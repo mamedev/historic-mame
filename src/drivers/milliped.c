@@ -74,7 +74,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0200, MWA_RAM },
-	{ 0x1000, 0x13ff, videoram_w, &videoram },
+	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
 	{ 0x0400, 0x0408, milliped_pokey1_w },
 	{ 0x0800, 0x0808, milliped_pokey2_w },
@@ -123,6 +123,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -332,7 +336,7 @@ struct GameDriver milliped_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,

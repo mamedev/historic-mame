@@ -9,10 +9,11 @@ int elevator_sh_interrupt(void)
 {
 	static int count;
 
-
-	count = (count + 1) % 2;
-
-	if (count) return 0xff;
+	count++;
+	if (count>=8){
+		count = 0;
+		return 0xff;
+	}
 	else
 	{
 		if (pending_commands) return Z80_NMI_INT;

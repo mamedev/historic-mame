@@ -5,7 +5,7 @@
 struct osd_bitmap
 {
 	int width,height;	/* width and hegiht of the bitmap */
-	void *private;	/* don't touch! - reserved for osdepend use */
+	void *_private;	/* don't touch! - reserved for osdepend use */
 	unsigned char *line[0];	/* pointers to the start of each line */
 };
 
@@ -108,6 +108,11 @@ struct osd_bitmap
 #define OSD_JOY_FIRE	9	/* any of the fire buttons */
 #define OSD_MAX_JOY     9
 
+#define X_AXIS          1
+#define Y_AXIS          2
+#define NO_TRAK         1000000
+
+
 extern int play_sound;
 extern int video_sync;
 
@@ -138,5 +143,12 @@ const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);
 
+int osd_trak_read(int axis);
+void osd_trak_center_x(void);
+void osd_trak_center_y(void);
+
+int open_page(int step);
+void close_page(void);
+void draw_line(int x1, int y1, int x2, int y2, int z, int col);
 
 #endif

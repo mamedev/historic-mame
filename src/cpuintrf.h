@@ -2,6 +2,7 @@
 #define CPUINTRF_H
 
 
+void cpu_init(void);
 void cpu_run(void);
 
 int  cpu_getstatus(int cpunum);
@@ -9,6 +10,7 @@ void cpu_halt(int cpunum,int running);
 
 
 int cpu_getpc(void);
+int cpu_getpreviouspc(void);  /* -RAY- */
 int cpu_getreturnpc(void);
 int cpu_geticount(void);
 void cpu_seticount(int cycles);
@@ -29,6 +31,13 @@ int input_port_4_r(int offset);
 int input_port_5_r(int offset);
 int input_port_6_r(int offset);
 int input_port_7_r(int offset);
+
+int readtrakport(int port);
+int input_trak_0_r(int offset);
+int input_trak_1_r(int offset);
+int input_trak_2_r(int offset);
+int input_trak_3_r(int offset);
+
 void interrupt_enable_w(int offset,int data);
 void interrupt_vector_w(int offset,int data);
 int interrupt(void);

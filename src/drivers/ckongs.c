@@ -92,6 +92,7 @@ interrupt mode 1 triggered by the main CPU
 
 extern unsigned char *scramble_attributesram;
 extern unsigned char *scramble_bulletsram;
+extern int scramble_bulletsram_size;
 extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void scramble_attributes_w(int offset,int data);
 extern void scramble_stars_w(int offset,int data);
@@ -119,10 +120,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x6bff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x983f, scramble_attributes_w, &scramble_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
-	{ 0x9860, 0x987f, MWA_RAM, &scramble_bulletsram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &scramble_bulletsram, &scramble_bulletsram_size },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa804, 0xa804, scramble_stars_w },
 	{ 0xa802, 0xa802, MWA_NOP },
@@ -192,6 +193,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -356,7 +361,7 @@ struct GameDriver ckongs_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

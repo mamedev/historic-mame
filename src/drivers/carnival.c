@@ -106,6 +106,10 @@ static struct InputPort input_ports[] =
 	{ -1 }
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -148,9 +152,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
-    0xff,0x00,0x00, /* RED */
-    0x00,0xff,0x00, /* GREEN */
-    0xff,0xff,0x00, /* YELLOW */
+        0xff,0x00,0x00, /* RED */
+        0x00,0xff,0x00, /* GREEN */
+        0xff,0xff,0x00, /* YELLOW */
 	0x00,0xff,0xff, /* CYAN */
 	0x00,0x00,0xff, /* BLUE */
 	0xff,0xff,0xff	/* WHITE */
@@ -263,7 +267,7 @@ struct GameDriver carnival_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,

@@ -112,6 +112,7 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 
 extern unsigned char *cclimber_bsvideoram;
+extern int cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
 extern void cclimber_colorram_w(int offset,int data);
@@ -147,12 +148,12 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9880, 0x989f, MWA_RAM, &spriteram },
+	{ 0x9880, 0x989f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x981f, MWA_RAM, &cclimber_column_scroll },
 	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
-	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram },
+	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram, &cclimber_bsvideoram_size },
 	{ 0x9400, 0x97ff, videoram_w },	/* mirror address, used to draw windows */
 	{ 0x98dc, 0x98df, MWA_RAM, &cclimber_bigspriteram },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
@@ -205,6 +206,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -387,7 +392,12 @@ ROM_END
 
 
 
-static unsigned cclimber_decode(int A)
+static void cclimber_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	static const unsigned char evetab[] =
 	{
@@ -429,11 +439,17 @@ static unsigned cclimber_decode(int A)
 	};
 
 
-	if (A & 1) return oddtab[RAM[A]];
-	else return evetab[RAM[A]];
+	if (A & 1) ROM[A] = oddtab[RAM[A]];
+	else ROM[A] = evetab[RAM[A]];
+}
 }
 
-static unsigned ccjap_decode(int A)
+static void ccjap_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	static const unsigned char evetab[] =
 	{
@@ -475,8 +491,9 @@ static unsigned ccjap_decode(int A)
 	};
 
 
-	if (A & 1) return oddtab[RAM[A]];
-	else return evetab[RAM[A]];
+	if (A & 1) ROM[A] = oddtab[RAM[A]];
+	else ROM[A] = evetab[RAM[A]];
+}
 }
 
 
@@ -528,7 +545,7 @@ struct GameDriver cclimber_driver =
 	0, cclimber_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,
@@ -547,7 +564,7 @@ struct GameDriver ccjap_driver =
 	0, ccjap_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,
@@ -566,7 +583,7 @@ struct GameDriver ccboot_driver =
 	0, ccjap_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

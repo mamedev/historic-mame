@@ -276,6 +276,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -500,52 +504,73 @@ ROM_END
 
 
 
-#if 0
 static int hiload(const char *name)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+  unsigned char *RAM = Machine->memory_region[0];
+  FILE *f;
+  int i;
+  
+  /* Wait for machine initialization to be done. */
+  if (RAM[0x00d1] == 0x00) return 0;
 
+  if ((f = fopen(name,"rb")) != 0)
+    {
+      /* Load and set hiscore table. */
+      fread(&RAM[0x152c],1,0x1572-0x152c,f);
+      fclose(f);
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0xee4e],"\x00\x08\x00",3) == 0)
-	{
-		FILE *f;
+      /* Set the "current hiscore" value. */
+      for (i=0; i < 4; i++) RAM[0x00d0+i] = RAM[0x152c+i];
+    }
 
-
-		if ((f = fopen(name,"rb")) != 0)
-		{
-			fread(&RAM[0xee00],1,13*7,f);
-			RAM[0xee97] = RAM[0xee00];
-			RAM[0xee98] = RAM[0xee01];
-			RAM[0xee99] = RAM[0xee02];
-			fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+  return 1;
 }
-
-
 
 static void hisave(const char *name)
 {
-	FILE *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+  unsigned char *RAM = Machine->memory_region[0], tmp;
+  FILE *f;
+  unsigned long pos0, pos1;
+  int i, j, done = 0;
 
+  if ((f = fopen(name,"wb")) != 0)
+    {
+      /* Bubble-sort hiscore table. */
+      while(!done)
+        {
+          done = 1;
+          for (i=0; i < 10-1; i++)
+            {
+              pos0 =
+                RAM[0x152c + i*7]*0x01000000 +
+                RAM[0x152d + i*7]*0x00010000 +
+                RAM[0x152e + i*7]*0x00000100 +
+                RAM[0x152f + i*7]*0x00000001;
 
-	if ((f = fopen(name,"wb")) != 0)
-	{
-		fwrite(&RAM[0xee00],1,13*7,f);
-		fclose(f);
-	}
+              pos1 =
+                RAM[0x152c + i*7 + 7]*0x01000000 +
+                RAM[0x152d + i*7 + 7]*0x00010000 +
+                RAM[0x152e + i*7 + 7]*0x00000100 +
+                RAM[0x152f + i*7 + 7]*0x00000001;
+
+              if(pos1 > pos0)
+                {
+                  done = 0;
+                  for(j=0; j < 7; j++)
+                    {
+                      tmp = RAM[0x152c + i*7 + j];
+                      RAM[0x152c + i*7 + j] = RAM[0x152c + i*7 + 7 + j];
+                      RAM[0x152c + i*7 + 7 + j] = tmp;
+                    }
+                }
+            }
+        }
+
+      /* Write hiscore table. */
+      fwrite(&RAM[0x152c],1,0x1572-0x152c,f);
+      fclose(f);
+    }
 }
-#endif
 
 
 struct GameDriver gng_driver =
@@ -559,12 +584,12 @@ struct GameDriver gng_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	gng_color_prom, 0, 0,
 	8*13, 8*16,
 
-	0, 0
+        hiload, hisave
 };
 
 struct GameDriver diamond_driver =
@@ -578,7 +603,7 @@ struct GameDriver diamond_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	diamond_color_prom, 0, 0,
 	8*13, 8*16,

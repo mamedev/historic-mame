@@ -32,6 +32,9 @@
     developers and MAME users and is the sole reason for bringing MAME
     under the GPL.
 
+    You can use these sources for your personal non-commercial purpose.
+    You are NOT ALLOWED to distribuite any un-official version of MAME.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -45,7 +48,7 @@
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
 #endif
 
-static char mameversion[8] = "0.25";   /* M.Z.: current version */
+static char mameversion[8] = "0.26";   /* M.Z.: current version */
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -54,6 +57,21 @@ static const struct MachineDriver *drv;
 
 static int hiscoreloaded;
 static char hiscorename[50];
+
+
+struct KEYSet *MM_DirectKEYSet;
+unsigned char MM_PatchedPort;
+unsigned char MM_OldPortValue=0;
+unsigned char MM_LastChangedValue=0;
+unsigned char MM_updir=1;
+unsigned char MM_leftdir=1;
+unsigned char MM_rightdir=1;
+unsigned char MM_downdir=1;
+unsigned char MM_orizdir=1;     /* Minimum between ldir and rdir */
+unsigned char MM_lrdir=1;
+unsigned char MM_totale;
+unsigned char MM_inverted=0;
+unsigned char MM_dir4=0;
 
 
 int frameskip;
@@ -102,7 +120,7 @@ int main(int argc,char **argv)
 	{
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
 		       "Copyright (C) 1997  by Nicola Salmoria and Mirko Buffoni\n\n",mameversion);
-		showdisclaimer();   /* Dichiarazione (in COMMON.C) */
+		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n");
 
 		return 0;
@@ -273,21 +291,14 @@ int init_machine(const char *gamename,int argc,char **argv)
 	ROM = RAM;
 
 	/* decrypt the ROMs if necessary */
-	if (gamedrv->rom_decode)
-	{
-		int j;
-
-
-		for (j = 0;j < 0x10000;j++)
-			RAM[j] = (*gamedrv->rom_decode)(j);
-	}
+	if (gamedrv->rom_decode) (*gamedrv->rom_decode)();
 
 	if (gamedrv->opcode_decode)
 	{
 		int j;
 
 
-		/* find the first avaialble memory region pointer */
+		/* find the first available memory region pointer */
 		j = 0;
 		while (Machine->memory_region[j]) j++;
 
@@ -296,14 +307,17 @@ int init_machine(const char *gamename,int argc,char **argv)
 
 		Machine->memory_region[j] = ROM;
 
-		for (j = 0;j < 0x10000;j++)
-			ROM[j] = (*gamedrv->opcode_decode)(j);
+		(*gamedrv->opcode_decode)();
 	}
 
 
 	/* read audio samples if available */
         Machine->samples = readsamples(gamedrv->samplenames,gamename);
 
+
+	/* first of all initialize the memory handlers, which could be used by the */
+	/* other initialization routines */
+	cpu_init();
 
 	if (*drv->init_machine && (*drv->init_machine)(gamename) != 0)
 		return 1;
@@ -313,6 +327,22 @@ int init_machine(const char *gamename,int argc,char **argv)
 
 	if (*drv->sh_init && (*drv->sh_init)(gamename) != 0)
 		return 1;
+
+        for (i = 1;i < argc;i++) if (stricmp(argv[i],"-dir4") == 0) MM_dir4 = 1;
+
+        if (MM_dir4)
+        {
+                MM_PatchedPort = Machine->gamedrv->keysettings[0].num;
+                MM_updir <<= (Machine->gamedrv->keysettings[0].mask);
+                MM_leftdir <<= (Machine->gamedrv->keysettings[1].mask);
+                MM_rightdir <<= (Machine->gamedrv->keysettings[2].mask);
+                MM_downdir <<= (Machine->gamedrv->keysettings[3].mask);
+                MM_lrdir = MM_leftdir + MM_rightdir;
+                MM_totale = MM_lrdir + MM_updir + MM_downdir;
+                MM_orizdir = MM_leftdir;
+                if (MM_rightdir < MM_orizdir) MM_orizdir = MM_rightdir;
+                if (Machine->gamedrv->input_ports[MM_PatchedPort].default_value == 0xff) MM_inverted = 1;
+        };
 
 	return 0;
 }
@@ -532,7 +562,7 @@ int updatescreen(void)
 				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
 				displaytext(dt,0);
 			}
-		} while ((key == 0) || (key == OSD_KEY_TAB));    /* MAURY_BEGIN: any key restarts */
+		} while ((key == 0) || (key == OSD_KEY_TAB) || (key == OSD_KEY_ALT));    /* MAURY_BEGIN: any key restarts */
 		if ((key == OSD_KEY_ESC) || (key == OSD_KEY_P))
 			while (osd_key_pressed(key));            /* MAURY_END: Filter ESC or P */
                 osd_set_mastervolume(CurrentVolume);

@@ -61,6 +61,9 @@ typedef struct
   byte A,P,X,Y,S;     /* CPU registers and program counter   */
   pair PC;
 
+  pair previousPC;		/* -RAY- */
+                                /* pc before a memory read/write */
+
   int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
                       /* between calls to Loop6502()         */
   byte IRequest;      /* Set to the INT_IRQ when pending IRQ */

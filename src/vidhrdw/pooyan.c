@@ -11,10 +11,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-
-
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -53,7 +49,7 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -81,7 +77,7 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 0;offs < 24*2;offs += 2)
+	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 1],

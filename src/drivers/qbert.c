@@ -146,6 +146,10 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -359,7 +363,7 @@ struct GameDriver qbert_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */
@@ -380,7 +384,7 @@ struct GameDriver qbertjp_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */

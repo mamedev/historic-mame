@@ -12,11 +12,9 @@
 
 
 unsigned char *mystston_videoram2,*mystston_colorram2;
+int mystston_videoram2_size;
 unsigned char *mystston_scroll;
 unsigned char *mystston_paletteram;
-
-#define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_RAM_SIZE 0x200
 
 
 
@@ -72,9 +70,9 @@ void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 ***************************************************************************/
 int mystston_vh_start(void)
 {
-	if ((dirtybuffer = malloc(BACKGROUND_RAM_SIZE)) == 0)
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,0,BACKGROUND_RAM_SIZE);
+	memset(dirtybuffer,0,videoram_size);
 
 	/* Mysterious Stones has a virtual screen twice as large as the visible screen */
 	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -101,35 +99,11 @@ void mystston_vh_stop(void)
 
 
 
-void mystston_videoram2_w(int offset,int data)
-{
-	if (mystston_videoram2[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mystston_videoram2[offset] = data;
-	}
-}
-
-
-
-void mystston_colorram2_w(int offset,int data)
-{
-	if (mystston_colorram2[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mystston_colorram2[offset] = data;
-	}
-}
-
-
-
 void mystston_paletteram_w(int offset,int data)
 {
 	if (mystston_paletteram[offset] != data)
 	{
-		if (offset > 16) memset(dirtybuffer,1,BACKGROUND_RAM_SIZE);
+		if (offset > 16) memset(dirtybuffer,1,videoram_size);
 
 		mystston_paletteram[offset] = data;
 	}
@@ -178,7 +152,7 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < BACKGROUND_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -190,8 +164,8 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 16 * (offs % 32);
 			sy = 16 * (offs / 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[4 + (mystston_colorram2[offs] & 0x01)],
-					mystston_videoram2[offs],
+			drawgfx(tmpbitmap,Machine->gfx[4 + (colorram[offs] & 0x01)],
+					videoram[offs],
 					0,
 					sx >= 256,0,	/* flip horizontally tiles on the right half of the bitmap */
 					sx,sy,
@@ -212,7 +186,7 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < 24*4;offs += 4)
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs] & 0x01)
 		{
@@ -228,9 +202,10 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = mystston_videoram2_size - 1;offs >= 0;offs--)
 	{
-		if ((colorram[offs] & 0x07) != 0x07 || videoram[offs] != 0x40)	/* don't draw spaces */
+		if ((mystston_colorram2[offs] & 0x07) != 0x07 ||
+				mystston_videoram2[offs] != 0x40)	/* don't draw spaces */
 		{
 			int sx,sy;
 
@@ -238,8 +213,8 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(bitmap,Machine->gfx[(colorram[offs] & 0x04) ? 1 : 0],
-					videoram[offs] + 256 * (colorram[offs] & 0x03),
+			drawgfx(bitmap,Machine->gfx[(mystston_colorram2[offs] & 0x04) ? 1 : 0],
+					mystston_videoram2[offs] + 256 * (mystston_colorram2[offs] & 0x03),
 					0,
 					0,0,
 					sx,sy,

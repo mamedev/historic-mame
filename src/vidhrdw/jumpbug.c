@@ -11,13 +11,12 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 #define MAX_STARS 250
+#define STARS_COLOR_BASE 32
 
 unsigned char *jumpbug_attributesram;
-unsigned char *jumpbug_bulletsram;
-static int stars_on;
+unsigned char *jumpbug_gfxbank;
+unsigned char *jumpbug_stars;
 
 struct star
 {
@@ -99,10 +98,6 @@ void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 		bits = ((i-32) >> 4) & 0x03;
 		palette[3*i + 2] = map[bits];
 	}
-
-
-	for (i = 32;i < 32 + 64;i++)
-		colortable[i] = i;
 }
 
 
@@ -117,8 +112,6 @@ int jumpbug_vh_start(void)
 	int generator;
 	int x,y;
 
-
-	stars_on = 0;
 
 	if (generic_vh_start() != 0)
 		return 1;
@@ -154,7 +147,7 @@ int jumpbug_vh_start(void)
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
 					stars[total_stars].code = color;
-					stars[total_stars].col = Machine->gfx[3]->colortable[color];
+					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
 
 					total_stars++;
 				}
@@ -174,7 +167,7 @@ void jumpbug_attributes_w(int offset,int data)
 		int i;
 
 
-		for (i = offset / 2;i < VIDEO_RAM_SIZE;i += 32)
+		for (i = offset / 2;i < videoram_size;i += 32)
 			dirtybuffer[i] = 1;
 	}
 
@@ -183,9 +176,13 @@ void jumpbug_attributes_w(int offset,int data)
 
 
 
-void jumpbug_stars_w(int offset,int data)
+void jumpbug_gfxbank_w(int offset,int data)
 {
-	stars_on = (data & 1);
+	if (jumpbug_gfxbank[offset] != data)
+	{
+		jumpbug_gfxbank[offset] = data;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -199,16 +196,16 @@ void jumpbug_stars_w(int offset,int data)
 ***************************************************************************/
 void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,charcode;
 
 
 			dirtybuffer[offs] = 0;
@@ -216,8 +213,15 @@ void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = (31 - offs / 32);
 			sy = (offs % 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs],
+			charcode = videoram[offs];
+			if ((charcode & 0xc0) == 0x80 && (jumpbug_gfxbank[2] & 1) != 0)
+			{
+				charcode += 128 + 64 * (jumpbug_gfxbank[0] & 1)
+						+ 128 * (jumpbug_gfxbank[1] & 1) + 256 * (~jumpbug_gfxbank[4] & 1);
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					charcode,
 					jumpbug_attributesram[2 * sy + 1],
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -230,49 +234,37 @@ void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		for (i = 0;i < 32;i++)
-			scroll[i] = jumpbug_attributesram[2 * i];
+		for (offs = 0;offs < 32;offs++)
+			scroll[offs] = jumpbug_attributesram[2 * offs];
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
-	/* Draw the bullets */
-	for (offs = 0; offs < 4*8; offs += 4)
-	{
-		int x,y;
-
-
-		x = jumpbug_bulletsram[offs + 1];
-
-		if (x >= Machine->drv->visible_area.min_x && x <= Machine->drv->visible_area.max_x)
-		{
-			y = 256 - jumpbug_bulletsram[offs + 3] - 8;
-
-			if (y >= 0)
-				bitmap->line[y][x] = Machine->gfx[3]->colortable[0x0f];	/* yellow (?) */
-		}
-	}
-
-
 	/* Draw the sprites */
-	for (offs = 0;offs < 4*8;offs += 4)
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		if (spriteram[offs + 3] > 8)	/* ???? */
+		int spritecode;
+
+
+		spritecode = spriteram[offs + 1] & 0x3f;
+		if ((spritecode & 0x30) == 0x20 && (jumpbug_gfxbank[2] & 1) != 0)
 		{
-			drawgfx(bitmap,Machine->gfx[2],
-							/* bit 4 of [offs+2] is used only by Crazy Kong */
-					(spriteram[offs + 1] & 0x3f) + 4*(spriteram[offs + 2] & 0x10),
-					spriteram[offs + 2],
-					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-					spriteram[offs],spriteram[offs + 3],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			spritecode += 32 + 16 * (jumpbug_gfxbank[0] & 1)
+					+ 32 * (jumpbug_gfxbank[1] & 1) + 64 * (~jumpbug_gfxbank[4] & 1);
 		}
+
+		drawgfx(bitmap,Machine->gfx[1],
+				spritecode,
+				spriteram[offs + 2],
+				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+				spriteram[offs],spriteram[offs + 3],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
 	/* draw the stars */
-	if (stars_on)
+	if (*jumpbug_stars & 1)
 	{
 		int bpen;
 		static int stars_blink,blink_count;

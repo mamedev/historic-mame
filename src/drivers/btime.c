@@ -137,9 +137,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1000, 0x13ff, videoram_w, &videoram },
+	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
-	{ 0x1800, 0x181f, MWA_RAM, &spriteram },
+	{ 0x1800, 0x181f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x4000, 0x4000, MWA_NOP },
 	{ 0x4003, 0x4003, sound_command_w },
 	{ 0x4004, 0x4004, btime_background_w },
@@ -203,6 +203,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -387,7 +391,12 @@ ROM_END
 
 
 
-static unsigned btime_decode(int A)
+static void btime_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	/* the encryption is a simple bit rotation: 76543210 -> 65342710      */
 	/* it is not known, however, when it must be applied. Only opcodes at */
@@ -863,25 +872,23 @@ static unsigned btime_decode(int A)
 		case 0xff1c:
 		case 0xff1e:
 		case 0xff3f:
-			return (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
+			ROM[A] = (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
 					| ((RAM[A] & 0x08) << 2);
 			break;
 
-#ifdef ONELEVEL
-		case 0xdb47:
-		case 0xdb48:
-		case 0xdb49:
-			return 0xea;
-			break;
-#endif
-
 		default:
-			return RAM[A];
+			ROM[A] = RAM[A];
 			break;
 	}
 }
+}
 
-static unsigned btimea_decode(int A)
+static void btimea_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	/* the encryption is a simple bit rotation: 76543210 -> 65342710      */
 	/* it is not known, however, when it must be applied. Only opcodes at */
@@ -1232,13 +1239,15 @@ static unsigned btimea_decode(int A)
 		case 0xf5ec:
 		case 0xf5ee:
 		case 0xf5f5:
-			return (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
+			ROM[A] = (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
 					| ((RAM[A] & 0x08) << 2);
 			break;
+
 		default:
-			return RAM[A];
+			ROM[A] = RAM[A];
 			break;
 	}
+}
 }
 
 
@@ -1301,7 +1310,7 @@ struct GameDriver btime_driver =
 	0, btime_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,
@@ -1320,7 +1329,7 @@ struct GameDriver btimea_driver =
 	0, btimea_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

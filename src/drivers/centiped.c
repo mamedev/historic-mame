@@ -133,6 +133,9 @@ extern int centiped_IN0_r(int offset);
 extern int centiped_rand_r(int offset);
 extern int centiped_interrupt(void);
 
+extern int centiped_trakball_x(int data);
+extern int centiped_trakball_y(int data);
+
 extern unsigned char *centiped_charpalette,*centiped_spritepalette;
 extern void centiped_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void centiped_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -153,7 +156,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
 	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
-	{ 0x0c02, 0x0c02, input_port_2_r },	/* IN2 */
+	{ 0x0c02, 0x0c02, input_trak_1_r },	/* IN2 */
 	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
 	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
 	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
@@ -164,7 +167,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07bf, videoram_w, &videoram },
+	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, milliped_pokey1_w },
 	{ 0x1404, 0x1407, centiped_vh_charpalette_w, &centiped_charpalette },
@@ -216,6 +219,22 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] = {
+  {
+    X_AXIS,
+    1,
+    1.0,
+    centiped_trakball_x
+  },
+  {
+    Y_AXIS,
+    1,
+    1.0,
+    centiped_trakball_y
+  },
+  { -1 }
+};
+
 
 static struct KEYSet keys[] =
 {
@@ -261,27 +280,13 @@ static struct GfxLayout spritelayout =
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the remapped color table and dynamically build the real one. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  16+4, 4 },	/* only code 0 is used by the game, the others */
-											/* are for the dip switch menu */
-	{ 1, 0x0000, &spritelayout,  16, 1 },
-	{ 0, 0,      &fakelayout,     0, 16 },
+	{ 1, 0x0000, &charlayout,   4, 1 },
+	{ 1, 0x0000, &spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -305,7 +310,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	16,16+2*4+3*4,
+	16, 2*4,
 	centiped_vh_convert_color_prom,
 
 	0,
@@ -391,7 +396,7 @@ struct GameDriver centiped_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, 0, 0,
 	8*13, 8*16,

@@ -40,7 +40,7 @@ static int Snd49Flag;
 	return;
 #endif
 
-	if (Machine->samples == 0) return;
+	if (Machine->samples == 0 || Machine->samples->sample[0] == 0) return;
 
   fx = data & 0x3F;
 

@@ -15,11 +15,15 @@ extern struct GameDriver mspacatk_driver;
 extern struct GameDriver crush_driver;
 extern struct GameDriver pengo_driver;
 extern struct GameDriver penta_driver;
+extern struct GameDriver pengopop_driver;
+extern struct GameDriver pengoa_driver;
 extern struct GameDriver ladybug_driver;
 extern struct GameDriver mrdo_driver;
 extern struct GameDriver mrdot_driver;
 extern struct GameDriver mrlo_driver;
 extern struct GameDriver docastle_driver;
+extern struct GameDriver dowild_driver;
+extern struct GameDriver dorunrun_driver;
 extern struct GameDriver cclimber_driver;
 extern struct GameDriver ccjap_driver;
 extern struct GameDriver ccboot_driver;
@@ -36,6 +40,7 @@ extern struct GameDriver bagman_driver;
 extern struct GameDriver wow_driver;
 extern struct GameDriver robby_driver;
 extern struct GameDriver gorf_driver;
+extern struct GameDriver seawolf_driver;
 extern struct GameDriver spacezap_driver;
 extern struct GameDriver galaxian_driver;
 extern struct GameDriver galmidw_driver;
@@ -106,22 +111,25 @@ extern struct GameDriver rushatck_driver;
 extern struct GameDriver venture_driver;
 extern struct GameDriver mtrap_driver;
 extern struct GameDriver pepper2_driver;
+
 extern struct GameDriver qbert_driver;
 extern struct GameDriver qbertjp_driver;
 extern struct GameDriver qbertqub_driver;
+extern struct GameDriver krull_driver;
+extern struct GameDriver reactor_driver;
 extern struct GameDriver mplanets_driver;
+extern struct GameDriver stooges_driver;
+
 extern struct GameDriver junglek_driver;
 extern struct GameDriver jungleh_driver;
 extern struct GameDriver elevator_driver;
 extern struct GameDriver elevatob_driver;
 extern struct GameDriver panic_driver;
 extern struct GameDriver arabian_driver;
-extern struct GameDriver reactor_driver;
 extern struct GameDriver c1942_driver;
 extern struct GameDriver popeyebl_driver;
 extern struct GameDriver warpwarp_driver;
 extern struct GameDriver gyruss_driver;
-extern struct GameDriver krull_driver;
 extern struct GameDriver superpac_driver;
 extern struct GameDriver kangaroo_driver;
 extern struct GameDriver galaga_driver;
@@ -150,7 +158,22 @@ extern struct GameDriver frontlin_driver;
 extern struct GameDriver wwestern_driver;
 extern struct GameDriver spacefb_driver;
 extern struct GameDriver tutankhm_driver;
+extern struct GameDriver mappy_driver;
+extern struct GameDriver ccastles_driver;
+extern struct GameDriver yiear_driver;
+extern struct GameDriver digdugnm_driver;
+extern struct GameDriver digdug_driver;
 
+extern struct GameDriver asteroid_driver;
+extern struct GameDriver astdelux_driver;
+extern struct GameDriver bwidow_driver;
+extern struct GameDriver bzone_driver;
+extern struct GameDriver gravitar_driver;
+extern struct GameDriver llander_driver;
+extern struct GameDriver redbaron_driver;
+extern struct GameDriver spacduel_driver;
+extern struct GameDriver tempest_driver;
+extern struct GameDriver missile_driver;
 
 const struct GameDriver *drivers[] =
 {
@@ -167,11 +190,15 @@ const struct GameDriver *drivers[] =
 	&crush_driver,
 	&pengo_driver,
 	&penta_driver,
+	&pengopop_driver,
+	&pengoa_driver,
 	&ladybug_driver,
 	&mrdo_driver,
 	&mrdot_driver,
 	&mrlo_driver,
 	&docastle_driver,
+	&dowild_driver,
+	&dorunrun_driver,
 	&cclimber_driver,
 	&ccjap_driver,
 	&ccboot_driver,
@@ -188,6 +215,7 @@ const struct GameDriver *drivers[] =
 	&wow_driver,
 	&robby_driver,
 	&gorf_driver,
+        &seawolf_driver,
         &spacezap_driver,
 	&galaxian_driver,
 	&galmidw_driver,
@@ -261,19 +289,20 @@ const struct GameDriver *drivers[] =
 	&qbert_driver,
 	&qbertjp_driver,
         &qbertqub_driver,
+        &krull_driver,
+        &reactor_driver,
 	&mplanets_driver,
+        &stooges_driver,
 	&junglek_driver,
 	&jungleh_driver,
 	&elevator_driver,
         &elevatob_driver,
 	&panic_driver,
         &arabian_driver,
-        &reactor_driver,
         &popeyebl_driver,
         &warpwarp_driver,
         &c1942_driver,
         &gyruss_driver,
-        &krull_driver,
         &superpac_driver,
         &kangaroo_driver,
         &galaga_driver,
@@ -300,5 +329,20 @@ const struct GameDriver *drivers[] =
         &wwestern_driver,
         &spacefb_driver,
         &tutankhm_driver,
+        &mappy_driver,
+        &ccastles_driver,
+        &yiear_driver,
+        &digdugnm_driver,
+        &digdug_driver,
+	&asteroid_driver,
+	&astdelux_driver,
+	&bwidow_driver,
+	&bzone_driver,
+	&gravitar_driver,
+	&llander_driver,
+	&redbaron_driver,
+	&spacduel_driver,
+	&tempest_driver,
+        &missile_driver,
 	0	/* end of array */
 };

@@ -110,9 +110,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa800, 0xabff, videoram_w, &videoram },
+	{ 0xa800, 0xabff, videoram_w, &videoram, &videoram_size },
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
-	{ 0xb040, 0xb05f, MWA_RAM, &spriteram },
+	{ 0xb040, 0xb05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb808, 0xb808, interrupt_enable_w },
 	{ 0xd000, 0xd000, sound_command_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
@@ -172,6 +172,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -290,7 +294,7 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	frogger_sh_init,
+	0,
 	frogger_sh_start,
 	AY8910_sh_stop,
 	AY8910_sh_update
@@ -336,6 +340,21 @@ ROM_START( frogsega_rom )
 	ROM_LOAD( "frogger.609", 0x0800, 0x0800 )
 	ROM_LOAD( "frogger.610", 0x1000, 0x0800 )
 ROM_END
+
+
+
+static void frogger_decode(void)
+{
+	int A;
+	unsigned char *RAM;
+
+
+	/* ROM 1 of the second CPU has data lines D0 and D1 swapped. Decode it. */
+	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	for (A = 0;A < 0x0800;A++)
+		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+}
 
 
 
@@ -393,10 +412,10 @@ struct GameDriver frogger_driver =
 	&machine_driver,
 
 	frogger_rom,
-	0, 0,
+	frogger_decode, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,
@@ -414,10 +433,10 @@ struct GameDriver frogsega_driver =
 	&machine_driver,
 
 	frogsega_rom,
-	0, 0,
+	frogger_decode, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

@@ -59,9 +59,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x37ff, MRA_ROM },
 	{ 0x4000, 0x47FF, MRA_RAM },
 	{ 0x4800, 0x4FFF, MRA_ROM },
-   { 0xc000, 0xc007, warpwarp_input_c000_7_r },
-   { 0xc010, 0xc010, warpwarp_input_controller_r },
-   { 0xc020, 0xc027, warpwarp_input_c020_27_r },
+        { 0xc000, 0xc007, warpwarp_input_c000_7_r },
+        { 0xc010, 0xc010, warpwarp_input_controller_r },
+        { 0xc020, 0xc027, warpwarp_input_c020_27_r },
 	{ -1 }	/* end of table */
 };
 
@@ -102,6 +102,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -266,7 +270,7 @@ struct GameDriver warpwarp_driver =
 	0, 0,
         0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,

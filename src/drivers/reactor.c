@@ -74,6 +74,7 @@ extern void gottlieb_output(int offset, int data);
 extern int reactor_IN1_r(int offset);
 extern int reactor_tb_H_r(int offset);
 extern int reactor_tb_V_r(int offset);
+extern int gottlieb_trakball(int data);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_spriteram;
@@ -145,6 +146,21 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
+static struct TrakPort trak_ports[] = {
+  {
+    X_AXIS,
+    1,
+    1.0,
+    gottlieb_trakball
+  },
+  {
+    Y_AXIS,
+    1,
+    1.0,
+    gottlieb_trakball
+  },
+  { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -279,7 +295,7 @@ struct GameDriver reactor_driver =
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	(char *)1,
 	0,0,    /* palette, colortable */

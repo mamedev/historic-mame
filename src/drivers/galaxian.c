@@ -157,6 +157,11 @@ static struct InputPort galaxian_input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
+
 
 static struct KEYSet keys[] =
 {
@@ -601,7 +606,7 @@ struct GameDriver galaxian_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galaxian_dsw, keys,
+	galaxian_input_ports, trak_ports, galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -620,7 +625,7 @@ struct GameDriver galmidw_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galaxian_dsw, keys,
+	galaxian_input_ports, trak_ports, galaxian_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -639,7 +644,7 @@ struct GameDriver galnamco_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -658,7 +663,7 @@ struct GameDriver superg_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -677,7 +682,7 @@ struct GameDriver galapx_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -696,7 +701,7 @@ struct GameDriver galap1_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -715,7 +720,7 @@ struct GameDriver galap4_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -734,7 +739,7 @@ struct GameDriver galturbo_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, galboot_dsw, keys,
+	galaxian_input_ports, trak_ports, galboot_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -753,7 +758,7 @@ struct GameDriver pisces_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, pisces_dsw, keys,
+	galaxian_input_ports, trak_ports, pisces_dsw, keys,
 
 	galaxian_color_prom, 0, 0,
 	8*13, 8*16,
@@ -772,7 +777,7 @@ struct GameDriver japirem_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, japirem_dsw, keys,
+	galaxian_input_ports, trak_ports, japirem_dsw, keys,
 
 	japirem_color_prom, 0, 0,
 	8*13, 8*16,
@@ -791,7 +796,7 @@ struct GameDriver uniwars_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	galaxian_input_ports, japirem_dsw, keys,
+	galaxian_input_ports, trak_ports, japirem_dsw, keys,
 
 	uniwars_color_prom, 0, 0,
 	8*13, 8*16,
@@ -810,7 +815,7 @@ struct GameDriver warofbug_driver =
 	0, 0,
 	mooncrst_sample_names,
 
-	warofbug_input_ports, warofbug_dsw, wbug_keys,
+	warofbug_input_ports, trak_ports, warofbug_dsw, wbug_keys,
 
 	japirem_color_prom, 0, 0,
 	8*13, 8*16,

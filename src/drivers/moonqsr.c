@@ -33,6 +33,7 @@
 
 extern unsigned char *moonqsr_attributesram;
 extern unsigned char *moonqsr_bulletsram;
+extern int moonqsr_bulletsram_size;
 extern void moonqsr_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void moonqsr_videoram_w(int offset,int data);
 extern void moonqsr_attributes_w(int offset,int data);
@@ -66,10 +67,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x983f, moonqsr_attributes_w, &moonqsr_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
-	{ 0x9860, 0x9880, MWA_RAM, &moonqsr_bulletsram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x9880, MWA_RAM, &moonqsr_bulletsram, &moonqsr_bulletsram_size },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
@@ -103,6 +104,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -226,7 +231,12 @@ ROM_END
 
 
 
-static unsigned moonqsr_decode(int A)
+static void moonqsr_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	static unsigned char evetab[] =
 	{
@@ -268,8 +278,9 @@ static unsigned moonqsr_decode(int A)
 	};
 
 
-	if (A & 1) return oddtab[RAM[A]];
-	else return evetab[RAM[A]];
+	if (A & 1) ROM[A] = oddtab[RAM[A]];
+	else ROM[A] = evetab[RAM[A]];
+}
 }
 
 
@@ -326,7 +337,7 @@ struct GameDriver moonqsr_driver =
 	0, moonqsr_decode,
 	mooncrst_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

@@ -205,6 +205,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -778,7 +782,7 @@ struct GameDriver dkong_driver =
 	0, 0,
 	sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, dkong_colortable,
 	8*13, 8*16,
@@ -797,7 +801,7 @@ struct GameDriver dkongjp_driver =
 	0, 0,
 	sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, dkong_colortable,
 	8*13, 8*16,
@@ -816,7 +820,7 @@ struct GameDriver dkongjr_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, dkongjr_colortable,
 	8*13, 8*16,

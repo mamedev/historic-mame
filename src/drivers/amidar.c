@@ -213,6 +213,10 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet amidar_keys[] =
 {
@@ -529,7 +533,7 @@ struct GameDriver amidar_driver =
 	0, 0,
 	0,
 
-	input_ports, amidar_dsw, amidar_keys,
+	input_ports, trak_ports, amidar_dsw, amidar_keys,
 
 	amidar_color_prom, 0, 0,
 	8*13, 8*16,
@@ -548,7 +552,7 @@ struct GameDriver amidarjp_driver =
 	0, 0,
 	0,
 
-	input_ports, amidar_dsw, amidar_keys,
+	input_ports, trak_ports, amidar_dsw, amidar_keys,
 
 	amidar_color_prom, 0, 0,
 	8*13, 8*16,
@@ -567,7 +571,7 @@ struct GameDriver turtles_driver =
 	0, 0,
 	0,
 
-	input_ports, turtles_dsw, turtles_keys,
+	input_ports, trak_ports, turtles_dsw, turtles_keys,
 
 	turtles_color_prom, 0, 0,
 	8*13, 8*16,
@@ -586,7 +590,7 @@ struct GameDriver turpin_driver =
 	0, 0,
 	0,
 
-	input_ports, turpin_dsw, turtles_keys,
+	input_ports, trak_ports, turpin_dsw, turtles_keys,
 
 	turtles_color_prom, 0, 0,
 	8*13, 8*16,

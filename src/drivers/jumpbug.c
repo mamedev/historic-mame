@@ -5,6 +5,7 @@ Jump Bug memory map (preliminary)
 0000-3fff ROM
 4000-47ff RAM
 4800-4bff Video RAM
+4c00-4fff mirror address for video RAM
 5000-50ff Object RAM
   5000-503f  screen attributes
   5040-505f  sprites
@@ -53,6 +54,7 @@ read:
 write:
 5800      8910 write port
 5900      8910 control port
+6002-6006 gfx bank select - see vidhrdw/jumpbug.c for details (6005 seems to be unused)
 7001      interrupt enable
 7002      coin counter ????
 7003      ?
@@ -60,6 +62,7 @@ write:
 7005      ?
 7006      screen vertical flip ????
 7007      screen horizontal flip ????
+7800      watchdog reset
 
 ***************************************************************************/
 
@@ -69,44 +72,47 @@ write:
 
 
 
-extern int jumpbug_sh_start(void);
-
-
-
 extern unsigned char *jumpbug_attributesram;
-extern unsigned char *jumpbug_bulletsram;
+extern unsigned char *jumpbug_gfxbank;
+extern unsigned char *jumpbug_stars;
 extern void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void jumpbug_attributes_w(int offset,int data);
+extern void jumpbug_gfxbank_w(int offset,int data);
 extern void jumpbug_stars_w(int offset,int data);
 extern int jumpbug_vh_start(void);
 extern void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern int jumpbug_sh_start(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM, Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address for Video RAM*/
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0xafff, MRA_ROM },
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* IN2 */
         { 0xeff0, 0xefff, MRA_RAM },
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address for Video RAM */
 	{ 0x5000, 0x503f, jumpbug_attributes_w, &jumpbug_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram },
-	{ 0x5060, 0x507f, MWA_RAM, &jumpbug_bulletsram },	/* not used by Jump Bug, but the driver needs it */
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-//	{ 0x7004, 0x7004, jumpbug_stars_w },
+	{ 0x7004, 0x7004, MWA_RAM, &jumpbug_stars },
+	{ 0x6002, 0x6006, jumpbug_gfxbank_w, &jumpbug_gfxbank },
 	{ 0x5900, 0x5900, AY8910_control_port_0_w },
 	{ 0x5800, 0x5800, AY8910_write_port_0_w },
+	{ 0x7800, 0x7800, MWA_NOP },
         { 0xeff0, 0xefff, MWA_RAM },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0xafff, MWA_ROM },
@@ -137,6 +143,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -169,18 +179,6 @@ static struct GfxLayout charlayout =
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-
-static struct GfxLayout charlayout2 =
-{
-	8,8,    /* 8*8 characters */
-	40,     /* 40 characters */
-	1,      /* 1 bits per pixel */
-	{ 0 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },     /* pretty straightforward layout */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	8*8     /* every char takes 8 consecutive bytes */
-};
-
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -193,27 +191,13 @@ static struct GfxLayout spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the color table */
-static struct GfxLayout starslayout =
-{
-	1,1,
-	0,
-	1,	/* 1 star = 1 color */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x3000, &charlayout2,    0, 8 },
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -246,7 +230,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	32+64, 32,	/* 32 for the characters, 64 for the stars */
 	jumpbug_vh_convert_color_prom,
 
 	0,
@@ -280,14 +264,13 @@ ROM_START( jumpbug_rom )
 	ROM_LOAD( "jb6", 0x9000, 0x1000 )
 	ROM_LOAD( "jb7", 0xa000, 0x1000 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jbi", 0x0000, 0x0800 )
-	ROM_LOAD( "jbj", 0x0800, 0x0800 )
-	ROM_LOAD( "jbk", 0x1000, 0x0800 )
-	ROM_LOAD( "jbl", 0x1800, 0x0800 )
-	ROM_LOAD( "jbm", 0x2000, 0x0800 )
-	ROM_LOAD( "jbn", 0x2800, 0x0800 )
-	ROM_LOAD( "jump_bug.fnt", 0x3000, 0x0120 )
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "jbi", 0x0000, 0x0800 )
+        ROM_LOAD( "jbj", 0x0800, 0x0800 )
+        ROM_LOAD( "jbk", 0x1000, 0x0800 )
+        ROM_LOAD( "jbl", 0x1800, 0x0800 )
+        ROM_LOAD( "jbm", 0x2000, 0x0800 )
+        ROM_LOAD( "jbn", 0x2800, 0x0800 )
 ROM_END
 
 ROM_START( jbugsega_rom )
@@ -295,37 +278,22 @@ ROM_START( jbugsega_rom )
 	ROM_LOAD( "jb1.prg", 0x0000, 0x4000 )
 	ROM_LOAD( "jb2.prg", 0x8000, 0x2800 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "jb3.gfx",      0x0000, 0x3000 )
-	ROM_LOAD( "jump_bug.fnt", 0x3000, 0x0120 )
 ROM_END
 
 
 
-static unsigned jumpbug_decode(int A)
+static void jumpbug_decode(void)
 {
-	switch (A)
-	{
-                case 0x265a:
-                case 0x8a16:
-                case 0x8dae:
-                        return 0xc9;
-			break;
-
-                case 0x8dbe:
-                case 0x9f53:
-                        return 0xc3;
-			break;
-
-                case 0x8dd7:
-                case 0x9f3d:
-                        return 0x18;
-			break;
-
-		default:
-			return RAM[A];
-			break;
-	}
+	/* this is not a "decryption", it is just a protection removal */
+	RAM[0x265a] = 0xc9;
+	RAM[0x8a16] = 0xc9;
+	RAM[0x8dae] = 0xc9;
+	RAM[0x8dbe] = 0xc3;
+	RAM[0x8dd7] = 0x18;
+	RAM[0x9f3d] = 0x18;
+	RAM[0x9f53] = 0xc3;
 }
 
 
@@ -338,10 +306,10 @@ struct GameDriver jumpbug_driver =
 	&machine_driver,
 
 	jumpbug_rom,
-        0, jumpbug_decode,
+	jumpbug_decode, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,
@@ -360,7 +328,7 @@ struct GameDriver jbugsega_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

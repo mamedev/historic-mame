@@ -13,10 +13,6 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
-
-
 static struct rectangle spritevisiblearea =
 {
 	0, 28*8-1,
@@ -81,12 +77,12 @@ void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 ***************************************************************************/
 void pacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -95,7 +91,7 @@ void pacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-	/* Even if Pengo's screen is 28x36, the memory layout is 32x32. We therefore */
+	/* Even if Pac Man's screen is 28x36, the memory layout is 32x32. We therefore */
 	/* have to convert the memory coordinates into screen coordinates. */
 	/* Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM */
 	/* don't map to a screen position. We don't check that here, however: range */
@@ -128,28 +124,28 @@ void pacman_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
+
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
+
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	/* sprites #0 and #7 are not used */
-
-	for (i = 6;i > 2;i--)
+	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[2*i] >> 2,spriteram[2*i + 1],
-				spriteram[2*i] & 2,spriteram[2*i] & 1,
-				239 - spriteram_2[2*i],272 - spriteram_2[2*i + 1],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				239 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 	/* the first two sprites must be offset one pixel to the left */
-	for (i = 2;i > 0;i--)
+	for (offs = 2*2;offs >= 0;offs -= 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[2*i] >> 2,spriteram[2*i + 1],
-				spriteram[2*i] & 2,spriteram[2*i] & 1,
-				238 - spriteram_2[2*i],272 - spriteram_2[2*i + 1],
+				spriteram[offs] >> 2,spriteram[offs + 1],
+				spriteram[offs] & 2,spriteram[offs] & 1,
+				238 - spriteram_2[offs],272 - spriteram_2[offs + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 }

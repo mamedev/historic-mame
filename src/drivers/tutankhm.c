@@ -278,6 +278,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct DSW dsw[] =
 {
@@ -480,7 +484,7 @@ struct GameDriver tutankhm_driver =
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	128-(8*3), 128-4+(8*3),

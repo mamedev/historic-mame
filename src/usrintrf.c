@@ -466,10 +466,6 @@ static int setdipswitches(void)
 				if (s == total - 1) done = 1;
 				break;
 
-			case OSD_KEY_TAB:
-				done = 1;
-				break;
-
 			case OSD_KEY_ESC:
 				done = 2;
 				break;
@@ -525,12 +521,12 @@ static int setkeysettings(void)
 	{
 		dt[2 * i].text = keysettings[i].name;
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
 	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	dt[2 * total + 1].text = 0;	/* terminate array */
 	total++;
 
@@ -582,10 +578,6 @@ static int setkeysettings(void)
 				}
 				break;
 
-			case OSD_KEY_TAB:
-				done = 1;
-				break;
-
 			case OSD_KEY_ESC:
 				done = 2;
 				break;
@@ -622,12 +614,13 @@ static int setjoysettings(void)
 	{
 		dt[2 * i].text = keysettings[i].name;
 		dt[2 * i].x = 2*Machine->uifont->width;
-		dt[2 * i].y = 2*Machine->uifont->height * i + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+		dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
 	}
 
 	dt[2 * total].text = "RETURN TO MAIN MENU";
 	dt[2 * total].x = (Machine->drv->screen_width - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->uifont->height * (total+1) + (Machine->drv->screen_height - 2*Machine->uifont->height * (total + 1)) / 2;
+	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->drv->screen_height - (3*Machine->uifont->height * (total + 1))/2) / 2;
+	dt[2 * total + 1].text = " ";
 	dt[2 * total + 1].text = 0;     /* terminate array */
 	total++;
 
@@ -674,12 +667,25 @@ static int setjoysettings(void)
 					dt[2 * s + 1].text = "            ";
 					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 					displaytext(dt,1);
+
 					/* Check all possible joystick values for switch or button press */
                               		joypressed = 0;
                               		while (!joypressed) {
                                           if (osd_key_pressed(OSD_KEY_ESC))
-                                              joypressed = 1; 
+                                              joypressed = 1;
 					  osd_poll_joystick();
+
+                                        /* Allows for "All buttons" */
+                                        if (osd_key_pressed(OSD_KEY_A)) {
+                                          Machine->gamedrv->input_ports[ keysettings[s].num ].joystick[ keysettings[s].mask ] = OSD_MAX_JOY;
+                                          joypressed = 1;
+                                        }
+                                        /* Clears entry "None" */
+                                        if (osd_key_pressed(OSD_KEY_N)) {
+                                          Machine->gamedrv->input_ports[ keysettings[s].num ].joystick[ keysettings[s].mask ] = 0;
+                                          joypressed = 1;
+                                        }
+
 				  	  for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++) {
 					    newjoy = osd_joy_pressed(joyindex);
 					    if (newjoy) {
@@ -691,10 +697,6 @@ static int setjoysettings(void)
 					  }
                               }
 				}
-				break;
-
-			case OSD_KEY_TAB:
-				done = 1;
 				break;
 
 			case OSD_KEY_ESC:
@@ -814,12 +816,9 @@ int setup_menu(void)
 				}
 				break;
 
-			case OSD_KEY_TAB:
-				done = 1;
-				break;
-
 			case OSD_KEY_ESC:
-				done = 2;
+                        case OSD_KEY_TAB:
+				done = 1;
 				break;
 		}
 	} while (done == 0);

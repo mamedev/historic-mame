@@ -11,13 +11,12 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
 
 unsigned char *mooncrst_attributesram;
 unsigned char *mooncrst_bulletsram;
+int mooncrst_bulletsram_size;
 static int gfx_extend;	/* used by Moon Cresta only */
 static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int stars_on;
@@ -176,7 +175,7 @@ void mooncrst_attributes_w(int offset,int data)
 		int i;
 
 
-		for (i = offset / 2;i < VIDEO_RAM_SIZE;i += 32)
+		for (i = offset / 2;i < videoram_size;i += 32)
 			dirtybuffer[i] = 1;
 	}
 
@@ -222,7 +221,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer[offs])
 		{
@@ -261,7 +260,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the bullets */
-	for (offs = 0; offs < 4*8; offs += 4)
+	for (offs = 0;offs < mooncrst_bulletsram_size;offs += 4)
 	{
 		int x,y;
 		int color;
@@ -292,7 +291,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < 4*8;offs += 4)
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs + 3] > 8)	/* ???? */
 		{

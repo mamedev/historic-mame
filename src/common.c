@@ -801,7 +801,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 			case TRANSPARENCY_PEN:
 			case TRANSPARENCY_COLOR:
 				{
-					int *sd4,x1;
+					int *sd4;
 					int trans4;
 
 
@@ -815,28 +815,33 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 							{
 								bm = dest->line[y] + sx;
 								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox) - 3);
-								for (x = sx;x <= ex;x+=4)
+								for (x = sx;x <= ex-3;x+=4)
 								{
-		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be executed correctly, though. */
-									if (*sd4 == trans4)
-									{
+									if (*sd4 == trans4){
 										bm += 4;
-									}
-									else
-									{
-										sd = ((unsigned char *)sd4) + 3;
-										x1 = ex - x;
-										if (x1 > 3) x1 = 3;
-										while (x1 >= 0)
-										{
-											col = *(sd--);
-											if (col != transparent_color) *bm = col;
-											bm++;
-											x1--;
-										}
+									}else{
+										sd = (unsigned char *)sd4+3;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd);
+										if (col != transparent_color) *bm = col;
+										bm++;
 									}
 									sd4--;
+								}
+								sd = (unsigned char *)sd4+3;
+								for (;x <= ex;x++)
+								{
+									col = *(sd--);
+									if (col != transparent_color) *bm = col;
+									bm++;
 								}
 							}
 						}
@@ -846,28 +851,33 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 							{
 								bm = dest->line[y] + sx;
 								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox) - 3);
-								for (x = sx;x <= ex;x+=4)
+								for (x = sx;x <= ex-3;x+=4)
 								{
-		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be executed correctly, though. */
-									if (*sd4 == trans4)
-									{
+									if (*sd4 == trans4){
 										bm += 4;
-									}
-									else
-									{
-										sd = ((unsigned char *)sd4) + 3;
-										x1 = ex - x;
-										if (x1 > 3) x1 = 3;
-										while (x1 >= 0)
-										{
-											col = *(sd--);
-											if (col != transparent_color) *bm = col;
-											bm++;
-											x1--;
-										}
+									}else{
+										sd = (unsigned char *)sd4 + 3;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd--);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd);
+										if (col != transparent_color) *bm = col;
+										bm++;
 									}
 									sd4--;
+								}
+								sd = (unsigned char *)sd4+3;
+								for (;x <= ex;x++)
+								{
+									col = *(sd--);
+									if (col != transparent_color) *bm = col;
+									bm++;
 								}
 							}
 						}
@@ -880,28 +890,33 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 							{
 								bm = dest->line[y] + sx;
 								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox));
-								for (x = sx;x <= ex;x+=4)
+								for (x = sx;x <= ex-3;x+=4)
 								{
-		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be executed correctly, though. */
-									if (*sd4 == trans4)
-									{
+									if (*sd4 == trans4){
 										bm += 4;
-									}
-									else
-									{
+									}else{
 										sd = (unsigned char *)sd4;
-										x1 = ex - x;
-										if (x1 > 3) x1 = 3;
-										while (x1 >= 0)
-										{
-											col = *(sd++);
-											if (col != transparent_color) *bm = col;
-											bm++;
-											x1--;
-										}
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd);
+										if (col != transparent_color) *bm = col;
+										bm++;
 									}
 									sd4++;
+								}
+								sd = (unsigned char *)sd4;
+								for (;x <= ex;x++)
+								{
+									col = *(sd++);
+									if (col != transparent_color) *bm = col;
+									bm++;
 								}
 							}
 						}
@@ -911,28 +926,33 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 							{
 								bm = dest->line[y] + sx;
 								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + (sx-ox));
-								for (x = sx;x <= ex;x+=4)
+								for (x = sx;x <= ex-3;x+=4)
 								{
-		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be executed correctly, though. */
-									if (*sd4 == trans4)
-									{
+									if (*sd4 == trans4){
 										bm += 4;
-									}
-									else
-									{
+									}else{
 										sd = (unsigned char *)sd4;
-										x1 = ex - x;
-										if (x1 > 3) x1 = 3;
-										while (x1 >= 0)
-										{
-											col = *(sd++);
-											if (col != transparent_color) *bm = col;
-											bm++;
-											x1--;
-										}
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd++);
+										if (col != transparent_color) *bm = col;
+										bm++;
+										col = *(sd);
+										if (col != transparent_color) *bm = col;
+										bm++;
 									}
 									sd4++;
+								}
+								sd = (unsigned char *)sd4;
+								for (;x <= ex;x++)
+								{
+									col = *(sd++);
+									if (col != transparent_color) *bm = col;
+									bm++;
 								}
 							}
 						}

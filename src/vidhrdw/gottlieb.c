@@ -117,7 +117,7 @@ void gottlieb_videoram_w(int offset,int data)
 	}
 }
 
-void gottlieb_output(int offset,int data)
+void gottlieb_video_outputs(int data)
 {
       static int last=0;
       int offs;

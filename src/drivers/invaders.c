@@ -236,6 +236,10 @@ static struct InputPort invdelux_input_ports[] =
 };
 
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -688,7 +692,7 @@ struct GameDriver invaders_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, invaders_dsw, invaders_keys,
+	input_ports, trak_ports, invaders_dsw, invaders_keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -707,7 +711,7 @@ struct GameDriver earthinv_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -727,7 +731,7 @@ struct GameDriver spaceatt_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -746,7 +750,7 @@ struct GameDriver invrvnge_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -765,7 +769,7 @@ struct GameDriver invdelux_driver =
 	0, 0,
 	invaders_sample_names,
 
-	invdelux_input_ports, invdelux_dsw, invdelux_keys,
+	invdelux_input_ports, trak_ports, invdelux_dsw, invdelux_keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -784,7 +788,7 @@ struct GameDriver galxwars_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -803,7 +807,7 @@ struct GameDriver lrescue_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,
@@ -823,7 +827,7 @@ struct GameDriver desterth_driver =
 	0, 0,
 	invaders_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, 0,
 	8*13, 8*16,

@@ -249,6 +249,9 @@ word Run6502(M6502 *R)
       if(!Debug6502(R)) return(R->PC.W);
 #endif
 
+	/* RAY */
+	R->previousPC.W = R->PC.W;
+
     I=Op6502_1(R->PC.W++);	/* -NS- */
     R->ICount-=Cycles[I];
     switch(I)

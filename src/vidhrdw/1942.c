@@ -11,10 +11,8 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_SIZE 0x400
-
 unsigned char *c1942_backgroundram;
+int c1942_backgroundram_size;
 unsigned char *c1942_scroll;
 unsigned char *c1942_palette_bank;
 static unsigned char *dirtybuffer2;
@@ -93,12 +91,12 @@ int c1942_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(BACKGROUND_SIZE)) == 0)
+	if ((dirtybuffer2 = malloc(c1942_backgroundram_size)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer,0,BACKGROUND_SIZE);
+	memset(dirtybuffer2,0,c1942_backgroundram_size);
 
 	/* the background area is twice as tall as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
@@ -143,12 +141,7 @@ void c1942_palette_bank_w(int offset,int data)
 {
 	if (*c1942_palette_bank != data)
 	{
-		int i;
-
-
-		for (i = 0;i < BACKGROUND_SIZE;i++)
-			dirtybuffer2[i] = 1;
-
+		memset(dirtybuffer2,1,c1942_backgroundram_size);
 		*c1942_palette_bank = data;
 	}
 }
@@ -200,7 +193,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (offs = 31*4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int bank,i,code,col,sx,sy;
 
@@ -231,7 +224,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (videoram[offs] != 0x30)	/* don't draw spaces */
 		{

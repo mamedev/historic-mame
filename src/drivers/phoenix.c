@@ -1,4 +1,9 @@
 /***************************************************************************
+Note:
+ new sound driver modifications--see sndhrdw\phoenix.c
+ also, Pleiades has its own color table--still need 
+ authentic colors though
+ Andrew Scott (ascott@utkux.utcc.utk.edu) 
 
 Phoenix memory map
 
@@ -122,6 +127,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -227,6 +236,45 @@ static unsigned char colortable[] =
         pBLACK,pBLUISH,pLTPURPLE,pGREEN     /* Background, Eagles: face, body, feet */
 };
 
+static unsigned char pl_colortable[] =
+{
+        /* charset A pallette A */
+        pBLACK,pBLACK,pCYAN,pCYAN,          /* Background, Unused, Letters, asterisks */
+        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Numbers/Ship, Ship gun */
+        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Ship body, Ship gun */
+        pBLACK,pYELLOW,pBLACK,pYELLOW,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
+        pBLACK,pYELLOW,pBLACK,pYELLOW,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
+        pBLACK,pPINK,pPURPLE,pYELLOW,       /* Background, UFO edge, UFO middle, UFO eyes */
+        pBLACK,pWHITE,pPURPLE,pYELLOW,      /* Background, Martian2 legs, Martian2 head, Martian2 eyes */
+        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Explosions */
+        /* charset A pallette B */
+        pBLACK,pBLUE,pCYAN,pCYAN,           /* Background, Unused, Letters, asterisks */
+        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Numbers/Ship, Ship gun */
+        pBLACK,pYELLOW,pRED,pWHITE,         /* Background, Ship sides, Ship body, Ship gun */
+        pBLACK,pYELLOW,pBLUISH,pWHITE,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
+        pBLACK,pYELLOW,pBLUISH,pWHITE,      /* Background, Martian1 eyes, Martian1 body, Martian1 mouth */
+        pBLACK,pYELLOW,pGREEN,pPURPLE,      /* Background, UFO edge, UFO middle, UFO eyes */
+        pBLACK,pWHITE,pRED,pPURPLE,         /* Background, Martian2 legs, Martian2 head, Martian2 eyes */
+        pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Explosions */
+        /* charset B pallette A */
+        pBLACK,pRED,pBLUE,pGREY,            /* Background, Stars & planets */
+        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Battleship: body, eyes, edge */
+        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Radar dish inside, Radar base/parked ship, Radar dish outside */
+        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Building/Landing light(off?), parked ship, Landing light(on?) */
+        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Space Monsters: body, horns/claws */
+        /* charset B pallette B */
+        pBLACK,pRED,pBLUE,pGREY,            /* Background, Stars & planets */
+        pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Battleship: body, eyes, edge */
+        pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Radar dish inside, Radar base/parked ship, Radar dish outside */
+        pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Building/Landing light(off?), parked ship, Landing light(on?) */
+        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: face, body, horns/claws */
+        pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Space Monsters: body, horns/claws */
+};
 
 
 /* waveforms for the audio hardware */
@@ -445,14 +493,14 @@ struct GameDriver phoenix_driver =
 {
 	"Phoenix (Centuri)",
 	"phoenix",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
+        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	phoenix_rom,
 	0, 0,
         phoenix_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,
@@ -464,14 +512,14 @@ struct GameDriver phoenixa_driver =
 {
 	"Phoenix (Amstar)",
 	"phoenixa",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
+        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	phoenixa_rom,
 	0, 0,
         phoenix_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,
@@ -483,14 +531,14 @@ struct GameDriver phoenix3_driver =
 {
 	"Phoenix (T.P.N.)",
 	"phoenix3",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
+        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	phoenix3_rom,
 	0, 0,
         phoenix_sample_names,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, palette, colortable,
 	8*13, 8*16,
@@ -502,16 +550,16 @@ struct GameDriver pleiads_driver =
 {
 	"Pleiads",
 	"pleiads",
-	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
+        "RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON\nANDREW SCOTT",
 	&machine_driver,
 
 	pleiads_rom,
 	0, 0,
         0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
-	0, palette, colortable,
+        0, palette, pl_colortable,
 	8*13, 8*16,
 
 	hiload, hisave

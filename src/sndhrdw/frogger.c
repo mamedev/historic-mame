@@ -5,23 +5,6 @@
 
 
 
-int frogger_sh_init(const char *gamename)
-{
-	int j;
-	unsigned char *RAM;
-
-
-	/* ROM 1 has data lines D0 and D1 swapped. Decode it. */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-
-	for (j = 0;j < 0x0800;j++)
-		RAM[j] = (RAM[j] & 0xfc) | ((RAM[j] & 1) << 1) | ((RAM[j] & 2) >> 1);
-
-	return 0;
-}
-
-
-
 static int frogger_portB_r(int offset)
 {
 	int clockticks,clock;

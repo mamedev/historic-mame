@@ -44,6 +44,7 @@ write:
 extern int commando_interrupt(void);
 
 extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
+extern int commando_bgvideoram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
 extern void commando_bgvideoram_w(int offset,int data);
 extern void commando_bgcolorram_w(int offset,int data);
@@ -72,11 +73,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram },
+	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
 	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
-	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram },
+	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
 	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
 	{ 0xc800, 0xc800, sound_command_w },
@@ -139,6 +140,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -155,7 +160,7 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 3, 0x0c, "LIVES", { "5", "2", "4", "3" }, 1 },
-	{ 4, 0x07, "BONUS", { "NONE", "20000 700000", "30000 800000", "10000 600000", "40000 1000000", "20000 600000", "30000 700000", "10000 50000" }, 1 },
+	{ 4, 0x07, "BONUS", { "NONE", "20000 70000", "30000 80000", "10000 60000", "40000 100000", "20000 60000", "30000 70000", "10000 50000" }, 1 },
 	{ 4, 0x10, "DIFFICULTY", { "DIFFICULT", "NORMAL" }, 1 },
 	{ 3, 0x03, "STARTING STAGE", { "7", "3", "5", "1" }, 1 },
 	{ 4, 0x08, "DEMO SOUNDS", { "OFF", "ON" } },
@@ -349,7 +354,12 @@ ROM_END
 
 
 
-static unsigned commando_decode(int A)
+static void commando_decode(void)
+{
+int A;
+
+
+for (A = 0;A < 0x10000;A++)
 {
 	static const unsigned char decode[] =
 	{
@@ -372,8 +382,8 @@ static unsigned commando_decode(int A)
 	};
 
 
-	if (A > 0) return decode[RAM[A]];
-	else return RAM[A];
+	if (A > 0) ROM[A] = decode[RAM[A]];
+}
 }
 
 
@@ -436,7 +446,7 @@ struct GameDriver commando_driver =
 	0, commando_decode,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

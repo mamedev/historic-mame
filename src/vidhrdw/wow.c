@@ -13,12 +13,7 @@
 
 unsigned char *wow_videoram;
 
-/* palette colors (see drivers/wow.c) */
-enum { BLACK,YELLOW,BLUE,RED,WHITE };
-
 int magic_expand_color, magic_control, collision;
-
-
 
 int wow_intercept_r(int offset)
 {
@@ -32,11 +27,9 @@ int wow_intercept_r(int offset)
 
 int wow_video_retrace_r(int offset)
 {
-    /* Current cycles divided by no.of cycles per scan line */
+	extern int CurrentScan;
 
-    /* Possibly should be reversed ! (i.e. scanlines - answer) */
-
-    return cpu_geticount() / (Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / Machine->drv->screen_height);
+    return CurrentScan;
 }
 
 void wow_videoram_w(int offset,int data)
@@ -45,6 +38,7 @@ void wow_videoram_w(int offset,int data)
 	{
 		int i;
                 int color;
+                const unsigned char *paldata;
 		unsigned char *bm;
 
 
@@ -63,14 +57,22 @@ void wow_videoram_w(int offset,int data)
 			bm = tmpbitmap->line[offset / 40] + 8 * (offset % 40) + 4;
 		}
 
+                paldata = &Machine->gfx[0]->colortable[0];
 		for (i = 0;i < 4;i++)
 		{
-			color = 0x00;
-			if (data & 0x80) color |= 0x01;
-			if (data & 0x40) color |= 0x02;
-			*bm = Machine->pens[color];
+/* Previous version
+			*bm = 0;
+
+			if (data & 0x80) *bm |= 1;
+			if (data & 0x40) *bm |= 2;
+*/
+                        color = 0x00;
+                        if (data & 0x80) color |= 0x01;
+                        if (data & 0x40) color |= 0x02;
+                        *bm = paldata[color];
 			bm++;
 			data <<= 2;
+
 		}
 	}
 }
@@ -265,53 +267,65 @@ void wow_pattern_board_w(int offset,int data)
 		if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 		cpu_getpc(),src,mode,skip,dest,length,loops);
 
-		for (i = 0; i <= loops;i++)
-		{
-			for (j = 0;j <= length;j++)
-			{
-				if (!(mode & 0x08) || j < length)
-                  if(dest >= 0) cpu_writemem(dest,RAM[src]);
+        /* Special scroll screen for Gorf */
 
-				if (mode & 0x20) dest++;		/* copy forwards */
-				else dest--;					/* backwards */
+        if (src==(dest+0x4000))
+        {
+        	if(dest==0)
+            {
+            	for (i=0x3FFF;i>0;i--) cpu_writemem(i,RAM[i+0x4000]);
+            }
+        }
+        else
+        {
+		    for (i = 0; i <= loops;i++)
+		    {
+			    for (j = 0;j <= length;j++)
+			    {
+				    if (!(mode & 0x08) || j < length)
+                        if(dest >= 0) cpu_writemem(dest,RAM[src]);
 
-				if ((j & 1) || !(mode & 0x02))  /* Expand Mode - don't increment source on odd loops */
-					if (mode & 0x04) src++;		/* Constant mode - don't increment at all! */
-			}
+				    if ((j & 1) || !(mode & 0x02))  /* Expand Mode - don't increment source on odd loops */
+					    if (mode & 0x04) src++;		/* Constant mode - don't increment at all! */
 
-			if ((j & 1) && (mode & 0x02))	    /* always increment source at end of line */
-				if (mode & 0x04) src++;			/* Constant mode - don't increment at all! */
+				    if (mode & 0x20) dest++;		/* copy forwards */
+				    else dest--;					/* backwards */
+			    }
 
-			if ((mode & 0x08) && (mode & 0x04)) /* Correct src if in flush mode */
-				src--;                          /* and NOT in Constant mode */
+			    if ((j & 1) && (mode & 0x02))	    /* always increment source at end of line */
+				    if (mode & 0x04) src++;			/* Constant mode - don't increment at all! */
 
-			if (mode & 0x20) dest--;			/* copy forwards */
-			else dest++;						/* backwards */
+			    if ((mode & 0x08) && (mode & 0x04)) /* Correct src if in flush mode */
+				    src--;                          /* and NOT in Constant mode */
 
-			dest += (int)((signed char)skip);	/* extend the sign of the skip register */
+			    if (mode & 0x20) dest--;			/* copy forwards */
+			    else dest++;						/* backwards */
 
-		/* Note: actually the hardware doesn't handle the sign of the skip register, */
-		/* when incrementing the destination address the carry bit is taken from the */
-		/* mode register. To faithfully emulate the hardware I should do: */
+			    dest += (int)((signed char)skip);	/* extend the sign of the skip register */
+
+		    /* Note: actually the hardware doesn't handle the sign of the skip register, */
+		    /* when incrementing the destination address the carry bit is taken from the */
+		    /* mode register. To faithfully emulate the hardware I should do: */
 #if 0
-			{
-				int lo,hi;
+			    {
+				    int lo,hi;
 
-				lo = dest & 0x00ff;
-				hi = dest & 0xff00;
-				lo += skip;
-				if (mode & 0x10)
-				{
-					if (lo < 0x100) hi -= 0x100;
-				}
-				else
-				{
-					if (lo > 0xff) hi += 0x100;
-				}
-				dest = hi | (lo & 0xff);
-			}
+				    lo = dest & 0x00ff;
+				    hi = dest & 0xff00;
+				    lo += skip;
+				    if (mode & 0x10)
+				    {
+					    if (lo < 0x100) hi -= 0x100;
+				    }
+				    else
+				    {
+					    if (lo > 0xff) hi += 0x100;
+				    }
+				    dest = hi | (lo & 0xff);
+			    }
 #endif
-		}
+		    }
+    	}
 	}
 }
 
@@ -324,8 +338,37 @@ void wow_pattern_board_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
+
 void wow_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
+
+void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	extern int Controller1;
+    int x,y,centre;
+
+	/* copy the character mapped graphics */
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+    /* Draw a sight */
+
+    if(RAM[0xc1fb] != 0)	/* Number of Players */
+    {
+    	/* Blue sight for Player 1 */
+
+        centre = 317 - (Controller1-18) * 10;
+
+        if (centre<2)   centre=2;
+        if (centre>317) centre=317;
+
+        for(y=25;y<46;y++) bitmap->line[y][centre] = Machine->gfx[0]->colortable[2];
+
+        for(x=centre-20;x<centre+21;x++)
+            if((x>0) && (x<=319)) bitmap->line[35][x] = Machine->gfx[0]->colortable[2];
+    };
 }

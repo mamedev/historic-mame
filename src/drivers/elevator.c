@@ -251,6 +251,10 @@ static struct InputPort input_ports[] =
 };
 
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -346,7 +350,7 @@ static struct MachineDriver machine_driver =
 			3000000,	/* 3 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			elevator_sh_interrupt,2
+			elevator_sh_interrupt,5
 		}
 	},
 	60,
@@ -455,7 +459,7 @@ struct GameDriver elevator_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom,0,0,
 	8*13, 8*16,
@@ -474,7 +478,7 @@ struct GameDriver elevatob_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom,0,0,
 	8*13, 8*16,

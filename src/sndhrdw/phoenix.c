@@ -1,23 +1,40 @@
+/* sound driver now does correct sounds for both small and large 
+   phoenixes.  force field sound still needs work. 
+   also all sounds need to be fine-tuned. 
+   music not implemented yet, but maybe next version... 
+   Andrew Scott (ascott@utkux.utcc.utk.edu) */
+
 #include "driver.h"
 #include <math.h>
 
 #define SAFREQ  1400
 #define SBFREQ  1400
+#define MAXFREQ_A 44100*7
+#define MAXFREQ_B 44100*4
+
+/* for voice A effects */
 #define SW_INTERVAL 4
 #define MOD_RATE 0.14
 #define MOD_DEPTH 0.1
+
+/* for voice B effect */
+#define SWEEP_RATE 0.14
+#define SWEEP_DEPTH 0.24
 
 /* values needed by phoenix_sh_update */
 static int sound_a_play = 0;
 static int sound_a_vol = 0;
 static int sound_a_freq = SAFREQ;
 static int sound_a_sw = 0;
+static int sound_a_adjust=1;
 static int hifreq = 0;
 static double t=0;
+static double x=PI/2;
 
 static int sound_b_play = 0;
 static int sound_b_vol = 0;
 static int sound_b_freq = SBFREQ;
+static int sound_b_adjust=1;
 
 static int noise_vol = 0;
 static int noise_freq = 1000;
@@ -48,13 +65,15 @@ void phoenix_sound_control_a_w(int offset,int data)
         /* noise */
         int noise = (data & 0xc0) >> 6;
 
-  /*    if (freq != sound_a_freq) sound_a_adjust = 0;  */
+        if (freq != sound_a_freq) sound_a_adjust = 1;
+        else sound_a_adjust=0;
+
         sound_a_freq = freq;
         sound_a_vol = vol;
 
         if (freq != 0x0f)
         {
-                osd_adjust_sample(0,352800/(16-sound_a_freq),85*(3-vol));
+                osd_adjust_sample(0,MAXFREQ_A/(16-sound_a_freq),85*(3-vol));
                 sound_a_play = 1;
         }
         else
@@ -109,13 +128,15 @@ void phoenix_sound_control_b_w(int offset,int data)
         /* 0 - no tune, 1 - alarm beep?, 2 - even level tune, 3 - odd level tune */
         /*int tune = (data & 0xc0) >> 6;*/
 
-   /*     if (freq != sound_b_freq) sound_b_adjust = 0; */
+        if (freq != sound_b_freq) sound_b_adjust = 1;
+        else sound_b_adjust=0;
+
         sound_b_freq = freq;
         sound_b_vol = vol;
 
         if (freq != 0x0f)
         {
-                osd_adjust_sample(1,176400/(16-sound_b_freq),85*(3-vol));
+                osd_adjust_sample(1,MAXFREQ_B/(16-sound_b_freq),85*(3-vol));
                 sound_b_play = 1;
         }
         else
@@ -139,27 +160,47 @@ int phoenix_sh_start(void)
 
 void phoenix_sh_update(void)
 {
-        pitch_a=44100*7/(16-sound_a_freq);
-        pitch_b=44100*4/(16-sound_b_freq);
+        pitch_a=MAXFREQ_A/(16-sound_a_freq);
+        pitch_b=MAXFREQ_B/(16-sound_b_freq);
 
 
-   /* do special modulation effect of voice A */
+   /* do special effects of voice A */
         if (hifreq)
             pitch_a=pitch_a*5/4;
      
         pitch_a+=((double)pitch_a*MOD_DEPTH*sin(t)); 
 
+        if (sound_a_adjust)
+            sound_a_sw=0;
+
         sound_a_sw++;
+
         if (sound_a_sw==SW_INTERVAL)
         {
             hifreq=!hifreq;
             sound_a_sw=0;
         }
 
+        if (sound_a_adjust)
+            t=0;
+
         t+=MOD_RATE;
+
         if (t>2*PI)
             t=0;
         
+   /* do special effects of voice B */
+        pitch_b+=((double)pitch_b*SWEEP_DEPTH*sin(x));
+
+        if (sound_b_adjust)
+            x=0;
+
+        x+=SWEEP_RATE;
+
+        if (x>3*PI/2)
+            x=3*PI/2;
+
+
 
         if (sound_a_play)
                 osd_adjust_sample(0,pitch_a,85*(3-sound_a_vol));

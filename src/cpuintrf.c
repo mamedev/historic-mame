@@ -17,7 +17,7 @@ extern void I86_Execute();
 extern void I86_Reset(unsigned char *mem,int cycles);
 
 
-static int activecpu;
+static int activecpu,totalcpu;
 static int cpurunning[MAX_CPU];
 
 static const struct MemoryReadAddress *memoryread;
@@ -31,6 +31,22 @@ static int memorywriteoffset[MH_ENTRIES];
 
 
 unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
+
+
+extern struct KEYSet *MM_DirectKEYSet;
+extern unsigned char MM_PatchedPort;
+extern unsigned char MM_OldPortValue;
+extern unsigned char MM_LastChangedValue;
+
+extern unsigned char MM_updir;
+extern unsigned char MM_leftdir;
+extern unsigned char MM_rightdir;
+extern unsigned char MM_downdir;
+extern unsigned char MM_orizdir;
+extern unsigned char MM_lrdir;
+extern unsigned char MM_totale;
+extern unsigned char MM_inverted;
+extern unsigned char MM_dir4;
 
 
 struct z80context
@@ -247,6 +263,42 @@ static void initmemoryhandlers(void)
 		}
 
 		mwa--;
+	}
+}
+
+
+void cpu_init(void)
+{
+	/* count how many CPUs we have to emulate */
+	totalcpu = 0;
+	while (totalcpu < MAX_CPU)
+	{
+		const struct MemoryReadAddress *mra;
+		const struct MemoryWriteAddress *mwa;
+
+
+		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
+
+		/* initialize the memory base pointers for memory hooks */
+		mra = Machine->drv->cpu[totalcpu].memory_read;
+		while (mra->start != -1)
+		{
+			if (mra->base) *mra->base =
+					&Machine->memory_region[Machine->drv->cpu[totalcpu].memory_region][mra->start];
+			if (mra->size) *mra->size = mra->end - mra->start + 1;
+			mra++;
+		}
+		mwa = Machine->drv->cpu[totalcpu].memory_write;
+		while (mwa->start != -1)
+		{
+			if (mwa->base) *mwa->base =
+					&Machine->memory_region[Machine->drv->cpu[totalcpu].memory_region][mwa->start];
+			if (mwa->size) *mwa->size = mwa->end - mwa->start + 1;
+			mwa++;
+		}
+
+
+		totalcpu++;
 	}
 }
 
@@ -491,6 +543,31 @@ int cpu_getpc(void)
 }
 
 
+/***************************************************************************
+
+  This is similar to cpu_getpc(), but instead of returning the current PC,
+  it returns the address of the opcode that is doing the read/write. The PC
+  has already been incremented by some unknown amount by the time the actual
+  read or write is being executed. This helps to figure out what opcode is
+  actually doing the reading or writing, and therefore the amount of cycles
+  it's taking. The Missile Command driver needs to know this.
+  
+***************************************************************************/
+int cpu_getpreviouspc(void)  /* -RAY- */
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+	{
+		case CPU_M6502:
+			return ((M6502 *)cpucontext[activecpu])->previousPC.W;
+			break;
+
+		default:
+	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			return -1;
+			break;
+	}
+}
+
 
 /***************************************************************************
 
@@ -584,7 +661,7 @@ void cpu_seticount(int cycles)
 ***************************************************************************/
 int readinputport(int port)
 {
-	int res,i;
+	int temp_res, res, i;
 	struct InputPort *in;
 
 
@@ -607,6 +684,46 @@ int readinputport(int port)
 				res ^= (1 << i);
 		}
 	}
+
+        if (MM_dir4 && (port == MM_PatchedPort))
+        {
+            if (res != MM_LastChangedValue)
+            {
+                MM_LastChangedValue = res;
+                if (MM_inverted)
+                {
+                    res = ~res;
+                    MM_OldPortValue = ~MM_OldPortValue;
+                };
+                temp_res = res & MM_totale;
+
+                if (MM_downdir & temp_res)                  /* DOWN control       */
+                {
+                   if ((MM_lrdir & temp_res) >= MM_orizdir) /* Left & Right?      */
+                   {
+                      if (MM_downdir & MM_OldPortValue)     /* changed direction? */
+                         res=(~MM_downdir) & res;           /* DOWN off           */
+                      else
+                         res=(~MM_lrdir) & res;             /* Left & Right off   */
+                   }
+                }
+                if (MM_updir & temp_res)                    /* UP control         */
+                {
+                   if ((MM_lrdir & temp_res) >= MM_orizdir)
+                   {
+                      if (MM_updir & MM_OldPortValue)
+                         res=(~MM_updir) & res;
+                      else
+                         res=(~MM_lrdir) & res;
+                   }
+                }
+                if (MM_inverted) res = ~res;
+
+                MM_OldPortValue = res; //Valore a valle delle modifiche
+            }
+            else  res = MM_OldPortValue;
+        };
+
 
 	return res;
 }
@@ -663,6 +780,55 @@ int input_port_6_r(int offset)
 int input_port_7_r(int offset)
 {
 	return readinputport(7);
+}
+
+
+int readtrakport(int port) {
+  int axis;
+  int read;
+  struct TrakPort *in;
+
+  in = &Machine->gamedrv->trak_ports[port];
+  axis = in->axis;
+
+  read = osd_trak_read(axis);
+
+  if(read == NO_TRAK) {
+    return(NO_TRAK);
+  }
+
+  if(in->centered) {
+    switch(axis) {
+    case X_AXIS:
+      osd_trak_center_x();
+      break;
+    case Y_AXIS:
+      osd_trak_center_y();
+      break;
+    }
+  }
+
+  if(in->conversion) {
+    return((*in->conversion)(read*in->scale));
+  }
+
+  return(read*in->scale);
+}
+
+int input_trak_0_r(int offset) {
+  return(readtrakport(0));
+}
+
+int input_trak_1_r(int offset) {
+  return(readtrakport(1));
+}
+
+int input_trak_2_r(int offset) {
+  return(readtrakport(2));
+}
+
+int input_trak_3_r(int offset) {
+  return(readtrakport(3));
 }
 
 

@@ -77,7 +77,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int spriteno;
 
 	/* Clear the bitmap */
-	memset(bitmap->private,0,bitmap->width*bitmap->height);
+	memset(bitmap->_private,0,bitmap->width*bitmap->height);
 
 	/* Draw the sprite/chars */
 	for (offs = 0,spriteno = spacefb_vref;offs < 128;offs++,spriteno++)
@@ -116,4 +116,3 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 }
-

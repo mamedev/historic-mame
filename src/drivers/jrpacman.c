@@ -129,9 +129,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4800, 0x4fef, MWA_RAM },
-	{ 0x4000, 0x47ff, jrpacman_videoram_w, &videoram },
+	{ 0x4000, 0x47ff, jrpacman_videoram_w, &videoram, &videoram_size },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x5080, 0x5080, MWA_RAM, &jrpacman_scroll },
 	{ 0x5070, 0x5070, jrpacman_palettebank_w, &jrpacman_palettebank },
@@ -180,6 +180,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -353,7 +357,7 @@ ROM_END
 
 
 
-static unsigned jrpacman_decode(int A)
+static void jrpacman_decode(void)
 {
 	/* The encryption PALs garble bots 0, 2 and 7 of the ROMs. The encryption */
 	/* scheme is complex (basically it's a state machine) and can only be */
@@ -389,17 +393,20 @@ static unsigned jrpacman_decode(int A)
 		{ 0x0031, 0x01 },{ 0x005C, 0x00 },{ 0x0005, 0x01 },{ 0x604E, 0x00 },
 	    { 0,0 }
 	};
-	int i;
-	int cumulative=0;
+	int i,j,A;
 
 
-	for (i = 0;table[i].count;i++)
+	A = 0;
+	i = 0;
+	while (table[i].count)
 	{
-		cumulative += table[i].count;
-		if (cumulative > A)
-			return RAM[A] ^ table[i].value;
+		for (j = 0;j < table[i].count;j++)
+		{
+			RAM[A] ^= table[i].value;
+			A++;
+		}
+		i++;
 	}
-	return RAM[A];	/* this should never happen! */
 }
 
 
@@ -481,7 +488,7 @@ struct GameDriver jrpacman_driver =
 	jrpacman_decode, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*11, 8*19,

@@ -586,6 +586,10 @@ static struct InputPort robotron_input_ports[] =
 	{ -1 }  /* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 
 static struct KEYSet robotron_keys[] =
@@ -1541,6 +1545,7 @@ struct GameDriver robotron_driver =
 	williams_sample_names,          /* samplenames */
 
 	robotron_input_ports,           /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	robotron_keys,                  /* KEY def    */
 
@@ -1602,6 +1607,7 @@ struct GameDriver joust_driver =
 	williams_sample_names,          /* samplenames */
 
 	joust_input_ports,              /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	joust_keys,                     /* KEY def    */
 
@@ -1659,6 +1665,7 @@ struct GameDriver sinistar_driver =
 	williams_sample_names,          /* samplenames */
 
 	sinistar_input_ports,           /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	keys,                           /* KEY def    */
 
@@ -1703,6 +1710,7 @@ struct GameDriver bubbles_driver =
 	williams_sample_names,          /* samplenames */
 
 	bubbles_input_ports,            /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	keys,                           /* KEY def    */
 
@@ -1747,6 +1755,7 @@ struct GameDriver stargate_driver =
 	williams_sample_names,          /* samplenames */
 
 	stargate_input_ports,           /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	stargate_keys,                  /* KEY def    */
 
@@ -1792,6 +1801,7 @@ struct GameDriver defender_driver =
 	williams_sample_names,          /* samplenames */
 
 	defender_input_ports,           /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	defender_keys,                  /* KEY def    */
 
@@ -1839,6 +1849,7 @@ struct GameDriver splat_driver =
 	williams_sample_names,          /* samplenames */
 
 	splat_input_ports,              /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	splat_keys,                     /* KEY def    */
 
@@ -1900,6 +1911,7 @@ struct GameDriver blaster_driver =
 	williams_sample_names,          /* samplenames */
 
 	blaster_input_ports,            /* InputPort  */
+        trak_ports,                     /* TrackBall  */
 	williams_dsw,                   /* DSW        */
 	blaster_keys,                   /* KEY def    */
 

@@ -11,11 +11,8 @@
 
 
 
-#define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_SIZE 0x400
-#define SPRITES_SIZE (96*4)
-
 unsigned char *commando_bgvideoram,*commando_bgcolorram;
+int commando_bgvideoram_size;
 unsigned char *commando_scrollx,*commando_scrolly;
 static unsigned char *dirtybuffer2;
 static unsigned char *spritebuffer1,*spritebuffer2;
@@ -88,21 +85,21 @@ int commando_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(BACKGROUND_SIZE)) == 0)
+	if ((dirtybuffer2 = malloc(commando_bgvideoram_size)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer,0,BACKGROUND_SIZE);
+	memset(dirtybuffer2,0,commando_bgvideoram_size);
 
-	if ((spritebuffer1 = malloc(SPRITES_SIZE)) == 0)
+	if ((spritebuffer1 = malloc(spriteram_size)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((spritebuffer2 = malloc(SPRITES_SIZE)) == 0)
+	if ((spritebuffer2 = malloc(spriteram_size)) == 0)
 	{
 		free(spritebuffer1);
 		free(dirtybuffer2);
@@ -181,8 +178,8 @@ int commando_interrupt(void)
 		/* we must store previous sprite data in a buffer and draw that instead of */
 		/* the latest one, otherwise sprites will not be synchronized with */
 		/* background scrolling */
-		memcpy(spritebuffer2,spritebuffer1,SPRITES_SIZE);
-		memcpy(spritebuffer1,spriteram,SPRITES_SIZE);
+		memcpy(spritebuffer2,spritebuffer1,spriteram_size);
+		memcpy(spritebuffer1,spriteram,spriteram_size);
 
 		return 0x00d7;	/* RST 10h */
 	}
@@ -202,7 +199,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	for (offs = 0;offs < BACKGROUND_SIZE;offs++)
+	for (offs = commando_bgvideoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 
@@ -238,7 +235,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 95*4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int bank;
 
@@ -257,7 +254,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
 

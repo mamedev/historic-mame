@@ -3,7 +3,7 @@
 #include <math.h>
 
 
-#define SND_CLOCK 4000000	/* 3.072 Mhz */
+#define SND_CLOCK 4000000	/* 4 Mhz */
 #define CHIPS 2
 
 
@@ -24,8 +24,6 @@ void ladybug_sound1_w(int offset,int data)
 {
 	SN76496Write(&sn[0],data);
 }
-
-
 
 void ladybug_sound2_w(int offset,int data)
 {

@@ -179,6 +179,11 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
+
 
 static struct KEYSet keys[] =
 {
@@ -460,7 +465,7 @@ struct GameDriver galaga_driver =
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, galaga_dsw, keys,
+	input_ports, trak_ports, galaga_dsw, keys,
 
 	color_prom, 0, 0,
 
@@ -480,7 +485,7 @@ struct GameDriver galagabl_driver =
 	0, 0,
 	galaga_sample_names,
 
-	input_ports, galagabl_dsw, keys,
+	input_ports, trak_ports, galagabl_dsw, keys,
 
 	color_prom, 0, 0,
 

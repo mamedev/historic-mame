@@ -138,7 +138,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xC000, 0xC7FF, MWA_RAM },
-	{ 0x8000, 0x83FF, videoram_w, &videoram },
+	{ 0x8000, 0x83FF, videoram_w, &videoram, &videoram_size },
 	{ 0x0000, 0x3FFF, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -174,10 +174,15 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, spacefb_port_0_w },
-   { 0x01, 0x01, spacefb_port_1_w },
+        { 0x01, 0x01, spacefb_port_1_w },
 	{ 0x02, 0x02, spacefb_port_2_w },
-   { 0x03, 0x03, spacefb_port_3_w },
+        { 0x03, 0x03, spacefb_port_3_w },
 	{ -1 }	/* end of table */
+};
+
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
 };
 
 static struct KEYSet keys[] =
@@ -304,7 +309,7 @@ struct GameDriver spacefb_driver =
 	0, 0,
         0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	colorprom, 0, 0,
 	8*13, 8*16,

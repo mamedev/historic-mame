@@ -16,14 +16,16 @@ they are assigned to. This makes handling of mirror addresses easier, and
 makes the handlers a bit more "object oriented". If you handler needs to
 read/write the main memory area, provide a "base" pointer: it will be
 initialized by the main engine to point to the beginning of the memory block
-assigned to the handler.
+assigned to the handler. You may also provided a pointer to "size": it
+will be set to the length of the memory area processed by the handler.
 
 ***************************************************************************/
 struct MemoryReadAddress
 {
 	int start,end;
 	int (*handler)(int offset);	/* see special values below */
-	unsigned char **base;
+	unsigned char **base;	/* optional (see explanation above) */
+	int *size;	/* optional (see explanation above) */
 };
 
 #define MRA_NOP 0	/* don't care, return 0 */
@@ -35,7 +37,8 @@ struct MemoryWriteAddress
 {
 	int start,end;
 	void (*handler)(int offset,int data);	/* see special values below */
-	unsigned char **base;
+	unsigned char **base;	/* optional (see explanation above) */
+	int *size;	/* optional (see explanation above) */
 };
 
 #define MWA_NOP 0	/* do nothing */
@@ -86,6 +89,26 @@ struct InputPort
 
 
 
+/*
+ *  The idea behing the trak-ball support is to have the system dependent
+ *  handler return a positive or negative number representing the distance
+ *  from the mouse region origin.  Then depending on what the emulation needs,
+ *  it will do a conversion on the distance from the origin into the desired
+ *  format.  Why was it implemented this way?  Take Reactor and Crystal Castles
+ *  as an example.  Reactor's inputs range from -127 to 127 where < 0 is
+ *  left/down and >0 is right/up.  However, Crystal Castles just looks at the
+ *  difference between successive unsigned char values.  So their inputs are
+ *  quite different.
+ */
+
+struct TrakPort {
+  int axis;                     /* The axis of the trak-ball */
+  int centered;                 /* Does it return to the "zero" position after a read? */
+  float scale;                  /* How much do we scale the value by? */
+  int (*conversion)(int data);  /* Function to do the conversion to what the game needs */
+};
+
+
 /* Key setting definition */
 struct KEYSet
 {
@@ -103,7 +126,7 @@ struct DSW
 				/* -1 terminates the array */
 	int mask;	/* bits affected */
 	const char *name;	/* name of the setting */
-	const char *values[16];/* null terminated array of names for the values */
+	const char *values[17];/* null terminated array of names for the values */
 									/* the setting can have */
 	int reverse; 	/* set to 1 to display values in reverse order */
 };
@@ -189,12 +212,14 @@ struct GameDriver
 	const struct MachineDriver *drv;
 
 	const struct RomModule *rom;
-	unsigned (*rom_decode)(int A);	        /* used to decrypt the ROMs after loading them */
-	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
-	const char **samplenames;	        /* optional array of names of samples to load. */
+	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
+	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
+									/* if the encryption is different from the above. */
+	const char **samplenames;	/* optional array of names of samples to load. */
 						/* drivers can retrieve them in Machine->samples */
 
 	struct InputPort *input_ports;
+        struct TrakPort *trak_ports;
 	const struct DSW *dswsettings;
 	const struct KEYSet *keysettings;
 

@@ -314,6 +314,7 @@ extern int c1942_bankedrom_r(int offset);
 extern int c1942_interrupt(void);
 
 extern unsigned char *c1942_backgroundram;
+extern int c1942_backgroundram_size;
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
 extern void c1942_background_w(int offset,int data);
@@ -344,10 +345,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, c1942_background_w, &c1942_backgroundram },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram },
+	{ 0xd800, 0xdbff, c1942_background_w, &c1942_backgroundram, &c1942_backgroundram_size },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
 	{ 0xc802, 0xc803, MWA_RAM, &c1942_scroll },
 	{ 0xc805, 0xc805, c1942_palette_bank_w, &c1942_palette_bank },
@@ -411,6 +412,11 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -748,7 +754,7 @@ struct GameDriver c1942_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*13, 8*16,

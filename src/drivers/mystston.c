@@ -54,10 +54,9 @@ extern int mystston_DSW2_r(int offset);
 extern int mystston_interrupt(void);
 
 extern unsigned char *mystston_videoram2,*mystston_colorram2;
+extern int mystston_videoram2_size;
 extern unsigned char *mystston_scroll;
 extern unsigned char *mystston_paletteram;
-extern void mystston_videoram2_w(int offset,int data);
-extern void mystston_colorram2_w(int offset,int data);
 extern void mystston_paletteram_w(int offset,int data);
 extern void mystston_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int mystston_vh_start(void);
@@ -80,15 +79,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x13ff, videoram_w, &videoram },
-	{ 0x1400, 0x17ff, colorram_w, &colorram },
-	{ 0x1800, 0x19ff, mystston_videoram2_w, &mystston_videoram2 },
-	{ 0x1a00, 0x1bff, mystston_colorram2_w, &mystston_colorram2 },
+	{ 0x1000, 0x13ff, MWA_RAM, &mystston_videoram2, &mystston_videoram2_size },
+	{ 0x1400, 0x17ff, MWA_RAM, &mystston_colorram2 },
+	{ 0x1800, 0x19ff, videoram_w, &videoram, &videoram_size },
+	{ 0x1a00, 0x1bff, colorram_w, &colorram },
 	{ 0x1c00, 0x1fff, MWA_RAM },
 	{ 0x2020, 0x2020, MWA_RAM, &mystston_scroll },
 	{ 0x2060, 0x2077, mystston_paletteram_w, &mystston_paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
-	{ 0x0780, 0x07df, MWA_RAM, &spriteram },	/* handled by the MWA_RAM above, here */
+	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },	/* handled by the MWA_RAM above, here */
 												/* to initialize the pointer */
 	{ -1 }	/* end of table */
 };
@@ -122,6 +121,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -279,7 +282,7 @@ struct GameDriver mystston_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	0, 0, 0,
 	8*13, 8*16,

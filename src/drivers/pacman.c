@@ -208,6 +208,11 @@ static struct InputPort pacman_input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
+
 static struct KEYSet keys[] =
 {
         { 0, 0, "MOVE UP" },
@@ -652,7 +657,7 @@ struct GameDriver pacman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -671,7 +676,7 @@ struct GameDriver pacplus_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacplus_color_prom, 0, 0,
 	8*11, 8*20,
@@ -690,7 +695,7 @@ struct GameDriver pacmod_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -709,7 +714,7 @@ struct GameDriver namcopac_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -728,7 +733,7 @@ struct GameDriver hangly_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -747,7 +752,7 @@ struct GameDriver puckman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -766,7 +771,7 @@ struct GameDriver piranha_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, pacman_dsw, keys,
+	pacman_input_ports, trak_ports, pacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -785,7 +790,7 @@ struct GameDriver mspacman_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, mspacman_dsw, keys,
+	pacman_input_ports, trak_ports, mspacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -804,7 +809,7 @@ struct GameDriver mspacatk_driver =
 	0, 0,
 	0,
 
-	pacman_input_ports, mspacman_dsw, keys,
+	pacman_input_ports, trak_ports, mspacman_dsw, keys,
 
 	pacman_color_prom, 0, 0,
 	8*11, 8*20,
@@ -823,7 +828,7 @@ struct GameDriver crush_driver =
 	0, 0,
 	0,
 
-	crush_input_ports, crush_dsw, keys,
+	crush_input_ports, trak_ports, crush_dsw, keys,
 
 	crush_color_prom, 0, 0,
 	8*11, 8*19,

@@ -31,6 +31,9 @@
     developers and MAME users and is the sole reason for bringing MAME
     under the GPL.
 
+##  You can use these sources for your personal non-commercial purpose.  ##
+##  You are NOT ALLOWED to distribuite any un-official version of MAME.  ##
+
 
 Important note:  from now on I, Mirko, am the coordinator of project MAME.
 I created a new account address for those of you who intend to contribute to
@@ -66,7 +69,15 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Arabian                     |  Yes   | Close  |  Yes   |   No   | arabian  |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Asteroids                   |  Yes   |  Yes   |   No   |   No   | asteroid |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Asteroids Deluxe            |  Yes   |  Yes   |  Yes   |   No   | astdelux |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Bagman                      |  Yes   |   No   | Music  |   No   | bagman   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Battlezone                  |  Yes   |  Yes   |  Yes   |   No   | bzone    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Black Widow                 |  Yes   |  Yes   |  Yes   |   No   | bwidow   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Blaster                     |  Yes   |  Yes   | Yes(1) |  Yes   | blaster  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -90,9 +101,15 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Crush Roller                |  Yes   |  Yes   |  Yes   |  Yes   | crush    |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Crystal Castles             |  Yes   |  Yes   |  Yes   |   No   | ccastles |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Defender                    |  Yes   |  Yes   | Yes(1) |  Yes   | defender |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Diamond Run                 |  Yes   |  Yes   | Yes(2) |   No   | diamond  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Dig Dug - Atari             |  Yes   |  Yes   |  Yes   |   No   | digdug   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Dig Dug - Namco             |  Yes   |  Yes   |  Yes   |   No   | digdugnm |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong                 |  Yes   | Close  | Yes(1) |  Yes   | dkong    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -108,21 +125,27 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Frogger                     |  Yes   | Close  |  Yes   |  Yes   | frogger  |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Frontline                   |   No   |   No   |  Yes   |   No   | frontlin |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Galaga                      |  Yes   |  Yes   | Yes(1) |  Yes   | galaga   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaga - Bootleg            |  Yes   |  Yes   | Yes(1) |  Yes   | galagabl |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaxian                    |  Yes   |  Yes   | Limited|  Yes   | galaxian |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Ghosts 'n Goblins           |  Yes   |  Yes   | Yes(2) |   No   | gng      |
+| Ghosts 'n Goblins           |  Yes   |  Yes   | Yes(2) |  Yes   | gng      |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gorf                        |   No   |   No   |   No   |  n/a   | gorf     |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Gravitar                    |  Yes   |  Yes   |  Yes   |   No   | gravitar |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Green Beret                 |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gyruss                      |  Yes   | Close  | Yes(1) |  Yes   | gyruss   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Hunchback                   |   No   |   No   |  Yes   |   No   | hunchy   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Jr. Pacman                  |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -142,13 +165,19 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Lost Tomb                   |  Yes   |   No   |  Yes   |  n/a   | losttomb |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Lunar Lander                |  Yes   |  Yes   |  Yes   |   No   | llander  |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Lunar Rescue                |  Yes   |  Yes   |  Yes   |  Yes   | lrescue  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mappy                       |  Yes   | Close  |  Yes   |  Yes   | mappy    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mad Planets                 |  Yes   |  Yes?  | Yes(1) |  n/a   | mplanets |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Millipede                   |  Yes   |   No   |   No   |  Yes   | milliped |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Missile Command             |  Yes   |  Yes   |  Yes   |  Yes   | missile  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Moon Cresta                 |  Yes   |  Yes   | Limited|  Yes   | mooncrst |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -160,7 +189,11 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mr. Do!                     |  Yes   |  Yes   |  Yes   |  Yes   | mrdo     |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Mr. Do's Castle             |   No   |   No   |   No   |  n/a   | docastle |
+| Mr. Do's Castle             |  Yes   |   No   |  Yes   |  Yes   | docastle |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mr. Do! Run Run             |  Yes   |  Yes   |  Yes   |  Yes   | dorunrun |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mr. Do! Wild Ride           |  Yes   |  Yes   |  Yes   |  Yes   | dowild   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Ms Pac Man (bootleg)        |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -194,17 +227,23 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Rally X                     |  Yes   |   No   |Partial.|   No   | rallyx   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Red Baron                   |   No   |  Yes   |  Yes   |   No   | redbaron |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Rescue                      |  Yes   |   No   |  Yes   |   No   | rescue   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Robotron                    |  Yes   |  Yes?  | Yes(1) |  Yes   | robotron |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Scramble                    |  Yes   |  Yes   |  Yes   |   No   | scramble |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Sea Wolf ][                 |  Yes   |   No   |   No   |  n/a   | seawolf2 |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Seicross                    |  Yes   |   No   |  Yes   |  n/a   | seicross |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Sinistar                    |   No   |  Yes   | Yes(1) |  Yes   | sinistar |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Space Firebird              |  Yes   |  Yes   |  No    |  No    | spacefb  |
+| Space Duel                  |  Yes   |  Yes   |  Yes   |   No   | spacduel |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Space Firebird              |  Yes   |  Yes   |   No   |   No   | spacefb  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Space Invaders              |  Yes   |  Yes   | Yes(1) |  Yes   | invaders |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -220,11 +259,15 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Super PacMan                |  Yes   | Close  |   No   |   No   | superpac |
+| Super PacMan                |  Yes   | Close  |  Yes   |   No   | superpac |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Tempest                     |  Yes   |  Yes   |  Yes   |   No   | tempest  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | The Adventures of Robby Roto|   No   |   No   |   No   |  n/a   | robby    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | The End                     |  Yes   |   No   |  Yes   |   No   | theend   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Three Stooges               |  Yes   |  Yes   |  Yes   |   No   | 3stooges |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Time Pilot                  |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -243,6 +286,8 @@ The list doesn't include variants of the same game.
 | Warp Warp                   |  Yes   |   No   |   No   |  n/a   | warpwarp |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Wizard of Wor               |  Yes   | Maybe  |   No   |   No   | wow      |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Wild Wstern                 |   No   |  Yes   |   No   |   No   | wwestern |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Zaxxon                      |  Yes   | Close  |   No   |  Yes   | zaxxon   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -285,7 +330,7 @@ Known issues:
 - Graphics are now perfect
 - I don't know where coin counter is located.  The game requires 4 credits
   to start
-
+- Free play switch doesn't work
 
 
 Arabian ("arabian")
@@ -296,10 +341,47 @@ F1      Enter test mode
 
 
 
+Asteroids ("asteroid")
+======================
+Arrows  Left & Right rotate ship, Up trust
+CTRL    Fire
+ALT     Hyperspace  (Shields in asteroid deluxe)
+
+Clones supported:
+  Asteroids Deluxe ("astdelux")
+
+
+
 Bagman ("bagman")
 =================
 Arrows  Move around
 CTRL    Action
+
+
+
+Battlezone ("bzone")
+====================
+W, I    Left and Right forward
+S, K    Left and Right backward
+Space   Fire
+
+
+Black Widow ("bwidow")
+======================
+A,W,S,D Move around
+Arrows  Fire around
+
+
+
+Blaster ("blaster")
+======================
+Arrows  Move around
+CTRL    Blast
+ALT     Thrust panel
+Z       Thrust joystick
+5       Auto Up
+6       Advance
+7       Hiscore reset
 
 
 
@@ -355,6 +437,8 @@ Centipede ("centiped")
 ======================
 Arrows  Move around
 CTRL    Fire
+
+Also this game supports trackball (-trak option)
 
 Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
@@ -416,6 +500,26 @@ Arrows  Move around
 F1      Skip level
 
 
+Crystal Castles ("ccastles")
+============================
+Arrows  Move around
+CTRL    Jump
+
+Also this game supports trackball (-trak option)
+
+Known issues:
+- Sound.  It's better!  The startup sound no longer plays.  The
+  game sounds are slightly slow.....
+- Dynamic palette.  I haven't given this the time it deserves.  I'll get
+  to this one soon.
+- The game is always in cocktail mode.  If I try to take it out of
+  cocktail mode, the player 1 and player 2 buttons no longer work.
+  Needless to say, I have not emulated cocktail mode, nor do I plan to so
+  only try 1 player games for now. :-)
+- No high score saving yet.
+- Cannot change the settings of the game.
+- Vertical scrolling is wrong.  Is horizontal scrolling right?
+
 
 Defender ("defender")
 ===========================
@@ -442,6 +546,18 @@ Arrows  Move around
 
 Known issues:
 - Don't know if banks mode switch is correct
+
+
+Dig Dug - Namco ("digdugnm")
+============================
+Arrows  Move around
+CTRL    Pump
+
+Clones supported:
+  Dig Dug by Atari ("digdug")
+
+Known issues:
+- The Atari version has some glitches on sprites/chars
 
 
 
@@ -510,6 +626,12 @@ Clones supported:
 
 
 
+Frontline ("frontlin")
+======================
+Not playable yet.
+
+
+
 Galaga ("galaga")
 =====================
 Original version with Namco copyright
@@ -564,7 +686,7 @@ Known issues:
 Gorf ("gorf")
 =============
 This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
-It boots, shows some text on the screen and that's all.
+It start, enter in attract mode and hangs when inserting a credit.
 
 
 
@@ -580,6 +702,14 @@ Clones supported:
 Known issues:
 - The music starts with what seems a correct pitch, but changes after you die
   for the first time or finishe the first level. Weird.
+
+
+
+Gravitar ("gravitar")
+=====================
+Arrows  Left & Right rotate ship, Up trust
+CTRL    Fire
+ALT     Shield
 
 
 
@@ -607,6 +737,12 @@ Clones supported:
 Known issues:
 - The star background is probably not entirely accurate.
 - What does dip switch 6 do?
+
+
+
+Hunchback ("hunchy")
+====================
+Runs on hardware similar to super cobra.  Still unplayable
 
 
 
@@ -648,7 +784,6 @@ Clones supported:
 Known issues:
 - The original version has now a decode_opcode, but controls appear to be
   reversed compared to the booleg version.  Haven't checked this yet.
-- Graphics are wrong - the game has multiple character banks, not emulated yet.
 
 
 
@@ -670,7 +805,7 @@ Known issues:
 Kangaroo ("kangaroo")
 =====================
 Arrows  Move around
-CTRL    Kick
+CTRL    Punch
 
 
 
@@ -688,8 +823,8 @@ F2      Select
 Kung Fu Master ("kungfum")
 ==========================
 Arrows  Move around
-Ctrl    Kick
-Alt     Punch
+Alt     Kick
+Ctrl    Punch
 F1+F3   Test mode
 
 Clones supported:
@@ -716,6 +851,14 @@ Known issues:
 - Graphics are now perfect
 - I don't know where coin counter is located.  The game requires 4 credits
   to start
+
+
+
+Lunar Lander ("llander")
+========================
+Arrows  Left and Right to rotate, Up to trust
+CTRL    Maximum trust
+ALT     Abort
 
 
 
@@ -746,6 +889,13 @@ F2      Select
 
 
 
+Mappy ("mappy")
+===============
+Arrows  Left and Right to move
+CTRL    Open door
+
+
+
 Mario Bros. ("mario")
 =====================
 Runs on hardware similar to Donkey Kong
@@ -773,6 +923,15 @@ Known issues:
 
 
 
+Missile Command ("missile"
+==========================
+A,S,D   Left, Central, Right shot
+
+Known issues:
+- Trackball support is not yet implemented.
+
+
+
 Moon Cresta ("mooncrst")
 ========================
 This runs on a hardware very similar to Galaxian.
@@ -787,6 +946,8 @@ Clones supported:
 
 Known issues:
 - The star background is probably not entirely accurate.
+- In bootleg version, the highscore should show Gremlin logo.  But probably
+  available rom images are corrupted.
 
 
 
@@ -845,7 +1006,26 @@ Clones supported:
 
 Mr. Do's Castle ("docastle")
 ============================
-Not working yet!
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Colors are wrong unless I find a correct color prom
+
+
+
+Mr. Do! RunRun ("dorunrun")
+===========================
+Arrows  Move around
+CTRL    Fire
+
+
+
+Mr. Do! WildRide ("dowild")
+===========================
+Arrows  Move around
+CTRL    Fire
+
 
 
 
@@ -919,6 +1099,8 @@ F1      Skip level
 F2      Test mode
 
 Clones supported:
+  Pengo with popcord music ("pengopop")
+  Pengo different copyright ("pengoa")
   Penta ("penta")
 
 
@@ -948,6 +1130,9 @@ ALT     Barrier
 Clones supported:
   Phoenix Amstar ("phoenixa")
   Phoenix T.P.N. ("phoenix3")
+
+Known issues:
+- Sound is now quite similar to original.  We miss the melody yet.
 
 
 
@@ -1082,6 +1267,18 @@ ALT     Player 1 Decoy
 F1      Test mode
 F2      Select
 
+Also this game supports trackball (-trak option)
+
+
+
+Red Baron ("redbaron")
+======================
+Arrows  Left and Right rotate
+CTRL    Fire
+
+Known issues:
+- The game accept coins, but doesn't start
+
 
 
 Rescue ("rescue")
@@ -1129,6 +1326,12 @@ Known issues:
   be clipped at the top and bottom of the screen?
 
 
+Sea Wolf ][ ("seawolf2")
+========================
+Arrows  Left & Right move cross
+CTRL    Fire
+
+
 
 Seicross ("seicross")
 =====================
@@ -1141,6 +1344,20 @@ Known issues:
 - You must remember to setup "Debug and Demo" mode to OFF
 - Setting SW7B to 1 will turn on FIRE facility
 - Colors are wrong
+
+
+
+Sinistar ("sinistar")
+======================
+Not playable yet
+
+
+
+Space Duel ("spacduel")
+=======================
+Arrows  Left & Right rotate ship, Up trust
+CTRL    Fire
+ALT     Shields
 
 
 
@@ -1226,6 +1443,19 @@ ALT     Fire2 (Direction arrow must be pressed together)
 
 
 
+Splat ("splat")
+======================
+W,A,S,D Walk around
+UP      Throw UP
+DOWN    Throw DOWN
+LEFT    Throw LEFT
+RIGHT   Throw RIGHT
+5       AutoUp
+6       Advance
+7       Hiscore reset
+
+
+
 Super Cobra ("scobra")
 ======================
 Runs on the same hardware as Scramble.
@@ -1284,16 +1514,24 @@ Known issues:
   in the logo).
 - Bonus star is blue (should be yellow?). GAME OVER is white (should be
   red?).
-- Can't enter initials at high score screen.
-- Sound CPU is not emulated.
-- High score saving not implemented.
+
+
+Tempest ("tempest")
+===================
+Arrows  Left & Right move around
+CTRL    Zap
+ALT     Super Zapper
+
+Known issues:
+- The game start with a blank screen.  Press CTRL to start
 
 
 
 The Adventures of Robby Roto ("robby")
 ======================================
-This game runs on the same hardware as Wizard of Wor, but doesn't work yet. I
-still haven to check the loading address of the ROMs.
+Arrows  Move around
+CTRL    Fire1
+ALT     Fire2
 
 
 
@@ -1307,6 +1545,17 @@ CTRL    Fire
 Known issues:
 - The star background is probably not entirely accurate. Also, maybe it should
   be clipped at the top and bottom of the screen?
+
+
+
+Three Stooges ("3stooges")
+==========================
+IJKL    Moe Moves around
+ALT     Moe Fire
+ESDF    Larry Moves around
+ENTER   Larry Fire
+Arrows  Curly Moves around
+CTRL    Curly Fire
 
 
 
@@ -1411,6 +1660,19 @@ CTRL    Fire
 Known issues:
 - The star background is probably not entirely accurate.
 - What do the dip switches do?
+
+
+
+Warp Warp ("warpwarp")
+======================
+Arrows  Move around
+CTRL    Fire
+
+
+
+Wild Western ("wwestern")
+=========================
+Not playable yet
 
 
 
@@ -1595,7 +1857,7 @@ options:
 -320          tell MAME to use a vesa 320x240 video mode
               If you get an error '320x240 not supported', you probably
               need Scitech's Display Doctor, which provides the 'de facto'
-              standard VESA implementaion (http://www.scitech.com)
+              standard VESA implementaion (http://www.scitechsoft.com)
               Note: this is a nice alternative to '-640x480 -noscanlines'
 -512          same as above, video mode is 512x384
 -640          same as above, video mode is 640x480

@@ -159,6 +159,10 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
@@ -348,6 +352,38 @@ ROM_START( penta_rom )
 	ROM_LOAD( "penta.105", 0x2000, 0x2000 )
 ROM_END
 
+ROM_START( pengopop_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "pengopop.u8",  0x0000, 0x1000 )
+        ROM_LOAD( "pengopop.u7",  0x1000, 0x1000 )
+        ROM_LOAD( "pengopop.u15", 0x2000, 0x1000 )
+        ROM_LOAD( "pengopop.u14", 0x3000, 0x1000 )
+        ROM_LOAD( "pengopop.u21", 0x4000, 0x1000 )
+        ROM_LOAD( "pengopop.u20", 0x5000, 0x1000 )
+        ROM_LOAD( "pengopop.u32", 0x6000, 0x1000 )
+        ROM_LOAD( "pengopop.u31", 0x7000, 0x1000 )
+
+        ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "pengopop.u92", 0x0000, 0x2000 )
+        ROM_LOAD( "pengopop.105", 0x2000, 0x2000 )
+ROM_END
+
+ROM_START( pengoa_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "008_PN01.BIN", 0x0000, 0x1000 )
+        ROM_LOAD( "007_PN05.BIN", 0x1000, 0x1000 )
+        ROM_LOAD( "015_PN02.BIN", 0x2000, 0x1000 )
+        ROM_LOAD( "014_PN06.BIN", 0x3000, 0x1000 )
+        ROM_LOAD( "021_PN03.BIN", 0x4000, 0x1000 )
+        ROM_LOAD( "020_PN07.BIN", 0x5000, 0x1000 )
+        ROM_LOAD( "032_PN04.BIN", 0x6000, 0x1000 )
+        ROM_LOAD( "031_PN08.BIN", 0x7000, 0x1000 )
+
+        ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "092_PN09.BIN", 0x0000, 0x2000 )
+        ROM_LOAD( "105_PN10.BIN", 0x2000, 0x2000 )
+ROM_END
+
 
 
 static int hiload(const char *name)
@@ -399,7 +435,7 @@ struct GameDriver pengo_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*11, 8*20,
@@ -418,10 +454,48 @@ struct GameDriver penta_driver =
 	0, 0,
 	0,
 
-	input_ports, dsw, keys,
+	input_ports, trak_ports, dsw, keys,
 
 	color_prom, 0, 0,
 	8*11, 8*20,
 
 	hiload, hisave
+};
+
+struct GameDriver pengopop_driver =
+{
+        "Pengo Popcorn Music",
+        "pengopop",
+        "ALLARD VAN DER BAS\nNICOLA SALMORIA\nSERGIO MUNOZ",
+        &machine_driver,
+
+        pengopop_rom,
+        0, 0,
+        0,
+
+        input_ports, trak_ports, dsw, keys,
+
+        color_prom, 0, 0,
+        8*11, 8*20,
+
+        hiload, hisave
+};
+
+struct GameDriver pengoa_driver =
+{
+        "Pengo (alternative version)",
+        "pengoa",
+        "ALLARD VAN DER BAS\nNICOLA SALMORIA\nSERGIO MUNOZ",
+        &machine_driver,
+
+        pengoa_rom,
+        0, 0,
+        0,
+
+        input_ports, trak_ports, dsw, keys,
+
+        color_prom, 0, 0,
+        8*11, 8*20,
+
+        hiload, hisave
 };

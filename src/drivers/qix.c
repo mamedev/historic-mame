@@ -221,6 +221,11 @@ static struct InputPort input_ports[] =
 	{ -1 }  /* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
+
 /* These are only here to allow user to change the key settings */
 /* Note:  Also need keys for the coin door switches. */
 static struct KEYSet keys[] =
@@ -421,7 +426,7 @@ struct GameDriver qix_driver =
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 
-	input_ports, qix_dsw, keys,
+	input_ports, trak_ports, qix_dsw, keys,
 
 	0, palette, colortable,   /* colors, palette, colortable */
 	128-(8*3), 128-4,   /* Paused message displayed at X,Y  */

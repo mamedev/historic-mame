@@ -13,21 +13,12 @@
 
 #define VIDEO_RAM_SIZE 0x400
 
-static int gfx_bank;
 
-
-
-static struct rectangle spritevisiblearea =
+void superpac_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+	int flipx,int flipy,int sx,int sy)
 {
-	0, 28*8-2/*1*/,
-	2*8, 34*8-1
-};
-
-int superpac_vh_start(void)
-{
-	gfx_bank = 0;
-
-	return generic_vh_start();
+	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+		TRANSPARENCY_PEN,0);
 }
 
 
@@ -41,7 +32,6 @@ int superpac_vh_start(void)
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int i,offs;
-
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -78,7 +68,7 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy = my + 2;
 			}
 
-			drawgfx(tmpbitmap,Machine->gfx[gfx_bank ? 2 : 0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs],
 					0,0,8*sx,8*sy,
@@ -89,19 +79,93 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	#if 0
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	/* sprites #0 and #7 are not used */
-	for (i = 6;i > 0;i--)
+	/* Draw the sprites. */
+	for (i = 0;i < 64;i++)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-				spriteram[2*i] >> 2,spriteram[2*i + 1],
-				spriteram[2*i] & 2,spriteram[2*i] & 1,
-				239 - spriteram_2[2*i],272 - spriteram_2[2*i + 1],
-				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+		/* is it on? */
+		if ((spriteram_3[2*i+1] & 2) == 0)
+		{
+			int sprite = spriteram[2*i];
+			int color = spriteram[2*i+1];
+			int x = spriteram_2[2*i]-17;
+			int y = (spriteram_2[2*i+1]-40) + 0x100*(spriteram_3[2*i+1] & 1);
+			int flipx = spriteram_3[2*i] & 2;
+			int flipy = spriteram_3[2*i] & 1;
+			
+			if (color > 37) color -= 32;
+			
+			/* is it on-screen? */
+			if (x > -16)
+			{
+				switch (spriteram_3[2*i] & 0x0c)
+				{
+					case 0:		/* normal size */
+						superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+						break;
+
+					case 4:		/* 2x vertical */
+						if (!flipy)
+						{
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+						}
+						else
+						{
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+						}
+						break;
+					
+					case 8:		/* 2x horizontal */
+						if (!flipx)
+						{
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+						}
+						else
+						{
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+						}
+						break;
+					
+					case 12:		/* 2x both ways */
+						if (!flipy && !flipx)
+						{
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
+						}
+						else if (flipy && flipx)
+						{
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+						}
+						else if (flipx)
+						{
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+						}
+						else /* flipy */
+						{
+							superpac_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
+							superpac_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
+							superpac_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
+							superpac_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+						}
+						break;
+				}
+			}
+		}
 	}
-	#endif
+
+#if 0
+
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
 	for (i = 0;i < 56; i++)
@@ -206,4 +270,5 @@ void superpac_vh_screenrefresh(struct osd_bitmap *bitmap)
 					&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 		}
 	}
+#endif
 }

@@ -1,4 +1,4 @@
-CC	= gcc
+CC      = gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
@@ -7,6 +7,7 @@ CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
+         obj/vidhrdw/vector.o obj/machine/mathbox.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
@@ -14,7 +15,8 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
-         obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
+         obj/machine/docastle.o obj/vidhrdw/docastle.o obj/sndhrdw/docastle.o obj/drivers/docastle.o \
+         obj/drivers/dowild.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/machine/seicross.o obj/sndhrdw/seicross.o obj/vidhrdw/seicross.o obj/drivers/seicross.o \
          obj/vidhrdw/ckong.o obj/drivers/ckong.o \
@@ -57,6 +59,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/machine/gottlieb.o obj/drivers/krull.o \
          obj/drivers/qbertqub.o \
          obj/drivers/mplanets.o \
+         obj/drivers/3stooges.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
          obj/machine/elevator.o obj/sndhrdw/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
@@ -78,6 +81,18 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/
          obj/machine/mystston.o obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/machine/tutankhm.o obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
+         obj/machine/mappy.o obj/sndhrdw/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
+         obj/machine/ccastles.o obj/sndhrdw/ccastles.o obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
+         obj/machine/yiear.o obj/vidhrdw/yiear.o obj/drivers/yiear.o \
+         obj/machine/digdug.o obj/vidhrdw/digdug.o obj/drivers/digdug.o \
+         obj/machine/asteroid.o obj/vidhrdw/asteroid.o obj/drivers/asteroid.o \
+         obj/drivers/bwidow.o \
+         obj/machine/bzone.o obj/vidhrdw/bzone.o obj/drivers/bzone.o \
+         obj/drivers/llander.o obj/machine/llander.o \
+         obj/drivers/redbaron.o \
+         obj/machine/spacduel.o \
+         obj/drivers/tempest.o obj/machine/tempest.o \
+         obj/machine/missile.o obj/vidhrdw/missile.o obj/drivers/missile.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
 
 VPATH = src src/Z80 src/M6502 src/I86 src/M6809

@@ -51,6 +51,7 @@ struct { char *desc; int x, y; } gfx_res[] = {
 	{ "-512x384"	, 512, 384 },
 	{ "-512"	, 512, 384 },
 	{ "-640x480"	, 640, 480 },
+	{ "-640x400"	, 640, 400 },
 	{ "-640"	, 640, 480 },
 	{ "-800x600"	, 800, 600 },
 	{ "-800"	, 800, 600 },
@@ -74,6 +75,28 @@ static int use_mouse = 0;
 
 void osd_poll_mouse(void);
 int osd_mouse_pressed(int joycode);
+
+
+/*
+ *   Trackball Related stuff
+ */
+
+extern volatile int mouse_x, mouse_y;
+static int use_trak = 0;
+static int large_trak_x = 0;
+static int large_trak_y = 0;
+
+#define TRAK_MAXX_RES 120
+#define TRAK_MAXY_RES 120
+#define TRAK_CENTER_X TRAK_MAXX_RES/2
+#define TRAK_CENTER_Y TRAK_MAXY_RES/2
+#define TRAK_MIN_X TRAK_MAXX_RES/6
+#define TRAK_MAX_X TRAK_MAXX_RES*5/6
+#define TRAK_MIN_Y TRAK_MAXY_RES/6
+#define TRAK_MAX_Y TRAK_MAXY_RES*5/6
+
+int osd_trak_read(int axis);
+int osd_trak_pressed(int joycode);
 
 
 /* audio related stuff */
@@ -173,6 +196,13 @@ int osd_init(int argc,char **argv)
                     use_mouse = 1;
                     use_joystick = 0;
                 }
+
+		if (stricmp(argv[i],"-trak") == 0)
+		{
+		    use_mouse = 0;
+                    use_joystick = 1;
+                    use_trak = 1;
+                }
 	}
 
 	if (play_sound)
@@ -257,16 +287,24 @@ int osd_init(int argc,char **argv)
            /* Get Soundblaster base address from environment variabler BLASTER   */
            /* Soundblaster OPL base port, at some compatibles this must be 0x388 */
 
-           blaster_env = getenv("BLASTER");
-           BaseSb = i = 0;
-           while ((blaster_env[i] & 0x5f) != 0x41) i++;        /* Look for 'A' char */
-           while (blaster_env[++i] != 0x20) {
-             BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
+           if(!getenv("BLASTER"))
+           {
+              printf("\nBLASTER variable not found, disabling fm sound!\n");
+              No_FM=1;
            }
+           else
+           {
+              blaster_env = getenv("BLASTER");
+              BaseSb = i = 0;
+              while ((blaster_env[i] & 0x5f) != 0x41) i++;        /* Look for 'A' char */
+              while (blaster_env[++i] != 0x20) {
+                BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
+              }
 
-           DelayReg=4;   /* Delay after an OPL register write increase it to avoid problems ,but you'll lose speed */
-           DelayData=7;  /* same as above but after an OPL data write this usually is greater than above */
-           InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
+              DelayReg=4;   /* Delay after an OPL register write increase it to avoid problems ,but you'll lose speed */
+              DelayData=7;  /* same as above but after an OPL data write this usually is greater than above */
+              InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
+           }
         }
 
 			}
@@ -284,18 +322,22 @@ int osd_init(int argc,char **argv)
 	}
 
         /* NTB: Initialiase mouse */
-        if( use_mouse )
+        if( use_mouse || use_trak )
         {
             if( install_mouse() == - 1 )
             {
                 use_mouse = 0;
+		use_trak = 0;
             }
             else
             {
-                set_mouse_speed( 0, 0 );
-                position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
-                mouse_ox = MOUSE_CENTRE_X;
-                mouse_oy = MOUSE_CENTRE_Y;
+	        if( use_mouse )
+                {
+                    set_mouse_speed( 0, 0 );
+                    position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
+                    mouse_ox = MOUSE_CENTRE_X;
+                    mouse_oy = MOUSE_CENTRE_Y;
+                }
             }
         }
 
@@ -354,7 +396,7 @@ struct osd_bitmap *osd_create_bitmap(int width,int height)
 		for (i = 0;i < height;i++)
 			bitmap->line[i] = &bm[i * width];
 
-		bitmap->private = bm;
+		bitmap->_private = bm;
 
 		clearbitmap(bitmap);
 	}
@@ -368,7 +410,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 {
 	if (bitmap)
 	{
-		free(bitmap->private);
+		free(bitmap->_private);
 		free(bitmap);
 	}
 }
@@ -415,12 +457,52 @@ Register scr224x288scanlines[] =
 };
 
 
+Register scr256x232[] =
+{
+        { 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x3f},
+        { 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
+        { 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x11},{ 0x3d4, 0x07, 0x3e},
+        { 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x41},{ 0x3d4, 0x10, 0xe5},
+        { 0x3d4, 0x11, 0x9c},{ 0x3d4, 0x12, 0xcf},{ 0x3d4, 0x13, 0x20},
+        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xd7},{ 0x3d4, 0x16, 0x04},
+        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+        { 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
+        { 0x3c0, 0x13, 0x00}
+};
+
+Register scr256x232scanlines[] =
+{
+        { 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x3f},
+        { 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
+        { 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x12},{ 0x3d4, 0x07, 0x1d},
+        { 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x60},{ 0x3d4, 0x10, 0x00},
+        { 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xe7},{ 0x3d4, 0x13, 0x20},
+        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x07},{ 0x3d4, 0x16, 0x1a},
+        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+        { 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
+        { 0x3c0, 0x13, 0x00}
+};
+
+
 Register scr256x256[] =
 {
 	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x3f},
 	{ 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4A},
 	{ 0x3d4, 0x05, 0x9A},{ 0x3d4, 0x06, 0x23},{ 0x3d4, 0x07, 0xb2},
 	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x61},{ 0x3d4, 0x10, 0x0a},
+	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xff},{ 0x3d4, 0x13, 0x20},
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x07},{ 0x3d4, 0x16, 0x1a},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
+	{ 0x3c0, 0x13, 0x00}
+};
+
+Register scr256x256_synced[] = /* V.V */
+{
+	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x62},{ 0x3d4, 0x01, 0x3f},
+	{ 0x3d4, 0x02, 0x40},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4A},
+	{ 0x3d4, 0x05, 0x9A},{ 0x3d4, 0x06, 0x42},{ 0x3d4, 0x07, 0xb2},
+	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x61},{ 0x3d4, 0x10, 0x14},
 	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xff},{ 0x3d4, 0x13, 0x20},
 	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x07},{ 0x3d4, 0x16, 0x1a},
 	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
@@ -443,28 +525,28 @@ Register scr256x256scanlines[] =
 
 Register scr288x224[] =
 {
-	{ 0x3c2, 0x0, 0xe3},{ 0x3d4, 0x0, 0x5f},{ 0x3d4, 0x1, 0x47},
-	{ 0x3d4, 0x2, 0x50},{ 0x3d4, 0x3, 0x82},{ 0x3d4, 0x4, 0x50},
-	{ 0x3d4, 0x5, 0x80},{ 0x3d4, 0x6, 0xb},{ 0x3d4, 0x7, 0x3e},
-	{ 0x3d4, 0x8, 0x0},{ 0x3d4, 0x9, 0x41},{ 0x3d4, 0x10, 0xda},
+	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x47},
+	{ 0x3d4, 0x02, 0x50},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x50},
+	{ 0x3d4, 0x05, 0x80},{ 0x3d4, 0x06, 0x0b},{ 0x3d4, 0x07, 0x3e},
+	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x41},{ 0x3d4, 0x10, 0xda},
 	{ 0x3d4, 0x11, 0x9c},{ 0x3d4, 0x12, 0xbf},{ 0x3d4, 0x13, 0x24},
-	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x4},
-	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},{ 0x3c4, 0x4, 0xe},
-	{ 0x3ce, 0x5, 0x40},{ 0x3ce, 0x6, 0x5},{ 0x3c0, 0x10, 0x41},
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x04},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
 	{ 0x3c0, 0x13, 0x0}
 };
 
 Register scr288x224scanlines[] =
 {
-	{ 0x3c2, 0x0, 0xe3},{ 0x3d4, 0x0, 0x5f},{ 0x3d4, 0x1, 0x47},
-	{ 0x3d4, 0x2, 0x47},{ 0x3d4, 0x3, 0x82},{ 0x3d4, 0x4, 0x50},
-	{ 0x3d4, 0x5, 0x9a},{ 0x3d4, 0x6, 0xb},{ 0x3d4, 0x7, 0x19},
-	{ 0x3d4, 0x8, 0x0},{ 0x3d4, 0x9, 0x40},{ 0x3d4, 0x10, 0xf5},
+	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x47},
+	{ 0x3d4, 0x02, 0x47},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x50},
+	{ 0x3d4, 0x05, 0x9a},{ 0x3d4, 0x06, 0x0b},{ 0x3d4, 0x07, 0x19},
+	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x40},{ 0x3d4, 0x10, 0xf5},
 	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xdf},{ 0x3d4, 0x13, 0x24},
-	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x4},
-	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},{ 0x3c4, 0x4, 0xe},
-	{ 0x3ce, 0x5, 0x40},{ 0x3ce, 0x6, 0x5},{ 0x3c0, 0x10, 0x41},
-	{ 0x3c0, 0x13, 0x0}
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x04},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
+	{ 0x3c0, 0x13, 0x00}
 };
 
 Register scr320x204[] =
@@ -482,15 +564,15 @@ Register scr320x204[] =
 
 Register scr240x272[] =
 {
-        { 0x3c2, 0x0, 0xe3}, { 0x3d4, 0x0, 0x5f}, { 0x3d4, 0x1, 0x3b},
-        { 0x3d4, 0x2, 0x38}, { 0x3d4, 0x3, 0x82}, { 0x3d4, 0x4, 0x4a},
-        { 0x3d4, 0x5, 0x9a}, { 0x3d4, 0x6, 0x55}, { 0x3d4, 0x7, 0xf0},
-        { 0x3d4, 0x8, 0x0},  { 0x3d4, 0x9, 0x61}, { 0x3d4, 0x10, 0x40},
-        { 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0x20},{ 0x3d4, 0x13, 0x1e},
-        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x40},{ 0x3d4, 0x16, 0x4a},
-        { 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},  { 0x3c4, 0x4, 0xe},
-        { 0x3ce, 0x5, 0x40}, { 0x3ce, 0x6, 0x5},  { 0x3c0, 0x10, 0x41},
-        { 0x3c0, 0x13, 0x0}
+        { 0x3c2, 0x00, 0xe3}, { 0x3d4, 0x00, 0x5f}, { 0x3d4, 0x01, 0x3b},
+        { 0x3d4, 0x02, 0x38}, { 0x3d4, 0x03, 0x82}, { 0x3d4, 0x04, 0x4a},
+        { 0x3d4, 0x05, 0x9a}, { 0x3d4, 0x06, 0x55}, { 0x3d4, 0x07, 0xf0},
+        { 0x3d4, 0x08, 0x00}, { 0x3d4, 0x09, 0x61}, { 0x3d4, 0x10, 0x40},
+        { 0x3d4, 0x11, 0xac}, { 0x3d4, 0x12, 0x20}, { 0x3d4, 0x13, 0x1e},
+        { 0x3d4, 0x14, 0x40}, { 0x3d4, 0x15, 0x40}, { 0x3d4, 0x16, 0x4a},
+        { 0x3d4, 0x17, 0xa3}, { 0x3c4, 0x01, 0x01}, { 0x3c4, 0x04, 0x0e},
+        { 0x3ce, 0x05, 0x40}, { 0x3ce, 0x06, 0x05}, { 0x3c0, 0x10, 0x41},
+        { 0x3c0, 0x13, 0x00}
 };
 
 /* Create a display screen, or window, large enough to accomodate a bitmap */
@@ -518,6 +600,7 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	if (!vesa_mode &&
 	    !(width == 224 && height == 288) &&
             !(width == 256 && height == 256) &&
+            !(width == 256 && height == 232) &&
 	    !(width == 288 && height == 224) &&
 	    !(width == 320 && height == 204) &&
             !(width == 240 && height == 272))
@@ -583,13 +666,29 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		{
 			if (noscanlines)
 			{
-				reg = scr256x256;
+				if (video_sync && videofreq == 1) /* V.V */
+				  reg = scr256x256_synced;
+				else
+				  reg = scr256x256;
 				reglen = sizeof(scr256x256)/sizeof(Register);
 			}
 			else
 			{
 				reg = scr256x256scanlines;
 				reglen = sizeof(scr256x256scanlines)/sizeof(Register);
+			}
+		}
+		else if (width == 256 && height == 232)
+		{
+			if (noscanlines)
+			{
+			        reg = scr256x232;
+				reglen = sizeof(scr256x232)/sizeof(Register);
+			}
+			else
+			{
+				reg = scr256x232scanlines;
+				reglen = sizeof(scr256x232scanlines)/sizeof(Register);
 			}
 		}
 		else if (width == 288 && height == 224)
@@ -623,6 +722,12 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		outRegArray(reg,reglen);
 	}
 
+	/* We need to do this AFTER the screen is made... */
+	if( use_trak ) {
+	  set_mouse_speed( 0, 0 );
+          set_mouse_range(0, 0, TRAK_MAXX_RES-1, TRAK_MAXY_RES-1);
+	  position_mouse( TRAK_CENTER_X, TRAK_CENTER_Y );
+	}
 
 	return bitmap;
 }
@@ -695,7 +800,7 @@ inline void update_vesa(void)
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->width /4;
-	lb = bitmap->private + bitmap->width*skiplines;
+	lb = bitmap->_private + bitmap->width*skiplines;
 
 	for (y = vesa_display_lines;y !=0 ; y--)
 	{
@@ -804,12 +909,12 @@ inline void update_rotate(void)
 
 	if (rotation == ROR)
 	{
-		lb = bitmap->private + (bitmap->height-1)*bitmap->width+skiplines;
+		lb = bitmap->_private + (bitmap->height-1)*bitmap->width+skiplines;
 		offset = -bitmap->width-1;
 	}
 	else 	
 	{
-		lb = bitmap->private + bitmap->width -1 -skiplines;
+		lb = bitmap->_private + bitmap->width -1 -skiplines;
 		offset = bitmap->width-1;
 	}
 	
@@ -867,7 +972,7 @@ void osd_update_display(void)
 	else 	/* no vesa-modes */
 	{
 		/* copy the bitmap to screen memory */
-		_dosmemputl(bitmap->private,bitmap->width * bitmap->height / 4,0xa0000);
+		_dosmemputl(bitmap->_private,bitmap->width * bitmap->height / 4,0xa0000);
 	}
 
 	/* if the user pressed F12, save a snapshot of the screen. */
@@ -1117,9 +1222,10 @@ const char *osd_joy_name(int joycode)
 {
   static char *joynames[] = { "LEFT", "RIGHT", "UP", "DOWN", "Button A",
 			      "Button B", "Button C", "Button D", "Any Button" };
+  static char *nonedefined = "None";
 
   if (joycode && joycode <= OSD_MAX_JOY) return (char*)joynames[joycode-1];
-  else return 0;
+  else return (char *)nonedefined;
 }
 
 
@@ -1165,6 +1271,9 @@ int osd_joy_pressed(int joycode)
             return( osd_mouse_pressed( joycode ));
         }
 
+	if( use_trak == 1) {
+	  return( osd_trak_pressed(joycode));
+	}
 
 	switch (joycode)
 	{
@@ -1328,4 +1437,205 @@ int osd_mouse_pressed(int joycode)
 			return 0;
 			break;
 	}
+}
+
+int osd_trak_pressed(int joycode)
+{
+	switch (joycode)
+	{
+		case OSD_JOY_LEFT:
+            return 0;
+			break;
+		case OSD_JOY_RIGHT:
+            return 0;
+			break;
+		case OSD_JOY_UP:
+            return 0;
+			break;
+		case OSD_JOY_DOWN:
+            return 0;
+			break;
+		case OSD_JOY_FIRE1:
+            return (mouse_b & 1);
+			break;
+		case OSD_JOY_FIRE2:
+            return (mouse_b & 2);
+			break;
+		case OSD_JOY_FIRE3:
+            return (mouse_b & 4);
+			break;
+		case OSD_JOY_FIRE:
+            return ((mouse_b & 1) || (mouse_b & 2) || (mouse_b & 4));
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+int osd_trak_read(int axis) {
+  if(!use_trak) {
+    return(NO_TRAK);
+  }
+
+  if(mouse_x > TRAK_MAX_X) {
+    large_trak_x++;
+    position_mouse(TRAK_MIN_X+(mouse_x-TRAK_MAX_X),mouse_y);
+  }
+
+  if(mouse_x < TRAK_MIN_X) {
+    large_trak_x--;
+    position_mouse(TRAK_MAX_X-(TRAK_MIN_X-mouse_x),mouse_y);
+  }
+
+  if(mouse_y > TRAK_MAX_Y) {
+    large_trak_y++;
+    position_mouse(mouse_x,TRAK_MIN_Y+(mouse_y-TRAK_MAX_Y));
+  }
+
+  if(mouse_y < TRAK_MIN_Y) {
+    large_trak_y--;
+    position_mouse(mouse_x,TRAK_MAX_Y-(TRAK_MIN_Y-mouse_y));
+  }
+
+  switch(axis) {
+  case X_AXIS:
+    return((large_trak_x*TRAK_MAXX_RES*2/3)+mouse_x-TRAK_CENTER_X);
+    break;
+  case Y_AXIS:
+    return((large_trak_y*TRAK_MAXY_RES*2/3)+mouse_y-TRAK_CENTER_Y);
+    break;
+  }
+  
+  return(0);
+}
+
+void osd_trak_center_x(void) {
+  large_trak_x = 0;
+  position_mouse(TRAK_CENTER_X, mouse_y);
+}
+
+void osd_trak_center_y(void) {
+  large_trak_y = 0;
+  position_mouse(mouse_x, TRAK_CENTER_Y);
+}
+
+
+#define MAXPIXELS 100000
+char * pixel[MAXPIXELS];
+int p_index=-1;
+
+inline void draw_pixel (int x, int y, int col)
+{
+	char *address;
+
+	if (x<0 || x >= bitmap->width)
+		return;
+	if (y<0 || y >= bitmap->height)
+		return;
+	address=&(bitmap->line[y][x]);
+	*address=(char)col;
+	p_index++;
+	pixel[p_index]=address;
+}
+
+/* 
+ * open_page() returns
+ * 0 - game has normal orientation
+ * 1 - game normally uses a turned monitor
+ */
+int open_page (int dummy)
+{
+	int i,res;
+	unsigned char bg;
+	
+	if (bitmap->height > bitmap->width)
+		res = 1;
+	else
+		res = 0;
+
+	bg=Machine->background_pen;
+	for (i=p_index; i>=0; i--)
+	{
+		*(pixel[i])=bg;
+	}
+	p_index=-1;
+	return (res);
+}
+
+void close_page (void)
+{
+}
+
+void draw_line (int x1,int y1,int x2,int y2,int col, int z)
+{
+	int dx,dy,cx,cy,sx,sy;
+
+	if (!z) return;
+
+	col += (z << 3);
+	
+#ifdef 0
+	if (x1<0 || y1<0 || x2<0 || y2<0 ||
+		x1>=bitmap->width || y1>=bitmap->height ||
+		x2>=bitmap->width || y2>=bitmap->height)
+	{
+		if (errorlog)
+			fprintf(errorlog,
+			"line:%d,%d nach %d,%d color %d, intensity %d\n",
+			 x1,y1,x2,y2,col,z);
+		return;
+	}
+#endif
+	dx=abs(x1-x2);
+	dy=abs(y1-y2);
+
+	if ((dx>=dy && x1>x2) || (dy>dx && y1>y2))
+	{
+		int t;
+		t = x1; x1 = x2; x2 = t;
+		t = y1; y1 = y2; y2 = t;
+	}
+	sx = ((x1 <= x2) ? 1 : -1);
+	sy = ((y1 <= y2) ? 1 : -1);
+	cx=dx/2;
+	cy=dy/2;
+
+	if (dx == dy)
+	{
+		while (x1 <= x2)
+		{
+			draw_pixel(x1,y1,col);
+			x1+=sx;
+			y1+=sy;
+		}
+	}
+	else if (dx>dy)
+	{
+		while (x1 <= x2)
+		{
+			draw_pixel(x1,y1,col);
+			x1+=sx;
+			cx-=dy;
+			if (cx < 0)
+			{	
+				y1+=sy;
+				cx+=dx;
+			}
+		}
+	}
+	else
+	{
+		while (y1 <= y2)
+		{
+			draw_pixel(x1,y1,col);
+			y1+=sy;
+			cy-=dx;
+			if (cy < 0)
+			{
+				x1+=sx;
+				cy+=dy;
+			}
+		}
+	}	
 }

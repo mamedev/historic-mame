@@ -196,19 +196,23 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct TrakPort trak_ports[] =
+{
+        { -1 }
+};
 
 static struct KEYSet keys[] =
 {
-        { 2, 4, "PL1 MOVE UP" },
+        { 0, 0, "PL1 MOVE UP" },
         { 0, 5, "PL1 MOVE LEFT"  },
         { 0, 4, "PL1 MOVE RIGHT" },
-        { 2, 6, "PL1 MOVE DOWN" },
+        { 2, 0, "PL1 MOVE DOWN" },
         { 0, 3, "PL1 FIRE FRONT" },
         { 0, 1, "PL1 FIRE DOWN" },
-        { 0, 0, "PL2 MOVE UP" },
+        { 2, 4, "PL2 MOVE UP" },
         { 1, 5, "PL2 MOVE LEFT"  },
         { 1, 4, "PL2 MOVE RIGHT" },
-        { 2, 0, "PL2 MOVE DOWN" },
+        { 2, 6, "PL2 MOVE DOWN" },
         { 1, 3, "PL2 FIRE FRONT" },
         { 1, 2, "PL2 FIRE DOWN" },
         { -1 }
@@ -467,7 +471,7 @@ struct GameDriver scramble_driver =
 	0, 0,
 	0,
 
-	input_ports, scramble_dsw, keys,
+	input_ports, trak_ports, scramble_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	8*13, 8*16,
@@ -486,7 +490,7 @@ struct GameDriver atlantis_driver =
 	0, 0,
 	0,
 
-	input_ports, atlantis_dsw, keys,
+	input_ports, trak_ports, atlantis_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	8*13, 8*16,
@@ -505,7 +509,7 @@ struct GameDriver theend_driver =
 	0, 0,
 	0,
 
-	input_ports, theend_dsw, keys,
+	input_ports, trak_ports, theend_dsw, keys,
 
 	scramble_color_prom, 0, 0,
 	8*13, 8*16,
@@ -524,7 +528,7 @@ struct GameDriver froggers_driver =
 	0, 0,
 	0,
 
-	input_ports, scramble_dsw, keys,
+	input_ports, trak_ports, scramble_dsw, keys,
 
 	froggers_color_prom, 0, 0,
 	8*13, 8*16,
