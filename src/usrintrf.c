@@ -1111,9 +1111,6 @@ static int setkeysettings(int selected)
 
 
 
-#ifdef macintosh
-static int setjoysettings(int selected) { return 0; }
-#else
 static int setjoysettings(int selected)
 {
 	const char *menu_item[40];
@@ -1265,6 +1262,74 @@ static int setjoysettings(int selected)
 
 	return sel + 1;
 }
+
+
+#ifdef macintosh
+static int calibratejoysticks(int selected) { return 0; }
+#else
+static int calibratejoysticks(int selected)
+{
+	int key;
+	char *msg;
+	char buf[2048];
+	int sel;
+	static int calibration_started = 0;
+
+	sel = selected - 1;
+
+	if (calibration_started == 0)
+	{
+		osd_joystick_start_calibration();
+		calibration_started = 1;
+		strcpy (buf, "");
+	}
+
+	if (sel > 255) /* Waiting for the user to acknowledge joystick movement */
+	{
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+				|| osd_key_pressed_memory (OSD_KEY_CANCEL))
+		{
+			calibration_started = 0;
+			sel = -1;
+		}
+		else if (osd_key_pressed_memory(OSD_KEY_ENTER))
+		{
+			osd_joystick_calibrate();
+			sel &= 0xff;
+		}
+
+		displaymessagewindow(buf);
+	}
+	else
+	{
+		msg = osd_joystick_calibrate_next();
+		need_to_clear_bitmap = 1;
+		if (msg == 0)
+		{
+			calibration_started = 0;
+			osd_joystick_end_calibration();
+			sel = -1;
+		}
+		else
+		{
+			strcpy (buf, msg);
+			displaymessagewindow(buf);
+			sel |= 0x100;
+		}
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
+}
+
 #endif
 
 
@@ -1783,6 +1848,7 @@ static int displaygameinfo(int selected)
 		"NES",
 		"Astrocade 'IO' chip",
 		"Namco",
+		"Namco System 1",
 		"TMS5220",
 		"VLM5030",
 		"ADPCM samples",
@@ -1982,7 +2048,7 @@ int showgamewarnings(void)
 
 
 
-enum { UI_SWITCH = 0,UI_KEY, UI_JOY,UI_ANALOG,
+enum { UI_SWITCH = 0,UI_KEY, UI_JOY,UI_ANALOG, UI_CALIBRATE,
 		UI_STATS,UI_CREDITS,UI_GAMEINFO,
 		UI_CHEAT,UI_RESET,UI_EXIT };
 
@@ -2020,6 +2086,12 @@ static void setup_menu_init(void)
 		{
 			menu_item[menu_total] = "Analog Setup"; menu_action[menu_total++] = UI_ANALOG;
 		}
+	}
+
+	/* Joystick calibration possible? */
+	if ((osd_joystick_needs_calibration()) != 0)
+	{
+		menu_item[menu_total] = "Calibrate Joysticks"; menu_action[menu_total++] = UI_CALIBRATE;
 	}
 
 	menu_item[menu_total] = "Stats"; menu_action[menu_total++] = UI_STATS;
@@ -2095,6 +2167,18 @@ static int setup_menu(int selected)
 					sel = (sel & 0xff) | (res << 8);
 				break;
 
+			case UI_CALIBRATE:
+				res = calibratejoysticks(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+
 			case UI_STATS:
 				res = mame_stats(sel >> 8);
 				if (res == -1)
@@ -2158,6 +2242,7 @@ sel = sel & 0xff;
 			case UI_KEY:
 			case UI_JOY:
 			case UI_ANALOG:
+			case UI_CALIBRATE:
 			case UI_STATS:
 			case UI_CREDITS:
 			case UI_GAMEINFO:

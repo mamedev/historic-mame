@@ -551,10 +551,11 @@ static void neogeo_custom_memory(void)
 	neogeo_blue_mask=0xf;
 	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_blue_mask=0xe;
 	if (!strcmp(Machine->gamedrv->name,"karnov_r")) neogeo_blue_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"kof96")) {neogeo_blue_mask=neogeo_red_mask=0xe;}
-	if (!strcmp(Machine->gamedrv->name,"kof97")) {neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;}
-	if (!strcmp(Machine->gamedrv->name,"ragnagrd")) {neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;}
-	if (!strcmp(Machine->gamedrv->name,"whp")) {neogeo_blue_mask=neogeo_red_mask=0xe;}
+	if (!strcmp(Machine->gamedrv->name,"kof95")) neogeo_blue_mask=0xe;
+	if (!strcmp(Machine->gamedrv->name,"kof96")) neogeo_blue_mask=neogeo_red_mask=0xe;
+	if (!strcmp(Machine->gamedrv->name,"kof97")) neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;
+	if (!strcmp(Machine->gamedrv->name,"ragnagrd")) neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;
+	if (!strcmp(Machine->gamedrv->name,"whp")) neogeo_blue_mask=neogeo_red_mask=0xe;
 }
 
 

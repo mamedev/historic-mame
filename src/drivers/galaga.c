@@ -621,7 +621,8 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8a4c],"\x18\x6e",2) == 0)
+	if (memcmp(&RAM[0x8a20],"\x00\x00\x00\x00\x02\x24",6) == 0 &&
+		memcmp(&RAM[0x8a4a],"\x18\x2a\x18",3) == 0 )
 	{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{

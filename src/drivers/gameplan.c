@@ -874,23 +874,25 @@ static void megatack_hisave(void)
 
 static int challeng_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM =
+	Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0)
+	if (memcmp(&RAM[0xcc], "\x00\x01\x00", 3) == 0 &&
+	memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0 )
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f, &RAM[0xcc], 0xf);
+			osd_fread(f, &RAM[0xcc], 0xf);
 			osd_fclose(f);
 		}
 
 		return 1;
 	}
-    else return 0;  /* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void challeng_hisave(void)

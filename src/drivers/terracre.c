@@ -303,7 +303,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	4600000,	/* 4.6 MHz ? (hand tuned) */
+	4000000,	/* 4 MHz ? (hand tuned) */
 	{ 255 }		/* (not supported) */
 };
 
@@ -505,14 +505,13 @@ static int terracre_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-
-        if ((memcmp(&terrac_ram[0x4a], "\x0e\x33\x35\x26", 4) == 0) &&
-            (memcmp(&terrac_ram[0x82], "\x0e\x32\x21\x39", 4) == 0))
+		if (READ_WORD(&terrac_ram[0x004a]) == 0x330e && READ_WORD(&terrac_ram[0x004c]) == 0x2635 &&
+			READ_WORD(&terrac_ram[0x0082]) == 0x320e && READ_WORD(&terrac_ram[0x0084]) == 0x3921)
         {
 
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread(f,&terrac_ram[0x46],14*5);
+                        osd_fread_msbfirst(f,&terrac_ram[0x46],14*5);
                         memcpy(&terrac_ram[0x8c], &terrac_ram[0x46], 4);
                         osd_fclose(f);
                 }
@@ -528,7 +527,7 @@ static void terracre_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite(f,&terrac_ram[0x46],14*5);
+                osd_fwrite_msbfirst(f,&terrac_ram[0x46],14*5);
                 osd_fclose(f);
         }
 }

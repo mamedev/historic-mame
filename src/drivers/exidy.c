@@ -1370,6 +1370,7 @@ ROM_START( fax_rom )
 	ROM_CONTINUE(            0x0000, 0x0800 )	/* overwrite with the real one - should be a 2716? */
 
 	ROM_REGION(0x10000) /* 64k for audio */
+	/* 5a missing! */
 	ROM_LOAD( "fxa2-6a.16",   0x7000, 0x0800, 0x2b3bfc44 )
 	ROM_LOAD( "fxa2-7a.16",   0x7800, 0x0800, 0x578c62b7 )
 	ROM_RELOAD(             0xF800, 0x0800 )

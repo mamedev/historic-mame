@@ -204,7 +204,7 @@ int osd_faccess(const char *newfilename, int filetype)
 	int  pathc;
 	static int indx;
 	static const char *filename;
-	char *dirname;
+	char *dir_name;
 
 	/* if filename == NULL, continue the search */
 	if (newfilename != NULL)
@@ -231,20 +231,20 @@ int osd_faccess(const char *newfilename, int filetype)
 	for (; indx < pathc; indx++)
 	{
 		struct stat stat_buffer;
-		dirname = pathv[indx];
+		dir_name = pathv[indx];
 
 		/* does such a directory (or file) exist? */
-		sprintf(name,"%s/%s",dirname,filename);
+		sprintf(name,"%s/%s",dir_name,filename);
 		if (cache_stat(name, &stat_buffer) == 0)
 			return indx+1;
 
 		/* try again with a .zip extension */
-		sprintf(name,"%s/%s.zip", dirname, filename);
+		sprintf(name,"%s/%s.zip", dir_name, filename);
 		if (cache_stat(name, &stat_buffer) == 0)
 			return indx+1;
 
 		/* try again with a .zif extension */
-		sprintf(name,"%s/%s.zif", dirname, filename);
+		sprintf(name,"%s/%s.zif", dir_name, filename);
 		if (cache_stat(name, &stat_buffer) == 0)
 			return indx+1;
 	}
@@ -295,12 +295,12 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 			}
 
 			for (indx=0;indx<pathc && !found; ++indx) {
-				const char* dirname = pathv[indx];
+				const char* dir_name = pathv[indx];
 
 				if (!found) {
-					sprintf(name,"%s/%s",dirname,gamename);
+					sprintf(name,"%s/%s",dir_name,gamename);
 					if (cache_stat(name,&stat_buffer)==0 && (stat_buffer.st_mode & S_IFDIR)) {
-						sprintf(name,"%s/%s/%s",dirname,gamename,filename);
+						sprintf(name,"%s/%s/%s",dir_name,gamename,filename);
 						if (filetype==OSD_FILETYPE_ROM)	{
 							if (checksum_file (name, &f->data, &f->length, &f->crc)==0) {
 								f->type = kRAMFile;
@@ -318,7 +318,7 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 
 				if (!found) {
 					/* try with a .zip extension */
-					sprintf(name,"%s/%s.zip", dirname, gamename);
+					sprintf(name,"%s/%s.zip", dir_name, gamename);
 					if (cache_stat(name,&stat_buffer)==0) {
 						if (load_zipped_file(name, filename, &f->data, &f->length)==0) {
 							if (errorlog)
@@ -333,9 +333,9 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 
 				if (!found) {
 					/* try with a .zip directory (if ZipMagic is installed) */
-					sprintf(name,"%s/%s.zip",dirname,gamename);
+					sprintf(name,"%s/%s.zip",dir_name,gamename);
 					if (cache_stat(name,&stat_buffer)==0 && (stat_buffer.st_mode & S_IFDIR)) {
-						sprintf(name,"%s/%s.zip/%s",dirname,gamename,filename);
+						sprintf(name,"%s/%s.zip/%s",dir_name,gamename,filename);
 						if (filetype==OSD_FILETYPE_ROM)	{
 							if (checksum_file (name, &f->data, &f->length, &f->crc)==0) {
 								f->type = kRAMFile;
@@ -356,9 +356,9 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 #if 0
 				if (!found) {
 					/* try with a .zif directory (if ZipFolders is installed) */
-					sprintf(name,"%s/%s.zif",dirname,gamename);
+					sprintf(name,"%s/%s.zif",dir_name,gamename);
 					if (cache_stat(name,&stat_buffer)==0) {
-						sprintf(name,"%s/%s.zif/%s",dirname,gamename,filename);
+						sprintf(name,"%s/%s.zif/%s",dir_name,gamename,filename);
 						if (filetype==OSD_FILETYPE_ROM)	{
 							if (checksum_file (name, &f->data, &f->length, &f->crc)==0) {
 								f->type = kRAMFile;
@@ -684,12 +684,12 @@ int osd_fchecksum (const char *game, const char *filename, unsigned int *length,
 		gamename = alternate_name;
 
 	for (indx=0;indx<rompathc && !found; ++indx) {
-		const char* dirname = rompathv[indx];
+		const char* dir_name = rompathv[indx];
 
 		if (!found) {
-			sprintf(name,"%s/%s",dirname,gamename);
+			sprintf(name,"%s/%s",dir_name,gamename);
 			if (cache_stat(name,&stat_buffer)==0 && (stat_buffer.st_mode & S_IFDIR)) {
-				sprintf(name,"%s/%s/%s",dirname,gamename,filename);
+				sprintf(name,"%s/%s/%s",dir_name,gamename,filename);
 				if (checksum_file(name,0,length,sum)==0) {
 					found = 1;
 				}
@@ -698,7 +698,7 @@ int osd_fchecksum (const char *game, const char *filename, unsigned int *length,
 
 		if (!found) {
 			/* try with a .zip extension */
-			sprintf(name,"%s/%s.zip", dirname, gamename);
+			sprintf(name,"%s/%s.zip", dir_name, gamename);
 			if (cache_stat(name,&stat_buffer)==0) {
 				if (checksum_zipped_file (name, filename, length, sum)==0) {
 					if (errorlog)
@@ -710,9 +710,9 @@ int osd_fchecksum (const char *game, const char *filename, unsigned int *length,
 
 		if (!found) {
 			/* try with a .zif directory (if ZipFolders is installed) */
-			sprintf(name,"%s/%s.zif",dirname,gamename);
+			sprintf(name,"%s/%s.zif",dir_name,gamename);
 			if (cache_stat(name,&stat_buffer)==0) {
-				sprintf(name,"%s/%s.zif/%s",dirname,gamename,filename);
+				sprintf(name,"%s/%s.zif/%s",dir_name,gamename,filename);
 				if (checksum_file(name,0,length,sum)==0) {
 					found = 1;
 				}

@@ -1470,17 +1470,16 @@ ROM_START( scobra_rom )
 	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xa96316d3 )
+	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	/* the ROMs were bad - I took the ones from the Konami version */
-	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0xd4346959 )
-	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xcc025d95 )
-	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0x1628c53f )
+	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
+	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
+	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
 ROM_START( scobrak_rom )
@@ -1509,20 +1508,15 @@ ROM_START( scobrab_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800, 0xaeddf391 )
 	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800, 0x72b57eb7 )
-	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800, 0xa26ded8c )
-	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800, 0xdf1a0519 )
-	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800, 0x2db3e68c )
-	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800, 0xa40158db )
-	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800, 0xb9e07c80 )
-	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800, 0x96ea7388 )
-	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800, 0x97aefb83 )
-	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800, 0x72254b10 )
-	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800, 0xd3b91f19 )
-	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800, 0x1bcc7875 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0xbdd70346 )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0xdca5ec31 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x0d8f6b6e )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800, 0xa96316d3 )
+	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )

@@ -246,7 +246,7 @@ static void irqhandler(void)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3.000000 MHz ? (partially supported) */
+	3600000,	/* 3.6 MHz ? (hand tuned) */
 	{ 255 },		/* (not supported) */
 	irqhandler,
 };
@@ -266,7 +266,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz ??? */
+			3600000,	/* 3.6 Mhz ??? */
 			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */

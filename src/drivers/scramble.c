@@ -1098,6 +1098,7 @@ static struct MemoryReadAddress triplep_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
 	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x7000, 0x7000, watchdog_reset_r },
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */

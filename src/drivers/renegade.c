@@ -475,7 +475,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.6 MHz ? (hand tuned) */
+	3250000,	/* 3.25 MHz ? (hand tuned) */
 	{ 255 }		/* (not supported) */
 };
 

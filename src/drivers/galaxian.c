@@ -1255,10 +1255,19 @@ static void galaxian_hisave(void)
 static int pisces_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x4021],0xff,3);	/* high score */
+			firsttime = 1;
+		}
 
 
 	/* wait for the screen to initialize */
-	if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
+	if (memcmp(&RAM[0x4021],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -1268,7 +1277,7 @@ static int pisces_hiload(void)
 			osd_fread(f,&RAM[0x4021],3);
 			osd_fclose(f);
 		}
-
+		firsttime= 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -1292,10 +1301,19 @@ static void pisces_hisave(void)
 static int warofbug_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+static int firsttime;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x4034],0xff,3);	/* high score */
+			firsttime = 1;
+		}
 
 
 	/* wait for memory to be set */
-	if (memcmp(&RAM[0x4045],"\x1F\x1F",2) == 0)
+	if (memcmp(&RAM[0x4034],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -1305,7 +1323,7 @@ static int warofbug_hiload(void)
 			osd_fread(f,&RAM[0x4034],3);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -1328,11 +1346,28 @@ static void warofbug_hisave(void)
 
 static int pacmanbl_hiload(void)
 {
+	static int firsttime;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* wait for "HIGH" to be on screen */
-	if (memcmp(&RAM[0x5240],"\x48\x40",2) == 0)
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+		if (firsttime == 0)
+		{
+			memset(&RAM[0x4288],0xff,3);	/* high score */
+			firsttime = 1;
+		}
+
+
+	/* Check for score to be initialised, and wait for "HIGH" to be on screen */
+
+	if (memcmp(&RAM[0x4288],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x5180],"\x40",1) == 0 && memcmp(&RAM[0x51a0],"\x40",1) == 0 &&
+		memcmp(&RAM[0x51c0],"\x40",1) == 0 && memcmp(&RAM[0x51e0],"\x40",1) == 0 &&
+		memcmp(&RAM[0x5200],"\x40",1) == 0 && memcmp(&RAM[0x5220],"\x40",1) == 0 &&
+		memcmp(&RAM[0x5240],"\x48",1) == 0 && memcmp(&RAM[0x5260],"\x47",1) == 0 &&
+		memcmp(&RAM[0x5280],"\x49",1) == 0 && memcmp(&RAM[0x52a0],"\x48",1) == 0)
 	{
 		void *f;
 
@@ -1342,7 +1377,7 @@ static int pacmanbl_hiload(void)
 			osd_fread(f,&RAM[0x4288],3);
 			osd_fclose(f);
 
-			hi = (RAM[0x4288] & 0x0f) +
+			hi = 	(RAM[0x4288] & 0x0f) +
 					(RAM[0x4288] >> 4) * 10 +
 					(RAM[0x4289] & 0x0f) * 100 +
 					(RAM[0x4289] >> 4) * 1000 +
@@ -1362,7 +1397,7 @@ static int pacmanbl_hiload(void)
 			if (hi >= 100000)
 				RAM[0x5220] = RAM[0x428a] >> 4;
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
@@ -1380,6 +1415,94 @@ static void pacmanbl_hisave(void)
 		osd_fclose(f);
 	}
 }
+
+
+static int zigzag_hiload(void)
+{
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    /* wait for memory to be set */
+    if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            int hi;
+            osd_fread(f,&RAM[0x4280],3);
+            osd_fclose(f);
+
+            hi = (RAM[0x4280] & 0x0f) +
+                (RAM[0x4280] >> 4) * 10 +
+                (RAM[0x4281] & 0x0f) * 100 +
+                (RAM[0x4281] >> 4) * 1000 +
+                (RAM[0x4282] & 0x0f) * 10000 +
+                (RAM[0x4282] >> 4) * 100000;
+
+            if (hi > 0)
+                RAM[0x52d] = 0x30+(RAM[0x4280] & 0x0F);
+            if (hi >= 10)
+                RAM[0x52e] = 0x30+(RAM[0x4280] >> 4);
+            if (hi >= 100)
+                RAM[0x52f] = 0x30+(RAM[0x4281] & 0x0F);
+            if (hi >= 1000)
+                RAM[0x530] = 0x30+(RAM[0x4281] >> 4);
+            if (hi >= 10000)
+                RAM[0x531] = 0x30+(RAM[0x4282] & 0x0F);
+            if (hi >= 100000)
+                RAM[0x532] = 0x30+(RAM[0x4282] >> 4);
+        }
+
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void zigzag_hisave(void)
+{
+    void *f;
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+        osd_fwrite(f,&RAM[0x4280],3);
+        osd_fclose(f);
+    }
+}
+
+static int mooncrgx_hiload(void)
+{
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    /* wait for memory to be set */
+    if (memcmp(&RAM[0x4042],"\x00\x50\x00",3) == 0)
+
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x4042],84);
+       		osd_fclose(f);
+
+
+        }
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void mooncrgx_hisave(void)
+{
+    void *f;
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+	   osd_fwrite(f,&RAM[0x4042],84);
+	   osd_fclose(f);
+    }
+}
+
 
 
 
@@ -1771,7 +1894,7 @@ struct GameDriver zigzag_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	zigzag_hiload, zigzag_hisave
 };
 
 struct GameDriver zigzag2_driver =
@@ -1797,7 +1920,7 @@ struct GameDriver zigzag2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	zigzag_hiload, zigzag_hisave
 };
 
 extern struct GameDriver mooncrst_driver;
@@ -1824,13 +1947,5 @@ struct GameDriver mooncrgx_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	mooncrgx_hiload, mooncrgx_hisave
 };
-
-
-
-
-
-
-
-

@@ -297,6 +297,20 @@ const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);
 
+/* Joystick calibration routines BW 19981216 */
+/* Do we need to calibrate the joystick at all? */
+int osd_joystick_needs_calibration (void);
+/* Preprocessing for joystick calibration. Returns 0 on success */
+void osd_joystick_start_calibration (void);
+/* Prepare the next calibration step. Return a description of this step. */
+/* (e.g. "move to upper left") */
+char *osd_joystick_calibrate_next (void);
+/* Get the actual joystick calibration data for the current position */
+void osd_joystick_calibrate (void);
+/* Postprocessing (e.g. saving joystick data to config) */
+void osd_joystick_end_calibration (void);
+
+
 void osd_trak_read(int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */

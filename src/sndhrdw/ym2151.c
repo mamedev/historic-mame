@@ -880,7 +880,7 @@ int YM2151Init(int num, int clock, int rate,int sample_bits )
     for ( i = 0 ; i < YMNumChips; i++ )
     {
 	YMPSG[i].clock = clock;
-	YMPSG[i].sampfreq = rate;
+	YMPSG[i].sampfreq = rate ? rate : 10000;	/* avoid division by 0 in init_chip_tables() */
 	YMPSG[i].handler = NULL;     /*interrupt handler */
 	YMPSG[i].porthandler = NULL; /*port write handler*/
 	init_chip_tables(&YMPSG[i]);

@@ -270,11 +270,16 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 
 	xr = ((x - background_scrollx) & 0xff) / 8;
 	yr = ((y - background_scrolly) & 0xff) / 8;
+
 	/* TODO: bits 5 and 6 of backgroundram are also used (e.g. Pitfall2, Mr. Viking) */
 	/* what's the difference? Bit 7 is used in Choplifter/WBML for extra char bank */
 	/* selection, but it is also set in Pitfall2 */
-	if (system8_backgroundram[2 * (32 * yr + xr) + 1] & 0x10)
+
+	/* I have to use cpu_readmem16() to pass through the memory handler which handles */
+	/* RAM banking in games running on WBML hardware */
+	if (cpu_readmem16(2 * (32 * yr + xr) + 1) & 0x10)
 		system8_background_collisionram[0x20 + spr_number] = 0xff;
+
 	/* TODO: collision should probably be checked with the foreground as well */
 	/* (TeddyBoy Blues, head of the tiger in girl bonus round) */
 }
@@ -563,7 +568,7 @@ static void system8_draw_bg(struct osd_bitmap *bitmap,int priority)
 		{
 			if ((system8_backgroundram[offs+1] & 0x08) == priority)
 			{
-				int code,color,transp;
+				int code,color;
 
 
 				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));
@@ -697,7 +702,7 @@ void chplft_draw_bg(struct osd_bitmap *bitmap, int priority)
 		{
 			if ((system8_backgroundram[offs+1] & 0x08) == priority)
 			{
-				int code,color,transp;
+				int code,color;
 
 
 				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));

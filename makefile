@@ -52,7 +52,7 @@ CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 #CFLAGS = -Isrc -Isrc/msdos -O -mpentium -Wall -Werror -g
 LDFLAGS = -s
 #LDFLAGS =
-LIBS   = -lalleg $(DJDIR)/lib/audiodjf.a \
+LIBS   = -lalleg $(DJDIR)/lib/libaudio.a \
 	 obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
 	 obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
 	 obj/midw8080.a obj/midwz80.a obj/meadows.a obj/astrocde.a \

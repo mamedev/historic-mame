@@ -200,8 +200,12 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				badarchive = 1;
 				break;
 			case AUD_LENGTH_MISMATCH:
-				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
+				if (aud->expchecksum)
+					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
+				else
+					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP EXISTS\n",
+						drivers[game]->name, aud->rom, aud->explength);
 				badarchive = 1;
 				break;
 			case AUD_ROM_GOOD:

@@ -7,7 +7,7 @@
 
 	Byte 0:
 		Bit 0 : Y co-ord hi bit
-    Bit 1,2: ?
+		Bit 1,2: ?
 		Bit 3,4 : Sprite height (1x, 2x, 4x, 8x)
 		Bit 5  - X flip
 		Bit 6  - Y flip
@@ -15,11 +15,12 @@
 	Byte 1: Y-coords
 	Byte 2:
 		Bit 0,1,2,3: Hi bits of sprite number
-		Bit 4,5,6,7: ?????
+		Bit 4,5,6,7: (Probably unused MSB's of sprite)
 	Byte 3: Low bits of sprite number
 	Byte 4:
 		Bit 0 : X co-ords hi bit
-		Bit 1,2,3: ? (can be set when enemy is killed - flash?)
+		Bit 1,2: ??
+		Bit 3: Sprite flash (sprite is displayed every other frame)
 		Bit 4,5,6,7:  - Colour
 	Byte 5: X-coords
 
@@ -63,12 +64,14 @@
    6: Style of rowscroll (maybe only low 3 bits) (see below)
 
 Rowscroll style - bank 1 register 6:
-	0: 512 scroll registers (Robocop)
-	3: 32 scroll registers (Heavy Barrel)
+	0: 256 scroll registers (Robocop)
+	1: 128?
+	2: 64?
+	3: 32 scroll registers (Heavy Barrel, Midres)
 	4: 16 scroll registers (Bad Dudes, Sly Spy)
-	5: ? (Hippodrome)
-	7: 4 scroll registers (Heavy Barrel)
-	8: 2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
+	5: 8? (Hippodrome)
+	6: 4 scroll registers (Heavy Barrel)
+	7: 2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
 
 Priority:
 	Bit 0 set = Playfield 3 drawn over Playfield 2
@@ -84,14 +87,11 @@ Priority:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-//#define DE_DEBUG
-
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x800	/* Size of background and foreground */
 
 
 /* Video */
-unsigned char *dec0_sprite,*dec0_mem;
 unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
 static unsigned char *dec0_pf1_dirty,*dec0_pf3_dirty,*dec0_pf2_dirty;
 static struct osd_bitmap *dec0_pf1_bitmap;
@@ -115,15 +115,11 @@ static int dec0_pri;
 /* Prototypes for this file */
 void dec0_vh_stop (void);
 
-int dec0_unknown1,dec0_unknown2; /* Temporary */
-
-
-
+/******************************************************************************/
 
 static void update_24bitcol(int offset)
 {
 	int r,g,b;
-
 
 	r = (READ_WORD(&paletteram[offset]) >> 0) & 0xff;
 	g = (READ_WORD(&paletteram[offset]) >> 8) & 0xff;
@@ -144,7 +140,7 @@ void dec0_paletteram_w_b(int offset,int data)
 	update_24bitcol(offset);
 }
 
-
+/******************************************************************************/
 
 /* pf23priority: 1 -> pf2 transparent, pf3 not transparent */
 /*               0 -> pf2 not transparent, pf3 transparent */
@@ -155,14 +151,10 @@ static void dec0_update_palette(int pf23priority)
 	int colmask[16];
 	int pal_base;
 
-
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
-
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0; offs < TEXTRAM_SIZE;offs += 2)
 	{
 		code = READ_WORD(&dec0_pf1_data[offs]);
@@ -184,9 +176,7 @@ static void dec0_update_palette(int pf23priority)
 
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
 	{
 		code = READ_WORD(&dec0_pf2_data[offs]);
@@ -208,9 +198,7 @@ static void dec0_update_palette(int pf23priority)
 
 
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
 	{
 		code = READ_WORD(&dec0_pf3_data[offs]);
@@ -232,24 +220,26 @@ static void dec0_update_palette(int pf23priority)
 
 
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
 		int x,y,sprite,multi;
 
-
-		y = READ_WORD(&dec0_sprite[offs]);
+		y = READ_WORD(&spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&dec0_sprite[offs+4]);
+		x = READ_WORD(&spriteram[offs+4]);
 		color = (x & 0xf000) >> 12;
 
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
 											/* multi = 0   1   3   7 */
 
-		sprite = READ_WORD (&dec0_sprite[offs+2]) & 0x0fff;
+		x = x & 0x01ff;
+		if (x >= 256) x -= 512;
+		x = 240 - x;
+		if (x>256) continue; /* Speedup + save colours */
+
+		sprite = READ_WORD (&spriteram[offs+2]) & 0x0fff;
 
 		sprite &= ~multi;
 
@@ -279,29 +269,34 @@ static void dec0_update_palette(int pf23priority)
 	}
 }
 
-
+/******************************************************************************/
 
 static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
+	static int flash_counter;
+	flash_counter++;
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash;
 
-		y = READ_WORD(&dec0_sprite[offs]);
+		y = READ_WORD(&spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&dec0_sprite[offs+4]);
-		colour = (x & 0xf000) >> 12;
+		x = READ_WORD(&spriteram[offs+4]);
+		colour = x >> 12;
 		if ((colour & pri_mask) != pri_val) continue;
+
+		flash=x&0x800;
+		if (flash && flash_counter%2) continue;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
 											/* multi = 0   1   3   7 */
 
-		sprite = READ_WORD (&dec0_sprite[offs+2]) & 0x0fff;
+		sprite = READ_WORD (&spriteram[offs+2]) & 0x0fff;
 
 		x = x & 0x01ff;
 		y = y & 0x01ff;
@@ -309,6 +304,8 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 		if (y >= 256) y -= 512;
 		x = 240 - x;
 		y = 240 - y;
+
+		if (x>256) continue; /* Speedup */
 
 		sprite &= ~multi;
 		if (fy)
@@ -332,6 +329,8 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 		}
 	}
 }
+
+/******************************************************************************/
 
 static void dec0_pf1_update(void)
 {
@@ -634,62 +633,165 @@ static void dec0_pf3_update(int transparent)
 
 void dec0_pf1_draw(struct osd_bitmap *bitmap)
 {
-	int offs;
+	int offs,lines,height,scrolly,scrollx;
+
+	scrollx = - READ_WORD(&dec0_pf1_control_1[0]);
+	scrolly = - READ_WORD(&dec0_pf1_control_1[2]);
 
 	/* We check for column scroll and use that if needed, otherwise use row scroll,
 	   I am 99% sure they are never needed at same time ;) */
 	if (READ_WORD(&dec0_pf1_colscroll[0])) /* This is NOT a good check for col scroll, I can't find real bit */
 	{
 		int cscrolly[64];
-		int scrollx;
-
-		scrollx = -READ_WORD(&dec0_pf1_control_1[0]);
 
 		for (offs = 0;offs < 32;offs++)
 		cscrolly[offs] = -READ_WORD(&dec0_pf1_control_1[2]) - READ_WORD(&dec0_pf1_colscroll[2*offs]);
 
 		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,32,cscrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
+
 	/* Row scroll enable bit (unsure if this enables/disables col scroll too) */
 	else if (READ_WORD(&dec0_pf1_control_0[0])&0x4)
 	{
-		int rscrollx[512],scrolly;
-		scrolly = -READ_WORD(&dec0_pf1_control_1[2]);
+		int rscrollx[1024];
 
+		/* Playfield shape */
+		switch (READ_WORD(&dec0_pf1_control_0[6]))
+		{
+			case 0:	height=1; break; /* 4x1, 256 rows */
+			case 1:	height=2; break; /* 2x2, 512 rows */
+			case 2:	height=4; break; /* 1x4, 1024 rows */
+			default: height=2; break; /* Never happens (I hope) */
+		}
+
+		/* Rowscroll style */
 		switch (READ_WORD(&dec0_pf1_control_1[6]))
 		{
-			case 8: /* Appears to be no row-scroll - so maybe only bottom 3 bits are style */
-				break;
-
-			case 4: /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
-				for (offs = 0;offs < 16;offs++)
-				rscrollx[offs] = -READ_WORD(&dec0_pf1_control_1[0]) - READ_WORD(&dec0_pf1_rowscroll[2*offs]);
-				copyscrollbitmap(bitmap,dec0_pf1_bitmap,16,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-				break;
-
-			case 3: /* 32 horizontal scroll registers (Heavy Barrel title screen) */
-				for (offs = 0;offs < 32;offs++)
-				rscrollx[offs] = -READ_WORD(&dec0_pf1_control_1[0]) - READ_WORD(&dec0_pf1_rowscroll[2*offs]);
-				copyscrollbitmap(bitmap,dec0_pf1_bitmap,32,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-				break;
-
-			case 0: /* 512 horizontal scroll registers (Robocop) */
-				for (offs = 0;offs < 512;offs++)
-				rscrollx[offs] = -READ_WORD(&dec0_pf1_control_1[0]) - READ_WORD(&dec0_pf1_rowscroll[2*offs]);
-				copyscrollbitmap(bitmap,dec0_pf1_bitmap,512,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-				break;
-
-			default:
-				if (errorlog) fprintf(errorlog,"Warning: Unknown row scroll type %d selected\n",READ_WORD(&dec0_pf1_control_1[6]));
+			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
+			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
+			case 2: lines=64; break; /* 128 horizontal scroll registers (Not used?) */
+			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
+			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
+			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
+			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
+			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
+			case 8: lines=1; break; /* Appears to be no row-scroll - so maybe only bottom 3 bits are style */
+			default: lines=1; break; /* Just in case */
 		}
+
+		for (offs = 0; offs < lines*height; offs++)
+			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf1_rowscroll[offs<<1]);
+		copyscrollbitmap(bitmap,dec0_pf1_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 	else /* Scroll registers not enabled */
-	{
-		int scrollx,scrolly;
-
-		scrollx = -READ_WORD(&dec0_pf1_control_1[0]);
-		scrolly = -READ_WORD(&dec0_pf1_control_1[2]);
 		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+}
+
+void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
+{
+	int offs,lines,height,scrolly,scrollx;
+
+	scrollx = - READ_WORD(&dec0_pf2_control_1[0]);
+	scrolly = - READ_WORD(&dec0_pf2_control_1[2]);
+
+	/* Colscroll not supported for this playfield (does anything use it?) */
+
+	/* Row scroll enable bit (unsure if this enables/disables col scroll too) */
+	if (READ_WORD(&dec0_pf2_control_0[0])&0x4)
+	{
+		int rscrollx[1024];
+
+		/* Playfield shape */
+		switch (READ_WORD(&dec0_pf2_control_0[6]))
+		{
+			case 0:	height=1; break; /* 4x1, 256 rows */
+			case 1:	height=2; break; /* 2x2, 512 rows */
+			case 2:	height=4; break; /* 1x4, 1024 rows */
+			default: height=2; break; /* Never happens (I hope) */
+		}
+
+		/* Rowscroll style */
+		switch (READ_WORD(&dec0_pf2_control_1[6]))
+		{
+			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
+			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
+			case 2: lines=64; break; /* 128 horizontal scroll registers (Not used?) */
+			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
+			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
+			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
+			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
+			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
+			case 8: lines=1; break; /* Appears to be no row-scroll */
+			default: lines=1; break; /* Just in case */
+		}
+
+		for (offs = 0; offs < lines*height; offs++)
+			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf2_rowscroll[offs<<1]);
+
+		if (trans)
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else { /* Scroll registers not enabled */
+		if (trans)
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+}
+
+void dec0_pf3_draw(struct osd_bitmap *bitmap, int trans)
+{
+	int offs,lines,height,scrolly,scrollx;
+
+	scrollx = - READ_WORD(&dec0_pf3_control_1[0]);
+	scrolly = - READ_WORD(&dec0_pf3_control_1[2]);
+
+	/* Colscroll not supported for this playfield (does anything use it?) */
+
+	/* Row scroll enable bit (unsure if this enables/disables col scroll too) */
+	if (READ_WORD(&dec0_pf3_control_0[0])&0x4)
+	{
+		int rscrollx[1024];
+
+		/* Playfield shape */
+		switch (READ_WORD(&dec0_pf3_control_0[6]))
+		{
+			case 0:	height=1; break; /* 4x1, 256 rows */
+			case 1:	height=2; break; /* 2x2, 512 rows */
+			case 2:	height=4; break; /* 1x4, 1024 rows */
+			default: height=2; break; /* Never happens (I hope) */
+		}
+
+		/* Rowscroll style */
+		switch (READ_WORD(&dec0_pf3_control_1[6]))
+		{
+			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
+			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
+			case 2: lines=64; break; /* 128 horizontal scroll registers (Not used?) */
+			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
+			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
+			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
+			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
+			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
+			case 8: lines=1; break; /* Appears to be no row-scroll - so maybe only bottom 3 bits are style */
+			default: lines=1; break; /* Just in case */
+		}
+
+		for (offs = 0; offs < lines*height; offs++)
+			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf3_rowscroll[offs<<1]);
+
+		if (trans)
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else { /* Scroll registers not enabled */
+		if (trans)
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -697,92 +799,37 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 
 void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-
+	int offs;
 
 	/* WARNING: priority inverted wrt all the other games */
 	dec0_update_palette(~dec0_pri & 0x01);
-
-	/* Scroll positions */
-	xscroll_b=READ_WORD(&dec0_pf3_control_1[0]);
-	yscroll_b=READ_WORD(&dec0_pf3_control_1[2]);
-	xscroll_f=READ_WORD(&dec0_pf2_control_1[0]);
-	yscroll_f=READ_WORD(&dec0_pf2_control_1[2]);
-
 	dec0_pf1_update();
 
-
-/* WARNING: inverted wrt Midnight Resistance */
-if ((dec0_pri & 0x01) == 0)
-{
-	int scrollx[32];
-	int scrolly;
-
-
-	dec0_pf2_update(0);
-	dec0_pf3_update(1);
-
-    /* Foreground */
-	for (offs = 0;offs < 32;offs++)
-		scrollx[offs] = -xscroll_f;
-	if (READ_WORD(&dec0_pf2_control_1[6]) == 0x04)
+	/* WARNING: inverted wrt Midnight Resistance */
+	if ((dec0_pri & 0x01) == 0)
 	{
-		for (offs = 0;offs < 16;offs++)
-			scrollx[offs] -= READ_WORD(&dec0_pf2_rowscroll[2*offs]);
-	}
-   	scrolly=-yscroll_f;
-	copyscrollbitmap(bitmap,dec0_pf2_bitmap,32,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		dec0_pf2_update(0);
+		dec0_pf3_update(1);
 
-    /* Background */
-	for (offs = 0;offs < 32;offs++)
-		scrollx[offs] = -xscroll_b;
-	if (READ_WORD(&dec0_pf3_control_1[6]) == 0x04)
+		dec0_pf2_draw(bitmap,0);
+		dec0_pf3_draw(bitmap,1);
+
+		/* I'm not supporting sprite priority because I can't figure out how it works. */
+		/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
+		dec0_drawsprites(bitmap,0x00,0x00);
+	}
+	else
 	{
-		for (offs = 0;offs < 16;offs++)
-			scrollx[offs] -= READ_WORD(&dec0_pf3_rowscroll[2*offs]);
+		dec0_pf3_update(0);
+		dec0_pf2_update(1);
+
+		dec0_pf3_draw(bitmap,0);
+		dec0_pf2_draw(bitmap,1);
+
+		/* I'm not supporting sprite priority because I can't figure out how it works. */
+		/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
+		dec0_drawsprites(bitmap,0x00,0x00);
 	}
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,32,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* I'm not supporting sprite priority because I can't figure out how it works. */
-	/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
-	dec0_drawsprites(bitmap,0x00,0x00);
-}
-else
-{
-	int scrollx[32];
-	int scrolly;
-
-
-	dec0_pf3_update(0);
-	dec0_pf2_update(1);
-
-    /* Background */
-	for (offs = 0;offs < 32;offs++)
-		scrollx[offs] = -xscroll_b;
-	if (READ_WORD(&dec0_pf3_control_1[6]) == 0x04)
-	{
-		for (offs = 0;offs < 16;offs++)
-			scrollx[offs] -= READ_WORD(&dec0_pf3_rowscroll[2*offs]);
-	}
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,32,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-    /* Foreground */
-	for (offs = 0;offs < 32;offs++)
-		scrollx[offs] = -xscroll_f;
-	if (READ_WORD(&dec0_pf2_control_1[6]) == 0x04)
-	{
-		for (offs = 0;offs < 16;offs++)
-			scrollx[offs] -= READ_WORD(&dec0_pf2_rowscroll[2*offs]);
-	}
-   	scrolly=-yscroll_f;
-	copyscrollbitmap(bitmap,dec0_pf2_bitmap,32,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* I'm not supporting sprite priority because I can't figure out how it works. */
-	/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
-	dec0_drawsprites(bitmap,0x00,0x00);
-}
 
 	dec0_pf1_draw(bitmap);
 }
@@ -791,87 +838,62 @@ else
 
 void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-	int scrollx,scrolly;
-
-
 	dec0_update_palette(dec0_pri & 0x01);
-
-	/* Scroll positions */
-	xscroll_b=READ_WORD (&dec0_pf3_control_1[0]);
-	yscroll_b=READ_WORD (&dec0_pf3_control_1[2]);
-	xscroll_f=READ_WORD (&dec0_pf2_control_1[0]);
-	yscroll_f=READ_WORD (&dec0_pf2_control_1[2]);
-
 	dec0_pf1_update();
 
-if (dec0_pri & 0x01)
-{
-	int trans;
+	if (dec0_pri & 0x01)
+	{
+		int trans;
 
+		dec0_pf2_update(0);
+		dec0_pf3_update(1);
 
-	dec0_pf2_update(0);
-	dec0_pf3_update(1);
+		/* WARNING: inverted wrt Midnight Resistance */
+		/* Robocop uses it only for the title screen, so this might be just */
+		/* completely wrong. The top 8 bits of the register might mean */
+		/* something (they are 0x80 in midres, 0x00 here) */
+		if (dec0_pri & 0x04)
+			trans = 0x08;
+		else trans = 0x00;
 
-	/* WARNING: inverted wrt Midnight Resistance */
-	/* Robocop uses it only for the title screen, so this might be just */
-	/* completely wrong. The top 8 bits of the register might mean */
-	/* something (they are 0x80 in midres, 0x00 here) */
-	if (dec0_pri & 0x04)
-		trans = 0x08;
-	else trans = 0x00;
+		dec0_pf2_draw(bitmap,0);
 
-    /* Foreground */
-    scrollx=-xscroll_f;
-   	scrolly=-yscroll_f;
-   	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (dec0_pri & 0x02)
+			dec0_drawsprites(bitmap,0x08,trans);
 
-	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans);
+		dec0_pf3_draw(bitmap,1);
 
-    /* Background */
-    scrollx=-xscroll_b;
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
-	else
-		dec0_drawsprites(bitmap,0x00,0x00);
+		if (dec0_pri & 0x02)
+			dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
+		else
+			dec0_drawsprites(bitmap,0x00,0x00);
 }
 else
 {
-	int trans;
+		int trans;
 
+		dec0_pf3_update(0);
+		dec0_pf2_update(1);
 
-	dec0_pf3_update(0);
-	dec0_pf2_update(1);
+		/* WARNING: inverted wrt Midnight Resistance */
+		/* Robocop uses it only for the title screen, so this might be just */
+		/* completely wrong. The top 8 bits of the register might mean */
+		/* something (they are 0x80 in midres, 0x00 here) */
+		if (dec0_pri & 0x04)
+			trans = 0x08;
+		else trans = 0x00;
 
-	/* WARNING: inverted wrt Midnight Resistance */
-	/* Robocop uses it only for the title screen, so this might be just */
-	/* completely wrong. The top 8 bits of the register might mean */
-	/* something (they are 0x80 in midres, 0x00 here) */
-	if (dec0_pri & 0x04)
-		trans = 0x08;
-	else trans = 0x00;
+		dec0_pf3_draw(bitmap,0);
 
-    /* Background */
-    scrollx=-xscroll_b;
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (dec0_pri & 0x02)
+			dec0_drawsprites(bitmap,0x08,trans);
 
-	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans);
+		dec0_pf2_draw(bitmap,1);
 
-    /* Foreground */
-    scrollx=-xscroll_f;
-   	scrolly=-yscroll_f;
-   	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
-	else
-		dec0_drawsprites(bitmap,0x00,0x00);
+		if (dec0_pri & 0x02)
+			dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
+		else
+			dec0_drawsprites(bitmap,0x00,0x00);
 }
 
 	dec0_pf1_draw(bitmap);
@@ -881,61 +903,16 @@ else
 
 void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-	int scrollx,scrolly;
-
-
 	dec0_update_palette(dec0_pri & 0x01);
-
-  /* Scroll positions */
-  xscroll_b=READ_WORD (&dec0_pf3_control_1[0]);
-  yscroll_b=READ_WORD (&dec0_pf3_control_1[2]);
-  xscroll_f=READ_WORD (&dec0_pf2_control_1[0]);
-  yscroll_f=READ_WORD (&dec0_pf2_control_1[2]);
 
 	dec0_pf1_update();
 	dec0_pf3_update(0);
 	dec0_pf2_update(1);
 
-  /* Background layer */
-  scrollx=-xscroll_b;
- 	scrolly=-yscroll_b;
+	dec0_pf3_draw(bitmap,0);
+	dec0_pf2_draw(bitmap,1);
 
-	/* Row scroll enable bit */
-	if (READ_WORD(&dec0_pf3_control_0[0])&0x4) {
-  	int rscrollx[8],offs;
-
-  	/* 2 registers, bitmap is twice size of screen so we double rowscroll usage */
-		if (READ_WORD(&dec0_pf2_control_1[6]) == 0x08)
-		{
-			for (offs = 0;offs < 2;offs++) {
-				rscrollx[offs]   =  - READ_WORD(&dec0_pf3_rowscroll[2*offs]) - READ_WORD(&dec0_pf3_control_1[0]);
-        rscrollx[offs+2] =  - READ_WORD(&dec0_pf3_rowscroll[2*offs]) - READ_WORD(&dec0_pf3_control_1[0]);
-      }
-
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,4,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-
-    /* 4 registers */
-    if (READ_WORD(&dec0_pf2_control_1[6]) == 0x07)
-		{
-			for (offs = 0;offs < 4;offs++) {
-				rscrollx[offs]   = - READ_WORD(&dec0_pf3_rowscroll[2*offs]) - READ_WORD(&dec0_pf3_control_1[0]);
-        rscrollx[offs+4] = - READ_WORD(&dec0_pf3_rowscroll[2*offs]) - READ_WORD(&dec0_pf3_control_1[0]);
-      }
-
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,8,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
- 	}
-  else
-		copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-  /* Foreground */
-  scrollx=-xscroll_f;
-	scrolly=-yscroll_f;
-	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-  /* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
+	/* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
@@ -943,29 +920,11 @@ void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-
-
 	dec0_update_palette(dec0_pri & 0x01);
 
-	/* Scroll positions */
-	xscroll_b=READ_WORD(&dec0_pf3_control_1[0]);
-	yscroll_b=READ_WORD(&dec0_pf3_control_1[2]);
-	xscroll_f=READ_WORD(&dec0_pf2_control_1[0]);
-	yscroll_f=READ_WORD(&dec0_pf2_control_1[2]);
-
 	dec0_pf1_update();
-	dec0_pf2_update(0);
-
-   {
-    int scrollx;
-    int scrolly;
-
-    scrollx=-xscroll_f;
-   	scrolly=-yscroll_f;
-   	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-   }
-
+	dec0_pf2_update(0); /* This is really the top layer.. */
+	dec0_pf2_draw(bitmap,0);
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
@@ -975,28 +934,13 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-  int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-
-
 	dec0_update_palette(dec0_pri & 0x01);
 
-  /* Scroll positions */
-  xscroll_b=READ_WORD (&dec0_pf3_control_1[0]);
-  yscroll_b=READ_WORD (&dec0_pf3_control_1[2]);
-  xscroll_f=READ_WORD (&dec0_pf2_control_1[0]);
-  yscroll_f=READ_WORD (&dec0_pf2_control_1[2]);
-
 	dec0_pf1_update();
-
-
-   {
-    int scrollx;
-    int scrolly;
 
 if (dec0_pri & 0x01)
 {
 	int trans;
-
 
 	dec0_pf2_update(0);
 	dec0_pf3_update(1);
@@ -1005,18 +949,12 @@ if (dec0_pri & 0x01)
 		trans = 0x00;
 	else trans = 0x08;
 
-    /* Foreground */
-    scrollx=-xscroll_f;
-   	scrolly=-yscroll_f;
-   	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	dec0_pf2_draw(bitmap,0);
 
 	if (dec0_pri & 0x02)
 		dec0_drawsprites(bitmap,0x08,trans);
 
-    /* Background */
-    scrollx=-xscroll_b;
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	dec0_pf3_draw(bitmap,1);
 
 	if (dec0_pri & 0x02)
 		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
@@ -1035,26 +973,18 @@ else
 		trans = 0x00;
 	else trans = 0x08;
 
-    /* Background */
-    scrollx=-xscroll_b;
-   	scrolly=-yscroll_b;
-    copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	dec0_pf3_draw(bitmap,0);
 
 	if (dec0_pri & 0x02)
 		dec0_drawsprites(bitmap,0x08,trans);
 
-    /* Foreground */
-    scrollx=-xscroll_f;
-   	scrolly=-yscroll_f;
-   	copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	dec0_pf2_draw(bitmap,1);
 
 	if (dec0_pri & 0x02)
 		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
 	else
 		dec0_drawsprites(bitmap,0x00,0x00);
-}
-   }
-
+	}
 
 	dec0_pf1_draw(bitmap);
 }
@@ -1063,55 +993,18 @@ else
 
 void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,xscroll_f,yscroll_f,xscroll_b,yscroll_b;
-
-
 	dec0_update_palette(dec0_pri & 0x01);
-
-	/* Scroll positions */
-	xscroll_b=READ_WORD (&dec0_pf3_control_1[0]);
-	yscroll_b=READ_WORD (&dec0_pf3_control_1[2]);
-	xscroll_f=READ_WORD (&dec0_pf2_control_1[0]);
-	yscroll_f=READ_WORD (&dec0_pf2_control_1[2]);
 
 	dec0_pf1_update();
 	dec0_pf3_update(0);
 	dec0_pf2_update(1);
 
-	{
-		int scrollx;
-		int scrolly;
-
-		/* Background area */
-		scrollx=-xscroll_b;
-		scrolly=-yscroll_b;
-		copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-		/* Foreground area */
-		scrolly=-yscroll_f;
-
-    /* Row scroll enable bit */
-  	if (READ_WORD(&dec0_pf2_control_0[0])&0x4)
-  	{
-			int rscrollx[16];
-
-      /* Sly Spy always uses style 4 - 16 registers */
-			for (offs = 0;offs < 16;offs++)
-				rscrollx[offs] = -xscroll_f - READ_WORD(&dec0_pf2_rowscroll[2*offs]);
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,16,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-		}
-		else
-		{
-			scrollx = -xscroll_f;
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-		}
-	}
+	dec0_pf3_draw(bitmap,0);
+	dec0_pf2_draw(bitmap,1);
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
 }
-
-
 
 /******************************************************************************/
 
@@ -1233,16 +1126,7 @@ int dec0_pf3_data_r(int offset)
 
 void dec0_priority_w(int offset,int data)
 {
-	if (offset == 0)
   	dec0_pri = data;
-	else
-		if (errorlog) fprintf(errorlog,"PC %06x write %02x to priority offset %d\n",cpu_getpc(),data,offset);
-}
-
-/* Nice 'wrap-around' patch which fixes sprite memory problems :) */
-void hippo_sprite_fix(int offset, int data)
-{
-	WRITE_WORD (&dec0_sprite[offset], data);
 }
 
 /******************************************************************************/
@@ -1283,54 +1167,10 @@ int dec0_vh_start (void)
 
 void dec0_vh_stop (void)
 {
-	#ifdef DE_DEBUG
-	int i;
-
-  FILE *fp;
-  fp=fopen("robo_hi.ram","wb");
-  fwrite(dec0_sprite,1,0x1000,fp);
-  fclose(fp);
-
-  fp=fopen("video.ram","wb");
-  fwrite(dec0_pf1_data,1,0x2000,fp);
-  fclose(fp);
-
-  fp=fopen("fore.ram","wb");
-  fwrite(dec0_pf2_data,1,0x800,fp);
-  fclose(fp);
-
-  fp=fopen("back.ram","wb");
-  fwrite(dec0_pf3_data,1,0x800,fp);
-  fclose(fp);
-
-  fp=fopen("pal_rg.ram","wb");
-  fwrite(paletteram,1,0x800,fp);
-  fclose(fp);
-
-  fp=fopen("pal_b.ram","wb");
-  fwrite(paletteram2,1,0x800,fp);
-  fclose(fp);
-
-  fp=fopen("system.rom","wb");
-  fwrite(RAM,1,0x60000,fp);
-  fclose(fp);
-
-  fp=fopen("system.ram","wb");
-  fwrite(dec0_mem,1,0x4000,fp);
-  fclose(fp);
-
-  fp=fopen("color.txt","wb");
-
-  fclose(fp);
-
-  #endif
-
 	osd_free_bitmap(dec0_pf2_bitmap);
 	osd_free_bitmap(dec0_pf3_bitmap);
 	osd_free_bitmap(dec0_pf1_bitmap);
 	free(dec0_pf3_dirty);
 	free(dec0_pf2_dirty);
 	free(dec0_pf1_dirty);
-
-  generic_vh_stop();
 }

@@ -52,7 +52,6 @@ static unsigned char *darkseal_ram;
 
 /* System prototypes - from machine/dec0.c */
 int slyspy_controls_read(int offset);
-int dude_interrupt(void);
 
 /******************************************************************************/
 
@@ -258,7 +257,7 @@ static struct MachineDriver darkseal_machine_driver =
 			10000000,
 			0,
 			darkseal_readmem,darkseal_writemem,0,0,
-			dude_interrupt,2
+			m68_level6_irq,1 /* VBL */
 		}, /*
 		{
 			CPU_??? | CPU_AUDIO_CPU,

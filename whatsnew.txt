@@ -1,128 +1,286 @@
-0.34 RELEASE CANDIDATE 1
+0.34
 
-New ROM sets supported (in no particular order):
-------------------------------------------------
+New ROM sets supported (in alphabetical order):
+-----------------------------------------------
 
-Space Panic (German) [Mike Coates]
-Cook Race (this was previously called hamburge) [Nicola Salmoria]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Accurate colors in Space Panic. [Mike Coates]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Preliminary sound support in the Exidy games. [Dan Boris]
-
-- Fixed music in Moon Patrol, Traverse USA and the other Irem games.
-  [Nicola Salmoria]
-
-- Samples support in Astro Fighter. [Zsolt Vasvari]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-NOTE: the high score save format has changed in some games to make it cross
-platform. The old scores for those games will be lost. If you see garbage in
-the high score table, or otherwise strange behaviour, delete the .hi file.
-
-- Scion, Stinger. [Zsolt Vasvari]
-
-- Block Out, Dark Seal, Cosmic Alien, Crazy Balloon, Radarscope, Side Track.
-  [Howie Cohen]
-
-- Lode Runner (all versions), Kid Niki, Spelunker II, Jail Break, The Main
-  Event, King of Boxer, Express Raider, Pac Land, Speed Ball. [Dave W.]
-
-
-Other drivers changes:
-----------------------
-
-- Fixed srumbler2. [Paul Leaman]
-
-
-Changes to the main program:
-----------------------------
-
-- When using the SoundBlaster OPL chip, YM3812 commands are converted to play
-  at the correct frequency. [Carl-Henrik Skårstedt]
-
-==========================================================================
-
-0.34 BETA 8
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-The Empire Strikes Back (not playable) [Brad Oliver]
-Liquid Kids [Brad Oliver]
-Growl [Brad Oliver]
-Speed Ball [Joseba Epalza]
-Sauro [Zsolt Vasvari]
-Magic Sword (USA) (merged) [Nicola Salmoria]
-P.O.W. [Bryan McPhail]
-Ghostbusters [Bryan McPhail]
-Maze Hunter [Bryan McPhail]
-Oscar (2 sets merged) [Bryan McPhail]
-RF2 [Andrew Prime]
-Gradius [Andrew Prime]
+1942 (set 3) (merged) [Nicola Salmoria]
+4D Warriors [Nicola Salmoria]
+600 (merged with Turtles) [John Dondzila]
+720 Degrees (set 2) (merged) [Nicola Salmoria]
+APB (set 2) (merged) (this fixes the title screen)
+Alex Kidd (not working) [Phil Stroffolino]
+Alien Storm (not working) [Phil Stroffolino]
+Alpine Ski (two sets merged) [John Butler]
+Area 88 (merged with UN Squadron) [Santeri Saarimaa]
+Arkanoid 2 [Luca Elia, Mirko Buffoni]
+Arm Wrestling [Nicola Salmoria]
+Armored Car (set 2) (merged) [Nicola Salmoria]
+Astro Fighter (set 3) (merged) [Zsolt Vasvari]
+Aurail (not working) [Phil Stroffolino]
+Avengers (two sets merged) (not working due to protection) [Paul Leaman]
+Bagman (Stern set 1) (merged) [Nicola Salmoria]
+Beastie Feastie [Clay Cowgill, Mike Balfour]
+Bio Attack (no collision detection) [Thierry Lescot]
+Bionic Commando (2 sets merged) [Steven Frew, Phil Stroffolino, Paul Leaman]
+Black Tiger (bootleg) (merged) [Marco Cassili]
+Block Gal (not working due to encryption) [Nicola Salmoria]
+Brain [Nicola Salmoria]
+Brix (merged with zzyzzyxx) [Brad Oliver]
+Bull Fight [Nicola Salmoria]
+Cop 01 (2 sets merged) [Carlos A. Lozano]
+Calipso [Brad Oliver]
+Captain Commando [Paul Leaman]
+Carrier Air Wing (World) (merged) [Nicola Salmoria]
+Checkmate [Al Kossow]
+Cheeky Mouse [Chris Moore]
+Commando (Data East) (merged) [Nicola Salmoria]
+Cook Race [Nicola Salmoria]
+Crystal Castles (set 2) (merged) [Nicola Salmoria]
+DakkoChan Jansoh (not working due to encryption) [Nicola Salmoria]
+Defence Command [Nicola Salmoria]
+Defense Command [David Winter]
+Discs of Tron (Upright) (merged) [Nicola Salmoria]
+Dynamite Dux [Phil Stroffolino]
+Dynasty Wars (not working) [Paul Leaman]
+E-Swat (not working) [Phil Stroffolino]
+Electric Yo-Yo (not working due to protection) [Al Kossow]
+Exciting Soccer (two sets merged) [Ernesto Corvi, Jarek Parchanski]
+Exerion (Taito) (merged) [Nicola Salmoria]
+Express Raider (2 sets merged) [Ernesto Corvi]
+Exterminator [Alex Pasadyn, Zsolt Vasvari]
+F1 Dream (bootleg) (merged) (this one works) [Paul Leaman]
+Fantasy Zone (not working) [Phil Stroffolino]
+Flash Point (not working) [Phil Stroffolino]
+Flicky (2 sets merged) [Nicola Salmoria]
+Formation Z (merged with Aeroboto) [Nicola Salmoria]
+Frogs [Nicola Salmoria]
+Future Spy [Nicola Salmoria]
 Galactic Warriors [Andrew Prime]
-TwinBee [Andrew Prime]
-Galivan [Luca Elia, Olivier Galibert]
-Jail Break [Ernesto Corvi]
-Kram (not playable) (2 sets merged)
-Meadows Lanes [Juergen Buchmueller]
-Heiankyo Alien [Nicola Salmoria]
-Cheeky Mouse (not working) [Chris Moore]
-Kid Niki [Phil Stroffolino]
-Spelunker II [Phil Stroffolino]
-Ghosts'n Goblins (new Cross set which replaces the old) [Zsolt Vasvari]
-Yankee Do! (merged with Mr. Do!) [Lee Taylor]
-Gunsmoke (US set 2, without the reset bug) (merged) [Nicola Salmoria]
-Legendary Wings (US set 2) (merged) [Nicola Salmoria]
-Smash TV (rev 5) (merged) [Alex Pasadyn]
-Trog (rev 3) (merged) [Zsolt Vasvari]
-Total Carnage (protottype) (merged) [Zsolt Vasvari]
-Mr. Do! (bugfixed) (merged) [Gareth Hall]
 Galaxy Rescue (merged with Lunar Rescue) [David Winter]
+Galivan [Luca Elia, Olivier Galibert]
+Gardia (not decrypted YET) [Nicola Salmoria]
+Get Star [Luca Elia]
+Ghostbusters [Bryan McPhail]
+Ghosts'n Goblins (2 new sets, merged) [Zsolt Vasvari, Nicola Salmoria]
+Golden Castle (merged with gladiatr) [Steve Ellenoff]
+Golden Star (blue version) (merged) [Mirko Buffoni]
+Gradius [Andrew Prime]
+Great Swordsman [Steve Ellenoff]
+Gridiron Fight [Nicola Salmoria]
+Growl [Brad Oliver]
+Gun Dealer (set 2) [Gerald Vanderick]
+Gunsmoke (US set 2, without the reset bug) (merged) [Nicola Salmoria]
+Hard Hat [Al Kossow]
+Heavy Metal [Nicola Salmoria]
+Heavyweight Champ (not working) [Phil Stroffolino]
+Heiankyo Alien [Nicola Salmoria]
 Heli Fire (set 2) [David Winter]
+Hi Impact Football [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+HigeMaru [Mirko Buffoni]
+Hustle [Frank Palazzolo]
+Hyper Olympic (bootleg using ADPCM samples) (merged) [David Winter]
+I'm Sorry (2 sets merged) [Nicola Salmoria]
+Intrepid [Zsolt Vasvari]
 Invader's Revenge (Dutchford) [David Winter]
-Super Invaders [David Winter]
-Sinistar (revision 2) (merged) (olso renamed oldsin to sinista1) [Howie Cohen]
-Pacland (set 1) (merged) (also renamed all of them, they are now
-  pacland, pacland2, pacland3, paclandm) [Nicola Salmoria]
+Jack Rabbit (2 new sets merged) [Nicola Salmoria]
+Jack the Giant Killer (set 2) (merged) [Thierry Lescot]
+Jail Break [Ernesto Corvi]
+Jump Shot (not working due to encryption) [Nicola Salmoria]
+Jumping (merged with Rainbow Islands) [Mike Coates]
+Jungler (Stern) (merged) [Nicola Salmoria]
+Kangaroo (bootleg) (merged) [Nicola Salmoria]
+Karate Champ (1 Player) [Ernesto Corvi]
+Karate Champ (VS and Karatedo, merged) [Ernesto Corvi]
+Kick (upright version) (merged) [Nicola Salmoria]
+Kid Niki [Phil Stroffolino]
+King & Balloon [Brad Oliver]
+Klax (set 3) (merged) [Nicola Salmoria]
+Kram (not playable) (2 sets merged)
+Kung Fu Master (2 new sets merged) [Nicola Salmoria]
+Lady Bug (bootleg) (merged) [Marco Cassili]
+Last Duel (bootleg) (this fixes the graphics) [Bryan McPhail]
+Legendary Wings (US set 2) (merged) [Nicola Salmoria]
+Liquid Kids [Brad Oliver]
+Lode Runner (set 1) (merged) [Nicola Salmoria]
+Lode Runner IV [Nicola Salmoria]
+Lost Tomb (hard) (merged) [Michael Appolo]
+M79 Ambush [Al Kossow]
+Magic Sword (USA) (merged) [Nicola Salmoria]
+Major League (not working) [Phil Stroffolino]
+Mania Challenge (set 2) (merged) [Nicola Salmoria]
+Max RPM (no sound due to missing ROMs) [Aaron Giles]
+Maze Hunter [Bryan McPhail]
+Meadows Lanes [Juergen Buchmueller]
+Mega Man (merged with Rockman) [Santeri Saarimaa]
+Mercs (3 sets merged) [Paul Leaman]
+Midnight Resistance (Japan) (merged) [Bryan McPhail]
+Mikie (headbutt version) (merged) [Nicola Salmoria]
+Missile Command (set 2) (merged) [Nicola Salmoria]
+Mister Viking [Nicola Salmoria]
+Moon War II (2 sets merged) [Brad Oliver]
+Mortal Kombat [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Mortal Kombat II (not working)
+Mr. Do! (Yukidaruma) (merged) [Nicola Salmoria]
+Mr. Do! (bugfixed) (merged) [Gareth Hall]
+Mr. TNT [Brad Oliver]
+My Hero (2 sets merged) [Nicola Salmoria]
+NBA Jam (not working)
+Narc [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Oscar (2 sets merged) [Bryan McPhail]
+Ozma Wars [Al Kossow]
+P.O.W. [Bryan McPhail]
+Pac Man Plus [Clay Cowgill, Mike Balfour]
+Pacland (set 1) (merged) [Nicola Salmoria]
+Pang [Paul Leaman]
+Penguin-Kun Wars (two sets merged) [Allard van der Bas]
+Phoenix (IRECSA) (merged) [David Winter]
+Pickin' [Nicola Salmoria]
+Pinball Action (set 2) (merged) [Marco Cassili]
+Pitfall II (encrypted version) (merged) [Nicola Salmoria]
 Polaris (set 2) [Victor Trucco]
+Pooyan (Konami) (merged) [Nicola Salmoria]
+Pot of Gold [Nicola Salmoria]
+Psychic 5 [Jarek Parchanski]
+Quartet II (not working) [Phil Stroffolino]
+Qwak (prototye) [Mike Balfour]
+RF2 [Andrew Prime]
+Regulus (2 sets merged) [Nicola Salmoria]
+Renegade (two sets, only the bootleg works) [Phil Stroffolino]
+Ring King / King of Boxer (merged) [Ernesto Corvi]
+River Patrol / Silver Land [Zsolt Vasvari]
+Road Fighter (set 2) (merged) [Nicola Salmoria]
+Rockman [Paul Leaman]
+Rygar (US set 1) (merged) [Nicola Salmoria]
+SDI (not working) [Phil Stroffolino]
+SWAT [Nicola Salmoria]
+Samurai [Nicola Salmoria]
+Sasuke vs. Commander [Nicola Salmoria]
+Sauro [Zsolt Vasvari]
+Scion (2 sets merged) [Nicola Salmoria]
+Sea Fighter Poseidon (not working due to protection) [Nicola Salmoria]
+Sega Ninja / Ninja Princess (merged) [Jarek Parchanski, Nicola Salmoria]
+Shark Attack [Victor Trucco]
+Side Track [Al Kossow]
+Sidearms (US) (merged) [Nicola Salmoria]
+Silkworm (set 2) (merged) [Nicola Salmoria]
+Sinistar (revision 2) (merged) [Howie Cohen]
+Smash TV (2 sets merged) [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
 Snow Bros (set 1) (merged) [Zsolt Vasvari]
+Space Fever (B&W) [Al Kossow]
+Space Panic (German) [Mike Coates]
+Space Trek (cocktail version) [Nicola Salmoria]
+Speak & Rescue [Al Kossow]
+Spectar (revision 3) (merged) [Al Kossow]
+Speed Ball [Joseba Epalza]
+Spelunker II [Phil Stroffolino]
+Star Jacker [Nicola Salmoria]
+Stinger [Nicola Salmoria]
+Street Fighter 2 (2 sets merged) [Paul Leaman]
+Strike Force [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Subs [Mike Balfour]
+Super Bagman (Valadon) (merged) [Nicola Salmoria]
+Super Casino [Thierry Lescot]
+Super Hi Impact [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Super Invaders [David Winter]
+Super Mouse [Brad Oliver]
+Superman [Howie Cohen, Brad Oliver]
+Tag Team Wrestling [Steve Ellenoff, Brad Oliver]
+Tecmo Knight [Nicola Salmoria]
+TeddyBoy Blues [Nicola Salmoria]
+Terminator 2 (not playable)
+Terra Cresta (two sets merged) [Carlos A. Lozano]
 Tetris (Cocktail set 1) (merged) [Zsolt Vasvari]
+The Billiards (merged with Video Hustler) [Nicola Salmoria]
+The Empire Strikes Back (not playable) [Brad Oliver]
+The King od Dragons (2 sets) [Paul Leaman]
+The Tin Star (not complete) [Nicola Salmoria]
+Tiger Heli (4 sets merged, only 2 work) [Nicola Salmoria]
+Time Pilot (Centuri) (merged) [Nicola Salmoria]
+Time Pilot 84 (set 2) (merged) [Nicola Salmoria]
+Time Scanner (not working) [Phil Stroffolino]
+Time Tunnel [Thierry Lescot]
+Toki no Senshi [Nicola Salmoria]
+Tokio / Scramble Formation (two sets merged) [Marcelo de G. Malheiros, Fredrik Sjostedt]
+Tomahawk 777 (two sets merged) [Zsolt Vasvari]
+Top Gunner (bootleg; also fixed the original set) [Nicola Salmoria]
+Total Carnage (2 sets merged) [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Tough Turf (not working) [Phil Stroffolino]
+Track & Field (Centuri) [Nicola Salmoria]
+Treasure Hunt (not working due to encryption) [Brad Oliver, Mike Balfour]
+Trog (3 sets merged) [Alex Pasadyn, Zsolt Vasvari, Kurt Mahan]
+Tron (set 2) (merged) [Nicola Salmoria]
+Turbo (preliminary) (3 sets merged) [Alex Pasadyn, Howie Cohen, Frank Palazzolo]
+Twin Cobra (preliminary) [Quench]
+TwinBee [Andrew Prime]
+Ufo Senshi Yohko Chan (not working due to encryption) [Nicola Salmoria]
+Vanguard (Centuri) (merged) [Nicola Salmoria]
+Varth [Paul Leaman]
+Vastar (set 2) (merged) [Nicola Salmoria]
+Venture (version 4) (merged) [Al Kossow]
+Venus (merged with Gyruss) [Nicola Salmoria]
+Vigilante (two sets merged) [Mike Balfour, Phil Stroffolino]
+Vulgus (set 2) (merged) [Nicola Salmoria]
+Water Ski [Nicola Salmoria]
+Western Express (merged with Express Raider) [Nicola Salmoria]
+Wonder Boy (many new sets, all merged) [Nicola Salmoria]
+Wonder Boy Monster Lair [Phil Stroffolino]
+Wrestle War [Phil Stroffolino]
+Yankee Do! (merged with Mr. Do!) [Lee Taylor]
+Zero Zone [Brad Oliver]
+Zig Zag (2 sets merged) [Nicola Salmoria]
 
 
-Neo Geo status
+
+NeoGeo Support
 --------------
+
+You need a zip file called neogeo.zip in your rompath.  It should contain at
+least three files:
+
+neo-geo.rom (128k)
+ng-sfix.rom (128k)
+ng-sm1.rom (128k)
+
+Important!  The bios zip file must be called neogeo.zip NOT neo-geo.zip, ie,
+there should be no dash in the middle.
+
+You also need to place the game zip in your rompath.  If you do not know what 8
+character filename the NeoGeo game you want to play has you can type:
+
+mame -listclones neogeo
+
+That will list the 8 character zip names of all currently supported games.
+
+- Optional rom loading of samples:  You may find games that do
+  not work now due to lack of memory as all the sound roms need to be loaded.
+  Some games will require an extra 16 megabytes of memory to load the sound
+  roms. You can force Mame NOT to load these samples if you specify no sound
+  BEFORE rom loading takes place.  In Dos this means you must type:
+
+  mame game -soundcard 0
+
+  If you DO NOT specify soundcard 0 then all sound roms will be loaded and
+  you may experience memory problems.
 
 - All games work, both in arcade and home mode. If you are stuck with a
   copyright message or the coin inputs don't work, delete the .CFG and .HI file
   for that game. This will fix the problem.
-  Super Sidekicks controls still stop working after a couple of minutes,
-  though.
+  Super Sidekicks controls stop working after a couple of minutes, though.
 
-- Sound support is 95% complete. If you experience garbled sound and you get
+- Sound support is 99% complete. If you experience garbled sound and you get
   NO GOOD DUMP EXISTS errors, this is caused by bad ROMs, not by imperfect
   emulation. There is NO WAY to fix that apart from redumping the bad ROMs.
 
 - If you get a Z80 ERROR message, it means that the sound program ROM is bad.
   Run the game without sound.
 
-- A few games have graphics glitches which are not easily fixed.
+- A few games have graphics glitches which are not easily fixed (raster line
+  effects).
 
-- "ROM length mismatch" errors. If you get these, you are just using ROMs
-  larger than the ones MAME expects. This is not a fatal error and the game
-  will still run fine (provided the ROMs are good, of course). You can "fix"
-  the ROMs yourself just by removing the second half of the file.
+- "ROM length mismatch" errors. If you get these, and you are using ROMs
+  larger than the ones MAME expects, then this is not a fatal error and the
+  game will still run fine (provided the ROMs are good, of course). You can
+  "fix" the ROMs yourself just by removing the second half of the file.
   Note that the sizes used by MAME are sort of arbitrary. In many cases it is
   difficult to know for sure which size the ROMs are really supposed to be, so
   we decided to consistently use the smallest possible files. The real ROMs
@@ -130,8 +288,50 @@ Neo Geo status
   it is either all FF, or contains a verbatim copy of the first half.
 
 
+
 These drivers have improved GRAPHICS:
 -------------------------------------
+
+- Fixed colors in Fast Freddie
+
+- In Mario Bros., the screen bounces when you hit POW. [Brad Oliver]
+
+- Improved Slap Fight. [Christoff Feldtmann]
+
+- Accurate colors in Money Money and Jack Rabbit. [Nicola Salmoria]
+
+- Enemies in TNZS are now visible, using the gfx ROMs from a new set (which is
+  not supported yet). [Chris Moore]
+
+- Fixed sticking sprites in Pnickies and Nemo. [Paul Leaman]
+
+- The background in Golden Star changes color correctly. [Nicola Salmoria]
+
+- Accurate colors in Astro Fighter (PROMs required). [Zsolt Vasvari]
+
+- Accurate colors in Lost Tomb (PROMs required). [Michael Appolo]
+
+- Fixed tile flipping bug in Solomon's Key. [Nicola Salmoria]
+
+- Fixed fg/bg priority in TeddyBoy Blues and Choplifter. [Nicola Salmoria]
+
+- Fixed transparency in Fire Trap. [Nicola Salmoria]
+
+- Fixed gfx banks in Pop Flamer. [Brad Oliver]
+
+- Pleiads colors might be correct now. [Nicola Salmoria]
+
+- Accurate colors in Strategy X. [Gerald Vanderick]
+
+- Backdrop support in Discs of Tron. The background image must be called
+  ARTWORK/DOTRON.PNG. [Mathis Rosenhauer, Brandon Kirkpatrick]
+
+- Fixed sprite flipping in Super Qix. [Mirko Buffoni]
+
+- Accurate colors in Jungler. Also fixed char flipping and sprite alignment.
+  [Nicola Salmoria]
+
+- Fixed bad graphics in Champion Baseball. [Nicola Salmoria]
 
 - Better colors in Scion (still not accurate) [Dick Millikan]
 
@@ -139,33 +339,53 @@ These drivers have improved GRAPHICS:
 
 - Added artwork support to Asteroid Deluxe. [Peter Hirschberg, Mathis Rosenhauer]
 
-- Background light support in Discs of Tron. [Mathis Rosenhauer]
-
 - Fixed mooncrgx. [Barry Rodewald]
 
 - High resolution sprites in Blasteroids. [Nicola Salmoria]
 
-- Rooms in Intrepid are now properly hidden until you enter them. Also fixed
-  the bridges in Round Up. [Nicola Salmoria]
+- Fixed flickering sprites in Super Space Invaders. [Andrew Prime]
 
-- Fixed flickering sprites in SSI. [Andrew Prime]
+- Accurate colors in Space Panic. [Mike Coates]
 
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Penguin-Kun Wars. [Roberto Fresca]
-
-- Cloak and Dagger, Frenzy, Future Spy, Cop 01. [Dave W.]
-
-- Exciting Soccer. [Jarek Parchanski]
-
-- Bionic Commando, Blasto, Tomahawk, Astro Invader, plus many fixes.
-  [Howie Cohen]
 
 
 These drivers have new or improved SOUND:
 -----------------------------------------
+
+- Sound in Gladiator. [Steve Ellenoff]
+
+- The music in Bubble Bobble stays in sync now. [Tatsuyuki Satoh]
+
+- Rewritten the SN76496 emulator. This fixes speech in Choplifter.
+  [Nicola Salmoria]
+
+- Fixed pitch in the System 8 games. [Hiromitsu Shioya]
+
+- Added RC filter emulation to Gyruss. This improves some sound effects, e.g.
+  the force field noise. [Francesco Caporali]
+
+- Sound in Mysterious Stones. [Nicola Salmoria]
+
+- Fixed sound pitch and tempo in Donkey Kong. [Mirko Buffoni]
+
+- Improved music tempo in SlapFight. [Sebastien Chevalier]
+
+- Sound in all of the working System 16 games. [Phil Stroffolino]
+
+- Emulation of the Astrocade sound chip (Gorf, Wizard of Wor, etc.)
+  [Frank Palazzolo]
+
+- Improved speech in Gorf. It now plays speech 100% accurately except for the
+  missing samples. [Kevin Bales]
+
+- Partial sound in Punk Shot. [Nicola Salmoria]
+
+- Sound in Super Space Invaders. [Ernesto Corvi]
+
+- Added decay to Donkey Kong. [Andrew Scott]
+
+- Added some more sound effects to Juno First. The shoot sound is still
+  missing. [Nicola Salmoria]
 
 - Improved the Pokey emulation. [Juergen Buchmueller]
 
@@ -178,20 +398,145 @@ These drivers have new or improved SOUND:
 
 - Partial sound in Satan of Saturn. [Nicola Salmoria]
 
+- Preliminary sound support in the Exidy games. [Dan Boris]
+
+- Fixed music in Moon Patrol, Traverse USA and the other Irem games.
+  [Nicola Salmoria]
+
+- Samples support in Astro Fighter. [Zsolt Vasvari]
+
+
+
+These drivers have HIGH SCORE support:
+--------------------------------------
+
+NOTE: the high score save format has changed in some games to make it cross
+platform. The old scores for those games will be lost. If you see garbage in
+the high score table, or otherwise strange behaviour, delete the .hi file.
+
+- Xain'd Sleena/Solar Warrior, Pinball Action, Tiger Road, Karnov, Chelnov,
+  Heavy Barrel, Bad Dudes, Robocop, Hippodrome, Sly Spy, Midnight Resistance,
+  Nemesis. [Dani Portillo]
+
+- Shark Attack. [Mike Balfour]
+
+- Flicky, Bull Fight, I'm Sorry, Star Jacker, Mr Viking, 4d Warrior, TeddyBoy
+  Blues, Beastie Feastie, Contra, Cobra Command, Super Qix, Vigilante, Pang,
+  HigeMaru, Hexa, Terra Cresta, Rastan, Tiger Heli. [Juan Carlos Lorente]
+
+- Quantum. [Nicola Salmoria]
+
+- Champion Baseball, Wonder Boy, Regulus, SWAT, Heavy Metal, Brain,
+  Toki no Senshi, Bionic Commando, Blasto, Tomahawk, Astro Invader,
+  Block Out, Dark Seal, Cosmic Alien, Crazy Balloon, Radarscope, Side Track.
+  [Howie Cohen]
+
+- Money Money, Jack Rabbit, Penguin-Kun Wars. [Roberto Fresca]
+
+- Cloak and Dagger, Frenzy, Future Spy, Cop 01, Lode Runner, Kid Niki,
+  Spelunker II, Jail Break, The Main Event, King of Boxer, Express Raider,
+  Pac Land, Speed Ball. [Dave W.]
+
+- Exciting Soccer. [Jarek Parchanski]
+
+- Scion, Stinger. [Zsolt Vasvari]
+
+
 
 Other drivers changes:
 ----------------------
 
+- The original Elevator Action now works, using the 68705 mcu ROM which was
+  missing. Since there is one additional CPU to emulate, it is slower than the
+  bootleg version. [Nicola Salmoria]
+
+- Replaced Front Line with the complete set containing the 68705 code. It
+  still doesn't work though. [Nicola Salmoria]
+
+- Replaced Golden Star with the original, encrypted set. [Mirko Buffoni]
+
+- Improvements to the System 8 driver. [Nicola Salmoria]
+
+- Front Line and Tin Star have the aiming dial (using a dual joystick setup).
+  Also, you can now kill and be killed in Front Line. However, collision
+  detection is not accurately emulated. [Nicola Salmoria]
+
+- Fixed ending in Robocop. [JC Alexander]
+
+- *FINALLY* fixed Commando sometimes not starting. It was a bug in the decode
+  routine, which has been completely rewritten. [Nicola Salmoria]
+
+- Improved Gladiator input handling. [Tatsuyuki Satoh]
+
+- Improved the System 16 drivers. [Phil Stroffolino]
+
+- Fixed movement of the squares in Checkman. [Brad Oliver]
+
+- Fixed hang on level 7 of Discs of Tron. [Jim Thevenot]
+
+- Fixed Blasto. [Juergen Buchmueller]
+
 - Chelnov is now playable! Plus many other fixes to the driver including
   slowdowns in Karnov. [Bryan McPhail]
+
+- Fixed srumbler2. [Paul Leaman]
+
+- Several improvements and bug fixes to the Data East 68000 games (Midnight
+  Resistance, Bad Dudes, Robocop, etc.). [Bryan McPhail]
+
+- Fixed resetting bug in Triple Punch. [Zsolt Vasvari]
+
 
 
 Changes to the main program:
 ----------------------------
 
+- Fixed a bug in the NOT instruction of the 68000 core. [Mike Coates]
+
+- You can proceed from the "press OK to continue" screen by pushing left then
+  right. You can also immediately quit by pressing ESC. [Nicola Salmoria]
+
+- Vector translucency can be turned off with -notranslucency.
+  [Valerio Verrando]
+
+- [DOS] New -romident option. Use "MAME -romident dirname" to identify unknown
+  ROM sets.
+
+- Switched to CRC-32 for file integrity checks. The old custom checksums are no
+  longer used. [John Butler, Bernd Wiebelt]
+
+- When using zipped files, ROMs are automatically retrieved even if they don't
+  have the expected name (provided they have the correct CRC-32, of course).
+  You'll never have to rename files any more (though you might have to rename
+  zips ;-) [Nicola Salmoria]
+
+- [DOS] New command -listcrc. It lists the CRC-32 for all the supported ROMs.
+  00000000 means that the ROM is known to be bad. [Nicola Salmoria]
+
+- Fixed bug in the 68000 interrupt handling which caused Rastan Saga to not
+  boot correctly. [Brad Oliver]
+
+- [DOS] Profiler. To enable it, use the -profiler parameter; then,
+  hit Left Shift + F11 to show the results on screen.
+  The profiler REQUIRES the Pentium-class RDTSC instruction. It will not work
+  on 486s, older Pentiums, and maybe other non-Intel CPUs. [Nicola Salmoria]
+
+- Improved the user interface. Use "the key on the left of 1" (tilde on some
+  leyboards) to turn on the On Screen Display which lets you change Volume,
+  Gamma Correction, Brightess, and independently set the volume levels of the
+  sound chips. Tab still brings up the setup menu, which is now asynchronous.
+  [Nicola Salmoria]
+
+- [DOS] Replaced the -fm option with -ym2203opl. Added -noym3812opl to use the
+  digital emulation of the YM3812 instead of the SoundBlaster OPL chip. Note
+  that with -noym3812opl you also need external drum samples. [Nicola Salmoria]
+
+- Clone sets are not reported as missing by -verifyroms if only the parent set
+  is present. [John Butler]
+
 - [DOS] Stereo sound support. It is a little slower than mono, to turn it off
-  use -nostereo. Stereo is enabled only for YM2610 and YM2151 games. The others
-  always use mono.
+  use -nostereo. Stereo is enabled only for games which really need it. The
+  others always use mono.
 
 - [DOS] New -listinfo command to give details on all of the supported games.
   [Andrea Mazzoleni]
@@ -201,349 +546,63 @@ Changes to the main program:
 
 - [DOS] Now using a new beta version of the SEAL audio library which further
   improves the dynamic range. You'll notice louder and better balanced sound
-  in many games. Let me know about games with bad balance. [Nicola Salmoria]
+  in many games. Let me know about games with bad balance.
+  The new library should also fix problems with the ENSONIQ AudioPCI and
+  Creative PCI64 cards. [Nicola Salmoria]
 
+- When using the SoundBlaster OPL chip, YM3812 commands are converted to play
+  at the correct frequency. [Carl-Henrik Skårstedt]
 
-==========================================================================
+- Joystick calibration is available in the Tab menu.
 
-0.34 BETA 7
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-Several Williams/Midway TMS34010 games. WARNING: these are VERY slow. You'll
-  need a powerful machine to run them at a decent speed. [Alex Pasadyn,
-  Zsolt Vasvari, Kurt Mahan]
-  The games are:
-    Smash Tv
-    Total Carnage
-    Mortal Kombat
-    Narc
-    Strike Force
-    Trog (prototype and release versions)
-    Hi Impact Football
-    Super Hi Impact
-    Terminator 2 (not playable)
-    Mortal Kombat II (not working)
-    NBA Jam (not working)
-Exciting Soccer (two sets merged) [Ernesto Corvi, Jarek Parchanski]
-Mercs (3 sets merged) [Paul Leaman]
-Super Casino [Thierry Lescot]
-Pickin' [Nicola Salmoria]
-Treasure Hunt (not working due to encryption) [Brad Oliver, Mike Balfour]
-Jump Shot (not working due to encryption) [Nicola Salmoria]
-Sidearms (US) (merged) [Nicola Salmoria]
-Defence Command [Nicola Salmoria]
-Vastar (set 2) (merged) (also contains the color PROMs) [Nicola Salmoria]
-Mania Challenge (set 2) (merged) (also contains the color PROMs) [Nicola Salmoria]
-Scion (Seibu Denshi) (merged) [Thierry Lescot]
-Road Fighter (set 2) (merged) [Nicola Salmoria]
-Time Pilot (Centuri) (merged) [Nicola Salmoria]
-Time Pilot 84 (set 2) (merged) [Nicola Salmoria]
-Track & Field (Centuri) [Nicola Salmoria]
-Kung Fu Master (2 new sets merged) [Nicola Salmoria]
-Western Express (merged with Express Raider) [Nicola Salmoria]
-The Billiards (merged with Video Hustler) [Nicola Salmoria]
-Gun Dealer (set 2) [Gerald Vanderick]
-Jack the Giant Killer (set 2) (merged) [Thierry Lescot]
-Carrier Air Wing (World) (merged) [Nicola Salmoria]
-Golden Star (blue version) (merged) [Mirko Buffoni]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed bad graphics in Champion Baseball. [Nicola Salmoria]
-
-- Accurate colors in Qwak. [Mike Balfour]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Added some more sound effects to Juno First. The shoot sound is still
-  missing. [Nicola Salmoria]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Tiger Heli. [Juan Carlos Lorente]
-
-- Wonder Boy, Regulus, SWAT, Heavy Metal, Brain, Toki no Senshi; plus fixed
-  many other System 8 games. [Howie Cohen]
-
-- Money Money, Jack Rabbit. [Roberto Fresca]
 
 
 Source:
 -------
 
-- [DOS] Now using a beta version of the SEAL audio library which will improve
-  the dynamic range. This change isn't complete yet. [Nicola Salmoria]
+- Moved the Sega encryption code used by Flicky, Future Spy, and many others,
+  to machine/segacrpt.c. [Nicola Salmoria]
 
-
-==========================================================================
-
-0.34 BETA 6
-
-Note about the x86 asm 68000 core: several bugs have been fixed (most notably,
-it now runs under pure DOS) but it is still not complete. For example, the two
-Metal Slugs hang shortly after game start. They will work if you recompile
-using the C core.
-
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-Qwak (prototye) [Mike Balfour]
-Superman [Howie Cohen, Brad Oliver]
-Zero Zone [Brad Oliver]
-The King od Dragons (2 sets) [Paul Leaman]
-Street Fighter 2 (2 sets merged) [Paul Leaman]
-Get Star [Luca Elia]
-Checkmate [Al Kossow]
-Ozma Wars [Al Kossow]
-Space Fever (B&W) [Al Kossow]
-Scion [Nicola Salmoria]
-Defense Command [David Winter]
-Mr. Do! (Yukidaruma) (merged) [Nicola Salmoria]
-Armored Car (set 2) (merged) [Nicola Salmoria]
-Bagman (Stern set 1) (merged) [Nicola Salmoria]
-Super Bagman (Valadon) (merged) [Nicola Salmoria]
-Moon War II (set 2) (merged) [Nicola Salmoria]
-Jungler (Stern) (merged) [Nicola Salmoria]
-Rygar (US set 1) (merged) [Nicola Salmoria]
-Jack Rabbit (set 2) (merged) [Nicola Salmoria]
-Jack Rabbit (special) (merged) [Nicola Salmoria]
-Midnight Resistance (Japan) (merged) [Bryan McPhail]
-Mega Man (merged with Rockman) [Santeri Saarimaa]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Accurate colors in Jungler. Also fixed char flipping and sprite alignment.
+- Added memory_region_length field to the RunningMachine structure. This could
+  be useful for drivers which handle several games on similar hardware.
   [Nicola Salmoria]
 
-- Improved Vastar. [Roberto Ventura]
 
+- TMS34010 emulator. [Alex Pasadyn, Zsolt Vasvari]
 
-These drivers have new or improved SOUND:
------------------------------------------
+- Replaced the 6502 emulator with a new one which also supports 65C02 and 6510.
+  Marat Fayzullin's core is no longer used. [Juergen Buchmueller]
 
-- Sound in Super Space Invaders. [Ernesto Corvi]
+- Fixed a bug in the 68000 BCD emulation which caused the F1 Dream timer to
+  malfunction. [Nicola Salmoria]
 
-- Added decay to Donkey Kong. [Andrew Scott]
+- Fixed bug in the Z80 block I/O instructions (INI, IND, INIR, INDR, OUTI,
+  OUTD, OTIR, and OTDR). [Frank Palazzolo]
 
+- [DOS] Rearranged the makefile using archives to work around E2BIG error on
+  some machines. [Juergen Buchmueller]
 
-Changes to the main program:
-----------------------------
+- Improved unzip code robustness when dealing with corrupt archives.
+  [John Butler]
 
-- [DOS] Replaced the -fm option with -ym2203opl. Added -noym3812opl to use the
-  digital emulation of the YM3812 instead of the SoundBlaster OPL chip. Note
-  that with -noym3812opl you also need external drum samples. [Nicola Salmoria]
+- Fixed SBCD in M68000 disassembler. [Mike Coates]
 
-- Clone sets are not reported as missing by -verifyroms if only the parent set
-  is present. [John Butler]
+- New unzip interface. New zip directory cache and filename cache (the latter
+  only in the DOS version). [Andrea Mazzoleni]
 
+- New streams.c to abstract audio streams. This makes them easier to use and
+  more efficient. osd_play_streamed_sample() should now be considered a private
+  function and should not be used in new code. [Nicola Salmoria]
 
-Source:
--------
+- Fixed bug in the I8039 external interrupt handling. [Dan Boris]
 
-- [DOS] Now using version 1.05 of the SEAL audio library. This should fix
-  problems with the ENSONIQ AudioPCI and Creative PCI64 cards.
-
-- YM2610 emulator. This is used by the NeoGeo games. [Hiromitsu Shioya]
-
-- TMS9900 emulator. [Andy Jones, based on original code by Ton Brouwer]
-
-
-NeoGeo Support
---------------
-
-This beta contains some major improvements to the neogeo emulation.  Work on
-this driver also uncovered several bad rom dumps, most of which you can correct
-yourself, existing bad rom dumps should still work but will give checksum and/or
-rom length errors on startup.
-
-How to:
-
-You need a zip file called neogeo.zip in your rompath.  It should contain at
-least three files:
-
-neo-geo.rom (128k)
-ng-sfix.rom (128k)
-ng-sm1.rom (128k)
-
-The rom 'ng-sm1.rom' is badly dumped in many archives, you will need one that is
-128k, see later for full details on bad roms.  Using a 256k rom will still work
-but will give a length & checksum error on every game.
-
-Important!  The bios zip file must be called neogeo.zip NOT neo-geo.zip, ie,
-there should be no dash in the middle.
-
-You also need to place the game zip in your rompath.  If you do not know what 8
-character filename the NeoGeo game you want to play has you can type:
-
-mame -listclones neogeo
-
-That will list the 8 character zip names of all currently supported games.
-
-What's New?
------------
-
-* FULL sound support, FM synth and ADPCM samples, on 90% of games using the
-YM2610 emulator.  The games without working sound should be fixed soon.
-
-- Optional rom loading of samples:  You may find games that worked before will
-not work now due to lack of memory as all the sound roms need to be loaded.
-Some games will require an extra 16 megabytes of memory to load the sound roms.
-You can force Mame NOT to load these samples if you specify no sound BEFORE rom
-loading takes place.  In Dos this means you must type:
-
-mame game -soundcard 0
-
-If you DO NOT specify soundcard 0 then all sound roms will be loaded and you may
-experience memory problems.
-
-* Improved graphics:
-
-- Auto-animations are supported, these are used in many games.  The Neogeo
-graphics hardware can cause animation without intervention from the main cpu.
-You can see this in the backgrounds of games such as Karnov's Revenge, Street
-Hoops, Samurai Shodown, King Of Fighters, etc.
-
-- Very accurate scaling support, including full screen zooms.
-
-- No more 'missing tiles' on zoomed graphics.
-
-- MAJOR speedup!  You should see at least 20-50% increase on all games.  The downside is
-you will see a black screen for a few seconds at the start of every game as
-the graphics are converted to a custom format.  There are many other
-optimisations in the video code too.
-
-- Fixed bug in y-flipped tiles glitched when y<0 (Thrash Rally)
-
-* All games for which rom dumps are available are now supported.  99% of them
-are working.
-
-* Several games have experimental 68000 idle cycle skipping, for these games you
-should see increases of between 5% and 20%.  Games currently using this method
-are:
-	Puzzle De Pon
-	Karnov's Revenge
-	Wind Jammers
-	Street Hoops
-	Neo Bomberman
-
-* SRAM save size has been reduced to 0x2000 bytes from 0x10000.  The NeoGeo
-has 8 memory frames and will store sram data for upto 8 games regardless
-of how many physical cartridges the machine can take.  The Mame emulation
-emulates a fixed 1 cartridge neogeo, therefore only the first 0x2000
-bytes of the SRAM should ever be used.  Due to bullet-proofed(!) memory
-handling there should be no more corrupt sram saves either.  Remember you can
-delete a game settings by deleting it's file in the 'hi' directory.
-
-Bug where SRAM states were reloaded upon every reset is fixed.
-
-Known Problems/To Do:
----------------------
-
-Some games will give a piracy warning.  You can still play the games if you
-set them to run in Console (Home) mode.  For some games you can set the game
-back to arcade mode after the protection check is done and leave it that
-way (because some games leave a flag in SRAM as to whether the game has passed
-it's security check).
-
-Line (row) scrolling is not implemented.  This is used for the floor in
-Karnov's Revenge, special effects in Spinmasters, etc, and many others.
-
-The calendar chip is not yet implemented.
-
-This release should give a substantial speed boost over previous betas, and there
-are some more optimisation ideas to be tried.
-
-Bad Roms
---------
-
-Several bad rom dumps have been found, this is where a rom has corrupt data
-and may also be the wrong size.  'Fixed' rom dumps will become available from
-the usual places in time.  The most common error is that a rom is twice the
-size it should be, and that the second half is either the same as the first or
-just has junk in it.  To be fix these roms you simply split them in half, and
-throw away the second half.  You should do a binary split, meaning your split
-program should not save any formatting information to the file.  As mentioned
-above bad rom dumps will continue to work but will give checkums and length
-errors.
-
-The Neorage team will support all fixes to the bad roms and make sure their
-emulator is compatible.  Most fixed romsets will work on Neorage already.
-
-
-==========================================================================
-
-0.34 BETA 5
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-Ring King / King of Boxer (merged) [Ernesto Corvi]
-Time Tunnel [Thierry Lescot]
-Bio Attack (no collision detection) [Thierry Lescot]
-Sea Fighter Poseidon (not working due to protection) [Nicola Salmoria]
-Top Gunner (bootleg; also fixed the original set) [Nicola Salmoria]
-Black Tiger (bootleg) (merged) [Marco Cassili]
-Pinball Action (set 2) (merged) [Marco Cassili]
-Exerion (Taito) (merged) [Nicola Salmoria]
-Space Trek (cocktail version) [Nicola Salmoria]
-Phoenix (IRECSA) (merged) [David Winter]
-Regulus (not encrypted) (merged) [Thierry Lescot]
-plus several Neo Geo games
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed sprite flipping in Super Qix. [Mirko Buffoni]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Partial sound in Punk Shot. [Nicola Salmoria]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Champion Baseball. [Howie Cohen]
-
-- Quantum. [Nicola Salmoria]
-
-
-Changes to the main program:
-----------------------------
-
-- Improved the user interface. Use "the key on the left of 1" (tilde on some
-  leyboards) to turn on the On Screen Display which lets you change Volume,
-  Gamma Correction, Brightess, and independently set the volume levels of the
-  sound chips. Tab still brings up the setup menu, which is now asynchronous.
-  [Nicola Salmoria]
-
-- [DOS] Improved the profiler. It now REQUIRES the Pentium-class RDTSC
-  instruction. It will not work on 486s, older Pentiums, and maybe other
-  non-Intel CPUs. [Nicola Salmoria]
-
-
-Source:
--------
+- New file types for osd_fopen(): OSD_FILETYPE_STATE and OSD_FILETYPE_ARTWORK.
 
 - x86 ASM 68000 core. This is a major speed improvement. [Mike Coates, Darren
   Olafson]
 
 - YM3812 and YM3526 software emulator. In the DOS version it is disabled
-  because we are using the 100% compatible SoundBlaster OPL chip.
+  by default because we are using the 100% compatible SoundBlaster OPL chip.
   [Carl-Henrik Skårstedt]
 
 - A begginning for a YM2413 emulator. It pushes data through the YM3812.
@@ -561,640 +620,6 @@ Source:
   which can be used to do some game specific initialization, for example by
   adding memory handlers using the above functions. [Nicola Salmoria]
 
+- YM2610 emulator. This is used by the NeoGeo games. [Hiromitsu Shioya]
 
-Changes to the cheat system [Stephane Humbert]
-
-New in MAME 034b4 :
-  * Possibility of "circular" values in search method 1:
-     - if you press OSD_KEY_LEFT or OSD_KEY_DOWN when value is 0, it turns to
-0xFF
-     - if you press OSD_KEY_RIGHT or OSD_KEY_UP when value is 0xFF, it turns to
-0.
-  * Added the possibility of toggling the watches display ON (Insert) and OFF
-(Del) .
-  * Possibility to work on another cheat file (CHEAT.DAT is just the default
-one) by using option "-cheatfile xx"
-  * Added new types of cheats:
-     - 20-24 : same as 0-4 but they force bits to 1
-     - 40-44 : same as 0-4 but they force bits to 0.
-
-New in MAME 034b5 :
-* 15 active cheats instead of 10.
-* Free memory before the start of a new search.
-* Possibility of searches in CPUs other than 0 : a question is asked to the
-user to choose a CPU (0 default) when he starts a new search and the game has more
-than one CPU.
-* Possibility to view watches for CPUs other than 0.
-* CPU is displayed with the watches.
-* Possibility to change the CPU of a watch by pressing 9 (previous CPU) and 0
-(next CPU) .
-* Possibility to copy a cheat code by pressing F4.
-* Possibility to rename the cheat filename by pressing F5.
-* Possibility to save all the cheat codes to disk by pressing F6.
-* Possibility to remove all the cheat codes from the active list by pressing
-F7.
-* In the edit cheat, on the data line :
-    - Home sets the value to 0
-    - End sets the value to 0x80.
-* Possibility to use to use Home, End, PgDown and PgUp to select a cheat code
-in the list.
-* Data is saved on 2 hex digits (%02X) .
-
-==========================================================================
-
-0.34 BETA 4
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-Arm Wrestling [Nicola Salmoria]
-Karate Champ (1 Player) [Ernesto Corvi]
-Mr. TNT [Brad Oliver]
-Alpine Ski (two sets merged) [John Butler]
-Tokio / Scramble Formation (two sets merged) [Marcelo de G. Malheiros,
-  Fredrik Sjostedt]
-Tiger Heli (4 sets merged, only 2 work) [Nicola Salmoria]
-Turbo (preliminary) (3 sets merged) [Alex Pasadyn, Howie Cohen, Frank Palazzolo]
-Express Raider (2 sets merged) [Ernesto Corvi]
-Arkanoid 2 [Luca Elia, Mirko Buffoni]
-Rockman [Paul Leaman]
-Captain Commando [Paul Leaman]
-Discs of Tron (Upright) (merged) (the other, which is the Environmental, is now
-  called "dotrone") [Nicola Salmoria]
-Tron (set 2) (merged) [Nicola Salmoria]
-Vanguard (Centuri) (merged) [Nicola Salmoria]
-1942 (set 3) (merged) [Nicola Salmoria]
-Bionic Commando (set 2) (merged) [Nicola Salmoria]
-Commando (Data East) (merged) [Nicola Salmoria]
-Ghosts 'n Goblins (Taito) (merged) [Nicola Salmoria]
-Vulgus (set 2) (merged) [Nicola Salmoria]
-Silkworm (set 2) (merged) [Nicola Salmoria]
-Cop 01 (set 2) (merged) [Nicola Salmoria]
-Formation Z (merged with Aeroboto) [Nicola Salmoria]
-Alex Kidd (not working) [Phil Stroffolino]
-Alien Storm (not working) [Phil Stroffolino]
-Aurail (not working) [Phil Stroffolino]
-Dynamite Dux [Phil Stroffolino]
-E-Swat (not working) [Phil Stroffolino]
-Fantasy Zone (not working) [Phil Stroffolino]
-Flash Point (not working) [Phil Stroffolino]
-Heavyweight Champ (not working) [Phil Stroffolino]
-Major League (not working) [Phil Stroffolino]
-Quartet II (not working) [Phil Stroffolino]
-SDI (not working) [Phil Stroffolino]
-Time Scanner (not working) [Phil Stroffolino]
-Tough Turf (not working) [Phil Stroffolino]
-Wonder Boy Monster Lair [Phil Stroffolino]
-Wrestle War [Phil Stroffolino]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Pleiads colors might be correct now. [Nicola Salmoria]
-
-- Accurate colors in Strategy X. [Gerald Vanderick]
-
-- Preliminary backdrop support in Discs of Tron. The background image must be
-  called ARTWORK/DOTRON.PNG. [Mathis Rosenhauer, Brandon Kirkpatrick]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Fixed sound pitch and tempo in Donkey Kong. [Mirko Buffoni]
-
-- Improved music tempo in SlapFight. [Sebastien Chevalier]
-
-- Improved Cop 01 (tempo is still wrong). [Nicola Salmoria]
-
-- Sound in all of the working System 16 games. [Phil Stroffolino]
-
-- Emulation of the Astrocade sound chip (Gorf, Wizard of Wor, etc.)
-  [Frank Palazzolo]
-
-- Improved speech in Gorf. It now plays speech 100% accurately except for the
-  missing samples. [Kevin Bales]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Nemesis. [Dani Portillo]
-
-- Terra Cresta, Rastan. [Juan Carlos Lorente]
-
-
-Other drivers changes:
-----------------------
-
-- Fixed hang on level 7 of Discs of Tron. [Jim Thevenot]
-
-- Fixed Blasto. [Juergen Buchmueller]
-
-- Fixed controls in Stinger. [Miguel Figueiredo]
-
-
-Changes to the main program:
-----------------------------
-
-- Switched to CRC-32 for file integrity checks. The old custom checksums are no
-  longer used. [John Butler, Bernd Wiebelt]
-
-- New unzip interface. New zip directory cache and filename cache (the latter
-  only in the DOS version). [Andrea Mazzoleni]
-
-- When using zipped files, ROMs are automatically retrieved even if they don't
-  have the expected name (provided they have the correct CRC-32, of course).
-  You'll never have to rename files any more (though you might have to rename
-  zips ;-) [Nicola Salmoria]
-
-- [DOS] New command -listcrc. It lists the CRC-32 for all the supported ROMs.
-  00000000 means that the ROM is known to be bad. [Nicola Salmoria]
-
-- Some improvements to the cheat system. [Stephane Humbert]
-
-- Fixed bug in the 68000 interrupt handling which causes Rastan Saga to not
-  boot correctly. [Brad Oliver]
-
-- [DOS] Experimental profiler. To enable it, use the -profiler parameter; then,
-  hit Left Shift + F11 to show the results on screen. I don't know how accurate
-  the figures are; the "Sound" figure is certainly underestimated for sound
-  chip emulators which don't use streams.c (it is computed under the CPU
-  playing the sound instead that under Sound).
-  Note that the sum of the percentages is much less than 100%. This is in part
-  due to portions of the code which are not profiled, but is also caused by the
-  massive overhead of calling uclock() (which happens very often when sound is
-  playing). [Nicola Salmoria]
-
-
-Source:
--------
-
-- New streams.c to abstract audio streams. This makes them easier to use and
-  more efficient. osd_play_streamed_sample() should now be considered a private
-  function and should not be used in new code. [Nicola Salmoria]
-
-- Completed the transition to CRC32 checksums. [John Butler, Bernd Weibelt]
-
-- Fixed bug in the I8039 external interrupt handling. [Dan Boris]
-
-- New file types for osd_fopen(): OSD_FILETYPE_STATE and OSD_FILETYPE_ARTWORK.
-
-
-NeoGeo Mame Support
--------------------
-
-This beta contains a major update to the NeoGeo driver.  It is still far from
-perfect but has many improvements over the previous version.  This is still
-very much a 'work-in-progress' driver with many known problems.  Hopefully
-these problems will be fixed soon.
-
-How to:
-
-You need a zip file called neogeo.zip in your rompath.  It should contain at
-least two files:
-
-neo-geo.rom (128k)
-ng-sfix.rom (128k)
-
-There should also be two other roms which are not yet used by Mame, they _will_
-be used in future versions of this driver so do not delete them.
-
-You also need to place the game zip in your rompath.  If you do not know what 8
-character filename the NeoGeo game you want to play has you can type:
-
-mame -listclones neogeo
-
-That will list the 8 character zip names of all currently supported games.
-
-What's New?
------------
-
-Many graphics improvements:
-* 'Missing tiles' in games such as Puzzle Bobble are fixed.
-* Scaling is improved, but still not perfect.  Full screen zooms tend to break
-  (eg, Thrash Rally, Art of Fighting).
-* 'Japan/Europe/USA' territory selection in dipswitch menu.
-* Start & coin key positions are moved to their 'standard' MAME positions
-* Coin inputs work, freeplay is no longer the default.
-* Soft dipswitches are fully emulated and saved per game, the files are saved
-  to the hiscore directory for now.
-* Custom drawgfx routine in place.  This is slower than the previous MAME
-  release but allows the graphics to be drawn from their native data.  This
-  allows:
-* MEMORY REQUIREMENTS APPROXIMATELY HALVED!  And also quicker loading time.
-* If you experience a 'black screen' for a few seconds after loading it is
-  because the 'pen usage' arrays are being calculated.  MAME NeoGeo uses a
-  compressed palette system to give the full NeoGeo 12 bit colour on an 8 bit
-  display.  (This is nothing new, almost every other MAME driver for high
-  colour games works in the same way, by choosing only the colours that are
-  actually displayed at any one time).  Although this gives better quality it
-  actually takes around 10-15% of the processor time each frame.
-* There is no 'black screen' at the end of each games demo. All games now
-  behave as per the arcade version and cycle to the 'NeoGeo logo' screen.
-
-
-Notes on soft dipswitches:  You can access these from pressing F2 (self test)
-or setting the test mode dipswitch and resetting the virtual machine. Both soft
-dips and cabinet settings are saved for each game. If, for some reason, you
-experience strange gameplay (NOT graphics glitches), the soft dips may have
-become corrupt (this _is_ still a beta release!), to clear them you can wipe
-the file in the hiscore directory for the game OR go into the hardware test and
-select the 'clear backup ram' option (recommended).
-
-Other Fixes
------------
-
-Emulation of soft dips fixed many problems games had in previous versions, for
-example, the game timers being set low in games such as KOTM and Art of Fighting
-are fixed. Almost all 'gameplay' issues are fixed by this.
-
-Sidenote: The 'blood bios' is not needed, nor supported.  All games affected by
-the blood bios actually have the 'blood' option in their soft dip options.  It
-can be turned on & off there without having to use a special bios.  In fact any
-non-standard bios may not work at this point.
-
-Due to the much decreased memory requirements large games such as Karnov's
-Revenge now work.
-
-What isn't fixed?
------------------
-
-'New' games such as Metal Slug, Pulstar, Shock Troopers do not work, either due
-to protection or bankswitching used in these games (information needed!).
-
-The animation in the 'rain' scenes of Karnov's Revenge does not animate!
-
-As mentioned before, full screen zooms are not correct.
-
-The MVS memory card is not supported.
-
-(Probably many other small bugs too).
-
-And finally:
-------------
-
-Q: Why don't you MAME guys do something original instead of doing something
-   that's already done?
-A: Tell that to a Mac/Arm/Amiga owner!
-
-Q: It's a bit slow...
-A: The custom graphics draw routine will be improved soon! It was felt that the
-   slowdown was merited due to the advantages of halving memory usage.
-
-==========================================================================
-
-0.34 BETA 3
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-Terra Cresta (two sets merged) [Carlos A. Lozano]
-Regulus [Nicola Salmoria]
-SWAT [Nicola Salmoria]
-Heavy Metal [Nicola Salmoria]
-Brain [Nicola Salmoria]
-Toki no Senshi [Nicola Salmoria]
-Gardia (not decrypted YET) [Nicola Salmoria]
-DakkoChan Jansoh (not working due to encryption) [Nicola Salmoria]
-Ufo Senshi Yohko Chan (not working due to encryption) [Nicola Salmoria]
-Wonder Boy (three more sets but I haven't decrypted one of them) (merged)
-  [Nicola Salmoria]
-Pitfall II (encrypted version) (the other has been renamed pitfallu) (merged)
-  [Nicola Salmoria]
-Water Ski [Nicola Salmoria]
-Last Duel (bootleg) (this fixes the graphics) [Bryan McPhail]
-Lady Bug (bootleg) (merged) [Marco Cassili]
-Lode Runner (set 1) (merged) (note that the old set has been renamed "ldruna")
-  [Nicola Salmoria]
-Lode Runner (2 Players) (this is different from the other) [Nicola Salmoria]
-Penguin-Kun Wars (two sets merged) [Allard van der Bas]
-Stinger [Nicola Salmoria]
-Zig Zag (2 sets merged) [Nicola Salmoria]
-River Patrol / Silver Land [Zsolt Vasvari]
-Jumping (merged with Rainbow Islands) [Mike Coates]
-600 (merged with Turtles) [John Dondzila]
-Area 88 (merged with UN Squadron) [Santeri Saarimaa]
-720 Degrees (set 2) (merged) [Nicola Salmoria]
-Crystal Castles (set 2) (merged) [Nicola Salmoria]
-Kangaroo (bootleg) (merged) [Nicola Salmoria]
-Klax (set 3) (merged) [Nicola Salmoria]
-Missile Command (set 2) (merged) [Nicola Salmoria]
-Pooyan (Konami) (merged) (the Stern set is now called "pooyans")
-  [Nicola Salmoria]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed fg/bg priority in TeddyBoy Blues and Choplifter. [Nicola Salmoria]
-
-- Colors in Shark Attack. [Mike Balfour]
-
-- Fixed transparency in Fire Trap. [Nicola Salmoria]
-
-- Fixed gfx banks in Pop Flamer. [Brad Oliver]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Fixed speech in Karate Champ. [Ernesto Corvi]
-
-- Fixed pitch in the System 8 games. [Hiromitsu Shioya]
-
-- Sound in Exterminator. Have your PII/900 handy ;-) [Zsolt Vasvari]
-
-- Added smoothing to ADPCM playback. [Juergen Buchmueller]
-
-- Added RC filter emulation to Gyruss. This improves some sound effects, e.g.
-  the force field noise. [Francesco Caporali]
-
-- Added ADPCM sounds to Renegade. [Phil Stroffolino]
-
-- Fixed speech in King & Balloon. [Brad Oliver]
-
-- Added ADPCM sample playback to the bootleg Hyper Olympic. [Nicola Salmoria]
-
-- Sound in Mysterious Stones. [Nicola Salmoria]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Shark Attack. [Mike Balfour]
-
-- Flicky, Bull Fight, I'm Sorry, Star Jacker, Mr Viking, 4d Warrior, TeddyBoy
-  Blues, Beastie Feastie, Contra, Cobra Command, Super Qix, Vigilante, Pang,
-  HigeMaru, Hexa. [Juan Carlos Lorente]
-
-- Tiger Road, Karnov, Chelnov, Heavy Barrel, Bad Dudes, Robocop, Hippodrome,
-  Sly Spy, Midnight Resistance. [Dani Portillo]
-
-- Fixed Star Force. [Dani Portillo]
-
-
-Other drivers changes:
-----------------------
-
-- Improved Gladiator input handling. [Tatsuyuki Satoh]
-
-- Improved the System 16 drivers. [Phil Stroffolino]
-
-- Fixed movement of the squares in Checkman. [Brad Oliver]
-
-
-Changes to the main program:
-----------------------------
-
-- Rewritten the SN76496 emulator. This fixes speech in Choplifter.
-  [Nicola Salmoria]
-
-- [DOS] New -romident option. Use "MAME -romident dirname" to identify unknown
-  ROM sets.
-
-
-Source:
--------
-
-- Improved unzip code robustness when dealing with corrupt archives.
-  [John Butler]
-
-- Fixed SBCD in M68000 disassembler. [Mike Coates]
-
-- CRC-32 checksums for most files are in place. [Bernd Wiebelt]
-
-
-==========================================================================
-
-
-0.34 BETA 2
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-F1 Dream (bootleg) (merged) (this one works) [Paul Leaman]
-Pang [Paul Leaman]
-Pac Man Plus [Clay Cowgill, Mike Balfour]
-Beastie Feastie [Clay Cowgill, Mike Balfour]
-Tecmo Knight [Nicola Salmoria]
-Bull Fight [Nicola Salmoria]
-4D Warriors [Nicola Salmoria]
-Block Gal (not working due to encryption) [Nicola Salmoria]
-Wonder Boy (three sets, all merged with WB Deluxe) [Nicola Salmoria]
-I'm Sorry (Japan) (merged) [Marco Cassili]
-My Hero (Japan) (merged) [Nicola Salmoria]
-Flicky (set 2) (merged) [Nicola Salmoria]
-Ninja Princess (original) (merged) (the other set, which seems to be a bootleg,
-  has been renamed "nprincesb") [Nicola Salmoria]
-Frogs [Nicola Salmoria]
-Samurai [Nicola Salmoria]
-Sasuke vs. Commander [Nicola Salmoria]
-Subs [Mike Balfour]
-Vigilante (two sets merged) [Mike Balfour, Phil Stroffolino]
-Exterminator (VERY SLOW) [Alex Pasadyn, Zsolt Vasvari]
-COP 01 [Carlos A. Lozano]
-Renegade (two sets, only the bootleg works) [Phil Stroffolino]
-Hustle [Frank Palazzolo]
-Tomahawk 777 (two sets merged) [Zsolt Vasvari]
-Karate Champ (VS and Karatedo, merged) [Ernesto Corvi]
-Astro Fighter (set 3) (merged) [Zsolt Vasvari]
-Side Track [Al Kossow]
-Spectar (revision 3) (merged) (the previous one has been renamed "spectar1")
-  [Al Kossow]
-Venture (version 4) (merged) [Al Kossow]
-Venus (merged with Gyruss) [Nicola Salmoria]
-APB (set 2) (merged) (this fixes the title screen)
-Lost Tomb (hard) (merged) [Michael Appolo]
-Hyper Olympic (bootleg) (merged) [David Winter]
-Brix (merged with zzyzzyxx) [Brad Oliver]
-Shark Attack [Victor Trucco]
-Mikie (headbutt version) (merged) (the other set has been renamed "mikiehs")
-  [Nicola Salmoria]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- The background in Golden Star changes color correctly. [Nicola Salmoria]
-
-- Accurate colors in Astro Fighter (PROMs required). [Zsolt Vasvari]
-
-- Accurate colors in Lost Tomb (PROMs required). [Michael Appolo]
-
-- Fixed tile flipping bug in Solomon's Key. [Nicola Salmoria]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- The music in Bubble Bobble seems to stay in sync now. [Tatsuyuki Satoh]
-
-
-Other drivers changes:
-----------------------
-
-- Dynasty Wars works (actually it was already working, it's just that the dip
-  switches had Freeze on by default).
-
-- Front Line and Tin Star have the aiming dial (using a dual joystick setup).
-  Also, you can now kill and be killed in Front Line. However, collision
-  detection is not accurately emulated. [Nicola Salmoria]
-
-- Fixed ending in Robocop. [JC Alexander]
-
-- *FINALLY* fixed Commando sometimes not starting. It was a bug in the decode
-  routine, which has been completely rewritten. [Nicola Salmoria]
-
-
-Changes to the main program:
-----------------------------
-
-- Vector translucency can be turned off with -notranslucency.
-  [Valerio Verrando]
-
-
-Source:
--------
-
-- TMS34010 emulator. [Alex Pasadyn, Zsolt Vasvari]
-
-- Replaced the 6502 emulator with a new one which also supports 65C02 and 6510.
-  Marat Fayzullin's core is no longer used. [Juergen Buchmueller]
-
-- Fixed a bug in the 68000 BCD emulation which caused the F1 Dream timer to
-  malfunction. [Nicola Salmoria]
-
-- New function osd_on_screen_display() to show text over the game screen.
-  [Nicola Salmoria]
-
-- Fixed bug in the Z80 block I/O instructions (INI, IND, INIR, INDR, OUTI,
-  OUTD, OTIR, and OTDR). [Frank Palazzolo]
-
-- Updated the FM emulation and the way the 8910 updates its buffers. FM also
-  has support for YM2608 and YM2612, though they are not compiled in.
-  [Tatsuyuki Satoh]
-
-- [DOS] Rearranged the makefile using archives to work around E2BIG error on
-  some machines. [Juergen Buchmueller]
-
-- Support for CRC-32 checksums instead of MAME's custom ones. The actual CRCs
-  will be added later to the drivers. [John Butler]
-
-==========================================================================
-
-
-0.34 BETA 1
-
-IMPORTANT: now most games load the color PROMs from disk. You'll have to add
-the missing files to the archives.
-
-
-New ROM sets supported (in no particular order):
-------------------------------------------------
-
-HigeMaru [Mirko Buffoni]
-Sega Ninja / Ninja Princess (merged) [Jarek Parchanski, Nicola Salmoria]
-My Hero [Jarek Parchanski]
-I'm Sorry [Nicola Salmoria]
-Flicky [Nicola Salmoria]
-TeddyBoy Blues [Nicola Salmoria]
-Star Jacker [Nicola Salmoria]
-Mister Viking [Nicola Salmoria]
-Future Spy [Nicola Salmoria]
-Avengers (two sets merged) (not working due to protection) [Paul Leaman]
-Bionic Commando [Steven Frew, Phil Stroffolino, Paul Leaman]
-Dynasty Wars (not working) [Paul Leaman]
-Varth [Paul Leaman]
-Electric Yo-Yo (not working due to protection) [Al Kossow]
-Tag Team Wrestling [Steve Ellenoff, Brad Oliver]
-Gridiron Fight [Nicola Salmoria]
-several Neo Geo games (NOT TESTED) [Shin Emu Keikaku team]
-King & Balloon [Brad Oliver]
-Super Mouse [Brad Oliver]
-Intrepid [Zsolt Vasvari]
-Moon War II [Brad Oliver]
-Calipso [Brad Oliver]
-Hard Hat [Al Kossow]
-Psychic 5 [Jarek Parchanski]
-Great Swordsman [Steve Ellenoff]
-Max RPM (no sound due to missing ROMs) [Aaron Giles]
-The Tin Star (not complete) [Nicola Salmoria]
-several 8080 games [Al Kossow]
-Pot of Gold [Nicola Salmoria]
-M79 Ambush [Al Kossow]
-Twin Cobra (preliminary) [Quench]
-Kick (upright version) (merged) [Nicola Salmoria]
-Golden Castle (merged with gladiatr) [Steve Ellenoff]
-Speak & Rescue ("speakres") [Al Kossow]
-
-
-These drivers have improved GRAPHICS:
--------------------------------------
-
-- Fixed colors in Fast Freddie (sorry... this slipped by in 0.33 final).
-
-- In Mario Bros., the screen bounces when you hit POW. [Brad Oliver]
-
-- Improved Slap Fight. [Christoff Feldtmann]
-
-- Accurate colors in Money Money and Jack Rabbit. [Nicola Salmoria]
-
-- Enemies in TNZS are now visible, using the gfx ROMs from a new set (which is
-  not supported yet). [Chris Moore]
-
-- Fixed sticking sprites in Pnickies and Nemo. [Paul Leaman]
-
-
-These drivers have new or improved SOUND:
------------------------------------------
-
-- Sound in Gladiator. [Steve Ellenoff]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Pinball Action. [Dani Portillo]
-
-
-These drivers have HIGH SCORE support:
---------------------------------------
-
-- Xain'd Sleena/Solar Warrior. [Dani Portillo]
-
-
-Other drivers changes:
-----------------------
-
-- The original Elevator Action now works, using the 68705 mcu ROM which was
-  missing. Since there is one additional CPU to emulate, it is slower than the
-  bootleg version. [Nicola Salmoria]
-
-- Replaced Front Line with the complete set containing the 68705 code. It
-  still doesn't work though. [Nicola Salmoria]
-
-- Replaced Golden Star with the original, encrypted set. [Mirko Buffoni]
-
-- Improvements to the System 8 driver. [Nicola Salmoria]
-
-
-Changes to the main program:
-----------------------------
-
-- Fixed a bug in the NOT instruction of the 68000 core. [Mike Coates]
-
-- You can proceed from the "press OK to continue" screen by pushing left then
-  right. You can also immediately quit by pressing ESC. [Nicola Salmoria]
-
-
-Source:
--------
-
-- Moved the Sega encryption code used by Flicky, Future Spy, and many others,
-  to machine/segacrpt.c. [Nicola Salmoria]
-
-- Added memory_region_length field to the RunningMachine structure. This could
-  be useful for drivers which handle several games on similar hardware.
-  [Nicola Salmoria]
+- TMS9900 emulator. [Andy Jones, based on original code by Ton Brouwer]

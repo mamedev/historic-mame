@@ -317,7 +317,7 @@ options:
               8 - Microsoft Sidewinder (up to 4)
               9 - Gravis GamePad Pro
 
-              Press F7 to calibrate analog joysticks. Calibration data
+              Use the TAB menu to calibrate analog joysticks. Calibration data
               will be saved in mame.cfg. If you're using different joytypes
               for different games, you may need to recalibrate your joystick
               every time.
@@ -365,7 +365,9 @@ options:
               other games are disabled by default. Use this switch to turn
               them on.
 -debug        Activate the integrated debugger. During the emulation, press
-              tilde to enter the debugger.
+              tilde to enter the debugger. This is only available if the
+              program is compiled with MAME_DEBUG defined.
+-profiler     Enable the profiler. Press Shift+F11 to show it on screen.
 -record name   Record joystick input on file INP/name.inp.
 -playback name Playback joystick input from file INP/name.inp.
 -savecfg      no longer supported at the moment
@@ -380,7 +382,6 @@ P            Pause
 F3           Reset
 F4           Show the game graphics. Use cursor keys to change set/color,
              F4 or Esc to return to the emulation.
-F7           Calibrate the joystick
 F8           Change frame skip on the fly (60, 30, 20, or 15)
 F10          Toggle speed throttling
 F11          Toggle speed display

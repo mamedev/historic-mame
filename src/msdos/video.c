@@ -41,7 +41,6 @@ char *dirty_old=grid1;
 char *dirty_new=grid2;
 
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
-void joy_calibration(void);
 
 extern int use_profiler;
 void osd_profiler_display(void);
@@ -1058,7 +1057,7 @@ void osd_close_display(void)
 {
 	if (gone_to_gfx_mode != 0)
 	{
-		set_gfx_mode(GFX_TEXT,80,25,0,0);
+		set_gfx_mode(GFX_TEXT,0,0,0,0);
 
 		if (frames_displayed > FRAMES_TO_SKIP)
 			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
@@ -1114,16 +1113,43 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 		for (i = 0;i < 256;i++)
 			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
 
-		if (totalcolors == 256)
+		if (totalcolors >= 255)
 		{
-			/* share color 255 for the user interface text */
-			Machine->uifont->colortable[0] = 0;
-			Machine->uifont->colortable[1] = 255;
-			Machine->uifont->colortable[2] = 255;
-			Machine->uifont->colortable[3] = 0;
+			int bestblack,bestwhite;
+			int bestblackscore,bestwhitescore;
+
 
 			for (i = 0;i < totalcolors;i++)
 				pens[i] = i;
+
+			bestblack = bestwhite = 0;
+			bestblackscore = 3*255*255;
+			bestwhitescore = 0;
+			for (i = 0;i < totalcolors;i++)
+			{
+				int r,g,b,score;
+
+				r = palette[3*i];
+				g = palette[3*i+1];
+				b = palette[3*i+2];
+				score = r*r + g*g + b*b;
+
+				if (score < bestblackscore)
+				{
+					bestblack = i;
+					bestblackscore = score;
+				}
+				if (score > bestwhitescore)
+				{
+					bestwhite = i;
+					bestwhitescore = score;
+				}
+			}
+
+			Machine->uifont->colortable[0] = pens[bestblack];
+			Machine->uifont->colortable[1] = pens[bestwhite];
+			Machine->uifont->colortable[2] = pens[bestwhite];
+			Machine->uifont->colortable[3] = pens[bestblack];
 		}
 		else
 		{
@@ -2351,9 +2377,6 @@ void osd_update_display(void)
 	}
 
 	if (showprofile) osd_profiler_display();
-
-	if (osd_key_pressed(OSD_KEY_JOY_CALIBRATE))
-		joy_calibration();
 
 
 	if (scrbitmap->depth == 8)

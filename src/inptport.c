@@ -366,9 +366,9 @@ struct ipd inputport_defaults[] =
 	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_AD_STICK_Y,          "AD Stick Y",      IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick X 2", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick X 3", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick X 4", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_UNKNOWN,             "UNKNOWN",         IP_KEY_NONE,     IP_JOY_NONE },
 	{ IPT_END,                 0,                 IP_KEY_NONE,     IP_JOY_NONE }
 };

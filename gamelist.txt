@@ -15,6 +15,7 @@ to list them.
 | 1941                 |  Yes   |  Yes   |  Yes   |   No   |   No   | 1941     |
 | 1942                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | 1942     |
 | 1943                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943     |
+| 1943 Kai             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943kai  |
 | 4D Warriors          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 4dwarrio |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
@@ -79,9 +80,9 @@ to list them.
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
 | Championship Sprint  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csprint  |
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
-| Cheeky Mouse         |   No   |   No   |   No   |   No   |   No   | cheekyms |
+| Cheeky Mouse         |  Yes   |   No   |Partial |   No   |  Yes   | cheekyms |
 | Chelnov              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
-| Choplifter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chplftb  |
+| Choplifter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chplft   |
 | Circus               |  Yes   |Overlay |Partial |  Yes   |   No   | circus   |
 | Circus Charlie       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | circusc  |
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
@@ -90,6 +91,7 @@ to list them.
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
 | Commando (Sega)      |   No   |   No   |  Yes   |  Yes   |  Yes   | commsega |
+| Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
 | Congo Bongo          |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | congo    |
 | Contra               |  Yes   | Close  |  Yes   |  Yes   |   No   | contra   |
 | Cop 01               |  Yes   | Close  |  Yes   |  Yes   |   No   | cop01    |
@@ -145,7 +147,7 @@ to list them.
 | F1 Dream             |  Yes   |  Yes   |  Yes   |   No   |   No   | f1dream  |
 | Fantasy              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | fantasy  |
 | Fantasy Zone         |   No   |  Yes   |   No   |   No   |   No   | fantzone |
-| Fast Freddie         |  Yes   |   No   |  Yes   |  Yes   |  Yes   | fastfred |
+| Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
 | Fax                  |  Yes   |  Yes   |   No   |   No   |   No   | fax      |
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | ffight   |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
@@ -169,6 +171,7 @@ to list them.
 | Get Star             |  Yes   |   No   |  Yes   |   No   |   No   | getstar  |
 | Ghosts'n Goblins     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gng      |
 | Ghouls'n Ghosts      |  Yes   |  Yes   |  Yes   |   No   |   No   | ghouls   |
+| Gingateikoku No GyakushuYes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
 | Golden Axe           |  Yes   |  Yes   |  Yes   |   No   |   No   | goldnaxe |
 | Golden Star          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | goldstar |
@@ -301,6 +304,7 @@ to list them.
 | NBA Jam              |   No   |  Yes   |  Yes   |  Yes   |   No   | nbajam   |
 | Nemesis              |  Yes   |  Yes   |Partial |  Yes   |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
+| New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | nrallyx  |
 | New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
@@ -420,10 +424,10 @@ to list them.
 | Spelunker II         |  Yes   |   No   |  Yes   |  Yes   |   No   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
 | Splat                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | splat    |
-| Sprint 2             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint2  |
+| Sprint 1             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint1  |
 | Spy Hunter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | spyhunt  |
-| Star Fire            |  Yes   | Close  | Yes(1) |  Yes   |   No   | startrek |
-| Star Force           |   No   |   No   |   No   |   No   |   No   | starfire |
+| Star Fire            |   No   |   No   |   No   |   No   |   No   | starfire |
+| Star Force           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | starforc |
 | Star Jacker          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | starjack |
 | Star Trek            |  Yes   | Close  | Yes(1) |  Yes   |   No   | startrek |
 | Star Wars            |  Yes   | Close  |  Yes   |  Yes   |   No   | starwars |
@@ -444,6 +448,7 @@ to list them.
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | suprmous |
 | Super Pac Man        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superpac |
+| Super Punch Out      |   No   |   No   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
 | Super Space Invaders |  Yes   |  Yes   |   No   |   No   |   No   | ssi      |
 | Super Sprint         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
@@ -510,7 +515,6 @@ to list them.
 | Two Tigers           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | twotiger |
 | UN Squadron          |  Yes   |  Yes   |  Yes   |   No   |   No   | unsquad  |
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
-| Uniwars              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | uniwars  |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
 | Vanguard             |  Yes   |  Yes   |No Speech  Yes   |  Yes   | vanguard |
@@ -543,7 +547,7 @@ to list them.
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
 | Zektor               |  Yes   | Close  |Partl(1)|  Yes   |   No   | zektor   |
 | Zero Zone            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerozone |
-| Zig Zag              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | zigzag   |
+| Zig Zag              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zigzag   |
 | Zoar                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zoar     |
 | Zoo Keeper           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zookeep  |
 | Zzyzzyxx             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zzyzzyxx |
@@ -581,7 +585,6 @@ Known issues:
 =============
 Clones supported:
   Japanese version ("1943jap")
-  the follow-up, 1943 Kai ("1943kai")
 
 Known issues:
 - Colors in test mode are not correct, but the board the PROMs were read from
@@ -846,8 +849,8 @@ Known issues:
 
 
 
-Centipede ("centipede")
-=======================
+Centipede ("centiped")
+======================
 Clones supported:
   revision 2 ("centipd2")
 
@@ -873,12 +876,13 @@ Known issues:
 
 
 
-Choplifter ("chplftb")
-======================
-original, with no 8751 microcontroller (replaced by a jumper pack).
+Choplifter ("chplft")
+=====================
+original with 8751 microcontroller
 
 Clones supported:
-  original with 8751 microcontroller ("chplft")
+  original, without the 8751 microcontroller which is replaced by a jumper
+    pack ("chplftb")
   bootleg ("chplftbl")
 
 Known issues:
@@ -1132,22 +1136,18 @@ Known issues:
 
 
 
-Fast Freddie ("fastfred")
-=========================
-Clones supported:
-  Fly-Boy (bootleg?) ("flyboy")
-
-Known issues:
-- Cocktail mode doesn't work in Fly-Boy. This seems a problem with the
-  original.
-
-
-
 Faster, Harder, More Challenging Q*Bert ("sqbert")
 ==================================================
 This is a sequel to Q*Bert which was never released to the public. You can
 find its story, as recalled by the author, Warren Davis, at
 http://www.coinop.org/features/qbstory.html
+
+
+
+Fax ("fax")
+===========
+Known issues:
+- Sound doesn't work because one ROM is missing.
 
 
 
@@ -1159,6 +1159,17 @@ Clones supported:
 Known issues:
 - Due to copy protection, the original version doesn't work. Use the bootleg
   instead.
+
+
+
+Fly-Boy ("flyboy")
+==================
+Clones supported:
+  Fast Freddie ("fastfred")
+
+Known issues:
+- Cocktail mode doesn't work in Fly-Boy. This seems a problem with the
+  original.
 
 
 
@@ -1977,12 +1988,8 @@ monitor is mostly informational, you might want to cut it out to enlarge the
 play area. You can do that enforcing a suitable screen size. Good resolutions
 are 400x300 (if your card supports it), or 800x600 with pixel doubling.
 
-Clones supported:
-  Super Punch Out ("spnchout")
-
 Known issues:
 - When you die, a rectangle on the left of the screen blinks.
-- Due to copy protection, Super Punch Out doesn't work.
 
 
 
@@ -2048,9 +2055,6 @@ Known issues:
 
 Rally X ("rallyx")
 ==================
-Clones supported:
-  New Rally X ("nrallyx")
-
 Known issues:
 - Sprites are not turned off appropriately.
 - Graphics placement in cocktail mode is not perfect.
@@ -2365,10 +2369,10 @@ F1+F2 bookkeeping/setup
 
 
 
-Sprint 2 ("sprint2")
+Sprint 1 ("sprint1")
 ====================
 Clones supported:
-  Sprint 1 ("sprint1")
+  Sprint 2 ("sprint2")
 
 Known issues:
 - Dip switches in Sprint 1 are wrong
@@ -2477,6 +2481,18 @@ Known issues:
 
 
 
+Super Punch Out ("spnchout")
+============================
+The game runs on two monitors, positioned one above the other. Since the top
+monitor is mostly informational, you might want to cut it out to enlarge the
+play area. You can do that enforcing a suitable screen size. Good resolutions
+are 400x300 (if your card supports it), or 800x600 with pixel doubling.
+
+Known issues:
+- Doesn't work due to copy protection.
+
+
+
 Super Qix ("superqix")
 ======================
 Clones supported:
@@ -2489,8 +2505,8 @@ Known issues:
 
 
 
-Super Sprintf ("ssprint")
-=========================
+Super Sprint ("ssprint")
+========================
 Known issues:
 - The green flag has wrong colors (chequered green and black instead of full
   green).
@@ -2669,14 +2685,6 @@ Clones supported:
 
 
 
-Triple Punch ("triplep")
-========================
-Known issues:
-- sometimes the game resets after you die. This is probably caused by the
-  copy protection.
-
-
-
 Turtles ("turtles")
 ===================
 Clones supported:
@@ -2705,16 +2713,6 @@ Two Tigers ("twotiger")
 =======================
 Known issues:
 - Two players not well supported
-
-
-
-Uniwars ("uniwars")
-===================
-Clones supported:
-  The original Japanese version, Gingateikoku No Gyakushu ("japirem")
-
-Known issues:
-- The star background is probably not entirely accurate.
 
 
 

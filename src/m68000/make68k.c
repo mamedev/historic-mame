@@ -21,6 +21,9 @@
  * 06.11.98 MJC - Flags saved on ADDA commands
  *                X set on ADD commands
  * 23.11.98 MJC - Alternate Memory Read/Write for non DOS
+ * 24.11.98 CK  - Add WIN32 specific stuff
+ * 25.11.98 DEO - abcd Size not initialised
+ * 21.12.98 MJC - Change register saving on Memory Banking
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -349,14 +352,37 @@ void MemoryBanking(int BaseCode)
 
     /* Call Banking Rountine */
 
-    fprintf(fp, "\t\t push   edx\n");
-    fprintf(fp, "\t\t push   esi\n");
+    if (SavedRegs[ESI] == '-')
+    {
+	  	fprintf(fp, "\t\t mov   [%s],ESI,\n",REG_PC);
+    }
+
+    if (SavedRegs[EDX] == '-')
+    {
+	    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
+    }
+
 #ifdef FASTCALL
-    fprintf(fp, "\t\t mov    %s,esi\n",FASTCALL_FIRST_REG);
+    fprintf(fp, "\t\t mov   %s,esi\n",FASTCALL_FIRST_REG);
+#else
+    fprintf(fp, "\t\t push  esi\n");
 #endif
-	fprintf(fp, "\t\t call   %s\n",name_cpu_setOPbase24);
-    fprintf(fp, "\t\t pop    esi\n");
-    fprintf(fp, "\t\t pop    edx\n");
+
+	fprintf(fp, "\t\t call  %s\n",name_cpu_setOPbase24);
+
+#ifndef FASTCALL
+    fprintf(fp, "\t\t add   esp,byte 4\n");
+#endif
+
+    if (SavedRegs[EDX] == '-')
+    {
+	    fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
+    }
+
+    if (SavedRegs[ESI] == '-')
+    {
+	  	fprintf(fp, "\t\t mov   ESI,[%s]\n",REG_PC);
+    }
 
     /* Update our copy */
 

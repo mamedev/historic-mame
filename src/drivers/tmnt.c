@@ -117,6 +117,7 @@ void tmnt_vh_stop (void);
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+static int tmnt_soundlatch = 0;
 
 
 void tmnt_sound_command_w(int offset,int data)
@@ -124,12 +125,23 @@ void tmnt_sound_command_w(int offset,int data)
 	soundlatch_w(0,data & 0xff);
 }
 
-void tmnt_s_9000_w(int offset,int data)
+int tmnt_sres_r(int offset)
+{
+	return tmnt_soundlatch;
+}
+
+void tmnt_sres_w(int offset,int data)
 {
 	/* bit 1 resets the UPD7795C sound chip */
 
 	/* bit 2 plays the title music */
-	if (data & 4) sample_start(0,0,0);
+	if (data & 4)
+	{
+		if (!sample_playing(0))	sample_start(0,0,0);
+	}
+	else sample_stop(0);
+
+	tmnt_soundlatch = data;
 }
 
 int tmnt_decode_sample(void)
@@ -322,6 +334,7 @@ static struct MemoryReadAddress tmnt_s_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x9000, 0x9000, tmnt_sres_r },	/* title music & UPD7759C reset */
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
 	{ -1 }	/* end of table */
@@ -331,7 +344,7 @@ static struct MemoryWriteAddress tmnt_s_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x9000, tmnt_s_9000_w },	/* title music & UPD7759C reset */
+	{ 0x9000, 0x9000, tmnt_sres_w },	/* title music & UPD7759C reset */
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ -1 }	/* end of table */
@@ -880,7 +893,77 @@ static struct MachineDriver punkshot_machine_driver =
 	}
 };
 
+/***************************************************************************
 
+  High score save/load
+
+***************************************************************************/
+
+static int tmnt_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+
+if ((READ_WORD(&(cpu_bankbase[1][0x03500])) == 0x0312) && (READ_WORD(&(cpu_bankbase[1][0x03502])) == 0x0257) && (READ_WORD(&(cpu_bankbase[1][0x03512])) == 0x0101) && (READ_WORD(&(cpu_bankbase[1][0x035C8])) == 0x4849) && (READ_WORD(&(cpu_bankbase[1][0x035CA])) == 0x4400) && (READ_WORD(&(cpu_bankbase[1][0x035EC])) == 0x4D49))
+
+{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread_msbfirst(f,&(cpu_bankbase[1][0x03500]),0x14);
+			osd_fread_msbfirst(f,&(cpu_bankbase[1][0x035C8]),0x27);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void tmnt_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&(cpu_bankbase[1][0x03500]),0x14);
+		osd_fwrite_msbfirst(f,&(cpu_bankbase[1][0x035C8]),0x27);
+
+
+		osd_fclose(f);
+	}
+}
+
+static int punkshot_hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+
+if ((READ_WORD(&(cpu_bankbase[1][0x00708])) == 0x0007) && (READ_WORD(&(cpu_bankbase[1][0x0070A])) == 0x2020) && (READ_WORD(&(cpu_bankbase[1][0x0072C])) == 0x464C))
+
+{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread_msbfirst(f,&(cpu_bankbase[1][0x00708]),0x28);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void punkshot_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&(cpu_bankbase[1][0x00708]),0x28);
+		osd_fclose(f);
+	}
+}
 
 /***************************************************************************
 
@@ -1057,7 +1140,7 @@ struct GameDriver tmnt_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	tmnt_hiload, tmnt_hisave
 };
 
 struct GameDriver tmntj_driver =
@@ -1083,7 +1166,7 @@ struct GameDriver tmntj_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	tmnt_hiload, tmnt_hisave
 };
 
 struct GameDriver tmht2p_driver =
@@ -1109,7 +1192,7 @@ struct GameDriver tmht2p_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	tmnt_hiload, tmnt_hisave
 };
 
 struct GameDriver tmnt2pj_driver =
@@ -1135,7 +1218,7 @@ struct GameDriver tmnt2pj_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	tmnt_hiload, tmnt_hisave
 };
 
 struct GameDriver punkshot_driver =
@@ -1161,5 +1244,5 @@ struct GameDriver punkshot_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	punkshot_hiload, punkshot_hisave
 };

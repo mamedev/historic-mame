@@ -19,14 +19,24 @@ To do:
 Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg).
 Birdie Try runs on this hardware, roms are needed.
 
-  Notes:
+Sprite/background priority in boat stage of Sly Spy & forest level of Bad
+Dudes, current drivers MAY be correct (Sly Spy is certainly wrong), we
+need real boards to check against.
+
+Figure out weapon placement in Heavy Barrel.
+
+
+Notes:
 	Missing scroll field in Hippodrome
 	Hippodrome can crash if you fight 'Serpent' enemy
-  Midnight Resistance:
-	The final sequence is wrong (missing front layer which should hide the
-	sun until the grass field scrolls in place).
-	At the end you are asked to enter your name using black letters on black
-	background...
+
+	Weapon placement in Heavy Barrel is still wrong.
+
+	No sound in Sly Spy or MidRes, they use a custom Deco processor.  It is a
+surface mounted 80-pin chip and appears to be HU6820 compatible.
+This chip is used for the backgrounds in Hippodrome, the main cpu in Bloody
+Wolf/Battle Ranger, and for sound in Caveman Ninja, Captain America, Dark Seal etc.
+
 
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
@@ -46,12 +56,8 @@ Mid res: bpx at c02 for level check, can go straight to credits.
          bpx 10a6 - so you can choose level at start of game.
          Put PC to 0xa1e in game to trigger continue screen
 
-To do:
-  Sprite/background priority in boat stage of Sly Spy & forest level of Bad
-    Dudes, current drivers MAY be correct (Sly Spy is certainly wrong), we
-    need real boards to check against.
 
-  No sound in Sly Spy or MidRes (what processor is it?!)
+SEE 0xdede in slyspy - scroll register from start of level 3
 
 ***************************************************************************/
 
@@ -59,16 +65,7 @@ To do:
 #include "vidhrdw/generic.h"
 #include "M6502/m6502.h"
 
-/* Hi-score definitions */
-static unsigned char *ram_robo;
-static unsigned char *ram_gen;
-static unsigned char *ram_hippo;
-static unsigned char *ram_sly;
-static unsigned char *ram_midres;
-
 /* Video emulation definitions */
-extern unsigned char *dec0_sprite,*dec0_mem;
-
 int  dec0_vh_start(void);
 void dec0_vh_stop(void);
 void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -77,9 +74,6 @@ void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void dec0_priority_w(int offset,int data);
-void hippo_sprite_fix(int offset, int data);
 
 extern unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
 extern unsigned char *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
@@ -104,52 +98,59 @@ void dec0_pf3_colscroll_w(int offset,int data);
 int dec0_pf3_colscroll_r(int offset);
 void dec0_pf3_data_w(int offset,int data);
 int dec0_pf3_data_r(int offset);
+void dec0_priority_w(int offset,int data);
 
 void dec0_paletteram_w_rg(int offset,int data);
 void dec0_paletteram_w_b(int offset,int data);
 
 /* System prototypes - from machine/dec0.c */
+extern void dec0_custom_memory(void);
 extern int dec0_controls_read(int offset);
 extern int dec0_rotary_read(int offset);
 extern int midres_controls_read(int offset);
 extern int slyspy_controls_read(int offset);
-extern int robocop_interrupt(void);
-extern int dude_interrupt(void);
-extern int hippodrm_protection(int offset);
-extern void hb_8751_write(int data);
 
-extern int dec0_unknown1,dec0_unknown2; /* Temporary */
+extern void dec0_i8751_write(int data);
+extern void dec0_i8751_reset(void);
+
+#if 0
+extern int hippo_6510_intf_r(int offset);
+extern void hippo_6510_intf_w(int offset,int data);
+#endif
+
+unsigned char *dec0_ram;
 
 /******************************************************************************/
 
-static void dec0_30c010_w(int offset,int data)
+static void dec0_control_w(int offset,int data)
 {
 	switch (offset)
 	{
-		case 0:
+		case 0: /* Playfield & Sprite priority */
 			dec0_priority_w(0,data);
 			break;
 
-		case 2: /* Unknown write in many games */
-			dec0_unknown1=data;
+		case 2: /* An ack or DMA flag */
 			break;
 
-		case 4:
+		case 4: /* 6502 sound cpu */
 			soundlatch_w(0,data & 0xff);
 			cpu_cause_interrupt(1,M6502_INT_NMI);
 			break;
 
-		case 6: /* Heavy Barrel Intel 8751 microcontroller - unknown for other games */
-			hb_8751_write(data);
-			dec0_unknown2=data; /* Temp */
+		case 6: /* Intel 8751 microcontroller - Bad Dudes & Heavy Barrel only */
+			dec0_i8751_write(data);
 			break;
 
-		case 8:
-			watchdog_reset_w(0,0);
+		case 8: /* Interrupt ack (VBL - IRQ 6) (or could be DMA flag to graphics chips */
 			break;
 
-		case 0xa: /* Many games write here only at startup for unknown reasons */
-			hb_8751_write(0x9000); /* We can use this to init HB microcontroller */
+		case 0xa: /* ? */
+ 			if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getpc(),data,0x30c010+offset);
+			break;
+
+		case 0xe: /* Reset Intel 8751? - not sure, all the games write here at startup */
+			dec0_i8751_reset();
  			if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getpc(),data,0x30c010+offset);
 			break;
 
@@ -165,14 +166,15 @@ static void slyspy_control_w(int offset, int data)
 
     switch (offset) {
     	case 0:
-				if (sound>0x2d) ADPCM_trigger(0,sound);
-				break;
-			case 2:
+			if (sound>0x2d) ADPCM_trigger(0,sound);
+			//soundlatch_w(0,data & 0xff);
+			break;
+		case 2:
 			/* This is set to 0x80 in the boat level, so could be sprite/playfield
 				priority - it fits for all cases except boat level where this is
                 also 0x80 :( */
-				dec0_unknown2=data;
-				break;
+			dec0_priority_w(0,data);
+			break;
     }
 }
 
@@ -180,30 +182,9 @@ static void midres_sound_w(int offset, int data)
 {
     int sound=data&0xff;
 
+//soundlatch_w(0,data & 0xff);
     if (sound>0x44)
 		ADPCM_trigger(0,sound);
-}
-
-/******************************************************************************/
-
-static int dude_skip(int offset)
-{
-	cpu_spinuntil_int();
-	return READ_WORD(&ram_gen[0x212]);
-}
-
-static int robocop_skip(int offset)
-{
-	int p=cpu_getpc();
-
-	if (p==0x17c0 || p==0x17ee) cpu_spinuntil_int();
-	return READ_WORD(&ram_robo[0x8]);
-}
-
-static int midres_skip(int offset)
-{
-	cpu_spinuntil_int();
-	return READ_WORD(&ram_midres[0x207c]);
 }
 
 /******************************************************************************/
@@ -212,11 +193,13 @@ static struct MemoryReadAddress dec0_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
+	{ 0x24a000, 0x24a7ff, dec0_pf2_data_r },
 	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
+	{ 0x24d000, 0x24d7ff, dec0_pf3_data_r },
 	{ 0x300000, 0x30001f, dec0_rotary_read },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
-	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_gen }, /* Main ram */
-	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
+	{ 0xff8000, 0xffbfff, MRA_BANK1 }, /* Main ram */
+	{ 0xffc000, 0xffc7ff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
 };
 
@@ -242,96 +225,11 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x24cc00, 0x24cfff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w, &dec0_pf3_data },
 
-	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* Priority, sound, watchdog, etc. */
+	{ 0x30c010, 0x30c01f, dec0_control_w },	/* Priority, sound, etc. */
 	{ 0x310000, 0x3107ff, dec0_paletteram_w_rg, &paletteram },	/* Red & Green bits */
 	{ 0x314000, 0x3147ff, dec0_paletteram_w_b, &paletteram_2 },	/* Blue bits */
-	{ 0xff8000, 0xffbfff, MWA_BANK1 },
-	{ 0xffc000, 0xffcfff, MWA_BANK2, &dec0_sprite },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress robocop_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
-	{ 0x244000, 0x245fff, dec0_pf1_data_r },
-	{ 0x30c000, 0x30c00b, dec0_controls_read },
-	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_robo }, /* Main ram */
-	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress robocop_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-
-	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
-	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
-	{ 0x242000, 0x24207f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
-	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ 0x242800, 0x243fff, MWA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
-	{ 0x244000, 0x245fff, dec0_pf1_data_w, &dec0_pf1_data },
-
-	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
-	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
-	{ 0x248000, 0x24807f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
-	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
-	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w, &dec0_pf2_data },
-
-	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
-	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
-	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
-	{ 0x24cc00, 0x24cfff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
-	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w, &dec0_pf3_data },
-
-	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* Priority, sound, watchdog, etc. */
-	{ 0x310000, 0x3107ff, dec0_paletteram_w_rg, &paletteram },	/* Red & Green bits */
-	{ 0x314000, 0x3147ff, dec0_paletteram_w_b, &paletteram_2 },	/* Blue bits */
-	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_mem },
-	{ 0xffc000, 0xffcfff, MWA_BANK2, &dec0_sprite },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress hippodrm_readmem[] =
-{
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x180000, 0x18001f, hippodrm_protection },
-	{ 0x30c000, 0x30c00b, dec0_controls_read },
-	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_hippo },
-	{ 0xffc000, 0xffcfff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress hippodrm_writemem[] =
-{
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x180000, 0x18001f, MWA_NOP },	/* ??? protection ??? */
-
-	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
-	{ 0x240010, 0x240017, dec0_pf1_control_1_w },
- 	{ 0x242000, 0x24207f, dec0_pf1_colscroll_w, &dec0_pf1_colscroll },
-	{ 0x242400, 0x2427ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
-	{ 0x244000, 0x245fff, dec0_pf1_data_w, &dec0_pf1_data },
-
-	{ 0x246000, 0x246007, dec0_pf2_control_0_w },	/* first tile layer */
-	{ 0x246010, 0x246017, dec0_pf2_control_1_w },
-	{ 0x248000, 0x24807f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
-	{ 0x248400, 0x2487ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
-	{ 0x24a000, 0x24a7ff, dec0_pf2_data_w, &dec0_pf2_data },
-
-/* Hippodrome never writes to the second tile layer RAM! Why? Protection? */
-	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
-	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
-	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
-	{ 0x24cc00, 0x24cfff, dec0_pf3_rowscroll_w, &dec0_pf3_rowscroll },
-	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w, &dec0_pf3_data },
-
-	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* Priority, sound, watchdog, etc. */
-	{ 0x310000, 0x3107ff, dec0_paletteram_w_rg, &paletteram },	/* Red & Green bits */
-	{ 0x314000, 0x3147ff, dec0_paletteram_w_b, &paletteram_2 },	/* Blue bits */
-	{ 0xff8000, 0xffbfff, MWA_BANK1 },
-	{ 0xffc000, 0xffc7ff, MWA_BANK2, &dec0_sprite },
-	{ 0xffc800, 0xffcfff, hippo_sprite_fix },
+	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_ram },
+	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
 	{ -1 }  /* end of table */
 };
 
@@ -339,7 +237,7 @@ static struct MemoryReadAddress slyspy_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x244000, 0x244003, MRA_NOP }, /* ?? watchdog ?? */
-	{ 0x304000, 0x307fff, MRA_BANK1, &ram_sly }, /* Sly spy main ram */
+	{ 0x304000, 0x307fff, MRA_BANK1 }, /* Sly spy main ram */
 	{ 0x308000, 0x3087ff, MRA_BANK2 }, /* Sprites */
 	{ 0x314008, 0x31400f, slyspy_controls_read },
 	{ 0x31c00c, 0x31c00f, MRA_NOP },	/* sound CPU read? */
@@ -371,12 +269,14 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 	{ 0x24c000, 0x24c7ff, dec0_pf2_data_w },
 	{ 0x24e000, 0x24ffff, dec0_pf1_data_w },
 
+// 248000 is really dec0_pf2_control_0_w
+
 	{ 0x300000, 0x300007, dec0_pf3_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf3_control_1_w },
 	{ 0x300800, 0x30087f, dec0_pf3_colscroll_w, &dec0_pf3_colscroll },
 	{ 0x301000, 0x3017ff, dec0_pf3_data_w, &dec0_pf3_data },
-	{ 0x304000, 0x307fff, MWA_BANK1 }, /* Sly spy main ram */
-	{ 0x308000, 0x3087ff, MWA_BANK2, &dec0_sprite },
+	{ 0x304000, 0x307fff, MWA_BANK1, &dec0_ram }, /* Sly spy main ram */
+	{ 0x308000, 0x3087ff, MWA_BANK2, &spriteram },
 	{ 0x310000, 0x3107ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x314000, 0x314003, slyspy_control_w },
 	{ -1 }  /* end of table */
@@ -385,7 +285,7 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 static struct MemoryReadAddress midres_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1, &ram_midres },
+	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x180000, 0x18000f, midres_controls_read },
 	{ 0x320000, 0x321fff, dec0_pf1_data_r },
@@ -395,16 +295,17 @@ static struct MemoryReadAddress midres_readmem[] =
 static struct MemoryWriteAddress midres_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1 },
-	{ 0x120000, 0x1207ff, MWA_BANK2, &dec0_sprite },
+	{ 0x100000, 0x103fff, MWA_BANK1, &dec0_ram },
+	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram },
 	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0x160000, 0x160003, dec0_priority_w },
+	{ 0x160000, 0x160001, dec0_priority_w },
 	{ 0x180008, 0x18000f, MWA_NOP }, /* ?? watchdog ?? */
 	{ 0x1a0000, 0x1a0001, midres_sound_w },
 
 	{ 0x200000, 0x200007, dec0_pf2_control_0_w },
 	{ 0x200010, 0x200017, dec0_pf2_control_1_w },
 	{ 0x220000, 0x2207ff, dec0_pf2_data_w, &dec0_pf2_data },
+	{ 0x220800, 0x220fff, dec0_pf2_data_w },	/* mirror address used in end sequence */
 	{ 0x240000, 0x24007f, dec0_pf2_colscroll_w, &dec0_pf2_colscroll },
 	{ 0x240400, 0x2407ff, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },
 
@@ -421,6 +322,25 @@ static struct MemoryWriteAddress midres_writemem[] =
 	{ 0x340400, 0x3407ff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },
 	{ -1 }  /* end of table */
 };
+
+#if 0
+static struct MemoryReadAddress hippo_sub_readmem[] =
+{
+	{ 0x0000, 0x01ff, MRA_RAM },
+	{ 0x6000, 0x60ff, hippo_6510_intf_r },
+	{ 0xc000, 0xdfff, MRA_ROM },
+	{ 0xe000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress hippo_sub_writemem[] =
+{
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x6000, 0x60ff, hippo_6510_intf_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+#endif
 
 /******************************************************************************/
 
@@ -508,7 +428,7 @@ INPUT_PORTS_START( hbarrel_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -556,7 +476,7 @@ INPUT_PORTS_START( baddudes_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -599,7 +519,7 @@ INPUT_PORTS_START( robocop_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -641,7 +561,7 @@ INPUT_PORTS_START( hippodrm_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -717,7 +637,7 @@ INPUT_PORTS_START( slyspy_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -765,7 +685,7 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
@@ -896,7 +816,7 @@ static struct MachineDriver hbarrel_machine_driver =
 			10000000,
 			0,
 			dec0_readmem,dec0_writemem,0,0,
-			dude_interrupt,2
+			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -950,7 +870,7 @@ static struct MachineDriver baddudes_machine_driver =
 			10000000,
 			0,
 			dec0_readmem,dec0_writemem,0,0,
-			dude_interrupt,2
+			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -965,7 +885,7 @@ static struct MachineDriver baddudes_machine_driver =
 	0,
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+ 	32*8, 64*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gfxdecodeinfo,
 	1024, 1024,
@@ -1003,9 +923,9 @@ static struct MachineDriver robocop_machine_driver =
 			CPU_M68000,
 			10000000,
 			0,
-			robocop_readmem,robocop_writemem,0,0,
-			robocop_interrupt,1
-		} ,
+			dec0_readmem,dec0_writemem,0,0,
+			m68_level6_irq,1 /* VBL */
+		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1250000,
@@ -1057,8 +977,8 @@ static struct MachineDriver hippodrm_machine_driver =
 			CPU_M68000,
 			10000000,
 			0,
-			hippodrm_readmem,hippodrm_writemem,0,0,
-			robocop_interrupt,1
+			dec0_readmem,dec0_writemem,0,0,
+			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -1066,7 +986,16 @@ static struct MachineDriver hippodrm_machine_driver =
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
+		},
+#if 0
+		{
+			CPU_M6502,
+			1000000,
+			4,
+			hippo_sub_readmem,hippo_sub_writemem,0,0,
+			ignore_interrupt,0
 		}
+#endif
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1112,15 +1041,17 @@ static struct MachineDriver midres_machine_driver =
 			10000000,
 			0,
 			midres_readmem,midres_writemem,0,0,
-			dude_interrupt,2
-		}  /*,
+			m68_level6_irq,1 /* VBL */
+		},
+#if 0
 		{
-			CPU_??? | CPU_AUDIO_CPU,
-			1250000,
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,
 			2,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			interrupt,1
-		}   */
+			dec1_s_readmem,dec1_s_writemem,0,0,
+			ignore_interrupt,0
+		}
+#endif
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1145,6 +1076,10 @@ static struct MachineDriver midres_machine_driver =
 		{
 			SOUND_ADPCM,
 			&adpcm_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
 		}
 	}
 };
@@ -1158,15 +1093,17 @@ static struct MachineDriver slyspy_machine_driver =
 			10000000,
 			0,
 			slyspy_readmem,slyspy_writemem,0,0,
-			robocop_interrupt,1
-		} /*,
+			m68_level6_irq,1 /* VBL */
+		},
+#if 0
 		{
-			CPU_??? | CPU_AUDIO_CPU,
-			1250000,
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,
 			2,
-			dec0_s_readmem,dec0_s_writemem,0,0,
+			dec1_s_readmem,dec1_s_writemem,0,0,
 			interrupt,1
-		}  */
+		}
+#endif
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1191,6 +1128,10 @@ static struct MachineDriver slyspy_machine_driver =
 		{
 			SOUND_ADPCM,
 			&adpcm_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
 		}
 	}
 };
@@ -1469,7 +1410,8 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
+	ROM_LOAD( "ew08",         0x0e000, 0x2000, 0x53010534 )
+	ROM_CONTINUE(0x0000,0xe000)
 ROM_END
 
 ROM_START( ffantasy_rom )
@@ -1513,8 +1455,9 @@ ROM_START( ffantasy_rom )
 	ROM_REGION(0x10000)	/* ADPCM sounds */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
-    ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08",         0x000000, 0x10000, 0x53010534 )
+	ROM_REGION(0x10000) /* Encrypted code bank */
+	ROM_LOAD( "ew08",         0x0e000, 0x2000, 0x53010534 )
+	ROM_CONTINUE(0x0000,0xe000)
 ROM_END
 
 ROM_START( slyspy_rom )
@@ -1554,8 +1497,9 @@ ROM_START( slyspy_rom )
 	ROM_LOAD( "fa00-.bin",    0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02-.bin",    0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Unknown sound CPU */
-	ROM_LOAD( "fa10-.bin",    0x00000, 0x10000, 0xdfd2ff25 )
+	ROM_REGION (0x10000)	/* Custom sound CPU */
+	ROM_LOAD( "fa10-.bin",    0x0e000, 0x02000, 0xdfd2ff25 )
+	ROM_CONTINUE(0x0000,0xe000)
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11-.bin",    0x00000, 0x20000, 0x4e547bad )
@@ -1590,8 +1534,9 @@ ROM_START( midres_rom )
 	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Unknown or corrupt sound CPU */
-	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
+	ROM_REGION(0x10000)	/* Custom sound CPU */
+	ROM_LOAD( "fl16",         0x0e000, 0x2000, 0x66360bdf )
+	ROM_CONTINUE(0x0000,0xe000)
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
@@ -1634,44 +1579,6 @@ ROM_START( midresj_rom )
 ROM_END
 
 /******************************************************************************/
-
-static void hbarrel_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	WRITE_WORD (&RAM[0x8B2],0x4E71);
-}
-
-static void hbarrelj_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	WRITE_WORD (&RAM[0x8A6],0x4E71);
-}
-
-static void drgninja_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* Lamppost patch & test mode patch */
-	WRITE_WORD (&RAM[0xDF9E],0x4E71);
-
-	/* Uncomment this to make end sequence appear at end of first level *
-	WRITE_WORD (&RAM[0x1b84],0x4E71);
-	WRITE_WORD (&RAM[0x1b86],0x4E71);	 */
-}
-
-static void baddudes_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	/* Gouky's amazing patch to fix lamposts and corrupt tiles!!! */
-	WRITE_WORD (&RAM[0xe32e],0x4E71);
-
-	/* Uncomment this to make end sequence appear at end of first level *
-	WRITE_WORD (&RAM[0x1ba2],0x4E71);
-	WRITE_WORD (&RAM[0x1ba4],0x4E71);  */
-}
 
 /* Sly Spy has many areas all mixed in with one another, they need to be
 	seperated via patches unless we find some byte written somewhere that
@@ -1734,34 +1641,20 @@ static void slyspy_patch(void)
 
 /******************************************************************************/
 
-/* Mish - Decryption of code bank rom 8, not currently doing much... */
+/* Mish - Decryption of code bank rom 8 */
 static void hippo_decode(void)
 {
 	unsigned char *MYRAM = Machine->memory_region[4];
-	int i,newword;
-/*	unsigned char *OUT = Machine->memory_region[Machine->drv->cpu[0].memory_region];*/
+	int i;
 
-	/* Read each byte, decrypt it, and make it a word so core can read it */
-	for (i=0x00000; i<0x10000; i=i+2) {
+	/* Read each byte, decrypt it */
+	for (i=0x00000; i<0x10000; i++) {
 	  	int swap1=MYRAM[i]&0x80;
 	    int swap2=MYRAM[i]&0x1;
 
 	    MYRAM[i]=(MYRAM[i]&0x7e);
 	    if (swap1) MYRAM[i]+=0x1;
 	    if (swap2) MYRAM[i]+=0x80;
-
-	    swap1=MYRAM[i+1]&0x80;
-	    swap2=MYRAM[i+1]&0x1;
-
-	    MYRAM[i+1]=(MYRAM[i+1]&0x7e);
-	    if (swap1) MYRAM[i+1]+=0x1;
-	    if (swap2) MYRAM[i+1]+=0x80;
-
-	    newword=((MYRAM[i])<<8) + MYRAM[i+1];
-
-      /* Write it to ??  A MRA_BANK probably
-	    WRITE_WORD (&ROM[i],newword);
-	    WRITE_WORD (&OUT[i],newword);*/
 	}
 }
 
@@ -1852,27 +1745,29 @@ ADPCM_SAMPLES_END
 
 static int robocopp_hiload(void)
 {
-        void *f;
+	void *f;
 
-        /* check if the hi score table has already been initialized */
+	/* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_robo[0x0ed8]) == 0x4d55 && READ_WORD(&ram_robo[0x0eda]) == 0x5250 &&
-			READ_WORD(&ram_robo[0x0f68]) == 0x504f && READ_WORD(&ram_robo[0x0f6a]) == 0x4c49 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&ram_robo[0x0ed8],16*10);
-                        ram_robo[0x3522]=ram_robo[0x0ee0];
-                        ram_robo[0x3523]=ram_robo[0x0ee1];
-                        ram_robo[0x3524]=ram_robo[0x0ee2];
-                        ram_robo[0x3525]=ram_robo[0x0ee3];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+	if (READ_WORD(&dec0_ram[0x0ed8]) == 0x4d55 && READ_WORD(&dec0_ram[0x0eda]) == 0x5250 &&
+		READ_WORD(&dec0_ram[0x0f68]) == 0x504f && READ_WORD(&dec0_ram[0x0f6a]) == 0x4c49 )
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread_msbfirst(f,&dec0_ram[0x0ed8],16*10);
+
+/* MISH :  The following lines DO NOT look endian friendly... */
+
+			dec0_ram[0x3522]=dec0_ram[0x0ee0];
+			dec0_ram[0x3523]=dec0_ram[0x0ee1];
+			dec0_ram[0x3524]=dec0_ram[0x0ee2];
+			dec0_ram[0x3525]=dec0_ram[0x0ee3];
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
-
 
 static void robocopp_hisave(void)
 {
@@ -1880,9 +1775,9 @@ static void robocopp_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_robo[0x0ed8],16*10);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x0ed8],16*10);
                 osd_fclose(f);
-				ram_robo[0x0ed8]=0;
+				dec0_ram[0x0ed8]=0;
         }
 }
 
@@ -1892,13 +1787,13 @@ static int hbarrel_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_gen[0x3e9c]) == 0x10 && READ_WORD(&ram_gen[0x3ea0]) == 0x09 &&
-			READ_WORD(&ram_gen[0x3ef0]) == 0x55 && READ_WORD(&ram_gen[0x3ef2]) == 0x4d26)
+        if (READ_WORD(&dec0_ram[0x3e9c]) == 0x10 && READ_WORD(&dec0_ram[0x3ea0]) == 0x09 &&
+			READ_WORD(&dec0_ram[0x3ef0]) == 0x55 && READ_WORD(&dec0_ram[0x3ef2]) == 0x4d26)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_gen[0x3e9c],4*10);
-                        osd_fread_msbfirst(f,&ram_gen[0x3ecc],4*10);
+                        osd_fread_msbfirst(f,&dec0_ram[0x3e9c],4*10);
+                        osd_fread_msbfirst(f,&dec0_ram[0x3ecc],4*10);
                         osd_fclose(f);
                 }
                 return 1;
@@ -1906,15 +1801,14 @@ static int hbarrel_hiload(void)
         else return 0;  /* we can't load the hi scores yet */
 }
 
-
 static void hbarrel_hisave(void)
 {
         void *f;
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_gen[0x3e9c],4*10);
-                osd_fwrite_msbfirst(f,&ram_gen[0x3ecc],4*10);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x3e9c],4*10);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x3ecc],4*10);
                 osd_fclose(f);
         }
 }
@@ -1925,13 +1819,13 @@ static int hbarrelj_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_gen[0x3e78]) == 0x10 && READ_WORD(&ram_gen[0x3e7c]) == 0x09 &&
-			READ_WORD(&ram_gen[0x3ecc]) == 0x55 && READ_WORD(&ram_gen[0x3ece]) == 0x4d26 )
+        if (READ_WORD(&dec0_ram[0x3e78]) == 0x10 && READ_WORD(&dec0_ram[0x3e7c]) == 0x09 &&
+			READ_WORD(&dec0_ram[0x3ecc]) == 0x55 && READ_WORD(&dec0_ram[0x3ece]) == 0x4d26 )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_gen[0x3e78],4*10);
-                        osd_fread_msbfirst(f,&ram_gen[0x3ea8],4*10);
+                        osd_fread_msbfirst(f,&dec0_ram[0x3e78],4*10);
+                        osd_fread_msbfirst(f,&dec0_ram[0x3ea8],4*10);
                         osd_fclose(f);
                 }
                 return 1;
@@ -1939,15 +1833,14 @@ static int hbarrelj_hiload(void)
         else return 0;  /* we can't load the hi scores yet */
 }
 
-
 static void hbarrelj_hisave(void)
 {
         void *f;
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_gen[0x3e78],4*10);
-                osd_fwrite_msbfirst(f,&ram_gen[0x3ea8],4*10);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x3e78],4*10);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x3ea8],4*10);
                 osd_fclose(f);
         }
 }
@@ -1958,15 +1851,15 @@ static int baddudes_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_gen[0x28fe]) == 0x4d49 && READ_WORD(&ram_gen[0x2900]) == 0x4e00 &&
-			READ_WORD(&ram_gen[0x299E]) == 0x444d && READ_WORD(&ram_gen[0x29a0]) == 0x5900 )
+        if (READ_WORD(&dec0_ram[0x28fe]) == 0x4d49 && READ_WORD(&dec0_ram[0x2900]) == 0x4e00 &&
+			READ_WORD(&dec0_ram[0x299E]) == 0x444d && READ_WORD(&dec0_ram[0x29a0]) == 0x5900 )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_gen[0x28fe],8*20);
-                        ram_gen[0x01d4]=ram_gen[0x2903];
-                        ram_gen[0x01d7]=ram_gen[0x2902];
-                        ram_gen[0x01d6]=ram_gen[0x2905];
+                        osd_fread_msbfirst(f,&dec0_ram[0x28fe],8*20);
+                        dec0_ram[0x01d4]=dec0_ram[0x2903];
+                        dec0_ram[0x01d7]=dec0_ram[0x2902];
+                        dec0_ram[0x01d6]=dec0_ram[0x2905];
                         osd_fclose(f);
                 }
                 return 1;
@@ -1981,7 +1874,7 @@ static void baddudes_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_gen[0x28fe],8*20);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x28fe],8*20);
                 osd_fclose(f);
         }
 }
@@ -1992,15 +1885,15 @@ static int drgninja_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_gen[0x28f8]) == 0x4d49 && READ_WORD(&ram_gen[0x28fa]) == 0x4e00 &&
-			READ_WORD(&ram_gen[0x2998]) == 0x444d && READ_WORD(&ram_gen[0x299a]) == 0x5900)
+        if (READ_WORD(&dec0_ram[0x28f8]) == 0x4d49 && READ_WORD(&dec0_ram[0x28fa]) == 0x4e00 &&
+			READ_WORD(&dec0_ram[0x2998]) == 0x444d && READ_WORD(&dec0_ram[0x299a]) == 0x5900)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_gen[0x28f8],8*20);
-                        ram_gen[0x01d4]=ram_gen[0x28fd];
-                        ram_gen[0x01d7]=ram_gen[0x28fc];
-                        ram_gen[0x01d6]=ram_gen[0x28ff];
+                        osd_fread_msbfirst(f,&dec0_ram[0x28f8],8*20);
+                        dec0_ram[0x01d4]=dec0_ram[0x28fd];
+                        dec0_ram[0x01d7]=dec0_ram[0x28fc];
+                        dec0_ram[0x01d6]=dec0_ram[0x28ff];
                         osd_fclose(f);
                 }
                 return 1;
@@ -2014,7 +1907,7 @@ static void drgninja_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_gen[0x28f8],8*20);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x28f8],8*20);
                 osd_fclose(f);
         }
 }
@@ -2025,12 +1918,12 @@ static int hippodrm_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_hippo[0x3e00]) == 0x0800 && READ_WORD(&ram_hippo[0x3e04]) == 0x0700  &&
-			READ_WORD(&ram_hippo[0x3e4c]) == 0x4352 && READ_WORD(&ram_hippo[0x3e4e]) == 0x5801  )
+        if (READ_WORD(&dec0_ram[0x3e00]) == 0x0800 && READ_WORD(&dec0_ram[0x3e04]) == 0x0700  &&
+			READ_WORD(&dec0_ram[0x3e4c]) == 0x4352 && READ_WORD(&dec0_ram[0x3e4e]) == 0x5801  )
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_hippo[0x3e00],80);
+                        osd_fread_msbfirst(f,&dec0_ram[0x3e00],80);
                         osd_fclose(f);
                 }
                 return 1;
@@ -2044,7 +1937,7 @@ static void hippodrm_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_hippo[0x3e00],80);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x3e00],80);
                 osd_fclose(f);
         }
 }
@@ -2055,16 +1948,16 @@ static int slyspy_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_sly[0x0000]) == 0x30 && READ_WORD(&ram_sly[0x0004]) == 0x28 &&
-			READ_WORD(&ram_sly[0x0098]) == 0x3030 && READ_WORD(&ram_sly[0x009c]) == 0x3030)
+        if (READ_WORD(&dec0_ram[0x0000]) == 0x30 && READ_WORD(&dec0_ram[0x0004]) == 0x28 &&
+			READ_WORD(&dec0_ram[0x0098]) == 0x3030 && READ_WORD(&dec0_ram[0x009c]) == 0x3030)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_sly[0],160);
-                        ram_sly[0x2adc]=ram_sly[0];
-                        ram_sly[0x2add]=ram_sly[1];
-                        ram_sly[0x2ade]=ram_sly[2];
-                        ram_sly[0x2adf]=ram_sly[3];
+                        osd_fread_msbfirst(f,&dec0_ram[0],160);
+                        dec0_ram[0x2adc]=dec0_ram[0];
+                        dec0_ram[0x2add]=dec0_ram[1];
+                        dec0_ram[0x2ade]=dec0_ram[2];
+                        dec0_ram[0x2adf]=dec0_ram[3];
                         osd_fclose(f);
                 }
                 return 1;
@@ -2078,9 +1971,9 @@ static void slyspy_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_sly[0],160);
+                osd_fwrite_msbfirst(f,&dec0_ram[0],160);
                 osd_fclose(f);
-				ram_sly[0x0098] = 0;
+				dec0_ram[0x0098] = 0;
         }
 }
 
@@ -2090,12 +1983,12 @@ static int midres_hiload(void)
 
         /* check if the hi score table has already been initialized */
 
-        if (READ_WORD(&ram_midres[0x26ea]) == 0x10 && READ_WORD(&ram_midres[0x26ee]) == 0x09 &&
-			READ_WORD(&ram_midres[0x2736]) == 0x55 && READ_WORD(&ram_midres[0x2738]) == 0x4d26)
+        if (READ_WORD(&dec0_ram[0x26ea]) == 0x10 && READ_WORD(&dec0_ram[0x26ee]) == 0x09 &&
+			READ_WORD(&dec0_ram[0x2736]) == 0x55 && READ_WORD(&dec0_ram[0x2738]) == 0x4d26)
         {
                 if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
                 {
-                        osd_fread_msbfirst(f,&ram_midres[0x26ea],80);
+                        osd_fread_msbfirst(f,&dec0_ram[0x26ea],80);
                         osd_fclose(f);
                 }
                 return 1;
@@ -2109,25 +2002,9 @@ static void midres_hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-                osd_fwrite_msbfirst(f,&ram_midres[0x26ea],80);
+                osd_fwrite_msbfirst(f,&dec0_ram[0x26ea],80);
                 osd_fclose(f);
         }
-}
-
-/* Cycle skip patches */
-static void baddudes_custom_memory(void)
-{
-	install_mem_read_handler(0, 0xff8212, 0xff8213, dude_skip);
-}
-
-static void robocop_custom_memory(void)
-{
-	install_mem_read_handler(0, 0xff8008, 0xff8009, robocop_skip);
-}
-
-static void midres_custom_memory(void)
-{
-	install_mem_read_handler(0, 0x10207c, 0x10207d, midres_skip);
 }
 
 /******************************************************************************/
@@ -2143,10 +2020,10 @@ struct GameDriver hbarrel_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
-	0,
+	dec0_custom_memory,
 
 	hbarrel_rom,
-	hbarrel_patch, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2168,10 +2045,10 @@ struct GameDriver hbarrelj_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
-	0,
+	dec0_custom_memory,
 
 	hbarrelj_rom,
-	hbarrelj_patch, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2193,10 +2070,10 @@ struct GameDriver baddudes_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
-	baddudes_custom_memory,
+	dec0_custom_memory,
 
 	baddudes_rom,
-	baddudes_patch, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2218,10 +2095,10 @@ struct GameDriver drgninja_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
-	baddudes_custom_memory,
+	dec0_custom_memory,
 
 	drgninja_rom,
-	drgninja_patch, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2243,7 +2120,7 @@ struct GameDriver robocopp_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&robocop_machine_driver,
-	robocop_custom_memory,
+	dec0_custom_memory,
 
 	robocopp_rom,
 	0, 0,
@@ -2268,7 +2145,7 @@ struct GameDriver hippodrm_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	GAME_NOT_WORKING,
 	&hippodrm_machine_driver,
-	0,
+	dec0_custom_memory,
 
 	hippodrm_rom,
 	hippo_decode, 0,
@@ -2293,7 +2170,7 @@ struct GameDriver ffantasy_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	GAME_NOT_WORKING,
 	&hippodrm_machine_driver,
-	0,
+	dec0_custom_memory,
 
 	ffantasy_rom,
 	hippo_decode, 0,
@@ -2318,7 +2195,7 @@ struct GameDriver slyspy_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&slyspy_machine_driver,
-	0,
+	dec0_custom_memory,
 
 	slyspy_rom,
 	slyspy_patch, 0,
@@ -2343,7 +2220,7 @@ struct GameDriver midres_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
-	midres_custom_memory,
+	dec0_custom_memory,
 
 	midres_rom,
 	0, 0,
@@ -2368,7 +2245,7 @@ struct GameDriver midresj_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
-	midres_custom_memory,
+	dec0_custom_memory,
 
 	midresj_rom,
 	0, 0,
@@ -2381,4 +2258,3 @@ struct GameDriver midresj_driver =
 	ORIENTATION_DEFAULT,
 	midres_hiload, midres_hisave
 };
-

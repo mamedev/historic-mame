@@ -194,7 +194,8 @@ int msdos_init_sound(void)
 				No_OPL = No_FM = 1;      /* YM2203 must trigger interrupts, cannot emulate it with the OPL */
 
 			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM3812
-					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM3526)
+					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM3526
+					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM2413)
 			{
 				No_FM = 1;      /* can't use the OPL chip to emulate the YM2203 */
 				No_OPL = 0;     /* but the OPL chip is used */

@@ -321,7 +321,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3526interface YM3526_interface =
 {
 	1,
-	3000000,
+	4000000,
 	{ 0xff },
 	0
 };
@@ -351,7 +351,7 @@ static struct MachineDriver galivan_machine_driver =
 			4,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0,
-			interrupt,6900		/* timed interrupt, ?? Hz */
+			interrupt,7600  /* timed interrupt, ?? Hz */
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,

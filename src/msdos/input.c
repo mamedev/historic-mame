@@ -4,8 +4,7 @@
 #undef inline
 
 
-void my_textout (char *buf);
-void update_screen(void);
+void my_textout (char *buf, int x, int y);
 
 int use_mouse;
 int joystick;
@@ -609,39 +608,52 @@ void osd_analogjoy_read(int *analog_x, int *analog_y)
 	*analog_y = joy[0].stick[0].axis[1].pos;
 }
 
-void joy_calibration(void)
+
+static int calibration_target;
+
+int osd_joystick_needs_calibration (void)
 {
-	int i;
-	char *msg;
-
-	int need_save = 0; /* do we really need to save the data? */
-
+	/* This could be improved, but unfortunately, this version of Allgegro */
+	/* lacks a flag which tells if a joystick is calibrationable, it only  */
+	/* remembers wether calibration is yet to be done. */
 	if (joystick == JOY_TYPE_NONE)
-		return;
+		return 0;
+	else
+		return 1;
+}
 
+
+void osd_joystick_start_calibration (void)
+{
 	/* reinitialises the joystick. */
 	remove_joystick();
 	install_joystick (joystick);
+	calibration_target = 0;
+}
 
-	for (i=0; i < num_joysticks; i++)
+char *osd_joystick_calibrate_next (void)
+{
+	while (calibration_target < num_joysticks)
 	{
-		while (joy[i].flags & JOYFLAG_CALIBRATE)
-		{
-			need_save = 1; /* OK, we need to save this later */
-			msg = calibrate_joystick_name(i);
-			osd_clearbitmap(Machine->scrbitmap);
-			my_textout(msg);
-			update_screen();
-			(void)osd_read_key(0);
-			if (calibrate_joystick(i))
-				continue; /* continue with next joystick on error */
-		}
+		if (joy[calibration_target].flags & JOYFLAG_CALIBRATE)
+			return (calibrate_joystick_name (calibration_target));
+		else
+			calibration_target++;
 	}
 
-	osd_clearbitmap(Machine->scrbitmap);
-	if (need_save)
-		save_joystick_data(0);
+	return 0;
 }
+
+void osd_joystick_calibrate (void)
+{
+	calibrate_joystick (calibration_target);
+}
+
+void osd_joystick_end_calibration (void)
+{
+	save_joystick_data(0);
+}
+
 
 void osd_trak_read(int *deltax,int *deltay)
 {
