@@ -1,12 +1,82 @@
 /***************************************************************************
-  Rainbow Islands (and Jumping)
 
-  driver by Mike Coates
+Rainbow Islands  (c) Taito 1987   + Jumping
+===============
+
+driver by Mike Coates
+
+c-chip enhancements and notes by Stefan Jokisch
+
+			***
+
+Notes on the Jumping bootleg
+----------------------------
+
+The bootleggers didn't manage to break the protection completely.
+The secret rooms are broken, and there are a few other glitches too.
+Some dying enemy sprites have obviously wrong graphics. And you can
+sometimes see monsters falling through a platform. This happens right
+at the start of round 1. There are two small platforms at the left side,
+and a longer platform above and to the right. When a monster falls off
+the left edge of the longer platform, it will fall straight through the
+small platforms.
+
+Monsters move slightly differently compared to Rainbow Islands, I don't
+think this is intentional. (E.g. when you start a game and wait for the
+monsters to reach you, the monster nearest to you tends to leave its
+platform on the wrong side.)
+
+
+Secret rooms in Rainbow Islands
+-------------------------------
+
+Getting the small diamonds in order [red through to purple, i.e.
+from left to right on the display at the bottom of screen] opens
+a secret door in the boss room. The trick is to turn an enemy into
+a diamond of a specific color. It depends on enemy x position and
+direction.
+
+
+Secret room codes
+-----------------
+
+The code at top of each secret room is a cheat code you can enter on
+the copyright screen. The "8" means B, and the symbol like a "T"
+in a circle means J. The others are L, R, S. These letters map to:
+
+L -> left
+R -> right
+J -> jump
+B -> rainbow
+S -> start
+
+These are the available codes (only one per game):
+
+"BLRBJSBJ"  Permanent fast shoes
+"RJSBJSBR"  Permanent double rainbows
+"SSSLLRRS"  Permanent fast rainbows
+"BJBJBJRS"  Hint a
+"LJLSLBLS"  Hint b
+"LBSJRLJL"  Continue after island five
+"RRLLBBJS"  All hidden food becomes money bags
+"RRRRSBSJ"  Does both of the previous two
+"SJBLRJSR"  Hint c
+"SRBJSLSB"  Gives you 100 million counter
+
+After you enter a code (except for hints), a symbol will appear
+in the bottom left corner of the "Push only 1p button" screen.
+
+
+TODO
+====
+
+Rainbowe needs dump of its c-chip.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/taitoic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
 
@@ -14,23 +84,14 @@
   Video Hardware - Uses similar engine to Rastan
 ***************************************************************************/
 
-extern size_t rastan_videoram_size;
-extern data16_t *rastan_videoram1,*rastan_videoram3;
-extern data16_t *rastan_scrollx;
-extern data16_t *rastan_scrolly;
-extern data16_t *rainbow_mainram;
-
-WRITE16_HANDLER( rastan_videoram1_w );
-READ16_HANDLER ( rastan_videoram1_r );
-WRITE16_HANDLER( rastan_videoram3_w );
-READ16_HANDLER ( rastan_videoram3_r );
+data16_t *rainbow_mainram;
 
 int  rastan_vh_start(void);
-int jumping_vh_start(void);
+int  jumping_vh_start(void);
+void rastan_vh_stop(void);
 
 WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
-WRITE16_HANDLER( rastan_flipscreen_w );
 
 
 /***************************************************************************
@@ -39,7 +100,6 @@ WRITE16_HANDLER( rastan_flipscreen_w );
   Rainbow uses a YM2151 and YM3012
   Jumping uses two YM2203's
 ***************************************************************************/
-
 
 static MEMORY_READ_START( rainbow_s_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -82,6 +142,7 @@ static struct YM2151interface ym2151_interface =
 	{ bankswitch_w }
 };
 
+
 /***************************************************************************
   Rainbow Islands Specific
 ***************************************************************************/
@@ -90,7 +151,6 @@ int rainbow_interrupt(void);
 WRITE16_HANDLER( rainbow_c_chip_w );
 READ16_HANDLER( rainbow_c_chip_r );
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 
 
 static MEMORY_READ16_START( rainbow_readmem )
@@ -103,10 +163,7 @@ static MEMORY_READ16_START( rainbow_readmem )
 	{ 0x3e0000, 0x3e0001, MRA16_NOP },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
 	{ 0x800000, 0x80ffff, rainbow_c_chip_r },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
 	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
 	{ 0xd00800, 0xd03fff, MRA16_RAM },	/* stuff gets stored here */
 MEMORY_END
@@ -121,13 +178,10 @@ static MEMORY_WRITE16_START( rainbow_writemem )
 	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
 	{ 0x800000, 0x80ffff, rainbow_c_chip_w },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
-	{ 0xc20000, 0xc20003, MWA16_RAM, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xc50000, 0xc50003, rastan_flipscreen_w },	/* bit 0 flipscreen */
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
+	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
+	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
+	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
 	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
 	{ 0xd00800, 0xd03fff, MWA16_RAM },	/* stuff gets stored here */
@@ -216,31 +270,31 @@ INPUT_PORTS_END
 
 static struct GfxLayout spritelayout1 =
 {
-	8,8,	/* 8*8 sprites */
+	8,8,		/* 8*8 sprites */
 	16384,	/* 16384 sprites */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 8, 12, 0, 4, 24, 28, 16, 20 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8		/* every sprite takes 32 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout2 =
 {
 	16,16,	/* 16*16 sprites */
-	4096,	/* 1024 sprites */
+	4096,		/* 1024 sprites */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 8, 12, 0, 4, 24, 28, 16, 20, 40, 44, 32, 36, 56, 60, 48, 52 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	128*8	/* every sprite takes 128 consecutive bytes */
+	128*8		/* every sprite takes 128 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout3 =
 {
 	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
+	1024,		/* 1024 sprites */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{
@@ -251,15 +305,15 @@ static struct GfxLayout spritelayout3 =
 	},
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8		/* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxDecodeInfo rainbowe_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
 	{ REGION_GFX2, 0x000000, &spritelayout2, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
 	{ REGION_GFX2, 0x080000, &spritelayout3, 0, 0x80 },	/* sprites 16x16 */
-	{ -1 } 										/* end of array */
+	{ -1 }	/* end of array */
 };
 
 static const struct MachineDriver machine_driver_rainbow =
@@ -286,13 +340,13 @@ static const struct MachineDriver machine_driver_rainbow =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 }, /*is Y visible correct ? */
 	rainbowe_gfxdecodeinfo,
-	2048, 2048,
+	8192, 8192,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	rastan_vh_start,
-	0,
+	rastan_vh_stop,
 	rainbow_vh_screenrefresh,
 
 	/* sound hardware */
@@ -328,6 +382,7 @@ static READ_HANDLER( jumping_latch_r )
 	return jumping_latch;
 }
 
+
 static MEMORY_READ16_START( jumping_readmem )
 	{ 0x000000, 0x09ffff, MRA16_ROM },
 	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
@@ -339,10 +394,7 @@ static MEMORY_READ16_START( jumping_readmem )
 	{ 0x401002, 0x401003, input_port_3_word_r },
 	{ 0x420000, 0x420001, MRA16_NOP },	/* read, but result not used */
 	{ 0x440000, 0x4407ff, MRA16_RAM },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
 	{ 0xd00000, 0xd01fff, MRA16_RAM },	/* original spriteram location, needed for Attract Mode */
 MEMORY_END
 
@@ -354,15 +406,12 @@ static MEMORY_WRITE16_START( jumping_writemem )
 	{ 0x3a0000, 0x3a0003, rainbow_spritectrl_w },	/* sprite palette bank, other unknowns */
 	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog ? */
 	{ 0x400006, 0x400007, jumping_sound_w },
-	{ 0x430000, 0x430003, MWA16_RAM, &rastan_scrolly }, /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0x430000, 0x430003, PC080SN_yscroll_word_0_w },
 	{ 0x440000, 0x4407ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x800000, 0x80ffff, MWA16_NOP },	/* original C-Chip location (not used) */
-	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
 	{ 0xc20000, 0xc20003, MWA16_NOP },	/* seems it is a leftover from rainbow: scroll y written here too */
-   	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx }, /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
 	{ 0xd00000, 0xd01fff, MWA16_RAM }, 	/* original spriteram location, needed for Attract Mode */
 MEMORY_END
 
@@ -371,9 +420,10 @@ static WRITE_HANDLER( jumping_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data & 1);
-	/*if (!(data & 8)) logerror("bankswitch not ORed with 8 !!!\n");*/
 
-	/*if (banknum != 1) logerror("bank selected =%02x\n", banknum);*/
+	// if (!(data & 8)) logerror("bankswitch not ORed with 8 !!!\n");
+	// if (banknum != 1) logerror("bank selected =%02x\n", banknum);
+
 	cpu_setbank( 6, &RAM[ 0x10000 + ( banknum * 0x2000 ) ] );
 }
 #endif
@@ -396,7 +446,7 @@ static MEMORY_WRITE_START( jumping_sound_writemem )
 	{ 0xb400, 0xb400, YM2203_control_port_1_w },
 	{ 0xb401, 0xb401, YM2203_write_port_1_w },
 	{ 0xbc00, 0xbc00, MWA_NOP },
-//	{ 0xbc00, 0xbc00, jumping_bankswitch_w },	/*looks like a bankswitch, but sound works with or without it*/
+//	{ 0xbc00, 0xbc00, jumping_bankswitch_w },	/* looks like a bankswitch, but sound works with or without it */
 MEMORY_END
 
 INPUT_PORTS_START( jumping )
@@ -482,13 +532,13 @@ static struct GfxLayout jumping_spritelayout =
 	{ 0x78000*8,0x50000*8,0x28000*8,0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7 },
 	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8		/* every sprite takes 32 consecutive bytes */
 };
 
 static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },	/* sprites 8x8 */
 	{ REGION_GFX2, 0, &jumping_spritelayout, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },	/* sprites 8x8 */
 	{ -1 }	/* end of array */
 };
 
@@ -529,13 +579,13 @@ static const struct MachineDriver machine_driver_jumping =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 }, /*is Y visible correct ? */
 	jumping_gfxdecodeinfo,
-	2048, 2048,
+	8192, 8192,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	jumping_vh_start,
-	0,
+	rastan_vh_stop,
 	jumping_vh_screenrefresh,
 
 	/* sound hardware */
@@ -577,18 +627,18 @@ ROM_END
 ROM_START( rainbowa )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )			 /* 8*64k for 68000 code */
 	ROM_LOAD16_BYTE( "b22_10-1",   0x00000, 0x10000, 0xe34a50ca )
-	ROM_LOAD16_BYTE( "b22_11-1",   0x00000, 0x10000, 0x6a31a093 )
+	ROM_LOAD16_BYTE( "b22_11-1",   0x00001, 0x10000, 0x6a31a093 )
 	ROM_LOAD16_BYTE( "b22_08-1",   0x20000, 0x10000, 0x15d6e17a )
-	ROM_LOAD16_BYTE( "b22_09-1",   0x20000, 0x10000, 0x454e66bc )
+	ROM_LOAD16_BYTE( "b22_09-1",   0x20001, 0x10000, 0x454e66bc )
 	ROM_LOAD16_BYTE( "ri_m03.rom", 0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD16_BYTE( "ri_m04.rom", 0x40000, 0x20000, 0x91625e7f )
+	ROM_LOAD16_BYTE( "ri_m04.rom", 0x40001, 0x20000, 0x91625e7f )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )			 /* 64k for the audio CPU */
 	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
 	ROM_CONTINUE(           	 0x10000, 0xc000 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ri_m01.rom", 	 0x000000, 0x80000, 0xb76c9168 )  /* 8x8 gfx */
+	ROM_LOAD( "ri_m01.rom", 	 0x00000, 0x80000, 0xb76c9168 )  /* 8x8 gfx */
 
 	ROM_REGION( 0xa0000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "ri_m02.rom", 	 0x00000, 0x80000, 0x1b87ecf0 )  /* sprites */
@@ -620,7 +670,10 @@ ROM_START( rainbowe )
 	ROM_LOAD( "b22-13",             0x80000, 0x10000, 0x2fda099f )
 	ROM_LOAD( "b22-12",             0x90000, 0x10000, 0x67a76dc6 )
 
-	/* C-Chip is missing! */
+	/* C-Chip is missing: until it is dumped, we fall back on rom from Jumping */
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )
+	ROM_LOAD( "jb1_f89",    	 0x00000, 0x10000, 0x0810d327 )	/* WRONG C-Chip */
 ROM_END
 
 ROM_START( jumping )
@@ -631,7 +684,7 @@ ROM_START( jumping )
 	ROM_LOAD16_BYTE( "jb1_i8",       0x20001, 0x10000, 0xed33bae1 )
 	ROM_LOAD16_BYTE( "ri_m03.rom",   0x40000, 0x20000, 0x3ebb0fb8 )
 	ROM_LOAD16_BYTE( "ri_m04.rom",   0x40001, 0x20000, 0x91625e7f )
-	ROM_LOAD16_BYTE( "jb1_f89",      0x80001, 0x10000, 0x0810d327 ) 	/* Dump of C-Chip? */
+	ROM_LOAD16_BYTE( "jb1_f89",      0x80001, 0x10000, 0x0810d327 ) 	/* Dump of C-Chip */
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )		/* 64k for the audio CPU */
 	ROM_LOAD( "jb1_cd67",      0x00000, 0x8000, 0x8527c00e )

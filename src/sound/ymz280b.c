@@ -657,7 +657,12 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 					voice->loop_count = 0;
 				}
 				if (voice->keyon && !(data & 0x80) && !voice->looping)
+//ks start
+				{
 					voice->playing = 0;
+					chip->status_register &= ~(1 << ((chip->current_register >> 2) & 7));
+				}
+//ks end
 				voice->keyon = (data & 0x80) >> 7;
 				update_step(chip, voice);
 				break;
@@ -739,10 +744,16 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 			case 0xff:		/* IRQ enable, test, etc */
 				chip->irq_enable = (data & 0x10) >> 4;
 				update_irq_state(chip);
-				chip->keyon_enable = (data & 0x80) >> 7;
-				if (!chip->keyon_enable)
+//ks start
+				if (chip->keyon_enable && !(data & 0x80))
 					for (i = 0; i < 8; i++)
 						chip->voice[i].playing = 0;
+				if (!chip->keyon_enable && (data & 0x80))
+					for (i = 0; i < 8; i++)
+						if (chip->voice[i].keyon && chip->voice[i].looping)
+							chip->voice[i].playing = 1;
+				chip->keyon_enable = (data & 0x80) >> 7;
+//ks end
 				break;
 
 			default:

@@ -1098,7 +1098,7 @@ static void init_fshark(void)
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
-	for (A = 0;A < 0x0600;A++)
+	for (A = 0;A < 0x0800;A++)
 		dest[A] = (source[A] << 8) | source[A + 0x800];
 }
 

@@ -892,7 +892,7 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 static struct YMZ280Binterface ymz280b_intf =
 {
 	1,
-	{ 16934400 },
+	{ 16934400 },						//ks
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq_gen }
@@ -987,7 +987,8 @@ static const struct MachineDriver machine_driver_ddonpach =
 static struct OKIM6295interface donpachi_okim6295_interface =
 {
 	2,
-	{ 4220, 16000 },
+//ks	{ 4220, 16000 },
+	{ 8330, 16000 },				//ks
 	{ REGION_SOUND1, REGION_SOUND2 },
 	{ 50, 50 }
 };
@@ -1217,8 +1218,10 @@ static void esprade_unpack_sprites(void)
 		unsigned char data1 = src[0];
 		unsigned char data2 = src[1];
 
-		src[0] = (data1 & 0xf0) + (data2 & 0x0f);
-		src[1] = ((data1 & 0x0f)<<4) + ((data2 & 0xf0)>>4);
+//		src[0] = (data1 & 0xf0) + (data2 & 0x0f);
+//		src[1] = ((data1 & 0x0f)<<4) + ((data2 & 0xf0)>>4);
+		src[0] = ((data1 & 0x0f)<<4) + (data2 & 0x0f);			//ks
+		src[1] = (data1 & 0xf0) + ((data2 & 0xf0)>>4);			//ks
 
 		src += 2;
 	}

@@ -51,16 +51,20 @@ no nmi
 
 the above series is opcode compatible (including illegal opcodes)
 
+
 n2a03 (some arcades, NES)
+-------------------------
 (nintendo variant)
-NMOS based! 
+NMOS based!
 illegal opcodes
 $6c jump indirect low byte overrun problem as in 6502
 no decimal mode
 integrated sound hardware
 
+
 65c02 (used in some designs)
-fixed jmp ind,x opcodes
+----------------------------
+fixed jmp ind opcode
 memory changing opcodes accesses memory: read, read, write
 no illegal opcodes from the above series
 so not full compatible to 6502 series
@@ -69,25 +73,40 @@ additional commands
 
 several other CMOS variants
 
+
 65sc02 (where used?)
+--------------------
 65c02 compatible
 additional commands
 
+atari lynx bastian schicks bll
+integrated m65sc02 cpu core
+no bbr bbs instructions, else m65c02 compatible
+
+watara supervision
+integrated m65c02 cpu core (or m65sc02 or m65ce02?)
+
+
 gte65816 (nintendo snes)
+------------------------
 65802 upgrade cpu (c64 and c128 upgrade cpu)
 16 bit wide registers
 24 bit address space
 65c02? compatible mode
 additional commands
 
+
 spc700
+------
 (snes sound processor)
 same register layout?
 same addressing modes?
 heavily modified opcodes
 YA could be combined for 16 bit operations?
 
+
 huc6280 (nec pcengine)
+----------------------
 65sc02 compatible?
 8 memory registers
 (highest 3 bits select memory register, these build a22..a13)
@@ -95,7 +114,11 @@ huc6280 (nec pcengine)
 additional commands?
 several additional integrated features
 
+
 65ce02 (c65 prototype)
+----------------------
+(scan of documentation available, also use
+c65 m4510 documentation)
 (cpu core to be used in asics)
 65sc02 compatible
 z register
@@ -104,14 +127,37 @@ b bank register, highbyte of all zerozape addressing
 register for stack high byte
 additional command (some from the 65816)
 
+
 m4510 (Commodore C65 CPU)
+-------------------------
+(scan of documentation (in c65 documentation) available)
 65ce02 compatible
 integrated 20 bit memory management (map)
 (aug opcode changed to map opcode)
 2 cia6526 integrated
 1 uart integrated
 
+
+mitsubishi 740 series
+---------------------
+(data book in electronic form available)
+(M507xx, M509xx, M374xx, M38xxx, M375xx)
+NMOS based
+additional operation mode
+(arithmetic instruction not performing on akku (a=a operation addressing mode)
+but on zeropage ([x]=[x] operation addressing mode))
+additional instructions LDM, MUL, DIV, TST, COM, RRF, CLT, SET, WIT, STP, CLP
+BRK 1 byte only?
+BRA CMOS compatible
+BBC, BBR different opcode as CMOS, and also akku addressing
+different TRB, TSB
+no CMOS STZ, JMP ind,x
+STP not in all variants
+MUL, DIV not in all variants
+
+
 Set Overflow Pin
+----------------
 in 6502 and pin compatibles (65C02 65SC02 65SC802 65CE02), M6509
 no SO pin 6510/7501/8500/8501/8502/65sc816
 6510T ?

@@ -18,6 +18,9 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
+#if (HAS_SH2)
+#include "cpu/sh2/sh2.h"
+#endif
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
@@ -403,6 +406,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
+#if (HAS_SH2)
+    CPU4(SH2,      sh2,     16,  0,1.00,SH2_INT_NONE ,               0,             -1,   32,32bew,   0,27,BE,2, 2  ),
+#endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif
@@ -612,7 +618,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4	),
 #endif
 #if (HAS_G65816)
-	CPU0(G65C816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
+	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
 #endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),

@@ -7,10 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
-
-extern unsigned char *spriteram;
-extern size_t spriteram_size;
+#include "generic.h"
 
 unsigned char *suprloco_videoram;
 

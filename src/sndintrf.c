@@ -355,6 +355,10 @@ int saa1099_num(const struct MachineSound *msound) { return ((struct SAA1099_int
 #if (HAS_IREMGA20)
 int iremga20_clock(const struct MachineSound *msound) { return ((struct IremGA20_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_ES5506)
+int ES5505_clock(const struct MachineSound *msound) { return ((struct ES5505interface*)msound->sound_interface)->baseclock[0]; }
+int ES5505_num(const struct MachineSound *msound) { return ((struct ES5505interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_SPEAKER)
 int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
 #endif
@@ -411,6 +415,18 @@ struct snd_interface sndintf[] =
 		0,
 		0,
 		0
+	},
+#endif
+#if (HAS_DISCRETE)
+    {
+		SOUND_DISCRETE,
+		"Discrete Components",
+		0,
+		0,
+		discrete_sh_start,
+		discrete_sh_stop,
+		0,
+		discrete_sh_reset
 	},
 #endif
 #if (HAS_AY8910)
@@ -900,6 +916,30 @@ struct snd_interface sndintf[] =
 		iremga20_clock,
 		IremGA20_sh_start,
 		IremGA20_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_ES5505)
+	{
+		SOUND_ES5505,
+		"ES5505",
+		ES5505_num,
+		ES5505_clock,
+		ES5505_sh_start,
+		ES5505_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_ES5506)
+	{
+		SOUND_ES5506,
+		"ES5506",
+		ES5505_num,
+		ES5505_clock,
+		ES5505_sh_start,
+		ES5505_sh_stop,
 		0,
 		0
 	},

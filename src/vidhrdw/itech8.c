@@ -315,6 +315,7 @@ static void NAME(void)																		\
 	/* compute horiz skip counts */															\
 	skip[0] = BLITTER_XSTART;																\
 	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;						\
+	if (xdir == -1) { int temp = skip[0]; skip[0] = skip[1]; skip[1] = temp; }				\
 	width -= skip[0] + skip[1];																\
 																							\
 	/* compute vertical skip counts */														\
@@ -398,6 +399,7 @@ static void NAME(void)																		\
 	/* compute horiz skip counts */															\
 	skip[0] = BLITTER_XSTART;																\
 	skip[1] = (width <= BLITTER_XSTOP) ? 0 : width - 1 - BLITTER_XSTOP;						\
+	if (xdir == -1) { int temp = skip[0]; skip[0] = skip[1]; skip[1] = temp; }				\
 	width -= skip[0] + skip[1];																\
 																							\
 	/* compute vertical skip counts */														\
@@ -653,7 +655,7 @@ READ_HANDLER( itech8_blitter_r )
 	int result = blitter_data[offset / 2];
 
 	/* debugging */
-	if (FULL_LOGGING) logerror("%04x:blitter_r(%02x)\n", cpu_getpreviouspc(), offset);
+	if (FULL_LOGGING) logerror("%04x:blitter_r(%02x)\n", cpu_getpreviouspc(), offset / 2);
 
 	/* low bit seems to be ignored */
 	offset /= 2;

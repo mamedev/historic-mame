@@ -158,7 +158,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 					overlay_load(filename, nextcol, Machine->drv->total_colors-nextcol);
 				}
 
-				if ((Machine->scrbitmap->depth == 8) || (artwork_backdrop == 0))
+				if (artwork_overlay != NULL)
 					overlay_set_palette (palette, (Machine->drv->total_colors > 256 ? 256 : Machine->drv->total_colors) - nextcol);
 			}
 			break;

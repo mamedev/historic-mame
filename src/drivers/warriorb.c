@@ -49,10 +49,6 @@ different colors. However, we emulate both.
 TODO
 ====
 
-Sprite / tile priority
-
-Sprite / tile alignment
-
 DIPs
 
 
@@ -170,17 +166,6 @@ READ16_HANDLER( warriorb_sound_r )
 
 /***********************************************************
 			 MEMORY STRUCTURES
-
-	TC0100SCN memory table from Raine
-	---------------------------------
-
-	280000 - 287fff | BG0 (1024x512 - 4 bytes/tile)
-	288000 - 28ffff | BG1 (1024x512 - 4 bytes/tile)
-	290000 - 2903ff | BG0 rowscroll
-	290400 - 2907ff | BG1 rowscroll
-	291000 - 291fff | FG0 GFX (8x8x4 - 16 bytes/tile)
-	292000 - 293fff | FG0 (1024x256 - 2 bytes/tile)
-
 ***********************************************************/
 
 static MEMORY_READ16_START( darius2d_readmem )
@@ -280,6 +265,25 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
 INPUT_PORTS_START( darius2d )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -312,52 +316,36 @@ INPUT_PORTS_START( darius2d )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
 
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )	// Darius only
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )  //used, but manual in japanese
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "every 500k" )
+	PORT_DIPSETTING(    0x0c, "every 700k" )
+	PORT_DIPSETTING(    0x08, "every 800k" )
+	PORT_DIPSETTING(    0x04, "every 900k" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )  // in manual
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( warriorb )
@@ -393,48 +381,34 @@ INPUT_PORTS_START( warriorb )
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Power Ups" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Magician" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -608,7 +582,7 @@ ROM_START( darius2d )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c07-17",  0x00000, 0x04000, 0xae16c905 )
-	ROM_CONTINUE(            0x10000, 0x1c000 ) /* banked stuff */
+	ROM_CONTINUE(        0x10000, 0x1c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c07-03", 0x00000, 0x80000, 0x189bafce )	/* SCR (screen 1) */
@@ -629,8 +603,6 @@ ROM_START( darius2d )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* delta-t samples */
 	ROM_LOAD( "c07-12", 0x00000, 0x80000, 0xe0b71258 )
-
-	// no unused roms in my set
 ROM_END
 
 ROM_START( warriorb )
@@ -644,7 +616,7 @@ ROM_START( warriorb )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "d24-17",  0x00000, 0x04000, 0xe41e4aae )
-	ROM_CONTINUE(            0x10000, 0x1c000 ) /* banked stuff */
+	ROM_CONTINUE(        0x10000, 0x1c000 )	/* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "d24-02", 0x000000, 0x100000, 0x9f50c271 )	/* SCR A, screen 1 */
@@ -665,10 +637,8 @@ ROM_START( warriorb )
 	ROM_LOAD( "d24-10", 0x100000, 0x100000, 0x0e0c716d )
 	ROM_LOAD( "d24-11", 0x200000, 0x100000, 0x15362573 )
 
-	/* Raine thinks d24-09 doubles up as delta-t samples! */
-	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* delta-t samples */
-
-	// no unused roms in my set
+	ROM_REGION( 0x1000, REGION_SOUND2, 0 )	/* delta-t samples, unused */
+	/* Note: Raine wrongly doubles up d24-09 as delta-t samples */
 ROM_END
 
 

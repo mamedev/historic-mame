@@ -566,30 +566,37 @@ static const struct MachineDriver machine_driver_sharrier =
 
 /***************************************************************************/
 
+data16_t er_io_analog_sel;
+
 static READ16_HANDLER( er_io_analog_r )
 {
-	switch(READ_WORD(&sys16_extraram3[0x30]))
+	switch( er_io_analog_sel )
 	{
 		case 0:		// accel
 			if(input_port_1_r( offset ) & 1)
 				return 0xff;
 			else
 				return 0;
-		case 4/2:		// brake
+		case 4:		// brake
 			if(input_port_1_r( offset ) & 2)
 				return 0xff;
 			else
 				return 0;
-		case 8/2:		// bank up down?
+		case 8:		// bank up down?
 			if(input_port_1_r( offset ) & 4)
 				return 0xff;
 			else
 				return 0;
-		case 12/2:	// handle
+		case 12:	// handle
 			return input_port_0_r( offset );
 
 	}
 	return 0;
+}
+
+static WRITE16_HANDLER( er_io_analog_w )
+{
+	COMBINE_DATA( &er_io_analog_sel );
 }
 
 static READ16_HANDLER( er_reset2_r )
@@ -624,6 +631,7 @@ static MEMORY_WRITE16_START( enduror_writemem )
 	{ 0x130000, 0x130fff, SYS16_MWA16_SPRITERAM },
 	{ 0x140000, 0x140001, sound_command_nmi_w },
 	{ 0x140002, 0x140003, sys16_3d_coinctrl_w },
+	{ 0x140030, 0x140031, er_io_analog_w },
 MEMORY_END
 
 static READ16_HANDLER( enduro_p2_skip_r ){

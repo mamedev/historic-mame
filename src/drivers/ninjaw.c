@@ -55,10 +55,6 @@ drawing the first TC0100SCN tilemap.
 TODO
 ====
 
-Sprite / tile priority
-
-Sprite / tile alignment
-
 If we drew tilemaps from *all three* TC0100SCNs, with their colors
 individually set by their particular palette generator, then the
 emulation would be more accurate. However, probably the result of
@@ -70,13 +66,24 @@ DIPs
 Ninjaw
 ------
 
-Some bad/rough sounds.
+Sound too quiet / concentrated on one side? Tank sounds bad.
+
+Some enemies "slide" relative to the background when they should
+be standing still. Very high cpu interleaving does not seem to
+help.
+
+[Vis area reduced to avoid 10 pixels of junk on RHS at end
+of round 2]
 
 
 Darius 2
 --------
 
-Some bad/rough sounds.
+Some bad/rough sounds, very similar to the ones in Ninjaw.
+(Perhaps problem of YM2610 emulation??)
+
+[Vis area reduced as in zone E you could see background tiles
+being updated on RHS of screen.]
 
 
 ***************************************************************************/
@@ -96,11 +103,6 @@ void ninjaw_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 static int ioc220_port=0;
 static int old_cpua_ctrl = 0xff;
-
-extern size_t ninjaw_spriteram_size;
-extern data16_t *ninjaw_spriteram16;
-READ16_HANDLER( ninjaw_spriteram_r );
-WRITE16_HANDLER( ninjaw_spriteram_w );
 
 static size_t sharedram_size;
 static data16_t *sharedram;
@@ -238,17 +240,6 @@ READ16_HANDLER( ninjaw_sound_r )
 
 /***********************************************************
 			 MEMORY STRUCTURES
-
-	TC0100SCN memory table from Raine
-	---------------------------------
-
-	280000 - 287fff | BG0 (1024x512 - 4 bytes/tile)
-	288000 - 28ffff | BG1 (1024x512 - 4 bytes/tile)
-	290000 - 2903ff | BG0 rowscroll
-	290400 - 2907ff | BG1 rowscroll
-	291000 - 291fff | FG0 GFX (8x8x4 - 16 bytes/tile)
-	292000 - 293fff | FG0 (1024x256 - 2 bytes/tile)
-
 ***********************************************************/
 
 static MEMORY_READ16_START( ninjaw_readmem )
@@ -257,7 +248,7 @@ static MEMORY_READ16_START( ninjaw_readmem )
 	{ 0x200000, 0x20000f, ninjaw_ioc_r },
 	{ 0x220000, 0x220003, ninjaw_sound_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_r },	/* sprite ram */
+	{ 0x260000, 0x263fff, MRA16_RAM },			/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_r },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_r },	/* tilemaps (2nd screen) */
@@ -276,7 +267,7 @@ static MEMORY_WRITE16_START( ninjaw_writemem )
 	{ 0x210000, 0x210001, cpua_ctrl_w },
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_w, &ninjaw_spriteram16, &ninjaw_spriteram_size },
+	{ 0x260000, 0x263fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
@@ -296,7 +287,7 @@ static MEMORY_READ16_START( ninjaw_cpub_readmem )
 	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
 	{ 0x200000, 0x20000f, ninjaw_ioc_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_r },	/* sprite ram */
+	{ 0x260000, 0x263fff, spriteram16_r },	/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
 	{ 0x340000, 0x340007, TC0110PCR_word_r },		/* palette (1st screen) */
 	{ 0x350000, 0x350007, TC0110PCR_word_1_r },	/* palette (2nd screen) */
@@ -308,7 +299,7 @@ static MEMORY_WRITE16_START( ninjaw_cpub_writemem )
 	{ 0x080000, 0x08ffff, MWA16_RAM },
 	{ 0x200000, 0x20000f, ninjaw_ioc_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_w },
+	{ 0x260000, 0x263fff, spriteram16_w },
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
 	{ 0x340000, 0x340007, TC0110PCR_step1_word_w },		/* palette (1st screen) */
 	{ 0x350000, 0x350007, TC0110PCR_step1_word_1_w },	/* palette (2nd screen) */
@@ -322,7 +313,7 @@ static MEMORY_READ16_START( darius2_readmem )
 	{ 0x200000, 0x20000f, ninjaw_ioc_r },
 	{ 0x220000, 0x220003, ninjaw_sound_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_r },	/* sprite ram */
+	{ 0x260000, 0x263fff, MRA16_RAM },	/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_r },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_r },	/* tilemaps (2nd screen) */
@@ -341,7 +332,7 @@ static MEMORY_WRITE16_START( darius2_writemem )
 	{ 0x210000, 0x210001, cpua_ctrl_w },
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_w, &ninjaw_spriteram16, &ninjaw_spriteram_size },
+	{ 0x260000, 0x263fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
@@ -358,7 +349,7 @@ static MEMORY_READ16_START( darius2_cpub_readmem )
 	{ 0x080000, 0x08ffff, MRA16_RAM },	/* main ram */
 	{ 0x200000, 0x20000f, ninjaw_ioc_r },
 	{ 0x240000, 0x24ffff, sharedram_r },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_r },	/* sprite ram */
+	{ 0x260000, 0x263fff, spriteram16_r },	/* sprite ram */
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_r },	/* tilemaps (1st screen) */
 MEMORY_END
 
@@ -367,7 +358,7 @@ static MEMORY_WRITE16_START( darius2_cpub_writemem )
 	{ 0x080000, 0x08ffff, MWA16_RAM },
 	{ 0x200000, 0x20000f, ninjaw_ioc_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
-	{ 0x260000, 0x263fff, ninjaw_spriteram_w },
+	{ 0x260000, 0x263fff, spriteram16_w },
 	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
 MEMORY_END
 
@@ -406,6 +397,37 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+#define TAITO_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
 INPUT_PORTS_START( ninjaw )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
@@ -428,62 +450,178 @@ INPUT_PORTS_START( ninjaw )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+
+	PORT_START /* DSW A, different coinage per country */
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  // all 6 in manual
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ninjawj )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+
+	PORT_START /* DSW A, different coinage per country */
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START /* DSW B */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  // all 6 in manual
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( darius2 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )	// Darius only
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Continuous Fire" )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 500k" )
+	PORT_DIPSETTING(    0x0c, "Every 700k" )
+	PORT_DIPSETTING(    0x08, "Every 800k" )
+	PORT_DIPSETTING(    0x04, "Every 900k" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -553,12 +691,15 @@ static struct YM2610interface ym2610_interface =
 };
 
 
-/***********************************************************
+/*************************************************************
 			     MACHINE DRIVERS
 
-Arbitrary interleaving of 10 set to help keep cpus in
-sync. They both write to spriteram, for example.
-***********************************************************/
+Ninjaw: high interleaving of 200, to rule it out as cause of
+enemies "sliding" when they should be standing still relative
+to the scrolling background.
+
+Darius2: arbitrary interleaving of 10 to keep cpus synced.
+*************************************************************/
 
 static struct MachineDriver machine_driver_ninjaw =
 {
@@ -583,11 +724,11 @@ static struct MachineDriver machine_driver_ninjaw =
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* CPU slices */
+	200,	/* CPU slices */
 	0,
 
 	/* video hardware */
-	113*8, 32*8, { 2*8+6, 112*8+6-1, 3*8, 31*8-1 },
+	111*8, 32*8, { 2*8+6, 110*8+6-1, 3*8, 31*8-1 },
 
 	ninjaw_gfxdecodeinfo,
 	4096*3, 4096*3,
@@ -636,7 +777,7 @@ static struct MachineDriver machine_driver_darius2 =
 	0,
 
 	/* video hardware */
-	113*8, 32*8, { 2*8+6, 112*8+6-1, 3*8, 31*8-1 },
+	111*8, 32*8, { 2*8+6, 110*8+6-1, 3*8, 31*8-1 },
 
 	ninjaw_gfxdecodeinfo,
 	4096*3, 4096*3,
@@ -707,8 +848,52 @@ ROM_START( ninjaw )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
 	ROM_LOAD( "b31-08", 0x000000, 0x80000, 0xa0a1f87d )
+ROM_END
 
-	// no unused roms in my set
+ROM_START( ninjawj )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 256K for 68000 CPUA code */
+	ROM_LOAD16_BYTE( "b31-30.bin", 0x00000, 0x10000, 0x056edd9f )
+	ROM_LOAD16_BYTE( "b31-28.bin", 0x00001, 0x10000, 0xcfa7661c )
+	ROM_LOAD16_BYTE( "b31-29",     0x20000, 0x10000, 0xf2941a37 )
+	ROM_LOAD16_BYTE( "b31-27",     0x20001, 0x10000, 0x2f3ff642 )
+
+	ROM_LOAD16_BYTE( "b31-41", 0x40000, 0x20000, 0x0daef28a )	/* last 4 data roms ? */
+	ROM_LOAD16_BYTE( "b31-39", 0x40001, 0x20000, 0xe9197c3c )
+	ROM_LOAD16_BYTE( "b31-40", 0x80000, 0x20000, 0x2ce0f24e )
+	ROM_LOAD16_BYTE( "b31-38", 0x80001, 0x20000, 0xbc68cd99 )
+
+	ROM_REGION( 0x60000, REGION_CPU3, 0 )	/* 384K for 68000 CPUB code */
+	ROM_LOAD16_BYTE( "b31-33", 0x00000, 0x10000, 0x6ce9af44 )
+	ROM_LOAD16_BYTE( "b31-36", 0x00001, 0x10000, 0xba20b0d4 )
+	ROM_LOAD16_BYTE( "b31-32", 0x20000, 0x10000, 0xe6025fec )
+	ROM_LOAD16_BYTE( "b31-35", 0x20001, 0x10000, 0x70d9a89f )
+	ROM_LOAD16_BYTE( "b31-31", 0x40000, 0x10000, 0x837f47e2 )
+	ROM_LOAD16_BYTE( "b31-34", 0x40001, 0x10000, 0xd6b5fb2a )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "b31-37",  0x00000, 0x04000, 0x0ca5799d )
+	ROM_CONTINUE(            0x10000, 0x1c000 )	/* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b31-01", 0x00000, 0x80000, 0x8e8237a7 )	/* SCR (screen 1) */
+	ROM_LOAD( "b31-02", 0x80000, 0x80000, 0x4c3b4e33 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b31-07", 0x000000, 0x80000, 0x33568cdb )	/* OBJ */
+	ROM_LOAD( "b31-06", 0x080000, 0x80000, 0x0d59439e )
+	ROM_LOAD( "b31-05", 0x100000, 0x80000, 0x0a1fc9fb )
+	ROM_LOAD( "b31-04", 0x180000, 0x80000, 0x2e1e4cb5 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screens 2+) */
+
+	ROM_REGION( 0x180000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "b31-09", 0x000000, 0x80000, 0x60a73382 )
+	ROM_LOAD( "b31-10", 0x080000, 0x80000, 0xc6434aef )
+	ROM_LOAD( "b31-11", 0x100000, 0x80000, 0x8da531d4 )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_LOAD( "b31-08", 0x000000, 0x80000, 0xa0a1f87d )
 ROM_END
 
 ROM_START( darius2 )
@@ -733,7 +918,7 @@ ROM_START( darius2 )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c07-28",  0x00000, 0x04000, 0xda304bc5 )
-	ROM_CONTINUE(            0x10000, 0x1c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x1c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c07-03", 0x00000, 0x80000, 0x189bafce )	/* SCR (screen 1) */
@@ -752,8 +937,6 @@ ROM_START( darius2 )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* delta-t samples */
 	ROM_LOAD( "c07-12", 0x00000, 0x80000, 0xe0b71258 )
-
-	// no unused roms in my set
 ROM_END
 
 
@@ -761,6 +944,7 @@ ROM_END
 
 /* Working Games */
 
-GAME( 1987, ninjaw,  0, ninjaw,  ninjaw, 0, ROT0, "Taito Corporation Japan", "The Ninja Warriors (Japan)" )
-GAME( 1989, darius2, 0, darius2, ninjaw, 0, ROT0, "Taito Corporation", "Darius II (Japan)" )
+GAME( 1987, ninjaw,   0,      ninjaw,  ninjaw,      0, ROT0, "Taito Corporation Japan", "The Ninja Warriors (World)" )
+GAME( 1987, ninjawj,  ninjaw, ninjaw,  ninjawj,     0, ROT0, "Taito Corporation", "The Ninja Warriors (Japan)" )
+GAME( 1989, darius2,  0,      darius2, darius2,     0, ROT0, "Taito Corporation", "Darius II (Japan)" )
 

@@ -46,14 +46,13 @@ f80b      ????
 
 ***************************************************************************/
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
 
 
 extern int tecmo_video_type;
 extern unsigned char *tecmo_txvideoram,*tecmo_fgvideoram,*tecmo_bgvideoram;
-extern unsigned char *spriteram;
-extern size_t spriteram_size;
 
 WRITE_HANDLER( tecmo_txvideoram_w );
 WRITE_HANDLER( tecmo_fgvideoram_w );

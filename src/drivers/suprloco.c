@@ -15,10 +15,6 @@ TODO:
 #include "vidhrdw/system1.h"
 #include "cpu/z80/z80.h"
 
-
-extern unsigned char *spriteram;
-extern size_t spriteram_size;
-
 extern unsigned char *suprloco_videoram;
 
 void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

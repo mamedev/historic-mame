@@ -34,6 +34,7 @@ Year + Game                  Licensed To            Board
 89 Arbalester                Taito / RomStar
 90 Thunder & Lightning       Romstar / Visco        P0-055-D
 91 Rezon                     Allumer                P0-063-A
+92 Block Carnival            Visco                  P0-068-B (M6100723A)
 92 Blandia                   Allumer                P0-072-2 (Prototype)
 92 Zing Zing Zip             Allumer + Tecmo        P0-079-A
 93 Mobile Suit Gundam(3)     Banpresto              P0-081-A
@@ -353,6 +354,46 @@ MEMORY_END
 
 
 /***************************************************************************
+								Block Carnival
+***************************************************************************/
+
+/* similar to krzybowl */
+static MEMORY_READ16_START( blockcar_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM				},	// ROM
+	{ 0xf00000, 0xf03fff, MRA16_RAM				},	// RAM
+	{ 0xf04000, 0xf041ff, MRA16_RAM				},	// Backup RAM?
+	{ 0xf05000, 0xf050ff, MRA16_RAM				},	// Backup RAM?
+	{ 0x300000, 0x300003, seta_dsw_r			},	// DSW
+	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
+	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
+	{ 0x500004, 0x500005, input_port_2_word_r	},	// Coins
+	{ 0xa00000, 0xa000ff, seta_sound_word_r		},	// Sound
+	{ 0xa00100, 0xa03fff, MRA16_RAM				},	//
+	{ 0xb00000, 0xb003ff, MRA16_RAM				},	// Palette
+	{ 0xc00000, 0xc03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+/**/{ 0xd00000, 0xd00001, MRA16_RAM				},	// ? 0x4000
+/**/{ 0xe00000, 0xe00607, MRA16_RAM				},	// Sprites Y
+MEMORY_END
+
+static MEMORY_WRITE16_START( blockcar_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM					},	// ROM
+	{ 0xf00000, 0xf03fff, MWA16_RAM					},	// RAM
+	{ 0xf04000, 0xf041ff, MWA16_RAM					},	// Backup RAM?
+	{ 0xf05000, 0xf050ff, MWA16_RAM					},	// Backup RAM?
+	{ 0x100000, 0x100001, MWA16_NOP					},	// ? 1 (start of interrupts, main loop: watchdog?)
+	{ 0x200000, 0x200001, MWA16_NOP					},	// ? 0/1 (IRQ acknowledge?)
+	{ 0x400000, 0x400001, seta_vregs_w, &seta_vregs	},	// Coin Lockout + Sound Enable (bit 4?)
+	{ 0xa00000, 0xa000ff, seta_sound_word_w			},	// Sound
+	{ 0xa00100, 0xa03fff, MWA16_RAM					},	//
+	{ 0xb00000, 0xb003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
+	{ 0xd00000, 0xd00001, MWA16_RAM					},	// ? 0x4000
+	{ 0xe00000, 0xe00607, MWA16_RAM, &spriteram16	},	// Sprites Y
+MEMORY_END
+
+
+
+/***************************************************************************
 								Caliber 50
 ***************************************************************************/
 
@@ -526,8 +567,7 @@ static MEMORY_WRITE16_START( krzybowl_writemem )
 	{ 0xc00000, 0xc03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xd00000, 0xd00001, MWA16_RAM					},	// ? 0x4000
 	{ 0xe00000, 0xe00607, MWA16_RAM, &spriteram16	},	// Sprites Y
-	{ -1 }
-};
+MEMORY_END
 
 
 /***************************************************************************
@@ -1400,6 +1440,77 @@ INPUT_PORTS_START( blandia )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
+								Block Carnival
+***************************************************************************/
+
+INPUT_PORTS_START( blockcar )
+
+	PORT_START	// IN0 - Player 1 - $500001.b
+	JOY_TYPE1_2BUTTONS(1)	// button2 = speed up
+
+	PORT_START	// IN1 - Player 2 - $500003.b
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins + DSW - $500005.b
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_DIPNAME( 0x0010, 0x0000, "Title" )
+	PORT_DIPSETTING(      0x0010, "Thunder & Lightning 2" )
+	PORT_DIPSETTING(      0x0000, "Block Carnival" )
+
+	PORT_START	// IN3 - 2 DSWs - $300003 & 1.b
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0002, "Easy"    )
+	PORT_DIPSETTING(      0x0003, "Normal"  )
+	PORT_DIPSETTING(      0x0001, "Hard"    )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x000c, "20K, Every 50K" )
+	PORT_DIPSETTING(      0x0004, "20K, Every 70K" )
+	PORT_DIPSETTING(      0x0008, "30K, Every 60K" )
+	PORT_DIPSETTING(      0x0000, "30K, Every 90K" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0030, "2" )
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0010, "4" )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 2-6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown 1-0" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown 1-3" )	// service mode, according to a file in the archive
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_2C ) )
 
 INPUT_PORTS_END
 
@@ -2311,7 +2422,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( thunderl )
 
 	PORT_START	// IN0 - Player 1
-	JOY_TYPE1_2BUTTONS(1)
+	JOY_TYPE1_2BUTTONS(1)	// button2 = speed up
 
 	PORT_START	// IN1 - Player 2
 	JOY_TYPE1_2BUTTONS(2)
@@ -3173,6 +3284,43 @@ static const struct MachineDriver machine_driver_blandia =
 	seta_vh_start_2_layers,
 	0,
 	seta_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{ SOUND_CUSTOM, &seta_sound_interface }
+	}
+};
+
+
+/***************************************************************************
+								Block Carnival
+***************************************************************************/
+
+static struct MachineDriver machine_driver_blockcar =
+{
+	{
+		{
+			CPU_M68000,
+			8000000,
+			blockcar_readmem, blockcar_writemem,0,0,
+			m68_level3_irq, 1
+		}
+	},
+	60,DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
+	tndrcade_gfxdecodeinfo,
+	512, 512,	/* sprites only */
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	0,	/* no need for a vh_start: no tilemaps */
+	0,
+	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -4200,6 +4348,55 @@ ROM_START( blandia )
 	ROM_CONTINUE(         0x200000, 0x020000             )	// this half is 0
 	ROM_LOAD( "s-7.bin",  0x120000, 0x020000, 0xe077dd39 )
 	ROM_CONTINUE(         0x220000, 0x020000             )	// this half is 0
+
+ROM_END
+
+
+
+/***************************************************************************
+
+					Block Carnival / Thunder & Lightning 2
+
+P0-068B, M6100723A
+
+CPU  : MC68000B8
+Sound: X1-010
+OSC  : 16.000MHz
+
+ROMs:
+u1.a1 - Main programs (27c010)
+u4.a3 /
+
+bl-chr-0.j3 - Graphics (4M mask)
+bl-chr-1.l3 /
+
+bl-snd-0.a13 - Sound (4M mask)
+
+Custom chips:	X1-001A	X1-002A
+				X1-004
+				X1-006
+				X1-007
+				X1-009
+				X1-010
+
+Other:
+Lithium battery x1
+
+***************************************************************************/
+
+ROM_START( blockcar )
+
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u1.a1",  0x000000, 0x020000, 0x4313fb00 )
+	ROM_LOAD16_BYTE( "u4.a3",  0x000001, 0x020000, 0x2237196d )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "bl-chr-0.j3",  0x000000, 0x080000, 0xa33300ca )
+	ROM_LOAD( "bl-chr-1.l3",  0x080000, 0x080000, 0x563de808 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "bl-snd-0.a13",  0x000000, 0x080000, 0xa92dabaf )
+	ROM_RELOAD(                0x080000, 0x080000             )
 
 ROM_END
 
@@ -5267,6 +5464,7 @@ GAMEX( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",  
 GAMEX( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning",            GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon",                          GAME_IMPERFECT_SOUND )
 GAMEX( 1992, blandia,  0,        blandia,  blandia,  0,        ROT0,   "Allumer",                "Blandia [Prototype]",            GAME_IMPERFECT_SOUND )
+GAMEX( 1992, blockcar, 0,        blockcar, blockcar, 0,        ROT90,  "Visco",                  "Block Carnival / Thunder & Lightning 2", GAME_IMPERFECT_SOUND ) // Title: DSW
 GAMEX( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270, "Allumer + Tecmo",        "Zing Zing Zip",                  GAME_IMPERFECT_SOUND )
 GAMEX( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,   "Athena",                 "Athena no Hatena ?",             GAME_IMPERFECT_SOUND )
 GAMEX( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, oisipuzl, ROT0,   "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka",    GAME_IMPERFECT_SOUND )

@@ -32,6 +32,11 @@
 extern "C" {
 #endif
 
+#ifdef RUNTIME_LOADER
+	extern void cdp1802_runtime_loader_init(void);
+#endif
+
+
 typedef struct {
 	// called after execution of an instruction with cycles,
 	// return cycles taken by dma hardware

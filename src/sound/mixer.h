@@ -20,6 +20,40 @@
   The MIXER() macro uses 16 bits because the YM3012_VOL() macro stuffs two
   MIXER() values for left and right channel into a long.
 */
+
+/*
+  extension volume control
+
+  normal volume control
+  input--+-| volume |----- left out
+         +-| volume |----- right out
+	      | same volume data
+
+
+  extension volume control
+  input--+-| left volume  |----- left out
+         +-| right volume |----- right out
+	     | different volume data
+
+
+  ex. use darius / ninja warriors / warrior blade hard ware
+
+  darius
+  mono out-----| volume |-- | pan 0x00-0xff |-- left
+                                   +----------- right
+
+  ninja warriors / warrior blade
+  left out  ----| separator |---| left volume  |---+----- left
+                      +---------| right volume |------+-- right
+                                                   |  |
+  right out ----| separator |---| left volume  |---+  |
+                      +---------| right volume |------+
+
+*/
+
+
+
+
 #define MIXER_PAN_CENTER  0
 #define MIXER_PAN_LEFT    1
 #define MIXER_PAN_RIGHT   2
@@ -34,7 +68,6 @@
 #define MIXER_GET_LEVEL(mixing_level)  ((mixing_level) & 0xff)
 #define MIXER_GET_PAN(mixing_level)    (((mixing_level) >> 8) & 0x03)
 #define MIXER_GET_GAIN(mixing_level)   (((mixing_level) >> 10) & 0x03)
-
 
 int mixer_sh_start(void);
 void mixer_sh_stop(void);
@@ -71,4 +104,7 @@ int mixer_get_default_mixing_level(int level);
 
 void mixer_read_config(void *f);
 void mixer_write_config(void *f);
+
+void mixer_set_stereo_volume(int ch, int l_vol, int r_vol );
+
 #endif

@@ -10,8 +10,6 @@ unsigned char   *mnight_scrolly_ram;
 unsigned char   *mnight_scrollx_ram;
 unsigned char   *mnight_bgenable_ram;
 unsigned char   *mnight_spoverdraw_ram;
-unsigned char   *mnight_spriteram;
-size_t mnight_spriteram_size;
 unsigned char   *mnight_background_videoram;
 size_t mnight_backgroundram_size;
 unsigned char   *mnight_foreground_videoram;
@@ -176,21 +174,21 @@ void mnight_draw_sprites(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites */
 
-	for (offs = 11 ;offs < mnight_spriteram_size; offs+=16)
+	for (offs = 11 ;offs < spriteram_size; offs+=16)
 	{
 		int sx,sy,tile,palette,flipx,flipy,big;
 
-		if (mnight_spriteram[offs+2] & 2)
+		if (spriteram[offs+2] & 2)
 		{
-			sx = mnight_spriteram[offs+1];
-			sy = mnight_spriteram[offs];
-			if (mnight_spriteram[offs+2] & 1) sx-=256;
-			tile = mnight_spriteram[offs+3]+((mnight_spriteram[offs+2] & 0xc0)<<2) + ((mnight_spriteram[offs+2] & 0x08)<<7);
-			big  = mnight_spriteram[offs+2] & 4;
+			sx = spriteram[offs+1];
+			sy = spriteram[offs];
+			if (spriteram[offs+2] & 1) sx-=256;
+			tile = spriteram[offs+3]+((spriteram[offs+2] & 0xc0)<<2) + ((spriteram[offs+2] & 0x08)<<7);
+			big  = spriteram[offs+2] & 4;
 			if (big) tile /= 4;
-			flipx = mnight_spriteram[offs+2] & 0x10;
-			flipy = mnight_spriteram[offs+2] & 0x20;
-			palette = mnight_spriteram[offs+4] & 0x0f;
+			flipx = spriteram[offs+2] & 0x10;
+			flipy = spriteram[offs+2] & 0x20;
+			palette = spriteram[offs+4] & 0x0f;
 			drawgfx(bitmap,Machine->gfx[(big)?2:1],
 					tile,
 					palette,

@@ -1,9 +1,9 @@
-INLINE UINT8 READ_OP(void) 
+INLINE UINT8 READ_OP(void)
 {
 	return cpu_readop(sc61860.pc++);
 }
 
-INLINE UINT8 READ_OP_ARG(void) 
+INLINE UINT8 READ_OP_ARG(void)
 {
 	return cpu_readop_arg(sc61860.pc++);
 }
@@ -15,12 +15,12 @@ INLINE UINT16 READ_OP_ARG_WORD(void)
 	return t;
 }
 
-INLINE UINT8 READ_BYTE(UINT16 adr) 
+INLINE UINT8 READ_BYTE(UINT16 adr)
 {
 	return cpu_readmem16(adr);
 }
 
-INLINE void WRITE_BYTE(UINT16 a,UINT8 v) 
+INLINE void WRITE_BYTE(UINT16 a,UINT8 v)
 {
 	cpu_writemem16(a,v);
 }
@@ -432,7 +432,7 @@ INLINE void sc61860_test_special(void)
  "string" operations
 ***********************************************************************************/
 INLINE void sc61860_add_bcd_a(void)
-{	
+{
 	int i,t, v=sc61860.ram[A];
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)+(v&0xf);
@@ -448,7 +448,7 @@ INLINE void sc61860_add_bcd_a(void)
 }
 
 INLINE void sc61860_add_bcd(void)
-{	
+{
 	int i,t,v=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)+(sc61860.ram[sc61860.q]&0xf)+v;
@@ -464,7 +464,7 @@ INLINE void sc61860_add_bcd(void)
 }
 
 INLINE void sc61860_sub_bcd_a(void)
-{	
+{
 	int i,t, v=sc61860.ram[A];
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)-(v&0xf);
@@ -480,7 +480,7 @@ INLINE void sc61860_sub_bcd_a(void)
 }
 
 INLINE void sc61860_sub_bcd(void)
-{	
+{
 	int i,t,v=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)-(sc61860.ram[sc61860.q]&0xf)-v;
@@ -497,7 +497,7 @@ INLINE void sc61860_sub_bcd(void)
 
 /* side effect p-i-1 -> p correct! */
 INLINE void sc61860_shift_left_nibble(void)
-{	
+{
 	int i,t=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t|=sc61860.ram[sc61860.p]<<4;
@@ -509,7 +509,7 @@ INLINE void sc61860_shift_left_nibble(void)
 
 /* side effect p+i+1 -> p correct! */
 INLINE void sc61860_shift_right_nibble(void)
-{	
+{
 	int i,t=0;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t|=sc61860.ram[sc61860.p];
@@ -618,7 +618,7 @@ INLINE void sc61860_exchange(int count)
 	for (i=0; i<=count; i++) {
 		t=sc61860.ram[sc61860.p];
 		sc61860.ram[sc61860.p++]=sc61860.ram[sc61860.q];
-		sc61860.ram[sc61860.q++]=t;	
+		sc61860.ram[sc61860.q++]=t;
 		sc61860_icount-=3;
 	}
 }

@@ -77,7 +77,7 @@ static void get_pf_tile_info(int tile_index)	/* For Performan only */
 	int tile,color;
 
 	tile=videoram[tile_index] + ((colorram[tile_index] & 0x03) << 8);
-	color=(colorram[tile_index] >> 3) & 0x1f;
+	color=(colorram[tile_index] >> 3) & 0x0f;
 	SET_TILE_INFO(0,tile,color)
 }
 
@@ -110,10 +110,12 @@ static void get_fix_tile_info(int tile_index)
 
 int perfrman_vh_start (void)
 {
-	pf1_tilemap = tilemap_create(get_pf_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	pf1_tilemap = tilemap_create(get_pf_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!pf1_tilemap)
 		return 1;
+
+	tilemap_set_transparent_pen(pf1_tilemap,0);
 
 	return 0;
 }
@@ -169,6 +171,59 @@ WRITE_HANDLER( slapfight_flipscreen_w )
 	else flipscreen=0; /* Port 0x3 is normal */
 }
 
+#if MAME_DEBUG
+void slapfght_log_vram(void)
+{
+	if ( keyboard_pressed(KEYCODE_B) )
+	{
+		int i;
+		while (keyboard_pressed(KEYCODE_B)) ;
+		for (i=0; i<0x800; i++)
+		{
+			logerror("Offset:%03x   TileRAM:%02x   AttribRAM:%02x   SpriteRAM:%02x\n",i, videoram[i],colorram[i],spriteram[i]);
+		}
+	}
+}
+#endif
+
+/***************************************************************************
+
+  Render the Sprites
+
+***************************************************************************/
+static void perfrman_draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		int sx, sy;
+
+		if ((buffered_spriteram[offs+2] & 0x80) == priority_to_display)
+		{
+			if (flipscreen)
+			{
+				sx = 265 - buffered_spriteram[offs+1];
+				sy = 239 - buffered_spriteram[offs+3];
+				sy &= 0xff;
+			}
+			else
+			{
+				sx = buffered_spriteram[offs+1] + 3;
+				sy = buffered_spriteram[offs+3] - 1;
+			}
+			drawgfx(bitmap,Machine->gfx[1],
+				buffered_spriteram[offs],
+				((buffered_spriteram[offs+2] >> 1) & 3)
+					+ ((buffered_spriteram[offs+2] << 2) & 4)
+//					+ ((buffered_spriteram[offs+2] >> 2) & 8)
+				,
+				flipscreen, flipscreen,
+				sx, sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
 
 /***************************************************************************
 
@@ -180,8 +235,6 @@ WRITE_HANDLER( slapfight_flipscreen_w )
 
 void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-
 	tilemap_set_flip( pf1_tilemap, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrolly( pf1_tilemap ,0 , 0 );
 	if (flipscreen) {
@@ -192,39 +245,15 @@ void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	tilemap_update(pf1_tilemap);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	perfrman_draw_sprites(bitmap,0);
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	perfrman_draw_sprites(bitmap,0x80);
 
-	/* Draw the sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
-	{
-		int sy;
-
-		if (flipscreen) {
-			sy = 239 - buffered_spriteram[offs+3];
-			if (sy < 0) sy &= 0xff;
-
-			drawgfx(bitmap,Machine->gfx[1],
-				buffered_spriteram[offs],
-				/* Bit x------- is definantly color related */
-				/* characters change this bit (and color) when digging */
-				(buffered_spriteram[offs+2] >> 3) & 0x1f,
-				1,1,
-				265 - buffered_spriteram[offs+1], sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-		else {
-			sy = buffered_spriteram[offs+3] - 1;
-
-			drawgfx(bitmap,Machine->gfx[1],
-				buffered_spriteram[offs],
-				/* Bit x------- is definantly color related */
-				/* characters change this bit (and color) when digging */
-				(buffered_spriteram[offs+2] >> 3) & 0x1f,
-				0,0,
-				buffered_spriteram[offs+1] + 3, sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
+#ifdef MAME_DEBUG
+	slapfght_log_vram();
+#endif
 }
 
 
@@ -269,4 +298,8 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	tilemap_draw(bitmap,fix_tilemap,0,0);
+
+#ifdef MAME_DEBUG
+	slapfght_log_vram();
+#endif
 }

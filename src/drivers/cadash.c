@@ -59,7 +59,6 @@ processor, the 07 rom is probably the program for it.
 DIPs
 
 
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -144,30 +143,6 @@ static WRITE_HANDLER( cadash_bankswitch_w )
 	cpu_setbank(10,&RAM[bankaddress]);
 }
 
-WRITE16_HANDLER( cadash_sound_w )
-{
-	if (offset == 0)
-		taitosound_port_w (0, data & 0xff);
-	else if (offset == 1)
-		taitosound_comm_w (0, data & 0xff);
-
-#ifdef MAME_DEBUG
-	if (data & 0xff00)
-	{
-		char buf[80];
-
-		sprintf(buf,"cadash_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
-#endif
-}
-
-READ16_HANDLER( cadash_sound_r )
-{
-	if (offset == 1)
-		return ((taitosound_comm_r (0) & 0xff));
-	else return 0;
-}
 
 /***********************************************************
 			 MEMORY STRUCTURES
@@ -175,7 +150,8 @@ READ16_HANDLER( cadash_sound_r )
 
 static MEMORY_READ16_START( cadash_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x0c0000, 0x0c0003, cadash_sound_r },
+	{ 0x0c0000, 0x0c0001, MRA16_NOP },
+	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_r },
 	{ 0x100000, 0x107fff, MRA16_RAM },	/* RAM */
 	{ 0x800000, 0x800fff, MRA16_RAM },	/* like a cchip ?? */
 	{ 0x900000, 0x90000f, cadash_input_r },
@@ -188,7 +164,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( cadash_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x080003, cadash_spritectrl_w },
-	{ 0x0c0000, 0x0c0003, cadash_sound_w },
+	{ 0x0c0000, 0x0c0001, taitosound_port16_lsb_w },
+	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_w },
 	{ 0x100000, 0x107fff, MWA16_RAM },
 	{ 0x800000, 0x800fff, MWA16_RAM },	/* like a cchip ?? */
 	{ 0x900000, 0x900001, MWA16_NOP },	/* watchdog ?? */
@@ -229,41 +206,86 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
-INPUT_PORTS_START( cadash )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+#define TAITO_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+#define TAITO_COINAGE_US_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, "Price to Continue" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, "Same as Start" )
+
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+#define ASUKA_PLAYERS_INPUT( player ) \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player )
+
+#define ASUKA_SYSTEM_INPUT \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START2 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	PORT_START	/* DSWA, probably different coinages between countries */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+
+INPUT_PORTS_START( cadash )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
+
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -271,41 +293,115 @@ INPUT_PORTS_START( cadash )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_WORLD_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	/* Round cleared   Added time	*/
+	/*       1            8:00	*/
+	/*       2           10:00	*/
+	/*       3            8:00	*/
+	/*       4            7:00	*/
+	/*       5            9:00	*/
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cadashj )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
+
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START	/* DSWB */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cadashu )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
+
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_US_8
+
+	PORT_START	/* DSWB */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
 INPUT_PORTS_END
 
 
@@ -384,13 +480,13 @@ static struct MachineDriver machine_driver_cadash =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* 12 Mhz ??? */
+			12000000,	/* 12 MHz ??? */
 			cadash_readmem,cadash_writemem,0,0,
 			cadash_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 MHz ??? */
 			z80_readmem,z80_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -443,9 +539,9 @@ ROM_START( cadash )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* empty region */
 
@@ -472,9 +568,9 @@ ROM_START( cadashj )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* empty region */
 
@@ -497,9 +593,9 @@ ROM_START( cadashu )
 	// bad dump so used checksum from other sets //
 	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* empty region */
 
@@ -520,9 +616,9 @@ ROM_START( cadashi )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* empty region */
 
@@ -543,9 +639,9 @@ ROM_START( cadashf )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* empty region */
 
@@ -558,8 +654,8 @@ ROM_END
 
 /*    year  rom       parent    machine   inp       init */
 GAME( 1989, cadash,   0,        cadash,   cadash,   0,       ROT0, "Taito Corporation Japan", "Cadash (World)" )
-GAME( 1989, cadashj,  cadash,   cadash,   cadash,   0,       ROT0, "Taito Corporation", "Cadash (Japan)" )
-GAME( 1989, cadashu,  cadash,   cadash,   cadash,   0,       ROT0, "Taito America Corporation", "Cadash (US)" )
+GAME( 1989, cadashj,  cadash,   cadash,   cadashj,  0,       ROT0, "Taito Corporation", "Cadash (Japan)" )
+GAME( 1989, cadashu,  cadash,   cadash,   cadashu,  0,       ROT0, "Taito America Corporation", "Cadash (US)" )
 GAME( 1989, cadashi,  cadash,   cadash,   cadash,   0,       ROT0, "Taito Corporation Japan", "Cadash (Italy)" )
 GAME( 1989, cadashf,  cadash,   cadash,   cadash,   0,       ROT0, "Taito Corporation Japan", "Cadash (France)" )
 

@@ -1,9 +1,7 @@
 #include "driver.h"
+#include "generic.h"
 
-
-unsigned char *lsasquad_scrollram,*lsasquad_videoram,*lsasquad_spriteram;
-size_t lsasquad_spriteram_size;
-
+unsigned char *lsasquad_scrollram;
 
 void lsasquad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -71,8 +69,8 @@ static void draw_layer(struct osd_bitmap *bitmap,unsigned char *scrollram)
 			if (flip_screen) sy = 248 - sy;
 			sy &= 0xff;
 
-			attr = lsasquad_videoram[base + 2*y + 1];
-			code = lsasquad_videoram[base + 2*y] + ((attr & 0x0f) << 8);
+			attr = videoram[base + 2*y + 1];
+			code = videoram[base + 2*y] + ((attr & 0x0f) << 8);
 			color = attr >> 4;
 
 			drawgfx(bitmap,Machine->gfx[0],
@@ -96,14 +94,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = lsasquad_spriteram_size-4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size-4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,attr,code,color,flipx,flipy;
 
-		sx = lsasquad_spriteram[offs+3];
-		sy = 240 - lsasquad_spriteram[offs];
-		attr = lsasquad_spriteram[offs+1];
-		code = lsasquad_spriteram[offs+2] + ((attr & 0x30) << 4);
+		sx = spriteram[offs+3];
+		sy = 240 - spriteram[offs];
+		attr = spriteram[offs+1];
+		code = spriteram[offs+2] + ((attr & 0x30) << 4);
 		color = attr & 0x0f;
 		flipx = attr & 0x40;
 		flipy = attr & 0x80;

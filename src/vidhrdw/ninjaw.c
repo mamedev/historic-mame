@@ -15,9 +15,7 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-int taito_hide_pixels;
-size_t ninjaw_spriteram_size;
-data16_t *ninjaw_spriteram16;
+static int taito_hide_pixels;
 
 /**********************************************************/
 
@@ -205,22 +203,6 @@ void ninjaw_vh_stop (void)
 		TC0110PCR_2_vh_stop();
 }
 
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-READ16_HANDLER( ninjaw_spriteram_r )
-{
-	return ninjaw_spriteram16[offset];
-}
-
-WRITE16_HANDLER( ninjaw_spriteram_w )
-{
-	COMBINE_DATA(&ninjaw_spriteram16[offset]);
-}
-
-
 /*********************************************************
 				PALETTE
 *********************************************************/
@@ -232,12 +214,12 @@ void ninjaw_update_palette (void)
 	unsigned short palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
-	for (offs = (ninjaw_spriteram_size/2)-4;offs >=0;offs -= 4)
+	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
-		data = ninjaw_spriteram16[offs+2];
+		data = spriteram16[offs+2];
 		tilenum = data & 0x7fff;
 
-		data = ninjaw_spriteram16[offs+3];
+		data = spriteram16[offs+3];
 		color = (data & 0x7f00) >> 8;
 
 		if (tilenum)
@@ -275,29 +257,38 @@ static void ninjaw_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 	int x, y, priority, curx, cury;
 	int code;
 
+#ifdef MAME_DEBUG
+	int unknown=0;
+#endif
+
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
 
-	priority = 0;
-
-	for (offs = (ninjaw_spriteram_size/2)-4;offs >=0;offs -= 4)
+	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
-		data = ninjaw_spriteram16[offs+0];
-		x = (data + 6) & 0x3ff;
+		data = spriteram16[offs+0];
+		x = (data - 8) & 0x3ff;	// -8 to align some sprites that sit on rock outcrops
 
-		data = ninjaw_spriteram16[offs+1];
-		y = (data - 0) & 0x1ff;	// this offset will change if screen vis area changes
+		data = spriteram16[offs+1];
+		y = (data - 0) & 0x1ff;
 
-		data = ninjaw_spriteram16[offs+2];
-		tilenum = data & 0x7fff;	// Darius 2 mask *may* be 0x1fff
+		data = spriteram16[offs+2];
+		tilenum = data & 0x7fff;
 
-		data = ninjaw_spriteram16[offs+3];
-		flipy = (data & 0x2); //>> 9;
-		flipx = (data & 0x1); //>> 8;
-		color = (data & 0x7f00) >> 8;
+		/* don't know meaning of bit 4 (Darius: explosions of your bomb shots) */
+		data = spriteram16[offs+3];
+		flipx    = (data & 0x1);
+		flipy    = (data & 0x2) >> 1;
+		priority = (data & 0x4) >> 2;
+		// ?     = (data & 0x8) >> 3;
+		color    = (data & 0x7f00) >> 8;
 
 		if (!tilenum) continue;
+
+#ifdef MAME_DEBUG
+		if (data & 0x80f0)   unknown |= (data &0x80f0);
+#endif
 
 		y += y_offs;
 
@@ -345,6 +336,15 @@ static void ninjaw_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 				&Machine->visible_area,TRANSPARENCY_PEN,0,
 				sprite_ptr->primask);
 	}
+
+#ifdef MAME_DEBUG
+	if (unknown)
+	{
+		char buf[80];
+		sprintf(buf,"unknown sprite bits: %04x",unknown);
+		usrintf_showmessage(buf);
+	}
+#endif
 }
 
 

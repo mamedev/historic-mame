@@ -2,20 +2,7 @@
 
 	Gaelco game hardware from 1991-1996
 
-	Driver by Manuel Abadia <manu@teleline.es>
-
-	Supported games:
-
-		* Big Karnak
-		* Biomechanical Toy
-		* Maniac Square
-
-	Known games running on this hardware:
-
-		* Squash
-		* Thunder Hoop
-		* World Rally
-		* Strike Back
+	Driver by Manuel Abadia
 
 ***************************************************************************/
 
@@ -124,7 +111,7 @@ MEMORY_END
 
 static MEMORY_READ_START( bigkarnk_readmem_snd )
 	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
-	{ 0x0800, 0x0800, OKIM6295_status_0_r },	/* OKI6295 */
+	{ 0x0800, 0x0801, OKIM6295_status_0_r },	/* OKI6295 */
 	{ 0x0a00, 0x0a00, YM3812_status_port_0_r },	/* YM3812 */
 	{ 0x0b00, 0x0b00, soundlatch_r },			/* Sound latch */
 	{ 0x0c00, 0xffff, MRA_ROM },				/* ROM */

@@ -910,7 +910,7 @@ static const struct MachineDriver machine_driver_aburner =
 		},
 		{
 			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_32k,
+			&sys16_segapcm_interface_15k_512,
 		}
 	}
 };

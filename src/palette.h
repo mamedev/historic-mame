@@ -183,6 +183,7 @@ READ_HANDLER( paletteram_r );
 READ_HANDLER( paletteram_2_r );
 READ16_HANDLER( paletteram16_word_r );
 READ16_HANDLER( paletteram16_2_word_r );
+READ32_HANDLER( paletteram32_r );
 
 WRITE_HANDLER( paletteram_BBGGGRRR_w );
 WRITE_HANDLER( paletteram_RRRGGGBB_w );

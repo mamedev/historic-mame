@@ -4351,10 +4351,10 @@ ROM_END
 
 ROM_START( kof99 )
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "kof99_p1.rom", 0x000000, 0x100000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "kof99_p2.rom", 0x100000, 0x400000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "kf99p_p1.rom", 0x000000, 0x100000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "kf99p_p2.rom", 0x100000, 0x400000, 0x00000000 )
 
-	NEO_SFIX_128K( "kof99_s1.rom", 0x00000000 )
+	NEO_SFIX_128K( "kf99p_s1.rom", 0x00000000 )
 
 	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
 
@@ -4367,14 +4367,14 @@ ROM_START( kof99 )
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x4000000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "kof99_c1.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "kof99_c2.rom", 0x0000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "kof99_c3.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "kof99_c4.rom", 0x1000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "kof99_c5.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "kof99_c6.rom", 0x2000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "kof99_c7.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "kof99_c8.rom", 0x3000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c1.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c2.rom", 0x0000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c3.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c4.rom", 0x1000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c5.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c6.rom", 0x2000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "kf99p_c7.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "kf99p_c8.rom", 0x3000001, 0x800000, 0x00000000 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( garou )
@@ -4495,8 +4495,8 @@ GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The
 GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
 GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
-GAME( 1999, kof99,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle" )
-GAME( 1999, garou,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves" )
+GAME( 1999, kof99,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
+GAME( 1999, garou,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Garou - Mark of the Wolves (prototype)" )
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
 GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Magician Lord (set 1)" )

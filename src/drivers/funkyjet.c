@@ -1,8 +1,9 @@
 /***************************************************************************
 
   Funky Jet                               (c) 1992 Mitchell Corporation
+  Sotsugyo Shousho	                      (c) 1995 Mitchell Corporation
 
-  But actually a Data East game...  Hardware is pretty close to Super Burger
+  But actually a Data East pcb...  Hardware is pretty close to Super Burger
   Time but with a different graphics chip.  And I can't work out the graphics
   format of this chip - it's used in all Data East games from 1991 onwards.
   If you want to help decode it, look at Rohga for an easy example as the fix
@@ -44,10 +45,11 @@ static WRITE16_HANDLER( funkyjet_protection16_w )
 {
 	COMBINE_DATA(&loopback[offset]);
 
-	if (offset != (0x502 >> 1) &&
+	/*if (offset != (0x502 >> 1) &&
 		offset != (0x700 >> 1) &&
 		offset != (0x70e >> 1) &&
-		offset != (0x78e >> 1))
+		offset != (0x78e >> 1))*/
+
 		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset<<1,data);
 
 	if (offset == (0x10a >> 1))
@@ -65,9 +67,10 @@ static WRITE16_HANDLER( funkyjet_protection16_w )
 	*/
 }
 
+/* Protection/IO chip 74 */
 static READ16_HANDLER( funkyjet_protection16_r )
 {
- 	switch (offset)
+	switch (offset)
 	{
 		case 0x148 >> 1: /* EOR mask for joysticks */
 			return 0;
@@ -87,9 +90,9 @@ static READ16_HANDLER( funkyjet_protection16_r )
 			return 0;
 
 	}
+ 		logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
 
-	if (offset != (0x778 >> 1))
-		logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
+//	if (offset != (0x778 >> 1))
 
 /*
 
@@ -262,6 +265,86 @@ INPUT_PORTS_START( funkyjet )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sotsugyo )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x80, 0x80, "Pause" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -304,7 +387,7 @@ static struct GfxLayout sprite_layout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   256, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tile_layout,  512, 16 }, 	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &tile_layout,  512, 16 }, /* Tiles 16x16 */
 	{ REGION_GFX2, 0, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
@@ -360,7 +443,7 @@ static const struct MachineDriver machine_driver_funkyjet =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	funkyjet_vh_start,
 	funkyjet_vh_stop,
@@ -401,6 +484,26 @@ ROM_START( funkyjet )
   	ROM_LOAD( "jk03.15h",    0x00000, 0x20000, 0x69a0eaf7 )
 ROM_END
 
+ROM_START( sotsugyo )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "03.12f", 0x00000, 0x40000, 0xd175dfd1 )
+	ROM_LOAD16_BYTE( "04.13f", 0x00001, 0x40000, 0x2072477c )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_LOAD( "sb020.16f",    0x00000, 0x10000, 0xbaf5ec93 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "02.2f", 0x000000, 0x80000, 0x337b1451 ) /* chars */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+  	ROM_LOAD( "00.2a", 0x000000, 0x80000, 0xd35a14ef ) /* sprites */
+	ROM_LOAD( "01.4a", 0x080000, 0x80000, 0xfa10dd54 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+  	ROM_LOAD( "sb030.15h",    0x00000, 0x20000, 0x1ea43f48 )
+ROM_END
+
 /******************************************************************************/
 
 GAMEX( 1992, funkyjet, 0, funkyjet, funkyjet, 0, ROT0, "[Data East] (Mitchell license)", "Funky Jet", GAME_NOT_WORKING )
+GAMEX( 1995, sotsugyo, 0, funkyjet, sotsugyo, 0, ROT0, "Mitchell Corporation (Atlus license)", "Sotsugyo Shousho", GAME_NOT_WORKING )

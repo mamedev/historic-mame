@@ -9,6 +9,7 @@ Additional tweaking by Jarek Burczynski
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 
 void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
@@ -19,9 +20,6 @@ void magmax_vh_stop(void);
 extern unsigned short magmax_vreg;
 extern data16_t *magmax_scroll_x;
 extern data16_t *magmax_scroll_y;
-extern data16_t *magmax_videoram;
-extern data16_t *magmax_spriteram;
-extern size_t magmax_spriteram_size;
 
 
 static void * scanline_timer;
@@ -135,8 +133,8 @@ MEMORY_END
 static MEMORY_WRITE16_START( magmax_writemem )
 	{ 0x000000, 0x013fff, MWA16_ROM },
 	{ 0x018000, 0x018fff, MWA16_RAM },
-	{ 0x020000, 0x0207ff, MWA16_RAM, &magmax_videoram },
-	{ 0x028000, 0x0281ff, MWA16_RAM, &magmax_spriteram, &magmax_spriteram_size },
+	{ 0x020000, 0x0207ff, MWA16_RAM, &videoram16, &videoram_size },
+	{ 0x028000, 0x0281ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x030010, 0x030011, magmax_vreg_w },
 	{ 0x030012, 0x030013, MWA16_RAM, &magmax_scroll_x },
 	{ 0x030014, 0x030015, MWA16_RAM, &magmax_scroll_y },

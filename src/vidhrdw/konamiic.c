@@ -11,7 +11,7 @@ TODO:
                          |
                   board #|year    CPU      tiles        sprites  priority palette    other
                     -----|---- ------- ------------- ------------- ------ ------ ----------------
-Hyper Crash         GX401 1985
+Hyper Crash         GX401 1985                   GX400
 Twinbee             GX412*1985   68000           GX400
 Yie Ar Kung Fu      GX407*1985    6809
 Gradius / Nemesis   GX456*1985   68000           GX400
@@ -25,7 +25,7 @@ Green Beret         GX577*1985     Z80           005849
 Galactic Warriors   GX578*1985   68000           GX400
 Salamander          GX587*1986   68000           GX400
 WEC Le Mans 24      GX602*1986 2x68000
-BAW / Black Panther GX604 1987   68000           GX400                    007593
+BAW / Black Panther GX604*1987   68000           GX400                    007593
 Combat School /     GX611*1987    6309           007121(x2)               007327
   Boot Camp
 Rock 'n Rage /      GX620*1986    6309 007342        007420               007327
@@ -37,7 +37,7 @@ Flak Attack         GX669*1987    6309           007121                   007327
 Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 007452
-Kitten Kaboodle /   GX712+1988                   GX400                    007593 051550
+Kitten Kaboodle /   GX712*1988                   GX400                    007593 051550
   Nyan Nyan Panic
 Chequered Flag      GX717*1988  052001               051960 051937(x2)           051316(x2) (zoom/rotation) 051733 (protection)
 Fast Lane           GX752*1987    6309           007121                          051733 (protection) 007801
@@ -52,7 +52,7 @@ Super Contra        GX775*1988  052001 052109 051962 051960 051937  PROM  007327
 Battlantis          GX777*1987    6309 007342        007420               007327 007324
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
-City Bomber         GX787+1987   68000           GX400                    007593 051550
+City Bomber         GX787*1987   68000           GX400                    007593 051550
 Over Drive          GX789 1990
 Hyper Crash         GX790 1987
 Blades of Steel     GX797*1987    6309 007342        007420               007327 051733 (protection)
@@ -478,18 +478,18 @@ The sprites are buffered, a write to 006 activates to copy between the
 main ram and the buffer.
 
 053244 memory map (but the 053245 sees and processes them too):
-000-001 W  global X offset
-002-003 W  global Y offset
-004     W  unknown
-005     W  bit 0 = flip screen X
+000-001  W global X offset
+002-003  W global Y offset
+004      W unknown
+005      W bit 0 = flip screen X
            bit 1 = flip screen Y
            bit 2 = unknown, used by Parodius
            bit 4 = enable gfx ROM reading
            bit 5 = unknown, used by Rollergames
-006     W  writing here copies the sprite ram to the internal buffer
-007     W  unknown
-008-009 W  low 16 bits of the ROM address to read
-00a-00b W  high bits of the ROM address to read.  3 bits for most games, 1 for asterix
+006     RW accessing this register copies the sprite ram to the internal buffer
+007      W unknown
+008-009  W low 16 bits of the ROM address to read
+00a-00b  W high bits of the ROM address to read.  3 bits for most games, 1 for asterix
 00c-00f R  reads data from the gfx ROMs (32 bits in total). The address of the
            data is determined by the registers above; plus bank switch bits for
            larger ROMs.
@@ -2704,6 +2704,11 @@ WRITE_HANDLER( K053245_w )
 		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0x00ff) | (data<<8);
 }
 
+INLINE void K053245_update_buffer( void )
+{
+	memcpy(K053245_buffer, K053245_ram, K053245_ramsize);
+}
+
 READ_HANDLER( K053244_r )
 {
 	if (K053244_readroms && offset >= 0x0c && offset < 0x10)
@@ -2719,6 +2724,11 @@ READ_HANDLER( K053244_r )
 #endif
 
 		return memory_region(K053245_memory_region)[addr];
+	}
+	else if (offset == 0x06)
+	{
+		K053245_update_buffer();
+		return 0;
 	}
 	else
 	{
@@ -2763,7 +2773,7 @@ WRITE_HANDLER( K053244_w )
 		break;
 	}
 	case 0x06:
-		memcpy(K053245_buffer, K053245_ram, K053245_ramsize);
+		K053245_update_buffer();
 		break;
 	case 0x08:
 	case 0x09:

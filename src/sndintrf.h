@@ -18,6 +18,9 @@ struct MachineSound
 #if (HAS_DAC)
 #include "sound/dac.h"
 #endif
+#if (HAS_DISCRETE)
+#include "sound/discrete.h"
+#endif
 #if (HAS_AY8910)
 #include "sound/ay8910.h"
 #endif
@@ -61,7 +64,11 @@ struct MachineSound
 #include "sound/tiaintf.h"
 #endif
 #if (HAS_NES)
+ #ifndef MESS
 #include "sound/nes_apu.h"
+ #else
+#include "sound/nesintf.h"
+ #endif
 #endif
 #if (HAS_ASTROCADE)
 #include "sound/astrocde.h"
@@ -129,6 +136,9 @@ struct MachineSound
 #if (HAS_IREMGA20)
 #include "sound/iremga20.h"
 #endif
+#if (HAS_ES5505 || HAS_ES5506)
+#include "sound/es5506.h"
+#endif
 #if (HAS_SPEAKER)
 #include "sound/speaker.h"
 #endif
@@ -154,6 +164,9 @@ enum
 #endif
 #if (HAS_DAC)
 	SOUND_DAC,
+#endif
+#if (HAS_DISCRETE)
+	SOUND_DISCRETE,
 #endif
 #if (HAS_AY8910)
 	SOUND_AY8910,
@@ -280,6 +293,12 @@ enum
 #endif
 #if (HAS_IREMGA20)
 	SOUND_IREMGA20,
+#endif
+#if (HAS_ES5505)
+	SOUND_ES5505,
+#endif
+#if (HAS_ES5506)
+	SOUND_ES5506,
 #endif
 #if (HAS_SPEAKER)
 	SOUND_SPEAKER,

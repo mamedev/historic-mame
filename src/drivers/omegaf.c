@@ -48,9 +48,7 @@ NOTE :
 **************************************************************************/
 
 extern unsigned char *omegaf_fg_videoram;
-extern unsigned char *omegaf_spriteram;
 extern size_t omegaf_fgvideoram_size;
-extern size_t omegaf_spriteram_size;
 
 extern unsigned char *omegaf_bg0_scroll_x;
 extern unsigned char *omegaf_bg1_scroll_x;
@@ -456,7 +454,7 @@ static MEMORY_WRITE_START( omegaf_writemem )
 	{ 0xd000, 0xd7ff, omegaf_fgvideoram_w, &omegaf_fg_videoram },
 	{ 0xd800, 0xdfff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xe000, 0xf9ff, MWA_RAM },							/* RAM */
-	{ 0xfa00, 0xffff, MWA_RAM, &omegaf_spriteram, &omegaf_spriteram_size },
+	{ 0xfa00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
 
 static MEMORY_READ_START( robokid_readmem )
@@ -502,7 +500,7 @@ static MEMORY_WRITE_START( robokid_writemem )
 	{ 0xdf04, 0xdf04, omegaf_bg2_enabled_w },				/* BG2 enabled */
 	{ 0xdf05, 0xdf05, omegaf_bg2_bank_w },					/* BG2 bank select */
 	{ 0xe000, 0xf9ff, MWA_RAM },							/* RAM */
-	{ 0xfa00, 0xffff, MWA_RAM, &omegaf_spriteram, &omegaf_spriteram_size },
+	{ 0xfa00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )

@@ -40,8 +40,8 @@ typedef unsigned short int word;
 #define FMT(a,b) a, b
 #define PTRS_PER_FORMAT 2
 
-#define READOP16(A) (cpu_readop16(((A)<<1)+TMS320C10_PGM_OFFSET))
-#define READARG16(A) (cpu_readop_arg16(((A)<<1)+TMS320C10_PGM_OFFSET))
+#define READOP16(A) (cpu_readop16((A)+TMS320C10_PGM_OFFSET))
+#define READARG16(A) (cpu_readop_arg16((A)+TMS320C10_PGM_OFFSET))
 
 char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
 char *nextar[4] = { ",AR0" , ",AR1" , "" , "" } ;

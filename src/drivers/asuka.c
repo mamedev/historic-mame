@@ -60,20 +60,12 @@ Asuka & Asuka: $e6a init code clearing TC0100SCN areas is erroneous.
 It only clears 1/8 of the BG layers; then it clears way too much of the
 rowscroll areas [0xc000, 0xc400] causing overrun into next 64K block.
 
-Asuka is one of the first Taito games using the TC0100SCN. They didn't
-bother using its FG (text) layer facility, instead placing text in the BG /
-sprite layers.
+Asuka is one of the early Taito games using the TC0100SCN. (Ninja
+Warriors was probably the first.) They didn't bother using its FG (text)
+layer facility, instead placing text in the BG / sprite layers.
 
-The address map for the Rastan tilemap chip [(c) same year as Asuka] is very
-similar to the TC0100SCN. The control words are mapped slightly differently.
-Perhaps Rastan had a prototype version or predecessor without the full feature
-set. For instance there is no indication in the Rastan inits that a separate
-text layer or rowscroll features are mapped. Having said that, Rastan does
-clear both unused 0x4000 blocks in the tilemap area, i.e. it assumes a 64K
-block of ram for tilemaps, the same size as the standard TC0100SCN chip.
-
-Maze of Flott [(c) one year later] and most other games with the TC0100SCN do
-use the FG layer for text. Driftout is one exception.
+Maze of Flott [(c) one year later] and most other games with the
+TC0100SCN do use the FG layer for text (Driftout is an exception).
 
 
 TODO
@@ -96,16 +88,18 @@ Wrong screen size? Left edge of green blueprints in attract looks
 like it's incorrectly off screen.
 
 
+Galmedes
+--------
+
+Test mode has select1/2 stuck at on.
+
+
 Eto
 ---
 
 $76d0 might be a protection check? It reads to and writes from the
 prog rom. Doesn't seem to cause problems though.
 
-[Service mode wasn't working: log showed it writing stuff around $c04xxx
-and regularly at $73ce reading $400000-f, inverting all bits and copying
-to RAM. These must be service mode mirrors for tilemaps and inputs.
-Strangely, spriteram and the TC0100SCN mirror overlap.]
 
 ***************************************************************************/
 
@@ -186,30 +180,6 @@ static WRITE_HANDLER( asuka_bankswitch_w )
 	cpu_setbank(10,&RAM[bankaddress]);
 }
 
-WRITE16_HANDLER( asuka_sound_w )
-{
-	if (offset == 0)
-		taitosound_port_w (0, data & 0xff);
-	else if (offset == 1)
-		taitosound_comm_w (0, data & 0xff);
-
-#if 0
-	if (data & 0xff00)
-	{
-		char buf[80];
-
-		sprintf(buf,"asuka_sound_w to high byte: %04x",data);
-		usrintf_showmessage(buf);
-	}
-#endif
-}
-
-READ16_HANDLER( asuka_sound_r )
-{
-	if (offset == 1)
-		return ((taitosound_comm_r (0) & 0xff));
-	else return 0;
-}
 
 /***********************************************************
 			 MEMORY STRUCTURES
@@ -220,7 +190,8 @@ static MEMORY_READ16_START( asuka_readmem )
 	{ 0x100000, 0x103fff, MRA16_RAM },	/* RAM */
 	{ 0x1076f0, 0x1076f1, MRA16_NOP },	/* Mofflott init does dummy reads here */
 	{ 0x200000, 0x20000f, TC0110PCR_word_r },
-	{ 0x3e0000, 0x3e0003, asuka_sound_r },
+	{ 0x3e0000, 0x3e0001, MRA16_NOP },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_r },
 	{ 0x400000, 0x40000f, asuka_input_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
@@ -232,7 +203,8 @@ static MEMORY_WRITE16_START( asuka_writemem )
 	{ 0x100000, 0x103fff, MWA16_RAM },
 	{ 0x200000, 0x20000f, TC0110PCR_step1_word_w },
 	{ 0x3a0000, 0x3a0003, asuka_spritectrl_w },
-	{ 0x3e0000, 0x3e0003, asuka_sound_w },
+	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
+	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
 	{ 0x400000, 0x400001, MWA16_NOP },	/* watchdog ?? */
 	{ 0x400008, 0x400009, MWA16_NOP },	/* ??? */
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
@@ -248,7 +220,8 @@ static MEMORY_READ16_START( eto_readmem )
 	{ 0x200000, 0x203fff, MRA16_RAM },	/* RAM */
 	{ 0x300000, 0x30000f, asuka_input_r },
 	{ 0x400000, 0x40000f, asuka_input_r },	/* service mode mirror */
-	{ 0x4e0000, 0x4e0003, asuka_sound_r },
+	{ 0x4e0000, 0x4e0001, MRA16_NOP },
+	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_r },
 	{ 0xc00000, 0xc007ff, MRA16_RAM },	/* sprite ram */
 	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_r },
@@ -261,7 +234,8 @@ static MEMORY_WRITE16_START( eto_writemem )	// N.B. tc100scn mirror overlaps spr
 	{ 0x300000, 0x300001, MWA16_NOP },	/* watchdog ?? */
 	{ 0x300008, 0x300009, MWA16_NOP },	/* ??? */
 	{ 0x4a0000, 0x4a0003, asuka_spritectrl_w },
-	{ 0x4e0000, 0x4e0003, asuka_sound_w },
+	{ 0x4e0000, 0x4e0001, taitosound_port16_lsb_w },
+	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_w },
 	{ 0xc00000, 0xc007ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xc01bfe, 0xc01bff, asuka_spriteflip_w },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* service mode mirror */
@@ -298,41 +272,62 @@ MEMORY_END
 			 INPUT PORTS, DIPs
 ***********************************************************/
 
-INPUT_PORTS_START( asuka )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+#define TAITO_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+#define TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Medium" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+#define ASUKA_PLAYERS_INPUT( player ) \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | player ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// if non-zero Asuka hangs
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
+#define ASUKA_SYSTEM_INPUT \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+
+
+INPUT_PORTS_START( asuka )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -340,23 +335,10 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -364,9 +346,9 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -374,43 +356,27 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x40, "Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0xc0, "Up to Level 2" )
+	PORT_DIPSETTING(    0x80, "Up to Level 3" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( mofflott )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// if non-zero Asuka hangs
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -418,35 +384,21 @@ INPUT_PORTS_START( mofflott )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20k and every 50k" )
+	PORT_DIPSETTING(    0x08, "50k and every 100k" )
+	PORT_DIPSETTING(    0x04, "100k only" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
@@ -455,40 +407,19 @@ INPUT_PORTS_START( mofflott )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( galmedes )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// if non-zero Asuka hangs
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -496,33 +427,19 @@ INPUT_PORTS_START( galmedes )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "every 100k" )
+	PORT_DIPSETTING(    0x0c, "100k and every 200k" )
+	PORT_DIPSETTING(    0x04, "150k and every 200k" )
+	PORT_DIPSETTING(    0x00, "every 200k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -533,40 +450,19 @@ INPUT_PORTS_START( galmedes )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( earthjkr )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// if non-zero Asuka hangs
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -574,23 +470,10 @@ INPUT_PORTS_START( earthjkr )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -598,10 +481,10 @@ INPUT_PORTS_START( earthjkr )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x30, "2" )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -611,40 +494,19 @@ INPUT_PORTS_START( earthjkr )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( eto )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN0 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* IN1 */
+	ASUKA_PLAYERS_INPUT( IPF_PLAYER2 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// if non-zero Asuka hangs
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+	/* IN2 */
+	ASUKA_SYSTEM_INPUT
 
 	PORT_START	/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -652,23 +514,10 @@ INPUT_PORTS_START( eto )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	TAITO_COINAGE_JAPAN_8
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )	// unsure of this
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -765,13 +614,13 @@ static struct MachineDriver machine_driver_asuka =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz ??? */
+			8000000,	/* 8 MHz ??? */
 			asuka_readmem,asuka_writemem,0,0,
 			asuka_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 MHz ??? */
 			z80_readmem,z80_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -812,13 +661,13 @@ static struct MachineDriver machine_driver_galmedes =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz ??? */
+			8000000,	/* 8 MHz ??? */
 			asuka_readmem,asuka_writemem,0,0,
 			asuka_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 MHz ??? */
 			z80_readmem,z80_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -859,13 +708,13 @@ static struct MachineDriver machine_driver_eto =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz ??? */
+			8000000,	/* 8 MHz ??? */
 			eto_readmem,eto_writemem,0,0,
 			asuka_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 MHz ??? */
 			z80_readmem,z80_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -922,9 +771,9 @@ ROM_START( asuka )
 	ROM_LOAD16_BYTE( "asuka_07.rom", 0x80000, 0x10000, 0xc113acc8 )
 	ROM_LOAD16_BYTE( "asuka_06.rom", 0x80001, 0x10000, 0xf517e64d )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "asuka_11.rom",   0x00000, 0x04000, 0xc378b508 )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "asuka_11.rom", 0x00000, 0x04000, 0xc378b508 )
+	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "asuka_10.rom", 0x00000, 0x10000, 0x387aaf40 )
@@ -947,9 +796,9 @@ ROM_START( mofflott )
 	ROM_LOAD16_BYTE( "c17-05.bin", 0x80000, 0x10000, 0x57ac4741 )
 	ROM_LOAD16_BYTE( "c17-04.bin", 0x80001, 0x10000, 0xf4250410 )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c17-07.bin",   0x00000, 0x04000, 0xcdb7bc2c )
-	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c17-07.bin", 0x00000, 0x04000, 0xcdb7bc2c )
+	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c17-06.bin", 0x00000, 0x10000, 0x5c332125 )
@@ -970,9 +819,9 @@ ROM_START( galmedes )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gm-obj.bin", 0x00000, 0x80000, 0x7a4a1315 )	/* Sprites (16 x 16) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "gm-snd.bin", 0x00000, 0x04000, 0xd6f56c21 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	/* empty region */
@@ -995,9 +844,9 @@ ROM_START( earthjkr )
 	ROM_LOAD16_BYTE( "ej_1.rom",   0x80000, 0x10000, 0xcb4891db )
 	ROM_LOAD16_BYTE( "ej_0.rom",   0x80001, 0x10000, 0xb612086f )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "ej_2.rom", 0x00000, 0x04000, 0x42ba2566 )
-	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	/* empty region */
@@ -1018,9 +867,9 @@ ROM_START( eto )
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "eto-3.6", 0x00000, 0x80000, 0xdd247397 )	/* SCR tiles (8 x 8) */
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "eto-5.27", 0x00000, 0x04000, 0xb3689da0 )
-	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
+	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	/* empty region */

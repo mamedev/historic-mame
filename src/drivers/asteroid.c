@@ -151,20 +151,13 @@ WRITE_HANDLER( llander_led_w );
 WRITE_HANDLER( asteroid_explode_w );
 WRITE_HANDLER( asteroid_thump_w );
 WRITE_HANDLER( asteroid_sounds_w );
-int asteroid_sh_start(const struct MachineSound *msound);
-void asteroid_sh_stop(void);
-void asteroid_sh_update(void);
-
 WRITE_HANDLER( astdelux_sounds_w );
-int astdelux_sh_start(const struct MachineSound *msound);
-void astdelux_sh_stop(void);
-void astdelux_sh_update(void);
+extern struct discrete_sound_block *asteroid_sound_interface;
+extern struct discrete_sound_block *astdelux_sound_interface;
 
 WRITE_HANDLER( llander_sounds_w );
 WRITE_HANDLER( llander_snd_reset_w );
-int llander_sh_start(const struct MachineSound *msound);
-void llander_sh_stop(void);
-void llander_sh_update(void);
+extern struct discrete_sound_block *llander_sound_interface;
 
 READ_HANDLER( asteroid_IN0_r );
 READ_HANDLER( asteroib_IN0_r );
@@ -586,12 +579,6 @@ static void asteroid_hisave(void)
  *		osd_fwrite(f,&RAM[0x0023],3*10+3*11);
  */
 
-static struct CustomSound_interface asteroid_custom_interface = {
-	asteroid_sh_start,
-	asteroid_sh_stop,
-	asteroid_sh_update
-};
-
 static const struct MachineDriver machine_driver_asteroid =
 {
 	/* basic machine hardware */
@@ -623,8 +610,8 @@ static const struct MachineDriver machine_driver_asteroid =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&asteroid_custom_interface
+			SOUND_DISCRETE,
+			&asteroid_sound_interface
 		}
 	}
 };
@@ -653,15 +640,14 @@ static const struct MachineDriver machine_driver_asteroib =
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dvg_start,
-	dvg_stop,
-	vector_vh_screenrefresh,
+	dvg_stop,	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&asteroid_custom_interface
+			SOUND_DISCRETE,
+			&asteroid_sound_interface
 		}
 	}
 };
@@ -684,12 +670,6 @@ static struct POKEYinterface pokey_interface =
 	{ 0 },
 	/* The allpot handler */
 	{ input_port_3_r }
-};
-
-static struct CustomSound_interface astdelux_custom_interface = {
-	astdelux_sh_start,
-	astdelux_sh_stop,
-	astdelux_sh_update
 };
 
 static const struct MachineDriver machine_driver_astdelux =
@@ -727,20 +707,12 @@ static const struct MachineDriver machine_driver_astdelux =
 			&pokey_interface
 		},
 		{
-			SOUND_CUSTOM,
-			&astdelux_custom_interface
+			SOUND_DISCRETE,
+			&astdelux_sound_interface
 		}
 	},
 
 	atari_vg_earom_handler
-};
-
-
-static struct CustomSound_interface llander_custom_interface =
-{
-	llander_sh_start,
-	llander_sh_stop,
-	llander_sh_update
 };
 
 
@@ -775,8 +747,8 @@ static const struct MachineDriver machine_driver_llander =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&llander_custom_interface
+			SOUND_DISCRETE,
+			&llander_sound_interface
 		}
 	}
 };

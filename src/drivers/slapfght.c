@@ -172,7 +172,14 @@ b73	checks lives. If zero, writes 0 to port 04 then jp 0000h.
 	routine, to not alter the credit counter.
 1523	put name in hi-scores?
 
----------------------------------------------------------------------------
+-------------------------------Performan-----------------------------------
+                 Interesting RAM locations (Main CPU).
+                 -------------------------------------
+
+$8056            Hero counter
+$8057            Level counter
+$8006 - $8035    High score table
+$8609 - $860f    High score characters to display to screen for highest score
 
 
 ***************************************************************************/
@@ -221,7 +228,6 @@ WRITE_HANDLER( slapfight_port_09_w );
 
 READ_HANDLER( getstar_e803_r );
 WRITE_HANDLER( getstar_sh_intenable_w );
-extern int getstar_sequence_index;
 int getstar_interrupt(void);
 
 
@@ -241,7 +247,7 @@ static MEMORY_WRITE_START( perfrman_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x880f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
-	{ 0x8810, 0x8fff, MWA_BANK1 },
+	{ 0x8810, 0x8fff, MWA_BANK1 },	/* Shared RAM with sound CPU */
 	{ 0x9000, 0x97ff, slapfight_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x9fff, slapfight_colorram_w, &colorram },
 	{ 0xa000, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -337,12 +343,13 @@ MEMORY_END
 static MEMORY_WRITE_START( perfrman_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8800, 0x880f, slapfight_dpram_w },
-	{ 0x8810, 0x8fff, MWA_BANK1 },
+	{ 0x8810, 0x8fff, MWA_BANK1 },	/* Shared RAM with main CPU */
 	{ 0xa080, 0xa080, AY8910_control_port_0_w },
 	{ 0xa082, 0xa082, AY8910_write_port_0_w },
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
 	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
+//	{ 0xa0f0, 0xa0f0, MWA_NOP },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -718,8 +725,8 @@ static struct GfxLayout perfrman_spritelayout =
 
 static struct GfxDecodeInfo perfrman_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &perfrman_charlayout,   0,  32 },
-	{ REGION_GFX2, 0, &perfrman_spritelayout, 0,  32 },
+	{ REGION_GFX1, 0, &perfrman_charlayout,     0, 16 },
+	{ REGION_GFX2, 0, &perfrman_spritelayout, 128, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -744,6 +751,16 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
+static struct AY8910interface perfrman_ay8910_interface =
+{
+	2,				/* 2 chips */
+	16000000/8,		/* 2MHz ???, 16MHz Oscillator */
+	{ 25, 25 },
+	{ input_port_0_r, input_port_2_r },
+	{ input_port_1_r, input_port_3_r },
+	{ 0, 0 },
+	{ 0, 0 }
+};
 
 static void eof_callback(void)
 {
@@ -756,20 +773,20 @@ static struct MachineDriver machine_driver_perfrman =
 	{
 		{
 			CPU_Z80,
-			6000000,
+			16000000/4,			/* 4MHz ???, 16MHz Oscillator */
 			perfrman_readmem,perfrman_writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			6000000,
+			16000000/8,			/* 2MHz ???, 16MHz Oscillator */
 			perfrman_sound_readmem,perfrman_sound_writemem,0,0,
 			getstar_interrupt, 6,	/* p'tit Seb 980926 this way it sound much better ! */
 			0,0						/* I think music is not so far from correct speed */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
 	/* video hardware */
@@ -789,7 +806,7 @@ static struct MachineDriver machine_driver_perfrman =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&perfrman_ay8910_interface
 		}
 	}
 };
@@ -811,8 +828,8 @@ static const struct MachineDriver machine_driver_tigerh =
 			nmi_interrupt,6,    /* ??? */
 		}
 	},
-	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
 	/* video hardware */
@@ -857,8 +874,8 @@ static const struct MachineDriver machine_driver_slapfigh =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
 	/* video hardware */
@@ -904,8 +921,8 @@ static const struct MachineDriver machine_driver_slapbtuk =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
 	/* video hardware */
@@ -941,19 +958,19 @@ ROM_START( perfrman )
 	ROM_LOAD( "ci06.4",    0x0000, 0x2000, 0xdf891ad0 )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "ci00.5",     0x4000, 0x2000, 0x79e191f8 )
-	ROM_LOAD( "ci01.6",     0x2000, 0x2000, 0x2e8e69df )
 	ROM_LOAD( "ci02.7",     0x0000, 0x2000, 0x8efa960a )
+	ROM_LOAD( "ci01.6",     0x2000, 0x2000, 0x2e8e69df )
+	ROM_LOAD( "ci00.5",     0x4000, 0x2000, 0x79e191f8 )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD( "ci03.8",     0x4000, 0x2000, 0x6410d9eb )
-	ROM_LOAD( "ci04.9",     0x2000, 0x2000, 0x026f27b3 )
 	ROM_LOAD( "ci05.10",    0x0000, 0x2000, 0x809a4ccc )
+	ROM_LOAD( "ci04.9",     0x2000, 0x2000, 0x026f27b3 )
+	ROM_LOAD( "ci03.8",     0x4000, 0x2000, 0x6410d9eb )
 
 	ROM_REGION( 0x300, REGION_PROMS, 0 )				 /* Color BPROMs */
-	ROM_LOAD( "ci12.14",    0x200, 0x0100, 0x67f86e3d )
-	ROM_LOAD( "ci13.15",    0x100, 0x0100, 0xa9a397eb )
 	ROM_LOAD( "ci14.16",    0x000, 0x0100, 0x515f8a3b )
+	ROM_LOAD( "ci13.15",    0x100, 0x0100, 0xa9a397eb )
+	ROM_LOAD( "ci12.14",    0x200, 0x0100, 0x67f86e3d )
 
 	ROM_REGION( 0x220, REGION_USER1, 0 )
 	ROM_LOAD( "ci11.11",    0x000, 0x0100, 0xd492e6c2 )
@@ -1352,7 +1369,8 @@ ROM_START( getstarb )
 ROM_END
 
 
-GAMEX( 1985, perfrman, 0,        perfrman, perfrman, 0, ROT270, "[Toaplan] Data East Corporation", "Performan", GAME_IMPERFECT_COLORS )
+/*   ( YEAR  NAME      PARENT    MACHINE   INPUT   INIT MONITOR COMPANY    FULLNAME     FLAGS ) */
+GAME ( 1985, perfrman, 0,        perfrman, perfrman, 0, ROT270, "[Toaplan] Data East Corporation", "Performan" )
 GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
@@ -1365,4 +1383,3 @@ GAMEX( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0, ROT270, "<unknown>", "Al
 GAMEX( 1986, getstar,  0,        slapfigh, getstar,  0, ROT0,   "Taito", "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1986, getstarj, getstar,  slapfigh, getstar,  0, ROT0,   "Taito", "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1986, getstarb, getstar,  slapfigh, getstar,  0, ROT0,   "bootleg", "Get Star (bootleg)", GAME_NO_COCKTAIL )
-

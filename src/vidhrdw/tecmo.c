@@ -5,11 +5,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "generic.h"
 
 unsigned char *tecmo_txvideoram,*tecmo_fgvideoram,*tecmo_bgvideoram;
-extern unsigned char *spriteram;
-extern size_t spriteram_size;
 
 int tecmo_video_type = 0;
 /*

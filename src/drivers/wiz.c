@@ -124,6 +124,7 @@ MEMORY_END
 
 
 static MEMORY_WRITE_START( writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc801, wiz_coin_counter_w },
 	{ 0xd000, 0xd3ff, MWA_RAM, &wiz_videoram2 },

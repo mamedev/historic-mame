@@ -8,8 +8,10 @@
 #include "vidhrdw/generic.h"
 #include <math.h>
 
-data16_t *nemesis_videoram1;
-data16_t *nemesis_videoram2;
+data16_t *nemesis_videoram1b;
+data16_t *nemesis_videoram1f;
+data16_t *nemesis_videoram2b;
+data16_t *nemesis_videoram2f;
 
 data16_t *nemesis_characterram;
 size_t nemesis_characterram_size;
@@ -84,7 +86,7 @@ WRITE16_HANDLER( salamander_palette_word_w )
 	COMBINE_DATA(paletteram16 + offset);
 	offset &= ~1;
 
-	data = (paletteram16[offset] << 8) | paletteram16[offset+1];
+	data = ((paletteram16[offset] << 8) & 0xff00) | (paletteram16[offset+1] & 0xff);
 
 	r = (data >>  0) & 0x1f;
 	g = (data >>  5) & 0x1f;
@@ -97,42 +99,58 @@ WRITE16_HANDLER( salamander_palette_word_w )
 	palette_change_color(offset / 2,r,g,b);
 }
 
-READ16_HANDLER( nemesis_videoram1_word_r )
+READ16_HANDLER( nemesis_videoram1b_word_r )
 {
-	return nemesis_videoram1[offset];
+	return nemesis_videoram1b[offset];
+}
+READ16_HANDLER( nemesis_videoram1f_word_r )
+{
+	return nemesis_videoram1f[offset];
 }
 
-WRITE16_HANDLER( nemesis_videoram1_word_w )
+WRITE16_HANDLER( nemesis_videoram1b_word_w )
 {
-	COMBINE_DATA(nemesis_videoram1 + offset);
-	if (offset < 0x800)
-		video1_dirty[offset] = 1;
-	else
-		video2_dirty[offset - 0x800] = 1;
+	COMBINE_DATA(nemesis_videoram1b + offset);
+	video1_dirty[offset] = 1;
+}
+WRITE16_HANDLER( nemesis_videoram1f_word_w )
+{
+	COMBINE_DATA(nemesis_videoram1f + offset);
+	video2_dirty[offset] = 1;
 }
 
-READ16_HANDLER( nemesis_videoram2_word_r )
+READ16_HANDLER( nemesis_videoram2b_word_r )
 {
-	return nemesis_videoram2[offset];
+	return nemesis_videoram2b[offset];
+}
+READ16_HANDLER( nemesis_videoram2f_word_r )
+{
+	return nemesis_videoram2f[offset];
 }
 
-WRITE16_HANDLER( nemesis_videoram2_word_w )
+WRITE16_HANDLER( nemesis_videoram2b_word_w )
 {
-	COMBINE_DATA(nemesis_videoram2 + offset);
-	if (offset < 0x800)
-		video1_dirty[offset] = 1;
-	else
-		video2_dirty[offset - 0x800] = 1;
+	COMBINE_DATA(nemesis_videoram2b + offset);
+	video1_dirty[offset] = 1;
+}
+WRITE16_HANDLER( nemesis_videoram2f_word_w )
+{
+	COMBINE_DATA(nemesis_videoram2f + offset);
+	video2_dirty[offset] = 1;
 }
 
 
 READ16_HANDLER( gx400_xscroll1_word_r ) { return nemesis_xscroll1[offset];}
 READ16_HANDLER( gx400_xscroll2_word_r ) { return nemesis_xscroll2[offset];}
 READ16_HANDLER( gx400_yscroll_word_r ) { return nemesis_yscroll[offset];}
+READ16_HANDLER( gx400_yscroll1_word_r ) { return nemesis_yscroll1[offset];}
+READ16_HANDLER( gx400_yscroll2_word_r ) { return nemesis_yscroll2[offset];}
 
 WRITE16_HANDLER( gx400_xscroll1_word_w ) { COMBINE_DATA(nemesis_xscroll1 + offset);}
 WRITE16_HANDLER( gx400_xscroll2_word_w ) { COMBINE_DATA(nemesis_xscroll2 + offset);}
 WRITE16_HANDLER( gx400_yscroll_word_w ) { COMBINE_DATA(nemesis_yscroll + offset);}
+WRITE16_HANDLER( gx400_yscroll1_word_w ) { COMBINE_DATA(nemesis_yscroll1 + offset);}
+WRITE16_HANDLER( gx400_yscroll2_word_w ) { COMBINE_DATA(nemesis_yscroll2 + offset);}
 
 
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
@@ -815,10 +833,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	{
 		for (adress = 0;adress < spriteram_words;adress += 8)
 		{
-			if(spriteram16[adress]!=priority) continue;
+			if((spriteram16[adress] & 0xff)!=priority) continue;
 
-			code = spriteram16[adress+3] + ((spriteram16[adress+4] & 0xc0) << 2);
-			zoom = spriteram16[adress+2]&0xff;
+			zoom = spriteram16[adress+2] & 0xff;
+			if (!(spriteram16[adress+2] & 0xff00) && ((spriteram16[adress+3] & 0xff00) != 0xff00))
+				code = spriteram16[adress+3] + ((spriteram16[adress+4] & 0xc0) << 2);
+			else
+				code = (spriteram16[adress+3] & 0xff) + ((spriteram16[adress+4] & 0xc0) << 2);
+
 			if (zoom != 0xFF || code!=0)
 			{
 				size=spriteram16[adress+1];
@@ -914,14 +936,14 @@ static void setup_palette(void)
 	for (color = 0;color < 0x80;color++) colmask[color] = 0;
 	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
-		code = nemesis_videoram1[offs + 0x800] & 0x7ff;
+		code = nemesis_videoram1f[offs] & 0x7ff;
 		if (char_dirty[code] == 1)
 		{
 			decodechar(Machine->gfx[0],code,(unsigned char *)nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			char_dirty[code] = 2;
 		}
-		color = nemesis_videoram2[offs + 0x800] & 0x7f;
+		color = nemesis_videoram2f[offs] & 0x7f;
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
@@ -942,8 +964,14 @@ static void setup_palette(void)
 	for (offs = 0;offs < spriteram_words;offs += 8)
 	{
 		int char_type;
-		int zoom = spriteram16[offs+2];
-		code = spriteram16[offs+3] + ((spriteram16[offs+4] & 0xc0) << 2);
+		int zoom;
+
+		zoom = spriteram16[offs+2] & 0xff;
+		if (!(spriteram16[offs+2] & 0xff00) && ((spriteram16[offs+3] & 0xff00) != 0xff00))
+			code = spriteram16[offs+3] + ((spriteram16[offs+4] & 0xc0) << 2);
+		else
+			code = (spriteram16[offs+3] & 0xff) + ((spriteram16[offs+4] & 0xc0) << 2);
+
 		if (zoom != 0xFF || code!=0)
 		{
 			int size = spriteram16[offs+1];
@@ -1063,14 +1091,14 @@ static void setup_palette(void)
 	for (color = 0;color < 0x80;color++) colmask[color] = 0;
 	for (offs = 0x800 - 1;offs >= 0;offs --)
 	{
-		code = nemesis_videoram1[offs] & 0x7ff;
+		code = nemesis_videoram1b[offs] & 0x7ff;
 		if (char_dirty[code] == 1)
 		{
 			decodechar(Machine->gfx[0],code,(unsigned char *)nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			char_dirty[code] = 2;
 		}
-		color = nemesis_videoram2[offs] & 0x7f;
+		color = nemesis_videoram2b[offs] & 0x7f;
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
@@ -1102,24 +1130,24 @@ static void setup_backgrounds(void)
 		int code,color;
 
 
-		code = nemesis_videoram1[offs + 0x800] & 0x7ff;
+		code = nemesis_videoram1f[offs] & 0x7ff;
 
 		if (video2_dirty[offs] || char_dirty[code])
 		{
 			int sx,sy,flipx,flipy;
 
-			color = nemesis_videoram2[offs + 0x800] & 0x7f;
+			color = nemesis_videoram2f[offs] & 0x7f;
 
 			video2_dirty[offs] = 0;
 
 			sx = offs % 64;
 			sy = offs / 64;
-			flipx = nemesis_videoram2[offs + 0x800] & 0x80;
-			flipy = nemesis_videoram1[offs + 0x800] & 0x800;
+			flipx = nemesis_videoram2f[offs] & 0x80;
+			flipy = nemesis_videoram1f[offs] & 0x800;
 
-			if(nemesis_videoram1[offs + 0x800]!=0 || nemesis_videoram2[offs + 0x800]!=0)
+			if(nemesis_videoram1f[offs]!=0 || nemesis_videoram2f[offs]!=0)
 			{
-				if (nemesis_videoram1[offs + 0x800] & 0x1000)		//screen priority
+				if (nemesis_videoram1f[offs] & 0x1000)		//screen priority
 				{
 					struct rectangle clip;
 
@@ -1169,7 +1197,7 @@ static void setup_backgrounds(void)
 		int code,color;
 
 
-		code = nemesis_videoram1[offs] & 0x7ff;
+		code = nemesis_videoram1b[offs] & 0x7ff;
 
 		if (video1_dirty[offs] || char_dirty[code])
 		{
@@ -1177,16 +1205,16 @@ static void setup_backgrounds(void)
 
 			video1_dirty[offs] = 0;
 
-			color = nemesis_videoram2[offs] & 0x7f;
+			color = nemesis_videoram2b[offs] & 0x7f;
 
 			sx = offs % 64;
 			sy = offs / 64;
-			flipx = nemesis_videoram2[offs] & 0x80;
-			flipy = nemesis_videoram1[offs] & 0x800;
+			flipx = nemesis_videoram2b[offs] & 0x80;
+			flipy = nemesis_videoram1b[offs] & 0x800;
 
-			if(nemesis_videoram1[offs]!=0 || nemesis_videoram2[offs]!=0)
+			if(nemesis_videoram1b[offs]!=0 || nemesis_videoram2b[offs]!=0)
 			{
-				if (nemesis_videoram1[offs] & 0x1000)		//screen priority
+				if (nemesis_videoram1b[offs] & 0x1000)		//screen priority
 				{
 					struct rectangle clip;
 
@@ -1326,9 +1354,10 @@ void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,l;
-	int xscroll[256],yscroll[256],xscroll2[256],yscroll2[256];
-	int culumn_scroll = 0;
+	int offs;
+	int xscroll1[256],xscroll2[256];
+	int yscroll1[64],yscroll2[64];
+	int row_scroll=0,culumn_scroll=0;
 
 	setup_palette();
 
@@ -1338,59 +1367,70 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* screen flash */
 	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],&Machine->visible_area);
 
-	/* Kludge - check if we need row or column scroll */
-	if (nemesis_yscroll[0x3c0] || nemesis_yscroll[0x3c8]) {
-		/* Column scroll */
-		culumn_scroll = 1;
-		l=0;
-		for (offs = 0x400-1;offs >= 0x3c0; offs--)
-		{
-			yscroll[l] = yscroll[l+64] = -nemesis_yscroll[offs];
-			l++;
-		}
-		copyscrollbitmap(bitmap,tmpbitmap2,0,0,128,yscroll,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-	} else { /* Rowscroll */
-		for (offs = 0;offs < 256;offs++)
-		{
-			xscroll[offs] = -((nemesis_xscroll1[offs] & 0xff) +
-					((nemesis_xscroll1[0x100 + offs] & 1) << 8));
-		}
-		copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	for (offs = 0; offs < 64; offs++)
+	{
+		yscroll1[offs] = -nemesis_yscroll2[offs];
+		yscroll2[offs] = -nemesis_yscroll1[offs];
+		if (yscroll1[offs]) culumn_scroll |= 0x01;
+		if (yscroll2[offs]) culumn_scroll |= 0x02;
+	}
+	for (offs = 0; offs < 256; offs++)
+	{
+		xscroll1[offs] = -((nemesis_xscroll1[offs] & 0xff) + ((nemesis_xscroll1[0x100 + offs] & 1) << 8));
+		xscroll2[offs] = -((nemesis_xscroll2[offs] & 0xff) + ((nemesis_xscroll2[0x100 + offs] & 1) << 8));
+		if (xscroll1[offs]) row_scroll |= 0x01;
+		if (xscroll2[offs]) row_scroll |= 0x02;
+	}
+
+	/* Copy the background bitmap */
+	if (culumn_scroll & 0x01)
+	{
+		if (row_scroll & 0x01)
+			copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll1,1,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,tmpbitmap2,0,0,64,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	} else {
+		copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll1,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 	/* Copy the foreground bitmap */
-	if (nemesis_yscroll[0x380] || nemesis_yscroll[0x388]) {
-		/* Column scroll */
-		l=0;
-		for (offs = 0x3c0-1;offs >= 0x380; offs--)
-		{
-			yscroll2[l] = yscroll2[l+64] = -nemesis_yscroll[offs];
-			l++;
-		}
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,128,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	if (culumn_scroll & 0x02)
+	{
+		if (row_scroll & 0x02)
+			copyscrollbitmap(bitmap,tmpbitmap,256,xscroll2,1,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,64,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 		draw_sprites(bitmap);
 
-		if (culumn_scroll)
-			copyscrollbitmap(bitmap,tmpbitmap4,0,0,128,yscroll,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-		else
-			copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-		copyscrollbitmap(bitmap,tmpbitmap3,0,0,128,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-	} else { /* Rowscroll */
-		for (offs = 0;offs < 256;offs++)
+		if (culumn_scroll & 0x01)
 		{
-			xscroll2[offs] = -((nemesis_xscroll2[offs] & 0xff) +
-					((nemesis_xscroll2[0x100 + offs] & 1) << 8));
+			if (row_scroll & 0x01)
+				copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll1,1,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			else
+				copyscrollbitmap(bitmap,tmpbitmap4,0,0,64,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		} else {
+			copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll1,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		}
+
+		if (row_scroll & 0x02)
+			copyscrollbitmap(bitmap,tmpbitmap3,256,xscroll2,1,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else
+			copyscrollbitmap(bitmap,tmpbitmap3,0,0,64,yscroll2,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	} else {
 		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll2,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 		draw_sprites(bitmap);
 
-		if (culumn_scroll)
-			copyscrollbitmap(bitmap,tmpbitmap4,0,0,128,yscroll,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-		else
-			copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		if (culumn_scroll & 0x01)
+		{
+			if (row_scroll & 0x01)
+				copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll1,1,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			else
+				copyscrollbitmap(bitmap,tmpbitmap4,0,0,64,yscroll1,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		} else {
+			copyscrollbitmap(bitmap,tmpbitmap4,256,xscroll1,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap3,256,xscroll2,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
@@ -1401,3 +1441,4 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			char_dirty[offs] = 0;
 	}
 }
+

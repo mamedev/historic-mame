@@ -35,6 +35,10 @@
 extern "C" {
 #endif
 
+#ifdef RUNTIME_LOADER
+	extern void sc61860_runtime_loader_init(void);
+#endif
+
 typedef struct {
 	int (*reset)(void);
 	int (*brk)(void);

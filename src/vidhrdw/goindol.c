@@ -6,11 +6,10 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "generic.h"
 
 unsigned char 	 	 *goindol_bg_videoram;
 unsigned char 	 	 *goindol_fg_videoram;
-unsigned char 		 *goindol_spriteram1;
-unsigned char 		 *goindol_spriteram2;
 unsigned char 		 *goindol_fg_scrollx;
 unsigned char 		 *goindol_fg_scrolly;
 static struct osd_bitmap *bitmap_bg;
@@ -20,7 +19,6 @@ static unsigned char 	 *bg_dirtybuffer;
 
 size_t goindol_fg_videoram_size;
 size_t goindol_bg_videoram_size;
-size_t goindol_spriteram_size;
 int 	 		 goindol_char_bank;
 
 
@@ -191,7 +189,7 @@ void goindol_draw_sprites(struct osd_bitmap *bitmap, int gfxbank, unsigned char 
 {
 	int offs,sx,sy,tile,palette;
 
-	for (offs = 0 ;offs < goindol_spriteram_size; offs+=4)
+	for (offs = 0 ;offs < spriteram_size; offs+=4)
 	{
 		sx = sprite_ram[offs];
 		sy = 240-sprite_ram[offs+1];
@@ -231,6 +229,6 @@ void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	goindol_draw_foreground(bitmap_fg);
 	copybitmap(bitmap,bitmap_bg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	copyscrollbitmap(bitmap,bitmap_fg,1,&fg_scrolly,1,&fg_scrollx,&Machine->visible_area,TRANSPARENCY_COLOR, 0);
-	goindol_draw_sprites(bitmap,1,goindol_spriteram1);
-	goindol_draw_sprites(bitmap,0,goindol_spriteram2);
+	goindol_draw_sprites(bitmap,1,spriteram);
+	goindol_draw_sprites(bitmap,0,spriteram_2);
 }

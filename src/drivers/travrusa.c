@@ -14,10 +14,8 @@ Loosely based on the our previous 10 Yard Fight driver.
 ****************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "sndhrdw/irem.h"
-
-extern unsigned char *spriteram;
-extern size_t spriteram_size;
 
 extern unsigned char *travrusa_videoram;
 

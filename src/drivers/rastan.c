@@ -8,33 +8,22 @@ driver by Jarek Burczynski
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
 data16_t *rastan_ram;	/* speedup hack */
 
-extern data16_t *rastan_videoram1,*rastan_videoram3;
-extern data16_t *rastan_scrollx;
-extern data16_t *rastan_scrolly;
-extern size_t rastan_videoram_size;
-
-WRITE16_HANDLER( rastan_videoram1_w );
-READ16_HANDLER ( rastan_videoram1_r );
-WRITE16_HANDLER( rastan_videoram3_w );
-READ16_HANDLER ( rastan_videoram3_r );
-
 WRITE16_HANDLER( rastan_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
-WRITE16_HANDLER( rastan_flipscreen_w );
 
-WRITE16_HANDLER( rastan_background_w );
-
-void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  rastan_vh_start(void);
-
+void rastan_vh_stop(void);
+void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
+
 
 static int rastan_interrupt(void)
 {
@@ -63,10 +52,7 @@ static MEMORY_READ16_START( rastan_readmem )
 	{ 0x390006, 0x390007, input_port_2_word_r },
 	{ 0x390008, 0x390009, input_port_3_word_r },
 	{ 0x39000a, 0x39000b, input_port_4_word_r },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
-	{ 0xc04000, 0xc07fff, MRA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
-	{ 0xc0c000, 0xc0ffff, MRA16_RAM },
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
 	{ 0xd00000, 0xd00fff, MRA16_RAM },	/* sprite ram, upper half only used in service mode */
 MEMORY_END
 
@@ -80,13 +66,10 @@ static MEMORY_WRITE16_START( rastan_writemem )
 	{ 0x3c0000, 0x3c0003, MWA16_NOP },	/* 0000,0020,0063,0992,1753 (very often) watchdog ? */
 	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
-	{ 0xc04000, 0xc07fff, MWA16_RAM },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
-	{ 0xc0c000, 0xc0ffff, MWA16_RAM },
-	{ 0xc20000, 0xc20003, MWA16_RAM, &rastan_scrolly },	/* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, MWA16_RAM, &rastan_scrollx },	/* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xc50000, 0xc50003, rastan_flipscreen_w },	/* bit 0 flipscreen*/
+	{ 0xc00000, 0xc0ffff, PC080SN_word_0_w },
+	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
+	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
+	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
 	{ 0xd00000, 0xd00fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
 MEMORY_END
@@ -310,8 +293,8 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
 	{ REGION_GFX2, 0, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ REGION_GFX1, 0, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
 	{ -1 } /* end of array */
 };
 
@@ -365,13 +348,13 @@ static const struct MachineDriver machine_driver_rastan =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	8192, 8192,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	rastan_vh_start,
-	0,
+	rastan_vh_stop,
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */

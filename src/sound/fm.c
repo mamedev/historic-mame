@@ -822,8 +822,8 @@ INLINE void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 	int ksr;
 
 	/* frequency step counter */
-	/* SLOT->Incr= (fc+SLOT->DT[kc])*SLOT->mul; */
-	SLOT->Incr= fc*SLOT->mul + SLOT->DT[kc];
+	SLOT->Incr= (fc+SLOT->DT[kc])*SLOT->mul;	/* verified on real chip */
+	/*	SLOT->Incr= fc*SLOT->mul + SLOT->DT[kc]; */
 	ksr = kc >> SLOT->KSR;
 	if( SLOT->ksr != ksr )
 	{

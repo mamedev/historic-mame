@@ -224,7 +224,7 @@ static const UINT8 op65c02[256][3] = {
 	{bpl,rel,BRA},{ora,idy,MRD},{ora,zpi,MRD},{ill,non,0 },/* 10 */
 	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
 	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{ill,non,0 },
-	{tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
 	{jsr,adr,0	},{and,idx,MRD},{ill,non,0	},{ill,non,0 },/* 20 */
 	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
 	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{ill,non,0 },
@@ -292,7 +292,7 @@ static const UINT8 op65sc02[256][3] = {
 	{bpl,rel,BRA},{ora,idy,MRD},{ora,zpi,MRD},{ill,non,0 },/* 10 */
 	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
 	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{ill,non,0 },
-	{tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
 	{jsr,adr,0	},{and,idx,MRD},{ill,non,0	},{ill,non,0 },/* 20 */
 	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
 	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{ill,non,0 },
@@ -427,7 +427,7 @@ static const UINT8 op65ce02[256][3] = {
 	{bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rw2,BRA},/* 10 */
 	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
 	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{inz,imp,0  },
-	{tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
 	{jsr,adr,0	},{and,idx,MRD},{jsr,ind,0	},{jsr,iax,0  },/* 20 */
 	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
 	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{tys,imp,0  },
@@ -497,7 +497,7 @@ static const UINT8 op4510[256][3] = {
 	{bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rw2,BRA},/* 10 */
 	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
 	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{inz,imp,0  },
-	{tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
 	{jsr,adr,0	},{and,idx,MRD},{jsr,ind,0	},{jsr,iax,0  },/* 20 */
 	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
 	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{tys,imp,0  },
@@ -866,7 +866,7 @@ unsigned int Dasm6502Helper(CPU_TYPE *this, char *buffer, unsigned pc)
 		pc += 2;
 		symbol = set_ea_info( 0, addr, EA_UINT16, access );
 		dst += sprintf(dst,"#%s", symbol);
-		break;	
+		break;
 	case iw3:
 		addr = ARGWORD(pc);
 		pc += 2;

@@ -65,16 +65,16 @@
 */
 
 
-typedef enum { 
+typedef enum {
 	Ill,
-	Imp, 
+	Imp,
 	Imm, ImmW,
-	RelP, RelM, 
-	Abs, 
+	RelP, RelM,
+	Abs,
 	Ptc,
-	Etc, 
-	Cal, 
-	Lp 
+	Etc,
+	Cal,
+	Lp
 } Adr;
 
 static const struct { char *mnemonic; Adr adr; } table[]={
@@ -156,35 +156,35 @@ unsigned sc61860_dasm(char *dst, unsigned oldpc)
 	UINT16 adr;
 
 	switch(oper&0xc0) {
-	case 0x80: 
+	case 0x80:
 		sprintf(dst,"%-6s%.2x",table[oper&0x80].mnemonic, oper&0x3f);
 		break;
 	default:
 		switch(oper&0xe0) {
-		case 0xe0: 
+		case 0xe0:
 			sprintf(dst,"%-6s%.4x",table[oper&0xe0].mnemonic,
-					PEEK_OP(pc++)|((oper&0x1f)<<8)); 
+					PEEK_OP(pc++)|((oper&0x1f)<<8));
 			break;
 		default:
 			switch (table[oper].adr) {
 			case Ill: sprintf(dst,"?%.2x",oper);break;
 			case Imp: sprintf(dst,"%s",table[oper].mnemonic); break;
 			case Imm: sprintf(dst,"%-6s%.2x",table[oper].mnemonic, PEEK_OP(pc++)); break;
-			case ImmW: 
+			case ImmW:
 				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
-				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr); 
+				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr);
 				break;
-			case Abs: 
+			case Abs:
 				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
-				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr); 
+				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr);
 				break;
-			case RelM: 
+			case RelM:
 				adr=pc-PEEK_OP(pc++);
-				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff); 
+				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case RelP:
 				adr=pc+PEEK_OP(pc++);
-				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff); 
+				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case Ptc:
 				t=PEEK_OP(pc++);

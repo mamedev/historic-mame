@@ -8,10 +8,7 @@ Additional tweaking by Jarek Burczynski
 ***************************************************************************/
 
 #include "driver.h"
-
-data16_t *magmax_videoram;
-data16_t *magmax_spriteram;
-size_t magmax_spriteram_size;
+#include "generic.h"
 
 data16_t *magmax_scroll_x;
 data16_t *magmax_scroll_y;
@@ -20,7 +17,6 @@ static int flipscreen = 0;
 
 static UINT16 pens_line_tab[256];
 static UINT32 *prom_tab = NULL;
-static struct osd_bitmap * tmpbitmap = NULL;
 
 
 typedef void (*blit_horiz_pixel_line_proc)(struct osd_bitmap *bitmap,int x,int y, int width, UINT16* pens);
@@ -477,20 +473,20 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* draw the sprites */
-	for (offs = 0; offs < magmax_spriteram_size/2; offs += 4)
+	for (offs = 0; offs < spriteram_size/2; offs += 4)
 	{
 		int sx, sy;
 
-		sy = magmax_spriteram[offs] & 0xff;
+		sy = spriteram16[offs] & 0xff;
 		if (sy)
 		{
-			int code = magmax_spriteram[offs + 1] & 0xff;
-			int attr = magmax_spriteram[offs + 2] & 0xff;
+			int code = spriteram16[offs + 1] & 0xff;
+			int attr = spriteram16[offs + 2] & 0xff;
 			int color = (attr & 0xf0) >> 4;
 			int flipx = attr & 0x04;
 			int flipy = attr & 0x08;
 
-			sx = (magmax_spriteram[offs + 3] & 0xff) - 0x80 + 0x100 * (attr & 0x01);
+			sx = (spriteram16[offs + 3] & 0xff) - 0x80 + 0x100 * (attr & 0x01);
 			sy = 239 - sy;
 
 			if (flipscreen)
@@ -526,7 +522,7 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		//int page = (magmax_vreg>>3) & 0x1;
 		int code;
 
-		code = magmax_videoram[offs /*+ page*/] & 0xff;
+		code = videoram16[offs /*+ page*/] & 0xff;
 		if (code)
 		{
 			int sx = (offs % 32);

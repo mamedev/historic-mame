@@ -32,7 +32,7 @@ static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
                 0..2 = Blue
                 3..5 = Green
                 6..8 = Blue
-                9..11 = Intesnsity
+                9..11 = Intensity
     Output resistor values:
                bit 0 = 22K
                bit 1 = 10K

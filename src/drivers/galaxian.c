@@ -1880,7 +1880,7 @@ static const struct MachineDriver machine_driver_##NAME =								\
 	}																			\
 };
 
-/*						 MEM  	   INTERRUPT  MACHINE_INIT           GFXDECODE  VH_START */
+/*			 MEM  	   INTERRUPT  MACHINE_INIT           GFXDECODE  VH_START */
 MACHINE_DRIVER(galaxian, galaxian, galaxian,  machine_init_galaxian, galaxian,  galaxian)
 MACHINE_DRIVER(warofbug, galaxian, galaxian,  0,                     galaxian,  galaxian)
 MACHINE_DRIVER(galapx,   galaxian, galaxian,  machine_init_galapx,   galaxian,  galaxian)
@@ -2124,11 +2124,25 @@ ROM_START( galaxian )
 	ROM_LOAD( "7l",           0x2000, 0x0800, 0x1b933207 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
-	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
+	ROM_LOAD( "1h.bin",       0x0000, 0x0800, 0x39fb43a4 )
+	ROM_LOAD( "1k.bin",       0x0800, 0x0800, 0x7e3f56a2 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
+
+ROM_START( galaxiaj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "7f.bin",       0x0000, 0x1000, 0x4335b1de )
+	ROM_LOAD( "7j.bin",       0x1000, 0x1000, 0x4e6f66a1 )
+	ROM_LOAD( "7l.bin",       0x2000, 0x0800, 0x5341d75a )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1h.bin",       0x0000, 0x0800, 0x39fb43a4 )
+	ROM_LOAD( "1k.bin",       0x0800, 0x0800, 0x7e3f56a2 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galmidw )
@@ -2144,13 +2158,12 @@ ROM_START( galmidw )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( superg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
-	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
+	ROM_LOAD( "7f.bin",       0x0000, 0x1000, 0x4335b1de )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
 	ROM_LOAD( "superg.y",     0x1800, 0x0800, 0x9463f753 )
 	ROM_LOAD( "superg.z",     0x2000, 0x0800, 0xe6312e35 )
@@ -2160,23 +2173,7 @@ ROM_START( superg )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
-ROM_END
-
-ROM_START( galaxb )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
-	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
-	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
-	ROM_LOAD( "cp4",          0x1800, 0x0800, 0x097d92a2 )
-	ROM_LOAD( "cp5",          0x2000, 0x0800, 0x5341d75a )
-
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cp7e",         0x0000, 0x0800, 0xd0ba22c9 )   /* logo was removed */
-	ROM_LOAD( "cp6e",         0x0800, 0x0800, 0x977e37cf )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galapx )
@@ -2192,14 +2189,13 @@ ROM_START( galapx )
 	ROM_LOAD( "galx.1k",      0x0800, 0x0800, 0xcbe84a76 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galap1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
-	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
-	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
+	ROM_LOAD( "7f.bin",       0x0000, 0x1000, 0x4335b1de )
+	ROM_LOAD( "galx_1_3.rom", 0x1000, 0x0800, 0x4c7031c0 )
 	ROM_LOAD( "galx_1_4.rom", 0x1800, 0x0800, 0xe71e1d9e )
 	ROM_LOAD( "galx_1_5.rom", 0x2000, 0x0800, 0x6e65a3b2 )
 
@@ -2208,7 +2204,7 @@ ROM_START( galap1 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galap4 )
@@ -2224,12 +2220,12 @@ ROM_START( galap4 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0xa57b83e4 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( galturbo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
+	ROM_LOAD( "galturbo.u",   0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
 	ROM_LOAD( "galturbo.y",   0x1800, 0x0800, 0xa44f450f )
@@ -2240,7 +2236,7 @@ ROM_START( galturbo )
 	ROM_LOAD( "galturbo.1k",  0x0800, 0x0800, 0x28511790 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( swarm )
@@ -2256,7 +2252,7 @@ ROM_START( swarm )
 	ROM_LOAD( "swarmb.bin",    0x0800, 0x0800, 0x60c4bd31 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( zerotime )
@@ -2272,7 +2268,7 @@ ROM_START( zerotime )
 	ROM_LOAD( "ztc-1.016",    0x0800, 0x0800, 0x5cd7df03 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( pisces )
@@ -2385,7 +2381,7 @@ ROM_START( redufo )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 
@@ -2456,7 +2452,7 @@ ROM_START( ghostmun )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "blpaccp",      0x0000, 0x0020, BADCRC( 0x24652bc4 ) ) /* who knows? */
+	ROM_LOAD( "ghostmun.clr", 0x0000, 0x0020, 0x8dca99ec )
 ROM_END
 
 ROM_START( devilfsg )
@@ -2714,7 +2710,7 @@ ROM_START( blkhole )
 	ROM_LOAD( "bh8",          0x0800, 0x0800, 0x03d11020 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( mooncrst )
@@ -2947,7 +2943,7 @@ ROM_START( moonal2 )
 	ROM_RELOAD(	              0x1800, 0x0800 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( moonal2b )
@@ -2970,7 +2966,7 @@ ROM_START( moonal2b )
 	ROM_RELOAD(	              0x1800, 0x0800 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( kingball )
@@ -3130,10 +3126,10 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 }
 
 
-GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco)" )
+GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
+GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
 GAME( 1979, galmidw,  galaxian, galaxian, galaxian, 0,        ROT90,  "[Namco] (Midway license)", "Galaxian (Midway)" )
 GAME( 1979, superg,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Super Galaxians" )
-GAME( 1979, galaxb,   galaxian, galaxian, superg,   0,        ROT90,  "bootleg", "Galaxian (bootleg)" )
 GAME( 1979, galapx,   galaxian, galapx,   superg,   0,        ROT90,  "hack", "Galaxian Part X" )
 GAME( 1979, galap1,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Space Invaders Galactica" )
 GAME( 1979, galap4,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Part 4" )

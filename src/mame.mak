@@ -76,6 +76,7 @@ CPUS+=ASAP@
 SOUNDS+=CUSTOM@
 SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
+SOUNDS+=DISCRETE@
 SOUNDS+=AY8910@
 SOUNDS+=YM2203@
 # enable only one of the following two
@@ -119,6 +120,8 @@ SOUNDS+=C140@
 SOUNDS+=QSOUND@
 SOUNDS+=SAA1099@
 SOUNDS+=IREMGA20@
+SOUNDS+=ES5505@
+SOUNDS+=ES5506@
 #SOUNDS+=SPEAKER@
 #SOUNDS+=WAVE@
 #SOUNDS+=BEEP@
@@ -139,11 +142,11 @@ DRVLIBS = \
 	$(OBJ)/kaneko.a $(OBJ)/seta.a $(OBJ)/atlus.a \
 	$(OBJ)/sun.a $(OBJ)/suna.a $(OBJ)/dooyong.a $(OBJ)/tong.a \
 	$(OBJ)/comad.a $(OBJ)/playmark.a $(OBJ)/pacific.a $(OBJ)/tecfri.a \
-	$(OBJ)/other.a $(OBJ)/neogeo.a \
+	$(OBJ)/metro.a $(OBJ)/other.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o \
-	$(OBJ)/machine/pacplus.o \
+	$(OBJ)/machine/pacplus.o $(OBJ)/machine/jumpshot.o \
 	$(OBJ)/machine/theglob.o \
 	$(OBJ)/drivers/jrpacman.o $(OBJ)/vidhrdw/jrpacman.o \
 	$(OBJ)/vidhrdw/pengo.o $(OBJ)/drivers/pengo.o \
@@ -209,6 +212,7 @@ $(OBJ)/nintendo.a: \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
 	$(OBJ)/machine/rp5h01.o $(OBJ)/vidhrdw/ppu2c03b.o \
 	$(OBJ)/machine/playch10.o $(OBJ)/vidhrdw/playch10.o $(OBJ)/drivers/playch10.o \
+	$(OBJ)/machine/vsnes.o $(OBJ)/vidhrdw/vsnes.o $(OBJ)/drivers/vsnes.o \
 
 $(OBJ)/midw8080.a: \
 	$(OBJ)/machine/8080bw.o $(OBJ)/machine/74123.o \
@@ -266,8 +270,11 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/lsasquad.o $(OBJ)/vidhrdw/lsasquad.o $(OBJ)/drivers/lsasquad.o \
 	$(OBJ)/machine/bublbobl.o $(OBJ)/vidhrdw/bublbobl.o $(OBJ)/drivers/bublbobl.o \
 	$(OBJ)/machine/mexico86.o $(OBJ)/vidhrdw/mexico86.o $(OBJ)/drivers/mexico86.o \
+	$(OBJ)/vidhrdw/darius.o $(OBJ)/drivers/darius.o \
 	$(OBJ)/vidhrdw/rastan.o $(OBJ)/sndhrdw/rastan.o $(OBJ)/drivers/rastan.o \
 	$(OBJ)/machine/rainbow.o $(OBJ)/drivers/rainbow.o \
+	$(OBJ)/drivers/opwolf.o \
+	$(OBJ)/vidhrdw/othunder.o $(OBJ)/drivers/othunder.o \
 	$(OBJ)/vidhrdw/topspeed.o $(OBJ)/drivers/topspeed.o \
 	$(OBJ)/machine/arkanoid.o $(OBJ)/vidhrdw/arkanoid.o $(OBJ)/drivers/arkanoid.o \
 	$(OBJ)/vidhrdw/superqix.o $(OBJ)/drivers/superqix.o \
@@ -276,16 +283,19 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/asuka.o $(OBJ)/drivers/asuka.o \
 	$(OBJ)/vidhrdw/cadash.o $(OBJ)/drivers/cadash.o \
 	$(OBJ)/vidhrdw/wgp.o $(OBJ)/drivers/wgp.o \
+	$(OBJ)/vidhrdw/slapshot.o $(OBJ)/drivers/slapshot.o \
 	$(OBJ)/vidhrdw/ninjaw.o $(OBJ)/drivers/ninjaw.o \
 	$(OBJ)/vidhrdw/warriorb.o $(OBJ)/drivers/warriorb.o \
 	$(OBJ)/machine/tnzs.o $(OBJ)/vidhrdw/tnzs.o $(OBJ)/drivers/tnzs.o \
 	$(OBJ)/machine/buggychl.o $(OBJ)/vidhrdw/buggychl.o $(OBJ)/drivers/buggychl.o \
 	$(OBJ)/machine/lkage.o $(OBJ)/vidhrdw/lkage.o $(OBJ)/drivers/lkage.o \
+	$(OBJ)/vidhrdw/taitoic.o $(OBJ)/sndhrdw/taitosnd.o \
 	$(OBJ)/vidhrdw/taito_l.o $(OBJ)/drivers/taito_l.o \
 	$(OBJ)/vidhrdw/taito_h.o $(OBJ)/drivers/taito_h.o \
 	$(OBJ)/vidhrdw/taito_b.o $(OBJ)/drivers/taito_b.o \
-	$(OBJ)/vidhrdw/taitoic.o $(OBJ)/sndhrdw/taitosnd.o \
+	$(OBJ)/vidhrdw/taito_z.o $(OBJ)/drivers/taito_z.o \
 	$(OBJ)/vidhrdw/taito_f2.o $(OBJ)/drivers/taito_f2.o \
+	$(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_f3.o $(OBJ)/drivers/taito_f3.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
@@ -332,6 +342,7 @@ $(OBJ)/itech.a: \
 	$(OBJ)/vidhrdw/tms34061.o \
 	$(OBJ)/machine/capbowl.o $(OBJ)/vidhrdw/capbowl.o $(OBJ)/drivers/capbowl.o \
 	$(OBJ)/vidhrdw/itech8.o $(OBJ)/drivers/itech8.o \
+	$(OBJ)/vidhrdw/itech32.o $(OBJ)/drivers/itech32.o \
 
 $(OBJ)/gremlin.a: \
 	$(OBJ)/vidhrdw/blockade.o $(OBJ)/drivers/blockade.o \
@@ -584,6 +595,7 @@ $(OBJ)/zaccaria.a: \
 
 $(OBJ)/upl.a: \
 	$(OBJ)/vidhrdw/nova2001.o $(OBJ)/drivers/nova2001.o \
+	$(OBJ)/vidhrdw/ninjakid.o $(OBJ)/drivers/ninjakid.o \
 	$(OBJ)/vidhrdw/pkunwar.o $(OBJ)/drivers/pkunwar.o \
 	$(OBJ)/vidhrdw/ninjakd2.o $(OBJ)/drivers/ninjakd2.o \
 	$(OBJ)/vidhrdw/mnight.o $(OBJ)/drivers/mnight.o \
@@ -711,6 +723,9 @@ $(OBJ)/tecfri.a: \
 	$(OBJ)/vidhrdw/speedbal.o $(OBJ)/drivers/speedbal.o \
 	$(OBJ)/vidhrdw/sauro.o $(OBJ)/drivers/sauro.o \
 
+$(OBJ)/metro.a: \
+	$(OBJ)/vidhrdw/metro.o $(OBJ)/drivers/metro.o \
+
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
@@ -736,7 +751,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/mazinger.o \
 	$(OBJ)/vidhrdw/amspdwy.o $(OBJ)/drivers/amspdwy.o \
 
-COREOBJS += $(OBJ)/driver.o
+COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
 
 # generated text files
 TEXTS += gamelist.txt

@@ -473,15 +473,15 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 
 	/* set default subdirectories */
 #ifndef MESS
-	nvdir		= get_string ("directory", "nvram",   NULL, "NVRAM");
 	hidir		= get_string ("directory", "hi",      NULL, "HI");
-	memcarddir	= get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir		= get_string ("directory", "sta",     NULL, "STA");
 	cheatdir	= get_string ("directory",  "cheat",   NULL, ".");
 #else
 	crcdir		= get_string ("directory",  "crc",     NULL, "CRC");
 	cheatdir	= get_string ("directory",  "cheat",   NULL, "CHEAT");
 #endif
+	memcarddir	= get_string ("directory", "memcard", NULL, "MEMCARD");
+	nvdir		= get_string ("directory", "nvram",   NULL, "NVRAM");
 	artworkdir	= get_string ("directory", "artwork", NULL, "ARTWORK");
 	cfgdir		= get_string ("directory", "cfg",     NULL, "CFG");
 	screenshotdir = get_string ("directory", "snap", NULL, "SNAP");

@@ -48,7 +48,7 @@ each one of them can declare to have four different priority levels.
 00f unused
 */
 
-static UINT8 TC0360PRI_regs[16];
+UINT8 TC0360PRI_regs[16];
 
 WRITE_HANDLER( TC0360PRI_w )
 {

@@ -36,6 +36,9 @@ enum
 #if (HAS_Z80)
 	CPU_Z80,
 #endif
+#if (HAS_SH2)
+	CPU_SH2,
+#endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif

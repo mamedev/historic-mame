@@ -24,8 +24,9 @@ struct wave_file {
 	int counter;			/* sample fraction counter for playback */
 	int smpfreq;			/* sample frequency from the WAV header */
 	int resolution; 		/* sample resolution in bits/sample (8 or 16) */
-	int samples;			/* number of samples (length * resolution / 8) */
-	int length; 			/* length in bytes */
+	int max_samples;		/* number of samples that could be stored in data */
+	int samples;
+	int length; 			/* length in bytes (max_samples * resolution / 8) */
 	void *data; 			/* sample data */
 	int status;				/* other status (mute, motor inhibit) */
 };
@@ -47,6 +48,9 @@ static struct wave_file wave[MAX_WAVE] = {{-1,},{-1,}};
 /*****************************************************************************
  * helper functions
  *****************************************************************************/
+/*
+	load an existing wave file from disk to memory
+*/
 static int wave_read(int id)
 {
 	struct wave_file *w = &wave[id];
@@ -254,12 +258,15 @@ static int wave_read(int id)
 			logerror("WAVE using 16-bit signed samples as is\n");
         }
 	}
-	w->samples = w->length * 8 / w->resolution;
+	w->max_samples = w->samples = w->length * 8 / w->resolution;
 	logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
 
 	return WAVE_OK;
 }
 
+/*
+	write the complete sampled tape image from memory to disk
+*/
 static int wave_write(int id)
 {
 	struct wave_file *w = &wave[id];
@@ -402,6 +409,9 @@ static int wave_write(int id)
 	return WAVE_OK;
 }
 
+/*
+	display a small tape icon, with the current position in the tape image
+*/
 static void wave_display(int id)
 {
 	static int tape_pos = 0;
@@ -423,6 +433,14 @@ static void wave_display(int id)
     }
 }
 
+/*****************************************************************************
+	WaveSound interface
+	our tape can be heard on the machine video.
+ *****************************************************************************/
+
+/*
+	this is the related stream update callback
+*/
 static void wave_sound_update(int id, INT16 *buffer, int length)
 {
 	struct wave_file *w = &wave[id];
@@ -463,10 +481,6 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	if( w->display )
 		wave_display(id);
 }
-
-/*****************************************************************************
- * WaveSound interface
- *****************************************************************************/
 
 int wave_sh_start(const struct MachineSound *msound)
 {
@@ -529,6 +543,9 @@ const void *wave_info(int id, int whatinfo)
  * to support your own file types with the fill_wave()
  * extension
  */
+/*
+	hurk - no wave write support
+*/
 int wave_init(int id, const char *name)
 {
 	void *file;
@@ -614,10 +631,11 @@ int wave_open(int id, int mode, void *args)
 	w->display = wa->display;
 
 	if( w->mode )
-	{
-        w->resolution = 16;
-		w->samples = w->smpfreq;
-		w->length = w->samples * w->resolution / 8;
+	{	/* write-only image */
+		w->resolution = 16;
+		w->max_samples = w->smpfreq;
+		w->samples = 0;
+		w->length = w->max_samples * w->resolution / 8;
 		w->data = malloc(w->length);
 		if( !w->data )
 		{
@@ -683,7 +701,8 @@ int wave_open(int id, int mode, void *args)
 
 			w->smpfreq = wa->smpfreq;
 			w->resolution = 16;
-			w->samples = length;
+			w->max_samples = length;
+			w->samples = 0;
 			w->length = length * 2;   /* 16 bits per sample */
 
 			w->data = malloc(w->length);
@@ -694,13 +713,13 @@ int wave_open(int id, int mode, void *args)
 				memset(&wave[id], 0, sizeof(struct wave_file));
 				return WAVE_ERR;
 			}
-			logerror("WAVE creating max %d:%02d samples (%d) at %d Hz\n", (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60, w->samples, w->smpfreq);
+			logerror("WAVE creating max %d:%02d samples (%d) at %d Hz\n", (w->max_samples/w->smpfreq)/60, (w->max_samples/w->smpfreq)%60, w->max_samples, w->smpfreq);
 
 			pos = 0;
 			/* if there has to be a header */
 			if( wa->header_samples > 0 )
 			{
-				length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, CODE_HEADER);
+				length = (*w->fill_wave)((INT16 *)w->data + pos, w->max_samples - pos, CODE_HEADER);
 				if( length < 0 )
 				{
 					logerror("WAVE conversion aborted at header\n");
@@ -716,13 +735,13 @@ int wave_open(int id, int mode, void *args)
 			/* convert the file data to samples */
 			bytes = 0;
 			osd_fseek(w->file, 0, SEEK_SET);
-			while( pos < w->samples )
+			while( pos < w->max_samples )
 			{
 				length = osd_fread(w->file, data, wa->chunk_size);
 				if( length == 0 )
 					break;
 				bytes += length;
-				length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, data);
+				length = (*w->fill_wave)((INT16 *)w->data + pos, w->max_samples - pos, data);
 				if( length < 0 )
 				{
 					logerror("WAVE conversion aborted at %d bytes (%d samples)\n", bytes, pos);
@@ -738,9 +757,9 @@ int wave_open(int id, int mode, void *args)
 			/* if there has to be a trailer */
 			if( wa->trailer_samples )
 			{
-				if( pos < w->samples )
+				if( pos < w->max_samples )
 				{
-					length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, CODE_TRAILER);
+					length = (*w->fill_wave)((INT16 *)w->data + pos, w->max_samples - pos, CODE_TRAILER);
 					if( length < 0 )
 					{
 						logerror("WAVE conversion aborted at trailer\n");
@@ -754,10 +773,13 @@ int wave_open(int id, int mode, void *args)
 				}
 			}
 
-			if( pos < w->samples )
+
+			w->samples = pos;
+
+			if( pos < w->max_samples )
 			{
 				/* what did the fill_wave() calls really fill into the buffer? */
-				w->samples = pos;
+				w->max_samples = pos;
 				w->length = pos * 2;   /* 16 bits per sample */
 				w->data = realloc(w->data, w->length);
 				/* failure in the last step? how sad... */
@@ -785,9 +807,9 @@ void wave_close(int id)
 		return;
 
     if( w->timer )
-	{
-		if( w->channel != -1 )
-			stream_update(w->channel, 0);
+	{	/* if we are currently playing/recording the file, we chop off the end (why ???) */
+		//if( w->channel != -1 )
+		//	stream_update(w->channel, 0);	/* R. Nabet : aaargh ! (to be confirmed) */
 		w->samples = w->play_pos;
 		w->length = w->samples * w->resolution / 8;
 		timer_remove(w->timer);
@@ -795,7 +817,7 @@ void wave_close(int id)
 	}
 
     if( w->mode )
-	{
+	{	/* if image is writable , we do write it to disk */
 		wave_output(id,0);
 		wave_write(id);
 		w->mode = 0;
@@ -916,15 +938,15 @@ void wave_output(int id, int data)
     if( w->timer )
     {
 		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-		if( pos >= w->samples )
+		if( pos >= w->max_samples )
         {
 			/* add at least one second of data */
-			if( pos - w->samples < w->smpfreq )
-				w->samples += w->smpfreq;
+			if( pos - w->max_samples < w->smpfreq )
+				w->max_samples += w->smpfreq;
 			else
-				w->samples = pos;	/* more than one second */
-            w->length = w->samples * w->resolution / 8;
-            w->data = realloc(w->data, w->length);
+				w->max_samples = pos;	/* more than one second */
+			w->length = w->max_samples * w->resolution / 8;
+			w->data = realloc(w->data, w->length);
             if( !w->data )
             {
                 logerror("WAVE realloc(%d) failed\n", w->length);
@@ -932,6 +954,8 @@ void wave_output(int id, int data)
                 return;
             }
         }
+		if (pos >= w->samples)
+			w->samples = pos;
 		while( w->record_pos < pos )
         {
 			if( w->resolution == 16 )
@@ -992,10 +1016,10 @@ int wave_output_chunk(int id, void *src, int count)
 			pos = w->length - 1;
 	}
 
-    if( pos + count >= w->length )
+	if( pos + count >= w->/*length*/max_samples )	/* R Nabet : "length" does not make much sense */
 	{
 		/* add space for new data */
-		w->samples += count - pos;
+		w->max_samples += count - pos;
 		w->length = w->samples * w->resolution / 8;
 		w->data = realloc(w->data, w->length);
 		if( !w->data )
@@ -1005,6 +1029,9 @@ int wave_output_chunk(int id, void *src, int count)
 			return 0;
 		}
 	}
+
+	if( pos + count >= w->samples )
+		w->samples = pos + count;
 
     if( count > 0 )
 	{

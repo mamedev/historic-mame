@@ -23,10 +23,8 @@ extern unsigned char    *mnight_scrolly_ram;
 extern unsigned char    *mnight_scrollx_ram;
 extern unsigned char    *mnight_bgenable_ram;
 extern unsigned char    *mnight_spoverdraw_ram;
-extern unsigned char    *mnight_spriteram;
 extern unsigned char    *mnight_background_videoram;
 extern unsigned char    *mnight_foreground_videoram;
-extern size_t mnight_spriteram_size;
 extern size_t mnight_backgroundram_size;
 extern size_t mnight_foregroundram_size;
 
@@ -84,7 +82,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xd9ff, MWA_RAM },
-	{ 0xda00, 0xdfff, MWA_RAM, &mnight_spriteram, &mnight_spriteram_size },
+	{ 0xda00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe000, 0xe7ff, mnight_bgvideoram_w, &mnight_background_videoram, &mnight_backgroundram_size }, // VFY
 	{ 0xe800, 0xefff, mnight_fgvideoram_w, &mnight_foreground_videoram, &mnight_foregroundram_size }, //VFY
 	{ 0xf000, 0xf5ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },

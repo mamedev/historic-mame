@@ -11,6 +11,17 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 CPU=$(strip $(findstring Z80GB@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z80gb
@@ -27,8 +38,8 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/cdp1802
 CPUDEFS += -DHAS_CDP1802=1
 CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
-DBGOBJS += $(OBJ)/cpu/cdp1802/disasm.o
-$(OBJ)/cpu/cdp1802/cdp1802.o: table.c
+DBGOBJS += $(OBJ)/cpu/cdp1802/1802dasm.o
+$(OBJ)/cpu/cdp1802/cdp1802.o: 1802tbl.c
 else
 CPUDEFS += -DHAS_CDP1802=0
 endif
@@ -773,9 +784,9 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/sc61860
 CPUDEFS += -DHAS_SC61860=1
 CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
-DBGOBJS += $(OBJ)/cpu/sc61860/disasm.o
+DBGOBJS += $(OBJ)/cpu/sc61860/scdasm.o
 $(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
-	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/table.c
+	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/sctable.c
 else
 CPUDEFS += -DHAS_SC61860=0
 endif
@@ -856,6 +867,14 @@ SOUNDDEFS += -DHAS_DAC=1
 SOUNDOBJS += $(OBJ)/sound/dac.o
 else
 SOUNDDEFS += -DHAS_DAC=0
+endif
+
+SOUND=$(strip $(findstring DISCRETE@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_DISCRETE=1
+SOUNDOBJS += $(OBJ)/sound/discrete.o
+else
+SOUNDDEFS += -DHAS_DISCRETE=0
 endif
 
 SOUND=$(strip $(findstring AY8910@,$(SOUNDS)))
@@ -1005,7 +1024,11 @@ endif
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
+ifndef MESS
 SOUNDOBJS += $(OBJ)/sound/nes_apu.o
+else
+SOUNDOBJS += $(OBJ)/sound/nes_apu2.o $(OBJ)/sound/nesintf.o
+endif
 else
 SOUNDDEFS += -DHAS_NES=0
 endif
@@ -1192,6 +1215,22 @@ SOUNDDEFS += -DHAS_IREMGA20=1
 SOUNDOBJS += $(OBJ)/sound/iremga20.o
 else
 SOUNDDEFS += -DHAS_IREMGA20=0
+endif
+
+SOUND=$(strip $(findstring ES5505@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES5505=1
+SOUNDOBJS += $(OBJ)/sound/es5506.o
+else
+SOUNDDEFS += -DHAS_ES5505=0
+endif
+
+SOUND=$(strip $(findstring ES5506@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES5506=1
+SOUNDOBJS += $(OBJ)/sound/es5506.o
+else
+SOUNDDEFS += -DHAS_ES5506=0
 endif
 
 SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))

@@ -25,10 +25,10 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 /* in vidhrdw/lsasquad.c */
-extern unsigned char *lsasquad_scrollram,*lsasquad_videoram,*lsasquad_spriteram;
-extern size_t lsasquad_spriteram_size;
+extern unsigned char *lsasquad_scrollram;
 void lsasquad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void lsasquad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -92,9 +92,9 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xbfff, MWA_RAM },	/* SRAM */
-	{ 0xc000, 0xdfff, MWA_RAM, &lsasquad_videoram },	/* SCREEN RAM */
+	{ 0xc000, 0xdfff, MWA_RAM, &videoram, &videoram_size },	/* SCREEN RAM */
 	{ 0xe000, 0xe3ff, MWA_RAM, &lsasquad_scrollram },	/* SCROLL RAM */
-	{ 0xe400, 0xe5ff, MWA_RAM, &lsasquad_spriteram, &lsasquad_spriteram_size },	/* OBJECT RAM */
+	{ 0xe400, 0xe5ff, MWA_RAM, &spriteram, &spriteram_size },	/* OBJECT RAM */
 	{ 0xea00, 0xea00, lsasquad_bankswitch_w },
 	{ 0xec00, 0xec00, lsasquad_sound_command_w },
 	{ 0xee00, 0xee00, lsasquad_mcu_w },

@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 int  goindol_vh_start(void);
 void goindol_vh_stop(void);
@@ -17,9 +18,8 @@ extern unsigned char	*goindol_fg_scrollx;
 extern unsigned char	*goindol_fg_scrolly;
 extern unsigned char 	*goindol_fg_videoram;
 extern unsigned char 	*goindol_bg_videoram;
-extern unsigned char 	*goindol_spriteram1;
-extern unsigned char 	*goindol_spriteram2;
-extern size_t goindol_spriteram_size;
+extern unsigned char 	*spriteram_1;
+extern unsigned char 	*spriteram_2;
 extern size_t goindol_fg_videoram_size;
 extern size_t goindol_bg_videoram_size;
 extern int 	 	goindol_char_bank;
@@ -55,14 +55,14 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-        { 0xc810, 0xc810, goindol_bankswitch_w },
+	{ 0xc810, 0xc810, goindol_bankswitch_w },
 	{ 0xc820, 0xd820, MWA_RAM, &goindol_fg_scrollx },
 	{ 0xc830, 0xd830, MWA_RAM, &goindol_fg_scrolly },
 	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xd000, 0xd03f, MWA_RAM, &goindol_spriteram1, &goindol_spriteram_size },
+	{ 0xd000, 0xd03f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd040, 0xd7ff, MWA_RAM },
 	{ 0xd800, 0xdfff, goindol_bg_videoram_w, &goindol_bg_videoram, &goindol_bg_videoram_size },
-	{ 0xe000, 0xe03f, MWA_RAM, &goindol_spriteram2 },
+	{ 0xe000, 0xe03f, MWA_RAM, &spriteram_2 },
 	{ 0xe040, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, goindol_fg_videoram_w, &goindol_fg_videoram, &goindol_fg_videoram_size },
 MEMORY_END

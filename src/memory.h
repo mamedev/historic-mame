@@ -16,8 +16,18 @@
 extern "C" {
 #endif
 
+/*
+ * Versions of GNU C earlier that 2.7 appear to have problems with the
+ * __attribute__ definition of UNUSEDARG, so we act as if it was not a
+ * GNU compiler.
+ */
+
 #ifdef __GNU__
+#if (__GNUC__ == 2) && (__GNUC_MINOR_ <= 7)
+#define UNUSEDARG
+#else
 #define UNUSEDARG __attribute__((__unused__))
+#endif
 #else
 #define UNUSEDARG
 #endif

@@ -99,10 +99,8 @@ void rallybik_vh_stop(void);
 void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern data16_t *spriteram16;
 extern data16_t *toaplan1_colorram1;
 extern data16_t *toaplan1_colorram2;
-extern size_t spriteram_size;
 extern size_t toaplan1_colorram1_size;
 extern size_t toaplan1_colorram2_size;
 

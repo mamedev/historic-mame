@@ -10,8 +10,6 @@ unsigned char 	*ninjakd2_scrolly_ram;
 unsigned char 	*ninjakd2_scrollx_ram;
 unsigned char 	*ninjakd2_bgenable_ram;
 unsigned char 	*ninjakd2_spoverdraw_ram;
-unsigned char 	*ninjakd2_spriteram;
-size_t ninjakd2_spriteram_size;
 unsigned char 	*ninjakd2_background_videoram;
 size_t ninjakd2_backgroundram_size;
 unsigned char 	*ninjakd2_foreground_videoram;
@@ -120,8 +118,8 @@ void ninjakd2_draw_foreground(struct osd_bitmap *bitmap)
 			lo = ninjakd2_foreground_videoram[offs*2];
 			hi = ninjakd2_foreground_videoram[offs*2+1];
 			tile = ((hi & 0xc0) << 2) | lo;
-			flipx = hi & 0x20;
-			flipy = hi & 0x10;
+			flipx = hi & 0x10;
+			flipy = hi & 0x20;
 			palette = hi & 0x0f;
 
 			drawgfx(bitmap,Machine->gfx[2],
@@ -157,8 +155,8 @@ void ninjakd2_draw_background(struct osd_bitmap *bitmap)
 			lo = ninjakd2_background_videoram[offs*2];
 			hi = ninjakd2_background_videoram[offs*2+1];
 			tile = ((hi & 0xc0) << 2) | lo;
-			flipx = hi & 0x20;
-			flipy = hi & 0x10;
+			flipx = hi & 0x10;
+			flipy = hi & 0x20;
 			palette = hi & 0x0f;
 			drawgfx(bitmap,Machine->gfx[0],
 					  tile,
@@ -177,19 +175,19 @@ void ninjakd2_draw_sprites(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites */
 
-	for (offs = 11 ;offs < ninjakd2_spriteram_size; offs+=16)
+	for (offs = 11 ;offs < spriteram_size; offs+=16)
 	{
 		int sx,sy,tile,palette,flipx,flipy;
 
-		if (ninjakd2_spriteram[offs+2] & 2)
+		if (spriteram[offs+2] & 2)
 		{
-			sx = ninjakd2_spriteram[offs+1];
-			sy = ninjakd2_spriteram[offs];
-			if (ninjakd2_spriteram[offs+2] & 1) sx-=256;
-			tile = ninjakd2_spriteram[offs+3]+((ninjakd2_spriteram[offs+2] & 0xc0)<<2);
-			flipx = ninjakd2_spriteram[offs+2] & 0x10;
-			flipy = ninjakd2_spriteram[offs+2] & 0x20;
-			palette = ninjakd2_spriteram[offs+4] & 0x0f;
+			sx = spriteram[offs+1];
+			sy = spriteram[offs];
+			if (spriteram[offs+2] & 1) sx-=256;
+			tile = spriteram[offs+3]+((spriteram[offs+2] & 0xc0)<<2);
+			flipx = spriteram[offs+2] & 0x10;
+			flipy = spriteram[offs+2] & 0x20;
+			palette = spriteram[offs+4] & 0x0f;
 			drawgfx(bitmap,Machine->gfx[1],
 						tile,
 						palette,

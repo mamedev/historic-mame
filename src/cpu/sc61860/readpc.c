@@ -11,30 +11,30 @@
 // gcc -O
 // important because of inb, outb
 
-/* 
+/*
    dumps data sent form sharp pc1401 into file
-   at sharp the following program must be started after 
+   at sharp the following program must be started after
    this dos program was started
    simple dos utility
    first arg (filename of file to be written) must be specified
-   
-   ct eprop needed 
+
+   ct eprop needed
    changing to parallel port should be easy
 
 nearly all sharp pocket pc's system roms should be readable
 this way.
 
 for some early pocket pc's it would be neccessary to load
-this program into memory. 
+this program into memory.
 (they don't have poke/peek/call instructions,
 so this program can't be typed in)
 
 adapter sharp - cteprommer
 
-1 
+1
 2 6v
 3 gnd                      8 bit textool gnd pin 20
-4 f0    data-->            8 bit textool data 0 pin 17      
+4 f0    data-->            8 bit textool data 0 pin 17
 5 f1    handshake -->      8 bit textool data 1 pin 18
 6 save
 7 load
@@ -57,13 +57,13 @@ but the pc side must not be interrupted with interrupt
 #if 0
 		/* this routine dump the memory (start 0)
 		   in an endless loop,
-		   the pc side must be started before this 
+		   the pc side must be started before this
 		   actual version should be in mess/machine/pocketc.c
 		*/
 
 1 restore: for i=16384 to 16455:read a: poke i,a: next i
 10 call 16384
-100 data 
+100 data
 #if 1
 		18,4,//lip xl
 		2,0,//lia 0 startaddress low
@@ -111,7 +111,7 @@ but the pc side must not be interrupted with interrupt
 		2,2, //lia 2
 		196,//				  adcm
 		95,//				  outf
-		//b: 
+		//b:
 		204,//inb
 		102,128,//tsia 0x80
 #if 0
@@ -131,7 +131,7 @@ but the pc side must not be interrupted with interrupt
 		2,0,//				  lia 0
 		196,//adcm
 		95,//				  outf
-		//c: 
+		//c:
 		204,//inb
 		102,128,//tsia 0x80
 #if 0

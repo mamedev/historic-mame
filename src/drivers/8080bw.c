@@ -4107,16 +4107,19 @@ ROM_END
 
 ROM_START( spacefev )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
-	ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
-	ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
-	ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
-	ROM_LOAD( "tsf.g2",       0x0c00, 0x0400, 0x1faef63a )
-	ROM_LOAD( "tsf.h1",       0x1000, 0x0400, 0xb365389d )
-	ROM_LOAD( "tsf.h2",       0x1400, 0x0400, 0xa36c61c9 )
-	ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
+	ROM_LOAD( "f1.bin",       0x0000, 0x0400, 0x35f295bd )
+	ROM_LOAD( "f2.bin",       0x0400, 0x0400, 0x0c633f4c )
+	ROM_LOAD( "g1.bin",       0x0800, 0x0400, 0xf3d851cb )
+	ROM_LOAD( "g2.bin",       0x0c00, 0x0400, 0x1faef63a )
+	ROM_LOAD( "h1.bin",       0x1000, 0x0400, 0xb365389d )
+	ROM_LOAD( "h2.bin",       0x1400, 0x0400, 0xa163e800 )
+	ROM_LOAD( "i1.bin",       0x1800, 0x0400, 0x00027be2 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
-	ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x75731745 )
+	ROM_LOAD( "ss3.ic2",      0x0000, 0x0400, 0x95c2c1ee )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )	/* ? */
+	ROM_LOAD( "f5.bpr",       0x0000, 0x0020, 0xc5914ec1 )
 ROM_END
 
 ROM_START( sfeverbw )
@@ -4131,7 +4134,7 @@ ROM_START( sfeverbw )
 	ROM_LOAD( "spacefev.i2",  0x1c00, 0x0400, 0xeff9f82d )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* Sound 8035 + 76477 Sound Generator */
-	ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x75731745 )
+	ROM_LOAD( "ss3.ic2",      0x0000, 0x0400, 0x95c2c1ee )
 ROM_END
 
 
@@ -4191,7 +4194,7 @@ ROM_END
 		  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, 	"Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
 		  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, 	"Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
 		  GAMEX(1980, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, 	"Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )
-		  GAMEX(1980, sfeverbw, 0,        sheriff,  spacefev, 8080bw,	ROT270, 	"Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
+		  GAMEX(1980, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, 	"Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
 
 /* Misc. manufacturers */
 

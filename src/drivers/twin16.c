@@ -110,16 +110,6 @@ static void cuebrick_nvram_handler(void *file,int read_or_write)
 /******************************************************************************************/
 
 
-static READ16_HANDLER( spriteram16_r )
-{
-	return spriteram16[offset];
-}
-
-static WRITE16_HANDLER( spriteram16_w )
-{
-	COMBINE_DATA(spriteram16 + offset);
-}
-
 static READ16_HANDLER( videoram16_r )
 {
 	return videoram16[offset];

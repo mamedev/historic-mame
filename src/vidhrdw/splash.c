@@ -10,10 +10,10 @@
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *splash_vregs;
-unsigned char *splash_videoram;
-unsigned char *splash_spriteram;
-unsigned char *splash_pixelram;
+data16_t *splash_vregs;
+data16_t *splash_videoram;
+data16_t *splash_spriteram;
+data16_t *splash_pixelram;
 
 static struct tilemap *screen[2];
 static struct osd_bitmap *screen2;
@@ -31,7 +31,7 @@ static struct osd_bitmap *screen2;
 
 	Screen 0: (64*32, 8x8 tiles)
 
-	Byte | Bit(s)			 | Description
+	Word | Bit(s)			 | Description
 	-----+-FEDCBA98-76543210-+--------------------------
 	  0  | -------- xxxxxxxx | sprite code (low 8 bits)
 	  0  | ----xxxx -------- | sprite code (high 4 bits)
@@ -39,7 +39,7 @@ static struct osd_bitmap *screen2;
 
 	Screen 1: (32*32, 16x16 tiles)
 
-	Byte | Bit(s)			 | Description
+	Word | Bit(s)			 | Description
 	-----+-FEDCBA98-76543210-+--------------------------
 	  0  | -------- -------x | flip y
 	  0  | -------- ------x- | flip x
@@ -50,7 +50,7 @@ static struct osd_bitmap *screen2;
 
 static void get_tile_info_splash_screen0(int tile_index)
 {
-	int data = READ_WORD(&splash_videoram[2*tile_index]);
+	int data = splash_videoram[tile_index];
 	int attr = data >> 8;
 	int code = data & 0xff;
 
@@ -59,7 +59,7 @@ static void get_tile_info_splash_screen0(int tile_index)
 
 static void get_tile_info_splash_screen1(int tile_index)
 {
-	int data = READ_WORD(&splash_videoram[0x1000 + 2*tile_index]);
+	int data = splash_videoram[(0x1000/2) + tile_index];
 	int attr = data >> 8;
 	int code = data & 0xff;
 
@@ -74,32 +74,35 @@ static void get_tile_info_splash_screen1(int tile_index)
 
 ***************************************************************************/
 
-READ_HANDLER( splash_vram_r )
+READ16_HANDLER( splash_vram_r )
 {
-	return READ_WORD(&splash_videoram[offset]);
+	return splash_videoram[offset];
 }
 
-WRITE_HANDLER( splash_vram_w )
+WRITE16_HANDLER( splash_vram_w )
 {
-	COMBINE_WORD_MEM(&splash_videoram[offset],data);
-	tilemap_mark_tile_dirty(screen[offset >> 12],(offset & 0x0fff) >> 1);
+	int oldword = splash_videoram[offset];
+	COMBINE_DATA(&splash_videoram[offset]);
+
+	if (oldword != splash_videoram[offset])
+		tilemap_mark_tile_dirty(screen[offset >> 11],((offset << 1) & 0x0fff) >> 1);
 }
 
-READ_HANDLER( splash_pixelram_r )
+READ16_HANDLER( splash_pixelram_r )
 {
-	return READ_WORD(&splash_pixelram[offset]);
+	return splash_pixelram[offset];
 }
 
-WRITE_HANDLER( splash_pixelram_w )
+WRITE16_HANDLER( splash_pixelram_w )
 {
 	int sx,sy,color;
 
-	COMBINE_WORD_MEM(&splash_pixelram[offset],data);
+	COMBINE_DATA(&splash_pixelram[offset]);
 
-	sx = (offset >> 1) & 0x1ff;
-	sy = (offset >> 10);
+	sx = offset & 0x1ff;
+	sy = (offset >> 9);
 
-	color = READ_WORD(&splash_pixelram[offset]);
+	color = splash_pixelram[offset];
 
 	plot_pixel(screen2, sx-9, sy, Machine->pens[0x300 + (color & 0xff)]);
 }
@@ -138,18 +141,23 @@ int splash_vh_start(void)
 	Sprite Format
 	-------------
 
-	Byte | Bit(s)   | Description
-	-----+-76543210-+--------------------------
-	  0  | xxxxxxxx | sprite number (low 8 bits)
-	  1  | xxxxxxxx | y position
-	  2  | xxxxxxxx | x position (low 8 bits)
-	  3  | ----xxxx | sprite number (high 4 bits)
-	  3  | --xx---- | unknown
-	  3  | -x------ | flip x
-	  3  | x------- | flip y
-	  4  | ----xxxx | sprite color
-	  4  | -xxx---- | unknown
-	  4  | x------- | x position (high bit)
+  	Word | Bit(s)			 | Description
+	-----+-FEDCBA98-76543210-+--------------------------
+	  0  | -------- xxxxxxxx | sprite number (low 8 bits)
+	  0  | xxxxxxxx -------- | unused
+	  1  | -------- xxxxxxxx | y position
+	  1  | xxxxxxxx -------- | unused
+	  2  | -------- xxxxxxxx | x position (low 8 bits)
+	  2  | xxxxxxxx -------- | unused
+	  3  | -------- ----xxxx | sprite number (high 4 bits)
+	  3  | -------- --xx---- | unknown
+	  3  | -------- -x------ | flip x
+	  3  | -------- x------- | flip y
+	  3  | xxxxxxxx -------- | unused
+  	  400| -------- ----xxxx | sprite color
+	  400| -------- -xxx---- | unknown
+	  400| -------- x------- | x position (high bit)
+	  400| xxxxxxxx -------- | unused
 */
 
 static void splash_draw_sprites(struct osd_bitmap *bitmap)
@@ -157,12 +165,12 @@ static void splash_draw_sprites(struct osd_bitmap *bitmap)
 	int i;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
-	for (i = 0; i < 0x800; i += 8){
-		int sx = READ_WORD(&splash_spriteram[i+4]) & 0xff;
-		int sy = (240 - (READ_WORD(&splash_spriteram[i+2]) & 0xff)) & 0xff;
-		int attr = READ_WORD(&splash_spriteram[i+6]) & 0xff;
-		int attr2 = READ_WORD(&splash_spriteram[i+0x800]) >> 8;
-		int number = (READ_WORD(&splash_spriteram[i]) & 0xff) + (attr & 0xf)*256;
+	for (i = 0; i < 0x400; i += 4){
+		int sx = splash_spriteram[i+2] & 0xff;
+		int sy = (240 - (splash_spriteram[i+1] & 0xff)) & 0xff;
+		int attr = splash_spriteram[i+3] & 0xff;
+		int attr2 = splash_spriteram[i+0x400] >> 8;
+		int number = (splash_spriteram[i] & 0xff) + (attr & 0xf)*256;
 
 		if (attr2 & 0x80) sx += 256;
 
@@ -182,8 +190,8 @@ static void splash_draw_sprites(struct osd_bitmap *bitmap)
 void splash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* set scroll registers */
-	tilemap_set_scrolly(screen[0], 0, READ_WORD(&splash_vregs[0]));
-	tilemap_set_scrolly(screen[1], 0, READ_WORD(&splash_vregs[2]));
+	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
+	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
 
 	tilemap_update(ALL_TILEMAPS);
 

@@ -56,13 +56,11 @@ data16_t *toaplan1_spritesizeram16;
 data16_t *toaplan1_tileram16;
 data16_t *toaplan1_buffered_spriteram16;
 data16_t *toaplan1_buffered_spritesizeram16;
-extern data16_t *buffered_spriteram16;
 
 size_t toaplan1_colorram1_size;
 size_t toaplan1_colorram2_size;
 data16_t *toaplan1_colorram1;
 data16_t *toaplan1_colorram2;
-extern data16_t *paletteram16;
 
 static unsigned int scrollregs[8];
 static unsigned int vblank;

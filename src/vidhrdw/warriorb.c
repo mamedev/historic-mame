@@ -15,7 +15,7 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-int taito_hide_pixels;
+static int taito_hide_pixels;
 
 /**********************************************************/
 
@@ -188,15 +188,17 @@ void warriorb_update_palette (void)
 
 static void warriorb_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
-	int offs, data, tilenum, color, flipx, flipy;
+	int offs, data, data2, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int code;
+
+#ifdef MAME_DEBUG
+	int unknown=0;
+#endif
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all at the end */
 	struct tempsprite *sprite_ptr = spritelist;
-
-	priority = 0;
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
@@ -207,15 +209,20 @@ static void warriorb_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_
 		data = spriteram16[offs+1];
 		tilenum = data & 0x7fff;
 
-		data = spriteram16[offs+2];
-		// priority bits might be in msbyte; 8 and 4 seen //
-		color = (data & 0x7f);
+		data2 = spriteram16[offs+2];
+		/* 8,4 also seen in msbyte */
+		priority = (data2 & 0x0100) >> 8;
+		color    = (data2 & 0x7f);
 
 		data = spriteram16[offs+3];
-		x = ((data & 0x3ff) + 4) &0x3ff;	// offset changes with vis. area
+		x = ((data & 0x3ff) + 4) &0x3ff;
 		flipx = (data & 0x400) >> 10;
 
 		if (!tilenum) continue;
+
+#ifdef MAME_DEBUG
+		if (data2 & 0xf280)   unknown |= (data2 &0xf280);
+#endif
 
 		y += y_offs;
 
@@ -263,6 +270,15 @@ static void warriorb_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_
 				&Machine->visible_area,TRANSPARENCY_PEN,0,
 				sprite_ptr->primask);
 	}
+
+#ifdef MAME_DEBUG
+	if (unknown)
+	{
+		char buf[80];
+		sprintf(buf,"unknown sprite bits: %04x",unknown);
+		usrintf_showmessage(buf);
+	}
+#endif
 }
 
 

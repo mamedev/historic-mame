@@ -160,6 +160,16 @@ WRITE_HANDLER( spriteram_w )
 	spriteram[offset] = data;
 }
 
+READ16_HANDLER( spriteram16_r )
+{
+	return spriteram16[offset];
+}
+
+WRITE16_HANDLER( spriteram16_w )
+{
+	COMBINE_DATA(spriteram16+offset);
+}
+
 READ_HANDLER( spriteram_2_r )
 {
 	return spriteram_2[offset];

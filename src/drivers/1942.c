@@ -59,13 +59,11 @@ correctly.
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "vidhrdw/generic.h"
 
 
 extern unsigned char *c1942_fgvideoram;
 extern unsigned char *c1942_bgvideoram;
-extern unsigned char *c1942_spriteram;
-extern size_t c1942_spriteram_size;
 
 
 int c1942_vh_start(void);
@@ -118,7 +116,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc804, 0xc804, c1942_c804_w },
 	{ 0xc805, 0xc805, c1942_palette_bank_w },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &c1942_spriteram, &c1942_spriteram_size },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xd7ff, c1942_fgvideoram_w, &c1942_fgvideoram },
 	{ 0xd800, 0xdbff, c1942_bgvideoram_w, &c1942_bgvideoram },
 	{ 0xe000, 0xefff, MWA_RAM },

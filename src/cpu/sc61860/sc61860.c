@@ -37,6 +37,18 @@ typedef int bool;
 #define LOG(x)
 #endif
 
+#ifdef RUNTIME_LOADER
+#define sc61860_ICount sc61860_icount
+struct cpu_interface
+sc61860_interface=
+CPU4(SC61860,  sc61860,  1,  0,1.00,-1,                -1,             -1,             8, 16,     0,16,BE,1, 4 );
+
+extern void sc61860_runtime_loader_init(void)
+{
+	cpuintf[CPU_SC61860]=sc61860_interface;
+}
+#endif
+
 /* Layout of the registers in the debugger */
 static UINT8 sc61860_reg_layout[] = {
 	SC61860_P,
@@ -115,8 +127,8 @@ WRITE_HANDLER(sc61860_internal_w)
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
-#include "ops.c"
-#include "table.c"
+#include "scops.c"
+#include "sctable.c"
 
 void sc61860_reset(void *param)
 {

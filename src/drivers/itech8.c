@@ -6,10 +6,12 @@
     driver by Aaron Giles
 
     Games supported:
+		* Strata Bowling
 		* Wheel of Fortune
 		* Golden Tee Golf
 		* Golden Tee Golf II [3 sets]
 		* Slick Shot
+		* Arlington Horse Racing
 		* Peggle [2 sets]
 		* Hot Shots Tennis
 		* Rim Rockin' Basketball [2 sets]
@@ -20,25 +22,21 @@
 		* Bloodstorm
 		* Golden Tee 3D Golf
 		* World Class Bowling
+		* Golden Tee Golf '97
+		* Golden Tee Golf '98
 		* Golden Tee Golf '99
+		* Golden Tee Golf 2K
 		* Hard Yardage
 
 	No known (good) dumps:
-		* Arlington Horse Racing
 		* Dyno-Bop
 		* Poker Dice
-		* Strata Bowling
 		* Neck & Neck
 		* Driver's Edge
 		* Pairs
 		* Street Fighter II: The Movie
-		* Golden Tee Golf '97
-		* Golden Tee Golf '98
-		* Golden Tee Golf 2K
 
 	Known issues:
-		* Many games have ticket dispensers; these aren't hooked up
-		* DIP switches aren't identified
 		* The credits screen in Peggle shows for less than half the time
 		  it should
 		* Slick Shot has large sections of code related to the trackball
@@ -57,7 +55,7 @@
 	CPU #1 (6809 games)
 	========================================================================
 	Note that many games have the regions 0000-0FFF and 1000-1FFF swapped.
-	Also, Golden Tee Golf II (V2.2) has most of the addresses if the
+	Also, Golden Tee Golf II (V2.2) has most of the addresses in the
 	0000-0FFF range swizzled randomly.
 	========================================================================
 	0100          W   xxxxxxxx    Unknown
@@ -148,7 +146,8 @@
 	2000-2003   R/W   xxxxxxxx    Yamaha chip I/O
 	3000-37FF   R/W   xxxxxxxx    RAM
 	4000        R/W   xxxxxxxx    OKI 6295 I/O
-	5000-500F   R/W   xxxxxxxx    6522 VIA chip (on later boards only)
+	5000-5003   R/W   xxxxxxxx    6521 PIA chip (on early YM3812 boards)
+	5000-500F   R/W   xxxxxxxx    6522 VIA chip (on later YM3812 boards)
 	8000-FFFF   R     xxxxxxxx    Program ROM
 	========================================================================
 	Interrupts:
@@ -162,6 +161,8 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
+#include "machine/6821pia.h"
+#include "machine/ticket.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
 #include <math.h>
@@ -209,6 +210,10 @@ static UINT8 tms34061_int;
 static UINT8 periodic_int;
 
 static data8_t sound_data;
+
+static data8_t pia_porta_data;
+static data8_t pia_portb_data;
+
 static data8_t *via6522;
 static data16_t via6522_timer_count[2];
 static void *via6522_timer[2];
@@ -216,6 +221,24 @@ static data8_t via6522_int_state;
 
 static data8_t *main_ram;
 static size_t main_ram_size;
+
+
+
+/*************************************
+ *
+ *	6821 PIA interface
+ *
+ *************************************/
+
+static WRITE_HANDLER( pia_porta_out );
+static WRITE_HANDLER( pia_portb_out );
+
+static struct pia6821_interface pia_interface =
+{
+	0, 0, 0, 0, 0, 0,						/* PIA inputs: A, B, CA1, CB1, CA2, CB2 */
+	pia_porta_out, pia_portb_out, 0, 0,		/* PIA outputs: A, B, CA2, CB2 */
+	0, 0									/* PIA IRQs: A, B */
+};
 
 
 
@@ -303,10 +326,18 @@ static void init_machine(void)
 	if ((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_M6809)
 		cpu_setbank(1, &memory_region(REGION_CPU1)[0x4000]);
 
-	/* reset the VIA chip */
+	/* reset the PIA (if used) */
+	pia_unconfig();
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_interface);
+	pia_reset();
+
+	/* reset the VIA chip (if used) */
 	via6522_timer_count[0] = via6522_timer_count[1] = 0;
 	via6522_timer[0] = via6522_timer[1] = 0;
 	via6522_int_state = 0;
+
+	/* reset the ticket dispenser */
+	ticket_dispenser_init(200, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_HIGH);
 }
 
 
@@ -342,17 +373,53 @@ static WRITE_HANDLER( rimrockn_bank_w )
  *
  *************************************/
 
-static READ_HANDLER( trakball_r )
+static READ_HANDLER( special_port0_r )
 {
-	int result = (INT8)readinputport(3 + (offset / 2));
-
-	/* adjust so that small movements are actually recorded */
-	return (result < 0) ? result - 1 : (result > 0) ? result + 1 : 0;
+	data8_t result = readinputport(0);
+	result = (result & 0xfe) | (pia_portb_data & 0x01);
+	return result;
 }
 
-static READ_HANDLER( rimrockn_input_r )
+
+
+/*************************************
+ *
+ *	6821 PIA handling
+ *
+ *************************************/
+
+WRITE_HANDLER( pia_porta_out )
 {
-	return readinputport(3 + offset);
+	logerror("PIA port A write = %02x\n", data);
+	pia_porta_data = data;
+}
+
+
+WRITE_HANDLER( pia_portb_out )
+{
+	logerror("PIA port B write = %02x\n", data);
+
+	/* bit 0 provides feedback to the main CPU */
+	/* bit 4 controls the ticket dispenser */
+	/* bit 5 controls the coin counter */
+	/* bit 6 controls the diagnostic sound LED */
+	pia_portb_data = data;
+	ticket_dispenser_w(0, (data & 0x10) << 3);
+	coin_counter_w(0, (data & 0x20) >> 5);
+}
+
+
+WRITE_HANDLER( ym2203_portb_out )
+{
+	logerror("YM2203 port B write = %02x\n", data);
+
+	/* bit 0 provides feedback to the main CPU */
+	/* bit 5 controls the coin counter */
+	/* bit 6 controls the diagnostic sound LED */
+	/* bit 7 controls the ticket dispenser */
+	pia_portb_data = data;
+	ticket_dispenser_w(0, data & 0x80);
+	coin_counter_w(0, (data & 0x20) >> 5);
 }
 
 
@@ -426,6 +493,10 @@ static WRITE_HANDLER( via6522_w )
 	/* switch off the offset */
 	switch (offset)
 	{
+		case 0:		/* write to port B */
+			pia_portb_out(0, data);
+			break;
+
 		case 5:		/* write into high order timer 1 */
 			via6522_timer_count[0] = (via6522[5] << 8) | via6522[4];
 			if (via6522_timer[0])
@@ -445,7 +516,6 @@ static WRITE_HANDLER( via6522_w )
 			if (FULL_LOGGING) logerror("VIA write(%02x) = %02x\n", offset, data);
 			break;
 	}
-
 }
 
 
@@ -569,12 +639,15 @@ static WRITE16_HANDLER( tms34061_16_w )
 
 static void nvram_handler(void *file, int read_or_write)
 {
+	int i;
+
 	if (read_or_write)
 		osd_fwrite(file, main_ram, main_ram_size);
 	else if (file)
 		osd_fread(file, main_ram, main_ram_size);
 	else
-		memset(main_ram, 0xff, main_ram_size);
+		for (i = 0; i < main_ram_size; i++)
+			main_ram[i] = rand();
 }
 
 
@@ -588,10 +661,14 @@ static void nvram_handler(void *file, int read_or_write)
 /*------ common layout with TMS34061 at 0000 ------*/
 static MEMORY_READ_START( tmslo_readmem )
 	{ 0x0000, 0x0fff, itech8_tms34061_r },
-	{ 0x1140, 0x1140, input_port_0_r },
+	{ 0x1140, 0x1140, special_port0_r },
 	{ 0x1160, 0x1160, input_port_1_r },
 	{ 0x1180, 0x1180, input_port_2_r },
-	{ 0x11c0, 0x11df, itech8_blitter_r },
+	{ 0x11c0, 0x11d7, itech8_blitter_r },
+	{ 0x11d8, 0x11d9, input_port_3_r },
+	{ 0x11da, 0x11db, input_port_4_r },
+	{ 0x11dc, 0x11dd, input_port_5_r },
+	{ 0x11de, 0x11df, input_port_6_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_BANK1 },
 MEMORY_END
@@ -599,6 +676,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( tmslo_writemem )
 	{ 0x0000, 0x0fff, itech8_tms34061_w },
+	{ 0x1100, 0x1100, MWA_NOP },
 	{ 0x1120, 0x1120, sound_data_w },
 	{ 0x1140, 0x1140, MWA_RAM, &itech8_grom_bank },
 	{ 0x1160, 0x1160, MWA_RAM, &itech8_display_page },
@@ -615,10 +693,14 @@ MEMORY_END
 /*------ common layout with TMS34061 at 1000 ------*/
 static MEMORY_READ_START( tmshi_readmem )
 	{ 0x1000, 0x1fff, itech8_tms34061_r },
-	{ 0x0140, 0x0140, input_port_0_r },
+	{ 0x0140, 0x0140, special_port0_r },
 	{ 0x0160, 0x0160, input_port_1_r },
 	{ 0x0180, 0x0180, input_port_2_r },
-	{ 0x01c0, 0x01df, itech8_blitter_r },
+	{ 0x01c0, 0x01d7, itech8_blitter_r },
+	{ 0x01d8, 0x01d9, input_port_3_r },
+	{ 0x01da, 0x01db, input_port_4_r },
+	{ 0x01dc, 0x01dd, input_port_5_r },
+	{ 0x01de, 0x01df, input_port_6_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_BANK1 },
 MEMORY_END
@@ -626,6 +708,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( tmshi_writemem )
 	{ 0x1000, 0x1fff, itech8_tms34061_w },
+	{ 0x0100, 0x0100, MWA_NOP },
 	{ 0x0120, 0x0120, sound_data_w },
 	{ 0x0140, 0x0140, MWA_RAM, &itech8_grom_bank },
 	{ 0x0160, 0x0160, MWA_RAM, &itech8_display_page },
@@ -645,7 +728,11 @@ static MEMORY_READ_START( gtg2_readmem )
 	{ 0x0100, 0x0100, input_port_0_r },
 	{ 0x0120, 0x0120, input_port_1_r },
 	{ 0x0140, 0x0140, input_port_2_r },
-	{ 0x0180, 0x019f, itech8_blitter_r },
+	{ 0x0180, 0x0197, itech8_blitter_r },
+	{ 0x0198, 0x0199, input_port_3_r },
+	{ 0x019a, 0x019b, input_port_4_r },
+	{ 0x019c, 0x019d, input_port_5_r },
+	{ 0x019e, 0x019f, input_port_6_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_BANK1 },
 MEMORY_END
@@ -653,7 +740,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( gtg2_writemem )
 	{ 0x1000, 0x1fff, itech8_tms34061_w },
-	{ 0x01c0, 0x01c0, sound_data_w },
+	{ 0x01c0, 0x01c0, gtg2_sound_data_w },
 	{ 0x0160, 0x0160, MWA_RAM, &itech8_grom_bank },
 	{ 0x0120, 0x0120, MWA_RAM, &itech8_display_page },
 	{ 0x01e0, 0x01e0, tms34061_latch_w },
@@ -664,7 +751,6 @@ static MEMORY_WRITE_START( gtg2_writemem )
 	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
-
 
 
 /*------ Ninja Clowns layout ------*/
@@ -725,14 +811,13 @@ static MEMORY_WRITE_START( sound2203_writemem )
 MEMORY_END
 
 
-
 /*------ YM3812-based sound board ------*/
 static MEMORY_READ_START( sound3812_readmem )
 	{ 0x1000, 0x1000, sound_data_r },
 	{ 0x2000, 0x2000, YM3812_status_port_0_r },
 	{ 0x3000, 0x37ff, MRA_RAM },
 	{ 0x4000, 0x4000, OKIM6295_status_0_r },
-	{ 0x5000, 0x500f, via6522_r },				/* only on some boards */
+	{ 0x5000, 0x5003, pia_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
@@ -743,7 +828,7 @@ static MEMORY_WRITE_START( sound3812_writemem )
 	{ 0x2001, 0x2001, YM3812_write_port_0_w },
 	{ 0x3000, 0x37ff, MWA_RAM },
 	{ 0x4000, 0x4000, OKIM6295_data_0_w },
-	{ 0x5000, 0x500f, via6522_w, &via6522 },	/* only on some boards */
+	{ 0x5000, 0x5003, pia_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -758,9 +843,56 @@ MEMORY_END
 #define PORT_SERVICE_NO_TOGGLE(mask,default)	\
 	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
+#define UNUSED_ANALOG	\
+	PORT_START	\
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+
+INPUT_PORTS_START( stratab )
+	PORT_START	/* 40 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* 60 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* 80 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* analog C */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog D */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog E */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog F */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( wfortune )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
@@ -777,28 +909,52 @@ INPUT_PORTS_START( wfortune )
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* custom D */
+	UNUSED_ANALOG	/* analog C */
+
+	PORT_START		/* analog D */
 	PORT_ANALOG( 0xff, 0x80, IPT_DIAL | IPF_PLAYER1, 75, 10, 0x00, 0xff )
+
+	UNUSED_ANALOG	/* analog E */
+
+	PORT_START		/* analog F */
+	PORT_ANALOG( 0xff, 0x80, IPT_DIAL | IPF_PLAYER2 | IPF_COCKTAIL, 75, 10, 0x00, 0xff )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( gtg )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
+	/* it is still unknown how the second player inputs are muxed in */
+	/* currently we map both sets of controls to the same inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	UNUSED_ANALOG	/* analog C */
+	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
@@ -808,7 +964,11 @@ INPUT_PORTS_START( gtg2 )
 	PORT_SERVICE_NO_TOGGLE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 60 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -818,26 +978,42 @@ INPUT_PORTS_START( gtg2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* 80 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x78, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* custom C */
+	PORT_START	/* analog C */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_CENTER, 25, 32, 0x80, 0x7f )
 
-	PORT_START	/* custom D */
+	PORT_START	/* analog D */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog E */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog F */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( gtg2t )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -845,17 +1021,24 @@ INPUT_PORTS_START( gtg2t )
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* custom C */
+	PORT_START	/* analog C */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_CENTER, 25, 32, 0x80, 0x7f )
 
-	PORT_START	/* custom D */
+	PORT_START	/* analog D */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog E */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog F */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( slikshot )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
@@ -871,17 +1054,57 @@ INPUT_PORTS_START( slikshot )
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* custom C */
+	PORT_START	/* analog C */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_CENTER, 25, 32, 0x80, 0x7f )
 
-	PORT_START	/* custom D */
+	PORT_START	/* analog D */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE | IPF_CENTER, 25, 32, 0x80, 0x7f )
+
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( arlingtn )
+	PORT_START	/* 40 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))	/* see code at e23c */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x08, DEF_STR( On ))
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* 60 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* 80 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	UNUSED_ANALOG	/* analog C */
+	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( peggle )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
@@ -896,12 +1119,18 @@ INPUT_PORTS_START( peggle )
 
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	UNUSED_ANALOG	/* analog C */
+	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( pegglet )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
@@ -914,14 +1143,27 @@ INPUT_PORTS_START( pegglet )
 	PORT_START	/* 80 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* custom D */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER1 | IPF_CENTER, 25, 10, 0x80, 0x7f )
+	UNUSED_ANALOG	/* analog C */
+
+	PORT_START		/* analog D */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER1 | IPF_CENTER, 50, 10, 0x80, 0x7f )
+
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( hstennis )
 	PORT_START	/* 40 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ))	/* see code at fbb5 */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x10, DEF_STR( On ))
+	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 60 */
@@ -945,12 +1187,18 @@ INPUT_PORTS_START( hstennis )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	UNUSED_ANALOG	/* analog C */
+	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( rimrockn )
 	PORT_START	/* 40 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* 60 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -1038,6 +1286,11 @@ INPUT_PORTS_START( ninclown )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+
+	UNUSED_ANALOG	/* analog C */
+	UNUSED_ANALOG	/* analog D */
+	UNUSED_ANALOG	/* analog E */
+	UNUSED_ANALOG	/* analog F */
 INPUT_PORTS_END
 
 
@@ -1056,7 +1309,7 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 	{ 0 },
 	{ 0 },
-	{ 0 },
+	{ ym2203_portb_out },
 	{ generate_sound_irq }
 };
 
@@ -1070,19 +1323,19 @@ static struct YM3812interface ym3812_interface =
 };
 
 
-static struct OKIM6295interface oki6295_interface_slow =
+static struct OKIM6295interface oki6295_interface_low =
 {
 	1,
-	{ CLOCK_8MHz/8/128 },
+	{ CLOCK_8MHz/8/165 },
 	{ REGION_SOUND1 },
 	{ 75 }
 };
 
 
-static struct OKIM6295interface oki6295_interface_fast =
+static struct OKIM6295interface oki6295_interface_high =
 {
 	1,
-	{ CLOCK_8MHz/6/165 },
+	{ CLOCK_8MHz/8/128 },
 	{ REGION_SOUND1 },
 	{ 75 }
 };
@@ -1140,13 +1393,14 @@ static struct MachineDriver machine_driver_##NAME =								\
 
 
 /*           NAME,      CPU,    CPUCLOCK,      MAINMEM,  YMTYPE, OKISPEED, XMIN, XMAX) */
-ITECH_DRIVER(tmslo2203, M6809,  CLOCK_8MHz/4,  tmslo,    2203,   fast,     0,    255);
-ITECH_DRIVER(tmshi2203, M6809,  CLOCK_8MHz/4,  tmshi,    2203,   fast,     0,    255);
-ITECH_DRIVER(gtg2,      M6809,  CLOCK_8MHz/4,  gtg2,     3812,   fast,     0,    255);
-ITECH_DRIVER(peggle,    M6809,  CLOCK_8MHz/4,  tmslo,    3812,   slow,     18,   367);
-ITECH_DRIVER(hstennis,  M6809,  CLOCK_8MHz/4,  tmshi,    3812,   fast,     0,    375);
-ITECH_DRIVER(rimrockn,  M6809,  CLOCK_12MHz/4, tmshi,    3812,   fast,     16,   375);
-ITECH_DRIVER(ninclown,  M68000, CLOCK_12MHz,   ninclown, 3812,   fast,     64,   423);
+ITECH_DRIVER(tmslo2203, M6809,  CLOCK_8MHz/4,  tmslo,    2203,   high,     0,    255);
+ITECH_DRIVER(tmshi2203, M6809,  CLOCK_8MHz/4,  tmshi,    2203,   high,     0,    255);
+ITECH_DRIVER(gtg2,      M6809,  CLOCK_8MHz/4,  gtg2,     3812,   high,     0,    255);
+ITECH_DRIVER(peggle,    M6809,  CLOCK_8MHz/4,  tmslo,    3812,   high,     18,   367);
+ITECH_DRIVER(arlingtn,  M6809,  CLOCK_8MHz/4,  tmshi,    3812,   low,      16,   389);
+ITECH_DRIVER(hstennis,  M6809,  CLOCK_8MHz/4,  tmshi,    3812,   high,     0,    375);
+ITECH_DRIVER(rimrockn,  M6809,  CLOCK_12MHz/4, tmshi,    3812,   high,     16,   375);
+ITECH_DRIVER(ninclown,  M68000, CLOCK_12MHz,   ninclown, 3812,   high,     64,   423);
 
 
 
@@ -1155,6 +1409,24 @@ ITECH_DRIVER(ninclown,  M68000, CLOCK_12MHz,   ninclown, 3812,   fast,     64,  
  *	ROM definitions
  *
  *************************************/
+
+ROM_START( stratab )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "sbprogv3.bin", 0x08000, 0x8000, 0xa5ae728f )
+	ROM_COPY( REGION_CPU1,    0x8000, 0x14000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "sbsnds.bin", 0x08000, 0x8000, 0xb36c8f0a )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0xa915b0bd )
+	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, 0x340c661f )
+	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, 0x5df9f1cf )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, 0x6ff390b9 )
+ROM_END
+
 
 ROM_START( wfortune )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
@@ -1211,14 +1483,13 @@ ROM_START( slikshot )
 	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0xe60c2804 )
 	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, 0xd764d542 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, 0x4b075f5e )
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.bin", 0x00000, 0x10000, 0x4b075f5e )
 ROM_END
 
 
 ROM_START( gtg2 )
 	/* banks are loaded in the opposite order from the others, */
-	/* probably as some sort of copy protection */
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "u5.2",   0x10000, 0x4000, 0x4a61580f )
 	ROM_CONTINUE(       0x04000, 0xc000 )
@@ -1242,7 +1513,6 @@ ROM_END
 
 ROM_START( gtg2t )
 	/* banks are loaded in the opposite order from the others, */
-	/* probably as some sort of copy protection */
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "u5",     0x10000, 0x4000, 0xc7b3a9f3 )
 	ROM_CONTINUE(       0x04000, 0xc000 )
@@ -1283,6 +1553,26 @@ ROM_START( gtg2j )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, 0x1cccbfdf )
+ROM_END
+
+
+ROM_START( arlingtn )
+	/* banks are loaded in the opposite order from the others, */
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "ahrd121.bin", 0x10000, 0x4000, 0x00aae02e )
+	ROM_CONTINUE(            0x04000, 0xc000 )
+	ROM_COPY( REGION_CPU1, 0x8000, 0x14000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "ahrsnd11.bin", 0x08000, 0x8000, 0xdec57dca )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0x5ef57fe5 )
+	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, 0x6aca95c0 )
+	ROM_LOAD( "grom2.bin", 0x40000, 0x10000, 0x6d6fde1b )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.bin", 0x00000, 0x40000, 0x56087f81 )
 ROM_END
 
 
@@ -1424,37 +1714,29 @@ ROM_END
  *
  *************************************/
 
-static void init_wfortune(void)
+static void init_viasound(void)
 {
-	install_mem_read_handler (0, 0x01da, 0x01db, input_port_3_r);
-}
-
-
-static void init_trakball(void)
-{
-	install_mem_read_handler (0, 0x01d8, 0x01db, trakball_r);
-}
-
-
-static void init_gtg2(void)
-{
-	install_mem_read_handler (0, 0x0198, 0x019b, trakball_r);
-	install_mem_write_handler(0, 0x01c0, 0x01c0, gtg2_sound_data_w);
-}
-
-
-static void init_pegglet(void)
-{
-	install_mem_read_handler (0, 0x11da, 0x11db, input_port_3_r);
+	/* some games with a YM3812 use a VIA(6522) for timing and communication */
+	install_mem_read_handler (1, 0x5000, 0x500f, via6522_r);
+	via6522 = install_mem_write_handler(1, 0x5000, 0x500f, via6522_w);
 }
 
 
 static void init_rimrockn(void)
 {
-	install_mem_write_handler(0, 0x0100, 0x0100, MWA_NOP);
-	install_mem_read_handler (0, 0x0161, 0x0165, rimrockn_input_r);
+	/* additional input ports */
+	install_mem_read_handler (0, 0x0161, 0x0161, input_port_3_r);
+	install_mem_read_handler (0, 0x0162, 0x0162, input_port_4_r);
+	install_mem_read_handler (0, 0x0163, 0x0163, input_port_5_r);
+	install_mem_read_handler (0, 0x0164, 0x0164, input_port_6_r);
+	install_mem_read_handler (0, 0x0165, 0x0165, input_port_7_r);
+
+	/* different banking mechanism (disable the old one) */
 	install_mem_write_handler(0, 0x01a0, 0x01a0, rimrockn_bank_w);
 	install_mem_write_handler(0, 0x01c0, 0x01df, itech8_blitter_w);
+
+	/* VIA-based sound timing */
+	init_viasound();
 }
 
 
@@ -1465,15 +1747,17 @@ static void init_rimrockn(void)
  *
  *************************************/
 
-GAME ( 1989, wfortune, 0,        tmshi2203, wfortune, wfortune, ROT0,  "GameTek", "Wheel Of Fortune" )
-GAME ( 1990, gtg,      0,        tmshi2203, gtg,      0,        ROT0,  "Strata/Incredible Technologies", "Golden Tee Golf" )
-GAMEX( 1990, slikshot, 0,        tmshi2203, slikshot, trakball, ROT90, "Grand Products/Incredible Technologies", "Slick Shot", GAME_NOT_WORKING )
-GAME ( 1990, hstennis, 0,        hstennis,  hstennis, 0,        ROT90, "Strata/Incredible Technologies", "Hot Shots Tennis" )
-GAME ( 1991, peggle,   0,        peggle,    peggle,   0,        ROT90, "Strata/Incredible Technologies", "Peggle (Joystick)" )
-GAME ( 1991, pegglet,  peggle,   peggle,    pegglet,  pegglet,  ROT90, "Strata/Incredible Technologies", "Peggle (Trackball)" )
-GAME ( 1991, rimrockn, 0,        rimrockn,  rimrockn, rimrockn, ROT0,  "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.2)" )
-GAME ( 1991, rimrocka, rimrockn, rimrockn,  rimrockn, rimrockn, ROT0,  "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.0)" )
-GAME ( 1991, ninclown, 0,        ninclown,  ninclown, 0,        ROT0,  "Strata/Incredible Technologies", "Ninja Clowns" )
-GAME ( 1992, gtg2,     0,        gtg2,      gtg2,     gtg2,     ROT0,  "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V2.2)" )
-GAME ( 1989, gtg2t,    gtg2,     tmshi2203, gtg2t,    trakball, ROT0,  "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V1.1)" )
-GAME ( 1991, gtg2j,    gtg2,     tmslo2203, gtg,      0,        ROT0,  "Strata/Incredible Technologies", "Golden Tee Golf II (Joystick, V1.0)" )
+GAME ( 1989, wfortune, 0,        tmshi2203, wfortune, 0,        ROT0,   "GameTek", "Wheel Of Fortune" )
+GAME ( 1990, stratab,  0,        tmshi2203, stratab,  0,        ROT270, "Strata/Incredible Technologies", "Strata Bowling" )
+GAME ( 1990, gtg,      0,        tmshi2203, gtg,      0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf" )
+GAMEX( 1990, slikshot, 0,        tmshi2203, slikshot, 0,        ROT90,  "Grand Products/Incredible Technologies", "Slick Shot", GAME_NOT_WORKING )
+GAME ( 1990, hstennis, 0,        hstennis,  hstennis, 0,        ROT90,  "Strata/Incredible Technologies", "Hot Shots Tennis" )
+GAME ( 1991, arlingtn, 0,        arlingtn,  arlingtn, 0,        ROT0,   "Strata/Incredible Technologies", "Arlington Horse Racing" )
+GAME ( 1991, peggle,   0,        peggle,    peggle,   0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Joystick)" )
+GAME ( 1991, pegglet,  peggle,   peggle,    pegglet,  0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Trackball)" )
+GAME ( 1991, rimrockn, 0,        rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.2)" )
+GAME ( 1991, rimrocka, rimrockn, rimrockn,  rimrockn, rimrockn, ROT0,   "Strata/Incredible Technologies", "Rim Rockin' Basketball (V2.0)" )
+GAME ( 1991, ninclown, 0,        ninclown,  ninclown, viasound, ROT0,   "Strata/Incredible Technologies", "Ninja Clowns" )
+GAME ( 1992, gtg2,     0,        gtg2,      gtg2,     viasound, ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V2.2)" )
+GAME ( 1989, gtg2t,    gtg2,     tmshi2203, gtg2t,    0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf II (Trackball, V1.1)" )
+GAME ( 1991, gtg2j,    gtg2,     tmslo2203, gtg,      0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf II (Joystick, V1.0)" )

@@ -236,10 +236,8 @@ extern unsigned char 	*ninjakd2_scrolly_ram;
 extern unsigned char 	*ninjakd2_scrollx_ram;
 extern unsigned char 	*ninjakd2_bgenable_ram;
 extern unsigned char 	*ninjakd2_spoverdraw_ram;
-extern unsigned char 	*ninjakd2_spriteram;
 extern unsigned char 	*ninjakd2_background_videoram;
 extern unsigned char 	*ninjakd2_foreground_videoram;
-extern size_t ninjakd2_spriteram_size;
 extern size_t ninjakd2_backgroundram_size;
 extern size_t ninjakd2_foregroundram_size;
 
@@ -349,7 +347,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xd000, 0xd7ff, ninjakd2_fgvideoram_w, &ninjakd2_foreground_videoram, &ninjakd2_foregroundram_size },
 	{ 0xd800, 0xdfff, ninjakd2_bgvideoram_w, &ninjakd2_background_videoram, &ninjakd2_backgroundram_size },
 	{ 0xe000, 0xf9ff, MWA_RAM },
-	{ 0xfa00, 0xffff, MWA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
+	{ 0xfa00, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
 
 

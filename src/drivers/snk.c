@@ -131,26 +131,37 @@ static int snk_rot8( int which ){
 
 static int snk_rot12( int which ){
 /*
-	This routine converts a 4 bit (16 directional) analog input to the 12 directional input
-	that many SNK games require.
+	This routine converts a 4 bit (16 directional) analog input to the 12
+	directional input that many SNK games require.
 */
-	const int dial_12[12] = { 0xb0,0xa0,0x90,0x80,0x70,0x60,0x50,0x40,0x30,0x20,0x10,0x00 };
+	const int dial_12[13] = {
+	0xb0,0xa0,0x90,0x80,0x70,0x60,
+	0xf0,
+	/* 0xf0 isn't a valid direction, but avoids the "joystick error"
+	protection
+	** in Guerilla War which happens when direction changes directly from
+	** 0x50<->0x60 8 times.
+	*/
+	0x50,0x40,0x30,0x20,0x10,0x00
+	};
 	int value = readinputport(which+1);
-	int joypos16 = value>>4;
+	int joydir = value>>4;
+	static int old_joydir[2];
+	static int dial_select[2];
 
-	static int old_joypos16[2];
-	static int joypos12[2];
-	int delta = joypos16 - old_joypos16[which];
+	int delta = (joydir - old_joydir[which])&0xf;
+	old_joydir[which] = joydir;
 
-	old_joypos16[which] = joypos16;
+	if( delta<=7 && delta>=1 ){
+		if( dial_select[which]==12 ) dial_select[which] = 0;
+		else dial_select[which]++;
+	}
+	else if( delta > 8 ){
+		if( dial_select[which]==0 ) dial_select[which] = 12;
+		else dial_select[which]--;
+	}
 
-	if( delta>8 ) delta -= 16; else if( delta<-8 ) delta += 16;
-
-	joypos12[which] += delta;
-	while( joypos12[which]<0 ) joypos12[which] += 12;
-	while( joypos12[which]>=12 ) joypos12[which] -= 12;
-
-	return (value&0x0f) | dial_12[joypos12[which]];
+	return (value&0xf) | dial_12[dial_select[which]];
 }
 
 static int snk_input_port_r( int which ){

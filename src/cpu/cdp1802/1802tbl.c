@@ -1,10 +1,10 @@
 static void cdp1802_log_icode(void)
 {
-	// logs the i-code 
+	// logs the i-code
 	UINT16 adr=cdp1802.reg[5].w.l;
 	UINT8 u=cpu_readmem16(adr),u2=cpu_readmem16(adr+1);
 	UINT16 i=(u<<8)|u2;
-	
+
 	switch (u&0xf0) {
 	case 0:
 		logerror("chip 8 icode %.4x: %.4x call 1802 %.3x\n",adr, i, i&0xfff);
@@ -16,124 +16,124 @@ static void cdp1802_log_icode(void)
 		logerror("chip 8 icode %.4x: %.4x call %.3x\n",adr, i, i&0xfff);
 		break;
 	case 0x30:
-		logerror("chip 8 icode %.4x: %.4x jump if r%x !=0  %.2x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x jump if r%x !=0  %.2x\n",adr, i,
 				 (i&0xf00)>>8,i&0xff);
 		break;
 	case 0x40:
-		logerror("chip 8 icode %.4x: %.4x jump if r%x ==0  %.2x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x jump if r%x ==0  %.2x\n",adr, i,
 				 (i&0xf00)>>8,i&0xff);
 		break;
 	case 0x50:
-		logerror("chip 8 icode %.4x: %.4x skip if r%x!=%.2x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x skip if r%x!=%.2x\n",adr, i,
 				 (i&0xf00)>>8,i&0xff);
 		break;
 	case 0x60:
-		logerror("chip 8 icode %.4x: %.4x load r%x,%.2x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x load r%x,%.2x\n",adr, i,
 				 (i&0xf00)>>8,i&0xff);
 		break;
 	case 0x70:
 		if (u!=0x70)
-			logerror("chip 8 icode %.4x: %.4x add r%x,%.2x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x add r%x,%.2x\n",adr, i,
 					 (i&0xf00)>>8,i&0xff);
 		else
-			logerror("chip 8 icode %.4x: %.4x dec r0, jump if not zero %.2x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x dec r0, jump if not zero %.2x\n",adr, i,
 					 i&0xff);
 		break;
 	case 0x80:
 		switch (u2&0xf) {
 		case 0:
-			logerror("chip 8 icode %.4x: %.4x r%x:=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x:=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 1:
-			logerror("chip 8 icode %.4x: %.4x r%x|=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x|=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 2:
-			logerror("chip 8 icode %.4x: %.4x r%x&=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x&=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 3:
-			logerror("chip 8 icode %.4x: %.4x r%x^=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x^=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 4:
-			logerror("chip 8 icode %.4x: %.4x r%x+=r%x, rb carry\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x+=r%x, rb carry\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 				break;
 		case 5:
-			logerror("chip 8 icode %.4x: %.4x r%x=r%x-r%x, rb carry\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x=r%x-r%x, rb carry\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4,(i&0xf00)>>8);
 			break;
 		case 6:
-			logerror("chip 8 icode %.4x: %.4x r%x>>=1, rb LSB\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x>>=1, rb LSB\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 7:
-			logerror("chip 8 icode %.4x: %.4x r%x-=r%x, rb carry\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x-=r%x, rb carry\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 0xe:
-			logerror("chip 8 icode %.4x: %.4x r%x<<=1, rb MSB\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x<<=1, rb MSB\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		default:
 			logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-					 cpu_readmem16(cdp1802.reg[5].w.l), 
-					 cpu_readmem16(cdp1802.reg[5].w.l+1)); 
+					 cpu_readmem16(cdp1802.reg[5].w.l),
+					 cpu_readmem16(cdp1802.reg[5].w.l+1));
 		}
 		break;
 	case 0x90:
 		switch (u2&0xf) {
 		case 0:
-			logerror("chip 8 icode %.4x: %.4x skip if r%x!=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x skip if r%x!=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 1:case 3: case 5: case 7: case 9: case 0xb: case 0xd: case 0xf:
-			logerror("chip 8 icode %.4x: %.4x r%x:=r%x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x:=r%x\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 2:case 6: case 0xa: case 0xe:
-			logerror("chip 8 icode %.4x: %.4x r%x:=Memory[r%x]\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x:=Memory[r%x]\n",adr, i,
 					 (i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		case 4:case 0xc:
-			logerror("chip 8 icode %.4x: %.4x Memory[r%x]\n:=r%x",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x Memory[r%x]\n:=r%x",adr, i,
 					 (i&0xf0)>>4,(i&0xf00)>>8);
 			break;
 		case 8:
-			logerror("chip 8 icode %.4x: %.4x Memory[r%x]\n:=BCD(r%x), r%x+=3",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x Memory[r%x]\n:=BCD(r%x), r%x+=3",adr, i,
 					 (i&0xf0)>>4,(i&0xf00)>>8,(i&0xf0)>>4);
 			break;
 		default:
 			logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-					 cpu_readmem16(cdp1802.reg[5].w.l), 
-					 cpu_readmem16(cdp1802.reg[5].w.l+1)); 
+					 cpu_readmem16(cdp1802.reg[5].w.l),
+					 cpu_readmem16(cdp1802.reg[5].w.l+1));
 		}
 		break;
 	case 0xa0:
-		logerror("chip 8 icode %.4x: %.4x index register:=%.3x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x index register:=%.3x\n",adr, i,
 				 i&0xfff);
 		break;
 	case 0xb0:
-		logerror("chip 8 icode %.4x: %.4x store %.2x at index register,  add %x to index register\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x store %.2x at index register,  add %x to index register\n",adr, i,
 				 i&0xff,(i&0xf00)>>8);
 		break;
 	case 0xc0:
 		if (u==0xc0)
 			logerror("chip 8 icode %.4x: %.4x return from subroutine\n",adr, i);
 		else
-			logerror("chip 8 icode %.4x: %.4x r%x:=random&%.2x\n",adr, i, 
+			logerror("chip 8 icode %.4x: %.4x r%x:=random&%.2x\n",adr, i,
 					 (i&0xf00)>>8,i&0xff);
 		break;
 	case 0xd0:
-		logerror("chip 8 icode %.4x: %.4x if key %x goto %.2x\n",adr, i, 
+		logerror("chip 8 icode %.4x: %.4x if key %x goto %.2x\n",adr, i,
 				 (i&0xf00)>>8,i&0xff);
 		break;
 	default:
 		logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-				 cpu_readmem16(cdp1802.reg[5].w.l), 
-				 cpu_readmem16(cdp1802.reg[5].w.l+1)); 
+				 cpu_readmem16(cdp1802.reg[5].w.l),
+				 cpu_readmem16(cdp1802.reg[5].w.l+1));
 	}
 }
 
@@ -254,16 +254,16 @@ static void cdp1802_instruction(void)
 	case 0xd0: cdp1802.p=oper&0xf;change_pc16(PC);break;
 	case 0xe0: cdp1802.x=oper&0xf;break;
 		break;
-	default: 		
+	default:
 		switch(oper&0xf8) {
-		case 0x60: 
+		case 0x60:
 			if (oper==0x60) {
 				logerror("cpu cdp1802 unknown opcode %.2x at %.4x\n",oper, PC-1);
 			} else {
 				cdp1802_out_n(oper&7);break;
 			}
 			break;
-		case 0x68: 
+		case 0x68:
 			if (oper==0x68) {
 			} else {
 				cdp1802_in_n(oper&7);break;
@@ -294,10 +294,10 @@ static void cdp1802_instruction(void)
 			case 0x73: cpu_writemem16(X--,cdp1802.d);break;
 			case 0x74: cdp1802_add_carry(cpu_readmem16(X));break;
 			case 0x75: cdp1802_sub_carry(cpu_readmem16(X),cdp1802.d);break;
-			case 0x76: 
+			case 0x76:
 				b=cdp1802.df;cdp1802.df=cdp1802.d&1;cdp1802.d>>=1;
 				if (b) cdp1802.d|=0x80;
-				break;	
+				break;
 			case 0x77: cdp1802_sub_carry(cdp1802.d, cpu_readmem16(X));break;
 			case 0x78: cpu_writemem16(X, cdp1802.t);break;
 			case 0x79:
@@ -311,10 +311,10 @@ static void cdp1802_instruction(void)
 			case 0x7b: cdp1802_q(1);break;
 			case 0x7c: cdp1802_add_carry(cpu_readmem16(PC++));break;
 			case 0x7d: cdp1802_sub_carry(cpu_readmem16(PC++),cdp1802.d);break;
-			case 0x7e: 
+			case 0x7e:
 				b=cdp1802.df;cdp1802.df=cdp1802.d&0x80;cdp1802.d<<=1;
 				if (b) cdp1802.d|=1;
-				break;	
+				break;
 			case 0x7f: cdp1802_sub_carry(cdp1802.d,cpu_readmem16(PC++));break;
 			case 0xc0: cdp1802_long_branch(1);break;
 			case 0xc1: cdp1802_long_branch(cdp1802.q);break;
@@ -338,7 +338,7 @@ static void cdp1802_instruction(void)
 			case 0xf3: cdp1802.d^=cpu_readmem16(X);break;
 			case 0xf4: cdp1802_add(cpu_readmem16(X));break;
 			case 0xf5: cdp1802_sub(cpu_readmem16(X),cdp1802.d);break;
-			case 0xf6: cdp1802.df=cdp1802.d&1;cdp1802.d>>=1;break;	
+			case 0xf6: cdp1802.df=cdp1802.d&1;cdp1802.d>>=1;break;
 			case 0xf7: cdp1802_sub(cdp1802.d,cpu_readmem16(X));break;
 			case 0xf8: cdp1802.d=cpu_readmem16(PC++);break;
 			case 0xf9: cdp1802.d|=cpu_readmem16(PC++);break;
@@ -346,7 +346,7 @@ static void cdp1802_instruction(void)
 			case 0xfb: cdp1802.d^=cpu_readmem16(PC++);break;
 			case 0xfc: cdp1802_add(cpu_readmem16(PC++));break;
 			case 0xfd: cdp1802_sub(cpu_readmem16(PC++),cdp1802.d);break;
-			case 0xfe: cdp1802.df=cdp1802.d&0x80;cdp1802.d<<=1;break;	
+			case 0xfe: cdp1802.df=cdp1802.d&0x80;cdp1802.d<<=1;break;
 			case 0xff: cdp1802_sub(cdp1802.d,cpu_readmem16(PC++));break;
 			default:
 				logerror("cpu cdp1802 unknown opcode %.2x at %.4x\n",oper, PC-1);

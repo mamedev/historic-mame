@@ -3,7 +3,16 @@
 Functions to emulate the video hardware of the machine.
 
 
-BG RAM format ( $D800 - $DFFF )
+BG RAM format [Argus and Butasan]
+-----------------------------------------------------------------------------
+ +0         +1
+ xxxx xxxx  ---- ---- = 1st - 8th bits of tile number
+ ---- ----  xx-- ---- = 9th and 10th bit of tile number
+ ---- ----  --x- ---- = flip y
+ ---- ----  ---x ---- = flip x
+ ---- ----  ---- xxxx = color
+
+BG RAM format [Valtric]
 -----------------------------------------------------------------------------
  +0         +1
  xxxx xxxx  ---- ---- = 1st - 8th bits of tile number
@@ -12,17 +21,19 @@ BG RAM format ( $D800 - $DFFF )
  ---- ----  ---- xxxx = color
 
 
-Text RAM format ( $D000 - $D7FF )
+Text RAM format [Argus, Valtric and Butasan]
 -----------------------------------------------------------------------------
  +0         +1
  xxxx xxxx  ---- ---- = low bits of tile number
  ---- ----  xx-- ---- = high bits of tile number
+ ---- ----  --x- ---- = flip y
+ ---- ----  ---x ---- = flip x
  ---- ----  ---- xxxx = color
 
 
-Sprite RAM format ( $F200 - $F7FF )
+Sprite RAM format [Argus]
 -----------------------------------------------------------------------------
- +0         +1         +2         +3         +4
+ +11        +12        +13        +14        +15
  xxxx xxxx  ---- ----  ---- ----  ---- ----  ---- ---- = sprite y
  ---- ----  xxxx xxxx  ---- ----  ---- ----  ---- ---- = low bits of sprite x
  ---- ----  ---- ----  xx-- ----  ---- ----  ---- ---- = high bits of tile number
@@ -32,10 +43,42 @@ Sprite RAM format ( $F200 - $F7FF )
  ---- ----  ---- ----  ---- ---x  ---- ----  ---- ---- = high bit of sprite x
  ---- ----  ---- ----  ---- ----  xxxx xxxx  ---- ---- = low bits of tile number
  ---- ----  ---- ----  ---- ----  ---- ----  ---- x--- = BG1 / sprite priority (Argus only)
- ---- ----  ---- ----  ---- ----  ---- ----  ---- +xxx = color
+ ---- ----  ---- ----  ---- ----  ---- ----  ---- -xxx = color
+
+Sprite RAM format [Valtric]
+-----------------------------------------------------------------------------
+ +11        +12        +13        +14        +15
+ xxxx xxxx  ---- ----  ---- ----  ---- ----  ---- ---- = sprite y
+ ---- ----  xxxx xxxx  ---- ----  ---- ----  ---- ---- = low bits of sprite x
+ ---- ----  ---- ----  xx-- ----  ---- ----  ---- ---- = high bits of tile number
+ ---- ----  ---- ----  --x- ----  ---- ----  ---- ---- = flip y
+ ---- ----  ---- ----  ---x ----  ---- ----  ---- ---- = flip x
+ ---- ----  ---- ----  ---- --x-  ---- ----  ---- ---- = high bit of sprite y
+ ---- ----  ---- ----  ---- ---x  ---- ----  ---- ---- = high bit of sprite x
+ ---- ----  ---- ----  ---- ----  xxxx xxxx  ---- ---- = low bits of tile number
+ ---- ----  ---- ----  ---- ----  ---- ----  ---- xxxx = color
+
+Sprite RAM format [Butasan]
+-----------------------------------------------------------------------------
+ +8         +9         +10        +11        +12
+ ---- -x--  ---- ----  ---- ----  ---- ----  ---- ---- = flip y
+ ---- ---x  ---- ----  ---- ----  ---- ----  ---- ---- = flip x
+ ---- ----  ---- xxxx  ---- ----  ---- ----  ---- ---- = color ($00 - $0B)
+ ---- ----  ---- ----  xxxx xxxx  ---- ----  ---- ---- = low bits of sprite x
+ ---- ----  ---- ----  ---- ----  ---- ---x  ---- ---- = top bit of sprite x
+ ---- ----  ---- ----  ---- ----  ---- ----  xxxx xxxx = low bits of sprite y
+ +13        +14        +15
+ ---- ---x  ---- ----  ---- ---- = top bit of sprite y
+ ---- ----  xxxx xxxx  ---- ---- = low bits of tile number
+ ---- ----  ---- ----  ---- xxxx = top bits of tile number
+
+(*) Sprite size is defined by its offset.
+    $F000 - $F0FF : 16x32    $F100 - $F2FF : 16x16
+    $F300 - $F3FF : 16x32    $F400 - $F57F : 16x16
+    $F580 - $F61F : 32x32    $F620 - $F67F : 64x64
 
 
-Scroll RAM of X and Y coordinates ( $C308 - $C30B )
+Scroll RAM of X and Y coordinates [Argus, Valtric and Butasan]
 -----------------------------------------------------------------------------
  +0         +1
  xxxx xxxx  ---- ---- = scroll value
@@ -46,7 +89,7 @@ Video effect RAM ( $C30C )
 -----------------------------------------------------------------------------
  +0
  ---- ---x  = BG enable bit
- ---- --x-  = gray scale effect ( Is it used ? )
+ ---- --x-  = gray scale effect or tile bank select.
 
 
 Flip screen controller
@@ -63,9 +106,11 @@ BG0 palette intensity ( $C47F, $C4FF )
  ---- ----  xxxx ---- = blue intensity
 
 
-(*) Things it is not emulated.
+(*) Things which are not emulated.
  - Color $000 - 00f, $01e, $02e ... are half transparent color.
  - Maybe, BG0 scroll value of Valtric is used for mosaic effect.
+ - Sprite priority bit may be present in Butasan. But I don't know
+   what is happened when it is set.
 
 ***************************************************************************/
 
@@ -73,6 +118,11 @@ BG0 palette intensity ( $C47F, $C4FF )
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
+
+#define BUTASAN_TEXT_RAMSIZE		0x0800
+#define BUTASAN_BG0_RAMSIZE			0x0800
+#define BUTASAN_TXBACK_RAMSIZE		0x0800
+#define BUTASAN_BG0BACK_RAMSIZE		0x0800
 
 
 data8_t *argus_paletteram;
@@ -82,21 +132,26 @@ data8_t *argus_bg0_scrolly;
 data8_t *argus_bg1ram;
 data8_t *argus_bg1_scrollx;
 data8_t *argus_bg1_scrolly;
-data8_t *spriteram;
-size_t spriteram_size;
-
-static struct tilemap *tx_tilemap  = NULL;
-static struct tilemap *bg0_tilemap  = NULL;
-static struct tilemap *bg1_tilemap  = NULL;
+data8_t *butasan_bg1ram;
 
 static data8_t *argus_dummy_bg0ram;
+static data8_t *butasan_txram;
+static data8_t *butasan_bg0ram;
+static data8_t *butasan_bg0backram;
+static data8_t *butasan_txbackram;
 
-static data8_t argus_bg_veffect = 0;
+static struct tilemap *tx_tilemap  = NULL;
+static struct tilemap *bg0_tilemap = NULL;
+static struct tilemap *bg1_tilemap = NULL;
+
+static data8_t argus_bg_status    = 0x01;
+static data8_t butasan_bg1_status = 0x01;
+static data8_t argus_bg_purple  = 0;
 static data8_t argus_flipscreen = 0;
 
 static int argus_palette_intensity = 0;
 
-/* VROM scroll related in Argus */
+/* VROM scroll related for Argus */
 static int lowbitscroll = 0;
 static int prvscrollx = 0;
 
@@ -111,6 +166,12 @@ static void argus_get_tx_tile_info(int tile_index)
 
 	lo = argus_txram[  tile_index << 1  ];
 	hi = argus_txram[ (tile_index << 1) + 1 ];
+
+	tile_info.flags = 0;
+	if ( hi & 0x20 )
+		tile_info.flags |= TILE_FLIPY;
+	if ( hi & 0x10 )
+		tile_info.flags |= TILE_FLIPX;
 
 	tile = ((hi & 0xc0) << 2) | lo;
 	color = hi & 0x0f;
@@ -163,6 +224,12 @@ static void valtric_get_tx_tile_info(int tile_index)
 	lo = argus_txram[  tile_index << 1  ];
 	hi = argus_txram[ (tile_index << 1) + 1 ];
 
+	tile_info.flags = 0;
+	if ( hi & 0x20 )
+		tile_info.flags |= TILE_FLIPY;
+	if ( hi & 0x10 )
+		tile_info.flags |= TILE_FLIPX;
+
 	tile = ((hi & 0xc0) << 2) | lo;
 	color = hi & 0x0f;
 
@@ -180,6 +247,66 @@ static void valtric_get_bg_tile_info(int tile_index)
 	color = hi & 0x0f;
 
 	SET_TILE_INFO(1, tile, color)
+}
+
+static void butasan_get_tx_tile_info(int tile_index)
+{
+	int hi, lo, color, tile;
+
+	tile_index ^= 0x3e0;
+
+	lo = butasan_txram[  tile_index << 1  ];
+	hi = butasan_txram[ (tile_index << 1) + 1 ];
+
+	tile_info.flags = 0;
+	if ( hi & 0x20 )
+		tile_info.flags |= TILE_FLIPY;
+	if ( hi & 0x10 )
+		tile_info.flags |= TILE_FLIPX;
+
+	tile = ((hi & 0xc0) << 2) | lo;
+	color = hi & 0x0f;
+
+	SET_TILE_INFO(3, tile, color)
+}
+
+static void butasan_get_bg0_tile_info(int tile_index)
+{
+	int hi, lo, color, tile;
+	int attrib;
+
+	attrib = (tile_index & 0x00f) | ((tile_index & 0x1e0) >> 1);
+	attrib |= ((tile_index & 0x200) >> 1) | ((tile_index & 0x010) << 5);
+	attrib ^= 0x0f0;
+
+	lo = butasan_bg0ram[  attrib << 1  ];
+	hi = butasan_bg0ram[ (attrib << 1) + 1 ];
+
+	tile_info.flags = 0;
+	if ( hi & 0x20 )
+		tile_info.flags |= TILE_FLIPY;
+	if ( hi & 0x10 )
+		tile_info.flags |= TILE_FLIPX;
+
+	tile = ((hi & 0xc0) << 2) | lo;
+	color = hi & 0x0f;
+
+	SET_TILE_INFO(1, tile, color)
+}
+
+static void butasan_get_bg1_tile_info(int tile_index)
+{
+	int bank, tile, attrib, color;
+
+	attrib = (tile_index & 0x00f) | ((tile_index & 0x3e0) >> 1)
+				| ((tile_index & 0x010) << 5);
+	attrib ^= 0x0f0;
+
+	bank = (butasan_bg1_status & 0x02) << 7;
+	tile = butasan_bg1ram[ attrib ] | bank;
+	color = (tile & 0x80) >> 7;
+
+	SET_TILE_INFO(2, tile, color)
 }
 
 
@@ -215,11 +342,6 @@ int argus_vh_start(void)
 	return 0;
 }
 
-void argus_vh_stop(void)
-{
-	free(argus_dummy_bg0ram);
-}
-
 int valtric_vh_start(void)
 {
 	/*                           info                       offset             type                 w   h  col  row */
@@ -236,12 +358,75 @@ int valtric_vh_start(void)
 	return 0;
 }
 
+int butasan_vh_start(void)
+{
+	/*                           info                       offset             type                 w   h  col  row */
+	bg0_tilemap = tilemap_create(butasan_get_bg0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32);
+	bg1_tilemap = tilemap_create(butasan_get_bg1_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32);
+	tx_tilemap  = tilemap_create(butasan_get_tx_tile_info,  tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
+
+	if ( !tx_tilemap || !bg0_tilemap || !bg1_tilemap )
+	{
+		return 1;
+	}
+
+	butasan_txram = malloc( BUTASAN_TEXT_RAMSIZE );
+	if (butasan_txram == NULL)
+		return 1;
+
+	butasan_bg0ram = malloc( BUTASAN_BG0_RAMSIZE );
+	if (butasan_bg0ram == NULL)
+	{
+		free(butasan_txram);
+		return 1;
+	}
+
+	butasan_txbackram = malloc( BUTASAN_TXBACK_RAMSIZE );
+	if (butasan_txbackram == NULL)
+	{
+		free(butasan_txram);
+		free(butasan_bg1ram);
+		return 1;
+	}
+
+	butasan_bg0backram = malloc( BUTASAN_BG0BACK_RAMSIZE );
+	if (butasan_bg0backram == NULL)
+	{
+		free(butasan_txram);
+		free(butasan_bg1ram);
+		free(butasan_txbackram);
+		return 1;
+	}
+
+	memset( butasan_txram,      0x00, BUTASAN_TEXT_RAMSIZE );
+	memset( butasan_bg0ram,     0x00, BUTASAN_BG0_RAMSIZE );
+	memset( butasan_txbackram,  0x00, BUTASAN_TXBACK_RAMSIZE );
+	memset( butasan_bg0backram, 0x00, BUTASAN_BG0BACK_RAMSIZE );
+
+	tilemap_set_transparent_pen( tx_tilemap,  15 );
+
+	return 0;
+}
+
+void argus_vh_stop(void)
+{
+	free(argus_dummy_bg0ram);
+}
+
+void butasan_vh_stop(void)
+{
+	free(butasan_txram);
+	free(butasan_bg0ram);
+	free(butasan_txbackram);
+	free(butasan_bg0backram);
+}
+
 
 /***************************************************************************
   Functions for handler of MAP roms in Argus and palette color
 ***************************************************************************/
 
-/* write bg0 pattern data to dummy bg0 ram */
+/* Write bg0 pattern data to dummy bg0 ram */
 static void argus_write_dummy_rams( int dramoffs, int vromoffs )
 {
 	int i;
@@ -298,6 +483,14 @@ static void argus_change_bg_palette(int color, int data)
 	g = (g - ig > 0) ? g - ig : 0;
 	b = (b - ib > 0) ? b - ib : 0;
 
+	if (argus_bg_status & 2)			/* Gray / purple scale */
+	{
+		r = (r + g + b) / 3;
+		g = b = r;
+		if (argus_bg_purple == 2)		/* Purple */
+			g = 0;
+	}
+
 	r = (r << 4) | r;
 	g = (g << 4) | g;
 	b = (b << 4) | b;
@@ -324,6 +517,20 @@ WRITE_HANDLER( argus_txram_w )
 	}
 }
 
+READ_HANDLER( butasan_txram_r )
+{
+	return butasan_txram[ offset ];
+}
+
+WRITE_HANDLER( butasan_txram_w )
+{
+	if (butasan_txram[ offset ] != data)
+	{
+		butasan_txram[ offset ] = data;
+		tilemap_mark_tile_dirty(tx_tilemap, (offset ^ 0x7c0) >> 1);
+	}
+}
+
 READ_HANDLER( argus_bg1ram_r )
 {
 	return argus_bg1ram[ offset ];
@@ -335,6 +542,46 @@ WRITE_HANDLER( argus_bg1ram_w )
 	{
 		argus_bg1ram[ offset ] = data;
 		tilemap_mark_tile_dirty(bg1_tilemap, offset >> 1);
+	}
+}
+
+READ_HANDLER( butasan_bg0ram_r )
+{
+	return butasan_bg0ram[ offset ];
+}
+
+WRITE_HANDLER( butasan_bg0ram_w )
+{
+	if (butasan_bg0ram[ offset ] != data)
+	{
+		int idx;
+
+		butasan_bg0ram[ offset ] = data;
+
+		idx = ((offset & 0x01f) >> 1) | ((offset & 0x400) >> 6);
+		idx |= (offset & 0x3e0) ^ 0x1e0;
+
+		tilemap_mark_tile_dirty(bg0_tilemap, idx);
+	}
+}
+
+READ_HANDLER( butasan_bg1ram_r )
+{
+	return butasan_bg1ram[ offset ];
+}
+
+WRITE_HANDLER( butasan_bg1ram_w )
+{
+	if (butasan_bg1ram[ offset ] != data)
+	{
+		int idx;
+
+		butasan_bg1ram[ offset ] = data;
+
+		idx = (offset & 0x00f) | ((offset & 0x200) >> 5) | ((offset & 0x1f0) << 1);
+		idx ^= 0x0f0;
+
+		tilemap_mark_tile_dirty(bg1_tilemap, idx);
 	}
 }
 
@@ -357,6 +604,20 @@ WRITE_HANDLER( argus_bg0_scrolly_w )
 			tilemap_set_scrolly( bg0_tilemap, 0, scrolly );
 		else
 			tilemap_set_scrolly( bg0_tilemap, 0, (scrolly + 256) & 0x1ff );
+	}
+}
+
+WRITE_HANDLER( butasan_bg0_scrollx_w )
+{
+	if (argus_bg0_scrollx[ offset ] != data)
+	{
+		int scrollx;
+		argus_bg0_scrollx[ offset ] = data;
+		scrollx = argus_bg0_scrollx[0] | ( (argus_bg0_scrollx[1] & 0x01) << 8);
+		if (!argus_flipscreen)
+			tilemap_set_scrollx( bg0_tilemap, 0, scrollx );
+		else
+			tilemap_set_scrollx( bg0_tilemap, 0, (scrollx + 256) & 0x1ff );
 	}
 }
 
@@ -388,12 +649,60 @@ WRITE_HANDLER( argus_bg1_scrolly_w )
 	}
 }
 
-WRITE_HANDLER( argus_bg_veffect_w )
+WRITE_HANDLER( argus_bg_status_w )
 {
-	if (argus_bg_veffect != data)
+	if (argus_bg_status != data)
 	{
-		argus_bg_veffect = data;
-		tilemap_set_enable(bg1_tilemap, data & 1);
+		argus_bg_status = data;
+
+		/* Backgound enable */
+		tilemap_set_enable(bg1_tilemap, argus_bg_status & 1);
+
+		/* Gray / purple scale */
+		if (argus_bg_status & 2)
+		{
+			int offs;
+
+			for (offs = 0x400 ; offs < 0x500 ; offs ++)
+			{
+				argus_change_bg_palette( (offs - 0x0400) + 128,
+					(argus_paletteram[offs] << 8) | argus_paletteram[offs + 0x0400] );
+			}
+		}
+	}
+}
+
+WRITE_HANDLER( valtric_bg_status_w )
+{
+	if (argus_bg_status != data)
+	{
+		argus_bg_status = data;
+
+		/* Backgound enable */
+		tilemap_set_enable(bg1_tilemap, argus_bg_status & 1);
+
+		/* Gray / purple scale */
+		if (argus_bg_status & 2)
+		{
+			int offs;
+
+			for (offs = 0x400 ; offs < 0x600 ; offs += 2)
+			{
+				argus_change_bg_palette( ((offs - 0x0400) >> 1) + 256,
+					argus_paletteram[offs | 1] | (argus_paletteram[offs & ~1] << 8));
+			}
+		}
+	}
+}
+
+WRITE_HANDLER( butasan_bg0_status_w )
+{
+	if (argus_bg_status != data)
+	{
+		argus_bg_status = data;
+
+		/* Backgound enable */
+		tilemap_set_enable(bg0_tilemap, argus_bg_status & 1);
 	}
 }
 
@@ -503,6 +812,8 @@ WRITE_HANDLER( argus_paletteram_w )
 			argus_change_bg_palette( (offs - 0x0400) + 128,
 				(argus_paletteram[offs] << 8) | argus_paletteram[offs + 0x0400] );
 		}
+
+		argus_bg_purple = argus_paletteram[0x0ff] & 0x0f;
 	}
 }
 
@@ -521,7 +832,7 @@ WRITE_HANDLER( valtric_paletteram_w )
 		}
 		else if (offset >= 0x0400 && offset <= 0x05ff )
 		{
-			argus_change_palette( ((offset - 0x0400) >> 1) + 256,
+			argus_change_bg_palette( ((offset - 0x0400) >> 1) + 256,
 				argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
 		}
 		else if (offset >= 0x0600 && offset <= 0x07ff )
@@ -534,52 +845,91 @@ WRITE_HANDLER( valtric_paletteram_w )
 	{
 		argus_palette_intensity = (argus_paletteram[0x01fe] << 8) | argus_paletteram[0x01ff];
 
-		for (offs = 0x400 ; offs < 0x500 ; offs += 2)
+		for (offs = 0x400 ; offs < 0x600 ; offs += 2)
 		{
-			argus_change_bg_palette( ((offset - 0x0400) >> 1) + 256,
+			argus_change_bg_palette( ((offs - 0x0400) >> 1) + 256,
+				argus_paletteram[offs | 1] | (argus_paletteram[offs & ~1] << 8));
+		}
+
+		argus_bg_purple = argus_paletteram[0x01ff] & 0x0f;
+	}
+}
+
+WRITE_HANDLER( butasan_paletteram_w )
+{
+	argus_paletteram[ offset ] = data;
+
+	if (offset < 0x0200 )							/* BG1 color */
+	{
+		argus_change_palette( ((offset - 0x0000) >> 1) + 256,
+			argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+	}
+	else if (offset < 0x0240 )						/* BG0 color */
+	{
+		argus_change_palette( ((offset - 0x0200) >> 1) + 192,
+			argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+	}
+	else if (offset >= 0x0400 && offset <= 0x04ff )	/* Sprite color */
+	{
+		if (offset < 0x0480)			/* 16 colors */
+			argus_change_palette( ((offset - 0x0400) >> 1) + 0,
+				argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+		else							/* 8  colors */
+		{
+			argus_change_palette( (offset & 0x70) + ((offset & 0x00f) >> 1) + 64,
+				argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+			argus_change_palette( (offset & 0x70) + ((offset & 0x00f) >> 1) + 72,
 				argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
 		}
 	}
+	else if (offset >= 0x0600 && offset <= 0x07ff )	/* Text color */
+	{
+		argus_change_palette( ((offset - 0x0600) >> 1) + 512,
+			argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+	}
 }
+
+READ_HANDLER( butasan_txbackram_r )
+{
+	return butasan_txbackram[ offset ];
+}
+
+WRITE_HANDLER( butasan_txbackram_w )
+{
+	if (butasan_txbackram[ offset ] != data)
+	{
+		butasan_txbackram[ offset ] = data;
+	}
+}
+
+READ_HANDLER( butasan_bg0backram_r )
+{
+	return butasan_bg0backram[ offset ];
+}
+
+WRITE_HANDLER( butasan_bg0backram_w )
+{
+	if (butasan_bg0backram[ offset ] != data)
+	{
+		butasan_bg0backram[ offset ] = data;
+	}
+}
+
+WRITE_HANDLER( butasan_bg1_status_w )
+{
+	if (butasan_bg1_status != data)
+	{
+		butasan_bg1_status = data;
+
+		tilemap_set_enable(bg1_tilemap, butasan_bg1_status & 0x01);	/* Set enable flag */
+		tilemap_mark_all_tiles_dirty( bg1_tilemap );				/* Bank changed */
+	}
+}
+
 
 /***************************************************************************
   Screen refresh
 ***************************************************************************/
-
-static void mark_sprite_colors(int color_mask)
-{
-	unsigned short palette_map[16];
-
-	int offs;
-	int i;
-
-	memset ( palette_map, 0x00, sizeof(palette_map) );
-
-	/* Find colors used in the sprites */
-	for (offs = 11; offs < spriteram_size; offs += 16)
-	{
-		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
-		{
-			int tile, color;
-			tile  = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
-			color = spriteram[offs+4] & color_mask;
-			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
-		}
-	}
-
-	for (i = 0; i < 16; i ++)
-	{
-		int j;
-
-		if (palette_map[i])
-		{
-			for (j = 0 ; j < 15 ; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-			palette_used_colors[16 * i + 15] = PALETTE_COLOR_TRANSPARENT;
-		}
-	}
-}
 
 static void argus_bg0_scroll_handle( void )
 {
@@ -587,7 +937,7 @@ static void argus_bg0_scroll_handle( void )
 	int scrollx;
 	int dcolumn;
 
-	/* deficit between previous and current scroll value */
+	/* Deficit between previous and current scroll value */
 	scrollx = argus_bg0_scrollx[0] | (argus_bg0_scrollx[1] << 8);
 	delta = scrollx - prvscrollx;
 	prvscrollx = scrollx;
@@ -681,6 +1031,162 @@ static void argus_bg0_scroll_handle( void )
 	else
 		tilemap_set_scrollx(bg0_tilemap, 0, (scrollx + 256) & 0x1ff);
 
+}
+
+static void argus_mark_sprite_colors(void)
+{
+	unsigned short palette_map[16];
+
+	int offs;
+	int i;
+
+	memset ( palette_map, 0x00, sizeof(palette_map) );
+
+	/* Find colors used in the sprites */
+	for (offs = 11; offs < spriteram_size; offs += 16)
+	{
+		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
+		{
+			int tile, color;
+			tile  = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
+			color = spriteram[offs+4] & 0x07;
+			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
+		}
+	}
+
+	for (i = 0; i < 16; i ++)
+	{
+		int j;
+
+		if (palette_map[i])
+		{
+			for (j = 0 ; j < 15 ; j++)
+				if (palette_map[i] & (1 << j))
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			palette_used_colors[16 * i + 15] = PALETTE_COLOR_TRANSPARENT;
+		}
+	}
+}
+
+static void valtric_mark_sprite_colors(void)
+{
+	unsigned short palette_map[16];
+
+	int offs;
+	int i;
+
+	memset ( palette_map, 0x00, sizeof(palette_map) );
+
+	/* Find colors used in the sprites */
+	for (offs = 11; offs < spriteram_size; offs += 16)
+	{
+		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
+		{
+			int tile, color;
+			tile  = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
+			color = spriteram[offs+4] & 0x0f;
+			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
+		}
+	}
+
+	for (i = 0; i < 16; i ++)
+	{
+		int j;
+
+		if (palette_map[i])
+		{
+			for (j = 0 ; j < 15 ; j++)
+			{
+				if (palette_map[i] & (1 << j))
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+			palette_used_colors[16 * i + 15] = PALETTE_COLOR_TRANSPARENT;
+		}
+	}
+}
+
+static void butasan_mark_sprite_colors(void)
+{
+	unsigned short palette_map[16];
+
+	int offs;
+	int i, j;
+
+	memset ( palette_map, 0x00, sizeof(palette_map) );
+
+	/* Find colors used in the sprites */
+	for (offs = 8 ; offs < spriteram_size ; offs += 16)
+	{
+		int tile, color;
+
+		tile	 = spriteram[offs + 6] + ((spriteram[offs + 7] & 0x0f) << 8);
+		color	 = spriteram[offs + 1] & 0x0f;
+
+		if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
+		{
+			palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile];
+		}
+		else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
+		{
+			for ( i = 0 ; i <= 1 ; i ++ )
+			{
+				palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i];
+			}
+		}
+		else if ( offs >= 0x580 && offs < 0x620 )
+		{
+			for ( i = 0 ; i <= 1 ; i ++ )
+			{
+				for ( j = 0 ; j <= 1 ; j ++ )
+				{
+					palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i * 2 + j];
+				}
+			}
+		}
+		else if ( offs >= 0x620 && offs < 0x680 )
+		{
+			for ( i = 0 ; i <= 3 ; i ++ )
+			{
+				for ( j = 0 ; j <= 3 ; j ++ )
+				{
+					palette_map[color] |= Machine -> gfx[0] -> pen_usage[tile + i * 4 + j];
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < 12; i ++)
+	{
+		if (palette_map[i])
+		{
+			for (j = 0 ; j < 7 ; j++)
+			{
+				if (palette_map[i] & (1 << j))
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+			palette_used_colors[i * 16 + 7] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 8 ; j < 16 ; j++)
+			{
+				if (palette_map[i] & (1 << j))
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
+				else
+					palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+		}
+		else
+		{
+			for (j = 0 ; j < 16 ; j++)
+			{
+				palette_used_colors[i * 16 + j] = PALETTE_COLOR_UNUSED;
+			}
+		}
+	}
 }
 
 static void argus_draw_sprites(struct osd_bitmap *bitmap, int priority)
@@ -792,8 +1298,199 @@ static void valtric_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
+void butasan_draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+	/* Draw the sprites */
+	for (offs = 8 ; offs < spriteram_size ; offs += 16)
+	{
+		int sx, sy, tile, flipx, flipy, color;
+
+		sx = spriteram[offs + 2];
+		sy = 240 - spriteram[offs + 4];
+
+		if (spriteram[offs + 3] & 0x01) sx -= 256;
+		if (spriteram[offs + 5] & 0x01) sy += 256;
+
+		tile	 = spriteram[offs + 6] + ((spriteram[offs + 7] & 0x0f) << 8);
+		flipx	 = spriteram[offs + 0] & 0x01;
+		flipy	 = spriteram[offs + 0] & 0x04;
+		color	 = spriteram[offs + 1] & 0x0f;
+
+		if (!argus_flipscreen)
+		{
+			if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
+			{
+				drawgfx(bitmap,Machine -> gfx[0],
+							tile,
+							color,
+							flipx, flipy,
+							sx, sy,
+							&Machine -> visible_area,
+							TRANSPARENCY_PEN, 7);
+			}
+			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
+			{
+				int i;
+
+				for ( i = 0 ; i <= 1 ; i ++ )
+				{
+					int td;
+
+					td = (flipx) ? (1 - i) : i;
+
+					drawgfx(bitmap,Machine -> gfx[0],
+								tile + td,
+								color,
+								flipx, flipy,
+								sx + i * 16, sy,
+								&Machine -> visible_area,
+								TRANSPARENCY_PEN, 7);
+				}
+			}
+			else if ( offs >= 0x580 && offs < 0x620 )
+			{
+				int i, j;
+
+				for ( i = 0 ; i <= 1 ; i ++ )
+				{
+					for ( j = 0 ; j <= 1 ; j ++ )
+					{
+						int td;
+
+						if ( !flipy )
+							td = (flipx) ? (i * 2) + 1 - j : i * 2 + j;
+						else
+							td = (flipx) ? ( (1 - i) * 2 ) + 1 - j : (1 - i) * 2 + j;
+
+						drawgfx(bitmap,Machine -> gfx[0],
+									tile + td,
+									color,
+									flipx, flipy,
+									sx + j * 16, sy - i * 16,
+									&Machine -> visible_area,
+									TRANSPARENCY_PEN, 7);
+					}
+				}
+			}
+			else if ( offs >= 0x620 && offs < 0x680 )
+			{
+				int i, j;
+
+				for ( i = 0 ; i <= 3 ; i ++ )
+				{
+					for ( j = 0 ; j <= 3 ; j ++ )
+					{
+						int td;
+
+						if ( !flipy )
+							td = (flipx) ? (i * 4) + 3 - j : i * 4 + j;
+						else
+							td = (flipx) ? ( (3 - i) * 4 ) + 3 - j : (3 - i) * 4 + j;
+
+						drawgfx(bitmap,Machine -> gfx[0],
+									tile + td,
+									color,
+									flipx, flipy,
+									sx + j * 16, sy - i * 16,									&Machine -> visible_area,
+									TRANSPARENCY_PEN, 7);
+					}
+				}
+			}
+		}
+		else
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx ^= 0x01;
+			flipy ^= 0x04;
+
+			if ( (offs >= 0x100 && offs < 0x300) || (offs >= 0x400 && offs < 0x580) )
+			{
+				drawgfx(bitmap,Machine -> gfx[0],
+							tile,
+							color,
+							flipx, flipy,
+							sx, sy,
+							&Machine -> visible_area,
+							TRANSPARENCY_PEN, 7);
+			}
+			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
+			{
+				int i;
+
+				for ( i = 0 ; i <= 1 ; i ++ )
+				{
+					int td;
+
+					td = (flipx) ? i : (1 - i);
+
+					drawgfx(bitmap,Machine -> gfx[0],
+								tile + td,
+								color,
+								flipx, flipy,
+								sx - i * 16, sy,
+								&Machine -> visible_area,
+								TRANSPARENCY_PEN, 7);
+				}
+			}
+			else if ( offs >= 0x580 && offs < 0x620 )
+			{
+				int i, j;
+
+				for ( i = 0 ; i <= 1 ; i ++ )
+				{
+					for ( j = 0 ; j <= 1 ; j ++ )
+					{
+						int td;
+
+						if ( !flipy )
+							td = (flipx) ? (1 - i) * 2 + j : ( (1 - i) * 2 ) + 1 - j;
+						else
+							td = (flipx) ? i * 2 + j : (i * 2) + 1 - j;
+
+						drawgfx(bitmap,Machine -> gfx[0],
+									tile + td,
+									color,
+									flipx, flipy,
+									sx - j * 16, sy + i * 16,
+									&Machine -> visible_area,
+									TRANSPARENCY_PEN, 7);
+					}
+				}
+			}
+			else if ( offs >= 0x620 && offs < 0x680 )
+			{
+				int i, j;
+
+				for ( i = 0 ; i <= 3 ; i ++ )
+				{
+					for ( j = 0 ; j <= 3 ; j ++ )
+					{
+						int td;
+
+						if ( !flipy )
+							td = (flipx) ? (3 - i) * 4 + j : ( (3 - i) * 4 ) + 3 - j;
+						else
+							td = (flipx) ? i * 4 + j : (i * 4) + 3 - j;
+
+						drawgfx(bitmap,Machine -> gfx[0],
+									tile + td,
+									color,
+									flipx, flipy,
+									sx - j * 16, sy + i * 16,									&Machine -> visible_area,
+									TRANSPARENCY_PEN, 7);
+					}
+				}
+			}
+		}
+	}
+}
+
+
 #if MAME_DEBUG
-static void argus_log_vram(void)
+static void butasan_log_vram(void)
 {
 	int offs;
 
@@ -802,12 +1499,16 @@ static void argus_log_vram(void)
 		int i;
 		logerror("\nSprite RAM\n");
 		logerror("---------------------------------------\n");
+		logerror("       +0 +1 +2 +3 +4 +5 +6 +7  +8 +9 +a +b +c +d +e +f\n");
 		for (offs = 0 ; offs < spriteram_size ; offs += 16)
 		{
 			for (i = 0 ; i < 16 ; i ++)
 			{
 				if (i == 0)
-					logerror("%04x : ", offs + 0xf200);
+				{
+					logerror("%04x : ", offs + 0xf000);
+					logerror("%02x ", spriteram[offs]);
+				}
 				else if (i == 7)
 					logerror("%02x  ", spriteram[offs + 7]);
 				else if (i == 15)
@@ -818,12 +1519,16 @@ static void argus_log_vram(void)
 		}
 		logerror("\nColor RAM\n");
 		logerror("---------------------------------------\n");
+		logerror("       +0 +1 +2 +3 +4 +5 +6 +7  +8 +9 +a +b +c +d +e +f\n");
 		for (offs = 0 ; offs < 0xbf0 ; offs += 16)
 		{
 			for (i = 0 ; i < 16 ; i ++)
 			{
 				if (i == 0)
+				{
 					logerror("%04x : ", offs + 0xc400);
+					logerror("%02x ", argus_paletteram[offs]);
+				}
 				else if (i == 7)
 					logerror("%02x  ", argus_paletteram[offs + 7]);
 				else if (i == 15)
@@ -833,8 +1538,6 @@ static void argus_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed(KEYCODE_N) )
-		logerror("---------------------------------------\n");
 }
 #endif
 
@@ -846,7 +1549,7 @@ void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
-	mark_sprite_colors(0x07);
+	argus_mark_sprite_colors();
 	palette_recalc();
 
 	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
@@ -856,11 +1559,6 @@ void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
 	argus_draw_sprites(bitmap, 1);
 	tilemap_draw(bitmap, tx_tilemap,  0, 0);
-
-
-#if MAME_DEBUG
-	argus_log_vram();
-#endif
 }
 
 void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -868,7 +1566,7 @@ void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(ALL_TILEMAPS);
 
 	palette_init_used_colors();
-	mark_sprite_colors(0x0f);
+	valtric_mark_sprite_colors();
 	palette_recalc();
 
 	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
@@ -876,4 +1574,24 @@ void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
 	valtric_draw_sprites(bitmap);
 	tilemap_draw(bitmap, tx_tilemap,  0, 0);
+}
+
+void butasan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	butasan_mark_sprite_colors();
+	palette_recalc();
+
+	fillbitmap(bitmap, palette_transparent_pen, &Machine -> visible_area);
+
+	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
+	tilemap_draw(bitmap, bg0_tilemap, 0, 0);
+	butasan_draw_sprites(bitmap);
+	tilemap_draw(bitmap, tx_tilemap,  0, 0);
+
+#if MAME_DEBUG
+	butasan_log_vram();
+#endif
 }

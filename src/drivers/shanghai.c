@@ -4,10 +4,14 @@ Shanghai
 
 driver by Nicola Salmoria
 
-this is mostly working, but the HD63484 emulation is incomplete. The continue
-yes/no display is wrong, I think this is caused by missing "window" emulation.
+The HD63484 emulation is incomplete, it implements the bare minimum required
+to run these games.
 
-Also, the game locks up after you win a round.
+The end of round animation in Shanghai is wrong; change the opcode at 0xfb1f2
+to a NOP to jump to it immediately at the beginning of a round.
+
+I'm not sure about the refresh rate, 60Hz makes time match the dip switch
+settings, but music runs too fast.
 
 ***************************************************************************/
 
@@ -17,8 +21,10 @@ Also, the game locks up after you win a round.
 /* decoding of long commands. Commands can be up to 64KB long... but Shanghai */
 /* doesn't reach that length. */
 #define FIFO_LENGTH 50
+#define HD63484_RAM_SIZE 0x200000
 static int fifo_counter;
 static UINT16 fifo[FIFO_LENGTH];
+static UINT16 readfifo;
 static UINT8 *HD63484_ram;
 static UINT16 HD63484_reg[256/2];
 static int org,rwp;
@@ -69,9 +75,9 @@ static char *instruction_name[64] =
 int HD63484_start(void)
 {
 	fifo_counter = 0;
-	HD63484_ram = malloc(0x200000);
+	HD63484_ram = malloc(HD63484_RAM_SIZE);
 	if (!HD63484_ram) return 1;
-	memset(HD63484_ram,0,0x200000);
+	memset(HD63484_ram,0,HD63484_RAM_SIZE);
 	return 0;
 }
 
@@ -106,12 +112,12 @@ static void doclr(int opcode,UINT16 fill,int *dst,INT16 _ax,INT16 _ay)
 			if (ax == 0) break;
 			else if (ax > 0)
 			{
-				*dst = (*dst + 1) & 0x1fffff;
+				*dst = (*dst + 1) & (HD63484_RAM_SIZE-1);
 				ax--;
 			}
 			else
 			{
-				*dst = (*dst - 1) & 0x1fffff;
+				*dst = (*dst - 1) & (HD63484_RAM_SIZE-1);
 				ax++;
 			}
 		}
@@ -119,13 +125,13 @@ static void doclr(int opcode,UINT16 fill,int *dst,INT16 _ax,INT16 _ay)
 		ax = _ax;
 		if (_ay < 0)
 		{
-			*dst = (*dst + 384 - ax) & 0x1fffff;
+			*dst = (*dst + 384 - ax) & (HD63484_RAM_SIZE-1);
 			if (ay == 0) break;
 			ay++;
 		}
 		else
 		{
-			*dst = (*dst - 384 - ax) & 0x1fffff;
+			*dst = (*dst - 384 - ax) & (HD63484_RAM_SIZE-1);
 			if (ay == 0) break;
 			ay--;
 		}
@@ -189,14 +195,14 @@ static void docpy(int opcode,int src,int *dst,INT16 _ax,INT16 _ay)
 				if (ay == 0) break;
 				else if (ay > 0)
 				{
-					src = (src - 384) & 0x1fffff;
-					*dst = (*dst + dstep1) & 0x1fffff;
+					src = (src - 384) & (HD63484_RAM_SIZE-1);
+					*dst = (*dst + dstep1) & (HD63484_RAM_SIZE-1);
 					ay--;
 				}
 				else
 				{
-					src = (src + 384) & 0x1fffff;
-					*dst = (*dst + dstep1) & 0x1fffff;
+					src = (src + 384) & (HD63484_RAM_SIZE-1);
+					*dst = (*dst + dstep1) & (HD63484_RAM_SIZE-1);
 					ay++;
 				}
 			}
@@ -205,14 +211,14 @@ static void docpy(int opcode,int src,int *dst,INT16 _ax,INT16 _ay)
 				if (ax == 0) break;
 				else if (ax > 0)
 				{
-					src = (src + 1) & 0x1fffff;
-					*dst = (*dst + dstep1) & 0x1fffff;
+					src = (src + 1) & (HD63484_RAM_SIZE-1);
+					*dst = (*dst + dstep1) & (HD63484_RAM_SIZE-1);
 					ax--;
 				}
 				else
 				{
-					src = (src - 1) & 0x1fffff;
-					*dst = (*dst + dstep1) & 0x1fffff;
+					src = (src - 1) & (HD63484_RAM_SIZE-1);
+					*dst = (*dst + dstep1) & (HD63484_RAM_SIZE-1);
 					ax++;
 				}
 			}
@@ -223,15 +229,15 @@ static void docpy(int opcode,int src,int *dst,INT16 _ax,INT16 _ay)
 			ay = _ay;
 			if (_ax < 0)
 			{
-				src = (src - 1 - ay) & 0x1fffff;
-				*dst = (*dst + dstep2) & 0x1fffff;
+				src = (src - 1 - ay) & (HD63484_RAM_SIZE-1);
+				*dst = (*dst + dstep2) & (HD63484_RAM_SIZE-1);
 				if (ax == 0) break;
 				ax++;
 			}
 			else
 			{
-				src = (src + 1 - ay) & 0x1fffff;
-				*dst = (*dst + dstep2) & 0x1fffff;
+				src = (src + 1 - ay) & (HD63484_RAM_SIZE-1);
+				*dst = (*dst + dstep2) & (HD63484_RAM_SIZE-1);
 				if (ax == 0) break;
 				ax--;
 			}
@@ -241,21 +247,53 @@ static void docpy(int opcode,int src,int *dst,INT16 _ax,INT16 _ay)
 			ax = _ax;
 			if (_ay < 0)
 			{
-				src = (src + 384 - ax) & 0x1fffff;
-				*dst = (*dst + dstep2) & 0x1fffff;
+				src = (src + 384 - ax) & (HD63484_RAM_SIZE-1);
+				*dst = (*dst + dstep2) & (HD63484_RAM_SIZE-1);
 				if (ay == 0) break;
 				ay++;
 			}
 			else
 			{
-				src = (src - 384 - ax) & 0x1fffff;
-				*dst = (*dst + dstep2) & 0x1fffff;
+				src = (src - 384 - ax) & (HD63484_RAM_SIZE-1);
+				*dst = (*dst + dstep2) & (HD63484_RAM_SIZE-1);
 				if (ay == 0) break;
 				ay--;
 			}
 		}
 	}
 }
+
+
+
+#define PLOT(addr,OPM)								\
+switch (OPM)										\
+{													\
+	case 0:											\
+		HD63484_ram[addr]  = cl0; break;			\
+	case 1:											\
+		HD63484_ram[addr] |= cl0; break;			\
+	case 2:											\
+		HD63484_ram[addr] &= cl0; break;			\
+	case 3:											\
+		HD63484_ram[addr] ^= cl0; break;			\
+	case 4:											\
+		if (HD63484_ram[addr] == (ccmp & 0xff))		\
+			HD63484_ram[addr] = cl0;				\
+		break;										\
+	case 5:											\
+		if (HD63484_ram[addr] != (ccmp & 0xff))		\
+			HD63484_ram[addr] = cl0;				\
+		break;										\
+	case 6:											\
+		if (HD63484_ram[addr] < (cl0 & 0xff))		\
+			HD63484_ram[addr] = cl0;				\
+		break;										\
+	case 7:											\
+		if (HD63484_ram[addr] > (cl0 & 0xff))		\
+			HD63484_ram[addr] = cl0;				\
+		break;										\
+}													\
+
 
 
 void HD63484_command_w(UINT16 cmd)
@@ -287,21 +325,35 @@ void HD63484_command_w(UINT16 cmd)
 
 		if (fifo[0] == 0x0400)	/* ORG */
 			org = ((fifo[1] & 0x00ff) << 12) | ((fifo[2] & 0xfff0) >> 4);
-		else if (fifo[0] == 0x0800)
-			cl0 = fifo[1];
-		else if (fifo[0] == 0x0801)
-			cl1 = fifo[1];
-		else if (fifo[0] == 0x0802)
-			ccmp = fifo[1];
-		else if (fifo[0] == 0x080c)
-			rwp = (rwp & 0x00fff) | ((fifo[1] & 0x00ff) << 12);
-		else if (fifo[0] == 0x080d)
-			rwp = (rwp & 0xff000) | ((fifo[1] & 0xfff0) >> 4);
+		else if ((fifo[0] & 0xffe0) == 0x0800)	/* WPR */
+		{
+			if (fifo[0] == 0x0800)
+				cl0 = fifo[1];
+			else if (fifo[0] == 0x0801)
+				cl1 = fifo[1];
+			else if (fifo[0] == 0x0802)
+				ccmp = fifo[1];
+			else if (fifo[0] == 0x080c)
+				rwp = (rwp & 0x00fff) | ((fifo[1] & 0x00ff) << 12);
+			else if (fifo[0] == 0x080d)
+				rwp = (rwp & 0xff000) | ((fifo[1] & 0xfff0) >> 4);
+			else
+logerror("unsupported register\n");
+		}
+		else if ((fifo[0] & 0xfff0) == 0x1800)	/* WPTN */
+		{
+			/* pattern RAM not supported */
+		}
+		else if (fifo[0] == 0x4400)	/* RD */
+		{
+			readfifo = HD63484_ram[2*rwp] | (HD63484_ram[2*rwp+1] << 8);
+			rwp = (rwp + 1) & (HD63484_RAM_SIZE/2-1);
+		}
 		else if (fifo[0] == 0x4800)	/* WT */
 		{
 			HD63484_ram[2*rwp]   = fifo[1] & 0x00ff ;
 			HD63484_ram[2*rwp+1] = (fifo[1] & 0xff00) >> 8;
-			rwp = (rwp + 1) & 0xfffff;
+			rwp = (rwp + 1) & (HD63484_RAM_SIZE/2-1);
 		}
 		else if (fifo[0] == 0x5800)	/* CLR */
 		{
@@ -338,6 +390,145 @@ rwp /= 2;
 			cpx = fifo[1];
 			cpy = fifo[2];
 		}
+//		else if ((fifo[0] & 0xff00) == 0x8800)	/* ALINE */
+		else if ((fifo[0] & 0xfff8) == 0x8800)	/* ALINE */
+		{
+			INT16 ex,ey,sx,sy;
+			INT16 ax,ay;
+			int dst;
+
+			sx = cpx;
+			sy = cpy;
+			ex = fifo[1];
+			ey = fifo[2];
+
+			ax = ex - sx;
+			ay = ey - sy;
+
+			if (abs(ax) >= abs(ay))
+			{
+				while (ax)
+				{
+					dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
+					PLOT(dst,fifo[0] & 0x0007)
+
+					if (ax > 0)
+					{
+						cpx++;
+						ax--;
+					}
+					else
+					{
+						cpx--;
+						ax++;
+					}
+					cpy = sy + ay * (cpx - sx) / (ex - sx);
+				}
+			}
+			else
+			{
+				while (ay)
+				{
+					dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
+					PLOT(dst,fifo[0] & 0x0007)
+
+					if (ay > 0)
+					{
+						cpy++;
+						ay--;
+					}
+					else
+					{
+						cpy--;
+						ay++;
+					}
+					cpx = sx + ax * (cpy - sy) / (ey - sy);
+				}
+			}
+		}
+//		else if ((fifo[0] & 0xff00) == 0x9000)	/* ARCT */
+		else if ((fifo[0] & 0xfff8) == 0x9000)	/* ARCT */
+		{
+			INT16 pcx,pcy;
+			INT16 ax,ay;
+			int dst;
+
+			pcx = fifo[1];
+			pcy = fifo[2];
+			dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
+
+			ax = pcx - cpx;
+			for (;;)
+			{
+				PLOT(dst,fifo[0] & 0x0007)
+
+				if (ax == 0) break;
+				else if (ax > 0)
+				{
+					dst = (dst + 1) & (HD63484_RAM_SIZE-1);
+					ax--;
+				}
+				else
+				{
+					dst = (dst - 1) & (HD63484_RAM_SIZE-1);
+					ax++;
+				}
+			}
+
+			ay = pcy - cpy;
+			for (;;)
+			{
+				PLOT(dst,fifo[0] & 0x0007)
+
+				if (ay == 0) break;
+				else if (ay > 0)
+				{
+					dst = (dst - 384) & (HD63484_RAM_SIZE-1);
+					ay--;
+				}
+				else
+				{
+					dst = (dst + 384) & (HD63484_RAM_SIZE-1);
+					ay++;
+				}
+			}
+
+			ax = cpx - pcx;
+			for (;;)
+			{
+				PLOT(dst,fifo[0] & 0x0007)
+
+				if (ax == 0) break;
+				else if (ax > 0)
+				{
+					dst = (dst + 1) & (HD63484_RAM_SIZE-1);
+					ax--;
+				}
+				else
+				{
+					dst = (dst - 1) & (HD63484_RAM_SIZE-1);
+					ax++;
+				}
+			}
+
+			ay = cpy - pcy;
+			for (;;)
+			{
+				PLOT(dst,fifo[0] & 0x0007)
+
+				if (ay == 0) break;
+				else if (ay > 0)
+				{
+					dst = (dst - 384) & (HD63484_RAM_SIZE-1);
+					ay--;
+				}
+				else
+				{
+					dst = (dst + 384) & (HD63484_RAM_SIZE-1);
+					ay++;
+				}
+			}
+		}
 //		else if ((fifo[0] & 0xff00) == 0xc000)	/* AFRCT */
 		else if ((fifo[0] & 0xfff8) == 0xc000)	/* AFRCT */
 		{
@@ -349,49 +540,23 @@ rwp /= 2;
 			pcy = fifo[2];
 			ax = pcx - cpx;
 			ay = pcy - cpy;
-			dst = (2*org + cpx - cpy * 384) & 0x1fffff;
+			dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
 
 			for (;;)
 			{
 				for (;;)
 				{
-					switch (fifo[0] & 0x0007)
-					{
-						case 0:
-							HD63484_ram[dst]  = cl0; break;
-						case 1:
-							HD63484_ram[dst] |= cl0; break;
-						case 2:
-							HD63484_ram[dst] &= cl0; break;
-						case 3:
-							HD63484_ram[dst] ^= cl0; break;
-						case 4:
-							if (HD63484_ram[dst] == (ccmp & 0xff))
-								HD63484_ram[dst] = cl0;
-							break;
-						case 5:
-							if (HD63484_ram[dst] != (ccmp & 0xff))
-								HD63484_ram[dst] = cl0;
-							break;
-						case 6:
-							if (HD63484_ram[dst] < (cl0 & 0xff))
-								HD63484_ram[dst] = cl0;
-							break;
-						case 7:
-							if (HD63484_ram[dst] > (cl0 & 0xff))
-								HD63484_ram[dst] = cl0;
-							break;
-					}
+					PLOT(dst,fifo[0] & 0x0007)
 
 					if (ax == 0) break;
 					else if (ax > 0)
 					{
-						dst = (dst + 1) & 0x1fffff;
+						dst = (dst + 1) & (HD63484_RAM_SIZE-1);
 						ax--;
 					}
 					else
 					{
-						dst = (dst - 1) & 0x1fffff;
+						dst = (dst - 1) & (HD63484_RAM_SIZE-1);
 						ax++;
 					}
 				}
@@ -399,17 +564,26 @@ rwp /= 2;
 				ax = pcx - cpx;
 				if (pcy < cpy)
 				{
-					dst = (dst + 384 - ax) & 0x1fffff;
+					dst = (dst + 384 - ax) & (HD63484_RAM_SIZE-1);
 					if (ay == 0) break;
 					ay++;
 				}
 				else
 				{
-					dst = (dst - 384 - ax) & 0x1fffff;
+					dst = (dst - 384 - ax) & (HD63484_RAM_SIZE-1);
 					if (ay == 0) break;
 					ay--;
 				}
 			}
+		}
+//		else if ((fifo[0] & 0xff00) == 0xcc00)	/* DOT */
+		else if ((fifo[0] & 0xfff8) == 0xcc00)	/* DOT */
+		{
+			int dst;
+
+			dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
+
+			PLOT(dst,fifo[0] & 0x0007)
 		}
 //		else if ((fifo[0] & 0xf000) == 0xe000)	/* AGCPY */
 		else if ((fifo[0] & 0xf0f8) == 0xe000)	/* AGCPY */
@@ -419,8 +593,8 @@ rwp /= 2;
 
 			pcx = fifo[1];
 			pcy = fifo[2];
-			src = (2*org + pcx - pcy * 384) & 0x1fffff;
-			dst = (2*org + cpx - cpy * 384) & 0x1fffff;
+			src = (2*org + pcx - pcy * 384) & (HD63484_RAM_SIZE-1);
+			dst = (2*org + cpx - cpy * 384) & (HD63484_RAM_SIZE-1);
 
 			docpy(fifo[0],src,&dst,fifo[3],fifo[4]);
 
@@ -428,7 +602,10 @@ rwp /= 2;
 			cpy = (dst - 2*org) / 384;
 		}
 		else
+{
 logerror("unsupported command\n");
+usrintf_showmessage("unsupported command %s (%04x)",instruction_name[fifo[0]>>10],fifo[0]);
+}
 
 		fifo_counter = 0;
 	}
@@ -440,8 +617,8 @@ static READ_HANDLER( HD63484_status_r )
 {
 	if (offset == 1) return 0xff;	/* high 8 bits - not used */
 
-	if (cpu_get_pc() != 0xfced6) logerror("%05x: HD63484 status read\n",cpu_get_pc());
-	return 0x22;	/* write FIFO ready + command end */
+	if (cpu_get_pc() != 0xfced6 && cpu_get_pc() != 0xfe1d6) logerror("%05x: HD63484 status read\n",cpu_get_pc());
+	return 0x22|4;	/* write FIFO ready + command end    + read FIFO ready */
 }
 
 static WRITE_HANDLER( HD63484_address_w )
@@ -481,6 +658,11 @@ static READ_HANDLER( HD63484_data_r )
 	if (regno == 0x80)
 	{
 		res = cpu_getscanline();
+	}
+	else if (regno == 0)
+	{
+logerror("%05x: HD63484 read FIFO\n",cpu_get_pc());
+		res = readfifo;
 	}
 	else
 	{
@@ -539,12 +721,15 @@ void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x,y,b;
 
+
+	palette_recalc();
+
 	b = 2 * (((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
 	for (y = 0;y < 280;y++)
 	{
 		for (x = 0;x < 384;x++)
 		{
-			b &= 0x1fffff;
+			b &= (HD63484_RAM_SIZE-1);
 			plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
 			b++;
 		}
@@ -552,14 +737,20 @@ void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if ((HD63484_reg[0x06/2] & 0x0300) == 0x0300)
 	{
+		int sy = (HD63484_reg[0x94/2] & 0x0fff) - (HD63484_reg[0x88/2] >> 8);
+		int h = HD63484_reg[0x96/2] & 0x0fff;
+		int sx = ((HD63484_reg[0x92/2] >> 8) - (HD63484_reg[0x84/2] >> 8)) * 4;
+		int w = (HD63484_reg[0x92/2] & 0xff) * 4;
+		if (sx < 0) sx = 0;	/* not sure about this (shangha2 title screen) */
+
 		b = 2 * (((HD63484_reg[0xdc/2] & 0x001f) << 16) + HD63484_reg[0xde/2]);
-		for (y = 0;y < 280;y++)
+		for (y = sy;y <= sy+h && y < 280;y++)
 		{
 			for (x = 0;x < 384;x++)
 			{
-				b &= 0x1fffff;
-				if (HD63484_ram[b])
-					plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
+				b &= (HD63484_RAM_SIZE-1);
+				if (x <= w && x + sx >= 0 && x+sx < 384)
+					plot_pixel(bitmap,x+sx,y,Machine->pens[HD63484_ram[b]]);
 				b++;
 			}
 		}
@@ -581,12 +772,12 @@ static WRITE_HANDLER( shanghai_coin_w )
 
 static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x03fff, MRA_RAM },
-	{ 0xa0000, 0xfffff, MRA_ROM },
+	{ 0x80000, 0xfffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x03fff, MWA_RAM },
-	{ 0xa0000, 0xfffff, MWA_ROM },
+	{ 0x80000, 0xfffff, MWA_ROM },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -605,6 +796,36 @@ static PORT_WRITE_START( writeport )
 	{ 0x20, 0x20, YM2203_control_port_0_w },
 	{ 0x22, 0x22, YM2203_write_port_0_w },
 	{ 0x4c, 0x4c, shanghai_coin_w },
+PORT_END
+
+
+static MEMORY_READ_START( shangha2_readmem )
+	{ 0x00000, 0x03fff, MRA_RAM },
+	{ 0x80000, 0xfffff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( shangha2_writemem )
+	{ 0x00000, 0x03fff, MWA_RAM },
+	{ 0x04000, 0x041ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
+	{ 0x80000, 0xfffff, MWA_ROM },
+MEMORY_END
+
+static PORT_READ_START( shangha2_readport )
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x10, 0x10, input_port_1_r },
+	{ 0x20, 0x20, input_port_2_r },
+	{ 0x30, 0x31, HD63484_status_r },
+	{ 0x32, 0x33, HD63484_data_r },
+	{ 0x40, 0x40, YM2203_status_port_0_r },
+	{ 0x42, 0x42, YM2203_read_port_0_r },
+PORT_END
+
+static PORT_WRITE_START( shangha2_writeport )
+	{ 0x30, 0x31, HD63484_address_w },
+	{ 0x32, 0x33, HD63484_data_w },
+	{ 0x40, 0x40, YM2203_control_port_0_w },
+	{ 0x42, 0x42, YM2203_write_port_0_w },
+	{ 0x50, 0x50, shanghai_coin_w },
 PORT_END
 
 
@@ -671,21 +892,99 @@ INPUT_PORTS_START( shanghai )
 	PORT_DIPNAME( 0x02, 0x02, "Help" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "2 Players Move Time" )
+	PORT_DIPNAME( 0x0c, 0x08, "2 Players Move Time" )
 	PORT_DIPSETTING(    0x0c, "8" )
 	PORT_DIPSETTING(    0x08, "10" )
 	PORT_DIPSETTING(    0x04, "12" )
 	PORT_DIPSETTING(    0x00, "14" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus Time for Making Pair" )
+	PORT_DIPNAME( 0x30, 0x20, "Bonus Time for Making Pair" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Start Time" )
+	PORT_DIPNAME( 0xc0, 0x40, "Start Time" )
 	PORT_DIPSETTING(    0xc0, "30" )
 	PORT_DIPSETTING(    0x80, "60" )
 	PORT_DIPSETTING(    0x40, "90" )
 	PORT_DIPSETTING(    0x00, "120" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( shangha2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x06, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x00, "2 Players Move Time" )
+	PORT_DIPSETTING(    0x08, "8" )
+	PORT_DIPSETTING(    0x00, "10" )
+	PORT_DIPNAME( 0x30, 0x20, "Bonus Time for Making Pair" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0xc0, 0x40, "Start Time" )
+	PORT_DIPSETTING(    0xc0, "30" )
+	PORT_DIPSETTING(    0x80, "60" )
+	PORT_DIPSETTING(    0x40, "90" )
+	PORT_DIPSETTING(    0x00, "120" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Mystery Tiles" )
+	PORT_DIPSETTING(    0x03, "0" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "6" )
+	PORT_DIPSETTING(    0x00, "8" )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
 
@@ -693,7 +992,7 @@ INPUT_PORTS_END
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	1500000,	/* ??? */
+	16000000/4,	/* ? */
 	{ YM2203_VOL(80,15) },
 	{ input_port_3_r },
 	{ input_port_4_r },
@@ -709,7 +1008,7 @@ static const struct MachineDriver machine_driver_shanghai =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ??? */
+			16000000/2,	/* ? */
 			readmem,writemem,readport,writeport,
 			shanghai_interrupt,1,
 			0,0
@@ -726,6 +1025,44 @@ static const struct MachineDriver machine_driver_shanghai =
 	shanghai_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
+	0,
+	shanghai_vh_start,
+	shanghai_vh_stop,
+	shanghai_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_shangha2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_V30,
+			16000000/2,	/* ? */
+			shangha2_readmem,shangha2_writemem,shangha2_readport,shangha2_writeport,
+			shanghai_interrupt,1,
+			0,0
+		}
+	},
+	30, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	384, 280, { 0, 384-1, 0, 280-1 },
+	0,
+	256,0,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	shanghai_vh_start,
 	shanghai_vh_stop,
@@ -759,6 +1096,15 @@ ROM_START( shanghai )
 	ROM_LOAD16_BYTE( "shg-36b.rom", 0xe0000, 0x10000, 0xa1d6af96 )
 ROM_END
 
+ROM_START( shangha2 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "sht-27j", 0x80001, 0x20000, 0x969cbf00 )
+	ROM_LOAD16_BYTE( "sht-26j", 0x80000, 0x20000, 0x4bf01ab4 )
+	ROM_LOAD16_BYTE( "sht-31j", 0xc0001, 0x20000, 0x312e3b9d )
+	ROM_LOAD16_BYTE( "sht-30j", 0xc0000, 0x20000, 0x2861a894 )
+ROM_END
 
 
-GAMEX( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai", GAME_NOT_WORKING )
+
+GAME( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0,       "Sunsoft", "Shanghai (Japan)" )
+GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0_16BIT, "Sunsoft", "Shanghai II (Japan)" )

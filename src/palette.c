@@ -1232,6 +1232,11 @@ READ16_HANDLER( paletteram16_2_word_r )
 	return paletteram16_2[offset];
 }
 
+READ32_HANDLER( paletteram32_r )
+{
+	return paletteram32[offset];
+}
+
 WRITE_HANDLER( paletteram_RRRGGGBB_w )
 {
 	int r,g,b;

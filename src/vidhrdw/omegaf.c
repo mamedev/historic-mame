@@ -80,9 +80,7 @@ unsigned char *omegaf_fg_videoram;
 unsigned char *omegaf_bg0_videoram;
 unsigned char *omegaf_bg1_videoram;
 unsigned char *omegaf_bg2_videoram;
-unsigned char *omegaf_spriteram;
 size_t omegaf_fgvideoram_size;
-size_t omegaf_spriteram_size;
 
 static int omegaf_bg0_bank = 0;
 static int omegaf_bg1_bank = 0;
@@ -559,20 +557,20 @@ static void mark_sprite_colors(void)
 	memset (palette_map, 0x00, sizeof (palette_map));
 
 	/* Find colors used in the sprites */
-	for (offs = 11 ;offs < omegaf_spriteram_size; offs += 16)
+	for (offs = 11 ;offs < spriteram_size; offs += 16)
 	{
 		int tile, big, color;
 
-		if (omegaf_spriteram[offs + 2] & 2)
+		if (spriteram[offs + 2] & 2)
 		{
-			tile = omegaf_spriteram[offs + 3] |
-					((omegaf_spriteram[offs + 2] & 0xc0) << 2) |
-					((omegaf_spriteram[offs + 2] & 0x08) << 7);
+			tile = spriteram[offs + 3] |
+					((spriteram[offs + 2] & 0xc0) << 2) |
+					((spriteram[offs + 2] & 0x08) << 7);
 
-			big  = omegaf_spriteram[offs + 2] & 4;
+			big  = spriteram[offs + 2] & 4;
 			if (big)
 				tile >>= 2;
-			color = omegaf_spriteram[offs + 4] & 0x0f;
+			color = spriteram[offs + 4] & 0x0f;
 			palette_map[color] |= Machine -> gfx[(big) ? 4 : 3] -> pen_usage[tile];
 		}
 	}
@@ -603,26 +601,26 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	int offs;
 
 	/* Draw the sprites */
-	for (offs = 11 ;offs < omegaf_spriteram_size; offs += 16)
+	for (offs = 11 ;offs < spriteram_size; offs += 16)
 	{
 		int sx, sy, tile, color, flipx, flipy, big;
 
-		if (omegaf_spriteram[offs + 2] & 2)
+		if (spriteram[offs + 2] & 2)
 		{
-			sx = omegaf_spriteram[offs + 1];
-			sy = omegaf_spriteram[offs];
-			if (omegaf_spriteram[offs + 2] & 1)
+			sx = spriteram[offs + 1];
+			sy = spriteram[offs];
+			if (spriteram[offs + 2] & 1)
 				sx -= 256;
-			tile = omegaf_spriteram[offs + 3] |
-					((omegaf_spriteram[offs + 2] & 0xc0) << 2) |
-					((omegaf_spriteram[offs + 2] & 0x08) << 7);
+			tile = spriteram[offs + 3] |
+					((spriteram[offs + 2] & 0xc0) << 2) |
+					((spriteram[offs + 2] & 0x08) << 7);
 
-			big  = omegaf_spriteram[offs + 2] & 4;
+			big  = spriteram[offs + 2] & 4;
 			if (big)
 				tile >>= 2;
-			flipx = omegaf_spriteram[offs + 2] & 0x10;
-			flipy = omegaf_spriteram[offs + 2] & 0x20;
-			color = omegaf_spriteram[offs + 4] & 0x0f;
+			flipx = spriteram[offs + 2] & 0x10;
+			flipy = spriteram[offs + 2] & 0x20;
+			color = spriteram[offs + 4] & 0x0f;
 			drawgfx(bitmap,Machine->gfx[(big) ? 4 : 3],
 					tile,
 					color,

@@ -607,7 +607,7 @@ CINEMA_MACHINE (ripoff, 0, 0, 1024, 768, SOUND_SAMPLES, &ripoff_samples_interfac
 
 static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
 
-READ_HANDLER( speedfrk_input_port_1_r )
+READ16_HANDLER( speedfrk_input_port_1_r )
 {
     static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
 	int val, current_frame;
@@ -702,7 +702,7 @@ INPUT_PORTS_END
 
 void speedfrk_init_machine (void)
 {
-	install_port_read_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r );
+	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r );
 
 	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_set_sound_handler (0);

@@ -7,13 +7,11 @@
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "generic.h"
 
 
 unsigned char *c1942_fgvideoram;
 unsigned char *c1942_bgvideoram;
-unsigned char *c1942_spriteram;
-size_t c1942_spriteram_size;
 
 static int c1942_palette_bank;
 static struct tilemap *fg_tilemap, *bg_tilemap;
@@ -201,16 +199,16 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	for (offs = c1942_spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int i,code,col,sx,sy,dir;
 
 
-		code = (c1942_spriteram[offs] & 0x7f) + 4*(c1942_spriteram[offs + 1] & 0x20)
-				+ 2*(c1942_spriteram[offs] & 0x80);
-		col = c1942_spriteram[offs + 1] & 0x0f;
-		sx = c1942_spriteram[offs + 3] - 0x10 * (c1942_spriteram[offs + 1] & 0x10);
-		sy = c1942_spriteram[offs + 2];
+		code = (spriteram[offs] & 0x7f) + 4*(spriteram[offs + 1] & 0x20)
+				+ 2*(spriteram[offs] & 0x80);
+		col = spriteram[offs + 1] & 0x0f;
+		sx = spriteram[offs + 3] - 0x10 * (spriteram[offs + 1] & 0x10);
+		sy = spriteram[offs + 2];
 		dir = 1;
 		if (flip_screen)
 		{
@@ -220,7 +218,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		}
 
 		/* handle double / quadruple height */
-		i = (c1942_spriteram[offs + 1] & 0xc0) >> 6;
+		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do

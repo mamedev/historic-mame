@@ -1264,12 +1264,22 @@ profiler_mark(PROFILER_INPUT);
 	in = input_analog[port];
 	sensitivity = IP_GET_SENSITIVITY(in);
 
-	delta = cpu_scalebyfcount(input_analog_current_value[port] - input_analog_previous_value[port]);
+	/* apply scaling fairly in both positive and negative directions */
+	delta = input_analog_current_value[port] - input_analog_previous_value[port];
+	if (delta >= 0)
+		delta = cpu_scalebyfcount(delta);
+	else
+		delta = -cpu_scalebyfcount(-delta);
 
 	current = input_analog_previous_value[port] + delta;
+	/* apply scaling fairly in both positive and negative directions */
+	if (current >= 0)
+		current = (current * sensitivity + 50) / 100;
+	else
+		current = (-current * sensitivity + 50) / -100;
 
 	input_port_value[port] &= ~in->mask;
-	input_port_value[port] |= ((current * sensitivity + 50) / 100) & in->mask;
+	input_port_value[port] |= current & in->mask;
 
 	if (playback)
 		readword(playback,&input_port_value[port]);

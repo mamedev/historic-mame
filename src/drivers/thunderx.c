@@ -4,12 +4,15 @@ Super Contra / Thunder Cross
 
 driver by Bryan McPhail, Manuel Abadia
 
+K052591 emulation by Eddie Edwards
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
+#include "mamedbg.h"
 
 static void scontra_init_machine(void);
 static void thunderx_init_machine(void);
@@ -19,6 +22,9 @@ extern int scontra_priority;
 int scontra_vh_start(void);
 void scontra_vh_stop(void);
 void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+static int unknown_enable = 0;
+extern int debug_key_pressed;
 
 /***************************************************************************/
 
@@ -43,7 +49,7 @@ static int thunderx_interrupt( void )
 
 static int palette_selected;
 static int bank;
-static unsigned char *ram,*unknownram;
+static unsigned char *ram,*cdram;
 
 static READ_HANDLER( scontra_bankedram_r )
 {
@@ -66,7 +72,10 @@ static READ_HANDLER( thunderx_bankedram_r )
 	if ((bank & 0x01) == 0)
 	{
 		if (bank & 0x10)
-			return unknownram[offset];
+		{
+//			debug_signal_breakpoint(0);
+			return cdram[offset];
+		}
 		else
 			return paletteram_r(offset);
 	}
@@ -79,7 +88,10 @@ static WRITE_HANDLER( thunderx_bankedram_w )
 	if ((bank & 0x01) == 0)
 	{
 		if (bank & 0x10)
-			unknownram[offset] = data;
+		{
+//			if (offset == 0x200)	debug_signal_breakpoint(1);
+			cdram[offset] = data;
+		}
 		else
 			paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 	}
@@ -87,7 +99,13 @@ static WRITE_HANDLER( thunderx_bankedram_w )
 		ram[offset] = data;
 }
 
-// calculate_collisions
+// run_collisions
+//
+// collide objects from s0 to e0 against
+// objects from s1 to e1
+//
+// only compare objects with the specified bits (cm) set in their flags
+// only set object 0's hit bit if (hm & 0x40) is true
 //
 // the data format is:
 //
@@ -96,121 +114,124 @@ static WRITE_HANDLER( thunderx_bankedram_w )
 // +2 : height (4 pixel units)
 // +3 : x (2 pixel units) of center of object
 // +4 : y (2 pixel units) of center of object
-//
-// flags:
-//
-// 0x01 : ???? Always set 1 by program
-// 0x02 : ???? Always set 0 by program
-// 0x04 : 0 = player 1 object; 1 = player 2 object
-// 0x08 : ???? Always set 0 by program
-// 0x10 : set by this code to indicate a collision
-// 0x20 : set to indicate that the object is an enemy bullet
-//        (also used on some bosses - object damages players but affects nothing else)
-// 0x40 : set to indicate that the object needs colliding
-// 0x80 : set to indicate that the entry is valid
-//
-// entries 0 to 1 are the players
-// entries 2 to 41 are player objects, but sometimes enemy bullets appear in this area
-// entries 42 to 117 are enemy objects
 
-static void calculate_collisions( void )
+static void run_collisions(int s0, int e0, int s1, int e1, int cm, int hm)
 {
-	unsigned char* ptr1;
-	unsigned char* ptr2;
-	int	i,j;
+	unsigned char*	p0;
+	unsigned char*	p1;
+	int				ii,jj;
 
-	// find out the range
-	// [0:1] point to the last byte to be examined
-	const int maxobj = 118;
-
-	// clear the flags
-	ptr1 = &unknownram[0x10];
-	for (i = 0; i < maxobj; i++, ptr1 += 5)
+	p0 = &cdram[16 + 5*s0];
+	for (ii = s0; ii < e0; ii++, p0 += 5)
 	{
-		ptr1[0] &= 0xEF;
-	}
+		int	l0,r0,b0,t0;
 
-	// i covers all the player objects 0 to 41
-	ptr1 = &unknownram[0x10];
-	for (i = 0; i < 42; i++, ptr1 += 5)
-	{
-		int	l1,r1,t1,b1;
+		// check valid
+		if (!(p0[0] & cm))			continue;
 
-		// check entry is valid and needs colliding
-		// want 0x80 (entry valid) and 0x40 (needs colliding)
-		if ((ptr1[0] & 0xC0) != 0xC0)	continue;
+		// get area
+		l0 = p0[3] - p0[1];
+		r0 = p0[3] + p0[1];
+		t0 = p0[4] - p0[2];
+		b0 = p0[4] + p0[2];
 
-		// check this is not an enemy bullet
-		// we don't collide enemy bullets against anything
-		// except the player
-		if (!(ptr1[0] & 0x20))			continue;
-
-		// get area of player object
-		l1 = ptr1[3] - ptr1[1];
-		r1 = ptr1[3] + ptr1[1];
-		t1 = ptr1[4] - ptr1[2];
-		b1 = ptr1[4] + ptr1[2];
-
-		// j covers all the enemy objects 42 to 117
-		// if this is a player, j also covers the player
-		// objects so we can check for enemy bullets, which
-		// are sometimes placed there
-		j = (i < 2) ? 2 : 42;
-		ptr2 = &unknownram[0x10] + j * 5;
-		for (; j < maxobj; j++, ptr2 += 5)
+		p1 = &cdram[16 + 5*s1];
+		for (jj = s1; jj < e1; jj++,p1 += 5)
 		{
-			int	l2,r2,t2,b2;
+			int	l1,r1,b1,t1;
 
-			// check entry is valid and needs colliding
-			// want 0x80 (entry valid) and 0x40 (needs colliding)
-			if ((ptr2[0] & 0xC0) != 0xC0)		continue;
+			// check valid
+			if (!(p1[0] & cm))		continue;
 
-			// is this an enemy bullet?
-			if (ptr2[0] & 0x20)
-			{
-				// no: so skip if we're in the player area
-				if (j < 42)		continue;
-			}
-			else
-			{
-				// yes: so skip if we're not a player
-				if (i >= 2)		continue;
-			}
+			// get area
+			l1 = p1[3] - p1[1];
+			r1 = p1[3] + p1[1];
+			t1 = p1[4] - p1[2];
+			b1 = p1[4] + p1[2];
 
-			// get area of enemy object
-			l2 = ptr2[3] - ptr2[1];
-			r2 = ptr2[3] + ptr2[1];
-			t2 = ptr2[4] - ptr2[2];
-			b2 = ptr2[4] + ptr2[2];
+			// overlap check
+			if (l1 >= r0)	continue;
+			if (l0 >= r1)	continue;
+			if (t1 >= b0)	continue;
+			if (t0 >= b1)	continue;
 
-			// area overlap check
-			if (l2 >= r1)	continue;
-			if (l1 >= r2)	continue;
-			if (t2 >= b1)	continue;
-			if (t1 >= b2)	continue;
-
-			// ok, they collide
-			// set the player object's hit flag
-			ptr1[0] |= 0x10;
-			// set the enemy object's hit flag
-			// unless it's a bullet
-			if (ptr2[0] & 0x20)
-			{
-				ptr2[0] |= 0x10;
-			}
+			// set flags
+			if (hm & 0x40)		p0[0] |= 0x10;
+			p1[0] |= 0x10;
 		}
 	}
 }
 
+// calculate_collisions
+//
+// emulates K052591 collision detection
+
+static void calculate_collisions( void )
+{
+	int	X0,Y0;
+	int	X1,Y1;
+	int	CM,HM;
+
+	// the data at 0x00 to 0x06 defines the operation
+	//
+	// 0x00 : word : last byte of set 0
+	// 0x02 : byte : last byte of set 1
+	// 0x03 : byte : collide mask
+	// 0x04 : byte : hit mask
+	// 0x05 : byte : first byte of set 0
+	// 0x06 : byte : first byte of set 1
+	//
+	// the USA version is slightly different:
+	//
+	// 0x05 : word : first byte of set 0
+	// 0x07 : byte : first byte of set 1
+	//
+	// the operation is to intersect set 0 with set 1
+	// collide mask specifies objects to ignore
+	// hit mask is 40 to set bit on object 0 and object 1
+	// hit mask is 20 to set bit on object 1 only
+
+	Y0 = cdram[0];
+	Y0 = (Y0 << 8) + cdram[1];
+	Y0 = (Y0 - 15) / 5;
+	Y1 = (cdram[2] - 15) / 5;
+
+	if (cdram[5] < 16)
+	{
+		// US Thunder Cross uses this form
+		X0 = cdram[5];
+		X0 = (X0 << 8) + cdram[6];
+		X0 = (X0 - 16) / 5;
+		X1 = (cdram[7] - 16) / 5;
+	}
+	else
+	{
+		// Japan Thunder Cross uses this form
+		X0 = (cdram[5] - 16) / 5;
+		X1 = (cdram[6] - 16) / 5;
+	}
+
+	CM = cdram[3];
+	HM = cdram[4];
+
+	run_collisions(X0,Y0,X1,Y1,CM,HM);
+}
+
 static WRITE_HANDLER( thunderx_1f98_w )
 {
-//logerror("%04x: write %02x to 1f98\n",cpu_get_pc(),data);
 	/* bit 0 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
 
-	/* bit 1 unknown - used by Thunder Cross during test of RAM C8 (5800-5fff) */
-	if ( data & 2 )
+	/* bit 1 = reset for collision MCU??? */
+	/* we don't need it, anyway */
+
+	/* bit 2 = do collision detection when 0->1 */
+	if ((data & 4) && !(unknown_enable & 4))
+	{
 		calculate_collisions();
+	}
+
+	unknown_enable = data;
 }
 
 WRITE_HANDLER( scontra_bankswitch_w )
@@ -903,7 +924,7 @@ static void thunderx_init_machine( void )
 	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
 
 	paletteram = &RAM[0x28000];
-	unknownram = &RAM[0x28800];
+	cdram = &RAM[0x28800];
 }
 
 static void init_scontra(void)
@@ -916,5 +937,5 @@ static void init_scontra(void)
 
 GAME( 1988, scontra,  0,        scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra" )
 GAME( 1988, scontraj, scontra,  scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra (Japan)" )
-GAMEX(1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross", GAME_NOT_WORKING )
-GAMEX(1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)", GAME_NOT_WORKING )
+GAME( 1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross" )
+GAME( 1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)" )

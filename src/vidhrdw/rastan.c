@@ -1,97 +1,69 @@
 /***************************************************************************
+  Functions to emulate similar video hardware on these Taito games:
 
-  Functions to emulate game video hardware:
   - rastan
+  - operation wolf
   - rainbow islands
-  - jumping
+  - jumping (bootleg)
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/taitoic.h"
 
+/* TODO: change sprite routines over to use pdrawgfx.
 
-size_t rastan_videoram_size;
-data16_t *rastan_videoram1;
-data16_t *rastan_videoram3;
-data16_t *rastan_scrollx;
-data16_t *rastan_scrolly;
+struct tempsprite
+{
+	int gfx;
+	int code,color;
+	int flipx,flipy;
+	int x,y;
+	int zoomx,zoomy;
+	int primask;
+};
+static struct tempsprite *spritelist;
+*/
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
-
-static int flipscreen;
 static UINT16 sprite_ctrl = 0;
 static UINT16 sprites_flipscreen = 0;
 
 
-static void get_bg_tile_info(int tile_index)
-{
-	int color = rastan_videoram1[tile_index*2 ];
-	int tile  = rastan_videoram1[tile_index*2 + 1];
-
-	SET_TILE_INFO(0, tile & 0x3fff, color & 0x007f )
-	tile_info.flags = TILE_FLIPYX( (color & 0xc000)>>14);
-}
-
-static void get_fg_tile_info(int tile_index)
-{
-	int color = rastan_videoram3[tile_index*2 ];
-	int tile  = rastan_videoram3[tile_index*2 + 1];
-
-	SET_TILE_INFO(0, tile & 0x3fff, color & 0x007f )
-	tile_info.flags = TILE_FLIPYX( (color & 0xc000)>>14);
-}
+/***************************************************************************/
 
 int rastan_vh_start (void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-
-	if (!bg_tilemap || !fg_tilemap)
+	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
+	if (PC080SN_vh_start(1,1,0,0,0,1,0))
 		return 1;
 
-	flipscreen = 0;
+	return 0;
+}
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
+int opwolf_vh_start (void)
+{
+	if (PC080SN_vh_start(1,1,0,0,0,1,0))
+		return 1;
 
 	return 0;
 }
 
 int jumping_vh_start(void)
 {
-	if (rastan_vh_start())
+	if (PC080SN_vh_start(1,1,0,0,1,0,0))
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,15);
+	PC080SN_set_trans_pen(0,1,15);
 
 	return 0;
 }
 
-WRITE16_HANDLER( rastan_videoram1_w )
+void rastan_vh_stop(void)
 {
-	data16_t oldword = rastan_videoram1[offset];
-	COMBINE_DATA (&rastan_videoram1[offset]);
-	if (oldword != rastan_videoram1[offset])
-		tilemap_mark_tile_dirty(bg_tilemap, offset/2 );
+	PC080SN_vh_stop();
 }
 
-READ16_HANDLER( rastan_videoram1_r )
-{
-   return rastan_videoram1[offset];
-}
-
-WRITE16_HANDLER( rastan_videoram3_w )
-{
-	data16_t oldword = rastan_videoram3[offset];
-	COMBINE_DATA (&rastan_videoram3[offset]);
-	if (oldword != rastan_videoram3[offset])
-		tilemap_mark_tile_dirty(fg_tilemap, offset/2 );
-}
-
-READ16_HANDLER( rastan_videoram3_r )
-{
-   return rastan_videoram3[offset];
-}
 
 WRITE16_HANDLER( rastan_spritectrl_w )
 {
@@ -129,38 +101,15 @@ WRITE16_HANDLER( rastan_spriteflip_w )
 	sprites_flipscreen = data;
 }
 
-WRITE16_HANDLER( rastan_flipscreen_w )
-{
-	if (offset == 0)
-	{
-		/* flipscreen when bit 0 set */
-		if (flipscreen != (data & 1) )
-		{
-			flipscreen = data & 1;
-			flip_screen_set( flipscreen );
-		}
-	}
-}
 
+/***************************************************************************/
 
-void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rastan_update_palette(void)
 {
-	int offs;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
-
-	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -(rastan_scrollx[0] - 16) );
-	tilemap_set_scrolly( bg_tilemap,0, -(rastan_scrolly[0]) );
-	tilemap_set_scrollx( fg_tilemap,0, -(rastan_scrollx[1] - 16) );
-	tilemap_set_scrolly( fg_tilemap,0, -(rastan_scrolly[1]) );
-
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
 	{
-		int color,i;
-		int colmask[128];
+		int offs,color,i;
+		int colmask[256];
 
 		memset(colmask, 0, sizeof(colmask));
 
@@ -170,30 +119,28 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (code)
 			{
 				color = (spriteram16[offs] & 0x0f) | sprite_colbank;
-				colmask[color] |= Machine->gfx[1]->pen_usage[code];
+				colmask[color] |= Machine->gfx[0]->pen_usage[code];
 			}
 		}
-		for (color = 0;color < 128;color++)
+
+		for (color = 0;color < 256;color++)
 		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[16 * color] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1;i < 16;i++)
-			{
+			for (i = 0; i < 16; i++)
 				if (colmask[color] & (1 << i))
-					palette_used_colors[16 * color + i] = PALETTE_COLOR_USED;
-			}
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
 		}
 	}
-	palette_recalc();
+}
 
-	/* Draw playfields */
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+void rastan_draw_sprites(struct osd_bitmap *bitmap,int y_offs)
+{
+	int offs,tile;
+	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)
 	{
-		int tile = spriteram16[offs+2];
+		tile = spriteram16[offs+2];
 		if (tile)
 		{
 			int sx,sy,color,data1;
@@ -202,6 +149,7 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = spriteram16[offs+3] & 0x1ff;
 			if (sx > 400) sx = sx - 512;
  			sy = spriteram16[offs+1] & 0x1ff;
+			sy += y_offs;
 			if (sy > 400) sy = sy - 512;
 
 			data1 = spriteram16[offs];
@@ -217,12 +165,103 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = 240 - sy;
 			}
 
-			drawgfx(bitmap,Machine->gfx[1],
+			drawgfx(bitmap,Machine->gfx[0],
 					tile,
 					color,
 					flipx, flipy,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
+
+void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int layer[2];
+
+	PC080SN_tilemap_update();
+
+	palette_init_used_colors();
+	rastan_update_palette();
+	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
+	palette_recalc();
+
+	layer[0] = 0;
+	layer[1] = 1;
+
+	fillbitmap(priority_bitmap,0,NULL);
+
+	/* wrong color for Rainbow backgrounds: solved by making bg an opaque tilemap */
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
+	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+
+	rastan_draw_sprites(bitmap,0);
+
+#if 0
+	{
+		char buf[80];
+		sprintf(buf,"sprite_ctrl: %04x",sprite_ctrl);
+		usrintf_showmessage(buf);
+	}
+#endif
+}
+
+/***************************************************************************/
+
+void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int layer[2];
+
+	PC080SN_tilemap_update();
+
+	palette_init_used_colors();
+	rastan_update_palette();
+	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
+
+	/* make sure color 4094 is white for our crosshair */
+	palette_change_color(4094, 0xff, 0xff, 0xff);
+	palette_used_colors[4094] = PALETTE_COLOR_USED;
+
+	palette_recalc();
+
+	layer[0] = 0;
+	layer[1] = 1;
+
+	fillbitmap(priority_bitmap,0,NULL);
+
+	/* wrong color e.g. picture when you die: solved by making bg an opaque tilemap */
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
+
+	rastan_draw_sprites(bitmap,0);
+
+	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+
+	/* See if we should draw artificial gun targets */
+	if (input_port_4_word_r(0) &0x1)	/* Fake DSW */
+	{
+		/* Draw an aiming crosshair (after exidy440) */
+		int beamx,beamy,xoffs,yoffs,y;
+
+		/* update the analog x,y values */
+		beamx = ((input_port_5_r(0) * 256) >> 8) + 3;
+		beamy = ((input_port_6_r(0) * 256) >> 8) + 19;
+
+		/* draw a crosshair */
+		xoffs = beamx - 5;
+		yoffs = beamy - 5;
+
+		for (y = -5; y <= 5; y++, yoffs++, xoffs++)
+		{
+			if (yoffs >= 0 && yoffs < 250 && beamx >= 0 && beamx < 320)
+				plot_pixel(bitmap, beamx, yoffs, Machine->pens[4094]);
+
+			if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 250)
+				plot_pixel(bitmap, xoffs, beamy, Machine->pens[4094]);
 		}
 	}
 
@@ -235,25 +274,20 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #endif
 }
 
+/***************************************************************************/
 
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
+	int layer[2];
 
-	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -(rastan_scrollx[0] - 16) );
-	tilemap_set_scrolly( bg_tilemap,0, -(rastan_scrolly[0]) );
-	tilemap_set_scrollx( fg_tilemap,0, -(rastan_scrollx[1] - 16) );
-	tilemap_set_scrolly( fg_tilemap,0, -(rastan_scrolly[1]) );
-
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
+	PC080SN_tilemap_update();
 
 	palette_init_used_colors();
 	{
 		int color,i;
-		int colmask[128];
+		int colmask[256];
 
 		memset(colmask, 0, sizeof(colmask));
 
@@ -262,29 +296,33 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int code = spriteram16[offs+2];
 			if (code)
 			{
-				color = (spriteram16[offs] & 0x0f) | sprite_colbank;	/* was (spriteram16[offs] + 0x10) & 0x7f;*/
+				color = (spriteram16[offs] & 0x0f) | sprite_colbank;
 
 				if (code < 4096)
-					colmask[color] |= Machine->gfx[1]->pen_usage[code];
+					colmask[color] |= Machine->gfx[0]->pen_usage[code];
 				else
 					colmask[color] |= Machine->gfx[2]->pen_usage[code-4096];
 			}
 		}
-		for (color = 0;color < 128;color++)
+
+		for (color = 0;color < 256;color++)
 		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[16 * color] = PALETTE_COLOR_TRANSPARENT;
-			for (i = 1;i < 16;i++)
-			{
+			for (i = 0; i < 16; i++)
 				if (colmask[color] & (1 << i))
-					palette_used_colors[16 * color + i] = PALETTE_COLOR_USED;
-			}
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
 		}
 	}
+
+	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
-	/* Draw playfields */
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	layer[0] = 0;
+	layer[1] = 1;
+
+	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)
@@ -314,7 +352,7 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			if (tile < 4096)
-				drawgfx(bitmap,Machine->gfx[1],
+				drawgfx(bitmap,Machine->gfx[0],
 					tile,
 					color,
 					flipx, flipy,
@@ -330,7 +368,7 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 #if 0
 	{
@@ -341,58 +379,61 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #endif
 }
 
+/***************************************************************************
 
-/* Jumping uses different sprite controller   */
-/* than rainbow island. - values are remapped */
-/* at address 0x2EA in the code. Apart from   */
-/* physical layout, the main change is that   */
-/* the Y settings are active low              */
+Jumping uses different sprite controller
+than rainbow island. - values are remapped
+at address 0x2EA in the code. Apart from
+physical layout, the main change is that
+the Y settings are active low.
+
+*/
 
 void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	int offs,layer[2];
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
 
-	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, -(rastan_scrollx[0] - 16) );
-	tilemap_set_scrolly( bg_tilemap,0,   rastan_scrolly[0]       );
-	tilemap_set_scrollx( fg_tilemap,0, 16 );
-	tilemap_set_scrolly( fg_tilemap,0, 0  );
+	PC080SN_tilemap_update();
 
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
+	/* Override values, or foreground layer is in wrong position */
+	PC080SN_set_scroll(0,1,16,0);
 
 	palette_init_used_colors();
 	{
 		int color,i;
-		int colmask[128];
+		int colmask[256];
 
 		memset(colmask, 0, sizeof(colmask));
 
 		for (offs = spriteram_size/2-8; offs >= 0; offs -= 8)
 		{
 			int code = spriteram16[offs];
-			if (code < Machine->gfx[1]->total_elements)
+			if (code < Machine->gfx[0]->total_elements)
 			{
 				color = (spriteram16[offs+4] & 0x0f) | sprite_colbank;
-				colmask[color] |= Machine->gfx[1]->pen_usage[code];
+				colmask[color] |= Machine->gfx[0]->pen_usage[code];
 			}
 		}
-		for (color = 0;color < 128;color++)
+
+		for (color = 0;color < 256;color++)
 		{
-			if (colmask[color] & (1 << 0))
-				palette_used_colors[16 * color] = PALETTE_COLOR_USED;
-			for (i = 1;i < 16;i++)
-			{
+			for (i = 0; i < 16; i++)
 				if (colmask[color] & (1 << i))
-					palette_used_colors[16 * color + i] = PALETTE_COLOR_USED;
-			}
+					palette_used_colors[color * 16 + i] = PALETTE_COLOR_USED;
 		}
 	}
+
+	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
-	/* Draw playfields */
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	layer[0] = 0;
+	layer[1] = 1;
+
+	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+ 	PC080SN_tilemap_draw(bitmap,0,layer[0],0,0);
 
 	/* Draw the sprites. 128 sprites in total */
 	for (offs = spriteram_size/2-8; offs >= 0; offs -= 8)
@@ -410,7 +451,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			data1 = spriteram16[offs+3];
 			color = (spriteram16[offs+4] & 0x0f) | sprite_colbank;
 
-			drawgfx(bitmap,Machine->gfx[1],
+			drawgfx(bitmap,Machine->gfx[0],
 					tile,
 					color,
 					data1 & 0x40, data1 & 0x80,
@@ -419,7 +460,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+ 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
 
 #if 0
 	{

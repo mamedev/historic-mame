@@ -127,7 +127,7 @@ static void nvram_handler(void *file,int read_or_write)
 static READ_HANDLER( pang_port5_r )
 {
 	int bit;
-	extern struct GameDriver driver_mgakuen2;
+	extern const struct GameDriver driver_mgakuen2;
 
 	bit = EEPROM_read_bit() << 7;
 
