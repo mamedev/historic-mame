@@ -9,7 +9,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/state.o $(OBJ)/datafile.o $(OBJ)/hiscore.o \
 	$(sort $(CPUOBJS)) \
 	$(OBJ)/sndintrf.o \
-	$(OBJ)/sound/streams.o $(OBJ)/sound/mixer.o \
+	$(OBJ)/sound/streams.o $(OBJ)/sound/mixer.o $(OBJ)/sound/filter.o \
 	$(sort $(SOUNDOBJS)) \
 	$(OBJ)/sound/votrax.o \
 	$(OBJ)/machine/z80fmly.o $(OBJ)/machine/6821pia.o \

@@ -342,7 +342,7 @@ static void draw_road(struct osd_bitmap *bitmap)
 		int xoffs, yoffs, xscroll, roadpal;
 		UINT8 scanline[256 + 8];
 		UINT8 *dest = scanline;
-		UINT16 *colortable;
+		UINT32 *colortable;
 
 		/* first add the vertical position modifier and the vertical scroll */
 		yoffs = ((polepos_vertical_position_modifier[y] + road16_vscroll) >> 3) & 0x1ff;

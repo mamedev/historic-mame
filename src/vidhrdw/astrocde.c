@@ -804,7 +804,7 @@ void astrocde_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int x,y,centre;
+	int centre;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
@@ -815,22 +815,16 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if(RAM[0xc1fb] != 0)	/* Number of Players */
 	{
-		/* Yellow sight for Player 1 */
+		/* Player 1 */
 
 		centre = 317 - ((input_port_0_r(0) & 0x3f)-18) * 10;
 
 		if (centre<2)   centre=2;
 		if (centre>317) centre=317;
 
-		for (y=35-10;y<35+11;y++)
-			plot_pixel(bitmap, centre, y, Machine->pens[0x77]);
+		draw_crosshair(bitmap,centre,35,&Machine->visible_area);
 
-   		for (x=centre-20;x<centre+21;x++)
-			if((x>0) && (x<319))
-				plot_pixel(bitmap, x, 35, Machine->pens[0x77]);
-
-
-		/* Red sight for Player 2 */
+		/* Player 2 */
 
 		if(RAM[0xc1fb] == 2)
 		{
@@ -839,12 +833,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (centre<1)   centre=1;
 			if (centre>316) centre=316;
 
-			for (y=33-10;y<33+11;y++)
-				plot_pixel(bitmap, centre, y, Machine->pens[0x58]);
-
-			for (x=centre-20;x<centre+21;x++)
-				if((x>0) && (x<319))
-					plot_pixel(bitmap, x, 33, Machine->pens[0x58]);
+			draw_crosshair(bitmap,centre,33,&Machine->visible_area);
 		}
 	}
 }

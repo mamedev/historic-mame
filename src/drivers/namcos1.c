@@ -776,7 +776,7 @@ static struct YM2151interface ym2151_interface =
 
 static struct namco_interface namco_interface =
 {
-	23920/2,	/* sample rate (approximate value) */
+	24000/2,	/* sample rate (approximate value) */
 	8,			/* number of voices */
 	50, 		/* playback volume */
 	-1, 		/* memory region */
@@ -823,7 +823,7 @@ static const struct MachineDriver machine_driver_ns1 =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0, /* CPU slice timer is made by machine_init */
 	init_namcos1,
 
@@ -889,7 +889,7 @@ static const struct MachineDriver machine_driver_quester =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0, /* CPU slice timer is made by machine_init */
 	init_namcos1,
 
@@ -955,7 +955,7 @@ static const struct MachineDriver machine_driver_faceoff =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0, /* CPU slice timer is made by machine_init */
 	init_namcos1,
 
@@ -1321,6 +1321,7 @@ ROM_START( blazer )
 	ROM_LOAD( "bz1_obj1.bin",		0x20000, 0x20000, 0x7cb10112 )
 	ROM_LOAD( "bz1_obj2.bin",		0x40000, 0x20000, 0x34b23bb7 )
 	ROM_LOAD( "bz1_obj3.bin",		0x60000, 0x20000, 0x9bc1db71 )
+	ROM_FILL(                       0x80000, 0x80000, 0xff )
 ROM_END
 
 /* Quester */

@@ -53,6 +53,7 @@ enum
 	UI_knownproblems,
 	UI_imperfectcolors,
 	UI_wrongcolors,
+	UI_imperfectgraphics,
 	UI_imperfectsound,
 	UI_nosound,
 	UI_nococktail,

@@ -255,7 +255,7 @@ static void draw_sprite(struct osd_bitmap *bitmap,int spr_number)
 {
 	int sy,row,height,src,bank;
 	unsigned char *sprite_base;
-	unsigned short *sprite_palette;
+	UINT32 *sprite_palette;
 	INT16 skip;	/* bytes to skip before drawing each row (can be negative) */
 	unsigned char *gfx;
 

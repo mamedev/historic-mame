@@ -350,7 +350,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	23920,	/* sample rate (approximate value) */
+	24000,	/* sample rate */
 	8,		/* number of voices */
 	100,	/* playback volume */
 	REGION_SOUND1	/* memory region */
@@ -386,7 +386,7 @@ static struct MachineDriver machine_driver_toypop =
 			toypop_m68000_interrupt,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,    /* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	toypop_init_machine,

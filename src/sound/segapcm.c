@@ -122,7 +122,7 @@ int SEGAPCMInit( const struct MachineSound *msound, int banksize, int mode, unsi
 		spcm.bank[i] = 0;
 		spcm.end_h[i] = 0;
 		spcm.delta_t[i] = 0x80;
-		spcm.flag[i] = 1;
+		spcm.flag[i] = SEGAPCM_WRITE_CHANGE;
 		spcm.add_addr[i] = 0;
 		spcm.step[i] = (int)(((float)sample_rate / (float)emulation_rate) * (float)(0x80<<5));
 		spcm.pcmd[i] = 0;
@@ -167,7 +167,7 @@ void SEGAPCMResetChip( void )
 		spcm.bank[i] = 0;
 		spcm.end_h[i] = 0;
 		spcm.delta_t[i] = 0;
-		spcm.flag[i] = 1;
+		spcm.flag[i] = SEGAPCM_WRITE_CHANGE;
 		spcm.add_addr[i] = 0;
 		spcm.step[i] = (int)(((float)sample_rate / (float)emulation_rate) * (float)(0x80<<5));
 	}
@@ -199,21 +199,21 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 
 	for( i = 0; i < SEGAPCM_MAX; i++ )
 	{
-		if( spcm.flag[i] == 2)
+		if( spcm.flag[i]&SEGAPCM_INIT )
 		{
-			spcm.flag[i]=0;
+			spcm.flag[i] = SEGAPCM_PLAY;
 			spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
 				  (spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
 		}
-		if( !spcm.flag[i] )
+		if( (spcm.flag[i]&SEGAPCM_PLAY) )
 		{
 			lv = spcm.vol[i][L_PAN];   rv = spcm.vol[i][R_PAN];
-			if(lv==0 && rv==0) continue;
+			//if(lv==0 && rv==0) continue;
 
 			pcm_buf = pcm_rom + (((int)spcm.bank[i]&spcm.bankmask)<<spcm.bankshift);
 			addr = (spcm.add_addr[i]>>PCM_ADDR_SHIFT)&0x0000ffff;
 			end_addr = ((((unsigned int)spcm.end_h[i]<<8)&0xff00) + 0x00ff);
-			if(spcm.end_h[i] < spcm.addr_h[i]) end_addr+=0x10000;
+			if(spcm.end_h[i] <= spcm.addr_h[i]) end_addr+=0x10000;
 
 			for( j = 0; j < length; j++ )
 			{
@@ -226,17 +226,30 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 					/**** end address check ****/
 					if( end_check_addr >= end_addr )
 					{
-						if(spcm.writeram[i*8+0x86] & 0x02)
-						{
-							spcm.flag[i] = 1;
-							spcm.writeram[i*8+0x86] = (spcm.writeram[i*8+0x86]&0xfe)|1;
-							break;
-						}
-						else
-						{ /* Loop */
-							spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
-									(spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
-						}
+#if 0
+					  if( spcm.writeram[i*8+0x86]&0x02 )
+					    {
+					      spcm.writeram[i*8+0x86] = (spcm.writeram[i*8+0x86]&0xfe)|1;
+					      spcm.bank[i] |= 1;
+					      break;
+					    }
+					  else
+					    { /* Loop */
+					      spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
+								    (spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
+					    }
+#else
+					  spcm.writeram[i*8+0x86] = (spcm.writeram[i*8+0x86]&0xfe)|1;
+					  spcm.bank[i] |= 1;
+					  if( spcm.writeram[i*8+0x86]&0x02 ){
+					    break;
+					  }
+					  else{
+					    /* Loop */
+					    spcm.add_addr[i] = (( (((int)spcm.addr_h[i]<<8)&0xff00) |
+								  (spcm.addr_l[i]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
+					  }
+#endif
 					}
 #ifdef PCM_NORMALIZE
 					tmp = spcm.pcmd[i];
@@ -246,7 +259,7 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 #endif
 				}
 				spcm.add_addr[i] += spcm.step[i];
-				if( spcm.flag[i] == 1 )  break;
+				if( !(spcm.flag[i]&SEGAPCM_PLAY) )  break;
 #ifndef PCM_NORMALIZE
 				*(datap[0] + j) = ILimit( (int)*(datap[0] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*lv), 32767, -32768 );
 				*(datap[1] + j) = ILimit( (int)*(datap[1] + j) + ((int)(*(pcm_buf + addr) - SPCM_CENTER)*rv), 32767, -32768 );
@@ -268,70 +281,71 @@ static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 /************************************************/
 WRITE_HANDLER( SegaPCM_w )
 {
-	int r = offset;
-	int v = data;
-	int rate;
-	int  lv, rv, cen;
+  int r = offset;
+  int v = data;
+  int old_v;
+  int rate;
+  int  lv, rv, cen;
 
-	int channel = (r>>3)&0x0f;
+  int channel = (r>>3)&0x0f;
 
-	spcm.writeram[r&0x07ff] = (char)v;		/* write value data */
-	switch( (r&0x87) )
-	{
-		case 0x00:
-		case 0x01:
-		case 0x84:  case 0x85:
-		case 0x87:
-			break;
+  spcm.writeram[r&0x07ff] = (char)v;		/* write value data */
+  switch( (r&0x87) )
+    {
+    case 0x00:
+    case 0x01:
+    case 0x84:  case 0x85:
+    case 0x87:
+      break;
 
-		case 0x02:
-			spcm.gain[channel][L_PAN] = v&0xff;
-remake_vol:
-			lv = spcm.gain[channel][L_PAN];   rv = spcm.gain[channel][R_PAN];
-			cen = (lv + rv) / 4;
-//			spcm.vol[channel][L_PAN] = (lv + cen)<<1;
-//			spcm.vol[channel][R_PAN] = (rv + cen)<<1;
-			spcm.vol[channel][L_PAN] = (lv + cen)*9/5;	// too much clipping
-			spcm.vol[channel][R_PAN] = (rv + cen)*9/5;
-			break;
-		case 0x03:
-			spcm.gain[channel][R_PAN] = v&0xff;
-			goto remake_vol;
+    case 0x02:
+      spcm.gain[channel][L_PAN] = v&0xff;
+    remake_vol:
+      lv = spcm.gain[channel][L_PAN];   rv = spcm.gain[channel][R_PAN];
+      cen = (lv + rv) / 4;
+      spcm.vol[channel][L_PAN] = (lv + cen)*9/5;	// too much clipping
+      spcm.vol[channel][R_PAN] = (rv + cen)*9/5;
+      break;
+    case 0x03:
+      spcm.gain[channel][R_PAN] = v&0xff;
+      goto remake_vol;
 
 
-		case 0x04:
-			spcm.addr_l[channel]= v;
-			break;
-		case 0x05:
-			spcm.addr_h[channel]= v;
-			break;
-		case 0x06:
-			spcm.end_h[channel]= v;
-			break;
-		case 0x07:
-			spcm.delta_t[channel]= v;
-			rate = (v&0x00ff)<<sample_shift;
-			spcm.step[channel] = (int)(((float)sample_rate / (float)emulation_rate) * (float)rate);
-			break;
-		case 0x86:
-			spcm.bank[channel]= v;
-			if( v&1 )    spcm.flag[channel] = 1; /* stop D/A */
-			else
-			{
-				/**** start D/A ****/
-//				spcm.flag[channel] = 0;
-				spcm.flag[channel] = 2;
-//				spcm.add_addr[channel] = (( (((int)spcm.addr_h[channel]<<8)&0xff00) |
-//					  (spcm.addr_l[channel]&0x00ff) ) << PCM_ADDR_SHIFT) &0x0ffff000;
-				spcm.pcmd[channel] = 0;
-			}
-			break;
-		/*
-		default:
-			printf( "unknown %d = %02x : %02x\n", channel, r, v );
-			break;
-		*/
-	}
+    case 0x04:
+      spcm.addr_l[channel]= v;
+      spcm.flag[channel] |= SEGAPCM_WRITE_CHANGE;
+      break;
+    case 0x05:
+      spcm.addr_h[channel]= v;
+      spcm.flag[channel] |= SEGAPCM_WRITE_CHANGE;
+      break;
+    case 0x06:
+      spcm.end_h[channel]= v;
+      spcm.flag[channel] |= SEGAPCM_WRITE_CHANGE;
+      break;
+    case 0x07:
+      spcm.delta_t[channel]= v;
+      rate = (v&0x00ff)<<sample_shift;
+      spcm.step[channel] = (int)(((float)sample_rate / (float)emulation_rate) * (float)rate);
+      break;
+    case 0x86:
+      old_v = spcm.bank[channel]&1;
+      spcm.bank[channel] = v;
+      if( (v&1) )    spcm.flag[channel] = 0; /* stop D/A */
+      //else if( spcm.flag[channel]&SEGAPCM_WRITE_CHANGE ){
+      else if( (old_v && !(v&1)) || (spcm.flag[channel]&SEGAPCM_WRITE_CHANGE) ){
+	/**** start D/A ****/
+	spcm.flag[channel] = SEGAPCM_INIT;
+	spcm.pcmd[channel] = 0;
+      }
+
+      break;
+#if 0
+    default:
+      printf( "unknown %d = %02x : %02x\n", channel, r, v );
+      break;
+#endif
+    }
 }
 
 /************************************************/
@@ -339,7 +353,7 @@ remake_vol:
 /************************************************/
 READ_HANDLER( SegaPCM_r )
 {
-	return spcm.writeram[offset & 0x07ff];		/* read value data */
+  return spcm.writeram[offset & 0x07ff];		/* read value data */
 }
 
 /**************** end of file ****************/

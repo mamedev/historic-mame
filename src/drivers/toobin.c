@@ -489,4 +489,4 @@ static void init_toobin(void)
 
 GAME( 1988, toobin,  0,      toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 3)" )
 GAME( 1988, toobin2, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (version 2)" )
-GAME( 1988, toobinp, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (Prototype)" )
+GAME( 1988, toobinp, toobin, toobin, toobin, toobin, ROT270, "Atari Games", "Toobin' (prototype)" )

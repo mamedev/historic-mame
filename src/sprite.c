@@ -87,7 +87,7 @@ int screen_line_offset;
 static struct sprite_list *first_sprite_list = NULL; /* used for resource tracking */
 static int FlickeringInvisible;
 
-static UINT16 *shade_table;
+static UINT32 *shade_table;
 
 static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int *last, int *delta ){
 	if( sprite_list->flags&SPRITE_LIST_FRONT_TO_BACK ){
@@ -171,7 +171,7 @@ static struct {
 } blit;
 
 static void do_blit_unpack( const struct sprite *sprite ){
-	const unsigned short *pal_data = sprite->pal_data;
+	const UINT32 *pal_data = sprite->pal_data;
 	int transparent_pen = blit.transparent_pen;
 
 	int screenx = sprite->x - blit.origin_x;
@@ -248,7 +248,7 @@ static void do_blit_unpack( const struct sprite *sprite ){
 }
 
 static void do_blit_stack( const struct sprite *sprite ){
-	const unsigned short *pal_data = sprite->pal_data;
+	const UINT32 *pal_data = sprite->pal_data;
 	int transparent_pen = blit.transparent_pen;
 	int flipx_adjust = sprite->tile_width-1;
 
@@ -407,7 +407,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const unsigned short *pal_data = sprite->pal_data;
+		const UINT32 *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -472,7 +472,7 @@ skip:
 	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const unsigned short *pal_data = sprite->pal_data;
+		const UINT32 *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy;
@@ -657,7 +657,7 @@ static void do_blit_zoom16( const struct sprite *sprite ){
 	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const unsigned short *pal_data = sprite->pal_data;
+		const UINT32 *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -722,7 +722,7 @@ skip:
 	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
 	{
 		const unsigned char *pen_data = sprite->pen_data;
-		const unsigned short *pal_data = sprite->pal_data;
+		const UINT32 *pal_data = sprite->pal_data;
 		int x,y;
 		unsigned char pen;
 		int pitch = blit.line_offset*dy/2;
@@ -1150,7 +1150,7 @@ void sprite_draw( struct sprite_list *sprite_list, int priority ){
 }
 
 
-void sprite_set_shade_table(UINT16 *table)
+void sprite_set_shade_table(UINT32 *table)
 {
 	shade_table=table;
 }

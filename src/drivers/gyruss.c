@@ -60,17 +60,15 @@ and 1 SFX channel controlled by an 8039:
 #include "cpu/i8039/i8039.h"
 
 
-/*#define EMULATE_6809*/
+void konami1_decode_cpu2(void);
 
-void konami1_decode_cpu4(void);
-
-extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
-WRITE_HANDLER( gyruss_queuereg_w );
 WRITE_HANDLER( gyruss_flipscreen_w );
 READ_HANDLER( gyruss_scanline_r );
+int  gyruss_vh_start(void);
+void gyruss_vh_stop(void);
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int gyruss_6809_interrupt(void);
 
 
 READ_HANDLER( gyruss_portA_r );
@@ -98,11 +96,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_RAM },
-#ifdef EMULATE_6809
 	{ 0xa000, 0xa7ff, gyruss_sharedram_r },
-#else
-	{ 0xa000, 0xa7ff, MRA_RAM },
-#endif
 	{ 0xc000, 0xc000, input_port_4_r },	/* DSW1 */
 	{ 0xc080, 0xc080, input_port_0_r },	/* IN0 */
 	{ 0xc0a0, 0xc0a0, input_port_1_r },	/* IN1 */
@@ -116,17 +110,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0x9fff, MWA_RAM },
-#ifdef EMULATE_6809
 	{ 0xa000, 0xa7ff, gyruss_sharedram_w, &gyruss_sharedram },
-#else
-	{ 0xa000, 0xa17f, MWA_RAM, &spriteram, &spriteram_size },     /* odd frame spriteram */
-	{ 0xa200, 0xa37f, MWA_RAM, &spriteram_2 },   /* even frame spriteram */
-	{ 0xa700, 0xa700, MWA_RAM, &gyruss_spritebank },
-	{ 0xa701, 0xa701, MWA_NOP },        /* semaphore system   */
-	{ 0xa702, 0xa702, gyruss_queuereg_w },       /* semaphore system   */
-	{ 0xa7fc, 0xa7fc, MWA_RAM, &gyruss_6809_drawplanet },
-	{ 0xa7fd, 0xa7fd, MWA_RAM, &gyruss_6809_drawship },
-#endif
 	{ 0xc000, 0xc000, MWA_NOP },	/* watchdog reset */
 	{ 0xc080, 0xc080, gyruss_sh_irqtrigger_w },
 	{ 0xc100, 0xc100, soundlatch_w },         /* command to soundb  */
@@ -134,7 +118,20 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc185, 0xc185, gyruss_flipscreen_w },
 MEMORY_END
 
+static MEMORY_READ_START( m6809_readmem )
+	{ 0x0000, 0x0000, gyruss_scanline_r },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x6000, 0x67ff, gyruss_sharedram_r },
+	{ 0xe000, 0xffff, MRA_ROM },
+MEMORY_END
 
+static MEMORY_WRITE_START( m6809_writemem )
+	{ 0x2000, 0x2000, interrupt_enable_w },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4040, 0x40ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6000, 0x67ff, gyruss_sharedram_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },                 /* rom soundboard     */
@@ -169,24 +166,6 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x14, 0x14, gyruss_i8039_irq_w },
 	{ 0x18, 0x18, soundlatch2_w },
 PORT_END
-
-
-#ifdef EMULATE_6809
-static MEMORY_READ_START( m6809_readmem )
-	{ 0x0000, 0x0000, gyruss_scanline_r },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x6000, 0x67ff, gyruss_sharedram_r },
-	{ 0xe000, 0xffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( m6809_writemem )
-	{ 0x2000, 0x2000, interrupt_enable_w },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4040, 0x40ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x6000, 0x67ff, gyruss_sharedram_w },
-	{ 0xe000, 0xffff, MWA_ROM },
-MEMORY_END
-#endif
 
 static MEMORY_READ_START( i8039_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
@@ -412,25 +391,13 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
-static struct GfxLayout spritelayout1 =
+static struct GfxLayout spritelayout =
 {
-	8,16,	/* 16*8 sprites */
+	8,16,	/* 8*16 sprites */
 	256,	/* 256 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0x4000*8+4, 0x4000*8+0, 4, 0  },
 	{ 0, 1, 2, 3,  8*8, 8*8+1, 8*8+2, 8*8+3 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	64*8	/* every sprite takes 64 consecutive bytes */
-};
-static struct GfxLayout spritelayout2 =
-{
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0x4000*8+4, 0x4000*8+0, 4, 0  },
-	{ 0, 1, 2, 3,  8*8, 8*8+1, 8*8+2, 8*8+3,
-		16*8+0, 16*8+1, 16*8+2, 16*8+3,  24*8, 24*8+1, 24*8+2, 24*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8	/* every sprite takes 64 consecutive bytes */
@@ -440,10 +407,9 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &charlayout,       0, 16 },
-	{ REGION_GFX2, 0x0000, &spritelayout1, 16*4, 16 },	/* upper half */
-	{ REGION_GFX2, 0x0010, &spritelayout1, 16*4, 16 },	/* lower half */
-	{ REGION_GFX2, 0x0000, &spritelayout2, 16*4, 16 },
+	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 },
+	{ REGION_GFX2, 0x0000, &spritelayout, 16*4, 16 },	/* upper half */
+	{ REGION_GFX2, 0x0010, &spritelayout, 16*4, 16 },	/* lower half */
 	{ -1 } /* end of array */
 };
 
@@ -482,6 +448,12 @@ static const struct MachineDriver machine_driver_gyruss =
 			nmi_interrupt,1
 		},
 		{
+			CPU_M6809,
+			2000000,        /* 2 MHz ??? */
+			m6809_readmem,m6809_writemem,0,0,
+			gyruss_6809_interrupt,256
+		},
+		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* 3.579545 MHz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
@@ -492,23 +464,10 @@ static const struct MachineDriver machine_driver_gyruss =
 			8000000/15,	/* 8MHz crystal */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
-		},
-#ifdef EMULATE_6809
-		{
-			CPU_M6809,
-			2000000,        /* 2 MHz ??? */
-			m6809_readmem,m6809_writemem,0,0,
-			interrupt,1
-		},
-#endif
+		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-#ifdef EMULATE_6809
-	20,	/* 20 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-#else
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-#endif
+	1,	/* 1 CPU slice per frame - interleaving is forced by the 6809 interrupts anyway */
 	0,
 
 	/* video hardware */
@@ -519,13 +478,9 @@ static const struct MachineDriver machine_driver_gyruss =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
-#ifndef EMULATE_6809
+	gyruss_vh_start,
+	gyruss_vh_stop,
 	gyruss_vh_screenrefresh,
-#else
-	gyruss_6809_vh_screenrefresh,
-#endif
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -556,16 +511,16 @@ ROM_START( gyruss )
 	ROM_LOAD( "gyrussk.3",    0x4000, 0x2000, 0x27454a98 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU4, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
-
-	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
-	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
@@ -589,16 +544,16 @@ ROM_START( gyrussce )
 	ROM_LOAD( "gya-3.bin",    0x4000, 0x2000, 0xf6dbb33b )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU4, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
-
-	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
-	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
@@ -622,16 +577,16 @@ ROM_START( venus )
 	ROM_LOAD( "r3",           0x4000, 0x2000, 0xdb246fcd )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU4, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
-
-	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
-	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
@@ -651,7 +606,7 @@ ROM_END
 
 static void init_gyruss(void)
 {
-	konami1_decode_cpu4();
+	konami1_decode_cpu2();
 }
 
 

@@ -23,6 +23,7 @@
 #define	ASTEROID_LIFE_ENAB		NODE_08
 #define ASTEROID_EXPLODE_NODE	NODE_09
 #define ASTEROID_EXPLODE_PITCH	NODE_17
+#define ASTEROID_THUMP_DUTY		NODE_18
 
 DISCRETE_SOUND_START(asteroid_sound_interface)
 	/************************************************/
@@ -41,7 +42,8 @@ DISCRETE_SOUND_START(asteroid_sound_interface)
 	DISCRETE_INPUT (ASTEROID_LIFE_ENAB    ,0x05,0x003f,0)
 
 	DISCRETE_INPUT (ASTEROID_THUMP_ENAB   ,0x10,0x003f,0)
-	DISCRETE_INPUTX(ASTEROID_THUMP_FREQ   ,0x11,0x003f,(100.0/15.0)      ,40.0    ,0)
+	DISCRETE_INPUTX(ASTEROID_THUMP_FREQ   ,0x11,0x003f,(70.0/15.0)       ,20.0    ,0)
+	DISCRETE_INPUTX(ASTEROID_THUMP_DUTY   ,0x12,0x003f,(55.0/15.0)       ,33.0    ,0)
 
 	DISCRETE_INPUTX(ASTEROID_EXPLODE_NODE ,0x20,0x003f,((1.0/15.0)*100.0),0.0     ,0)
 	DISCRETE_INPUTX(ASTEROID_EXPLODE_PITCH,0x21,0x003f,1000.0            ,0.0     ,0)
@@ -60,7 +62,7 @@ DISCRETE_SOUND_START(asteroid_sound_interface)
 	/* The sound can be tweaked with the gain and   */
 	/* adder constants in the 2 lines below         */
 	/************************************************/
-	DISCRETE_SQUAREWAVE(NODE_11,ASTEROID_THUMP_ENAB,ASTEROID_THUMP_FREQ,100.0,50,0)
+	DISCRETE_SQUAREWAVE(NODE_11,ASTEROID_THUMP_ENAB,ASTEROID_THUMP_FREQ,100.0,ASTEROID_THUMP_DUTY,0)
 	DISCRETE_RCFILTER(NODE_10,1,NODE_11,3300,0.1e-6)
 
 	/************************************************/
@@ -189,8 +191,9 @@ WRITE_HANDLER( asteroid_explode_w )
 
 WRITE_HANDLER( asteroid_thump_w )
 {
-	discrete_sound_w(0x10,data&0x10);		//Thump enable
-	discrete_sound_w(0x11,data&0x0f);		//Thump frequency
+	discrete_sound_w(0x10,data&0x10);			//Thump enable
+	discrete_sound_w(0x11,(data&0x0f)^0x0f);	//Thump frequency
+	discrete_sound_w(0x12,data&0x0f);			//Thump duty
 }
 
 WRITE_HANDLER( asteroid_sounds_w )

@@ -137,6 +137,7 @@ static INT32 *scratch;
 
 static INT16 *ulaw_lookup;
 static UINT16 *volume_lookup;
+static UINT32 accum_mask;
 
 static FILE *eslog;
 
@@ -396,18 +397,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = voice->start + (accum - voice->end);						\
+				accum = (voice->start + (accum - voice->end))&accum_mask;			\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = voice->start + (accum - voice->end);						\
+				accum = (voice->start + (accum - voice->end))&accum_mask;			\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = voice->end - (accum - voice->end);							\
+				accum = (voice->end - (accum - voice->end))&accum_mask;				\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -434,18 +435,18 @@ do																					\
 																					\
 			/* uni-directional looping */											\
 			case CONTROL_LPE:														\
-				accum = voice->end - (voice->start - accum);						\
+				accum = (voice->end - (voice->start - accum))&accum_mask;			\
 				break;																\
 																					\
 			/* trans-wave looping */												\
 			case CONTROL_BLE:														\
-				accum = voice->end - (voice->start - accum);						\
+				accum = (voice->end - (voice->start - accum))&accum_mask;			\
 				voice->control = (voice->control & ~CONTROL_LOOPMASK) | CONTROL_LEI;\
 				break;																\
 																					\
 			/* bi-directional looping */											\
 			case CONTROL_LPE | CONTROL_BLE:											\
-				accum = voice->start + (voice->start - accum);						\
+				accum = (voice->start + (voice->start - accum))&accum_mask;			\
 				voice->control ^= CONTROL_DIR;										\
 				goto reverse;														\
 		}																			\
@@ -476,7 +477,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum += freqcount;
+				accum = (accum+freqcount)&accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -494,7 +495,7 @@ reverse:
 			while (samples--)
 			{
 				/* fetch two samples */
-				accum -= freqcount;
+				accum = (accum-freqcount)&accum_mask;
 
 				/* update filters/volumes */
 				if (voice->ecount != 0)
@@ -650,7 +651,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
 				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum += freqcount;
+				accum = (accum+freqcount)&accum_mask;
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
@@ -684,7 +685,7 @@ reverse:
 				/* fetch two samples */
 				INT32 val1 = (INT16)base[accum >> 11];
 				INT32 val2 = (INT16)base[(accum >> 11) + 1];
-				accum -= freqcount;
+				accum = (accum-freqcount)&accum_mask;
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, accum);
@@ -903,6 +904,7 @@ int ES5506_sh_start(const struct MachineSound *msound)
 			es5506[i].voice[j].exbank = 0;
 		}
 	}
+	accum_mask=0xffffffff;
 
 	/* allocate memory */
 	accumulator = malloc(sizeof(accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
@@ -1393,7 +1395,7 @@ WRITE_HANDLER( ES5506_data_1_w )
 
 /**********************************************************************************************
 
-     ES5505_sh_stop -- start emulation of the ES5505
+     ES5505_sh_start -- start emulation of the ES5505
 
 ***********************************************************************************************/
 
@@ -1457,6 +1459,10 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 				voice->control |= ((data >> 2) & CONTROL_LPMASK) |
 								  ((data << 2) & (CONTROL_CA0 | CONTROL_CA1));
 			}
+
+if (voice->control&CONTROL_IRQE) logerror("IRQE enabled on voice %d\n",chip->current_page & 0x1f);
+if (voice->control&CONTROL_IRQ) logerror("IRQ enabled on voice %d\n",chip->current_page & 0x1f);
+
 			update_irq_state(chip);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, control=%04x (raw=%04x & %04x)\n", cpu_getpreviouspc(), chip->current_page & 0x1f, voice->control, data, mem_mask ^ 0xffff);
@@ -1464,11 +1470,12 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 
 		case 0x01:	/* FC */
 			if (ACCESSING_LSB)
-				voice->freqcount = (voice->freqcount & ~0x001fc) | ((data & 0x00fe) << 1);
+				voice->freqcount = (voice->freqcount & ~0x001fe) | ((data & 0x00ff) << 1);
 			if (ACCESSING_MSB)
 				voice->freqcount = (voice->freqcount & ~0x1fe00) | ((data & 0xff00) << 1);
 			if (LOG_COMMANDS && eslog)
 				fprintf(eslog, "%06x:voice %d, freq count=%08x\n", cpu_getpreviouspc(), chip->current_page & 0x1f, voice->freqcount);
+logerror("voice %d, freq is %08x\n",chip->current_page & 0x1f,data);
 			break;
 
 		case 0x02:	/* STRT (hi) */
@@ -1887,6 +1894,7 @@ INLINE UINT16 es5505_reg_read_high(struct ES5506Chip *chip, struct ES5506Voice *
 			/* accumulator */
 			if ((voice->control & CONTROL_STOPMASK) && chip->region_base[voice->control >> 14])
 				voice->o1n1 = chip->region_base[voice->control >> 14][voice->exbank + (voice->accum >> 11)];
+			accum_mask=0x7fffffff; /* Silly, needs to go in init */
 			result = voice->o1n1;
 			break;
 
@@ -1991,8 +1999,6 @@ READ16_HANDLER( ES5505_data_1_r )
 	return es5505_reg_read(&es5506[1], offset);
 }
 
-
-
 /**********************************************************************************************
 
      ES5505_data_0_w/ES5505_data_1_w -- handle a write to the current register
@@ -2008,6 +2014,7 @@ WRITE16_HANDLER( ES5505_data_1_w )
 {
 	es5505_reg_write(&es5506[1], offset, data, mem_mask);
 }
+
 void ES5506_voice_bank_0_w(int voice, int bank)
 {
 	es5506[0].voice[voice].exbank=bank;

@@ -476,9 +476,9 @@ CPU=$(strip $(findstring M68000@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68000=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
-ASMDEFS += -DA68KEM
+ifdef X86_ASM_68000
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
+ASMDEFS += -DA68K0
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
 M68000_GENERATED_OBJS = \
@@ -495,9 +495,9 @@ CPU=$(strip $(findstring M68010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68010=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
-ASMDEFS += -DA68KEM
+ifdef X86_ASM_68000
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
+ASMDEFS += -DA68K0
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
 M68000_GENERATED_OBJS = \
@@ -514,8 +514,9 @@ CPU=$(strip $(findstring M68EC020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68EC020=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
+ifdef X86_ASM_68020
+ASMDEFS += -DA68K2
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
 ASMDEFS += -DA68KEM
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
@@ -533,8 +534,9 @@ CPU=$(strip $(findstring M68020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68020=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
+ifdef X86_ASM_68020
+ASMDEFS += -DA68K2
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
 ASMDEFS += -DA68KEM
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
@@ -786,7 +788,7 @@ CPUDEFS += -DHAS_SC61860=1
 CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
 DBGOBJS += $(OBJ)/cpu/sc61860/scdasm.o
 $(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
-	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/sctable.c
+	src/cpu/sc61860/sc.h src/cpu/sc61860/scops.c src/cpu/sc61860/sctable.c
 else
 CPUDEFS += -DHAS_SC61860=0
 endif
@@ -873,6 +875,9 @@ SOUND=$(strip $(findstring DISCRETE@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_DISCRETE=1
 SOUNDOBJS += $(OBJ)/sound/discrete.o
+$(OBJ)/sound/discrete.o: src/sound/discrete.c src/sound/discrete.h \
+		src/sound/disc_dev.c src/sound/disc_flt.c src/sound/disc_inp.c \
+		src/sound/disc_mth.c src/sound/disc_out.c src/sound/disc_wav.c
 else
 SOUNDDEFS += -DHAS_DISCRETE=0
 endif
@@ -952,7 +957,7 @@ endif
 SOUND=$(strip $(findstring YM2413@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2413=1
-SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/ym2413.o $(OBJ)/sound/fmopl.o
+SOUNDOBJS += $(OBJ)/sound/2413intf.o $(OBJ)/sound/ym2413.o
 else
 SOUNDDEFS += -DHAS_YM2413=0
 endif

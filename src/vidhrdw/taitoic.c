@@ -180,6 +180,47 @@ control registers:
 00e-00f incyy
 
 
+
+TC0360PRI
+---------
+Priority manager
+A higher priority value means higher priority. 0 could mean disable but
+I'm not sure. If two inputs have the same priority value, I think the first
+one has priority, but I'm not sure of that either.
+It seems the chip accepts three inputs from three different sources, and
+each one of them can declare to have four different priority levels.
+
+000 unknown. Could it be related to highlight/shadow effects in qcrayon2
+    and gunfront?
+001 in games with a roz layer, this is the roz palette bank (bottom 6 bits
+    affect roz color, top 2 bits affect priority)
+002 unknown
+003 unknown
+
+004 ----xxxx \       priority level 0 (unused? usually 0, pulirula sets it to F in some places)
+    xxxx---- | Input priority level 1 (usually FG0)
+005 ----xxxx |   #1  priority level 2 (usually BG0)
+    xxxx---- /       priority level 3 (usually BG1)
+
+006 ----xxxx \       priority level 0 (usually sprites with top color bits 00)
+    xxxx---- | Input priority level 1 (usually sprites with top color bits 01)
+007 ----xxxx |   #2  priority level 2 (usually sprites with top color bits 10)
+    xxxx---- /       priority level 3 (usually sprites with top color bits 11)
+
+008 ----xxxx \       priority level 0 (e.g. roz layer if top bits of register 001 are 00)
+    xxxx---- | Input priority level 1 (e.g. roz layer if top bits of register 001 are 01)
+009 ----xxxx |   #3  priority level 2 (e.g. roz layer if top bits of register 001 are 10)
+    xxxx---- /       priority level 3 (e.g. roz layer if top bits of register 001 are 11)
+
+00a unused
+00b unused
+00c unused
+00d unused
+00e unused
+00f unused
+
+
+
 TC0480SCP
 ---------
 Tilemap generator, has four zoomable tilemaps with 16x16 tiles.
@@ -710,6 +751,7 @@ void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags
 
 /***************************************************************************/
 
+
 static unsigned char taitof2_scrbank;
 WRITE16_HANDLER( taitof2_scrbank_w )   /* Mjnquest banks its 2 sets of scr tiles */
 {
@@ -720,6 +762,7 @@ WRITE16_HANDLER( taitof2_scrbank_w )   /* Mjnquest banks its 2 sets of scr tiles
 #define TC0100SCN_TOTAL_CHARS 256
 #define TC0100SCN_MAX_CHIPS 3
 static int TC0100SCN_chips;
+static struct rectangle myclip;
 
 static data16_t TC0100SCN_ctrl[TC0100SCN_MAX_CHIPS][8];
 
@@ -741,15 +784,17 @@ static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_gfx[TC0100SCN_MAX_CHIPS],TC0100SCN_tx_gfx[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_col_mult = 0;
-static int TC0100SCN_colbank[3],TC0100SCN_dblwidth;
+static int TC0100SCN_chip_colbank[3],TC0100SCN_colbank[3];
+static int TC0100SCN_dblwidth[TC0100SCN_MAX_CHIPS];
 
 
-INLINE void common_get_bg0_tile_info(data16_t *ram,int gfxnum,int tile_index)
+INLINE void common_get_bg0_tile_info(data16_t *ram,int gfxnum,int tile_index,int colbank,int dblwidth)
 {
 	int code,attr;
 
-	if (!TC0100SCN_dblwidth)
+	if (!dblwidth)
 	{
+		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
 		code = (ram[2*tile_index + 1] & 0x7fff) + (taitof2_scrbank << 15);
 		attr = ram[2*tile_index];
 	}
@@ -758,16 +803,19 @@ INLINE void common_get_bg0_tile_info(data16_t *ram,int gfxnum,int tile_index)
 		code = ram[2*tile_index + 1];
 		attr = ram[2*tile_index];
 	}
-	SET_TILE_INFO(gfxnum,code,((attr * TC0100SCN_bg_col_mult) + TC0100SCN_colbank[0]) & 0xff);
+	SET_TILE_INFO(gfxnum,code,(((attr * TC0100SCN_bg_col_mult) +
+		TC0100SCN_colbank[0]) & 0xff) + colbank);
+
 	tile_info.flags = TILE_FLIPYX((attr & 0xc000) >> 14);
 }
 
-INLINE void common_get_bg1_tile_info(data16_t *ram,int gfxnum,int tile_index)
+INLINE void common_get_bg1_tile_info(data16_t *ram,int gfxnum,int tile_index,int colbank,int dblwidth)
 {
 	int code,attr;
 
-	if (!TC0100SCN_dblwidth)
+	if (!dblwidth)
 	{
+		/* Mahjong Quest (F2 system) inexplicably has a banking feature */
 		code = (ram[2*tile_index + 1] & 0x7fff) + (taitof2_scrbank << 15);
 		attr = ram[2*tile_index];
 	}
@@ -776,69 +824,74 @@ INLINE void common_get_bg1_tile_info(data16_t *ram,int gfxnum,int tile_index)
 		code = ram[2*tile_index + 1];
 		attr = ram[2*tile_index];
 	}
-	SET_TILE_INFO(gfxnum,code,((attr * TC0100SCN_bg_col_mult) + TC0100SCN_colbank[1]) & 0xff);
+	SET_TILE_INFO(gfxnum,code,(((attr * TC0100SCN_bg_col_mult) +
+		TC0100SCN_colbank[1]) & 0xff) + colbank);
+
 	tile_info.flags = TILE_FLIPYX((attr & 0xc000) >> 14);
 }
 
-INLINE void common_get_tx_tile_info(data16_t *ram,int gfxnum,int tile_index)
+INLINE void common_get_tx_tile_info(data16_t *ram,int gfxnum,int tile_index,int colbank,int dblwidth)
 {
-	int attr;
+	int attr = ram[tile_index];
 
-	if (!TC0100SCN_dblwidth)
-	{
-		attr = ram[tile_index];
-	}
-	else
-	{
-		attr = ram[tile_index];
-	}
-	SET_TILE_INFO(gfxnum,attr & 0xff,(((attr >> 6) &0xfc) + (TC0100SCN_colbank[2] << 2)) &0x3ff);
+	SET_TILE_INFO(gfxnum,attr & 0xff,((((attr >> 6) &0xfc) +
+			(TC0100SCN_colbank[2] << 2)) &0x3ff) + colbank*4);
+
 	tile_info.flags = TILE_FLIPYX((attr & 0xc000) >> 14);
 }
 
 static void TC0100SCN_get_bg_tile_info_0(int tile_index)
 {
-	common_get_bg0_tile_info(TC0100SCN_bg_ram[0],TC0100SCN_bg_gfx[0],tile_index);
+	common_get_bg0_tile_info(TC0100SCN_bg_ram[0],TC0100SCN_bg_gfx[0],tile_index,
+			TC0100SCN_chip_colbank[0],TC0100SCN_dblwidth[0]);
 }
 
 static void TC0100SCN_get_fg_tile_info_0(int tile_index)
 {
-	common_get_bg1_tile_info(TC0100SCN_fg_ram[0],TC0100SCN_bg_gfx[0],tile_index);
+	common_get_bg1_tile_info(TC0100SCN_fg_ram[0],TC0100SCN_bg_gfx[0],tile_index,
+			TC0100SCN_chip_colbank[0],TC0100SCN_dblwidth[0]);
 }
 
 static void TC0100SCN_get_tx_tile_info_0(int tile_index)
 {
-	common_get_tx_tile_info(TC0100SCN_tx_ram[0],TC0100SCN_tx_gfx[0],tile_index);
+	common_get_tx_tile_info(TC0100SCN_tx_ram[0],TC0100SCN_tx_gfx[0],tile_index,
+			TC0100SCN_chip_colbank[0],TC0100SCN_dblwidth[0]);
 }
 
 static void TC0100SCN_get_bg_tile_info_1(int tile_index)
 {
-	common_get_bg0_tile_info(TC0100SCN_bg_ram[1],TC0100SCN_bg_gfx[1],tile_index);
+	common_get_bg0_tile_info(TC0100SCN_bg_ram[1],TC0100SCN_bg_gfx[1],tile_index,
+			TC0100SCN_chip_colbank[1],TC0100SCN_dblwidth[1]);
 }
 
 static void TC0100SCN_get_fg_tile_info_1(int tile_index)
 {
-	common_get_bg1_tile_info(TC0100SCN_fg_ram[1],TC0100SCN_bg_gfx[1],tile_index);
+	common_get_bg1_tile_info(TC0100SCN_fg_ram[1],TC0100SCN_bg_gfx[1],tile_index,
+			TC0100SCN_chip_colbank[1],TC0100SCN_dblwidth[1]);
 }
 
 static void TC0100SCN_get_tx_tile_info_1(int tile_index)
 {
-	common_get_tx_tile_info(TC0100SCN_tx_ram[1],TC0100SCN_tx_gfx[1],tile_index);
+	common_get_tx_tile_info(TC0100SCN_tx_ram[1],TC0100SCN_tx_gfx[1],tile_index,
+			TC0100SCN_chip_colbank[1],TC0100SCN_dblwidth[1]);
 }
 
 static void TC0100SCN_get_bg_tile_info_2(int tile_index)
 {
-	common_get_bg0_tile_info(TC0100SCN_bg_ram[2],TC0100SCN_bg_gfx[2],tile_index);
+	common_get_bg0_tile_info(TC0100SCN_bg_ram[2],TC0100SCN_bg_gfx[2],tile_index,
+			TC0100SCN_chip_colbank[2],TC0100SCN_dblwidth[2]);
 }
 
 static void TC0100SCN_get_fg_tile_info_2(int tile_index)
 {
-	common_get_bg1_tile_info(TC0100SCN_fg_ram[2],TC0100SCN_bg_gfx[2],tile_index);
+	common_get_bg1_tile_info(TC0100SCN_fg_ram[2],TC0100SCN_bg_gfx[2],tile_index,
+			TC0100SCN_chip_colbank[2],TC0100SCN_dblwidth[2]);
 }
 
 static void TC0100SCN_get_tx_tile_info_2(int tile_index)
 {
-	common_get_tx_tile_info(TC0100SCN_tx_ram[2],TC0100SCN_tx_gfx[2],tile_index);
+	common_get_tx_tile_info(TC0100SCN_tx_ram[2],TC0100SCN_tx_gfx[2],tile_index,
+			TC0100SCN_chip_colbank[2],TC0100SCN_dblwidth[2]);
 }
 
 /* This array changes if TC0100SCN_MAX_CHIPS is altered */
@@ -867,6 +920,13 @@ static struct GfxLayout TC0100SCN_charlayout =
 };
 
 
+void TC0100SCN_set_chip_colbanks(int chip0,int chip1,int chip2)
+{
+	TC0100SCN_chip_colbank[0] = chip0;	/* palette area for chip 0 */
+	TC0100SCN_chip_colbank[1] = chip1;
+	TC0100SCN_chip_colbank[2] = chip2;
+}
+
 void TC0100SCN_set_colbanks(int bg0,int bg1,int fg)
 {
 	TC0100SCN_colbank[0] = bg0;
@@ -876,7 +936,7 @@ void TC0100SCN_set_colbanks(int bg0,int bg1,int fg)
 
 void TC0100SCN_set_layer_ptrs(int i)
 {
-	if (!TC0100SCN_dblwidth)
+	if (!TC0100SCN_dblwidth[i])
 	{
 		TC0100SCN_bg_ram[i]       = TC0100SCN_ram[i] + 0x0000;
 		TC0100SCN_tx_ram[i]       = TC0100SCN_ram[i] + 0x2000;
@@ -901,7 +961,6 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 {
 	int gfx_index,gfxset_offs,i;
 
-	TC0100SCN_dblwidth=0;
 
 	if (chips > TC0100SCN_MAX_CHIPS) return 1;
 
@@ -910,6 +969,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 	for (i = 0;i < chips;i++)
 	{
 		int xd,yd;
+		TC0100SCN_dblwidth[i]=0;
 
 		/* Single width versions */
 		TC0100SCN_tilemap[i][0][0] = tilemap_create(TC0100SCN_get_tile_info[i][0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
@@ -920,6 +980,31 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		TC0100SCN_tilemap[i][0][1] = tilemap_create(TC0100SCN_get_tile_info[i][0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 		TC0100SCN_tilemap[i][1][1] = tilemap_create(TC0100SCN_get_tile_info[i][1],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 		TC0100SCN_tilemap[i][2][1] = tilemap_create(TC0100SCN_get_tile_info[i][2],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,32);
+
+		/* Set up clipping for multi-TC0100SCN games. We assume
+		   this code won't ever affect single screen games:
+		   Thundfox is the only one with two chips, and we're
+		   safe as it doesn't use double width tilemaps. */
+
+		if (chips==2)	/* Dual screen */
+		{
+			myclip.min_x = 4 + (320*i);
+			myclip.min_y = 16;
+			myclip.max_x = 3 + 320*(i+1);
+			myclip.max_y = 256;
+		}
+
+		if (chips==3)	/* Triple screen */
+		{
+			myclip.min_x = 22 + (288*i);
+			myclip.min_y = 16;
+			myclip.max_x = 21 + 288*(i+1);
+			myclip.max_y = 256;
+		}
+
+		tilemap_set_clip(TC0100SCN_tilemap[i][0][1],&myclip);
+		tilemap_set_clip(TC0100SCN_tilemap[i][1][1],&myclip);
+		tilemap_set_clip(TC0100SCN_tilemap[i][2][1],&myclip);
 
 		TC0100SCN_ram[i] = malloc(TC0100SCN_RAM_SIZE);
 		TC0100SCN_char_dirty[i] = malloc(TC0100SCN_TOTAL_CHARS);
@@ -988,9 +1073,23 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		tilemap_set_scrolldx(TC0100SCN_tilemap[i][2][0],-16 + xd,-16 - xd - 7);
 		tilemap_set_scrolldy(TC0100SCN_tilemap[i][2][0],yd,-yd);
 
-		/* Double width tilemaps */
+		/* Double width tilemaps. We must correct offsets for
+		   extra chips, as MAME sees offsets from LHS of whole
+		   display not from the edges of individual screens.
+		   NB flipscreen tilemap offsets are speculative. */
+
 		xd = -x_offset;
 		yd = 8;
+
+		if (chips==2)	/* Dual screen (wrong by one pixel for Darius2d) */
+		{
+			if (i==1) xd+=319;
+		}
+		if (chips==3)	/* Triple screen */
+		{
+			if (i==1) xd+=286;
+			if (i==2) xd+=572;
+		}
 		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][1],-16 + xd,-16 - xd);
 		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][1],yd,-yd);
 		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][1],-16 + xd,-16 - xd);
@@ -1002,11 +1101,14 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 		tilemap_set_scroll_rows(TC0100SCN_tilemap[i][1][0],512);
 		tilemap_set_scroll_rows(TC0100SCN_tilemap[i][0][1],512);
 		tilemap_set_scroll_rows(TC0100SCN_tilemap[i][1][1],512);
+
+		/* Default is for all used chips to access the same palette area */
+		TC0100SCN_chip_colbank[i]=0;
 	}
 
-	taitof2_scrbank = 0;
+	taitof2_scrbank = 0;	/* only Mjnquest changes this */
 
-	TC0100SCN_bg_col_mult = 1;	/* multiplier to cope with bg gfx != 4bpp */
+	TC0100SCN_bg_col_mult = 1;	/* multiplier for when bg gfx != 4bpp */
 
 	if (Machine->gfx[gfxnum]->color_granularity == 2)	/* Yuyugogo, Yesnoj */
 		TC0100SCN_bg_col_mult = 8;
@@ -1052,7 +1154,7 @@ static void TC0100SCN_word_w(int chip,offs_t offset,data16_t data,UINT32 mem_mas
 	COMBINE_DATA(&TC0100SCN_ram[chip][offset]);
 	if (oldword != TC0100SCN_ram[chip][offset])
 	{
-		if (!TC0100SCN_dblwidth)
+		if (!TC0100SCN_dblwidth[chip])
 		{
 			if (offset < 0x2000)
 				tilemap_mark_tile_dirty(TC0100SCN_tilemap[chip][0][0],offset / 2);
@@ -1151,19 +1253,19 @@ static void TC0100SCN_ctrl_word_w(int chip,offs_t offset,data16_t data,UINT32 me
 
 		case 0x06:
 		{
-			int old_width = TC0100SCN_dblwidth;
+			int old_width = TC0100SCN_dblwidth[chip];
 
-			TC0100SCN_dblwidth = (data &0x10) >> 4;
+			TC0100SCN_dblwidth[chip] = (data &0x10) >> 4;
 
-			if (TC0100SCN_dblwidth != old_width)	/* tilemap width is changing */
+			if (TC0100SCN_dblwidth[chip] != old_width)	/* tilemap width is changing */
 			{
 				/* Reinitialise layer pointers */
 				TC0100SCN_set_layer_ptrs(chip);
 
 				/* We have neglected these tilemaps, so we make amends now */
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth]);
-				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth]);
+				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
+				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]]);
+				tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
 			}
 
 			break;
@@ -1207,15 +1309,15 @@ void TC0100SCN_tilemap_update(void)
 
 	for (chip = 0;chip < TC0100SCN_chips;chip++)
 	{
-		tilemap_set_scrolly(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth],0,TC0100SCN_bgscrolly[chip]);
-		tilemap_set_scrolly(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth],0,TC0100SCN_fgscrolly[chip]);
+		tilemap_set_scrolly(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]],0,TC0100SCN_bgscrolly[chip]);
+		tilemap_set_scrolly(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]],0,TC0100SCN_fgscrolly[chip]);
 
 		for (j = 0;j < 256;j++)
-			tilemap_set_scrollx(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth],
+			tilemap_set_scrollx(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]],
 					(j + TC0100SCN_bgscrolly[chip]) & 0x1ff,
 					TC0100SCN_bgscrollx[chip] - TC0100SCN_bgscroll_ram[chip][j]);
 		for (j = 0;j < 256;j++)
-			tilemap_set_scrollx(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth],
+			tilemap_set_scrollx(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]],
 					(j + TC0100SCN_fgscrolly[chip]) & 0x1ff,
 					TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][j]);
 
@@ -1229,7 +1331,7 @@ void TC0100SCN_tilemap_update(void)
 			{
 				int attr = TC0100SCN_tx_ram[chip][tile_index];
 				if (TC0100SCN_char_dirty[chip][attr & 0xff])
-					tilemap_mark_tile_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth],tile_index);
+					tilemap_mark_tile_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]],tile_index);
 			}
 
 			for (j = 0;j < TC0100SCN_TOTAL_CHARS;j++)
@@ -1241,9 +1343,9 @@ void TC0100SCN_tilemap_update(void)
 			TC0100SCN_chars_dirty[chip] = 0;
 		}
 
-		tilemap_update(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth]);
-		tilemap_update(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth]);
-		tilemap_update(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth]);
+		tilemap_update(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
+		tilemap_update(TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]]);
+		tilemap_update(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
 	}
 }
 
@@ -1260,15 +1362,15 @@ if (disable != 0 && disable != 3 && disable != 7)
 	{
 		case 0:
 			if (disable & 0x01) return;
-			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth],flags,priority);
+			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]],flags,priority);
 			break;
 		case 1:
 			if (disable & 0x02) return;
-			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth],flags,priority);
+			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][1][TC0100SCN_dblwidth[chip]],flags,priority);
 			break;
 		case 2:
 			if (disable & 0x04) return;
-			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth],flags,priority);
+			tilemap_draw(bitmap,TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]],flags,priority);
 			break;
 	}
 }
@@ -1422,6 +1524,54 @@ void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT3
 
 /***************************************************************************/
 
+UINT8 TC0360PRI_regs[16];
+
+WRITE_HANDLER( TC0360PRI_w )
+{
+	TC0360PRI_regs[offset] = data;
+
+if (offset >= 0x0a)
+	usrintf_showmessage("write %02x to unused TC0360PRI reg %x",data,offset);
+#if 0
+#define regs TC0360PRI_regs
+	usrintf_showmessage("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
+		regs[0x00],regs[0x01],regs[0x02],regs[0x03],
+		regs[0x04],regs[0x05],regs[0x06],regs[0x07],
+		regs[0x08],regs[0x09]);
+#endif
+}
+
+WRITE16_HANDLER( TC0360PRI_halfword_w )
+{
+	if (ACCESSING_LSB)
+	{
+		TC0360PRI_w(offset,data & 0xff);
+#if 0
+if (data & 0xff00)
+{ logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
+	else
+{ logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
+#endif
+	}
+}
+
+WRITE16_HANDLER( TC0360PRI_halfword_swap_w )
+{
+	if (ACCESSING_MSB)
+	{
+		TC0360PRI_w(offset,(data >> 8) & 0xff);
+#if 0
+if (data & 0xff)
+{ logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
+	else
+{ logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
+#endif
+	}
+}
+
+
+/***************************************************************************/
+
 
 #define TC0480SCP_RAM_SIZE 0x10000
 #define TC0480SCP_TOTAL_CHARS 256
@@ -1439,10 +1589,9 @@ static struct tilemap *TC0480SCP_tilemap[5][2];
 static char *TC0480SCP_char_dirty;
 static int TC0480SCP_chars_dirty;
 static int TC0480SCP_bg_gfx,TC0480SCP_tx_gfx;
-static int TC0480SCP_tile_colbase;
-static int TC0480SCP_dblwidth;
-static int TC0480SCP_x_offs;
-static int TC0480SCP_y_offs;
+static int TC0480SCP_tile_colbase,TC0480SCP_dblwidth;
+static int TC0480SCP_x_offs,TC0480SCP_y_offs;
+static int TC0480SCP_text_xoffs,TC0480SCP_text_yoffs;
 
 int TC0480SCP_pri_reg;   // read externally in vidhrdw\taito_f2.c
 
@@ -1538,12 +1687,14 @@ void TC0480SCP_set_layer_ptrs(void)
 	}
 }
 
-int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_base)
+int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_xoffs,int text_yoffs,int col_base)
 {
 	int gfx_index;
 
 		int i,xd,yd;
 		TC0480SCP_tile_colbase = col_base;
+		TC0480SCP_text_xoffs = text_xoffs;
+		TC0480SCP_text_yoffs = text_yoffs;
 		TC0480SCP_dblwidth=0;
 
 		/* Single width versions */
@@ -1618,20 +1769,37 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_b
 		xd = -TC0480SCP_x_offs;
 		yd =  TC0480SCP_y_offs;
 
+		/* I suspect that Metalb in screenflip needs (320-xd) for bg
+		   and we will have to pass an offset per game to get all
+		   games correct in screenflip... */
 
-		for (i=0;i<2;i++)
-		{
-			tilemap_set_scrolldx(TC0480SCP_tilemap[0][i], xd,   319-xd);   // 40*8 = 320 (screen width)
-			tilemap_set_scrolldy(TC0480SCP_tilemap[0][i], yd,   256-yd);   // 28*8 = 224 (screen height)
-			tilemap_set_scrolldx(TC0480SCP_tilemap[1][i], xd,   319-xd);
-			tilemap_set_scrolldy(TC0480SCP_tilemap[1][i], yd,   256-yd);
-			tilemap_set_scrolldx(TC0480SCP_tilemap[2][i], xd,   319-xd);
-			tilemap_set_scrolldy(TC0480SCP_tilemap[2][i], yd,   256-yd);
-			tilemap_set_scrolldx(TC0480SCP_tilemap[3][i], xd,   319-xd);
-			tilemap_set_scrolldy(TC0480SCP_tilemap[3][i], yd,   256-yd);
-			tilemap_set_scrolldx(TC0480SCP_tilemap[4][i], xd-2, 315-xd);   /* text layer */
-			tilemap_set_scrolldy(TC0480SCP_tilemap[4][i], yd,   256-yd);   /* text layer */
-		}
+		/* It's not possible to get the text scrolldx calculations
+		   harmonised with the other layers: xd-2, 315-xd is the
+		   next valid pair:- the numbers diverge from xd, 319-xd */
+
+		/* Single width offsets */
+		tilemap_set_scrolldx(TC0480SCP_tilemap[0][0], xd,   319-xd);	// 40*8 = 320 (screen width)
+		tilemap_set_scrolldy(TC0480SCP_tilemap[0][0], yd,   256-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[1][0], xd,   319-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[1][0], yd,   256-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[2][0], xd,   319-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[2][0], yd,   256-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[3][0], xd,   319-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[3][0], yd,   256-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[4][0], xd-3, 316-xd);	/* text layer */
+		tilemap_set_scrolldy(TC0480SCP_tilemap[4][0], yd,   256-yd);	/* text layer */
+
+		/* Double width offsets */
+		tilemap_set_scrolldx(TC0480SCP_tilemap[0][1], xd,   320-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[0][1], yd,   258-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[1][1], xd,   320-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[1][1], yd,   258-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[2][1], xd,   320-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[2][1], yd,   258-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[3][1], xd,   320-xd);
+		tilemap_set_scrolldy(TC0480SCP_tilemap[3][1], yd,   258-yd);
+		tilemap_set_scrolldx(TC0480SCP_tilemap[4][1], xd-3, 317-xd);	/* text layer */
+		tilemap_set_scrolldy(TC0480SCP_tilemap[4][1], yd,   256-yd);	/* text layer */
 
 		for (i=0;i<2;i++)
 		{
@@ -1726,40 +1894,25 @@ static void TC0480SCP_ctrl_word_write(offs_t offset,data16_t data,UINT32 mem_mas
 	switch( offset )
 	{
 		/* The x offsets of the four bg layers are staggered by intervals of 4 pixels */
-/* NOTE:
-Metalb does not always stick with this e.g. it wants bg0&1 further right
-(see stick man on stairs and blue planet in attract).
-There was a bg3 alignment problem with sprites in the round 4 long
-spaceship boss: solved by pushing bg3 two pixels right [there may be a
-single pixel left because of sprites being a frame "early"].
-New offsets make "film" on skyscraper in round 1 slightly wrong.
-*/
-		case 0x00:   /* bg0 x */
-			if (TC0480SCP_tile_colbase) data += 2;   // improves Metalb attract
 
+		case 0x00:   /* bg0 x */
 			if (!flip)  data = -data;
 			TC0480SCP_bgscrollx[0] = data;
 			break;
 
 		case 0x01:   /* bg1 x */
-			if (TC0480SCP_tile_colbase) data += 2;   // improves Metalb attract
-
 			data += 4;
 			if (!flip)  data = -data;
 			TC0480SCP_bgscrollx[1] = data;
 			break;
 
 		case 0x02:   /* bg2 x */
-			if (TC0480SCP_tile_colbase) data += 2;   // same as other layers
-
 			data += 8;
 			if (!flip)  data = -data;
 			TC0480SCP_bgscrollx[2] = data;
 			break;
 
 		case 0x03:   /* bg3 x */
-			if (TC0480SCP_tile_colbase) data += 2;   // improves Metalb round 4 boss
-
 			data += 12;
 			if (!flip)  data = -data;
 			TC0480SCP_bgscrollx[3] = data;
@@ -1792,11 +1945,21 @@ New offsets make "film" on skyscraper in round 1 slightly wrong.
 			break;
 
 		case 0x0c:   /* fg (text) x */
+
+			/* Text layer can be offset from bg0 (e.g. Metalb) */
+			if (!flip)	data -= TC0480SCP_text_xoffs;
+			if (flip)	data += TC0480SCP_text_xoffs;
+
 			tilemap_set_scrollx(TC0480SCP_tilemap[4][0], 0, -data);
 			tilemap_set_scrollx(TC0480SCP_tilemap[4][1], 0, -data);
 			break;
 
 		case 0x0d:   /* fg (text) y */
+
+			/* Text layer can be offset from bg0 (e.g. Slapshot) */
+			if (!flip)	data -= TC0480SCP_text_yoffs;
+			if (flip)	data += TC0480SCP_text_yoffs;
+
 			tilemap_set_scrolly(TC0480SCP_tilemap[4][0], 0, -data);
 			tilemap_set_scrolly(TC0480SCP_tilemap[4][1], 0, -data);
 			break;
@@ -2011,6 +2174,81 @@ void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32
 			tilemap_draw(bitmap,TC0480SCP_tilemap[4][TC0480SCP_dblwidth],flags,priority);
 			break;
 	}
+}
+
+/***************************************************************
+
+TC0480SCP bg layer priority
+---------------------------
+
+...000..   0  1  2  3
+...001..   1  2  3  0  (no evidence of this)
+...010..   2  3  0  1  (no evidence of this)
+...011..   3  0  1  2
+...100..   3  2  1  0
+...101..   2  1  0  3  [0 undefined: in mb (c) screen is taito logo(1) over zooming mouth(2)?]
+...110..   1  0  3  2  (no evidence of this)
+...111..   0  3  2  1
+
+Perhaps bottom two bits relate to row effect enable/disable? Old
+priority table included here for reference until we figure that.
+As we never see a layer that should clearly be hidden, I don't
+think there are layer disable bits. [There are layer opacity issues
+in Super Chase though.]
+
+	// mb = seen during metal black game
+	// ss = seen during slap shot game
+	{ 0, 1, 2, 3, },	// 0x00  00000  mb ss [text screens, but Deadconx confirms layer order]
+	{ 0, 1, 2, 3, },	// 0x01  00001
+	{ 0, 1, 2, 3, },	// 0x02  00010
+	{ 0, 1, 2, 3, },	// 0x03  00011  mb    [all boss dies]
+	{ 0, 1, 2, 3, },	// 0x04  00100
+	{ 0, 1, 2, 3, },	// 0x05  00101
+	{ 0, 1, 2, 3, },	// 0x06  00110
+	{ 0, 1, 2, 3, },	// 0x07  00111
+	{ 0, 1, 2, 3, },	// 0x08  01000
+	{ 0, 1, 2, 3, },	// 0x09  01001
+	{ 0, 1, 2, 3, },	// 0x0a  01010
+	{ 0, 1, 2, 3, },	// 0x0b  01011
+	{ 3, 0, 1, 2, },	// 0x0c  01100  mb    [round3 boss; bg0 undefined (was 0312)]
+	{ 3, 0, 1, 2, },	// 0x0d  01101
+	{ 3, 0, 1, 2, },	// 0x0e  01110
+	{ 3, 0, 1, 2, },	// 0x0f  01111  mb    [second part of round5]
+	{ 3, 2, 1, 0, },	// 0x10  10000  mb ss [round 6 start (was 3012; 0/1 or 1/0?)]
+	{ 3, 2, 1, 0, },	// 0x11  10001     ss (1/0 or 0/1?)
+	{ 3, 2, 1, 0, },	// 0x12  10010  mb    [round1 start]
+	{ 3, 2, 1, 0, },	// 0x13  10011  mb    [final boss, round2/4 start & bonus in demo] (2/1 then 0, bg3 undefined)
+	{ 0, 1, 2, 3, },	// 0x14  10100  mb    [copyright screen, bg0 undefined]
+	{ 0, 1, 2, 3, },	// 0x15  10101
+	{ 0, 1, 2, 3, },	// 0x16  10110
+	{ 0, 1, 2, 3, },	// 0x17  10111  mb    [round4 boss; bg0/1 undefined]
+	{ 0, 1, 2, 3, },	// 0x18  11000
+	{ 0, 1, 2, 3, },	// 0x19  11001
+	{ 0, 1, 2, 3, },	// 0x1a  11010
+	{ 0, 1, 2, 3, },	// 0x1b  11011
+	{ 0, 3, 2, 1, },	// 0x1c  11100  mb    [late round 3; bg1/2/3 posns interchangeable (was 0123)]
+	{ 0, 3, 2, 1, },	// 0x1d  11101
+	{ 0, 3, 2, 1, },	// 0x1e  11110  mb    [first part of round5]
+	{ 0, 3, 2, 1, },	// 0x1f  11111  mb    [first part of round3]
+};
+
+**************************************************************/
+
+static UINT16 TC0480SCP_bg_pri_lookup[8] =
+{
+	0x0123,
+	0x1230,
+	0x2301,
+	0x3012,
+	0x3210,
+	0x2103,
+	0x1032,
+	0x0321
+};
+
+int TC0480SCP_get_bg_priority(void)
+{
+	return TC0480SCP_bg_pri_lookup[(TC0480SCP_pri_reg &0x1c) >> 2];
 }
 
 

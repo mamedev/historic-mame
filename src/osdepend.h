@@ -58,6 +58,12 @@ void osd_free_bitmap(struct osd_bitmap *bitmap);
   (ORIENTATION_SWAP_XY set), or even to ask the user to rotate the monitor if it's
   a pivot model. Note that the OS dependant code must NOT perform any rotation,
   this is done entirely in the core.
+  Depth can be 8 or 16 for palettized modes, meaning that the core will store in the
+  bitmaps logical pens which will have to be remapped through a palette at blit time,
+  and 15 or 32 for direct mapped modes, meaning that the bitmaps will contain RGB
+  triplets (555 or 888). For direct mapped modes, the VIDEO_RGB_DIRECT flag is set
+  in the attributes field.
+
   Returns 0 on success.
 */
 int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
@@ -85,12 +91,19 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 /*
   osd_allocate_colors() is called after osd_create_display(), to create and
   initialize the palette.
+
   palette is an array of 'totalcolors' R,G,B triplets. The function returns
   in *pens the pen values corresponding to the requested colors.
   When modifiable is not 0, the palette will be modified later via calls to
   osd_modify_pen(). Otherwise, the code can assume that the palette will not
   change, and activate special optimizations (e.g. direct copy for a 16-bit
   display).
+
+  For direct mapped modes, the palette contains just three entries, a pure red,
+  pure green and pure blue. Of course this is not the game palette, it is only
+  used by the core to determine the layout (RGB, BGR etc.) so the OS code can
+  do a straight copy of the bitmap without having to remap it. RGB 565 modes
+  are NOT supported yet by the core, only 555.
 
   The function must also initialize Machine->uifont->colortable[] to get proper
   white-on-black and black-on-white text.
@@ -102,8 +115,8 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
   Return 0 for success.
 */
 int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT16 *pens,int modifiable,
-		const UINT8 *debug_palette,UINT16 *debug_pens);
+		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *debug_palette,UINT32 *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 
@@ -262,7 +275,7 @@ int osd_joystick_needs_calibration (void);
 void osd_joystick_start_calibration (void);
 /* Prepare the next calibration step. Return a description of this step. */
 /* (e.g. "move to upper left") */
-char *osd_joystick_calibrate_next (void);
+const char *osd_joystick_calibrate_next (void);
 /* Get the actual joystick calibration data for the current position */
 void osd_joystick_calibrate (void);
 /* Postprocessing (e.g. saving joystick data to config) */

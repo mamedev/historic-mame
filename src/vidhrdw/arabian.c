@@ -325,7 +325,7 @@ WRITE_HANDLER( arabian_videoram_w )
 
 void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	UINT16 pens[256];
+	UINT32 pens[256];
 	int y;
 
 	/* build the combined pens table; this handles transparency of the upper plane */

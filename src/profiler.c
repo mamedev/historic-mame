@@ -8,8 +8,8 @@ static int use_profiler;
  * so we make it into an unsigned long here.
  */
 
-#ifdef __GNU__
-#if (__GNUC__ == 2) && (__GNUC_MINOR_ <= 7)
+#ifdef __GNUC__
+#if (__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
 #define UINT64		unsigned long
 #endif
 #endif

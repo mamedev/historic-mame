@@ -63,19 +63,20 @@ extern int use_mouse, joystick, use_hotrod;
 extern char *cheatfile;
 
 /* from datafile.c */
-extern char *history_filename,*mameinfo_filename;
+extern const char *history_filename,*mameinfo_filename;
 
 /* from fileio.c */
-void decompose_rom_sample_path (char *rompath, char *samplepath);
+void decompose_rom_sample_path (const char *rompath, const char *samplepath);
 
 #ifdef MESS
 void decompose_software_path (char *softwarepath);
 #endif
 
-extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
-extern char *artworkdir, *screenshotdir, *alternate_name;
+extern const char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
+extern const char *artworkdir, *screenshotdir;
+extern char *alternate_name;
 
-extern char *cheatdir;
+extern const char *cheatdir;
 
 #ifdef MESS
 /* path to the CRC database files */
@@ -101,7 +102,7 @@ extern int wait_interlace;
 static int mame_argc;
 static char **mame_argv;
 static int game;
-char *rompath, *samplepath;
+static const char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
@@ -114,7 +115,7 @@ struct { char *name; int id; } joy_table[] =
 	{ "8button",        JOY_TYPE_8BUTTON },
 	{ "fspro",          JOY_TYPE_FSPRO },
 	{ "wingex",         JOY_TYPE_WINGEX },
-	{ "sidewinder",     JOY_TYPE_SIDEWINDER },
+	{ "sidewinder",     JOY_TYPE_SIDEWINDER_AG },
 	{ "gamepadpro",     JOY_TYPE_GAMEPAD_PRO },
 	{ "grip",           JOY_TYPE_GRIP },
 	{ "grip4",          JOY_TYPE_GRIP4 },
@@ -153,7 +154,7 @@ struct { char *name; int id; } monitor_table[] =
  */
 static int get_bool (char *section, char *option, char *shortcut, int def)
 {
-	char *yesnoauto;
+	const char *yesnoauto;
 	int res, i;
 
 	res = def;
@@ -281,9 +282,9 @@ static float get_float (char *section, char *option, char *shortcut, float def)
 	return res;
 }
 
-static char *get_string (char *section, char *option, char *shortcut, char *def)
+static const char *get_string (char *section, char *option, char *shortcut, char *def)
 {
-	char *res;
+	const char *res;
 	int i;
 
 	res = def;
@@ -367,13 +368,13 @@ void init_inpdir(void)
 void parse_cmdline (int argc, char **argv, int game_index, char *override_default_rompath)
 {
 	static float f_beam, f_flicker;
-	char *resolution, *vectorres;
-	char *vesamode;
-	char *joyname;
+	const char *resolution, *vectorres;
+	const char *vesamode;
+	const char *joyname;
 	char tmpres[10];
 	int i;
-	char *tmpstr;
-	char *monitorname;
+	const char *tmpstr;
+	const char *monitorname;
 
 	mame_argc = argc;
 	mame_argv = argv;
@@ -403,7 +404,9 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 
 	tmpstr			   = get_string ("config", "depth", NULL, "auto");
 	options.color_depth = atoi(tmpstr);
-	if (options.color_depth != 8 && options.color_depth != 16) options.color_depth = 0; /* auto */
+	if (options.color_depth != 8 && options.color_depth != 15 &&
+			options.color_depth != 16 && options.color_depth != 32)
+		options.color_depth = 0; /* auto */
 
 	skiplines	= get_int	 ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int	 ("config", "skipcolumns",  NULL, 0);
@@ -446,6 +449,7 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	if (attenuation < -32) attenuation = -32;
 	if (attenuation > 0) attenuation = 0;
 	sampleratedetect    = get_bool ("config", "sampleratedetect", NULL, 1);
+	options.use_filter = get_bool ("config", "resamplefilter", NULL, 1);
 
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);

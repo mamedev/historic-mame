@@ -169,15 +169,19 @@ INLINE void z80gb_ProcessInterrupts (void)
 
 			irq = ISWITCH & IFLAGS;
 
+			/*
 			logerror("Attempting to process Z80GB Interrupt IRQ $%02X\n", irq);
 			logerror("Attempting to process Z80GB Interrupt ISWITCH $%02X\n", ISWITCH);
 			logerror("Attempting to process Z80GB Interrupt IFLAGS $%02X\n", IFLAGS);
+			*/
 
 
 		if (irq)
 		{
 			int irqline = 0;
+			/*
 			logerror("Z80GB Interrupt IRQ $%02X\n", irq);
+			*/
 
 			while( irqline < 5 )
 			{
@@ -196,7 +200,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 					Regs.w.SP -= 2;
 					mem_WriteWord (Regs.w.SP, Regs.w.PC);
 					Regs.w.PC = 0x40 + irqline * 8;
-					logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );
+					/*logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );*/
 					return;
 				}
 				irqline++;
@@ -330,7 +334,7 @@ void z80gb_set_nmi_line(int state)
 
 void z80gb_set_irq_line (int irqline, int state)
 {
-	logerror("setting irq line 0x%02x state 0x%08x\n", irqline, state);
+	/*logerror("setting irq line 0x%02x state 0x%08x\n", irqline, state);*/
 	//if( Regs.w.irq_state == state )
 	//	return;
 
@@ -340,7 +344,7 @@ void z80gb_set_irq_line (int irqline, int state)
 
 		IFLAGS |= (0x01 << irqline);
 		CheckInterrupts = 1;
-		logerror("Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);
+		/*logerror("Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);*/
 
 	}
 	else
@@ -349,7 +353,7 @@ void z80gb_set_irq_line (int irqline, int state)
 		IFLAGS &= ~(0x01 << irqline);
 		if( IFLAGS == 0 )
 			CheckInterrupts = 0;
-		logerror("Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);
+		/*logerror("Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);*/
 
      }
 }

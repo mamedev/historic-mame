@@ -137,6 +137,7 @@ WRITE_HANDLER( pengo_sound_w );
 
 extern void pacplus_decode(void);
 extern void jumpshot_decode(void);
+extern void shootbul_decode(void);
 
 void theglob_init_machine(void);
 READ_HANDLER( theglob_decrypt_rom );
@@ -1170,6 +1171,48 @@ INPUT_PORTS_START( jumpshot )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( shootbul )
+	PORT_START /* IN0 */
+	PORT_ANALOG( 0x0f, 0x0f, IPT_TRACKBALL_X , 50, 25, 0, 0)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START /* IN1 */
+	PORT_ANALOG( 0x0f, 0x0f, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 25, 0, 0)
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW 1 */
+	PORT_DIPNAME( 0x07, 0x07, "Time"  )
+	PORT_DIPSETTING(    0x01, "Short")
+	PORT_DIPSETTING(    0x07, "Average" )
+	PORT_DIPSETTING(    0x03, "Long" )
+	PORT_DIPSETTING(    0x05, "Longer" )
+	PORT_DIPSETTING(    0x06, "Longest" )
+	PORT_DIPNAME( 0x08, 0x08, "Title Page Sounds"  )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* DSW 2 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 
 
 static struct GfxLayout tilelayout =
@@ -1244,7 +1287,7 @@ static const struct MachineDriver machine_driver_pacman =
 			pacman_interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	pacman_init_machine,
 
@@ -1281,7 +1324,7 @@ static const struct MachineDriver machine_driver_theglob =
 			pacman_interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	theglob_init_machine,
 
@@ -1318,7 +1361,7 @@ static const struct MachineDriver machine_driver_vanvan =
 			nmi_interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -1355,7 +1398,7 @@ static const struct MachineDriver machine_driver_dremshpr =
 			nmi_interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -1392,7 +1435,7 @@ static const struct MachineDriver machine_driver_alibaba =
 			interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -2085,28 +2128,6 @@ ROM_START( beastf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( jumpshot )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
-	ROM_LOAD( "6f",           0x1000, 0x1000, 0xf70deae2 )
-	ROM_LOAD( "6h",           0x2000, 0x1000, 0x894d6f68 )
-	ROM_LOAD( "6j",           0x3000, 0x1000, 0xf15a108a )
-
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "5e",           0x0000, 0x1000, 0xd9fa90f5 )
-
-	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "5f",           0x0000, 0x1000, 0x2ec711c1 )
-
-	ROM_REGION( 0x0120, REGION_PROMS, 0 )
-	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
-	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
-
-	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
-	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
-	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
-ROM_END
-
 ROM_START( vanvan )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
@@ -2190,6 +2211,50 @@ ROM_START( alibaba )
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( jumpshot )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
+	ROM_LOAD( "6f",           0x1000, 0x1000, 0xf70deae2 )
+	ROM_LOAD( "6h",           0x2000, 0x1000, 0x894d6f68 )
+	ROM_LOAD( "6j",           0x3000, 0x1000, 0xf15a108a )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5e",           0x0000, 0x1000, 0xd9fa90f5 )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x1000, 0x2ec711c1 )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
+	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( shootbul )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "sb6e.cpu",     0x0000, 0x1000, 0x25daa5e9 )
+	ROM_LOAD( "sb6f.cpu",     0x1000, 0x1000, 0x92144044 )
+	ROM_LOAD( "sb6h.cpu",     0x2000, 0x1000, 0x43b7f99d )
+	ROM_LOAD( "sb6j.cpu",     0x3000, 0x1000, 0xbc4d3bbf )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sb5e.cpu",     0x0000, 0x1000, 0x07c6c5aa )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sb5f.cpu",     0x0000, 0x1000, 0xeaec6837 )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "7f.rom",       0x0000, 0x0020, 0xec578b98 )
+	ROM_LOAD( "4a.rom",       0x0020, 0x0100, 0x81a6b30f )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 ) /* timing - not used */
 ROM_END
 
 
@@ -2365,6 +2430,12 @@ static void init_jumpshot(void)
 	jumpshot_decode();
 }
 
+static void init_shootbul(void)
+{
+	shootbul_decode();
+}
+
+
 
 /*          rom       parent    machine   inp       init */
 GAME( 1980, pacman,   0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
@@ -2400,3 +2471,4 @@ GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Karateco"
 GAME( 1983, vanvans,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Sanritsu", "Van Van Car (Sanritsu)" )
 GAME( 1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )
 GAME( 1985, jumpshot, 0,        pacman,   jumpshot, jumpshot, ROT90,  "Bally Midway", "Jump Shot" )
+GAME( 1985, shootbul, 0,        pacman,   shootbul, shootbul, ROT90,  "Bally Midway", "Shoot the Bull" )

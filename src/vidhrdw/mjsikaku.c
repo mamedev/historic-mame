@@ -1,46 +1,48 @@
-/***************************************************************************
+/******************************************************************************
 
 	Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 1999/11/05 -
+	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
-***************************************************************************/
+******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/mjsikaku.h"
 #include "machine/nb1413m3.h"
 
 
-unsigned char mjsikaku_palette[0x20];
-
 static int mjsikaku_scrolly;
-static int mjsikaku_drawx;
-static int mjsikaku_drawy;
+static int mjsikaku_drawx, mjsikaku_drawy;
 static int mjsikaku_sizex, mjsikaku_sizey;
 static int mjsikaku_radrx, mjsikaku_radry;
-static int mjsikaku_dispflag;
-static int mjsikaku_dispflag2;
 static int mjsikaku_gfxrom;
+static int mjsikaku_dispflag;
+static int mjsikaku_gfxflag1;
+static int mjsikaku_gfxflag2;
+static int mjsikaku_gfxflag3;
 static int mjsikaku_flipscreen;
-static int gfxdraw_mode;
+static int mjsikaku_flipx, mjsikaku_flipy;
+static int mjsikaku_screen_refresh;
+static int mjsikaku_gfxmode;
 
-static struct osd_bitmap *tmpbitmap1;
+static struct osd_bitmap *mjsikaku_tmpbitmap;
 static unsigned short *mjsikaku_videoram;
+static unsigned short *mjsikaku_videoworkram;
+static unsigned char *mjsikaku_palette;
 
 
+static void mjsikaku_vramflip(void);
 static void mjsikaku_gfxdraw(void);
 static void secolove_gfxdraw(void);
 static void bijokkoy_gfxdraw(void);
-static void housemnq_gfxdraw(void);
 static void seiha_gfxdraw(void);
 static void crystal2_gfxdraw(void);
 
 
-/******************************************************************/
+/******************************************************************************
 
 
-/******************************************************************/
+******************************************************************************/
 void mjsikaku_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	int i;
@@ -50,28 +52,10 @@ void mjsikaku_init_palette(unsigned char *palette, unsigned short *colortable, c
 	{
 		int r, g, b;
 
-		r = (i >> 0) & 0x0f;
-		g = (i >> 4) & 0x0f;
-		b = (i >> 8) & 0x0f;
-
-		(*palette++) = ((r << 4) | r);
-		(*palette++) = ((g << 4) | g);
-		(*palette++) = ((b << 4) | b);
-	}
-}
-
-void secolove_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
-{
-	int i;
-
-	/* initialize 444 RGB lookup */
-	for (i = 0; i < 4096; i++)
-	{
-		int r, g, b;
-
-		r = (i >> 0) & 0x0f;
-		g = (i >> 4) & 0x0f;
-		b = (i >> 8) & 0x0f;
+		// xxxxbbbb_ggggrrrr
+		r = ((i >> 0) & 0x0f);
+		g = ((i >> 4) & 0x0f);
+		b = ((i >> 8) & 0x0f);
 
 		(*palette++) = ((r << 4) | r);
 		(*palette++) = ((g << 4) | g);
@@ -83,16 +67,17 @@ void seiha_init_palette(unsigned char *palette, unsigned short *colortable, cons
 {
 	int i;
 
-	/* initialize 555 RGB lookup */
-	for (i = 0; i < 32768; i++)
+	/* initialize 655 RGB lookup */
+	for (i = 0; i < 65536; i++)
 	{
 		int r, g, b;
 
-		r = (i >>  0) & 0x1f;
-		g = (i >>  5) & 0x1f;
-		b = (i >> 10) & 0x1f;
+		// bbbbbggg_ggrrrrrr
+		r = ((i >>  0) & 0x3f);
+		g = ((i >>  6) & 0x1f);
+		b = ((i >> 11) & 0x1f);
 
-		(*palette++) = ((r << 3) | (r >> 2));
+		(*palette++) = ((r << 2) | (r >> 3));
 		(*palette++) = ((g << 3) | (g >> 2));
 		(*palette++) = ((b << 3) | (b >> 2));
 	}
@@ -107,21 +92,22 @@ void crystal2_init_palette(unsigned char *palette, unsigned short *colortable, c
 	{
 		int bit0, bit1, bit2;
 
+		// xxxxxxxx_bbgggrrr
 		/* red component */
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		(*palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = ((i >> 0) & 0x01);
+		bit1 = ((i >> 1) & 0x01);
+		bit2 = ((i >> 2) & 0x01);
+		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* green component */
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		(*palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = ((i >> 3) & 0x01);
+		bit1 = ((i >> 4) & 0x01);
+		bit2 = ((i >> 5) & 0x01);
+		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* blue component */
 		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		(*palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = ((i >> 6) & 0x01);
+		bit2 = ((i >> 7) & 0x01);
+		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 	}
 }
 
@@ -135,10 +121,10 @@ WRITE_HANDLER( secolove_palette_w )
 	mjsikaku_palette[offset & 0x0f] = (data ^ 0xff);
 }
 
-/******************************************************************/
+/******************************************************************************
 
 
-/******************************************************************/
+******************************************************************************/
 void mjsikaku_radrx_w(int data)
 {
 	mjsikaku_radrx = data;
@@ -158,7 +144,7 @@ void mjsikaku_sizey_w(int data)
 {
 	mjsikaku_sizey = data;
 
-	switch (gfxdraw_mode)
+	switch (mjsikaku_gfxmode)
 	{
 		case	0:
 			mjsikaku_gfxdraw();
@@ -175,48 +161,83 @@ void mjsikaku_sizey_w(int data)
 		case	4:
 			bijokkoy_gfxdraw();
 			break;
-		case	5:
-			housemnq_gfxdraw();
-			break;
 	}
 }
 
-void mjsikaku_dispflag_w(int data)
+void mjsikaku_gfxflag1_w(int data)
 {
-	mjsikaku_dispflag = data;
+	static int mjsikaku_flipscreen_old = -1;
 
-	mjsikaku_flipscreen = (data & 0x04) >> 2;
+	mjsikaku_gfxflag1 = data;
+
+	mjsikaku_flipx = (data & 0x01) ? 1 : 0;
+	mjsikaku_flipy = (data & 0x02) ? 1 : 0;
+	mjsikaku_flipscreen = (data & 0x04) ? 0 : 1;
+	mjsikaku_dispflag = (data & 0x08) ? 0 : 1;
+
+	if ((nb1413m3_type == NB1413M3_MJSIKAKU) ||
+	    (nb1413m3_type == NB1413M3_OTONANO) ||
+	    (nb1413m3_type == NB1413M3_SECOLOVE) ||
+	    (nb1413m3_type == NB1413M3_CITYLOVE) ||
+	    (nb1413m3_type == NB1413M3_SEIHA) ||
+	    (nb1413m3_type == NB1413M3_SEIHAM) ||
+	    (nb1413m3_type == NB1413M3_IEMOTO) ||
+	    (nb1413m3_type == NB1413M3_OJOUSAN) ||
+	    (nb1413m3_type == NB1413M3_BIJOKKOY) ||
+	    (nb1413m3_type == NB1413M3_HOUSEMNQ) ||
+	    (nb1413m3_type == NB1413M3_HOUSEMN2) ||
+	    (nb1413m3_type == NB1413M3_CRYSTAL2) ||
+	    (nb1413m3_type == NB1413M3_APPAREL))
+	{
+		mjsikaku_flipscreen ^= 1;
+	}
+
+	if (mjsikaku_flipscreen != mjsikaku_flipscreen_old)
+	{
+		mjsikaku_vramflip();
+		mjsikaku_screen_refresh = 1;
+		mjsikaku_flipscreen_old = mjsikaku_flipscreen;
+	}
 }
 
-void mjsikaku_dispflag2_w(int data)
+void mjsikaku_gfxflag2_w(int data)
 {
-	mjsikaku_dispflag2 = data;
+	mjsikaku_gfxflag2 = data;
 
-	if (!strcmp(Machine->gamedrv->name, "seiham")) mjsikaku_dispflag2 ^= 0x20;
+	if (nb1413m3_type == NB1413M3_SEIHAM) mjsikaku_gfxflag2 ^= 0x20;
+}
+
+void mjsikaku_gfxflag3_w(int data)
+{
+	mjsikaku_gfxflag3 = (data & 0xe0);
 }
 
 void mjsikaku_drawx_w(int data)
 {
-	mjsikaku_drawx = data;
+	mjsikaku_drawx = (data ^ 0xff);
 }
 
 void mjsikaku_drawy_w(int data)
 {
-	mjsikaku_drawy = ((data - mjsikaku_scrolly) & 0xff);
+	if (mjsikaku_flipscreen) mjsikaku_drawy = ((data - 2) ^ 0xff) & 0xff;
+	else mjsikaku_drawy = (data ^ 0xff);
 }
 
 void mjsikaku_scrolly_w(int data)
 {
-	mjsikaku_scrolly = ((-data) & 0x1ff);
+	if (mjsikaku_flipscreen) mjsikaku_scrolly = (data ^ 0xff);
+	else mjsikaku_scrolly = (data - 1) & 0xff;
 }
 
 void mjsikaku_romsel_w(int data)
 {
-	mjsikaku_gfxrom = (data & 0x1f);
+	mjsikaku_gfxrom = (data & 0x07);
 
-	if ((0x20000 * mjsikaku_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
+#ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
+#endif
 		mjsikaku_gfxrom = 0;
 	}
 }
@@ -225,9 +246,11 @@ void secolove_romsel_w(int data)
 {
 	mjsikaku_gfxrom = ((data & 0xc0) >> 4) + (data & 0x03);
 
-	if ((0x20000 * mjsikaku_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
+#ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
+#endif
 		mjsikaku_gfxrom = 0;
 	}
 }
@@ -236,9 +259,24 @@ void iemoto_romsel_w(int data)
 {
 	mjsikaku_gfxrom = (data & 0x07);
 
-	if ((0x20000 * mjsikaku_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
+#ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
+#endif
+		mjsikaku_gfxrom = 0;
+	}
+}
+
+void seiha_romsel_w(int data)
+{
+	mjsikaku_gfxrom = (data & 0x1f);
+
+	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
+	{
+#ifdef MAME_DEBUG
+		usrintf_showmessage("GFXROM BANK OVER!!");
+#endif
 		mjsikaku_gfxrom = 0;
 	}
 }
@@ -247,1084 +285,940 @@ void crystal2_romsel_w(int data)
 {
 	mjsikaku_gfxrom = (data & 0x03);
 
-	if ((0x20000 * mjsikaku_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
+	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
+#ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
+#endif
 		mjsikaku_gfxrom = 0;
 	}
 }
 
-/******************************************************************/
+/******************************************************************************
 
 
-/******************************************************************/
+******************************************************************************/
+void mjsikaku_vramflip(void)
+{
+	int x, y;
+	unsigned short color1, color2;
+
+	for (y = 0; y < (Machine->drv->screen_height / 2); y++)
+	{
+		for (x = 0; x < Machine->drv->screen_width; x++)
+		{
+			color1 = mjsikaku_videoram[(y * Machine->drv->screen_width) + x];
+			color2 = mjsikaku_videoram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0x1ff)];
+			mjsikaku_videoram[(y * Machine->drv->screen_width) + x] = color2;
+			mjsikaku_videoram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0x1ff)] = color1;
+
+			color1 = mjsikaku_videoworkram[(y * Machine->drv->screen_width) + x];
+			color2 = mjsikaku_videoworkram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0x1ff)];
+			mjsikaku_videoworkram[(y * Machine->drv->screen_width) + x] = color2;
+			mjsikaku_videoworkram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0x1ff)] = color1;
+		}
+	}
+}
+
 static void mjsikaku_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
-	int i, j;
 	int x, y;
-	int flipx, flipy;
+	int dx1, dx2, dy;
 	int startx, starty;
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
 	int tflag1, tflag2;
+	int gfxaddr;
+	unsigned short r, g, b;
+	unsigned short color, color1, color2;
+	unsigned short drawcolor1, drawcolor2;
 
-	if (mjsikaku_dispflag2 & 0x20) return;
+	if (mjsikaku_gfxflag2 & 0x20) return;
 
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
+	if (mjsikaku_flipx)
 	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
+		mjsikaku_drawx -= (mjsikaku_sizex << 1);
+		startx = mjsikaku_sizex;
+		sizex = ((mjsikaku_sizex ^ 0xff) + 1);
 		skipx = -1;
 	}
-
-	if (flipy)
+	else
 	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
+		mjsikaku_drawx = (mjsikaku_drawx - mjsikaku_sizex);
+		startx = 0;
+		sizex = (mjsikaku_sizex + 1);
+		skipx = 1;
+	}
+
+	if (mjsikaku_flipy)
+	{
+		mjsikaku_drawy -= ((mjsikaku_sizey << 1) + 1);
+		starty = mjsikaku_sizey;
+		sizey = ((mjsikaku_sizey ^ 0xff) + 1);
+		skipy = -1;
 	}
 	else
 	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
+		mjsikaku_drawy = (mjsikaku_drawy - mjsikaku_sizey - 1);
+		starty = 0;
+		sizey = (mjsikaku_sizey + 1);
+		skipy = 1;
 	}
 
-	i = j = 0;
+	gfxaddr = ((mjsikaku_gfxrom << 17) + (mjsikaku_radry << 9) + (mjsikaku_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
 		{
-			unsigned char color1, color2;
-			unsigned char r, g, b;
-			unsigned short drawcolor1, drawcolor2;
+			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
+			{
+#ifdef MAME_DEBUG
+				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+#endif
+				gfxaddr = 0;
+			}
 
-			color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-			color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
+			color = GFX[gfxaddr++];
+
+			if (mjsikaku_flipscreen)
+			{
+				dx1 = (((((mjsikaku_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
+				dx2 = (((((mjsikaku_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
+				dy = (((mjsikaku_drawy + y + mjsikaku_scrolly) ^ 0xff) & 0xff);
+			}
+			else
+			{
+				dx1 = ((((mjsikaku_drawx + x) * 2) + 0) & 0x1ff);
+				dx2 = ((((mjsikaku_drawx + x) * 2) + 1) & 0x1ff);
+				dy = ((mjsikaku_drawy + y + (-mjsikaku_scrolly & 0xff)) & 0xff);
+			}
+
+			if (mjsikaku_flipx)
+			{
+				// flip
+				color1 = (color & 0xf0) >> 4;
+				color2 = (color & 0x0f) >> 0;
+			}
+			else
+			{
+				// normal
+				color1 = (color & 0x0f) >> 0;
+				color2 = (color & 0xf0) >> 4;
+			}
 
 			r = ((mjsikaku_palette[(color1 << 1) + 0] & 0x07) << 1) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x01) >> 0);
 			g = ((mjsikaku_palette[(color1 << 1) + 0] & 0x38) >> 2) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x02) >> 1);
 			b = ((mjsikaku_palette[(color1 << 1) + 0] & 0xc0) >> 4) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x0c) >> 2);
+
 			drawcolor1 = (((b << 8) | (g << 4) | (r << 0)) & 0x0fff);
-			tflag1 = ((r == 0x0f) && (g == 0x0f) && (b == 0x0f)) ? 0 : 1;
 
 			r = ((mjsikaku_palette[(color2 << 1) + 0] & 0x07) << 1) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x01) >> 0);
 			g = ((mjsikaku_palette[(color2 << 1) + 0] & 0x38) >> 2) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x02) >> 1);
 			b = ((mjsikaku_palette[(color2 << 1) + 0] & 0xc0) >> 4) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x0c) >> 2);
+
 			drawcolor2 = (((b << 8) | (g << 4) | (r << 0)) & 0x0fff);
-			tflag2 = ((r == 0x0f) && (g == 0x0f) && (b == 0x0f)) ? 0 : 1;
 
-			if (flipx)
+			tflag1 = tflag2 = 0;
+
+			if (drawcolor1 != 0x0fff) tflag1 = 1;
+			if (drawcolor2 != 0x0fff) tflag2 = 1;
+
+			if (tflag1)
 			{
-				int tmp;
-
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
-
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
+				plot_pixel(mjsikaku_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
+			}
+			if (tflag2)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
+				plot_pixel(mjsikaku_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
 			}
 
 			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
 		}
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 4000) ? 0 : 1;
-
 }
 
 static void secolove_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
-	int i, j;
 	int x, y;
-	int flipx, flipy;
+	int dx1, dx2, dy;
 	int startx, starty;
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
 	int tflag1, tflag2;
-	int hcflag;
+	int gfxaddr;
+	unsigned short color, color1, color2;
+	unsigned short drawcolor1, drawcolor2;
 
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
+	if (mjsikaku_flipx)
 	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
+		mjsikaku_drawx -= (mjsikaku_sizex << 1);
+		startx = mjsikaku_sizex;
+		sizex = ((mjsikaku_sizex ^ 0xff) + 1);
 		skipx = -1;
 	}
-
-	if (flipy)
+	else
 	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
+		mjsikaku_drawx = (mjsikaku_drawx - mjsikaku_sizex);
+		startx = 0;
+		sizex = (mjsikaku_sizex + 1);
+		skipx = 1;
+	}
+
+	if (mjsikaku_flipy)
+	{
+		mjsikaku_drawy -= ((mjsikaku_sizey << 1) + 1);
+		starty = mjsikaku_sizey;
+		sizey = ((mjsikaku_sizey ^ 0xff) + 1);
+		skipy = -1;
 	}
 	else
 	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
+		mjsikaku_drawy = (mjsikaku_drawy - mjsikaku_sizey - 1);
+		starty = 0;
+		sizey = (mjsikaku_sizey + 1);
+		skipy = 1;
 	}
 
-	i = j = 0;
+	gfxaddr = ((mjsikaku_gfxrom << 17) + (mjsikaku_radry << 9) + (mjsikaku_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
 		{
-			unsigned char color1, color2;
-			unsigned char r, g, b;
-			unsigned short drawcolor1, drawcolor2;
-
-			if (mjsikaku_dispflag2 & 0x04)
+			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
-				// 65536 colors mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xff) >> 0);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0xff) >> 0);
+#ifdef MAME_DEBUG
+				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+#endif
+				gfxaddr = 0;
+			}
 
+			color = GFX[gfxaddr++];
+
+			if (mjsikaku_flipscreen)
+			{
+				dx1 = (((((mjsikaku_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
+				dx2 = (((((mjsikaku_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
+				dy = (((mjsikaku_drawy + y + mjsikaku_scrolly) ^ 0xff) & 0xff);
+			}
+			else
+			{
+				dx1 = ((((mjsikaku_drawx + x) * 2) + 0) & 0x1ff);
+				dx2 = ((((mjsikaku_drawx + x) * 2) + 1) & 0x1ff);
+				dy = ((mjsikaku_drawy + y + (-mjsikaku_scrolly & 0xff)) & 0xff);
+			}
+
+			if (mjsikaku_gfxflag2 & 0x04)
+			{
+				// direct mode
+
+				color1 = color;
+				color2 = color;
+			}
+			else
+			{
+				// palette mode
+
+				if (mjsikaku_flipx)
 				{
-					// high
+					// flip
+					color1 = (color & 0xf0) >> 4;
+					color2 = (color & 0x0f) >> 0;
+				}
+				else
+				{
+					// normal
+					color1 = (color & 0x0f) >> 0;
+					color2 = (color & 0xf0) >> 4;
+				}
 
-					drawcolor1 = color1;	// dammy
-					drawcolor2 = color2;	// dammy
+				color1 = mjsikaku_palette[color1];
+				color2 = mjsikaku_palette[color2];
+			}
 
-					hcflag = 1;
+			if (mjsikaku_gfxflag2 & 0x20)
+			{
+				// vram lower draw
 
-					// src xxxxxxxx_bbgggrrr
-					// dst xxxxbbbb_ggggrrrr
+				if (mjsikaku_gfxflag2 & 0x10)
+				{
+					// 4096 colors low mode (2nd draw upper)
+					color1 = color2 = mjsikaku_palette[((color & 0xf0) >> 4)];
+				}
+				else
+				{
+					// 4096 colors low mode (1st draw lower)
+					color1 = color2 = mjsikaku_palette[((color & 0x0f) >> 0)];
+				}
 
-					r = ((drawcolor1 & 0x07) >> 0) & 0x07;
-					g = ((drawcolor1 & 0x38) >> 3) & 0x07;
-					b = ((drawcolor1 & 0xc0) >> 6) & 0x03;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (8 + 2)) | (g << (4 + 1)) | (r << (0 + 1)));
+				tflag1 = tflag2 = 0;
 
-					r = ((drawcolor2 & 0x07) >> 0) & 0x07;
-					g = ((drawcolor2 & 0x38) >> 3) & 0x07;
-					b = ((drawcolor2 & 0xc0) >> 6) & 0x03;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (8 + 2)) | (g << (4 + 1)) | (r << (0 + 1)));
+				if (color1 != 0xff)
+				{
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0xff00;
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= (color1 & 0x00ff);
+					tflag1 = 1;
+				}
+
+				if (color2 != 0xff)
+				{
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0xff00;
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0x00ff);
+					tflag1 = 2;
 				}
 			}
 			else
 			{
-				// Palettized picture mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
+				// vram higher draw
 
-				if (mjsikaku_dispflag2 & 0x20)
-				{
-					drawcolor1 = 0;
-					drawcolor2 = 0;
-					tflag1 = tflag2 = 0;
-					hcflag = 0;
-				}
-				else
-				{
-					//
-					drawcolor1 = mjsikaku_palette[color1];
-					drawcolor2 = mjsikaku_palette[color2];
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0x00ff;
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0x00ff;
 
-					hcflag = 1;
-
-					// src xxxxxxxx_bbgggrrr
-					// dst xxxxbbbb_ggggrrrr
-
-					r = ((drawcolor1 & 0x07) >> 0) & 0x07;
-					g = ((drawcolor1 & 0x38) >> 3) & 0x07;
-					b = ((drawcolor1 & 0xc0) >> 6) & 0x03;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (8 + 2)) | (g << (4 + 1)) | (r << (0 + 1)));
-
-					r = ((drawcolor2 & 0x07) >> 0) & 0x07;
-					g = ((drawcolor2 & 0x38) >> 3) & 0x07;
-					b = ((drawcolor2 & 0xc0) >> 6) & 0x03;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (8 + 2)) | (g << (4 + 1)) | (r << (0 + 1)));
-				}
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= ((color1 << 8) & 0xff00);
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= ((color2 << 8) & 0xff00);
 			}
 
-			if (flipx)
+			color1 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1];
+			color2 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2];
+
+			tflag1 = tflag2 = 0;
+
+			if ((color1 & 0xff00) != 0xff00) tflag1 = 1;
+			if ((color2 & 0xff00) != 0xff00) tflag2 = 1;
+
+			drawcolor1  = ((((color1 & 0x0001) >> 0) & 0x0001) | (((color1 & 0x0700) >> 7) & 0x000e));	// R 4bit
+			drawcolor1 |= ((((color1 & 0x0002) << 3) & 0x0010) | (((color1 & 0x3800) >> 6) & 0x00e0));	// G 4bit
+			drawcolor1 |= ((((color1 & 0x000c) << 6) & 0x0300) | (((color1 & 0xc000) >> 4) & 0x0c00));	// B 4bit
+
+			drawcolor2  = ((((color2 & 0x0001) >> 0) & 0x0001) | (((color2 & 0x0700) >> 7) & 0x000e));	// R 4bit
+			drawcolor2 |= ((((color2 & 0x0002) << 3) & 0x0010) | (((color2 & 0x3800) >> 6) & 0x00e0));	// G 4bit
+			drawcolor2 |= ((((color2 & 0x000c) << 6) & 0x0300) | (((color2 & 0xc000) >> 4) & 0x0c00));	// B 4bit
+
+			if (tflag1)
 			{
-				int tmp;
-
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
-
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
+				plot_pixel(mjsikaku_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
+			}
+			if (tflag2)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
+				plot_pixel(mjsikaku_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
 			}
 
 			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] |= drawcolor1;
-						drawcolor1 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1];
-					}
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] |= drawcolor2;
-						drawcolor2 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2];
-					}
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
 		}
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 4000) ? 0 : 1;
-
 }
 
 static void bijokkoy_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
-	int i, j;
 	int x, y;
-	int flipx, flipy;
+	int dx1, dx2, dy;
 	int startx, starty;
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
 	int tflag1, tflag2;
-	int hcflag;
+	int gfxaddr;
+	unsigned short color, color1, color2;
+	unsigned short drawcolor1, drawcolor2;
 
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
+	if (mjsikaku_flipx)
 	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
+		mjsikaku_drawx -= (mjsikaku_sizex << 1);
+		startx = mjsikaku_sizex;
+		sizex = ((mjsikaku_sizex ^ 0xff) + 1);
 		skipx = -1;
 	}
-
-	if (flipy)
+	else
 	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
+		mjsikaku_drawx = (mjsikaku_drawx - mjsikaku_sizex);
+		startx = 0;
+		sizex = (mjsikaku_sizex + 1);
+		skipx = 1;
+	}
+
+	if (mjsikaku_flipy)
+	{
+		mjsikaku_drawy -= ((mjsikaku_sizey << 1) + 1);
+		starty = mjsikaku_sizey;
+		sizey = ((mjsikaku_sizey ^ 0xff) + 1);
+		skipy = -1;
 	}
 	else
 	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
+		mjsikaku_drawy = (mjsikaku_drawy - mjsikaku_sizey - 1);
+		starty = 0;
+		sizey = (mjsikaku_sizey + 1);
+		skipy = 1;
 	}
 
-	i = j = 0;
+	gfxaddr = ((mjsikaku_gfxrom << 17) + (mjsikaku_radry << 9) + (mjsikaku_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
 		{
-			unsigned char color1, color2;
-			unsigned char r, g, b;
-			unsigned short drawcolor1, drawcolor2;
-
-			if (mjsikaku_dispflag2 & 0x04)
+			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
-				// 65536 colors mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xff) >> 0);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0xff) >> 0);
+#ifdef MAME_DEBUG
+				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+#endif
+				gfxaddr = 0;
+			}
 
-				if (mjsikaku_dispflag2 & 0x20)
-				{
-					// low
-					hcflag = 1;
-					drawcolor1 = color1;	// dammy
-					drawcolor2 = color2;	// dammy
+			color = GFX[gfxaddr++];
 
-					// src xxxxxxxx_bbbggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = ((drawcolor1 & 0x07) >> 1) & 0x03;
-					g = ((drawcolor1 & 0x18) >> 3) & 0x03;
-					b = ((drawcolor1 & 0xe0) >> 5) & 0x07;
-					tflag1 = ((r == 0x03) && (g == 0x03) && (b == 0x07)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
-
-					r = ((drawcolor2 & 0x07) >> 1) & 0x03;
-					g = ((drawcolor2 & 0x18) >> 3) & 0x03;
-					b = ((drawcolor2 & 0xe0) >> 5) & 0x07;
-					tflag2 = ((r == 0x03) && (g == 0x03) && (b == 0x07)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
-				}
-				else
-				{
-					// high
-					hcflag = 0;
-					drawcolor1 = color1;	// dammy
-					drawcolor2 = color2;	// dammy
-
-					// src xxxxxxxx_bbgggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = (drawcolor1 & 0x07) >> 0;
-					g = (drawcolor1 & 0x38) >> 3;
-					b = (drawcolor1 & 0xc0) >> 6;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-
-					r = (drawcolor2 & 0x07) >> 0;
-					g = (drawcolor2 & 0x38) >> 3;
-					b = (drawcolor2 & 0xc0) >> 6;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-				}
+			if (mjsikaku_flipscreen)
+			{
+				dx1 = (((((mjsikaku_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
+				dx2 = (((((mjsikaku_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
+				dy = (((mjsikaku_drawy + y + mjsikaku_scrolly) ^ 0xff) & 0xff);
 			}
 			else
 			{
-				// Palettized picture mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
+				dx1 = ((((mjsikaku_drawx + x) * 2) + 0) & 0x1ff);
+				dx2 = ((((mjsikaku_drawx + x) * 2) + 1) & 0x1ff);
+				dy = ((mjsikaku_drawy + y + (-mjsikaku_scrolly & 0xff)) & 0xff);
+			}
 
-				if (mjsikaku_dispflag2 & 0x20)
+			if (mjsikaku_gfxflag2 & 0x04)
+			{
+				// direct mode
+
+				color1 = color;
+				color2 = color;
+			}
+			else
+			{
+				// palette mode
+
+				if (mjsikaku_flipx)
 				{
-					//
-					drawcolor1 = 0;		// dammy
-					drawcolor2 = 0;		// dammy
-
-					hcflag = 0;
-
-					tflag1 = tflag2 = 0;	// dammy
+					// flip
+					color1 = (color & 0xf0) >> 4;
+					color2 = (color & 0x0f) >> 0;
 				}
 				else
 				{
-					// Palettized picture mode
-					drawcolor1 = mjsikaku_palette[color1];
-					drawcolor2 = mjsikaku_palette[color2];
-
-					hcflag = 1;
-
-					// src xxxxxxxx_bbgggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = (drawcolor1 & 0x07) >> 0;
-					g = (drawcolor1 & 0x38) >> 3;
-					b = (drawcolor1 & 0xc0) >> 6;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-
-					r = (drawcolor2 & 0x07) >> 0;
-					g = (drawcolor2 & 0x38) >> 3;
-					b = (drawcolor2 & 0xc0) >> 6;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
+					// normal
+					color1 = (color & 0x0f) >> 0;
+					color2 = (color & 0xf0) >> 4;
 				}
+
+				color1 = mjsikaku_palette[color1];
+				color2 = mjsikaku_palette[color2];
 			}
 
-			if (flipx)
+			if (mjsikaku_gfxflag2 & 0x20)
 			{
-				int tmp;
+				// vram lower draw
 
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
+				if (color1 == 0xff) color1 = 0x0000;
+				if (color2 == 0xff) color2 = 0x0000;
 
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0xff00;
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0xff00;
+
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= (color1 & 0x00ff);
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0x00ff);
+			}
+			else
+			{
+				// vram higher draw
+
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0x00ff;
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0x00ff;
+
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= ((color1 << 8) & 0xff00);
+				mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= ((color2 << 8) & 0xff00);
+			}
+
+			color1 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1];
+			color2 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2];
+
+			tflag1 = tflag2 = 0;
+
+			if ((color1 & 0xff00) != 0xff00) tflag1 = 1;
+			if ((color2 & 0xff00) != 0xff00) tflag2 = 1;
+
+			drawcolor1  = ((((color1 & 0x0007) >>  0) & 0x0007) | (((color1 & 0x0700) >>  5) & 0x0038));	// R 6bit
+			drawcolor1 |= ((((color1 & 0x0018) <<  3) & 0x00c0) | (((color1 & 0x3800) >>  3) & 0x0700));	// G 5bit
+			drawcolor1 |= ((((color1 & 0x00e0) <<  6) & 0x3800) | (((color1 & 0xc000) >>  0) & 0xc000));	// B 5bit
+
+			drawcolor2  = ((((color2 & 0x0007) >>  0) & 0x0007) | (((color2 & 0x0700) >>  5) & 0x0038));	// R 6bit
+			drawcolor2 |= ((((color2 & 0x0018) <<  3) & 0x00c0) | (((color2 & 0x3800) >>  3) & 0x0700));	// G 5bit
+			drawcolor2 |= ((((color2 & 0x00e0) <<  6) & 0x3800) | (((color2 & 0xc000) >>  0) & 0xc000));	// B 5bit
+
+			if (tflag1)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
+				plot_pixel(mjsikaku_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
+			}
+			if (tflag2)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
+				plot_pixel(mjsikaku_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
 			}
 
 			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] |= drawcolor1;
-						drawcolor1 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1];
-					}
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] |= drawcolor2;
-						drawcolor2 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2];
-					}
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
 		}
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 4000) ? 0 : 1;
-
-}
-
-static void housemnq_gfxdraw(void)
-{
-	unsigned char *GFX = memory_region(REGION_GFX1);
-
-	int i, j;
-	int x, y;
-	int flipx, flipy;
-	int startx, starty;
-	int sizex, sizey;
-	int skipx, skipy;
-	int ctrx, ctry;
-	int tflag1, tflag2;
-	int hcflag;
-
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
-	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
-		skipx = -1;
-	}
-
-	if (flipy)
-	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
-	}
-	else
-	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
-	}
-
-	i = j = 0;
-
-	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
-	{
-		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
-		{
-			unsigned char color1, color2;
-			unsigned char r, g, b;
-			unsigned short drawcolor1, drawcolor2;
-
-			if (mjsikaku_dispflag2 & 0x04)
-			{
-				// 65536 colors mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xff) >> 0);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0xff) >> 0);
-
-				if (mjsikaku_dispflag2 & 0x20)
-				{
-					// low
-					hcflag = 1;
-					drawcolor1 = color1;	// dammy
-					drawcolor2 = color2;	// dammy
-
-					// src xxxxxxxx_bbbggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = ((drawcolor1 & 0x07) >> 1) & 0x03;
-					g = ((drawcolor1 & 0x18) >> 3) & 0x03;
-					b = ((drawcolor1 & 0xe0) >> 5) & 0x07;
-					tflag1 = ((r == 0x03) && (g == 0x03) && (b == 0x07)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
-
-					r = ((drawcolor2 & 0x07) >> 1) & 0x03;
-					g = ((drawcolor2 & 0x18) >> 3) & 0x03;
-					b = ((drawcolor2 & 0xe0) >> 5) & 0x07;
-					tflag2 = ((r == 0x03) && (g == 0x03) && (b == 0x07)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
-				}
-				else
-				{
-					// high
-					hcflag = 0;
-					drawcolor1 = color1;	// dammy
-					drawcolor2 = color2;	// dammy
-
-					// src xxxxxxxx_bbgggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = (drawcolor1 & 0x07) >> 0;
-					g = (drawcolor1 & 0x38) >> 3;
-					b = (drawcolor1 & 0xc0) >> 6;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-
-					r = (drawcolor2 & 0x07) >> 0;
-					g = (drawcolor2 & 0x38) >> 3;
-					b = (drawcolor2 & 0xc0) >> 6;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-				}
-			}
-			else
-			{
-				// Palettized picture mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
-
-
-				if (mjsikaku_dispflag2 & 0x20)
-				{
-					//
-					drawcolor1 = 0;		// dammy
-					drawcolor2 = 0;		// dammy
-
-					hcflag = 1;
-
-					tflag1 = tflag2 = 0;	// dammy
-				}
-				else
-				{
-					// Palettized picture mode
-					drawcolor1 = mjsikaku_palette[color1];
-					drawcolor2 = mjsikaku_palette[color2];
-
-					hcflag = 0;
-
-					// src xxxxxxxx_bbgggrrr
-					// dst xbbbbbgg_gggrrrrr
-
-					r = (drawcolor1 & 0x07) >> 0;
-					g = (drawcolor1 & 0x38) >> 3;
-					b = (drawcolor1 & 0xc0) >> 6;
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-
-					r = (drawcolor2 & 0x07) >> 0;
-					g = (drawcolor2 & 0x38) >> 3;
-					b = (drawcolor2 & 0xc0) >> 6;
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 = ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
-				}
-			}
-
-			if (flipx)
-			{
-				int tmp;
-
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
-
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
-			}
-
-			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] |= drawcolor1;
-						drawcolor1 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1];
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					}
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					if (hcflag)
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] |= drawcolor2;
-						drawcolor2 = mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2];
-					}
-					else
-					{
-						mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					}
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
-		}
-	}
-
-	nb1413m3_busyflag = (nb1413m3_busyctr > 4000) ? 0 : 1;
-
 }
 
 static void seiha_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
-	int i, j;
 	int x, y;
-	int flipx, flipy;
+	int dx1, dx2, dy;
 	int startx, starty;
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
 	int tflag1, tflag2;
+	int gfxaddr;
+	unsigned short r, g, b;
+	unsigned short color, color1, color2;
+	unsigned short drawcolor1, drawcolor2;
 
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
+	if (mjsikaku_flipx)
 	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
+		mjsikaku_drawx -= (mjsikaku_sizex << 1);
+		startx = mjsikaku_sizex;
+		sizex = ((mjsikaku_sizex ^ 0xff) + 1);
 		skipx = -1;
 	}
-
-	if (flipy)
+	else
 	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
+		mjsikaku_drawx = (mjsikaku_drawx - mjsikaku_sizex);
+		startx = 0;
+		sizex = (mjsikaku_sizex + 1);
+		skipx = 1;
+	}
+
+	if (mjsikaku_flipy)
+	{
+		mjsikaku_drawy -= ((mjsikaku_sizey << 1) + 1);
+		starty = mjsikaku_sizey;
+		sizey = ((mjsikaku_sizey ^ 0xff) + 1);
+		skipy = -1;
 	}
 	else
 	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
+		mjsikaku_drawy = (mjsikaku_drawy - mjsikaku_sizey - 1);
+		starty = 0;
+		sizey = (mjsikaku_sizey + 1);
+		skipy = 1;
 	}
 
-	i = j = 0;
+	gfxaddr = ((mjsikaku_gfxrom << 17) + (mjsikaku_radry << 9) + (mjsikaku_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
 		{
-			unsigned char color1, color2;
-			unsigned char r, g, b;
-			unsigned short drawcolor1, drawcolor2;
-
-			if (!(mjsikaku_dispflag2 & 0x20))
+			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
-				// 65536 colors mode
-				//   To prevent illegal access
-				if (((0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) - (sizey * sizex)) < 0) continue;
+#ifdef MAME_DEBUG
+				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+#endif
+				gfxaddr = 0;
+			}
 
+			color = GFX[gfxaddr++];
+
+			if (mjsikaku_flipscreen)
+			{
+				dx1 = (((((mjsikaku_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
+				dx2 = (((((mjsikaku_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
+				dy = (((mjsikaku_drawy + y + mjsikaku_scrolly) ^ 0xff) & 0xff);
+			}
+			else
+			{
+				dx1 = ((((mjsikaku_drawx + x) * 2) + 0) & 0x1ff);
+				dx2 = ((((mjsikaku_drawx + x) * 2) + 1) & 0x1ff);
+				dy = ((mjsikaku_drawy + y + (-mjsikaku_scrolly & 0xff)) & 0xff);
+			}
+
+			if (mjsikaku_gfxflag3 & 0x40)
+			{
+				// direct mode
+
+				if (mjsikaku_gfxflag3 & 0x80)
 				{
-					// 65536 colors (lower)
-
-					color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + i]) & 0xff) >> 0);
-					color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + j]) & 0xff) >> 0);
+					// for direct lower (3-2-3 mode)
 
 					// src xxxxxxxx_bbbggrrr
-					// dst xbbbbbgg_gggrrrrr
+					// dst xxxxxxxx_bbbggrrr
 
-				//	r = ((color1 & 0x07) >> 0);
-					r = ((color1 & 0x06) >> 1);
-					g = ((color1 & 0x18) >> 3);
-					b = ((color1 & 0xe0) >> 5);
-					drawcolor1 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
+					if (color == 0xff) color = 0x00;
 
-				//	r = ((color2 & 0x07) >> 0);
-					r = ((color2 & 0x06) >> 1);
-					g = ((color2 & 0x18) >> 2);
-					b = ((color2 & 0xe0) >> 5);
-					drawcolor2 = ((b << (10 + 0)) | (g << (5 + 0)) | (r << (0 + 0)));
+					tflag1 = tflag2 = 1;
+
+					color1 = color2 = color;
+
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0xff00;
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0xff00;
+
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= (color1 & 0x00ff);
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0x00ff);
 				}
+				else
 				{
-					// 65536 colors (higher)
-
-					color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) - (sizey * sizex) + (i++)]) & 0xff) >> 0);
-					color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) - (sizey * sizex) + (j++)]) & 0xff) >> 0);
+					// for direct higher (3-3-2 mode)
 
 					// src xxxxxxxx_bbgggrrr
-					// dst xbbbbbgg_gggrrrrr
+					// dst bbgggrrr_xxxxxxxx
 
-					r = ((color1 & 0x07) >> 0);
-					g = ((color1 & 0x38) >> 3);
-					b = ((color1 & 0xc0) >> 6);
-					tflag1 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor1 |= ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
+					tflag1 = tflag2 = 1;
 
-					r = ((color2 & 0x07) >> 0);
-					g = ((color2 & 0x38) >> 3);
-					b = ((color2 & 0xc0) >> 6);
-					tflag2 = ((r == 0x07) && (g == 0x07) && (b == 0x03)) ? 0 : 1;
-					drawcolor2 |= ((b << (10 + 3)) | (g << (5 + 2)) | (r << (0 + 2)));
+					if (color == 0xff) color = 0x00;
+
+					color1 = color2 = (color << 8);
+
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] &= 0x00ff;
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] &= 0x00ff;
+
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] |= (color1 & 0xff00);
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0xff00);
 				}
 			}
 			else
 			{
-				// Palettized picture mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
+				// palette mode
 
-				// src xxxxbbbb_ggggrrrr
-				// dst xbbbbbgg_gggrrrrr
+				// unknown flag (seiha, seiham)
+			//	if (mjsikaku_gfxflag3 & 0x80) return;
 
-				r = ((mjsikaku_palette[(color1 << 1) + 0] & 0x07) << 1) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x01) >> 0);
-				g = ((mjsikaku_palette[(color1 << 1) + 0] & 0x38) >> 2) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x02) >> 1);
-				b = ((mjsikaku_palette[(color1 << 1) + 0] & 0xc0) >> 4) | ((mjsikaku_palette[(color1 << 1) + 1] & 0x0c) >> 2);
-				tflag1 = ((r == 0x0f) && (g == 0x0f) && (b == 0x0f)) ? 0 : 1;
-				drawcolor1 = ((b << (10 + 1)) | (g << (5 + 1)) | (r << (0 + 1)));
+				// unknown (seiha, seiham, iemoto, ojousan)
+				if (!(mjsikaku_gfxflag2 & 0x20)) return;
 
-				r = ((mjsikaku_palette[(color2 << 1) + 0] & 0x07) << 1) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x01) >> 0);
-				g = ((mjsikaku_palette[(color2 << 1) + 0] & 0x38) >> 2) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x02) >> 1);
-				b = ((mjsikaku_palette[(color2 << 1) + 0] & 0xc0) >> 4) | ((mjsikaku_palette[(color2 << 1) + 1] & 0x0c) >> 2);
-				tflag2 = ((r == 0x0f) && (g == 0x0f) && (b == 0x0f)) ? 0 : 1;
-				drawcolor2 = ((b << (10 + 1)) | (g << (5 + 1)) | (r << (0 + 1)));
+				if (mjsikaku_flipx)
+				{
+					// flip
+					color1 = (color & 0xf0) >> 4;
+					color2 = (color & 0x0f) >> 0;
+				}
+				else
+				{
+					// normal
+					color1 = (color & 0x0f) >> 0;
+					color2 = (color & 0xf0) >> 4;
+				}
+
+				// for palette (4-4-4 mode)
+
+				r = ((mjsikaku_palette[(color1 << 1) + 1] & 0x01) << 2);
+				g = ((mjsikaku_palette[(color1 << 1) + 1] & 0x02) << 3);
+				b = ((mjsikaku_palette[(color1 << 1) + 1] & 0x0c) << 4);
+
+				color1 = (((mjsikaku_palette[(color1 << 1) + 0] & 0xff) << 8) | b | g | r);
+
+				r = ((mjsikaku_palette[(color2 << 1) + 1] & 0x01) << 2);
+				g = ((mjsikaku_palette[(color2 << 1) + 1] & 0x02) << 3);
+				b = ((mjsikaku_palette[(color2 << 1) + 1] & 0x0c) << 4);
+
+				color2 = (((mjsikaku_palette[(color2 << 1) + 0] & 0xff) << 8) | b | g | r);
+
+				tflag1 = tflag2 = 0;
+
+				if ((color1 & 0xffd4) != 0xffd4)
+				{
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1] = color1;
+					tflag1 = 1;
+				}
+
+				if ((color2 & 0xffd4) != 0xffd4)
+				{
+					mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2] = color2;
+					tflag2 = 1;
+				}
 			}
 
-			if (flipx)
+			color1 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx1];
+			color2 = mjsikaku_videoworkram[(dy * Machine->drv->screen_width) + dx2];
+
+			// RGB = higher, rgb = lower
+			// src BBGGGRRR_bbbggrrr
+			// dst BBbbbGGG_ggRRRrrr
+
+			drawcolor1  = (((color1 & 0x0007) >>  0) | ((color1 & 0x0700) >>  5));	// R 6bit
+			drawcolor1 |= (((color1 & 0x0018) <<  3) | ((color1 & 0x3800) >>  3));	// G 5bit
+			drawcolor1 |= (((color1 & 0x00e0) <<  6) | ((color1 & 0xc000) >>  0));	// B 5bit
+
+			drawcolor2  = (((color2 & 0x0007) >>  0) | ((color2 & 0x0700) >>  5));	// R 6bit
+			drawcolor2 |= (((color2 & 0x0018) <<  3) | ((color2 & 0x3800) >>  3));	// G 5bit
+			drawcolor2 |= (((color2 & 0x00e0) <<  6) | ((color2 & 0xc000) >>  0));	// B 5bit
+
+			if (tflag1)
 			{
-				int tmp;
-
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
-
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
+				plot_pixel(mjsikaku_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
+			}
+			if (tflag2)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
+				plot_pixel(mjsikaku_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
 			}
 
 			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
 		}
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 4000) ? 0 : 1;
-
 }
 
 static void crystal2_gfxdraw(void)
 {
 	unsigned char *GFX = memory_region(REGION_GFX1);
 
-	int i, j;
 	int x, y;
-	int flipx, flipy;
+	int dx1, dx2, dy;
 	int startx, starty;
 	int sizex, sizey;
 	int skipx, skipy;
 	int ctrx, ctry;
 	int tflag1, tflag2;
+	int gfxaddr;
+	unsigned short color, color1, color2;
+	unsigned short drawcolor1, drawcolor2;
 
-	flipx = (mjsikaku_dispflag & 0x01) ? 1 : 0;
-	flipy = (mjsikaku_dispflag & 0x02) ? 1 : 0;
-
-	if (flipx)
+	if (mjsikaku_flipx)
 	{
-		startx = 0;
-		sizex = (((mjsikaku_sizex - 1) ^ 0xff) & 0xff);
-		skipx = 1;
-		mjsikaku_drawx = ((mjsikaku_drawx - sizex) & 0xff);
-	}
-	else
-	{
-		startx = (mjsikaku_sizex & 0xff);
-		sizex = (startx + 1);
+		mjsikaku_drawx -= (mjsikaku_sizex << 1);
+		startx = mjsikaku_sizex;
+		sizex = ((mjsikaku_sizex ^ 0xff) + 1);
 		skipx = -1;
 	}
-
-	if (flipy)
+	else
 	{
-		starty = 0;
-		sizey = (((mjsikaku_sizey - 1) ^ 0xff) & 0xff);
-		skipy = 1;
-		mjsikaku_drawy = ((mjsikaku_drawy - sizey) & 0xff);
+		mjsikaku_drawx = (mjsikaku_drawx - mjsikaku_sizex);
+		startx = 0;
+		sizex = (mjsikaku_sizex + 1);
+		skipx = 1;
+	}
+
+	if (mjsikaku_flipy)
+	{
+		mjsikaku_drawy -= ((mjsikaku_sizey << 1) + 1);
+		starty = mjsikaku_sizey;
+		sizey = ((mjsikaku_sizey ^ 0xff) + 1);
+		skipy = -1;
 	}
 	else
 	{
-		starty = (mjsikaku_sizey & 0xff);
-		sizey = (starty + 1);
-		skipy = -1;
+		mjsikaku_drawy = (mjsikaku_drawy - mjsikaku_sizey - 1);
+		starty = 0;
+		sizey = (mjsikaku_sizey + 1);
+		skipy = 1;
 	}
 
-	i = j = 0;
+	gfxaddr = ((mjsikaku_gfxrom << 17) + (mjsikaku_radry << 9) + (mjsikaku_radrx << 1));
 
 	for (y = starty, ctry = sizey; ctry > 0; y += skipy, ctry--)
 	{
 		for (x = startx, ctrx = sizex; ctrx > 0; x += skipx, ctrx--)
 		{
-			unsigned char color1, color2;
-			unsigned short drawcolor1, drawcolor2;
+			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
+			{
+#ifdef MAME_DEBUG
+				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+#endif
+				gfxaddr = 0;
+			}
 
-			if (mjsikaku_dispflag2 & 0x04)
+			color = GFX[gfxaddr++];
+
+			if (mjsikaku_flipscreen)
+			{
+				dx1 = (((((mjsikaku_drawx + x) * 2) + 0) ^ 0x1ff) & 0x1ff);
+				dx2 = (((((mjsikaku_drawx + x) * 2) + 1) ^ 0x1ff) & 0x1ff);
+				dy = (((mjsikaku_drawy + y + mjsikaku_scrolly) ^ 0xff) & 0xff);
+			}
+			else
+			{
+				dx1 = ((((mjsikaku_drawx + x) * 2) + 0) & 0x1ff);
+				dx2 = ((((mjsikaku_drawx + x) * 2) + 1) & 0x1ff);
+				dy = ((mjsikaku_drawy + y + (-mjsikaku_scrolly & 0xff)) & 0xff);
+			}
+
+			if (mjsikaku_gfxflag2 & 0x04)
 			{
 				// 65536 colors mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xff) >> 0);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0xff) >> 0);
 
-				drawcolor1 = color1;
-				drawcolor2 = color2;
-				tflag1 = (drawcolor1 != 0xff) ? 1 : 0;
-				tflag2 = (drawcolor2 != 0xff) ? 1 : 0;
+				drawcolor1 = drawcolor2 = color;
+
+				tflag1 = tflag2 = 0;
+
+				if (drawcolor1 != 0xff) tflag1 = 1;
+				if (drawcolor2 != 0xff) tflag2 = 1;
 			}
 			else
 			{
 				// Palettized picture mode
-				color1 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (i++)]) & 0xf0) >> 4);
-				color2 = (((GFX[(0x20000 * mjsikaku_gfxrom) + ((0x0200 * mjsikaku_radry) + (0x0002 * mjsikaku_radrx)) + (j++)]) & 0x0f) >> 0);
+
+				if (mjsikaku_flipx)
+				{
+					// flip
+					color1 = (color & 0xf0) >> 4;
+					color2 = (color & 0x0f) >> 0;
+				}
+				else
+				{
+					// normal
+					color1 = (color & 0x0f) >> 0;
+					color2 = (color & 0xf0) >> 4;
+				}
 
 				drawcolor1 = mjsikaku_palette[color1];
 				drawcolor2 = mjsikaku_palette[color2];
-				tflag1 = (drawcolor1 != 0xff) ? 1 : 0;
-				tflag2 = (drawcolor2 != 0xff) ? 1 : 0;
+
+				tflag1 = tflag2 = 0;
+
+				if (drawcolor1 != 0xff) tflag1 = 1;
+				if (drawcolor2 != 0xff) tflag2 = 1;
 			}
 
-			if (flipx)
+			if (tflag1)
 			{
-				int tmp;
-
-				tmp = drawcolor1;
-				drawcolor1 = drawcolor2;
-				drawcolor2 = tmp;
-
-				tmp = tflag1;
-				tflag1 = tflag2;
-				tflag2 = tmp;
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx1] = drawcolor1;
+				plot_pixel(mjsikaku_tmpbitmap, dx1, dy, Machine->pens[drawcolor1]);
+			}
+			if (tflag2)
+			{
+				mjsikaku_videoram[(dy * Machine->drv->screen_width) + dx2] = drawcolor2;
+				plot_pixel(mjsikaku_tmpbitmap, dx2, dy, Machine->pens[drawcolor2]);
 			}
 
 			nb1413m3_busyctr++;
-
-			{
-				int x1, x2, yy;
-
-				x1 = (((mjsikaku_drawx * 2) + (x * 2)) & 0x1ff);
-				x2 = ((((mjsikaku_drawx * 2) + (x * 2)) + 1) & 0x1ff);
-				yy = ((mjsikaku_drawy + y) & 0xff);
-
-				if (tflag1)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x1] = drawcolor1;
-					plot_pixel(tmpbitmap1, x1, yy, Machine->pens[drawcolor1]);
-				}
-				if (tflag2)
-				{
-					mjsikaku_videoram[(yy * Machine->drv->screen_width) + x2] = drawcolor2;
-					plot_pixel(tmpbitmap1, x2, yy, Machine->pens[drawcolor2]);
-				}
-			}
 		}
 	}
 
 	nb1413m3_busyflag = (nb1413m3_busyctr > 600) ? 0 : 1;
-
 }
 
-/******************************************************************/
+/******************************************************************************
 
 
-/******************************************************************/
+******************************************************************************/
 int mjsikaku_vh_start(void)
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 0;
+	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	mjsikaku_gfxmode = 0;
 	return 0;
 }
 
 int secolove_vh_start(void)
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 1;
+	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	mjsikaku_gfxmode = 1;
 	return 0;
 }
 
 int bijokkoy_vh_start(void)
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 4;
-	return 0;
-}
-
-int housemnq_vh_start(void)
-{
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 5;
+	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	mjsikaku_gfxmode = 4;
 	return 0;
 }
 
 int seiha_vh_start(void)
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 2;
+	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	mjsikaku_gfxmode = 2;
 	return 0;
 }
 
 int crystal2_vh_start(void)
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
-	gfxdraw_mode = 3;
+	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
+	mjsikaku_gfxmode = 3;
 	return 0;
 }
 
 void mjsikaku_vh_stop(void)
 {
+	free(mjsikaku_palette);
+	free(mjsikaku_videoworkram);
 	free(mjsikaku_videoram);
-	bitmap_free(tmpbitmap1);
+	bitmap_free(mjsikaku_tmpbitmap);
+	mjsikaku_palette = 0;
+	mjsikaku_videoworkram = 0;
 	mjsikaku_videoram = 0;
-	tmpbitmap1 = 0;
+	mjsikaku_tmpbitmap = 0;
 }
 
+/******************************************************************************
+
+
+******************************************************************************/
 void mjsikaku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh)
+	if (full_refresh || mjsikaku_screen_refresh)
 	{
+		mjsikaku_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)
 		{
 			for (x = 0; x < Machine->drv->screen_width; x++)
 			{
 				color = mjsikaku_videoram[(y * Machine->drv->screen_width) + x];
-				plot_pixel(tmpbitmap1, x, y, Machine->pens[color]);
+				plot_pixel(mjsikaku_tmpbitmap, x, y, Machine->pens[color]);
 			}
 		}
 	}
 
-	if (!(mjsikaku_dispflag & 0x08))	// display enable ?
+	if (mjsikaku_dispflag)
 	{
-		copyscrollbitmap(bitmap, tmpbitmap1, 0, 0, 1, &mjsikaku_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, mjsikaku_tmpbitmap, 0, 0, 1, &mjsikaku_scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{
-		fillbitmap(bitmap, Machine->pens[0], 0);
+		fillbitmap(bitmap, Machine->pens[0x0000], 0);
 	}
 }

@@ -1205,9 +1205,9 @@ static MEMORY_READ16_START( bshark_cpub_readmem )
 	{ 0x108000, 0x10bfff, MRA16_RAM },
 	{ 0x110000, 0x113fff, sharedram_r },
 //	{ 0x40000a, 0x40000b, taitoz_unknown_r },	// ???
-	{ 0x600000, 0x600001, (mem_read16_handler)YM2610_status_port_0_A_r },
-	{ 0x600002, 0x600003, (mem_read16_handler)YM2610_read_port_0_r },
-	{ 0x600004, 0x600005, (mem_read16_handler)YM2610_status_port_0_B_r },
+	{ 0x600000, 0x600001, YM2610_status_port_0_A_lsb_r },
+	{ 0x600002, 0x600003, YM2610_read_port_0_lsb_r },
+	{ 0x600004, 0x600005, YM2610_status_port_0_B_lsb_r },
 	{ 0x60000c, 0x60000d, MRA16_NOP },
 	{ 0x60000e, 0x60000f, MRA16_NOP },
 	{ 0x800000, 0x801fff, TC0150ROD_word_r },	/* "root ram" */
@@ -1218,10 +1218,10 @@ static MEMORY_WRITE16_START( bshark_cpub_writemem )
 	{ 0x108000, 0x10bfff, MWA16_RAM },
 	{ 0x110000, 0x113fff, sharedram_w },
 //	{ 0x400000, 0x400007, MWA16_NOP },   // pan ???
-	{ 0x600000, 0x600001, (mem_write16_handler)YM2610_control_port_0_A_w },
-	{ 0x600002, 0x600003, (mem_write16_handler)YM2610_data_port_0_A_w },
-	{ 0x600004, 0x600005, (mem_write16_handler)YM2610_control_port_0_B_w },
-	{ 0x600006, 0x600007, (mem_write16_handler)YM2610_data_port_0_B_w },
+	{ 0x600000, 0x600001, YM2610_control_port_0_A_lsb_w },
+	{ 0x600002, 0x600003, YM2610_data_port_0_A_lsb_w },
+	{ 0x600004, 0x600005, YM2610_control_port_0_B_lsb_w },
+	{ 0x600006, 0x600007, YM2610_data_port_0_B_lsb_w },
 	{ 0x60000c, 0x60000d, MWA16_NOP },	// interrupt controller?
 	{ 0x60000e, 0x60000f, MWA16_NOP },
 	{ 0x800000, 0x801fff, TC0150ROD_word_w },	/* "root ram" */
@@ -1385,9 +1385,9 @@ static MEMORY_READ16_START( spacegun_cpub_readmem )
 	{ 0x20c000, 0x20ffff, MRA16_RAM },	/* local CPUB ram */
 	{ 0x210000, 0x21ffff, sharedram_r },
 	{ 0x800000, 0x80000f, spacegun_input_r },
-	{ 0xc00000, 0xc00001, (mem_read16_handler)YM2610_status_port_0_A_r },
-	{ 0xc00002, 0xc00003, (mem_read16_handler)YM2610_read_port_0_r },
-	{ 0xc00004, 0xc00005, (mem_read16_handler)YM2610_status_port_0_B_r },
+	{ 0xc00000, 0xc00001, YM2610_status_port_0_A_lsb_r },
+	{ 0xc00002, 0xc00003, YM2610_read_port_0_lsb_r },
+	{ 0xc00004, 0xc00005, YM2610_status_port_0_B_lsb_r },
 	{ 0xc0000c, 0xc0000d, MRA16_NOP },
 	{ 0xc0000e, 0xc0000f, MRA16_NOP },
 	{ 0xf00000, 0xf00007, spacegun_lightgun_r },
@@ -1400,10 +1400,10 @@ static MEMORY_WRITE16_START( spacegun_cpub_writemem )
 	{ 0x800000, 0x800001, MWA16_NOP },	/* watchdog ? */
 	{ 0x800006, 0x800007, eeprom_w },
 //	{ 0x800008, 0x800009, MWA16_NOP },	/* coin ctr, lockout ? */
-	{ 0xc00000, 0xc00001, (mem_write16_handler)YM2610_control_port_0_A_w },
-	{ 0xc00002, 0xc00003, (mem_write16_handler)YM2610_data_port_0_A_w },
-	{ 0xc00004, 0xc00005, (mem_write16_handler)YM2610_control_port_0_B_w },
-	{ 0xc00006, 0xc00007, (mem_write16_handler)YM2610_data_port_0_B_w },
+	{ 0xc00000, 0xc00001, YM2610_control_port_0_A_lsb_w },
+	{ 0xc00002, 0xc00003, YM2610_data_port_0_A_lsb_w },
+	{ 0xc00004, 0xc00005, YM2610_control_port_0_B_lsb_w },
+	{ 0xc00006, 0xc00007, YM2610_data_port_0_B_lsb_w },
 	{ 0xc0000c, 0xc0000d, MWA16_NOP },	// interrupt controller?
 	{ 0xc0000e, 0xc0000f, MWA16_NOP },
 //	{ 0xc20000, 0xc20003, YM2610_???? },	/* Pan (acc. to Raine) */

@@ -506,27 +506,27 @@ ROM_END
 
 ROM_START( spacedem )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "sd5e.cpu",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
-	ROM_LOAD( "sd5f.cpu",     0x0800, 0x0800, 0x0814f964 )
-	ROM_LOAD( "sd5h.cpu",     0x1000, 0x0800, 0xebfff682 )
-	ROM_LOAD( "sd5i.cpu",     0x1800, 0x0800, 0xdd7e1378 )
-	ROM_LOAD( "sd5j.cpu",     0x2000, 0x0800, 0x98334fda )
-	ROM_LOAD( "sd5k.cpu",     0x2800, 0x0800, 0xba4933b2 )
-	ROM_LOAD( "sd5m.cpu",     0x3000, 0x0800, 0x14d3c656 )
-	ROM_LOAD( "sd5n.cpu",     0x3800, 0x0800, 0x7e0e41b0 )
+	ROM_LOAD( "sdm-c-5e",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
+	ROM_LOAD( "sdm-c-5f",     0x0800, 0x0800, 0x0814f964 )
+	ROM_LOAD( "sdm-c-5h",     0x1000, 0x0800, 0xebfff682 )
+	ROM_LOAD( "sdm-c-5i",     0x1800, 0x0800, 0xdd7e1378 )
+	ROM_LOAD( "sdm-c-5j",     0x2000, 0x0800, 0x98334fda )
+	ROM_LOAD( "sdm-c-5k",     0x2800, 0x0800, 0xba4933b2 )
+	ROM_LOAD( "sdm-c-5m",     0x3000, 0x0800, 0x14d3c656 )
+	ROM_LOAD( "sdm-c-5n",     0x3800, 0x0800, 0x7e0e41b0 )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
-    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+    ROM_LOAD( "sdm-e-20",     0x0000, 0x0400, 0x55f40a0b )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sd5k.vid",     0x0000, 0x0800, 0x55758e4d )
-	ROM_LOAD( "sd6k.vid",     0x0800, 0x0800, 0x3fcbb20c )
+	ROM_LOAD( "sdm-v-5k",     0x0000, 0x0800, 0x55758e4d )
+	ROM_LOAD( "sdm-v-6k",     0x0800, 0x0800, 0x3fcbb20c )
 
 	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x528e8533 )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+	ROM_LOAD( "sdm-v-3n",     0x0000, 0x0020, 0x6d8ad169 )
 ROM_END
 
 
@@ -534,4 +534,4 @@ GAMEX( 1980, spacefb,  0,       spacefb, spacefb,  0, ROT90, "Nintendo", "Space 
 GAMEX( 1980, spacefbg, spacefb, spacefb, spacefb,  0, ROT90, "Gremlin", "Space Firebird (Gremlin)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1980, spacebrd, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Bird (bootleg)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1980, spacefbb, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Firebird (bootleg)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1980, spacedem, spacefb, spacefb, spacedem, 0, ROT90, "Nintendo / Fortrek", "Space Demon", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1980, spacedem, spacefb, spacefb, spacedem, 0, ROT90, "Nintendo (Fortrek license)", "Space Demon", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

@@ -173,7 +173,7 @@ static struct GfxDecodeInfo ninjakid_gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	6000000/3,	/* 2 MHz? */
+	6000000/2,	/* 3 MHz */
 	{ 50, 50 }
 };
 
@@ -312,12 +312,12 @@ INPUT_PORTS_START( ninjakid )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )/* Probably Unused */
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )/* Probably Unused */
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "High Score Names" )
+	PORT_DIPSETTING(    0x00, "3 Letters" )
+	PORT_DIPSETTING(    0x08, "8 Letters" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )/* Probably Unused */
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

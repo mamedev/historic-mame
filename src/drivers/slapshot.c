@@ -10,23 +10,22 @@ Nicola Salmoria.)
 
 				*****
 
-Slapshot uses some different Taito custom ics, but is very similar
-to games on the Taito F2 system, especially those using the same
+Slapshot uses one or two newer Taito custom ics, but the hardware is
+very similar to the Taito F2 system, especially F2 games using the same
 TC0480SCP tilemap generator (e.g. Metal Black).
 
 This game has 6 separate layers of graphics - four 32x32 tiled scrolling
-background planes of 16x16 tiles, a text plane with 64x64 8x8 character
-tiles with character definitions held in ram, and a sprite plane with
-zoomable 16x16 sprites.
+zoomable background planes of 16x16 tiles, a text plane with 64x64 8x8
+character tiles with character definitions held in ram, and a sprite
+plane with zoomable 16x16 sprites. This sprite system appears to be
+identical to the one used in F2 and F3 games.
 
-This game is unusual as it uses for some of the time the double-width
-tilemap feature of the TC0480SCP. Why it does so is unclear, as it is
-not a multi-screen game. ????
+Slapshot switches in and out of the double-width tilemap mode of the
+TC0480SCP. This is unusual, as most games stick to one width.
 
-The palette generator is 8 bits per color gun like the Taito F3 system
-(Taito F2 games used only 4 or 5). Like Metal Black it doubles the
-palette space and uses the first half for sprites only, so the second
-half can be devoted to tilemaps.
+The palette generator is 8 bits per color gun like the Taito F3 system.
+Like Metal Black the palette space is doubled, and the first half used
+for sprites only so the second half can be devoted to tilemaps.
 
 The main cpu is a 68000.
 
@@ -37,35 +36,39 @@ Commands are written to it by the 68000 (as in the Taito F2 games).
 Slapshot custom ics
 -------------------
 
-TC0480SCP (IC61)	// known tilemap chip
-TC0640FIO (IC83)	// new version of TC0510NIO io chip?
-TC0650FDA (IC84)	// 24 bit color palette chip?
-TC0360PRI (IC56)	// (common in pri/color combo on F2 boards)
-TC0530SYC (IC58)	// known sound comm chip
-TC0520TBC (IC36)	// known object chip
-TC0540OBN (IC54)	// known object chip
+TC0480SCP (IC61)	- known tilemap chip
+TC0640FIO (IC83)	- new version of TC0510NIO io chip?
+TC0650FDA (IC84)	- (palette?)
+TC0360PRI (IC56)	- (common in pri/color combo on F2 boards)
+TC0530SYC (IC58)	- known sound comm chip
+TC0520TBC (IC36)	- known object chip
+TC0540OBN (IC54)	- known object chip
 
 
 TODO
 ====
 
-Page faults in pure DOS from within copyrozbitmap_core16!
+TC0480SCP problems: in flipscreen the bottom few pixels
+of tilemaps are often missing or messed up.
 
-Save and load NVRAM
+Some hanging notes (try F2 while music is playing).
 
-TC0480SCP problems: layer offsets sometimes suspect.
-E.g. text layer vs. bg layers.
+Sprite colors issue: when you do a super-shot, on the cut
+screen the man (it's always the American) should be black.
 
-Vis area can probably lose 8 pixels top and bottom, I
-don't want to do this until layer offsets are fixed.
+Col $f8 is used for the man, col $fc for the red/pink
+"explosion" under the puck. (Use this to track where they are
+in spriteram quickly.) Both of these colors are only set
+when the first super-shot happens, so it's clear those
+colors are for the super-shot... but screenshot evidence
+proves the man should be entirely black.
 
-Sprite/tile priority is not checked.
+Extract common sprite stuff from this and taito_f2 ?
 
-A few high values in sprite extension area (0x25,0x26)
-don't seem to make sense with only 0x2000 sprite tiles.
 
-Extract common parts from this and taito_f2.c:
-the sprites and the PRI chip stuff.
+Code
+----
+$854 marks start of service mode
 
 ***************************************************************************/
 
@@ -88,12 +91,9 @@ extern data16_t *taito_sprite_ext;
 extern size_t taito_spriteext_size;
 
 
-/***********************************************************
-			PRIORITY / COLOR
-
-These routines should be moved to vidhrdw/taitoic.c.
-drivers/taitof2.c duplicates the TC0360PRI ones.
-***********************************************************/
+/******************************************************
+				COLOR
+******************************************************/
 
 static READ16_HANDLER( color_ram_word_r )
 {
@@ -115,31 +115,28 @@ static WRITE16_HANDLER( color_ram_word_w )
 	}
 }
 
-static WRITE16_HANDLER( TC0360PRI_halfword_w )
-{
-	if (ACCESSING_LSB)
-	{
-		TC0360PRI_w(offset,data & 0xff);
-#if 0
-if (data & 0xff00)
-{ logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
-	else
-{ logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
-#endif
-	}
-}
 
-static WRITE16_HANDLER( TC0360PRI_halfword_swap_w )
+/**********************************************************
+				NVRAM
+
+ (Only alternate bytes are used, we save it all anyway)
+**********************************************************/
+
+static data16_t *slapshot_nvram;
+static size_t slapshot_nvram_size;
+
+static void slapshot_nvram_handler(void *file,int read_or_write)
 {
-	if (ACCESSING_MSB)
+	if( read_or_write )
 	{
-		TC0360PRI_w(offset,(data >> 8) & 0xff);
-#if 0
-if (data & 0xff)
-{ logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
+		osd_fwrite (file, slapshot_nvram, slapshot_nvram_size);
+	}
 	else
-{ logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset); }
-#endif
+	{
+		if (file)
+			osd_fread (file, slapshot_nvram, slapshot_nvram_size);
+		else
+			memset (slapshot_nvram, 0xff, slapshot_nvram_size);
 	}
 }
 
@@ -171,19 +168,19 @@ static READ16_HANDLER( slapshot_input_r )
 	switch (offset)
 	{
 		case 0x00:
-			return input_port_4_word_r(0) << 8;	/* IN4, unknown */
+			return input_port_0_word_r(0) << 8;	/* IN0, unknown/unused */
 
 		case 0x01:
-			return input_port_0_word_r(0) << 8;	/* IN0 */
-
-		case 0x02:
 			return input_port_1_word_r(0) << 8;	/* IN1 */
 
-		case 0x03:
+		case 0x02:
 			return input_port_2_word_r(0) << 8;	/* IN2 */
 
-		case 0x07:
+		case 0x03:
 			return input_port_3_word_r(0) << 8;	/* IN3 */
+
+		case 0x07:
+			return input_port_4_word_r(0) << 8;	/* IN4 */
 
 	}
 
@@ -191,6 +188,31 @@ logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_p
 	return 0xff;
 }
 
+static READ16_HANDLER( slapshot_service_input_r )
+{
+	switch (offset)
+	{
+		case 0x00:
+			return input_port_0_word_r(0) << 8;	/* IN0, unknown/unused */
+
+		case 0x01:
+			return input_port_1_word_r(0) << 8;	/* IN1 */
+
+		case 0x02:
+			return input_port_2_word_r(0) << 8;	/* IN2 */
+
+		case 0x03:
+			return ((input_port_3_word_r(0) & 0xef) |
+				  (input_port_5_word_r(0) & 0x10))  << 8;	/* IN3 + service switch */
+
+		case 0x07:
+			return input_port_4_word_r(0) << 8;	/* IN4 */
+
+	}
+
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %02x\n",cpu_get_pc(),offset);
+	return 0xff;
+}
 
 /*****************************************************
 				SOUND
@@ -243,9 +265,9 @@ static MEMORY_READ16_START( slapshot_readmem )
 	{ 0x800000, 0x80ffff, TC0480SCP_word_r },	/* tilemaps */
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_r },
 	{ 0x900000, 0x907fff, color_ram_word_r },	/* 8bpg palette */
-	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* nvram (maps to 0x2000 bytes) */
+	{ 0xa00000, 0xa03fff, MRA16_RAM },	/* nvram (only low bytes used) */
 	{ 0xc00000, 0xc0000f, slapshot_input_r },
-	{ 0xc00020, 0xc0002f, slapshot_input_r },	/* mirror */
+	{ 0xc00020, 0xc0002f, slapshot_service_input_r },	/* service mirror */
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_r },
 MEMORY_END
 
@@ -257,7 +279,7 @@ static MEMORY_WRITE16_START( slapshot_writemem )
 	{ 0x800000, 0x80ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_w },
 	{ 0x900000, 0x907fff, color_ram_word_w, &color_ram },
-	{ 0xa00000, 0xa03fff, MWA16_RAM },
+	{ 0xa00000, 0xa03fff, MWA16_RAM, &slapshot_nvram, &slapshot_nvram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_swap_w },	/* priority chip */
 	{ 0xc00000, 0xc00001, MWA16_NOP },	/* watchdog ?? */
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_w },
@@ -301,6 +323,16 @@ MEMORY_END
 INPUT_PORTS_START( slapshot )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -309,7 +341,7 @@ INPUT_PORTS_START( slapshot )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
@@ -319,17 +351,17 @@ INPUT_PORTS_START( slapshot )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN2 */
+	PORT_START      /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )	// => service mode, should map to F2!
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )	/* bit is service switch at c0002x */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN3 */
+	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -339,8 +371,8 @@ INPUT_PORTS_START( slapshot )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
-	PORT_START	// IN4, unknown
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN5, so we can OR in service switch */
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -436,7 +468,7 @@ static struct MachineDriver machine_driver_slapshot =
 	0,
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
 
 	slapshot_gfxdecodeinfo,
 	8192, 8192,
@@ -455,7 +487,9 @@ static struct MachineDriver machine_driver_slapshot =
 			SOUND_YM2610B,
 			&ym2610_interface
 		}
-	}
+	},
+
+	slapshot_nvram_handler
 };
 
 
@@ -485,7 +519,7 @@ ROM_START( slapshot )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "d71-06.37", 0x00000, 0x80000, 0xf3324188 )
 
-	/* no Delta-t samples */
+	/* no Delta-T samples */
 
 //	Pals (not dumped)
 //	ROM_LOAD( "d71-08.40",  0x00000, 0x00???, 0x00000000 )

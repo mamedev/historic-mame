@@ -30,23 +30,22 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct rectangle visible_area;
-	UINT16 *pens;	/* remapped palette pen numbers. When you write */
+	UINT32 *pens;	/* remapped palette pen numbers. When you write */
 					/* directly to a bitmap, never use absolute values, */
 					/* use this array to get the pen number. For example, */
 					/* if you want to use color #6 in the palette, use */
 					/* pens[6] instead of just 6. */
 	UINT16 *game_colortable;	/* lookup table used to map gfx pen numbers */
 								/* to color numbers */
-	UINT16 *remapped_colortable;	/* the above, already remapped through */
+	UINT32 *remapped_colortable;	/* the above, already remapped through */
 									/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
-	int color_depth;	/* video color depth: 8 or 16 */
+	int color_depth;	/* video color depth: 8, 16, 15 or 32 */
 	int sample_rate;	/* the digital audio sample rate; 0 if sound is disabled. */
 						/* This is set to a default value, or a value specified by */
 						/* the user; osd_init() is allowed to change it to the actual */
 						/* sample rate supported by the audio card. */
-	int obsolete;	// was sample_bits;	/* 8 or 16 */
 	struct GameSamples *samples;	/* samples loaded from disk */
 	struct InputPort *input_ports;	/* the input ports definition from the driver */
 								/* is copied here and modified (load settings from disk, */
@@ -62,8 +61,8 @@ struct RunningMachine
 
 	/* stuff for the debugger */
 	struct osd_bitmap *debug_bitmap;
-	UINT16 *debug_pens;
-	UINT16 *debug_remapped_colortable;
+	UINT32 *debug_pens;
+	UINT32 *debug_remapped_colortable;
 	struct GfxElement *debugger_font;
 };
 
@@ -93,6 +92,7 @@ struct GameOptions {
 	int samplerate;
 	int use_samples;
 	int use_emulated_ym3812;
+	int use_filter;
 
 	int color_depth;	/* 8 or 16, any other value means auto */
 	int vector_width;	/* requested width for vector games; 0 means default (640) */

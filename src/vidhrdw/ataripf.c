@@ -1052,8 +1052,13 @@ WRITE32_HANDLER( ataripf_0_split32_w )
 static void pf_process(struct ataripf_data *pf, pf_callback callback, void *param, const struct rectangle *clip)
 {
 	struct ataripf_state *state = pf->statelist;
-	struct rectangle finalclip = clip ? *clip : Machine->visible_area;
+	struct rectangle finalclip;
 	int i;
+
+	if (clip)
+		finalclip = *clip;
+	else
+		finalclip = Machine->visible_area;
 
 	/* if the gfx has changed, make sure we have extended usage maps for everyone */
 	if (pf->gfxchanged)

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Thse are some of the CPS-B chip numbers:
+These are some of the CPS-B chip numbers:
 
 NAME                                        CPS-B #                     C-board PAL's  B-board PAL's
 Forgotten Worlds / Lost Worlds              CPS-B-01  ?                 None           ? & LW10
@@ -64,7 +64,7 @@ Some registers move from game to game.. following example strider
 0x6c-0x6d	Priority mask |   of these masks. The masks indicate pens in the tile
 0x6e-0x6f	Priority mask /   that have priority over sprites.
 0x70-0x71	Control register (usually 0x003f). The function of this register
-			is unknown; experiments on the real board show that values
+            is unknown; experiments on the real board show that values
 			different from 0x3f in the low 6 bits cause wrong colors. The
 			other bits seem to be unused.
 			The only place where this register seems to be set to a value
@@ -82,12 +82,19 @@ Fixed registers
 Known Bug List
 ==============
 All games
-* Large sprites don't exit smoothly on the left side of the screen (e.g. Car
-in Mega Man attract mode, cadillac in Cadillacs and Dinosaurs)
 * There might be problems if high priority tiles (over sprites) and rowscroll
 are used at the same time, because the priority buffer is not rowscrolled.
 The only place I know were this might cause problems is the cave in mtwins,
 which waves to simulate heat. I haven't noticed anything wrong, though.
+
+CPS2:
+* CPS2 can do raster effects, certainly used by ssf2 (Cammy and DeeJay levels)
+  and maybe others (xmcota?). IRQ4 is some sort of scanline interrupt used for
+  that purpose.
+
+SF2
+* Missing chain in the foreground in Ken's level, and sign in Cun Li's level.
+  Those graphics are in the backmost layer.
 
 Magic Sword.
 * during attract mode, characters are shown with a black background. There is
@@ -106,12 +113,6 @@ distortion as expected.
 
 qad
 * layer enable mask incomplete
-
-dino
-* in level 6, the legs of the big dino which stomps you are almost entirely
-missing.
-* in level 6, palette changes due to lightnings cause a lot of tiling effects
-on scroll2.
 
 wof
 * In round 8, when the player goes over a bridge, there is a problem with
@@ -139,6 +140,12 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 
 #define CPS1_DUMP_VIDEO 0
 
+#if MAME_DEBUG
+extern int cps_tileviewer_start(void);
+extern void cps_tileviewer_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void cps_tileviewer_stop(void);
+static int cps_view_tiles=0;
+#endif
 
 /********************************************************************
 
@@ -311,19 +318,38 @@ static struct CPS1config cps1_config_table[]=
 	{"qtono2",  NOBATTRY, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"megaman", CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"rockmanj",CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sfzch",   CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"pnickj",  CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"pang3",   CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5},	/* EEPROM port is among the CPS registers */
 	{"pang3j",  CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5},	/* EEPROM port is among the CPS registers */
+
+    /* CPS2 games */
+    {"cps2",    CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff },
+    {"ssf2",    CPS_B_01, 4,4,0,     -1,0x0000,0xffff,0x0000,0xffff },
+    {"xmcota",  CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
+    {"xmcotaj", CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
+    {"xmcotaj1",CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
+
 	{0}		/* End of table */
 };
 
-static void cps1_init_machine(void)
+static int cps_version;
+
+void cps_setversion(int v)
+{
+    cps_version=v;
+}
+
+int cps_getversion(void)
+{
+    return cps_version;
+}
+
+
+static void cps_init_machine(void)
 {
 	const char *gamename = Machine->gamedrv->name;
-
-
 	struct CPS1config *pCFG=&cps1_config_table[0];
+
 	while(pCFG->name)
 	{
 		if (strcmp(pCFG->name, gamename) == 0)
@@ -333,6 +359,25 @@ static void cps1_init_machine(void)
 		pCFG++;
 	}
 	cps1_game_config=pCFG;
+
+    if (!cps1_game_config->name)
+    {
+        gamename="cps2";
+        pCFG=&cps1_config_table[0];
+        while(pCFG->name)
+        {
+            if (strcmp(pCFG->name, gamename) == 0)
+            {
+                break;
+            }
+            pCFG++;
+        }
+        cps1_game_config=pCFG;
+   }
+
+#if MAME_DEBUG
+    cps_view_tiles=0;
+#endif
 
 	if (strcmp(gamename, "sf2rb" )==0)
 	{
@@ -361,7 +406,6 @@ static void cps1_init_machine(void)
 	}
 #endif
 }
-
 
 
 INLINE int cps1_port(int offset)
@@ -431,8 +475,8 @@ if (cps1_game_config->control_reg && offset == cps1_game_config->control_reg/2 &
 	usrintf_showmessage("control_reg = %04x",data);
 #endif
 #if VERBOSE
-if (offset >= 0x22/2 &&
-		offset != cps1_game_config->layer_control/2 &&
+if (offset > 0x22/2 &&
+        offset != cps1_game_config->layer_control/2 &&
 		offset != cps1_game_config->priority0/2 &&
 		offset != cps1_game_config->priority1/2 &&
 		offset != cps1_game_config->priority2/2 &&
@@ -441,8 +485,8 @@ if (offset >= 0x22/2 &&
 	logerror("PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset*2);
 
 #ifdef MAME_DEBUG
-if (offset == 0x22/2 && (data & ~0x8001) != 0x0e)
-	usrintf_showmessage("port 22 = %02x",data);
+//if (offset == 0x22/2 && (data & ~0x8001) != 0x0e)
+//	usrintf_showmessage("port 22 = %02x",data);
 if (cps1_game_config->priority0 && offset == cps1_game_config->priority0/2 && data != 0x00)
 	usrintf_showmessage("priority0 %04x",data);
 #endif
@@ -455,11 +499,8 @@ if (cps1_game_config->priority0 && offset == cps1_game_config->priority0/2 && da
 data16_t *cps1_gfxram;
 data16_t *cps1_output;
 
-
 size_t cps1_gfxram_size;
 size_t cps1_output_size;
-
-/* Private */
 
 /* Offset of each palette entry */
 const int cps1_obj_palette     = 0*32;
@@ -533,18 +574,124 @@ static int *cps1_tile32_pen_usage;      /* pen usage array */
 static int cps1_max_char;	       /* Maximum number of 8x8 chars */
 static int cps1_max_tile16;	     /* Maximum number of 16x16 tiles */
 static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
-static UINT8 *stars1_rom,*stars2_rom;
+static UINT8 *stars_rom;
 
 /* first 0x4000 of gfx ROM are used, but 0x0000-0x1fff is == 0x2000-0x3fff */
 const int stars_rom_size = 0x2000;
 
+/* PSL: CPS2 support */
+const int cps2_obj_size    =0x2000;
+data16_t *cps2_objram;
+data16_t *cps2_output;
+
+size_t cps2_objram_size;
+size_t cps2_output_size;
+static data16_t *cps2_buffered_obj;
+static int cps2_last_sprite_offset;     /* Offset of the last sprite */
+
+
+#define CPS2_OBJ_BASE           0x00    /* Base address of objects */
+#define CPS2_UK1_BASE           0x02    /* Unknown (nearly always 0x807d) */
+#define CPS2_PRI_BASE           0x04    /* Layers priorities */
+#define CPS2_UK2_BASE           0x06    /* Unknown (always 0x0000) */
+#define CPS2_UK3_START          0x08    /* Unknown (always 0x0040) */
+#define CPS2_UK4_SIZE           0x0a    /* Unknown (always 0x0010)  */
+
+INLINE int cps2_port(int offset)
+{
+    return cps2_output[offset/2];
+}
+
+
+
+
+static void cps1_gfx_decode(void)
+{
+	int size=memory_region_length(REGION_GFX1);
+	int i,j,gfxsize;
+	UINT8 masks[] = {
+			0xff, 0x00, 0x00, 0x00,
+			0x00, 0xff, 0x00, 0x00,
+			0x00, 0x00, 0xff, 0x00,
+			0x00, 0x00, 0x00, 0xff,
+		};
+	UINT32 mask1,mask2,mask4,mask8;
+
+	/* compensate for machine endianness */
+	mask1 = *((UINT32 *)&masks[0]);
+	mask2 = *((UINT32 *)&masks[4]);
+	mask4 = *((UINT32 *)&masks[8]);
+	mask8 = *((UINT32 *)&masks[12]);
+
+	cps1_gfx = (UINT32 *)memory_region(REGION_GFX1);
+
+	gfxsize=size/4;
+
+	for (i = 0;i < gfxsize;i++)
+	{
+		UINT32 src = cps1_gfx[i];
+		UINT32 dwval = 0;
+		int penusage = 0;
+
+		for (j = 0;j < 8;j++)
+		{
+			int n = 0;
+			UINT32 mask = (0x01010101 << j) & src;
+
+			if (mask & mask1) n |= 1;
+			if (mask & mask2) n |= 2;
+			if (mask & mask4) n |= 4;
+			if (mask & mask8) n |= 8;
+
+			dwval |= n << (j * 4);
+			penusage |= 1 << n;
+		}
+		cps1_gfx[i] = dwval;
+		cps1_char_pen_usage[i/16]    |= penusage;
+		cps1_tile16_pen_usage[i/32]  |= penusage;
+		cps1_tile32_pen_usage[i/128] |= penusage;
+	}
+}
+
+static void unshuffle(UINT64 *buf,int len)
+{
+	int i;
+	UINT64 t;
+
+	if (len == 2) return;
+
+	if (len % 4) exit(1);   /* must not happen */
+
+	len /= 2;
+
+	unshuffle(buf,len);
+	unshuffle(buf + len,len);
+
+	for (i = 0;i < len/2;i++)
+	{
+		t = buf[len/2 + i];
+		buf[len/2 + i] = buf[len + i];
+		buf[len + i] = t;
+	}
+}
+
+static void cps2_gfx_decode(void)
+{
+	const int banksize=0x200000;
+	int size=memory_region_length(REGION_GFX1);
+	int i;
+
+	for (i = 0;i < size;i += banksize)
+		unshuffle((UINT64 *)(memory_region(REGION_GFX1) + i),banksize/8);
+
+	cps1_gfx_decode();
+}
+
 
 int cps1_gfx_start(void)
 {
-	UINT32 dwval;
 	int size=memory_region_length(REGION_GFX1);
-	unsigned char *data = memory_region(REGION_GFX1);
-	int i,j,nchar,penusage,gfxsize;
+	int gfxsize;
 
 	gfxsize=size/4;
 
@@ -552,12 +699,6 @@ int cps1_gfx_start(void)
 	cps1_max_char  =(gfxsize/2)/8;
 	cps1_max_tile16=(gfxsize/4)/8;
 	cps1_max_tile32=(gfxsize/16)/8;
-
-	cps1_gfx=malloc(gfxsize*sizeof(UINT32));
-	if (!cps1_gfx)
-	{
-		return -1;
-	}
 
 	cps1_char_pen_usage=malloc(cps1_max_char*sizeof(int));
 	if (!cps1_char_pen_usage)
@@ -578,61 +719,22 @@ int cps1_gfx_start(void)
 	}
 	memset(cps1_tile32_pen_usage, 0, cps1_max_tile32*sizeof(int));
 
-	stars1_rom = malloc(stars_rom_size);
-	if (!stars1_rom) return -1;
-	memcpy(stars1_rom,memory_region(REGION_GFX1) + memory_region_length(REGION_GFX1)/4,stars_rom_size);
+	stars_rom = malloc(4*stars_rom_size);
+	if (!stars_rom) return -1;
+	memcpy(stars_rom,memory_region(REGION_GFX1),4*stars_rom_size);
 
-	stars2_rom = malloc(stars_rom_size);
-	if (!stars2_rom) return -1;
-	memcpy(stars2_rom,memory_region(REGION_GFX1),stars_rom_size);
-
-	{
-		for (i=0; i<gfxsize/2; i++)
-		{
-			nchar=i/8;  /* 8x8 char number */
-		   dwval=0;
-		   for (j=0; j<8; j++)
-		   {
-				int n,mask;
-				n=0;
-				mask=0x80>>j;
-				if (*(data+size/4)&mask)	   n|=1;
-				if (*(data+size/4+1)&mask)	 n|=2;
-				if (*(data+size/2+size/4)&mask)    n|=4;
-				if (*(data+size/2+size/4+1)&mask)  n|=8;
-				dwval|=n<<(28-j*4);
-				penusage=1<<n;
-				cps1_char_pen_usage[nchar]|=penusage;
-				cps1_tile16_pen_usage[nchar/2]|=penusage;
-				cps1_tile32_pen_usage[nchar/8]|=penusage;
-		   }
-		   cps1_gfx[2*i]=dwval;
-		   dwval=0;
-		   for (j=0; j<8; j++)
-		   {
-				int n,mask;
-				n=0;
-				mask=0x80>>j;
-				if (*(data)&mask)	  n|=1;
-				if (*(data+1)&mask)	n|=2;
-				if (*(data+size/2)&mask)   n|=4;
-				if (*(data+size/2+1)&mask) n|=8;
-				dwval|=n<<(28-j*4);
-				penusage=1<<n;
-				cps1_char_pen_usage[nchar]|=penusage;
-				cps1_tile16_pen_usage[nchar/2]|=penusage;
-				cps1_tile32_pen_usage[nchar/8]|=penusage;
-		   }
-		   cps1_gfx[2*i+1]=dwval;
-		   data+=2;
-		}
-	}
+    if (cps_version == 1)
+        cps1_gfx_decode();
+    else
+        cps2_gfx_decode();
+#if MAME_DEBUG
+    cps_tileviewer_start();
+#endif
 	return 0;
 }
 
 void cps1_gfx_stop(void)
 {
-	free(cps1_gfx);
 	cps1_gfx = NULL;
 	free(cps1_char_pen_usage);
 	cps1_char_pen_usage = NULL;
@@ -640,16 +742,17 @@ void cps1_gfx_stop(void)
 	cps1_tile16_pen_usage = NULL;
 	free(cps1_tile32_pen_usage);
 	cps1_tile32_pen_usage = NULL;
-	free(stars1_rom);
-	stars1_rom = NULL;
-	free(stars2_rom);
-	stars2_rom = NULL;
+	free(stars_rom);
+	stars_rom = NULL;
+#if MAME_DEBUG
+    cps_tileviewer_start();
+#endif
 }
 
 
 void cps1_draw_gfx(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -685,7 +788,7 @@ void cps1_draw_gfx(
 
 void cps1_draw_gfx16(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -720,7 +823,7 @@ void cps1_draw_gfx16(
 
 void cps1_draw_gfx_pri(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -745,7 +848,7 @@ void cps1_draw_gfx_pri(
 
 void cps1_draw_gfx16_pri(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -778,7 +881,7 @@ priority rendering.
 */
 void cps1_draw_gfx_opaque(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -802,7 +905,7 @@ void cps1_draw_gfx_opaque(
 
 void cps1_draw_gfx_opaque16(
 	struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,
+	int code,
 	int color,
 	int flipx,int flipy,
 	int sx,int sy,
@@ -828,7 +931,7 @@ void cps1_draw_gfx_opaque16(
 
 INLINE void cps1_draw_scroll1(
 	struct osd_bitmap *dest,
-	unsigned int code, int color,
+	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
@@ -850,7 +953,7 @@ INLINE void cps1_draw_scroll1(
 
 INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 	const struct GfxElement *gfx,
-	unsigned int code, int color,
+	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
@@ -871,7 +974,7 @@ INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 
 INLINE void cps1_draw_tile16_pri(struct osd_bitmap *dest,
 	const struct GfxElement *gfx,
-	unsigned int code, int color,
+	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
@@ -892,7 +995,7 @@ INLINE void cps1_draw_tile16_pri(struct osd_bitmap *dest,
 
 INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
 	const struct GfxElement *gfx,
-	unsigned int code, int color,
+	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
@@ -961,7 +1064,7 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 
 INLINE void cps1_draw_tile16_bmp(struct osd_bitmap *dest,
 	const struct GfxElement *gfx,
-	unsigned int code, int color,
+	int code, int color,
 	int flipx, int flipy,int sx, int sy)
 {
 	if (dest->depth==16)
@@ -1009,12 +1112,31 @@ void cps1_dump_video(void)
 		fwrite(cps1_scroll3, cps1_scroll3_size, 1, fp);
 		fclose(fp);
 	}
-	fp=fopen("OBJ.DMP", "w+b");
-	if (fp)
-	{
-		fwrite(cps1_obj, cps1_obj_size, 1, fp);
-		fclose(fp);
-	}
+
+    fp=fopen("OBJ.DMP", "w+b");
+    if (fp)
+    {
+        fwrite(cps1_obj, cps1_obj_size, 1, fp);
+        fclose(fp);
+    }
+    if (cps_version == 2)
+    {
+        /* PSL: CPS2 support */
+        fp=fopen("OBJCPS2.DMP", "w+b");
+        if (fp)
+        {
+            fwrite(cps2_objram, cps2_objram_size, 1, fp);
+            fclose(fp);
+        }
+        fp=fopen("CPS2OUTP.DMP", "w+b");
+        if (fp)
+        {
+            fwrite(cps2_output, cps2_output_size, 1, fp);
+            fclose(fp);
+        }
+
+    }
+
 
 	fp=fopen("OTHER.DMP", "w+b");
 	if (fp)
@@ -1055,7 +1177,8 @@ INLINE void cps1_get_video_base(void )
 	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE,cps1_scroll1_size);
 	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE,cps1_scroll2_size);
 	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE,cps1_scroll3_size);
-	cps1_obj=cps1_base(CPS1_OBJ_BASE,cps1_obj_size);
+    cps1_obj=cps1_base(CPS1_OBJ_BASE, cps1_obj_size);
+
 	cps1_palette=cps1_base(CPS1_PALETTE_BASE,cps1_palette_size);
 	cps1_other=cps1_base(CPS1_OTHER_BASE,cps1_other_size);
 
@@ -1144,11 +1267,11 @@ if (keyboard_pressed(KEYCODE_Z))
 
 ***************************************************************************/
 
-int cps1_vh_start(void)
+int cps_vh_start(void)
 {
 	int i;
 
-	cps1_init_machine();
+    cps_init_machine();
 
 	if (cps1_gfx_start())
 	{
@@ -1179,15 +1302,28 @@ int cps1_vh_start(void)
 		palette_change_color(i,0,0,0);
 	}
 
-	cps1_buffered_obj = malloc (cps1_obj_size);
-	if (!cps1_buffered_obj)
-	{
+    cps1_buffered_obj = malloc (cps1_obj_size);
+    if (!cps1_buffered_obj)
+    {
 		return -1;
 	}
-	memset(cps1_buffered_obj, 0x00, cps1_obj_size);
+    memset(cps1_buffered_obj, 0x00, cps1_obj_size);
+
+    cps2_buffered_obj = malloc (2*cps2_objram_size);
+    if (!cps2_buffered_obj)
+    {
+		return -1;
+	}
+    memset(cps2_buffered_obj, 0x00, 2*cps2_objram_size);
+
 
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
+
+    if (cps_version == 2)
+    {
+        memset(cps2_objram, 0, cps2_objram_size);
+    }
 
 	/* Put in some defaults */
 	cps1_output[CPS1_OBJ_BASE/2]     = 0x9200;
@@ -1216,6 +1352,21 @@ int cps1_vh_start(void)
 	return 0;
 }
 
+int cps1_vh_start(void)
+{
+    cps_version=1;
+    return cps_vh_start();
+}
+
+int cps2_vh_start(void)
+{
+    if (cps_version != 99)
+    {
+        cps_version=2;
+    }
+    return cps_vh_start();
+}
+
 /***************************************************************************
 
   Stop the video hardware emulation.
@@ -1231,6 +1382,8 @@ void cps1_vh_stop(void)
 		free(cps1_scroll2_old);
 	if (cps1_buffered_obj)
 		free(cps1_buffered_obj);
+    if (cps2_buffered_obj)
+        free(cps2_buffered_obj);
 	cps1_gfx_stop();
 }
 
@@ -1327,10 +1480,10 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 {
 	int x,y, offs, offsx, sx, sy, ytop;
 
-	int scrlxrough=(scroll1x>>3)+4;
+    int scrlxrough=(scroll1x>>3)+4;
 	int scrlyrough=(scroll1y>>3);
 	int base=cps1_game_config->bank_scroll1*0x08000;
-	const int spacechar=cps1_game_config->space_scroll1;
+    const int spacechar=cps1_game_config->space_scroll1;
 
 
 	sx=-(scroll1x&0x07);
@@ -1353,7 +1506,7 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 			code  =cps1_scroll1[offs/2];
 			colour=cps1_scroll1[(offs+2)/2];
 
-			if (code != 0x20 && code != spacechar)
+            if (code != 0x20 && code != spacechar)
 			{
 				int transp;
 
@@ -1423,50 +1576,76 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 
 void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 {
-	int offset=6;
+    int offset=0;
 	/* Locate the end of table marker */
-	while (offset < cps1_obj_size)
+    while (offset < cps1_obj_size/2)
 	{
-		int colour=cps1_buffered_obj[offset/2];
+        int colour=cps1_buffered_obj[offset+3];
 		if (colour == 0xff00)
 		{
 			/* Marker found. This is the last sprite. */
-			cps1_last_sprite_offset=offset-6-8;
+            cps1_last_sprite_offset=offset-4;
 			return;
 		}
-		offset+=8;
+        offset+=4;
 	}
 	/* Sprites must use full sprite RAM */
-	cps1_last_sprite_offset=cps1_obj_size-8;
+    cps1_last_sprite_offset=cps1_obj_size/2-4;
 }
 
-/* Find used colours */
-void cps1_palette_sprites(unsigned short *base)
+void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 {
-	int i;
-
-	for (i=cps1_last_sprite_offset; i>=0; i-=8)
+    int offset=0;
+	/* Locate the end of table marker */
+    while (offset < cps2_obj_size/2)
 	{
-		int x=cps1_buffered_obj[i/2];
-		int y=cps1_buffered_obj[(i+2)/2];
+        if (cps2_buffered_obj[offset+1]==0x8000 )
+		{
+			/* Marker found. This is the last sprite. */
+            cps2_last_sprite_offset=offset-4;
+			return;
+		}
+        offset+=4;
+	}
+	/* Sprites must use full sprite RAM */
+    cps2_last_sprite_offset=cps2_obj_size/2-4;
+}
+
+
+/* Find used colours */
+
+void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
+{
+   int i;
+   for (i=last; i>=0; i-=4)
+   {
+        int x=objram[i];
+        int y=objram[i+1];
 		if (x && y)
 		{
-			int colour=cps1_buffered_obj[(i+6)/2];
+            int colour=objram[i+3];
 			int col=colour&0x1f;
-			unsigned int code=cps1_buffered_obj[(i+4)/2];
-			if (cps1_game_config->kludge == 7)
-			{
-				code += 0x4000;
-			}
-			if (cps1_game_config->kludge == 1 && code >= 0x01000)
-			{
-				code += 0x4000;
-			}
-			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
-			{
-				code += 0x4000;
-			}
+            int code=objram[i+2];
 
+            if (cps_version == 2)
+            {
+                code+=((y & 0x6000) <<3);
+            }
+            else
+            {
+                if (cps1_game_config->kludge == 7)
+                {
+                    code += 0x4000;
+                }
+                if (cps1_game_config->kludge == 1 && code >= 0x01000)
+                {
+                    code += 0x4000;
+                }
+                if (cps1_game_config->kludge == 2 && code >= 0x02a00)
+                {
+                    code += 0x4000;
+                }
+            }
 			if ( colour & 0xff00 )
 			{
 				int nys, nxs;
@@ -1475,7 +1654,7 @@ void cps1_palette_sprites(unsigned short *base)
 				nx++;
 				ny++;
 
-				if (colour & 0x40)   /* Y Flip */					      /* Y flip */
+                if (colour & 0x40)   /* Y Flip */
 				{
 					if (colour &0x20)
 					{
@@ -1537,50 +1716,167 @@ void cps1_palette_sprites(unsigned short *base)
 				cps1_tile16_pen_usage[code % cps1_max_tile16]&0x7fff;
 			}
 		}
-	}
+    }
 }
-
-
 
 void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
-	const int mask=0x7fff;
 	int i;
-//mish
-	/* Draw the sprites */
-	for (i=cps1_last_sprite_offset; i>=0; i-=8)
+	data16_t *base=cps1_buffered_obj+cps1_last_sprite_offset;
+	for (i=cps1_last_sprite_offset; i>=0; i-=4)
 	{
-		int x=cps1_buffered_obj[i/2];
-		int y=cps1_buffered_obj[(i+2)/2];
-		if (x && y )
+		const int mask=0x7fff;
+		int x=*(base+0);
+		int y=*(base+1);
+		int code  =*(base+2);
+		int colour=*(base+3);
+		int col=colour&0x1f;
+
+		x-=0x20;
+		y+=0x20;
+
+		if (cps1_game_config->kludge == 7)
 		{
-			unsigned int code=cps1_buffered_obj[(i+4)/2];
-			int colour=cps1_buffered_obj[(i+6)/2];
+			code += 0x4000;
+		}
+		if (cps1_game_config->kludge == 1 && code >= 0x01000)
+		{
+			code += 0x4000;
+		}
+		if (cps1_game_config->kludge == 2 && code >= 0x02a00)
+		{
+			code += 0x4000;
+		}
+
+		if (colour & 0xff00 )
+		{
+			/* handle blocked sprites */
+			int nx=(colour & 0x0f00) >> 8;
+			int ny=(colour & 0xf000) >> 12;
+			int nxs,nys,sx,sy;
+			nx++;
+			ny++;
+
+			if (colour & 0x40)
+			{
+				/* Y flip */
+				if (colour &0x20)
+				{
+					for (nys=0; nys<ny; nys++)
+					{
+						for (nxs=0; nxs<nx; nxs++)
+						{
+							sx = (x+nxs*16) & 0x1ff;
+							sy = (y+nys*16) & 0x1ff;
+
+							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								code+(nx-1)-nxs+0x10*(ny-1-nys),
+								col&0x1f,
+								1,1,
+								sx,sy,mask);
+						}
+					}
+				}
+				else
+				{
+					for (nys=0; nys<ny; nys++)
+					{
+						for (nxs=0; nxs<nx; nxs++)
+						{
+							sx = (x+nxs*16) & 0x1ff;
+							sy = (y+nys*16) & 0x1ff;
+
+							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								code+nxs+0x10*(ny-1-nys),
+								col&0x1f,
+								0,1,
+								sx,sy,mask );
+						}
+					}
+				}
+			}
+			else
+			{
+				if (colour &0x20)
+				{
+					for (nys=0; nys<ny; nys++)
+					{
+						for (nxs=0; nxs<nx; nxs++)
+						{
+							sx = (x+nxs*16) & 0x1ff;
+							sy = (y+nys*16) & 0x1ff;
+
+							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								code+(nx-1)-nxs+0x10*nys,
+								col&0x1f,
+								1,0,
+								sx,sy,mask
+								);
+						}
+					}
+				}
+				else
+				{
+					for (nys=0; nys<ny; nys++)
+					{
+						for (nxs=0; nxs<nx; nxs++)
+						{
+							sx = (x+nxs*16) & 0x1ff;
+							sy = (y+nys*16) & 0x1ff;
+
+							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								code+nxs+0x10*nys,
+								col&0x1f,
+								0,0,
+								sx,sy, mask);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			/* Simple case... 1 sprite */
+			cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+				   code,
+				   col&0x1f,
+				   colour&0x20,colour&0x40,
+				   x & 0x1ff,y & 0x1ff,mask);
+		}
+		base -= 4;
+	}
+}
+
+int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
+{
+	int i;
+	int ret=0;
+	data16_t *base=cps2_buffered_obj;
+
+
+#ifdef MAME_DEBUG
+	if (keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_1+drawpriority))
+	{
+		return 0;
+	}
+#endif
+
+	for (i=0; i<=cps2_last_sprite_offset; i+=4)
+	{
+		const int mask=0x7fff;
+		int x=*(base+0);
+		int y=*(base+1);
+		int priority=(x>>13)&0x07;
+
+		if (priority == drawpriority)
+		{
+			int code  =*(base+2)+((y & 0x6000) <<3);
+			int colour=*(base+3);
 			int col=colour&0x1f;
-
-			y &= 0x1ff;
-			if (y > 450) y -= 0x200;
-
-			/* in cawing, skyscrapers parts on level 2 have all the top bits of the */
-			/* x coordinate set. Does this have a special meaning? */
-			x &= 0x1ff;
-			if (x > 450) x -= 0x200;
+			ret = 1;
 
 			x-=0x20;
 			y+=0x20;
-
-			if (cps1_game_config->kludge == 7)
-			{
-				code += 0x4000;
-			}
-			if (cps1_game_config->kludge == 1 && code >= 0x01000)
-			{
-				code += 0x4000;
-			}
-			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
-			{
-				code += 0x4000;
-			}
 
 			if (colour & 0xff00 )
 			{
@@ -1600,12 +1896,10 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = x+nxs*16;
-								sy = y+nys*16;
-								if (sx > 450) sx -= 0x200;
-								if (sy > 450) sy -= 0x200;
+								sx = (x+nxs*16) & 0x3ff;
+								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,Machine->gfx[0],
 									code+(nx-1)-nxs+0x10*(ny-1-nys),
 									col&0x1f,
 									1,1,
@@ -1619,12 +1913,10 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = x+nxs*16;
-								sy = y+nys*16;
-								if (sx > 450) sx -= 0x200;
-								if (sy > 450) sy -= 0x200;
+								sx = (x+nxs*16) & 0x3ff;
+								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,Machine->gfx[0],
 									code+nxs+0x10*(ny-1-nys),
 									col&0x1f,
 									0,1,
@@ -1641,12 +1933,10 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = x+nxs*16;
-								sy = y+nys*16;
-								if (sx > 450) sx -= 0x200;
-								if (sy > 450) sy -= 0x200;
+								sx = (x+nxs*16) & 0x3ff;
+								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,Machine->gfx[0],
 									code+(nx-1)-nxs+0x10*nys,
 									col&0x1f,
 									1,0,
@@ -1661,12 +1951,10 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = x+nxs*16;
-								sy = y+nys*16;
-								if (sx > 450) sx -= 0x200;
-								if (sy > 450) sy -= 0x200;
+								sx = (x+nxs*16) & 0x3ff;
+								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,Machine->gfx[0],
 									code+nxs+0x10*nys,
 									col&0x1f,
 									0,0,
@@ -1679,16 +1967,17 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 			else
 			{
 				/* Simple case... 1 sprite */
-				cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+				cps1_draw_tile16(bitmap,Machine->gfx[0],
 					   code,
 					   col&0x1f,
 					   colour&0x20,colour&0x40,
-					   x,y,mask);
+					   x & 0x3ff,y & 0x3ff,mask);
 			}
 		}
+		base += 4;
 	}
+	return ret;
 }
-
 
 
 /***************************************************************************
@@ -1937,6 +2226,10 @@ void cps1_palette_scroll3(unsigned short *base)
 			{
 				code -= 0x1000;
 			}
+			if (cps1_game_config->kludge == 8 && code >= 0x05800)
+			{
+				code -= 0x4000;
+			}
 			colour=cps1_scroll3[(offs+2)/2];
 			if (code < cps1_max_tile32)
 			{
@@ -1964,6 +2257,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 		{
 			int offsy, offsx, offs, colour, code;
 			int n;
+			int transp;
 			n=ny+sy;
 			offsy  = ((n&0x07)*4 | ((n&0xf8)*0x0100))&0x3fff;
 			offsx=((nx+sx)*0x020)&0x7ff;
@@ -1972,13 +2266,16 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 			code=cps1_scroll3[offs/2];
 			if (code >= startcode && code <= endcode)
 			{
-				int transp;
-
 				code+=basecode;
 				if (cps1_game_config->kludge == 2 && code >= 0x01500)
 				{
 					code -= 0x1000;
 				}
+				if (cps1_game_config->kludge == 8 && code >= 0x05800)
+				{
+					code -= 0x4000;
+				}
+
 				colour=cps1_scroll3[(offs+2)/2];
 				if (priority)
 				{
@@ -2014,13 +2311,13 @@ void cps1_render_stars(struct osd_bitmap *bitmap)
 		int offs;
 
 
-		for (offs = 0;offs < stars_rom_size;offs += 2)
+		for (offs = 0;offs < stars_rom_size/2;offs++)
 		{
-			int col = stars2_rom[offs];
+			int col = stars_rom[8*offs+4];
 			if (col != 0x0f)
 			{
-				int sx = ((offs/2) / 256) * 32;
-				int sy = ((offs/2) % 256);
+				int sx = (offs / 256) * 32;
+				int sy = (offs % 256);
 				sx = (sx - stars2x - 64 + (col & 0x1f)) & 0x1ff;
 				sy = (sy - stars2y) & 0xff;
 				if (cps1_flip_screen)
@@ -2037,13 +2334,13 @@ void cps1_render_stars(struct osd_bitmap *bitmap)
 			}
 		}
 
-		for (offs = 0;offs < stars_rom_size;offs += 2)
+		for (offs = 0;offs < stars_rom_size/2;offs++)
 		{
-			int col = stars1_rom[offs];
+			int col = stars_rom[8*offs];
 			if (col != 0x0f)
 			{
-				int sx = ((offs/2) / 256) * 32;
-				int sy = ((offs/2) % 256);
+				int sx = (offs / 256) * 32;
+				int sy = (offs % 256);
 				sx = (sx - stars1x - 64+ (col & 0x1f)) & 0x1ff;
 				sy = (sy - stars1y) & 0xff;
 				if (cps1_flip_screen)
@@ -2070,7 +2367,7 @@ void cps1_render_layer(struct osd_bitmap *bitmap, int layer, int distort)
 		switch (layer)
 		{
 			case 0:
-				cps1_render_sprites(bitmap);
+                cps1_render_sprites(bitmap);
 				break;
 			case 1:
 				cps1_render_scroll1(bitmap, 0);
@@ -2120,12 +2417,25 @@ void cps1_render_high_layer(struct osd_bitmap *bitmap, int layer)
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned short palette_usage[cps1_palette_entries];
-	int layercontrol,l0,l1,l2,l3;
+    int layercontrol,l0,l1,l2,l3;
 	int i,offset;
 	int distort_scroll2=0;
 	int videocontrol=cps1_port(0x22);
 	int old_flip;
 
+
+#if MAME_DEBUG
+    if (keyboard_pressed_memory(KEYCODE_T))
+    {
+        cps_view_tiles=~cps_view_tiles;
+    }
+    if (cps_view_tiles || cps_version == 99)
+    {
+        memset(palette_used_colors, PALETTE_COLOR_VISIBLE, 4096);
+        cps_tileviewer_screenrefresh(bitmap, full_refresh);
+        return;
+    }
+#endif
 
 	old_flip=cps1_flip_screen;
 	cps1_flip_screen=videocontrol&0x8000;
@@ -2143,15 +2453,22 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	cps1_get_video_base();
 
 	/* Find the offset of the last sprite in the sprite table */
-	cps1_find_last_sprite();
-
+    cps1_find_last_sprite();
+    if (cps_version == 2)
+    {
+        cps2_find_last_sprite();
+    }
 	/* Build palette */
 	cps1_build_palette();
 
 	/* Compute the used portion of the palette */
 	memset (palette_usage, 0, sizeof (palette_usage));
-	cps1_palette_sprites (&palette_usage[cps1_obj_palette]);
-	if (cps1_layer_enabled[1])
+    cps_palette_sprites (&palette_usage[cps1_obj_palette], cps1_buffered_obj, cps1_last_sprite_offset);
+    if (cps_version == 2)
+    {
+        cps_palette_sprites (&palette_usage[cps1_obj_palette], cps2_buffered_obj, cps2_last_sprite_offset);
+    }
+    if (cps1_layer_enabled[1])
 		cps1_palette_scroll1 (&palette_usage[cps1_scroll1_palette]);
 	if (cps1_layer_enabled[2])
 		cps1_palette_scroll2 (&palette_usage[cps1_scroll2_palette]);
@@ -2210,16 +2527,53 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	l1 = (layercontrol >> 0x08) & 03;
 	l2 = (layercontrol >> 0x0a) & 03;
 	l3 = (layercontrol >> 0x0c) & 03;
-
 	fillbitmap(priority_bitmap,0,NULL);
 
-	cps1_render_layer(bitmap,l0,distort_scroll2);
-	if (l1 == 0) cps1_render_high_layer(bitmap,l0);	/* prepare mask for sprites */
-	cps1_render_layer(bitmap,l1,distort_scroll2);
-	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* prepare mask for sprites */
-	cps1_render_layer(bitmap,l2,distort_scroll2);
-	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* prepare mask for sprites */
-	cps1_render_layer(bitmap,l3,distort_scroll2);
+	if (cps_version == 1)
+	{
+		cps1_render_layer(bitmap,l0,distort_scroll2);
+		if (l1 == 0) cps1_render_high_layer(bitmap,l0); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,l1,distort_scroll2);
+		if (l2 == 0) cps1_render_high_layer(bitmap,l1); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,l2,distort_scroll2);
+		if (l3 == 0) cps1_render_high_layer(bitmap,l2); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,l3,distort_scroll2);
+	}
+	else
+	{
+		int pri_ctrl = cps2_port(CPS2_PRI_BASE);
+		int l0pri,l1pri,l2pri,l3pri;
+
+		l0pri = (pri_ctrl >> 4*l0) & 0x0f;
+		l1pri = (pri_ctrl >> 4*l1) & 0x0f;
+		l2pri = (pri_ctrl >> 4*l2) & 0x0f;
+		l3pri = (pri_ctrl >> 4*l3) & 0x0f;
+
+#ifdef MAME_DEBUG
+if (keyboard_pressed(KEYCODE_Z))
+	usrintf_showmessage("order: %d (%d) %d (%d) %d (%d) %d (%d)",l0,l0pri,l1,l1pri,l2,l2pri,l3,l3pri);
+#endif
+
+		/* take out the CPS1 sprites layer */
+		if (l0 == 0) { l0 = l1; l1 = 0; l0pri = l1pri; }
+		if (l1 == 0) { l1 = l2; l2 = 0; l1pri = l2pri; }
+		if (l2 == 0) { l2 = l3; l3 = 0; l2pri = l3pri; }
+
+//		if (l1pri < l0pri) usrintf_showmessage("l1pri < l0pri!");
+//		if (l2pri < l1pri) usrintf_showmessage("l2pri < l1pri!");
+
+		for (i = 0;i <= l0pri;i++)
+			cps2_render_sprites(bitmap,i);
+		cps1_render_layer(bitmap,l0,distort_scroll2);
+		for (i = l0pri+1;i <= l1pri;i++)
+			cps2_render_sprites(bitmap,i);
+		cps1_render_layer(bitmap,l1,distort_scroll2);
+		for (i = l1pri+1;i <= l2pri;i++)
+			cps2_render_sprites(bitmap,i);
+		cps1_render_layer(bitmap,l2,distort_scroll2);
+		for (i = l2pri+1;i <= 7;i++)
+			cps2_render_sprites(bitmap,i);
+	}
 
 #if CPS1_DUMP_VIDEO
 	if (keyboard_pressed(KEYCODE_F))
@@ -2234,9 +2588,14 @@ void cps1_eof_callback(void)
 	/* Get video memory base registers */
 	cps1_get_video_base();
 
-	/* Mish: 181099: Buffer sprites for next frame - the hardware must do
-		this at the end of vblank */
-	memcpy(cps1_buffered_obj,cps1_obj,cps1_obj_size);
+	/* CPS1 sprites have to be delayed one frame */
+    memcpy(cps1_buffered_obj, cps1_obj, cps1_obj_size);
+    if (cps_version == 2)
+    {
+		/* CPS2 sprites have to be delayed two frames */
+        memcpy(cps2_buffered_obj, cps2_buffered_obj+cps2_obj_size, cps2_obj_size);
+        memcpy(cps2_buffered_obj+cps2_obj_size, cps2_objram, cps2_obj_size);
+    }
 }
 
 
@@ -2251,15 +2610,16 @@ void cps1_eof_callback(void)
 	int i, j;
 	UINT32 dwval;
 	UINT32 *src;
-	const unsigned short *paldata;
+	const UINT32 *paldata;
 	UINT32 n;
 	DATATYPE *bm;
 
-	if ( code > max || (tpens & pusage[code])==0)
+	if (code > max || (tpens & pusage[code])==0)
 	{
 		/* Do not draw blank object */
 		return;
 	}
+	src = cps1_gfx+code*delta;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -2288,7 +2648,6 @@ void cps1_eof_callback(void)
 	}
 
 	paldata=&gfx->colortable[gfx->color_granularity * color];
-	src = cps1_gfx+code*delta;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

@@ -9,9 +9,11 @@
 #define MAX_054539 2
 
 struct K054539interface {
-	int num;					/* number of chips */
-	int clock;					/* clock (usually 48000) */
-	int region;					/* memory region of sample ROM(s) */
+	int num;									/* number of chips */
+	int clock;									/* clock (usually 48000) */
+	int region[MAX_054539];						/* memory regions of sample ROM(s) */
+	int mixing_level[MAX_054539][2];			/* Mixing levels */
+	void (*apan[MAX_054539])(double, double);	/* Callback for analog output mixing levels (0..1 for each channel) */
 	void (*irq[MAX_054539])( void );
 };
 

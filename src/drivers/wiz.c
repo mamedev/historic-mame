@@ -67,12 +67,24 @@ I/O write:
 
 TODO:
 
-- Verify/Fix colors
-- Sprite banking in Wiz. I have a hack in wiz_vh_screenrefresh
+- Verify sprite colors in stinger/scion
 - background noise in scion (but not scionc). Note that the sound program is
   almost identical, except for three patches affecting noise period, noise
   channel C enable and channel C volume. So it looks just like a bug in the
   original (weird), or some strange form of protection.
+
+Wiz:
+- Sprite banking. I have a hack in wiz_vh_screenrefresh.
+- Possible sprite/char priority issues.
+- Player dies suddenly at the moment "Brain" enemy appear.
+- Position of checkpoint is wrong. As side effect, boss appears at strange.
+  point. In real machine, it should appear at G (goal - rightmost of the map)
+  of heaven area.
+- After gameover, the game is set to freeplay.
+- MCU issues? There is unknown device (Sony CXK5808-55) on the board.
+- And the supplier of the screenshot says there still may be some wrong
+  colors.
+
 
 ***************************************************************************/
 
@@ -88,6 +100,7 @@ extern unsigned char *wiz_sprite_bank;
 WRITE_HANDLER( wiz_char_bank_select_w );
 WRITE_HANDLER( wiz_attributes_w );
 WRITE_HANDLER( wiz_palettebank_w );
+WRITE_HANDLER( wiz_bgcolor_w );
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -122,7 +135,6 @@ static MEMORY_READ_START( readmem )
 	{ 0xf800, 0xf800, watchdog_reset_r },
 MEMORY_END
 
-
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
@@ -144,7 +156,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xf800, 0xf800, sound_command_w },
 	{ 0xf808, 0xf808, MWA_NOP },	/* explosion sound trigger - analog? */
 	{ 0xf80a, 0xf80a, MWA_NOP },	/* shoot sound trigger - analog? */
-	{ 0xf818, 0xf818, MWA_NOP },
+	{ 0xf818, 0xf818, wiz_bgcolor_w },
 MEMORY_END
 
 
@@ -440,7 +452,7 @@ static struct GfxDecodeInfo stinger_gfxdecodeinfo[] =
 static struct AY8910interface wiz_ay8910_interface =
 {
 	3,      /* 3 chips */
-	14318000/8,	/* ? */
+	18432000/12,	/* ? */
 	{ 10, 10, 10 },
 	{ 0 },
 	{ 0 },
@@ -451,7 +463,7 @@ static struct AY8910interface wiz_ay8910_interface =
 static struct AY8910interface stinger_ay8910_interface =
 {
 	2,      /* 2 chips */
-	14318000/8,	/* ? */
+	18432000/12,	/* ? */
 	{ 25, 25 },
 	{ 0 },
 	{ 0 },
@@ -474,7 +486,7 @@ static const struct MachineDriver machine_driver_##NAME =				\
 			CPU_Z80 | CPU_AUDIO_CPU,							\
 			14318000/8,     /* ? */								\
 			sound_readmem,sound_writemem,0,0,					\
-			nmi_interrupt,3 /* ??? */							\
+			nmi_interrupt,4 /* ??? */							\
 		}														\
 	},															\
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */			\
@@ -699,8 +711,8 @@ static void init_stinger(void)
 
 
 
-GAMEX( 1983, stinger, 0,     stinger, stinger, stinger, ROT90,  "Seibu Denshi", "Stinger",     GAME_IMPERFECT_COLORS )
-GAMEX( 1984, scion,   0,     stinger, scion,   0,       ROT0,   "Seibu Denshi", "Scion",       GAME_IMPERFECT_COLORS )
-GAMEX( 1984, scionc,  scion, stinger, scion,   0,       ROT0,   "Seibu Denshi [Cinematronics license]", "Scion (Cinematronics)", GAME_IMPERFECT_COLORS )
-GAMEX( 1985, wiz,     0,     wiz,     wiz,     0,       ROT270, "Seibu Kaihatsu Inc.", "Wiz",  GAME_IMPERFECT_COLORS )
-GAMEX( 1985, wizt,    wiz,   wiz,     wiz,     0,       ROT270, "Taito Corp.",  "Wiz (Taito)", GAME_IMPERFECT_COLORS )
+GAMEX(1983, stinger, 0,     stinger, stinger, stinger, ROT90,  "Seibu Denshi", "Stinger", GAME_IMPERFECT_COLORS )
+GAMEX(1984, scion,   0,     stinger, scion,   0,       ROT0,   "Seibu Denshi", "Scion", GAME_IMPERFECT_COLORS )
+GAMEX(1984, scionc,  scion, stinger, scion,   0,       ROT0,   "Seibu Denshi (Cinematronics license)", "Scion (Cinematronics)", GAME_IMPERFECT_COLORS )
+GAME( 1985, wiz,     0,     wiz,     wiz,     0,       ROT270, "Seibu Kaihatsu Inc.", "Wiz" )
+GAME( 1985, wizt,    wiz,   wiz,     wiz,     0,       ROT270, "[Seibu] (Taito license)", "Wiz (Taito)" )

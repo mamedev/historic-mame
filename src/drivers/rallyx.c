@@ -318,7 +318,7 @@ static const struct MachineDriver machine_driver_rallyx =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -411,7 +411,7 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
 
 	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, BADCRC( 0x3c16f62c ) )    /* dots */
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )    /* dots */
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )

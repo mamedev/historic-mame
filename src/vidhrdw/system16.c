@@ -228,7 +228,7 @@ READ16_HANDLER( sys16_tileram_r ){
 static void draw_sprite16(
 	struct osd_bitmap *bitmap,
 	const unsigned char *addr, int pitch,
-	const UINT16 *paldata,
+	const UINT32 *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -311,7 +311,7 @@ static void draw_sprite16(
 static void draw_sprite8(
 	struct osd_bitmap *bitmap,
 	const unsigned char *addr, int pitch,
-	const UINT16 *paldata,
+	const UINT32 *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -399,7 +399,7 @@ static void draw_sprite8(
 static void draw_sprite(
 	struct osd_bitmap *bitmap,
 	const UINT8 *addr, int pitch,
-	const UINT16 *paldata,
+	const UINT32 *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
 	int flipx, int flipy,
@@ -416,7 +416,7 @@ static void draw_sprite(
 }
 
 static void draw_sprites( struct osd_bitmap *bitmap, int b3d ){
-	const unsigned short *base_pal = Machine->gfx[0]->colortable;
+	const UINT32 *base_pal = Machine->gfx[0]->colortable;
 	const unsigned char *base_gfx = memory_region(REGION_GFX2);
 
 	struct sys16_sprite_attributes sprite;
@@ -1365,8 +1365,8 @@ static void render_gr(struct osd_bitmap *bitmap,int priority){
 	int yflip=0, ypos;
 	int dx=1,xoff=0;
 
-	UINT16 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
-	UINT16 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
+	UINT32 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
+	UINT32 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
 
 #if 0
 if( keyboard_pressed( KEYCODE_S ) ){
@@ -1733,8 +1733,8 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 
 	int second_road = sys16_gr_second_road[0];
 
-	UINT16 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
-	UINT16 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
+	UINT32 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
+	UINT32 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
 
 	priority=priority << 11;
 

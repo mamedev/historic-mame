@@ -479,7 +479,7 @@ static const struct MachineDriver machine_driver_polepos =
 			polepos_z8002_2_interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	 /* frames per second, vblank duration */
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	 /* frames per second, vblank duration */
 	100,	/* some interleaving */
 	polepos_init_machine,
 

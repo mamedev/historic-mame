@@ -6,12 +6,12 @@ static data32_t	es5510_gpr[0xc0];
 static data32_t	es5510_gpr_latch;
 static void *timer_68681=NULL;
 extern data32_t *f3_shared_ram;
-static int timer_mode;
+static int timer_mode,m68681_imr;
 
 static int es_tmp=1;
 
 #define M68000_CLOCK	16000000
-#define M68681_CLOCK	4000000
+#define M68681_CLOCK	2000000 /* Actually X1, not the main clock */
 
 enum { TIMER_SINGLESHOT, TIMER_PULSE };
 
@@ -31,12 +31,56 @@ WRITE16_HANDLER(f3_68000_share_w)
 	else f3_shared_ram[offset/4]=(f3_shared_ram[offset/4]&0xffffff00)|((data&0xff00)>>8);
 }
 
+WRITE16_HANDLER( f3_es5505_bank_w )
+{
+	unsigned int max_banks_this_game=(memory_region_length(REGION_SOUND1)/0x200000)-1;
+
+#if 0
+{
+	static char count[10];
+	char t[32];
+	count[data&7]++;
+	sprintf(t,"%d %d %d %d %d %d %d %d",count[0],count[1],count[2],count[3],count[4],count[5],count[6],count[7]);
+	usrintf_showmessage(t);
+}
+#endif
+
+	/* If game is using a out of range (empty) bank - just set it to the last empty bank */
+	if ((data&0x7)>max_banks_this_game)
+		ES5506_voice_bank_0_w(offset,max_banks_this_game<<20);
+	else
+		ES5506_voice_bank_0_w(offset,(data&0x7)<<20);
+}
+
+WRITE16_HANDLER( f3_volume_w )
+{
+	static data16_t channel[8],last_l,last_r;
+	static int latch;
+
+	if (offset==0) latch=(data>>8)&0x7;
+	if (offset==1) channel[latch]=data>>8;
+
+	if(Machine->sample_rate) {
+//		if (channel[7]!=last_l) mixer_set_volume(0, (int)((float)channel[7]*1.58)); /* Left master volume */
+//		if (channel[6]!=last_r) mixer_set_volume(1, (int)((float)channel[6]*1.58)); /* Right master volume */
+		last_l=channel[7];
+		last_r=channel[6];
+	}
+	/* Channel 5 - Left Aux?  Always set to volume, but never used for panning */
+	/* Channel 4 - Right Aux?  Always set to volume, but never used for panning */
+	/* Channels 0, 1, 2, 3 - Unused */
+}
+
 static void timer_callback(int param)
 {
 	if (timer_mode==TIMER_SINGLESHOT) timer_68681=NULL;
-	cpu_irq_line_vector_w(1, 7, vector_reg);
-	cpu_set_irq_line(1, 7, ASSERT_LINE);
-	imr_status|=0x8;
+
+	/* Only cause IRQ if the mask is set to allow it */
+	if (m68681_imr&8) {
+		cpu_irq_line_vector_w(1, 6, vector_reg);
+		cpu_set_irq_line(1, 6, ASSERT_LINE);
+		imr_status|=0x8;
+	}
 }
 
 void f3_68681_reset(void)
@@ -52,50 +96,62 @@ READ16_HANDLER(f3_68681_r)
 	if (offset==0x5) {
 		int ret=imr_status;
 		imr_status=0;
-
-//		logerror("%06x: 68681 read offset %04x (%04x)\n",cpu_get_pc(),offset,ret);
 		return ret;
 	}
-//	logerror("%06x: 68681 read offset %04x\n",cpu_get_pc(),offset);
 
 	if (offset==0xe)
 		return 1;
 
 	/* IRQ ack */
 	if (offset==0xf) {
-		cpu_set_irq_line(1, 7, CLEAR_LINE);
+		cpu_set_irq_line(1, 6, CLEAR_LINE);
 		return 0;
 	}
 
 	return 0xff;
 }
-//c109e8: 68681 read offset 001c is end of init sequence
+
 WRITE16_HANDLER(f3_68681_w)
 {
 	switch (offset) {
 		case 0x04: /* ACR */
-			logerror("68681:  %02x %02x\n",offset,data&0xff);
-			if ((data&0xff)==0x30) {
-				logerror("68681:  Counter started: %d counts, tick is X1/16, fires in %d 68k cycles\n",counter,(M68000_CLOCK/M68681_CLOCK)*counter);
-				if (timer_68681) timer_remove(timer_68681);
-//				timer_68681=timer_pulse(TIME_IN_CYCLES(1000000/48,1), 0, timer_callback);
-				timer_68681=timer_set(TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter*4,1), 0, timer_callback);
-//timer_68681=timer_set(TIME_IN_CYCLES(1000000/16,1), 0, timer_callback);
-				timer_mode=TIMER_SINGLESHOT;
-		} else if ((data&0xff)==0x60) {
-				logerror("68681:  Timer started: %d counts, tick is X1\n",counter);
-				if (timer_68681) timer_remove(timer_68681);
-				timer_68681=timer_pulse(TIME_IN_CYCLES(1000000/50,1), 0, timer_callback);
-//this time is wrong..
-//timer_68681=timer_set(TIME_IN_CYCLES(1000000/16,1), 0, timer_callback);
-				timer_mode=TIMER_PULSE;
-			} else {
-				logerror("68681:  %02x %02x - Unsupported timer mode\n",offset,data&0xff);
+			switch ((data>>4)&7) {
+				case 0:
+					logerror("Counter:  Unimplemented external IP2\n");
+					break;
+				case 1:
+					logerror("Counter:  Unimplemented TxCA - 1X clock of channel A\n");
+					break;
+				case 2:
+					logerror("Counter:  Unimplemented TxCB - 1X clock of channel B\n");
+					break;
+				case 3:
+					logerror("Counter:  X1/Clk - divided by 16, counter is %04x, so interrupt every %d cycles\n",counter,(M68000_CLOCK/M68681_CLOCK)*counter*16);
+					if (timer_68681) timer_remove(timer_68681);
+					timer_mode=TIMER_SINGLESHOT;
+					timer_68681=timer_set(TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter*16,1), 0, timer_callback);
+					break;
+				case 4:
+					logerror("Timer:  Unimplemented external IP2\n");
+					break;
+				case 5:
+					logerror("Timer:  Unimplemented external IP2/16\n");
+					break;
+				case 6:
+					logerror("Timer:  X1/Clk, counter is %04x, so interrupt every %d cycles\n",counter,(M68000_CLOCK/M68681_CLOCK)*counter);
+					if (timer_68681) timer_remove(timer_68681);
+					timer_mode=TIMER_PULSE;
+					timer_68681=timer_pulse(TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter,1), 0, timer_callback);
+					break;
+				case 7:
+					logerror("Timer:  Unimplemented X1/Clk - divided by 16\n");
+					break;
 			}
 			break;
 
 		case 0x05: /* IMR */
 			logerror("68681:  %02x %02x\n",offset,data&0xff);
+			m68681_imr=data&0xff;
 			break;
 
 		case 0x06: /* CTUR */
@@ -119,7 +175,8 @@ WRITE16_HANDLER(f3_68681_w)
 
 READ16_HANDLER(es5510_dsp_r)
 {
-	if (es_tmp) return es5510_dsp_ram[offset];
+//	logerror("%06x: DSP read offset %04x (data is %04x)\n",cpu_get_pc(),offset,es5510_dsp_ram[offset]);
+//	if (es_tmp) return es5510_dsp_ram[offset];
 /*
 	switch (offset) {
 		case 0x00: return (es5510_gpr_latch>>16)&0xff;
@@ -135,7 +192,6 @@ READ16_HANDLER(es5510_dsp_r)
 	if (offset==0x12) return 0;
 
 //	if (offset>4)
-//	logerror("%06x: DSP read offset %04x (data is %04x)\n",cpu_get_pc(),offset,es5510_dsp_ram[offset]);
 	if (offset==0x16) return 0x27;
 
 	return es5510_dsp_ram[offset];

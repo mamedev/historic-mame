@@ -23,7 +23,7 @@ struct sprite {
 	const UINT8 *pen_data;	/* points to top left corner of tile data */
 	int line_offset;
 
-	const UINT16 *pal_data;
+	const UINT32 *pal_data;
 	UINT32 pen_usage;
 
 	int x_offset, y_offset;
@@ -63,6 +63,6 @@ struct sprite_list *sprite_list_create( int num_sprites, int flags );
 void sprite_update( void );
 void sprite_draw( struct sprite_list *sprite_list, int priority );
 
-void sprite_set_shade_table(UINT16 *table);
+void sprite_set_shade_table(UINT32 *table);
 
 #endif

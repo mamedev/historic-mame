@@ -593,7 +593,7 @@ static struct GfxDecodeInfo todruaga_gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	23920,	/* sample rate (approximate value) */
+	24000,	/* sample rate */
 	8,		/* number of voices */
 	100,	/* playback volume */
 	REGION_SOUND1	/* memory region */
@@ -619,7 +619,7 @@ static const struct MachineDriver machine_driver_mappy =
 			mappy_interrupt_2,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,    /* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	mappy_init_machine,
@@ -663,7 +663,7 @@ static const struct MachineDriver machine_driver_digdug2 =
 			mappy_interrupt_2,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,    /* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	mappy_init_machine,
@@ -707,7 +707,7 @@ static const struct MachineDriver machine_driver_motos =
 			mappy_interrupt_2,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,    /* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	motos_init_machine,
@@ -751,7 +751,7 @@ static const struct MachineDriver machine_driver_todruaga =
 			mappy_interrupt_2,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,    /* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	mappy_init_machine,

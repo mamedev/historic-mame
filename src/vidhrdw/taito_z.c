@@ -226,7 +226,7 @@ int taitoz_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x26,0x08,0))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x26,0x08,-1,0,0))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */

@@ -81,7 +81,7 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 	int temp,w,h;
 
 	/* special case for vectors */
-	if(Machine->drv->video_attributes == VIDEO_TYPE_VECTOR)
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
 		if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
 		{
@@ -376,7 +376,7 @@ struct GfxElement *builduifont(void)
 	};
 
 	struct GfxElement *font;
-	static unsigned short colortable[2*2];	/* ASG 980209 */
+	static UINT32 colortable[2*2];	/* ASG 980209 */
 
 
 	switch_ui_orientation();
@@ -535,8 +535,7 @@ void ui_text(struct osd_bitmap *bitmap,const char *buf,int x,int y)
 
 void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int height)
 {
-	unsigned short black,white;
-
+	UINT32 black,white;
 
 	switch_ui_orientation();
 
@@ -563,7 +562,7 @@ void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int heigh
 
 static void drawbar(struct osd_bitmap *bitmap,int leftx,int topy,int width,int height,int percentage,int default_percentage)
 {
-	unsigned short black,white;
+	UINT32 black,white;
 
 
 	switch_ui_orientation();
@@ -1761,7 +1760,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 
 static int calibratejoysticks(struct osd_bitmap *bitmap,int selected)
 {
-	char *msg;
+	const char *msg;
 	static char buf[2048];
 	int sel;
 	static int calibration_started = 0;
@@ -2292,7 +2291,7 @@ int showgamewarnings(struct osd_bitmap *bitmap)
 
 	if (Machine->gamedrv->flags &
 			(GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_IMPERFECT_COLORS |
-			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL))
+			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL))
 	{
 		int done;
 
@@ -2318,6 +2317,12 @@ int showgamewarnings(struct osd_bitmap *bitmap)
 		if (Machine->gamedrv->flags & GAME_WRONG_COLORS)
 		{
 			strcat(buf, ui_getstring (UI_wrongcolors));
+			strcat(buf, "\n");
+		}
+
+		if (Machine->gamedrv->flags & GAME_IMPERFECT_GRAPHICS)
+		{
+			strcat(buf, ui_getstring (UI_imperfectgraphics));
 			strcat(buf, "\n");
 		}
 

@@ -2,15 +2,18 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
-static int xexexbg_ctrla, xexexbg_ctrlb, xexexbg_select, xexexbg_x, xexexbg_y;
+static data8_t xexexbg_regs[8];
 static unsigned char *xexexbg_base;
 static data16_t *xexexbg_ram, *xexexbg_rammax;
+static UINT32 xexexbg_rommask;
 
 int xexexbg_vh_start(int region)
 {
 	xexexbg_base = memory_region(region);
 	xexexbg_ram = malloc(0x1000);
 	xexexbg_rammax = xexexbg_ram + 0x800;
+	xexexbg_rommask = memory_region_length(region) - 1;
+
 	return 0;
 }
 
@@ -21,54 +24,13 @@ void xexexbg_vh_stop(void)
 
 WRITE16_HANDLER( xexexbg_w )
 {
-	if(ACCESSING_LSB) {
-		int old;
-		data &= 0xff;
-		switch(offset) {
-		case 0x0:
-			old = xexexbg_x;
-			xexexbg_x = (xexexbg_x & 0xff) | (data << 8);
-			break;
-		case 0x1:
-			old = xexexbg_x;
-			xexexbg_x = (xexexbg_x & 0xff00) | data;
-			break;
-		case 0x2:
-			old = xexexbg_y;
-			xexexbg_y = (xexexbg_y & 0xff) | (data << 8);
-			break;
-		case 0x3:
-			old = xexexbg_y;
-			xexexbg_y = (xexexbg_y & 0xff00) | data;
-			break;
-		case 0x4:
-			if((xexexbg_ctrlb & 0xe5) != (data & 0xe5))
-				logerror("Back.b %02x\n", data & 0xe5);
-			xexexbg_ctrlb = data;
-			break;
-		case 0x5:
-			if(xexexbg_ctrla != data)
-				logerror("Back.a %02x\n", data);
-			xexexbg_ctrla = data;
-			break;
-		case 0x7:
-			xexexbg_select = data;
-			break;
-		}
-	}
+	if(ACCESSING_LSB)
+		xexexbg_regs[offset] = data;
 }
 
 READ16_HANDLER( xexexbg_r )
 {
-	switch(offset) {
-	case 0x5:
-		return xexexbg_ctrla;
-	case 0x7:
-		return xexexbg_select;
-	default:
-		logerror("xexexbg: Reading %x at %x\n", offset*2, cpu_get_pc());
-		return 0;
-	}
+	return xexexbg_regs[offset];
 }
 
 WRITE16_HANDLER( xexexbg_ram_w )
@@ -83,9 +45,9 @@ READ16_HANDLER( xexexbg_ram_r )
 
 READ16_HANDLER( xexexbg_rom_r )
 {
-	if (!(xexexbg_ctrla & 1))
+	if (!(xexexbg_regs[5] & 1))
 		logerror("Back: Reading rom memory with enable=0\n");
-	return *(xexexbg_base + 2048*xexexbg_select + (offset>>2));
+	return *(xexexbg_base + 2048*xexexbg_regs[7] + (offset>>1));
 }
 
 #if 1
@@ -98,15 +60,17 @@ int ddx = -19 - 201 - 299;
 
 void xexexbg_mark_colors(int colorbase)
 {
-	int cmap = 0;
-	int i, j;
-	for(i=0; i<512*8; i+=8)
-		if(xexexbg_ram[i] || xexexbg_ram[i+1])
-			cmap |= 1 << (xexexbg_ram[i] & 0xf);
-	for(i=0; i<16; i++)
-		if(cmap & (1<<i))
-			for(j=0; j<16; j++)
-				palette_used_colors[colorbase*16 + i * 16 + j] = PALETTE_COLOR_VISIBLE;
+	if(palette_used_colors) {
+		int cmap = 0;
+		int i, j;
+		for(i=0; i<512*8; i+=8)
+			if(xexexbg_ram[i] || xexexbg_ram[i+1])
+				cmap |= 1 << (xexexbg_ram[i] & 0xf);
+		for(i=0; i<16; i++)
+			if(cmap & (1<<i))
+				for(j=0; j<16; j++)
+					palette_used_colors[colorbase*16 + i * 16 + j] = PALETTE_COLOR_VISIBLE;
+	}
 }
 
 void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
@@ -116,25 +80,28 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;
 
-	int orientation = (xexexbg_ctrlb & 8 ? ORIENTATION_FLIP_X : 0)\
-		| (xexexbg_ctrlb & 16 ? ORIENTATION_FLIP_Y : 0)
-		| (xexexbg_ctrlb & 1 ? 0 : ORIENTATION_SWAP_XY);
+	int orientation = (xexexbg_regs[4] & 8 ? ORIENTATION_FLIP_X : 0)\
+		| (xexexbg_regs[4] & 16 ? ORIENTATION_FLIP_Y : 0)
+		| (xexexbg_regs[4] & 1 ? 0 : ORIENTATION_SWAP_XY);
+
+	INT16 cur_x = (xexexbg_regs[0] << 8) | xexexbg_regs[1];
+	INT16 cur_y = (xexexbg_regs[2] << 8) | xexexbg_regs[3];
 
 	colorbase <<= 4;
 
 	if(orientation & ORIENTATION_SWAP_XY) {
 		dim1_max = area.max_x - area.min_x + 1;
 		dim2_max = area.max_y - area.min_y + 1;
-		delta = (INT16)xexexbg_y + ddy;
-		line = xexexbg_ram + (((area.min_x + (INT16)xexexbg_x + ddx) & 0x1ff) << 2);
+		delta = cur_y + ddy;
+		line = xexexbg_ram + (((area.min_x + cur_x + ddx) & 0x1ff) << 2);
 	} else {
 		dim1_max = area.max_y - area.min_y + 1;
 		dim2_max = area.max_x - area.min_x + 1;
-		delta = (INT16)xexexbg_x + 49;
-		line = xexexbg_ram + (((area.min_y + (INT16)xexexbg_y + 16) & 0x1ff) << 2);
+		delta = cur_x + 49;
+		line = xexexbg_ram + (((area.min_y + cur_y + 16) & 0x1ff) << 2);
 	}
 
-	if(xexexbg_ctrlb & 0x80) {
+	if(xexexbg_regs[4] & 0x80) {
 		mask1 = 0xffffc000;
 		mask2 = 0x00003fff;
 	} else {
@@ -142,7 +109,7 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 		mask2 = 0x0000ffff;
 	}
 
-	if(xexexbg_ctrlb & 4)
+	if(xexexbg_regs[4] & 4)
 		mask1 = 0;
 
 	for(dim1 = 0; dim1 < dim1_max; dim1++) {
@@ -173,7 +140,7 @@ void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
 				continue;
 			}
 
-			romp = xexexbg_base[((cpos & mask2)>>7) + start];
+			romp = xexexbg_base[(((cpos & mask2)>>7) + start) & xexexbg_rommask];
 
 			if(cpos & 0x40)
 				romp &= 0xf;
@@ -206,7 +173,7 @@ void xexex_set_alpha(int on)
 WRITE16_HANDLER(xexex_alpha_level_w)
 {
 	if(ACCESSING_LSB)
-		cur_alpha_level = data & 0x1f;
+		cur_alpha_level = ((data & 0x1f) << 3) | ((data & 0x1f) >> 2);
 }
 
 static void xexex_sprite_callback(int *code, int *color, int *priority_mask)
@@ -237,6 +204,8 @@ int xexex_vh_start(void)
 	cur_alpha = 0;
 	cur_alpha_level = 0x1f;
 
+	K053251_vh_start();
+
 	xexexbg_vh_start(REGION_GFX3);
 	if (K054157_vh_start(REGION_GFX1, 1, xexex_scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback))
 	{
@@ -249,6 +218,7 @@ int xexex_vh_start(void)
 		xexexbg_vh_stop();
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -278,7 +248,7 @@ static void sortlayers(int *layer, int *pri)
 	SWAP(1, 3)
 	SWAP(2, 3)
 }
-
+int xdump = 0;
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int layer[4];
@@ -287,6 +257,7 @@ void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 #if 0
 if (keyboard_pressed(KEYCODE_D))
 {
+	xdump = 1;
 #if 0
 	FILE *fp;
 	fp=fopen("bg.dmp", "w+b");
@@ -297,6 +268,7 @@ if (keyboard_pressed(KEYCODE_D))
 		fclose(fp);
 	}
 #endif
+#if 0
 	int i, j;
 	for(i=0; i<16*64; i+=16) {
 		fprintf(stderr, "%03x:", i*2);
@@ -305,6 +277,7 @@ if (keyboard_pressed(KEYCODE_D))
 		fprintf(stderr, "\n");
 	}
 	fprintf(stderr, "\n");
+#endif
 }
 #endif
 
@@ -339,13 +312,15 @@ if (keyboard_pressed(KEYCODE_D))
 	for(plane=0; plane<4; plane++)
 		if(layer[plane] < 0)
 			xexexbg_draw(bitmap, bg_colorbase, 1<<plane);
-		else if(1 || !cur_alpha || !layer[plane])
+		else if(!cur_alpha || (layer[plane] != 0))
 			K054157_tilemap_draw(bitmap, layer[plane], 0, 1<<plane);
 
 	K053247_sprites_draw(bitmap);
-#if 0
-	if(cur_alpha)
-		K054157_tilemap_draw(bitmap, 0, TILEMAP_ALPHA, cur_alpha_level);
-#endif
+
+	if(cur_alpha) {
+		alpha_set_level(cur_alpha_level);
+		K054157_tilemap_draw(bitmap, 0, TILEMAP_ALPHA, 0);
+	}
+
 	K054157_tilemap_draw(bitmap, 3, 0, 0);
 }

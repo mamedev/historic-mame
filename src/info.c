@@ -639,6 +639,8 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 
 	#ifndef MESS
 	/* addictional fixed record */
+
+	/* NEO GEO bios */
 	fprintf(out, "resource" L1B);
 	fprintf(out, L1P "name neogeo" L1N);
 	fprintf(out, L1P "description \"Neo Geo BIOS\"" L1N);
@@ -656,6 +658,63 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "name ng-sfix.rom" L2N);
 	fprintf(out, L2P "size 131072" L2N);
 	fprintf(out, L2P "crc 354029fc" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1E);
+
+	/* PLAYCH10 bios */
+	fprintf(out, "resource" L1B);
+	fprintf(out, L1P "name playch10" L1N);
+	fprintf(out, L1P "description \"PlayChoice-10 BIOS\"" L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name pch1-c.8t" L2N);
+	fprintf(out, L2P "size 16384" L2N);
+	fprintf(out, L2P "crc d52fa07a" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name pch1-c.8p" L2N);
+	fprintf(out, L2P "size 8192" L2N);
+	fprintf(out, L2P "crc 30c15e23" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name pch1-c.8m" L2N);
+	fprintf(out, L2P "size 8192" L2N);
+	fprintf(out, L2P "crc c1232eee" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name pch1-c.8k" L2N);
+	fprintf(out, L2P "size 8192" L2N);
+	fprintf(out, L2P "crc 9acffb30" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name 82s129.6f" L2N);
+	fprintf(out, L2P "size 256" L2N);
+	fprintf(out, L2P "crc e5414ca3" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name 82s129.6e" L2N);
+	fprintf(out, L2P "size 256" L2N);
+	fprintf(out, L2P "crc a2625c6e" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name 82s129.6d" L2N);
+	fprintf(out, L2P "size 256" L2N);
+	fprintf(out, L2P "crc 1213ebd4" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1E);
+
+	/* CVS bios */
+	fprintf(out, "resource" L1B);
+	fprintf(out, L1P "name cvs" L1N);
+	fprintf(out, L1P "description \"CVS BIOS\"" L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name 5b.bin" L2N);
+	fprintf(out, L2P "size 2048" L2N);
+	fprintf(out, L2P "crc f055a624" L2N);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1P "rom" L2B);
+	fprintf(out, L2P "name 82s185.10h" L2N);
+	fprintf(out, L2P "size 2048" L2N);
+	fprintf(out, L2P "crc c205bca6" L2N);
 	fprintf(out, L2E L1N);
 	fprintf(out, L1E);
 	#endif

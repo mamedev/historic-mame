@@ -620,7 +620,7 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	UINT16 n_x;
 	UINT16 n_y;
-	UINT16 *pens = Machine->pens;
+	UINT32 *pens = Machine->pens;
 
 	if( palette_recalc() || full_refresh )
 	{

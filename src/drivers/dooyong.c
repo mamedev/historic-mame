@@ -1262,5 +1262,5 @@ GAME( 1990, lastday,  0,       lastday,  lastday,  0,      ROT270_16BIT, "Dooyon
 GAME( 1990, lastdaya, lastday, lastday,  lastday,  0,      ROT270_16BIT, "Dooyong", "The Last Day (set 2)" )
 GAME( 1991, pollux,   0,       pollux,   pollux,   pollux, ROT270_16BIT, "Dooyong", "Pollux" )
 GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0,      ROT270_16BIT, "Dooyong", "Blue Hawk" )
-GAME( 1994, primella, 0,       primella, primella, 0,      ROT0_16BIT,   "[Dooyong] (NTC license)", "Primella" )
+GAME( 1994, primella, 0,       primella, primella, 0,      ROT0_16BIT,   "NTC", "Primella" )
 GAME( 1995, rshark,   0,       rshark,   rshark,   0,      ROT270_16BIT, "Dooyong", "R-Shark" )

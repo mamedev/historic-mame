@@ -398,9 +398,9 @@ void init_openice(void)
 }
 
 
-/********************** NBA Maximum Hangtime **********************/
+/********************** NBA Hangtime & NBA Maximum Hangtime **********************/
 
-void init_nbamaxht(void)
+void init_nbahangt(void)
 {
 	/* common init */
 	init_wolfu_generic();

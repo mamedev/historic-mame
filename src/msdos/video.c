@@ -44,6 +44,7 @@ BEGIN_COLOR_DEPTH_LIST
 	COLOR_DEPTH_8
 	COLOR_DEPTH_15
 	COLOR_DEPTH_16
+	COLOR_DEPTH_32
 END_COLOR_DEPTH_LIST
 
 
@@ -118,6 +119,24 @@ void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 
+void blitscreen_dirty1_vesa_1x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_1x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_1x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3xs_32bpp(struct osd_bitmap *bitmap);
+
 
 /* dirty mode 0 (no osd_mark_dirty calls) */
 void blitscreen_dirty0_vga(struct osd_bitmap *bitmap);
@@ -175,6 +194,24 @@ void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
+
+void blitscreen_dirty0_vesa_1x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_1x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_1x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_1x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_2x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_2xs_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3x_32bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3xs_32bpp(struct osd_bitmap *bitmap);
 
 
 
@@ -313,6 +350,50 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struc
 		},	/* 4 x 3 */
 		{	{ blitscreen_dirty0_vesa_4x_3x_16bpp_palettized,  blitscreen_dirty1_vesa_4x_3x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_4x_3xs_16bpp_palettized, blitscreen_dirty1_vesa_4x_3xs_16bpp_palettized }
+		}
+	}
+};
+
+static void (*updaters32[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitmap *bitmap) =
+{			/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_32bpp, blitscreen_dirty1_vesa_1x_1x_32bpp },
+			{ blitscreen_dirty0_vesa_1x_1x_32bpp, blitscreen_dirty1_vesa_1x_1x_32bpp }
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_32bpp,  blitscreen_dirty1_vesa_1x_2x_32bpp },
+			{ blitscreen_dirty0_vesa_1x_2xs_32bpp, blitscreen_dirty1_vesa_1x_2xs_32bpp }
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
+		}
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_32bpp,  blitscreen_dirty1_vesa_2x_1x_32bpp },
+			{ blitscreen_dirty0_vesa_2x_1x_32bpp,  blitscreen_dirty1_vesa_2x_1x_32bpp }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_32bpp,  blitscreen_dirty1_vesa_2x_2x_32bpp },
+			{ blitscreen_dirty0_vesa_2x_2xs_32bpp, blitscreen_dirty1_vesa_2x_2xs_32bpp }
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_32bpp,  blitscreen_dirty1_vesa_2x_3x_32bpp },
+			{ blitscreen_dirty0_vesa_2x_3xs_32bpp, blitscreen_dirty1_vesa_2x_3xs_32bpp }
+		}
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_32bpp, blitscreen_dirty1_vesa_3x_1x_32bpp },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_32bpp, blitscreen_dirty1_vesa_3x_2x_32bpp },
+			{ blitscreen_dirty0_vesa_3x_2xs_32bpp, blitscreen_dirty1_vesa_3x_2xs_32bpp }
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_32bpp, blitscreen_dirty1_vesa_3x_3x_32bpp },
+			{ blitscreen_dirty0_vesa_3x_3xs_32bpp, blitscreen_dirty1_vesa_3x_3xs_32bpp }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_32bpp,  blitscreen_dirty1_vesa_4x_2x_32bpp },
+			{ blitscreen_dirty0_vesa_4x_2xs_32bpp, blitscreen_dirty1_vesa_4x_2xs_32bpp }
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_32bpp,  blitscreen_dirty1_vesa_4x_3x_32bpp },
+			{ blitscreen_dirty0_vesa_4x_3xs_32bpp, blitscreen_dirty1_vesa_4x_3xs_32bpp }
 		}
 	}
 };
@@ -523,23 +604,28 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 	struct osd_bitmap *bitmap;
 
 
+	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
+	{
+		logerror("osd_alloc_bitmap() unknown depth %d\n",depth);
+		return NULL;
+	}
+
 	if ((bitmap = malloc(sizeof(struct osd_bitmap))) != 0)
 	{
 		int i,rowlen,rdwidth;
 		unsigned char *bm;
 
 
-		if (depth != 8 && depth != 16) depth = 8;
-
 		bitmap->depth = depth;
 		bitmap->width = width;
 		bitmap->height = height;
 
 		rdwidth = (width + 7) & ~7;     /* round width to a quadword */
-		if (depth == 16)
-			rowlen = 2 * (rdwidth + 2 * safety) * sizeof(unsigned char);
-		else
-			rowlen =     (rdwidth + 2 * safety) * sizeof(unsigned char);
+		rowlen = (rdwidth + 2 * safety) * sizeof(unsigned char);
+		if (depth == 32)
+			rowlen *= 4;
+		else if (depth == 15 || depth == 16)
+			rowlen *= 2;
 
 		if ((bm = malloc((height + 2 * safety) * rowlen)) == 0)
 		{
@@ -560,7 +646,9 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 
 		for (i = 0;i < height + 2 * safety;i++)
 		{
-			if (depth == 16)
+			if (depth == 32)
+				bitmap->line[i] = &bm[i * rowlen + 4*safety];
+			else if (depth == 15 || depth == 16)
 				bitmap->line[i] = &bm[i * rowlen + 2*safety];
 			else
 				bitmap->line[i] = &bm[i * rowlen + safety];
@@ -657,9 +745,9 @@ static void select_display_mode(int width,int height,int depth,int attributes,in
 	use_vesa = -1;
 
 	/* 16 bit color is supported only by VESA modes */
-	if (depth == 16)
+	if (depth == 16 || depth == 32)
 	{
-		logerror("Game needs 16-bit colors. Using VESA\n");
+		logerror("Game needs %d-bit colors. Using VESA\n",depth);
 		use_tweaked = 0;
 		/* only one 15.75KHz VESA mode, so force that */
 		if (scanrate15KHz == 1)
@@ -1263,8 +1351,10 @@ static int osd_set_display(int width,int height,int depth,int attributes,int ori
 			/* address changes, therefore preventing flickering. */
 			if (bits == 8)
 				triplebuf_page_width = (gfx_width + 0x3ff) & ~0x3ff;
-			else
+			else if (bits == 16)
 				triplebuf_page_width = (gfx_width + 0x1ff) & ~0x1ff;
+			else	/* bits == 32 */
+				triplebuf_page_width = (gfx_width + 0x1ff) & ~0x0ff;
 
 			/* don't ask for a larger screen if triplebuffer not requested - could */
 			/* cause problems in some cases. */
@@ -1540,7 +1630,7 @@ static int osd_set_display(int width,int height,int depth,int attributes,int ori
 
 		rate = ((float)TICKS_PER_SEC)/(b-a);
 
-		logerror("target frame rate = %ffps, video frame rate = %3.2fHz\n",video_fps,rate);
+		logerror("target frame rate = %dfps, video frame rate = %3.2fHz\n",video_fps,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > video_fps * 108 / 100)
@@ -1578,9 +1668,10 @@ Returns 0 on success.
 */
 int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation)
 {
-	logerror("width %d, height %d\n", width,height);
+	logerror("width %d, height %d depth %d\n",width,height,depth);
 
 	video_depth = depth;
+	if (video_depth == 15) video_depth = 16;
 	video_fps = fps;
 	video_attributes = attributes;
 	video_orientation = orientation;
@@ -1614,7 +1705,7 @@ int osd_create_display(int width,int height,int depth,int fps,int attributes,int
 			use_dirty = 0;
 	}
 
-	select_display_mode(width,height,depth,attributes,orientation);
+	select_display_mode(width,height,video_depth,attributes,orientation);
 
 /* find a VESA driver for 15KHz modes just in case we need it later on */
 	if (scanrate15KHz)
@@ -1623,7 +1714,7 @@ int osd_create_display(int width,int height,int depth,int fps,int attributes,int
 		SVGA15KHzdriver = 0;
 
 
-	if (!osd_set_display(width,height,depth,attributes,orientation))
+	if (!osd_set_display(width,height,video_depth,attributes,orientation))
 		return 1;
 
 	/* set visible area to nothing just to initialize it - it will be set by the core */
@@ -1719,13 +1810,184 @@ void osd_debugger_focus(int debugger_has_focus)
 }
 
 
+
+
+static int init_direct_mapped(unsigned int totalcolors,
+		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *debug_palette,UINT32 *debug_pens)
+{
+	if (video_depth == 16)
+	{
+		int i;
+		int r,g,b;
+		unsigned char *pal;
+
+		screen_colors = 32768;
+
+		dirtycolor = malloc(screen_colors * sizeof(int));
+		current_palette = malloc(3 * screen_colors * sizeof(unsigned char));
+		palette_16bit_lookup = malloc(screen_colors * sizeof(palette_16bit_lookup[0]));
+		if (dirtycolor == 0 || current_palette == 0 || palette_16bit_lookup == 0)
+			return 1;
+
+		for (i = 0;i < screen_colors;i++)
+			dirtycolor[i] = 1;
+		dirtypalette = 1;
+
+		pal = current_palette;
+		for (r = 0;r < 32;r++)
+		{
+			for (g = 0;g < 32;g++)
+			{
+				for (b = 0;b < 32;b++)
+				{
+					*(pal++) = (r << 3) | (r >> 2);
+					*(pal++) = (g << 3) | (g >> 2);
+					*(pal++) = (b << 3) | (b >> 2);
+				}
+			}
+		}
+
+#if 0
+		for (i = 0;i < totalcolors;i++)
+		{
+			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
+			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
+			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
+			*pens++ = makecol(r,g,b);
+		}
+#endif
+		pens[0] = 0x7c00;
+		pens[1] = 0x03e0;
+		pens[2] = 0x001f;
+
+		Machine->uifont->colortable[0] = 0x0000;
+		Machine->uifont->colortable[1] = 0x7fff;
+		Machine->uifont->colortable[2] = 0x7fff;
+		Machine->uifont->colortable[3] = 0x0000;
+
+#if 0
+		if (debug_pens)
+		{
+			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			{
+				r = debug_palette[3*i+0];
+				g = debug_palette[3*i+1];
+				b = debug_palette[3*i+2];
+				*debug_pens++ = makecol(r,g,b);
+			}
+		}
+#endif
+		if (debug_pens)
+		{
+			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			{
+				r = debug_palette[3*i+0];
+				g = debug_palette[3*i+1];
+				b = debug_palette[3*i+2];
+				*debug_pens++ = r * pens[0] / 0xff + g * pens[1] / 0xff + b * pens[2] / 0xff;
+			}
+		}
+
+
+		if (use_mmx == -1) /* mmx=auto: can new mmx blitters be applied? */
+		{
+			/* impossible cases follow */
+			if (!cpu_mmx)
+				mmxlfb = 0;
+			else if ((gfx_mode != GFX_VESA2L) && (gfx_mode != GFX_VESA3))
+				mmxlfb = 0;
+			/* not yet implemented cases follow */
+			else if ((xmultiply > 2) || (ymultiply > 2))
+				mmxlfb = 0;
+			else
+				mmxlfb = 1;
+		}
+		else /* use forced mmx= setting from mame.cfg at own risk!!! */
+			mmxlfb = use_mmx;
+
+		update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		update_screen_debugger = updaters16_palettized[0][0][0][0];
+	}
+	else if (video_depth == 32)
+	{
+		int i;
+		int r,g,b;
+
+
+		screen_colors = 2;
+
+		dirtycolor = malloc(screen_colors * sizeof(int));
+		current_palette = malloc(3 * screen_colors * sizeof(unsigned char));
+		if (dirtycolor == 0 || current_palette == 0)
+			return 1;
+
+		for (i = 0;i < screen_colors;i++)
+			dirtycolor[i] = 1;
+		dirtypalette = 1;
+
+		for (i = 0;i < totalcolors;i++)
+		{
+			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
+			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
+			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
+			*pens++ = makecol(r,g,b);
+		}
+
+		Machine->uifont->colortable[0] = makecol(0x00,0x00,0x00);
+		Machine->uifont->colortable[1] = makecol(0xff,0xff,0xff);
+		Machine->uifont->colortable[2] = makecol(0xff,0xff,0xff);
+		Machine->uifont->colortable[3] = makecol(0x00,0x00,0x00);
+
+		if (debug_pens)
+		{
+			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			{
+				r = debug_palette[3*i+0];
+				g = debug_palette[3*i+1];
+				b = debug_palette[3*i+2];
+				*debug_pens++ = makecol(r,g,b);
+			}
+		}
+
+		if (use_mmx == -1) /* mmx=auto: can new mmx blitters be applied? */
+		{
+			/* impossible cases follow */
+			if (!cpu_mmx)
+				mmxlfb = 0;
+			else if ((gfx_mode != GFX_VESA2L) && (gfx_mode != GFX_VESA3))
+				mmxlfb = 0;
+			/* not yet implemented cases follow */
+			else if ((xmultiply > 2) || (ymultiply > 2))
+				mmxlfb = 0;
+			else
+				mmxlfb = 1;
+		}
+		else /* use forced mmx= setting from mame.cfg at own risk!!! */
+			mmxlfb = use_mmx;
+
+/* MMX functions for 32-bit modes are broken */
+mmxlfb = 0;
+
+		update_screen = updaters32[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		update_screen_debugger = updaters32[0][0][0][0];
+	}
+
+	return 0;
+}
+
+
 int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT16 *pens,int modifiable,
-		const UINT8 *debug_palette,UINT16 *debug_pens)
+		const UINT8 *palette,UINT32 *pens,int modifiable,
+		const UINT8 *debug_palette,UINT32 *debug_pens)
 {
 	int i;
 
 	modifiable_palette = modifiable;
+
+	if (video_attributes & VIDEO_RGB_DIRECT)
+		return init_direct_mapped(totalcolors,palette,pens,modifiable,debug_palette,debug_pens);
+
 	screen_colors = totalcolors;
 	if (video_depth != 8)
 		screen_colors += 2;
@@ -1918,6 +2180,7 @@ int osd_allocate_colors(unsigned int totalcolors,
 
 	return 0;
 }
+
 
 
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
@@ -2310,7 +2573,7 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 				}
 			}
 		}
-		else
+		else if (bitmap->depth == 15 || bitmap->depth == 16)
 		{
 			if (dirty_bright)
 			{

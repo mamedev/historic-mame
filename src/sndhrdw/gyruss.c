@@ -78,10 +78,10 @@ WRITE_HANDLER( gyruss_filter1_w )
 WRITE_HANDLER( gyruss_sh_irqtrigger_w )
 {
 	/* writing to this register triggers IRQ on the sound CPU */
-	cpu_cause_interrupt(1,0xff);
+	cpu_cause_interrupt(2,0xff);
 }
 
 WRITE_HANDLER( gyruss_i8039_irq_w )
 {
-	cpu_cause_interrupt(2,I8039_EXT_INT);
+	cpu_cause_interrupt(3,I8039_EXT_INT);
 }

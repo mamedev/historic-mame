@@ -1,7 +1,7 @@
 /***************************************************************************
 
-								-=  Magix  =-
-							 (c) 1995  Yun Sung
+						-=  Magix  & Cannon Ball =-
+							(c) 1995  Yun Sung
 
 				driver by	Luca Elia (eliavit@unina.it)
 
@@ -11,7 +11,7 @@ OSC : 16.000 MHz
 
 Notes:
 
-- Title changes to "Rock" via DSW
+- "Magix" can change title to "Rock" through a DSW
 - In service mode press Service Coin (e.g. '9')
 
 To Do:
@@ -19,17 +19,20 @@ To Do:
 - Better Sound
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
-/* Variables defined in vidhrdw */
-extern unsigned char *magix_videoram_0,*magix_videoram_1;
+/* Variables defined in vidhrdw: */
 
-/* Functions defined in vidhrdw */
+extern unsigned char *magix_videoram_0,*magix_videoram_1;
+extern int magix_layers_ctrl;
+
+/* Functions defined in vidhrdw: */
 
 WRITE_HANDLER( magix_videobank_w );
 
-READ_HANDLER( magix_videoram_r );
+READ_HANDLER ( magix_videoram_r );
 WRITE_HANDLER( magix_videoram_w );
 
 WRITE_HANDLER( magix_flipscreen_w );
@@ -58,16 +61,14 @@ void magix_init_machine( void )
 ***************************************************************************/
 
 
-/***************************************************************************
-									Magix
-***************************************************************************/
-
 WRITE_HANDLER( magix_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	int bank = data & 7;
-	if (bank != data)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	int bank			=	data & 7;		// ROM bank
+	magix_layers_ctrl	=	data & 0x30;	// Layers enable
+
+	if (data & ~0x37)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -93,7 +94,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( magix_writemem )
 	{ 0x0000, 0x0000, MWA_ROM				},	// ROM
-	{ 0x0001, 0x0001, magix_bankswitch_w	},	// ROM Bankswitching
+	{ 0x0001, 0x0001, magix_bankswitch_w	},	// ROM Bank (again?)
 	{ 0x0002, 0xbfff, MWA_ROM				},	// ROM
 	{ 0xc000, 0xdfff, magix_videoram_w		},	// Video RAM (Banked)
 	{ 0xe000, 0xffff, MWA_RAM				},	// RAM
@@ -112,7 +113,7 @@ PORT_END
 
 static PORT_WRITE_START( magix_writeport )
 	{ 0x00, 0x00, magix_videobank_w		},	// Video RAM Bank
-	{ 0x01, 0x01, magix_bankswitch_w	},	// ROM Bankswitching (again?)
+	{ 0x01, 0x01, magix_bankswitch_w	},	// ROM Bank + Layers Enable
 	{ 0x02, 0x02, soundlatch_w			},	// To Sound CPU
 	{ 0x06, 0x06, magix_flipscreen_w	},	// Flip Screen
 	{ 0x07, 0x07, IOWP_NOP				},	// ? (end of IRQ, random value)
@@ -132,10 +133,6 @@ PORT_END
 ***************************************************************************/
 
 
-/***************************************************************************
-									Magix
-***************************************************************************/
-
 static int adpcm;
 
 WRITE_HANDLER( magix_sound_bankswitch_w )
@@ -148,7 +145,7 @@ WRITE_HANDLER( magix_sound_bankswitch_w )
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
 
-	cpu_setbank(3, RAM);
+	cpu_setbank(2, RAM);
 
 	MSM5205_reset_w(0,data & 0x20);
 }
@@ -163,7 +160,7 @@ WRITE_HANDLER( magix_adpcm_w )
 
 static MEMORY_READ_START( magix_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM			},	// ROM
-	{ 0x8000, 0xbfff, MRA_BANK3			},	// Banked ROM
+	{ 0x8000, 0xbfff, MRA_BANK2			},	// Banked ROM
 	{ 0xf000, 0xf7ff, MRA_RAM			},	// RAM
 	{ 0xf800, 0xf800, soundlatch_r		},	// From Main CPU
 MEMORY_END
@@ -171,7 +168,7 @@ MEMORY_END
 static MEMORY_WRITE_START( magix_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM					},	// ROM
 	{ 0x8000, 0xbfff, MWA_ROM					},	// Banked ROM
-	{ 0xe000, 0xe000, magix_sound_bankswitch_w	},	// ROM Bankswitching
+	{ 0xe000, 0xe000, magix_sound_bankswitch_w	},	// ROM Bank
 	{ 0xe400, 0xe400, magix_adpcm_w				},
 	{ 0xec00, 0xec00, YM3812_control_port_0_w	},	// YM3812
 	{ 0xec01, 0xec01, YM3812_write_port_0_w		},
@@ -188,6 +185,10 @@ MEMORY_END
 								Input Ports
 
 
+***************************************************************************/
+
+/***************************************************************************
+									Magix
 ***************************************************************************/
 
 INPUT_PORTS_START( magix )
@@ -229,7 +230,6 @@ INPUT_PORTS_START( magix )
 	PORT_DIPSETTING(    0x06, "Normal" )
 	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPSETTING(    0x02, "Hardest" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -275,6 +275,93 @@ INPUT_PORTS_START( magix )
 INPUT_PORTS_END
 
 
+/***************************************************************************
+								Cannon Ball
+***************************************************************************/
+
+INPUT_PORTS_START( cannball )
+
+	PORT_START	// IN0 - Coins
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN1    )
+
+	PORT_START	// IN1 - Player 1
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	// IN2 - Player 2
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	// IN3 - DSW 1
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x06, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x02, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+
+	PORT_START	// IN4 - DSW 2
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
+
 
 
 /***************************************************************************
@@ -286,52 +373,36 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles in 2 roms */
-static struct GfxLayout layout_8x8x4_split =
+static struct GfxLayout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,2),
 	4,
-	{0,1,2,3},
-	{RGN_FRAC(1,2)+1*4,RGN_FRAC(1,2)+0*4,1*4,0*4, RGN_FRAC(1,2)+3*4,RGN_FRAC(1,2)+2*4,3*4,2*4},
-	{0*16,1*16,2*16,3*16,4*16,5*16,6*16,7*16},
-	4*8*4
+	{ STEP4(0,1) },
+	{ RGN_FRAC(1,2)+1*4,RGN_FRAC(1,2)+0*4,1*4,0*4, RGN_FRAC(1,2)+3*4,RGN_FRAC(1,2)+2*4,3*4,2*4},
+	{ STEP8(0,16) },
+	8*8*4/2
 };
 
-
-
-/*	Tiles in the background are 6x8 (!). They are 8 planes deep and are
-	oddily spread between 3 ROMs. We just stretch each tile to an 8x8 one */
-
-static struct GfxLayout layout_6x8x8_stretch =
+/* 8x8x8 tiles in 4 roms */
+static struct GfxLayout layout_8x8x8 =
 {
 	8,8,
-	RGN_FRAC(1,3),
+	RGN_FRAC(1,4),
 	8,
-	{0,1,2,3,4,5,6,7},
-	{	RGN_FRAC(2,3) + 0*8, RGN_FRAC(1,3) + 0*8, RGN_FRAC(0,3) + 0*8,
-		RGN_FRAC(0,3) + 0*8,	/* Repeated pixel to pad to 8x8 */
-
-		RGN_FRAC(2,3) + 1*8, RGN_FRAC(1,3) + 1*8, RGN_FRAC(0,3) + 1*8,
-		RGN_FRAC(0,3) + 1*8,	/* Repeated pixel to pad to 8x8 */
-	},
-	{0*32,0*32+2*8, 1*32,1*32+2*8, 2*32,2*32+2*8, 3*32,3*32+2*8},
-	4*4*8
+	{ STEP8(0,1) },
+	{ RGN_FRAC(0,4) + 0*8, RGN_FRAC(1,4) + 0*8, RGN_FRAC(2,4) + 0*8, RGN_FRAC(3,4) + 0*8,
+	  RGN_FRAC(0,4) + 1*8, RGN_FRAC(1,4) + 1*8, RGN_FRAC(2,4) + 1*8, RGN_FRAC(3,4) + 1*8 },
+	{ STEP8(0,16) },
+	8*8*8/4
 };
-
-
-/***************************************************************************
-									Magix
-***************************************************************************/
 
 static struct GfxDecodeInfo magix_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_6x8x8_stretch, 0, 0x08 }, // [0] Tiles (Background)
-	{ REGION_GFX2, 0, &layout_8x8x4_split,	 0,	0x40 }, // [1] Tiles (Text)
+	{ REGION_GFX1, 0, &layout_8x8x8, 0, 0x08 }, // [0] Tiles (Background)
+	{ REGION_GFX2, 0, &layout_8x8x4, 0,	0x40 }, // [1] Tiles (Text)
 	{ -1 }
 };
-
-
-
 
 
 
@@ -365,7 +436,7 @@ static struct YM3812interface magix_ym3812_interface =
 	1,
 	4000000,	/* ? */
 	{ 50 },
-	{ 0  },
+	{  0 },
 };
 
 struct MSM5205interface magix_msm5205_interface =
@@ -410,16 +481,10 @@ static const struct MachineDriver machine_driver_magix =
 	magix_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&magix_ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&magix_msm5205_interface
-		}
+		{	SOUND_YM3812,	&magix_ym3812_interface		},
+		{	SOUND_MSM5205,	&magix_msm5205_interface	}
 	}
 };
 
@@ -442,6 +507,11 @@ static const struct MachineDriver machine_driver_magix =
 
 									Magix
 
+Yun Sung, 1995.
+CPU : Z80B
+SND : Z80A + YM3812 + Oki M5205
+OSC : 16.000
+
 ***************************************************************************/
 
 ROM_START( magix )
@@ -456,14 +526,55 @@ ROM_START( magix )
 	ROM_LOAD( "magix.08", 0x00000, 0x0c000, 0x6fd60be9 )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 
-	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
-	ROM_LOAD( "magix.01",  0x000000, 0x80000, 0x4590d782 )
-	ROM_LOAD( "magix.02",  0x080000, 0x80000, 0x09efb8e5 )
-	ROM_LOAD( "magix.03",  0x100000, 0x80000, 0xc8cb0373 )
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
+	ROM_LOAD( "magix.04",  0x000000, 0x80000, 0x0a100d2b )
+	ROM_LOAD( "magix.03",  0x080000, 0x80000, 0xc8cb0373 )
+	ROM_LOAD( "magix.02",  0x100000, 0x80000, 0x09efb8e5 )
+	ROM_LOAD( "magix.01",  0x180000, 0x80000, 0x4590d782 )
 
 	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
 	ROM_LOAD( "magix.05", 0x00000, 0x20000, 0x862d378c )	// only first $8000 bytes != 0
 	ROM_LOAD( "magix.06", 0x20000, 0x20000, 0x8b2ab901 )	// only first $8000 bytes != 0
+
+ROM_END
+
+
+/***************************************************************************
+
+								Cannon Ball
+
+01, 02, 03, 04  are 27c020
+05, 06, 07, 08  are 27c010
+2 pals used
+
+Z80b PROGRAM, Z80b SOUND
+
+Cy7c384A
+16mhz
+
+***************************************************************************/
+
+ROM_START( cannball )
+
+	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_LOAD( "cannball.07", 0x00000, 0x0c000, 0x17db56b4 )
+	ROM_CONTINUE(            0x10000, 0x14000             )
+	/* $2000 bytes for bank 0 of video ram (text) */
+	/* $2000 bytes for bank 1 of video ram (background) */
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
+	ROM_LOAD( "cannball.08", 0x00000, 0x0c000, 0x11403875 )
+	ROM_CONTINUE(            0x10000, 0x14000             )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
+	ROM_LOAD( "cannball.01",  0x000000, 0x40000, 0x2d7785e4 )
+	ROM_LOAD( "cannball.02",  0x040000, 0x40000, 0x24df387e )
+	ROM_LOAD( "cannball.03",  0x080000, 0x40000, 0x4d62f192 )
+	ROM_LOAD( "cannball.04",  0x0c0000, 0x40000, 0x37cf8b12 )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
+	ROM_LOAD( "cannball.05", 0x00000, 0x20000, 0x87c1f1fa )
+	ROM_LOAD( "cannball.06", 0x20000, 0x20000, 0xe722bee8 )
 
 ROM_END
 
@@ -476,5 +587,5 @@ ROM_END
 
 ***************************************************************************/
 
-// Title changes to "Rock" via DSW
-GAMEX( 1995, magix, 0, magix, magix, 0, ROT0_16BIT, "Yun Sung", "Magix", GAME_IMPERFECT_SOUND )
+GAMEX( 1995, cannball, 0, magix, cannball, 0, ROT0_16BIT, "Yun Sung / Soft Vision", "Cannon Ball",  GAME_IMPERFECT_SOUND )
+GAMEX( 1995, magix,    0, magix, magix,    0, ROT0_16BIT, "Yun Sung",               "Magix / Rock", GAME_IMPERFECT_SOUND ) // Title: DSW

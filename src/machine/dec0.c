@@ -500,8 +500,8 @@ static void hbarrel_custom_memory(void)
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
-unsigned char *RAM = memory_region(REGION_CPU1);
-WRITE_WORD (&RAM[0xb3e],0x8008);
+data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+rom[0xb3e/2] = 0x8008;
 }
 }
 
@@ -510,8 +510,8 @@ static void hbarrelu_custom_memory(void)
 	GAME=1;
 
 { /* Remove this patch once processing time of i8751 is simulated */
-unsigned char *RAM = memory_region(REGION_CPU1);
-WRITE_WORD (&RAM[0xb68],0x8008);
+data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+rom[0xb68/2] = 0x8008;
 }
 }
 

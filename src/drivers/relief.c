@@ -162,12 +162,6 @@ static WRITE16_HANDLER( adpcm_w )
  *
  *************************************/
 
-static READ16_HANDLER( ym2413_r )
-{
-	return YM2413_status_port_0_r(0) | 0xff00;
-}
-
-
 static WRITE16_HANDLER( ym2413_w )
 {
 	if (ACCESSING_LSB)
@@ -189,7 +183,6 @@ static WRITE16_HANDLER( ym2413_w )
 
 static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x140000, 0x140003, ym2413_r },
 	{ 0x140010, 0x140011, adpcm_r },
 	{ 0x180000, 0x180fff, atarigen_eeprom_upper_r },
 	{ 0x260000, 0x260001, input_port_0_word_r },
@@ -337,8 +330,7 @@ static struct YM2413interface ym2413_interface =
 {
 	1,
 	ATARI_CLOCK_14MHz/4,
-	{ 75 },
-	{ 0 }
+	{ 75 }
 };
 
 

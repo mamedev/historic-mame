@@ -445,7 +445,7 @@ static const struct MachineDriver machine_driver_baraduke =
 			interrupt,1
 		}
 	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,		/* we need heavy synch */
 	0,
 
@@ -488,7 +488,7 @@ static const struct MachineDriver machine_driver_metrocrs =
 			interrupt,1
 		}
 	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,		/* we need heavy synch */
 	0,
 

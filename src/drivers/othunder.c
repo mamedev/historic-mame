@@ -34,12 +34,6 @@ Commands are written to the Z80 by the 68000 (the same as Taito F2 games).
 TODO
 ====
 
-We need to have artificial P1/2 targets [I put in a fake extra dip
-to enable/disable]. Problem is that the game does not update screen
-coords for your aim except (i) when you shoot (ii) when you have
-the power up which shows you where you are aiming. So they aren't
-any good to us: we will have to work with the raw analogue inputs?
-
 Light gun interrupt timing is arbitrary.
 
 TC0100SCN problem: text vs. bg0/1 offsets seem wrong: first level
@@ -48,31 +42,6 @@ them 4 further left. This may be a flaw in assumptions made in
 vidhrdw\taitoic.c, or related to game being ORIENTATION_FLIP_X ?
 
 DIPs
-
-
-Aim coordinate documentation
-----------------------------
-
-RAM:	$82732/4 P1x/y aim sprite coords
-	$82736/8 P2x/y aim sprite coords
-
-$1c58a: calls $1c626 (if p2 exists?) and $1c6f4 (if p1 exists?).
-
-PLAYER 1
-$1c6f4 code at $1c74e calls $1436
-		$1c754 subtracts 32 from P1x and P1y aim sprite coords
-
-$1436 calls $a932 which does P1 raw lightgun coord conversion,
-	based on calibration info from eerom [eerom data $8a000 on].
-	Raw x/y coords in $82848/a.
-
-PLAYER 2
-$1c626 code at $1c680 calls $15de
-		$1c686 subtracts 32 from P2x and P2y aim sprite coords
-
-$15de calls $aa48 which does P2 raw lightgun coord conversion,
-	based on calibration info from eerom [eerom data $8a000 on].
-	Raw x/y coords in $8284c/e.
 
 
 ***************************************************************************/
@@ -91,7 +60,7 @@ void othunder_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 static data16_t eep_latch = 0;
 
-//static data16_t *othunder_ram;
+extern data16_t *othunder_ram;
 
 
 /***********************************************************
@@ -297,7 +266,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( othunder_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x080000, 0x08ffff, MWA16_RAM },
+	{ 0x080000, 0x08ffff, MWA16_RAM, &othunder_ram },
 	{ 0x090000, 0x090001, MWA16_NOP },   /* watchdog ?? (alternates 1 and 0xffff) */
 	{ 0x090006, 0x090007, eeprom_w },
 	{ 0x090008, 0x090009, MWA16_NOP },   /* coin ctr, lockout ? */

@@ -18,6 +18,7 @@ TODO:
 extern unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
 WRITE_HANDLER( fastlane_vram1_w );
 WRITE_HANDLER( fastlane_vram2_w );
+void fastlane_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int fastlane_vh_start(void);
 void fastlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -239,7 +240,7 @@ static struct GfxLayout gfxlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &gfxlayout, 0, 64 },
+	{ REGION_GFX1, 0, &gfxlayout, 0, 64*16 },
 	{ -1 } /* end of array */
 };
 
@@ -288,8 +289,8 @@ static const struct MachineDriver machine_driver_fastlane =
 	/* video hardware */
 	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024, 1024,
-	0,
+	1024, 1024*16,
+	fastlane_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -316,23 +317,20 @@ static const struct MachineDriver machine_driver_fastlane =
 
 ROM_START( fastlane )
 	ROM_REGION( 0x21000, REGION_CPU1, 0 ) /* code + banked roms */
-	ROM_LOAD( "fl_e05.rom", 0x08000, 0x08000, 0xe1004489 )  /* fixed ROM */
-	ROM_LOAD( "fl_e04.rom", 0x10000, 0x10000, 0xff4d6029 )  /* banked ROM */
+	ROM_LOAD( "752_m02.9h",  0x08000, 0x08000, 0xe1004489 )  /* fixed ROM */
+	ROM_LOAD( "752_e01.10h", 0x10000, 0x10000, 0xff4d6029 )  /* banked ROM */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fl_m02.rom", 0x00000, 0x80000, 0xa126e82d )  /* tiles + sprites */
+	ROM_LOAD( "752e04.2i",   0x00000, 0x80000, 0xa126e82d )  /* tiles + sprites */
 
-	ROM_REGION( 0x0400, REGION_PROMS, 0 )
-	ROM_LOAD( "prom1",      0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom2",      0x0100, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom3",      0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "prom4",      0x0300, 0x0100, 0x00000000 )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "752e03.6h",   0x0000, 0x0100, 0x44300aeb )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 007232 data */
-	ROM_LOAD( "fl_m01.rom", 0x00000, 0x20000, 0x85d691ed ) /* chip 1 */
+	ROM_LOAD( "752e06.4c",   0x00000, 0x20000, 0x85d691ed ) /* chip 1 */
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 007232 data */
-	ROM_LOAD( "fl_m03.rom", 0x00000, 0x80000, 0x119e9cbf ) /* chip 2 */
+	ROM_LOAD( "752e05.12b",  0x00000, 0x80000, 0x119e9cbf ) /* chip 2 */
 ROM_END
 
 

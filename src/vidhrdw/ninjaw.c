@@ -33,8 +33,10 @@ static int number_of_TC0100SCN(void)
 		{
 			if (!IS_MEMPORT_MARKER(mwa))
 			{
-				if (mwa->handler == TC0100SCN_word_0_w)
-					has_chip[0] = 1;
+				if ((mwa->handler == TC0100SCN_word_0_w) ||
+					(mwa->handler == TC0100SCN_dual_screen_w) ||
+					(mwa->handler == TC0100SCN_triple_screen_w))
+				has_chip[0] = 1;
 			}
 			mwa++;
 		}
@@ -69,6 +71,7 @@ static int number_of_TC0100SCN(void)
 	}
 
 	/* Catch illegal configurations */
+	/* TODO: we should give an appropriate warning */
 
 	if (!has_chip[0] && (has_chip[1] || has_chip[2]))
 		return -1;
@@ -177,6 +180,9 @@ int ninjaw_core_vh_start (void)
 		if (TC0110PCR_2_vh_start())
 			return 1;
 
+	/* Ensure palette from correct TC0110PCR used for each screen */
+	TC0100SCN_set_chip_colbanks(0x0,0x100,0x200);
+
 	return 0;
 }
 
@@ -211,6 +217,7 @@ void ninjaw_update_palette (void)
 {
 	int i,j;
 	int offs,data,tilenum,color;
+	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	unsigned short palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
@@ -222,6 +229,7 @@ void ninjaw_update_palette (void)
 		data = spriteram16[offs+3];
 		color = (data & 0x7f00) >> 8;
 
+		tilenum &= tile_mask;
 		if (tilenum)
 		{
 			palette_map[color] |= Machine->gfx[0]->pen_usage[tilenum];
@@ -369,9 +377,17 @@ void ninjaw_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+
+	/* chip 0 does tilemaps on the left, chip 1 center, chip 2 the right */
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);	/* left */
+	TC0100SCN_tilemap_draw(bitmap,1,layer[0],0,1);	/* center */
+	TC0100SCN_tilemap_draw(bitmap,2,layer[0],0,1);	/* right */
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,1,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,2,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,1,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,2,layer[2],0,4);
 
 	/* Sprites can be under/over the layer below text layer */
 	{

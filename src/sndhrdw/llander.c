@@ -17,15 +17,15 @@
 #define LLANDER_EXPLOD_NODE	NODE_53
 
 /***************************************************************************
-  Lander has 4 sound sources: 3khz, 6khz, thrust, explosion
+  Lander has 4 sound sources: 3kHz, 6kHz, thrust, explosion
 
   As the filtering removes a lot of the signal amplitute on thrust and
   explosion paths the gain is partitioned unequally:
 
-  3khz (tone)             Gain 1
-  6khz (tone)             Gain 1
-  thrust (12khz noise)    Gain 2
-  explosion (12khz noise) Gain 4
+  3kHz (tone)             Gain 1
+  6kHz (tone)             Gain 1
+  thrust (12kHz noise)    Gain 2
+  explosion (12kHz noise) Gain 4
 
 This is very simply implemented at 2 sinewave sources of fixed amplitude
 and two white noise sources one of fixed amplitude and one of variable

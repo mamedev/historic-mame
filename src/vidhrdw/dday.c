@@ -91,7 +91,7 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 	if (gfx->colortable)	/* remap colors */
 	{
-		const unsigned short *paldata;	/* ASG 980209 */
+		const UINT32 *paldata;	/* ASG 980209 */
 
 		paldata = &gfx->colortable[gfx->color_granularity * color];
 

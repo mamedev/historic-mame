@@ -120,7 +120,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 						7--- ----		0
 						-6-- ----		Sprite Bank
-						--5- ----		1 (0 only in Blandia & MSGundam!)
+						--5- ----		0 = Sprite Buffering (blandia,msgundam,qzkklogy)
 						---4 ----		0
 						---- 3210		Columns To Draw (1 is the special value for 16)
 
@@ -294,31 +294,19 @@ int seta_vh_start_2_layers(void)
 	   at any given time */
 
 	/* layer 0 */
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
 
 	/* layer 1 */
-	tilemap_2 = tilemap_create(	get_tile_info_2,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
-	tilemap_3 = tilemap_create(	get_tile_info_3,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
 	if (tilemap_0 && tilemap_1 && tilemap_2 && tilemap_3)
 	{
@@ -363,17 +351,11 @@ int seta_vh_start_1_layer(void)
 	   at any given time */
 
 	/* layer 0 */
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16,16,
-								DIM_NX,DIM_NY );
+	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, DIM_NX,DIM_NY );
 
 
 	/* NO layer 1 */
@@ -496,7 +478,8 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 	int flip	=	ctrl & 0x40;
 	int numcol	=	ctrl2 & 0x000f;
 
-	data16_t *src = spriteram16_2 + ((ctrl2 & 0x40) ? 0x2000/2 : 0);
+	/* Sprites Banking and/or Sprites Buffering */
+	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
 	int upper	=	( spriteram16[ 0x604/2 ] & 0xFF ) +
 					( spriteram16[ 0x606/2 ] & 0xFF ) * 256;
@@ -599,7 +582,9 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 	int ctrl2	=	spriteram16[ 0x602/2 ];
 
 	int flip	=	ctrl & 0x40;
-	data16_t *src = spriteram16_2 + ((ctrl2 & 0x40) ? 0x2000/2 : 0);
+
+	/* Sprites Banking and/or Sprites Buffering */
+	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
 //	int max_y	=	Machine->visible_area.max_y+1;
 	int max_y	=	Machine->drv->screen_height;
@@ -630,7 +615,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 		if (flip)
 		{
 //			y = max_y - y;
-			y = max_y - y 
+			y = max_y - y
 				+(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
 			flipx = !flipx;
 			flipy = !flipy;
@@ -685,7 +670,8 @@ void seta_mark_sprite_color(void)
 	int flip	=	ctrl & 0x40;
 	int numcol	=	ctrl2 & 0x000f;
 
-	data16_t *src = spriteram16_2 + ((ctrl2 & 0x40) ? 0x2000/2 : 0);
+	/* Sprites Banking and/or Sprites Buffering */
+	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
 	/* Number of columns to draw - the value 1 seems special, meaning:
 	   draw every column */
@@ -724,7 +710,7 @@ void seta_mark_sprite_color(void)
 		if (flip)
 		{
 //			y = max_y - y;
-			y = max_y - y 
+			y = max_y - y
 				+(Machine->drv->screen_height-(Machine->visible_area.max_y+1));
 		}
 
@@ -745,7 +731,9 @@ void seta_mark_sprite_color(void)
 
 /***************************************************************************
 
+
 								Screen Drawing
+
 
 ***************************************************************************/
 

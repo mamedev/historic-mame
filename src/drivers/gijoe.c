@@ -323,7 +323,9 @@ static struct K054539interface k054539_interface =
 {
 	1,			/* 1 chip */
 	48000,
-	REGION_SOUND1,
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ 0 },
 	{ sound_nmi }
 };
 

@@ -5,6 +5,7 @@
 #include "mamedbg.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "palette.h"
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -464,11 +465,35 @@ int run_game(int game)
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
-	if (options.color_depth == 16 ||
-			(options.color_depth != 8 && (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)))
-		Machine->color_depth = 16;
+	if (!options.color_depth)
+	{
+		if (drv->video_attributes & VIDEO_RGB_DIRECT)
+		{
+			if (drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
+				Machine->color_depth = 32;
+			else
+				Machine->color_depth = 15;
+		}
+		else if (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)
+			Machine->color_depth = 16;
+		else
+			Machine->color_depth = 8;
+	}
 	else
-		Machine->color_depth = 8;
+		Machine->color_depth = options.color_depth;
+
+	if (Machine->color_depth == 15 || Machine->color_depth == 32)
+	{
+		if (!(drv->video_attributes & VIDEO_RGB_DIRECT))
+			Machine->color_depth = 16;
+		else
+		{
+			alpha_active = 1;
+			alpha_init();
+		}
+	}
+	else
+		alpha_active = 0;
 
 	if (options.vector_width == 0) options.vector_width = 640;
 	if (options.vector_height == 0) options.vector_height = 480;
@@ -773,7 +798,7 @@ static void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *heigh
 static int vh_open(void)
 {
 	int i;
-	int bmwidth,bmheight,viswidth,visheight;
+	int bmwidth,bmheight,viswidth,visheight,attr;
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
@@ -866,9 +891,14 @@ static int vh_open(void)
 		temp = viswidth; viswidth = visheight; visheight = temp;
 	}
 
+	/* take out the hicolor flag if it's not being used */
+	attr = drv->video_attributes;
+	if (Machine->color_depth != 15 && Machine->color_depth != 32)
+		attr &= ~VIDEO_RGB_DIRECT;
+
 	/* create the display bitmap, and allocate the palette */
 	if (osd_create_display(viswidth,visheight,Machine->color_depth,
-			drv->frames_per_second,drv->video_attributes,Machine->orientation))
+			drv->frames_per_second,attr,Machine->orientation))
 	{
 		vh_close();
 		return 1;
@@ -1016,6 +1046,7 @@ void draw_screen(void)
 		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap,bitmap_dirty);
 
 	bitmap_dirty = 0;
+	palette_post_screen_update_cb();
 }
 
 void schedule_full_refresh(void)

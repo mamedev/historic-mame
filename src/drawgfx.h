@@ -45,7 +45,7 @@ struct GfxElement
 	unsigned int total_elements;	/* total number of characters/sprites */
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
-	unsigned short *colortable;	/* map color codes to screen pens */
+	UINT32 *colortable;	/* map color codes to screen pens */
 	int total_colors;
 	unsigned int *pen_usage;	/* an array of total_elements ints. */
 								/* It is a table of the pens each character uses */
@@ -74,6 +74,13 @@ struct rectangle
 	int min_y,max_y;
 };
 
+struct _alpha_cache {
+	const UINT8 *alphas;
+	const UINT8 *alphad;
+	UINT8 alpha[0x101][0x100];
+};
+
+extern struct _alpha_cache alpha_cache;
 
 enum
 {
@@ -90,6 +97,8 @@ enum
 	TRANSPARENCY_PEN_TABLE_RAW,	/* special pen remapping modes (see DRAWMODE_xxx below) with no remapping */
 	TRANSPARENCY_BLEND,			/* blend two bitmaps, shifting the source and ORing to the dest with remapping */
 	TRANSPARENCY_BLEND_RAW,		/* blend two bitmaps, shifting the source and ORing to the dest with no remapping */
+	TRANSPARENCY_ALPHAONE,		/* single pen transparency, single pen alpha */
+	TRANSPARENCY_ALPHA,			/* single pen transparency, other pens alpha */
 
 	TRANSPARENCY_MODES			/* total number of modes; must be last */
 };
@@ -104,18 +113,18 @@ enum
 };
 
 
-typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);
+typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,UINT32 pen);
 typedef int  (*read_pixel_proc)(struct osd_bitmap *bitmap,int x,int y);
-typedef void (*plot_box_proc)(struct osd_bitmap *bitmap,int x,int y,int width,int height,int pen);
+typedef void (*plot_box_proc)(struct osd_bitmap *bitmap,int x,int y,int width,int height,UINT32 pen);
 typedef void (*mark_dirty_proc)(int sx,int sy,int ex,int ey);
 
-/* pointers to pixel functions.  They're set based on orientation, depthness and weather
+
+/* pointers to pixel functions.  They're set based on orientation, depthness and whether
    dirty rectangle handling is enabled */
 extern plot_pixel_proc plot_pixel;
 extern read_pixel_proc read_pixel;
 extern plot_box_proc plot_box;
 extern mark_dirty_proc mark_dirty;
-
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
@@ -142,10 +151,39 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT16 *pens,int transparent_pen);
-void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT16 *pens,int transparent_pen);
-void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT16 *pens,int transparent_pen,UINT32 orient,int pri);
-void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT16 *pens,int transparent_pen,UINT32 orient,int pri);
+void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT32 *pens,int transparent_pen);
+void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT32 *pens,int transparent_pen);
+void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT32 *pens,int transparent_pen,UINT32 orient,int pri);
+
+
+/* Alpha blending functions */
+extern int alpha_active;
+void alpha_init(void);
+INLINE void alpha_set_level(int level) {
+	if(level == 0)
+		level = -1;
+	alpha_cache.alphas = alpha_cache.alpha[level+1];
+	alpha_cache.alphad = alpha_cache.alpha[255-level];
+}
+
+INLINE UINT32 alpha_blend16( UINT32 d, UINT32 s )
+{
+	const UINT8 *alphas = alpha_cache.alphas;
+	const UINT8 *alphad = alpha_cache.alphad;
+	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
+		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
+}
+
+
+INLINE UINT32 alpha_blend32( UINT32 d, UINT32 s )
+{
+	const UINT8 *alphas = alpha_cache.alphas;
+	const UINT8 *alphad = alpha_cache.alphad;
+	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
+		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
+}
+
 
 /*
   Copy a bitmap applying rotation, zooming, and arbitrary distortion.
@@ -192,6 +230,8 @@ void mdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
+
+void draw_crosshair(struct osd_bitmap *bitmap,int x,int y,const struct rectangle *clip);
 
 #ifdef __cplusplus
 }

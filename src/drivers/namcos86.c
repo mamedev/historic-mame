@@ -1116,26 +1116,22 @@ INPUT_PORTS_END
 
 /*******************************************************************/
 
-#define TILELAYOUT(NUM) static struct GfxLayout tilelayout_##NUM =  \
-{                                                                   \
-	8,8,	/* 8*8 characters */                                    \
-	NUM,	/* NUM characters */                                    \
-	3,	/* 3 bits per pixel */                                      \
-	{ 2*NUM*8*8, NUM*8*8, 0 },                                      \
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },                                     \
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },                     \
-	8*8	/* every char takes 8 consecutive bytes */                  \
-}
-
-TILELAYOUT(1024);
-TILELAYOUT(2048);
-TILELAYOUT(4096);
+static struct GfxLayout tilelayout =
+{
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
 
 #define SPRITELAYOUT(NUM) static struct GfxLayout spritelayout_##NUM =         \
 {																			   \
 	16,16,	/* 16*16 sprites */												   \
 	NUM,	/* NUM sprites */												   \
-	4,	/* 4 bitss per pixel */												   \
+	4,	/* 4 bits per pixel */												   \
 	{ 0, 1, 2, 3 },															   \
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,								   \
 			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },					   \
@@ -1149,11 +1145,11 @@ SPRITELAYOUT(512);
 SPRITELAYOUT(1024);
 
 
-#define GFXDECODE(CHAR1,CHAR2,SPRITE)										\
-static struct GfxDecodeInfo gfxdecodeinfo_##CHAR1##_##CHAR2##_##SPRITE[] =	\
+#define GFXDECODE(SPRITE)													\
+static struct GfxDecodeInfo gfxdecodeinfo_##SPRITE[] =						\
 {																			\
-	{ REGION_GFX1, 0x00000,      &tilelayout_##CHAR1,    2048*0, 256 },		\
-	{ REGION_GFX2, 0x00000,      &tilelayout_##CHAR2,    2048*0, 256 },		\
+	{ REGION_GFX1, 0x00000,      &tilelayout,            2048*0, 256 },		\
+	{ REGION_GFX2, 0x00000,      &tilelayout,            2048*0, 256 },		\
 	{ REGION_GFX3, 0*128*SPRITE, &spritelayout_##SPRITE, 2048*1, 128 },		\
 	{ REGION_GFX3, 1*128*SPRITE, &spritelayout_##SPRITE, 2048*1, 128 },		\
 	{ REGION_GFX3, 2*128*SPRITE, &spritelayout_##SPRITE, 2048*1, 128 },		\
@@ -1165,11 +1161,9 @@ static struct GfxDecodeInfo gfxdecodeinfo_##CHAR1##_##CHAR2##_##SPRITE[] =	\
 	{ -1 }																	\
 };
 
-GFXDECODE(1024,1024, 256)
-GFXDECODE(2048,2048, 256)
-GFXDECODE(2048,2048, 512)
-GFXDECODE(4096,2048, 512)
-GFXDECODE(4096,2048,1024)
+GFXDECODE( 256)
+GFXDECODE( 512)
+GFXDECODE(1024)
 
 /*******************************************************************/
 
@@ -1239,7 +1233,7 @@ static const struct MachineDriver machine_driver_##NAME =								\
 			interrupt, 1	/* ??? */											\
 		}																		\
 	},																			\
-	60, DEFAULT_60HZ_VBLANK_DURATION,											\
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,									\
 	100, /* cpu slices */														\
 	namco86_init_machine, /* init machine */									\
 																				\
@@ -1278,12 +1272,12 @@ static const struct MachineDriver machine_driver_##NAME =								\
 };
 
 
-MACHINE_DRIVER( hopmappy, 1024_1024_256 )
-MACHINE_DRIVER( skykiddx, 2048_2048_256 )
-MACHINE_DRIVER( roishtar, 1024_1024_256 )
-MACHINE_DRIVER( genpeitd, 4096_2048_1024 )
-MACHINE_DRIVER( rthunder, 4096_2048_512 )
-MACHINE_DRIVER( wndrmomo, 2048_2048_512 )
+MACHINE_DRIVER( hopmappy, 256 )
+MACHINE_DRIVER( skykiddx, 256 )
+MACHINE_DRIVER( roishtar, 256 )
+MACHINE_DRIVER( genpeitd, 1024 )
+MACHINE_DRIVER( rthunder, 512 )
+MACHINE_DRIVER( wndrmomo, 512 )
 
 
 /***************************************************************************
@@ -1305,11 +1299,11 @@ ROM_START( hopmappy )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm6",         0x00000, 0x04000, 0xfd0e8887 )	/* plane 1,2 */
-	/* no plane 3 */
+	ROM_FILL(                0x04000, 0x02000, 0 )			/* no plane 3 */
 
 	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm5",         0x00000, 0x04000, 0x9c4f31ae )	/* plane 1,2 */
-	/* no plane 3 */
+	ROM_FILL(                0x04000, 0x02000, 0 )			/* no plane 3 */
 
 	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm4",         0x00000, 0x8000, 0x78719c52 )

@@ -712,7 +712,7 @@ The factors are in the range 0 (no shrinking) - 3F (half size).
 
 static void get_sprite_info(void)
 {
-	const unsigned short *base_pal	= Machine->remapped_colortable;
+	const UINT32         *base_pal	= Machine->remapped_colortable;
 	const unsigned char  *base_gfx	= memory_region(REGION_GFX1);
 
 	const int gfx_max = memory_region_length(REGION_GFX1);
@@ -795,9 +795,10 @@ static void get_sprite_info(void)
 	* SHIFT + RCTRL to go back to the start of the gfx
 
 */
-void browser(struct osd_bitmap *bitmap)
+#ifdef MAME_DEBUG
+static void browser(struct osd_bitmap *bitmap)
 {
-	const unsigned short *base_pal	=	Machine->gfx[0]->colortable + 0;
+	const UINT32         *base_pal	=	Machine->gfx[0]->colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(REGION_GFX1);
 
 	const int gfx_max				=	memory_region_length(REGION_GFX1);
@@ -850,7 +851,7 @@ void browser(struct osd_bitmap *bitmap)
 	sprintf(buf,"W:%02X GFX/8: %X",w,gfx / 8);
 	usrintf_showmessage(buf);
 }
-
+#endif
 
 
 

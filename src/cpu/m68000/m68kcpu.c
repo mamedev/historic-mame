@@ -5,19 +5,19 @@
 #if 0
 static const char* copyright_notice =
 "MUSASHI\n"
-"Version 3.2 (2000-08-04)\n"
+"Version 3.3 (2001-01-29)\n"
 "A portable Motorola M680x0 processor emulation engine.\n"
-"Copyright 1999-2000 Karl Stenerud.  All rights reserved.\n"
+"Copyright 1998-2001 Karl Stenerud.  All rights reserved.\n"
 "\n"
 "This code may be freely used for non-commercial purpooses as long as this\n"
 "copyright notice remains unaltered in the source code and any binary files\n"
 "containing this code in compiled form.\n"
 "\n"
-"Any commercial ventures wishing to use this code must contact the author\n"
-"(Karl Stenerud) for commercial licensing terms.\n"
+"All other lisencing terms must be negotiated with the author\n"
+"(Karl Stenerud).\n"
 "\n"
 "The latest version of this code can be obtained at:\n"
-"http://members.xoom.com/kstenerud\n"
+"http://kstenerud.cjb.net\n"
 ;
 #endif
 
@@ -348,6 +348,7 @@ uint8 m68ki_ea_idx_cycle_table[64] =
 	13, /* ..11..11 memory indirect,    base 32,   outer 32   */
 	 0, 11, 13, 13,  0, 11, 13, 13,  0, 11, 13, 13
 };
+
 
 
 /* ======================================================================== */

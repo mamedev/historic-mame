@@ -17,7 +17,7 @@ TODO:
 - The gradient sky is completely wrong - it's more of a placeholder to show
   that it's supposed to be there. It is supposed to skew along with the
   background, and the gradient can move around (the latter doesn't seem to
-  beused except for making it cover the whole screen on the title screen,
+  be used except for making it cover the whole screen on the title screen,
   and start at the middle during gameplay)
 - Video driver is largely unoptimized
 - Support for the 7630's controlling the sound chip outputs (bass/treble,
@@ -542,5 +542,5 @@ ROM_END
 
 
 
-GAMEX( 1984, buggychl, 0,        buggychl, buggychl, 0, ROT270, "Taito Corporation", "Buggy Challenge", GAME_IMPERFECT_SOUND )
-GAMEX( 1984, buggycht, buggychl, buggychl, buggychl, 0, ROT270, "Taito Corporation (Tecfri license)", "Buggy Challenge (Tecfri)", GAME_IMPERFECT_SOUND )
+GAMEX( 1984, buggychl, 0,        buggychl, buggychl, 0, ROT270, "Taito Corporation", "Buggy Challenge", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1984, buggycht, buggychl, buggychl, buggychl, 0, ROT270, "Taito Corporation (Tecfri license)", "Buggy Challenge (Tecfri)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -169,6 +169,8 @@ static write8_handler 		wmemhandler8s[STATIC_COUNT];	/* copy of 8-bit static wri
 static struct cpu_data 		cpudata[MAX_CPU];				/* data gathered for each CPU */
 static struct bank_data 	bankdata[MAX_BANKS];			/* data gathered for each bank */
 
+offs_t encrypted_opcode_start[MAX_CPU],encrypted_opcode_end[MAX_CPU];
+
 
 /*-------------------------------------------------
 	PROTOTYPES
@@ -284,6 +286,13 @@ void memory_shutdown(void)
 void memory_set_opcode_base(int cpu, void *base)
 {
 	cpudata[cpu].rombase = base;
+}
+
+
+void memory_set_encrypted_opcode_range(int cpu,offs_t min_address,offs_t max_address)
+{
+	encrypted_opcode_start[cpu] = min_address;
+	encrypted_opcode_end[cpu] = max_address;
 }
 
 
@@ -942,6 +951,8 @@ static int init_cpudata(void)
 		/* set the RAM/ROM base */
 		cpudata[cpu].rambase = cpudata[cpu].rombase = memory_region(REGION_CPU1 + cpu);
 		cpudata[cpu].opbase = NULL;
+		encrypted_opcode_start[cpu] = 0;
+		encrypted_opcode_end[cpu] = 0;
 
 		/* initialize the readmem and writemem tables */
 		if (!init_memport(cpu, &cpudata[cpu].mem, address_bits_of_cpu(cpu), cpunum_databus_width(cpu), 1))

@@ -16,7 +16,6 @@ source was very helpful in many areas particularly the sprites.)
 
 The dual screen games operate on hardware with various similarities to
 the Taito F2 system, as they share some custom ics e.g. the TC0100SCN.
-In the arcades they have two horizontal screens side by side. (???)
 
 For each screen the games have 3 separate layers of graphics: - one
 128x64 tiled scrolling background plane of 8x8 tiles, a similar
@@ -24,9 +23,17 @@ foreground plane, and a 128x32 text plane with character definitions
 held in ram. As well as this, there is a single sprite plane which
 covers both screens. The sprites are 16x16 and are not zoomable.
 
+Writing to the first TC0100SCN "writes through" to the subsidiary one
+so both have identical contents. The only time the second TC0100SCN is
+addressed on its own is during initial memory checks, I think. (?)
+
 Warrior Blade has a slightly different gfx set for the 2nd screen
-[the last few pages only], so we will have to draw tilemaps from
-both TC0100SCN chips using their respective gfx set.
+because the programmers ran out of scr gfx space (only 0xffff tiles
+can be addressed by the TC0100SCN). In-game while tiles are
+scrolling from one screen to the other it is necessary to have
+identical gfx tiles for both screens. But for static screens (e.g. cut
+scenes between levels) the gfx tiles needn't be the same. By
+exploiting this they squeezed some extra graphics into the game.
 
 There is a single 68000 processor which takes care of everything
 except sound. That is done by a Z80 controlling a YM2610. Sound
@@ -39,32 +46,51 @@ Tilemaps
 
 TC0100SCN has tilemaps twice as wide as usual. The two BG tilemaps take
 up twice the usual space, $8000 bytes each. The text tilemap takes up
-the usual space, as its height is halved [like Cameltru].
+the usual space, as its height is halved.
 
 The double palette generator (one for each screen) is probably just a
-result of the way the 2-screen hardware works. I think the second one
-simply duplicates the colors in the first, rather than offering any
-different colors. However, we emulate both.
+result of the way the hardware works: they both have the same colors.
+
+Dumper's Info
+-------------
+
+Darius II (Dual Screen Old & New JPN Ver.)
+(c)1989 Taito
+J1100204A
+K1100483A
+
+CPU 	:MC68000P12F(16MHz),Z80A
+Sound	:YM2610
+OSC 	:26.686MHz,16.000MHz
+Other	:
+TC0140SYT
+TC0220IOC
+TC0110PCR x2
+TC0100SCN x2
+TC0390LHC-1
+TC0130LNB x8
+
+[Function of these last two unknown].
 
 TODO
 ====
 
-DIPs
+Unknown sprite bits.
 
 
 Darius 2
 --------
 
-Some sounds seem bad.
+The unpleasant sounds when some big enemies appear are wrong, they
+are meant to create rumbling on a subwoofer in the cabinet, as a sort
+of vibration device. Either strip them out or transpose them down in
+pitch?
 
 
 Warriorb
 --------
 
-The SCR tiles are *different* for screens 1 and 2. This is why we get
-some junk tiles in the intermissions between levels. If we properly
-drew the right hand half of the screen using the 2nd TC0100SCN and its
-gfx set, the problem would vanish.
+Colscroll effects?
 
 
 ***************************************************************************/
@@ -77,11 +103,16 @@ gfx set, the problem would vanish.
 
 int warriorb_vh_start (void);
 void warriorb_vh_stop (void);
-
 void warriorb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 //static data16_t *warriorb_ram;
 
+
+WRITE16_HANDLER( TC0100SCN_dual_screen_w )
+{
+	TC0100SCN_word_0_w(offset,data,mem_mask);
+	TC0100SCN_word_1_w(offset,data,mem_mask);
+}
 
 /***********************************************************
 				INTERRUPTS
@@ -185,7 +216,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( darius2d_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
 	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x213fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x200000, 0x213fff, TC0100SCN_dual_screen_w },	/* tilemaps (all screens) */
 	{ 0x214000, 0x2141ff, MWA16_NOP },	/* error in screen clearing code ? */
 	{ 0x220000, 0x22000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x240000, 0x253fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
@@ -217,7 +248,7 @@ MEMORY_END
 static MEMORY_WRITE16_START( warriorb_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM },
 	{ 0x200000, 0x213fff, MWA16_RAM },
-	{ 0x300000, 0x313fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x300000, 0x313fff, TC0100SCN_dual_screen_w },	/* tilemaps (all screens) */
 	{ 0x320000, 0x32000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x340000, 0x353fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
 	{ 0x360000, 0x36000f, TC0100SCN_ctrl_word_1_w },
@@ -226,7 +257,7 @@ static MEMORY_WRITE16_START( warriorb_writemem )
 	{ 0x600000, 0x6013ff, MWA16_RAM, &spriteram16, &spriteram_size },
 //	{ 0x800000, 0x800001, MWA16_NOP },	/* watchdog ?? */
 //	{ 0x800008, 0x800009, MWA16_NOP },	/* coin lockout/ctr ? */
-//	{ 0x820000, 0x820001, MWA16_NOP },	// ??? uses bits 0,2,3
+//	{ 0x820000, 0x820001, MWA16_NOP },	// ? uses bits 0,2,3
 	{ 0x830000, 0x830003, warriorb_sound_w },
 MEMORY_END
 
@@ -573,36 +604,90 @@ static struct MachineDriver machine_driver_warriorb =
 
 ROM_START( darius2d )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 512K for 68000 code */
-	ROM_LOAD16_BYTE( "c07-20", 0x00000, 0x20000, 0x48b0804a )
-	ROM_LOAD16_BYTE( "c07-19", 0x00001, 0x20000, 0x1f9a4f83 )
-	ROM_LOAD16_BYTE( "c07-21", 0x40000, 0x20000, 0xb491b0ca )
-	ROM_LOAD16_BYTE( "c07-18", 0x40001, 0x20000, 0xc552e42f )
+	ROM_LOAD16_BYTE( "c07_20-2.74", 0x00000, 0x20000, 0xa0f345b8 )
+	ROM_LOAD16_BYTE( "c07_19-2.73", 0x00001, 0x20000, 0x925412c6 )
+	ROM_LOAD16_BYTE( "c07_21-2.76", 0x40000, 0x20000, 0xbdd60e37 )
+	ROM_LOAD16_BYTE( "c07_18-2.71", 0x40001, 0x20000, 0x23fcd89b )
 
-	ROM_LOAD16_WORD_SWAP( "c07-09",   0x80000, 0x80000, 0xcc69c2ce )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c07-09.75",   0x80000, 0x80000, 0xcc69c2ce )	/* data rom */
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
-	ROM_LOAD( "c07-17",  0x00000, 0x04000, 0xae16c905 )
-	ROM_CONTINUE(        0x10000, 0x1c000 )	/* banked stuff */
+	ROM_LOAD( "c07-17.69", 0x00000, 0x04000, 0xae16c905 )
+	ROM_CONTINUE(          0x10000, 0x1c000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c07-03", 0x00000, 0x80000, 0x189bafce )	/* SCR (screen 1) */
-	ROM_LOAD( "c07-04", 0x80000, 0x80000, 0x50421e81 )
+	ROM_LOAD( "c07-03.12", 0x00000, 0x80000, 0x189bafce )	/* SCR (screen 1) */
+	ROM_LOAD( "c07-04.11", 0x80000, 0x80000, 0x50421e81 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "c07-06", 0x00000, 0x40000, 0x7ca7fc52 )	/* OBJ */
-	ROM_LOAD32_BYTE( "c07-05", 0x00001, 0x40000, 0xe10715f4 )
-	ROM_LOAD32_BYTE( "c07-08", 0x00002, 0x40000, 0x1de7f1d7 )
-	ROM_LOAD32_BYTE( "c07-07", 0x00003, 0x40000, 0x632b0a85 )
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "c07-06.27", 0x00000, 0x80000, 0x5eebbcd6 )	/* OBJ */
+	ROM_LOAD32_BYTE( "c07-05.24", 0x00001, 0x80000, 0xfb6d0550 )
+	ROM_LOAD32_BYTE( "c07-08.25", 0x00002, 0x80000, 0xa07dc846 )
+	ROM_LOAD32_BYTE( "c07-07.26", 0x00003, 0x80000, 0xfd9f9e74 )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screen 2) */
 
+/* The actual board duplicates the SCR gfx roms for the 2nd TC0100SCN */
+//	ROM_LOAD( "c07-03.47", 0x00000, 0x80000, 0x189bafce )
+//	ROM_LOAD( "c07-04.48", 0x80000, 0x80000, 0x50421e81 )
+
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c07-10", 0x00000, 0x80000, 0x4bbe0ed9 )
-	ROM_LOAD( "c07-11", 0x80000, 0x80000, 0x3c815699 )
+	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, 0x4bbe0ed9 )
+	ROM_LOAD( "c07-11.96", 0x80000, 0x80000, 0x3c815699 )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* delta-t samples */
-	ROM_LOAD( "c07-12", 0x00000, 0x80000, 0xe0b71258 )
+	ROM_LOAD( "c07-12.107", 0x00000, 0x80000, 0xe0b71258 )
+
+	ROM_REGION( 0x001000, REGION_USER1, 0 )	/* unknown roms */
+	ROM_LOAD( "c07-13.37", 0x00000, 0x00400, 0x3ca18eb3 )
+	ROM_LOAD( "c07-14.38", 0x00000, 0x00400, 0xbaf2a193 )
+
+// Pals, not dumped
+//	ROM_LOAD( "C07-15.78", 0x00000, 0x00?00, 0x00000000 )
+//	ROM_LOAD( "C07-16.79", 0x00000, 0x00?00, 0x00000000 )
+ROM_END
+
+ROM_START( drius2do )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 512K for 68000 code */
+	ROM_LOAD16_BYTE( "c07_20-1.74", 0x00000, 0x20000, 0x48b0804a )
+	ROM_LOAD16_BYTE( "c07_19-1.73", 0x00001, 0x20000, 0x1f9a4f83 )
+	ROM_LOAD16_BYTE( "c07_21-1.76", 0x40000, 0x20000, 0xb491b0ca )
+	ROM_LOAD16_BYTE( "c07_18-1.71", 0x40001, 0x20000, 0xc552e42f )
+
+	ROM_LOAD16_WORD_SWAP( "c07-09.75",   0x80000, 0x80000, 0xcc69c2ce )	/* data rom */
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c07-17.69", 0x00000, 0x04000, 0xae16c905 )
+	ROM_CONTINUE(          0x10000, 0x1c000 ) /* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c07-03.12", 0x00000, 0x80000, 0x189bafce )	/* SCR (screen 1) */
+	ROM_LOAD( "c07-04.11", 0x80000, 0x80000, 0x50421e81 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "c07-06.27", 0x00000, 0x80000, 0x5eebbcd6 )	/* OBJ */
+	ROM_LOAD32_BYTE( "c07-05.24", 0x00001, 0x80000, 0xfb6d0550 )
+	ROM_LOAD32_BYTE( "c07-08.25", 0x00002, 0x80000, 0xa07dc846 )
+	ROM_LOAD32_BYTE( "c07-07.26", 0x00003, 0x80000, 0xfd9f9e74 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x100000 )	/* SCR (screen 2) */
+
+/* The actual board duplicates the SCR gfx roms for the 2nd TC0100SCN */
+//	ROM_LOAD( "c07-03.47", 0x00000, 0x80000, 0x189bafce )
+//	ROM_LOAD( "c07-04.48", 0x80000, 0x80000, 0x50421e81 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "c07-10.95", 0x00000, 0x80000, 0x4bbe0ed9 )
+	ROM_LOAD( "c07-11.96", 0x80000, 0x80000, 0x3c815699 )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* delta-t samples */
+	ROM_LOAD( "c07-12.107", 0x00000, 0x80000, 0xe0b71258 )
+
+	ROM_REGION( 0x001000, REGION_USER1, 0 )	/* unknown roms */
+	ROM_LOAD( "c07-13.37", 0x00000, 0x00400, 0x3ca18eb3 )
+	ROM_LOAD( "c07-14.38", 0x00000, 0x00400, 0xbaf2a193 )
 ROM_END
 
 ROM_START( warriorb )
@@ -613,10 +698,11 @@ ROM_START( warriorb )
 	ROM_LOAD16_BYTE( "d24-18", 0x080001, 0x40000, 0x4502db60 )
 
 	ROM_LOAD16_WORD_SWAP( "d24-09",   0x100000, 0x100000, 0xece5cc59 )	/* data rom */
+	/* Note: Raine wrongly doubles up d24-09 as delta-t samples */
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "d24-17",  0x00000, 0x04000, 0xe41e4aae )
-	ROM_CONTINUE(        0x10000, 0x1c000 )	/* banked stuff */
+	ROM_CONTINUE(        0x10000, 0x1c000 ) /* banked stuff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "d24-02", 0x000000, 0x100000, 0x9f50c271 )	/* SCR A, screen 1 */
@@ -637,8 +723,7 @@ ROM_START( warriorb )
 	ROM_LOAD( "d24-10", 0x100000, 0x100000, 0x0e0c716d )
 	ROM_LOAD( "d24-11", 0x200000, 0x100000, 0x15362573 )
 
-	ROM_REGION( 0x1000, REGION_SOUND2, 0 )	/* delta-t samples, unused */
-	/* Note: Raine wrongly doubles up d24-09 as delta-t samples */
+	/* No Delta-T samples */
 ROM_END
 
 
@@ -646,5 +731,6 @@ ROM_END
 /* Working Games */
 
 GAME( 1989, darius2d, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)" )
+GAME( 1989, drius2do, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)" )
 GAME( 1991, warriorb, 0,        warriorb, warriorb, 0, ROT0, "Taito Corporation", "Warrior Blade (Japan)" )
 

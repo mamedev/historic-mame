@@ -15,6 +15,7 @@
 	------------------
 	- Mortal Kombat 3
 	- Ultimate Mortal Kombat 3
+	- NBA Hangtime
 	- NBA Maximum Hangtime
 	- 2 On 2 Open Ice Challenge
 	- WWF Wrestlemania
@@ -27,7 +28,6 @@
 
 	Currently undumped:
 	-------------------
-	- NBA Hangtime
 
 
 	Known Bugs:
@@ -66,7 +66,7 @@ void init_mk3r10(void);
 void init_umk3(void);
 void init_umk3r11(void);
 void init_openice(void);
-void init_nbamaxht(void);
+void init_nbahangt(void);
 void init_rmpgwt(void);
 void init_wwfmania(void);
 
@@ -375,7 +375,7 @@ INPUT_PORTS_START( openice )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nbamaxht )
+INPUT_PORTS_START( nbahangt )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
@@ -957,6 +957,46 @@ ROM_START( openice )
 	ROM_LOAD( "oiceu118.bin",  0x0f00000, 0x100000, 0x9eaaf93e )
 ROM_END
 
+ROM_START( nbahangt )
+	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
+
+	ROM_REGION( ADSP2100_SIZE + 0x400000, REGION_CPU2, 0 )	/* ADSP-2105 data */
+	ROM_LOAD( "mhtu2.bin",  ADSP2100_SIZE + 0x000000, 0x100000, 0x3f0b0d0a )
+	ROM_LOAD( "mhtu3.bin",  ADSP2100_SIZE + 0x100000, 0x100000, 0xec1db988 )
+	ROM_LOAD( "mhtu4.bin",  ADSP2100_SIZE + 0x200000, 0x100000, 0xc7f847a3 )
+	ROM_LOAD( "mhtu5.bin",  ADSP2100_SIZE + 0x300000, 0x100000, 0xef19316a )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_LOAD16_BYTE( "htime54.bin",  0x00000, 0x80000, 0xc2875d98 )
+	ROM_LOAD16_BYTE( "htime63.bin",  0x00001, 0x80000, 0x6f4728c3 )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROM_LOAD( "mhtu133.bin",  0x0000000, 0x100000, 0x3163feed )
+	ROM_LOAD( "mhtu132.bin",  0x0100000, 0x100000, 0x428eaf44 )
+	ROM_LOAD( "mhtu131.bin",  0x0200000, 0x100000, 0x5f7c5111 )
+	ROM_LOAD( "mhtu130.bin",  0x0300000, 0x100000, 0xc7c0c514 )
+
+	ROM_LOAD( "mhtu129.bin",  0x0400000, 0x100000, 0xb3d0daa0 )
+	ROM_LOAD( "mhtu128.bin",  0x0500000, 0x100000, 0x3704ee69 )
+	ROM_LOAD( "mhtu127.bin",  0x0600000, 0x100000, 0x4ea64d5a )
+	ROM_LOAD( "mhtu126.bin",  0x0700000, 0x100000, 0x0c5c19b7 )
+
+	ROM_LOAD( "mhtu125.bin",  0x0800000, 0x100000, 0x46c43d67 )
+	ROM_LOAD( "mhtu124.bin",  0x0900000, 0x100000, 0xed495156 )
+	ROM_LOAD( "mhtu123.bin",  0x0a00000, 0x100000, 0xb48aa5da )
+	ROM_LOAD( "mhtu122.bin",  0x0b00000, 0x100000, 0xb18cd181 )
+
+	ROM_LOAD( "mhtu121.bin",  0x0c00000, 0x100000, 0x5acb267a )
+	ROM_LOAD( "mhtu120.bin",  0x0d00000, 0x100000, 0x28e05f86 )
+	ROM_LOAD( "mhtu119.bin",  0x0e00000, 0x100000, 0xb4f604ea )
+	ROM_LOAD( "mhtu118.bin",  0x0f00000, 0x100000, 0xa257b973 )
+
+	ROM_LOAD( "mhtu113.bin",  0x1400000, 0x100000, 0xd712a779 )
+	ROM_LOAD( "mhtu112.bin",  0x1500000, 0x100000, 0x644e1bca )
+	ROM_LOAD( "mhtu111.bin",  0x1600000, 0x100000, 0x10d3b768 )
+	ROM_LOAD( "mhtu110.bin",  0x1700000, 0x100000, 0x8575aeb2 )
+ROM_END
+
 ROM_START( nbamaxht )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1118,6 +1158,7 @@ GAME( 1994, umk3r11, mk3,       wolfu, mk3,     umk3r11, ROT0_16BIT, "Midway", "
 
 GAME( 1995, wwfmania,0,         wolfu, wwfmania,wwfmania,ROT0_16BIT, "Midway", "WWF: Wrestlemania (rev 1.30)" )
 GAME( 1995, openice, 0,         wolfu, openice, openice, ROT0_16BIT, "Midway", "2 On 2 Open Ice Challenge (rev 1.21)" )
-GAME( 1996, nbamaxht,0,         wolfu, nbamaxht,nbamaxht,ROT0_16BIT, "Midway", "NBA Maximum Hangtime (rev 1.0)" )
+GAME( 1996, nbahangt,0,         wolfu, nbahangt,nbahangt,ROT0_16BIT, "Midway", "NBA Hangtime (rev L1.1)" )
+GAME( 1996, nbamaxht,nbahangt,  wolfu, nbahangt,nbahangt,ROT0_16BIT, "Midway", "NBA Maximum Hangtime (rev 1.0)" )
 GAME( 1997, rmpgwt,  0,         wolfu, rmpgwt,  rmpgwt,  ROT0_16BIT, "Midway", "Rampage: World Tour (rev 1.3)" )
 GAME( 1997, rmpgwt11,rmpgwt,    wolfu, rmpgwt,  rmpgwt,  ROT0_16BIT, "Midway", "Rampage: World Tour (rev 1.1)" )

@@ -760,13 +760,13 @@ static void enduror_init_machine( void ){
 }
 
 static void enduror_sprite_decode( void ){
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	sys16_interleave_sprite_data( 8*0x20000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 
-//	enduror_decode_data (RAM,RAM,0x10000);	// no decrypt info.
-	enduror_decode_data (RAM+0x10000,RAM+0x10000,0x10000);
-	enduror_decode_data2(RAM+0x20000,RAM+0x20000,0x10000);
+//	enduror_decode_data (rom,rom,0x10000);	// no decrypt info.
+	enduror_decode_data (rom+0x10000/2,rom+0x10000/2,0x10000);
+	enduror_decode_data2(rom+0x20000/2,rom+0x20000/2,0x10000);
 }
 
 static void endurob_sprite_decode( void ){
@@ -776,40 +776,40 @@ static void endurob_sprite_decode( void ){
 
 static void endurora_opcode_decode( void )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int diff = 0x50000;	/* place decrypted opcodes in a hole after RAM */
 
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_opcode_base(0,rom+diff/2);
 
-	memcpy(rom+diff+0x10000,rom+0x10000,0x20000);
-	memcpy(rom+diff,rom+0x30000,0x10000);
+	memcpy(rom+(diff+0x10000)/2,rom+0x10000/2,0x20000);
+	memcpy(rom+diff/2,rom+0x30000/2,0x10000);
 
 	// patch code to force a reset on cpu2 when starting a new game.
 	// Undoubtly wrong, but something like it is needed for the game to work
-	WRITE_WORD(&rom[0x1866 + diff],0x4a79);
-	WRITE_WORD(&rom[0x1868 + diff],0x00e0);
-	WRITE_WORD(&rom[0x186a + diff],0x0000);
+	rom[(0x1866 + diff)/2] = 0x4a79;
+	rom[(0x1868 + diff)/2] = 0x00e0;
+	rom[(0x186a + diff)/2] = 0x0000;
 }
 
 static void endurob2_opcode_decode( void )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int diff = 0x50000;	/* place decrypted opcodes in a hole after RAM */
 
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_opcode_base(0,rom+diff/2);
 
-	memcpy(rom+diff,rom,0x30000);
+	memcpy(rom+diff/2,rom,0x30000);
 
-	endurob2_decode_data (rom,rom+diff,0x10000);
-	endurob2_decode_data2(rom+0x10000,rom+diff+0x10000,0x10000);
+	endurob2_decode_data (rom,rom+diff/2,0x10000);
+	endurob2_decode_data2(rom+0x10000/2,rom+(diff+0x10000)/2,0x10000);
 
 	// patch code to force a reset on cpu2 when starting a new game.
 	// Undoubtly wrong, but something like it is needed for the game to work
-	WRITE_WORD(&rom[0x1866 + diff],0x4a79);
-	WRITE_WORD(&rom[0x1868 + diff],0x00e0);
-	WRITE_WORD(&rom[0x186a + diff],0x0000);
+	rom[(0x1866 + diff)/2] = 0x4a79;
+	rom[(0x1868 + diff)/2] = 0x00e0;
+	rom[(0x186a + diff)/2] = 0x0000;
 }
 
 static void init_enduror( void )

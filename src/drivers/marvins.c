@@ -77,7 +77,7 @@ static int sound_fetched;
 
 static struct namco_interface snkwave_interface =
 {
-	23920,	/* ? (wave generator has a 8MHz clock near it) */
+	24000,	/* ? (wave generator has a 8MHz clock near it) */
 	1,		/* number of voices */
 	8,		/* playback volume */
 	-1		/* memory region */
@@ -622,7 +622,7 @@ static const struct MachineDriver machine_driver_marvins = {
 			nmi_interrupt,4 /* seems to be correct */
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100, /* CPU slices per frame */
 	0, /* init_machine */
 
@@ -673,7 +673,7 @@ static const struct MachineDriver machine_driver_madcrash = {
 			nmi_interrupt,4 /* wrong? */
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,	/* CPU slices per frame */
 	0, /* init_machine */
 

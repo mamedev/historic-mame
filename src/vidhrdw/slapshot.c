@@ -69,7 +69,7 @@ int slapshot_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x20,0x10,256))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,30,9,-1,1,256))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -138,9 +138,6 @@ void slapshot_update_palette (void)
 	unsigned short palette_map[256];
 
 	memset (palette_map, 0, sizeof (palette_map));
-
-// DG: we aren't applying sprite marker tests here, but doesn't seem
-// to cause palette overflows, so I don't think we should worry.
 
 	color = 0;
 	area = sprites_active_area;
@@ -561,7 +558,7 @@ static void slapshot_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_
 			   drawgfxzoom does not know to draw from flip-side of sprites when
 			   screen is flipped; so we must correct the coords ourselves. */
 
-			curx = 320 - curx - zx;
+			curx = 319 - curx - zx;
 			cury = 256 - cury - zy;
 			flipx = !flipx;
 			flipy = !flipy;
@@ -672,53 +669,10 @@ void taito_no_buffer_eof_callback(void)
 	prepare_sprites = 1;
 }
 
+
 /**************************************************************
 				SCREEN REFRESH
-**************************************************************/
 
-static UINT8 TC0480SCP_pri_lookup[32][4] =
-{
-	/* mb = seen during metal black game */
-	/* ss = seen during slap shot game */
-	/* odd = not standard bg0123 order */
-	/* (x,x) = layers whose intended order is uncertain e.g. they are empty at the time */
-
-	{ 0, 1, 2, 3, },	// 0x00  00000  mb ss
-	{ 0, 1, 2, 3, },	// 0x01  00001
-	{ 0, 1, 2, 3, },	// 0x02  00010
-	{ 0, 1, 2, 3, },	// 0x03  00011  mb
-	{ 0, 1, 2, 3, },	// 0x04  00100
-	{ 0, 1, 2, 3, },	// 0x05  00101
-	{ 0, 1, 2, 3, },	// 0x06  00110
-	{ 0, 1, 2, 3, },	// 0x07  00111
-	{ 0, 1, 2, 3, },	// 0x08  01000
-	{ 0, 1, 2, 3, },	// 0x09  01001
-	{ 0, 1, 2, 3, },	// 0x0a  01010
-	{ 0, 1, 2, 3, },	// 0x0b  01011
-	{ 0, 3, 1, 2, },	// 0x0c  01100  mb    odd ?? check
-	{ 0, 1, 2, 3, },	// 0x0d  01101
-	{ 0, 1, 2, 3, },	// 0x0e  01110
-	{ 3, 0, 1, 2, },	// 0x0f  01111  mb    odd ?? check
-	{ 3, 2, 0, 1, },	// 0x10  10000  mb ss odd (had to lower bg2 by 2 for ss, 0/1 or 1/0?)
-	{ 3, 2, 1, 0, },	// 0x11  10001     ss odd (1/0 or 0/1?)
-	{ 3, 2, 1, 0, },	// 0x12  10010  mb    odd
-	{ 3, 2, 1, 0, },	// 0x13  10011  mb    odd
-	{ 0, 1, 2, 3, },	// 0x14  10100  mb
-	{ 0, 1, 2, 3, },	// 0x15  10101
-	{ 0, 1, 2, 3, },	// 0x16  10110
-	{ 0, 1, 2, 3, },	// 0x17  10111  mb
-	{ 0, 1, 2, 3, },	// 0x18  11000
-	{ 0, 1, 2, 3, },	// 0x19  11001
-	{ 0, 1, 2, 3, },	// 0x1a  11010
-	{ 0, 1, 2, 3, },	// 0x1b  11011
-	{ 0, 1, 2, 3, },	// 0x1c  11100  mb
-	{ 0, 1, 2, 3, },	// 0x1d  11101
-	{ 0, 3, 2, 1, },	// 0x1e  11110  mb    odd
-	{ 0, 3, 2, 1, },	// 0x1f  11111  mb    odd
-};
-
-
-/*********************************************************************
 Slapshot and Metalb use in the PRI chip
 ---------------------------------------
 
@@ -734,10 +688,10 @@ a bg layer given priority over some sprites.
 
 void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[5];
-	int tilepri[5];
-	int spritepri[4];
-	int priority;
+	UINT8 layer[5];
+	UINT8 tilepri[5];
+	UINT8 spritepri[4];
+	UINT16 priority;
 
 #ifdef MAME_DEBUG
 	static int dislayer[5];	/* Layer toggles to help get the layers correct */
@@ -789,7 +743,6 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	taito_handle_sprite_buffering();
 
 	TC0480SCP_tilemap_update();
-	priority = TC0480SCP_pri_reg & 0x1f;
 
 	palette_init_used_colors();
 	slapshot_update_palette();
@@ -804,12 +757,13 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	palette_recalc();
 
-	layer[0] = TC0480SCP_pri_lookup[priority][0];   /* tells us which bg layer is bottom */
-	layer[1] = TC0480SCP_pri_lookup[priority][1];
-	layer[2] = TC0480SCP_pri_lookup[priority][2];
-	layer[3] = TC0480SCP_pri_lookup[priority][3];   /* tells us which is top */
+	priority = TC0480SCP_get_bg_priority();
 
-	layer[4] = 4;   // Text layer
+	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
+	layer[1] = (priority &0x0f00) >>  8;
+	layer[2] = (priority &0x00f0) >>  4;
+	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
+	layer[4] = 4;   /* text layer always over bg layers */
 
 	tilepri[0] = TC0360PRI_regs[4] & 0x0f;     /* bg0 */
 	tilepri[1] = TC0360PRI_regs[4] >> 4;       /* bg1 */
@@ -859,7 +813,7 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[(layer[3])]) primasks[i] |= 0xff00;
 		}
 
-		slapshot_draw_sprites(bitmap,primasks,8);
+		slapshot_draw_sprites(bitmap,primasks,0);
 	}
 
 	/*

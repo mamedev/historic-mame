@@ -11,6 +11,12 @@
 #include "artwork.h"
 
 static int use_tmpbitmap;
+static int sight_xs;
+static int sight_xc;
+static int sight_xe;
+static int sight_ys;
+static int sight_yc;
+static int sight_ye;
 static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static int color_map_select;
@@ -480,28 +486,69 @@ static void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	if (use_tmpbitmap)
+	{
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		osd_mark_dirty( sight_xc, sight_ys, sight_xc, sight_ye );
+		osd_mark_dirty( sight_xs, sight_yc, sight_xe, sight_yc );
+	}
 }
 
 
-static void draw_sight(int x_center, int y_center)
+static void draw_sight(struct osd_bitmap *bitmap,int x_center, int y_center)
 {
 	int x,y;
 
+	sight_xc = x_center;
+	if( sight_xc < 2 )
+	{
+		sight_xc = 2;
+	}
+	else if( sight_xc > 253 )
+	{
+		sight_xc = 253;
+	}
 
-    if (x_center<2)   x_center=2;
-    if (x_center>253) x_center=253;
+	sight_yc = y_center;
+	if( sight_yc < 2 )
+	{
+		sight_yc = 2;
+	}
+	else if( sight_yc > 221 )
+	{
+		sight_yc = 221;
+	}
 
-    if (y_center<2)   y_center=2;
-    if (y_center>253) y_center=253;
+	sight_xs = sight_xc - 20;
+	if( sight_xs < 0 )
+	{
+		sight_xs = 0;
+	}
+	sight_xe = sight_xc + 20;
+	if( sight_xe > 255 )
+	{
+		sight_xe = 255;
+	}
 
-	for(y = y_center-10; y < y_center+11; y++)
-		if((y >= 0) && (y < 256))
-			plot_pixel_8080(x_center,y,1);
+	sight_ys = sight_yc - 20;
+	if( sight_ys < 0 )
+	{
+		sight_ys = 0;
+	}
+	sight_ye = sight_yc + 20;
+	if( sight_ye > 223 )
+	{
+		sight_ye = 223;
+	}
 
-	for(x = x_center-20; x < x_center+21; x++)
-		if((x >= 0) && (x < 256))
-			plot_pixel_8080(x,y_center,1);
+	x = sight_xc;
+	y = sight_yc;
+	if (flip_screen)
+	{
+		x = 255-x;
+		y = 223-y;
+	}
+
+	draw_crosshair(bitmap,x,y,&Machine->visible_area);
 }
 
 
@@ -510,7 +557,7 @@ static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* update the bitmap (and erase old cross) */
 	vh_screenrefresh(bitmap, full_refresh);
 
-    draw_sight(((input_port_0_r(0) & 0x1f) * 8) + 4, 31);
+    draw_sight(bitmap,((input_port_0_r(0) & 0x1f) * 8) + 4, 31);
 }
 
 static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -518,7 +565,7 @@ static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 	/* update the bitmap (and erase old cross) */
 	vh_screenrefresh(bitmap, full_refresh);
 
-    draw_sight(((input_port_0_r(0) & 0x7f) * 2) - 12, 31);
+    draw_sight(bitmap,((input_port_0_r(0) & 0x7f) * 2) - 12, 31);
 }
 
 static void desertgu_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -526,7 +573,7 @@ static void desertgu_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 	/* update the bitmap (and erase old cross) */
 	vh_screenrefresh(bitmap, full_refresh);
 
-	draw_sight(((input_port_0_r(0) & 0x7f) * 2) - 30,
+	draw_sight(bitmap,((input_port_0_r(0) & 0x7f) * 2) - 30,
 			   ((input_port_2_r(0) & 0x7f) * 2) - 30);
 }
 

@@ -292,7 +292,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	23920,	/* sample rate (approximate value) */
+	24000,	/* sample rate */
 	8,		/* number of voices */
 	100,	/* playback volume */
 	-1,		/* memory region */
@@ -318,7 +318,7 @@ static const struct MachineDriver machine_driver_pacland =
 			interrupt,1
 		},
 	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	100,	/* we need heavy synching between the MCU and the CPU */
 	0,
 

@@ -63,6 +63,7 @@ extern unsigned char *intrepid_sprite_bank_select;
 WRITE_HANDLER( galaxian_attributes_w );
 
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void suprmous_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 READ_HANDLER( thepit_input_port_0_r );
 WRITE_HANDLER( thepit_sound_enable_w );
@@ -590,8 +591,8 @@ static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo suprmous_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &suprmous_charlayout,   0, 8 },
-	{ REGION_GFX1, 0x0800, &suprmous_spritelayout, 0, 8 },
+	{ REGION_GFX1, 0x0000, &suprmous_charlayout,   0, 4 },
+	{ REGION_GFX1, 0x0800, &suprmous_spritelayout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -608,7 +609,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-#define MACHINE_DRIVER(GAMENAME, COLORS)		            \
+#define MACHINE_DRIVER(GAMENAME, CONVERT)		            \
 static const struct MachineDriver machine_driver_##GAMENAME =		\
 {									  			            \
 	/* basic machine hardware */							\
@@ -634,8 +635,8 @@ static const struct MachineDriver machine_driver_##GAMENAME =		\
 	/* video hardware */									\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
 	GAMENAME##_gfxdecodeinfo,								\
-	COLORS+8, COLORS,										\
-	thepit_vh_convert_color_prom,							\
+	32+8, 32,												\
+	CONVERT##_vh_convert_color_prom,						\
 															\
 	VIDEO_TYPE_RASTER,										\
 	0,														\
@@ -657,9 +658,9 @@ static const struct MachineDriver machine_driver_##GAMENAME =		\
 #define suprmous_readmem   intrepid_readmem
 #define suprmous_writemem  intrepid_writemem
 
-MACHINE_DRIVER(thepit,   4*8)
-MACHINE_DRIVER(intrepid, 4*8)
-MACHINE_DRIVER(suprmous, 8*8)
+MACHINE_DRIVER(thepit,   thepit)
+MACHINE_DRIVER(intrepid, thepit)
+MACHINE_DRIVER(suprmous, suprmous)
 
 /***************************************************************************
 
@@ -786,6 +787,27 @@ ROM_START( portman )
 	ROM_LOAD( "ic3",          0x0000, 0x0020, 0x6440dc61 )
 ROM_END
 
+ROM_START( funnymou )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	    /* 64k for main CPU */
+	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
+	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
+	ROM_LOAD( "suprmous.x3",  0x2000, 0x1000, 0xb5b8d34d )
+	ROM_LOAD( "suprmous.x4",  0x3000, 0x1000, 0x603333df )
+	ROM_LOAD( "suprmous.x5",  0x4000, 0x1000, 0x2ef9cbf1 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	   /* 64k for audio CPU */
+	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
+	ROM_LOAD( "suprmous.x8",  0x0000, 0x1000, 0xdbef9db8 )
+	ROM_LOAD( "suprmous.x9",  0x1000, 0x1000, 0x700d996e )
+	ROM_LOAD( "suprmous.x7",  0x2000, 0x1000, 0xe9295071 )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
+	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
+ROM_END
+
 ROM_START( suprmous )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	    /* 64k for main CPU */
 	ROM_LOAD( "sm.1",         0x0000, 0x1000, 0x9db2b786 )
@@ -798,30 +820,9 @@ ROM_START( suprmous )
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
-	ROM_LOAD( "sm.7",         0x0000, 0x1000, 0x1d476696 )
-	ROM_LOAD( "sm.8",         0x1000, 0x1000, 0x2f81ab5f )
-	ROM_LOAD( "sm.9",         0x2000, 0x1000, 0x8463af89 )
-
-	ROM_REGION( 0x0040, REGION_PROMS, 0 )
-	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
-	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
-ROM_END
-
-ROM_START( suprmou2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	    /* 64k for main CPU */
-	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
-	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
-	ROM_LOAD( "suprmous.x3",  0x2000, 0x1000, 0xb5b8d34d )
-	ROM_LOAD( "suprmous.x4",  0x3000, 0x1000, 0x603333df )
-	ROM_LOAD( "suprmous.x5",  0x4000, 0x1000, 0x2ef9cbf1 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	   /* 64k for audio CPU */
-	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
-
-	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
-	ROM_LOAD( "suprmous.x7",  0x0000, 0x1000, 0xe9295071 )
-	ROM_LOAD( "suprmous.x8",  0x1000, 0x1000, 0xdbef9db8 )
-	ROM_LOAD( "suprmous.x9",  0x2000, 0x1000, 0x700d996e )
+	ROM_LOAD( "sm.8",         0x0000, 0x1000, 0x2f81ab5f )
+	ROM_LOAD( "sm.9",         0x1000, 0x1000, 0x8463af89 )
+	ROM_LOAD( "sm.7",         0x2000, 0x1000, 0x1d476696 )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
@@ -840,9 +841,9 @@ ROM_START( machomou )
 	ROM_LOAD( "mm6.e6",       0x0000, 0x1000, 0x20816913 )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
-	ROM_LOAD( "mm7.3d",       0x0000, 0x1000, 0xa6f60ed2 )
-	ROM_LOAD( "mm8.3c",       0x1000, 0x1000, 0x062e77cb )
-	ROM_LOAD( "mm9.3a",       0x2000, 0x1000, 0xa2f0cfb3 )
+	ROM_LOAD( "mm8.3c",       0x0000, 0x1000, 0x062e77cb )
+	ROM_LOAD( "mm9.3a",       0x1000, 0x1000, 0xa2f0cfb3 )
+	ROM_LOAD( "mm7.3d",       0x2000, 0x1000, 0xa6f60ed2 )
 
 	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "mmouse2.clr",  0x0000, 0x0020, 0x00000000 )
@@ -855,8 +856,8 @@ GAME( 1981, roundup,  0,        thepit,   roundup,  0, ROT90, "Amenip/Centuri", 
 GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito", "Fitter" )
 GAME( 1982, thepit,   0,        thepit,   thepit,   0, ROT90, "Centuri", "The Pit" )
 GAME( 1982, portman,  0,        intrepid, portman,  0, ROT90, "Nova Games Ltd.", "Port Man" )
-GAMEX(1982, suprmous, 0,        suprmous, suprmous, 0, ROT90, "Taito", "Super Mouse", GAME_WRONG_COLORS )
-GAMEX(1982, suprmou2, suprmous, suprmous, suprmous, 0, ROT90, "Chu Co. Ltd", "Funny Mouse (bootleg?)", GAME_WRONG_COLORS )
-GAMEX(1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse", GAME_WRONG_COLORS )
+GAME( 1982, funnymou, 0,        suprmous, suprmous, 0, ROT90, "Chu Co. Ltd", "Funny Mouse" )
+GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0, ROT90, "Taito", "Super Mouse" )
+GAME( 1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse" )
 GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
 GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )

@@ -24,6 +24,7 @@ ca003		8046a		00
 ***************************************************************************/
 
 #include "driver.h"
+
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
@@ -84,11 +85,14 @@ static WRITE16_HANDLER( K053251_halfword_w )
 /* A1, A5 and A6 don't go to the 053247. */
 static READ16_HANDLER( K053247_scattered_word_r )
 {
-	if (offset & 0x0031)
+	if (offset & 0x0031) {
+		//		fprintf(stderr, "Read1 %x [%04x]\n", 0x90000+offset*2, spriteram16[offset]);
 		return spriteram16[offset];
-	else
+	} else
 	{
+		//int xo = offset;
 		offset = ((offset & 0x000e) >> 1) | ((offset & 0x3fc0) >> 3);
+		//		fprintf(stderr, "Read2 %x [%04x]\n", 0x90000+xo*2, K053247_word_r(offset));
 		return K053247_word_r(offset);
 	}
 }
@@ -100,8 +104,6 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 	else
 	{
 		offset = ((offset & 0x000e) >> 1) | ((offset & 0x3fc0) >> 3);
-//if ((offset&0xf) == 0)
-//	logerror("%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
 		K053247_word_w(offset,data,mem_mask);
 	}
 }
@@ -129,6 +131,26 @@ static READ16_HANDLER( control1_r )
 	return res;
 }
 
+static void parse_control2(void)
+{
+	/* bit 0  is data */
+	/* bit 1  is cs (active low) */
+	/* bit 2  is clock (active high) */
+	/* bit 5  is enable irq 6 */
+	/* bit 6  is enable irq 5 */
+	/* bit 11 is watchdog */
+
+	EEPROM_write_bit(cur_control2 & 0x01);
+	EEPROM_set_cs_line((cur_control2 & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((cur_control2 & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 8 = enable sprite ROM reading */
+	K053246_set_OBJCHA_line((cur_control2 & 0x0100) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 9 = disable alpha channel on K054157 plane 0 */
+	xexex_set_alpha(!(cur_control2 & 0x200));
+}
+
 static READ16_HANDLER( control2_r )
 {
 	return cur_control2;
@@ -137,23 +159,7 @@ static READ16_HANDLER( control2_r )
 static WRITE16_HANDLER( control2_w )
 {
 	COMBINE_DATA(&cur_control2);
-
-	/* bit 0  is data */
-	/* bit 1  is cs (active low) */
-	/* bit 2  is clock (active high) */
-	/* bit 5  is enable irq 6 */
-	/* bit 6  is enable irq 5 */
-	/* bit 11 is watchdog */
-
-	EEPROM_write_bit(data & 0x01);
-	EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
-	EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
-
-	/* bit 8 = enable sprite ROM reading */
-	K053246_set_OBJCHA_line((data & 0x0100) ? ASSERT_LINE : CLEAR_LINE);
-
-	/* bit 9 = disable alpha channel on K054157 plane 0 */
-	xexex_set_alpha(!(cur_control2 & 0x200));
+	parse_control2();
 }
 
 static int xexex_interrupt(void)
@@ -202,21 +208,41 @@ static WRITE16_HANDLER( sound_irq_w )
 
 static READ16_HANDLER( sound_status_r )
 {
-	int latch = soundlatch3_r(0);
-	if(latch != 0x80)
-		logerror("Sound status read %x\n", latch);
-	return latch;
+	return soundlatch3_r(0);
+}
+
+static int cur_sound_region = 0;
+
+static void reset_sound_region(void)
+{
+	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data&7)*0x4000);
+	cur_sound_region = data & 7;
+	reset_sound_region();
+}
+
+static void ym_set_mixing(double left, double right)
+{
+	if(Machine->sample_rate) {
+		int l = 71*left;
+		int r = 71*right;
+		int ch;
+		for(ch=0; ch<MIXER_MAX_CHANNELS; ch++) {
+			const char *name = mixer_get_name(ch);
+			if(name && name[0] == 'Y')
+				mixer_set_stereo_volume(ch, l, r);
+		}
+	}
 }
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x08ffff, MRA16_RAM },			/* Work RAM */
 	{ 0x090000, 0x097fff, K053247_scattered_word_r },	/* Sprites */
+	{ 0x098000, 0x09ffff, K053247_scattered_word_r },	/* Sprites (mirror) */
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
 	{ 0x0c6000, 0x0c6fff, xexexbg_ram_r },			/* Background generator effects */
 	{ 0x0c8000, 0x0c800f, xexexbg_r },
@@ -237,6 +263,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM },
 	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram16 },
+		//	{ 0x098000, 0x09ffff, K053247_scattered_word_w },/* Mirror for some buggy levels */
 	{ 0x0c0000, 0x0c003f, K054157_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
 	{ 0x0c6000, 0x0c6fff, xexexbg_ram_w },
@@ -252,6 +279,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x181fff, K054157_ram_word_w },
+	{ 0x182000, 0x183fff, K054157_ram_word_w },		/* Mirror for some buggy levels */
 	{ 0x190000, 0x191fff, MWA16_ROM },
 	{ 0x1b0000, 0x1b1fff, paletteram16_xrgb_word_w, &paletteram16 },
 MEMORY_END
@@ -320,7 +348,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	4000000,		/* Value found in Amuse */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ 0 }
 };
 
@@ -328,7 +356,9 @@ static struct K054539interface k054539_interface =
 {
 	1,			/* 1 chip */
 	48000,
-	REGION_SOUND1
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ ym_set_mixing }
 };
 
 static const struct MachineDriver machine_driver_xexex =
@@ -358,7 +388,7 @@ static const struct MachineDriver machine_driver_xexex =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
 	0,
 	xexex_vh_start,
 	xexex_vh_stop,
@@ -444,14 +474,14 @@ static void init_xexex(void)
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-#if 0
+
+	/* Invulnerability */
 	if(0 && !strcmp(Machine->gamedrv->name, "xexex")) {
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
 	}
-#endif
 }
 
 
-GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0_16BIT, "Konami", "Xexex (World)" )
-GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0_16BIT, "Konami", "Xexex (Japan)" )
+GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)" )
+GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)" )

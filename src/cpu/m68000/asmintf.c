@@ -6,6 +6,15 @@
 #include "mamedbg.h"
 #include "m68000.h"
 
+/* global access */
+struct m68k_memory_interface a68k_memory_intf;
+
+#ifdef A68K0
+#ifdef A68K2
+struct m68k_memory_interface m68k_memory_intf;
+#endif
+#endif
+
 enum
 {
 	M68K_CPU_TYPE_INVALID,
@@ -20,6 +29,13 @@ enum
 
 int illegal_op = 0 ;
 int illegal_pc = 0 ;
+
+#ifdef MAME_DEBUG
+void m68k_illegal_opcode(void)
+{
+	logerror("Illegal Opcode %4x at %8x\n",illegal_op,illegal_pc);
+}
+#endif
 
 unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_type);
 
@@ -63,7 +79,9 @@ typedef struct
     int BankID;			  /* Memory bank in use */
     int CPUtype;		  /* CPU Type 0=68000,1=68010,2=68020 */
 
-} m68k_cpu_context;
+	struct m68k_memory_interface Memory_Interface;
+
+} a68k_cpu_context;
 
 
 static UINT8 M68K_layout[] = {
@@ -87,29 +105,25 @@ static UINT8 m68k_win_layout[] = {
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
-extern m68k_cpu_context regs;
+#ifdef A68K0
+extern a68k_cpu_context M68000_regs;
 
-extern void CONVENTION M68KRUN(void);
-extern void CONVENTION M68KRESET(void);
+extern void CONVENTION M68000_RUN(void);
+extern void CONVENTION M68000_RESET(void);
+#endif
 
+#ifdef A68K2
+extern a68k_cpu_context M68020_regs;
 
-/* Redirect memory calls */
-struct m68k_memory_interface
-{
-	offs_t		opcode_xor;
-	data8_t		(*read8)(offs_t);
-	data16_t	(*read16)(offs_t);
-	data32_t	(*read32)(offs_t);
-	void		(*write8)(offs_t, data8_t);
-	void		(*write16)(offs_t, data16_t);
-	void		(*write32)(offs_t, data32_t);
-	void		(*changepc)(offs_t);
-};
-
+extern void CONVENTION M68020_RUN(void);
+extern void CONVENTION M68020_RESET(void);
+#endif
 
 /****************************************************************************
  * 24-bit address, 16-bit data memory interface
  ****************************************************************************/
+
+#ifdef A68K0
 
 static data32_t readlong_a24_d16(offs_t address)
 {
@@ -138,13 +152,21 @@ static const struct m68k_memory_interface interface_a24_d16 =
 	cpu_writemem24bew,
 	cpu_writemem24bew_word,
 	writelong_a24_d16,
-	changepc_a24_d16
+	changepc_a24_d16,
+	cpu_readmem24bew,				// Encrypted Versions
+	cpu_readmem24bew_word,
+	readlong_a24_d16,
+	cpu_readmem24bew_word,
+	readlong_a24_d16,
 };
 
+#endif // A68k0
 
 /****************************************************************************
  * 24-bit address, 32-bit data memory interface
  ****************************************************************************/
+
+#ifdef A68K2
 
 /* potentially misaligned 16-bit reads with a 32-bit data bus (and 24-bit address bus) */
 static data16_t readword_a24_d32(offs_t address)
@@ -220,7 +242,12 @@ static const struct m68k_memory_interface interface_a24_d32 =
 	cpu_writemem24bedw,
 	writeword_a24_d32,
 	writelong_a24_d32,
-	changepc_a24_d32
+	changepc_a24_d32,
+	cpu_readmem24bedw,
+	readword_a24_d32,
+	readlong_a24_d32,
+	readword_a24_d32,
+	readlong_a24_d32,
 };
 
 
@@ -302,39 +329,49 @@ static const struct m68k_memory_interface interface_a32_d32 =
 	cpu_writemem32bedw,
 	writeword_a32_d32,
 	writelong_a32_d32,
-	changepc_a32_d32
+	changepc_a32_d32,
+	cpu_readmem32bedw,
+	readword_a32_d32,
+	readlong_a32_d32,
+	readword_a32_d32,
+	readlong_a32_d32,
 };
 
-/* global access */
-struct m68k_memory_interface m68k_memory_intf;
-
+#endif // A68K2
 
 /********************************************/
 /* Interface routines to link Mame -> 68KEM */
 /********************************************/
 
-#define READOP(a)	(cpu_readop16((a) ^ m68k_memory_intf.opcode_xor))
+#define READOP(a)	(cpu_readop16((a) ^ a68k_memory_intf.opcode_xor))
 
-static void m680x0_reset_common(void)
+#ifdef A68K0
+
+static void m68k16_reset_common(void)
 {
-	memset(&regs,0,sizeof(regs));
+	memset(&M68000_regs,0,sizeof(M68000_regs));
 
-    regs.a[7] = regs.isp = (( READOP(0) << 16 ) | READOP(2));
-    regs.pc   = (( READOP(4) << 16 ) | READOP(6)) & 0xffffff;
-    regs.sr_high = 0x27;
+    M68000_regs.a[7] = M68000_regs.isp = (( READOP(0) << 16 ) | READOP(2));
+    M68000_regs.pc   = (( READOP(4) << 16 ) | READOP(6)) & 0xffffff;
+    M68000_regs.sr_high = 0x27;
 
 	#ifdef MAME_DEBUG
-		regs.sr = 0x2700;
+		M68000_regs.sr = 0x2700;
 	#endif
 
-    M68KRESET();
+    M68000_RESET();
 }
 
 void m68000_reset(void *param)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
-	m680x0_reset_common();
+	// Allocate Correct Memory routines
+
+	if (a68k_memory_intf.read8 != cpu_readmem24bew)
+		a68k_memory_intf = interface_a24_d16;
+
+	m68k16_reset_common();
+
+    M68000_regs.Memory_Interface = a68k_memory_intf;
 }
 
 
@@ -350,9 +387,9 @@ void m68000_exit(void)
 
 int m68000_execute(int cycles)
 {
-	if (regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
+	if (M68000_regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
 
-	m68000_ICount = cycles;
+	M68000_ICount = cycles;
 
 #ifdef MAME_DEBUG
     do
@@ -361,7 +398,7 @@ int m68000_execute(int cycles)
         {
 			#ifdef TRACE68K
 
-			int StartCycle = m68000_ICount;
+			int StartCycle = M68000_ICount;
 
             skiptrace++;
 
@@ -372,110 +409,112 @@ int m68000_execute(int cycles)
                 areg = dreg = 0;
 	            for (mycount=7;mycount>=0;mycount--)
                 {
-            	    areg = areg + regs.a[mycount];
-                    dreg = dreg + regs.d[mycount];
+            	    areg = areg + M68000_regs.a[mycount];
+                    dreg = dreg + M68000_regs.d[mycount];
                 }
 
            	    logerror("=> %8x %8x ",areg,dreg);
-			    logerror("%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
+			    logerror("%6x %4x %d\n",M68000_regs.pc,M68000_regs.sr & 0x271F,M68000_ICount);
             }
             #endif
 
+            m68k_memory_intf = a68k_memory_intf;
 			MAME_Debug();
-            M68KRUN();
+            M68000_RUN();
 
             #ifdef TRACE68K
-            if ((regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
-    			m68000_ICount = 0;
+            if ((M68000_regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
+    			M68000_ICount = 0;
             else
-				m68000_ICount = StartCycle - 12;
+				M68000_ICount = StartCycle - 12;
             #endif
         }
         else
-			M68KRUN();
+			M68000_RUN();
 
-    } while (m68000_ICount > 0);
+    } while (M68000_ICount > 0);
 
 #else
 
-	M68KRUN();
+	M68000_RUN();
 
 #endif /* MAME_DEBUG */
 
-	return (cycles - m68000_ICount);
+	return (cycles - M68000_ICount);
 }
 
 
 unsigned m68000_get_context(void *dst)
 {
 	if( dst )
-		*(m68k_cpu_context*)dst = regs;
-	return sizeof(m68k_cpu_context);
+		*(a68k_cpu_context*)dst = M68000_regs;
+	return sizeof(a68k_cpu_context);
 }
 
 void m68000_set_context(void *src)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
 	if( src )
-		regs = *(m68k_cpu_context*)src;
+	{
+		M68000_regs = *(a68k_cpu_context*)src;
+        a68k_memory_intf = M68000_regs.Memory_Interface;
+    }
 }
 
 unsigned m68000_get_pc(void)
 {
-    return regs.pc;
+    return M68000_regs.pc;
 }
 
 void m68000_set_pc(unsigned val)
 {
-	regs.pc = val;
+	M68000_regs.pc = val;
 }
 
 unsigned m68000_get_sp(void)
 {
-	return regs.isp;
+	return M68000_regs.isp;
 }
 
 void m68000_set_sp(unsigned val)
 {
-	regs.isp = val;
+	M68000_regs.isp = val;
 }
 
 unsigned m68000_get_reg(int regnum)
 {
     switch( regnum )
     {
-		case M68K_PC: return regs.pc;
-		case M68K_ISP: return regs.isp;
-		case M68K_USP: return regs.usp;
-		case M68K_SR: return regs.sr;
-		case M68K_VBR: return regs.vbr;
-		case M68K_SFC: return regs.sfc;
-		case M68K_DFC: return regs.dfc;
-		case M68K_D0: return regs.d[0];
-		case M68K_D1: return regs.d[1];
-		case M68K_D2: return regs.d[2];
-		case M68K_D3: return regs.d[3];
-		case M68K_D4: return regs.d[4];
-		case M68K_D5: return regs.d[5];
-		case M68K_D6: return regs.d[6];
-		case M68K_D7: return regs.d[7];
-		case M68K_A0: return regs.a[0];
-		case M68K_A1: return regs.a[1];
-		case M68K_A2: return regs.a[2];
-		case M68K_A3: return regs.a[3];
-		case M68K_A4: return regs.a[4];
-		case M68K_A5: return regs.a[5];
-		case M68K_A6: return regs.a[6];
-		case M68K_A7: return regs.a[7];
-		case REG_PREVIOUSPC: return regs.previous_pc;
+		case M68K_PC: return M68000_regs.pc;
+		case M68K_ISP: return M68000_regs.isp;
+		case M68K_USP: return M68000_regs.usp;
+		case M68K_SR: return M68000_regs.sr;
+		case M68K_VBR: return M68000_regs.vbr;
+		case M68K_SFC: return M68000_regs.sfc;
+		case M68K_DFC: return M68000_regs.dfc;
+		case M68K_D0: return M68000_regs.d[0];
+		case M68K_D1: return M68000_regs.d[1];
+		case M68K_D2: return M68000_regs.d[2];
+		case M68K_D3: return M68000_regs.d[3];
+		case M68K_D4: return M68000_regs.d[4];
+		case M68K_D5: return M68000_regs.d[5];
+		case M68K_D6: return M68000_regs.d[6];
+		case M68K_D7: return M68000_regs.d[7];
+		case M68K_A0: return M68000_regs.a[0];
+		case M68K_A1: return M68000_regs.a[1];
+		case M68K_A2: return M68000_regs.a[2];
+		case M68K_A3: return M68000_regs.a[3];
+		case M68K_A4: return M68000_regs.a[4];
+		case M68K_A5: return M68000_regs.a[5];
+		case M68K_A6: return M68000_regs.a[6];
+		case M68K_A7: return M68000_regs.a[7];
+		case REG_PREVIOUSPC: return M68000_regs.previous_pc;
 /* TODO: Verify that this is the right thing to do for the purpose? */
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = M68000_regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					return (*m68k_memory_intf.read32)( offset );
+					return (*a68k_memory_intf.read32)( offset );
             }
     }
     return 0;
@@ -485,53 +524,53 @@ void m68000_set_reg(int regnum, unsigned val)
 {
     switch( regnum )
     {
-		case M68K_PC: regs.pc = val; break;
-		case M68K_ISP: regs.isp = val; break;
-		case M68K_USP: regs.usp = val; break;
-		case M68K_SR: regs.sr = val; break;
-		case M68K_VBR: regs.vbr = val; break;
-		case M68K_SFC: regs.sfc = val; break;
-		case M68K_DFC: regs.dfc = val; break;
-		case M68K_D0: regs.d[0] = val; break;
-		case M68K_D1: regs.d[1] = val; break;
-		case M68K_D2: regs.d[2] = val; break;
-		case M68K_D3: regs.d[3] = val; break;
-		case M68K_D4: regs.d[4] = val; break;
-		case M68K_D5: regs.d[5] = val; break;
-		case M68K_D6: regs.d[6] = val; break;
-		case M68K_D7: regs.d[7] = val; break;
-		case M68K_A0: regs.a[0] = val; break;
-		case M68K_A1: regs.a[1] = val; break;
-		case M68K_A2: regs.a[2] = val; break;
-		case M68K_A3: regs.a[3] = val; break;
-		case M68K_A4: regs.a[4] = val; break;
-		case M68K_A5: regs.a[5] = val; break;
-		case M68K_A6: regs.a[6] = val; break;
-		case M68K_A7: regs.a[7] = val; break;
+		case M68K_PC: M68000_regs.pc = val; break;
+		case M68K_ISP: M68000_regs.isp = val; break;
+		case M68K_USP: M68000_regs.usp = val; break;
+		case M68K_SR: M68000_regs.sr = val; break;
+		case M68K_VBR: M68000_regs.vbr = val; break;
+		case M68K_SFC: M68000_regs.sfc = val; break;
+		case M68K_DFC: M68000_regs.dfc = val; break;
+		case M68K_D0: M68000_regs.d[0] = val; break;
+		case M68K_D1: M68000_regs.d[1] = val; break;
+		case M68K_D2: M68000_regs.d[2] = val; break;
+		case M68K_D3: M68000_regs.d[3] = val; break;
+		case M68K_D4: M68000_regs.d[4] = val; break;
+		case M68K_D5: M68000_regs.d[5] = val; break;
+		case M68K_D6: M68000_regs.d[6] = val; break;
+		case M68K_D7: M68000_regs.d[7] = val; break;
+		case M68K_A0: M68000_regs.a[0] = val; break;
+		case M68K_A1: M68000_regs.a[1] = val; break;
+		case M68K_A2: M68000_regs.a[2] = val; break;
+		case M68K_A3: M68000_regs.a[3] = val; break;
+		case M68K_A4: M68000_regs.a[4] = val; break;
+		case M68K_A5: M68000_regs.a[5] = val; break;
+		case M68K_A6: M68000_regs.a[6] = val; break;
+		case M68K_A7: M68000_regs.a[7] = val; break;
 /* TODO: Verify that this is the right thing to do for the purpose? */
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				unsigned offset = M68000_regs.isp + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					(*m68k_memory_intf.write32)( offset, val );
+					(*a68k_memory_intf.write32)( offset, val );
             }
     }
 }
 
 void m68k_assert_irq(int int_line)
 {
-	regs.IRQ_level = int_line;
+	M68000_regs.IRQ_level = int_line;
 
     /* Now check for Interrupt */
 
-	m68000_ICount = -1;
-    M68KRUN();
+	M68000_ICount = -1;
+    M68000_RUN();
 }
 
 void m68k_clear_irq(int int_line)
 {
-	regs.IRQ_level = 0;
+	M68000_regs.IRQ_level = 0;
 }
 
 void m68000_set_nmi_line(int state)
@@ -568,12 +607,12 @@ void m68000_set_irq_line(int irqline, int state)
 
 void m68000_set_irq_callback(int (*callback)(int irqline))
 {
-	regs.irq_callback = callback;
+	M68000_regs.irq_callback = callback;
 }
 
 void m68000_set_reset_callback(int (*callback)(void))
 {
-	regs.reset_callback = callback;
+	M68000_regs.reset_callback = callback;
 }
 
 /****************************************************************************
@@ -586,12 +625,12 @@ const char *m68000_info(void *context, int regnum)
 #endif
     static char buffer[32][47+1];
 	static int which;
-	m68k_cpu_context *r = context;
+	a68k_cpu_context *r = context;
 
 	which = ++which % 32;
 	buffer[which][0] = '\0';
 	if( !context )
-		r = &regs;
+		r = &M68000_regs;
 
 	switch( regnum )
 	{
@@ -667,10 +706,13 @@ unsigned m68000_dasm(char *buffer, unsigned pc)
 
 void m68010_reset(void *param)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
-	m680x0_reset_common();
-    regs.CPUtype=1;
+	if (a68k_memory_intf.read8 != cpu_readmem24bew)
+		a68k_memory_intf = interface_a24_d16;
+
+	m68k16_reset_common();
+
+    M68000_regs.CPUtype=1;
+    M68000_regs.Memory_Interface = a68k_memory_intf;
 }
 
 void m68010_exit(void) { m68000_exit(); }
@@ -679,10 +721,11 @@ unsigned m68010_get_context(void *dst) { return m68000_get_context(dst); }
 
 void m68010_set_context(void *src)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem24bew)
-		m68k_memory_intf = interface_a24_d16;
 	if( src )
-		regs = *(m68k_cpu_context*)src;
+    {
+		M68000_regs = *(a68k_cpu_context*)src;
+        a68k_memory_intf = M68000_regs.Memory_Interface;
+    }
 }
 
 unsigned m68010_get_pc(void) { return m68000_get_pc(); }
@@ -716,94 +759,277 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 }
 #endif
 
+
+#endif // A68K0
+
+
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
 
-#if (HAS_M68EC020)
+#ifdef A68K2
 
-void m68ec020_reset(void *param)
+static void m68k32_reset_common(void)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem24bedw)
-		m68k_memory_intf = interface_a24_d32;
-	m680x0_reset_common();
-    regs.CPUtype=2;
+	memset(&M68020_regs,0,sizeof(M68020_regs));
+
+    M68020_regs.a[7] = M68020_regs.isp = (( READOP(0) << 16 ) | READOP(2));
+    M68020_regs.pc   = (( READOP(4) << 16 ) | READOP(6)) & 0xffffff;
+    M68020_regs.sr_high = 0x27;
+
+	#ifdef MAME_DEBUG
+		M68020_regs.sr = 0x2700;
+	#endif
+
+    M68020_RESET();
 }
-
-void m68ec020_exit(void) { m68000_exit(); }
-int  m68ec020_execute(int cycles) { return m68000_execute(cycles); }
-unsigned m68ec020_get_context(void *dst) { return m68000_get_context(dst); }
-
-void m68ec020_set_context(void *src)
-{
-	if (m68k_memory_intf.read8 != cpu_readmem24bedw)
-		m68k_memory_intf = interface_a24_d32;
-	if( src )
-		regs = *(m68k_cpu_context*)src;
-}
-
-unsigned m68ec020_get_pc(void) { return m68000_get_pc(); }
-void m68ec020_set_pc(unsigned val) { m68000_set_pc(val); }
-unsigned m68ec020_get_sp(void) { return m68000_get_sp(); }
-void m68ec020_set_sp(unsigned val) { m68000_set_sp(val); }
-unsigned m68ec020_get_reg(int regnum) { return m68000_get_reg(regnum); }
-void m68ec020_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
-void m68ec020_set_nmi_line(int state) { m68000_set_nmi_line(state); }
-void m68ec020_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
-void m68ec020_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
-
-const char *m68ec020_info(void *context, int regnum)
-{
-	switch( regnum )
-	{
-		case CPU_INFO_NAME: return "68EC020";
-	}
-	return m68000_info(context,regnum);
-}
-
-unsigned m68ec020_dasm(char *buffer, unsigned pc)
-{
-	change_pc24bew(pc);
-#ifdef MAME_DEBUG
-	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
-#else
-	sprintf(buffer, "$%04X", cpu_readop16(pc) );
-	return 2;
-#endif
-}
-#endif
 
 #if (HAS_M68020)
 
 void m68020_reset(void *param)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem32bedw)
-		m68k_memory_intf = interface_a32_d32;
-	m680x0_reset_common();
-    regs.CPUtype=2;
+	if (a68k_memory_intf.read8 != cpu_readmem32bedw)
+		a68k_memory_intf = interface_a32_d32;
+
+	m68k32_reset_common();
+
+    M68000_regs.CPUtype=2;
+    M68000_regs.Memory_Interface = a68k_memory_intf;
 }
 
-void m68020_exit(void) { m68000_exit(); }
-int  m68020_execute(int cycles) { return m68000_execute(cycles); }
-unsigned m68020_get_context(void *dst) { return m68000_get_context(dst); }
+void m68020_exit(void)
+{
+	/* nothing to do ? */
+}
+
+int m68020_execute(int cycles)
+{
+	if (M68020_regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
+
+	M68020_ICount = cycles;
+
+#ifdef MAME_DEBUG
+    do
+    {
+		if (mame_debug)
+        {
+			#ifdef TRACE68K
+
+			int StartCycle = M68020_ICount;
+
+            skiptrace++;
+
+            if (skiptrace > 0)
+            {
+			    int mycount, areg, dreg;
+
+                areg = dreg = 0;
+	            for (mycount=7;mycount>=0;mycount--)
+                {
+            	    areg = areg + M68020_regs.a[mycount];
+                    dreg = dreg + M68020_regs.d[mycount];
+                }
+
+           	    logerror("=> %8x %8x ",areg,dreg);
+			    logerror("%6x %4x %d\n",M68020_regs.pc,M68020_regs.sr & 0x271F,M68020_ICount);
+            }
+            #endif
+
+            m68k_memory_intf = a68k_memory_intf;
+			MAME_Debug();
+            M68020_RUN();
+
+            #ifdef TRACE68K
+            if ((M68020_regs.IRQ_level & 0x80) || (cpu_getstatus(cpu_getactivecpu()) == 0))
+    			M68020_ICount = 0;
+            else
+				M68020_ICount = StartCycle - 12;
+            #endif
+        }
+        else
+			M68020_RUN();
+
+    } while (M68020_ICount > 0);
+
+#else
+
+	M68020_RUN();
+
+#endif /* MAME_DEBUG */
+
+	return (cycles - M68020_ICount);
+}
+
+unsigned m68020_get_context(void *dst)
+{
+	if( dst )
+		*(a68k_cpu_context*)dst = M68020_regs;
+	return sizeof(a68k_cpu_context);
+}
 
 void m68020_set_context(void *src)
 {
-	if (m68k_memory_intf.read8 != cpu_readmem32bedw)
-		m68k_memory_intf = interface_a32_d32;
 	if( src )
-		regs = *(m68k_cpu_context*)src;
+    {
+		M68020_regs = *(a68k_cpu_context*)src;
+        a68k_memory_intf = M68000_regs.Memory_Interface;
+    }
 }
 
-unsigned m68020_get_pc(void) { return m68000_get_pc(); }
-void m68020_set_pc(unsigned val) { m68000_set_pc(val); }
-unsigned m68020_get_sp(void) { return m68000_get_sp(); }
-void m68020_set_sp(unsigned val) { m68000_set_sp(val); }
-unsigned m68020_get_reg(int regnum) { return m68000_get_reg(regnum); }
-void m68020_set_reg(int regnum, unsigned val) { m68000_set_reg(regnum,val); }
-void m68020_set_nmi_line(int state) { m68000_set_nmi_line(state); }
-void m68020_set_irq_line(int irqline, int state)  { m68000_set_irq_line(irqline,state); }
-void m68020_set_irq_callback(int (*callback)(int irqline))  { m68000_set_irq_callback(callback); }
+unsigned m68020_get_pc(void)
+{
+    return M68020_regs.pc;
+}
+
+void m68020_set_pc(unsigned val)
+{
+	M68020_regs.pc = val;
+}
+
+unsigned m68020_get_sp(void)
+{
+	return M68020_regs.isp;
+}
+
+void m68020_set_sp(unsigned val)
+{
+	M68020_regs.isp = val;
+}
+
+unsigned m68020_get_reg(int regnum)
+{
+    switch( regnum )
+    {
+		case M68K_PC: return M68020_regs.pc;
+		case M68K_ISP: return M68020_regs.isp;
+		case M68K_USP: return M68020_regs.usp;
+		case M68K_SR: return M68020_regs.sr;
+		case M68K_VBR: return M68020_regs.vbr;
+		case M68K_SFC: return M68020_regs.sfc;
+		case M68K_DFC: return M68020_regs.dfc;
+		case M68K_D0: return M68020_regs.d[0];
+		case M68K_D1: return M68020_regs.d[1];
+		case M68K_D2: return M68020_regs.d[2];
+		case M68K_D3: return M68020_regs.d[3];
+		case M68K_D4: return M68020_regs.d[4];
+		case M68K_D5: return M68020_regs.d[5];
+		case M68K_D6: return M68020_regs.d[6];
+		case M68K_D7: return M68020_regs.d[7];
+		case M68K_A0: return M68020_regs.a[0];
+		case M68K_A1: return M68020_regs.a[1];
+		case M68K_A2: return M68020_regs.a[2];
+		case M68K_A3: return M68020_regs.a[3];
+		case M68K_A4: return M68020_regs.a[4];
+		case M68K_A5: return M68020_regs.a[5];
+		case M68K_A6: return M68020_regs.a[6];
+		case M68K_A7: return M68020_regs.a[7];
+		case REG_PREVIOUSPC: return M68020_regs.previous_pc;
+/* TODO: Verify that this is the right thing to do for the purpose? */
+		default:
+			if( regnum <= REG_SP_CONTENTS )
+			{
+				unsigned offset = M68020_regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					return (*a68k_memory_intf.read32)( offset );
+            }
+    }
+    return 0;
+}
+
+void m68020_set_reg(int regnum, unsigned val)
+{
+    switch( regnum )
+    {
+		case M68K_PC: M68020_regs.pc = val; break;
+		case M68K_ISP: M68020_regs.isp = val; break;
+		case M68K_USP: M68020_regs.usp = val; break;
+		case M68K_SR: M68020_regs.sr = val; break;
+		case M68K_VBR: M68020_regs.vbr = val; break;
+		case M68K_SFC: M68020_regs.sfc = val; break;
+		case M68K_DFC: M68020_regs.dfc = val; break;
+		case M68K_D0: M68020_regs.d[0] = val; break;
+		case M68K_D1: M68020_regs.d[1] = val; break;
+		case M68K_D2: M68020_regs.d[2] = val; break;
+		case M68K_D3: M68020_regs.d[3] = val; break;
+		case M68K_D4: M68020_regs.d[4] = val; break;
+		case M68K_D5: M68020_regs.d[5] = val; break;
+		case M68K_D6: M68020_regs.d[6] = val; break;
+		case M68K_D7: M68020_regs.d[7] = val; break;
+		case M68K_A0: M68020_regs.a[0] = val; break;
+		case M68K_A1: M68020_regs.a[1] = val; break;
+		case M68K_A2: M68020_regs.a[2] = val; break;
+		case M68K_A3: M68020_regs.a[3] = val; break;
+		case M68K_A4: M68020_regs.a[4] = val; break;
+		case M68K_A5: M68020_regs.a[5] = val; break;
+		case M68K_A6: M68020_regs.a[6] = val; break;
+		case M68K_A7: M68020_regs.a[7] = val; break;
+/* TODO: Verify that this is the right thing to do for the purpose? */
+		default:
+			if( regnum <= REG_SP_CONTENTS )
+			{
+				unsigned offset = M68020_regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					(*a68k_memory_intf.write32)( offset, val );
+            }
+    }
+}
+
+void m68020_assert_irq(int int_line)
+{
+	M68020_regs.IRQ_level = int_line;
+
+    /* Now check for Interrupt */
+
+	M68020_ICount = -1;
+    M68020_RUN();
+}
+
+void m68020_clear_irq(int int_line)
+{
+	M68020_regs.IRQ_level = 0;
+}
+
+void m68020_set_nmi_line(int state)
+{
+	switch(state)
+	{
+		case CLEAR_LINE:
+			m68020_clear_irq(7);
+			return;
+		case ASSERT_LINE:
+			m68020_assert_irq(7);
+			return;
+		default:
+			m68020_assert_irq(7);
+			return;
+	}
+}
+
+void m68020_set_irq_line(int irqline, int state)
+{
+	switch(state)
+	{
+		case CLEAR_LINE:
+			m68020_clear_irq(irqline);
+			return;
+		case ASSERT_LINE:
+			m68020_assert_irq(irqline);
+			return;
+		default:
+			m68020_assert_irq(irqline);
+			return;
+	}
+}
+
+void m68020_set_irq_callback(int (*callback)(int irqline))
+{
+	M68020_regs.irq_callback = callback;
+}
+
+void m68020_set_reset_callback(int (*callback)(void))
+{
+	M68020_regs.reset_callback = callback;
+}
 
 const char *m68020_info(void *context, int regnum)
 {
@@ -826,3 +1052,62 @@ unsigned m68020_dasm(char *buffer, unsigned pc)
 }
 #endif
 
+#if (HAS_M68EC020)
+
+void m68ec020_reset(void *param)
+{
+	if (a68k_memory_intf.read8 != cpu_readmem24bedw)
+		a68k_memory_intf = interface_a24_d32;
+
+	m68k32_reset_common();
+
+    M68020_regs.CPUtype=2;
+    M68000_regs.Memory_Interface = a68k_memory_intf;
+}
+
+void m68ec020_exit(void) { m68020_exit(); }
+int  m68ec020_execute(int cycles) { return m68020_execute(cycles); }
+unsigned m68ec020_get_context(void *dst) { return m68020_get_context(dst); }
+
+void m68ec020_set_context(void *src)
+{
+	if( src )
+    {
+		M68020_regs = *(a68k_cpu_context*)src;
+        a68k_memory_intf = M68000_regs.Memory_Interface;
+    }
+}
+
+unsigned m68ec020_get_pc(void) { return m68020_get_pc(); }
+void m68ec020_set_pc(unsigned val) { m68020_set_pc(val); }
+unsigned m68ec020_get_sp(void) { return m68020_get_sp(); }
+void m68ec020_set_sp(unsigned val) { m68020_set_sp(val); }
+unsigned m68ec020_get_reg(int regnum) { return m68020_get_reg(regnum); }
+void m68ec020_set_reg(int regnum, unsigned val) { m68020_set_reg(regnum,val); }
+void m68ec020_set_nmi_line(int state) { m68020_set_nmi_line(state); }
+void m68ec020_set_irq_line(int irqline, int state)  { m68020_set_irq_line(irqline,state); }
+void m68ec020_set_irq_callback(int (*callback)(int irqline))  { m68020_set_irq_callback(callback); }
+
+const char *m68ec020_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "68EC020";
+	}
+	return m68000_info(context,regnum);
+}
+
+unsigned m68ec020_dasm(char *buffer, unsigned pc)
+{
+	change_pc24bew(pc);
+#ifdef MAME_DEBUG
+	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68EC020);
+#else
+	sprintf(buffer, "$%04X", cpu_readop16(pc) );
+	return 2;
+#endif
+}
+
+#endif
+
+#endif // A68K2

@@ -4,6 +4,10 @@
 #include "m68000.h"
 #include "state.h"
 
+/* global access */
+struct m68k_memory_interface m68k_memory_intf;
+
+#ifndef A68K0
 
 /****************************************************************************
  * 24-bit address, 16-bit data memory interface
@@ -38,17 +42,20 @@ static const struct m68k_memory_interface interface_a24_d16 =
 	writelong_a24_d16,
 	changepc_a24_d16
 };
-	
+
+#endif // A68K0
 
 /****************************************************************************
  * 24-bit address, 32-bit data memory interface
  ****************************************************************************/
 
+#ifndef A68K2
+
 /* potentially misaligned 16-bit reads with a 32-bit data bus (and 24-bit address bus) */
 static data16_t readword_a24_d32(offs_t address)
 {
 	data16_t result;
-	
+
 	if (!(address & 1))
 		return cpu_readmem24bedw_word(address);
 	result = cpu_readmem24bedw(address) << 8;
@@ -71,7 +78,7 @@ static void writeword_a24_d32(offs_t address, data16_t data)
 static data32_t readlong_a24_d32(offs_t address)
 {
 	data32_t result;
-	
+
 	if (!(address & 3))
 		return cpu_readmem24bedw_dword(address);
 	else if (!(address & 1))
@@ -130,7 +137,7 @@ static const struct m68k_memory_interface interface_a24_d32 =
 static data16_t readword_a32_d32(offs_t address)
 {
 	data16_t result;
-	
+
 	if (!(address & 1))
 		return cpu_readmem32bedw_word(address);
 	result = cpu_readmem32bedw(address) << 8;
@@ -153,7 +160,7 @@ static void writeword_a32_d32(offs_t address, data16_t data)
 static data32_t readlong_a32_d32(offs_t address)
 {
 	data32_t result;
-	
+
 	if (!(address & 3))
 		return cpu_readmem32bedw_dword(address);
 	else if (!(address & 1))
@@ -203,13 +210,13 @@ static const struct m68k_memory_interface interface_a32_d32 =
 	changepc_a32_d32
 };
 
-/* global access */
-struct m68k_memory_interface m68k_memory_intf;
-
+#endif // A68K2
 
 /****************************************************************************
  * 68000 section
  ****************************************************************************/
+
+#ifndef A68K0
 
 static UINT8 m68000_reg_layout[] = {
 	M68K_PC, M68K_ISP, -1,
@@ -804,9 +811,14 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 
 #endif /* HAS_M68010 */
 
+#endif // A68K0
+
 /****************************************************************************
  * M680EC20 section
  ****************************************************************************/
+
+#ifndef A68K2
+
 #if HAS_M68EC020
 
 static UINT8 m68ec020_reg_layout[] = {
@@ -1427,3 +1439,5 @@ unsigned m68020_dasm(char *buffer, unsigned pc)
 #endif
 }
 #endif /* HAS_M68020 */
+
+#endif // A68K2

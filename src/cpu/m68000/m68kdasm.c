@@ -3,20 +3,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -224,9 +224,11 @@ static char* g_cpcc[64] =
 /* ======================================================================== */
 
 #define LIMIT_CPU_TYPES(ALLOWED_CPU_TYPES)	\
-	if(!g_cpu_type & ALLOWED_CPU_TYPES)		\
-		d68000_illegal()
-
+	if(!(g_cpu_type & ALLOWED_CPU_TYPES))	\
+	{										\
+		d68000_illegal();					\
+		return;								\
+	}
 
 #define read_imm_8()  (m68k_read_disassembler_16(((g_cpu_pc+=2)-2)&g_address_mask)&0xff)
 #define read_imm_16() m68k_read_disassembler_16(((g_cpu_pc+=2)-2)&g_address_mask)
@@ -269,7 +271,9 @@ static char* make_signed_hex_str_8(uint val)
 
 	val &= 0xff;
 
-	if(val & 0x80)
+	if(val == 0x80)
+		sprintf(str, "-$80");
+	else if(val & 0x80)
 		sprintf(str, "-$%x", (0-val) & 0x7f);
 	else
 		sprintf(str, "$%x", val & 0x7f);
@@ -283,7 +287,9 @@ static char* make_signed_hex_str_16(uint val)
 
 	val &= 0xffff;
 
-	if(val & 0x8000)
+	if(val == 0x8000)
+		sprintf(str, "-$8000");
+	else if(val & 0x8000)
 		sprintf(str, "-$%x", (0-val) & 0x7fff);
 	else
 		sprintf(str, "$%x", val & 0x7fff);
@@ -297,7 +303,9 @@ static char* make_signed_hex_str_32(uint val)
 
 	val &= 0xffffffff;
 
-	if(val & 0x80000000)
+	if(val == 0x80000000)
+		sprintf(str, "-$80000000");
+	else if(val & 0x80000000)
 		sprintf(str, "-$%x", (0-val) & 0x7fffffff);
 	else
 		sprintf(str, "$%x", val & 0x7fffffff);
@@ -345,7 +353,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
 	uint preindex;
 	uint postindex;
 	uint comma = 0;
-	uint temp_value = 0;
+	uint temp_value;
 
 	/* Switch buffers so we don't clobber on a double-call to this function */
 	mode = mode == b1 ? b2 : b1;
@@ -1312,7 +1320,6 @@ static void d68020_cmpi_pcix_8(void)
 static void d68000_cmpi_16(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
 	str = get_imm_str_s16();
 	sprintf(g_dasm_str, "cmpi.w  %s, %s", str, get_ea_mode_str_16(g_cpu_ir));
 }
@@ -1336,7 +1343,6 @@ static void d68020_cmpi_pcix_16(void)
 static void d68000_cmpi_32(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
 	str = get_imm_str_s32();
 	sprintf(g_dasm_str, "cmpi.l  %s, %s", str, get_ea_mode_str_32(g_cpu_ir));
 }

@@ -109,10 +109,6 @@ void neogeo_vh_stop(void)
 	if (neogeo_vidram16)
 		free (neogeo_vidram16);
 	neogeo_vidram16 = NULL;
-
-	if (neogeo_ram16)
-		free (neogeo_ram16);
-	neogeo_ram16 = NULL;
 }
 
 static int common_vh_start(void)
@@ -518,17 +514,6 @@ READ16_HANDLER( neogeo_vidram16_modulo_r )
 }
 
 
-/* Two routines to enable videoram to be read in debugger */
-READ16_HANDLER( mish_vid16_r )
-{
-	return neogeo_vidram16[offset];
-}
-
-WRITE16_HANDLER( mish_vid16_w )
-{
-	COMBINE_DATA(&neogeo_vidram16[offset]);
-}
-
 WRITE16_HANDLER( neo_board_fix_16_w )
 {
 	fix_bank = 1;
@@ -593,7 +578,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 	}
 
 	{
-		const unsigned short *paldata;	/* ASG 980209 */
+		const UINT32 *paldata;	/* ASG 980209 */
 		paldata = &gfx->colortable[gfx->color_granularity * color];
 		if (flipx)	/* X flip */
 		{
@@ -778,7 +763,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 	}
 
 	{
-		const unsigned short *paldata;	/* ASG 980209 */
+		const UINT32 *paldata;	/* ASG 980209 */
 		paldata = &gfx->colortable[gfx->color_granularity * color];
 		if (flipx)	/* X flip */
 		{

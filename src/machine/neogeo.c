@@ -49,7 +49,7 @@ void neogeo_init_machine(void)
 	res = src & 0x3;
 
 	/* Console/arcade mode */
-	if (src & 0x04)
+//	if (src & 0x04)
 		res |= 0x8000;
 
 	/* write the ID in the system BIOS ROM */
@@ -95,10 +95,6 @@ void init_neogeo(void)
 		logerror("using memory region %d for Delta T samples\n",REGION_SOUND1);
 		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND1;
 	}
-
-	/* Allocate ram banks */
-	neogeo_ram16 = malloc (0x10000);
-	cpu_setbank(1, neogeo_ram16);
 
 	/* Set the biosbank */
 	cpu_setbank(3, memory_region(REGION_USER1));
@@ -292,13 +288,13 @@ static void neogeo_custom_memory(void)
 			 !strcmp(Machine->gamedrv->name,"kof96") ||
 			 !strcmp(Machine->gamedrv->name,"kof97") ||
 			 !strcmp(Machine->gamedrv->name,"kof98") ||
-			 !strcmp(Machine->gamedrv->name,"kof99") ||
+			 !strcmp(Machine->gamedrv->name,"kof99p") ||
 			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
 			 !strcmp(Machine->gamedrv->name,"lastbld2") ||
 			 !strcmp(Machine->gamedrv->name,"rbff2") ||
 			 !strcmp(Machine->gamedrv->name,"mslug2") ||
-			 !strcmp(Machine->gamedrv->name,"garou"))
+			 !strcmp(Machine->gamedrv->name,"garoup"))
 		sram_protection_hack = 0x100 >> 1;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))

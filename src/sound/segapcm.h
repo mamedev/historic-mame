@@ -22,6 +22,9 @@ enum
 	LR_PAN = 2
 };
 
+#define  SEGAPCM_INIT            (1<<0)
+#define  SEGAPCM_PLAY            (1<<1)
+#define  SEGAPCM_WRITE_CHANGE    (1<<2)
 
 typedef struct segapcm
 {

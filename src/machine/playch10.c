@@ -210,8 +210,8 @@ READ_HANDLER( pc10_in1_r )
 		int trigger = readinputport( 3 );
 		int x = readinputport( 5 );
 		int y = readinputport( 6 );
-		int pix, color_base;
-		UINT16 *pens = Machine->pens;
+		UINT32 pix, color_base;
+		UINT32 *pens = Machine->pens;
 
 		/* no sprite hit (yet) */
 		ret |= 0x08;
@@ -743,11 +743,11 @@ void init_pcgboard( void )
 
 /**********************************************************************************/
 
-/* i Board games (Captain Sky Hawk) */
+/* i Board games (Captain Sky Hawk, Solar Jetman) */
 
 static WRITE_HANDLER( iboard_rom_switch_w )
 {
-	int bank = data & 3;
+	int bank = data & 7;
 
 	if ( data & 0x10 )
 		ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
@@ -765,6 +765,31 @@ void init_pciboard( void )
 
 	/* Roms are banked at $8000 to $bfff */
 	install_mem_write_handler( 1, 0x8000, 0xffff, iboard_rom_switch_w );
+
+	/* common init */
+	init_playch10();
+}
+
+/**********************************************************************************/
+
+/* H Board games (PinBot) */
+
+void init_pchboard( void )
+{
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
+
+	/* Roms are banked at $8000 to $bfff */
+	install_mem_write_handler( 1, 0x8000, 0xffff, gboard_rom_switch_w );
+
+	/* extra ram at $6000-$7fff */
+	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_RAM );
+	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_RAM );
+
+	gboard_banks[0] = 0x1e;
+	gboard_banks[1] = 0x1f;
+	gboard_scanline_counter = 0;
+	gboard_scanline_latch = 0;
 
 	/* common init */
 	init_playch10();

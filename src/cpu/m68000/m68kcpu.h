@@ -4,20 +4,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -388,10 +388,14 @@
 #endif
 
 
-#if !M68K_SEPARATE_READ_IMM
+#if !M68K_SEPARATE_READS
 #define m68k_read_immediate_16(A) m68ki_read_program_16(A)
 #define m68k_read_immediate_32(A) m68ki_read_program_32(A)
-#endif /* M68K_SEPARATE_READ_IMM */
+
+#define m68k_read_pcrelative_8(A) m68ki_read_program_8(A)
+#define m68k_read_pcrelative_16(A) m68ki_read_program_16(A)
+#define m68k_read_pcrelative_32(A) m68ki_read_program_32(A)
+#endif /* M68K_SEPARATE_READS */
 
 
 /* Enable or disable callback functions */
@@ -720,6 +724,11 @@
 /* map read immediate 8 to read immediate 16 */
 #define m68ki_read_imm_8() MASK_OUT_ABOVE_8(m68ki_read_imm_16())
 
+/* Map PC-relative reads */
+#define m68ki_read_pcrel_8(A) m68k_read_pcrelative_8(A)
+#define m68ki_read_pcrel_16(A) m68k_read_pcrelative_16(A)
+#define m68ki_read_pcrel_32(A) m68k_read_pcrelative_32(A)
+
 /* Read from the program space */
 #define m68ki_read_program_8(A) 	m68ki_read_8_fc(A, FLAG_S | FUNCTION_CODE_USER_PROGRAM)
 #define m68ki_read_program_16(A) 	m68ki_read_16_fc(A, FLAG_S | FUNCTION_CODE_USER_PROGRAM)
@@ -768,8 +777,6 @@ typedef struct
 	uint sr_mask;      /* Implemented status register bits */
 
 	/* Clocks required for instructions / exceptions */
-	uint8* cyc_instruction;
-	uint8* cyc_exception;
 	uint cyc_bcc_notake_b;
 	uint cyc_bcc_notake_w;
 	uint cyc_dbcc_f_noexp;
@@ -779,6 +786,8 @@ typedef struct
 	uint cyc_movem_l;
 	uint cyc_shift;
 	uint cyc_reset;
+	uint8* cyc_instruction;
+	uint8* cyc_exception;
 
 	/* Callbacks to host */
 	int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
@@ -1200,12 +1209,12 @@ INLINE uint OPER_AW_32(void)    {uint ea = EA_AW_32();    return m68ki_read_32(e
 INLINE uint OPER_AL_8(void)     {uint ea = EA_AL_8();     return m68ki_read_8(ea); }
 INLINE uint OPER_AL_16(void)    {uint ea = EA_AL_16();    return m68ki_read_16(ea);}
 INLINE uint OPER_AL_32(void)    {uint ea = EA_AL_32();    return m68ki_read_32(ea);}
-INLINE uint OPER_PCDI_8(void)   {uint ea = EA_PCDI_8();   return m68ki_read_8(ea); }
-INLINE uint OPER_PCDI_16(void)  {uint ea = EA_PCDI_16();  return m68ki_read_16(ea);}
-INLINE uint OPER_PCDI_32(void)  {uint ea = EA_PCDI_32();  return m68ki_read_32(ea);}
-INLINE uint OPER_PCIX_8(void)   {uint ea = EA_PCIX_8();   return m68ki_read_8(ea); }
-INLINE uint OPER_PCIX_16(void)  {uint ea = EA_PCIX_16();  return m68ki_read_16(ea);}
-INLINE uint OPER_PCIX_32(void)  {uint ea = EA_PCIX_32();  return m68ki_read_32(ea);}
+INLINE uint OPER_PCDI_8(void)   {uint ea = EA_PCDI_8();   return m68ki_read_pcrel_8(ea); }
+INLINE uint OPER_PCDI_16(void)  {uint ea = EA_PCDI_16();  return m68ki_read_pcrel_16(ea);}
+INLINE uint OPER_PCDI_32(void)  {uint ea = EA_PCDI_32();  return m68ki_read_pcrel_32(ea);}
+INLINE uint OPER_PCIX_8(void)   {uint ea = EA_PCIX_8();   return m68ki_read_pcrel_8(ea); }
+INLINE uint OPER_PCIX_16(void)  {uint ea = EA_PCIX_16();  return m68ki_read_pcrel_16(ea);}
+INLINE uint OPER_PCIX_32(void)  {uint ea = EA_PCIX_32();  return m68ki_read_pcrel_32(ea);}
 
 
 
@@ -1395,6 +1404,12 @@ INLINE void m68ki_stack_frame_3word(uint pc, uint sr)
  */
 INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector)
 {
+	/* Stack a 3-word frame if we are 68000 */
+	if(CPU_TYPE == CPU_TYPE_000)
+	{
+		m68ki_stack_frame_3word(pc, sr);
+		return;
+	}
 	m68ki_push_16(vector<<2);
 	m68ki_push_32(pc);
 	m68ki_push_16(sr);
@@ -1441,7 +1456,7 @@ INLINE void m68ki_stack_frame_buserr(uint pc, uint sr, uint address, uint write,
 /* Format 8 stack frame (68010).
  * 68010 only.  This is the 29 word bus/address error frame.
  */
-INLINE void m68ki_stack_frame_1000(uint pc, uint sr, uint vector)
+void m68ki_stack_frame_1000(uint pc, uint sr, uint vector)
 {
 	/* VERSION
 	 * NUMBER
@@ -1495,7 +1510,7 @@ INLINE void m68ki_stack_frame_1000(uint pc, uint sr, uint vector)
  * if the error happens at an instruction boundary.
  * PC stacked is address of next instruction.
  */
-INLINE void m68ki_stack_frame_1010(uint sr, uint vector, uint pc)
+void m68ki_stack_frame_1010(uint sr, uint vector, uint pc)
 {
 	/* INTERNAL REGISTER */
 	m68ki_push_16(0);
@@ -1542,7 +1557,7 @@ INLINE void m68ki_stack_frame_1010(uint sr, uint vector, uint pc)
  * if the error happens during instruction execution.
  * PC stacked is address of instruction in progress.
  */
-INLINE void m68ki_stack_frame_1011(uint sr, uint vector, uint pc)
+void m68ki_stack_frame_1011(uint sr, uint vector, uint pc)
 {
 	/* INTERNAL REGISTERS (18 words) */
 	m68ki_push_32(0);
@@ -1617,19 +1632,10 @@ INLINE void m68ki_exception_trap(uint vector)
 {
 	uint sr = m68ki_init_exception();
 
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-			m68ki_stack_frame_0000(REG_PC, sr, vector);
-			break;
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0010(sr, vector);
-	}
+	if(CPU_TYPE_IS_010_LESS(CPU_TYPE))
+		m68ki_stack_frame_0000(REG_PC, sr, vector);
+	else
+		m68ki_stack_frame_0010(sr, vector);
 
 	m68ki_jump_vector(vector);
 
@@ -1641,19 +1647,7 @@ INLINE void m68ki_exception_trap(uint vector)
 INLINE void m68ki_exception_trapN(uint vector)
 {
 	uint sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC, sr, vector);
-	}
-
+	m68ki_stack_frame_0000(REG_PC, sr, vector);
 	m68ki_jump_vector(vector);
 
 	/* Use up some clock cycles */
@@ -1665,19 +1659,10 @@ INLINE void m68ki_exception_trace(void)
 {
 	uint sr = m68ki_init_exception();
 
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_TRACE);
-			break;
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0010(sr, EXCEPTION_TRACE);
-	}
+	if(CPU_TYPE_IS_010_LESS(CPU_TYPE))
+		m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_TRACE);
+	else
+		m68ki_stack_frame_0010(sr, EXCEPTION_TRACE);
 
 	m68ki_jump_vector(EXCEPTION_TRACE);
 
@@ -1692,19 +1677,7 @@ INLINE void m68ki_exception_trace(void)
 INLINE void m68ki_exception_privilege_violation(void)
 {
 	uint sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_PRIVILEGE_VIOLATION);
-	}
-
+	m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_PRIVILEGE_VIOLATION);
 	m68ki_jump_vector(EXCEPTION_PRIVILEGE_VIOLATION);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1722,19 +1695,7 @@ INLINE void m68ki_exception_1010(void)
 #endif
 
 	sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC-2, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1010);
-	}
-
+	m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1010);
 	m68ki_jump_vector(EXCEPTION_1010);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1753,19 +1714,7 @@ INLINE void m68ki_exception_1111(void)
 #endif
 
 	sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC-2, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1111);
-	}
-
+	m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1111);
 	m68ki_jump_vector(EXCEPTION_1111);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1782,19 +1731,7 @@ INLINE void m68ki_exception_illegal(void)
 				 m68ki_disassemble_quick(ADDRESS_68K(REG_PPC))));
 
 	sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_ILLEGAL_INSTRUCTION);
-	}
-
+	m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_ILLEGAL_INSTRUCTION);
 	m68ki_jump_vector(EXCEPTION_ILLEGAL_INSTRUCTION);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1805,19 +1742,7 @@ INLINE void m68ki_exception_illegal(void)
 INLINE void m68ki_exception_format_error(void)
 {
 	uint sr = m68ki_init_exception();
-
-	switch(CPU_TYPE)
-	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_FORMAT_ERROR);
-	}
-
+	m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_FORMAT_ERROR);
 	m68ki_jump_vector(EXCEPTION_FORMAT_ERROR);
 
 	/* Use up some clock cycles and undo the instruction's cycles */
@@ -1830,8 +1755,9 @@ INLINE void m68ki_exception_address_error(void)
 	/* Not emulated yet */
 }
 
+
 /* Service an interrupt request and start exception processing */
-INLINE void m68ki_exception_interrupt(uint int_level)
+void m68ki_exception_interrupt(uint int_level)
 {
 	uint vector;
 	uint sr;
@@ -1848,24 +1774,17 @@ INLINE void m68ki_exception_interrupt(uint int_level)
 	vector = m68ki_int_ack(int_level);
 
 	/* Get the interrupt vector */
-	if(vector > 255)
+	if(vector == M68K_INT_ACK_AUTOVECTOR)
+		/* Use the autovectors.  This is the most commonly used implementation */
+		vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
+	else if(vector == M68K_INT_ACK_SPURIOUS)
+		/* Called if no devices respond to the interrupt acknowledge */
+		vector = EXCEPTION_SPURIOUS_INTERRUPT;
+	else if(vector > 255)
 	{
-		switch(vector)
-		{
-			case M68K_INT_ACK_AUTOVECTOR:
-				/* Use the autovectors.  This is the most commonly used implementation */
-				vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
-				break;
-			case M68K_INT_ACK_SPURIOUS:
-				/* Called if no devices respond to the interrupt acknowledge */
-				vector = EXCEPTION_SPURIOUS_INTERRUPT;
-				break;
-			default:
-				/* Invalid vector */
-				M68K_DO_LOG_EMU((M68K_LOG_FILEHANDLE "%s at %08x: Interrupt acknowledge returned invalid vector $%x\n",
-						 m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PC), vector));
-				return;
-		}
+		M68K_DO_LOG_EMU((M68K_LOG_FILEHANDLE "%s at %08x: Interrupt acknowledge returned invalid vector $%x\n",
+				 m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PC), vector));
+		return;
 	}
 
 	/* Start exception processing */
@@ -1882,25 +1801,13 @@ INLINE void m68ki_exception_interrupt(uint int_level)
 		new_pc = m68ki_read_data_32((EXCEPTION_UNINITIALIZED_INTERRUPT<<2) + REG_VBR);
 
 	/* Generate a stack frame */
-	switch(CPU_TYPE)
+	m68ki_stack_frame_0000(REG_PC, sr, vector);
+	if(FLAG_M && CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
-		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
-			break;
-		case CPU_TYPE_010:
-			m68ki_stack_frame_0000(REG_PC, sr, vector);
-			break;
-		case CPU_TYPE_EC020:
-		case CPU_TYPE_020:
-		default:
-			m68ki_stack_frame_0000(REG_PC, sr, vector);
-			if(FLAG_M)
-			{
-				/* Create throwaway frame */
-				m68ki_set_sm_flag(FLAG_S);	/* clear M */
-				sr |= 0x2000; /* Same as SR in master stack frame except S is forced high */
-				m68ki_stack_frame_0001(REG_PC, sr, vector);
-			}
+		/* Create throwaway frame */
+		m68ki_set_sm_flag(FLAG_S);	/* clear M */
+		sr |= 0x2000; /* Same as SR in master stack frame except S is forced high */
+		m68ki_stack_frame_0001(REG_PC, sr, vector);
 	}
 
 	m68ki_jump(new_pc);

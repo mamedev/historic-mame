@@ -849,7 +849,6 @@ void toaplan1_fillbgmask(struct osd_bitmap *dest_bmp, struct osd_bitmap *source_
 			}
 		}
 	}
-
 	else
 	{
 		int ex = sx+source_bmp->width;
@@ -879,7 +878,7 @@ void toaplan1_fillbgmask(struct osd_bitmap *dest_bmp, struct osd_bitmap *source_
 			for( y=sy; y<ey; y++ )
 			{
 				unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-				unsigned char *source = source_bmp->line[y];
+				unsigned short *source = (unsigned short *)source_bmp->line[y];
 				int x;
 
 				for( x=sx; x<ex; x++ )
@@ -1204,4 +1203,3 @@ void samesame_eof_callback(void)
 	memcpy(toaplan1_buffered_spritesizeram16, toaplan1_spritesizeram16, TOAPLAN1_SPRITESIZERAM16_SIZE);
 	cpu_set_irq_line(0, MC68000_IRQ_2, HOLD_LINE);  /* Frame done */
 }
-

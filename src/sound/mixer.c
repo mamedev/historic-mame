@@ -7,11 +7,33 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "filter.h"
+
 #include <math.h>
+#include <limits.h>
+#include <assert.h>
 
+/***************************************************************************/
+/* Options */
 
-/* enable this to turn off clipping (helpful to find cases where we max out */
-#define DISABLE_CLIPPING		0
+/* Define it to enable the check of the flag options.use_filter as condition for the filter use */
+#define MIXER_USE_OPTION_FILTER
+
+/* Undefine it to turn off clipping (helpful to find cases where we max out */
+#define MIXER_USE_CLIPPING
+
+/* Define it to enable the logerror output */
+/* #define MIXER_USE_LOGERROR */
+
+/***************************************************************************/
+/* Config */
+
+/* Internal log */
+#ifdef MIXER_USE_LOGERROR
+#define mixererror(a) logerror a
+#else
+#define mixererror(a) do { } while (0)
+#endif
 
 /* accumulators have ACCUMULATOR_SAMPLES samples (must be a power of 2) */
 #define ACCUMULATOR_SAMPLES		8192
@@ -21,71 +43,595 @@
 #define FRACTION_BITS			16
 #define FRACTION_MASK			((1 << FRACTION_BITS) - 1)
 
+/***************************************************************************/
+/* Static data */
 
 static int mixer_sound_enabled;
-
 
 /* holds all the data for the a mixer channel */
 struct mixer_channel_data
 {
-	char		name[40];
+	char name[40];
 
 	/* current volume, gain and pan */
-	INT32           left_volume;
-	INT32           right_volume;
-	INT32		gain;
-	INT32		pan;
+	int left_volume;
+	int right_volume;
+	int gain;
+	int pan;
 
 	/* mixing levels */
-	UINT8		mixing_level;
-	UINT8		default_mixing_level;
-	UINT8		config_mixing_level;
-	UINT8		config_default_mixing_level;
+	unsigned mixing_level;
+	unsigned default_mixing_level;
+	unsigned config_mixing_level;
+	unsigned config_default_mixing_level;
 
 	/* current playback positions */
-	UINT32		input_frac;
-	UINT32		samples_available;
-	UINT32		frequency;
-	UINT32		step_size;
+	unsigned samples_available;
+
+	/* resample */
+	int frac; /* resample fixed point state (used if filter is not active) */
+	int pivot; /* resample brehesnam state (used if filter is active) */
+	int step; /* fixed point increment */
+	unsigned from_frequency; /* source frequency */
+	unsigned to_frequency; /* destination frequency */
+	filter* filter; /* filter used, ==0 if none */
+	filter_state* left; /* state of the filter for the left/mono channel */
+	filter_state* right; /* state of the filter for the right channel */
+	int is_reset_requested; /* state reset requested */
 
 	/* state of non-streamed playback */
-	UINT8		is_stream;
-	UINT8		is_playing;
-	UINT8		is_looping;
-	UINT8		is_16bit;
-	void *		data_start;
-	void *		data_end;
-	void *		data_current;
+	int is_stream;
+	int is_playing;
+	int is_looping;
+	int is_16bit;
+	void* data_start;
+	void* data_end;
+	void* data_current;
 };
-
-
 
 /* channel data */
 static struct mixer_channel_data mixer_channel[MIXER_MAX_CHANNELS];
-static UINT8 config_mixing_level[MIXER_MAX_CHANNELS];
-static UINT8 config_default_mixing_level[MIXER_MAX_CHANNELS];
-static UINT8 first_free_channel = 0;
-static UINT8 config_invalid;
-static UINT8 is_stereo;
+static unsigned config_mixing_level[MIXER_MAX_CHANNELS];
+static unsigned config_default_mixing_level[MIXER_MAX_CHANNELS];
+static int first_free_channel = 0;
+static int is_config_invalid;
+static int is_stereo;
 
 /* 32-bit accumulators */
-static UINT32 accum_base;
-static INT32 left_accum[ACCUMULATOR_SAMPLES];
-static INT32 right_accum[ACCUMULATOR_SAMPLES];
+static unsigned accum_base;
+static int left_accum[ACCUMULATOR_SAMPLES];
+static int right_accum[ACCUMULATOR_SAMPLES];
 
 /* 16-bit mix buffers */
-static INT16 mix_buffer[ACCUMULATOR_SAMPLES*2];	/* *2 for stereo */
+static INT16 mix_buffer[ACCUMULATOR_SAMPLES*2]; /* *2 for stereo */
 
 /* global sample tracking */
-static UINT32 samples_this_frame;
+static unsigned samples_this_frame;
 
+/***************************************************************************
+	mixer_channel_resample
+***************************************************************************/
 
+/* Window size of the FIR filter in samples (must be odd) */
+/* Greather values are more precise, less values are faster. */
+#define FILTER_WIDTH 31
 
-/* function prototypes */
-static void mix_sample_8(struct mixer_channel_data *channel, int samples_to_generate);
-static void mix_sample_16(struct mixer_channel_data *channel, int samples_to_generate);
+/* The number of samples that need to be played to flush the filter state */
+/* For the FIR filters it's equal to the filter width */
+#define FILTER_FLUSH FILTER_WIDTH
 
+/* Setup the resample information */
+static void mixer_channel_resample_set(struct mixer_channel_data *channel, int freq, int restart)
+{
+	unsigned to_frequency;
+	unsigned from_frequency;
 
+	mixererror(("Mixer:mixer_channel_resample_set(%s,%d,%d)\n",channel->name,freq,restart));
+
+	if (restart)
+	{
+		mixererror(("\tpivot=0\n"));
+		channel->pivot = 0;
+		channel->frac = 0;
+	}
+
+	from_frequency = freq;
+	to_frequency = Machine->sample_rate;
+
+	/* only if the filter change */
+	if (from_frequency != channel->from_frequency || to_frequency != channel->to_frequency)
+	{
+		/* delete the previous filter */
+		if (channel->filter)
+		{
+			filter_free(channel->filter);
+			channel->filter = 0;
+		}
+
+		/* make a new filter */
+#ifdef MIXER_USE_OPTION_FILTER
+		if (options.use_filter)
+#endif
+		if (from_frequency && to_frequency && from_frequency != to_frequency)
+		{
+			double cut;
+
+			if (from_frequency < to_frequency)
+				/* upsampling */
+				cut = (double)from_frequency / to_frequency / 2;
+			else {
+				/* downsampling */
+				cut = (double)to_frequency / from_frequency / 2;
+			}
+
+			channel->filter = filter_lp_fir_alloc(cut, FILTER_WIDTH);
+
+			mixererror(("\tfilter from %d Hz, to %d Hz, cut %f\n",from_frequency,to_frequency,cut));
+		}
+	}
+
+	channel->from_frequency = from_frequency;
+	channel->to_frequency = to_frequency;
+	channel->step = (double)from_frequency * (1 << FRACTION_BITS) / to_frequency;
+
+	/* reset the filter state */
+	if (channel->filter && channel->is_reset_requested)
+	{
+		mixererror(("\tstate clear\n"));
+		channel->is_reset_requested = 0;
+		filter_state_reset(channel->filter,channel->left);
+		filter_state_reset(channel->filter,channel->right);
+	}
+}
+
+/* Resample a channel
+	channel		channel info
+	state		filter state
+	volume		volume (0-255)
+	dst		destination vector
+	dst_len		max number of destination samples
+	src		source vector, (updated at the exit)
+	src_len		max number of source samples
+*/
+static unsigned mixer_channel_resample_16(struct mixer_channel_data* channel, filter_state* state, int volume, int* dst, unsigned dst_len, INT16** psrc, unsigned src_len)
+{
+	unsigned dst_base = (accum_base + channel->samples_available) & ACCUMULATOR_MASK;
+	unsigned dst_pos = dst_base;
+
+	INT16* src = *psrc;
+
+	assert( dst_len <= ACCUMULATOR_MASK );
+
+	if (!channel->filter)
+	{
+		if (channel->from_frequency == channel->to_frequency)
+		{
+			/* copy */
+			unsigned len;
+			INT16* src_end;
+			if (src_len > dst_len)
+				len = dst_len;
+			else
+				len = src_len;
+
+#ifdef X86_ASM /* this is very hardware dependant */
+			/* optimized version (a small but measurable speedup) */
+			while (len) {
+				unsigned run;
+				int* rundst;
+
+				run = ACCUMULATOR_MASK + 1 - dst_pos;
+				if (run > len)
+					run = len;
+				len -= run;
+
+				src_end = src + (run & 3);
+				while (src != src_end) {
+					dst[dst_pos] += (*src * volume) >> 8;
+					dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+					++src;
+				}
+
+				rundst = dst + dst_pos;
+				src_end = src + (run & ~3);
+				dst_pos = (dst_pos + (run & ~3)) & ACCUMULATOR_MASK;
+				while (src != src_end) {
+					rundst[0] += (src[0] * volume) >> 8;
+					rundst[1] += (src[1] * volume) >> 8;
+					rundst[2] += (src[2] * volume) >> 8;
+					rundst[3] += (src[3] * volume) >> 8;
+					rundst += 4;
+					src += 4;
+				}
+			}
+#else
+			/* reference version */
+			src_end = src + len;
+			while (src != src_end)
+			{
+				dst[dst_pos] += (*src * volume) >> 8;
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				++src;
+			}
+#endif
+		} else {
+			/* end address */
+			INT16* src_end = src + src_len;
+			unsigned dst_pos_end = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+
+			int step = channel->step;
+			int frac = channel->frac;
+			src += frac >> FRACTION_BITS;
+			frac &= FRACTION_MASK;
+
+			while (src < src_end && dst_pos != dst_pos_end)
+			{
+				dst[dst_pos] += (*src * volume) >> 8;
+				frac += step;
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				src += frac >> FRACTION_BITS;
+				frac &= FRACTION_MASK;
+			}
+
+			/* adjust the end if it's too big */
+			if (src > src_end) {
+				frac += (src - src_end) << FRACTION_BITS;
+				src = src_end;
+			}
+
+			channel->frac = frac;
+		}
+	} else if (!channel->from_frequency) {
+		dst_pos = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+	} else {
+		int pivot = channel->pivot;
+
+		/* end address */
+		INT16* src_end = src + src_len;
+		unsigned dst_pos_end = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+
+		/* volume */
+		filter_real v = volume;
+
+		if (channel->from_frequency < channel->to_frequency)
+		{
+			/* upsampling */
+			while (src != src_end && dst_pos != dst_pos_end)
+			{
+				/* source */
+				filter_insert(channel->filter,state,*src * v / 256.0);
+				pivot += channel->from_frequency;
+				if (pivot > 0)
+				{
+					pivot -= channel->to_frequency;
+					++src;
+				}
+				/* dest */
+				dst[dst_pos] += filter_compute(channel->filter,state);
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+			}
+		} else {
+			/* downsampling */
+			while (src != src_end && dst_pos != dst_pos_end)
+			{
+				/* source */
+				filter_insert(channel->filter,state,*src * v / 256.0);
+				pivot -= channel->to_frequency;
+				++src;
+				/* dest */
+				if (pivot < 0)
+				{
+					pivot += channel->from_frequency;
+					dst[dst_pos] += filter_compute(channel->filter,state);
+					dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				}
+			}
+		}
+
+		channel->pivot = pivot;
+	}
+
+	*psrc = src;
+
+	return (dst_pos - dst_base) & ACCUMULATOR_MASK;
+}
+
+static unsigned mixer_channel_resample_8(struct mixer_channel_data *channel, filter_state* state, int volume, int* dst, unsigned dst_len, INT8** psrc, unsigned src_len)
+{
+	unsigned dst_base = (accum_base + channel->samples_available) & ACCUMULATOR_MASK;
+	unsigned dst_pos = dst_base;
+
+	INT8* src = *psrc;
+
+	assert( dst_len <= ACCUMULATOR_MASK );
+
+	if (!channel->filter)
+	{
+		if (channel->from_frequency == channel->to_frequency)
+		{
+			/* copy */
+			unsigned len;
+			INT8* src_end;
+			if (src_len > dst_len)
+				len = dst_len;
+			else
+				len = src_len;
+
+			src_end = src + len;
+			while (src != src_end)
+			{
+				dst[dst_pos] += *src * volume;
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				++src;
+			}
+		} else {
+			/* end address */
+			INT8* src_end = src + src_len;
+			unsigned dst_pos_end = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+
+			int step = channel->step;
+			int frac = channel->frac;
+			src += frac >> FRACTION_BITS;
+			frac &= FRACTION_MASK;
+
+			while (src < src_end && dst_pos != dst_pos_end)
+			{
+				dst[dst_pos] += *src * volume;
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				frac += step;
+				src += frac >> FRACTION_BITS;
+				frac &= FRACTION_MASK;
+			}
+
+			/* adjust the end if it's too big */
+			if (src > src_end) {
+				frac += (src - src_end) << FRACTION_BITS;
+				src = src_end;
+			}
+
+			channel->frac = frac;
+		}
+	} else if (!channel->from_frequency) {
+		dst_pos = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+	} else {
+		int pivot = channel->pivot;
+
+		/* end address */
+		INT8* src_end = src + src_len;
+		unsigned dst_pos_end = (dst_pos + dst_len) & ACCUMULATOR_MASK;
+
+		/* volume */
+		filter_real v = volume;
+
+		if (channel->from_frequency < channel->to_frequency)
+		{
+			/* upsampling */
+			while (src != src_end && dst_pos != dst_pos_end)
+			{
+				/* source */
+				filter_insert(channel->filter,state,*src * v);
+				pivot += channel->from_frequency;
+				if (pivot > 0)
+				{
+					pivot -= channel->to_frequency;
+					++src;
+				}
+				/* dest */
+				dst[dst_pos] += filter_compute(channel->filter,state);
+				dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+			}
+		} else {
+			/* downsampling */
+			while (src != src_end && dst_pos != dst_pos_end)
+			{
+				/* source */
+				filter_insert(channel->filter,state,*src * v);
+				pivot -= channel->to_frequency;
+				++src;
+				/* dest */
+				if (pivot < 0)
+				{
+					pivot += channel->from_frequency;
+					dst[dst_pos] += filter_compute(channel->filter,state);
+					dst_pos = (dst_pos + 1) & ACCUMULATOR_MASK;
+				}
+			}
+		}
+
+		channel->pivot = pivot;
+	}
+
+	*psrc = src;
+
+	return (dst_pos - dst_base) & ACCUMULATOR_MASK;
+}
+
+/* Mix a 8 bit channel */
+static unsigned mixer_channel_resample_8_pan(struct mixer_channel_data *channel, int* volume, unsigned dst_len, INT8** src, unsigned src_len)
+{
+	unsigned count;
+
+	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
+		count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+	} else if (channel->pan == MIXER_PAN_RIGHT) {
+		count = mixer_channel_resample_8(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	} else {
+		/* save */
+		unsigned save_pivot = channel->pivot;
+		unsigned save_frac = channel->frac;
+		INT8* save_src = *src;
+		count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+		/* restore */
+		channel->pivot = save_pivot;
+		channel->frac = save_frac;
+		*src = save_src;
+		mixer_channel_resample_8(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	}
+
+	channel->samples_available += count;
+	return count;
+}
+
+/* Mix a 16 bit channel */
+static unsigned mixer_channel_resample_16_pan(struct mixer_channel_data *channel, int* volume, unsigned dst_len, INT16** src, unsigned src_len)
+{
+	unsigned count;
+
+	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
+		count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+	} else if (channel->pan == MIXER_PAN_RIGHT) {
+		count = mixer_channel_resample_16(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	} else {
+		/* save */
+		unsigned save_pivot = channel->pivot;
+		unsigned save_frac = channel->frac;
+		INT16* save_src = *src;
+		count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+		/* restore */
+		channel->pivot = save_pivot;
+		channel->frac = save_frac;
+		*src = save_src;
+		mixer_channel_resample_16(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	}
+
+	channel->samples_available += count;
+	return count;
+}
+
+/***************************************************************************
+	mix_sample_8
+***************************************************************************/
+
+void mix_sample_8(struct mixer_channel_data *channel, int samples_to_generate)
+{
+	INT8 *source, *source_end;
+	int mixing_volume[2];
+
+	/* compute the overall mixing volume */
+	if (mixer_sound_enabled)
+	{
+		mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+		mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	} else {
+		mixing_volume[0] = 0;
+		mixing_volume[1] = 0;
+	}
+	/* get the initial state */
+	source = channel->data_current;
+	source_end = channel->data_end;
+
+	/* an outer loop to handle looping samples */
+	while (samples_to_generate > 0)
+	{
+		samples_to_generate -= mixer_channel_resample_8_pan(channel,mixing_volume,samples_to_generate,&source,source_end - source);
+
+		assert( source <= source_end );
+
+		/* handle the end case */
+		if (source >= source_end)
+		{
+			/* if we're done, stop playing */
+			if (!channel->is_looping)
+			{
+				channel->is_playing = 0;
+				break;
+			}
+
+			/* if we're looping, wrap to the beginning */
+			else
+				source -= (INT8 *)source_end - (INT8 *)channel->data_start;
+		}
+	}
+
+	/* update the final positions */
+	channel->data_current = source;
+}
+
+/***************************************************************************
+	mix_sample_16
+***************************************************************************/
+
+void mix_sample_16(struct mixer_channel_data *channel, int samples_to_generate)
+{
+	INT16 *source, *source_end;
+	int mixing_volume[2];
+
+	/* compute the overall mixing volume */
+	if (mixer_sound_enabled)
+	{
+		mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+		mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	} else {
+		mixing_volume[0] = 0;
+		mixing_volume[1] = 0;
+	}
+	/* get the initial state */
+	source = channel->data_current;
+	source_end = channel->data_end;
+
+	/* an outer loop to handle looping samples */
+	while (samples_to_generate > 0)
+	{
+		samples_to_generate -= mixer_channel_resample_16_pan(channel,mixing_volume,samples_to_generate,&source,source_end - source);
+
+		assert( source <= source_end );
+
+		/* handle the end case */
+		if (source >= source_end)
+		{
+			/* if we're done, stop playing */
+			if (!channel->is_looping)
+			{
+				channel->is_playing = 0;
+				break;
+			}
+
+			/* if we're looping, wrap to the beginning */
+			else
+				source -= (INT16 *)source_end - (INT16 *)channel->data_start;
+		}
+	}
+
+	/* update the final positions */
+	channel->data_current = source;
+}
+
+/***************************************************************************
+	mixer_flush
+***************************************************************************/
+
+/* Silence samples */
+static unsigned char silence_data[FILTER_FLUSH];
+
+/* Flush the state of the filter playing some 0 samples */
+static void mixer_flush(struct mixer_channel_data *channel)
+{
+	INT8 *source_begin, *source_end;
+	int mixing_volume[2];
+	unsigned save_available;
+
+	mixererror(("Mixer:mixer_flush(%s)\n",channel->name));
+
+	/* filter reset request */
+	channel->is_reset_requested = 1;
+
+	/* null volume */
+	mixing_volume[0] = 0;
+	mixing_volume[1] = 0;
+
+	/* null data */
+	source_begin = (INT8*)silence_data;
+	source_end = (INT8*)silence_data + FILTER_FLUSH;
+
+	/* save the number of samples availables */
+	save_available = channel->samples_available;
+
+	/* mix the silence */
+	mixer_channel_resample_8_pan(channel,mixing_volume,ACCUMULATOR_MASK,&source_begin,source_end - source_begin);
+
+	/* restore the number of samples availables */
+	channel->samples_available = save_available;
+}
 
 /***************************************************************************
 	mixer_sh_start
@@ -104,6 +650,9 @@ int mixer_sh_start(void)
 		channel->default_mixing_level 			= 0xff;
 		channel->config_mixing_level 			= config_mixing_level[i];
 		channel->config_default_mixing_level 	= config_default_mixing_level[i];
+
+		channel->left = filter_state_alloc();
+		channel->right = filter_state_alloc();
 	}
 
 	/* determine if we're playing in stereo or not */
@@ -112,8 +661,8 @@ int mixer_sh_start(void)
 
 	/* clear the accumulators */
 	accum_base = 0;
-	memset(left_accum, 0, ACCUMULATOR_SAMPLES * sizeof(INT32));
-	memset(right_accum, 0, ACCUMULATOR_SAMPLES * sizeof(INT32));
+	memset(left_accum, 0, sizeof(left_accum));
+	memset(right_accum, 0, sizeof(right_accum));
 
 	samples_this_frame = osd_start_audio_stream(is_stereo);
 
@@ -129,9 +678,19 @@ int mixer_sh_start(void)
 
 void mixer_sh_stop(void)
 {
-	osd_stop_audio_stream();
-}
+	struct mixer_channel_data *channel;
+	int i;
 
+	osd_stop_audio_stream();
+
+	for (i = 0, channel = mixer_channel; i < MIXER_MAX_CHANNELS; i++, channel++)
+	{
+		if (channel->filter)
+			filter_free(channel->filter);
+		filter_state_free(channel->left);
+		filter_state_free(channel->right);
+	}
+}
 
 /***************************************************************************
 	mixer_update_channel
@@ -149,19 +708,18 @@ void mixer_update_channel(struct mixer_channel_data *channel, int total_sample_c
 	if (samples_to_generate <= 0)
 		return;
 
-	/* if we're playing, mix in the data */
+        /* if we're playing, mix in the data */
 	if (channel->is_playing)
 	{
 		if (channel->is_16bit)
 			mix_sample_16(channel, samples_to_generate);
 		else
 			mix_sample_8(channel, samples_to_generate);
+
+		if (!channel->is_playing)
+			mixer_flush(channel);
 	}
-
-	/* just eat the rest */
-	channel->samples_available += samples_to_generate;
 }
-
 
 /***************************************************************************
 	mixer_sh_update
@@ -169,11 +727,11 @@ void mixer_update_channel(struct mixer_channel_data *channel, int total_sample_c
 
 void mixer_sh_update(void)
 {
-	struct mixer_channel_data *	channel;
-	UINT32 accum_pos = accum_base;
+	struct mixer_channel_data* channel;
+	unsigned accum_pos = accum_base;
 	INT16 *mix;
-	INT32 sample;
-	int	i;
+	int sample;
+	int i;
 
 	profiler_mark(PROFILER_MIXER);
 
@@ -197,7 +755,7 @@ void mixer_sh_update(void)
 		{
 			/* fetch and clip the sample */
 			sample = left_accum[accum_pos];
-#if !DISABLE_CLIPPING
+#ifdef MIXER_USE_CLIPPING
 			if (sample < -32768)
 				sample = -32768;
 			else if (sample > 32767)
@@ -221,7 +779,7 @@ void mixer_sh_update(void)
 		{
 			/* fetch and clip the left sample */
 			sample = left_accum[accum_pos];
-#if !DISABLE_CLIPPING
+#ifdef MIXER_USE_CLIPPING
 			if (sample < -32768)
 				sample = -32768;
 			else if (sample > 32767)
@@ -234,7 +792,7 @@ void mixer_sh_update(void)
 
 			/* fetch and clip the right sample */
 			sample = right_accum[accum_pos];
-#if !DISABLE_CLIPPING
+#ifdef MIXER_USE_CLIPPING
 			if (sample < -32768)
 				sample = -32768;
 			else if (sample > 32767)
@@ -304,7 +862,7 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 
 		/* attempt to load in the configuration data for this channel */
 		channel->mixing_level = channel->default_mixing_level;
-		if (!config_invalid)
+		if (!is_config_invalid)
 		{
 			/* if the defaults match, set the mixing level from the config */
 			if (channel->default_mixing_level == channel->config_default_mixing_level)
@@ -313,7 +871,7 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 			/* otherwise, invalidate all channels that have been created so far */
 			else
 			{
-				config_invalid = 1;
+				is_config_invalid = 1;
 				for (j = 0; j < first_free_channel + i; j++)
 					mixer_set_mixing_level(j, mixer_channel[j].default_mixing_level);
 			}
@@ -447,7 +1005,7 @@ void mixer_read_config(void *f)
 		config_default_mixing_level[i] = default_levels[i];
 		config_mixing_level[i] = mixing_levels[i];
 	}
-	config_invalid = 0;
+	is_config_invalid = 0;
 }
 
 
@@ -478,8 +1036,9 @@ void mixer_write_config(void *f)
 void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
-	UINT32 step_size, input_pos, output_pos, samples_mixed;
-	INT32 mixing_volume[2];
+	int mixing_volume[2];
+
+	mixererror(("Mixer:mixer_play_streamed_sample_16(%s,,%d,%d)\n",channel->name,len/2,freq));
 
 	/* skip if sound is off */
 	if (Machine->sample_rate == 0)
@@ -489,71 +1048,20 @@ void mixer_play_streamed_sample_16(int ch, INT16 *data, int len, int freq)
 	profiler_mark(PROFILER_MIXER);
 
 	/* compute the overall mixing volume */
-	if (mixer_sound_enabled){
-	  mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	  mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	}
-	else{
+	if (mixer_sound_enabled) {
+		mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+		mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
+	} else {
 		mixing_volume[0] = 0;
 		mixing_volume[1] = 0;
 	}
-	/* compute the step size for sample rate conversion */
-	if (freq != channel->frequency)
-	{
-		channel->frequency = freq;
-		channel->step_size = (UINT32)((double)freq * (double)(1 << FRACTION_BITS) / (double)Machine->sample_rate);
-	}
-	step_size = channel->step_size;
 
-	/* now determine where to mix it */
-	input_pos = channel->input_frac;
-	output_pos = (accum_base + channel->samples_available) & ACCUMULATOR_MASK;
+	mixer_channel_resample_set(channel, freq, 0);
 
 	/* compute the length in fractional form */
-	len = (len / 2) << FRACTION_BITS;
-	samples_mixed = 0;
+	len = len / 2; /* convert len from byte to word */
 
-	/* if we're mono or left panning, just mix to the left channel */
-	if (!is_stereo || channel->pan == MIXER_PAN_LEFT)
-	{
-		while (input_pos < len)
-		{
-			left_accum[output_pos] += (data[input_pos >> FRACTION_BITS] * mixing_volume[0]) >> 8;
-			input_pos += step_size;
-			output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-			samples_mixed++;
-		}
-	}
-
-	/* if we're right panning, just mix to the right channel */
-	else if (channel->pan == MIXER_PAN_RIGHT)
-	{
-		while (input_pos < len)
-		{
-			right_accum[output_pos] += (data[input_pos >> FRACTION_BITS] * mixing_volume[1]) >> 8;
-			input_pos += step_size;
-			output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-			samples_mixed++;
-		}
-	}
-
-	/* if we're stereo center, mix to both channels */
-	else
-	{
-		while (input_pos < len)
-		{
-			left_accum[output_pos] += (data[input_pos >> FRACTION_BITS] * mixing_volume[0]) >> 8;
-			right_accum[output_pos] +=  (data[input_pos >> FRACTION_BITS] * mixing_volume[1]) >> 8;
-
-			input_pos += step_size;
-			output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-			samples_mixed++;
-		}
-	}
-
-	/* update the final positions */
-	channel->input_frac = input_pos & FRACTION_MASK;
-	channel->samples_available += samples_mixed;
+	mixer_channel_resample_16_pan(channel,mixing_volume,ACCUMULATOR_MASK,&data,len);
 
 	profiler_mark(PROFILER_END);
 }
@@ -588,6 +1096,8 @@ void mixer_play_sample(int ch, INT8 *data, int len, int freq, int loop)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
+	mixererror(("Mixer:mixer_play_sample_8(%s,,%d,%d,%s)\n",channel->name,len,freq,loop ? "loop" : "single"));
+
 	/* skip if sound is off, or if this channel is a stream */
 	if (Machine->sample_rate == 0 || channel->is_stream)
 		return;
@@ -595,15 +1105,9 @@ void mixer_play_sample(int ch, INT8 *data, int len, int freq, int loop)
 	/* update the state of this channel */
 	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
-	/* compute the step size for sample rate conversion */
-	if (freq != channel->frequency)
-	{
-		channel->frequency = freq;
-		channel->step_size = (UINT32)((double)freq * (double)(1 << FRACTION_BITS) / (double)Machine->sample_rate);
-	}
+	mixer_channel_resample_set(channel,freq,1);
 
 	/* now determine where to mix it */
-	channel->input_frac = 0;
 	channel->data_start = data;
 	channel->data_current = data;
 	channel->data_end = (UINT8 *)data + len;
@@ -621,6 +1125,8 @@ void mixer_play_sample_16(int ch, INT16 *data, int len, int freq, int loop)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
+	mixererror(("Mixer:mixer_play_sample_16(%s,,%d,%d,%s)\n",channel->name,len/2,freq,loop ? "loop" : "single"));
+
 	/* skip if sound is off, or if this channel is a stream */
 	if (Machine->sample_rate == 0 || channel->is_stream)
 		return;
@@ -628,15 +1134,9 @@ void mixer_play_sample_16(int ch, INT16 *data, int len, int freq, int loop)
 	/* update the state of this channel */
 	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
 
-	/* compute the step size for sample rate conversion */
-	if (freq != channel->frequency)
-	{
-		channel->frequency = freq;
-		channel->step_size = (UINT32)((double)freq * (double)(1 << FRACTION_BITS) / (double)Machine->sample_rate);
-	}
+	mixer_channel_resample_set(channel,freq,1);
 
 	/* now determine where to mix it */
-	channel->input_frac = 0;
 	channel->data_start = data;
 	channel->data_current = data;
 	channel->data_end = (UINT8 *)data + len;
@@ -654,10 +1154,15 @@ void mixer_stop_sample(int ch)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
-	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
-	channel->is_playing = 0;
-}
+	mixererror(("Mixer:mixer_stop_sample(%s)\n",channel->name));
 
+	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
+
+	if (channel->is_playing) {
+		channel->is_playing = 0;
+		mixer_flush(channel);
+	}
+}
 
 /***************************************************************************
 	mixer_is_sample_playing
@@ -680,16 +1185,16 @@ void mixer_set_sample_frequency(int ch, int freq)
 {
 	struct mixer_channel_data *channel = &mixer_channel[ch];
 
-	mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
+	assert( !channel->is_stream );
 
-	/* compute the step size for sample rate conversion */
-	if (freq != channel->frequency)
-	{
-		channel->frequency = freq;
-		channel->step_size = (UINT32)((double)freq * (double)(1 << FRACTION_BITS) / (double)Machine->sample_rate);
+	if (channel->is_playing) {
+		mixererror(("Mixer:mixer_set_sample_frequency(%s,%d)\n",channel->name,freq));
+
+		mixer_update_channel(channel, sound_scalebufferpos(samples_this_frame));
+
+		mixer_channel_resample_set(channel,freq,0);
 	}
 }
-
 
 /***************************************************************************
 	mixer_sound_enable_global_w
@@ -708,200 +1213,4 @@ void mixer_sound_enable_global_w(int enable)
 
 	mixer_sound_enabled = enable;
 }
-
-
-/***************************************************************************
-	mix_sample_8
-***************************************************************************/
-
-void mix_sample_8(struct mixer_channel_data *channel, int samples_to_generate)
-{
-	UINT32 step_size, input_frac, output_pos;
-	INT8 *source, *source_end;
-	INT32 mixing_volume[2];
-
-	/* compute the overall mixing volume */
-	if (mixer_sound_enabled){
-	  mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	  mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	}
-	else{
-		mixing_volume[0] = 0;
-		mixing_volume[1] = 0;
-	}
-	/* get the initial state */
-	step_size = channel->step_size;
-	source = channel->data_current;
-	source_end = channel->data_end;
-	input_frac = channel->input_frac;
-	output_pos = (accum_base + channel->samples_available) & ACCUMULATOR_MASK;
-
-	/* an outer loop to handle looping samples */
-	while (samples_to_generate > 0)
-	{
-		/* if we're mono or left panning, just mix to the left channel */
-		if (!is_stereo || channel->pan == MIXER_PAN_LEFT)
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				left_accum[output_pos] += *source * mixing_volume[0];
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* if we're right panning, just mix to the right channel */
-		else if (channel->pan == MIXER_PAN_RIGHT)
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				right_accum[output_pos] += *source * mixing_volume[1];
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* if we're stereo center, mix to both channels */
-		else
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				left_accum[output_pos] +=  *source * mixing_volume[0];
-				right_accum[output_pos] +=  *source * mixing_volume[1];
-
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* handle the end case */
-		if (source >= source_end)
-		{
-			/* if we're done, stop playing */
-			if (!channel->is_looping)
-			{
-				channel->is_playing = 0;
-				break;
-			}
-
-			/* if we're looping, wrap to the beginning */
-			else
-				source -= (INT8 *)source_end - (INT8 *)channel->data_start;
-		}
-	}
-
-	/* update the final positions */
-	channel->input_frac = input_frac;
-	channel->data_current = source;
-}
-
-
-/***************************************************************************
-	mix_sample_16
-***************************************************************************/
-
-void mix_sample_16(struct mixer_channel_data *channel, int samples_to_generate)
-{
-	UINT32 step_size, input_frac, output_pos;
-	INT16 *source, *source_end;
-	INT32 mixing_volume[2];
-
-	/* compute the overall mixing volume */
-	if (mixer_sound_enabled){
-	  mixing_volume[0] = ((channel->left_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	  mixing_volume[1] = ((channel->right_volume * channel->mixing_level * 256) << channel->gain) / (100*100);
-	}
-	else{
-		mixing_volume[0] = 0;
-		mixing_volume[1] = 0;
-	}
-	/* get the initial state */
-	step_size = channel->step_size;
-	source = channel->data_current;
-	source_end = channel->data_end;
-	input_frac = channel->input_frac;
-	output_pos = (accum_base + channel->samples_available) & ACCUMULATOR_MASK;
-
-	/* an outer loop to handle looping samples */
-	while (samples_to_generate > 0)
-	{
-		/* if we're mono or left panning, just mix to the left channel */
-		if (!is_stereo || channel->pan == MIXER_PAN_LEFT)
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				left_accum[output_pos] += (*source * mixing_volume[0]) >> 8;
-
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* if we're right panning, just mix to the right channel */
-		else if (channel->pan == MIXER_PAN_RIGHT)
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				right_accum[output_pos] += (*source * mixing_volume[1]) >> 8;
-
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* if we're stereo center, mix to both channels */
-		else
-		{
-			while (source < source_end && samples_to_generate > 0)
-			{
-				left_accum[output_pos] += (*source * mixing_volume[0]) >> 8;
-				right_accum[output_pos] += (*source * mixing_volume[1]) >> 8;
-
-				input_frac += step_size;
-				source += input_frac >> FRACTION_BITS;
-				input_frac &= FRACTION_MASK;
-
-				output_pos = (output_pos + 1) & ACCUMULATOR_MASK;
-				samples_to_generate--;
-			}
-		}
-
-		/* handle the end case */
-		if (source >= source_end)
-		{
-			/* if we're done, stop playing */
-			if (!channel->is_looping)
-			{
-				channel->is_playing = 0;
-				break;
-			}
-
-			/* if we're looping, wrap to the beginning */
-			else
-				source -= (INT16 *)source_end - (INT16 *)channel->data_start;
-		}
-	}
-
-	/* update the final positions */
-	channel->input_frac = input_frac;
-	channel->data_current = source;
-}
-
 

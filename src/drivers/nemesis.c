@@ -2686,6 +2686,20 @@ ROM_START( citybmrj )
 	ROM_LOAD(      "787e01.1k",   0x00000, 0x80000, 0xedc34d01 )
 ROM_END
 
+ROM_START( kittenk )
+	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
+	ROM_LOAD16_BYTE( "kitten.15k",   0x000000, 0x10000, 0x8267cb2b )
+	ROM_LOAD16_BYTE( "kitten.15h",   0x000001, 0x10000, 0xeb41cfa5 )
+	ROM_LOAD16_BYTE( "712b08.15f",   0x100000, 0x20000, 0xe6d71611 )
+	ROM_LOAD16_BYTE( "712b07.15d",   0x100001, 0x20000, 0x30f75c9f )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for sound */
+	ROM_LOAD(      "712e02.4h",   0x00000, 0x08000, 0xba76f310 )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )    /* 007232 data */
+	ROM_LOAD(      "712b01.1k",   0x00000, 0x80000, 0xf65b5d95 )
+ROM_END
+
 ROM_START( nyanpani )
 	ROM_REGION( 0x140000, REGION_CPU1, 0 )    /* 64k for code */
 	ROM_LOAD16_BYTE( "712j10.15k",   0x000000, 0x10000, 0x924b27ec )
@@ -2715,5 +2729,5 @@ GAME( 1986, lifefrcj, salamand, salamand,      lifefrcj, 0, ROT0,   "Konami", "L
 GAME( 1987, blkpnthr, 0,        blkpnthr,      blkpnthr, 0, ROT0,   "Konami", "Black Panther" )
 GAME( 1987, citybomb, 0,        citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (World)" )
 GAME( 1987, citybmrj, citybomb, citybomb,      citybomb, 0, ROT270, "Konami", "City Bomber (Japan)" )
-GAME( 1988, nyanpani, 0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)" )
-
+GAME( 1988, kittenk,  0,        nyanpani,      nyanpani, 0, ROT0,   "Konami", "Kitten Kaboodle" )
+GAME( 1988, nyanpani, kittenk,  nyanpani,      nyanpani, 0, ROT0,   "Konami", "Nyan Nyan Panic (Japan)" )

@@ -658,7 +658,7 @@ static const struct MachineDriver machine_driver_xevious =
 			xevious_interrupt_3,2
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	xevious_init_machine,

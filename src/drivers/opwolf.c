@@ -59,12 +59,12 @@ void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int opwolf_gun_x,opwolf_gun_y;
 
-static READ_HANDLER( cchip_r )
+static READ16_HANDLER( cchip_r )
 {
 	return cchip_ram[offset];
 }
 
-static WRITE_HANDLER( cchip_w )
+static WRITE16_HANDLER( cchip_w )
 {
 	cchip_ram[offset] = data &0xff;
 }
@@ -136,7 +136,7 @@ static MEMORY_READ16_START( opwolf_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x0f0008, 0x0f0009, input_port_0_word_r },	/* IN0 */
 	{ 0x0f000a, 0x0f000b, input_port_1_word_r },	/* IN1 */
-	{ 0x0ff000, 0x0fffff, (mem_read16_handler)cchip_r },
+	{ 0x0ff000, 0x0fffff, cchip_r },
 	{ 0x100000, 0x107fff, MRA16_RAM },	/* RAM */
 	{ 0x200000, 0x200fff, paletteram16_word_r },
 	{ 0x380000, 0x380001, input_port_2_word_r },	/* DSW A */
@@ -151,7 +151,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( opwolf_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0ff000, 0x0fffff, (mem_write16_handler)cchip_w },
+	{ 0x0ff000, 0x0fffff, cchip_w },
 	{ 0x100000, 0x107fff, MWA16_RAM },
 	{ 0x200000, 0x200fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
 	{ 0x380000, 0x380003, rainbow_spritectrl_w },	// usually 0x4, changes when you fire
@@ -176,14 +176,14 @@ static MEMORY_READ_START( sub_z80_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8800, 0x8800, z80_input1_r },	/* read at PC=$637: poked to $c004 */
 	{ 0x9800, 0x9800, z80_input2_r },	/* read at PC=$631: poked to $c005 */
-	{ 0xc000, 0xcfff, cchip_r },	// does upper half exist ?
+	{ 0xc000, 0xcfff, MRA_RAM },	// does upper half exist ?
 MEMORY_END
 
 static MEMORY_WRITE_START( sub_z80_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x9000, 0x9000, MWA_NOP },	/* unknown write, 0 then 1 each interrupt */
 	{ 0xa000, 0xa000, MWA_NOP },	/* unknown write, once per interrupt */
-	{ 0xc000, 0xcfff, cchip_w, &cchip_ram },
+	{ 0xc000, 0xcfff, MWA_RAM, &cchip_ram },
 MEMORY_END
 
 /***************************************************************************/
@@ -581,11 +581,11 @@ ROM_START( opwolf )
 	ROM_LOAD16_BYTE( "opwlf.39",  0x20000, 0x10000, 0x216b4838 )
 	ROM_LOAD16_BYTE( "opwlf.29",  0x20001, 0x10000, 0xb71bc44c )
 
-	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "opwlf_s.10",   0x00000, 0x04000, 0x45c7ace3 )
 	ROM_CONTINUE(         0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION( 0x8000, REGION_CPU3, 0 )      /* fake Z80 from the bootleg */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )      /* fake Z80 from the bootleg */
 	ROM_LOAD( "opwlfb.09",   0x00000, 0x08000, 0xab27a3dd )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -605,11 +605,11 @@ ROM_START( opwolfb )
 	ROM_LOAD16_BYTE( "opwlfb.13",  0x20000, 0x10000, 0x61230c6e )
 	ROM_LOAD16_BYTE( "opwlfb.11",  0x20001, 0x10000, 0x342e318d )
 
-	ROM_REGION( 0x14000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "opwlfb.30",   0x00000, 0x04000, 0x0669b94c )
 	ROM_CONTINUE(         0x10000, 0x04000 ) /* banked stuff */
 
-	ROM_REGION( 0x8000, REGION_CPU3, 0 )      /* c-chip substitute Z80 */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )      /* c-chip substitute Z80 */
 	ROM_LOAD( "opwlfb.09",   0x00000, 0x08000, 0xab27a3dd )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )

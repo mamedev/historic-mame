@@ -37,7 +37,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		draw a tile filled with a single color (0-1ff)
 
 
-							[ 512? Zooming Sprites ]
+							[ 512 Zooming Sprites ]
 
 		The sprites are NOT tile based: the "tile" size can vary from
 		8 to 64 (independently for width and height) with an 8 pixel
@@ -55,7 +55,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data16_t *metro_priority;
+data16_t *metro_videoregs;
 data16_t *metro_screenctrl;
 data16_t *metro_scroll;
 data16_t *metro_tiletable;
@@ -90,6 +90,18 @@ WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w )
 
 
 						Tilemaps: Tiles Set & Window
+
+	Each entry in the Tiles Set RAM uses 2 words to specify a starting
+	tile code and a color code. This adds 16 consecutive tiles with
+	that color code to the set of available tiles.
+
+		Offset:		Bits:					Value:
+
+		0.w			fedc ---- ---- ----
+					---- ba98 7654 ----		Color Code
+					---- ---- ---- 3210		Code High Bits
+
+		2.w									Code Low Bits
 
 
 ***************************************************************************/
@@ -138,6 +150,8 @@ static struct tilemap *tilemap_0, *tilemap_1, *tilemap_2;
 
 #define WIN_NX		(0x40)
 #define WIN_NY		(0x20)
+//#define WIN_NX		(0x40+1)
+//#define WIN_NY		(0x20+1)
 
 
 
@@ -174,8 +188,10 @@ WRITE16_HANDLER( metro_vram_##_n_##_w ) \
 	if ( newdata != olddata ) \
 	{ \
 		/* Account for the window */ \
-		int col		=	(offset % BIG_NX) - (metro_window[_n_ * 2 + 1] / 8); \
-		int row		=	(offset / BIG_NY) - (metro_window[_n_ * 2 + 0] / 8); \
+		int col		=	(offset % BIG_NX) - ((metro_window[_n_ * 2 + 1] / 8) % BIG_NX); \
+		int row		=	(offset / BIG_NX) - ((metro_window[_n_ * 2 + 0] / 8) % BIG_NY); \
+		if (col < -(BIG_NX-WIN_NX))	col += (BIG_NX-WIN_NX) + WIN_NX; \
+		if (row < -(BIG_NY-WIN_NY))	row += (BIG_NY-WIN_NY) + WIN_NY; \
 		if	( (col >= 0) && (col < WIN_NX) && \
 			  (row >= 0) && (row < WIN_NY) ) \
 			tilemap_mark_tile_dirty(tilemap_##_n_, row * WIN_NX + col ); \
@@ -291,9 +307,6 @@ int metro_vh_start_14100(void)
 		tilemap_set_scroll_cols(tilemap_2,1);
 		tilemap_set_transparent_pen(tilemap_2,15);
 
-		metro_sprite_xoffs	=	0 + ((Machine->drv->screen_width == 360) ? 0x34c : 0x362);
-		metro_sprite_yoffs	=	0x190;
-
 		memset(sprite, 0, sizeof(sprite_t) * 0x10000);
 
 		return 0;
@@ -312,7 +325,7 @@ void metro_vh_stop(void)
 	}
 }
 
-const struct GameDriver driver_balcube;
+extern const struct GameDriver driver_balcube;
 
 int metro_vh_start_14220(void)
 {
@@ -352,9 +365,6 @@ int metro_vh_start_14220(void)
 		tilemap_set_scroll_cols(tilemap_2,1);
 		tilemap_set_transparent_pen(tilemap_2,15);
 
-		metro_sprite_xoffs	=	-2 + ((Machine->drv->screen_width == 360) ? 0x34c : 0x362);
-		metro_sprite_yoffs	=	0x190;
-
 		tilemap_set_scrolldx(tilemap_0, -2, 2);
 		tilemap_set_scrolldx(tilemap_1, -2, 2);
 		tilemap_set_scrolldx(tilemap_2, -2, 2);
@@ -374,6 +384,27 @@ void balcube_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 		for( pen = 0; pen < 256; pen++ )
 			colortable[0x2000 + color * 256 + pen] = (color * 16 + pen) % 0x2000;
 }
+
+
+/***************************************************************************
+
+								Video Registers
+
+
+			Offset:				Value:
+
+			0.w					Number Of Sprites To Draw
+			2.w					? $8100, $913 (bit 8 = priority)
+			4.w					Sprites Y Offset
+			6.w					Sprites X Offset
+			8.w					Sprites Color Codes Start
+			-
+			10.w				? always $24 (400x200 tilemap window ?)
+			12.w				? $fff,$ffe,$e0f
+
+
+***************************************************************************/
+
 
 
 /***************************************************************************
@@ -404,9 +435,9 @@ void balcube_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 
 ***************************************************************************/
 
-/* Draw sprites whose priority falls in the min_pri..max_pri range */
+/* Draw sprites of a given priority */
 
-void metro_draw_sprites(struct osd_bitmap *bitmap, int min_pri, int max_pri)
+void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 {
 	const int region		=	REGION_GFX1;
 
@@ -416,22 +447,19 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int min_pri, int max_pri)
 	int max_x				=	Machine->drv->screen_width;
 	int max_y				=	Machine->drv->screen_height;
 
-	data16_t *src			=	spriteram16 + (spriteram_size-8)/2;
+	int max_sprites			=	spriteram_size / 8;
+	int sprites				=	metro_videoregs[0x0/2] % max_sprites;
+
+	data16_t *src			=	spriteram16 + (sprites - 1) * (8/2);
 	data16_t *end			=	spriteram16;
 
-	min_pri = (~min_pri & 0x1f) << (16-5);
-	max_pri = (~max_pri & 0x1f) << (16-5);
+	int color_start			=	((metro_videoregs[0x8/2] & 0xf) << 4 ) + 0x100;
 
-	if (min_pri > max_pri)
-	{
-		int temp = min_pri;
-		min_pri = max_pri;
-		max_pri = temp;
-	}
+	pri = (~pri & 0x1f) << (16-5);
 
 	for ( ; src >= end; src -= 8/2 )
 	{
-		int x,y, attr,code, flipx,flipy, zoom, pri;
+		int x,y, attr,code, flipx,flipy, zoom, curr_pri;
 		unsigned char *gfxdata;
 
 		/* Exponential zoom table extracted from daitoride */
@@ -446,9 +474,8 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int min_pri, int max_pri)
 			0x078,0x070,0x068,0x060,0x058,0x050,0x048,0x040	};
 
 		x					=	src[ 0 ];
-		pri					=	x & 0xf800;
-		if ( pri == 0xf800 )					continue;
-		if ( (pri<min_pri) || (pri>max_pri) )	continue;
+		curr_pri			=	x & 0xf800;
+		if ( (curr_pri == 0xf800) || (curr_pri != pri) )	continue;
 		y					=	src[ 1 ];
 		attr				=	src[ 2 ];
 		code				=	src[ 3 ];
@@ -494,7 +521,7 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int min_pri, int max_pri)
 
 		drawgfxzoom(	bitmap,sprite[code].gfx,
 						0,
-						((attr & 0xf0)>>4) + 0x1f0,
+						((attr & 0xf0)>>4) + color_start,
 						flipx, flipy,
 						x, y,
 						&Machine->visible_area, TRANSPARENCY_PEN, 0xf,
@@ -522,8 +549,13 @@ void metro_mark_sprites_colors(void)
 	int max_x				=	Machine->visible_area.max_x;
 	int max_y				=	Machine->visible_area.max_y;
 
-	data16_t *src			=	spriteram16 + (spriteram_size-8)/2;
+	int max_sprites			=	spriteram_size / 8;
+	int sprites				=	metro_videoregs[0x0/2] % max_sprites;
+
+	data16_t *src			=	spriteram16 + (sprites - 1) * (8/2);
 	data16_t *end			=	spriteram16;
+
+	int color_start			=	((metro_videoregs[0x8/2] & 0xf) << 4 ) + 0x100;
 
 	memset(colmask, 0, sizeof(colmask));
 
@@ -537,7 +569,7 @@ void metro_mark_sprites_colors(void)
 		int n				=	( ( (attr >> 11) & 0x7 ) + 1 ) *
 								( ( (attr >>  8) & 0x7 ) + 1 );
 
-		int color			=	( (attr & 0xf0) >> 4 ) /*+ 0x1f0*/;
+		int color			=	( (attr & 0xf0) >> 4 );
 
 		if ((x & 0xf800) == 0xf800)		continue;
 
@@ -555,7 +587,7 @@ void metro_mark_sprites_colors(void)
 	for (col = 0; col < 16; col++)
 	 for (pen = 0; pen < 15; pen++)	// pen 15 is transparent
 	  if (colmask[col] & (1 << pen))
-	  {	palette_used_colors[16 * (col + 0x1f0) + pen] = PALETTE_COLOR_USED;
+	  {	palette_used_colors[16 * (col + color_start) + pen] = PALETTE_COLOR_USED;
 		count++;	}
 
 #if 0
@@ -567,17 +599,95 @@ void metro_mark_sprites_colors(void)
 /***************************************************************************
 
 
-
 								Screen Drawing
 
 
 ***************************************************************************/
 
+void metro_tilemap_draw	(struct osd_bitmap *bitmap, struct tilemap *tilemap, UINT32 flags, UINT32 priority,
+						 int sx, int sy, int wx, int wy)	// scroll & window values
+{
+#if 1
+		tilemap_set_scrollx(tilemap, 0, sx - wx);
+		tilemap_set_scrolly(tilemap, 0, sy - wy);
+		tilemap_draw(bitmap,tilemap, flags, priority);
+#else
+	int x,y,i;
+
+	/* sub tile placement */
+//	sx		=	sx - (wx & ~7) + (wx & 7);
+	sx		=	sx - wx;
+	sx		=	( (sx & 0x7fff) - (sx & 0x8000) ) % ((WIN_NX-1)*8);
+
+//	sy		=	sy - (wy & ~7) + (wy & 7);
+	sy		=	sy - wy;
+	sy		=	( (sy & 0x7fff) - (sy & 0x8000) ) % ((WIN_NY-1)*8);
+
+	/* splitting point */
+	x		=	(WIN_NX-1)*8 - sx;
+
+	y		=	(WIN_NY-1)*8 - sy;
+
+	for ( i = 0; i < 4 ; i++ )
+	{
+		struct rectangle clip;
+
+		tilemap_set_scrollx(tilemap, 0, sx + ((i & 1) ? -x : 0));
+		tilemap_set_scrolly(tilemap, 0, sy + ((i & 2) ? -y : 0));
+
+		clip.min_x	=	x - ((i & 1) ? 0 : (WIN_NX-1)*8);
+		clip.min_y	=	y - ((i & 2) ? 0 : (WIN_NY-1)*8);
+
+		clip.max_x	=	clip.min_x + (WIN_NX-1)*8 - 1;
+		clip.max_y	=	clip.min_y + (WIN_NY-1)*8 - 1;
+
+		if (clip.min_x > Machine->visible_area.max_x)	continue;
+		if (clip.min_y > Machine->visible_area.max_y)	continue;
+
+		if (clip.max_x < Machine->visible_area.min_x)	continue;
+		if (clip.max_y < Machine->visible_area.min_y)	continue;
+
+		if (clip.min_x < Machine->visible_area.min_x)	clip.min_x = Machine->visible_area.min_x;
+		if (clip.max_x > Machine->visible_area.max_x)	clip.max_x = Machine->visible_area.max_x;
+
+		if (clip.min_y < Machine->visible_area.min_y)	clip.min_y = Machine->visible_area.min_y;
+		if (clip.max_y > Machine->visible_area.max_y)	clip.max_y = Machine->visible_area.max_y;
+
+		/* The clip region's width must be a multiple of 8!
+		   This fact renderes the function useless, as far as
+		   we are concerned! */
+		tilemap_set_clip(tilemap, &clip);
+		tilemap_draw(bitmap,tilemap, flags, priority);
+	}
+#endif
+
+}
+
+
 void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = -1;
+	int i,layers_ctrl = -1;
 
 	data16_t screenctrl = *metro_screenctrl;
+
+	/* Scrolling */
+	int sy0		=	metro_scroll[0x0/2];
+	int sx0		=	metro_scroll[0x2/2];
+	int sy1		=	metro_scroll[0x4/2];
+	int sx1		=	metro_scroll[0x6/2];
+	int sy2		=	metro_scroll[0x8/2];
+	int sx2		=	metro_scroll[0xa/2];
+
+	int wy0		=	metro_window[0x0/2];
+	int wx0		=	metro_window[0x2/2];
+	int wy1		=	metro_window[0x4/2];
+	int wx1		=	metro_window[0x6/2];
+	int wy2		=	metro_window[0x8/2];
+	int wx2		=	metro_window[0xa/2];
+
+
+	metro_sprite_xoffs	=	metro_videoregs[0x06/2] - Machine->drv->screen_width  / 2;
+	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen_height / 2;
 
 
 	/* Black background color ? */
@@ -586,15 +696,15 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/*	Screen Control Register:
 
-		f--- ---- ---- ----
-		-edc ---- ---- ----		Layer 0,1,2 Enable
+		f--- ---- ---- ----		?
+		-edc ---- ---- ----		? Layer 0,1,2 Enable
 		---- ba98 7654 32--
-		---- ---- ---- --1-		Blank Screen
+		---- ---- ---- --1-		? Blank Screen
 		---- ---- ---- ---0		Flip  Screen	*/
 	if (screenctrl & 2)	return;
-	tilemap_set_enable(tilemap_0, screenctrl & 0x0100);
-	tilemap_set_enable(tilemap_1, screenctrl & 0x0200);
-	tilemap_set_enable(tilemap_2, screenctrl & 0x0400);
+//	tilemap_set_enable(tilemap_0, screenctrl & 0x0400);
+//	tilemap_set_enable(tilemap_1, screenctrl & 0x0200);
+//	tilemap_set_enable(tilemap_2, screenctrl & 0x0100);
 	flip_screen_set(screenctrl & 1);
 
 
@@ -603,14 +713,6 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (tmap_dirty & 2)	{ tilemap_mark_all_tiles_dirty(tilemap_1); tmap_dirty &= ~2; }
 	if (tmap_dirty & 4)	{ tilemap_mark_all_tiles_dirty(tilemap_2); tmap_dirty &= ~4; }
 
-
-	/* Scrolling */
-	tilemap_set_scrolly(tilemap_0, 0, metro_scroll[0x0/2] - metro_window[0x0/2] );
-	tilemap_set_scrollx(tilemap_0, 0, metro_scroll[0x2/2] - metro_window[0x2/2] );
-	tilemap_set_scrolly(tilemap_1, 0, metro_scroll[0x4/2] - metro_window[0x4/2] );
-	tilemap_set_scrollx(tilemap_1, 0, metro_scroll[0x6/2] - metro_window[0x6/2] );
-	tilemap_set_scrolly(tilemap_2, 0, metro_scroll[0x8/2] - metro_window[0x8/2] );
-	tilemap_set_scrollx(tilemap_2, 0, metro_scroll[0xa/2] - metro_window[0xa/2] );
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))
@@ -622,16 +724,16 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
-#if 0
+#if 1
 {	char buf[1024];
-	sprintf(buf, "%X %X %X %X %X %X %X %X\n"
-				 "%X %X %X %X %X %X\n"
-				 "%X %X %X %X %X %X",
+	sprintf(buf, "r %X %X %X %X %X %X %X %X\n"
+				 "s %X %X %X %X %X %X\n"
+				 "w %X %X %X %X %X %X",
 
-				metro_priority[0x00/2], metro_priority[0x02/2],
-				metro_priority[0x04/2], metro_priority[0x06/2],
-				metro_priority[0x08/2],
-				metro_priority[0x10/2], metro_priority[0x12/2],
+				metro_videoregs[0x00/2], metro_videoregs[0x02/2],
+				metro_videoregs[0x04/2], metro_videoregs[0x06/2],
+				metro_videoregs[0x08/2],
+				metro_videoregs[0x10/2], metro_videoregs[0x12/2],
 				*metro_screenctrl,
 
 				metro_scroll[0x02/2], metro_scroll[0x00/2],
@@ -655,16 +757,18 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	palette_recalc();
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_2, 0, 0);
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_1, 0, 0);
-	if (metro_priority[0x02/2] & 0x0100)	// tilemap 0 over sprites
+	if (layers_ctrl & 1)	metro_tilemap_draw(bitmap,tilemap_2, 0, 0, sx2, sy2, wx2, wy2);
+	if (layers_ctrl & 2)	metro_tilemap_draw(bitmap,tilemap_1, 0, 0, sx1, sy1, wx1, wy1);
+	if (metro_videoregs[0x02/2] & 0x0100)	// tilemap 0 over sprites
 	{
-		if (layers_ctrl & 8)	metro_draw_sprites(bitmap, 0x00, 0x1f);
-		if (layers_ctrl & 4)	tilemap_draw(bitmap,tilemap_0, 0, 0);
+		if (layers_ctrl & 8)
+			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
+		if (layers_ctrl & 4)	metro_tilemap_draw(bitmap,tilemap_0, 0, 0, sx0, sy0, wx0, wy0);
 	}
 	else
 	{
-		if (layers_ctrl & 4)	tilemap_draw(bitmap,tilemap_0, 0, 0);
-		if (layers_ctrl & 8)	metro_draw_sprites(bitmap, 0x00, 0x1f);
+		if (layers_ctrl & 4)	metro_tilemap_draw(bitmap,tilemap_0, 0, 0, sx0, sy0, wx0, wy0);
+		if (layers_ctrl & 8)
+			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
 	}
 }

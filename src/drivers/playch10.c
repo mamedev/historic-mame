@@ -78,9 +78,12 @@ Working games:
 	- Gradius							(GR) - A board
 	- Hogan's Alley						(HA) - Standard board
 	- Kung Fu							(SX) - Standard board
+	- Mario Bros.						(MA) - Standard board
 	- Mario Open Golf					(UG) - K board
 	- Mega Man 3						(XU) - G board
+	- Metroid							(MT) - D board
 	- Ninja Gaiden						(NG) - F board
+	- Ninja Gaiden 2					(NW) - G board
 	- Ninja Gaiden 3					(3N) - G board
 	- Nintendo World Cup				(XZ) - G board
 	- Power Blade						(7T) - G board
@@ -90,13 +93,16 @@ Working games:
 	- Rescue Rangers					(RU) - F board
 	- Rockin' Kats						(7A) - G board
 	- Rush N' Attack					(RA) - B board
+	- Solar Jetman						(LJ) - i board
 	- Super C							(UE) - G board
 	- Super Mario Bros					(SM) - Standard board
 	- Super Mario Bros 2				(MW) - G board
 	- Super Mario Bros 3				(UM) - G board
+	- Tecmo Bowl						(TW) - F board
 	- Teenage Mutant Ninja Turtles		(U2) - F board
 	- Teenage Mutant Ninja Turtles 2	(2N) - G board
 	- Tennis							(TE) - Standard board
+	- Trojan							(TJ) - B board
 	- The Goonies						(GN) - C board
 	- Volley Ball						(VB) - Standard board
 	- Wild Gunman						(WG) - Standard board
@@ -112,15 +118,11 @@ Non working games due to mapper/nes emulation issues:
 
 Non working games due to missing roms:
 --------------------------------------
-	- Tecmo Bowl						(TW) - F board
+	- ShatterHand						(??) - ? board
 
 Non working games due to missing RP5H01 data:
 ---------------------------------------------
-	- Metroid							(MT) - D board
-	- Ninja Gaiden 2					(??) - ? board
 	- Pinbot							(io) - H board
-	- Solar Jetman						(LJ) - i board
-	- Trojan							(??) - ? board
 
 ****************************************************************************
 
@@ -137,7 +139,7 @@ The 6 first DSWB (I-N) are used to set timer speed :
 When bit 7 of DSWB (P) is ON, you're in 'Freeplay' mode with 9999 units of time ...
 However, this is effective ONLY if 7 other DSWB (I-O) are OFF !
 
-I add the 32 combinaisons for coinage.
+I add the 32 combinations for coinage.
 
 As I don't know what is the default value for timer speed, and I don't want to write
 the 64 combinaisons, I only put some values ... Feel free to add the other ones ...
@@ -310,19 +312,20 @@ extern void playch10_vh_convert_color_prom(unsigned char *palette, unsigned shor
 extern void playch10_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
 
 /* from machine */
-void pc10_init_machine( void );
-void init_playch10( void );	/* standard games */
-void init_pc_gun( void );	/* gun games */
-void init_pc_hrz( void );	/* horizontal games */
-void init_pcaboard( void );	/* a-board games */
-void init_pcbboard( void );	/* b-board games */
-void init_pccboard( void );	/* c-board games */
-void init_pcdboard( void );	/* d-board games */
-void init_pceboard( void );	/* e-board games */
-void init_pcfboard( void );	/* f-board games */
-void init_pcgboard( void );	/* g-board games */
-void init_pciboard( void );	/* i-board games */
-void init_pckboard( void );	/* k-board games */
+extern void pc10_init_machine( void );
+extern void init_playch10( void );	/* standard games */
+extern void init_pc_gun( void );	/* gun games */
+extern void init_pc_hrz( void );	/* horizontal games */
+extern void init_pcaboard( void );	/* a-board games */
+extern void init_pcbboard( void );	/* b-board games */
+extern void init_pccboard( void );	/* c-board games */
+extern void init_pcdboard( void );	/* d-board games */
+extern void init_pceboard( void );	/* e-board games */
+extern void init_pcfboard( void );	/* f-board games */
+extern void init_pcgboard( void );	/* g-board games */
+extern void init_pchboard( void );	/* h-board games */
+extern void init_pciboard( void );	/* i-board games */
+extern void init_pckboard( void );	/* k-board games */
 READ_HANDLER( pc10_port_0_r );
 READ_HANDLER( pc10_instrom_r );
 READ_HANDLER( pc10_prot_r );
@@ -860,6 +863,21 @@ ROM_START( pc_vball )	/* Volley Ball */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf701863f )
 ROM_END
 
+ROM_START( pc_mario )	/* Mario Bros. */
+	BIOS_CPU
+	ROM_LOAD( "ma-u3",   0x0c000, 0x2000, 0xa426c5c0 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_LOAD( "ma-u1",   0x0c000, 0x4000, 0x75f6a9f3 )
+
+    ROM_REGION( 0x02000, REGION_GFX2, 0 )	/* cart gfx */
+    ROM_LOAD( "ma-u2",	 0x00000, 0x2000, 0x10f77435 )
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x79006635 )
+ROM_END
+
 /* Gun Games */
 ROM_START( pc_duckh )	/* Duck Hunt */
 	BIOS_CPU
@@ -1029,6 +1047,21 @@ ROM_START( pc_rygar )	/* Rygar */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xb69309ab )
 ROM_END
 
+ROM_START( pc_trjan )	/* Trojan */
+	BIOS_CPU
+	ROM_LOAD( "tj-u4",    0x0c000, 0x2000, 0x10835e1d ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_LOAD( "tj-u1",    0x10000, 0x10000, 0x335c0e62 ) /* banked */
+    ROM_LOAD( "tj-u2",    0x20000, 0x10000, 0xc0ddc79e ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x14df772f )
+ROM_END
+
 /* C-Board Games */
 ROM_START( pc_goons )	/* The Goonies */
 	BIOS_CPU
@@ -1059,6 +1092,21 @@ ROM_START( pc_radrc )	/* Rad Racer */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x17c880f9 )
+ROM_END
+
+ROM_START( pc_mtoid )	/* Metroid */
+	BIOS_CPU
+	ROM_LOAD( "mt-u5",   0x0c000, 0x2000, 0x3dc25049 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_LOAD( "mt-u1",   0x10000, 0x10000, 0x4006ff10 )
+    ROM_LOAD( "mt-u2",   0x20000, 0x10000, 0xace6bbd8 ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xefab54c9 )
 ROM_END
 
 /* E-Board Games */
@@ -1223,6 +1271,21 @@ ROM_START( pc_bstar )	/* Baseball Stars */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x3e871350 )
+ROM_END
+
+ROM_START( pc_tbowl )	/* Tecmo Bowl */
+	BIOS_CPU
+	ROM_LOAD( "tw-u2",   0x0c000, 0x2000, 0x162aa313 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
+	ROM_LOAD( "tw-u4",   0x10000, 0x20000, 0x4f0c69be )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
+	ROM_LOAD( "tw-u1",   0x00000, 0x20000, 0x44b078ef )
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x18b2d1d3 )
 ROM_END
 
 /* G-Board Games */
@@ -1403,20 +1466,69 @@ ROM_START( pc_smb2 )	/* Super Mario Bros 2 */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x372f4e84 )
 ROM_END
 
+ROM_START( pc_ngai2 )	/* Ninja Gaiden 2 */
+	BIOS_CPU
+	ROM_LOAD( "nw-u3",   0x0c000, 0x2000, 0xbc178cde ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
+	ROM_LOAD( "nw-u5",   0x10000, 0x20000, 0xc43da8e2 )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* cart gfx */
+    ROM_LOAD( "nw-u1",    0x00000, 0x20000, 0x8e0c8bb0 )
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x682dffd1 )
+ROM_END
+
+/* H-Board Games */
+ROM_START( pc_pinbt )	/* PinBot */
+	BIOS_CPU
+	ROM_LOAD( "io-u3",   0x0c000, 0x2000, 0x15ba8a2e ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
+	ROM_LOAD( "io-u5",   0x10000, 0x20000, 0x9f75b83b )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )	/* banked */
+
+    ROM_REGION( 0x010000, REGION_GFX2, 0 )	/* cart gfx */
+    ROM_LOAD( "io-u1",    0x00000, 0x10000, 0x9089fc24 )
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x0 )
+ROM_END
+
 /* i-Board Games */
 ROM_START( pc_cshwk )	/* Captain Sky Hawk */
 	BIOS_CPU
 	ROM_LOAD( "yw-u3",   0x0c000, 0x2000, 0x9d988209 ) /* extra bios code for this game */
     BIOS_GFX
 
-    ROM_REGION( 0x30000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
     ROM_LOAD( "yw-u1",   0x10000, 0x20000, 0xa5e0208a ) /* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
 
 	/* No cart gfx - uses vram */
 
     ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xeb1c794f )
 ROM_END
+
+ROM_START( pc_sjetm )	/* Solar Jetman */
+	BIOS_CPU
+	ROM_LOAD( "lj-u3",   0x0c000, 0x2000, 0x273d8e75 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2, 0 )  /* 64k for code */
+    ROM_LOAD( "lj-u1",   0x10000, 0x40000, 0x8111ba08 ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1, 0 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf3ae712a )
+ROM_END
+
 
 /* K-Board Games */
 ROM_START( pc_moglf )	/* Mario Open Golf */
@@ -1458,6 +1570,7 @@ GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "P
 
 /* Standard Games */
 GAME( 1983, pc_tenis,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Tennis" )
+GAME( 1983, pc_mario,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Mario Bros." )
 GAME( 1984, pc_bball,playch10, playch10, playch10, playch10, ROT0, "Nintendo of America", "PlayChoice-10: Baseball" )
 GAME( 1984, pc_bfght,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Balloon Fight" )
 GAME( 1984, pc_ebike,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
@@ -1478,6 +1591,7 @@ GAMEX(1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nint
 
 /* B-Board Games */
 GAME( 1986, pc_pwrst,playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
+GAME( 1986, pc_trjan,playch10, playch10, playch10, pcbboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Trojan" )
 GAME( 1987, pc_cvnia,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Castlevania" )
 GAME( 1987, pc_dbldr,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Double Dribble" )
 GAME( 1987, pc_rnatk,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Rush N' Attack" )
@@ -1488,6 +1602,7 @@ GAME( 1988, pc_cntra,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nint
 GAME( 1986, pc_goons,playch10, playch10, playch10, pccboard, ROT0, "Konami", "PlayChoice-10: The Goonies" )
 
 /* D-Board Games */
+GAME( 1986, pc_mtoid,playch10, playch10, playch10, pcdboard, ROT0, "Nintendo", "PlayChoice-10: Metroid" )
 GAME( 1987, pc_radrc,playch10, playch10, playch10, pcdboard, ROT0, "Square", "PlayChoice-10: Rad Racer" )
 
 /* E-Board Games */
@@ -1497,12 +1612,13 @@ GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "
 GAME( 1987, pc_rcpam,playch10, playch10, playch10, pcfboard, ROT0, "Rare", "PlayChoice-10: RC Pro Am" )
 GAME( 1989, pc_ngaid,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden" )
 GAME( 1989, pc_tmnt ,playch10, playch10, playch10, pcfboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage Mutant Ninja Turtles" )
+GAME( 1989, pc_ftqst,playch10, playch10, playch10, pcfboard, ROT0, "Sunsoft (Nintendo of America license)", "PlayChoice-10: Uncle Fester's Quest - The Addams Family" )
+GAME( 1989, pc_bstar,playch10, playch10, playch10, pcfboard, ROT0, "SNK (Nintendo of America license)", "PlayChoice-10: Baseball Stars" )
+GAME( 1989, pc_tbowl,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Tecmo Bowl" )
 GAME( 1990, pc_drmro,playch10, playch10, playch10, pcfboard, ROT0, "Nintendo", "PlayChoice-10: Dr Mario" )
 GAME( 1990, pc_ynoid,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Yo! Noid" )
-GAME( 19??, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos?", "PlayChoice-10: Double Dragon" )
-GAME( 1989, pc_ftqst,playch10, playch10, playch10, pcfboard, ROT0, "Sunsoft (Nintendo of America license)", "PlayChoice-10: Fester's Quest" )
 GAME( 19??, pc_rrngr,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Rescue Rangers" )
-GAME( 1989, pc_bstar,playch10, playch10, playch10, pcfboard, ROT0, "SNK (Nintendo of America license)", "PlayChoice-10: Baseball Stars" )
+GAME( 19??, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos?", "PlayChoice-10: Double Dragon" )
 
 /* G-Board Games */
 GAMEX(1985, pc_gntlt,playch10, playch10, playch10, pcgboard, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet", GAME_NOT_WORKING )
@@ -1513,12 +1629,17 @@ GAMEX(1990, pc_radr2,playch10, playch10, playch10, pcgboard, ROT0, "Square (Nint
 GAME( 1990, pc_suprc,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Super C" )
 GAME( 1990, pc_tmnt2,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage mutant Ninja Turtles 2" )
 GAME( 1990, pc_wcup ,playch10, playch10, playch10, pcgboard, ROT0, "Technos (Nintendo license)", "PlayChoice-10: Nintendo World Cup" )
+GAME( 1990, pc_ngai2,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 2" )
 GAME( 1991, pc_ngai3,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 3" )
 GAME( 1991, pc_pwbld,playch10, playch10, playch10, pcgboard, ROT0, "Taito (Nintendo of America license)", "PlayChoice-10: Power Blade" )
 GAME( 1991, pc_rkats,playch10, playch10, playch10, pcgboard, ROT0, "Atlus (Nintendo of America license)", "PlayChoice-10: Rockin' Kats" )
 
+/* H-Board Games */
+GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_NOT_WORKING )
+
 /* i-Board Games */
 GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )
+GAME( 1990, pc_sjetm,playch10, playch10, playch10, pciboard, ROT0, "Rare", "PlayChoice-10: Solar Jetman" )
 
 /* K-Board Games */
 GAME( 1991, pc_moglf,playch10, playch10, playch10, pckboard, ROT0, "Nintendo", "PlayChoice-10: Mario Open Golf" )

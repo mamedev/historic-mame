@@ -28,13 +28,13 @@ static int sound_fix=0;
 static UINT8 rp2c04001_colortable[] =
 {
 	0x35, 0xff, 0x16, 0x22, 0x1c, 0xff, 0xff, 0x15, /* 0x00 - 0x07 */
-	0xff, 0x00, 0x27, 0x05, 0x04, 0xff, 0x08, 0x30, /* 0x08 - 0x0f */
+	0xff, 0x00, 0x27, 0x05, 0x04, 0x27, 0x08, 0x30, /* 0x08 - 0x0f */
 	0x21, 0xff, 0xff, 0x29, 0x3c, 0xff, 0x36, 0x12, /* 0x10 - 0x17 */
 	0xff, 0x2b, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, /* 0x18 - 0x1f */
 	0xff, 0x31, 0xff, 0x2a, 0x2c, 0x0c, 0xff, 0xff, /* 0x20 - 0x27 */
 	0xff, 0x07, 0x34, 0x06, 0x13, 0xff, 0x26, 0x0f, /* 0x28 - 0x2f */
 	0xff, 0x19, 0x10, 0x0a, 0xff, 0xff, 0xff, 0x17, /* 0x30 - 0x37 */
-	0xff, 0x11, 0xff, 0xff, 0xff, 0x25, 0x18, 0xff  /* 0x38 - 0x3f */
+	0xff, 0x11, 0x09, 0xff, 0xff, 0x25, 0x18, 0xff  /* 0x38 - 0x3f */
 };
 
 /* RP2C04-002 */
@@ -51,29 +51,32 @@ static UINT8 rp2c04002_colortable[] =
 };
 
 /* RP2C04-003 */
+/* check 0x0f, 0x2e */
 static UINT8 rp2c04003_colortable[] =
 {
+
 	0xff, 0xff, 0xff, 0x10, 0x1a, 0x30, 0x31, 0x09, /* 0x00 - 0x07 */
-	0x01, 0x0f, 0x36, 0x08, 0x15, 0xff, 0xff, 0x3c, /* 0x08 - 0x0f */
+	0x01, 0x0f, 0x36, 0x08, 0x15, 0xff, 0xff, 0x30, /* 0x08 - 0x0f */
 	0x22, 0x1c, 0xff, 0x12, 0x19, 0x18, 0x17, 0xff, /* 0x10 - 0x17 */
 	0x00, 0xff, 0xff, 0x02, 0x16, 0x06, 0xff, 0x35, /* 0x18 - 0x1f */
-	0x23, 0xff, 0xff, 0xff, 0xff, 0x27, 0x26, 0x20, /* 0x20 - 0x27 */
-	0x29, 0xff, 0x21, 0x24, 0x11, 0xff, 0xff, 0xff, /* 0x28 - 0x2f */
-	0x2c, 0xff, 0xff, 0xff, 0x07, 0xff, 0x28, 0xff, /* 0x30 - 0x37 */
+	0x23, 0xff, 0x8b, 0xf7, 0xff, 0x27, 0x26, 0x20, /* 0x20 - 0x27 */
+	0x29, 0xff, 0x21, 0x24, 0x11, 0xff, 0xef, 0xff, /* 0x28 - 0x2f */
+	0x2c, 0xff, 0xff, 0xff, 0x07, 0xf9, 0x28, 0xff, /* 0x30 - 0x37 */
 	0x0a, 0xff, 0x32, 0x37, 0x13, 0xff, 0xff, 0x0c  /* 0x38 - 0x3f */
 };
 
 /* RP2C05-004 */
+/* check 0x03 0x1d, 0x38, 0x3b*/
 static UINT8 rp2c05004_colortable[] =
 {
-	0x18, 0xff, 0x1c, 0xff, 0xff, 0xff, 0x01, 0x17, /* 0x00 - 0x07 */
+	0x18, 0xff, 0x1c, 0x89, 0xff, 0xff, 0x01, 0x17, /* 0x00 - 0x07 */
 	0x10, 0xff, 0x2a, 0xff, 0x36, 0x37, 0x1a, 0xff, /* 0x08 - 0x0f */
 	0x25, 0xff, 0x12, 0xff, 0x0f, 0xff, 0xff, 0x26, /* 0x10 - 0x17 */
-	0xff, 0xff, 0x22, 0xff, 0xff, 0xff, 0x3a, 0x21, /* 0x18 - 0x1f */
-	0x05, 0x0a, 0x07, 0xff, 0x13, 0xff, 0x00, 0x15, /* 0x20 - 0x27 */
+	0xff, 0xff, 0x22, 0xff, 0xff, 0x0f, 0x3a, 0x21, /* 0x18 - 0x1f */
+	0x05, 0x0a, 0x07, 0xc2, 0x13, 0xff, 0x00, 0x15, /* 0x20 - 0x27 */
 	0x0c, 0xff, 0x11, 0xff, 0xff, 0x38, 0xff, 0xff, /* 0x28 - 0x2f */
-	0xff, 0xff, 0x08, 0x16, 0xff, 0xff, 0x30, 0x3c, /* 0x30 - 0x37 */
-	0xff, 0x27, 0xff, 0xff, 0x29, 0xff, 0xff, 0x09  /* 0x38 - 0x3f */
+	0xff, 0xff, 0x08, 0x45, 0xff, 0xff, 0x30, 0x3c, /* 0x30 - 0x37 */
+	0x0f, 0x27, 0xff, 0x60, 0x29, 0xff, 0xff, 0x09  /* 0x38 - 0x3f */
 };
 
 
@@ -90,8 +93,8 @@ static int remap_colors( int num, int addr, int data )
 
 		if ( newdata != 0xff )
 			data = newdata;
-		#if 0
-		//#ifdef MAME_DEBUG
+
+		#ifdef MAME_DEBUG
 		else
 			usrintf_showmessage( "Unmatched color %02x, at address %04x\n", data & 0x3f, addr );
 		#endif
@@ -115,22 +118,6 @@ WRITE_HANDLER( vsnes_in0_w )
 		input_latch[1] = readinputport( 1 );
 	}
 }
-
-READ_HANDLER( vsnes_in0_r )
-{
-
-	int ret = ( input_latch[0] ) & 1;
-
-	/* shift */
-	input_latch[0] >>= 1;
-
-	ret |= readinputport( 2 ); 				/* merge coins, etc */
-	ret |= ( readinputport( 3 ) & 3 ) << 3; /* merge 2 dipswitches */
-
-	return ret;
-
-}
-
 
 READ_HANDLER( gun_in0_r )
 {
@@ -159,6 +146,22 @@ sound_fix ++;
 
 return ret;
 
+
+}
+
+
+READ_HANDLER( vsnes_in0_r )
+{
+
+	int ret = ( input_latch[0] ) & 1;
+
+	/* shift */
+	input_latch[0] >>= 1;
+
+	ret |= readinputport( 2 ); 				/* merge coins, etc */
+	ret |= ( readinputport( 3 ) & 3 ) << 3; /* merge 2 dipswitches */
+
+	return ret;
 
 }
 
@@ -200,12 +203,12 @@ READ_HANDLER( vsnes_in0_1_r )
 
 READ_HANDLER( vsnes_in1_1_r )
 {
-	int ret = ( input_latch[1] ) & 1;
+	int ret = ( input_latch[3] ) & 1;
 
 	ret |= readinputport( 7 ) & ~3;			/* merge the rest of the dipswitches */
 
 	/* shift */
-	input_latch[2] >>= 1;
+	input_latch[3] >>= 1;
 
 	return ret;
 
@@ -336,8 +339,8 @@ static int zapstore;
 		{
 			int x = readinputport( 4 );
 			int y = readinputport( 5 );
-			int pix, color_base;
-			UINT16 *pens = Machine->pens;
+			UINT32 pix, color_base;
+			UINT32 *pens = Machine->pens;
 
 			/* get the pixel at the gun position */
 			pix = ppu2c03b_get_pixel( 0, x, y );
@@ -632,6 +635,20 @@ void init_excitebk( void )
 }
 
 
+void init_excitbkj( void )
+{
+	/* common init */
+	init_vsnes();
+
+	/* normal banking */
+	init_vsnormal();
+
+	/* now override the vidaccess callback */
+	/* we need to remap color tables */
+	/* this *is* the VS games protection, I guess */
+	remapped_colortable = rp2c05004_colortable;
+}
+
 /**********************************************************************************/
 
 /* Mach Rider */
@@ -800,6 +817,7 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 	static int last_bank = 0xff;
 	static int rbibb_command;
 
+
 	switch( offset & 0x7001 )
 	{
 		case 0x0000:
@@ -827,6 +845,8 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 						data &= 0xfe;
 						page ^= ( cmd << 1 );
 						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
+
+
 					break;
 
 					case 2: /* char banking */
@@ -835,6 +855,7 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 					case 5: /* char banking */
 						page ^= cmd + 2;
 						ppu2c03b_set_videorom_bank( 0, page, 1, data, 64 );
+
 					break;
 
 					case 6: /* program banking */
@@ -901,8 +922,8 @@ void init_rbibb( void )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x2c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
 
 	/* RBI Base ball hack */
 	install_mem_read_handler(0,0x5e00, 0x5e01, rbi_hack_r) ;
@@ -918,6 +939,73 @@ void init_rbibb( void )
 	init_vsnes();
 
 }
+
+
+static READ_HANDLER( xevious_hack_r)
+{
+
+
+return 0x05;
+
+}
+
+static READ_HANDLER( xevious_hack_r1)
+{
+
+
+
+return 0x01;
+
+}
+
+
+static READ_HANDLER( xevious_hack_r2)
+{
+
+
+
+return 0x89;
+
+}
+
+
+static READ_HANDLER( xevious_hack_r3)
+{
+
+
+
+return 0x37;
+
+}
+
+
+void init_xevious( void )
+{
+	/* We do manual banking, in case the code falls through */
+	/* Copy the initial banks */
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+
+	/* RBI Base ball hack */
+
+
+	/* MMC3 mapper at writes to $8000-$ffff */
+	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
+
+	//install_mem_read_handler(0,0x54ff,0x54ff,xevious_hack_r);
+	//install_mem_read_handler(0,0x5678,0x5678,xevious_hack_r1);
+	//install_mem_read_handler(0,0x578f,0x578f,xevious_hack_r2);
+	//install_mem_read_handler(0,0x5567,0x5567,xevious_hack_r3);
+
+	/* extra ram at $6000-$7fff */
+//	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
+//	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+
+	/* common init */
+	init_vsnes();
+	//remapped_colortable = rp2c04001_colortable;
+}
+
 
 static READ_HANDLER( tko_security_r )
 {
@@ -935,7 +1023,8 @@ static READ_HANDLER( tko_security_r )
 		return 0;
 	}
 
-	return security_data[security_counter++];
+	return security_data[(security_counter++)];
+
 }
 
 void init_tkoboxng( void )
@@ -1034,6 +1123,8 @@ void init_vsskykid( void )
 
 
 }
+
+
 
 /**********************************************************************************/
 /* Platoon rom banking */
@@ -1149,6 +1240,7 @@ void init_balonfgt(void)
 /* only differance between this and vstennis is the colors */
 
 	init_vstennis();
+
 	remapped_colortable = rp2c04003_colortable;
 }
 
@@ -1163,6 +1255,20 @@ void init_vsbball(void)
 	init_vstennis();
 
 remapped_colortable = rp2c04001_colortable;
+
+}
+
+
+/**********************************************************************/
+/* Dual Ice climr Jpn */
+
+void init_iceclmrj(void)
+{
+/* only differance between this and vstennis is the colors */
+
+	init_vstennis();
+
+remapped_colortable = rp2c05004_colortable;
 
 }
 

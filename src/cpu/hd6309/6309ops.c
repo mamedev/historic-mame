@@ -2723,47 +2723,70 @@ INLINE void muld_im( void )
 	PAIR t, q;
 
 	IMMWORD( t );
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZVC;
+	SET_NZ16(D);
 }
 
 /* $118d DIVD immediate */
 INLINE void divd_im( void )
 {
-	UINT8 t;
+	UINT8   t;
+	INT16   v;
 
 	IMMBYTE( t );
-	if ( t == 0 )
+
+	if( t != 0 )
 	{
-		DZError();
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+
+		CLR_NZVC;
+		SET_NZ8(B);
+
+		if( B & 0x01 )
+			SEC;
+
+		if ( (v > 127) || (v < -128) )
+			SEV;
 	}
 	else
 	{
-		W = (signed short) D / (signed char) t;
-		D = (signed short) D % (signed char) t;
+		hd6309_ICount -= 8;
+		DZError();
 	}
-
-	/* Warning: Set CC */
 }
 
 /* $118e DIVQ immediate */
 INLINE void divq_im( void )
 {
 	PAIR	t,q;
-	INT16	v;
+	INT32	v;
 
 	IMMWORD( t );
 	q.w.h = D;
 	q.w.l = W;
 
-	v = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
-	D = v;
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
 
-	/* Warning: Set CC */
+		CLR_NZVC;
+		SET_NZ16(W);
+
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
+	}
+	else
+		DZError();
 }
 
 #if macintosh
@@ -3011,40 +3034,72 @@ INLINE void muld_di( void )
 	PAIR	t,q;
 
 	DIRWORD(t);
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 
 	D = q.w.h;
 	W = q.w.l;
-	/* Warning: Set CC */
+	CLR_NZVC;
+	SET_NZ16(D);
 }
 
 /* $119d DIVD direct -**0- */
 INLINE void divd_di( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	DIRBYTE(t);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
 
-	/* Warning: Set CC */
+	if( t != 0 )
+	{
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+
+		CLR_NZVC;
+		SET_NZ8(B);
+
+		if( B & 0x01 )
+			SEC;
+
+		if ( (v > 127) || (v < -128) )
+			SEV;
+	}
+	else
+	{
+		hd6309_ICount -= 8;
+		DZError();
+	}
 }
 
 /* $119e DIVQ direct -**0- */
 INLINE void divq_di( void )
 {
 	PAIR	t, q;
-	INT16	v;
+	INT32	v;
 
 	q.w.h = D;
 	q.w.l = W;
 
 	DIRWORD(t);
-	v = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
-	D = v;
 
-	/* Warning: Set CC */
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
+	}
+	else
+		DZError();
 }
 
 /* $10dc LDQ direct -**0- */
@@ -3352,31 +3407,50 @@ INLINE void muld_ix( void )
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	q.d = (signed short) D * (signed short)t;
+	q.d = (INT16) D * (INT16)t;
 
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZVC;
+	SET_NZ16(D);
 }
 
 /* $11ad DIVD indexed -**0- */
 INLINE void divd_ix( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	fetch_effective_address();
 	t=RM(EAD);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
 
-	/* Warning: Set CC */
+	if( t != 0 )
+	{
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+
+		CLR_NZVC;
+		SET_NZ8(B);
+
+		if( B & 0x01 )
+			SEC;
+
+		if ( (v > 127) || (v < -128) )
+			SEV;
+	}
+	else
+	{
+		hd6309_ICount -= 8;
+		DZError();
+	}
 }
 
 /* $11ae DIVQ indexed -**0- */
 INLINE void divq_ix( void )
 {
 	UINT16	t;
+	INT32	v;
 	PAIR	q;
 
 	q.w.h = D;
@@ -3384,10 +3458,24 @@ INLINE void divq_ix( void )
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	D = (signed long) q.d / (signed short) t;
-	W = (signed long) q.d % (signed short) t;
 
-	/* Warning: Set CC */
+	if( t != 0 )
+	{
+		v = (INT32) q.d / (INT16) t;
+		D = (INT32) q.d % (INT16) t;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
+	}
+	else
+		DZError();
 }
 
 /* $10ec LDQ indexed -**0- */
@@ -3682,39 +3770,72 @@ INLINE void muld_ex( void )
 	PAIR	t, q;
 
 	EXTWORD(t);
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZVC;
+	SET_NZ16(D);
 }
 
 /* $11bd DIVD extended -**0- */
 INLINE void divd_ex( void )
 {
 	UINT8	t;
+	INT16   v;
 
 	EXTBYTE(t);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
 
-	/* Warning: Set CC */
+	if( t != 0 )
+	{
+		v = (INT16) D / (INT8) t;
+		A = (INT16) D % (INT8) t;
+		B = v;
+
+		CLR_NZVC;
+		SET_NZ8(B);
+
+		if( B & 0x01 )
+			SEC;
+
+		if ( (v > 127) || (v < -128) )
+			SEV;
+	}
+	else
+	{
+		hd6309_ICount -= 8;
+		DZError();
+	}
 }
 
 /* $11be DIVQ extended -**0- */
 INLINE void divq_ex( void )
 {
 	PAIR	t, q;
+	INT32	v;
 
 	q.w.h = D;
 	q.w.l = W;
 
 	EXTWORD(t);
-	D = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
 
-	/* Warning: Set CC */
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
+	}
+	else
+		DZError();
 }
 
 /* $10fc LDQ extended -**0- */
@@ -5421,10 +5542,10 @@ INLINE void pref11( void )
 		case 0x35: bieor(); 		break;
 		case 0x36: ldbt();			break;
 		case 0x37: stbt();			break;
-		case 0x38: tfmpp(); 		break;	/* Timing for TFM is actually 6+3n.       */
-		case 0x39: tfmmm(); 		break;	/* To avoid saving the state, I decided   */
-		case 0x3a: tfmpc(); 		break;	/* to ignore to initial 6 cycles.         */
-		case 0x3b: tfmcp(); 		break;  /* We will soon see how this fairs!       */
+		case 0x38: tfmpp(); 		break;	/* Timing for TFM is actually 6+3n.        */
+		case 0x39: tfmmm(); 		break;	/* To avoid saving the state, I decided    */
+		case 0x3a: tfmpc(); 		break;	/* to push the initial 6 cycles to the end */
+		case 0x3b: tfmcp(); 		break;  /* We will soon see how this fairs!        */
 		case 0x3c: bitmd_im();		break;
 		case 0x3d: ldmd_im();		break;
 		case 0x3f: swi3();			break;

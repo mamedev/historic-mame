@@ -246,7 +246,7 @@ static void draw_one_sprite(struct osd_bitmap *bitmap, UINT8 *sprite)
 	{
 		if (ypos >= 16 && ypos < 240)
 		{
-			UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
+			UINT32 *pens = &Machine->pens[scanline_palette[y] * 256];
 			UINT8 *old = &local_videoram[ypos * 256 + xpos];
 			int currx = xpos;
 
@@ -347,7 +347,7 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (y = 0; y < 240; y++)
 		if (scanline_dirty[y] || full_refresh)
 		{
-			UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
+			UINT32 *pens = &Machine->pens[scanline_palette[y] * 256];
 			draw_scanline8(bitmap, 0, y, 256, &local_videoram[y * 256], pens, -1);
 			scanline_dirty[y] = 0;
 		}

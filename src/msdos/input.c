@@ -452,7 +452,7 @@ void osd_joystick_start_calibration (void)
 	calibration_target = 0;
 }
 
-char *osd_joystick_calibrate_next (void)
+const char *osd_joystick_calibrate_next (void)
 {
 	while (calibration_target < num_joysticks)
 	{

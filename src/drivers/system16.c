@@ -1415,7 +1415,7 @@ static void init_aurail (void)
 
 static void init_auraila(void)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int diff = 0x40000;	/* place decrypted opcodes in a empty hole */
 
 	init_aurail();
@@ -1425,8 +1425,8 @@ static void init_auraila(void)
 	memcpy(rom+diff,rom,0x40000);
 
 	aurail_decode_data(rom,rom,0x10000);
-	aurail_decode_opcode1(rom+diff,rom+diff,0x10000);
-	aurail_decode_opcode2(rom+diff+0x10000,rom+diff+0x10000,0x10000);
+	aurail_decode_opcode1(rom+diff/2,rom+diff/2,0x10000);
+	aurail_decode_opcode2(rom+(diff+0x10000)/2,rom+(diff+0x10000)/2,0x10000);
 }
 
 /***************************************************************************/

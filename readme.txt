@@ -1,6 +1,6 @@
 
                  M.A.M.E.  -  Multiple Arcade Machine Emulator
-          Copyright (C) 1997-2000 by Nicola Salmoria and The MAME Team
+          Copyright (C) 1997-2001 by Nicola Salmoria and The MAME Team
 
 Many people have helped with this project--directly, or by releasing the source
 code for the drivers they have written. We are not trying to take credit that

@@ -2115,5 +2115,5 @@ GAME( 1986, rampage2, rampage,  rampage,  rampage,  rampage,  ROT0,  "Bally Midw
 GAME( 1986, powerdrv, 0,        powerdrv, powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive" )
 GAME( 1986, maxrpm,   0,        sarge,    maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM" )
 GAME( 1983, spyhunt,  0,        spyhunt,  spyhunt,  spyhunt,  ROT90, "Bally Midway", "Spy Hunter" )
-GAME( 1985, turbotag, 0,        turbotag, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (Prototype)" )
+GAME( 1985, turbotag, 0,        turbotag, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (prototype)" )
 GAME( 1984, crater,   0,        crater,   crater,   crater,   ORIENTATION_FLIP_X, "Bally Midway", "Crater Raider" )

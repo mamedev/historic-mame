@@ -150,6 +150,10 @@ struct MachineDriver
 /* Mish 181099:  See comments in vidhrdw/generic.c for details */
 #define VIDEO_BUFFERS_SPRITERAM 0x0100
 
+/* game wants to use a hicolor or truecolor bitmap (e.g. for alpha blending) */
+#define VIDEO_RGB_DIRECT 0x0200
+
+
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001
 
@@ -194,6 +198,7 @@ struct GameDriver
 #define	GAME_REQUIRES_16BIT			0x0100	/* cannot fit in 256 colors */
 #define GAME_NO_COCKTAIL			0x0200	/* screen flip support is missing */
 #define GAME_UNEMULATED_PROTECTION	0x0400	/* game's protection not fully emulated */
+#define GAME_IMPERFECT_GRAPHICS		0x0800	/* graphics are wrong/incomplete */
 #define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS

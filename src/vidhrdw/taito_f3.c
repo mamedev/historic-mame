@@ -174,7 +174,7 @@ Line ram memory map:
 static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static data32_t *gfx_base,*spriteram32_buffered;
 static int vram_dirty[256],pivot_dirty[2048];
-static int pivot_changed,vram_changed,scroll_kludge_y;
+static int pivot_changed,vram_changed,scroll_kludge_y,scroll_kludge_x;
 static data32_t f3_control_0[8];
 static data32_t f3_control_1[8];
 static int flipscreen;
@@ -194,6 +194,7 @@ struct F3config
 {
 	int name;
 	int extend;
+	int sx;
 	int sy;
 	int pivot;
 	int pcol;
@@ -203,37 +204,37 @@ struct F3config
 struct F3config *f3_game_config;
 static struct F3config f3_config_table[]=
 {
-	/* Name    Extend  Y Offset  Flip Pivot Pivot Col VRAM Y */
-	{ RINGRAGE,  0,     -30,         0,        0,       0    },
-	{ ARABIANM,  0,     -24,         0,        0,       0    },
-	{ RIDINGF,   1,     -24,         0,        0,       0    },
-	{ GSEEKER,   0,     -31,         0,        0,       0    },
-	{ TRSTAR,    1,       0,         0,        0,       0    },
-	{ GUNLOCK,   1,     -24,         0,        0,       0    },
-	{ TWINQIX,   1,     -24,         1,        0,       0    },
-	{ SCFINALS,  0,     -31,         1,       11,       0    },
-	{ LIGHTBR,   1,     -30,         0,        0,       0    }, //0100
-	{ KAISERKN,  0,     -30,         1,        9,       0    },
-	{ DARIUSG,   0,     -30,         0,        0,       0    },
-	{ BUBSYMPH,  1,     -30,         0,        0,       0    },
-	{ SPCINVDX,  1,     -30,         1,        1,       0    },
-	{ QTHEATER,  1,       0,         0,        0,       0    },
-	{ HTHERO95,  0,     -30,         1,        7,       0    },
-	{ SPCINV95,  0,     -30,         0,        0,       0    },
-	{ EACTION2,  1,     -23,         0,        0,       0    },
-	{ QUIZHUHU,  1,     -23,         0,        0,       0    },
-	{ PBOBBLE2,  0,       0,         0,        0,       0    },
-	{ GEKIRIDO,  0,     -24,         0,        0,       0    },
-	{ KTIGER2,   0,     -24,         0,        0,       0    },
-	{ BUBBLEM,   1,     -30,         0,       16,       0    },
-	{ CLEOPATR,  0,     -30,         0,        0,       0    },
-	{ PBOBBLE3,  0,       0,         0,        0,       0    },
-	{ ARKRETRN,  1,     -23,         0,        0,       0    },
-	{ KIRAMEKI,  0,     -30,         0,        0,       0    },
-	{ PUCHICAR,  1,     -23,         0,        0,       0    },
-	{ PBOBBLE4,  0,       0,         1,       10,       0    },
-	{ POPNPOP,   1,     -23,         0,        0,       0    }, //0300
-	{ LANDMAKR,  1,     -23,         0,        0,       0    },
+	/* Name    Extend  X Offset, Y Offset  Flip Pivot Pivot Col VRAM Y */
+	{ RINGRAGE,  0,      0,        -30,         0,        0,       0    },
+	{ ARABIANM,  0,      0,        -30,         0,        0,       0    },
+	{ RIDINGF,   1,      0,        -24,         0,        0,       0    },
+	{ GSEEKER,   0,      0,        -31,         0,        0,       0    },
+	{ TRSTAR,    1,      0,          0,         0,        0,       0    },
+	{ GUNLOCK,   1,      0,        -24,         0,        0,       0    },
+	{ TWINQIX,   1,      0,        -24,         1,        0,       0    },
+	{ SCFINALS,  0,      0,        -31,         1,       11,       0    },
+	{ LIGHTBR,   1,      0,        -30,         0,        0,       0    },
+	{ KAISERKN,  0,      1,        -30,         1,        9,       0    },
+	{ DARIUSG,   0,      0,        -30,         0,        0,       0    },
+	{ BUBSYMPH,  1,      0,        -30,         0,        0,       0    },
+	{ SPCINVDX,  1,      0,        -30,         1,        1,       0    },
+	{ QTHEATER,  1,      0,          0,         0,        0,       0    },
+	{ HTHERO95,  0,      0,        -30,         1,        7,       0    },
+	{ SPCINV95,  0,      0,        -30,         0,        0,       0    },
+	{ EACTION2,  1,      0,        -23,         0,        0,       0    },
+	{ QUIZHUHU,  1,      0,        -23,         0,        0,       0    },
+	{ PBOBBLE2,  0,      1,          0,         0,        0,       0    },
+	{ GEKIRIDO,  0,      0,        -24,         0,        0,       0    },
+	{ KTIGER2,   0,      1,        -24,         0,        0,       0    },
+	{ BUBBLEM,   1,      0,        -30,         0,       16,       0    },
+	{ CLEOPATR,  0,      0,        -30,         0,        0,       0    },
+	{ PBOBBLE3,  0,      1,          0,         0,        0,       0    },
+	{ ARKRETRN,  1,      0,        -23,         0,        0,       0    },
+	{ KIRAMEKI,  0,      0,        -30,         0,        0,       0    },
+	{ PUCHICAR,  1,      0,        -23,         0,        0,       0    },
+	{ PBOBBLE4,  0,      1,          0,         1,       10,       0    },
+	{ POPNPOP,   1,      0,        -23,         0,        0,       0    },
+	{ LANDMAKR,  1,      0,        -23,         0,        0,       0    },
 	{0}
 };
 
@@ -459,22 +460,20 @@ static void f3_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tilemap,UI
 			}
 		}
 
-		x=0;
 		x_index=x_offset+(zoom*16);
+		x=x_index+(320*zoom); /* 320 pixels */
 		dst=scanline;
 		if (Machine->orientation == ROT0) {
 			src=(unsigned short *)srcbitmap->line[((y_index>>16)+colscroll)&0x1ff];
-			while (x<320) {
+			while (x_index<x) {
 				*dst++ = src[(x_index>>16)&width_mask];
 				x_index += zoom;
-				x++;
 			}
 		} else {
-			while (x<320) { /* 270 degree rotation - Slow, slow, slow */
+			while (x_index<x) { /* 270 degree rotation - Slow, slow, slow */
 				src=(unsigned short *)srcbitmap->line[(width_mask-(x_index>>16))&width_mask];
 				*dst++ = src[((y_index>>16)+1+colscroll)&0x1ff];
 				x_index += zoom;
-				x++;
 			}
 		}
 
@@ -595,7 +594,6 @@ static void f3_clip_top_border(struct osd_bitmap *bitmap)
 				return;
 		}
 
-		/* Erase this line */
 		draw_scanline16(bitmap,46,i,320+46,scanline,0,-1);
 		if (flipscreen) pri_base-=2; else pri_base+=2;
 	}
@@ -631,6 +629,27 @@ static void f3_clip_bottom_border(struct osd_bitmap *bitmap)
 }
 
 /******************************************************************************/
+
+#if 0
+static void f3_fix_transparent_colours(int p0, int p1, int p2, int p3)
+{
+ 	int color, i, pos=0;
+
+	/* Find layer with lowest priority - no transparency for this layer */
+	for (i=0; i<0x10; i++) {
+		if (p0==i) { if (f3_game_config->extend) pos=0x0000; else pos=0x0000; i=0x10; }
+		if (p1==i) { if (f3_game_config->extend) pos=0x0800; else pos=0x0400; i=0x10; }
+		if (p2==i) { if (f3_game_config->extend) pos=0x1000; else pos=0x0800; i=0x10; }
+		if (p3==i) { if (f3_game_config->extend) pos=0x1800; else pos=0x0c00; i=0x10; }
+	}
+
+	for (i=pos; i<pos+0x400+(f3_game_config->extend*0x400); i++) {
+		color=f3_pf_data[i]>>16;
+		palette_used_colors[16 * (color&0x1ff)] = PALETTE_COLOR_USED;
+		f3_palette_24bit_w(16 * (color&0x1ff),paletteram32[16 * (color&0x1ff)],0);
+	}
+}
+#endif
 
 static void f3_draw_vram_layer(struct osd_bitmap *bitmap)
 {
@@ -896,10 +915,10 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy[2]=0x300-((f3_control_0[3]&0xffff0000)>>23)-scroll_kludge_y;
 		sy[3]=0x300-((f3_control_0[3]&0x0000ffff)>> 7)-scroll_kludge_y;
 
-		sx[0]=-0x1a0-((f3_control_0[0]&0xffff0000)>>22)+6;
-		sx[1]=-0x1a0-((f3_control_0[0]&0x0000ffff)>> 6)+10;
-		sx[2]=-0x1a0-((f3_control_0[1]&0xffff0000)>>22)+14;
-		sx[3]=-0x1a0-((f3_control_0[1]&0x0000ffff)>> 6)+18;
+		sx[0]=-0x1a0-((f3_control_0[0]&0xffff0000)>>22)+6+scroll_kludge_x;
+		sx[1]=-0x1a0-((f3_control_0[0]&0x0000ffff)>> 6)+10+scroll_kludge_x;
+		sx[2]=-0x1a0-((f3_control_0[1]&0xffff0000)>>22)+14+scroll_kludge_x;
+		sx[3]=-0x1a0-((f3_control_0[1]&0x0000ffff)>> 6)+18+scroll_kludge_x;
 
 		/* Rowscroll - values can latch if the control bit isn't set per playfield per line */
 		rs[0]=rs[1]=rs[2]=rs[3]=0;
@@ -937,10 +956,10 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sy[2]=((f3_control_0[3]&0xffff0000)>>23)+scroll_kludge_y;
 		sy[3]=((f3_control_0[3]&0x0000ffff)>> 7)+scroll_kludge_y;
 
-		sx[0]=((f3_control_0[0]&0xffff0000)>>22)-6;
-		sx[1]=((f3_control_0[0]&0x0000ffff)>> 6)-10;
-		sx[2]=((f3_control_0[1]&0xffff0000)>>22)-14;
-		sx[3]=((f3_control_0[1]&0x0000ffff)>> 6)-18;
+		sx[0]=((f3_control_0[0]&0xffff0000)>>22)-6-scroll_kludge_x;
+		sx[1]=((f3_control_0[0]&0x0000ffff)>> 6)-10-scroll_kludge_x;
+		sx[2]=((f3_control_0[1]&0xffff0000)>>22)-14-scroll_kludge_x;
+		sx[3]=((f3_control_0[1]&0x0000ffff)>> 6)-18-scroll_kludge_x;
 
 		/* Rowscroll - values can latch if the control bit isn't set per playfield per line */
 		rs[0]=rs[1]=rs[2]=rs[3]=0;
@@ -984,7 +1003,6 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(pf3_tilemap);
 	gfx_base=f3_pf_data+inc+inc+inc;
 	tilemap_update(pf4_tilemap);
-	palette_recalc();
 
 	/* Calculate relative playfield priorities - the real hardware can assign
 		a different value to each scanline in each playfield but some games
@@ -1066,6 +1084,10 @@ void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* These games have a solid white alpha layer which is of course opaque until we support it - disable for now */
 	if ((tpri[3]&0x8000) && (f3_game==POPNPOP || f3_game==ARKRETRN)) enable[3]=0;
+
+	/* We don't need to mark pens in 16 or 24 bit modes, only transparent colours */
+//	f3_fix_transparent_colours(tpri[0]&0xf,tpri[1]&0xf,tpri[2]&0xf,tpri[3]&0xf);
+	palette_recalc();
 
 	/* Draw playfields, there are 16 priority levels, we also keep track
 		of layer ordering so it can be applied to the sprite rendering */
@@ -1261,7 +1283,7 @@ void f3_vh_stop (void)
 		}
 		fp=fopen("sprite.dmp","wb");
 		if (fp) {
-			fwrite(spriteram,0x10000/4, 4 ,fp);
+			fwrite(spriteram32,0x10000/4, 4 ,fp);
 			fclose(fp);
 		}
 		fp=fopen("vram.dmp","wb");
@@ -1332,6 +1354,7 @@ int f3_vh_start(void)
 
 	/* Y Offset is related to the first visible line in line ram in some way */
 	scroll_kludge_y=f3_game_config->sy;
+	scroll_kludge_x=f3_game_config->sx;
 
 	/* Palettes have 4 bpp indexes despite up to 6 bpp data */
 	Machine->gfx[1]->color_granularity=16;

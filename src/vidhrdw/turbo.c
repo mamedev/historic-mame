@@ -440,7 +440,7 @@ static void draw_everything(struct osd_bitmap *bitmap, int yoffs)
 	UINT8 *sprite_priority_base = &sprite_priority[(turbo_fbpla & 7) << 7];
 	UINT8 *road_gfxdata_base = &road_gfxdata[(turbo_opc << 5) & 0x7e0];
 	UINT16 *road_palette_base = &road_expanded_palette[(turbo_fbcol & 1) << 4];
-	UINT16 *colortable;
+	UINT32 *colortable;
 	int x, y, i;
 
 	/* determine the color offset */

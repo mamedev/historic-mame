@@ -1,21 +1,21 @@
 /*##########################################################################
 
 	atarirle.c
-	
+
 	RLE sprite handling for early-to-mid 90's Atari raster games.
 
 ############################################################################
 
 	Description:
-	
+
 	Beginning with Hydra, and continuing through to Primal Rage, Atari used
 	RLE-compressed sprites. These sprites were decoded, colored, and scaled
 	on the fly using an AMD 29C101 ALU unit. The instructions for the ALU
 	were read from 3 512-byte PROMs and fed into the instruction input.
-	
+
 	See the bottom of the source for more details on the operation of these
 	componenets.
-	
+
 ##########################################################################*/
 
 #include "driver.h"
@@ -70,10 +70,10 @@ struct atarirle_data
 
 	int					palettebase;		/* base palette entry */
 	int					maxcolors;			/* maximum number of colors */
-	
+
 	int					xscroll;			/* current x scroll offset */
 	int					yscroll;			/* current y scroll offset */
-	
+
 	struct rectangle	cliprect;			/* clipping rectangle */
 
 	struct atarirle_mask codemask;			/* mask for the code index */
@@ -128,7 +128,7 @@ data16_t *atarirle_0_spriteram;
 	STATIC VARIABLES
 ##########################################################################*/
 
-static struct atarirle_data atarirle[ATARIRLE_MAX]; 
+static struct atarirle_data atarirle[ATARIRLE_MAX];
 
 static UINT8 rle_bpp[8];
 static UINT16 *rle_table[8];
@@ -145,16 +145,16 @@ static void prescan_rle(const struct atarirle_data *mo, int which);
 static void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int color, int hflip, int vflip,
 		int x, int y, int xscale, int yscale, const struct rectangle *clip);
 static void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 
 
@@ -164,7 +164,7 @@ static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atari
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	compute_log: Computes the number of bits necessary to 
+	compute_log: Computes the number of bits necessary to
 	hold a given value. The input must be an even power of
 	two.
 ---------------------------------------------------------------*/
@@ -172,7 +172,7 @@ static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atari
 INLINE int compute_log(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return -1;
 	while (!(value & 1))
@@ -192,7 +192,7 @@ INLINE int compute_log(int value)
 INLINE int round_to_powerof2(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return 1;
 	while ((value >>= 1) != 0)
@@ -211,7 +211,7 @@ INLINE int collapse_bits(int value, int mask)
 {
 	int testmask, ormask;
 	int result = 0;
-	
+
 	for (testmask = ormask = 1; testmask != 0; testmask <<= 1)
 		if (mask & testmask)
 		{
@@ -231,7 +231,7 @@ INLINE int collapse_bits(int value, int mask)
 INLINE int convert_mask(const struct atarirle_entry *input, struct atarirle_mask *result)
 {
 	int i, temp;
-	
+
 	/* determine the word and make sure it's only 1 */
 	result->word = -1;
 	for (i = 0; i < 8; i++)
@@ -242,14 +242,14 @@ INLINE int convert_mask(const struct atarirle_entry *input, struct atarirle_mask
 			else
 				return 0;
 		}
-	
+
 	/* if all-zero, it's valid */
 	if (result->word == -1)
 	{
 		result->word = result->shift = result->mask = 0;
 		return 1;
 	}
-	
+
 	/* determine the shift and final mask */
 	result->shift = 0;
 	temp = input->data[result->word];
@@ -285,7 +285,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* build and allocate the generic tables */
 	if (!build_rle_tables())
 		return 1;
-		
+
 	/* determine the masks first */
 	convert_mask(&desc->codemask,     &mo->codemask);
 	convert_mask(&desc->colormask,    &mo->colormask);
@@ -298,7 +298,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 	/* copy in the basic data */
 	mo->timerallocated = 0;
-	
+
 	mo->bitmapwidth   = round_to_powerof2(mo->xposmask.mask);
 	mo->bitmapheight  = round_to_powerof2(mo->yposmask.mask);
 	mo->bitmapxmask   = mo->bitmapwidth - 1;
@@ -306,7 +306,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 	mo->spriteramsize = desc->spriteramentries;
 	mo->spriterammask = desc->spriteramentries - 1;
-	
+
 	mo->palettebase   = desc->palettebase;
 	mo->maxcolors     = desc->maxcolors / 16;
 
@@ -316,7 +316,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	mo->rombase       = base;
 	mo->romlength     = memory_region_length(desc->region);
 	mo->objectcount   = count_objects(base, mo->romlength);
-	
+
 	mo->cliprect      = Machine->visible_area;
 	if (desc->rightclip)
 	{
@@ -327,7 +327,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* allocate the object info */
 	mo->info = malloc(sizeof(mo->info[0]) * mo->objectcount);
 	VERIFYRETFREE(mo->info, "atarirle_init: out of memory for object info", 0)
-	
+
 	/* fill in the data */
 	memset(mo->info, 0, sizeof(mo->info[0]) * mo->objectcount);
 	for (i = 0; i < mo->objectcount; i++)
@@ -336,10 +336,10 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* allocate the spriteram */
 	mo->spriteram = malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
 	VERIFYRETFREE(mo->spriteram, "atarirle_init: out of memory for spriteram", 0)
-	
+
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
-	
+
 	return 1;
 }
 
@@ -352,17 +352,17 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 void atarirle_free(void)
 {
 	int i;
-	
+
 	/* loop over object banks */
 	for (i = 0; i < ATARIRLE_MAX; i++)
-	{	
+	{
 		struct atarirle_data *mo = &atarirle[i];
-		
+
 		/* free the spriteram */
 		if (mo->spriteram)
 			free(mo->spriteram);
 		mo->spriteram = NULL;
-		
+
 		/* free the info data */
 		if (mo->info)
 			free(mo->info);
@@ -382,16 +382,16 @@ void atarirle_free(void)
 ---------------------------------------------------------------*/
 
 void atarirle_mark_palette(int map)
-{	
+{
 	struct atarirle_data *mo = &atarirle[map];
 	struct atarirle_entry *obj = mo->spriteram;
 	int i;
-	
+
 	/* loop over objects in spriteram */
 	for (i = 0; i < mo->spriteramsize; i++, obj++)
 	{
 		int priority = EXTRACT_DATA(obj, mo->prioritymask);
-		
+
 		/* only handle non-zero priority items */
 		if (priority != 0)
 		{
@@ -404,7 +404,7 @@ void atarirle_mark_palette(int map)
 				int color = EXTRACT_DATA(obj, mo->colormask);
 				UINT8 *used = &palette_used_colors[mo->palettebase + color * 16];
 				UINT32 usage = rle->pen_usage;
-		
+
 				/* mark colors in the lower area */
 				if (usage)
 					for (i = 0; i < 32; i++, usage >>= 1)
@@ -469,11 +469,11 @@ void atarirle_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb c
 		{
 			int scale, code;
 
-			/* extract scale and code */			
+			/* extract scale and code */
 			obj = &mo->spriteram[current->entry];
 			scale = EXTRACT_DATA(obj, mo->scalemask);
 			code = EXTRACT_DATA(obj, mo->codemask);
-			
+
 			/* make sure they are in range */
 			if (scale > 0 && code < mo->objectcount)
 			{
@@ -481,13 +481,13 @@ void atarirle_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb c
 				int color = EXTRACT_DATA(obj, mo->colormask);
 				int x = EXTRACT_DATA(obj, mo->xposmask) - mo->xscroll;
 				int y = EXTRACT_DATA(obj, mo->yposmask) - mo->yscroll;
-				
+
 				if (x & ((mo->xposmask.mask + 1) >> 1))
 					x = (INT16)(x | ~mo->xposmask.mask);
 				if (y & ((mo->yposmask.mask + 1) >> 1))
 					y = (INT16)(y | ~mo->yposmask.mask);
 				x += mo->cliprect.min_x;
-				
+
 				draw_rle(mo, bitmap, code, color * 16, hflip, 0, x, y, scale, scale, &mo->cliprect);
 			}
 		}
@@ -541,7 +541,7 @@ int atarirle_get_yscroll(int map)
 WRITE16_HANDLER( atarirle_0_spriteram_w )
 {
 	int entry, idx;
-	
+
 	COMBINE_DATA(&atarirle_0_spriteram[offset]);
 
 	entry = (offset >> 3) & atarirle[0].spriterammask;
@@ -558,7 +558,7 @@ static int build_rle_tables(void)
 {
 	UINT16 *base;
 	int i;
-	
+
 	/* if we've already done it, don't bother */
 	if (rle_table[0])
 		return 0;
@@ -635,7 +635,7 @@ int count_objects(const data16_t *base, int length)
 	/* that determines how many objects */
 	return lowest_address / 4;
 }
-	
+
 
 /*---------------------------------------------------------------
 	prescan_rle: Prescans an RLE object, computing the pen
@@ -735,7 +735,7 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int color, int hflip, int vflip,
 	int x, int y, int xscale, int yscale, const struct rectangle *clip)
 {
-	const UINT16 *palettebase = &Machine->pens[mo->palettebase + color];
+	const UINT32 *palettebase = &Machine->pens[mo->palettebase + color];
 	const struct atarirle_info *info = &mo->info[code];
 	int scaled_xoffs = (xscale * info->xoffs) >> 12;
 	int scaled_yoffs = (yscale * info->yoffs) >> 12;
@@ -778,7 +778,7 @@ void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int
 ---------------------------------------------------------------*/
 
 void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -967,7 +967,7 @@ void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
 ---------------------------------------------------------------*/
 
 void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -1151,12 +1151,12 @@ void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx
 
 
 /*---------------------------------------------------------------
-	draw_rle_zoom_hflip: Draw an RLE-compressed object to an 
+	draw_rle_zoom_hflip: Draw an RLE-compressed object to an
 	8-bit bitmap with horizontal flip.
 ---------------------------------------------------------------*/
 
 void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -1344,7 +1344,7 @@ void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *
 ---------------------------------------------------------------*/
 
 void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
-		const UINT16 *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -1529,8 +1529,8 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_inf
 /***************************************************************************
 
 	The mapping of the bits from the PROMs is like this:
-	
-		D23 -> 
+
+		D23 ->
 		D22 ->
 		D21 ->
 		D20 ->
@@ -1538,7 +1538,7 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_inf
 		D18 ->
 		D17 -> instruction bit 8
 		D16 -> instruction bit 7
-		
+
 		D15 -> instruction bit 6
 		D14 -> instruction bit 5
 		D13 -> instruction bit 4
@@ -1547,7 +1547,7 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_inf
 		D10 -> instruction bit 1 (modified via a PAL)
 		D9  -> instruction bit 0
 		D8  -> carry in
-		
+
 		D7  -> A bit 3
 		D6  -> A bit 2
 		D5  -> A bit 1
@@ -1556,10 +1556,10 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_inf
 		D2  -> B bit 2
 		D1  -> B bit 1
 		D0  -> B bit 0
-		
+
 	Although much of the logic is contained in the ALU, the program counter
 	is fed externally. Jumps are decoded like this:
-	
+
 		if (D13 && D14)
 		{
 			switch (D11 | D10 | D9)
@@ -1577,407 +1577,407 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_inf
 			if (condition)
 				PC = D8 | D7 | D6 | D5 | D4 | D3 | D2 | D1 | D0;
 		}
-	
+
 	Here is the code from Guardians of the Hood:
-	
+
 	                  I  C A B
 	                 --- - - -
-	000: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS) 
-	001: 01 C8 66 -> 0E4 0 6 6 
-	002: 01 89 66 -> 0C4 1 6 6 
-	003: 03 82 66 -> 1C1 0 6 6 
-	004: 01 B8 65 -> 0DC 0 6 5 
-	005: 01 82 66 -> 0C1 0 6 6 
-	006: 01 89 55 -> 0C4 1 5 5 
-	007: 01 C8 77 -> 0E4 0 7 7 
-	008: 01 89 77 -> 0C4 1 7 7 
-	009: 03 82 77 -> 1C1 0 7 7 
-	00A: 03 82 77 -> 1C1 0 7 7 
-	00B: 03 82 77 -> 1C1 0 7 7 
-	00C: 03 82 77 -> 1C1 0 7 7 
-	00D: 01 C8 88 -> 0E4 0 8 8 
-	00E: 01 B8 79 -> 0DC 0 7 9 
-	00F: 03 82 99 -> 1C1 0 9 9 
-	010: 01 82 99 -> 0C1 0 9 9 
-	011: 01 B8 61 -> 0DC 0 6 1 
-	012: 01 82 11 -> 0C1 0 1 1 
-	013: 01 96 11 -> 0CB 0 1 1 
-	014: 03 82 11 -> 1C1 0 1 1 
-	015: 03 82 11 -> 1C1 0 1 1 
-	016: 03 82 11 -> 1C1 0 1 1 
-	017: 03 82 11 -> 1C1 0 1 1 
-	018: 00 EE 18 -> 077 0 1 8 if /MOTIMEP JUMP 018 
-	019: 84 B8 11 -> 05C 0 1 1 
-	01A: 01 B8 72 -> 0DC 0 7 2 
-	01B: 00 C8 00 -> 064 0 0 0 
-	01C: 9C B8 88 -> 05C 0 8 8 
-	01D: 98 B8 88 -> 05C 0 8 8 
-	01E: 01 96 22 -> 0CB 0 2 2 
-	01F: 00 F4 1C -> 07A 0 1 C if NZ JUMP 01C 
-	020: 00 38 11 -> 01C 0 1 1 
-	021: 03 34 00 -> 19A 0 0 0 
-	022: 03 34 00 -> 19A 0 0 0 
-	023: 03 34 00 -> 19A 0 0 0 
-	024: 00 11 99 -> 008 1 9 9 
-	025: 02 34 00 -> 11A 0 0 0 
-	026: 84 B4 00 -> 05A 0 0 0 
-	027: 00 C8 00 -> 064 0 0 0 
-	028: 00 C8 00 -> 064 0 0 0 
-	029: 10 3E 00 -> 01F 0 0 0 
-	02A: 00 E5 3B -> 072 1 3 B if Z JUMP 13B 
-	02B: 00 05 00 -> 002 1 0 0 
-	02C: 9C B4 00 -> 05A 0 0 0 
-	02D: 98 B4 00 -> 05A 0 0 0 
-	02E: 00 EE 2E -> 077 0 2 E if /MOTIMEP JUMP 02E 
-	02F: 10 3E 00 -> 01F 0 0 0 
-	030: 00 05 00 -> 002 1 0 0 
-	031: 00 F4 35 -> 07A 0 3 5 if NZ JUMP 035 
-	032: A8 B8 55 -> 05C 0 5 5 (latch UC.HFLIP) 
-	033: A8 FE 35 -> 07F 0 3 5 if MOTIMEP JUMP 035 (latch UC.HFLIP) 
-	034: 00 E1 47 -> 070 1 4 7 JUMP 147 
-	035: 01 B8 72 -> 0DC 0 7 2 
-	036: 01 B8 8F -> 0DC 0 8 F 
-	037: 01 83 5F -> 0C1 1 5 F 
-	038: 84 B8 FF -> 05C 0 F F 
-	039: 00 EE 39 -> 077 0 3 9 if /MOTIMEP JUMP 039 
-	03A: 19 BE FF -> 0DF 0 F F 
-	03B: 00 E4 68 -> 072 0 6 8 if Z JUMP 068 
-	03C: 84 B8 88 -> 05C 0 8 8 
-	03D: 00 EE 3D -> 077 0 3 D if /MOTIMEP JUMP 03D 
-	03E: 19 BE AA -> 0DF 0 A A 
-	03F: 00 EE 3F -> 077 0 3 F if /MOTIMEP JUMP 03F 
-	040: 19 BE BB -> 0DF 0 B B 
-	041: 00 EE 41 -> 077 0 4 1 if /MOTIMEP JUMP 041 
-	042: 19 BE CC -> 0DF 0 C C 
-	043: 00 EE 43 -> 077 0 4 3 if /MOTIMEP JUMP 043 
-	044: 19 BE DD -> 0DF 0 D D 
-	045: 00 EE 45 -> 077 0 4 5 if /MOTIMEP JUMP 045 
-	046: 19 BE EE -> 0DF 0 E E 
-	047: 00 C8 00 -> 064 0 0 0 
-	048: 01 82 1F -> 0C1 0 1 F 
-	049: 84 B8 FF -> 05C 0 F F 
-	04A: 11 BE FF -> 0DF 0 F F 
-	04B: 00 C8 00 -> 064 0 0 0 
-	04C: 00 C8 00 -> 064 0 0 0 
-	04D: 9C B8 99 -> 05C 0 9 9 
-	04E: 90 B8 99 -> 05C 0 9 9 
-	04F: 00 C8 00 -> 064 0 0 0 
-	050: 84 B8 99 -> 05C 0 9 9 
-	051: 9C B8 AA -> 05C 0 A A 
-	052: 98 B8 AA -> 05C 0 A A 
-	053: 00 C8 00 -> 064 0 0 0 
-	054: 00 C8 00 -> 064 0 0 0 
-	055: 9C B8 BB -> 05C 0 B B 
-	056: 98 B8 BB -> 05C 0 B B 
-	057: 00 C8 00 -> 064 0 0 0 
-	058: 00 C8 00 -> 064 0 0 0 
-	059: 9C B8 CC -> 05C 0 C C 
-	05A: 98 B8 CC -> 05C 0 C C 
-	05B: 00 C8 00 -> 064 0 0 0 
-	05C: 00 C8 00 -> 064 0 0 0 
-	05D: 9C B8 DD -> 05C 0 D D 
-	05E: 98 B8 DD -> 05C 0 D D 
-	05F: 00 C8 00 -> 064 0 0 0 
-	060: 00 C8 00 -> 064 0 0 0 
-	061: 9C B8 EE -> 05C 0 E E 
-	062: 98 B8 EE -> 05C 0 E E 
-	063: 00 C8 00 -> 064 0 0 0 
-	064: 00 C8 00 -> 064 0 0 0 
-	065: 9C B8 FF -> 05C 0 F F 
-	066: 98 B8 FF -> 05C 0 F F 
-	067: 01 82 69 -> 0C1 0 6 9 
-	068: 01 82 68 -> 0C1 0 6 8 
-	069: 01 96 22 -> 0CB 0 2 2 
-	06A: 00 F4 36 -> 07A 0 3 6 if NZ JUMP 036 
-	06B: 01 B8 72 -> 0DC 0 7 2 
-	06C: 01 96 22 -> 0CB 0 2 2 
-	06D: 01 C8 44 -> 0E4 0 4 4 
-	06E: 01 96 44 -> 0CB 0 4 4 
-	06F: 01 B8 43 -> 0DC 0 4 3 
-	070: 02 B8 44 -> 15C 0 4 4 
-	071: 02 B8 44 -> 15C 0 4 4 
-	072: 02 B8 44 -> 15C 0 4 4 
-	073: 02 B8 44 -> 15C 0 4 4 
-	074: 02 B8 33 -> 15C 0 3 3 
-	075: 01 93 43 -> 0C9 1 4 3 
-	076: 02 B8 33 -> 15C 0 3 3 
-	077: 00 38 33 -> 01C 0 3 3 
-	078: 01 C8 33 -> 0E4 0 3 3 
-	079: 01 89 33 -> 0C4 1 3 3 
-	07A: 01 82 33 -> 0C1 0 3 3 
-	07B: 01 C8 00 -> 0E4 0 0 0 
-	07C: 00 B8 00 -> 05C 0 0 0 
-	07D: 00 F4 87 -> 07A 0 8 7 if NZ JUMP 087 
-	07E: 01 89 11 -> 0C4 1 1 1 
-	07F: 84 B8 11 -> 05C 0 1 1 
-	080: 00 EE 80 -> 077 0 8 0 if /MOTIMEP JUMP 080 
-	081: 11 BE 00 -> 0DF 0 0 0 
-	082: A4 B8 22 -> 05C 0 2 2 (latch UC.COLOR) 
-	083: 01 96 22 -> 0CB 0 2 2 
-	084: 00 F6 7C -> 07B 0 7 C if P JUMP 07C 
-	085: 8C B8 22 -> 05C 0 2 2 
-	086: 00 E0 86 -> 070 0 8 6 JUMP 086 
-	087: 84 B8 00 -> 05C 0 0 0 
-	088: 00 EE 88 -> 077 0 8 8 if /MOTIMEP JUMP 088 
-	089: 19 BE 55 -> 0DF 0 5 5 
-	08A: A8 B8 55 -> 05C 0 5 5 (latch UC.HFLIP) 
-	08B: 03 82 55 -> 1C1 0 5 5 
-	08C: 00 C8 00 -> 064 0 0 0 
-	08D: 19 BE FF -> 0DF 0 F F 
-	08E: A4 B8 FF -> 05C 0 F F (latch UC.COLOR) 
-	08F: 00 C8 00 -> 064 0 0 0 
-	090: 00 C8 00 -> 064 0 0 0 
-	091: 19 BE 66 -> 0DF 0 6 6 
-	092: B0 C8 00 -> 064 0 0 0 (latch UC.FORMAT) 
-	093: 00 C8 00 -> 064 0 0 0 
-	094: 00 C8 00 -> 064 0 0 0 
-	095: 19 BE 77 -> 0DF 0 7 7 
-	096: 00 C8 00 -> 064 0 0 0 
-	097: 00 C8 00 -> 064 0 0 0 
-	098: 00 C8 00 -> 064 0 0 0 
-	099: 19 BE 88 -> 0DF 0 8 8 
-	09A: 00 C8 00 -> 064 0 0 0 
-	09B: 00 C8 00 -> 064 0 0 0 
-	09C: 00 C8 00 -> 064 0 0 0 
-	09D: 19 BE 00 -> 0DF 0 0 0 
-	09E: 84 B8 55 -> 05C 0 5 5 
-	09F: 00 C8 00 -> 064 0 0 0 
-	0A0: 00 C8 00 -> 064 0 0 0 
-	0A1: 09 BE DD -> 0DF 0 D D 
-	0A2: 00 C8 00 -> 064 0 0 0 
-	0A3: 00 C8 00 -> 064 0 0 0 
-	0A4: 09 BE EE -> 0DF 0 E E 
-	0A5: 01 C8 AA -> 0E4 0 A A 
-	0A6: 01 C8 BB -> 0E4 0 B B 
-	0A7: 09 BE 99 -> 0DF 0 9 9 
-	0A8: 01 B8 8F -> 0DC 0 8 F 
-	0A9: 01 82 FF -> 0C1 0 F F 
-	0AA: 09 BE 55 -> 0DF 0 5 5 
-	0AB: 01 C8 CC -> 0E4 0 C C 
-	0AC: 00 B8 DD -> 05C 0 D D 
-	0AD: 00 F6 B1 -> 07B 0 B 1 if P JUMP 0B1 
-	0AE: 01 A9 DD -> 0D4 1 D D 
-	0AF: 01 82 4C -> 0C1 0 4 C 
-	0B0: 01 89 CC -> 0C4 1 C C 
-	0B1: 01 82 CC -> 0C1 0 C C 
-	0B2: 00 B8 EE -> 05C 0 E E 
-	0B3: 00 F6 B7 -> 07B 0 B 7 if P JUMP 0B7 
-	0B4: 01 A9 EE -> 0D4 1 E E 
-	0B5: 01 82 4C -> 0C1 0 4 C 
-	0B6: 01 89 CC -> 0C4 1 C C 
-	0B7: 03 82 CC -> 1C1 0 C C 
-	0B8: 01 82 FF -> 0C1 0 F F 
-	0B9: 43 86 DA -> 1C3 0 D A 
-	0BA: 43 86 EB -> 1C3 0 E B 
-	0BB: 01 82 FF -> 0C1 0 F F 
-	0BC: 43 86 DA -> 1C3 0 D A 
-	0BD: 43 86 EB -> 1C3 0 E B 
-	0BE: 01 82 FF -> 0C1 0 F F 
-	0BF: 43 86 DA -> 1C3 0 D A 
-	0C0: 43 86 EB -> 1C3 0 E B 
-	0C1: 01 82 FF -> 0C1 0 F F 
-	0C2: 43 86 DA -> 1C3 0 D A 
-	0C3: 43 86 EB -> 1C3 0 E B 
-	0C4: 01 82 FF -> 0C1 0 F F 
-	0C5: 43 86 DA -> 1C3 0 D A 
-	0C6: 43 86 EB -> 1C3 0 E B 
-	0C7: 01 82 FF -> 0C1 0 F F 
-	0C8: 43 86 DA -> 1C3 0 D A 
-	0C9: 43 86 EB -> 1C3 0 E B 
-	0CA: 01 82 FF -> 0C1 0 F F 
-	0CB: 43 86 DA -> 1C3 0 D A 
-	0CC: 43 86 EB -> 1C3 0 E B 
-	0CD: 01 82 FF -> 0C1 0 F F 
-	0CE: 41 86 DA -> 0C3 0 D A 
-	0CF: 41 86 EB -> 0C3 0 E B 
-	0D0: 02 B8 DD -> 15C 0 D D 
-	0D1: 02 B8 EE -> 15C 0 E E 
-	0D2: 01 82 FF -> 0C1 0 F F 
-	0D3: 41 86 DA -> 0C3 0 D A 
-	0D4: 41 86 EB -> 0C3 0 E B 
-	0D5: 02 B8 DD -> 15C 0 D D 
-	0D6: 02 B8 EE -> 15C 0 E E 
-	0D7: 01 82 FF -> 0C1 0 F F 
-	0D8: 41 86 DA -> 0C3 0 D A 
-	0D9: 41 86 EB -> 0C3 0 E B 
-	0DA: 02 B8 DD -> 15C 0 D D 
-	0DB: 02 B8 EE -> 15C 0 E E 
-	0DC: 01 82 FF -> 0C1 0 F F 
-	0DD: 41 86 DA -> 0C3 0 D A 
-	0DE: 41 86 EB -> 0C3 0 E B 
-	0DF: 00 B8 CC -> 05C 0 C C 
-	0E0: 00 F6 E2 -> 07B 0 E 2 if P JUMP 0E2 
-	0E1: 01 A9 AA -> 0D4 1 A A 
-	0E2: 01 82 CC -> 0C1 0 C C 
-	0E3: 00 F6 E5 -> 07B 0 E 5 if P JUMP 0E5 
-	0E4: 01 A9 BB -> 0D4 1 B B 
-	0E5: 01 C8 CC -> 0E4 0 C C 
-	0E6: 01 89 CC -> 0C4 1 C C 
-	0E7: 03 82 CC -> 1C1 0 C C 
-	0E8: 03 82 CC -> 1C1 0 C C 
-	0E9: 03 82 CC -> 1C1 0 C C 
-	0EA: 01 B8 4F -> 0DC 0 4 F 
-	0EB: 03 82 FF -> 1C1 0 F F 
-	0EC: 00 D2 48 -> 069 0 4 8 
-	0ED: 00 E5 19 -> 072 1 1 9 if Z JUMP 119 
-	0EE: 02 B8 88 -> 15C 0 8 8 
-	0EF: 02 B8 88 -> 15C 0 8 8 
-	0F0: 02 B8 88 -> 15C 0 8 8 
-	0F1: 02 B8 88 -> 15C 0 8 8 
-	0F2: 01 80 88 -> 0C0 0 8 8 
-	0F3: 84 B8 88 -> 05C 0 8 8 
-	0F4: 00 EE F4 -> 077 0 F 4 if /MOTIMEP JUMP 0F4 
-	0F5: 19 BE 88 -> 0DF 0 8 8 
-	0F6: AC B8 88 -> 05C 0 8 8 (latch UC.RATE) 
-	0F7: 01 82 88 -> 0C1 0 8 8 
-	0F8: 02 B8 88 -> 15C 0 8 8 
-	0F9: 00 F8 FC -> 07C 0 F C if /BLT.HFLIP JUMP 0FC 
-	0FA: 01 82 A6 -> 0C1 0 A 6 
-	0FB: 00 E0 FD -> 070 0 F D JUMP 0FD 
-	0FC: 01 93 A6 -> 0C9 1 A 6 
-	0FD: 01 93 B7 -> 0C9 1 B 7 
-	0FE: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT) 
-	0FF: 84 B8 55 -> 05C 0 5 5 
-	100: 01 C8 EE -> 0E4 0 E E 
-	101: 00 C8 00 -> 064 0 0 0 
-	102: 09 BE DD -> 0DF 0 D D 
-	103: 00 E6 7C -> 073 0 7 C if N JUMP 07C 
-	104: 00 93 F7 -> 049 1 F 7 
-	105: 00 ED 0B -> 076 1 0 B if C JUMP 10B 
-	106: B4 B8 DD -> 05C 0 D D (latch UC.TRANS) 
-	107: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS) 
-	108: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS) 
-	109: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS) 
-	10A: BC C8 00 -> 064 0 0 0 (latch UC.SCAN) 
-	10B: 01 82 C7 -> 0C1 0 C 7 
-	10C: 01 82 8E -> 0C1 0 8 E 
-	10D: 00 D2 4E -> 069 0 4 E 
-	10E: 00 E5 14 -> 072 1 1 4 if Z JUMP 114 
-	10F: 01 93 4E -> 0C9 1 4 E 
-	110: 01 96 EE -> 0CB 0 E E 
-	111: 01 83 D5 -> 0C1 1 D 5 
-	112: 00 FD 14 -> 07E 1 1 4 if NC JUMP 114 
-	113: 01 89 99 -> 0C4 1 9 9 
-	114: 00 FB 14 -> 07D 1 1 4 if BLT.SCAN JUMP 114 
-	115: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS) 
-	116: 84 B8 55 -> 05C 0 5 5 
-	117: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT) 
-	118: 00 E1 02 -> 070 1 0 2 JUMP 102 
-	119: AC B8 88 -> 05C 0 8 8 (latch UC.RATE) 
-	11A: 00 F9 1D -> 07C 1 1 D if /BLT.HFLIP JUMP 11D 
-	11B: 01 82 A6 -> 0C1 0 A 6 
-	11C: 00 E1 1E -> 070 1 1 E JUMP 11E 
-	11D: 01 93 A6 -> 0C9 1 A 6 
-	11E: 01 93 B7 -> 0C9 1 B 7 
-	11F: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT) 
-	120: 84 B8 55 -> 05C 0 5 5 
-	121: 01 B8 4E -> 0DC 0 4 E 
-	122: 01 89 EE -> 0C4 1 E E 
-	123: 02 B8 EE -> 15C 0 E E 
-	124: 09 BE DD -> 0DF 0 D D 
-	125: 00 E6 7C -> 073 0 7 C if N JUMP 07C 
-	126: 01 82 8E -> 0C1 0 8 E 
-	127: 00 D2 4E -> 069 0 4 E 
-	128: 00 E5 33 -> 072 1 3 3 if Z JUMP 133 
-	129: 01 93 4E -> 0C9 1 4 E 
-	12A: 01 96 EE -> 0CB 0 E E 
-	12B: 00 93 F7 -> 049 1 F 7 
-	12C: 00 ED 32 -> 076 1 3 2 if C JUMP 132 
-	12D: B4 B8 DD -> 05C 0 D D (latch UC.TRANS) 
-	12E: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS) 
-	12F: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS) 
-	130: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS) 
-	131: BC C8 00 -> 064 0 0 0 (latch UC.SCAN) 
-	132: 01 82 C7 -> 0C1 0 C 7 
-	133: 01 83 D5 -> 0C1 1 D 5 
-	134: 00 FD 36 -> 07E 1 3 6 if NC JUMP 136 
-	135: 01 89 99 -> 0C4 1 9 9 
-	136: 00 FB 36 -> 07D 1 3 6 if BLT.SCAN JUMP 136 
-	137: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS) 
-	138: 84 B8 55 -> 05C 0 5 5 
-	139: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT) 
-	13A: 00 E1 24 -> 070 1 2 4 JUMP 124 
-	13B: 08 3E 00 -> 01F 0 0 0 
-	13C: 00 EF 3C -> 077 1 3 C if /MOTIMEP JUMP 13C 
-	13D: 18 3E 00 -> 01F 0 0 0 
-	13E: 00 E5 75 -> 072 1 7 5 if Z JUMP 175 
-	13F: 00 C8 00 -> 064 0 0 0 
-	140: 9C B8 44 -> 05C 0 4 4 
-	141: 98 B8 44 -> 05C 0 4 4 
-	142: 00 C8 00 -> 064 0 0 0 
-	143: 00 C8 00 -> 064 0 0 0 
-	144: 9C B8 11 -> 05C 0 1 1 
-	145: 98 B8 11 -> 05C 0 1 1 
-	146: 00 E1 5A -> 070 1 5 A JUMP 15A 
-	147: 00 38 11 -> 01C 0 1 1 
-	148: 03 34 00 -> 19A 0 0 0 
-	149: 03 34 00 -> 19A 0 0 0 
-	14A: 03 34 00 -> 19A 0 0 0 
-	14B: 00 11 99 -> 008 1 9 9 
-	14C: 00 EF 4C -> 077 1 4 C if /MOTIMEP JUMP 14C 
-	14D: 02 34 00 -> 11A 0 0 0 
-	14E: 84 B4 00 -> 05A 0 0 0 
-	14F: 01 C8 00 -> 0E4 0 0 0 
-	150: 9C B8 00 -> 05C 0 0 0 
-	151: 98 B8 00 -> 05C 0 0 0 
-	152: 00 C8 00 -> 064 0 0 0 
-	153: 00 C8 00 -> 064 0 0 0 
-	154: 9C B8 11 -> 05C 0 1 1 
-	155: 98 B8 11 -> 05C 0 1 1 
-	156: 00 C8 00 -> 064 0 0 0 
-	157: 00 C8 00 -> 064 0 0 0 
-	158: 9C B8 44 -> 05C 0 4 4 
-	159: 98 B8 44 -> 05C 0 4 4 
-	15A: 09 BE DD -> 0DF 0 D D 
-	15B: 01 82 8E -> 0C1 0 8 E 
-	15C: 00 D2 4E -> 069 0 4 E 
-	15D: 00 E5 67 -> 072 1 6 7 if Z JUMP 167 
-	15E: 01 93 4E -> 0C9 1 4 E 
-	15F: 01 96 EE -> 0CB 0 E E 
-	160: 00 93 F7 -> 049 1 F 7 
-	161: 00 ED 67 -> 076 1 6 7 if C JUMP 167 
-	162: B4 B8 DD -> 05C 0 D D (latch UC.TRANS) 
-	163: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS) 
-	164: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS) 
-	165: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS) 
-	166: BC C8 00 -> 064 0 0 0 (latch UC.SCAN) 
-	167: 01 82 C7 -> 0C1 0 C 7 
-	168: 01 83 D5 -> 0C1 1 D 5 
-	169: 00 FD 6C -> 07E 1 6 C if NC JUMP 16C 
-	16A: 01 89 99 -> 0C4 1 9 9 
-	16B: 01 C8 00 -> 0E4 0 0 0 
-	16C: 01 96 00 -> 0CB 0 0 0 
-	16D: 00 F5 6C -> 07A 1 6 C if NZ JUMP 16C 
-	16E: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS) 
-	16F: 84 B8 55 -> 05C 0 5 5 
-	170: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT) 
-	171: 01 C8 00 -> 0E4 0 0 0 
-	172: 01 96 00 -> 0CB 0 0 0 
-	173: 00 F5 72 -> 07A 1 7 2 if NZ JUMP 172 
-	174: 00 E1 5A -> 070 1 5 A JUMP 15A 
-	175: 84 B8 88 -> 05C 0 8 8 
-	176: 00 EF 76 -> 077 1 7 6 if /MOTIMEP JUMP 176 
-	177: 19 BE AA -> 0DF 0 A A 
-	178: B0 B8 AA -> 05C 0 A A (latch UC.FORMAT) 
-	179: 01 C8 77 -> 0E4 0 7 7 
-	17A: 84 B8 77 -> 05C 0 7 7 
-	17B: 01 C8 BB -> 0E4 0 B B 
-	17C: 00 C8 00 -> 064 0 0 0 
-	17D: 00 C8 00 -> 064 0 0 0 
-	17E: 00 C8 00 -> 064 0 0 0 
-	17F: 08 3E 00 -> 01F 0 0 0 
-	180: 01 80 BB -> 0C0 0 B B 
-	181: 01 89 77 -> 0C4 1 7 7 
-	182: 00 F5 7F -> 07A 1 7 F if NZ JUMP 17F 
-	183: 84 B8 AA -> 05C 0 A A 
-	184: 00 C8 00 -> 064 0 0 0 
-	185: 00 C8 00 -> 064 0 0 0 
-	186: 9C B8 BB -> 05C 0 B B 
-	187: 98 B8 BB -> 05C 0 B B 
-	188: 01 96 AA -> 0CB 0 A A 
-	189: 00 F7 8B -> 07B 1 8 B if P JUMP 18B 
-	18A: 00 E1 8A -> 070 1 8 A JUMP 18A 
-	18B: 00 C8 00 -> 064 0 0 0 
-	18C: 00 E1 78 -> 070 1 7 8 JUMP 178 
+	000: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS)
+	001: 01 C8 66 -> 0E4 0 6 6
+	002: 01 89 66 -> 0C4 1 6 6
+	003: 03 82 66 -> 1C1 0 6 6
+	004: 01 B8 65 -> 0DC 0 6 5
+	005: 01 82 66 -> 0C1 0 6 6
+	006: 01 89 55 -> 0C4 1 5 5
+	007: 01 C8 77 -> 0E4 0 7 7
+	008: 01 89 77 -> 0C4 1 7 7
+	009: 03 82 77 -> 1C1 0 7 7
+	00A: 03 82 77 -> 1C1 0 7 7
+	00B: 03 82 77 -> 1C1 0 7 7
+	00C: 03 82 77 -> 1C1 0 7 7
+	00D: 01 C8 88 -> 0E4 0 8 8
+	00E: 01 B8 79 -> 0DC 0 7 9
+	00F: 03 82 99 -> 1C1 0 9 9
+	010: 01 82 99 -> 0C1 0 9 9
+	011: 01 B8 61 -> 0DC 0 6 1
+	012: 01 82 11 -> 0C1 0 1 1
+	013: 01 96 11 -> 0CB 0 1 1
+	014: 03 82 11 -> 1C1 0 1 1
+	015: 03 82 11 -> 1C1 0 1 1
+	016: 03 82 11 -> 1C1 0 1 1
+	017: 03 82 11 -> 1C1 0 1 1
+	018: 00 EE 18 -> 077 0 1 8 if /MOTIMEP JUMP 018
+	019: 84 B8 11 -> 05C 0 1 1
+	01A: 01 B8 72 -> 0DC 0 7 2
+	01B: 00 C8 00 -> 064 0 0 0
+	01C: 9C B8 88 -> 05C 0 8 8
+	01D: 98 B8 88 -> 05C 0 8 8
+	01E: 01 96 22 -> 0CB 0 2 2
+	01F: 00 F4 1C -> 07A 0 1 C if NZ JUMP 01C
+	020: 00 38 11 -> 01C 0 1 1
+	021: 03 34 00 -> 19A 0 0 0
+	022: 03 34 00 -> 19A 0 0 0
+	023: 03 34 00 -> 19A 0 0 0
+	024: 00 11 99 -> 008 1 9 9
+	025: 02 34 00 -> 11A 0 0 0
+	026: 84 B4 00 -> 05A 0 0 0
+	027: 00 C8 00 -> 064 0 0 0
+	028: 00 C8 00 -> 064 0 0 0
+	029: 10 3E 00 -> 01F 0 0 0
+	02A: 00 E5 3B -> 072 1 3 B if Z JUMP 13B
+	02B: 00 05 00 -> 002 1 0 0
+	02C: 9C B4 00 -> 05A 0 0 0
+	02D: 98 B4 00 -> 05A 0 0 0
+	02E: 00 EE 2E -> 077 0 2 E if /MOTIMEP JUMP 02E
+	02F: 10 3E 00 -> 01F 0 0 0
+	030: 00 05 00 -> 002 1 0 0
+	031: 00 F4 35 -> 07A 0 3 5 if NZ JUMP 035
+	032: A8 B8 55 -> 05C 0 5 5 (latch UC.HFLIP)
+	033: A8 FE 35 -> 07F 0 3 5 if MOTIMEP JUMP 035 (latch UC.HFLIP)
+	034: 00 E1 47 -> 070 1 4 7 JUMP 147
+	035: 01 B8 72 -> 0DC 0 7 2
+	036: 01 B8 8F -> 0DC 0 8 F
+	037: 01 83 5F -> 0C1 1 5 F
+	038: 84 B8 FF -> 05C 0 F F
+	039: 00 EE 39 -> 077 0 3 9 if /MOTIMEP JUMP 039
+	03A: 19 BE FF -> 0DF 0 F F
+	03B: 00 E4 68 -> 072 0 6 8 if Z JUMP 068
+	03C: 84 B8 88 -> 05C 0 8 8
+	03D: 00 EE 3D -> 077 0 3 D if /MOTIMEP JUMP 03D
+	03E: 19 BE AA -> 0DF 0 A A
+	03F: 00 EE 3F -> 077 0 3 F if /MOTIMEP JUMP 03F
+	040: 19 BE BB -> 0DF 0 B B
+	041: 00 EE 41 -> 077 0 4 1 if /MOTIMEP JUMP 041
+	042: 19 BE CC -> 0DF 0 C C
+	043: 00 EE 43 -> 077 0 4 3 if /MOTIMEP JUMP 043
+	044: 19 BE DD -> 0DF 0 D D
+	045: 00 EE 45 -> 077 0 4 5 if /MOTIMEP JUMP 045
+	046: 19 BE EE -> 0DF 0 E E
+	047: 00 C8 00 -> 064 0 0 0
+	048: 01 82 1F -> 0C1 0 1 F
+	049: 84 B8 FF -> 05C 0 F F
+	04A: 11 BE FF -> 0DF 0 F F
+	04B: 00 C8 00 -> 064 0 0 0
+	04C: 00 C8 00 -> 064 0 0 0
+	04D: 9C B8 99 -> 05C 0 9 9
+	04E: 90 B8 99 -> 05C 0 9 9
+	04F: 00 C8 00 -> 064 0 0 0
+	050: 84 B8 99 -> 05C 0 9 9
+	051: 9C B8 AA -> 05C 0 A A
+	052: 98 B8 AA -> 05C 0 A A
+	053: 00 C8 00 -> 064 0 0 0
+	054: 00 C8 00 -> 064 0 0 0
+	055: 9C B8 BB -> 05C 0 B B
+	056: 98 B8 BB -> 05C 0 B B
+	057: 00 C8 00 -> 064 0 0 0
+	058: 00 C8 00 -> 064 0 0 0
+	059: 9C B8 CC -> 05C 0 C C
+	05A: 98 B8 CC -> 05C 0 C C
+	05B: 00 C8 00 -> 064 0 0 0
+	05C: 00 C8 00 -> 064 0 0 0
+	05D: 9C B8 DD -> 05C 0 D D
+	05E: 98 B8 DD -> 05C 0 D D
+	05F: 00 C8 00 -> 064 0 0 0
+	060: 00 C8 00 -> 064 0 0 0
+	061: 9C B8 EE -> 05C 0 E E
+	062: 98 B8 EE -> 05C 0 E E
+	063: 00 C8 00 -> 064 0 0 0
+	064: 00 C8 00 -> 064 0 0 0
+	065: 9C B8 FF -> 05C 0 F F
+	066: 98 B8 FF -> 05C 0 F F
+	067: 01 82 69 -> 0C1 0 6 9
+	068: 01 82 68 -> 0C1 0 6 8
+	069: 01 96 22 -> 0CB 0 2 2
+	06A: 00 F4 36 -> 07A 0 3 6 if NZ JUMP 036
+	06B: 01 B8 72 -> 0DC 0 7 2
+	06C: 01 96 22 -> 0CB 0 2 2
+	06D: 01 C8 44 -> 0E4 0 4 4
+	06E: 01 96 44 -> 0CB 0 4 4
+	06F: 01 B8 43 -> 0DC 0 4 3
+	070: 02 B8 44 -> 15C 0 4 4
+	071: 02 B8 44 -> 15C 0 4 4
+	072: 02 B8 44 -> 15C 0 4 4
+	073: 02 B8 44 -> 15C 0 4 4
+	074: 02 B8 33 -> 15C 0 3 3
+	075: 01 93 43 -> 0C9 1 4 3
+	076: 02 B8 33 -> 15C 0 3 3
+	077: 00 38 33 -> 01C 0 3 3
+	078: 01 C8 33 -> 0E4 0 3 3
+	079: 01 89 33 -> 0C4 1 3 3
+	07A: 01 82 33 -> 0C1 0 3 3
+	07B: 01 C8 00 -> 0E4 0 0 0
+	07C: 00 B8 00 -> 05C 0 0 0
+	07D: 00 F4 87 -> 07A 0 8 7 if NZ JUMP 087
+	07E: 01 89 11 -> 0C4 1 1 1
+	07F: 84 B8 11 -> 05C 0 1 1
+	080: 00 EE 80 -> 077 0 8 0 if /MOTIMEP JUMP 080
+	081: 11 BE 00 -> 0DF 0 0 0
+	082: A4 B8 22 -> 05C 0 2 2 (latch UC.COLOR)
+	083: 01 96 22 -> 0CB 0 2 2
+	084: 00 F6 7C -> 07B 0 7 C if P JUMP 07C
+	085: 8C B8 22 -> 05C 0 2 2
+	086: 00 E0 86 -> 070 0 8 6 JUMP 086
+	087: 84 B8 00 -> 05C 0 0 0
+	088: 00 EE 88 -> 077 0 8 8 if /MOTIMEP JUMP 088
+	089: 19 BE 55 -> 0DF 0 5 5
+	08A: A8 B8 55 -> 05C 0 5 5 (latch UC.HFLIP)
+	08B: 03 82 55 -> 1C1 0 5 5
+	08C: 00 C8 00 -> 064 0 0 0
+	08D: 19 BE FF -> 0DF 0 F F
+	08E: A4 B8 FF -> 05C 0 F F (latch UC.COLOR)
+	08F: 00 C8 00 -> 064 0 0 0
+	090: 00 C8 00 -> 064 0 0 0
+	091: 19 BE 66 -> 0DF 0 6 6
+	092: B0 C8 00 -> 064 0 0 0 (latch UC.FORMAT)
+	093: 00 C8 00 -> 064 0 0 0
+	094: 00 C8 00 -> 064 0 0 0
+	095: 19 BE 77 -> 0DF 0 7 7
+	096: 00 C8 00 -> 064 0 0 0
+	097: 00 C8 00 -> 064 0 0 0
+	098: 00 C8 00 -> 064 0 0 0
+	099: 19 BE 88 -> 0DF 0 8 8
+	09A: 00 C8 00 -> 064 0 0 0
+	09B: 00 C8 00 -> 064 0 0 0
+	09C: 00 C8 00 -> 064 0 0 0
+	09D: 19 BE 00 -> 0DF 0 0 0
+	09E: 84 B8 55 -> 05C 0 5 5
+	09F: 00 C8 00 -> 064 0 0 0
+	0A0: 00 C8 00 -> 064 0 0 0
+	0A1: 09 BE DD -> 0DF 0 D D
+	0A2: 00 C8 00 -> 064 0 0 0
+	0A3: 00 C8 00 -> 064 0 0 0
+	0A4: 09 BE EE -> 0DF 0 E E
+	0A5: 01 C8 AA -> 0E4 0 A A
+	0A6: 01 C8 BB -> 0E4 0 B B
+	0A7: 09 BE 99 -> 0DF 0 9 9
+	0A8: 01 B8 8F -> 0DC 0 8 F
+	0A9: 01 82 FF -> 0C1 0 F F
+	0AA: 09 BE 55 -> 0DF 0 5 5
+	0AB: 01 C8 CC -> 0E4 0 C C
+	0AC: 00 B8 DD -> 05C 0 D D
+	0AD: 00 F6 B1 -> 07B 0 B 1 if P JUMP 0B1
+	0AE: 01 A9 DD -> 0D4 1 D D
+	0AF: 01 82 4C -> 0C1 0 4 C
+	0B0: 01 89 CC -> 0C4 1 C C
+	0B1: 01 82 CC -> 0C1 0 C C
+	0B2: 00 B8 EE -> 05C 0 E E
+	0B3: 00 F6 B7 -> 07B 0 B 7 if P JUMP 0B7
+	0B4: 01 A9 EE -> 0D4 1 E E
+	0B5: 01 82 4C -> 0C1 0 4 C
+	0B6: 01 89 CC -> 0C4 1 C C
+	0B7: 03 82 CC -> 1C1 0 C C
+	0B8: 01 82 FF -> 0C1 0 F F
+	0B9: 43 86 DA -> 1C3 0 D A
+	0BA: 43 86 EB -> 1C3 0 E B
+	0BB: 01 82 FF -> 0C1 0 F F
+	0BC: 43 86 DA -> 1C3 0 D A
+	0BD: 43 86 EB -> 1C3 0 E B
+	0BE: 01 82 FF -> 0C1 0 F F
+	0BF: 43 86 DA -> 1C3 0 D A
+	0C0: 43 86 EB -> 1C3 0 E B
+	0C1: 01 82 FF -> 0C1 0 F F
+	0C2: 43 86 DA -> 1C3 0 D A
+	0C3: 43 86 EB -> 1C3 0 E B
+	0C4: 01 82 FF -> 0C1 0 F F
+	0C5: 43 86 DA -> 1C3 0 D A
+	0C6: 43 86 EB -> 1C3 0 E B
+	0C7: 01 82 FF -> 0C1 0 F F
+	0C8: 43 86 DA -> 1C3 0 D A
+	0C9: 43 86 EB -> 1C3 0 E B
+	0CA: 01 82 FF -> 0C1 0 F F
+	0CB: 43 86 DA -> 1C3 0 D A
+	0CC: 43 86 EB -> 1C3 0 E B
+	0CD: 01 82 FF -> 0C1 0 F F
+	0CE: 41 86 DA -> 0C3 0 D A
+	0CF: 41 86 EB -> 0C3 0 E B
+	0D0: 02 B8 DD -> 15C 0 D D
+	0D1: 02 B8 EE -> 15C 0 E E
+	0D2: 01 82 FF -> 0C1 0 F F
+	0D3: 41 86 DA -> 0C3 0 D A
+	0D4: 41 86 EB -> 0C3 0 E B
+	0D5: 02 B8 DD -> 15C 0 D D
+	0D6: 02 B8 EE -> 15C 0 E E
+	0D7: 01 82 FF -> 0C1 0 F F
+	0D8: 41 86 DA -> 0C3 0 D A
+	0D9: 41 86 EB -> 0C3 0 E B
+	0DA: 02 B8 DD -> 15C 0 D D
+	0DB: 02 B8 EE -> 15C 0 E E
+	0DC: 01 82 FF -> 0C1 0 F F
+	0DD: 41 86 DA -> 0C3 0 D A
+	0DE: 41 86 EB -> 0C3 0 E B
+	0DF: 00 B8 CC -> 05C 0 C C
+	0E0: 00 F6 E2 -> 07B 0 E 2 if P JUMP 0E2
+	0E1: 01 A9 AA -> 0D4 1 A A
+	0E2: 01 82 CC -> 0C1 0 C C
+	0E3: 00 F6 E5 -> 07B 0 E 5 if P JUMP 0E5
+	0E4: 01 A9 BB -> 0D4 1 B B
+	0E5: 01 C8 CC -> 0E4 0 C C
+	0E6: 01 89 CC -> 0C4 1 C C
+	0E7: 03 82 CC -> 1C1 0 C C
+	0E8: 03 82 CC -> 1C1 0 C C
+	0E9: 03 82 CC -> 1C1 0 C C
+	0EA: 01 B8 4F -> 0DC 0 4 F
+	0EB: 03 82 FF -> 1C1 0 F F
+	0EC: 00 D2 48 -> 069 0 4 8
+	0ED: 00 E5 19 -> 072 1 1 9 if Z JUMP 119
+	0EE: 02 B8 88 -> 15C 0 8 8
+	0EF: 02 B8 88 -> 15C 0 8 8
+	0F0: 02 B8 88 -> 15C 0 8 8
+	0F1: 02 B8 88 -> 15C 0 8 8
+	0F2: 01 80 88 -> 0C0 0 8 8
+	0F3: 84 B8 88 -> 05C 0 8 8
+	0F4: 00 EE F4 -> 077 0 F 4 if /MOTIMEP JUMP 0F4
+	0F5: 19 BE 88 -> 0DF 0 8 8
+	0F6: AC B8 88 -> 05C 0 8 8 (latch UC.RATE)
+	0F7: 01 82 88 -> 0C1 0 8 8
+	0F8: 02 B8 88 -> 15C 0 8 8
+	0F9: 00 F8 FC -> 07C 0 F C if /BLT.HFLIP JUMP 0FC
+	0FA: 01 82 A6 -> 0C1 0 A 6
+	0FB: 00 E0 FD -> 070 0 F D JUMP 0FD
+	0FC: 01 93 A6 -> 0C9 1 A 6
+	0FD: 01 93 B7 -> 0C9 1 B 7
+	0FE: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT)
+	0FF: 84 B8 55 -> 05C 0 5 5
+	100: 01 C8 EE -> 0E4 0 E E
+	101: 00 C8 00 -> 064 0 0 0
+	102: 09 BE DD -> 0DF 0 D D
+	103: 00 E6 7C -> 073 0 7 C if N JUMP 07C
+	104: 00 93 F7 -> 049 1 F 7
+	105: 00 ED 0B -> 076 1 0 B if C JUMP 10B
+	106: B4 B8 DD -> 05C 0 D D (latch UC.TRANS)
+	107: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS)
+	108: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS)
+	109: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS)
+	10A: BC C8 00 -> 064 0 0 0 (latch UC.SCAN)
+	10B: 01 82 C7 -> 0C1 0 C 7
+	10C: 01 82 8E -> 0C1 0 8 E
+	10D: 00 D2 4E -> 069 0 4 E
+	10E: 00 E5 14 -> 072 1 1 4 if Z JUMP 114
+	10F: 01 93 4E -> 0C9 1 4 E
+	110: 01 96 EE -> 0CB 0 E E
+	111: 01 83 D5 -> 0C1 1 D 5
+	112: 00 FD 14 -> 07E 1 1 4 if NC JUMP 114
+	113: 01 89 99 -> 0C4 1 9 9
+	114: 00 FB 14 -> 07D 1 1 4 if BLT.SCAN JUMP 114
+	115: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS)
+	116: 84 B8 55 -> 05C 0 5 5
+	117: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT)
+	118: 00 E1 02 -> 070 1 0 2 JUMP 102
+	119: AC B8 88 -> 05C 0 8 8 (latch UC.RATE)
+	11A: 00 F9 1D -> 07C 1 1 D if /BLT.HFLIP JUMP 11D
+	11B: 01 82 A6 -> 0C1 0 A 6
+	11C: 00 E1 1E -> 070 1 1 E JUMP 11E
+	11D: 01 93 A6 -> 0C9 1 A 6
+	11E: 01 93 B7 -> 0C9 1 B 7
+	11F: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT)
+	120: 84 B8 55 -> 05C 0 5 5
+	121: 01 B8 4E -> 0DC 0 4 E
+	122: 01 89 EE -> 0C4 1 E E
+	123: 02 B8 EE -> 15C 0 E E
+	124: 09 BE DD -> 0DF 0 D D
+	125: 00 E6 7C -> 073 0 7 C if N JUMP 07C
+	126: 01 82 8E -> 0C1 0 8 E
+	127: 00 D2 4E -> 069 0 4 E
+	128: 00 E5 33 -> 072 1 3 3 if Z JUMP 133
+	129: 01 93 4E -> 0C9 1 4 E
+	12A: 01 96 EE -> 0CB 0 E E
+	12B: 00 93 F7 -> 049 1 F 7
+	12C: 00 ED 32 -> 076 1 3 2 if C JUMP 132
+	12D: B4 B8 DD -> 05C 0 D D (latch UC.TRANS)
+	12E: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS)
+	12F: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS)
+	130: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS)
+	131: BC C8 00 -> 064 0 0 0 (latch UC.SCAN)
+	132: 01 82 C7 -> 0C1 0 C 7
+	133: 01 83 D5 -> 0C1 1 D 5
+	134: 00 FD 36 -> 07E 1 3 6 if NC JUMP 136
+	135: 01 89 99 -> 0C4 1 9 9
+	136: 00 FB 36 -> 07D 1 3 6 if BLT.SCAN JUMP 136
+	137: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS)
+	138: 84 B8 55 -> 05C 0 5 5
+	139: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT)
+	13A: 00 E1 24 -> 070 1 2 4 JUMP 124
+	13B: 08 3E 00 -> 01F 0 0 0
+	13C: 00 EF 3C -> 077 1 3 C if /MOTIMEP JUMP 13C
+	13D: 18 3E 00 -> 01F 0 0 0
+	13E: 00 E5 75 -> 072 1 7 5 if Z JUMP 175
+	13F: 00 C8 00 -> 064 0 0 0
+	140: 9C B8 44 -> 05C 0 4 4
+	141: 98 B8 44 -> 05C 0 4 4
+	142: 00 C8 00 -> 064 0 0 0
+	143: 00 C8 00 -> 064 0 0 0
+	144: 9C B8 11 -> 05C 0 1 1
+	145: 98 B8 11 -> 05C 0 1 1
+	146: 00 E1 5A -> 070 1 5 A JUMP 15A
+	147: 00 38 11 -> 01C 0 1 1
+	148: 03 34 00 -> 19A 0 0 0
+	149: 03 34 00 -> 19A 0 0 0
+	14A: 03 34 00 -> 19A 0 0 0
+	14B: 00 11 99 -> 008 1 9 9
+	14C: 00 EF 4C -> 077 1 4 C if /MOTIMEP JUMP 14C
+	14D: 02 34 00 -> 11A 0 0 0
+	14E: 84 B4 00 -> 05A 0 0 0
+	14F: 01 C8 00 -> 0E4 0 0 0
+	150: 9C B8 00 -> 05C 0 0 0
+	151: 98 B8 00 -> 05C 0 0 0
+	152: 00 C8 00 -> 064 0 0 0
+	153: 00 C8 00 -> 064 0 0 0
+	154: 9C B8 11 -> 05C 0 1 1
+	155: 98 B8 11 -> 05C 0 1 1
+	156: 00 C8 00 -> 064 0 0 0
+	157: 00 C8 00 -> 064 0 0 0
+	158: 9C B8 44 -> 05C 0 4 4
+	159: 98 B8 44 -> 05C 0 4 4
+	15A: 09 BE DD -> 0DF 0 D D
+	15B: 01 82 8E -> 0C1 0 8 E
+	15C: 00 D2 4E -> 069 0 4 E
+	15D: 00 E5 67 -> 072 1 6 7 if Z JUMP 167
+	15E: 01 93 4E -> 0C9 1 4 E
+	15F: 01 96 EE -> 0CB 0 E E
+	160: 00 93 F7 -> 049 1 F 7
+	161: 00 ED 67 -> 076 1 6 7 if C JUMP 167
+	162: B4 B8 DD -> 05C 0 D D (latch UC.TRANS)
+	163: B8 B8 77 -> 05C 0 7 7 (latch UC.XYPOS)
+	164: A0 B8 33 -> 05C 0 3 3 (latch UC.RASCAS)
+	165: B8 B8 66 -> 05C 0 6 6 (latch UC.XYPOS)
+	166: BC C8 00 -> 064 0 0 0 (latch UC.SCAN)
+	167: 01 82 C7 -> 0C1 0 C 7
+	168: 01 83 D5 -> 0C1 1 D 5
+	169: 00 FD 6C -> 07E 1 6 C if NC JUMP 16C
+	16A: 01 89 99 -> 0C4 1 9 9
+	16B: 01 C8 00 -> 0E4 0 0 0
+	16C: 01 96 00 -> 0CB 0 0 0
+	16D: 00 F5 6C -> 07A 1 6 C if NZ JUMP 16C
+	16E: A0 C8 00 -> 064 0 0 0 (latch UC.RASCAS)
+	16F: 84 B8 55 -> 05C 0 5 5
+	170: B0 B8 99 -> 05C 0 9 9 (latch UC.FORMAT)
+	171: 01 C8 00 -> 0E4 0 0 0
+	172: 01 96 00 -> 0CB 0 0 0
+	173: 00 F5 72 -> 07A 1 7 2 if NZ JUMP 172
+	174: 00 E1 5A -> 070 1 5 A JUMP 15A
+	175: 84 B8 88 -> 05C 0 8 8
+	176: 00 EF 76 -> 077 1 7 6 if /MOTIMEP JUMP 176
+	177: 19 BE AA -> 0DF 0 A A
+	178: B0 B8 AA -> 05C 0 A A (latch UC.FORMAT)
+	179: 01 C8 77 -> 0E4 0 7 7
+	17A: 84 B8 77 -> 05C 0 7 7
+	17B: 01 C8 BB -> 0E4 0 B B
+	17C: 00 C8 00 -> 064 0 0 0
+	17D: 00 C8 00 -> 064 0 0 0
+	17E: 00 C8 00 -> 064 0 0 0
+	17F: 08 3E 00 -> 01F 0 0 0
+	180: 01 80 BB -> 0C0 0 B B
+	181: 01 89 77 -> 0C4 1 7 7
+	182: 00 F5 7F -> 07A 1 7 F if NZ JUMP 17F
+	183: 84 B8 AA -> 05C 0 A A
+	184: 00 C8 00 -> 064 0 0 0
+	185: 00 C8 00 -> 064 0 0 0
+	186: 9C B8 BB -> 05C 0 B B
+	187: 98 B8 BB -> 05C 0 B B
+	188: 01 96 AA -> 0CB 0 A A
+	189: 00 F7 8B -> 07B 1 8 B if P JUMP 18B
+	18A: 00 E1 8A -> 070 1 8 A JUMP 18A
+	18B: 00 C8 00 -> 064 0 0 0
+	18C: 00 E1 78 -> 070 1 7 8 JUMP 178
 
 ***************************************************************************/

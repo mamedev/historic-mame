@@ -3,20 +3,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -63,10 +63,11 @@
 #define M68K_EMULATE_020            OPT_ON
 
 
-/* Turn this on if you want to have immediate reads call
- * m68k_read_immediate_xx() instead of m68k_read_xx().
+/* If on, the CPU will call m68k_read_immediate_xx() for immediate addressing
+ * and m68k_read_pcrelative_xx() for PC-relative addressing.
+ * If off, all read requests from the CPU will be redirected to m68k_read_xx()
  */
-#define M68K_SEPARATE_READ_IMM      OPT_OFF
+#define M68K_SEPARATE_READS         OPT_OFF
 
 
 /* If on, CPU will call the interrupt acknowledge callback when it services an

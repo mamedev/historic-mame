@@ -1,5 +1,3 @@
-//The VS Arcade Bit needs to be enabled for this game, and according to Emulation status, Mapper 4 needs to be set for this game as well
-
 /***************************************************************************
 
 Nintendo VS UniSystem and DualSystem - (c) 198? Nintendo of America
@@ -35,15 +33,27 @@ RP2c05-004:
 - Ice climber
 - Clu Clu Land
 - Top gun ( ? ) (maybe a RC2c05-04)
+- Excite Bike (Japan)
+- Ice Climber Dual (Japan)
 
 Rcp2c03b:
 - Duckhunt
 - Tennis
-- Skykid ????
+- Skykid
 - Rbi Baseball
 - Mahjong
+- Star Luster
+- Stroke and Match Golf (Japan)
+- Pinball (Japan)
 
-- Gumshoe (no rom dump)
+Needed roms:
+- Gumshoe
+
+
+Known issues:
+Light Gun doesnt work in 16 bit mode
+Can't Rotate
+
 
 ***************************************************************************/
 #include "driver.h"
@@ -69,6 +79,7 @@ extern void vsdual_init_machine( void );
 extern void init_vsnes( void );
 extern void init_suprmrio( void );
 extern void init_excitebk( void );
+extern void init_excitbkj( void );
 extern void init_vsnormal( void );
 extern void init_duckhunt( void );
 extern void init_hogalley( void );
@@ -88,6 +99,10 @@ extern void init_vstennis( void );
 extern void init_wrecking(void);
 extern void init_balonfgt(void);
 extern void init_vsbball(void);
+extern void init_iceclmrj(void);
+extern void init_xevious(void);
+
+
 extern READ_HANDLER( vsnes_in0_r );
 extern READ_HANDLER( vsnes_in1_r );
 extern READ_HANDLER( vsnes_in0_1_r );
@@ -400,6 +415,53 @@ INPUT_PORTS_START( platoon )
 INPUT_PORTS_END
 
 
+/*
+Stroke Play Off On
+Hole in 1 +5 +4
+Double Eagle +4 +3
+Eagle +3 +2
+Birdie +2 +1
+Par +1 0
+Bogey 0 -1
+Other 0 -2
+
+Match Play OFF ON
+Win Hole +1 +2
+Tie 0 0
+Lose Hole -1 -2
+*/
+
+INPUT_PORTS_START( golf )
+	VS_CONTROLS
+
+	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x05, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x00, "Hole Size" )
+	PORT_DIPSETTING(	0x00, "Large" )
+	PORT_DIPSETTING(	0x08, "Small" )
+	PORT_DIPNAME( 0x10, 0x00, "Points per Stroke" )
+	PORT_DIPSETTING(	0x00, "Easier" )
+	PORT_DIPSETTING(	0x10, "Harder" )
+	PORT_DIPNAME( 0x60, 0x00, "Starting Points" )
+	PORT_DIPSETTING(	0x00, "10" )
+	PORT_DIPSETTING(	0x40, "13" )
+	PORT_DIPSETTING(	0x20, "16" )
+	PORT_DIPSETTING(	0x60, "20" )
+	PORT_DIPNAME( 0x80, 0x00, "Difficulty Vs. Computer" )
+	PORT_DIPSETTING(	0x00, "Easy" )
+	PORT_DIPSETTING(	0x80, "Hard")
+
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( vstennis )
 	VS_DUAL_CONTROLS_L /* left side controls */
 
@@ -603,7 +665,7 @@ VS_DUAL_CONTROLS_L /* left side controls */
 	VS_DUAL_CONTROLS_R /* right side controls */
 
 		PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
-		PORT_DIPNAME( 0x01, 0x00, "TestMode?")//DEF_STR( Unknown ) )
+		PORT_DIPNAME( 0x01, 0x00, DEF_STR(Service_Mode))
 		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 		PORT_DIPSETTING(	0x01, DEF_STR( On ) )
 		PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
@@ -685,10 +747,96 @@ VS_DUAL_CONTROLS_L /* left side controls */
 		PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START(vsbballj)
+VS_DUAL_CONTROLS_L /* left side controls */
 
-INPUT_PORTS_START( drmario )
+	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+		PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+		PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+		PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off) )
+		PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+		PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+		PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+		PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+		PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+		PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
-	VS_CONTROLS_REVERSE
+	VS_DUAL_CONTROLS_R /* right side controls */
+
+		PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+		PORT_DIPNAME( 0x01, 0x00, DEF_STR( Service_Mode ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+		PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+		PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+		PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+		PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+		PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+		PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+		PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+		PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+
+INPUT_PORTS_START(iceclmrj)
+PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+	VS_DUAL_CONTROLS_L
+
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+
+	VS_DUAL_CONTROLS_R
 
 	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -697,17 +845,46 @@ INPUT_PORTS_START( drmario )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Virus Level"  )
-	PORT_DIPSETTING(	0x00, "1" )
-	PORT_DIPSETTING(	0x04, "3" )
-	PORT_DIPSETTING(	0x08, "5" )
-	PORT_DIPSETTING(	0x0c, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( drmario )
+
+	VS_CONTROLS_REVERSE
+
+	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
+	PORT_DIPNAME( 0x03, 0x00, "Drop Rate Increases After" )
+	PORT_DIPSETTING(	0x00, "7 Pills")
+	PORT_DIPSETTING(	0x01, "8 Pills" )
+	PORT_DIPSETTING(	0x02, "9 Pills" )
+	PORT_DIPSETTING(	0x03, "10 Pills" )
+	PORT_DIPNAME( 0x0c, 0x00, "Virus Level"  )
+	PORT_DIPSETTING(	0x00, "1" )
+	PORT_DIPSETTING(	0x04, "3" )
+	PORT_DIPSETTING(	0x08, "5" )
+	PORT_DIPSETTING(	0x0c, "7" )
+	PORT_DIPNAME( 0x30, 0x00, "Drop Speed Up" )
+	PORT_DIPSETTING(	0x00, "Slow" )
+	PORT_DIPSETTING(	0x10, "Medium")
+	PORT_DIPSETTING(	0x20, "Fast" )
+	PORT_DIPSETTING(	0x30, "Fastest" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Free_Play ) )
@@ -727,25 +904,19 @@ INPUT_PORTS_START( rbibb )
 	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Colors"  )
-	PORT_DIPSETTING(	0x00, "Alternate" )
-	PORT_DIPSETTING(	0x20, "Normal" )
-	/* note if alternate colors selected the folowing will change colors*/
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Max. 1p/in, 2p/in, Min")
+	PORT_DIPSETTING(	0x04, "2, 1, 3" )
+	PORT_DIPSETTING(	0x0c, "2, 2, 4" )
+	PORT_DIPSETTING(	0x00, "3, 2, 6" )
+	PORT_DIPSETTING(	0x08, "4, 3, 7" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR(Demo_Sounds ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	/*Note the 3 dips below are docuemtned as required to be off in the manual */
+	/* Turning them on messes with the colors */
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 
 INPUT_PORTS_END
@@ -884,53 +1055,18 @@ INPUT_PORTS_START( excitebk )
 	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(	0x06, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
-
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( ladygolf )
-	VS_CONTROLS
-
-	PORT_START /* DSW0 - bit 0 and 1 read from bit 3 and 4 on $4016, rest of the bits read on $4017 */
-	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0x07, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(	0x05, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x00, "Bonus" )
+	PORT_DIPSETTING(	0x00, "100k and Every 50k" )
+	PORT_DIPSETTING(	0x10, "Every 100k" )
+	PORT_DIPSETTING(	0x08, "100k Only" )
+	PORT_DIPSETTING(	0x18, "Nothing")
+	PORT_DIPNAME( 0x20, 0x00, "1st Half Qualifying Time" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x20, "Hard" )
+	PORT_DIPNAME( 0x40, 0x00, "2nd Half Qualifying Time" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x40, "Hard" )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1045,7 +1181,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( hogalley )
 	VS_ZAPPER
 
-	PORT_START	/* IN2 */ \
+	PORT_START	/* IN2 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */
@@ -1281,7 +1417,14 @@ static struct MachineDriver machine_driver_vsdual =
 	vsdual_init_machine,
 
 	/* video hardware */
+
+
+
+
+
 	32*8*2, 30*8, { 0*8, 32*8*2-1, 0*8, 30*8-1 },
+
+
 	nes_gfxdecodeinfo,
 
 	2*4*16, 2*4*16,
@@ -1310,7 +1453,7 @@ static struct MachineDriver machine_driver_vsdual =
 
 /******************************************************************************/
 
-/* RP2C04_0004 games */
+
 ROM_START( suprmrio)
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
 	ROM_LOAD( "1d",  0x8000, 0x2000, 0xbe4d5436 )
@@ -1414,16 +1557,37 @@ ROM_START( excitebk )
 
 ROM_END
 
-ROM_START( jajamaru )
+ROM_START( excitbkj )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "10.bin", 0x8000, 0x2000, 0x16af1704)
-	ROM_LOAD( "9.bin",  0xa000, 0x2000, 0xdb7d1814)
-	ROM_LOAD( "8.bin",  0xc000, 0x2000, 0xce263271)
-	ROM_LOAD( "7.bin",  0xe000, 0x2000, 0xa406d0e4)
+	ROM_LOAD( "eb4-46da.bin",  0x8000, 0x2000, 0x6aa87037 )
+	ROM_LOAD( "eb4-46ca.bin",  0xa000, 0x2000, 0xbdb317db )
+	ROM_LOAD( "eb4-46ba.bin",  0xc000, 0x2000, 0xd1afe2dd )
+	ROM_LOAD( "eb4-46aa.bin",  0xe000, 0x2000, 0x46711d0e )
 
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
-	ROM_LOAD( "12.bin",  0x0000, 0x2000, 0xc91d536a )
-	ROM_LOAD( "11.bin",  0x2000, 0x2000, 0xf0034c04 )
+	ROM_LOAD( "eb4-48ba.bin",  0x0000, 0x2000, 0x62a76c52 )
+	ROM_LOAD( "eb4-48aa.bin",  0x2000, 0x2000, 0xa9b49a05 )
+
+ROM_END
+
+
+ROM_START( jajamaru )
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
+	//ROM_LOAD( "10.bin", 0x8000, 0x2000, 0x16af1704)
+	//ROM_LOAD( "9.bin",  0xa000, 0x2000, 0xdb7d1814)
+
+	ROM_LOAD( "8.bin",  0x8000, 0x2000, 0xce263271)
+	ROM_LOAD( "7.bin",  0xa000, 0x2000, 0xa406d0e4)
+	ROM_LOAD( "9.bin", 0xc000, 0x2000, 0xdb7d1814)
+	ROM_LOAD( "10.bin",  0xe000, 0x2000, 0x16af1704)
+
+
+
+	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
+	//ROM_LOAD( "12.bin",  0x0000, 0x2000, 0xc91d536a )
+	//ROM_LOAD( "11.bin",  0x2000, 0x2000, 0xf0034c04 )
+	//ROM_LOAD( "7.bin",   0x4000, 0x2000, 0xc91d536a )
+	//ROM_LOAD( "8.bin",  0x6000, 0x2000, 0xf0034c04 )
 
 ROM_END
 
@@ -1440,6 +1604,18 @@ ROM_START( ladygolf)
 	ROM_LOAD( "lg-2a",  0x2000, 0x2000, 0xd07407b1 )
 ROM_END
 
+ROM_START( smgolfj )
+	ROM_REGION( 0x10000,REGION_CPU1, 0  ) /* 6502 memory */
+	ROM_LOAD( "gf3_6d_b.bin",  0x8000, 0x2000, 0x8ce375b6 )
+	ROM_LOAD( "gf3_6c_b.bin",  0xa000, 0x2000, 0x50a938d3 )
+	ROM_LOAD( "gf3_6b_b.bin",  0xc000, 0x2000, 0x7dc39f1f )
+	ROM_LOAD( "gf3_6a_b.bin",  0xe000, 0x2000, 0x9b8a2106 )
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "gf3_8b_b.bin",  0x0000, 0x2000, 0x7ef68029 )
+	ROM_LOAD( "gf3_8a_b.bin",  0x2000, 0x2000, 0xf2285878 )
+ROM_END
+
 ROM_START( machridr )
 	ROM_REGION( 0x10000,REGION_CPU1,0 ) /* 6502 memory */
 	ROM_LOAD( "mr-1d",  0x8000, 0x2000, 0x379c44b9 )
@@ -1452,7 +1628,7 @@ ROM_START( machridr )
 	ROM_LOAD( "mr-2a",  0x2000, 0x2000, 0x685899d8 )
 ROM_END
 
-ROM_START(vsgolf)
+ROM_START(smgolf)
 	ROM_REGION( 0x10000,REGION_CPU1,0 ) /* 6502 memory */
 	ROM_LOAD( "golf-1d",  0x8000, 0x2000, 0xa3e286d3 )
 	ROM_LOAD( "golf-1c",  0xa000, 0x2000, 0xe477e48b )
@@ -1474,6 +1650,21 @@ ROM_START( vspinbal )
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "pb-8b",  0x0000, 0x2000, 0x8822ee9e )
 	ROM_LOAD( "pb-8a",  0x2000, 0x2000, 0xcbe98a28 )
+ROM_END
+
+
+
+
+ROM_START( vspinblj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "pn3_6d_b.bin",  0x8000, 0x2000, 0xfd50c42e  )
+	ROM_LOAD( "pn3_6c_b.bin",  0xa000, 0x2000, 0x59beb9e5  )
+	ROM_LOAD( "pn3_6b_b.bin",  0xc000, 0x2000, 0xce7f47ce  )
+	ROM_LOAD( "pn3_6a_b.bin",  0xe000, 0x2000, 0x5685e2ee  )
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "pn3_8b_b.bin",  0x0000, 0x2000, 0x1e3fec3e )
+	ROM_LOAD( "pn3_8a_b.bin",  0x2000, 0x2000, 0x6f963a65 )
 ROM_END
 
 
@@ -1501,6 +1692,18 @@ ROM_START( vssoccer )
 	ROM_LOAD( "soccer2a",  0x2000, 0x2000, 0x7263613a )
 ROM_END
 
+ROM_START( starlstr )
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "sl_04.1d",  0x8000, 0x2000, 0x4fd5b385 )
+	ROM_LOAD( "sl_03.1c",  0xa000, 0x2000, 0xf26cd7ca )
+	ROM_LOAD( "sl_02.1b",  0xc000, 0x2000, 0x9308f34e )
+	ROM_LOAD( "sl_01.1a",  0xe000, 0x2000, 0xd87296e4 )
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "sl_06.2b",  0x0000, 0x2000, 0x25f0e027 )
+	ROM_LOAD( "sl_05.2a",  0x2000, 0x2000, 0x2bbb45fd )
+ROM_END
+
 
 ROM_START( vstetris )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
@@ -1508,7 +1711,7 @@ ROM_START( vstetris )
 	ROM_LOAD( "c000.6b",  0xc000, 0x2000, 0x9e9cda9d)
 	ROM_LOAD( "e000.6a",  0xe000, 0x2000, 0xbfeaf6c1)
 
-	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_REGION( 0x2000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "char.8b",  0x0000, 0x2000, 0x51e8d403 )
 
 ROM_END
@@ -1570,6 +1773,18 @@ ROM_START( platoon )
 ROM_END
 
 
+ROM_START( vsxevus )
+	ROM_REGION( 0x30000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "prg2n", 0x10000, 0x10000, 0xe2c0a2be)
+	ROM_LOAD( "prg1",  0x20000, 0x10000, 0xe2c0a2be)
+
+
+	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "cha",  0x00000, 0x8000, 0x689df57d )
+
+ROM_END
+
+
 /* Dual System */
 
 ROM_START( balonfgt )
@@ -1583,6 +1798,7 @@ ROM_START( balonfgt )
 	ROM_LOAD( "bf.2b",  0x0000, 0x2000, 0xf27d9aa0 )
 	ROM_LOAD( "bf.2a",  0x2000, 0x2000, 0x76e6bbf8 )
 
+
 	ROM_REGION( 0x10000,REGION_CPU2,0 ) /* 6502 memory */
 	ROM_LOAD( "bf.6d",  0x08000, 0x02000, 0xef4ebff1 )
 	ROM_LOAD( "bf.6c",  0x0a000, 0x02000, 0x14af0e42 )
@@ -1592,6 +1808,7 @@ ROM_START( balonfgt )
 	ROM_REGION( 0x4000,REGION_GFX2, 0 ) /* PPU memory */
 	ROM_LOAD( "bf.8b",  0x0000, 0x2000, 0xf27d9aa0 )
 	ROM_LOAD( "bf.8a",  0x2000, 0x2000, 0x76e6bbf8 )
+
 ROM_END
 
 ROM_START( vsmahjng )
@@ -1635,6 +1852,52 @@ ROM_START( vsbball )
 	ROM_LOAD( "bb-8b",  0x0000, 0x2000, 0x3ff8bec3 )
 	ROM_LOAD( "bb-8a",  0x2000, 0x2000, 0x13b20cfd )
 ROM_END
+
+
+ROM_START( vsbballj )
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "ba_1d_a1.bin",  0x08000, 0x02000, 0x6dbc129b)
+	ROM_LOAD( "ba_1c_a1.bin",  0x0a000, 0x02000, 0x2a684b3a)
+	ROM_LOAD( "ba_1b_a1.bin",  0x0c000, 0x02000, 0x7ca0f715)
+	ROM_LOAD( "ba_1a_a1.bin",  0x0e000, 0x02000, 0x926bb4fc)
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "ba_2b_a.bin",  0x0000, 0x2000, 0x919147d0 )
+	ROM_LOAD( "ba_2a_a.bin",  0x2000, 0x2000, 0x3f7edb00 )
+
+	ROM_REGION( 0x10000,REGION_CPU2,0 ) /* 6502 memory */
+	ROM_LOAD( "ba_6d_a1.bin",  0x08000, 0x02000, 0xd534dca4)
+	ROM_LOAD( "ba_6c_a1.bin",  0x0a000, 0x02000, 0x73904bbc)
+	ROM_LOAD( "ba_6b_a1.bin",  0x0c000, 0x02000, 0x7c130724)
+	ROM_LOAD( "ba_6a_a1.bin",  0x0e000, 0x02000, 0xd938080e)
+
+	ROM_REGION( 0x4000,REGION_GFX2, 0 ) /* PPU memory */
+	ROM_LOAD( "ba_8b_a.bin",  0x0000, 0x2000, 0x919147d0 )
+	ROM_LOAD( "ba_8a_a.bin",  0x2000, 0x2000, 0x3f7edb00 )
+ROM_END
+
+ROM_START( vsbbalja )
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "ba_1d_a2.bin",  0x08000, 0x02000, 0xf3820b70)
+	ROM_LOAD( "ba_1c_a2.bin",  0x0a000, 0x02000, 0x39fbbf28)
+	ROM_LOAD( "ba_1b_a2.bin",  0x0c000, 0x02000, 0xb1377b12)
+	ROM_LOAD( "ba_1a_a2.bin",  0x0e000, 0x02000, 0x08fab347)
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "ba_2b_a.bin",  0x0000, 0x2000, 0x919147d0 )
+	ROM_LOAD( "ba_2a_a.bin",  0x2000, 0x2000, 0x3f7edb00 )
+
+	ROM_REGION( 0x10000,REGION_CPU2,0 ) /* 6502 memory */
+	ROM_LOAD( "ba_6d_a2.bin",  0x08000, 0x02000, 0xc69561b0)
+	ROM_LOAD( "ba_6c_a2.bin",  0x0a000, 0x02000, 0x17d1ca39)
+	ROM_LOAD( "ba_6b_a2.bin",  0x0c000, 0x02000, 0x37481900)
+	ROM_LOAD( "ba_6a_a2.bin",  0x0e000, 0x02000, 0xa44ffc4b)
+
+	ROM_REGION( 0x4000,REGION_GFX2, 0 ) /* PPU memory */
+	ROM_LOAD( "ba_8b_a.bin",  0x0000, 0x2000, 0x919147d0 )
+	ROM_LOAD( "ba_8a_a.bin",  0x2000, 0x2000, 0x3f7edb00 )
+ROM_END
+
 
 ROM_START( vstennis )
 	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
@@ -1680,47 +1943,74 @@ ROM_START( wrecking )
 	ROM_LOAD( "wr.8a",  0x2000, 0x2000, 0x653350d8 )
 ROM_END
 
+ROM_START( iceclmrj )
+
+	ROM_REGION( 0x10000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_LOAD( "ic4-41da.bin",  0x08000, 0x02000, 0x94e3197d )
+	ROM_LOAD( "ic4-41ca.bin",  0x0a000, 0x02000, 0xb253011e )
+	ROM_LOAD( "ic441ba1.bin",  0x0c000, 0x02000, 0xf3795874 )
+	ROM_LOAD( "ic4-41aa.bin",  0x0e000, 0x02000, 0x094c246c )
+
+	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "ic4-42ba.bin",  0x0000, 0x2000, 0x331460b4 )
+	ROM_LOAD( "ic4-42aa.bin",  0x2000, 0x2000, 0x4ec44fb3 )
+
+	ROM_REGION( 0x10000,REGION_CPU2, 0 ) /* 6502 memory */
+	ROM_LOAD( "ic4-46da.bin",  0x08000, 0x02000, 0x94e3197d )
+	ROM_LOAD( "ic4-46ca.bin",  0x0a000, 0x02000, 0xb253011e )
+	ROM_LOAD( "ic4-46ba.bin",  0x0c000, 0x02000, 0x2ee9c1f9 )
+	ROM_LOAD( "ic4-46aa.bin",  0x0e000, 0x02000, 0x094c246c )
+
+	ROM_REGION( 0x4000,REGION_GFX2, 0 ) /* PPU memory */
+	ROM_LOAD( "ic4-48ba.bin",  0x0000, 0x2000, 0x331460b4 )
+	ROM_LOAD( "ic4-48aa.bin",  0x2000, 0x2000, 0x4ec44fb3 )
+
+ROM_END
+
 /******************************************************************************/
 
-/*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT  	   MONITOR  */
-GAMEX( 1980, btlecity, 0,	  vsnes,   btlecity, vsnormal, ROT0, "Namco",     "Battle City",GAME_WRONG_COLORS )
-GAME( 1987,	cstlevna, 0,	  vsnes,   cstlevna, cstlevna, ROT0, "Konami",    "Vs Castlevania" )
-GAME( 1984, cluclu,   0,	  vsnes,   cluclu,   suprmrio, ROT0, "Nintendo",  "Clu Clu Land" )
-GAME( 1990,	drmario,  0,	  vsnes,   drmario,  drmario,  ROT0, "Nintendo",  "Dr Mario" )
-GAME( 1985, duckhunt, 0,      vsnes,   duckhunt, duckhunt, ROT0, "Nintendo",  "Duck Hunt" )
-GAME( 1984, excitebk, 0,	  vsnes,   excitebk, excitebk, ROT0, "Nintendo",  "Excitebike")
-GAME( 1986,	goonies,  0,	  vsnes,   vsnes,    goonies,  ROT0, "Konami",	  "VS The Goonies" )
-GAME( 1985, hogalley, 0,      vsnes,   hogalley, hogalley, ROT0, "Nintendo",  "Hogan's Alley" )
-GAME( 1984, iceclimb, 0,      vsnes,   iceclimb, suprmrio, ROT0, "Nintendo",  "Ice Climber" )
-GAME( 1984, ladygolf, 0,      vsnes,   ladygolf, machridr, ROT0, "Nintendo",  "Stroke and Match Golf (Ladies Version)" )
-GAME( 1985, machridr, 0,      vsnes,   machridr, machridr, ROT0, "Nintendo",  "Mach Rider" )
-GAME( 1986, rbibb,	  0,	  vsnes,   rbibb,    rbibb,    ROT0, "Namco",  	   "Atari RBI Baseball")
-GAME( 1986, suprmrio, 0,      vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "VS Super Mario Bros" )
-GAME( 1985, vsskykid, 0,	  vsnes,   vsskykid, vsskykid, ROT0, "Namco",     "Super SkyKid"  )
-GAMEX( 1987, tkoboxng, 0,     vsnes,   vsnes,    tkoboxng, ROT0, "Namco LTD.", "VS TKO Boxing", GAME_IMPERFECT_SOUND )
-GAME( 1984, vsgolf,   0,      vsnes,   vsnes,    machridr, ROT0, "Nintendo",  "Stroke and Match Golf (Men's Version" )
-GAME( 1984, vspinbal, 0,      vsnes,   vsnes,    vspinbal, ROT0, "Nintendo",  "Pinball" )
-GAME( 1986, vsslalom, 0,      vsnes,   vsnes,    vsslalom, ROT0, "Rare LTD.",  "VS Slalom" )
-GAME( 1985, vssoccer, 0,      vsnes,   vsnes,    excitebk, ROT0, "Nintendo",  "Soccer" )
-GAME( 1986, vsgradus, 0,      vsnes,   vsnes,    vsgradus, ROT0, "Konami",  "VS Gradius" )
-GAMEX( 1987, platoon,  0,     vsnes,   platoon,	 platoon,  ROT0, "Ocean Software Limited", 	"Platoon", GAME_WRONG_COLORS )
-GAMEX( 1987, vstetris, 0,     vsnes,   vstetris, vspinbal, ROT0, "Academysoft-Elory",  "VS Tetris",GAME_WRONG_COLORS )
+/*    YEAR  NAME      PARENT    MACHINE  INPUT     INIT  	   MONITOR  */
+GAMEX(1985, btlecity, 0,	    vsnes,   btlecity, vsnormal, ROT0, "Namco",     "Battle City",GAME_WRONG_COLORS )
+GAME( 1985, starlstr, 0,        vsnes,   vsnes,    vsnormal, ROT0, "Namco",  	  "Star Luster" )
+GAME( 1987,	cstlevna, 0,	    vsnes,   cstlevna, cstlevna, ROT0, "Konami",    "Vs. Castlevania" )
+GAME( 1984, cluclu,   0,	    vsnes,   cluclu,   suprmrio, ROT0, "Nintendo",  "Clu Clu Land" )
+GAME( 1990,	drmario,  0,	    vsnes,   drmario,  drmario,  ROT0, "Nintendo",  "Dr. Mario" )
+GAME( 1985, duckhunt, 0,        vsnes,   duckhunt, duckhunt, ROT0, "Nintendo",  "Duck Hunt" )
+GAME( 1984, excitebk, 0,	    vsnes,   excitebk, excitebk, ROT0, "Nintendo",  "Excitebike")
+GAME( 1984, excitbkj, excitebk, vsnes,   excitebk, excitbkj, ROT0, "Nintendo",  "Excitebike (Japan)")
+GAME( 1986,	goonies,  0,	    vsnes,   vsnes,    goonies,  ROT0, "Konami",	  "Vs. The Goonies" )
+GAME( 1985, hogalley, 0,        vsnes,   hogalley, hogalley, ROT0, "Nintendo",  "Hogan's Alley" )
+GAME( 1984, iceclimb, 0,        vsnes,   iceclimb, suprmrio, ROT0, "Nintendo",  "Ice Climber" )
+GAME( 1984, ladygolf, 0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Stroke and Match Golf (Ladies Version)" )
+GAME( 1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Mach Rider" )
+GAME( 1986, rbibb,	  0,	    vsnes,   rbibb,    rbibb,    ROT0, "Namco",  	   "Atari RBI Baseball")
+GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "Vs. Super Mario Bros" )
+GAME( 1985, vsskykid, 0,	    vsnes,   vsskykid, vsskykid, ROT0, "Namco",     "Super SkyKid"  )
+GAMEX(1987,tkoboxng, 0,         vsnes,   vsnes,    tkoboxng, ROT0, "Namco LTD.", "Vs. TKO Boxing", GAME_WRONG_COLORS )
+GAME( 1984, smgolf,   0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Stroke and Match Golf (Men's Version" )
+GAME( 1984, smgolfj,  smgolf,   vsnes,   golf,     vsnormal, ROT0, "Nintendo", "Stroke and Match Golf (Japan)" )
+GAME( 1984, vspinbal, 0,        vsnes,   vsnes,    vspinbal, ROT0, "Nintendo",  "Pinball" )
+GAME( 1984, vspinblj, vspinbal, vsnes,   vsnes,    vsnormal, ROT0, "Nintendo",  "Pinball (Japan)" )
+GAME( 1986, vsslalom, 0,        vsnes,   vsnes,    vsslalom, ROT0, "Rare LTD.",  "Vs. Slalom" )
+GAME( 1985, vssoccer, 0,        vsnes,   vsnes,    excitebk, ROT0, "Nintendo",  "Soccer" )
+GAME( 1986, vsgradus, 0,        vsnes,   vsnes,    vsgradus, ROT0, "Konami",  "Vs. Gradius" )
+GAMEX(1987, platoon,  0,        vsnes,   platoon,  platoon,  ROT0, "Ocean Software Limited", 	"Platoon", GAME_WRONG_COLORS )
+GAMEX(1987, vstetris, 0,        vsnes,   vstetris, vspinbal, ROT0, "Academysoft-Elory",  "Vs. Tetris",GAME_WRONG_COLORS )
 
 /* Dual games */
-GAME( 1984, vstennis, 0,      vsdual,  vstennis, vstennis, ROT0, "Nintendo Co. LTD",		  "VS. Tennis"  )
-GAME( 1984, wrecking, 0,      vsdual,  wrecking, wrecking, ROT0, "Nintendo Co. LTD",		  "VS. Wrecking Crew" )
-GAME( 1984, balonfgt, 0,      vsdual,  balonfgt, balonfgt, ROT0, "Nintendo",  				  "VS. Baloon Fight" )
-GAME( 1984, vsmahjng, 0,      vsdual,  vsmahjng, vstennis, ROT0, "Nintendo Co. LTD",		  "VS. Mahjang"  )
-GAME( 1984, vsbball,  0,      vsdual,  vsbball,  vsbball,  ROT0, "Nintendo of America INC.",  "VS. BaseBall"  )
+GAME( 1984, vstennis, 0,        vsdual,  vstennis, vstennis, ROT0, "Nintendo",		  "Vs. Tennis"  )
+GAME( 1984, wrecking, 0,        vsdual,  wrecking, wrecking, ROT0, "Nintendo",		  "Vs. Wrecking Crew" )
+GAME( 1984, balonfgt, 0,        vsdual,  balonfgt, balonfgt, ROT0, "Nintendo",  				  "Vs. Baloon Fight" )
+GAME( 1984, vsmahjng, 0,        vsdual,  vsmahjng, vstennis, ROT0, "Nintendo",		  "Vs. Mahjang"  )
+GAME( 1984, vsbball,  0,        vsdual,  vsbball,  vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall"  )
+GAME( 1984, vsbballj, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 1)"  )
+GAME( 1984, vsbbalja, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 2)"  )
+GAME( 1984, iceclmrj, 0,        vsdual,  iceclmrj, iceclmrj, ROT0, "Nintendo",  				  "Ice Climber Dual (Japan)"  )
 
 
 /* are these using the correct mappers? */
 
-GAMEX( ????, topgun,   0,	  vsnes,   vsnes,    vstopgun, ROT0, "Nintendo",  "VS Topgun", GAME_NOT_WORKING )
-
-GAMEX( ????, jajamaru, 0,      vsnes,   vsnes,    vsnormal, ROT0, "Nintendo",  "JAJARU", GAME_NOT_WORKING )
-
-
-
-
+GAMEX(????, topgun,   0,	    vsnes,   vsnes,    vstopgun, ROT0, "Nintendo",  "VS Topgun", GAME_NOT_WORKING )
+GAMEX(????, jajamaru, 0,        vsnes,   vsnes,    vsnormal, ROT0, "Nintendo",  "JAJARU", GAME_NOT_WORKING )
+GAMEX(????, vsxevus,  0,        vsnes,   vsnes,	   xevious,  ROT0, "Namco?", 	"Xevious", GAME_NOT_WORKING )
 

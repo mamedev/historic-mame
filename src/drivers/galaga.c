@@ -407,7 +407,7 @@ static const struct MachineDriver machine_driver_galaga =
 			galaga_interrupt_3,2
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	99,	/* 99 CPU slices per frame - with 100, galagab2 hangs on coin insertion */
 	galaga_init_machine,
 

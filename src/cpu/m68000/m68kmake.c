@@ -3,20 +3,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -48,7 +48,7 @@
  */
 
 
-char* g_version = "3.2";
+char* g_version = "3.3";
 
 /* ======================================================================== */
 /* =============================== INCLUDES =============================== */
@@ -75,7 +75,8 @@ char* g_version = "3.2";
 #define MAX_REPLACE_LENGTH               30	/* Max number of replace strings */
 #define MAX_INSERT_LENGTH              5000	/* Max size of insert piece */
 #define MAX_NAME_LENGTH                  30	/* Max length of ophandler name */
-#define MAX_MODE_LENGTH                   6	/* Max length of special mode str*/
+#define MAX_SPEC_PROC_LENGTH              4	/* Max length of special processing str */
+#define MAX_SPEC_EA_LENGTH                5	/* Max length of specified EA str */
 #define EA_ALLOWED_LENGTH                11	/* Max length of ea allowed str */
 #define MAX_OPCODE_INPUT_TABLE_LENGTH  1000	/* Max length of opcode handler tbl */
 #define MAX_OPCODE_OUTPUT_TABLE_LENGTH 3000	/* Max length of opcode handler tbl */
@@ -130,6 +131,9 @@ char* g_version = "3.2";
 #define CPU_TYPE_010 1
 #define CPU_TYPE_020 2
 
+#define UNSPECIFIED "."
+#define UNSPECIFIED_CH '.'
+
 #define HAS_NO_EA_MODE(A) (strcmp(A, "..........") == 0)
 #define HAS_EA_AI(A)   ((A)[0] == 'A')
 #define HAS_EA_PI(A)   ((A)[1] == '+')
@@ -163,15 +167,17 @@ enum
 /* Everything we need to know about an opcode */
 typedef struct
 {
-	char name[MAX_NAME_LENGTH];
-	unsigned char size;
-	char mode[MAX_MODE_LENGTH];
-	unsigned char bits;
-	unsigned short op_mask;
-	unsigned short op_match;
-	char ea_allowed[EA_ALLOWED_LENGTH];
-	char cpus[NUM_CPUS+1];
-	unsigned char cycles[NUM_CPUS]; /* cycles for 000, 010, 020 */
+	char name[MAX_NAME_LENGTH];           /* opcode handler name */
+	unsigned char size;                   /* Size of operation */
+	char spec_proc[MAX_SPEC_PROC_LENGTH]; /* Special processing mode */
+	char spec_ea[MAX_SPEC_EA_LENGTH];     /* Specified effective addressing mode */
+	unsigned char bits;                   /* Number of significant bits (used for sorting the table) */
+	unsigned short op_mask;               /* Mask to apply for matching an opcode to a handler */
+	unsigned short op_match;              /* Value to match after masking */
+	char ea_allowed[EA_ALLOWED_LENGTH];   /* Effective addressing modes allowed */
+	char cpu_mode[NUM_CPUS];              /* User or supervisor mode */
+	char cpus[NUM_CPUS+1];                /* Allowed CPUs */
+	unsigned char cycles[NUM_CPUS];       /* cycles for 000, 010, 020 */
 } opcode_struct;
 
 
@@ -211,9 +217,9 @@ int num_bits(int value);
 int atoh(char* buff);
 int fgetline(char* buff, int nchars, FILE* file);
 int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type);
-opcode_struct* find_opcode(char* name, int size, char* mode);
+opcode_struct* find_opcode(char* name, int size, char* spec_proc, char* spec_ea);
 opcode_struct* find_illegal_opcode(void);
-int extract_opcode_info(char* src, char* name, int* size, char* mode);
+int extract_opcode_info(char* src, char* name, int* size, char* spec_proc, char* spec_ea);
 void add_replace_string(replace_struct* replace, char* search_str, char* replace_str);
 void write_body(FILE* filep, body_struct* body, replace_struct* replace);
 void get_base_name(char* base_name, opcode_struct* op);
@@ -491,6 +497,20 @@ int check_strsncpy(char* dst, char* src, int maxlength)
 	return p - dst;
 }
 
+/* copy until 0 or specified character and exit with error if we read too far */
+int check_strcncpy(char* dst, char* src, char delim, int maxlength)
+{
+	char* p = dst;
+	while(*src && *src != delim)
+	{
+		*p++ = *src++;
+		if(p - dst > maxlength)
+			error_exit("Field too long");
+	}
+	*p = 0;
+	return p - dst;
+}
+
 /* convert ascii to integer and exit with error if we find invalid data */
 int check_atoi(char* str, int *result)
 {
@@ -502,7 +522,7 @@ int check_atoi(char* str, int *result)
 		accum += *p++ - '0';
 	}
 	if(*p != ' ' && *p != 0)
-		error_exit("Malformed integer value");
+		error_exit("Malformed integer value (%c)", *p);
 	*result = accum;
 	return p - str;
 }
@@ -595,11 +615,11 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 
 		/* ASG: added these cases -- immediate modes take 2 extra cycles here */
 		if(cpu_type == CPU_TYPE_000 && ea_mode == EA_MODE_I &&
-		   (strcmp(op->name, "add_er") == 0 ||
-			strcmp(op->name, "adda")   == 0 ||
-			strcmp(op->name, "and_er") == 0 ||
-			strcmp(op->name, "or_er")  == 0 ||
-			strcmp(op->name, "sub_er") == 0 ||
+		   ((strcmp(op->name, "add") == 0 && strcmp(op->spec_proc, "er") == 0) ||
+			strcmp(op->name, "adda")   == 0                                    ||
+			(strcmp(op->name, "and") == 0 && strcmp(op->spec_proc, "er") == 0) ||
+			(strcmp(op->name, "or") == 0 && strcmp(op->spec_proc, "er") == 0)  ||
+			(strcmp(op->name, "sub") == 0 && strcmp(op->spec_proc, "er") == 0) ||
 			strcmp(op->name, "suba")   == 0))
 			return op->cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size] + 2;
 
@@ -616,7 +636,7 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 }
 
 /* Find an opcode in the opcode handler list */
-opcode_struct* find_opcode(char* name, int size, char* mode)
+opcode_struct* find_opcode(char* name, int size, char* spec_proc, char* spec_ea)
 {
 	opcode_struct* op;
 
@@ -625,7 +645,8 @@ opcode_struct* find_opcode(char* name, int size, char* mode)
 	{
 		if(	strcmp(name, op->name) == 0 &&
 			(size == op->size) &&
-			strcmp(mode, op->mode) == 0)
+			strcmp(spec_proc, op->spec_proc) == 0 &&
+			strcmp(spec_ea, op->spec_ea) == 0)
 				return op;
 	}
 	return NULL;
@@ -645,31 +666,35 @@ opcode_struct* find_illegal_opcode(void)
 }
 
 /* Parse an opcode handler name */
-int extract_opcode_info(char* src, char* name, int* size, char* mode)
+int extract_opcode_info(char* src, char* name, int* size, char* spec_proc, char* spec_ea)
 {
-	char* start = strstr(src, ID_OPHANDLER_NAME) + strlen(ID_OPHANDLER_NAME) + 1;
-	char* end;
+	char* ptr = strstr(src, ID_OPHANDLER_NAME);
 
-	if(start == NULL)
+	if(ptr == NULL)
 		return 0;
 
-	if((end = strstr(start, ",")) == NULL)
-		return 0;
-	strncpy(name, start, end-start);
-	name[end-start] = 0;
+	ptr += strlen(ID_OPHANDLER_NAME) + 1;
 
-	for(start = end+1;*start == ' ';start++)
-		;
-	if((end = strstr(start, ",")) == NULL)
-		return 0;
-	*size = atoi(start);
+	ptr += check_strcncpy(name, ptr, ',', MAX_NAME_LENGTH);
+	if(*ptr != ',') return 0;
+	ptr++;
+	ptr += skip_spaces(ptr);
 
-	for(start = end+1;*start == ' ';start++)
-		;
-	if((end = strstr(start, ")")) == NULL)
-		return 0;
-	strncpy(mode, start, end-start);
-	mode[end-start] = 0;
+	*size = atoi(ptr);
+	ptr = strstr(ptr, ",");
+	if(ptr == NULL) return 0;
+    ptr++;
+	ptr += skip_spaces(ptr);
+
+	ptr += check_strcncpy(spec_proc, ptr, ',', MAX_SPEC_PROC_LENGTH);
+	if(*ptr != ',') return 0;
+	ptr++;
+	ptr += skip_spaces(ptr);
+
+	ptr += check_strcncpy(spec_ea, ptr, ')', MAX_SPEC_EA_LENGTH);
+	if(*ptr != ')') return 0;
+	ptr++;
+	ptr += skip_spaces(ptr);
 
 	return 1;
 }
@@ -730,8 +755,10 @@ void get_base_name(char* base_name, opcode_struct* op)
 	sprintf(base_name, "m68k_op_%s", op->name);
 	if(op->size > 0)
 		sprintf(base_name+strlen(base_name), "_%d", op->size);
-	if(strcmp(op->mode, "_") != 0)
-		sprintf(base_name+strlen(base_name), "_%s", op->mode);
+	if(strcmp(op->spec_proc, UNSPECIFIED) != 0)
+		sprintf(base_name+strlen(base_name), "_%s", op->spec_proc);
+	if(strcmp(op->spec_ea, UNSPECIFIED) != 0)
+		sprintf(base_name+strlen(base_name), "_%s", op->spec_ea);
 }
 
 /* Write the prototype of an opcode handler function */
@@ -810,8 +837,8 @@ void set_opcode_struct(opcode_struct* src, opcode_struct* dst, int ea_mode)
 
 	for(i=0;i<NUM_CPUS;i++)
 		dst->cycles[i] = get_oper_cycles(dst, ea_mode, i);
-	if(strcmp(dst->mode, "_") == 0 && ea_mode != EA_MODE_NONE)
-		sprintf(dst->mode, "%s", g_ea_info_table[ea_mode].fname_add);
+	if(strcmp(dst->spec_ea, UNSPECIFIED) == 0 && ea_mode != EA_MODE_NONE)
+		sprintf(dst->spec_ea, "%s", g_ea_info_table[ea_mode].fname_add);
 	dst->op_mask |= g_ea_info_table[ea_mode].mask_add;
 	dst->op_match |= g_ea_info_table[ea_mode].match_add;
 }
@@ -952,7 +979,8 @@ void process_opcode_handlers(void)
 	char func_name[MAX_LINE_LENGTH+1];
 	char oper_name[MAX_LINE_LENGTH+1];
 	int  oper_size;
-	char oper_mode[MAX_LINE_LENGTH+1];
+	char oper_spec_proc[MAX_LINE_LENGTH+1];
+	char oper_spec_ea[MAX_LINE_LENGTH+1];
 	opcode_struct* opinfo;
 	replace_struct* replace = malloc(sizeof(replace_struct));
 	body_struct* body = malloc(sizeof(body_struct));
@@ -973,7 +1001,7 @@ void process_opcode_handlers(void)
 				return; /* all done */
 			}
 			if(fgetline(func_name, MAX_LINE_LENGTH, input_file) < 0)
-				error_exit("Premature end of file");
+				error_exit("Premature end of file when getting function name");
 		}
 		/* Get the rest of the function */
 		for(body->length=0;;body->length++)
@@ -982,7 +1010,7 @@ void process_opcode_handlers(void)
 				error_exit("Function too long");
 
 			if(fgetline(body->body[body->length], MAX_LINE_LENGTH, input_file) < 0)
-				error_exit("Premature end of file");
+				error_exit("Premature end of file when getting function body");
 
 			if(body->body[body->length][0] == '}')
 			{
@@ -994,11 +1022,11 @@ void process_opcode_handlers(void)
 		g_num_primitives++;
 
 		/* Extract the function name information */
-		if(!extract_opcode_info(func_name, oper_name, &oper_size, oper_mode))
+		if(!extract_opcode_info(func_name, oper_name, &oper_size, oper_spec_proc, oper_spec_ea))
 			error_exit("Invalid " ID_OPHANDLER_NAME " format");
 
 		/* Find the corresponding table entry */
-		opinfo = find_opcode(oper_name, oper_size, oper_mode);
+		opinfo = find_opcode(oper_name, oper_size, oper_spec_proc, oper_spec_ea);
 		if(opinfo == NULL)
 			error_exit("Unable to find matching table entry for %s", func_name);
 
@@ -1048,6 +1076,8 @@ void populate_table(void)
 	{
 		if(fgetline(buff, MAX_LINE_LENGTH, g_input_file) < 0)
 			error_exit("Premature EOF while reading table");
+		if(strlen(buff) == 0)
+			continue;
 		/* We finish when we find an input separator */
 		if(strcmp(buff, ID_INPUT_SEPARATOR) == 0)
 			break;
@@ -1064,9 +1094,13 @@ void populate_table(void)
 		ptr += check_atoi(ptr, &temp);
 		op->size = (unsigned char)temp;
 
-		/* EA Mode */
+		/* Special processing */
 		ptr += skip_spaces(ptr);
-		ptr += check_strsncpy(op->mode, ptr, MAX_MODE_LENGTH);
+		ptr += check_strsncpy(op->spec_proc, ptr, MAX_SPEC_PROC_LENGTH);
+
+		/* Specified EA Mode */
+		ptr += skip_spaces(ptr);
+		ptr += check_strsncpy(op->spec_ea, ptr, MAX_SPEC_EA_LENGTH);
 
 		/* Bit Pattern (more processing later) */
 		ptr += skip_spaces(ptr);
@@ -1076,13 +1110,21 @@ void populate_table(void)
 		ptr += skip_spaces(ptr);
 		ptr += check_strsncpy(op->ea_allowed, ptr, EA_ALLOWED_LENGTH);
 
+		/* CPU operating mode (U = user or supervisor, S = supervisor only */
+		ptr += skip_spaces(ptr);
+		for(i=0;i<NUM_CPUS;i++)
+		{
+			op->cpu_mode[i] = *ptr++;
+			ptr += skip_spaces(ptr);
+		}
+
 		/* Allowed CPUs for this instruction */
 		for(i=0;i<NUM_CPUS;i++)
 		{
 			ptr += skip_spaces(ptr);
-			if(*ptr == '_')
+			if(*ptr == UNSPECIFIED_CH)
 			{
-				op->cpus[i] = '.';
+				op->cpus[i] = UNSPECIFIED_CH;
 				op->cycles[i] = 0;
 				ptr++;
 			}

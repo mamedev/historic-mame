@@ -5,6 +5,20 @@
 unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
 static struct tilemap *layer0, *layer1;
 
+
+void fastlane_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int pal,col;
+
+	for (pal = 0;pal < 16;pal++)
+	{
+		for (col = 0;col < 1024;col++)
+		{
+			*(colortable++) = (col & ~0x0f) | color_prom[16 * pal + (col & 0x0f)];
+		}
+	}
+}
+
 /***************************************************************************
 
   Callbacks for the TileMap code
@@ -29,7 +43,7 @@ static void get_tile_info0(int tile_index)
 
 	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(0,code+bank*256,1);
+	SET_TILE_INFO(0,code+bank*256,1 + 64 * (attr & 0x0f));
 }
 
 static void get_tile_info1(int tile_index)
@@ -50,7 +64,7 @@ static void get_tile_info1(int tile_index)
 
 	bank = (bank & ~(mask << 1)) | ((K007121_ctrlram[0][0x04] & mask) << 1);
 
-	SET_TILE_INFO(0,code+bank*256,0);
+	SET_TILE_INFO(0,code+bank*256,0 + 64 * (attr & 0x0f));
 }
 
 /***************************************************************************

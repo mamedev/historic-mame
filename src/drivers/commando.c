@@ -348,7 +348,7 @@ static const struct MachineDriver machine_driver_commando =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,16*4+4*16+16*8,
+	256,256,
 	commando_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -530,14 +530,14 @@ static void init_commando(void)
 
 	memory_set_opcode_base(0,rom+diff);
 
-	/* the first opcode is not encrypted */
+	/* the first opcode is *not* encrypted */
 	rom[0+diff] = rom[0];
 	for (A = 1;A < 0xc000;A++)
 	{
 		int src;
 
 		src = rom[A];
-		rom[A+diff] = src ^ (src & 0xee) ^ ((src & 0xe0) >> 4) ^ ((src & 0x0e) << 4);
+		rom[A+diff] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
 	}
 }
 
@@ -556,7 +556,7 @@ static void init_spaceinv(void)
 		int src;
 
 		src = rom[A];
-		rom[A+diff] = src ^ (src & 0xee) ^ ((src & 0xe0) >> 4) ^ ((src & 0x0e) << 4);
+		rom[A+diff] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
 	}
 }
 

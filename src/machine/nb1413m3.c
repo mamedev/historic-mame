@@ -1,13 +1,20 @@
-/***************************************************************************
+/******************************************************************************
 
 	Machine Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 1999/11/05 -
+	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
-***************************************************************************/
+******************************************************************************/
+/******************************************************************************
+Memo:
+
+******************************************************************************/
 
 #include "driver.h"
 #include "machine/nb1413m3.h"
+
+
+#define NB1413M3_DEBUG	0
 
 
 int nb1413m3_type;
@@ -59,6 +66,7 @@ int nb1413m3_interrupt(void)
 		case	NB1413M3_PSTADIUM:
 		case	NB1413M3_TRIPLEW2:
 		case	NB1413M3_VANILLA:
+		case	NB1413M3_FINALBNY:
 		case	NB1413M3_MJLSTORY:
 		case	NB1413M3_QMHAYAKU:
 		case	NB1413M3_AV2MJ1:
@@ -66,6 +74,7 @@ int nb1413m3_interrupt(void)
 			nb1413m3_busyctr = 0;
 			return interrupt();
 			break;
+
 		default:
 			if (nb1413m3_nmi_enable)
 			{
@@ -136,11 +145,12 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_HOUSEMN2:
 		case	NB1413M3_BIJOKKOY:
 		case	NB1413M3_BIJOKKOG:
-		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_OTONANO:
+		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_KAGUYA:
 			rombank = nb1413m3_sndrombank1;
 			break;
+		case	NB1413M3_TAIWANMB:
 		case	NB1413M3_SCANDAL:
 		case	NB1413M3_SCANDALM:
 		case	NB1413M3_MJFOCUSM:
@@ -156,6 +166,7 @@ int nb1413m3_sndrom_r(int offset)
 		case	NB1413M3_MJFOCUS:
 		case	NB1413M3_PEEPSHOW:
 		case	NB1413M3_GALKOKU:
+		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_MJNANPAS:
 		case	NB1413M3_MLADYHTR:
 		case	NB1413M3_CLUB90S:
@@ -218,9 +229,11 @@ int nb1413m3_inputport0_r(void)
 {
 	switch (nb1413m3_type)
 	{
-		case	NB1413M3_NIGHTGL:
 		case	NB1413M3_PASTELGL:
 			return ((input_port_3_r(0) & 0xfe) | (nb1413m3_busyflag & 0x01));
+			break;
+		case	NB1413M3_TAIWANMB:
+			return ((input_port_3_r(0) & 0xfc) | ((nb1413m3_outcoin_flag & 0x01) << 1) | (nb1413m3_busyflag & 0x01));
 			break;
 		default:
 			return ((input_port_2_r(0) & 0xfc) | ((nb1413m3_outcoin_flag & 0x01) << 1) | (nb1413m3_busyflag & 0x01));
@@ -233,6 +246,7 @@ int nb1413m3_inputport1_r(void)
 	switch (nb1413m3_type)
 	{
 		case	NB1413M3_PASTELGL:
+		case	NB1413M3_TAIWANMB:
 			switch ((nb1413m3_inputport ^ 0xff) & 0x1f)
 			{
 				case	0x01:	return readinputport(4);
@@ -288,6 +302,7 @@ int nb1413m3_inputport2_r(void)
 	switch (nb1413m3_type)
 	{
 		case	NB1413M3_PASTELGL:
+		case	NB1413M3_TAIWANMB:
 			switch ((nb1413m3_inputport ^ 0xff) & 0x1f)
 			{
 				case	0x01:	return 0xff;
@@ -342,11 +357,14 @@ int nb1413m3_inputport3_r(void)
 {
 	switch (nb1413m3_type)
 	{
+		case	NB1413M3_TAIWANMB:
 		case	NB1413M3_SEIHAM:
+		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_TOKIMBSJ:
 		case	NB1413M3_MJFOCUSM:
 		case	NB1413M3_SCANDALM:
 		case	NB1413M3_BANANADR:
+		case	NB1413M3_FINALBNY:
 			return ((nb1413m3_outcoin_flag & 0x01) << 1);
 			break;
 		case	NB1413M3_MAIKO:
@@ -363,13 +381,19 @@ int nb1413m3_dipsw1_r(void)
 {
 	switch (nb1413m3_type)
 	{
+		case	NB1413M3_TAIWANMB:
+			return ((readinputport(0) & 0xf0) | ((readinputport(1) & 0xf0) >> 4));
+			break;
 		case	NB1413M3_OTONANO:
 		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_KAGUYA:
 			return (((readinputport(0) & 0x0f) << 4) | (readinputport(1) & 0x0f));
 			break;
+		case	NB1413M3_SCANDAL:
+		case	NB1413M3_SCANDALM:
 		case	NB1413M3_MJFOCUSM:
 		case	NB1413M3_GALKOKU:
+		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_GALKAIKA:
 		case	NB1413M3_MCONTEST:
 		case	NB1413M3_TOKIMBSJ:
@@ -381,6 +405,7 @@ int nb1413m3_dipsw1_r(void)
 		case	NB1413M3_PSTADIUM:
 		case	NB1413M3_TRIPLEW2:
 		case	NB1413M3_VANILLA:
+		case	NB1413M3_FINALBNY:
 		case	NB1413M3_MJLSTORY:
 		case	NB1413M3_QMHAYAKU:
 			return (((readinputport(1) & 0x01) >> 0) | ((readinputport(1) & 0x04) >> 1) |
@@ -398,13 +423,19 @@ int nb1413m3_dipsw2_r(void)
 {
 	switch (nb1413m3_type)
 	{
+		case	NB1413M3_TAIWANMB:
+			return (((readinputport(0) & 0x0f) << 4) | (readinputport(1) & 0x0f));
+			break;
 		case	NB1413M3_OTONANO:
 		case	NB1413M3_MJCAMERA:
 		case	NB1413M3_KAGUYA:
 			return ((readinputport(0) & 0xf0) | ((readinputport(1) & 0xf0) >> 4));
 			break;
+		case	NB1413M3_SCANDAL:
+		case	NB1413M3_SCANDALM:
 		case	NB1413M3_MJFOCUSM:
 		case	NB1413M3_GALKOKU:
+		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_GALKAIKA:
 		case	NB1413M3_MCONTEST:
 		case	NB1413M3_TOKIMBSJ:
@@ -416,6 +447,7 @@ int nb1413m3_dipsw2_r(void)
 		case	NB1413M3_PSTADIUM:
 		case	NB1413M3_TRIPLEW2:
 		case	NB1413M3_VANILLA:
+		case	NB1413M3_FINALBNY:
 		case	NB1413M3_MJLSTORY:
 		case	NB1413M3_QMHAYAKU:
 			return (((readinputport(1) & 0x02) >> 1) | ((readinputport(1) & 0x08) >> 2) |
@@ -429,25 +461,54 @@ int nb1413m3_dipsw2_r(void)
 	}
 }
 
+int nb1413m3_dipsw3_l_r(void)
+{
+	return ((readinputport(2) & 0xf0) >> 4);
+}
+
+int nb1413m3_dipsw3_h_r(void)
+{
+	return ((readinputport(2) & 0x0f) >> 0);
+}
+
 void nb1413m3_outcoin_w(int data)
 {
 	switch (nb1413m3_type)
 	{
+		case	NB1413M3_TAIWANMB:
 		case	NB1413M3_SEIHAM:
+		case	NB1413M3_HYOUBAN:
 		case	NB1413M3_TOKIMBSJ:
 		case	NB1413M3_MJFOCUSM:
 		case	NB1413M3_SCANDALM:
 		case	NB1413M3_BANANADR:
 		case	NB1413M3_HANAOJI:
+		case	NB1413M3_FINALBNY:
 			if (data & 0x04) nb1413m3_outcoin_flag ^= 1;
 			else nb1413m3_outcoin_flag = 1;
 			break;
 		default:
 			break;
 	}
+
+#if NB1413M3_DEBUG
+	set_led_status(2, (nb1413m3_outcoin_flag ^ 1));		// out coin
+#endif
 }
 
 void nb1413m3_vcrctrl_w(int data)
 {
-	if (data & 0x08) usrintf_showmessage(" ** VCR CONTROL ** ");
+	if (data & 0x08)
+	{
+#if NB1413M3_DEBUG
+		usrintf_showmessage(" ** VCR CONTROL ** ");
+		set_led_status(2, 1);
+#endif
+	}
+	else
+	{
+#if NB1413M3_DEBUG
+		set_led_status(2, 0);
+#endif
+	}
 }

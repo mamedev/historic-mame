@@ -1,7 +1,7 @@
 /*##########################################################################
 
 	atarimo.c
-	
+
 	Common motion object management functions for Atari raster games.
 
 ##########################################################################*/
@@ -63,7 +63,7 @@ struct atarimo_data
 	int					palettebase;		/* base palette entry */
 	int					maxcolors;			/* maximum number of colors */
 	int					transpen;			/* transparent pen index */
-	
+
 	int					bank;				/* current bank number */
 	int					xscroll;			/* current x scroll offset */
 	int					yscroll;			/* current y scroll offset */
@@ -98,7 +98,7 @@ struct atarimo_data
 	struct atarimo_cache *endcache;			/* end of the cache */
 	struct atarimo_cache *curcache;			/* current cache entry */
 	struct atarimo_cache *prevcache;		/* previous cache entry */
-	
+
 	ataripf_overrender_cb overrender0;		/* overrender callback for PF 0 */
 	ataripf_overrender_cb overrender1;		/* overrender callback for PF 1 */
 	struct rectangle	process_clip;		/* (during processing) the clip rectangle */
@@ -169,7 +169,7 @@ static void mo_scanline_callback(int scanline);
 ##########################################################################*/
 
 /*---------------------------------------------------------------
-	compute_log: Computes the number of bits necessary to 
+	compute_log: Computes the number of bits necessary to
 	hold a given value. The input must be an even power of
 	two.
 ---------------------------------------------------------------*/
@@ -177,7 +177,7 @@ static void mo_scanline_callback(int scanline);
 INLINE int compute_log(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return -1;
 	while (!(value & 1))
@@ -197,7 +197,7 @@ INLINE int compute_log(int value)
 INLINE int round_to_powerof2(int value)
 {
 	int log = 0;
-	
+
 	if (value == 0)
 		return 1;
 	while ((value >>= 1) != 0)
@@ -214,7 +214,7 @@ INLINE int round_to_powerof2(int value)
 INLINE int convert_mask(const struct atarimo_entry *input, struct atarimo_mask *result)
 {
 	int i, temp;
-	
+
 	/* determine the word and make sure it's only 1 */
 	result->word = -1;
 	for (i = 0; i < 4; i++)
@@ -225,14 +225,14 @@ INLINE int convert_mask(const struct atarimo_entry *input, struct atarimo_mask *
 			else
 				return 0;
 		}
-	
+
 	/* if all-zero, it's valid */
 	if (result->word == -1)
 	{
 		result->word = result->shift = result->mask = 0;
 		return 1;
 	}
-	
+
 	/* determine the shift and final mask */
 	result->shift = 0;
 	temp = input->data[result->word];
@@ -308,11 +308,11 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->spriterammask = mo->spriteramsize - 1;
 	mo->slipramsize   = mo->bitmapheight >> mo->tileyshift;
 	mo->sliprammask   = mo->slipramsize - 1;
-	
+
 	mo->palettebase   = desc->palettebase;
 	mo->maxcolors     = desc->maxcolors / gfx->color_granularity;
 	mo->transpen      = desc->transpen;
-	
+
 	mo->bank          = 0;
 	mo->xscroll       = 0;
 	mo->yscroll       = 0;
@@ -321,9 +321,9 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->ignorevalue   = desc->ignorevalue;
 	mo->ignorecb      = desc->ignorecb;
 	mo->codehighshift = compute_log(round_to_powerof2(mo->codemask.mask));
-	
+
 	mo->slipram       = (map == 0) ? &atarimo_0_slipram : &atarimo_1_slipram;
-	
+
 	/* allocate the priority bitmap */
 	priority_bitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
 	VERIFYRETFREE(priority_bitmap, "atarimo_init: out of memory for priority bitmap", 0)
@@ -331,14 +331,14 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* allocate the spriteram */
 	mo->spriteram = malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
 	VERIFYRETFREE(mo->spriteram, "atarimo_init: out of memory for spriteram", 0)
-	
+
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
 
 	/* allocate the code lookup */
 	mo->codelookup = malloc(sizeof(mo->codelookup[0]) * round_to_powerof2(mo->codemask.mask));
 	VERIFYRETFREE(mo->codelookup, "atarimo_init: out of memory for code lookup", 0)
-	
+
 	/* initialize it 1:1 */
 	for (i = 0; i < round_to_powerof2(mo->codemask.mask); i++)
 		mo->codelookup[i] = i;
@@ -346,7 +346,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* allocate the color lookup */
 	mo->colorlookup = malloc(sizeof(mo->colorlookup[0]) * round_to_powerof2(mo->colormask.mask));
 	VERIFYRETFREE(mo->colorlookup, "atarimo_init: out of memory for color lookup", 0)
-	
+
 	/* initialize it 1:1 */
 	for (i = 0; i < round_to_powerof2(mo->colormask.mask); i++)
 		mo->colorlookup[i] = i;
@@ -354,7 +354,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* allocate the gfx lookup */
 	mo->gfxlookup = malloc(sizeof(mo->gfxlookup[0]) * round_to_powerof2(mo->gfxmask.mask));
 	VERIFYRETFREE(mo->gfxlookup, "atarimo_init: out of memory for gfx lookup", 0)
-	
+
 	/* initialize it with the gfxindex we were passed in */
 	for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)
 		mo->gfxlookup[i] = desc->gfxindex;
@@ -367,7 +367,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* initialize the end/last pointers */
 	mo->curcache = mo->cache;
 	mo->prevcache = NULL;
-	
+
 	/* initialize the gfx elements */
 	gfxelement[desc->gfxindex] = *Machine->gfx[desc->gfxindex];
 	gfxelement[desc->gfxindex].colortable = &Machine->remapped_colortable[mo->palettebase];
@@ -377,7 +377,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	logerror("  spriteram mask=%X, size=%d\n", mo->spriterammask, mo->spriteramsize);
 	logerror("  slipram mask=%X, size=%d\n", mo->sliprammask, mo->slipramsize);
 	logerror("  bitmap size=%dx%d\n", mo->bitmapwidth, mo->bitmapheight);
-	
+
 	return 1;
 }
 
@@ -389,42 +389,42 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 void atarimo_free(void)
 {
 	int i;
-	
+
 	/* free the motion object data */
 	for (i = 0; i < ATARIMO_MAX; i++)
 	{
 		struct atarimo_data *mo = &atarimo[i];
-	
+
 		/* free the priority bitmap */
 		if (priority_bitmap)
 			free(priority_bitmap);
 		priority_bitmap = NULL;
-	
+
 		/* free the spriteram */
 		if (mo->spriteram)
 			free(mo->spriteram);
 		mo->spriteram = NULL;
-		
+
 		/* free the codelookup */
 		if (mo->codelookup)
 			free(mo->codelookup);
 		mo->codelookup = NULL;
-	
+
 		/* free the codelookup */
 		if (mo->codelookup)
 			free(mo->codelookup);
 		mo->codelookup = NULL;
-	
+
 		/* free the colorlookup */
 		if (mo->colorlookup)
 			free(mo->colorlookup);
 		mo->colorlookup = NULL;
-	
+
 		/* free the gfxlookup */
 		if (mo->gfxlookup)
 			free(mo->gfxlookup);
 		mo->gfxlookup = NULL;
-	
+
 		/* free the cache */
 		if (mo->cache)
 			free(mo->cache);
@@ -480,7 +480,7 @@ UINT8 *atarimo_get_gfx_lookup(int map, int *size)
 
 
 /*---------------------------------------------------------------
-	atarimo_render: Render the motion objects to the 
+	atarimo_render: Render the motion objects to the
 	destination bitmap.
 ---------------------------------------------------------------*/
 
@@ -513,18 +513,18 @@ void atarimo_mark_palette(int map)
 	UINT8 *used_colors = &palette_used_colors[mo->palettebase];
 	UINT32 marked_colors[256];
 	int i, j;
-	
+
 	/* reset the marked colors */
 	memset(marked_colors, 0, mo->maxcolors * sizeof(UINT32));
-	
+
 	/* mark the colors used */
 	mo_process(mo, mo_usage_callback, marked_colors, NULL);
-	
+
 	/* loop over colors */
 	for (i = 0; i < mo->maxcolors; i++)
 	{
 		int usage = marked_colors[i];
-		
+
 		/* if this entry was marked, loop over bits */
 		if (usage)
 		{
@@ -533,7 +533,7 @@ void atarimo_mark_palette(int map)
 					used_colors[j] = PALETTE_COLOR_USED;
 			used_colors[mo->transpen] = PALETTE_COLOR_TRANSPARENT;
 		}
-		
+
 		/* advance by the color granularity of the gfx */
 		used_colors += gfxelement[mo->gfxlookup[0]].color_granularity;
 	}
@@ -577,7 +577,7 @@ void atarimo_set_palettebase(int map, int base, int scanline)
 {
 	struct atarimo_data *mo = &atarimo[map];
 	int i;
-	
+
 	mo->palettebase = base;
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
 		gfxelement[i].colortable = &Machine->remapped_colortable[base];
@@ -619,7 +619,7 @@ void atarimo_set_yscroll(int map, int yscroll, int scanline)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_bank: Returns the banking value 
+	atarimo_get_bank: Returns the banking value
 	for the motion objects.
 ---------------------------------------------------------------*/
 
@@ -630,7 +630,7 @@ int atarimo_get_bank(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_palettebase: Returns the palette base 
+	atarimo_get_palettebase: Returns the palette base
 	for the motion objects.
 ---------------------------------------------------------------*/
 
@@ -641,7 +641,7 @@ int atarimo_get_palettebase(int map)
 
 
 /*---------------------------------------------------------------
-	atarimo_get_xscroll: Returns the horizontal scroll value 
+	atarimo_get_xscroll: Returns the horizontal scroll value
 	for the motion objects.
 ---------------------------------------------------------------*/
 
@@ -669,7 +669,7 @@ int atarimo_get_yscroll(int map)
 WRITE16_HANDLER( atarimo_0_spriteram_w )
 {
 	int entry, idx, bank;
-	
+
 	COMBINE_DATA(&atarimo_0_spriteram[offset]);
 	if (atarimo[0].split)
 	{
@@ -693,7 +693,7 @@ WRITE16_HANDLER( atarimo_0_spriteram_w )
 WRITE16_HANDLER( atarimo_1_spriteram_w )
 {
 	int entry, idx, bank;
-	
+
 	COMBINE_DATA(&atarimo_1_spriteram[offset]);
 	if (atarimo[1].split)
 	{
@@ -711,14 +711,14 @@ WRITE16_HANDLER( atarimo_1_spriteram_w )
 
 
 /*---------------------------------------------------------------
-	atarimo_0_spriteram_expanded_w: Write handler for the 
+	atarimo_0_spriteram_expanded_w: Write handler for the
 	expanded form of spriteram.
 ---------------------------------------------------------------*/
 
 WRITE16_HANDLER( atarimo_0_spriteram_expanded_w )
 {
 	int entry, idx, bank;
-	
+
 	COMBINE_DATA(&atarimo_0_spriteram[offset]);
 	if (!(offset & 1))
 	{
@@ -767,14 +767,19 @@ WRITE16_HANDLER( atarimo_1_slipram_w )
 
 static void mo_process(struct atarimo_data *mo, mo_callback callback, void *param, const struct rectangle *clip)
 {
-	struct rectangle finalclip = clip ? *clip : Machine->visible_area;
+	struct rectangle finalclip;
 	struct atarimo_cache *base = mo->cache;
+
+	if (clip)
+		finalclip = *clip;
+	else
+		finalclip = Machine->visible_area;
 
 	/* if the graphics info has changed, recompute */
 	if (mo->gfxchanged)
 	{
 		int i;
-		
+
 		mo->gfxchanged = 0;
 		for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)
 		{
@@ -799,7 +804,7 @@ static void mo_process(struct atarimo_data *mo, mo_callback callback, void *para
 		/* set the upper clip bound and a maximum lower bound */
 		mo->process_clip.min_y = base->scanline;
 		mo->process_clip.max_y = 100000;
-		
+
 		/* import the X and Y scroll values */
 		mo->process_xscroll = base->entry.data[0];
 		mo->process_yscroll = base->entry.data[1];
@@ -844,7 +849,7 @@ static void mo_process(struct atarimo_data *mo, mo_callback callback, void *para
 
 
 /*---------------------------------------------------------------
-	mo_update: Parses the current motion object list, caching 
+	mo_update: Parses the current motion object list, caching
 	all entries.
 ---------------------------------------------------------------*/
 
@@ -855,7 +860,7 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 	struct atarimo_cache *new_previous = current;
 	UINT8 spritevisit[ATARIMO_MAXPERBANK];
 	int match = 0, link;
-	
+
 	/* skip if the scanline is past the bottom of the screen */
 	if (scanline > Machine->visible_area.max_y)
 		return;
@@ -879,12 +884,12 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 		else
 			match = 1;
 	}
-	
+
 	/* set up the first entry with scroll and banking information */
 	current->scanline = scanline;
 	current->entry.data[0] = mo->xscroll;
 	current->entry.data[1] = mo->yscroll;
-	
+
 	/* look for a match with the previous entry */
 	if (match)
 	{
@@ -995,7 +1000,7 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 	int width = EXTRACT_DATA(entry, mo->widthmask) + 1;
 	int height = EXTRACT_DATA(entry, mo->heightmask) + 1;
 	int xadv, yadv;
-	
+
 	/* is this one to ignore? */
 	if (mo->ignoremask.mask != 0 && EXTRACT_DATA(entry, mo->ignoremask) == mo->ignorevalue)
 	{
@@ -1071,27 +1076,27 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 			}
 			else if (sy > mo->process_clip.max_y)
 				break;
-	
+
 			/* loop over the width */
 			for (x = 0, sx = xpos; x < width; x++, sx += xadv, code++)
 			{
 				/* clip the X coordinate */
 				if (sx <= -mo->process_clip.min_x - gfx->width || sx > mo->process_clip.max_x)
 					continue;
-	
+
 				/* draw the sprite */
 				drawgfx(bitmap, gfx, code, color, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_PEN, mo->transpen);
-				
+
 				/* also draw the raw version to the priority bitmap */
 				if (mo->overrender0 || mo->overrender1)
 					drawgfx(priority_bitmap, gfx, code, 0, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_NONE_RAW, mo->transpen);
-				
+
 				/* track the total usage */
 				total_usage |= usage[code];
 			}
 		}
 	}
-	
+
 	/* alternative order is swapped */
 	else
 	{
@@ -1106,21 +1111,21 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 			}
 			else if (sx > mo->process_clip.max_x)
 				break;
-	
+
 			/* loop over the height */
 			for (y = 0, sy = ypos; y < height; y++, sy += yadv, code++)
 			{
 				/* clip the X coordinate */
 				if (sy <= -mo->process_clip.min_y - gfx->height || sy > mo->process_clip.max_y)
 					continue;
-	
+
 				/* draw the sprite */
 				drawgfx(bitmap, gfx, code, color, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_PEN, mo->transpen);
-				
+
 				/* also draw the raw version to the priority bitmap */
 				if (mo->overrender0 || mo->overrender1)
 					drawgfx(priority_bitmap, gfx, code, 0, hflip, vflip, sx, sy, &mo->process_clip, TRANSPARENCY_NONE_RAW, mo->transpen);
-				
+
 				/* track the total usage */
 				total_usage |= usage[code];
 			}
@@ -1171,7 +1176,7 @@ static void mo_scanline_callback(int param)
 	struct atarimo_data *mo = &atarimo[param >> 16];
 	int scanline = param & 0xffff;
 	int nextscanline = scanline + mo->updatescans;
-	
+
 	/* if this is scanline 0, reset things */
 	/* also, adjust where we will next break */
 	if (scanline == 0)
@@ -1179,10 +1184,10 @@ static void mo_scanline_callback(int param)
 		mo->curcache = mo->cache;
 		mo->prevcache = NULL;
 	}
-	
+
 	/* do the update */
 	mo_update(mo, scanline);
-	
+
 	/* don't bother updating in the VBLANK area, just start back at 0 */
 	if (nextscanline > Machine->visible_area.max_y)
 		nextscanline = 0;

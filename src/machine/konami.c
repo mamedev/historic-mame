@@ -60,7 +60,7 @@ void konami1_decode(void)
 	decode(0);
 }
 
-void konami1_decode_cpu4(void)
+void konami1_decode_cpu2(void)
 {
-	decode(3);
+	decode(1);
 }

@@ -301,34 +301,6 @@ WRITE16_HANDLER( cchip2_word_w );
 
 
 
-static WRITE16_HANDLER( TC0360PRI_halfword_w )
-{
-	if (ACCESSING_LSB)
-	{
-		TC0360PRI_w(offset,data & 0xff);
-if (data & 0xff00)
-logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-	else
-	{
-logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-}
-
-static WRITE16_HANDLER( TC0360PRI_halfword_swap_w )
-{
-	if (ACCESSING_MSB)
-	{
-		TC0360PRI_w(offset,(data >> 8) & 0xff);
-if (data & 0xff)
-logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-	else
-	{
-logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-}
-
 /**********************************************************
 			GAME INPUTS
 **********************************************************/

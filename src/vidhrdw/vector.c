@@ -82,7 +82,7 @@ static UINT8  *pTinten;            /* intensity         */
 static UINT16 *pTmerge;            /* mergeing pixels   */
 static UINT16 *invpens;            /* maps OS colors to pens */
 
-static UINT16 *pens;
+static UINT32 *pens;
 static UINT16 total_colors;
 
 #define Tcosin(x)   pTcosin[(x)]          /* adjust line width */

@@ -612,7 +612,7 @@ WRITE16_HANDLER( toaplan2_txvideoram16_offs_w )
 	/* Besides containing flip, function of this RAM is still unknown */
 	/* This is however line related as per line-scroll RAM below */
 	/* Maybe specifies which line to draw text info (line number data is */
-	/*  opposite when flip bits are on) */
+	/*   opposite when flip bits are on) */
 
 	data16_t oldword = toaplan2_txvideoram16_offs[offset];
 
@@ -651,7 +651,7 @@ WRITE16_HANDLER( toaplan2_txvideoram16_offs_w )
 		}
 		COMBINE_DATA(&toaplan2_txvideoram16_offs[offset]);
 	}
-	logerror("Writing %04x to text offs RAM offset %04x\n",data,offset);
+//	logerror("Writing %04x to text offs RAM offset %04x\n",data,offset);
 }
 
 READ16_HANDLER( toaplan2_txscrollram16_r )
@@ -674,8 +674,8 @@ WRITE16_HANDLER( toaplan2_txscrollram16_w )
 	}
 	tilemap_set_scrollx(tx_tilemap, offset, (data_tx - tx_scrollx_zero));
 
-	logerror("Writing %04x to text scroll RAM offset %04x\n",data,offset);
-	logerror("Line number %08x  Scroll %08x  data_tx=%04x tx_scrollx_zero=%04x\n",((data_tx - tx_scrollx_zero) - offset),(data_tx - tx_scrollx_zero),data_tx,tx_scrollx_zero);
+//	logerror("Writing %04x to text scroll RAM offset %04x\n",data,offset);
+//	logerror("Line number %08x  Scroll %08x  data_tx=%04x tx_scrollx_zero=%04x\n",((data_tx - tx_scrollx_zero) - offset),(data_tx - tx_scrollx_zero),data_tx,tx_scrollx_zero);
 	COMBINE_DATA(&toaplan2_txscrollram16[offset]);
 }
 
@@ -1341,7 +1341,7 @@ void toaplan2_log_vram(void)
 static void mark_sprite_colors(int controller)
 {
 	int offs, attrib, sprite, color, i, pal_base;
-	int sprite_sizex, sprite_sizey, temp_x, temp_y;
+	int sprite_sizex, sprite_sizey, dim_x, dim_y;
 	int colmask[64];
 
 	data16_t *source = (data16_t *)(spriteram16_now[controller]);
@@ -1364,9 +1364,9 @@ static void mark_sprite_colors(int controller)
 			sprite_sizex = (source[offs + 2] & 0x0f) + 1;
 			sprite_sizey = (source[offs + 3] & 0x0f) + 1;
 
-			for (temp_y = 0; temp_y < sprite_sizey; temp_y++)
+			for (dim_y = 0; dim_y < sprite_sizey; dim_y++)
 			{
-				for (temp_x = 0; temp_x < sprite_sizex; temp_x++)
+				for (dim_x = 0; dim_x < sprite_sizex; dim_x++)
 				{
 					colmask[color] |= Machine->gfx[ ((controller*2)+1) ]->pen_usage[sprite];
 					sprite++ ;
@@ -1375,10 +1375,9 @@ static void mark_sprite_colors(int controller)
 		}
 	}
 
-	palette_used_colors[pal_base] = PALETTE_COLOR_USED;
-	for (color = 1;color < 64;color++)
+	for (color = 0;color < 64;color++)
 	{
-		if (colmask[0] & 1)
+		if ((color == 0) && (colmask[0] & 1))
 			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 1; i < 16; i++)
 		{
@@ -1386,16 +1385,13 @@ static void mark_sprite_colors(int controller)
 				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
+
 }
 
 
 
 static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priority_to_display, int bank_sel )
 {
-	/* bank_sel is whether it is needed to take account of bank select or not */
-	/*  0 : not take account of bank select */
-	/*  1 : take account of bank select used for Batrider */
-
 	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
 	const struct rectangle *clip = &Machine->visible_area;
 
@@ -1405,7 +1401,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 	for (offs = 0; offs < (TOAPLAN2_SPRITERAM_SIZE/2); offs += 4)
 	{
 		int attrib, sprite, color, priority, flipx, flipy, sx, sy;
-		int sprite_sizex, sprite_sizey, temp_x, temp_y, sx_base, sy_base;
+		int sprite_sizex, sprite_sizey, dim_x, dim_y, sx_base, sy_base;
 		int bank, sprite_num;
 
 		attrib = source[offs];
@@ -1413,11 +1409,11 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 
 		if ((priority == priority_to_display) && (attrib & 0x8000))
 		{
-			if (!bank_sel)
+			if (!bank_sel)	/* No Sprite select bank switching needed */
 			{
-				sprite = ((attrib & 3) << 16) | source[offs + 1] ;	/* 18 bit */
+				sprite = ((attrib & 3) << 16) | source[offs + 1];	/* 18 bit */
 			}
-			else
+			else		/* Batrider Sprite select bank switching required */
 			{
 				sprite_num = source[offs + 1] & 0x7fff;
 				bank = ((attrib & 3) << 1) | (source[offs + 1] >> 15);
@@ -1425,21 +1421,21 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 			}
 			color = (attrib >> 2) & 0x3f;
 
-			/****** find out sprite size ******/
+			/***** find out sprite size *****/
 			sprite_sizex = ((source[offs + 2] & 0x0f) + 1) * 8;
 			sprite_sizey = ((source[offs + 3] & 0x0f) + 1) * 8;
 
-			/****** find position to display sprite ******/
-			sx_base = (source[offs + 2] >> 7) - sprite_scrollx[controller];
-			sy_base = (source[offs + 3] >> 7) - sprite_scrolly[controller];
+			/***** find position to display sprite *****/
+            sx_base = ((source[offs + 2] >> 7) - sprite_scrollx[controller]) & 0x1ff;
+            sy_base = ((source[offs + 3] >> 7) - sprite_scrolly[controller]) & 0x1ff;
 
 			flipx = attrib & TOAPLAN2_SPRITE_FLIPX;
 			flipy = attrib & TOAPLAN2_SPRITE_FLIPY;
 
 			if (flipx)
 			{
+				/***** Wrap sprite position around *****/
 				sx_base -= 7;
-				/****** wrap around sprite position ******/
 				if (sx_base >= 0x1c0) sx_base -= 0x200;
 			}
 			else
@@ -1457,7 +1453,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 				if (sy_base >= 0x180) sy_base -= 0x200;
 			}
 
-			/****** flip the sprite layer in any active X or Y flip ******/
+			/***** Flip the sprite layer in any active X or Y flip *****/
 			if (sprite_flip[controller])
 			{
 				if (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPX)
@@ -1466,18 +1462,19 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 					sy_base = 240 - sy_base;
 			}
 
-			/****** cancel flip, if it and sprite layer flip are active ******/
+			/***** Cancel flip, if it, and sprite layer flip are active *****/
 			flipx = (flipx ^ (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPX));
 			flipy = (flipy ^ (sprite_flip[controller] & TOAPLAN2_SPRITE_FLIPY));
 
-			for (temp_y = 0; temp_y < sprite_sizey; temp_y += 8)
+			/***** Draw the complete sprites using the dimension info *****/
+			for (dim_y = 0; dim_y < sprite_sizey; dim_y += 8)
 			{
-				if (flipy) sy = sy_base - temp_y;
-				else       sy = sy_base + temp_y;
-				for (temp_x = 0; temp_x < sprite_sizex; temp_x += 8)
+				if (flipy) sy = sy_base - dim_y;
+				else       sy = sy_base + dim_y;
+				for (dim_x = 0; dim_x < sprite_sizex; dim_x += 8)
 				{
-					if (flipx) sx = sx_base - temp_x;
-					else       sx = sx_base + temp_x;
+					if (flipx) sx = sx_base - dim_x;
+					else       sx = sx_base + dim_x;
 
 					drawgfx(bitmap,gfx,sprite,
 						color,

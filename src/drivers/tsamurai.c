@@ -45,6 +45,8 @@ TODO:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 
+WRITE_HANDLER( vsgongf_color_w );
+
 WRITE_HANDLER( tsamurai_bgcolor_w );
 WRITE_HANDLER( tsamurai_textbank1_w );
 WRITE_HANDLER( tsamurai_textbank2_w );
@@ -58,6 +60,9 @@ WRITE_HANDLER( tsamurai_fg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_colorram_w );
 extern int tsamurai_vh_start( void );
 extern unsigned char *tsamurai_videoram;
+
+extern int vsgongf_vh_start( void );
+extern void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 
 static struct AY8910interface ay8910_interface =
 {
@@ -76,6 +81,12 @@ static struct DACinterface dac_interface =
 	{ 20, 20 }
 };
 
+static struct DACinterface vsgongf_dac_interface =
+{
+	1,			/* number of chips */
+	{ 20 }
+};
+
 static int nmi_enabled;
 static int sound_command1, sound_command2, sound_command3;
 
@@ -84,7 +95,7 @@ static WRITE_HANDLER( nmi_enable_w ){
 }
 
 static int samurai_interrupt( void ){
-	return nmi_enabled? nmi_interrupt():ignore_interrupt();
+	return nmi_enabled?nmi_interrupt():ignore_interrupt();
 }
 
 READ_HANDLER( unknown_d803_r )
@@ -250,8 +261,6 @@ static PORT_WRITE_START( z80_writeport_m660 )
 	{ 0x02, 0x02, MWA_NOP },               /* Always follows above with 0x01 data */
 PORT_END
 
-/*******************************************************************************/
-
 static READ_HANDLER( sound_command1_r )
 {
 	return sound_command1;
@@ -358,6 +367,68 @@ MEMORY_END
 
 /*******************************************************************************/
 
+static READ_HANDLER( vsgongf_a006_r ){
+	return 0x80; /* sound CPU busy? */
+}
+
+static READ_HANDLER( vsgongf_a100_r ){
+	return 0xaa;
+}
+
+static WRITE_HANDLER( vsgongf_sound_command_w ){
+	soundlatch_w( offset, data );
+	cpu_cause_interrupt( 1, Z80_NMI_INT );
+}
+
+static MEMORY_READ_START( readmem_vsgongf )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xa003, 0xa003, MRA_RAM },
+	{ 0xa006, 0xa006, vsgongf_a006_r }, /* protection */
+	{ 0xa100, 0xa100, vsgongf_a100_r }, /* protection */
+	{ 0xc000, 0xc7ff, MRA_RAM }, /* work ram */
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xf800, 0xf800, input_port_0_r }, /* joy1 */
+	{ 0xf801, 0xf801, input_port_1_r }, /* joy2 */
+	{ 0xf802, 0xf802, input_port_2_r }, /* coin */
+	{ 0xf804, 0xf804, input_port_3_r }, /* dsw1 */
+	{ 0xf805, 0xf805, input_port_4_r }, /* dsw2 */
+	{ 0xfc00, 0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem_vsgongf )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xc000, 0xc7ff, MWA_RAM }, /* work ram */
+	{ 0xe000, 0xe3ff, tsamurai_fg_videoram_w, &videoram },
+	{ 0xe400, 0xe43f, MWA_RAM, &spriteram },
+	{ 0xe440, 0xe47b, MWA_RAM },
+	{ 0xe800, 0xe800, vsgongf_sound_command_w },
+	{ 0xec00, 0xec06, MWA_RAM },
+	{ 0xf000, 0xf000, vsgongf_color_w },
+	{ 0xf400, 0xf400, MWA_RAM }, /* vreg? always 0 */
+	{ 0xf800, 0xf800, MWA_RAM },
+	{ 0xf801, 0xf801, MWA_RAM }, /* vreg? always 0 */
+	{ 0xf803, 0xf803, MWA_RAM }, /* vreg? always 0 */
+	{ 0xfc00, 0xfc00, MWA_RAM }, /* vreg? always 0 */
+	{ 0xfc01, 0xfc01, nmi_enable_w },
+	{ 0xfc02, 0xfc03, tsamurai_coin_counter_w },
+	{ 0xfc04, 0xfc04, tsamurai_textbank1_w },
+MEMORY_END
+
+static MEMORY_READ_START( readmem_sound_vsgongf )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x6000, 0x63ff, MRA_RAM }, /* work RAM */
+	{ 0x8000, 0x8000, soundlatch_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem_sound_vsgongf )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6000, 0x63ff, MWA_RAM }, /* work RAM */
+	{ 0x8000, 0x8000, MWA_NOP }, /* NMI enable */
+	{ 0xa000, 0xa000, sound_out1_w },
+MEMORY_END
+
+/*******************************************************************************/
+
 INPUT_PORTS_START( tsamurai )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -439,7 +510,6 @@ INPUT_PORTS_START( tsamurai )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( nunchaku )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -517,6 +587,90 @@ INPUT_PORTS_START( nunchaku )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "DSW2 Unknown 4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( vsgongf )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -684,7 +838,6 @@ INPUT_PORTS_START( m660 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
 static struct GfxLayout char_layout =
 {
 	8,8,
@@ -737,7 +890,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /*******************************************************************************/
-/*******************************************************************************/
+
 static struct MachineDriver machine_driver_tsamurai =
 {
 	{
@@ -790,7 +943,6 @@ static struct MachineDriver machine_driver_tsamurai =
 	}
 };
 
-/*******************************************************************************/
 static struct MachineDriver machine_driver_m660 =
 {
 	{
@@ -849,6 +1001,54 @@ static struct MachineDriver machine_driver_m660 =
 	}
 };
 
+static struct MachineDriver machine_driver_vsgongf =
+{
+	{
+		{
+			CPU_Z80,
+			4000000,
+			readmem_vsgongf,writemem_vsgongf,0,0,
+			samurai_interrupt,1,
+		},
+		{
+			CPU_Z80,
+			2000000,
+			readmem_sound_vsgongf,writemem_sound_vsgongf,
+			0,z80_writeport,
+			ignore_interrupt,1
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1, /* CPU slices */
+	0, /* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 0, 255, 8, 255-8 },
+	gfxdecodeinfo,
+	256,256,
+	tsamurai_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	vsgongf_vh_start,
+	0,
+	vsgongf_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&vsgongf_dac_interface
+		}
+	}
+};
+
+/*******************************************************************************/
 
 ROM_START( tsamurai )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code  - main CPU */
@@ -863,28 +1063,28 @@ ROM_START( tsamurai )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_RELOAD( 			0x02000, 0x2000 )
-	ROM_LOAD( "a35-05.10b", 0x04000, 0x2000, 0x55a17b08 )
-	ROM_RELOAD( 			0x06000, 0x2000 )
-	ROM_LOAD( "a35-06.10d", 0x08000, 0x2000, 0xf5ee6f8f )
-	ROM_RELOAD( 			0x0a000, 0x2000 )
+	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-04.10a", 0x0000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_RELOAD( 			0x2000, 0x2000 )
+	ROM_LOAD( "a35-05.10b", 0x4000, 0x2000, 0x55a17b08 )
+	ROM_RELOAD( 			0x6000, 0x2000 )
+	ROM_LOAD( "a35-06.10d", 0x8000, 0x2000, 0xf5ee6f8f )
+	ROM_RELOAD( 			0xa000, 0x2000 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-10.11n", 0x00000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "a35-11.11q", 0x02000, 0x1000, 0x93346d75 )
-	ROM_LOAD( "a35-12.11r", 0x04000, 0x1000, 0xf4c69d8a )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-10.11n", 0x0000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x2000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x4000, 0x1000, 0xf4c69d8a )
 
-	ROM_REGION( 0x0c000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-07.12h", 0x00000, 0x4000, 0x38fc349f ) // sprites
-	ROM_LOAD( "a35-08.12j", 0x04000, 0x4000, 0xa07d6dc3 )
-	ROM_LOAD( "a35-09.12k", 0x08000, 0x4000, 0xc0784a0e )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-07.12h", 0x0000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x4000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x8000, 0x4000, 0xc0784a0e )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
-	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
-	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
+	ROM_REGION( 0x300, REGION_PROMS, 0 )
+	ROM_LOAD( "a35-16.2j",  0x000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x200, 0x0100, 0x918e4732 )
 ROM_END
 
 ROM_START( tsamura2 )
@@ -900,28 +1100,28 @@ ROM_START( tsamura2 )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_RELOAD( 			0x02000, 0x2000 )
-	ROM_LOAD( "a35-05.10b", 0x04000, 0x2000, 0x55a17b08 )
-	ROM_RELOAD( 			0x06000, 0x2000 )
-	ROM_LOAD( "a35-06.10d", 0x08000, 0x2000, 0xf5ee6f8f )
-	ROM_RELOAD( 			0x0a000, 0x2000 )
+	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-04.10a", 0x0000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_RELOAD( 			0x2000, 0x2000 )
+	ROM_LOAD( "a35-05.10b", 0x4000, 0x2000, 0x55a17b08 )
+	ROM_RELOAD( 			0x6000, 0x2000 )
+	ROM_LOAD( "a35-06.10d", 0x8000, 0x2000, 0xf5ee6f8f )
+	ROM_RELOAD( 			0xa000, 0x2000 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-10.11n", 0x00000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "a35-11.11q", 0x02000, 0x1000, 0x93346d75 )
-	ROM_LOAD( "a35-12.11r", 0x04000, 0x1000, 0xf4c69d8a )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-10.11n", 0x0000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x2000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x4000, 0x1000, 0xf4c69d8a )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "a35-07.12h", 0x00000, 0x4000, 0x38fc349f ) // sprites
-	ROM_LOAD( "a35-08.12j", 0x04000, 0x4000, 0xa07d6dc3 )
-	ROM_LOAD( "a35-09.12k", 0x08000, 0x4000, 0xc0784a0e )
+	ROM_REGION( 0xC000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "a35-07.12h", 0x0000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x4000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x8000, 0x4000, 0xc0784a0e )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
-	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
-	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
+	ROM_REGION( 0x300, REGION_PROMS, 0 )
+	ROM_LOAD( "a35-16.2j",  0x000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x200, 0x0100, 0x918e4732 )
 ROM_END
 
 ROM_START( nunchaku )
@@ -939,22 +1139,22 @@ ROM_START( nunchaku )
 	ROM_LOAD( "nunchack.m2", 0x2000, 0x2000, 0xf37d7c49 )
 
 	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "nunchack.b1", 0x00000, 0x2000, 0x48c88fea ) // tiles
-	ROM_RELOAD( 			 0x02000, 0x2000 )
-	ROM_LOAD( "nunchack.b2", 0x04000, 0x2000, 0xeec818e4 )
-	ROM_RELOAD( 			 0x06000, 0x2000 )
-	ROM_LOAD( "nunchack.b3", 0x08000, 0x2000, 0x5f16473f )
-	ROM_RELOAD( 			 0x0a000, 0x2000 )
+	ROM_LOAD( "nunchack.b1", 0x0000, 0x2000, 0x48c88fea ) // tiles
+	ROM_RELOAD( 			 0x2000, 0x2000 )
+	ROM_LOAD( "nunchack.b2", 0x4000, 0x2000, 0xeec818e4 )
+	ROM_RELOAD( 			 0x6000, 0x2000 )
+	ROM_LOAD( "nunchack.b3", 0x8000, 0x2000, 0x5f16473f )
+	ROM_RELOAD( 			 0xa000, 0x2000 )
 
 	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "nunchack.v1", 0x00000, 0x1000, 0x358a3714 ) // characters
-	ROM_LOAD( "nunchack.v2", 0x02000, 0x1000, 0x54c18d8e )
-	ROM_LOAD( "nunchack.v3", 0x04000, 0x1000, 0xf7ac203a )
+	ROM_LOAD( "nunchack.v1", 0x0000, 0x1000, 0x358a3714 ) // characters
+	ROM_LOAD( "nunchack.v2", 0x2000, 0x1000, 0x54c18d8e )
+	ROM_LOAD( "nunchack.v3", 0x4000, 0x1000, 0xf7ac203a )
 
 	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "nunchack.c1", 0x00000, 0x4000, 0x797cbc8a ) // sprites
-	ROM_LOAD( "nunchack.c2", 0x04000, 0x4000, 0x701a0cc3 )
-	ROM_LOAD( "nunchack.c3", 0x08000, 0x4000, 0xffb841fc )
+	ROM_LOAD( "nunchack.c1", 0x0000, 0x4000, 0x797cbc8a ) // sprites
+	ROM_LOAD( "nunchack.c2", 0x4000, 0x4000, 0x701a0cc3 )
+	ROM_LOAD( "nunchack.c3", 0x8000, 0x4000, 0xffb841fc )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "nunchack.016", 0x000, 0x100, 0xa7b077d4 )
@@ -975,22 +1175,22 @@ ROM_START( yamagchi )
 	ROM_LOAD( "a38-13.4j", 0x0000, 0x2000, 0xa26445bb )
 
 	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a38-04.10a", 0x00000, 0x2000, 0x6bc69d4d ) // tiles
-	ROM_RELOAD( 			0x02000, 0x2000 )
-	ROM_LOAD( "a38-05.10b", 0x04000, 0x2000, 0x047fb315 )
-	ROM_RELOAD( 			0x06000, 0x2000 )
-	ROM_LOAD( "a38-06.10d", 0x08000, 0x2000, 0xa636afb2 )
-	ROM_RELOAD( 			0x0a000, 0x2000 )
+	ROM_LOAD( "a38-04.10a", 0x0000, 0x2000, 0x6bc69d4d ) // tiles
+	ROM_RELOAD( 			0x2000, 0x2000 )
+	ROM_LOAD( "a38-05.10b", 0x4000, 0x2000, 0x047fb315 )
+	ROM_RELOAD( 			0x6000, 0x2000 )
+	ROM_LOAD( "a38-06.10d", 0x8000, 0x2000, 0xa636afb2 )
+	ROM_RELOAD( 			0xa000, 0x2000 )
 
 	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "a38-10.11n", 0x00000, 0x1000, 0x51ab4671 ) // characters
-	ROM_LOAD( "a38-11.11p", 0x02000, 0x1000, 0x27890169 )
-	ROM_LOAD( "a38-12.11r", 0x04000, 0x1000, 0xc98d5cf2 )
+	ROM_LOAD( "a38-10.11n", 0x0000, 0x1000, 0x51ab4671 ) // characters
+	ROM_LOAD( "a38-11.11p", 0x2000, 0x1000, 0x27890169 )
+	ROM_LOAD( "a38-12.11r", 0x4000, 0x1000, 0xc98d5cf2 )
 
 	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "a38-07.12h", 0x00000, 0x4000, 0xa3a521b6 ) // sprites
-	ROM_LOAD( "a38-08.12j", 0x04000, 0x4000, 0x553afc66 )
-	ROM_LOAD( "a38-09.12l", 0x08000, 0x4000, 0x574156ae )
+	ROM_LOAD( "a38-07.12h", 0x0000, 0x4000, 0xa3a521b6 ) // sprites
+	ROM_LOAD( "a38-08.12j", 0x4000, 0x4000, 0x553afc66 )
+	ROM_LOAD( "a38-09.12l", 0x8000, 0x4000, 0x574156ae )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7114e.2k", 0x000, 0x100, 0xe7648110 )
@@ -1014,19 +1214,19 @@ ROM_START( m660 )
 	ROM_LOAD( "660x.bin", 0x0000, 0x8000, 0xb82f0cfa )
 
 	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "660q.bin", 0x00000, 0x4000, 0xe24e431a ) // tiles
-	ROM_LOAD( "660p.bin", 0x04000, 0x4000, 0xb2c93d46 )
-	ROM_LOAD( "660o.bin", 0x08000, 0x4000, 0x763c5983 )
+	ROM_LOAD( "660q.bin", 0x0000, 0x4000, 0xe24e431a ) // tiles
+	ROM_LOAD( "660p.bin", 0x4000, 0x4000, 0xb2c93d46 )
+	ROM_LOAD( "660o.bin", 0x8000, 0x4000, 0x763c5983 )
 
 	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "660u.bin", 0x00000, 0x2000, 0x030af716 ) // characters
-	ROM_LOAD( "660v.bin", 0x02000, 0x2000, 0x51a6e160 )
-	ROM_LOAD( "660w.bin", 0x04000, 0x2000, 0x8a45b469 )
+	ROM_LOAD( "660u.bin", 0x0000, 0x2000, 0x030af716 ) // characters
+	ROM_LOAD( "660v.bin", 0x2000, 0x2000, 0x51a6e160 )
+	ROM_LOAD( "660w.bin", 0x4000, 0x2000, 0x8a45b469 )
 
 	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "660t.bin", 0x00000, 0x4000, 0x990c0cee ) // sprites
-	ROM_LOAD( "660s.bin", 0x04000, 0x4000, 0xd9aa7834 )
-	ROM_LOAD( "660r.bin", 0x08000, 0x4000, 0x27b26905 )
+	ROM_LOAD( "660t.bin", 0x0000, 0x4000, 0x990c0cee ) // sprites
+	ROM_LOAD( "660s.bin", 0x4000, 0x4000, 0xd9aa7834 )
+	ROM_LOAD( "660r.bin", 0x8000, 0x4000, 0x27b26905 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "az-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
@@ -1050,19 +1250,19 @@ ROM_START( m660b )
 	ROM_LOAD( "660x.bin", 0x0000, 0x8000, 0xb82f0cfa )
 
 	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "660q.bin", 0x00000, 0x4000, 0xe24e431a ) // tiles
-	ROM_LOAD( "660p.bin", 0x04000, 0x4000, 0xb2c93d46 )
-	ROM_LOAD( "660o.bin", 0x08000, 0x4000, 0x763c5983 )
+	ROM_LOAD( "660q.bin", 0x0000, 0x4000, 0xe24e431a ) // tiles
+	ROM_LOAD( "660p.bin", 0x4000, 0x4000, 0xb2c93d46 )
+	ROM_LOAD( "660o.bin", 0x8000, 0x4000, 0x763c5983 )
 
 	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "m660-10.bin", 0x00000, 0x2000, 0xb11405a6 ) // characters
-	ROM_LOAD( "m660-11.bin", 0x02000, 0x2000, 0x94b8b69f )
-	ROM_LOAD( "m660-12.bin", 0x04000, 0x2000, 0xd6768c68 )
+	ROM_LOAD( "m660-10.bin", 0x0000, 0x2000, 0xb11405a6 ) // characters
+	ROM_LOAD( "m660-11.bin", 0x2000, 0x2000, 0x94b8b69f )
+	ROM_LOAD( "m660-12.bin", 0x4000, 0x2000, 0xd6768c68 )
 
 	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "660t.bin", 0x00000, 0x4000, 0x990c0cee ) // sprites
-	ROM_LOAD( "660s.bin", 0x04000, 0x4000, 0xd9aa7834 )
-	ROM_LOAD( "660r.bin", 0x08000, 0x4000, 0x27b26905 )
+	ROM_LOAD( "660t.bin", 0x0000, 0x4000, 0x990c0cee ) // sprites
+	ROM_LOAD( "660s.bin", 0x4000, 0x4000, 0xd9aa7834 )
+	ROM_LOAD( "660r.bin", 0x8000, 0x4000, 0x27b26905 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "az-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
@@ -1085,28 +1285,57 @@ ROM_START( alphaxz )
 	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* Z80 code AY driver */
 	ROM_LOAD( "660x.bin", 0x0000, 0x8000, 0xb82f0cfa )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "az-04.bin", 0x00000, 0x4000, 0x23da4e3d ) // tiles
 	ROM_LOAD( "az-05.bin", 0x04000, 0x4000, 0x8746ff69 )
 	ROM_LOAD( "az-06.bin", 0x08000, 0x4000, 0x6e494964 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "az-10.bin", 0x00000, 0x2000, 0x10b499bb ) // characters
 	ROM_LOAD( "az-11.bin", 0x02000, 0x2000, 0xd91993f6 )
 	ROM_LOAD( "az-12.bin", 0x04000, 0x2000, 0x8ea48ef3 )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xC000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "az-07.bin", 0x00000, 0x4000, 0x5f9cc65e ) // sprites
 	ROM_LOAD( "az-08.bin", 0x04000, 0x4000, 0x23e3a6ba )
 	ROM_LOAD( "az-09.bin", 0x08000, 0x4000, 0x7096fa71 )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_REGION( 0x300, REGION_PROMS, 0 )
 	ROM_LOAD( "az-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
 	ROM_LOAD( "az-ggg.bin", 0x100, 0x100, 0x22e8b22c )
 	ROM_LOAD( "az-bbb.bin", 0x200, 0x100, 0xb7d6fdb5 )
 ROM_END
 
+ROM_START( vsgongf )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "1.5a",	0x0000, 0x2000, 0x2c056dee ) /* good? */
+	ROM_LOAD( "2",		0x2000, 0x2000, 0x1a634daf ) /* good? */
+	ROM_LOAD( "3.5d",	0x4000, 0x2000, 0x5ac16861 )
+	ROM_LOAD( "4.5f",	0x6000, 0x2000, 0x1d1baf7b )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code - sound CPU */
+	ROM_LOAD( "6.5n",	0x0000, 0x2000, 0x785b9000 )
+	ROM_LOAD( "5.5l",	0x2000, 0x2000, 0x76dbfde9 ) /* ? */
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles (N/A) */
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "7.6f",	0x0000, 0x1000, 0x6ec68692 )
+	ROM_LOAD( "8.7f",	0x2000, 0x1000, 0xafba16c8 )
+	ROM_LOAD( "9.8f",	0x4000, 0x1000, 0x536bf710 )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "13.15j",  0x0000, 0x2000, 0xa2451a31 )
+	ROM_LOAD( "14.15h",  0x4000, 0x2000, 0xb387403e )
+	ROM_LOAD( "15.15f",  0x8000, 0x2000, 0x0e649334 )
+
+	ROM_REGION( 0x300, REGION_PROMS, 0 )
+	ROM_LOAD( "clr.6s",  0x000, 0x0100, 0x578bfbea )
+	ROM_LOAD( "clr.6r",  0x100, 0x0100, 0x3ec00739 )
+	ROM_LOAD( "clr.6p",  0x200, 0x0100, 0x0e4fd17a )
+ROM_END
+
+GAMEX(1984, vsgongf,  0,        vsgongf,  vsgongf,  0, ROT90, "Kaneko", "VS Gong Fight", GAME_IMPERFECT_COLORS )
 GAME( 1985, tsamurai, 0,        tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 1)" )
 GAME( 1985, tsamura2, tsamurai, tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 2)" )
 GAMEX(1985, nunchaku, 0,        tsamurai, nunchaku, 0, ROT90, "Taito", "Nunchackun", GAME_IMPERFECT_COLORS )

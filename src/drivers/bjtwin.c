@@ -2075,9 +2075,9 @@ static void init_bjtwin(void)
  *	008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-//	rom = memory_region(REGION_CPU1);
-//	WRITE_WORD(&rom[0x09172], 0x6006);	/* patch checksum error */
-//	WRITE_WORD(&rom[0x08f74], 0x4e71);
+//	data 16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+//	rom[0x09172/2] = 0x6006;	/* patch checksum error */
+//	rom[0x08f74/2] = 0x4e71);
 }
 
 

@@ -152,7 +152,7 @@ int thief_vh_start( void ){
 void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	unsigned int offs;
 	int flipscreen = thief_video_control&1;
-	const UINT16 *pal_data = Machine->pens;
+	const UINT32 *pal_data = Machine->pens;
 	UINT8 *dirty = dirtybuffer;
 	const UINT8 *source = videoram;
 	struct osd_bitmap *page;

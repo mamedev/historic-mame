@@ -407,7 +407,7 @@ struct cpu_interface cpuintf[] =
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
 #if (HAS_SH2)
-    CPU4(SH2,      sh2,     16,  0,1.00,SH2_INT_NONE ,               0,             -1,   32,32bew,   0,27,BE,2, 2  ),
+    CPU4(SH2,      sh2,     16,  0,1.00,SH2_INT_NONE ,               0,             -1,   32,32bedw,   0,32,BE,2, 2  ),
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
@@ -877,6 +877,7 @@ logerror("Machine reset\n");
 
 			/* update the timer with how long we actually ran */
 			timer_update_cpu(cpunum, ran);
+
 		}
 
 		profiler_mark(PROFILER_END);
@@ -2304,6 +2305,7 @@ static void cpu_vblankcallback(int param)
 	/* is it a real VBLANK? */
 	if (!--vblank_countdown)
 	{
+
 		/* do we update the screen now? */
 		if (!(Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK))
 			usres = updatescreen();

@@ -11,8 +11,11 @@ TARGET = mame
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
 
-# uncomment next line to use Assembler 68k engine
-# X86_ASM_68K = 1
+# uncomment next line to use Assembler 68000 engine
+# X86_ASM_68000 = 1
+
+# uncomment next line to use Assembler 68020 engine
+# X86_ASM_68020 = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)
@@ -140,7 +143,7 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@
 ifndef DEBUG
-	upx $(EMULATOR)
+	upx -9 $(EMULATOR)
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -173,15 +176,25 @@ $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
-# generate asm source files for the 68000 emulator
-$(OBJ)/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
+# generate asm source files for the 68000/68020 emulators
+$(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
 	@echo Generating $@...
-	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/comptab.asm
+	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68000tab.asm 00
+
+$(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
+	@echo Generating $@...
+	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68020tab.asm 20
 
 # generated asm files for the 68000 emulator
-$(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
+$(OBJ)/cpu/m68000/68000.o:  $(OBJ)/cpu/m68000/68000.asm
+	@echo Assembling $<...
+	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
+
+$(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 	@echo Assembling $<...
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 

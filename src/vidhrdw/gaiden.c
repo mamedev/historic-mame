@@ -184,7 +184,7 @@ static void mark_sprite_colors(void)
 		{
 			UINT32 pen_usage = 0xfffe;
 			UINT32 color = (source[2] >> 4) & 0xf;
-			const UINT16 *pal_data = &gfx->colortable[gfx->color_granularity * color];
+			const UINT32 *pal_data = &gfx->colortable[gfx->color_granularity * color];
 			int indx = pal_data - Machine->remapped_colortable;
 			while (pen_usage)
 			{

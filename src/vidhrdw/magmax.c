@@ -15,14 +15,14 @@ data16_t *magmax_scroll_y;
 unsigned short magmax_vreg;
 static int flipscreen = 0;
 
-static UINT16 pens_line_tab[256];
+static UINT32 pens_line_tab[256];
 static UINT32 *prom_tab = NULL;
 
 
-typedef void (*blit_horiz_pixel_line_proc)(struct osd_bitmap *bitmap,int x,int y, int width, UINT16* pens);
+typedef void (*blit_horiz_pixel_line_proc)(struct osd_bitmap *bitmap,int x,int y, int width, UINT32* pens);
 static blit_horiz_pixel_line_proc blit_horiz_pixel_line;
 
-static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &((b->line[y])[x]);
 	while(w-->0)
@@ -31,7 +31,7 @@ static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &((b->line[y])[b->width-1-x]);
 	while(w-->0)
@@ -40,7 +40,7 @@ static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &((b->line[b->height-1-y])[x]);
 	while(w-->0)
@@ -49,7 +49,7 @@ static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &((b->line[b->height-1-y])[b->width-1-x]);
 	while(w-->0)
@@ -58,7 +58,7 @@ static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	while(w-->0)
 	{
@@ -66,7 +66,7 @@ static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	y = b->width-1-y;
 	while(w-->0)
@@ -75,7 +75,7 @@ static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	while(w-->0)
@@ -84,7 +84,7 @@ static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	y = b->width-1-y;
@@ -95,7 +95,7 @@ static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens
 	}
 }
 
-static void bhpl_16_nd(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[x]);
 	while(w-->0)
@@ -104,7 +104,7 @@ static void bhpl_16_nd(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[b->width-1-x]);
 	while(w-->0)
@@ -113,7 +113,7 @@ static void bhpl_16_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[x]);
 	while(w-->0)
@@ -122,7 +122,7 @@ static void bhpl_16_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[b->width-1-x]);
 	while(w-->0)
@@ -131,7 +131,7 @@ static void bhpl_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	while(w-->0)
 	{
@@ -139,7 +139,7 @@ static void bhpl_16_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	y = b->width-1-y;
 	while(w-->0)
@@ -148,7 +148,7 @@ static void bhpl_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens
 		pens++;
 	}
 }
-static void bhpl_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	while(w-->0)
@@ -157,7 +157,7 @@ static void bhpl_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens
 		pens++;
 	}
 }
-static void bhpl_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
+static void bhpl_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	y = b->width-1-y;
@@ -314,7 +314,7 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			UINT32 rom15F_addr   = (((scroll_v + v) & 0x07)<<2) + (map_v_scr_100<<5);
 			UINT32 map_v_scr_1fe_6 =((scroll_v + v) & 0x1fe)<<6;
 
-			unsigned short *pens = &Machine->pens[2*16 + (map_v_scr_100>>1)];
+			UINT32 *pens = &Machine->pens[2*16 + (map_v_scr_100>>1)];
 
 			if (!map_v_scr_100)
 			{
@@ -462,7 +462,7 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (flipscreen)
 			{
 				int i;
-				UINT16 pens_line_tab_flipped[256];
+				UINT32 pens_line_tab_flipped[256];
 				for (i=0; i<256; i++)
 					pens_line_tab_flipped[i] = pens_line_tab[255-i];
 				blit_horiz_pixel_line(bitmap,0,255-v,256,pens_line_tab_flipped);

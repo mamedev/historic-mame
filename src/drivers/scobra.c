@@ -110,7 +110,7 @@ static void scobra_init_machine(void)
 	interrupt_enable_w(0,0);
 }
 
-static READ_HANDLER( moonwar2_IN0_r )
+static READ_HANDLER( moonwar_IN0_r )
 {
 	int sign;
 	int delta;
@@ -485,7 +485,7 @@ INPUT_PORTS_START( armorcar )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( moonwar2 )
+INPUT_PORTS_START( moonwar )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* the spinner */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -526,7 +526,7 @@ INPUT_PORTS_START( moonwar2 )
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( monwar2a )
+INPUT_PORTS_START( moonwara )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* the spinner */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -1732,7 +1732,7 @@ ROM_START( armorca2 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 ROM_END
 
-ROM_START( moonwar2 )
+ROM_START( moonwar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "mw2.2c",       0x0000, 0x1000, 0x7c11b4d9 )
 	ROM_LOAD( "mw2.2e",       0x1000, 0x1000, 0x1b6362be )
@@ -1751,7 +1751,7 @@ ROM_START( moonwar2 )
 	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
 ROM_END
 
-ROM_START( monwar2a )
+ROM_START( moonwara )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xbc20b734 )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xdb6ffec2 )
@@ -2056,10 +2056,10 @@ ROM_END
 
 
 
-static void init_moonwar2(void)
+static void init_moonwar(void)
 {
 	/* Install special handler for the spinner */
-	install_mem_read_handler(0, 0x9800, 0x9800, moonwar2_IN0_r);
+	install_mem_read_handler(0, 0x9800, 0x9800, moonwar_IN0_r);
 }
 
 
@@ -2298,8 +2298,8 @@ GAME( 1981, stratgyx, 0,        stratgyx, stratgyx, 0,        ROT0,   "Konami", 
 GAME( 1981, stratgys, stratgyx, stratgyx, stratgyx, 0,        ROT0,   "[Konami] (Stern license)", "Strategy X (Stern)" )
 GAME( 1981, armorcar, 0,        armorcar, armorcar, 0,        ROT90,  "Stern", "Armored Car (set 1)" )
 GAME( 1981, armorca2, armorcar, armorcar, armorcar, 0,        ROT90,  "Stern", "Armored Car (set 2)" )
-GAME( 1981, moonwar2, 0,        type1,    moonwar2, moonwar2, ROT90,  "Stern", "Moon War II (set 1)" )
-GAME( 1981, monwar2a, moonwar2, type1,    monwar2a, moonwar2, ROT90,  "Stern", "Moon War II (set 2)" )
+GAME( 1981, moonwar,  0,        type1,    moonwar,  moonwar,  ROT90,  "Stern", "Moon War (set 1)" )
+GAME( 1981, moonwara, moonwar,  type1,    moonwara, moonwar,  ROT90,  "Stern", "Moon War (set 2)" )
 GAME( 1984, spdcoin,  0,        type1,    spdcoin,  0,        ROT90,  "Stern",    "Speed Coin (prototype)" )
 GAMEX(1982, darkplnt, 0,        type2,    darkplnt, 0,        ROT180, "Stern", "Dark Planet", GAME_NOT_WORKING )
 GAME( 1982, tazmania, 0,        type1,    tazmania, 0,        ROT90,  "Stern", "Tazz-Mania (Scramble hardware)" )

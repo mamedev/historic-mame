@@ -133,12 +133,12 @@ out:
 
 /******************** Machine stuff **********************/
 void wardner_reset(void);
-WRITE_HANDLER( wardner_mainram_w );
 READ_HANDLER( wardner_mainram_r );
+WRITE_HANDLER( wardner_mainram_w );
+WRITE_HANDLER( wardner_control_w );
+WRITE_HANDLER( wardner_coin_dsp_w );
 READ16_HANDLER( twincobr_dsp_r );
 WRITE16_HANDLER( twincobr_dsp_w );
-WRITE_HANDLER( twincobr_control_w );
-WRITE_HANDLER( wardner_coin_dsp_w );
 
 static int wardner_membank = 0;
 extern int twincobr_intenable;
@@ -158,7 +158,7 @@ WRITE_HANDLER( wardner_txlayer_w );
 WRITE_HANDLER( wardner_bgscroll_w );
 WRITE_HANDLER( wardner_fgscroll_w );
 WRITE_HANDLER( wardner_txscroll_w );
-WRITE_HANDLER( twincobr_exscroll_w );
+WRITE_HANDLER( wardner_exscroll_w );
 
 int  toaplan0_vh_start(void);
 void toaplan0_vh_stop(void);
@@ -331,10 +331,10 @@ static PORT_WRITE_START( writeport )
 	{ 0x24, 0x25, wardner_bglayer_w },		/* offset in bg video RAM */
 	{ 0x30, 0x33, wardner_fgscroll_w },		/* scroll fg layer */
 	{ 0x34, 0x35, wardner_fglayer_w },		/* offset in fg video RAM */
-	{ 0x40, 0x43, twincobr_exscroll_w },	/* scroll extra layer (not used) */
+	{ 0x40, 0x43, wardner_exscroll_w },		/* scroll extra layer (not used) */
 	{ 0x60, 0x65, wardner_videoram_w },		/* data for video layer RAM */
 	{ 0x5a, 0x5a, wardner_coin_dsp_w },		/* Machine system control */
-	{ 0x5c, 0x5c, twincobr_control_w },		/* Machine system control */
+	{ 0x5c, 0x5c, wardner_control_w },		/* Machine system control */
 	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
 PORT_END
 

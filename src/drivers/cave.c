@@ -53,6 +53,7 @@ extern data16_t *cave_vram_0, *cave_vctrl_0;
 extern data16_t *cave_vram_1, *cave_vctrl_1;
 extern data16_t *cave_vram_2, *cave_vctrl_2;
 
+extern data16_t *cave_wkram;
 
 /* Functions defined in vidhrdw */
 
@@ -74,7 +75,14 @@ int uopoko_vh_start(void);
 void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void donpachi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ddonpach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void esprade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void guwange_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dfeveron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void uopoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void cave_vh_stop(void);
 
 /* Variables only used here */
 
@@ -82,7 +90,10 @@ static UINT8 vblank_irq;
 static UINT8 sound_irq;
 static UINT8 unknown_irq;
 
-
+static data8_t cave_default_eeprom_type1[]=	{0x00,0x0C,0x11,0x0D,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF};  /* DFeveron, Guwange */
+static data8_t cave_default_eeprom_type2[] ={0x00,0x0C,0xFF,0xFB,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Esprade, DonPachi, DDonPachi */
+static data8_t cave_default_eeprom_type3[] ={0x00,0x03,0x08,0x00,0xFF,0xFF,0xFF,0xFF,0x08,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF};  /* UoPoko */
+static data8_t* cave_default_eeprom;
 
 /***************************************************************************
 
@@ -256,7 +267,10 @@ void cave_nvram_handler(void *file,int read_or_write)
 		EEPROM_init(&eeprom_interface);
 
 		if (file) EEPROM_load(file);
-		else usrintf_showmessage("You MUST initialize NVRAM in service mode");
+		else /* usrintf_showmessage("You MUST initialize NVRAM in service mode"); */
+		{
+			EEPROM_set_data(cave_default_eeprom,16);  /* Set the EEPROM to Factory Defaults */
+		}
 	}
 }
 
@@ -336,7 +350,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( dfeveron_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM						},	// RAM
+	{ 0x100000, 0x10ffff, MWA16_RAM, &cave_wkram		},	// RAM
 	{ 0x300000, 0x300003, cave_sound_w					},	// To Sound
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
@@ -376,7 +390,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( ddonpach_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM							},	// RAM
+	{ 0x100000, 0x10ffff, MWA16_RAM, &cave_wkram			},	// RAM
 	{ 0x300000, 0x300003, cave_sound_w						},	// To Sound
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
@@ -410,6 +424,8 @@ READ16_HANDLER( donpachi_videoregs_r )
 	}
 }
 
+//ks s
+#if 0
 WRITE16_HANDLER( donpachi_videoregs_w )
 {
 	COMBINE_DATA(&cave_videoregs[offset]);
@@ -419,6 +435,8 @@ WRITE16_HANDLER( donpachi_videoregs_w )
 //		case 0x78/2:	watchdog_reset16_w(0,0);	break;
 	}
 }
+#endif
+//ks e
 
 static WRITE16_HANDLER( nmk_oki6295_bankswitch_w )
 {
@@ -471,7 +489,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( donpachi_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM									},	// RAM
+	{ 0x100000, 0x10ffff, MWA16_RAM, &cave_wkram					},	// RAM
 	{ 0x200000, 0x207fff, cave_vram_1_w,     &cave_vram_1			},	// Layer 1 (size?)
 	{ 0x300000, 0x307fff, cave_vram_0_w,     &cave_vram_0			},	// Layer 0 (size?)
 	{ 0x400000, 0x407fff, cave_vram_2_8x8_w, &cave_vram_2			},	// Layer 2 (size?)
@@ -480,7 +498,7 @@ static MEMORY_WRITE16_START( donpachi_writemem )
 	{ 0x600000, 0x600005, MWA16_RAM,  &cave_vctrl_1					},	// Layer 1 Control
 	{ 0x700000, 0x700005, MWA16_RAM,  &cave_vctrl_0					},	// Layer 0 Control
 	{ 0x800000, 0x800005, MWA16_RAM,  &cave_vctrl_2					},	// Layer 2 Control
-	{ 0x900000, 0x90007f, donpachi_videoregs_w, &cave_videoregs		},	// Video Regs?
+	{ 0x900000, 0x90007f, MWA16_RAM, &cave_videoregs				},	// Video Regs?
 	{ 0xa08000, 0xa08fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xb00000, 0xb00003, cave_oki_0_w								},	// Sound
 	{ 0xb00010, 0xb00013, cave_oki_1_w								},	//
@@ -514,7 +532,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( esprade_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA16_RAM									},	// RAM
+	{ 0x100000, 0x10ffff, MWA16_RAM, &cave_wkram					},	// RAM
 	{ 0x300000, 0x300003, cave_sound_w								},	// To Sound
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
@@ -554,7 +572,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( guwange_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-	{ 0x200000, 0x20ffff, MWA16_RAM									},	// RAM
+	{ 0x200000, 0x20ffff, MWA16_RAM, &cave_wkram					},	// RAM
 	{ 0x300000, 0x30007f, MWA16_RAM, &cave_videoregs				},	// Video Regs?
 	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
@@ -892,7 +910,7 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 static struct YMZ280Binterface ymz280b_intf =
 {
 	1,
-	{ 16934400 },						//ks
+	{ 16934400 },
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq_gen }
@@ -926,8 +944,8 @@ static const struct MachineDriver machine_driver_dfeveron =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	dfeveron_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	dfeveron_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -966,8 +984,8 @@ static const struct MachineDriver machine_driver_ddonpach =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	ddonpach_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	ddonpach_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -987,8 +1005,7 @@ static const struct MachineDriver machine_driver_ddonpach =
 static struct OKIM6295interface donpachi_okim6295_interface =
 {
 	2,
-//ks	{ 4220, 16000 },
-	{ 8330, 16000 },				//ks
+	{ 8330, 16000 },
 	{ REGION_SOUND1, REGION_SOUND2 },
 	{ 50, 50 }
 };
@@ -1015,8 +1032,8 @@ static const struct MachineDriver machine_driver_donpachi =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	ddonpach_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	donpachi_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -1058,8 +1075,8 @@ static const struct MachineDriver machine_driver_esprade =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	esprade_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	esprade_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -1098,8 +1115,8 @@ static const struct MachineDriver machine_driver_guwange =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	guwange_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	guwange_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -1138,8 +1155,8 @@ static const struct MachineDriver machine_driver_uopoko =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	uopoko_vh_start,
-	0,
-	cave_vh_screenrefresh,
+	cave_vh_stop,
+	uopoko_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -1218,10 +1235,8 @@ static void esprade_unpack_sprites(void)
 		unsigned char data1 = src[0];
 		unsigned char data2 = src[1];
 
-//		src[0] = (data1 & 0xf0) + (data2 & 0x0f);
-//		src[1] = ((data1 & 0x0f)<<4) + ((data2 & 0xf0)>>4);
-		src[0] = ((data1 & 0x0f)<<4) + (data2 & 0x0f);			//ks
-		src[1] = (data1 & 0xf0) + ((data2 & 0xf0)>>4);			//ks
+		src[0] = ((data1 & 0x0f)<<4) + (data2 & 0x0f);
+		src[1] = (data1 & 0xf0) + ((data2 & 0xf0)>>4);
 
 		src += 2;
 	}
@@ -1267,6 +1282,7 @@ ROM_END
 
 void init_dfeveron(void)
 {
+	cave_default_eeprom = cave_default_eeprom_type1;
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 }
@@ -1318,6 +1334,7 @@ ROM_END
 
 void init_ddonpach(void)
 {
+	cave_default_eeprom = cave_default_eeprom_type2;
 	ddonpach_unpack_sprites();
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
 }
@@ -1418,8 +1435,18 @@ ROM_END
 
 void init_esprade(void)
 {
+	cave_default_eeprom = cave_default_eeprom_type2;
 	esprade_unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+
+//ks start    ROM PATCH
+#if 0
+	{
+		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+		rom[0x118A/2] = 0x4e71;			//palette fix	118A: 5548				SUBQ.W	#2,A0		--> NOP
+	}
+#endif
+//ks end
 }
 
 
@@ -1464,7 +1491,12 @@ ROM_START( guwange )
 
 ROM_END
 
-
+void init_guwange(void)
+{
+	cave_default_eeprom = cave_default_eeprom_type1;
+	esprade_unpack_sprites();
+	cave_spritetype = 0;	// "normal" sprites
+}
 
 
 /***************************************************************************
@@ -1501,6 +1533,7 @@ ROM_END
 
 void init_uopoko(void)
 {
+	cave_default_eeprom = cave_default_eeprom_type3;
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 }
@@ -1516,9 +1549,9 @@ void init_uopoko(void)
 
 ***************************************************************************/
 
-GAME( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "Donpachi (Japan)"       )
-GAME( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "Dodonpachi (Japan)"     )
+GAME( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "DonPachi (Japan)"       )
+GAME( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270_16BIT, "Atlus/Cave",                  "DoDonPachi (Japan)"     )
 GAME( 1998, dfeveron, 0, dfeveron, cave,    dfeveron, ROT270_16BIT, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
 GAME( 1998, esprade,  0, esprade,  cave,    esprade,  ROT270_16BIT, "Atlus/Cave",                  "ESP Ra.De. (Japan)"     )
 GAME( 1998, uopoko,   0, uopoko,   cave,    uopoko,   ROT0_16BIT,   "Cave (Jaleco license)",       "Uo Poko (Japan)"        )
-GAME( 1999, guwange,  0, guwange,  guwange, esprade,  ROT270_16BIT, "Atlus/Cave",                  "Guwange (Japan)"        )
+GAME( 1999, guwange,  0, guwange,  guwange, guwange,  ROT270_16BIT, "Atlus/Cave",                  "Guwange (Japan)"        )

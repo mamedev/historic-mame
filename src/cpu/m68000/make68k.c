@@ -95,6 +95,8 @@
  * 30.09.00 DEO   - added mull, divl, bfextu
  *                  added '020 addressing modes
  *                  fixed $6xff branching
+ * 23.01.01 MJC   - Spits out seperate code for 68000 & 68020
+ *                  allows seperate optimising!
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -129,7 +131,8 @@
 
 #undef  STALLCHECK      /* Affects fetching of Opcode */
 #define SAVEPPC         /* Save Previous PC */
-#undef  ENCRYPTED       /* Allows OP_ROM <> OP_RAM */
+#define ENCRYPTED       /* PC relative = decrypted */
+#define ENCRYPTCODEONLY /* Opcodes and PC Rel encrypted only */
 #define ASMBANK         /* Memory banking algorithm to use */
 #define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4     /* Alignment to use for branches */
@@ -168,7 +171,7 @@ int      DisOp;
  *
  */
 
-#define VERSION    "0.26"
+#define VERSION    "0.30"
 
 #define TRUE -1
 #define FALSE 0
@@ -183,14 +186,12 @@ int      DisOp;
 #define EBP 6
 
 
+#define NORMAL 0
+#define PCREL  1
 
 /* Register Location Offsets */
 
-#ifdef OS2
-   #define ICOUNT          "m68000_ICount"
-#else
-   #define ICOUNT          "_m68000_ICount"
-#endif
+#define ICOUNT             "asm_count"
 
 #define REG_DAT            "R_D0"
 #define REG_DAT_EBX        "[R_D0+ebx*4]"
@@ -206,7 +207,6 @@ int      DisOp;
 #define REG_SR             "R_SR"
 #define REG_IRQ_CALLBACK   "R_IRQ_CALLBACK"
 #define REG_RESET_CALLBACK "R_RESET_CALLBACK"
-
 
 
 /* 68010 Regs */
@@ -226,14 +226,18 @@ int      DisOp;
  */
 
 FILE *fp = NULL;
-char *comptab = NULL;
 
+char *comptab = NULL;
+char *CPUtype = NULL;
+
+int  CPU            = 0;
 int  FlagProcess    = 0;
 int  CheckInterrupt = 0;
 int  ExternalIO     = 0;
 int  Opcount        = 0;
 int  TimingCycles   = 0;
 int  AddEACycles    = 0;
+int  AccessType     = NORMAL;
 
 #ifdef DOS
 
@@ -272,11 +276,10 @@ static char* regnameslong[] =
 { "EAX","EBX","ECX","EDX","ESI","EDI","EBP"};
 
 static char* regnamesword[] =
-{ "AX","BX","CX","DX"};
+{ "AX","BX","CX","DX", "SI", "DI", "BP"};
 
 static char* regnamesshort[] =
 { "AL","BL","CL","DL"};
-
 
 
 
@@ -506,7 +509,7 @@ void MemoryBanking(int BaseCode)
    fprintf(fp, "\t\t push  esi\n");
 #endif
 
-   fprintf(fp, "\t\t call  [_m68k_memory_intf+28]\n");
+   fprintf(fp, "\t\t call  [_a68k_memory_intf+28]\n");
 
 #ifndef FASTCALL
    fprintf(fp, "\t\t add   esp,byte 4\n");
@@ -592,7 +595,6 @@ void Completed(void)
 
 #endif
 
-   fprintf(fp, "\t\t mov   eax,[_m68k_memory_intf+0]\n");	/* ASG */
    if (CheckInterrupt)
    {
       fprintf(fp,"; Check for Interrupt waiting\n\n");
@@ -600,13 +602,29 @@ void Completed(void)
       fprintf(fp,"\t\t jne   near interrupt\n\n");
    }
 
-   fprintf(fp, "\t\t xor   eax,esi\n");	/* ASG */
+   if(CPU==2)
+   {
+      /* 32 bit memory version */
+   	  fprintf(fp, "\t\t mov   eax,[_a68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t xor   eax,esi\n");	/* ASG */
+
 #ifdef STALLCHECK
-   fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-   fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
+      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
-   fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
+      fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
 #endif
+   }
+   else
+   {
+      /* 16 bit memory */
+#ifdef STALLCHECK
+      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+#else
+      fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+#endif
+   }
 
    fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n\n");
 }
@@ -674,17 +692,32 @@ void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
 
 void CheckCPUType(int Minimum)
 {
-   fprintf(fp, "\t\t mov   eax,[CPUtype]\n");
-
-   if (Minimum == 1)
+   if(CPU==2)
    {
-      fprintf(fp, "\t\t test  eax,eax\n");
-      fprintf(fp, "\t\t jz    near ILLEGAL\n\n");
+   	   /* Only check for > 020 */
+
+       if(Minimum>2)
+       {
+	       fprintf(fp, "\t\t mov   eax,[CPUversion]\n");
+
+           fprintf(fp, "\t\t cmp   al,%d\n",Minimum);
+           fprintf(fp, "\t\t jb    near ILLEGAL\n\n");
+       }
    }
    else
    {
-      fprintf(fp, "\t\t cmp   al,%d\n",Minimum);
-      fprintf(fp, "\t\t jb    near ILLEGAL\n\n");
+	   fprintf(fp, "\t\t mov   eax,[CPUversion]\n");
+
+       if (Minimum == 1)
+       {
+          fprintf(fp, "\t\t test  eax,eax\n");
+          fprintf(fp, "\t\t jz    near ILLEGAL\n\n");
+       }
+       else
+       {
+          fprintf(fp, "\t\t cmp   al,%d\n",Minimum);
+          fprintf(fp, "\t\t jb    near ILLEGAL\n\n");
+       }
    }
 }
 
@@ -962,20 +995,81 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
    /* Call Mame memory routine */
 
 	/* ASG - changed these to call through the function pointers */
+
+#ifdef ENCRYPTED
+   switch (AccessType)
+   {
+   	  case NORMAL :
+          switch (Size)
+          {
+             case 66 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+4]\n");
+                break;
+
+             case 87 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+8]\n");
+                break;
+
+             case 76 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+12]\n");
+                break;
+          }
+          break;
+
+      case PCREL :
+
+   	    #ifdef ENCRYPTCODEONLY
+          switch (Size)
+          {
+             case 66 :
+  	      		fprintf(fp, "\t\t movzx EAX,byte [%s+ebp]\n",regnameslong[AReg]);
+                break;
+
+             case 87 :
+  	      		fprintf(fp, "\t\t movzx EAX,word [%s+ebp]\n",regnameslong[AReg]);
+                break;
+
+             case 76 :
+  	      		fprintf(fp, "\t\t mov   EAX,dword [%s+ebp]\n",regnameslong[AReg]);
+                break;
+          }
+
+        #else
+          switch (Size)
+          {
+             case 66 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+32]\n");
+                break;
+
+             case 87 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+36]\n");
+                break;
+
+             case 76 :
+                fprintf(fp, "\t\t call  [_a68k_memory_intf+40]\n");
+                break;
+          }
+        #endif
+
+          break;
+   }
+#else
+
    switch (Size)
    {
       case 66 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+4]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+4]\n");
          break;
 
       case 87 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+8]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+8]\n");
          break;
 
       case 76 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+12]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+12]\n");
          break;
    }
+#endif
 
    /* Correct Stack */
 
@@ -1105,15 +1199,15 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
    switch (Size)
    {
       case 66 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+16]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+16]\n");
          break;
 
       case 87 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+20]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+20]\n");
          break;
 
       case 76 :
-         fprintf(fp, "\t\t call  [_m68k_memory_intf+24]\n");
+         fprintf(fp, "\t\t call  [_a68k_memory_intf+24]\n");
          break;
    }
 
@@ -1176,76 +1270,58 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 
 void Memory_Fetch(char Size,int Dreg,int Extend)
 {
+   static int loopcount=0;
 
-#ifdef ENCRYPTED
+   /* Always goes via OP_ROM */
 
-   /* This version allows for OP_ROM <> OP_RAM */
-
-   fprintf(fp, "\t\t mov   %s,dword [_OP_RAM]\n",regnameslong[Dreg]);
-
-   if ((Extend == TRUE) & (Size == 'W'))
+   if(CPU!=2)
    {
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t movsx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-   }
-   else if (Size == 'W')
-   {
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t movzx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      /* 16 Bit version */
+
+      if ((Extend == TRUE) & (Size == 'W'))
+	     fprintf(fp, "\t\t movsx %s,word [esi+ebp]\n",regnameslong[Dreg]);
+      else
+	     fprintf(fp, "\t\t mov   %s,dword [esi+ebp]\n",regnameslong[Dreg]);
+
+      if (Size == 'L')
+     	 fprintf(fp, "\t\t rol   %s,16\n",regnameslong[Dreg]);
    }
    else
    {
-      /* ASG - fix me - this is going to be slow! */
-      int tempreg = (Dreg == EAX) ? EBX : EAX;
-      fprintf(fp, "\t\t push  %s\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t mov   %s,[esi+%s-2]\n",regnameslong[tempreg],regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t and   %s,0FFFF0000h\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t add   esi,byte 2\n");					/* ASG */
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t movzx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
-      fprintf(fp, "\t\t or    %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
-      fprintf(fp, "\t\t pop   %s\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t sub   esi,byte 2\n");					/* ASG */
-   }
+      /* 32 Bit version */
 
-#else
+      if (Size == 'W')
+      {
+         fprintf(fp, "\t\t mov   %s,esi\n",regnameslong[Dreg]);
+         fprintf(fp, "\t\t xor   %s,byte 2\n",regnameslong[Dreg]);
 
-   /* This version OP_ROM must be = OP_RAM */
+         if (Extend == TRUE)
+	         fprintf(fp, "\t\t movsx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
+         else
+	         fprintf(fp, "\t\t movzx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
+      }
+      else
+      {
+      	 // if address is exact multiple of 4, long read will work
+         // otherwise we need to get words address-2 and address+4
 
-   if ((Extend == TRUE) & (Size == 'W'))
-   {
-      fprintf(fp, "\t\t mov   %s,esi\n",regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   %s,[_m68k_memory_intf+0]\n",regnameslong[Dreg]);
-      fprintf(fp, "\t\t movsx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
-   }
-   else if (Size == 'W')
-   {
-      fprintf(fp, "\t\t mov   %s,esi\n",regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   %s,[_m68k_memory_intf+0]\n",regnameslong[Dreg]);
-      fprintf(fp, "\t\t movzx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
-   }
-   else
-   {
-      /* ASG - fix me - this is going to be slow! */
-      int tempreg = (Dreg == EAX) ? EBX : EAX;
-      fprintf(fp, "\t\t push  %s\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t mov   %s,[_m68k_memory_intf+0]\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t lea   %s,[esi+2]\n",regnameslong[Dreg]);
-      fprintf(fp, "\t\t xor   %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
-      fprintf(fp, "\t\t xor   %s,esi\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t mov   %s,[%s+ebp-2]\n",regnameslong[tempreg],regnameslong[tempreg]);
-      fprintf(fp, "\t\t movzx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
-      fprintf(fp, "\t\t and   %s,0FFFF0000h\n",regnameslong[tempreg]);
-      fprintf(fp, "\t\t or    %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
-      fprintf(fp, "\t\t pop   %s\n",regnameslong[tempreg]);
-   }
+         // Always read long
+         fprintf(fp, "\t\t mov   %s,dword [esi+ebp]\n",regnameslong[Dreg]);
 
-#endif
+         // OK ?
+		 fprintf(fp, "\t\t test  si, word 2\n");
+         fprintf(fp, "\t\t jz    short FL%3.3d\n",loopcount+1);
+
+         // no, so get high word
+         fprintf(fp, "\t\t mov   %s,dword [esi+ebp-4]\n",regnameslong[Dreg]);
+         // and get low word
+         fprintf(fp, "\t\t mov   %s,word [esi+ebp+4]\n",regnamesword[Dreg]);
+
+         fprintf(fp, "FL%3.3d:\n",loopcount+1);
+
+         loopcount += 1;
+      }
+   }
 }
 
 
@@ -1287,134 +1363,163 @@ void ExtensionDecode(int SaveEDX)
 {
    char *Label = GenerateLabel(0,1);
 
-// eax holds scaled index
-
    if (SaveEDX)
       fprintf(fp, "\t\t push  edx\n");
 
    Memory_Fetch('W',EAX,FALSE);
    fprintf(fp, "\t\t add   esi,byte 2\n");
 
-// might be faster just to push all regs
-   fprintf(fp, "\t\t push  ebx\n");
-   fprintf(fp, "\t\t push  ecx\n");
+   if(CPU!=2)
+   {
+      /* 68000 Extension */
 
-// copies for later use
-   fprintf(fp, "\t\t mov   ecx,eax\n");
-   fprintf(fp, "\t\t mov   edx,eax\n");
+      fprintf(fp, "\t\t mov   edx,eax\n");
+      fprintf(fp, "\t\t shr   eax,10\n");
+      fprintf(fp, "\t\t and   eax,byte 3Ch\n");
+      fprintf(fp, "\t\t mov   eax,[%s+eax]\n",REG_DAT);
+      fprintf(fp, "\t\t test  dh,8H\n");
+      fprintf(fp, "\t\t jnz   short %s\n",Label);
+      fprintf(fp, "\t\t cwde\n");
+      fprintf(fp, "%s:\n",Label);
+      fprintf(fp, "\t\t add   edi,eax\n");
+      fprintf(fp, "\t\t movsx edx,dl\n");
+      fprintf(fp, "\t\t add   edi,edx\n");
+   }
+   else
+   {
+   	  /* 68020 Extension */
 
-// check E bit to see if displacement or full format
-   fprintf(fp, "\t\t test  dh,1\n");
-   fprintf(fp, "\t\t jz   short %s_a\n",Label);
-// full mode so check IS (index supress)
-   fprintf(fp, "\t\t test  dl,40h\n");
-   fprintf(fp, "\t\t jz   short %s_b\n",Label);
-// set index to 0, it's not added
-   fprintf(fp, "\t\t xor  eax,eax\n");
-   fprintf(fp, "\t\t jmp  near %s_d\n",Label);
+      // eax holds scaled index
 
-// add displacement
-   fprintf(fp, "%s_a:\n",Label);
-   fprintf(fp, "\t\t movsx eax,al\n");
-   fprintf(fp, "\t\t add   edi,eax\n");
+      // might be faster just to push all regs
+      fprintf(fp, "\t\t push  ebx\n");
+      fprintf(fp, "\t\t push  ecx\n");
 
-   fprintf(fp, "%s_b:\n",Label);
-// calc index always scale (68k will scale by 1)
-   fprintf(fp, "\t\t mov   eax,ecx\n");
-   fprintf(fp, "\t\t shr   eax,10\n");
-   fprintf(fp, "\t\t and   eax,byte 3Ch\n");
-   fprintf(fp, "\t\t mov   eax,[%s+eax]\n",REG_DAT);
-   fprintf(fp, "\t\t test  ch,8H\n");
-   fprintf(fp, "\t\t jnz   short %s_c\n",Label);
-   fprintf(fp, "\t\t movsx eax,ax\n");
+      // copies for later use
+      fprintf(fp, "\t\t mov   ecx,eax\n");
+      fprintf(fp, "\t\t mov   edx,eax\n");
 
-   fprintf(fp, "%s_c:\n",Label);
-   fprintf(fp, "\t\t shr   ecx,byte 9\n");
-   fprintf(fp, "\t\t and   cl,3\n");
-   fprintf(fp, "\t\t shl   eax,cl\n");
+      // check E bit to see if displacement or full format
+      fprintf(fp, "\t\t test  dh,1\n");
+      fprintf(fp, "\t\t jz   short %s_a\n",Label);
+      // full mode so check IS (index supress)
+      fprintf(fp, "\t\t test  dl,40h\n");
+      fprintf(fp, "\t\t jz   short %s_b\n",Label);
+      // set index to 0, it's not added
+      fprintf(fp, "\t\t xor  eax,eax\n");
+      fprintf(fp, "\t\t jmp  short %s_d\n",Label);  // near
 
-// if brief mode we can add index and exit
-   fprintf(fp, "\t\t test  dh,1\n");
-   fprintf(fp, "\t\t jnz   short %s_d\n",Label);
-// add index and exit
-   fprintf(fp, "\t\t add   edi,eax\n");
-   fprintf(fp, "\t\t jmp   near %s_j\n",Label);
+      // add displacement
+      fprintf(fp, "%s_a:\n",Label);
+      fprintf(fp, "\t\t movsx eax,al\n");
+      fprintf(fp, "\t\t add   edi,eax\n");
 
-   fprintf(fp, "%s_d:\n",Label);
-// check BS (base supress)
-// if BS is 1 then set edi to 0
-   fprintf(fp, "\t\t test  dl,80h\n");
-   fprintf(fp, "\t\t jz    %s_4a\n",Label);
-   fprintf(fp, "\t\t xor   edi,edi\n");
-// if null displacement skip over
-   fprintf(fp, "%s_4a:\n",Label);
-   fprintf(fp, "\t\t push  eax\n");
-   fprintf(fp, "\t\t test  dl,20h\n");
-   fprintf(fp, "\t\t jz    short %s_f\n",Label);
+      fprintf(fp, "%s_b:\n",Label);
+      // calc index always scale (68k will scale by 1)
+      fprintf(fp, "\t\t mov   eax,ecx\n");
+      fprintf(fp, "\t\t shr   eax,10\n");
+      fprintf(fp, "\t\t and   eax,byte 3Ch\n");
+      fprintf(fp, "\t\t mov   eax,[%s+eax]\n",REG_DAT);
+      fprintf(fp, "\t\t test  ch,8H\n");
+      fprintf(fp, "\t\t jnz   short %s_c\n",Label);
+      fprintf(fp, "\t\t cwde\n");
 
-// **** calc base displacement ****
-// is it long
-   fprintf(fp, "\t\t test  dl,10h\n");
-   fprintf(fp, "\t\t jz    short %s_e\n",Label);
-// fetch long base
-   Memory_Fetch('L',EBX,FALSE);
-   fprintf(fp, "\t\t add   edi,ebx\n");
-   fprintf(fp, "\t\t add   esi,byte 4\n");
-   fprintf(fp, "\t\t jmp   short %s_f\n",Label);
+      fprintf(fp, "%s_c:\n",Label);
+      fprintf(fp, "\t\t shr   ecx,byte 9\n");
+      fprintf(fp, "\t\t and   cl,3\n");
+      fprintf(fp, "\t\t shl   eax,cl\n");
 
-// fetch word base
-   fprintf(fp, "%s_e:\n",Label);
-   Memory_Fetch('W',EBX,TRUE);
-   fprintf(fp, "\t\t add   edi,ebx\n");
-   fprintf(fp, "\t\t add   esi,byte 2\n");
+#if 0
+      // if brief mode we can add index and exit
+      fprintf(fp, "\t\t test  dh,1\n");
+      fprintf(fp, "\t\t jnz   short %s_d\n",Label);
+      // add index and exit
+      fprintf(fp, "\t\t add   edi,eax\n");
+      fprintf(fp, "\t\t jmp   near %s_j\n",Label);
+#else
+      // if brief mode we can add index and exit
+      fprintf(fp, "\t\t test  dh,1\n");
+      fprintf(fp, "\t\t jz    near %s_i2\n",Label);
+#endif
 
-// **** indirect? ****
-   fprintf(fp, "%s_f:\n",Label);
-   fprintf(fp, "\t\t pop   eax\n");
-   fprintf(fp, "\t\t test  dl,3\n");
-   fprintf(fp, "\t\t jz    short %s_7a\n",Label);
-// pre or post indirect
-   fprintf(fp, "\t\t test  dl,4\n");
-   fprintf(fp, "\t\t jnz   short %s_g\n",Label);
-// do pre
-   fprintf(fp, "\t\t add   edi,eax\n");
-   Memory_Read('L',EDI,"ABCDSDB",2);
-   fprintf(fp, "\t\t mov   edi,eax\n");
-   fprintf(fp, "\t\t jmp   short %s_h\n",Label);
+      fprintf(fp, "%s_d:\n",Label);
+      // check BS (base supress)
+      // if BS is 1 then set edi to 0
+      fprintf(fp, "\t\t test  dl,80h\n");
+      fprintf(fp, "\t\t jz    short %s_4a\n",Label);
+      fprintf(fp, "\t\t xor   edi,edi\n");
+      // if null displacement skip over
+      fprintf(fp, "%s_4a:\n",Label);
+//    fprintf(fp, "\t\t push  eax\n");		// Why ? (matched below)
+      fprintf(fp, "\t\t test  dl,20h\n");
+      fprintf(fp, "\t\t jz    short %s_f\n",Label);
 
-// do post
-   fprintf(fp, "%s_g:\n",Label);
-   fprintf(fp, "\t\t push  eax\n");
-   Memory_Read('L',EDI,"ABCDSDB",2);
-   fprintf(fp, "\t\t mov   edi,eax\n");
-   fprintf(fp, "\t\t pop   eax\n");
+      // **** calc base displacement ****
+      // is it long
+      fprintf(fp, "\t\t test  dl,10h\n");
+      fprintf(fp, "\t\t jz    short %s_e\n",Label);
+      // fetch long base
+      Memory_Fetch('L',EBX,FALSE);
+      fprintf(fp, "\t\t add   edi,ebx\n");
+      fprintf(fp, "\t\t add   esi,byte 4\n");
+      fprintf(fp, "\t\t jmp   short %s_f\n",Label);
 
-   fprintf(fp, "%s_7a:\n",Label);
-   fprintf(fp, "\t\t add   edi,eax\n");
+      // fetch word base
+      fprintf(fp, "%s_e:\n",Label);
+      Memory_Fetch('W',EBX,TRUE);
+      fprintf(fp, "\t\t add   edi,ebx\n");
+      fprintf(fp, "\t\t add   esi,byte 2\n");
 
-// **** outer displacement ****
-// if null displacement skip over
-   fprintf(fp, "%s_h:\n",Label);
-   fprintf(fp, "\t\t test  dl,2\n");
-   fprintf(fp, "\t\t jz    short %s_j\n",Label);
-// word or long?
-   fprintf(fp, "\t\t test  dl,1\n");
-   fprintf(fp, "\t\t jz    short %s_i\n",Label);
-// fetch long
-   Memory_Fetch('L',EAX,FALSE);
-   fprintf(fp, "\t\t add   edi,eax\n");
-   fprintf(fp, "\t\t add   esi,byte 4\n");
-   fprintf(fp, "\t\t jmp   short %s_j\n",Label);
-// fetch word
-   fprintf(fp, "%s_i:\n",Label);
-   Memory_Fetch('W',EAX,TRUE);
-   fprintf(fp, "\t\t add   edi,eax\n");
-   fprintf(fp, "\t\t add   esi,byte 2\n");
+      // **** indirect? ****
+      fprintf(fp, "%s_f:\n",Label);
+//    fprintf(fp, "\t\t pop   eax\n");		// Why ? (matched with above)
+      fprintf(fp, "\t\t test  dl,3\n");
+      fprintf(fp, "\t\t jz    short %s_7a\n",Label);
+      // pre or post indirect
+      fprintf(fp, "\t\t test  dl,4\n");
+      fprintf(fp, "\t\t jnz   short %s_g\n",Label);
+      // do pre
+      fprintf(fp, "\t\t add   edi,eax\n");
+      Memory_Read('L',EDI,"ABCDSDB",2);
+      fprintf(fp, "\t\t mov   edi,eax\n");
+      fprintf(fp, "\t\t jmp   short %s_h\n",Label);
 
-// **** exit ****
-   fprintf(fp, "%s_j:\n",Label);
-   fprintf(fp, "\t\t pop   ecx\n");
-   fprintf(fp, "\t\t pop   ebx\n");
+      // do post
+      fprintf(fp, "%s_g:\n",Label);
+      fprintf(fp, "\t\t push  eax\n");
+      Memory_Read('L',EDI,"-B-DS-B",2);
+//    fprintf(fp, "\t\t mov   edi,eax\n");	// swop register usage
+//    fprintf(fp, "\t\t pop   eax\n");		// all the same once added
+      fprintf(fp, "\t\t pop   edi\n");
+
+      fprintf(fp, "%s_7a:\n",Label);
+      fprintf(fp, "\t\t add   edi,eax\n");
+
+      // **** outer displacement ****
+      // if null displacement skip over
+      fprintf(fp, "%s_h:\n",Label);
+      fprintf(fp, "\t\t test  dl,2\n");
+      fprintf(fp, "\t\t jz    short %s_j\n",Label);
+      // word or long?
+      fprintf(fp, "\t\t test  dl,1\n");
+      fprintf(fp, "\t\t jz    short %s_i\n",Label);
+      // fetch long
+      Memory_Fetch('L',EAX,FALSE);
+      fprintf(fp, "\t\t add   esi,byte 4\n");
+//    fprintf(fp, "\t\t add   edi,eax\n");			// Done at i2
+      fprintf(fp, "\t\t jmp   short %s_i2\n",Label);
+      // fetch word
+      fprintf(fp, "%s_i:\n",Label);
+      Memory_Fetch('W',EAX,TRUE);
+      fprintf(fp, "\t\t add   esi,byte 2\n");
+      fprintf(fp, "%s_i2:\n",Label);
+      fprintf(fp, "\t\t add   edi,eax\n");
+
+      // **** exit ****
+      fprintf(fp, "%s_j:\n",Label);
+      fprintf(fp, "\t\t pop   ecx\n");
+      fprintf(fp, "\t\t pop   ebx\n");
+   }
 
    if (SaveEDX)
       fprintf(fp, "\t\t pop   edx\n");
@@ -1471,6 +1576,8 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
          TimingCycles += 4 ;
    }
 
+   AccessType = NORMAL;
+
    switch (mode)
    {
 
@@ -1512,7 +1619,7 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
          /* Get Word */
 
          Memory_Fetch('W',EDI,TRUE);
-         fprintf(fp, "\t\t movsx edi,di\n");
+//       fprintf(fp, "\t\t movsx edi,di\n");
          fprintf(fp, "\t\t add   esi,byte 2\n");
          break;
 
@@ -1526,6 +1633,7 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
 
       case 9:
 
+         AccessType = PCREL;
          Memory_Fetch('W',EAX,TRUE);
          fprintf(fp, "\t\t movsx eax,ax\n");
          fprintf(fp, "\t\t mov   EDI,ESI           ; Get PC\n");
@@ -1537,6 +1645,7 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
 
          /* Get PC */
 
+         AccessType = PCREL;
          fprintf(fp, "\t\t mov   edi,esi           ; Get PC\n");
 
          /* Add Extension Details */
@@ -3466,87 +3575,90 @@ void branchinstructions(void)
 
       /* Fill up Opcode Array */
 
-      for (Counter=1;Counter<0xff;Counter++)
+      for (Counter=1;Counter<0x100;Counter++)
          OpcodeArray[BaseCode+Counter] = BaseCode+1;
 
-      /* 8 bit 0xff & 68020 instruction - 32 bit displacement */
-      /* 0xff for 68000/010 is not a special case */
-
-      Align();
-      fprintf(fp, "%s:\n",GenerateLabel(BaseCode+0xff,0));
-      sprintf( jmpLabel, GenerateLabel(BaseCode+0xff,1) ) ;
-      fprintf(fp, "\t\t add   esi,byte 2\n\n");
-
-      TimingCycles += 10 ;
-
-      if (Opcode == 0x60)
+      if(CPU==2)
       {
-         /* bra - always branch */
-         fprintf(fp, "\t\t mov   eax,[CPUtype]\n");
-         fprintf(fp, "\t\t cmp   al,byte 2\n");
-         fprintf(fp, "\t\t jge   near %s_BRA\n", jmpLabel) ;
-         Exception(3,BaseCode);
 
-         fprintf(fp, "%s_BRA:\n",jmpLabel);
-         Memory_Fetch('L',EAX,FALSE);
-         fprintf(fp, "\t\t add   esi,eax\n");
-         MemoryBanking(BaseCode+6);
-         Completed();
+      	/* 8 bit 0xff & 68020 instruction - 32 bit displacement */
+
+        Align();
+        fprintf(fp, "%s:\n",GenerateLabel(BaseCode+0xff,0));
+        sprintf( jmpLabel, GenerateLabel(BaseCode+0xff,1) ) ;
+        fprintf(fp, "\t\t add   esi,byte 2\n\n");
+
+        TimingCycles += 10 ;
+
+        if (Opcode == 0x60)
+        {
+           /* bra - always branch */
+           fprintf(fp, "\t\t mov   eax,[CPUversion]\n");
+           fprintf(fp, "\t\t cmp   al,byte 2\n");
+           fprintf(fp, "\t\t jge   near %s_BRA\n", jmpLabel) ;
+           Exception(3,BaseCode);
+
+           fprintf(fp, "%s_BRA:\n",jmpLabel);
+           Memory_Fetch('L',EAX,FALSE);
+           fprintf(fp, "\t\t add   esi,eax\n");
+           MemoryBanking(BaseCode+6);
+           Completed();
+        }
+        else
+        {
+           if (Opcode != 0x61)
+           {
+              Label = ConditionDecode(Opcode & 0x0F,TRUE);
+
+              fprintf(fp, "\t\t mov   eax,[CPUversion]\n");
+              fprintf(fp, "\t\t cmp   al,byte 2\n");
+              fprintf(fp, "\t\t jl    near %s_NOJMP\n", jmpLabel) ;
+
+              /* Code for Failed branch */
+              fprintf(fp, "\t\t add   esi,byte 4\n");
+
+              fprintf(fp, "%s_NOJMP:\n", jmpLabel ) ;
+              TimingCycles -= 2;
+              MemoryBanking(BaseCode+7);
+              Completed();
+              TimingCycles += 2;
+
+              /* Successful Branch */
+              Align();
+              fprintf(fp, "%s:\n",Label);
+
+              fprintf(fp, "\t\t mov   eax,[CPUversion]\n");
+              fprintf(fp, "\t\t cmp   al,byte 2\n");
+              fprintf(fp, "\t\t jge   near %s_JMP\n", jmpLabel) ;
+              /* condition passed, 8bit, 0xff offset, cause trap */
+              Exception(3,BaseCode);
+
+              fprintf(fp, "%s_JMP:\n", jmpLabel ) ;
+              Memory_Fetch('L',EAX,FALSE);
+              fprintf(fp, "\t\t add   esi,eax\n");
+              MemoryBanking(BaseCode+8);
+              Completed();
+           }
+           else
+           {
+              /* BSR - Special Case */
+
+              TimingCycles += 8 ;
+
+              Memory_Fetch('L',EBX,TRUE);
+              fprintf(fp, "\t\t add   ebx,esi\n");
+
+              fprintf(fp, "\t\t add   esi,byte 4\n");
+              PushPC(ECX,EAX,"-B-DS-B",1);
+
+              fprintf(fp, "\t\t mov   esi,ebx\n");
+              MemoryBanking(BaseCode+9);
+              Completed();
+           }
+        }
+
+        OpcodeArray[BaseCode+0xff] = BaseCode+0xff;
       }
-      else
-      {
-         if (Opcode != 0x61)
-         {
-            Label = ConditionDecode(Opcode & 0x0F,TRUE);
-
-            fprintf(fp, "\t\t mov   eax,[CPUtype]\n");
-            fprintf(fp, "\t\t cmp   al,byte 2\n");
-            fprintf(fp, "\t\t jl    near %s_NOJMP\n", jmpLabel) ;
-
-            /* Code for Failed branch */
-            fprintf(fp, "\t\t add   esi,byte 4\n");
-
-            fprintf(fp, "%s_NOJMP:\n", jmpLabel ) ;
-            TimingCycles -= 2;
-            MemoryBanking(BaseCode+7);
-            Completed();
-            TimingCycles += 2;
-
-            /* Successful Branch */
-            Align();
-            fprintf(fp, "%s:\n",Label);
-
-            fprintf(fp, "\t\t mov   eax,[CPUtype]\n");
-            fprintf(fp, "\t\t cmp   al,byte 2\n");
-            fprintf(fp, "\t\t jge   near %s_JMP\n", jmpLabel) ;
-            /* condition passed, 8bit, 0xff offset, cause trap */
-            Exception(3,BaseCode);
-
-            fprintf(fp, "%s_JMP:\n", jmpLabel ) ;
-            Memory_Fetch('L',EAX,FALSE);
-            fprintf(fp, "\t\t add   esi,eax\n");
-            MemoryBanking(BaseCode+8);
-            Completed();
-         }
-         else
-         {
-            /* BSR - Special Case */
-
-            TimingCycles += 8 ;
-
-            Memory_Fetch('L',EBX,TRUE);
-            fprintf(fp, "\t\t add   ebx,esi\n");
-
-            fprintf(fp, "\t\t add   esi,byte 4\n");
-            PushPC(ECX,EAX,"-B-DS-B",1);
-
-            fprintf(fp, "\t\t mov   esi,ebx\n");
-            MemoryBanking(BaseCode+9);
-            Completed();
-         }
-      }
-
-      OpcodeArray[BaseCode+0xff] = BaseCode+0xff;
    }
 }
 
@@ -5404,14 +5516,29 @@ void reset(void)
 
       /* Prefetch next instruction */
 
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      if(CPU==2)
+      {
+         /* 32 bit memory version */
+
+         fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
-      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-      fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+         fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+         fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
-      fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+         fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
 #endif
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+         fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
+      }
+      else
+      {
+         /* 16 bit memory */
+#ifdef STALLCHECK
+         fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+         fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+#else
+         fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+#endif
+      }
 
       fprintf(fp, "\t\t mov   eax,dword [%s]\n", REG_RESET_CALLBACK);
       fprintf(fp, "\t\t or    eax,eax\n");
@@ -5588,6 +5715,13 @@ void illegal_opcode(void)
    fprintf(fp, "ILLEGAL:\n");
    fprintf(fp, "\t\t mov [_illegal_op],ecx\n");
    fprintf(fp, "\t\t mov [_illegal_pc],esi\n");
+
+#ifdef MAME_DEBUG
+   fprintf(fp, "\t\t pushad\n");
+   fprintf(fp, "\t\t call _m68k_illegal_opcode\n");
+   fprintf(fp, "\t\t popad\n");
+#endif
+
    Exception(4,0xFFFE);
 }
 
@@ -7244,7 +7378,7 @@ void ReturnandDeallocate(void)
 void MoveControlRegister(void)
 {
    int  Direction;
-   int    BaseCode = 0x4e7a ;
+   int  BaseCode = 0x4e7a ;
 
    for (Direction=0;Direction<2;Direction++)
    {
@@ -7259,14 +7393,14 @@ void MoveControlRegister(void)
       fprintf(fp, "\t\t jz    short OP_%4.4x_Trap\n",BaseCode+Direction);
 
       fprintf(fp, "\t\t add   esi,byte 2\n");
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
       fprintf(fp, "\t\t xor   ebx,ebx\t\t; Avoid Stall\n");
       fprintf(fp, "\t\t mov   bx,[esi+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ebx,word [esi+ebp]\n");
 #endif
-      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t xor   esi,[_a68k_memory_intf+0]\n");	/* ASG */
 
       fprintf(fp, "\t\t add   esi,byte 2\n");
       fprintf(fp, "\t\t mov   eax,ebx\n");
@@ -7382,20 +7516,13 @@ void CodeSegmentBegin(void)
 
    fprintf(fp, "\t\t BITS 32\n\n");
 
-#ifdef OS2
-   fprintf(fp, "\t\t GLOBAL M68KRUN\n");
-   fprintf(fp, "\t\t GLOBAL M68KRESET\n");
-   fprintf(fp, "\t\t GLOBAL m68000_ICount\n");
-   fprintf(fp, "\t\t GLOBAL regs\n");
-#else
-   fprintf(fp, "\t\t GLOBAL _M68KRUN\n");
-   fprintf(fp, "\t\t GLOBAL _M68KRESET\n");
-   fprintf(fp, "\t\t GLOBAL _m68000_ICount\n");
-   fprintf(fp, "\t\t GLOBAL _regs\n");
-#endif
+   fprintf(fp, "\t\t GLOBAL %s_RUN\n",CPUtype);
+   fprintf(fp, "\t\t GLOBAL %s_RESET\n",CPUtype);
+   fprintf(fp, "\t\t GLOBAL %s_ICount\n",CPUtype);
+   fprintf(fp, "\t\t GLOBAL %s_regs\n",CPUtype);
 
 	/* ASG - only one interface to memory now */
-   fprintf(fp, "\t\t EXTERN _m68k_memory_intf\n");
+   fprintf(fp, "\t\t EXTERN _a68k_memory_intf\n");
    fprintf(fp, "\t\t EXTERN _memory_amask\n");
 
    fprintf(fp, "; Vars Mame declares / needs access to\n\n");
@@ -7410,6 +7537,10 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t EXTERN _opcode_entry\n");
    fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
 
+#ifdef MAME_DEBUG
+   fprintf(fp, "\t\t EXTERN _m68k_illegal_opcode\n");
+#endif
+
 #ifdef OS2
    fprintf(fp, "\t\t SECTION maincode USE32 FLAT CLASS=CODE\n\n");
 #else
@@ -7420,11 +7551,7 @@ void CodeSegmentBegin(void)
 
 /* Reset routine */
 
-#ifdef OS2
-   fprintf(fp, "M68KRESET:\n");
-#else
-   fprintf(fp, "_M68KRESET:\n");
-#endif
+   fprintf(fp, "%s_RESET:\n",CPUtype);
 
    fprintf(fp, "\t\t pushad\n\n");
 
@@ -7475,11 +7602,7 @@ void CodeSegmentBegin(void)
 
    Align();
 
-#ifdef OS2
-   fprintf(fp, "M68KRUN:\n");
-#else
-   fprintf(fp, "_M68KRUN:\n");
-#endif
+   fprintf(fp, "%s_RUN:\n",CPUtype);
 
    fprintf(fp, "\t\t pushad\n");
    fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
@@ -7495,16 +7618,30 @@ void CodeSegmentBegin(void)
    /* See if was only called to check for Interrupt */
 
    fprintf(fp, "\t\t test  dword [%s],-1\n",ICOUNT);
-   fprintf(fp, "\t\t mov   eax,[_m68k_memory_intf+0]\n");		/* ASG */
    fprintf(fp, "\t\t js    short MainExit\n\n");
 
-   fprintf(fp, "\t\t xor   eax,esi\n");							/* ASG */
+   if(CPU==2)
+   {
+   	  /* 32 Bit */
+      fprintf(fp, "\t\t mov   eax,[_a68k_memory_intf+0]\n");		/* ASG */
+      fprintf(fp, "\t\t xor   eax,esi\n");							/* ASG */
 #ifdef STALLCHECK
-   fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-   fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
+      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
-   fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
+      fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
 #endif
+   }
+   else
+   {
+   	  /* 16 Bit Fetch */
+#ifdef STALLCHECK
+      fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
+      fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+#else
+      fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+#endif
+   }
 
    fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");
 
@@ -7677,6 +7814,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t shl   eax,2\n");
    fprintf(fp, "\t\t add   eax,[%s]\n",REG_VBR);     /* 68010+ Vector Base */
 
+   /* Direct Read */
    Memory_Read('L',EAX,"------B",0);
 
    fprintf(fp, "\t\t mov   esi,eax\t\t;Set PC\n");
@@ -7697,25 +7835,14 @@ void CodeSegmentEnd(void)
 #endif
 
    fprintf(fp, "\n\t\t align 16\n");
-
-#ifdef OS2
-   fprintf(fp, "m68000_ICount\t DD 0\n\n");
-#else
-   fprintf(fp, "_m68000_ICount\t DD 0\n\n");
-#endif
-
-
+   fprintf(fp, "%s_ICount\n",CPUtype);
+   fprintf(fp, "asm_count\t DD 0\n\n");
 
    /* Memory structure for 68000 registers  */
    /* Same layout as structure in CPUDEFS.H */
 
    fprintf(fp, "\n\n; Register Structure\n\n");
-
-#ifdef OS2
-   fprintf(fp, "regs\n");
-#else
-   fprintf(fp, "_regs\n");
-#endif
+   fprintf(fp, "%s_regs\n",CPUtype);
 
    fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");
    fprintf(fp, "R_D1\t DD 0\n");
@@ -7756,7 +7883,7 @@ void CodeSegmentEnd(void)
    fprintf(fp, "R_VBR\t DD 0\t\t\t ; Vector Base\n");
 
    fprintf(fp, "asmbank\t DD 0\n\n");
-   fprintf(fp, "CPUtype\t DD 0\n\n");
+   fprintf(fp, "CPUversion\t DD 0\n\n");
    fprintf(fp, "FullPC\t DD 0\n\n");
 
    /* Extra space for variables mame uses for debugger */
@@ -7848,7 +7975,6 @@ void EmitCode(void)
    typelogicalmath();                  /* Various ranges */
    addx_subx();
    divides();
-   divl();
    swap();
    not();                        /* also neg negx clr */
    moveusp();
@@ -7856,8 +7982,6 @@ void EmitCode(void)
    exg();
    cmpm();
    mul();
-   mull();
-   bitfield();
    ReturnandRestore();
    rts();
    jmp_jsr();
@@ -7891,6 +8015,13 @@ void EmitCode(void)
    MoveControlRegister();
    MoveAddressSpace();
 
+   if(CPU==2)						/* 68020 Commands */
+   {
+	   divl();
+	   mull();
+	   bitfield();
+   }
+
    CodeSegmentEnd();
 }
 
@@ -7900,13 +8031,15 @@ int main(int argc, char **argv)
 
    printf("\nMake68K - V%s - Copyright 1998, Mike Coates (mame@btinternet.com)\n", VERSION);
    printf("                            1999, & Darren Olafson (deo@mail.island.net)\n");
-   printf("                            2000\n\n");
+   printf("                            2000\n");
 
-   if (argc != 3)
+   if (argc != 4)
    {
-      printf("Usage: %s outfile jumptable-outfile\n", argv[0]);
+      printf("Usage: %s outfile jumptable-outfile type\n", argv[0]);
       exit(1);
    }
+
+   printf("Building 680%s              2001\n\n",argv[3]);
 
    for (dwLoop=0;dwLoop<65536;)  OpcodeArray[dwLoop++] = -2;
 
@@ -7926,6 +8059,16 @@ int main(int argc, char **argv)
    }
 
    comptab = argv[2];
+
+
+   CPUtype = malloc(64);
+#ifdef OS2
+   sprintf(CPUtype,"M680%s",argv[3]);
+#else
+   sprintf(CPUtype,"_M680%s",argv[3]);
+#endif
+
+   if(argv[3][0]=='2') CPU = 2;
 
    EmitCode();
 

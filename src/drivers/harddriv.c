@@ -1,73 +1,73 @@
 /***************************************************************************
 
 	Driver for Atari polygon racer games
-	
+
 	This collection of games uses many CPUs and many boards in many
 	different combinations. There are 3 different main boards:
-	
+
 		- the "driver" board (A045988) is the original Hard Drivin' PCB
 			- Hard Drivin'
 			- Race Drivin' Upgrade
-			
-		- the "multisync" board (A046901) 
+
+		- the "multisync" board (A046901)
 			- STUN Runner
 			- Steel Talons
 			- Hard Drivin' Compact
 			- Race Drivin' Compact
-			
+
 		- the "multisync II" board (A049852)
 			- Hard Drivin' Airborne
-	
+
 	To first order, all of the above boards had the same basic features:
 
 		a 68010 @ 7MHz to drive the whole game
 		a TMS34010 @ 48MHz (GSP) to render the polygons and graphics
 		a TMS34012 @ 50MHz (PSP, labelled SCX6218UTP) to expand pixels
 		a TMS34010 @ 50MHz (MSP, optional) to handle in-game calculations
-		
+
 	The original "driver" board had 1MB of VRAM. The "multisync" board
 	reduced that to 512k.
-	
+
 	Stacked on top of the main board were two or more additional boards
 	that were accessible through an expansion bus. Each game had at least
 	an ADSP board and a sound board. Later games had additional boards for
 	extra horsepower or for communications between multiple players.
-	
+
 	-----------------------------------------------------------------------
-	
+
 	The ADSP board is usually the board stacked closest to the main board.
 	It also comes in three varieties, though these do not match
 	one-for-one with the main boards listed above. They are:
-	
+
 		- the "ADSP" board (A044420)
 			- early Hard Drivin' revisions
-		
+
 		- the "ADSP II" board (A047046)
 			- later Hard Drivin'
 			- STUN Runner
 			- Hard Drivin' Compact
 			- Race Drivin' Upgrade
 			- Race Drivin' Compact
-		
+
 		- the "DS III" board (A049096)
 			- Steel Talons
 			- Hard Drivin' Airborne
-			
+
 	These boards are the workhorses of the game. They contain a single
 	8MHz ADSP-2100 (ADSP and ADSP II) or 12MHz ADSP-2101 (DS III) chip
-	that is responsible for all the polygon transformations, lighting, and 
+	that is responsible for all the polygon transformations, lighting, and
 	slope computations. Along with the DSP, there are several high-speed
 	serial-access ROMs and RAMs.
-	
+
 	The "ADSP II" board is nearly identical to the original "ADSP" board
 	except that is has space for extra serial ROM data. The "DS III" is
 	an advanced design that contains space for a bunch of complex sound
 	circuitry that appears to have never been used.
-		
+
 	-----------------------------------------------------------------------
-	
+
 	Three sound boards were used:
-			
+
 		- the "driver sound" board (A046491)
 			- Hard Drivin'
 			- Hard Drivin' Compact
@@ -76,70 +76,70 @@
 
 		- the "JSA II" board
 			- STUN Runner
-		
+
 		- the "JSA IIIS" board
 			- Steel Talons
-			
+
 	The "driver sound" board runs with a 68000 master and a TMS32010 slave
 	driving a DAC. The "JSA" boards are both standard Atari sound boards
 	with a 6502 driving a YM2151 and an OKI6295 ADPCM chip.
 
 	-----------------------------------------------------------------------
-	
+
 	In addition, there were a number of supplemental boards that were
 	included with certain games:
-	
+
 		- the "DSK" board (A047724)
 			- Race Drivin' Upgrade
 			- Race Drivin' Compact
 
 		- the "DSPCOM" board (A049349)
 			- Steel Talons
-		
+
 		- the "DSK II" board (A051028)
 			- Hard Drivin' Airborne ???
 
 	-----------------------------------------------------------------------
-	
+
 	There are a total of 7 known games (plus variants) on this hardware:
-	
+
 	Hard Drivin'
 		- "driver" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "ADSP" or "ADSP II" board (8MHz ADSP-2100)
 		- "driver sound" board (7MHz 68000, 20MHz TMS32010)
-	
+
 	Hard Drivin' Compact
 		- "multisync" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "ADSP II" board (8MHz ADSP-2100)
 		- "driver sound" board (7MHz 68000, 20MHz TMS32010)
-		
+
 	S.T.U.N. Runner
 		- "multisync" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "ADSP II" board (8MHz ADSP-2100)
 		- "JSA II" sound board (1.7MHz 6502, YM2151, OKI6295)
-	
+
 	Race Drivin' Upgrade
 		- "driver" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "ADSP" or "ADSP II" board (8MHz ADSP-2100)
 		- "DSK" board (40MHz DSP32C, 20MHz TMS32015)
 		- "driver sound" board (7MHz 68000, 20MHz TMS32010)
-		
+
 	Race Drivin' Compact
 		- "multisync" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "ADSP II" board (8MHz ADSP-2100)
 		- "DSK" board (40MHz DSP32C, 20MHz TMS32015)
 		- "driver sound" board (7MHz 68000, 20MHz TMS32010)
-		
+
 	Steel Talons
 		- "multisync" board (7MHz 68010, 2x50MHz TMS34010, 50MHz TMS34012)
 		- "DS III" board (12MHz ADSP-2101)
 		- "JSA IIIS" sound board (1.7MHz 6502, YM2151, OKI6295)
 		- "DSPCOM" I/O board (10MHz ADSP-2105)
-		
+
 	Hard Drivin's Airborne (prototype)
 		- main board with ???
 		- other boards ???
-		
+
 	BMX Heat (prototype)
 		- unknown boards ???
 
@@ -520,21 +520,21 @@ INPUT_PORTS_START( harddriv )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
-	
+
 	PORT_START		/* a80000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 0 (gas) */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 1 (clutch) */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 2 (seat) */
 	PORT_BIT( 0xff, 0x80, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 3 (shift F/B) */
 	PORT_BIT( 0xff, 0x80, IPT_UNUSED )
 
@@ -552,13 +552,13 @@ INPUT_PORTS_START( harddriv )
 
 	PORT_START		/* b80000 - 12 bit ADC 0 (wheel) */
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 1 (brake) */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -575,7 +575,7 @@ INPUT_PORTS_START( racedriv )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* a80000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -583,13 +583,13 @@ INPUT_PORTS_START( racedriv )
 
 	PORT_START		/* b00000 - 8 bit ADC 0 */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 1 */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -607,13 +607,13 @@ INPUT_PORTS_START( racedriv )
 
 	PORT_START		/* b80000 - 12 bit ADC 0 */
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 1 */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -630,22 +630,22 @@ INPUT_PORTS_START( stunrun )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
-	
+
 	PORT_START		/* a80000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0xfff8, IP_ACTIVE_LOW, IPT_UNUSED )
-		
+
 	PORT_START		/* b00000 - 8 bit ADC 0 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 2 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -663,13 +663,13 @@ INPUT_PORTS_START( stunrun )
 
 	PORT_START		/* b80000 - 12 bit ADC 0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -688,7 +688,7 @@ INPUT_PORTS_START( steeltal )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* a80000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -697,13 +697,13 @@ INPUT_PORTS_START( steeltal )
 
 	PORT_START		/* b00000 - 8 bit ADC 0 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 2 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -721,13 +721,13 @@ INPUT_PORTS_START( steeltal )
 
 	PORT_START		/* b80000 - 12 bit ADC 0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -746,7 +746,7 @@ INPUT_PORTS_START( hdrivair )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* a80000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -754,13 +754,13 @@ INPUT_PORTS_START( hdrivair )
 
 	PORT_START		/* b00000 - 8 bit ADC 0 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 2 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0x00, 0xff )
-	
+
 	PORT_START		/* b00000 - 8 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -778,13 +778,13 @@ INPUT_PORTS_START( hdrivair )
 
 	PORT_START		/* b80000 - 12 bit ADC 0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START		/* b80000 - 12 bit ADC 3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -1044,7 +1044,7 @@ static struct MachineDriver machine_driver_steeltal =
 
 	/* sound hardware */
 	JSA_III_MONO(REGION_SOUND1),
-	
+
 	atarigen_nvram_handler
 };
 
@@ -1164,7 +1164,7 @@ static void init_ds3(void)
 
 	/GROM=2006:		reads 16-bits of ROM data
 
-	/GFWCLR=2007:	
+	/GFWCLR=2007:
 
 	/GWR0=2000:		latches 16 bits of data, sets GFLAG
 
@@ -1189,12 +1189,12 @@ static void init_dsk(void)
 	/* install extra ROM */
 	install_mem_read16_handler(0, 0x940000, 0x95ffff, hddsk_rom_r);
 	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x00000);
-	
+
 	/* install extra RAM */
 	install_mem_read16_handler(0, 0x900000, 0x90ffff, hddsk_ram_r);
 	install_mem_write16_handler(0, 0x900000, 0x90ffff, hddsk_ram_w);
 	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x20000);
-	
+
 	/* install extra ZRAM */
 	install_mem_read16_handler(0, 0x910000, 0x910fff, hddsk_zram_r);
 	install_mem_write16_handler(0, 0x910000, 0x910fff, hddsk_zram_w);
@@ -1214,13 +1214,13 @@ static void init_dsk(void)
 /* COMMON INIT: initialize the original "driver" sound board */
 static void init_driver_sound(void)
 {
-	UINT8 *base = memory_region(REGION_SOUND1);
-	int length = memory_region_length(REGION_SOUND1);
+	data16_t *base = (data16_t *)memory_region(REGION_SOUND1);
+	int length = memory_region_length(REGION_SOUND1) / 2;
 	int i;
-	
+
 	/* adjust the sound ROMs */
-	for (i = 0; i < length; i += 2)
-		WRITE_WORD(&base[i], READ_WORD(&base[i]) >> 1);
+	for (i = 0; i < length; i++)
+		base[i] >>= 1;
 }
 
 
@@ -1255,6 +1255,15 @@ static void init_harddriv(void)
 	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
 	install_mem_write16_handler(3, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
 	hdadsp_speedup_pc = 0x139;
+}
+
+
+static void init_harddrvc(void)
+{
+	/* initialize the boards */
+	init_multisync();
+	init_adsp();
+	init_driver_sound();
 }
 
 
@@ -1293,7 +1302,7 @@ static void init_steeltal(void)
 	/* initialize the boards */
 	init_multisync();
 	init_ds3();
-	
+
 	install_mem_read16_handler(0, 0x908000, 0x908001, steeltal_dummy_r);
 
 	/* set up the "slapstic" */
@@ -1362,11 +1371,11 @@ ROM_START( harddriv )
 	ROM_LOAD16_BYTE( "hd_210.w", 0xa0001, 0x10000, 0x5b25023c )
 	ROM_LOAD16_BYTE( "hd_200.x", 0xc0000, 0x10000, 0xe1f455a3 )
 	ROM_LOAD16_BYTE( "hd_210.x", 0xc0001, 0x10000, 0xa7fc3aaa )
-	
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
 
 	ROM_REGION( 0x20000, REGION_CPU5, 0 )		/* 2*64k for audio 68000 code */
@@ -1374,20 +1383,63 @@ ROM_START( harddriv )
 	ROM_LOAD16_BYTE( "hd_s.70n", 0x00000, 0x08000, 0x0c77fab6 )
 
 	ROM_REGION( 0x10000, REGION_CPU6, 0 )		/* dummy region for audio 32010 */
-	
+
 	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
 	ROM_LOAD16_BYTE( "hd_dsp.10h", 0x00000, 0x10000, 0x1b77f171 )
 	ROM_LOAD16_BYTE( "hd_dsp.10k", 0x00001, 0x10000, 0xe50bec32 )
 	ROM_LOAD16_BYTE( "hd_dsp.10j", 0x20000, 0x10000, 0x998d3da2 )
 	ROM_LOAD16_BYTE( "hd_dsp.10l", 0x20001, 0x10000, 0xbc59a2b7 )
-	
+
 	ROM_REGION( 0x8000, REGION_USER2, 0 )		/* 32k for I/O buffers */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 4*128k for audio serial ROMs */
+	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )	/* 4*128k for audio serial ROMs */
 	ROM_LOAD16_BYTE( "hd_s.65a", 0x00000, 0x10000, 0xa88411dc )
 	ROM_LOAD16_BYTE( "hd_s.55a", 0x20000, 0x10000, 0x071a4309 )
 	ROM_LOAD16_BYTE( "hd_s.45a", 0x40000, 0x10000, 0xebf391af )
 	ROM_LOAD16_BYTE( "hd_s.30a", 0x60000, 0x10000, 0xf46ef09c )
+ROM_END
+
+
+ROM_START( harddrvc )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 2MB for 68000 code */
+	ROM_LOAD16_BYTE( "068-2101.10r", 0x00001, 0x10000, 0x4805ba06 )
+	ROM_LOAD16_BYTE( "068-2102.00r", 0x00000, 0x10000, 0x6252048b )
+	ROM_LOAD16_BYTE( "068-2103.10s", 0x20001, 0x10000, 0x729941e8 )
+	ROM_LOAD16_BYTE( "068-2104.00s", 0x20000, 0x10000, 0x8246f945 )
+	ROM_LOAD16_BYTE( "068-1111.10w", 0xa0001, 0x10000, 0x4d759891 )
+	ROM_LOAD16_BYTE( "068-1112.00w", 0xa0000, 0x10000, 0xe5ea74e4 )
+	ROM_LOAD16_BYTE( "068-1113.10x", 0xc0001, 0x10000, 0x5630390d )
+	ROM_LOAD16_BYTE( "068-1114.00x", 0xc0000, 0x10000, 0x293c153b )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
+
+	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
+
+	ROM_REGION( 0x10000, REGION_CPU5, 0 )		/* dummy region for DSP32 */
+
+	ROM_REGION( 0x50000, REGION_CPU6, 0 )		/* 2*64k for audio 68000 code */
+	ROM_LOAD16_BYTE( "052-3121.45n", 0x00001, 0x08000, 0x6346bca3 )
+	ROM_LOAD16_BYTE( "052-3122.70n", 0x00000, 0x08000, 0x3f20a396 )
+
+	ROM_REGION( 0x10000, REGION_CPU7, 0 )		/* dummy region for audio 32010 */
+
+	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
+	ROM_LOAD16_BYTE( "hd_dsp.10h", 0x00000, 0x10000, 0x1b77f171 )
+	ROM_LOAD16_BYTE( "hd_dsp.10k", 0x00001, 0x10000, 0xe50bec32 )
+	ROM_LOAD16_BYTE( "hd_dsp.10j", 0x20000, 0x10000, 0x998d3da2 )
+	ROM_LOAD16_BYTE( "hd_dsp.10l", 0x20001, 0x10000, 0xbc59a2b7 )
+
+	ROM_REGION( 0x8000, REGION_USER2, 0 )		/* 32k for I/O buffers */
+
+	ROM_REGION16_BE( 0x20000, REGION_USER3, 0 )		/* 128k for DSK ROMs */
+
+	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )	/* 10*128k for audio serial ROMs */
+	ROM_LOAD16_BYTE( "hd_s.65a",     0x00000, 0x10000, 0xa88411dc )
+	ROM_LOAD16_BYTE( "hd_s.55a",     0x20000, 0x10000, 0x071a4309 )
+	ROM_LOAD16_BYTE( "052-3125.30a", 0x40000, 0x10000, 0x856548ff )
+	ROM_LOAD16_BYTE( "hd_s.30a",     0x60000, 0x10000, 0xf46ef09c )
 ROM_END
 
 
@@ -1413,7 +1465,7 @@ ROM_START( stunrun )
 	ROM_REGION( 0x14000, REGION_CPU4, 0 )		/* 64k for 6502 code */
 	ROM_LOAD( "sr_snd.10c", 0x10000, 0x4000, 0x121ab09a )
 	ROM_CONTINUE(           0x04000, 0xc000 )
-	
+
 	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
 	ROM_LOAD16_BYTE( "sr_dsp_9.10h", 0x00000, 0x10000, 0x0ebf8e58 )
 	ROM_LOAD16_BYTE( "sr_dsp_9.10k", 0x00001, 0x10000, 0xfb98abaf )
@@ -1454,7 +1506,7 @@ ROM_START( stunrnp )
 	ROM_REGION( 0x14000, REGION_CPU4, 0 )		/* 64k for 6502 code */
 	ROM_LOAD( "sr_snd.10c", 0x10000, 0x4000, 0x121ab09a )
 	ROM_CONTINUE(           0x04000, 0xc000 )
-	
+
 	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
 	ROM_LOAD16_BYTE( "sr_dsp_9.10h", 0x00000, 0x10000, 0x0ebf8e58 )
 	ROM_LOAD16_BYTE( "sr_dsp_9.10k", 0x00001, 0x10000, 0xfb98abaf )
@@ -1495,7 +1547,7 @@ ROM_START( steeltal )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
 
 	ROM_REGION( 0x14000, REGION_CPU5, 0 )		/* 64k for 6502 code */
@@ -1504,7 +1556,7 @@ ROM_START( steeltal )
 
 	ROM_REGION( 0x10000, REGION_CPU6, 0 )		/* 64k for DSP communications */
 	ROM_LOAD( "stdspcom.5f",  0x00000, 0x10000, 0x4c645933 )
-	
+
 	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
 	ROM_LOAD16_BYTE( "stds3.2lm", 0x00000, 0x20000, 0x0a29db30 )
 	ROM_LOAD16_BYTE( "stds3.2t",  0x00001, 0x20000, 0xa5882384 )
@@ -1541,7 +1593,7 @@ ROM_START( steeltdb )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
 
 	ROM_REGION( 0x14000, REGION_CPU5, 0 )		/* 64k for 6502 code */
@@ -1550,7 +1602,7 @@ ROM_START( steeltdb )
 
 	ROM_REGION( 0x10000, REGION_CPU6, 0 )		/* 64k for DSP communications */
 	ROM_LOAD( "stdspcom.5f",  0x00000, 0x10000, 0x4c645933 )
-	
+
 	ROM_REGION16_BE( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
 	ROM_LOAD16_BYTE( "stds3.2lm", 0x00000, 0x20000, 0x0a29db30 )
 	ROM_LOAD16_BYTE( "stds3.2t",  0x00001, 0x20000, 0xa5882384 )
@@ -1587,11 +1639,11 @@ ROM_START( racedriv )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
-	
+
 	ROM_REGION( 0x10000, REGION_CPU5, 0 )		/* dummy region for DSP32 */
-	
+
 	ROM_REGION( 0x50000, REGION_CPU6, 0 )		/* 2*64k for audio 68000 code */
 	ROM_LOAD16_BYTE( "rd1032.bin", 0x00001, 0x10000, 0x33005f2a )
 	ROM_LOAD16_BYTE( "rd1033.bin", 0x00000, 0x10000, 0x4fc800ac )
@@ -1610,7 +1662,7 @@ ROM_START( racedriv )
 	ROM_LOAD16_BYTE( "rd1030.bin", 0x00000, 0x10000, 0x31a600db )
 	ROM_LOAD16_BYTE( "rd1031.bin", 0x00001, 0x10000, 0x059c410b )
 
-	ROM_REGION( 0x120000, REGION_SOUND1, 0 )	/* 10*128k for audio serial ROMs */
+	ROM_REGION16_BE( 0x120000, REGION_SOUND1, 0 )	/* 10*128k for audio serial ROMs */
 	ROM_LOAD16_BYTE( "rd1123.bin", 0x00000, 0x10000, 0xa88411dc )
 	ROM_LOAD16_BYTE( "rd1124.bin", 0x20000, 0x10000, 0x071a4309 )
 	ROM_LOAD16_BYTE( "rd3125.bin", 0x40000, 0x10000, 0x856548ff )
@@ -1641,11 +1693,11 @@ ROM_START( racedrvc )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
-	
+
 	ROM_REGION( 0x10000, REGION_CPU5, 0 )		/* dummy region for DSP32 */
-	
+
 	ROM_REGION( 0x50000, REGION_CPU6, 0 )		/* 2*64k for audio 68000 code */
 	ROM_LOAD16_BYTE( "rd1032.bin", 0x00001, 0x10000, 0x33005f2a )
 	ROM_LOAD16_BYTE( "rd1033.bin", 0x00000, 0x10000, 0x4fc800ac )
@@ -1664,7 +1716,7 @@ ROM_START( racedrvc )
 	ROM_LOAD16_BYTE( "rd1030.bin", 0x00000, 0x10000, 0x31a600db )
 	ROM_LOAD16_BYTE( "rd1031.bin", 0x00001, 0x10000, 0x059c410b )
 
-	ROM_REGION( 0x120000, REGION_SOUND1, 0 )	/* 10*128k for audio serial ROMs */
+	ROM_REGION16_BE( 0x120000, REGION_SOUND1, 0 )	/* 10*128k for audio serial ROMs */
 	ROM_LOAD16_BYTE( "rd1123.bin", 0x00000, 0x10000, 0xa88411dc )
 	ROM_LOAD16_BYTE( "rd1124.bin", 0x20000, 0x10000, 0x071a4309 )
 	ROM_LOAD16_BYTE( "rd3125.bin", 0x40000, 0x10000, 0x856548ff )
@@ -1691,9 +1743,9 @@ ROM_START( hdrivair )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
-	
+
 	ROM_REGION( 0x50000, REGION_CPU5, 0 )		/* 5*64k for 32C010 code */
 
 	ROM_REGION( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
@@ -1744,9 +1796,9 @@ ROM_START( hdrivaip )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* dummy region for GSP 34010 */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* dummy region for MSP 34010 */
-	
+
 	ROM_REGION( ADSP2100_SIZE, REGION_CPU4, 0 )/* dummy region for ADSP 2100 */
-	
+
 	ROM_REGION( 0x50000, REGION_CPU5, 0 )		/* 5*64k for 32C010 code */
 
 	ROM_REGION( 0x60000, REGION_USER1, 0 )		/* 384k for object ROM */
@@ -1787,11 +1839,12 @@ ROM_END
  *************************************/
 
 GAMEX( 1988, harddriv, 0,        harddriv, harddriv, harddriv, ROT0_16BIT, "Atari Games", "Hard Drivin'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, harddrvc, harddriv, racedriv, racedriv, harddrvc, ROT0_16BIT, "Atari Games", "Hard Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME ( 1989, stunrun,  0,        stunrun,  stunrun,  stunrun,  ROT0_16BIT, "Atari Games", "S.T.U.N. Runner" )
-GAME ( 1989, stunrnp,  stunrun,  stunrun,  stunrun,  stunrun,  ROT0_16BIT, "Atari Games", "S.T.U.N. Runner (Prototype)" )
-GAMEX( 1990, racedriv, 0,        harddriv, racedriv, racedriv, ROT0_16BIT, "Atari Games", "Race Drivin' (Upgrade)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, racedrvc, racedriv, racedriv, racedriv, racedrvc, ROT0_16BIT, "Atari Games", "Race Drivin' (Compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME ( 1989, stunrnp,  stunrun,  stunrun,  stunrun,  stunrun,  ROT0_16BIT, "Atari Games", "S.T.U.N. Runner (prototype)" )
+GAMEX( 1990, racedriv, 0,        harddriv, racedriv, racedriv, ROT0_16BIT, "Atari Games", "Race Drivin' (upgrade)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, racedrvc, racedriv, racedriv, racedriv, racedrvc, ROT0_16BIT, "Atari Games", "Race Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1990, steeltal, 0,        steeltal, steeltal, steeltal, ROT0_16BIT, "Atari Games", "Steel Talons", GAME_NOT_WORKING )
 GAMEX( 1990, steeltdb, steeltal, steeltal, steeltal, steeltal, ROT0_16BIT, "Atari Games", "Steel Talons (debug)", GAME_NOT_WORKING )
-GAMEX( 1993, hdrivair, 0,        steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (Prototype)", GAME_NOT_WORKING )
-GAMEX( 1993, hdrivaip, hdrivair, steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (Prototype, early rev)", GAME_NOT_WORKING )
+GAMEX( 1993, hdrivair, 0,        steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (prototype)", GAME_NOT_WORKING )
+GAMEX( 1993, hdrivaip, hdrivair, steeltal, hdrivair, hdrivair, ROT0_16BIT, "Atari Games", "Hard Drivin's Airborne (prototype, early rev)", GAME_NOT_WORKING )

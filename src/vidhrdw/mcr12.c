@@ -20,7 +20,7 @@ static UINT32 spritebitmap_width;
 static UINT32 spritebitmap_height;
 
 static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip);
-static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy);
+static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT32 *pens, int sx, int sy);
 
 INT8 mcr12_sprite_xoffs;
 INT8 mcr12_sprite_xoffs_flip;
@@ -317,7 +317,7 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
  *
  *************************************/
 
-static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy)
+static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT32 *pens, int sx, int sy)
 {
 	int x, y;
 

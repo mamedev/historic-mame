@@ -25,6 +25,22 @@
  *
  *****************************************************************************/
 
+/*****************************************************************************
+	Changes
+	20010207 Sylvain Glaize (mokona@puupuu.org)
+
+	- Bug fix in INLINE void MOVBM(UINT32 m, UINT32 n) (see comment)
+	- Support of full 32 bit addressing (RB, RW, RL and WB, WW, WL functions)
+		reason : when the two high bits of the address are set, access is
+		done directly in the cache data array. The SUPER KANEKO NOVA SYSTEM
+		sets the stack pointer here, using these addresses as usual RAM access.
+
+		No real cache support has been added.
+	- Read/Write memory format correction (_bew to _bedw) (see also SH2
+		definition in cpuintrf.c and DasmSH2(..) in sh2dasm.c )
+
+ *****************************************************************************/
+
 #include <stdio.h>
 #include <signal.h>
 #include "driver.h"
@@ -114,18 +130,28 @@ INLINE data8_t RB(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r(A);
+
+	if (A >= 0xc0000000)
+		return cpu_readmem32bedw(A);
+
 	if (A >= 0x40000000)
 		return 0xa5;
-	return cpu_readmem32bew(A & AM);
+
+	return cpu_readmem32bedw(A & AM);
 }
 
 INLINE data16_t RW(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return (sh2_internal_r(A) << 8) | sh2_internal_r(A+1);
+
+	if (A >= 0xc0000000)
+		return cpu_readmem32bedw_word(A);
+
 	if (A >= 0x40000000)
 		return 0xa5a5;
-	return cpu_readmem32bew_word(A & AM);
+
+	return cpu_readmem32bedw_word(A & AM);
 }
 
 INLINE data32_t RL(offs_t A)
@@ -135,9 +161,14 @@ INLINE data32_t RL(offs_t A)
 			   (sh2_internal_r(A+1) << 16) |
 			   (sh2_internal_r(A+2) <<	8) |
 			   (sh2_internal_r(A+3) <<	0);
+
+	if (A >= 0xc0000000)
+		return cpu_readmem32bedw_dword(A);
+
 	if (A >= 0x40000000)
 		return 0xa5a5a5a5;
-	return ((cpu_readmem32bew_word(A) << 16) | cpu_readmem32bew_word(A+2));
+
+	return cpu_readmem32bedw_dword(A & AM);
 }
 
 INLINE void WB(offs_t A, data8_t V)
@@ -147,9 +178,17 @@ INLINE void WB(offs_t A, data8_t V)
 		sh2_internal_w(A,V);
 		return;
 	}
+
+	if (A >= 0xc0000000)
+	{
+		cpu_writemem32bedw(A,V);
+		return;
+	}
+
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem32bew(A & AM,V);
+
+	cpu_writemem32bedw(A & AM,V);
 }
 
 INLINE void WW(offs_t A, data16_t V)
@@ -160,9 +199,17 @@ INLINE void WW(offs_t A, data16_t V)
 		sh2_internal_w(A+1,(V >> 0) & 0xff);
 		return;
 	}
+
+	if (A >= 0xc0000000)
+	{
+		cpu_writemem32bedw_word(A,V);
+		return;
+	}
+
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem32bew_word(A & AM,V);
+
+	cpu_writemem32bedw_word(A & AM,V);
 }
 
 INLINE void WL(offs_t A, data32_t V)
@@ -175,10 +222,17 @@ INLINE void WL(offs_t A, data32_t V)
 		sh2_internal_w(A+3,(V >>  0) & 0xff);
 		return;
 	}
+
+	if (A >= 0xc0000000)
+	{
+		cpu_writemem32bedw_dword(A,V);
+		return;
+	}
+
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem32bew_word(A,V >> 16);
-	cpu_writemem32bew_word(A+2,V & 0xffff);
+
+	cpu_writemem32bedw_dword(A & AM,V);
 }
 
 INLINE void sh2_exception(char *message, int irqline)
@@ -1134,7 +1188,9 @@ INLINE void MOVLL(UINT32 m, UINT32 n)
 /*	MOV.B	Rm,@-Rn */
 INLINE void MOVBM(UINT32 m, UINT32 n)
 {
-	UINT32 data = sh2.r[n];
+	/* SMG : bug fix, was reading sh2.r[n] */
+	UINT32 data = sh2.r[m] & 0x000000ff;
+
 	sh2.r[n] -= 1;
 	WB( sh2.r[n], data );
 }
@@ -2160,6 +2216,7 @@ void sh2_reset(void *param)
 		raise( SIGABRT );
 	}
 	memset(sh2.m, 0, 0x200);
+
 	sh2.pc = RL(0);
 	sh2.r[15] = RL(4);
 	sh2.sr = I;
@@ -2617,5 +2674,3 @@ unsigned sh2_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
-
-

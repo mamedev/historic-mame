@@ -595,5 +595,5 @@ ROM_END
 
 
 GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk, 0, ROT0_16BIT, "Gaelco", "Big Karnak" )
-GAME( 1995, biomtoy,  0, maniacsq, biomtoy,  0, ROT0_16BIT, "Gaelco", "Biomechanical Toy (Unprotected)" )
-GAME( 1996, maniacsq, 0, maniacsq, maniacsq, 0, ROT0_16BIT, "Gaelco", "Maniac Square (Prototype)" )
+GAME( 1995, biomtoy,  0, maniacsq, biomtoy,  0, ROT0_16BIT, "Gaelco", "Biomechanical Toy (unprotected)" )
+GAME( 1996, maniacsq, 0, maniacsq, maniacsq, 0, ROT0_16BIT, "Gaelco", "Maniac Square (prototype)" )

@@ -6,7 +6,7 @@ STARWARS HARDWARE FILE
 This file is Copyright 1997, Steve Baines.
 Modified by Frank Palazzolo for sound support
 
-Current e-mail contact address:  sjb@ohm.york.ac.uk
+Current e-mail contact address:  sulaco@ntlworld.com
 
 Release 2.0 (6 August 1997)
 

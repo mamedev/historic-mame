@@ -107,14 +107,14 @@ extern READ16_HANDLER( SYS16_CPU2_RESET_HACK );
 extern struct GfxDecodeInfo sys16_gfxdecodeinfo[];
 
 // encryption decoding
-void endurob2_decode_data(unsigned char *dest,unsigned char *source,int size);
-void endurob2_decode_data2(unsigned char *dest,unsigned char *source,int size);
-void enduror_decode_data(unsigned char *dest,unsigned char *source,int size);
-void enduror_decode_data2(unsigned char *dest,unsigned char *source,int size);
+void endurob2_decode_data(data16_t *dest,data16_t *source,int size);
+void endurob2_decode_data2(data16_t *dest,data16_t *source,int size);
+void enduror_decode_data(data16_t *dest,data16_t *source,int size);
+void enduror_decode_data2(data16_t *dest,data16_t *source,int size);
 
-void aurail_decode_data(unsigned char *dest,unsigned char *source,int size);
-void aurail_decode_opcode1(unsigned char *dest,unsigned char *source,int size);
-void aurail_decode_opcode2(unsigned char *dest,unsigned char *source,int size);
+void aurail_decode_data(data16_t *dest,data16_t *source,int size);
+void aurail_decode_opcode1(data16_t *dest,data16_t *source,int size);
+void aurail_decode_opcode2(data16_t *dest,data16_t *source,int size);
 
 #define SYS16_JOY1 PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) \

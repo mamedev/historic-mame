@@ -426,7 +426,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct namco_interface namco_interface =
 {
-	23920,	/* sample rate (approximate value) */
+	24000,	/* sample rate */
 	8,	  /* number of voices */
 	100,	/* playback volume */
 	REGION_SOUND1	/* memory region */
@@ -471,7 +471,7 @@ static const struct MachineDriver machine_driver_gaplus =
 			gaplus_interrupt_3,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
 	gaplus_init_machine,
 
@@ -526,7 +526,7 @@ static const struct MachineDriver machine_driver_gaplusa =
 			gaplus_interrupt_3,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
 	gaplus_init_machine,
 
@@ -581,7 +581,7 @@ static const struct MachineDriver machine_driver_galaga3 =
 			gaplus_interrupt_3,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* a high value to ensure proper synchronization of the CPUs */
 	gaplus_init_machine,
 

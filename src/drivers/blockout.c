@@ -32,17 +32,12 @@ static int blockout_interrupt(void)
 	return 6 - cpu_getiloops();
 }
 
-static WRITE_HANDLER( blockout_sound_command_w )
+static WRITE16_HANDLER( blockout_sound_command_w )
 {
-	switch (offset)
+	if (ACCESSING_LSB)
 	{
-		case 0:
-			soundlatch_w(offset,data);
-			cpu_cause_interrupt(1,Z80_NMI_INT);
-			break;
-		case 2:
-			/* don't know, maybe reset sound CPU */
-			break;
+		soundlatch_w(offset,data & 0xff);
+		cpu_cause_interrupt(1,Z80_NMI_INT);
 	}
 }
 
@@ -64,7 +59,8 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100014, 0x100017, (mem_write16_handler)blockout_sound_command_w },
+	{ 0x100014, 0x100015, blockout_sound_command_w },
+	{ 0x100016, 0x100017, MWA16_NOP },	/* don't know, maybe reset sound CPU */
 	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
 	{ 0x1d4000, 0x1dffff, MWA16_RAM },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MWA16_RAM },	/* work RAM */

@@ -141,15 +141,16 @@ int cps2_gfx_start(void)
 }
 
 
-int cps2_vh_start(void)
+int cps_tileviewer_start(void)
 {
+/*
     if (cps1_vh_start())
     {
         return -1;
     }
     cps1_gfx_stop();
     cps2_gfx_start();
-
+*/
 	cps2_start=0;
 	cps2_debug=1;	/* Scroll 1 display */
 	cps2_width=48;	/* 48 characters wide */
@@ -157,9 +158,9 @@ int cps2_vh_start(void)
 	return 0;
 }
 
-void cps2_vh_stop(void)
+void cps_tileviewer_stop(void)
 {
-    cps1_vh_stop();
+    /*cps1_vh_stop();*/
 }
 
 
@@ -238,7 +239,7 @@ void cps1_debug_tiles(struct osd_bitmap *bitmap)
 
 WRITE16_HANDLER( cps2_qsound_sharedram_w );
 
-void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cps_tileviewer_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     static int qcode;
     int stop=0;

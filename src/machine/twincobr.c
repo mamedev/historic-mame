@@ -15,7 +15,7 @@
 
 data16_t *twincobr_68k_dsp_ram;
 data8_t  *twincobr_sharedram;
-data8_t   *wardner_mainram;
+data8_t  *wardner_mainram;
 
 
 extern int twincobr_fg_rom_bank;
@@ -26,12 +26,12 @@ extern int twincobr_flip_x_base;
 extern int twincobr_flip_y_base;
 extern int wardner_sprite_hack;
 
-static int coin_count;	/* coin count increments on startup ? , so stop it */
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
 int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 #if LOG_DSP_CALLS
-static char *toaplan_cpu_type[2] = { "68K" , "Z80" };
+static char *toaplan_cpu_type[2] = { "68K"   , "Z80" };
+static int  toaplan_port_type[2] = { 0x7800c , 0x5c  };
 #endif
 
 int twincobr_intenable;
@@ -46,7 +46,6 @@ void fsharkbt_reset_8741_mcu(void)
 	twincobr_intenable = 0;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
-	coin_count = 0;		/* coin count increments on startup ? , so stop it */
 }
 
 void wardner_reset(void)
@@ -56,7 +55,6 @@ void wardner_reset(void)
 	twincobr_display_on = 1;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
-	coin_count = 0;		/* coin count increments on startup ? , so stop it */
 }
 
 
@@ -195,7 +193,7 @@ READ_HANDLER( wardner_mainram_r )
 }
 
 
-WRITE16_HANDLER( twincobr_control_w )
+static void toaplan0_control_w(int offset, int data)
 {
 #if 0
 	logerror("%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
@@ -236,7 +234,17 @@ WRITE16_HANDLER( twincobr_control_w )
 					} break;
 	}
 }
-
+WRITE16_HANDLER( twincobr_control_w )
+{
+	if (ACCESSING_LSB)
+	{
+		toaplan0_control_w(offset, data & 0xff);
+	}
+}
+WRITE_HANDLER( wardner_control_w )
+{
+	toaplan0_control_w(offset, data);
+}
 
 
 READ16_HANDLER( twincobr_sharedram_r )
@@ -247,24 +255,27 @@ READ16_HANDLER( twincobr_sharedram_r )
 WRITE16_HANDLER( twincobr_sharedram_w )
 {
 	if (ACCESSING_LSB)
-		twincobr_sharedram[offset] = data;
+	{
+		twincobr_sharedram[offset] = data & 0xff;
+	}
 }
 
-static WRITE_HANDLER( toaplan_coin_dsp_w )
+static void toaplan0_coin_dsp_w(int offset, int data)
 {
 #if 0
 	if (data > 1)
 		logerror("%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
 #endif
 	switch (data) {
-		case 0x08: if (coin_count) { coin_counter_w(0,1); coin_counter_w(0,0); } break;
-		case 0x09: if (coin_count) { coin_counter_w(2,1); coin_counter_w(2,0); } break;
-		case 0x0a: if (coin_count) { coin_counter_w(1,1); coin_counter_w(1,0); } break;
-		case 0x0b: if (coin_count) { coin_counter_w(3,1); coin_counter_w(3,0); } break;
-		case 0x0c: coin_lockout_w(0,1); coin_lockout_w(2,1); break;
-		case 0x0d: coin_lockout_w(0,0); coin_lockout_w(2,0); break;
-		case 0x0e: coin_lockout_w(1,1); coin_lockout_w(3,1); break;
-		case 0x0f: coin_lockout_w(1,0); coin_lockout_w(3,0); coin_count=1; break;
+		case 0x08: coin_counter_w(0,0); break;
+		case 0x09: coin_counter_w(0,1); break;
+		case 0x0a: coin_counter_w(1,0); break;
+		case 0x0b: coin_counter_w(1,1); break;
+		case 0x0c: coin_lockout_w(0,1); break;
+		case 0x0d: coin_lockout_w(0,0); break;
+		case 0x0e: coin_lockout_w(1,1); break;
+		case 0x0f: coin_lockout_w(1,0); break;
+		/****** The following apply to Flying Shark/Wardner only ******/
 		case 0x00:	/* This means assert the INT line to the DSP */
 #if LOG_DSP_CALLS
 					logerror("Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
@@ -284,14 +295,16 @@ static WRITE_HANDLER( toaplan_coin_dsp_w )
 }
 WRITE16_HANDLER( fshark_coin_dsp_w )
 {
-	toaplan_coin_dsp_w(offset, data);
+	if (ACCESSING_LSB)
+	{
+		toaplan0_coin_dsp_w(offset, data & 0xff);
+	}
 }
 WRITE_HANDLER( twincobr_coin_w )
 {
-	toaplan_coin_dsp_w(offset, data);
+	toaplan0_coin_dsp_w(offset, data);
 }
 WRITE_HANDLER( wardner_coin_dsp_w )
 {
-	toaplan_coin_dsp_w(offset, data);
+	toaplan0_coin_dsp_w(offset, data);
 }
-

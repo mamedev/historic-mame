@@ -2285,16 +2285,16 @@ static void init_btlfield(void)
 
 static void init_sbasebal(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	/* Game hangs on divide by zero?!  Patch it */
-	WRITE_WORD (&RAM[0xb672],0x4E71);
+	rom[0xb672/2] = 0x4e71;
 
 	/* And patch the ROM checksums */
-	WRITE_WORD (&RAM[0x44e],0x4E71);
-	WRITE_WORD (&RAM[0x450],0x4E71);
-	WRITE_WORD (&RAM[0x458],0x4E71);
-	WRITE_WORD (&RAM[0x45a],0x4E71);
+	rom[0x44e/2] = 0x4e71;
+	rom[0x450/2] = 0x4e71;
+	rom[0x458/2] = 0x4e71;
+	rom[0x45a/2] = 0x4e71;
 
 	microcontroller_id=0x8512;
 	invert_controls=0;

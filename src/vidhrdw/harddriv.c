@@ -583,7 +583,7 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* redraw the screen */
 	for (i = 0, draw_state = &gfx_update_list[0]; i < gfx_update_index - 1; i++, draw_state++)
 	{
-		UINT16 *pens = &Machine->pens[draw_state->palettebank * 256];
+		UINT32 *pens = &Machine->pens[draw_state->palettebank * 256];
 		int x, y, width = Machine->drv->screen_width;
 		int sy = draw_state[0].scanline;
 		int ey = draw_state[1].scanline - 1;

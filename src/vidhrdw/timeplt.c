@@ -1,11 +1,3 @@
-/***************************************************************************
-
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
-
 #include "driver.h"
 
 extern unsigned char *spriteram,*spriteram_2;
@@ -13,18 +5,13 @@ extern size_t spriteram_size;
 
 unsigned char *timeplt_videoram,*timeplt_colorram;
 static struct tilemap *bg_tilemap;
-static int sprite_multiplex_hack;
 
-
-void init_timeplt(void)
-{
-	sprite_multiplex_hack = 1;
-}
-
-void init_psurge(void)
-{
-	sprite_multiplex_hack = 0;
-}
+/*
+sprites are multiplexed, so we have to buffer the spriteram
+scanline by scanline.
+*/
+static unsigned char *sprite_mux_buffer,*sprite_mux_buffer_2;
+static int scanline;
 
 
 /***************************************************************************
@@ -125,12 +112,26 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
+void timeplt_vh_stop(void)
+{
+	free(sprite_mux_buffer);
+	free(sprite_mux_buffer_2);
+	sprite_mux_buffer = 0;
+	sprite_mux_buffer_2 = 0;
+}
+
 int timeplt_vh_start(void)
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (!bg_tilemap)
+	sprite_mux_buffer = malloc(256 * spriteram_size);
+	sprite_mux_buffer_2 = malloc(256 * spriteram_size);
+
+	if (!bg_tilemap || !sprite_mux_buffer || !sprite_mux_buffer_2)
+	{
+		timeplt_vh_stop();
 		return 1;
+	}
 
 	return 0;
 }
@@ -163,13 +164,13 @@ WRITE_HANDLER( timeplt_colorram_w )
 
 WRITE_HANDLER( timeplt_flipscreen_w )
 {
-	flip_screen_set(data & 1);
+	flip_screen_set(~data & 1);
 }
 
 /* Return the current video scan line */
 READ_HANDLER( timeplt_scanline_r )
 {
-	return cpu_scalebyfcount(256);
+	return scanline;
 }
 
 
@@ -183,43 +184,41 @@ READ_HANDLER( timeplt_scanline_r )
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
-	const struct rectangle *clip = &Machine->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	int offs;
+	int line;
 
 
-	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
+	for (line = 0;line < 256;line++)
 	{
-		int code,color,sx,sy,flipx,flipy;
-
-		code = spriteram[offs + 1];
-		color = spriteram_2[offs] & 0x3f;
-		sx = 240 - spriteram[offs];
-		sy = spriteram_2[offs + 1]-1;
-		flipx = spriteram_2[offs] & 0x40;
-		flipy = !(spriteram_2[offs] & 0x80);
-
-		drawgfx(bitmap,gfx,
-				code,
-				color,
-				flipx,flipy,
-				sx,sy,
-				clip,TRANSPARENCY_PEN,0);
-
-		if (sprite_multiplex_hack)
+		if (line >= Machine->visible_area.min_y && line <= Machine->visible_area.max_y)
 		{
-			if (sy < 240)
+			unsigned char *sr,*sr2;
+
+			sr = sprite_mux_buffer + line * spriteram_size;
+			sr2 = sprite_mux_buffer_2 + line * spriteram_size;
+			clip.min_y = clip.max_y = line;
+
+			for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 			{
-				/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
-				/* this is done by the program, multiplexing the sprites; we don't emulate */
-				/* that, we just reproduce the behaviour. */
-				if (offs <= 2*2 || offs >= 19*2)
+				int code,color,sx,sy,flipx,flipy;
+
+				sx = sr[offs];
+				sy = 241 - sr2[offs + 1];
+
+				if (sy > line-16 && sy <= line)
 				{
+					code = sr[offs + 1];
+					color = sr2[offs] & 0x3f;
+					flipx = ~sr2[offs] & 0x40;
+					flipy = sr2[offs] & 0x80;
+
 					drawgfx(bitmap,gfx,
 							code,
 							color,
 							flipx,flipy,
-							(sx + 128) & 0xff,(sy + 128) & 0xff,
-							clip,TRANSPARENCY_PEN,0);
+							sx,sy,
+							&clip,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -233,4 +232,18 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,bg_tilemap,1,0);
+}
+
+
+int timeplt_interrupt(void)
+{
+	scanline = 255 - cpu_getiloops();
+
+	memcpy(sprite_mux_buffer + scanline * spriteram_size,spriteram,spriteram_size);
+	memcpy(sprite_mux_buffer_2 + scanline * spriteram_size,spriteram_2,spriteram_size);
+
+	if (scanline == 255)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
 }

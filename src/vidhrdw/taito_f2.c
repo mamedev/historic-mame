@@ -7,64 +7,7 @@
 #define TC0280GRD_GFX_NUM 2
 #define TC0430GRW_GFX_NUM 2
 
-
-/*
-TC0360PRI
----------
-Priority manager.
-A higher priority value means higher priority. 0 could mean disable but
-I'm not sure. If two inputs have the same priority value, I think the first
-one has priority, but I'm not sure of that either.
-It seems the chip accepts three inputs from three different sources, and
-each one of them can declare to have four different priority levels.
-
-000 unknown. Could it be related to highlight/shadow effects in qcrayon2
-    and gunfront?
-001 in games with a roz layer, this is the roz palette bank (bottom 6 bits
-    affect roz color, top 2 bits affect priority)
-002 unknown
-003 unknown
-
-004 ----xxxx \       priority level 0 (unused? usually 0, pulirula sets it to F in some places)
-    xxxx---- | Input priority level 1 (usually FG0)
-005 ----xxxx |   #1  priority level 2 (usually BG0)
-    xxxx---- /       priority level 3 (usually BG1)
-
-006 ----xxxx \       priority level 0 (usually sprites with top color bits 00)
-    xxxx---- | Input priority level 1 (usually sprites with top color bits 01)
-007 ----xxxx |   #2  priority level 2 (usually sprites with top color bits 10)
-    xxxx---- /       priority level 3 (usually sprites with top color bits 11)
-
-008 ----xxxx \       priority level 0 (e.g. roz layer if top bits of register 001 are 00)
-    xxxx---- | Input priority level 1 (e.g. roz layer if top bits of register 001 are 01)
-009 ----xxxx |   #3  priority level 2 (e.g. roz layer if top bits of register 001 are 10)
-    xxxx---- /       priority level 3 (e.g. roz layer if top bits of register 001 are 11)
-
-00a unused
-00b unused
-00c unused
-00d unused
-00e unused
-00f unused
-*/
-
-UINT8 TC0360PRI_regs[16];
-
-WRITE_HANDLER( TC0360PRI_w )
-{
-	TC0360PRI_regs[offset] = data;
-
-if (offset >= 0x0a)
-	usrintf_showmessage("write %02x to unused TC0360PRI reg %x",data,offset);
-#if 0
-#define regs TC0360PRI_regs
-	usrintf_showmessage("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
-		regs[0x00],regs[0x01],regs[0x02],regs[0x03],
-		regs[0x04],regs[0x05],regs[0x06],regs[0x07],
-		regs[0x08],regs[0x09]);
-#endif
-}
-
+extern UINT8 TC0360PRI_regs[16];
 extern int TC0480SCP_pri_reg;
 
 data16_t *f2_sprite_extension;
@@ -124,6 +67,7 @@ static int f2_pivot_ydisp = 0;
 
 static int f2_xkludge = 0;   /* Needed in TC0480SCP games: Deadconx, Metalb, Footchmp */
 static int f2_ykludge = 0;
+static int f2_text_xkludge = 0;
 
 
 static int has_two_TC0100SCN(void)
@@ -255,7 +199,7 @@ int taitof2_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_xkludge,f2_ykludge,f2_tilemap_col_base))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_xkludge,f2_ykludge,f2_text_xkludge,0,f2_tilemap_col_base))
 			return 1;
 	}
 	else	/* it's a tc0100scn game */
@@ -383,6 +327,7 @@ int taitof2_footchmp_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x1d;
 	f2_ykludge = 0x08;
+	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -393,6 +338,7 @@ int taitof2_hthero_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x33;   // needs different kludges from Footchmp
 	f2_ykludge = - 0x04;
+	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -403,6 +349,7 @@ int taitof2_deadconx_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x1e;
 	f2_ykludge = 0x08;
+	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -413,6 +360,7 @@ int taitof2_deadconj_vh_start (void)
 	f2_hide_pixels = 3;
 	f2_xkludge = 0x34;
 	f2_ykludge = - 0x05;
+	f2_text_xkludge = -1;
 	f2_tilemap_col_base = 0;
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
@@ -421,9 +369,10 @@ int taitof2_deadconj_vh_start (void)
 int taitof2_metalb_vh_start (void)
 {
 	f2_hide_pixels = 3;
-	f2_xkludge = 0x34;
+	f2_xkludge = 0x32;
 	f2_ykludge = - 0x04;
-	f2_tilemap_col_base = 256;   // uses separate palette area for tilemaps
+	f2_text_xkludge = 1;	/* text layer is offset from the norm */
+	f2_tilemap_col_base = 256;   /* uses separate palette area for tilemaps */
 	f2_spriteext = 0;
 	return (taitof2_core_vh_start());
 }
@@ -911,10 +860,14 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 				   of our sprite chunk. So it is difference in x and y
 				   coords of our chunk and diagonally adjoining one. */
 
-				x = xlatch + x_no * (0x100 - zoomx) / 16;
-				y = ylatch + y_no * (0x100 - zoomy) / 16;
-				zx = xlatch + (x_no+1) * (0x100 - zoomx) / 16 - x;
-				zy = ylatch + (y_no+1) * (0x100 - zoomy) / 16 - y;
+//				x = xlatch + x_no * (0x100 - zoomx) / 16;
+//				y = ylatch + y_no * (0x100 - zoomy) / 16;
+//				zx = xlatch + (x_no+1) * (0x100 - zoomx) / 16 - x;
+//				zy = ylatch + (y_no+1) * (0x100 - zoomy) / 16 - y;
+				x = xlatch + (x_no * (0x100 - zoomx)+12) / 16;    //ks
+				y = ylatch + (y_no * (0x100 - zoomy)+12) / 16;    //ks
+				zx = xlatch + ((x_no+1) * (0x100 - zoomx)+12) / 16 - x;  //ks
+				zy = ylatch + ((y_no+1) * (0x100 - zoomy)+12) / 16 - y;  //ks
 			}
 		}
 		else
@@ -1444,50 +1397,6 @@ void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-/*
-Table from Raine. Can't see how to calculate order.
-
-The lsbit may be irrelevant to layer order.
-Seems there are only 5 truly different layer orders used.
-And why does it use 5 reg values that all cause bg0123?
-*/
-
-static UINT8 TC0480SCP_pri_lookup[32][4] =
-{
-	{ 0, 1, 2, 3, },	// 0x00  00000  yes (i.e. seen during game)
-	{ 0, 1, 2, 3, },	// 0x01  00001
-	{ 0, 1, 2, 3, },	// 0x02  00010
-	{ 0, 1, 2, 3, },	// 0x03  00011  yes
-	{ 0, 1, 2, 3, },	// 0x04  00100
-	{ 0, 1, 2, 3, },	// 0x05  00101
-	{ 0, 1, 2, 3, },	// 0x06  00110
-	{ 0, 1, 2, 3, },	// 0x07  00111
-	{ 0, 1, 2, 3, },	// 0x08  01000
-	{ 0, 1, 2, 3, },	// 0x09  01001
-	{ 0, 1, 2, 3, },	// 0x0a  01010
-	{ 0, 1, 2, 3, },	// 0x0b  01011
-	{ 0, 3, 1, 2, },	// 0x0c  01100  yes odd (i.e. not standard bg0123 order)
-	{ 0, 1, 2, 3, },	// 0x0d  01101
-	{ 0, 1, 2, 3, },	// 0x0e  01110
-	{ 3, 0, 1, 2, },	// 0x0f  01111  yes odd
-	{ 3, 0, 1, 2, },	// 0x10  10000  yes odd
-	{ 0, 1, 2, 3, },	// 0x11  10001
-	{ 3, 2, 1, 0, },	// 0x12  10010  yes odd
-	{ 3, 2, 1, 0, },	// 0x13  10011  yes odd
-	{ 0, 1, 2, 3, },	// 0x14  10100  yes
-	{ 0, 1, 2, 3, },	// 0x15  10101
-	{ 0, 1, 2, 3, },	// 0x16  10110
-	{ 0, 1, 2, 3, },	// 0x17  10111  yes
-	{ 0, 1, 2, 3, },	// 0x18  11000
-	{ 0, 1, 2, 3, },	// 0x19  11001
-	{ 0, 1, 2, 3, },	// 0x1a  11010
-	{ 0, 1, 2, 3, },	// 0x1b  11011
-	{ 0, 1, 2, 3, },	// 0x1c  11100  yes
-	{ 0, 1, 2, 3, },	// 0x1d  11101
-	{ 0, 3, 2, 1, },	// 0x1e  11110  yes odd
-	{ 0, 3, 2, 1, },	// 0x1f  11111  yes odd
-};
-
 
 /*********************************************************************
 
@@ -1500,13 +1409,10 @@ Deadconx and Footchmp use in the PRI chip
 	0000xxxx   BG1
 
 Deadconx = 0x7db9 (bg0-3) 0x8eca (sprites)
-
 So it has bg0 [back] / s / bg1 / s / bg2 / s / bg3 / s
 
 Footchmp = 0x8db9 (bg0-3) 0xe5ac (sprites)
-
 So it has s / bg0 [grass] / bg1 [crowd] / s / bg2 [goal] / s / bg3 [messages] / s [player scan dots]
-
 
 Metalb uses in the PRI chip
 ---------------------------
@@ -1516,16 +1422,16 @@ Metalb uses in the PRI chip
 +6	xxxx0000   BG3
 	0000xxxx   BG2
 
-and it changes these (and the sprite pri settings) quite a lot...
-The sprite/tile priority seems fine.
+and it changes these (and the sprite pri settings) a lot.
+
 ********************************************************************/
 
 void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[5];
-	int tilepri[5];
-	int spritepri[4];
-	int priority;
+	UINT8 layer[5];
+	UINT8 tilepri[5];
+	UINT8 spritepri[4];
+	UINT16 priority;
 
 /*
 Layer toggles to help get the layer offsets in Metalb correct.
@@ -1574,7 +1480,6 @@ Some are still suspect! [see taitoic.c for more about this]
 	taitof2_handle_sprite_buffering();
 
 	TC0480SCP_tilemap_update();
-	priority = TC0480SCP_pri_reg & 0x1f;
 
 	palette_init_used_colors();
 	taitof2_update_palette();
@@ -1588,12 +1493,13 @@ Some are still suspect! [see taitoic.c for more about this]
 	}
 	palette_recalc();
 
-	layer[0] = TC0480SCP_pri_lookup[priority][0];   /* tells us which bg layer is bottom */
-	layer[1] = TC0480SCP_pri_lookup[priority][1];
-	layer[2] = TC0480SCP_pri_lookup[priority][2];
-	layer[3] = TC0480SCP_pri_lookup[priority][3];   /* tells us which is top */
+	priority = TC0480SCP_get_bg_priority();
 
-	layer[4] = 4;   // Text layer
+	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
+	layer[1] = (priority &0x0f00) >>  8;
+	layer[2] = (priority &0x00f0) >>  4;
+	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
+	layer[4] = 4;   /* text layer always over bg layers */
 
 	tilepri[0] = TC0360PRI_regs[4] & 0x0f;     /* bg0 */
 	tilepri[1] = TC0360PRI_regs[4] >> 4;       /* bg1 */
@@ -1659,9 +1565,10 @@ Some are still suspect! [see taitoic.c for more about this]
 /* Deadconx, Footchmp */
 void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layer[5];
-	int tilepri[5];
-	int spritepri[4];
+	UINT8 layer[5];
+	UINT8 tilepri[5];
+	UINT8 spritepri[4];
+	UINT16 priority;
 
 	taitof2_handle_sprite_buffering();
 
@@ -1679,11 +1586,13 @@ void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	palette_recalc();
 
-	layer[0] = 0;	/* bottom bg */
-	layer[1] = 1;
-	layer[2] = 2;
-	layer[3] = 3;	/* top bg */
-	layer[4] = 4;	/* text */
+	priority = TC0480SCP_get_bg_priority();
+
+	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
+	layer[1] = (priority &0x0f00) >>  8;
+	layer[2] = (priority &0x00f0) >>  4;
+	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
+	layer[4] = 4;   /* text layer always over bg layers */
 
 	tilepri[0] = TC0360PRI_regs[4] >> 4;      /* bg0 */
 	tilepri[1] = TC0360PRI_regs[5] & 0x0f;    /* bg1 */

@@ -468,20 +468,18 @@ ROM_END
 
 void init_ginganin(void)
 {
-	unsigned char *RAM;
+	data16_t *rom;
 
 	/* main cpu patches */
-	RAM = memory_region(REGION_CPU1);
+	rom = (data16_t *)memory_region(REGION_CPU1);
 	/* avoid writes to rom getting to the log */
-	WRITE_WORD(&RAM[0x408],0x6000); WRITE_WORD(&RAM[0x40a],0x001c);
+	rom[0x408/2] = 0x6000;
+	rom[0x40a/2] = 0x001c;
 
 
 	/* sound cpu patches */
-	RAM = memory_region(REGION_CPU2);
-
 	/* let's clear the RAM: ROM starts at 0x4000 */
-	memset (&RAM[0],0,0x800);
-
+	memset(memory_region(REGION_CPU2),0,0x800);
 }
 
 

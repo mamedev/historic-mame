@@ -16,19 +16,26 @@ source was very helpful in many areas particularly the sprites.)
 
 The triple screen games operate on hardware with various similarities to
 the Taito F2 system, as they share some custom ics e.g. the TC0100SCN.
-In the arcades they have three horizontal screens side by side. (???)
+
+According to Sixtoe: "The multi-monitor systems had 2 or 3 13" screens;
+one in the middle facing the player, and the other 1 or 2 on either side
+mounted below and facing directly up reflecting off special semi-reflecting
+mirrors, with about 1" of the graphics being overlapped on each screen.
+This was the only way to get uninterrupted screens and to be able to see
+through both ways. Otherwise you`d have the monitors' edges visible.
+You can tell if your arcade has been cheap (like one near me) when you
+look at the screens and can see black triangles on the left or right, this
+means they bought ordinary mirrors and you can't see through them the
+wrong way, as the semi-reflecting mirrors were extremely expensive."
 
 For each screen the games have 3 separate layers of graphics:- one
 128x64 tiled scrolling background plane of 8x8 tiles, a similar
 foreground plane, and a 128x32 text plane with character definitions
-held in ram. It appears that the tilemap generating chips for each
-screen actually all contain *identical* tilemaps, but the scroll
-controls are used to get the correct part visible on that particular
-screen.
+held in ram.
 
-Hence the tilemap area for the first screen appears to contain a
-complete tilemap *including* what would be displayed on the other two
-screens.
+Writing to the first TC0100SCN "writes through" to the two subsidiary
+chips so that all three have identical contents. The subsidiary ones are
+only addressed individually during initial memory checks, I think. (?)
 
 There is a single sprite plane which covers all 3 screens.
 The sprites are 16x16 and are not zoomable.
@@ -45,45 +52,43 @@ Tilemaps
 
 TC0100SCN has tilemaps twice as wide as usual. The two BG tilemaps take
 up twice the usual space, $8000 bytes each. The text tilemap takes up
-the usual space, because its height is halved [like Cameltru].
+the usual space, because its height is halved.
 
 The triple palette generator (one for each screen) is probably just a
-result of the way the 3-screen hardware works. They all seem to offer an
-identical set of colors. We emulate all three, but currently we are only
-drawing the first TC0100SCN tilemap.
+result of the way the hardware works: the colors in each are the same.
+
 
 TODO
 ====
 
-If we drew tilemaps from *all three* TC0100SCNs, with their colors
-individually set by their particular palette generator, then the
-emulation would be more accurate. However, probably the result of
-only drawing one is identical.
-
-DIPs
+Verify 68000 clock rates. Unknown sprite bits.
 
 
 Ninjaw
 ------
 
-Sound too quiet / concentrated on one side? Tank sounds bad.
+Similar "subwoofer" sound problem to Darius2 - see below.
 
-Some enemies "slide" relative to the background when they should
-be standing still. Very high cpu interleaving does not seem to
-help.
+68000 clock rates are a guess (at 12MHz the world version
+rarely displayed any enemy sprites).
 
-[Vis area reduced to avoid 10 pixels of junk on RHS at end
-of round 2]
+Some enemies slide relative to the background when they should
+be standing still. High cpu interleaving doesn't help much.
 
 
 Darius 2
 --------
 
-Some bad/rough sounds, very similar to the ones in Ninjaw.
-(Perhaps problem of YM2610 emulation??)
+The unpleasant sounds when some big enemies appear are wrong: they
+are meant to create rumbling on a subwoofer in the cabinet. Can we
+strip them out or transpose them down in pitch?
 
-[Vis area reduced as in zone E you could see background tiles
-being updated on RHS of screen.]
+The low frequency sound is not heard at all via the regular stereo
+speakers on a real Darius 2 but is somehow routed only into the
+subwoofer. The subwoofer starts shaking due to the sound and rattles
+the player (the subwoofer is in the seat of the unit).
+So in a sense this low frequency rumble is more a force feedback
+device of sorts than anything. (Info from Julian Eggebrecht)
 
 
 ***************************************************************************/
@@ -96,13 +101,12 @@ being updated on RHS of screen.]
 
 int ninjaw_vh_start (void);
 void ninjaw_vh_stop (void);
-
 void ninjaw_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 
 //static data16_t *ninjaw_ram;
 
-static int ioc220_port=0;
-static int old_cpua_ctrl = 0xff;
+static UINT8 ioc220_port=0;
+static UINT16 old_cpua_ctrl = 0xff;
 
 static size_t sharedram_size;
 static data16_t *sharedram;
@@ -117,21 +121,26 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-static WRITE16_HANDLER( cpua_ctrl_w )	// assumes Z80 sandwiched between 68Ks
+static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 {
 	if ((data &0xff00) && ((data &0xff) == 0))
 		data = data >> 8;
 
 	/* bit 0 enables cpu B */
+	cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
-	if ((data &0x1)!=(old_cpua_ctrl &0x1))	// perhaps unnecessary but may be written with same value
-		cpu_set_reset_line(2,(data &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	/* is there an irq enable ? */
 
-	/* is there an irq enable ??? */
-
+	/* (currently there's no need to keep track of previous value) */
 	old_cpua_ctrl = data;
-
 	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+}
+
+WRITE16_HANDLER( TC0100SCN_triple_screen_w )
+{
+	TC0100SCN_word_0_w(offset,data,mem_mask);
+	TC0100SCN_word_1_w(offset,data,mem_mask);
+	TC0100SCN_word_2_w(offset,data,mem_mask);
 }
 
 /***********************************************************
@@ -268,7 +277,7 @@ static MEMORY_WRITE16_START( ninjaw_writemem )
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
 	{ 0x260000, 0x263fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
 	{ 0x2e0000, 0x2e000f, TC0100SCN_ctrl_word_1_w },
@@ -300,7 +309,7 @@ static MEMORY_WRITE16_START( ninjaw_cpub_writemem )
 	{ 0x200000, 0x20000f, ninjaw_ioc_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
 	{ 0x260000, 0x263fff, spriteram16_w },
-	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
 	{ 0x340000, 0x340007, TC0110PCR_step1_word_w },		/* palette (1st screen) */
 	{ 0x350000, 0x350007, TC0110PCR_step1_word_1_w },	/* palette (2nd screen) */
 	{ 0x360000, 0x360007, TC0110PCR_step1_word_2_w },	/* palette (3rd screen) */
@@ -333,7 +342,7 @@ static MEMORY_WRITE16_START( darius2_writemem )
 	{ 0x220000, 0x220003, ninjaw_sound_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram, &sharedram_size },
 	{ 0x260000, 0x263fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
 	{ 0x2a0000, 0x2a000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x2c0000, 0x2d3fff, TC0100SCN_word_1_w },	/* tilemaps (2nd screen) */
 	{ 0x2e0000, 0x2e000f, TC0100SCN_ctrl_word_1_w },
@@ -359,7 +368,7 @@ static MEMORY_WRITE16_START( darius2_cpub_writemem )
 	{ 0x200000, 0x20000f, ninjaw_ioc_w },
 	{ 0x240000, 0x24ffff, sharedram_w, &sharedram },
 	{ 0x260000, 0x263fff, spriteram16_w },
-	{ 0x280000, 0x293fff, TC0100SCN_word_0_w },	/* tilemaps (1st screen) */
+	{ 0x280000, 0x293fff, TC0100SCN_triple_screen_w },	/* tilemaps (all screens) */
 MEMORY_END
 
 
@@ -428,168 +437,106 @@ MEMORY_END
 	PORT_DIPSETTING(    0x01, "Hard" ) \
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
-INPUT_PORTS_START( ninjaw )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+#define NINJAW_IN0 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Stops working if this is high */ \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	/* Freezes game */ \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+#define NINJAW_IN1 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+#define NINJAW_IN2 \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 
-	PORT_START /* DSW A, different coinage per country */
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+#define NINJAW_DSWA \
+	PORT_START \
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) \
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+
+#define NINJAW_DSWB \
+	PORT_START \
+	TAITO_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  /* all 6 in manual */ \
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On) ) \
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On) ) \
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On) ) \
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On) ) \
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_START( ninjaw )
+	NINJAW_IN0
+
+	NINJAW_IN1
+
+	NINJAW_IN2
+
+	NINJAW_DSWA
 	TAITO_COINAGE_WORLD_8
 
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  // all 6 in manual
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	NINJAW_DSWB
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ninjawj )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	NINJAW_IN0
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	NINJAW_IN1
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	NINJAW_IN2
 
-	PORT_START /* DSW A, different coinage per country */
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	TAITO_COINAGE_WORLD_8
+	NINJAW_DSWA
+	TAITO_COINAGE_JAPAN_8
 
-	PORT_START /* DSW B */
-	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )  // all 6 in manual
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	NINJAW_DSWB
 INPUT_PORTS_END
 
 INPUT_PORTS_START( darius2 )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	// Stops working if this is high
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// Freezes game
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	NINJAW_IN0
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	NINJAW_IN1
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	NINJAW_IN2
 
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -607,10 +554,10 @@ INPUT_PORTS_START( darius2 )
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "Every 500k" )
-	PORT_DIPSETTING(    0x0c, "Every 700k" )
-	PORT_DIPSETTING(    0x08, "Every 800k" )
-	PORT_DIPSETTING(    0x04, "Every 900k" )
+	PORT_DIPSETTING(    0x00, "every 500k" )
+	PORT_DIPSETTING(    0x0c, "every 700k" )
+	PORT_DIPSETTING(    0x08, "every 800k" )
+	PORT_DIPSETTING(    0x04, "every 900k" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
@@ -620,8 +567,8 @@ INPUT_PORTS_START( darius2 )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -694,8 +641,8 @@ static struct YM2610interface ym2610_interface =
 /*************************************************************
 			     MACHINE DRIVERS
 
-Ninjaw: high interleaving of 200, to rule it out as cause of
-enemies "sliding" when they should be standing still relative
+Ninjaw: high interleaving of 100, but doesn't stop enemies
+"sliding" when they should be standing still relative
 to the scrolling background.
 
 Darius2: arbitrary interleaving of 10 to keep cpus synced.
@@ -706,7 +653,7 @@ static struct MachineDriver machine_driver_ninjaw =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
+			13343000,	/* 26.686/2 MHz ??? */
 			ninjaw_readmem,ninjaw_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
@@ -718,13 +665,13 @@ static struct MachineDriver machine_driver_ninjaw =
 		},
 		{
 			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
+			13343000,	/* 26.686/2 MHz ??? */
 			ninjaw_cpub_readmem,ninjaw_cpub_writemem,0,0,
 			ninjaw_interrupt, 1
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* CPU slices */
+	100,	/* CPU slices */
 	0,
 
 	/* video hardware */
@@ -749,6 +696,7 @@ static struct MachineDriver machine_driver_ninjaw =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_darius2 =
 {
@@ -940,11 +888,15 @@ ROM_START( darius2 )
 ROM_END
 
 
+static void init_ninjaw(void)
+{
+	old_cpua_ctrl = 0xff;
+}
 
 
 /* Working Games */
 
-GAME( 1987, ninjaw,   0,      ninjaw,  ninjaw,      0, ROT0, "Taito Corporation Japan", "The Ninja Warriors (World)" )
-GAME( 1987, ninjawj,  ninjaw, ninjaw,  ninjawj,     0, ROT0, "Taito Corporation", "The Ninja Warriors (Japan)" )
-GAME( 1989, darius2,  0,      darius2, darius2,     0, ROT0, "Taito Corporation", "Darius II (Japan)" )
+GAME( 1987, ninjaw,   0,      ninjaw,  ninjaw,   ninjaw,  ROT0, "Taito Corporation Japan", "The Ninja Warriors (World)" )
+GAME( 1987, ninjawj,  ninjaw, ninjaw,  ninjawj,  ninjaw,  ROT0, "Taito Corporation", "The Ninja Warriors (Japan)" )
+GAME( 1989, darius2,  0,      darius2, darius2,  ninjaw,  ROT0, "Taito Corporation", "Darius II (Japan)" )
 

@@ -88,7 +88,7 @@ void topspeed_update_palette(void)
 }
 
 
-void topspeed_draw_sprites(struct osd_bitmap *bitmap,int pri,int y_offs)
+void topspeed_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 {
 	data16_t *spritemap = topspeed_spritemap;
 	int offs, data, tilenum, color, flipx, flipy;
@@ -107,19 +107,20 @@ void topspeed_draw_sprites(struct osd_bitmap *bitmap,int pri,int y_offs)
 		y = data & 0x1ff;
 
 		data = spriteram16[offs+1];
+		flipy = (data & 0x8000) >> 15;
 		zoomx = (data & 0x7f);
 
 		data = spriteram16[offs+2];
 		priority = (data & 0x8000) >> 15;
 		flipx = (data & 0x4000) >> 14;
-		flipy = (data & 0x2000) >> 13;	// ?
+//		unknown = (data & 0x2000) >> 13;
 		x = data & 0x1ff;
 
 		data = spriteram16[offs+3];
 		color = (data & 0xff00) >> 8;
 		tilenum = data & 0xff;
 
-		if ((!tilenum) || (priority!=pri)) continue;
+		if (!tilenum) continue;
 
 		map_offset = tilenum << 7;
 
@@ -180,17 +181,40 @@ void topspeed_draw_sprites(struct osd_bitmap *bitmap,int pri,int y_offs)
 			sprite_ptr->zoomx = zx << 12;
 			sprite_ptr->zoomy = zy << 13;
 
-			drawgfxzoom(bitmap,Machine->gfx[0],
-					sprite_ptr->code,
-					sprite_ptr->color,
-					sprite_ptr->flipx,sprite_ptr->flipy,
-					sprite_ptr->x,sprite_ptr->y,
-					&Machine->visible_area,TRANSPARENCY_PEN,0,
-					sprite_ptr->zoomx,sprite_ptr->zoomy);
+			if (primasks)
+			{
+				sprite_ptr->primask = primasks[priority];
+				sprite_ptr++;
+			}
+			else
+			{
+				drawgfxzoom(bitmap,Machine->gfx[0],
+						sprite_ptr->code,
+						sprite_ptr->color,
+						sprite_ptr->flipx,sprite_ptr->flipy,
+						sprite_ptr->x,sprite_ptr->y,
+						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						sprite_ptr->zoomx,sprite_ptr->zoomy);
+			}
 		}
 
 		if (bad_chunks)
 logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
+	}
+
+	/* this happens only if primsks != NULL */
+	while (sprite_ptr != spritelist)
+	{
+		sprite_ptr--;
+
+		pdrawgfxzoom(bitmap,Machine->gfx[0],
+				sprite_ptr->code,
+				sprite_ptr->color,
+				sprite_ptr->flipx,sprite_ptr->flipy,
+				sprite_ptr->x,sprite_ptr->y,
+				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				sprite_ptr->zoomx,sprite_ptr->zoomy,
+				sprite_ptr->primask);
 	}
 }
 
@@ -265,32 +289,33 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[3]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,1,layer[0],0,0);
-
-#ifdef MAME_DEBUG
-	if (dislayer[4]==0)
-#endif
-	topspeed_draw_sprites(bitmap,1,3);
+	PC080SN_tilemap_draw(bitmap,1,layer[0],0,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,1,layer[1],0,0);
+	PC080SN_tilemap_draw(bitmap,1,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[1]==0)
 #endif
- 	PC080SN_tilemap_draw(bitmap,0,layer[2],0,0);
-
-#ifdef MAME_DEBUG
-	if (dislayer[4]==0)
-#endif
-	topspeed_draw_sprites(bitmap,0,3);
+ 	PC080SN_tilemap_draw(bitmap,0,layer[2],0,4);
 
 #ifdef MAME_DEBUG
 	if (dislayer[0]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,0,layer[3],0,0);
+	PC080SN_tilemap_draw(bitmap,0,layer[3],0,8);
+
+#ifdef MAME_DEBUG
+	if (dislayer[4]==0)
+#endif
+	/* Sprites are either over bottom layer or under top layer */
+	/* sprite/sprite priority is from position in list, sprite/
+	   tile from a control bit, hence we must use pdrawgfx */
+	{
+		int primasks[2] = {0xff00,0xfffc};
+		topspeed_draw_sprites(bitmap,primasks,3);
+	}
 }
 
 

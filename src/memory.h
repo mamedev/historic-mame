@@ -22,8 +22,8 @@ extern "C" {
  * GNU compiler.
  */
 
-#ifdef __GNU__
-#if (__GNUC__ == 2) && (__GNUC_MINOR_ <= 7)
+#ifdef __GNUC__
+#if (__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
 #define UNUSEDARG
 #else
 #define UNUSEDARG __attribute__((__unused__))
@@ -37,8 +37,6 @@ extern "C" {
 /* obsolete, to be removed */
 #define READ_WORD(a)			(*(UINT16 *)(a))
 #define WRITE_WORD(a,d)			(*(UINT16 *)(a) = (d))
-#define COMBINE_WORD(w,d)		(((w) & ((d) >> 16)) | ((d) & 0xffff))
-#define COMBINE_WORD_MEM(a,d)	(WRITE_WORD((a), (READ_WORD(a) & ((d) >> 16)) | (d)))
 
 
 /***************************************************************************
@@ -766,6 +764,8 @@ opbase_handler memory_set_opbase_handler(int cpu, opbase_handler function);
 
 /* ----- separate opcode/data encryption helpers ---- */
 void		memory_set_opcode_base(int cpu, void *base);
+void		memory_set_encrypted_opcode_range(int cpu, offs_t min_address,offs_t max_address);
+extern offs_t encrypted_opcode_start[],encrypted_opcode_end[];
 
 /* ----- return a base pointer to memory ---- */
 void *		memory_find_base(int cpu, offs_t offset);

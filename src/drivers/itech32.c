@@ -9,9 +9,7 @@
 		* Time Killers (2 sets)
 		* Bloodstorm (3 sets)
 		* Hard Yardage (2 sets)
-
-	Not working:
-		* Street Fighter: The Movie
+		* Street Fighter: The Movie (2 sets)
 
 	Games not supported because IT is still selling them:
 		* World Class Bowling
@@ -27,9 +25,6 @@
 		* Neck & Neck
 		* Driver's Edge
 		* Pairs
-
-	Known issues:
-		* Street Fighter: The Movie has 8 surface-mount ROMs that aren't dumped
 
 ****************************************************************************
 
@@ -286,6 +281,7 @@ static READ32_HANDLER( itech020_prot_result_r )
 
 static WRITE_HANDLER( sound_bank_w )
 {
+	logerror("sound bank = %02x\n", data);
 	cpu_setbank(1, &memory_region(REGION_CPU2)[0x10000 + data * 0x4000]);
 }
 
@@ -315,7 +311,7 @@ static WRITE16_HANDLER( sound_data_w )
 
 static WRITE32_HANDLER( sound_data32_w )
 {
-	if (ACCESSING_MSW32)
+	if (!(mem_mask & 0x00ff0000))
 		timer_set(TIME_NOW, (data >> 16) & 0xff, delayed_sound_data_w);
 }
 
@@ -901,17 +897,30 @@ INPUT_PORTS_START( sftm )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
-	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
 
 	PORT_START	/* 100000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
-	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 
 	PORT_START	/* 180000 */
-	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON6        | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6        | IPF_PLAYER2 )
 
 	PORT_START	/* 200000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -924,12 +933,12 @@ INPUT_PORTS_START( sftm )
 	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, "Rotate Trackball" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ))
-	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
-	PORT_DIPSETTING(      0x0040, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
 	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
@@ -1270,33 +1279,68 @@ ROM_START( sftm )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 
 	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "prog0.bin", 0x00000, 0x40000, 0x00c0c63c )
-	ROM_LOAD32_BYTE( "prog1.bin", 0x00001, 0x40000, 0xd4d2a67e )
-	ROM_LOAD32_BYTE( "prog2.bin", 0x00002, 0x40000, 0xd7b36c92 )
-	ROM_LOAD32_BYTE( "prog3.bin", 0x00003, 0x40000, 0xbe3efdbd )
+	ROM_LOAD32_BYTE( "prom0_v1.1", 0x00000, 0x40000, 0x00c0c63c )
+	ROM_LOAD32_BYTE( "prom1_v1.1", 0x00001, 0x40000, 0xd4d2a67e )
+	ROM_LOAD32_BYTE( "prom2_v1.1", 0x00002, 0x40000, 0xd7b36c92 )
+	ROM_LOAD32_BYTE( "prom3_v1.1", 0x00003, 0x40000, 0xbe3efdbd )
 
 	ROM_REGION( 0x48000, REGION_CPU2, 0 )
 	ROM_LOAD( "snd-v10.bin", 0x10000, 0x38000, 0x10d85366 )
 	ROM_CONTINUE(            0x08000, 0x08000 )
 
-	ROM_REGION( 0x3080000, REGION_GFX1, 0 )
-	ROM_LOAD32_BYTE( "grom0_0.bin", 0x0000000, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom0_1.bin", 0x0000001, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom0_2.bin", 0x0000002, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom0_3.bin", 0x0000003, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom1_0.bin", 0x1000000, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom1_1.bin", 0x1000001, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom1_2.bin", 0x1000002, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom1_3.bin", 0x1000003, 0x400000, 0x00000000 )
-	ROM_LOAD32_BYTE( "grom3_0.bin", 0x3000000, 0x020000, 0x3e1f76f7 )
-	ROM_LOAD32_BYTE( "grom3_1.bin", 0x3000001, 0x020000, 0x578054b6 )
-	ROM_LOAD32_BYTE( "grom3_2.bin", 0x3000002, 0x020000, 0x9af2f698 )
-	ROM_LOAD32_BYTE( "grom3_3.bin", 0x3000003, 0x020000, 0xcd38d1d6 )
+	ROM_REGION( 0x2080000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "rm0-0.bin",  0x0000000, 0x400000, 0x09ef29cb )
+	ROM_LOAD32_BYTE( "rm0-1.bin",  0x0000001, 0x400000, 0x6f5910fa )
+	ROM_LOAD32_BYTE( "rm0-2.bin",  0x0000002, 0x400000, 0xb8a2add5 )
+	ROM_LOAD32_BYTE( "rm0-3.bin",  0x0000003, 0x400000, 0x6b6ff867 )
+	ROM_LOAD32_BYTE( "rm1-0.bin",  0x1000000, 0x400000, 0xd5d65f77 )
+	ROM_LOAD32_BYTE( "rm1-1.bin",  0x1000001, 0x400000, 0x90467e27 )
+	ROM_LOAD32_BYTE( "rm1-2.bin",  0x1000002, 0x400000, 0x903e56c2 )
+	ROM_LOAD32_BYTE( "rm1-3.bin",  0x1000003, 0x400000, 0xfac35686 )
+	ROM_LOAD32_BYTE( "grm3_0.bin", 0x2000000, 0x020000, 0x3e1f76f7 )
+	ROM_LOAD32_BYTE( "grm3_1.bin", 0x2000001, 0x020000, 0x578054b6 )
+	ROM_LOAD32_BYTE( "grm3_2.bin", 0x2000002, 0x020000, 0x9af2f698 )
+	ROM_LOAD32_BYTE( "grm3_3.bin", 0x2000003, 0x020000, 0xcd38d1d6 )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "srom0.bin",  0x000000, 0x200000, 0x00000000 )
+	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x200000, 0x6ca1d3fc )
 
-	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_REGION16_BE( 0x400000, REGION_SOUND4, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom3.bin",  0x000000, 0x080000, 0x4f181534 )
+ROM_END
+
+
+ROM_START( sftmj )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "prom0112.bin", 0x00000, 0x40000, 0x640a04a8 )
+	ROM_LOAD32_BYTE( "prom1112.bin", 0x00001, 0x40000, 0x2a27b690 )
+	ROM_LOAD32_BYTE( "prom2112.bin", 0x00002, 0x40000, 0xcec1dd7b )
+	ROM_LOAD32_BYTE( "prom3112.bin", 0x00003, 0x40000, 0x48fa60f4 )
+
+	ROM_REGION( 0x48000, REGION_CPU2, 0 )
+	ROM_LOAD( "snd_v111.u23", 0x10000, 0x38000, 0x004854ed )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+	ROM_REGION( 0x2080000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "rm0-0.bin",  0x0000000, 0x400000, 0x09ef29cb )
+	ROM_LOAD32_BYTE( "rm0-1.bin",  0x0000001, 0x400000, 0x6f5910fa )
+	ROM_LOAD32_BYTE( "rm0-2.bin",  0x0000002, 0x400000, 0xb8a2add5 )
+	ROM_LOAD32_BYTE( "rm0-3.bin",  0x0000003, 0x400000, 0x6b6ff867 )
+	ROM_LOAD32_BYTE( "rm1-0.bin",  0x1000000, 0x400000, 0xd5d65f77 )
+	ROM_LOAD32_BYTE( "rm1-1.bin",  0x1000001, 0x400000, 0x90467e27 )
+	ROM_LOAD32_BYTE( "rm1-2.bin",  0x1000002, 0x400000, 0x903e56c2 )
+	ROM_LOAD32_BYTE( "rm1-3.bin",  0x1000003, 0x400000, 0xfac35686 )
+	ROM_LOAD32_BYTE( "grm3_0.bin", 0x2000000, 0x020000, 0x3e1f76f7 )
+	ROM_LOAD32_BYTE( "grm3_1.bin", 0x2000001, 0x020000, 0x578054b6 )
+	ROM_LOAD32_BYTE( "grm3_2.bin", 0x2000002, 0x020000, 0x9af2f698 )
+	ROM_LOAD32_BYTE( "grm3_3.bin", 0x2000003, 0x020000, 0xcd38d1d6 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom0.bin", 0x000000, 0x200000, 0x6ca1d3fc )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND4, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "srom3.bin",  0x000000, 0x080000, 0x4f181534 )
 ROM_END
 
@@ -1345,15 +1389,27 @@ static void init_bloodstm(void)
 	itech32_planes = 1;
 }
 
-static void init_sftm(void)
+static void init_sftm_common(int prot_addr, int sound_pc)
 {
 	init_program_rom();
-	init_sound_speedup(0x2011, 0x9059);
+	init_sound_speedup(0x2011, sound_pc);
 	itech32_vram_height = 1024;
-	itech32_planes = 2;
+	itech32_planes = 1;
 
-	itech020_prot_address = 0x7a66;
-	memset(memory_region(REGION_GFX1), 0x81, 0x3000000);
+	itech020_prot_address = prot_addr;
+
+	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
+	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
+}
+
+static void init_sftm(void)
+{
+	init_sftm_common(0x7a66, 0x9059);
+}
+
+static void init_sftmj(void)
+{
+	init_sftm_common(0x7a6a, 0x905f);
 }
 
 
@@ -1364,12 +1420,12 @@ static void init_sftm(void)
  *
  *************************************/
 
-GAME ( 1992, timekill, 0,        timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.32)" )
-GAME ( 1992, timek131, timekill, timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.31)" )
-GAME ( 1993, hardyard, 0,        bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.20)" )
-GAME ( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.00)" )
-GAME ( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
-GAME ( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
-GAME ( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
-
-GAMEX( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie", GAME_NOT_WORKING )
+GAME( 1992, timekill, 0,        timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.32)" )
+GAME( 1992, timek131, timekill, timekill, timekill, timekill, ROT0_16BIT,  "Strata/Incredible Technologies", "Time Killers (v1.31)" )
+GAME( 1993, hardyard, 0,        bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.20)" )
+GAME( 1993, hardyd10, hardyard, bloodstm, hardyard, hardyard, ROT0_16BIT,  "Strata/Incredible Technologies", "Hard Yardage (v1.00)" )
+GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.22)" )
+GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
+GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0_16BIT,  "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
+GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.1)" )
+GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftmj,    ROT0_16BIT,  "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )

@@ -1,7 +1,7 @@
 /***************************************************************************
 
-								-=  Magix  =-
-							 (c) 1995  Yun Sung
+						-=  Magix  & Cannon Ball =-
+							(c) 1995  Yun Sung
 
 				driver by	Luca Elia (eliavit@unina.it)
 
@@ -16,7 +16,7 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 			[ Background ]
 
 			Layer Size:				512 x 256
-			Tiles:					6 x 8 x 8 (!)
+			Tiles:					8 x 8 x 8
 
 			[ Foreground ]
 
@@ -27,13 +27,14 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		There are no sprites.
 
 ***************************************************************************/
+
 #include "vidhrdw/generic.h"
 
 
 /* Variables that driver has access to: */
 
 unsigned char *magix_videoram_0,*magix_videoram_1;
-
+int magix_layers_ctrl;
 
 /* Variables only used here: */
 
@@ -43,7 +44,7 @@ static int magix_videobank;
 
 /***************************************************************************
 
-							Memory Handlers
+								Memory Handlers
 
 ***************************************************************************/
 
@@ -124,9 +125,10 @@ WRITE_HANDLER( magix_flipscreen_w )
 
 							  [ Tiles Format ]
 
-Offset:
+	Offset:
 
-	Videoram + 0000.w		Code
+	Videoram + 0000.b		Code (Low  Bits)
+	Videoram + 0001.b		Code (High Bits)
 	Colorram + 0000.b		Color
 
 
@@ -162,24 +164,18 @@ static void get_tile_info_1( int tile_index )
 /***************************************************************************
 
 
-								Vh_Start
+							Vide Hardware Init
 
 
 ***************************************************************************/
 
 int magix_vh_start(void)
 {
-	tilemap_0 = tilemap_create(	get_tile_info_0,
-								tilemap_scan_rows,
-								TILEMAP_OPAQUE,
-								8,8,
-								DIM_NX_0, DIM_NY_0 );
+	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+								TILEMAP_OPAQUE, 8,8, DIM_NX_0, DIM_NY_0 );
 
-	tilemap_1 = tilemap_create(	get_tile_info_1,
-								tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								8,8,
-								DIM_NX_1, DIM_NY_1 );
+	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 8,8, DIM_NX_1, DIM_NY_1 );
 
 	if (tilemap_0 && tilemap_1)
 	{
@@ -201,7 +197,7 @@ int magix_vh_start(void)
 
 void magix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = -1;
+	int layers_ctrl = (~magix_layers_ctrl) >> 4;
 
 #ifdef MAME_DEBUG
 if (keyboard_pressed(KEYCODE_Z))
@@ -222,7 +218,7 @@ if (keyboard_pressed(KEYCODE_Z))
 	palette_recalc();
 
 	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0,0);
-	else                fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else				fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0,0);
 }

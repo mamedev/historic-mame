@@ -245,24 +245,13 @@ void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (input_port_4_word_r(0) &0x1)	/* Fake DSW */
 	{
 		/* Draw an aiming crosshair (after exidy440) */
-		int beamx,beamy,xoffs,yoffs,y;
+		int beamx,beamy;
 
 		/* update the analog x,y values */
 		beamx = ((input_port_5_r(0) * 256) >> 8) + 3;
 		beamy = ((input_port_6_r(0) * 256) >> 8) + 19;
 
-		/* draw a crosshair */
-		xoffs = beamx - 5;
-		yoffs = beamy - 5;
-
-		for (y = -5; y <= 5; y++, yoffs++, xoffs++)
-		{
-			if (yoffs >= 0 && yoffs < 250 && beamx >= 0 && beamx < 320)
-				plot_pixel(bitmap, beamx, yoffs, Machine->pens[4094]);
-
-			if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 250)
-				plot_pixel(bitmap, xoffs, beamy, Machine->pens[4094]);
-		}
+		draw_crosshair(bitmap,beamx,beamy,&Machine->visible_area);
 	}
 
 #if 0

@@ -389,13 +389,13 @@ WRITE16_HANDLER( hd68k_adsp_program_w )
 	if (!(offset & 1))
 	{
 		temp = oldword >> 16;
-		COMBINE_WORD_MEM(&temp, data);
+		COMBINE_DATA(&temp);
 		oldword = (oldword & 0x0000ffff) | (temp << 16);
 	}
 	else
 	{
 		temp = oldword & 0xffff;
-		COMBINE_WORD_MEM(&temp, data);
+		COMBINE_DATA(&temp);
 		oldword = (oldword & 0xffff0000) | temp;
 	}
 	ADSP2100_WRPGM(base, oldword);

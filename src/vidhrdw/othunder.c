@@ -4,6 +4,9 @@
 
 #define TC0100SCN_GFX_NUM 1
 
+
+data16_t *othunder_ram;
+
 struct tempsprite
 {
 	int gfx;
@@ -363,13 +366,95 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0) &0x1)	/* Fake DSW */
+	if (input_port_4_word_r(0) & 0x1)	/* Fake DSW */
 	{
-//		char buf[80];
-//		sprintf(buf,"Gun targets");
-//		usrintf_showmessage(buf);
+		int rawx, rawy, centrex, centrey, screenx, screeny;
 
-		// Here we will draw gun targets //
+		//calculate p1 screen co-ords by matching routine at $A932
+		rawx = othunder_ram[0x2848/2];
+		centrex = othunder_ram[0xa046/2];
+		if (rawx <= centrex)
+		{
+			rawx = centrex - rawx;
+			screenx = rawx * othunder_ram[0xa04e/2] + (((rawx * othunder_ram[0xa050/2]) & 0xffff0000) >> 16);
+			screenx = 0xa0 - screenx;
+			if (screenx < 0) screenx = 0;
+		}
+		else
+		{
+			if (rawx > othunder_ram[0xa028/2]) rawx = othunder_ram[0xa028/2];
+			rawx -= centrex;
+			screenx = rawx * othunder_ram[0xa056/2] + (((rawx * othunder_ram[0xa058/2]) & 0xffff0000) >> 16);
+			screenx += 0xa0;
+			if (screenx > 0x140) screenx = 0x140;
+		}
+		rawy = othunder_ram[0x284a/2];
+		centrey = othunder_ram[0xa048/2];
+		if (rawy <= centrey)
+		{
+			rawy = centrey - rawy;
+			screeny = rawy * othunder_ram[0xa052/2] + (((rawy * othunder_ram[0xa054/2]) & 0xffff0000) >> 16);
+			screeny = 0x78 - screeny;
+			if (screeny < 0) screeny = 0;
+		}
+		else
+		{
+			if (rawy > othunder_ram[0xa030/2]) rawy = othunder_ram[0xa030/2];
+			rawy -= centrey;
+			screeny = rawy * othunder_ram[0xa05a/2] + (((rawy * othunder_ram[0xa05c/2]) & 0xffff0000) >> 16);
+			screeny += 0x78;
+			if (screeny > 0xf0) screeny = 0xf0;
+		}
+
+		//fudge y to show in centre of scope/hit sprite, note that screenx, screeny
+		//were confirmed to match those stored by the game at $82732, $82734
+		screeny += 2;
+
+		//player 1
+		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
+
+		//calculate p2 screen co-ords by matching routine at $AA48
+		rawx = othunder_ram[0x284c/2];
+		centrex = othunder_ram[0xa04a/2];
+		if (rawx <= centrex)
+		{
+			rawx = centrex - rawx;
+			screenx = rawx * othunder_ram[0xa05e/2] + (((rawx * othunder_ram[0xa060/2]) & 0xffff0000) >> 16);
+			screenx = 0xa0 - screenx;
+			if (screenx < 0) screenx = 0;
+		}
+		else
+		{
+			if (rawx > othunder_ram[0xa038/2]) rawx = othunder_ram[0xa038/2];
+			rawx -= centrex;
+			screenx = rawx * othunder_ram[0xa066/2] + (((rawx * othunder_ram[0xa068/2]) & 0xffff0000) >> 16);
+			screenx += 0xa0;
+			if (screenx > 0x140) screenx = 0x140;
+		}
+		rawy = othunder_ram[0x284e/2];
+		centrey = othunder_ram[0xa04c/2];
+		if (rawy <= centrey)
+		{
+			rawy = centrey - rawy;
+			screeny = rawy * othunder_ram[0xa062/2] + (((rawy * othunder_ram[0xa064/2]) & 0xffff0000) >> 16);
+			screeny = 0x78 - screeny;
+			if (screeny < 0) screeny = 0;
+		}
+		else
+		{
+			if (rawy > othunder_ram[0xa040/2]) rawy = othunder_ram[0xa040/2];
+			rawy -= centrey;
+			screeny = rawy * othunder_ram[0xa06a/2] + (((rawy * othunder_ram[0xa06c/2]) & 0xffff0000) >> 16);
+			screeny += 0x78;
+			if (screeny > 0xf0) screeny = 0xf0;
+		}
+
+		//fudge y to show in centre of scope/hit sprite, note that screenx, screeny
+		//were confirmed to match those stored by the game at $82736, $82738
+		screeny += 2;
+
+		//player 2
+		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
 	}
 }
 

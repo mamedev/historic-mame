@@ -126,6 +126,7 @@ extern "C" {
 int palette_start(void);
 void palette_stop(void);
 int palette_init(void);
+void palette_post_screen_update_cb(void);
 
 void palette_change_color(int color,UINT8 red,UINT8 green,UINT8 blue);
 

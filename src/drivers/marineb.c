@@ -71,7 +71,6 @@ static void springer_init_machine(void)
 	espial_init_machine();
 }
 
-
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },
@@ -334,6 +333,78 @@ INPUT_PORTS_START( wanted )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( bcruzm12 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_COIN1 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x03, 0x01, "2nd Bonus Life" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x01, "60000" )
+	PORT_DIPSETTING(    0x02, "80000" )
+	PORT_DIPSETTING(    0x03, "100000" )
+	PORT_DIPNAME( 0x0c, 0x04, "1st Bonus Life" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_DIPSETTING(    0x0c, "50000" )
+	PORT_DIPNAME( 0xf0, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, " A 3C/1C  B 3C/1C" )
+	PORT_DIPSETTING(    0xe0, " A 3C/1C  B 1C/2C" )
+	PORT_DIPSETTING(    0xf0, " A 3C/1C  B 1C/4C" )
+	PORT_DIPSETTING(    0x20, " A 2C/1C  B 2C/1C" )
+	PORT_DIPSETTING(    0xd0, " A 2C/1C  B 1C/1C" )
+	PORT_DIPSETTING(    0x70, " A 2C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0xb0, " A 2C/1C  B 1C/5C" )
+	PORT_DIPSETTING(    0xc0, " A 2C/1C  B 1C/6C" )
+	PORT_DIPSETTING(    0x60, " A 1C/1C  B 4C/5C" )
+	PORT_DIPSETTING(    0x50, " A 1C/1C  B 2C/3C" )
+	PORT_DIPSETTING(    0x10, " A 1C/1C  B 1C/1C" )
+	PORT_DIPSETTING(    0x30, " A 1C/2C  B 1C/2C" )
+	PORT_DIPSETTING(    0xa0, " A 1C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x80, " A 1C/1C  B 1C/5C" )
+	PORT_DIPSETTING(    0x90, " A 1C/1C  B 1C/6C" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
 static struct GfxLayout marineb_charlayout =
 {
@@ -491,9 +562,7 @@ static struct AY8910interface wanted_ay8910_interface =
 	{ 0 }
 };
 
-
 #define springer_gfxdecodeinfo   marineb_gfxdecodeinfo
-
 #define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
 #define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT)				\
@@ -542,6 +611,42 @@ DRIVER(hoccer,   marineb,  marineb, nmi_interrupt);
 DRIVER(wanted,   marineb,  wanted,  interrupt    );
 DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
 
+static const struct MachineDriver machine_driver_bcruzm12 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 MHz  */
+			readmem,writemem,0,wanted_writeport,
+			interrupt,1
+		}
+	},
+	60, 5000,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	springer_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	wanted_gfxdecodeinfo,
+	256,256,
+	espial_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	wanted_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&wanted_ay8910_interface
+		},
+	}
+};
 
 /***************************************************************************
 
@@ -685,6 +790,55 @@ ROM_START( wanted )
 	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
 ROM_END
 
+/*
+Battle Cruiser M12
+(C) Sigma Enterprises, Inc. 1983
+
+PCB Number: F-005A
+
+CPU: NEC D780C (Z80)
+SND 2 x AY-3-8912
+XTAL: 12.000Mhz
+DIPS: 2 x 8 position
+
+All roms type 2764
+Both proms type MB7052 (compatible to 82s129)
+RAM: 1 x 8416, 1 x AM9122, 2 x D2125, 4 x M5L2114
+
+PCB Layout:
+
+       NECD780C                      D-84_4  D-84_5  D-84_6  D-84_7
+
+8416  D-84_1  D-84_2  D-84_3                  D2125    AM9122        12.000Mhz
+                                              D2125
+                                              M5L2114
+                                              M5L2114
+                                              M5L2114
+      SW1                                     M5L2114
+      SW2
+AY-3-8912    AY-3-8912                                             BCM12COL.K7
+                                                                   BCM12COL.K6
+*/
+
+ROM_START( bcruzm12 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
+	ROM_LOAD( "d-84_3.bin",		   0x0000, 0x2000, 0x132baa3d )
+	ROM_LOAD( "d-84_2.bin",		   0x2000, 0x2000, 0x1a788d1f )
+	ROM_LOAD( "d-84_1.bin",		   0x4000, 0x2000, 0x9d5b3017 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "d-84_5.bin",		   0x0000, 0x2000, 0x2e963f6a )
+	ROM_LOAD( "d-84_4.bin",		   0x2000, 0x2000, 0xfe186459 )
+
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "d-84_7.bin",		   0x0000, 0x2000, 0xa5be90ef )
+	ROM_LOAD( "d-84_6.bin",		   0x2000, 0x2000, 0x1337dc01 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "bcm12col.k7",	   0x0000, 0x0100, 0xbf4f2671 )	/* palette low 4 bits */
+	ROM_LOAD( "bcm12col.k6",	   0x0100, 0x0100, 0x59f955f6 )	/* palette high 4 bits */
+ROM_END
+
 ROM_START( hopprobo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
@@ -708,12 +862,13 @@ ROM_START( hopprobo )
 ROM_END
 
 
-
+/*    year  name      parent   machine   inputs */
 GAME( 1982, marineb,  0,       marineb,  marineb, 0, ROT0,   "Orca", "Marine Boy" )
 GAME( 1982, changes,  0,       changes,  changes, 0, ROT0,   "Orca", "Changes" )
 GAME( 1982, looper,   changes, changes,  changes, 0, ROT0,   "Orca", "Looper" )
 GAME( 1982, springer, 0,       springer, marineb, 0, ROT270, "Orca", "Springer" )
 GAME( 1983, hoccer,   0,       hoccer,   hoccer,  0, ROT90,  "Eastern Micro Electronics, Inc.", "Hoccer (set 1)" )
 GAME( 1983, hoccer2,  hoccer,  hoccer,   hoccer,  0, ROT90,  "Eastern Micro Electronics, Inc.", "Hoccer (set 2)" )	/* earlier */
-GAME( 1984, wanted,   0,       wanted,   wanted,  0, ROT90,  "Sigma Ent. Inc.", "Wanted" )
+GAME( 1983, bcruzm12, 0,       bcruzm12, bcruzm12,0, ROT90,  "Sigma Enterprises Inc.", "Battle Cruiser M12" )
 GAME( 1983, hopprobo, 0,       hopprobo, marineb, 0, ROT90,  "Sega", "Hopper Robo" )
+GAME( 1984, wanted,   0,       wanted,   wanted,  0, ROT90,  "Sigma Enterprises Inc.", "Wanted" )

@@ -107,6 +107,9 @@ int warriorb_core_vh_start (void)
 		if (TC0110PCR_1_vh_start())
 			return 1;
 
+	/* Ensure palette from correct TC0110PCR used for each screen */
+	TC0100SCN_set_chip_colbanks(0,0x100,0x0);
+
 	return 0;
 }
 
@@ -146,17 +149,19 @@ void warriorb_update_palette (void)
 {
 	int i,j;
 	int offs,data,tilenum,color;
+	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	unsigned short palette_map[256];
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
 	{
 		data = spriteram16[offs+1];
-		tilenum = data & 0x7fff;
+		tilenum = data &0x7fff;
 
 		data = spriteram16[offs+2];
 		color = (data & 0x7f);
 
+		tilenum &= tile_mask;
 		if (tilenum)
 		{
 			palette_map[color] |= Machine->gfx[0]->pen_usage[tilenum];
@@ -303,9 +308,14 @@ void warriorb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
+
+	/* chip 0 does tilemaps on the left, chip 1 does the ones on the right */
+	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);	/* left */
+	TC0100SCN_tilemap_draw(bitmap,1,layer[0],0,1);	/* right */
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,1,layer[1],0,2);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,1,layer[2],0,4);
 
 	/* Sprites can be under/over the layer below text layer */
 	{

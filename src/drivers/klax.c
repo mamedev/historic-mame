@@ -364,6 +364,29 @@ ROM_START( klaxj )
 ROM_END
 
 
+ROM_START( klaxd )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
+	ROM_LOAD16_BYTE( "2206.bin",     0x00000, 0x10000, 0x9d1a713b )
+	ROM_LOAD16_BYTE( "1205.bin",     0x00001, 0x10000, 0x45065a5a )
+	ROM_LOAD16_BYTE( "1208.bin",     0x20000, 0x10000, 0xb4019b32 )
+	ROM_LOAD16_BYTE( "1207.bin",     0x20001, 0x10000, 0x14550a75 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
+	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
+	ROM_LOAD( "136075-2.009", 0x20000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x30000, 0x10000, 0xe83cca91 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136075-2.014", 0x00000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.013", 0x10000, 0x10000, 0x36764bbc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM data */
+	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
+	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -388,3 +411,4 @@ GAME( 1989, klax,  0,    klax, klax, klax, ROT0, "Atari Games", "Klax (set 1)" )
 GAME( 1989, klax2, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 2)" )
 GAME( 1989, klax3, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 3)" )
 GAME( 1989, klaxj, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Japan)" )
+GAME( 1989, klaxd, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Germany)" )

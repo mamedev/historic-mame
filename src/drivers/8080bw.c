@@ -1563,7 +1563,7 @@ INPUT_PORTS_START( boothill )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START                                                                                          /* Player 2 Gun */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 50, 10, 1, 255, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 50, 10, 1, 255, KEYCODE_X, KEYCODE_S, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START                                                                                          /* Player 1 Gun */
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE, 50, 10, 1, 255, KEYCODE_Z, KEYCODE_A, IP_JOY_NONE, IP_JOY_NONE )
@@ -4156,12 +4156,12 @@ ROM_END
 /* 626 */ GAMEX(1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   	"Midway", "M-4", GAME_NO_SOUND )
 /* 630 */ GAMEX(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   	"Midway", "Clowns", GAME_NO_SOUND )
 /* 640    																			"Midway", "Space Walk" */
-/* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   	"Midway", "Extra Innings", GAME_NO_SOUND )
+/* 642 */ GAMEX(1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   	"Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAMEX(1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  	"Midway", "Shuffleboard", GAME_NO_SOUND )
 /* 644 */ GAMEX(1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   	"Midway", "Dog Patch", GAME_NO_SOUND )
 /* 645 */ GAMEX(1980, spcenctr, 0,        spcenctr, spcenctr, spcenctr,	ROT0_16BIT,	"Midway", "Space Encounters", GAME_NO_SOUND )
 /* 652 */ GAMEX(1979, phantom2, 0,        m4,       phantom2, phantom2, ROT0,   	"Midway", "Phantom II", GAME_NO_SOUND )
-/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   8080bw,	ROT90,  	"Midway", "4 Player Bowling", GAME_NO_SOUND )
+/* 730 */ GAMEX(1978, bowler,   0,        bowler,   bowler,   8080bw,	ROT90,  	"Midway", "4 Player Bowling Alley", GAME_NO_SOUND )
 /* 739 */ GAME( 1978, invaders, 0,        invaders, invaders, invaders, ROT270, 	"Midway", "Space Invaders" )
 /* 742 */ GAMEX(1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   	"Midway", "Blue Shark", GAME_NO_SOUND )
 /* 851 */ GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, invad2ct, ROT90,  	"Midway", "Space Invaders II (Midway, cocktail)" )

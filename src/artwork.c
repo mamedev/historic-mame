@@ -33,9 +33,12 @@ static void brightness_update (struct artwork_info *a)
 {
 	int i;
 	UINT8 rgb[3];
-	UINT16 *pens = Machine->pens;
+	UINT32 *pens = Machine->pens;
 
 	/* Calculate brightness of all colors */
+	if (Machine->scrbitmap->depth == 15 || Machine->scrbitmap->depth == 32)
+		abort();
+
 	if (Machine->scrbitmap->depth == 8)
 		i = MIN(256, Machine->drv->total_colors);
 	else
@@ -895,7 +898,7 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 			UINT16 *src, *dst;
 			UINT64 *rgb = artwork_overlay->rgb;
 			UINT8 *bright = artwork_overlay->brightness;
-			unsigned short *pens = &Machine->pens[artwork_overlay->start_pen];
+			UINT32 *pens = &Machine->pens[artwork_overlay->start_pen];
 
 			copybitmap(dest, artwork_overlay->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
 

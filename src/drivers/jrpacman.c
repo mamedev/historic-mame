@@ -301,7 +301,7 @@ static const struct MachineDriver machine_driver_jrpacman =
 			jrpacman_interrupt,1
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60.606060, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	jrpacman_init_machine,
 

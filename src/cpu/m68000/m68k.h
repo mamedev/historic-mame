@@ -6,20 +6,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -127,6 +127,18 @@ typedef enum
  * while values used are 32 bits, only the appropriate number
  * of bits are relevant (i.e. in write_memory_8, only the lower 8 bits
  * of value should be written to memory).
+ *
+ * NOTE: I have separated the immediate and PC-relative memory fetches
+ *       from the other memory fetches because some systems require
+ *       differentiation between PROGRAM and DATA fetches (usually
+ *       for security setups such as encryption).
+ *       This separation can either be achieved by setting
+ *       M68K_SEPARATE_READS in m68kconf.h and defining
+ *       the read functions, or by setting M68K_EMULATE_FC and
+ *       making a function code callback function.
+ *       Using the callback offers better emulation coverage
+ *       because you can also monitor whether the CPU is in SYSTEM or
+ *       USER mode, but it is also slower.
  */
 
 /* Read from anywhere */
@@ -137,6 +149,11 @@ unsigned int  m68k_read_memory_32(unsigned int address);
 /* Read data immediately following the PC */
 INLINE unsigned int  m68k_read_immediate_16(unsigned int address);
 INLINE unsigned int  m68k_read_immediate_32(unsigned int address);
+
+/* Read data relative to the PC */
+INLINE unsigned int  m68k_read_pcrelative_8(unsigned int address);
+INLINE unsigned int  m68k_read_pcrelative_16(unsigned int address);
+INLINE unsigned int  m68k_read_pcrelative_32(unsigned int address);
 
 /* Memory access for the disassembler */
 unsigned int m68k_read_disassembler_8  (unsigned int address);

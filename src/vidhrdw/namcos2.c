@@ -426,7 +426,7 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 	int dest_x,dest_x_delta,dest_x_start,dest_x_end,tmp_x;
 	int dest_y,dest_y_delta,dest_y_start,dest_y_end,tmp_y;
 	int right_dx,right_dy,down_dx,down_dy,start_x,start_y;
-	unsigned short *paldata;
+	UINT32 *paldata;
 	int colour;
 
 	/* These need to be sign extended for arithmetic useage */

@@ -294,5 +294,4 @@ align 16								; align the loop
 create_stretch 8
 create_stretch 16
 create_stretch 16,_palettized
-
-
+create_stretch 32

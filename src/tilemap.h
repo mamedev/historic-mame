@@ -25,9 +25,15 @@ struct tilemap;
 #define TILEMAP_IGNORE_TRANSPARENCY		0x10
 #define TILEMAP_BACK					0x20
 #define TILEMAP_FRONT					0x40
+#define TILEMAP_ALPHA					0x80
+
 /*
 	when rendering a split layer, pass TILEMAP_FRONT or TILEMAP_BACK or'd with the
 	tile_priority value to specify the part to draw.
+
+	when rendering a layer in alpha mode, the priority parameter
+	becomes the alpha parameter (0..255).  Split mode is still
+	available in alpha mode, ignore_transparency isn't.
 */
 
 #define TILEMAP_BITMASK_TRANSPARENT (0)
@@ -42,7 +48,7 @@ extern struct tile_info {
 	*/
 	UINT32 tile_number; /* for cache key */
 	const UINT8 *pen_data;
-	const UINT16 *pal_data;
+	const UINT32 *pal_data;
 	UINT32 pen_usage;
 	UINT32 flags;	/* flipx, flipy, ignore_transparency, split */
 	UINT32 priority;
@@ -106,11 +112,13 @@ void tilemap_dispose( struct tilemap *tilemap );
 
 void tilemap_set_transparent_pen( struct tilemap *tilemap, int pen );
 void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 penmask );
+void tilemap_set_depth( struct tilemap *tilemap, int tile_depth, int tile_granularity );
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int memory_offset );
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
 
 void tilemap_dirty_palette( const UINT8 *dirty_pens );
+void tilemap_dirty_color( int color );
 
 void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows ); /* default: 1 */
 void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped );

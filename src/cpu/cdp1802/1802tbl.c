@@ -1,3 +1,6 @@
+//#define LOG_ICODE
+
+#ifdef LOG_ICODE
 static void cdp1802_log_icode(void)
 {
 	// logs the i-code
@@ -136,6 +139,7 @@ static void cdp1802_log_icode(void)
 				 cpu_readmem16(cdp1802.reg[5].w.l+1));
 	}
 }
+#endif
 
 INLINE void cdp1802_add(UINT8 data)
 {
@@ -232,7 +236,9 @@ static void cdp1802_instruction(void)
 	int oper;
 	bool b;
 
-	if (PC==0x6b) cdp1802_log_icode();
+#ifdef LOG_ICODE
+	if (PC==0x6b) cdp1802_log_icode(); // if you want to have the icodes in the debuglog
+#endif
 
 	oper=cpu_readop(PC++);
 	switch(oper&0xf0) {
@@ -258,7 +264,7 @@ static void cdp1802_instruction(void)
 		switch(oper&0xf8) {
 		case 0x60:
 			if (oper==0x60) {
-				logerror("cpu cdp1802 unknown opcode %.2x at %.4x\n",oper, PC-1);
+				X++;
 			} else {
 				cdp1802_out_n(oper&7);break;
 			}
@@ -287,7 +293,6 @@ static void cdp1802_instruction(void)
 			case 0x3d: cdp1802_short_branch_ef(0,2);break;
 			case 0x3e: cdp1802_short_branch_ef(0,4);break;
 			case 0x3f: cdp1802_short_branch_ef(0,8);break;
-			case 0x60: X++;break;
 			case 0x70: cdp1802_read_px();cdp1802.ie=1;break;
 			case 0x71: cdp1802_read_px();cdp1802.ie=0;break;
 			case 0x72: cdp1802.d=cpu_readmem16(X++);break;

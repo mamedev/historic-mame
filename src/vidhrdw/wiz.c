@@ -28,6 +28,7 @@ unsigned char *wiz_attributesram;
 unsigned char *wiz_attributesram2;
 
 static int flipx, flipy;
+static int bgpen;
 
 unsigned char *wiz_sprite_bank;
 static unsigned char char_bank[2];
@@ -103,6 +104,11 @@ WRITE_HANDLER( wiz_palettebank_w )
 
 		memset(dirtybuffer,1,videoram_size);
 	}
+}
+
+WRITE_HANDLER( wiz_bgcolor_w )
+{
+	bgpen = data;
 }
 
 WRITE_HANDLER( wiz_char_bank_select_w )
@@ -252,12 +258,6 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int bank;
 	const struct rectangle* visible_area;
-	int bgpen;
-
-	/* TODO: find what selects the background color */
-	bgpen = 0;
-	//if (sky) bgpen = 0x1a;
-	//if (book) bgpen = 0x24;
 
 	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
 	draw_background(bitmap, 2 + ((char_bank[0] << 1) | char_bank[1]), 0);
@@ -282,7 +282,7 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
 	draw_background(bitmap, 2 + char_bank[0], 1);
 	draw_foreground(bitmap, 1);
 	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area);

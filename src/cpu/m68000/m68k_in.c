@@ -3,20 +3,20 @@
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.2
+ *                                Version 3.3
  *
  * A portable Motorola M680x0 processor emulation engine.
- * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
+ * Copyright 1998-2001 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purposes as long as this
  * copyright notice remains unaltered in the source code and any binary files
  * containing this code in compiled form.
  *
- * Any commercial ventures wishing to use this code must contact the author
- * (Karl Stenerud) for commercial licensing terms.
+ * All other lisencing terms must be negotiated with the author
+ * (Karl Stenerud).
  *
  * The latest version of this code can be obtained at:
- * http://members.xoom.com/kstenerud
+ * http://kstenerud.cjb.net
  */
 
 
@@ -42,17 +42,17 @@
  *
  * The M68KMAKE_OPHANDLER_BODY section contains the opcode handler
  * primitives themselves.  Each opcode handler begins with:
- *    M68KMAKE_OP(A, B, C)
+ *    M68KMAKE_OP(A, B, C, D)
  *
  * where A is the opcode handler name, B is the size of the operation,
- * and C denotes any special case effecive address modes.  If this
- * opcode handler does not use a special case effective address mode,
- * C will be an underbar "_".
+ * C denotes any special processing mode, and D denotes a specific
+ * addressing mode.
+ * For C and D where nothing is specified, use "."
  *
  * Example:
- *     M68KMAKE_OP(abcd_rr, 8, _)   ophandler abcd_rr, size 8, no special modes
- *     M68KMAKE_OP(abcd_mm, 8, ax7) ophandler abcd_mm, size 8, register X is A7
- *     M68KMAKE_OP(tst, 16, pcix)   ophandler tst, size 16, PCIX addressing
+ *     M68KMAKE_OP(abcd, 8, rr, .)   abcd, size 8, register to register, default EA
+ *     M68KMAKE_OP(abcd, 8, mm, ax7) abcd, size 8, memory to memory, register X is A7
+ *     M68KMAKE_OP(tst, 16, ., pcix) tst, size 16, PCIX addressing
  *
  * All opcode handler primitives end with a closing curly brace "}" at column 1
  *
@@ -68,10 +68,11 @@
  * be interpreted on instructions where the corresponding table entry
  * specifies multiple effective addressing modes.
  * Example:
- *    clr          32  _     0100001010......  A+-DXWL...   12   6   4
+ * clr       32  .     .     0100001010......  A+-DXWL...  U U U   12   6   4
  *
  * This table entry says that the clr.l opcde has 7 variations (A+-DXWL).
- * see the table section for an explanation of these.
+ * It is run in user or supervisor mode for all CPUs, and uses 12 cycles for
+ * 68000, 6 cycles for 68010, and 4 cycles for 68020.
  */
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -122,17 +123,17 @@ unsigned char m68ki_cycles[NUM_CPU_TYPES][0x10000]; /* Cycles used by CPU type *
 /* This is used to generate the opcode handler jump table */
 typedef struct
 {
-	void (*opcode_handler)(void); /* handler function */
-	unsigned int  mask;			/* mask on opcode */
-	unsigned int  match;			/* what to match after masking */
-	unsigned char cycles[NUM_CPU_TYPES];			/* cycles each cpu type takes */
+	void (*opcode_handler)(void);        /* handler function */
+	unsigned int  mask;                  /* mask on opcode */
+	unsigned int  match;                 /* what to match after masking */
+	unsigned char cycles[NUM_CPU_TYPES]; /* cycles each cpu type takes */
 } opcode_handler_struct;
 
 
 /* Opcode handler table */
 static opcode_handler_struct m68k_opcode_handler_table[] =
 {
-/*   function                      mask    match   000  010  020 */
+/*   function                      mask    match    000  010  020 */
 
 
 
@@ -194,7 +195,7 @@ void m68ki_build_opcode_table(void)
 				m68ki_instruction_jump_table[instr] = ostruct->opcode_handler;
 				for(k=0;k<NUM_CPU_TYPES;k++)
 					m68ki_cycles[k][instr] = ostruct->cycles[k];
-				if((instr & 0xf000) == 0xe000 && (!instr & 0x20))
+				if((instr & 0xf000) == 0xe000 && (!(instr & 0x20)))
 					m68ki_cycles[0][instr] = m68ki_cycles[1][instr] = ostruct->cycles[k] + ((((j-1)&7)+1)<<1);
 			}
 		}
@@ -252,53 +253,8 @@ M68KMAKE_OPCODE_HANDLER_HEADER
 #include "m68kcpu.h"
 
 /* ======================================================================== */
-/* ======================= INSTRUCTION HANDLERS A-C ======================= */
+/* ========================= INSTRUCTION HANDLERS ========================= */
 /* ======================================================================== */
-/* Instruction handler function names follow this convention:
- *
- * m68k_op_NAME_EXTENSIONS(void)
- * where:
- *    NAME is the name of the opcode it handles
- *    EXTENSIONS are any extensions for special instances of that opcode.
- *
- * Examples:
- *   m68k_op_add_er_8_ai(): add opcode, from effective address to register,
- *                         size = byte, using address register indirect
- *
- *   m68k_op_asr_s_8(): arithmetic shift right, static count, size = byte
- *
- *
- * Note: move uses the form CPU_move_DST_SRC_SIZE
- *
- * Common extensions:
- * 8   : size = byte
- * 16  : size = word
- * 32  : size = long
- * rr  : register to register
- * mm  : memory to memory
- * a7  : using a7 register
- * ax7 : using a7 in X part of instruction (....XXX......YYY)
- * ay7 : using a7 in Y part of instruction (....XXX......YYY)
- * axy7: using a7 in both parts of instruction (....XXX......YYY)
- * r   : register
- * s   : static
- * er  : effective address -> register
- * re  : register -> effective address
- * ea  : using effective address mode of operation
- * d   : data register direct
- * a   : address register direct
- * ai  : address register indirect
- * pi  : address register indirect with postincrement
- * pi7 : address register 7 indirect with postincrement
- * pd  : address register indirect with predecrement
- * pd7 : address register 7 indirect with predecrement
- * di  : address register indirect with displacement
- * ix  : address register indirect with index
- * aw  : absolute word
- * al  : absolute long
- * pcdi: program counter with displacement
- * pcix: program counter with index
- */
 
 
 
@@ -314,12 +270,57 @@ M68KMAKE_OPCODE_HANDLER_FOOTER
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_TABLE_BODY
 
-name:        Opcode handler base name
+The following table is arranged as follows:
+
+name:        Opcode mnemonic
+
 size:        Operation size
-ea mode:     Special addressing modes.  Set to underbar ("_") for normal
-             instructions.
+
+spec proc:   Special processing mode:
+                 .:    normal
+                 s:    static operand
+                 r:    register operand
+                 rr:   register to register
+                 mm:   memory to memory
+                 er:   effective address to register
+                 re:   register to effective address
+                 dd:   data register to data register
+                 da:   data register to address register
+                 aa:   address register to address register
+                 cr:   control register to register
+                 rc:   register to control register
+                 toc:  to condition code register
+                 tos:  to status register
+                 tou:  to user stack pointer
+                 frc:  from condition code register
+                 frs:  from status register
+                 fru:  from user stack pointer
+                 * for move.x, the special processing mode is a specific
+                   destination effective addressing mode.
+
+spec ea:     Specific effective addressing mode:
+                 .:    normal
+                 i:    immediate
+                 d:    data register
+                 a:    address register
+                 ai:   address register indirect
+                 pi:   address register indirect with postincrement
+                 pd:   address register indirect with predecrement
+                 di:   address register indirect with displacement
+                 ix:   address register indirect with index
+                 aw:   absolute word address
+                 al:   absolute long address
+                 pcdi: program counter relative with displacement
+                 pcix: program counter relative with index
+                 a7:   register specified in instruction is A7
+                 ax7:  register field X of instruction is A7
+                 ay7:  register field Y of instruction is A7
+                 axy7: register fields X and Y of instruction are A7
+
 bit pattern: Pattern to recognize this opcode.  "." means don't care.
+
 allowed ea:  List of allowed addressing modes:
+                 .: not present
                  A: address register indirect
                  +: ARI (address register indirect) with postincrement
                  -: ARI with predecrement
@@ -330,538 +331,541 @@ allowed ea:  List of allowed addressing modes:
                  d: program counter indirect with displacement
                  x: program counter indirect with index
                  I: immediate
+mode:        CPU operating mode for each cpu type.  U = user or supervisor,
+             S = supervisor only, "." = opcode not present.
+
 cpu cycles:  Base number of cycles required to execute this opcode on the
              specified CPU type.
-             If this opcode does not exist on a specific cpu, set to underbar
-             ("_")
+             Use "." if CPU does not have this opcode.
 
 
-                 ea                      allowed ea  cpu cycles
-name       size  mode  bit pattern       A+-DXWLdxI  000 010 020  comments
-=========  ====  ====  ================  ==========  === === ===  =============
+
+              spec  spec                    allowed ea  mode   cpu cycles
+name    size  proc   ea   bit pattern       A+-DXWLdxI  0 1 2  000 010 020  comments
+======  ====  ====  ====  ================  ==========  = = =  === === ===  =============
 M68KMAKE_TABLE_START
-1010          0  _     1010............  ..........    4   4   4
-1111          0  _     1111............  ..........    4   4   4
-abcd_rr       8  _     1100...100000...  ..........    6   6   4
-abcd_mm       8  ax7   1100111100001...  ..........   18  18  16
-abcd_mm       8  ay7   1100...100001111  ..........   18  18  16
-abcd_mm       8  axy7  1100111100001111  ..........   18  18  16
-abcd_mm       8  _     1100...100001...  ..........   18  18  16
-add_er        8  d     1101...000000...  ..........    4   4   2
-add_er        8  _     1101...000......  A+-DXWLdxI    4   4   2
-add_er       16  d     1101...001000...  ..........    4   4   2
-add_er       16  a     1101...001001...  ..........    4   4   2
-add_er       16  _     1101...001......  A+-DXWLdxI    4   4   2
-add_er       32  d     1101...010000...  ..........    6   6   2
-add_er       32  a     1101...010001...  ..........    6   6   2
-add_er       32  _     1101...010......  A+-DXWLdxI    6   6   2
-add_re        8  _     1101...100......  A+-DXWL...    8   8   4
-add_re       16  _     1101...101......  A+-DXWL...    8   8   4
-add_re       32  _     1101...110......  A+-DXWL...   12  12   4
-adda         16  d     1101...011000...  ..........    8   8   2
-adda         16  a     1101...011001...  ..........    8   8   2
-adda         16  _     1101...011......  A+-DXWLdxI    8   8   2
-adda         32  d     1101...111000...  ..........    6   6   2
-adda         32  a     1101...111001...  ..........    6   6   2
-adda         32  _     1101...111......  A+-DXWLdxI    6   6   2
-addi          8  d     0000011000000...  ..........    8   8   2
-addi          8  _     0000011000......  A+-DXWL...   12  12   4
-addi         16  d     0000011001000...  ..........    8   8   2
-addi         16  _     0000011001......  A+-DXWL...   12  12   4
-addi         32  d     0000011010000...  ..........   16  14   2
-addi         32  _     0000011010......  A+-DXWL...   20  20   4
-addq          8  d     0101...000000...  ..........    4   4   2
-addq          8  _     0101...000......  A+-DXWL...    8   8   4
-addq         16  d     0101...001000...  ..........    4   4   2
-addq         16  a     0101...001001...  ..........    4   4   2
-addq         16  _     0101...001......  A+-DXWL...    8   8   4
-addq         32  d     0101...010000...  ..........    8   8   2
-addq         32  a     0101...010001...  ..........    8   8   2
-addq         32  _     0101...010......  A+-DXWL...   12  12   4
-addx_rr       8  _     1101...100000...  ..........    4   4   2
-addx_rr      16  _     1101...101000...  ..........    4   4   2
-addx_rr      32  _     1101...110000...  ..........    8   6   2
-addx_mm       8  ax7   1101111100001...  ..........   18  18  12
-addx_mm       8  ay7   1101...100001111  ..........   18  18  12
-addx_mm       8  axy7  1101111100001111  ..........   18  18  12
-addx_mm       8  _     1101...100001...  ..........   18  18  12
-addx_mm      16  _     1101...101001...  ..........   18  18  12
-addx_mm      32  _     1101...110001...  ..........   30  30  12
-and_er        8  d     1100...000000...  ..........    4   4   2
-and_er        8  _     1100...000......  A+-DXWLdxI    4   4   2
-and_er       16  d     1100...001000...  ..........    4   4   2
-and_er       16  _     1100...001......  A+-DXWLdxI    4   4   2
-and_er       32  d     1100...010000...  ..........    6   6   2
-and_er       32  _     1100...010......  A+-DXWLdxI    6   6   2
-and_re        8  _     1100...100......  A+-DXWL...    8   8   4
-and_re       16  _     1100...101......  A+-DXWL...    8   8   4
-and_re       32  _     1100...110......  A+-DXWL...   12  12   4
-andi_to_ccr  16  _     0000001000111100  ..........   20  16  12
-andi_to_sr   16  _     0000001001111100  ..........   20  16  12
-andi          8  d     0000001000000...  ..........    8   8   2
-andi          8  _     0000001000......  A+-DXWL...   12  12   4
-andi         16  d     0000001001000...  ..........    8   8   2
-andi         16  _     0000001001......  A+-DXWL...   12  12   4
-andi         32  d     0000001010000...  ..........   14  14   2
-andi         32  _     0000001010......  A+-DXWL...   20  20   4
-asr_s         8  _     1110...000000...  ..........    6   6   6
-asr_s        16  _     1110...001000...  ..........    6   6   6
-asr_s        32  _     1110...010000...  ..........    8   8   6
-asr_r         8  _     1110...000100...  ..........    6   6   6
-asr_r        16  _     1110...001100...  ..........    6   6   6
-asr_r        32  _     1110...010100...  ..........    8   8   6
-asr          16  _     1110000011......  A+-DXWL...    8   8   5
-asl_s         8  _     1110...100000...  ..........    6   6   8
-asl_s        16  _     1110...101000...  ..........    6   6   8
-asl_s        32  _     1110...110000...  ..........    8   8   8
-asl_r         8  _     1110...100100...  ..........    6   6   8
-asl_r        16  _     1110...101100...  ..........    6   6   8
-asl_r        32  _     1110...110100...  ..........    8   8   8
-asl          16  _     1110000111......  A+-DXWL...    8   8   6
-bcc           8  _     0110............  ..........    8   8   6
-bcc          16  _     0110....00000000  ..........   10  10   6
-bcc          32  _     0110....11111111  ..........    _   _   6
-bchg_r        8  _     0000...101......  A+-DXWL...    8   8   4
-bchg_r       32  d     0000...101000...  ..........    8   8   4
-bchg_s        8  _     0000100001......  A+-DXWL...   12  12   4
-bchg_s       32  d     0000100001000...  ..........   12  12   4
-bclr_r        8  _     0000...110......  A+-DXWL...    8  10   4
-bclr_r       32  d     0000...110000...  ..........   10  10   4
-bclr_s        8  _     0000100010......  A+-DXWL...   12  12   4
-bclr_s       32  d     0000100010000...  ..........   14  14   4
-bfchg        32  d     1110101011000...  ..........    _   _  12  timing not quite correct
-bfchg        32  _     1110101011......  A..DXWL...    _   _  20
-bfclr        32  d     1110110011000...  ..........    _   _  12
-bfclr        32  _     1110110011......  A..DXWL...    _   _  20
-bfexts       32  d     1110101111000...  ..........    _   _   8
-bfexts       32  _     1110101111......  A..DXWLdx.    _   _  15
-bfextu       32  d     1110100111000...  ..........    _   _   8
-bfextu       32  _     1110100111......  A..DXWLdx.    _   _  15
-bfffo        32  d     1110110111000...  ..........    _   _  18
-bfffo        32  _     1110110111......  A..DXWLdx.    _   _  28
-bfins        32  d     1110111111000...  ..........    _   _  10
-bfins        32  _     1110111111......  A..DXWL...    _   _  17
-bfset        32  d     1110111011000...  ..........    _   _  12
-bfset        32  _     1110111011......  A..DXWL...    _   _  20
-bftst        32  d     1110100011000...  ..........    _   _   6
-bftst        32  _     1110100011......  A..DXWLdx.    _   _  13
-bkpt          0  _     0100100001001...  ..........    _  10  10
-bra           8  _     01100000........  ..........   10  10  10
-bra          16  _     0110000000000000  ..........   10  10  10
-bra          32  _     0110000011111111  ..........    _   _  10
-bset_r       32  d     0000...111000...  ..........    8   8   4
-bset_r        8  _     0000...111......  A+-DXWL...    8   8   4
-bset_s        8  _     0000100011......  A+-DXWL...   12  12   4
-bset_s       32  d     0000100011000...  ..........   12  12   4
-bsr           8  _     01100001........  ..........   18  18   7
-bsr          16  _     0110000100000000  ..........   18  18   7
-bsr          32  _     0110000111111111  ..........    _   _   7
-btst_r        8  _     0000...100......  A+-DXWLdxI    4   4   4
-btst_r       32  d     0000...100000...  ..........    6   6   4
-btst_s        8  _     0000100000......  A+-DXWLdx.    8   8   4
-btst_s       32  d     0000100000000...  ..........   10  10   4
-callm        32  _     0000011011......  A..DXWLdx.    _   _  60  not properly emulated
-cas           8  _     0000101011......  A+-DXWL...    _   _  12
-cas          16  _     0000110011......  A+-DXWL...    _   _  12
-cas          32  _     0000111011......  A+-DXWL...    _   _  12
-cas2         16  _     0000110011111100  ..........    _   _  12
-cas2         32  _     0000111011111100  ..........    _   _  12
-chk          16  d     0100...110000...  ..........   10   8   8
-chk          16  _     0100...110......  A+-DXWLdxI   10   8   8
-chk          32  d     0100...100000...  ..........    _   _   8
-chk          32  _     0100...100......  A+-DXWLdxI    _   _   8
-chk2_cmp2     8  _     0000000011......  A..DXWLdx.    _   _  18
-chk2_cmp2    16  _     0000001011......  A..DXWLdx.    _   _  18
-chk2_cmp2    32  _     0000010011......  A..DXWLdx.    _   _  18
-clr           8  d     0100001000000...  ..........    4   4   2
-clr           8  _     0100001000......  A+-DXWL...    8   4   4
-clr          16  d     0100001001000...  ..........    4   4   2
-clr          16  _     0100001001......  A+-DXWL...    8   4   4
-clr          32  d     0100001010000...  ..........    6   6   2
-clr          32  _     0100001010......  A+-DXWL...   12   6   4
-cmp           8  d     1011...000000...  ..........    4   4   2
-cmp           8  _     1011...000......  A+-DXWLdxI    4   4   2
-cmp          16  d     1011...001000...  ..........    4   4   2
-cmp          16  a     1011...001001...  ..........    4   4   2
-cmp          16  _     1011...001......  A+-DXWLdxI    4   4   2
-cmp          32  d     1011...010000...  ..........    6   6   2
-cmp          32  a     1011...010001...  ..........    6   6   2
-cmp          32  _     1011...010......  A+-DXWLdxI    6   6   2
-cmpa         16  d     1011...011000...  ..........    6   6   4
-cmpa         16  a     1011...011001...  ..........    6   6   4
-cmpa         16  _     1011...011......  A+-DXWLdxI    6   6   4
-cmpa         32  d     1011...111000...  ..........    6   6   4
-cmpa         32  a     1011...111001...  ..........    6   6   4
-cmpa         32  _     1011...111......  A+-DXWLdxI    6   6   4
-cmpi          8  d     0000110000000...  ..........    8   8   2
-cmpi          8  _     0000110000......  A+-DXWL...    8   8   2
-cmpi          8  pcdi  0000110000111010  ..........    _   _   7
-cmpi          8  pcix  0000110000111011  ..........    _   _   9
-cmpi         16  d     0000110001000...  ..........    8   8   2
-cmpi         16  _     0000110001......  A+-DXWL...    8   8   2
-cmpi         16  pcdi  0000110001111010  ..........    _   _   7
-cmpi         16  pcix  0000110001111011  ..........    _   _   9
-cmpi         32  d     0000110010000...  ..........   14  12   2
-cmpi         32  _     0000110010......  A+-DXWL...   12  12   2
-cmpi         32  pcdi  0000110010111010  ..........    _   _   7
-cmpi         32  pcix  0000110010111011  ..........    _   _   9
-cmpm          8  ax7   1011111100001...  ..........   12  12   9
-cmpm          8  ay7   1011...100001111  ..........   12  12   9
-cmpm          8  axy7  1011111100001111  ..........   12  12   9
-cmpm          8  _     1011...100001...  ..........   12  12   9
-cmpm         16  _     1011...101001...  ..........   12  12   9
-cmpm         32  _     1011...110001...  ..........   20  20   9
-cpbcc        32  _     1111...01.......  ..........    _   _   4  unemulated
-cpdbcc       32  _     1111...001001...  ..........    _   _   4  unemulated
-cpgen        32  _     1111...000......  ..........    _   _   4  unemulated
-cpscc        32  _     1111...001......  ..........    _   _   4  unemulated
-cptrapcc     32  _     1111...001111...  ..........    _   _   4  unemulated
-dbt          16  _     0101000011001...  ..........   12  12   6
-dbf          16  _     0101000111001...  ..........   14  14   6
-dbcc         16  _     0101....11001...  ..........   12  12   6
-divs         16  d     1000...111000...  ..........  158 122  56
-divs         16  _     1000...111......  A+-DXWLdxI  158 122  56
-divu         16  d     1000...011000...  ..........  140 108  44
-divu         16  _     1000...011......  A+-DXWLdxI  140 108  44
-divl         32  d     0100110001000...  ..........    _   _  84
-divl         32  _     0100110001......  A+-DXWLdxI    _   _  84
-eor           8  d     1011...100000...  ..........    4   4   2
-eor           8  _     1011...100......  A+-DXWL...    8   8   4
-eor          16  d     1011...101000...  ..........    4   4   2
-eor          16  _     1011...101......  A+-DXWL...    8   8   4
-eor          32  d     1011...110000...  ..........    8   6   2
-eor          32  _     1011...110......  A+-DXWL...   12  12   4
-eori_to_ccr  16  _     0000101000111100  ..........   20  16  12
-eori_to_sr   16  _     0000101001111100  ..........   20  16  12
-eori          8  d     0000101000000...  ..........    8   8   2
-eori          8  _     0000101000......  A+-DXWL...   12  12   4
-eori         16  d     0000101001000...  ..........    8   8   2
-eori         16  _     0000101001......  A+-DXWL...   12  12   4
-eori         32  d     0000101010000...  ..........   16  14   2
-eori         32  _     0000101010......  A+-DXWL...   20  20   4
-exg_dd       32  _     1100...101000...  ..........    6   6   2
-exg_aa       32  _     1100...101001...  ..........    6   6   2
-exg_da       32  _     1100...110001...  ..........    6   6   2
-ext          16  _     0100100010000...  ..........    4   4   4
-ext          32  _     0100100011000...  ..........    4   4   4
-extb         32  _     0100100111000...  ..........    _   _   4
-illegal       0  _     0100101011111100  ..........    4   4   4
-jmp          32  _     0100111011......  A..DXWLdx.    4   4   0
-jsr          32  _     0100111010......  A..DXWLdx.   12  12   0
-lea          32  _     0100...111......  A..DXWLdx.    0   0   2
-link         16  a7    0100111001010111  ..........   16  16   5
-link         16  _     0100111001010...  ..........   16  16   5
-link         32  a7    0100100000001111  ..........    _   _   6
-link         32  _     0100100000001...  ..........    _   _   6
-lsr_s         8  _     1110...000001...  ..........    6   6   4
-lsr_s        16  _     1110...001001...  ..........    6   6   4
-lsr_s        32  _     1110...010001...  ..........    8   8   4
-lsr_r         8  _     1110...000101...  ..........    6   6   6
-lsr_r        16  _     1110...001101...  ..........    6   6   6
-lsr_r        32  _     1110...010101...  ..........    8   8   6
-lsr          16  _     1110001011......  A+-DXWL...    8   8   5
-lsl_s         8  _     1110...100001...  ..........    6   6   4
-lsl_s        16  _     1110...101001...  ..........    6   6   4
-lsl_s        32  _     1110...110001...  ..........    8   8   4
-lsl_r         8  _     1110...100101...  ..........    6   6   6
-lsl_r        16  _     1110...101101...  ..........    6   6   6
-lsl_r        32  _     1110...110101...  ..........    8   8   6
-lsl          16  _     1110001111......  A+-DXWL...    8   8   5
-move_dd       8  d     0001...000000...  ..........    4   4   2
-move_dd       8  _     0001...000......  A+-DXWLdxI    4   4   2
-move_ai       8  d     0001...010000...  ..........    8   8   4
-move_ai       8  _     0001...010......  A+-DXWLdxI    8   8   4
-move_pi       8  d     0001...011000...  ..........    8   8   4
-move_pi       8  _     0001...011......  A+-DXWLdxI    8   8   4
-move_pi7      8  d     0001111011000...  ..........    8   8   4
-move_pi7      8  _     0001111011......  A+-DXWLdxI    8   8   4
-move_pd       8  d     0001...100000...  ..........    8   8   5
-move_pd       8  _     0001...100......  A+-DXWLdxI    8   8   5
-move_pd7      8  d     0001111100000...  ..........    8   8   5
-move_pd7      8  _     0001111100......  A+-DXWLdxI    8   8   5
-move_di       8  d     0001...101000...  ..........   12  12   5
-move_di       8  _     0001...101......  A+-DXWLdxI   12  12   5
-move_ix       8  d     0001...110000...  ..........   14  14   7
-move_ix       8  _     0001...110......  A+-DXWLdxI   14  14   7
-move_aw       8  d     0001000111000...  ..........   12  12   4
-move_aw       8  _     0001000111......  A+-DXWLdxI   12  12   4
-move_al       8  d     0001001111000...  ..........   16  16   6
-move_al       8  _     0001001111......  A+-DXWLdxI   16  16   6
-move_dd      16  d     0011...000000...  ..........    4   4   2
-move_dd      16  a     0011...000001...  ..........    4   4   2
-move_dd      16  _     0011...000......  A+-DXWLdxI    4   4   2
-move_ai      16  d     0011...010000...  ..........    8   8   4
-move_ai      16  a     0011...010001...  ..........    8   8   4
-move_ai      16  _     0011...010......  A+-DXWLdxI    8   8   4
-move_pi      16  d     0011...011000...  ..........    8   8   4
-move_pi      16  a     0011...011001...  ..........    8   8   4
-move_pi      16  _     0011...011......  A+-DXWLdxI    8   8   4
-move_pd      16  d     0011...100000...  ..........    8   8   5
-move_pd      16  a     0011...100001...  ..........    8   8   5
-move_pd      16  _     0011...100......  A+-DXWLdxI    8   8   5
-move_di      16  d     0011...101000...  ..........   12  12   5
-move_di      16  a     0011...101001...  ..........   12  12   5
-move_di      16  _     0011...101......  A+-DXWLdxI   12  12   5
-move_ix      16  d     0011...110000...  ..........   14  14   7
-move_ix      16  a     0011...110001...  ..........   14  14   7
-move_ix      16  _     0011...110......  A+-DXWLdxI   14  14   7
-move_aw      16  d     0011000111000...  ..........   12  12   4
-move_aw      16  a     0011000111001...  ..........   12  12   4
-move_aw      16  _     0011000111......  A+-DXWLdxI   12  12   4
-move_al      16  d     0011001111000...  ..........   16  16   6
-move_al      16  a     0011001111001...  ..........   16  16   6
-move_al      16  _     0011001111......  A+-DXWLdxI   16  16   6
-move_dd      32  d     0010...000000...  ..........    4   4   2
-move_dd      32  a     0010...000001...  ..........    4   4   2
-move_dd      32  _     0010...000......  A+-DXWLdxI    4   4   2
-move_ai      32  d     0010...010000...  ..........   12  12   4
-move_ai      32  a     0010...010001...  ..........   12  12   4
-move_ai      32  _     0010...010......  A+-DXWLdxI   12  12   4
-move_pi      32  d     0010...011000...  ..........   12  12   4
-move_pi      32  a     0010...011001...  ..........   12  12   4
-move_pi      32  _     0010...011......  A+-DXWLdxI   12  12   4
-move_pd      32  d     0010...100000...  ..........   12  14   5
-move_pd      32  a     0010...100001...  ..........   12  14   5
-move_pd      32  _     0010...100......  A+-DXWLdxI   12  14   5
-move_di      32  d     0010...101000...  ..........   16  16   5
-move_di      32  a     0010...101001...  ..........   16  16   5
-move_di      32  _     0010...101......  A+-DXWLdxI   16  16   5
-move_ix      32  d     0010...110000...  ..........   18  18   7
-move_ix      32  a     0010...110001...  ..........   18  18   7
-move_ix      32  _     0010...110......  A+-DXWLdxI   18  18   7
-move_aw      32  d     0010000111000...  ..........   16  16   4
-move_aw      32  a     0010000111001...  ..........   16  16   4
-move_aw      32  _     0010000111......  A+-DXWLdxI   16  16   4
-move_al      32  d     0010001111000...  ..........   20  20   6
-move_al      32  a     0010001111001...  ..........   20  20   6
-move_al      32  _     0010001111......  A+-DXWLdxI   20  20   6
-movea        16  d     0011...001000...  ..........    4   4   2
-movea        16  a     0011...001001...  ..........    4   4   2
-movea        16  _     0011...001......  A+-DXWLdxI    4   4   2
-movea        32  d     0010...001000...  ..........    4   4   2
-movea        32  a     0010...001001...  ..........    4   4   2
-movea        32  _     0010...001......  A+-DXWLdxI    4   4   2
-move_fr_ccr  16  d     0100001011000...  ..........    _   4   4
-move_fr_ccr  16  _     0100001011......  A+-DXWL...    _   8   4
-move_to_ccr  16  d     0100010011000...  ..........   12  12   4
-move_to_ccr  16  _     0100010011......  A+-DXWLdxI   12  12   4
-move_fr_sr   16  d     0100000011000...  ..........    6   4   8
-move_fr_sr   16  _     0100000011......  A+-DXWL...    8   8   8
-move_to_sr   16  d     0100011011000...  ..........   12  12   8
-move_to_sr   16  _     0100011011......  A+-DXWLdxI   12  12   8
-move_fr_usp  32  _     0100111001101...  ..........    4   6   2
-move_to_usp  32  _     0100111001100...  ..........    4   6   2
-movec_cr     32  _     0100111001111010  ..........    _  12   6
-movec_rc     32  _     0100111001111011  ..........    _  10  12
-movem_re     16  pd    0100100010100...  ..........    8   8   4
-movem_re     16  _     0100100010......  A..DXWL...    8   8   4
-movem_re     32  pd    0100100011100...  ..........    8   8   4
-movem_re     32  _     0100100011......  A..DXWL...    8   8   4
-movem_er     16  pi    0100110010011...  ..........   12  12   8
-movem_er     16  _     0100110010......  A..DXWLdx.   12  12   8
-movem_er     32  pi    0100110011011...  ..........   12  12   8
-movem_er     32  _     0100110011......  A..DXWLdx.   12  12   8
-movep_er     16  _     0000...100001...  ..........   16  16  12
-movep_er     32  _     0000...101001...  ..........   24  24  18
-movep_re     16  _     0000...110001...  ..........   16  16  11
-movep_re     32  _     0000...111001...  ..........   24  24  17
-moveq        32  _     0111...0........  ..........    4   4   2
-moves         8  _     0000111000......  A+-DXWL...    _  14   5
-moves        16  _     0000111001......  A+-DXWL...    _  14   5
-moves        32  _     0000111010......  A+-DXWL...    _  16   5
-muls         16  d     1100...111000...  ..........   54  32  27
-muls         16  _     1100...111......  A+-DXWLdxI   54  32  27
-mulu         16  d     1100...011000...  ..........   54  30  27
-mulu         16  _     1100...011......  A+-DXWLdxI   54  30  27
-mull         32  d     0100110000000...  ..........    _   _  43
-mull         32  _     0100110000......  A+-DXWLdxI    _   _  43
-nbcd          8  d     0100100000000...  ..........    6   6   6
-nbcd          8  _     0100100000......  A+-DXWL...    8   8   6
-neg           8  d     0100010000000...  ..........    4   4   2
-neg           8  _     0100010000......  A+-DXWL...    8   8   4
-neg          16  d     0100010001000...  ..........    4   4   2
-neg          16  _     0100010001......  A+-DXWL...    8   8   4
-neg          32  d     0100010010000...  ..........    6   6   2
-neg          32  _     0100010010......  A+-DXWL...   12  12   4
-negx          8  d     0100000000000...  ..........    4   4   2
-negx          8  _     0100000000......  A+-DXWL...    8   8   4
-negx         16  d     0100000001000...  ..........    4   4   2
-negx         16  _     0100000001......  A+-DXWL...    8   8   4
-negx         32  d     0100000010000...  ..........    6   6   2
-negx         32  _     0100000010......  A+-DXWL...   12  12   4
-nop           0  _     0100111001110001  ..........    4   4   2
-not           8  d     0100011000000...  ..........    4   4   2
-not           8  _     0100011000......  A+-DXWL...    8   8   4
-not          16  d     0100011001000...  ..........    4   4   2
-not          16  _     0100011001......  A+-DXWL...    8   8   4
-not          32  d     0100011010000...  ..........    6   6   2
-not          32  _     0100011010......  A+-DXWL...   12  12   4
-or_er         8  d     1000...000000...  ..........    4   4   2
-or_er         8  _     1000...000......  A+-DXWLdxI    4   4   2
-or_er        16  d     1000...001000...  ..........    4   4   2
-or_er        16  _     1000...001......  A+-DXWLdxI    4   4   2
-or_er        32  d     1000...010000...  ..........    6   6   2
-or_er        32  _     1000...010......  A+-DXWLdxI    6   6   2
-or_re         8  _     1000...100......  A+-DXWL...    8   8   4
-or_re        16  _     1000...101......  A+-DXWL...    8   8   4
-or_re        32  _     1000...110......  A+-DXWL...   12  12   4
-ori_to_ccr   16  _     0000000000111100  ..........   20  16  12
-ori_to_sr    16  _     0000000001111100  ..........   20  16  12
-ori           8  d     0000000000000...  ..........    8   8   2
-ori           8  _     0000000000......  A+-DXWL...   12  12   4
-ori          16  d     0000000001000...  ..........    8   8   2
-ori          16  _     0000000001......  A+-DXWL...   12  12   4
-ori          32  d     0000000010000...  ..........   16  14   2
-ori          32  _     0000000010......  A+-DXWL...   20  20   4
-pack_rr      16  _     1000...101000...  ..........    _   _   6
-pack_mm      16  ax7   1000111101001...  ..........    _   _  13
-pack_mm      16  ay7   1000...101001111  ..........    _   _  13
-pack_mm      16  axy7  1000111101001111  ..........    _   _  13
-pack_mm      16  _     1000...101001...  ..........    _   _  13
-pea          32  _     0100100001......  A..DXWLdx.    6   6   5
-reset         0  _     0100111001110000  ..........    0   0   0
-ror_s         8  _     1110...000011...  ..........    6   6   8
-ror_s        16  _     1110...001011...  ..........    6   6   8
-ror_s        32  _     1110...010011...  ..........    8   8   8
-ror_r         8  _     1110...000111...  ..........    6   6   8
-ror_r        16  _     1110...001111...  ..........    6   6   8
-ror_r        32  _     1110...010111...  ..........    8   8   8
-ror          16  _     1110011011......  A+-DXWL...    8   8   7
-rol_s         8  _     1110...100011...  ..........    6   6   8
-rol_s        16  _     1110...101011...  ..........    6   6   8
-rol_s        32  _     1110...110011...  ..........    8   8   8
-rol_r         8  _     1110...100111...  ..........    6   6   8
-rol_r        16  _     1110...101111...  ..........    6   6   8
-rol_r        32  _     1110...110111...  ..........    8   8   8
-rol          16  _     1110011111......  A+-DXWL...    8   8   7
-roxr_s        8  _     1110...000010...  ..........    6   6  12
-roxr_s       16  _     1110...001010...  ..........    6   6  12
-roxr_s       32  _     1110...010010...  ..........    8   8  12
-roxr_r        8  _     1110...000110...  ..........    6   6  12
-roxr_r       16  _     1110...001110...  ..........    6   6  12
-roxr_r       32  _     1110...010110...  ..........    8   8  12
-roxr         16  _     1110010011......  A+-DXWL...    8   8   5
-roxl_s        8  _     1110...100010...  ..........    6   6  12
-roxl_s       16  _     1110...101010...  ..........    6   6  12
-roxl_s       32  _     1110...110010...  ..........    8   8  12
-roxl_r        8  _     1110...100110...  ..........    6   6  12
-roxl_r       16  _     1110...101110...  ..........    6   6  12
-roxl_r       32  _     1110...110110...  ..........    8   8  12
-roxl         16  _     1110010111......  A+-DXWL...    8   8   5
-rtd          32  _     0100111001110100  ..........    _  16  10
-rte          32  _     0100111001110011  ..........   20  24  20  bus fault not emulated
-rtm          32  _     000001101100....  ..........    _   _  19  not properly emulated
-rtr          32  _     0100111001110111  ..........   20  20  14
-rts          32  _     0100111001110101  ..........   16  16  10
-sbcd_rr       8  _     1000...100000...  ..........    6   6   4
-sbcd_mm       8  ax7   1000111100001...  ..........   18  18  16
-sbcd_mm       8  ay7   1000...100001111  ..........   18  18  16
-sbcd_mm       8  axy7  1000111100001111  ..........   18  18  16
-sbcd_mm       8  _     1000...100001...  ..........   18  18  16
-st            8  d     0101000011000...  ..........    6   4   4
-st            8  _     0101000011......  A+-DXWL...    8   8   6
-sf            8  d     0101000111000...  ..........    4   4   4
-sf            8  _     0101000111......  A+-DXWL...    8   8   6
-scc           8  d     0101....11000...  ..........    4   4   4
-scc           8  _     0101....11......  A+-DXWL...    8   8   6
-stop          0  _     0100111001110010  ..........    4   4   8
-sub_er        8  d     1001...000000...  ..........    4   4   2
-sub_er        8  _     1001...000......  A+-DXWLdxI    4   4   2
-sub_er       16  d     1001...001000...  ..........    4   4   2
-sub_er       16  a     1001...001001...  ..........    4   4   2
-sub_er       16  _     1001...001......  A+-DXWLdxI    4   4   2
-sub_er       32  d     1001...010000...  ..........    6   6   2
-sub_er       32  a     1001...010001...  ..........    6   6   2
-sub_er       32  _     1001...010......  A+-DXWLdxI    6   6   2
-sub_re        8  _     1001...100......  A+-DXWL...    8   8   4
-sub_re       16  _     1001...101......  A+-DXWL...    8   8   4
-sub_re       32  _     1001...110......  A+-DXWL...   12  12   4
-suba         16  d     1001...011000...  ..........    8   8   2
-suba         16  a     1001...011001...  ..........    8   8   2
-suba         16  _     1001...011......  A+-DXWLdxI    8   8   2
-suba         32  d     1001...111000...  ..........    6   6   2
-suba         32  a     1001...111001...  ..........    6   6   2
-suba         32  _     1001...111......  A+-DXWLdxI    6   6   2
-subi          8  d     0000010000000...  ..........    8   8   2
-subi          8  _     0000010000......  A+-DXWL...   12  12   4
-subi         16  d     0000010001000...  ..........    8   8   2
-subi         16  _     0000010001......  A+-DXWL...   12  12   4
-subi         32  d     0000010010000...  ..........   16  14   2
-subi         32  _     0000010010......  A+-DXWL...   20  20   4
-subq          8  d     0101...100000...  ..........    4   4   2
-subq          8  _     0101...100......  A+-DXWL...    8   8   4
-subq         16  d     0101...101000...  ..........    4   4   2
-subq         16  a     0101...101001...  ..........    8   4   2
-subq         16  _     0101...101......  A+-DXWL...    8   8   4
-subq         32  d     0101...110000...  ..........    8   8   2
-subq         32  a     0101...110001...  ..........    8   8   2
-subq         32  _     0101...110......  A+-DXWL...   12  12   4
-subx_rr       8  _     1001...100000...  ..........    4   4   2
-subx_rr      16  _     1001...101000...  ..........    4   4   2
-subx_rr      32  _     1001...110000...  ..........    8   6   2
-subx_mm       8  ax7   1001111100001...  ..........   18  18  12
-subx_mm       8  ay7   1001...100001111  ..........   18  18  12
-subx_mm       8  axy7  1001111100001111  ..........   18  18  12
-subx_mm       8  _     1001...100001...  ..........   18  18  12
-subx_mm      16  _     1001...101001...  ..........   18  18  12
-subx_mm      32  _     1001...110001...  ..........   30  30  12
-swap         32  _     0100100001000...  ..........    4   4   4
-tas           8  d     0100101011000...  ..........    4   4   4
-tas           8  _     0100101011......  A+-DXWL...   14  14  12
-trap          0  _     010011100100....  ..........    4   4   4
-trapt         0  _     0101000011111100  ..........    _   _   4
-trapt        16  _     0101000011111010  ..........    _   _   6
-trapt        32  _     0101000011111011  ..........    _   _   8
-trapf         0  _     0101000111111100  ..........    _   _   4
-trapf        16  _     0101000111111010  ..........    _   _   6
-trapf        32  _     0101000111111011  ..........    _   _   8
-trapcc        0  _     0101....11111100  ..........    _   _   4
-trapcc       16  _     0101....11111010  ..........    _   _   6
-trapcc       32  _     0101....11111011  ..........    _   _   8
-trapv         0  _     0100111001110110  ..........    4   4   4
-tst           8  d     0100101000000...  ..........    4   4   2
-tst           8  _     0100101000......  A+-DXWL...    4   4   2
-tst           8  pcdi  0100101000111010  ..........    _   _   7
-tst           8  pcix  0100101000111011  ..........    _   _   9
-tst           8  i     0100101000111100  ..........    _   _   6
-tst          16  d     0100101001000...  ..........    4   4   2
-tst          16  a     0100101001001...  ..........    _   _   2
-tst          16  _     0100101001......  A+-DXWL...    4   4   2
-tst          16  pcdi  0100101001111010  ..........    _   _   7
-tst          16  pcix  0100101001111011  ..........    _   _   9
-tst          16  i     0100101001111100  ..........    _   _   6
-tst          32  d     0100101010000...  ..........    4   4   2
-tst          32  a     0100101010001...  ..........    _   _   2
-tst          32  _     0100101010......  A+-DXWL...    4   4   2
-tst          32  pcdi  0100101010111010  ..........    _   _   7
-tst          32  pcix  0100101010111011  ..........    _   _   9
-tst          32  i     0100101010111100  ..........    _   _   6
-unlk         32  a7    0100111001011111  ..........   12  12   6
-unlk         32  _     0100111001011...  ..........   12  12   6
-unpk_rr      16  _     1000...110000...  ..........    _   _   8
-unpk_mm      16  ax7   1000111110001...  ..........    _   _  13
-unpk_mm      16  ay7   1000...110001111  ..........    _   _  13
-unpk_mm      16  axy7  1000111110001111  ..........    _   _  13
-unpk_mm      16  _     1000...110001...  ..........    _   _  13
+1010       0  .     .     1010............  ..........  U U U    4   4   4
+1111       0  .     .     1111............  ..........  U U U    4   4   4
+abcd       8  rr    .     1100...100000...  ..........  U U U    6   6   4
+abcd       8  mm    ax7   1100111100001...  ..........  U U U   18  18  16
+abcd       8  mm    ay7   1100...100001111  ..........  U U U   18  18  16
+abcd       8  mm    axy7  1100111100001111  ..........  U U U   18  18  16
+abcd       8  mm    .     1100...100001...  ..........  U U U   18  18  16
+add        8  er    d     1101...000000...  ..........  U U U    4   4   2
+add        8  er    .     1101...000......  A+-DXWLdxI  U U U    4   4   2
+add       16  er    d     1101...001000...  ..........  U U U    4   4   2
+add       16  er    a     1101...001001...  ..........  U U U    4   4   2
+add       16  er    .     1101...001......  A+-DXWLdxI  U U U    4   4   2
+add       32  er    d     1101...010000...  ..........  U U U    6   6   2
+add       32  er    a     1101...010001...  ..........  U U U    6   6   2
+add       32  er    .     1101...010......  A+-DXWLdxI  U U U    6   6   2
+add        8  re    .     1101...100......  A+-DXWL...  U U U    8   8   4
+add       16  re    .     1101...101......  A+-DXWL...  U U U    8   8   4
+add       32  re    .     1101...110......  A+-DXWL...  U U U   12  12   4
+adda      16  .     d     1101...011000...  ..........  U U U    8   8   2
+adda      16  .     a     1101...011001...  ..........  U U U    8   8   2
+adda      16  .     .     1101...011......  A+-DXWLdxI  U U U    8   8   2
+adda      32  .     d     1101...111000...  ..........  U U U    6   6   2
+adda      32  .     a     1101...111001...  ..........  U U U    6   6   2
+adda      32  .     .     1101...111......  A+-DXWLdxI  U U U    6   6   2
+addi       8  .     d     0000011000000...  ..........  U U U    8   8   2
+addi       8  .     .     0000011000......  A+-DXWL...  U U U   12  12   4
+addi      16  .     d     0000011001000...  ..........  U U U    8   8   2
+addi      16  .     .     0000011001......  A+-DXWL...  U U U   12  12   4
+addi      32  .     d     0000011010000...  ..........  U U U   16  14   2
+addi      32  .     .     0000011010......  A+-DXWL...  U U U   20  20   4
+addq       8  .     d     0101...000000...  ..........  U U U    4   4   2
+addq       8  .     .     0101...000......  A+-DXWL...  U U U    8   8   4
+addq      16  .     d     0101...001000...  ..........  U U U    4   4   2
+addq      16  .     a     0101...001001...  ..........  U U U    4   4   2
+addq      16  .     .     0101...001......  A+-DXWL...  U U U    8   8   4
+addq      32  .     d     0101...010000...  ..........  U U U    8   8   2
+addq      32  .     a     0101...010001...  ..........  U U U    8   8   2
+addq      32  .     .     0101...010......  A+-DXWL...  U U U   12  12   4
+addx       8  rr    .     1101...100000...  ..........  U U U    4   4   2
+addx      16  rr    .     1101...101000...  ..........  U U U    4   4   2
+addx      32  rr    .     1101...110000...  ..........  U U U    8   6   2
+addx       8  mm    ax7   1101111100001...  ..........  U U U   18  18  12
+addx       8  mm    ay7   1101...100001111  ..........  U U U   18  18  12
+addx       8  mm    axy7  1101111100001111  ..........  U U U   18  18  12
+addx       8  mm    .     1101...100001...  ..........  U U U   18  18  12
+addx      16  mm    .     1101...101001...  ..........  U U U   18  18  12
+addx      32  mm    .     1101...110001...  ..........  U U U   30  30  12
+and        8  er    d     1100...000000...  ..........  U U U    4   4   2
+and        8  er    .     1100...000......  A+-DXWLdxI  U U U    4   4   2
+and       16  er    d     1100...001000...  ..........  U U U    4   4   2
+and       16  er    .     1100...001......  A+-DXWLdxI  U U U    4   4   2
+and       32  er    d     1100...010000...  ..........  U U U    6   6   2
+and       32  er    .     1100...010......  A+-DXWLdxI  U U U    6   6   2
+and        8  re    .     1100...100......  A+-DXWL...  U U U    8   8   4
+and       16  re    .     1100...101......  A+-DXWL...  U U U    8   8   4
+and       32  re    .     1100...110......  A+-DXWL...  U U U   12  12   4
+andi      16  toc   .     0000001000111100  ..........  U U U   20  16  12
+andi      16  tos   .     0000001001111100  ..........  S S S   20  16  12
+andi       8  .     d     0000001000000...  ..........  U U U    8   8   2
+andi       8  .     .     0000001000......  A+-DXWL...  U U U   12  12   4
+andi      16  .     d     0000001001000...  ..........  U U U    8   8   2
+andi      16  .     .     0000001001......  A+-DXWL...  U U U   12  12   4
+andi      32  .     d     0000001010000...  ..........  U U U   14  14   2
+andi      32  .     .     0000001010......  A+-DXWL...  U U U   20  20   4
+asr        8  s     .     1110...000000...  ..........  U U U    6   6   6
+asr       16  s     .     1110...001000...  ..........  U U U    6   6   6
+asr       32  s     .     1110...010000...  ..........  U U U    8   8   6
+asr        8  r     .     1110...000100...  ..........  U U U    6   6   6
+asr       16  r     .     1110...001100...  ..........  U U U    6   6   6
+asr       32  r     .     1110...010100...  ..........  U U U    8   8   6
+asr       16  .     .     1110000011......  A+-DXWL...  U U U    8   8   5
+asl        8  s     .     1110...100000...  ..........  U U U    6   6   8
+asl       16  s     .     1110...101000...  ..........  U U U    6   6   8
+asl       32  s     .     1110...110000...  ..........  U U U    8   8   8
+asl        8  r     .     1110...100100...  ..........  U U U    6   6   8
+asl       16  r     .     1110...101100...  ..........  U U U    6   6   8
+asl       32  r     .     1110...110100...  ..........  U U U    8   8   8
+asl       16  .     .     1110000111......  A+-DXWL...  U U U    8   8   6
+bcc        8  .     .     0110............  ..........  U U U    8   8   6
+bcc       16  .     .     0110....00000000  ..........  U U U   10  10   6
+bcc       32  .     .     0110....11111111  ..........  . . U    .   .   6
+bchg       8  r     .     0000...101......  A+-DXWL...  U U U    8   8   4
+bchg      32  r     d     0000...101000...  ..........  U U U    8   8   4
+bchg       8  s     .     0000100001......  A+-DXWL...  U U U   12  12   4
+bchg      32  s     d     0000100001000...  ..........  U U U   12  12   4
+bclr       8  r     .     0000...110......  A+-DXWL...  U U U    8  10   4
+bclr      32  r     d     0000...110000...  ..........  U U U   10  10   4
+bclr       8  s     .     0000100010......  A+-DXWL...  U U U   12  12   4
+bclr      32  s     d     0000100010000...  ..........  U U U   14  14   4
+bfchg     32  .     d     1110101011000...  ..........  . . U    .   .  12  timing not quite correct
+bfchg     32  .     .     1110101011......  A..DXWL...  . . U    .   .  20
+bfclr     32  .     d     1110110011000...  ..........  . . U    .   .  12
+bfclr     32  .     .     1110110011......  A..DXWL...  . . U    .   .  20
+bfexts    32  .     d     1110101111000...  ..........  . . U    .   .   8
+bfexts    32  .     .     1110101111......  A..DXWLdx.  . . U    .   .  15
+bfextu    32  .     d     1110100111000...  ..........  . . U    .   .   8
+bfextu    32  .     .     1110100111......  A..DXWLdx.  . . U    .   .  15
+bfffo     32  .     d     1110110111000...  ..........  . . U    .   .  18
+bfffo     32  .     .     1110110111......  A..DXWLdx.  . . U    .   .  28
+bfins     32  .     d     1110111111000...  ..........  . . U    .   .  10
+bfins     32  .     .     1110111111......  A..DXWL...  . . U    .   .  17
+bfset     32  .     d     1110111011000...  ..........  . . U    .   .  12
+bfset     32  .     .     1110111011......  A..DXWL...  . . U    .   .  20
+bftst     32  .     d     1110100011000...  ..........  . . U    .   .   6
+bftst     32  .     .     1110100011......  A..DXWLdx.  . . U    .   .  13
+bkpt       0  .     .     0100100001001...  ..........  . U U    .  10  10
+bra        8  .     .     01100000........  ..........  U U U   10  10  10
+bra       16  .     .     0110000000000000  ..........  U U U   10  10  10
+bra       32  .     .     0110000011111111  ..........  U U U    .   .  10
+bset      32  r     d     0000...111000...  ..........  U U U    8   8   4
+bset       8  r     .     0000...111......  A+-DXWL...  U U U    8   8   4
+bset       8  s     .     0000100011......  A+-DXWL...  U U U   12  12   4
+bset      32  s     d     0000100011000...  ..........  U U U   12  12   4
+bsr        8  .     .     01100001........  ..........  U U U   18  18   7
+bsr       16  .     .     0110000100000000  ..........  U U U   18  18   7
+bsr       32  .     .     0110000111111111  ..........  . . U    .   .   7
+btst       8  r     .     0000...100......  A+-DXWLdxI  U U U    4   4   4
+btst      32  r     d     0000...100000...  ..........  U U U    6   6   4
+btst       8  s     .     0000100000......  A+-DXWLdx.  U U U    8   8   4
+btst      32  s     d     0000100000000...  ..........  U U U   10  10   4
+callm     32  .     .     0000011011......  A..DXWLdx.  . . U    .   .  60  not properly emulated
+cas        8  .     .     0000101011......  A+-DXWL...  . . U    .   .  12
+cas       16  .     .     0000110011......  A+-DXWL...  . . U    .   .  12
+cas       32  .     .     0000111011......  A+-DXWL...  . . U    .   .  12
+cas2      16  .     .     0000110011111100  ..........  . . U    .   .  12
+cas2      32  .     .     0000111011111100  ..........  . . U    .   .  12
+chk       16  .     d     0100...110000...  ..........  U U U   10   8   8
+chk       16  .     .     0100...110......  A+-DXWLdxI  U U U   10   8   8
+chk       32  .     d     0100...100000...  ..........  . . U    .   .   8
+chk       32  .     .     0100...100......  A+-DXWLdxI  . . U    .   .   8
+chk2cmp2   8  .     .     0000000011......  A..DXWLdx.  . . U    .   .  18
+chk2cmp2  16  .     .     0000001011......  A..DXWLdx.  . . U    .   .  18
+chk2cmp2  32  .     .     0000010011......  A..DXWLdx.  . . U    .   .  18
+clr        8  .     d     0100001000000...  ..........  U U U    4   4   2
+clr        8  .     .     0100001000......  A+-DXWL...  U U U    8   4   4
+clr       16  .     d     0100001001000...  ..........  U U U    4   4   2
+clr       16  .     .     0100001001......  A+-DXWL...  U U U    8   4   4
+clr       32  .     d     0100001010000...  ..........  U U U    6   6   2
+clr       32  .     .     0100001010......  A+-DXWL...  U U U   12   6   4
+cmp        8  .     d     1011...000000...  ..........  U U U    4   4   2
+cmp        8  .     .     1011...000......  A+-DXWLdxI  U U U    4   4   2
+cmp       16  .     d     1011...001000...  ..........  U U U    4   4   2
+cmp       16  .     a     1011...001001...  ..........  U U U    4   4   2
+cmp       16  .     .     1011...001......  A+-DXWLdxI  U U U    4   4   2
+cmp       32  .     d     1011...010000...  ..........  U U U    6   6   2
+cmp       32  .     a     1011...010001...  ..........  U U U    6   6   2
+cmp       32  .     .     1011...010......  A+-DXWLdxI  U U U    6   6   2
+cmpa      16  .     d     1011...011000...  ..........  U U U    6   6   4
+cmpa      16  .     a     1011...011001...  ..........  U U U    6   6   4
+cmpa      16  .     .     1011...011......  A+-DXWLdxI  U U U    6   6   4
+cmpa      32  .     d     1011...111000...  ..........  U U U    6   6   4
+cmpa      32  .     a     1011...111001...  ..........  U U U    6   6   4
+cmpa      32  .     .     1011...111......  A+-DXWLdxI  U U U    6   6   4
+cmpi       8  .     d     0000110000000...  ..........  U U U    8   8   2
+cmpi       8  .     .     0000110000......  A+-DXWL...  U U U    8   8   2
+cmpi       8  .     pcdi  0000110000111010  ..........  . . U    .   .   7
+cmpi       8  .     pcix  0000110000111011  ..........  . . U    .   .   9
+cmpi      16  .     d     0000110001000...  ..........  U U U    8   8   2
+cmpi      16  .     .     0000110001......  A+-DXWL...  U U U    8   8   2
+cmpi      16  .     pcdi  0000110001111010  ..........  . . U    .   .   7
+cmpi      16  .     pcix  0000110001111011  ..........  . . U    .   .   9
+cmpi      32  .     d     0000110010000...  ..........  U U U   14  12   2
+cmpi      32  .     .     0000110010......  A+-DXWL...  U U U   12  12   2
+cmpi      32  .     pcdi  0000110010111010  ..........  . . U    .   .   7
+cmpi      32  .     pcix  0000110010111011  ..........  . . U    .   .   9
+cmpm       8  .     ax7   1011111100001...  ..........  U U U   12  12   9
+cmpm       8  .     ay7   1011...100001111  ..........  U U U   12  12   9
+cmpm       8  .     axy7  1011111100001111  ..........  U U U   12  12   9
+cmpm       8  .     .     1011...100001...  ..........  U U U   12  12   9
+cmpm      16  .     .     1011...101001...  ..........  U U U   12  12   9
+cmpm      32  .     .     1011...110001...  ..........  U U U   20  20   9
+cpbcc     32  .     .     1111...01.......  ..........  . . U    .   .   4  unemulated
+cpdbcc    32  .     .     1111...001001...  ..........  . . U    .   .   4  unemulated
+cpgen     32  .     .     1111...000......  ..........  . . U    .   .   4  unemulated
+cpscc     32  .     .     1111...001......  ..........  . . U    .   .   4  unemulated
+cptrapcc  32  .     .     1111...001111...  ..........  . . U    .   .   4  unemulated
+dbt       16  .     .     0101000011001...  ..........  U U U   12  12   6
+dbf       16  .     .     0101000111001...  ..........  U U U   14  14   6
+dbcc      16  .     .     0101....11001...  ..........  U U U   12  12   6
+divs      16  .     d     1000...111000...  ..........  U U U  158 122  56
+divs      16  .     .     1000...111......  A+-DXWLdxI  U U U  158 122  56
+divu      16  .     d     1000...011000...  ..........  U U U  140 108  44
+divu      16  .     .     1000...011......  A+-DXWLdxI  U U U  140 108  44
+divl      32  .     d     0100110001000...  ..........  . . U    .   .  84
+divl      32  .     .     0100110001......  A+-DXWLdxI  . . U    .   .  84
+eor        8  .     d     1011...100000...  ..........  U U U    4   4   2
+eor        8  .     .     1011...100......  A+-DXWL...  U U U    8   8   4
+eor       16  .     d     1011...101000...  ..........  U U U    4   4   2
+eor       16  .     .     1011...101......  A+-DXWL...  U U U    8   8   4
+eor       32  .     d     1011...110000...  ..........  U U U    8   6   2
+eor       32  .     .     1011...110......  A+-DXWL...  U U U   12  12   4
+eori      16  toc   .     0000101000111100  ..........  U U U   20  16  12
+eori      16  tos   .     0000101001111100  ..........  S S S   20  16  12
+eori       8  .     d     0000101000000...  ..........  U U U    8   8   2
+eori       8  .     .     0000101000......  A+-DXWL...  U U U   12  12   4
+eori      16  .     d     0000101001000...  ..........  U U U    8   8   2
+eori      16  .     .     0000101001......  A+-DXWL...  U U U   12  12   4
+eori      32  .     d     0000101010000...  ..........  U U U   16  14   2
+eori      32  .     .     0000101010......  A+-DXWL...  U U U   20  20   4
+exg       32  dd    .     1100...101000...  ..........  U U U    6   6   2
+exg       32  aa    .     1100...101001...  ..........  U U U    6   6   2
+exg       32  da    .     1100...110001...  ..........  U U U    6   6   2
+ext       16  .     .     0100100010000...  ..........  U U U    4   4   4
+ext       32  .     .     0100100011000...  ..........  U U U    4   4   4
+extb      32  .     .     0100100111000...  ..........  . . U    .   .   4
+illegal    0  .     .     0100101011111100  ..........  U U U    4   4   4
+jmp       32  .     .     0100111011......  A..DXWLdx.  U U U    4   4   0
+jsr       32  .     .     0100111010......  A..DXWLdx.  U U U   12  12   0
+lea       32  .     .     0100...111......  A..DXWLdx.  U U U    0   0   2
+link      16  .     a7    0100111001010111  ..........  U U U   16  16   5
+link      16  .     .     0100111001010...  ..........  U U U   16  16   5
+link      32  .     a7    0100100000001111  ..........  . . U    .   .   6
+link      32  .     .     0100100000001...  ..........  . . U    .   .   6
+lsr        8  s     .     1110...000001...  ..........  U U U    6   6   4
+lsr       16  s     .     1110...001001...  ..........  U U U    6   6   4
+lsr       32  s     .     1110...010001...  ..........  U U U    8   8   4
+lsr        8  r     .     1110...000101...  ..........  U U U    6   6   6
+lsr       16  r     .     1110...001101...  ..........  U U U    6   6   6
+lsr       32  r     .     1110...010101...  ..........  U U U    8   8   6
+lsr       16  .     .     1110001011......  A+-DXWL...  U U U    8   8   5
+lsl        8  s     .     1110...100001...  ..........  U U U    6   6   4
+lsl       16  s     .     1110...101001...  ..........  U U U    6   6   4
+lsl       32  s     .     1110...110001...  ..........  U U U    8   8   4
+lsl        8  r     .     1110...100101...  ..........  U U U    6   6   6
+lsl       16  r     .     1110...101101...  ..........  U U U    6   6   6
+lsl       32  r     .     1110...110101...  ..........  U U U    8   8   6
+lsl       16  .     .     1110001111......  A+-DXWL...  U U U    8   8   5
+move       8  d     d     0001...000000...  ..........  U U U    4   4   2
+move       8  d     .     0001...000......  A+-DXWLdxI  U U U    4   4   2
+move       8  ai    d     0001...010000...  ..........  U U U    8   8   4
+move       8  ai    .     0001...010......  A+-DXWLdxI  U U U    8   8   4
+move       8  pi    d     0001...011000...  ..........  U U U    8   8   4
+move       8  pi    .     0001...011......  A+-DXWLdxI  U U U    8   8   4
+move       8  pi7   d     0001111011000...  ..........  U U U    8   8   4
+move       8  pi7   .     0001111011......  A+-DXWLdxI  U U U    8   8   4
+move       8  pd    d     0001...100000...  ..........  U U U    8   8   5
+move       8  pd    .     0001...100......  A+-DXWLdxI  U U U    8   8   5
+move       8  pd7   d     0001111100000...  ..........  U U U    8   8   5
+move       8  pd7   .     0001111100......  A+-DXWLdxI  U U U    8   8   5
+move       8  di    d     0001...101000...  ..........  U U U   12  12   5
+move       8  di    .     0001...101......  A+-DXWLdxI  U U U   12  12   5
+move       8  ix    d     0001...110000...  ..........  U U U   14  14   7
+move       8  ix    .     0001...110......  A+-DXWLdxI  U U U   14  14   7
+move       8  aw    d     0001000111000...  ..........  U U U   12  12   4
+move       8  aw    .     0001000111......  A+-DXWLdxI  U U U   12  12   4
+move       8  al    d     0001001111000...  ..........  U U U   16  16   6
+move       8  al    .     0001001111......  A+-DXWLdxI  U U U   16  16   6
+move      16  d     d     0011...000000...  ..........  U U U    4   4   2
+move      16  d     a     0011...000001...  ..........  U U U    4   4   2
+move      16  d     .     0011...000......  A+-DXWLdxI  U U U    4   4   2
+move      16  ai    d     0011...010000...  ..........  U U U    8   8   4
+move      16  ai    a     0011...010001...  ..........  U U U    8   8   4
+move      16  ai    .     0011...010......  A+-DXWLdxI  U U U    8   8   4
+move      16  pi    d     0011...011000...  ..........  U U U    8   8   4
+move      16  pi    a     0011...011001...  ..........  U U U    8   8   4
+move      16  pi    .     0011...011......  A+-DXWLdxI  U U U    8   8   4
+move      16  pd    d     0011...100000...  ..........  U U U    8   8   5
+move      16  pd    a     0011...100001...  ..........  U U U    8   8   5
+move      16  pd    .     0011...100......  A+-DXWLdxI  U U U    8   8   5
+move      16  di    d     0011...101000...  ..........  U U U   12  12   5
+move      16  di    a     0011...101001...  ..........  U U U   12  12   5
+move      16  di    .     0011...101......  A+-DXWLdxI  U U U   12  12   5
+move      16  ix    d     0011...110000...  ..........  U U U   14  14   7
+move      16  ix    a     0011...110001...  ..........  U U U   14  14   7
+move      16  ix    .     0011...110......  A+-DXWLdxI  U U U   14  14   7
+move      16  aw    d     0011000111000...  ..........  U U U   12  12   4
+move      16  aw    a     0011000111001...  ..........  U U U   12  12   4
+move      16  aw    .     0011000111......  A+-DXWLdxI  U U U   12  12   4
+move      16  al    d     0011001111000...  ..........  U U U   16  16   6
+move      16  al    a     0011001111001...  ..........  U U U   16  16   6
+move      16  al    .     0011001111......  A+-DXWLdxI  U U U   16  16   6
+move      32  d     d     0010...000000...  ..........  U U U    4   4   2
+move      32  d     a     0010...000001...  ..........  U U U    4   4   2
+move      32  d     .     0010...000......  A+-DXWLdxI  U U U    4   4   2
+move      32  ai    d     0010...010000...  ..........  U U U   12  12   4
+move      32  ai    a     0010...010001...  ..........  U U U   12  12   4
+move      32  ai    .     0010...010......  A+-DXWLdxI  U U U   12  12   4
+move      32  pi    d     0010...011000...  ..........  U U U   12  12   4
+move      32  pi    a     0010...011001...  ..........  U U U   12  12   4
+move      32  pi    .     0010...011......  A+-DXWLdxI  U U U   12  12   4
+move      32  pd    d     0010...100000...  ..........  U U U   12  14   5
+move      32  pd    a     0010...100001...  ..........  U U U   12  14   5
+move      32  pd    .     0010...100......  A+-DXWLdxI  U U U   12  14   5
+move      32  di    d     0010...101000...  ..........  U U U   16  16   5
+move      32  di    a     0010...101001...  ..........  U U U   16  16   5
+move      32  di    .     0010...101......  A+-DXWLdxI  U U U   16  16   5
+move      32  ix    d     0010...110000...  ..........  U U U   18  18   7
+move      32  ix    a     0010...110001...  ..........  U U U   18  18   7
+move      32  ix    .     0010...110......  A+-DXWLdxI  U U U   18  18   7
+move      32  aw    d     0010000111000...  ..........  U U U   16  16   4
+move      32  aw    a     0010000111001...  ..........  U U U   16  16   4
+move      32  aw    .     0010000111......  A+-DXWLdxI  U U U   16  16   4
+move      32  al    d     0010001111000...  ..........  U U U   20  20   6
+move      32  al    a     0010001111001...  ..........  U U U   20  20   6
+move      32  al    .     0010001111......  A+-DXWLdxI  U U U   20  20   6
+movea     16  .     d     0011...001000...  ..........  U U U    4   4   2
+movea     16  .     a     0011...001001...  ..........  U U U    4   4   2
+movea     16  .     .     0011...001......  A+-DXWLdxI  U U U    4   4   2
+movea     32  .     d     0010...001000...  ..........  U U U    4   4   2
+movea     32  .     a     0010...001001...  ..........  U U U    4   4   2
+movea     32  .     .     0010...001......  A+-DXWLdxI  U U U    4   4   2
+move      16  frc   d     0100001011000...  ..........  . U U    .   4   4
+move      16  frc   .     0100001011......  A+-DXWL...  . U U    .   8   4
+move      16  toc   d     0100010011000...  ..........  U U U   12  12   4
+move      16  toc   .     0100010011......  A+-DXWLdxI  U U U   12  12   4
+move      16  frs   d     0100000011000...  ..........  U S S    6   4   8 U only for 000
+move      16  frs   .     0100000011......  A+-DXWL...  U S S    8   8   8 U only for 000
+move      16  tos   d     0100011011000...  ..........  S S S   12  12   8
+move      16  tos   .     0100011011......  A+-DXWLdxI  S S S   12  12   8
+move      32  fru   .     0100111001101...  ..........  S S S    4   6   2
+move      32  tou   .     0100111001100...  ..........  S S S    4   6   2
+movec     32  cr    .     0100111001111010  ..........  . S S    .  12   6
+movec     32  rc    .     0100111001111011  ..........  . S S    .  10  12
+movem     16  re    pd    0100100010100...  ..........  U U U    8   8   4
+movem     16  re    .     0100100010......  A..DXWL...  U U U    8   8   4
+movem     32  re    pd    0100100011100...  ..........  U U U    8   8   4
+movem     32  re    .     0100100011......  A..DXWL...  U U U    8   8   4
+movem     16  er    pi    0100110010011...  ..........  U U U   12  12   8
+movem     16  er    .     0100110010......  A..DXWLdx.  U U U   12  12   8
+movem     32  er    pi    0100110011011...  ..........  U U U   12  12   8
+movem     32  er    .     0100110011......  A..DXWLdx.  U U U   12  12   8
+movep     16  er    .     0000...100001...  ..........  U U U   16  16  12
+movep     32  er    .     0000...101001...  ..........  U U U   24  24  18
+movep     16  re    .     0000...110001...  ..........  U U U   16  16  11
+movep     32  re    .     0000...111001...  ..........  U U U   24  24  17
+moveq     32  .     .     0111...0........  ..........  U U U    4   4   2
+moves      8  .     .     0000111000......  A+-DXWL...  . S S    .  14   5
+moves     16  .     .     0000111001......  A+-DXWL...  . S S    .  14   5
+moves     32  .     .     0000111010......  A+-DXWL...  . S S    .  16   5
+muls      16  .     d     1100...111000...  ..........  U U U   54  32  27
+muls      16  .     .     1100...111......  A+-DXWLdxI  U U U   54  32  27
+mulu      16  .     d     1100...011000...  ..........  U U U   54  30  27
+mulu      16  .     .     1100...011......  A+-DXWLdxI  U U U   54  30  27
+mull      32  .     d     0100110000000...  ..........  . . U    .   .  43
+mull      32  .     .     0100110000......  A+-DXWLdxI  . . U    .   .  43
+nbcd       8  .     d     0100100000000...  ..........  U U U    6   6   6
+nbcd       8  .     .     0100100000......  A+-DXWL...  U U U    8   8   6
+neg        8  .     d     0100010000000...  ..........  U U U    4   4   2
+neg        8  .     .     0100010000......  A+-DXWL...  U U U    8   8   4
+neg       16  .     d     0100010001000...  ..........  U U U    4   4   2
+neg       16  .     .     0100010001......  A+-DXWL...  U U U    8   8   4
+neg       32  .     d     0100010010000...  ..........  U U U    6   6   2
+neg       32  .     .     0100010010......  A+-DXWL...  U U U   12  12   4
+negx       8  .     d     0100000000000...  ..........  U U U    4   4   2
+negx       8  .     .     0100000000......  A+-DXWL...  U U U    8   8   4
+negx      16  .     d     0100000001000...  ..........  U U U    4   4   2
+negx      16  .     .     0100000001......  A+-DXWL...  U U U    8   8   4
+negx      32  .     d     0100000010000...  ..........  U U U    6   6   2
+negx      32  .     .     0100000010......  A+-DXWL...  U U U   12  12   4
+nop        0  .     .     0100111001110001  ..........  U U U    4   4   2
+not        8  .     d     0100011000000...  ..........  U U U    4   4   2
+not        8  .     .     0100011000......  A+-DXWL...  U U U    8   8   4
+not       16  .     d     0100011001000...  ..........  U U U    4   4   2
+not       16  .     .     0100011001......  A+-DXWL...  U U U    8   8   4
+not       32  .     d     0100011010000...  ..........  U U U    6   6   2
+not       32  .     .     0100011010......  A+-DXWL...  U U U   12  12   4
+or         8  er    d     1000...000000...  ..........  U U U    4   4   2
+or         8  er    .     1000...000......  A+-DXWLdxI  U U U    4   4   2
+or        16  er    d     1000...001000...  ..........  U U U    4   4   2
+or        16  er    .     1000...001......  A+-DXWLdxI  U U U    4   4   2
+or        32  er    d     1000...010000...  ..........  U U U    6   6   2
+or        32  er    .     1000...010......  A+-DXWLdxI  U U U    6   6   2
+or         8  re    .     1000...100......  A+-DXWL...  U U U    8   8   4
+or        16  re    .     1000...101......  A+-DXWL...  U U U    8   8   4
+or        32  re    .     1000...110......  A+-DXWL...  U U U   12  12   4
+ori       16  toc   .     0000000000111100  ..........  U U U   20  16  12
+ori       16  tos   .     0000000001111100  ..........  S S S   20  16  12
+ori        8  .     d     0000000000000...  ..........  U U U    8   8   2
+ori        8  .     .     0000000000......  A+-DXWL...  U U U   12  12   4
+ori       16  .     d     0000000001000...  ..........  U U U    8   8   2
+ori       16  .     .     0000000001......  A+-DXWL...  U U U   12  12   4
+ori       32  .     d     0000000010000...  ..........  U U U   16  14   2
+ori       32  .     .     0000000010......  A+-DXWL...  U U U   20  20   4
+pack      16  rr    .     1000...101000...  ..........  . . U    .   .   6
+pack      16  mm    ax7   1000111101001...  ..........  . . U    .   .  13
+pack      16  mm    ay7   1000...101001111  ..........  . . U    .   .  13
+pack      16  mm    axy7  1000111101001111  ..........  . . U    .   .  13
+pack      16  mm    .     1000...101001...  ..........  . . U    .   .  13
+pea       32  .     .     0100100001......  A..DXWLdx.  U U U    6   6   5
+reset      0  .     .     0100111001110000  ..........  S S S    0   0   0
+ror        8  s     .     1110...000011...  ..........  U U U    6   6   8
+ror       16  s     .     1110...001011...  ..........  U U U    6   6   8
+ror       32  s     .     1110...010011...  ..........  U U U    8   8   8
+ror        8  r     .     1110...000111...  ..........  U U U    6   6   8
+ror       16  r     .     1110...001111...  ..........  U U U    6   6   8
+ror       32  r     .     1110...010111...  ..........  U U U    8   8   8
+ror       16  .     .     1110011011......  A+-DXWL...  U U U    8   8   7
+rol        8  s     .     1110...100011...  ..........  U U U    6   6   8
+rol       16  s     .     1110...101011...  ..........  U U U    6   6   8
+rol       32  s     .     1110...110011...  ..........  U U U    8   8   8
+rol        8  r     .     1110...100111...  ..........  U U U    6   6   8
+rol       16  r     .     1110...101111...  ..........  U U U    6   6   8
+rol       32  r     .     1110...110111...  ..........  U U U    8   8   8
+rol       16  .     .     1110011111......  A+-DXWL...  U U U    8   8   7
+roxr       8  s     .     1110...000010...  ..........  U U U    6   6  12
+roxr      16  s     .     1110...001010...  ..........  U U U    6   6  12
+roxr      32  s     .     1110...010010...  ..........  U U U    8   8  12
+roxr       8  r     .     1110...000110...  ..........  U U U    6   6  12
+roxr      16  r     .     1110...001110...  ..........  U U U    6   6  12
+roxr      32  r     .     1110...010110...  ..........  U U U    8   8  12
+roxr      16  .     .     1110010011......  A+-DXWL...  U U U    8   8   5
+roxl       8  s     .     1110...100010...  ..........  U U U    6   6  12
+roxl      16  s     .     1110...101010...  ..........  U U U    6   6  12
+roxl      32  s     .     1110...110010...  ..........  U U U    8   8  12
+roxl       8  r     .     1110...100110...  ..........  U U U    6   6  12
+roxl      16  r     .     1110...101110...  ..........  U U U    6   6  12
+roxl      32  r     .     1110...110110...  ..........  U U U    8   8  12
+roxl      16  .     .     1110010111......  A+-DXWL...  U U U    8   8   5
+rtd       32  .     .     0100111001110100  ..........  . U U    .  16  10
+rte       32  .     .     0100111001110011  ..........  S S S   20  24  20  bus fault not emulated
+rtm       32  .     .     000001101100....  ..........  . . U    .   .  19  not properly emulated
+rtr       32  .     .     0100111001110111  ..........  U U U   20  20  14
+rts       32  .     .     0100111001110101  ..........  U U U   16  16  10
+sbcd       8  rr    .     1000...100000...  ..........  U U U    6   6   4
+sbcd       8  mm    ax7   1000111100001...  ..........  U U U   18  18  16
+sbcd       8  mm    ay7   1000...100001111  ..........  U U U   18  18  16
+sbcd       8  mm    axy7  1000111100001111  ..........  U U U   18  18  16
+sbcd       8  mm    .     1000...100001...  ..........  U U U   18  18  16
+st         8  .     d     0101000011000...  ..........  U U U    6   4   4
+st         8  .     .     0101000011......  A+-DXWL...  U U U    8   8   6
+sf         8  .     d     0101000111000...  ..........  U U U    4   4   4
+sf         8  .     .     0101000111......  A+-DXWL...  U U U    8   8   6
+scc        8  .     d     0101....11000...  ..........  U U U    4   4   4
+scc        8  .     .     0101....11......  A+-DXWL...  U U U    8   8   6
+stop       0  .     .     0100111001110010  ..........  S S S    4   4   8
+sub        8  er    d     1001...000000...  ..........  U U U    4   4   2
+sub        8  er    .     1001...000......  A+-DXWLdxI  U U U    4   4   2
+sub       16  er    d     1001...001000...  ..........  U U U    4   4   2
+sub       16  er    a     1001...001001...  ..........  U U U    4   4   2
+sub       16  er    .     1001...001......  A+-DXWLdxI  U U U    4   4   2
+sub       32  er    d     1001...010000...  ..........  U U U    6   6   2
+sub       32  er    a     1001...010001...  ..........  U U U    6   6   2
+sub       32  er    .     1001...010......  A+-DXWLdxI  U U U    6   6   2
+sub        8  re    .     1001...100......  A+-DXWL...  U U U    8   8   4
+sub       16  re    .     1001...101......  A+-DXWL...  U U U    8   8   4
+sub       32  re    .     1001...110......  A+-DXWL...  U U U   12  12   4
+suba      16  .     d     1001...011000...  ..........  U U U    8   8   2
+suba      16  .     a     1001...011001...  ..........  U U U    8   8   2
+suba      16  .     .     1001...011......  A+-DXWLdxI  U U U    8   8   2
+suba      32  .     d     1001...111000...  ..........  U U U    6   6   2
+suba      32  .     a     1001...111001...  ..........  U U U    6   6   2
+suba      32  .     .     1001...111......  A+-DXWLdxI  U U U    6   6   2
+subi       8  .     d     0000010000000...  ..........  U U U    8   8   2
+subi       8  .     .     0000010000......  A+-DXWL...  U U U   12  12   4
+subi      16  .     d     0000010001000...  ..........  U U U    8   8   2
+subi      16  .     .     0000010001......  A+-DXWL...  U U U   12  12   4
+subi      32  .     d     0000010010000...  ..........  U U U   16  14   2
+subi      32  .     .     0000010010......  A+-DXWL...  U U U   20  20   4
+subq       8  .     d     0101...100000...  ..........  U U U    4   4   2
+subq       8  .     .     0101...100......  A+-DXWL...  U U U    8   8   4
+subq      16  .     d     0101...101000...  ..........  U U U    4   4   2
+subq      16  .     a     0101...101001...  ..........  U U U    8   4   2
+subq      16  .     .     0101...101......  A+-DXWL...  U U U    8   8   4
+subq      32  .     d     0101...110000...  ..........  U U U    8   8   2
+subq      32  .     a     0101...110001...  ..........  U U U    8   8   2
+subq      32  .     .     0101...110......  A+-DXWL...  U U U   12  12   4
+subx       8  rr    .     1001...100000...  ..........  U U U    4   4   2
+subx      16  rr    .     1001...101000...  ..........  U U U    4   4   2
+subx      32  rr    .     1001...110000...  ..........  U U U    8   6   2
+subx       8  mm    ax7   1001111100001...  ..........  U U U   18  18  12
+subx       8  mm    ay7   1001...100001111  ..........  U U U   18  18  12
+subx       8  mm    axy7  1001111100001111  ..........  U U U   18  18  12
+subx       8  mm    .     1001...100001...  ..........  U U U   18  18  12
+subx      16  mm    .     1001...101001...  ..........  U U U   18  18  12
+subx      32  mm    .     1001...110001...  ..........  U U U   30  30  12
+swap      32  .     .     0100100001000...  ..........  U U U    4   4   4
+tas        8  .     d     0100101011000...  ..........  U U U    4   4   4
+tas        8  .     .     0100101011......  A+-DXWL...  U U U   14  14  12
+trap       0  .     .     010011100100....  ..........  U U U    4   4   4
+trapt      0  .     .     0101000011111100  ..........  . . U    .   .   4
+trapt     16  .     .     0101000011111010  ..........  . . U    .   .   6
+trapt     32  .     .     0101000011111011  ..........  . . U    .   .   8
+trapf      0  .     .     0101000111111100  ..........  . . U    .   .   4
+trapf     16  .     .     0101000111111010  ..........  . . U    .   .   6
+trapf     32  .     .     0101000111111011  ..........  . . U    .   .   8
+trapcc     0  .     .     0101....11111100  ..........  . . U    .   .   4
+trapcc    16  .     .     0101....11111010  ..........  . . U    .   .   6
+trapcc    32  .     .     0101....11111011  ..........  . . U    .   .   8
+trapv      0  .     .     0100111001110110  ..........  U U U    4   4   4
+tst        8  .     d     0100101000000...  ..........  U U U    4   4   2
+tst        8  .     .     0100101000......  A+-DXWL...  U U U    4   4   2
+tst        8  .     pcdi  0100101000111010  ..........  . . U    .   .   7
+tst        8  .     pcix  0100101000111011  ..........  . . U    .   .   9
+tst        8  .     i     0100101000111100  ..........  . . U    .   .   6
+tst       16  .     d     0100101001000...  ..........  U U U    4   4   2
+tst       16  .     a     0100101001001...  ..........  . . U    .   .   2
+tst       16  .     .     0100101001......  A+-DXWL...  U U U    4   4   2
+tst       16  .     pcdi  0100101001111010  ..........  . . U    .   .   7
+tst       16  .     pcix  0100101001111011  ..........  . . U    .   .   9
+tst       16  .     i     0100101001111100  ..........  . . U    .   .   6
+tst       32  .     d     0100101010000...  ..........  U U U    4   4   2
+tst       32  .     a     0100101010001...  ..........  . . U    .   .   2
+tst       32  .     .     0100101010......  A+-DXWL...  U U U    4   4   2
+tst       32  .     pcdi  0100101010111010  ..........  . . U    .   .   7
+tst       32  .     pcix  0100101010111011  ..........  . . U    .   .   9
+tst       32  .     i     0100101010111100  ..........  . . U    .   .   6
+unlk      32  .     a7    0100111001011111  ..........  U U U   12  12   6
+unlk      32  .     .     0100111001011...  ..........  U U U   12  12   6
+unpk      16  rr    .     1000...110000...  ..........  . . U    .   .   8
+unpk      16  mm    ax7   1000111110001...  ..........  . . U    .   .  13
+unpk      16  mm    ay7   1000...110001111  ..........  . . U    .   .  13
+unpk      16  mm    axy7  1000111110001111  ..........  . . U    .   .  13
+unpk      16  mm    .     1000...110001...  ..........  . . U    .   .  13
 
 
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_OPCODE_HANDLER_BODY
 
-M68KMAKE_OP(1010, 0, _)
+M68KMAKE_OP(1010, 0, ., .)
 {
 	m68ki_exception_1010();
 }
 
 
-M68KMAKE_OP(1111, 0, _)
+M68KMAKE_OP(1111, 0, ., .)
 {
 	m68ki_exception_1111();
 }
 
 
-M68KMAKE_OP(abcd_rr, 8, _)
+M68KMAKE_OP(abcd, 8, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -878,14 +882,13 @@ M68KMAKE_OP(abcd_rr, 8, _)
 	FLAG_N = NFLAG_8(res); /* officially undefined */
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(abcd_mm, 8, ax7)
+M68KMAKE_OP(abcd, 8, mm, ax7)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -902,14 +905,13 @@ M68KMAKE_OP(abcd_mm, 8, ax7)
 	FLAG_N = NFLAG_8(res); /* officially undefined */
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(abcd_mm, 8, ay7)
+M68KMAKE_OP(abcd, 8, mm, ay7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -926,14 +928,13 @@ M68KMAKE_OP(abcd_mm, 8, ay7)
 	FLAG_N = NFLAG_8(res); /* officially undefined */
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(abcd_mm, 8, axy7)
+M68KMAKE_OP(abcd, 8, mm, axy7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -950,14 +951,13 @@ M68KMAKE_OP(abcd_mm, 8, axy7)
 	FLAG_N = NFLAG_8(res); /* officially undefined */
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(abcd_mm, 8, _)
+M68KMAKE_OP(abcd, 8, mm, .)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -974,14 +974,13 @@ M68KMAKE_OP(abcd_mm, 8, _)
 	FLAG_N = NFLAG_8(res); /* officially undefined */
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(add_er, 8, d)
+M68KMAKE_OP(add, 8, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_8(DY);
@@ -997,7 +996,7 @@ M68KMAKE_OP(add_er, 8, d)
 }
 
 
-M68KMAKE_OP(add_er, 8, _)
+M68KMAKE_OP(add, 8, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_8;
@@ -1013,7 +1012,7 @@ M68KMAKE_OP(add_er, 8, _)
 }
 
 
-M68KMAKE_OP(add_er, 16, d)
+M68KMAKE_OP(add, 16, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(DY);
@@ -1029,7 +1028,7 @@ M68KMAKE_OP(add_er, 16, d)
 }
 
 
-M68KMAKE_OP(add_er, 16, a)
+M68KMAKE_OP(add, 16, er, a)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(AY);
@@ -1045,7 +1044,7 @@ M68KMAKE_OP(add_er, 16, a)
 }
 
 
-M68KMAKE_OP(add_er, 16, _)
+M68KMAKE_OP(add, 16, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_16;
@@ -1061,7 +1060,7 @@ M68KMAKE_OP(add_er, 16, _)
 }
 
 
-M68KMAKE_OP(add_er, 32, d)
+M68KMAKE_OP(add, 32, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -1077,7 +1076,7 @@ M68KMAKE_OP(add_er, 32, d)
 }
 
 
-M68KMAKE_OP(add_er, 32, a)
+M68KMAKE_OP(add, 32, er, a)
 {
 	uint* r_dst = &DX;
 	uint src = AY;
@@ -1093,7 +1092,7 @@ M68KMAKE_OP(add_er, 32, a)
 }
 
 
-M68KMAKE_OP(add_er, 32, _)
+M68KMAKE_OP(add, 32, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_32;
@@ -1109,7 +1108,7 @@ M68KMAKE_OP(add_er, 32, _)
 }
 
 
-M68KMAKE_OP(add_re, 8, _)
+M68KMAKE_OP(add, 8, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = MASK_OUT_ABOVE_8(DX);
@@ -1125,7 +1124,7 @@ M68KMAKE_OP(add_re, 8, _)
 }
 
 
-M68KMAKE_OP(add_re, 16, _)
+M68KMAKE_OP(add, 16, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = MASK_OUT_ABOVE_16(DX);
@@ -1141,7 +1140,7 @@ M68KMAKE_OP(add_re, 16, _)
 }
 
 
-M68KMAKE_OP(add_re, 32, _)
+M68KMAKE_OP(add, 32, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint src = DX;
@@ -1157,7 +1156,7 @@ M68KMAKE_OP(add_re, 32, _)
 }
 
 
-M68KMAKE_OP(adda, 16, d)
+M68KMAKE_OP(adda, 16, ., d)
 {
 	uint* r_dst = &AX;
 
@@ -1165,7 +1164,7 @@ M68KMAKE_OP(adda, 16, d)
 }
 
 
-M68KMAKE_OP(adda, 16, a)
+M68KMAKE_OP(adda, 16, ., a)
 {
 	uint* r_dst = &AX;
 
@@ -1173,7 +1172,7 @@ M68KMAKE_OP(adda, 16, a)
 }
 
 
-M68KMAKE_OP(adda, 16, _)
+M68KMAKE_OP(adda, 16, ., .)
 {
 	uint* r_dst = &AX;
 
@@ -1181,7 +1180,7 @@ M68KMAKE_OP(adda, 16, _)
 }
 
 
-M68KMAKE_OP(adda, 32, d)
+M68KMAKE_OP(adda, 32, ., d)
 {
 	uint* r_dst = &AX;
 
@@ -1189,7 +1188,7 @@ M68KMAKE_OP(adda, 32, d)
 }
 
 
-M68KMAKE_OP(adda, 32, a)
+M68KMAKE_OP(adda, 32, ., a)
 {
 	uint* r_dst = &AX;
 
@@ -1197,7 +1196,7 @@ M68KMAKE_OP(adda, 32, a)
 }
 
 
-M68KMAKE_OP(adda, 32, _)
+M68KMAKE_OP(adda, 32, ., .)
 {
 	uint* r_dst = &AX;
 
@@ -1205,7 +1204,7 @@ M68KMAKE_OP(adda, 32, _)
 }
 
 
-M68KMAKE_OP(addi, 8, d)
+M68KMAKE_OP(addi, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_8();
@@ -1221,7 +1220,7 @@ M68KMAKE_OP(addi, 8, d)
 }
 
 
-M68KMAKE_OP(addi, 8, _)
+M68KMAKE_OP(addi, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -1237,7 +1236,7 @@ M68KMAKE_OP(addi, 8, _)
 }
 
 
-M68KMAKE_OP(addi, 16, d)
+M68KMAKE_OP(addi, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_16();
@@ -1253,7 +1252,7 @@ M68KMAKE_OP(addi, 16, d)
 }
 
 
-M68KMAKE_OP(addi, 16, _)
+M68KMAKE_OP(addi, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -1269,7 +1268,7 @@ M68KMAKE_OP(addi, 16, _)
 }
 
 
-M68KMAKE_OP(addi, 32, d)
+M68KMAKE_OP(addi, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_32();
@@ -1285,7 +1284,7 @@ M68KMAKE_OP(addi, 32, d)
 }
 
 
-M68KMAKE_OP(addi, 32, _)
+M68KMAKE_OP(addi, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -1301,7 +1300,7 @@ M68KMAKE_OP(addi, 32, _)
 }
 
 
-M68KMAKE_OP(addq, 8, d)
+M68KMAKE_OP(addq, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1317,7 +1316,7 @@ M68KMAKE_OP(addq, 8, d)
 }
 
 
-M68KMAKE_OP(addq, 8, _)
+M68KMAKE_OP(addq, 8, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -1333,7 +1332,7 @@ M68KMAKE_OP(addq, 8, _)
 }
 
 
-M68KMAKE_OP(addq, 16, d)
+M68KMAKE_OP(addq, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1349,7 +1348,7 @@ M68KMAKE_OP(addq, 16, d)
 }
 
 
-M68KMAKE_OP(addq, 16, a)
+M68KMAKE_OP(addq, 16, ., a)
 {
 	uint* r_dst = &AY;
 
@@ -1357,7 +1356,7 @@ M68KMAKE_OP(addq, 16, a)
 }
 
 
-M68KMAKE_OP(addq, 16, _)
+M68KMAKE_OP(addq, 16, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -1373,7 +1372,7 @@ M68KMAKE_OP(addq, 16, _)
 }
 
 
-M68KMAKE_OP(addq, 32, d)
+M68KMAKE_OP(addq, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1389,7 +1388,7 @@ M68KMAKE_OP(addq, 32, d)
 }
 
 
-M68KMAKE_OP(addq, 32, a)
+M68KMAKE_OP(addq, 32, ., a)
 {
 	uint* r_dst = &AY;
 
@@ -1397,7 +1396,7 @@ M68KMAKE_OP(addq, 32, a)
 }
 
 
-M68KMAKE_OP(addq, 32, _)
+M68KMAKE_OP(addq, 32, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -1414,7 +1413,7 @@ M68KMAKE_OP(addq, 32, _)
 }
 
 
-M68KMAKE_OP(addx_rr, 8, _)
+M68KMAKE_OP(addx, 8, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_8(DY);
@@ -1426,14 +1425,13 @@ M68KMAKE_OP(addx_rr, 8, _)
 	FLAG_X = FLAG_C = CFLAG_8(res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(addx_rr, 16, _)
+M68KMAKE_OP(addx, 16, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(DY);
@@ -1445,14 +1443,13 @@ M68KMAKE_OP(addx_rr, 16, _)
 	FLAG_X = FLAG_C = CFLAG_16(res);
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(addx_rr, 32, _)
+M68KMAKE_OP(addx, 32, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -1464,14 +1461,13 @@ M68KMAKE_OP(addx_rr, 32, _)
 	FLAG_X = FLAG_C = CFLAG_ADD_32(src, dst, res);
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = res;
 }
 
 
-M68KMAKE_OP(addx_mm, 8, ax7)
+M68KMAKE_OP(addx, 8, mm, ax7)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -1483,14 +1479,13 @@ M68KMAKE_OP(addx_mm, 8, ax7)
 	FLAG_X = FLAG_C = CFLAG_8(res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(addx_mm, 8, ay7)
+M68KMAKE_OP(addx, 8, mm, ay7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -1502,14 +1497,13 @@ M68KMAKE_OP(addx_mm, 8, ay7)
 	FLAG_X = FLAG_C = CFLAG_8(res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(addx_mm, 8, axy7)
+M68KMAKE_OP(addx, 8, mm, axy7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -1521,14 +1515,13 @@ M68KMAKE_OP(addx_mm, 8, axy7)
 	FLAG_X = FLAG_C = CFLAG_8(res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(addx_mm, 8, _)
+M68KMAKE_OP(addx, 8, mm, .)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -1540,14 +1533,13 @@ M68KMAKE_OP(addx_mm, 8, _)
 	FLAG_X = FLAG_C = CFLAG_8(res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(addx_mm, 16, _)
+M68KMAKE_OP(addx, 16, mm, .)
 {
 	uint src = OPER_AY_PD_16();
 	uint ea  = EA_AX_PD_16();
@@ -1559,14 +1551,13 @@ M68KMAKE_OP(addx_mm, 16, _)
 	FLAG_X = FLAG_C = CFLAG_16(res);
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_16(ea, res);
 }
 
 
-M68KMAKE_OP(addx_mm, 32, _)
+M68KMAKE_OP(addx, 32, mm, .)
 {
 	uint src = OPER_AY_PD_32();
 	uint ea  = EA_AX_PD_32();
@@ -1578,14 +1569,13 @@ M68KMAKE_OP(addx_mm, 32, _)
 	FLAG_X = FLAG_C = CFLAG_ADD_32(src, dst, res);
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_32(ea, res);
 }
 
 
-M68KMAKE_OP(and_er, 8, d)
+M68KMAKE_OP(and, 8, er, d)
 {
 	FLAG_Z = MASK_OUT_ABOVE_8(DX &= (DY | 0xffffff00));
 
@@ -1595,7 +1585,7 @@ M68KMAKE_OP(and_er, 8, d)
 }
 
 
-M68KMAKE_OP(and_er, 8, _)
+M68KMAKE_OP(and, 8, er, .)
 {
 	FLAG_Z = MASK_OUT_ABOVE_8(DX &= (M68KMAKE_GET_OPER_AY_8 | 0xffffff00));
 
@@ -1605,7 +1595,7 @@ M68KMAKE_OP(and_er, 8, _)
 }
 
 
-M68KMAKE_OP(and_er, 16, d)
+M68KMAKE_OP(and, 16, er, d)
 {
 	FLAG_Z = MASK_OUT_ABOVE_16(DX &= (DY | 0xffff0000));
 
@@ -1615,7 +1605,7 @@ M68KMAKE_OP(and_er, 16, d)
 }
 
 
-M68KMAKE_OP(and_er, 16, _)
+M68KMAKE_OP(and, 16, er, .)
 {
 	FLAG_Z = MASK_OUT_ABOVE_16(DX &= (M68KMAKE_GET_OPER_AY_16 | 0xffff0000));
 
@@ -1625,7 +1615,7 @@ M68KMAKE_OP(and_er, 16, _)
 }
 
 
-M68KMAKE_OP(and_er, 32, d)
+M68KMAKE_OP(and, 32, er, d)
 {
 	FLAG_Z = DX &= DY;
 
@@ -1635,7 +1625,7 @@ M68KMAKE_OP(and_er, 32, d)
 }
 
 
-M68KMAKE_OP(and_er, 32, _)
+M68KMAKE_OP(and, 32, er, .)
 {
 	FLAG_Z = DX &= M68KMAKE_GET_OPER_AY_32;
 
@@ -1645,7 +1635,7 @@ M68KMAKE_OP(and_er, 32, _)
 }
 
 
-M68KMAKE_OP(and_re, 8, _)
+M68KMAKE_OP(and, 8, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint res = DX & m68ki_read_8(ea);
@@ -1659,7 +1649,7 @@ M68KMAKE_OP(and_re, 8, _)
 }
 
 
-M68KMAKE_OP(and_re, 16, _)
+M68KMAKE_OP(and, 16, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint res = DX & m68ki_read_16(ea);
@@ -1673,7 +1663,7 @@ M68KMAKE_OP(and_re, 16, _)
 }
 
 
-M68KMAKE_OP(and_re, 32, _)
+M68KMAKE_OP(and, 32, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint res = DX & m68ki_read_32(ea);
@@ -1687,7 +1677,7 @@ M68KMAKE_OP(and_re, 32, _)
 }
 
 
-M68KMAKE_OP(andi, 8, d)
+M68KMAKE_OP(andi, 8, ., d)
 {
 	FLAG_Z = MASK_OUT_ABOVE_8(DY &= (OPER_I_8() | 0xffffff00));
 
@@ -1697,7 +1687,7 @@ M68KMAKE_OP(andi, 8, d)
 }
 
 
-M68KMAKE_OP(andi, 8, _)
+M68KMAKE_OP(andi, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -1712,7 +1702,7 @@ M68KMAKE_OP(andi, 8, _)
 }
 
 
-M68KMAKE_OP(andi, 16, d)
+M68KMAKE_OP(andi, 16, ., d)
 {
 	FLAG_Z = MASK_OUT_ABOVE_16(DY &= (OPER_I_16() | 0xffff0000));
 
@@ -1722,7 +1712,7 @@ M68KMAKE_OP(andi, 16, d)
 }
 
 
-M68KMAKE_OP(andi, 16, _)
+M68KMAKE_OP(andi, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -1737,7 +1727,7 @@ M68KMAKE_OP(andi, 16, _)
 }
 
 
-M68KMAKE_OP(andi, 32, d)
+M68KMAKE_OP(andi, 32, ., d)
 {
 	FLAG_Z = DY &= (OPER_I_32());
 
@@ -1747,7 +1737,7 @@ M68KMAKE_OP(andi, 32, d)
 }
 
 
-M68KMAKE_OP(andi, 32, _)
+M68KMAKE_OP(andi, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -1762,13 +1752,13 @@ M68KMAKE_OP(andi, 32, _)
 }
 
 
-M68KMAKE_OP(andi_to_ccr, 16, _)
+M68KMAKE_OP(andi, 16, toc, .)
 {
 	m68ki_set_ccr(m68ki_get_ccr() & OPER_I_16());
 }
 
 
-M68KMAKE_OP(andi_to_sr, 16, _)
+M68KMAKE_OP(andi, 16, tos, .)
 {
 	if(FLAG_S)
 	{
@@ -1781,7 +1771,7 @@ M68KMAKE_OP(andi_to_sr, 16, _)
 }
 
 
-M68KMAKE_OP(asr_s, 8, _)
+M68KMAKE_OP(asr, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1800,7 +1790,7 @@ M68KMAKE_OP(asr_s, 8, _)
 }
 
 
-M68KMAKE_OP(asr_s, 16, _)
+M68KMAKE_OP(asr, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1819,7 +1809,7 @@ M68KMAKE_OP(asr_s, 16, _)
 }
 
 
-M68KMAKE_OP(asr_s, 32, _)
+M68KMAKE_OP(asr, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -1838,7 +1828,7 @@ M68KMAKE_OP(asr_s, 32, _)
 }
 
 
-M68KMAKE_OP(asr_r, 8, _)
+M68KMAKE_OP(asr, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -1890,7 +1880,7 @@ M68KMAKE_OP(asr_r, 8, _)
 }
 
 
-M68KMAKE_OP(asr_r, 16, _)
+M68KMAKE_OP(asr, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -1942,7 +1932,7 @@ M68KMAKE_OP(asr_r, 16, _)
 }
 
 
-M68KMAKE_OP(asr_r, 32, _)
+M68KMAKE_OP(asr, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -1994,7 +1984,7 @@ M68KMAKE_OP(asr_r, 32, _)
 }
 
 
-M68KMAKE_OP(asr, 16, _)
+M68KMAKE_OP(asr, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -2012,7 +2002,7 @@ M68KMAKE_OP(asr, 16, _)
 }
 
 
-M68KMAKE_OP(asl_s, 8, _)
+M68KMAKE_OP(asl, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -2029,7 +2019,7 @@ M68KMAKE_OP(asl_s, 8, _)
 }
 
 
-M68KMAKE_OP(asl_s, 16, _)
+M68KMAKE_OP(asl, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -2046,7 +2036,7 @@ M68KMAKE_OP(asl_s, 16, _)
 }
 
 
-M68KMAKE_OP(asl_s, 32, _)
+M68KMAKE_OP(asl, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -2063,7 +2053,7 @@ M68KMAKE_OP(asl_s, 32, _)
 }
 
 
-M68KMAKE_OP(asl_r, 8, _)
+M68KMAKE_OP(asl, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -2100,7 +2090,7 @@ M68KMAKE_OP(asl_r, 8, _)
 }
 
 
-M68KMAKE_OP(asl_r, 16, _)
+M68KMAKE_OP(asl, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -2137,7 +2127,7 @@ M68KMAKE_OP(asl_r, 16, _)
 }
 
 
-M68KMAKE_OP(asl_r, 32, _)
+M68KMAKE_OP(asl, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -2174,7 +2164,7 @@ M68KMAKE_OP(asl_r, 32, _)
 }
 
 
-M68KMAKE_OP(asl, 16, _)
+M68KMAKE_OP(asl, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -2190,7 +2180,7 @@ M68KMAKE_OP(asl, 16, _)
 }
 
 
-M68KMAKE_OP(bcc, 8, _)
+M68KMAKE_OP(bcc, 8, ., .)
 {
 	if(M68KMAKE_CC)
 	{
@@ -2202,7 +2192,7 @@ M68KMAKE_OP(bcc, 8, _)
 }
 
 
-M68KMAKE_OP(bcc, 16, _)
+M68KMAKE_OP(bcc, 16, ., .)
 {
 	if(M68KMAKE_CC)
 	{
@@ -2217,7 +2207,7 @@ M68KMAKE_OP(bcc, 16, _)
 }
 
 
-M68KMAKE_OP(bcc, 32, _)
+M68KMAKE_OP(bcc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2236,7 +2226,7 @@ M68KMAKE_OP(bcc, 32, _)
 }
 
 
-M68KMAKE_OP(bchg_r, 32, d)
+M68KMAKE_OP(bchg, 32, r, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (DX & 0x1f);
@@ -2246,7 +2236,7 @@ M68KMAKE_OP(bchg_r, 32, d)
 }
 
 
-M68KMAKE_OP(bchg_r, 8, _)
+M68KMAKE_OP(bchg, 8, r, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = m68ki_read_8(ea);
@@ -2257,7 +2247,7 @@ M68KMAKE_OP(bchg_r, 8, _)
 }
 
 
-M68KMAKE_OP(bchg_s, 32, d)
+M68KMAKE_OP(bchg, 32, s, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (OPER_I_8() & 0x1f);
@@ -2267,7 +2257,7 @@ M68KMAKE_OP(bchg_s, 32, d)
 }
 
 
-M68KMAKE_OP(bchg_s, 8, _)
+M68KMAKE_OP(bchg, 8, s, .)
 {
 	uint mask = 1 << (OPER_I_8() & 7);
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -2278,7 +2268,7 @@ M68KMAKE_OP(bchg_s, 8, _)
 }
 
 
-M68KMAKE_OP(bclr_r, 32, d)
+M68KMAKE_OP(bclr, 32, r, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (DX & 0x1f);
@@ -2288,7 +2278,7 @@ M68KMAKE_OP(bclr_r, 32, d)
 }
 
 
-M68KMAKE_OP(bclr_r, 8, _)
+M68KMAKE_OP(bclr, 8, r, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = m68ki_read_8(ea);
@@ -2299,7 +2289,7 @@ M68KMAKE_OP(bclr_r, 8, _)
 }
 
 
-M68KMAKE_OP(bclr_s, 32, d)
+M68KMAKE_OP(bclr, 32, s, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (OPER_I_8() & 0x1f);
@@ -2309,7 +2299,7 @@ M68KMAKE_OP(bclr_s, 32, d)
 }
 
 
-M68KMAKE_OP(bclr_s, 8, _)
+M68KMAKE_OP(bclr, 8, s, .)
 {
 	uint mask = 1 << (OPER_I_8() & 7);
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -2320,7 +2310,7 @@ M68KMAKE_OP(bclr_s, 8, _)
 }
 
 
-M68KMAKE_OP(bfchg, 32, d)
+M68KMAKE_OP(bfchg, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2355,7 +2345,7 @@ M68KMAKE_OP(bfchg, 32, d)
 }
 
 
-M68KMAKE_OP(bfchg, 32, _)
+M68KMAKE_OP(bfchg, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2409,7 +2399,7 @@ M68KMAKE_OP(bfchg, 32, _)
 }
 
 
-M68KMAKE_OP(bfclr, 32, d)
+M68KMAKE_OP(bfclr, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2446,7 +2436,7 @@ M68KMAKE_OP(bfclr, 32, d)
 }
 
 
-M68KMAKE_OP(bfclr, 32, _)
+M68KMAKE_OP(bfclr, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2500,7 +2490,7 @@ M68KMAKE_OP(bfclr, 32, _)
 }
 
 
-M68KMAKE_OP(bfexts, 32, d)
+M68KMAKE_OP(bfexts, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2534,7 +2524,7 @@ M68KMAKE_OP(bfexts, 32, d)
 }
 
 
-M68KMAKE_OP(bfexts, 32, _)
+M68KMAKE_OP(bfexts, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2582,7 +2572,7 @@ M68KMAKE_OP(bfexts, 32, _)
 }
 
 
-M68KMAKE_OP(bfextu, 32, d)
+M68KMAKE_OP(bfextu, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2616,7 +2606,7 @@ M68KMAKE_OP(bfextu, 32, d)
 }
 
 
-M68KMAKE_OP(bfextu, 32, _)
+M68KMAKE_OP(bfextu, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2663,7 +2653,7 @@ M68KMAKE_OP(bfextu, 32, _)
 }
 
 
-M68KMAKE_OP(bfffo, 32, d)
+M68KMAKE_OP(bfffo, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2701,7 +2691,7 @@ M68KMAKE_OP(bfffo, 32, d)
 }
 
 
-M68KMAKE_OP(bfffo, 32, _)
+M68KMAKE_OP(bfffo, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2753,7 +2743,7 @@ M68KMAKE_OP(bfffo, 32, _)
 }
 
 
-M68KMAKE_OP(bfins, 32, d)
+M68KMAKE_OP(bfins, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2795,7 +2785,7 @@ M68KMAKE_OP(bfins, 32, d)
 }
 
 
-M68KMAKE_OP(bfins, 32, _)
+M68KMAKE_OP(bfins, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2856,7 +2846,7 @@ M68KMAKE_OP(bfins, 32, _)
 }
 
 
-M68KMAKE_OP(bfset, 32, d)
+M68KMAKE_OP(bfset, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2893,7 +2883,7 @@ M68KMAKE_OP(bfset, 32, d)
 }
 
 
-M68KMAKE_OP(bfset, 32, _)
+M68KMAKE_OP(bfset, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2948,7 +2938,7 @@ M68KMAKE_OP(bfset, 32, _)
 }
 
 
-M68KMAKE_OP(bftst, 32, d)
+M68KMAKE_OP(bftst, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -2983,7 +2973,7 @@ M68KMAKE_OP(bftst, 32, d)
 }
 
 
-M68KMAKE_OP(bftst, 32, _)
+M68KMAKE_OP(bftst, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3034,7 +3024,7 @@ M68KMAKE_OP(bftst, 32, _)
 }
 
 
-M68KMAKE_OP(bkpt, 0, _)
+M68KMAKE_OP(bkpt, 0, ., .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -3044,7 +3034,7 @@ M68KMAKE_OP(bkpt, 0, _)
 }
 
 
-M68KMAKE_OP(bra, 8, _)
+M68KMAKE_OP(bra, 8, ., .)
 {
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
 	m68ki_branch_8(MASK_OUT_ABOVE_8(REG_IR));
@@ -3053,7 +3043,7 @@ M68KMAKE_OP(bra, 8, _)
 }
 
 
-M68KMAKE_OP(bra, 16, _)
+M68KMAKE_OP(bra, 16, ., .)
 {
 	uint offset = OPER_I_16();
 	REG_PC -= 2;
@@ -3064,7 +3054,7 @@ M68KMAKE_OP(bra, 16, _)
 }
 
 
-M68KMAKE_OP(bra, 32, _)
+M68KMAKE_OP(bra, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3080,7 +3070,7 @@ M68KMAKE_OP(bra, 32, _)
 }
 
 
-M68KMAKE_OP(bset_r, 32, d)
+M68KMAKE_OP(bset, 32, r, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (DX & 0x1f);
@@ -3090,7 +3080,7 @@ M68KMAKE_OP(bset_r, 32, d)
 }
 
 
-M68KMAKE_OP(bset_r, 8, _)
+M68KMAKE_OP(bset, 8, r, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = m68ki_read_8(ea);
@@ -3101,7 +3091,7 @@ M68KMAKE_OP(bset_r, 8, _)
 }
 
 
-M68KMAKE_OP(bset_s, 32, d)
+M68KMAKE_OP(bset, 32, s, d)
 {
 	uint* r_dst = &DY;
 	uint mask = 1 << (OPER_I_8() & 0x1f);
@@ -3111,7 +3101,7 @@ M68KMAKE_OP(bset_s, 32, d)
 }
 
 
-M68KMAKE_OP(bset_s, 8, _)
+M68KMAKE_OP(bset, 8, s, .)
 {
 	uint mask = 1 << (OPER_I_8() & 7);
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -3122,7 +3112,7 @@ M68KMAKE_OP(bset_s, 8, _)
 }
 
 
-M68KMAKE_OP(bsr, 8, _)
+M68KMAKE_OP(bsr, 8, ., .)
 {
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
 	m68ki_push_32(REG_PC);
@@ -3130,7 +3120,7 @@ M68KMAKE_OP(bsr, 8, _)
 }
 
 
-M68KMAKE_OP(bsr, 16, _)
+M68KMAKE_OP(bsr, 16, ., .)
 {
 	uint offset = OPER_I_16();
 	m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
@@ -3140,7 +3130,7 @@ M68KMAKE_OP(bsr, 16, _)
 }
 
 
-M68KMAKE_OP(bsr, 32, _)
+M68KMAKE_OP(bsr, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3155,25 +3145,25 @@ M68KMAKE_OP(bsr, 32, _)
 }
 
 
-M68KMAKE_OP(btst_r, 32, d)
+M68KMAKE_OP(btst, 32, r, d)
 {
 	FLAG_Z = DY & (1 << (DX & 0x1f));
 }
 
 
-M68KMAKE_OP(btst_r, 8, _)
+M68KMAKE_OP(btst, 8, r, .)
 {
 	FLAG_Z = M68KMAKE_GET_OPER_AY_8 & (1 << (DX & 7));
 }
 
 
-M68KMAKE_OP(btst_s, 32, d)
+M68KMAKE_OP(btst, 32, s, d)
 {
 	FLAG_Z = DY & (1 << (OPER_I_8() & 0x1f));
 }
 
 
-M68KMAKE_OP(btst_s, 8, _)
+M68KMAKE_OP(btst, 8, s, .)
 {
 	uint bit = OPER_I_8() & 7;
 
@@ -3181,7 +3171,7 @@ M68KMAKE_OP(btst_s, 8, _)
 }
 
 
-M68KMAKE_OP(callm, 32, _)
+M68KMAKE_OP(callm, 32, ., .)
 {
 	if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 	{
@@ -3199,7 +3189,7 @@ M68KMAKE_OP(callm, 32, _)
 }
 
 
-M68KMAKE_OP(cas, 8, _)
+M68KMAKE_OP(cas, 8, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3228,7 +3218,7 @@ M68KMAKE_OP(cas, 8, _)
 }
 
 
-M68KMAKE_OP(cas, 16, _)
+M68KMAKE_OP(cas, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3257,7 +3247,7 @@ M68KMAKE_OP(cas, 16, _)
 }
 
 
-M68KMAKE_OP(cas, 32, _)
+M68KMAKE_OP(cas, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3286,7 +3276,7 @@ M68KMAKE_OP(cas, 32, _)
 }
 
 
-M68KMAKE_OP(cas2, 16, _)
+M68KMAKE_OP(cas2, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3331,7 +3321,7 @@ M68KMAKE_OP(cas2, 16, _)
 }
 
 
-M68KMAKE_OP(cas2, 32, _)
+M68KMAKE_OP(cas2, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3376,7 +3366,7 @@ M68KMAKE_OP(cas2, 32, _)
 }
 
 
-M68KMAKE_OP(chk, 16, d)
+M68KMAKE_OP(chk, 16, ., d)
 {
 	sint src = MAKE_INT_16(DX);
 	sint bound = MAKE_INT_16(DY);
@@ -3390,7 +3380,7 @@ M68KMAKE_OP(chk, 16, d)
 }
 
 
-M68KMAKE_OP(chk, 16, _)
+M68KMAKE_OP(chk, 16, ., .)
 {
 	sint src = MAKE_INT_16(DX);
 	sint bound = MAKE_INT_16(M68KMAKE_GET_OPER_AY_16);
@@ -3404,7 +3394,7 @@ M68KMAKE_OP(chk, 16, _)
 }
 
 
-M68KMAKE_OP(chk, 32, d)
+M68KMAKE_OP(chk, 32, ., d)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3423,7 +3413,7 @@ M68KMAKE_OP(chk, 32, d)
 }
 
 
-M68KMAKE_OP(chk, 32, _)
+M68KMAKE_OP(chk, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3442,7 +3432,7 @@ M68KMAKE_OP(chk, 32, _)
 }
 
 
-M68KMAKE_OP(chk2_cmp2, 8, _)
+M68KMAKE_OP(chk2cmp2, 8, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3475,7 +3465,7 @@ M68KMAKE_OP(chk2_cmp2, 8, _)
 }
 
 
-M68KMAKE_OP(chk2_cmp2, 16, _)
+M68KMAKE_OP(chk2cmp2, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3510,7 +3500,7 @@ M68KMAKE_OP(chk2_cmp2, 16, _)
 }
 
 
-M68KMAKE_OP(chk2_cmp2, 32, _)
+M68KMAKE_OP(chk2cmp2, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3542,7 +3532,7 @@ M68KMAKE_OP(chk2_cmp2, 32, _)
 }
 
 
-M68KMAKE_OP(clr, 8, d)
+M68KMAKE_OP(clr, 8, ., d)
 {
 	DY &= 0xffffff00;
 
@@ -3553,7 +3543,7 @@ M68KMAKE_OP(clr, 8, d)
 }
 
 
-M68KMAKE_OP(clr, 8, _)
+M68KMAKE_OP(clr, 8, ., .)
 {
 	m68ki_write_8(M68KMAKE_GET_EA_AY_8, 0);
 
@@ -3564,7 +3554,7 @@ M68KMAKE_OP(clr, 8, _)
 }
 
 
-M68KMAKE_OP(clr, 16, d)
+M68KMAKE_OP(clr, 16, ., d)
 {
 	DY &= 0xffff0000;
 
@@ -3575,7 +3565,7 @@ M68KMAKE_OP(clr, 16, d)
 }
 
 
-M68KMAKE_OP(clr, 16, _)
+M68KMAKE_OP(clr, 16, ., .)
 {
 	m68ki_write_16(M68KMAKE_GET_EA_AY_16, 0);
 
@@ -3586,7 +3576,7 @@ M68KMAKE_OP(clr, 16, _)
 }
 
 
-M68KMAKE_OP(clr, 32, d)
+M68KMAKE_OP(clr, 32, ., d)
 {
 	DY = 0;
 
@@ -3597,7 +3587,7 @@ M68KMAKE_OP(clr, 32, d)
 }
 
 
-M68KMAKE_OP(clr, 32, _)
+M68KMAKE_OP(clr, 32, ., .)
 {
 	m68ki_write_32(M68KMAKE_GET_EA_AY_32, 0);
 
@@ -3608,7 +3598,7 @@ M68KMAKE_OP(clr, 32, _)
 }
 
 
-M68KMAKE_OP(cmp, 8, d)
+M68KMAKE_OP(cmp, 8, ., d)
 {
 	uint src = MASK_OUT_ABOVE_8(DY);
 	uint dst = MASK_OUT_ABOVE_8(DX);
@@ -3621,7 +3611,7 @@ M68KMAKE_OP(cmp, 8, d)
 }
 
 
-M68KMAKE_OP(cmp, 8, _)
+M68KMAKE_OP(cmp, 8, ., .)
 {
 	uint src = M68KMAKE_GET_OPER_AY_8;
 	uint dst = MASK_OUT_ABOVE_8(DX);
@@ -3634,7 +3624,7 @@ M68KMAKE_OP(cmp, 8, _)
 }
 
 
-M68KMAKE_OP(cmp, 16, d)
+M68KMAKE_OP(cmp, 16, ., d)
 {
 	uint src = MASK_OUT_ABOVE_16(DY);
 	uint dst = MASK_OUT_ABOVE_16(DX);
@@ -3647,7 +3637,7 @@ M68KMAKE_OP(cmp, 16, d)
 }
 
 
-M68KMAKE_OP(cmp, 16, a)
+M68KMAKE_OP(cmp, 16, ., a)
 {
 	uint src = MASK_OUT_ABOVE_16(AY);
 	uint dst = MASK_OUT_ABOVE_16(DX);
@@ -3660,7 +3650,7 @@ M68KMAKE_OP(cmp, 16, a)
 }
 
 
-M68KMAKE_OP(cmp, 16, _)
+M68KMAKE_OP(cmp, 16, ., .)
 {
 	uint src = M68KMAKE_GET_OPER_AY_16;
 	uint dst = MASK_OUT_ABOVE_16(DX);
@@ -3673,7 +3663,7 @@ M68KMAKE_OP(cmp, 16, _)
 }
 
 
-M68KMAKE_OP(cmp, 32, d)
+M68KMAKE_OP(cmp, 32, ., d)
 {
 	uint src = DY;
 	uint dst = DX;
@@ -3686,7 +3676,7 @@ M68KMAKE_OP(cmp, 32, d)
 }
 
 
-M68KMAKE_OP(cmp, 32, a)
+M68KMAKE_OP(cmp, 32, ., a)
 {
 	uint src = AY;
 	uint dst = DX;
@@ -3699,7 +3689,7 @@ M68KMAKE_OP(cmp, 32, a)
 }
 
 
-M68KMAKE_OP(cmp, 32, _)
+M68KMAKE_OP(cmp, 32, ., .)
 {
 	uint src = M68KMAKE_GET_OPER_AY_32;
 	uint dst = DX;
@@ -3712,7 +3702,7 @@ M68KMAKE_OP(cmp, 32, _)
 }
 
 
-M68KMAKE_OP(cmpa, 16, d)
+M68KMAKE_OP(cmpa, 16, ., d)
 {
 	uint src = MAKE_INT_16(DY);
 	uint dst = AX;
@@ -3725,7 +3715,7 @@ M68KMAKE_OP(cmpa, 16, d)
 }
 
 
-M68KMAKE_OP(cmpa, 16, a)
+M68KMAKE_OP(cmpa, 16, ., a)
 {
 	uint src = MAKE_INT_16(AY);
 	uint dst = AX;
@@ -3738,7 +3728,7 @@ M68KMAKE_OP(cmpa, 16, a)
 }
 
 
-M68KMAKE_OP(cmpa, 16, _)
+M68KMAKE_OP(cmpa, 16, ., .)
 {
 	uint src = MAKE_INT_16(M68KMAKE_GET_OPER_AY_16);
 	uint dst = AX;
@@ -3751,7 +3741,7 @@ M68KMAKE_OP(cmpa, 16, _)
 }
 
 
-M68KMAKE_OP(cmpa, 32, d)
+M68KMAKE_OP(cmpa, 32, ., d)
 {
 	uint src = DY;
 	uint dst = AX;
@@ -3764,7 +3754,7 @@ M68KMAKE_OP(cmpa, 32, d)
 }
 
 
-M68KMAKE_OP(cmpa, 32, a)
+M68KMAKE_OP(cmpa, 32, ., a)
 {
 	uint src = AY;
 	uint dst = AX;
@@ -3777,7 +3767,7 @@ M68KMAKE_OP(cmpa, 32, a)
 }
 
 
-M68KMAKE_OP(cmpa, 32, _)
+M68KMAKE_OP(cmpa, 32, ., .)
 {
 	uint src = M68KMAKE_GET_OPER_AY_32;
 	uint dst = AX;
@@ -3790,7 +3780,7 @@ M68KMAKE_OP(cmpa, 32, _)
 }
 
 
-M68KMAKE_OP(cmpi, 8, d)
+M68KMAKE_OP(cmpi, 8, ., d)
 {
 	uint src = OPER_I_8();
 	uint dst = MASK_OUT_ABOVE_8(DY);
@@ -3803,7 +3793,7 @@ M68KMAKE_OP(cmpi, 8, d)
 }
 
 
-M68KMAKE_OP(cmpi, 8, _)
+M68KMAKE_OP(cmpi, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint dst = M68KMAKE_GET_OPER_AY_8;
@@ -3816,7 +3806,7 @@ M68KMAKE_OP(cmpi, 8, _)
 }
 
 
-M68KMAKE_OP(cmpi, 8, pcdi)
+M68KMAKE_OP(cmpi, 8, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3834,7 +3824,7 @@ M68KMAKE_OP(cmpi, 8, pcdi)
 }
 
 
-M68KMAKE_OP(cmpi, 8, pcix)
+M68KMAKE_OP(cmpi, 8, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3852,7 +3842,7 @@ M68KMAKE_OP(cmpi, 8, pcix)
 }
 
 
-M68KMAKE_OP(cmpi, 16, d)
+M68KMAKE_OP(cmpi, 16, ., d)
 {
 	uint src = OPER_I_16();
 	uint dst = MASK_OUT_ABOVE_16(DY);
@@ -3865,7 +3855,7 @@ M68KMAKE_OP(cmpi, 16, d)
 }
 
 
-M68KMAKE_OP(cmpi, 16, _)
+M68KMAKE_OP(cmpi, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint dst = M68KMAKE_GET_OPER_AY_16;
@@ -3878,7 +3868,7 @@ M68KMAKE_OP(cmpi, 16, _)
 }
 
 
-M68KMAKE_OP(cmpi, 16, pcdi)
+M68KMAKE_OP(cmpi, 16, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3896,7 +3886,7 @@ M68KMAKE_OP(cmpi, 16, pcdi)
 }
 
 
-M68KMAKE_OP(cmpi, 16, pcix)
+M68KMAKE_OP(cmpi, 16, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3914,7 +3904,7 @@ M68KMAKE_OP(cmpi, 16, pcix)
 }
 
 
-M68KMAKE_OP(cmpi, 32, d)
+M68KMAKE_OP(cmpi, 32, ., d)
 {
 	uint src = OPER_I_32();
 	uint dst = DY;
@@ -3927,7 +3917,7 @@ M68KMAKE_OP(cmpi, 32, d)
 }
 
 
-M68KMAKE_OP(cmpi, 32, _)
+M68KMAKE_OP(cmpi, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint dst = M68KMAKE_GET_OPER_AY_32;
@@ -3940,7 +3930,7 @@ M68KMAKE_OP(cmpi, 32, _)
 }
 
 
-M68KMAKE_OP(cmpi, 32, pcdi)
+M68KMAKE_OP(cmpi, 32, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3958,7 +3948,7 @@ M68KMAKE_OP(cmpi, 32, pcdi)
 }
 
 
-M68KMAKE_OP(cmpi, 32, pcix)
+M68KMAKE_OP(cmpi, 32, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -3976,7 +3966,7 @@ M68KMAKE_OP(cmpi, 32, pcix)
 }
 
 
-M68KMAKE_OP(cmpm, 8, ax7)
+M68KMAKE_OP(cmpm, 8, ., ax7)
 {
 	uint src = OPER_AY_PI_8();
 	uint dst = OPER_A7_PI_8();
@@ -3989,7 +3979,7 @@ M68KMAKE_OP(cmpm, 8, ax7)
 }
 
 
-M68KMAKE_OP(cmpm, 8, ay7)
+M68KMAKE_OP(cmpm, 8, ., ay7)
 {
 	uint src = OPER_A7_PI_8();
 	uint dst = OPER_AX_PI_8();
@@ -4002,7 +3992,7 @@ M68KMAKE_OP(cmpm, 8, ay7)
 }
 
 
-M68KMAKE_OP(cmpm, 8, axy7)
+M68KMAKE_OP(cmpm, 8, ., axy7)
 {
 	uint src = OPER_A7_PI_8();
 	uint dst = OPER_A7_PI_8();
@@ -4015,7 +4005,7 @@ M68KMAKE_OP(cmpm, 8, axy7)
 }
 
 
-M68KMAKE_OP(cmpm, 8, _)
+M68KMAKE_OP(cmpm, 8, ., .)
 {
 	uint src = OPER_AY_PI_8();
 	uint dst = OPER_AX_PI_8();
@@ -4028,7 +4018,7 @@ M68KMAKE_OP(cmpm, 8, _)
 }
 
 
-M68KMAKE_OP(cmpm, 16, _)
+M68KMAKE_OP(cmpm, 16, ., .)
 {
 	uint src = OPER_AY_PI_16();
 	uint dst = OPER_AX_PI_16();
@@ -4041,7 +4031,7 @@ M68KMAKE_OP(cmpm, 16, _)
 }
 
 
-M68KMAKE_OP(cmpm, 32, _)
+M68KMAKE_OP(cmpm, 32, ., .)
 {
 	uint src = OPER_AY_PI_32();
 	uint dst = OPER_AX_PI_32();
@@ -4054,7 +4044,7 @@ M68KMAKE_OP(cmpm, 32, _)
 }
 
 
-M68KMAKE_OP(cpbcc, 32, _)
+M68KMAKE_OP(cpbcc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4067,7 +4057,7 @@ M68KMAKE_OP(cpbcc, 32, _)
 }
 
 
-M68KMAKE_OP(cpdbcc, 32, _)
+M68KMAKE_OP(cpdbcc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4080,7 +4070,7 @@ M68KMAKE_OP(cpdbcc, 32, _)
 }
 
 
-M68KMAKE_OP(cpgen, 32, _)
+M68KMAKE_OP(cpgen, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4093,7 +4083,7 @@ M68KMAKE_OP(cpgen, 32, _)
 }
 
 
-M68KMAKE_OP(cpscc, 32, _)
+M68KMAKE_OP(cpscc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4106,7 +4096,7 @@ M68KMAKE_OP(cpscc, 32, _)
 }
 
 
-M68KMAKE_OP(cptrapcc, 32, _)
+M68KMAKE_OP(cptrapcc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4119,13 +4109,13 @@ M68KMAKE_OP(cptrapcc, 32, _)
 }
 
 
-M68KMAKE_OP(dbt, 16, _)
+M68KMAKE_OP(dbt, 16, ., .)
 {
 	REG_PC += 2;
 }
 
 
-M68KMAKE_OP(dbf, 16, _)
+M68KMAKE_OP(dbf, 16, ., .)
 {
 	uint* r_dst = &DY;
 	uint res = MASK_OUT_ABOVE_16(*r_dst - 1);
@@ -4143,7 +4133,7 @@ M68KMAKE_OP(dbf, 16, _)
 }
 
 
-M68KMAKE_OP(dbcc, 16, _)
+M68KMAKE_OP(dbcc, 16, ., .)
 {
 	if(M68KMAKE_NOT_CC)
 	{
@@ -4168,7 +4158,7 @@ M68KMAKE_OP(dbcc, 16, _)
 }
 
 
-M68KMAKE_OP(divs, 16, d)
+M68KMAKE_OP(divs, 16, ., d)
 {
 	uint* r_dst = &DX;
 	sint src = MAKE_INT_16(DY);
@@ -4206,7 +4196,7 @@ M68KMAKE_OP(divs, 16, d)
 }
 
 
-M68KMAKE_OP(divs, 16, _)
+M68KMAKE_OP(divs, 16, ., .)
 {
 	uint* r_dst = &DX;
 	sint src = MAKE_INT_16(M68KMAKE_GET_OPER_AY_16);
@@ -4244,7 +4234,7 @@ M68KMAKE_OP(divs, 16, _)
 }
 
 
-M68KMAKE_OP(divu, 16, d)
+M68KMAKE_OP(divu, 16, ., d)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(DY);
@@ -4270,7 +4260,7 @@ M68KMAKE_OP(divu, 16, d)
 }
 
 
-M68KMAKE_OP(divu, 16, _)
+M68KMAKE_OP(divu, 16, ., .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_16;
@@ -4296,7 +4286,7 @@ M68KMAKE_OP(divu, 16, _)
 }
 
 
-M68KMAKE_OP(divl, 32, d)
+M68KMAKE_OP(divl, 32, ., d)
 {
 #if M68K_USE_64_BIT
 
@@ -4403,13 +4393,13 @@ M68KMAKE_OP(divl, 32, d)
 					if(GET_MSB_32(dividend_hi))
 					{
 						dividend_neg = 1;
-						dividend_hi = MASK_OUT_ABOVE_32((-dividend_hi) - (dividend_lo != 0));
-						dividend_lo = MASK_OUT_ABOVE_32(-dividend_lo);
+						dividend_hi = (uint)MASK_OUT_ABOVE_32((-(sint)dividend_hi) - (dividend_lo != 0));
+						dividend_lo = (uint)MASK_OUT_ABOVE_32(-(sint)dividend_lo);
 					}
 					if(GET_MSB_32(divisor))
 					{
 						divisor_neg = 1;
-						divisor = MASK_OUT_ABOVE_32(-divisor);
+						divisor = (uint)MASK_OUT_ABOVE_32(-(sint)divisor);
 
 					}
 				}
@@ -4452,11 +4442,11 @@ M68KMAKE_OP(divl, 32, d)
 					}
 					if(dividend_neg)
 					{
-						remainder = MASK_OUT_ABOVE_32(-remainder);
-						quotient = MASK_OUT_ABOVE_32(-quotient);
+						remainder = (uint)MASK_OUT_ABOVE_32(-(sint)remainder);
+						quotient = (uint)MASK_OUT_ABOVE_32(-(sint)quotient);
 					}
 					if(divisor_neg)
-						quotient = MASK_OUT_ABOVE_32(-quotient);
+						quotient = (uint)MASK_OUT_ABOVE_32(-(sint)quotient);
 				}
 
 				REG_D[word2 & 7] = remainder;
@@ -4507,7 +4497,7 @@ M68KMAKE_OP(divl, 32, d)
 }
 
 
-M68KMAKE_OP(divl, 32, _)
+M68KMAKE_OP(divl, 32, ., .)
 {
 #if M68K_USE_64_BIT
 
@@ -4614,13 +4604,13 @@ M68KMAKE_OP(divl, 32, _)
 					if(GET_MSB_32(dividend_hi))
 					{
 						dividend_neg = 1;
-						dividend_hi = MASK_OUT_ABOVE_32((-dividend_hi) - (dividend_lo != 0));
-						dividend_lo = MASK_OUT_ABOVE_32(-dividend_lo);
+						dividend_hi = (uint)MASK_OUT_ABOVE_32((-(sint)dividend_hi) - (dividend_lo != 0));
+						dividend_lo = (uint)MASK_OUT_ABOVE_32(-(sint)dividend_lo);
 					}
 					if(GET_MSB_32(divisor))
 					{
 						divisor_neg = 1;
-						divisor = MASK_OUT_ABOVE_32(-divisor);
+						divisor = (uint)MASK_OUT_ABOVE_32(-(sint)divisor);
 
 					}
 				}
@@ -4663,11 +4653,11 @@ M68KMAKE_OP(divl, 32, _)
 					}
 					if(dividend_neg)
 					{
-						remainder = MASK_OUT_ABOVE_32(-remainder);
-						quotient = MASK_OUT_ABOVE_32(-quotient);
+						remainder = (uint)MASK_OUT_ABOVE_32(-(sint)remainder);
+						quotient = (uint)MASK_OUT_ABOVE_32(-(sint)quotient);
 					}
 					if(divisor_neg)
-						quotient = MASK_OUT_ABOVE_32(-quotient);
+						quotient = (uint)MASK_OUT_ABOVE_32(-(sint)quotient);
 				}
 
 				REG_D[word2 & 7] = remainder;
@@ -4718,7 +4708,7 @@ M68KMAKE_OP(divl, 32, _)
 }
 
 
-M68KMAKE_OP(eor, 8, d)
+M68KMAKE_OP(eor, 8, ., d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY ^= MASK_OUT_ABOVE_8(DX));
 
@@ -4729,7 +4719,7 @@ M68KMAKE_OP(eor, 8, d)
 }
 
 
-M68KMAKE_OP(eor, 8, _)
+M68KMAKE_OP(eor, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint res = MASK_OUT_ABOVE_8(DX ^ m68ki_read_8(ea));
@@ -4743,7 +4733,7 @@ M68KMAKE_OP(eor, 8, _)
 }
 
 
-M68KMAKE_OP(eor, 16, d)
+M68KMAKE_OP(eor, 16, ., d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY ^= MASK_OUT_ABOVE_16(DX));
 
@@ -4754,7 +4744,7 @@ M68KMAKE_OP(eor, 16, d)
 }
 
 
-M68KMAKE_OP(eor, 16, _)
+M68KMAKE_OP(eor, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint res = MASK_OUT_ABOVE_16(DX ^ m68ki_read_16(ea));
@@ -4768,7 +4758,7 @@ M68KMAKE_OP(eor, 16, _)
 }
 
 
-M68KMAKE_OP(eor, 32, d)
+M68KMAKE_OP(eor, 32, ., d)
 {
 	uint res = DY ^= DX;
 
@@ -4779,7 +4769,7 @@ M68KMAKE_OP(eor, 32, d)
 }
 
 
-M68KMAKE_OP(eor, 32, _)
+M68KMAKE_OP(eor, 32, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint res = DX ^ m68ki_read_32(ea);
@@ -4793,7 +4783,7 @@ M68KMAKE_OP(eor, 32, _)
 }
 
 
-M68KMAKE_OP(eori, 8, d)
+M68KMAKE_OP(eori, 8, ., d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY ^= OPER_I_8());
 
@@ -4804,7 +4794,7 @@ M68KMAKE_OP(eori, 8, d)
 }
 
 
-M68KMAKE_OP(eori, 8, _)
+M68KMAKE_OP(eori, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -4819,7 +4809,7 @@ M68KMAKE_OP(eori, 8, _)
 }
 
 
-M68KMAKE_OP(eori, 16, d)
+M68KMAKE_OP(eori, 16, ., d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY ^= OPER_I_16());
 
@@ -4830,7 +4820,7 @@ M68KMAKE_OP(eori, 16, d)
 }
 
 
-M68KMAKE_OP(eori, 16, _)
+M68KMAKE_OP(eori, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -4845,7 +4835,7 @@ M68KMAKE_OP(eori, 16, _)
 }
 
 
-M68KMAKE_OP(eori, 32, d)
+M68KMAKE_OP(eori, 32, ., d)
 {
 	uint res = DY ^= OPER_I_32();
 
@@ -4856,7 +4846,7 @@ M68KMAKE_OP(eori, 32, d)
 }
 
 
-M68KMAKE_OP(eori, 32, _)
+M68KMAKE_OP(eori, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -4871,13 +4861,13 @@ M68KMAKE_OP(eori, 32, _)
 }
 
 
-M68KMAKE_OP(eori_to_ccr, 16, _)
+M68KMAKE_OP(eori, 16, toc, .)
 {
 	m68ki_set_ccr(m68ki_get_ccr() ^ OPER_I_16());
 }
 
 
-M68KMAKE_OP(eori_to_sr, 16, _)
+M68KMAKE_OP(eori, 16, tos, .)
 {
 	if(FLAG_S)
 	{
@@ -4890,7 +4880,7 @@ M68KMAKE_OP(eori_to_sr, 16, _)
 }
 
 
-M68KMAKE_OP(exg_dd, 32, _)
+M68KMAKE_OP(exg, 32, dd, .)
 {
 	uint* reg_a = &DX;
 	uint* reg_b = &DY;
@@ -4900,7 +4890,7 @@ M68KMAKE_OP(exg_dd, 32, _)
 }
 
 
-M68KMAKE_OP(exg_aa, 32, _)
+M68KMAKE_OP(exg, 32, aa, .)
 {
 	uint* reg_a = &AX;
 	uint* reg_b = &AY;
@@ -4910,7 +4900,7 @@ M68KMAKE_OP(exg_aa, 32, _)
 }
 
 
-M68KMAKE_OP(exg_da, 32, _)
+M68KMAKE_OP(exg, 32, da, .)
 {
 	uint* reg_a = &DX;
 	uint* reg_b = &AY;
@@ -4920,7 +4910,7 @@ M68KMAKE_OP(exg_da, 32, _)
 }
 
 
-M68KMAKE_OP(ext, 16, _)
+M68KMAKE_OP(ext, 16, ., .)
 {
 	uint* r_dst = &DY;
 
@@ -4933,7 +4923,7 @@ M68KMAKE_OP(ext, 16, _)
 }
 
 
-M68KMAKE_OP(ext, 32, _)
+M68KMAKE_OP(ext, 32, ., .)
 {
 	uint* r_dst = &DY;
 
@@ -4946,7 +4936,7 @@ M68KMAKE_OP(ext, 32, _)
 }
 
 
-M68KMAKE_OP(extb, 32, _)
+M68KMAKE_OP(extb, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -4964,12 +4954,12 @@ M68KMAKE_OP(extb, 32, _)
 }
 
 
-M68KMAKE_OP(illegal, 0, _)
+M68KMAKE_OP(illegal, 0, ., .)
 {
 	m68ki_exception_illegal();
 }
 
-M68KMAKE_OP(jmp, 32, _)
+M68KMAKE_OP(jmp, 32, ., .)
 {
 	m68ki_jump(M68KMAKE_GET_EA_AY_32);
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
@@ -4978,7 +4968,7 @@ M68KMAKE_OP(jmp, 32, _)
 }
 
 
-M68KMAKE_OP(jsr, 32, _)
+M68KMAKE_OP(jsr, 32, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
@@ -4987,13 +4977,13 @@ M68KMAKE_OP(jsr, 32, _)
 }
 
 
-M68KMAKE_OP(lea, 32, _)
+M68KMAKE_OP(lea, 32, ., .)
 {
 	AX = M68KMAKE_GET_EA_AY_32;
 }
 
 
-M68KMAKE_OP(link, 16, a7)
+M68KMAKE_OP(link, 16, ., a7)
 {
 	REG_A[7] -= 4;
 	m68ki_write_32(REG_A[7], REG_A[7]);
@@ -5001,7 +4991,7 @@ M68KMAKE_OP(link, 16, a7)
 }
 
 
-M68KMAKE_OP(link, 16, _)
+M68KMAKE_OP(link, 16, ., .)
 {
 	uint* r_dst = &AY;
 
@@ -5011,7 +5001,7 @@ M68KMAKE_OP(link, 16, _)
 }
 
 
-M68KMAKE_OP(link, 32, a7)
+M68KMAKE_OP(link, 32, ., a7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -5024,7 +5014,7 @@ M68KMAKE_OP(link, 32, a7)
 }
 
 
-M68KMAKE_OP(link, 32, _)
+M68KMAKE_OP(link, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -5039,7 +5029,7 @@ M68KMAKE_OP(link, 32, _)
 }
 
 
-M68KMAKE_OP(lsr_s, 8, _)
+M68KMAKE_OP(lsr, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5055,7 +5045,7 @@ M68KMAKE_OP(lsr_s, 8, _)
 }
 
 
-M68KMAKE_OP(lsr_s, 16, _)
+M68KMAKE_OP(lsr, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5071,7 +5061,7 @@ M68KMAKE_OP(lsr_s, 16, _)
 }
 
 
-M68KMAKE_OP(lsr_s, 32, _)
+M68KMAKE_OP(lsr, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5087,7 +5077,7 @@ M68KMAKE_OP(lsr_s, 32, _)
 }
 
 
-M68KMAKE_OP(lsr_r, 8, _)
+M68KMAKE_OP(lsr, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5124,7 +5114,7 @@ M68KMAKE_OP(lsr_r, 8, _)
 }
 
 
-M68KMAKE_OP(lsr_r, 16, _)
+M68KMAKE_OP(lsr, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5161,7 +5151,7 @@ M68KMAKE_OP(lsr_r, 16, _)
 }
 
 
-M68KMAKE_OP(lsr_r, 32, _)
+M68KMAKE_OP(lsr, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5197,7 +5187,7 @@ M68KMAKE_OP(lsr_r, 32, _)
 }
 
 
-M68KMAKE_OP(lsr, 16, _)
+M68KMAKE_OP(lsr, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -5212,7 +5202,7 @@ M68KMAKE_OP(lsr, 16, _)
 }
 
 
-M68KMAKE_OP(lsl_s, 8, _)
+M68KMAKE_OP(lsl, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5228,7 +5218,7 @@ M68KMAKE_OP(lsl_s, 8, _)
 }
 
 
-M68KMAKE_OP(lsl_s, 16, _)
+M68KMAKE_OP(lsl, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5244,7 +5234,7 @@ M68KMAKE_OP(lsl_s, 16, _)
 }
 
 
-M68KMAKE_OP(lsl_s, 32, _)
+M68KMAKE_OP(lsl, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -5260,7 +5250,7 @@ M68KMAKE_OP(lsl_s, 32, _)
 }
 
 
-M68KMAKE_OP(lsl_r, 8, _)
+M68KMAKE_OP(lsl, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5297,7 +5287,7 @@ M68KMAKE_OP(lsl_r, 8, _)
 }
 
 
-M68KMAKE_OP(lsl_r, 16, _)
+M68KMAKE_OP(lsl, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5334,7 +5324,7 @@ M68KMAKE_OP(lsl_r, 16, _)
 }
 
 
-M68KMAKE_OP(lsl_r, 32, _)
+M68KMAKE_OP(lsl, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint shift = DX & 0x3f;
@@ -5370,7 +5360,7 @@ M68KMAKE_OP(lsl_r, 32, _)
 }
 
 
-M68KMAKE_OP(lsl, 16, _)
+M68KMAKE_OP(lsl, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -5385,7 +5375,7 @@ M68KMAKE_OP(lsl, 16, _)
 }
 
 
-M68KMAKE_OP(move_dd, 8, d)
+M68KMAKE_OP(move, 8, d, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint* r_dst = &DX;
@@ -5399,7 +5389,7 @@ M68KMAKE_OP(move_dd, 8, d)
 }
 
 
-M68KMAKE_OP(move_dd, 8, _)
+M68KMAKE_OP(move, 8, d, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint* r_dst = &DX;
@@ -5413,7 +5403,7 @@ M68KMAKE_OP(move_dd, 8, _)
 }
 
 
-M68KMAKE_OP(move_ai, 8, d)
+M68KMAKE_OP(move, 8, ai, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AX_AI_8();
@@ -5427,7 +5417,7 @@ M68KMAKE_OP(move_ai, 8, d)
 }
 
 
-M68KMAKE_OP(move_ai, 8, _)
+M68KMAKE_OP(move, 8, ai, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AX_AI_8();
@@ -5441,7 +5431,7 @@ M68KMAKE_OP(move_ai, 8, _)
 }
 
 
-M68KMAKE_OP(move_pi7, 8, d)
+M68KMAKE_OP(move, 8, pi7, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_A7_PI_8();
@@ -5455,7 +5445,7 @@ M68KMAKE_OP(move_pi7, 8, d)
 }
 
 
-M68KMAKE_OP(move_pi, 8, d)
+M68KMAKE_OP(move, 8, pi, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AX_PI_8();
@@ -5469,7 +5459,7 @@ M68KMAKE_OP(move_pi, 8, d)
 }
 
 
-M68KMAKE_OP(move_pi7, 8, _)
+M68KMAKE_OP(move, 8, pi7, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_A7_PI_8();
@@ -5483,7 +5473,7 @@ M68KMAKE_OP(move_pi7, 8, _)
 }
 
 
-M68KMAKE_OP(move_pi, 8, _)
+M68KMAKE_OP(move, 8, pi, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AX_PI_8();
@@ -5497,7 +5487,7 @@ M68KMAKE_OP(move_pi, 8, _)
 }
 
 
-M68KMAKE_OP(move_pd7, 8, d)
+M68KMAKE_OP(move, 8, pd7, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_A7_PD_8();
@@ -5511,7 +5501,7 @@ M68KMAKE_OP(move_pd7, 8, d)
 }
 
 
-M68KMAKE_OP(move_pd, 8, d)
+M68KMAKE_OP(move, 8, pd, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AX_PD_8();
@@ -5525,7 +5515,7 @@ M68KMAKE_OP(move_pd, 8, d)
 }
 
 
-M68KMAKE_OP(move_pd7, 8, _)
+M68KMAKE_OP(move, 8, pd7, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_A7_PD_8();
@@ -5539,7 +5529,7 @@ M68KMAKE_OP(move_pd7, 8, _)
 }
 
 
-M68KMAKE_OP(move_pd, 8, _)
+M68KMAKE_OP(move, 8, pd, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AX_PD_8();
@@ -5553,7 +5543,7 @@ M68KMAKE_OP(move_pd, 8, _)
 }
 
 
-M68KMAKE_OP(move_di, 8, d)
+M68KMAKE_OP(move, 8, di, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AX_DI_8();
@@ -5567,7 +5557,7 @@ M68KMAKE_OP(move_di, 8, d)
 }
 
 
-M68KMAKE_OP(move_di, 8, _)
+M68KMAKE_OP(move, 8, di, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AX_DI_8();
@@ -5581,7 +5571,7 @@ M68KMAKE_OP(move_di, 8, _)
 }
 
 
-M68KMAKE_OP(move_ix, 8, d)
+M68KMAKE_OP(move, 8, ix, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AX_IX_8();
@@ -5595,7 +5585,7 @@ M68KMAKE_OP(move_ix, 8, d)
 }
 
 
-M68KMAKE_OP(move_ix, 8, _)
+M68KMAKE_OP(move, 8, ix, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AX_IX_8();
@@ -5609,7 +5599,7 @@ M68KMAKE_OP(move_ix, 8, _)
 }
 
 
-M68KMAKE_OP(move_aw, 8, d)
+M68KMAKE_OP(move, 8, aw, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AW_8();
@@ -5623,7 +5613,7 @@ M68KMAKE_OP(move_aw, 8, d)
 }
 
 
-M68KMAKE_OP(move_aw, 8, _)
+M68KMAKE_OP(move, 8, aw, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AW_8();
@@ -5637,7 +5627,7 @@ M68KMAKE_OP(move_aw, 8, _)
 }
 
 
-M68KMAKE_OP(move_al, 8, d)
+M68KMAKE_OP(move, 8, al, d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 	uint ea = EA_AL_8();
@@ -5651,7 +5641,7 @@ M68KMAKE_OP(move_al, 8, d)
 }
 
 
-M68KMAKE_OP(move_al, 8, _)
+M68KMAKE_OP(move, 8, al, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_8;
 	uint ea = EA_AL_8();
@@ -5665,7 +5655,7 @@ M68KMAKE_OP(move_al, 8, _)
 }
 
 
-M68KMAKE_OP(move_dd, 16, d)
+M68KMAKE_OP(move, 16, d, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint* r_dst = &DX;
@@ -5679,7 +5669,7 @@ M68KMAKE_OP(move_dd, 16, d)
 }
 
 
-M68KMAKE_OP(move_dd, 16, a)
+M68KMAKE_OP(move, 16, d, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint* r_dst = &DX;
@@ -5693,7 +5683,7 @@ M68KMAKE_OP(move_dd, 16, a)
 }
 
 
-M68KMAKE_OP(move_dd, 16, _)
+M68KMAKE_OP(move, 16, d, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint* r_dst = &DX;
@@ -5707,7 +5697,7 @@ M68KMAKE_OP(move_dd, 16, _)
 }
 
 
-M68KMAKE_OP(move_ai, 16, d)
+M68KMAKE_OP(move, 16, ai, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AX_AI_16();
@@ -5721,7 +5711,7 @@ M68KMAKE_OP(move_ai, 16, d)
 }
 
 
-M68KMAKE_OP(move_ai, 16, a)
+M68KMAKE_OP(move, 16, ai, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AX_AI_16();
@@ -5735,7 +5725,7 @@ M68KMAKE_OP(move_ai, 16, a)
 }
 
 
-M68KMAKE_OP(move_ai, 16, _)
+M68KMAKE_OP(move, 16, ai, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AX_AI_16();
@@ -5749,7 +5739,7 @@ M68KMAKE_OP(move_ai, 16, _)
 }
 
 
-M68KMAKE_OP(move_pi, 16, d)
+M68KMAKE_OP(move, 16, pi, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AX_PI_16();
@@ -5763,7 +5753,7 @@ M68KMAKE_OP(move_pi, 16, d)
 }
 
 
-M68KMAKE_OP(move_pi, 16, a)
+M68KMAKE_OP(move, 16, pi, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AX_PI_16();
@@ -5777,7 +5767,7 @@ M68KMAKE_OP(move_pi, 16, a)
 }
 
 
-M68KMAKE_OP(move_pi, 16, _)
+M68KMAKE_OP(move, 16, pi, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AX_PI_16();
@@ -5791,7 +5781,7 @@ M68KMAKE_OP(move_pi, 16, _)
 }
 
 
-M68KMAKE_OP(move_pd, 16, d)
+M68KMAKE_OP(move, 16, pd, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AX_PD_16();
@@ -5805,7 +5795,7 @@ M68KMAKE_OP(move_pd, 16, d)
 }
 
 
-M68KMAKE_OP(move_pd, 16, a)
+M68KMAKE_OP(move, 16, pd, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AX_PD_16();
@@ -5819,7 +5809,7 @@ M68KMAKE_OP(move_pd, 16, a)
 }
 
 
-M68KMAKE_OP(move_pd, 16, _)
+M68KMAKE_OP(move, 16, pd, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AX_PD_16();
@@ -5833,7 +5823,7 @@ M68KMAKE_OP(move_pd, 16, _)
 }
 
 
-M68KMAKE_OP(move_di, 16, d)
+M68KMAKE_OP(move, 16, di, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AX_DI_16();
@@ -5847,7 +5837,7 @@ M68KMAKE_OP(move_di, 16, d)
 }
 
 
-M68KMAKE_OP(move_di, 16, a)
+M68KMAKE_OP(move, 16, di, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AX_DI_16();
@@ -5861,7 +5851,7 @@ M68KMAKE_OP(move_di, 16, a)
 }
 
 
-M68KMAKE_OP(move_di, 16, _)
+M68KMAKE_OP(move, 16, di, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AX_DI_16();
@@ -5875,7 +5865,7 @@ M68KMAKE_OP(move_di, 16, _)
 }
 
 
-M68KMAKE_OP(move_ix, 16, d)
+M68KMAKE_OP(move, 16, ix, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AX_IX_16();
@@ -5889,7 +5879,7 @@ M68KMAKE_OP(move_ix, 16, d)
 }
 
 
-M68KMAKE_OP(move_ix, 16, a)
+M68KMAKE_OP(move, 16, ix, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AX_IX_16();
@@ -5903,7 +5893,7 @@ M68KMAKE_OP(move_ix, 16, a)
 }
 
 
-M68KMAKE_OP(move_ix, 16, _)
+M68KMAKE_OP(move, 16, ix, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AX_IX_16();
@@ -5917,7 +5907,7 @@ M68KMAKE_OP(move_ix, 16, _)
 }
 
 
-M68KMAKE_OP(move_aw, 16, d)
+M68KMAKE_OP(move, 16, aw, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AW_16();
@@ -5931,7 +5921,7 @@ M68KMAKE_OP(move_aw, 16, d)
 }
 
 
-M68KMAKE_OP(move_aw, 16, a)
+M68KMAKE_OP(move, 16, aw, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AW_16();
@@ -5945,7 +5935,7 @@ M68KMAKE_OP(move_aw, 16, a)
 }
 
 
-M68KMAKE_OP(move_aw, 16, _)
+M68KMAKE_OP(move, 16, aw, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AW_16();
@@ -5959,7 +5949,7 @@ M68KMAKE_OP(move_aw, 16, _)
 }
 
 
-M68KMAKE_OP(move_al, 16, d)
+M68KMAKE_OP(move, 16, al, d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 	uint ea = EA_AL_16();
@@ -5973,7 +5963,7 @@ M68KMAKE_OP(move_al, 16, d)
 }
 
 
-M68KMAKE_OP(move_al, 16, a)
+M68KMAKE_OP(move, 16, al, a)
 {
 	uint res = MASK_OUT_ABOVE_16(AY);
 	uint ea = EA_AL_16();
@@ -5987,7 +5977,7 @@ M68KMAKE_OP(move_al, 16, a)
 }
 
 
-M68KMAKE_OP(move_al, 16, _)
+M68KMAKE_OP(move, 16, al, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 	uint ea = EA_AL_16();
@@ -6001,7 +5991,7 @@ M68KMAKE_OP(move_al, 16, _)
 }
 
 
-M68KMAKE_OP(move_dd, 32, d)
+M68KMAKE_OP(move, 32, d, d)
 {
 	uint res = DY;
 	uint* r_dst = &DX;
@@ -6015,7 +6005,7 @@ M68KMAKE_OP(move_dd, 32, d)
 }
 
 
-M68KMAKE_OP(move_dd, 32, a)
+M68KMAKE_OP(move, 32, d, a)
 {
 	uint res = AY;
 	uint* r_dst = &DX;
@@ -6029,7 +6019,7 @@ M68KMAKE_OP(move_dd, 32, a)
 }
 
 
-M68KMAKE_OP(move_dd, 32, _)
+M68KMAKE_OP(move, 32, d, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint* r_dst = &DX;
@@ -6043,7 +6033,7 @@ M68KMAKE_OP(move_dd, 32, _)
 }
 
 
-M68KMAKE_OP(move_ai, 32, d)
+M68KMAKE_OP(move, 32, ai, d)
 {
 	uint res = DY;
 	uint ea = EA_AX_AI_32();
@@ -6057,7 +6047,7 @@ M68KMAKE_OP(move_ai, 32, d)
 }
 
 
-M68KMAKE_OP(move_ai, 32, a)
+M68KMAKE_OP(move, 32, ai, a)
 {
 	uint res = AY;
 	uint ea = EA_AX_AI_32();
@@ -6071,7 +6061,7 @@ M68KMAKE_OP(move_ai, 32, a)
 }
 
 
-M68KMAKE_OP(move_ai, 32, _)
+M68KMAKE_OP(move, 32, ai, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AX_AI_32();
@@ -6085,7 +6075,7 @@ M68KMAKE_OP(move_ai, 32, _)
 }
 
 
-M68KMAKE_OP(move_pi, 32, d)
+M68KMAKE_OP(move, 32, pi, d)
 {
 	uint res = DY;
 	uint ea = EA_AX_PI_32();
@@ -6099,7 +6089,7 @@ M68KMAKE_OP(move_pi, 32, d)
 }
 
 
-M68KMAKE_OP(move_pi, 32, a)
+M68KMAKE_OP(move, 32, pi, a)
 {
 	uint res = AY;
 	uint ea = EA_AX_PI_32();
@@ -6113,7 +6103,7 @@ M68KMAKE_OP(move_pi, 32, a)
 }
 
 
-M68KMAKE_OP(move_pi, 32, _)
+M68KMAKE_OP(move, 32, pi, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AX_PI_32();
@@ -6127,7 +6117,7 @@ M68KMAKE_OP(move_pi, 32, _)
 }
 
 
-M68KMAKE_OP(move_pd, 32, d)
+M68KMAKE_OP(move, 32, pd, d)
 {
 	uint res = DY;
 	uint ea = EA_AX_PD_32();
@@ -6141,7 +6131,7 @@ M68KMAKE_OP(move_pd, 32, d)
 }
 
 
-M68KMAKE_OP(move_pd, 32, a)
+M68KMAKE_OP(move, 32, pd, a)
 {
 	uint res = AY;
 	uint ea = EA_AX_PD_32();
@@ -6155,7 +6145,7 @@ M68KMAKE_OP(move_pd, 32, a)
 }
 
 
-M68KMAKE_OP(move_pd, 32, _)
+M68KMAKE_OP(move, 32, pd, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AX_PD_32();
@@ -6169,7 +6159,7 @@ M68KMAKE_OP(move_pd, 32, _)
 }
 
 
-M68KMAKE_OP(move_di, 32, d)
+M68KMAKE_OP(move, 32, di, d)
 {
 	uint res = DY;
 	uint ea = EA_AX_DI_32();
@@ -6183,7 +6173,7 @@ M68KMAKE_OP(move_di, 32, d)
 }
 
 
-M68KMAKE_OP(move_di, 32, a)
+M68KMAKE_OP(move, 32, di, a)
 {
 	uint res = AY;
 	uint ea = EA_AX_DI_32();
@@ -6197,7 +6187,7 @@ M68KMAKE_OP(move_di, 32, a)
 }
 
 
-M68KMAKE_OP(move_di, 32, _)
+M68KMAKE_OP(move, 32, di, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AX_DI_32();
@@ -6211,7 +6201,7 @@ M68KMAKE_OP(move_di, 32, _)
 }
 
 
-M68KMAKE_OP(move_ix, 32, d)
+M68KMAKE_OP(move, 32, ix, d)
 {
 	uint res = DY;
 	uint ea = EA_AX_IX_32();
@@ -6225,7 +6215,7 @@ M68KMAKE_OP(move_ix, 32, d)
 }
 
 
-M68KMAKE_OP(move_ix, 32, a)
+M68KMAKE_OP(move, 32, ix, a)
 {
 	uint res = AY;
 	uint ea = EA_AX_IX_32();
@@ -6239,7 +6229,7 @@ M68KMAKE_OP(move_ix, 32, a)
 }
 
 
-M68KMAKE_OP(move_ix, 32, _)
+M68KMAKE_OP(move, 32, ix, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AX_IX_32();
@@ -6253,7 +6243,7 @@ M68KMAKE_OP(move_ix, 32, _)
 }
 
 
-M68KMAKE_OP(move_aw, 32, d)
+M68KMAKE_OP(move, 32, aw, d)
 {
 	uint res = DY;
 	uint ea = EA_AW_32();
@@ -6267,7 +6257,7 @@ M68KMAKE_OP(move_aw, 32, d)
 }
 
 
-M68KMAKE_OP(move_aw, 32, a)
+M68KMAKE_OP(move, 32, aw, a)
 {
 	uint res = AY;
 	uint ea = EA_AW_32();
@@ -6281,7 +6271,7 @@ M68KMAKE_OP(move_aw, 32, a)
 }
 
 
-M68KMAKE_OP(move_aw, 32, _)
+M68KMAKE_OP(move, 32, aw, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AW_32();
@@ -6295,7 +6285,7 @@ M68KMAKE_OP(move_aw, 32, _)
 }
 
 
-M68KMAKE_OP(move_al, 32, d)
+M68KMAKE_OP(move, 32, al, d)
 {
 	uint res = DY;
 	uint ea = EA_AL_32();
@@ -6309,7 +6299,7 @@ M68KMAKE_OP(move_al, 32, d)
 }
 
 
-M68KMAKE_OP(move_al, 32, a)
+M68KMAKE_OP(move, 32, al, a)
 {
 	uint res = AY;
 	uint ea = EA_AL_32();
@@ -6323,7 +6313,7 @@ M68KMAKE_OP(move_al, 32, a)
 }
 
 
-M68KMAKE_OP(move_al, 32, _)
+M68KMAKE_OP(move, 32, al, .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 	uint ea = EA_AL_32();
@@ -6337,43 +6327,43 @@ M68KMAKE_OP(move_al, 32, _)
 }
 
 
-M68KMAKE_OP(movea, 16, d)
+M68KMAKE_OP(movea, 16, ., d)
 {
 	AX = MAKE_INT_16(DY);
 }
 
 
-M68KMAKE_OP(movea, 16, a)
+M68KMAKE_OP(movea, 16, ., a)
 {
 	AX = MAKE_INT_16(AY);
 }
 
 
-M68KMAKE_OP(movea, 16, _)
+M68KMAKE_OP(movea, 16, ., .)
 {
 	AX = MAKE_INT_16(M68KMAKE_GET_OPER_AY_16);
 }
 
 
-M68KMAKE_OP(movea, 32, d)
+M68KMAKE_OP(movea, 32, ., d)
 {
 	AX = DY;
 }
 
 
-M68KMAKE_OP(movea, 32, a)
+M68KMAKE_OP(movea, 32, ., a)
 {
 	AX = AY;
 }
 
 
-M68KMAKE_OP(movea, 32, _)
+M68KMAKE_OP(movea, 32, ., .)
 {
 	AX = M68KMAKE_GET_OPER_AY_32;
 }
 
 
-M68KMAKE_OP(move_fr_ccr, 16, d)
+M68KMAKE_OP(move, 16, frc, d)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6384,7 +6374,7 @@ M68KMAKE_OP(move_fr_ccr, 16, d)
 }
 
 
-M68KMAKE_OP(move_fr_ccr, 16, _)
+M68KMAKE_OP(move, 16, frc, .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6395,19 +6385,19 @@ M68KMAKE_OP(move_fr_ccr, 16, _)
 }
 
 
-M68KMAKE_OP(move_to_ccr, 16, d)
+M68KMAKE_OP(move, 16, toc, d)
 {
 	m68ki_set_ccr(DY);
 }
 
 
-M68KMAKE_OP(move_to_ccr, 16, _)
+M68KMAKE_OP(move, 16, toc, .)
 {
 	m68ki_set_ccr(M68KMAKE_GET_OPER_AY_16);
 }
 
 
-M68KMAKE_OP(move_fr_sr, 16, d)
+M68KMAKE_OP(move, 16, frs, d)
 {
 	if(CPU_TYPE_IS_000(CPU_TYPE) || FLAG_S)	/* NS990408 */
 	{
@@ -6418,7 +6408,7 @@ M68KMAKE_OP(move_fr_sr, 16, d)
 }
 
 
-M68KMAKE_OP(move_fr_sr, 16, _)
+M68KMAKE_OP(move, 16, frs, .)
 {
 	if(CPU_TYPE_IS_000(CPU_TYPE) || FLAG_S)	/* NS990408 */
 	{
@@ -6430,7 +6420,7 @@ M68KMAKE_OP(move_fr_sr, 16, _)
 }
 
 
-M68KMAKE_OP(move_to_sr, 16, d)
+M68KMAKE_OP(move, 16, tos, d)
 {
 	if(FLAG_S)
 	{
@@ -6441,7 +6431,7 @@ M68KMAKE_OP(move_to_sr, 16, d)
 }
 
 
-M68KMAKE_OP(move_to_sr, 16, _)
+M68KMAKE_OP(move, 16, tos, .)
 {
 	if(FLAG_S)
 	{
@@ -6454,7 +6444,7 @@ M68KMAKE_OP(move_to_sr, 16, _)
 }
 
 
-M68KMAKE_OP(move_fr_usp, 32, _)
+M68KMAKE_OP(move, 32, fru, .)
 {
 	if(FLAG_S)
 	{
@@ -6465,7 +6455,7 @@ M68KMAKE_OP(move_fr_usp, 32, _)
 }
 
 
-M68KMAKE_OP(move_to_usp, 32, _)
+M68KMAKE_OP(move, 32, tou, .)
 {
 	if(FLAG_S)
 	{
@@ -6477,7 +6467,7 @@ M68KMAKE_OP(move_to_usp, 32, _)
 }
 
 
-M68KMAKE_OP(movec_cr, 32, _)
+M68KMAKE_OP(movec, 32, cr, .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6543,7 +6533,7 @@ M68KMAKE_OP(movec_cr, 32, _)
 }
 
 
-M68KMAKE_OP(movec_rc, 32, _)
+M68KMAKE_OP(movec, 32, rc, .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6621,7 +6611,7 @@ M68KMAKE_OP(movec_rc, 32, _)
 }
 
 
-M68KMAKE_OP(movem_re, 16, pd)
+M68KMAKE_OP(movem, 16, re, pd)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6641,7 +6631,7 @@ M68KMAKE_OP(movem_re, 16, pd)
 }
 
 
-M68KMAKE_OP(movem_re, 16, _)
+M68KMAKE_OP(movem, 16, re, .)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6660,7 +6650,7 @@ M68KMAKE_OP(movem_re, 16, _)
 }
 
 
-M68KMAKE_OP(movem_re, 32, pd)
+M68KMAKE_OP(movem, 32, re, pd)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6680,7 +6670,7 @@ M68KMAKE_OP(movem_re, 32, pd)
 }
 
 
-M68KMAKE_OP(movem_re, 32, _)
+M68KMAKE_OP(movem, 32, re, .)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6699,7 +6689,7 @@ M68KMAKE_OP(movem_re, 32, _)
 }
 
 
-M68KMAKE_OP(movem_er, 16, pi)
+M68KMAKE_OP(movem, 16, er, pi)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6719,7 +6709,7 @@ M68KMAKE_OP(movem_er, 16, pi)
 }
 
 
-M68KMAKE_OP(movem_er, 16, _)
+M68KMAKE_OP(movem, 16, er, .)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6738,7 +6728,7 @@ M68KMAKE_OP(movem_er, 16, _)
 }
 
 
-M68KMAKE_OP(movem_er, 32, pi)
+M68KMAKE_OP(movem, 32, er, pi)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6758,7 +6748,7 @@ M68KMAKE_OP(movem_er, 32, pi)
 }
 
 
-M68KMAKE_OP(movem_er, 32, _)
+M68KMAKE_OP(movem, 32, er, .)
 {
 	uint i = 0;
 	uint register_list = OPER_I_16();
@@ -6777,7 +6767,7 @@ M68KMAKE_OP(movem_er, 32, _)
 }
 
 
-M68KMAKE_OP(movep_re, 16, _)
+M68KMAKE_OP(movep, 16, re, .)
 {
 	uint ea = EA_AY_DI_16();
 	uint src = DX;
@@ -6787,7 +6777,7 @@ M68KMAKE_OP(movep_re, 16, _)
 }
 
 
-M68KMAKE_OP(movep_re, 32, _)
+M68KMAKE_OP(movep, 32, re, .)
 {
 	uint ea = EA_AY_DI_32();
 	uint src = DX;
@@ -6799,7 +6789,7 @@ M68KMAKE_OP(movep_re, 32, _)
 }
 
 
-M68KMAKE_OP(movep_er, 16, _)
+M68KMAKE_OP(movep, 16, er, .)
 {
 	uint ea = EA_AY_DI_16();
 	uint* r_dst = &DX;
@@ -6808,7 +6798,7 @@ M68KMAKE_OP(movep_er, 16, _)
 }
 
 
-M68KMAKE_OP(movep_er, 32, _)
+M68KMAKE_OP(movep, 32, er, .)
 {
 	uint ea = EA_AY_DI_32();
 
@@ -6817,7 +6807,7 @@ M68KMAKE_OP(movep_er, 32, _)
 }
 
 
-M68KMAKE_OP(moves, 8, _)
+M68KMAKE_OP(moves, 8, ., .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6852,7 +6842,7 @@ M68KMAKE_OP(moves, 8, _)
 }
 
 
-M68KMAKE_OP(moves, 16, _)
+M68KMAKE_OP(moves, 16, ., .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6887,7 +6877,7 @@ M68KMAKE_OP(moves, 16, _)
 }
 
 
-M68KMAKE_OP(moves, 32, _)
+M68KMAKE_OP(moves, 32, ., .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -6917,7 +6907,7 @@ M68KMAKE_OP(moves, 32, _)
 }
 
 
-M68KMAKE_OP(moveq, 32, _)
+M68KMAKE_OP(moveq, 32, ., .)
 {
 	uint res = DX = MAKE_INT_8(MASK_OUT_ABOVE_8(REG_IR));
 
@@ -6928,7 +6918,7 @@ M68KMAKE_OP(moveq, 32, _)
 }
 
 
-M68KMAKE_OP(muls, 16, d)
+M68KMAKE_OP(muls, 16, ., d)
 {
 	uint* r_dst = &DX;
 	uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(DY) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
@@ -6942,7 +6932,7 @@ M68KMAKE_OP(muls, 16, d)
 }
 
 
-M68KMAKE_OP(muls, 16, _)
+M68KMAKE_OP(muls, 16, ., .)
 {
 	uint* r_dst = &DX;
 	uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(M68KMAKE_GET_OPER_AY_16) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
@@ -6956,7 +6946,7 @@ M68KMAKE_OP(muls, 16, _)
 }
 
 
-M68KMAKE_OP(mulu, 16, d)
+M68KMAKE_OP(mulu, 16, ., d)
 {
 	uint* r_dst = &DX;
 	uint res = MASK_OUT_ABOVE_16(DY) * MASK_OUT_ABOVE_16(*r_dst);
@@ -6970,7 +6960,7 @@ M68KMAKE_OP(mulu, 16, d)
 }
 
 
-M68KMAKE_OP(mulu, 16, _)
+M68KMAKE_OP(mulu, 16, ., .)
 {
 	uint* r_dst = &DX;
 	uint res = M68KMAKE_GET_OPER_AY_16 * MASK_OUT_ABOVE_16(*r_dst);
@@ -6984,7 +6974,7 @@ M68KMAKE_OP(mulu, 16, _)
 }
 
 
-M68KMAKE_OP(mull, 32, d)
+M68KMAKE_OP(mull, 32, ., d)
 {
 #if M68K_USE_64_BIT
 
@@ -7058,9 +7048,9 @@ M68KMAKE_OP(mull, 32, d)
 		if(BIT_B(word2))			   /* signed */
 		{
 			if(GET_MSB_32(src))
-				src = MASK_OUT_ABOVE_32(-src);
+				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
 			if(GET_MSB_32(dst))
-				dst = MASK_OUT_ABOVE_32(-dst);
+				dst = (uint)MASK_OUT_ABOVE_32(-(sint)dst);
 		}
 
 		src1 = MASK_OUT_ABOVE_16(src);
@@ -7079,8 +7069,8 @@ M68KMAKE_OP(mull, 32, d)
 
 		if(BIT_B(word2) && neg)
 		{
-			hi = MASK_OUT_ABOVE_32((-hi) - (lo != 0));
-			lo = MASK_OUT_ABOVE_32(-lo);
+			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - (lo != 0));
+			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
 		if(BIT_A(word2))
@@ -7108,7 +7098,7 @@ M68KMAKE_OP(mull, 32, d)
 }
 
 
-M68KMAKE_OP(mull, 32, _)
+M68KMAKE_OP(mull, 32, ., .)
 {
 #if M68K_USE_64_BIT
 
@@ -7182,9 +7172,9 @@ M68KMAKE_OP(mull, 32, _)
 		if(BIT_B(word2))			   /* signed */
 		{
 			if(GET_MSB_32(src))
-				src = MASK_OUT_ABOVE_32(-src);
+				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
 			if(GET_MSB_32(dst))
-				dst = MASK_OUT_ABOVE_32(-dst);
+				dst = (uint)MASK_OUT_ABOVE_32(-(sint)dst);
 		}
 
 		src1 = MASK_OUT_ABOVE_16(src);
@@ -7203,8 +7193,8 @@ M68KMAKE_OP(mull, 32, _)
 
 		if(BIT_B(word2) && neg)
 		{
-			hi = MASK_OUT_ABOVE_32((-hi) - (lo != 0));
-			lo = MASK_OUT_ABOVE_32(-lo);
+			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - (lo != 0));
+			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
 		if(BIT_A(word2))
@@ -7232,7 +7222,7 @@ M68KMAKE_OP(mull, 32, _)
 }
 
 
-M68KMAKE_OP(nbcd, 8, d)
+M68KMAKE_OP(nbcd, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint dst = *r_dst;
@@ -7247,8 +7237,7 @@ M68KMAKE_OP(nbcd, 8, d)
 
 		*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 
-		if(res != 0)
-			FLAG_Z = ZFLAG_CLEAR;
+		FLAG_Z |= res;
 		FLAG_C = CFLAG_SET;
 		FLAG_X = XFLAG_SET;
 	}
@@ -7261,7 +7250,7 @@ M68KMAKE_OP(nbcd, 8, d)
 }
 
 
-M68KMAKE_OP(nbcd, 8, _)
+M68KMAKE_OP(nbcd, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint dst = m68ki_read_8(ea);
@@ -7276,8 +7265,7 @@ M68KMAKE_OP(nbcd, 8, _)
 
 		m68ki_write_8(ea, MASK_OUT_ABOVE_8(res));
 
-		if(res != 0)
-			FLAG_Z = ZFLAG_CLEAR;
+		FLAG_Z |= res;
 		FLAG_C = CFLAG_SET;
 		FLAG_X = XFLAG_SET;
 	}
@@ -7290,7 +7278,7 @@ M68KMAKE_OP(nbcd, 8, _)
 }
 
 
-M68KMAKE_OP(neg, 8, d)
+M68KMAKE_OP(neg, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - MASK_OUT_ABOVE_8(*r_dst);
@@ -7304,7 +7292,7 @@ M68KMAKE_OP(neg, 8, d)
 }
 
 
-M68KMAKE_OP(neg, 8, _)
+M68KMAKE_OP(neg, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = m68ki_read_8(ea);
@@ -7319,7 +7307,7 @@ M68KMAKE_OP(neg, 8, _)
 }
 
 
-M68KMAKE_OP(neg, 16, d)
+M68KMAKE_OP(neg, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - MASK_OUT_ABOVE_16(*r_dst);
@@ -7333,7 +7321,7 @@ M68KMAKE_OP(neg, 16, d)
 }
 
 
-M68KMAKE_OP(neg, 16, _)
+M68KMAKE_OP(neg, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -7348,7 +7336,7 @@ M68KMAKE_OP(neg, 16, _)
 }
 
 
-M68KMAKE_OP(neg, 32, d)
+M68KMAKE_OP(neg, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - *r_dst;
@@ -7362,7 +7350,7 @@ M68KMAKE_OP(neg, 32, d)
 }
 
 
-M68KMAKE_OP(neg, 32, _)
+M68KMAKE_OP(neg, 32, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint src = m68ki_read_32(ea);
@@ -7377,7 +7365,7 @@ M68KMAKE_OP(neg, 32, _)
 }
 
 
-M68KMAKE_OP(negx, 8, d)
+M68KMAKE_OP(negx, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - MASK_OUT_ABOVE_8(*r_dst) - XFLAG_AS_1();
@@ -7387,14 +7375,13 @@ M68KMAKE_OP(negx, 8, d)
 	FLAG_V = *r_dst & res;
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(negx, 8, _)
+M68KMAKE_OP(negx, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = m68ki_read_8(ea);
@@ -7405,14 +7392,13 @@ M68KMAKE_OP(negx, 8, _)
 	FLAG_V = src & res;
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(negx, 16, d)
+M68KMAKE_OP(negx, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - MASK_OUT_ABOVE_16(*r_dst) - XFLAG_AS_1();
@@ -7422,14 +7408,13 @@ M68KMAKE_OP(negx, 16, d)
 	FLAG_V = (*r_dst & res)>>8;
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(negx, 16, _)
+M68KMAKE_OP(negx, 16, ., .)
 {
 	uint ea  = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -7440,14 +7425,13 @@ M68KMAKE_OP(negx, 16, _)
 	FLAG_V = (src & res)>>8;
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_16(ea, res);
 }
 
 
-M68KMAKE_OP(negx, 32, d)
+M68KMAKE_OP(negx, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = 0 - MASK_OUT_ABOVE_32(*r_dst) - XFLAG_AS_1();
@@ -7457,14 +7441,13 @@ M68KMAKE_OP(negx, 32, d)
 	FLAG_V = (*r_dst & res)>>24;
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = res;
 }
 
 
-M68KMAKE_OP(negx, 32, _)
+M68KMAKE_OP(negx, 32, ., .)
 {
 	uint ea  = M68KMAKE_GET_EA_AY_32;
 	uint src = m68ki_read_32(ea);
@@ -7475,20 +7458,19 @@ M68KMAKE_OP(negx, 32, _)
 	FLAG_V = (src & res)>>24;
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_32(ea, res);
 }
 
 
-M68KMAKE_OP(nop, 0, _)
+M68KMAKE_OP(nop, 0, ., .)
 {
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
 }
 
 
-M68KMAKE_OP(not, 8, d)
+M68KMAKE_OP(not, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = MASK_OUT_ABOVE_8(~*r_dst);
@@ -7502,7 +7484,7 @@ M68KMAKE_OP(not, 8, d)
 }
 
 
-M68KMAKE_OP(not, 8, _)
+M68KMAKE_OP(not, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint res = MASK_OUT_ABOVE_8(~m68ki_read_8(ea));
@@ -7516,7 +7498,7 @@ M68KMAKE_OP(not, 8, _)
 }
 
 
-M68KMAKE_OP(not, 16, d)
+M68KMAKE_OP(not, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = MASK_OUT_ABOVE_16(~*r_dst);
@@ -7530,7 +7512,7 @@ M68KMAKE_OP(not, 16, d)
 }
 
 
-M68KMAKE_OP(not, 16, _)
+M68KMAKE_OP(not, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint res = MASK_OUT_ABOVE_16(~m68ki_read_16(ea));
@@ -7544,7 +7526,7 @@ M68KMAKE_OP(not, 16, _)
 }
 
 
-M68KMAKE_OP(not, 32, d)
+M68KMAKE_OP(not, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint res = *r_dst = MASK_OUT_ABOVE_32(~*r_dst);
@@ -7556,7 +7538,7 @@ M68KMAKE_OP(not, 32, d)
 }
 
 
-M68KMAKE_OP(not, 32, _)
+M68KMAKE_OP(not, 32, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint res = MASK_OUT_ABOVE_32(~m68ki_read_32(ea));
@@ -7570,7 +7552,7 @@ M68KMAKE_OP(not, 32, _)
 }
 
 
-M68KMAKE_OP(or_er, 8, d)
+M68KMAKE_OP(or, 8, er, d)
 {
 	uint res = MASK_OUT_ABOVE_8((DX |= MASK_OUT_ABOVE_8(DY)));
 
@@ -7581,7 +7563,7 @@ M68KMAKE_OP(or_er, 8, d)
 }
 
 
-M68KMAKE_OP(or_er, 8, _)
+M68KMAKE_OP(or, 8, er, .)
 {
 	uint res = MASK_OUT_ABOVE_8((DX |= M68KMAKE_GET_OPER_AY_8));
 
@@ -7592,7 +7574,7 @@ M68KMAKE_OP(or_er, 8, _)
 }
 
 
-M68KMAKE_OP(or_er, 16, d)
+M68KMAKE_OP(or, 16, er, d)
 {
 	uint res = MASK_OUT_ABOVE_16((DX |= MASK_OUT_ABOVE_16(DY)));
 
@@ -7603,7 +7585,7 @@ M68KMAKE_OP(or_er, 16, d)
 }
 
 
-M68KMAKE_OP(or_er, 16, _)
+M68KMAKE_OP(or, 16, er, .)
 {
 	uint res = MASK_OUT_ABOVE_16((DX |= M68KMAKE_GET_OPER_AY_16));
 
@@ -7614,7 +7596,7 @@ M68KMAKE_OP(or_er, 16, _)
 }
 
 
-M68KMAKE_OP(or_er, 32, d)
+M68KMAKE_OP(or, 32, er, d)
 {
 	uint res = DX |= DY;
 
@@ -7625,7 +7607,7 @@ M68KMAKE_OP(or_er, 32, d)
 }
 
 
-M68KMAKE_OP(or_er, 32, _)
+M68KMAKE_OP(or, 32, er, .)
 {
 	uint res = DX |= M68KMAKE_GET_OPER_AY_32;
 
@@ -7636,7 +7618,7 @@ M68KMAKE_OP(or_er, 32, _)
 }
 
 
-M68KMAKE_OP(or_re, 8, _)
+M68KMAKE_OP(or, 8, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint res = MASK_OUT_ABOVE_8(DX | m68ki_read_8(ea));
@@ -7650,7 +7632,7 @@ M68KMAKE_OP(or_re, 8, _)
 }
 
 
-M68KMAKE_OP(or_re, 16, _)
+M68KMAKE_OP(or, 16, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint res = MASK_OUT_ABOVE_16(DX | m68ki_read_16(ea));
@@ -7664,7 +7646,7 @@ M68KMAKE_OP(or_re, 16, _)
 }
 
 
-M68KMAKE_OP(or_re, 32, _)
+M68KMAKE_OP(or, 32, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint res = DX | m68ki_read_32(ea);
@@ -7678,7 +7660,7 @@ M68KMAKE_OP(or_re, 32, _)
 }
 
 
-M68KMAKE_OP(ori, 8, d)
+M68KMAKE_OP(ori, 8, ., d)
 {
 	uint res = MASK_OUT_ABOVE_8((DY |= OPER_I_8()));
 
@@ -7689,7 +7671,7 @@ M68KMAKE_OP(ori, 8, d)
 }
 
 
-M68KMAKE_OP(ori, 8, _)
+M68KMAKE_OP(ori, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -7704,7 +7686,7 @@ M68KMAKE_OP(ori, 8, _)
 }
 
 
-M68KMAKE_OP(ori, 16, d)
+M68KMAKE_OP(ori, 16, ., d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY |= OPER_I_16());
 
@@ -7715,7 +7697,7 @@ M68KMAKE_OP(ori, 16, d)
 }
 
 
-M68KMAKE_OP(ori, 16, _)
+M68KMAKE_OP(ori, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -7730,7 +7712,7 @@ M68KMAKE_OP(ori, 16, _)
 }
 
 
-M68KMAKE_OP(ori, 32, d)
+M68KMAKE_OP(ori, 32, ., d)
 {
 	uint res = DY |= OPER_I_32();
 
@@ -7741,7 +7723,7 @@ M68KMAKE_OP(ori, 32, d)
 }
 
 
-M68KMAKE_OP(ori, 32, _)
+M68KMAKE_OP(ori, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -7756,13 +7738,13 @@ M68KMAKE_OP(ori, 32, _)
 }
 
 
-M68KMAKE_OP(ori_to_ccr, 16, _)
+M68KMAKE_OP(ori, 16, toc, .)
 {
 	m68ki_set_ccr(m68ki_get_ccr() | OPER_I_16());
 }
 
 
-M68KMAKE_OP(ori_to_sr, 16, _)
+M68KMAKE_OP(ori, 16, tos, .)
 {
 	if(FLAG_S)
 	{
@@ -7775,7 +7757,7 @@ M68KMAKE_OP(ori_to_sr, 16, _)
 }
 
 
-M68KMAKE_OP(pack_rr, 16, _)
+M68KMAKE_OP(pack, 16, rr, .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -7790,7 +7772,7 @@ M68KMAKE_OP(pack_rr, 16, _)
 }
 
 
-M68KMAKE_OP(pack_mm, 16, ax7)
+M68KMAKE_OP(pack, 16, mm, ax7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -7807,7 +7789,7 @@ M68KMAKE_OP(pack_mm, 16, ax7)
 }
 
 
-M68KMAKE_OP(pack_mm, 16, ay7)
+M68KMAKE_OP(pack, 16, mm, ay7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -7824,7 +7806,7 @@ M68KMAKE_OP(pack_mm, 16, ay7)
 }
 
 
-M68KMAKE_OP(pack_mm, 16, axy7)
+M68KMAKE_OP(pack, 16, mm, axy7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -7840,7 +7822,7 @@ M68KMAKE_OP(pack_mm, 16, axy7)
 }
 
 
-M68KMAKE_OP(pack_mm, 16, _)
+M68KMAKE_OP(pack, 16, mm, .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -7857,7 +7839,7 @@ M68KMAKE_OP(pack_mm, 16, _)
 }
 
 
-M68KMAKE_OP(pea, 32, _)
+M68KMAKE_OP(pea, 32, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 
@@ -7865,7 +7847,7 @@ M68KMAKE_OP(pea, 32, _)
 }
 
 
-M68KMAKE_OP(reset, 0, _)
+M68KMAKE_OP(reset, 0, ., .)
 {
 	if(FLAG_S)
 	{
@@ -7877,7 +7859,7 @@ M68KMAKE_OP(reset, 0, _)
 }
 
 
-M68KMAKE_OP(ror_s, 8, _)
+M68KMAKE_OP(ror, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -7894,7 +7876,7 @@ M68KMAKE_OP(ror_s, 8, _)
 }
 
 
-M68KMAKE_OP(ror_s, 16, _)
+M68KMAKE_OP(ror, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -7910,7 +7892,7 @@ M68KMAKE_OP(ror_s, 16, _)
 }
 
 
-M68KMAKE_OP(ror_s, 32, _)
+M68KMAKE_OP(ror, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -7926,7 +7908,7 @@ M68KMAKE_OP(ror_s, 32, _)
 }
 
 
-M68KMAKE_OP(ror_r, 8, _)
+M68KMAKE_OP(ror, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -7953,7 +7935,7 @@ M68KMAKE_OP(ror_r, 8, _)
 }
 
 
-M68KMAKE_OP(ror_r, 16, _)
+M68KMAKE_OP(ror, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -7980,7 +7962,7 @@ M68KMAKE_OP(ror_r, 16, _)
 }
 
 
-M68KMAKE_OP(ror_r, 32, _)
+M68KMAKE_OP(ror, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8007,7 +7989,7 @@ M68KMAKE_OP(ror_r, 32, _)
 }
 
 
-M68KMAKE_OP(ror, 16, _)
+M68KMAKE_OP(ror, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -8022,7 +8004,7 @@ M68KMAKE_OP(ror, 16, _)
 }
 
 
-M68KMAKE_OP(rol_s, 8, _)
+M68KMAKE_OP(rol, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8039,7 +8021,7 @@ M68KMAKE_OP(rol_s, 8, _)
 }
 
 
-M68KMAKE_OP(rol_s, 16, _)
+M68KMAKE_OP(rol, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8055,7 +8037,7 @@ M68KMAKE_OP(rol_s, 16, _)
 }
 
 
-M68KMAKE_OP(rol_s, 32, _)
+M68KMAKE_OP(rol, 32, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8071,7 +8053,7 @@ M68KMAKE_OP(rol_s, 32, _)
 }
 
 
-M68KMAKE_OP(rol_r, 8, _)
+M68KMAKE_OP(rol, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8106,7 +8088,7 @@ M68KMAKE_OP(rol_r, 8, _)
 }
 
 
-M68KMAKE_OP(rol_r, 16, _)
+M68KMAKE_OP(rol, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8141,7 +8123,7 @@ M68KMAKE_OP(rol_r, 16, _)
 }
 
 
-M68KMAKE_OP(rol_r, 32, _)
+M68KMAKE_OP(rol, 32, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8169,7 +8151,7 @@ M68KMAKE_OP(rol_r, 32, _)
 }
 
 
-M68KMAKE_OP(rol, 16, _)
+M68KMAKE_OP(rol, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -8184,7 +8166,7 @@ M68KMAKE_OP(rol, 16, _)
 }
 
 
-M68KMAKE_OP(roxr_s, 8, _)
+M68KMAKE_OP(roxr, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8202,7 +8184,7 @@ M68KMAKE_OP(roxr_s, 8, _)
 }
 
 
-M68KMAKE_OP(roxr_s, 16, _)
+M68KMAKE_OP(roxr, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8220,7 +8202,7 @@ M68KMAKE_OP(roxr_s, 16, _)
 }
 
 
-M68KMAKE_OP(roxr_s, 32, _)
+M68KMAKE_OP(roxr, 32, s, .)
 {
 #if M68K_USE_64_BIT
 
@@ -8259,7 +8241,7 @@ M68KMAKE_OP(roxr_s, 32, _)
 }
 
 
-M68KMAKE_OP(roxr_r, 8, _)
+M68KMAKE_OP(roxr, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8289,7 +8271,7 @@ M68KMAKE_OP(roxr_r, 8, _)
 }
 
 
-M68KMAKE_OP(roxr_r, 16, _)
+M68KMAKE_OP(roxr, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8319,7 +8301,7 @@ M68KMAKE_OP(roxr_r, 16, _)
 }
 
 
-M68KMAKE_OP(roxr_r, 32, _)
+M68KMAKE_OP(roxr, 32, r, .)
 {
 #if M68K_USE_64_BIT
 
@@ -8379,7 +8361,7 @@ M68KMAKE_OP(roxr_r, 32, _)
 }
 
 
-M68KMAKE_OP(roxr, 16, _)
+M68KMAKE_OP(roxr, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -8396,7 +8378,7 @@ M68KMAKE_OP(roxr, 16, _)
 }
 
 
-M68KMAKE_OP(roxl_s, 8, _)
+M68KMAKE_OP(roxl, 8, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8414,7 +8396,7 @@ M68KMAKE_OP(roxl_s, 8, _)
 }
 
 
-M68KMAKE_OP(roxl_s, 16, _)
+M68KMAKE_OP(roxl, 16, s, .)
 {
 	uint* r_dst = &DY;
 	uint shift = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -8432,7 +8414,7 @@ M68KMAKE_OP(roxl_s, 16, _)
 }
 
 
-M68KMAKE_OP(roxl_s, 32, _)
+M68KMAKE_OP(roxl, 32, s, .)
 {
 #if M68K_USE_64_BIT
 
@@ -8471,7 +8453,7 @@ M68KMAKE_OP(roxl_s, 32, _)
 }
 
 
-M68KMAKE_OP(roxl_r, 8, _)
+M68KMAKE_OP(roxl, 8, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8502,7 +8484,7 @@ M68KMAKE_OP(roxl_r, 8, _)
 }
 
 
-M68KMAKE_OP(roxl_r, 16, _)
+M68KMAKE_OP(roxl, 16, r, .)
 {
 	uint* r_dst = &DY;
 	uint orig_shift = DX & 0x3f;
@@ -8532,7 +8514,7 @@ M68KMAKE_OP(roxl_r, 16, _)
 }
 
 
-M68KMAKE_OP(roxl_r, 32, _)
+M68KMAKE_OP(roxl, 32, r, .)
 {
 #if M68K_USE_64_BIT
 
@@ -8592,7 +8574,7 @@ M68KMAKE_OP(roxl_r, 32, _)
 }
 
 
-M68KMAKE_OP(roxl, 16, _)
+M68KMAKE_OP(roxl, 16, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = m68ki_read_16(ea);
@@ -8609,7 +8591,7 @@ M68KMAKE_OP(roxl, 16, _)
 }
 
 
-M68KMAKE_OP(rtd, 32, _)
+M68KMAKE_OP(rtd, 32, ., .)
 {
 	if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
 	{
@@ -8624,7 +8606,7 @@ M68KMAKE_OP(rtd, 32, _)
 }
 
 
-M68KMAKE_OP(rte, 32, _)
+M68KMAKE_OP(rte, 32, ., .)
 {
 	if(FLAG_S)
 	{
@@ -8695,7 +8677,7 @@ rte_loop:
 }
 
 
-M68KMAKE_OP(rtm, 32, _)
+M68KMAKE_OP(rtm, 32, ., .)
 {
 	if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 	{
@@ -8709,7 +8691,7 @@ M68KMAKE_OP(rtm, 32, _)
 }
 
 
-M68KMAKE_OP(rtr, 32, _)
+M68KMAKE_OP(rtr, 32, ., .)
 {
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
 	m68ki_set_ccr(m68ki_pull_16());
@@ -8717,14 +8699,14 @@ M68KMAKE_OP(rtr, 32, _)
 }
 
 
-M68KMAKE_OP(rts, 32, _)
+M68KMAKE_OP(rts, 32, ., .)
 {
 	m68ki_trace_t0();				   /* auto-disable (see m68kcpu.h) */
 	m68ki_jump(m68ki_pull_32());
 }
 
 
-M68KMAKE_OP(sbcd_rr, 8, _)
+M68KMAKE_OP(sbcd, 8, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -8741,14 +8723,13 @@ M68KMAKE_OP(sbcd_rr, 8, _)
 	res = MASK_OUT_ABOVE_8(res);
 
 	FLAG_N = NFLAG_8(res); /* officially undefined */
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(sbcd_mm, 8, ax7)
+M68KMAKE_OP(sbcd, 8, mm, ax7)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -8765,14 +8746,13 @@ M68KMAKE_OP(sbcd_mm, 8, ax7)
 	res = MASK_OUT_ABOVE_8(res);
 
 	FLAG_N = NFLAG_8(res); /* officially undefined */
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(sbcd_mm, 8, ay7)
+M68KMAKE_OP(sbcd, 8, mm, ay7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -8789,14 +8769,13 @@ M68KMAKE_OP(sbcd_mm, 8, ay7)
 	res = MASK_OUT_ABOVE_8(res);
 
 	FLAG_N = NFLAG_8(res); /* officially undefined */
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(sbcd_mm, 8, axy7)
+M68KMAKE_OP(sbcd, 8, mm, axy7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -8813,14 +8792,13 @@ M68KMAKE_OP(sbcd_mm, 8, axy7)
 	res = MASK_OUT_ABOVE_8(res);
 
 	FLAG_N = NFLAG_8(res); /* officially undefined */
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(sbcd_mm, 8, _)
+M68KMAKE_OP(sbcd, 8, mm, .)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -8837,38 +8815,37 @@ M68KMAKE_OP(sbcd_mm, 8, _)
 	res = MASK_OUT_ABOVE_8(res);
 
 	FLAG_N = NFLAG_8(res); /* officially undefined */
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(st, 8, d)
+M68KMAKE_OP(st, 8, ., d)
 {
 	DY |= 0xff;
 }
 
 
-M68KMAKE_OP(st, 8, _)
+M68KMAKE_OP(st, 8, ., .)
 {
 	m68ki_write_8(M68KMAKE_GET_EA_AY_8, 0xff);
 }
 
 
-M68KMAKE_OP(sf, 8, d)
+M68KMAKE_OP(sf, 8, ., d)
 {
 	DY &= 0xffffff00;
 }
 
 
-M68KMAKE_OP(sf, 8, _)
+M68KMAKE_OP(sf, 8, ., .)
 {
 	m68ki_write_8(M68KMAKE_GET_EA_AY_8, 0);
 }
 
 
-M68KMAKE_OP(scc, 8, d)
+M68KMAKE_OP(scc, 8, ., d)
 {
 	if(M68KMAKE_CC)
 	{
@@ -8879,13 +8856,13 @@ M68KMAKE_OP(scc, 8, d)
 }
 
 
-M68KMAKE_OP(scc, 8, _)
+M68KMAKE_OP(scc, 8, ., .)
 {
 	m68ki_write_8(M68KMAKE_GET_EA_AY_8, M68KMAKE_CC ? 0xff : 0);
 }
 
 
-M68KMAKE_OP(stop, 0, _)
+M68KMAKE_OP(stop, 0, ., .)
 {
 	if(FLAG_S)
 	{
@@ -8900,7 +8877,7 @@ M68KMAKE_OP(stop, 0, _)
 }
 
 
-M68KMAKE_OP(sub_er, 8, d)
+M68KMAKE_OP(sub, 8, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_8(DY);
@@ -8916,7 +8893,7 @@ M68KMAKE_OP(sub_er, 8, d)
 }
 
 
-M68KMAKE_OP(sub_er, 8, _)
+M68KMAKE_OP(sub, 8, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_8;
@@ -8932,7 +8909,7 @@ M68KMAKE_OP(sub_er, 8, _)
 }
 
 
-M68KMAKE_OP(sub_er, 16, d)
+M68KMAKE_OP(sub, 16, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(DY);
@@ -8948,7 +8925,7 @@ M68KMAKE_OP(sub_er, 16, d)
 }
 
 
-M68KMAKE_OP(sub_er, 16, a)
+M68KMAKE_OP(sub, 16, er, a)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(AY);
@@ -8964,7 +8941,7 @@ M68KMAKE_OP(sub_er, 16, a)
 }
 
 
-M68KMAKE_OP(sub_er, 16, _)
+M68KMAKE_OP(sub, 16, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_16;
@@ -8980,7 +8957,7 @@ M68KMAKE_OP(sub_er, 16, _)
 }
 
 
-M68KMAKE_OP(sub_er, 32, d)
+M68KMAKE_OP(sub, 32, er, d)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -8996,7 +8973,7 @@ M68KMAKE_OP(sub_er, 32, d)
 }
 
 
-M68KMAKE_OP(sub_er, 32, a)
+M68KMAKE_OP(sub, 32, er, a)
 {
 	uint* r_dst = &DX;
 	uint src = AY;
@@ -9012,7 +8989,7 @@ M68KMAKE_OP(sub_er, 32, a)
 }
 
 
-M68KMAKE_OP(sub_er, 32, _)
+M68KMAKE_OP(sub, 32, er, .)
 {
 	uint* r_dst = &DX;
 	uint src = M68KMAKE_GET_OPER_AY_32;
@@ -9028,7 +9005,7 @@ M68KMAKE_OP(sub_er, 32, _)
 }
 
 
-M68KMAKE_OP(sub_re, 8, _)
+M68KMAKE_OP(sub, 8, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint src = MASK_OUT_ABOVE_8(DX);
@@ -9044,7 +9021,7 @@ M68KMAKE_OP(sub_re, 8, _)
 }
 
 
-M68KMAKE_OP(sub_re, 16, _)
+M68KMAKE_OP(sub, 16, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_16;
 	uint src = MASK_OUT_ABOVE_16(DX);
@@ -9060,7 +9037,7 @@ M68KMAKE_OP(sub_re, 16, _)
 }
 
 
-M68KMAKE_OP(sub_re, 32, _)
+M68KMAKE_OP(sub, 32, re, .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_32;
 	uint src = DX;
@@ -9076,7 +9053,7 @@ M68KMAKE_OP(sub_re, 32, _)
 }
 
 
-M68KMAKE_OP(suba, 16, d)
+M68KMAKE_OP(suba, 16, ., d)
 {
 	uint* r_dst = &AX;
 
@@ -9084,7 +9061,7 @@ M68KMAKE_OP(suba, 16, d)
 }
 
 
-M68KMAKE_OP(suba, 16, a)
+M68KMAKE_OP(suba, 16, ., a)
 {
 	uint* r_dst = &AX;
 
@@ -9092,7 +9069,7 @@ M68KMAKE_OP(suba, 16, a)
 }
 
 
-M68KMAKE_OP(suba, 16, _)
+M68KMAKE_OP(suba, 16, ., .)
 {
 	uint* r_dst = &AX;
 
@@ -9100,7 +9077,7 @@ M68KMAKE_OP(suba, 16, _)
 }
 
 
-M68KMAKE_OP(suba, 32, d)
+M68KMAKE_OP(suba, 32, ., d)
 {
 	uint* r_dst = &AX;
 
@@ -9108,7 +9085,7 @@ M68KMAKE_OP(suba, 32, d)
 }
 
 
-M68KMAKE_OP(suba, 32, a)
+M68KMAKE_OP(suba, 32, ., a)
 {
 	uint* r_dst = &AX;
 
@@ -9116,7 +9093,7 @@ M68KMAKE_OP(suba, 32, a)
 }
 
 
-M68KMAKE_OP(suba, 32, _)
+M68KMAKE_OP(suba, 32, ., .)
 {
 	uint* r_dst = &AX;
 
@@ -9124,7 +9101,7 @@ M68KMAKE_OP(suba, 32, _)
 }
 
 
-M68KMAKE_OP(subi, 8, d)
+M68KMAKE_OP(subi, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_8();
@@ -9140,7 +9117,7 @@ M68KMAKE_OP(subi, 8, d)
 }
 
 
-M68KMAKE_OP(subi, 8, _)
+M68KMAKE_OP(subi, 8, ., .)
 {
 	uint src = OPER_I_8();
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -9156,7 +9133,7 @@ M68KMAKE_OP(subi, 8, _)
 }
 
 
-M68KMAKE_OP(subi, 16, d)
+M68KMAKE_OP(subi, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_16();
@@ -9172,7 +9149,7 @@ M68KMAKE_OP(subi, 16, d)
 }
 
 
-M68KMAKE_OP(subi, 16, _)
+M68KMAKE_OP(subi, 16, ., .)
 {
 	uint src = OPER_I_16();
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -9188,7 +9165,7 @@ M68KMAKE_OP(subi, 16, _)
 }
 
 
-M68KMAKE_OP(subi, 32, d)
+M68KMAKE_OP(subi, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = OPER_I_32();
@@ -9204,7 +9181,7 @@ M68KMAKE_OP(subi, 32, d)
 }
 
 
-M68KMAKE_OP(subi, 32, _)
+M68KMAKE_OP(subi, 32, ., .)
 {
 	uint src = OPER_I_32();
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -9220,7 +9197,7 @@ M68KMAKE_OP(subi, 32, _)
 }
 
 
-M68KMAKE_OP(subq, 8, d)
+M68KMAKE_OP(subq, 8, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -9236,7 +9213,7 @@ M68KMAKE_OP(subq, 8, d)
 }
 
 
-M68KMAKE_OP(subq, 8, _)
+M68KMAKE_OP(subq, 8, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_8;
@@ -9252,7 +9229,7 @@ M68KMAKE_OP(subq, 8, _)
 }
 
 
-M68KMAKE_OP(subq, 16, d)
+M68KMAKE_OP(subq, 16, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -9268,7 +9245,7 @@ M68KMAKE_OP(subq, 16, d)
 }
 
 
-M68KMAKE_OP(subq, 16, a)
+M68KMAKE_OP(subq, 16, ., a)
 {
 	uint* r_dst = &AY;
 
@@ -9276,7 +9253,7 @@ M68KMAKE_OP(subq, 16, a)
 }
 
 
-M68KMAKE_OP(subq, 16, _)
+M68KMAKE_OP(subq, 16, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_16;
@@ -9292,7 +9269,7 @@ M68KMAKE_OP(subq, 16, _)
 }
 
 
-M68KMAKE_OP(subq, 32, d)
+M68KMAKE_OP(subq, 32, ., d)
 {
 	uint* r_dst = &DY;
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
@@ -9308,7 +9285,7 @@ M68KMAKE_OP(subq, 32, d)
 }
 
 
-M68KMAKE_OP(subq, 32, a)
+M68KMAKE_OP(subq, 32, ., a)
 {
 	uint* r_dst = &AY;
 
@@ -9316,7 +9293,7 @@ M68KMAKE_OP(subq, 32, a)
 }
 
 
-M68KMAKE_OP(subq, 32, _)
+M68KMAKE_OP(subq, 32, ., .)
 {
 	uint src = (((REG_IR >> 9) - 1) & 7) + 1;
 	uint ea = M68KMAKE_GET_EA_AY_32;
@@ -9332,7 +9309,7 @@ M68KMAKE_OP(subq, 32, _)
 }
 
 
-M68KMAKE_OP(subx_rr, 8, _)
+M68KMAKE_OP(subx, 8, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_8(DY);
@@ -9344,14 +9321,13 @@ M68KMAKE_OP(subx_rr, 8, _)
 	FLAG_V = VFLAG_SUB_8(src, dst, res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(subx_rr, 16, _)
+M68KMAKE_OP(subx, 16, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = MASK_OUT_ABOVE_16(DY);
@@ -9363,14 +9339,13 @@ M68KMAKE_OP(subx_rr, 16, _)
 	FLAG_V = VFLAG_SUB_16(src, dst, res);
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
 }
 
 
-M68KMAKE_OP(subx_rr, 32, _)
+M68KMAKE_OP(subx, 32, rr, .)
 {
 	uint* r_dst = &DX;
 	uint src = DY;
@@ -9382,14 +9357,13 @@ M68KMAKE_OP(subx_rr, 32, _)
 	FLAG_V = VFLAG_SUB_32(src, dst, res);
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	*r_dst = res;
 }
 
 
-M68KMAKE_OP(subx_mm, 8, ax7)
+M68KMAKE_OP(subx, 8, mm, ax7)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -9401,14 +9375,13 @@ M68KMAKE_OP(subx_mm, 8, ax7)
 	FLAG_V = VFLAG_SUB_8(src, dst, res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(subx_mm, 8, ay7)
+M68KMAKE_OP(subx, 8, mm, ay7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -9420,14 +9393,13 @@ M68KMAKE_OP(subx_mm, 8, ay7)
 	FLAG_V = VFLAG_SUB_8(src, dst, res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(subx_mm, 8, axy7)
+M68KMAKE_OP(subx, 8, mm, axy7)
 {
 	uint src = OPER_A7_PD_8();
 	uint ea  = EA_A7_PD_8();
@@ -9439,14 +9411,13 @@ M68KMAKE_OP(subx_mm, 8, axy7)
 	FLAG_V = VFLAG_SUB_8(src, dst, res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(subx_mm, 8, _)
+M68KMAKE_OP(subx, 8, mm, .)
 {
 	uint src = OPER_AY_PD_8();
 	uint ea  = EA_AX_PD_8();
@@ -9458,14 +9429,13 @@ M68KMAKE_OP(subx_mm, 8, _)
 	FLAG_V = VFLAG_SUB_8(src, dst, res);
 
 	res = MASK_OUT_ABOVE_8(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_8(ea, res);
 }
 
 
-M68KMAKE_OP(subx_mm, 16, _)
+M68KMAKE_OP(subx, 16, mm, .)
 {
 	uint src = OPER_AY_PD_16();
 	uint ea  = EA_AX_PD_16();
@@ -9477,14 +9447,13 @@ M68KMAKE_OP(subx_mm, 16, _)
 	FLAG_V = VFLAG_SUB_16(src, dst, res);
 
 	res = MASK_OUT_ABOVE_16(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_16(ea, res);
 }
 
 
-M68KMAKE_OP(subx_mm, 32, _)
+M68KMAKE_OP(subx, 32, mm, .)
 {
 	uint src = OPER_AY_PD_32();
 	uint ea  = EA_AX_PD_32();
@@ -9496,14 +9465,13 @@ M68KMAKE_OP(subx_mm, 32, _)
 	FLAG_V = VFLAG_SUB_32(src, dst, res);
 
 	res = MASK_OUT_ABOVE_32(res);
-	if(res)
-		FLAG_Z = ZFLAG_CLEAR;
+	FLAG_Z |= res;
 
 	m68ki_write_32(ea, res);
 }
 
 
-M68KMAKE_OP(swap, 32, _)
+M68KMAKE_OP(swap, 32, ., .)
 {
 	uint* r_dst = &DY;
 
@@ -9517,7 +9485,7 @@ M68KMAKE_OP(swap, 32, _)
 }
 
 
-M68KMAKE_OP(tas, 8, d)
+M68KMAKE_OP(tas, 8, ., d)
 {
 	uint* r_dst = &DY;
 
@@ -9529,7 +9497,7 @@ M68KMAKE_OP(tas, 8, d)
 }
 
 
-M68KMAKE_OP(tas, 8, _)
+M68KMAKE_OP(tas, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint dst = m68ki_read_8(ea);
@@ -9542,14 +9510,14 @@ M68KMAKE_OP(tas, 8, _)
 }
 
 
-M68KMAKE_OP(trap, 0, _)
+M68KMAKE_OP(trap, 0, ., .)
 {
 	/* Trap#n stacks exception frame type 0 */
 	m68ki_exception_trapN(EXCEPTION_TRAP_BASE + (REG_IR & 0xf));	/* HJB 990403 */
 }
 
 
-M68KMAKE_OP(trapt, 0, _)
+M68KMAKE_OP(trapt, 0, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9560,7 +9528,7 @@ M68KMAKE_OP(trapt, 0, _)
 }
 
 
-M68KMAKE_OP(trapt, 16, _)
+M68KMAKE_OP(trapt, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9571,7 +9539,7 @@ M68KMAKE_OP(trapt, 16, _)
 }
 
 
-M68KMAKE_OP(trapt, 32, _)
+M68KMAKE_OP(trapt, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9582,7 +9550,7 @@ M68KMAKE_OP(trapt, 32, _)
 }
 
 
-M68KMAKE_OP(trapf, 0, _)
+M68KMAKE_OP(trapf, 0, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9592,7 +9560,7 @@ M68KMAKE_OP(trapf, 0, _)
 }
 
 
-M68KMAKE_OP(trapf, 16, _)
+M68KMAKE_OP(trapf, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9603,7 +9571,7 @@ M68KMAKE_OP(trapf, 16, _)
 }
 
 
-M68KMAKE_OP(trapf, 32, _)
+M68KMAKE_OP(trapf, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9614,7 +9582,7 @@ M68KMAKE_OP(trapf, 32, _)
 }
 
 
-M68KMAKE_OP(trapcc, 0, _)
+M68KMAKE_OP(trapcc, 0, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9626,7 +9594,7 @@ M68KMAKE_OP(trapcc, 0, _)
 }
 
 
-M68KMAKE_OP(trapcc, 16, _)
+M68KMAKE_OP(trapcc, 16, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9642,7 +9610,7 @@ M68KMAKE_OP(trapcc, 16, _)
 }
 
 
-M68KMAKE_OP(trapcc, 32, _)
+M68KMAKE_OP(trapcc, 32, ., .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9658,7 +9626,7 @@ M68KMAKE_OP(trapcc, 32, _)
 }
 
 
-M68KMAKE_OP(trapv, 0, _)
+M68KMAKE_OP(trapv, 0, ., .)
 {
 	if(COND_VC())
 	{
@@ -9668,7 +9636,7 @@ M68KMAKE_OP(trapv, 0, _)
 }
 
 
-M68KMAKE_OP(tst, 8, d)
+M68KMAKE_OP(tst, 8, ., d)
 {
 	uint res = MASK_OUT_ABOVE_8(DY);
 
@@ -9679,7 +9647,7 @@ M68KMAKE_OP(tst, 8, d)
 }
 
 
-M68KMAKE_OP(tst, 8, _)
+M68KMAKE_OP(tst, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint res = m68ki_read_8(ea);
@@ -9691,7 +9659,7 @@ M68KMAKE_OP(tst, 8, _)
 }
 
 
-M68KMAKE_OP(tst, 8, pcdi)
+M68KMAKE_OP(tst, 8, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9707,7 +9675,7 @@ M68KMAKE_OP(tst, 8, pcdi)
 }
 
 
-M68KMAKE_OP(tst, 8, pcix)
+M68KMAKE_OP(tst, 8, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9723,7 +9691,7 @@ M68KMAKE_OP(tst, 8, pcix)
 }
 
 
-M68KMAKE_OP(tst, 8, i)
+M68KMAKE_OP(tst, 8, ., i)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9739,7 +9707,7 @@ M68KMAKE_OP(tst, 8, i)
 }
 
 
-M68KMAKE_OP(tst, 16, d)
+M68KMAKE_OP(tst, 16, ., d)
 {
 	uint res = MASK_OUT_ABOVE_16(DY);
 
@@ -9750,7 +9718,7 @@ M68KMAKE_OP(tst, 16, d)
 }
 
 
-M68KMAKE_OP(tst, 16, a)
+M68KMAKE_OP(tst, 16, ., a)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9766,7 +9734,7 @@ M68KMAKE_OP(tst, 16, a)
 }
 
 
-M68KMAKE_OP(tst, 16, _)
+M68KMAKE_OP(tst, 16, ., .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_16;
 
@@ -9777,7 +9745,7 @@ M68KMAKE_OP(tst, 16, _)
 }
 
 
-M68KMAKE_OP(tst, 16, pcdi)
+M68KMAKE_OP(tst, 16, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9793,7 +9761,7 @@ M68KMAKE_OP(tst, 16, pcdi)
 }
 
 
-M68KMAKE_OP(tst, 16, pcix)
+M68KMAKE_OP(tst, 16, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9809,7 +9777,7 @@ M68KMAKE_OP(tst, 16, pcix)
 }
 
 
-M68KMAKE_OP(tst, 16, i)
+M68KMAKE_OP(tst, 16, ., i)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9825,7 +9793,7 @@ M68KMAKE_OP(tst, 16, i)
 }
 
 
-M68KMAKE_OP(tst, 32, d)
+M68KMAKE_OP(tst, 32, ., d)
 {
 	uint res = DY;
 
@@ -9836,7 +9804,7 @@ M68KMAKE_OP(tst, 32, d)
 }
 
 
-M68KMAKE_OP(tst, 32, a)
+M68KMAKE_OP(tst, 32, ., a)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9852,7 +9820,7 @@ M68KMAKE_OP(tst, 32, a)
 }
 
 
-M68KMAKE_OP(tst, 32, _)
+M68KMAKE_OP(tst, 32, ., .)
 {
 	uint res = M68KMAKE_GET_OPER_AY_32;
 
@@ -9863,7 +9831,7 @@ M68KMAKE_OP(tst, 32, _)
 }
 
 
-M68KMAKE_OP(tst, 32, pcdi)
+M68KMAKE_OP(tst, 32, ., pcdi)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9879,7 +9847,7 @@ M68KMAKE_OP(tst, 32, pcdi)
 }
 
 
-M68KMAKE_OP(tst, 32, pcix)
+M68KMAKE_OP(tst, 32, ., pcix)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9895,7 +9863,7 @@ M68KMAKE_OP(tst, 32, pcix)
 }
 
 
-M68KMAKE_OP(tst, 32, i)
+M68KMAKE_OP(tst, 32, ., i)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9911,13 +9879,13 @@ M68KMAKE_OP(tst, 32, i)
 }
 
 
-M68KMAKE_OP(unlk, 32, a7)
+M68KMAKE_OP(unlk, 32, ., a7)
 {
 	REG_A[7] = m68ki_read_32(REG_A[7]);
 }
 
 
-M68KMAKE_OP(unlk, 32, _)
+M68KMAKE_OP(unlk, 32, ., .)
 {
 	uint* r_dst = &AY;
 
@@ -9926,7 +9894,7 @@ M68KMAKE_OP(unlk, 32, _)
 }
 
 
-M68KMAKE_OP(unpk_rr, 16, _)
+M68KMAKE_OP(unpk, 16, rr, .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9941,7 +9909,7 @@ M68KMAKE_OP(unpk_rr, 16, _)
 }
 
 
-M68KMAKE_OP(unpk_mm, 16, ax7)
+M68KMAKE_OP(unpk, 16, mm, ax7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9960,7 +9928,7 @@ M68KMAKE_OP(unpk_mm, 16, ax7)
 }
 
 
-M68KMAKE_OP(unpk_mm, 16, ay7)
+M68KMAKE_OP(unpk, 16, mm, ay7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9979,7 +9947,7 @@ M68KMAKE_OP(unpk_mm, 16, ay7)
 }
 
 
-M68KMAKE_OP(unpk_mm, 16, axy7)
+M68KMAKE_OP(unpk, 16, mm, axy7)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
@@ -9997,7 +9965,7 @@ M68KMAKE_OP(unpk_mm, 16, axy7)
 }
 
 
-M68KMAKE_OP(unpk_mm, 16, _)
+M68KMAKE_OP(unpk, 16, mm, .)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{

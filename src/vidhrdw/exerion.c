@@ -316,7 +316,7 @@ void draw_background(struct osd_bitmap *bitmap)
 		int stop3 = latches[11] >> 4;
 		UINT8 *mixer = &background_mixer[(latches[12] << 4) & 0xf0];
 		UINT8 scanline[VISIBLE_X_MAX];
-		UINT16 *pens;
+		UINT32 *pens;
 
 		/* the cocktail flip flag controls whether we count up or down in X */
 		if (!exerion_cocktail_flip)

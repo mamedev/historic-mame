@@ -337,7 +337,7 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 	int real_x;
 	int ysize;
 	int xsize;
-	const unsigned short *paldata;	/* ASG 980209 */
+	const UINT32 *paldata;	/* ASG 980209 */
 	int transmask;
 
 	if (!gfx) return;
@@ -582,7 +582,7 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 	int ysize;
 	int xsize;
 	int transmask;
-	const unsigned short *paldata;	/* ASG 980209 */
+	const UINT32 *paldata;	/* ASG 980209 */
 
 	if (!gfx) return;
 

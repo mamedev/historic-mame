@@ -89,7 +89,7 @@ int dss_sinewave_init(struct node_description *node)
 	if((node->context=malloc(sizeof(struct dss_sinewave_context)))==NULL)
 	{
 		discrete_log("dss_sinewave_init() - Failed to allocate local context memory.");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -99,8 +99,8 @@ int dss_sinewave_init(struct node_description *node)
 
 	/* Initialise the object */
 	dss_sinewave_reset(node);
-		
-	return 0;	
+
+	return 0;
 }
 
 int dss_sinewave_kill(struct node_description *node)
@@ -162,12 +162,12 @@ int dss_squarewave_reset(struct node_description *node)
 	struct dss_squarewave_context *context;
 	double start;
 	context=(struct dss_squarewave_context*)node->context;
-	
+
 	/* Establish starting phase, convert from degrees to radians */
 	start=(node->input5/360.0)*(2.0*PI);
 	/* Make sure its always mod 2Pi */
 	context->phase=fmod(node->input5,2.0*PI);
-	
+
 	return 0;
 }
 
@@ -179,7 +179,7 @@ int dss_squarewave_init(struct node_description *node)
 	if((node->context=malloc(sizeof(struct dss_squarewave_context)))==NULL)
 	{
 		discrete_log("dss_squarewave_init() - Failed to allocate local context memory.");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -189,8 +189,8 @@ int dss_squarewave_init(struct node_description *node)
 
 	/* Initialise the object */
 	dss_squarewave_reset(node);
-		
-	return 0;	
+
+	return 0;
 }
 
 int dss_squarewave_kill(struct node_description *node)
@@ -230,7 +230,7 @@ int dss_noise_step(struct node_description *node)
 		/* Only sample noise on rollover to next cycle */
 		if(newphase>(2.0*PI))
 		{
-			int newval=rand();
+			int newval=rand() & 0x7fff;
 			node->output=node->input2*(1-(newval/16384.0));
 		}
 	}
@@ -257,7 +257,7 @@ int dss_noise_init(struct node_description *node)
 	if((node->context=malloc(sizeof(struct dss_noise_context)))==NULL)
 	{
 		discrete_log("dss_noise_init() - Failed to allocate local context memory.");
-		return 1;			
+		return 1;
 	}
 	else
 	{
@@ -267,8 +267,8 @@ int dss_noise_init(struct node_description *node)
 
 	/* Initialise the object */
 	dss_noise_reset(node);
-		
-	return 0;	
+
+	return 0;
 }
 
 int dss_noise_kill(struct node_description *node)

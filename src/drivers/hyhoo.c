@@ -1,28 +1,50 @@
-/***************************************************************************
+/******************************************************************************
 
 	Game Driver for Nichibutsu Mahjong series.
 
 	Taisen Quiz HYHOO
-	(c)1987 NihonBussan Co.,Ltd.
+	(c)1987 Nihon Bussan Co.,Ltd.
 
 	Taisen Quiz HYHOO 2
-	(c)1987 NihonBussan Co.,Ltd.
+	(c)1987 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi 2000/01/28 -
+	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/01/28 -
 
-***************************************************************************/
-/***************************************************************************
+******************************************************************************/
+/******************************************************************************
 Memo:
 
->>>>>>>	Pictures using 16bit color is not correct.
+- Some games display "GFXROM BANK OVER!!" or "GFXROM ADDRESS OVER!!"
+  in Debug build.
 
-***************************************************************************/
+- Screen flip is not perfect.
+
+******************************************************************************/
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/hyhoo.h"
 #include "machine/nb1413m3.h"
+
+
+#define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
+
+
+void hyhoo_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void hyhoo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+int hyhoo_vh_start(void);
+void hyhoo_vh_stop(void);
+
+WRITE_HANDLER( hyhoo_palette_w );
+void hyhoo_radrx_w(int data);
+void hyhoo_radry_w(int data);
+void hyhoo_sizex_w(int data);
+void hyhoo_sizey_w(int data);
+void hyhoo_gfxflag1_w(int data);
+void hyhoo_gfxflag2_w(int data);
+void hyhoo_drawx_w(int data);
+void hyhoo_drawy_w(int data);
+void hyhoo_romsel_w(int data);
 
 
 static void init_hyhoo(void)
@@ -96,13 +118,19 @@ static WRITE_HANDLER( io_hyhoo_w )
 		case	0x9300:	hyhoo_drawy_w(data); break;
 		case	0x9400:	hyhoo_sizex_w(data); break;
 		case	0x9500:	hyhoo_sizey_w(data); break;
-		case	0x9600:	hyhoo_dispflag_w(data); break;
+		case	0x9600:	hyhoo_gfxflag1_w(data); break;
 		case	0x9700:	break;
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	hyhoo_romsel_w(data);
-				nb1413m3_gfxrombank_w(data); break;
+				hyhoo_gfxflag2_w(data);
+				nb1413m3_gfxrombank_w(data);
+				break;
 		case	0xf000:	break;
 	}
 }
@@ -158,7 +186,7 @@ INPUT_PORTS_START( hyhoo )
 	PORT_DIPSETTING(    0x00, "95%" )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
@@ -233,7 +261,7 @@ INPUT_PORTS_START( hyhoo2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
@@ -278,7 +306,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,				/* 1 chip */
 	1250000,			/* 1.25 MHz ?? */
-	{ 50 },
+	{ 35 },
 	{ input_port_0_r },		// DIPSW-A read
 	{ input_port_1_r },		// DIPSW-B read
 	{ 0 },
@@ -292,7 +320,7 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV1( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -308,9 +336,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 16, 240-1 }, \
+	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	65536, 0, \
+	65536, 65536, \
 	hyhoo_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -335,9 +363,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 };
 
 
-//	     NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1(   hyhoo, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler)
-NBMJDRV1(  hyhoo2, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler)
+//	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
+NBMJDRV1(    hyhoo, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler )
+NBMJDRV1(   hyhoo2, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler )
 
 
 ROM_START( hyhoo )
@@ -383,6 +411,6 @@ ROM_START( hyhoo2 )
 ROM_END
 
 
-//    YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,      MONITOR, COMPANY, FULLNAME, FLAGS)
-GAMEX(1987,    hyhoo,        0,    hyhoo,    hyhoo,    hyhoo, ROT270_16BIT, "Nichibutsu", "Taisen Quiz HYHOO (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
-GAMEX(1987,   hyhoo2,        0,   hyhoo2,   hyhoo2,   hyhoo2, ROT270_16BIT, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
+//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,      MONITOR, COMPANY, FULLNAME, FLAGS
+GAMEX( 1987,    hyhoo,        0,    hyhoo,    hyhoo,    hyhoo,  ROT90_16BIT, "Nichibutsu", "Taisen Quiz HYHOO (Japan)", 0 )
+GAMEX( 1987,   hyhoo2,        0,   hyhoo2,   hyhoo2,   hyhoo2,  ROT90_16BIT, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)", 0 )

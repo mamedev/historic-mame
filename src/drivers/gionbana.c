@@ -1,85 +1,120 @@
-/***************************************************************************
+/******************************************************************************
 
 	Game Driver for Nichibutsu Mahjong series.
 
 	Gionbana
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Mahjong Hana no Momoko gumi
-	(c)1988 NihonBussan Co.,Ltd.
+	(c)1988 Nihon Bussan Co.,Ltd.
 
 	Mahjong Satsujin Jiken
-	(c)1988 NihonBussan Co.,Ltd.
+	(c)1988 Nihon Bussan Co.,Ltd.
 
 	Telephone Mahjong
-	(c)1988 NihonBussan Co.,Ltd.
+	(c)1988 Nihon Bussan Co.,Ltd.
 
 	Mahjong G-MEN'89
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Mahjong Focus
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Mahjong Focus (Medal Type)
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Nozokimeguri Mahjong Peep Show
-	(c)1989 NihonBussan Co.,Ltd. / AC.
+	(c)1989 AC
 
 	Scandal Mahjong
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Scandal Mahjong (Medal Type)
-	(c)1989 NihonBussan Co.,Ltd.
+	(c)1989 Nihon Bussan Co.,Ltd.
 
 	Mahjong Nanpa Story
-	(c)1989 NihonBussan Co.,Ltd. / (c)1989 BROOKS
+	(c)1989 BROOKS
 
 	Mahjong Banana Dream (Medal Type)
-	(c)1989 NihonBussan Co.,Ltd. / (c)1989 DIGITAL SOFT
+	(c)1989 DIGITAL SOFT
 
 	Mahjong CLUB 90's
-	(c)1990 NihonBussan Co.,Ltd.
+	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Mahjong THE LADY HUNTER
-	(c)1990 NihonBussan Co.,Ltd.
+	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Mahjong Chinmoku no Hentai
-	(c)1990 NihonBussan Co.,Ltd.
+	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Maikobana
-	(c)1990 NihonBussan Co.,Ltd.
+	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Hana to Ojisan (Medal Type)
-	(c)1991 NihonBussan Co.,Ltd.
+	(c)1991 Nihon Bussan Co.,Ltd.
 
-	Driver by Takahiro Nogi 1999/11/05 -
+	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 1999/11/05 -
 
-***************************************************************************/
-/***************************************************************************
+******************************************************************************/
+/******************************************************************************
 Memo:
 
->>>>>>>	In mjfocus(Medal Type), sometimes CPU's hands are forced out from the screen.
-		This is correct behaviour.
+- In mjfocus(Medal Type), sometimes CPU's hands are forced out from the screen.
+  This is correct behaviour.
 
->>>>>>>	Telmajan cannot set to JAMMA type. I don't know why.
+- Telmajan cannot set to JAMMA type. I don't know why.
 
->>>>>>>	Controls in gionbana: 1~8 is assigned to A~H, "Yes" is LShift, "No" is Z.
+- Controls in gionbana: 1~8 is assigned to A~H, "Yes" is LShift, "No" is Z.
 
->>>>>>>	Controls in maiko and hanaoji: 1~8 is assigned to A~H, "Yes" is M, "No" is N.
+- Controls in maiko and hanaoji: 1~8 is assigned to A~H, "Yes" is M, "No" is N.
 
->>>>>>>	Font display in hanamomo is different from real machine.
+- Font display in hanamomo is different from real machine.
 
->>>>>>>	Real machine has ROMs for protection, but I don't know how to access the ROM,
-		so I patched the program to disable the check.
+- Real machine has ROMs for protection, but I don't know how to access the ROM,
+  so I patched the program to disable the check.
 
-***************************************************************************/
+- In some games like gionbana, palette for Black is set to transparent
+  after returning from tile viewer (F4). I don't know why this occurs.
+
+- Some games display "GFXROM BANK OVER!!" or "GFXROM ADDRESS OVER!!"
+  in Debug build.
+
+- Screen flipping is not perfect.
+
+******************************************************************************/
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/gionbana.h"
 #include "machine/nb1413m3.h"
+
+
+#define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
+
+
+void gionbana_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+int gionbana_vh_start(void);
+void gionbana_vh_stop(void);
+int hanamomo_vh_start(void);
+void hanamomo_vh_stop(void);
+
+READ_HANDLER( gionbana_palette_r );
+WRITE_HANDLER( gionbana_palette_w );
+READ_HANDLER( maiko_palette_r );
+WRITE_HANDLER( maiko_palette_w );
+void gionbana_radrx_w(int data);
+void gionbana_radry_w(int data);
+void gionbana_sizex_w(int data);
+void gionbana_sizey_w(int data);
+void gionbana_gfxflag_w(int data);
+void gionbana_drawx_w(int data);
+void gionbana_drawy_w(int data);
+void gionbana_scrolly_w(int data);
+void gionbana_vramsel_w(int data);
+void gionbana_romsel_w(int data);
+void gionbana_paltblnum_w(int data);
+READ_HANDLER( gionbana_paltbl_r );
+WRITE_HANDLER( gionbana_paltbl_w );
 
 
 static void init_gionbana(void)
@@ -372,7 +407,7 @@ static WRITE_HANDLER( io_gionbana_w )
 		case	0x2300:	gionbana_drawy_w(data); break;
 		case	0x2400:	gionbana_sizex_w(data); break;
 		case	0x2500:	gionbana_sizey_w(data); break;
-		case	0x2600:	gionbana_dispflag_w(data); break;
+		case	0x2600:	gionbana_gfxflag_w(data); break;
 		case	0x2700:	break;
 		case	0x4000:	gionbana_paltblnum_w(data); break;
 		case	0x6000:	gionbana_romsel_w(data); break;
@@ -382,7 +417,11 @@ static WRITE_HANDLER( io_gionbana_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	gionbana_vramsel_w(data); break;
 		case	0xf000:	nb1413m3_outcoin_w(data); break;
 	}
@@ -405,7 +444,7 @@ static WRITE_HANDLER( io_hanamomo_w )
 		case	0x3300:	gionbana_drawy_w(data); break;
 		case	0x3400:	gionbana_sizex_w(data); break;
 		case	0x3500:	gionbana_sizey_w(data); break;
-		case	0x3600:	gionbana_dispflag_w(data); break;
+		case	0x3600:	gionbana_gfxflag_w(data); break;
 		case	0x3700:	break;
 		case	0x4000:	gionbana_paltblnum_w(data); break;
 		case	0x6000:	gionbana_romsel_w(data); break;
@@ -415,9 +454,13 @@ static WRITE_HANDLER( io_hanamomo_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	break;
 	}
 }
 
@@ -439,7 +482,7 @@ static WRITE_HANDLER( io_msjiken_w )
 		case	0x5300:	gionbana_drawy_w(data); break;
 		case	0x5400:	gionbana_sizex_w(data); break;
 		case	0x5500:	gionbana_sizey_w(data); break;
-		case	0x5600:	gionbana_dispflag_w(data); break;
+		case	0x5600:	gionbana_gfxflag_w(data); break;
 		case	0x5700:	break;
 		case	0x6000:	gionbana_romsel_w(data); break;
 		case	0x7000:	gionbana_scrolly_w(data); break;
@@ -448,9 +491,13 @@ static WRITE_HANDLER( io_msjiken_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	break;
 	}
 }
 
@@ -476,7 +523,7 @@ static WRITE_HANDLER( io_scandal_w )
 		case	0x0300:	gionbana_drawy_w(data); break;
 		case	0x0400:	gionbana_sizex_w(data); break;
 		case	0x0500:	gionbana_sizey_w(data); break;
-		case	0x0600:	gionbana_dispflag_w(data); break;
+		case	0x0600:	gionbana_gfxflag_w(data); break;
 		case	0x0700:	break;
 		case	0x1000:	gionbana_romsel_w(data); break;
 		case	0x2000:	gionbana_paltblnum_w(data); break;
@@ -486,9 +533,13 @@ static WRITE_HANDLER( io_scandal_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	nb1413m3_nmi_clock_w(data); break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	break;
-		case	0xf000:	nb1413m3_outcoin_w(data); break;
+		case	0xf000:	break;
 	}
 }
 
@@ -537,7 +588,7 @@ static WRITE_HANDLER( io_scandalm_w )
 		case	0x0300:	gionbana_drawy_w(data); break;
 		case	0x0400:	gionbana_sizex_w(data); break;
 		case	0x0500:	gionbana_sizey_w(data); break;
-		case	0x0600:	gionbana_dispflag_w(data); break;
+		case	0x0600:	gionbana_gfxflag_w(data); break;
 		case	0x0700:	break;
 		case	0x1000:	gionbana_romsel_w(data); break;
 		case	0x2000:	gionbana_paltblnum_w(data); break;
@@ -547,7 +598,11 @@ static WRITE_HANDLER( io_scandalm_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	nb1413m3_nmi_clock_w(data); break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	break;
 		case	0xf000:	nb1413m3_outcoin_w(data); break;
 	}
@@ -575,7 +630,7 @@ static WRITE_HANDLER( io_bananadr_w )
 		case	0x0300:	gionbana_drawy_w(data); break;
 		case	0x0400:	gionbana_sizex_w(data); break;
 		case	0x0500:	gionbana_sizey_w(data); break;
-		case	0x0600:	gionbana_dispflag_w(data); break;
+		case	0x0600:	gionbana_gfxflag_w(data); break;
 		case	0x0700:	break;
 		case	0x1000:	gionbana_romsel_w(data); break;
 		case	0x2000:	gionbana_paltblnum_w(data); break;
@@ -586,7 +641,11 @@ static WRITE_HANDLER( io_bananadr_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	nb1413m3_nmi_clock_w(data); break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	break;
 		case	0xf000:	nb1413m3_outcoin_w(data); break;
 	}
@@ -632,7 +691,7 @@ static WRITE_HANDLER( io_maiko_w )
 		case	0x5300:	gionbana_drawy_w(data); break;
 		case	0x5400:	gionbana_sizex_w(data); break;
 		case	0x5500:	gionbana_sizey_w(data); break;
-		case	0x5600:	gionbana_dispflag_w(data); break;
+		case	0x5600:	gionbana_gfxflag_w(data); break;
 		case	0x5700:	break;
 		case	0x6000:	gionbana_romsel_w(data); break;
 		case	0x7000:	gionbana_scrolly_w(data); break;
@@ -641,7 +700,11 @@ static WRITE_HANDLER( io_maiko_w )
 		case	0xa000:	nb1413m3_inputportsel_w(data); break;
 		case	0xb000:	nb1413m3_sndrombank1_w(data); break;
 		case	0xc000:	break;
+#if SIGNED_DAC
 		case	0xd000:	DAC_0_signed_data_w(0, data); break;
+#else
+		case	0xd000:	DAC_0_data_w(0, data); break;
+#endif
 		case	0xe000:	gionbana_vramsel_w(data); break;
 		case	0xf000:	nb1413m3_outcoin_w(data); break;
 	}
@@ -655,14 +718,14 @@ PORT_END
 INPUT_PORTS_START( hanamomo )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -681,7 +744,7 @@ INPUT_PORTS_START( hanamomo )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -700,14 +763,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( msjiken )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -721,14 +784,14 @@ INPUT_PORTS_START( msjiken )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Control Type" )
-	PORT_DIPSETTING(    0x80, "ROYAL")
-	PORT_DIPSETTING(    0x00, "JAMMA")
+	PORT_DIPSETTING(    0x80, "ROYAL" )
+	PORT_DIPSETTING(    0x00, "JAMMA" )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -767,14 +830,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( telmahjn )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -788,14 +851,14 @@ INPUT_PORTS_START( telmahjn )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Control Type" )
-	PORT_DIPSETTING(    0x80, "ROYAL")
-	PORT_DIPSETTING(    0x00, "JAMMA")
+	PORT_DIPSETTING(    0x80, "ROYAL" )
+	PORT_DIPSETTING(    0x00, "JAMMA" )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -834,14 +897,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( gionbana )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
@@ -874,7 +937,7 @@ INPUT_PORTS_START( gionbana )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -893,14 +956,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( mgmen89 )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -921,7 +984,7 @@ INPUT_PORTS_START( mgmen89 )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -943,14 +1006,14 @@ INPUT_PORTS_START( mjfocus )
 
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -967,7 +1030,7 @@ INPUT_PORTS_START( mjfocus )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1035,7 +1098,7 @@ INPUT_PORTS_START( mjfocusm )
 	PORT_DIPSETTING(    0x00, "B" )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1054,14 +1117,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( peepshow )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1077,7 +1140,7 @@ INPUT_PORTS_START( peepshow )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1096,14 +1159,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( scandal )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1119,7 +1182,7 @@ INPUT_PORTS_START( scandal )
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1183,7 +1246,7 @@ INPUT_PORTS_START( scandalm )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1202,14 +1265,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( mjnanpas )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1230,7 +1293,52 @@ INPUT_PORTS_START( mjnanpas )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
+
+	NBMJCTRL_PORT1	/* (3) PORT 1-1 */
+	NBMJCTRL_PORT2	/* (4) PORT 1-2 */
+	NBMJCTRL_PORT3	/* (5) PORT 1-3 */
+	NBMJCTRL_PORT4	/* (6) PORT 1-4 */
+	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mjnanpaa )
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Game Sounds" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1263,10 +1371,10 @@ INPUT_PORTS_START( bananadr )
 	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "DIPSW 1-5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "DIPSW 1-6" )
+	PORT_DIPNAME( 0x20, 0x20, "Character Display Test" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
@@ -1298,12 +1406,12 @@ INPUT_PORTS_START( bananadr )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPNAME( 0x80, 0x00, "Score Pool" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1322,10 +1430,10 @@ INPUT_PORTS_END
 INPUT_PORTS_START( club90s )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "1")
-	PORT_DIPSETTING(    0x02, "2")
-	PORT_DIPSETTING(    0x01, "3")
-	PORT_DIPSETTING(    0x00, "4")
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1349,7 +1457,7 @@ INPUT_PORTS_START( club90s )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1368,10 +1476,10 @@ INPUT_PORTS_END
 INPUT_PORTS_START( mladyhtr )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "1")
-	PORT_DIPSETTING(    0x02, "2")
-	PORT_DIPSETTING(    0x01, "3")
-	PORT_DIPSETTING(    0x00, "4")
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1385,8 +1493,8 @@ INPUT_PORTS_START( mladyhtr )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Game Mode" )
-	PORT_DIPSETTING(    0x40, "Beginner")
-	PORT_DIPSETTING(    0x00, "Expert")
+	PORT_DIPSETTING(    0x40, "Beginner" )
+	PORT_DIPSETTING(    0x00, "Expert" )
 	PORT_DIPNAME( 0x80, 0x80, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1395,7 +1503,7 @@ INPUT_PORTS_START( mladyhtr )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1414,10 +1522,10 @@ INPUT_PORTS_END
 INPUT_PORTS_START( chinmoku )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "1")
-	PORT_DIPSETTING(    0x02, "2")
-	PORT_DIPSETTING(    0x01, "3")
-	PORT_DIPSETTING(    0x00, "4")
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
@@ -1441,7 +1549,7 @@ INPUT_PORTS_START( chinmoku )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
@@ -1460,18 +1568,22 @@ INPUT_PORTS_END
 INPUT_PORTS_START( maiko )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x07, "1 (Easy)")
-	PORT_DIPSETTING(    0x06, "2")
-	PORT_DIPSETTING(    0x05, "3")
-	PORT_DIPSETTING(    0x04, "4")
-	PORT_DIPSETTING(    0x03, "5")
-	PORT_DIPSETTING(    0x02, "6")
-	PORT_DIPSETTING(    0x01, "7")
-	PORT_DIPSETTING(    0x00, "8 (Hard)")
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1487,7 +1599,7 @@ INPUT_PORTS_START( maiko )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) PORT 0-1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )		//
@@ -1562,12 +1674,12 @@ INPUT_PORTS_START( hanaoji )
 	PORT_DIPNAME( 0x40, 0x40, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0-1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )		//
@@ -1605,7 +1717,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,				/* 1 chip */
 	1250000,			/* 1.25 MHz ?? */
-	{ 50 },
+	{ 35 },
 	{ input_port_0_r },		// DIPSW-A read
 	{ input_port_1_r },		// DIPSW-B read
 	{ 0 },
@@ -1619,7 +1731,7 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV1( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1635,9 +1747,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 8, 248-1 }, \
+	512, 256, { 0, 512-1, 7, 247-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1661,7 +1773,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	##_nvram_ \
 };
 
-#define NBMJDRV2(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV2( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1677,9 +1789,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 16, 240-1 }, \
+	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1703,7 +1815,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	##_nvram_ \
 };
 
-#define NBMJDRV3(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV3( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1719,9 +1831,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 8, 248-1 }, \
+	512, 256, { 0, 512-1, 7, 247-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1745,7 +1857,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	##_nvram_ \
 };
 
-#define NBMJDRV4(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV4( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1761,9 +1873,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 8, 248-1 }, \
+	512, 256, { 0, 512-1, 7, 247-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1787,7 +1899,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	##_nvram_ \
 };
 
-#define NBMJDRV5(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV5( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1803,9 +1915,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 8, 248-1 }, \
+	512, 256, { 0, 512-1, 7, 247-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1829,7 +1941,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	##_nvram_ \
 };
 
-#define NBMJDRV6(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
+#define NBMJDRV6( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
 static struct MachineDriver machine_driver_##_name_ = \
 { \
 	{ \
@@ -1845,9 +1957,9 @@ static struct MachineDriver machine_driver_##_name_ = \
 	nb1413m3_init_machine, \
 \
 	/* video hardware */ \
-	512, 256, { 0, 512-1, 16, 240-1 }, \
+	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	256, 256*4, \
+	256, 256, \
 	0, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1872,24 +1984,24 @@ static struct MachineDriver machine_driver_##_name_ = \
 };
 
 
-//	     NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1(gionbana, 132, gionbana, gionbana, gionbana, gionbana, 0)
-NBMJDRV2(hanamomo, 132, hanamomo, hanamomo, gionbana, hanamomo, 0)
-NBMJDRV2( msjiken, 144, gionbana, gionbana, gionbana,  msjiken, 0)
-NBMJDRV2( scandal, 132, scandalm, scandalm, gionbana,  scandal, 0)
-NBMJDRV3(telmahjn, 144, gionbana, gionbana, gionbana, gionbana, 0)
-NBMJDRV3( mgmen89, 132, gionbana, gionbana, gionbana, gionbana, 0)
-NBMJDRV4( mjfocus, 132, gionbana, gionbana, gionbana, gionbana, 0)
-NBMJDRV4(peepshow, 132, gionbana, gionbana, gionbana, gionbana, 0)
-NBMJDRV5(mjnanpas, 132,  club90s,  club90s, gionbana, gionbana, 0)
-NBMJDRV5( club90s, 132,  club90s,  club90s, gionbana, gionbana, 0)
-NBMJDRV5(mladyhtr, 132,  club90s,  club90s, gionbana, gionbana, 0)
-NBMJDRV5(chinmoku, 132,  club90s,  club90s, gionbana, gionbana, 0)
-NBMJDRV5(   maiko, 132,    maiko,    maiko,    maiko,    maiko, 0)
-NBMJDRV5( hanaoji, 132,  hanaoji,  hanaoji,    maiko,    maiko, nb1413m3_nvram_handler)
-NBMJDRV6(mjfocusm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler)
-NBMJDRV6(scandalm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler)
-NBMJDRV5(bananadr, 132, scandalm, scandalm, gionbana, bananadr, nb1413m3_nvram_handler)
+//	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
+NBMJDRV1( gionbana, 132, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV2( hanamomo, 132, hanamomo, hanamomo, gionbana, hanamomo, 0 )
+NBMJDRV2(  msjiken, 144, gionbana, gionbana, gionbana,  msjiken, 0 )
+NBMJDRV2(  scandal, 132, scandalm, scandalm, gionbana,  scandal, 0 )
+NBMJDRV3( telmahjn, 144, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV3(  mgmen89, 132, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV4(  mjfocus, 132, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV4( peepshow, 132, gionbana, gionbana, gionbana, gionbana, 0 )
+NBMJDRV5( mjnanpas, 132,  club90s,  club90s, gionbana, gionbana, 0 )
+NBMJDRV5(  club90s, 132,  club90s,  club90s, gionbana, gionbana, 0 )
+NBMJDRV5( mladyhtr, 132,  club90s,  club90s, gionbana, gionbana, 0 )
+NBMJDRV5( chinmoku, 132,  club90s,  club90s, gionbana, gionbana, 0 )
+NBMJDRV5(    maiko, 132,    maiko,    maiko,    maiko,    maiko, 0 )
+NBMJDRV5(  hanaoji, 132,  hanaoji,  hanaoji,    maiko,    maiko, nb1413m3_nvram_handler )
+NBMJDRV6( mjfocusm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler )
+NBMJDRV6( scandalm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler )
+NBMJDRV5( bananadr, 132, scandalm, scandalm, gionbana, bananadr, nb1413m3_nvram_handler )
 
 
 ROM_START( gionbana )
@@ -1957,23 +2069,23 @@ ROM_START( msjiken )
 	ROM_LOAD( "msjn_12.bin",  0x00000, 0x10000, 0x810e299e )
 
 	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
-	ROM_LOAD( "msjn_01.bin",  0x000000, 0x10000, 0x42dc6211 ) // main board
-	ROM_LOAD( "msjn_02.bin",  0x010000, 0x10000, 0x3bc29b14 ) // 	"
-	ROM_LOAD( "msjn_03.bin",  0x020000, 0x10000, 0x442c838d ) // 	"
-	ROM_LOAD( "msjn_04.bin",  0x030000, 0x10000, 0x42aff870 ) // 	"
-	ROM_LOAD( "msjn_05.bin",  0x040000, 0x10000, 0x50735648 ) // 	"
-	ROM_LOAD( "msjn_06.bin",  0x050000, 0x10000, 0x76b72d64 ) // 	"
-	ROM_LOAD( "msjn_07.bin",  0x060000, 0x10000, 0xaabd0c75 ) // 	"
-	ROM_LOAD( "msjn_08.bin",  0x070000, 0x10000, 0xc87ef18a ) // 	"
-	ROM_LOAD( "msjn_10r.bin", 0x080000, 0x10000, 0x274700d2 ) // sub board
-	ROM_LOAD( "msjn_10.bin",  0x090000, 0x10000, 0x4c1deff9 ) // 	"
-	ROM_LOAD( "msjn_04r.bin", 0x0a0000, 0x10000, 0xcac5a5cf ) // 	"
-	ROM_LOAD( "msjn_05r.bin", 0x0b0000, 0x10000, 0xa2200fb2 ) // 	"
-	ROM_LOAD( "msjn_06r.bin", 0x0c0000, 0x10000, 0x528061b1 ) // 	"
-	ROM_LOAD( "msjn_07r.bin", 0x0d0000, 0x10000, 0xd2d2dae6 ) // 	"
-	ROM_LOAD( "msjn_08r.bin", 0x0e0000, 0x10000, 0xdec0e799 ) // 	"
-	ROM_LOAD( "msjn_09r.bin", 0x0f0000, 0x10000, 0x552167d9 ) // 	"
-	ROM_LOAD( "msjn_09.bin",  0x100000, 0x10000, 0xdf62249e ) // main board
+	ROM_LOAD( "msjn_01.bin",  0x000000, 0x10000, 0x42dc6211 )
+	ROM_LOAD( "msjn_02.bin",  0x010000, 0x10000, 0x3bc29b14 )
+	ROM_LOAD( "msjn_03.bin",  0x020000, 0x10000, 0x442c838d )
+	ROM_LOAD( "msjn_04.bin",  0x030000, 0x10000, 0x42aff870 )
+	ROM_LOAD( "msjn_05.bin",  0x040000, 0x10000, 0x50735648 )
+	ROM_LOAD( "msjn_06.bin",  0x050000, 0x10000, 0x76b72d64 )
+	ROM_LOAD( "msjn_07.bin",  0x060000, 0x10000, 0xaabd0c75 )
+	ROM_LOAD( "msjn_08.bin",  0x070000, 0x10000, 0xc87ef18a )
+	ROM_LOAD( "msjn_10r.bin", 0x080000, 0x10000, 0x274700d2 )
+	ROM_LOAD( "msjn_10.bin",  0x090000, 0x10000, 0x4c1deff9 )
+	ROM_LOAD( "msjn_04r.bin", 0x0a0000, 0x10000, 0xcac5a5cf )
+	ROM_LOAD( "msjn_05r.bin", 0x0b0000, 0x10000, 0xa2200fb2 )
+	ROM_LOAD( "msjn_06r.bin", 0x0c0000, 0x10000, 0x528061b1 )
+	ROM_LOAD( "msjn_07r.bin", 0x0d0000, 0x10000, 0xd2d2dae6 )
+	ROM_LOAD( "msjn_08r.bin", 0x0e0000, 0x10000, 0xdec0e799 )
+	ROM_LOAD( "msjn_09r.bin", 0x0f0000, 0x10000, 0x552167d9 )
+	ROM_LOAD( "msjn_09.bin",  0x100000, 0x10000, 0xdf62249e )
 ROM_END
 
 ROM_START( telmahjn )
@@ -2177,7 +2289,41 @@ ROM_START( mjnanpas )
 	ROM_LOAD( "mnst_02.bin", 0x00000, 0x10000, 0x22c7ddce )
 	ROM_LOAD( "mnst_01.bin", 0x10000, 0x10000, 0x13b79c41 )
 
-	ROM_REGION( 0x240000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "mnst_04.bin", 0x000000, 0x10000, 0x7b8fb5f2 )
+	ROM_LOAD( "mnst_05.bin", 0x010000, 0x10000, 0x6e48b612 )
+	ROM_LOAD( "mnst_06.bin", 0x020000, 0x10000, 0x1ea7db2e )
+	ROM_LOAD( "mnst_07.bin", 0x030000, 0x10000, 0x2930acbb )
+	ROM_LOAD( "mnst_08.bin", 0x040000, 0x10000, 0xcd632b5c )
+	ROM_LOAD( "mnst_09.bin", 0x050000, 0x10000, 0x77116d9e )
+	ROM_LOAD( "mnst_10.bin", 0x060000, 0x10000, 0x5502e478 )
+	ROM_LOAD( "mnst_11.bin", 0x070000, 0x10000, 0x3f739fb1 )
+	ROM_LOAD( "mnst_12.bin", 0x080000, 0x10000, 0x2741f576 )
+	ROM_LOAD( "mnst_13.bin", 0x090000, 0x10000, 0x10132020 )
+	ROM_LOAD( "mnst_14.bin", 0x0a0000, 0x10000, 0x03b32fa7 )
+	ROM_LOAD( "mnst_15.bin", 0x0b0000, 0x10000, 0x4bb85dd7 )
+	ROM_LOAD( "mnst_16.bin", 0x0c0000, 0x10000, 0x38de91de )
+	ROM_LOAD( "mnst_17.bin", 0x0d0000, 0x10000, 0x23cac7e3 )
+	ROM_LOAD( "mnst_18.bin", 0x0e0000, 0x10000, 0xaf62af24 )
+	ROM_LOAD( "mnst_19.bin", 0x0f0000, 0x10000, 0xe18dc023 )
+	ROM_LOAD( "mnst_20.bin", 0x100000, 0x10000, 0xca706644 )
+	ROM_LOAD( "mnst_21.bin", 0x110000, 0x10000, 0x0a609495 )
+	ROM_LOAD( "mnst_22.bin", 0x120000, 0x10000, 0x3468f36f )
+	ROM_LOAD( "mnst_23.bin", 0x130000, 0x10000, 0x8d1a64a6 )
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
+	ROM_LOAD( "mnst_m1.bin", 0x00000, 0x40000, 0x77ba1eaf )
+ROM_END
+
+ROM_START( mjnanpaa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "mnst_03.old", 0x00000, 0x10000, 0xa105b2b8 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_LOAD( "mnst_02.bin", 0x00000, 0x10000, 0x22c7ddce )
+	ROM_LOAD( "mnst_01.bin", 0x10000, 0x10000, 0x13b79c41 )
+
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mnst_04.bin", 0x000000, 0x10000, 0x7b8fb5f2 )
 	ROM_LOAD( "mnst_05.bin", 0x010000, 0x10000, 0x6e48b612 )
 	ROM_LOAD( "mnst_06.bin", 0x020000, 0x10000, 0x1ea7db2e )
@@ -2210,7 +2356,7 @@ ROM_START( bananadr )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "2.4j",   0x00000, 0x20000, 0xd6f24371 )
 
-	ROM_REGION( 0x240000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "3.11p",  0x000000, 0x10000, 0xbcb94d00 )
 	ROM_LOAD( "4.11n",  0x010000, 0x10000, 0x90642607 )
 	ROM_LOAD( "5.11m",  0x020000, 0x10000, 0x1ea7db2e )
@@ -2241,7 +2387,7 @@ ROM_START( club90s )
 	ROM_LOAD( "c90s_02.bin", 0x00000, 0x10000, 0xb7938ed8 )
 	ROM_LOAD( "c90s_01.bin", 0x10000, 0x10000, 0xbaaf17bd )
 
-	ROM_REGION( 0x180000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "c90s_04.bin", 0x080000, 0x20000, 0x2c7d74ef )
 	ROM_LOAD( "c90s_05.bin", 0x0a0000, 0x20000, 0x98d1f969 )
 	ROM_LOAD( "c90s_06.bin", 0x0c0000, 0x20000, 0x509c1499 )
@@ -2260,7 +2406,7 @@ ROM_START( mladyhtr )
 	ROM_LOAD( "mlht_02.bin", 0x00000, 0x10000, 0xe841696d )
 	ROM_LOAD( "mlht_01.bin", 0x10000, 0x10000, 0x75c35c62 )
 
-	ROM_REGION( 0x1d0000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mj-1802.bin", 0x000000, 0x80000, 0xe6213f10 )
 	ROM_LOAD( "mlht_04.bin", 0x080000, 0x20000, 0x5896f484 )
 	ROM_LOAD( "mlht_05.bin", 0x0a0000, 0x20000, 0xbc26f689 )
@@ -2290,7 +2436,7 @@ ROM_START( chinmoku )
 	ROM_LOAD( "2.2k",   0x00000, 0x10000, 0x0d6306e3 )
 	ROM_LOAD( "1.2h",   0x10000, 0x10000, 0xa85e681c )
 
-	ROM_REGION( 0x1e0000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "4.8d",   0x020000, 0x20000, 0x5b5234f6 )
 	ROM_LOAD( "5.8e",   0x040000, 0x20000, 0x56bf9a23 )
 	ROM_LOAD( "6.8f",   0x060000, 0x20000, 0x188bdbd6 )
@@ -2336,7 +2482,7 @@ ROM_START( hanaoji )
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "hnoj_01.bin", 0x00000, 0x10000, 0x3f7fcb94 )
 
-	ROM_REGION( 0x120000, REGION_GFX1, 0 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hnoj_03.bin", 0x000000, 0x20000, 0xfbbe1dce )
 	ROM_LOAD( "hnoj_04.bin", 0x020000, 0x20000, 0x2074b04f )
 	ROM_LOAD( "hnoj_05.bin", 0x040000, 0x20000, 0x84d20ba6 )
@@ -2349,21 +2495,22 @@ ROM_START( hanaoji )
 ROM_END
 
 
-//    YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS)
-GAMEX(1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,       ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1988,  msjiken,        0,  msjiken,  msjiken,  msjiken,     ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1988, telmahjn,        0, telmahjn, telmahjn, telmahjn,     ROT270, "Nichibutsu", "Telephone Mahjong (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, gionbana,        0, gionbana, gionbana, gionbana,       ROT0, "Nichibutsu", "Gionbana (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,       ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,       ROT0, "Nichibutsu", "Mahjong Focus (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,       ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,       ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989,  scandal,        0,  scandal,  scandal,  scandal,       ROT0, "Nichibutsu", "Scandal Mahjong (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, scandalm,  scandal, scandalm, scandalm, scandalm,       ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1989, bananadr,        0, bananadr, bananadr, bananadr,       ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1990,  club90s,        0,  club90s,  club90s,  club90s,       ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,       ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,       ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1990,    maiko,        0,    maiko,    maiko,    maiko,       ROT0, "Nichibutsu", "Maikobana (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,       ROT0, "Nichibutsu", "Hana to Ojisan [BET]", GAME_NO_COCKTAIL)
+//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
+GAMEX( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,       ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)", 0 )
+GAMEX( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken,     ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)", 0 )
+GAMEX( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn,     ROT270, "Nichibutsu", "Telephone Mahjong (Japan)", 0 )
+GAMEX( 1989, gionbana,        0, gionbana, gionbana, gionbana,       ROT0, "Nichibutsu", "Gionbana (Japan)", 0 )
+GAMEX( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,       ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)", 0 )
+GAMEX( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,       ROT0, "Nichibutsu", "Mahjong Focus (Japan)", 0 )
+GAMEX( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,       ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)", 0 )
+GAMEX( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,       ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)", 0 )
+GAMEX( 1989,  scandal,        0,  scandal,  scandal,  scandal,       ROT0, "Nichibutsu", "Scandal Mahjong (Japan)", 0 )
+GAMEX( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,       ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)", 0 )
+GAMEX( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)", 0 )
+GAMEX( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)", 0 )
+GAMEX( 1989, bananadr,        0, bananadr, bananadr, bananadr,       ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)", 0 )
+GAMEX( 1990,  club90s,        0,  club90s,  club90s,  club90s,       ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan)", 0 )
+GAMEX( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,       ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)", 0 )
+GAMEX( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,       ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)", 0 )
+GAMEX( 1990,    maiko,        0,    maiko,    maiko,    maiko,       ROT0, "Nichibutsu", "Maikobana (Japan)", 0 )
+GAMEX( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,       ROT0, "Nichibutsu", "Hana to Ojisan [BET]", 0 )

@@ -1,11 +1,13 @@
 #include "mamalleg.h"
 #include "driver.h"
-#ifndef MESS
 #include "unzip.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef MESS
+#include "mess/msdos.h"
+#endif
 
 /* Verbose outputs to error.log ? */
 #define VERBOSE 	0
@@ -27,9 +29,8 @@ char *samples = NULL;
 char **samplepathv = NULL;
 int samplepathc = 0;
 
-char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
-char *memcarddir, *artworkdir, *screenshotdir;
-char *cheatdir;	/* Steph */
+const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
+const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 
 char *alternate_name;				   /* for "-romdir" */
 
@@ -161,7 +162,7 @@ static void cache_allocate (unsigned entries)
 
 /* This function can be called several times with different parameters,
  * for example by "mame -verifyroms *". */
-void decompose_rom_sample_path (char *rompath, char *samplepath)
+void decompose_rom_sample_path (const char *rompath, const char *samplepath)
 {
 	char *token;
 
@@ -343,8 +344,14 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 	/* Support "-romdir" yuck. */
 	if( alternate_name )
 	{
-		LOG(("osd_fopen: -romdir overrides '%s' by '%s'\n", gamename, alternate_name));
-        gamename = alternate_name;
+		/* check for DEFAULT.CFG file request */
+		if( filetype == OSD_FILETYPE_CONFIG && gamename == "default" )
+		{
+			LOG(("osd_fopen: default input configuration file requested; -romdir switch not applied\n"));
+		} else {
+			LOG(("osd_fopen: -romdir overrides '%s' by '%s'\n", gamename, alternate_name));
+        		gamename = alternate_name;
+        	}
 	}
 
 	switch( filetype )
@@ -1417,4 +1424,3 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 	return 0;
 }
-#endif

@@ -49,8 +49,8 @@ const char *DATAFILE_TAG_KEY = "$info";
 const char *DATAFILE_TAG_BIO = "$bio";
 const char *DATAFILE_TAG_MAME = "$mame";
 
-char *history_filename = "history.dat";
-char *mameinfo_filename = "mameinfo.dat";
+const char *history_filename = "history.dat";
+const char *mameinfo_filename = "mameinfo.dat";
 
 
 /****************************************************************************

@@ -145,7 +145,7 @@ WRITE16_HANDLER( taitob_pixelram_w )
 
 void taitob_redraw_pixel_layer_dirty(void)
 {
-	unsigned short *pens = Machine->pens + b_px_color_base;
+	UINT32 *pens = Machine->pens + b_px_color_base;
 	int sy;
 
 	for (sy=0; sy < 512; sy++)
@@ -169,7 +169,7 @@ void taitob_redraw_pixel_layer_dirty(void)
 
 WRITE16_HANDLER( masterw_pixelram_w )
 {
-	unsigned short *pens = Machine->pens + b_px_color_base;
+	UINT32 *pens = Machine->pens + b_px_color_base;
     int sx,sy,color1,color2;
 	int i;
 
@@ -194,7 +194,7 @@ WRITE16_HANDLER( masterw_pixelram_w )
 
 WRITE16_HANDLER( hitice_pixelram_w )
 {
-	unsigned short *pens = Machine->pens + b_px_color_base;
+	UINT32 *pens = Machine->pens + b_px_color_base;
     int sx,sy,color;
 
 	{

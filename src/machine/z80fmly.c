@@ -455,10 +455,21 @@ typedef struct
 	int rdy[2];                           /* ready pin level                */
 	int in[2];                            /* input port data                */
 	int out[2];                           /* output port                    */
+	int strobe[2];							/* strobe inputs */
 	int int_state[2];                     /* interrupt status (daisy chain) */
 } z80pio;
 
 static z80pio pios[MAX_PIO];
+
+static void	z80pio_set_rdy(z80pio *pio, int ch, int state)
+{
+	/* set state */
+	pio->rdy[ch] = state;
+
+	/* call callback with state */
+	if (pio->rdyr[ch]!=0)
+		pio->rdyr[ch](pio->rdy[ch]);
+}
 
 /* initialize pio emurator */
 void z80pio_init (z80pio_interface *intf)
@@ -531,9 +542,10 @@ void z80pio_reset (int which)
 		pio->enable[i] = 0x00;	/* disable     */
 		pio->mode[i]   = 0x01;	/* mode input  */
 		pio->dir[i]    = 0x01;	/* dir  input  */
-		pio->rdy[i]    = 0x00;	/* RDY = low   */
+		z80pio_set_rdy(pio,i,0);	/* RDY = low   */
 		pio->out[i]    = 0x00;	/* outdata = 0 */
 		pio->int_state[i] = 0;
+		pio->strobe[i] = 0;
 	}
 	z80pio_interrupt_check( pio );
 }
@@ -548,7 +560,7 @@ void z80pio_d_w( int which , int ch , int data )
 	switch( pio->mode[ch] ){
 	case PIO_MODE0:			/* mode 0 output */
 	case PIO_MODE2:			/* mode 2 i/o */
-		pio->rdy[ch] = 1;	/* ready = H */
+		z80pio_set_rdy(pio, ch,1); /* ready = H */
 		z80pio_check_irq( pio , ch );
 		return;
 	case PIO_MODE1:			/* mode 1 intput */
@@ -626,12 +638,12 @@ int z80pio_d_r( int which , int ch )
 	case PIO_MODE0:			/* mode 0 output */
 		return pio->out[ch];
 	case PIO_MODE1:			/* mode 1 intput */
-		pio->rdy[ch] = 1;	/* ready = H */
+		z80pio_set_rdy(pio, ch, 1);	/* ready = H */
 		z80pio_check_irq( pio , ch );
 		return pio->in[ch];
 	case PIO_MODE2:			/* mode 2 i/o */
 		if( ch ) logerror("PIO-B mode 2 \n");
-		pio->rdy[1] = 1;	/* brdy = H */
+		z80pio_set_rdy(pio, 1, 1); /* brdy = H */
 		z80pio_check_irq( pio , ch );
 		return pio->in[ch];
 	case PIO_MODE3:			/* mode 3 bit */
@@ -698,7 +710,7 @@ void z80pio_p_w( int which , int ch , int data )
 	case PIO_MODE2:	/* only port A */
 		ch = 1;		/* handshake and IRQ is use portB */
 	case PIO_MODE1:
-		pio->rdy[ch] = 0;
+		z80pio_set_rdy(pio, ch, 0);
 		z80pio_check_irq( pio , ch );
 		break;
 	case PIO_MODE3:
@@ -718,7 +730,7 @@ int z80pio_p_r( int which , int ch )
 	switch( pio->mode[ch] ){
 	case PIO_MODE2:		/* port A only */
 	case PIO_MODE0:
-		pio->rdy[ch] = 0;
+		z80pio_set_rdy(pio, ch, 0);
 		z80pio_check_irq( pio , ch );
 		break;
 	case PIO_MODE1:
@@ -750,3 +762,67 @@ WRITE_HANDLER( z80pioA_0_p_w ) { z80pio_p_w(0,0,data);   }
 WRITE_HANDLER( z80pioB_0_p_w ) { z80pio_p_w(0,1,data);   }
 READ_HANDLER( z80pioA_0_p_r )           { return z80pio_p_r(0,0); }
 READ_HANDLER( z80pioB_0_p_r )           { return z80pio_p_r(0,1); }
+
+static void z80pio_update_strobe(int which, int ch, int state)
+{
+	z80pio *pio = pios + which;
+
+	if (ch) ch=1;
+
+	switch (pio->mode[ch])
+	{
+		/* output mode */
+		case PIO_MODE0:
+		{
+			/* ensure valid */
+			state = state & 0x01;
+
+			/* strobe changed state? */
+			if ((pio->strobe[ch]^state)!=0)
+			{
+				/* yes */
+				if (state!=0)
+				{
+					/* positive edge */
+					logerror("PIO-%c positive strobe\n",'A'+ch );
+					/* ready is now inactive */
+					z80pio_set_rdy(pio, ch, 0);
+
+					/* int enabled? */
+					if (pio->enable[ch] & PIO_INT_ENABLE)
+					{
+						/* trigger an int request */
+						pio->int_state[ch] |= Z80_INT_REQ;
+					}
+				}
+			}
+
+			/* store strobe state */
+			pio->strobe[ch] = state;
+
+			/* check interrupt */
+			z80pio_interrupt_check( pio );
+		}
+		break;
+
+		default:
+			break;
+	}
+}
+
+/* set /astb input */
+/* /astb is active low */
+/* output mode: a positive edge is used by peripheral to acknowledge
+the receipt of data */
+/* input mode: strobe is used by peripheral to load data from the peripheral
+into port a input register, data loaded into pio when signal is active */
+void	z80pio_astb_w(int which, int state)
+{
+	z80pio_update_strobe(which, 0, state);
+}
+
+/* set bstb input */
+void	z80pio_bstb_w(int which, int state)
+{
+	z80pio_update_strobe(which, 1, state);
+}

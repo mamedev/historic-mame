@@ -59,12 +59,18 @@ typedef struct
 	void (*rdyB[MAX_PIO])(int data );             /* portB ready active callback (do not support yet)*/
 } z80pio_interface;
 
+
 void z80pio_init (z80pio_interface *intf);
 void z80pio_reset (int which);
 void z80pio_d_w( int which , int ch , int data );
 void z80pio_c_w( int which , int ch , int data );
 int z80pio_c_r( int which , int ch );
 int z80pio_d_r( int which , int ch );
+
+/* set/clear /astb input */
+void	z80pio_astb_w(int which, int state);
+/* set/clear /bstb input */
+void	z80pio_bstb_w(int which, int state);
 
 void z80pio_p_w( int which , int ch , int data );
 int z80pio_p_r( int which , int ch );

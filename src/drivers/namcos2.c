@@ -3328,46 +3328,46 @@ void init_assaultp(void)
 
 void init_burnforc(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_BURNING_FORCE;
-	WRITE_WORD( &RAM[0x001e18], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x003a9c], 0x4e75 );	// Patch $d00000 checks
+	rom[0x001e18/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x003a9c/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_cosmogng(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_COSMO_GANG;
-	WRITE_WORD( &RAM[0x0034d2], 0x4e75 );	// Patch $d00000 checks
+	rom[0x0034d2/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 
 void init_dsaber(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DRAGON_SABER;
-	WRITE_WORD( &RAM[0x001172], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00119c], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x002160], 0x4e75 );	// Patch $d00000 checks
+	rom[0x001172/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x00119c/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x002160/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_dsaberj(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DRAGON_SABER_JP;
-	WRITE_WORD( &RAM[0x001172], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0011a4], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x002160], 0x4e75 );	// Patch $d00000 checks
+	rom[0x001172/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x0011a4/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x002160/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_dirtfoxj(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DIRT_FOX_JP;
-	WRITE_WORD( &RAM[0x008876], 0x4e75 );	// Patch $d00000 checks
+	rom[0x008876/2] = 0x4e75;	// Patch $d00000 checks
 
 	/* HACK TO MAKE STEERING WORK */
-	WRITE_WORD( &RAM[0x00cd0a], 0x007f );
+	rom[0x00cd0a/2] = 0x007f;
 }
 
 void init_finallap(void)
@@ -3377,49 +3377,49 @@ void init_finallap(void)
 
 void init_finalap2(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_2;
-	WRITE_WORD( &RAM[0x004028], 0x4e71 );	// Patch some protection checks
-	WRITE_WORD( &RAM[0x00402a], 0x4e71 );
-	WRITE_WORD( &RAM[0x00403e], 0x4e71 );
-	WRITE_WORD( &RAM[0x004040], 0x4e71 );
+	rom[0x004028/2] = 0x4e71;	// Patch some protection checks
+	rom[0x00402a/2] = 0x4e71;
+	rom[0x00403e/2] = 0x4e71;
+	rom[0x004040/2] = 0x4e71;
 }
 
 void init_finalp2j(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_2;
-	WRITE_WORD( &RAM[0x003de2], 0x4e71 );	// Patch some protection checks
-	WRITE_WORD( &RAM[0x003de4], 0x4e71 );
-	WRITE_WORD( &RAM[0x003df8], 0x4e71 );
-	WRITE_WORD( &RAM[0x003dfa], 0x4e71 );
-	WRITE_WORD( &RAM[0x004028], 0x4e71 );
-	WRITE_WORD( &RAM[0x00402a], 0x4e71 );
-	WRITE_WORD( &RAM[0x00403e], 0x4e71 );
-	WRITE_WORD( &RAM[0x004040], 0x4e71 );
+	rom[0x003de2/2] = 0x4e71;	// Patch some protection checks
+	rom[0x003de4/2] = 0x4e71;
+	rom[0x003df8/2] = 0x4e71;
+	rom[0x003dfa/2] = 0x4e71;
+	rom[0x004028/2] = 0x4e71;
+	rom[0x00402a/2] = 0x4e71;
+	rom[0x00403e/2] = 0x4e71;
+	rom[0x004040/2] = 0x4e71;
 }
 
 void init_finalap3(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_3;
-	WRITE_WORD( &RAM[0x003f36], 0x4e71 );	// Patch some nasty protection
-	WRITE_WORD( &RAM[0x003f38], 0x4e71 );	// this stuff runs in the IRQ
-	WRITE_WORD( &RAM[0x003f4c], 0x4e71 );
-	WRITE_WORD( &RAM[0x003f4e], 0x4e71 );
-	WRITE_WORD( &RAM[0x003f66], 0x4e71 );
-	WRITE_WORD( &RAM[0x003f68], 0x4e71 );
-	WRITE_WORD( &RAM[0x003f7c], 0x4e71 );
-	WRITE_WORD( &RAM[0x003f7e], 0x4e71 );
+	rom[0x003f36/2] = 0x4e71;	// Patch some nasty protection
+	rom[0x003f38/2] = 0x4e71;	// this stuff runs in the IRQ
+	rom[0x003f4c/2] = 0x4e71;
+	rom[0x003f4e/2] = 0x4e71;
+	rom[0x003f66/2] = 0x4e71;
+	rom[0x003f68/2] = 0x4e71;
+	rom[0x003f7c/2] = 0x4e71;
+	rom[0x003f7e/2] = 0x4e71;
 }
 
 void init_finehour(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINEST_HOUR;
-	WRITE_WORD( &RAM[0x001892], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x003ac0], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00467c], 0x4e71 );	// Patch $d00000 checks
+	rom[0x001892/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x003ac0/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x00467c/2] = 0x4e71;	// Patch $d00000 checks
 }
 
 void init_fourtrax(void)
@@ -3434,22 +3434,22 @@ void init_kyukaidk(void)
 
 void init_marvlanj(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MARVEL_LAND;
-	WRITE_WORD( &RAM[0x000f24], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001fb2], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0048b6], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0048d2], 0x4e75 );	// Patch $d00000 checks
+	rom[0x000f24/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001fb2/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x0048b6/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x0048d2/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_marvland(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MARVEL_LAND;
-	WRITE_WORD( &RAM[0x00101e], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00223a], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x004cf4], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x004d10], 0x4e75 );	// Patch $d00000 checks
+	rom[0x00101e/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x00223a/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x004cf4/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x004d10/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_metlhawk(void)
@@ -3459,87 +3459,87 @@ void init_metlhawk(void)
 
 void init_mirninja(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MIRAI_NINJA;
-	WRITE_WORD( &RAM[0x00052a], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x01de68], 0x4e75 );	// Patch $d00000 checks
+	rom[0x00052a/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x01de68/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_ordyne(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ORDYNE;
-	WRITE_WORD( &RAM[0x0025a4], 0x4e75 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0025c2], 0x4e75 );	// Patch $d00000 checks
+	rom[0x0025a4/2] = 0x4e75;	// Patch $d00000 checks
+	rom[0x0025c2/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_phelios(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_PHELIOS;
-	WRITE_WORD( &RAM[0x0011ea], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0011ec], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0011f6], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0011f8], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00120a], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00120c], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001216], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001218], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001222], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001224], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x00122e], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x001230], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x02607a], 0x4e75 );	// Patch $d00000 checks
+	rom[0x0011ea/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0011ec/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0011f6/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0011f8/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x00120a/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x00120c/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001216/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001218/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001222/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001224/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x00122e/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x001230/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x02607a/2] = 0x4e75;	// Patch $d00000 checks
 }
 
 void init_rthun2(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ROLLING_THUNDER_2;
-	WRITE_WORD( &RAM[0x0042b0], 0x4e71 );	// Patch $d00000 checks
+	rom[0x0042b0/2] = 0x4e71;	// Patch $d00000 checks
 
-	WRITE_WORD( &RAM[0x004260], 0x33fc );	// Protection patch, replace
-	WRITE_WORD( &RAM[0x004262], 0x0000 );	//
-	WRITE_WORD( &RAM[0x004264], 0x0010 );	// move.w $d00004,$100002
-	WRITE_WORD( &RAM[0x004266], 0x0002 );	//		   with
-	WRITE_WORD( &RAM[0x004268], 0x4e71 );	// move.w #$0001,$100002
+	rom[0x004260/2] = 0x33fc;	// Protection patch, replace
+	rom[0x004262/2] = 0x0000;	//
+	rom[0x004264/2] = 0x0010;	// move.w $d00004,$100002
+	rom[0x004266/2] = 0x0002;	//		   with
+	rom[0x004268/2] = 0x4e71;	// move.w #$0001,$100002
 }
 
 void init_rthun2j(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ROLLING_THUNDER_2;
-	WRITE_WORD( &RAM[0x0040d2], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0149cc], 0x4e75 );	// Patch $d00000 checks
+	rom[0x0040d2/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0149cc/2] = 0x4e75;	// Patch $d00000 checks
 
-	WRITE_WORD( &RAM[0x004082], 0x33fc );	// Protection patch, replace
-	WRITE_WORD( &RAM[0x004084], 0x0000 );	//
-	WRITE_WORD( &RAM[0x004086], 0x0010 );	// move.w $d00004,$100002
-	WRITE_WORD( &RAM[0x004088], 0x0002 );	//		   with
-	WRITE_WORD( &RAM[0x00408a], 0x4e71 );	// move.w #$0001,$100002
+	rom[0x004082/2] = 0x33fc;	// Protection patch, replace
+	rom[0x004084/2] = 0x0000;	//
+	rom[0x004086/2] = 0x0010;	// move.w $d00004,$100002
+	rom[0x004088/2] = 0x0002;	//		   with
+	rom[0x00408a/2] = 0x4e71;	// move.w #$0001,$100002
 }
 
 void init_sgunner2(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_STEEL_GUNNER_2;
-	WRITE_WORD( &RAM[0x001162], 0x4e71 );	// Patch $a00000 checks
+	rom[0x001162/2] = 0x4e71;	// Patch $a00000 checks
 }
 
 void init_sws92(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_92;
-	WRITE_WORD( &RAM[0x0011fc], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0011fe], 0x4e71 );	// Patch $d00000 checks
+	rom[0x0011fc/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0011fe/2] = 0x4e71;	// Patch $d00000 checks
 }
 
 void init_sws93(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1 );
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_93;
-	WRITE_WORD( &RAM[0x0013ae], 0x4e71 );	// Patch $d00000 checks
-	WRITE_WORD( &RAM[0x0013b0], 0x4e71 );	// Patch $d00000 checks
+	rom[0x0013ae/2] = 0x4e71;	// Patch $d00000 checks
+	rom[0x0013b0/2] = 0x4e71;	// Patch $d00000 checks
 }
 
 void init_suzuka8h(void)
@@ -3549,12 +3549,12 @@ void init_suzuka8h(void)
 
 void init_suzuk8h2(void)
 {
-	unsigned char *RAM=memory_region(REGION_CPU1);
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUZUKA_8_HOURS_2;
-	WRITE_WORD( &RAM[0x003ec8], 0x4e71 );	// Patch some protection checks
-	WRITE_WORD( &RAM[0x003ede], 0x4e71 );
-	WRITE_WORD( &RAM[0x003ee0], 0x4e71 );
-	WRITE_WORD( &RAM[0x003eee], 0x4e71 );
+	rom[0x003ec8/2] = 0x4e71;	// Patch some protection checks
+	rom[0x003ede/2] = 0x4e71;
+	rom[0x003ee0/2] = 0x4e71;
+	rom[0x003eee/2] = 0x4e71;
 }
 
 void init_valkyrie(void)

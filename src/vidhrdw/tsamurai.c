@@ -262,3 +262,50 @@ void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,foreground,0,0);
 }
+
+/***************************************************************************
+
+VS Gong Fight runs on older hardware
+
+***************************************************************************/
+
+int vsgongf_color;
+
+WRITE_HANDLER( vsgongf_color_w )
+{
+	if( vsgongf_color != data )
+	{
+		vsgongf_color = data;
+		tilemap_mark_all_tiles_dirty( foreground );
+	}
+}
+
+static void get_vsgongf_tile_info(int tile_index)
+{
+	int tile_number = videoram[tile_index];
+	int color = vsgongf_color&0x1f;
+	if( textbank1 ) tile_number += 0x100;
+	SET_TILE_INFO(1,tile_number,color )
+}
+
+int vsgongf_vh_start(void)
+{
+	foreground = tilemap_create(get_vsgongf_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	if (!foreground) return 1;
+	return 0;
+}
+
+void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+{
+	static int k;
+	if( keyboard_pressed( KEYCODE_Q ) ){
+		while( keyboard_pressed( KEYCODE_Q ) ){}
+		k++;
+		vsgongf_color = k;
+		tilemap_mark_all_tiles_dirty( foreground );
+	}
+
+	tilemap_update( ALL_TILEMAPS );
+	tilemap_draw(bitmap,foreground,0,0);
+	draw_sprites(bitmap);
+}

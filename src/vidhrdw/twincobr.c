@@ -219,6 +219,12 @@ WRITE_HANDLER( wardner_fgscroll_w )
 	twincobr_fgscroll_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
+WRITE_HANDLER( wardner_exscroll_w )	/* Extra unused video layer */
+{
+	if (offset == 0) logerror("PC - write %04x to unknown video scroll Y register\n",data);
+	else logerror("PC - write %04x to unknown video scroll X register\n",data);
+}
+
 READ_HANDLER( wardner_videoram_r )
 {
 	int shift = 8 * (offset & 1);
@@ -240,7 +246,7 @@ WRITE_HANDLER( wardner_videoram_w )
 	}
 }
 
-static void twincobr_draw_sprites (struct osd_bitmap *bitmap, int priority)
+static void twincobr_draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	int offs;
 

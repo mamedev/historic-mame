@@ -198,6 +198,7 @@ WRITE16_HANDLER( K053251_msb_w );
 enum { K053251_CI0=0,K053251_CI1,K053251_CI2,K053251_CI3,K053251_CI4 };
 int K053251_get_priority(int ci);
 int K053251_get_palette_index(int ci);
+int K053251_vh_start(void);
 
 
 WRITE_HANDLER( K054000_w );

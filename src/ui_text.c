@@ -76,6 +76,7 @@ const char * default_text[] =
 #endif
 	"The colors aren't 100% accurate.",
 	"The colors are completely wrong.",
+	"The video emulation isn't 100% accurate.",
 	"The sound emulation isn't 100% accurate.",
 	"The game lacks sound.",
 	"Screen flipping in cocktail mode is not supported.",
