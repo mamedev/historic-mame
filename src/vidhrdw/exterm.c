@@ -139,21 +139,22 @@ void exterm_paletteram_w(int offset, int data)
 	memcpy(&exterm_master_videoram[address>>3], shiftreg, 256*sizeof(unsigned short));
 
 
-static void to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
+void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(shiftreg, &exterm_master_videoram[address>>3], 256*sizeof(unsigned short));
 }
 
-static void from_shiftreg_master_16(unsigned int address, unsigned short* shiftreg)
+void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg)
 {
-	FROM_SHIFTREG_MASTER(short);
+	if (Machine->scrbitmap->depth == 16)
+	{
+		FROM_SHIFTREG_MASTER(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_MASTER(char);
+	}
 }
-
-static void from_shiftreg_master_8(unsigned int address, unsigned short* shiftreg)
-{
-	FROM_SHIFTREG_MASTER(char);
-}
-
 
 #define FROM_SHIFTREG_SLAVE(TYPE)										\
 	int i;																\
@@ -181,19 +182,21 @@ static void from_shiftreg_master_8(unsigned int address, unsigned short* shiftre
 	memcpy(&exterm_slave_videoram[address>>3], shiftreg, 256*2*sizeof(unsigned char));
 
 
-static void to_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
+void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(shiftreg, &exterm_slave_videoram[address>>3], 256*2*sizeof(unsigned char));
 }
 
-static void from_shiftreg_slave_16(unsigned int address, unsigned short* shiftreg)
+void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
 {
-	FROM_SHIFTREG_SLAVE(short);
-}
-
-static void from_shiftreg_slave_8(unsigned int address, unsigned short* shiftreg)
-{
-	FROM_SHIFTREG_SLAVE(char);
+	if (Machine->scrbitmap->depth == 16)
+	{
+		FROM_SHIFTREG_SLAVE(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_SLAVE(char);
+	}
 }
 
 
@@ -218,21 +221,13 @@ int exterm_vh_start(void)
 	}
 
 	/* Install depth specific handler */
-
-
 	if (Machine->scrbitmap->depth == 16)
 	{
-		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_16);
-		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_16);
-
 		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w);
 		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w);
 	}
 	else
 	{
-		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_8);
-		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_8);
-
 		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w);
 		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w);
 	}

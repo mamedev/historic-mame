@@ -127,16 +127,9 @@ void punchout_dac_w(int offset,int data)
 void punchout_2a03_reset_w(int offset,int data)
 {
 	if (data & 1)
-	{
-		/* suspend execution */
-		cpu_halt(1,0);
-	}
+		cpu_set_reset_line(1,ASSERT_LINE);
 	else
-	{
-		/* reset and resume execution */
-		cpu_reset(1);
-		cpu_halt(1,1);
-	}
+		cpu_set_reset_line(1,CLEAR_LINE);
 }
 
 static int prot_mode_sel = -1; /* Mode selector */

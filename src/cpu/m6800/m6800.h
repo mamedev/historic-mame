@@ -17,7 +17,11 @@ enum {
 #define M6800_WAI		8			/* set when WAI is waiting for an interrupt */
 
 #define M6800_IRQ_LINE	0			/* IRQ line number */
-
+#define M6800_TIN_LINE	1			/* P20/Tin Input Capture line (eddge sense)     */
+									/* Active eddge is selecrable by internal reg.  */
+									/* raise eddge : CLEAR_LINE  -> ASSERT_LINE     */
+									/* fall  eddge : ASSERT_LINE -> CLEAR_LINE      */
+									/* it is usuali to use PULSE_LINE state         */
 /* PUBLIC GLOBALS */
 extern int m6800_ICount;
 
@@ -142,6 +146,7 @@ extern unsigned m6802_dasm(char *buffer, unsigned pc);
 #define M6803_INT_NMI				M6800_INT_NMI
 #define M6803_WAI					M6800_WAI
 #define M6803_IRQ_LINE				M6800_IRQ_LINE
+#define M6803_TIN_LINE				M6800_TIN_LINE
 
 #define m6803_ICount				m6800_ICount
 extern void m6803_reset(void *param);
@@ -224,6 +229,7 @@ extern unsigned m6808_dasm(char *buffer, unsigned pc);
 #define HD63701_INT_NMI 			 M6800_INT_NMI
 #define HD63701_WAI 				 M6800_WAI
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
+#define HD63701_TIN_LINE			 M6800_TIN_LINE
 
 #define hd63701_ICount				 m6800_ICount
 extern void hd63701_reset(void *param);

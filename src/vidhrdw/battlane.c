@@ -2,6 +2,9 @@
 
 	Battlelane
 
+    TODO: Properly support flip screen
+          Tidy / Optimize and add dirty layer support
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,18 +16,31 @@ int battlane_bitmap_size;
 unsigned char *battlane_bitmap;
 static int battlane_video_ctrl;
 
-int battlane_spriteram_size;
-unsigned char *battlane_spriteram;
+const int battlane_spriteram_size=0x100;
+static unsigned char battlane_spriteram[0x100];
+
+const int battlane_tileram_size=0x800;
+static unsigned char battlane_tileram[0x800];
+
+
+static int flipscreen;
+static int battlane_scrolly;
+static int battlane_scrollx;
+
+extern int battlane_cpu_control;
+
+static struct osd_bitmap *bkgnd_bitmap;  /* scroll bitmap */
 
 
 void battlane_video_ctrl_w(int offset, int data)
 {
-#if 1
-	if (errorlog)
-	{
-                fprintf(errorlog, "Video control =%02x)\n", data);
-	}
-#endif
+	/*
+    Video control register
+
+        0x80    = ????
+        0x0e    = Bitmap plane (bank?) select  (0-7)
+        0x01    = Scroll MSB
+	*/
 
 	battlane_video_ctrl=data;
 }
@@ -34,20 +50,58 @@ int battlane_video_ctrl_r(int offset)
 	return battlane_video_ctrl;
 }
 
+void battlane_set_video_flip(int flip)
+{
+
+    if (flip != flipscreen)
+    {
+        // Invalidate any cached data
+    }
+
+    flipscreen=flip;
+
+    /*
+    Don't flip the screen. The render function doesn't support
+    it properly yet.
+    */
+    flipscreen=0;
+
+}
+
+void battlane_scrollx_w(int offset, int data)
+{
+    battlane_scrollx=data;
+}
+
+void battlane_scrolly_w(int offset, int data)
+{
+    battlane_scrolly=data;
+}
+
+void battlane_tileram_w(int offset, int data)
+{
+    battlane_tileram[offset]=data;
+}
+
+int battlane_tileram_r(int offset)
+{
+    return battlane_tileram[offset];
+}
+
+void battlane_spriteram_w(int offset, int data)
+{
+    battlane_spriteram[offset]=data;
+}
+
+int battlane_spriteram_r(int offset)
+{
+    return battlane_spriteram[offset];
+}
+
+
 void battlane_bitmap_w(int offset, int data)
 {
 	int i, orval;
-
-#if 0
-	unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (errorlog)
-	{
-		fprintf(errorlog, "%04x=%02x   (0x1c00=%02x)\n",
-			offset+0x2000, data, RAM[0x1c00]);
-	}
-#endif
 
     orval=(~battlane_video_ctrl>>1)&0x07;
 
@@ -73,38 +127,6 @@ int battlane_bitmap_r(int offset)
 	return battlane_bitmap[offset];
 }
 
-#if 0
-void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	unsigned char *pal;
-
-	pal = palette;
-
-	/* Set all the 256 colors because we need them to remap the color 0 */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2;
-
-		/* red component */
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 1) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (i >> 3) & 0x01;
-		bit1 = (i >> 4) & 0x01;
-		bit2 = (i >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (i >> 6) & 0x01;
-		bit2 = (i >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	}
-}
-
-#endif
 
 
 
@@ -125,6 +147,13 @@ void battlane_dump_bitmap(void)
 	if (fp)
 	{
 		fwrite(battlane_spriteram, 0x100, 1, fp);
+		fclose(fp);
+	}
+
+    fp=fopen("TILES.DMP", "w+b");
+	if (fp)
+	{
+        fwrite(battlane_tileram, 0x800, 1, fp);
 		fclose(fp);
 	}
 
@@ -155,6 +184,14 @@ int battlane_vh_start(void)
 	}
 
 	memset(battlane_spriteram, 0, battlane_spriteram_size);
+    memset(battlane_tileram,255, battlane_tileram_size);
+
+    bkgnd_bitmap = osd_create_bitmap(0x0200, 0x0200);
+    if (!bkgnd_bitmap)
+	{
+		return 1;
+	}
+
 
 	return 0;
 }
@@ -176,6 +213,10 @@ void battlane_vh_stop(void)
 	{
 		free(battlane_bitmap);
 	}
+    if (bkgnd_bitmap)
+    {
+        free(bkgnd_bitmap);
+    }
 }
 
 /***************************************************************************
@@ -190,20 +231,26 @@ INLINE void battlane_build_palette(void)
     unsigned char *PALETTE =
         Machine->memory_region[3];
 
-/*    unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
- */
     for (offset = 0; offset < 0x40; offset++)
 	{
           int palette = PALETTE[offset];
           int red, green, blue;
-          red   = (palette&0x07) * 16*2;
-          green = ((palette>>3)&0x07) * 16*2;
-          blue  = ((palette>>6)&0x07) * 16*4;
+
+          blue   = ((palette>>6)&0x03) * 16*4;
+          green  = ((palette>>3)&0x07) * 16*2;
+          red    = ((palette>>0)&0x07) * 16*2;
+
           palette_change_color (offset, red, green, blue);
 	}
 }
 
+/*
+
+void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+
+}
+*/
 
 /***************************************************************************
 
@@ -214,110 +261,157 @@ INLINE void battlane_build_palette(void)
 ***************************************************************************/
 void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	static int s;
+    int scrollx,scrolly;
 	int x,y, offs;
-	unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (keyboard_pressed(KEYCODE_PGDN))
-	{
-		while (keyboard_pressed(KEYCODE_PGDN)) ;
-		s++;
-	}
-
-	if (keyboard_pressed(KEYCODE_PGUP))
-	{
-		while (keyboard_pressed(KEYCODE_PGUP)) ;
-		s--;
-	}
+    /* Scroll registers */
+    scrolly=256*(battlane_video_ctrl&0x01)+battlane_scrolly;
+    scrollx=256*(battlane_cpu_control&0x01)+battlane_scrollx;
 
 
     battlane_build_palette();
 	if (palette_recalc ())
     {
-
+         // Mark cached layer as dirty
     }
 
+    /* Draw tile map. TODO: Cache it */
+    for (offs=0; offs <0x400;  offs++)
+    {
+        int sx,sy;
+        int code=battlane_tileram[offs];
+        int attr=battlane_tileram[0x400+offs];
 
-	/* Blank screen */
-	fillbitmap(bitmap,0,&Machine->drv->visible_area);
+        sx=(offs&0x0f)+(offs&0x100)/16;
+        sy=((offs&0x200)/2+(offs&0x0f0))/16;
+        drawgfx(bkgnd_bitmap,Machine->gfx[1+(attr&0x01)],
+               code,
+               (attr>>1)&0x07,
+               !flipscreen,flipscreen,
+               sx*16,sy*16,
+               NULL,
+               TRANSPARENCY_NONE, 0);
 
-	for (y=0; y<32;y++)
+    }
+    /* copy the background graphics */
+    {
+		int scrlx, scrly;
+        scrlx=-scrollx;
+        scrly=-scrolly;
+        copyscrollbitmap(bitmap,bkgnd_bitmap,1,&scrly,1,&scrlx,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    }
+    {
+    char baf[256];
+    char baf2[40];
+    baf[0]=0;
+
+    /* Draw sprites */
+    for (offs=0; offs<0x0100; offs+=4)
 	{
-		for (x=0; x<32; x++)
-		{
-			int sx=32-((s+x)&0x1f);
-			int code;
+           /*
+           0x80=bank 2
+           0x40=
+           0x20=bank 1
+           0x10=y double
+           0x08=Unknown - all vehicles have this bit clear
+           0x04=x flip
+           0x02=y flip
+           0x01=Sprite enable
+           */
+          int attr=battlane_spriteram[offs+1];
+          int code=battlane_spriteram[offs+3];
+          code += 256*((attr>>6) & 0x02);
+          code += 256*((attr>>5) & 0x01);
+          if (offs > 0x00a0)
+          {
+               sprintf(baf2, "%02x ", attr);
+               strcat(baf,baf2);
+          }
 
-			code=RAM[0x1200+((15-y)*16)+
-				(sx&0x0f)+0x10*(sx&0x10)];
-			if (code)
-			{
-				drawgfx(bitmap,Machine->gfx[1],
-					 code,
-					 0,
-					 0,1,
-					 x*16,y*16,
-					 &Machine->drv->visible_area,
-					 TRANSPARENCY_NONE, 0);
-			}
-		}
-	}
-
-	for (offs=0x0100-4; offs>=0; offs-=4)
-	{
-	      int code=battlane_spriteram[offs+3]+((battlane_spriteram[offs+1]&0x80)<<1);
-          //if (battlane_spriteram[offs+1])
+          if (attr & 0x01)
 	      {
-               drawgfx(bitmap,Machine->gfx[0],
-					 code,
-					 battlane_spriteram[offs+1]&0x07,
-					 0,1,
-					 battlane_spriteram[offs+2],
-					 battlane_spriteram[offs],
+               int sx=battlane_spriteram[offs+2];
+               int sy=battlane_spriteram[offs];
+               int flipx=attr&0x04;
+               int flipy=attr&0x02;
+               if (!flipscreen)
+               {
+                    sx=240-sx;
+                    sy=240-sy;
+                    flipy=!flipy;
+                    flipx=!flipx;
+               }
+               if ( attr & 0x10)  /* Double Y direction */
+               {
+                   int dy=16;
+                   if (flipy)
+                   {
+                        dy=-16;
+                   }
+                   drawgfx(bitmap,Machine->gfx[0],
+                     code,
+                     0,
+                     flipx,flipy,
+                     sx, sy,
 					 &Machine->drv->visible_area,
-					 TRANSPARENCY_PEN, 15);
+                     TRANSPARENCY_PEN, 0);
+
+                    drawgfx(bitmap,Machine->gfx[0],
+                     code+1,
+                     0,
+                     flipx,flipy,
+                     sx, sy-dy,
+					 &Machine->drv->visible_area,
+                     TRANSPARENCY_PEN, 0);
+                }
+                else
+                {
+                   drawgfx(bitmap,Machine->gfx[0],
+					 code,
+                     0,
+                     flipx,flipy,
+                     sx, sy,
+					 &Machine->drv->visible_area,
+                     TRANSPARENCY_PEN, 0);
+                }
           }
 	}
 
-    for (y=0; y<0x20*8; y++)
-    {
-        for (x=0; x<0x20*8; x++)
-        {
-            int data=screen_bitmap->line[y][x];
-            if (data)
-            {
-                bitmap->line[y][x]=Machine->pens[data];
-            }
-       }
-	}
 
-#ifdef MAME_DEBUG
-    if (keyboard_pressed(KEYCODE_SPACE))
+//    usrintf_showmessage(baf);
+    }
+    /* Draw foreground bitmap */
+    if (flipscreen)
     {
-        /* Display current palette */
-        const int numblocks=0x08;
-        const int left=(0x20*8-numblocks*16)/2;
-        int pal;
-        int nX=left;
-        int nY=64;
-        for (pal=0; pal<0x40; pal++)
+        for (y=0; y<0x20*8; y++)
         {
-            for (y=0; y<16;y++)
+            for (x=0; x<0x20*8; x++)
             {
-                for (x=0; x<16;x++)
+                int data=screen_bitmap->line[y][x];
+                if (data)
                 {
-                    bitmap->line[nY+y][nX+x]=Machine->pens[pal];
+                    bitmap->line[255-y][255-x]=Machine->pens[data];
                 }
-            }
-            nX+=16;
-            if (nX >= left+numblocks*16)
-            {
-                nX=left;
-                nY+=16;
             }
         }
     }
+    else
+    {
+        for (y=0; y<0x20*8; y++)
+        {
+            for (x=0; x<0x20*8; x++)
+            {
+                int data=screen_bitmap->line[y][x];
+                if (data)
+                {
+                    bitmap->line[y][x]=Machine->pens[data];
+                }
+            }
+        }
+
+    }
+
+#ifdef MAME_DEBUG
     if (keyboard_pressed(KEYCODE_S))
     {
          battlane_dump_bitmap();

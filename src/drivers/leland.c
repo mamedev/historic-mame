@@ -82,43 +82,10 @@ int cpu_get_halt_line(int num)
 #endif
 }
 
-void cpu_set_reset_line(int num, int reset)
-{
-	if (reset==HOLD_LINE )
-	{
-#ifdef NOISY_CPU
-		/* Hold reset line (drop it low). Suspend CPU. */
-		if (errorlog)
-		{
-			fprintf(errorlog, "CPU#%d (PC=%04x) RESET LINE HELD\n", num, cpu_get_pc());
-		}
-#endif
-		if (cpu_getstatus(num))
-		{
-			cpu_reset(num);
-			cpu_halt(num, 0);
-		}
-	}
-	else
-	{
-		if (!cpu_getstatus(num))
-		{
-#ifdef NOISY_CPU
-			/* Resume CPU when reset line has been raised */
-			if (errorlog)
-			{
-				fprintf(errorlog, "CPU#%d RESET LINE CLEARED... RESUMING\n", num);
-			}
-#endif
-			cpu_halt(num, 1);
-		}
-	}
-}
-
 void cpu_set_test_line(int num, int test)
 {
 	/* TEST flag for 80186 sync instrucntion */
-	if (test==HOLD_LINE )
+	if (test==ASSERT_LINE )
 	{
 		/* Set test line */
 	}
@@ -540,9 +507,9 @@ void leland_sound_cpu_control_w(int data)
 		0x08 = INT1
 	*/
 
-	cpu_set_reset_line(2, data&0x80  ? CLEAR_LINE : HOLD_LINE);
-    cpu_set_nmi_line(2,   data&0x40  ? CLEAR_LINE : HOLD_LINE);
-    cpu_set_test_line(2,  data&0x20  ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_reset_line(2, data&0x80  ? CLEAR_LINE : ASSERT_LINE);
+    cpu_set_nmi_line(2,   data&0x40  ? CLEAR_LINE : ASSERT_LINE);
+    cpu_set_test_line(2,  data&0x20  ? CLEAR_LINE : ASSERT_LINE);
 
 	/* No idea about the int 0 and int 1 pins (do they give IRQ number?) */
 	intnum =(data&0x20)>>6;  /* Int 0 */
@@ -798,10 +765,10 @@ void leland_slave_cmd_w(int offset, int data)
 	}
 #endif
 
-	cpu_set_reset_line(1, data&0x01  ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_reset_line(1, data&0x01  ? CLEAR_LINE : ASSERT_LINE);
 	/* 0x02=colour write */
-	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : HOLD_LINE);
-	cpu_set_irq_line(1, 0, data&0x08 ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : ASSERT_LINE);
+	cpu_set_irq_line(1, 0, data&0x08 ? CLEAR_LINE : ASSERT_LINE);
 
 	/*
 	0x10, 0x20, 0x40 = Unknown (connected to bit 0 of control read
@@ -3663,9 +3630,9 @@ static struct GfxDecodeInfo ataxx_gfxdecodeinfo[] =
 
 void ataxx_slave_cmd_w(int offset, int data)
 {
-	cpu_set_irq_line(1, 0, data&0x01 ? CLEAR_LINE : HOLD_LINE);
-	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : HOLD_LINE);
-	cpu_set_reset_line(1,  data&0x10 ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_irq_line(1, 0, data&0x01 ? CLEAR_LINE : ASSERT_LINE);
+	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : ASSERT_LINE);
+	cpu_set_reset_line(1,  data&0x10 ? CLEAR_LINE : ASSERT_LINE);
 	leland_slave_cmd=data;
 }
 
@@ -3777,9 +3744,9 @@ void ataxx_sound_control_w(int offset, int data)
 
 	int intnum;
 
-	cpu_set_reset_line(2, data&0x01  ? CLEAR_LINE : HOLD_LINE);
-    cpu_set_nmi_line(2,   data&0x02  ? CLEAR_LINE : HOLD_LINE);
-    cpu_set_test_line(2,  data&0x10  ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_reset_line(2, data&0x01  ? CLEAR_LINE : ASSERT_LINE);
+    cpu_set_nmi_line(2,   data&0x02  ? CLEAR_LINE : ASSERT_LINE);
+    cpu_set_test_line(2,  data&0x10  ? CLEAR_LINE : ASSERT_LINE);
 
 	/* No idea about the int 0 and int 1 pins (do they give int number?) */
 	intnum =(data&0x04)>>2;  /* Int 0 */

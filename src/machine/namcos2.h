@@ -39,27 +39,50 @@
 #define GFX_CHR		2
 #define GFX_ROZ		3
 
+/*********************************************/
+/* IF GAME SPECIFIC HACKS ARE REQUIRED THEN  */
+/* USE THE namcos2_gametype VARIABLE TO FIND */
+/* OUT WHAT GAME IS RUNNING                  */
+/*********************************************/
+
 #define NAMCOS2_ASSAULT             0x1000
-#define NAMCOS2_ASSAULTA            0x1001
+#define NAMCOS2_ASSAULTJ            0x1001
 #define NAMCOS2_ASSAULT_PLUS        0x1002
-#define NAMCOS2_METAL_HAWK          0x1003
-#define NAMCOS2_PHELIOS             0x1004
-#define NAMCOS2_BURNING_FORCE       0x1005
-#define NAMCOS2_WALKYRIE            0x1006
-#define NAMCOS2_MARVEL_LAND         0x1007
-#define NAMCOS2_ROLLING_THUNDER_2   0x1008
-#define NAMCOS2_COSMO_GANG          0x1009
-#define NAMCOS2_FOUR_TRAX           0x100a
-#define NAMCOS2_ORDYNE              0x100b
+#define NAMCOS2_BUBBLE_TROUBLE      0x1003
+#define NAMCOS2_BURNING_FORCE       0x1004
+#define NAMCOS2_COSMO_GANG          0x1005
+#define NAMCOS2_COSMO_GANG_US       0x1006
+#define NAMCOS2_DIRT_FOX            0x1007
+#define NAMCOS2_DRAGON_SABER        0x1008
+#define NAMCOS2_FINAL_LAP           0x1009
+#define NAMCOS2_FINAL_LAP_2         0x100a
+#define NAMCOS2_FINAL_LAP_3         0x100b
 #define NAMCOS2_FINEST_HOUR         0x100c
-#define NAMCOS2_DRAGON_SABER        0x100d
-#define NAMCOS2_MIRAI_NINJA         0x100e
+#define NAMCOS2_FOUR_TRAX           0x100d
+#define NAMCOS2_GOLLY_GHOST         0x100e
+#define NAMCOS2_LUCKY_AND_WILD      0x100f
+#define NAMCOS2_MARVEL_LAND         0x1010
+#define NAMCOS2_METAL_HAWK          0x1011
+#define NAMCOS2_MIRAI_NINJA         0x1012
+#define NAMCOS2_ORDYNE              0x1013
+#define NAMCOS2_PHELIOS             0x1014
+#define NAMCOS2_ROLLING_THUNDER_2   0x1015
+#define NAMCOS2_STEEL_GUNNER        0x1016
+#define NAMCOS2_STEEL_GUNNER_2      0x1017
+#define NAMCOS2_SUPER_WSTADIUM      0x1018
+#define NAMCOS2_SUPER_WSTADIUM_92   0x1019
+#define NAMCOS2_SUPER_WSTADIUM_93   0x101a
+#define NAMCOS2_SUZUKA_8_HOURS      0x101b
+#define NAMCOS2_WALKYRIE            0x101c
 
 extern int namcos2_gametype;
+
+/*********************************************/
 
 int  namcos2_vh_start(void);
 void namcos2_vh_stop(void);
 void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh);
+void namcos2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* MACHINE */
 
@@ -78,6 +101,7 @@ void namcos2_dpram_byte_w(int offset, int data);
 int	 namcos2_68k_dpram_word_r(int offset);
 void namcos2_68k_dpram_word_w(int offset, int data);
 
+extern unsigned char *namcos2_dpram;
 
 /**************************************************************/
 /* Sprite memory handlers                                     */
@@ -106,43 +130,50 @@ extern int namcos2_eeprom_size;
 /**************************************************************/
 /*  Shared video memory function handlers                     */
 /**************************************************************/
+int  namcos2_68k_vram_ctrl_r( int offset );
+void namcos2_68k_vram_ctrl_w( int offset, int data );
+
 #define NAMCOS2_68K_VIDEORAM_W  MWA_BANK1, &videoram
 #define NAMCOS2_68K_VIDEORAM_R  MRA_BANK1
-extern int  namcos2_68k_vram_ctrl_r( int offset );
-extern void namcos2_68k_vram_ctrl_w( int offset, int data );
 extern unsigned char namcos2_68k_vram_ctrl[];
 
 
 /**************************************************************/
 /*  Shared video palette function handlers                    */
 /**************************************************************/
-//#define NAMCOS2_PALETTE_W     MWA_BANK2, &namcos2_68k_video_palette
-//#define NAMCOS2_PALETTE_Rq    MRA_BANK2
-extern unsigned char *namcos2_68k_video_palette;
-extern int  namcos2_68k_video_palette_r( int offset );
-extern void namcos2_68k_video_palette_w( int offset, int data );
+int  namcos2_68k_video_palette_r( int offset );
+void namcos2_68k_video_palette_w( int offset, int data );
+
+#define NAMCOS2_COLOUR_CODES    0x20
+extern unsigned char *namcos2_68k_palette_ram;
+extern int namcos2_68k_palette_size;
 
 
 /**************************************************************/
 /*  Shared data ROM memory handlerhandlers                    */
 /**************************************************************/
-extern int  namcos2_68k_data_rom_r(int offset);
+int  namcos2_68k_data_rom_r(int offset);
 
 
 /**************************************************************/
 /* Shared serial communications processory (CPU5 ????)        */
 /**************************************************************/
-extern int  namcos2_68k_serial_comms_ram_r(int offset);
-extern void namcos2_68k_serial_comms_ram_w(int offset, int data);
-extern int  namcos2_68k_serial_comms_ctrl_r(int offset);
-extern void namcos2_68k_serial_comms_ctrl_w(int offset,int data);
+int  namcos2_68k_serial_comms_ram_r(int offset);
+void namcos2_68k_serial_comms_ram_w(int offset, int data);
+int  namcos2_68k_serial_comms_ctrl_r(int offset);
+void namcos2_68k_serial_comms_ctrl_w(int offset,int data);
+
+extern unsigned char  namcos2_68k_serial_comms_ctrl[0x10];
+extern unsigned char *namcos2_68k_serial_comms_ram;
+
 
 
 /**************************************************************/
 /* Shared protection/random number generator                  */
 /**************************************************************/
-extern int  namcos2_68k_key_r( int offset );
-extern void namcos2_68k_key_w( int offset, int data );
+int  namcos2_68k_key_r( int offset );
+void namcos2_68k_key_w( int offset, int data );
+
 extern unsigned char namcos2_68k_key[];
 
 
@@ -160,17 +191,17 @@ extern unsigned char namcos2_68k_key[];
 #define NAMCOS2_C148_VBLANKIRQ  7
 
 
-extern int  namcos2_68k_master_C148[32];
-extern void namcos2_68k_master_C148_w( int offset, int data );
-extern int  namcos2_68k_master_C148_r( int offset );
-extern int  namcos2_68k_master_vblank( void );
-extern void namcos2_68k_master_posirq( int moog );
+int  namcos2_68k_master_C148[32];
+void namcos2_68k_master_C148_w( int offset, int data );
+int  namcos2_68k_master_C148_r( int offset );
+int  namcos2_68k_master_vblank( void );
+void namcos2_68k_master_posirq( int moog );
 
-extern int  namcos2_68k_slave_C148[32];
-extern void namcos2_68k_slave_C148_w( int offset, int data );
-extern int  namcos2_68k_slave_C148_r( int offset );
-extern int  namcos2_68k_slave_vblank(void);
-extern void namcos2_68k_slave_posirq( int moog );
+int  namcos2_68k_slave_C148[32];
+void namcos2_68k_slave_C148_w( int offset, int data );
+int  namcos2_68k_slave_C148_r( int offset );
+int  namcos2_68k_slave_vblank(void);
+void namcos2_68k_slave_posirq( int moog );
 
 
 /**************************************************************/
@@ -196,13 +227,21 @@ extern unsigned char *namcos2_68k_slave_ram;
 /**************************************************************/
 /*  ROZ - Rotate & Zoom memory function handlers              */
 /**************************************************************/
-#define NAMCOS2_68K_ROZ_RAM_W       MWA_BANK5, &namcos2_roz_ram
-#define NAMCOS2_68K_ROZ_RAM_R       MRA_BANK5
 
-extern void namcos2_68k_roz_ctrl_w( int offset, int data );
-extern int  namcos2_68k_roz_ctrl_r( int offset );
-extern unsigned char namcos2_roz_ctrl[];
-extern unsigned char *namcos2_roz_ram;
+#define ROZ_CLEAN_TILE  0
+#define ROZ_DIRTY_TILE  1
+#define ROZ_REDRAW_ALL  2
+
+void namcos2_68k_roz_ctrl_w( int offset, int data );
+int  namcos2_68k_roz_ctrl_r( int offset );
+extern unsigned char namcos2_68k_roz_ctrl[];
+
+void namcos2_68k_roz_ram_w( int offset, int data );
+int  namcos2_68k_roz_ram_r( int offset );
+int  namcos2_68k_roz_ram_size;
+int  namcos2_68k_roz_ram_dirty;
+extern unsigned char *namcos2_68k_roz_ram;
+extern unsigned char *namcos2_68k_roz_dirty_buffer;
 
 
 /**************************************************************/
@@ -210,3 +249,11 @@ extern unsigned char *namcos2_roz_ram;
 /**************************************************************/
 #define BANKED_SOUND_ROM_R		MRA_BANK6
 #define CPU3_ROM1				6			/* Bank number */
+
+
+/**************************************************************/
+/* MCU Specific memory handlers                               */
+/**************************************************************/
+
+void namcos2_mcu_analog_ctrl_w( int offset, int data );
+int  namcos2_mcu_analog_ctrl_r( int offset );

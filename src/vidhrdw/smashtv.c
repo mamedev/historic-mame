@@ -8,6 +8,11 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 
+#define PARTIAL_UPDATING		0
+#define PARTIAL_UPDATE_CHUNK	16
+
+static void partial_update_callback(int scanline);
+
 void wms_stateload(void);
 void wms_statesave(void);
 
@@ -98,6 +103,9 @@ int wms_vh_start(void)
 		return 1;
 	}
 	memset(wms_cmos_ram,0,0x8000);
+#if PARTIAL_UPDATING
+	timer_set(cpu_getscanlinetime(0), 0, partial_update_callback);
+#endif
 	return 0;
 }
 int wms_t_vh_start(void)
@@ -121,6 +129,9 @@ int wms_t_vh_start(void)
 		return 1;
 	}
 	memset(wms_cmos_ram,0,0x8000);
+#if PARTIAL_UPDATING
+	timer_set(cpu_getscanlinetime(0), 0, partial_update_callback);
+#endif
 	return 0;
 }
 void wms_vh_stop (void)
@@ -130,28 +141,20 @@ void wms_vh_stop (void)
 	free(paletteram);
 }
 
-void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wms_update_partial(struct osd_bitmap *bitmap, int min, int max)
 {
 	int v,h;
+	unsigned short *pens = Machine->pens;
 	unsigned short *rv;
 	int skip,col;
 
-	//if (keyboard_pressed(KEYCODE_Q)) wms_statesave();
-	//if (keyboard_pressed(KEYCODE_W)) wms_stateload();
-
-	if (keyboard_pressed(KEYCODE_E)&&errorlog) fprintf(errorlog, "log spot\n");
-	//if (keyboard_pressed(KEYCODE_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
-
 	rv = &wms_videoram[(~TMS34010_get_DPYSTRT(0) & 0x1ff0)<<5];
+	rv = (((rv + 512 * (min - Machine->drv->visible_area.min_y)) - wms_videoram) & 0x3ffff) + wms_videoram;
 	col = Machine->drv->visible_area.max_x;
 	skip = 511 - col;
 
 	if (bitmap->depth==16)
 	{
-		unsigned int min = Machine->drv->visible_area.min_y;
-		unsigned int max = Machine->drv->visible_area.max_y;
-		unsigned short *pens = Machine->pens;
-
 		for (v = min; v <= max; v++)
 		{
 			unsigned short *rows = &((unsigned short *)bitmap->line[v])[0];
@@ -174,10 +177,6 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		unsigned int min = Machine->drv->visible_area.min_y;
-		unsigned int max = Machine->drv->visible_area.max_y;
-		unsigned short *pens = Machine->pens;
-
 		for (v = min; v <= max; v++)
 		{
 			unsigned char *rows = &(bitmap->line[v])[0];
@@ -196,5 +195,48 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;
 		}
 	}
+}
+
+void partial_update_callback(int scanline)
+{
+	int min, max;
+
+	if (scanline == 0)
+	{
+		min = (Machine->drv->screen_height / PARTIAL_UPDATE_CHUNK) * PARTIAL_UPDATE_CHUNK;
+		max = Machine->drv->screen_height - 1;
+	}
+	else
+	{
+		min = scanline - PARTIAL_UPDATE_CHUNK;
+		max = scanline - 1;
+	}
+
+	if (max >= Machine->drv->visible_area.min_y && min <= Machine->drv->visible_area.max_y)
+	{
+		if (min < Machine->drv->visible_area.min_y)
+			min = Machine->drv->visible_area.min_y;
+		if (max > Machine->drv->visible_area.max_y)
+			max = Machine->drv->visible_area.max_y;
+		wms_update_partial(Machine->scrbitmap, min, max);
+	}
+
+	scanline += PARTIAL_UPDATE_CHUNK;
+	if (scanline >= Machine->drv->screen_height) scanline = 0;
+	timer_set(cpu_getscanlinetime(scanline), scanline, partial_update_callback);
+}
+
+
+void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	//if (keyboard_pressed(KEYCODE_Q)) wms_statesave();
+	//if (keyboard_pressed(KEYCODE_W)) wms_stateload();
+
+	if (keyboard_pressed(KEYCODE_E)&&errorlog) fprintf(errorlog, "log spot\n");
+	//if (keyboard_pressed(KEYCODE_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
+
+#if !PARTIAL_UPDATING
+	wms_update_partial(bitmap, Machine->drv->visible_area.min_y, Machine->drv->visible_area.max_y);
+#endif
 	wms_autoerase_start=1000;
 }

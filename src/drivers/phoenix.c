@@ -58,12 +58,12 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void phoenix_sound_control_a_w(int offset, int data);
 void phoenix_sound_control_b_w(int offset, int data);
-int  phoenix_sh_start(void);
+int phoenix_sh_start(const struct MachineSound *msound);
 void phoenix_sh_update(void);
 
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int  pleiads_sh_start(void);
+int pleiads_sh_start(const struct MachineSound *msound);
 void pleiads_sh_update(void);
 
 
@@ -251,6 +251,21 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static struct CustomSound_interface phoenix_custom_interface =
+{
+	phoenix_sh_start,
+	0,
+	phoenix_sh_update
+};
+
+static struct CustomSound_interface pleiads_custom_interface =
+{
+	pleiads_sh_start,
+	0,
+	pleiads_sh_update
+};
+
 #define MACHINE_DRIVER(GAMENAME)									\
 																	\
 static struct MachineDriver GAMENAME##_machine_driver =				\
@@ -282,10 +297,13 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 	phoenix_vh_screenrefresh,										\
 																	\
 	/* sound hardware */											\
-	0,																\
-	GAMENAME##_sh_start,											\
-	0,																\
-	GAMENAME##_sh_update											\
+	0,0,0,0,														\
+	{																\
+		{															\
+			SOUND_CUSTOM,											\
+			&GAMENAME##_custom_interface							\
+		}															\
+	}																\
 };
 
 

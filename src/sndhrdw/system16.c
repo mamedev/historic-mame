@@ -35,7 +35,7 @@ void sys16_7751_audio_8255_w( int offset, int data )
 
 	if ((data & 0x0f) != 8)
 	{
-		cpu_reset(2);
+		cpu_set_reset_line(2,PULSE_LINE);
 		timer_set(TIME_IN_USEC(300), data, trigger_7751_sound);
 	}
 }

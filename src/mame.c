@@ -76,7 +76,7 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
 				return 1;
 			}
-			if (drivers[i]->rom == drivers[j]->rom)
+			if (drivers[i]->rom == drivers[j]->rom && drivers[i]->rom!=NULL)
 			{
 				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
 				return 1;
@@ -84,6 +84,10 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 		}
 
 		romp = drivers[i]->rom;
+
+if (romp)
+{ /*MESS*/
+
 		while (romp->name || romp->offset || romp->length)
 		{
 			const char *c;
@@ -103,6 +107,7 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 
 			romp++;
 		}
+}/*MESS*/
 	}
 
 	return 0;

@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Midway MCR-2 system
-	
+
 	Currently implemented:
 		* Satan's Hollow
 		* Tron
@@ -21,7 +21,7 @@
 	CPU #1
 	========================================================================
 	0000-BFFF   R     xxxxxxxx    Program ROM
-	C000-C7FF   R/W   xxxxxxxx    Program RAM
+	C000-C7FF   R/W   xxxxxxxx    NVRAM
 	F000-F1FF   R/W   xxxxxxxx    Sprite RAM
 	F800-FF7F   R/W   xxxxxxxx    Background video RAM
 	FF80-FFFF     W   xxxxxxxx    Palette RAM
@@ -549,71 +549,71 @@ static struct MachineDriver journey_machine_driver =
 
 static void shollow_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc600, 0x8a, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void tron_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc4f0, 0x97, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void kroozr_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc466, 0x95, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_PORT_04_READS(NULL, kroozr_dial_r, kroozr_trakball_x_r, NULL, kroozr_trakball_y_r);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, NULL, NULL);
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void domino_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x92, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void wacko_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x91, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 0;
 }
 
 
 static void twotiger_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0xa0, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr2_sprite_color = 1;
 }
 
 
 static void journey_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xc000, 0x9e, NULL);
+	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr3_sprite_code_mask = 0x07f;
 }
 

@@ -712,7 +712,7 @@ static void OPL_initalize(FM_OPL *OPL)
 	/* frequency base */
 	OPL->freqbase = (OPL->rate) ? ((double)OPL->clock * 4096.0 / OPL->rate) / 72  : 0;
 	/* Timer base time */
-	OPL->TimerBase = (OPL->rate) ? 1.0/((double)OPL->clock / 72.0 ) : 0;
+	OPL->TimerBase = 1.0/((double)OPL->clock / 72.0 );
 	/* make time tables */
 	init_timetables( OPL , OPL_ARRATE , OPL_DRRATE );
 	/* make fnumber -> increment counter table */

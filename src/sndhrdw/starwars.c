@@ -220,6 +220,6 @@ void starwars_soundrst(int offset, int data)
 	port_A &= 0x3f;
 
 	/* reset sound CPU here  */
-	cpu_reset (1);
+	cpu_set_reset_line(1,PULSE_LINE);
 }
 

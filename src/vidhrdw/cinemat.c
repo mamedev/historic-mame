@@ -148,7 +148,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 										   Machine->scrbitmap->height);
 					overlay=artwork_create(simple_overlays[color_prom[1]], nextcol,
 										   Machine->drv->total_colors-nextcol);
-                    printf ("overlay created\n");
+//                    printf ("overlay created\n");
 				}
 
 				if (overlay != NULL)

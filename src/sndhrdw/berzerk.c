@@ -52,7 +52,7 @@ extern int collision;
 int deathsound = 0;          /* trigger for playing collision sound */
 int nextdata5 = -1;
 
-int berzerk_sh_start(void)
+int berzerk_sh_start(const struct MachineSound *msound)
 {
 	int i;
 

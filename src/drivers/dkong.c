@@ -154,6 +154,7 @@ Changes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "cpu/s2650/s2650.h"
 
 static int page = 0;
 static int p[8] = { 255,255,255,255,255,255,255,255 };
@@ -195,9 +196,8 @@ void dkongjr_sh_test5(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2
 void dkongjr_sh_test4(int offset, int data)      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
 void dkongjr_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data); }
 
-int hunchbks_mirror_r(int offset);
+int  hunchbks_mirror_r(int offset);
 void hunchbks_mirror_w(int offset,int data);
-unsigned s2650_get_pc(void);
 
 static int  dkong_sh_getp1(int offset)   { return p[1]; }
 static int  dkong_sh_getp2(int offset)   { return p[2]; }
@@ -283,18 +283,24 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+int herbiedk_acknowledge(int offset)
+{
+	s2650_set_sense(1);
+    return 0;
+}
+
 static struct MemoryReadAddress hunchbkd_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_ROM },
-	{ 0x1400, 0x1400, input_port_0_r },	/* IN0 */
-	{ 0x1480, 0x1480, input_port_1_r },	/* IN1 */
-	{ 0x1500, 0x1500, input_port_2_r },	/* IN2/DSW2 */
-    { 0x1507, 0x1507, MRA_RAM },     	/* read every int */
-	{ 0x1580, 0x1580, input_port_3_r },	/* DSW1 */
-	{ 0x1600, 0x1bff, MRA_RAM },	/* video RAM */
+	{ 0x1400, 0x1400, input_port_0_r },			/* IN0 */
+	{ 0x1480, 0x1480, input_port_1_r },			/* IN1 */
+	{ 0x1500, 0x1500, input_port_2_r },			/* IN2/DSW2 */
+    { 0x1507, 0x1507, herbiedk_acknowledge },  	/* Clear Int */
+	{ 0x1580, 0x1580, input_port_3_r },			/* DSW1 */
+	{ 0x1600, 0x1bff, MRA_RAM },				/* video RAM */
 	{ 0x1c00, 0x1fff, MRA_RAM },
     { 0x3000, 0x3fff, hunchbks_mirror_r },
     { 0x5000, 0x5fff, hunchbks_mirror_r },
@@ -349,6 +355,17 @@ int hunchbkd_read_1(int offset)
 	return hunchloopback;
 }
 
+int herbiedk_read_1(int offset)
+{
+	switch (s2650_get_pc())
+	{
+        case 0x002b:
+		case 0x09dc:  return 0x0;
+	}
+
+    return 1;
+}
+
 static struct IOWritePort hunchbkd_writeport[] =
 {
 	{ 0x101, 0x101, hunchbkd_write_data },
@@ -359,6 +376,12 @@ static struct IOReadPort hunchbkd_readport[] =
 {
 	{ 0x00, 0x00, hunchbkd_read_0 },
 	{ 0x01, 0x01, hunchbkd_read_1 },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort herbiedk_readport[] =
+{
+	{ 0x01, 0x01, herbiedk_read_1 },
 	{ -1 }	/* end of table */
 };
 
@@ -440,19 +463,15 @@ void dkong3_dac_w(int offset,int data)
 
 void dkong3_2a03_reset_w(int offset,int data)
 {
-	if ((data & 1) == 0)
+	if (data & 1)
 	{
-		/* suspend execution */
-		cpu_halt(1,0);
-		cpu_halt(2,0);
+		cpu_set_reset_line(1,CLEAR_LINE);
+		cpu_set_reset_line(2,CLEAR_LINE);
 	}
 	else
 	{
-		/* reset and resume execution */
-		cpu_reset(1);
-		cpu_halt(1,1);
-		cpu_reset(2);
-		cpu_halt(2,1);
+		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(2,ASSERT_LINE);
 	}
 }
 
@@ -829,6 +848,57 @@ static struct MachineDriver hunchbkd_machine_driver =
 	}
 };
 
+int herbiedk_interrupt(void)
+{
+	s2650_set_sense(0);
+	return ignore_interrupt();
+}
+
+static struct MachineDriver herbiedk_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_S2650,
+			3072000,
+			0,
+			hunchbkd_readmem,hunchbkd_writemem,herbiedk_readport,hunchbkd_writeport,
+			herbiedk_interrupt,1
+		},
+        {
+			CPU_I8035 | CPU_AUDIO_CPU,
+			6000000/15,	/* 6Mhz crystal */
+			3,
+			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
+			ignore_interrupt,1
+		}
+    },
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	dkong_gfxdecodeinfo,
+	256, 64*4,
+	dkong_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	dkong_vh_start,
+	generic_vh_stop,
+	dkong_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dkong_dac_interface
+		}
+	}
+};
+
 static struct MachineDriver dkongjr_machine_driver =
 {
 	/* basic machine hardware */
@@ -892,7 +962,6 @@ static struct DACinterface dkong3_dac_interface =
 	1,
 	{ 255, 255 }
 };
-
 
 
 static struct MachineDriver dkong3_machine_driver =
@@ -1219,6 +1288,30 @@ ROM_START( hunchbkd_rom )
 
 	ROM_REGION(0x1000)	/* sound */
 	ROM_LOAD( "hb.3h",        0x0000, 0x0800, 0xa3c240d4 )
+ROM_END
+
+ROM_START( herbiedk_rom )
+	ROM_REGION(0x8000)	/* 32k for code */
+	ROM_LOAD( "5f.cpu",        0x0000, 0x1000, 0xc7ab3ac6 )
+	ROM_LOAD( "5g.cpu",        0x2000, 0x1000, 0xd1031aa6 )
+	ROM_LOAD( "5h.cpu",        0x4000, 0x1000, 0xc0daf551 )
+	ROM_LOAD( "5k.cpu",        0x6000, 0x1000, 0x67442242 )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5h.vid",        0x0000, 0x0800, 0xea2a2547 )
+	ROM_LOAD( "5k.vid",        0x0800, 0x0800, 0xa8d421c9 )
+	ROM_LOAD( "7c.clk",        0x1000, 0x0800, 0xaf646166 )
+	ROM_LOAD( "7d.clk",        0x1800, 0x0800, 0xd8e15832 )
+	ROM_LOAD( "7e.clk",        0x2000, 0x0800, 0x2f7e65fa )
+	ROM_LOAD( "7f.clk",        0x2800, 0x0800, 0xad32d5ae )
+
+	ROM_REGION(0x0300) /* color PROMs */
+	ROM_LOAD( "74s287.2k",     0x0000, 0x0100, 0x7dc0a381 ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, 0x0a440c00 ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, 0x5a3446cc ) /* character color codes on a per-column basis */
+
+	ROM_REGION(0x1000)	/* sound */
+	ROM_LOAD( "3i.snd",        0x0000, 0x0800, 0x20e30406 )
 ROM_END
 
 ROM_START( herocast_rom )
@@ -1692,7 +1785,6 @@ struct GameDriver dkong3_driver =
 	dkong3_hiload, dkong3_hisave
 };
 
-
 struct GameDriver hunchbkd_driver =
 {
 	__FILE__,
@@ -1707,6 +1799,32 @@ struct GameDriver hunchbkd_driver =
 	0,
 
 	hunchbkd_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	dkong_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver herbiedk_driver =
+{
+	__FILE__,
+	0,
+	"herbiedk",
+	"Herbie at the Olympics (DK conversion)",
+	"1984",
+	"CVS",//"Seatongrove UK Ltd",
+	"Mike Coates",
+	GAME_WRONG_COLORS,
+	&herbiedk_machine_driver,
+	0,
+
+	herbiedk_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

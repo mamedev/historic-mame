@@ -24,7 +24,7 @@ const char *depthch_sample_names[] =
 	"shortex.wav",
 	"spray.wav",
 	"sonar.wav",
-	"sonarena.wav",
+	"sonarena.wav",	/* currently not used */
 	0
 };
 

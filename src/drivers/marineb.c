@@ -18,8 +18,8 @@ b800      IN2/watchdog reset
 
 write:
 9800      column scroll
-9a00      ??? (set to 0 at beginning)
-9c00      ???
+9a00      char palette bank bit 0 (not used by Hoccer)
+9c00      char palette bank bit 1 (not used by Hoccer)
 a000      NMI interrupt acknowledge/enable
 a001      flipy
 a002      flipx
@@ -43,6 +43,9 @@ extern int marineb_active_low_flipscreen;
 
 void espial_init_machine(void);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+
+void marineb_palbank0_w(int offset, int data);
+void marineb_palbank1_w(int offset, int data);
 
 void marineb_flipscreen_x_w(int offset, int data);
 void marineb_flipscreen_y_w(int offset, int data);
@@ -87,6 +90,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8c00, 0x8c3f, MWA_RAM, &spriteram },  /* Hoccer only */
 	{ 0x9000, 0x93ff, colorram_w, &colorram },
 	{ 0x9800, 0x9800, MWA_RAM, &marineb_column_scroll },
+	{ 0x9a00, 0x9a00, marineb_palbank0_w },
+	{ 0x9c00, 0x9c00, marineb_palbank1_w },
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa001, 0xa001, marineb_flipscreen_y_w },
 	{ 0xa002, 0xa002, marineb_flipscreen_x_w },
@@ -347,6 +352,17 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 16 bytes */
 };
 
+static struct GfxLayout wanted_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	1024,	/* 1024 characters */
+	2,	    /* 2 bits per pixel */
+	{ 4, 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8	/* every char takes 16 bytes */
+};
+
 static struct GfxLayout marineb_small_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -410,7 +426,15 @@ static struct GfxLayout changes_big_spritelayout =
 
 static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 16 },
+	{ 1, 0x0000, &charlayout,                  0, 64 },
+	{ 1, 0x4000, &marineb_small_spritelayout,  0, 64 },
+	{ 1, 0x4000, &marineb_big_spritelayout,    0, 64 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo wanted_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &wanted_charlayout,           0, 64 },
 	{ 1, 0x4000, &marineb_small_spritelayout,  0, 64 },
 	{ 1, 0x4000, &marineb_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
@@ -418,7 +442,7 @@ static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 16 },
+	{ 1, 0x0000, &charlayout,                  0, 64 },
 	{ 1, 0x4000, &changes_small_spritelayout,  0, 64 },
 	{ 1, 0x5000, &changes_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
@@ -426,8 +450,8 @@ static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo hoccer_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 16 },
-	{ 1, 0x4000, &changes_small_spritelayout,  0, 64 },
+	{ 1, 0x0000, &charlayout,                  0, 16 },	/* no palette banks */
+	{ 1, 0x4000, &changes_small_spritelayout,  0, 16 },	/* no palette banks */
 	{ -1 } /* end of array */
 };
 
@@ -458,12 +482,11 @@ static struct AY8910interface wanted_ay8910_interface =
 
 
 #define springer_gfxdecodeinfo  marineb_gfxdecodeinfo
-#define wanted_gfxdecodeinfo    marineb_gfxdecodeinfo
 #define hopprobo_gfxdecodeinfo  marineb_gfxdecodeinfo
 
 #define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
-#define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT, CONVERT)		\
+#define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT)				\
 static struct MachineDriver NAME##_machine_driver =					\
 {																	\
 	/* basic machine hardware */									\
@@ -484,8 +507,7 @@ static struct MachineDriver NAME##_machine_driver =					\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },						\
 	NAME##_gfxdecodeinfo,											\
 	256,256,														\
-	CONVERT,														\
-																	\
+	espial_vh_convert_color_prom,									\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
 	generic_vh_start,												\
@@ -503,13 +525,13 @@ static struct MachineDriver NAME##_machine_driver =					\
 }
 
 
-/*     NAME      INITMACH  SNDHRDW	INTERRUPT      CONVERT_COLOR_PROM */
-DRIVER(marineb,  marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
-DRIVER(changes,  marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
-DRIVER(springer, springer, marineb, nmi_interrupt, espial_vh_convert_color_prom);
-DRIVER(hoccer,   marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
-DRIVER(wanted,   marineb,  wanted,  interrupt,     0);
-DRIVER(hopprobo, marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
+/*     NAME      INITMACH  SNDHRDW	INTERRUPT */
+DRIVER(marineb,  marineb,  marineb, nmi_interrupt);
+DRIVER(changes,  marineb,  marineb, nmi_interrupt);
+DRIVER(springer, springer, marineb, nmi_interrupt);
+DRIVER(hoccer,   marineb,  marineb, nmi_interrupt);
+DRIVER(wanted,   marineb,  wanted,  interrupt    );
+DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
 
 
 /***************************************************************************
@@ -624,9 +646,9 @@ ROM_START( wanted_rom )
 	ROM_LOAD( "obj-a",		   0x4000, 0x2000, 0x90b60771 )
 	ROM_LOAD( "obj-b",		   0x6000, 0x2000, 0xe14ee689 )
 
-	ROM_REGION(0x0200)  /* color proms - missing */
-	ROM_LOAD( "wanted.1b",	   0x0000, 0x0100, 0x00000000 )
-	ROM_LOAD( "wanted.1c",	   0x0100, 0x0100, 0x00000000 )
+	ROM_REGION(0x0200)  /* color proms */
+	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, 0x2ba90a00 )	/* palette low 4 bits */
+	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
 ROM_END
 
 ROM_START( hopprobo_rom )
@@ -829,19 +851,18 @@ struct GameDriver wanted_driver =
 	"1984",
 	"Sigma Ent. Inc.",
 	"Zsolt Vasvari",
-	GAME_WRONG_COLORS,
+	0,
 	&wanted_machine_driver,
 	0,
 
 	wanted_rom,
-	0,
-	0,
+	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	wanted_input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	wanted_hiload, wanted_hisave
@@ -872,4 +893,3 @@ struct GameDriver hopprobo_driver =
 
 	0, 0
 };
-

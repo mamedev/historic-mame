@@ -208,6 +208,10 @@ static const char *panic_sample_names[] =
     "escaping.wav",
 	"ekilled.wav",
     "death.wav",
+    "elaugh.wav",
+    "extral.wav",
+    "oxygen.wav",
+    "coin.wav",
 	0       /* end of array */
 };
 
@@ -252,6 +256,9 @@ void panic_sound_output_w(int offset, int data)
                       break;
 
             case 3  : /* Oxygen */
+			          if (data)
+                      	if (!sample_playing(6))
+							sample_start(6, 9, 1);
                       break;
 
             case 4  : /* Drop 2 */
@@ -282,6 +289,10 @@ void panic_sound_output_w(int offset, int data)
         		      break;
 
             case 9  : /* Extend */
+                      if (data)
+					  	sample_start(4, 8, 0);
+                      else
+                      	sample_stop(4);
                       break;
 
             case 10 : /* Bonus */
@@ -293,7 +304,11 @@ void panic_sound_output_w(int offset, int data)
                       break;
 
             case 16 : /* Enemy Laugh */
+			          if (data) sample_start(5, 7, 0);
                       break;
+
+            case 17 : /* Coin - Not triggered by software */
+            		  if (data) sample_start(0, 10, 0);
         }
     }
 
@@ -398,6 +413,14 @@ int panic_interrupt(void)
 
 	if (count == 1)
 	{
+    	/* Coin insert - Trigger Sample */
+
+        /* mostly not noticed since sound is */
+		/* only enabled if game in progress! */
+
+    	if ((input_port_3_r(0) & 0xc0) != 0xc0)
+        	panic_sound_output_w(17,1);
+
 		return 0x00cf;		/* RST 08h */
     }
     else

@@ -578,7 +578,7 @@ static struct IOReadPort truxton_sound_readport[] =
 
 static struct IOWritePort truxton_sound_writeport[] =
 {
-	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout for Rally bike */
+//	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout for Rally bike */
 	{ 0x60, 0x60, YM3812_control_port_0_w },
 	{ 0x61, 0x61, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
@@ -792,6 +792,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* TODO: Truxton changes 'coins per credit' options, depending on the locality setting. */
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )

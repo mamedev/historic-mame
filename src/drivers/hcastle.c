@@ -26,6 +26,8 @@ extern unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 void hcastle_pf1_video_w(int offset,int data);
 void hcastle_pf2_video_w(int offset,int data);
 void hcastle_gfxbank_w(int offset,int data);
+void hcastle_pf1_control_w(int offset,int data);
+void hcastle_pf2_control_w(int offset,int data);
 
 static void hcastle_bankswitch_w(int offset, int data)
 {
@@ -86,9 +88,9 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0007, MWA_RAM, &hcastle_pf1_control },
+	{ 0x0000, 0x0007, hcastle_pf1_control_w, &hcastle_pf1_control },
 	{ 0x0020, 0x003f, MWA_RAM },	/* rowscroll? */
-	{ 0x0200, 0x0207, MWA_RAM, &hcastle_pf2_control },
+	{ 0x0200, 0x0207, hcastle_pf2_control_w, &hcastle_pf2_control },
 	{ 0x0220, 0x023f, MWA_RAM },	/* rowscroll? */
 	{ 0x0400, 0x0400, hcastle_bankswitch_w },
 	{ 0x0404, 0x0404, soundlatch_w },

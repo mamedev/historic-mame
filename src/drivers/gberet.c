@@ -557,15 +557,15 @@ static struct GfxLayout gberetb_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   16*16, 16 },
-	{ 1, 0x04000, &spritelayout,     0, 16 },
+	{ 1, 0x00000, &charlayout,       0, 16 },
+	{ 1, 0x04000, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gberetb_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &gberetb_charlayout,   16*16, 16 },
-	{ 1, 0x04000, &gberetb_spritelayout,     0, 16 },
+	{ 1, 0x00000, &gberetb_charlayout,       0, 16 },
+	{ 1, 0x04000, &gberetb_spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 

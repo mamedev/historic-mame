@@ -11,7 +11,6 @@
 **************************************************************************
 
 wow_sh_start  - Start emulation, load samples from Votrax subdirectory
-wow_sh_stop   - End emulation, free memory used for samples
 wow_sh_w      - Write data to votrax port
 wow_sh_status - Return busy status (-1 = busy)
 wow_port_2_r  - Returns status of voice port
@@ -90,16 +89,12 @@ extern char totalword[256], *totalword_ptr;
 extern char oldword[256];
 extern int plural;
 
-int wow_sh_start(void)
+int wow_sh_start(const struct MachineSound *msound)
 {
     wowBaseFrequency = 11025;
     wowBaseVolume = 230;
     wowChannel = 0;
     return 0;
-}
-
-void wow_sh_stop(void)
-{
 }
 
 int wow_speech_r(int offset)

@@ -23,14 +23,12 @@ void jedi_rom_banksel( int offset, int data)
     if (data & 0x04) cpu_setbank (1, &RAM[0x18000]);
 }
 
-void jedi_sound_reset( int offset, int data) {
+void jedi_sound_reset( int offset, int data)
+{
     if (data & 1)
-        cpu_halt (1, 1);
+		cpu_set_reset_line(1,CLEAR_LINE);
     else
-        {
-            cpu_halt (1, 0);
-            cpu_reset (1);
-        }
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 int jedi_control_r (int offset) {

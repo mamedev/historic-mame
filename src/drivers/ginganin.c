@@ -83,12 +83,12 @@ static void ginganin_init_machine (void)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x020000, 0x023fff, MRA_BANK1, 0, 0,    "ram"         },
-	{ 0x030000, 0x0307ff, MRA_BANK2, 0, 0,    "txt ram"     },
-	{ 0x040000, 0x0407ff, MRA_BANK3, 0, 0,    "sprites ram" },
-	{ 0x050000, 0x0507ff, MRA_BANK4, 0, 0,    "palette"     },
-	{ 0x060000, 0x06000f, MRA_BANK5, 0, 0,    "vregs"       },
-	{ 0x068000, 0x06bfff, MRA_BANK6, 0, 0,    "fg ram"      },	// bg lives in ROM
+	{ 0x020000, 0x023fff, MRA_BANK1 },
+	{ 0x030000, 0x0307ff, MRA_BANK2 },
+	{ 0x040000, 0x0407ff, MRA_BANK3 },
+	{ 0x050000, 0x0507ff, MRA_BANK4 },
+	{ 0x060000, 0x06000f, MRA_BANK5 },
+	{ 0x068000, 0x06bfff, MRA_BANK6 },	// bg lives in ROM
 	{ 0x070000, 0x070001, input_port_0_r },	// controls
 	{ 0x070002, 0x070003, input_port_1_r },	// DSWs
 	{ -1 }

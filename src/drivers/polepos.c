@@ -137,13 +137,12 @@ static int cpu2_interrupt( void ) {
 	return ignore_interrupt();
 }
 
-static void z80_cpu_enable_w( int offs, int data ) {
-    if ( data & 1 )
-		cpu_halt( offs + 1, 1 );
-	else {
-        cpu_halt( offs + 1, 0 );
-		cpu_reset( offs + 1 );
-	}
+static void z80_cpu_enable_w( int offs, int data )
+{
+    if (data & 1)
+		cpu_set_reset_line(offs + 1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(offs + 1,ASSERT_LINE);
 }
 
 /* ADC selection and read */
@@ -772,8 +771,8 @@ ROM_END
 static void polepos_init(void)
 {
 	/* halt the two Z8002 cpus */
-	cpu_halt(1, 0);
-	cpu_halt(2, 0);
+	cpu_set_reset_line(1,ASSERT_LINE);
+	cpu_set_reset_line(2,ASSERT_LINE);
 }
 
 struct GameDriver polepos_driver =

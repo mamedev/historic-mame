@@ -44,6 +44,32 @@ void DAC_signed_data_w(int num,int data)
 }
 
 
+void DAC_data_16_w(int num,int data)
+{
+	int out = data >> 1;		/* range      0..32767 */
+
+	if (output[num] != out)
+	{
+		/* update the output buffer before changing the registers */
+		stream_update(channel[num],0);
+		output[num] = out;
+	}
+}
+
+
+void DAC_signed_data_16_w(int num,int data)
+{
+	int out = data - 0x8000;	/* range -32768..32767 */
+
+	if (output[num] != out)
+	{
+		/* update the output buffer before changing the registers */
+		stream_update(channel[num],0);
+		output[num] = out;
+	}
+}
+
+
 static void DAC_build_voltable(void)
 {
 	int i;

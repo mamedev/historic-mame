@@ -206,10 +206,9 @@ static void *nmi_timer;
 static int nmi_rate;
 static int ym2151_port;
 
-int gottlieb_sh_start(void)
+void gottlieb_sound_init(void)
 {
 	nmi_timer = NULL;
-	return 0;
 }
 
 int stooges_sound_input_r(int offset)

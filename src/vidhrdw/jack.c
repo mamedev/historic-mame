@@ -74,29 +74,29 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy;
-		int num, color;
-		int flipy;
+		int sx,sy,num, color,flipx,flipy;
 
 		sx    = spriteram[offs + 1];
 		sy    = spriteram[offs];
 		num   = spriteram[offs + 2] + ((spriteram[offs + 3] & 0x08) << 5);
 		color = spriteram[offs + 3] & 0x07;
+		flipx = (spriteram[offs + 3] & 0x80);
 		flipy = (spriteram[offs + 3] & 0x40);
 
 		if (flipscreen)
 		{
 			sx = 248 - sx;
 			sy = 248 - sy;
+			flipx = !flipx;
 			flipy = !flipy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				num,
 				color,
-				flipscreen,flipy,
+				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

@@ -149,7 +149,7 @@ static void init_machine(void)
 	sound_data_from_68k_ready = sound_data_from_6502_ready = 0;
 
 	/* CPU 2 doesn't run until reset */
-	cpu_halt(2, 0);
+	cpu_set_reset_line(2,ASSERT_LINE);
 
 	/* make sure we're pointing to the right screen by default */
 	cyberbal_set_screen(0);
@@ -228,8 +228,7 @@ static void p2_reset_w(int offset, int data)
 {
 	(void)offset;
 	(void)data;
-	cpu_reset(2);
-	cpu_halt(2, 1);
+	cpu_set_reset_line(2,CLEAR_LINE);
 }
 
 

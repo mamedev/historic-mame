@@ -89,13 +89,10 @@ static void latch_w(int offset, int data)
 	if (!(data & 0x00ff0000))
 	{
 		/* 0 means hold CPU 2's reset low */
-		if (!(data & 1))
-		{
-			cpu_halt(1, 0);
-			cpu_reset(1);
-		}
+		if (data & 1)
+			cpu_set_reset_line(1,CLEAR_LINE);
 		else
-			cpu_halt(1, 1);
+			cpu_set_reset_line(1,ASSERT_LINE);
 
 		/* bits 2-5 are the alpha bank */
 		thunderj_set_alpha_bank((data >> 2) & 7);
@@ -362,7 +359,7 @@ static void rom_decode(void)
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x200000; i++)
 		Machine->memory_region[4][i] ^= 0xff;
-	
+
 	/* copy the shared ROM from region 0 to region 1 */
 	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
 }

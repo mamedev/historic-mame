@@ -101,21 +101,21 @@ static int retofinv_protection_r(int offset)
 static void reset_cpu2_w(int offset,int data)
 {
      if (data)
-	    cpu_reset(2);
+	    cpu_set_reset_line(2,PULSE_LINE);
 }
 
 static void reset_cpu1_w(int offset,int data)
 {
     if (data)
-	    cpu_reset(1);
+	    cpu_set_reset_line(1,PULSE_LINE);
 }
 
 static void cpu1_halt_w(int offset,int data)
 {
 	if (data)
- 	    cpu_halt(1,1);
+		cpu_halt(1,1);
 	else
- 	    cpu_halt(1,0);
+		cpu_halt(1,0);
 }
 
 static int protection_2_r(int offset)

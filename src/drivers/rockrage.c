@@ -24,7 +24,7 @@ void rockrage_vreg_w(int offset, int data);
 
 static int rockrage_interrupt( void )
 {
-	if (K007342_is_INT_enabled)
+	if (K007342_is_INT_enabled())
         return M6309_INT_IRQ;
     else
 		return ignore_interrupt();

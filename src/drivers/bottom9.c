@@ -33,16 +33,16 @@ static int bankedram1_r(int offset)
 	else
 	{
 		if (zoomreadroms)
-			return K051316_rom_r(offset);
+			return K051316_rom_0_r(offset);
 		else
-			return K051316_r(offset);
+			return K051316_0_r(offset);
 	}
 }
 
 static void bankedram1_w(int offset,int data)
 {
 	if (K052109_selected) K052109_051960_w(offset,data);
-	else K051316_w(offset,data);
+	else K051316_0_w(offset,data);
 }
 
 static int bankedram2_r(int offset)
@@ -148,7 +148,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1fa0, 0x1fa0, MWA_NOP },//watchdog_reset_w },
 	{ 0x1fb0, 0x1fb0, soundlatch_w },
 	{ 0x1fc0, 0x1fc0, bottom9_sh_irqtrigger_w },
-	{ 0x1ff0, 0x1fff, K051316_ctrl_w },
+	{ 0x1ff0, 0x1fff, K051316_ctrl_0_w },
 	{ 0x2000, 0x27ff, bankedram2_w, &paletteram },
 	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5fff, MWA_RAM },

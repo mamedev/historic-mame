@@ -17,21 +17,17 @@ unsigned char *vastar_sharedram;
 
 void vastar_init_machine(void)
 {
-	cpu_halt(1,0);
+	/* we must start with the second CPU halted */
+	cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 void vastar_hold_cpu2_w(int offset,int data)
 {
 	/* I'm not sure that this works exactly like this */
-	if ((data & 1) == 0)
-	{
-		cpu_halt(1,0);
-	}
+	if (data & 1)
+		cpu_set_reset_line(1,CLEAR_LINE);
 	else
-	{
-		cpu_halt(1,1);
-		cpu_reset(1);
-	}
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 

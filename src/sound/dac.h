@@ -12,5 +12,7 @@ struct DACinterface
 int DAC_sh_start(const struct MachineSound *msound);
 void DAC_data_w(int num,int data);
 void DAC_signed_data_w(int num,int data);
+void DAC_data_16_w(int num,int data);
+void DAC_signed_data_16_w(int num,int data);
 
 #endif

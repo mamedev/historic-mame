@@ -355,7 +355,7 @@ options:
 			  emulates the OPL in software, the built in digirtal emulation
 			  will probably sound better).
 
--joy n (default: none) allows joystick input, n can be:
+-joy name (default: none) allows joystick input, name can be:
               none         - no joystick
               auto         - attempts auto detection
               standard     - normal 2 button joystick
@@ -368,6 +368,9 @@ options:
               wingwarrior  - Wingman Warrior
               sidewinder   - Microsoft Sidewinder (up to 4)
               gamepadpro   - Gravis GamePad Pro
+              grip         - Gravis GrIP
+              grip4        - Gravis GrIP constrained to only move along the
+			                 four main axis
               sneslpt1     - SNES pad on LPT1 (needs special hardware)
               sneslpt2     - SNES pad on LPT2 (needs special hardware)
               sneslpt3     - SNES pad on LPT3 (needs special hardware)
@@ -388,6 +391,9 @@ options:
               http://snespad.emulationworld.com
               4) http://www.debaser.force9.co.uk/ccmame has info on how to
               connect PSX and N64 pads.
+
+-hotrod       sets a default keyboard configuration suitable for the HotRod
+              joystick by HanaHo Games.
 
 -log          create a log of illegal memory accesses in ERROR.LOG
 -help, -?     display current MAME version and copyright notice

@@ -114,7 +114,7 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void meadows_videoram_w(int offset, int data);
 void meadows_sprite_w(int offset, int data);
 
-int meadows_sh_start(void);
+int meadows_sh_start(const struct MachineSound *msound);
 void meadows_sh_stop(void);
 void meadows_sh_dac_w(int data);
 void meadows_sh_update(void);
@@ -429,6 +429,15 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
+static struct CustomSound_interface custom_interface =
+{
+	meadows_sh_start,
+	meadows_sh_stop,
+	0
+};
+
+
+
 static struct MachineDriver deadeye_machine_driver =
 {
 	/* basic machine hardware */
@@ -467,14 +476,15 @@ static struct MachineDriver deadeye_machine_driver =
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	&meadows_sh_start,
-	&meadows_sh_stop,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_DAC,
 			&dac_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
     }
 };
@@ -517,14 +527,15 @@ static struct MachineDriver gypsyjug_machine_driver =
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	&meadows_sh_start,
-	&meadows_sh_stop,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_DAC,
 			&dac_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
 		}
 	}
 };

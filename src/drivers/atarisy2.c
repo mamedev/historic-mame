@@ -268,12 +268,9 @@ static void interrupt_ack_w(int offset, int data)
 		/* reset sound CPU */
 		case 0x20:
 			if (!(data & 0xff000000))
-			{
-				cpu_halt(1, 0);
-				cpu_reset(1);
-			}
+				cpu_set_reset_line(1,ASSERT_LINE);
 			if (!(data & 0x00ff0000))
-				cpu_halt(1, 1);
+				cpu_set_reset_line(1,CLEAR_LINE);
 			break;
 
 		/* reset 32V IRQ */

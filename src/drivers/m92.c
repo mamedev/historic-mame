@@ -8,19 +8,17 @@
 	Lethal Thunder							(c) 1991 Irem Corp
 	Hook (World set)						(c) 1992 Irem Corp
 	Hook (USA set)							(c) 1992 Irem America Corp
+	Mystic Riders (World)					(c) 1992 Irem Corp
+	Gun Hohki (Japan)						(c) 1992 Irem Corp
 	Undercover Cops							(c) 1992 Irem Corp
 	Rtype Leo (Japan)						(c) 1992 Irem Corp
 	Major Title 2  							(c) 1992 Irem Corp
 	The Irem Skins Game (USA Set 1)			(c) 1992 Irem America Corp
 	The Irem Skins Game (USA Set 2)			(c) 1992 Irem America Corp
-	In The Hunt						M92-E	(c) 1993 Irem America Corp
+	In The Hunt						M92-E	(c) 1993 Irem Corp
+	Kaitei Daisensou				M92-E	(c) 1993 Irem Corp
 	Ninja Baseball Batman (Not working)		(c) 1993 Irem America Corp
-
-
-	Other games thought to be on this hardware:
-
-	Lethal Thunder 2
-	Mystic Riders/Gun Hoki
+	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
 
 	Once decrypted, Irem M97 games will be very close to this hardware.
 
@@ -50,15 +48,10 @@ Glitch list!
 		Title screen is incorrect, it uses mask sprites but I can't find
 		how the effect is turned on/off
 		Colour flicker on level 2
-		Crashes after continue screen (related to memcard?)
-		Crash after level 3?
-
-	In The Hunt:
-		Crash in level 3?
+		Crashes fixed via a protection(?) kludge.
 
 	Gunforce:
 		Random crashes
-		Water doesn't appear on last(?) level.
 		Waterfalls on level 3(?) should appear over sprites.
 		^- Bit 0x8 in playfield 3 set - new type of split tilemap?
 
@@ -66,9 +59,13 @@ Glitch list!
 		Starts with 99 credits (related to memcard?)
 
 	Irem Skins:
+		Mask sprite on title screen?
 		Sprites & tiles written with bad colour values.
 		Eeprom load/save not yet implemented - when done, MT2EEP should
 		  be removed from the ROM definition.
+
+	In The Hunt:
+		Crash in level 3?
 
 	Blade Master:
 		Sprite list register isn't updated in service mode.
@@ -111,11 +108,13 @@ void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int 
 extern int m92_sprite_list,m92_raster_irq_position,m92_spritechip;
 extern unsigned char *m92_vram_data,*m92_spriteram,*m92_spritecontrol;
 
+static int protection_kludge;
+
 /*****************************************************************************/
 
 static int status_port_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%06x: status %04x\n",cpu_get_pc(),offset);
+//if (errorlog) fprintf(errorlog,"%06x: status %04x\n",cpu_get_pc(),offset);
 
 /*
 
@@ -130,14 +129,25 @@ if (errorlog) fprintf(errorlog,"%06x: status %04x\n",cpu_get_pc(),offset);
 	R-Type Leo reads it now & again..
 
 */
+	if (protection_kludge)
+		m92_ram[0x53]=1; /* FIXES RTYPE LEO! */
+
 	return 0xff;
 }
 
 static int m92_eeprom_r(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[4];
-//	if (errorlog) fprintf(errorlog,"EEPROM %04x\n",offset);
+//	if (errorlog) fprintf(errorlog,"%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
+
 	return RAM[offset/2];
+}
+
+static void m92_eeprom_w(int offset,int data)
+{
+	unsigned char *RAM = Machine->memory_region[4];
+//	if (errorlog) fprintf(errorlog,"%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
+	RAM[offset/2]=data;
 }
 
 static void m92_coincounter_w(int offset, int data)
@@ -159,11 +169,24 @@ static void m92_coincounter_w(int offset, int data)
 #endif
 }
 
+static void m92_unknown_w(int offset, int data)
+{
+#if 0
+	static int d[2];
+	d[offset]=data;
+	if (offset==1) {
+		char t[16];
+		sprintf(t,"%02x",d[0] | (d[1]<<8));
+		usrintf_showmessage(t);
+	}
+#endif
+}
+
 static void m92_bankswitch_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-//	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
 	if (offset==1) return; /* Unused top byte */
 
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
@@ -180,6 +203,8 @@ static void m92_soundlatch_w(int offset, int data)
 	if (offset==0) soundlatch_w(0,data);
 	/* Interrupt second V33 */
 }
+
+/*****************************************************************************/
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -200,7 +225,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x00000, 0xbffff, MWA_ROM },
 	{ 0xd0000, 0xdffff, m92_vram_w, &m92_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
-	{ 0xf0000, 0xf3fff, MWA_RAM, &m92_eeprom }, /* Eeprom, Major Title 2 only */
+	{ 0xf0000, 0xf3fff, m92_eeprom_w, &m92_eeprom }, /* Eeprom, Major Title 2 only */
 	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram },
 	{ 0xf8800, 0xf8fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
@@ -257,6 +282,7 @@ static struct IOWritePort writeport[] =
 	{ 0x88, 0x8f, m92_pf2_control_w },
 	{ 0x90, 0x97, m92_pf3_control_w },
 	{ 0x98, 0x9f, m92_master_control_w },
+	{ 0xc0, 0xc1, m92_unknown_w },
 	{ -1 }	/* end of table */
 };
 
@@ -527,6 +553,64 @@ INPUT_PORTS_START( skingame_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Probably difficulty */
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* One of these is continue */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gunhohki_input_ports )
+	PORT_PLAYER1_2BUTTON_JOYSTICK
+	PORT_PLAYER2_2BUTTON_JOYSTICK
+	PORT_UNUSED
+	PORT_UNUSED
+	PORT_COINS_VBLANK
+	PORT_SYSTEM_DIPSWITCH
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Probably difficulty */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -863,16 +947,16 @@ static int m92_raster_interrupt(void)
 		return M92_IRQ_0;
 	}
 
-	/* End of vblank, allow 2 lines for processing of this irq (guess) */
-	if (line==254) {
+	/* End of vblank */
+	if (line==255) {
 		m92_vblank=0;
-		return 0; //M92_IRQ_1; /* Enables Batman to run, but breaks Skingame */
+		return 0;
 	}
 
 #if 0 /* Kludge to allow Batman to boot */
-	if (line==10)
+	if (line==256)
 		return M92_IRQ_1;
-	if (line==11)
+	if (line==10)
 		return M92_IRQ_3;
 #endif
 
@@ -885,7 +969,8 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz */
+//			18000000,	/* 18 MHz */
+			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
 			0,
 			readmem,writemem,readport,writeport,
 			m92_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
@@ -1174,10 +1259,10 @@ ROM_END
 
 ROM_START( kaiteids_rom )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
-	ROM_LOAD_V20_EVEN( "ith-h0j.bin", 0x000000, 0x040000, 0xdc1dec36 )
-	ROM_LOAD_V20_ODD ( "ith-l0j.bin", 0x000000, 0x040000, 0x8835d704 )
-	ROM_LOAD_V20_EVEN( "ith-h1j.bin", 0x080000, 0x020000, 0x5a7b212d )
-	ROM_LOAD_V20_ODD ( "ith-l1j.bin", 0x080000, 0x020000, 0x4c084494 )
+	ROM_LOAD_V20_EVEN( "ith-h0j.bin",0x000000, 0x040000, 0xdc1dec36 )
+	ROM_LOAD_V20_ODD ( "ith-l0j.bin",0x000000, 0x040000, 0x8835d704 )
+	ROM_LOAD_V20_EVEN( "ith-h1j.bin",0x080000, 0x020000, 0x5a7b212d )
+	ROM_LOAD_V20_ODD ( "ith-l1j.bin",0x080000, 0x020000, 0x4c084494 )
 
 	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
 	ROM_LOAD( "ith_ic26.rom",0x000000, 0x080000, 0x4c1818cf )
@@ -1274,6 +1359,58 @@ ROM_START( rtypeleo_rom )
 
 	ROM_REGION(0x80000)	 /* Region 3 ADPCM samples */
 	ROM_LOAD( "rtl-da.bin" ,0x000000, 0x080000, 0xdbebd1ff )
+ROM_END
+
+ROM_START( mysticri_rom )
+	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_EVEN( "mr-h0-b.bin",  0x000000, 0x040000, 0xd529f887 )
+	ROM_LOAD_V20_ODD ( "mr-l0-b.bin",  0x000000, 0x040000, 0xa457ab44 )
+	ROM_LOAD_V20_EVEN( "mr-h1-b.bin",  0x080000, 0x010000, 0xe17649b9 )
+	ROM_LOAD_V20_ODD ( "mr-l1-b.bin",  0x080000, 0x010000, 0xa87c62b4 )
+
+	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
+	ROM_LOAD( "mr-c0.bin", 0x000000, 0x040000, 0x872a8fad )
+	ROM_LOAD( "mr-c1.bin", 0x080000, 0x040000, 0xd2ffb27a )
+	ROM_LOAD( "mr-c2.bin", 0x100000, 0x040000, 0x62bff287 )
+	ROM_LOAD( "mr-c3.bin", 0x180000, 0x040000, 0xd0da62ab )
+
+	ROM_LOAD( "mr-o00.bin", 0x200000, 0x080000, 0xa0f9ce16 )
+	ROM_LOAD( "mr-o10.bin", 0x300000, 0x080000, 0x4e70a9e9 )
+	ROM_LOAD( "mr-o20.bin", 0x400000, 0x080000, 0xb9c468fc )
+	ROM_LOAD( "mr-o30.bin", 0x500000, 0x080000, 0xcc32433a )
+
+	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_LOAD_V20_EVEN( "mr-sh0.bin",0x000000, 0x010000, 0x50d335e4 )
+	ROM_LOAD_V20_ODD ( "mr-sl0.bin",0x000000, 0x010000, 0x0fa32721 )
+
+	ROM_REGION(0x40000)	 /* Region 3 ADPCM samples */
+	ROM_LOAD( "mr-da.bin" ,0x000000, 0x040000, 0x1a11fc59 )
+ROM_END
+
+ROM_START( gunhohki_rom )
+	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_EVEN( "mr-h0.bin",  0x000000, 0x040000, 0x83352270 )
+	ROM_LOAD_V20_ODD ( "mr-l0.bin",  0x000000, 0x040000, 0x9db308ae )
+	ROM_LOAD_V20_EVEN( "mr-h1.bin",  0x080000, 0x010000, 0xc9532b60 )
+	ROM_LOAD_V20_ODD ( "mr-l1.bin",  0x080000, 0x010000, 0x6349b520 )
+
+	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
+	ROM_LOAD( "mr-c0.bin", 0x000000, 0x040000, 0x872a8fad )
+	ROM_LOAD( "mr-c1.bin", 0x080000, 0x040000, 0xd2ffb27a )
+	ROM_LOAD( "mr-c2.bin", 0x100000, 0x040000, 0x62bff287 )
+	ROM_LOAD( "mr-c3.bin", 0x180000, 0x040000, 0xd0da62ab )
+
+	ROM_LOAD( "mr-o00.bin", 0x200000, 0x080000, 0xa0f9ce16 )
+	ROM_LOAD( "mr-o10.bin", 0x300000, 0x080000, 0x4e70a9e9 )
+	ROM_LOAD( "mr-o20.bin", 0x400000, 0x080000, 0xb9c468fc )
+	ROM_LOAD( "mr-o30.bin", 0x500000, 0x080000, 0xcc32433a )
+
+	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_LOAD_V20_EVEN( "mr-sh0.bin",0x000000, 0x010000, 0x50d335e4 )
+	ROM_LOAD_V20_ODD ( "mr-sl0.bin",0x000000, 0x010000, 0x0fa32721 )
+
+	ROM_REGION(0x40000)	 /* Region 3 ADPCM samples */
+	ROM_LOAD( "mr-da.bin" ,0x000000, 0x040000, 0x1a11fc59 )
 ROM_END
 
 ROM_START( uccops_rom )
@@ -1403,8 +1540,11 @@ static int hook_cycle_r(int offset)
 
 static int rtypeleo_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x307a3 && m92_ram[0x32]==2)
+	if (cpu_get_pc()==0x307a3 && m92_ram[0x32]==1)
 		cpu_spinuntil_int();
+
+//307a3:  POSITION 0000 data 01
+//m92_ram[offset+0x33]=data;
 
 //if (errorlog && cpu_get_pc()!=0x307a3 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x32]);
 	return m92_ram[0x32 + offset];
@@ -1452,10 +1592,20 @@ static void m92_startup(void)
 	/* These games seem to have a different sprite chip */
 	if (!strcmp(Machine->gamedrv->name,"rtypeleo")
 		|| !strcmp(Machine->gamedrv->name,"lethalth")
-		|| !strcmp(Machine->gamedrv->name,"uccops"))
+		|| !strcmp(Machine->gamedrv->name,"uccops")
+		|| !strcmp(Machine->gamedrv->name,"nbbatman")
+		|| !strcmp(Machine->gamedrv->name,"leaguemn")
+		|| !strcmp(Machine->gamedrv->name,"mysticri")
+		|| !strcmp(Machine->gamedrv->name,"gunhohki"))
 		m92_spritechip=1;
 	else
 		m92_spritechip=0;
+
+	/* Very bad.. */
+	if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
+		protection_kludge=1;
+	else
+		protection_kludge=0;
 }
 
 static void m92_sound_decrypt(void)
@@ -1489,21 +1639,23 @@ struct GameDriver M92_NAME##_driver  = \
 	0,0  								\
 };
 
-M92DRIVER(bmaster ,"Blade Master","1991","Irem",bmaster_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(bmaster ,"Blade Master (World)","1991","Irem",bmaster_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(gunforce,"Gunforce - Battle Fire Engulfed Terror Island (World)","1991","Irem",gunforce_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem America",gunforce_input_ports,&gunforce_driver,ORIENTATION_DEFAULT)
 M92DRIVER(hook,    "Hook (World)","1992","Irem",hook_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(hooku,   "Hook (US)","1992","Irem America",hook_input_ports,&hook_driver,ORIENTATION_DEFAULT)
-M92DRIVER(uccops  ,"Undercover Cops","1992","Irem",uccops_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(mysticri,"Mystic Riders (World)","1992","Irem",gunhohki_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(gunhohki,"Gun Hohki (Japan)","1992","Irem",gunhohki_input_ports,&mysticri_driver,ORIENTATION_DEFAULT)
+M92DRIVER(uccops  ,"Undercover Cops (World)","1992","Irem",uccops_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(rtypeleo,"R-Type Leo (Japan)","1992","Irem",rtypeleo_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(majtitl2,"Major Title 2 (World)","1992","Irem",skingame_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(skingame,"The Irem Skins Game (US set 1)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
 M92DRIVER(skingam2,"The Irem Skins Game (US set 2)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
-M92DRIVER(inthunt ,"In The Hunt","1993","Irem",inthunt_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(inthunt ,"In The Hunt (World)","1993","Irem",inthunt_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(kaiteids,"Kaitei Daisensou (Japan)","1993","Irem",inthunt_input_ports,&inthunt_driver,ORIENTATION_DEFAULT)
 
 /* Not working yet */
-M92DRIVER(nbbatman,"Ninja Baseball Batman","1993","Irem",nbbatman_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem America",nbbatman_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(leaguemn,"Yakyuu Kakutou League-Man (Japan)","1993","Irem",nbbatman_input_ports,&nbbatman_driver,ORIENTATION_DEFAULT)
 
 /* Different machine driver for this one, it uses a different memory map */
@@ -1539,6 +1691,7 @@ Quiz F-1 1,2 Finish          	Nanao	08J27291A4 014 9147KK700
 Skins Game						Nanao 	08J27291A7
 R-Type Leo						Irem 	D800001A1
 In The Hunt						Irem 	D8000011A1
+Gun Hohki									  16?
 Risky Challenge/Gussun Oyoyo 			D8000019A1
 Shisensho II                 			D8000020A1 023 9320NK700
 

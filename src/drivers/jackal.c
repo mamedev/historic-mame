@@ -582,9 +582,9 @@ ROM_START( jackal_rom )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, 0x5c7aaaa1 )
+	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, BADCRC( 0x5c7aaaa1 ) )
 	ROM_LOAD( "j-t06.rom",    0x20000, 0x20000, 0x5c8f9325 )
-	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, 0x0b8350e7 )
+	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, BADCRC( 0x0b8350e7 ) )
 	ROM_LOAD( "j-t07.rom",    0x60000, 0x20000, 0xcf077092 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/

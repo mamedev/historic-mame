@@ -92,8 +92,8 @@ int gaplus_interrupt_3( void )
 void gaplus_reset_2_3_w( int offset,int data )
 {
     int_enable_2 = int_enable_3 = 1;
-    cpu_reset( 1 );
-    cpu_reset( 2 );
+    cpu_set_reset_line(1,PULSE_LINE);
+    cpu_set_reset_line(2,PULSE_LINE);
     credits = coincounter1 = coincounter2 = 0;
 }
 

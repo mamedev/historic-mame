@@ -2176,7 +2176,7 @@ struct GameDriver mmonkey_driver =
 	"mmonkey",
 	"Minky Monkey",
 	"1982",
-	"Technos Japan + Roller Tron",
+	"Technos + Roller Tron",
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&mmonkey_machine_driver,

@@ -74,7 +74,7 @@ int k88games_vh_start(void)
 		K052109_vh_stop();
 		return 1;
 	}
-	if (K051316_vh_start(ZOOMROM_MEM_REGION,4,zoom_callback))
+	if (K051316_vh_start_0(ZOOMROM_MEM_REGION,4,zoom_callback))
 	{
 		K052109_vh_stop();
 		K051960_vh_stop();
@@ -88,7 +88,7 @@ void k88games_vh_stop(void)
 {
 	K052109_vh_stop();
 	K051960_vh_stop();
-	K051316_vh_stop();
+	K051316_vh_stop_0();
 }
 
 
@@ -105,7 +105,7 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	K052109_tilemap_update();
-	K051316_tilemap_update();
+	K051316_tilemap_update_0();
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
@@ -124,12 +124,12 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		K052109_tilemap_draw(bitmap,2,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,0,0);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 	}
 	else
 	{
 		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 		K051960_sprites_draw(bitmap,0,0);
 		K052109_tilemap_draw(bitmap,1,0);
 		K051960_sprites_draw(bitmap,1,1);

@@ -44,7 +44,7 @@ void bladestl_vreg_w(int offset, int data);
 static int bladestl_interrupt( void )
 {
 	cpu_cause_interrupt(0,M6309_INT_NMI);
-	if (K007342_is_INT_enabled)
+	if (K007342_is_INT_enabled())
         return M6309_INT_FIRQ;
     else
 		return ignore_interrupt();

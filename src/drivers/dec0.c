@@ -1199,6 +1199,60 @@ static struct MachineDriver robocop_machine_driver =
 	}
 };
 
+static struct MachineDriver robocopb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			dec0_readmem,dec0_writemem,0,0,
+			m68_level6_irq,1 /* VBL */
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,
+			2,
+			dec0_s_readmem,dec0_s_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	dec0_vh_start,
+	dec0_vh_stop,
+	robocop_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
 static struct MachineDriver hippodrm_machine_driver =
 {
 	/* basic machine hardware */
@@ -2649,7 +2703,7 @@ struct GameDriver robocopb_driver =
 	"bootleg",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocop_machine_driver,
+	&robocopb_machine_driver,
 	dec0_custom_memory,
 
 	robocopb_rom,

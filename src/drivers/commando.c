@@ -284,7 +284,7 @@ static struct MachineDriver machine_driver =
 	256,16*4+4*16+16*8,
 	commando_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	commando_vh_start,
 	commando_vh_stop,

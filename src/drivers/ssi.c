@@ -350,7 +350,7 @@ static struct MachineDriver machine_driver =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER| VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	ssi_vh_start,
 	ssi_vh_stop,

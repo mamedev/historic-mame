@@ -541,7 +541,7 @@ static struct MachineDriver machine_driver =
 	576, 576,
 	0, /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	0,
 	0,

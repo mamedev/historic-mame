@@ -489,7 +489,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			2000000,		/* 2 Mhz??? */
 			3,
 			sound_readmem,sound_writemem,0,0,
 			interrupt,6	/* ??? */

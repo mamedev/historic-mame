@@ -176,7 +176,8 @@ int readroms(void)
 						explength += length;
 
 					if (romp->offset + length > region_size ||
-						((romp->length & ROMFLAG_ALTERNATE) && (romp->offset&~1) + 2*length > region_size))
+						(!(romp->length & ROMFLAG_NIBBLE) && (romp->length & ROMFLAG_ALTERNATE)
+								&& (romp->offset&~1) + 2*length > region_size))
 					{
 						printf("Error in RomModule definition: %s out of memory region space\n",name);
 						osd_fclose(f);

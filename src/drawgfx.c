@@ -403,13 +403,14 @@ INLINE void blockmove_transpen_noremap_flipx16(
 #undef BLOCKMOVE
 #undef RGB_MASK
 
+extern unsigned short *shrinked_pens;
+
 #define DATA_TYPE UINT16
 #define DECLARE(function,args,body) INLINE void function##16 args body
 #define BLOCKMOVE(function,flipx,args) \
 	if (flipx) blockmove_##function##_flipx##16 args ; \
 	else blockmove_##function##16 args
-//#define RGB_MASK 0x4210 /* xRRRRRGGGGGBBBBB */
-#define RGB_MASK 0x8410 /* RRRRRRGGGGGBBBBB */
+#define RGB_MASK shrinked_pens[0x4210]
 #include "drawgfx.c"
 #undef DATA_TYPE
 #undef DECLARE
@@ -1381,6 +1382,22 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 #ifndef PREROTATE_GFX
 		flipy = !flipy;
 #endif
+	}
+
+	/* KW 991012 -- Added code to force clip to bitmap boundary */
+	if(clip)
+	{
+		myclip.min_x = clip->min_x;
+		myclip.max_x = clip->max_x;
+		myclip.min_y = clip->min_y;
+		myclip.max_y = clip->max_y;
+
+		if (myclip.min_x < 0) myclip.min_x = 0;
+		if (myclip.max_x >= dest_bmp->width) myclip.max_x = dest_bmp->width-1;
+		if (myclip.min_y < 0) myclip.min_y = 0;
+		if (myclip.max_y >= dest_bmp->height) myclip.max_y = dest_bmp->height-1;
+
+		clip=&myclip;
 	}
 
 

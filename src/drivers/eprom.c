@@ -201,13 +201,10 @@ void eprom_latch_w(int offset, int data)
 	/* reset extra CPU */
 	if (!(data & 0x00ff0000))
 	{
-		if (!(data & 1))
-		{
-			cpu_halt(1, 0);
-			cpu_reset(1);
-		}
+		if (data & 1)
+			cpu_set_reset_line(1,CLEAR_LINE);
 		else
-			cpu_halt(1, 1);
+			cpu_set_reset_line(1,ASSERT_LINE);
 	}
 }
 
@@ -471,7 +468,7 @@ static void rom_decode(void)
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x100000; i++)
 		Machine->memory_region[3][i] ^= 0xff;
-	
+
 	/* copy the shared ROM from region 0 to region 1 */
 	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
 }

@@ -10,7 +10,7 @@ TO DO:
   often (major slowdown in stage 4)
 - sometimes when you kill the final boss the game stays there instead of showing
   the end sequence
-- find start lamp check, power up lamp check and joystick lamp check addresses
+- find start lamp, power up lamp and joystick lamp addresses
 
 ***************************************************************************/
 
@@ -72,10 +72,10 @@ static struct MemoryReadAddress ajax_readmem[] =
 	{ 0x0182, 0x0182, input_port_0_r },				/* DSW #1 */
 	{ 0x0183, 0x0183, input_port_1_r },				/* DSW #2 */
 	{ 0x01c0, 0x01c0, input_port_2_r },				/* DSW #3 */
-	{ 0x0800, 0x0807, K051937_r },
-	{ 0x0c00, 0x0fff, K051960_r },
+	{ 0x0800, 0x0807, K051937_r },					/* sprite RAM */
+	{ 0x0c00, 0x0fff, K051960_r },					/* sprite RAM */
 	{ 0x1000, 0x1fff, MRA_RAM },					/* RAM */
-	{ 0x2000, 0x3fff, ajax_sharedram_r },		/* shared RAM with the 6809 */
+	{ 0x2000, 0x3fff, ajax_sharedram_r },			/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MRA_RAM },					/* RAM */
 	{ 0x6000, 0x7fff, MRA_BANK2 },					/* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },					/* ROM */
@@ -85,15 +85,15 @@ static struct MemoryReadAddress ajax_readmem[] =
 static struct MemoryWriteAddress ajax_writemem[] =
 {
 	{ 0x0000, 0x0001, MWA_RAM },					/* ??? */
-	{ 0x00c0, 0x00c0, ajax_bankswitch_w },		/* bankswitch control */
+	{ 0x00c0, 0x00c0, ajax_bankswitch_w },			/* bankswitch control */
 	{ 0x0020, 0x0020, MWA_RAM },					/* ??? */
 	{ 0x0040, 0x0040, MWA_RAM },					/* ??? */
-	{ 0x0080, 0x0080, ajax_sh_irqtrigger_w },	/* sound command */
+	{ 0x0080, 0x0080, ajax_sh_irqtrigger_w },		/* sound command */
 	{ 0x0140, 0x0140, MWA_RAM },					/* ??? */
-	{ 0x0800, 0x0807, K051937_w },
-	{ 0x0c00, 0x0fff, K051960_w },
+	{ 0x0800, 0x0807, K051937_w },					/* sprite control registers */
+	{ 0x0c00, 0x0fff, K051960_w },					/* sprite RAM */
 	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
-	{ 0x2000, 0x3fff, ajax_sharedram_w },		/* shared RAM with the 6809 */
+	{ 0x2000, 0x3fff, ajax_sharedram_w },			/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MWA_RAM },					/* RAM */
 	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
@@ -102,24 +102,24 @@ static struct MemoryWriteAddress ajax_writemem[] =
 
 static struct MemoryReadAddress ajax_readmem_2[] =
 {
-	{ 0x0000, 0x07ff, K051316_r },
-	{ 0x1000, 0x17ff, K051316_rom_r },		/* 051316 (ROM test) */
+	{ 0x0000, 0x07ff, K051316_0_r },		/* 051316 zoom/rotation layer */
+	{ 0x1000, 0x17ff, K051316_rom_0_r },	/* 051316 (ROM test) */
 	{ 0x2000, 0x3fff, ajax_sharedram_r },	/* shared RAM with the 052001 */
 	{ 0x4000, 0x7fff, K052109_r },			/* video RAM + color RAM + video registers */
-	{ 0x8000, 0x9fff, MRA_BANK1 },					/* banked ROM */
-	{ 0xa000, 0xffff, MRA_ROM },					/* ROM */
+	{ 0x8000, 0x9fff, MRA_BANK1 },			/* banked ROM */
+	{ 0xa000, 0xffff, MRA_ROM },			/* ROM */
 	{ -1 }
 };
 
 static struct MemoryWriteAddress ajax_writemem_2[] =
 {
-	{ 0x0000, 0x07ff, K051316_w },
-	{ 0x0800, 0x080f, K051316_ctrl_w },
+	{ 0x0000, 0x07ff, K051316_0_w },			/* 051316 zoom/rotation layer */
+	{ 0x0800, 0x080f, K051316_ctrl_0_w },		/* 051316 control registers */
 	{ 0x1800, 0x1800, ajax_bankswitch_w_2 },	/* bankswitch control */
 	{ 0x2000, 0x3fff, ajax_sharedram_w, &ajax_sharedram },/* shared RAM with the 052001 */
-	{ 0x4000, 0x7fff, K052109_w },			/* video RAM + color RAM + video registers */
-	{ 0x8000, 0x9fff, MWA_ROM },			/* banked ROM */
-	{ 0xa000, 0xffff, MWA_ROM },			/* ROM */
+	{ 0x4000, 0x7fff, K052109_w },				/* video RAM + color RAM + video registers */
+	{ 0x8000, 0x9fff, MWA_ROM },				/* banked ROM */
+	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */
 	{ -1 }
 };
 
@@ -138,7 +138,7 @@ static struct MemoryWriteAddress ajax_writemem_sound[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM g04_b03.bin */
 	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
-	{ 0x9000, 0x9000, sound_bank_w },
+	{ 0x9000, 0x9000, sound_bank_w },				/* 007232 bankswitch */
 	{ 0xa000, 0xa00d, K007232_write_port_0_w },		/* 007232 registers (chip 1) */
 	{ 0xb000, 0xb00d, K007232_write_port_1_w },		/* 007232 registers (chip 2) */
 	{ 0xb80c, 0xb80c, k007232_extvol_w },	/* extra volume, goes to the 007232 w/ A11 */

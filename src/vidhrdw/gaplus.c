@@ -386,6 +386,7 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (flipscreen)
 			{
 				flipx = !flipx;
+				flipy = !flipy;
 			}
 
             switch (spriteram_3[offs] & 0xa8)

@@ -246,12 +246,12 @@ void tia_w (uint16 addr, uint8 val)
           break;
 
        case AUDV0:
-          AUDV[0] = (val & 0x0f) << 3;
+          AUDV[0] = (val & 0x0f) << 2;
           chan = 0;
           break;
 
        case AUDV1:
-          AUDV[1] = (val & 0x0f) << 3;
+          AUDV[1] = (val & 0x0f) << 2;
           chan = 1;
           break;
 

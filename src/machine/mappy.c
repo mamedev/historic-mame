@@ -134,7 +134,7 @@ void mappy_customio_w_2(int offset,int data)
 void mappy_reset_2_w(int offset,int data)
 {
 	io_chip_1_enabled = io_chip_2_enabled = 0;
-	cpu_reset( 1 );
+	cpu_set_reset_line(1,PULSE_LINE);
 }
 
 void mappy_io_chips_enable_w(int offset,int data)

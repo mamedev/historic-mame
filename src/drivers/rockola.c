@@ -113,7 +113,7 @@ void vanguard_sound1_w(int offset,int data);
 void fantasy_sound0_w(int offset,int data);
 void fantasy_sound1_w(int offset,int data);
 void fantasy_sound2_w(int offset,int data);
-int rockola_sh_start(void);
+int rockola_sh_start(const struct MachineSound *msound);
 void rockola_sh_update(void);
 
 
@@ -676,6 +676,15 @@ static struct GfxDecodeInfo fantasy_gfxdecodeinfo[] =
 
 
 
+static struct CustomSound_interface custom_interface =
+{
+	rockola_sh_start,
+	0,
+	rockola_sh_update
+};
+
+
+
 static struct MachineDriver sasuke_machine_driver =
 {
 	/* basic machine hardware */
@@ -737,10 +746,13 @@ static struct MachineDriver satansat_machine_driver =
 	satansat_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	rockola_sh_start,
-	0,
-	rockola_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 static struct MachineDriver vanguard_machine_driver =
@@ -772,10 +784,13 @@ static struct MachineDriver vanguard_machine_driver =
 	rockola_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	rockola_sh_start,
-	0,
-	rockola_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 static struct MachineDriver fantasy_machine_driver =
@@ -807,10 +822,13 @@ static struct MachineDriver fantasy_machine_driver =
 	rockola_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	rockola_sh_start,
-	0,
-	rockola_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 /* note that in this driver the visible area is different!!! */
@@ -843,10 +861,13 @@ static struct MachineDriver pballoon_machine_driver =
 	rockola_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	rockola_sh_start,
-	0,
-	rockola_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 
@@ -877,7 +898,7 @@ ROM_START( sasuke_rom )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x9c805120 )
 
 	ROM_REGION(0x0020)  /* color prom */
-	/* missing! */
+	ROM_LOAD( "prom",         0x0000, 0x0020, 0x00000000 )
 
 	/* no sound ROMs - the sound section is entirely analog */
 ROM_END
@@ -1124,15 +1145,6 @@ ROM_END
 
 
 
-static unsigned char wrong_color_prom[] =
-{
-	/* this is the Zarzon one */
-	0x00,0xF8,0x02,0xFF,0xF8,0x27,0xC0,0xF8,0xC0,0x80,0x07,0x07,0xFF,0xF8,0x3F,0xFF,
-	0x00,0xF8,0x02,0xFF,0xC0,0xC0,0x80,0x26,0x38,0xA0,0xA0,0x04,0x07,0xC6,0xC5,0x27,
-};
-
-
-
 static int vanguard_hiload(void)     /* V.V */
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1268,7 +1280,7 @@ struct GameDriver sasuke_driver =
 
 	sasuke_input_ports,
 
-	wrong_color_prom,0,0,
+	PROM_MEMORY_REGION(2),0,0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

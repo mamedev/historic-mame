@@ -120,13 +120,10 @@ void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void phoenix_sound_control_a_w(int offset, int data);
-void phoenix_sound_control_b_w(int offset, int data);
-int phoenix_sh_start(void);
-void phoenix_sh_update(void);
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int pleiads_sh_start(void);
+int pleiads_sh_start(const struct MachineSound *msound);
+
 void pleiads_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
@@ -165,6 +162,7 @@ static struct MemoryWriteAddress popflame_writemem[] =
 };
 
 
+
 /***************************************************************************
 
   Naughty Boy doesn't have VBlank interrupts.
@@ -172,6 +170,7 @@ static struct MemoryWriteAddress popflame_writemem[] =
   slots.
 
 ***************************************************************************/
+
 int naughtyb_interrupt(void)
 {
 	if (readinputport(2) & 1)
@@ -219,7 +218,7 @@ INPUT_PORTS_START( input_ports )
 	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+        PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
 
@@ -242,6 +241,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,    0, 32 },
 	{ 1, 0x2000, &charlayout, 32*4, 32 },
 	{ -1 } /* end of array */
+};
+
+
+
+static struct CustomSound_interface custom_interface =
+{
+	pleiads_sh_start,
+	0,
+	pleiads_sh_update
 };
 
 
@@ -276,10 +284,13 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,
-	pleiads_sh_start,
-	0,
-	pleiads_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 /* Exactly the same but for the writemem handler */
@@ -313,10 +324,13 @@ static struct MachineDriver popflame_machine_driver =
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,
-	pleiads_sh_start,
-	0,
-	pleiads_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 

@@ -706,38 +706,6 @@ int namcos1_vh_start( void )
 	for(i=0;i<0xff;i++)
 		namcos1_playfield_control_w( i,0 );
 
-#if 1
-	/* build gfxmaskdata for missing ROM */
-	if (!strcmp(Machine->gamedrv->name,"blazer"))
-	{
-		const struct GfxElement *mask = Machine->gfx[0];
-		const struct GfxElement *pens = Machine->gfx[1];
-		int total  = mask->total_elements;
-		int width  = mask->width;
-		int height = mask->height;
-		int line,x,c;
-
-		for(c=0;c<total;c++)
-		{
-			/* build missing gfxmaskdata patch */
-			if( mask->pen_usage)
-				mask->pen_usage[c] = 0;
-			for(line=0;line<height;line++)
-			{
-				unsigned char  *maskbm = get_gfx_pointer(mask,c,line);
-				unsigned char  *pensbm = get_gfx_pointer(pens,c,line);
-				for (x=0;x<width;x++)
-				{
-					/* transparency color is code0 */
-					if(pensbm[x]!=0) maskbm[x] = 1;
-					if( mask->pen_usage)
-						mask->pen_usage[c] |= 1<<maskbm[x];
-				}
-			}
-		}
-	}
-#endif
-
 #if NAMCOS1_DIRECT_DRAW
 	if(namcos1_tilemap_used)
 	{

@@ -212,7 +212,7 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 
 
-int phoenix_sh_start(void)
+int phoenix_sh_start(const struct MachineSound *msound)
 {
 	channel0 = mixer_allocate_channel(MAX_VOLUME);
 	channel1 = mixer_allocate_channel(MAX_VOLUME);

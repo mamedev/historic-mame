@@ -36,12 +36,14 @@ extern void contra_bg_cram_w(int offset,int data);
 extern void contra_text_vram_w(int offset,int data);
 extern void contra_text_cram_w(int offset,int data);
 
-extern void contra_sprite_buffer_select( int offset, int data );
+extern void contra_sprite_buffer_1_w( int offset, int data );
+extern void contra_sprite_buffer_2_w( int offset, int data );
 extern void contra_0007_w(int offset,int data);
 extern void contra_fg_palette_bank_w(int offset,int data);
 extern void contra_bg_palette_bank_w(int offset,int data);
 extern void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int contra_vh_start(void);
+extern void contra_vh_stop(void);
 
 void contra_init_machine(void)
 {
@@ -100,7 +102,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0000, MWA_RAM, &contra_fg_vertical_scroll },
 	{ 0x0002, 0x0002, MWA_RAM, &contra_fg_horizontal_scroll },
-	{ 0x0003, 0x0003, contra_sprite_buffer_select },
+	{ 0x0003, 0x0003, contra_sprite_buffer_1_w },
 	{ 0x0006, 0x0006, contra_fg_palette_bank_w },
 	{ 0x0007, 0x0007, contra_0007_w },
 	{ 0x0018, 0x0018, contra_coin_counter_w },
@@ -109,6 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x001e, 0x001e, MWA_NOP },	/* ? */
 	{ 0x0060, 0x0060, MWA_RAM, &contra_bg_vertical_scroll },
 	{ 0x0062, 0x0062, MWA_RAM, &contra_bg_horizontal_scroll },
+	{ 0x0063, 0x0063, contra_sprite_buffer_2_w },
 	{ 0x0066, 0x0066, contra_bg_palette_bank_w },
 	{ 0x0c00, 0x0cff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x1000, 0x1fff, MWA_RAM },
@@ -315,7 +318,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	contra_vh_start,
-	0, /* vh_stop */
+	contra_vh_stop,
 	contra_vh_screenrefresh,
 
 	/* sound hardware */

@@ -335,6 +335,21 @@ ROM_START( snowbroa_rom )
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
+ROM_START( snowbrob_rom )
+	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "sbros3-a",     0x00000, 0x20000, 0x301627d6 )
+	ROM_LOAD_ODD ( "sbros2-a",     0x00000, 0x20000, 0xf6689f41 )
+
+	ROM_REGION_DISPOSE(0x80000)
+	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
+	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
+	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
+	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
+
+	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+ROM_END
+
 ROM_START( snowbroj_rom )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3",   0x00000, 0x20000, 0x3f504f9e )
@@ -436,6 +451,30 @@ struct GameDriver snowbroa_driver =
 	hiload, hisave
 };
 
+struct GameDriver snowbrob_driver =
+{
+	__FILE__,
+	&snowbros_driver,
+	"snowbrob",
+	"Snow Bros. - Nick & Tom (set 3)",
+	"1990",
+	"Toaplan (Romstar license)",
+	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
+	0,
+	&machine_driver,
+	0,
+
+	snowbrob_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	snowbros_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
 
 struct GameDriver snowbroj_driver =
 {

@@ -463,20 +463,13 @@ void tnzs_workram_w (int offset, int data)
 
 void tnzs_bankswitch_w (int offset, int data)
 {
-	static int reset;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	/* bit 4 resets the second CPU */
-	if ((data & 0x10) && !reset)
-	{
-		cpu_reset(1);
-		cpu_halt(1,1);
-	}
-	else if (!(data & 0x10))
-	{
-		cpu_halt (1,0);
-	}
-	reset = data & 0x10;
+	if (data & 0x10)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 
 	/* bits 0-2 select RAM/ROM bank */
 //	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch\n", cpu_get_pc(),data);

@@ -1,5 +1,6 @@
-
 #include "driver.h"
+#include "generic.h"
+
 
 extern unsigned char *taitol_rambanks;
 extern int taitol_bg18_deltax, taitol_bg19_deltax;
@@ -7,7 +8,6 @@ extern int taitol_bg18_deltax, taitol_bg19_deltax;
 static struct tilemap *bg18_tilemap;
 static struct tilemap *bg19_tilemap;
 static struct tilemap *char1a_tilemap;
-static struct sprite_list *obj1b_sprite_list;
 
 static int cur_ctrl = 0;
 static int cur_bankg = 0;
@@ -60,6 +60,7 @@ int taitol_vh_start(void)
 {
 	int i;
 
+
 	bg18_tilemap = tilemap_create(get_bg18_tile_info,
 								  TILEMAP_TRANSPARENT,
 								  8, 8,
@@ -75,9 +76,7 @@ int taitol_vh_start(void)
 									8, 8,
 									64, 32);
 
-	obj1b_sprite_list = sprite_list_create(0x7e, SPRITE_LIST_FRONT_TO_BACK);
-
-	if(!char1a_tilemap || !bg18_tilemap || !bg19_tilemap || !obj1b_sprite_list)
+	if(!char1a_tilemap || !bg18_tilemap || !bg19_tilemap)
 		return 1;
 
 	bankc[0] = bankc[1] = bankc[2] = bankc[3] = 0;
@@ -85,25 +84,8 @@ int taitol_vh_start(void)
 
 	bg18_tilemap->transparent_pen = 0;
 	char1a_tilemap->transparent_pen = 0;
-	obj1b_sprite_list->transparent_pen = 0;
 
-	obj1b_sprite_list->sprite_type = SPRITE_TYPE_UNPACK;
-	obj1b_sprite_list->max_priority = 1;
-
-	for(i=0;i<obj1b_sprite_list->num_sprites;i++) {
-	  obj1b_sprite_list->sprite[i].priority = 0;
-	  obj1b_sprite_list->sprite[i].flags = 0;
-	  obj1b_sprite_list->sprite[i].tile_width = 16;
-	  obj1b_sprite_list->sprite[i].tile_height = 16;
-	  obj1b_sprite_list->sprite[i].total_width = 16;
-	  obj1b_sprite_list->sprite[i].total_height = 16;
-	  obj1b_sprite_list->sprite[i].x_offset = 0;
-	  obj1b_sprite_list->sprite[i].y_offset = 0;
-	  obj1b_sprite_list->sprite[i].line_offset = 16;
-	}
-
-	for(i=0;i<256;i++)
-		//		palette_change_color(i, i&15 ? 255 : 0, i&15 ? 255 : 0, i&15 ? 255 : 0);
+	for (i=0;i<256;i++)
 		palette_change_color(i, 0, 0, 0);
 
 	tilemap_set_scrollx(char1a_tilemap, 0, 8);
@@ -251,29 +233,31 @@ void taitol_char1a_m(int offset)
 
 void taitol_obj1b_m(int offset)
 {
-	if(offset>=0x3f0 && offset<=0x3ff) {
-		switch(offset & 0xf) {
-		case 0x4:
-		case 0x5:
+	if(offset>=0x3f0 && offset<=0x3ff)
+	{
+		switch(offset & 0xf)
+		{
+			case 0x4:
+			case 0x5:
 			{
 				int dx = taitol_rambanks[0x73f4]|(taitol_rambanks[0x73f5]<<8);
 				tilemap_set_scrollx(bg18_tilemap, 0, taitol_bg18_deltax - dx);
 				break;
 			}
-		case 0x6:
+			case 0x6:
 			{
 				int dy = taitol_rambanks[0x73f6];
 				tilemap_set_scrolly(bg18_tilemap, 0, -dy);
 				break;
 			}
-		case 0xc:
-		case 0xd:
+			case 0xc:
+			case 0xd:
 			{
 				int dx = taitol_rambanks[0x73fc]|(taitol_rambanks[0x73fd]<<8);
 				tilemap_set_scrollx(bg19_tilemap, 0, taitol_bg19_deltax - dx);
 				break;
 			}
-		case 0xe:
+			case 0xe:
 			{
 				int dy = taitol_rambanks[0x73fe];
 				tilemap_set_scrolly(bg19_tilemap, 0, -dy);
@@ -291,65 +275,42 @@ void taitol_obj1b_m(int offset)
 
 ***************************************************************************/
 
-static void get_sprite_info(void)
+static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
-	unsigned char *p = taitol_rambanks + 0x7000;
-	struct sprite *sprite = obj1b_sprite_list->sprite;
-	int i;
-	static int ccount = 0;
-	ccount++;
-	if(ccount==16)
-		ccount = 0;
+	int offs;
 
-	for(i=0; i<0x7e; i++) {
-		int code = p[0] | (p[1]<<8);
 
-		if(code) {
-			int attr = p[2] | (p[3]<<8);
-			int flags = SPRITE_VISIBLE;
-			int color = attr & 0x0f;
+	spriteram = taitol_rambanks + 0x7000;
+	spriteram_size = 0x3f0;
 
-			code = code % gfx->total_elements;
+	for (offs = spriteram_size - 8;offs >= 0;offs -= 8)
+	{
+		int code,color,pri,sx,sy,flipx,flipy;
 
-			if(attr & 0x100)
-				flags |= SPRITE_FLIPX;
-			if(attr & 0x200)
-				flags |= SPRITE_FLIPY;
+		color = spriteram[offs + 2] & 0x0f;
+		pri = (color & 0x08) >> 3;
+		if (pri == priority)
+		{
+			code = spriteram[offs] | (spriteram[offs + 1] << 8);
+			sx = spriteram[offs + 4] | (spriteram[offs + 5] << 8);
+			sy = spriteram[offs + 6] | (spriteram[offs + 7] << 8);
+			flipx = spriteram[offs + 3] & 0x01;
+			flipy = spriteram[offs + 3] & 0x02;
 
-			if(color>=8)
-				sprite->priority = 0;
-			else
-				sprite->priority = 1;
-
-#if 0
-			if(errorlog && (attr != 0xaaaa) && (attr != 0x5555) && (attr != 0xaa55) && (attr & 0xfcf0))
-				fprintf(errorlog, "Unhandled attr bits : %04x\n", attr & 0xfcf0);
-#endif
-
-			sprite->x = p[4] | (p[5]<<8);
-			sprite->y = p[6] | (p[7]<<8);
-
-			sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
-			sprite->pen_usage = gfx->pen_usage[code];
-
-			sprite->pen_data = gfx->gfxdata + code*gfx->char_modulo;
-			sprite->flags = flags;
-		} else
-			sprite->flags = 0;
-
-		p += 8;
-		sprite++;
+			drawgfx(bitmap,Machine->gfx[1],
+					code,
+					color,
+					flipx,flipy,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 }
+
 
 void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	tilemap_update(ALL_TILEMAPS);
-	get_sprite_info();
-
-	palette_init_used_colors();
-	sprite_update();
 
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
@@ -357,9 +318,8 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap, bg19_tilemap, 0);
-	sprite_draw(obj1b_sprite_list, 0);
+	draw_sprites(bitmap,1);
 	tilemap_draw(bitmap, bg18_tilemap, 0);
-	sprite_draw(obj1b_sprite_list, 1);
-
+	draw_sprites(bitmap,0);
 	tilemap_draw(bitmap, char1a_tilemap, 0);
 }

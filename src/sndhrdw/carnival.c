@@ -229,7 +229,7 @@ void carnival_sh_port2_w( int offset, int data )
 	if ( bitsGoneHigh & OUT_PORT_2_MUSIC_RESET )
 	{
 		/* reset output is no longer asserted active low */
-		cpu_reset( CPU_MUSIC_ID );
+		cpu_set_reset_line( CPU_MUSIC_ID, PULSE_LINE );
 	}
 }
 

@@ -410,7 +410,7 @@ static void pandoras_portB_w(int offset,int data)
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318180/8,	/* 1.789772727 MHz (?) */
+	4000000,	/* ??????? */
 	{ 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },

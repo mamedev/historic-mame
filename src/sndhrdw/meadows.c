@@ -34,7 +34,7 @@ static	signed char waveform[2] = { -120, 120 };
 /************************************/
 /* Sound handler start				*/
 /************************************/
-int meadows_sh_start(void)
+int meadows_sh_start(const struct MachineSound *msound)
 {
 	int vol[2];
 

@@ -110,7 +110,7 @@ static void control_w( int offset, int data ) {
 
 static void sound_reset_w( int offset, int data ) {
     if ( !( data & 1 ) )
-    	cpu_reset( 1 );
+    	cpu_set_reset_line(1,PULSE_LINE);
 }
 
 static void sound_control_w( int offset, int data ) {
@@ -207,7 +207,7 @@ static struct MemoryWriteAddress kc_sound_writemem[] =
 };
 
 static int sound_reset_r( int offset ) {
-    cpu_reset( 1 );
+    cpu_set_reset_line(1,PULSE_LINE);
     return 0;
 }
 

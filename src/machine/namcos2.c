@@ -13,17 +13,8 @@ Namco System II
 #include "cpu/m6809/m6809.h"
 #include "machine/namcos2.h"
 
-unsigned char namcos2_roz_ctrl[0x10];
-unsigned char *namcos2_roz_ram;
-
 unsigned char *namcos2_68k_master_ram=NULL;
 unsigned char *namcos2_68k_slave_ram=NULL;
-unsigned char *namcos2_sprite_ram=NULL;
-
-unsigned char *namcos2_dpram=NULL;	/* 2Kx8 */
-unsigned char  namcos2_68k_serial_comms_ctrl[0x10];
-unsigned char *namcos2_68k_serial_comms_ram=NULL;
-unsigned char *namcos2_68k_palette_ram=NULL;
 
 int namcos2_gametype=0;
 
@@ -35,7 +26,6 @@ int namcos2_gametype=0;
 void namcos2_init_machine(void)
 {
     int loop;
-//	unsigned char *RAM;
 
 	if(namcos2_dpram==NULL) namcos2_dpram = malloc(0x800);
 	memset( namcos2_dpram, 0, 0x800 );
@@ -47,8 +37,8 @@ void namcos2_init_machine(void)
     if(namcos2_68k_serial_comms_ram==NULL) namcos2_68k_serial_comms_ram = malloc(0x4000);
 	memset( namcos2_68k_serial_comms_ram, 0, 0x4000 );
 
-    if(namcos2_68k_palette_ram==NULL) namcos2_68k_palette_ram = malloc(0x10000);
-	memset( namcos2_68k_palette_ram, 0, 0x10000 );
+    if(namcos2_68k_roz_dirty_buffer==NULL) namcos2_68k_roz_dirty_buffer = malloc(0x10000);
+	memset( namcos2_68k_roz_dirty_buffer, ROZ_DIRTY_TILE, 0x10000 );
 
 	/* Initialise the bank select in the sound CPU */
 	namcos2_sound_bankselect_w(0,0);		/* Page in bank 0 */
@@ -63,6 +53,9 @@ void namcos2_init_machine(void)
         namcos2_68k_master_C148[loop]=0;
         namcos2_68k_slave_C148[loop]=0;
 	}
+
+	/* Disable ROZ by default */
+	namcos2_68k_roz_ctrl_w(0x0e,0);
 }
 
 
@@ -147,50 +140,82 @@ int namcos2_68k_vram_ctrl_r( int offset )
 /* 68000 Shared memory area - Video palette control          */
 /*************************************************************/
 
-unsigned char *namcos2_68k_video_palette;
+unsigned char *namcos2_68k_palette_ram;
+int namcos2_68k_palette_size;
 
 int  namcos2_68k_video_palette_r( int offset )
 {
-	if (errorlog) fprintf(errorlog,"Video Palette read  Addr=%08x\n",offset);
+	if (errorlog) fprintf(errorlog,"CPU#%d PC=$%06x Video Palette read  Addr=%08x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 	return READ_WORD(&namcos2_68k_palette_ram[offset&0xffff]);
 }
 
 void namcos2_68k_video_palette_w( int offset, int data )
 {
-	if (errorlog) fprintf(errorlog,"Video Palette write Addr=%08x, Data=%04x\n",offset,data);
-	COMBINE_WORD_MEM(&namcos2_68k_palette_ram[offset&0xffff],data);
+	int oldword = READ_WORD(&namcos2_68k_palette_ram[offset&0xffff]);
+	int newword = COMBINE_WORD(oldword, data);
+	int pen,red,green,blue;
+
+	if(oldword != newword)
+	{
+		WRITE_WORD(&namcos2_68k_palette_ram[offset&0xffff],newword);
+
+        /* 0x3000 offset is control registers */
+        if((offset&0x3000)!=0x3000)
+        {
+            pen=(((offset&0xc000)>>2) | (offset&0x0fff))>>1;
+
+            red  =(READ_WORD(&namcos2_68k_palette_ram[offset&0xcfff]))&0x00ff;
+            green=(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x1000]))&0x00ff;
+            blue =(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x2000]))&0x00ff;
+
+            /* Int color, uchar r/g/b */
+
+            palette_change_color(pen,red,green,blue);
+
+//          if (errorlog) fprintf(errorlog,"CPU#%d PC=$%06x Video Palette write Addr=%08x, Data=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+            if (errorlog) fprintf(errorlog,"CPU#%d PC=$%06x Video Palette PEN=%04x, R=%02x, G=%02x B=%02x\n",cpu_getactivecpu(),cpu_get_pc(),pen,red,green,blue);
+        }
+    }
+
+//	if (errorlog) fprintf(errorlog,"CPU#%d PC=$%06x Video Palette write Addr=%08x, Data=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
 }
 
 /*************************************************************/
 /* 68000/6809/63705 Shared memory area - DUAL PORT Memory    */
 /*************************************************************/
 
+unsigned char *namcos2_dpram=NULL;	/* 2Kx8 */
+
 int	namcos2_68k_dpram_word_r(int offset)
 {
 	offset = offset/2;
-	return READ_WORD(&namcos2_dpram[offset]);
+	return namcos2_dpram[offset&0x7ff];
 }
 
 void namcos2_68k_dpram_word_w(int offset, int data)
 {
-	offset = offset/2;
-	namcos2_dpram[offset] = COMBINE_WORD( namcos2_dpram[offset], data )&0xff;
+    offset = offset/2;
+	if (!(data & 0x00ff0000))
+		namcos2_dpram[offset&0x7ff] = data & 0xff;
 }
 
 int	namcos2_dpram_byte_r(int offset)
 {
-	return namcos2_dpram[offset];
+	return namcos2_dpram[offset&0x7ff];
 }
 
 void namcos2_dpram_byte_w(int offset, int data)
 {
-	namcos2_dpram[offset] = data;
+	namcos2_dpram[offset&0x7ff] = data;
 }
 
 
 /**************************************************************/
 /* 68000 Shared serial communications processor (CPU5?)       */
 /**************************************************************/
+
+unsigned char  namcos2_68k_serial_comms_ctrl[0x10];
+unsigned char *namcos2_68k_serial_comms_ram=NULL;
 
 int namcos2_68k_serial_comms_ram_r(int offset)
 {
@@ -223,16 +248,26 @@ void namcos2_68k_serial_comms_ctrl_w(int offset,int data)
 /* 68000 Shared SPRITE/OBJECT Memory access/control          */
 /*************************************************************/
 
+/* The sprite bank register also holds the colour bank for */
+/* the ROZ memory and some of the priority control data    */
+
+unsigned char *namcos2_sprite_ram=NULL;
 int namcos2_sprite_bank=0;
 
 void namcos2_68k_sprite_ram_w(int offset, int data)
 {
-	WRITE_WORD(&namcos2_sprite_ram[offset],data);
+	COMBINE_WORD_MEM(&namcos2_sprite_ram[offset],data);
 }
 
 void namcos2_68k_sprite_bank_w( int offset, int data )
 {
-    namcos2_sprite_bank=data&0x000f;
+	int newword = COMBINE_WORD(namcos2_sprite_bank, data);
+
+	/* If ROZ colour code changes we MUST redraw everything */
+	if((namcos2_sprite_bank&0x0f00)!=(newword&0x0f00))
+		namcos2_68k_roz_ram_dirty=ROZ_REDRAW_ALL;
+
+	namcos2_sprite_bank=newword;
 }
 
 int	namcos2_68k_sprite_ram_r(int offset)
@@ -310,14 +345,37 @@ void namcos2_68k_key_w( int offset, int data )
 /*                                                            */
 /**************************************************************/
 
+unsigned char namcos2_68k_roz_ctrl[0x10];
+int  namcos2_68k_roz_ram_size=0;
+int  namcos2_68k_roz_ram_dirty=0;
+unsigned char *namcos2_68k_roz_ram=NULL;
+unsigned char *namcos2_68k_roz_dirty_buffer=NULL;
+
 void namcos2_68k_roz_ctrl_w( int offset, int data )
 {
-	COMBINE_WORD_MEM(&namcos2_roz_ctrl[offset&0x0f],data);
+	COMBINE_WORD_MEM(&namcos2_68k_roz_ctrl[offset&0x0f],data);
 }
 
 int namcos2_68k_roz_ctrl_r( int offset )
 {
-	return READ_WORD(&namcos2_roz_ctrl[offset&0x0f]);
+	return READ_WORD(&namcos2_68k_roz_ctrl[offset&0x0f]);
+}
+
+void namcos2_68k_roz_ram_w( int offset, int data )
+{
+	int oldword = READ_WORD(&namcos2_68k_roz_ram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	if (oldword == newword) return;
+	WRITE_WORD(&namcos2_68k_roz_ram[offset],newword);
+
+	/* Mark tile as dirty for redraw */
+    namcos2_68k_roz_dirty_buffer[(offset>>1)&0xffff]=ROZ_DIRTY_TILE;
+	namcos2_68k_roz_ram_dirty=ROZ_DIRTY_TILE;
+}
+
+int  namcos2_68k_roz_ram_r( int offset )
+{
+	return READ_WORD(&namcos2_68k_roz_ram[offset]);
 }
 
 
@@ -343,7 +401,6 @@ int  namcos2_68k_slave_C148[0x20];
 
 void namcos2_68k_master_C148_w( int offset, int data )
 {
-//	int idx=offset>>12;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
@@ -353,46 +410,34 @@ void namcos2_68k_master_C148_w( int offset, int data )
 	switch(offset)
 	{
 	    case 0x1de000:
-	        cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
+	        cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
 	        break;
 	    case 0x1da000:
 	        cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
 	        break;
 
 		case 0x1e2000:				/* Reset register CPU3 */
-			if(data&0x01)
-			{
-				/* Resume execution */
-				cpu_reset(NAMCOS2_CPU3);
-				cpu_halt(NAMCOS2_CPU3,1);
-				/* Give the new CPU an immediate slice of the action */
-				cpu_yield();
-			}
-			else
-			{
-				/* Suspend execution */
-				cpu_reset(NAMCOS2_CPU3);
-				cpu_halt(NAMCOS2_CPU3,0);
-			}
-			break;
+		    {
+			    if (data & 1)
+				    /* Resume execution */
+					cpu_set_reset_line(NAMCOS2_CPU3,CLEAR_LINE);
+	    		else
+			    	/* Suspend execution */
+					cpu_set_reset_line(NAMCOS2_CPU3,ASSERT_LINE);
+	    	}
+		  	break;
 		case 0x1e4000:				/* Reset register CPU2 & CPU4 */
-			if(data&0x01)
-			{
-				/* Resume execution */
-				cpu_reset(NAMCOS2_CPU2);
-				cpu_halt(NAMCOS2_CPU2,1);
-				cpu_reset(NAMCOS2_CPU4);
-				cpu_halt(NAMCOS2_CPU4,1);
-				/* Give the new CPU an immediate slice of the action */
-				cpu_yield();
-			}
-			else
-			{
-				/* Suspend execution */
-				cpu_reset(NAMCOS2_CPU2);
-				cpu_halt(NAMCOS2_CPU2,0);
-				cpu_reset(NAMCOS2_CPU4);
-				cpu_halt(NAMCOS2_CPU4,0);
+		    {
+    			if (data & 1)
+	    		{
+					cpu_set_reset_line(NAMCOS2_CPU2,CLEAR_LINE);
+					cpu_set_reset_line(NAMCOS2_CPU4,CLEAR_LINE);
+    			}
+	    		else
+		    	{
+					cpu_set_reset_line(NAMCOS2_CPU2,ASSERT_LINE);
+					cpu_set_reset_line(NAMCOS2_CPU4,ASSERT_LINE);
+			    }
 			}
 			break;
 		case 0x1e6000:					/* Watchdog reset */
@@ -406,12 +451,17 @@ void namcos2_68k_master_C148_w( int offset, int data )
 
 int namcos2_68k_master_C148_r( int offset )
 {
-//	int idx=offset>>12;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
 	switch(offset)
 	{
+	    case 0x1de000:
+	        cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
+	        break;
+	    case 0x1da000:
+	        cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
+	        break;
 		case 0x1e0000:					/* EEPROM Status register*/
 			return 0xffff;				/* Only BIT0 used: 1=EEPROM READY 0=EEPROM BUSY */
 			break;
@@ -445,7 +495,6 @@ void namcos2_68k_master_posirq( int moog )
 
 void namcos2_68k_slave_C148_w( int offset, int data )
 {
-//	int idx=offset>>12;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
@@ -455,7 +504,7 @@ void namcos2_68k_slave_C148_w( int offset, int data )
 	switch(offset)
 	{
 	    case 0x1de000:
-	        cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
+	        cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
 	        break;
 	    case 0x1da000:
 	        cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
@@ -471,12 +520,17 @@ void namcos2_68k_slave_C148_w( int offset, int data )
 
 int namcos2_68k_slave_C148_r( int offset )
 {
-//	int idx=offset>>12;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
 	switch(offset)
 	{
+	    case 0x1de000:
+	        cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
+	        break;
+	    case 0x1da000:
+	        cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
+	        break;
 		case 0x1e6000:					/* Watchdog reset */
 			/* watchdog_reset_w(0,0); */
 			break;
@@ -495,10 +549,8 @@ int namcos2_68k_slave_vblank(void)
 /*  Sound sub-system                                          */
 /**************************************************************/
 
-//int namcos2_sound_interrupt(int irq)
 int namcos2_sound_interrupt(void)
 {
-//    cpu_set_irq_line( CPU_SOUND, M6809_INT_FIRQ , irq ? ASSERT_LINE : CLEAR_LINE);
 	cpu_set_irq_line( CPU_SOUND, M6809_INT_FIRQ , PULSE_LINE);
 //	if (errorlog) fprintf(errorlog,"NAMCOS2 Flyback Sound Interrupt - M6809_INT_FIRQ\n");
 	return M6809_INT_FIRQ;
@@ -510,4 +562,24 @@ void namcos2_sound_bankselect_w(int offset, int data)
 	unsigned char *RAM = Machine->memory_region[CPU_SOUND];
 	int bank = ( data >> 4 ) & 0x07;
 	cpu_setbank( CPU3_ROM1, &RAM[ 0x10000 + ( 0x4000 * bank ) ] );
+}
+
+
+
+/**************************************************************/
+/*                                                            */
+/*  68705 IO CPU Support functions                            */
+/*                                                            */
+/**************************************************************/
+
+int namcos2_mcu_analog_ctrl=0;
+
+void namcos2_mcu_analog_ctrl_w( int offset, int data )
+{
+    namcos2_mcu_analog_ctrl=data&0xff;
+}
+
+int  namcos2_mcu_analog_ctrl_r( int offset )
+{
+    return namcos2_mcu_analog_ctrl|0x80;
 }

@@ -46,8 +46,8 @@ unsigned char namco_key[16] =
 void xevious_init_machine(void)
 {
 	/* halt the slave CPUs until they're reset */
-	cpu_halt(1,0);
-	cpu_halt(2,0);
+	cpu_set_reset_line(1,ASSERT_LINE);
+	cpu_set_reset_line(2,ASSERT_LINE);
 
 	Machine->memory_region[0][0x8c00] = 1;
 	Machine->memory_region[0][0x8c01] = 1;
@@ -333,23 +333,16 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 
 void xevious_halt_w(int offset,int data)
 {
-	static int reset23;
-
-	data &= 1;
-	if (data && !reset23)
+	if (data & 1)
 	{
-		cpu_reset (1);
-		cpu_reset (2);
-		cpu_halt (1,1);
-		cpu_halt (2,1);
+		cpu_set_reset_line(1,CLEAR_LINE);
+		cpu_set_reset_line(2,CLEAR_LINE);
 	}
-	else if (!data)
+	else
 	{
-		cpu_halt (1,0);
-		cpu_halt (2,0);
+		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(2,ASSERT_LINE);
 	}
-
-	reset23 = data;
 }
 
 

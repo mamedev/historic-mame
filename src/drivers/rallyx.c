@@ -1,5 +1,10 @@
 /***************************************************************************
 
+TODO:
+- fix hanging sprites on the title screen (e.g. if you insert a coin while
+  the car is passing by)
+
+
 Rally X memory map (preliminary)
 
 0000-3fff ROM

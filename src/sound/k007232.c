@@ -359,7 +359,23 @@ static void K007232_WriteReg( int r, int v, int chip )
 
 	kpcm[chip].wreg[r] = v;			/* stock write data */
 
-	if (r == 0x0d)
+	if (r == 0x05)
+	{
+		if (kpcm[chip].start[0] < 0x20000)
+		{
+			kpcm[chip].play[0] = 1;
+			kpcm[chip].addr[0] = 0;
+		}
+	}
+	else if (r == 0x0b)
+	{
+		if (kpcm[chip].start[1] < 0x20000)
+		{
+			kpcm[chip].play[1] = 1;
+			kpcm[chip].addr[1] = 0;
+		}
+	}
+	else if (r == 0x0d)
 	{
 		/* select if sample plays once or looped */
 		kpcm[chip].loop[0] = v & 0x01;
@@ -458,6 +474,16 @@ void K007232_write_port_1_w(int r,int v)
 int K007232_read_port_1_r(int r)
 {
 	return K007232_ReadReg(r,1);
+}
+
+void K007232_write_port_2_w(int r,int v)
+{
+	K007232_WriteReg(r,v,2);
+}
+
+int K007232_read_port_2_r(int r)
+{
+	return K007232_ReadReg(r,2);
 }
 
 void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B)

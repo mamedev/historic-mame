@@ -35,7 +35,7 @@ static unsigned char waveform[32] =
 
 
 
-int rockola_sh_start(void)
+int rockola_sh_start(const struct MachineSound *msound)
 {
 	int vol[3];
 

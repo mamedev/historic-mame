@@ -33,7 +33,7 @@ void smashtv_snd_cmd_real_w (int param)
 	pia_0_cb1_w (0, (param&0x200?1:0));
 	if (!(param&0x100))
 	{
-		cpu_reset(1);
+		cpu_set_reset_line(1,PULSE_LINE);
 		if (errorlog) fprintf(errorlog, "sound reset\n");
 	}
 }

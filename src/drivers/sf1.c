@@ -308,15 +308,14 @@ static struct MemoryReadAddress sound2_readmem[] =
 /* Yes, _no_ ram */
 static struct MemoryWriteAddress sound2_writemem[] =
 {
-//	{ 0x0000, 0xffff, MWA_ROM },	for some reason (bug in memory.c?) this causes a crash
-	{ 0x0000, 0xffff, MWA_NOP },
+	{ 0x0000, 0xffff, MWA_ROM },
 	{ -1 }
 };
 
 static struct IOReadPort sound2_readport[] =
 {
-{ 0x01, 0x01, soundlatch_r },
-{ -1 }
+	{ 0x01, 0x01, soundlatch_r },
+	{ -1 }
 };
 
 

@@ -754,7 +754,7 @@ static void delayed_sound_reset(int param)
 {
 	/* unhalt and reset the sound CPU */
 	cpu_halt(sound_cpu_num, 1);
-	cpu_reset(sound_cpu_num);
+	cpu_set_reset_line(sound_cpu_num,PULSE_LINE);
 
 	/* reset the sound write state */
 	atarigen_sound_to_cpu_ready = 0;

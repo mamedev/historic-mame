@@ -11,7 +11,7 @@ Hardware				Main 	Sub		Sound	Sound Chips
 ----------------------------------------------------------------------
 [WEC Le Mans 24]		68000	68000	Z-80	YM2151 YM3012 1x007232
 
-[Hot Chase]				68000	68000	68B09E	YM2151 YM3012 3x007232
+[Hot Chase]				68000	68000	68B09E	              3x007232
 
  [CPU PCB GX763 350861B]
  						007641	007770	3x007232	051550
@@ -221,7 +221,7 @@ Self Test:
 								[Hot Chase]
 ---------------------------------------------------------------------------
 
-- No Sound
+- Samples pitch is too low
 - Zoom and rotation
 
 ---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ void hotchase_vh_stop(void);
 	unsigned char *src = _from; \
 	if ((buffer = malloc(_len))) \
 	{ \
-		for (i = 0 ; i < _len ; i++) \
+		for (i = 0 ; i <= _len ; i++) \
 			buffer[i] = \
 			 src[(((i & (1 << _0))?(1<<0x0):0) + \
 				 ((i & (1 << _1))?(1<<0x1):0) + \
@@ -349,18 +349,14 @@ static void irqctrl_w(int offset, int data)
 
 //	Bit 0 : SUBINT
 	if ( (wecleman_irqctrl & 1) && (!(data & 1)) )	// 1->0 transition
-	{
-//		cpu_halt(1,1);
 		cpu_set_irq_line(1,4,HOLD_LINE);
-	}
 
 
 //	Bit 1 : NSUBRST
-	if ( (!(wecleman_irqctrl & 2)) && (data & 2) )	// 0->1 transition
-	{
-		cpu_reset(1);
-//		cpu_halt(1,0);
-	}
+	if (data & 2)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 
 
 //	Bit 2 : SOUND-ON
@@ -579,42 +575,42 @@ static void wecleman_soundlatch_w(int offset, int data);
 
 static struct MemoryReadAddress wecleman_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM,										},
-	{ 0x040000, 0x043fff, MRA_BANK1,			0,0,	"RAM"			},
-	{ 0x060000, 0x060007, MRA_BANK2,			0,0,	"vregs?"		},	// only 60006.w is read
-	{ 0x080000, 0x080011, blitter_r,			0,0,	"Blitter"		},	// for debug
-	{ 0x100000, 0x103fff, wecleman_pageram_r,	0,0,	"Page RAM"		},
-	{ 0x108000, 0x108fff, wecleman_txtram_r,	0,0,	"Text RAM"		},
-	{ 0x110000, 0x110fff, paletteram_word_r,	0,0,	"Palette"		},
-	{ 0x124000, 0x127fff, sharedram_r, 			0,0,	"Shared RAM"	},
-	{ 0x130000, 0x130fff, spriteram_word_r,		0,0,	"Sprite RAM"	},
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x040000, 0x043fff, MRA_BANK1 },
+	{ 0x060000, 0x060007, MRA_BANK2 },	// only 60006.w is read
+	{ 0x080000, 0x080011, blitter_r },	// for debug
+	{ 0x100000, 0x103fff, wecleman_pageram_r },
+	{ 0x108000, 0x108fff, wecleman_txtram_r },
+	{ 0x110000, 0x110fff, paletteram_word_r },
+	{ 0x124000, 0x127fff, sharedram_r },
+	{ 0x130000, 0x130fff, spriteram_word_r },
 
-	{ 0x140010, 0x140011, wecleman_read_gear	},	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_r  		},	// ??
-	{ 0x140014, 0x140015, input_port_2_r  		},	// DSW
-	{ 0x140016, 0x140017, input_port_3_r  		},	// DSW
-	{ 0x140020, 0x140021, selected_ip_r			},	// Accelerator or Wheel or ..
+	{ 0x140010, 0x140011, wecleman_read_gear },	// Coins + brake + gear
+	{ 0x140012, 0x140013, input_port_1_r },	// ??
+	{ 0x140014, 0x140015, input_port_2_r },	// DSW
+	{ 0x140016, 0x140017, input_port_3_r },	// DSW
+	{ 0x140020, 0x140021, selected_ip_r },	// Accelerator or Wheel or ..
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM												}, // 03c000-03ffff used as RAM sometimes!
-	{ 0x040000, 0x043fff, MWA_BANK1, 0, 0,							"RAM"		},
-	{ 0x060000, 0x060007, MWA_BANK2, &wecleman_unknown, 0,			"?"			},
-	{ 0x080000, 0x080011, blitter_w, &blitter_regs, 0,				"Blitter"	},
-	{ 0x100000, 0x103fff, wecleman_pageram_w, &wecleman_pageram, 0, "Page RAM"	},
-	{ 0x108000, 0x108fff, wecleman_txtram_w, &wecleman_txtram,	0,	"Text RAM"	},
-	{ 0x110000, 0x110fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram, 0,	"Palette"	 },
-	{ 0x124000, 0x127fff, sharedram_w, &sharedram, 0,							"Shared RAM" },
-	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size,		"Sprite RAM" },
+	{ 0x000000, 0x03ffff, MWA_ROM }, // 03c000-03ffff used as RAM sometimes!
+	{ 0x040000, 0x043fff, MWA_BANK1 },
+	{ 0x060000, 0x060007, MWA_BANK2, &wecleman_unknown },
+	{ 0x080000, 0x080011, blitter_w, &blitter_regs },
+	{ 0x100000, 0x103fff, wecleman_pageram_w, &wecleman_pageram },
+	{ 0x108000, 0x108fff, wecleman_txtram_w, &wecleman_txtram },
+	{ 0x110000, 0x110fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x124000, 0x127fff, sharedram_w, &sharedram },
+	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size },
 
 	{ 0x140000, 0x140001, wecleman_soundlatch_w },	// Soundlatch_w
-	{ 0x140002, 0x140003, selected_ip_w			},	// Selects accelerator / wheel / ..
-	{ 0x140004, 0x140005, irqctrl_w				},	// Main CPU controls the other CPUs
-	{ 0x140006, 0x140007, MWA_NOP				},	// Watchdog reset
-	{ 0x140020, 0x140021, MWA_NOP				},	// Paired with writes to $140003
-	{ 0x140030, 0x140031, MWA_BANK3				},	// ??
+	{ 0x140002, 0x140003, selected_ip_w },	// Selects accelerator / wheel / ..
+	{ 0x140004, 0x140005, irqctrl_w },	// Main CPU controls the other CPUs
+	{ 0x140006, 0x140007, MWA_NOP },	// Watchdog reset
+	{ 0x140020, 0x140021, MWA_NOP },	// Paired with writes to $140003
+	{ 0x140030, 0x140031, MWA_BANK3 },	// ??
 	{ -1 }
 };
 
@@ -635,45 +631,45 @@ void hotchase_soundlatch_w(int offset, int data);
 
 static struct MemoryReadAddress hotchase_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM										},
-	{ 0x040000, 0x063fff, MRA_BANK1,			0, 0,	"Work RAM"		},
-	{ 0x080000, 0x080011, MRA_BANK2,			0, 0,	"Blitter"		},
-	{ 0x100000, 0x100fff, MRA_BANK3,			0, 0,	"BG Ram"		},
-	{ 0x101000, 0x10101f, MRA_BANK4,			0, 0,	"BG Regs"		},
-	{ 0x102000, 0x102fff, MRA_BANK5,			0, 0,	"FG Ram"		},
-	{ 0x103000, 0x10301f, MRA_BANK6,			0, 0,	"FG Regs"		},
-	{ 0x110000, 0x111fff, paletteram_word_r,	0, 0, 	"Palette"		},	// only the first 2048 colors used
-	{ 0x120000, 0x123fff, sharedram_r,			0, 0,	"Shared RAM"	},
-	{ 0x130000, 0x130fff, spriteram_word_r,		0, 0,	"Sprite RAM"	},
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x040000, 0x063fff, MRA_BANK1 },
+	{ 0x080000, 0x080011, MRA_BANK2 },
+	{ 0x100000, 0x100fff, MRA_BANK3 },
+	{ 0x101000, 0x10101f, MRA_BANK4 },
+	{ 0x102000, 0x102fff, MRA_BANK5 },
+	{ 0x103000, 0x10301f, MRA_BANK6 },
+	{ 0x110000, 0x111fff, paletteram_word_r },	// only the first 2048 colors used
+	{ 0x120000, 0x123fff, sharedram_r },
+	{ 0x130000, 0x130fff, spriteram_word_r },
 
-	{ 0x140006, 0x140007, MRA_NOP				},	// Watchdog_reset_r
-	{ 0x140010, 0x140011, hotchase_read_gear	},	// Coins + brake + gear
-	{ 0x140012, 0x140013, input_port_1_r		},	// ?? bit 4 from sound cpu
-	{ 0x140014, 0x140015, input_port_2_r		},	// DSW 2
-	{ 0x140016, 0x140017, input_port_3_r		},	// DSW 1
-	{ 0x140020, 0x140021, selected_ip_r			},	// Accelerator or Wheel or ..
-//	{ 0x140022, 0x140023, MRA_NOP				},	// ??
+	{ 0x140006, 0x140007, MRA_NOP },	// Watchdog_reset_r
+	{ 0x140010, 0x140011, hotchase_read_gear },	// Coins + brake + gear
+	{ 0x140012, 0x140013, input_port_1_r },	// ?? bit 4 from sound cpu
+	{ 0x140014, 0x140015, input_port_2_r },	// DSW 2
+	{ 0x140016, 0x140017, input_port_3_r },	// DSW 1
+	{ 0x140020, 0x140021, selected_ip_r },	// Accelerator or Wheel or ..
+//	{ 0x140022, 0x140023, MRA_NOP },	// ??
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM												},
-	{ 0x040000, 0x063fff, MWA_BANK1, 0,	0,							"Work RAM"	},
-	{ 0x080000, 0x080011, blitter_w, &blitter_regs,	0,				"Blitter"	},
-	{ 0x100000, 0x100fff, hotchase_bgram_w, &hotchase_bgram, 0,		"BG Ram"	},
-	{ 0x101000, 0x10101f, hotchase_bgreg_w, &hotchase_bgreg, 0,		"BG Regs"	},
-	{ 0x102000, 0x102fff, hotchase_fgram_w,	&hotchase_fgram, 0,		"FG Ram"	},
-	{ 0x103000, 0x10301f, hotchase_fgreg_w,	&hotchase_fgreg, 0,		"FG Regs"	},
-	{ 0x110000, 0x111fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram, 0,	"Palette"		},
-	{ 0x120000, 0x123fff, sharedram_w, &sharedram, 0,							"Shared Ram"	},
-	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size,		"Sprite Ram"	},
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x040000, 0x063fff, MWA_BANK1 },
+	{ 0x080000, 0x080011, blitter_w, &blitter_regs },
+	{ 0x100000, 0x100fff, hotchase_bgram_w, &hotchase_bgram },
+	{ 0x101000, 0x10101f, hotchase_bgreg_w, &hotchase_bgreg },
+	{ 0x102000, 0x102fff, hotchase_fgram_w,	&hotchase_fgram },
+	{ 0x103000, 0x10301f, hotchase_fgreg_w,	&hotchase_fgreg },
+	{ 0x110000, 0x111fff, paletteram_SBGRBBBBGGGGRRRR_word_w, &paletteram },
+	{ 0x120000, 0x123fff, sharedram_w, &sharedram },
+	{ 0x130000, 0x130fff, spriteram_word_w, &spriteram, &spriteram_size },
 
-	{ 0x140000, 0x140001, hotchase_soundlatch_w	},	// Soundlatch_w
-	{ 0x140002, 0x140003, selected_ip_w			},	// Selects accelerator / wheel / ..
-	{ 0x140004, 0x140005, irqctrl_w				},	// Main CPU controls the other CPUs
-	{ 0x140020, 0x140021, MWA_NOP				},	// Paired with writes to $140003
-//	{ 0x140030, 0x140031, MWA_NOP				},	// ??
+	{ 0x140000, 0x140001, hotchase_soundlatch_w },	// Soundlatch_w
+	{ 0x140002, 0x140003, selected_ip_w },	// Selects accelerator / wheel / ..
+	{ 0x140004, 0x140005, irqctrl_w },	// Main CPU controls the other CPUs
+	{ 0x140020, 0x140021, MWA_NOP },	// Paired with writes to $140003
+//	{ 0x140030, 0x140031, MWA_NOP },	// ??
 	{ -1 }
 };
 
@@ -695,17 +691,17 @@ static struct MemoryWriteAddress hotchase_writemem[] =
 
 static struct MemoryReadAddress wecleman_sub_readmem[] =
 {
-	{ 0x000000, 0x00ffff, MRA_ROM								},
-	{ 0x060000, 0x060fff, MRA_BANK8,	0,0,	"Road RAM"		},
-	{ 0x070000, 0x073fff, &sharedram_r, 0,0,	"Shared RAM"	},
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x060000, 0x060fff, MRA_BANK8 },
+	{ 0x070000, 0x073fff, &sharedram_r },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_sub_writemem[] =
 {
-	{ 0x000000, 0x00ffff, MWA_ROM																},
-	{ 0x060000, 0x060fff, MWA_BANK8, &wecleman_roadram, &wecleman_roadram_size, "Road RAM"		},
-	{ 0x070000, 0x073fff, sharedram_w, 0,0, 									"Shared RAM"	},
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x060000, 0x060fff, MWA_BANK8, &wecleman_roadram, &wecleman_roadram_size },
+	{ 0x070000, 0x073fff, sharedram_w },
 	{ -1 }
 };
 
@@ -727,19 +723,19 @@ static struct MemoryWriteAddress wecleman_sub_writemem[] =
 
 static struct MemoryReadAddress hotchase_sub_readmem[] =
 {
-	{ 0x000000, 0x01ffff, MRA_ROM								},
-	{ 0x020000, 0x020fff, MRA_BANK7,	0, 0,	"Road RAM"		},
-	{ 0x060000, 0x060fff, MRA_BANK8,	0, 0,	"Work RAM"		},
-	{ 0x040000, 0x043fff, &sharedram_r, 0, 0,	"Shared RAM"	},
+	{ 0x000000, 0x01ffff, MRA_ROM },
+	{ 0x020000, 0x020fff, MRA_BANK7 },
+	{ 0x060000, 0x060fff, MRA_BANK8 },
+	{ 0x040000, 0x043fff, &sharedram_r },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_sub_writemem[] =
 {
-	{ 0x000000, 0x01ffff, MWA_ROM															},
-	{ 0x020000, 0x020fff, MWA_BANK7, &wecleman_roadram, &wecleman_roadram_size, "Road RAM"	},
-	{ 0x060000, 0x060fff, MWA_BANK8,	0,0,	"Work RAM"		},
-	{ 0x040000, 0x043fff, sharedram_w,	0,0,	"Shared RAM"	},
+	{ 0x000000, 0x01ffff, MWA_ROM },
+	{ 0x020000, 0x020fff, MWA_BANK7, &wecleman_roadram, &wecleman_roadram_size },
+	{ 0x060000, 0x060fff, MWA_BANK8 },
+	{ 0x040000, 0x043fff, sharedram_w },
 	{ -1 }
 };
 
@@ -801,25 +797,25 @@ void multiply_w(int offset, int data)
 
 static struct MemoryReadAddress wecleman_sound_readmem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM					},
-	{ 0x8000, 0x83ff, MRA_RAM					},
-	{ 0x9000, 0x9000, multiply_r				},	// Protection
-	{ 0xa000, 0xa000, soundlatch_r				},
-	{ 0xb000, 0xb00d, K007232_read_port_0_r		},	// Reading offset 5/b triggers the sample
-	{ 0xc001, 0xc001, YM2151_status_port_0_r	},
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x9000, 0x9000, multiply_r },	// Protection
+	{ 0xa000, 0xa000, soundlatch_r },
+	{ 0xb000, 0xb00d, K007232_read_port_0_r },	// Reading offset 5/b triggers the sample
+	{ 0xc001, 0xc001, YM2151_status_port_0_r },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress wecleman_sound_writemem[] =
 {
-	{ 0x0000, 0x7fff, MWA_ROM					},
-	{ 0x8000, 0x83ff, MWA_RAM					},
-	{ 0x9000, 0x9001, multiply_w				},	// Protection
-	{ 0x9006, 0x9006, MWA_NOP					},
-	{ 0xb000, 0xb00d, K007232_write_port_0_w	},
-	{ 0xc000, 0xc000, YM2151_register_port_0_w	},
-	{ 0xc001, 0xc001, YM2151_data_port_0_w		},
-//	{ 0xf000, 0xf000, MWA_NOP					},	// ?
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x9000, 0x9001, multiply_w },	// Protection
+	{ 0x9006, 0x9006, MWA_NOP },
+	{ 0xb000, 0xb00d, K007232_write_port_0_w },
+	{ 0xc000, 0xc000, YM2151_register_port_0_w },
+	{ 0xc001, 0xc001, YM2151_data_port_0_w },
+//	{ 0xf000, 0xf000, MWA_NOP },	// ?
 	{ -1 }
 };
 
@@ -827,6 +823,16 @@ static struct MemoryWriteAddress wecleman_sound_writemem[] =
 /***************************************************************************
 								Hot Chase
 ***************************************************************************/
+
+static struct K007232_interface hotchase_k007232_interface =
+{
+	3,
+	{5,6,7},
+	{K007232_VOL(33,MIXER_PAN_CENTER,33,MIXER_PAN_CENTER),
+	 K007232_VOL(33,MIXER_PAN_LEFT,33,MIXER_PAN_RIGHT),
+	 K007232_VOL(33,MIXER_PAN_LEFT,33,MIXER_PAN_RIGHT) },
+	{0,0,0}
+};
 
 
 /* 140001.b */
@@ -836,73 +842,105 @@ void hotchase_soundlatch_w(int offset, int data)
 	cpu_set_irq_line(2,M6809_IRQ_LINE, HOLD_LINE);
 }
 
-
-/* This are _guesses_ :
-
-	1/2/3000 -> 3 x 007232
-	(it look like the sample address, for example, is written as
-	 a *big endian* value in regs 2/3)
-
-	4000	volume? a9
-	4001	volume
-	4002	volume
-	4003	volume? 00 cc
-	4004	volume? 00 ee ff
-	4005	? 00 8a ff
-	4006	? 00 48 80 88 c8
-	4007	? 01 02 2a
-
-	5000	irq ack?
-	6000	soundlatch_r
-	7000	? 0
-
-Game over sample: ROM e11, top half, offset 0 */
-
-#if 0
-void hotchase_K007232_w(int offset, int data)
+void hotchase_sound_control_w(int offset, int data)
 {
-	int chip = offset / 0x1000;
-	int reg  = offset - chip * 0x1000;
+	int reg[8];
 
-//	if (chip == 1)
-//	{
-		if ((reg % 6) < 4)	K007232_WriteReg(reg ^ 1, data, chip);
-//		else				K007232_WriteReg(reg ^ 0, data, chip);
+	reg[offset] = data;
 
-		if ( (reg % 6) == 0x5 )
+	switch (offset)
+	{
+		case 0x0:	/* Change volume of voice A (l&r speaker at once) */
+		case 0x2:	/* for 3 chips.. */
+		case 0x4:
+								// chip, channel (l/r), volA, volB
+			K007232_set_volume( offset / 2,	0, (data >> 4) * 0x11, (reg[offset^1] >> 4) * 0x11);
+			K007232_set_volume( offset / 2,	1, (data & 15) * 0x11, (reg[offset^1] & 15) * 0x11);
+			break;
+
+		case 0x1:	/* Change volume of voice B (l&r speaker at once) */
+		case 0x3:	/* for 3 chips.. */
+		case 0x5:
+								// chip, channel (l/r), volA, volB
+			K007232_set_volume( offset / 2,	0, (reg[offset^1] >> 4) * 0x11, (data >> 4) * 0x11);
+			K007232_set_volume( offset / 2,	1, (reg[offset^1] & 15) * 0x11, (data & 15) * 0x11);
+			break;
+
+		case 0x06:	/* Bankswitch for chips 0 & 1 */
 		{
-//			K007232_WriteReg(0xc, 0xff, chip);	// max volume
-			K007232_ReadReg(reg % 6, chip);		// trigger sample
-			usrintf_showmessage("SAMPLE");
+			unsigned char *RAM0 = Machine->memory_region[hotchase_k007232_interface.bank[0]];
+			unsigned char *RAM1 = Machine->memory_region[hotchase_k007232_interface.bank[1]];
+
+			int bank0_a = (data >> 1) & 1;
+			int bank1_a = (data >> 2) & 1;
+			int bank0_b = (data >> 3) & 1;
+			int bank1_b = (data >> 4) & 1;
+			// bit 6: chip 2 - ch0 ?
+			// bit 7: chip 2 - ch1 ?
+
+			K007232_bankswitch(0, &RAM0[bank0_a*0x20000], &RAM0[bank0_b*0x20000]);
+			K007232_bankswitch(1, &RAM1[bank1_a*0x20000], &RAM1[bank1_b*0x20000]);
 		}
-//	}
+		break;
+
+		case 0x07:	/* Bankswitch for chip 2 */
+		{
+			unsigned char *RAM2 = Machine->memory_region[hotchase_k007232_interface.bank[2]];
+
+			int bank2_a = (data >> 0) & 7;
+			int bank2_b = (data >> 3) & 7;
+
+			K007232_bankswitch(2, &RAM2[bank2_a*0x20000], &RAM2[bank2_b*0x20000]);
+		}
+		break;
+	}
 }
-#endif
+
+
+/* Read and write handlers for one K007232 chip:
+   even and odd register are mapped swapped */
+
+#define HOTCHASE_K007232_RW(_chip_) \
+int hotchase_K007232_##_chip_##_r(int offset) \
+{ \
+	return K007232_read_port_##_chip_##_r(offset ^ 1); \
+} \
+void hotchase_K007232_##_chip_##_w(int offset, int data) \
+{ \
+	K007232_write_port_##_chip_##_w(offset ^ 1, data); \
+} \
+
+/* 3 x K007232 */
+HOTCHASE_K007232_RW(0)
+HOTCHASE_K007232_RW(1)
+HOTCHASE_K007232_RW(2)
 
 
 
-#if 0
 static struct MemoryReadAddress hotchase_sound_readmem[] =
 {
-	{ 0x0000, 0x07ff, MRA_RAM			},
-//	{ 0x3000, 0x300d, K007232_ReadReg	},
-	{ 0x6000, 0x6000, soundlatch_r		},	// Read on IRQ
-	{ 0x8000, 0xffff, MRA_ROM			},
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x1000, 0x100d, hotchase_K007232_0_r },
+	{ 0x2000, 0x200d, hotchase_K007232_1_r },
+	{ 0x3000, 0x300d, hotchase_K007232_2_r },
+	{ 0x6000, 0x6000, soundlatch_r },	// Read on IRQ
+	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress hotchase_sound_writemem[] =
 {
-	{ 0x0000, 0x07ff, MWA_RAM 				},
-//	{ 0x1000, 0x300d, hotchase_K007232_w	},
-//	{ 0x1000, 0x1001, MWA_NOP				},	// Only 0 written
-//	{ 0x100c, 0x100c, MWA_NOP				},
-	{ 0x5000, 0x5000, MWA_NOP				},
-	{ 0x7000, 0x7000, MWA_NOP				},	// Only 0 written
-	{ 0x8000, 0xffff, MWA_ROM				},
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x1000, 0x100d, hotchase_K007232_0_w },
+	{ 0x2000, 0x200d, hotchase_K007232_1_w },
+	{ 0x3000, 0x300d, hotchase_K007232_2_w },
+	{ 0x4000, 0x4007, hotchase_sound_control_w },	// Sound volume, banking, etc.
+	{ 0x5000, 0x5000, MWA_NOP },	// written with 0 on IRQ, 1 on FIRQ
+	{ 0x7000, 0x7000, MWA_NOP },	// command acknowledge?
+	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
-#endif
+
 
 
 
@@ -1353,48 +1391,17 @@ static struct MachineDriver wecleman_machine_driver =
 								Hot Chase
 ***************************************************************************/
 
-#if 0
-static struct K007232_interface hotchase_k007232_interface =
-{
-	3,
-	{5,6,7},
-	{K007232_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER),
-	 K007232_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT),
-	 K007232_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{0,0,0}
-};
-#endif
 
-void hotchase_init_machine(void)
-{
-#if 0
-	unsigned char *RAM1 = Machine->memory_region[hotchase_k007232_interface.bank[0]];
-	unsigned char *RAM2 = Machine->memory_region[hotchase_k007232_interface.bank[1]];
-	unsigned char *RAM3 = Machine->memory_region[hotchase_k007232_interface.bank[2]];
-
-	K007232_bankswitch(0,&RAM1[0],&RAM1[0x20000]);
-	K007232_bankswitch(1,&RAM2[0],&RAM2[0x20000]);
-	K007232_bankswitch(2,&RAM3[0],&RAM3[0x20000]);
-#endif
-}
-
-
-int hotchase_interrupt( void )
-{
-	return 4;
-}
-
-int hotchase_sound_interrupt(void)
-{
-	return M6809_INT_FIRQ;
-}
+void hotchase_init_machine(void)		{						}
+int  hotchase_interrupt( void )			{return 4;				}
+int  hotchase_sound_interrupt(void)		{return M6809_INT_FIRQ;	}
 
 static struct MachineDriver hotchase_machine_driver =
 {
 	{
 		{
 			CPU_M68000,
-			4000000,
+			10000000,		/* 10 MHz - PCB is drawn in one set's readme */
 			0,
 			hotchase_readmem,hotchase_writemem,0,0,
 			hotchase_interrupt,1,
@@ -1402,22 +1409,21 @@ static struct MachineDriver hotchase_machine_driver =
 		},
 		{
 			CPU_M68000,
-			4000000,
+			10000000,		/* 10 MHz - PCB is drawn in one set's readme */
 			3,
 			hotchase_sub_readmem,hotchase_sub_writemem,0,0,
 			ignore_interrupt,1,		/* lev 4 irq generated by main CPU */
 			0,0
 		},
-#if 0
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			3579545,
+			3579545,		/* 3.579 MHz - PCB is drawn in one set's readme */
 			4,
 			hotchase_sound_readmem,hotchase_sound_writemem,0,0,
-			hotchase_sound_interrupt,1, /* irq caused by main cpu */
+			hotchase_sound_interrupt,8, /* FIRQ, while IRQ is caused by main cpu */
+										/* Amuse: every 2 ms */
 			0,0
 		},
-#endif
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -1440,15 +1446,9 @@ static struct MachineDriver hotchase_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-#if 0
-		{
 			SOUND_K007232,
 			&hotchase_k007232_interface
 		}
-#endif
 	}
 };
 
@@ -1659,14 +1659,14 @@ ROM_START( hotchase_rom )
 	ROM_LOAD( "763f01", 0x8000, 0x8000, 0x4fddd061 )
 
 	ROM_REGION(0x40000)			/* Region 5 - sound samples */
-	ROM_LOAD( "763e11", 0x00000, 0x40000, 0x9d99a5a7 )
+	ROM_LOAD( "763e11", 0x000000, 0x040000, 0x9d99a5a7 )	// 2 banks
 
 	ROM_REGION(0x40000)			/* Region 6 - sound samples */
-	ROM_LOAD( "763e10", 0x00000, 0x40000, 0xca409210 )
+	ROM_LOAD( "763e10", 0x000000, 0x040000, 0xca409210 )	// 2 banks
 
 	ROM_REGION(0x100000)		/* Region 7 - sound samples */
-	ROM_LOAD( "763e09", 0x000000, 0x080000, 0xc39857db )	// 8*0x10000 or 2*0x40000
-	ROM_LOAD( "763e08", 0x080000, 0x080000, 0x054a9a63 )	// 8*0x10000
+	ROM_LOAD( "763e08", 0x000000, 0x080000, 0x054a9a63 )	// 4 banks
+	ROM_LOAD( "763e09", 0x080000, 0x080000, 0xc39857db )	// 4 banks
 
 ROM_END
 
@@ -1732,7 +1732,7 @@ void hotchase_sprite_decode( int num_banks, int bank_size )
 /* Unpack sprites data and do some patching */
 void hotchase_rom_decode(void)
 {
-unsigned char *RAM,x;
+unsigned char *RAM;
 int i;
 
 /* Optional code patches */
@@ -1759,7 +1759,7 @@ int i;
 	RAM = Machine->memory_region[2];
 	for (i = 0; i < 0x80000*6; i += 2)
 	{
-		x = RAM[i];
+		int x = RAM[i];
 		RAM[i] = RAM[i+1];
 		RAM[i+1] = x;
 	}
@@ -1779,7 +1779,7 @@ struct GameDriver hotchase_driver =
 	"1988",
 	"Konami",
 	"Luca Elia\n",
-	GAME_NOT_WORKING,
+	0,
 	&hotchase_machine_driver,
 	0,
 

@@ -1,24 +1,24 @@
 /***************************************************************************
 
 	Midway MCR-3 system
-	
+
 	Currently implemented:
 		* Tapper
 		* Timber
 		* Discs of Tron (Squawk n' Talk)
 		* Destruction Derby (Turbo Chip Squeak)
-		
+
 	Spy Hunter games (MCR3 with scrolling):
 		* Spy Hunter (Chip Squeak Deluxe)
 		* Turbo Tag (prototype) (Chip Squeak Deluxe)
 		* Crater Raider
-		
+
 	MCR Monoboard games (MCR3 with a slightly different memory map):
 		* Destruction Derby (Monoboard version) (Turbo Chip Squeak)
 		* Sarge (Turbo Chip Squeak)
 		* Rampage (Sounds Good)
 		* Power Drive (Sounds Good)
-		* Max RPM (Unknown Sound)
+		* Max RPM (Turbo Chip Squeak)
 
 ****************************************************************************
 
@@ -30,7 +30,7 @@
 	CPU #1
 	========================================================================
 	0000-DFFF   R     xxxxxxxx    Program ROM
-	E000-E7FF   R/W   xxxxxxxx    Program RAM
+	E000-E7FF   R/W   xxxxxxxx    NVRAM
 	E800-E9FF   R/W   xxxxxxxx    Sprite RAM
 	F000-F7FF   R/W   xxxxxxxx    Background video RAM
 	F800-F8FF     W   xxxxxxxx    Palette RAM
@@ -133,7 +133,7 @@ static INT8 maxrpm_p1_shift;
 static INT8 maxrpm_p2_shift;
 
 /* Translation table for one-joystick emulation */
-static const UINT8 one_joy_trans[16] = 
+static const UINT8 one_joy_trans[16] =
 {
 	0x00,0x05,0x0A,0x00,0x06,0x04,0x08,0x00,
 	0x09,0x01,0x02,0x00,0x00,0x00,0x00,0x00
@@ -179,7 +179,7 @@ static int dotron_port_2_r(int offset)
 		count = 5;
 		delta = 0;
 	}
-	
+
 	/* Map to "aim down" */
 	else if (delta < -5)
 	{
@@ -241,7 +241,7 @@ static int powerdrv_interrupt(void)
 	/* pulse the CTC line 2 periodically */
 	z80ctc_0_trg2_w(0, 1);
 	z80ctc_0_trg2_w(0, 0);
-	
+
 	if (cpu_getiloops() == 0)
 		return mcr_interrupt();
 	else
@@ -350,14 +350,14 @@ static void spyhunt_port_4_w(int offset, int data)
 
 	/* mux select is in bit 7 */
 	input_mux = (data >> 7) & 1;
-	
+
 	/* lamp driver command triggered by bit 5, data is in low four bits */
 	if (((lastport4 ^ data) & 0x20) && !(data & 0x20))
 		spyhunt_lamp[data & 7] = (data >> 3) & 1;
-	
+
 	/* low 5 bits go to control the Chip Squeak Deluxe */
 	csdeluxe_data_w(offset, data);
-	
+
 	/* remember the last data */
 	lastport4 = data;
 }
@@ -1226,7 +1226,7 @@ static struct MachineDriver destderb_machine_driver =
 };
 
 
-/* Sarge/Demolition Derby Mono = MCR monoboardmonoboard = MCR3 with no SSIO */
+/* Sarge/Demolition Derby Mono/Max RPM = MCR monoboardmonoboard = MCR3 with no SSIO */
 /* in this case, Turbo Chip Squeak is used for sound */
 static struct MachineDriver sarge_machine_driver =
 {
@@ -1326,37 +1326,6 @@ static struct MachineDriver powerdrv_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SOUNDS_GOOD
-	}
-};
-
-
-/* Max RPM = MCR monoboard with no sound since we don't know what its sound board is */
-static struct MachineDriver maxrpm_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		MONO_CPU(mcr_interrupt)
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
-
-	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
-	gfxdecodeinfo,
-	8*16, 8*16,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	mcrmono_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 }
 	}
 };
 
@@ -1498,10 +1467,10 @@ static void spyhunt_decode(void)
 
 static void tapper_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x9d, NULL);
+	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr3_char_code_mask = 0x3ff;
 	mcr3_sprite_code_mask = 0x0ff;
 }
@@ -1509,10 +1478,10 @@ static void tapper_init(void)
 
 static void timber_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x9f, NULL);
+	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-		
+
 	mcr3_char_code_mask = 0x3ff;
 	mcr3_sprite_code_mask = 0x0ff;
 
@@ -1524,11 +1493,11 @@ static void timber_init(void)
 
 static void dotron_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe543, 0xac, NULL);
+	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_SQUAWK_N_TALK);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, dotron_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(dotron_port_4_w, NULL, NULL, NULL);
-	
+
 	mcr3_char_code_mask = 0x1ff;
 	mcr3_sprite_code_mask = 0x07f;
 }
@@ -1536,17 +1505,18 @@ static void dotron_init(void)
 
 static void destderb_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe4e6, 0x153, NULL);
+	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, NULL, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(turbocs_data_w, NULL, NULL, NULL);
-	
+
 	mcr3_char_code_mask = 0x1ff;
 	mcr3_sprite_code_mask = 0x0ff;
-	
+
 	/* need to invert the graphics for the monoboard version only */
 	if (Machine->memory_region[1][0] == 0xff)
 	{
+		MCR_CONFIGURE_NO_HISCORE;
 		MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, turbocs_data_w, NULL);
 		mcrmono_decode();
 	}
@@ -1559,24 +1529,24 @@ static void sarge_init(void)
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
 	MCR_CONFIGURE_PORT_04_READS(NULL, sarge_port_1_r, sarge_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, turbocs_data_w, NULL);
-	
+
 	mcr3_char_code_mask = 0x1ff;
 	mcr3_sprite_code_mask = 0x0ff;
-	
+
 	mcrmono_decode();
 }
 
 
 static void rampage_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe631, 0x3f, NULL);
+	MCR_CONFIGURE_HISCORE(0xe631, 0x3f, NULL);	/* no actual NVRAM here, though */
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, NULL, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, soundsgood_data_w, NULL);
-	
+
 	mcr3_char_code_mask = 0x3ff;
 	mcr3_sprite_code_mask = 0x1ff;
-	
+
 	mcrmono_decode();
 }
 
@@ -1587,10 +1557,10 @@ static void powerdrv_init(void)
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, powerdrv_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, soundsgood_data_w, powerdrv_port_7_w);
-	
+
 	mcr3_char_code_mask = 0x3ff;
 	mcr3_sprite_code_mask = 0x1ff;
-	
+
 	mcrmono_decode();
 }
 
@@ -1601,24 +1571,24 @@ static void maxrpm_init(void)
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
 	MCR_CONFIGURE_PORT_04_READS(NULL, maxrpm_port_1_r, maxrpm_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(NULL, maxrpm_mux_w, turbocs_data_w, NULL);
-	
+
 	mcr3_char_code_mask = 0x3ff;
 	mcr3_sprite_code_mask = 0x1ff;
-	
+
 	mcrmono_decode();
 }
 
 
 static void spyhunt_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xf42b, 0xfb, NULL);
+	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, spyhunt_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(spyhunt_port_4_w, NULL, NULL, NULL);
-	
+
 	mcr3_char_code_mask = 0x07f;
 	mcr3_sprite_code_mask = 0x0ff;
-	
+
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = -16;
 	spyhunt_draw_lamps = 1;
@@ -1629,18 +1599,18 @@ static void spyhunt_init(void)
 
 static void turbotag_init(void)
 {
-	MCR_CONFIGURE_NO_HISCORE;
+	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_CHIP_SQUEAK_DELUXE);
 	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, spyhunt_port_2_r, NULL, NULL);
 	MCR_CONFIGURE_PORT_47_WRITES(spyhunt_port_4_w, NULL, NULL, NULL);
-	
+
 	mcr3_char_code_mask = 0x07f;
 	mcr3_sprite_code_mask = 0x0ff;
-	
+
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = -88;
 	spyhunt_draw_lamps = 0;
-	
+
 	/* kludge for bad ROM read */
 	install_mem_read_handler(0, 0x0b53, 0x0b53, turbotag_kludge_r);
 }
@@ -1648,13 +1618,13 @@ static void turbotag_init(void)
 
 static void crater_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0xf5fb, 0xa3, NULL);
+	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
-	
+
 	mcr3_char_code_mask = 0x07f;
 	mcr3_sprite_code_mask = 0x0ff;
-	
+
 	spyhunt_sprite_color_mask = 0x03;
 	spyhunt_scroll_offset = -96;
 	spyhunt_draw_lamps = 0;
@@ -2009,9 +1979,10 @@ ROM_START( maxrpm_rom )
 	ROM_LOAD( "fg-1",         0x18000, 0x8000, 0xe54b7f2a )
 	ROM_LOAD( "fg-2",         0x28000, 0x8000, 0x38be8505 )
 	ROM_LOAD( "fg-3",         0x38000, 0x8000, 0x9ae3eb52 )
-	
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "maxrpm.snd",  0x00000, 0x08000, 0x00000000 )	/* placeholder */
+
+	ROM_REGION(0x10000)  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "turbskwk.u5",   0x8000, 0x4000, 0x55c3b759 )
+	ROM_LOAD( "turbskwk.u4",   0xc000, 0x4000, 0x31a2da2e )
 ROM_END
 
 
@@ -2192,7 +2163,7 @@ MCR3_DRIVER      (sarge,    sarge,    1985, ORIENTATION_DEFAULT,   "Sarge")
 MCR3_DRIVER      (rampage,  rampage,  1986, ORIENTATION_DEFAULT,   "Rampage (revision 3)")
 MCR3_CLONE_DRIVER(rampage2, rampage,  1986, ORIENTATION_DEFAULT,   "Rampage (revision 2)", rampage)
 MCR3_DRIVER      (powerdrv, powerdrv, 1986, ORIENTATION_DEFAULT,   "Power Drive")
-MCR3_DRIVER      (maxrpm,   maxrpm,   1986, ORIENTATION_DEFAULT,   "Max RPM")
+MCR3_DRIVER      (maxrpm,   sarge,    1986, ORIENTATION_DEFAULT,   "Max RPM")
 
 MCR3_DRIVER      (spyhunt,  spyhunt,  1983, ORIENTATION_ROTATE_90, "Spy Hunter")
 MCR3_DRIVER      (turbotag, turbotag, 1985, ORIENTATION_ROTATE_90, "Turbo Tag (Prototype)")

@@ -181,12 +181,12 @@ enum
 #define CPU_FLAGS_MASK 0xff00
 
 
-#define MAX_CPU 4	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
-					/* can run at the same time. Currently, 4 is enough. */
+#define MAX_CPU 8	/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
+					/* can run at the same time. Currently, 8 is enough. */
 
 
-#define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
-					/* which can run at the same time. Currently, 4 is enough. */
+#define MAX_SOUND 5	/* MAX_SOUND is the maximum number of sound subsystems */
+					/* which can run at the same time. Currently, 5 is enough. */
 
 
 
@@ -217,7 +217,7 @@ struct MachineDriver
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
-	int unused;	/* obsolete */
+	int obsolete1;
 
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
@@ -225,9 +225,9 @@ struct MachineDriver
 
 	/* sound hardware */
 	int sound_attributes;
-	int (*sh_start)(void);
-	void (*sh_stop)(void);
-	void (*sh_update)(void);
+	int obsolete2;
+	int obsolete3;
+	int obsolete4;
 	struct MachineSound sound[MAX_SOUND];
 };
 
@@ -272,11 +272,10 @@ struct MachineDriver
 #define	VIDEO_SUPPORTS_16BIT		0x0008
 
 /* ASG 980417 - added: */
-/* bit 4 of the video attributes indicates that the driver wants its refresh before the VBLANK */
-/*       instead of after. You usually don't want to use this, but it might be necessary if */
-/*       you are caching data during the video frame and want to update the screen before */
-/*       the game starts calculating the next frame. */
-#define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
+/* bit 4 of the video attributes indicates that the driver wants its refresh after */
+/*       the VBLANK instead of before. */
+#define	VIDEO_UPDATE_BEFORE_VBLANK	0x0000
+#define	VIDEO_UPDATE_AFTER_VBLANK	0x0010
 
 /* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
 /* different proportions, e.g. 1:2 for Blasteroids */
@@ -322,7 +321,7 @@ struct GameDriver
 									/* if the encryption is different from the above. */
 	const char **samplenames;		/* optional array of names of samples to load. */
 									/* drivers can retrieve them in Machine->samples */
-	const unsigned char *sound_prom;
+	struct ADPCMsample *adpcm_sample_list;	/* was sound_prom */
 
 	struct InputPort *input_ports;
 

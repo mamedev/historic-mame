@@ -29,7 +29,13 @@ static int noise_freq;
 
 static int noisemulate;
 
-static int channel0,channel1,channel23;
+static int channel0,channel1,channel2,channel3,channel23;
+
+/* coin-up */
+static void *timer_a;
+static void *timer_b;
+void timer_a_callback(int param);
+void timer_b_callback(int param);
 
 
 /* waveforms for the audio hardware */
@@ -176,14 +182,14 @@ void pleiads_sound_control_b_w (int offset,int data)
 	if (errorlog) fprintf(errorlog,"B:%X freq: %02x vol: %02x\n",data, data & 0x0f, (data & 0x30) >> 4);
 }
 
-
-
-int pleiads_sh_start (void)
+int pleiads_sh_start(const struct MachineSound *msound)
 {
 	int vol[2];
 
 	channel0 = mixer_allocate_channel(VOLUME_A);
 	channel1 = mixer_allocate_channel(SAMPLE_VOLUME);
+	channel2 = mixer_allocate_channel(5);
+	channel3 = mixer_allocate_channel(5);
 	vol[0]=vol[1]=VOLUME_B;
 	channel23 = mixer_allocate_channels(2,vol);
 
@@ -203,9 +209,9 @@ int pleiads_sh_start (void)
 	}
 
 	mixer_set_volume(channel0,0);
-	mixer_play_sample(channel0,waveform0,2,1000,1);
+        mixer_play_sample(channel0,waveform0,2,1000,1);
 	mixer_set_volume(channel23+0,0);
-	mixer_play_sample(channel23+0,(signed char *)waveform1,32,1000,1);
+        mixer_play_sample(channel23+0,(signed char *)waveform1,32,1000,1);
 	mixer_set_volume(channel23+1,0);
 	mixer_play_sample(channel23+1,(signed char *)waveform1,32,1000,1);
 
@@ -221,5 +227,27 @@ void pleiads_sh_update (void)
 		mixer_set_volume(channel1,noise_vol*100/255);
 		noise_vol-=3;
 	}
+        if (readinputport(2) & 1)
+		{
+                mixer_set_volume(channel2,100);
+                mixer_play_sample(channel2,waveform0,2,1000,1);
+                mixer_set_volume(channel2+1,100);
+                mixer_play_sample(channel2+1,waveform0,2,2000,1);
+
+                timer_a = timer_set(TIME_IN_SEC(.2),0, timer_a_callback);
+                }
 }
 
+void timer_a_callback (int param)
+{
+        mixer_set_volume(channel2,0);
+        mixer_set_volume(channel3,100);
+        mixer_play_sample(channel3,waveform0,2,4000,1);
+
+        timer_b = timer_set(TIME_IN_SEC(.08),0, timer_b_callback);
+}
+
+void timer_b_callback (int param)
+{
+        mixer_set_volume(channel3,0);
+}

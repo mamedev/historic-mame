@@ -373,8 +373,33 @@ double compute_pixel_time(int x, int y)
  *
  *************************************/
 
+#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
+	if (orientation)													\
+	{																	\
+		int dy = bitmap->line[1] - bitmap->line[0];						\
+		int tx = x, ty = y, temp;										\
+		if (orientation & ORIENTATION_SWAP_XY)							\
+		{																\
+			temp = tx; tx = ty; ty = temp;								\
+			xadv = dy;													\
+		}																\
+		if (orientation & ORIENTATION_FLIP_X)							\
+		{																\
+			tx = bitmap->width - 1 - tx;								\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		if (orientation & ORIENTATION_FLIP_Y)							\
+		{																\
+			ty = bitmap->height - 1 - ty;								\
+			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		/* can't lookup line because it may be negative! */				\
+		dst = bitmap->line[0] + dy * ty + tx;							\
+	}
+
 void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 {
+	int orientation = Machine->orientation;
 	int xoffs, yoffs, count;
 	int x, y, i, sy;
 	UINT8 *palette;
@@ -397,9 +422,14 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 		{
 			UINT8 *src = &local_videoram[sy * 512];
 			UINT8 *dst = &bitmap->line[y][0];
+			int xadv = 1;
 
-			for (x = 0; x < 320; x++)
-				*dst++ = Machine->pens[*src++];
+			/* adjust if we're oriented oddly */
+			ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
+
+			/* redraw the scanline */
+			for (x = 0; x < 320; x++, dst += xadv)
+				*dst = Machine->pens[*src++];
 			scanline_dirty[sy] = 0;
 		}
 	}
@@ -441,13 +471,16 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 			{
 				UINT8 *old = &local_videoram[sy * 512 + xoffs];
 				UINT8 *dst = &bitmap->line[yoffs][xoffs];
-				int currx = xoffs;
+				int currx = xoffs, xadv = 1;
+
+				/* adjust if we're oriented oddly */
+				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xoffs, yoffs, xadv);
 
 				/* mark this scanline dirty */
 				scanline_dirty[sy] = 1;
 
 				/* loop over x */
-				for (x = 0; x < 8; x++, dst += 2, old += 2)
+				for (x = 0; x < 8; x++, dst += xadv * 2, old += 2)
 				{
 					int ipixel = *src++;
 					int left = ipixel & 0xf0;
@@ -472,7 +505,7 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 					{
 						/* combine with the background */
 						pen = right | old[1];
-						dst[1] = Machine->pens[pen];
+						dst[xadv] = Machine->pens[pen];
 
 						/* check the collisions bit */
 						if ((palette[2 * pen] & 0x80) && count++ < 128)
@@ -536,11 +569,20 @@ void exidy440_update_callback(int param)
 	{
 		if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 320)
 		{
+			UINT8 *dst = &bitmap->line[yoffs][beamx];
+			int xadv = 1;
+			ADJUST_FOR_ORIENTATION(Machine->orientation, bitmap, dst, beamx, yoffs, xadv);
+			*dst = Machine->pens[256];
+
 			scanline_dirty[yoffs] = 1;
-			bitmap->line[yoffs][beamx] = Machine->pens[256];
 		}
 		if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 240)
-			bitmap->line[beamy][xoffs] = Machine->pens[256];
+		{
+			UINT8 *dst = &bitmap->line[beamy][xoffs];
+			int xadv = 1;
+			ADJUST_FOR_ORIENTATION(Machine->orientation, bitmap, dst, xoffs, beamy, xadv);
+			*dst = Machine->pens[256];
+		}
 	}
 }
 

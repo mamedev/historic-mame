@@ -33,7 +33,7 @@ static int key_id;
 static int key_id_query;
 
 static int rev1_key_r( int offset ) {
-	//if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
 		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
@@ -192,13 +192,14 @@ static void rev2_key_w( int offset, int data )
 *	                                                                                  *
 **************************************************************************************/
 
-#if 0
+#if 1
 static int soundram_r( int offset)
 {
 	if(offset<0x100)
 		return namcos1_wavedata_r(offset);
 	if(offset<0x140)
 		return namcos1_sound_r(offset-0x100);
+
 	/* sahred ram */
 	return namco_wavedata[offset];
 }
@@ -218,6 +219,9 @@ static void soundram_w( int offset, int data )
 	}
 	/* sahred ram */
 	namco_wavedata[offset] = data;
+
+	//if(offset>=0x1000 && errorlog)
+	//	fprintf(errorlog,"CPU #%d PC %04x: write shared ram %04x=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
 }
 
 /* ROM handlers */
@@ -271,13 +275,14 @@ void namcos1_bankswitch_w( int offset, int data ) {
 		namcos1_banks[cpu][bank].bank_offset    =  namcos1_bank_element[chip].bank_offset;
 		namcos1_banks[cpu][bank].bank_pointer   =  namcos1_bank_element[chip].bank_pointer;
 		//memcpy( &namcos1_banks[cpu][bank] , &namcos1_bank_element[chip] , sizeof(bankhandler));
-#if 1
+
+		/* unmapped bank warning */
 		if( namcos1_banks[cpu][bank].bank_handler_r == unknown_r)
 		{
 			if (errorlog)
-				fprintf(errorlog,"CPU %d : Unknown chip selected ($%04x) at PC %04x\n", cpu_getactivecpu(), chip, cpu_get_pc() );
+				fprintf(errorlog,"CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , cpu_get_pc(), bank , chip );
 		}
-#endif
+
 		if( namcos1_banks[cpu][bank].bank_handler_w == rom_w)
 		/* Since we might be executing code, lets copy it to RAM */
 		{
@@ -306,7 +311,7 @@ void namcos1_subcpu_bank(int offset,int data)
 	cpu_setactivecpu( 1 );
 	namcos1_bankswitch_w( 0x0e00, chip>>8  );
 	namcos1_bankswitch_w( 0x0e01, chip&0xff);
-	cpu_reset( 1 );
+	/* cpu_set_reset_line(1,PULSE_LINE); */
 	cpu_setactivecpu( oldcpu );
 }
 
@@ -366,20 +371,24 @@ MW_HANDLER(1,6)
 *	                                                                                  *
 **************************************************************************************/
 
+static int mcu_patch_data;
+
 void namcos1_cpu_control_w( int offset, int data )
 {
-	//if(errorlog) fprintf(errorlog,"reset controll %02x\n",data);
-	if ( data & 1 ) {
-		//cpu_reset( 1 );
-		cpu_reset( 2 );
-		cpu_reset( 3 );
-		cpu_halt( 1, 1 );
-		cpu_halt( 2, 1 );
-		cpu_halt( 3, 1 );
-	} else {
-		cpu_halt( 1, 0 );
-		cpu_halt( 2, 0 );
-		cpu_halt( 3, 0 );
+	// if(errorlog) fprintf(errorlog,"reset controll %02x\n",data);
+	if (data & 1)
+	{
+		cpu_set_reset_line(1,CLEAR_LINE);
+		cpu_set_reset_line(2,CLEAR_LINE);
+		cpu_set_reset_line(3,CLEAR_LINE);
+
+		mcu_patch_data = 0;
+	}
+	else
+	{
+		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(2,ASSERT_LINE);
+		cpu_set_reset_line(3,ASSERT_LINE);
 	}
 }
 
@@ -399,10 +408,69 @@ void namcos1_sound_bankswitch_w( int offset, int data )
 
 /**************************************************************************************
 *	                                                                                  *
-*	Initialization                                                                    *
+*	CPU idling spinlock routine
+*	                                                                                  *
+**************************************************************************************/
+static unsigned char *sound_spinlock_ram;
+static int sound_spinlock_pc;
+
+/* sound cpu */
+static int namcos1_sound_spinlock_r(int offset)
+{
+	if(cpu_get_pc()==sound_spinlock_pc && *sound_spinlock_ram == 0)
+		cpu_spinuntil_int();
+	return *sound_spinlock_ram;
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	MCU banking emulation and patch
 *	                                                                                  *
 **************************************************************************************/
 
+/* mcu banked rom area select */
+void namcos1_mcu_bankswitch_w(int offset,int data)
+{
+	int bank = (((~data)&0xf8)>>1) | (data&7);
+	int addr = 0x10000 + bank*0x8000;
+
+	if( addr >= Machine->memory_region_length[6])
+	{
+		if(errorlog)
+			fprintf(errorlog,"unmapped mcu bank selected pc=%04x back=%02x\n",cpu_get_pc(),data);
+		addr = 0x4000;
+	}
+	cpu_setbank( 4, Machine->memory_region[6]+addr );
+}
+
+/* This pont This is very obscure, but i havent found any better way yet. */
+/* Works with all games so far.									*/
+
+/* patch points of memory address */
+/* CPU0/1 bank[17f][1000] */
+/* CPU2   [7000]          */
+/* CPU3   [c000]          */
+
+/* This memory point should be set $A6 by anyware , but         */
+/* I found set $A6 only initialize in MCU                       */
+/* This patch kill write this data by MCU case $A6 to xx(clear) */
+
+void namcos1_mcu_patch_w(int offset,int data)
+{
+extern void mwh_bank3(int _address,int _data);
+
+	//if(errorlog) fprintf(errorlog,"mcu C000 write pc=%04x data=%02x\n",cpu_get_pc(),data);
+	if(mcu_patch_data == 0xa6) return;
+	mcu_patch_data = data;
+
+	mwh_bank3( offset, data );
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Initialization                                                                    *
+*	                                                                                  *
+**************************************************************************************/
 
 static int namcos1_setopbase (int pc) {
 #ifdef NAMCOS1_OPCODE_COPY
@@ -474,8 +542,8 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	/* RAM 1 banks display controll , playfields , sprite */
 	namcos1_insatll_bank(0x17e,0x17e,0,namcos1_videocontroll_w,0,&s1ram[0x8000]);
 	/* RAM 1 shared ram , PSG device */
-	/* namcos1_insatll_bank(0x17f,0x17f,soundram_r,soundram_w,0x0000,namco_wavedata); */
-	namcos1_insatll_bank(0x17f,0x17f,0,soundram_w,0x0000,namco_wavedata);
+	namcos1_insatll_bank(0x17f,0x17f,soundram_r,soundram_w,0x0000,namco_wavedata);
+	//namcos1_insatll_bank(0x17f,0x17f,0,soundram_w,0x0000,namco_wavedata);
 	/* RAM3 */
 	namcos1_insatll_bank(0x180,0x183,0,0,0,&s1ram[0xc000]);
 	/* PRG0 */
@@ -496,7 +564,13 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
 }
 
-/* extern int m6809_slapstic; */
+#if 0
+void namcos1_timercallback(int param)
+{
+extern void mwh_bank3(int _address,int _data);
+	mwh_bank3( 0,0xa6);
+}
+#endif
 
 void namcos1_machine_init( void ) {
 
@@ -534,16 +608,16 @@ void namcos1_machine_init( void ) {
 		cpu_setbank( 3, RAM );
 	}
 
-
-
 	/* In case we had some cpu's suspended, resume them now */
-	//cpu_halt( 1, 1 );
-	//cpu_halt( 2, 1 );
-	//cpu_halt( 3, 1 );
-
 	cpu_halt( 1, 0 );
 	cpu_halt( 2, 0 );
 	cpu_halt( 3, 0 );
+
+	/* mcu patch data clear */
+	mcu_patch_data = 0;
+
+//	timer_pulse(TIME_IN_HZ(15000),0,namcos1_timercallback);
+
 }
 /**************************************************************************************
 *	                                                                                  *
@@ -577,6 +651,30 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	/* override opcode handling for extended memory bank handler */
 	/* m6809_slapstic = 1; */
 	cpu_setOPbaseoverride( namcos1_setopbase );
+
+	/* sound cpu speedup optimize (auto ditect) */
+	{
+		unsigned char *RAM = Machine->memory_region[3]; /* sound cpu */
+		int addr,flag_ptr;
+
+		for(addr=0xd000;addr<0xd0ff;addr++)
+		{
+			if(RAM[addr+0]==0xb6 &&   /* lda xxxx */
+			   RAM[addr+3]==0x27 &&   /* BEQ addr */
+			   RAM[addr+4]==0xfb )
+			{
+				flag_ptr = RAM[addr+1]*256 + RAM[addr+2];
+				if(flag_ptr>0x5140 && flag_ptr<0x5400)
+				{
+					sound_spinlock_pc   = addr+3;
+					sound_spinlock_ram  = install_mem_read_handler(2,flag_ptr,flag_ptr,namcos1_sound_spinlock_r);
+					if(errorlog)
+						fprintf(errorlog,"Set sound cpu spinlock : pc=%04x , addr = %04x\n",sound_spinlock_pc,flag_ptr);
+					break;
+				}
+			}
+		}
+	}
 }
 
 /**************************************************************************************

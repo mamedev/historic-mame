@@ -420,85 +420,69 @@ if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
 /* this does much more than this, but I'm not sure exactly what */
 void neo_control_w(int offset, int data)
 {
-if (errorlog) fprintf(errorlog,"PC %06x: 3c0006 = %02x\n",cpu_get_pc(),data);
-	/* I'm waving my hands in a big way here... */
-	/* Games which definitely need IRQ2:
-	   sengoku2
-	   spinmast
-	   ridhero
-	   turfmast
+    /* Games which definitely need IRQ2:
+    neocup98
+	ssideki4
+	ssideki3
+	sengoku2
+	spinmast
+	ridhero
+	turfmast
+	zedblade
+	galaxyfg
 	*/
-	if ((data & 0xff) == 0xd0)	/* certainly wrong, but fixes spinmast and sengoku2 */
-		irq2_enable = 1;
-	else
-		irq2_enable = 0;
 
-irq2control = data & 0xff;
-switch (irq2control)
-{
-	case 0xd0:
+    if (data & 0x10)
 		irq2enable = 1;
-		lastirq2line = 1000;
-if (errorlog) fprintf(errorlog,"IRQ2 start = %d\n",irq2start);
-		break;
-
-	case 0x00:
+    else
+    {
 		irq2enable = 0;
 		lastirq2line = 1000;
-if (errorlog) fprintf(errorlog,"IRQ2 disable\n");
-		break;
+    }
 
-	case 0x70:	/* ssideki2 */
-		irq2enable = 1;
+    if (data & 0x40)
 		lastirq2line = 1000;
-if (errorlog) fprintf(errorlog,"IRQ2 start = %d\n",irq2start);
-		break;
 
-	case 0x50:	/* turfmast */
-	case 0x90:	/* turfmast */
-		irq2enable = 1;
-		lastirq2line = 1000;
-if (errorlog) fprintf(errorlog,"IRQ2 start = %d\n",irq2start);
-		break;
+    irq2control = data & 0xff;
 
-	case 0x40:	/* turfmast */
-	case 0x80:	/* turfmast */
-		irq2enable = 0;
-		lastirq2line = 1000;
-if (errorlog) fprintf(errorlog,"IRQ2 disable\n");
-		break;
 
-	default:
-if (errorlog) fprintf(errorlog,"IRQ2 unknown command\n");
-		break;
-}
-
-	if((data & 0xf0ff) == 0)
-	{
-		/* Auto-Anim Speed Control ? */
+    /* Auto-Anim Speed Control? */
+    if((data & 0xf0ff) == 0)
+    {
 		int speed = (data >> 8) & 0xf;
-		if(speed!=0) neogeo_frame_counter_speed=speed;
-	}
+        if (speed) neogeo_frame_counter_speed=speed;
+    }
 }
 
 static void neo_irq2pos_w(int offset,int data)
 {
-	static int value;
-	int line;
+    static int value,temp;
+    int line;
 
-
+#if 0
 if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_get_pc(),0x3c0008+offset,data);
 
 	if (offset == 0)
 		value = (value & 0x0000ffff) | (data << 16);
 	else
 		value = (value & 0xffff0000) | data;
+#else
+    if (offset == 0)
+        value = (temp & 0x0000ffff) | (data << 16);
+    else
+    {
+        if (irq2control == 0x30 || irq2control == 0x50)
+            value = (value & 0xffff0000) | data;
+        else
+            temp = data;
+    }
+#endif
 
-if (errorlog) fprintf(errorlog,"irq2value: raster line %d, horiz offset %d\n",(value / 0x180),value % 0x180);
+    line = value / 0x180 + 1;
 
-	line = (value + 0x17f) / 0x180;
-	if (line <= 8) irq2repeat = line;
+    if (line <= 8) irq2repeat = line;
 	else irq2start = line;
+
 }
 
 
@@ -4403,6 +4387,34 @@ ROM_START( neo_mslugx_rom )
 	ROM_LOAD_GFX_ODD ( "msx_c6.rom", 0x2000000, 0x800000, 0x83e3e69d ) /* Plane 0,1 */
 ROM_END
 
+ROM_START( neo_kof99_rom )
+	ROM_REGION(0x500000)
+	ROM_LOAD_WIDE_SWAP( "kof99_p1.rom", 0x000000, 0x100000, 0x00000000 )
+	ROM_LOAD_WIDE_SWAP( "kof99_p2.rom", 0x100000, 0x400000, 0x00000000 )
+
+	NEO_SFIX_128K( "kof99_s1.rom", 0x00000000 )
+
+	NEO_BIOS_SOUND_128K( "kof99_m1.rom", 0x5e74539c )
+
+	ROM_REGION_OPTIONAL(0x0e00000) /* sound samples */
+	ROM_LOAD( "kof99_v1.rom", 0x000000, 0x400000, 0xef2eecc8 )
+	ROM_LOAD( "kof99_v2.rom", 0x400000, 0x400000, 0x73e211ca )
+	ROM_LOAD( "kof99_v3.rom", 0x800000, 0x400000, 0x821901da )
+	ROM_LOAD( "kof99_v4.rom", 0xc00000, 0x200000, 0xb49e6178 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION(0x4000000)
+	ROM_LOAD_GFX_EVEN( "kof99_c1.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "kof99_c2.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "kof99_c3.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "kof99_c4.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "kof99_c5.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "kof99_c6.rom", 0x2000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "kof99_c7.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "kof99_c8.rom", 0x3000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
+ROM_END
+
 /******************************************************************************/
 
 /* dummy entry for the dummy bios driver */
@@ -4602,7 +4614,7 @@ NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu - shukumei no
 NEODRIVER(roboarmy,"Robo Army","1991","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(fbfrenzy,"Football Frenzy","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(kotm2,   "King of the Monsters 2 - The Next Thing","1992","SNK",&neogeo_machine_driver)
-NEODRIVER(sengoku2,"Sengoku 2 / Sengoku Denshou 2","1993","SNK",&neogeo_machine_driver)
+NEODRIVER(sengoku2,"Sengoku 2 / Sengoku Denshou 2","1993","SNK",&neogeo_raster_machine_driver)
 NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(quizdai2,"Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(3countb, "3 Count Bout / Fire Suplex","1993","SNK",&neogeo_16bit_machine_driver)
@@ -4612,7 +4624,7 @@ NEODRIVER(tophuntr,"Top Hunter - Roddy & Cathy","1994","SNK",&neogeo_16bit_machi
 NEODRIVER(fatfury2,"Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(ssideki, "Super Sidekicks / Tokuten Ou","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_16bit_machine_driver)
-NEODRIVER(aof2,    "Art of Fighting 2 / Ryuuko no Ken 2","1994","SNK",&neogeo_machine_driver)
+NEODRIVER(aof2,    "Art of Fighting 2 / Ryuuko no Ken 2","1994","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(fatfursp,"Fatal Fury Special / Garou Densetsu Special","1993","SNK",&neogeo_machine_driver)
 NEODRIVER(savagere,"Savage Reign / Fu'un Mokushiroku - kakutou sousei","1995","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football","1994","SNK",&neogeo_raster_machine_driver)
@@ -4636,6 +4648,7 @@ NEODRIVER(kof98,   "The King of Fighters '98 - The Slugfest / King of Fighters '
 NEODRIVER(lastbld2,"The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi","1998","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(neocup98,"Neo-Geo Cup '98 - The Road to the Victory","1998","SNK",&neogeo_raster_machine_driver)
 NEODRIVER(mslugx,  "Metal Slug X - Super Vehicle-001","1999","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(kof99,   "The King of Fighters '99 - Millennium Battle","1999","SNK",&neogeo_16bit_machine_driver)
 
 /* Alpha Denshi Co / ADK (changed name in 1993) */
 NEODRIVER(maglord, "Magician Lord (set 1)","1990","Alpha Denshi Co",&neogeo_machine_driver)
@@ -4681,7 +4694,7 @@ NEODRIVERMGD2(minasan, "Minnasanno Okagesamadesu","1990","Monolith Corp.",&neoge
 NEODRIVERMGD2(bakatono,"Bakatonosama Mahjong Manyuki","1991","Monolith Corp.",&neogeo_machine_driver)
 
 /* Nazca */
-NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca",&neogeo_16bit_machine_driver)
+NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca",&neogeo_raster_machine_driver)
 NEODRIVER(mslug,   "Metal Slug - Super Vehicle-001","1996","Nazca",&neogeo_machine_driver)
 
 /* NMK */

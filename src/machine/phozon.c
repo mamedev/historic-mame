@@ -50,7 +50,7 @@ void phozon_cpu3_enable_w(int offset,int data){
 }
 
 void phozon_cpu3_reset_w(int offset,int data){
-	cpu_reset( 2 );
+	cpu_set_reset_line(2,PULSE_LINE);
 }
 
 /************************************************************************************

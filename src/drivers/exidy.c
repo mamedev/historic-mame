@@ -823,29 +823,29 @@ static unsigned char palette[] =
 /* dip switches on the board. Here are the colors they map to. */
 static unsigned char targ_palette[] =
 {
-					/* color   use                            */
-	0x00,0x00,0xFF, /* blue    background             */
+					/* color   use                */
+	0x00,0x00,0xFF, /* blue    background         */
 	0x00,0xFF,0xFF, /* cyan    characters 192-255 */
 	0xFF,0xFF,0x00, /* yellow  characters 128-191 */
 	0xFF,0xFF,0xFF, /* white   characters  64-127 */
 	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0xFF, /* cyan    not used               */
-	0xFF,0xFF,0xFF, /* white   bullet sprite          */
-	0x00,0xFF,0x00, /* green   wummel sprite          */
+	0x00,0xFF,0xFF, /* cyan    not used           */
+	0xFF,0xFF,0xFF, /* white   bullet sprite      */
+	0x00,0xFF,0x00, /* green   wummel sprite      */
 };
 
 /* Spectar has different colors */
 static unsigned char spectar_palette[] =
 {
-					/* color   use                            */
-	0x00,0x00,0xFF, /* blue    background             */
+					/* color   use                */
+	0x00,0x00,0xFF, /* blue    background         */
 	0x00,0xFF,0x00, /* green   characters 192-255 */
 	0x00,0xFF,0x00, /* green   characters 128-191 */
 	0xFF,0xFF,0xFF, /* white   characters  64-127 */
 	0xFF,0x00,0x00, /* red     characters   0- 63 */
-	0x00,0xFF,0x00, /* green   not used               */
-	0xFF,0xFF,0x00, /* yellow  bullet sprite          */
-	0x00,0xFF,0x00, /* green   wummel sprite          */
+	0x00,0xFF,0x00, /* green   not used           */
+	0xFF,0xFF,0x00, /* yellow  bullet sprite      */
+	0x00,0xFF,0x00, /* green   wummel sprite      */
 };
 
 

@@ -73,6 +73,10 @@ int  exterm_master_videoram_r(int offset);
 int  exterm_slave_videoram_r(int offset);
 void exterm_paletteram_w(int offset, int data);
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg);
+void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg);
+void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
+void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 
 /* Functions in sndhrdw/gottlieb.c */
 void gottlieb_sh_w(int offset,int data);
@@ -83,6 +87,8 @@ void exterm_ym2151_w(int offset, int data);
 
 /* Functions in machine/exterm.c */
 void exterm_init_machine(void);
+void exterm_host_data_w(int offset, int data);
+int  exterm_host_data_r(int offset);
 int  exterm_coderom_r(int offset);
 int  exterm_input_port_0_1_r(int offset);
 int  exterm_input_port_2_3_r(int offset);
@@ -93,13 +99,22 @@ int  exterm_sound_dac_speedup_r(int offset);
 int  exterm_sound_ym2151_speedup_r(int offset);
 
 
+static struct tms34010_config master_config =
+{
+	0,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_master,	/* write to shiftreg function */
+	exterm_from_shiftreg_master	/* read from shiftreg function */
+};
+
+
 static struct MemoryReadAddress master_readmem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r, &exterm_master_videoram },
 	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r, &exterm_master_speedup },
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x0100000f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
-	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), TMS34010_HSTDATA_r },
+	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
 	{ TOBYTE(0x01400000), TOBYTE(0x0140000f), exterm_input_port_0_1_r },
 	{ TOBYTE(0x01440000), TOBYTE(0x0144000f), exterm_input_port_2_3_r },
 	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_r },
@@ -118,10 +133,7 @@ static struct MemoryWriteAddress master_writemem[] =
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), TMS34010_HSTADRL_w },
-	{ TOBYTE(0x01100000), TOBYTE(0x011fffff), TMS34010_HSTADRH_w },
-	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), TMS34010_HSTDATA_w },
-	{ TOBYTE(0x01300000), TOBYTE(0x013fffff), TMS34010_HSTCTLH_w },
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), exterm_host_data_w },
 	{ TOBYTE(0x01500000), TOBYTE(0x0150000f), exterm_output_port_0_w },
 	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_w },
 	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset_w },
@@ -129,6 +141,15 @@ static struct MemoryWriteAddress master_writemem[] =
 	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2 }, /* EEPROM */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
 	{ -1 }  /* end of table */
+};
+
+
+static struct tms34010_config slave_config =
+{
+	1,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	exterm_to_shiftreg_slave,	/* write to shiftreg function */
+	exterm_from_shiftreg_slave	/* read from shiftreg function */
 };
 
 
@@ -273,17 +294,19 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			40000000,	/* 40 Mhz */
+			40000000/8,	/* 40 Mhz */
 			0,
             master_readmem,master_writemem,0,0,
-            ignore_interrupt,0  /* Display Interrupts caused internally */
+            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            0,0,&master_config
 		},
 		{
 			CPU_TMS34010,
-			40000000,	/* 40 Mhz */
+			40000000/8,	/* 40 Mhz */
 			2,
             slave_readmem,slave_writemem,0,0,
-            ignore_interrupt,0  /* Display Interrupts caused internally */
+            ignore_interrupt,0,  /* Display Interrupts caused internally */
+            0,0,&slave_config
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -304,7 +327,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	0,
+	exterm_init_machine,
 
 	/* video hardware, the reason for 263 is that the VCOUNT register is
 	   supposed to go from 0 to the value in VEND-1, which is 263 */

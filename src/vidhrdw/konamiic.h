@@ -84,6 +84,7 @@ void K051937_word_w(int offset,int data);
 void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority);
 void K051960_mark_sprites_colors(void);
 int K051960_is_IRQ_enabled(void);
+int K051960_is_NMI_enabled(void);
 
 /* special handling for the chips sharing address space */
 int K052109_051960_r(int offset);
@@ -132,15 +133,30 @@ The callback must put:
 - if necessary, put flags for the TileMap code in the tile_info
   structure (e.g. TILE_FLIPX)
 */
-int K051316_vh_start(int gfx_memory_region,int bpp,
+int K051316_vh_start_0(int gfx_memory_region,int bpp,
 		void (*callback)(int *code,int *color));
-void K051316_vh_stop(void);
-int K051316_r(int offset);
-void K051316_w(int offset,int data);
-int K051316_rom_r(int offset);
-void K051316_ctrl_w(int offset,int data);
-void K051316_tilemap_update(void);
-void K051316_zoom_draw(struct osd_bitmap *bitmap);
+int K051316_vh_start_1(int gfx_memory_region,int bpp,
+		void (*callback)(int *code,int *color));
+void K051316_vh_stop_0(void);
+void K051316_vh_stop_1(void);
+int K051316_0_r(int offset);
+int K051316_1_r(int offset);
+int K051316_2_r(int offset);
+void K051316_0_w(int offset,int data);
+void K051316_1_w(int offset,int data);
+void K051316_2_w(int offset,int data);
+int K051316_rom_0_r(int offset);
+int K051316_rom_1_r(int offset);
+int K051316_rom_2_r(int offset);
+void K051316_ctrl_0_w(int offset,int data);
+void K051316_ctrl_1_w(int offset,int data);
+void K051316_ctrl_2_w(int offset,int data);
+void K051316_tilemap_update_0(void);
+void K051316_tilemap_update_1(void);
+void K051316_tilemap_update_2(void);
+void K051316_zoom_draw_0(struct osd_bitmap *bitmap);
+void K051316_zoom_draw_1(struct osd_bitmap *bitmap);
+void K051316_zoom_draw_2(struct osd_bitmap *bitmap);
 
 
 void K053251_w(int offset,int data);

@@ -89,7 +89,9 @@ typedef struct
 	UINT8	cc; 			/* Condition codes */
 	UINT8	wai_state;		/* WAI opcode state */
 	UINT8	nmi_state;		/* NMI line state */
-	UINT8	irq_state;		/* IRQ line state */
+	UINT8	irq_state[2];	/* IRQ line state [IRQ1,TIN] */
+	UINT8	ic_eddge;		/* InputCapture eddge , b.0=fall,b.1=raise */
+
     int     (*irq_callback)(int irqline);
 	int 	extra_cycles;	/* cycles used for interrupts */
 
@@ -98,8 +100,12 @@ typedef struct
 	UINT8	port1_data;
 	UINT8	port2_data;
 	UINT8	tcsr;			/* Timer Control and Status Register */
-	UINT16	counter;		/* counter */
-	UINT16	output_compare;	/* output compare * 4 */
+	UINT8	pending_tcsr;	/* pending IRQ flag for clear IRQflag process */
+	UINT8	irq2;			/* IRQ2 flags */
+	UINT16	counter;		/* free running counter */
+	UINT16	output_compare;	/* output compare       */
+	int		oc_left;		/* left countor to output compare match */
+	UINT16	input_capture;	/* input capture        */
 	UINT8	ram_ctrl;
 
 }   m6800_Regs;
@@ -156,6 +162,63 @@ static void (*wr_s_handler_w)(PAIR *);
 #define PULLBYTE(b) (*rd_s_handler_b)(&b)
 #define PULLWORD(w) (*rd_s_handler_w)(&w)
 
+#define MODIFIED_tcsr {	\
+	m6800.irq2 = (m6800.tcsr&(m6800.tcsr<<3))&(TCSR_ICF|TCSR_OCF|TCSR_TOF); \
+}
+
+#define MODIFIED_output_compare {								\
+	m6800.oc_left = (int)m6800.output_compare - m6800.counter;	\
+	if(m6800.oc_left<=0) m6800.oc_left += 0x10000;				\
+}
+
+/* irq entry */
+#define ENTER_INTERRUPT(message,irq_vector) {			\
+	LOG((errorlog, message, cpu_getactivecpu()));		\
+	if( m6800.wai_state & M6800_WAI )					\
+	{													\
+		m6800.extra_cycles += 4;						\
+		m6800.wai_state &= ~M6800_WAI;					\
+	}													\
+	else												\
+	{													\
+		PUSHWORD(pPC);									\
+		PUSHWORD(pX);									\
+		PUSHBYTE(A);									\
+		PUSHBYTE(B);									\
+		PUSHBYTE(CC);									\
+		m6800.extra_cycles += 12;						\
+	}													\
+	SEI;												\
+	RM16( irq_vector, &pPC );							\
+	change_pc(PC);										\
+}
+
+/* take interrupt */
+#define TAKE_ICI ENTER_INTERRUPT("M6800#%d take ICI\n",0xfff6)
+#define TAKE_OCI ENTER_INTERRUPT("M6800#%d take OCI\n",0xfff4)
+#define TAKE_TOI ENTER_INTERRUPT("M6800#%d take TOI\n",0xfff2)
+
+/* check IRQ2 (internal irq) */
+#define CHECK_IRQ2 {													\
+	if(m6800.irq2&(TCSR_ICF|TCSR_OCF|TCSR_TOF))							\
+	{																	\
+		if(m6800.irq2&TCSR_ICF)											\
+		{																\
+			TAKE_ICI;													\
+			if( m6800.irq_callback )									\
+				(void)(*m6800.irq_callback)(M6800_TIN_LINE);			\
+		}																\
+		else if(m6800.irq2&TCSR_OCF)									\
+		{																\
+			TAKE_OCI;													\
+		}																\
+		else if(m6800.irq2&TCSR_TOF)									\
+		{																\
+			TAKE_TOI;													\
+		}																\
+	}																	\
+}
+
 /* check the IRQ lines for pending interrupts */
 #define CHECK_IRQ_LINES(one_more_insn) {								\
 	if( one_more_insn ) 												\
@@ -183,83 +246,23 @@ static void (*wr_s_handler_w)(PAIR *);
 			(*hd63701_insn[ireg])();									\
 			INCREMENT_COUNTER(cycles_6800[ireg]);						\
             m6800_ICount -= cycles_63701[ireg];                         \
-            break;                                                      \
+			break;														\
 		}																\
-    }                                                                   \
-	if( m6800.irq_state != CLEAR_LINE && !(CC & 0x10) )					\
+	}																	\
+	if( !(CC & 0x10) )													\
 	{																	\
-        /* standard IRQ */                                              \
-		LOG((errorlog, "M6800#%d take IRQ\n", cpu_getactivecpu()));     \
-		if( m6800.wai_state & M6800_WAI )								\
-        {                                                               \
-			m6800.extra_cycles += 4;									\
-			m6800.wai_state &= ~M6800_WAI;								\
+		if( m6800.irq_state[M6800_IRQ_LINE] != CLEAR_LINE )				\
+		{	/* stanadrd IRQ */											\
+			ENTER_INTERRUPT("M6800#%d take IRQ1\n",0xfff8)				\
+			if( m6800.irq_callback )									\
+				(void)(*m6800.irq_callback)(M6800_IRQ_LINE);			\
 		}																\
 		else															\
-        {                                                               \
-			PUSHWORD(pPC);												\
-			PUSHWORD(pX);												\
-			PUSHBYTE(A);												\
-			PUSHBYTE(B);												\
-			PUSHBYTE(CC);												\
-			m6800.extra_cycles += 12;									\
-        }                                                               \
-        SEI;                                                            \
-		RM16( 0xfff8, &pPC );											\
-		change_pc(PC);													\
-		if( m6800.irq_callback )										\
-			(void)(*m6800.irq_callback)(M6800_IRQ_LINE);				\
-	}																	\
-}
-
-#define TAKE_OCI {														\
-	if( !(CC & 0x10) )													\
-	{																	\
-		LOG((errorlog, "M6800#%d take OCI\n", cpu_getactivecpu()));     \
-		if( m6800.wai_state & M6800_WAI )								\
 		{																\
-			m6800.extra_cycles += 4;									\
-			m6800.wai_state &= ~M6800_WAI;								\
-        }                                                               \
-		else                                                            \
-		{                                                               \
-			PUSHWORD(pPC);												\
-			PUSHWORD(pX);												\
-			PUSHBYTE(A);												\
-			PUSHBYTE(B);												\
-			PUSHBYTE(CC);												\
-			m6800.extra_cycles += 12;									\
-		}                                                               \
-		SEI;                                                            \
-		RM16( 0xfff4, &pPC );											\
-		change_pc(PC);													\
+			CHECK_IRQ2;													\
+		}																\
 	}																	\
 }
-
-#define TAKE_TOI {														\
-	if( !(CC & 0x10) )													\
-	{																	\
-		LOG((errorlog, "M6800#%d take TOI\n", cpu_getactivecpu()));     \
-		if( m6800.wai_state & M6800_WAI )								\
-		{																\
-			m6800.extra_cycles += 4;									\
-			m6800.wai_state &= ~M6800_WAI;								\
-        }                                                               \
-		else                                                            \
-		{                                                               \
-			PUSHWORD(pPC);												\
-			PUSHWORD(pX);												\
-			PUSHBYTE(A);												\
-			PUSHBYTE(B);												\
-			PUSHBYTE(CC);												\
-			m6800.extra_cycles += 12;									\
-		}                                                               \
-		SEI;                                                            \
-		RM16( 0xfff2, &pPC );											\
-		change_pc(PC);													\
-	}																	\
-}
-
 
 /* CC masks                       HI NZVC
 								7654 3210	*/
@@ -367,27 +370,27 @@ static UINT8 flags8d[256]= /* decrement */
 #define TCSR_OCF  0x40
 #define TCSR_ICF  0x80
 
-
-#define INCREMENT_COUNTER(amount)															\
-{																							\
-	UINT16 old_counter;																		\
-																							\
-	old_counter = m6800.counter;															\
-	m6800.counter = m6800.counter + amount; 												\
-	if ((old_counter < m6800.output_compare && m6800.counter >= m6800.output_compare) ||	\
-		(m6800.counter < old_counter && /* loop around */									\
-		(old_counter < m6800.output_compare || m6800.counter >= m6800.output_compare)))		\
-	{																						\
-		m6800.tcsr |= TCSR_OCF;																\
-		if (m6800.tcsr & TCSR_EOCI)															\
-			TAKE_OCI;																		\
-	}																						\
-	if (old_counter < 0xffff && (m6800.counter >= 0xffff || m6800.counter < old_counter))	\
-	{																						\
-		m6800.tcsr |= TCSR_TOF;																\
-		if (m6800.tcsr & TCSR_ETOI)															\
-			TAKE_TOI;																		\
-	}																						\
+#define INCREMENT_COUNTER(amount)														\
+{																						\
+	UINT32 next_cnt = (UINT32)m6800.counter + amount;									\
+	if( (m6800.oc_left-=amount)<=0 )													\
+	{																					\
+		m6800.oc_left += 0x10000;														\
+		m6800.tcsr |= TCSR_OCF;															\
+		m6800.pending_tcsr |= TCSR_OCF;													\
+		MODIFIED_tcsr;																	\
+		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_EOCI))									\
+			TAKE_OCI;																	\
+	}																					\
+	if (next_cnt >= 0xffff )															\
+	{																					\
+		m6800.tcsr |= TCSR_TOF;															\
+		m6800.pending_tcsr |= TCSR_TOF;													\
+		MODIFIED_tcsr;																	\
+		if ( !(CC & 0x10) && (m6800.tcsr & TCSR_ETOI))									\
+			TAKE_TOI;																	\
+	}																					\
+	m6800.counter = (UINT16)next_cnt;													\
 }
 
 #define EAT_CYCLES																	\
@@ -607,14 +610,19 @@ void m6800_reset(void *param)
 
     m6800.wai_state = 0;
 	m6800.nmi_state = 0;
-	m6800.irq_state = 0;
+	m6800.irq_state[M6800_IRQ_LINE] = 0;
+	m6800.irq_state[M6800_TIN_LINE] = 0;
+	m6800.ic_eddge = 0;
 
 	m6800.port1_ddr = 0x00;
 	m6800.port2_ddr = 0x00;
 	/* TODO: on reset port 2 should be read to determine the operating mode (bits 0-2) */
 	m6800.tcsr = 0x00;
+	m6800.pending_tcsr = 0x00;
+	m6800.irq2 = 0;
 	m6800.counter = 0x0000;
 	m6800.output_compare = 0xffff;
+	m6800.oc_left = 0xffff;
 	m6800.ram_ctrl |= 0x40;
 }
 
@@ -700,7 +708,7 @@ unsigned m6800_get_reg(int regnum)
 		case M6800_B: return m6800.d.b.l;
 		case M6800_X: return m6800.x.w.l;
 		case M6800_NMI_STATE: return m6800.nmi_state;
-		case M6800_IRQ_STATE: return m6800.irq_state;
+		case M6800_IRQ_STATE: return m6800.irq_state[M6800_IRQ_LINE];
 		case REG_PREVIOUSPC: return m6800.ppc.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -773,11 +781,29 @@ void m6800_set_nmi_line(int state)
 
 void m6800_set_irq_line(int irqline, int state)
 {
-	if (m6800.irq_state == state) return;
-	LOG((errorlog, "M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
-	m6800.irq_state = state;
-	if (state == CLEAR_LINE) return;
+	int eddge;
 
+	if (m6800.irq_state[irqline] == state) return;
+	LOG((errorlog, "M6800#%d set_irq_line %d,%d\n", cpu_getactivecpu(), irqline, state));
+	m6800.irq_state[irqline] = state;
+
+	switch(irqline)
+	{
+	case M6800_IRQ_LINE:
+		if (state == CLEAR_LINE) return;
+		break;
+	case M6800_TIN_LINE:
+		eddge = (state == CLEAR_LINE ) ? 2 : 0;
+		if( ((m6800.tcsr&TCSR_IEDG) ^ (state==CLEAR_LINE ? TCSR_IEDG : 0))==0 )
+			return;
+		/* active eddge in */
+		m6800.tcsr |= TCSR_ICF;
+		m6800.pending_tcsr |= TCSR_ICF;
+		MODIFIED_tcsr;
+		break;
+	default:
+		return;
+	}
 	CHECK_IRQ_LINES(0); /* HJB 990417 */
 }
 
@@ -796,7 +822,8 @@ static void state_save(void *file, const char *module)
 	state_save_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
 	state_save_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_save_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state, 1);
+	state_save_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
+	state_save_UINT8(file,module,cpu,"TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
 }
 
 static void state_load(void *file, const char *module)
@@ -809,7 +836,8 @@ static void state_load(void *file, const char *module)
 	state_load_UINT16(file,module,cpu,"X", &m6800.x.w.l, 1);
 	state_load_UINT8(file,module,cpu,"CC", &m6800.cc, 1);
 	state_load_UINT8(file,module,cpu,"NMI_STATE", &m6800.nmi_state, 1);
-	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state, 1);
+	state_load_UINT8(file,module,cpu,"IRQ_STATE", &m6800.irq_state[M6800_IRQ_LINE], 1);
+	state_load_UINT8(file,module,cpu,"TIN_STATE", &m6800.irq_state[M6800_TIN_LINE], 1);
 }
 
 void m6800_state_save(void *file) { state_save(file,"m6800"); }
@@ -1148,7 +1176,8 @@ const char *m6800_info(void *context, int regnum)
 		case CPU_INFO_REG+M6800_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
 		case CPU_INFO_REG+M6800_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6800_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_REG+M6800_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6800_IRQ_LINE]); break;
+//		case CPU_INFO_REG+M6800_TIN_STATE: sprintf(buffer[which], "TIN:%X", r->irq_state[M6800_TIN_LINE]); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
@@ -2104,23 +2133,41 @@ int m6803_internal_registers_r(int offset)
 if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read from unsupported internal register %02x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 			return 0;
 		case 0x08:
+			m6800.pending_tcsr = 0;
 //if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read TCSR register\n",cpu_getactivecpu(),cpu_get_pc());
 			return m6800.tcsr;
-/* TODO:
- - read 08 (with TCSR_TOF set), read 09 clears TCSR_TOF
- - read 08 (with TCSR_OCF set), write 0b or 0c clears TCSR_OCF
- - read 08 (with TCSR_ICF set), read 0d clears TCSR_ICF
-*/
 		case 0x09:
+			if(!(m6800.pending_tcsr&TCSR_TOF))
+			{
+				m6800.tcsr &= ~TCSR_TOF;
+				MODIFIED_tcsr;
+			}
 			return (m6800.counter >> 8) & 0xff;
 		case 0x0a:
 			return (m6800.counter >> 0) & 0xff;
 		case 0x0b:
+			if(!(m6800.pending_tcsr&TCSR_OCF))
+			{
+				m6800.tcsr &= ~TCSR_OCF;
+				MODIFIED_tcsr;
+			}
 			return (m6800.output_compare >> 8) & 0xff;
 		case 0x0c:
+			if(!(m6800.pending_tcsr&TCSR_OCF))
+			{
+				m6800.tcsr &= ~TCSR_OCF;
+				MODIFIED_tcsr;
+			}
 			return (m6800.output_compare >> 0) & 0xff;
 		case 0x0d:
+			if(!(m6800.pending_tcsr&TCSR_ICF))
+			{
+				m6800.tcsr &= ~TCSR_ICF;
+				MODIFIED_tcsr;
+			}
+			return (m6800.input_capture >> 0) & 0xff;
 		case 0x0e:
+			return (m6800.input_capture >> 8) & 0xff;
 		case 0x0f:
 		case 0x10:
 		case 0x11:
@@ -2189,8 +2236,11 @@ if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unsuppo
 			break;
 		case 0x08:
 			m6800.tcsr = data;
+			m6800.pending_tcsr &= m6800.tcsr;
+			MODIFIED_tcsr;
+			//if( !(CC & 0x10) )
+			//	CHECK_IRQ2;
 //if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: TCSR = %02x\n",cpu_getactivecpu(),cpu_get_pc(),data);
-if (errorlog && (data & TCSR_EICI)) fprintf(errorlog,"warning - EICI not supported\n");
 			break;
 		case 0x09:
 			latch09 = data & 0xff;	/* 6301 only */
@@ -2201,9 +2251,11 @@ if (errorlog && (data & TCSR_EICI)) fprintf(errorlog,"warning - EICI not support
 			break;
 		case 0x0b:
 			m6800.output_compare = (m6800.output_compare & 0x00ff) | ((data << 8) & 0xff00);
+			MODIFIED_output_compare;
 			break;
 		case 0x0c:
 			m6800.output_compare = (m6800.output_compare & 0xff00) | ((data << 0) & 0x00ff);
+			MODIFIED_output_compare;
 			break;
 		case 0x0d:
 		case 0x0e:

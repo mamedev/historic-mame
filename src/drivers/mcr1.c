@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Midway MCR-1 system
-	
+
 	Currently implemented:
 		* Solar Fox
 		* Kick
@@ -16,7 +16,7 @@
 	CPU #1
 	========================================================================
 	0000-6FFF   R     xxxxxxxx    Program ROM
-	7000-77FF   R/W   xxxxxxxx    Program RAM
+	7000-77FF   R/W   xxxxxxxx    NVRAM
 	F000-F1FF   R/W   xxxxxxxx    Sprite RAM
 	F400-F41F     W   xxxxxxxx    Palette RAM blue/green
 	F800-F81F     W   xxxxxxxx    Palette RAM red
@@ -279,7 +279,7 @@ static void solarfox_init(void)
 {
 	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7,0,0,0,0,0 };
 
-	MCR_CONFIGURE_HISCORE(0x7000, 0x86, hiscore_init);
+	MCR_CONFIGURE_HISCORE(0x7000, 0x800, hiscore_init);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
 
@@ -289,7 +289,7 @@ static void solarfox_init(void)
 
 static void kick_init(void)
 {
-	MCR_CONFIGURE_HISCORE(0x7000, 0x91, NULL);
+	MCR_CONFIGURE_HISCORE(0x7000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 	MCR_CONFIGURE_DEFAULT_PORTS;
 

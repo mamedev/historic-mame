@@ -118,6 +118,11 @@ void m72_sound_irq_ack_w(int offset,int data)
 
 static int sample_addr;
 
+void m72_set_sample_start(int start)
+{
+	sample_addr = start;
+}
+
 void vigilant_sample_addr_w(int offset,int data)
 {
 	if (offset == 1)
@@ -138,7 +143,7 @@ void shisen_sample_addr_w(int offset,int data)
 	sample_addr <<= 2;
 }
 
-void m72_sample_addr_w(int offset,int data)
+void rtype2_sample_addr_w(int offset,int data)
 {
 	sample_addr >>= 5;
 

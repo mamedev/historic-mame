@@ -12,7 +12,7 @@
 
 static struct osd_bitmap *pf1_bitmap;
 static struct osd_bitmap *pf2_bitmap;
-static char *dirty_pf1,*dirty_pf2;
+static unsigned char *dirty_pf1,*dirty_pf2,*private_spriteram_2,*private_spriteram;
 unsigned char *hcastle_pf1_control,*hcastle_pf2_control;
 unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 static int gfx_bank;
@@ -52,6 +52,28 @@ void hcastle_gfxbank_w(int offset, int data)
 	gfx_bank=data;
 }
 
+void hcastle_pf1_control_w(int offset,int data)
+{
+	hcastle_pf1_control[offset]=data;
+	if (offset==3) {
+		if ((hcastle_pf1_control[3]&0x8)==0)
+			memcpy(private_spriteram,spriteram+0x800,0x800);
+		else
+			memcpy(private_spriteram,spriteram,0x800);
+	}
+}
+
+void hcastle_pf2_control_w(int offset,int data)
+{
+	hcastle_pf2_control[offset]=data;
+	if (offset==3) {
+		if ((hcastle_pf2_control[3]&0x8)==0)
+			memcpy(private_spriteram_2,spriteram_2+0x800,0x800);
+		else
+			memcpy(private_spriteram_2,spriteram_2,0x800);
+	}
+}
+
 /*****************************************************************************/
 
 static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int bank )
@@ -59,8 +81,10 @@ static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int b
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const unsigned char *source,*finish;
 
-	if ((hcastle_pf1_control[3]&0x8)==0x8) source = sbank + 0x800;
-	else source = sbank;
+//	if ((hcastle_pf1_control[3]&0x8)==0x8) source = sbank + 0x800;
+//	else
+
+	source = sbank;
 	finish = source + 0x800;
 
 /*
@@ -262,8 +286,8 @@ Level 2:
 		scrollx = -((hcastle_pf2_control[1]<<8)+hcastle_pf2_control[0]);
 		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		draw_sprites( bitmap, spriteram, 0 );
-		draw_sprites( bitmap, spriteram_2, 1 );
+		draw_sprites( bitmap, private_spriteram, 0 );
+		draw_sprites( bitmap, private_spriteram_2, 1 );
 
 		scrolly = -hcastle_pf1_control[2];
 		scrollx = -((hcastle_pf1_control[1]<<8)+hcastle_pf1_control[0]);
@@ -279,8 +303,8 @@ Level 2:
 		scrollx = -((hcastle_pf1_control[1]<<8)+hcastle_pf1_control[0]);
 		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-		draw_sprites( bitmap, spriteram, 0 );
-		draw_sprites( bitmap, spriteram_2, 1 );
+		draw_sprites( bitmap, private_spriteram, 0 );
+		draw_sprites( bitmap, private_spriteram_2, 1 );
 	}
 
 #if 0
@@ -320,10 +344,14 @@ int hcastle_vh_start(void)
 	if ((pf2_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
 		return 1;
 
-	dirty_pf1=(char *)malloc (0x1000);
-	dirty_pf2=(char *)malloc (0x1000);
+	dirty_pf1=malloc (0x1000);
+	dirty_pf2=malloc (0x1000);
+	private_spriteram=malloc (0x800);
+	private_spriteram_2=malloc (0x800);
 	memset(dirty_pf1,1,0x1000);
 	memset(dirty_pf2,1,0x1000);
+	memset(private_spriteram,0,0x800);
+	memset(private_spriteram_2,0,0x800);
 
 	return 0;
 }
@@ -334,4 +362,6 @@ void hcastle_vh_stop(void)
 	osd_free_bitmap(pf2_bitmap);
 	free(dirty_pf1);
 	free(dirty_pf2);
+	free(private_spriteram);
+	free(private_spriteram_2);
 }

@@ -160,7 +160,7 @@ void mhavoc_out_0_w (int offset, int data)
 	{
 		if (errorlog)
 			fprintf (errorlog, "\t\t\t\t*** resetting gamma processor. ***\n");
-		cpu_reset(1);
+		cpu_set_reset_line(1,PULSE_LINE);
 		alpha_rcvd=0;
 		alpha_xmtd=0;
 		gamma_rcvd=0;

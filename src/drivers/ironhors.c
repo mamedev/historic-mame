@@ -41,13 +41,13 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-void ironhors_init_machine(void)
+static void ironhors_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
-int ironhors_interrupt(void)
+static int ironhors_interrupt(void)
 {
 	if (cpu_getiloops() == 0)
 	{
@@ -60,7 +60,7 @@ int ironhors_interrupt(void)
 	return ignore_interrupt();
 }
 
-void ironhors_sh_irqtrigger_w(int offset,int data)
+static void ironhors_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
 }
@@ -163,20 +163,20 @@ INPUT_PORTS_START( ironhors_input_ports )
 
 	PORT_START	/* IN1 */
 	/* note that button 3 for player 1 and 2 are exchanged */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -201,7 +201,7 @@ INPUT_PORTS_START( ironhors_input_ports )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -248,7 +248,13 @@ INPUT_PORTS_START( ironhors_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR ( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR ( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -333,8 +339,8 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ? */
-	{ YM2203_VOL(25,25) },
+	18432000/6,		/* 3.07 MHz?  mod by Shingo Suzuki 1999/10/15 */
+	{ YM2203_VOL(40,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -350,14 +356,14 @@ static struct MachineDriver ironhors_machine_driver =
 	{
 		{
 			CPU_M6809,
-			2500000,        /* 2.50 Mhz? */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			0,
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ??  */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			3,	/* memory region #3 */
 			ironhors_sound_readmem,ironhors_sound_writemem,ironhors_sound_readport,ironhors_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -395,14 +401,14 @@ static struct MachineDriver farwest_machine_driver =
 	{
 		{
 			CPU_M6809,
-			2500000,        /* 2.50 Mhz? */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			0,
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ??  */
+			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
 			3,	/* memory region #3 */
 			farwest_sound_readmem,farwest_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */

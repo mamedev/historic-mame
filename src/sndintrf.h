@@ -79,7 +79,7 @@ struct MachineSound
 #include "sound/upd7759.h"
 #endif
 #if (HAS_HC55516)
-#include "sound/cvsd.h"
+#include "sound/hc55516.h"
 #endif
 #if (HAS_K007232)
 #include "sound/k007232.h"

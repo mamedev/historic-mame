@@ -65,11 +65,6 @@ void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 		color_prom++;
 	}
-
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 }
 
 

@@ -40,7 +40,16 @@ static int palette_bank;
 void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	/* for b&w games we'll use the Head On PROM */
+	static unsigned char bw_color_prom[] =
+	{
+		/* for b/w games, let's use the Head On PROM */
+		0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
+		0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
+	};
 
+
+	if (color_prom == 0) color_prom = bw_color_prom;
 
 	for (i = 0;i < Machine->drv->total_colors / 2;i++)
 	{
@@ -74,14 +83,18 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	{
 		extern struct GameDriver heiankyo_driver;
+		extern struct GameDriver invinco_driver;
 		extern struct GameDriver digger_driver;
+		extern struct GameDriver tranqgun_driver;
 
 		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
 		if (Machine->gamedrv == &heiankyo_driver)
 			palette_bank = 3;
 
-		/* and Digger expects it to default to 1 */
-		if (Machine->gamedrv == &digger_driver)
+		/* and many others expect it to default to 1 */
+		if (Machine->gamedrv == &invinco_driver ||
+				Machine->gamedrv == &digger_driver ||
+				Machine->gamedrv == &tranqgun_driver)
 			palette_bank = 1;
 	}
 }
@@ -126,6 +139,11 @@ void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -153,7 +171,7 @@ void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[0],
 					charcode,
 					(charcode >> 5) + 8 * palette_bank,
 					0,0,
@@ -168,8 +186,4 @@ void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtycharacter[offs] == 2) dirtycharacter[offs] = 0;
 	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

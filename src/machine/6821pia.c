@@ -13,6 +13,10 @@
 #include "driver.h"
 
 
+/* define this to "errorlog" to get logging; define it to 0 to get no logging */
+#define pialog 0
+
+
 /******************* internal PIA data structure *******************/
 
 struct pia6821
@@ -79,6 +83,14 @@ static const UINT8 swizzle_address[4] = { 0, 2, 1, 3 };
 
 
 
+/******************* un-configuration *******************/
+
+void pia_unconfig(void)
+{
+	memset(&pia, 0, sizeof(pia));
+}
+
+
 /******************* configuration *******************/
 
 void pia_config(int which, int addressing, const struct pia6821_interface *intf)
@@ -100,7 +112,7 @@ void pia_reset(void)
 	{
 		const struct pia6821_interface *intf = pia[i].intf;
 		UINT8 addr = pia[i].addr;
-		
+
 		memset(&pia[i], 0, sizeof(pia[i]));
 
 		pia[i].intf = intf;
@@ -109,28 +121,58 @@ void pia_reset(void)
 }
 
 
+/******************* wire-OR for all interrupt handlers *******************/
+
+static void update_shared_irq_handler(void (*irq_func)(int state))
+{
+	int i;
+
+	/* search all PIAs for this same IRQ function */
+	for (i = 0; i < MAX_PIA; i++)
+		if (pia[i].intf)
+		{
+			/* check IRQ A */
+			if (pia[i].intf->irq_a_func == irq_func && pia[i].irq_a_state)
+			{
+				(*irq_func)(1);
+				return;
+			}
+
+			/* check IRQ B */
+			if (pia[i].intf->irq_b_func == irq_func && pia[i].irq_b_state)
+			{
+				(*irq_func)(1);
+				return;
+			}
+		}
+
+	/* if we found nothing, the state is off */
+	(*irq_func)(0);
+}
+
+
 /******************* external interrupt check *******************/
 
 static void update_6821_interrupts(struct pia6821 *p)
 {
 	int new_state;
-	
+
 	/* start with IRQ A */
 	new_state = 0;
 	if ((p->irq_a1 && IRQ1_ENABLED(p->ctl_a)) || (p->irq_a2 && IRQ2_ENABLED(p->ctl_a))) new_state = 1;
 	if (new_state != p->irq_a_state)
 	{
 		p->irq_a_state = new_state;
-		if (p->intf->irq_a_func) (*p->intf->irq_a_func)(new_state);
+		if (p->intf->irq_a_func) update_shared_irq_handler(p->intf->irq_a_func);
 	}
-	
+
 	/* then do IRQ B */
 	new_state = 0;
 	if ((p->irq_b1 && IRQ1_ENABLED(p->ctl_b)) || (p->irq_b2 && IRQ2_ENABLED(p->ctl_b))) new_state = 1;
 	if (new_state != p->irq_b_state)
 	{
 		p->irq_b_state = new_state;
-		if (p->intf->irq_b_func) (*p->intf->irq_b_func)(new_state);
+		if (p->intf->irq_b_func) update_shared_irq_handler(p->intf->irq_b_func);
 	}
 }
 
@@ -146,7 +188,7 @@ int pia_read(int which, int offset)
 	if (p->addr & PIA_16BIT) offset /= 2;
 	offset &= 3;
 	if (p->addr & PIA_ALTERNATE_ORDERING) offset = swizzle_address[offset];
-	
+
 	switch (offset)
 	{
 		/******************* port A output/DDR read *******************/
@@ -180,11 +222,16 @@ int pia_read(int which, int offset)
 						p->out_ca2 = 1;
 					}
 				}
+
+				if (pialog) fprintf(pialog, "PIA%d read port A = %02X\n", which, val);
 			}
 
 			/* read DDR register */
 			else
+			{
 				val = p->ddr_a;
+				if (pialog) fprintf(pialog, "PIA%d read DDR A = %02X\n", which, val);
+			}
 			break;
 
 		/******************* port B output/DDR read *******************/
@@ -202,11 +249,16 @@ int pia_read(int which, int offset)
 				/* IRQ flags implicitly cleared by a read */
 				p->irq_b1 = p->irq_b2 = 0;
 				update_6821_interrupts(p);
+
+				if (pialog) fprintf(pialog, "PIA%d read port B = %02X\n", which, val);
 			}
 
 			/* read DDR register */
 			else
+			{
 				val = p->ddr_b;
+				if (pialog) fprintf(pialog, "PIA%d read DDR B = %02X\n", which, val);
+			}
 			break;
 
 		/******************* port A control read *******************/
@@ -222,6 +274,8 @@ int pia_read(int which, int offset)
 			/* set the IRQ flags if we have pending IRQs */
 			if (p->irq_a1) val |= PIA_IRQ1;
 			if (p->irq_a2 && C2_INPUT(p->ctl_a)) val |= PIA_IRQ2;
+
+			if (pialog) fprintf(pialog, "PIA%d read control A = %02X\n", which, val);
 			break;
 
 		/******************* port B control read *******************/
@@ -237,6 +291,8 @@ int pia_read(int which, int offset)
 			/* set the IRQ flags if we have pending IRQs */
 			if (p->irq_b1) val |= PIA_IRQ1;
 			if (p->irq_b2 && C2_INPUT(p->ctl_b)) val |= PIA_IRQ2;
+
+			if (pialog) fprintf(pialog, "PIA%d read control B = %02X\n", which, val);
 			break;
 	}
 
@@ -263,7 +319,7 @@ void pia_write(int which, int offset, int data)
 	if (p->addr & PIA_16BIT) offset /= 2;
 	offset &= 3;
 	if (p->addr & PIA_ALTERNATE_ORDERING) offset = swizzle_address[offset];
-	
+
 	/* adjust data for 16-bit */
 	if (p->addr & PIA_16BIT)
 	{
@@ -296,6 +352,8 @@ void pia_write(int which, int offset, int data)
 			/* write output register */
 			if (OUTPUT_SELECTED(p->ctl_a))
 			{
+				if (pialog) fprintf(pialog, "PIA%d port A write = %02X\n", which, data);
+
 				/* update the output value */
 				p->out_a = data;/* & p->ddr_a; */	/* NS990130 - don't mask now, DDR could change later */
 
@@ -306,6 +364,8 @@ void pia_write(int which, int offset, int data)
 			/* write DDR register */
 			else
 			{
+				if (pialog) fprintf(pialog, "PIA%d DDR A write = %02X\n", which, data);
+
 				if (p->ddr_a != data)
 				{
 					/* NS990130 - if DDR changed, call the callback again */
@@ -323,6 +383,8 @@ void pia_write(int which, int offset, int data)
 			/* write output register */
 			if (OUTPUT_SELECTED(p->ctl_b))
 			{
+				if (pialog) fprintf(pialog, "PIA%d port B write = %02X\n", which, data);
+
 				/* update the output value */
 				p->out_b = data;/* & p->ddr_b */	/* NS990130 - don't mask now, DDR could change later */
 
@@ -349,6 +411,8 @@ void pia_write(int which, int offset, int data)
 			/* write DDR register */
 			else
 			{
+				if (pialog) fprintf(pialog, "PIA%d DDR B write = %02X\n", which, data);
+
 				if (p->ddr_b != data)
 				{
 					/* NS990130 - if DDR changed, call the callback again */
@@ -362,6 +426,8 @@ void pia_write(int which, int offset, int data)
 
 		/******************* port A control write *******************/
 		case PIA_CTLA:
+
+			if (pialog) fprintf(pialog, "PIA%d control A write = %02X\n", which, data);
 
 			/* CA2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CA2 */
@@ -388,6 +454,8 @@ void pia_write(int which, int offset, int data)
 
 		/******************* port B control write *******************/
 		case PIA_CTLB:
+
+			if (pialog) fprintf(pialog, "PIA%d control B write = %02X\n", which, data);
 
 			/* CB2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CB2 */
@@ -444,7 +512,7 @@ void pia_set_input_ca1(int which, int data)
 		{
 			/* mark the IRQ */
 			p->irq_a1 = 1;
-			
+
 			/* update externals */
 			update_6821_interrupts(p);
 

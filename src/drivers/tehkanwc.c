@@ -55,12 +55,9 @@ static void shared_w(int offset,int data)
 static void sub_cpu_halt_w(int offset,int data)
 {
 	if (data)
-	{
-		cpu_reset(1);
-		cpu_halt(1,1);
-	}
+		cpu_set_reset_line(1,CLEAR_LINE);
 	else
-		cpu_halt(1,0);
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 
@@ -109,7 +106,7 @@ static void sound_command_w(int offset,int data)
 
 static void reset_callback(int param)
 {
-	cpu_reset(2);
+	cpu_set_reset_line(2,PULSE_LINE);
 }
 
 static void sound_answer_w(int offset,int data)

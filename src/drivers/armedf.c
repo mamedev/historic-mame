@@ -6,6 +6,10 @@ Armed Formation
 Terra Force
 (c)1987 Nichibutsu
 
+Crazy Climber 2
+(c)1988 Nichibutsu
+"cclimbr2" Driver Added by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
+
 68000 + Z80
 
 ***********************************************************************/
@@ -18,6 +22,7 @@ Terra Force
 #include "cpu/z80/z80.h"
 
 extern void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int terraf_vh_start(void);
 extern int armedf_vh_start(void);
 extern void armedf_vh_stop(void);
@@ -161,6 +166,38 @@ static struct MemoryWriteAddress armedf_writemem[] ={
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress cclimbr2_readmem[] =
+{
+	{ 0x000000, 0x05ffff, MRA_ROM },
+	{ 0x060000, 0x063fff, MRA_BANK1 }, /* sprites */
+	{ 0x064000, 0x064fff, paletteram_word_r },
+
+	{ 0x068000, 0x069fff, terraf_text_videoram_r },
+	{ 0x06a000, 0x06a9ff, MRA_BANK2 },
+
+	{ 0x06C000, 0x06C9ff, MRA_BANK3 },
+	{ 0x070000, 0x070fff, armedf_fg_videoram_r },
+	{ 0x074000, 0x074fff, armedf_bg_videoram_r },
+	{ 0x078000, 0x07800f, io_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress cclimbr2_writemem[] ={
+	{ 0x000000, 0x05ffff, MWA_ROM },
+	{ 0x060000, 0x063fff, MWA_BANK1, &spriteram },
+	{ 0x064000, 0x064fff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
+
+	{ 0x068000, 0x069fff, terraf_text_videoram_w, &videoram },
+	{ 0x06a000, 0x06a9ff, MWA_BANK2 },
+
+	{ 0x06C000, 0x06C9ff, MWA_BANK3 },
+	{ 0x06ca00, 0x06cbff, MWA_RAM },
+	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_bg_videoram },
+	{ 0x074000, 0x074fff, armedf_bg_videoram_w, &armedf_fg_videoram },
+	{ 0x07c000, 0x07c00f, io_w },
+	{ -1 }
+};
+
 static struct MemoryReadAddress soundreadmem[] ={
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_RAM },
@@ -170,6 +207,18 @@ static struct MemoryReadAddress soundreadmem[] ={
 static struct MemoryWriteAddress soundwritemem[] ={
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress cclimbr2_soundreadmem[] ={
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress cclimbr2_soundwritemem[] ={
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -242,7 +291,7 @@ INPUT_PORTS_START( armedf_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
@@ -357,6 +406,96 @@ INPUT_PORTS_START( terraf_input_ports )
 	PORT_DIPSETTING(    0x00, "Unlimited" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( cclimbr2_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START	/* Coin, Start */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Test Mode */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )     /* Tilt */
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3")
+	PORT_DIPSETTING(    0x02, "4")
+	PORT_DIPSETTING(    0x01, "5")
+	PORT_DIPSETTING(    0x00, "6")
+	PORT_DIPNAME( 0x04, 0x04, "First Bonus" )
+	PORT_DIPSETTING(    0x04, "30k")
+	PORT_DIPSETTING(    0x00, "60k")
+	PORT_DIPNAME( 0x08, 0x08, "Second Bonus" )
+	PORT_DIPSETTING(    0x08, "70k Only")
+	PORT_DIPSETTING(    0x00, "Nothing")
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy")
+	PORT_DIPSETTING(    0x00, "Hard")
+#if 0
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, "Continue Play" )
+	PORT_DIPSETTING(    0x10, "3")
+	PORT_DIPSETTING(    0x00, "0")
+#if 0
+	PORT_DIPNAME( 0x20, 0x20, "Flip Screen" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#if 0
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
+INPUT_PORTS_END
+
 static struct GfxLayout char_layout = {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -411,10 +550,20 @@ int armedf_interrupt(void){
 	return (1);
 }
 
+int cclimbr2_interrupt(void){
+	return (2);
+}
+
 static struct DACinterface dac_interface =
 {
 	2,	/* 2 channels */
 	{ 100,100 },
+};
+
+static struct DACinterface cclimbr2_dac_interface =
+{
+	2,	/* 2 channels */
+	{ 40, 40 },
 };
 
 static struct MachineDriver terraf_machine_driver =
@@ -483,7 +632,7 @@ static struct MachineDriver armedf_machine_driver =
 			interrupt,128
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,
 	0,
 
@@ -509,6 +658,54 @@ static struct MachineDriver armedf_machine_driver =
 		{
 			SOUND_DAC,
 			&dac_interface
+		}
+	}
+};
+
+static struct MachineDriver cclimbr2_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			8000000, /* 8 Mhz?? */
+			0,
+			cclimbr2_readmem,cclimbr2_writemem,0,0,
+			cclimbr2_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3072000,	/* 3.072 Mhz???? */
+			2,
+			cclimbr2_soundreadmem,cclimbr2_soundwritemem,readport,writeport,
+			interrupt,128
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,						// nogi
+	0,
+
+	/* video hardware */
+	38*8, 32*8, { 1*8, 37*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048,2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	terraf_vh_start,
+	armedf_vh_stop,
+	cclimbr2_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+		   SOUND_YM3812,
+		   &ym3812_interface
+		},
+		{
+			SOUND_DAC,
+			&cclimbr2_dac_interface
 		}
 	}
 };
@@ -579,6 +776,34 @@ ROM_START( armedf_rom )
 	ROM_LOAD( "af_10.rom", 0x00000, 0x10000, 0xc5eacb87 )
 ROM_END
 
+ROM_START( cclimbr2_rom )
+	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+	ROM_LOAD_EVEN( "4.bin", 0x00000, 0x10000, 0x7922ea14 )
+	ROM_LOAD_ODD(  "1.bin", 0x00000, 0x10000, 0x2ac7ed67 )
+	ROM_LOAD_EVEN( "6.bin", 0x20000, 0x10000, 0x7905c992 )
+	ROM_LOAD_ODD(  "5.bin", 0x20000, 0x10000, 0x47be6c1e )
+	ROM_LOAD_EVEN( "3.bin", 0x40000, 0x10000, 0x1fb110d6 )
+	ROM_LOAD_ODD(  "2.bin", 0x40000, 0x10000, 0x0024c15b )
+
+	ROM_REGION(0x88000)
+	ROM_LOAD( "10.bin", 0x00000, 0x08000, 0x7f475266 ) /* characters */
+	ROM_LOAD( "7.bin",  0x08000, 0x10000, 0xcbdd3906 ) /* foreground tiles */
+	ROM_LOAD( "8.bin",  0x18000, 0x10000, 0xb2a613c0 )
+	ROM_LOAD( "17.bin", 0x28000, 0x10000, 0xe24bb2d7 ) /* background tiles */
+	ROM_LOAD( "18.bin", 0x38000, 0x10000, 0x56834554 )
+	ROM_LOAD( "15.bin", 0x48000, 0x10000, 0x4bf838be ) /* sprites */
+	ROM_LOAD( "16.bin", 0x58000, 0x10000, 0x21a265c5 )
+	ROM_LOAD( "13.bin", 0x68000, 0x10000, 0x6b6ec999 )
+	ROM_LOAD( "14.bin", 0x78000, 0x10000, 0xf426a4ad )
+
+	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_LOAD( "11.bin", 0x00000, 0x04000, 0xfe0175be )
+	ROM_LOAD( "12.bin", 0x04000, 0x08000, 0x5ddf18f2 )
+
+	ROM_REGION(0x4000)	/* unknown */
+	ROM_LOAD( "9.bin",  0x0000, 0x4000, 0x740d260f )	// DATA ?
+ROM_END
+
 struct GameDriver terraf_driver =
 {
 	__FILE__,
@@ -611,9 +836,14 @@ struct GameDriver terrafu_driver =
 	0,
 	&terraf_machine_driver,
 	0,
+
 	terrafu_rom,
-	0,0,0,0,
+	0, 0,
+	0,
+	0,
+
 	terraf_input_ports,
+
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
@@ -631,10 +861,40 @@ struct GameDriver armedf_driver =
 	0,
 	&armedf_machine_driver,
 	0,
+
 	armedf_rom,
-	0,0,0,0,
+	0, 0,
+	0,
+	0,
+
 	armedf_input_ports,
+
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver cclimbr2_driver =
+{
+	__FILE__,
+	0,
+	"cclimbr2",
+	"Crazy Climber 2 (Japan)",
+	"1988",
+	"Nichibutsu",
+	"Takahiro Nogi",
+	0,
+	&cclimbr2_machine_driver,
+	0,
+
+	cclimbr2_rom,
+	0, 0,
+	0,
+	0,
+
+	cclimbr2_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 	0, 0
 };

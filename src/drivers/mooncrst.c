@@ -613,17 +613,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
-/* colors, but it should not be considered correct. It's a bootleg anyway. */
-static unsigned char wrong_color_prom[] =
-{
-	/* palette */
-	0x00,0x3B,0xCB,0xFE,0x00,0x1F,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xCC,0x07,
-	0x00,0xC0,0xB8,0x1F,0x00,0x1E,0x79,0x0F,0x00,0xFE,0x07,0xF8,0x00,0x7E,0x07,0xC6
-};
-
-
-
 static struct CustomSound_interface custom_interface =
 {
 	mooncrst_sh_start,
@@ -1005,7 +994,9 @@ ROM_START( fantazia_rom )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "fantazia.clr", 0x0000, 0x0020, 0x00000000 )   /* missing */
+	/* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
+	/* colors, but it should not be considered correct. It's a bootleg anyway. */
+	ROM_LOAD( "6l_prom.bin",  0x0000, 0x0020, BADCRC( 0xf5381d3e ) )
 ROM_END
 
 ROM_START( eagle_rom )
@@ -1666,7 +1657,7 @@ struct GameDriver fantazia_driver =
 
 	mooncrst_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave

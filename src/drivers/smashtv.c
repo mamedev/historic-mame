@@ -79,6 +79,8 @@
 #include "cpu/tms34010/tms34010.h"
 #include "machine/6821pia.h"
 
+#define TMS34010_CLOCK_DIVIDER		2
+
 /* Variables in vidhrdw/smashtv.c */
 extern unsigned char *wms_videoram;
 extern           int wms_videoram_size;
@@ -107,6 +109,9 @@ void trog_init_machine(void);
 void narc_init_machine(void);
 void mk2_init_machine(void);
 void nbajam_init_machine(void);
+
+void wms_to_shiftreg(unsigned int address, unsigned short* shiftreg);
+void wms_from_shiftreg(unsigned int address, unsigned short* shiftreg);
 
 void wms_sysreg_w(int offset, int data);
 void wms_sysreg2_w(int offset, int data);
@@ -273,8 +278,8 @@ static struct MemoryReadAddress narc_music_readmem[] =
 static struct MemoryWriteAddress narc_digitizer_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM},
-	{ 0x2000, 0x2000, CVSD_clock_w },
-	{ 0x2400, 0x2400, CVSD_dig_and_clk_w },
+	{ 0x2000, 0x2000, hc55516_clock_set_w },
+	{ 0x2400, 0x2400, hc55516_digit_clock_clear_w },
 	{ 0x3000, 0x3000, narc_slave_DAC_w },
 	{ 0x3800, 0x3800, narc_digitizer_bank_select_w },
 	{ 0x3c00, 0x3c00, MWA_NOP}, /* SYNC */
@@ -305,8 +310,8 @@ static struct MemoryWriteAddress smashtv_sound_writemem[] =
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x4000, 0x4003, pia_0_w },
-	{ 0x6000, 0x6000, CVSD_dig_and_clk_w },
-	{ 0x6800, 0x6800, CVSD_clock_w },
+	{ 0x6000, 0x6000, hc55516_digit_clock_clear_w },
+	{ 0x6800, 0x6800, hc55516_clock_set_w },
 	{ 0x7800, 0x7800, smashtv_sound_bank_select_w },
 	{ 0x8000, 0xffff, MWA_ROM},
 	{ -1 }
@@ -1163,10 +1168,10 @@ INPUT_PORTS_END
  *   Sound interface
  */
 
-static struct CVSDinterface cvsd_interface =
+static struct hc55516_interface cvsd_interface =
 {
 	1,          /* 1 chip */
-	{ 30 }
+	{ 80 }
 };
 
 static struct DACinterface dac_interface =
@@ -1221,6 +1226,16 @@ void mk_adpcm_bs_w(int offset, int data)
 	if (errorlog) fprintf(errorlog, "adpcm-bs 0x%x --> 0x%x\n", data, okim6295_interface.region[0]);
 }
 
+
+static struct tms34010_config cpu_config =
+{
+	0,					/* halt on reset */
+	NULL,				/* generate interrupt */
+	wms_to_shiftreg,	/* write to shiftreg function */
+	wms_from_shiftreg	/* read from shiftreg function */
+};
+
+
 /* Y-unit games */
 static struct MachineDriver smashtv_machine_driver =
 {
@@ -1228,14 +1243,15 @@ static struct MachineDriver smashtv_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			8000000,	/* 8 Mhz */
+			4000000,	/* 8 Mhz */
 			2,
 			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1283,10 +1299,11 @@ static struct MachineDriver narc_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			48000000,	/* 48 Mhz */
+			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
@@ -1344,14 +1361,15 @@ static struct MachineDriver trog_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			8000000,	/* 8 Mhz */
+			4000000,	/* 8 Mhz */
 			2,
 			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1399,14 +1417,15 @@ static struct MachineDriver mk_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			8000000,	/* 8 Mhz */
+			4000000,	/* 8 Mhz */
 			2,
 			mk_sound_readmem,mk_sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1454,14 +1473,15 @@ static struct MachineDriver term2_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			8000000,	/* 8 Mhz */
+			4000000,	/* 8 Mhz */
 			2,
 			mk_sound_readmem,mk_sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1509,10 +1529,11 @@ static struct MachineDriver mk2_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			mk2_readmem,mk2_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1543,14 +1564,15 @@ static struct MachineDriver nbajam_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000,	/* 50 Mhz */
+			50000000/8,	/* 50 Mhz */
 			0,
 			mk2_readmem,mk2_writemem,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0,
+			0,0,&cpu_config
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			8000000,	/* 2 Mhz */
+			4000000,	/* 2 Mhz */
 			2,
 			mk_sound_readmem,mk_sound_writemem,0,0,
 			ignore_interrupt,0

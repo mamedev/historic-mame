@@ -15,93 +15,93 @@
    									- Bitfields	(ins,ext)
    									- i80186 emulation (brkem,retem.calln,reti,
    									  additional MD-Flag (bit 15) in statusreg.
-					
-  NEC V20		- 	8/10 MHz 
+
+  NEC V20		- 	8/10 MHz
   					µpd70108
   					i8088 pin compatible
-  
+
   NEC V20H		-   10/12/16 MHz
   					µpd70108H
   					packages: 40 pin IYP, 44 pin PLCC, 52 pin PFP (QFP)
-  					
+
   NEC V25		-	extra instructions for register bank switches and task switches
   					µpd70320, mPD70322
   					packages: 84 pin PLCC, 94 pin QFP
-  
+
   NEC V25 Plus	- 	NEC V25 with integrated peripherals: PIC,DMA,ports,serial,timer
   					256 Bytes RAM, 8 kByte ROM
   					µpd70325
-  					
+
   NEC V25 Software Guard - NEC V25 with 8086 emulation and security mode
   					µpd70327
-  					
+
   NEC V30		- 	10,12,16 MHz
   					µpd70116
-  					i8086 pin compatible 
-  
+  					i8086 pin compatible
+
   NEC V30H		-   see V25H (but with V30 core)
   					µpd70116H
-  				
+
   NEC V33		-   ???	used in IREM M92 (R-Type Leo !)
   					16 MHz
   					µpd 70136
-  
+
   NEC V35		- 	same as V25 but V30 core.
   					µpd70330, mPD70332
-  					
+
   NEC V35 Plus	-   same as V25 Plus but with V30 core
   					µpd70335
-  					
+
   NEC V35 Sofware Guard - take a guess....yep !
   					µpd70337
-  					
-  
+
+
   NEC V40		-	undefined opcode triggers INT6, same speeds as V20
   					packages: 68 pin PGA, 68 pin PLCC, 80 pin PFP (QFP)
   					µpd70208
-	
+
   NEC V40H		-	10,12,16 MHz
 					µpd70208H
 					packages: 68 pin PGA, 80 pin PFP (QFP)
-					
+
   NEC V45		-	???
-  
+
   NEC V50		-	undifed opcode triggers INT6, V30 speeds
   					µpd70216
-  					
+
   NEC V50H		-   10,12,16 MHz
   					µpd70216H
-  
+
   NEC V53a		-	???
-  					
+
   NEC V55		- 	speeds up to 16 MHz (????)
-  
+
   NEC V60 		- 	16 MHz (???)	[Sonic,Spiderman,Golden Axe 2...]
-  
-  NEC V70 		- 	16 MHz (???)	
+
+  NEC V70 		- 	16 MHz (???)
   					µpd70616
   					used in Sega System 32
-  
+
 
 
    History:
    --------
    20.07.1999 v1.0: 90% of Basic V20 is done. Used in IREM M72 (?) (Raiden,R-Type,...)
-					No peripherals ! 
+					No peripherals !
 
-   2do: - EXT & INS Instruction: 
+   2do: - EXT & INS Instruction:
 		I have no clue about how they work
-	    - RETEM & CALLN & RETI and the MD-Flag: 
+	    - RETEM & CALLN & RETI and the MD-Flag:
 	    	I have added the MD-Flag and BRKEM clears it (set by reset and is normally =1).
 	    	The Mapping of the registers ond the whole CALLN/RETI adress-sheme is missing.
 	    	No big deal (adress spache is narrowed to 8080/8086) but it has to be
 	    	waved in here.
-	    - All other V models 
+	    - All other V models
 	    - adjust clocks for all other instructions than the nec_pre() ones. !!!
 
-	22.07.1999 v1.5: Information-flood - Found much info in the OPCODE.LST 
-	
-	    fixed:	- timings ! (All clocks correspond to V20 !!!) 
+	22.07.1999 v1.5: Information-flood - Found much info in the OPCODE.LST
+
+	    fixed:	- timings ! (All clocks correspond to V20 !!!)
 	    fixed:	- found almost every opcode for all NEC-CPUS. No code though but opcodes
 			  are known now. I inserted the comments from OPCODE.LST.
 
@@ -109,13 +109,13 @@
          maybe rewrite this part.
        - add some code to identify which cpu we are trying to emulate (for correct timing)
        - strip unnecessary code
-			  
+
 */
-        
-        
+
+
 #include <stdio.h>
 #include <string.h>
-#include "host.h"
+#include "nechost.h"
 #include "cpuintrf.h"
 #include "memory.h"
 #include "mamedbg.h"
@@ -185,9 +185,9 @@ static char seg_prefix;         /* prefix segment indicator */
 #define NMI_IRQ 0x02
 #define NEC_PENDING 0x80
 
-#include "instr.h"
-#include "ea.h"
-#include "modrm.h"
+#include "necinstr.h"
+#include "necea.h"
+#include "necmodrm.h"
 
 static UINT8 parity_table[256];
 /***************************************************************************/
@@ -243,18 +243,18 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
     unsigned dest_seg, dest_off;
 
 #if 0
-	if (errorlog) 
-		fprintf(errorlog,"PC=%06x : NEC Interrupt %02d",cpu_get_pc(),int_num);	
+	if (errorlog)
+		fprintf(errorlog,"PC=%06x : NEC Interrupt %02d",cpu_get_pc(),int_num);
 #endif
 
     i_pushf();
 	I.TF = I.IF = 0;
 	if (md_flag) SetMD(0);	/* clear Mode-flag = start 8080 emulation mode */
-	
+
 	if (int_num == -1)
 	{
 		int_num = (*I.irq_callback)(0);
-//		if (errorlog) fprintf(errorlog," (indirect ->%02d) ",int_num);	
+//		if (errorlog) fprintf(errorlog," (indirect ->%02d) ",int_num);
 	}
 
     dest_off = ReadWord(int_num*4);
@@ -266,8 +266,8 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
 	I.sregs[CS] = (WORD)dest_seg;
 	I.base[CS] = SegBase(CS);
 	change_pc20((I.base[CS]+I.ip) & I.amask);
-//	if (errorlog) 
-//		fprintf(errorlog,"=%06x\n",cpu_get_pc());		
+//	if (errorlog)
+//		fprintf(errorlog,"=%06x\n",cpu_get_pc());
 }
 
 
@@ -334,7 +334,7 @@ static void i_add_r16w(void)    /* Opcode 0x03 */
 static void i_add_ald8(void)    /* Opcode 0x04 */
 {
     DEF_ald8(dst,src);
-	nec_ICount-=4;   
+	nec_ICount-=4;
     ADDB(dst,src);
 	I.regs.b[AL]=dst;
 }
@@ -342,7 +342,7 @@ static void i_add_ald8(void)    /* Opcode 0x04 */
 static void i_add_axd16(void)    /* Opcode 0x05 */
 {
     DEF_axd16(dst,src);
-	nec_ICount-=4;   
+	nec_ICount-=4;
     ADDW(dst,src);
 	I.regs.w[AW]=dst;
 }
@@ -395,7 +395,7 @@ static void i_or_r16w(void)    /* Opcode 0x0b */
 static void i_or_ald8(void)    /* Opcode 0x0c */
 {
     DEF_ald8(dst,src);
-	nec_ICount-=4;   
+	nec_ICount-=4;
     ORB(dst,src);
 	I.regs.b[AL]=dst;
 }
@@ -403,7 +403,7 @@ static void i_or_ald8(void)    /* Opcode 0x0c */
 static void i_or_axd16(void)    /* Opcode 0x0d */
 {
     DEF_axd16(dst,src);
-	nec_ICount-=4;   
+	nec_ICount-=4;
     ORW(dst,src);
 	I.regs.w[AW]=dst;
 }
@@ -428,13 +428,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			ModRM = FETCH;
 		    if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=3;   
+		    	nec_ICount-=3;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-12;			/* my source says 14 cycles everytime and not 
+   				nec_ICount=old-12;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = I.regs.b[CL] & 0x7;
@@ -452,34 +452,34 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-12;			/* my source says 14 cycles everytime and not 
+				nec_ICount=old-12;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = I.regs.b[CL] & 0xF;
 			I.ZeroVal = tmp & bytes[tmp2] ? 1 : 0;
 //			SetZF(tmp & (1<<tmp2));
 			break;
-		
-		
+
+
 		case 0x12 : // 0F 12 [mod:000:r/m] - CLR1 reg/m8,cl
 			ModRM = FETCH;
 		    /* need the long if due to correct cycles OB[19.07.99] */
 		    if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=5;   
+		    	nec_ICount-=5;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte( EA);
-   				nec_ICount=old-14;			/* my source says 14 cycles everytime and not 
+   				nec_ICount=old-14;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = I.regs.b[CL] & 0x7;		/* hey its a Byte so &07 NOT &0f */
 			tmp &= ~(bytes[tmp2]);
 			PutbackRMByte(ModRM,tmp);
 			break;
-	
+
 		case 0x13 : // 0F 13 [mod:000:r/m] - CLR1 reg/m16,cl
 			ModRM = FETCH;
 		    //tmp = GetRMWord(ModRM);
@@ -491,25 +491,25 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-14;			/* my source says 14 cycles everytime and not 
+				nec_ICount=old-14;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = I.regs.b[CL] & 0xF;		/* this time its a word */
 			tmp &= ~(bytes[tmp2]);
 			PutbackRMWord(ModRM,tmp);
 			break;
-			
+
 		case 0x14 : // 0F 14 47 30 - SET1 [bx+30h],cl
 			ModRM = FETCH;
 			if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=4;   
+		    	nec_ICount-=4;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	 (*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-13;	
+   				nec_ICount=old-13;
 		    }
 			tmp2 = I.regs.b[CL] & 0x7;
 			tmp |= (bytes[tmp2]);
@@ -526,7 +526,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-13;			
+				nec_ICount=old-13;
 			}
 			tmp2 = I.regs.b[CL] & 0xF;
 			tmp |= (bytes[tmp2]);
@@ -537,13 +537,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		    /* need the long if due to correct cycles OB[19.07.99] */
 		    if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=4;   
+		    	nec_ICount-=4;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-18;			/* my source says 18 cycles everytime and not 
+   				nec_ICount=old-18;			/* my source says 18 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = I.regs.b[CL] & 0x7;	/* hey its a Byte so &07 NOT &0f */
@@ -564,7 +564,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-18;			/* my source says 14 cycles everytime and not 
+				nec_ICount=old-18;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = I.regs.b[CL] & 0xF;		/* this time its a word */
@@ -579,13 +579,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   //tmp = GetRMByte(ModRM);
 		    if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=4;   
+		    	nec_ICount-=4;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-13;			/* my source says 15 cycles everytime and not 
+   				nec_ICount=old-13;			/* my source says 15 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = FETCH;
@@ -604,7 +604,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-13;			/* my source says 14 cycles everytime and not 
+				nec_ICount=old-13;			/* my source says 14 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = FETCH;
@@ -617,13 +617,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   	//tmp = GetRMByte(ModRM);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=6;   
+		    	nec_ICount-=6;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-15;			/* my source says 15 cycles everytime and not 
+   				nec_ICount=old-15;			/* my source says 15 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = FETCH;
@@ -642,7 +642,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-15;			/* my source says 15 cycles everytime and not 
+				nec_ICount=old-15;			/* my source says 15 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = FETCH;
@@ -655,13 +655,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   //tmp = GetRMByte(ModRM);
 		    if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=5;   
+		    	nec_ICount-=5;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-14;			/* my source says 15 cycles everytime and not 
+   				nec_ICount=old-14;			/* my source says 15 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 		    }
 			tmp2 = FETCH;
@@ -682,7 +682,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				(*GetEA[ModRM])();	// calculate EA
 				tmp=ReadWord(EA);	// read from EA
 				nec_ICount=old-14;
-				//if (errorlog) fprintf(errorlog,"[%04x]=%04x ->",EA,tmp);			
+				//if (errorlog) fprintf(errorlog,"[%04x]=%04x ->",EA,tmp);
 			}
 			tmp2 = FETCH;
 			tmp2 &= 0xF;
@@ -695,13 +695,13 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   	//tmp = GetRMByte(ModRM);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=5;   
+		    	nec_ICount-=5;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-   				nec_ICount=old-19;			
+   				nec_ICount=old-19;
 		    }
 			tmp2 = FETCH;
 			tmp2 &= 0x7;
@@ -722,7 +722,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-19;			/* my source says 15 cycles everytime and not 
+				nec_ICount=old-19;			/* my source says 15 cycles everytime and not
    											   ModRM-dependent like GetEA[] does..hmmm */
 			}
 			tmp2 = FETCH;
@@ -793,29 +793,29 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			I.OverVal = I.CarryVal;
 			nec_ICount-=7+19*count;
 			} break;
-		
+
 		case 0x25 :
 			/*
 			----------O-MOVSPA---------------------------------
 			OPCODE MOVSPA	 -  Move Stack Pointer After Bank Switched
-			
+
 			CPU:  NEC V25,V35,V25 Plus,V35 Plus,V25 Software Guard
 			Type of Instruction: System
-			
+
 			Instruction:  MOVSPA
-			
+
 			Description:  This instruction transfer	 both SS and SP	 of the old register
 				      bank to new register bank after the bank has been switched by
 				      interrupt or BRKCS instruction.
-			
+
 			Flags Affected:	 None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	MOVSPA
 			COP (Code of Operation)	 : 0Fh 25h
-			
+
 			Clocks:	 16
 			*/
 			if (errorlog) fprintf(errorlog,"PC=%06x : MOVSPA\n",cpu_get_pc()-2);
@@ -858,7 +858,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   	//tmp = GetRMByte(ModRM);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=25;   
+		    	nec_ICount-=25;
 		    }
 		    else {
 		    	int old=nec_ICount;
@@ -874,7 +874,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			break;
 		// Is this a REAL instruction??
 		case 0x29 : // 0F 29 C7 - ROL4 bx
-			
+
 			ModRM = FETCH;
 		    /*
 		    if (ModRM >= 0xc0) {
@@ -901,7 +901,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		   	//tmp = GetRMByte(ModRM);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		    	nec_ICount-=29;   
+		    	nec_ICount-=29;
 		    }
 		    else {
 		    	int old=nec_ICount;
@@ -914,7 +914,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			tmp = tmp2 | (tmp>>4);
 			PutbackRMByte(ModRM,tmp);
 			break;
-			
+
 		case 0x2B : // 0F 2b c2 - ROR4 bx
 			ModRM = FETCH;
 			/*
@@ -927,7 +927,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				int old=nec_ICount;
 				(*GetEA[ModRM])();;
 				tmp=ReadWord(EA);
-				nec_ICount=old-33;			
+				nec_ICount=old-33;
 			}
 			tmp2 = (I.regs.b[AL] & 0xF)<<4;
 			I.regs.b[AL] = (I.regs.b[AL] & 0xF0) | (tmp&0xF);
@@ -944,9 +944,9 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 
 				Perform a High-Speed Software Interrupt with contex-switch to
 				register bank indicated by the lower 3-bits of 'bank'.
-			
+
 			Info:	NEC V25/V35/V25 Plus/V35 Plus Bank System
-			
+
 				This Chips have	 8 32bytes register banks, which placed in
 				Internal chip RAM by addresses:
 				xxE00h..xxE1Fh Bank 0
@@ -958,7 +958,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				Where xx is Value of IDB register.
 				IBD is Byte Register contained Internal data area base
 				IBD addresses is FFFFFh and xxFFFh where xx is data in IBD.
-			
+
 				Format of Bank:
 				+0	Reserved
 				+2	Vector PC
@@ -976,7 +976,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				+1A	DW		;DW
 				+1C	CW		;CW
 				+1E	AW		;AW
-			
+
 				Format of V25 etc. PSW (FLAGS):
 				Bit	Description
 				15	1
@@ -997,252 +997,252 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				2	P	;PF
 				1	BRKI	I/O Trap Enable Flag
 				0	CY	;CF
-			
+
 			Flags Affected:	 None
 			*/
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : BRKCS %02x\n",cpu_get_pc()-3,ModRM);			
+			if (errorlog) fprintf(errorlog,"PC=%06x : BRKCS %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=15;// checked !
 			break;
-		
-		case 0x31: // 0F 31 [mod:reg:r/m] - INS reg8,reg8 or INS reg8,imm4 
-		
+
+		case 0x31: // 0F 31 [mod:reg:r/m] - INS reg8,reg8 or INS reg8,imm4
+
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : INS ",cpu_get_pc()-2);					
+			if (errorlog) fprintf(errorlog,"PC=%06x : INS ",cpu_get_pc()-2);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
 		        if (errorlog) fprintf(errorlog,"ModRM=%04x \n",ModRM);
-		    	nec_ICount-=29;   
+		    	nec_ICount-=29;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);			
+		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);
    				nec_ICount=old-33;
    			}
-			
+
 			// more to come
 			//bfl=tmp2 & 0xf;		// bit field length
 			//bfs=tmp & 0xf;		// bit field start (bit offset in DS:IX)
 			//I.regs.b[AH] =0;	// AH =0
-			
-			/*2do: the rest is silence....yet 
+
+			/*2do: the rest is silence....yet
 			----------O-INS------------------------------------
 			OPCODE INS  -  Insert Bit String
-			
+
 			CPU: NEC/Sony  all V-series
 			Type of Instruction: User
-			
+
 			Instruction:  INS  start,len
-			
+
 			Description:
-			
+
 				  BitField [	     BASE =  ES:IY
 					 START BIT OFFSET =  start
 						   LENGTH =  len
 						 ]   <-	 AW [ bits= (len-1)..0]
-			
+
 			Note:	di and start automatically UPDATE
 			Note:	Alternative Name of this instruction is NECINS
-			
+
 			Flags Affected: None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form		 : INS	reg8,reg8
 			COP (Code of Operation)	 : 0FH 31H  PostByte
 			*/
-			
-			//nec_ICount-=31; /* 31 -117 clocks ....*/ 
-			break;	
-		case 0x33: // 0F 33 [mod:reg:r/m] - EXT reg8,reg8 or EXT reg8,imm4 
-			
+
+			//nec_ICount-=31; /* 31 -117 clocks ....*/
+			break;
+		case 0x33: // 0F 33 [mod:reg:r/m] - EXT reg8,reg8 or EXT reg8,imm4
+
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : EXT ",cpu_get_pc()-2);					
+			if (errorlog) fprintf(errorlog,"PC=%06x : EXT ",cpu_get_pc()-2);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
 		        if (errorlog) fprintf(errorlog,"ModRM=%04x \n",ModRM);
-		    	nec_ICount-=29;   
+		    	nec_ICount-=29;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);			
+		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);
    				nec_ICount=old-33;
    			}
 			/*2do: the rest is silence....yet */
 			//bfl=tmp2 & 0xf;		// bit field length
 			//bfs=tmp & 0xf;		// bit field start (bit offset in DS:IX)
 			//I.regs.b[AH] =0;	// AH =0
-			
+
 			/*
 
 			----------O-EXT------------------------------------
 			OPCODE EXT  -  Extract Bit Field
-			
+
 			CPU: NEC/Sony all  V-series
 			Type of Instruction: User
-			
+
 			Instruction:  EXT  start,len
-			
+
 			Description:
-			
+
 				  AW <- BitField [
 						     BASE =  DS:IX
 					 START BIT OFFSET =  start
 						   LENGTH =  len
 						 ];
-			
+
 			Note:	si and start automatically UPDATE
-			
+
 			Flags Affected: None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form		 : EXT	reg8,reg8
 			COP (Code of Operation)	 : 0FH 33H  PostByte
-			
+
 			Clocks:		EXT  reg8,reg8
 			NEC V20:	26-55
 			*/
-			
-			//NEC_ICount-=26; /* 26 -55 clocks ....*/ 
+
+			//NEC_ICount-=26; /* 26 -55 clocks ....*/
 			break;
 		case 0x91:
 			/*
 			----------O-RETRBI---------------------------------
 			OPCODE RETRBI	 -  Return from Register Bank Context
 				     Switch  Interrupt.
-			
+
 			CPU:  NEC V25,V35,V25 Plus,V35 Plus,V25 Software Guard
 			Type of Instruction: System
-			
+
 			Instruction:  RETRBI
-			
+
 			Description:
-			
+
 				PC  <- Save PC;
 				PSW <- Save PSW;
-			
+
 			Flags Affected:	 All
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	RETRBI
 			COP (Code of Operation)	 : 0Fh 91h
-			
+
 			Clocks:	 12
 			*/
 			if (errorlog) fprintf(errorlog,"PC=%06x : RETRBI\n",cpu_get_pc()-2);
 			nec_ICount-=12;
 			break;
-			
+
 		case 0x94:
 			/*
 			----------O-TSKSW----------------------------------
 			OPCODE TSKSW  -	  Task Switch
-			
+
 			CPU:  NEC V25,V35,V25 Plus,V35 Plus,V25 Software Guard
 			Type of Instruction: System
-			
+
 			Instruction:  TSKSW   reg16
-			
+
 			Description:  Perform a High-Speed task switch to the register bank indicated
 				      by lower 3 bits of reg16. The PC and PSW are saved in the old
 				      banks. PC and PSW save Registers and the new PC and PSW values
 				      are retrived from the new register bank's save area.
-			
+
 			Note:	     See BRKCS instruction for more Info about banks.
-			
+
 			Flags Affected:	 All
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	TSCSW reg16
 			COP (Code of Operation)	 : 0Fh 94h <1111 1RRR>
-			
+
 			Clocks:	 11
 			*/
 			ModRM = FETCH;
-			
+
 			if (errorlog) fprintf(errorlog,"PC=%06x : TSCSW %02x\n",cpu_get_pc()-3,ModRM);
-			nec_ICount-=11; 
+			nec_ICount-=11;
 			break;
 		case 0x95:
 			/*
 			----------O-MOVSPB---------------------------------
 			OPCODE MOVSPB	 -  Move Stack Pointer Before Bamk Switching
-			
+
 			CPU:  NEC V25,V35,V25 Plus,V35 Plus,V25 Software Guard
 			Type of Instruction: System
-			
+
 			Instruction:  MOVSPB  Number_of_bank
-			
+
 			Description:  The MOVSPB instruction transfers the current SP and SS before
 				      the bank switching to new register bank.
-			
+
 			Note:	      New Register Bank Number indicated by lower 3bit of Number_of_
 				      _bank.
-			
+
 			Note:	      See BRKCS instruction for more info about banks.
-			
+
 			Flags Affected:	 None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	MOVSPB	  reg16
 			COP (Code of Operation)	 : 0Fh 95h <1111 1RRR>
-			
+
 			Clocks:	 11
 			*/
 			ModRM = FETCH;
 			if (errorlog) fprintf(errorlog,"PC=%06x : MOVSPB %02x\n",cpu_get_pc()-3,ModRM);
-			nec_ICount-=11; 
+			nec_ICount-=11;
 			break;
 		case 0xbe:
 			/*
 			----------O-STOP-----------------------------------
 			OPCODE STOP    -  Stop CPU
-			
+
 			CPU:  NEC V25,V35,V25 Plus,V35 Plus,V25 Software Guard
 			Type of Instruction: System
-			
+
 			Instruction:  STOP
-			
+
 			Description:
 					PowerDown instruction, Stop Oscillator,
 					Halt CPU.
-			
+
 			Flags Affected:	 None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	STOP
 			COP (Code of Operation)	 : 0Fh BEh
-			
+
 			Clocks:	 N/A
-			*/	
+			*/
 			if (errorlog) fprintf(errorlog,"PC=%06x : STOP\n",cpu_get_pc()-2);
 			nec_ICount-=2; /* of course this is crap */
 			break;
-		case 0xe0: 
+		case 0xe0:
 			/*
 			----------O-BRKXA----------------------------------
 			OPCODE BRKXA   -  Break to Expansion Address
-			
+
 			CPU:  NEC V33/V53  only
 			Type of Instruction: System
-			
+
 			Instruction:  BRKXA int_vector
-			
+
 			Description:
 				     [sp-1,sp-2] <- PSW		; PSW EQU FLAGS
 				     [sp-3,sp-4] <- PS		; PS  EQU CS
@@ -1254,29 +1254,29 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				     PC	 <- [int_vector*4 +0,+1]
 				     PS	 <- [int_vector*4 +2,+3]
 				     Enter Expansion Address Mode.
-			
+
 			Note:	In NEC V53 Memory Space dividing into 1024 16K pages.
 				The programming model is Same as in Normal mode.
-			
+
 				Mechanism is:
 				20 bit Logical Address:	 19..14 Page Num  13..0 Offset
-			
+
 				page Num convertin by internal table to 23..14 Page Base
 				tHE pHYIXCAL ADDRESS is both Base and Offset.
-			
+
 				Address Expansion Registers:
 				logical Address A19..A14	I/O Address
 				0				FF00h
 				1				FF02h
 				...				...
 				63				FF7Eh
-			
+
 				Register XAM aliased with port # FF80h indicated current mode
 				of operation.
 				Format of XAM register (READ ONLY):
 				15..1	reserved
 				0	XA Flag, if=1 then in XA mode.
-			
+
 			Format	of  V53 PSW:
 				15..12	1
 				11	V
@@ -1291,30 +1291,30 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				2	P
 				1	1
 				0	CY
-			
+
 			Flags Affected:	 None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	BRKXA  imm8
 			COP (Code of Operation)	 : 0Fh E0h imm8
 			*/
-			
+
 			ModRM = FETCH;
 			if (errorlog) fprintf(errorlog,"PC=%06x : BRKXA %02x\n",cpu_get_pc()-3,ModRM);
-			nec_ICount-=12;  
+			nec_ICount-=12;
 			break;
-		case 0xf0: 
+		case 0xf0:
 			/*
 			----------O-RETXA----------------------------------
 			OPCODE RETXA   -  Return from  Expansion Address
-			
+
 			CPU:  NEC V33/V53 only
 			Type of Instruction: System
-			
+
 			Instruction:  RETXA int_vector
-			
+
 			Description:
 				     [sp-1,sp-2] <- PSW		; PSW EQU FLAGS
 				     [sp-3,sp-4] <- PS		; PS  EQU CS
@@ -1326,20 +1326,20 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				     PC	 <- [int_vector*4 +0,+1]
 				     PS	 <- [int_vector*4 +2,+3]
 				     Disable EA mode.
-			
+
 			Flags Affected:	 None
-			
+
 			CPU mode: RM
-			
+
 			+++++++++++++++++++++++
 			Physical Form:	RETXA  imm8
 			COP (Code of Operation)	 : 0Fh F0h imm8
-			
+
 			Clocks:	 12
 			*/
 			ModRM = FETCH;
 			if (errorlog) fprintf(errorlog,"PC=%06x : RETXA %02x\n",cpu_get_pc()-3,ModRM);
-			nec_ICount-=12;  
+			nec_ICount-=12;
 			break;
 		case 0xff: /* 0F ff imm8 - BRKEM */
 			/*
@@ -1347,14 +1347,14 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 
 			CPU: NEC/Sony V20/V30/V40/V50
 			Description:
-			
+
 					PUSH	FLAGS
 					PUSH	CS
 					PUSH	IP
 					MOV	CS,0:[intnum*4+2]
 					MOV	IP,0:[intnum*4]
 					MD <- 0;	// Enable 8080 emulation
-			
+
 			Note:	BRKEM instruction do software interrupt and then New CS,IP loaded
 				it switch to 8080 mode i.e. CPU will execute 8080 code.
 				Mapping Table of Registers in 8080 Mode
@@ -1362,7 +1362,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				native.	   AL CH CL DH DL BH BL BP IP  FLAGS(low)
 				For Return of 8080 mode use CALLN instruction.
 			Note:	I.e. 8080 addressing only 64KB then "Real Address" is CS*16+PC
-			
+
 			Flags Affected: MD
 			*/
 			ModRM=FETCH;
@@ -1382,7 +1382,7 @@ static void i_adc_br8(void)    /* Opcode 0x10 */
     src+=CF;
     ADDB(dst,src);
     PutbackRMByte(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_adc_wr16(void)    /* Opcode 0x11 */
@@ -1391,7 +1391,7 @@ static void i_adc_wr16(void)    /* Opcode 0x11 */
     src+=CF;
     ADDW(dst,src);
     PutbackRMWord(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
 }
 
 static void i_adc_r8b(void)    /* Opcode 0x12 */
@@ -1400,7 +1400,7 @@ static void i_adc_r8b(void)    /* Opcode 0x12 */
     src+=CF;
     ADDB(dst,src);
     RegByte(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_adc_r16w(void)    /* Opcode 0x13 */
@@ -1410,7 +1410,7 @@ static void i_adc_r16w(void)    /* Opcode 0x13 */
     src+=CF;
     ADDW(dst,src);
     RegWord(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_adc_ald8(void)    /* Opcode 0x14 */
@@ -1451,7 +1451,7 @@ static void i_sbb_br8(void)    /* Opcode 0x18 */
     src+=CF;
     SUBB(dst,src);
     PutbackRMByte(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_sbb_wr16(void)    /* Opcode 0x19 */
@@ -1460,7 +1460,7 @@ static void i_sbb_wr16(void)    /* Opcode 0x19 */
     src+=CF;
     SUBW(dst,src);
     PutbackRMWord(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
 }
 
 static void i_sbb_r8b(void)    /* Opcode 0x1a */
@@ -1469,7 +1469,7 @@ static void i_sbb_r8b(void)    /* Opcode 0x1a */
     src+=CF;
     SUBB(dst,src);
     RegByte(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_sbb_r16w(void)    /* Opcode 0x1b */
@@ -1478,7 +1478,7 @@ static void i_sbb_r16w(void)    /* Opcode 0x1b */
     src+=CF;
     SUBW(dst,src);
     RegWord(ModRM)= dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_sbb_ald8(void)    /* Opcode 0x1c */
@@ -1487,7 +1487,7 @@ static void i_sbb_ald8(void)    /* Opcode 0x1c */
     src+=CF;
     SUBB(dst,src);
 	I.regs.b[AL] = dst;
-	nec_ICount-=4;   
+	nec_ICount-=4;
 }
 
 static void i_sbb_axd16(void)    /* Opcode 0x1d */
@@ -1496,7 +1496,7 @@ static void i_sbb_axd16(void)    /* Opcode 0x1d */
     src+=CF;
     SUBW(dst,src);
 	I.regs.w[AW]=dst;
-	nec_ICount-=4;   
+	nec_ICount-=4;
 }
 
 static void i_push_ds(void)    /* Opcode 0x1e */
@@ -1517,7 +1517,7 @@ static void i_and_br8(void)    /* Opcode 0x20 */
     DEF_br8(dst,src);
     ANDB(dst,src);
     PutbackRMByte(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_and_wr16(void)    /* Opcode 0x21 */
@@ -1525,7 +1525,7 @@ static void i_and_wr16(void)    /* Opcode 0x21 */
     DEF_wr16(dst,src);
     ANDW(dst,src);
     PutbackRMWord(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
 }
 
 static void i_and_r8b(void)    /* Opcode 0x22 */
@@ -1533,7 +1533,7 @@ static void i_and_r8b(void)    /* Opcode 0x22 */
     DEF_r8b(dst,src);
     ANDB(dst,src);
     RegByte(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_and_r16w(void)    /* Opcode 0x23 */
@@ -1541,7 +1541,7 @@ static void i_and_r16w(void)    /* Opcode 0x23 */
     DEF_r16w(dst,src);
     ANDW(dst,src);
     RegWord(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_and_ald8(void)    /* Opcode 0x24 */
@@ -1549,7 +1549,7 @@ static void i_and_ald8(void)    /* Opcode 0x24 */
     DEF_ald8(dst,src);
     ANDB(dst,src);
 	I.regs.b[AL] = dst;
-	nec_ICount-=4; 
+	nec_ICount-=4;
 }
 
 static void i_and_axd16(void)    /* Opcode 0x25 */
@@ -1557,7 +1557,7 @@ static void i_and_axd16(void)    /* Opcode 0x25 */
     DEF_axd16(dst,src);
     ANDW(dst,src);
 	I.regs.w[AW]=dst;
-	nec_ICount-=4; 
+	nec_ICount-=4;
 }
 
 static void i_es(void)    /* Opcode 0x26 */
@@ -1594,8 +1594,8 @@ static void i_sub_br8(void)    /* Opcode 0x28 */
     DEF_br8(dst,src);
 	SUBB(dst,src);
     PutbackRMByte(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
-    
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
+
 }
 
 static void i_sub_wr16(void)    /* Opcode 0x29 */
@@ -1603,7 +1603,7 @@ static void i_sub_wr16(void)    /* Opcode 0x29 */
     DEF_wr16(dst,src);
     SUBW(dst,src);
     PutbackRMWord(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
 }
 
 static void i_sub_r8b(void)    /* Opcode 0x2a */
@@ -1611,7 +1611,7 @@ static void i_sub_r8b(void)    /* Opcode 0x2a */
     DEF_r8b(dst,src);
     SUBB(dst,src);
     RegByte(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_sub_r16w(void)    /* Opcode 0x2b */
@@ -1619,7 +1619,7 @@ static void i_sub_r16w(void)    /* Opcode 0x2b */
     DEF_r16w(dst,src);
     SUBW(dst,src);
     RegWord(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_sub_ald8(void)    /* Opcode 0x2c */
@@ -1671,7 +1671,7 @@ static void i_xor_br8(void)    /* Opcode 0x30 */
     DEF_br8(dst,src);
     XORB(dst,src);
     PutbackRMByte(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_xor_wr16(void)    /* Opcode 0x31 */
@@ -1679,7 +1679,7 @@ static void i_xor_wr16(void)    /* Opcode 0x31 */
     DEF_wr16(dst,src);
     XORW(dst,src);
     PutbackRMWord(ModRM,dst);
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
 }
 
 static void i_xor_r8b(void)    /* Opcode 0x32 */
@@ -1687,7 +1687,7 @@ static void i_xor_r8b(void)    /* Opcode 0x32 */
     DEF_r8b(dst,src);
 	XORB(dst,src);
     RegByte(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_xor_r16w(void)    /* Opcode 0x33 */
@@ -1695,7 +1695,7 @@ static void i_xor_r16w(void)    /* Opcode 0x33 */
     DEF_r16w(dst,src);
     XORW(dst,src);
     RegWord(ModRM)=dst;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_xor_ald8(void)    /* Opcode 0x34 */
@@ -1711,7 +1711,7 @@ static void i_xor_axd16(void)    /* Opcode 0x35 */
     DEF_axd16(dst,src);
     XORW(dst,src);
 	I.regs.w[AW]=dst;
-	nec_ICount-=4;	
+	nec_ICount-=4;
 }
 
 static void i_ss(void)    /* Opcode 0x36 */
@@ -1744,42 +1744,42 @@ static void i_cmp_br8(void)    /* Opcode 0x38 */
 {
     DEF_br8(dst,src);
     SUBB(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_cmp_wr16(void)    /* Opcode 0x39 */
 {
     DEF_wr16(dst,src);
     SUBW(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_cmp_r8b(void)    /* Opcode 0x3a */
 {
     DEF_r8b(dst,src);
     SUBB(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_cmp_r16w(void)    /* Opcode 0x3b */
 {
     DEF_r16w(dst,src);
     SUBW(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_cmp_ald8(void)    /* Opcode 0x3c */
 {
     DEF_ald8(dst,src);
     SUBB(dst,src);
-    nec_ICount-=4;	
+    nec_ICount-=4;
 }
 
 static void i_cmp_axd16(void)    /* Opcode 0x3d */
 {
     DEF_axd16(dst,src);
     SUBW(dst,src);
-    nec_ICount-=4;	
+    nec_ICount-=4;
 }
 
 static void i_ds(void)    /* Opcode 0x3e */
@@ -1915,98 +1915,98 @@ static void i_dec_di(void)    /* Opcode 0x4f */
 static void i_push_ax(void)    /* Opcode 0x50 */
 {
 	PUSH(I.regs.w[AW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_cx(void)    /* Opcode 0x51 */
 {
 	PUSH(I.regs.w[CW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_dx(void)    /* Opcode 0x52 */
 {
 	PUSH(I.regs.w[DW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_bx(void)    /* Opcode 0x53 */
 {
 	PUSH(I.regs.w[BW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_sp(void)    /* Opcode 0x54 */
 {
 	PUSH(I.regs.w[SP]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_bp(void)    /* Opcode 0x55 */
 {
 	PUSH(I.regs.w[BP]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 
 static void i_push_si(void)    /* Opcode 0x56 */
 {
 	PUSH(I.regs.w[IX]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_push_di(void)    /* Opcode 0x57 */
 {
 	PUSH(I.regs.w[IY]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_ax(void)    /* Opcode 0x58 */
 {
 	POP(I.regs.w[AW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_cx(void)    /* Opcode 0x59 */
 {
 	POP(I.regs.w[CW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_dx(void)    /* Opcode 0x5a */
 {
 	POP(I.regs.w[DW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_bx(void)    /* Opcode 0x5b */
 {
 	POP(I.regs.w[BW]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_sp(void)    /* Opcode 0x5c */
 {
 	POP(I.regs.w[SP]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_bp(void)    /* Opcode 0x5d */
 {
 	POP(I.regs.w[BP]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_si(void)    /* Opcode 0x5e */
 {
 	POP(I.regs.w[IX]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pop_di(void)    /* Opcode 0x5f */
 {
 	POP(I.regs.w[IY]);
-	nec_ICount-=10;	
+	nec_ICount-=10;
 }
 
 static void i_pusha(void)    /* Opcode 0x60 */
@@ -2020,7 +2020,7 @@ static void i_pusha(void)    /* Opcode 0x60 */
 	PUSH(I.regs.w[BP]);
 	PUSH(I.regs.w[IX]);
 	PUSH(I.regs.w[IY]);
-	nec_ICount-=51;	
+	nec_ICount-=51;
 }
 
 static void i_popa(void)    /* Opcode 0x61 */
@@ -2034,7 +2034,7 @@ static void i_popa(void)    /* Opcode 0x61 */
 	POP(I.regs.w[DW]);
 	POP(I.regs.w[CW]);
 	POP(I.regs.w[AW]);
-	nec_ICount-=59;	
+	nec_ICount-=59;
 }
 
 static void i_bound(void)    /* Opcode 0x62  BOUND or CHKIND (on NEC)*/
@@ -2044,9 +2044,9 @@ static void i_bound(void)    /* Opcode 0x62  BOUND or CHKIND (on NEC)*/
     int high= (INT16)GetnextRMWord;
     int tmp= (INT16)RegWord(ModRM);
     if (tmp<low || tmp>high) {
-		/* OB: on NECs CS:IP points to instruction 
+		/* OB: on NECs CS:IP points to instruction
 		       FOLLOWING the BOUND instruction ! */
-		// I.ip-=2;			
+		// I.ip-=2;
 		nec_interrupt(5,0);
     }
  	nec_ICount-=20;
@@ -2057,7 +2057,7 @@ static void i_brkn(void)	/* Opcode 0x63 BRKN -  Break to Native Mode */
 	/*
 	CPU:  NEC (V25/V35) Software Guard only
 	Instruction:  BRKN int_vector
-	
+
 	Description:
 		     [sp-1,sp-2] <- PSW		; PSW EQU FLAGS
 		     [sp-3,sp-4] <- PS		; PS  EQU CS
@@ -2068,19 +2068,19 @@ static void i_brkn(void)	/* Opcode 0x63 BRKN -  Break to Native Mode */
 		     MD	 <-  1
 		     PC	 <- [int_vector*4 +0,+1]
 		     PS	 <- [int_vector*4 +2,+3]
-	
+
 	Note:	The BRKN instruction switches operations in Native Mode
 		from Security Mode via Interrupt call. In Normal Mode
 		Instruction executed as	 mPD70320/70322 (V25) operation mode.
-	
+
 	Flags Affected:	 None
-	
+
 	CPU mode: RM
-	
+
 	+++++++++++++++++++++++
 	Physical Form:	BRKN  imm8
 	COP (Code of Operation)	 : 63h imm8
-	
+
 	Clocks:	 56+10T [44+10T]
 	*/
 	//nec_ICount-=56;
@@ -2240,7 +2240,7 @@ static void i_imul_d16(void)    /* Opcode 0x69 */
     dst = (INT32)((INT16)src)*(INT32)((INT16)src2);
 	I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
     RegWord(ModRM)=(WORD)dst;
-    nec_ICount-=(ModRM >=0xc0 )?38:47;	
+    nec_ICount-=(ModRM >=0xc0 )?38:47;
 }
 
 
@@ -2248,7 +2248,7 @@ static void i_push_d8(void)    /* Opcode 0x6a */
 {
     unsigned tmp = (WORD)((INT16)((INT8)FETCH));
     PUSH(tmp);
-    nec_ICount-=7;	
+    nec_ICount-=7;
 }
 
 static void i_imul_d8(void)    /* Opcode 0x6b */
@@ -2258,7 +2258,7 @@ static void i_imul_d8(void)    /* Opcode 0x6b */
     dst = (INT32)((INT16)src)*(INT32)((INT16)src2);
 	I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
     RegWord(ModRM)=(WORD)dst;
-    nec_ICount-=(ModRM >=0xc0 )?31:39;	
+    nec_ICount-=(ModRM >=0xc0 )?31:39;
 }
 
 static void i_insb(void)    /* Opcode 0x6c */
@@ -2349,7 +2349,7 @@ static void i_jnz(void)    /* Opcode 0x75 */
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
 		change_pc20((I.base[CS]+I.ip) & I.amask);
-	} else nec_ICount-=4; 
+	} else nec_ICount-=4;
 }
 
 static void i_jbe(void)    /* Opcode 0x76 */
@@ -2379,7 +2379,7 @@ static void i_js(void)    /* Opcode 0x78 */
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
 		change_pc20((I.base[CS]+I.ip) & I.amask);
-	} else nec_ICount-=4; 
+	} else nec_ICount-=4;
 }
 
 static void i_jns(void)    /* Opcode 0x79 */
@@ -2457,7 +2457,7 @@ static void i_80pre(void)    /* Opcode 0x80 */
 	unsigned ModRM = FETCH;
     unsigned dst = GetRMByte(ModRM);
     unsigned src = FETCH;
-	nec_ICount-=(ModRM >=0xc0 )?4:18;	
+	nec_ICount-=(ModRM >=0xc0 )?4:18;
 
     switch (ModRM & 0x38)
     {
@@ -2504,7 +2504,7 @@ static void i_81pre(void)    /* Opcode 0x81 */
     unsigned dst = GetRMWord(ModRM);
     unsigned src = FETCH;
     src+= (FETCH << 8);
-	nec_ICount-=(ModRM >=0xc0 )?4:26;	
+	nec_ICount-=(ModRM >=0xc0 )?4:26;
 
     switch (ModRM & 0x38)
     {
@@ -2549,7 +2549,7 @@ static void i_82pre(void)	 /* Opcode 0x82 */
 	unsigned ModRM = FETCH;
 	unsigned dst = GetRMByte(ModRM);
 	unsigned src = FETCH;
-	nec_ICount-=(ModRM >=0xc0 )?4:18;	
+	nec_ICount-=(ModRM >=0xc0 )?4:18;
 
     switch (ModRM & 0x38)
     {
@@ -2594,7 +2594,7 @@ static void i_83pre(void)    /* Opcode 0x83 */
 	unsigned ModRM = FETCH;
     unsigned dst = GetRMWord(ModRM);
     unsigned src = (WORD)((INT16)((INT8)FETCH));
-	nec_ICount-=(ModRM >=0xc0 )?4:26;	
+	nec_ICount-=(ModRM >=0xc0 )?4:26;
 
     switch (ModRM & 0x38)
     {
@@ -2638,14 +2638,14 @@ static void i_test_br8(void)    /* Opcode 0x84 */
 {
     DEF_br8(dst,src);
     ANDB(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:10;	
+    nec_ICount-=(ModRM >=0xc0 )?2:10;
 }
 
 static void i_test_wr16(void)    /* Opcode 0x85 */
 {
     DEF_wr16(dst,src);
     ANDW(dst,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:14;	
+    nec_ICount-=(ModRM >=0xc0 )?2:14;
 }
 
 static void i_xchg_br8(void)    /* Opcode 0x86 */
@@ -2655,7 +2655,7 @@ static void i_xchg_br8(void)    /* Opcode 0x86 */
     PutbackRMByte(ModRM,src);
     // V30
     if (ModRM >= 0xc0) nec_ICount-=3;
-    else nec_ICount-=(EO & 1 )?24:16;	
+    else nec_ICount-=(EO & 1 )?24:16;
 }
 
 static void i_xchg_wr16(void)    /* Opcode 0x87 */
@@ -2663,7 +2663,7 @@ static void i_xchg_wr16(void)    /* Opcode 0x87 */
     DEF_wr16(dst,src);
     RegWord(ModRM)=dst;
     PutbackRMWord(ModRM,src);
-    nec_ICount-=(ModRM >=0xc0 )?3:24;	
+    nec_ICount-=(ModRM >=0xc0 )?3:24;
 }
 
 static void i_mov_br8(void)    /* Opcode 0x88 */
@@ -2671,7 +2671,7 @@ static void i_mov_br8(void)    /* Opcode 0x88 */
 	unsigned ModRM = FETCH;
     BYTE src = RegByte(ModRM);
     PutRMByte(ModRM,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:9;	
+    nec_ICount-=(ModRM >=0xc0 )?2:9;
 }
 
 static void i_mov_wr16(void)    /* Opcode 0x89 */
@@ -2679,7 +2679,7 @@ static void i_mov_wr16(void)    /* Opcode 0x89 */
 	unsigned ModRM = FETCH;
     WORD src = RegWord(ModRM);
     PutRMWord(ModRM,src);
-    nec_ICount-=(ModRM >=0xc0 )?2:13;	
+    nec_ICount-=(ModRM >=0xc0 )?2:13;
 }
 
 static void i_mov_r8b(void)    /* Opcode 0x8a */
@@ -2687,7 +2687,7 @@ static void i_mov_r8b(void)    /* Opcode 0x8a */
 	unsigned ModRM = FETCH;
     BYTE src = GetRMByte(ModRM);
     RegByte(ModRM)=src;
-    nec_ICount-=(ModRM >=0xc0 )?2:11;	
+    nec_ICount-=(ModRM >=0xc0 )?2:11;
 }
 
 static void i_mov_r16w(void)    /* Opcode 0x8b */
@@ -2695,7 +2695,7 @@ static void i_mov_r16w(void)    /* Opcode 0x8b */
 	unsigned ModRM = FETCH;
     WORD src = GetRMWord(ModRM);
     RegWord(ModRM)=src;
-    nec_ICount-=(ModRM >=0xc0 )?2:15;	
+    nec_ICount-=(ModRM >=0xc0 )?2:15;
 }
 
 static void i_mov_wsreg(void)    /* Opcode 0x8c */
@@ -2703,7 +2703,7 @@ static void i_mov_wsreg(void)    /* Opcode 0x8c */
 	unsigned ModRM = FETCH;
 	if (ModRM & 0x20) return;	/* HJB 12/13/98 1xx is invalid */
 	PutRMWord(ModRM,I.sregs[(ModRM & 0x38) >> 3]);
-	nec_ICount-=(ModRM >=0xc0 )?2:12;	
+	nec_ICount-=(ModRM >=0xc0 )?2:12;
 }
 
 static void i_lea(void)    /* Opcode 0x8d */
@@ -2711,14 +2711,14 @@ static void i_lea(void)    /* Opcode 0x8d */
 	unsigned ModRM = FETCH;
 	(void)(*GetEA[ModRM])();
 	RegWord(ModRM)=EO;	/* HJB 12/13/98 effective offset (no segment part) */
-	nec_ICount-=4;	
+	nec_ICount-=4;
 }
 
 static void i_mov_sregw(void)    /* Opcode 0x8e */
 {
 	unsigned ModRM = FETCH;
     WORD src = GetRMWord(ModRM);
-	nec_ICount-=(ModRM >=0xc0 )?2:13;	
+	nec_ICount-=(ModRM >=0xc0 )?2:13;
     switch (ModRM & 0x38)
     {
     case 0x00:  /* mov es,ew */
@@ -2745,7 +2745,7 @@ static void i_popw(void)    /* Opcode 0x8f */
     WORD tmp;
     POP(tmp);
     PutRMWord(ModRM,tmp);
-    nec_ICount-=21;	
+    nec_ICount-=21;
 }
 
 
@@ -2862,7 +2862,7 @@ static void i_sahf(void)    /* Opcode 0x9e */
 static void i_lahf(void)    /* Opcode 0x9f */
 {
 	I.regs.b[AH] = CompressFlags() & 0xff;
-	nec_ICount-=2;   
+	nec_ICount-=2;
 }
 
 static void i_mov_aldisp(void)    /* Opcode 0xa0 */
@@ -2948,7 +2948,7 @@ static void i_test_ald8(void)    /* Opcode 0xa8 */
 {
     DEF_ald8(dst,src);
     ANDB(dst,src);
-    nec_ICount-=4;  
+    nec_ICount-=4;
 }
 
 static void i_test_axd16(void)    /* Opcode 0xa9 */
@@ -3008,105 +3008,105 @@ static void i_scasw(void)    /* Opcode 0xaf */
 static void i_mov_ald8(void)    /* Opcode 0xb0 */
 {
 	I.regs.b[AL] = FETCH;
-	nec_ICount-=4; 
+	nec_ICount-=4;
 }
 
 static void i_mov_cld8(void)    /* Opcode 0xb1 */
 {
 	I.regs.b[CL] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_dld8(void)    /* Opcode 0xb2 */
 {
 	I.regs.b[DL] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_bld8(void)    /* Opcode 0xb3 */
 {
 	I.regs.b[BL] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_ahd8(void)    /* Opcode 0xb4 */
 {
 	I.regs.b[AH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_chd8(void)    /* Opcode 0xb5 */
 {
 	I.regs.b[CH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_dhd8(void)    /* Opcode 0xb6 */
 {
 	I.regs.b[DH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_bhd8(void)    /* Opcode 0xb7 */
 {
 	I.regs.b[BH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_axd16(void)    /* Opcode 0xb8 */
 {
 	I.regs.b[AL] = FETCH;
 	I.regs.b[AH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_cxd16(void)    /* Opcode 0xb9 */
 {
 	I.regs.b[CL] = FETCH;
 	I.regs.b[CH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_dxd16(void)    /* Opcode 0xba */
 {
 	I.regs.b[DL] = FETCH;
 	I.regs.b[DH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_bxd16(void)    /* Opcode 0xbb */
 {
 	I.regs.b[BL] = FETCH;
 	I.regs.b[BH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_spd16(void)    /* Opcode 0xbc */
 {
 	I.regs.b[SPL] = FETCH;
 	I.regs.b[SPH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_bpd16(void)    /* Opcode 0xbd */
 {
 	I.regs.b[BPL] = FETCH;
 	I.regs.b[BPH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_sid16(void)    /* Opcode 0xbe */
 {
 	I.regs.b[IXL] = FETCH;
 	I.regs.b[IXH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 static void i_mov_did16(void)    /* Opcode 0xbf */
 {
 	I.regs.b[IYL] = FETCH;
 	I.regs.b[IYH] = FETCH;
-	nec_ICount-=4;  
+	nec_ICount-=4;
 }
 
 void nec_rotate_shift_Byte(unsigned ModRM, unsigned count)
@@ -3120,7 +3120,7 @@ void nec_rotate_shift_Byte(unsigned ModRM, unsigned count)
   }
   else if (count==1)
   {
-    nec_ICount-=(ModRM >=0xc0 )?2:16;	
+    nec_ICount-=(ModRM >=0xc0 )?2:16;
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL eb,1 */
@@ -3176,7 +3176,7 @@ void nec_rotate_shift_Byte(unsigned ModRM, unsigned count)
   }
   else
   {
-    nec_ICount-=(ModRM >=0xc0 )?7+4*count:19+4*count;	
+    nec_ICount-=(ModRM >=0xc0 )?7+4*count:19+4*count;
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL eb,count */
@@ -3252,7 +3252,7 @@ void nec_rotate_shift_Word(unsigned ModRM, unsigned count)
   }
   else if (count==1)
   {
-    nec_ICount-=(ModRM >=0xc0 )?2:24;	
+    nec_ICount-=(ModRM >=0xc0 )?2:24;
     switch (ModRM & 0x38)
     {
 #if 0
@@ -3360,8 +3360,8 @@ void nec_rotate_shift_Word(unsigned ModRM, unsigned count)
   }
   else
   {
-	
-    nec_ICount-=(ModRM >=0xc0 )?7+count*4:27+count*4;	
+
+    nec_ICount-=(ModRM >=0xc0 )?7+count*4:27+count*4;
     switch (ModRM & 0x38)
     {
       case 0x00:  /* ROL ew,count */
@@ -3484,7 +3484,7 @@ static void i_mov_bd8(void)    /* Opcode 0xc6 */
 {
     unsigned ModRM = FETCH;
     PutImmRMByte(ModRM);
-    nec_ICount-=(ModRM >=0xc0 )?4:11;	
+    nec_ICount-=(ModRM >=0xc0 )?4:11;
 }
 
 static void i_mov_wd16(void)    /* Opcode 0xc7 */
@@ -3516,7 +3516,7 @@ static void i_leave(void)    /* Opcode 0xc9 */
 {
 	I.regs.w[SP]=I.regs.w[BP];
 	POP(I.regs.w[BP]);
-	nec_ICount-=8;  
+	nec_ICount-=8;
 }
 
 static void i_retf_d16(void)    /* Opcode 0xca */
@@ -3528,7 +3528,7 @@ static void i_retf_d16(void)    /* Opcode 0xca */
 	I.base[CS] = SegBase(CS);
 	I.regs.w[SP]+=count;
 	change_pc20((I.base[CS]+I.ip) & I.amask);
-	nec_ICount-=25; // 21-29  
+	nec_ICount-=25; // 21-29
 }
 
 static void i_retf(void)    /* Opcode 0xcb */
@@ -3598,8 +3598,8 @@ static void i_rotshft_wcl(void)    /* Opcode 0xd3 */
 /*     always substitute 0x0a.									*/
 static void i_aam(void)   	/* Opcode 0xd4 */
 {
-	unsigned mult=FETCH;    
-    
+	unsigned mult=FETCH;
+
 	if (mult == 0)
 		nec_interrupt(0,0);
     else
@@ -3633,21 +3633,21 @@ static void i_setalc(void)  /* Opcode 0xd6 */
 	/*
 	----------O-SETALC---------------------------------
 	OPCODE SETALC  - Set AL to Carry Flag
-	
+
 	CPU:  Intel 8086 and all its clones and upward
 	    compatibility chips.
 	Type of Instruction: User
-	
+
 	Instruction: SETALC
-	
+
 	Description:
-	
+
 		IF (CF=0) THEN AL:=0 ELSE AL:=FFH;
-	
+
 	Flags Affected: None
-	
+
 	CPU mode: RM,PM,VM,SMM
-	
+
 	Physical Form:		 SETALC
 	COP (Code of Operation): D6H
 	Clocks:	      80286    : n/a   [3]
@@ -3813,48 +3813,11 @@ static void i_inaldx(void)    /* Opcode 0xec */
 
 static void i_inaxdx(void)    /* Opcode 0xed */
 {
-	/*
-		----------O-CALLN----------------------------------
-	OPCODE CALLN	 - Call Native Mode Routine
-	
-	CPU: NEC/Sony V20/V30 etc
-	Type of Instruction: System
-	
-	Instruction:  CALLN intnum
-	
-	Description:
-		CALLN instruction call (interrupt service in Native Mode)
-		from 8080 emulation mode:
-			PUSH	FLAGS
-			PUSH	CS
-			PUSH	IP
-			IF <- 0
-			TF <- 0
-			MD <- 1
-			MOV	CS,0:[intnum*4+2]
-			MOV	IP,0:[intnum*4]
-	
-	Flags Affected: IF,TF,MD
-	
-	CPU mode: 8080 Emulation
-	
-	+++++++++++++++++++++++
-	Physical Form: CALLN imm8
-	COP (Code of Operation)	 : EDH EDH imm8
-	
-	Clocks:
-	NEC V20/V30:	38-58
-	*/
-	
-	/* seems not to exist on NEC's
 	unsigned port = I.regs.w[DW];
+
 	I.regs.b[AL] = read_port(port);
 	I.regs.b[AH] = read_port(port+1);
-	NEC_ICount-=12;
-	*/
-	unsigned NMR;
-	NMR=FETCH;
-	if (errorlog) fprintf(errorlog,"PC=%06x : CALLN %02x\n",cpu_get_pc()-2,NMR);
+	nec_ICount-=12;
 }
 
 static void i_outdxal(void)    /* Opcode 0xee */
@@ -3884,7 +3847,7 @@ static void i_brks(void) 	/* Opcode 0xf1 - Break to Security Mode */
 	/*
 	CPU:  NEC (V25/V35) Software Guard  only
 	Instruction:  BRKS int_vector
-	
+
 	Description:
 		     [sp-1,sp-2] <- PSW		; PSW EQU FLAGS
 		     [sp-3,sp-4] <- PS		; PS  EQU CS
@@ -3895,16 +3858,16 @@ static void i_brks(void) 	/* Opcode 0xf1 - Break to Security Mode */
 		     MD	 <-  0
 		     PC	 <- [int_vector*4 +0,+1]
 		     PS	 <- [int_vector*4 +2,+3]
-	
+
 	Note:	The BRKS instruction switches operations in Security Mode
 		via Interrupt call. In Security Mode the fetched operation
 		code is executed after conversion in accordance with build-in
 		translation table
-	
+
 	Flags Affected:	 None
-	
+
 	CPU mode: RM
-	
+
 	+++++++++++++++++++++++
 	Physical Form:	BRKS  imm8
 	Clocks:	 56+10T [44+10T]
@@ -4075,18 +4038,18 @@ static void i_f6pre(void)
 		tmp &= FETCH;
 		I.CarryVal = I.OverVal = I.AuxVal = 0;
 		SetSZPF_Byte(tmp);
-		nec_ICount-=(ModRM >=0xc0 )?4:11;	
+		nec_ICount-=(ModRM >=0xc0 )?4:11;
 		break;
 
     case 0x10:  /* NOT Eb */
 		PutbackRMByte(ModRM,~tmp);
-		nec_ICount-=(ModRM >=0xc0 )?2:16;	
+		nec_ICount-=(ModRM >=0xc0 )?2:16;
 		break;
     case 0x18:  /* NEG Eb */
         	tmp2=0;
         	SUBB(tmp2,tmp);
         	PutbackRMByte(ModRM,tmp2);
-        	nec_ICount-=(ModRM >=0xc0 )?2:16;	
+        	nec_ICount-=(ModRM >=0xc0 )?2:16;
 		break;
     case 0x20:  /* MUL AL, Eb */
 		{
@@ -4102,7 +4065,7 @@ static void i_f6pre(void)
 			SetZF(I.regs.w[AW]);
 			I.CarryVal = I.OverVal = (I.regs.b[AH] != 0);
 		}
-		nec_ICount-=(ModRM >=0xc0 )?30:36;	
+		nec_ICount-=(ModRM >=0xc0 )?30:36;
 		break;
     case 0x28:  /* IMUL AL, Eb */
 		{
@@ -4120,7 +4083,7 @@ static void i_f6pre(void)
 
 			I.CarryVal = I.OverVal = (result >> 7 != 0) && (result >> 7 != -1);
 		}
-		nec_ICount-=(ModRM >=0xc0 )?30:39;	
+		nec_ICount-=(ModRM >=0xc0 )?30:39;
 		break;
     case 0x30:  /* IYV AL, Ew */
 		{
@@ -4147,7 +4110,7 @@ static void i_f6pre(void)
 				break;
 			}
 		}
-		nec_ICount-=(ModRM >=0xc0 )?25:35;	
+		nec_ICount-=(ModRM >=0xc0 )?25:35;
 		break;
     case 0x38:  /* IIYV AL, Ew */
 		{
@@ -4177,7 +4140,7 @@ static void i_f6pre(void)
 				break;
 			}
 		}
-		nec_ICount-=(ModRM >=0xc0 )?43:53;	
+		nec_ICount-=(ModRM >=0xc0 )?43:53;
 		break;
     }
 }
@@ -4202,19 +4165,19 @@ static void i_f7pre(void)
 
 		I.CarryVal = I.OverVal = I.AuxVal = 0;
 		SetSZPF_Word(tmp);
-		nec_ICount-=(ModRM >=0xc0 )?4:15;	
+		nec_ICount-=(ModRM >=0xc0 )?4:15;
 		break;
     case 0x10:  /* NOT Ew */
 		tmp = ~tmp;
 		PutbackRMWord(ModRM,tmp);
-		nec_ICount-=(ModRM >=0xc0 )?2:24;	
+		nec_ICount-=(ModRM >=0xc0 )?2:24;
 		break;
 
     case 0x18:  /* NEG Ew */
         tmp2 = 0;
         SUBW(tmp2,tmp);
         PutbackRMWord(ModRM,tmp2);
-	nec_ICount-=(ModRM >=0xc0 )?2:24;	
+	nec_ICount-=(ModRM >=0xc0 )?2:24;
 	break;
     case 0x20:  /* MUL AW, Ew */
 		{
@@ -4232,9 +4195,9 @@ static void i_f7pre(void)
 			SetZF(I.regs.w[AW] | I.regs.w[DW]);
 			I.CarryVal = I.OverVal = (I.regs.w[DW] != 0);
 		}
-		nec_ICount-=(ModRM >=0xc0 )?30:36;	
+		nec_ICount-=(ModRM >=0xc0 )?30:36;
 		break;
-		
+
     case 0x28:  /* IMUL AW, Ew */
 		nec_ICount-=150;
 		{
@@ -4254,7 +4217,7 @@ static void i_f7pre(void)
 
 			SetZF(I.regs.w[AW] | I.regs.w[DW]);
 		}
-		nec_ICount-=(ModRM >=0xc0 )?34:44;	
+		nec_ICount-=(ModRM >=0xc0 )?34:44;
 		break;
     case 0x30:  /* IYV AW, Ew */
 		{
@@ -4283,7 +4246,7 @@ static void i_f7pre(void)
 				break;
 			}
 		}
-		nec_ICount-=(ModRM >=0xc0 )?25:35;	
+		nec_ICount-=(ModRM >=0xc0 )?25:35;
 		break;
     case 0x38:  /* IIYV AW, Ew */
 		{
@@ -4311,7 +4274,7 @@ static void i_f7pre(void)
 				break;
 			}
 		}
-		nec_ICount-=(ModRM >=0xc0 )?43:53;	
+		nec_ICount-=(ModRM >=0xc0 )?43:53;
 		break;
     }
 }
@@ -4374,7 +4337,7 @@ static void i_fepre(void)    /* Opcode 0xfe */
     SetSZPF_Byte(tmp1);
 
     PutbackRMByte(ModRM,(BYTE)tmp1);
-    nec_ICount-=(ModRM >=0xc0 )?2:16;	
+    nec_ICount-=(ModRM >=0xc0 )?2:16;
 }
 
 
@@ -4395,7 +4358,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		SetSZPF_Word(tmp1);
 
 		PutbackRMWord(ModRM,(WORD)tmp1);
-		nec_ICount-=(ModRM >=0xc0 )?2:24;	
+		nec_ICount-=(ModRM >=0xc0 )?2:24;
 		break;
 
     case 0x08:  /* DEC ew */
@@ -4407,7 +4370,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		SetSZPF_Word(tmp1);
 
 		PutbackRMWord(ModRM,(WORD)tmp1);
-		nec_ICount-=(ModRM >=0xc0 )?2:24;	
+		nec_ICount-=(ModRM >=0xc0 )?2:24;
 		break;
 
     case 0x10:  /* CALL ew */
@@ -4415,7 +4378,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		PUSH(I.ip);
 		I.ip = (WORD)tmp;
 		change_pc20((I.base[CS]+I.ip) & I.amask);
-		nec_ICount-=(ModRM >=0xc0 )?16:20;	
+		nec_ICount-=(ModRM >=0xc0 )?16:20;
 		break;
 
 	case 0x18:  /* CALL FAR ea */
@@ -4427,7 +4390,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		PUSH(I.ip);
 		I.ip = tmp1;
 		change_pc20((I.base[CS]+I.ip) & I.amask);
-		nec_ICount-=(ModRM >=0xc0 )?16:26;	
+		nec_ICount-=(ModRM >=0xc0 )?16:26;
 		break;
 
     case 0x20:  /* JMP ea */
@@ -4459,7 +4422,7 @@ static void i_invalid(void)
 	/*	{ extern int debug_key_pressed; debug_key_pressed = 1; } */
 	I.ip--;
 	nec_ICount-=10;
-	if (errorlog) 
+	if (errorlog)
 		fprintf(errorlog,"PC=%06x : Invalid Opcode %02x\n",cpu_get_pc(),(BYTE)cpu_readop((I.base[CS]+I.ip)&I.amask));
 }
 
@@ -4963,7 +4926,7 @@ const char *nec_v20_info(void *context, int regnum)
 				r->flags & 0x0002 ? 'N':'.',
 				r->flags & 0x0001 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "V20";	
+		case CPU_INFO_NAME: return "V20";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
 		case CPU_INFO_VERSION: return "1.3";
 		case CPU_INFO_FILE: return __FILE__;
@@ -5025,7 +4988,7 @@ const char *nec_v30_info(void *context, int regnum)
 				r->flags & 0x0002 ? 'N':'.',
 				r->flags & 0x0001 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "V30";	
+		case CPU_INFO_NAME: return "V30";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
 		case CPU_INFO_VERSION: return "1.3";
 		case CPU_INFO_FILE: return __FILE__;
@@ -5087,7 +5050,7 @@ const char *nec_v33_info(void *context, int regnum)
 				r->flags & 0x0002 ? 'N':'.',
 				r->flags & 0x0001 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "V33";	
+		case CPU_INFO_NAME: return "V33";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
 		case CPU_INFO_VERSION: return "1.3";
 		case CPU_INFO_FILE: return __FILE__;

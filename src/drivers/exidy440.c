@@ -448,6 +448,16 @@ static int io1_r(int offset)
  *
  *************************************/
 
+static void delayed_sound_command_w(int param)
+{
+	exidy440_sound_command = param;
+	exidy440_sound_command_ack = 0;
+
+	/* cause an FIRQ on the sound CPU */
+	cpu_set_irq_line(1, 1, ASSERT_LINE);
+}
+
+
 static void io1_w(int offset, int data)
 {
 	if (errorlog) fprintf(errorlog, "W I/O1[%02X]=%02X\n", offset, data);
@@ -456,11 +466,7 @@ static void io1_w(int offset, int data)
 	switch (offset & 0xe0)
 	{
 		case 0x00:										/* sound command */
-			exidy440_sound_command = data;
-			exidy440_sound_command_ack = 0;
-
-			/* cause an FIRQ on the sound CPU */
-			cpu_set_irq_line(1, 1, ASSERT_LINE);
+			timer_set(TIME_NOW, data, delayed_sound_command_w);
 			break;
 
 		case 0x20:										/* coin bits I/O1 */

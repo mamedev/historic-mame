@@ -247,7 +247,7 @@ static int ninjakd2_bank_latch = 255;
 
 
 
-int ninjakd2_init_samples(void)
+int ninjakd2_init_samples(const struct MachineSound *msound)
 {
 	int i,n;
 	unsigned char *source = Machine->memory_region[3];
@@ -506,6 +506,13 @@ static struct Samplesinterface samples_interface =
 	25	/* volume */
 };
 
+static struct CustomSound_interface custom_interface =
+{
+	ninjakd2_init_samples,
+	0,
+	0
+};
+
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
@@ -551,6 +558,7 @@ static struct MachineDriver ninjakd2_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
+	/* sound hardware */
 	0,0,0,0,
 	{
 		{
@@ -592,10 +600,8 @@ static struct MachineDriver ninjak2a_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
-	0,
-	ninjakd2_init_samples,
-	0,
-	0,
+	/* sound hardware */
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2203,
@@ -604,6 +610,10 @@ static struct MachineDriver ninjak2a_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface
 		}
 	}
 };

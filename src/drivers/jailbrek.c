@@ -357,23 +357,23 @@ struct GameDriver jailbrek_driver =
 {
 	__FILE__,
 	0,
-    "jailbrek",
-    "Jail Break",
+	"jailbrek",
+	"Jail Break",
 	"1986",
 	"Konami",
-    "Ernesto Corvi\n",
+	"Ernesto Corvi\n",
 	0,
-    &machine_driver,
+	&machine_driver,
 	0,
-    jailbrek_rom,
-    0, jailbrek_decode,
-    0,
-    0,      /* sound_prom */
+	jailbrek_rom,
+	0, jailbrek_decode,
+	0,
+	0,      /* sound_prom */
 
-    input_ports,
+	input_ports,
 
-    PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_DEFAULT,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
 
-    jailbrek_hiload, jailbrek_hisave
+	jailbrek_hiload, jailbrek_hisave
 };

@@ -122,7 +122,7 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = (struct ADPCMsample *)Machine->gamedrv->sound_prom;
+	sample_list = Machine->gamedrv->adpcm_sample_list;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)
@@ -182,7 +182,7 @@ void ADPCM_sh_stop (void)
 	int i;
 
 	/* free the temporary table if we created it */
-	if (sample_list && sample_list != (struct ADPCMsample *)Machine->gamedrv->sound_prom)
+	if (sample_list && sample_list != Machine->gamedrv->adpcm_sample_list)
 		free (sample_list);
 	sample_list = 0;
 
@@ -581,7 +581,7 @@ static int OKIM6295_sub_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = (struct ADPCMsample *)Machine->gamedrv->sound_prom;
+	sample_list = Machine->gamedrv->adpcm_sample_list;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)
@@ -871,22 +871,22 @@ if (errorlog) fprintf(errorlog,"oki%d(2 byte) %02x %02x (Voice %01x - %01x)\n",n
 	}
 }
 
-int OKIM6295_status_0_r (int num)
+int OKIM6295_status_0_r (int offset)
 {
 	return OKIM6295_status_r(0);
 }
 
-int OKIM6295_status_1_r (int num)
+int OKIM6295_status_1_r (int offset)
 {
 	return OKIM6295_status_r(1);
 }
 
-void OKIM6295_data_0_w (int num, int data)
+void OKIM6295_data_0_w (int offset, int data)
 {
 	OKIM6295_data_w(0,data);
 }
 
-void OKIM6295_data_1_w (int num, int data)
+void OKIM6295_data_1_w (int offset, int data)
 {
 	OKIM6295_data_w(1,data);
 }

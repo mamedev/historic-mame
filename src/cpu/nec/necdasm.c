@@ -58,7 +58,7 @@ Any comments/updates/bug reports to:
 #include <stdlib.h>
 
 #ifdef MAME_DEBUG
-#include "host.h"
+#include "nechost.h"
 
 /* Little endian uint read */
 #define	le_uint8(ptr) (*(UINT8*)ptr)
@@ -258,9 +258,9 @@ static char *second[] = {
   "rol4 %Eb",         0,                 "ror4 %Eb",       0,
   0,                  "brkcs %Ib",       0,                0,
 /* 3 */
-  0,                  "ins %Eb,%Gb",     0,                "ext %Eb,%Gb", 
+  0,                  "ins %Eb,%Gb",     0,                "ext %Eb,%Gb",
   0, 0, 0, 0,
-  0,                  "ins %Eb,%Ib",     0,                "ext %Eb,%Ib", 
+  0,                  "ins %Eb,%Ib",     0,                "ext %Eb,%Ib",
   0, 0, 0, 0,
 /* 4 */
   0, 0, 0, 0, 0, 0, 0, 0,
@@ -567,8 +567,8 @@ static void do_modrm(char subtype)
 {
   int mod = MOD(modrm());
   int rm = RM(modrm());
-  
-  
+
+
   if (mod == 3) { /* specifies two registers */
     reg_name(rm, subtype);
     return;
@@ -599,7 +599,7 @@ static void do_modrm(char subtype)
     case 6: uprintf("bp"); break;
     case 7: uprintf("bw"); break;
     }
-  } 
+  }
   switch (mod) {
   case 1:
        outhex('b', 2, 1, addrsize, 0);
@@ -622,7 +622,7 @@ static void percent(char type, char subtype)
   char *name;
   //int extend = (addrsize == 32) ? 4 : 2;
   int extend = 2;	// NEC only has 16 Bit
-  
+
   UINT8 c;
   unsigned d;
 
@@ -731,10 +731,10 @@ static void percent(char type, char subtype)
        uprintf("iy]");
        break;
 
-  case '2':                            
+  case '2':
        d=getbyte();	// 0f xx
        //wordop = d & 1;
-       ua_str(second[d]);      
+       ua_str(second[d]);
        break;
 
   case 'g':                            /* modrm group `subtype' (0--7) */
@@ -849,7 +849,7 @@ unsigned Dasmnec(char* buffer, unsigned pc)
 	modrmv = -1;   /* read next byte as modrm */
 	sibv = -1;     /* set modrm and sib flags */
 	opsize = addrsize = 16;
-	
+
 	//c = getbyte();			/* read opcode */
 	c = getopcode();
 	wordop = c & 1;

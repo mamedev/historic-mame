@@ -70,6 +70,8 @@ extern struct tile_info {
 	tile attributes byte.
 */
 
+#define TILE_LINE_DISABLED 0x80000000
+
 struct tilemap {
 	int dx, dx_if_flipped;
 	int dy, dy_if_flipped;

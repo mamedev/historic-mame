@@ -617,7 +617,7 @@ struct GameDriver rastan_driver =
 	rastan_rom,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	rastan_samples,	/* sound_prom */
 
 	rastan_input_ports,
 
@@ -643,7 +643,7 @@ struct GameDriver rastanu_driver =
 	rastanu_rom,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	rastan_samples,	/* sound_prom */
 
 	rastsaga_input_ports,
 
@@ -668,7 +668,7 @@ struct GameDriver rastanu2_driver =
 	rastanu2_rom,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	rastan_samples,	/* sound_prom */
 
 	rastsaga_input_ports,
 
@@ -693,7 +693,7 @@ struct GameDriver rastsaga_driver =
 	rastsaga_rom,
 	0, 0,
 	0,
-	(void *)rastan_samples,	/* sound_prom */
+	rastan_samples,	/* sound_prom */
 
 	rastsaga_input_ports,
 
@@ -701,138 +701,6 @@ struct GameDriver rastsaga_driver =
 	ORIENTATION_DEFAULT,
 	rastan_hiload, rastan_hisave
 };
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-/* ---------------------------  CUT HERE  ----------------------------- */
-/**************** This can be deleted somewhere in the future ***********/
-/*                This is here just to test YM2151 emulator             */
-
-
-int rastan_smus_interrupt(void);
-void r_wr_a000mus(int offset,int data);
-int r_rd_a001mus(int offset);
-void r_wr_a001mus(int offset,int data);
-void rastan_irq_mus_handler (void);
-void rastan_vhmus_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-}
-
-static struct MemoryReadAddress rastan_smus_readmem[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x8fff, MRA_RAM },
-	{ 0x9001, 0x9001, YM2151_status_port_0_r },
-	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, r_rd_a001mus },
-	{ -1 }  /* end of table */
-};
-static struct MemoryWriteAddress rastan_smus_writemem[] =
-{
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, YM2151_register_port_0_w },
-	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, r_wr_a000mus },
-	{ 0xa001, 0xa001, r_wr_a001mus },
-	{ 0xb000, 0xb000, ADPCM_trigger },
-	{ 0xc000, 0xc000, r_wr_c000 },
-	{ 0xd000, 0xd000, r_wr_d000 },
-	{ 0xe000, 0xefff, videoram00_word_w, &videoram00, &videoram_size },/*this is the fake*/
-	{ -1 }  /* end of table */
-};
-
-
-static struct YM2151interface ym2151_interface_mus =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ rastan_irq_mus_handler }
-};
-
-static struct MachineDriver rastmu_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 Mhz */
-			2,
-			rastan_smus_readmem,rastan_smus_writemem,0,0,
-			rastan_smus_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	2048, 2048,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rastan_vhmus_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-//			SOUND_YM2151_ALT,
-			SOUND_YM2151,
-			&ym2151_interface_mus
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
-
-struct GameDriver rastmus_driver =
-{
-	__FILE__,
-	0,
-	"rastmus",
-	"Rastan music player (YM2151)",
-	" ",
-	" ",
-	"Jarek Burczynski",
-	0,
-	&rastmu_driver,
-
-	rastan_rom,
-	0, 0,
-	0,
-	(void *)rastan_samples,	/* sound_prom */
-
-	rastan_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-#endif
-
-
-
-
-
 
 
 
@@ -848,10 +716,8 @@ struct GameDriver rastmus_driver =
 */
 
 ROM_START( ymcym_rom )
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-/*ROM_LOAD( "IC49_19.bin", 0x0000, 0x10000, 0x73fbbecf ) */ /*Rastan sound CPU rom*/
-
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x10000)
+	ROM_REGION(0x1000)
 ROM_END
 
 INPUT_PORTS_START( ymcym_input_ports )
@@ -893,7 +759,7 @@ static struct MemoryWriteAddress ymcym_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-void ymcym_2151_irq_handler(void)
+void ymcym_2151_irq_handler(int irq)
 {
 }
 
@@ -902,7 +768,8 @@ static struct YM2151interface ymcym_2151_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ ymcym_2151_irq_handler }
+	{ ymcym_2151_irq_handler },
+	{ 0 }
 };
 
 int ymcym_interrupt(void)
@@ -927,7 +794,7 @@ int i;
 	return 0;
 }
 
-static struct MachineDriver ymcym_driver =
+static struct MachineDriver ymcym_machine =
 {
 	/* basic machine hardware */
 	{
@@ -939,8 +806,8 @@ static struct MachineDriver ymcym_driver =
 			ymcym_interrupt, 1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
 	0,
 
 	/* video hardware */
@@ -976,17 +843,191 @@ struct GameDriver cymplay_driver =
 	" ",
 	"Jarek Burczynski",
 	0,
-	&ymcym_driver,
+	&ymcym_machine,
+	0,
 
 	ymcym_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	ymcym_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+
+
+
+/*
+** YM2151 register test
+**
+** driver is called ymtest (extern it in driver.c)
+**
+** For this to run you only need a file "2151.reg" in the same
+** directory of mame.exe
+*/
+
+
+static FILE * ymfile =NULL;
+
+int ymtest_vh_start(void)
+{
+	ymfile=fopen("2151.reg","rb");
+	if (!ymfile){
+		if (errorlog) fprintf(errorlog,"Could not find 2151.reg file !\n");
+		return 1;
+	}
+	return 0;
+}
+
+void ymtest_vh_stop(void)
+{
+	if (ymfile) fclose(ymfile);
+}
+
+void ymtest_2151_irq_handler(int irq)
+{
+}
+
+static struct YM2151interface ymtest_2151_interface =
+{
+	1,		/* 1 chip */
+	4000000,	/* 4 MHz clock [X68000] */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ ymtest_2151_irq_handler },
+	{ 0 }
+};
+
+
+int fget_reg(FILE *f)
+{
+int tab[256];
+int i,wyn;
+int mode=0;
+int val=-1;
+
+	for (i=0; i<256; i++)
+		tab[i] = 0;
+	for (i='0'; i<='9'; i++)
+		tab[i] = i-'0';
+	for (i='a'; i<='f'; i++)
+		tab[i] = i-'a'+10;
+	for (i='A'; i<='F'; i++)
+		tab[i] = i-'A'+10;
+
+	while ( ( (wyn=fgetc(f)) != EOF)  && (mode>=0) )
+	{
+		if (wyn=='$')
+		{
+			mode=1;
+		}
+		else
+		{
+			switch(mode)
+			{
+			case 1:	val = tab[wyn];
+				mode=2;
+				break;
+			case 2:	val = val*16 + tab[wyn];
+				mode = -1;
+				break;
+			}
+		}
+	}
+
+	if (wyn!=EOF)
+		return val;
+	else
+		return -1;
+}
+
+int ymtest_interrupt(void)
+{
+static int finished=0;
+int i,j;
+	while (!finished)
+	{
+		i = fget_reg(ymfile); //get reg from 2151.reg file
+		j = fget_reg(ymfile); //get data from 2151.reg file
+
+		if ( (i < 0) || (j < 0) ){
+			if (errorlog) fprintf(errorlog,"2151.reg EOF reached... \n");
+			finished=1;
+		}
+		else{
+			if (errorlog) fprintf(errorlog,"2151 write to reg %02x value %02x \n",i,j);
+			YM2151_register_port_0_w(0,i);
+			YM2151_data_port_0_w(0,j);
+		}
+	};
+
+	return 0;
+}
+
+static struct MachineDriver ymtest_machine =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			1000000,	/* 1 Mhz */
+			0, /*rom region*/
+			ymcym_readmem, ymcym_writemem,0,0,
+			ymtest_interrupt, 1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	0,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	ymtest_vh_start,
+	ymtest_vh_stop,
+	ymcym_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151_ALT,
+//			SOUND_YM2151,
+			&ymtest_2151_interface
+		}
+	}
+};
+
+struct GameDriver ymtest_driver =
+{
+	__FILE__,
+	0,
+	"ymtest",
+	"YM2151 register test",
+	" ",
+	" ",
+	"Jarek Burczynski",
+	0,
+	&ymtest_machine,
+	0,
+
+	ymcym_rom,
+	0, 0,
+	0,
+	0,
+
+	ymcym_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
 #endif

@@ -86,7 +86,7 @@ if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data
 	if (data & 4)
 	{
 		/* reset and start the protection mcu */
-		cpu_reset(1);
+		cpu_set_reset_line(1,PULSE_LINE);
 		cpu_halt(1,1);
 	}
 

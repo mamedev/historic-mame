@@ -80,13 +80,13 @@ extern struct AY8910interface ssio_ay8910_interface;
 extern struct MemoryReadAddress csdeluxe_readmem[];
 extern struct MemoryWriteAddress csdeluxe_writemem[];
 
-extern struct DACinterface csdeluxe_dac_interface;
-extern struct DACinterface turbocs_plus_csdeluxe_dac_interface;
+extern struct DACinterface mcr_dac_interface;
+extern struct DACinterface mcr_dual_dac_interface;
 
 #define SOUND_CPU_CHIP_SQUEAK_DELUXE(mem)			\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
-		7500000,	/* 7.5 Mhz */					\
+		15000000/2,	/* 7.5 Mhz */					\
 		mem,										\
 		csdeluxe_readmem,csdeluxe_writemem,0,0,		\
 		ignore_interrupt,1							\
@@ -95,13 +95,13 @@ extern struct DACinterface turbocs_plus_csdeluxe_dac_interface;
 #define SOUND_CHIP_SQUEAK_DELUXE					\
 	{												\
 		SOUND_DAC,									\
-		&csdeluxe_dac_interface						\
+		&mcr_dac_interface							\
 	}
 
-#define SOUND_TURBO_CHIP_SQUEAK_PLUS_CSDELUXE		\
+#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD		\
 	{												\
 		SOUND_DAC,									\
-		&turbocs_plus_csdeluxe_dac_interface		\
+		&mcr_dual_dac_interface						\
 	}
 
 
@@ -114,7 +114,7 @@ extern struct MemoryWriteAddress soundsgood_writemem[];
 #define SOUND_CPU_SOUNDS_GOOD(mem)					\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
-		7500000,	/* 7.5 Mhz */					\
+		16000000/2,	/* 8.0 Mhz */					\
 		mem,										\
 		soundsgood_readmem,soundsgood_writemem,0,0,	\
 		ignore_interrupt,1							\
@@ -132,7 +132,7 @@ extern struct MemoryWriteAddress turbocs_writemem[];
 #define SOUND_CPU_TURBO_CHIP_SQUEAK(mem)			\
 	{												\
 		CPU_M6809 | CPU_AUDIO_CPU,					\
-		2250000,	/* 2.25 Mhz??? */				\
+		9000000/4,	/* 2.25 Mhz */					\
 		mem,										\
 		turbocs_readmem,turbocs_writemem,0,0,		\
 		ignore_interrupt,1							\
@@ -173,7 +173,7 @@ extern struct MemoryWriteAddress advaudio_writemem[];
 
 extern struct YM2151interface advaudio_ym2151_interface;
 extern struct DACinterface advaudio_dac_interface;
-extern struct CVSDinterface advaudio_cvsd_interface;
+extern struct hc55516_interface advaudio_cvsd_interface;
 
 #define SOUND_CPU_ADVANCED_AUDIO(mem)				\
 	{												\

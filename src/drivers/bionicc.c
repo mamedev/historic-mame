@@ -190,7 +190,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( bionicc_input_ports )
+INPUT_PORTS_START( input_ports )
 	PORT_START
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -220,7 +220,7 @@ INPUT_PORTS_START( bionicc_input_ports )
 	PORT_DIPSETTING(    0x60, "Medium")
 	PORT_DIPSETTING(    0x20, "Hard")
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -390,9 +390,12 @@ static struct MachineDriver machine_driver =
 	0,
 	bionicc_vh_screenrefresh,
 
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
-		 { SOUND_YM2151,  &ym2151_interface },
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
 	}
 };
 
@@ -602,7 +605,7 @@ struct GameDriver bionicc_driver =
 	0,0,
 	0,
 
-	bionicc_input_ports,
+	input_ports,
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,
@@ -627,7 +630,7 @@ struct GameDriver bionicc2_driver =
 	0,0,
 	0,
 
-	bionicc_input_ports,
+	input_ports,
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,
@@ -652,7 +655,7 @@ struct GameDriver topsecrt_driver =
 	0,0,
 	0,
 
-	bionicc_input_ports,
+	input_ports,
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,

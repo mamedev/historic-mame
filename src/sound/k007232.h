@@ -4,7 +4,7 @@
 #ifndef __KDAC_A_H__
 #define __KDAC_A_H__
 
-#define MAX_K007232		2
+#define MAX_K007232		3
 
 
 struct K007232_interface
@@ -21,8 +21,10 @@ int K007232_sh_start(const struct MachineSound *msound);
 
 void K007232_write_port_0_w(int r,int v);
 void K007232_write_port_1_w(int r,int v);
+void K007232_write_port_2_w(int r,int v);
 int K007232_read_port_0_r(int r);
 int K007232_read_port_1_r(int r);
+int K007232_read_port_2_r(int r);
 
 void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B);
 

@@ -1690,9 +1690,9 @@ static const char *name_rdmem( unsigned base )
         {
 			unsigned offset = base - mr->start;
 
-			if( mr->description )
-				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
-			else
+//			if( mr->description )
+//				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
+//			else
 			if( mr->base && *mr->base == videoram )
 				sprintf(dst, "video+%04X", lshift(offset) );
 			else
@@ -1822,9 +1822,9 @@ static const char *name_wrmem( unsigned base )
     {
         if( base >= mw->start && base <= mw->end )
         {
-			if( mw->description )
-				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
-			else
+//			if( mw->description )
+//				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
+//			else
 			if( mw->base && *mw->base == videoram )
 				sprintf(dst, "video+%04X", lshift(base - mw->start) );
 			else

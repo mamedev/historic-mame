@@ -1976,9 +1976,9 @@ void machine_reset(void)
   Use this function to reset a specified CPU immediately
 
 ***************************************************************************/
-void cpu_reset(int cpunum)
+void cpu_set_reset_line(int cpunum,int state)
 {
-	timer_set (TIME_NOW, cpunum, cpu_resetcallback);
+	timer_set (TIME_NOW, (cpunum & 7) | (state << 3), cpu_resetcallback);
 }
 
 
@@ -3083,8 +3083,19 @@ static void cpu_clearintcallback (int param)
 
 static void cpu_resetcallback (int param)
 {
+	int state = param >> 3;
+	int cpunum = param & 7;
+
 	/* reset the CPU */
-	cpu_reset_cpu (param);
+	if (state == PULSE_LINE)
+		cpu_reset_cpu (cpunum);
+	else if (state == ASSERT_LINE)
+	{
+		cpu_reset_cpu (cpunum);
+		cpu_halt (cpunum, 0);
+	}
+	else if (state == CLEAR_LINE)
+		cpu_halt (cpunum, 1);
 }
 
 
@@ -3162,7 +3173,7 @@ static void cpu_vblankcallback (int param)
 	if (!--vblank_countdown)
 	{
 		/* do we update the screen now? */
-		if (Machine->drv->video_attributes & VIDEO_UPDATE_BEFORE_VBLANK)
+		if (!(Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK))
 			usres = updatescreen();
 
 		/* Set the timer to update the screen */
@@ -3187,7 +3198,7 @@ static void cpu_vblankcallback (int param)
 static void cpu_updatecallback (int param)
 {
 	/* update the screen if we didn't before */
-	if (!(Machine->drv->video_attributes & VIDEO_UPDATE_BEFORE_VBLANK))
+	if (Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK)
 		usres = updatescreen();
 	vblank = 0;
 

@@ -281,7 +281,7 @@ void tmnt_sres_w(int offset,int data)
 }
 
 
-static int tmnt_decode_sample(void)
+static int tmnt_decode_sample(const struct MachineSound *msound)
 {
 	int i;
 	signed short *dest;
@@ -2073,6 +2073,13 @@ static struct Samplesinterface samples_interface =
 	25	/* volume */
 };
 
+static struct CustomSound_interface custom_interface =
+{
+	tmnt_decode_sample,
+	0,
+	0
+};
+
 static struct K053260_interface k053260_interface_nmi =
 {
 	3579545,
@@ -2183,10 +2190,7 @@ static struct MachineDriver tmnt_machine_driver =
 	tmnt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	tmnt_decode_sample,
-	0,
-	0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -2203,6 +2207,10 @@ static struct MachineDriver tmnt_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface
 		}
 	}
 };

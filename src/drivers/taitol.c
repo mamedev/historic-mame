@@ -12,6 +12,31 @@
   - Fighting hawk
   - Raimais
   - Champion Wrestler
+
+Notes:
+- the system uses RAM based characters, which aren't really supported by the
+  TileMap system, so we have to tilemap_mark_all_tiles_dirty() to compensate
+
+TODO:
+- sound in the multiprocessor games
+- American horseshoes doesn't  have the trackball hooked  up.  X and Y
+  are 9bits values each splitted  in two bytes.   Probably easy to add
+  too.
+- The  puzznic protection is worked around,  but I'm not happy with it
+  (the 68705-returned values are wrong, I'm sure of that).
+- A bunch of control registers are simply ignored
+- The source of   irqs 0 and  1 is  ignored, while  2 is vblank  (0 is
+  usually   ignored  by the  program,    1   leads  to  reading    the
+  ports... maybe vbl-in, vbl-out and hblank ?).
+- Raimais is broken.  Probably something stupid, I had it working some
+  time ago.
+- There may still  be some issues of  priorities in fighting  hawk, at
+  the beginning of the first level (I didn't play the game far).
+- Wrong priority in Raimais game intro, this requires sprite/sprite and
+  sprite/tile priorities to be orthogonal
+- Cachat's title    screen  has some  problems.   The middle tile layer
+  is shifted 16 pixels to the left.
+
 */
 
 
@@ -69,6 +94,7 @@ unsigned char *taitol_rambanks;
 int taitol_bg18_deltax, taitol_bg19_deltax;
 
 static unsigned char *palette_ram;
+static unsigned char *empty_ram;
 static unsigned char *shared_ram;
 
 static int (*porte0_r)(int);
@@ -89,8 +115,7 @@ static void palette_notifier(int addr)
 	//	addr &= 0x1ff;
 
 	if(addr > 0x200) {
-		if(errorlog)
-			fprintf(errorlog, "Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
+if(errorlog) fprintf(errorlog, "Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
 	} else {
 		//		r = g = b = ((addr & 0x1e) != 0)*255;
 		palette_change_color(addr/2, r, g, b);
@@ -103,6 +128,7 @@ static void machine_init(void)
 
 	taitol_rambanks = malloc(0x1000*12);
 	palette_ram = malloc(0x1000);
+	empty_ram = malloc(0x1000);
 
 	for(i=0;i<3;i++)
 		irq_adr_table[i] = 0;
@@ -300,17 +326,25 @@ static int rombank2switch_r(int offset)
 
 static void rambankswitch_w(int offset, int data)
 {
-	if(cur_rambank[offset]!=data) {
+	if(cur_rambank[offset]!=data)
+	{
 		cur_rambank[offset]=data;
-		if(0 && errorlog)
-		  fprintf(errorlog, "rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
-		if(data>=0x14 && data<=0x1f) {
+//if(errorlog) fprintf(errorlog, "rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+		if(data>=0x14 && data<=0x1f)
+		{
 			data -= 0x14;
 			current_notifier[offset] = rambank_modify_notifiers[data];
 			current_base[offset] = taitol_rambanks+0x1000*data;
-		} else {
+		} else if (data == 0x80)
+		{
 			current_notifier[offset] = palette_notifier;
 			current_base[offset] = palette_ram;
+		}
+		else
+		{
+if(errorlog) fprintf(errorlog, "unknown rambankswitch %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+			current_notifier[offset] = 0;
+			current_base[offset] = empty_ram;
 		}
 		cpu_setbank(2+offset, current_base[offset]);
 	}
@@ -1880,7 +1914,7 @@ struct GameDriver horshoes_driver =
 	"1990",
 	"Taito America Corporation",
 	"",
-	0,
+	GAME_NOT_WORKING,
 	&horshoes_machine_driver,
 	0,
 

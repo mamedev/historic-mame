@@ -84,6 +84,7 @@ int exidy_sh_start(const struct MachineSound *msound)
 	mixer_play_sample(exidy_sample_channels[2],(signed char*)exidy_waveform1,16,1000,1);
 
 	/* Init PIA */
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
 	pia_reset();

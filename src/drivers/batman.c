@@ -82,16 +82,10 @@ static void latch_w(int offset, int data)
 	WRITE_WORD(latch_data, newword);
 
 	/* bit 4 is connected to the /RESET pin on the 6502 */
-	if ((oldword ^ newword) & 0x0010)
-	{
-		if (newword & 0x0010)
-		{
-			cpu_halt(1, 1);
-			cpu_reset(1);
-		}
-		else
-			cpu_halt(1, 0);
-	}
+	if (newword & 0x0010)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ newword) & 0x7000)

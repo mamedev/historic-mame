@@ -1001,7 +1001,7 @@ static struct MachineDriver trojan_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	trojan_vh_start,
 	trojan_vh_stop,
@@ -1192,7 +1192,7 @@ struct GameDriver trojan_driver =
 	trojan_rom,
 	0, 0,
 	0,
-	(void *)trojan_samples, /* sound_prom */
+	trojan_samples, /* sound_prom */
 
 	trojanls_input_ports,
 
@@ -1217,7 +1217,7 @@ struct GameDriver trojanr_driver =
 	trojanr_rom,
 	0, 0,
 	0,
-	(void *)trojan_samples, /* sound_prom */
+	trojan_samples, /* sound_prom */
 
 	trojan_input_ports,
 
@@ -1242,7 +1242,7 @@ struct GameDriver trojanj_driver =
 	trojanj_rom,
 	0, 0,
 	0,
-	(void *)trojan_samples, /* sound_prom */
+	trojan_samples, /* sound_prom */
 
 	trojan_input_ports,
 
@@ -1330,7 +1330,7 @@ static struct MachineDriver avengers_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	trojan_vh_start,
 	trojan_vh_stop,
@@ -1497,7 +1497,7 @@ struct GameDriver avengers_driver =
 	avengers_rom,
 	0, 0,
 	0,
-	(void *)avengers_samples, /* sound_prom */
+	avengers_samples, /* sound_prom */
 
 	avengers_input_ports,
 
@@ -1522,7 +1522,7 @@ struct GameDriver avenger2_driver =
 	avenger2_rom,
 	0, 0,
 	0,
-	(void *)avengers_samples, /* sound_prom */
+	avengers_samples, /* sound_prom */
 
 	avengers_input_ports,
 

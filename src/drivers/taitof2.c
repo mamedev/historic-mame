@@ -926,7 +926,7 @@ static struct MachineDriver liquidk_machine_driver =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	taitof2_vh_start,
 	taitof2_vh_stop,
@@ -1325,6 +1325,52 @@ ROM_START( growl_rom )
 	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
 ROM_END
 
+ROM_START( growlu_rom )
+	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
+	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
+	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
+	ROM_LOAD_ODD ( "c74-14.rom",    0x80000, 0x40000, 0xc1c57e51 )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "growl_01.rom", 0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
+	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
+
+	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x100000)      /* ADPCM samples */
+	ROM_LOAD( "growl_04.rom", 0x000000, 0x100000, 0x2d97edf2 )
+
+	ROM_REGION(0x080000)      /* ADPCM samples */
+	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
+ROM_END
+
+ROM_START( runark_rom )
+	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
+	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
+	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
+	ROM_LOAD_ODD ( "c74_09.14",     0x80000, 0x40000, 0x58cc2feb )
+
+	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "growl_01.rom", 0x000000, 0x100000, 0x3434ce80 ) /* characters */
+	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
+	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
+
+	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION(0x100000)      /* ADPCM samples */
+	ROM_LOAD( "growl_04.rom", 0x000000, 0x100000, 0x2d97edf2 )
+
+	ROM_REGION(0x080000)      /* ADPCM samples */
+	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
+ROM_END
+
 
 static int growl_hiload(void)
 {
@@ -1354,6 +1400,7 @@ static void growl_hisave(void)
 		osd_fclose(f);
 	}
 }
+
 struct GameDriver growl_driver =
 {
 	__FILE__,
@@ -1378,6 +1425,57 @@ struct GameDriver growl_driver =
 	ORIENTATION_DEFAULT,
 	growl_hiload, growl_hisave
 };
+
+struct GameDriver growlu_driver =
+{
+	__FILE__,
+	&growl_driver,
+	"growlu",
+	"Growl (US)",
+	"1990",
+	"Taito America Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&growl_machine_driver,
+	0,
+
+	growlu_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	growl_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	growl_hiload, growl_hisave
+};
+
+struct GameDriver runark_driver =
+{
+	__FILE__,
+	&growl_driver,
+	"runark",
+	"Runark (Japan)",
+	"1990",
+	"Taito Corporation",
+	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
+	0,
+	&growl_machine_driver,
+	0,
+
+	runark_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	growl_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	growl_hiload, growl_hisave
+};
+
 
 ROM_START( megab_rom )
 	ROM_REGION(0x100000)     /* 256k for 68000 code */

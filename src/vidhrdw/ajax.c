@@ -82,7 +82,7 @@ int ajax_vh_start( void )
 		K052109_vh_stop();
 		return 1;
 	}
-	if (K051316_vh_start(ZOOMROM_MEM_REGION,7,zoom_callback))
+	if (K051316_vh_start_0(ZOOMROM_MEM_REGION,7,zoom_callback))
 	{
 		K052109_vh_stop();
 		K051960_vh_stop();
@@ -96,7 +96,7 @@ void ajax_vh_stop( void )
 {
 	K052109_vh_stop();
 	K051960_vh_stop();
-	K051316_vh_stop();
+	K051316_vh_stop_0();
 }
 
 
@@ -110,7 +110,7 @@ void ajax_vh_stop( void )
 void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
 	K052109_tilemap_update();
-	K051316_tilemap_update();
+	K051316_tilemap_update_0();
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
@@ -137,7 +137,7 @@ void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY);
 		/* pri = 1 have priority over B, not over zoom and A - is this used? */
 //		K051960_sprites_draw(bitmap,1,1);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 		/* pri = 0 have priority over zoom and B, not over A */
 		/* the game seems to just use pri 0. */
 		K051960_sprites_draw(bitmap,0,0);
@@ -163,7 +163,7 @@ void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		/* the game seems to just use pri 0. */
 		K051960_sprites_draw(bitmap,0,1);
 		K052109_tilemap_draw(bitmap,1,0);
-		K051316_zoom_draw(bitmap);
+		K051316_zoom_draw_0(bitmap);
 		/* pri = 4 have priority over zoom, A and B */
 		K051960_sprites_draw(bitmap,4,4);
 		/* pri = 5 have priority over A and B, not over zoom - is this used? */

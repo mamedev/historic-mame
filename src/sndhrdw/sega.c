@@ -182,7 +182,7 @@ static int roarPlaying;	/* Is the ship roar noise playing? */
 static int queue[MAX_SPEECH];
 static int queuePtr = 0;
 
-int sega_sh_start (void)
+int sega_sh_start (const struct MachineSound *msound)
 {
 	int i;
 
@@ -262,7 +262,7 @@ void sega_sh_update (void)
 		}
 	}
 
-int tacscan_sh_start (void)
+int tacscan_sh_start (const struct MachineSound *msound)
 {
 	roarPlaying = 0;
 	return 0;

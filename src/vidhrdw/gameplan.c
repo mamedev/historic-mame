@@ -131,7 +131,8 @@ void gameplan_sound_w(int offset,int data)
 
 		if (cb2 == 0)
 		{
-//			cpu_reset(1);	enabling this causes a hang in Challenger when entering high score name
+//	enabling this causes a hang in Challenger when entering high score name
+//			cpu_set_reset_line(1,PULSE_LINE);
 			return;
 		}
 

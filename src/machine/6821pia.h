@@ -53,6 +53,7 @@ struct pia6821_interface
 };
 
 
+void pia_unconfig(void);
 void pia_config(int which, int addressing, const struct pia6821_interface *intf);
 void pia_reset(void);
 int pia_read(int which, int offset);

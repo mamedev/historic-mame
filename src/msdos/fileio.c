@@ -345,6 +345,28 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 					}
 				}
 
+#ifdef MESS
+				/* Zip cart support for MESS */
+				if (!found && filetype == OSD_FILETYPE_ROM_CART)
+				{
+					extension = strrchr(name, '.');		/* find extension       */
+					if (extension) *extension = '\0';	/* drop extension       */
+					sprintf(name,"%s.zip", name);		/* add .zip for zipfile */
+					if (cache_stat(name,&stat_buffer)==0) {
+						if (load_zipped_file(name, filename, &f->data, &f->length)==0) {
+							if (errorlog)
+								fprintf(errorlog,"Using (osd_fopen) zip file for %s\n", filename);
+							f->type = kZippedFile;
+							f->offset = 0;
+							f->crc = crc32 (0L, f->data, f->length);
+							found = 1;
+						}
+					}
+				}
+
+#endif
+
+
 				if (!found) {
 					/* try with a .zip extension */
 					sprintf(name,"%s/%s.zip", dir_name, gamename);
@@ -425,6 +447,26 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 							found = f->file!=0;
 						}
 					}
+
+ /******************************************************/
+ 				/* Zip IMAGE support for MESS */
+ 				if (filetype == OSD_FILETYPE_IMAGE && !_write) {
+ 					extension = strrchr(name, '.');		/* find extension       */
+ 					if (extension) *extension = '\0';	/* drop extension       */
+ 					sprintf(name,"%s.zip", name);		/* add .zip for zipfile */
+ 					if (cache_stat(name,&stat_buffer)==0) {
+ 						if (load_zipped_file(name, filename, &f->data, &f->length)==0) {
+ 							if (errorlog)
+ 								fprintf(errorlog,"Using (osd_fopen) zip file for %s\n", filename);
+ 							f->type = kZippedFile;
+ 							f->offset = 0;
+ 							f->crc = crc32 (0L, f->data, f->length);
+ 							found = 1;
+ 						}
+ 					}
+ 				}
+
+/******************************************************/
 
 					if (!found && !_write) {
 						/* try with a .zip extension */

@@ -65,7 +65,6 @@ int sys16_spritelist_end;
 int sys16_tilebank_switch;
 int sys16_rowscroll_scroll;
 int sys16_quartet_title_kludge;
-int sys16_tilemap_height;					// outrun speedup kludge
 extern void (* sys16_update_proc)( void );
 
 /* video registers */
@@ -107,8 +106,6 @@ static struct tilemap *background, *foreground, *text_layer;
 static struct tilemap *background2, *foreground2;
 static int old_bg_page[4],old_fg_page[4], old_tile_bank1, old_tile_bank0;
 static int old_bg2_page[4],old_fg2_page[4];
-
-char **priority_row_bg=0,**priority_row_bg2=0,**priority_row_fg=0,**priority_row_fg2=0;
 
 static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield );
 
@@ -505,14 +502,6 @@ int sys16_textram_r( int offset ){
 /***************************************************************************/
 
 void sys16_vh_stop( void ){
-	if(priority_row_bg) free(priority_row_bg);
-	if(priority_row_bg2) free(priority_row_bg2);
-	if(priority_row_fg) free(priority_row_fg);
-	if(priority_row_fg2) free(priority_row_fg2);
-	priority_row_bg=0;
-	priority_row_bg2=0;
-	priority_row_fg=0;
-	priority_row_fg2=0;
 
 #ifdef SPACEHARRIER_OFFSETS
 	if(spaceharrier_patternoffsets) free(spaceharrier_patternoffsets);
@@ -527,19 +516,19 @@ int sys16_vh_start( void ){
 			get_bg_tile_info,
 			TILEMAP_OPAQUE,
 			8,8,
-			64*2,32*sys16_tilemap_height );
+			64*2,32*2 );
 	else
 		background = tilemap_create(
 			get_bg_tile_info,
 			TILEMAP_TRANSPARENT,
 			8,8,
-			64*2,32*sys16_tilemap_height );
+			64*2,32*2 );
 
 	foreground = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
 		8,8,
-		64*2,32*sys16_tilemap_height );
+		64*2,32*2 );
 
 	text_layer = tilemap_create(
 		get_text_tile_info,
@@ -651,7 +640,6 @@ int sys16_ho_vh_start( void ){
 	ret = sys16_vh_start();
 	if(ret) return 1;
 
-	// Defaults for sys16 games
 	sys16_textlayer_lo_min=0;
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
@@ -670,7 +658,6 @@ int sys16_or_vh_start( void ){
 	ret = sys16_vh_start();
 	if(ret) return 1;
 
-	// Defaults for sys16 games
 	sys16_textlayer_lo_min=0;
 	sys16_textlayer_lo_max=0;
 	sys16_textlayer_hi_min=0;
@@ -684,7 +671,7 @@ int sys16_or_vh_start( void ){
 
 
 int sys18_vh_start( void ){
-	int ret,i;
+	int ret;
 	sys16_bg1_trans=1;
 
 	background2 = tilemap_create(
@@ -699,12 +686,7 @@ int sys18_vh_start( void ){
 		8,8,
 		64*2,32*2 );
 
-	priority_row_bg = (char **)calloc(64,sizeof(char *));
-	priority_row_bg2 = (char **)calloc(64,sizeof(char *));
-	priority_row_fg = (char **)calloc(64,sizeof(char *));
-	priority_row_fg2 = (char **)calloc(64,sizeof(char *));
-
-	if( background2 && foreground2 && priority_row_bg && priority_row_bg2 && priority_row_fg && priority_row_fg2)
+	if( background2 && foreground2)
 	{
 		ret = sys16_vh_start();
 		if(ret) return 1;
@@ -722,17 +704,6 @@ int sys18_vh_start( void ){
 			tilemap_set_scroll_rows( background2 , 64 );
 		}
 
-		// take liberties with the tilemaps!
-
-		for(i=0;i<64;i++)
-		{
-			priority_row_bg[i]=background->priority_row[i];
-			priority_row_bg2[i]=background2->priority_row[i];
-			priority_row_fg[i]=foreground->priority_row[i];
-			priority_row_fg2[i]=foreground2->priority_row[i];
-		}
-
-		// Defaults for sys16 games
 		sys16_textlayer_lo_min=0;
 		sys16_textlayer_lo_max=0x1f;
 		sys16_textlayer_hi_min=0x20;
@@ -786,7 +757,6 @@ static void get_sprite_info( void ){
 				break;
 			}
 			sprite->flags = 0;
-
 
 			if(bottom !=0 && bottom > top)
 			{
@@ -1919,17 +1889,6 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 #endif
 }
 
-char dummy_priority_row[128]={
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15
-};
-
 void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	int i;
 	if( sys16_update_proc ) sys16_update_proc();
@@ -1941,8 +1900,8 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		if (!sys16_refreshenable) freeze_counter=4;
 		if (freeze_counter)
 		{
-			if( sys16_clear_screen)
-				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+//			if( sys16_clear_screen)
+//				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 			freeze_counter--;
 			return;
 		}
@@ -1952,14 +1911,14 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 		if(sys18_splittab_bg_x)
 		{
-			int offset,offset2, scroll,scroll2;
+			int offset,offset2, scroll,scroll2,orig_scroll;
 
 			offset = 32+((sys16_bg_scrolly&0x1f8) >> 3);
 			offset2 = 32+((sys16_bg2_scrolly&0x1f8) >> 3);
 
 			for(i=0;i<29;i++)
 			{
-				scroll2 = scroll = READ_WORD(&sys18_splittab_bg_x[i*2]);
+				orig_scroll = scroll2 = scroll = READ_WORD(&sys18_splittab_bg_x[i*2]);
 
 				if((sys16_bg_scrollx &0xff00) != 0x8000)
 					scroll = sys16_bg_scrollx;
@@ -1967,8 +1926,16 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 				if((sys16_bg2_scrollx &0xff00) != 0x8000)
 					scroll2 = sys16_bg2_scrollx;
 
-				tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
-				tilemap_set_scrollx( background2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_bgxoffset );
+				if(orig_scroll&0x8000)
+				{
+					tilemap_set_scrollx( background , (i+offset)&0x3f, TILE_LINE_DISABLED );
+					tilemap_set_scrollx( background2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_bgxoffset );
+				}
+				else
+				{
+					tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
+					tilemap_set_scrollx( background2 , (i+offset)&0x3f, TILE_LINE_DISABLED );
+				}
 			}
 		}
 		else
@@ -1977,25 +1944,19 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 			tilemap_set_scrollx( background2, 0, -320-(sys16_bg2_scrollx&0x3ff)+sys16_bgxoffset );
 		}
 
-		if(sys18_splittab_bg_y)
-		{
-		}
-		else
-		{
-			tilemap_set_scrolly( background , 0, -256+sys16_bg_scrolly );
-			tilemap_set_scrolly( background2, 0, -256+sys16_bg2_scrolly );
-		}
+		tilemap_set_scrolly( background , 0, -256+sys16_bg_scrolly );
+		tilemap_set_scrolly( background2, 0, -256+sys16_bg2_scrolly );
 
 		if(sys18_splittab_fg_x)
 		{
-			int offset,offset2, scroll,scroll2;
+			int offset,offset2, scroll,scroll2,orig_scroll;
 
 			offset = 32+((sys16_fg_scrolly&0x1f8) >> 3);
 			offset2 = 32+((sys16_fg2_scrolly&0x1f8) >> 3);
 
 			for(i=0;i<29;i++)
 			{
-				scroll2 = scroll = READ_WORD(&sys18_splittab_fg_x[i*2]);
+				orig_scroll = scroll2 = scroll = READ_WORD(&sys18_splittab_fg_x[i*2]);
 
 				if((sys16_fg_scrollx &0xff00) != 0x8000)
 					scroll = sys16_fg_scrollx;
@@ -2003,8 +1964,16 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 				if((sys16_fg2_scrollx &0xff00) != 0x8000)
 					scroll2 = sys16_fg2_scrollx;
 
-				tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
-				tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_fgxoffset );
+				if(orig_scroll&0x8000)
+				{
+					tilemap_set_scrollx( foreground , (i+offset)&0x3f, TILE_LINE_DISABLED );
+					tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_fgxoffset );
+				}
+				else
+				{
+					tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
+					tilemap_set_scrollx( foreground2 , (i+offset)&0x3f, TILE_LINE_DISABLED );
+				}
 			}
 		}
 		else
@@ -2013,14 +1982,9 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 			tilemap_set_scrollx( foreground2, 0, -320-(sys16_fg2_scrollx&0x3ff)+sys16_fgxoffset );
 		}
 
-		if(sys18_splittab_fg_y)
-		{
-		}
-		else
-		{
-			tilemap_set_scrolly( foreground , 0, -256+sys16_fg_scrolly );
-			tilemap_set_scrolly( foreground2, 0, -256+sys16_fg2_scrolly );
-		}
+
+		tilemap_set_scrolly( foreground , 0, -256+sys16_fg_scrolly );
+		tilemap_set_scrolly( foreground2, 0, -256+sys16_fg2_scrolly );
 
 		tilemap_set_enable( background2, sys18_bg2_active );
 		tilemap_set_enable( foreground2, sys18_fg2_active );
@@ -2036,48 +2000,10 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		build_shadow_table();
 		tilemap_render(  ALL_TILEMAPS  );
 
-
-		// turn off lines
-		if(sys18_splittab_bg_x)
-		{
-			int offset,offset2;
-
-			offset = 32+(sys16_bg_scrolly >> 3);
-			offset2 = 32+(sys16_bg2_scrolly >> 3);
-
-			for(i=0;i<29;i++)
-			{
-				if((READ_WORD(&sys18_splittab_bg_x[i*2]))&0x8000)
-					background->priority_row[(i+offset)&0x3f]=dummy_priority_row;
-				else
-					background2->priority_row[(i+offset2)&0x3f]=dummy_priority_row;
-			}
-		}
-
-		if(sys18_splittab_fg_x)
-		{
-			int offset,offset2;
-
-			offset = 32+(sys16_fg_scrolly >> 3);
-			offset2 = 32+(sys16_fg2_scrolly >> 3);
-
-			for(i=0;i<29;i++)
-			{
-				if((READ_WORD(&sys18_splittab_fg_x[i*2]))&0x8000)
-					foreground->priority_row[(i+offset)&0x3f]=dummy_priority_row;
-				else
-					foreground2->priority_row[(i+offset2)&0x3f]=dummy_priority_row;
-			}
-		}
-
 		if(sys18_bg2_active)
-		{
 			tilemap_draw( bitmap, background2, 0 );
-		}
 		else
-		{
 			fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
-		}
 
 		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
 		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );	//??
@@ -2087,23 +2013,16 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		tilemap_draw( bitmap, background, 1 );
 		sprite_draw(sprite_list,2);
 		tilemap_draw( bitmap, background, 2 );
+
 		if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 0 );
 		tilemap_draw( bitmap, foreground, 0 );
 		sprite_draw(sprite_list,1);
 		if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 1 );
 		tilemap_draw( bitmap, foreground, 1 );
+
 		tilemap_draw( bitmap, text_layer, 1 );
 		sprite_draw(sprite_list,0);
 		tilemap_draw( bitmap, text_layer, 0 );
-
-		// reset tile priorities.
-		for(i=0;i<64;i++)
-		{
-			background->priority_row[i]=priority_row_bg[i];
-			background2->priority_row[i]=priority_row_bg2[i];
-			foreground->priority_row[i]=priority_row_fg[i];
-			foreground2->priority_row[i]=priority_row_fg2[i];
-		}
 	}
 }
 
@@ -2628,14 +2547,12 @@ static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
 		xscroll=&sys16_textram[0x0fc0];
 		yscroll=&sys16_textram[0x0f58];
 		tilemap=background;
-		if(errorlog) fprintf(errorlog,"Back\n");
 	}
 	else
 	{
 		xscroll=&sys16_textram[0x0f80];
 		yscroll=&sys16_textram[0x0f30];
 		tilemap=foreground;
-		if(errorlog) fprintf(errorlog,"Front\n");
 	}
 
 	left = tilemap->clip_left;

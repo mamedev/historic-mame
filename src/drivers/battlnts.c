@@ -21,7 +21,7 @@ void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int battlnts_interrupt( void )
 {
-	if (K007342_is_INT_enabled)
+	if (K007342_is_INT_enabled())
         return M6309_INT_IRQ;
     else
         return ignore_interrupt();

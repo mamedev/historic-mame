@@ -2,6 +2,10 @@
 
   Video Hardware for Armed Formation and Terra Force
 
+Crazy Climber 2
+(c)1988 Nichibutsu
+"cclimbr2" Driver Added by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -307,4 +311,73 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_draw( bitmap, foreground, 0 );
 	if( sprite_enable ) draw_sprites( bitmap, 1 );
 	tilemap_draw( bitmap, text_layer, 0 );
+}
+
+
+static void cclimbr2_draw_sprites( struct osd_bitmap *bitmap, int priority ){
+	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct GfxElement *gfx = Machine->gfx[3];
+
+	UINT16 *source = (UINT16 *)spriteram;
+	UINT16 *finish = source+1024;
+
+	while( source<finish ){
+		int sy = 240-(source[0]&0x1ff);				// ???
+		int tile_number = source[1]; /* ??YX?TTTTTTTTTTT */
+
+		int color = (source[2]>>8)&0x1f;
+		int sx = source[3] - 0x68;
+
+		if (((source[0] & 0x3000) >> 12) == priority)
+		{
+			drawgfx(bitmap,gfx,
+				tile_number,
+				color,
+ 				tile_number&0x2000,tile_number&0x1000, /* flip */
+				sx,sy,
+				clip,TRANSPARENCY_PEN,0xf);
+		}
+
+		source+=4;
+	}
+}
+
+void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	unsigned char *RAM;
+	int sprite_enable = armedf_vreg & 0x200;
+
+	tilemap_set_enable( background, armedf_vreg&0x800 );
+	tilemap_set_enable( foreground, armedf_vreg&0x400 );
+	tilemap_set_enable( text_layer, armedf_vreg&0x100 );
+
+	tilemap_set_scrollx( text_layer, 0, 0 );
+	tilemap_set_scrolly( text_layer, 0, 0 );
+
+	tilemap_set_scrollx( background, 0, armedf_bg_scrollx+104);
+	tilemap_set_scrolly( background, 0, armedf_bg_scrolly );
+
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	tilemap_set_scrollx( foreground, 0, READ_WORD(&RAM[0x6123c]) - (160 + 256 * 3)+8);	// ???
+	tilemap_set_scrolly( foreground, 0, READ_WORD(&RAM[0x6123e]) - 1);			// ???
+
+	tilemap_update(  ALL_TILEMAPS  );
+
+	palette_init_used_colors();
+	mark_sprite_colors();
+
+	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+
+	tilemap_render(  ALL_TILEMAPS  );
+
+	if( armedf_vreg & 0x0800 )
+		tilemap_draw( bitmap, background, 0 );
+	else
+		fillbitmap( bitmap, 0, 0 ); /* disabled background - all black? */
+
+	if( sprite_enable ) cclimbr2_draw_sprites( bitmap, 2 );
+	tilemap_draw( bitmap, foreground, 0 );
+	if( sprite_enable ) cclimbr2_draw_sprites( bitmap, 1 );
+	tilemap_draw( bitmap, text_layer, 0 );
+	if( sprite_enable ) cclimbr2_draw_sprites( bitmap, 0 );
 }

@@ -193,7 +193,7 @@ int OKIM6295_clock(const struct MachineSound *msound) { return ((struct OKIM6295
 int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_HC55516)
-int HC55516_num(const struct MachineSound *msound) { return ((struct CVSDinterface*)msound->sound_interface)->num; }
+int HC55516_num(const struct MachineSound *msound) { return ((struct hc55516_interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_K007232)
 int K007232_num(const struct MachineSound *msound) { return ((struct K007232_interface*)msound->sound_interface)->num_chips; }
@@ -607,7 +607,7 @@ struct snd_interface sndintf[] =
 		"HC55516",
 		HC55516_num,
 		0,
-		CVSD_sh_start,
+		hc55516_sh_start,
 		0,
 		0,
 		0
@@ -707,11 +707,6 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 		totalsound++;
 	}
 
-	/* call the custom initialization AFTER initializing the standard sections, */
-	/* so it can tweak the default parameters (like panning) */
-	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
-		return 1;
-
 	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
 	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
@@ -730,8 +725,6 @@ void sound_stop(void)
 {
 	int totalsound = 0;
 
-
-	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
 
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{
@@ -759,8 +752,6 @@ void sound_update(void)
 
 
 	profiler_mark(PROFILER_SOUND);
-
-	if (Machine->drv->sh_update) (*Machine->drv->sh_update)();
 
 	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
 	{

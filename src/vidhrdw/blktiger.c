@@ -233,10 +233,10 @@ for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
 
 	/* only count visible sprites */
-	if (sx >= Machine->drv->visible_area.min_x &&
-			sx+15 <= Machine->drv->visible_area.max_x &&
-			sy >= Machine->drv->visible_area.min_y &&
-			sy+15 <= Machine->drv->visible_area.max_y)
+	if (sx+15 >= Machine->drv->visible_area.min_x &&
+			sx <= Machine->drv->visible_area.max_x &&
+			sy+15 >= Machine->drv->visible_area.min_y &&
+			sy <= Machine->drv->visible_area.max_y)
 	{
 		colour = spriteram[offs+1] & 0x07;
 		code=scroll_ram[offs];

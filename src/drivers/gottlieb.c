@@ -152,7 +152,7 @@ void riot_ram_w(int offset, int data);
 void gottlieb_riot_w(int offset, int data);
 void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
-int gottlieb_sh_start(void);
+void gottlieb_sound_init(void);
 int stooges_sound_input_r(int offset);
 void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
@@ -1176,62 +1176,62 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 }
 
 #define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX)	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
+static struct MachineDriver GAMENAME##_machine_driver =				\
+{																	\
+	/* basic machine hardware */									\
+	{																\
+		{															\
 			CPU_I86,												\
 			5000000,        /* 5 Mhz */								\
 			0,														\
 			READMEM,WRITEMEM,0,0,									\
 			gottlieb_interrupt,1									\
-		},		                                                    \
-		{		                                                    \
+		},															\
+		{															\
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
 			1000000,	/* 1 MHz */									\
 			2,	/* memory region #2 */								\
 			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
 								/* NMIs are triggered by the second sound CPU */	\
-		},                                                   		\
-		{		                                                    \
+		},															\
+		{															\
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
 			1000000,	/* 1 MHz */									\
 			3,	/* memory region #3 */								\
 			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
 								/* NMIs are triggered by a programmable timer */	\
-		}                                                   		\
-	},                                                          	\
+		}															\
+	},																\
 	61, 1018,	/* frames per second, vblank duration */			\
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,						                                    	\
+	0,																\
 																	\
-	/* video hardware */                                        	\
+	/* video hardware */											\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
-	GFX,                                                        	\
-	16, 16,		                                                	\
-	0,									                           	\
+	GFX,															\
+	16, 16,															\
+	0,																\
 																	\
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
-	0,                                                          	\
+	0,																\
 	gottlieb_vh_start,												\
 	gottlieb_vh_stop,												\
 	gottlieb_vh_screenrefresh,										\
 																	\
-	/* sound hardware */                                        	\
-	0,gottlieb_sh_start,0,0,                                       	\
-	{                                                           	\
-		{                                                   		\
+	/* sound hardware */											\
+	0,0,0,0,														\
+	{																\
+		{															\
 			SOUND_DAC,												\
 			&dac2_interface											\
 		},															\
 		{															\
 			SOUND_AY8910,											\
 			&ay8910_interface										\
-		}                                                   		\
-	}                                                           	\
+		}															\
+	}																\
 }
 
 /* games using the revision 1 sound board */
@@ -1850,7 +1850,7 @@ struct GameDriver mach3_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&mach3_machine_driver,
-	0,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
 	mach3_rom,
 	0, 0,
@@ -1877,7 +1877,7 @@ struct GameDriver usvsthem_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&usvsthem_machine_driver,
-	0,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
 	usvsthem_rom,
 	0, 0,
@@ -1903,7 +1903,7 @@ struct GameDriver stooges_driver =
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
 	&stooges_machine_driver,
-	0,
+	gottlieb_sound_init,	/* clear nmi_timer */
 
 	stooges_rom,
 	0, 0,

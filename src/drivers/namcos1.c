@@ -24,20 +24,41 @@ Etc.
 
 Emulating this is not trivial.
 
+MCU bank area system (guess)
+
+bank window 4000-bfff (32K)
+
+VOICE ROM 0 : bank f8-ff
+
+bank: 4Mbit ROM : 2Mbit ROM : 1Mbit ROM
+ ff :38000-3ffff:-----------:-----------
+ fe :30000-37fff:-----------:-----------
+ fd :28000-2ffff:-----------:-----------
+ fc :20000-27fff:-----------:-----------
+ fb :18000-1ffff:18000-1ffff:08000-0ffff
+ fa :10000-17fff:10000-17fff:00000-07fff
+ f9 :08000-0ffff:08000-0ffff:-----------
+ f8 :00000-07fff:00000-07fff:-----------
+
+VOICE ROM 1 : bank f0-f7
+VOICE ROM 2 : bank e8-ef
+VOICE ROM 3 : bank e0-e7
+VOICE ROM 4 : bank d8-df
+VOICE ROM 5 : bank d0-d7
+
 issue:
-  not work                   : berabohm , tankfrce
+  not work                   : tankfrce
   not playable               : bakutotu
-  sometime need namual reset : galag88j , etc
+                               berabohm(addittional key PCB?)
   shadow/highlight sprite    : mmaze, pacmania , soukobdx , dangseed , etc
-  playfield offset           : dspirit (1dot shift case flipscreen)
+  playfield offset           : dspirit (1dot shift when flipscreen)
+  sometime stop sound        : dspirit
   display error (about cpu communication ?)
     : dangseed credit and score is not changed.
     : ws90 time count of select is wrong , somwtime no display 'score'
     : gaalga88 flip sprite in opening of 2player case 'TYPE A'
-  no voice sound   : voice data looks unsigned 8bit PCM data
-                     voice data handled by mcu ,maybe
-                     But it is uncertain now.
-                     And voice ROM allocation is wrong too
+  dac sound                  : playback rate is wrong , sometime noisy.
+
 stubs for driver.c:
 ------------------
 
@@ -45,8 +66,10 @@ stubs for driver.c:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/M6809/M6809.h"
-#include "cpu/M6800/M6800.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6800/m6800.h"
+
+#define NS1_SLICE 25  /* 25 CPU slice per frame - enough for the cpu's to communicate */
 
 /* from vidhrdw */
 extern void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -90,6 +113,10 @@ extern void namcos1_1_banked_area5_w( int offset, int data );
 extern void namcos1_1_banked_area6_w( int offset, int data );
 extern void namcos1_cpu_control_w( int offset, int data );
 extern void namcos1_sound_bankswitch_w( int offset, int data );
+
+extern void namcos1_mcu_bankswitch_w(int offset,int data);
+extern void namcos1_mcu_patch_w(int offset,int data);
+
 extern void namcos1_machine_init( void );
 
 /************************************************************************************/
@@ -119,6 +146,8 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xe000, 0xefff, namcos1_bankswitch_w },
 	{ 0xf000, 0xf000, namcos1_cpu_control_w },
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
+//	{ 0xf400, 0xf400, MWA_NOP }, /* unknown */
+//	{ 0xf600, 0xf600, MWA_NOP }, /* unknown */
 	{ 0xfc00, 0xfc01, namcos1_subcpu_bank },
 	{ -1 }  /* end of table */
 };
@@ -148,6 +177,8 @@ static struct MemoryWriteAddress sub_writemem[] =
 	{ 0xc000, 0xdfff, namcos1_1_banked_area6_w },
 	{ 0xf000, 0xf000, MWA_NOP }, /* IO Chip */
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
+//	{ 0xf400, 0xf400, MWA_NOP }, /* unknown */
+//	{ 0xf600, 0xf600, MWA_NOP }, /* unknown */
 	{ -1 }  /* end of table */
 };
 
@@ -176,7 +207,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x9fff, MWA_RAM },	/* Sound RAM 3 */
 	{ 0xc000, 0xc001, namcos1_sound_bankswitch_w }, /* bank selector */
 	{ 0xd001, 0xd001, MWA_NOP },	/* watchdog? */
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0xc000, 0xc000, MWA_NOP}, /* unknown write 10h */
+	{ 0xe000, 0xe000, MWA_NOP}, /* IRQ clar ? */
 	{ -1 }  /* end of table */
 };
 
@@ -189,42 +221,14 @@ static int dsw_r( int offs ) {
 	return 0xf0 | ( ret & 0x0f );
 }
 
-/* This is very obscure, but i havent found any better way yet. */
-/* Works with all games so far.									*/
-static void mcu_patch_w( int offs, int data ) {
-void mwh_bank3(int _address,int _data);
-
-	if ( cpu_get_pc() == 0xba8e )
-		return;
-	mwh_bank3( offs, data );
-}
-
-static int pd000,pd400,pd800,pf000;
-
-static void show_adpcmport(void)
+static void dac0_w(int offset,int data)
 {
-#if 0
-	char buf[80];
-	sprintf(buf,"d000=%02x d400=%02x d800=%02x f000=%02x",
-	pd000,pd400,pd800,pf000 );
-	usrintf_showmessage(buf);
-#endif
+	DAC_signed_data_w(0,data);
 }
-static void pd000_w(int offset,int data)
+static void dac1_w(int offset,int data)
 {
-	/* DAC_data_w(0,data); */
-	pd000 = data; show_adpcmport();
+	DAC_signed_data_w(1,data);
 }
-static void pd400_w(int offset,int data)
-{
-	/* DAC_data_w(1,data); */
-	pd400 = data; show_adpcmport();
-}
-
-static void pd800_w(int offset,int data)
-{	pd800 = data; show_adpcmport(); }
-static void pf000_w(int offset,int data)
-{	pf000 = data; show_adpcmport(); }
 
 static struct MemoryReadAddress mcu_readmem[] =
 {
@@ -233,7 +237,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x1400, 0x1400, input_port_0_r },
 	{ 0x1401, 0x1401, input_port_1_r },
 	{ 0x1000, 0x1002, dsw_r },
-	{ 0xb800, 0xbfff, MRA_ROM },
+	{ 0x4000, 0xbfff, MRA_BANK4 }, /* banked ROM */
 	{ 0xc000, 0xc7ff, MRA_BANK3 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
 	{ 0xf000, 0xffff, MRA_ROM },
@@ -244,23 +248,22 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },
 	{ 0x0080, 0x00ff, MWA_RAM }, /* built in RAM */
-	{ 0xb800, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc000, mcu_patch_w },
+	{ 0x4000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc000, namcos1_mcu_patch_w },
 	{ 0xc000, 0xc7ff, MWA_BANK3 },
 	{ 0xc800, 0xcfff, MWA_RAM }, /* EEPROM */
-
-	{ 0xd000, 0xd000, pd000_w }, // DAC L ch ?
-	{ 0xd400, 0xd400, pd400_w }, // DAC R ch ?
-	{ 0xd800, 0xd800, pd800_w }, // ??
-	{ 0xf000, 0xf000, pf000_w }, // ??
-
-//	{ 0xf000, 0xffff, MWA_ROM },
+	{ 0xd000, 0xd000, dac0_w }, /* DAC0 */
+	{ 0xd400, 0xd400, dac1_w }, /* DAC1 */
+	{ 0xd800, 0xd800, namcos1_mcu_bankswitch_w }, /* BANK selector */
+	{ 0xf000, 0xf000, MWA_NOP }, /* IRQ clear ? */
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort mcu_writeport[] =
 {
 //	{ HD63701_PORT2, HD63701_PORT2, mwh_error },
+// internal register 4 : port ?
+// internal register 5 : port ?
 	{ -1 }	/* end of table */
 };
 
@@ -278,6 +281,11 @@ static int namcos1_eeprom_load(void)
 	{
 		osd_fread(f,&Machine->memory_region[6][0xc800],0x800);
 		osd_fclose(f);
+	}
+	else
+	{
+		usrintf_showmessage("F2 toggles test mode");
+		memset(&Machine->memory_region[6][0xc800],0xff,0x800);
 	}
 
 	return 1;
@@ -389,11 +397,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
-static void namcos1_sound_interrupt( int irq ) {
-	cpu_set_irq_line( 2, 1 , irq ? ASSERT_LINE : CLEAR_LINE);
-	//cpu_cause_interrupt( 2, M6809_INT_FIRQ );
+static void namcos1_sound_interrupt( int irq )
+{
+	cpu_set_irq_line( 2, M6809_FIRQ_LINE , irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =
@@ -414,13 +420,11 @@ static struct namco_interface namco_interface =
 	1		/* stereo */
 };
 
-#if 0
 static struct DACinterface dac_interface =
 {
 	2,			/* 2 channel ? */
 	{ 50,50 }	/* mixing level */
 };
-#endif
 
 static struct MachineDriver machine_driver =
 {
@@ -456,7 +460,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	25, /* 25 CPU slice per frame - enough for the cpu's to communicate */
+	NS1_SLICE,
 	namcos1_machine_init,
 
 	/* video hardware */
@@ -481,12 +485,10 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_NAMCO,
 			&namco_interface
-#if 0
 		},
 		{
 			SOUND_DAC,
 			&dac_interface
-#endif
 		}
 	}
 };
@@ -525,7 +527,7 @@ static struct MachineDriver machine_driver16 =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	25, /* 25 CPU slice per frame - enough for the cpu's to communicate */
+	NS1_SLICE,
 	namcos1_machine_init,
 
 	/* video hardware */
@@ -550,12 +552,10 @@ static struct MachineDriver machine_driver16 =
 		{
 			SOUND_NAMCO,
 			&namco_interface
-#if 0
 		},
 		{
 			SOUND_DAC,
 			&dac_interface
-#endif
 		}
 	}
 };
@@ -566,6 +566,10 @@ static struct MachineDriver machine_driver16 =
   Game driver(s)
 
 ***************************************************************************/
+/* load half size ROM to full size space */
+#define ROM_LOAD_HS(name,start,length,crc)  \
+	ROM_LOAD(name,start,length,crc) \
+	ROM_RELOAD(start+length,length)
 
 /* Shadowland */
 ROM_START( shadowld_rom )
@@ -573,7 +577,7 @@ ROM_START( shadowld_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "yd.ch8",			0x00000, 0x20000, 0x0c8e69d0 )	/* missing! */
+	ROM_LOAD( "yd.ch8",			0x00000, 0x20000, 0x0c8e69d0 )	/* character mask */
 	ROM_LOAD( "yd.ch0",			0x20000, 0x20000, 0x717441dd )	/* characters */
 	ROM_LOAD( "yd.ch1",			0x40000, 0x20000, 0xc1be6e35 )	/* characters */
 	ROM_LOAD( "yd.ch2",			0x60000, 0x20000, 0x2df8d8cc )	/* characters */
@@ -600,35 +604,27 @@ ROM_START( shadowld_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "yd3.p7",			0x010000, 0x10000, 0xf1c271a0 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd3.p6",			0x020000, 0x10000, 0x93d6811c )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p5",			0x040000, 0x10000, 0x29a78bd6 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p3",			0x080000, 0x10000, 0xa4f27c24 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x090000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p2",   		0x0a0000, 0x10000, 0x62e5bbec )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p1",   		0x0c0000, 0x10000, 0xa8ea6bd3 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p0",   		0x0e0000, 0x10000, 0x07e49883 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd3.p7",		0x000000, 0x10000, 0xf1c271a0 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd3.p6",		0x020000, 0x10000, 0x93d6811c )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p5",		0x040000, 0x10000, 0x29a78bd6 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p3",		0x080000, 0x10000, 0xa4f27c24 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p2",		0x0a0000, 0x10000, 0x62e5bbec )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p1",		0x0c0000, 0x10000, 0xa8ea6bd3 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p0",		0x0e0000, 0x10000, 0x07e49883 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "yd1.v0",			0x10000, 0x0f800, 0xcde1ee23 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "yd1.v1",			0x20000, 0x10000, 0xc61f462b )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v2",			0x30000, 0x10000, 0x821ad462 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v3",			0x40000, 0x10000, 0x1e003489 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v4",			0x50000, 0x10000, 0xa106e6f6 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v5",			0x60000, 0x10000, 0xde72f38f )	/* 16 * 4k banks */
+	ROM_REGION( 0xd0000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "yd1.v0",		0x10000, 0x10000, 0xcde1ee23 )
+	ROM_LOAD_HS( "yd1.v1",		0x30000, 0x10000, 0xc61f462b )
+	ROM_LOAD_HS( "yd1.v2",		0x50000, 0x10000, 0x821ad462 )
+	ROM_LOAD_HS( "yd1.v3",		0x70000, 0x10000, 0x1e003489 )
+	ROM_LOAD_HS( "yd1.v4",		0x90000, 0x10000, 0xa106e6f6 )
+	ROM_LOAD_HS( "yd1.v5",		0xb0000, 0x10000, 0xde72f38f )
 ROM_END
 
 /* Youkai Douchuuki (Shadowland Japan) */
@@ -637,7 +633,7 @@ ROM_START( youkaidk_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "yd.ch8",			0x00000, 0x20000, 0x0c8e69d0 )	/* missing! */
+	ROM_LOAD( "yd.ch8",			0x00000, 0x20000, 0x0c8e69d0 )	/* character mask */
 	ROM_LOAD( "yd.ch0",			0x20000, 0x20000, 0x717441dd )	/* characters */
 	ROM_LOAD( "yd.ch1",			0x40000, 0x20000, 0xc1be6e35 )	/* characters */
 	ROM_LOAD( "yd.ch2",			0x60000, 0x20000, 0x2df8d8cc )	/* characters */
@@ -663,35 +659,27 @@ ROM_START( youkaidk_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "yd2prg7b.bin",	0x010000, 0x10000, 0xa05bf3ae )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1-prg6.bin",	0x020000, 0x10000, 0x785a2772 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p5",			0x040000, 0x10000, 0x29a78bd6 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p3",			0x080000, 0x10000, 0xa4f27c24 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x090000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p2",   		0x0a0000, 0x10000, 0x62e5bbec )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p1",   		0x0c0000, 0x10000, 0xa8ea6bd3 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "yd1.p0",   		0x0e0000, 0x10000, 0x07e49883 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd2prg7b.bin",0x000000, 0x10000, 0xa05bf3ae )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1-prg6.bin",0x020000, 0x10000, 0x785a2772 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p5",		0x040000, 0x10000, 0x29a78bd6 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p3",		0x080000, 0x10000, 0xa4f27c24 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p2",		0x0a0000, 0x10000, 0x62e5bbec )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p1",		0x0c0000, 0x10000, 0xa8ea6bd3 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "yd1.p0",		0x0e0000, 0x10000, 0x07e49883 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "yd1.v0",			0x10000, 0x0f800, 0xcde1ee23 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "yd1.v1",			0x20000, 0x10000, 0xc61f462b )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v2",			0x30000, 0x10000, 0x821ad462 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v3",			0x40000, 0x10000, 0x1e003489 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v4",			0x50000, 0x10000, 0xa106e6f6 )	/* 16 * 4k banks */
-	ROM_LOAD( "yd1.v5",			0x60000, 0x10000, 0xde72f38f )	/* 16 * 4k banks */
+	ROM_REGION( 0xd0000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "yd1.v0",		0x10000, 0x10000, 0xcde1ee23 )
+	ROM_LOAD_HS( "yd1.v1",		0x30000, 0x10000, 0xc61f462b )
+	ROM_LOAD_HS( "yd1.v2",		0x50000, 0x10000, 0x821ad462 )
+	ROM_LOAD_HS( "yd1.v3",		0x70000, 0x10000, 0x1e003489 )
+	ROM_LOAD_HS( "yd1.v4",		0x90000, 0x10000, 0xa106e6f6 )
+	ROM_LOAD_HS( "yd1.v5",		0xb0000, 0x10000, 0xde72f38f )
 ROM_END
 
 /* Dragon Spirit */
@@ -700,7 +688,7 @@ ROM_START( dspirit_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dschr-8.bin",	0x00000, 0x20000, 0x946eb242 )	/* characters */
+	ROM_LOAD( "dschr-8.bin",	0x00000, 0x20000, 0x946eb242 )	/* character mask */
 	ROM_LOAD( "dschr-0.bin",	0x20000, 0x20000, 0x7bf28ac3 )	/* characters */
 	ROM_LOAD( "dschr-1.bin",	0x40000, 0x20000, 0x03582fea )	/* characters */
 	ROM_LOAD( "dschr-2.bin",	0x60000, 0x20000, 0x5e05f4f9 )	/* characters */
@@ -726,36 +714,27 @@ ROM_START( dspirit_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "dsprg-7.bin",	0x010000, 0x10000, 0xf4c0d75e )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-6.bin",	0x020000, 0x10000, 0xa82737b4 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-5.bin", 	0x040000, 0x10000, 0x9a3a1028 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-4.bin",	0x060000, 0x10000, 0xf3307870 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x070000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-3.bin",	0x080000, 0x10000, 0xc6e5954b )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x090000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-2.bin",	0x0a0000, 0x10000, 0x3c9b0100 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-1.bin",	0x0c0000, 0x10000, 0xf7e3298a )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "dsprg-0.bin",	0x0e0000, 0x10000, 0xb22a2856 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-7.bin",	0x000000, 0x10000, 0xf4c0d75e )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-6.bin",	0x020000, 0x10000, 0xa82737b4 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-5.bin",	0x040000, 0x10000, 0x9a3a1028 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-4.bin",	0x060000, 0x10000, 0xf3307870 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-3.bin",	0x080000, 0x10000, 0xc6e5954b )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-2.bin",	0x0a0000, 0x10000, 0x3c9b0100 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-1.bin",	0x0c0000, 0x10000, 0xf7e3298a )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-0.bin",	0x0e0000, 0x10000, 0xb22a2856 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xa0000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "dsvoi-0.bin",	0x10000, 0x0f800, 0x313b3508 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "dsvoi-1.bin",	0x20000, 0x20000, 0x54790d4e )	/* 32 * 4k banks */
-	ROM_LOAD( "dsvoi-2.bin",	0x40000, 0x20000, 0x05298534 )	/* 32 * 4k banks */
-	ROM_LOAD( "dsvoi-3.bin",	0x60000, 0x20000, 0x13e84c7e )	/* 32 * 4k banks */
-	ROM_LOAD( "dsvoi-4.bin",	0x80000, 0x20000, 0x34fbb8cd )	/* 32 * 4k banks */
+	ROM_REGION( 0xb0000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "dsvoi-0.bin",	0x10000, 0x10000, 0x313b3508 )
+	ROM_LOAD( "dsvoi-1.bin",	0x30000, 0x20000, 0x54790d4e )
+	ROM_LOAD( "dsvoi-2.bin",	0x50000, 0x20000, 0x05298534 )
+	ROM_LOAD( "dsvoi-3.bin",	0x70000, 0x20000, 0x13e84c7e )
+	ROM_LOAD( "dsvoi-4.bin",	0x90000, 0x20000, 0x34fbb8cd )
 ROM_END
 
 /* Blazer */
@@ -764,57 +743,51 @@ ROM_START( blazer_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chr8.rom",		0x20000, 0x20000, 0x00000000 )	/* missing! - would go at 00000 */
-	ROM_LOAD( "chr0.rom",		0x20000, 0x20000, 0xd346ba61 )	/* characters */
-	ROM_LOAD( "chr1.rom",		0x40000, 0x20000, 0xe45eb2ea )	/* characters */
-	ROM_LOAD( "chr2.rom",		0x60000, 0x20000, 0x599079ee )	/* characters */
-	ROM_LOAD( "chr3.rom",		0x80000, 0x20000, 0xd5182e36 )	/* characters */
-	ROM_LOAD( "chr4.rom",		0xa0000, 0x20000, 0xe788259e )	/* characters */
-	ROM_LOAD( "chr5.rom",		0xc0000, 0x20000, 0x107e6814 )	/* characters */
-	ROM_LOAD( "chr6.rom",		0xe0000, 0x20000, 0x0312e2ba )	/* characters */
-	ROM_LOAD( "chr7.rom",		0x100000, 0x20000, 0x8cc1827b )	/* characters */
+	ROM_LOAD( "bz1_chr8.bin",	0x000000, 0x20000, 0xdb28bfca )	/* character mask */
+	ROM_LOAD( "bz1_chr0.bin",	0x020000, 0x20000, 0xd346ba61 )	/* characters */
+	ROM_LOAD( "bz1_chr1.bin",	0x040000, 0x20000, 0xe45eb2ea )	/* characters */
+	ROM_LOAD( "bz1_chr2.bin",	0x060000, 0x20000, 0x599079ee )	/* characters */
+	ROM_LOAD( "bz1_chr3.bin",	0x080000, 0x20000, 0xd5182e36 )	/* characters */
+	ROM_LOAD( "bz1_chr4.bin",	0x0a0000, 0x20000, 0xe788259e )	/* characters */
+	ROM_LOAD( "bz1_chr5.bin",	0x0c0000, 0x20000, 0x107e6814 )	/* characters */
+	ROM_LOAD( "bz1_chr6.bin",	0x0e0000, 0x20000, 0x0312e2ba )	/* characters */
+	ROM_LOAD( "bz1_chr7.bin",	0x100000, 0x20000, 0xd9d9a90f )	/* characters */
 
-	ROM_LOAD( "obj0.rom",		0x120000, 0x20000, 0xa1e5fb3f )	/* sprites */
-	ROM_LOAD( "obj1.rom",		0x140000, 0x20000, 0x4fc4acca )	/* sprites */
-	ROM_LOAD( "obj2.rom",		0x160000, 0x20000, 0x114cbc09 )	/* sprites */
-	ROM_LOAD( "obj3.rom",		0x180000, 0x20000, 0x7117d08a )	/* sprites */
+	ROM_LOAD( "bz1_obj0.bin",	0x120000, 0x20000, 0x22aee927 )	/* sprites */
+	ROM_LOAD( "bz1_obj1.bin",	0x140000, 0x20000, 0x7cb10112 )	/* sprites */
+	ROM_LOAD( "bz1_obj2.bin",	0x160000, 0x20000, 0x34b23bb7 )	/* sprites */
+	ROM_LOAD( "bz1_obj3.bin",	0x180000, 0x20000, 0x9bc1db71 )	/* sprites */
 
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION(0x3c000)     /* 192k for the sound cpu */
-	ROM_LOAD( "sound0.rom",		0x0c000, 0x10000, 0x6c3a580b )
-	ROM_LOAD( "sound1.rom",		0x1c000, 0x20000, 0xd206b1bd )
+	ROM_LOAD( "bz1_snd0.bin",	0x0c000, 0x10000, 0x6c3a580b )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "prg7.rom",		0x010000, 0x10000, 0x2d4cbb95 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg6.rom",		0x020000, 0x20000, 0x81c48fc0 )	/* 8 * 8k banks */
-	ROM_LOAD( "prg5.rom",		0x040000, 0x20000, 0x900da191 )	/* 8 * 8k banks */
-	ROM_LOAD( "prg4.rom",		0x060000, 0x20000, 0xb866e9b0 )	/* 8 * 8k banks */
-	ROM_LOAD( "prg3.rom",		0x080000, 0x10000, 0x81b32a1a )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x090000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg2.rom",   	0x0a0000, 0x10000, 0x5d700aed )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg1.rom",   	0x0c0000, 0x10000, 0xc54bbbf4 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg0.rom",   	0x0e0000, 0x10000, 0xa7dd195b )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "bz1_prg7.bin",0x000000, 0x10000, 0x2d4cbb95 )	/* 8 * 8k banks */
+	ROM_LOAD( "bz1_prg6.bin",	0x020000, 0x20000, 0x81c48fc0 )	/* 8 * 8k banks */
+	ROM_LOAD( "bz1_prg5.bin",	0x040000, 0x20000, 0x900da191 )	/* 8 * 8k banks */
+	ROM_LOAD( "bz1_prg4.bin",	0x060000, 0x20000, 0x65ef6f05 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bz1_prg3.bin",0x080000, 0x10000, 0x81b32a1a )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bz1_prg2.bin",0x0a0000, 0x10000, 0x5d700aed )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bz1_prg1.bin",0x0c0000, 0x10000, 0xc54bbbf4 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bz1_prg0.bin",0x0e0000, 0x10000, 0xa7dd195b )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x80000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "voice0.rom",		0x10000, 0x0f800, 0x3d09d32e )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "voice1.rom",		0x20000, 0x20000, 0x2005c9c0 )	/* 32 * 4k banks */
-	ROM_LOAD( "voice2.rom",		0x40000, 0x20000, 0xc876fba6 )	/* 32 * 4k banks */
-	ROM_LOAD( "voice3.rom",		0x60000, 0x20000, 0x7d22ac3f )	/* 32 * 4k banks */
+	ROM_REGION( 0xb0000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "bz1_voi0.bin",0x10000, 0x10000, 0x3d09d32e )
+	ROM_LOAD( "bz1_voi1.bin",	0x30000, 0x20000, 0x2043b141 )
+	ROM_LOAD( "bz1_voi2.bin",	0x50000, 0x20000, 0x64143442 )
+	ROM_LOAD( "bz1_voi3.bin",	0x70000, 0x20000, 0x26cfc510 )
+	ROM_LOAD( "bz1_voi4.bin",	0x90000, 0x20000, 0xd206b1bd )
 ROM_END
 
 /* Pacmania */
@@ -823,7 +796,7 @@ ROM_START( pacmania_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pm_chr8.bin",	0x000000, 0x10000, 0xf3afd65d )	/* characters */
+	ROM_LOAD( "pm_chr8.bin",	0x000000, 0x10000, 0xf3afd65d )	/* character mask */
 	ROM_LOAD( "pm_chr0.bin",	0x020000, 0x20000, 0x7c57644c )	/* characters */
 	ROM_LOAD( "pm_chr1.bin",	0x040000, 0x20000, 0x7eaa67ed )	/* characters */
 	ROM_LOAD( "pm_chr2.bin",	0x060000, 0x20000, 0x27e739ac )	/* characters */
@@ -842,19 +815,17 @@ ROM_START( pacmania_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, load it at the bottom 64k */
-	ROM_LOAD( "pm_prg7.bin", 0x010000, 0x10000, 0x462fa4fd )	/* 8 * 8k banks */
-	ROM_RELOAD( 			 0x000000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "pm_prg6.bin", 0x020000, 0x20000, 0xfe94900c )	/* 16 * 8k banks */
+	ROM_LOAD_HS( "pm_prg7.bin",	0x000000, 0x10000, 0x462fa4fd )	/* 8 * 8k banks */
+	ROM_LOAD( "pm_prg6.bin",	0x020000, 0x20000, 0xfe94900c )	/* 16 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 64k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x20000 ) /* 128k for the MCU & voice */
-	ROM_LOAD( "pm_voice.bin",   0x10000, 0x0f800, 0x1ad5788f )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "pm_voice.bin",0x10000, 0x10000, 0x1ad5788f )
 ROM_END
 
 /* Pacmania (Japan) deff o1,s0,s1,p7,v0 */
@@ -863,7 +834,7 @@ ROM_START( pacmanij_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pm_chr8.bin",	0x000000, 0x10000, 0xf3afd65d )	/* characters */
+	ROM_LOAD( "pm_chr8.bin",	0x000000, 0x10000, 0xf3afd65d )	/* character mask */
 	ROM_LOAD( "pm_chr0.bin",	0x020000, 0x20000, 0x7c57644c )	/* characters */
 	ROM_LOAD( "pm_chr1.bin",	0x040000, 0x20000, 0x7eaa67ed )	/* characters */
 	ROM_LOAD( "pm_chr2.bin",	0x060000, 0x20000, 0x27e739ac )	/* characters */
@@ -882,19 +853,17 @@ ROM_START( pacmanij_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, load it at the bottom 64k */
-	ROM_LOAD( "pm-p7.t10",	 0x010000, 0x10000, 0x2aa99e2b )	/* 8 * 8k banks */
-	ROM_RELOAD( 			 0x000000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "pm_prg6.bin", 0x020000, 0x20000, 0xfe94900c )	/* 16 * 8k banks */
+	ROM_LOAD_HS( "pm-p7.t10",	0x000000, 0x10000, 0x2aa99e2b )	/* 8 * 8k banks */
+	ROM_LOAD( "pm_prg6.bin",	0x020000, 0x20000, 0xfe94900c )	/* 16 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 64k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x20000 ) /* 128k for the MCU & voice */
-	ROM_LOAD( "pm-v0.b5",       0x10000, 0x0f800, 0xe2689f79 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "pm-v0.b5",	0x10000, 0x10000, 0xe2689f79 )
 ROM_END
 
 /* Galaga 88 */
@@ -903,7 +872,7 @@ ROM_START( galaga88_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
     ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g88_chr8.rom",	0x00000, 0x20000, 0x3862ed0a )	/* characters */
+	ROM_LOAD( "g88_chr8.rom",	0x00000, 0x20000, 0x3862ed0a )	/* character mask */
 	ROM_LOAD( "g88_chr0.rom",	0x20000, 0x20000, 0x68559c78 )	/* characters */
 	ROM_LOAD( "g88_chr1.rom",	0x40000, 0x20000, 0x3dc0f93f )	/* characters */
 	ROM_LOAD( "g88_chr2.rom",	0x60000, 0x20000, 0xdbf26f1f )	/* characters */
@@ -926,31 +895,25 @@ ROM_START( galaga88_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "g88_prg7.rom",	0x010000, 0x10000, 0xdf75b7fc )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg6.rom",	0x020000, 0x10000, 0x7e3471d3 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg5.rom",	0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg1.rom",	0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg0.rom",	0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )				/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg7.rom",0x000000, 0x10000, 0xdf75b7fc )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg6.rom",0x020000, 0x10000, 0x7e3471d3 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg5.rom",0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg1.rom",0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg0.rom",0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "g88_vce0.rom",   0x10000, 0x0f800, 0x86921dd4 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "g88_vce1.rom",   0x20000, 0x10000, 0x9c300e16 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce2.rom",   0x30000, 0x10000, 0x5316b4b0 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce3.rom",   0x40000, 0x10000, 0xdc077af4 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce4.rom",   0x50000, 0x10000, 0xac0279a7 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce5.rom",   0x60000, 0x10000, 0x014ddba1 )	/* 16 * 4k banks */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "g88_vce0.rom",0x10000, 0x10000, 0x86921dd4 )
+	ROM_LOAD_HS( "g88_vce1.rom",0x30000, 0x10000, 0x9c300e16 )
+	ROM_LOAD_HS( "g88_vce2.rom",0x50000, 0x10000, 0x5316b4b0 )
+	ROM_LOAD_HS( "g88_vce3.rom",0x70000, 0x10000, 0xdc077af4 )
+	ROM_LOAD_HS( "g88_vce4.rom",0x90000, 0x10000, 0xac0279a7 )
+	ROM_LOAD_HS( "g88_vce5.rom",0xb0000, 0x10000, 0x014ddba1 )
 ROM_END
 
 /* Galaga 88 japan */
@@ -959,7 +922,7 @@ ROM_START( galag88j_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
     ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g88_chr8.rom",	0x00000, 0x20000, 0x3862ed0a )	/* characters */
+	ROM_LOAD( "g88_chr8.rom",	0x00000, 0x20000, 0x3862ed0a )	/* character mask */
 	ROM_LOAD( "g88_chr0.rom",	0x20000, 0x20000, 0x68559c78 )	/* characters */
 	ROM_LOAD( "g88_chr1.rom",	0x40000, 0x20000, 0x3dc0f93f )	/* characters */
 	ROM_LOAD( "g88_chr2.rom",	0x60000, 0x20000, 0xdbf26f1f )	/* characters */
@@ -982,31 +945,25 @@ ROM_START( galag88j_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "g88jprg7.rom",	0x010000, 0x10000, 0x7c10965d )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88jprg6.rom",	0x020000, 0x10000, 0xe7203707 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg5.rom",	0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg1.rom",	0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )				/* 8 * 8k banks */
-	ROM_LOAD( "g88_prg0.rom",	0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )				/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88jprg7.rom",0x000000, 0x10000, 0x7c10965d )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88jprg6.rom",0x020000, 0x10000, 0xe7203707 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg5.rom",0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg1.rom",0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg0.rom",0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "g88_vce0.rom",   0x10000, 0x0f800, 0x86921dd4 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "g88_vce1.rom",   0x20000, 0x10000, 0x9c300e16 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce2.rom",   0x30000, 0x10000, 0x5316b4b0 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce3.rom",   0x40000, 0x10000, 0xdc077af4 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce4.rom",   0x50000, 0x10000, 0xac0279a7 )	/* 16 * 4k banks */
-	ROM_LOAD( "g88_vce5.rom",   0x60000, 0x10000, 0x014ddba1 )	/* 16 * 4k banks */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "g88_vce0.rom",0x10000, 0x10000, 0x86921dd4 )
+	ROM_LOAD_HS( "g88_vce1.rom",0x30000, 0x10000, 0x9c300e16 )
+	ROM_LOAD_HS( "g88_vce2.rom",0x50000, 0x10000, 0x5316b4b0 )
+	ROM_LOAD_HS( "g88_vce3.rom",0x70000, 0x10000, 0xdc077af4 )
+	ROM_LOAD_HS( "g88_vce4.rom",0x90000, 0x10000, 0xac0279a7 )
+	ROM_LOAD_HS( "g88_vce5.rom",0xb0000, 0x10000, 0x014ddba1 )
 ROM_END
 
 /* Beraboh Man */
@@ -1015,7 +972,7 @@ ROM_START( berabohm_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bm-chr8.bin",	0x00000, 0x20000, 0x92860e95 )	/* characters */
+	ROM_LOAD( "bm-chr8.bin",	0x00000, 0x20000, 0x92860e95 )	/* character mask */
 	ROM_LOAD( "bm-chr0.bin",	0x20000, 0x20000, 0xeda1d92e )	/* characters */
 	ROM_LOAD( "bm-chr1.bin",	0x40000, 0x20000, 0x8ae1891e )	/* characters */
 	ROM_LOAD( "bm-chr2.bin",	0x60000, 0x20000, 0x774cdf4e )	/* characters */
@@ -1043,73 +1000,19 @@ ROM_START( berabohm_rom )
 	/* if you got a 64k one, reload it */
 	ROM_LOAD( "bm1prg7b.bin",	0x010000, 0x10000, 0xe0c36ddd )	/* 8 * 8k banks */
 	ROM_CONTINUE(				0x000000, 0x10000 )
-	ROM_LOAD( "bm1-prg6.bin",	0x020000, 0x10000, 0xa51b69a5 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "bm1-prg6.bin",0x020000, 0x10000, 0xa51b69a5 )	/* 8 * 8k banks */
 	ROM_LOAD( "bm1-prg4.bin",	0x060000, 0x20000, 0xf6cfcb8c )	/* 8 * 8k banks */
 	ROM_LOAD( "bm1-prg1.bin",	0x0c0000, 0x20000, 0xb15f6407 )	/* 8 * 8k banks */
 	ROM_LOAD( "bm1-prg0.bin",	0x0e0000, 0x20000, 0xb57ff8c1 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x50000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "bm1-voi0.bin",	0x10000, 0x0f800, 0x4e40d0ca )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "bm1-voi1.bin",	0x20000, 0x10000, 0xbe9ce0a8 )	/* 32 * 4k banks */
-	ROM_CONTINUE(				0x40000, 0x10000 )
-	ROM_LOAD( "bm1-voi2.bin",	0x30000, 0x10000, 0x41225d04 )
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x70000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "bm1-voi0.bin",0x10000, 0x10000, 0x4e40d0ca )
+	ROM_LOAD(    "bm1-voi1.bin",0x30000, 0x20000, 0xbe9ce0a8 )
+	ROM_LOAD_HS( "bm1-voi2.bin",0x50000, 0x10000, 0x41225d04 )
 ROM_END
-
-#if 0
-/* Alice in Wonderland */
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
-	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
-
-	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mm.ch8",			0x00000, 0x20000, 0xa3784dfe )	/* missing! */
-	ROM_LOAD( "mm.ch0",			0x20000, 0x20000, 0x43ff2dfc )	/* characters */
-	ROM_LOAD( "mm.ch1",			0x40000, 0x20000, 0xb9b4b72d )	/* characters */
-	ROM_LOAD( "mm.ch2",			0x60000, 0x20000, 0xbee28425 )	/* characters */
-	ROM_LOAD( "mm.ch3",			0x80000, 0x20000, 0xd9f41e5c )	/* characters */
-	ROM_LOAD( "mm.ch4",			0xa0000, 0x20000, 0x3484f4ae )	/* characters */
-	ROM_LOAD( "mm.ch5",			0xc0000, 0x20000, 0xc863deba )	/* characters */
-
-	ROM_LOAD( "mm.ob0",			0x120000, 0x20000, 0xd4b7e698 )	/* sprites */
-	ROM_LOAD( "mm.ob1",			0x140000, 0x20000, 0x1ce49e04 )	/* sprites */
-	ROM_LOAD( "mm.ob2",			0x160000, 0x20000, 0x3d3d5de3 )	/* sprites */
-	ROM_LOAD( "mm.ob3",			0x180000, 0x20000, 0xdac57358 )	/* sprites */
-
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
-	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
-
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
-	ROM_LOAD( "mm.sd0",			0x0c000, 0x10000, 0x25d25e07 )
-	ROM_LOAD( "mm1.sd1",		0x1c000, 0x10000, 0x4a3cc89e )
-
-	ROM_REGION( 0x100000 ) /* 1m for ROMs */
-	/* PRGx ROMs go here - they can be 128k max. */
-	/* if you got a 64k one, reload it */
-	ROM_LOAD( "mm1.p7",			0x010000, 0x10000, 0x085e58cc )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "mm1.p6",			0x020000, 0x10000, 0xeaf530d8 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "mm.p2",   		0x0a0000, 0x20000, 0x91bde09f )	/* 8 * 8k banks */
-	ROM_LOAD( "mm.p1",   		0x0c0000, 0x20000, 0x6ba14e41 )	/* 8 * 8k banks */
-	ROM_LOAD( "mm.p0",   		0x0e0000, 0x20000, 0xe169a911 )	/* 8 * 8k banks */
-
-	ROM_REGION( 0x14000 ) /* 80k for RAM */
-	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
-	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
-	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
-
-	ROM_REGION( 0x80000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "mm.v0",			0x10000, 0x0f800, 0xee974cff )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 ) /* 16 * 4k banks */
-	ROM_LOAD( "mm.v1",			0x30000, 0x20000, 0xd09b5830 )	/* 32 * 4k banks */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
-ROM_END
-#endif
 
 /* Marchen Maze */
 ROM_START( mmaze_rom )
@@ -1117,7 +1020,7 @@ ROM_START( mmaze_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mm.ch8",			0x00000, 0x20000, 0xa3784dfe )	/* missing! */
+	ROM_LOAD( "mm.ch8",			0x00000, 0x20000, 0xa3784dfe )	/* character mask */
 	ROM_LOAD( "mm.ch0",			0x20000, 0x20000, 0x43ff2dfc )	/* characters */
 	ROM_LOAD( "mm.ch1",			0x40000, 0x20000, 0xb9b4b72d )	/* characters */
 	ROM_LOAD( "mm.ch2",			0x60000, 0x20000, 0xbee28425 )	/* characters */
@@ -1140,10 +1043,8 @@ ROM_START( mmaze_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "mm1.p7",			0x010000, 0x10000, 0x085e58cc )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "mm1.p6",			0x020000, 0x10000, 0xeaf530d8 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "mm1.p7",		0x000000, 0x10000, 0x085e58cc )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "mm1.p6",		0x020000, 0x10000, 0xeaf530d8 )	/* 8 * 8k banks */
 	ROM_LOAD( "mm.p2",   		0x0a0000, 0x20000, 0x91bde09f )	/* 8 * 8k banks */
 	ROM_LOAD( "mm.p1",   		0x0c0000, 0x20000, 0x6ba14e41 )	/* 8 * 8k banks */
 	ROM_LOAD( "mm.p0",   		0x0e0000, 0x20000, 0xe169a911 )	/* 8 * 8k banks */
@@ -1153,12 +1054,10 @@ ROM_START( mmaze_rom )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x80000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "mm.v0",			0x10000, 0x0f800, 0xee974cff )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 ) /* 16 * 4k banks */
-	ROM_LOAD( "mm.v1",			0x30000, 0x20000, 0xd09b5830 )	/* 32 * 4k banks */
+	ROM_REGION( 0x80000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "mm.v0",			0x10000, 0x20000, 0xee974cff )
+	ROM_LOAD( "mm.v1",			0x30000, 0x20000, 0xd09b5830 )
 ROM_END
 
 /* Bakutotsu Kijuutei */
@@ -1167,7 +1066,7 @@ ROM_START( bakutotu_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bk-chr8.bin",	0x00000, 0x20000, 0x6c8d4029 )	/* characters */
+	ROM_LOAD( "bk-chr8.bin",	0x00000, 0x20000, 0x6c8d4029 )	/* character mask */
 	ROM_LOAD( "bk-chr0.bin",	0x20000, 0x20000, 0x4e011058 )	/* characters */
 	ROM_LOAD( "bk-chr1.bin",	0x40000, 0x20000, 0x496fcb9b )	/* characters */
 	ROM_LOAD( "bk-chr2.bin",	0x60000, 0x20000, 0xdc812e28 )	/* characters */
@@ -1191,24 +1090,19 @@ ROM_START( bakutotu_rom )
 	/* if you got a 64k one, reload it */
 	ROM_LOAD( "bk1-prg7.bin",	0x010000, 0x10000, 0xfac1c1bf )	/* 8 * 8k banks */
 	ROM_CONTINUE(				0x000000, 0x10000 )
-	ROM_LOAD( "bk1-prg6.bin",	0x020000, 0x20000, 0x57a3ce42 )	/* 8 * 8k banks */
-	ROM_LOAD( "bk1-prg5.bin",	0x040000, 0x10000, 0xdceed7cb )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x050000, 0x10000 )
-	ROM_LOAD( "bk1-prg4.bin",	0x060000, 0x10000, 0x96446d48 )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x070000, 0x10000 )
-	ROM_LOAD( "bk1-prg3.bin",	0x080000, 0x20000, 0xe608234f )	/* 8 * 8k banks */
-	ROM_LOAD( "bk1-prg2.bin",	0x090000, 0x10000, 0x7a686daa)	/* 8 * 8k banks */
-	ROM_RELOAD(					0x0a0000, 0x10000 )
-	ROM_LOAD( "bk1-prg1.bin",	0x0b0000, 0x10000, 0xd389d6d4 )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x0c0000, 0x10000 )
-	ROM_LOAD( "bk1-prg0.bin",	0x0e0000, 0x20000, 0x4529c362 )	/* 8 * 8k banks */
+	ROM_LOAD(    "bk1-prg6.bin",0x020000, 0x20000, 0x57a3ce42 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg5.bin",0x040000, 0x10000, 0xdceed7cb )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg4.bin",0x060000, 0x10000, 0x96446d48 )	/* 8 * 8k banks */
+	ROM_LOAD(    "bk1-prg3.bin",0x080000, 0x20000, 0xe608234f )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg2.bin",0x090000, 0x10000, 0x7a686daa)	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg1.bin",0x0b0000, 0x10000, 0xd389d6d4 )	/* 8 * 8k banks */
+	ROM_LOAD(    "bk1-prg0.bin",0x0e0000, 0x20000, 0x4529c362 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x40000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "bk1-voi0.bin",	0x10000, 0x0f800, 0x008e290e )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "bk1-voi0.bin",0x10000, 0x10000, 0x008e290e )
 ROM_END
 
 /* World Court */
@@ -1217,7 +1111,7 @@ ROM_START( wldcourt_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "wc1-chr8.bin",	0x00000, 0x20000, 0x23e1c399 )	/* characters */
+	ROM_LOAD( "wc1-chr8.bin",	0x00000, 0x20000, 0x23e1c399 )	/* character mask */
 	ROM_LOAD( "wc1-chr0.bin",	0x20000, 0x20000, 0x9fb07b9b )	/* characters */
 	ROM_LOAD( "wc1-chr1.bin",	0x40000, 0x20000, 0x01bfbf60 )	/* characters */
 	ROM_LOAD( "wc1-chr2.bin",	0x60000, 0x20000, 0x7e8acf45 )	/* characters */
@@ -1237,21 +1131,18 @@ ROM_START( wldcourt_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "wc1-prg7.bin",	0x010000, 0x10000, 0x8a7c6cac )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "wc1-prg6.bin",	0x020000, 0x10000, 0xe9216b9e )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "wc1-prg7.bin",0x000000, 0x10000, 0x8a7c6cac )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "wc1-prg6.bin",0x020000, 0x10000, 0xe9216b9e )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x40000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "wc1-voi0.bin",	0x10000, 0x0f800, 0xb57919f7 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "wc1-voi1.bin",	0x20000, 0x20000, 0x97974b4b )	/* 32 * 4k banks */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "wc1-voi0.bin",0x10000, 0x10000, 0xb57919f7 )
+	ROM_LOAD( "wc1-voi1.bin",	0x30000, 0x20000, 0x97974b4b )
 ROM_END
 
 /* Splatter House */
@@ -1260,7 +1151,7 @@ ROM_START( splatter_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chr8",			0x00000, 0x20000, 0x321f483b )	/* characters */
+	ROM_LOAD( "chr8",			0x00000, 0x20000, 0x321f483b )	/* character mask */
 	ROM_LOAD( "chr0",			0x20000, 0x20000, 0x4dd2ef05 )	/* characters */
 	ROM_LOAD( "chr1",			0x40000, 0x20000, 0x7a764999 )	/* characters */
 	ROM_LOAD( "chr2",			0x60000, 0x20000, 0x6e6526ee )	/* characters */
@@ -1287,36 +1178,26 @@ ROM_START( splatter_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "prg7",			0x010000, 0x10000, 0x24c8cbd7 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg6",   		0x020000, 0x10000, 0x97a3e664 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x030000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg5",   		0x040000, 0x10000, 0x0187de9a )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x050000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg4",   		0x060000, 0x10000, 0x350dee5b )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x070000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg3",   		0x080000, 0x10000, 0x955ce93f )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x090000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg2",   		0x0a0000, 0x10000, 0x434dbe7d )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg1",   		0x0c0000, 0x10000, 0x7a3efe09 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "prg0",   		0x0e0000, 0x10000, 0x4e07e6d9 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg7",		0x000000, 0x10000, 0x24c8cbd7 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg6",		0x020000, 0x10000, 0x97a3e664 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg5",		0x040000, 0x10000, 0x0187de9a )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg4",		0x060000, 0x10000, 0x350dee5b )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg3",		0x080000, 0x10000, 0x955ce93f )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg2",		0x0a0000, 0x10000, 0x434dbe7d )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg1",		0x0c0000, 0x10000, 0x7a3efe09 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg0",		0x0e0000, 0x10000, 0x4e07e6d9 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x90000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "voice0",   		0x10000, 0x0f800, 0x2199cb66 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 ) /* 16 * 4k banks */
-	ROM_LOAD( "voice1",   		0x30000, 0x20000, 0x9b6472af )	/* 32 * 4k banks */
-	ROM_LOAD( "voice2",			0x50000, 0x20000, 0x25ea75b6 )	/* 32 * 4k banks */
-	ROM_LOAD( "voice3",			0x70000, 0x20000, 0x5eebcdb4 )	/* 32 * 4k banks */
+	ROM_REGION( 0x90000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "voice0",   		0x20000, 0x20000, 0x2199cb66 )
+	ROM_LOAD( "voice1",   		0x30000, 0x20000, 0x9b6472af )
+	ROM_LOAD( "voice2",			0x50000, 0x20000, 0x25ea75b6 )
+	ROM_LOAD( "voice3",			0x70000, 0x20000, 0x5eebcdb4 )
 ROM_END
 
 /* Rompers */
@@ -1325,7 +1206,7 @@ ROM_START( rompers_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rp1-chr8.bin",	0x00000, 0x10000, 0x69cfe46a )	/* characters */
+	ROM_LOAD( "rp1-chr8.bin",	0x00000, 0x10000, 0x69cfe46a )	/* character mask */
 	ROM_LOAD( "rp1-chr0.bin",	0x20000, 0x20000, 0x41b10ef3 )	/* characters */
 	ROM_LOAD( "rp1-chr1.bin",	0x40000, 0x20000, 0xc18cd24e )	/* characters */
 	ROM_LOAD( "rp1-chr2.bin",	0x60000, 0x20000, 0x6c9a3c79 )	/* characters */
@@ -1348,22 +1229,16 @@ ROM_START( rompers_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "rp1-prg7.bin",	0x010000, 0x10000, 0x49d057e2 )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x000000, 0x10000 )
-	ROM_LOAD( "rp1-prg6.bin",	0x020000, 0x10000, 0x80821065 )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x030000, 0x10000 )
-	ROM_LOAD( "rp1-prg5.bin",	0x040000, 0x10000, 0x98bd4133)	/* 8 * 8k banks */
-	ROM_RELOAD(					0x050000, 0x10000 )
-	ROM_LOAD( "rp1-prg4.bin",	0x060000, 0x10000, 0x0918f06d )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x070000, 0x10000 )
+	ROM_LOAD_HS( "rp1-prg7.bin",0x000000, 0x10000, 0x49d057e2 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "rp1-prg6.bin",0x020000, 0x10000, 0x80821065 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "rp1-prg5.bin",0x040000, 0x10000, 0x98bd4133)	/* 8 * 8k banks */
+	ROM_LOAD_HS( "rp1-prg4.bin",0x060000, 0x10000, 0x0918f06d )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x40000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "rp1-voi0.bin",	0x10000, 0x0f800, 0x11caef7e )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 ) /* This bank has the 63701 code */
+	ROM_REGION( 0x30000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "rp1-voi0.bin",	0x10000, 0x20000, 0x11caef7e )
 ROM_END
 
 /* Blast off */
@@ -1372,7 +1247,7 @@ ROM_START( blastoff_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bo1-chr8.bin",	0x00000, 0x20000, 0xe8b5f2d4 )	/* characters */
+	ROM_LOAD( "bo1-chr8.bin",	0x00000, 0x20000, 0xe8b5f2d4 )	/* character mask */
 	ROM_LOAD( "bo1-chr0.bin",	0x20000, 0x20000, 0xbdc0afb5 )	/* characters */
 	ROM_LOAD( "bo1-chr1.bin",	0x40000, 0x20000, 0x963d2639 )	/* characters */
 	ROM_LOAD( "bo1-chr2.bin",	0x60000, 0x20000, 0xacdb6894 )	/* characters */
@@ -1403,13 +1278,11 @@ ROM_START( blastoff_rom )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "bo1-voi0.bin",	0x10000, 0x0f800, 0x47065e18 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 )
-	ROM_LOAD( "bo1-voi1.bin",	0x30000, 0x20000, 0x0308b18e )	/* 32 * 4k banks */
-	ROM_LOAD( "bo1-voi2.bin",	0x50000, 0x20000, 0x88cab230 )
+	ROM_REGION( 0x70000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "bo1-voi0.bin",	0x10000, 0x20000, 0x47065e18 )
+	ROM_LOAD( "bo1-voi1.bin",	0x30000, 0x20000, 0x0308b18e )
+	ROM_LOAD( "bo1-voi2.bin",	0x50000, 0x20000, 0x88cab230 )
 ROM_END
 
 /* Dangerous Sseed */
@@ -1418,7 +1291,7 @@ ROM_START( dangseed_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dr1-chr8.bin",	0x00000, 0x20000, 0x0fbaa10e )	/* characters */
+	ROM_LOAD( "dr1-chr8.bin",	0x00000, 0x20000, 0x0fbaa10e )	/* character mask */
 	ROM_LOAD( "dr1-chr0.bin",	0x20000, 0x20000, 0x419bacc7 )	/* characters */
 	ROM_LOAD( "dr1-chr1.bin",	0x40000, 0x20000, 0x55ce77e1 )	/* characters */
 	ROM_LOAD( "dr1-chr2.bin",	0x60000, 0x20000, 0x6f913419 )	/* characters */
@@ -1442,17 +1315,14 @@ ROM_START( dangseed_rom )
 	/* if you got a 64k one, reload it */
 	ROM_LOAD( "dr1-prg7.bin",	0x010000, 0x10000, 0xd7d2f653 )	/* 8 * 8k banks */
 	ROM_CONTINUE(				0x000000, 0x10000 )
-	ROM_LOAD( "dr1-prg6.bin",	0x020000, 0x10000, 0xcc68262b )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x030000, 0x10000 )
+	ROM_LOAD_HS( "dr1-prg6.bin",0x020000, 0x10000, 0xcc68262b )	/* 8 * 8k banks */
 	ROM_LOAD( "dr1-prg5.bin",	0x040000, 0x20000, 0x7986bbdd )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x70000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "dr1-voi0.bin",	0x10000, 0x0f800, 0xde4fdc0e )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 )
+	ROM_REGION( 0x30000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "dr1-voi0.bin",	0x10000, 0x20000, 0xde4fdc0e )
 ROM_END
 
 /* World Stadium 90 */
@@ -1461,7 +1331,7 @@ ROM_START( ws90_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "wschr-8.bin",	0x00000, 0x20000, 0xd1897b9b )	/* characters */
+	ROM_LOAD( "wschr-8.bin",	0x00000, 0x20000, 0xd1897b9b )	/* character mask */
 	ROM_LOAD( "wschr-0.bin",	0x20000, 0x20000, 0x3e3e96b4 )	/* characters */
 	ROM_LOAD( "wschr-1.bin",	0x40000, 0x20000, 0x897dfbc1 )	/* characters */
 	ROM_LOAD( "wschr-2.bin",	0x60000, 0x20000, 0xe142527c )	/* characters */
@@ -1484,25 +1354,20 @@ ROM_START( ws90_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "wsprg-7.bin",	0x010000, 0x10000, 0x37ae1b25 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x000000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "wsprg-2.bin",	0x0a0000, 0x10000, 0xb9e98e2f )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0b0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "wsprg-1.bin",	0x0c0000, 0x10000, 0x7ad8768f )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0d0000, 0x10000 )		/* 8 * 8k banks */
-	ROM_LOAD( "wsprg-0.bin",	0x0e0000, 0x10000, 0xb0234298 )	/* 8 * 8k banks */
-	ROM_RELOAD( 				0x0f0000, 0x10000 )		/* 8 * 8k banks */
+	ROM_LOAD_HS( "wsprg-7.bin",	0x000000, 0x10000, 0x37ae1b25 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "wsprg-2.bin",	0x0a0000, 0x10000, 0xb9e98e2f )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "wsprg-1.bin",	0x0c0000, 0x10000, 0x7ad8768f )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "wsprg-0.bin",	0x0e0000, 0x10000, 0xb0234298 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x40000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "wsvoi-0.bin",	0x10000, 0x0f800, 0xf6949199 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "wsvoi-1.bin",	0x20000, 0x20000, 0x210e2af9 )	/* 32 * 4k banks */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "wsvoi-0.bin",	0x10000, 0x10000, 0xf6949199 )
+	ROM_LOAD( "wsvoi-1.bin",	0x30000, 0x20000, 0x210e2af9 )
 ROM_END
 
 /* Pistol Daimyo no Bouken */
@@ -1511,7 +1376,7 @@ ROM_START( pistoldm_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pd-chr8.bin",	0x00000, 0x20000, 0xa5f516db )	/* characters */
+	ROM_LOAD( "pd-chr8.bin",	0x00000, 0x20000, 0xa5f516db )	/* character mask */
 	ROM_LOAD( "pd-chr0.bin",	0x20000, 0x20000, 0xadbbaf5c )	/* characters */
 	ROM_LOAD( "pd-chr1.bin",	0x40000, 0x20000, 0xb4e4f554 )	/* characters */
 	ROM_LOAD( "pd-chr2.bin",	0x60000, 0x20000, 0x84592540 )	/* characters */
@@ -1541,12 +1406,10 @@ ROM_START( pistoldm_rom )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x50000 ) /* MCU & voice */
-	ROM_LOAD( "pd-voi0.bin",	0x10000, 0x0f800, 0xad1b8128 )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x20000, 0x10000 )
-	ROM_LOAD( "pd-voi1.bin",	0x30000, 0x20000, 0x2871c494 )	/* 15 * 4k banks */
+	ROM_REGION( 0x50000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "pd-voi0.bin",	0x10000, 0x20000, 0xad1b8128 )
+	ROM_LOAD( "pd-voi1.bin",	0x30000, 0x20000, 0x2871c494 )
 ROM_END
 
 /* Soukoban DX */
@@ -1555,7 +1418,7 @@ ROM_START( soukobdx_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sb1-chr8.bin",	0x00000, 0x10000, 0x5692b297 )	/* characters */
+	ROM_LOAD( "sb1-chr8.bin",	0x00000, 0x10000, 0x5692b297 )	/* character mask */
 	ROM_LOAD( "sb1-chr0.bin",	0x20000, 0x20000, 0x267f1331 )	/* characters */
 	ROM_LOAD( "sb1-chr1.bin",	0x40000, 0x20000, 0xe5ff61ad )	/* characters */
 	ROM_LOAD( "sb1-chr2.bin",	0x60000, 0x20000, 0x099b746b )	/* characters */
@@ -1572,17 +1435,15 @@ ROM_START( soukobdx_rom )
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
 	/* if you got a 64k one, reload it */
-	ROM_LOAD( "sb1-prg7.bin",	0x010000, 0x10000, 0xc3bd418a )	/* 8 * 8k banks */
-	ROM_RELOAD(					0x000000, 0x10000 )
+	ROM_LOAD_HS( "sb1-prg7.bin",0x000000, 0x10000, 0xc3bd418a )	/* 8 * 8k banks */
 	ROM_LOAD( "sb1-prg1.bin",	0x0c0000, 0x20000, 0x5d1fdd94 )	/* 8 * 8k banks */
 	ROM_LOAD( "sb1-prg0.bin",	0x0e0000, 0x20000, 0x8af8cb73 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x40000 ) /* 448k for the MCU & voice */
-	ROM_LOAD( "sb1-voi0.bin",	0x10000, 0x0f800, 0x63d9cedf )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_REGION( 0x40000 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "sb1-voi0.bin",0x10000, 0x10000, 0x63d9cedf )
 ROM_END
 
 /* Tank Force */
@@ -1591,7 +1452,7 @@ ROM_START( tankfrce_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tf1-chr8.bin",	0x00000, 0x20000, 0x7d53b31e )	/* characters */
+	ROM_LOAD( "tf1-chr8.bin",	0x00000, 0x20000, 0x7d53b31e )	/* character mask */
 	ROM_LOAD( "tf1-chr0.bin",	0x20000, 0x20000, 0x51fedc8c )	/* characters */
 	ROM_LOAD( "tf1-chr1.bin",	0x40000, 0x20000, 0x76e1bc56 )	/* characters */
 	ROM_LOAD( "tf1-chr2.bin",	0x60000, 0x20000, 0xfcb645d9 )	/* characters */
@@ -1618,13 +1479,10 @@ ROM_START( tankfrce_rom )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x50000 ) /* MCU & voice */
-	ROM_LOAD( "tf1-voi0.bin",	0x10000, 0x0f800, 0xf542676a )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x0b800, 0x00800 ) /* This bank has the 63701 code */
-	ROM_CONTINUE(				0x30000, 0x10000 )
-	ROM_LOAD( "tf1-voi1.bin",	0x20000, 0x10000, 0x615d09cd )	/* 15 * 4k banks */
-	ROM_CONTINUE(				0x40000, 0x10000 )
+	ROM_REGION( 0x50000 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "tf1-voi0.bin",	0x10000, 0x20000, 0xf542676a )
+	ROM_LOAD( "tf1-voi1.bin",	0x30000, 0x20000, 0x615d09cd )
 ROM_END
 
 
@@ -1638,7 +1496,7 @@ struct GameDriver NAME##_driver  = \
 	REALNAME,         \
 	YEAR,             \
 	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
@@ -1663,7 +1521,7 @@ struct GameDriver NAME##_driver  = \
 	REALNAME,         \
 	YEAR,             \
 	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
@@ -1688,7 +1546,7 @@ struct GameDriver NAME##_driver  = \
 	REALNAME,         \
 	YEAR,             \
 	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver16,  \
 	INIT_NAME##_driver_init, \
@@ -1713,7 +1571,7 @@ struct GameDriver NAME##_driver  = \
 	REALNAME,         \
 	YEAR,             \
 	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver16,  \
 	INIT_NAME##_driver_init, \
@@ -1738,7 +1596,7 @@ struct GameDriver NAME##_driver  = \
 	REALNAME,         \
 	YEAR,             \
 	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	GAME_NOT_WORKING, \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
@@ -1761,8 +1619,9 @@ NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_
 //NAMCOS1_NWDRIVER(quester,"Quester","1987","Namco",quester,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER16(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
 NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVERCLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
+/* galaga88 use shadow sprite , and could fit in 256 colors stage 21 */
+NAMCOS1_DRIVER16(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER16CLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
 //NAMCOS1_NWDRIVER(wstadium,"World Stadium","1988","Namco",wstadium,ORIENTATION_DEFAULT)
 NAMCOS1_NWDRIVER(berabohm,"Beraboh Man","1988","Namco",berabohm,ORIENTATION_DEFAULT)
 //NAMCOS1_DRIVER(alice,"Alice In Wonderland","1988","Namco",alice,ORIENTATION_DEFAULT)

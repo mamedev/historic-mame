@@ -1141,15 +1141,6 @@ static struct GfxDecodeInfo calipso_gfxdecodeinfo[] =
 
 
 
-/* this is NOT the original color PROM - it's the Super Cobra one */
-static unsigned char wrong_color_prom[] =
-{
-	0x00,0xF6,0x07,0xF0,0x00,0x80,0x3F,0xC7,0x00,0xFF,0x07,0x27,0x00,0xFF,0xC9,0x39,
-	0x00,0x3C,0x07,0xF0,0x00,0x27,0x29,0xFF,0x00,0xC7,0x17,0xF6,0x00,0xC7,0x39,0x3F
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -3131,7 +3122,7 @@ struct GameDriver anteater_driver =
 
 	anteater_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	anteater_hiload, anteater_hisave
@@ -3261,7 +3252,7 @@ struct GameDriver superbon_driver =
 
 	superbon_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	superbon_hiload, losttomb_hisave

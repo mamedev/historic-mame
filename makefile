@@ -12,8 +12,8 @@ EMULATOR_EXE = mame.exe
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = rtype_driver
-TINY_OBJS = obj/drivers/m72.o obj/vidhrdw/m72.o obj/sndhrdw/m72.o
+TINY_NAME = finalizr_driver
+TINY_OBJS = obj/drivers/finalizr.o obj/vidhrdw/finalizr.o obj/machine/konami.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -126,7 +126,7 @@ endif
 
 #if obj subdirectory doesn't exist, create the tree before proceeding
 ifeq ($(wildcard ./obj),)
-noobj: makedir all
+noobj: maketree all
 endif
 
 
@@ -604,7 +604,7 @@ endif
 SOUND=$(strip $(findstring HC55516@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_HC55516=1
-SOUNDOBJS += obj/sound/cvsd.o
+SOUNDOBJS += obj/sound/hc55516.o
 endif
 
 SOUND=$(strip $(findstring K007232@,$(SOUNDS)))
@@ -707,9 +707,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
 		 obj/kyugo.a obj/williams.a obj/gremlin.a obj/vicdual.a \
          obj/capcom.a obj/capbowl.a obj/leland.a \
          obj/sega.a obj/dataeast.a obj/tehkan.a obj/konami.a \
-         obj/exidy.a obj/atarivg.a obj/centiped.a \
-         obj/kangaroo.a obj/ataribw.a obj/atarimsc.a \
-         obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
+         obj/exidy.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
@@ -778,9 +776,6 @@ obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
 obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
-
-obj/cpu/z80/z80_vm.o: src/cpu/z80/z80.c
-        $(CC) $(CDEFS) $(CFLAGS) -DZ80_VM=1 -c $< -o $@
 
 obj/%.a:
 	 $(AR) cr $@ $^
@@ -884,6 +879,7 @@ obj/irem.a: \
          obj/vidhrdw/shisen.o obj/drivers/shisen.o \
          obj/vidhrdw/m92.o obj/drivers/m92.o \
          obj/drivers/m97.o \
+         obj/vidhrdw/m107.o obj/drivers/m107.o \
 
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
@@ -954,7 +950,8 @@ obj/gremlin.a: \
          obj/vidhrdw/blockade.o obj/drivers/blockade.o \
 
 obj/vicdual.a: \
-         obj/vidhrdw/vicdual.o obj/sndhrdw/carnival.o obj/sndhrdw/depthch.o obj/drivers/vicdual.o \
+         obj/vidhrdw/vicdual.o obj/drivers/vicdual.o \
+         obj/sndhrdw/carnival.o obj/sndhrdw/depthch.o obj/sndhrdw/invinco.o obj/sndhrdw/pulsar.o \
 
 obj/sega.a: \
          obj/machine/segacrpt.o \
@@ -1029,6 +1026,7 @@ obj/konami.a: \
          obj/vidhrdw/pingpong.o obj/drivers/pingpong.o \
          obj/vidhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/jailbrek.o obj/drivers/jailbrek.o \
+         obj/vidhrdw/finalizr.o obj/drivers/finalizr.o \
          obj/vidhrdw/ironhors.o obj/drivers/ironhors.o \
          obj/machine/jackal.o obj/vidhrdw/jackal.o obj/drivers/jackal.o \
          obj/machine/ddrible.o obj/vidhrdw/ddrible.o obj/drivers/ddrible.o \
@@ -1066,7 +1064,7 @@ obj/exidy.a: \
          obj/machine/starfire.o obj/vidhrdw/starfire.o obj/drivers/starfire.o \
          obj/sndhrdw/exidy440.o obj/vidhrdw/exidy440.o obj/drivers/exidy440.o \
 
-obj/atarivg.a: \
+obj/atari.a: \
          obj/machine/atari_vg.o \
          obj/machine/asteroid.o obj/sndhrdw/asteroid.o \
 		 obj/vidhrdw/llander.o obj/drivers/asteroid.o \
@@ -1074,21 +1072,10 @@ obj/atarivg.a: \
          obj/sndhrdw/bzone.o  obj/drivers/bzone.o \
          obj/sndhrdw/redbaron.o \
          obj/drivers/tempest.o \
-         obj/machine/starwars.o obj/machine/swmathbx.o obj/drivers/starwars.o obj/sndhrdw/starwars.o \
+         obj/machine/starwars.o obj/machine/swmathbx.o \
+         obj/drivers/starwars.o obj/sndhrdw/starwars.o \
          obj/machine/mhavoc.o obj/drivers/mhavoc.o \
          obj/machine/quantum.o obj/drivers/quantum.o \
-
-obj/centiped.a: \
-         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
-         obj/machine/milliped.o obj/vidhrdw/milliped.o obj/drivers/milliped.o \
-         obj/vidhrdw/qwakprot.o obj/drivers/qwakprot.o \
-         obj/vidhrdw/warlord.o obj/drivers/warlord.o \
-
-obj/kangaroo.a: \
-         obj/machine/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
-         obj/machine/arabian.o obj/vidhrdw/arabian.o obj/drivers/arabian.o \
-
-obj/ataribw.a: \
          obj/machine/atarifb.o obj/vidhrdw/atarifb.o obj/drivers/atarifb.o \
          obj/machine/sprint2.o obj/vidhrdw/sprint2.o obj/drivers/sprint2.o \
          obj/machine/sbrkout.o obj/vidhrdw/sbrkout.o obj/drivers/sbrkout.o \
@@ -1101,8 +1088,12 @@ obj/ataribw.a: \
          obj/machine/atarifb.o obj/vidhrdw/atarifb.o obj/drivers/atarifb.o \
          obj/vidhrdw/canyon.o obj/drivers/canyon.o \
          obj/vidhrdw/skydiver.o obj/drivers/skydiver.o \
-
-obj/atarimsc.a: \
+         obj/vidhrdw/warlord.o obj/drivers/warlord.o \
+         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
+         obj/machine/milliped.o obj/vidhrdw/milliped.o obj/drivers/milliped.o \
+         obj/vidhrdw/qwakprot.o obj/drivers/qwakprot.o \
+         obj/machine/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
+         obj/machine/arabian.o obj/vidhrdw/arabian.o obj/drivers/arabian.o \
          obj/machine/missile.o obj/vidhrdw/missile.o obj/drivers/missile.o \
          obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
@@ -1111,8 +1102,6 @@ obj/atarimsc.a: \
          obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
          obj/vidhrdw/cloud9.o obj/drivers/cloud9.o \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
-
-obj/atari.a: \
          obj/machine/atarigen.o obj/sndhrdw/atarijsa.o \
          obj/machine/slapstic.o \
          obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
@@ -1135,6 +1124,7 @@ obj/atari.a: \
          obj/vidhrdw/batman.o obj/drivers/batman.o \
          obj/vidhrdw/relief.o obj/drivers/relief.o \
          obj/vidhrdw/offtwall.o obj/drivers/offtwall.o \
+         obj/vidhrdw/arcadecl.o obj/drivers/arcadecl.o \
 
 obj/rockola.a: \
          obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
@@ -1151,6 +1141,7 @@ obj/snk.a: \
 obj/technos.a: \
          obj/drivers/scregg.o \
          obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
+         obj/vidhrdw/ssozumo.o obj/drivers/ssozumo.o \
          obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o obj/machine/maniach.o \
          obj/vidhrdw/renegade.o obj/drivers/renegade.o \
@@ -1278,6 +1269,9 @@ obj/cpu/m68000/m68kcpu.o: obj/cpu/m68000/m68kops.c m68kmake.c m68k_in.c
 
 
 makedir:
+	@echo make makedir is no longer necessary, just type make
+
+maketree:
 	md obj
 	md obj\cpu
 	md obj\cpu\z80
@@ -1308,45 +1302,7 @@ makedir:
 	md obj\msdos
 
 clean:
-	del obj\*.o
-	del obj\*.a
-	del obj\cpu\z80\*.o
-	del obj\cpu\z80\*.oa
-	del obj\cpu\z80\*.asm
-	del obj\cpu\z80\*.exe
-	del obj\cpu\m6502\*.o
-	del obj\cpu\h6280\*.o
-	del obj\cpu\i86\*.o
-	del obj\cpu\nec\*.o
-	del obj\cpu\i8039\*.o
-	del obj\cpu\i8085\*.o
-	del obj\cpu\m6800\*.o
-	del obj\cpu\m6800\*.oa
-	del obj\cpu\m6800\*.exe
-	del obj\cpu\m6805\*.o
-	del obj\cpu\m6809\*.o
-	del obj\cpu\konami\*.o
-	del obj\cpu\m68000\*.o
-	del obj\cpu\m68000\*.c
-	del obj\cpu\m68000\*.h
-	del obj\cpu\m68000\*.oa
-	del obj\cpu\m68000\*.og
-	del obj\cpu\m68000\*.asm
-	del obj\cpu\m68000\*.exe
-	del obj\cpu\s2650\*.o
-	del obj\cpu\t11\*.o
-	del obj\cpu\tms34010\*.o
-	del obj\cpu\tms9900\*.o
-	del obj\cpu\z8000\*.o
-	del obj\cpu\tms32010\*.o
-	del obj\cpu\ccpu\*.o
-	del obj\cpu\pdp1\*.o
-	del obj\sound\*.o
-	del obj\drivers\*.o
-	del obj\machine\*.o
-	del obj\vidhrdw\*.o
-	del obj\sndhrdw\*.o
-	del obj\msdos\*.o
+	deltree /Y obj
 	del $(EMULATOR_EXE)
 	del romcmp.exe
 

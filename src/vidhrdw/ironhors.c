@@ -186,7 +186,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx = sr[offs+3];
 				sy = sr[offs+2];
 				flipx = sr[offs+4] & 0x20;
-				flipy = sr[offs+4] & 0x40;  /* not sure yet */
+				flipy = sr[offs+4] & 0x40;
 				code = (sr[offs] << 2) + ((sr[offs+1] & 0x01) << 10) + ((sr[offs+1] & 0x0c) >> 2);
 				color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
 

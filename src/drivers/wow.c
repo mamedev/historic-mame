@@ -55,15 +55,13 @@ int  Gorf_IO_r(int offset);
 
 int  wow_vh_start(void);
 
-int  wow_sh_start(void);
-void wow_sh_stop(void);
+int  wow_sh_start(const struct MachineSound *msound);
 void wow_sh_update(void);
 
 int  wow_speech_r(int offset);
 int  wow_port_2_r(int offset);
 
-int  gorf_sh_start(void);
-void gorf_sh_stop(void);
+int  gorf_sh_start(const struct MachineSound *msound);
 void gorf_sh_update(void);
 int  gorf_speech_r(int offset);
 int  gorf_port_2_r(int offset);
@@ -494,7 +492,9 @@ INPUT_PORTS_START( wow_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct Samplesinterface wow_samples_interface =
+
+
+static struct Samplesinterface samples_interface =
 {
 	8,	/* 8 channels */
 	25	/* volume */
@@ -513,6 +513,22 @@ static struct astrocade_interface astrocade_1chip_interface =
 	1789773,	/* Clock speed */
 	{255}			/* Volume */
 };
+
+static struct CustomSound_interface gorf_custom_interface =
+{
+	gorf_sh_start,
+	0,
+	gorf_sh_update
+};
+
+static struct CustomSound_interface wow_custom_interface =
+{
+	wow_sh_start,
+	0,
+	wow_sh_update
+};
+
+
 
 static struct MachineDriver wow_machine_driver =
 {
@@ -543,18 +559,19 @@ static struct MachineDriver wow_machine_driver =
 	wow_vh_screenrefresh_stars,
 
 	/* sound hardware */
-	0,             				/* Initialise audio hardware */
-	wow_sh_start,   			/* Start audio  */
-	wow_sh_stop,     			/* Stop audio   */
-	wow_sh_update,              /* Update audio */
+	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&wow_samples_interface
-		},
 		{
 			SOUND_ASTROCADE,
 			&astrocade_2chip_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&wow_custom_interface
 		}
  	}
 };
@@ -972,11 +989,7 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct Samplesinterface gorf_samples_interface =
-{
-	8,	/* 8 channels */
-	25	/* volume */
-};
+
 
 static struct MachineDriver gorf_machine_driver =
 {
@@ -1010,18 +1023,19 @@ static struct MachineDriver gorf_machine_driver =
 	gorf_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gorf_sh_start,
-	gorf_sh_stop,
-	gorf_sh_update,
+	0,0,0,0,
 	{
-		{
-			SOUND_SAMPLES,
-			&gorf_samples_interface
-		},
 		{
 			SOUND_ASTROCADE,
 			&astrocade_2chip_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&gorf_custom_interface
 		}
 	}
 };

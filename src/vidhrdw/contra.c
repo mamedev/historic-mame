@@ -7,7 +7,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int spriteram_offset;
+//static int spriteram_offset;
+static unsigned char *private_spriteram_2,*private_spriteram;
 
 unsigned char *contra_fg_vertical_scroll;
 unsigned char *contra_fg_horizontal_scroll;
@@ -169,8 +170,20 @@ void contra_bg_palette_bank_w(int offset,int data){
 	}
 }
 
-void contra_sprite_buffer_select( int offset, int data ){
-	spriteram_offset = (data&0x08)?0x000:0x800;
+void contra_sprite_buffer_1_w( int offset, int data )
+{
+	if ((data&0x8)==0)
+		memcpy(private_spriteram,spriteram+0x800,0x800);
+	else
+		memcpy(private_spriteram,spriteram,0x800);
+}
+
+void contra_sprite_buffer_2_w( int offset, int data )
+{
+	if ((data&0x8)==0)
+		memcpy(private_spriteram_2,spriteram+0x2800,0x800);
+	else
+		memcpy(private_spriteram_2,spriteram+0x2000,0x800);
 }
 
 /***************************************************************************
@@ -201,6 +214,9 @@ int contra_vh_start(void){
 		5,32	/* number of columns, number of rows */
 	);
 
+	private_spriteram=malloc (0x800);
+	private_spriteram_2=malloc (0x800);
+
 	if( bg_tilemap && fg_tilemap && text_tilemap ){
 		struct rectangle clip = Machine->drv->visible_area;
 		clip.min_x += 40;
@@ -219,6 +235,12 @@ int contra_vh_start(void){
 	return 1;
 }
 
+void contra_vh_stop(void)
+{
+	free(private_spriteram);
+	free(private_spriteram_2);
+}
+
 static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
@@ -227,9 +249,15 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 //	unsigned char *RAM = Machine->memory_region[0];
 //	int limit = (bank)? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
 
-	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;
-	const unsigned char *finish = source+(40)*5;
+//	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;
+//	const unsigned char *finish = source+(40)*5;
+	const unsigned char *finish,*source;
 	int base_color = bank?2:4;
+
+	if (bank==0) source=private_spriteram;
+	else source=private_spriteram_2;
+	finish = source+(40)*5;
+
 /*
 	spriteram[0]	tile_number
 	spriteram[1]	XXXX		color

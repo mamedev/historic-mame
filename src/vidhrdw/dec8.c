@@ -212,8 +212,8 @@ void lastmiss_control_w(int offset, int data)
 	scroll2[0]=(data>>5)&1;
 	scroll2[2]=(data>>6)&1;
 
-if (cpu_get_pc()==0xfa51) cpu_reset(1); /* No way this can be right... */
-if (cpu_get_pc()==0xf9d2) cpu_reset(1); /* No way this can be right... */
+if (cpu_get_pc()==0xfa51) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
+if (cpu_get_pc()==0xf9d2) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
 
 //if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }

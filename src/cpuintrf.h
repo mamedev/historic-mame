@@ -221,7 +221,7 @@ int watchdog_reset_r(int offset);
 /* Use this function to reset the machine */
 void machine_reset(void);
 /* Use this function to reset a single CPU */
-void cpu_reset(int cpu);
+void cpu_set_reset_line(int cpu,int state);
 
 /* Use this function to stop and restart CPUs */
 void cpu_halt(int cpunum,int running);

@@ -75,6 +75,7 @@ void m92_spritebuffer_w(int offset,int data)
 	if (m92_spritechip==0 && offset==0) {
 		memcpy(m92_spriteram,spriteram,0x800);
 	}
+//	if (m92_spritechip==1)	memset(spriteram,0,0x800);
 }
 
 /*****************************************************************************/
@@ -106,9 +107,6 @@ static void get_pf2_tile_info( int col, int row )
 	color=m92_vram_data[offs+2];
 	SET_TILE_INFO(0,tile,color&0x3f)
 
-/* Bit 8 of colour set signals split tile, top pens over sprites,
-   Bit 1 of flags signals whole tile over sprite
-*/
 	if (m92_vram_data[offs+3]&1) pri = 2;
 	else if (color&0x80) pri = 1;
 	else pri = 0;
@@ -118,28 +116,37 @@ static void get_pf2_tile_info( int col, int row )
 
 static void get_pf3_tile_info( int col, int row )
 {
-	int offs,tile,color;
+	int offs,tile,color,pri;
 	offs=(col*4) + (row*256);
 	offs+=pf3_vram_ptr;
 	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
 	color=m92_vram_data[offs+2];
 
+	//if (m92_vram_data[offs+3]&1) pri = 2;
+	//else
+	if (color&0x80) pri = 1;
+	else pri = 0;
+
 	SET_TILE_INFO(0,tile,color&0x3f)
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1);
+	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
 }
 
 static void get_pf3_wide_tile_info( int col, int row )
 {
-	int offs,tile,color;
+	int offs,tile,color,pri;
 	offs=(col*4) + (row*512);
-
 	offs+=pf3_vram_ptr;
 
 	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
 	color=m92_vram_data[offs+2];
 
+//	if (m92_vram_data[offs+3]&1) pri = 2;
+//	else
+	if (color&0x80) pri = 1;
+	else pri = 0;
+
 	SET_TILE_INFO(0,tile,color&0x3f)
-	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1);
+	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
 }
 
 /*****************************************************************************/
@@ -241,7 +248,9 @@ void m92_master_control_w(int offset,int data)
 		case 6:
 		case 7:
 			m92_raster_irq_position=((pf4_control[7]<<8) | pf4_control[6])-128;
-			break;
+	if (errorlog && offset==7) fprintf(errorlog,"%04x: raster %d\n",cpu_get_pc(),m92_raster_irq_position);
+
+		break;
 	}
 }
 
@@ -265,14 +274,14 @@ int m92_vh_start(void)
 
 	pf3_layer = tilemap_create(
 		get_pf3_tile_info,
-		0,
+		TILEMAP_SPLIT,
 		8,8,
 		64,64
 	);
 
 	pf3_wide_layer = tilemap_create(
 		get_pf3_wide_tile_info,
-		0,
+		TILEMAP_SPLIT,
 		8,8,
 		128,64
 	);
@@ -282,12 +291,18 @@ int m92_vh_start(void)
 	/* split type 0 - totally transparent in front half */
 	pf1_layer->transmask[0] = 0xffff;
 	pf2_layer->transmask[0] = 0xffff;
+	pf3_layer->transmask[0] = 0xffff;
+	pf3_wide_layer->transmask[0] = 0xffff;
 	/* split type 1 - pens 0-7 transparent in front half */
 	pf1_layer->transmask[1] = 0x00ff;
 	pf2_layer->transmask[1] = 0x00ff;
+	pf3_layer->transmask[1] = 0x00ff;
+	pf3_wide_layer->transmask[1] = 0x00ff;
 	/* split type 2 - pen 0 transparent in front half */
 	pf1_layer->transmask[2] = 0x0001;
 	pf2_layer->transmask[2] = 0x0001;
+	pf3_layer->transmask[2] = 0x0001;
+	pf3_wide_layer->transmask[2] = 0x0001;
 
 	m92_spriteram = malloc(0x800);
 	memset(m92_spriteram,0,0x800);
@@ -494,9 +509,9 @@ static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *
 
 	if (pf3_enable) {
 		if (pf3_shape)
-			tilemap_draw(bitmap,pf3_wide_layer,0);
+			tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_BACK);
 		else
-			tilemap_draw(bitmap,pf3_layer,0);
+			tilemap_draw(bitmap,pf3_layer,TILEMAP_BACK);
 	}
 	else
 		fillbitmap(bitmap,palette_transparent_pen,clip);
@@ -506,6 +521,7 @@ static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *
 
 	m92_drawsprites(bitmap,clip,0);
 
+	tilemap_draw(bitmap,pf3_layer,TILEMAP_FRONT);
 	tilemap_draw(bitmap,pf2_layer,TILEMAP_FRONT);
 	tilemap_draw(bitmap,pf1_layer,TILEMAP_FRONT);
 

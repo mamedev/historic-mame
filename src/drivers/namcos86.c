@@ -189,13 +189,13 @@ static int rt_decode_sample( void ) {
 	return 0; /* no errors */
 }
 
-static int rt_decode_sample0( void ) {
+static int rt_decode_sample0( const struct MachineSound *msound ) {
 
 	rt_decode_mode = 0;
 	return rt_decode_sample();
 }
 
-static int rt_decode_sample1( void ) {
+static int rt_decode_sample1( const struct MachineSound *msound ) {
 
 	rt_decode_mode = 1;
 	return rt_decode_sample();
@@ -1108,6 +1108,21 @@ static struct Samplesinterface samples_interface =
 	40	/* volume */			// Takahiro Nogi. 1999/09/26 (20 -> 40)
 };
 
+static struct CustomSound_interface custom_interface0 =
+{
+	rt_decode_sample0,
+	0,
+	0
+};
+
+static struct CustomSound_interface custom_interface1 =
+{
+	rt_decode_sample1,
+	0,
+	0
+};
+
+
 static void rt_init_machine( void )
 {
 	unsigned char *base = Machine->memory_region[MEM_CPU1] + 0x10000;
@@ -1161,7 +1176,7 @@ static struct MachineDriver roishtar_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1174,6 +1189,10 @@ static struct MachineDriver roishtar_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface0
 		}
 	}
 };
@@ -1221,7 +1240,7 @@ static struct MachineDriver genpeitd_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample1,0,0,		// Takahiro Nogi. 1999/09/26
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1234,6 +1253,10 @@ static struct MachineDriver genpeitd_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface1
 		}
 	}
 };
@@ -1281,7 +1304,7 @@ static struct MachineDriver rthunder_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1294,6 +1317,10 @@ static struct MachineDriver rthunder_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface0
 		}
 	}
 };
@@ -1341,7 +1368,7 @@ static struct MachineDriver wndrmomo_machine_driver =
 	namcos86_vh_screenrefresh,
 
 	/* sound hardware */
-	0,rt_decode_sample0,0,0,		// Takahiro Nogi. 1999/09/26
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -1354,6 +1381,10 @@ static struct MachineDriver wndrmomo_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually initializes the samples */
+			&custom_interface0
 		}
 	}
 };

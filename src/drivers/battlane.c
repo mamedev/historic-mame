@@ -5,58 +5,38 @@
 
 	2x6809
 
+    Driver provided by Paul Leaman (paul@vortexcomputing.demon.co.uk)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+extern int battlane_vh_start(void);
+extern void battlane_vh_stop(void);
+extern void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-int battlane_vh_start(void);
-void battlane_vh_stop(void);
-void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *battlane_bitmap;
 extern int battlane_bitmap_size;
-extern unsigned char *battlane_spriteram;
-extern int battlane_spriteram_size;
-
+extern void battlane_spriteram_w(int, int);
+extern int battlane_spriteram_r(int);
+extern void battlane_tileram_w(int, int);
+extern int battlane_tileram_r(int);
 extern void battlane_bitmap_w(int, int);
 extern int battlane_bitmap_r(int);
 extern void battlane_video_ctrl_w(int, int);
 extern int battlane_video_ctrl_r(int);
+extern void battlane_set_video_flip(int);
 
+extern void battlane_scrolly_w(int offset, int data);
+extern void battlane_scrollx_w(int offset, int data);
 
-/*
-BattleLane uses an unknown M6809 interrupt vector 0xfffa (this is actually the
-SWI vector, so the following is completely wrong - NS).
+/* CPU interrupt control register */
+int battlane_cpu_control;
 
-Since the core doesn't support this, I will swap the FIRQ and unknown vectors
-around (swapping keeps the self test happy)
-*/
-
-#define VECTOR_KLUDGE 1
-
-#if VECTOR_KLUDGE
-#define M6809_IRQ2_LINE M6809_FIRQ_LINE
-
-void battlane_machine_init(void)
-{
-	unsigned char *SLAVERAM =
-		Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	int b1, b2;
-	b1=SLAVERAM[0xfff6];
-	b2=SLAVERAM[0xfff7];
-	SLAVERAM[0xfff6]=SLAVERAM[0xfffa];
-	SLAVERAM[0xfff7]=SLAVERAM[0xfffb];
-	SLAVERAM[0xfffa]=b1;
-	SLAVERAM[0xfffb]=b2;
-}
-#else
-void battlane_machine_init(void)
-{
-}
-#endif
-
+/* RAM shared between CPU 0 and 1 */
 void battlane_shared_ram_w(int offset, int data)
 {
 	unsigned char *RAM =
@@ -71,38 +51,44 @@ int battlane_shared_ram_r(int offset)
 	return RAM[offset];
 }
 
-static int battlane_cpu_control;
 
-void cpu1_command_w(int offset, int data)
+void battlane_cpu_command_w(int offset, int data)
 {
 	battlane_cpu_control=data;
-	/*if (errorlog)
-	{
-		fprintf(errorlog, "CPU# PC=%04x IRQ=%02x\n", cpu_get_pc(), data);
-	}*/
 
 	/*
 	CPU control register
 
-		0x80	= ???
-		0x08	= ???
-		0x04	= Unknown IRQ vector 0xfffa (1=Activate)
-		0x02	= IRQ	(0=Activate)
-		0x01	= ???
+        0x80    = Video Flip
+        0x08    = NMI
+        0x04    = CPU 0 IRQ   (0=Activate)
+        0x02    = CPU 1 IRQ   (0=Activate)
+        0x01    = Scroll MSB
 	*/
 
+    battlane_set_video_flip(data & 0x80);
 
 	/*
-	No idea what is connected to the NMI lines yet
-	*/
-	//cpu_set_nmi_line(0,     data & 0x80 ? CLEAR_LINE : HOLD_LINE);
-	//cpu_set_nmi_line(1,     data & 0x80 ? CLEAR_LINE : HOLD_LINE);
+        I think that the NMI is an inhibitor. It is constantly set
+        to zero whenever an NMIs are allowed.
 
+        However, it could also be that setting to zero could
+        cause the NMI to trigger. I really don't know.
+	*/
+
+    /*
+    if (~battlane_cpu_control & 0x08)
+    {
+        cpu_set_nmi_line(0, PULSE_LINE);
+        cpu_set_nmi_line(1, PULSE_LINE);
+    }
+    */
 
 	/*
-	Trigger an 6809 IRQ at vector 0xfffa
+        CPU2's SWI will trigger an 6809 IRQ on the master by resetting 0x04
+        Master will respond by setting the bit back again
 	*/
-	cpu_set_irq_line(1, M6809_IRQ2_LINE,  (~data) & 0x04 ? CLEAR_LINE : HOLD_LINE);
+    cpu_set_irq_line(0, M6809_IRQ_LINE,  data & 0x04 ? CLEAR_LINE : HOLD_LINE);
 
 	/*
 	Slave function call (e.g. ROM test):
@@ -123,13 +109,15 @@ void cpu1_command_w(int offset, int data)
 	cpu_set_irq_line(1, M6809_IRQ_LINE,   data & 0x02 ? CLEAR_LINE : HOLD_LINE);
 }
 
-static struct MemoryReadAddress cpu1_readmem[] =
+/* Both CPUs share the same memory */
+
+static struct MemoryReadAddress battlane_readmem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-	{ 0x1000, 0x17ff, MRA_RAM }, /* Tile RAM  */
-	{ 0x1800, 0x18ff, MRA_RAM },
+    { 0x1000, 0x17ff, battlane_tileram_r },
+    { 0x1800, 0x18ff, battlane_spriteram_r },
 	{ 0x1c00, 0x1c00, input_port_0_r },
-	{ 0x1c01, 0x1c01, input_port_1_r },
+    { 0x1c01, 0x1c01, input_port_1_r },   /* VBLANK port */
 	{ 0x1c02, 0x1c02, input_port_2_r },
 	{ 0x1c03, 0x1c03, input_port_3_r },
 	{ 0x1c04, 0x1c04, YM3526_status_port_0_r },
@@ -138,13 +126,15 @@ static struct MemoryReadAddress cpu1_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress cpu1_writemem[] =
+static struct MemoryWriteAddress battlane_writemem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-	{ 0x1000, 0x17ff, MWA_RAM },  /* Tile RAM  */
-	{ 0x1800, 0x18ff, MWA_RAM, &battlane_spriteram, &battlane_spriteram_size},
+    { 0x1000, 0x17ff, battlane_tileram_w },
+    { 0x1800, 0x18ff, battlane_spriteram_w },
 	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
-	{ 0x1c03, 0x1c03, cpu1_command_w },
+    { 0x1c01, 0x1c01, battlane_scrolly_w },
+    { 0x1c02, 0x1c02, battlane_scrollx_w },
+    { 0x1c03, 0x1c03, battlane_cpu_command_w },
 	{ 0x1c04, 0x1c04, YM3526_control_port_0_w },
 	{ 0x1c05, 0x1c05, YM3526_write_port_0_w },
 	{ 0x1e00, 0x1e3f, MWA_RAM }, /* Palette ??? */
@@ -153,10 +143,8 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-
 int battlane_cpu1_interrupt(void)
 {
-
 #ifdef MAME_DEBUG
 	if (keyboard_pressed(KEYCODE_F))
 	{
@@ -174,32 +162,23 @@ int battlane_cpu1_interrupt(void)
 	}
 #endif
 
-
-	if (cpu_getiloops()!=0)
+    if (cpu_getiloops()==0)
 	{
-		return interrupt();
+        /* See note in battlane_cpu_command_w */
+        if (~battlane_cpu_control & 0x08)
+        {
+            cpu_set_nmi_line(1, PULSE_LINE);
+            return M6809_INT_NMI;
+        }
+        else
+            return ignore_interrupt();
 	}
-	else
+    else
 	{
-		/*
-		Hit N like crazy to get the demo loop running. Both must be triggered
-		at the same time since the slave NMI waits for the master to complete.
-		NMI is used to update the sprites.
-		*/
-		if (keyboard_pressed(KEYCODE_N))
-		{
-			static int NMI=0;
-			NMI=~NMI;
-			cpu_set_nmi_line(0,  NMI ? CLEAR_LINE : HOLD_LINE);
-			cpu_set_nmi_line(1,  NMI ? CLEAR_LINE : HOLD_LINE);
-		}
-
-
-		/*
+        /*
 		FIRQ seems to drive the music & coin inputs. I have no idea what it is
 		attached to
 		*/
-
 		return M6809_INT_FIRQ;
 	}
 }
@@ -222,15 +201,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLank ? */
+    PORT_START      /* IN1 */
+    PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )     /* Unused bits */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )     /* VBLank ? */
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
@@ -274,16 +247,19 @@ INPUT_PORTS_END
 
 static struct GfxLayout spritelayout =
 {
-	16,16,    /* 16*16 sprites */
-	512,    /* ??? sprites */
+    16,16,  /* 16*16 sprites */
+    0x0400,    /* 0x400 sprites */
 	6,      /* 6 bits per pixel ??!!! */
     { 0, 8, 0x08000*8,0x08000*8+8, 0x10000*8, 0x10000*8+8},
-	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
-	  0, 1, 2, 3, 4, 5, 6, 7},
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
-	  16*8*2+0*8, 16*8*2+2*8, 16*8*2+4*8, 16*8*2+6*8,
-	  16*8*2+8*8, 16*8*2+10*8, 16*8*2+12*8, 16*8*2+14*8},
-	16*8*2*2     /* every char takes 16*8 consecutive bytes */
+    {
+        7, 6, 5, 4, 3, 2, 1, 0,
+      16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+    },
+    {
+        14*8,14*8,13*8,12*8,11*8,10*8,9*8,8*8,
+        7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8,
+    },
+    16*8*2     /* every char takes 16*8*2 consecutive bytes */
 };
 
 static struct GfxLayout tilelayout =
@@ -291,7 +267,7 @@ static struct GfxLayout tilelayout =
 	16,16 ,    /* 16*16 tiles */
 	256,    /* 256 tiles */
 	3,      /* 3 bits per pixel */
-        {  0x8000*8+4, 4, 0},    /* plane offset */
+    {   4, 0, 0x8000*8+4 },    /* plane offset */
 	{
 	16+8+0, 16+8+1, 16+8+2, 16+8+3,
 	16+0, 16+1, 16+2,   16+3,
@@ -309,7 +285,7 @@ static struct GfxLayout tilelayout2 =
 	16,16 ,    /* 16*16 tiles */
 	256,    /* 256 tiles */
 	3,      /* 3 bits per pixel */
-	{ 0x4000*8, 0x4000*8+4, 0x8000*8 },    /* plane offset */
+    { 0x4000*8+4, 0x8000*8, 0x4000*8+0, },    /* plane offset */
 	{
 	16+8+0, 16+8+1, 16+8+2, 16+8+3,
 	16+0, 16+1, 16+2,   16+3,
@@ -326,8 +302,8 @@ static struct GfxLayout tilelayout2 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
     { 1, 0x00000, &spritelayout,     0, 32},
-    { 1, 0x18000, &tilelayout,       8, 32},
-    { 1, 0x18000, &tilelayout2,      8, 32},
+    { 1, 0x18000, &tilelayout,       0, 32},
+    { 1, 0x18000, &tilelayout2,      0, 32},
 	{ -1 } /* end of array */
 };
 
@@ -345,31 +321,31 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			1250000,        /* 1.25 Mhz ? */
+            1250000,        /* 1.25 Mhz ? */
 			0,
-			cpu1_readmem,cpu1_writemem,0,0,
-            battlane_cpu1_interrupt,3
+            battlane_readmem, battlane_writemem,0,0,
+            battlane_cpu1_interrupt,2
 		},
 		{
 			CPU_M6809,
-			1250000,        /* 1.25 Mhz ? */
+            1250000,        /* 1.25 Mhz ? */
 			2,      /* memory region #2 */
-			cpu1_readmem,cpu1_writemem,0,0,
+            battlane_readmem, battlane_writemem,0,0,
             battlane_cpu2_interrupt,1
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-    1,      /* 3 CPU slices per frame */
-	battlane_machine_init,      /* init machine */
+    0,      /* CPU slices per frame */
+    0,      /* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },       /* not sure */
 	gfxdecodeinfo,
-        0x40,0x40,
-        NULL,
+    0x40,0x40,
+    NULL, //battlane_vh_convert_color_prom,
 
-        VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-	0,
+    VIDEO_TYPE_RASTER |VIDEO_MODIFIES_PALETTE,
+    0 ,
 	battlane_vh_start,
 	battlane_vh_stop,
 	battlane_vh_screenrefresh,
@@ -457,8 +433,6 @@ ROM_START( battlan3_rom )
 	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
 ROM_END
 
-
-
 static void battlane_decode(void)
 {
 	unsigned char *src,*dest;
@@ -484,7 +458,7 @@ struct GameDriver battlane_driver =
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-	GAME_NOT_WORKING,
+    GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 
@@ -496,7 +470,7 @@ struct GameDriver battlane_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+    ORIENTATION_ROTATE_90,
 
 	0, 0
 };
@@ -510,7 +484,7 @@ struct GameDriver battlan2_driver =
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-	GAME_NOT_WORKING,
+    GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 
@@ -522,7 +496,7 @@ struct GameDriver battlan2_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+    ORIENTATION_ROTATE_90,
 
 	0, 0
 };
@@ -536,7 +510,7 @@ struct GameDriver battlan3_driver =
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-	GAME_NOT_WORKING,
+    GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 
@@ -548,7 +522,7 @@ struct GameDriver battlan3_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+    ORIENTATION_ROTATE_90,
 
 	0, 0
 };

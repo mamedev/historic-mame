@@ -136,7 +136,7 @@ void sega_mult2_w (int offset, int data);
 void sega_switch_w (int offset, int data);
 
 /* Sound hardware prototypes */
-int sega_sh_start (void);
+int sega_sh_start (const struct MachineSound *msound);
 int sega_sh_r (int offset);
 void sega_sh_speech_w (int offset, int data);
 void sega_sh_update(void);
@@ -148,7 +148,7 @@ void spacfury2_sh_w (int offset, int data);
 void zektor1_sh_w (int offset, int data);
 void zektor2_sh_w (int offset, int data);
 
-int tacscan_sh_start (void);
+int tacscan_sh_start (const struct MachineSound *msound);
 void tacscan_sh_w (int offset, int data);
 void tacscan_sh_update(void);
 
@@ -1209,6 +1209,13 @@ static struct Samplesinterface spacfury_samples_interface =
 	25	/* volume */
 };
 
+static struct CustomSound_interface sega_custom_interface =
+{
+	sega_sh_start,
+	0,
+	sega_sh_update
+};
+
 static struct MachineDriver spacfury_machine_driver =
 {
 	/* basic machine hardware */
@@ -1239,14 +1246,15 @@ static struct MachineDriver spacfury_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sega_sh_start,
-	0,
-	sega_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&spacfury_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
 		}
 	}
 };
@@ -1358,6 +1366,8 @@ static struct Samplesinterface zektor_samples_interface =
 	25	/* volume */
 };
 
+
+
 static struct MachineDriver zektor_machine_driver =
 {
 	/* basic machine hardware */
@@ -1389,14 +1399,15 @@ static struct MachineDriver zektor_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sega_sh_start,
-	0,
-	sega_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&zektor_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
 		}
 	}
 };
@@ -1471,6 +1482,15 @@ static struct Samplesinterface tacscan_samples_interface =
 	25	/* volume */
 };
 
+static struct CustomSound_interface tacscan_custom_interface =
+{
+	tacscan_sh_start,
+	0,
+	tacscan_sh_update
+};
+
+
+
 static struct MachineDriver tacscan_machine_driver =
 {
 	/* basic machine hardware */
@@ -1502,14 +1522,15 @@ static struct MachineDriver tacscan_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	tacscan_sh_start,
-	0,
-	tacscan_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&tacscan_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&tacscan_custom_interface
 		}
 	}
 };
@@ -1602,14 +1623,15 @@ static struct MachineDriver elim2_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sega_sh_start,
-	0,
-	sega_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&elim2_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
 		}
 	}
 };
@@ -1698,14 +1720,15 @@ static struct MachineDriver elim4_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sega_sh_start,
-	0,
-	sega_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&elim2_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
 		}
 	}
 };
@@ -1838,14 +1861,15 @@ static struct MachineDriver startrek_machine_driver =
 	sega_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sega_sh_start,
-	0,
-	sega_sh_update,
+	0,0,0,0,
 	{
 		{
 			SOUND_SAMPLES,
 			&startrek_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
 		}
 	}
 };

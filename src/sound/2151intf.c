@@ -126,10 +126,9 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
 			stream[i] = stream_init_multi(YM2151_NUMBUF,
-				name,vol,rate,Machine->sample_bits,
-				i,YM2151UpdateOne);
+				name,vol,rate,SAMPLE_BITS,i,YM2151UpdateOne);
 		}
-		if (YM2151Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits) == 0)
+		if (YM2151Init(intf->num,intf->baseclock,Machine->sample_rate) == 0)
 		{
 			for (i = 0; i < intf->num; i++)
 			{
@@ -190,7 +189,7 @@ int YM2151_status_port_0_r(int offset)
 	switch(FMMode)
 	{
 	case CHIP_YM2151_DAC:
-		return OPMReadStatus(0);
+		return YM2151Read(0,1);
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(0);
 	}
@@ -202,7 +201,7 @@ int YM2151_status_port_1_r(int offset)
 	switch(FMMode)
 	{
 	case CHIP_YM2151_DAC:
-		return OPMReadStatus(1);
+		return YM2151Read(1,1);
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(1);
 	}
@@ -214,7 +213,7 @@ int YM2151_status_port_2_r(int offset)
 	switch(FMMode)
 	{
 	case CHIP_YM2151_DAC:
-		return OPMReadStatus(2);
+		return YM2151Read(2,1);
 	case CHIP_YM2151_ALT:
 		return YM2151ReadStatus(2);
 	}

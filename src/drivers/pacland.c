@@ -55,13 +55,10 @@ static void sharedram1_w( int offset, int val )
 
 static void pacland_halt_mcu_w( int offset, int data )
 {
-	if ( offset == 0 ) {
-		cpu_reset( 1 );
-
-		cpu_halt( 1, 1 );
-	} else {
-		cpu_halt( 1, 0 );
-	}
+	if (offset == 0)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 
@@ -336,7 +333,7 @@ static struct MachineDriver machine_driver =
 	256,256*4+256*4+3*64*16,
 	pacland_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	pacland_vh_start,
 	pacland_vh_stop,

@@ -29,7 +29,7 @@ void berzerk_magicram_control_w(int offset,int data);
 int  berzerk_collision_r(int offset);
 
 void berzerk_sound_control_a_w(int offset, int data);
-int  berzerk_sh_start(void);
+int  berzerk_sh_start(const struct MachineSound *msound);
 void berzerk_sh_update(void);
 
 
@@ -352,11 +352,21 @@ unsigned char berzerk_palette[16 * 3] =
         0xff, 0xff, 0xff
 };
 
+
+
 static struct Samplesinterface berzerk_samples_interface =
 {
 	8,	/* 8 channels */
 	25	/* volume */
 };
+
+static struct CustomSound_interface custom_interface =
+{
+	berzerk_sh_start,
+	0,
+	berzerk_sh_update
+};
+
 
 
 #define  frenzy_init_machine  0
@@ -392,14 +402,15 @@ static struct MachineDriver GAMENAME##_machine_driver =					\
 	generic_bitmapped_vh_screenrefresh,									\
 																		\
 	/* sound hardware */												\
-	0,																	\
-	berzerk_sh_start,													\
-	0,																	\
-	berzerk_sh_update,													\
+	0,0,0,0,															\
 	{																	\
 		{																\
 			SOUND_SAMPLES,												\
 			&berzerk_samples_interface									\
+		},																\
+		{																\
+			SOUND_CUSTOM,	/* actually plays the samples */			\
+			&custom_interface											\
 		}																\
 	}																	\
 };

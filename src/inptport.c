@@ -1383,7 +1383,7 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 
 						/* if IPF_RESET set, reset the first CPU */
 						if ((in->type & IPF_RESETCPU) && waspressed[ib] == 0)
-							cpu_reset(0);
+							cpu_set_reset_line(0,PULSE_LINE);
 
 						if (in->type & IPF_IMPULSE)
 						{

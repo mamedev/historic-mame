@@ -99,6 +99,15 @@ void carnival_music_port_2_w( int offset, int data );
 extern const char *depthch_sample_names[];
 void depthch_sh_port1_w(int offset, int data);
 
+/* Invinco sound handlers */
+extern const char *invinco_sample_names[];
+void invinco_sh_port2_w(int offset, int data);
+
+/* Pulsar sound handlers */
+extern const char *pulsar_sample_names[];
+void pulsar_sh_port1_w(int offset, int data);
+void pulsar_sh_port2_w(int offset, int data);
+
 
 static int protection_data;
 
@@ -333,9 +342,9 @@ INPUT_PORTS_START( frogs_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) ) /* maybe Demo Sounds */
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Free Game" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
@@ -365,9 +374,9 @@ INPUT_PORTS_START( sspaceat_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life After 1st Stage" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x0e, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
@@ -378,13 +387,13 @@ INPUT_PORTS_START( sspaceat_input_ports )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x02, "5" ) */
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x80, 0x00, "Credits Display" )
-	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -394,9 +403,14 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( headon_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unknown, but used (sound related?) */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
@@ -431,7 +445,9 @@ INPUT_PORTS_START( headon2_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unknown, but used (sound related?) */
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
@@ -698,10 +714,10 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )	/* unknown, but used */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -709,7 +725,7 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -746,10 +762,10 @@ INPUT_PORTS_START ( sptrekct_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -757,7 +773,7 @@ INPUT_PORTS_START ( sptrekct_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unknown, but could be used */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -959,9 +975,9 @@ INPUT_PORTS_START ( heiankyo_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* bonus life? */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "2 Players Mode")
-	PORT_DIPSETTING(    0x08, "Alternate")
-	PORT_DIPSETTING(    0x00, "Simultaneous")
+	PORT_DIPNAME( 0x08, 0x00, "2 Players Mode" )
+	PORT_DIPSETTING(    0x08, "Alternating" )
+	PORT_DIPSETTING(    0x00, "Simultaneous" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1023,7 +1039,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	10,	/* 10 channels */
+	12,	/* 12 channels */
 	50	/* volume */
 };
 
@@ -1052,7 +1068,7 @@ static struct MachineDriver NAME##_machine_driver =	\
 	64, 64,											\
 	vicdual_vh_convert_color_prom,					\
 													\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_UPDATE_BEFORE_VBLANK,			\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
 	0,												\
 	generic_vh_start,								\
 	generic_vh_stop,								\
@@ -1078,7 +1094,7 @@ static struct AY8910interface carnival_ay8910_interface =
 {
 	1,	/* 1 chips */
 	PSG_CLOCK_CARNIVAL,
-	{ 50 },
+	{ 35 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -1118,7 +1134,7 @@ static struct MachineDriver carnival_machine_driver =
 	64, 64,
 	vicdual_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1325,7 +1341,7 @@ ROM_START( invinco_rom )
 	ROM_LOAD( "318a.uxx",     0x2000, 0x0400, 0x0780721d )
 
 	ROM_REGION(0x0020) /* color PROMs */
-	ROM_LOAD( "invinco.clr",  0x0000, 0x0020, 0x00000000 )	/* missing! */
+	ROM_LOAD( "316-246.u44",  0x0000, 0x0020, 0xfe4406cb )
 ROM_END
 
 ROM_START( invds_rom )
@@ -1374,7 +1390,7 @@ ROM_START( tranqgun_rom )
 	ROM_LOAD( "u1.bin",       0x3c00, 0x0400, 0x431a7449 )
 
 	ROM_REGION(0x0020) /* color PROMs */
-	ROM_LOAD( "tranqgun.clr", 0x0000, 0x0020, 0x00000000 )	/* missing! */
+	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0x6481445b )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
 	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
@@ -1570,38 +1586,6 @@ static void vicdual_decode(void)
 
 
 
-static unsigned char bw_color_prom[] =
-{
-	/* for b/w games, let's use the Head On PROM */
-	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
-	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
-};
-
-static unsigned char invinco_color_prom[] =
-{
-	/* selected palette from the invho2 and invds PROMs */
-	0xd1,0xb1,0x31,0x51,0xf1,0xb1,0x71,0x91,0xd1,0xb1,0x31,0x51,0xf1,0xb1,0x71,0x91,
-	0xd1,0xb1,0x31,0x51,0xf1,0xb1,0x71,0x91,0xd1,0xb1,0x31,0x51,0xf1,0xb1,0x71,0x91
-};
-
-static unsigned char tranqgun_color_prom[] =
-{
-	/* PR-57: palette */
-	/* was a bad read, this is just a guess! */
-	0xc0,0xe0,0x60,0x60,0x80,0xa0,0x60,0x20,0xc0,0xe0,0x60,0x60,0x80,0xa0,0x60,0x20,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
-
-#if 0
-/* ROMs for this game are not available yet */
-static unsigned char ho2ds_color_prom[] =
-{
-	/* 316-283: palette */
-	0x31,0xB1,0x71,0x31,0x31,0x31,0x31,0x31,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
-	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
-};
-#endif
-
 
 static int carnival_hiload(void)
 {
@@ -1670,6 +1654,31 @@ static void carnival_driver_init(void)
 	install_port_write_handler(0, 0x02, 0x02, carnival_sh_port2_w);
 }
 
+static void invinco_driver_init(void)
+{
+	/* install sample trigger */
+	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+}
+
+static void invho2_driver_init(void)
+{
+	/* install sample trigger */
+	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+}
+
+static void invds_driver_init(void)
+{
+	/* install sample trigger */
+	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
+}
+
+static void pulsar_driver_init(void)
+{
+	/* install sample triggers */
+	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
+	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
+}
+
 
 struct GameDriver depthch_driver =
 {
@@ -1691,7 +1700,7 @@ struct GameDriver depthch_driver =
 
 	depthch_input_ports,
 
-	bw_color_prom, 0, 0,
+	0, 0, 0,	/* b&w game, no color PROM */
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -1706,7 +1715,7 @@ struct GameDriver safari_driver =
 	"1977",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&safari_machine_driver,
 	0,
 
@@ -1717,7 +1726,7 @@ struct GameDriver safari_driver =
 
 	safari_input_ports,
 
-	bw_color_prom, 0, 0,
+	0, 0, 0,	/* b&w game, no color PROM */
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -1732,7 +1741,7 @@ struct GameDriver frogs_driver =
 	"1978",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_2Aports_machine_driver,
 	0,
 
@@ -1743,7 +1752,7 @@ struct GameDriver frogs_driver =
 
 	frogs_input_ports,
 
-	bw_color_prom, 0, 0,
+	0, 0, 0,	/* b&w game, no color PROM */
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -1754,11 +1763,11 @@ struct GameDriver sspaceat_driver =
 	__FILE__,
 	0,
 	"sspaceat",
-	"Sega Space Attack (Upright)",
+	"Space Attack (Upright)",
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_3ports_machine_driver,
 	0,
 
@@ -1780,11 +1789,11 @@ struct GameDriver sspacatc_driver =
 	__FILE__,
 	&sspaceat_driver,
 	"sspacatc",
-	"Sega Space Attack (Cocktail)",
+	"Space Attack (Cocktail)",
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_3ports_machine_driver,
 	0,
 
@@ -1810,7 +1819,7 @@ struct GameDriver headon_driver =
 	"1979",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_2Aports_machine_driver,
 	0,
 
@@ -1836,7 +1845,7 @@ struct GameDriver headonb_driver =
 	"1979",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_2Aports_machine_driver,
 	0,
 
@@ -1862,7 +1871,7 @@ struct GameDriver headon2_driver =
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_3ports_machine_driver,
 	0,
 
@@ -1880,6 +1889,14 @@ struct GameDriver headon2_driver =
 };
 
 /* No ROMs yet for the following one, but we have the color PROM. */
+#if 0
+static unsigned char ho2ds_color_prom[] =
+{
+	/* 316-283: palette */
+	0x31,0xB1,0x71,0x31,0x31,0x31,0x31,0x31,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
+	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
+};
+#endif
 //GAMEDRIVER( ho2ds,    "Head On 2 / Deep Scan", vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
 
 struct GameDriver invho2_driver =
@@ -1893,11 +1910,11 @@ struct GameDriver invho2_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
-	0,
+	invho2_driver_init,
 
 	invho2_rom,
 	vicdual_decode, 0,
-	0,
+	invinco_sample_names,
 	0,	/* sound_prom */
 
 	invho2_input_ports,
@@ -1917,7 +1934,7 @@ struct GameDriver samurai_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	samurai_driver_init,
 
@@ -1945,16 +1962,16 @@ struct GameDriver invinco_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	GAME_IMPERFECT_COLORS,
 	&vicdual_3ports_machine_driver,
-	0,
+	invinco_driver_init,
 
 	invinco_rom,
 	vicdual_decode, 0,
-	0,
+	invinco_sample_names,
 	0,	/* sound_prom */
 
 	invinco_input_ports,
 
-	invinco_color_prom, 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
@@ -1971,11 +1988,11 @@ struct GameDriver invds_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
-	0,
+	invds_driver_init,
 
 	invds_rom,
 	vicdual_decode, 0,
-	0,
+	invinco_sample_names,
 	0,	/* sound_prom */
 
 	invds_input_ports,
@@ -1995,7 +2012,7 @@ struct GameDriver tranqgun_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	GAME_IMPERFECT_COLORS | GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	0,
 
@@ -2006,7 +2023,7 @@ struct GameDriver tranqgun_driver =
 
 	tranqgun_input_ports,
 
-	tranqgun_color_prom, 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
@@ -2021,7 +2038,7 @@ struct GameDriver spacetrk_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	0,
 
@@ -2047,7 +2064,7 @@ struct GameDriver sptrekct_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	0,
 
@@ -2125,7 +2142,7 @@ struct GameDriver digger_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_3ports_machine_driver,
 	0,
 
@@ -2153,11 +2170,11 @@ struct GameDriver pulsar_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
-	0,
+	pulsar_driver_init,
 
 	pulsar_rom,
 	vicdual_decode, 0,
-	0,
+	pulsar_sample_names,
 	0,	/* sound_prom */
 
 	pulsar_input_ports,
@@ -2177,7 +2194,7 @@ struct GameDriver heiankyo_driver =
 	"1979",
 	"Denki Onkyo",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
+	GAME_NO_SOUND,
 	&vicdual_4ports_machine_driver,
 	0,
 

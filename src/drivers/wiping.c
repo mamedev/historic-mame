@@ -86,20 +86,10 @@ static int read_ports(int offset)
 
 static void subcpu_reset_w(int offset,int data)
 {
-	static int reset;
-
-	data &= 1;
-	if (data && !reset)
-	{
-		cpu_reset(1);
-		cpu_halt (1,1);
-	}
-	else if (!data)
-	{
-		cpu_halt (1,0);
-	}
-
-	reset = data;
+	if (data & 1)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 

@@ -12,11 +12,31 @@
 
 unsigned char *marineb_column_scroll;
 int marineb_active_low_flipscreen;
+static int palbank;
 
 
 static int flipscreen_x;
 static int flipscreen_y;
 
+
+void marineb_palbank0_w(int offset, int data)
+{
+	if ((palbank & 1) != (data & 1))
+	{
+		palbank = (palbank & ~1) | (data & 1);
+		memset(dirtybuffer, 1, videoram_size);
+	}
+}
+
+void marineb_palbank1_w(int offset, int data)
+{
+	data <<= 1;
+	if ((palbank & 2) != (data & 2))
+	{
+		palbank = (palbank & ~2) | (data & 2);
+		memset(dirtybuffer, 1, videoram_size);
+	}
+}
 
 void marineb_flipscreen_x_w(int offset, int data)
 {
@@ -64,7 +84,6 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
 			sx = offs % 32;
 			sy = offs / 32;
 
-			/* does Marine Boy use flipx/flipy??? (it might have 64 colors) */
 			flipx = colorram[offs] & 0x20;
 			flipy = colorram[offs] & 0x10;
 
@@ -82,7 +101,7 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
 
 			drawgfx(_tmpbitmap,Machine->gfx[0],
 					videoram[offs] | ((colorram[offs] & 0xc0) << 2),
-					colorram[offs] & 0x0f,
+					(colorram[offs] & 0x0f) + 16 * palbank,
 					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -146,7 +165,7 @@ void marineb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		code  = videoram[offs2];
 		sx    = videoram[offs2 + 0x20];
 		sy    = colorram[offs2];
-		col   = colorram[offs2 + 0x20];
+		col   = (colorram[offs2 + 0x20] & 0x0f) + 16 * palbank;
 		flipx =   code & 0x02;
 		flipy = !(code & 0x01);
 
@@ -203,7 +222,7 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		code  = videoram[offs2];
 		sx    = videoram[offs2 + 0x20];
 		sy    = colorram[offs2];
-		col   = colorram[offs2 + 0x20];
+		col   = (colorram[offs2 + 0x20] & 0x0f) + 16 * palbank;
 		flipx =   code & 0x02;
 		flipy = !(code & 0x01);
 
@@ -289,7 +308,7 @@ void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		code  = videoram[offs2];
 		sx    = 240 - videoram[offs2 + 0x20];
 		sy    = colorram[offs2];
-		col   = colorram[offs2 + 0x20];
+		col   = (colorram[offs2 + 0x20] & 0x0f) + 16 * palbank;
 		flipx = !(code & 0x02);
 		flipy = !(code & 0x01);
 
@@ -397,7 +416,7 @@ void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		code  = videoram[offs2];
 		sx    = videoram[offs2 + 0x20];
 		sy    = colorram[offs2];
-		col   = colorram[offs2 + 0x20];
+		col   = (colorram[offs2 + 0x20] & 0x0f) + 16 * palbank;
 		flipx =   code & 0x02;
 		flipy = !(code & 0x01);
 
@@ -433,4 +452,3 @@ void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
-

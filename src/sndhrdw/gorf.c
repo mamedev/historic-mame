@@ -11,7 +11,6 @@
 **************************************************************************
 
 gorf_sh_start  - Start emulation, load samples from Votrax subdirectory
-gorf_sh_stop   - End emulation, free memory used for samples
 gorf_sh_w      - Write data to votrax port
 gorf_sh_status - Return busy status (-1 = busy)
 gorf_port_2_r  - Returns status of voice port
@@ -92,16 +91,12 @@ char totalword[256], *totalword_ptr;
 char oldword[256];
 int plural = 0;
 
-int gorf_sh_start(void)
+int gorf_sh_start(const struct MachineSound *msound)
 {
     GorfBaseFrequency = 11025;
     GorfBaseVolume = 230;
     GorfChannel = 0;
     return 0;
-}
-
-void gorf_sh_stop(void)
-{
 }
 
 int gorf_speech_r(int offset)

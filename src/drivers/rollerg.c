@@ -38,8 +38,8 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 0010\n",cpu_get_pc(),data);
 
 static int rollerg_K051316_r(int offset)
 {
-	if (readzoomroms) return K051316_rom_r(offset);
-	else return K051316_r(offset);
+	if (readzoomroms) return K051316_rom_0_r(offset);
+	else return K051316_0_r(offset);
 }
 
 static int rollerg_sound_r(int offset)
@@ -97,9 +97,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0020, 0x0020, watchdog_reset_w },
 	{ 0x0030, 0x0031, K053260_WriteReg },
 	{ 0x0040, 0x0040, soundirq_w },
-	{ 0x0200, 0x020f, K051316_ctrl_w },
+	{ 0x0200, 0x020f, K051316_ctrl_0_w },
 	{ 0x0300, 0x030f, K053244_w },
-	{ 0x0800, 0x0fff, K051316_w },
+	{ 0x0800, 0x0fff, K051316_0_w },
 	{ 0x1000, 0x17ff, K053245_w },
 	{ 0x1800, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
 	{ 0x2000, 0x3aff, MWA_RAM },

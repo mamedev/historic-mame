@@ -224,7 +224,7 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
 
@@ -234,7 +234,7 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 
@@ -252,7 +252,7 @@ INPUT_PORTS_START( cclimber_input_ports )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
@@ -279,7 +279,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 
@@ -287,7 +287,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 
@@ -308,7 +308,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
@@ -350,9 +350,9 @@ INPUT_PORTS_START( rpatrolb_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 1" )  /* Probably unused */
+	PORT_DIPNAME( 0x0020, 0x00, "Unknown 1" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x0020, "On" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 2" )  /* Probably unused */
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
@@ -411,20 +411,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x0000, &spritelayout,    0, 16 }, /* sprite set #1 */
 	{ 1, 0x2000, &spritelayout,    0, 16 }, /* sprite set #2 */
 	{ -1 } /* end of array */
-};
-
-/* the PROMs of this bootleg are a mix of Crazy Climber and Crazy Kong */
-static unsigned char wrong_color_prom[] =
-{
-	/* char palette */
-	0x00,0x79,0x04,0x87,0x00,0xB7,0xFF,0x5F,0x00,0xC0,0xE8,0xF4,0x00,0x3F,0x04,0x38,
-	0x00,0x0D,0x7A,0xB7,0x00,0x07,0x26,0x02,0x00,0x27,0x16,0x30,0x00,0xB7,0xF4,0x0C,
-	0x00,0x4F,0xF6,0x24,0x00,0xB6,0xFF,0x5F,0x00,0x33,0x00,0xB7,0x00,0x66,0x00,0x3A,
-	0x00,0xC0,0x3F,0xB7,0x00,0x20,0xF4,0x16,0x00,0xFF,0x7F,0x87,0x00,0xB6,0xF4,0xC0,
-
-	/* bigsprite palette */
-	0x00,0xFF,0x18,0xC0,0x00,0xFF,0xC6,0x8F,0x00,0x0F,0xFF,0x1F,0x00,0xFF,0xC0,0x67,
-	0x00,0x47,0x7F,0x88,0x00,0x88,0x47,0x7F,0x00,0x7F,0x88,0x47,0x00,0x40,0x08,0xFF
 };
 
 
@@ -521,9 +507,9 @@ ROM_START( cclimber_rom )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
 	ROM_REGION(0x60)      /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13",         0x0000, 0x1000, 0xe0042f75 )
@@ -625,9 +611,9 @@ ROM_START( cclimbrj_rom )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
 	ROM_REGION(0x60)      /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -655,9 +641,9 @@ ROM_START( ccboot_rom )
 	ROM_LOAD( "m01.bin",      0x4800, 0x0800, 0x49fab908 )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -685,9 +671,9 @@ ROM_START( ccboot2_rom )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -785,9 +771,9 @@ ROM_START( ckong_rom )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -812,9 +798,9 @@ ROM_START( ckonga_rom )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -839,9 +825,9 @@ ROM_START( ckongjeu_rom )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -871,9 +857,9 @@ ROM_START( ckongo_rom )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
-	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
-	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -898,9 +884,9 @@ ROM_START( ckongalc_rom )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x751c3325 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0xab1940fa )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0xb4e827a5 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -925,9 +911,9 @@ ROM_START( monkeyd_rom )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
 	ROM_REGION(0x60)        /* color proms */
-	ROM_LOAD( "cclimber.pr1", 0x0000, 0x20, 0x00000000 )
-	ROM_LOAD( "cclimber.pr2", 0x0020, 0x20, 0x00000000 )
-	ROM_LOAD( "ck6t.bin",     0x0040, 0x20, 0x00000000 )
+	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x00000000 )
+	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
+	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
 
 	ROM_REGION(0x2000)      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
@@ -1370,7 +1356,7 @@ struct GameDriver monkeyd_driver =
 	"1981",
 	"bootleg",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
@@ -1381,7 +1367,7 @@ struct GameDriver monkeyd_driver =
 
 	ckong_input_ports,
 
-	wrong_color_prom, 0, 0,	/* wrong */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
@@ -1540,7 +1526,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1550,7 +1536,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1568,7 +1554,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -1584,9 +1570,9 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "???" )
@@ -1606,7 +1592,7 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1616,7 +1602,7 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 
@@ -1634,7 +1620,7 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -1647,8 +1633,8 @@ INPUT_PORTS_START( guzzler_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "High Score Names" )
-	PORT_DIPSETTING(    0x20, "3 Letters" )
+	PORT_DIPNAME( 0x0020, 0x00, "High Score Names" )
+	PORT_DIPSETTING(    0x0020, "3 Letters" )
 	PORT_DIPSETTING(    0x00, "10 Letters" )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )

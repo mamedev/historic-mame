@@ -682,6 +682,43 @@ static void vigilant_hisave(void)
 	}
 }
 
+/** Meikyu Jima / Kickle Cubicle high score save routine - RJF (Oct 5, 1999) **/
+static int kikcubic_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xfe30],"\x07\x18\x35",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xfe30], 20*10);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+			RAM[0xfef8] = RAM[0xfe30];
+			RAM[0xfef9] = RAM[0xfe31];
+			RAM[0xfefa] = RAM[0xfe32];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void kikcubic_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xfe30], 20*10);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver vigilant_driver =
 {
@@ -780,5 +817,5 @@ struct GameDriver kikcubic_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	kikcubic_hiload, kikcubic_hisave
 };

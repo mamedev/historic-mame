@@ -2386,11 +2386,13 @@ static int displaygameinfo(int selected)
 		pixely /= tmin;
 
 		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
-		sprintf(&buf[strlen(buf)],"%d x %d (%s) %d Hz\npixel aspect ratio %d:%d\n",
+		sprintf(&buf[strlen(buf)],"%d x %d (%s) %d Hz\n",
 				Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
 				Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
 				(Machine->gamedrv->orientation & ORIENTATION_SWAP_XY) ? "V" : "H",
-				Machine->drv->frames_per_second,
+				Machine->drv->frames_per_second);
+#if 0
+		sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
 				pixelx,pixely);
 		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
@@ -2398,6 +2400,7 @@ static int displaygameinfo(int selected)
 		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 			strcat(buf,"(dynamic)\n");
 		else strcat(buf,"(static)\n");
+#endif
 	}
 
 
@@ -2453,6 +2456,15 @@ int showgamewarnings(void)
 
 		strcpy(buf, "There are known problems with this game:\n\n");
 
+
+#ifdef MESS
+		if (Machine->gamedrv->flags & GAME_COMPUTER)
+		{
+			strcpy(buf, "The emulated system is a computer: \n\n");
+			strcat(buf, "The keyboard emulation may not be 100% accurate.\n");
+		}
+#endif
+
 		if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
 		{
 			strcat(buf, "The colors aren't 100% accurate.\n");
@@ -2478,7 +2490,12 @@ int showgamewarnings(void)
 			const struct GameDriver *maindrv;
 			int foundworking;
 
-			strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+			#ifdef MESS
+			strcpy(buf,"THIS SYSTEM DOESN'T WORK PROPERLY");
+			#else
+            strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+			#endif
+
 			if (Machine->gamedrv->clone_of) maindrv = Machine->gamedrv->clone_of;
 			else maindrv = Machine->gamedrv;
 
@@ -3515,6 +3532,68 @@ int handle_user_interface(void)
 #ifdef MAME_DEBUG
 	static int show_total_colors;
 #endif
+
+#ifdef MESS
+
+ if (Machine->gamedrv->flags & GAME_COMPUTER)
+ {
+ 	static int ui_active = 0, ui_toggle_key = 0;
+ 	static int ui_display_count = 4 * 60;
+
+ 	if( keyboard_pressed(KEYCODE_SCRLOCK) )
+ 	{
+ 		if( !ui_toggle_key )
+ 		{
+ 			ui_toggle_key = 1;
+ 			ui_active = !ui_active;
+ 			ui_display_count = 4 * 60;
+ 			bitmap_dirty = 1;
+         }
+ 	}
+ 	else
+ 	{
+ 		ui_toggle_key = 0;
+ 	}
+
+ 	if( ui_active )
+ 	{
+ 		if( ui_display_count > 0 )
+ 		{
+ 			char text[] = "Keyboard: user interface - ScrLock to toggle";
+ 			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
+ 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
+ 			for( x = 0; text[x]; x++ )
+ 			{
+ 				drawgfx(Machine->scrbitmap,
+ 					Machine->uifont,text[x],0,0,0,
+ 					x0+x*Machine->uifont->width,
+ 					y0,0,TRANSPARENCY_NONE,0);
+ 			}
+ 			if( --ui_display_count == 0 )
+ 				bitmap_dirty = 1;
+         }
+     }
+ 	else
+ 	{
+ 		if( ui_display_count > 0 )
+         {
+ 			char text[] = "Keyboard: emulation - ScrLock to toggle";
+ 			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
+ 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
+             for( x = 0; text[x]; x++ )
+ 			{
+ 				drawgfx(Machine->scrbitmap,
+ 					Machine->uifont,text[x],0,0,0,
+ 					x0+x*Machine->uifont->width,
+ 					y0,0,TRANSPARENCY_NONE,0);
+ 			}
+ 			if( --ui_display_count == 0 )
+ 				bitmap_dirty = 1;
+         }
+         return 0;
+     }
+ }
+ #endif
 
 	/* if the user pressed F12, save the screen to a file */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))

@@ -38,16 +38,16 @@ static int bankedram_r(int offset)
 	else
 	{
 		if (zoomreadroms)
-			return K051316_rom_r(offset);
+			return K051316_rom_0_r(offset);
 		else
-			return K051316_r(offset);
+			return K051316_0_r(offset);
 	}
 }
 
 static void bankedram_w(int offset,int data)
 {
 	if (videobank) ram[offset] = data;
-	else K051316_w(offset,data);
+	else K051316_0_w(offset,data);
 }
 
 static void k88games_5f84_w(int offset,int data)
@@ -140,7 +140,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5f88, 0x5f88, watchdog_reset_w },
 	{ 0x5f8c, 0x5f8c, soundlatch_w },
 	{ 0x5f90, 0x5f90, k88games_sh_irqtrigger_w },
-	{ 0x5fc0, 0x5fcf, K051316_ctrl_w },
+	{ 0x5fc0, 0x5fcf, K051316_ctrl_0_w },
 	{ 0x4000, 0x7fff, K052109_051960_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */

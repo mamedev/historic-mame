@@ -226,8 +226,33 @@ void balsente_paletteram_w(int offset, int data)
  *
  *************************************/
 
+#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
+	if (orientation)													\
+	{																	\
+		int dy = bitmap->line[1] - bitmap->line[0];						\
+		int tx = x, ty = y, temp;										\
+		if (orientation & ORIENTATION_SWAP_XY)							\
+		{																\
+			temp = tx; tx = ty; ty = temp;								\
+			xadv = dy;													\
+		}																\
+		if (orientation & ORIENTATION_FLIP_X)							\
+		{																\
+			tx = bitmap->width - 1 - tx;								\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		if (orientation & ORIENTATION_FLIP_Y)							\
+		{																\
+			ty = bitmap->height - 1 - ty;								\
+			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		/* can't lookup line because it may be negative! */				\
+		dst = bitmap->line[0] + dy * ty + tx;							\
+	}
+
 void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	int orientation = Machine->orientation;
 	UINT8 palette_used[4];
 	int x, y, i;
 
@@ -263,9 +288,14 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		{
 			UINT8 *src = &local_videoram[y * 256];
 			UINT8 *dst = &bitmap->line[y][0];
+			int xadv = 1;
 
-			for (x = 0; x < 256; x++)
-				*dst++ = pens[*src++];
+			/* adjust in case we're oddly oriented */
+			ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
+
+			/* redraw the scanline */
+			for (x = 0; x < 256; x++, dst += xadv)
+				*dst = pens[*src++];
 			scanline_dirty[y] = 0;
 		}
 	}
@@ -281,8 +311,8 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int xpos = sprite[3];
 
 		/* get a pointer to the source image */
-		src = Machine->gfx[0]->gfxdata + image * Machine->gfx[0]->char_modulo;
-		if (flags & 0x80) src += 8 * 15;
+		src = &Machine->memory_region[2][64 * image];
+		if (flags & 0x80) src += 4 * 15;
 
 		/* loop over y */
 		for (y = 0; y < 16; y++, ypos = (ypos + 1) & 255)
@@ -292,7 +322,10 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
 				UINT8 *old = &local_videoram[ypos * 256 + xpos];
 				UINT8 *dst = &bitmap->line[ypos][xpos];
-				int currx = xpos;
+				int currx = xpos, xadv = 1;
+
+				/* adjust in case we're oddly oriented */
+				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xpos, ypos, xadv);
 
 				/* mark this scanline dirty */
 				scanline_dirty[ypos] = 1;
@@ -301,46 +334,70 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				if (!(flags & 0x40))
 				{
 					/* loop over x */
-					for (x = 0; x < 8; x++, dst++, old++, currx++)
+					for (x = 0; x < 4; x++, dst += xadv * 2, old += 2)
 					{
-						int ipixel = *src++ << 4;
+						int ipixel = *src++;
+						int left = ipixel & 0xf0;
+						int right = (ipixel << 4) & 0xf0;
 						int pen;
 
 						/* left pixel */
-						if (ipixel && currx >= 0 && currx < 256)
+						if (left && currx >= 0 && currx < 256)
 						{
 							/* combine with the background */
-							pen = ipixel | *old;
-							*dst = pens[pen];
+							pen = left | old[0];
+							dst[0] = pens[pen];
 						}
+						currx++;
+
+						/* right pixel */
+						if (right && currx >= 0 && currx < 256)
+						{
+							/* combine with the background */
+							pen = right | old[1];
+							dst[xadv] = pens[pen];
+						}
+						currx++;
 					}
 				}
 
 				/* hflip case */
 				else
 				{
-					src += 7;
+					src += 4;
 
 					/* loop over x */
-					for (x = 0; x < 8; x++, dst++, old++, currx++)
+					for (x = 0; x < 4; x++, dst += xadv * 2, old += 2)
 					{
-						int ipixel = *src-- << 4;
+						int ipixel = *--src;
+						int left = (ipixel << 4) & 0xf0;
+						int right = ipixel & 0xf0;
 						int pen;
 
 						/* left pixel */
-						if (ipixel && currx >= 0 && currx < 256)
+						if (left && currx >= 0 && currx < 256)
 						{
 							/* combine with the background */
-							pen = ipixel | *old;
-							*dst = pens[pen];
+							pen = left | old[0];
+							dst[0] = pens[pen];
 						}
+						currx++;
+
+						/* right pixel */
+						if (right && currx >= 0 && currx < 256)
+						{
+							/* combine with the background */
+							pen = right | old[1];
+							dst[xadv] = pens[pen];
+						}
+						currx++;
 					}
-					src += 9;
+					src += 4;
 				}
 			}
 			else
-				src += 8;
-			if (flags & 0x80) src -= 2 * 8;
+				src += 4;
+			if (flags & 0x80) src -= 2 * 4;
 		}
 	}
 
@@ -357,11 +414,19 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		{
 			if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 256)
 			{
+				UINT8 *dst = &bitmap->line[yoffs][beamx];
+				int xadv = 1;
+				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, beamx, yoffs, xadv);
+				*dst = Machine->pens[1024];
 				scanline_dirty[yoffs] = 1;
-				bitmap->line[yoffs][beamx] = Machine->pens[1024];
 			}
 			if (xoffs >= 0 && xoffs < 256 && beamy >= 0 && beamy < 240)
-				bitmap->line[beamy][xoffs] = Machine->pens[1024];
+			{
+				UINT8 *dst = &bitmap->line[beamy][xoffs];
+				int xadv = 1;
+				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xoffs, beamy, xadv);
+				*dst = Machine->pens[1024];
+			}
 		}
 	}
 }

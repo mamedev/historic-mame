@@ -71,7 +71,10 @@ int grobda_interrupt_2( void ){
 
 void grobda_cpu2_enable_w(int offset,int data)
 {
-	cpu_halt(1, offset);
+	if (offset)
+		cpu_set_reset_line(1,CLEAR_LINE);
+	else
+		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 /************************************************************************************

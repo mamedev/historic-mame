@@ -60,6 +60,7 @@ static struct pia6821_interface pia_1_intf =
 
 static void zaccaria_init_machine(void)
 {
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &pia_1_intf);
 	pia_reset();

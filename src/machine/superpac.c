@@ -68,7 +68,7 @@ void superpac_sharedram_w(int offset,int data)
 
 void superpac_reset_2_w(int offset,int data)
 {
-	cpu_reset( 1 );
+	cpu_set_reset_line(1,PULSE_LINE);
 }
 
 

@@ -1071,12 +1071,12 @@ void wms_dma2_w(int offset, int data)
 	}
 }
 
-static void wms_to_shiftreg(unsigned int address, unsigned short* shiftreg)
+void wms_to_shiftreg(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(shiftreg, &wms_videoram[address>>3], 2*512*sizeof(unsigned short));
 }
 
-static void wms_from_shiftreg(unsigned int address, unsigned short* shiftreg)
+void wms_from_shiftreg(unsigned int address, unsigned short* shiftreg)
 {
 	memcpy(&wms_videoram[address>>3], shiftreg, 2*512*sizeof(unsigned short));
 }
@@ -2384,8 +2384,6 @@ void narc_init_machine(void)
 
 	install_mem_read_handler(0, TOBYTE(0x09afffd0), TOBYTE(0x09afffef), narc_unknown_r); /* bug? */
 	install_mem_read_handler(0, TOBYTE(0x38383900), TOBYTE(0x383839ff), narc_unknown_r); /* bug? */
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 void smashtv_init_machine(void)
 {
@@ -2413,12 +2411,11 @@ void smashtv_init_machine(void)
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
+	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
 	pia_reset();
 	pia_0_ca1_w(0, 1);
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), smashtv_sound_w);
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 void mk_init_machine(void)
 {
@@ -2448,8 +2445,6 @@ void mk_init_machine(void)
 	mk_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), mk_sound_w);
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 void term2_init_machine(void)
 {
@@ -2499,8 +2494,6 @@ void trog_init_machine(void)
 	pia_0_ca1_w (0, 1);
 	/* fix sound (hack) */
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), trog_sound_w);
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 void mk2_init_machine(void)
 {
@@ -2523,8 +2516,6 @@ void mk2_init_machine(void)
 		}
 	}*/
 	wms_videoram_size = 0x80000*2;
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 void nbajam_init_machine(void)
 {
@@ -2552,7 +2543,5 @@ void nbajam_init_machine(void)
 	mk_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
 	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
-
-	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }
 

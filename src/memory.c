@@ -74,8 +74,6 @@ static int writeport_size[MAX_CPU];
 const struct IOReadPort *cur_readport;
 const struct IOWritePort *cur_writeport;
 int cur_portmask;
-static int cur_readport_max;
-static int cur_writeport_max;
 
 /* current hardware element map */
 static MHELE *cur_mr_element[MAX_CPU];
@@ -127,6 +125,19 @@ static int (*setOPbasefunc)(int);
 MHELE *cur_mrhard;
 MHELE *cur_mwhard;
 
+/* empty port handler structures */
+static struct IOReadPort empty_readport[] =
+{
+	{ -1 }
+};
+
+static struct IOWritePort empty_writeport[] =
+{
+	{ -1 }
+};
+
+static void *install_port_read_handler_common(int cpu, int start, int end, int (*handler)(int), int install_at_beginning);
+static void *install_port_write_handler_common(int cpu, int start, int end, void (*handler)(int, int), int install_at_beginning);
 
 /***************************************************************************
 
@@ -297,8 +308,8 @@ static int memory_allocate_ext (void)
 	struct ExtMemory *ext = ext_memory;
 	int cpu;
 
-	/* A change for MESS */
-	if (Machine->gamedrv->rom == NULL) return 1;
+	/* a change for MESS */
+	if (Machine->gamedrv->rom == 0)  return 1;
 
 	/* loop over all CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu (); cpu++)
@@ -376,6 +387,27 @@ static int memory_allocate_ext (void)
 }
 
 
+unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend)
+{
+	int region = Machine->drv->cpu[cpu].memory_region;
+	struct ExtMemory *ext;
+
+	/* look in external memory first */
+	for (ext = ext_memory; ext->data; ext++)
+		if (ext->region == region && ext->start <= offset && ext->end >= offset)
+		{
+			*chunkstart = ext->start;
+			*chunkend = ext->end;
+			return ext->data;
+		}
+
+	/* return RAM */
+	*chunkstart = 0;
+	*chunkend = Machine->memory_region_length[region] - 1;
+	return ramptr[cpu];
+}
+
+
 unsigned char *memory_find_base (int cpu, int offset)
 {
 	int region = Machine->drv->cpu[cpu].memory_region;
@@ -419,7 +451,7 @@ int initmemoryhandlers(void)
 	/* ASG 980121 -- allocate external memory */
 	if (!memory_allocate_ext ())
 		return 0;
-	setOPbasefunc = NULL;
+	setOPbasefunc = 0;
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )
 	{
@@ -456,35 +488,38 @@ int initmemoryhandlers(void)
 		readport[cpu] = 0;
 		writeport[cpu] = 0;
 
-		/* install port handlers */
+		/* install port handlers - at least an empty one */
 		ioread = Machine->drv->cpu[cpu].port_read;
-		if (ioread)
-		{
-			while (ioread->start != -1)
-			{
-				if (install_port_read_handler(cpu, ioread->start, ioread->end, ioread->handler) == 0)
-				{
-					shutdownmemoryhandler();
-					return 0;
-				}
+		if (ioread == 0)  ioread = empty_readport;
 
-				ioread++;
+		while (1)
+		{
+			if (install_port_read_handler_common(cpu, ioread->start, ioread->end, ioread->handler, 0) == 0)
+			{
+				shutdownmemoryhandler();
+				return 0;
 			}
+
+			if (ioread->start == -1)  break;
+
+			ioread++;
 		}
 
-		iowrite = Machine->drv->cpu[cpu].port_write;
-		if (iowrite)
-		{
-			while (iowrite->start != -1)
-			{
-				if (install_port_write_handler(cpu, iowrite->start, iowrite->end, iowrite->handler) == 0)
-				{
-					shutdownmemoryhandler();
-					return 0;
-				}
 
-				iowrite++;
+		iowrite = Machine->drv->cpu[cpu].port_write;
+		if (iowrite == 0)  iowrite = empty_writeport;
+
+		while (1)
+		{
+			if (install_port_write_handler_common(cpu, iowrite->start, iowrite->end, iowrite->handler, 0) == 0)
+			{
+				shutdownmemoryhandler();
+				return 0;
 			}
+
+			if (iowrite->start == -1)  break;
+
+			iowrite++;
 		}
 
 		portmask[cpu] = 0xffff;
@@ -802,8 +837,6 @@ void memorycontextswap(int activecpu)
 	cur_readport = readport[activecpu];
 	cur_writeport = writeport[activecpu];
 	cur_portmask = portmask[activecpu];
-	cur_readport_max = readport_size[activecpu] / sizeof(struct IOReadPort) - 2;
-	cur_writeport_max = writeport_size[activecpu] / sizeof(struct IOWritePort) - 2;
 
 	/* op code memory pointer */
 	ophw = HT_RAM;
@@ -1683,26 +1716,25 @@ void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
 ***************************************************************************/
 int cpu_readport(int port)
 {
+	const struct IOReadPort *iorp = cur_readport;
+
 	port &= cur_portmask;
 
-	if (cur_readport_max >= 0)
+	/* search the handlers. The order is as follows: first the dynamically installed
+	   handlers are searched, followed by the static ones in whatever order they were
+	   specified in the driver */
+	while (iorp->start != -1)
 	{
-		const struct IOReadPort *iorp = &cur_readport[cur_readport_max];
-
-		/* search backwards so the most recently installed handlers get a preference */
-		while (iorp >= cur_readport)
+		if (port >= iorp->start && port <= iorp->end)
 		{
-			if (port >= iorp->start && port <= iorp->end)
-			{
-				int (*handler)(int) = iorp->handler;
+			int (*handler)(int) = iorp->handler;
 
 
-				if (handler == IORP_NOP) return 0;
-				else return (*handler)(port - iorp->start);
-			}
-
-			iorp--;
+			if (handler == IORP_NOP) return 0;
+			else return (*handler)(port - iorp->start);
 		}
+
+		iorp++;
 	}
 
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),port);
@@ -1717,28 +1749,27 @@ int cpu_readport(int port)
 ***************************************************************************/
 void cpu_writeport(int port, int value)
 {
+	const struct IOWritePort *iowp = cur_writeport;
+
 	port &= cur_portmask;
 
-	if (cur_writeport_max >= 0)
+	/* search the handlers. The order is as follows: first the dynamically installed
+	   handlers are searched, followed by the static ones in whatever order they were
+	   specified in the driver */
+	while (iowp->start != -1)
 	{
-		const struct IOWritePort *iowp = &cur_writeport[cur_writeport_max];
-
-		/* search backwards so the most recently installed handlers get a preference */
-		while (iowp >= cur_writeport)
+		if (port >= iowp->start && port <= iowp->end)
 		{
-			if (port >= iowp->start && port <= iowp->end)
-			{
-				void (*handler)(int,int) = iowp->handler;
+			void (*handler)(int,int) = iowp->handler;
 
 
-				if (handler == IOWP_NOP) return;
-				else (*handler)(port - iowp->start,value);
+			if (handler == IOWP_NOP) return;
+			else (*handler)(port - iowp->start,value);
 
-				return;
-			}
-
-			iowp--;
+			return;
 		}
+
+		iowp++;
 	}
 
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),value,port);
@@ -2302,14 +2333,24 @@ void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int
 
 void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int))
 {
-	int i;
+	return install_port_read_handler_common(cpu, start, end, handler, 1);
+}
 
+void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+{
+	return install_port_write_handler_common(cpu, start, end, handler, 1);
+}
+
+static void *install_port_read_handler_common(int cpu, int start, int end,
+											  int (*handler)(int), int install_at_beginning)
+{
+	int i, oldsize;
+
+	oldsize = readport_size[cpu];
 	readport_size[cpu] += sizeof(struct IOReadPort);
 
 	if (readport[cpu] == 0)
 	{
-		// extra space for the end marker
-		readport_size[cpu] += sizeof(struct IOReadPort);
 		readport[cpu] = malloc(readport_size[cpu]);
 	}
 	else
@@ -2317,27 +2358,44 @@ void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int)
 		readport[cpu] = realloc(readport[cpu], readport_size[cpu]);
 	}
 
-	i = readport_size[cpu] / sizeof(struct IOReadPort) - 2;
+	if (readport[cpu] == 0)  return 0;
+
+	if (install_at_beginning)
+	{
+		/* can't do a single memcpy because it doesn't handle overlapping regions correctly??? */
+		for (i = oldsize / sizeof(struct IOReadPort); i >= 1; i--)
+		{
+			memcpy(&readport[cpu][i], &readport[cpu][i - 1], sizeof(struct IOReadPort));
+		}
+
+		i = 0;
+	}
+	else
+	{
+		i = oldsize / sizeof(struct IOReadPort);
+	}
+
+#ifdef MEM_DUMP
+	if (errorlog) fprintf(errorlog, "Installing port read handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
+#endif
 
 	readport[cpu][i].start = start;
 	readport[cpu][i].end = end;
 	readport[cpu][i].handler = handler;
 
-	readport[cpu][i+1].start = -1;
-
 	return readport[cpu];
 }
 
-void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+static void *install_port_write_handler_common(int cpu, int start, int end,
+											   void (*handler)(int, int), int install_at_beginning)
 {
-	int i;
+	int i, oldsize;
 
+	oldsize = writeport_size[cpu];
 	writeport_size[cpu] += sizeof(struct IOWritePort);
 
 	if (writeport[cpu] == 0)
 	{
-		// extra space for the end marker
-		writeport_size[cpu] += sizeof(struct IOWritePort);
 		writeport[cpu] = malloc(writeport_size[cpu]);
 	}
 	else
@@ -2345,13 +2403,30 @@ void *install_port_write_handler(int cpu, int start, int end, void (*handler)(in
 		writeport[cpu] = realloc(writeport[cpu], writeport_size[cpu]);
 	}
 
-	i = writeport_size[cpu] / sizeof(struct IOWritePort) - 2;
+	if (writeport[cpu] == 0)  return 0;
+
+	if (install_at_beginning)
+	{
+		/* can't do a single memcpy because it doesn't handle overlapping regions correctly??? */
+		for (i = oldsize / sizeof(struct IOWritePort); i >= 1; i--)
+		{
+			memcpy(&writeport[cpu][i], &writeport[cpu][i - 1], sizeof(struct IOWritePort));
+		}
+
+		i = 0;
+	}
+	else
+	{
+		i = oldsize / sizeof(struct IOWritePort);
+	}
+
+#ifdef MEM_DUMP
+	if (errorlog) fprintf(errorlog, "Installing port write handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
+#endif
 
 	writeport[cpu][i].start = start;
 	writeport[cpu][i].end = end;
 	writeport[cpu][i].handler = handler;
-
-	writeport[cpu][i+1].start = -1;
 
 	return writeport[cpu];
 }

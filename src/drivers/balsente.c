@@ -15,6 +15,7 @@
 		* Sente Diagnostic Cartridge
 		* Snacks'n Jaxson
 		* Snake Pit
+		* Spiker
 		* Stocker
 		* Street Football
 		* Toggle
@@ -26,7 +27,6 @@
 
 	Looking for ROMs for these:
 		* Euro Stocker
-		* Spiker
 		* Stompin'
 		* Strike Avenger
 		* Team Hat Trick
@@ -223,6 +223,9 @@ static UINT32 noise_position[6];
 
 /* game-specific states */
 static UINT8 nstocker_bits;
+static UINT8 spiker_expand_color;
+static UINT8 spiker_expand_bgcolor;
+static UINT8 spiker_expand_bits;
 
 
 
@@ -1121,6 +1124,41 @@ static void counter_control_w(int offset, int data)
 static int nstocker_port2_r(int offset)
 {
 	return (input_port_2_r(offset) & 0xf0) | nstocker_bits;
+}
+
+
+static void spiker_expand_w(int offset, int data)
+{
+	/* offset 0 is the bit pattern */
+	if (offset == 0)
+		spiker_expand_bits = data;
+
+	/* offset 1 is the background color (cleared on each read) */
+	else if (offset == 1)
+		spiker_expand_bgcolor = data;
+
+	/* offset 2 is the color */
+	else if (offset == 2)
+		spiker_expand_color = data;
+}
+
+
+static int spiker_expand_r(int offset)
+{
+	UINT8 left, right;
+
+	/* first rotate each nibble */
+	spiker_expand_bits = ((spiker_expand_bits << 1) & 0xee) | ((spiker_expand_bits >> 3) & 0x11);
+
+	/* compute left and right pixels */
+	left  = (spiker_expand_bits & 0x10) ? spiker_expand_color : spiker_expand_bgcolor;
+	right = (spiker_expand_bits & 0x01) ? spiker_expand_color : spiker_expand_bgcolor;
+
+	/* reset the background color */
+	spiker_expand_bgcolor = 0;
+
+	/* return the combined result */
+	return (left & 0xf0) | (right & 0x0f);
 }
 
 
@@ -2036,6 +2074,61 @@ INPUT_PORTS_START( toggle_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( nametune_input_ports )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x08, "3 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x0c, "4 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x10, "4 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x14, "5 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x18, "5 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x1c, "5 Coins = 3 Bonus" )
+	PORT_DIPNAME( 0x20, 0x00, "Left Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x20, "x2" )
+	PORT_DIPNAME( 0xc0, 0x00, "Right Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x40, "x4" )
+	PORT_DIPSETTING(    0x80, "x5" )
+	PORT_DIPSETTING(    0xc0, "x6" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	PORT_START	/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "P1 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "P1 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "P1 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "P2 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "P2 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "P2 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	/* analog ports */
+	UNUSED_ANALOG_X4
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( nstocker_input_ports )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
@@ -2158,11 +2251,11 @@ INPUT_PORTS_START( sfootbal_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nametune_input_ports )
+INPUT_PORTS_START( spiker_input_ports )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ))
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
 	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
@@ -2184,32 +2277,32 @@ INPUT_PORTS_START( nametune_input_ports )
 	PORT_DIPSETTING(    0xc0, "x6" )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x00, "Game Duration" )
+	PORT_DIPSETTING(    0x00, "11 points" )
+	PORT_DIPSETTING(    0x01, "15 points" )
+	PORT_BIT( 0x7e, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
 	PORT_START	/* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "P1 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "P1 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "P1 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "P2 Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "P2 Green Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "P2 Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x38, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	/* analog ports */
-	UNUSED_ANALOG_X4
+	PLAYER2_TRACKBALL
+	PLAYER1_TRACKBALL
 INPUT_PORTS_END
 
 
@@ -2283,32 +2376,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics definitions
- *
- *************************************/
-
-static struct GfxLayout spritelayout =
-{
-	8,16,	/* 8*16 chars */
-	1024,	/* 1024 chars */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	8*64	/* every char takes 64 consecutive bytes */
-};
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 2, 0x000000, &spritelayout, 0, 16 },
-	{ -1 } /* end of array */
-};
-
-
-
-/*************************************
- *
  *	Sound definitions
  *
  *************************************/
@@ -2355,7 +2422,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	256, 240, { 0, 255, 0, 239 },
-	gfxdecodeinfo,
+	0,
 	1025,1025,
 	0,
 
@@ -2508,13 +2575,19 @@ static void gimeabrk_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0
 static void minigolf_init(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
 static void minigol2_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
 static void toggle_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void nametune_init(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
 static void nstocker_init(void)
 {
 	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; adc_shift = 1;
 }
 static void sfootbal_init(void) { expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 0; }
-static void nametune_init(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
+static void spiker_init(void)
+{
+	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
+	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
+	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 1;
+}
 static void rescraid_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
 
 
@@ -2532,7 +2605,7 @@ ROM_START( sentetst_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "sdiaggr0.bin", 0x00000, 0x2000, 0x5e0ff62a )
 ROM_END
 
@@ -2551,7 +2624,7 @@ ROM_START( cshift_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "cs-gr0.bin", 0x00000, 0x2000, 0x67f9d3b3 )
 	ROM_LOAD( "cs-gr1.bin", 0x02000, 0x2000, 0x78973d50 )
 	ROM_LOAD( "cs-gr2.bin", 0x04000, 0x2000, 0x1784f939 )
@@ -2574,7 +2647,7 @@ ROM_START( gghost_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "ggh-gr0.bin", 0x00000, 0x2000, 0x03515526 )
 	ROM_LOAD( "ggh-gr1.bin", 0x02000, 0x2000, 0xb4293435 )
 	ROM_LOAD( "ggh-gr2.bin", 0x04000, 0x2000, 0xece0cb97 )
@@ -2595,7 +2668,7 @@ ROM_START( hattrick_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x9f41baba )
 	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0x951f08c9 )
 ROM_END
@@ -2615,7 +2688,7 @@ ROM_START( otwalls_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "otw-gr0.bin", 0x00000, 0x2000, 0x210bad3c )
 	ROM_LOAD( "otw-gr1.bin", 0x02000, 0x2000, 0x13e6aaa5 )
 	ROM_LOAD( "otw-gr2.bin", 0x04000, 0x2000, 0x5cfefee5 )
@@ -2639,7 +2712,7 @@ ROM_START( snakepit_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "spit-gr0.bin", 0x00000, 0x2000, 0xf77fd85d )
 	ROM_LOAD( "spit-gr1.bin", 0x02000, 0x2000, 0x3ad10334 )
 	ROM_LOAD( "spit-gr2.bin", 0x04000, 0x2000, 0x24887703 )
@@ -2663,7 +2736,7 @@ ROM_START( snakjack_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x3e64b5d5 )
 	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0xb3b8baee )
 	ROM_LOAD( "rom-gr2.u7b", 0x04000, 0x2000, 0xe9d89dac )
@@ -2685,7 +2758,7 @@ ROM_START( stocker_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "stkr-gr0.bin", 0x00000, 0x2000, 0x76d5694c )
 	ROM_LOAD( "stkr-gr1.bin", 0x02000, 0x2000, 0x4a5cc00b )
 	ROM_LOAD( "stkr-gr2.bin", 0x04000, 0x2000, 0x70002382 )
@@ -2707,7 +2780,7 @@ ROM_START( triviag1_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "tpg1-gr0.bin", 0x00000, 0x2000, 0x20c9217a )
 	ROM_LOAD( "tpg1-gr1.bin", 0x02000, 0x2000, 0xd7f44504 )
 	ROM_LOAD( "tpg1-gr2.bin", 0x04000, 0x2000, 0x4e59a15d )
@@ -2729,7 +2802,7 @@ ROM_START( triviag2_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin",  0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin",  0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin",  0x08000, 0x4000, 0x1e870293 )
@@ -2748,7 +2821,7 @@ ROM_START( triviasp_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin",    0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin",    0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "allsport.3b", 0x08000, 0x4000, 0x7415a7fc )
@@ -2767,7 +2840,7 @@ ROM_START( triviayp_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x1242033e )
@@ -2786,7 +2859,7 @@ ROM_START( triviabb_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x92fb6fb1 )
@@ -2803,7 +2876,7 @@ ROM_START( gimeabrk_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0xe3cdc476 )
 	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x0555d9c0 )
 ROM_END
@@ -2821,7 +2894,7 @@ ROM_START( minigolf_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0x8e24d594 )
 	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x3bf355ef )
 	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, 0x8eb14921 )
@@ -2836,7 +2909,7 @@ ROM_START( minigol2_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "6b-ver2",  0x00000, 0x8000, 0x5988f4ba )
 	ROM_LOAD( "4b-ver2",  0x08000, 0x8000, 0x78a30e23 )
 ROM_END
@@ -2856,49 +2929,9 @@ ROM_START( toggle_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "tgle-gr0.bin", 0x00000, 0x2000, 0x0e0e5d0e )
 	ROM_LOAD( "tgle-gr1.bin", 0x02000, 0x2000, 0x3b141ad2 )
-ROM_END
-
-
-ROM_START( nstocker_rom )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
-	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
-	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x27a728b5 )
-	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x2999cdf2 )
-	ROM_LOAD( "cd01.u4a",  0x20000, 0x4000, 0x75e9b51a )
-	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x0a32e0a5 )
-	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, 0x9bb292fe )
-	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xe77c1aea )
-
-	ROM_REGION(0x10000)		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
-
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
-	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0xfd0c38be )
-	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x35d4433e )
-	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x734b858a )
-	ROM_LOAD( "gr67.u1c", 0x0c000, 0x4000, 0x3311f9c0 )
-ROM_END
-
-
-ROM_START( sfootbal_rom )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
-	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
-	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
-	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, 0x91ad42c5 )
-	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, 0xbf80bb1a )
-
-	ROM_REGION(0x10000)		/* 64k for Z80 */
-	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
-
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
-	ROM_LOAD( "sfbgr01.bin", 0x00000, 0x4000, 0xe3108d35 )
-	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, 0x5c5af726 )
-	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, 0xe767251e )
-	ROM_LOAD( "sfbgr67.bin", 0x0c000, 0x4000, 0x42452a7a )
 ROM_END
 
 
@@ -2924,8 +2957,64 @@ ROM_START( nametune_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "nttgr0.bin",  0x00000, 0x8000, 0x6b75bb4b )
+ROM_END
+
+
+ROM_START( nstocker_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
+	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x27a728b5 )
+	ROM_LOAD( "ab67.u5a",  0x1c000, 0x4000, 0x2999cdf2 )
+	ROM_LOAD( "cd01.u4a",  0x20000, 0x4000, 0x75e9b51a )
+	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x0a32e0a5 )
+	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, 0x9bb292fe )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xe77c1aea )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0xfd0c38be )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x35d4433e )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x734b858a )
+	ROM_LOAD( "gr67.u1c", 0x0c000, 0x4000, 0x3311f9c0 )
+ROM_END
+
+
+ROM_START( sfootbal_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
+	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
+	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, 0x91ad42c5 )
+	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, 0xbf80bb1a )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_LOAD( "sfbgr01.bin", 0x00000, 0x4000, 0xe3108d35 )
+	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, 0x5c5af726 )
+	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, 0xe767251e )
+	ROM_LOAD( "sfbgr67.bin", 0x0c000, 0x4000, 0x42452a7a )
+ROM_END
+
+
+ROM_START( spiker_rom )
+	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x2d53d023 )
+	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x3be87edf )
+	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xf2c73ece )
+
+	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0x0caa6e3e )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x970c81f6 )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x90ddd737 )
 ROM_END
 
 
@@ -2939,7 +3028,7 @@ ROM_START( rescraid_rom )
 	ROM_REGION(0x10000)		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* up to 64k of sprites */
+	ROM_REGION(0x10000)		/* up to 64k of sprites */
 	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, 0xe0dfc133 )
 	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, 0x952ade30 )
 ROM_END
@@ -3024,7 +3113,8 @@ BALSENTE_DRIVER      (gimeabrk, 1985, "Gimme A Break")
 BALSENTE_DRIVER      (minigolf, 1985, "Mini Golf (set 1)")
 BALSENTE_CLONE_DRIVER(minigol2, 1985, "Mini Golf (set 2)", minigolf)
 BALSENTE_DRIVER      (toggle,   1985, "Toggle")
+BALSENTE_DRIVER      (nametune, 1986, "Name That Tune")
 BALSENTE_DRIVER      (nstocker, 1986, "Night Stocker")
 BALSENTE_DRIVER      (sfootbal, 1986, "Street Football")
-BALSENTE_DRIVER      (nametune, 1986, "Name That Tune")
+BALSENTE_DRIVER      (spiker,   1986, "Spiker")
 BALSENTE_DRIVER      (rescraid, 1987, "Rescue Raider")
