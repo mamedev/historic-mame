@@ -783,7 +783,7 @@ static struct CustomSound_interface sega_custom_interface =
 	sega_sh_update
 };
 
-static struct MachineDriver machine_driver_spacfury =
+static const struct MachineDriver machine_driver_spacfury =
 {
 	/* basic machine hardware */
 	{
@@ -805,7 +805,7 @@ static struct MachineDriver machine_driver_spacfury =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -884,7 +884,7 @@ static struct Samplesinterface zektor_samples_interface =
 
 
 
-static struct MachineDriver machine_driver_zektor =
+static const struct MachineDriver machine_driver_zektor =
 {
 	/* basic machine hardware */
 	{
@@ -907,7 +907,7 @@ static struct MachineDriver machine_driver_zektor =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -981,7 +981,7 @@ static struct CustomSound_interface tacscan_custom_interface =
 
 
 
-static struct MachineDriver machine_driver_tacscan =
+static const struct MachineDriver machine_driver_tacscan =
 {
 	/* basic machine hardware */
 	{
@@ -1004,7 +1004,7 @@ static struct MachineDriver machine_driver_tacscan =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1057,7 +1057,7 @@ static struct Samplesinterface elim2_samples_interface =
 };
 
 
-static struct MachineDriver machine_driver_elim2 =
+static const struct MachineDriver machine_driver_elim2 =
 {
 	/* basic machine hardware */
 	{
@@ -1080,7 +1080,7 @@ static struct MachineDriver machine_driver_elim2 =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1102,7 +1102,7 @@ static struct MachineDriver machine_driver_elim2 =
 
 
 
-static struct MachineDriver machine_driver_elim4 =
+static const struct MachineDriver machine_driver_elim4 =
 {
 	/* basic machine hardware */
 	{
@@ -1125,7 +1125,7 @@ static struct MachineDriver machine_driver_elim4 =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,
@@ -1217,7 +1217,7 @@ static struct Samplesinterface startrek_samples_interface =
 	startrek_sample_names
 };
 
-static struct MachineDriver machine_driver_startrek =
+static const struct MachineDriver machine_driver_startrek =
 {
 	/* basic machine hardware */
 	{
@@ -1240,7 +1240,7 @@ static struct MachineDriver machine_driver_startrek =
 	256,256,
 	sega_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	sega_vh_start,
 	sega_vh_stop,

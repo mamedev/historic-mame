@@ -325,7 +325,7 @@ static struct K053260_interface k053260_interface =
 
 
 
-static struct MachineDriver machine_driver_parodius =
+static const struct MachineDriver machine_driver_parodius =
 {
 	/* basic machine hardware */
 	{

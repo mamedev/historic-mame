@@ -219,7 +219,7 @@ int sqix_interrupt(void)
 		return 0;
 }
 
-static struct MachineDriver machine_driver_superqix =
+static const struct MachineDriver machine_driver_superqix =
 {
 	/* basic machine hardware */
 	{
@@ -242,7 +242,7 @@ static struct MachineDriver machine_driver_superqix =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	superqix_vh_start,
 	superqix_vh_stop,

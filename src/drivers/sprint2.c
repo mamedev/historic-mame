@@ -309,7 +309,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver_sprint2 =
+static const struct MachineDriver machine_driver_sprint2 =
 {
 	/* basic machine hardware */
 	{
@@ -340,7 +340,7 @@ static struct MachineDriver machine_driver_sprint2 =
 	0,0,0,0
 };
 
-static struct MachineDriver machine_driver_sprint1 =
+static const struct MachineDriver machine_driver_sprint1 =
 {
 	/* basic machine hardware */
 	{
@@ -398,6 +398,9 @@ ROM_START( sprint1 )
 	ROM_REGION( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
 	ROM_LOAD( "6399-01.j6",   0x0200, 0x0200, 0x63d685b2 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* unknown */
 ROM_END
 
 ROM_START( sprint2 )
@@ -416,6 +419,9 @@ ROM_START( sprint2 )
 	ROM_REGION( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
 	ROM_LOAD( "6399-01.j6",   0x0200, 0x0200, 0x63d685b2 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* unknown */
 ROM_END
 
 

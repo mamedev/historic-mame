@@ -1183,7 +1183,7 @@ static struct CustomSound_interface astrob_custom_interface =
 	astrob_speech_sh_update
 };
 
-static struct MachineDriver machine_driver_astrob =
+static const struct MachineDriver machine_driver_astrob =
 {
 	/* basic machine hardware */
 	{
@@ -1237,7 +1237,7 @@ static struct Samplesinterface spaceod_samples_interface =
 	spaceod_sample_names
 };
 
-static struct MachineDriver machine_driver_spaceod =
+static const struct MachineDriver machine_driver_spaceod =
 {
 	/* basic machine hardware */
 	{
@@ -1281,7 +1281,7 @@ static struct Samplesinterface samples_interface_005 =
 	s005_sample_names
 };
 
-static struct MachineDriver machine_driver_005 =
+static const struct MachineDriver machine_driver_005 =
 {
 	/* basic machine hardware */
 	{
@@ -1340,7 +1340,7 @@ static struct TMS36XXinterface monsterb_tms3617_interface =
 	{ {0.5,0.5,0.5,0.5,0.5,0.5} }  /* decay times of voices */
 };
 
-static struct MachineDriver machine_driver_monsterb =
+static const struct MachineDriver machine_driver_monsterb =
 {
 	/* basic machine hardware */
 	{
@@ -1391,7 +1391,7 @@ static struct MachineDriver machine_driver_monsterb =
 	}
 };
 
-static struct MachineDriver machine_driver_pignewt =
+static const struct MachineDriver machine_driver_pignewt =
 {
 	/* basic machine hardware */
 	{
@@ -1430,7 +1430,7 @@ static struct SN76496interface sn76496_interface =
 	{ 100, 100 }
 };
 
-static struct MachineDriver machine_driver_sindbadm =
+static const struct MachineDriver machine_driver_sindbadm =
 {
 	/* basic machine hardware */
 	{

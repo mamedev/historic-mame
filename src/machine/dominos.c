@@ -120,13 +120,13 @@ Lamps
 WRITE_HANDLER( dominos_lamp1_w )
 {
 	/* Address Line 0 is the data passed to LAMP1 */
-	osd_led_w(0,offset & 0x01);
+	set_led_status(0,offset & 0x01);
 }
 
 WRITE_HANDLER( dominos_lamp2_w )
 {
 	/* Address Line 0 is the data passed to LAMP2 */
-	osd_led_w(1,offset & 0x01);
+	set_led_status(1,offset & 0x01);
 }
 
 /***************************************************************************

@@ -80,14 +80,14 @@ static WRITE_HANDLER( ajax_bankswitch_w )
 
 static WRITE_HANDLER( ajax_lamps_w )
 {
-	osd_led_w(0,(data & 0x02) >> 1);	/* super weapon lamp */
-	osd_led_w(1,(data & 0x04) >> 2);	/* power up lamps */
-	osd_led_w(5,(data & 0x04) >> 2);	/* power up lamps */
-	osd_led_w(2,(data & 0x20) >> 5);	/* start lamp */
-	osd_led_w(3,(data & 0x40) >> 6);	/* game over lamps */
-	osd_led_w(6,(data & 0x40) >> 6);	/* game over lamps */
-	osd_led_w(4,(data & 0x80) >> 7);	/* game over lamps */
-	osd_led_w(7,(data & 0x80) >> 7);	/* game over lamps */
+	set_led_status(1,data & 0x02);	/* super weapon lamp */
+	set_led_status(2,data & 0x04);	/* power up lamps */
+	set_led_status(5,data & 0x04);	/* power up lamps */
+	set_led_status(0,data & 0x20);	/* start lamp */
+	set_led_status(3,data & 0x40);	/* game over lamps */
+	set_led_status(6,data & 0x40);	/* game over lamps */
+	set_led_status(4,data & 0x80);	/* game over lamps */
+	set_led_status(7,data & 0x80);	/* game over lamps */
 }
 
 /*	ajax_ls138_f10:

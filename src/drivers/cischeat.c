@@ -981,7 +981,7 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 	{ 33, 33 } \
 }; \
 \
-static struct MachineDriver machine_driver_##_shortname_ = \
+static const struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{ \
 		{ \

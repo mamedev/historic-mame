@@ -639,7 +639,7 @@ static struct Samplesinterface zaxxon_samples_interface =
 };
 
 
-static struct MachineDriver machine_driver_zaxxon =
+static const struct MachineDriver machine_driver_zaxxon =
 {
 	/* basic machine hardware */
 	{
@@ -676,7 +676,7 @@ static struct MachineDriver machine_driver_zaxxon =
 	}
 };
 
-static struct MachineDriver machine_driver_futspy =
+static const struct MachineDriver machine_driver_futspy =
 {
 	/* basic machine hardware */
 	{
@@ -713,7 +713,7 @@ static struct MachineDriver machine_driver_futspy =
 	}
 };
 
-static struct MachineDriver machine_driver_razmataz =
+static const struct MachineDriver machine_driver_razmataz =
 {
 	/* basic machine hardware */
 	{

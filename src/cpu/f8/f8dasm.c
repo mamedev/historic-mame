@@ -19,35 +19,45 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	{
 	/* opcode  bitmask */
 	case 0x00: /* 0000 0000 */
-		sprintf(buffer, "LR   A,KU");
+		sym = set_ea_info( 0, 12, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,KU");
 		break;
 	case 0x01: /* 0000 0001 */
-		sprintf(buffer, "LR   A,KL");
+		sym = set_ea_info( 0, 13, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,KL");
 		break;
 	case 0x02: /* 0000 0010 */
-		sprintf(buffer, "LR   A,QU");
+		sym = set_ea_info( 0, 14, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,QU");
 		break;
 	case 0x03: /* 0000 0011 */
-		sprintf(buffer, "LR   A,QL");
+		sym = set_ea_info( 0, 15, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,QL");
 		break;
 	case 0x04: /* 0000 0100 */
-		sprintf(buffer, "LR   KU,A");
+		sym = set_ea_info( 0, 12, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   KU,A");
 		break;
 	case 0x05: /* 0000 0101 */
-		sprintf(buffer, "LR   KL,A");
+		sym = set_ea_info( 0, 13, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   KL,A");
 		break;
 	case 0x06: /* 0000 0110 */
-		sprintf(buffer, "LR   QU,A");
+		sym = set_ea_info( 0, 14, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   QU,A");
 		break;
 	case 0x07: /* 0000 0111 */
-		sprintf(buffer, "LR   QL,A");
+		sym = set_ea_info( 0, 15, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   QL,A");
 		break;
 
     case 0x08: /* 0000 1000 */
-		sprintf(buffer, "LR   K,P");
+		sym = set_ea_info( 0, 12, EA_UINT16, EA_ZPG_WR );
+        sprintf(buffer, "LR   K,P");
 		break;
 	case 0x09: /* 0000 1001 */
-		sprintf(buffer, "LR   P,K");
+		sym = set_ea_info( 0, 12, EA_UINT16, EA_ZPG_RD );
+        sprintf(buffer, "LR   P,K");
 		break;
 	case 0x0a: /* 0000 1010 */
 		sprintf(buffer, "LR   A,IS");
@@ -61,17 +71,22 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		break;
 	case 0x0d: /* 0000 1101 */
 		sprintf(buffer, "LR   P0,Q");
-		break;
+		sym = set_ea_info( 0, 14, EA_UINT16, EA_ZPG_RD );
+        break;
 	case 0x0e: /* 0000 1110 */
-		sprintf(buffer, "LR   Q,DC");
+		sym = set_ea_info( 0, 14, EA_UINT16, EA_ZPG_WR );
+        sprintf(buffer, "LR   Q,DC");
 		break;
 	case 0x0f: /* 0000 1111 */
-		sprintf(buffer, "LR   DC,Q");
+		sym = set_ea_info( 0, 14, EA_UINT16, EA_ZPG_RD );
+        sprintf(buffer, "LR   DC,Q");
 		break;
 	case 0x10: /* 0001 0000 */
+		sym = set_ea_info( 0, 10, EA_UINT16, EA_ZPG_RD );
 		sprintf(buffer, "LR   DC,H");
 		break;
 	case 0x11: /* 0001 0001 */
+		sym = set_ea_info( 0, 10, EA_UINT16, EA_ZPG_WR );
 		sprintf(buffer, "LR   H,DC");
 		break;
 	case 0x12: /* 0001 0010 */
@@ -87,9 +102,11 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "SL   4");
 		break;
 	case 0x16: /* 0001 0110 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_RD );
 		sprintf(buffer, "LM") ;
 		break;
 	case 0x17: /* 0001 0111 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_WR );
 		sprintf(buffer, "ST");
 		break;
 	case 0x18: /* 0001 1000 */
@@ -105,13 +122,16 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "EI");
 		break;
 	case 0x1c: /* 0001 1100 */
-		sprintf(buffer, "POP");
+		sym = set_ea_info( 0, cpu_get_reg(F8_PC1), EA_UINT16, EA_ABS_PC );
+        sprintf(buffer, "POP");
 		break;
 	case 0x1d: /* 0001 1101 */
-		sprintf(buffer, "LR   W,J");
+		sym = set_ea_info( 0, 9, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   W,J");
 		break;
 	case 0x1e: /* 0001 1110 */
-		sprintf(buffer, "LR   J,W");
+		sym = set_ea_info( 0, 9, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   J,W");
 		break;
 	case 0x1f: /* 0001 1111 */
 		sprintf(buffer, "INC");
@@ -148,12 +168,12 @@ unsigned DasmF8(char *buffer, unsigned pc)
         break;
 	case 0x26: /* 0010 0110 */
 		size += 1;
-        sym = set_ea_info( 0, cpu_readop_arg(pc+1), EA_UINT8, EA_VALUE );
+		sym = set_ea_info( 0, cpu_readop_arg(pc+1), EA_UINT8, EA_PORT_RD );
 		sprintf(buffer, "IN   %s",sym);
         break;
 	case 0x27: /* 0010 0111 */
 		size += 1;
-        sym = set_ea_info( 0, cpu_readop_arg(pc+1), EA_UINT8, EA_VALUE );
+		sym = set_ea_info( 0, cpu_readop_arg(pc+1), EA_UINT8, EA_PORT_WR );
 		sprintf(buffer, "OUT  %s",sym);
         break;
 	case 0x28: /* 0010 1000 */
@@ -178,7 +198,11 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "DCI  %s",sym);
         break;
 	case 0x2b: /* 0010 1011 */
+		sprintf(buffer, "NOP");
+		break;
 	case 0x2c: /* 0010 1100 */
+		sprintf(buffer, "XDC");
+		break;
 	case 0x2d: /* 0010 1101 */
 	case 0x2e: /* 0010 1110 */
 	case 0x2f: /* 0010 1111 */
@@ -197,16 +221,20 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x39: /* 0011 1001 */
 	case 0x3a: /* 0011 1010 */
 	case 0x3b: /* 0011 1011 */
-		sprintf(buffer, "DS   %s",rname[op & 15]);
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RDWR );
+        sprintf(buffer, "DS   %s",rname[op & 15]);
         break;
     case 0x3c: /* 0011 1100 */
-		sprintf(buffer, "DS   (IS)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RDWR );
+        sprintf(buffer, "DS   (IS)");
         break;
     case 0x3d: /* 0011 1101 */
-		sprintf(buffer, "DS   (IS++)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RDWR );
+        sprintf(buffer, "DS   (IS++)");
         break;
     case 0x3e: /* 0011 1110 */
-		sprintf(buffer, "DS   (IS--)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RDWR );
+        sprintf(buffer, "DS   (IS--)");
         break;
     case 0x3f: /* 0011 1111 */
 		sprintf(buffer, "???  $%02X",op);
@@ -224,16 +252,20 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x49: /* 0100 1001 */
 	case 0x4a: /* 0100 1010 */
 	case 0x4b: /* 0100 1011 */
-		sprintf(buffer, "LR   A,%s",rname[op & 15]);
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,%s",rname[op & 15]);
         break;
     case 0x4c: /* 0100 1100 */
-		sprintf(buffer, "LR   A,(IS)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,(IS)");
         break;
     case 0x4d: /* 0100 1101 */
-		sprintf(buffer, "LR   A,(IS++)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,(IS++)");
         break;
     case 0x4e: /* 0100 1110 */
-		sprintf(buffer, "LR   A,(IS--)");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "LR   A,(IS--)");
         break;
     case 0x4f: /* 0100 1111 */
 		sprintf(buffer, "???  $%02X",op);
@@ -251,16 +283,20 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x59: /* 0101 1001 */
 	case 0x5a: /* 0101 1010 */
 	case 0x5b: /* 0101 1011 */
-		sprintf(buffer, "LR   %s,A",rname[op & 15]);
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   %s,A",rname[op & 15]);
         break;
     case 0x5c: /* 0101 1100 */
-		sprintf(buffer, "LR   (IS),A");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   (IS),A");
         break;
     case 0x5d: /* 0101 1101 */
-		sprintf(buffer, "LR   (IS++),A");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   (IS++),A");
         break;
     case 0x5e: /* 0101 1110 */
-		sprintf(buffer, "LR   (IS--),A");
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_WR );
+        sprintf(buffer, "LR   (IS--),A");
         break;
     case 0x5f: /* 0101 1111 */
 		sprintf(buffer, "???  $%02X",op);
@@ -325,34 +361,28 @@ unsigned DasmF8(char *buffer, unsigned pc)
         break;
 
     case 0x88: /* 1000 1000 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "AM   %s", sym);
-        break;
+		sprintf(buffer, "AM");
+		break;
 
     case 0x89: /* 1000 1001 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "AMD  %s", sym);
+		sprintf(buffer, "AMD");
         break;
 
     case 0x8a: /* 1000 1010 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "NM   %s", sym);
-        break;
+		sprintf(buffer, "NM");
+		break;
 
     case 0x8b: /* 1000 1011 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "OM   %s", sym);
-        break;
+		sprintf(buffer, "OM");
+		break;
 
     case 0x8c: /* 1000 1100 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "XM   %s", sym);
-        break;
+		sprintf(buffer, "XM");
+		break;
 
     case 0x8d: /* 1000 1101 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "CM   %s", sym);
-        break;
+		sprintf(buffer, "CM");
+		break;
 
     case 0x8e: /* 1000 1110 */
 		sprintf(buffer, "ADC");
@@ -360,7 +390,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 
     case 0x8f: /* 1000 1111 */
 		size += 1;
-		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) - 3;
+		ea = pc + (INT8)cpu_readop_arg(pc+1) - 3;
 		sym = set_ea_info( 0, ea, EA_UINT16, EA_REL_PC );
 		sprintf(buffer, "BR7  %s", sym);
         break;
@@ -383,7 +413,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x9f: /* 1001 1111 */
 		size += 1;
 		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_VALUE );
-		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) - 3;
+		ea = pc + (INT8)cpu_readop_arg(pc+1) - 3;
         sym2 = set_ea_info( 1, ea, EA_UINT16, EA_REL_PC );
 		sprintf(buffer, "BF   %s,%s", sym, sym2);
         break;
@@ -423,6 +453,8 @@ unsigned DasmF8(char *buffer, unsigned pc)
 
     case 0xb2: /* 1011 0010 */
 	case 0xb3: /* 1011 0011 */
+		sprintf(buffer, "???  $%02X\n", op);
+        break;
 
     case 0xb4: /* 1011 0100 */
 	case 0xb5: /* 1011 0101 */
@@ -452,12 +484,24 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0xc9: /* 1100 1001 */
 	case 0xca: /* 1100 1010 */
 	case 0xcb: /* 1100 1011 */
-	case 0xcc: /* 1100 1100 */
-	case 0xcd: /* 1100 1101 */
-	case 0xce: /* 1100 1110 */
-	case 0xcf: /* 1100 1111 */
-		sprintf(buffer, "AS   %s", rname[op & 15]);
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RD );
+        sprintf(buffer, "AS   %s", rname[op & 15]);
         break;
+    case 0xcc: /* 1100 1100 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "AS   (IS)");
+        break;
+    case 0xcd: /* 1100 1101 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "AS   (IS++)");
+        break;
+    case 0xce: /* 1100 1110 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "AS   (IS--)");
+        break;
+    case 0xcf: /* 1100 1111 */
+		sprintf(buffer, "???  $%02X\n", op);
+		break;
 
     case 0xd0: /* 1101 0000 */
 	case 0xd1: /* 1101 0001 */
@@ -471,11 +515,23 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0xd9: /* 1101 1001 */
 	case 0xda: /* 1101 1010 */
 	case 0xdb: /* 1101 1011 */
-	case 0xdc: /* 1101 1100 */
-	case 0xdd: /* 1101 1101 */
-	case 0xde: /* 1101 1110 */
-	case 0xdf: /* 1101 1111 */
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RD );
 		sprintf(buffer, "ASD  %s", rname[op & 15]);
+		break;
+    case 0xdc: /* 1101 1100 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "ASD  (IS)");
+		break;
+    case 0xdd: /* 1101 1101 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "ASD  (IS++)");
+        break;
+    case 0xde: /* 1101 1110 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "ASD  (IS--)");
+        break;
+    case 0xdf: /* 1101 1111 */
+		sprintf(buffer, "???  $%02X\n", op);
         break;
 
     case 0xe0: /* 1110 0000 */
@@ -490,11 +546,23 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0xe9: /* 1110 1001 */
 	case 0xea: /* 1110 1010 */
 	case 0xeb: /* 1110 1011 */
-	case 0xec: /* 1110 1100 */
-	case 0xed: /* 1110 1101 */
-	case 0xee: /* 1110 1110 */
-	case 0xef: /* 1110 1111 */
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RD );
 		sprintf(buffer, "XS   %s", rname[op & 15]);
+        break;
+    case 0xec: /* 1110 1100 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "XS   (IS)");
+        break;
+    case 0xed: /* 1110 1101 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "XS   (IS++)");
+        break;
+    case 0xee: /* 1110 1110 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "XS   (IS--)");
+        break;
+    case 0xef: /* 1110 1111 */
+		sprintf(buffer, "???  $%02X\n", op);
         break;
 
 
@@ -510,11 +578,23 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0xf9: /* 1111 1001 */
 	case 0xfa: /* 1111 1010 */
 	case 0xfb: /* 1111 1011 */
-	case 0xfc: /* 1111 1100 */
-	case 0xfd: /* 1111 1101 */
-	case 0xfe: /* 1111 1110 */
-	case 0xff: /* 1111 1111 */
+		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_ZPG_RD );
 		sprintf(buffer, "NS   %s", rname[op & 15]);
+		break;
+    case 0xfc: /* 1111 1100 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "NS   (IS)");
+        break;
+    case 0xfd: /* 1111 1101 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "NS   (IS++)");
+        break;
+    case 0xfe: /* 1111 1110 */
+		sym = set_ea_info( 0, cpu_get_reg(F8_IS), EA_UINT8, EA_ZPG_RD );
+		sprintf(buffer, "NS   (IS--)");
+        break;
+    case 0xff: /* 1111 1111 */
+		sprintf(buffer, "???  $%02X\n", op);
         break;
     }
 

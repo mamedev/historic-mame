@@ -314,7 +314,7 @@ static struct UPD7759_interface upd7759_interface =
 
 
 
-static struct MachineDriver machine_driver_88games =
+static const struct MachineDriver machine_driver_88games =
 {
 	{
 		{

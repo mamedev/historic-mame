@@ -152,7 +152,7 @@ static UINT8 *liberatr_ctrld;
 
 static WRITE_HANDLER( liberatr_led_w )
 {
-	osd_led_w(offset, (data >> 4) & 0x01);
+	set_led_status(offset,~data & 0x10);
 }
 
 
@@ -370,7 +370,7 @@ static struct POKEYinterface pokey_interface =
 
 
 #define MACHINE_DRIVER(NAME)							\
-static struct MachineDriver machine_driver_##NAME =		\
+static const struct MachineDriver machine_driver_##NAME =		\
 {														\
 	/* basic machine hardware */						\
 	{													\

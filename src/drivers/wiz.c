@@ -464,7 +464,7 @@ static struct AY8910interface stinger_ay8910_interface =
 
 
 #define MACHINE_DRIVER(NAME)									\
-static struct MachineDriver machine_driver_##NAME =				\
+static const struct MachineDriver machine_driver_##NAME =				\
 {																\
 	{															\
 		{														\

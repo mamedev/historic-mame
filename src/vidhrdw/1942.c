@@ -7,16 +7,16 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 
-unsigned char *c1942_foreground_videoram;
-unsigned char *c1942_foreground_colorram;
-size_t c1942_foreground_videoram_size;
-unsigned char *c1942_scroll;
+unsigned char *c1942_fgvideoram;
+unsigned char *c1942_bgvideoram;
+unsigned char *c1942_spriteram;
+size_t c1942_spriteram_size;
+
 static data_t c1942_palette_bank;
-static struct osd_bitmap *tmpbitmap2;
+static struct tilemap *fg_tilemap, *bg_tilemap;
 
 
 
@@ -92,6 +92,33 @@ void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = c1942_fgvideoram[tile_index];
+	color = c1942_fgvideoram[tile_index + 0x400];
+	SET_TILE_INFO(0,code + ((color & 0x80) << 1),color & 0x3f)
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code, color;
+
+	tile_index = (tile_index & 0x0f) | ((tile_index & 0x01f0) << 1);
+
+	code = c1942_bgvideoram[tile_index];
+	color = c1942_bgvideoram[tile_index + 0x10];
+	SET_TILE_INFO(1,code + ((color & 0x80) << 1),(color & 0x1f) + (0x20 * c1942_palette_bank));
+	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
+}
+
 
 /***************************************************************************
 
@@ -100,38 +127,51 @@ void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 ***************************************************************************/
 int c1942_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,16);
+
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	/* the background area is twice as wide as the screen (actually twice as tall, */
-	/* because this is a vertical game) */
-	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
+	fg_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
 
-
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void c1942_vh_stop(void)
+
+WRITE_HANDLER( c1942_fgvideoram_w )
 {
-	bitmap_free(tmpbitmap2);
-	generic_vh_stop();
+	c1942_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
+WRITE_HANDLER( c1942_bgvideoram_w )
+{
+	c1942_bgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,(offset & 0x0f) | ((offset >> 1) & 0x01f0));
+}
 
 
 WRITE_HANDLER( c1942_palette_bank_w )
 {
-	set_vh_global_attribute( &c1942_palette_bank, data );
+	if (c1942_palette_bank != data)
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+
+	c1942_palette_bank = data;
+}
+
+WRITE_HANDLER( c1942_scroll_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
 
@@ -148,77 +188,28 @@ WRITE_HANDLER( c1942_c804_w )
 	flip_screen_w(offset, data & 0x80);
 }
 
+
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	if (full_refresh)
-	{
-		memset(dirtybuffer, 1, videoram_size);
-	}
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if ((offs & 0x10) == 0 && (dirtybuffer[offs] != 0 || dirtybuffer[offs + 16] != 0))
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = dirtybuffer[offs + 16] = 0;
-
-			sx = offs / 32;
-			sy = offs % 32;
-			flipx = videoram[offs + 16] & 0x20;
-			flipy = videoram[offs + 16] & 0x40;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 15 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					videoram[offs] + 2*(videoram[offs + 16] & 0x80),
-					(videoram[offs + 16] & 0x1f) + 32 * c1942_palette_bank,
-					flipx,flipy,
-					16 * sx,16 * sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the background graphics */
-	{
-		int scroll;
-
-
-		scroll = -(c1942_scroll[0] + 256 * c1942_scroll[1]);
-		if (flip_screen) scroll = 256-scroll;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = c1942_spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int i,code,col,sx,sy,dir;
 
 
-		code = (spriteram[offs] & 0x7f) + 4*(spriteram[offs + 1] & 0x20)
-				+ 2*(spriteram[offs] & 0x80);
-		col = spriteram[offs + 1] & 0x0f;
-		sx = spriteram[offs + 3] - 0x10 * (spriteram[offs + 1] & 0x10);
-		sy = spriteram[offs + 2];
+		code = (c1942_spriteram[offs] & 0x7f) + 4*(c1942_spriteram[offs + 1] & 0x20)
+				+ 2*(c1942_spriteram[offs] & 0x80);
+		col = c1942_spriteram[offs + 1] & 0x0f;
+		sx = c1942_spriteram[offs + 3] - 0x10 * (c1942_spriteram[offs + 1] & 0x10);
+		sy = c1942_spriteram[offs + 2];
 		dir = 1;
 		if (flip_screen)
 		{
@@ -227,8 +218,8 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			dir = -1;
 		}
 
-		/* handle double / quadruple height (actually width because this is a rotated game) */
-		i = (spriteram[offs + 1] & 0xc0) >> 6;
+		/* handle double / quadruple height */
+		i = (c1942_spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
 
 		do
@@ -244,25 +235,14 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = c1942_foreground_videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
+}
 
+void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				c1942_foreground_videoram[offs] + 2 * (c1942_foreground_colorram[offs] & 0x80),
-				c1942_foreground_colorram[offs] & 0x3f,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }

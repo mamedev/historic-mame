@@ -196,13 +196,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
-	{ 2000000, 4000000 },	/* 8 MHz / 4 ?*/
+	{ 4000000, 2000000 },	/* 8 MHz / 4 ?*/
 	{ 100, 100 }
 };
 
 
 
-static struct MachineDriver machine_driver_suprloco =
+static const struct MachineDriver machine_driver_suprloco =
 {
 	/* basic machine hardware */
 	{

@@ -1426,7 +1426,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static struct MachineDriver machine_driver_arkanoi2 =
+static const struct MachineDriver machine_driver_arkanoi2 =
 {
 	/* basic machine hardware */
 	{
@@ -1470,7 +1470,7 @@ static struct MachineDriver machine_driver_arkanoi2 =
 	}
 };
 
-static struct MachineDriver machine_driver_drtoppel =
+static const struct MachineDriver machine_driver_drtoppel =
 {
 	/* basic machine hardware */
 	{
@@ -1513,7 +1513,7 @@ static struct MachineDriver machine_driver_drtoppel =
 	}
 };
 
-static struct MachineDriver machine_driver_tnzs =
+static const struct MachineDriver machine_driver_tnzs =
 {
 	/* basic machine hardware */
 	{
@@ -1557,7 +1557,7 @@ static struct MachineDriver machine_driver_tnzs =
 	}
 };
 
-static struct MachineDriver machine_driver_tnzsb =
+static const struct MachineDriver machine_driver_tnzsb =
 {
 	/* basic machine hardware */
 	{
@@ -1607,7 +1607,7 @@ static struct MachineDriver machine_driver_tnzsb =
 	}
 };
 
-static struct MachineDriver machine_driver_insectx =
+static const struct MachineDriver machine_driver_insectx =
 {
 	/* basic machine hardware */
 	{
@@ -1651,7 +1651,7 @@ static struct MachineDriver machine_driver_insectx =
 	}
 };
 
-static struct MachineDriver machine_driver_kageki =
+static const struct MachineDriver machine_driver_kageki =
 {
 	{
 		{

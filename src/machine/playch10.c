@@ -14,6 +14,7 @@ int pc10_gun_controller;
 static int cart_sel;
 static int cntrl_mask;
 static int input_latch[2];
+static int mirroring;
 
 /*************************************
  *
@@ -37,7 +38,9 @@ void pc10_init_machine( void )
 	RP5H01_enable_w( 0, 1 );
 
 	/* reset the ppu */
-	ppu2c03b_reset( 0, cpu_getscanlineperiod() * 2 );
+	ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 2 );
+
+	ppu2c03b_set_mirroring( 0, mirroring );
 }
 
 /*************************************
@@ -99,7 +102,7 @@ WRITE_HANDLER( pc10_GAMESTOP_w )
 WRITE_HANDLER( pc10_PPURES_w )
 {
 	if ( data & 1 )
-		ppu2c03b_reset( 0, cpu_getscanlineperiod() * 2 );
+		ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 2 );
 }
 
 READ_HANDLER( pc10_detectclr_r )
@@ -229,7 +232,7 @@ READ_HANDLER( pc10_in1_r )
 		/* now, add the trigger if not masked */
 		if ( !cntrl_mask )
 		{
-			ret |= ( trigger & 1 ) << 4;
+			ret |= ( trigger & 2 ) << 3;
 		}
 	}
 
@@ -263,8 +266,10 @@ void init_playch10( void )
 
 	/* set the controller to default */
 	pc10_gun_controller = 0;
-}
 
+	/* default mirroring */
+	mirroring = PPU_MIRROR_NONE;
+}
 
 /**********************************************************************************
  *
@@ -281,6 +286,131 @@ void init_pc_gun( void )
 
 	/* set the control type */
 	pc10_gun_controller = 1;
+}
+
+
+/* Horizontal mirroring */
+
+void init_pc_hrz( void )
+{
+	/* common init */
+	init_playch10();
+
+	/* setup mirroring */
+	mirroring = PPU_MIRROR_HORZ;
+}
+
+/* MMC1 mapper, used by D and F boards */
+
+static int mmc1_shiftreg;
+static int mmc1_shiftcount;
+static int mmc1_rom_mask;
+
+static WRITE_HANDLER( mmc1_rom_switch_w )
+{
+	/* basically, a MMC1 mapper from the nes */
+	static int size16k, switchlow, vrom4k;
+
+	int reg = ( offset >> 13 );
+
+	/* reset mapper */
+	if ( data & 0x80 )
+	{
+		mmc1_shiftreg = mmc1_shiftcount = 0;
+
+		size16k = 1;
+		switchlow = 1;
+		vrom4k = 0;
+
+		return;
+	}
+
+	/* see if we need to clock in data */
+	if ( mmc1_shiftcount < 5 )
+	{
+		mmc1_shiftreg >>= 1;
+		mmc1_shiftreg |= ( data & 1 ) << 4;
+		mmc1_shiftcount++;
+	}
+
+	/* are we done shifting? */
+	if ( mmc1_shiftcount == 5 )
+	{
+		/* reset count */
+		mmc1_shiftcount = 0;
+
+		/* apply data to registers */
+		switch( reg )
+		{
+			case 0:		/* mirroring and options */
+				{
+					int _mirroring;
+
+					vrom4k = mmc1_shiftreg & 0x10;
+					size16k = mmc1_shiftreg & 0x08;
+					switchlow = mmc1_shiftreg & 0x04;
+
+					switch( mmc1_shiftreg & 3 )
+					{
+						case 0:
+							_mirroring = PPU_MIRROR_LOW;
+						break;
+
+						case 1:
+							_mirroring = PPU_MIRROR_HIGH;
+						break;
+
+						case 2:
+							_mirroring = PPU_MIRROR_VERT;
+						break;
+
+						default:
+						case 3:
+							_mirroring = PPU_MIRROR_HORZ;
+						break;
+					}
+
+					/* apply mirroring */
+					ppu2c03b_set_mirroring( 0, _mirroring );
+				}
+			break;
+
+			case 1:	/* video rom banking - bank 0 - 4k or 8k */
+				ppu2c03b_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, ( mmc1_shiftreg & 0x1f ), 256 );
+			break;
+
+			case 2: /* video rom banking - bank 1 - 4k only */
+				if ( vrom4k )
+					ppu2c03b_set_videorom_bank( 0, 4, 4, ( mmc1_shiftreg & 0x1f ), 256 );
+			break;
+
+			case 3:	/* program banking */
+				{
+					int bank = ( mmc1_shiftreg & mmc1_rom_mask ) * 0x4000;
+
+					if ( !size16k )
+					{
+						/* switch 32k */
+						memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x8000 );
+					}
+					else
+					{
+						/* switch 16k */
+						if ( switchlow )
+						{
+							/* low */
+							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x4000 );
+						}
+						else
+						{
+							/* high */
+							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x4000 );
+						}
+					}
+				}
+			break;
+		}
+	}
 }
 
 /**********************************************************************************/
@@ -310,9 +440,6 @@ static WRITE_HANDLER( bboard_rom_switch_w )
 	int bankoffset = 0x10000 + ( ( data & 7 ) * 0x4000 );
 
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bankoffset], 0x4000 );
-
-	/* set the mirroring here */
-	ppu2c03b_set_mirroring( 0, PPU_MIRROR_VERT );
 }
 
 void init_pcbboard( void )
@@ -326,6 +453,9 @@ void init_pcbboard( void )
 
 	/* common init */
 	init_playch10();
+
+	/* set the mirroring here */
+	mirroring = PPU_MIRROR_VERT;
 }
 
 /**********************************************************************************/
@@ -341,6 +471,25 @@ void init_pccboard( void )
 {
 	/* switches vrom with writes to $6000 */
 	install_mem_write_handler( 1, 0x6000, 0x6000, cboard_vrom_switch_w );
+
+	/* common init */
+	init_playch10();
+}
+
+/**********************************************************************************/
+
+/* D Board games (Rad Racer) */
+
+void init_pcdboard( void )
+{
+	/* We do manual banking, in case the code falls through */
+	/* Copy the initial banks */
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x28000], 0x8000 );
+
+	mmc1_rom_mask = 0x07;
+
+	/* MMC mapper at writes to $8000-$ffff */
+	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -404,126 +553,18 @@ void init_pceboard( void )
 
 /**********************************************************************************/
 
-/* F Board games (Ninja Gaiden, Double Dragon) - BROKEN(?) */
-
-static int fboard_shiftreg;
-static int fboard_shiftcount;
-
-static WRITE_HANDLER( fboard_rom_switch_w )
-{
-	/* basically, a MMC1 mapper from the nes */
-	static int size16k, switchlow, vrom4k;
-
-	int reg = ( offset >> 13 );
-
-	/* reset mapper */
-	if ( data & 0x80 )
-	{
-		fboard_shiftreg = fboard_shiftcount = 0;
-
-		size16k = 1;
-		switchlow = 1;
-		vrom4k = 0;
-
-		return;
-	}
-
-	/* see if we need to clock in data */
-	if ( fboard_shiftcount < 5 )
-	{
-		fboard_shiftreg >>= 1;
-		fboard_shiftreg |= ( data & 1 ) << 4;
-		fboard_shiftcount++;
-	}
-
-	/* are we done shifting? */
-	if ( fboard_shiftcount == 5 )
-	{
-		/* reset count */
-		fboard_shiftcount = 0;
-
-		/* apply data to registers */
-		switch( reg )
-		{
-			case 0:		/* mirroring and options */
-				{
-					int mirroring;
-
-					vrom4k = fboard_shiftreg & 0x10;
-					size16k = fboard_shiftreg & 0x08;
-					switchlow = fboard_shiftreg & 0x04;
-
-					switch( fboard_shiftreg & 3 )
-					{
-						case 0:
-							mirroring = PPU_MIRROR_LOW;
-						break;
-
-						case 1:
-							mirroring = PPU_MIRROR_HIGH;
-						break;
-
-						case 2:
-							mirroring = PPU_MIRROR_VERT;
-						break;
-
-						default:
-						case 3:
-							mirroring = PPU_MIRROR_HORZ;
-						break;
-					}
-
-					/* apply mirroring */
-					ppu2c03b_set_mirroring( 0, mirroring );
-				}
-			break;
-
-			case 1:	/* video rom banking - bank 0 - 4k or 8k */
-				ppu2c03b_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, ( fboard_shiftreg & 0x1f ), 256 );
-			break;
-
-			case 2: /* video rom banking - bank 1 - 4k only */
-				if ( vrom4k )
-					ppu2c03b_set_videorom_bank( 0, 4, 4, ( fboard_shiftreg & 0x1f ), 256 );
-			break;
-
-			case 3:	/* program banking */
-				{
-					int bank = ( fboard_shiftreg & 0x0f ) * 0x4000;
-
-					if ( !size16k )
-					{
-						/* switch 32k */
-						memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x8000 );
-					}
-					else
-					{
-						/* switch 16k */
-						if ( switchlow )
-						{
-							/* low */
-							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x4000 );
-						}
-						else
-						{
-							/* high */
-							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x010000+bank], 0x4000 );
-						}
-					}
-				}
-			break;
-		}
-	}
-}
+/* F Board games (Ninja Gaiden, Double Dragon) */
 
 void init_pcfboard( void )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x48000], 0x8000 );
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x28000], 0x8000 );
+
+	mmc1_rom_mask = 0x07;
 
 	/* MMC mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, fboard_rom_switch_w );
+	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -535,25 +576,18 @@ void init_pcfboard( void )
 
 static int gboard_scanline_counter;
 static int gboard_scanline_latch;
+static int gboard_banks[2];
 
 static void gboard_scanline_cb( int num, int scanline, int vblank, int blanked )
 {
 	if ( !vblank && !blanked )
 	{
-		if ( --gboard_scanline_counter <= 0 )
+		if ( --gboard_scanline_counter == -1 )
 		{
 			gboard_scanline_counter = gboard_scanline_latch;
 			cpu_set_irq_line( 1, 0, PULSE_LINE );
 		}
 	}
-}
-
-static void gboard_irq_cb( void )
-{
-	memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[0x4e000], 0x2000 );
-
-	cpu_set_nmi_line( 1, PULSE_LINE );
-	pc10_int_detect = 1;
 }
 
 static WRITE_HANDLER( gboard_rom_switch_w )
@@ -569,9 +603,29 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 
 			if ( last_bank != ( data & 0xc0 ) )
 			{
+				int bank;
+
 				/* reset the banks */
-				memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
-				memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
+				if ( gboard_command & 0x40 )
+				{
+					/* high bank */
+					bank = gboard_banks[0] * 0x2000 + 0x10000;
+
+					memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
+					memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
+				}
+				else
+				{
+					/* low bank */
+					bank = gboard_banks[0] * 0x2000 + 0x10000;
+
+					memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
+					memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
+				}
+
+				/* mid bank */
+				bank = gboard_banks[1] * 0x2000 + 0x10000;
+				memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
 
 				last_bank = data & 0xc0;
 			}
@@ -581,6 +635,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 			{
 				UINT8 cmd = gboard_command & 0x07;
 				int page = ( gboard_command & 0x80 ) >> 5;
+				int bank;
 
 				switch( cmd )
 				{
@@ -603,7 +658,8 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 						if ( gboard_command & 0x40 )
 						{
 							/* high bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[0] = data & 0x1f;
+							bank = ( gboard_banks[0] ) * 0x2000 + 0x10000;
 
 							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
 							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
@@ -611,7 +667,8 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 						else
 						{
 							/* low bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[0] = data & 0x1f;
+							bank = ( gboard_banks[0] ) * 0x2000 + 0x10000;
 
 							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
 							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
@@ -621,7 +678,8 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 					case 7: /* program banking */
 						{
 							/* mid bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[1] = data & 0x1f;
+							bank = gboard_banks[1] * 0x2000 + 0x10000;
 
 							memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
 						}
@@ -650,6 +708,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 		break;
 
 		case 0x6000: /* disable irqs */
+			gboard_scanline_counter = gboard_scanline_latch;
 			ppu2c03b_set_scanline_callback( 0, 0 );
 		break;
 
@@ -672,6 +731,59 @@ void init_pcgboard( void )
 	/* extra ram at $6000-$7fff */
 	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_RAM );
 	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_RAM );
+
+	gboard_banks[0] = 0x1e;
+	gboard_banks[1] = 0x1f;
+	gboard_scanline_counter = 0;
+	gboard_scanline_latch = 0;
+
+	/* common init */
+	init_playch10();
+}
+
+/**********************************************************************************/
+
+/* i Board games (Captain Sky Hawk) */
+
+static WRITE_HANDLER( iboard_rom_switch_w )
+{
+	int bank = data & 3;
+
+	if ( data & 0x10 )
+		ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
+	else
+		ppu2c03b_set_mirroring( 0, PPU_MIRROR_LOW );
+
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank * 0x8000 + 0x10000], 0x8000 );
+}
+
+void init_pciboard( void )
+{
+	/* We do manual banking, in case the code falls through */
+	/* Copy the initial banks */
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x10000], 0x8000 );
+
+	/* Roms are banked at $8000 to $bfff */
+	install_mem_write_handler( 1, 0x8000, 0xffff, iboard_rom_switch_w );
+
+	/* common init */
+	init_playch10();
+}
+
+/**********************************************************************************/
+
+/* K Board games (Mario Open Golf) */
+
+void init_pckboard( void )
+{
+	/* We do manual banking, in case the code falls through */
+	/* Copy the initial banks */
+	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x48000], 0x8000 );
+
+	mmc1_rom_mask = 0x0f;
+
+	/* Roms are banked at $8000 to $bfff */
+	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();

@@ -327,7 +327,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_bking2 =
+static const struct MachineDriver machine_driver_bking2 =
 {
     /* basic machine hardware */
     {
@@ -361,7 +361,7 @@ static struct MachineDriver machine_driver_bking2 =
     512, 4*8+4*4+4*2+4*2,
     bking2_vh_convert_color_prom,
 
-    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+    VIDEO_TYPE_RASTER,
     0,  /* video hardware init */
     generic_vh_start,
     generic_vh_stop,

@@ -407,7 +407,7 @@ static struct YM3526interface ym3526_interface =
 
 
 
-static struct MachineDriver machine_driver_brkthru =
+static const struct MachineDriver machine_driver_brkthru =
 {
 	/* basic machine hardware */
 	{
@@ -454,7 +454,7 @@ static struct MachineDriver machine_driver_brkthru =
 	}
 };
 
-static struct MachineDriver machine_driver_darwin =
+static const struct MachineDriver machine_driver_darwin =
 {
 	/* basic machine hardware */
 	{

@@ -73,7 +73,7 @@ INPUT_PORTS_START( dotrikun )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_dotrikun =
+static const struct MachineDriver machine_driver_dotrikun =
 {
 	/* basic machine hardware */
 	{

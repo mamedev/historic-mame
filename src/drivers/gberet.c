@@ -582,7 +582,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver_gberet =
+static const struct MachineDriver machine_driver_gberet =
 {
 	/* basic machine hardware */
 	{
@@ -619,7 +619,7 @@ static struct MachineDriver machine_driver_gberet =
 	}
 };
 
-static struct MachineDriver machine_driver_gberetb =
+static const struct MachineDriver machine_driver_gberetb =
 {
 	/* basic machine hardware */
 	{
@@ -656,7 +656,7 @@ static struct MachineDriver machine_driver_gberetb =
 	}
 };
 
-static struct MachineDriver machine_driver_mrgoemon =
+static const struct MachineDriver machine_driver_mrgoemon =
 {
 	/* basic machine hardware */
 	{

@@ -16,6 +16,7 @@ static unsigned char *ram;
 extern unsigned char *snowbros_spriteram;
 
 void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( snowbros_spriteram_w );
 READ_HANDLER( snowbros_spriteram_r );
 
@@ -214,22 +215,15 @@ INPUT_PORTS_START( snowbros )
 INPUT_PORTS_END
 
 
-
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 sprites */
-	4096,	/* 4096 sprites */
-	4,	/* 4 bits per pixel */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
-	{
-		0, 4, 8, 12, 16, 20, 24, 28,
-		8*32+0, 8*32+4, 8*32+8, 8*32+12, 8*32+16, 8*32+20, 8*32+24, 8*32+28,
-	},
-	{
-		0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32
-	},
-	128*8
+	{ STEP8(0,4), STEP8(8*32,4) },
+	{ STEP8(0,32), STEP8(16*32,32) },
+	32*32
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -238,7 +232,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxLayout tilelayout_wb =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ STEP4(3*4,-4), STEP4(7*4,-4), STEP4(11*4,-4), STEP4(15*4,-4) },
+	{ STEP16(0,64) },
+	16*64
+};
 
+static struct GfxDecodeInfo gfxdecodeinfo_wb[] =
+{
+	{ REGION_GFX1, 0, &tilelayout_wb,  0, 16 },
+	{ -1 }
+};
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
@@ -256,7 +265,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver machine_driver_snowbros =
+static const struct MachineDriver machine_driver_snowbros =
 {
 	/* basic machine hardware */
 	{
@@ -283,7 +292,7 @@ static struct MachineDriver machine_driver_snowbros =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -299,7 +308,48 @@ static struct MachineDriver machine_driver_snowbros =
 	}
 };
 
+static const struct MachineDriver machine_driver_wintbob =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,	/* 10mhz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
+			readmem,writemem,0,0,
+			snowbros_interrupt,3
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3600000,	/* 3.6 Mhz ??? */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
 
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo_wb,
+	256, 256,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	wintbob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+	}
+};
 
 /***************************************************************************
 
@@ -368,9 +418,31 @@ ROM_START( snowbroj )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
 ROM_END
 
+ROM_START( wintbob )
+	ROM_REGION( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "wb03.bin", 0x00000, 0x10000, 0xdf56e168 )
+	ROM_LOAD_ODD ( "wb01.bin", 0x00000, 0x10000, 0x05722f17 )
+	ROM_LOAD_EVEN( "wb04.bin", 0x20000, 0x10000, 0x53be758d )
+	ROM_LOAD_ODD ( "wb02.bin", 0x20000, 0x10000, 0xfc8e292e )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_LOAD( "wb05.bin",     0x0000, 0x10000, 0x53fe59df )
+
+	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	/* probably identical data to Snow Bros, in a different format */
+	ROM_LOAD_GFX_EVEN( "wb13.bin",     0x00000, 0x10000, 0x426921de )
+	ROM_LOAD_GFX_ODD ( "wb06.bin",     0x00000, 0x10000, 0x68204937 )
+	ROM_LOAD_GFX_EVEN( "wb12.bin",     0x20000, 0x10000, 0xef4e04c7 )
+	ROM_LOAD_GFX_ODD ( "wb07.bin",     0x20000, 0x10000, 0x53f40978 )
+	ROM_LOAD_GFX_EVEN( "wb11.bin",     0x40000, 0x10000, 0x41cb4563 )
+	ROM_LOAD_GFX_ODD ( "wb08.bin",     0x40000, 0x10000, 0x9497b88c )
+	ROM_LOAD_GFX_EVEN( "wb10.bin",     0x60000, 0x10000, 0x5fa22b1e )
+	ROM_LOAD_GFX_ODD ( "wb09.bin",     0x60000, 0x10000, 0x9be718ca )
+ROM_END
 
 
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 3)" )
 GAME( 1990, snowbroj, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (Japan)" )
+GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )

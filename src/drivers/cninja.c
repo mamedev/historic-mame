@@ -729,7 +729,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /**********************************************************************************/
 
-static struct MachineDriver machine_driver_cninja =
+static const struct MachineDriver machine_driver_cninja =
 {
 	/* basic machine hardware */
 	{
@@ -781,7 +781,7 @@ static struct MachineDriver machine_driver_cninja =
 	}
 };
 
-static struct MachineDriver machine_driver_stoneage =
+static const struct MachineDriver machine_driver_stoneage =
 {
 	/* basic machine hardware */
 	{
@@ -829,7 +829,7 @@ static struct MachineDriver machine_driver_stoneage =
 	}
 };
 
-static struct MachineDriver machine_driver_edrandy =
+static const struct MachineDriver machine_driver_edrandy =
 {
 	/* basic machine hardware */
 	{

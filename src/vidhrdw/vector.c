@@ -816,7 +816,7 @@ static void clever_mark_dirty (void)
 	}
 }
 
-void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
+void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	int temp_x, temp_y;
@@ -871,99 +871,6 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		new++;
 	}
-}
-
-/*********************************************************************
-  Artwork functions.
- *********************************************************************/
-
-/*********************************************************************
-  Restore the old bitmap with the artwork (backdrop or overlay).
-  MLR 100598
- *********************************************************************/
-
-static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork_info *a, int full_refresh)
-{
-	int i, x, y;
-	struct osd_bitmap *artwork;
-
-	if (full_refresh)
-	{
-		copybitmap(bitmap, a->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-	}
-	else if (pixel)
-	{
-		artwork = a->artwork;
-
-		for (i=p_index-1; i>=0; i--)
-		{
-			x = pixel[i] >> 16;
-			y = pixel[i] & 0x0000ffff;
-			vector_pp (bitmap, x, y, vector_rp(artwork, x, y));
-		}
-	}
-}
-
-/*********************************************************************
-  vector_vh_update_backdrop
-
-  This draws a vector screen with backdrop.
-
-  First the backdrop is restored. Then the new vector screen
-  is recalculated with vector_vh_update. Changed pixels are
-  then merged with the backdrop.
- *********************************************************************/
-
-static void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork_info *a, int full_refresh)
-{
-	int i, x, y;
-	unsigned int coords;
-	int newcol, bdcol;
-	UINT8 r, g, b, rb, gb, bb;
-	struct osd_bitmap *vb = a->vector_bitmap;
-	struct osd_bitmap *ob = a->orig_artwork;
-	struct osd_bitmap *ab = a->artwork;
-	UINT8 *tab = a->pTable;
-	UINT8 *brightness = a->brightness;
-	vector_restore_artwork(bitmap, a, full_refresh);
-	vector_vh_update(vb, full_refresh);
-
-	if (bitmap->depth == 8)
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-			newcol = pens[tab[vector_rp(ob, x, y) * total_colors + invpens[vector_rp(vb, x, y)]]];
-			if (brightness[newcol] > brightness[vector_rp(ab, x, y)])
-				vector_pp (bitmap, x, y, newcol);
-		}
-	else
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-
-			osd_get_pen (vector_rp(vb, x, y), &r, &g, &b);
-			bdcol = vector_rp(ab, x, y);
-			osd_get_pen (bdcol, &rb, &gb, &bb);
-			r = MIN (255, r + rb / 4);
-			g = MIN (255, g + gb / 4);
-			b = MIN (255, b + bb / 4);
-			newcol = Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + a->start_pen];
-			if (brightness[newcol] > brightness[bdcol])
-				vector_pp (bitmap, x, y, newcol);
-		}
-}
-
-void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	if (artwork_backdrop)
-		vector_vh_update_backdrop(bitmap, artwork_backdrop, full_refresh);
-	else
-		vector_vh_update(bitmap, full_refresh);
 }
 
 #endif /* if !(defined xgl) && !(defined xfx) && !(defined svgafx) */

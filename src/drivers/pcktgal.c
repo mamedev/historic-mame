@@ -265,7 +265,7 @@ static struct MSM5205interface msm5205_interface =
 
 /***************************************************************************/
 
-static struct MachineDriver machine_driver_pcktgal =
+static const struct MachineDriver machine_driver_pcktgal =
 {
 	/* basic machine hardware */
 	{
@@ -294,7 +294,7 @@ static struct MachineDriver machine_driver_pcktgal =
 	512, 512,
 	ghostb_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -318,7 +318,7 @@ static struct MachineDriver machine_driver_pcktgal =
 	}
 };
 
-static struct MachineDriver machine_driver_bootleg =
+static const struct MachineDriver machine_driver_bootleg =
 {
 	/* basic machine hardware */
 	{
@@ -347,7 +347,7 @@ static struct MachineDriver machine_driver_bootleg =
 	512, 512,
 	ghostb_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

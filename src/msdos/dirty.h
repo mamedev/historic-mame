@@ -5,5 +5,5 @@
 
 
 typedef char dirtygrid[DIRTY_V * DIRTY_H];
-#define ISDIRTY(x,y) (dirty_new[(y)/16 * DIRTY_H + (x)/16] || dirty_old[(y)/16 * DIRTY_H + (x)/16])
+#define ISDIRTY(x,y) (dirty_new[(y)/16 * DIRTY_H + (x)/16])
 #define MARKDIRTY(x,y) dirty_new[(y)/16 * DIRTY_H + (x)/16] = 1

@@ -241,8 +241,5 @@ void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void exedexes_eof_callback(void)
 {
-	/* Mish: Spriteram is always 1 frame ahead, suggesting buffering.  I can't
-		find a register to control this so I assume it happens automatically
-		every frame at the end of vblank */
 	buffer_spriteram_w(0,0);
 }

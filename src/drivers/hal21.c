@@ -652,7 +652,7 @@ static struct MemoryWriteAddress hal21_writemem_CPUB[] = {
 
 /**************************************************************************/
 
-static struct MachineDriver machine_driver_aso =
+static const struct MachineDriver machine_driver_aso =
 {
 	{
 		{
@@ -701,7 +701,7 @@ static struct MachineDriver machine_driver_aso =
 	}
 };
 
-static struct MachineDriver machine_driver_hal21 = {
+static const struct MachineDriver machine_driver_hal21 = {
 	{
 		{
 			CPU_Z80,

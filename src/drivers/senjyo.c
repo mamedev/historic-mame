@@ -573,7 +573,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver_senjyo =
+static const struct MachineDriver machine_driver_senjyo =
 {
 	{
 		{

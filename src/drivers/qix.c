@@ -607,7 +607,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_qix =
+static const struct MachineDriver machine_driver_qix =
 {
 	/* basic machine hardware */
 	{
@@ -661,7 +661,7 @@ static struct MachineDriver machine_driver_qix =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_mcu =
+static const struct MachineDriver machine_driver_mcu =
 {
 	/* basic machine hardware */
 	{
@@ -721,7 +721,7 @@ static struct MachineDriver machine_driver_mcu =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_zookeep =
+static const struct MachineDriver machine_driver_zookeep =
 {
 	/* basic machine hardware */
 	{

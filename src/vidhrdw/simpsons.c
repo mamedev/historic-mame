@@ -48,7 +48,7 @@ int simpsons_vh_start( void )
 {
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
-	if (K053247_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K053247_vh_start(REGION_GFX2,53,23,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;

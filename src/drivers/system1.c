@@ -1662,7 +1662,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver_system1 =
+static const struct MachineDriver machine_driver_system1 =
 {
 	/* basic machine hardware */
 	{
@@ -1708,7 +1708,7 @@ static struct MachineDriver machine_driver_system1 =
 
 
 /* driver with reduced visible area for scrolling games */
-static struct MachineDriver machine_driver_small =
+static const struct MachineDriver machine_driver_small =
 {
 	/* basic machine hardware */
 	{
@@ -1752,7 +1752,7 @@ static struct MachineDriver machine_driver_small =
 };
 
 
-static struct MachineDriver machine_driver_hvymetal =
+static const struct MachineDriver machine_driver_hvymetal =
 {
 	/* basic machine hardware */
 	{
@@ -1796,7 +1796,7 @@ static struct MachineDriver machine_driver_hvymetal =
 };
 
 
-static struct MachineDriver machine_driver_chplft =
+static const struct MachineDriver machine_driver_chplft =
 {
 	/* basic machine hardware */
 	{
@@ -1840,7 +1840,7 @@ static struct MachineDriver machine_driver_chplft =
 };
 
 
-static struct MachineDriver machine_driver_brain =
+static const struct MachineDriver machine_driver_brain =
 {
 	/* basic machine hardware */
 	{
@@ -1884,7 +1884,7 @@ static struct MachineDriver machine_driver_brain =
 };
 
 
-static struct MachineDriver machine_driver_wbml =
+static const struct MachineDriver machine_driver_wbml =
 {
 	/* basic machine hardware */
 	{

@@ -285,11 +285,17 @@ int cem3394_num(const struct MachineSound *msound) { return ((struct cem3394_int
 #if (HAS_QSOUND)
 int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_SAA1099)
+int saa1099_num(const struct MachineSound *msound) { return ((struct SAA1099_interface*)msound->sound_interface)->numchips; }
+#endif
 #if (HAS_SPEAKER)
 int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_WAVE)
 int wave_num(const struct MachineSound *msound) { return ((struct Wave_interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_BEEP)
+int beep_num(const struct MachineSound *msound) { return ((struct beep_interface*)msound->sound_interface)->num; }
 #endif
 
 struct snd_interface sndintf[] =
@@ -795,6 +801,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_SAA1099)
+	{
+		SOUND_SAA1099,
+		"SAA1099",
+		saa1099_num,
+		0,
+		saa1099_sh_start,
+		saa1099_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SPEAKER)
 	{
 		SOUND_SPEAKER,
@@ -819,6 +837,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_BEEP)
+	{
+		SOUND_BEEP,
+		"Beep",
+		beep_num,
+		0,
+		beep_sh_start,
+		beep_sh_stop,
+		beep_sh_update,
+		0
+	},
+#endif
 };
 
 
@@ -833,8 +863,11 @@ int sound_start(void)
 	{
 		if (sndintf[i].sound_num != i)
 		{
+            int j;
 logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sndintf[i].sound_num);
-			return 1;
+			for (j = 0; j < i; j++)
+				logerror("ID %2d: %s\n", j, sndintf[j].name);
+            return 1;
 		}
 	}
 

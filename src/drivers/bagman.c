@@ -523,7 +523,7 @@ static struct TMS5110interface tms5110_interface =
 	bagman_speech_rom_read_bit	/*M0 callback function. Called whenever chip requests a single bit of data*/
 };
 
-static struct MachineDriver machine_driver_bagman =
+static const struct MachineDriver machine_driver_bagman =
 {
 	/* basic machine hardware */
 	{
@@ -544,7 +544,7 @@ static struct MachineDriver machine_driver_bagman =
 	64,64,
 	bagman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -564,7 +564,7 @@ static struct MachineDriver machine_driver_bagman =
 	}
 };
 
-static struct MachineDriver machine_driver_pickin =
+static const struct MachineDriver machine_driver_pickin =
 {
 	/* basic machine hardware */
 	{
@@ -585,7 +585,7 @@ static struct MachineDriver machine_driver_pickin =
 	64,64,
 	bagman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

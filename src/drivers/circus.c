@@ -296,7 +296,7 @@ static struct DACinterface dac_interface =
 	{ 255, 255 }
 };
 
-static struct MachineDriver machine_driver_circus =
+static const struct MachineDriver machine_driver_circus =
 {
 	/* basic machine hardware */
 	{
@@ -334,7 +334,7 @@ static struct MachineDriver machine_driver_circus =
 };
 
 
-static struct MachineDriver machine_driver_robotbwl =
+static const struct MachineDriver machine_driver_robotbwl =
 {
 	/* basic machine hardware */
 	{
@@ -371,7 +371,7 @@ static struct MachineDriver machine_driver_robotbwl =
 	}
 };
 
-static struct MachineDriver machine_driver_crash =
+static const struct MachineDriver machine_driver_crash =
 {
 	/* basic machine hardware */
 	{
@@ -408,7 +408,7 @@ static struct MachineDriver machine_driver_crash =
 	}
 };
 
-static struct MachineDriver machine_driver_ripcord =
+static const struct MachineDriver machine_driver_ripcord =
 {
 	/* basic machine hardware */
 	{

@@ -27,6 +27,7 @@ Memory Overview:
 WRITE_HANDLER( tigeroad_videoctrl_w );
 WRITE_HANDLER( tigeroad_scroll_w );
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tigeroad_eof_callback(void);
 
 
 static unsigned char *ram;
@@ -490,54 +491,46 @@ INPUT_PORTS_END
 
 static struct GfxLayout text_layout =
 {
-	8,8,    /* character size */
-	2048,   /* number of characters */
-	2,      /* bits per pixel */
-	{ 4, 0 }, /* plane offsets */
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 }, /* x offsets */
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 }, /* y offsets */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
 
 static struct GfxLayout tile_layout =
 {
-	32,32,  /* tile size */
-	2048,   /* number of tiles */
-	4,      /* bits per pixel */
-
-	{ 2048*256*8+4, 2048*256*8+0, 4, 0 },
-
-	{ /* x offsets */
+	32,32,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
+	{
 		0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 		64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+8+0, 64*8+8+1, 64*8+8+2, 64*8+8+3,
 		2*64*8+0, 2*64*8+1, 2*64*8+2, 2*64*8+3, 2*64*8+8+0, 2*64*8+8+1, 2*64*8+8+2, 2*64*8+8+3,
 		3*64*8+0, 3*64*8+1, 3*64*8+2, 3*64*8+3, 3*64*8+8+0, 3*64*8+8+1, 3*64*8+8+2, 3*64*8+8+3,
 	},
-
-	{ /* y offsets */
+	{
 		0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 		8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16,
 		16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
 		24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16
 	},
-
 	256*8
 };
 
 static struct GfxLayout sprite_layout =
 {
-	16,16,  /* tile size */
-	4096,   /* number of tiles */
-	4,      /* bits per pixel */
-	{ 3*4096*32*8, 2*4096*32*8, 1*4096*32*8, 0*4096*32*8 }, /* plane offsets */
-	{ /* x offsets */
-		0, 1, 2, 3, 4, 5, 6, 7,
-		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7
-	},
-	{ /* y offsets */
-		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
-	},
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8
 };
 
@@ -579,7 +572,7 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static struct MachineDriver machine_driver_tigeroad =
+static const struct MachineDriver machine_driver_tigeroad =
 {
 	{
 		{
@@ -596,8 +589,7 @@ static struct MachineDriver machine_driver_tigeroad =
 								/* IRQs are triggered by the YM2203 */
 		}
 	},
-	60, 2500,   /* frames per second, vblank duration */
-				/* vblank duration hand tuned to get proper sprite/background alignment */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,  /* CPU slices per frame */
 	0,
 
@@ -607,8 +599,8 @@ static struct MachineDriver machine_driver_tigeroad =
 	576, 576,
 	0, /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	tigeroad_eof_callback,
 	0,
 	0,
 	tigeroad_vh_screenrefresh,
@@ -624,7 +616,7 @@ static struct MachineDriver machine_driver_tigeroad =
 };
 
 /* same as above but with additional Z80 for samples playback */
-static struct MachineDriver machine_driver_toramich =
+static const struct MachineDriver machine_driver_toramich =
 {
 	{
 		{
@@ -648,8 +640,7 @@ static struct MachineDriver machine_driver_toramich =
 			interrupt,4000	/* ? */
 		}
 	},
-	60, 2500,   /* frames per second, vblank duration */
-				/* vblank duration hand tuned to get proper sprite/background alignment */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,  /* CPU slices per frame */
 	0,
 
@@ -659,8 +650,8 @@ static struct MachineDriver machine_driver_toramich =
 	576, 576,
 	0, /* convert color prom routine */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	tigeroad_eof_callback,
 	0,
 	0,
 	tigeroad_vh_screenrefresh,
@@ -771,25 +762,19 @@ ROM_START( f1dream )
 	ROM_REGION( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "10d_01.bin",   0x00000, 0x08000, 0x361caf00 ) /* 8x8 text */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x060000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03f_12.bin",   0x00000, 0x10000, 0xbc13e43c ) /* tiles */
 	ROM_LOAD( "01f_10.bin",   0x10000, 0x10000, 0xf7617ad9 )
 	ROM_LOAD( "03h_14.bin",   0x20000, 0x10000, 0xe33cd438 )
-	/* 30000-7ffff empty */
-	ROM_LOAD( "02f_11.bin",   0x80000, 0x10000, 0x4aa49cd7 )
-	ROM_LOAD( "17f_09.bin",   0x90000, 0x10000, 0xca622155 )
-	ROM_LOAD( "02h_13.bin",   0xa0000, 0x10000, 0x2a63961e )
-	/* b0000-fffff empty */
+	ROM_LOAD( "02f_11.bin",   0x30000, 0x10000, 0x4aa49cd7 )
+	ROM_LOAD( "17f_09.bin",   0x40000, 0x10000, 0xca622155 )
+	ROM_LOAD( "02h_13.bin",   0x50000, 0x10000, 0x2a63961e )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03b_06.bin",   0x00000, 0x10000, 0x5e54e391 ) /* sprites */
-	/* 10000-1ffff empty */
-	ROM_LOAD( "02b_05.bin",   0x20000, 0x10000, 0xcdd119fd )
-	/* 30000-3ffff empty */
-	ROM_LOAD( "03d_08.bin",   0x40000, 0x10000, 0x811f2e22 )
-	/* 50000-5ffff empty */
-	ROM_LOAD( "02d_07.bin",   0x60000, 0x10000, 0xaa9a1233 )
-	/* 70000-7ffff empty */
+	ROM_LOAD( "02b_05.bin",   0x10000, 0x10000, 0xcdd119fd )
+	ROM_LOAD( "03d_08.bin",   0x20000, 0x10000, 0x811f2e22 )
+	ROM_LOAD( "02d_07.bin",   0x30000, 0x10000, 0xaa9a1233 )
 
 	ROM_REGION( 0x08000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
@@ -811,25 +796,19 @@ ROM_START( f1dreamb )
 	ROM_REGION( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "10d_01.bin",   0x00000, 0x08000, 0x361caf00 ) /* 8x8 text */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x060000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03f_12.bin",   0x00000, 0x10000, 0xbc13e43c ) /* tiles */
 	ROM_LOAD( "01f_10.bin",   0x10000, 0x10000, 0xf7617ad9 )
 	ROM_LOAD( "03h_14.bin",   0x20000, 0x10000, 0xe33cd438 )
-	/* 30000-7ffff empty */
-	ROM_LOAD( "02f_11.bin",   0x80000, 0x10000, 0x4aa49cd7 )
-	ROM_LOAD( "17f_09.bin",   0x90000, 0x10000, 0xca622155 )
-	ROM_LOAD( "02h_13.bin",   0xa0000, 0x10000, 0x2a63961e )
-	/* b0000-fffff empty */
+	ROM_LOAD( "02f_11.bin",   0x30000, 0x10000, 0x4aa49cd7 )
+	ROM_LOAD( "17f_09.bin",   0x40000, 0x10000, 0xca622155 )
+	ROM_LOAD( "02h_13.bin",   0x50000, 0x10000, 0x2a63961e )
 
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03b_06.bin",   0x00000, 0x10000, 0x5e54e391 ) /* sprites */
-	/* 10000-1ffff empty */
-	ROM_LOAD( "02b_05.bin",   0x20000, 0x10000, 0xcdd119fd )
-	/* 30000-3ffff empty */
-	ROM_LOAD( "03d_08.bin",   0x40000, 0x10000, 0x811f2e22 )
-	/* 50000-5ffff empty */
-	ROM_LOAD( "02d_07.bin",   0x60000, 0x10000, 0xaa9a1233 )
-	/* 70000-7ffff empty */
+	ROM_LOAD( "02b_05.bin",   0x10000, 0x10000, 0xcdd119fd )
+	ROM_LOAD( "03d_08.bin",   0x20000, 0x10000, 0x811f2e22 )
+	ROM_LOAD( "02d_07.bin",   0x30000, 0x10000, 0xaa9a1233 )
 
 	ROM_REGION( 0x08000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )

@@ -622,7 +622,7 @@ static struct namco_interface namco_interface =
 
 
 /* the machine driver: 2 6809s running at 1MHz */
-static struct MachineDriver machine_driver_mappy =
+static const struct MachineDriver machine_driver_mappy =
 {
 	/* basic machine hardware */
 	{
@@ -666,7 +666,7 @@ static struct MachineDriver machine_driver_mappy =
 	}
 };
 
-static struct MachineDriver machine_driver_digdug2 =
+static const struct MachineDriver machine_driver_digdug2 =
 {
 	/* basic machine hardware */
 	{
@@ -710,7 +710,7 @@ static struct MachineDriver machine_driver_digdug2 =
 	}
 };
 
-static struct MachineDriver machine_driver_motos =
+static const struct MachineDriver machine_driver_motos =
 {
 	/* basic machine hardware */
 	{
@@ -754,7 +754,7 @@ static struct MachineDriver machine_driver_motos =
 	}
 };
 
-static struct MachineDriver machine_driver_todruaga =
+static const struct MachineDriver machine_driver_todruaga =
 {
 	/* basic machine hardware */
 	{

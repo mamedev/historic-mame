@@ -357,7 +357,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_missile =
+static const struct MachineDriver machine_driver_missile =
 {
 	/* basic machine hardware */
 	{

@@ -455,7 +455,9 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 
 	/* misc configuration */
 	options.cheat	   = get_bool ("config", "cheat", NULL, 0);
+#ifdef MAME_DEBUG
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
+#endif
 
 	tmpstr = get_string ("config", "cheatfile", "cf", CHEAT_NAME );
 	cheatfile = malloc(strlen(tmpstr) + 1);

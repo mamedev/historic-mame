@@ -359,7 +359,7 @@ static int madgear_interrupt(void)
 	else return 6; /* Controls */
 }
 
-static struct MachineDriver machine_driver_lastduel =
+static const struct MachineDriver machine_driver_lastduel =
 {
 	/* basic machine hardware */
 	{
@@ -403,7 +403,7 @@ static struct MachineDriver machine_driver_lastduel =
 	}
 };
 
-static struct MachineDriver machine_driver_madgear =
+static const struct MachineDriver machine_driver_madgear =
 {
 	/* basic machine hardware */
 	{

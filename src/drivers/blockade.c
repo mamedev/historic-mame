@@ -485,7 +485,7 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver machine_driver_blockade =
+static const struct MachineDriver machine_driver_blockade =
 {
 	/* basic machine hardware */
 	{
@@ -522,7 +522,7 @@ static struct MachineDriver machine_driver_blockade =
 	}
 };
 
-static struct MachineDriver machine_driver_comotion =
+static const struct MachineDriver machine_driver_comotion =
 {
 	/* basic machine hardware */
 	{
@@ -559,7 +559,7 @@ static struct MachineDriver machine_driver_comotion =
 	}
 };
 
-static struct MachineDriver machine_driver_blasto =
+static const struct MachineDriver machine_driver_blasto =
 {
 	/* basic machine hardware */
 	{
@@ -596,7 +596,7 @@ static struct MachineDriver machine_driver_blasto =
 	}
 };
 
-static struct MachineDriver machine_driver_hustle =
+static const struct MachineDriver machine_driver_hustle =
 {
     /* basic machine hardware */
     {

@@ -27,7 +27,7 @@ void blockout_vh_stop(void);
 void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-int blockout_interrupt(void)
+static int blockout_interrupt(void)
 {
 	/* interrupt 6 is vblank */
 	/* interrupt 5 reads coin inputs - might have to be triggered only */
@@ -35,7 +35,7 @@ int blockout_interrupt(void)
 	return 6 - cpu_getiloops();
 }
 
-READ_HANDLER( blockout_input_r )
+static READ_HANDLER( blockout_input_r )
 {
 	switch (offset)
 	{
@@ -55,7 +55,7 @@ logerror("PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
 	}
 }
 
-WRITE_HANDLER( blockout_sound_command_w )
+static WRITE_HANDLER( blockout_sound_command_w )
 {
 	switch (offset)
 	{
@@ -221,7 +221,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver machine_driver_blockout =
+static const struct MachineDriver machine_driver_blockout =
 {
 	/* basic machine hardware */
 	{

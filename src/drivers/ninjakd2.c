@@ -534,7 +534,7 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static struct MachineDriver machine_driver_ninjakd2 =
+static const struct MachineDriver machine_driver_ninjakd2 =
 {
 	{
 		{
@@ -568,7 +568,7 @@ static struct MachineDriver machine_driver_ninjakd2 =
 	}
 };
 
-static struct MachineDriver machine_driver_ninjak2a =
+static const struct MachineDriver machine_driver_ninjak2a =
 {
 	{
 		{

@@ -229,15 +229,15 @@ int old_data, new_data;
 	switch (offset)
 	{
  		case 0x0000   :	// leds
- 			osd_led_w(0, (new_data >> 4) & 1 );
-			osd_led_w(1, (new_data >> 5) & 1 );
+ 			set_led_status(0,new_data & 0x10);
+			set_led_status(1,new_data & 0x20);
 			break;
 
 		case 0x0002   :	// ?? 91/1/91/1 ...
 			break;
 
  		case 0x0004   :	// motor (seat?)
-			osd_led_w(2, (new_data != old_data) ? 1 : 0);
+			set_led_status(2, (new_data != old_data) ? 1 : 0);
  			break;
 
  		case 0x0006   :	// motor (wheel?)
@@ -300,11 +300,11 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 		case 0x0004   :
 		case 0x0014   :
 
-			osd_led_w(0, (new_data >> 2) & 1 );	// 1p start lamp
-			osd_led_w(1, (new_data >> 5) & 1 );	// 2p start lamp?
+			set_led_status(0,new_data & 0x04);	// 1p start lamp
+			set_led_status(1,new_data & 0x20);	// 2p start lamp?
 
 			// wheel | seat motor
-			osd_led_w(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
+			set_led_status(2, ((new_data >> 3) | (new_data >> 4)) & 1 );
 
 			break;
 

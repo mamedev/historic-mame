@@ -495,7 +495,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_gyruss =
+static const struct MachineDriver machine_driver_gyruss =
 {
 	/* basic machine hardware */
 	{
@@ -541,7 +541,7 @@ static struct MachineDriver machine_driver_gyruss =
 	32,16*4+16*16,
 	gyruss_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

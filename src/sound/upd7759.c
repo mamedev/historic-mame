@@ -254,8 +254,8 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
 
-	// Added and Modified by Takahiro Nogi. 1999/10/28
-#if 0	// original
+	/* Added and Modified by Takahiro Nogi. 1999/10/28 */
+#if 0	/* original */
 	switch (data[j])
 	{
 		case 0x53: sample->freq = 8000; break;

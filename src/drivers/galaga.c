@@ -391,7 +391,7 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static struct MachineDriver machine_driver_galaga =
+static const struct MachineDriver machine_driver_galaga =
 {
 	/* basic machine hardware */
 	{

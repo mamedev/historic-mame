@@ -52,6 +52,7 @@ enum addr_mode {
 	acc,   /* accumulator */
 	imm,   /* immediate */
 	iw2,   /* immediate word (65ce02) */
+	iw3,   /* augment (65ce02) */
 	adr,   /* absolute address (jmp,jsr) */
 	aba,   /* absolute */
 	zpg,   /* zero page */
@@ -90,12 +91,14 @@ enum opcodes {
 	rla,  rra, sax,  slo,  sre,  sah,  say,  ssh,
 	sxh,  syh, top,  oal,  kil,
 /* 65ce02 mnemonics */
-	cle,  see,	map,
+	cle,  see,  rtn,  aug,
 	tab,  tba,	taz,  tza, tys, tsy,
 	ldz,  stz2/* real register store */,
 	dez,  inz,	cpz,  phz,	plz,
 	neg,  asr2/* arithmetic shift right */,
-	asw,  row,	dew,  inw,	phw
+	asw,  row,	dew,  inw,	phw,
+/* 4510 mnemonics */
+	map
 };
 
 
@@ -119,12 +122,14 @@ static const char *token[]=
 	"rla", "rra", "sax", "slo", "sre", "sah", "say", "ssh",
 	"sxh", "syh", "top", "oal", "kil",
 	/* 65ce02 mnemonics */
-	"cle", "see", "map",
+	"cle", "see", "rtn", "aug",
 	"tab", "tba", "taz", "tza", "tys", "tsy",
 	"ldz", "stz",
 	"dez", "inz", "cpz", "phz", "plz",
 	"neg", "asr",
-	"asw", "row", "dew", "inw", "phw"
+	"asw", "row", "dew", "inw", "phw",
+/* 4510 mnemonics */
+	"map"
 };
 
 /* Some really short names for the EA access modes */
@@ -438,8 +443,78 @@ static const UINT8 op65ce02[256][3] = {
 	{bvc,rel,BRA},{eor,idy,MRD},{eor,idz,MRD},{bvc,rw2,BRA},/* 50 */
 	{asr2,zpx,ZRW},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
 	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{tab,imp,0  },
+	{aug,iw3,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
+	{rts,imp,0	},{adc,idx,MRD},{rtn,imm,VAL},{bsr,rw2,BRA},/* 60 */
+	{stz2,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
+	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{tza,imp,0  },
+	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
+	{bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{bvs,rw2,BRA},/* 70 */
+	{stz2,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
+	{sei,imp,0	},{adc,aby,MRD},{ply,imp,0	},{tba,imp,0  },
+	{jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
+	{bra,rel,BRA},{sta,idx,MWR},{sta,isy,MWR},{bra,rw2,BRA},/* 80 */
+	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
+	{dey,imp,0	},{bit,imm,VAL},{txa,imp,0	},{sty,abx,MWR},
+	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
+	{bcc,rel,BRA},{sta,idy,MWR},{sta,inz,MWR},{bcc,rw2,BRA},/* 90 */
+	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
+	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{stx,aby,MWR},
+	{stz2,aba,MWR},{sta,abx,MWR},{stz2,abx,MWR},{bbs,zpb,ZRD},
+	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ldz,imm,VAL},/* a0 */
+	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
+	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ldz,aba,MRD},
+	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
+	{bcs,rel,BRA},{lda,idy,MRD},{lda,inz,MRD},{bcs,rw2,BRA},/* b0 */
+	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
+	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ldz,abx,MRD},
+	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
+	{cpy,imm,VAL},{cmp,idx,MRD},{cpz,imm,VAL},{dew,zpg,ZRW2},/* c0 */
+	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
+	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{asw,aba,MRW2},
+	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
+	{bne,rel,BRA},{cmp,idy,MRD},{cmp,idz,MRD},{bne,rw2,BRA},/* d0 */
+	{cpz,zpg,MRD},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
+	{cld,imp,0	},{cmp,aby,MRD},{phx,imp,0	},{phz,imp,0  },
+	{cpz,aba,MRD},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
+	{cpx,imm,VAL},{sbc,idx,MRD},{lda,isy,MRD},{inw,zpg,ZRW2},/* e0 */
+	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
+	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{row,aba,MRW2},
+	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
+	{beq,rel,BRA},{sbc,idy,MRD},{sbc,idz,MRD},{beq,rw2,BRA},/* f0 */
+	{phw,iw2,VAL},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
+	{sed,imp,0	},{sbc,aby,MRD},{plx,imp,0	},{plz,imp,0  },
+	{phw,aba,MRD2},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+};
+#endif
+
+#if (HAS_M4510)
+// only map instead of aug and 20 bit memory management
+static const UINT8 op4510[256][3] = {
+	{brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
+	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
+	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0  },
+	{tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
+	{bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rw2,BRA},/* 10 */
+	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
+	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{inz,imp,0  },
+	{tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+	{jsr,adr,0	},{and,idx,MRD},{jsr,ind,0	},{jsr,iax,0  },/* 20 */
+	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
+	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{tys,imp,0  },
+	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
+	{bmi,rel,BRA},{and,idz,MRD},{and,zpi,MRD},{bmi,rw2,BRA},/* 30 */
+	{bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
+	{sec,imp,0	},{and,aby,MRD},{dea,imp,0	},{dez,imp,0  },
+	{bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
+	{rti,imp,0	},{eor,idx,MRD},{neg,imp,0	},{asr2,imp,0 },/* 40 */
+	{asr2,zpg,ZRW},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
+	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{taz,imp,0  },
+	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
+	{bvc,rel,BRA},{eor,idy,MRD},{eor,idz,MRD},{bvc,rw2,BRA},/* 50 */
+	{asr2,zpx,ZRW},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
+	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{tab,imp,0  },
 	{map,imp,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
-	{rts,imp,0	},{adc,idx,MRD},{rts,imm,VAL},{bsr,rw2,BRA},/* 60 */
+	{rts,imp,0	},{adc,idx,MRD},{rtn,imm,VAL},{bsr,rw2,BRA},/* 60 */
 	{stz2,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
 	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{tza,imp,0  },
 	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
@@ -723,7 +798,7 @@ static READ_HANDLER(m4510_readmem)
 }
 
 static CPU_TYPE type_m4510 = {
-	(const UINT8*)op65ce02, m4510_get_reg, m4510_readmem, m6509_get_argword
+	(const UINT8*)op4510, m4510_get_reg, m4510_readmem, m6509_get_argword
 };
 #endif
 
@@ -791,6 +866,13 @@ unsigned int Dasm6502Helper(CPU_TYPE *this, char *buffer, unsigned pc)
 		pc += 2;
 		symbol = set_ea_info( 0, addr, EA_UINT16, access );
 		dst += sprintf(dst,"#%s", symbol);
+		break;	
+	case iw3:
+		addr = ARGWORD(pc);
+		pc += 2;
+		addr |= ARGBYTE(pc++)<<16;
+//		symbol = set_ea_info( 0, addr, EA_UINT16, access );
+		dst += sprintf(dst,"#%.6x", addr);
 		break;
 
 	case zpg:

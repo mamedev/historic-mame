@@ -157,7 +157,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_quantum =
+static const struct MachineDriver machine_driver_quantum =
 {
 	/* basic machine hardware */
 	{
@@ -178,7 +178,7 @@ static struct MachineDriver machine_driver_quantum =
 	256, 0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	avg_start_quantum,
 	avg_stop,

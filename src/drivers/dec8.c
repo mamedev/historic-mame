@@ -2050,7 +2050,7 @@ static int oscar_interrupt(void)
 
 /******************************************************************************/
 
-static struct MachineDriver machine_driver_cobracom =
+static const struct MachineDriver machine_driver_cobracom =
 {
 	/* basic machine hardware */
 	{
@@ -2099,7 +2099,7 @@ static struct MachineDriver machine_driver_cobracom =
 	}
 };
 
-static struct MachineDriver machine_driver_ghostb =
+static const struct MachineDriver machine_driver_ghostb =
 {
 	/* basic machine hardware */
 	{
@@ -2148,7 +2148,7 @@ static struct MachineDriver machine_driver_ghostb =
 	}
 };
 
-static struct MachineDriver machine_driver_srdarwin =
+static const struct MachineDriver machine_driver_srdarwin =
 {
 	/* basic machine hardware */
 	{
@@ -2197,7 +2197,7 @@ static struct MachineDriver machine_driver_srdarwin =
 	}
 };
 
-static struct MachineDriver machine_driver_gondo =
+static const struct MachineDriver machine_driver_gondo =
 {
 	/* basic machine hardware */
 	{
@@ -2246,7 +2246,7 @@ static struct MachineDriver machine_driver_gondo =
 	}
 };
 
-static struct MachineDriver machine_driver_oscar =
+static const struct MachineDriver machine_driver_oscar =
 {
 	/* basic machine hardware */
 	{
@@ -2301,7 +2301,7 @@ static struct MachineDriver machine_driver_oscar =
 	}
 };
 
-static struct MachineDriver machine_driver_lastmiss =
+static const struct MachineDriver machine_driver_lastmiss =
 {
 	/* basic machine hardware */
 	{
@@ -2356,7 +2356,7 @@ static struct MachineDriver machine_driver_lastmiss =
 	}
 };
 
-static struct MachineDriver machine_driver_shackled =
+static const struct MachineDriver machine_driver_shackled =
 {
 	/* basic machine hardware */
 	{
@@ -2411,7 +2411,7 @@ static struct MachineDriver machine_driver_shackled =
 	}
 };
 
-static struct MachineDriver machine_driver_csilver =
+static const struct MachineDriver machine_driver_csilver =
 {
 	/* basic machine hardware */
 	{
@@ -2470,7 +2470,7 @@ static struct MachineDriver machine_driver_csilver =
 	}
 };
 
-static struct MachineDriver machine_driver_garyoret =
+static const struct MachineDriver machine_driver_garyoret =
 {
 	/* basic machine hardware */
 	{

@@ -189,7 +189,7 @@ static int lgtnfght_interrupt(void)
 
 
 
-WRITE_HANDLER( tmnt_sound_command_w )
+static WRITE_HANDLER( tmnt_sound_command_w )
 {
 	soundlatch_w(0,data & 0xff);
 }
@@ -2191,7 +2191,7 @@ static struct K053260_interface glfgreat_k053260_interface =
 };
 
 
-static struct MachineDriver machine_driver_mia =
+static const struct MachineDriver machine_driver_mia =
 {
 	/* basic machine hardware */
 	{
@@ -2238,7 +2238,7 @@ static struct MachineDriver machine_driver_mia =
 	}
 };
 
-static struct MachineDriver machine_driver_tmnt =
+static const struct MachineDriver machine_driver_tmnt =
 {
 	/* basic machine hardware */
 	{
@@ -2297,7 +2297,7 @@ static struct MachineDriver machine_driver_tmnt =
 	}
 };
 
-static struct MachineDriver machine_driver_punkshot =
+static const struct MachineDriver machine_driver_punkshot =
 {
 	/* basic machine hardware */
 	{
@@ -2346,7 +2346,7 @@ static struct MachineDriver machine_driver_punkshot =
 	}
 };
 
-static struct MachineDriver machine_driver_lgtnfght =
+static const struct MachineDriver machine_driver_lgtnfght =
 {
 	/* basic machine hardware */
 	{
@@ -2393,7 +2393,7 @@ static struct MachineDriver machine_driver_lgtnfght =
 	}
 };
 
-static struct MachineDriver machine_driver_detatwin =
+static const struct MachineDriver machine_driver_detatwin =
 {
 	/* basic machine hardware */
 	{
@@ -2443,7 +2443,7 @@ static struct MachineDriver machine_driver_detatwin =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_glfgreat =
+static const struct MachineDriver machine_driver_glfgreat =
 {
 	/* basic machine hardware */
 	{
@@ -2487,7 +2487,7 @@ static struct MachineDriver machine_driver_glfgreat =
 	}
 };
 
-static struct MachineDriver machine_driver_tmnt2 =
+static const struct MachineDriver machine_driver_tmnt2 =
 {
 	/* basic machine hardware */
 	{
@@ -2537,7 +2537,7 @@ static struct MachineDriver machine_driver_tmnt2 =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_ssriders =
+static const struct MachineDriver machine_driver_ssriders =
 {
 	/* basic machine hardware */
 	{
@@ -2587,7 +2587,7 @@ static struct MachineDriver machine_driver_ssriders =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_thndrx2 =
+static const struct MachineDriver machine_driver_thndrx2 =
 {
 	/* basic machine hardware */
 	{

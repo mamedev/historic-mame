@@ -43,7 +43,7 @@ WRITE_HANDLER( avalnche_output_w )
 	switch (offset & 0x07)
 	{
 		case 0x00:		/* 1 CREDIT LAMP */
-	        osd_led_w(0,(data & 0x01));
+	        set_led_status(0,data & 0x01);
 			break;
 		case 0x01:		/* ATTRACT */
 			attract = data & 0x01;
@@ -61,7 +61,7 @@ WRITE_HANDLER( avalnche_output_w )
 			}
 			break;
 		case 0x03:		/* 2 CREDIT LAMP */
-	        osd_led_w(1,(data & 0x01));
+	        set_led_status(1,data & 0x01);
 			break;
 		case 0x04:		/* AUD0 */
 			aud0 = data & 0x01;
@@ -73,7 +73,7 @@ WRITE_HANDLER( avalnche_output_w )
 			aud2 = data & 0x01;
 			break;
 		case 0x07:		/* START LAMP (Serve button) */
-	        osd_led_w(2,(data & 0x01));
+	        set_led_status(2,data & 0x01);
 			break;
 	}
 }

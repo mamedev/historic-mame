@@ -835,7 +835,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver machine_driver_lastday =
+static const struct MachineDriver machine_driver_lastday =
 {
 	/* basic machine hardware */
 	{
@@ -878,7 +878,7 @@ static struct MachineDriver machine_driver_lastday =
 	}
 };
 
-static struct MachineDriver machine_driver_pollux =
+static const struct MachineDriver machine_driver_pollux =
 {
 	/* basic machine hardware */
 	{
@@ -921,7 +921,7 @@ static struct MachineDriver machine_driver_pollux =
 	}
 };
 
-static struct MachineDriver machine_driver_bluehawk =
+static const struct MachineDriver machine_driver_bluehawk =
 {
 	/* basic machine hardware */
 	{
@@ -968,7 +968,7 @@ static struct MachineDriver machine_driver_bluehawk =
 	}
 };
 
-static struct MachineDriver machine_driver_primella =
+static const struct MachineDriver machine_driver_primella =
 {
 	/* basic machine hardware */
 	{
@@ -1021,7 +1021,7 @@ static int rshark_interrupt(void)
 	else return 6;
 }
 
-static struct MachineDriver machine_driver_rshark =
+static const struct MachineDriver machine_driver_rshark =
 {
 	/* basic machine hardware */
 	{
@@ -1127,8 +1127,8 @@ ROM_START( lastdaya )
 
 	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
 	ROM_LOAD_GFX_EVEN( "e6",           0x00000, 0x20000, 0x7623c443 )
-	ROM_LOAD_GFX_EVEN( "e9",           0x00000, 0x20000, 0x717f6a0e )
-	ROM_LOAD_GFX_ODD ( "lday7.bin",    0x40000, 0x20000, 0x6e57a888 )
+	ROM_LOAD_GFX_ODD ( "e9",           0x00000, 0x20000, 0x717f6a0e )
+	ROM_LOAD_GFX_EVEN( "lday7.bin",    0x40000, 0x20000, 0x6e57a888 )
 	ROM_LOAD_GFX_ODD ( "lday10.bin",   0x40000, 0x20000, 0xa5548dca )
 
 	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* tiles */

@@ -254,7 +254,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver_lasso =
+static const struct MachineDriver machine_driver_lasso =
 {
 	{
 		{

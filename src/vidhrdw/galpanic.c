@@ -106,44 +106,21 @@ WRITE_HANDLER( galpanic_spriteram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 	int sx,sy;
 
-
-	palette_recalc();
-
-	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
-	{
-		int color;
-
-
-		sx = (offs/2) % 256;
-		sy = (offs/2) / 256;
-
-		color = READ_WORD(&galpanic_fgvideoram[offs]);
-		if (color)
-		{
-			plot_pixel(bitmap, sx, sy, Machine->pens[color]);
-		}
-	}
-
-
 	sx = sy = 0;
 	for (offs = 0;offs < spriteram_size;offs += 0x10)
 	{
-		int x,y,code,color,flipx,flipy;
+		int x,y,code,color,flipx,flipy,attr1,attr2;
 
-
-		x = READ_WORD(&spriteram[offs + 8]) - ((READ_WORD(&spriteram[offs + 6]) & 0x01) << 8);
-		y = READ_WORD(&spriteram[offs + 10]) + ((READ_WORD(&spriteram[offs + 6]) & 0x02) << 7);
-		if (READ_WORD(&spriteram[offs + 6]) & 0x04)	/* multi sprite */
+		attr1 = READ_WORD(&spriteram[offs + 6]);
+		x = READ_WORD(&spriteram[offs + 8]) - ((attr1 & 0x01) << 8);
+		y = READ_WORD(&spriteram[offs + 10]) + ((attr1 & 0x02) << 7);
+		if (attr1 & 0x04)	/* multi sprite */
 		{
 			sx += x;
 			sy += y;
@@ -154,12 +131,14 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = y;
 		}
 
+		color = (attr1 & 0xf0) >> 4;
+
 		/* bit 0 [offs + 0] is used but I don't know what for */
 
-		code = READ_WORD(&spriteram[offs + 12]) + ((READ_WORD(&spriteram[offs + 14]) & 0x1f) << 8);
-		color = (READ_WORD(&spriteram[offs + 6]) & 0xf0) >> 4;
-		flipx = READ_WORD(&spriteram[offs + 14]) & 0x80;
-		flipy = READ_WORD(&spriteram[offs + 14]) & 0x40;
+		attr2 = READ_WORD(&spriteram[offs + 14]);
+		code = READ_WORD(&spriteram[offs + 12]) + ((attr2 & 0x1f) << 8);
+		flipx = attr2 & 0x80;
+		flipy = attr2 & 0x40;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
@@ -168,4 +147,74 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx,sy - 16,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+static void comad_draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int sx,sy,code,color,flipx,flipy;
+
+		sx = READ_WORD(&spriteram[offs + 4]) >> 6;
+		sy = READ_WORD(&spriteram[offs + 6]) >> 6;
+		code = READ_WORD(&spriteram[offs + 2]);
+		color = (READ_WORD(&spriteram[offs]) & 0x003c) >> 2;
+		flipx = READ_WORD(&spriteram[offs]) & 0x0002;
+		flipy = READ_WORD(&spriteram[offs]) & 0x0001;
+
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				color,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
+static void draw_fgbitmap(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+	for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
+	{
+		int sx,sy,color;
+
+		sx = (offs/2) % 256;
+		sy = (offs/2) / 256;
+		color = READ_WORD(&galpanic_fgvideoram[offs]);
+		if (color)
+		{
+			plot_pixel(bitmap, sx, sy, Machine->pens[color]);
+		}
+	}
+}
+
+void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	palette_recalc();
+
+	/* copy the temporary bitmap to the screen */
+	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
+	/* returns true */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+	draw_fgbitmap(bitmap);
+
+	galpanic_draw_sprites(bitmap);
+}
+
+void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	palette_recalc();
+
+	/* copy the temporary bitmap to the screen */
+	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
+	/* returns true */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+	draw_fgbitmap(bitmap);
+
+	comad_draw_sprites(bitmap);
 }

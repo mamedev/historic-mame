@@ -96,25 +96,16 @@ reversed for the Serve LED, which has a NOT on the signal.
 ***************************************************************************/
 WRITE_HANDLER( sbrkout_start_1_led_w )
 {
-    if (offset==0)
-        osd_led_w(0,0);
-    else
-        osd_led_w(0,1);
+	set_led_status(0,offset & 1);
 }
 
 WRITE_HANDLER( sbrkout_start_2_led_w )
 {
-    if (offset==0)
-        osd_led_w(1,0);
-    else
-        osd_led_w(1,1);
+	set_led_status(1,offset & 1);
 }
 
 WRITE_HANDLER( sbrkout_serve_led_w )
 {
-    if (offset==0)
-        osd_led_w(2,1);
-    else
-        osd_led_w(2,0);
+	set_led_status(2,~offset & 1);
 }
 

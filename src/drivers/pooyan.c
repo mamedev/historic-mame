@@ -235,7 +235,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver machine_driver_pooyan =
+static const struct MachineDriver machine_driver_pooyan =
 {
 	/* basic machine hardware */
 	{
@@ -262,7 +262,7 @@ static struct MachineDriver machine_driver_pooyan =
 	32,16*16+16*16,
 	pooyan_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

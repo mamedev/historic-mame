@@ -630,7 +630,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver_docastle =
+static const struct MachineDriver machine_driver_docastle =
 {
 	/* basic machine hardware */
 	{
@@ -657,7 +657,7 @@ static struct MachineDriver machine_driver_docastle =
 	258, 96*16,
 	docastle_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	docastle_vh_start,
 	docastle_vh_stop,
@@ -673,7 +673,7 @@ static struct MachineDriver machine_driver_docastle =
 	}
 };
 
-static struct MachineDriver machine_driver_dorunrun =
+static const struct MachineDriver machine_driver_dorunrun =
 {
 	/* basic machine hardware */
 	{
@@ -700,7 +700,7 @@ static struct MachineDriver machine_driver_dorunrun =
 	258, 96*16,
 	dorunrun_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	docastle_vh_start,
 	docastle_vh_stop,

@@ -374,7 +374,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_matmania =
+static const struct MachineDriver machine_driver_matmania =
 {
 	/* basic machine hardware */
 	{
@@ -440,7 +440,7 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-static struct MachineDriver machine_driver_maniach =
+static const struct MachineDriver machine_driver_maniach =
 {
 	/* basic machine hardware */
 	{

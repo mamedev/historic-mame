@@ -73,8 +73,8 @@ static WRITE_HANDLER( bladestl_bankswitch_w )
 	coin_counter_w(1,data & 0x02);
 
 	/* bits 2 & 3 = lamps */
-	osd_led_w(0,(data & 0x04) >> 2);
-	osd_led_w(1,(data & 0x08) >> 3);
+	set_led_status(0,data & 0x04);
+	set_led_status(1,data & 0x08);
 
 	/* bit 4 = relay (???) */
 
@@ -456,7 +456,7 @@ static struct UPD7759_interface upd7759_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_bladestl =
+static const struct MachineDriver machine_driver_bladestl =
 {
 	/* basic machine hardware */
 	{

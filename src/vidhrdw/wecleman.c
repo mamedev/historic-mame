@@ -897,7 +897,7 @@ void browser(struct osd_bitmap *bitmap)
 	if ((wecleman_irqctrl & 0x40)==0) layers_ctrl = 0;	// TV-KILL
 
 #define WECLEMAN_LAMPS \
-	osd_led_w(0,(wecleman_selected_ip >> 2)& 1); 		// Start lamp
+	set_led_status(0,wecleman_selected_ip & 0x04); 		// Start lamp
 
 
 

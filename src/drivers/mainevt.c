@@ -79,10 +79,10 @@ WRITE_HANDLER( mainevt_coin_w )
 {
 	coin_counter_w(0,data & 0x10);
 	coin_counter_w(1,data & 0x20);
-	osd_led_w(0,data >> 0);
-	osd_led_w(1,data >> 1);
-	osd_led_w(2,data >> 2);
-	osd_led_w(3,data >> 3);
+	set_led_status(0,data & 0x01);
+	set_led_status(1,data & 0x02);
+	set_led_status(2,data & 0x04);
+	set_led_status(3,data & 0x08);
 }
 
 WRITE_HANDLER( mainevt_sh_irqtrigger_w )
@@ -633,7 +633,7 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_mainevt =
+static const struct MachineDriver machine_driver_mainevt =
 {
 	/* basic machine hardware */
 	{
@@ -680,7 +680,7 @@ static struct MachineDriver machine_driver_mainevt =
 	}
 };
 
-static struct MachineDriver machine_driver_devstors =
+static const struct MachineDriver machine_driver_devstors =
 {
 	/* basic machine hardware */
 	{

@@ -309,18 +309,6 @@ void toaplan2_1_vh_stop(void)
 	toaplan2_vh_stop(1);
 	toaplan2_vh_stop(0);
 }
-/* Added by Yochizo 2000/08/19 */
-void raizing_0_vh_stop(void)
-{
-	toaplan2_vh_stop(0);
-	free( textvideoram );
-}
-void raizing_1_vh_stop(void)
-{
-	toaplan2_vh_stop(1);
-	toaplan2_vh_stop(0);
-	free( textvideoram );
-}
 
 
 static int create_tilemaps_0(void)
@@ -434,16 +422,6 @@ int raizing_0_vh_start(void)
 {
 	if (toaplan2_vh_start(0))
 		return 1;
-	if ((textvideoram = malloc(TOAPLAN2_TEXT_VRAM_SIZE)) == 0)
-	{
-		free(     fgvideoram[0] );
-		free(    topvideoram[0] );
-		free(  spriteram_now[0] );
-		free( spriteram_next[0] );
-		free(  spriteram_new[0] );
-		free(     bgvideoram[0] );
-		return 1;
-	}
 	memset(textvideoram,0,TOAPLAN2_TEXT_VRAM_SIZE);
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	if (!text_tilemap)
@@ -458,22 +436,6 @@ int raizing_1_vh_start(void)
 	error_level |= toaplan2_vh_start(1);
 	if (error_level)
 		return 1;
-	if ((textvideoram = malloc(TOAPLAN2_TEXT_VRAM_SIZE)) == 0)
-	{
-		free(     fgvideoram[0] );
-		free(    topvideoram[0] );
-		free(  spriteram_now[0] );
-		free( spriteram_next[0] );
-		free(  spriteram_new[0] );
-		free(     bgvideoram[0] );
-		free(     fgvideoram[1] );
-		free(    topvideoram[1] );
-		free(  spriteram_now[1] );
-		free( spriteram_next[1] );
-		free(  spriteram_new[1] );
-		free(     bgvideoram[1] );
-		return 1;
-	}
 	memset(textvideoram,0,TOAPLAN2_TEXT_VRAM_SIZE);
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	if (!text_tilemap)

@@ -17,11 +17,14 @@
 
 
 
-unsigned char *mystston_videoram2,*mystston_colorram2;
-size_t mystston_videoram2_size;
+unsigned char *mystston_fgvideoram;
+unsigned char *mystston_bgvideoram;
 unsigned char *mystston_scroll;
+
 static int textcolor;
-static int flipscreen;
+static struct tilemap *fg_tilemap, *bg_tilemap;
+
+
 
 /***************************************************************************
 
@@ -31,11 +34,10 @@ static int flipscreen;
   text.
 
 ***************************************************************************/
+
 void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	palette += 3*24;	/* first 24 colors are RAM */
@@ -68,120 +70,115 @@ void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 /***************************************************************************
 
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	return (num_cols - 1 - col) * num_rows + row;
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code;
+
+	code = mystston_fgvideoram[tile_index] + ((mystston_fgvideoram[tile_index + 0x400] & 0x07) << 8);
+	SET_TILE_INFO(0, code, textcolor);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code;
+
+	code = mystston_bgvideoram[tile_index] + ((mystston_bgvideoram[tile_index + 0x200] & 0x01) << 8);
+	SET_TILE_INFO(1, code, 0);
+	/* the right (lower) side of the screen is flipped */
+	tile_info.flags = (tile_index & 0x10) ? TILE_FLIPY : 0;
+}
+
+
+/***************************************************************************
+
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int mystston_vh_start(void)
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	fg_tilemap = tilemap_create(get_fg_tile_info,get_memory_offset,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,get_memory_offset,TILEMAP_OPAQUE,     16,16,16,32);
 
-	/* Mysterious Stones has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
-	}
+
+	fg_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
 
-
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void mystston_vh_stop(void)
+
+WRITE_HANDLER( mystston_fgvideoram_w )
 {
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
+	mystston_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
+WRITE_HANDLER( mystston_bgvideoram_w )
+{
+	mystston_bgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x1ff);
+}
+
+
+WRITE_HANDLER( mystston_scroll_w )
+{
+	tilemap_set_scrolly(bg_tilemap,0,data);
+}
 
 
 WRITE_HANDLER( mystston_2000_w )
 {
+	int new_textcolor;
+
+
 	/* bits 0 and 1 are text color */
-	textcolor = ((data & 0x01) << 1) | ((data & 0x02) >> 1);
+	new_textcolor = ((data & 0x01) << 1) | ((data & 0x02) >> 1);
+	if (textcolor != new_textcolor)
+	{
+		tilemap_mark_all_tiles_dirty(fg_tilemap);
+		textcolor = new_textcolor;
+	}
 
 	/* bits 4 and 5 are coin counters */
 	coin_counter_w(0,data & 0x10);
 	coin_counter_w(1,data & 0x20);
 
 	/* bit 7 is screen flip */
-	if (flipscreen != (data & 0x80))
-	{
-		flipscreen = data & 0x80;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flip_screen_w(0,data & 0x80);
 
 	/* other bits unused? */
-logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
+	logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
 }
-
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 15 - offs / 32;
-			sy = offs % 32;
-			flipy = (sy >= 16) ? 1 : 0;	/* flip horizontally tiles on the right half of the bitmap */
-			if (flipscreen)
-			{
-				sx = 15 - sx;
-				sy = 31 - sy;
-				flipy = !flipy;
-			}
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs] + 256 * (colorram[offs] & 0x01),
-					0,
-					flipscreen,flipy,
-					16*sx,16*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrolly;
-
-
-		scrolly = -*mystston_scroll;
-		if (flipscreen) scrolly = 256 - scrolly;
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs] & 0x01)
@@ -193,7 +190,7 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (240 - spriteram[offs+2]) & 0xff;
 			flipx = spriteram[offs] & 0x04;
 			flipy = spriteram[offs] & 0x02;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -209,27 +206,18 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+}
 
+void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = mystston_videoram2_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
+	tilemap_render(ALL_TILEMAPS);
 
-		sx = 31 - offs / 32;
-		sy = offs % 32;
-		if (flipscreen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				mystston_videoram2[offs] + 256 * (mystston_colorram2[offs] & 0x07),
-				textcolor,
-				flipscreen,flipscreen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }

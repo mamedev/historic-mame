@@ -21,11 +21,11 @@ c003      DSW1
 c004      DSW2
 
 write:
-c802      background x scroll low 8 bits
-c803      background y scroll low 8 bits
+c802      background y scroll low 8 bits
+c803      background x scroll low 8 bits
 c805      background palette bank selector
-c902      background x scroll high bit
-c903      background y scroll high bit
+c902      background y scroll high bit
+c903      background x scroll high bit
 
 SOUND CPU
 0000-3fff ROM
@@ -43,18 +43,17 @@ c001      YM2203 #2 write
 #include "vidhrdw/generic.h"
 
 
-
 int c1942_interrupt(void);
 
-extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
-extern size_t vulgus_bgvideoram_size;
-extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
-extern unsigned char *vulgus_palette_bank;
+extern unsigned char *vulgus_fgvideoram;
+extern unsigned char *vulgus_bgvideoram;
+extern unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
+
+WRITE_HANDLER( vulgus_fgvideoram_w );
 WRITE_HANDLER( vulgus_bgvideoram_w );
-WRITE_HANDLER( vulgus_bgcolorram_w );
+WRITE_HANDLER( vulgus_c804_w );
 WRITE_HANDLER( vulgus_palette_bank_w );
 int vulgus_vh_start(void);
-void vulgus_vh_stop(void);
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -66,18 +65,6 @@ static int vulgus_interrupt(void)
 	else return 0x00d7;	/* RST 10h - vblank */
 }
 
-
-
-static WRITE_HANDLER( vulgus_control_w )
-{
-	/* bit 0-1 coin counters */
-	coin_counter_w(0, data & 1);
-	coin_counter_w(1, data & 2);
-
-	/* bit 7   flip screen
-
-	   in vulgus this is active LO, in vulgusj this is active HI !!! */
-}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -96,19 +83,16 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scrolllow },
-	{ 0xc804, 0xc804, vulgus_control_w },
-	{ 0xc805, 0xc805, vulgus_palette_bank_w, &vulgus_palette_bank },
-	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scrollhigh },
+	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scroll_low },
+	{ 0xc804, 0xc804, vulgus_c804_w },
+	{ 0xc805, 0xc805, vulgus_palette_bank_w },
+	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scroll_high },
 	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, vulgus_bgvideoram_w, &vulgus_bgvideoram, &vulgus_bgvideoram_size },
-	{ 0xdc00, 0xdfff, vulgus_bgcolorram_w, &vulgus_bgcolorram },
+	{ 0xd000, 0xd7ff, vulgus_fgvideoram_w, &vulgus_fgvideoram },
+	{ 0xd800, 0xdfff, vulgus_bgvideoram_w, &vulgus_bgvideoram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
-
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -222,37 +206,37 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 tiles */
-	512,	/* 512 tiles */
-	3,	/* 3 bits per pixel */
-	{ 0, 512*32*8, 2*512*32*8 },	/* the bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	32*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	4,	/* 4 bits per pixel */
-	{ 256*64*8+4, 256*64*8, 4, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 
@@ -280,7 +264,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_vulgus =
+static const struct MachineDriver machine_driver_vulgus =
 {
 	/* basic machine hardware */
 	{
@@ -310,7 +294,7 @@ static struct MachineDriver machine_driver_vulgus =
 	VIDEO_TYPE_RASTER,
 	0,
 	vulgus_vh_start,
-	vulgus_vh_stop,
+	0,
 	vulgus_vh_screenrefresh,
 
 	/* sound hardware */
@@ -450,6 +434,6 @@ ROM_END
 
 
 
-GAMEX( 1984, vulgus,  0,      vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, vulgus2, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1984, vulgusj, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (Japan?)", GAME_NO_COCKTAIL )
+GAME( 1984, vulgus,  0,      vulgus, vulgus, 0, ROT90,  "Capcom", "Vulgus (set 1)" )
+GAME( 1984, vulgus2, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 2)" )
+GAME( 1984, vulgusj, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (Japan?)" )

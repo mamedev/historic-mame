@@ -228,7 +228,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_xybots =
+static const struct MachineDriver machine_driver_xybots =
 {
 	/* basic machine hardware */
 	{
@@ -250,7 +250,7 @@ static struct MachineDriver machine_driver_xybots =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	xybots_vh_start,
 	xybots_vh_stop,

@@ -1726,13 +1726,13 @@ INLINE void m68ki_exception_1010(void)
 	switch(CPU_TYPE)
 	{
 		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
+			m68ki_stack_frame_3word(REG_PC-2, sr);
 			break;
 		case CPU_TYPE_010:
 		case CPU_TYPE_EC020:
 		case CPU_TYPE_020:
 		default:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_1010);
+			m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1010);
 	}
 
 	m68ki_jump_vector(EXCEPTION_1010);
@@ -1757,13 +1757,13 @@ INLINE void m68ki_exception_1111(void)
 	switch(CPU_TYPE)
 	{
 		case CPU_TYPE_000:
-			m68ki_stack_frame_3word(REG_PC, sr);
+			m68ki_stack_frame_3word(REG_PC-2, sr);
 			break;
 		case CPU_TYPE_010:
 		case CPU_TYPE_EC020:
 		case CPU_TYPE_020:
 		default:
-			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_1111);
+			m68ki_stack_frame_0000(REG_PC-2, sr, EXCEPTION_1111);
 	}
 
 	m68ki_jump_vector(EXCEPTION_1111);

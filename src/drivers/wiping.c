@@ -317,7 +317,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver_wiping =
+static const struct MachineDriver machine_driver_wiping =
 {
 	/* basic machine hardware */
 	{
@@ -345,7 +345,7 @@ static struct MachineDriver machine_driver_wiping =
 	32, 64*4+64*4,
 	wiping_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

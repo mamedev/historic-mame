@@ -41,13 +41,13 @@ extern size_t cop01_videoram_size;
 
 
 
-WRITE_HANDLER( cop01_sound_command_w )
+static WRITE_HANDLER( cop01_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,0xff);
 }
 
-READ_HANDLER( cop01_sound_command_r )
+static READ_HANDLER( cop01_sound_command_r )
 {
 	int res;
 	static int pulse;
@@ -278,7 +278,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_cop01 =
+static const struct MachineDriver machine_driver_cop01 =
 {
 	/* basic machine hardware */
 	{

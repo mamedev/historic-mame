@@ -362,7 +362,7 @@ static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static struct MachineDriver machine_driver_bloodbro =
+static const struct MachineDriver machine_driver_bloodbro =
 {
 	{
 		{
@@ -399,7 +399,7 @@ static struct MachineDriver machine_driver_bloodbro =
 	}
 };
 
-static struct MachineDriver machine_driver_weststry =
+static const struct MachineDriver machine_driver_weststry =
 {
 	{
 		{

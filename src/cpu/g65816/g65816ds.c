@@ -19,6 +19,9 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 #include "g65816ds.h"
 #include <stdio.h>
 
+#ifdef SEC
+#undef SEC
+#endif
 
 #define ADDRESS_65816(A) ((A)&0xffffff)
 #ifndef INLINE

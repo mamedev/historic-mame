@@ -503,7 +503,7 @@ static struct DACinterface lazercmd_DAC_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_lazercmd =
+static const struct MachineDriver machine_driver_lazercmd =
 {
 /* basic machine hardware */
 	{
@@ -548,7 +548,7 @@ static struct MachineDriver machine_driver_lazercmd =
 	}
 };
 
-static struct MachineDriver machine_driver_medlanes =
+static const struct MachineDriver machine_driver_medlanes =
 {
 /* basic machine hardware */
 	{

@@ -20,6 +20,8 @@ static int mcu_sent = 0,main_sent = 0;
 
  The following is ENTIRELY GUESSWORK!!!
 
+ It seems, however, to be identical to Buggy Challenge.
+
 ***************************************************************************/
 
 static unsigned char portA_in,portA_out,ddrA;

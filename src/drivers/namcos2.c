@@ -1106,7 +1106,7 @@ via software as INT1
 /*															 */
 /*************************************************************/
 
-static struct MachineDriver machine_driver_default =
+static const struct MachineDriver machine_driver_default =
 {
 	{
 		{
@@ -1174,7 +1174,7 @@ static struct MachineDriver machine_driver_default =
 };
 
 
-static struct MachineDriver machine_driver_driving =
+static const struct MachineDriver machine_driver_driving =
 {
 	{
 		{
@@ -1242,7 +1242,7 @@ static struct MachineDriver machine_driver_driving =
 };
 
 
-static struct MachineDriver machine_driver_metlhawk =
+static const struct MachineDriver machine_driver_metlhawk =
 {
 	{
 		{
@@ -3615,7 +3615,7 @@ GAME( 1989, finehour, 0,        default,  default,  finehour, ROT0_16BIT,   "Nam
 GAMEX(1989, fourtrax, 0,        driving,  driving,  fourtrax, ROT0,         "Namco", "Four Trax", GAME_NOT_WORKING)
 GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0,         "Namco", "Marvel Land (US)" )
 GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0,         "Namco", "Marvel Land (Japan)" )
-GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,        "Namco", "Legend of the Valkyrie (Japan)" )
+GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,        "Namco", "Valkyrie No Densetsu (Japan)" )
 GAME( 1990, kyukaidk, 0,        default,  default,  kyukaidk, ROT0_16BIT,   "Namco", "Kyuukai Douchuuki (Japan new version)" )
 GAME( 1990, kyukaido, kyukaidk, default,  default,  kyukaidk, ROT0_16BIT,   "Namco", "Kyuukai Douchuuki (Japan old version)" )
 GAME( 1990, dsaber,   0,        default,  default,  dsaber,   ROT90,        "Namco", "Dragon Saber" )

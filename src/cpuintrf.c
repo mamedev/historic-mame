@@ -21,6 +21,9 @@
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
+#if (HAS_CDP1802)
+#include "cpu/cdp1802/cdp1802.h"
+#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -87,11 +90,13 @@
 #if (HAS_F8)
 #include "cpu/f8/f8.h"
 #endif
+#if (HAS_CP1600)
+#include "cpu/cp1600/cp1600.h"
+#endif
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
-#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
-	|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
+#if (HAS_TMS9900 || HAS_TMS9940 || HAS_TMS9980 || HAS_TMS9985 || HAS_TMS9989 || HAS_TMS9995 || HAS_TMS99105A || HAS_TMS99110A)
 #include "cpu/tms9900/tms9900.h"
 #endif
 #if (HAS_Z8000)
@@ -106,10 +111,10 @@
 #if (HAS_PDP1)
 #include "cpu/pdp1/pdp1.h"
 #endif
-#if (HAS_ADSP2100) || (HAS_ADSP2105)
+#if (HAS_ADSP2100 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
-#if (HAS_MIPS)
+#if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
 #endif
 #if (HAS_SC61860)
@@ -398,6 +403,10 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   16,	  0,16,LE,1, 4,16	),
 #endif
+#if (HAS_CDP1802)
+#define cdp1802_ICount cdp1802_icount
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   16,	  0,16,BE,1, 3,16	),
+#endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   16,	  0,16,LE,1, 3,16	),
 #endif
@@ -537,6 +546,10 @@ struct cpu_interface cpuintf[] =
 #define f8_ICount f8_icount
 	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   16,	  0,16,LE,1, 3,16	),
 #endif
+#if (HAS_CP1600)
+#define cp1600_ICount cp1600_icount
+    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             16,    0,16,LE,1, 3,16   ),
+#endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
 #endif
@@ -582,8 +595,8 @@ struct cpu_interface cpuintf[] =
 #if (HAS_ADSP2105)
 	CPU3(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
-#if (HAS_MIPS)
-	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+#if (HAS_PSXCPU)
+	CPU0(PSX,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
@@ -1035,6 +1048,11 @@ int cycles_left_to_run(void)
 	return ICOUNT(cpunum);
 }
 
+void cpu_set_op_base(unsigned val)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SET_OP_BASE(cpunum,val);
+}
 
 
 /***************************************************************************
@@ -2019,6 +2037,20 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
+#if (HAS_PSXCPU)
+			case CPU_PSX:
+				switch (num)
+				{
+				case MIPS_IRQ0: 		irq_line = 0; LOG(("MIPS IRQ0\n")); break;
+				case MIPS_IRQ1: 		irq_line = 1; LOG(("MIPS IRQ1\n")); break;
+				case MIPS_IRQ2: 		irq_line = 2; LOG(("MIPS IRQ2\n")); break;
+				case MIPS_IRQ3: 		irq_line = 3; LOG(("MIPS IRQ3\n")); break;
+				case MIPS_IRQ4: 		irq_line = 4; LOG(("MIPS IRQ4\n")); break;
+				case MIPS_IRQ5: 		irq_line = 5; LOG(("MIPS IRQ5\n")); break;
+				default:				irq_line = 0; LOG(("MIPS unknown\n"));
+				}
+				break;
+#endif
 			default:
 				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
@@ -2529,7 +2561,7 @@ unsigned cpu_address_bits(void)
 unsigned cpu_address_mask(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return (1 << cpuintf[CPU_TYPE(cpunum)].address_bits) - 1;
+	return MHMASK(cpuintf[CPU_TYPE(cpunum)].address_bits);
 }
 
 /***************************************************************************
@@ -2731,7 +2763,7 @@ unsigned cputype_address_mask(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
 	if( cpu_type < CPU_COUNT )
-		return (1 << cpuintf[cpu_type].address_bits) - 1;
+		return MHMASK(cpuintf[cpu_type].address_bits);
 	return 0;
 }
 

@@ -90,7 +90,7 @@ static struct YM2151interface ym2151_interface =
 #endif
 
 
-static struct MachineDriver machine_driver_m97 =
+static const struct MachineDriver machine_driver_m97 =
 {
 	/* basic machine hardware */
 	{

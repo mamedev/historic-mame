@@ -529,7 +529,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver_gameplan =
+static const struct MachineDriver machine_driver_gameplan =
 {
     /* basic machine hardware */
     {							/* MachineCPU */

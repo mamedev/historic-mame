@@ -297,7 +297,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver_munchmo =
+static const struct MachineDriver machine_driver_munchmo =
 {
 	{
 		{

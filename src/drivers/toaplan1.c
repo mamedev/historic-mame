@@ -1419,7 +1419,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver machine_driver_rallybik =
+static const struct MachineDriver machine_driver_rallybik =
 {
 	/* basic machine hardware */
 	{
@@ -1462,7 +1462,7 @@ static struct MachineDriver machine_driver_rallybik =
 	}
 };
 
-static struct MachineDriver machine_driver_truxton =
+static const struct MachineDriver machine_driver_truxton =
 {
 	/* basic machine hardware */
 	{
@@ -1505,7 +1505,7 @@ static struct MachineDriver machine_driver_truxton =
 	}
 };
 
-static struct MachineDriver machine_driver_hellfire =
+static const struct MachineDriver machine_driver_hellfire =
 {
 	/* basic machine hardware */
 	{
@@ -1548,7 +1548,7 @@ static struct MachineDriver machine_driver_hellfire =
 	}
 };
 
-static struct MachineDriver machine_driver_zerowing =
+static const struct MachineDriver machine_driver_zerowing =
 {
 	/* basic machine hardware */
 	{
@@ -1591,7 +1591,7 @@ static struct MachineDriver machine_driver_zerowing =
 	}
 };
 
-static struct MachineDriver machine_driver_demonwld =
+static const struct MachineDriver machine_driver_demonwld =
 {
 	/* basic machine hardware */
 	{
@@ -1640,7 +1640,7 @@ static struct MachineDriver machine_driver_demonwld =
 	}
 };
 
-static struct MachineDriver machine_driver_samesame =
+static const struct MachineDriver machine_driver_samesame =
 {
 	/* basic machine hardware */
 	{
@@ -1677,7 +1677,7 @@ static struct MachineDriver machine_driver_samesame =
 	}
 };
 
-static struct MachineDriver machine_driver_outzone =
+static const struct MachineDriver machine_driver_outzone =
 {
 	/* basic machine hardware */
 	{
@@ -1720,7 +1720,7 @@ static struct MachineDriver machine_driver_outzone =
 	}
 };
 
-static struct MachineDriver machine_driver_vimana =
+static const struct MachineDriver machine_driver_vimana =
 {
 	/* basic machine hardware */
 	{

@@ -814,7 +814,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver_galivan =
+static const struct MachineDriver machine_driver_galivan =
 {
 	/* basic machine hardware */
 	{
@@ -862,7 +862,7 @@ static struct MachineDriver machine_driver_galivan =
 	}
 };
 
-static struct MachineDriver machine_driver_ninjemak =
+static const struct MachineDriver machine_driver_ninjemak =
 {
 	/* basic machine hardware */
 	{

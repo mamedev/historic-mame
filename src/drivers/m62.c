@@ -1206,7 +1206,7 @@ static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 
 #define MACHINE_DRIVER(GAMENAME,READPORT,CLOCK,PIXELS_PER_LINE,COLORS,CONVERTCOLOR)          \
                                                                                              \
-static struct MachineDriver machine_driver_##GAMENAME =                                      \
+static const struct MachineDriver machine_driver_##GAMENAME =                                      \
 {                                                                                            \
 	/* basic machine hardware */                                                             \
 	{                                                                                        \

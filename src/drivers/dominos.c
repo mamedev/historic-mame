@@ -143,7 +143,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver_dominos =
+static const struct MachineDriver machine_driver_dominos =
 {
 	/* basic machine hardware */
 	{

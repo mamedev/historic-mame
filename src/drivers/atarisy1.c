@@ -219,7 +219,7 @@ static void init_machine(void)
 
 static WRITE_HANDLER( led_w )
 {
-	osd_led_w(offset, ~data & 1);
+	set_led_status(offset,~data & 1);
 }
 
 
@@ -874,7 +874,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_atarisy1 =
+static const struct MachineDriver machine_driver_atarisy1 =
 {
 	/* basic machine hardware */
 	{

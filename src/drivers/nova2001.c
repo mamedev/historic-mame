@@ -204,7 +204,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_nova2001 =
+static const struct MachineDriver machine_driver_nova2001 =
 {
 	{
 		{

@@ -50,7 +50,7 @@ INPUT_PORTS_START( minivadr )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver_minivadr =
+static const struct MachineDriver machine_driver_minivadr =
 {
 	/* basic machine hardware */
 	{

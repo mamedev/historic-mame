@@ -285,7 +285,7 @@ static void dynduke_eof_callback(void)
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static struct MachineDriver machine_driver_dynduke =
+static const struct MachineDriver machine_driver_dynduke =
 {
 	/* basic machine hardware */
 	{

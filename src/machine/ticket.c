@@ -86,7 +86,7 @@ WRITE_HANDLER( ticket_dispenser_w )
 			logerror("PC: %04X  Ticket Power Off\n", cpu_get_pc());
 #endif
 			timer_remove(timer);
-			osd_led_w(2,0);
+			set_led_status(2,0);
 			power = 0;
 		}
 	}
@@ -115,7 +115,7 @@ static void ticket_dispenser_toggle(int parm)
 
 	if (status == ticketdispensed)
 	{
-		osd_led_w(2,1);
+		set_led_status(2,1);
 		dispensed_tickets++;
 
 #ifdef DEBUG_TICKET
@@ -124,6 +124,6 @@ static void ticket_dispenser_toggle(int parm)
 	}
 	else
 	{
-		osd_led_w(2,0);
+		set_led_status(2,0);
 	}
 }

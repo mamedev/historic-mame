@@ -2065,7 +2065,7 @@ void blandia_init_machine(void)
 	blandia_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 }
 
-static struct MachineDriver machine_driver_blandia =
+static const struct MachineDriver machine_driver_blandia =
 {
 	{
 		{
@@ -2126,7 +2126,7 @@ int calibr50_interrupt(void)
 }
 
 
-static struct MachineDriver machine_driver_calibr50 =
+static const struct MachineDriver machine_driver_calibr50 =
 {
 	{
 		{
@@ -2175,7 +2175,7 @@ static struct MachineDriver machine_driver_calibr50 =
 
 /* downtown lev 3 = lev 2 + lev 1 ! */
 
-static struct MachineDriver machine_driver_downtown =
+static const struct MachineDriver machine_driver_downtown =
 {
 	{
 		{
@@ -2227,7 +2227,7 @@ static struct MachineDriver machine_driver_downtown =
 /* drgnunit lev 1 == lev 3 (writes to $500000)
    lev 2 drives the game */
 
-static struct MachineDriver machine_driver_drgnunit =
+static const struct MachineDriver machine_driver_drgnunit =
 {
 	{
 		{
@@ -2270,7 +2270,7 @@ static struct MachineDriver machine_driver_drgnunit =
 
 /* metafox lev 3 = lev 2 + lev 1 ! */
 
-static struct MachineDriver machine_driver_metafox =
+static const struct MachineDriver machine_driver_metafox =
 {
 	{
 		{
@@ -2319,7 +2319,7 @@ static struct MachineDriver machine_driver_metafox =
 
 /* msgundam lev 2 == lev 6 ! */
 
-static struct MachineDriver machine_driver_msgundam =
+static const struct MachineDriver machine_driver_msgundam =
 {
 	{
 		{
@@ -2406,7 +2406,7 @@ static int tndrcade_sub_interrupt(void)
 	}
 }
 
-static struct MachineDriver machine_driver_tndrcade =
+static const struct MachineDriver machine_driver_tndrcade =
 {
 	{
 		{
@@ -2463,7 +2463,7 @@ static struct MachineDriver machine_driver_tndrcade =
    the samples need a different playback rate,
    the visible area seems different. */
 
-static struct MachineDriver machine_driver_twineagl =
+static const struct MachineDriver machine_driver_twineagl =
 {
 	{
 		{
@@ -2516,7 +2516,7 @@ static struct MachineDriver machine_driver_twineagl =
 	5 ints per frame
 */
 
-static struct MachineDriver machine_driver_usclssic =
+static const struct MachineDriver machine_driver_usclssic =
 {
 	{
 		{
@@ -2565,7 +2565,7 @@ static struct MachineDriver machine_driver_usclssic =
 /* wrofaero lev 2 almost identical to lev 6, but there's an additional
    call in the latter (sound related?) */
 
-static struct MachineDriver machine_driver_wrofaero =
+static const struct MachineDriver machine_driver_wrofaero =
 {
 	{
 		{
@@ -2612,7 +2612,7 @@ static struct MachineDriver machine_driver_wrofaero =
    at int 1 is necessary: it plays the background music.
  */
 
-static struct MachineDriver machine_driver_zingzip =
+static const struct MachineDriver machine_driver_zingzip =
 {
 	{
 		{

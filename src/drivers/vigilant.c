@@ -432,7 +432,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_vigilant =
+static const struct MachineDriver machine_driver_vigilant =
 {
 	/* basic machine hardware */
 	{
@@ -480,7 +480,7 @@ static struct MachineDriver machine_driver_vigilant =
 	}
 };
 
-static struct MachineDriver machine_driver_kikcubic =
+static const struct MachineDriver machine_driver_kikcubic =
 {
 	/* basic machine hardware */
 	{

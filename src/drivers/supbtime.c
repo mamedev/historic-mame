@@ -295,7 +295,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver machine_driver_supbtime =
+static const struct MachineDriver machine_driver_supbtime =
 {
 	/* basic machine hardware */
 	{

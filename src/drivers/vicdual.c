@@ -1037,16 +1037,44 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct Samplesinterface samples_interface =
+static struct Samplesinterface samples_interface_carnival =
+{
+ 	12,	/* 12 channels */
+ 	50,	/* volume */
+	carnival_sample_names
+};
+
+static struct Samplesinterface samples_interface_depthch =
 {
 	12,	/* 12 channels */
 	50,	/* volume */
-	0	/* samplenames filled in later by the _init function */
+	depthch_sample_names
 };
 
+static struct Samplesinterface samples_interface_invinco3 =
+{
+	12,	/* 12 channels */
+	50,	/* volume */
+	invinco_sample_names
+};
 
-#define MACHINEDRIVER(NAME, MEM, PORT)				\
-static struct MachineDriver machine_driver_##NAME =	\
+#define samples_interface_invinco4 samples_interface_invinco3
+
+static struct Samplesinterface samples_interface_pulsar =
+{
+	12,	/* 12 channels */
+	50,	/* volume */
+	pulsar_sample_names
+};
+
+#define samples_interface_2ports samples_interface_carnival	/* not used */
+#define samples_interface_3ports samples_interface_carnival	/* not used */
+#define samples_interface_4ports samples_interface_carnival	/* not used */
+#define samples_interface_safari samples_interface_carnival	/* not used */
+
+
+#define MACHINEDRIVER(NAME, MEM, PORT, SAMPLES)		\
+static const struct MachineDriver machine_driver_##NAME =	\
 {													\
 	/* basic machine hardware */					\
 	{												\
@@ -1077,16 +1105,20 @@ static struct MachineDriver machine_driver_##NAME =	\
 	0,0,0,0,										\
 	{												\
 		{											\
-			SOUND_SAMPLES,							\
-			&samples_interface						\
+			SAMPLES * SOUND_SAMPLES,				\
+			&samples_interface_##NAME				\
 		}											\
 	}												\
 };
 
-MACHINEDRIVER( 2ports, vicdual, 2ports )
-MACHINEDRIVER( 3ports, vicdual, 3ports )
-MACHINEDRIVER( 4ports, vicdual, 4ports )
-MACHINEDRIVER( safari, safari,  safari )
+MACHINEDRIVER( 2ports,   vicdual, 2ports, 0 )
+MACHINEDRIVER( 3ports,   vicdual, 3ports, 0 )
+MACHINEDRIVER( 4ports,   vicdual, 4ports, 0 )
+MACHINEDRIVER( safari,   safari,  safari, 0 )
+MACHINEDRIVER( depthch,  vicdual, 2ports, 1 )
+MACHINEDRIVER( invinco3, vicdual, 3ports, 1 )
+MACHINEDRIVER( invinco4, vicdual, 4ports, 1 )
+MACHINEDRIVER( pulsar,   vicdual, 4ports, 1 )
 
 
 static struct AY8910interface carnival_ay8910_interface =
@@ -1102,7 +1134,7 @@ static struct AY8910interface carnival_ay8910_interface =
 
 /* don't know if any of the other games use the 8048 music board */
 /* so, we won't burden those drivers with the extra music handling */
-static struct MachineDriver machine_driver_carnival =
+static const struct MachineDriver machine_driver_carnival =
 {
 	/* basic machine hardware */
 	{
@@ -1144,7 +1176,7 @@ static struct MachineDriver machine_driver_carnival =
 		},
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&samples_interface_carnival
 		}
 	}
 };
@@ -1187,7 +1219,6 @@ ROM_START( safari )
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
-
 ROM_END
 
 ROM_START( frogs )
@@ -1286,8 +1317,10 @@ ROM_START( headon2 )
 	ROM_LOAD( "u21.bin",      0x1800, 0x0400, 0x4c19dd40 )
 	ROM_LOAD( "u20.bin",      0x1c00, 0x0400, 0x25887ff2 )
 
-	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
+	ROM_LOAD( "u65.bin",      0x0020, 0x0020, 0xe60a7960 )	/* control PROM */
+	ROM_LOAD( "u66.bin",      0x0040, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
 ROM_START( invho2 )
@@ -1598,8 +1631,6 @@ static void vicdual_decode(void)
 
 static void init_nosamples(void)
 {
-	samples_interface.samplenames = 0;
-
 	vicdual_decode();
 }
 
@@ -1610,8 +1641,6 @@ static void init_depthch(void)
 	/* install sample trigger */
 	install_port_write_handler(0, 0x04, 0x04, depthch_sh_port1_w);
 
-	samples_interface.samplenames = depthch_sample_names;
-
 	vicdual_decode();
 }
 
@@ -1620,8 +1649,6 @@ static void init_samurai(void)
 	/* install protection handlers */
 	install_mem_write_handler(0, 0x7f00, 0x7f00, samurai_protection_w);
 	install_port_read_handler(0, 0x01, 0x03, samurai_input_r);
-
-	samples_interface.samplenames = 0;
 
 	vicdual_decode();
 }
@@ -1632,8 +1659,6 @@ static void init_carnival(void)
 	install_port_write_handler(0, 0x01, 0x01, carnival_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, carnival_sh_port2_w);
 
-	samples_interface.samplenames = carnival_sample_names;
-
 	vicdual_decode();
 }
 
@@ -1641,8 +1666,6 @@ static void init_invinco(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
-
-	samples_interface.samplenames = invinco_sample_names;
 
 	vicdual_decode();
 }
@@ -1652,8 +1675,6 @@ static void init_invho2(void)
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
 
-	samples_interface.samplenames = invinco_sample_names;
-
 	vicdual_decode();
 }
 
@@ -1661,8 +1682,6 @@ static void init_invds(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
-
-	samples_interface.samplenames = invinco_sample_names;
 
 	vicdual_decode();
 }
@@ -1673,13 +1692,11 @@ static void init_pulsar(void)
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
 
-	samples_interface.samplenames = pulsar_sample_names;
-
 	vicdual_decode();
 }
 
 
-GAME( 1977, depthch,  0,        2ports,   depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
+GAME( 1977, depthch,  0,        depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
 GAMEX(1977, safari,   0,        safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
 GAMEX(1978, frogs,    0,        2ports,   frogs,    nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
 GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (upright)", GAME_NO_SOUND )
@@ -1688,15 +1705,15 @@ GAMEX(1979, sspacatc, sspaceat, 3ports,   sspaceat, nosamples, ROT270, "Sega", "
 GAMEX(1979, headon,   0,        2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
 GAMEX(1979, headonb,  headon,   2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
 GAMEX(1979, headon2,  0,        3ports,   headon2,  nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
-GAME( 1979, invho2,   0,        4ports,   invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
+GAME( 1979, invho2,   0,        invinco4, invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
 GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
-GAME( 1979, invinco,  0,        3ports,   invinco,  invinco,   ROT270, "Sega", "Invinco" )
-GAME( 1979, invds,    0,        4ports,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
+GAME( 1979, invinco,  0,        invinco3, invinco,  invinco,   ROT270, "Sega", "Invinco" )
+GAME( 1979, invds,    0,        invinco4,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
 GAMEX(1980, tranqgun, 0,        4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
 GAMEX(1980, spacetrk, 0,        4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (upright)", GAME_NO_SOUND )
 GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "Space Trek (cocktail)", GAME_NO_SOUND )
 GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)" )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (cocktail)" )
 GAMEX(1980, digger,   0,        3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
-GAME( 1981, pulsar,   0,        4ports,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
+GAME( 1981, pulsar,   0,        pulsar,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
 GAMEX(1979, heiankyo, 0,        4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )

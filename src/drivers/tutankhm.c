@@ -340,7 +340,7 @@ INPUT_PORTS_END
 
 
 
-static struct MachineDriver machine_driver_tutankhm =
+static const struct MachineDriver machine_driver_tutankhm =
 {
 	/* basic machine hardware */
 	{

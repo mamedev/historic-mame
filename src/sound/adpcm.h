@@ -3,16 +3,6 @@
 
 #define MAX_ADPCM 8
 
-/* NOTE: Actual sample data is specified in the sound_prom parameter of the game driver, but
-   since the MAME code expects this to be an array of char *'s, we do a small kludge here */
-
-struct ADPCMsample
-{
-	int num;       /* trigger number (-1 to mark the end) */
-	int offset;    /* offset in that region */
-	int length;    /* length of the sample */
-};
-
 
 /* a generic ADPCM interface, for unknown chips */
 
@@ -21,7 +11,6 @@ struct ADPCMinterface
 	int num;			       /* total number of ADPCM decoders in the machine */
 	int frequency;             /* playback frequency */
 	int region;                /* memory region where the samples come from */
-	void (*init)(const struct ADPCMinterface *, struct ADPCMsample *, int max); /* initialization function */
 	int mixing_level[MAX_ADPCM];     /* master volume */
 };
 
@@ -29,7 +18,6 @@ int ADPCM_sh_start(const struct MachineSound *msound);
 void ADPCM_sh_stop(void);
 void ADPCM_sh_update(void);
 
-void ADPCM_trigger(int num, int which);
 void ADPCM_play(int num, int offset, int length);
 void ADPCM_setvol(int num, int vol);
 void ADPCM_stop(int num);

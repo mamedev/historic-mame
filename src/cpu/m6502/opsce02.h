@@ -55,9 +55,13 @@
 	else														\
 		P = (P & ~(F_N | F_Z)) | ((n.b.h) & F_N)
 
+/* EA_IDY 
+ *  ???? subtract 1 cycle if page boundary is crossed */
+
+
 /***************************************************************
  *	EA = zero page indirect + Z (post indexed)
- *	subtract 1 cycle if page boundary is crossed
+ *  ???? subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 #define EA_IDZ													\
 	ZPL = RDOPARG();											\
@@ -70,7 +74,7 @@
 
 /***************************************************************
  *	EA = zero page indexed stack, indirect + Y (post indexed)
- *	subtract 1 cycle if page boundary is crossed
+ *	??? subtract 1 cycle if page boundary is crossed
  ***************************************************************/
 /* i think its based on stack high byte instead of of bank register */
 #define EA_ZP_INSP_INY											\
@@ -121,20 +125,35 @@
  *	BRA  branch relative
  *	extra cycle if page boundary is crossed
  ***************************************************************/
+#undef BRA
+#define BRA(cond)												\
+	if (cond)													\
+	{															\
+		tmp = RDOPARG();										\
+		EAW = PCW + (signed char)tmp;							\
+		PCD = EAD;												\
+		CHANGE_PC;												\
+	}															\
+	else														\
+	{															\
+		PCW++;													\
+	}
+
+/***************************************************************
+ *	BRA  branch relative
+ ***************************************************************/
 #define BRA_WORD(cond)											\
 	if (cond)													\
 	{															\
 		EAL = RDOPARG();										\
 		EAH = RDOPARG();										\
 		EAW = PCW + (short)(EAW-1); 							\
-		m6502_ICount -= (PCH == EAH) ? 4 : 5;					\
 		PCD = EAD;												\
 		CHANGE_PC;												\
 	}															\
 	else														\
 	{															\
 		PCW += 2;												\
-		m6502_ICount -= 2;										\
 	}
 
 /* 65ce02 ******************************************************
@@ -150,35 +169,26 @@
 		P&=~F_E
 
 /* 65ce02 ******************************************************
- *	map
+ *	augment
  ***************************************************************/
-#define MAP 													\
- logerror("m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n", \
-  m65ce02.pc.w.l-1, m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
+#define AUG 													\
+ t1=RDOPARG(); t2=RDOPARG(); t3=RDOPARG(); \
+ logerror("m65ce02 at pc:%.4x reserved op aug %.2x %.2x %.2x\n", \
+  t1,t2,t3);
 
 /* 65ce02 ******************************************************
  *	rts imm
  ***************************************************************/
-/* who knows 
-   freeing local variables of procedure
-   or freeing parameters of procedure call (more likely) */
-#define RTS_IMM 												\
- logerror("m65ce02 at pc:%.4x unknown op rts %.2x\n",m65ce02.pc.w.l-2,tmp);
+#define RTN 												\
+  if (P&F_E) { S+=tmp; } else { SW+=tmp; }
 
 /* 65ce02 ******************************************************
  *	NEG accu
- *	[7] -> [7][6][5][4][3][2][1][0] -> C
+ * twos complement
  ***************************************************************/
-/* not sure about this */
-#if 1
 #define NEG 													\
- logerror("m65ce02 at pc:%.4x not sure neg\n",m65ce02.pc.w.l-1);\
 	A= (A^0xff)+1;												\
 	SET_NZ(A)
-#else
-#define NEG 													\
-	tmp = A; A=0; SBC;
-#endif
 
 /* 65ce02 ******************************************************
  *	ASR arithmetic (signed) shift right
@@ -392,7 +402,9 @@
 #define PLP 													\
 	if ( P & F_I )												\
 	{															\
-		PULL(P);												\
+		UINT8 temp; \
+		PULL(temp);												\
+		P=(P&F_E)|F_B|(temp&~F_E); \
 		if( m6502.irq_state != CLEAR_LINE && !(P & F_I) )		\
 		{														\
 			LOG(("M65ce02#%d PLP sets after_cli\n",             \
@@ -402,9 +414,10 @@
 	}															\
 	else														\
 	{															\
-		PULL(P);												\
-	}															\
-	P |= F_B
+		UINT8 temp; \
+		PULL(temp);												\
+		P=(P&F_E)|F_B|(temp&~F_E); \
+	}															
 
 /* 65ce02 ********************************************************
  * RTI	Return from interrupt
@@ -413,10 +426,9 @@
  ***************************************************************/
 #undef RTI
 #define RTI 													\
-	PULL(P);													\
+{ UINT8 temp;PULL(temp);P=(P&F_E)|F_B|(temp&~F_E); } \
 	PULL(PCL);													\
 	PULL(PCH);													\
-	P |= F_B;													\
 	if( m65ce02.irq_state != CLEAR_LINE && !(P & F_I) ) 		\
 	{															\
 		LOG(("M65ce02#%d RTI sets after_cli\n",                 \

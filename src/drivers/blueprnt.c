@@ -62,12 +62,12 @@ static WRITE_HANDLER( dipsw_w )
 	dipsw = data;
 }
 
-READ_HANDLER( blueprnt_sh_dipsw_r )
+static READ_HANDLER( blueprnt_sh_dipsw_r )
 {
 	return dipsw;
 }
 
-WRITE_HANDLER( blueprnt_sound_command_w )
+static WRITE_HANDLER( blueprnt_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -332,7 +332,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_blueprnt =
+static const struct MachineDriver machine_driver_blueprnt =
 {
 	/* basic machine hardware */
 	{

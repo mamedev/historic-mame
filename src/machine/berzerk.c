@@ -64,14 +64,14 @@ READ_HANDLER( berzerk_nmi_disable_r )
 
 READ_HANDLER( berzerk_led_on_r )
 {
-	osd_led_w(0,1);
+	set_led_status(0,1);
 
 	return 0;
 }
 
 READ_HANDLER( berzerk_led_off_r )
 {
-	osd_led_w(0,0);
+	set_led_status(0,0);
 
 	return 0;
 }

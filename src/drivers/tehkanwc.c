@@ -651,7 +651,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 25 }
 };
 
-static struct MachineDriver machine_driver_tehkanwc =
+static const struct MachineDriver machine_driver_tehkanwc =
 {
 	/* basic machine hardware */
 	{

@@ -176,7 +176,7 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static struct MachineDriver machine_driver_gotya =
+static const struct MachineDriver machine_driver_gotya =
 {
 	/* basic machine hardware */
 	{

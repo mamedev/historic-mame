@@ -960,7 +960,7 @@ static struct CustomSound_interface i186_custom_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_ataxx =
+static const struct MachineDriver machine_driver_ataxx =
 {
 	/* basic machine hardware */
 	{
@@ -1011,7 +1011,7 @@ static struct MachineDriver machine_driver_ataxx =
 };
 
 
-static struct MachineDriver machine_driver_wsf =
+static const struct MachineDriver machine_driver_wsf =
 {
 	/* basic machine hardware */
 	{

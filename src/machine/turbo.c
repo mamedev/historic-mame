@@ -289,7 +289,7 @@ WRITE_HANDLER( turbo_coin_and_lamp_w )
 			break;
 
 		case 3:		/* Start Lamp */
-			osd_led_w(0, data);
+			set_led_status(0, data & 1);
 			break;
 
 		case 4:		/* n/c */

@@ -11,7 +11,7 @@
 
 	NOTICE:
 
-	This code is around 98% complete!  Several things are unimplemented,
+	This code is around 99% complete!  Several things are unimplemented,
 	some due to lack of time, some due to lack of documentation, mainly
 	due to lack of programs using these features.
 
@@ -52,6 +52,9 @@
 	Changelog, version 1.06, 4/5/00 - last opcode bug found?
 		JMP indirect was doing a EAL++; instead of EAD++; - Obviously causing
 		a corrupt read when L = 0xff!  This fixes Bloody Wolf and Trio The Punch!
+
+	Changelog, version 1.07, 3/9/00:
+		Changed timer to be single shot - fixes Crude Buster music in level 1.
 
 ******************************************************************************/
 
@@ -205,7 +208,7 @@ int h6280_execute(int cycles)
 			h6280.timer_value -= deltacycle;
 			if(h6280.timer_value<=0 && h6280.timer_ack==1)
 			{
-				h6280.timer_ack=0;
+				h6280.timer_ack=h6280.timer_status=0;
 				h6280_set_irq_line(2,ASSERT_LINE);
 			}
 		}
@@ -215,6 +218,8 @@ int h6280_execute(int cycles)
 		if( h6280.pc.d == h6280.ppc.d )
 		{
 			if (h6280_ICount > 0) h6280_ICount=0;
+			h6280.extra_cycles = 0;
+			return cycles;
 		}
 
 	} while (h6280_ICount > 0);
@@ -415,7 +420,7 @@ const char *h6280_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "HuC6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.06";
+		case CPU_INFO_VERSION: return "1.07";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;

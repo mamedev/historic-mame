@@ -545,7 +545,7 @@ static void neogeo_custom_memory(void)
 //	if (!strcmp(Machine->gamedrv->name,"joyjoy"))   install_mem_read_handler(0, 0x100554, 0x100555, joyjoy_cycle_r);	// Slower
 //	if (!strcmp(Machine->gamedrv->name,"ridhero"))  install_mem_read_handler(0, 0x1000ca, 0x1000cb, ridhero_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"bstars"))   install_mem_read_handler(0, 0x10000a, 0x10000b, bstars_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"cyberlip")) install_mem_read_handler(0, 0x107bb4, 0x107bb4, cyberlip_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"cyberlip")) install_mem_read_handler(0, 0x107bb4, 0x107bb5, cyberlip_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"lbowling")) install_mem_read_handler(0, 0x100098, 0x100099, lbowling_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"superspy")) install_mem_read_handler(0, 0x10108c, 0x10108d, superspy_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"ttbb"))     install_mem_read_handler(0, 0x10000e, 0x10000f, ttbb_cycle_r);
@@ -614,7 +614,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"legendos")) install_mem_read_handler(0, 0x100002, 0x100003, legendos_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"viewpoin")) install_mem_read_handler(0, 0x101216, 0x101217, viewpoin_cycle_r);	// Doesn't work
 	if (!strcmp(Machine->gamedrv->name,"fatfury2")) install_mem_read_handler(0, 0x10418c, 0x10418d, fatfury2_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"bstars2"))  install_mem_read_handler(0, 0x10001c, 0x10001c, bstars2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"bstars2"))  install_mem_read_handler(0, 0x10001c, 0x10001d, bstars2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"ssideki"))  install_mem_read_handler(0, 0x108c84, 0x108c85, ssideki_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kotm2"))    install_mem_read_handler(0, 0x101000, 0x101001, kotm2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho"))   install_mem_read_handler(0, 0x100a76, 0x100a77, samsho_cycle_r);

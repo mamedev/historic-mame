@@ -630,7 +630,7 @@ struct YM2610interface gunbird_ym2610_interface =
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
-static struct MachineDriver machine_driver_gunbird =
+static const struct MachineDriver machine_driver_gunbird =
 {
 	{
 		{
@@ -696,7 +696,7 @@ struct YM2610interface sngkace_ym2610_interface =
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
-static struct MachineDriver machine_driver_sngkace =
+static const struct MachineDriver machine_driver_sngkace =
 {
 	{
 		{
@@ -759,7 +759,7 @@ struct YM2610interface s1945_ym2610_interface =
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
-static struct MachineDriver machine_driver_s1945 =
+static const struct MachineDriver machine_driver_s1945 =
 {
 	{
 		{

@@ -11,10 +11,12 @@ Sound:	OKIM6295
 - Note:	To enter test mode press F2 (Test)
 		Use 9 (Service Coin) to change page.
 
-To Do: sprites flip y (not used by the game)
+TODO:
+- sprites flip y (not used by the game)
 
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -40,15 +42,8 @@ void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /***************************************************************************
 
-
 								Memory Maps
 
-
-***************************************************************************/
-
-
-/***************************************************************************
-								Power Instinct
 ***************************************************************************/
 
 READ_HANDLER( powerins_input_r )
@@ -69,41 +64,36 @@ READ_HANDLER( powerins_input_r )
 
 static struct MemoryReadAddress powerins_readmem[] =
 {
-	{ 0x000000, 0x0fffff, MRA_ROM				},	// ROM
-	{ 0x100000, 0x10003f, powerins_input_r		},	// Input Ports
-	{ 0x120000, 0x120fff, MRA_BANK2				},	// Palette
-/**/{ 0x130000, 0x130007, MRA_BANK3				},	// VRAM 0 Control
-	{ 0x140000, 0x143fff, MRA_BANK4				},	// VRAM 0
-	{ 0x170000, 0x170fff, MRA_BANK5				},	// VRAM 1
-	{ 0x180000, 0x18ffff, MRA_BANK6				},	// RAM + Sprites
-//	{ 0x990000, 0x99003f, powerins_vregs_r		},	// Fake: use to see the video regs.
+	{ 0x000000, 0x0fffff, MRA_ROM },	// ROM
+	{ 0x100000, 0x10003f, powerins_input_r },	// Input Ports
+	{ 0x120000, 0x120fff, MRA_BANK2 },	// Palette
+/**/{ 0x130000, 0x130007, MRA_BANK3 },	// VRAM 0 Control
+	{ 0x140000, 0x143fff, MRA_BANK4 },	// VRAM 0
+	{ 0x170000, 0x170fff, MRA_BANK5 },	// VRAM 1
+	{ 0x180000, 0x18ffff, MRA_BANK6 },	// RAM + Sprites
+//	{ 0x990000, 0x99003f, powerins_vregs_r },	// Fake: use to see the video regs.
 	{ -1 }
 };
 
 static struct MemoryWriteAddress powerins_writemem[] =
 {
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10003f, powerins_vregs_w, &powerins_vregs			},	// Video Regs
-	{ 0x120000, 0x120fff, powerins_paletteram_w, &paletteram		},	// Palette
-	{ 0x130000, 0x130007, MWA_BANK3, &powerins_vctrl_0				},	// VRAM 0 Control
-	{ 0x140000, 0x143fff, powerins_vram_0_w, &powerins_vram_0		},	// VRAM 0
-	{ 0x170000, 0x170fff, powerins_vram_1_w, &powerins_vram_1		},	// VRAM 1
-	{ 0x171000, 0x171fff, powerins_vram_1_w							},	// Mirror of VRAM 1?
-	{ 0x180000, 0x18ffff, MWA_BANK6, &spriteram						},	// RAM + Sprites
+	{ 0x000000, 0x0fffff, MWA_ROM },	// ROM
+	{ 0x100000, 0x10003f, powerins_vregs_w, &powerins_vregs },	// Video Regs
+	{ 0x120000, 0x120fff, powerins_paletteram_w, &paletteram },	// Palette
+	{ 0x130000, 0x130007, MWA_BANK3, &powerins_vctrl_0 },	// VRAM 0 Control
+	{ 0x140000, 0x143fff, powerins_vram_0_w, &powerins_vram_0 },	// VRAM 0
+	{ 0x170000, 0x170fff, powerins_vram_1_w, &powerins_vram_1 },	// VRAM 1
+	{ 0x171000, 0x171fff, powerins_vram_1_w },	// Mirror of VRAM 1?
+	{ 0x180000, 0x18ffff, MWA_BANK6, &spriteram },	// RAM + Sprites
 	{ -1 }
 };
-
-
-
 
 
 
 
 /***************************************************************************
 
-
 								Input Ports
-
 
 ***************************************************************************/
 
@@ -195,9 +185,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-
 								Graphics Layouts
-
 
 ***************************************************************************/
 
@@ -244,10 +232,6 @@ static struct GfxLayout layout_16x16x4_swap =
 };
 
 
-/***************************************************************************
-								Power Instinct
-***************************************************************************/
-
 static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,      0x000, 0x20 }, // [0] Tiles
@@ -263,15 +247,8 @@ static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
 
 /***************************************************************************
 
-
 								Machine Drivers
 
-
-***************************************************************************/
-
-
-/***************************************************************************
-								Power Instinct
 ***************************************************************************/
 
 static struct OKIM6295interface powerins_okim6295_interface =
@@ -282,7 +259,9 @@ static struct OKIM6295interface powerins_okim6295_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_powerins =
+
+
+static const struct MachineDriver machine_driver_powerins =
 {
 	{
 		{
@@ -324,9 +303,7 @@ static struct MachineDriver machine_driver_powerins =
 
 /***************************************************************************
 
-
 								ROMs Loading
-
 
 ***************************************************************************/
 
@@ -383,18 +360,9 @@ ROM_START( powerins )
 
 	ROM_REGION( 0x090000, REGION_SOUND1 )	/* 8 bit adpcm (banked) */
 	ROM_LOAD( "rom5", 0x000000, 0x030000, 0x88579c8f )
-	ROM_CONTINUE(     0x040000, 0x050000             )
+	ROM_CONTINUE(     0x040000, 0x050000 )
 ROM_END
 
 
-
-
-/***************************************************************************
-
-
-								Game Drivers
-
-
-***************************************************************************/
 
 GAME( 1993, powerins, 0, powerins, powerins, 0, ROT0_16BIT, "Atlus", "Power Instinct (USA) [bootleg]" )

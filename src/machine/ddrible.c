@@ -12,7 +12,9 @@
 
 unsigned char *ddrible_sharedram;
 unsigned char *ddrible_snd_sharedram;
-int ddrible_int_enable_0, ddrible_int_enable_1;
+
+extern int ddrible_int_enable_0;
+extern int ddrible_int_enable_1;
 
 void ddrible_init_machine( void )
 {

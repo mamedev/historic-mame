@@ -955,7 +955,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver machine_driver_hbarrel =
+static const struct MachineDriver machine_driver_hbarrel =
 {
 	/* basic machine hardware */
 	{
@@ -1007,7 +1007,7 @@ static struct MachineDriver machine_driver_hbarrel =
 	}
 };
 
-static struct MachineDriver machine_driver_baddudes =
+static const struct MachineDriver machine_driver_baddudes =
 {
 	/* basic machine hardware */
 	{
@@ -1059,7 +1059,7 @@ static struct MachineDriver machine_driver_baddudes =
 	}
 };
 
-static struct MachineDriver machine_driver_birdtry =
+static const struct MachineDriver machine_driver_birdtry =
 {
 	/* basic machine hardware */
 	{
@@ -1111,7 +1111,7 @@ static struct MachineDriver machine_driver_birdtry =
 	}
 };
 
-static struct MachineDriver machine_driver_robocop =
+static const struct MachineDriver machine_driver_robocop =
 {
 	/* basic machine hardware */
 	{
@@ -1169,7 +1169,7 @@ static struct MachineDriver machine_driver_robocop =
 	}
 };
 
-static struct MachineDriver machine_driver_robocopb =
+static const struct MachineDriver machine_driver_robocopb =
 {
 	/* basic machine hardware */
 	{
@@ -1221,7 +1221,7 @@ static struct MachineDriver machine_driver_robocopb =
 	}
 };
 
-static struct MachineDriver machine_driver_hippodrm =
+static const struct MachineDriver machine_driver_hippodrm =
 {
 	/* basic machine hardware */
 	{
@@ -1279,7 +1279,7 @@ static struct MachineDriver machine_driver_hippodrm =
 	}
 };
 
-static struct MachineDriver machine_driver_slyspy =
+static const struct MachineDriver machine_driver_slyspy =
 {
 	/* basic machine hardware */
 	{
@@ -1331,7 +1331,7 @@ static struct MachineDriver machine_driver_slyspy =
 	}
 };
 
-static struct MachineDriver machine_driver_midres =
+static const struct MachineDriver machine_driver_midres =
 {
 	/* basic machine hardware */
 	{

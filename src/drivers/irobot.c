@@ -58,6 +58,9 @@ I-Robot Memory Map
 4000 - 5FFF  R      Banked ROM
 6000 - FFFF  R      Fixed ROM
 
+Notes:
+- There is no flip screen nor cocktail mode in the original game
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -280,7 +283,7 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static struct MachineDriver machine_driver_irobot =
+static const struct MachineDriver machine_driver_irobot =
 {
 	/* basic machine hardware */
 	{
@@ -369,4 +372,4 @@ ROM_END
 
 
 
-GAMEX( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot", GAME_NO_COCKTAIL )
+GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot" )

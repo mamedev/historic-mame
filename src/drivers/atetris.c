@@ -175,7 +175,7 @@ static struct POKEYinterface pokey_interface =
 	{ input_port_0_r, input_port_1_r }
 };
 
-static struct MachineDriver machine_driver_atetris =
+static const struct MachineDriver machine_driver_atetris =
 {
 	/* basic machine hardware */
 	{
@@ -196,7 +196,7 @@ static struct MachineDriver machine_driver_atetris =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

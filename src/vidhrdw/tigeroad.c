@@ -98,8 +98,8 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 
 static void render_sprites( struct osd_bitmap *bitmap )
 {
-	unsigned char *source = &spriteram[spriteram_size] - 8;
-	unsigned char *finish = spriteram;
+	unsigned char *source = &buffered_spriteram[spriteram_size] - 8;
+	unsigned char *finish = buffered_spriteram;
 
 	while( source>=finish )
 	{
@@ -180,4 +180,9 @@ void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	render_sprites( bitmap );
 	render_background( bitmap,1 );
 	render_text( bitmap );
+}
+
+void tigeroad_eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
 }

@@ -430,7 +430,7 @@ static struct AY8910interface ay8910_interface =
 
 
 #define MACHINE_DRIVER(GAMENAME)							\
-static struct MachineDriver machine_driver_##GAMENAME =		\
+static const struct MachineDriver machine_driver_##GAMENAME =		\
 {															\
 	/* basic machine hardware */							\
 	{														\

@@ -315,7 +315,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_frogger =
+static const struct MachineDriver machine_driver_frogger =
 {
 	/* basic machine hardware */
 	{
@@ -358,7 +358,7 @@ static struct MachineDriver machine_driver_frogger =
 	}
 };
 
-static struct MachineDriver machine_driver_froggrmc =
+static const struct MachineDriver machine_driver_froggrmc =
 {
 	/* basic machine hardware */
 	{

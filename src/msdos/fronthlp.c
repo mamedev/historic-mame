@@ -543,13 +543,18 @@ int frontend_help (int argc, char **argv)
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
 					for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
 					{
-						const char **samplenames;
-						if( drivers[i]->drv->sound[j].sound_type != SOUND_SAMPLES )
-							continue;
-						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+						const char **samplenames = NULL;
+#if (HAS_SAMPLES)
+						if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
+							samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+						if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
+							samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
 						if (samplenames != 0 && samplenames[0] != 0)
 						{
 							printf("%-10s",drivers[i]->name);
@@ -581,14 +586,19 @@ int frontend_help (int argc, char **argv)
 				printromlist(gamedrv->rom,gamename);
 			else
 			{
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
 				int k;
 				for( k = 0; gamedrv->drv->sound[k].sound_type && k < MAX_SOUND; k++ )
 				{
-					const char **samplenames;
-					if( gamedrv->drv->sound[k].sound_type != SOUND_SAMPLES )
-						continue;
-					samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+					const char **samplenames = NULL;
+#if (HAS_SAMPLES)
+					if( gamedrv->drv->sound[k].sound_type == SOUND_SAMPLES )
+							samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+					if( gamedrv->drv->sound[k].sound_type == SOUND_VLM5030 )
+							samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+#endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
 						i = 0;
@@ -708,41 +718,58 @@ int frontend_help (int argc, char **argv)
 			break;
 
 		case LIST_GAMELISTHEADER: /* GAMELIST.TXT */
-			printf("This is the complete list of games supported by MAME %s\n",build_version);
+			printf("This is the complete list of games supported by MAME %s.\n",build_version);
 			if (!listclones)
 				printf("Variants of the same game are not included, you can use the -listclones command\n"
 					"to get a list of the alternate versions of a given game.\n");
 			printf("\n"
-				"The list is generated automatically and is not 100%% accurate, particularly in\n"
-				"the \"Screen Flip\" column. Please let us know of any errors you find so we can\n"
-				"correct them.\n"
+				"This list is generated automatically and is not 100%% accurate (particularly in\n"
+				"the Screen Flip column). Please let us know of any errors so we can correct\n"
+				"them.\n"
 				"\n"
-				"The meanings of the columns are as follows:\n"
-				"Working - \"No\" means that the emulation has shortcomings that cause the game\n"
-				"  not to work correctly. This can be anywhere from just showing a black screen\n"
-				"  to being playable with major problems.\n"
-				"Correct Colors - \"Yes\" means that colors should be identical to the original,\n"
-				"  \"Close\" that they are very similar but wrong in places, \"No\" that they are\n"
-				"  completely wrong. In some cases, we were not able to find the color PROMs of\n"
-				"  the game. Those PROMs will be reported as \"NO GOOD DUMP KNOWN\" on startup,\n"
-				"  and the game will have wrong colors. The game is still reported as \"Yes\" in\n"
-				"  this column, because the code to handle the color PROMs is in the driver and\n"
-				"  if you provide them colors will be correct.\n"
-				"Sound - \"Partial\" means that sound support is either incomplete or not entirely\n"
-				"  accurate. Note that, due to analog circuitry which is difficult to emulate,\n"
-				"  sound may be significantly different from the real board. A common case is\n"
-				"  the presence of low pass filters that make the real board sound less harsh\n"
-				"  than the emulation.\n"
-				"Screen Flip - A large number of games have a dip switch setting for \"Cocktail\"\n"
-				"  cabinet, meaning that the players sit in front of each other, and the screen\n"
-				"  is flipped when player 2 is playing. Some games also have a \"Flip Screen\" dip\n"
-				"  switch. Those need special support in the driver, which is missing in many\n"
-				"  cases.\n"
-				"Internal Name - This is the unique name that should be specified on the command\n"
-				"  line to run the game. ROMs must be placed in the ROM path, either in a .zip\n"
-				"  file or in a subdirectory of the same name. The former is suggested, because\n"
-				"  the files will be identified by their CRC instead of requiring specific\n"
-				"  names.\n\n");
+				"Here are the meanings of the columns:\n"
+				"\n"
+				"Working\n"
+				"=======\n"
+				"  NO: Emulation is still in progress; the game does not work correctly. This\n"
+				"  means anything from major problems to a black screen.\n"
+				"\n"
+				"Correct Colors\n"
+				"==============\n"
+				"    YES: Colors should be identical to the original.\n"
+				"  CLOSE: Colors are nearly correct.\n"
+				"     NO: Colors are completely wrong. \n"
+				"  \n"
+				"  Note: In some cases, the color PROMs for some games are not yet available.\n"
+				"  This causes a NO GOOD DUMP KNOWN message on startup (and, of course, the game\n"
+				"  has wrong colors). The game will still say YES in this column, however,\n"
+				"  because the code to handle the color PROMs has been added to the driver. When\n"
+				"  the PROMs are available, the colors will be correct.\n"
+				"\n"
+				"Sound\n"
+				"=====\n"
+				"  PARTIAL: Sound support is incomplete or not entirely accurate. \n"
+				"\n"
+				"  Note: Some original games contain analog sound circuitry, which is difficult\n"
+				"  to emulate. Therefore, these emulated sounds may be significantly different.\n"
+				"\n"
+				"Screen Flip\n"
+				"===========\n"
+				"  Many games were offered in cocktail-table models, allowing two players to sit\n"
+				"  across from each other; the game's image flips 180 degrees for each player's\n"
+				"  turn. Some games also have a \"Flip Screen\" DIP switch setting to turn the\n"
+				"  picture (particularly useful with vertical games).\n"
+				"  In many cases, this feature has not yet been emulated.\n"
+				"\n"
+				"Internal Name\n"
+				"=============\n"
+				"  This is the unique name that must be used when running the game from a\n"
+				"  command line.\n"
+				"\n"
+				"  Note: Each game's ROM set must be placed in the ROM path, either in a .zip\n"
+				"  file or in a subdirectory with the game's Internal Name. The former is\n"
+				"  suggested, because the files will be identified by their CRC instead of\n"
+				"  requiring specific names.\n\n");
 			printf("+----------------------------------+-------+-------+-------+-------+----------+\n");
 			printf("|                                  |       |Correct|       |Screen | Internal |\n");
 			printf("| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n");
@@ -830,15 +857,24 @@ int frontend_help (int argc, char **argv)
 						printf("|  Yes  ");
 
 					{
-						const char **samplenames = 0;
-#if (HAS_SAMPLES)
+						const char **samplenames = NULL;
+#if (HAS_SAMPLES || HAS_VLM5030)
 						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
 						{
+#if (HAS_SAMPLES)
 							if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
 							{
 								samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 								break;
 							}
+#endif
+#if (HAS_VLM5030)
+							if (drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030)
+							{
+								samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+								break;
+							}
+#endif
 						}
 #endif
 						if (drivers[i]->flags & GAME_NO_SOUND)
@@ -1278,10 +1314,18 @@ j = 0;	// count only the main cpu
 			if (verify & VERIFY_SAMPLES)
 			{
 				const char **samplenames = NULL;
+#if (HAS_SAMPLES || HAS_VLM5030)
+ 				for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+				{
 #if (HAS_SAMPLES)
-				for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
-					if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
-						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+ 					if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
+ 						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+					if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
+						samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
+				}
 #endif
 				/* ignore games that need no samples */
 				if (samplenames == 0 || samplenames[0] == 0)

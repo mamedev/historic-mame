@@ -71,10 +71,10 @@ WRITE_HANDLER( starwars_out_w )
 			coin_counter_w (1, data);
 			break;
 		case 2:		/* LED 3 */
-			osd_led_w (2, data >> 7);
+			set_led_status (2, ~data & 0x80);
 			break;
 		case 3:		/* LED 2 */
-			osd_led_w (1, data >> 7);
+			set_led_status (1, ~data & 0x80);
 			break;
 		case 4:
 //			logerror("bank_switch_w, %02x\n", data);
@@ -93,7 +93,7 @@ WRITE_HANDLER( starwars_out_w )
 			prngclr_w (offset, data);
 			break;
 		case 6:
-			osd_led_w (0, data >> 7);
+			set_led_status (0, ~data & 0x80);
 			break;	/* LED 1 */
 		case 7:
 			logerror("recall\n"); /* what's that? */
@@ -327,7 +327,7 @@ INPUT_PORTS_START( starwars )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -404,7 +404,7 @@ INPUT_PORTS_START( esb )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -505,7 +505,7 @@ static struct TMS5220interface tms5220_interface =
 
 
 
-static struct MachineDriver machine_driver_starwars =
+static const struct MachineDriver machine_driver_starwars =
 {
 	/* basic machine hardware */
 	{
@@ -537,7 +537,7 @@ static struct MachineDriver machine_driver_starwars =
 	256,0, /* Number of colours, length of colour lookup table */
 	avg_init_palette_swars,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,							/* Handler to initialise video handware */
 	avg_start_starwars,			/* Start video hardware */
 	avg_stop,					/* Stop video hardware */
@@ -559,7 +559,7 @@ static struct MachineDriver machine_driver_starwars =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_esb =
+static const struct MachineDriver machine_driver_esb =
 {
 	/* basic machine hardware */
 	{
@@ -591,7 +591,7 @@ static struct MachineDriver machine_driver_esb =
 	256,0, /* Number of colours, length of colour lookup table */
 	avg_init_palette_swars,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,							/* Handler to initialise video handware */
 	avg_start_starwars,			/* Start video hardware */
 	avg_stop,					/* Stop video hardware */

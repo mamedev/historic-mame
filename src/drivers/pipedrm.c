@@ -659,7 +659,7 @@ static struct YM2610interface ym2610_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_pipedrm =
+static const struct MachineDriver machine_driver_pipedrm =
 {
 	/* basic machine hardware */
 	{
@@ -700,7 +700,7 @@ static struct MachineDriver machine_driver_pipedrm =
 };
 
 
-static struct MachineDriver machine_driver_hatris =
+static const struct MachineDriver machine_driver_hatris =
 {
 	/* basic machine hardware */
 	{

@@ -459,7 +459,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static struct MachineDriver machine_driver_bosco =
+static const struct MachineDriver machine_driver_bosco =
 {
 	/* basic machine hardware */
 	{

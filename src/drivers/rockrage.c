@@ -273,7 +273,7 @@ static struct VLM5030interface vlm5030_interface =
 	0
 };
 
-static struct MachineDriver machine_driver_rockrage =
+static const struct MachineDriver machine_driver_rockrage =
 {
 	/* basic machine hardware */
 	{

@@ -50,9 +50,7 @@ END_COLOR_DEPTH_LIST
 
 
 dirtygrid grid1;
-dirtygrid grid2;
-char *dirty_old=grid1;
-char *dirty_new=grid2;
+char *dirty_new=grid1;
 
 void center_mode(Register *pReg);
 
@@ -337,6 +335,9 @@ extern UINT32 *palette_16bit_lookup;
 int frameskip,autoframeskip;
 #define FRAMESKIP_LEVELS 12
 
+static int update_video_first_time;
+
+
 /* type of monitor output- */
 /* Standard PC, NTSC, PAL or Arcade */
 int monitor_type;
@@ -578,6 +579,10 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 }
 
 
+static void mark_full_screen_dirty(void)
+{
+	osd_mark_dirty(0,0,65535,65535,1);
+}
 
 /* set the bitmap to black */
 void osd_clearbitmap(struct osd_bitmap *bitmap)
@@ -594,11 +599,11 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	}
 
 
-	if (bitmap == Machine->scrbitmap || bitmap == overlay_real_scrbitmap)
+	if (bitmap == Machine->scrbitmap || bitmap == artwork_real_scrbitmap)
 	{
 		extern int bitmap_dirty;        /* in mame.c */
 
-		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
+		mark_full_screen_dirty();
 		bitmap_dirty = 1;
 	}
 }
@@ -645,15 +650,6 @@ void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 static void init_dirty(char dirty)
 {
 	memset(dirty_new, dirty, MAX_GFX_WIDTH/16 * MAX_GFX_HEIGHT/16);
-}
-
-INLINE void swap_dirty(void)
-{
-    char *tmp;
-
-	tmp = dirty_old;
-	dirty_old = dirty_new;
-	dirty_new = tmp;
 }
 
 
@@ -844,6 +840,13 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 					xm*=2;
 				else ym*=2;
 			}
+			else if ((attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+					== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+			{
+				if (orientation & ORIENTATION_SWAP_XY)
+					ym*=2;
+				else xm*=2;
+			}
 
 			if (scanlines && stretch)
 			{
@@ -974,6 +977,13 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 							tw /= 2;
 						else th /= 2;
 					}
+					else if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+							== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+					{
+						if (video_orientation & ORIENTATION_SWAP_XY)
+							th /= 2;
+						else tw /= 2;
+					}
 
 					/* Hack for 320x480 and 400x600 "vmame" video modes */
 					if ((gfx_width == 320 && gfx_height == 480) ||
@@ -995,6 +1005,13 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 							xmultiply *= 2;
 						else ymultiply *= 2;
 					}
+					else if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+							== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+					{
+						if (video_orientation & ORIENTATION_SWAP_XY)
+							ymultiply *= 2;
+						else xmultiply *= 2;
+					}
 
 					/* Hack for 320x480 and 400x600 "vmame" video modes */
 					if ((gfx_width == 320 && gfx_height == 480) ||
@@ -1010,6 +1027,13 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 					if (video_orientation & ORIENTATION_SWAP_XY)
 						xmultiply *= 2;
 					else ymultiply *= 2;
+				}
+				else if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+						== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+				{
+					if (video_orientation & ORIENTATION_SWAP_XY)
+						ymultiply *= 2;
+					else xmultiply *= 2;
 				}
 
 				/* Hack for 320x480 and 400x600 "vmame" video modes */
@@ -1115,17 +1139,8 @@ static int osd_set_display(int width,int height,int depth,int attributes,int ori
 
 
 	/* Mark the dirty buffers as dirty */
+	if (use_dirty) init_dirty(1);
 
-	if (use_dirty)
-	{
-		if (vector_game)
-			/* vector games only use one dirty buffer */
-			init_dirty (0);
-		else
-			init_dirty(1);
-		swap_dirty();
-		init_dirty(1);
-	}
 	if (dirtycolor)
 	{
 		for (i = 0;i < screen_colors;i++)
@@ -1622,7 +1637,7 @@ int osd_create_display(int width,int height,int depth,int fps,int attributes,int
 	if (use_dirty == -1)	/* dirty=auto in mame.cfg? */
 	{
 		/* Is the game using a dirty system? */
-		if ((attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
+		if (attributes & VIDEO_SUPPORTS_DIRTY)
 			use_dirty = 1;
 		else
 			use_dirty = 0;
@@ -1668,6 +1683,8 @@ int osd_create_display(int width,int height,int depth,int fps,int attributes,int
 		if(dbl)
 			scanlines=1;
 	}
+
+	update_video_first_time = 1;
 
     return 0;
 }
@@ -1719,7 +1736,7 @@ void osd_debugger_focus(int debugger_has_focus)
 			clrbitmap = osd_alloc_bitmap(gfx_display_columns,gfx_display_lines,video_depth);
 			if (clrbitmap)
 			{
-				update_screen(clrbitmap);
+				update_screen_debugger(clrbitmap);
 				osd_free_bitmap(clrbitmap);
 			}
 		}
@@ -1984,28 +2001,28 @@ INLINE void pan_display(void)
 		if (skipcolumns < skipcolumnsmax)
 		{
 			skipcolumns++;
-			osd_mark_dirty (0,0,Machine->scrbitmap->width-1,Machine->scrbitmap->height-1,1);
+			mark_full_screen_dirty();
 			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_RIGHT,1))
 		if (skipcolumns > skipcolumnsmin)
 		{
 			skipcolumns--;
-			osd_mark_dirty (0,0,Machine->scrbitmap->width-1,Machine->scrbitmap->height-1,1);
+			mark_full_screen_dirty();
 			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN,1))
 		if (skiplines < skiplinesmax)
 		{
 			skiplines++;
-			osd_mark_dirty (0,0,Machine->scrbitmap->width-1,Machine->scrbitmap->height-1,1);
+			mark_full_screen_dirty();
 			pan_changed = 1;
 		}
 	if (input_ui_pressed_repeat(IPT_UI_PAN_UP,1))
 		if (skiplines > skiplinesmin)
 		{
 			skiplines--;
-			osd_mark_dirty (0,0,Machine->scrbitmap->width-1,Machine->scrbitmap->height-1,1);
+			mark_full_screen_dirty();
 			pan_changed = 1;
 		}
 
@@ -2041,7 +2058,7 @@ int osd_skip_this_frame(void)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap,int leds_status)
 {
 	static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 	{
@@ -2067,9 +2084,29 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 	int have_to_clear_bitmap = 0;
 	int already_synced;
 	struct osd_bitmap *bitmap;
+	static int leds_old;
+
+	if (update_video_first_time || leds_old != leds_status)
+	{
+		static const int led_flags[3] =
+		{
+			KB_NUMLOCK_FLAG,
+			KB_CAPSLOCK_FLAG,
+			KB_SCROLOCK_FLAG
+		};
+
+		update_video_first_time = 0;
+		leds_old = leds_status;
+
+		i = 0;
+		if (leds_status & 1) i |= led_flags[0];
+		if (leds_status & 2) i |= led_flags[1];
+		if (leds_status & 4) i |= led_flags[2];
+		set_leds(i);
+	}
 
 
-	if (debug_bitmap && keyboard_pressed_memory(KEYCODE_F5))
+	if (debug_bitmap && input_ui_pressed(IPT_UI_TOGGLE_DEBUG))
 	{
 		osd_debugger_focus(show_debugger ^ 1);
 	}
@@ -2378,12 +2415,7 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 		if (!show_debugger && have_to_clear_bitmap)
 			osd_clearbitmap(bitmap);
 
-		if (use_dirty)
-		{
-			if (!vector_game)
-				swap_dirty();
-			init_dirty(0);
-		}
+		if (use_dirty) init_dirty(0);
 
 		if (!show_debugger && have_to_clear_bitmap)
 			osd_clearbitmap(bitmap);

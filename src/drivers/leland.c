@@ -1773,7 +1773,7 @@ static struct CustomSound_interface redline_custom_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_leland =
+static const struct MachineDriver machine_driver_leland =
 {
 	/* basic machine hardware */
 	{
@@ -1818,7 +1818,7 @@ static struct MachineDriver machine_driver_leland =
 };
 
 
-static struct MachineDriver machine_driver_redline =
+static const struct MachineDriver machine_driver_redline =
 {
 	/* basic machine hardware */
 	{
@@ -1870,7 +1870,7 @@ static struct MachineDriver machine_driver_redline =
 };
 
 
-static struct MachineDriver machine_driver_quarterb =
+static const struct MachineDriver machine_driver_quarterb =
 {
 	/* basic machine hardware */
 	{
@@ -1922,7 +1922,7 @@ static struct MachineDriver machine_driver_quarterb =
 };
 
 
-static struct MachineDriver machine_driver_lelandi =
+static const struct MachineDriver machine_driver_lelandi =
 {
 	/* basic machine hardware */
 	{

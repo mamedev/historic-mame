@@ -588,7 +588,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 #define MACHINE_DRIVER(NAME,CPU1_CLOCK,SOUND)					\
-static struct MachineDriver machine_driver_##NAME =				\
+static const struct MachineDriver machine_driver_##NAME =				\
 {																\
 	/* basic machine hardware */								\
 	{															\

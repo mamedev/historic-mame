@@ -580,7 +580,7 @@ static struct K007232_interface k007232_interface =
 
 
 
-static struct MachineDriver machine_driver_scontra =
+static const struct MachineDriver machine_driver_scontra =
 {
 	{
 		{
@@ -626,7 +626,7 @@ static struct MachineDriver machine_driver_scontra =
 	}
 };
 
-static struct MachineDriver machine_driver_thunderx =
+static const struct MachineDriver machine_driver_thunderx =
 {
 	{
 		{

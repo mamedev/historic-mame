@@ -189,7 +189,7 @@ static WRITE_HANDLER( galaxian_coin_lockout_w )
 
 static WRITE_HANDLER( galaxian_leds_w )
 {
-	osd_led_w(offset,data);
+	set_led_status(offset,data & 1);
 }
 
 static READ_HANDLER( galapx_funky_r )
@@ -1873,7 +1873,7 @@ static struct DACinterface kingball_dac_interface =
 
 #define MACHINE_DRIVER(NAME, MEM, INT, INIT, GFX, VHSTART)						\
 																				\
-static struct MachineDriver machine_driver_##NAME =								\
+static const struct MachineDriver machine_driver_##NAME =								\
 {																				\
 	/* basic machine hardware */												\
 	{																			\
@@ -1924,7 +1924,7 @@ MACHINE_DRIVER(mooncrst, mooncrst, galaxian,  0,                     galaxian, 	
 MACHINE_DRIVER(moonqsr,  mooncrst, galaxian,  0,                     galaxian, 	moonqsr)
 
 
-static struct MachineDriver machine_driver_zigzag =
+static const struct MachineDriver machine_driver_zigzag =
 {
 	/* basic machine hardware */
 	{
@@ -1961,7 +1961,7 @@ static struct MachineDriver machine_driver_zigzag =
 	}
 };
 
-static struct MachineDriver machine_driver_jumpbug =
+static const struct MachineDriver machine_driver_jumpbug =
 {
 	/* basic machine hardware */
 	{
@@ -1998,7 +1998,7 @@ static struct MachineDriver machine_driver_jumpbug =
 	}
 };
 
-static struct MachineDriver machine_driver_checkman =
+static const struct MachineDriver machine_driver_checkman =
 {
 	/* basic machine hardware */
 	{
@@ -2046,7 +2046,7 @@ static struct MachineDriver machine_driver_checkman =
 	}
 };
 
-static struct MachineDriver machine_driver_checkmaj =
+static const struct MachineDriver machine_driver_checkmaj =
 {
 	/* basic machine hardware */
 	{
@@ -2090,7 +2090,7 @@ static struct MachineDriver machine_driver_checkmaj =
 };
 
 
-static struct MachineDriver machine_driver_kingball =
+static const struct MachineDriver machine_driver_kingball =
 {
 	/* basic machine hardware */
 	{

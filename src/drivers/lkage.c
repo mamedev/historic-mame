@@ -59,18 +59,18 @@ static void nmi_callback(int param)
 	else pending_nmi = 1;
 }
 
-WRITE_HANDLER( lkage_sound_command_w )
+static WRITE_HANDLER( lkage_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-WRITE_HANDLER( lkage_sh_nmi_disable_w )
+static WRITE_HANDLER( lkage_sh_nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-WRITE_HANDLER( lkage_sh_nmi_enable_w )
+static WRITE_HANDLER( lkage_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
@@ -365,7 +365,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_lkage =
+static const struct MachineDriver machine_driver_lkage =
 {
 	{
 		{
@@ -417,7 +417,7 @@ static struct MachineDriver machine_driver_lkage =
 	}
 };
 
-static struct MachineDriver machine_driver_lkageb =
+static const struct MachineDriver machine_driver_lkageb =
 {
 	{
 		{

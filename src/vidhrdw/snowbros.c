@@ -100,3 +100,39 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 }
+
+void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	palette_recalc ();
+
+	fillbitmap(bitmap,Machine->gfx[0]->colortable[0],&Machine->visible_area);
+
+	for (offs = 0;offs < 0x1e00; offs += 16)
+	{
+		int xpos  = (READ_WORD(&snowbros_spriteram[0x00+offs]) & 0xff);
+		int ypos  = (READ_WORD(&snowbros_spriteram[0x08+offs]) & 0xff);
+/*		int unk1  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x01);*/  /* Unknown .. Set for the Bottom Left part of Sprites */
+		int disbl = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x02);
+/*		int unk2  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x04);*/  /* Unknown .. Set for most things */
+		int wrapr = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0x08);
+		int colr  = (READ_WORD(&snowbros_spriteram[0x02+offs]) & 0xf0) >> 4;
+		int tilen = (READ_WORD(&snowbros_spriteram[0x04+offs])  << 8 )+
+					(READ_WORD(&snowbros_spriteram[0x06+offs]) & 0xFF);
+		int flipy = (READ_WORD(&snowbros_spriteram[0x04+offs]) & 0x80);
+		int flipx = (READ_WORD(&snowbros_spriteram[0x04+offs]) & 0x40);
+
+		if (wrapr == 8) xpos -= 256;
+
+		if ((xpos > -16) && (ypos > 0) && (xpos < 256) && (ypos < 240) && (disbl !=2))
+		{
+			drawgfx(bitmap,Machine->gfx[0],
+					tilen,
+					colr,
+					flipy, flipx,
+					xpos,ypos,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}

@@ -215,7 +215,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_solomon =
+static const struct MachineDriver machine_driver_solomon =
 {
 	/* basic machine hardware */
 	{
@@ -243,7 +243,7 @@ static struct MachineDriver machine_driver_solomon =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	solomon_vh_start,
 	solomon_vh_stop,

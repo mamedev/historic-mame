@@ -251,5 +251,5 @@ void sega_vh_stop (void)
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	sega_generate_vector_list();
-	vector_vh_update(bitmap,full_refresh);
+	vector_vh_screenrefresh(bitmap,full_refresh);
 }

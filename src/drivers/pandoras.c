@@ -426,7 +426,7 @@ static struct DACinterface dac_interface =
 	{ 50 }
 };
 
-static struct MachineDriver machine_driver_pandoras =
+static const struct MachineDriver machine_driver_pandoras =
 {
 	/* basic machine hardware */
 	{

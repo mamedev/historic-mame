@@ -641,7 +641,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver_tigerh =
+static const struct MachineDriver machine_driver_tigerh =
 {
 	/* basic machine hardware */
 	{
@@ -686,7 +686,7 @@ static struct MachineDriver machine_driver_tigerh =
 	}
 };
 
-static struct MachineDriver machine_driver_slapfigh =
+static const struct MachineDriver machine_driver_slapfigh =
 {
 	/* basic machine hardware */
 	{
@@ -735,7 +735,7 @@ static struct MachineDriver machine_driver_slapfigh =
 };
 
 /* identical to slapfigh_ but writemem has different scroll registers */
-static struct MachineDriver machine_driver_slapbtuk =
+static const struct MachineDriver machine_driver_slapbtuk =
 {
 	/* basic machine hardware */
 	{

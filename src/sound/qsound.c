@@ -358,8 +358,8 @@ void qsound_set_command(int data, int value)
 			   {
 					pandata=32;
 			   }
-			   qsound_channel[ch].lvol=qsound_pan_table[pandata];
-			   qsound_channel[ch].rvol=qsound_pan_table[32-pandata];
+			   qsound_channel[ch].rvol=qsound_pan_table[pandata];
+			   qsound_channel[ch].lvol=qsound_pan_table[32-pandata];
 #endif
 			   qsound_channel[ch].pan = value;
 #if QSOUND_DRIVER2
@@ -435,8 +435,8 @@ void qsound_update( int num, INT16 **buffer, int length )
 					pC->lastdt=pST[pC->address];
 				}
 
-				(*pOutL) += ((pC->lastdt  * lvol) >> 6);
-				(*pOutR) += ((pC->lastdt  * rvol) >> 6);
+				(*pOutL) += ((pC->lastdt * lvol) >> 6);
+				(*pOutR) += ((pC->lastdt * rvol) >> 6);
 				pOutL++;
 				pOutR++;
 				pC->offset += pC->pitch;

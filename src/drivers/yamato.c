@@ -343,7 +343,7 @@ static struct AY8910interface yamato_ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_yamato =
+static const struct MachineDriver machine_driver_yamato =
 {
 	/* basic machine hardware */
 	{

@@ -424,8 +424,6 @@ int dotron_vh_start(void)
 				plot_pixel(artwork_backdrop->orig_artwork, x, y, newpixel);
 			}
 
-		backdrop_refresh(artwork_backdrop);
-
 		/* create palettes with different levels of brightness */
 		memcpy(dotron_palettes[0], artwork_backdrop->orig_palette, 3 * artwork_backdrop->num_pens_used);
 		for (i = 0; i < artwork_backdrop->num_pens_used; i++)
@@ -441,7 +439,6 @@ int dotron_vh_start(void)
 
 		logerror("Backdrop loaded.\n");
 	}
-
 	return 0;
 }
 
@@ -458,7 +455,6 @@ void dotron_change_light(int light)
 	light_status = light;
 }
 
-
 static void dotron_change_palette(int which)
 {
 	UINT8 *new_palette;
@@ -472,8 +468,6 @@ static void dotron_change_palette(int which)
 	for (i = 0; i < artwork_backdrop->num_pens_used; i++)
 		palette_change_color(i + offset, new_palette[i * 3], new_palette[i * 3 + 1], new_palette[i * 3 + 2]);
 }
-
-
 
 /*************************************
  *
@@ -492,23 +486,10 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int light = light_status & 1;
 		if ((light_status & 2) && (cpu_getcurrentframe() & 1)) light++;	/* strobe */
 		dotron_change_palette(light);
-		/* This is necessary because Discs of Tron modifies the palette */
-		if (backdrop_black_recalc())
-			memset(dirtybuffer, 1, videoram_size);
-
 	}
 
 	if (full_refresh || palette_recalc())
-	{
-		if (artwork_backdrop)
-		{
-			backdrop_refresh(artwork_backdrop);
-			copybitmap(tmpbitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			copybitmap(bitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			osd_mark_dirty(0,0,bitmap->width, bitmap->height, 0);
-		}
 		memset(dirtybuffer, 1 ,videoram_size);
-	}
 
 	/* Screen clip, because our backdrop is a different resolution than the game */
 	sclip.min_x = DOTRON_X_START + 0;
@@ -534,18 +515,6 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 			drawgfx(tmpbitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
 					mx, my, &sclip, TRANSPARENCY_NONE, 0);
-
-			if (artwork_backdrop != NULL)
-			{
-				struct rectangle bclip;
-
-				bclip.min_x = mx;
-				bclip.max_x = mx + 16 - 1;
-				bclip.min_y = my;
-				bclip.max_y = my + 16 - 1;
-
-				draw_backdrop(tmpbitmap, artwork_backdrop->artwork, 0, 0, &bclip);
-			}
 
 			dirtybuffer[offs] = 0;
 		}

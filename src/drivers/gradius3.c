@@ -402,7 +402,7 @@ static struct K007232_interface k007232_interface =
 
 
 
-static struct MachineDriver machine_driver_gradius3 =
+static const struct MachineDriver machine_driver_gradius3 =
 {
 	/* basic machine hardware */
 	{

@@ -230,9 +230,9 @@ READ_HANDLER( stooges_IN4_r )
 
 WRITE_HANDLER( reactor_output_w )
 {
-	osd_led_w(0,(data & 0x20) >> 5);
-	osd_led_w(1,(data & 0x40) >> 6);
-	osd_led_w(2,(data & 0x80) >> 7);
+	set_led_status(0,data & 0x20);
+	set_led_status(1,data & 0x40);
+	set_led_status(2,data & 0x80);
 	gottlieb_video_outputs_w(offset,data);
 }
 
@@ -1215,26 +1215,14 @@ static struct GfxLayout charROMlayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	256,    /* 256 sprites */
+	16,16,
+	RGN_FRAC(1,4),
 	4,      /* 4 bits per pixel */
-	{ 0, 256*32*8, 2*256*32*8, 3*256*32*8 },
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	32*8    /* every sprite takes 32 consecutive bytes */
-};
-
-static struct GfxLayout qbertqub_spritelayout =
-{
-	16,16,  /* 16*16 sprites */
-	512,    /* 512 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0, 512*32*8, 2*512*32*8, 3*512*32*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	32*8    /* every sprite takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxDecodeInfo charRAM_gfxdecodeinfo[] =
@@ -1248,13 +1236,6 @@ static struct GfxDecodeInfo charROM_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charROMlayout, 0, 1 },
 	{ REGION_GFX2, 0x0000, &spritelayout,  0, 1 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0x0000, &charROMlayout,         0, 1 },
-	{ REGION_GFX2, 0x0000, &qbertqub_spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -1349,11 +1330,23 @@ static const char *qbert_sample_names[] =
 	0	/* end of array */
 };
 
-static struct Samplesinterface samples_interface =
+static struct Samplesinterface qbert_samples_interface =
+{
+ 	1,	/* one channel */
+	100,	/* volume */
+	qbert_sample_names
+};
+
+static struct Samplesinterface reactor_samples_interface =
 {
 	1,	/* one channel */
-	100	/* volume */
+	100,	/* volume */
+	reactor_sample_names
 };
+
+#define gottlieb_samples_interface qbert_samples_interface	/* not used */
+#define krull_samples_interface qbert_samples_interface		/* not used */
+
 
 static struct AY8910interface ay8910_interface =
 {
@@ -1380,8 +1373,8 @@ static struct AY8910interface ay8910_interface =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
-static struct MachineDriver machine_driver_##GAMENAME =             \
+#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM,SAMPLES)	\
+static const struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                	\
 	{		                                                        \
@@ -1409,7 +1402,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 	16, 16,		                                                	\
 	0,									                           	\
 																	\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,						\
 	0,                                                          	\
 	gottlieb_vh_start,												\
 	gottlieb_vh_stop,												\
@@ -1423,8 +1416,8 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 			&dac1_interface											\
 		},															\
 		{															\
-			SOUND_SAMPLES,	/* for Votrax simulation */				\
-			&samples_interface										\
+			SAMPLES * SOUND_SAMPLES,	/* for Votrax simulation */	\
+			&GAMENAME##_samples_interface							\
 		}                                                   		\
 	},                                                           	\
 																	\
@@ -1432,7 +1425,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 }
 
 #define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
-static struct MachineDriver machine_driver_##GAMENAME =				\
+static const struct MachineDriver machine_driver_##GAMENAME =				\
 {																	\
 	/* basic machine hardware */									\
 	{																\
@@ -1467,7 +1460,7 @@ static struct MachineDriver machine_driver_##GAMENAME =				\
 	16, 16,															\
 	0,																\
 																	\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,	\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,						\
 	0,																\
 	gottlieb_vh_start,												\
 	gottlieb_vh_stop,												\
@@ -1490,15 +1483,15 @@ static struct MachineDriver machine_driver_##GAMENAME =				\
 }
 
 /* games using the revision 1 sound board */
-MACHINE_DRIVER_SOUND_1(reactor,  reactor_readmem, reactor_writemem, charRAM_gfxdecodeinfo, 0);
-MACHINE_DRIVER_SOUND_1(gottlieb, gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo, nvram_handler);
-MACHINE_DRIVER_SOUND_1(qbertqub, gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_1(krull,    gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo, nvram_handler);
+MACHINE_DRIVER_SOUND_1(reactor,  reactor_readmem, reactor_writemem, charRAM_gfxdecodeinfo,0,            1);
+MACHINE_DRIVER_SOUND_1(gottlieb, gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler,0);
+MACHINE_DRIVER_SOUND_1(qbert,    gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler,1);
+MACHINE_DRIVER_SOUND_1(krull,    gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo,nvram_handler,0);
 /* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,    gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo, nvram_handler);
-MACHINE_DRIVER_SOUND_2(usvsthem, gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(stooges,  stooges_readmem, stooges_writemem, charRAM_gfxdecodeinfo, nvram_handler);
-MACHINE_DRIVER_SOUND_2(gottlieb2,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo, nvram_handler);
+MACHINE_DRIVER_SOUND_2(mach3,    gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(usvsthem, gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(stooges,  stooges_readmem, stooges_writemem, charRAM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(gottlieb2,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler);
 
 
 /***************************************************************************
@@ -1824,32 +1817,22 @@ ROM_START( curvebal )
 ROM_END
 
 
-static void init_reactor(void)
-{
-	samples_interface.samplenames = reactor_sample_names;
-}
-
-static void init_qbert(void)
-{
-	samples_interface.samplenames = qbert_sample_names;
-}
-
 static void init_gottlieb(void)
 {
 	gottlieb_sound_init();
 }
 
 
-GAME( 1982, reactor,  0,     reactor,  reactor,  reactor,  ROT0,   "Gottlieb", "Reactor" )
+GAME( 1982, reactor,  0,     reactor,  reactor,  0,        ROT0,   "Gottlieb", "Reactor" )
 GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
-GAME( 1982, qbert,    0,     gottlieb, qbert,    qbert,    ROT270, "Gottlieb", "Q*bert (US)" )
-GAME( 1982, qbertjp,  qbert, gottlieb, qbert,    qbert,    ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
+GAME( 1982, qbert,    0,     qbert,    qbert,    0,        ROT270, "Gottlieb", "Q*bert (US)" )
+GAME( 1982, qbertjp,  qbert, qbert,    qbert,    0,        ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
 GAMEX(1982, insector, 0,     gottlieb, insector, 0,        ROT0,   "Gottlieb", "Insector (prototype)", GAME_NO_SOUND )
 GAME( 1983, krull,    0,     krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
-GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
+GAME( 1983, sqbert,   0,     qbert,    qbert,    0,        ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
 GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
 GAMEX(????, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
 GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "Three Stooges", GAME_IMPERFECT_SOUND )
-GAME( 1983, qbertqub, 0,     qbertqub, qbertqub, qbert,    ROT270, "Mylstar", "Q*bert's Qubes" )
+GAME( 1983, qbertqub, 0,     qbert,    qbertqub, 0,        ROT270, "Mylstar", "Q*bert's Qubes" )
 GAME( 1983, screwloo, 0,     gottlieb2,screwloo, 0,        ROT0,   "Mylstar", "Screw Loose (prototype)" )
 GAME( 1984, curvebal, 0,     gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball" )

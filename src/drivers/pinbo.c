@@ -124,7 +124,7 @@ static int pinbo_interrupt(void)
 	else return interrupt();	/* one IRQ per frame */
 }
 
-WRITE_HANDLER( pinbo_sound_command_w )
+static WRITE_HANDLER( pinbo_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_IRQ_INT);
@@ -372,7 +372,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_pinbo =
+static const struct MachineDriver machine_driver_pinbo =
 {
 	/* basic machine hardware */
 	{
@@ -400,7 +400,7 @@ static struct MachineDriver machine_driver_pinbo =
 	256, 256,
 	pinbo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

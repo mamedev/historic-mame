@@ -117,6 +117,8 @@ int main (int argc, char **argv)
 	char override_path[256];
 
 
+	override_path[0] = 0;
+
 	memset(&options,0,sizeof(options));
 
 	/* these two are not available in mame.cfg */

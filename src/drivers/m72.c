@@ -1913,7 +1913,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_rtype =
+static const struct MachineDriver machine_driver_rtype =
 {
 	/* basic machine hardware */
 	{
@@ -1957,7 +1957,7 @@ static struct MachineDriver machine_driver_rtype =
 	}
 };
 
-static struct MachineDriver machine_driver_m72 =
+static const struct MachineDriver machine_driver_m72 =
 {
 	/* basic machine hardware */
 	{
@@ -2005,7 +2005,7 @@ static struct MachineDriver machine_driver_m72 =
 	}
 };
 
-static struct MachineDriver machine_driver_xmultipl =
+static const struct MachineDriver machine_driver_xmultipl =
 {
 	/* basic machine hardware */
 	{
@@ -2053,7 +2053,7 @@ static struct MachineDriver machine_driver_xmultipl =
 	}
 };
 
-static struct MachineDriver machine_driver_dbreed =
+static const struct MachineDriver machine_driver_dbreed =
 {
 	/* basic machine hardware */
 	{
@@ -2101,7 +2101,7 @@ static struct MachineDriver machine_driver_dbreed =
 	}
 };
 
-static struct MachineDriver machine_driver_rtype2 =
+static const struct MachineDriver machine_driver_rtype2 =
 {
 	/* basic machine hardware */
 	{
@@ -2149,7 +2149,7 @@ static struct MachineDriver machine_driver_rtype2 =
 	}
 };
 
-static struct MachineDriver machine_driver_majtitle =
+static const struct MachineDriver machine_driver_majtitle =
 {
 	/* basic machine hardware */
 	{
@@ -2197,7 +2197,7 @@ static struct MachineDriver machine_driver_majtitle =
 	}
 };
 
-static struct MachineDriver machine_driver_hharry =
+static const struct MachineDriver machine_driver_hharry =
 {
 	/* basic machine hardware */
 	{
@@ -2245,7 +2245,7 @@ static struct MachineDriver machine_driver_hharry =
 	}
 };
 
-static struct MachineDriver machine_driver_hharryu =
+static const struct MachineDriver machine_driver_hharryu =
 {
 	/* basic machine hardware */
 	{
@@ -2293,7 +2293,7 @@ static struct MachineDriver machine_driver_hharryu =
 	}
 };
 
-static struct MachineDriver machine_driver_poundfor =
+static const struct MachineDriver machine_driver_poundfor =
 {
 	/* basic machine hardware */
 	{

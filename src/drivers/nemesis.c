@@ -1527,7 +1527,7 @@ static struct K007232_interface k007232_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver machine_driver_nemesis =
+static const struct MachineDriver machine_driver_nemesis =
 {
 	/* basic machine hardware */
 	{
@@ -1579,7 +1579,7 @@ static struct MachineDriver machine_driver_nemesis =
 	}
 };
 
-static struct MachineDriver machine_driver_konamigt =
+static const struct MachineDriver machine_driver_konamigt =
 {
 	/* basic machine hardware */
 	{
@@ -1627,7 +1627,7 @@ static struct MachineDriver machine_driver_konamigt =
 	}
 };
 
-static struct MachineDriver machine_driver_salamand =
+static const struct MachineDriver machine_driver_salamand =
 {
 	/* basic machine hardware */
 	{
@@ -1679,7 +1679,7 @@ static struct MachineDriver machine_driver_salamand =
 	}
 };
 
-static struct MachineDriver machine_driver_gx400 =
+static const struct MachineDriver machine_driver_gx400 =
 {
 	/* basic machine hardware */
 	{
@@ -1731,7 +1731,7 @@ static struct MachineDriver machine_driver_gx400 =
 	}
 };
 
-static struct MachineDriver machine_driver_twinbee_gx400 =
+static const struct MachineDriver machine_driver_twinbee_gx400 =
 {
 	/* basic machine hardware */
 	{
@@ -1783,7 +1783,7 @@ static struct MachineDriver machine_driver_twinbee_gx400 =
 	}
 };
 
-static struct MachineDriver machine_driver_rf2_gx400 =
+static const struct MachineDriver machine_driver_rf2_gx400 =
 {
 	/* basic machine hardware */
 	{

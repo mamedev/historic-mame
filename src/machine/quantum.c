@@ -42,8 +42,8 @@ WRITE_HANDLER( quantum_led_w )
 	coin_counter_w(1,data & 1);
 
 	/* bits 4 and 5 are LED controls */
-	osd_led_w(0,(data & 0x10) >> 4);
-	osd_led_w(1,(data & 0x20) >> 5);
+	set_led_status(0,data & 0x10);
+	set_led_status(1,data & 0x20);
 
 	/* other bits unknown */
 }

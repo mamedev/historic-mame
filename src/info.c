@@ -382,14 +382,19 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
 	int i;
 	for( i = 0; game->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
 	{
 		const char **samplenames = NULL;
-		if( game->drv->sound[i].sound_type != SOUND_SAMPLES )
-			continue;
-		samplenames = ((struct Samplesinterface *)game->drv->sound[i].sound_interface)->samplenames;
+#if (HAS_SAMPLES)
+		if( game->drv->sound[i].sound_type == SOUND_SAMPLES )
+			samplenames = ((struct Samplesinterface *)game->drv->sound[i].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+		if( game->drv->sound[i].sound_type == SOUND_VLM5030 )
+			samplenames = ((struct VLM5030interface *)game->drv->sound[i].sound_interface)->samplenames;
+#endif
 		if (samplenames != 0 && samplenames[0] != 0) {
 			int k = 0;
 			if (samplenames[k][0]=='*') {

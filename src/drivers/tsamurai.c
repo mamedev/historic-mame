@@ -508,7 +508,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver_tsamurai =
+static const struct MachineDriver machine_driver_tsamurai =
 {
 	{
 		{

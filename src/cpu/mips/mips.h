@@ -5,7 +5,8 @@
 
 enum
 {
-	MIPS_PC = 1, MIPS_OC,
+	MIPS_PC = 1,
+	MIPS_DELAYPC, MIPS_DELAY,
 	MIPS_HI, MIPS_LO,
 	MIPS_R0, MIPS_R1,
 	MIPS_R2, MIPS_R3,
@@ -43,15 +44,14 @@ enum
 
 extern int mips_ICount;
 
-#define MIPS_INT_NONE	( 0 )
-#define MIPS_INT1	( 1 )
-#define MIPS_INT2	( 2 )
-#define MIPS_INT3	( 4 )
-#define MIPS_INT4	( 8 )
-#define MIPS_INT5	( 16 )
-#define MIPS_INT6	( 32 )
-#define MIPS_INT7	( 64 )
-#define MIPS_INT8	( 128 )
+#define MIPS_INT_NONE	( -1 )
+
+#define MIPS_IRQ0	( 0 )
+#define MIPS_IRQ1	( 1 )
+#define MIPS_IRQ2	( 2 )
+#define MIPS_IRQ3	( 3 )
+#define MIPS_IRQ4	( 4 )
+#define MIPS_IRQ5	( 5 )
 
 #define MIPS_BYTE_EXTEND( a ) ( (INT32)(INT8)a )
 #define MIPS_WORD_EXTEND( a ) ( (INT32)(INT16)a )
@@ -69,7 +69,7 @@ extern int mips_ICount;
 #define INS_COFUN( op ) ( op & 0x1ffffff )
 #define INS_CF( op ) ( op & 63 )
 
-#define GTE_OP( op ) ( op & 0x1f01bff ) 
+#define GTE_OP( op ) ( op & 0x1f01bff )
 #define GTE_SF( op ) ( ( op >> 19 ) & 1 )
 #define GTE_MX( op ) ( ( op >> 17 ) & 3 )
 #define GTE_V( op ) ( ( op >> 15 ) & 3 )
@@ -163,13 +163,15 @@ extern int mips_ICount;
 #define CF_RFE ( 16 )
 
 #ifdef LSB_FIRST
-#define READ_LONG(a)          (*(UINT32 *)(a))
+#define MIPS_READ_LONG(a)		(*(UINT32 *)(a))
+#define MIPS_WRITE_LONG(a,d) 	(*(UINT32 *)(a) = (d))
 #else
-#define READ_LONG(a)		  (READ_WORD(a+2)<<16)|READ_WORD(a)
+#define MIPS_READ_LONG(a)		READ_WORD(a+2)<<16|READ_WORD(a)
+#define MIPS_WRITE_LONG(a,d)	WRITE_WORD(a+2,d>>16);WRITE_WORD(a,d & 0xffff)
 #endif
 
-#define cpu_readop32(A)     READ_LONG(&OP_ROM[A])
-extern void mips_stop( void );
+#define mips_readop32(A)	MIPS_READ_LONG(&OP_ROM[A])
+extern void mips_stop(void);
 
 extern void mips_reset(void *param);
 extern void mips_exit(void);
@@ -177,7 +179,6 @@ extern int mips_execute(int cycles);
 extern unsigned mips_get_context(void *dst);
 extern void mips_set_context(void *src);
 extern unsigned mips_get_pc(void);
-extern unsigned mips_get_op_counter( void );
 extern void mips_set_pc(unsigned val);
 extern unsigned mips_get_sp(void);
 extern void mips_set_sp(unsigned val);
@@ -191,6 +192,31 @@ extern unsigned mips_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmMIPS(char *buff, unsigned _pc);
+#endif
+
+#if HAS_PSXCPU
+
+#define psxcpu_ICount                   mips_ICount
+
+#define psxcpu_reset mips_reset
+#define psxcpu_exit mips_exit
+#define psxcpu_execute mips_execute
+#define psxcpu_get_context mips_get_context
+#define psxcpu_set_context mips_set_context
+#define psxcpu_get_pc mips_get_pc
+#define psxcpu_set_pc mips_set_pc
+#define psxcpu_get_sp mips_get_sp
+#define psxcpu_set_sp mips_set_sp
+#define psxcpu_get_reg mips_get_reg
+#define psxcpu_set_reg mips_set_reg
+#define psxcpu_set_nmi_line mips_set_nmi_line
+#define psxcpu_set_irq_line mips_set_irq_line
+#define psxcpu_set_irq_callback mips_set_irq_callback
+#define psxcpu_state_save mips_state_save
+#define psxcpu_state_load mips_state_load
+#define psxcpu_info mips_info
+#define psxcpu_dasm mips_dasm
+
 #endif
 
 #endif

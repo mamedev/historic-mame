@@ -22,6 +22,10 @@ extern "C" {
 #define FRAC_DEN(offset) (((offset) >> 23) & 0x0f)
 #define FRAC_OFFSET(offset) ((offset) & 0x007fffff)
 
+#define STEP4(START,STEP)  (START),(START)+1*(STEP),(START)+2*(STEP),(START)+3*(STEP)
+#define STEP8(START,STEP)  STEP4(START,STEP),STEP4((START)+4*(STEP),STEP)
+#define STEP16(START,STEP) STEP8(START,STEP),STEP8((START)+8*(STEP),STEP)
+
 
 struct GfxLayout
 {

@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.3
+ *	POKEY chip emulator 4.5
  *	Copyright (c) 2000 by The MAME Team
  *
  *	Based on original info found in Ron Fries' Pokey emulator,
@@ -12,7 +12,17 @@
  *  things means it is distributed as is, no warranties whatsoever.
  *	For more details read the readme.txt that comes with MAME.
  *
- *	4.4:
+ *	4.5:
+ *	- changed the 9/17 bit polynomial formulas such that the values
+ *	  required for the Tempest Pokey protection will be found.
+ *	  Tempest expects the upper 4 bits of the RNG to appear in the
+ *	  lower 4 bits after four cycles, so there has to be a shift
+ *	  of 1 per cycle (which was not the case before). Bits #6-#13 of the
+ *	  new RNG give this expected result now, bits #0-7 of the 9 bit poly.
+ *	- reading the RNG returns the shift register contents ^ 0xff.
+ *	  That way resetting the Pokey with SKCTL (which resets the
+ *	  polynome shifters to 0) returns the expected 0xff value.
+ *  4.4:
  *	- reversed sample values to make OFF channels produce a zero signal.
  *	  actually de-reversed them; don't remember that I reversed them ;-/
  *	4.3:
@@ -564,8 +574,11 @@ static void rand_init(UINT8 *rng, int size, int left, int right, int add)
 	LOG_RAND(("rand %d\n", size));
     for( i = 0; i < mask; i++ )
 	{
-		*rng = x >> (size - 8);   /* use the upper 8 bits */
-		LOG_RAND(("%05x: %02x\n", x, *rng));
+		if (size == 17)
+			*rng = x >> 6;	/* use bits 6..13 */
+		else
+			*rng = x;		/* use bits 0..7 */
+        LOG_RAND(("%05x: %02x\n", x, *rng));
         rng++;
         /* calculate next bit */
 		x = ((x << left) + (x >> right) + add) & mask;
@@ -591,12 +604,12 @@ int pokey_sh_start(const struct MachineSound *msound)
 	/* initialize the poly counters */
 	poly_init(poly4,   4, 3, 1, 0x00004);
 	poly_init(poly5,   5, 3, 2, 0x00008);
-	poly_init(poly9,   9, 2, 7, 0x00080);
-	poly_init(poly17, 17, 7,10, 0x18000);
+	poly_init(poly9,   9, 8, 1, 0x00180);
+	poly_init(poly17, 17,16, 1, 0x1c000);
 
 	/* initialize the random arrays */
-	rand_init(rand9,   9, 2, 7, 0x00080);
-	rand_init(rand17, 17, 7,10, 0x18000);
+	rand_init(rand9,   9, 8, 1, 0x00180);
+	rand_init(rand17, 17,16, 1, 0x1c000);
 
 	for( chip = 0; chip < intf.num; chip++ )
 	{
@@ -882,26 +895,28 @@ int pokey_register_r(int chip, int offs)
 		 ****************************************************************/
 		if( p->SKCTL & SK_RESET )
 		{
-			UINT32 adjust = (UINT32)(timer_timeelapsed(p->rtimer) * intf.baseclock);
+			UINT32 adjust = (UINT32)(timer_timeelapsed(p->rtimer) * intf.baseclock + 0.5);
 			p->r9 = (p->r9 + adjust) % 0x001ff;
 			p->r17 = (p->r17 + adjust) % 0x1ffff;
-			if( p->AUDCTL & POLY9 )
-			{
-				p->RANDOM = rand9[p->r9];
-				LOG_RAND(("POKEY #%d adjust %u rand9[$%05x]: $%02x\n", chip, adjust, p->r9, p->RANDOM));
-			}
-            else
-			{
-				p->RANDOM = rand17[p->r17];
-				LOG_RAND(("POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
-			}
 		}
 		else
 		{
-			LOG_RAND(("POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
+			p->r9 = 0;
+			p->r17 = 0;
+            LOG_RAND(("POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
 		}
-		timer_reset(p->rtimer, TIME_NEVER);
-		data = p->RANDOM;
+		if( p->AUDCTL & POLY9 )
+		{
+			p->RANDOM = rand9[p->r9];
+			LOG_RAND(("POKEY #%d adjust %u rand9[$%05x]: $%02x\n", chip, adjust, p->r9, p->RANDOM));
+		}
+		else
+		{
+			p->RANDOM = rand17[p->r17];
+			LOG_RAND(("POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
+		}
+        timer_reset(p->rtimer, TIME_NEVER);
+		data = p->RANDOM ^ 0xff;
 		break;
 
 	case SERIN_C:

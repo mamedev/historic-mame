@@ -237,11 +237,13 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 
 		sx = (READ_WORD(&spriteram[offs+2]) & 0x01ff) + 16*8 - 1;
+		if (sx >= 512) sx -= 512;
 		starty = READ_WORD(&spriteram[offs+0]) & 0xff;
 		endy = READ_WORD(&spriteram[offs+0]) >> 8;
 
 		width = READ_WORD(&spriteram[offs+4]) & 0x007f;
 		flipx = READ_WORD(&spriteram[offs+4]) & 0x0100;
+		if (flipx) sx++;
 
 		color = 0x40 + (READ_WORD(&spriteram[offs+8]) & 0x3f);
 
@@ -254,9 +256,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			case 0xc0:                   break;	/* above everything */
 		}
 
-
-if (READ_WORD(&spriteram[offs+4]) & 0x0080) color = rand() & 0x7f;
-if (READ_WORD(&spriteram[offs+10])) color = rand() & 0x7f;
 
 		start = READ_WORD(&spriteram[offs+6]) +
 				((READ_WORD(&spriteram[offs+8]) & 0x1f00) << 8);

@@ -715,7 +715,7 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_zunit =
+static const struct MachineDriver machine_driver_zunit =
 {
 	/* basic machine hardware */
 	{
@@ -761,7 +761,7 @@ static struct MachineDriver machine_driver_zunit =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_yunit_cvsd_4bit =
+static const struct MachineDriver machine_driver_yunit_cvsd_4bit =
 {
 	/* basic machine hardware */
 	{
@@ -800,7 +800,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_4bit =
 };
 
 
-static struct MachineDriver machine_driver_yunit_cvsd_6bit =
+static const struct MachineDriver machine_driver_yunit_cvsd_6bit =
 {
 	/* basic machine hardware */
 	{
@@ -839,7 +839,7 @@ static struct MachineDriver machine_driver_yunit_cvsd_6bit =
 };
 
 
-static struct MachineDriver machine_driver_yunit_adpcm =
+static const struct MachineDriver machine_driver_yunit_adpcm =
 {
 	/* basic machine hardware */
 	{

@@ -55,13 +55,13 @@ static void get_fg_tile_info(int tile_index)
 	SET_TILE_INFO(2,(videoram1[2*tile_index] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
 	if ((attr & 0xc0) == 0xc0)
 	{
-		tile_info.priority = 2;
-		tile_info.flags = 0;
+		tile_info.priority = 1;
+		tile_info.flags = TILE_SPLIT(0);
 	}
 	else
 	{
-		tile_info.priority = (attr & 0x20) >> 5;
-		tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
+		tile_info.priority = 0;
+		tile_info.flags = TILE_SPLIT((attr & 0x20) >> 5) | TILE_FLIPXY((attr & 0xc0) >> 6);
 	}
 }
 
@@ -91,7 +91,8 @@ int bionicc_vh_start(void)
 
 	tx_tilemap->transparent_pen = 3;
 	fg_tilemap->transparent_pen = 15;
-	fg_tilemap->transmask[0] = 0xffc1; /* split has pens 1-5 opaque in front half */
+	fg_tilemap->transmask[0] = 0xffff; /* split type 0 is completely transparent in front half */
+	fg_tilemap->transmask[1] = 0xffc1; /* split type 1 has pens 1-5 opaque in front half */
 	bg_tilemap->transparent_pen = 15;
 
 	return 0;
@@ -282,21 +283,15 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	tilemap_draw(bitmap,fg_tilemap,2|TILEMAP_BACK);
-	tilemap_draw(bitmap,fg_tilemap,2|TILEMAP_FRONT);
+	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_BACK);	/* nothing in FRONT */
 	tilemap_draw(bitmap,bg_tilemap,0);
 	tilemap_draw(bitmap,fg_tilemap,0|TILEMAP_BACK);
-	tilemap_draw(bitmap,fg_tilemap,0|TILEMAP_FRONT);
-	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_BACK);
 	bionicc_draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_FRONT);
+	tilemap_draw(bitmap,fg_tilemap,0|TILEMAP_FRONT);
 	tilemap_draw(bitmap,tx_tilemap,0);
 }
 
 void bionicc_eof_callback(void)
 {
-	/* Mish: Spriteram is always 1 frame ahead, suggesting buffering.  I can't
-		find a register to control this so I assume it happens automatically
-		every frame at the end of vblank */
 	buffer_spriteram_w(0,0);
 }

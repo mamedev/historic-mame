@@ -57,9 +57,6 @@ struct ADPCMVoice
 static UINT8 num_voices;
 static struct ADPCMVoice adpcm[MAX_ADPCM];
 
-/* global pointer to the current array of samples */
-static struct ADPCMsample *sample_list;
-
 /* step size index shift table */
 static int index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
 
@@ -270,20 +267,6 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 	/* reset the ADPCM system */
 	num_voices = intf->num;
 	compute_tables();
-	sample_list = 0;
-
-	/* generate the sample table, if one is needed */
-	if (intf->init)
-	{
-		/* allocate memory for it */
-		sample_list = malloc(257 * sizeof(struct ADPCMsample));
-		if (!sample_list)
-			return 1;
-		memset(sample_list, 0, 257 * sizeof(struct ADPCMsample));
-
-		/* callback to initialize */
-		(*intf->init)(intf, sample_list, 256);
-	}
 
 	/* initialize the voices */
 	memset(adpcm, 0, sizeof(adpcm));
@@ -317,12 +300,6 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 
 void ADPCM_sh_stop(void)
 {
-	/* free the temporary table if we created it */
-	if (sample_list)
-	{
-		free(sample_list);
-		sample_list = 0;
-	}
 }
 
 
@@ -335,52 +312,6 @@ void ADPCM_sh_stop(void)
 
 void ADPCM_sh_update(void)
 {
-}
-
-
-
-/**********************************************************************************************
-
-     ADPCM_trigger -- handle a write to the ADPCM data stream
-
-***********************************************************************************************/
-
-void ADPCM_trigger(int num, int which)
-{
-	struct ADPCMVoice *voice = &adpcm[num];
-	struct ADPCMsample *sample;
-
-	/* bail if we're not playing anything */
-	if (Machine->sample_rate == 0)
-		return;
-
-	/* range check the numbers */
-	if (num >= num_voices)
-	{
-		logerror("error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
-		return;
-	}
-
-	/* find a match */
-	for (sample = sample_list; sample->length > 0; sample++)
-		if (sample->num == which)
-		{
-			/* update the ADPCM voice */
-			stream_update(voice->stream, 0);
-
-			/* set up the voice to play this sample */
-			voice->playing = 1;
-			voice->base = &voice->region_base[sample->offset];
-			voice->sample = 0;
-			voice->count = sample->length;
-
-			/* also reset the ADPCM parameters */
-			voice->signal = -2;
-			voice->step = 0;
-			return;
-		}
-
-	logerror("warning: ADPCM_trigger() called with unknown trigger = %08x\n",which);
 }
 
 
@@ -545,7 +476,6 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 	/* reset the ADPCM system */
 	num_voices = intf->num * MAX_OKIM6295_VOICES;
 	compute_tables();
-	sample_list = 0;
 
 	/* initialize the voices */
 	memset(adpcm, 0, sizeof(adpcm));

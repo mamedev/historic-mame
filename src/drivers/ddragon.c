@@ -483,7 +483,7 @@ static int ddragon_interrupt(void)
 
 
 
-static struct MachineDriver machine_driver_ddragon =
+static const struct MachineDriver machine_driver_ddragon =
 {
 	/* basic machine hardware */
 	{
@@ -535,7 +535,7 @@ static struct MachineDriver machine_driver_ddragon =
 	}
 };
 
-static struct MachineDriver machine_driver_ddragonb =
+static const struct MachineDriver machine_driver_ddragonb =
 {
 	/* basic machine hardware */
 	{
@@ -587,7 +587,7 @@ static struct MachineDriver machine_driver_ddragonb =
 	}
 };
 
-static struct MachineDriver machine_driver_ddragon2 =
+static const struct MachineDriver machine_driver_ddragon2 =
 {
 	/* basic machine hardware */
 	{

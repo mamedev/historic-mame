@@ -854,7 +854,7 @@ static struct CustomSound_interface exidy_custom_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_targ =
+static const struct MachineDriver machine_driver_targ =
 {
 	/* basic machine hardware */
 	{
@@ -875,7 +875,7 @@ static struct MachineDriver machine_driver_targ =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -891,7 +891,7 @@ static struct MachineDriver machine_driver_targ =
 };
 
 
-static struct MachineDriver machine_driver_mtrap =
+static const struct MachineDriver machine_driver_mtrap =
 {
 	/* basic machine hardware */
 	{
@@ -924,7 +924,7 @@ static struct MachineDriver machine_driver_mtrap =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -939,7 +939,7 @@ static struct MachineDriver machine_driver_mtrap =
 };
 
 
-static struct MachineDriver machine_driver_venture =
+static const struct MachineDriver machine_driver_venture =
 {
 	/* basic machine hardware */
 	{
@@ -966,7 +966,7 @@ static struct MachineDriver machine_driver_venture =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -980,7 +980,7 @@ static struct MachineDriver machine_driver_venture =
 };
 
 
-static struct MachineDriver machine_driver_pepper2 =
+static const struct MachineDriver machine_driver_pepper2 =
 {
 	/* basic machine hardware */
 	{
@@ -1007,7 +1007,7 @@ static struct MachineDriver machine_driver_pepper2 =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -1022,7 +1022,7 @@ static struct MachineDriver machine_driver_pepper2 =
 };
 
 
-static struct MachineDriver machine_driver_fax =
+static const struct MachineDriver machine_driver_fax =
 {
 	/* basic machine hardware */
 	{
@@ -1049,7 +1049,7 @@ static struct MachineDriver machine_driver_fax =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,

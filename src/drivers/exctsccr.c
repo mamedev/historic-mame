@@ -355,7 +355,7 @@ static struct DACinterface bl_dac_interface =
 
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_exctsccr =
+static const struct MachineDriver machine_driver_exctsccr =
 {
 	/* basic machine hardware */
 	{
@@ -404,7 +404,7 @@ static struct MachineDriver machine_driver_exctsccr =
 };
 
 /* Bootleg */
-static struct MachineDriver machine_driver_exctsccb =
+static const struct MachineDriver machine_driver_exctsccb =
 {
 	/* basic machine hardware */
 	{

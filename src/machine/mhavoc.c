@@ -170,13 +170,13 @@ WRITE_HANDLER( mhavoc_out_0_w )
 	}
 	player_1 = data & 0x20;
 	/* Emulate the roller light (Blinks on fatal errors) */
-	osd_led_w (2, data & 0x01);
+	set_led_status (2, data & 0x01);
 }
 
 WRITE_HANDLER( mhavoc_out_1_w )
 {
-	osd_led_w (1, data & 0x01);
-	osd_led_w (0, (data & 0x02)>>1);
+	set_led_status (1,data & 0x01);
+	set_led_status (0,data & 0x02);
 }
 
 static void mhavoc_gamma_irq(int param)

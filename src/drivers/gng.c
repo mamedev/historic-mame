@@ -1,164 +1,19 @@
 /***************************************************************************
 
-GHOST AND GOBLINS HARDWARE.  ( Doc By Roberto Ventura )
-
-The hardware is similar to 1942's and other Capcom games.
-It seems that it's adapted by software to run on a standard (horizontal)
-CRT display.
-
--ROM CONTENTS.
-
-GG1.bin  = Character display. (unlike 1942 this is bit complemented)
-GG2.bin  = Sound ROM.
-GG3.bin  = CPU main chunk,fixed in 8000h-ffffh.
-GG4.bin  = CPU paged in.Upmost 2000h fixed in 6000h-7fffh.
-GG5.bin  = CPU paged in 4000h-5fffh.
-GG6.bin  = background set 2-3   plane 3
-GG7.bin  = background set 0-1   plane 3
-GG8.bin  = background set 2-3   plane 2
-GG9.bin  = background set 0-1   plane 2
-GG10.bin = background set 2-3   plane 1
-GG11.bin = background set 0-1   plane 1
-GG12.bin = sprites set 2        planes 3-4
-GG13.bin = sprites set 1        planes 3-4
-GG14.bin = sprites set 0        planes 3-4
-GG15.bin = sprites set 2        planes 1-2
-GG16.bin = sprites set 1        planes 1-2
-GG17.bin = sprites set 0        planes 1-2
-
-Note: the plane order is important because the game's palette is
-not stored in hardware,therefore there is only a way to match a bit
-with the corresponding colour.
-
-In other ROM sets I've found a different in-rom arrangement of banks.
-(16k ROMs instead of 32k)
-
--MEMORY MAP:
-
-0000-1DFF = Work RAM
-
-1e00-1f7f = Sprites
-
-2000-23ff = Characters video ram.
-2400-27ff = Characters attributes.
-
-2800-2bff = Background video ram.
-2c00-2fff = Background attributes.
-
-3000-37ff = Input ports.
-3800-3fff = Output ports.
-
-4000-5fff = Bank switched.
-6000-7fff = GG4 8k upmost.  (fixed)
-8000-ffff = GG3.            (fixed)
-
--CHARACTER TILE FORMAT.
-
-Attribute description:
-
-                76543210
-                    ^^^^ Palette selector.
-                  ^ Page selector.
-                ^^ ^ Unknown/unused.
-
-Two 256 tiles pages are available for characters.
-
-Sixteen 4 colours palettes are available for characters.
+Ghosts'n Goblins
+Diamond Run
 
 
--BACKGROUND TILE FORMAT:
-
-Both scroll and attributes map consist of 4 pages which wrap up/down
-and left/right.
-
-Attribute description:
-
-                76543210
-                     ^^^ Palette selector
-                    ^ Tile priority
-                   ^ Flip X
-                  ^ Flip Y? (should be present.)
-                ^^ Tile page selector.
-
-When the priority bit is set the tile can overlap sprites.
-
-Eight 8 colours palettes are available for background.
-
-Four 256 tiles pages are available for background.
-
--SPRITE FORMAT:
-
-There hardware is capable to display 96 sprites,they use 4 bytes each,in order:
-1) Sprite number.
-2) Sprite attribute.
-3) Y pos.
-4) X pos.
-
-Sprite attribute description:
-
-                76543210
-                       ^ X "Sprite clipping"
-                      ^ Unknown/Unused
-                     ^ Flip X
-                    ^Flip Y
-                  ^^ Palette selector
-                ^^ Sprite page selector
-
-I've called bit 1 "Sprite clipping" bit because this does not act as a
-MSB,it's set when the sprite reaches either left or right border,
-according to the MSB bit of the X position (rough scroll) selects two
-border display columns,where sprites horizontal movement is limited
-by a 7 bit offset (rest of X position).
-
-Four 16 colours palettes are available for sprites.
-
-Three 256 sprites pages are available.
-
-The sprite priority is inversed: the last sprite,increasing memory,
-has the higher priority.
-
-INPUT:
-
-3000 = Coin and start buttons
-3001 = Controls and joystick 1.
-3002 = Controls and joystick 2.
-3003 = DIP 0
-3004 = DIP 1
-
-OUTPUT:
-
-3800-38ff = Palette HI: 2 nibbles:red and green.
-3900-39ff = Palette LO: 1 nibble:blue (low nibble set to zero)
-
-        The palette depth is 12 bits (4096 colours).
-        Each object (scroll,characters,sprites) has it's own palette space.
-
-        00-3f:  background palettes. (8x8 colours)
-        40-7f:  sprites palettes. (4*16 colours)
-        80-bf:  characters palettes (16*4 colours)
-        c0-ff:  duplicate of character palettes ?? (16*4 colours)
-
-        note:   character and sprite palettes are in reversed order,the
-                transparent colour is the last colour,not colour zero.
-
-3a00 = sound output?
-
-3b08 = scroll X
-3b09 = scroll X MSB
-3b0a = scroll Y
-3b0b = scroll Y MSB
-
-3c00 = watchdog???
-
-3d00 = ???
-3d01 = ???
-3d02 = ???
-3d03 = ???
-
-3e00 = page selector (valid pages are 0,1,2,3 and 4)
-
-
-
+Notes:
+- Diamond Run doesn't use all the ROMs. d5 is not used at all, and the second
+  half of d3o is not used either. There are 0x38 levels in total, the data for
+  levels 0x00-0x0f is taken from ROM space 0x8000-0xbfff, the data for levels
+  0x10-0x37 is taken from the banked space 0x4000-0x5fff (5 banks) (see the
+  table at 0xc66f). Actually, looking at the code it seems to roll overs at
+  level 0x2f, and indeed the data for levels 0x30-0x37 isn't valid (player
+  starts into a wall, or there are invisible walls, etc.)
+  The 0x6000-0x7fff ROM space doesn't seem to be used: instead the game writes
+  to 6048 and reads from 6000. Silly copy protection?
 
 ***************************************************************************/
 
@@ -168,31 +23,32 @@ OUTPUT:
 
 
 
-WRITE_HANDLER( gng_bankswitch_w );
-READ_HANDLER( gng_bankedrom_r );
-void gng_init_machine(void);
-
-extern unsigned char *gng_fgvideoram,*gng_fgcolorram;
-extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
+extern unsigned char *gng_fgvideoram;
+extern unsigned char *gng_bgvideoram;
 WRITE_HANDLER( gng_fgvideoram_w );
-WRITE_HANDLER( gng_fgcolorram_w );
 WRITE_HANDLER( gng_bgvideoram_w );
-WRITE_HANDLER( gng_bgcolorram_w );
 WRITE_HANDLER( gng_bgscrollx_w );
 WRITE_HANDLER( gng_bgscrolly_w );
 WRITE_HANDLER( gng_flipscreen_w );
 int gng_vh_start(void);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gng_eof_callback(void);
 
 
 
-WRITE_HANDLER( gng_bankswitch_w )
+static WRITE_HANDLER( gng_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
-	static int bank[] = { 0x10000, 0x12000, 0x14000, 0x16000, 0x04000, 0x18000 };
-	cpu_setbank (1, &RAM[bank[data]]);
+	if (data == 4)
+	{
+		cpu_setbank(1,rom + 0x4000);
+	}
+	else
+	{
+		cpu_setbank(1,rom + 0x10000 + (data & 3) * 0x2000);
+	}
 }
 
 
@@ -215,10 +71,8 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, gng_fgvideoram_w, &gng_fgvideoram },
-	{ 0x2400, 0x27ff, gng_fgcolorram_w, &gng_fgcolorram },
-	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram },
-	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
+	{ 0x2000, 0x27ff, gng_fgvideoram_w, &gng_fgvideoram },
+	{ 0x2800, 0x2fff, gng_bgvideoram_w, &gng_bgvideoram },
 	{ 0x3800, 0x38ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0x3900, 0x39ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0x3a00, 0x3a00, soundlatch_w },
@@ -226,6 +80,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3b0a, 0x3b0b, gng_bgscrolly_w },
 	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
 	{ 0x3d00, 0x3d00, gng_flipscreen_w },
+//	{ 0x3d01, 0x3d01, reset sound cpu?
+	{ 0x3d02, 0x3d03, coin_counter_w },
 	{ 0x3e00, 0x3e00, gng_bankswitch_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -261,7 +117,7 @@ INPUT_PORTS_START( gng )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -346,7 +202,7 @@ INPUT_PORTS_START( makaimur )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -504,48 +360,49 @@ INPUT_PORTS_START( diamond )
 INPUT_PORTS_END
 
 
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 tiles */
-	1024,	/* 1024 tiles */
-	3,	/* 3 bits per pixel */
-	{ 2*1024*32*8, 1024*32*8, 0 },	/* the bitplanes are separated */
-        { 0, 1, 2, 3, 4, 5, 6, 7,
-            16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	32*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	768,	/* 768 sprites */
-	4,	/* 4 bits per pixel */
-	{ 768*64*8+4, 768*64*8+0, 4, 0 },
-        { 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-	    32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   128, 16 },	/* colors 128-195 */
-	{ REGION_GFX2, 0, &tilelayout,     0,  8 },	/* colors   0- 63 */
-	{ REGION_GFX3, 0, &spritelayout,  64,  4 },	/* colors  64-127 */
+	{ REGION_GFX1, 0, &charlayout,   0x80, 16 },	/* colors 0x80-0xbf */
+	{ REGION_GFX2, 0, &tilelayout,   0x00,  8 },	/* colors 0x00-0x3f */
+	{ REGION_GFX3, 0, &spritelayout, 0x40,  4 },	/* colors 0x40-0x7f */
 	{ -1 } /* end of array */
 };
 
@@ -564,7 +421,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_gng =
+static const struct MachineDriver machine_driver_gng =
 {
 	/* basic machine hardware */
 	{
@@ -581,19 +438,18 @@ static struct MachineDriver machine_driver_gng =
 			interrupt,4
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	192, 192,
+	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	gng_eof_callback,
 	gng_vh_start,
 	0,
 	gng_vh_screenrefresh,
@@ -617,13 +473,13 @@ static struct MachineDriver machine_driver_gng =
 ***************************************************************************/
 
 ROM_START( gng )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 4 */
 	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
-	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b )	/* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -650,15 +506,15 @@ ROM_START( gng )
 ROM_END
 
 ROM_START( gnga )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
 	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
 	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
-	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
 	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
 	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -685,13 +541,13 @@ ROM_START( gnga )
 ROM_END
 
 ROM_START( gngt )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 )	/* 4000-5fff is page 4 */
 	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
-	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "mm05",         0x10000, 0x8000, 0x8f7cff61 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "mm05",         0x10000, 0x8000, 0x8f7cff61 )	/* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -718,13 +574,13 @@ ROM_START( gngt )
 ROM_END
 
 ROM_START( makaimur )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 4 */
 	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
-	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "12n.rom",      0x10000, 0x8000, 0x65a6a97b )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "12n.rom",      0x10000, 0x8000, 0x65a6a97b )	/* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -751,13 +607,13 @@ ROM_START( makaimur )
 ROM_END
 
 ROM_START( makaimuc )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
-	ROM_LOAD( "mj03c.bin",       0x08000, 0x8000, 0xd343332d )
-	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )	/* page 1, 2, 3 and 4 */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 4 */
+	ROM_LOAD( "mj03c.bin",      0x08000, 0x8000, 0xd343332d )
+	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )	/* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -784,13 +640,13 @@ ROM_START( makaimuc )
 ROM_END
 
 ROM_START( makaimug )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
-	ROM_LOAD( "mj03g.bin",       0x08000, 0x8000, 0x61b043bb )
-	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )	/* page 1, 2, 3 and 4 */
+	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 4 */
+	ROM_LOAD( "mj03g.bin",      0x08000, 0x8000, 0x61b043bb )
+	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )	/* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -817,15 +673,14 @@ ROM_START( makaimug )
 ROM_END
 
 ROM_START( diamond )
-	ROM_REGION( 0x1a000, REGION_CPU1 )	/* 64k for code * 6 pages (is it really 6?) */
-	ROM_LOAD( "d5",           0x00000, 0x8000, 0x453f3f9e )
+	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_LOAD( "d3o",          0x04000, 0x4000, 0xba4bf9f1 )	/* 4000-5fff is page 4 */
 	ROM_LOAD( "d3",           0x08000, 0x8000, 0xf436d6fa )
-	ROM_LOAD( "d3o",          0x04000, 0x2000, 0xba4bf9f1 )	/* 4000-5fff is page 0 */
-	ROM_CONTINUE(             0x18000, 0x2000 )
-	ROM_LOAD( "d5o",          0x10000, 0x8000, 0xae58bd3a )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "d5o",          0x10000, 0x8000, 0xae58bd3a )	/* page 0, 1, 2, 3 */
+	ROM_LOAD( "d5",           0x18000, 0x8000, 0x453f3f9e )	/* is this supposed to be used? */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "d2",           0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "d2",           0x0000, 0x8000, 0x615f5b6f )
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "d1",           0x00000, 0x4000, 0x3a24e504 )	/* characters */
@@ -838,13 +693,9 @@ ROM_START( diamond )
 	ROM_LOAD( "d7",           0x10000, 0x4000, 0xfd595274 )	/* tiles 0-1 Plane 3*/
 	ROM_LOAD( "d6",           0x14000, 0x4000, 0x7f51dcd2 )	/* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "d17",          0x00000, 0x4000, 0x8164b005 )	/* sprites 0 Plane 1-2 */
-	/* empty space for unused sprites 1 Plane 1-2 */
-	/* empty space for unused sprites 2 Plane 1-2 */
-	ROM_LOAD( "d14",          0x0c000, 0x4000, 0x6f132163 )	/* sprites 0 Plane 3-4 */
-	/* empty space for unused sprites 1 Plane 3-4 */
-	/* empty space for unused sprites 2 Plane 3-4 */
+	ROM_LOAD( "d14",          0x04000, 0x4000, 0x6f132163 )	/* sprites 0 Plane 3-4 */
 
 	ROM_REGION( 0x0200, REGION_PROMS )
 	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )	/* video timing (not used) */
@@ -853,10 +704,22 @@ ROM_END
 
 
 
-GAME( 1985, gng,      0,   gng, gng,      0, ROT0, "Capcom", "Ghosts'n Goblins (World? set 1)" )
-GAME( 1985, gnga,     gng, gng, gng,      0, ROT0, "Capcom", "Ghosts'n Goblins (World? set 2)" )
-GAME( 1985, gngt,     gng, gng, gng,      0, ROT0, "Capcom (Taito America license)", "Ghosts'n Goblins (US)" )
-GAME( 1985, makaimur, gng, gng, makaimur, 0, ROT0, "Capcom", "Makai-Mura" )
-GAME( 1985, makaimuc, gng, gng, makaimur, 0, ROT0, "Capcom", "Makai-Mura (Revision C)" )
-GAME( 1985, makaimug, gng, gng, makaimur, 0, ROT0, "Capcom", "Makai-Mura (Revision G)" )
-GAME( 1989, diamond,  0,   gng, diamond,  0, ROT0, "KH Video", "Diamond Run" )
+static READ_HANDLER( diamond_hack_r )
+{
+	return 0;
+}
+
+static void init_diamond(void)
+{
+	install_mem_read_handler(0,0x6000,0x6000,diamond_hack_r);
+}
+
+
+
+GAME( 1985, gng,      0,   gng, gng,      0,       ROT0, "Capcom", "Ghosts'n Goblins (World? set 1)" )
+GAME( 1985, gnga,     gng, gng, gng,      0,       ROT0, "Capcom", "Ghosts'n Goblins (World? set 2)" )
+GAME( 1985, gngt,     gng, gng, gng,      0,       ROT0, "Capcom (Taito America license)", "Ghosts'n Goblins (US)" )
+GAME( 1985, makaimur, gng, gng, makaimur, 0,       ROT0, "Capcom", "Makai-Mura" )
+GAME( 1985, makaimuc, gng, gng, makaimur, 0,       ROT0, "Capcom", "Makai-Mura (Revision C)" )
+GAME( 1985, makaimug, gng, gng, makaimur, 0,       ROT0, "Capcom", "Makai-Mura (Revision G)" )
+GAME( 1989, diamond,  0,   gng, diamond,  diamond, ROT0, "KH Video", "Diamond Run" )

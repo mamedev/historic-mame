@@ -65,8 +65,6 @@ WRITE_HANDLER( crbaloon_spritectrl_w )
 
 WRITE_HANDLER( crbaloon_flipscreen_w )
 {
-	/* screen flip is handled both by software and hardware */
-	data ^= (~readinputport(0) >> 1) & 1;
 	flip_screen_w(0,data & 1);
 }
 
@@ -124,13 +122,12 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* collision occured, bitmap will be same as tmpbitmap        */
 
 	bx = spritectrl[1];
-	by = spritectrl[2];
+	by = spritectrl[2] - 32;
 
-	//if (flip_screen)
-	//{
-	//	bx = bx - 1;
-	//	by = by + 32;
-	//}
+	if (flip_screen)
+	{
+		by += 32;
+	}
 
 	drawgfx(bitmap,Machine->gfx[1],
 			spritectrl[0] & 0x0f,

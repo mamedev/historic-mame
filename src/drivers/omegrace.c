@@ -285,12 +285,14 @@ READ_HANDLER( omegrace_spinner1_r )
 WRITE_HANDLER( omegrace_leds_w )
 {
 	/* bits 0 and 1 are coin counters */
-	coin_counter_w(0,data & 1);
-	coin_counter_w(1,data & 2);
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
 
-	/* bits 2 to 5 are the start leds (4 and 5 cocktail only, not supported) */
-	osd_led_w(0,~data >> 2);
-	osd_led_w(1,~data >> 3);
+	/* bits 2 to 5 are the start leds (4 and 5 cocktail only) */
+	set_led_status(0,~data & 0x04);
+	set_led_status(1,~data & 0x08);
+	set_led_status(2,~data & 0x10);
+	set_led_status(3,~data & 0x20);
 
 	/* bit 6 flips screen (not supported) */
 }
@@ -468,7 +470,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_omegrace =
+static const struct MachineDriver machine_driver_omegrace =
 {
 	/* basic machine hardware */
 	{
@@ -498,7 +500,7 @@ static struct MachineDriver machine_driver_omegrace =
 	256,0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -538,5 +540,5 @@ ROM_END
 
 
 
-GAME( 1981, omegrace, 0, omegrace, omegrace, 0, ROT0, "Midway", "Omega Race" )
+GAMEX( 1981, omegrace, 0, omegrace, omegrace, 0, ROT0, "Midway", "Omega Race", GAME_NO_COCKTAIL )
 

@@ -303,7 +303,7 @@ static struct k051649_interface k051649_interface =
 	45,			/* Volume */
 };
 
-static struct MachineDriver machine_driver_hcastle =
+static const struct MachineDriver machine_driver_hcastle =
 {
 	/* basic machine hardware */
 	{

@@ -457,7 +457,7 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_rampart =
+static const struct MachineDriver machine_driver_rampart =
 {
 	/* basic machine hardware */
 	{
@@ -478,7 +478,7 @@ static struct MachineDriver machine_driver_rampart =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	rampart_vh_start,
 	rampart_vh_stop,

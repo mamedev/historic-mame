@@ -182,8 +182,8 @@ static void berlwall_init_machine (void)
 						[ Great 1000 Miles Rally ]
 ***************************************************************************/
 
-struct GameDriver driver_gtmr;
-struct GameDriver driver_gtmre;
+const struct GameDriver driver_gtmr;
+const struct GameDriver driver_gtmre;
 
 /* The MCU has access to NVRAM */
 void gtmr_mcu_run(void)
@@ -1201,7 +1201,7 @@ int berlwall_interrupt(void)
 }
 
 
-static struct MachineDriver machine_driver_berlwall =
+static const struct MachineDriver machine_driver_berlwall =
 {
 	{
 		{
@@ -1274,7 +1274,7 @@ int gtmr_interrupt(void)
 	}
 }
 
-static struct MachineDriver machine_driver_gtmr =
+static const struct MachineDriver machine_driver_gtmr =
 {
 	{
 		{
@@ -1350,7 +1350,7 @@ int shogwarr_interrupt(void)
 	}
 }
 
-static struct MachineDriver machine_driver_shogwarr =
+static const struct MachineDriver machine_driver_shogwarr =
 {
 	{
 		{
@@ -1450,7 +1450,6 @@ BW-001                      42101
 ***************************************************************************/
 
 ROM_START( berlwall )
-
  	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "bw100a", 0x000000, 0x020000, 0xe6bcb4eb )
 	ROM_LOAD_ODD(  "bw101a", 0x000000, 0x020000, 0x38056fb2 )
@@ -1475,14 +1474,9 @@ ROM_START( berlwall )
 
 	ROM_REGION( 0x040000, REGION_SOUND1 )	/* Samples */
 	ROM_LOAD( "bw000",  0x000000, 0x040000, 0xd8fe869d )
-
 ROM_END
 
-
-
-
 ROM_START( berlwalt )
-
  	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "u23_01.bin", 0x000000, 0x020000, 0x76b526ce )
 	ROM_LOAD_ODD(  "u39_01.bin", 0x000000, 0x020000, 0x78fa7ef2 )
@@ -1507,7 +1501,6 @@ ROM_START( berlwalt )
 
 	ROM_REGION( 0x040000, REGION_SOUND1 )	/* Samples */
 	ROM_LOAD( "bw000",  0x000000, 0x040000, 0xd8fe869d )
-
 ROM_END
 
 
@@ -1606,7 +1599,6 @@ f1: 10F6
 	master up= 94/07/18 15:12:35			*/
 
 ROM_START( gtmr )
-
  	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "u2.bin", 0x000000, 0x080000, 0x031799f7 )
 	ROM_LOAD_ODD(  "u1.bin", 0x000000, 0x080000, 0x6238790a )
@@ -1633,7 +1625,6 @@ ROM_START( gtmr )
 
 	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
 	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, 0x380cdc7c )	//  2 x $40000 - HALVES IDENTICAL
-
 ROM_END
 
 
@@ -1643,7 +1634,6 @@ ROM_END
 	master up= 94/09/06 14:49:19			*/
 
 ROM_START( gtmre )
-
  	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "gmmu2.bin", 0x000000, 0x080000, 0x36dc4aa9 )
 	ROM_LOAD_ODD(  "gmmu1.bin", 0x000000, 0x080000, 0x8653c144 )
@@ -1668,7 +1658,6 @@ ROM_START( gtmre )
 
 	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
 	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, 0x380cdc7c )	//  2 x $40000 - HALVES IDENTICAL
-
 ROM_END
 
 
@@ -1690,7 +1679,6 @@ GMR2U90	IDENTICAL TO GMR1U90
 ***************************************************************************/
 
 ROM_START( gtmr2 )
-
  	ROM_REGION( 0x100000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "maincode.1", 0x000000, 0x080000, 0x00000000 )
 	ROM_LOAD_ODD(  "maincode.2", 0x000000, 0x080000, 0x00000000 )
@@ -1710,7 +1698,6 @@ ROM_START( gtmr2 )
 
 	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
 	ROM_LOAD( "samples",  0x000000, 0x100000, 0x00000000 )
-
 ROM_END
 
 
@@ -1740,8 +1727,6 @@ Shogun Warriors, Kaneko 1992
    fb020a.u1    fb020b.u2
 
 
-fb022b.u6               FIXED BITS (11111111)
-
 
 ---------------------------------------------------------------------------
 								Game code
@@ -1760,7 +1745,6 @@ ROUTINES:
 ***************************************************************************/
 
 ROM_START( shogwarr )
-
  	ROM_REGION( 0x040000, REGION_CPU1 )			/* 68000 Code */
 	ROM_LOAD_EVEN( "fb030a.u61", 0x000000, 0x020000, 0xa04106c6 )
 	ROM_LOAD_ODD(  "fb031a.u62", 0x000000, 0x020000, 0xd1def5e2 )
@@ -1777,11 +1761,11 @@ ROM_START( shogwarr )
 	ROM_REGION( 0x600000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Sprites */
 	ROM_LOAD( "fb020a.u1",  0x000000, 0x080000, 0xda1b7373 )
 	ROM_LOAD( "fb022a.u5",  0x080000, 0x080000, 0x60aa1282 )
-	ROM_LOAD( "fb020b.u2",  0x100000, 0x100000, 0x1 )
-	ROM_LOAD( "fb021a.u3",  0x200000, 0x100000, 0x1 )
-	ROM_LOAD( "fb021b.u4",  0x300000, 0x100000, 0x1 )
+	ROM_LOAD( "fb020b.u2",  0x100000, 0x100000, 0x276b9d7b )
+	ROM_LOAD( "fb021a.u3",  0x200000, 0x100000, 0x7da15d37 )
+	ROM_LOAD( "fb021b.u4",  0x300000, 0x100000, 0x6a512d7b )
 	ROM_LOAD( "fb023.u7",   0x400000, 0x100000, 0x132794bd )
-	ROM_LOAD( "fb022b.u6",  0x500000, 0x100000, 0x00000000 )
+	ROM_LOAD( "fb022b.u6",  0x500000, 0x080000, 0xcd05a5c8 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1 )	/* Samples */
 	ROM_LOAD( "fb000e.u42",  0x000000, 0x080000, 0x969f1465 )	// 2 x $40000
@@ -1790,7 +1774,6 @@ ROM_START( shogwarr )
 	ROM_REGION( 0x100000, REGION_SOUND2 )	/* Samples */
 	ROM_LOAD( "fb002.u44",   0x000000, 0x080000, 0x05d7c2a9 )	// 2 x $40000
 	ROM_LOAD( "fb003.u45",   0x080000, 0x080000, 0x405722e9 )	// 2 x $40000
-
 ROM_END
 
 

@@ -1197,7 +1197,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_paperboy =
+static const struct MachineDriver machine_driver_paperboy =
 {
 	/* basic machine hardware */
 	{
@@ -1252,7 +1252,7 @@ static struct MachineDriver machine_driver_paperboy =
 };
 
 
-static struct MachineDriver machine_driver_a720 =
+static const struct MachineDriver machine_driver_a720 =
 {
 	/* basic machine hardware */
 	{
@@ -1307,7 +1307,7 @@ static struct MachineDriver machine_driver_a720 =
 };
 
 
-static struct MachineDriver machine_driver_sprint =
+static const struct MachineDriver machine_driver_sprint =
 {
 	/* basic machine hardware */
 	{
@@ -1335,7 +1335,7 @@ static struct MachineDriver machine_driver_sprint =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,

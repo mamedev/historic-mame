@@ -186,7 +186,7 @@ static int pacman_interrupt(void)
 
 static WRITE_HANDLER( pacman_leds_w )
 {
-	osd_led_w(offset,data);
+	set_led_status(offset,data & 1);
 }
 
 static WRITE_HANDLER( alibaba_sound_w )
@@ -1190,7 +1190,7 @@ static struct AY8910interface dremshpr_ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver_pacman =
+static const struct MachineDriver machine_driver_pacman =
 {
 	/* basic machine hardware */
 	{
@@ -1211,7 +1211,7 @@ static struct MachineDriver machine_driver_pacman =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	pacman_vh_start,
 	generic_vh_stop,
@@ -1227,7 +1227,7 @@ static struct MachineDriver machine_driver_pacman =
 	}
 };
 
-static struct MachineDriver machine_driver_theglob =
+static const struct MachineDriver machine_driver_theglob =
 {
 	/* basic machine hardware */
 	{
@@ -1264,7 +1264,7 @@ static struct MachineDriver machine_driver_theglob =
 	}
 };
 
-static struct MachineDriver machine_driver_vanvan =
+static const struct MachineDriver machine_driver_vanvan =
 {
 	/* basic machine hardware */
 	{
@@ -1285,7 +1285,7 @@ static struct MachineDriver machine_driver_vanvan =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	pacman_vh_start,
 	generic_vh_stop,
@@ -1301,7 +1301,7 @@ static struct MachineDriver machine_driver_vanvan =
 	}
 };
 
-static struct MachineDriver machine_driver_dremshpr =
+static const struct MachineDriver machine_driver_dremshpr =
 {
 	/* basic machine hardware */
 	{
@@ -1322,7 +1322,7 @@ static struct MachineDriver machine_driver_dremshpr =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	pacman_vh_start,
 	generic_vh_stop,
@@ -1338,7 +1338,7 @@ static struct MachineDriver machine_driver_dremshpr =
 	}
 };
 
-static struct MachineDriver machine_driver_alibaba =
+static const struct MachineDriver machine_driver_alibaba =
 {
 	/* basic machine hardware */
 	{
@@ -1359,7 +1359,7 @@ static struct MachineDriver machine_driver_alibaba =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	pacman_vh_start,
 	generic_vh_stop,

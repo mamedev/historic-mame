@@ -864,7 +864,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 100, 100 }
 };
 
-static struct MachineDriver machine_driver_sf1 =
+static const struct MachineDriver machine_driver_sf1 =
 {
 	{
 		{
@@ -919,7 +919,7 @@ static struct MachineDriver machine_driver_sf1 =
 	}
 };
 
-static struct MachineDriver machine_driver_sf1us =
+static const struct MachineDriver machine_driver_sf1us =
 {
 	{
 		{
@@ -974,7 +974,7 @@ static struct MachineDriver machine_driver_sf1us =
 	}
 };
 
-static struct MachineDriver machine_driver_sf1jp =
+static const struct MachineDriver machine_driver_sf1jp =
 {
 	{
 		{
@@ -1086,6 +1086,12 @@ ROM_START( sf1 )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
+
+	ROM_REGION( 0x0320, REGION_PROMS )
+	ROM_LOAD( "mb7114h.12k",  0x0000, 0x0100, 0x75af3553 )	/* unknown */
+	ROM_LOAD( "mb7114h.11h",  0x0100, 0x0100, 0xc0e56586 )	/* unknown */
+	ROM_LOAD( "mb7114h.12j",  0x0200, 0x0100, 0x4c734b64 )	/* unknown */
+	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
 ROM_END
 
 ROM_START( sf1us )
@@ -1144,6 +1150,12 @@ ROM_START( sf1us )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
+
+	ROM_REGION( 0x0320, REGION_PROMS )
+	ROM_LOAD( "mb7114h.12k",  0x0000, 0x0100, 0x75af3553 )	/* unknown */
+	ROM_LOAD( "mb7114h.11h",  0x0100, 0x0100, 0xc0e56586 )	/* unknown */
+	ROM_LOAD( "mb7114h.12j",  0x0200, 0x0100, 0x4c734b64 )	/* unknown */
+	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
 ROM_END
 
 ROM_START( sf1jp )
@@ -1202,6 +1214,12 @@ ROM_START( sf1jp )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
+
+	ROM_REGION( 0x0320, REGION_PROMS )
+	ROM_LOAD( "sfb05.bin",    0x0000, 0x0100, 0x864199ad )	/* unknown */
+	ROM_LOAD( "sfb00.bin",    0x0100, 0x0100, 0xbd3f8c5d )	/* unknown */
+	ROM_LOAD( "mb7114h.12j",  0x0200, 0x0100, 0x4c734b64 )	/* unknown */
+	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
 ROM_END
 
 

@@ -4120,7 +4120,7 @@ INLINE void sbca_ex( void )
 INLINE void subd_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = D;
 	r = d - b.d;
@@ -4133,7 +4133,7 @@ INLINE void subd_ex( void )
 INLINE void subw_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = W;
 	r = d - b.d;
@@ -4146,7 +4146,7 @@ INLINE void subw_ex( void )
 INLINE void cmpd_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = D;
 	r = d - b.d;
@@ -4158,7 +4158,7 @@ INLINE void cmpd_ex( void )
 INLINE void cmpw_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = W;
 	r = d - b.d;
@@ -4170,7 +4170,7 @@ INLINE void cmpw_ex( void )
 INLINE void cmpu_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = U;
 	r = d - b.d;
@@ -4262,7 +4262,7 @@ INLINE void adda_ex( void )
 INLINE void cmpx_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = X;
 	r = d - b.d;
@@ -4274,7 +4274,7 @@ INLINE void cmpx_ex( void )
 INLINE void cmpy_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = Y;
 	r = d - b.d;
@@ -4286,7 +4286,7 @@ INLINE void cmpy_ex( void )
 INLINE void cmps_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = S;
 	r = d - b.d;
@@ -4314,7 +4314,7 @@ INLINE void ldx_ex( void )
 /* $11bf MULD extended -**0- */
 INLINE void muld_ex( void )
 {
-	PAIR	t;
+	PAIR t = {{0,}};
 
 	EXTWORD(t);
 	Q = (signed short) D * (signed short)t.w.l;
@@ -4337,8 +4337,8 @@ INLINE void divd_ex( void )
 /* $11be DIVQ extended -**0- */
 INLINE void divq_ex( void )
 {
-	PAIR	t;
-	INT16	v;
+	PAIR t = {{0,}};
+	INT16 v;
 
 	EXTWORD(t);
 	v = (signed long) Q / (signed short) t.w.l;
@@ -5579,8 +5579,8 @@ INLINE void sbcb_ex( void )
 /* $10b2 SBCD extended ?**** */
 INLINE void sbcd_ex( void )
 {
-	PAIR	t;
-	UINT32	r;
+	PAIR t = {{0,}};
+	UINT32 r;
 
 	EXTWORD(t);
 	r = D - t.w.l - (CC & CC_C);
@@ -5593,7 +5593,7 @@ INLINE void sbcd_ex( void )
 INLINE void addd_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = D;
 	r = d + b.d;
@@ -5606,7 +5606,7 @@ INLINE void addd_ex( void )
 INLINE void addw_ex( void )
 {
 	UINT32 r,d;
-	PAIR b;
+	PAIR b = {{0,}};
 	EXTWORD(b);
 	d = W;
 	r = d + b.d;
@@ -5652,7 +5652,7 @@ INLINE void andb_ex( void )
 /* $10b4 ANDD extended -**0- */
 INLINE void andd_ex( void )
 {
-	PAIR t;
+	PAIR t = {{0,}};
 	EXTWORD(t);
 	D &= t.w.l;
 	CLR_NZV;
@@ -5672,8 +5672,8 @@ INLINE void bitb_ex( void )
 /* $10b5 BITD extended -**0- */
 INLINE void bitd_ex( void )
 {
-	PAIR	t;
-	UINT8	r;
+	PAIR t = {{0,}};
+	UINT8 r;
 	EXTWORD(t);
 	r = B & t.w.l;
 	CLR_NZV;
@@ -5744,7 +5744,7 @@ INLINE void eorb_ex( void )
 /* $10b8 EORD extended -**0- */
 INLINE void eord_ex( void )
 {
-	PAIR t;
+	PAIR t = {{0,}};
 	EXTWORD(t);
 	D ^= t.w.l;
 	CLR_NZV;
@@ -5787,7 +5787,7 @@ INLINE void orb_ex( void )
 /* $10ba ORD extended -**0- */
 INLINE void ord_ex( void )
 {
-	PAIR t;
+	PAIR t = {{0,}};
 	EXTWORD(t);
 	D |= t.w.l;
 	CLR_NZV;

@@ -314,7 +314,7 @@ static struct YM3526interface ym3526_interface =
 
 
 
-static struct MachineDriver machine_driver_sidepckt =
+static const struct MachineDriver machine_driver_sidepckt =
 {
 	/* basic machine hardware */
 	{
@@ -342,7 +342,7 @@ static struct MachineDriver machine_driver_sidepckt =
 	256, 256,
 	sidepckt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY, tilemaps don't support dirty
+	VIDEO_TYPE_RASTER,
 	0,
 	sidepckt_vh_start,
 	generic_vh_stop,
@@ -362,7 +362,7 @@ static struct MachineDriver machine_driver_sidepckt =
 	}
 };
 
-static struct MachineDriver machine_driver_sidepctj =
+static const struct MachineDriver machine_driver_sidepctj =
 {
 	/* basic machine hardware */
 	{
@@ -390,7 +390,7 @@ static struct MachineDriver machine_driver_sidepctj =
 	256, 256,
 	sidepckt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY, tilemaps don't support dirty
+	VIDEO_TYPE_RASTER,
 	0,
 	sidepckt_vh_start,
 	generic_vh_stop,

@@ -185,7 +185,7 @@ static struct DACinterface dac_interface =
 */
 
 
-static struct MachineDriver machine_driver_videopin =
+static const struct MachineDriver machine_driver_videopin =
 {
 	/* basic machine hardware */
 	{
@@ -208,7 +208,7 @@ static struct MachineDriver machine_driver_videopin =
 	256, 2, /* Game is black & white, extra 254 colors for the backdrop */
 	init_palette,
 
-	VIDEO_TYPE_RASTER, //| VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	videopin_vh_start,
 	videopin_vh_stop,

@@ -156,7 +156,7 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static struct MachineDriver machine_driver_mrjong =
+static const struct MachineDriver machine_driver_mrjong =
 {
 	{
 		{
@@ -176,7 +176,7 @@ static struct MachineDriver machine_driver_mrjong =
 	16, 4*32,
 	mrjong_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

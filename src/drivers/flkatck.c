@@ -291,7 +291,7 @@ static struct K007232_interface k007232_interface =
 };
 
 
-static struct MachineDriver machine_driver_flkatck =
+static const struct MachineDriver machine_driver_flkatck =
 {
 	{
 		{

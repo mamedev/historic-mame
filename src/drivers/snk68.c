@@ -814,7 +814,7 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver machine_driver_ikari3 =
+static const struct MachineDriver machine_driver_ikari3 =
 {
 	/* basic machine hardware */
 	{
@@ -863,7 +863,7 @@ static struct MachineDriver machine_driver_ikari3 =
 	}
 };
 
-static struct MachineDriver machine_driver_pow =
+static const struct MachineDriver machine_driver_pow =
 {
 	/* basic machine hardware */
 	{
@@ -912,7 +912,7 @@ static struct MachineDriver machine_driver_pow =
 	}
 };
 
-static struct MachineDriver machine_driver_searchar =
+static const struct MachineDriver machine_driver_searchar =
 {
 	/* basic machine hardware */
 	{
@@ -961,7 +961,7 @@ static struct MachineDriver machine_driver_searchar =
 	}
 };
 
-static struct MachineDriver machine_driver_streetsm =
+static const struct MachineDriver machine_driver_streetsm =
 {
 	/* basic machine hardware */
 	{

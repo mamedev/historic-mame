@@ -124,21 +124,22 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap);
 void K053245_mark_sprites_colors(void);
 
 
-int K053247_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
 void K053247_vh_stop(void);
 READ_HANDLER( K053247_word_r );
 WRITE_HANDLER( K053247_word_w );
 READ_HANDLER( K053247_r );
 WRITE_HANDLER( K053247_w );
+void K053247_sprites_draw(struct osd_bitmap *bitmap);
+void K053247_mark_sprites_colors(void);
+
 READ_HANDLER( K053246_r );
 WRITE_HANDLER( K053246_w );
 READ_HANDLER( K053246_word_r );
 WRITE_HANDLER( K053246_word_w );
 void K053246_set_OBJCHA_line(int state);
-void K053247_sprites_draw(struct osd_bitmap *bitmap);
-void K053247_mark_sprites_colors(void);
-int K053247_is_IRQ_enabled(void);
+int K053246_is_IRQ_enabled(void);
 
 
 /*
@@ -195,3 +196,13 @@ READ_HANDLER( K054000_r );
 WRITE_HANDLER( K051733_w );
 READ_HANDLER( K051733_r );
 
+int K054157_vh_start(int rambank, int rombank, int gfx_memory_region, int (*scrolld)[4][2],
+					 int plane0,int plane1,int plane2,int plane3,
+					 void (*callback)(int, int *, int *));
+void K054157_vh_stop(void);
+READ_HANDLER( K054157_ram_word_r );
+WRITE_HANDLER( K054157_ram_word_w );
+READ_HANDLER( K054157_r );
+WRITE_HANDLER( K054157_w );
+void K054157_tilemap_update(void);
+void K054157_tilemap_draw(struct osd_bitmap *bitmap, int num, int flags);

@@ -440,8 +440,8 @@ INPUT_PORTS_START( portman )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPSETTING(    0x10, "300000" )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "30000" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
@@ -615,7 +615,7 @@ static struct AY8910interface ay8910_interface =
 
 
 #define MACHINE_DRIVER(GAMENAME, COLORS)		            \
-static struct MachineDriver machine_driver_##GAMENAME =		\
+static const struct MachineDriver machine_driver_##GAMENAME =		\
 {									  			            \
 	/* basic machine hardware */							\
 	{														\

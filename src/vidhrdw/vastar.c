@@ -11,14 +11,22 @@
 
 
 
-unsigned char *vastar_bg1colorram2, *vastar_sprite_priority;
-unsigned char *vastar_fgvideoram,*vastar_fgcolorram1,*vastar_fgcolorram2;
-unsigned char *vastar_bg2videoram,*vastar_bg2colorram1,*vastar_bg2colorram2;
-unsigned char *vastar_bg1scroll,*vastar_bg2scroll;
-static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
+unsigned char *vastar_bg1videoram;
+unsigned char *vastar_bg2videoram;
+unsigned char *vastar_fgvideoram;
+unsigned char *vastar_sprite_priority;
+unsigned char *vastar_bg1_scroll;
+unsigned char *vastar_bg2_scroll;
+
+static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+***************************************************************************/
 
 void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -53,227 +61,208 @@ void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = vastar_fgvideoram[tile_index + 0x800] | (vastar_fgvideoram[tile_index + 0x400] << 8);
+	color = vastar_fgvideoram[tile_index];
+	SET_TILE_INFO(0, code, color);
+}
+
+static void get_bg1_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = vastar_bg1videoram[tile_index + 0x800] | (vastar_bg1videoram[tile_index] << 8);
+	color = vastar_bg1videoram[tile_index + 0xc00];
+	SET_TILE_INFO(4, code, color);
+}
+
+static void get_bg2_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = vastar_bg2videoram[tile_index + 0x800] | (vastar_bg2videoram[tile_index] << 8);
+	color = vastar_bg2videoram[tile_index + 0xc00];
+	SET_TILE_INFO(3, code, color);
+}
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int vastar_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	fg_tilemap  = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg1_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-	memset(dirtybuffer2,1,videoram_size);
+	fg_tilemap->transparent_pen = 0;
+	bg1_tilemap->transparent_pen = 0;
+	bg2_tilemap->transparent_pen = 0;
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
+	tilemap_set_scroll_cols(bg1_tilemap, 32);
+	tilemap_set_scroll_cols(bg2_tilemap, 32);
 
 	return 0;
 }
 
 
-
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void vastar_vh_stop(void)
+
+WRITE_HANDLER( vastar_fgvideoram_w )
 {
-	bitmap_free(tmpbitmap2);
-	free(dirtybuffer2);
-	generic_vh_stop();
+	vastar_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-
-
-WRITE_HANDLER( vastar_bg1colorram2_w )
+WRITE_HANDLER( vastar_bg1videoram_w )
 {
-	if (vastar_bg1colorram2[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		vastar_bg1colorram2[offset] = data;
-	}
+	vastar_bg1videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg1_tilemap,offset & 0x3ff);
 }
 
 WRITE_HANDLER( vastar_bg2videoram_w )
 {
-	if (vastar_bg2videoram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		vastar_bg2videoram[offset] = data;
-	}
+	vastar_bg2videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg2_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( vastar_bg2colorram1_w )
+
+READ_HANDLER( vastar_bg1videoram_r )
 {
-	if (vastar_bg2colorram1[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		vastar_bg2colorram1[offset] = data;
-	}
+	return vastar_bg1videoram[offset];
 }
 
-WRITE_HANDLER( vastar_bg2colorram2_w )
+READ_HANDLER( vastar_bg2videoram_r )
 {
-	if (vastar_bg2colorram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		vastar_bg2colorram2[offset] = data;
-	}
+	return vastar_bg2videoram[offset];
 }
 
 
-void vastar_draw_sprites(struct osd_bitmap *bitmap)
+WRITE_HANDLER( vastar_bg1_scroll_w )
+{
+	vastar_bg1_scroll[offset] = data;
+	tilemap_set_scrolly(bg1_tilemap,offset,data);
+}
+
+WRITE_HANDLER( vastar_bg2_scroll_w )
+{
+	vastar_bg2_scroll[offset] = data;
+	tilemap_set_scrolly(bg2_tilemap,offset,data);
+}
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
 	for (offs = 0; offs < spriteram_size; offs += 2)
 	{
-		int code;
+		int code, sx, sy, color, flipx, flipy;
 
 
 		code = ((spriteram_3[offs] & 0xfc) >> 2) + ((spriteram_2[offs] & 0x01) << 6)
 				+ ((offs & 0x20) << 2);
 
+		sx = spriteram_3[offs + 1];
+		sy = spriteram[offs];
+		color = spriteram[offs + 1] & 0x3f;
+		flipx = spriteram_3[offs] & 0x02;
+		flipy = spriteram_3[offs] & 0x01;
+
+		if (flip_screen)
+		{
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
 		if (spriteram_2[offs] & 0x08)	/* double width */
 		{
+			if (!flip_screen)
+				sy = 224 - sy;
+
 			drawgfx(bitmap,Machine->gfx[2],
-					code/2,
-					spriteram[offs+1] & 0x3f,
-					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],224-spriteram[offs],
+					code/2,color,
+					flipx,flipy,
+					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			/* redraw with wraparound */
 			drawgfx(bitmap,Machine->gfx[2],
-					code/2,
-					spriteram[offs+1] & 0x3f,
-					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],256+224-spriteram[offs],
+					code/2,color,
+					flipx,flipy,
+					sx,sy+256,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else
+		{
+			if (!flip_screen)
+				sy = 240 - sy;
+
 			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					spriteram[offs+1] & 0x3f,
-					spriteram_3[offs] & 0x02,spriteram_3[offs] & 0x01,
-					spriteram_3[offs + 1],240-spriteram[offs],
+					code,color,
+					flipx,flipy,
+					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 }
 
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	switch (*vastar_sprite_priority)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+	case 0:
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
+		draw_sprites(bitmap);
+		tilemap_draw(bitmap, bg2_tilemap, 0);
+		tilemap_draw(bitmap, fg_tilemap, 0);
+		break;
 
+	case 2:
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
+		draw_sprites(bitmap);
+		tilemap_draw(bitmap, bg1_tilemap, 0);
+		tilemap_draw(bitmap, bg2_tilemap, 0);
+		tilemap_draw(bitmap, fg_tilemap, 0);
+		break;
 
-			dirtybuffer[offs] = 0;
+	case 3:
+		tilemap_draw(bitmap, bg1_tilemap, TILEMAP_IGNORE_TRANSPARENCY);
+		tilemap_draw(bitmap, bg2_tilemap, 0);
+		tilemap_draw(bitmap, fg_tilemap, 0);
+		draw_sprites(bitmap);
+		break;
 
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[3],
-					videoram[offs] + 256 * (vastar_bg1colorram2[offs] & 0x01),
-					colorram[offs],
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		if (dirtybuffer2[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap2,Machine->gfx[4],
-					vastar_bg2videoram[offs] + 256 * (vastar_bg2colorram2[offs] & 0x01),
-					vastar_bg2colorram1[offs],
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+	default:
+		logerror("Unimplemented priority %X\n", *vastar_sprite_priority);
+		break;
 	}
-
-
-	/* copy the temporary bitmaps to the screen */
-	{
-		int scroll[32];
-
-
-		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = -vastar_bg2scroll[offs];
-		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-		if (*vastar_sprite_priority == 2)
-		{
-			vastar_draw_sprites(bitmap);	/* sprite must appear behind background */
-			copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_COLOR,92);
-		}
-		else if (*vastar_sprite_priority == 0)
-			vastar_draw_sprites(bitmap);
-
-		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = -vastar_bg1scroll[offs];
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* draw the frontmost playfield - they are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				vastar_fgvideoram[offs] + 256 * (vastar_fgcolorram2[offs] & 0x01),
-				vastar_fgcolorram1[offs],
-				0,0,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-	if (*vastar_sprite_priority == 3)
-		vastar_draw_sprites(bitmap);
 }

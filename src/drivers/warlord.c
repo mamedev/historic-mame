@@ -92,7 +92,7 @@ void warlord_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static WRITE_HANDLER( warlord_led_w )
 {
-	osd_led_w(offset,~data >> 7);
+	set_led_status(offset,~data & 0x80);
 }
 
 
@@ -239,7 +239,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_warlord =
+static const struct MachineDriver machine_driver_warlord =
 {
 	/* basic machine hardware */
 	{
@@ -260,7 +260,7 @@ static struct MachineDriver machine_driver_warlord =
 	128, 8*4+8*4,
 	warlord_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

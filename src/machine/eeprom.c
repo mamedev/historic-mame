@@ -4,22 +4,30 @@
 #define VERBOSE 0
 
 #define SERIAL_BUFFER_LENGTH 40
+#define MEMORY_SIZE 1024
 
 static struct EEPROM_interface *intf;
 
 static int serial_count;
 static char serial_buffer[SERIAL_BUFFER_LENGTH];
-static unsigned char eeprom_data[256];
+static unsigned char eeprom_data[MEMORY_SIZE];
 static int eeprom_data_bits;
 static int eeprom_read_address;
 static int eeprom_clock_count;
 static int latch,reset_line,clock_line,sending;
 static int locked;
+static int reset_delay;
 
 
 void EEPROM_init(struct EEPROM_interface *interface)
 {
 	intf = interface;
+
+	if ((1 << intf->address_bits) * intf->data_bits / 8 > MEMORY_SIZE)
+	{
+		usrintf_showmessage("EEPROM larger than eeprom.c allows");
+		return;
+	}
 
 	memset(eeprom_data,0xff,(1 << intf->address_bits) * intf->data_bits / 8);
 	serial_count = 0;
@@ -148,6 +156,7 @@ if (serial_count)
 
 	serial_count = 0;
 	sending = 0;
+	reset_delay = 5;	/* delay a little before returning setting data to 1 (needed by wbeachvl) */
 }
 
 
@@ -165,7 +174,17 @@ int EEPROM_read_bit(void)
 
 	if (sending)
 		res = (eeprom_data_bits >> intf->data_bits) & 1;
-	else res = 1;
+	else
+	{
+		if (reset_delay > 0)
+		{
+			/* this is needed by wbeachvl */
+			reset_delay--;
+			res = 0;
+		}
+		else
+			res = 1;
+	}
 
 #if VERBOSE
 logerror("read bit %d\n",res);

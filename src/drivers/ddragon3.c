@@ -565,7 +565,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /**************************************************************************/
 
-static struct MachineDriver machine_driver_ddragon3 =
+static const struct MachineDriver machine_driver_ddragon3 =
 {
 	{
 		{
@@ -612,7 +612,7 @@ static struct MachineDriver machine_driver_ddragon3 =
 	}
 };
 
-static struct MachineDriver machine_driver_ddrago3b =
+static const struct MachineDriver machine_driver_ddrago3b =
 {
 	{
 		{
@@ -659,7 +659,7 @@ static struct MachineDriver machine_driver_ddrago3b =
 	}
 };
 
-static struct MachineDriver machine_driver_ctribe =
+static const struct MachineDriver machine_driver_ctribe =
 {
 	{
 		{

@@ -451,7 +451,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_mhavoc =
+static const struct MachineDriver machine_driver_mhavoc =
 {
 	/* basic machine hardware */
 	{
@@ -482,7 +482,7 @@ static struct MachineDriver machine_driver_mhavoc =
 	256,0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	avg_start_mhavoc,
 	avg_stop,

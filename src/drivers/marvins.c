@@ -615,7 +615,7 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 **
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_marvins = {
+static const struct MachineDriver machine_driver_marvins = {
 	{
 		{
 			CPU_Z80,
@@ -666,7 +666,7 @@ static struct MachineDriver machine_driver_marvins = {
 	}
 };
 
-static struct MachineDriver machine_driver_madcrash = {
+static const struct MachineDriver machine_driver_madcrash = {
 	{
 		{
 			CPU_Z80,

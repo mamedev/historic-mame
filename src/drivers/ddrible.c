@@ -10,8 +10,8 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 
-extern int ddrible_int_enable_0;
-extern int ddrible_int_enable_1;
+int ddrible_int_enable_0;
+int ddrible_int_enable_1;
 
 static unsigned char *ddrible_sharedram;
 static unsigned char *ddrible_snd_sharedram;
@@ -372,7 +372,7 @@ static struct VLM5030interface vlm5030_interface =
 	0           /* VCU pin level (default) */
 };
 
-static struct MachineDriver machine_driver_ddribble =
+static const struct MachineDriver machine_driver_ddribble =
 {
 	/* basic machine hardware  */
 	{
@@ -401,7 +401,7 @@ static struct MachineDriver machine_driver_ddribble =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	//64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 },
+	/*64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 }, */
 	gfxdecodeinfo,
 	64, 64 + 256,
 	ddrible_vh_convert_color_prom,

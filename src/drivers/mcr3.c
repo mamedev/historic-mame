@@ -1151,7 +1151,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 
 
 /* General MCR3 system */
-static struct MachineDriver machine_driver_mcr3 =
+static const struct MachineDriver machine_driver_mcr3 =
 {
 	/* basic machine hardware */
 	{
@@ -1168,7 +1168,7 @@ static struct MachineDriver machine_driver_mcr3 =
 	8*16, 8*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1184,7 +1184,7 @@ static struct MachineDriver machine_driver_mcr3 =
 
 
 /* Discs of Tron = General MCR3 with Squawk & Talk, and backdrop support */
-static struct MachineDriver machine_driver_dotron =
+static const struct MachineDriver machine_driver_dotron =
 {
 	/* basic machine hardware */
 	{
@@ -1202,7 +1202,7 @@ static struct MachineDriver machine_driver_dotron =
 	4*16+32768, 4*16,		/* The extra colors are for the backdrop */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dotron_vh_start,
 	generic_vh_stop,
@@ -1219,7 +1219,7 @@ static struct MachineDriver machine_driver_dotron =
 
 
 /* Destruction Derby = General MCR3 with Turbo Chip Squeak instead of SSIO */
-static struct MachineDriver machine_driver_destderb =
+static const struct MachineDriver machine_driver_destderb =
 {
 	/* basic machine hardware */
 	{
@@ -1236,7 +1236,7 @@ static struct MachineDriver machine_driver_destderb =
 	8*16, 8*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1253,7 +1253,7 @@ static struct MachineDriver machine_driver_destderb =
 
 /* Sarge/Demolition Derby Mono/Max RPM = MCR monoboardmonoboard = MCR3 with no SSIO */
 /* in this case, Turbo Chip Squeak is used for sound */
-static struct MachineDriver machine_driver_sarge =
+static const struct MachineDriver machine_driver_sarge =
 {
 	/* basic machine hardware */
 	{
@@ -1270,7 +1270,7 @@ static struct MachineDriver machine_driver_sarge =
 	8*16, 8*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1286,7 +1286,7 @@ static struct MachineDriver machine_driver_sarge =
 
 
 /* Rampage = MCR monoboard with Sounds Good */
-static struct MachineDriver machine_driver_rampage =
+static const struct MachineDriver machine_driver_rampage =
 {
 	/* basic machine hardware */
 	{
@@ -1303,7 +1303,7 @@ static struct MachineDriver machine_driver_rampage =
 	8*16, 8*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1319,7 +1319,7 @@ static struct MachineDriver machine_driver_rampage =
 
 
 /* Power Drive = MCR monoboard with Sounds Good and external interrupts */
-static struct MachineDriver machine_driver_powerdrv =
+static const struct MachineDriver machine_driver_powerdrv =
 {
 	/* basic machine hardware */
 	{
@@ -1342,7 +1342,7 @@ static struct MachineDriver machine_driver_powerdrv =
 	8*16, 8*16,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1358,7 +1358,7 @@ static struct MachineDriver machine_driver_powerdrv =
 
 
 /* Spy Hunter = MCR3 with altered memory map, scrolling, special lamps, and a chip squeak deluxe */
-static struct MachineDriver machine_driver_spyhunt =
+static const struct MachineDriver machine_driver_spyhunt =
 {
 	/* basic machine hardware */
 	{
@@ -1393,7 +1393,7 @@ static struct MachineDriver machine_driver_spyhunt =
 
 
 /* Turbo Tag = Spy Hunter with no SSIO */
-static struct MachineDriver machine_driver_turbotag =
+static const struct MachineDriver machine_driver_turbotag =
 {
 	/* basic machine hardware */
 	{
@@ -1426,7 +1426,7 @@ static struct MachineDriver machine_driver_turbotag =
 
 
 /* Crater Raider = Spy Hunter with no Chip Squeak Deluxe */
-static struct MachineDriver machine_driver_crater =
+static const struct MachineDriver machine_driver_crater =
 {
 	/* basic machine hardware */
 	{

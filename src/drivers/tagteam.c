@@ -241,7 +241,7 @@ static struct DACinterface dac_interface =
 	{ 255 }
 };
 
-static struct MachineDriver machine_driver_tagteam =
+static const struct MachineDriver machine_driver_tagteam =
 {
 	/* basic machine hardware */
 	{
@@ -268,7 +268,7 @@ static struct MachineDriver machine_driver_tagteam =
 	32, 32,
 	tagteam_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

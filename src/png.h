@@ -31,8 +31,8 @@
 /* PNG support */
 struct png_info {
 	UINT32 width, height;
-	UINT32 xoffset, yoffset;
 	UINT32 xres, yres;
+	struct rectangle screen;
 	double xscale, yscale;
 	double source_gamma;
 	UINT32 chromaticities[8];
@@ -63,6 +63,7 @@ struct png_info {
 int png_verify_signature (void *fp);
 int png_inflate_image (struct png_info *p);
 int png_read_file(void *fp, struct png_info *p);
+int png_read_info(void *fp, struct png_info *p);
 int png_expand_buffer_8bit (struct png_info *p);
 void png_delete_unused_colors (struct png_info *p);
 int png_unfilter(struct png_info *p);

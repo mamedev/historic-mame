@@ -287,7 +287,7 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 		if (ophw == bank)								\
 		{												\
 			ophw = 0xff;								\
-			cpu_setOPbase16(cpu_get_pc());				\
+			cpu_set_op_base(cpu_get_pc());				\
 		}												\
 	}													\
 }

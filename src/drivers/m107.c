@@ -360,7 +360,7 @@ static int m107_raster_interrupt(void)
 	return 0;
 }
 
-static struct MachineDriver machine_driver_firebarr =
+static const struct MachineDriver machine_driver_firebarr =
 {
 	/* basic machine hardware */
 	{
@@ -400,7 +400,7 @@ static struct MachineDriver machine_driver_firebarr =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 };
 
-static struct MachineDriver machine_driver_dsoccr94 =
+static const struct MachineDriver machine_driver_dsoccr94 =
 {
 	/* basic machine hardware */
 	{

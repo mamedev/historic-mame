@@ -19,6 +19,9 @@
   This structure is a generic structure used to hold both backdrops
   and overlays.
 *********************************************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct artwork_info
 {
@@ -27,7 +30,6 @@ struct artwork_info
 	struct osd_bitmap *artwork1;
 	struct osd_bitmap *alpha;
 	struct osd_bitmap *orig_artwork;   /* needed for palette recalcs */
-	struct osd_bitmap *vector_bitmap;  /* needed to buffer the vector image in vg with overlays */
 	UINT8 *orig_palette;               /* needed for restoring the colors after special effects? */
 	int num_pens_used;
 	UINT8 *transparency;
@@ -46,6 +48,12 @@ struct artwork_element
 	UINT16 alpha;   /* 0x00-0xff or OVERLAY_DEFAULT_OPACITY */
 };
 
+struct artwork_size_info
+{
+	int width, height;         /* widht and height of the artwork */
+	struct rectangle screen;   /* location of the screen relative to the artwork */
+};
+
 #define OVERLAY_DEFAULT_OPACITY         0xffff
 
 #ifndef MIN
@@ -57,7 +65,7 @@ struct artwork_element
 
 extern struct artwork_info *artwork_backdrop;
 extern struct artwork_info *artwork_overlay;
-extern struct osd_bitmap *overlay_real_scrbitmap;
+extern struct osd_bitmap *artwork_real_scrbitmap;
 
 /*********************************************************************
   functions that apply to backdrops AND overlays
@@ -69,24 +77,21 @@ void artwork_load(struct artwork_info **a,const char *filename, unsigned int sta
 void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork_info **a);
+int artwork_get_size_info(const char *file_name, struct artwork_size_info *a);
 
 /*********************************************************************
   functions that are backdrop-specific
 *********************************************************************/
 void backdrop_refresh(struct artwork_info *a);
-void backdrop_refresh_tables (struct artwork_info *a);
-void backdrop_set_palette(struct artwork_info *a, unsigned char *palette);
-int backdrop_black_recalc(void);
-void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,int sy,
-		   const struct rectangle *clip);
-void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
-		      unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		      const struct rectangle *clip,const struct osd_bitmap *back);
 
 /*********************************************************************
   functions that are overlay-specific
 *********************************************************************/
 int overlay_set_palette (unsigned char *palette, int num_shades);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

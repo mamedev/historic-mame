@@ -32,6 +32,8 @@ LD = @gcc
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
+MD = -mkdir
+RM = @rm -f
 
 ifdef DEBUG
 NAME = $(TARGET)d
@@ -105,12 +107,14 @@ nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
 endif
 
-#if obj subdirectory doesn't exist, create the tree before proceeding
-ifeq ($(wildcard $(OBJ)),)
-noobj: maketree all
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+ifdef MESS
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 endif
 
-all:	$(EMULATOR) extra
+all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
@@ -160,7 +164,7 @@ $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo M68K make $<...
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
 	@echo Generating M68K source files...
-	$(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
+	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000 emulator
 $(OBJ)/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
@@ -176,62 +180,20 @@ $(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	@rm -f $@
+	$(RM) $@
 	$(AR) cr $@ $^
 
 makedir:
 	@echo make makedir is no longer necessary, just type make
 
-maketree:
-	@echo Making MAME object tree in $(OBJ)...
-	@md $(OBJ)
-	@md $(OBJ)\cpu
-	@md $(OBJ)\cpu\z80
-	@md $(OBJ)\cpu\z80gb
-	@md $(OBJ)\cpu\m6502
-	@md $(OBJ)\cpu\h6280
-	@md $(OBJ)\cpu\i86
-	@md $(OBJ)\cpu\nec
-	@md $(OBJ)\cpu\i8039
-	@md $(OBJ)\cpu\i8085
-	@md $(OBJ)\cpu\m6800
-	@md $(OBJ)\cpu\m6805
-	@md $(OBJ)\cpu\m6809
-	@md $(OBJ)\cpu\hd6309
-	@md $(OBJ)\cpu\konami
-	@md $(OBJ)\cpu\m68000
-	@md $(OBJ)\cpu\s2650
-	@md $(OBJ)\cpu\t11
-	@md $(OBJ)\cpu\tms34010
-	@md $(OBJ)\cpu\tms9900
-	@md $(OBJ)\cpu\z8000
-	@md $(OBJ)\cpu\tms32010
-	@md $(OBJ)\cpu\ccpu
-	@md $(OBJ)\cpu\adsp2100
-	@md $(OBJ)\cpu\pdp1
-	@md $(OBJ)\cpu\mips
-	@md $(OBJ)\cpu\sc61860
-	@md $(OBJ)\cpu\arm
-	@md $(OBJ)\cpu\g65816
-	@md $(OBJ)\cpu\f8
-	@md $(OBJ)\sound
-	@md $(OBJ)\msdos
-	@md $(OBJ)\drivers
-	@md $(OBJ)\machine
-	@md $(OBJ)\vidhrdw
-	@md $(OBJ)\sndhrdw
-ifdef MESS
-	@echo Making MESS object tree in $(OBJ)\mess...
-	@md $(OBJ)\mess
-	@md $(OBJ)\mess\systems
-	@md $(OBJ)\mess\machine
-	@md $(OBJ)\mess\vidhrdw
-	@md $(OBJ)\mess\sndhrdw
-	@md $(OBJ)\mess\tools
-endif
+$(sort $(OBJDIRS)):
+	$(MD) $@
+
+maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	@rm -fr $(OBJ)
+	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	@rm -f $(EMULATOR)
+	$(RM) $(EMULATOR)
+

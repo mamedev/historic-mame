@@ -34,7 +34,7 @@ static unsigned char waveform[32] =
 
 
 
-static const char *vanguard_sample_names[] =
+const char *vanguard_sample_names[] =
 {
 	"*vanguard",
 	"explsion.wav",
@@ -45,8 +45,6 @@ static const char *vanguard_sample_names[] =
 int rockola_sh_start(const struct MachineSound *msound)
 {
 	int vol[3];
-
-	Machine->samples = readsamples(vanguard_sample_names,Machine->gamedrv->name);
 
 	vol[0] = vol[1] = vol[2] = TONE_VOLUME;
 	tonechannels = mixer_allocate_channels(3,vol);

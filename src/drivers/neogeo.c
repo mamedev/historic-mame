@@ -1032,7 +1032,7 @@ struct YM2610interface neogeo_ym2610_interface =
 {
 	1,
 	8000000,
-	{ MIXERG(30,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
+	{ MIXERG(15,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1040,12 +1040,12 @@ struct YM2610interface neogeo_ym2610_interface =
 	{ neogeo_sound_irq },
 	{ REGION_SOUND2 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(75,MIXER_PAN_LEFT,75,MIXER_PAN_RIGHT) }
 };
 
 /******************************************************************************/
 
-static struct MachineDriver machine_driver_neogeo =
+static const struct MachineDriver machine_driver_neogeo =
 {
 	{
 		{
@@ -1090,7 +1090,7 @@ static struct MachineDriver machine_driver_neogeo =
 	neogeo_nvram_handler
 };
 
-static struct MachineDriver machine_driver_raster =
+static const struct MachineDriver machine_driver_raster =
 {
 	{
 		{
@@ -4118,6 +4118,41 @@ ROM_START( shocktro )
 	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
 ROM_END
 
+ROM_START( shocktrj )
+	ROM_REGION( 0x500000, REGION_CPU1 )
+	ROM_LOAD_WIDE_SWAP( "238-pg1.p1",   0x000000, 0x100000, 0xefedf8dc )
+	ROM_LOAD_WIDE_SWAP( "shock_p2.rom", 0x300000, 0x200000, 0x646f6c76 )
+	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+
+	NEO_SFIX_128K( "shock_s1.rom", 0x1f95cedb )
+
+	NEO_BIOS_SOUND_128K( "shock_m1.rom", 0x075b9518 )
+
+	ROM_REGION( 0x600000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
+	ROM_LOAD( "shock_v1.rom", 0x000000, 0x400000, 0x260c0bef )
+	ROM_LOAD( "shock_v2.rom", 0x400000, 0x200000, 0x4ad7d59e )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x2000000, REGION_GFX2 )
+	ROM_LOAD_GFX_EVEN( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
+	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( "shock_c2.rom", 0x0400000, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
+	ROM_LOAD_GFX_ODD ( 0,              0x0000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( "shock_c3.rom", 0x0c00000, 0x200000, 0x6682a458 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_EVEN( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( "shock_c4.rom", 0x0c00000, 0x200000, 0xcbef1f17 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_ODD ( 0,              0x0800000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( "shock_c5.rom", 0x1400000, 0x200000, 0xe17762b1 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_EVEN( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( "shock_c6.rom", 0x1400000, 0x200000, 0x28beab71 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_ODD ( 0,              0x1000000, 0x200000, 0 )
+	ROM_LOAD_GFX_EVEN( "shock_c7.rom", 0x1c00000, 0x200000, 0xa47e62d2 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_EVEN( 0,              0x1800000, 0x200000, 0 )
+	ROM_LOAD_GFX_ODD ( "shock_c8.rom", 0x1c00000, 0x200000, 0xe8e890fb ) /* Plane 2,3 */
+	ROM_LOAD_GFX_ODD ( 0,              0x1800000, 0x200000, 0 )
+ROM_END
+
 ROM_START( blazstar )
 	ROM_REGION( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "bstar_p1.rom", 0x000000, 0x100000, 0x183682f8 )
@@ -4676,6 +4711,7 @@ GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "
 GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
 GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner 2" )
 GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers" )
+GAME( 1997, shocktrj, shocktro, neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers (Japan)" )
 GAME( 1998, shocktr2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers - 2nd Squad" )
 
 /* Sunsoft */

@@ -586,7 +586,7 @@ static int kingobox_interrupt( void ) {
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver_kingofb =
+static const struct MachineDriver machine_driver_kingofb =
 {
 	/* basic machine hardware */
 	{
@@ -648,7 +648,7 @@ static struct MachineDriver machine_driver_kingofb =
 
 
 /* Ring King */
-static struct MachineDriver machine_driver_ringking =
+static const struct MachineDriver machine_driver_ringking =
 {
 	/* basic machine hardware */
 	{

@@ -1102,7 +1102,7 @@ static struct UPD7759_interface upd7759_interface =
 
 
 #define MACHINE_DRIVER(NAME,NVRAM)				\
-static struct MachineDriver machine_driver_##NAME =	\
+static const struct MachineDriver machine_driver_##NAME =	\
 {	\
 	{	\
 		{	\
@@ -1162,7 +1162,7 @@ static struct MachineDriver machine_driver_##NAME =	\
 MACHINE_DRIVER(twin16,0)
 MACHINE_DRIVER(cuebrick,cuebrick_nvram_handler)
 
-static struct MachineDriver machine_driver_heavysync =
+static const struct MachineDriver machine_driver_heavysync =
 {
 	{
 		{
@@ -1218,7 +1218,7 @@ static struct MachineDriver machine_driver_heavysync =
 	}
 };
 
-static struct MachineDriver machine_driver_fround =
+static const struct MachineDriver machine_driver_fround =
 {
 	{
 		{

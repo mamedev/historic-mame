@@ -4,9 +4,8 @@
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
 #include <stdarg.h>
-#ifdef macintosh	/* JB 981117 */
-#	include "mac_dos.h"
-#	include "stat.h"
+#ifdef macintosh
+#	include "macromcmp.h"
 #else
 #ifndef WIN32
 #   include <dirent.h>
@@ -20,13 +19,12 @@
 
 #define MAX_FILES 100
 
-#ifdef macintosh	/* JB 981117 */
-
-static int errno = 0;
-#define MAX_FILENAME_LEN 31
-
-#else
+#ifndef MAX_FILENAME_LEN
 #define MAX_FILENAME_LEN 12	/* increase this if you are using a real OS... */
+#endif
+
+#ifndef PATH_DELIM
+#define PATH_DELIM '/'
 #endif
 
 
@@ -366,12 +364,9 @@ static void readfile(const char *path,struct fileinfo *file)
 
 	if (path)
 	{
+		char delim[2] = { PATH_DELIM, '\0' };
 		strcpy(fullname,path);
-#ifdef macintosh	/* JB 981117 */
-		strcat(fullname,":");
-#else
-		strcat(fullname,"/");
-#endif
+		strcat(fullname,delim);
 	}
 	else fullname[0] = 0;
 	strcat(fullname,file->name);
@@ -384,18 +379,12 @@ static void readfile(const char *path,struct fileinfo *file)
 
 	if ((f = fopen(fullname,"rb")) == 0)
 	{
-#ifdef macintosh	/* JB 981117 */
-		errno = fnfErr;
-#endif
 		printf("%s: %s\n",fullname,strerror(errno));
 		return;
 	}
 
 	if (fread(file->buf,1,file->size,f) != file->size)
 	{
-#ifdef macintosh	/* JB 981117 */
-		errno = fnfErr;
-#endif
 		printf("%s: %s\n",fullname,strerror(errno));
 		fclose(f);
 		return;
@@ -430,9 +419,6 @@ static int load_files(int i, int *found, const char *path)
 
 	if (stat(path,&st) != 0)
 	{
-#ifdef macintosh
-		errno = fnfErr;
-#endif
 		printf("%s: %s\n",path,strerror(errno));
 		return 10;
 	}
@@ -451,7 +437,7 @@ static int load_files(int i, int *found, const char *path)
 				char buf[255+1];
 				struct stat st_file;
 
-				sprintf(buf, "%s/%s", path, d->d_name);
+				sprintf(buf, "%s%c%s", path, PATH_DELIM, d->d_name);
 				if(stat(buf, &st_file) == 0 && S_ISREG(st_file.st_mode))
 				{
 					unsigned size = st_file.st_size;

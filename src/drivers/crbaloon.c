@@ -356,7 +356,7 @@ static struct SN76477interface sn76477_interface =
 };
 
 
-static struct MachineDriver machine_driver_crbaloon =
+static const struct MachineDriver machine_driver_crbaloon =
 {
 	/* basic machine hardware */
 	{
@@ -372,12 +372,12 @@ static struct MachineDriver machine_driver_crbaloon =
 	crbaloon_machine_init,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	16, 16*2,
 	crbaloon_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

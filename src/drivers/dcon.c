@@ -247,7 +247,7 @@ static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,REGION_SOUND1);
 
-static struct MachineDriver machine_driver_dcon =
+static const struct MachineDriver machine_driver_dcon =
 {
 	/* basic machine hardware */
 	{

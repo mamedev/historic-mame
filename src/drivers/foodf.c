@@ -217,7 +217,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_foodf =
+static const struct MachineDriver machine_driver_foodf =
 {
 	/* basic machine hardware */
 	{
@@ -238,7 +238,7 @@ static struct MachineDriver machine_driver_foodf =
 	256, 256,
 	foodf_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	foodf_vh_start,
 	foodf_vh_stop,

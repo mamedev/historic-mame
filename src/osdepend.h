@@ -82,16 +82,6 @@ void osd_close_display(void);
 void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 
 
-/*
-  When the debugger is active, two bitmaps are produced, one for the usual game
-  display and the other for the debugger. They can be shown one at a time, or
-  in two separate windows, depending on the OS limitations. If only one is
-  shown, the user must have a way to switch between the two (suggestion: F5).
-  This function is used by the debugger to force the display of a particular
-  bitmap, e.g. the debugger one when the debugger becomes active.
-*/
-void osd_debugger_focus(int debugger_has_focus);
-
 
 /*
   osd_allocate_colors() is called after osd_create_display(), to create and
@@ -132,7 +122,23 @@ void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 9
 */
 int osd_skip_this_frame(void);
 
-void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap);
+/*
+  Update video and audio. game_bitmap contains the game display, while
+  debug_bitmap an image of the debugger window (if the debugger is active; NULL
+  otherwise). They can be shown one at a time, or in two separate windows,
+  depending on the OS limitations. If only one is shown, the user must be able
+  to toggle between the two by pressing IPT_UI_TOGGLE_DEBUG; moreover,
+  osd_debugger_focus() will be used by the core to force the display of a
+  specific bitmap, e.g. the debugger one when the debugger becomes active.
+
+  leds_status is a bitmask of lit LEDs, usually player start lamps. They can be
+  simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
+  on the window title bar.
+*/
+void osd_update_video_and_audio(
+		struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap,int leds_status);
+
+void osd_debugger_focus(int debugger_has_focus);
 
 void osd_set_gamma(float _gamma);
 float osd_get_gamma(void);
@@ -371,9 +377,6 @@ int osd_display_loading_rom_message(const char *name,int current,int total);
 /* Note that the OS dependant code must NOT stop processing input, since the user */
 /* interface is still active while the game is paused. */
 void osd_pause(int paused);
-
-/* control keyboard leds or other indicators */
-void osd_led_w(int led,int on);
 
 
 

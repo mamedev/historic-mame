@@ -62,62 +62,66 @@ BIOS:
 
 Working games:
 --------------
-	- Contra					(CT) - B board
-	- Duck Hunt					(DH) - Standard board
-	- Excite Bike				(EB) - Standard board
-	- Ninja Gaiden				(NG) - F board
-	- Pro Wrestling				(PW) - B board
-	- Rush N' Attack			(RA) - B board
-	- Super Mario Bros			(SM) - Standard board
-	- Super Mario Bros 3		(UM) - G board
-	- The Goonies				(GN) - C board
-
+	- 1942								(NF) - Standard board
+	- Balloon Fight						(BF) - Standard board
+	- Baseball							(BA) - Standard board
+	- Captain Sky Hawk					(YW) - i board
+	- Castlevania						(CV) - B board
+	- Contra							(CT) - B board
+	- Double Dragon						(WD) - F board
+	- Double Dribble					(DW) - B board
+	- Dr. Mario							(VU) - F board
+	- Duck Hunt							(DH) - Standard board
+	- Excite Bike						(EB) - Standard board
+	- Fester's Quest					(EQ) - F board
+	- Golf								(GF) - Standard board
+	- Gradius							(GR) - A board
+	- Hogan's Alley						(HA) - Standard board
+	- Kung Fu							(SX) - Standard board
+	- Mario Open Golf					(UG) - K board
+	- Mega Man 3						(XU) - G board
+	- Ninja Gaiden						(NG) - F board
+	- Ninja Gaiden 3					(3N) - G board
+	- Nintendo World Cup				(XZ) - G board
+	- Power Blade						(7T) - G board
+	- Pro Wrestling						(PW) - B board
+	- Rad Racer							(RC) - D board
+	- RC Pro Am							(PM) - F board
+	- Rescue Rangers					(RU) - F board
+	- Rockin' Kats						(7A) - G board
+	- Rush N' Attack					(RA) - B board
+	- Super C							(UE) - G board
+	- Super Mario Bros					(SM) - Standard board
+	- Super Mario Bros 2				(MW) - G board
+	- Super Mario Bros 3				(UM) - G board
+	- Teenage Mutant Ninja Turtles		(U2) - F board
+	- Teenage Mutant Ninja Turtles 2	(2N) - G board
+	- Tennis							(TE) - Standard board
+	- The Goonies						(GN) - C board
+	- Volley Ball						(VB) - Standard board
+	- Wild Gunman						(WG) - Standard board
+	- Yo Noid							(YC) - F board
 
 Non working games due to mapper/nes emulation issues:
 -----------------------------------------------------
-	- Mike Tyson's Punchout		(PT) - E board
-	- Track & Field				(TR) - A board
+	- Gauntlet							(GL) - G board
+	- Mike Tyson's Punchout				(PT) - E board
+	- Track & Field						(TR) - A board
+	- Rygar								(RY) - B board
+	- Rad Racer II						(QR) - G board
 
 Non working games due to missing roms:
 --------------------------------------
-	- Double Dragon				(WD) - F board
+	- Tecmo Bowl						(TW) - F board
 
 Non working games due to missing RP5H01 data:
 ---------------------------------------------
-	- 1942						(NF) - Standard board
-	- Balloon Fight				(BF) - Standard board
-	- Baseball					(BA) - Standard board
-	- Baseball Stars			(B9) - F board
-	- Captain Sky Hawk			(YW) - i board
-	- Castlevania				(CV) - B board
-	- Double Dribble			(DW) - B board
-	- Dr. Mario					(VU) - F board
-	- Fester's Quest			(EQ) - F board
-	- Gauntlet					(GL) - G board
-	- Golf						(GF) - Standard board
-	- Gradius					(GR) - A board
-	- Hogan's Alley				(HA) - Standard board
-	- Kung Fu					(SX) - Standard board
-	- Mario Open Golf			(UG) - K board
-	- Metroid					(MT) - D board
-	- Ninja Gaiden 3			(3N) - G board
-	- Pinbot					(io) - H board
-	- Power Blade				(7T) - G board
-	- Rad Racer					(RC) - D board
-	- Rad Racer II				(QR) - G board
-	- RC Pro Am					(PM) - F board
-	- Rescue Rangers			(RU) - F board
-	- Rockin' Kats				(7A) - G board
-	- Rygar						(RY) - B board
-	- Solar Jetman				(LJ) - i board
-	- Super C					(UE) - G board
-	- Tennis					(TE) - Standard board
-	- TMNT						(U2) - F board
-	- TMNT II					(2N) - G board
-	- Volley Ball				(VB) - Standard board
-	- Wild Gunman				(WG) - Standard board
-	- World Cup					(XZ) - G board
-	- Yo Noid					(YC) - F board
+	- Baseball Stars					(B9) - F board
+	- Metroid							(MT) - D board
+	- Ninja Gaiden 2					(??) - ? board
+	- Pinbot							(io) - H board
+	- Solar Jetman						(LJ) - i board
+	- Trojan							(??) - ? board
 
 ****************************************************************************
 
@@ -127,8 +131,9 @@ Notes & Todo:
 - Fix Mike Tyson's Punchout gfx banking.
 - Fix Track & Field. It requires you to press start after starting
   a game without displaying anything on screen. Bad rom?.
-- Fix Ninja Gaiden?. After the attract mode it displays a black
-screen. Game works fine tho. Normal behaviour?. Bad rom?.
+- Look at Ninja Gaiden 3. It has some slight timming issues on the
+second level. Probably related to the mapper's irq timming.
+- Fix Rad Racer II. More timming issues.
 - Dipswitches
 - Better control layout?. This thing has odd buttons.
 - Find dumps of the rest of the RP5H01's and add the remaining games.
@@ -155,12 +160,16 @@ extern void playch10_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refre
 extern void pc10_init_machine( void );
 extern void init_playch10( void );	/* standard games */
 extern void init_pc_gun( void );	/* gun games */
+extern void init_pc_hrz( void );	/* horizontal games */
 extern void init_pcaboard( void );	/* a-board games */
 extern void init_pcbboard( void );	/* b-board games */
 extern void init_pccboard( void );	/* c-board games */
+extern void init_pcdboard( void );	/* d-board games */
 extern void init_pceboard( void );	/* e-board games */
 extern void init_pcfboard( void );	/* f-board games */
 extern void init_pcgboard( void );	/* g-board games */
+extern void init_pciboard( void );	/* i-board games */
+extern void init_pckboard( void );	/* k-board games */
 extern READ_HANDLER( pc10_port_0_r );
 extern READ_HANDLER( pc10_instrom_r );
 extern READ_HANDLER( pc10_prot_r );
@@ -461,7 +470,7 @@ static struct DACinterface nes_dac_interface =
 
 
 #define PC10_MACHINE_DRIVER( name, nvram )								\
-static struct MachineDriver machine_driver_##name =						\
+static const struct MachineDriver machine_driver_##name =						\
 {																		\
 	/* basic machine hardware */										\
 	{																	\
@@ -478,7 +487,7 @@ static struct MachineDriver machine_driver_##name =						\
 			ignore_interrupt, 0											\
 		}																\
 	},																	\
-	60, ( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ) * 2,  /* fps, vblank duration */				\
+	60, ( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ),  /* fps, vblank duration */	\
 	1,	/* cpus dont talk to each other */								\
 	pc10_init_machine,													\
 																		\
@@ -509,7 +518,7 @@ static struct MachineDriver machine_driver_##name =						\
 	nvram																\
 };
 
-PC10_MACHINE_DRIVER( playch10, )
+PC10_MACHINE_DRIVER( playch10, NULL )
 PC10_MACHINE_DRIVER( playchnv, nvram_handler )
 
 /***************************************************************************
@@ -565,6 +574,111 @@ ROM_START( pc_ebike )	/* Excite Bike */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xa0263750 )
 ROM_END
 
+ROM_START( pc_1942 )	/* 1942 */
+	BIOS_CPU
+	ROM_LOAD( "u3",      0x0c000, 0x2000, 0x415b8807 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "u1",    	 0x08000, 0x8000, 0xc4e8c04a )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "u2",		 0x00000, 0x2000, 0x03379b76 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x29893c7f )
+ROM_END
+
+ROM_START( pc_bfght )	/* Balloon Fight */
+	BIOS_CPU
+	ROM_LOAD( "bf-u3",   0x0c000, 0x2000, 0xa9949544 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "bf-u1",   0x0c000, 0x4000, 0x575ed2fe )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "bf-u2",	 0x00000, 0x2000, 0xc642a1df )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbe3c42fb )
+ROM_END
+
+ROM_START( pc_bball )	/* Baseball */
+	BIOS_CPU
+	ROM_LOAD( "ba-u3",   0x0c000, 0x2000, 0x06861a0d ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "ba-u1",   0x0c000, 0x4000, 0x39d1fa03 )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "ba-u2",	 0x00000, 0x2000, 0xcde71b82 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x7940cfc4 )
+ROM_END
+
+ROM_START( pc_golf )	/* Golf */
+	BIOS_CPU
+	ROM_LOAD( "gf-u3",   0x0c000, 0x2000, 0x882dea87 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "gf-u1",   0x0c000, 0x4000, 0xf9622bfa )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "gf-u2",	 0x00000, 0x2000, 0xff6fc790 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x2cd98ef6 )
+ROM_END
+
+ROM_START( pc_kngfu )	/* Kung Fu */
+	BIOS_CPU
+	ROM_LOAD( "sx-u3",   0x0c000, 0x2000, 0xead71b7e ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "sx-u1",   0x08000, 0x8000, 0x0516375e )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "sx-u2",	 0x00000, 0x2000, 0x430b49a4 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xa1687f01 )
+ROM_END
+
+ROM_START( pc_tenis )	/* Tennis */
+	BIOS_CPU
+	ROM_LOAD( "te-u3",   0x0c000, 0x2000, 0x6928e920 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "te-u1",   0x0c000, 0x4000, 0x8b2e3e81 )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "te-u2",	 0x00000, 0x2000, 0x3a34c45b )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbcc9a48e )
+ROM_END
+
+ROM_START( pc_vball )	/* Volley Ball */
+	BIOS_CPU
+	ROM_LOAD( "vb-u3",   0x0c000, 0x2000, 0x9104354e ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "vb-u1",   0x08000, 0x8000, 0x35226b99 )
+
+    ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "vb-u2",	 0x00000, 0x2000, 0x2415dce2 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf701863f )
+ROM_END
+
 /* Gun Games */
 ROM_START( pc_duckh )	/* Duck Hunt */
 	BIOS_CPU
@@ -581,6 +695,36 @@ ROM_START( pc_duckh )	/* Duck Hunt */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8cd6aad6 )
 ROM_END
 
+ROM_START( pc_hgaly )	/* Hogan's Alley */
+	BIOS_CPU
+	ROM_LOAD( "ha-u3",   0x0c000, 0x2000, 0xa2525180 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "ha-u1",   0x0c000, 0x4000, 0x8963ae6e )
+
+    ROM_REGION( 0x04000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "ha-u2",   0x00000, 0x2000, 0x5df42fc4 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x5ac61521 )
+ROM_END
+
+ROM_START( pc_wgnmn )	/* Wild Gunman */
+	BIOS_CPU
+	ROM_LOAD( "wg-u3",   0x0c000, 0x2000, 0xda08afe5 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "wg-u1",   0x0c000, 0x4000, 0x389960db )
+
+    ROM_REGION( 0x04000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "wg-u2",   0x00000, 0x2000, 0xa5e04856 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xdef015a3 )
+ROM_END
+
 /* A-Board Games */
 ROM_START( pc_tkfld )	/* Track & Field */
 	BIOS_CPU
@@ -595,6 +739,21 @@ ROM_START( pc_tkfld )	/* Track & Field */
 
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1e2e7f1e )
+ROM_END
+
+ROM_START( pc_grdus )	/* Gradius */
+	BIOS_CPU
+	ROM_LOAD( "gr-u4",   0x0c000, 0x2000, 0x27d76160 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "gr-u2",   0x08000, 0x8000, 0xaa96889c )
+
+    ROM_REGION( 0x08000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "gr-u3",   0x00000, 0x8000, 0xde963bec )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xb8d5bf8a )
 ROM_END
 
 /* B-Board Games */
@@ -644,6 +803,51 @@ ROM_START( pc_pwrst )	/* Pro Wrestling */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x4c6b7983 )
 ROM_END
 
+ROM_START( pc_cvnia )	/* Castlevania */
+	BIOS_CPU
+	ROM_LOAD( "u4cv",    0x0c000, 0x2000, 0xa2d4245d ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "u1cv",    0x10000, 0x10000, 0xadd4fc52 ) /* banked */
+    ROM_LOAD( "u2cv",    0x20000, 0x10000, 0x7885e567 ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x7da2f045 )
+ROM_END
+
+ROM_START( pc_dbldr )	/* Double Dribble */
+	BIOS_CPU
+	ROM_LOAD( "dw-u4",    0x0c000, 0x2000, 0x5006eef8 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "dw-u1",    0x10000, 0x10000, 0x78e08e61 ) /* banked */
+    ROM_LOAD( "dw-u2",    0x20000, 0x10000, 0xab554cde ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x9b5f4bd2 )
+ROM_END
+
+ROM_START( pc_rygar )	/* Rygar */
+	BIOS_CPU
+	ROM_LOAD( "ry-u4",    0x0c000, 0x2000, 0x7149071b ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "ry-u1",    0x10000, 0x10000, 0xaa2e54bc ) /* banked */
+    ROM_LOAD( "ry-u2",    0x20000, 0x10000, 0x80cb158b ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xb69309ab )
+ROM_END
+
 /* C-Board Games */
 ROM_START( pc_goons )	/* The Goonies */
 	BIOS_CPU
@@ -658,6 +862,22 @@ ROM_START( pc_goons )	/* The Goonies */
 
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xcdd62d08 )
+ROM_END
+
+/* D-Board Games */
+ROM_START( pc_radrc )	/* Rad Racer */
+	BIOS_CPU
+	ROM_LOAD( "rc-u5",   0x0c000, 0x2000, 0xae60fd08 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "rc-u1",   0x10000, 0x10000, 0xdce369a7 )
+    ROM_LOAD( "rc-u2",   0x20000, 0x10000, 0x389a79b5 ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x17c880f9 )
 ROM_END
 
 /* E-Board Games */
@@ -682,9 +902,8 @@ ROM_START( pc_ngaid )	/* Ninja Gaiden */
 	ROM_LOAD( "u2ng",    0x0c000, 0x2000, 0x7505de96 ) /* extra bios code for this game */
     BIOS_GFX
 
-    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
 	ROM_LOAD( "u4ng",    0x10000, 0x20000, 0x5f1e7b19 )	/* banked */
-	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u1ng",   0x00000, 0x20000, 0xeccd2dcb )	/* banked */
@@ -698,15 +917,116 @@ ROM_START( pc_ddrgn )	/* Double Dragon */
 	ROM_LOAD( "wd-u2",   0x0c000, 0x2000, 0xdfca1578 ) /* extra bios code for this game */
     BIOS_GFX
 
-    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
 	ROM_LOAD( "wd-u4",  0x10000, 0x20000, 0x05c97f64 )	/* banked */
-	ROM_RELOAD(			0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
-	ROM_LOAD( "wd-u1",  0x00000, 0x20000, 0x00000000 )
+	ROM_LOAD( "wd-u1",  0x00000, 0x20000, 0x5ebe0fd0 )
 
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf9739d62 )
+ROM_END
+
+ROM_START( pc_drmro )	/* Dr Mario */
+	BIOS_CPU
+	ROM_LOAD( "vu-u2",   0x0c000, 0x2000, 0x4b7869ac ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "vu-u4",  0x10000, 0x08000, 0xcb02a930 )	/* banked */
+	ROM_RELOAD(			0x18000, 0x08000 )
+	ROM_RELOAD(			0x20000, 0x08000 )
+	ROM_RELOAD(			0x28000, 0x08000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "vu-u1",  0x00000, 0x08000, 0x064d4ab3 )
+	ROM_RELOAD(			0x08000, 0x08000 )
+	ROM_RELOAD(			0x10000, 0x08000 )
+	ROM_RELOAD(			0x18000, 0x08000 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1b26e58c )
+ROM_END
+
+ROM_START( pc_ftqst )	/* Fester's Quest */
+	BIOS_CPU
+	ROM_LOAD( "eq-u2",   0x0c000, 0x2000, 0x85326040 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "eq-u4",  0x10000, 0x20000, 0x953a3eaf )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "eq-u1",  0x00000, 0x20000, 0x0ca17ab5 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1c601cd7 )
+ROM_END
+
+ROM_START( pc_rcpam )	/* RC Pro Am */
+	BIOS_CPU
+	ROM_LOAD( "pm-u2",   0x0c000, 0x2000, 0x358c2de7 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "pm-u4",  0x10000, 0x08000, 0x82cfde25 )	/* banked */
+	ROM_RELOAD(			0x18000, 0x08000 )
+	ROM_RELOAD(			0x20000, 0x08000 )
+	ROM_RELOAD(			0x28000, 0x08000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "pm-u1",  0x00000, 0x08000, 0x83c90d47 )
+	ROM_RELOAD(			0x08000, 0x08000 )
+	ROM_RELOAD(			0x10000, 0x08000 )
+	ROM_RELOAD(			0x18000, 0x08000 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xd71d8085 )
+ROM_END
+
+ROM_START( pc_rrngr )	/* Rescue Rangers */
+	BIOS_CPU
+	ROM_LOAD( "ru-u2",   0x0c000, 0x2000, 0x2a4bfc4b ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "ru-u4",  0x10000, 0x20000, 0x02931525 )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "ru-u1",  0x00000, 0x20000, 0x218d4224 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1c2e1865 )
+ROM_END
+
+ROM_START( pc_ynoid )	/* Yo! Noid */
+	BIOS_CPU
+	ROM_LOAD( "yc-u2",   0x0c000, 0x2000, 0x0449805c ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "yc-u4",  0x10000, 0x20000, 0x4affeee7 )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "yc-u1",  0x00000, 0x20000, 0x868f7343 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8c376465 )
+ROM_END
+
+ROM_START( pc_tmnt )	/* Teenage Mutant Ninja Turtles */
+	BIOS_CPU
+	ROM_LOAD( "u2u2",   0x0c000, 0x2000, 0xbdce58c0 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "u4u2",   0x10000, 0x20000, 0x0ccd28d5 )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+	ROM_LOAD( "u1u2",   0x00000, 0x20000, 0x91f01f53 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf5a38e98 )
 ROM_END
 
 /* G-Board Games */
@@ -726,6 +1046,196 @@ ROM_START( pc_smb3 )	/* Super Mario Bros 3 */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xe48f4945 )
 ROM_END
 
+ROM_START( pc_gntlt )	/* Gauntlet */
+	BIOS_CPU
+	ROM_LOAD( "u3gl",    0x0c000, 0x2000, 0x57575b92 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "gl-0.prg",0x10000, 0x20000, 0xb19c48a5 )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
+
+    ROM_REGION( 0x010000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "gl-0.chr", 0x00000, 0x10000, 0x22af8849 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xba7f2e13 )
+ROM_END
+
+ROM_START( pc_pwbld )	/* Power Blade */
+	BIOS_CPU
+	ROM_LOAD( "7t-u3",    0x0c000, 0x2000, 0xedcc21c6 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "7t-u5",   0x10000, 0x20000, 0xfaa957b1 )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "7t-u1",    0x00000, 0x20000, 0x344be4a6 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x31a05a48 )
+ROM_END
+
+ROM_START( pc_ngai3 )	/* Ninja Gaiden 3 */
+	BIOS_CPU
+	ROM_LOAD( "u33n",    0x0c000, 0x2000, 0xc7ba0f59 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "u53n",    0x10000, 0x20000, 0xf0c77dcb )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "u13n",    0x00000, 0x20000, 0x584bcf5d )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x13755943 )
+ROM_END
+
+ROM_START( pc_radr2 )	/* Rad Racer II */
+	BIOS_CPU
+	ROM_LOAD( "qr-u3",    0x0c000, 0x2000, 0x0c8fea63 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "qr-u5",    0x10000, 0x10000, 0xab90e397 )	/* banked */
+	ROM_RELOAD(			  0x20000, 0x10000 )
+	ROM_RELOAD(			  0x30000, 0x10000 )
+	ROM_RELOAD(			  0x40000, 0x10000 )
+
+    ROM_REGION( 0x010000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "qr-u1",    0x00000, 0x10000, 0x07df55d8 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x40c4f294 )
+ROM_END
+
+ROM_START( pc_rkats )	/* Rockin' Kats */
+	BIOS_CPU
+	ROM_LOAD( "7a-u3",    0x0c000, 0x2000, 0x352b1e3c ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "7a-u5",    0x10000, 0x20000, 0x319ccfcc )	/* banked */
+	ROM_RELOAD(			  0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "7a-u1",    0x00000, 0x20000, 0x487aa440 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x56ab5bf9 )
+ROM_END
+
+ROM_START( pc_suprc )	/* Super C */
+	BIOS_CPU
+	ROM_LOAD( "ue-u3",    0x0c000, 0x2000, 0xa30ca248 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "ue-u5",    0x10000, 0x20000, 0xc7fbecc3 )	/* banked */
+	ROM_RELOAD(			  0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "ue-u1",    0x00000, 0x20000, 0x153295c1 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xd477095e )
+ROM_END
+
+ROM_START( pc_tmnt2 )	/* Teenage Mutant Ninja Turtles II */
+	BIOS_CPU
+	ROM_LOAD( "2n-u3",    0x0c000, 0x2000, 0x65298370 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "2n-u5",    0x10000, 0x40000, 0x717e1c46 )	/* banked */
+
+    ROM_REGION( 0x040000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "2n-u1",    0x00000, 0x40000, 0x0dbc575f )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x237e8519 )
+ROM_END
+
+ROM_START( pc_wcup )	/* Nintendo World Cup */
+	BIOS_CPU
+	ROM_LOAD( "xz-u3",    0x0c000, 0x2000, 0xc26cb22f ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "xz-u5",    0x10000, 0x20000, 0x314ee295 )	/* banked */
+	ROM_RELOAD(			  0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "xz-u1",    0x00000, 0x20000, 0x92477d53 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xe17e1d76 )
+ROM_END
+
+ROM_START( pc_mman3 )	/* Mega Man 3 */
+	BIOS_CPU
+	ROM_LOAD( "xu-u3",   0x0c000, 0x2000, 0xc3984e09 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "xu-u4",   0x10000, 0x20000, 0x98a3263c )	/* banked */
+	ROM_LOAD( "xu-u5",   0x30000, 0x20000, 0xd365647a )	/* banked */
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "xu-u1",    0x00000, 0x20000, 0x4028916e )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x0fe6e900 )
+ROM_END
+
+ROM_START( pc_smb2 )	/* Super Mario Bros 2 */
+	BIOS_CPU
+	ROM_LOAD( "mw-u3",   0x0c000, 0x2000, 0xbeaeb43a ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+	ROM_LOAD( "mw-u5",   0x10000, 0x20000, 0x07854b3f )	/* banked */
+	ROM_RELOAD(			 0x30000, 0x20000 )
+
+    ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
+    ROM_LOAD( "mw-u1",    0x00000, 0x20000, 0xf2ba1170 )
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x372f4e84 )
+ROM_END
+
+/* i-Board Games */
+ROM_START( pc_cshwk )	/* Captain Sky Hawk */
+	BIOS_CPU
+	ROM_LOAD( "yw-u3",   0x0c000, 0x2000, 0x9d988209 ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "yw-u1",   0x10000, 0x20000, 0xa5e0208a ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0xeb1c794f )
+ROM_END
+
+/* K-Board Games */
+ROM_START( pc_moglf )	/* Mario Open Golf */
+	BIOS_CPU
+	ROM_LOAD( "ug-u2",   0x0c000, 0x2000, 0xe932fe2b ) /* extra bios code for this game */
+    BIOS_GFX
+
+    ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
+    ROM_LOAD( "ug-u4",   0x10000, 0x40000, 0x091a6a4c ) /* banked */
+
+	/* No cart gfx - uses vram */
+
+    ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
+    ROM_LOAD( "security.prm", 0x00000, 0x10, 0x633766d5 )
+ROM_END
 
 /***************************************************************************
 
@@ -748,23 +1258,70 @@ GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "P
 
 /******************************************************************************/
 
-/*    YEAR  NAME      PARENT	   MACHINE	 INPUT     INIT  	 MONITOR  */
-GAME( 1984, pc_ebike, playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
-GAME( 1985, pc_smb,	  playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros." )
+/*    YEAR  NAME     PARENT	   MACHINE	 INPUT     INIT  	 MONITOR  */
 
-GAME( 1984, pc_duckh, playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
+/* Standard Games */
+GAME( 1983, pc_tenis,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Tennis" )
+GAME( 1984, pc_bball,playch10, playch10, playch10, playch10, ROT0, "Nintendo of America", "PlayChoice-10: Baseball" )
+GAME( 1984, pc_bfght,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Balloon Fight" )
+GAME( 1984, pc_ebike,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
+GAME( 1984, pc_golf ,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Golf" )
+GAME( 1984, pc_kngfu,playch10, playch10, playch10, playch10, ROT0, "Irem (Nintendo license)", "PlayChoice-10: Kung Fu" )
+GAME( 1985, pc_1942, playch10, playch10, playch10, pc_hrz,   ROT0, "Capcom", "PlayChoice-10: 1942" )
+GAME( 1985, pc_smb,	 playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros." )
+GAME( 1986, pc_vball,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Volley ball" )
 
-GAMEX(1987, pc_tkfld, playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Track & Field", GAME_NOT_WORKING )
+/* Gun Games */
+GAME( 1984, pc_duckh,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
+GAME( 1984, pc_hgaly,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Hogan's Alley" )
+GAME( 1984, pc_wgnmn,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Wild Gunman" )
 
-GAME( 1986, pc_pwrst, playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
-GAME( 1987, pc_rnatk, playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Rush N' Attack" )
-GAME( 1988, pc_cntra, playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Contra" )
+/* A-Board Games */
+GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" )
+GAMEX(1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Track & Field", GAME_NOT_WORKING )
 
-GAME( 1986, pc_goons, playch10, playch10, playch10, pccboard, ROT0, "Konami", "PlayChoice-10: The Goonies" )
+/* B-Board Games */
+GAME( 1986, pc_pwrst,playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
+GAME( 1987, pc_cvnia,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Castlevania" )
+GAME( 1987, pc_dbldr,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Double Dribble" )
+GAME( 1987, pc_rnatk,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Rush N' Attack" )
+GAME( 1987, pc_rygar,playch10, playch10, playch10, pcbboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Rygar" )
+GAME( 1988, pc_cntra,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Contra" )
 
-GAMEX(1987, pc_miket, playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_NOT_WORKING )
+/* C-Board Games */
+GAME( 1986, pc_goons,playch10, playch10, playch10, pccboard, ROT0, "Konami", "PlayChoice-10: The Goonies" )
 
-GAME( 1989, pc_ngaid, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Ninja Gaiden" )
-GAMEX(198?, pc_ddrgn, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Double Dragon", GAME_NOT_WORKING )
+/* D-Board Games */
+GAME( 1987, pc_radrc,playch10, playch10, playch10, pcdboard, ROT0, "Square", "PlayChoice-10: Rad Racer" )
 
-GAME( 1988, pc_smb3,  playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )
+/* E-Board Games */
+GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_NOT_WORKING )
+
+/* F-Board Games */
+GAME( 1987, pc_rcpam,playch10, playch10, playch10, pcfboard, ROT0, "Rare", "PlayChoice-10: RC Pro Am" )
+GAME( 1989, pc_ngaid,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden" )
+GAME( 1989, pc_tmnt ,playch10, playch10, playch10, pcfboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage Mutant Ninja Turtles" )
+GAME( 1990, pc_drmro,playch10, playch10, playch10, pcfboard, ROT0, "Nintendo", "PlayChoice-10: Dr Mario" )
+GAME( 1990, pc_ynoid,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Yo! Noid" )
+GAME( 19??, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos?", "PlayChoice-10: Double Dragon" )
+GAME( 1989, pc_ftqst,playch10, playch10, playch10, pcfboard, ROT0, "Sunsoft (Nintendo of America license)", "PlayChoice-10: Fester's Quest" )
+GAME( 19??, pc_rrngr,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Rescue Rangers" )
+
+/* G-Board Games */
+GAMEX(1985, pc_gntlt,playch10, playch10, playch10, pcgboard, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet", GAME_NOT_WORKING )
+GAME( 1988, pc_smb2 ,playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 2" )
+GAME( 1988, pc_smb3, playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )
+GAME( 1990, pc_mman3,playch10, playch10, playch10, pcgboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Mega Man 3" )
+GAMEX(1990, pc_radr2,playch10, playch10, playch10, pcgboard, ROT0, "Square (Nintendo of America license)", "PlayChoice-10: Rad Racer II", GAME_NOT_WORKING )
+GAME( 1990, pc_suprc,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Super C" )
+GAME( 1990, pc_tmnt2,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage mutant Ninja Turtles 2" )
+GAME( 1990, pc_wcup ,playch10, playch10, playch10, pcgboard, ROT0, "Technos (Nintendo license)", "PlayChoice-10: Nintendo World Cup" )
+GAME( 1991, pc_ngai3,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 3" )
+GAME( 1991, pc_pwbld,playch10, playch10, playch10, pcgboard, ROT0, "Taito (Nintendo of America license)", "PlayChoice-10: Power Blade" )
+GAME( 1991, pc_rkats,playch10, playch10, playch10, pcgboard, ROT0, "Atlus (Nintendo of America license)", "PlayChoice-10: Rockin' Kats" )
+
+/* i-Board Games */
+GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )
+
+/* K-Board Games */
+GAME( 1991, pc_moglf,playch10, playch10, playch10, pckboard, ROT0, "Nintendo", "PlayChoice-10: Mario Open Golf" )

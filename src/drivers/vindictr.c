@@ -345,7 +345,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_vindictr =
+static const struct MachineDriver machine_driver_vindictr =
 {
 	/* basic machine hardware */
 	{

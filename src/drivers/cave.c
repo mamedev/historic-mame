@@ -782,7 +782,7 @@ static struct YMZ280Binterface ymz280b_intf =
 								Dangun Feveron
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_dfeveron =
+static const struct MachineDriver machine_driver_dfeveron =
 {
 	{
 		{
@@ -822,7 +822,7 @@ static struct MachineDriver machine_driver_dfeveron =
 								Dodonpachi
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_ddonpach =
+static const struct MachineDriver machine_driver_ddonpach =
 {
 	{
 		{
@@ -863,7 +863,7 @@ static struct MachineDriver machine_driver_ddonpach =
 ***************************************************************************/
 
 
-static struct MachineDriver machine_driver_esprade =
+static const struct MachineDriver machine_driver_esprade =
 {
 	{
 		{
@@ -903,7 +903,7 @@ static struct MachineDriver machine_driver_esprade =
 								Guwange
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_guwange =
+static const struct MachineDriver machine_driver_guwange =
 {
 	{
 		{
@@ -943,7 +943,7 @@ static struct MachineDriver machine_driver_guwange =
 								Uo Poko
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_uopoko =
+static const struct MachineDriver machine_driver_uopoko =
 {
 	{
 		{

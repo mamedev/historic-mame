@@ -98,7 +98,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
 	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
-//	{ 0x0c10, 0x0c11, sbrkout_serve_led_w }, /* Serve LED */
+	{ 0x0c10, 0x0c11, sbrkout_serve_led_w }, /* Serve LED */
 	{ 0x0c30, 0x0c31, sbrkout_start_1_led_w }, /* 1 Player Start Light */
 	{ 0x0c40, 0x0c41, sbrkout_start_2_led_w }, /* 2 Player Start Light */
 	{ 0x0c50, 0x0c51, MWA_RAM }, /* NMI Pot Reading Enable */
@@ -221,7 +221,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_sbrkout =
+static const struct MachineDriver machine_driver_sbrkout =
 {
 	/* basic machine hardware */
 	{
@@ -281,6 +281,10 @@ ROM_START( sbrkout )
 
 	ROM_REGION( 0x0020, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "033282.k6",    0x0000, 0x0020, 0x6228736b )
+
+	ROM_REGION( 0x0120, REGION_PROMS )
+	ROM_LOAD( "006400.m2",    0x0000, 0x0100, 0xb8094b4c )	/* sync (not used) */
+	ROM_LOAD( "006401.e2",    0x0100, 0x0020, 0x857df8db )	/* unknown */
 ROM_END
 
 

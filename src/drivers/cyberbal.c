@@ -1067,7 +1067,7 @@ static struct CustomSound_interface samples_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_cyberbal =
+static const struct MachineDriver machine_driver_cyberbal =
 {
 	/* basic machine hardware */
 	{
@@ -1141,7 +1141,7 @@ static struct MachineDriver machine_driver_cyberbal =
 };
 
 
-static struct MachineDriver machine_driver_cyberb2p =
+static const struct MachineDriver machine_driver_cyberb2p =
 {
 	/* basic machine hardware */
 	{

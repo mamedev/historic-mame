@@ -84,10 +84,10 @@ static READ_HANDLER( inputport_r )
 	return data;
 }
 
-static WRITE_HANDLER( skykid_lamps_w )
+static WRITE_HANDLER( skykid_led_w )
 {
-	osd_led_w(0, (data & 0x08) >> 3);
-	osd_led_w(1, (data & 0x10) >> 4);
+	set_led_status(0,data & 0x08);
+	set_led_status(1,data & 0x10);
 }
 
 static WRITE_HANDLER( skykid_halt_mcu_w )
@@ -180,16 +180,23 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ -1 }
 };
 
+
+static READ_HANDLER( readFF )
+{
+	return 0xff;
+}
+
 static struct IOReadPort mcu_readport[] =
 {
 	{ HD63701_PORT1, HD63701_PORT1, inputport_r },			/* input ports read */
+	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort mcu_writeport[] =
 {
 	{ HD63701_PORT1, HD63701_PORT1, inputport_select_w },	/* input port select */
-	{ HD63701_PORT2, HD63701_PORT2, skykid_lamps_w },		/* lamps */
+	{ HD63701_PORT2, HD63701_PORT2, skykid_led_w },			/* lamps */
 	{ -1 }	/* end of table */
 };
 
@@ -455,7 +462,7 @@ static struct namco_interface namco_interface =
 	0					/* stereo */
 };
 
-static struct MachineDriver machine_driver_skykid =
+static const struct MachineDriver machine_driver_skykid =
 {
 	/* basic machine hardware */
 	{

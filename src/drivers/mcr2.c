@@ -519,7 +519,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_mcr2 =
+static const struct MachineDriver machine_driver_mcr2 =
 {
 	/* basic machine hardware */
 	{
@@ -542,7 +542,7 @@ static struct MachineDriver machine_driver_mcr2 =
 	64,64,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	mcr12_vh_start,
 	mcr12_vh_stop,
@@ -557,7 +557,7 @@ static struct MachineDriver machine_driver_mcr2 =
 };
 
 
-static struct MachineDriver machine_driver_journey =
+static const struct MachineDriver machine_driver_journey =
 {
 	/* basic machine hardware */
 	{
@@ -580,7 +580,7 @@ static struct MachineDriver machine_driver_journey =
 	64,64,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

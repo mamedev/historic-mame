@@ -264,7 +264,7 @@ static struct namco_interface namco_interface =
 	REGION_SOUND1	/* memory region */
 };
 
-static struct MachineDriver machine_driver_phozon =
+static const struct MachineDriver machine_driver_phozon =
 {
 	/* basic machine hardware  */
 	{

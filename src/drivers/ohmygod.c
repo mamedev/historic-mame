@@ -241,7 +241,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver machine_driver_ohmygod =
+static const struct MachineDriver machine_driver_ohmygod =
 {
 	/* basic machine hardware */
 	{

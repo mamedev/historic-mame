@@ -507,8 +507,8 @@ int memory_init(void)
 		{
 			while (_mra->start != -1)
 			{
-//				if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
-//				if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
+/*				if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start); */
+/*				if (_mra->size) *_mra->size = _mra->end - _mra->start + 1; */
 				_mra++;
 			}
 		}
@@ -1666,7 +1666,17 @@ static void *install_port_read_handler_common(int cpu, int start, int end,
 	}
 	else
 	{
+		struct IOReadPort *old_readport = readport[cpu];
+
 		readport[cpu] = realloc(readport[cpu], readport_size[cpu]);
+
+		/* check if we're changing the current readport and ifso update it */
+		if (cur_readport == old_readport)
+		   cur_readport = readport[cpu];
+
+		/* realloc leaves the old buffer intact if it fails, so free it */
+		if(!readport[cpu])
+		   free(old_readport);
 	}
 
 	if (readport[cpu] == 0)  return 0;
@@ -1711,7 +1721,17 @@ static void *install_port_write_handler_common(int cpu, int start, int end,
 	}
 	else
 	{
+		struct IOWritePort *old_writeport = writeport[cpu];
+
 		writeport[cpu] = realloc(writeport[cpu], writeport_size[cpu]);
+
+		/* check if we're changing the current writeport and ifso update it */
+		if (cur_writeport == old_writeport)
+		   cur_writeport = writeport[cpu];
+
+		/* realloc leaves the old buffer intact if it fails, so free it */
+		if(!writeport[cpu])
+		   free(old_writeport);
 	}
 
 	if (writeport[cpu] == 0)  return 0;

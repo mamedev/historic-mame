@@ -710,7 +710,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 	{ 30, 30 } \
 }; \
  \
-static struct MachineDriver machine_driver_##_shortname_ = \
+static const struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{ \
 		{ \
@@ -778,7 +778,7 @@ static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 	{ 100 } \
 }; \
  \
-static struct MachineDriver machine_driver_##_shortname_ = \
+static const struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{\
 		{\
@@ -844,7 +844,7 @@ static struct YM2203interface ym2203_interface_##_shortname_ = \
 	{ irq_handler } \
 }; \
 \
-static struct MachineDriver machine_driver_##_shortname_ = \
+static const struct MachineDriver machine_driver_##_shortname_ = \
 {\
 	{\
 		{\

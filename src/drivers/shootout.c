@@ -299,7 +299,7 @@ static int shootout_interrupt(void)
 	return 0;
 }
 
-static struct MachineDriver machine_driver_shootout =
+static const struct MachineDriver machine_driver_shootout =
 {
 	/* basic machine hardware */
 	{
@@ -342,7 +342,7 @@ static struct MachineDriver machine_driver_shootout =
 	}
 };
 
-static struct MachineDriver machine_driver_shootouj =
+static const struct MachineDriver machine_driver_shootouj =
 {
 	/* basic machine hardware */
 	{

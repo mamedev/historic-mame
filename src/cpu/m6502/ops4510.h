@@ -54,18 +54,30 @@
 #undef WRMEM
 #define WRMEM(addr,data) cpu_writemem20(M4510_MEM(addr),data)
 
-#undef MAP
+/* c65 docu says transfer of axyz to the mapper register
+   so no readback!? */
 #define MAP 													\
+		if (PEEK_OP() == 0xea /*NOP, in this case end of map*/ )\
  { \
-  UINT16 low, high; \
-  low=m4510.low; \
-  high=m4510.high; \
+  m4510.mem[0]=0; \
+  m4510.mem[1]=0; \
+  m4510.mem[2]=0; \
+  m4510.mem[3]=0; \
+  m4510.mem[4]=0; \
+  m4510.mem[5]=0; \
+  m4510.mem[6]=0; \
+  m4510.mem[7]=0; \
+  CHANGE_PC; \
+} else { \
+  /*UINT16 low, high;*/ \
+  /*low=m4510.low;*/ \
+  /*high=m4510.high;*/ \
   m4510.low=m4510.a|(m4510.x<<8); \
   m4510.high=m4510.y|(m4510.z<<8); \
-  m4510.a=low&0xff; \
-  m4510.x=low>>8; \
-  m4510.y=high&0xff; \
-  m4510.z=high>>8; \
+  /*m4510.a=low&0xff;*/ \
+  /*m4510.x=low>>8;*/ \
+  /*m4510.y=high&0xff;*/ \
+  /*m4510.z=high>>8;*/ \
   m4510.mem[0]=(m4510.low&0x1000) ? (m4510.low&0xfff)<<8:0; \
   m4510.mem[1]=(m4510.low&0x2000) ? (m4510.low&0xfff)<<8:0; \
   m4510.mem[2]=(m4510.low&0x4000) ? (m4510.low&0xfff)<<8:0; \
@@ -75,5 +87,9 @@
   m4510.mem[6]=(m4510.high&0x4000) ? (m4510.high&0xfff)<<8:0; \
   m4510.mem[7]=(m4510.high&0x8000) ? (m4510.high&0xfff)<<8:0; \
   CHANGE_PC; \
- }
+ } \
+ { \
+				UINT8 op = RDOP();								\
+				(*m65ce02.insn[op])();							\
+ } \
 

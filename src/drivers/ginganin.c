@@ -371,7 +371,7 @@ static struct Y8950interface y8950_interface =
 	{ 0 }   /* I/O write */
 };
 
-static struct MachineDriver machine_driver_ginganin =
+static const struct MachineDriver machine_driver_ginganin =
 {
 	{
 		{

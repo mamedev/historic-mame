@@ -799,7 +799,7 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 
 /**********************************************************************/
 
-static struct MachineDriver machine_driver_tnk3 =
+static const struct MachineDriver machine_driver_tnk3 =
 {
 	{
 		{
@@ -848,7 +848,7 @@ static struct MachineDriver machine_driver_tnk3 =
 	}
 };
 
-static struct MachineDriver machine_driver_athena =
+static const struct MachineDriver machine_driver_athena =
 /* mostly identical to TNK3, but with an aditional YM3526 */
 {
 	{
@@ -899,7 +899,7 @@ static struct MachineDriver machine_driver_athena =
 	}
 };
 
-static struct MachineDriver machine_driver_ikari =
+static const struct MachineDriver machine_driver_ikari =
 {
 	{
 		{
@@ -948,7 +948,7 @@ static struct MachineDriver machine_driver_ikari =
 	}
 };
 
-static struct MachineDriver machine_driver_victroad =
+static const struct MachineDriver machine_driver_victroad =
 /* identical to Ikari Warriors, but sound system replaces one of the YM3526 with Y8950 */
 {
 	{
@@ -998,7 +998,7 @@ static struct MachineDriver machine_driver_victroad =
 	}
 };
 
-static struct MachineDriver machine_driver_gwar =
+static const struct MachineDriver machine_driver_gwar =
 {
 	{
 		{
@@ -1046,7 +1046,7 @@ static struct MachineDriver machine_driver_gwar =
 	}
 };
 
-static struct MachineDriver machine_driver_bermudat =
+static const struct MachineDriver machine_driver_bermudat =
 {
 	{
 		{
@@ -1095,7 +1095,7 @@ static struct MachineDriver machine_driver_bermudat =
 	}
 };
 
-static struct MachineDriver machine_driver_psychos =
+static const struct MachineDriver machine_driver_psychos =
 {
 	{
 		{
@@ -1143,7 +1143,7 @@ static struct MachineDriver machine_driver_psychos =
 	}
 };
 
-static struct MachineDriver machine_driver_chopper1 =
+static const struct MachineDriver machine_driver_chopper1 =
 {
 	{
 		{
@@ -1195,7 +1195,7 @@ static struct MachineDriver machine_driver_chopper1 =
 	}
 };
 
-static struct MachineDriver machine_driver_tdfever =
+static const struct MachineDriver machine_driver_tdfever =
 {
 	{
 		{
@@ -1249,7 +1249,7 @@ static struct MachineDriver machine_driver_tdfever =
 	}
 };
 
-static struct MachineDriver machine_driver_ftsoccer =
+static const struct MachineDriver machine_driver_ftsoccer =
 {
 	{
 		{

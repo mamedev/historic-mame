@@ -313,7 +313,7 @@ static struct YM3526interface ym3526_interface =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ???? */
+	4000000,	/* 4 MHz ???? */
 	{ YM2203_VOL(40,20), YM2203_VOL(40,20) },
 	{ 0 },
 	{ 0 },
@@ -328,7 +328,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver_ym3526 =
+static const struct MachineDriver machine_driver_ym3526 =
 {
 	{
 		{
@@ -374,7 +374,7 @@ static struct MachineDriver machine_driver_ym3526 =
 	}
 };
 
-static struct MachineDriver machine_driver_ym2203 =
+static const struct MachineDriver machine_driver_ym2203 =
 {
 	{
 		{

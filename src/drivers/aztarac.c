@@ -127,7 +127,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0, 0, 0 }
 };
 
-static struct MachineDriver machine_driver_aztarac =
+static const struct MachineDriver machine_driver_aztarac =
 {
 	/* basic machine hardware */
 	{
@@ -155,11 +155,11 @@ static struct MachineDriver machine_driver_aztarac =
 	256, 256,
 	aztarac_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	aztarac_vh_start,
 	vector_vh_stop,
-	vector_vh_update,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

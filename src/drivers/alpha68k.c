@@ -1380,7 +1380,7 @@ static int kyros_interrupt(void)
 /******************************************************************************/
 
 
-static struct MachineDriver machine_driver_kouyakyu =
+static const struct MachineDriver machine_driver_kouyakyu =
 {
 	{
  		{
@@ -1426,7 +1426,7 @@ static struct MachineDriver machine_driver_kouyakyu =
 	}
 };
 
-static struct MachineDriver machine_driver_kyros =
+static const struct MachineDriver machine_driver_kyros =
 {
 	/* basic machine hardware */
 	{
@@ -1474,7 +1474,7 @@ static struct MachineDriver machine_driver_kyros =
 	}
 };
 
-static struct MachineDriver machine_driver_sstingry =
+static const struct MachineDriver machine_driver_sstingry =
 {
 	/* basic machine hardware */
 	{
@@ -1522,7 +1522,7 @@ static struct MachineDriver machine_driver_sstingry =
 	}
 };
 
-static struct MachineDriver machine_driver_alpha68k_I =
+static const struct MachineDriver machine_driver_alpha68k_I =
 {
 	/* basic machine hardware */
 	{
@@ -1566,7 +1566,7 @@ static struct MachineDriver machine_driver_alpha68k_I =
 	}
 };
 
-static struct MachineDriver machine_driver_alpha68k_II =
+static const struct MachineDriver machine_driver_alpha68k_II =
 {
 	/* basic machine hardware */
 	{
@@ -1619,7 +1619,7 @@ static struct MachineDriver machine_driver_alpha68k_II =
 	}
 };
 
-static struct MachineDriver machine_driver_alpha68k_V =
+static const struct MachineDriver machine_driver_alpha68k_V =
 {
 	/* basic machine hardware */
 	{
@@ -1672,7 +1672,7 @@ static struct MachineDriver machine_driver_alpha68k_V =
 	}
 };
 
-static struct MachineDriver machine_driver_alpha68k_V_sb =
+static const struct MachineDriver machine_driver_alpha68k_V_sb =
 {
 	/* basic machine hardware */
 	{

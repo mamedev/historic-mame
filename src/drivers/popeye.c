@@ -260,7 +260,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_popeyebl =
+static const struct MachineDriver machine_driver_popeyebl =
 {
 	/* basic machine hardware */
 	{
@@ -281,7 +281,7 @@ static struct MachineDriver machine_driver_popeyebl =
 	32+16+256, 16*2+64*4,
 	popeyebl_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	popeye_vh_start,
 	popeye_vh_stop,

@@ -43,7 +43,7 @@ int palette_transparent_color;
 
 UINT16 *palette_shadow_table;
 
-void overlay_remap(void);
+void artwork_remap(void);
 
 
 
@@ -1225,7 +1225,7 @@ const UINT8 *palette_recalc(void)
 		}
 	}
 
-	if (ret) overlay_remap();
+	if (ret) artwork_remap();
 
 	return ret;
 }
@@ -1501,6 +1501,12 @@ WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
+}
+
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
+{
+	paletteram[offset] = data;
+	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w )

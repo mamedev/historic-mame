@@ -601,7 +601,7 @@ static struct CustomSound_interface asteroid_custom_interface = {
 	asteroid_sh_update
 };
 
-static struct MachineDriver machine_driver_asteroid =
+static const struct MachineDriver machine_driver_asteroid =
 {
 	/* basic machine hardware */
 	{
@@ -622,7 +622,7 @@ static struct MachineDriver machine_driver_asteroid =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -638,7 +638,7 @@ static struct MachineDriver machine_driver_asteroid =
 	}
 };
 
-static struct MachineDriver machine_driver_asteroib =
+static const struct MachineDriver machine_driver_asteroib =
 {
 	/* basic machine hardware */
 	{
@@ -659,7 +659,7 @@ static struct MachineDriver machine_driver_asteroib =
 	256+32768, 0,
 	avg_init_palette_white,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -701,7 +701,7 @@ static struct CustomSound_interface astdelux_custom_interface = {
 	astdelux_sh_update
 };
 
-static struct MachineDriver machine_driver_astdelux =
+static const struct MachineDriver machine_driver_astdelux =
 {
 	/* basic machine hardware */
 	{
@@ -722,7 +722,7 @@ static struct MachineDriver machine_driver_astdelux =
 	256+32768, 0,
 	avg_init_palette_astdelux,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dvg_start,
 	dvg_stop,
@@ -753,7 +753,7 @@ static struct CustomSound_interface llander_custom_interface =
 };
 
 
-static struct MachineDriver machine_driver_llander =
+static const struct MachineDriver machine_driver_llander =
 {
 	/* basic machine hardware */
 	{
@@ -774,7 +774,7 @@ static struct MachineDriver machine_driver_llander =
 	256+32768, 0,
 	llander_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	llander_start,
 	llander_stop,

@@ -235,7 +235,7 @@ static struct namco_interface namco_interface =
 
 
 
-static struct MachineDriver machine_driver_pengo =
+static const struct MachineDriver machine_driver_pengo =
 {
 	/* basic machine hardware */
 	{
@@ -260,7 +260,7 @@ static struct MachineDriver machine_driver_pengo =
 	32,4*64,
 	pengo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	pengo_vh_start,
 	generic_vh_stop,

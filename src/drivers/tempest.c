@@ -188,8 +188,8 @@ static READ_HANDLER( tempest_IN0_r )
 
 static WRITE_HANDLER( tempest_led_w )
 {
-	osd_led_w (0, ~(data >> 1));
-	osd_led_w (1, ~data);
+	set_led_status(0, ~data & 0x02);
+	set_led_status(1, ~data & 0x01);
 	/* FLIP is bit 0x04 */
 }
 
@@ -361,7 +361,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver_tempest =
+static const struct MachineDriver machine_driver_tempest =
 {
 	/* basic machine hardware */
 	{
@@ -382,7 +382,7 @@ static struct MachineDriver machine_driver_tempest =
 	256,0,
 	avg_init_palette_multi,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	avg_start_tempest,
 	avg_stop,
@@ -503,7 +503,7 @@ ROM_END
 
 
 
-GAME( 1980, tempest,  0,       tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 3)" )
-GAME( 1980, tempest1, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 1)" )
-GAME( 1980, tempest2, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 2)" )
-GAME( 1980, temptube, tempest, tempest, tempest, 0, ROT0, "hack", "Tempest Tubes" )
+GAMEX( 1980, tempest,  0,       tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 3)", GAME_NO_COCKTAIL )
+GAMEX( 1980, tempest1, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 1)", GAME_NO_COCKTAIL )
+GAMEX( 1980, tempest2, tempest, tempest, tempest, 0, ROT0, "Atari", "Tempest (rev 2)", GAME_NO_COCKTAIL )
+GAMEX( 1980, temptube, tempest, tempest, tempest, 0, ROT0, "hack", "Tempest Tubes", GAME_NO_COCKTAIL )

@@ -352,7 +352,7 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 
 			if (rzy < 0xff && my < 0x10 && my)
 			{
-				my = (my*256)/(rzy+1);
+				my = ((my*16*256)/(rzy+1)+15)/16;
 				if (my > 0x10) my = 0x10;
 			}
 			if (my > 0x20) my=0x20;
@@ -986,7 +986,7 @@ if (!dotiles) { 					/* debug */
 
 			if (rzy < 0xff && my < 0x10 && my)
 			{
-				my = (my*256)/(rzy+1);
+				my = ((my*16*256)/(rzy+1)+15)/16;
 				if (my > 0x10) my = 0x10;
 			}
 			if (my > 0x20) my=0x20;

@@ -235,8 +235,8 @@ enum
 #if (HAS_ADSP2105)
 	CPU_ADSP2105,
 #endif
-#if (HAS_MIPS)
-	CPU_MIPS,
+#if (HAS_PSXCPU)
+	CPU_PSX,
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,
@@ -275,7 +275,7 @@ enum
 struct MachineDriver
 {
 	/* basic machine hardware */
-	struct MachineCPU cpu[MAX_CPU];
+	const struct MachineCPU cpu[MAX_CPU];
 	float frames_per_second;
 	int vblank_duration;	/* in microseconds - see description below */
 	int cpu_slices_per_frame;	/* for multicpu games. 1 is the minimum, meaning */
@@ -292,11 +292,11 @@ struct MachineDriver
 
     /* video hardware */
 	int screen_width,screen_height;
-	struct rectangle default_visible_area;	/* the visible area can be changed at */
+	const struct rectangle default_visible_area;	/* the visible area can be changed at */
 									/* run time, but it should never be larger than the */
 									/* one specified here, in order not to force the */
 									/* OS dependant code to resize the display window. */
-	struct GfxDecodeInfo *gfxdecodeinfo;
+	const struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
 	unsigned int color_table_len;	/* length in shorts of the color lookup table */
 	void (*vh_init_palette)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -316,7 +316,7 @@ struct MachineDriver
 	int obsolete1;
 	int obsolete2;
 	int obsolete3;
-	struct MachineSound sound[MAX_SOUND];
+	const struct MachineSound sound[MAX_SOUND];
 
 	/*
 	   use this to manage nvram/eeprom/cmos/etc.
@@ -356,12 +356,12 @@ struct MachineDriver
 
 /* flags for video_attributes */
 
+/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
+#define	VIDEO_SUPPORTS_DIRTY		0x0002
+
 /* bit 0 of the video attributes indicates raster or vector video hardware */
 #define	VIDEO_TYPE_RASTER			0x0000
 #define	VIDEO_TYPE_VECTOR			0x0001
-
-/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
-#define	VIDEO_SUPPORTS_DIRTY		0x0002
 
 /* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
 #define	VIDEO_MODIFIES_PALETTE	0x0004
@@ -379,14 +379,15 @@ struct MachineDriver
 
 /* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
 /* different proportions, e.g. 1:2 for Blasteroids */
-#define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0020
+#define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0060
 #define VIDEO_PIXEL_ASPECT_RATIO_1_1 0x0000
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
+#define VIDEO_PIXEL_ASPECT_RATIO_2_1 0x0040
 
-#define VIDEO_DUAL_MONITOR 0x0040
+#define VIDEO_DUAL_MONITOR 0x0080
 
 /* Mish 181099:  See comments in vidhrdw/generic.c for details */
-#define VIDEO_BUFFERS_SPRITERAM 0x0080
+#define VIDEO_BUFFERS_SPRITERAM 0x0100
 
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001
@@ -442,8 +443,8 @@ struct GameDriver
 
 
 #define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT;	\
+const struct GameDriver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -459,8 +460,8 @@ struct GameDriver driver_##NAME =			\
 };
 
 #define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern struct GameDriver driver_##PARENT;	\
-struct GameDriver driver_##NAME =			\
+extern const struct GameDriver driver_##PARENT;	\
+const struct GameDriver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\

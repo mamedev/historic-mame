@@ -73,12 +73,12 @@ WRITE_HANDLER( missile_w )
 	/* $4800 - various IO */
 	if (offset == 0x4800)
 	{
-		flip_screen_w(0, ~data & 0x40);
-		coin_counter_w (0, data & 0x20);
-		coin_counter_w (1, data & 0x10);
-		coin_counter_w (2, data & 0x08);
-		osd_led_w (0, ~data >> 1);
-		osd_led_w (1, ~data >> 2);
+		flip_screen_w(0,~data & 0x40);
+		coin_counter_w(0,data & 0x20);
+		coin_counter_w(1,data & 0x10);
+		coin_counter_w(2,data & 0x08);
+		set_led_status(0,~data & 0x02);
+		set_led_status(1,~data & 0x04);
 		ctrld = data & 1;
 		return;
 	}

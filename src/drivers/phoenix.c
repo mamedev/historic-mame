@@ -333,7 +333,7 @@ static struct CustomSound_interface pleiads_custom_interface =
 
 #define MACHINE_DRIVER(GAMENAME)									\
 																	\
-static struct MachineDriver machine_driver_##GAMENAME = 			\
+static const struct MachineDriver machine_driver_##GAMENAME = 			\
 {																	\
 	/* basic machine hardware */									\
 	{																\

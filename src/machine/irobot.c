@@ -191,8 +191,8 @@ WRITE_HANDLER( irobot_rom_banksel_w )
 			cpu_setbank(1, &RAM[0x1A000]);
 			break;
 	}
-	osd_led_w(0,data & 0x10);
-	osd_led_w(1,data & 0x20);
+	set_led_status(0,data & 0x10);
+	set_led_status(1,data & 0x20);
 }
 
 static void scanline_callback(int scanline)

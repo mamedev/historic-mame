@@ -569,29 +569,6 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 
 
-static int leds=0;
-static const int led_flags[3] = {
-  KB_NUMLOCK_FLAG,
-  KB_CAPSLOCK_FLAG,
-  KB_SCROLOCK_FLAG
-};
-void osd_led_w(int led,int on) {
-  int temp=leds;
-  if (led<3) {
-    if (on&1)
-	temp |=  led_flags[led];
-    else
-	temp &= ~led_flags[led];
-    if (temp!=leds) {
-	leds=temp;
-	set_leds (leds);
-    }
-  }
-}
-
-
-
-
 
 void msdos_init_input (void)
 {

@@ -229,10 +229,10 @@ WRITE_HANDLER( victory_main_ack_w )
 
 static WRITE_HANDLER( lamp_control_w )
 {
-	osd_led_w(0, (data >> 7) & 1);
-	osd_led_w(1, (data >> 6) & 1);
-	osd_led_w(2, (data >> 5) & 1);
-	osd_led_w(3, (data >> 4) & 1);
+	set_led_status(0,data & 0x80);
+	set_led_status(1,data & 0x40);
+	set_led_status(2,data & 0x20);
+	set_led_status(3,data & 0x10);
 }
 
 
@@ -428,7 +428,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_victory =
+static const struct MachineDriver machine_driver_victory =
 {
 	/* basic machine hardware */
 	{

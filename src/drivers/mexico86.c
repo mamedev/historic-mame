@@ -359,7 +359,7 @@ static struct YM2203interface ym2203_interface =
 
 
 #define MACHINEDRIVER(NAME) 														\
-static struct MachineDriver machine_driver_##NAME = 								\
+static const struct MachineDriver machine_driver_##NAME = 								\
 {																					\
 	{																				\
 		{																			\

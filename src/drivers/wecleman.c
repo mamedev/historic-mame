@@ -1342,7 +1342,7 @@ void wecleman_init_machine(void)
 }
 
 
-static struct MachineDriver machine_driver_wecleman =
+static const struct MachineDriver machine_driver_wecleman =
 {
 	{
 		{
@@ -1410,7 +1410,7 @@ void hotchase_init_machine(void)		{						}
 int  hotchase_interrupt( void )			{return 4;				}
 int  hotchase_sound_interrupt(void)		{return M6809_INT_FIRQ;	}
 
-static struct MachineDriver machine_driver_hotchase =
+static const struct MachineDriver machine_driver_hotchase =
 {
 	{
 		{

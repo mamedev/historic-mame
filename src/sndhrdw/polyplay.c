@@ -18,8 +18,6 @@
 static int freq1, freq2, channellfo, channel_playing1, channel_playing2;
 int lfovol[2] = {LFO_VOLUME,LFO_VOLUME};
 
-const double pi = 3.14159265359;
-
 static INT16 backgroundwave[SAMPLE_LENGTH];
 
 int polyplay_sh_start(const struct MachineSound *msound)

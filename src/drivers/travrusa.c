@@ -267,7 +267,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver machine_driver_travrusa =
+static const struct MachineDriver machine_driver_travrusa =
 {
 	/* basic machine hardware */
 	{

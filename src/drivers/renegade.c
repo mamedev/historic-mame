@@ -634,13 +634,12 @@ static struct ADPCMinterface adpcm_interface =
 	1,			/* 1 channel */
 	8000,		/* 8000Hz playback */
 	REGION_SOUND1,	/* memory region */
-	0,			/* init function */
 	{ 100 }		/* volume */
 };
 
 
 
-static struct MachineDriver machine_driver_renegade =
+static const struct MachineDriver machine_driver_renegade =
 {
 	{
 		{

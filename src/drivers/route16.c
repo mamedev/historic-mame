@@ -260,7 +260,7 @@ static struct DACinterface dac_interface =
 
 #define MACHINE_DRIVER(GAMENAME, AUDIO_INTERFACES)   		\
 															\
-static struct MachineDriver machine_driver_##GAMENAME =		\
+static const struct MachineDriver machine_driver_##GAMENAME =		\
 {															\
 	/* basic machine hardware */							\
 	{														\

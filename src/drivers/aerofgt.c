@@ -1080,7 +1080,7 @@ static struct YM2610interface ym2610_interface =
 
 
 
-static struct MachineDriver machine_driver_pspikes =
+static const struct MachineDriver machine_driver_pspikes =
 {
 	/* basic machine hardware */
 	{
@@ -1124,7 +1124,7 @@ static struct MachineDriver machine_driver_pspikes =
 	}
 };
 
-static struct MachineDriver machine_driver_karatblz =
+static const struct MachineDriver machine_driver_karatblz =
 {
 	/* basic machine hardware */
 	{
@@ -1168,7 +1168,7 @@ static struct MachineDriver machine_driver_karatblz =
 	}
 };
 
-static struct MachineDriver machine_driver_spinlbrk =
+static const struct MachineDriver machine_driver_spinlbrk =
 {
 	/* basic machine hardware */
 	{
@@ -1212,7 +1212,7 @@ static struct MachineDriver machine_driver_spinlbrk =
 	}
 };
 
-static struct MachineDriver machine_driver_turbofrc =
+static const struct MachineDriver machine_driver_turbofrc =
 {
 	/* basic machine hardware */
 	{
@@ -1256,7 +1256,7 @@ static struct MachineDriver machine_driver_turbofrc =
 	}
 };
 
-static struct MachineDriver machine_driver_aerofgtb =
+static const struct MachineDriver machine_driver_aerofgtb =
 {
 	/* basic machine hardware */
 	{
@@ -1301,7 +1301,7 @@ static struct MachineDriver machine_driver_aerofgtb =
 	}
 };
 
-static struct MachineDriver machine_driver_aerofgt =
+static const struct MachineDriver machine_driver_aerofgt =
 {
 	/* basic machine hardware */
 	{

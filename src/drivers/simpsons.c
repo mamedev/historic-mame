@@ -276,7 +276,7 @@ static int simpsons_irq(void)
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (simpsons_firq_enabled && K053247_is_IRQ_enabled())
+		if (simpsons_firq_enabled && K053246_is_IRQ_enabled())
 			return KONAMI_INT_FIRQ;
 	}
 	else
@@ -288,7 +288,7 @@ static int simpsons_irq(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver_simpsons =
+static const struct MachineDriver machine_driver_simpsons =
 {
 	/* basic machine hardware */
 	{

@@ -41,8 +41,8 @@ WRITE_HANDLER( soccer_out1_w )
 	/* bit 5-6 = trackball CTRL bits */
 	/* bit 7 = Rule LED */
 	CTRLD = data;
-	osd_led_w (0, (data & 0x10) >> 4);
-	osd_led_w (1, (data & 0x80) >> 7);
+	set_led_status(0,data & 0x10);
+	set_led_status(1,data & 0x80);
 }
 
 

@@ -249,7 +249,7 @@ struct VLM5030interface sbasketb_vlm5030_interface =
 };
 
 
-static struct MachineDriver machine_driver_sbasketb =
+static const struct MachineDriver machine_driver_sbasketb =
 {
 	/* basic machine hardware */
 	{

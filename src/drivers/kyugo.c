@@ -592,7 +592,7 @@ static struct AY8910interface ay8910_interface =
 ***************************************************************************/
 
 #define Machine_Driver( name ) \
-static struct MachineDriver machine_driver_##name =											\
+static const struct MachineDriver machine_driver_##name =											\
 {																							\
 	{																						\
 		{																					\

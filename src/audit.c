@@ -281,11 +281,17 @@ int AuditSampleSet (int game, tMissingSample **audit)
 
 	gamedrv = drivers[game];
 	samplenames = NULL;
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
 	for( j = 0; gamedrv->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
 	{
+#if (HAS_SAMPLES)
 		if( gamedrv->drv->sound[j].sound_type == SOUND_SAMPLES )
 			samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[j].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+		if( gamedrv->drv->sound[j].sound_type == SOUND_VLM5030 )
+			samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[j].sound_interface)->samplenames;
+#endif
 	}
 #endif
     /* does the game use samples at all? */

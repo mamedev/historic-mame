@@ -3,13 +3,13 @@
 Custom blitter GA9201 KA01-0249 (120pin IC)
 
 
-This is a simple tile-based blitter that writes to a frame buffer. The buffer
-is never cleared, so stuff drawn is left over from frame to frame until it is
+This is a tile-based blitter that writes to a frame buffer. The buffer is
+never cleared, so stuff drawn is left over from frame to frame until it is
 overwritten.
 
 Tiles are stored in ROM and have a fixed 16x16 size. The blitter can draw them
-as single sprites (composed of one or more tiles), or as larger sprites whose
-tile codes are picked from a tilemap in RAM.
+as single sprites (composed of one or more tiles in the horizontal direction),
+or as larger sprites whose tile codes are picked from a tilemap in RAM.
 
 Sprites can be zoomed, distorted and rotated.
 
@@ -36,8 +36,8 @@ Word | Bit(s)           | Use
   0  | ---------------- | unused?
   1  | xxxx------------ | high bits of tile #; for tilemaps, this is applied to all tiles
   1  | ----xxxxxxxxxxxx | low bits of tile #; probably unused for tilemaps
-  2  | xxxxxxxxxxxxxxxx | x coordinate*0x10 of destination top left corner
-  3  | xxxxxxxxxxxxxxxx | y coordinate*0x10 of destination top left corner
+  2  | ---xxxxxxxxx---- | x coordinate of destination top left corner
+  3  | ---xxxxxxxxx---- | y coordinate of destination top left corner
   4  | ------------x--- | 0 = use code as-is  1 = fetch codes from tilemap RAM
   4  | -------------x-- | 1 = draw "compressed" tilemap, as if tiles were 8x8 instead of 16x16
   4  | --------------x- | flip y
@@ -158,10 +158,10 @@ WRITE_HANDLER( shangha3_blitter_go_w )
 		color = READ_WORD(&shangha3_ram[offs+10]) & 0x7f;
 		flipx = READ_WORD(&shangha3_ram[offs+8]) & 0x01;
 		flipy = READ_WORD(&shangha3_ram[offs+8]) & 0x02;
-		sx = READ_WORD(&shangha3_ram[offs+4]) / 16;
-		if (sx > 0x800) sx -= 0x1000;
-		sy = READ_WORD(&shangha3_ram[offs+6]) / 16;
-		if (sy > 0x800) sy -= 0x1000;
+		sx = (READ_WORD(&shangha3_ram[offs+4]) & 0x1ff0) >> 4;
+		if (sx >= 0x180) sx -= 0x200;
+		sy = (READ_WORD(&shangha3_ram[offs+6]) & 0x1ff0) >> 4;
+		if (sy >= 0x100) sy -= 0x200;
 		sizex = READ_WORD(&shangha3_ram[offs+12]);
 		sizey = READ_WORD(&shangha3_ram[offs+14]);
 		zoomx = READ_WORD(&shangha3_ram[offs+20]);

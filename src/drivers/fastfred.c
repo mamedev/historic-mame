@@ -450,7 +450,7 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver_fastfred =
+static const struct MachineDriver machine_driver_fastfred =
 {
 	/* basic machine hardware */
 	{
@@ -493,7 +493,7 @@ static struct MachineDriver machine_driver_fastfred =
 	}
 };
 
-static struct MachineDriver machine_driver_jumpcoas =
+static const struct MachineDriver machine_driver_jumpcoas =
 {
 	/* basic machine hardware */
 	{

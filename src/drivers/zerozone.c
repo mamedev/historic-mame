@@ -205,7 +205,7 @@ static struct OKIM6295interface okim6295_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_zerozone =
+static const struct MachineDriver machine_driver_zerozone =
 {
 	{
 		{

@@ -213,6 +213,7 @@ WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w );	/* uses paletteram_2[] */
 WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w );	/* uses paletteram[] */
 WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w );	/* uses paletteram_2[] */
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w );
+WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w );
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w );	/* uses paletteram[] */

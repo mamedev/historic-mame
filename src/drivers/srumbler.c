@@ -21,6 +21,7 @@ WRITE_HANDLER( srumbler_4009_w );
 
 int  srumbler_vh_start(void);
 void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void srumbler_eof_callback(void);
 
 
 
@@ -219,9 +220,9 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	1024,   /* 1024 characters */
-	2,      /* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0,8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
@@ -230,10 +231,10 @@ static struct GfxLayout charlayout =
 
 static struct GfxLayout tilelayout =
 {
-	16,16,  /* 16*16 tiles */
-	2048,   /* 2048  tiles */
-	4,      /* 4 bits per pixel */
-	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -243,15 +244,15 @@ static struct GfxLayout tilelayout =
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	2048,   /* 2048 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0x30000*8, 0x20000*8, 0x10000*8, 0   },
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			2*64+0, 2*64+1, 2*64+2, 2*64+3, 2*64+4, 2*64+5, 2*64+6, 2*64+7, 2*64+8 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8    /* every sprite takes 32*8 consecutive bytes */
+	32*8
 };
 
 
@@ -277,7 +278,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_srumbler =
+static const struct MachineDriver machine_driver_srumbler =
 {
 	/* basic machine hardware */
 	{
@@ -294,8 +295,7 @@ static struct MachineDriver machine_driver_srumbler =
 			interrupt,4
 		}
 	},
-	60, 2500,       /* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	srumbler_init_machine,
 
@@ -306,8 +306,8 @@ static struct MachineDriver machine_driver_srumbler =
 	512, 512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	srumbler_eof_callback,
 	srumbler_vh_start,
 	0,
 	srumbler_vh_screenrefresh,

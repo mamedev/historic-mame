@@ -329,7 +329,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver machine_driver_madmotor =
+static const struct MachineDriver machine_driver_madmotor =
 {
 	/* basic machine hardware */
 	{

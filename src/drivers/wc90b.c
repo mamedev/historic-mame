@@ -380,7 +380,7 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver machine_driver_wc90b =
+static const struct MachineDriver machine_driver_wc90b =
 {
 	/* basic machine hardware */
 	{

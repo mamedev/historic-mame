@@ -351,7 +351,7 @@ static int olibochu_interrupt(void)
 		return 0xd7;	/* RST 10h */
 }
 
-static struct MachineDriver machine_driver_olibochu =
+static const struct MachineDriver machine_driver_olibochu =
 {
 	/* basic machine hardware */
 	{

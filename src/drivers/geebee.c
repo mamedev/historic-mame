@@ -447,7 +447,7 @@ static struct CustomSound_interface custom_interface =
 	geebee_sh_update
 };
 
-static struct MachineDriver machine_driver_geebee =
+static const struct MachineDriver machine_driver_geebee =
 {
 	/* basic machine hardware */
 	{
@@ -485,7 +485,7 @@ static struct MachineDriver machine_driver_geebee =
 };
 
 
-static struct MachineDriver machine_driver_navalone =
+static const struct MachineDriver machine_driver_navalone =
 {
 	/* basic machine hardware */
 	{
@@ -524,7 +524,7 @@ static struct MachineDriver machine_driver_navalone =
 
 
 
-static struct MachineDriver machine_driver_kaitei =
+static const struct MachineDriver machine_driver_kaitei =
 {
 	/* basic machine hardware */
 	{
@@ -561,7 +561,7 @@ static struct MachineDriver machine_driver_kaitei =
     }
 };
 
-static struct MachineDriver machine_driver_sos =
+static const struct MachineDriver machine_driver_sos =
 {
 	/* basic machine hardware */
 	{

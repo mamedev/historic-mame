@@ -50,7 +50,7 @@ WRITE_HANDLER( qwakprot_paletteram_w );
 
 static WRITE_HANDLER( qwakprot_led_w )
 {
-	osd_led_w(offset,~data >> 7);
+	set_led_status(offset,~data & 0x80);
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -207,7 +207,7 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static struct MachineDriver machine_driver_qwakprot =
+static const struct MachineDriver machine_driver_qwakprot =
 {
 	/* basic machine hardware */
 	{

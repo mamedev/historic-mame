@@ -1031,7 +1031,7 @@ WRITE_HANDLER( williams_dcs_bank_select_w )
 
 	/* bit 11 = sound board led */
 #if 0
-	osd_led_w( 2, ( data & 0x800 ) ? 1 : 0 );
+	set_led_status(2,data & 0x800);
 #endif
 
 #if (!DISABLE_DCS_SPEEDUP)

@@ -712,7 +712,7 @@ static struct YM2203interface tokio_ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_bublbobl =
+static const struct MachineDriver machine_driver_bublbobl =
 {
 	/* basic machine hardware */
 	{
@@ -774,7 +774,7 @@ static struct MachineDriver machine_driver_bublbobl =
 	}
 };
 
-static struct MachineDriver machine_driver_boblbobl =
+static const struct MachineDriver machine_driver_boblbobl =
 {
 	/* basic machine hardware */
 	{
@@ -829,7 +829,7 @@ static struct MachineDriver machine_driver_boblbobl =
 	}
 };
 
-static struct MachineDriver machine_driver_tokio =
+static const struct MachineDriver machine_driver_tokio =
 {
 	/* basic machine hardware */
 	{

@@ -7,6 +7,10 @@
   Thanks to Ishmair for providing information about the screen
   layout on level 3.
 
+Notes:
+- sprites/tile priority is a guess. I didn't find a PROM that would simply
+  translate to the scheme I implemented.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -14,29 +18,23 @@
 #include "cpu/z80/z80.h"
 
 
+extern unsigned char *blktiger_txvideoram;
 
-extern unsigned char *blktiger_backgroundram;
-extern unsigned char *blktiger_backgroundattribram;
-extern size_t blktiger_backgroundram_size;
-extern unsigned char *blktiger_palette_bank;
-extern unsigned char *blktiger_screen_layout;
-
-WRITE_HANDLER( blktiger_palette_bank_w );
 WRITE_HANDLER( blktiger_screen_layout_w );
 
-READ_HANDLER( blktiger_background_r );
-WRITE_HANDLER( blktiger_background_w );
+READ_HANDLER( blktiger_bgvideoram_r );
+WRITE_HANDLER( blktiger_bgvideoram_w );
+WRITE_HANDLER( blktiger_txvideoram_w );
 WRITE_HANDLER( blktiger_video_control_w );
 WRITE_HANDLER( blktiger_video_enable_w );
-WRITE_HANDLER( blktiger_scrollbank_w );
+WRITE_HANDLER( blktiger_bgvideoram_bank_w );
 WRITE_HANDLER( blktiger_scrollx_w );
 WRITE_HANDLER( blktiger_scrolly_w );
-
-int blktiger_interrupt(void);
 
 int blktiger_vh_start(void);
 void blktiger_vh_stop(void);
 void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blktiger_eof_callback(void);
 
 
 
@@ -52,11 +50,17 @@ static READ_HANDLER( blktiger_protection_r )
 static WRITE_HANDLER( blktiger_bankswitch_w )
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-	cpu_setbank(1,&RAM[bankaddress]);
+	cpu_setbank(1,&rom[bankaddress]);
+}
+
+static WRITE_HANDLER( blktiger_coinlockout_w )
+{
+	coin_lockout_w(0,~data & 0x01);
+	coin_lockout_w(1,~data & 0x02);
 }
 
 
@@ -65,7 +69,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcfff, blktiger_background_r },
+	{ 0xc000, 0xcfff, blktiger_bgvideoram_r },
 	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -73,9 +77,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, blktiger_background_w, &blktiger_backgroundram, &blktiger_backgroundram_size },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xc000, 0xcfff, blktiger_bgvideoram_w },
+	{ 0xd000, 0xd7ff, blktiger_txvideoram_w, &blktiger_txvideoram },
 	{ 0xd800, 0xdbff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
 	{ 0xdc00, 0xdfff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xe000, 0xfdff, MWA_RAM },
@@ -91,7 +94,7 @@ static struct IOReadPort readport[] =
 	{ 0x03, 0x03, input_port_3_r },
 	{ 0x04, 0x04, input_port_4_r },
 	{ 0x05, 0x05, input_port_5_r },
-	{ 0x07, 0x07, blktiger_protection_r },        /*DPS 980118*/
+	{ 0x07, 0x07, blktiger_protection_r },
 	{ -1 }	/* end of table */
 };
 
@@ -99,20 +102,17 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, soundlatch_w },
 	{ 0x01, 0x01, blktiger_bankswitch_w },
+	{ 0x03, 0x03, blktiger_coinlockout_w },
 	{ 0x04, 0x04, blktiger_video_control_w },
 	{ 0x06, 0x06, watchdog_reset_w },
 	{ 0x07, 0x07, IOWP_NOP }, /* Software protection (7) */
 	{ 0x08, 0x09, blktiger_scrollx_w },
 	{ 0x0a, 0x0b, blktiger_scrolly_w },
 	{ 0x0c, 0x0c, blktiger_video_enable_w },
-	{ 0x0d, 0x0d, blktiger_scrollbank_w },   /* Scroll ram bank register */
-	{ 0x0e, 0x0e, blktiger_screen_layout_w },/* Video scrolling layout */
-#if 0
-	{ 0x03, 0x03, IOWP_NOP }, /* Unknown port 3 */
-#endif
+	{ 0x0d, 0x0d, blktiger_bgvideoram_bank_w },
+	{ 0x0e, 0x0e, blktiger_screen_layout_w },
 	{ -1 }	/* end of table */
 };
-
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -147,15 +147,15 @@ INPUT_PORTS_START( blktiger )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -163,9 +163,9 @@ INPUT_PORTS_START( blktiger )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -226,35 +226,37 @@ INPUT_PORTS_START( blktiger )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	2048,   /* 2048 characters */
-	2,	/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	2048,   /* 2048 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-	32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
+			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	32*16
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   768, 32 },	/* colors 768 - 895 */
-	{ REGION_GFX2, 0, &spritelayout,   0, 16 },	/* colors 0 - 255 */
-	{ REGION_GFX3, 0, &spritelayout, 512,  8 },	/* colors 512 - 639 */
+	{ REGION_GFX1, 0, &charlayout,   0x300, 32 },	/* colors 0x300-0x37f */
+	{ REGION_GFX2, 0, &spritelayout, 0x000, 16 },	/* colors 0x000-0x0ff */
+	{ REGION_GFX3, 0, &spritelayout, 0x200,  8 },	/* colors 0x200-0x27f */
 	{ -1 } /* end of array */
 };
 
@@ -280,7 +282,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_blktiger =
+static const struct MachineDriver machine_driver_blktiger =
 {
 	/* basic machine hardware */
 	{
@@ -297,7 +299,7 @@ static struct MachineDriver machine_driver_blktiger =
 			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
 		}
 	},
-	60, 1500,	/* frames per second, vblank duration - hand tuned to get rid of sprite lag */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -307,8 +309,8 @@ static struct MachineDriver machine_driver_blktiger =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	blktiger_eof_callback,
 	blktiger_vh_start,
 	blktiger_vh_stop,
 	blktiger_vh_screenrefresh,
@@ -464,7 +466,7 @@ ROM_END
 
 
 
-GAMEX( 1987, blktiger, 0,        blktiger, blktiger, 0, ROT0, "Capcom", "Black Tiger", GAME_NO_COCKTAIL )
-GAMEX( 1987, bktigerb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Tiger (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1987, blkdrgon, blktiger, blktiger, blktiger, 0, ROT0, "Capcom", "Black Dragon", GAME_NO_COCKTAIL )
-GAMEX( 1987, blkdrgnb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Dragon (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1987, blktiger, 0,        blktiger, blktiger, 0, ROT0, "Capcom", "Black Tiger" )
+GAME( 1987, bktigerb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Tiger (bootleg)" )
+GAME( 1987, blkdrgon, blktiger, blktiger, blktiger, 0, ROT0, "Capcom", "Black Dragon" )
+GAME( 1987, blkdrgnb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Dragon (bootleg)" )

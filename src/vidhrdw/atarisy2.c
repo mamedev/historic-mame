@@ -196,11 +196,6 @@ WRITE_HANDLER( atarisys2_hscroll_w )
 	pf_state.hscroll = (newword >> 6) & 0x03ff;
 	pf_state.param[0] = newword & 0x000f;
 	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
-
-	/* mark the playfield dirty for those games that handle it */
-	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
-		osd_mark_dirty(Machine->visible_area.min_x, Machine->visible_area.min_y,
-		                Machine->visible_area.max_x, Machine->visible_area.max_y, 0);
 }
 
 
@@ -217,11 +212,6 @@ WRITE_HANDLER( atarisys2_vscroll_w )
 	/* update the playfield parameters */
 	pf_state.param[1] = newword & 0x000f;
 	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
-
-	/* mark the playfield dirty for those games that handle it */
-	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
-		osd_mark_dirty(Machine->visible_area.min_x, Machine->visible_area.min_y,
-		                Machine->visible_area.max_x, Machine->visible_area.max_y, 0);
 }
 
 

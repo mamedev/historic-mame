@@ -60,7 +60,7 @@
  *       and do not put a closing curly brace at column 1 unless it is
  *       marking the end of the handler!
  *
- * Inside the handler, m68kmake will recognize M68KMAKE_GET_OPER_xx_xx, 
+ * Inside the handler, m68kmake will recognize M68KMAKE_GET_OPER_xx_xx,
  * M68KMAKE_GET_EA_xx_xx, and M68KMAKE_CC directives, and create multiple
  * opcode handlers to handle variations in the opcode handler.
  * Note: M68KMAKE_CC will only be interpreted in condition code opcodes.
@@ -518,7 +518,7 @@ cpscc        32  _     1111...001......  ..........    _   _   4  unemulated
 cptrapcc     32  _     1111...001111...  ..........    _   _   4  unemulated
 dbt          16  _     0101000011001...  ..........   12  12   6
 dbf          16  _     0101000111001...  ..........   14  14   6
-dbcc         16  _     0101....11001...  ..........   10  10   6
+dbcc         16  _     0101....11001...  ..........   12  12   6
 divs         16  d     1000...111000...  ..........  158 122  56
 divs         16  _     1000...111......  A+-DXWLdxI  158 122  56
 divu         16  d     1000...011000...  ..........  140 108  44
@@ -671,7 +671,7 @@ moves        16  _     0000111001......  A+-DXWL...    _  14   5
 moves        32  _     0000111010......  A+-DXWL...    _  16   5
 muls         16  d     1100...111000...  ..........   54  32  27
 muls         16  _     1100...111......  A+-DXWLdxI   54  32  27
-mulu         16  d     1100...011000...  ..........   54  30  27 
+mulu         16  d     1100...011000...  ..........   54  30  27
 mulu         16  _     1100...011......  A+-DXWLdxI   54  30  27
 mull         32  d     0100110000000...  ..........    _   _  43
 mull         32  _     0100110000......  A+-DXWLdxI    _   _  43
@@ -4442,7 +4442,7 @@ M68KMAKE_OP(divl, 32, d)
 						quotient++;
 					}
 				}
-	
+
 				if(BIT_B(word2))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
@@ -4653,7 +4653,7 @@ M68KMAKE_OP(divl, 32, _)
 						quotient++;
 					}
 				}
-	
+
 				if(BIT_B(word2))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)

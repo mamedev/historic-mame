@@ -11,11 +11,9 @@
 
 
 
-unsigned char *commando_bgvideoram,*commando_bgcolorram;
-size_t commando_bgvideoram_size;
-unsigned char *commando_scrollx,*commando_scrolly;
-static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
+unsigned char *commando_fgvideoram,*commando_bgvideoram;
+
+static struct tilemap *fg_tilemap, *bg_tilemap;
 
 
 
@@ -32,6 +30,7 @@ static struct osd_bitmap *tmpbitmap2;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
+
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -61,90 +60,87 @@ void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = commando_fgvideoram[tile_index];
+	color = commando_fgvideoram[tile_index + 0x400];
+	SET_TILE_INFO(0, code + ((color & 0xc0) << 2), color & 0x0f);
+	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = commando_bgvideoram[tile_index];
+	color = commando_bgvideoram[tile_index + 0x400];
+	SET_TILE_INFO(1, code + ((color & 0xc0) << 2), color & 0x0f);
+	tile_info.flags = TILE_FLIPYX((color & 0x30) >> 4);
+}
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int commando_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
+
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(commando_bgvideoram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-	memset(dirtybuffer2,1,commando_bgvideoram_size);
-
-	/* the background area is twice as tall and twice as large as the screen */
-	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
+	fg_tilemap->transparent_pen = 3;
 
 	return 0;
 }
 
 
-
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void commando_vh_stop(void)
+
+WRITE_HANDLER( commando_fgvideoram_w )
 {
-	bitmap_free(tmpbitmap2);
-	free(dirtybuffer2);
-	generic_vh_stop();
+	commando_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
-
-
 
 WRITE_HANDLER( commando_bgvideoram_w )
 {
-	if (commando_bgvideoram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		commando_bgvideoram[offset] = data;
-	}
+	commando_bgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 
-
-WRITE_HANDLER( commando_bgcolorram_w )
+WRITE_HANDLER( commando_scrollx_w )
 {
-	if (commando_bgcolorram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
+	static unsigned char scroll[2];
 
-		commando_bgcolorram[offset] = data;
-	}
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
-
-
-WRITE_HANDLER( commando_spriteram_w )
+WRITE_HANDLER( commando_scrolly_w )
 {
-	if (data != spriteram[offset] && offset % 4 == 2)
-		logerror("%04x: sprite %d X offset (old = %d new = %d) scanline %d\n",
-				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
-	if (data != spriteram[offset] && offset % 4 == 3)
-		logerror("%04x: sprite %d Y offset (old = %d new = %d) scanline %d\n",
-				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
-	if (data != spriteram[offset] && offset % 4 == 0)
-		logerror("%04x: sprite %d code (old = %d new = %d) scanline %d\n",
-				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+	static unsigned char scroll[2];
 
-	spriteram[offset] = data;
+	scroll[offset] = data;
+	tilemap_set_scrolly(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
-
 
 
 WRITE_HANDLER( commando_c804_w )
@@ -153,7 +149,8 @@ WRITE_HANDLER( commando_c804_w )
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
-	/* bit 4 resets the sound CPU - we ignore it */
+	/* bit 4 resets the sound CPU */
+	cpu_set_reset_line(1,(data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 7 flips screen */
 	flip_screen_w(offset, ~data & 0x80);
@@ -163,84 +160,26 @@ WRITE_HANDLER( commando_c804_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-
-	if (full_refresh)
-	{
-		memset(dirtybuffer2,1,commando_bgvideoram_size);
-	}
-
-
-	for (offs = commando_bgvideoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer2[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs / 32;
-			sy = offs % 32;
-			flipx = commando_bgcolorram[offs] & 0x10;
-			flipy = commando_bgcolorram[offs] & 0x20;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					commando_bgvideoram[offs] + 4*(commando_bgcolorram[offs] & 0xc0),
-					commando_bgcolorram[offs] & 0x0f,
-					flipx,flipy,
-					16 * sx,16 * sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the background graphics */
-	{
-		int scrollx,scrolly;
-
-
-		scrollx = -(commando_scrolly[0] + 256 * commando_scrolly[1]);
-		scrolly = -(commando_scrollx[0] + 256 * commando_scrollx[1]);
-		if (flip_screen)
-		{
-			scrollx = 256 - scrollx;
-			scrolly = 256 - scrolly;
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,flipx,flipy,bank;
+		int sx,sy,flipx,flipy,bank,attr;
 
 
-		/* bit 1 of [offs+1] is not used */
-
-		sx = spriteram[offs + 3] - 0x100 * (spriteram[offs + 1] & 0x01);
-		sy = spriteram[offs + 2];
-		flipx = spriteram[offs + 1] & 0x04;
-		flipy = spriteram[offs + 1] & 0x08;
-		bank = (spriteram[offs + 1] & 0xc0) >> 6;
+		/* bit 1 of attr is not used */
+		attr = buffered_spriteram[offs + 1];
+		sx = buffered_spriteram[offs + 3] - ((attr & 0x01) << 8);
+		sy = buffered_spriteram[offs + 2];
+		flipx = attr & 0x04;
+		flipy = attr & 0x08;
+		bank = (attr & 0xc0) >> 6;
 
 		if (flip_screen)
 		{
@@ -252,38 +191,25 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (bank < 3)
 			drawgfx(bitmap,Machine->gfx[2],
-					spriteram[offs] + 256 * bank,
-					(spriteram[offs + 1] & 0x30) >> 4,
+					buffered_spriteram[offs] + 256 * bank,
+					(attr & 0x30) >> 4,
 					flipx,flipy,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
+}
 
+void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy,flipx,flipy;
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,fg_tilemap,0);
+}
 
-
-		sx = offs % 32;
-		sy = offs / 32;
-		flipx = colorram[offs] & 0x10;
-		flipy = colorram[offs] & 0x20;
-
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-			flipx = !flipx;
-			flipy = !flipy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + 4 * (colorram[offs] & 0xc0),
-				colorram[offs] & 0x0f,
-				flipx,flipy,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
-	}
+void commando_eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
 }

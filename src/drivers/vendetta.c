@@ -347,7 +347,7 @@ static int vendetta_irq( void )
 		return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver_vendetta =
+static const struct MachineDriver machine_driver_vendetta =
 {
 	/* basic machine hardware */
 	{

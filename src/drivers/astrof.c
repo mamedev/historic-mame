@@ -214,7 +214,7 @@ INPUT_PORTS_END
 
 
 #define MACHINE_DRIVER(GAMENAME, NUMCOLORS) 								   \
-static struct MachineDriver machine_driver_##GAMENAME =						   \
+static const struct MachineDriver machine_driver_##GAMENAME =						   \
 {																			   \
 	/* basic machine hardware */											   \
 	{																		   \

@@ -650,7 +650,7 @@ static struct DACinterface dac_interface =
 	{ 50, 50, 50 }
 };
 
-static struct MachineDriver machine_driver_atarifb =
+static const struct MachineDriver machine_driver_atarifb =
 {
 	/* basic machine hardware */
 	{
@@ -688,7 +688,7 @@ static struct MachineDriver machine_driver_atarifb =
 	}
 };
 
-static struct MachineDriver machine_driver_atarifb4 =
+static const struct MachineDriver machine_driver_atarifb4 =
 {
 	/* basic machine hardware */
 	{
@@ -726,7 +726,7 @@ static struct MachineDriver machine_driver_atarifb4 =
 	}
 };
 
-static struct MachineDriver machine_driver_soccer =
+static const struct MachineDriver machine_driver_soccer =
 {
 	/* basic machine hardware */
 	{

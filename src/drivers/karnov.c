@@ -574,7 +574,7 @@ static void karnov_reset_init(void)
 	memset(karnov_ram,0,0x4000); /* Chelnov likes ram clear on reset.. */
 }
 
-static struct MachineDriver machine_driver_karnov =
+static const struct MachineDriver machine_driver_karnov =
 {
 	/* basic machine hardware */
 	{
@@ -622,7 +622,7 @@ static struct MachineDriver machine_driver_karnov =
 	}
 };
 
-static struct MachineDriver machine_driver_wndrplnt =
+static const struct MachineDriver machine_driver_wndrplnt =
 {
 	/* basic machine hardware */
 	{

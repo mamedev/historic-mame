@@ -77,8 +77,8 @@ static READ_HANDLER( inputport_r )
 
 static WRITE_HANDLER( baraduke_lamps_w )
 {
-	osd_led_w(0, (data & 0x08) >> 3);
-	osd_led_w(1, (data & 0x10) >> 4);
+	set_led_status(0,data & 0x08);
+	set_led_status(1,data & 0x10);
 }
 
 READ_HANDLER( baraduke_sharedram_r )
@@ -440,7 +440,7 @@ static struct namco_interface namco_interface =
 };
 
 
-static struct MachineDriver machine_driver_baraduke =
+static const struct MachineDriver machine_driver_baraduke =
 {
 	/* basic machine hardware */
 	{
@@ -483,7 +483,7 @@ static struct MachineDriver machine_driver_baraduke =
 	}
 };
 
-static struct MachineDriver machine_driver_metrocrs =
+static const struct MachineDriver machine_driver_metrocrs =
 {
 	/* basic machine hardware */
 	{

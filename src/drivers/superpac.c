@@ -363,7 +363,7 @@ static struct namco_interface namco_interface =
 
 
 
-static struct MachineDriver machine_driver_superpac =
+static const struct MachineDriver machine_driver_superpac =
 {
 	/* basic machine hardware  */
 	{
@@ -391,7 +391,7 @@ static struct MachineDriver machine_driver_superpac =
 	32,	4*(64+64),
 	superpac_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -407,7 +407,7 @@ static struct MachineDriver machine_driver_superpac =
 	}
 };
 
-static struct MachineDriver machine_driver_pacnpal =
+static const struct MachineDriver machine_driver_pacnpal =
 {
 	/* basic machine hardware  */
 	{
@@ -435,7 +435,7 @@ static struct MachineDriver machine_driver_pacnpal =
 	32,	4*(64+64),
 	superpac_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

@@ -1098,7 +1098,7 @@ static struct Samplesinterface cosmicg_samples_interface =
 };
 
 
-static struct MachineDriver machine_driver_panic =
+static const struct MachineDriver machine_driver_panic =
 {
 	/* basic machine hardware */
 	{
@@ -1119,7 +1119,7 @@ static struct MachineDriver machine_driver_panic =
 	16, 8*4,
 	panic_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,
@@ -1139,7 +1139,7 @@ static struct MachineDriver machine_driver_panic =
     }
 };
 
-static struct MachineDriver machine_driver_cosmica =
+static const struct MachineDriver machine_driver_cosmica =
 {
 	/* basic machine hardware */
 	{
@@ -1160,7 +1160,7 @@ static struct MachineDriver machine_driver_cosmica =
 	8, 16*4,
 	cosmica_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,
@@ -1170,7 +1170,7 @@ static struct MachineDriver machine_driver_cosmica =
 	0,0,0,0
 };
 
-static struct MachineDriver machine_driver_cosmicg =
+static const struct MachineDriver machine_driver_cosmicg =
 {
 	/* basic machine hardware */
 	{
@@ -1219,7 +1219,7 @@ static struct MachineDriver machine_driver_cosmicg =
 	}
 };
 
-static struct MachineDriver machine_driver_magspot2 =
+static const struct MachineDriver machine_driver_magspot2 =
 {
 	/* basic machine hardware */
 	{
@@ -1240,7 +1240,7 @@ static struct MachineDriver machine_driver_magspot2 =
 	16, 8*4,
 	magspot2_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,
@@ -1256,7 +1256,7 @@ static struct MachineDriver machine_driver_magspot2 =
 	}
 };
 
-static struct MachineDriver machine_driver_nomnlnd =
+static const struct MachineDriver machine_driver_nomnlnd =
 {
 	/* basic machine hardware */
 	{
@@ -1276,7 +1276,7 @@ static struct MachineDriver machine_driver_nomnlnd =
 	nomnlnd_gfxdecodeinfo,
 	16, 16*4,
 	magspot2_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,

@@ -481,7 +481,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver_kchampvs =
+static const struct MachineDriver machine_driver_kchampvs =
 {
 	/* basic machine hardware */
 	{
@@ -511,7 +511,7 @@ static struct MachineDriver machine_driver_kchampvs =
 	256, /* color table length */
 	kchamp_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	kchampvs_vh_start,
 	generic_vh_stop,
@@ -535,7 +535,7 @@ static struct MachineDriver machine_driver_kchampvs =
 * 1 Player Version  *
 ********************/
 
-static struct MachineDriver machine_driver_kchamp =
+static const struct MachineDriver machine_driver_kchamp =
 {
 	/* basic machine hardware */
 	{
@@ -566,7 +566,7 @@ static struct MachineDriver machine_driver_kchamp =
 	256, /* color table length */
 	kchamp_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	kchamp1p_vh_start,
 	generic_vh_stop,

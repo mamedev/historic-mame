@@ -382,7 +382,7 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_arcadecl =
+static const struct MachineDriver machine_driver_arcadecl =
 {
 	/* basic machine hardware */
 	{
@@ -403,7 +403,7 @@ static struct MachineDriver machine_driver_arcadecl =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	arcadecl_vh_start,
 	arcadecl_vh_stop,

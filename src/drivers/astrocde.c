@@ -62,6 +62,9 @@ OUT:
 
 extern unsigned char *wow_videoram;
 
+extern const char *wow_sample_names[];
+extern const char *gorf_sample_names[];
+
 void astrocde_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 READ_HANDLER( wow_intercept_r );
 WRITE_HANDLER( wow_videoram_w );
@@ -564,10 +567,18 @@ INPUT_PORTS_END
 
 
 
-static struct Samplesinterface samples_interface =
+static struct Samplesinterface wow_samples_interface =
 {
 	8,	/* 8 channels */
-	25	/* volume */
+	25,	/* volume */
+	wow_sample_names
+};
+
+static struct Samplesinterface gorf_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	gorf_sample_names
 };
 
 static struct astrocade_interface astrocade_2chip_interface =
@@ -601,7 +612,7 @@ static struct CustomSound_interface wow_custom_interface =
 
 
 
-static struct MachineDriver machine_driver_seawolf2 =
+static const struct MachineDriver machine_driver_seawolf2 =
 {
 	/* basic machine hardware */
 	{
@@ -632,7 +643,7 @@ static struct MachineDriver machine_driver_seawolf2 =
 	0,0,0,0,
 };
 
-static struct MachineDriver machine_driver_spacezap =
+static const struct MachineDriver machine_driver_spacezap =
 {
 	/* basic machine hardware */
 	{
@@ -669,7 +680,7 @@ static struct MachineDriver machine_driver_spacezap =
 	}
 };
 
-static struct MachineDriver machine_driver_ebases =
+static const struct MachineDriver machine_driver_ebases =
 {
 	/* basic machine hardware */
 	{
@@ -706,7 +717,7 @@ static struct MachineDriver machine_driver_ebases =
 	}
 };
 
-static struct MachineDriver machine_driver_wow =
+static const struct MachineDriver machine_driver_wow =
 {
 	/* basic machine hardware */
 	{
@@ -742,7 +753,7 @@ static struct MachineDriver machine_driver_wow =
 		},
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&wow_samples_interface
 		},
 		{
 			SOUND_CUSTOM,	/* actually plays the samples */
@@ -751,7 +762,7 @@ static struct MachineDriver machine_driver_wow =
  	}
 };
 
-static struct MachineDriver machine_driver_gorf =
+static const struct MachineDriver machine_driver_gorf =
 {
 	/* basic machine hardware */
 	{
@@ -790,7 +801,7 @@ static struct MachineDriver machine_driver_gorf =
 		},
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&gorf_samples_interface
 		},
 		{
 			SOUND_CUSTOM,	/* actually plays the samples */
@@ -799,7 +810,7 @@ static struct MachineDriver machine_driver_gorf =
 	}
 };
 
-static struct MachineDriver machine_driver_robby =
+static const struct MachineDriver machine_driver_robby =
 {
 	/* basic machine hardware */
 	{
@@ -836,7 +847,7 @@ static struct MachineDriver machine_driver_robby =
 	}
 };
 
-static struct MachineDriver machine_driver_profpac =
+static const struct MachineDriver machine_driver_profpac =
 {
 	/* basic machine hardware */
 	{

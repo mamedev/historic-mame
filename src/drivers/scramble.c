@@ -1223,7 +1223,7 @@ static struct AY8910interface triplep_ay8910_interface =
 
 
 #define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART)	\
-static struct MachineDriver machine_driver_##NAME =				\
+static const struct MachineDriver machine_driver_##NAME =				\
 {																\
 	/* basic machine hardware */								\
 	{															\
@@ -1278,7 +1278,7 @@ DRIVER_2CPU(hotshock, mariner,   hotshock, hotshock, pisces);
 
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
-static struct MachineDriver machine_driver_triplep =
+static const struct MachineDriver machine_driver_triplep =
 {
 	/* basic machine hardware */
 	{
@@ -1315,7 +1315,7 @@ static struct MachineDriver machine_driver_triplep =
 	}
 };
 
-static struct MachineDriver machine_driver_mariner =
+static const struct MachineDriver machine_driver_mariner =
 {
 	/* basic machine hardware */
 	{
@@ -1357,7 +1357,7 @@ static struct MachineDriver machine_driver_mariner =
 /*  epoxied in a plastic case labelled Century Playpack   */
 /**********************************************************/
 
-static struct MachineDriver machine_driver_hunchbks =
+static const struct MachineDriver machine_driver_hunchbks =
 {
 	/* basic machine hardware */
 	{

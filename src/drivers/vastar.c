@@ -66,31 +66,35 @@ write:
 
 
 
-extern unsigned char *vastar_bg1colorram2, *vastar_sprite_priority;
-extern unsigned char *vastar_fgvideoram,*vastar_fgcolorram1,*vastar_fgcolorram2;
-extern unsigned char *vastar_bg2videoram,*vastar_bg2colorram1,*vastar_bg2colorram2;
-extern unsigned char *vastar_bg1scroll,*vastar_bg2scroll;
+extern unsigned char *vastar_bg1videoram;
+extern unsigned char *vastar_bg2videoram;
+extern unsigned char *vastar_fgvideoram;
+extern unsigned char *vastar_sprite_priority;
+extern unsigned char *vastar_bg1_scroll;
+extern unsigned char *vastar_bg2_scroll;
 
-WRITE_HANDLER( vastar_bg1colorram2_w );
+WRITE_HANDLER( vastar_bg1videoram_w );
 WRITE_HANDLER( vastar_bg2videoram_w );
-WRITE_HANDLER( vastar_bg2colorram1_w );
-WRITE_HANDLER( vastar_bg2colorram2_w );
+WRITE_HANDLER( vastar_fgvideoram_w );
+READ_HANDLER( vastar_bg1videoram_r );
+READ_HANDLER( vastar_bg2videoram_r );
+WRITE_HANDLER( vastar_bg1_scroll_w );
+WRITE_HANDLER( vastar_bg2_scroll_w );
 void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int vastar_vh_start(void);
-void vastar_vh_stop(void);
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 
 static unsigned char *vastar_sharedram;
 
 
-void vastar_init_machine(void)
+
+static void vastar_init_machine(void)
 {
 	/* we must start with the second CPU halted */
 	cpu_set_reset_line(1,ASSERT_LINE);
 }
 
-WRITE_HANDLER( vastar_hold_cpu2_w )
+static WRITE_HANDLER( vastar_hold_cpu2_w )
 {
 	/* I'm not sure that this works exactly like this */
 	if (data & 1)
@@ -99,12 +103,12 @@ WRITE_HANDLER( vastar_hold_cpu2_w )
 		cpu_set_reset_line(1,ASSERT_LINE);
 }
 
-READ_HANDLER( vastar_sharedram_r )
+static READ_HANDLER( vastar_sharedram_r )
 {
 	return vastar_sharedram[offset];
 }
 
-WRITE_HANDLER( vastar_sharedram_w )
+static WRITE_HANDLER( vastar_sharedram_w )
 {
 	vastar_sharedram[offset] = data;
 }
@@ -114,12 +118,12 @@ WRITE_HANDLER( vastar_sharedram_w )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8800, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x9fff, MRA_RAM },
+	{ 0x8000, 0x8fff, vastar_bg2videoram_r },
+	{ 0x9000, 0x9fff, vastar_bg1videoram_r },
+	{ 0xa000, 0xafff, vastar_bg2videoram_r },	/* mirror address */
+	{ 0xb000, 0xbfff, vastar_bg1videoram_r },	/* mirror address */
 	{ 0xc400, 0xcfff, MRA_RAM },
-	{ 0xe000, 0xe000, MRA_RAM },	/* ?? */
+	{ 0xe000, 0xe000, watchdog_reset_r },
 	{ 0xf000, 0xf0ff, vastar_sharedram_r },
 	{ 0xf100, 0xf7ff, MRA_RAM },
 	{ -1 }	/* end of table */
@@ -128,37 +132,32 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, vastar_bg1colorram2_w, &vastar_bg1colorram2 },
-	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
-	{ 0x8c00, 0x8fff, colorram_w, &colorram },
-	{ 0x9000, 0x93ff, vastar_bg2colorram2_w, &vastar_bg2colorram2 },
-	{ 0x9800, 0x9bff, vastar_bg2videoram_w, &vastar_bg2videoram },
-	{ 0x9c00, 0x9fff, vastar_bg2colorram1_w, &vastar_bg2colorram1 },
+	{ 0x8000, 0x8fff, vastar_bg2videoram_w, &vastar_bg2videoram },
+	{ 0x9000, 0x9fff, vastar_bg1videoram_w, &vastar_bg1videoram },
+	{ 0xa000, 0xafff, vastar_bg2videoram_w },				/* mirror address */
+	{ 0xb000, 0xbfff, vastar_bg1videoram_w },  				/* mirror address */
 	{ 0xc000, 0xc000, MWA_RAM, &vastar_sprite_priority },	/* sprite/BG priority */
-	{ 0xc400, 0xc7ff, MWA_RAM, &vastar_fgcolorram1 },
-	{ 0xc800, 0xcbff, MWA_RAM, &vastar_fgcolorram2 },
-	{ 0xcc00, 0xcfff, MWA_RAM, &vastar_fgvideoram },
-	{ 0xe000, 0xe000, MWA_RAM },	/* ?? */
+	{ 0xc7c0, 0xc7df, vastar_bg1_scroll_w, &vastar_bg1_scroll },
+	{ 0xc7e0, 0xc7ff, vastar_bg2_scroll_w, &vastar_bg2_scroll },
+	{ 0xc400, 0xcfff, vastar_fgvideoram_w, &vastar_fgvideoram },
+	{ 0xe000, 0xe000, watchdog_reset_w },
 	{ 0xf000, 0xf0ff, vastar_sharedram_w, &vastar_sharedram },
 	{ 0xf100, 0xf7ff, MWA_RAM },
 
 	/* in hidden portions of video RAM: */
 	{ 0xc400, 0xc43f, MWA_RAM, &spriteram, &spriteram_size },	/* actually c410-c41f and c430-c43f */
-	{ 0xc7c0, 0xc7df, MWA_RAM, &vastar_bg2scroll },
-	{ 0xc7e0, 0xc7ff, MWA_RAM, &vastar_bg1scroll },
 	{ 0xc800, 0xc83f, MWA_RAM, &spriteram_2 },	/* actually c810-c81f and c830-c83f */
 	{ 0xcc00, 0xcc3f, MWA_RAM, &spriteram_3 },	/* actually cc10-cc1f and cc30-cc3f */
 	{ -1 }	/* end of table */
 };
 
-
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, interrupt_enable_w },
+	{ 0x01, 0x01, flip_screen_w },
 	{ 0x02, 0x02, vastar_hold_cpu2_w },
 	{ -1 }	/* end of table */
 };
-
 
 static struct MemoryReadAddress cpu2_readmem[] =
 {
@@ -279,33 +278,33 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes are packed in one byte */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	2,	/* 2 bits per pixel */
+	16,16,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 static struct GfxLayout spritelayoutdw =
 {
-	16,32,	/* 16*32 sprites */
-	128,	/* 128 sprites */
-	2,	/* 2 bits per pixel */
+	16,32,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
@@ -313,18 +312,7 @@ static struct GfxLayout spritelayoutdw =
 			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8,
 			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
 			96*8, 97*8, 98*8, 99*8, 100*8, 101*8, 102*8, 103*8 },
-	128*8	/* every sprite takes 64 consecutive bytes */
-};
-
-static struct GfxLayout tilelayout =
-{
-	8,8,	/* 8*8 tiles */
-	512,	/* 512 tiles */
-	2,	/* 4 bits per pixel */
-	{ 0, 4 },
-	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every sprite takes 64 consecutive bytes */
+	128*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -332,8 +320,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &charlayout,     0, 64 },
 	{ REGION_GFX2, 0, &spritelayout,   0, 64 },
 	{ REGION_GFX2, 0, &spritelayoutdw, 0, 64 },
-	{ REGION_GFX3, 0, &tilelayout,     0, 64 },
-	{ REGION_GFX4, 0, &tilelayout,     0, 64 },
+	{ REGION_GFX3, 0, &charlayout,     0, 64 },
+	{ REGION_GFX4, 0, &charlayout,     0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -352,7 +340,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_vastar =
+static const struct MachineDriver machine_driver_vastar =
 {
 	/* basic machine hardware */
 	{
@@ -383,7 +371,7 @@ static struct MachineDriver machine_driver_vastar =
 	VIDEO_TYPE_RASTER,
 	0,
 	vastar_vh_start,
-	vastar_vh_stop,
+	0,
 	vastar_vh_screenrefresh,
 
 	/* sound hardware */
@@ -476,5 +464,5 @@ ROM_END
 
 
 
-GAMEX( 1983, vastar,  0,      vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1983, vastar2, vastar, vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 2)", GAME_NO_COCKTAIL )
+GAME( 1983, vastar,  0,      vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 1)" )
+GAME( 1983, vastar2, vastar, vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 2)" )

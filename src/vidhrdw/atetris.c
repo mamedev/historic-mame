@@ -154,7 +154,7 @@ void atetris_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* recalc the palette if necessary */
-	if (palette_recalc ())
+	if (palette_recalc() || full_refresh)
 		memset (dirtybuffer,1,videoram_size);
 
 
@@ -177,13 +177,11 @@ void atetris_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		color = ((videoram[offs + 1] & 0xf0) >> 4);
 
-		drawgfx(tmpbitmap,Machine->gfx[0],
+		drawgfx(bitmap,Machine->gfx[0],
 				charcode,
 				color,
 				0,0,
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

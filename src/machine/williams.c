@@ -70,6 +70,9 @@ static WRITE_HANDLER( defender_io_w );
 /* Stargate-specific code */
 READ_HANDLER( stargate_input_port_0_r );
 
+/* Lotto Fun-specific code */
+static READ_HANDLER( lottofun_input_port_0_r );
+
 /* Turkey Shoot-specific code */
 static READ_HANDLER( tshoot_input_port_0_3_r );
 static WRITE_HANDLER( tshoot_lamp_w );
@@ -156,6 +159,14 @@ struct pia6821_interface stargate_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ stargate_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+/* Special PIA 0 for Lotto Fun, to handle the controls and ticket dispenser */
+struct pia6821_interface lottofun_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ lottofun_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, ticket_dispenser_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
@@ -314,6 +325,9 @@ void williams_init_machine(void)
 {
 	/* reset the PIAs */
 	pia_reset();
+
+	/* reset the ticket dispenser (Lotto Fun) */
+	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 
 	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
 	timer_set(cpu_getscanlinetime(0), 0, williams_va11_callback);
@@ -818,6 +832,20 @@ WRITE_HANDLER( blaster_bank_select_w )
 
 /*************************************
  *
+ *	Lotto Fun-specific routines
+ *
+ *************************************/
+
+static READ_HANDLER( lottofun_input_port_0_r )
+{
+	/* merge in the ticket dispenser status */
+	return input_port_0_r(offset) | ticket_dispenser_r(offset);
+}
+
+
+
+/*************************************
+ *
  *	Turkey Shoot-specific routines
  *
  *************************************/
@@ -841,16 +869,10 @@ static WRITE_HANDLER( tshoot_maxvol_w )
 static WRITE_HANDLER( tshoot_lamp_w )
 {
 	/* set the grenade lamp */
-	if (data & 0x04)
-		osd_led_w(0, 1);
-	else
-		osd_led_w(0, 0);
+	set_led_status(0,data & 0x04);
 
 	/* set the gun lamp */
-	if (data & 0x08)
-		osd_led_w(1, 1);
-	else
-		osd_led_w(1, 0);
+	set_led_status(1,data & 0x08);
 
 #if 0
 	/* gun coil */

@@ -957,7 +957,7 @@ static struct GfxDecodeInfo zwackery_gfxdecodeinfo[] =
 
 =================================================================*/
 
-static struct MachineDriver machine_driver_zwackery =
+static const struct MachineDriver machine_driver_zwackery =
 {
 	/* basic machine hardware */
 	{
@@ -979,7 +979,7 @@ static struct MachineDriver machine_driver_zwackery =
 	4096, 4096,
 	zwackery_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -995,7 +995,7 @@ static struct MachineDriver machine_driver_zwackery =
 
 
 #define MACHINE_DRIVER_MCR68(NAME, MEMMAP, SOUND) 		\
-static struct MachineDriver machine_driver_##NAME =		\
+static const struct MachineDriver machine_driver_##NAME =		\
 {														\
 	/* basic machine hardware */						\
 	{													\
@@ -1017,7 +1017,7 @@ static struct MachineDriver machine_driver_##NAME =		\
 	8*16, 8*16,											\
 	0,													\
 														\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,			\
 	0,													\
 	generic_vh_start,									\
 	generic_vh_stop,									\

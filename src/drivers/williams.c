@@ -13,6 +13,7 @@
 		* Bubbles
 		* Splat
 		* Sinistar
+		* Lotto Fun
 
 		* Blaster
 
@@ -498,6 +499,7 @@ extern struct pia6821_interface williams_snd_pia_intf;
 /* Game-specific old-Williams PIA interfaces */
 extern struct pia6821_interface defender_pia_0_intf;
 extern struct pia6821_interface stargate_pia_0_intf;
+extern struct pia6821_interface lottofun_pia_0_intf;
 extern struct pia6821_interface sinistar_snd_pia_intf;
 
 /* Generic later-Williams PIA interfaces */
@@ -1084,6 +1086,30 @@ INPUT_PORTS_START( sinistar )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( lottofun )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Used by ticket dispenser */
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPF_TOGGLE, "Memory Protect", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // COIN1.5? :)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Sound board handshake
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( blaster )
 	PORT_START      /* IN0 */
 	/* pseudo analog joystick, see below */
@@ -1302,7 +1328,7 @@ static struct hc55516_interface sinistar_cvsd_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_defender =
+static const struct MachineDriver machine_driver_defender =
 {
 	/* basic machine hardware  */
 	{
@@ -1349,7 +1375,7 @@ static struct MachineDriver machine_driver_defender =
 };
 
 
-static struct MachineDriver machine_driver_williams =
+static const struct MachineDriver machine_driver_williams =
 {
 	/* basic machine hardware  */
 	{
@@ -1396,7 +1422,7 @@ static struct MachineDriver machine_driver_williams =
 };
 
 
-static struct MachineDriver machine_driver_sinistar =
+static const struct MachineDriver machine_driver_sinistar =
 {
 	/* basic machine hardware  */
 	{
@@ -1447,7 +1473,7 @@ static struct MachineDriver machine_driver_sinistar =
 };
 
 
-static struct MachineDriver machine_driver_blaster =
+static const struct MachineDriver machine_driver_blaster =
 {
 	/* basic machine hardware  */
 	{
@@ -1494,7 +1520,7 @@ static struct MachineDriver machine_driver_blaster =
 };
 
 
-static struct MachineDriver machine_driver_williams2 =
+static const struct MachineDriver machine_driver_williams2 =
 {
 	/* basic machine hardware  */
 	{
@@ -1541,7 +1567,7 @@ static struct MachineDriver machine_driver_williams2 =
 };
 
 
-static struct MachineDriver machine_driver_joust2 =
+static const struct MachineDriver machine_driver_joust2 =
 {
 	/* basic machine hardware  */
 	{
@@ -1770,6 +1796,19 @@ static void init_sinistar(void)
 	/* install RAM instead of ROM in the Dxxx slot */
 	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
 	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static void init_lottofun(void)
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(lottofun_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
 }
 
 
@@ -2310,6 +2349,26 @@ ROM_START( sinista2 )
 ROM_END
 
 
+ROM_START( lottofun )
+	ROM_REGION( 0x10000, REGION_CPU1 ) 	/* 64k for code */
+	ROM_LOAD( "vl4e.dat",     0x0000, 0x1000, 0x5e9af236 )
+	ROM_LOAD( "vl4c.dat",     0x1000, 0x1000, 0x4b134ae2 )
+	ROM_LOAD( "vl4a.dat",     0x2000, 0x1000, 0xb2f1f95a )
+	ROM_LOAD( "vl5e.dat",     0x3000, 0x1000, 0xc8681c55 )
+	ROM_LOAD( "vl5c.dat",     0x4000, 0x1000, 0xeb9351e0 )
+	ROM_LOAD( "vl5a.dat",     0x5000, 0x1000, 0x534f2fa1 )
+	ROM_LOAD( "vl6e.dat",     0x6000, 0x1000, 0xbefac592 )
+	ROM_LOAD( "vl6c.dat",     0x7000, 0x1000, 0xa73d7f13 )
+	ROM_LOAD( "vl6a.dat",     0x8000, 0x1000, 0x5730a43d )
+	ROM_LOAD( "vl7a.dat",     0xd000, 0x1000, 0xfb2aec2c )
+	ROM_LOAD( "vl7c.dat",     0xe000, 0x1000, 0x9a496519 )
+	ROM_LOAD( "vl7e.dat",     0xf000, 0x1000, 0x032cab4b )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) 	/* 64k for the sound CPU */
+	ROM_LOAD( "vl2532.snd",   0xf000, 0x1000, 0x214b8a04 )
+ROM_END
+
+
 ROM_START( blaster )
 	ROM_REGION( 0x3c000, REGION_CPU1 )
 	ROM_LOAD( "blaster.11",   0x04000, 0x2000, 0x6371e62f )
@@ -2526,3 +2585,5 @@ GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams"
 GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot" )
 GAMEX(1984, inferno,  0,        williams2,inferno,  inferno,  ROT0,   "Williams", "Inferno", GAME_IMPERFECT_SOUND )
 GAME( 1986, joust2,   0,        joust2,   joust2,   joust2,   ROT270, "Williams", "Joust 2 - Survival of the Fittest (set 1)" )
+
+GAME( 1987, lottofun, 0,        williams, lottofun, lottofun, ROT0,   "H.A.R. Management", "Lotto Fun" )

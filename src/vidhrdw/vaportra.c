@@ -324,22 +324,6 @@ void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	last_pri=pri;
 
-	/* Update playfields */
-	switch (pri) {
-		case 0:
-		case 2:
-			pf4_tilemap->type=TILEMAP_OPAQUE;
-			pf3_tilemap->type=TILEMAP_TRANSPARENT;
-			pf2_tilemap->type=TILEMAP_TRANSPARENT;
-			break;
-		case 1:
-		case 3:
-			pf2_tilemap->type=TILEMAP_OPAQUE;
-			pf3_tilemap->type=TILEMAP_TRANSPARENT;
-			pf4_tilemap->type=TILEMAP_TRANSPARENT;
-			break;
-	}
-
 	gfx_bank=1;
 	gfx_base=vaportra_pf2_data;
 	tilemap_update(pf2_tilemap);
@@ -359,25 +343,25 @@ void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	if (pri==0) {
-		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY);
 		tilemap_draw(bitmap,pf2_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
 		tilemap_draw(bitmap,pf3_tilemap,0);
 	}
 	else if (pri==1) {
-		tilemap_draw(bitmap,pf2_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY);
 		tilemap_draw(bitmap,pf4_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
 		tilemap_draw(bitmap,pf3_tilemap,0);
 	}
 	else if (pri==2) {
-		tilemap_draw(bitmap,pf4_tilemap,0);
+		tilemap_draw(bitmap,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY);
 		tilemap_draw(bitmap,pf3_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
 		tilemap_draw(bitmap,pf2_tilemap,0);
 	}
 	else {
-		tilemap_draw(bitmap,pf2_tilemap,0);
+		tilemap_draw(bitmap,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY);
 		tilemap_draw(bitmap,pf3_tilemap,0);
 		vaportra_drawsprites(bitmap,0);
 		tilemap_draw(bitmap,pf4_tilemap,0);

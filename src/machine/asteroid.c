@@ -118,8 +118,8 @@ WRITE_HANDLER( asteroid_bank_switch_w )
 			RAM[0x300 + i] = temp;
 		}
 	}
-	osd_led_w (0, ~(data >> 1));
-	osd_led_w (1, ~data);
+	set_led_status (0, ~data & 0x02);
+	set_led_status (1, ~data & 0x01);
 }
 
 WRITE_HANDLER( astdelux_bank_switch_w )
@@ -146,7 +146,7 @@ WRITE_HANDLER( astdelux_bank_switch_w )
 
 WRITE_HANDLER( astdelux_led_w )
 {
-	osd_led_w (offset, ~data);
+	set_led_status(offset,~data & 0x01);
 }
 
 void asteroid_init_machine(void)

@@ -435,7 +435,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver_cclimber =
+static const struct MachineDriver machine_driver_cclimber =
 {
 	/* basic machine hardware */
 	{
@@ -1282,7 +1282,7 @@ static struct AY8910interface swimmer_ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_swimmer =
+static const struct MachineDriver machine_driver_swimmer =
 {
 	/* basic machine hardware */
 	{

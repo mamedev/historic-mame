@@ -741,9 +741,9 @@ static void f8_lm(void)
 
 /***************************************************
  *	O Z C S 0001 0111
- *	- - - - SM
+ *	- - - - ST
  ***************************************************/
-static void f8_sm(void)
+static void f8_st(void)
 {
 	f8.dbus = f8.a;
 	ROMC_05();
@@ -1217,18 +1217,19 @@ static void f8_am(void)
  ***************************************************/
 static void f8_amd(void)
 {
-	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	UINT8 tmp = f8.a - 0x66, adj = 0x00;
+	int sum;
     ROMC_02();
 	sum = (tmp & 0x0f) + (f8.dbus & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
-	sum = (tmp & 0xf0) + (f8.dbus & 0xf0) + adj;
-	if (sum > 0x90)
+	sum = tmp + f8.dbus + adj;
+	if (sum > 0x99)
 		adj += 0x60;
-	tmp = adj + f8.dbus - 0x66;
+	tmp += adj;
 	CLR_OZCS;
-	SET_OC(f8.a, tmp);
-	f8.a += tmp;
+	SET_OC(tmp,f8.dbus);
+	f8.a = tmp + f8.dbus;
 	SET_SZ(f8.a);
     ROMC_00();
 }
@@ -1437,18 +1438,19 @@ static void f8_as_isar_d(void)
  ***************************************************/
 static void f8_asd(int r)
 {
-	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	UINT8 tmp = f8.a - 0x66, adj = 0x00;
+	int sum;
 	ROMC_1C();
 	sum = (tmp & 0x0f) + (f8.r[r] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
-	sum = (tmp & 0xf0) + (f8.r[r] & 0xf0) + adj;
-	if (sum > 0x90)
+	sum = tmp + f8.r[r] + adj;
+	if (sum > 0x99)
 		adj += 0x60;
-	tmp = adj + f8.r[r] - 0x66;
+	tmp += adj;
 	CLR_OZCS;
-	SET_OC(f8.a, tmp);
-	f8.a += tmp;
+	SET_OC(tmp, f8.r[r]);
+	f8.a = tmp + f8.r[r];
 	SET_SZ(f8.a);
 	ROMC_00();
 }
@@ -1459,18 +1461,19 @@ static void f8_asd(int r)
  ***************************************************/
 static void f8_asd_isar(void)
 {
-	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	UINT8 tmp = f8.a - 0x66, adj = 0x00;
+	int sum;
 	ROMC_1C();
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
-	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
-	if (sum > 0x90)
+	sum = tmp + f8.r[f8.is] + adj;
+	if (sum > 0x99)
 		adj += 0x60;
-	tmp = adj + f8.r[f8.is] - 0x66;
+	tmp += adj;
 	CLR_OZCS;
-	SET_OC(f8.a, tmp);
-	f8.a += tmp;
+	SET_OC(tmp, f8.r[f8.is]);
+	f8.a = tmp + f8.r[f8.is];
 	SET_SZ(f8.a);
 	ROMC_00();
 }
@@ -1481,18 +1484,19 @@ static void f8_asd_isar(void)
  ***************************************************/
 static void f8_asd_isar_i(void)
 {
-	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	UINT8 tmp = f8.a - 0x66, adj = 0x00;
+	int sum;
 	ROMC_1C();
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
-	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
-	if (sum > 0x90)
+	sum = tmp + f8.r[f8.is] + adj;
+	if (sum > 0x99)
 		adj += 0x60;
-	tmp = adj + f8.r[f8.is] - 0x66;
+	tmp += adj;
 	CLR_OZCS;
-	SET_OC(f8.a, tmp);
-	f8.a += tmp;
+	SET_OC(tmp, f8.r[f8.is]);
+	f8.a = tmp + f8.r[f8.is];
 	SET_SZ(f8.a);
 	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
 	ROMC_00();
@@ -1504,18 +1508,19 @@ static void f8_asd_isar_i(void)
  ***************************************************/
 static void f8_asd_isar_d(void)
 {
-	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	UINT8 tmp = f8.a - 0x66, adj = 0x00;
+	int sum;
 	ROMC_1C();
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
-	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
-	if (sum > 0x90)
+	sum = tmp + f8.r[f8.is] + adj;
+	if (sum > 0x99)
 		adj += 0x60;
-	tmp = adj + f8.r[f8.is] - 0x66;
+	tmp += adj;
 	CLR_OZCS;
-	SET_OC(f8.a, tmp);
-	f8.a += tmp;
+	SET_OC(tmp, f8.r[f8.is]);
+	f8.a = tmp + f8.r[f8.is];
 	SET_SZ(f8.a);
 	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
 	ROMC_00();
@@ -1696,7 +1701,7 @@ int f8_execute(int cycles)
 		case 0x14: /* 0001 0100 */	f8_sr_4();			break;
 		case 0x15: /* 0001 0101 */	f8_sl_4();			break;
 		case 0x16: /* 0001 0110 */	f8_lm();			break;
-		case 0x17: /* 0001 0111 */	f8_sm();			break;
+		case 0x17: /* 0001 0111 */	f8_st();			break;
 		case 0x18: /* 0001 1000 */	f8_com();			break;
 		case 0x19: /* 0001 1001 */	f8_lnk();			break;
 		case 0x1a: /* 0001 1010 */	f8_di();			break;

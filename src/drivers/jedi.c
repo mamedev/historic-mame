@@ -303,7 +303,7 @@ static struct TMS5220interface tms5220_interface =
 
 
 
-static struct MachineDriver machine_driver_jedi =
+static const struct MachineDriver machine_driver_jedi =
 {
 	/* basic machine hardware */
 	{

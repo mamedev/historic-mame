@@ -443,7 +443,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver_deadeye =
+static const struct MachineDriver machine_driver_deadeye =
 {
 	/* basic machine hardware */
 	{
@@ -492,7 +492,7 @@ static struct MachineDriver machine_driver_deadeye =
     }
 };
 
-static struct MachineDriver machine_driver_gypsyjug =
+static const struct MachineDriver machine_driver_gypsyjug =
 {
 	/* basic machine hardware */
 	{

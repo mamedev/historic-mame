@@ -323,7 +323,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_arkanoid =
+static const struct MachineDriver machine_driver_arkanoid =
 {
 	/* basic machine hardware */
 	{
@@ -350,7 +350,7 @@ static struct MachineDriver machine_driver_arkanoid =
 	512, 512,
 	arkanoid_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -366,7 +366,7 @@ static struct MachineDriver machine_driver_arkanoid =
 	}
 };
 
-static struct MachineDriver machine_driver_bootleg =
+static const struct MachineDriver machine_driver_bootleg =
 {
 	/* basic machine hardware */
 	{
@@ -387,7 +387,7 @@ static struct MachineDriver machine_driver_bootleg =
 	512, 512,
 	arkanoid_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

@@ -1208,7 +1208,7 @@ static struct AY8910interface hustler_ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_type1 =
+static const struct MachineDriver machine_driver_type1 =
 {
 	/* basic machine hardware */
 	{
@@ -1252,7 +1252,7 @@ static struct MachineDriver machine_driver_type1 =
 };
 
 /* same as the above, the only difference is in gfxdecodeinfo to have long bullets */
-static struct MachineDriver machine_driver_armorcar =
+static const struct MachineDriver machine_driver_armorcar =
 {
 	/* basic machine hardware */
 	{
@@ -1297,7 +1297,7 @@ static struct MachineDriver machine_driver_armorcar =
 
 /* Rescue, Minefield and Strategy X have extra colours, and custom video initialise */
 /* routines to set up the graduated colour backgound they use */
-static struct MachineDriver machine_driver_rescue =
+static const struct MachineDriver machine_driver_rescue =
 {
 	/* basic machine hardware */
 	{
@@ -1340,7 +1340,7 @@ static struct MachineDriver machine_driver_rescue =
 	}
 };
 
-static struct MachineDriver machine_driver_minefld =
+static const struct MachineDriver machine_driver_minefld =
 {
 	/* basic machine hardware */
 	{
@@ -1383,7 +1383,7 @@ static struct MachineDriver machine_driver_minefld =
 	}
 };
 
-static struct MachineDriver machine_driver_stratgyx =
+static const struct MachineDriver machine_driver_stratgyx =
 {
 	/* basic machine hardware */
 	{
@@ -1426,7 +1426,7 @@ static struct MachineDriver machine_driver_stratgyx =
 	}
 };
 
-static struct MachineDriver machine_driver_type2 =
+static const struct MachineDriver machine_driver_type2 =
 {
 	/* basic machine hardware */
 	{
@@ -1469,7 +1469,7 @@ static struct MachineDriver machine_driver_type2 =
 	}
 };
 
-static struct MachineDriver machine_driver_hustler =
+static const struct MachineDriver machine_driver_hustler =
 {
 	/* basic machine hardware */
 	{
@@ -1512,7 +1512,7 @@ static struct MachineDriver machine_driver_hustler =
 	}
 };
 
-static struct MachineDriver machine_driver_hustlerb =
+static const struct MachineDriver machine_driver_hustlerb =
 {
 	/* basic machine hardware */
 	{
@@ -1555,7 +1555,7 @@ static struct MachineDriver machine_driver_hustlerb =
 	}
 };
 
-static struct MachineDriver machine_driver_calipso =
+static const struct MachineDriver machine_driver_calipso =
 {
 	/* basic machine hardware */
 	{

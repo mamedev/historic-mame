@@ -184,7 +184,7 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static struct MachineDriver machine_driver_pingpong =
+static const struct MachineDriver machine_driver_pingpong =
 {
 	/* basic machine hardware */
 	{

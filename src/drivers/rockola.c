@@ -95,6 +95,8 @@ extern unsigned char *rockola_videoram2;
 extern unsigned char *rockola_characterram;
 extern unsigned char *rockola_scrollx,*rockola_scrolly;
 
+extern const char *vanguard_sample_names[];
+
 WRITE_HANDLER( satansat_b002_w );
 WRITE_HANDLER( satansat_backcolor_w );
 void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -693,9 +695,16 @@ static struct CustomSound_interface custom_interface =
 	rockola_sh_update
 };
 
+static struct Samplesinterface vanguard_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	vanguard_sample_names
+};
 
 
-static struct MachineDriver machine_driver_sasuke =
+
+static const struct MachineDriver machine_driver_sasuke =
 {
 	/* basic machine hardware */
 	{
@@ -716,7 +725,7 @@ static struct MachineDriver machine_driver_sasuke =
 	32,4*4 + 4*4,
 	satansat_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -726,7 +735,7 @@ static struct MachineDriver machine_driver_sasuke =
 	0,0,0,0
 };
 
-static struct MachineDriver machine_driver_satansat =
+static const struct MachineDriver machine_driver_satansat =
 {
 	/* basic machine hardware */
 	{
@@ -747,7 +756,7 @@ static struct MachineDriver machine_driver_satansat =
 	32,4*4 + 4*4,
 	satansat_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -756,14 +765,18 @@ static struct MachineDriver machine_driver_satansat =
 	/* sound hardware */
 	0,0,0,0,
 	{
+ 		{
+			SOUND_SAMPLES,
+			&vanguard_samples_interface
+		},
 		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
+			SOUND_CUSTOM,	/* also plays the samples */
+ 			&custom_interface
+ 		}
 	}
 };
 
-static struct MachineDriver machine_driver_vanguard =
+static const struct MachineDriver machine_driver_vanguard =
 {
 	/* basic machine hardware */
 	{
@@ -793,14 +806,18 @@ static struct MachineDriver machine_driver_vanguard =
 	/* sound hardware */
 	0,0,0,0,
 	{
+ 		{
+			SOUND_SAMPLES,
+			&vanguard_samples_interface
+		},
 		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
+			SOUND_CUSTOM,	/* also plays the samples */
+ 			&custom_interface
+ 		}
 	}
 };
 
-static struct MachineDriver machine_driver_fantasy =
+static const struct MachineDriver machine_driver_fantasy =
 {
 	/* basic machine hardware */
 	{
@@ -830,15 +847,19 @@ static struct MachineDriver machine_driver_fantasy =
 	/* sound hardware */
 	0,0,0,0,
 	{
+ 		{
+			SOUND_SAMPLES,
+			&vanguard_samples_interface
+		},
 		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
+			SOUND_CUSTOM,	/* also plays the samples */
+ 			&custom_interface
+ 		}
 	}
 };
 
 /* note that in this driver the visible area is different! */
-static struct MachineDriver machine_driver_pballoon =
+static const struct MachineDriver machine_driver_pballoon =
 {
 	/* basic machine hardware */
 	{
@@ -868,10 +889,14 @@ static struct MachineDriver machine_driver_pballoon =
 	/* sound hardware */
 	0,0,0,0,
 	{
+ 		{
+			SOUND_SAMPLES,
+			&vanguard_samples_interface
+		},
 		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
+			SOUND_CUSTOM,	/* also plays the samples */
+ 			&custom_interface
+ 		}
 	}
 };
 

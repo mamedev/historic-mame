@@ -356,7 +356,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver_bionicc =
+static const struct MachineDriver machine_driver_bionicc =
 {
 	/* basic machine hardware */
 	{
@@ -373,7 +373,7 @@ static struct MachineDriver machine_driver_bionicc =
 			nmi_interrupt,4	/* ??? */
 		}
 	},
-	60, 5000, //DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	0,
 

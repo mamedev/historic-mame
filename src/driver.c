@@ -241,6 +241,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( sectrzon )	/* (c) 1984 + Alice */
 	DRIVER( wiping )	/* (c) 1982 */
 	DRIVER( rugrats )	/* (c) 1983 */
+	DRIVER( magmax )	/* (c) 1985 */
 	DRIVER( cop01 )		/* (c) 1985 */
 	DRIVER( cop01a )	/* (c) 1985 */
 	DRIVER( terracre )	/* (c) 1985 */
@@ -508,18 +509,50 @@ TESTDRIVER( herocast )
 	DRIVER( armwrest )	/* (c) 1985 */
 
 	/* Nintendo Playchoice 10 games */
+	DRIVER( pc_tenis )	/* (c) 1983 Nintendo */
+	DRIVER( pc_bball )	/* (c) 1984 Nintendo of America */
+	DRIVER( pc_bfght )	/* (c) 1984 Nintendo */
 	DRIVER( pc_ebike )	/* (c) 1984 Nintendo */
+	DRIVER( pc_golf	)	/* (c) 1984 Nintendo */
+	DRIVER( pc_kngfu )	/* (c) 1984 Irem (Nintendo license) */
+	DRIVER( pc_1942 )	/* (c) 1985 Capcom */
 	DRIVER( pc_smb )	/* (c) 1985 Nintendo */
+	DRIVER( pc_vball )	/* (c) 1986 Nintendo */
 	DRIVER( pc_duckh )	/* (c) 1984 Nintendo */
+	DRIVER( pc_hgaly )	/* (c) 1984 Nintendo */
+	DRIVER( pc_wgnmn )	/* (c) 1984 Nintendo */
+	DRIVER( pc_grdus )	/* (c) 1986 Konami */
 	DRIVER( pc_tkfld )	/* (c) 1987 Konami (Nintendo of America license) */
 	DRIVER( pc_pwrst )	/* (c) 1986 Nintendo */
+	DRIVER( pc_cvnia )	/* (c) 1987 Konami (Nintendo of America license) */
+	DRIVER( pc_dbldr )	/* (c) 1987 Konami (Nintendo of America license) */
 	DRIVER( pc_rnatk )	/* (c) 1987 Konami (Nintendo of America license) */
+	DRIVER( pc_rygar )	/* (c) 1987 Tecmo (Nintendo of America license) */
 	DRIVER( pc_cntra )	/* (c) 1988 Konami (Nintendo of America license) */
 	DRIVER( pc_goons )	/* (c) 1986 Konami */
+	DRIVER( pc_radrc )	/* (c) 1987 Square */
 	DRIVER( pc_miket )	/* (c) 1987 Nintendo */
+	DRIVER( pc_rcpam )	/* (c) 1987 Rare */
 	DRIVER( pc_ngaid )	/* (c) 1989 Tecmo (Nintendo of America license) */
+	DRIVER( pc_tmnt )	/* (c) 1989 Konami (Nintendo of America license) */
+	DRIVER( pc_drmro )	/* (c) 1990 Nintendo */
+	DRIVER( pc_ynoid )	/* (c) 1990 Capcom USA (Nintendo of America license) */
 	DRIVER( pc_ddrgn )
+	DRIVER( pc_ftqst )	/* (c) 1989 Sunsoft (Nintendo of America license) */
+	DRIVER( pc_rrngr )	/* (c) Capcom USA (Nintendo of America license) */
+	DRIVER( pc_gntlt )	/* (c) 1985 Atari/Tengen (Nintendo of America license) */
+	DRIVER( pc_smb2 )	/* (c) 1988 Nintendo */
 	DRIVER( pc_smb3 )	/* (c) 1988 Nintendo */
+	DRIVER( pc_mman3 )	/* (c) 1990 Capcom USA (Nintendo of America license) */
+	DRIVER( pc_radr2 )	/* (c) 1990 Square (Nintendo of America license) */
+	DRIVER( pc_suprc )	/* (c) 1990 Konami (Nintendo of America license) */
+	DRIVER( pc_tmnt2 )	/* (c) 1990 Konami (Nintendo of America license) */
+	DRIVER( pc_wcup )	/* (c) 1990 Technos (Nintendo license) */
+	DRIVER( pc_ngai3 )	/* (c) 1991 Tecmo (Nintendo of America license) */
+	DRIVER( pc_pwbld )	/* (c) 1991 Taito (Nintendo of America license) */
+	DRIVER( pc_rkats )	/* (c) 1991 Atlus (Nintendo of America license) */
+	DRIVER( pc_cshwk )	/* (c) 1989 Rare (Nintendo of America license) */
+	DRIVER( pc_moglf )	/* (c) 1991 Nintendo */
 
 	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
@@ -861,6 +894,8 @@ TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( tsamura2 )	/* A35 (c) 1985 Taito */
 	DRIVER( nunchaku )	/* ??? (c) 1985 Taito */
 	DRIVER( yamagchi )	/* A38 (c) 1985 Taito */
+	DRIVER( buggychl )	/* A22 (c) 1984 Taito Corporation */
+	DRIVER( buggycht )	/* A22 (c) 1984 Taito Corporation + Tefri license */
 TESTDRIVER( flstory )	/* A45 (c) 1985 Taito Corporation */
 TESTDRIVER( flstoryj )	/* A45 (c) 1985 Taito Corporation (Japan) */
 TESTDRIVER( onna34ro )	/* A52 */
@@ -1041,6 +1076,7 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( snowbroa )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbrob )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
+	DRIVER( wintbob )	/* bootleg */
 
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
 	DRIVER( ghox )		/* TP-021 (c) 1991 Toaplan */
@@ -1056,6 +1092,8 @@ TESTDRIVER( fixeight )	/* TP-026 (c) 1992 + Taito license */
 	DRIVER( batsugun )	/* TP-030 (c) 1993 Toaplan */
 	DRIVER( batugnsp )	/* TP-??? (c) 1993 Toaplan */
 	DRIVER( snowbro2 )	/* TP-??? (c) 1994 Hanafram */
+	DRIVER( mahoudai )	/* (c) 1993 Raizing + Able license */
+	DRIVER( shippumd )	/* (c) 1994 Raizing */
 
 /*
 Toa Plan's board list
@@ -1152,6 +1190,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( tshoot )	/* (c) 1984 */
 	DRIVER( inferno )	/* (c) 1984 */
 	DRIVER( joust2 )	/* (c) 1986 */
+	DRIVER( lottofun )	/* (c) 1987 H.A.R. Management */
 
 	/* Capcom games */
 	/* The following is a COMPLETE list of the Capcom games up to 1997, as shown on */
@@ -1243,7 +1282,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( ghouls )	/* 12/1988 (c) 1988 (World) */
 	DRIVER( ghoulsu )	/* 12/1988 (c) 1988 (US) */
 	DRIVER( ghoulsj )	/* 12/1988 (c) 1988 (Japan) */
-	DRIVER( strider )	/*  3/1989 (c) 1989 */
+	DRIVER( strider )	/*  3/1989 (c) 1989 (not explicitly stated but should be US) */
 	DRIVER( striderj )	/*  3/1989 (c) 1989 */
 	DRIVER( stridrja )	/*  3/1989 (c) 1989 */
 	DRIVER( dwj )		/*  4/1989 (c) 1989 (Japan) */
@@ -1324,54 +1363,62 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	/* Capcom CPS2 games */
 	/* list completed by CPS2Shock */
 	/* http://cps2shock.retrogames.com */
-TESTDRIVER( ssf2 )		/* Super Street Fighter 2: The New Challengers (USA 930911) */
-TESTDRIVER( ssf2a )		/* Super Street Fighter 2: The New Challengers (Asia 930911) */
-TESTDRIVER( ssf2j )		/* Super Street Fighter 2: The New Challengers (Japan 930910) */
-TESTDRIVER( ecofe )		/* Eco Fighters (Etc 931203) */
-TESTDRIVER( ddtod )		/* Dungeons & Dragons: Tower of Doom (USA 940113) */
-TESTDRIVER( ddtoda )	/* Dungeons & Dragons: Tower of Doom (Asia 940113) */
-TESTDRIVER( ddtodr1 )	/* Dungeons & Dragons: Tower of Doom (USA 940125) */
-TESTDRIVER( ssf2t )		/* Super Street Fighter 2 Turbo (USA 940223) */
-TESTDRIVER( ssf2xj )	/* Super Street Fighter 2 X: Grand Master Challenge (Japan 940223) */
-TESTDRIVER( avsp )		/* Aliens Vs. Predator (USA 940520) */
-TESTDRIVER( vampj )		/* Vampire: The Night Warriors (Japan 940705) */
-TESTDRIVER( vampa )		/* Vampire: The Night Warriors (Asia 940705) */
-TESTDRIVER( dstlk )		/* DarkStalkers: The Night Warriors (USA 940818) */
-TESTDRIVER( slam2e )	/* Saturday Night Slammasters II: Ring of Destruction (Euro 940902) */
-TESTDRIVER( armwara )	/* Armoured Warriors (Asia 940920) */
-TESTDRIVER( xmcotaj )	/* X-Men: Children of the Atom (Japan 941219) */
-TESTDRIVER( xmcota )	/* X-Men: Children of the Atom (USA 950105) */
-TESTDRIVER( vhuntj )	/* Vampire Hunter: Darkstalkers 2 (Japan 950302) */
-TESTDRIVER( nwarr )		/* Night Warriors: DarkStalkers Revenge (USA 950406) */
-TESTDRIVER( cybotsj )	/* Cyberbots: Full Metal Madness (Japan 950420) */
-TESTDRIVER( sfa )		/* Street Fighter Alpha: The Warriors Dream (USA 950627) */
-TESTDRIVER( sfar1 )		/* Street Fighter Alpha: The Warriors Dream (USA 950727) */
-TESTDRIVER( sfzj )		/* Street Fighter Zero (Japan 950627) */
-TESTDRIVER( sfzjr1 )	/* Street Fighter Zero (Japan 950727) */
-TESTDRIVER( msh )		/* Marvel Super Heroes (USA 951024) */
-TESTDRIVER( 19xx )		/* 19XX: The Battle Against Destiny (USA 951207) */
-TESTDRIVER( ddsom )		/* Dungeons & Dragons 2: Shadow over Mystara (USA 960209) */
-TESTDRIVER( sfz2j )		/* Street Fighter Zero 2 (Japan 960227) */
-TESTDRIVER( spf2xj )	/* Super Puzzle Fighter 2 X (Japan 960531) */
-TESTDRIVER( spf2t )		/* Super Puzzle Fighter 2 Turbo (USA 960620) */
-TESTDRIVER( rckman2j )	/* Rockman 2: The Power Fighters (Japan 960708) */
-TESTDRIVER( sfz2a )		/* Street Fighter Zero 2 Alpha (Japan 960805) */
-						/*  9/1996 Quiz Naneiro Dreams */
-TESTDRIVER( xmvsf )		/* X-Men Vs. Street Fighter (USA 961004) */
-TESTDRIVER( batcirj )	/* Battle Circuit (Japan 970319) */
-TESTDRIVER( batcira )	/* Battle Circuit (Asia 970319) */
-TESTDRIVER( vsav )		/* Vampire Savior: The Lord of Vampire (USA 970519) */
-TESTDRIVER( vsavj )		/* Vampire Savior: The Lord of Vampire (Japan 970519) */
-TESTDRIVER( mshvsf )	/* Marvel Super Heroes Vs. Street Fighter (USA 970625) */
-TESTDRIVER( mshvsfj )	/* Marvel Super Heroes Vs. Street Fighter (Japan 970707) */
-TESTDRIVER( vhunt2 )	/* Vampire Hunter 2: Darkstalkers Revenge (Japan 970828) */
-TESTDRIVER( sgemf )		/* Super Gem Fighter Mini Mix (USA 970904) */
-TESTDRIVER( pfghtj )	/* Pocket Fighter (Japan 970904) */
-TESTDRIVER( vsav2 )		/* Vampire Savior 2: The Lord of Vampire (Japan 970913) */
-TESTDRIVER( mvsc )		/* Marvel Super Heroes vs. Capcom: Clash of Super Heroes (USA 980123) */
-TESTDRIVER( sfa3 )		/* Street Fighter Alpha 3 (USA 980629) */
-						/* 1999 Giga Wing */
+TESTDRIVER( ssf2 )		/* 11/09/1993 Super Street Fighter 2: The New Challengers (USA) */
+TESTDRIVER( ssf2a )		/* 11/09/1993 Super Street Fighter 2: The New Challengers (Asia) */
+TESTDRIVER( ssf2j )		/* 10/09/1993 Super Street Fighter 2: The New Challengers (Japan) */
+TESTDRIVER( ecofe )		/* 03/12/1993 Eco Fighters (Etc) */
+TESTDRIVER( uecology )	/* 03/12/1993 Ultimate Ecology (Japan) */
+TESTDRIVER( ddtod )		/* 13/01/1994 Dungeons & Dragons: Tower of Doom (USA) */
+TESTDRIVER( ddtoda )	/* 13/01/1994 Dungeons & Dragons: Tower of Doom (Asia) */
+TESTDRIVER( ddtodr1 )	/* 25/01/1994 Dungeons & Dragons: Tower of Doom (USA) */
+TESTDRIVER( ssf2t )		/* 23/02/1994 Super Street Fighter 2 Turbo (USA) */
+TESTDRIVER( ssf2xj )	/* 23/02/1994 Super Street Fighter 2 X: Grand Master Challenge (Japan) */
+TESTDRIVER( avsp )		/* 20/05/1994 Aliens Vs. Predator (USA) */
+TESTDRIVER( avspa )		/* 20/05/1994 Aliens Vs. Predator (Asia) */
+TESTDRIVER( vampj )		/* 05/07/1994 Vampire: The Night Warriors (Japan) */
+TESTDRIVER( vampa )		/* 05/07/1994 Vampire: The Night Warriors (Asia) */
+TESTDRIVER( dstlk )		/* 18/08/1994 DarkStalkers: The Night Warriors (USA) */
+TESTDRIVER( slam2e )	/* 02/09/1994 Saturday Night Slammasters II: Ring of Destruction (Euro) */
+TESTDRIVER( smbomber )	/* 08/08/1994 Super Muscle Bomber: The International Blowout (Japan) */
+TESTDRIVER( armwar )	/* 24/10/1994 Armoured Warriors (USA) */
+TESTDRIVER( armwara )	/* 20/09/1994 Armoured Warriors (Asia) */
+TESTDRIVER( xmcotaj )	/* 19/12/1994 X-Men: Children of the Atom (Japan) */
+TESTDRIVER( xmcota )	/* 05/01/1995 X-Men: Children of the Atom (USA) */
+TESTDRIVER( vhuntj )	/* 02/03/1995 Vampire Hunter: Darkstalkers 2 (Japan) */
+TESTDRIVER( nwarr )		/* 06/04/1995 Night Warriors: DarkStalkers Revenge (USA) */
+TESTDRIVER( cybotsj )	/* 20/04/1995 Cyberbots: Full Metal Madness (Japan) */
+TESTDRIVER( sfa )		/* 27/06/1995 Street Fighter Alpha: The Warriors Dream (USA) */
+TESTDRIVER( sfar1 )		/* 27/07/1995 Street Fighter Alpha: The Warriors Dream (USA) */
+TESTDRIVER( sfzj )		/* 27/06/1995 Street Fighter Zero (Japan) */
+TESTDRIVER( sfzjr1 )	/* 27/07/1995 Street Fighter Zero (Japan) */
+TESTDRIVER( msh )		/* 24/10/1995 Marvel Super Heroes (USA) */
+TESTDRIVER( 19xx )		/* 07/12/1995 19XX: The Battle Against Destiny (USA) */
+TESTDRIVER( ddsom )		/* 09/02/1996 Dungeons & Dragons 2: Shadow over Mystara (USA) */
+TESTDRIVER( sfz2j )		/* 27/02/1996 Street Fighter Zero 2 (Japan) */
+TESTDRIVER( spf2xj )	/* 31/05/1996 Super Puzzle Fighter 2 X (Japan) */
+TESTDRIVER( spf2t )		/* 20/06/1996 Super Puzzle Fighter 2 Turbo (USA) */
+TESTDRIVER( qndream )	/* 26/06/1996 Quiz Nanairo Dreams: Miracle of the Rainbow Colored Town (Japan) */
+TESTDRIVER( rckman2j )	/* 08/07/1996 Rockman 2: The Power Fighters (Japan) */
+TESTDRIVER( sfz2a )		/* 05/08/1996 Street Fighter Zero 2 Alpha (Japan) */
+TESTDRIVER( xmvsf )		/* 04/10/1996 X-Men Vs. Street Fighter (USA) */
+TESTDRIVER( batcirj )	/* 19/03/1997 Battle Circuit (Japan) */
+TESTDRIVER( batcira )	/* 19/03/1997 Battle Circuit (Asia) */
+TESTDRIVER( vsav )		/* 19/05/1997 Vampire Savior: The Lord of Vampire (USA) */
+TESTDRIVER( vsavj )		/* 19/05/1997 Vampire Savior: The Lord of Vampire (Japan) */
+TESTDRIVER( mshvsf )	/* 25/06/1997 Marvel Super Heroes Vs. Street Fighter (USA) */
+TESTDRIVER( mshvsfj )	/* 07/07/1997 Marvel Super Heroes Vs. Street Fighter (Japan) */
+TESTDRIVER( sgemf )		/* 04/09/1997 Super Gem Fighter Mini Mix (USA) */
+TESTDRIVER( pfghtj )	/* 04/09/1997 Pocket Fighter (Japan) */
+TESTDRIVER( vhunt2 )	/* 13/09/1997 Vampire Hunter 2: Darkstalkers Revenge (Japan) */
+TESTDRIVER( vsav2 )		/* 13/09/1997 Vampire Savior 2: The Lord of Vampire (Japan) */
+TESTDRIVER( mvsc )		/* 23/01/1998 Marvel Super Heroes vs. Capcom: Clash of Super Heroes (USA) */
+TESTDRIVER( mvscj )		/* 23/01/1998 Marvel Super Heroes vs. Capcom: Clash of Super Heroes (Japan) */
+TESTDRIVER( sfa3 )		/* 29/06/1998 Street Fighter Alpha 3 (USA) */
+TESTDRIVER( sfz3 )		/* 27/07/1998 Street Fighter Zero 3 (USA) */
+						/* Giga Wing */
 						/* Gulum Pa! */
+						/* Dimahoo */
+
 
 	/* Capcom CPS3 games */
 	/* 10/1996 Warzard */
@@ -1380,7 +1427,7 @@ TESTDRIVER( sfa3 )		/* Street Fighter Alpha 3 (USA 980629) */
 	/* ???? Street Fighter 3: Second Impact ~giant attack~ */
 	/* ???? Street Fighter 3: Third Strike ~fight to the finish~ */
 
-	/* Capcom ZN1/ZN2 games */
+	/* Capcom ZN1 */
 TESTDRIVER( ts2j )		/*  Battle Arena Toshinden 2 (JAPAN 951124) */
 						/*  7/1996 Star Gladiator */
 TESTDRIVER( sfex )		/*  Street Fighter EX (ASIA 961219) */
@@ -1389,11 +1436,22 @@ TESTDRIVER( sfexp )		/*  Street Fighter EX Plus (USA 970311) */
 TESTDRIVER( sfexpj )	/*  Street Fighter EX Plus (JAPAN 970311) */
 TESTDRIVER( rvschool )	/*  Rival Schools (ASIA 971117) */
 TESTDRIVER( jgakuen )	/*  Justice Gakuen (JAPAN 971117) */
+
+	/* Capcom ZN2 */
 TESTDRIVER( sfex2 )		/*  Street Fighter EX 2 (JAPAN 980312) */
 TESTDRIVER( tgmj )		/*  Tetris The Grand Master (JAPAN 980710) */
+TESTDRIVER( kikaioh )	/*  Kikaioh (JAPAN 980914) */
 TESTDRIVER( sfex2p )	/*  Street Fighter EX 2 Plus (JAPAN 990611) */
+TESTDRIVER( shiryu2 )	/*  Strider Hiryu 2 (JAPAN 991213) */
 						/*  Star Gladiator 2 */
 						/*  Rival Schools 2 */
+
+	/* Video System ZN1 */
+TESTDRIVER( sncwgltd )	/*  Sonic Wings Limited (JAPAN) */
+
+	/* Tecmo ZN1 */
+TESTDRIVER( glpracr2 )	/*  Gallop Racer 2 (JAPAN) */
+TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
 
 	/* Mitchell games */
 	DRIVER( mgakuen )	/* (c) 1988 Yuga */
@@ -2044,7 +2102,8 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( parodius )	/* GX955 (c) 1990 (Japan) */
 	DRIVER( rollerg )	/* GX999 (c) 1991 (US) */
 	DRIVER( rollergj )	/* GX999 (c) 1991 (Japan) */
-TESTDRIVER( xexex )		/* GX067 (c) 1991 */
+	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
+	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
 	DRIVER( simpsons )	/* GX072 (c) 1991 */
 	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
 	DRIVER( simps2pj )	/* GX072 (c) 1991 (Japan) */
@@ -2476,6 +2535,8 @@ TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( ttmahjng )	/* Taito */
 
 	/* Zaccaria games */
+	DRIVER( sia2650 )
+	DRIVER( tinv2650 )
 	DRIVER( monymony )	/* (c) 1983 */
 	DRIVER( jackrabt )	/* (c) 1984 */
 	DRIVER( jackrab2 )	/* (c) 1984 */
@@ -2621,6 +2682,8 @@ V1.2   May 27,1999
 	DRIVER( scionc )	/* (c) 1984 Seibu Denshi + Cinematronics license */
 	DRIVER( wiz )		/* (c) 1985 Seibu Kaihatsu */
 	DRIVER( wizt )		/* (c) 1985 Taito Corporation */
+	DRIVER( kncljoe )	/* (c) 1985 Taito Corporation */
+	DRIVER( kncljoea )	/* (c) 1985 Taito Corporation */
 	DRIVER( empcity )	/* (c) 1986 Seibu Kaihatsu (bootleg?) */
 	DRIVER( empcityj )	/* (c) 1986 Taito Corporation (Japan) */
 	DRIVER( stfight )	/* (c) 1986 Seibu Kaihatsu (Germany) (bootleg?) */
@@ -2762,6 +2825,7 @@ TESTDRIVER( bounty )
 	DRIVER( bigkarnk )	/* (c) 1991 Gaelco */
 	DRIVER( splash )	/* (c) 1992 Gaelco */
 	DRIVER( biomtoy )	/* (c) 1995 Gaelco */
+TESTDRIVER( maniacsq )	/* (c) 1996 Gaelco */
 
 /*
 Gaelco Game list:
@@ -2841,7 +2905,22 @@ TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 
 	/* Comad games */
 	DRIVER( zerozone )	/* (c) 1993 Comad */
+	DRIVER( hotpinbl )	/* (c) 1995 Comad & New Japan System */
 	DRIVER( galspnbl )	/* (c) 1996 Comad */
+TESTDRIVER( ladyfrog )
+	/* the following ones run on modified Gals Panic hardware */
+	DRIVER( fantasia )	/* (c) 1994 Comad & New Japan System */
+	DRIVER( newfant )	/* (c) 1995 Comad & New Japan System */
+	DRIVER( missw96 )	/* (c) 1996 Comad */
+
+	/* Playmark games */
+	DRIVER( bigtwin )	/* (c) 1995 */
+	DRIVER( wbeachvl )	/* (c) 1995 */
+
+	/* Pacific Novelty games */
+	DRIVER( sharkatt )	/* (c) [1980] */
+	DRIVER( thief )		/* (c) 1981 */
+	DRIVER( natodef )	/* (c) 1982 */
 
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
@@ -2862,7 +2941,6 @@ TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 	DRIVER( spiders2 )	/* (c) 1981 Sigma Ent. Inc. */
 	DRIVER( stactics )	/* [1981 Sega] */
 	DRIVER( exterm )	/* (c) 1989 Premier Technology - a Gottlieb game */
-	DRIVER( sharkatt )	/* (c) Pacific Novelty */
 	DRIVER( kingofb )	/* (c) 1985 Woodplace Inc. */
 	DRIVER( ringking )	/* (c) 1985 Data East USA */
 	DRIVER( ringkin2 )
@@ -3031,6 +3109,7 @@ TESTDRIVER( dlair )
 	DRIVER( irrmaze )	/* 0236 (c) 1997 SNK / Saurus */
 	DRIVER( popbounc )	/* 0237 (c) 1997 Video System Co. */
 	DRIVER( shocktro )	/* 0238 (c) 1997 Saurus */
+	DRIVER( shocktrj )	/* 0238 (c) 1997 Saurus */
 	DRIVER( blazstar )	/* 0239 (c) 1998 Yumekobo */
 	DRIVER( rbff2 )		/* 0240 (c) 1998 SNK */
 	DRIVER( mslug2 )	/* 0241 (c) 1998 SNK */

@@ -300,7 +300,7 @@ static struct AY8910interface ay8910_interface =
  * Machine driver
  *********************************************************************/
 
-static struct MachineDriver machine_driver_exerion =
+static const struct MachineDriver machine_driver_exerion =
 {
 	/* basic machine hardware */
 	{

@@ -328,7 +328,7 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_relief =
+static const struct MachineDriver machine_driver_relief =
 {
 	/* basic machine hardware */
 	{

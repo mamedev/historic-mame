@@ -16,8 +16,8 @@ static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static data_t color_map_select;
 static int background_color;
 
-static int overlay_type;	/* 0=none, 1=geometric, 2=file */
-static const void *init_overlay;
+static int artwork_type;
+static const void *init_artwork;
 
 static mem_write_handler videoram_w_p;
 static void (*vh_screenrefresh_p)(struct osd_bitmap *bitmap,int full_refresh);
@@ -86,6 +86,7 @@ static const struct artwork_element invad2ct_overlay[]=
 	END
 };
 
+enum { NO_ARTWORK = 0, SIMPLE_OVERLAY, FILE_OVERLAY, SIMPLE_BACKDROP, FILE_BACKDROP };
 
 void init_8080bw(void)
 {
@@ -94,7 +95,7 @@ void init_8080bw(void)
 	use_tmpbitmap = 0;
 	screen_red = 0;
 	screen_red_enabled = 0;
-	overlay_type = 0;
+	artwork_type = NO_ARTWORK;
 	color_map_select = 0;
 	flip_screen_w(0,0);
 }
@@ -102,8 +103,8 @@ void init_8080bw(void)
 void init_invaders(void)
 {
 	init_8080bw();
-	init_overlay = invaders_overlay;
-	overlay_type = 1;
+	init_artwork = invaders_overlay;
+	artwork_type = SIMPLE_OVERLAY;
 }
 
 void init_invaddlx(void)
@@ -116,15 +117,15 @@ void init_invaddlx(void)
 void init_invrvnge(void)
 {
 	init_8080bw();
-	init_overlay = invrvnge_overlay;
-	overlay_type = 1;
+	init_artwork = invrvnge_overlay;
+	artwork_type = SIMPLE_OVERLAY;
 }
 
 void init_invad2ct(void)
 {
 	init_8080bw();
-	init_overlay = invad2ct_overlay;
-	overlay_type = 1;
+	init_artwork = invad2ct_overlay;
+	artwork_type = SIMPLE_OVERLAY;
 }
 
 void init_schaser(void)
@@ -206,8 +207,8 @@ void init_spcenctr(void)
 	extern struct GameDriver driver_spcenctr;
 
 	init_8080bw();
-	init_overlay = driver_spcenctr.name;
-	overlay_type = 2;
+	init_artwork = driver_spcenctr.name;
+	artwork_type = FILE_OVERLAY;
 }
 
 void init_phantom2(void)
@@ -217,11 +218,19 @@ void init_phantom2(void)
 	use_tmpbitmap = 1;
 }
 
+void init_boothill(void)
+{
+//	extern struct GameDriver driver_boothill;
+
+	init_8080bw();
+//	init_artwork = driver_boothill.name;
+//	artwork_type = FILE_BACKDROP;
+}
 
 int invaders_vh_start(void)
 {
 	/* create overlay if one of was specified in init_X */
-	if (overlay_type)
+	if (artwork_type != NO_ARTWORK)
 	{
 		int start_pen;
 		int max_pens;
@@ -230,10 +239,23 @@ int invaders_vh_start(void)
 		start_pen = 2;
 		max_pens = Machine->drv->total_colors-start_pen;
 
-		if (overlay_type == 1)
-			overlay_create((const struct artwork_element *)init_overlay, start_pen, max_pens);
-		else
-			overlay_load((const char *)init_overlay, start_pen, max_pens);
+		switch (artwork_type)
+		{
+		case SIMPLE_OVERLAY:
+			overlay_create((const struct artwork_element *)init_artwork, start_pen, max_pens);
+			break;
+		case FILE_OVERLAY:
+			overlay_load((const char *)init_artwork, start_pen, max_pens);
+			break;
+		case SIMPLE_BACKDROP:
+			break;
+		case FILE_BACKDROP:
+			backdrop_load((const char *)init_artwork, start_pen, max_pens);
+			break;
+		default:
+			logerror("Unknown artwork type.\n");
+			break;
+		}
 	}
 
 	if (use_tmpbitmap && (generic_bitmapped_vh_start() != 0))

@@ -405,8 +405,8 @@ static WRITE_HANDLER( namcos86_coin_w )
 
 static WRITE_HANDLER( namcos86_led_w )
 {
-	osd_led_w(0,data >> 3);
-	osd_led_w(1,data >> 4);
+	set_led_status(0,data & 0x08);
+	set_led_status(1,data & 0x10);
 }
 
 
@@ -550,9 +550,15 @@ MCU_MEMORY( wndrmomo, 0x4000, 0x3800, 0xc000, 0xc800 )
 #undef UNUSED
 
 
+static READ_HANDLER( readFF )
+{
+	return 0xff;
+}
+
 static struct IOReadPort mcu_readport[] =
 {
 	{ HD63701_PORT1, HD63701_PORT1, input_port_4_r },
+	{ HD63701_PORT2, HD63701_PORT2, readFF },	/* leds won't work otherwise */
 	{ -1 }	/* end of table */
 };
 
@@ -1224,7 +1230,7 @@ static void namco86_init_machine( void )
 
 
 #define MACHINE_DRIVER(NAME,GFX)												\
-static struct MachineDriver machine_driver_##NAME =								\
+static const struct MachineDriver machine_driver_##NAME =								\
 {																				\
 	{																			\
 		{																		\

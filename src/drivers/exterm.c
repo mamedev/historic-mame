@@ -311,7 +311,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver_exterm =
+static const struct MachineDriver machine_driver_exterm =
 {
 	/* basic machine hardware */
 	{

@@ -2110,7 +2110,7 @@ static struct YM2203interface ym2203_interface_single =
 
 
 #define MCH_TRIPLE(name) \
-static struct MachineDriver machine_driver_##name =		\
+static const struct MachineDriver machine_driver_##name =		\
 {															\
 	{														\
 		{													\
@@ -2157,7 +2157,7 @@ static struct MachineDriver machine_driver_##name =		\
 };
 
 #define MCH_TRIPLE_2610(name) \
-static struct MachineDriver machine_driver_##name =		\
+static const struct MachineDriver machine_driver_##name =		\
 {															\
 	{														\
 		{													\
@@ -2204,7 +2204,7 @@ static struct MachineDriver machine_driver_##name =		\
 };
 
 #define MCH_DOUBLE(name) \
-static struct MachineDriver machine_driver_##name =		\
+static const struct MachineDriver machine_driver_##name =		\
 {															\
 	{														\
 		{													\
@@ -2245,7 +2245,7 @@ static struct MachineDriver machine_driver_##name =		\
 };
 
 #define MCH_SINGLE(name) \
-static struct MachineDriver machine_driver_##name =	\
+static const struct MachineDriver machine_driver_##name =	\
 {														\
 	{													\
 		{												\

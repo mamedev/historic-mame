@@ -257,7 +257,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_blstroid =
+static const struct MachineDriver machine_driver_blstroid =
 {
 	/* basic machine hardware */
 	{
@@ -280,7 +280,7 @@ static struct MachineDriver machine_driver_blstroid =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	blstroid_vh_start,
 	blstroid_vh_stop,

@@ -22,8 +22,8 @@ c003      DSW1
 c004      DSW2
 
 write:
-c808-c809 background scroll y position
-c80a-c80b background scroll x position
+c808-c809 background scroll x position
+c80a-c80b background scroll y position
 
 SOUND CPU
 0000-3fff ROM
@@ -41,18 +41,18 @@ write:
 #include "vidhrdw/generic.h"
 
 
+extern unsigned char *commando_fgvideoram;
+extern unsigned char *commando_bgvideoram;
 
-extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
-extern size_t commando_bgvideoram_size;
-extern unsigned char *commando_scrollx,*commando_scrolly;
+WRITE_HANDLER( commando_fgvideoram_w );
 WRITE_HANDLER( commando_bgvideoram_w );
-WRITE_HANDLER( commando_bgcolorram_w );
-WRITE_HANDLER( commando_spriteram_w );
+WRITE_HANDLER( commando_scrollx_w );
+WRITE_HANDLER( commando_scrolly_w );
 WRITE_HANDLER( commando_c804_w );
 int commando_vh_start(void);
-void commando_vh_stop(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void commando_eof_callback(void);
 
 
 
@@ -80,14 +80,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, commando_c804_w },
-	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
-	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
-	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
+	{ 0xc808, 0xc809, commando_scrollx_w },
+	{ 0xc80a, 0xc80b, commando_scrolly_w },
+	{ 0xd000, 0xd7ff, commando_fgvideoram_w, &commando_fgvideoram },
+	{ 0xd800, 0xdfff, commando_bgvideoram_w, &commando_bgvideoram },
 	{ 0xe000, 0xfdff, MWA_RAM },
-	{ 0xfe00, 0xff7f, commando_spriteram_w, &spriteram, &spriteram_size },
+	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xff80, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -276,37 +274,37 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 tiles */
-	1024,	/* 1024 tiles */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*32*8, 2*1024*32*8 },	/* the bitplanes are separated */
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	32*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	768,	/* 768 sprites */
-	4,	/* 4 bits per pixel */
-	{ 768*64*8+4, 768*64*8+0, 4, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 
@@ -324,7 +322,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz */
+	1500000,	/* 1.5 MHz ? */
 	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
 	{ 0 },
 	{ 0 },
@@ -334,7 +332,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_commando =
+static const struct MachineDriver machine_driver_commando =
 {
 	/* basic machine hardware */
 	{
@@ -346,13 +344,12 @@ static struct MachineDriver machine_driver_commando =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
+			3000000,	/* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, 500,	/* frames per second, vblank duration */
-				/* vblank duration is crucial to get proper sprite/background alignment */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -362,10 +359,10 @@ static struct MachineDriver machine_driver_commando =
 	256,16*4+4*16+16*8,
 	commando_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	commando_eof_callback,
 	commando_vh_start,
-	commando_vh_stop,
+	0,
 	commando_vh_screenrefresh,
 
 	/* sound hardware */

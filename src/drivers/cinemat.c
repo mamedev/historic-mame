@@ -99,7 +99,7 @@ static struct IOWritePort writeport[] =
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy, samples, sample_interface) 	\
-static struct MachineDriver machine_driver_##driver = 								\
+static const struct MachineDriver machine_driver_##driver = 								\
 { 																					\
 	/* basic machine hardware */ 													\
 	{ 																				\
@@ -120,7 +120,7 @@ static struct MachineDriver machine_driver_##driver = 								\
 	256 + 32768, 256, 																\
  	cinemat_init_colors, 															\
 																					\
-	VIDEO_TYPE_VECTOR, 																\
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,										\
 	0, 																				\
 	cinemat_vh_start, 																\
 	cinemat_vh_stop, 																\
@@ -219,7 +219,7 @@ void spacewar_init_machine (void)
 	cinemat_set_sound_handler (spacewar_sound_w);
 }
 
-static struct MachineDriver machine_driver_spacewar =
+static const struct MachineDriver machine_driver_spacewar =
 {
 	/* basic machine hardware */
 	{
@@ -240,7 +240,7 @@ static struct MachineDriver machine_driver_spacewar =
 	256 + 32768, 256,
  	spacewar_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	spacewar_vh_start,
 	spacewar_vh_stop,
@@ -1098,7 +1098,7 @@ static Z80_DaisyChain daisy_chain[] =
 
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
-static struct MachineDriver machine_driver_demon =
+static const struct MachineDriver machine_driver_demon =
 {
 	/* basic machine hardware */
 	{
@@ -1126,7 +1126,7 @@ static struct MachineDriver machine_driver_demon =
 	256 + 32768, 256,
  	cinemat_init_colors,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
 	0,
 	cinemat_vh_start,
 	cinemat_vh_stop,

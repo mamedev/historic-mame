@@ -308,7 +308,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct MachineDriver machine_driver_starfire =
+static const struct MachineDriver machine_driver_starfire =
 {
 	/* basic machine hardware */
 	{

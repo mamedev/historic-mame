@@ -355,7 +355,7 @@ int bssoccer_interrupt(void)
 	}
 }
 
-static struct MachineDriver machine_driver_bssoccer =
+static const struct MachineDriver machine_driver_bssoccer =
 {
 	{
 		{

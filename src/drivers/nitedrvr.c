@@ -168,7 +168,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver_nitedrv =
+static const struct MachineDriver machine_driver_nitedrv =
 {
 	/* basic machine hardware */
 	{
@@ -218,6 +218,9 @@ ROM_START( nitedrvr )
 
 	ROM_REGION( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6568-01.p2",   0x0000, 0x0200, 0xf80d8889 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "6559-01.h7",   0x0000, 0x0100, 0x5a8d0e42 )	/* unknown */
 ROM_END
 
 

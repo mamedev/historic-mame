@@ -680,7 +680,7 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_wolfu =
+static const struct MachineDriver machine_driver_wolfu =
 {
 	/* basic machine hardware */
 	{

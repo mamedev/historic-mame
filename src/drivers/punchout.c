@@ -816,7 +816,7 @@ static struct VLM5030interface vlm5030_interface =
 
 
 #define MACHINE_DRIVER(NAME,GFX,COLORTABLE)											\
-static struct MachineDriver machine_driver_##NAME =									\
+static const struct MachineDriver machine_driver_##NAME =									\
 {																					\
 	/* basic machine hardware */													\
 	{																				\

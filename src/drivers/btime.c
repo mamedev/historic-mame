@@ -1347,7 +1347,7 @@ static struct AY8910interface ay8910_interface =
 
 #define MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
 																	\
-static struct MachineDriver machine_driver_##GAMENAME =             \
+static const struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                	\
 	{		                                                        \
@@ -1948,7 +1948,7 @@ static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct MachineDriver machine_driver_decocass =
+static const struct MachineDriver machine_driver_decocass =
 {
 	/* basic machine hardware */
 	{

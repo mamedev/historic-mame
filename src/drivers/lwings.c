@@ -8,10 +8,6 @@
   Driver provided by Paul Leaman
 
 TODO:
-- Trojan contains a third Z80 to drive the game samples. This third
-  Z80 outputs the ADPCM data byte at a time to the sound hardware. Since
-  this will be expensive to do this extra processor is not emulated.
-  Instead, the ADPCM data is lifted directly from the sound ROMS.
 - sectionz does "false contacts" on the coin counters, causing them to
   increment twice per coin.
 
@@ -19,105 +15,69 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/z80/z80.h"
 
 
-extern unsigned char *lwings_backgroundram;
-extern unsigned char *lwings_backgroundattribram;
-extern size_t lwings_backgroundram_size;
-extern unsigned char *lwings_scrolly;
-extern unsigned char *lwings_scrollx;
-extern unsigned char *lwings_palette_bank;
-WRITE_HANDLER( lwings_background_w );
-WRITE_HANDLER( lwings_backgroundattrib_w );
-WRITE_HANDLER( lwings_palette_bank_w );
+extern unsigned char *lwings_fgvideoram;
+extern unsigned char *lwings_bg1videoram;
+
+WRITE_HANDLER( lwings_fgvideoram_w );
+WRITE_HANDLER( lwings_bg1videoram_w );
+WRITE_HANDLER( lwings_bg1_scrollx_w );
+WRITE_HANDLER( lwings_bg1_scrolly_w );
+WRITE_HANDLER( lwings_bg2_scrollx_w );
+WRITE_HANDLER( lwings_bg2_image_w );
 int  lwings_vh_start(void);
-void lwings_vh_stop(void);
-void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-extern unsigned char *trojan_scrolly;
-extern unsigned char *trojan_scrollx;
-extern unsigned char *trojan_bk_scrolly;
-extern unsigned char *trojan_bk_scrollx;
-int  avengers_vh_start(void);
 int  trojan_vh_start(void);
-void trojan_vh_stop(void);
+int  avengers_vh_start(void);
+void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lwings_eof_callback(void);
 
 
 
-int lwings_bank_register=0xff;
-
-WRITE_HANDLER( lwings_bankswitch_w )
+static WRITE_HANDLER( lwings_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *RAM;
+	int bank;
+
+
+	/* bit 0 is flip screen */
+	flip_screen_w(0,~data & 0x01);
+
 	/* bits 1 and 2 select ROM bank */
-	int bank = (data & 0x06) >> 1;
+	RAM = memory_region(REGION_CPU1);
+	bank = (data & 0x06) >> 1;
 	cpu_setbank(1,&RAM[0x10000 + bank*0x4000]);
 
-	/* bit 0 is flip screen (not supported yet) */
-
 	/* bit 3 enables NMI */
-	lwings_bank_register=data;
+	interrupt_enable_w(0,data & 0x08);
 
 	/* bits 6 and 7 are coin counters */
 	coin_counter_w(1,data & 0x40);
 	coin_counter_w(0,data & 0x80);
 }
 
-int lwings_interrupt(void)
+static int lwings_interrupt(void)
 {
 	return 0x00d7; /* RST 10h */
 }
 
-int avengers_interrupt( void ){ /* hack */
-#if 0
-	static int n;
-	if (keyboard_pressed_memory(KEYCODE_S)){ /* test code */
-		n++;
-		n&=0x0f;
-		ADPCM_trigger(0, n);
-	}
-#endif
+static int avengers_interrupt( void )
+{ /* hack */
+	static int s;
 
-	if( lwings_bank_register & 0x08 ){ /* NMI enable */
-		static int s;
-		s=!s;
-		if( s ){
-			return interrupt();
-			//cpu_cause_interrupt(0, 0xd7);
-		}
-		else {
-			return Z80_NMI_INT;
-		}
-	}
-
-	return Z80_IGNORE_INT;
+	s=!s;
+	if( s )
+		return interrupt();
+	else
+		return nmi_interrupt();
 }
 
-WRITE_HANDLER( trojan_sound_cmd_w )
-{
-       soundlatch_w(offset, data);
-       if (data != 0xff && (data & 0x08))
-       {
-	      /*
-	      I assume that Trojan's ADPCM output is directly derived
-	      from the sound code. I can't find an output port that
-	      does this on either the sound board or main board.
-	      */
-	      ADPCM_trigger(0, data & 0x07);
-	}
-
-#if 0
-	logerror("Sound Code=%02x\n", data);
-#endif
-}
-
-WRITE_HANDLER( avengers_protection_w )
+static WRITE_HANDLER( avengers_protection_w )
 {
 }
 
-READ_HANDLER( avengers_protection_r )
+static READ_HANDLER( avengers_protection_r )
 {
 	/* the protection reads are used for background palette among other things */
 	static int hack;
@@ -125,12 +85,20 @@ READ_HANDLER( avengers_protection_r )
 	return hack++;
 }
 
+static WRITE_HANDLER( msm5205_w )
+{
+	MSM5205_reset_w(offset,(data>>7)&1);
+	MSM5205_data_w(offset,data);
+	MSM5205_vclk_w(offset,1);
+	MSM5205_vclk_w(offset,0);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x7fff, MRA_ROM },   /* CODE */
-	{ 0x8000, 0xbfff, MRA_BANK1 },  /* CODE */
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xf7ff, MRA_RAM },
 	{ 0xf808, 0xf808, input_port_0_r },
 	{ 0xf809, 0xf809, input_port_1_r },
@@ -146,25 +114,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xddff, MWA_RAM },
 	{ 0xde00, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe400, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
-	{ 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
+	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
+	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
 	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
-	{ 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
-	{ 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
-	{ 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
-	{ 0xf805, 0xf805, MWA_RAM, &trojan_bk_scrolly },
-	{ 0xf808, 0xf809, MWA_RAM, &lwings_scrolly},
-	{ 0xf80a, 0xf80b, MWA_RAM, &lwings_scrollx},
+	{ 0xf808, 0xf809, lwings_bg1_scrollx_w },
+	{ 0xf80a, 0xf80b, lwings_bg1_scrolly_w },
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
 	{ -1 }  /* end of table */
 };
-
-/* TROJAN - intercept sound command write for ADPCM samples */
 
 static struct MemoryWriteAddress trojan_writemem[] =
 {
@@ -172,45 +132,72 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xc000, 0xddff, MWA_RAM },
 	{ 0xde00, 0xdf7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xdf80, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe400, 0xe7ff, colorram_w, &colorram },
-	{ 0xe800, 0xebff, lwings_background_w, &lwings_backgroundram, &lwings_backgroundram_size },
-	{ 0xec00, 0xefff, lwings_backgroundattrib_w, &lwings_backgroundattribram },
+	{ 0xe000, 0xe7ff, lwings_fgvideoram_w, &lwings_fgvideoram },
+	{ 0xe800, 0xefff, lwings_bg1videoram_w, &lwings_bg1videoram },
 	{ 0xf000, 0xf3ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0xf400, 0xf7ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
-	{ 0xf800, 0xf801, MWA_RAM, &trojan_scrollx },
-	{ 0xf802, 0xf803, MWA_RAM, &trojan_scrolly },
-	{ 0xf804, 0xf804, MWA_RAM, &trojan_bk_scrollx },
-	{ 0xf805, 0xf805, MWA_RAM, &trojan_bk_scrolly },
+	{ 0xf800, 0xf801, lwings_bg1_scrollx_w },
+	{ 0xf802, 0xf803, lwings_bg1_scrolly_w },
+	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
+	{ 0xf805, 0xf805, lwings_bg2_image_w },
 	{ 0xf809, 0xf809, avengers_protection_w },
-	{ 0xf80c, 0xf80c, trojan_sound_cmd_w },
+	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
 	{ -1 }  /* end of table */
 };
 
 
-
 static struct MemoryReadAddress sound_readmem[] =
 {
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xc800, soundlatch_r },
 	{ 0xe006, 0xe006, MRA_RAM },    /* Avengers - ADPCM status?? */
-	{ 0x0000, 0x7fff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2203_control_port_0_w },
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },
 	{ 0xe002, 0xe002, YM2203_control_port_1_w },
 	{ 0xe003, 0xe003, YM2203_write_port_1_w },
 	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
-	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
+
+static struct MemoryReadAddress adpcm_readmem[] =
+{
+	{ 0x0000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+/* Yes, _no_ ram */
+static struct MemoryWriteAddress adpcm_writemem[] =
+{
+/*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
+	{ 0x0000, 0xffff, MWA_NOP },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort adpcm_readport[] =
+{
+	{ 0x00, 0x00, soundlatch_r },
+	{ -1 }
+};
+
+
+static struct IOWritePort adpcm_writeport[] =
+{
+	{ 0x01, 0x01, msm5205_w },
+	{ -1 }
+};
+
+
 
 INPUT_PORTS_START( sectionz )
 	PORT_START      /* IN0 */
@@ -521,7 +508,7 @@ INPUT_PORTS_START( trojanls )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen?" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
@@ -529,86 +516,152 @@ INPUT_PORTS_START( trojanls )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( avengers )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus" )
+	PORT_DIPSETTING(    0x30, "20k 60k" )
+	PORT_DIPSETTING(    0x10, "20k 70k" )
+	PORT_DIPSETTING(    0x20, "20k 80k" )
+	PORT_DIPSETTING(    0x00, "30k 80k" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+
+	PORT_START      /* DSWA */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	1024,   /* 1024 characters */
-	2,      /* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8    /* every char takes 16 consecutive bytes */
-};
-
-static struct GfxLayout tilelayout =
-{
-	16,16,  /* 16*16 tiles */
-	2048,   /* 2048 tiles */
-	4,      /* 4 bits per pixel */
-	{ 0x30000*8, 0x20000*8, 0x10000*8, 0x00000*8  },  /* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8    /* every tile takes 32 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	1024,   /* 1024 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0x10000*8+4, 0x10000*8+0, 4, 0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8    /* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
-static struct GfxLayout spritelayout_trojan = /* LWings, with more sprites */
+static struct GfxLayout bg1_tilelayout =
 {
-	16,16,  /* 16*16 sprites */
-	2048,   /* 2048 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8    /* every sprite takes 64 consecutive bytes */
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
 };
 
-static struct GfxLayout bktilelayout_trojan =
+static struct GfxLayout bg2_tilelayout =
 {
-	16,16,  /* 16*16 sprites */
-	512,   /* 512 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0x08000*8+0, 0x08000*8+4, 0, 4 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4, 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8    /* every sprite takes 64 consecutive bytes */
+	64*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   512, 16 }, /* colors 512-575 */
-	{ REGION_GFX2, 0, &tilelayout,     0,  8 }, /* colors   0-127 */
-	{ REGION_GFX3, 0, &spritelayout, 384,  8 }, /* colors 384-511 */
+	{ REGION_GFX1, 0, &charlayout,     512, 16 }, /* colors 512-575 */
+	{ REGION_GFX2, 0, &bg1_tilelayout,   0,  8 }, /* colors   0-127 */
+	{ REGION_GFX3, 0, &spritelayout,   384,  8 }, /* colors 384-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 {
-	{ REGION_GFX1, 0, &charlayout,          768, 16 },  /* colors 768-831 */
-	{ REGION_GFX2, 0, &tilelayout,          256,  8 },  /* colors 256-383 */
-	{ REGION_GFX3, 0, &spritelayout_trojan, 640,  8 },  /* colors 640-767 */
-	{ REGION_GFX4, 0, &bktilelayout_trojan,   0,  8 },  /* colors   0-127 */
+	{ REGION_GFX1, 0, &charlayout,     768, 16 }, /* colors 768-831 */
+	{ REGION_GFX2, 0, &bg1_tilelayout, 256,  8 }, /* colors 256-383 */
+	{ REGION_GFX3, 0, &spritelayout,   640,  8 }, /* colors 640-767 */
+	{ REGION_GFX4, 0, &bg2_tilelayout,   0,  8 }, /* colors   0-127 */
 	{ -1 } /* end of array */
 };
 
@@ -616,8 +669,8 @@ static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	2,                      /* 2 chips */
-	1500000,        /* 1.5 MHz (?) */
+	2,			/* 2 chips */
+	1500000,	/* 1.5 MHz (?) */
 	{ YM2203_VOL(10,20), YM2203_VOL(10,20) },
 	{ 0 },
 	{ 0 },
@@ -625,9 +678,18 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
+static struct MSM5205interface msm5205_interface =
+{
+	1,					/* 1 chip */
+	384000,				/* 384KHz ? */
+	{ 0 },				/* interrupt function */
+	{ MSM5205_SEX_4B },	/* slave mode */
+	{ 50 }
+};
 
 
-static struct MachineDriver machine_driver_lwings =
+
+static const struct MachineDriver machine_driver_lwings =
 {
 	/* basic machine hardware */
 	{
@@ -654,10 +716,10 @@ static struct MachineDriver machine_driver_lwings =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	lwings_eof_callback,
 	lwings_vh_start,
-	lwings_vh_stop,
+	0,
 	lwings_vh_screenrefresh,
 
 	/* sound hardware */
@@ -666,6 +728,114 @@ static struct MachineDriver machine_driver_lwings =
 		{
 			SOUND_YM2203,
 			&ym2203_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_trojan =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,        /* 4 MHz (?) */
+			readmem,trojan_writemem,0,0,
+			lwings_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,        /* 3 MHz (?) */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,4
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* ? */
+			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
+			0,0,
+			interrupt,4000
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	gfxdecodeinfo_trojan,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	lwings_eof_callback,
+	trojan_vh_start,
+	0,
+	trojan_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface,
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_avengers =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,        /* 4 MHz (?) */
+			readmem,trojan_writemem,0,0,
+			avengers_interrupt,2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,        /* 3 MHz (?) */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,4
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* ? */
+			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
+			0,0,
+			interrupt,4000
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	gfxdecodeinfo_trojan,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	lwings_eof_callback,
+	avengers_vh_start,
+	0,
+	trojan_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface,
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
 		}
 	}
 };
@@ -773,19 +943,6 @@ ROM_START( lwingsjp )
 	ROM_LOAD( "63s141.15g",   0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
 
-
-
-/***************************************************************
-
- Section Z
- =========
-
-   Exactly the same hardware as legendary wings, apart from the
-   graphics orientation.
-
-***************************************************************/
-
-
 ROM_START( sectionz )
 	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x69585125 )
@@ -849,103 +1006,6 @@ ROM_START( sctionza )
 	ROM_REGION( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114e.15g",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
 ROM_END
-
-
-
-/***************************************************************
-
- Trojan
- ======
-
-   Similar to Legendary Wings apart from:
-   1) More sprites
-   2) 3rd Z80 (ADPCM)
-   3) Different palette layout
-   4) Third Background tile layer
-
-***************************************************************/
-
-
-
-/*
-ADPCM is driven by Z80 continuously outputting to a port. The following
-table is lifted from the code.
-
-Sample 5 doesn't play properly.
-*/
-
-struct ADPCMsample trojan_samples[] =
-{
-	{ 0x00, 0x00a7, (0x0aa9-0x00a7)*2 },
-	{ 0x01, 0x0aa9, (0x12ab-0x0aa9)*2 },
-	{ 0x02, 0x12ab, (0x17ad-0x12ab)*2 },
-	{ 0x03, 0x17ad, (0x22af-0x17ad)*2 },
-	{ 0x04, 0x22af, (0x2db1-0x22af)*2 },
-	{ 0x05, 0x2db1, (0x310a-0x2db1)*2 },
-	{ 0x06, 0x310a, (0x3cb3-0x310a)*2 }
-};
-
-static void trojan_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
-{
-	memcpy(sample_list,trojan_samples,sizeof(trojan_samples));
-}
-
-static struct ADPCMinterface trojan_adpcm_interface =
-{
-	1,                      /* 1 channel */
-	4000,                   /* 4000Hz playback */
-	REGION_CPU3,            /* memory region */
-	trojan_adpcm_init,		/* init function */
-	{ 255 }
-};
-
-static struct MachineDriver machine_driver_trojan =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem,trojan_writemem,0,0,
-			lwings_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2500,       /* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo_trojan,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	trojan_vh_start,
-	trojan_vh_stop,
-	trojan_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface,
-		},
-		{
-			SOUND_ADPCM,
-			&trojan_adpcm_interface
-		}
-	}
-};
 
 ROM_START( trojan )
 	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
@@ -1034,11 +1094,11 @@ ROM_START( trojanr )
 	ROM_LOAD( "tb24.bin",     0x08000, 0x8000, 0x14fc6cf2 )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
-	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+	ROM_LOAD( "tb23.bin",     0x0000,  0x8000, 0xeda13c0e )  /* Tile Map */
 
 	ROM_REGION( 0x0200, REGION_PROMS )
-	ROM_LOAD( "tbp24s10.7j",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
-	ROM_LOAD( "mb7114e.1e",   0x0100, 0x0100, 0x5052fa9d )	/* priority (not used) */
+	ROM_LOAD( "tbp24s10.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "mb7114e.1e",   0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
 
 ROM_START( trojanj )
@@ -1081,181 +1141,12 @@ ROM_START( trojanj )
 	ROM_LOAD( "tb24.bin",     0x08000, 0x8000, 0x14fc6cf2 )
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
-	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+	ROM_LOAD( "tb23.bin",     0x0000,  0x8000, 0xeda13c0e )  /* Tile Map */
 
 	ROM_REGION( 0x0200, REGION_PROMS )
-	ROM_LOAD( "tbp24s10.7j",  0x0000, 0x0100, 0xd96bcc98 )	/* timing (not used) */
-	ROM_LOAD( "mb7114e.1e",   0x0100, 0x0100, 0x5052fa9d )	/* priority (not used) */
+	ROM_LOAD( "tbp24s10.7j",  0x0000,  0x0100, 0xd96bcc98 )	/* timing (not used) */
+	ROM_LOAD( "mb7114e.1e",   0x0100,  0x0100, 0x5052fa9d )	/* priority (not used) */
 ROM_END
-
-/***************************************************************************
-
- Avengers - Doesn't work properly due to copy protection
-
- ***************************************************************************/
-
-
-/*
-E2 00 E4 03 E6 0C E8 10 EA 19 EC 25 EE 38 F0 3B F2 3E F4 49 F4 s
-*/
-struct ADPCMsample avengers_samples[] =
-{
-	{ 0x00, 0x00e2, (0x03e4 -0x00e2)*2 },
-	{ 0x01, 0x03e4, (0x0ce6 -0x03e4)*2 },
-	{ 0x02, 0x0ce6, (0x10e8 -0x0ce6)*2 },
-	{ 0x03, 0x10e8, (0x19ea -0x10e8)*2 },
-	{ 0x04, 0x19ea, (0x25ec -0x19ea)*2 },
-	{ 0x05, 0x25ec, (0x38ee -0x25ec)*2 },
-	{ 0x06, 0x38ee, (0x3bf0 -0x38ee)*2 },
-	{ 0x07, 0x3bf0, (0x3ef2 -0x3bf0)*2 },
-	{ 0x08, 0x3ef2, (0x49f4 -0x3ef2)*2 }
-};
-
-static void avengers_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
-{
-	memcpy(sample_list,avengers_samples,sizeof(avengers_samples));
-}
-
-static struct ADPCMinterface avengers_adpcm_interface =
-{
-	1,                      /* 1 channel */
-	4000,                   /* 4000Hz playback */
-	REGION_CPU3,            /* memory region */
-	avengers_adpcm_init,	/* init function */
-	{ 255 }
-};
-
-/*
-machine driver is exactly the same as trojan apart from
-a new custom interrupt handler and slightly different videohardware
-*/
-
-static struct MachineDriver machine_driver_avengers =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem,trojan_writemem,0,0,
-			avengers_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2500,       /* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo_trojan,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	avengers_vh_start,
-	trojan_vh_stop,
-	trojan_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface,
-		},
-		{
-			SOUND_ADPCM,
-			&avengers_adpcm_interface
-		}
-	}
-};
-
-INPUT_PORTS_START( avengers )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
-
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus" )
-	PORT_DIPSETTING(    0x30, "20k 60k" )
-	PORT_DIPSETTING(    0x10, "20k 70k" )
-	PORT_DIPSETTING(    0x20, "20k 80k" )
-	PORT_DIPSETTING(    0x00, "30k 80k" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0xc0, "3" )
-	PORT_DIPSETTING(    0x40, "4" )
-	PORT_DIPSETTING(    0x80, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-
-	PORT_START      /* DSWA */
-	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
-INPUT_PORTS_END
 
 ROM_START( avengers )
 	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
@@ -1297,10 +1188,10 @@ ROM_START( avengers )
 	ROM_LOAD( "24.13n",       0x08000, 0x8000, 0xa6354024 ) /* planes 2,3 */
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
-	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
+	ROM_LOAD( "23.9n",        0x0000,  0x8000, 0xc0a93ef6 )  /* Tile Map */
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "63s141.7j",    0x0000, 0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
+	ROM_LOAD( "63s141.7j",    0x0000,  0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
 ROM_END
 
 ROM_START( avenger2 )
@@ -1310,10 +1201,10 @@ ROM_START( avenger2 )
 	ROM_LOAD( "avg5.bin",     0x18000, 0x8000, 0x9a214b42 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "02.15h",       0x0000, 0x8000, 0x107a2e17 ) /* MISSING from this set */
+	ROM_LOAD( "02.15h",       0x0000,  0x8000, 0x107a2e17 ) /* MISSING from this set */
 
 	ROM_REGION( 0x10000, REGION_CPU3 )     /* ADPCM CPU (not emulated) */
-	ROM_LOAD( "01.6d",        0x0000, 0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
+	ROM_LOAD( "01.6d",        0x0000,  0x8000, 0xc1e5d258 ) /* adpcm player - "Talker" ROM */
 
 	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03.8k",        0x00000, 0x4000, 0x4a297a5c )  /* characters */
@@ -1343,20 +1234,21 @@ ROM_START( avenger2 )
 	ROM_LOAD( "24.13n",       0x08000, 0x8000, 0xa6354024 ) /* planes 2,3 */
 
 	ROM_REGION( 0x08000, REGION_GFX5 )
-	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
+	ROM_LOAD( "23.9n",        0x0000,  0x8000, 0xc0a93ef6 )  /* Tile Map */
 
 	ROM_REGION( 0x0100, REGION_PROMS )
-	ROM_LOAD( "63s141.7j",    0x0000, 0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
+	ROM_LOAD( "63s141.7j",    0x0000,  0x0100, 0xa5259e65 )	/* interrupt timing? (not used) */
 ROM_END
 
 
-GAMEX(1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)", GAME_NO_COCKTAIL )
-GAMEX(1986, lwings2,  lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 2)", GAME_NO_COCKTAIL )
-GAMEX(1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Ales no Tsubasa (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 2)", GAME_NO_COCKTAIL )
-GAMEX(1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)", GAME_NO_COCKTAIL )
-GAMEX(1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)", GAME_NO_COCKTAIL )
-GAMEX(1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
-GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+
+GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 1)" )
+GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 2)" )
+GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT90, "Capcom", "Legendary Wings (US set 1)" )
+GAME( 1986, lwings2,  lwings,   lwings,   lwings,   0, ROT90, "Capcom", "Legendary Wings (US set 2)" )
+GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT90, "Capcom", "Ales no Tsubasa (Japan)" )
+GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,  "Capcom", "Trojan (US)" )
+GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom (Romstar license)", "Trojan (Romstar)" )
+GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom", "Tatakai no Banka (Japan)" )
+GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
+GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )

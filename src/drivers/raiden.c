@@ -317,7 +317,7 @@ static void raiden_eof_callback(void)
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static struct MachineDriver machine_driver_raiden =
+static const struct MachineDriver machine_driver_raiden =
 {
 	/* basic machine hardware */
 	{
@@ -360,7 +360,7 @@ static struct MachineDriver machine_driver_raiden =
 	}
 };
 
-static struct MachineDriver machine_driver_raidena =
+static const struct MachineDriver machine_driver_raidena =
 {
 	/* basic machine hardware */
 	{

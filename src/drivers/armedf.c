@@ -756,7 +756,7 @@ static struct DACinterface cclimbr2_dac_interface =
 	{ 40, 40 },
 };
 
-static struct MachineDriver machine_driver_terraf =
+static const struct MachineDriver machine_driver_terraf =
 {
 	{
 		{
@@ -802,7 +802,7 @@ static struct MachineDriver machine_driver_terraf =
 	}
 };
 
-static struct MachineDriver machine_driver_kodure =
+static const struct MachineDriver machine_driver_kodure =
 {
 	{
 		{
@@ -848,7 +848,7 @@ static struct MachineDriver machine_driver_kodure =
 	}
 };
 
-static struct MachineDriver machine_driver_armedf =
+static const struct MachineDriver machine_driver_armedf =
 {
 	{
 		{
@@ -894,7 +894,7 @@ static struct MachineDriver machine_driver_armedf =
 	}
 };
 
-static struct MachineDriver machine_driver_cclimbr2 =
+static const struct MachineDriver machine_driver_cclimbr2 =
 {
 	{
 		{

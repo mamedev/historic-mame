@@ -34,12 +34,12 @@ WRITE_HANDLER( xain_flipscreen_w );
 extern unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
 
 
-READ_HANDLER( xain_sharedram_r )
+static READ_HANDLER( xain_sharedram_r )
 {
 	return xain_sharedram[offset];
 }
 
-WRITE_HANDLER( xain_sharedram_w )
+static WRITE_HANDLER( xain_sharedram_w )
 {
 	/* locations 003d and 003e are used as a semaphores between CPU A and B, */
 	/* so let's resync every time they are changed to avoid deadlocks */
@@ -49,7 +49,7 @@ WRITE_HANDLER( xain_sharedram_w )
 	xain_sharedram[offset] = data;
 }
 
-WRITE_HANDLER( xainCPUA_bankswitch_w )
+static WRITE_HANDLER( xainCPUA_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -57,7 +57,7 @@ WRITE_HANDLER( xainCPUA_bankswitch_w )
 	else {cpu_setbank(1,&RAM[0x4000]);}
 }
 
-WRITE_HANDLER( xainCPUB_bankswitch_w )
+static WRITE_HANDLER( xainCPUB_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -65,7 +65,7 @@ WRITE_HANDLER( xainCPUB_bankswitch_w )
 	else {cpu_setbank(2,&RAM[0x4000]);}
 }
 
-WRITE_HANDLER( xain_sound_command_w )
+static WRITE_HANDLER( xain_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,M6809_INT_IRQ);
@@ -334,7 +334,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver_xsleena =
+static const struct MachineDriver machine_driver_xsleena =
 {
 	{
 		{

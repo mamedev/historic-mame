@@ -296,7 +296,7 @@ static struct namco_interface namco_interface =
 
 
 
-static struct MachineDriver machine_driver_jrpacman =
+static const struct MachineDriver machine_driver_jrpacman =
 {
 	/* basic machine hardware */
 	{

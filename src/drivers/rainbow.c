@@ -281,7 +281,7 @@ static struct GfxDecodeInfo rainbowe_gfxdecodeinfo[] =
 	{ -1 } 										/* end of array */
 };
 
-static struct MachineDriver machine_driver_rainbow =
+static const struct MachineDriver machine_driver_rainbow =
 {
 	/* basic machine hardware */
 	{
@@ -531,7 +531,7 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_jumping =
+static const struct MachineDriver machine_driver_jumping =
 {
 	/* basic machine hardware */
 	{

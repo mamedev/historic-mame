@@ -143,7 +143,7 @@ static void init_m79amb(void)
 		rom[i] = ~rom[i];
 }
 
-static struct MachineDriver machine_driver_m79amb =
+static const struct MachineDriver machine_driver_m79amb =
 {
 	/* basic machine hardware */
 	{

@@ -415,7 +415,7 @@ static struct MemoryWriteAddress masao_sound_writemem[] =
 };
 
 
-static struct MachineDriver machine_driver_mario =
+static const struct MachineDriver machine_driver_mario =
 {
 	/* basic machine hardware */
 	{
@@ -462,7 +462,7 @@ static struct MachineDriver machine_driver_mario =
 	}
 };
 
-static struct MachineDriver machine_driver_masao =
+static const struct MachineDriver machine_driver_masao =
 {
 	/* basic machine hardware */
 	{

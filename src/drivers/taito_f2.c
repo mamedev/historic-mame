@@ -17,6 +17,12 @@ Sound is handled by a Z80 with a YM2610 connected to it.
 
 The memory map for each of the games is similar but not identical.
 
+Notes:
+- Metal Black has secret command to select stage.
+  Start the machine with holding service switch.
+  Then push 1p start, 1p start, 1p start, service SW, 1p start
+  while error message is displayed.
+
 
 Custom chips
 ------------
@@ -5223,7 +5229,7 @@ static void init_machine_qcrayon(void)
 #define init_machine_0 0
 
 #define MACHINE_DRIVER(NAME,INIT,MAXCOLS,GFX,VHSTART,VHREFRESH,EOF)							\
-static struct MachineDriver machine_driver_##NAME =									\
+static const struct MachineDriver machine_driver_##NAME =									\
 {																					\
 	/* basic machine hardware */													\
 	{																				\

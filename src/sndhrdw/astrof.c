@@ -44,18 +44,20 @@ struct Samplesinterface astrof_samples_interface =
 	astrof_sample_names
 };
 
+#if 0
 static const char *tomahawk_sample_names[] =
 {
 	"*tomahawk",
 	/* We don't have these yet */
 	0   /* end of array */
 };
+#endif
 
 struct Samplesinterface tomahawk_samples_interface =
 {
 	1,	/* 1 channel for now */
 	25,	/* volume */
-	tomahawk_sample_names
+	0,//tomahawk_sample_names
 };
 
 

@@ -398,7 +398,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_offtwall =
+static const struct MachineDriver machine_driver_offtwall =
 {
 	/* basic machine hardware */
 	{
@@ -420,7 +420,7 @@ static struct MachineDriver machine_driver_offtwall =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	offtwall_vh_start,
 	offtwall_vh_stop,

@@ -283,7 +283,7 @@ static struct YM2608interface ym2608_interface =
 
 
 
-static struct MachineDriver machine_driver_tail2nos =
+static const struct MachineDriver machine_driver_tail2nos =
 {
 	/* basic machine hardware */
 	{

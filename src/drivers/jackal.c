@@ -430,7 +430,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver_jackal =
+static const struct MachineDriver machine_driver_jackal =
 {
 	/* basic machine hardware */
 	{
@@ -474,7 +474,7 @@ static struct MachineDriver machine_driver_jackal =
 };
 
 /* identical but different gfxdecode */
-static struct MachineDriver machine_driver_topgunbl =
+static const struct MachineDriver machine_driver_topgunbl =
 {
 	/* basic machine hardware */
 	{

@@ -22,6 +22,20 @@
  *	 - Cycle counts are guesswork :-)
  *
  *****************************************************************************/
+/* 
+   PeT 11.August 2000
+       added NMOS rw opcodes address access behaviour
+	   emulation of this currently NOT in NMOS 6502, N2A03, M6509
+	   only done in the official opcodes
+	   (inofficial are too hard to guess and test)
+   NMOS does rw opcodes
+   (inc 00) as read 00 into alu, write alu into 00, inc alu, write alu into 00
+   CMOS 
+   (inc 00) as read 00 into alu, read alu into 00, inc alu, write alu into 00
+   needed in many C64,c16 games
+   c16 lone07 does asl ff09, 1st write cycles quits interrupt
+*/
+
 
 #undef	OP
 #define OP(nn) INLINE void m6510_##nn(void)
@@ -141,23 +155,23 @@ OP(f4) {		  m6502_ICount -= 2;		 DOP;		  } /* 2 DOP */
 #define m6510_d5 m6502_d5									/* 4 CMP ZPX */
 #define m6510_f5 m6502_f5									/* 4 SBC ZPX */
 
-#define m6510_06 m6502_06									/* 5 ASL ZPG */
-#define m6510_26 m6502_26									/* 5 ROL ZPG */
-#define m6510_46 m6502_46									/* 5 LSR ZPG */
-#define m6510_66 m6502_66									/* 5 ROR ZPG */
+OP(06) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; ASL; WB_EA;  } /* 5 ASL ZPG */
+OP(26) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; ROL; WB_EA;  } /* 5 ROL ZPG */
+OP(46) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; LSR; WB_EA;  } /* 5 LSR ZPG */
+OP(66) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; ROR; WB_EA;  } /* 5 ROR ZPG */
 #define m6510_86 m6502_86									/* 3 STX ZPG */
 #define m6510_a6 m6502_a6									/* 3 LDX ZPG */
-#define m6510_c6 m6502_c6									/* 5 DEC ZPG */
-#define m6510_e6 m6502_e6									/* 5 INC ZPG */
+OP(c6) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; DEC; WB_EA;  } /* 5 DEC ZPG */
+OP(e6) { int tmp; m6502_ICount -= 5; RD_ZPG; WB_EA; INC; WB_EA;  } /* 5 INC ZPG */
 
-#define m6510_16 m6502_16									/* 6 ASL ZPX */
-#define m6510_36 m6502_36									/* 6 ROL ZPX */
-#define m6510_56 m6502_56									/* 6 LSR ZPX */
-#define m6510_76 m6502_76									/* 6 ROR ZPX */
+OP(16) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; ASL; WB_EA;  } /* 6 ASL ZPX */
+OP(36) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; ROL; WB_EA;  } /* 6 ROL ZPX */
+OP(56) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; LSR; WB_EA;  } /* 6 LSR ZPX */
+OP(76) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; ROR; WB_EA;  } /* 6 ROR ZPX */
 #define m6510_96 m6502_96									/* 4 STX ZPY */
 #define m6510_b6 m6502_b6									/* 4 LDX ZPY */
-#define m6510_d6 m6502_d6									/* 6 DEC ZPX */
-#define m6510_f6 m6502_f6									/* 6 INC ZPX */
+OP(d6) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; DEC; WB_EA;  } /* 6 DEC ZPX */
+OP(f6) { int tmp; m6502_ICount -= 6; RD_ZPX; WB_EA; INC; WB_EA;  } /* 6 INC ZPX */
 
 OP(07) { int tmp; m6502_ICount -= 5; RD_ZPG; SLO; WB_EA;  } /* 5 SLO ZPG */
 OP(27) { int tmp; m6502_ICount -= 5; RD_ZPG; RLA; WB_EA;  } /* 5 RLA ZPG */
@@ -285,23 +299,24 @@ OP(fc) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 #define m6510_dd m6502_dd									/* 4 CMP ABX */
 #define m6510_fd m6502_fd									/* 4 SBC ABX */
 
-#define m6510_0e m6502_0e									/* 6 ASL ABS */
-#define m6510_2e m6502_2e									/* 6 ROL ABS */
-#define m6510_4e m6502_4e									/* 6 LSR ABS */
-#define m6510_6e m6502_6e									/* 6 ROR ABS */
+
+OP(0e) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; ASL; WB_EA;  } /* 6 ASL ABS */
+OP(2e) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; ROL; WB_EA;  } /* 6 ROL ABS */
+OP(4e) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; LSR; WB_EA;  } /* 6 LSR ABS */
+OP(6e) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; ROR; WB_EA;  } /* 6 ROR ABS */
 #define m6510_8e m6502_8e									/* 5 STX ABS */
 #define m6510_ae m6502_ae									/* 4 LDX ABS */
-#define m6510_ce m6502_ce									/* 6 DEC ABS */
-#define m6510_ee m6502_ee									/* 6 INC ABS */
+OP(ce) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; DEC; WB_EA;  } /* 6 DEC ABS */
+OP(ee) { int tmp; m6502_ICount -= 6; RD_ABS; WB_EA; INC; WB_EA;  } /* 6 INC ABS */
 
-#define m6510_1e m6502_1e									/* 7 ASL ABX */
-#define m6510_3e m6502_3e									/* 7 ROL ABX */
-#define m6510_5e m6502_5e									/* 7 LSR ABX */
-#define m6510_7e m6502_7e									/* 7 ROR ABX */
+OP(1e) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; ASL; WB_EA;  } /* 7 ASL ABX */
+OP(3e) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; ROL; WB_EA;  } /* 7 ROL ABX */
+OP(5e) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; LSR; WB_EA;  } /* 7 LSR ABX */
+OP(7e) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; ROR; WB_EA;  } /* 7 ROR ABX */
 OP(9e) { int tmp; m6502_ICount -= 2; EA_ABY; SXH; WB_EA;  } /* 2 SXH ABY */
 #define m6510_be m6502_be									/* 4 LDX ABY */
-#define m6510_de m6502_de									/* 7 DEC ABX */
-#define m6510_fe m6502_fe									/* 7 INC ABX */
+OP(de) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; DEC; WB_EA;  } /* 7 DEC ABX */
+OP(fe) { int tmp; m6502_ICount -= 7; RD_ABX; WB_EA; INC; WB_EA;  } /* 7 INC ABX */
 
 OP(0f) { int tmp; m6502_ICount -= 6; RD_ABS; SLO; WB_EA;  } /* 4 SLO ABS */
 OP(2f) { int tmp; m6502_ICount -= 6; RD_ABS; RLA; WB_EA;  } /* 4 RLA ABS */

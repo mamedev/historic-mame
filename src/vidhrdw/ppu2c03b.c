@@ -93,6 +93,7 @@ typedef struct {
 	int						back_color;				/* background color */
 	UINT8					*ppu_page[4];			/* ppu pages */
 	int						nes_vram[8];			/* keep track of 8 .5k vram pages to speed things up */
+	int						scan_scale;				/* scan scale */
 } ppu2c03b_chip;
 
 /* our local copy of the interface */
@@ -242,6 +243,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		/* initialize the scanline handling portion */
 		chips[i].scanline_timer = 0;
 		chips[i].scanline = 0;
+		chips[i].scan_scale = 1;
 
 		/* allocate a screen bitmap, videoram and spriteram, a dirtychar array and the monochromatic colortable */
 		chips[i].bitmap = bitmap_alloc( VISIBLE_SCREEN_WIDTH, VISIBLE_SCREEN_HEIGHT );
@@ -792,6 +794,8 @@ static void scanline_callback( int num )
 	int blanked = ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) ) == 0;
 	int vblank = ( ppu_regs[PPU_STATUS] & PPU_STATUS_VBLANK ) ? 1 : 0;
 
+/*	logerror("SCANLINE CALLBACK %d\n",chips[num].scanline); */
+
 	/* if a callback is available, call it */
 	if ( chips[num].scanline_callback_proc )
 		(*chips[num].scanline_callback_proc)( num, chips[num].scanline, vblank, blanked );
@@ -838,6 +842,9 @@ static void scanline_callback( int num )
 		/* reset the scanline count */
 		chips[num].scanline = 0;
 	}
+
+	/* setup our next stop here */
+	chips[num].scanline_timer = timer_set( cpu_getscanlinetime( chips[num].scanline * chips[num].scan_scale ), num, scanline_callback );
 }
 
 /*************************************
@@ -845,7 +852,7 @@ static void scanline_callback( int num )
  *	PPU Reset
  *
  *************************************/
-void ppu2c03b_reset( int num, double scanline_period )
+void ppu2c03b_reset( int num, int scan_scale )
 {
 	int i;
 
@@ -860,11 +867,14 @@ void ppu2c03b_reset( int num, double scanline_period )
 	if ( chips[num].scanline_timer )
 		timer_remove( chips[num].scanline_timer );
 
-	/* allocate the scanline timer */
-	chips[num].scanline_timer = timer_pulse( scanline_period, num, scanline_callback );
-
 	/* reset the scanline count */
 	chips[num].scanline = 0;
+
+	/* set the scan scale (this is for dual monitor vertical setups) */
+	chips[num].scan_scale = scan_scale;
+
+	/* allocate the scanline timer - start at scanline 0 */
+	chips[num].scanline_timer = timer_set( cpu_getscanlinetime(0), num, scanline_callback );
 
 	/* reset the callbacks */
 	chips[num].scanline_callback_proc = 0;
@@ -922,14 +932,16 @@ int ppu2c03b_r( int num, int offset )
 	/* check bounds */
 	if ( num >= intf->num )
 	{
-		logerror( "PPU(r): Attempting to access an unmapped chip\n" );
+		logerror( "PPU %d(r): Attempting to access an unmapped chip\n", num );
 		return 0;
 	}
 
 	if ( offset >= PPU_MAX_REG )
 	{
-		logerror( "PPU: Attempting to read past the chip\n" );
-		return 0;
+		logerror( "PPU %d(r): Attempting to read past the chip\n", num );
+
+		offset &= PPU_MAX_REG - 1;
+/*		return 0; */
 	}
 
 	/* now, see wich register to read */
@@ -986,7 +998,9 @@ void ppu2c03b_w( int num, int offset, int data )
 	if ( offset >= PPU_MAX_REG )
 	{
 		logerror( "PPU: Attempting to write past the chip\n" );
-		return;
+
+		offset &= PPU_MAX_REG - 1;
+/*		return; */
 	}
 
 	switch( offset )
@@ -1197,6 +1211,8 @@ void ppu2c03b_render( int num, struct osd_bitmap *bitmap, int flipx, int flipy, 
 		logerror( "PPU(render): Attempting to access an unmapped chip\n" );
 		return;
 	}
+
+/*	logerror("PPU %d:VBLANK HIT (scanline %d)\n",num, chips[num].scanline); */
 
 	copybitmap( bitmap, chips[num].bitmap, flipx, flipy, sx, sy, 0, TRANSPARENCY_NONE, 0 );
 }

@@ -447,7 +447,7 @@ static struct DACinterface dac_interface =
 
 
 #define MACHINE_DRIVER(NAME,NVRAM)														\
-static struct MachineDriver machine_driver_##NAME =										\
+static const struct MachineDriver machine_driver_##NAME =										\
 {																						\
 	/* basic machine hardware */														\
 	{																					\

@@ -422,7 +422,7 @@ static int actfan_interrupt(void)
 	return H6280_INT_IRQ1;
 }
 
-static struct MachineDriver machine_driver_actfancr =
+static const struct MachineDriver machine_driver_actfancr =
 {
 	/* basic machine hardware */
 	{
@@ -474,7 +474,7 @@ static struct MachineDriver machine_driver_actfancr =
 	}
 };
 
-static struct MachineDriver machine_driver_triothep =
+static const struct MachineDriver machine_driver_triothep =
 {
 	/* basic machine hardware */
 	{

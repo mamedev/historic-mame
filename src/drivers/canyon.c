@@ -72,7 +72,7 @@ static READ_HANDLER( canyon_switches_r )
 
 WRITE_HANDLER( canyon_led_w )
 {
-	osd_led_w((offset & 0x01), data & 0x01);
+	set_led_status((offset & 0x01), data & 0x01);
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -206,7 +206,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver_canyon =
+static const struct MachineDriver machine_driver_canyon =
 {
 	/* basic machine hardware */
 	{

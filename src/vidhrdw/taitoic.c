@@ -1185,35 +1185,35 @@ static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags)
 
 		if (!flip)
 		{
-			startx = (-TC0480SCP_tilemap[layer]->rowscroll[0] - (TC0480SCP_x_offs - 16 - layer*4)) << 16;
-//			- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte ??
+			startx = ((TC0480SCP_bgscrollx[layer] + 16 + layer*4) << 16)
+				- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte
 
 			incxx = zoom;
 			incyx = 0;
 
-			starty = (-TC0480SCP_tilemap[layer]->colscroll[0] + TC0480SCP_y_offs) << 16;
-//			- ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte ??
+			starty = (TC0480SCP_bgscrolly[layer] << 16)
+				+ ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte
 			incxy = 0;
 			incyy = zoom;
 
 			startx += (TC0480SCP_x_offs - 16 - layer*4) * incxx;
-			starty -= (TC0480SCP_y_offs) * incxx;
+			starty -= (TC0480SCP_y_offs) * incyy;
 		}
-		else	// flipscreen; this section doesn't work
+		else
 		{
-			startx = (-TC0480SCP_tilemap[layer]->rowscroll[0] + (TC0480SCP_x_offs - 16 - layer*4)) << 16;
-//			- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte ??
+			startx = ((-TC0480SCP_bgscrollx[layer] + 16 + layer*4) << 16)
+				- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte
 
 			incxx = zoom;
 			incyx = 0;
 
-			starty = (-TC0480SCP_tilemap[layer]->colscroll[0] - TC0480SCP_y_offs) << 16;
-//			- ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte ??
+			starty = (-TC0480SCP_bgscrolly[layer] << 16)
+				+ ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte
 			incxy = 0;
 			incyy = zoom;
 
-			startx -= (TC0480SCP_x_offs - 16 - layer*4) * incxx;
-			starty += (TC0480SCP_y_offs) * incxx;
+			startx += (TC0480SCP_x_offs - 16 - layer*4) * incxx;
+			starty -= (TC0480SCP_y_offs) * incyy;
 		}
 
 		copyrozbitmap(bitmap,srcbitmap,startx,starty,

@@ -851,7 +851,7 @@ static struct DACinterface dac_interface =
 	{ 100 	}	/* mixing level */
 };
 
-static struct MachineDriver machine_driver_ns1 =
+static const struct MachineDriver machine_driver_ns1 =
 {
 	/* basic machine hardware */
 	{
@@ -917,7 +917,7 @@ static struct MachineDriver machine_driver_ns1 =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_quester =
+static const struct MachineDriver machine_driver_quester =
 {
 	/* basic machine hardware */
 	{
@@ -983,7 +983,7 @@ static struct MachineDriver machine_driver_quester =
 	nvram_handler
 };
 
-static struct MachineDriver machine_driver_faceoff =
+static const struct MachineDriver machine_driver_faceoff =
 {
 	/* basic machine hardware */
 	{

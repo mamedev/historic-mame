@@ -119,7 +119,7 @@ WRITE_HANDLER( starcrus_ship_parm_1_w )
 WRITE_HANDLER( starcrus_ship_parm_2_w )
 {
     s2_sprite = data&0x1f;
-    osd_led_w(2, ((data&0x80)>>7)^0x01); 		/* game over lamp */
+    set_led_status(2,~data & 0x80); 		/* game over lamp */
     coin_counter_w(0, ((data&0x40)>>6)^0x01); 	/* coin counter */
     engine2_on = ((data&0x20)>>5)^0x01;
 
