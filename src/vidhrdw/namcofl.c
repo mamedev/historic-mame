@@ -114,8 +114,8 @@ namcofl_install_palette( void )
 
 			for( byte_offset=0; byte_offset<4; byte_offset++ )
 			{
-				palette_set_color( pen++, r>>24, g>>24, b>>24 );
-				r<<=8; g<<=8; b<<=8;
+				palette_set_color( pen++, r&0xff, g&0xff, b&0xff);
+				r>>=8; g>>=8; b>>=8;
 			}
 		}
 	}
@@ -219,7 +219,7 @@ tilemapFL_get_info(int tile_index,int which,const data32_t *tilemap_videoram)
 	int code = nth_word32( tilemap_videoram, tile_index );
 	int mangle;
 
-	code &= 0x1fff;
+	code &= 0xffff;
 	mangle = code;
 	SET_TILE_INFO( NAMCONB1_TILEGFX,mangle,tilemap_palette_bank[which],0)
 	tile_info.mask_data = 8*code + mpMaskData;
@@ -252,43 +252,29 @@ VIDEO_UPDATE( namcofl )
 		}
 		if( i<4 )
 		{
-			tilemap_set_scrollx( background[i],0,namcofl_scrollram32[i*2]+48-xadjust[i] );
-			tilemap_set_scrolly( background[i],0,namcofl_scrollram32[i*2+1]+24 );
+			tilemap_set_scrollx( background[i],0,(namcofl_scrollram32[i*2]>>16)+48-xadjust[i] );
+			tilemap_set_scrolly( background[i],0,(namcofl_scrollram32[i*2+1]>>16)+24 );
 		}
 	}
 
 	for( pri=0; pri<8; pri++ )
 	{
-		namco_roz_draw( bitmap,cliprect,pri );
+//		namco_roz_draw( bitmap,cliprect,pri );
+
 		for( i=0; i<6; i++ )
 		{
-			if( nth_word32( &namcofl_scrollram32[0x20/4],i ) == pri )
+			if ((nth_word32( &namcofl_scrollram32[0x20/4],i ) == pri) && (nth_word32( &namcofl_scrollram32[0x20/4],i )))
 			{
-				if( namcos2_gametype == NAMCONB1_NEBULRAY && i==3 )
-				{
-					/* HACK; don't draw this tilemap - it contains garbage */
-				}
-				else
-				{
-					tilemap_draw( bitmap,cliprect,background[i],0,0/*1<<pri*/ );
-				}
+				tilemap_draw( bitmap,cliprect,background[i],0,0);
 			}
 		}
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
+
 } /* namcofl_vh_screenrefresh */
 
-static int
-FLobjcode2tile( int code )
+static int FLobjcode2tile( int code )
 {
-	int bank = 0; //nth_byte32( namcofl_spritebank32, (code>>11)&0xf );
-	code &= 0x7ff;
-	if( bank&0x01 ) code |= 0x01*0x800;
-	if( bank&0x02 ) code |= 0x02*0x800;
-	if( bank&0x04 ) code |= 0x04*0x800;
-	if( bank&0x08 ) code |= 0x08*0x800;
-	if( bank&0x10 ) code |= 0x10*0x800;
-	if( bank&0x40 ) code |= 0x20*0x800;
 	return code;
 }
 

@@ -5,9 +5,12 @@
   Driver by smf
 
   Issues:
-    sound cpu is only simulated enough for inputs to work, credit handling is not perfect.
     not all games work due to either banking, dma or protection issues.
     graphics are glitchy in some games.
+
+    - day, date, and year from the RTC appear to be ignored (hour/min/sec are fine). H8 core bug or BIOS doesn't care?
+    - golgo13 needs the gun figured out.  also, what is the "sensor" input listed in the test menu?
+    - golgo13 assumes the test switch is a switch, not a button - must hold down F2 to stay in test mode
 
 Known Dumps
 -----------
@@ -41,7 +44,10 @@ X101: M53.693 KDS 745 (near CXD8654Q)
 #include "driver.h"
 #include "state.h"
 #include "cpu/mips/psx.h"
+#include "cpu/h83002/h83002.h"
 #include "includes/psx.h"
+#include "machine/at28c16.h"
+#include <time.h>
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -72,46 +78,22 @@ static READ32_HANDLER( sharedram_r )
 	return namcos12_sharedram[ offset ];
 }
 
-#define SHRAM( x ) namcos12_sharedram[ ( x ) / 4 ]
+static WRITE16_HANDLER( sharedram_sub_w )
+{
+	data16_t *shared16 = (data16_t *)namcos12_sharedram;
+
+	COMBINE_DATA( &shared16[ offset ] );
+}
+
+static READ16_HANDLER( sharedram_sub_r )
+{
+	data16_t *shared16 = (data16_t *)namcos12_sharedram;
+
+	return shared16[ offset ];
+}
 
 static INTERRUPT_GEN( namcos12_vblank )
 {
-	UINT16 n_coin;
-	static UINT16 n_oldcoin = 0;
-
-	SHRAM( 0x3000 ) = ( SHRAM( 0x3000 ) & 0x0000ffff ) | 0x76010000;
-	SHRAM( 0x30f0 ) = ( SHRAM( 0x30f0 ) & 0xffff0000 ) | 0x00000000;
-	SHRAM( 0x305c ) = ( SHRAM( 0x305c ) & 0x0000ffff ) | 0x00000000;
-	SHRAM( 0x3068 ) = ( SHRAM( 0x3068 ) & 0x0000ffff ) | 0x00000000;
-	SHRAM( 0x3078 ) = ( SHRAM( 0x3078 ) & 0xffff0000 ) | 0x00000000;
-	SHRAM( 0x3240 ) = ( SHRAM( 0x3240 ) & 0xffff0000 ) | 0x00000000;
-	SHRAM( 0x3940 ) = ( SHRAM( 0x3940 ) & 0xffff0000 ) | 0x00000000;
-
-	SHRAM( 0x3380 ) = readinputport( 0 );
-
-	SHRAM( 0x3180 ) = SHRAM( 0x3140 );
-	SHRAM( 0x3140 ) = readinputport( 1 ) | ( readinputport( 2 ) << 16 );
-	n_coin = readinputport( 3 );
-	if( ( n_coin & n_oldcoin & 0x01 ) != 0 )
-	{
-		SHRAM( 0x32c0 ) = ( SHRAM( 0x32c0 ) & 0xffff0000 ) | ( ( SHRAM( 0x32c0 ) + 0x00000001 ) & 0x0000ffff );
-	}
-	if( ( n_coin & n_oldcoin & 0x02 ) != 0 )
-	{
-		SHRAM( 0x32c0 ) = ( SHRAM( 0x32c0 ) & 0x0000ffff ) | ( ( SHRAM( 0x32c0 ) + 0x00010000 ) & 0xffff0000 );
-	}
-	if( ( SHRAM( 0x3140 ) & ~SHRAM( 0x3180 ) & 0x00004000 ) != 0 )
-	{
-		SHRAM( 0x3200 ) = ( SHRAM( 0x3200 ) & 0xffff0000 ) | ( ( SHRAM( 0x3200 ) + 0x00000001 ) & 0x0000ffff );
-	}
-	if( ( SHRAM( 0x3140 ) & ~SHRAM( 0x3180 ) & 0x40000000 ) != 0 )
-	{
-		SHRAM( 0x3200 ) = ( SHRAM( 0x3200 ) & 0x0000ffff ) | ( ( SHRAM( 0x3200 ) + 0x00010000 ) & 0xffff0000 );
-	}
-	SHRAM( 0x3900 ) = SHRAM( 0x3200 ) + SHRAM( 0x32c0 );
-
-	n_oldcoin = ~n_coin;
-
 	psx_vblank();
 
 	/* kludge: protection hacks */
@@ -131,18 +113,47 @@ static INTERRUPT_GEN( namcos12_vblank )
 	}
 }
 
-static data32_t m_n_bankoffset;
+static data32_t m_n_bankoffset, m_n_bankoffseth;
+
+// called after a state load to properly set things up again
+static void s12_resetbank(void)
+{
+	if (!strcmp( Machine->gamedrv->name, "golgo13" ))
+	{
+		cpu_setbank( 1, memory_region( REGION_USER2 ) + ((m_n_bankoffseth << 23) | (m_n_bankoffset << 21)) );
+	}
+	else
+	{
+		cpu_setbank( 1, memory_region( REGION_USER2 ) + ( m_n_bankoffset * 0x200000 ) );
+	}
+}
 
 static WRITE32_HANDLER( bankoffset_w )
 {
-	m_n_bankoffset = data;
+	// Golgo 13 has different banking (maybe the keycus controls it?)
+	if (!strcmp( Machine->gamedrv->name, "golgo13" ))
+	{
+		if (data & 8)
+		{
+			m_n_bankoffseth = data & 0x6;
+			m_n_bankoffset = 0;
+		}
+		else
+		{
+			m_n_bankoffset = data & 0x7;
+		} 
+	}
+	else
+	{
+		m_n_bankoffset = data;
+	}
 
-	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( m_n_bankoffset * 0x200000 ) );
+	s12_resetbank();
 
 	verboselog( 1, "bankoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_bankoffset );
 }
 
-static data32_t m_n_dmaoffset;
+static data32_t m_n_dmaoffset, m_n_dmabias;
 
 static WRITE32_HANDLER( dmaoffset_w )
 {
@@ -161,7 +172,7 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 
 	verboselog( 1, "namcos12_rom_read( %08x, %08x )\n", n_address, n_size );
 
-	if( m_n_dmaoffset >= 0x80000000 )
+	if (( m_n_dmaoffset >= 0x80000000 ) || ( m_n_dmabias == 0x1f300000 ))
 	{
 		p_n_src = (data32_t *)( memory_region( REGION_USER1 ) + ( m_n_dmaoffset & 0x003fffff ) );
 	}
@@ -184,6 +195,11 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 	}
 }
 
+static WRITE32_HANDLER( s12_dma_bias_w )
+{
+	m_n_dmabias = data;
+}
+
 static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
 	AM_RANGE(0x1f000000, 0x1f000003) AM_READWRITE(MRA32_NOP, bankoffset_w)			/* banking */
@@ -191,11 +207,12 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f010000, 0x1f010003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f018000, 0x1f018003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f080000, 0x1f083fff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos12_sharedram) /* shared ram?? */
-	AM_RANGE(0x1f140000, 0x1f141fff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* flash */
+	AM_RANGE(0x1f140000, 0x1f140fff) AM_READWRITE( at28c16_0_32_lsb_r, at28c16_0_32_lsb_w ) /* eeprom */
 	AM_RANGE(0x1f1bff08, 0x1f1bff0f) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f700000, 0x1f70ffff) AM_WRITE(dmaoffset_w)  /* dma */
 	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
-	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
+	AM_RANGE(0x1f801000, 0x1f801003) AM_WRITE(s12_dma_bias_w)
+	AM_RANGE(0x1f801004, 0x1f801007) AM_WRITENOP
 	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
 	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
 	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
@@ -225,9 +242,12 @@ static DRIVER_INIT( namcos12 )
 	psx_driver_init();
 
 	psx_dma_install_read_handler( 5, namcos12_rom_read );
-
+										
 	state_save_register_UINT32( "namcos12", 0, "m_n_dmaoffset", &m_n_dmaoffset, 1 );
+	state_save_register_UINT32( "namcos12", 0, "m_n_dmabias", &m_n_dmabias, 1 );
 	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
+	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffseth", &m_n_bankoffseth, 1 );
+	state_save_register_func_postload( s12_resetbank );
 
 	/* kludge: some kind of protection? */
 	if( strcmp( Machine->gamedrv->name, "tekkentt" ) == 0 ||
@@ -250,17 +270,201 @@ MACHINE_INIT( namcos12 )
 	bankoffset_w(0,0,0);
 }
 
+
+/* H8/3002 MCU stuff */
+static ADDRESS_MAP_START( s12h8rwmap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08ffff) AM_READWRITE( sharedram_sub_r, sharedram_sub_w )
+	AM_RANGE(0x280000, 0x287fff) AM_READWRITE( c352_0_r, c352_0_w )
+	AM_RANGE(0x300000, 0x300001) AM_READ( input_port_1_word_r )
+	AM_RANGE(0x300002, 0x300003) AM_READ( input_port_2_word_r )
+	AM_RANGE(0x300010, 0x300011) AM_NOP	// golgo13 writes here a lot, possibly also a wait state generator?
+	AM_RANGE(0x300030, 0x300031) AM_NOP	// most S12 bioses write here simply to generate a wait state.  there is no deeper meaning.
+ADDRESS_MAP_END
+
+static READ8_HANDLER( s12_mcu_p8_r )
+{
+	return 0x02;
+}
+
+// emulation of the Epson R4543 real time clock
+// in System 12, bit 0 of H8/3002 port A is connected to it's chip enable
+// the actual I/O takes place through the H8/3002's serial port B.
+
+static int s12_porta = 0, s12_rtcstate = 0;
+
+static READ8_HANDLER( s12_mcu_pa_r )
+{
+	return s12_porta;
+}
+
+static WRITE8_HANDLER( s12_mcu_pa_w )
+{
+	// bit 0 = chip enable for the RTC
+	// reset the state on the rising edge of the bit
+	if ((!(s12_porta & 1)) && (data & 1))
+	{
+		s12_rtcstate = 0;
+	}
+
+	s12_porta = data;
+}
+
+INLINE UINT8 make_bcd(UINT8 data)
+{
+	return ((data / 10) << 4) | (data % 10);
+}
+
+static READ8_HANDLER( s12_mcu_rtc_r )
+{
+	data8_t ret = 0;
+	time_t curtime;
+	struct tm *exptime;
+	static int weekday[7] = { 7, 1, 2, 3, 4, 5, 6 };
+
+	time(&curtime);
+	exptime = localtime(&curtime);
+
+	switch (s12_rtcstate)
+	{
+		case 0:
+			ret = make_bcd(exptime->tm_sec);	// seconds (BCD, 0-59) in bits 0-6, bit 7 = battery low
+			break;
+		case 1:
+			ret = make_bcd(exptime->tm_min);	// minutes (BCD, 0-59)
+			break;
+		case 2:
+			ret = make_bcd(exptime->tm_hour);	// hour (BCD, 0-23)
+			break;
+		case 3:
+			ret = make_bcd(weekday[exptime->tm_wday]); // day of the week (1 = Monday, 7 = Sunday)
+			break;
+		case 4:
+			ret = make_bcd(exptime->tm_mday);	// day (BCD, 1-31)
+			break;
+		case 5:
+			ret = make_bcd(exptime->tm_mon + 1);	// month (BCD, 1-12)
+			break;
+		case 6:
+			ret = make_bcd(exptime->tm_year % 100);	// year (BCD, 0-99)
+			break;
+	}
+
+	s12_rtcstate++;
+
+	return ret;
+}
+
+static int s12_lastpB = 0x50, s12_setstate = 0, s12_setnum, s12_settings[8];
+
+static READ8_HANDLER( s12_mcu_portB_r )
+{
+	// golgo13 won't boot if this doesn't toggle every read
+	s12_lastpB ^= 0x80;
+	return s12_lastpB;
+}
+
+static WRITE8_HANDLER( s12_mcu_portB_w )
+{
+	// bit 7 = chip enable for the video settings controller
+	if (data & 0x80)
+	{
+		s12_setstate = 0;
+	}
+
+	s12_lastpB = data;
+}
+
+static WRITE8_HANDLER( s12_mcu_settings_w )
+{
+	if (s12_setstate)
+	{
+		// data
+		s12_settings[s12_setnum] = data;
+
+		if (s12_setnum == 7)
+		{
+			logerror("S12 video settings: Contrast: %02x  R: %02x  G: %02x  B: %02x\n", 
+				BITSWAP8(s12_settings[0], 0, 1, 2, 3, 4, 5, 6, 7), 
+				BITSWAP8(s12_settings[1], 0, 1, 2, 3, 4, 5, 6, 7),  
+				BITSWAP8(s12_settings[2], 0, 1, 2, 3, 4, 5, 6, 7),  
+				BITSWAP8(s12_settings[3], 0, 1, 2, 3, 4, 5, 6, 7));
+		}
+	}
+	else
+	{	// setting number
+		s12_setnum = (data >> 4)-1;
+	}
+
+	s12_setstate ^= 1;
+}
+
+/* Golgo 13 lightgun inputs: FIXME!  What format do these want the data in? */
+
+static READ8_HANDLER( s12_mcu_gun_h_r )
+{
+	if (offset & 1)
+	{	// upper 2 bits of 10-bit result
+		return 0;
+	}
+
+	// lower 8 bits
+	return readinputport(3);
+}
+
+static READ8_HANDLER( s12_mcu_gun_v_r )
+{
+	if (offset & 1)
+	{	// upper 2 bits of 10-bit result
+		return 0;
+	}
+
+	// lower 8 bits
+	return readinputport(4);
+}
+
+static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(H8_PORT7, H8_PORT7) AM_READ( input_port_0_r )
+	AM_RANGE(H8_PORT8, H8_PORT8) AM_READ( s12_mcu_p8_r ) AM_WRITENOP
+	AM_RANGE(H8_PORTA, H8_PORTA) AM_READWRITE( s12_mcu_pa_r, s12_mcu_pa_w )
+	AM_RANGE(H8_PORTB, H8_PORTB) AM_READWRITE( s12_mcu_portB_r, s12_mcu_portB_w )
+	AM_RANGE(H8_SERIAL_B, H8_SERIAL_B) AM_READ( s12_mcu_rtc_r ) AM_WRITE( s12_mcu_settings_w )
+	AM_RANGE(H8_ADC_0_L, H8_ADC_0_H) AM_NOP
+	AM_RANGE(H8_ADC_1_L, H8_ADC_1_H) AM_READ( s12_mcu_gun_h_r )	// golgo 13 gun X-axis
+	AM_RANGE(H8_ADC_2_L, H8_ADC_2_H) AM_READ( s12_mcu_gun_v_r )	// golgo 13 gun Y-axis
+	AM_RANGE(H8_ADC_3_L, H8_ADC_3_H) AM_NOP 
+ADDRESS_MAP_END
+
+static struct C352interface c352_interface =
+{
+	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
+	YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT),
+	REGION_SOUND1,
+};
+
+static VIDEO_UPDATE( golgo13 )
+{
+	video_update_psx( bitmap, cliprect );
+
+// FIXME: need to draw crosshair here
+}
+
 static MACHINE_DRIVER_START( coh700 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( namcos12_map, 0 )
 	MDRV_CPU_VBLANK_INT( namcos12_vblank, 1 )
 
+	MDRV_CPU_ADD(H83002, 14745600 )	/* verified 14.7456 MHz */
+	MDRV_CPU_PROGRAM_MAP( s12h8rwmap, 0 )
+	MDRV_CPU_IO_MAP( s12h8iomap, 0 )
+	MDRV_CPU_VBLANK_INT( irq1_line_pulse, 1 );
+
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( namcos12 )
-	MDRV_NVRAM_HANDLER( generic_0fill )
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -275,83 +479,111 @@ static MACHINE_DRIVER_START( coh700 )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD(C352, c352_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( golgo13 )
+	MDRV_IMPORT_FROM( coh700 )
+
+	MDRV_VIDEO_UPDATE( golgo13 )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos12 )
 	/* IN 0 */
 	PORT_START
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0040, 0x0000, "DIP1 (Test)" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR(Service_Mode) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Freeze" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0xff3f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN 1 */
 	PORT_START
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON5 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON6 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2) 
 
 	/* IN 2 */
 	PORT_START
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_SERVICE2 )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER2 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x0f11, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( golgo13 )
+	/* IN 0 */
+	PORT_START
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR(Service_Mode) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Freeze" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0xff3f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN 1 */
+	PORT_START
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2) 
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2) 
+
+	/* IN 2 */
+	PORT_START
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x0f11, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* IN 3 */
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	/* IN 4 */
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 INPUT_PORTS_END
 
 ROM_START( aquarush )
@@ -364,7 +596,7 @@ ROM_START( aquarush )
 	ROM_LOAD(        "aq1rm1.8",    0x800000, 0x800000, CRC(e4d415cf) SHA1(bbd244adaf704d7daf7341ff3b0a92162927a59b) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "aq1vera.11s",  0x000000, 0x080000, CRC(78277e02) SHA1(577ebb6d7ab5e304fb1dc1e7fd5649762e0d1786) )
+	ROM_LOAD16_WORD_SWAP( "aq1vera.11s",  0x000000, 0x080000, CRC(78277e02) SHA1(577ebb6d7ab5e304fb1dc1e7fd5649762e0d1786) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "aq1wav0.2",    0x000000, 0x800000, CRC(0cf7278d) SHA1(aee31e4d9b3522f42325071768803c542aa6de09) )
@@ -386,7 +618,7 @@ ROM_START( ehrgeiz )
 	ROM_LOAD16_BYTE( "eg1fl3u.6",   0x1800001, 0x200000, CRC(cea397de) SHA1(3791dbadb5699c805c27930e59c61af4d62f77f7) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "eg3vera.11s",  0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
+	ROM_LOAD16_WORD_SWAP( "eg3vera.11s",  0x0000000, 0x080000, CRC(9e44645e) SHA1(374eb4a4c09d6b5b7af5ff0efec16b4d2aacbe2b) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "eg1wav0.2",    0x0000000, 0x800000, CRC(961fe69f) SHA1(0189a061959a8d94b9d2db627911264faf9f28fd) )
@@ -407,7 +639,7 @@ ROM_START( fgtlayer )
 	ROM_LOAD16_BYTE( "ftl1fl4h.6",  0x1c00001, 0x200000, CRC(5ad59726) SHA1(b3a68f7ba2052b99407a5423223202001f2a4f67) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "ftl1vera.11s", 0x0000000, 0x080000, CRC(e3f957cd) SHA1(1c7f2033025fb9c40654cff26d78697baf697c59) )
+	ROM_LOAD16_WORD_SWAP( "ftl1vera.11s", 0x0000000, 0x080000, CRC(e3f957cd) SHA1(1c7f2033025fb9c40654cff26d78697baf697c59) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "ftl1wav0.2",   0x0000000, 0x800000, CRC(ee009a2b) SHA1(c332bf59917b2673d7acb864bf92d25d74a350b6) )
@@ -434,7 +666,7 @@ ROM_START( golgo13 )
 	ROM_LOAD16_BYTE( "glg1fl5u.9",  0x3800001, 0x200000, CRC(2231a07c) SHA1(480e17219101a0dae5cd64507e31cd7e711c95fa) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "glg1vera.11s", 0x0000000, 0x080000, CRC(5c33f240) SHA1(ec8fc8d83466b28dfa35b93e16d8164883513b19) )
+	ROM_LOAD16_WORD_SWAP( "glg1vera.11s", 0x0000000, 0x080000, CRC(5c33f240) SHA1(ec8fc8d83466b28dfa35b93e16d8164883513b19) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "glg1wav0.1",   0x0000000, 0x800000, CRC(672d4f7c) SHA1(16a7564a2c68840a438a33ac2381df4e70e1bb45) )
@@ -455,7 +687,7 @@ ROM_START( mdhorse )
 	ROM_LOAD16_BYTE( "mdh1rm2u",    0x2000001, 0x800000, CRC(9490dafe) SHA1(c1bd9343535876eac5369a86105013b4a7d731b3) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "mdh1vera.11s", 0x0000000, 0x080000, CRC(20d7ba29) SHA1(95a056d1f1ac70dda8ced832b506076485348a33) )
+	ROM_LOAD16_WORD_SWAP( "mdh1vera.11s", 0x0000000, 0x080000, CRC(20d7ba29) SHA1(95a056d1f1ac70dda8ced832b506076485348a33) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "mdh1wav0",     0x0000000, 0x800000, CRC(7b031123) SHA1(7cbc1f71d259405f9f1ef26026d51abcb255b057) )
@@ -471,7 +703,7 @@ ROM_START( mrdrillr )
 	ROM_LOAD16_BYTE( "dri1rm0u.9",  0x0000001, 0x400000, CRC(5aae85ea) SHA1(a54dcc050c12ed3d77efc328e366e99c392eb139) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "dri1vera.11s", 0x0000000, 0x080000, CRC(33ea9c0e) SHA1(5018d7a1a45ec3133cd928435db8804f66321924) )
+	ROM_LOAD16_WORD_SWAP( "dri1vera.11s", 0x0000000, 0x080000, CRC(33ea9c0e) SHA1(5018d7a1a45ec3133cd928435db8804f66321924) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "dri1wav0.5",   0x0000000, 0x800000, CRC(32928df1) SHA1(79af92a2d24a0e3d5bfe1785776b0f86a93882ce) )
@@ -491,7 +723,7 @@ ROM_START( pacapp )
 	ROM_LOAD16_BYTE( "ppp1rm2u.11", 0x1000001, 0x400000, CRC(cada7a0d) SHA1(e8d927a4680911b77de1d906b5e0140697e9c67b) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "ppp1vera.11s", 0x0000000, 0x080000, CRC(22242317) SHA1(e46bf3c594136168faedebbd59f53ff9a6ecf3c1) )
+	ROM_LOAD16_WORD_SWAP( "ppp1vera.11s", 0x0000000, 0x080000, CRC(22242317) SHA1(e46bf3c594136168faedebbd59f53ff9a6ecf3c1) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "ppp1wav0.5",   0x0000000, 0x800000, CRC(184ccc7d) SHA1(b74638cebef209638c625aac7e8c5b924f56a8bb) )
@@ -511,7 +743,7 @@ ROM_START( soulclbr )
 	ROM_LOAD(        "soc1fl4.5",   0x1c00000, 0x400000, CRC(6212090e) SHA1(ed5e50771180935a0c2e760e7369673098722201) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
+	ROM_LOAD16_WORD_SWAP( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "soc1wav0.2",   0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
@@ -530,7 +762,7 @@ ROM_START( soulclba )
 	ROM_LOAD(        "soc1fl4.5",   0x1c00000, 0x400000, CRC(6212090e) SHA1(ed5e50771180935a0c2e760e7369673098722201) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
+	ROM_LOAD16_WORD_SWAP( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "soc1wav0.2",   0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
@@ -551,7 +783,7 @@ ROM_START( sws99 )
 	ROM_LOAD16_BYTE( "ss91fl4h.6",  0x1c00001, 0x200000, CRC(be3730a4) SHA1(48802229d31c1eef7f4173eb05060a328b702336) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "ss91vera.11s", 0x0000000, 0x080000, CRC(c6bc5c31) SHA1(c6ef46c3fa8a7749618126d360e614ea6c8d9c54) )
+	ROM_LOAD16_WORD_SWAP( "ss91vera.11s", 0x0000000, 0x080000, CRC(c6bc5c31) SHA1(c6ef46c3fa8a7749618126d360e614ea6c8d9c54) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "ss91wav0.2",   0x0000000, 0x800000, CRC(1c5e2ff1) SHA1(4f29dfd49f6b5c3ca3b758823d368051354bd673) )
@@ -574,7 +806,7 @@ ROM_START( tekken3 )
 	ROM_LOAD16_BYTE( "tet1fl3u.13", 0x1800001, 0x200000, CRC(1917d993) SHA1(cabc44514a3e62a18a7f8f883603241447d6948b) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "tet1vere.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
+	ROM_LOAD16_WORD_SWAP( "tet1vere.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
 
 	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "tet1wav0.5",   0x0000000, 0x400000, CRC(77ba7975) SHA1(fe9434dcf0fb232c85efaaae1b4b13d36099620a) )
@@ -599,22 +831,22 @@ ROM_START( tekkentt )
 	ROM_LOAD16_BYTE( "teg3flou.7",  0x3400001, 0x200000, CRC(6d6947d1) SHA1(2f307bc4070fadb510c0473bc91d917b2d845ca5) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "teg3verb.11s", 0x0000000, 0x080000, CRC(67d0c469) SHA1(da164702fc21b9f46a9e32c89e7b1d36070ddf79) )
+	ROM_LOAD16_WORD_SWAP( "teg3verb.11s", 0x0000000, 0x080000, CRC(67d0c469) SHA1(da164702fc21b9f46a9e32c89e7b1d36070ddf79) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "teg3wav0.1",   0x0000000, 0x800000, CRC(4bd99104) SHA1(f76b0576cc28fe49d3c1c402988b933933e52e15) )
 	ROM_LOAD( "teg3wav1.12",  0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
 ROM_END
 
-GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
-GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
-GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, golgo13,   0,        coh700, namcos12, namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
+GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */

@@ -229,6 +229,8 @@ struct GameOptions
 	int		debug_width;	/* requested width of debugger bitmap */
 	int		debug_height;	/* requested height of debugger bitmap */
 	int		debug_depth;	/* requested depth of debugger bitmap */
+	
+	const char *controller;	/* controller-specific cfg to load */
 
 	#ifdef MESS
 	UINT32 ram;
@@ -382,6 +384,9 @@ const struct performance_info *mame_get_performance_info(void);
 
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);
+
+/* runs validity checks */
+int mame_validitychecks(void);
 
 #ifdef MESS
 #include "mess.h"

@@ -470,7 +470,7 @@ void cdrom_get_audio_data(struct cdrom_file *file, INT16 *bufL, INT16 *bufR, UIN
 	file->audio_length -= sectoread;
 
 	/* CD-DA data on the disc is big-endian, flip if we're not */
-	#if LSB_FIRST
+	#ifdef LSB_FIRST
 	for (i = 0; i < file->audio_samples*4; i += 2)
 	{
 		UINT8 tmp;

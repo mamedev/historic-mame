@@ -253,6 +253,11 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 		if( pri != ((palette>>5)&7) ) return;
 		break;
 
+	case NAMCOFL_SPEED_RACER:
+	case NAMCOFL_FINAL_LAP_R:
+		if( pri != ((palette>>5)&0x7) ) return;
+		break;
+
 	default:
 		if( pri != ((palette>>4)&0x7) ) return;
 		break;
@@ -288,9 +293,15 @@ draw_spriteC355( struct mame_bitmap *bitmap, const struct rectangle *cliprect, c
 		}
 	}
 	else
-	{ /* Namco NB1, Namco System 2 */
-		xscroll += 0x26;
-		yscroll += 0x19;
+	{ 
+		if ((namcos2_gametype == NAMCOFL_SPEED_RACER) || (namcos2_gametype == NAMCOFL_FINAL_LAP_R))
+		{ /* Namco FL: don't adjust and things line up fine */
+		}
+		else
+		{ /* Namco NB1, Namco System 2 */ 
+			xscroll += 0x26;
+			yscroll += 0x19;
+		}
 	}
 	
 	hpos -= xscroll;
@@ -483,6 +494,22 @@ READ32_HANDLER( namco_obj32_r )
 	return (spriteram16[offset]<<16)|spriteram16[offset+1];
 } /* namco_obj32_r */
 
+WRITE32_HANDLER( namco_obj32_le_w )
+{
+	data32_t v;
+	offset *= 2;
+	v = (spriteram16[offset+1]<<16)|spriteram16[offset];
+	COMBINE_DATA( &v );
+	spriteram16[offset+1] = v>>16;
+	spriteram16[offset] = v&0xffff;
+} /* namco_obj32_w */
+
+READ32_HANDLER( namco_obj32_le_r )
+{
+	offset *= 2;
+	return (spriteram16[offset+1]<<16)|spriteram16[offset];
+} /* namco_obj32_r */
+
 /**************************************************************************************************************/
 
 /* ROZ abstraction (preliminary)
@@ -490,6 +517,7 @@ READ32_HANDLER( namco_obj32_r )
  * Used by:
  *	Namco NB2 - The Outfoxies, Mach Breakers
  *	Namco System 2 - Metal Hawk, Lucky and Wild
+ *      Namco System FL - Final Lap R, Speed Racer
  */
 static data16_t *rozbank16;
 static data16_t *rozvideoram16;
@@ -567,6 +595,11 @@ roz_get_info( int tile_index,int which )
 		case 0x19: mangle |= 0x0e00; break;
 		case 0x1a: mangle |= 0x0600; break;
 		}
+		break;
+
+	case NAMCOFL_SPEED_RACER:
+	case NAMCOFL_FINAL_LAP_R:
+		mangle = tile;
 		break;
 
 	case NAMCOS2_METAL_HAWK:
@@ -660,11 +693,12 @@ void namco_roz_draw(
 {
 	const int xoffset = 36,yoffset = 3;
 	int which;
+
 	for( which=0; which<2; which++ )
 	{
 		const data16_t *pSource = &rozcontrol16[which*8];
 		data16_t attrs = pSource[1];
-		if( (attrs&0x8000)==0 )
+		if((attrs&0x8000) == 0)
 		{ /* layer is enabled */
 			int color = attrs&0xf;
 			int page;
@@ -720,9 +754,15 @@ void namco_roz_draw(
 				page = (attrs&0x0800)?0:0x4000; /* ? */
 				break;
 
+			case NAMCOFL_FINAL_LAP_R:
+			case NAMCOFL_SPEED_RACER:
+				roz_pri = (pSource[1]>>5)&0x7;
+				page = pSource[3]&0x4000;
+				break;
+
 			case NAMCOS2_METAL_HAWK:
 			default:
-				roz_pri = which; /* ? */
+				roz_pri = which;
 				page = pSource[3]&0x4000;
 				break;
 			}
@@ -782,8 +822,9 @@ void namco_roz_draw(
 					incxy << 8,
 					incyx << 8,
 					incyy << 8,
-					1,	/* copy with wraparound */
+					1,	
 					0,0);
+
 			} /* roz_pri==pri */
 		}
 	}
@@ -877,6 +918,22 @@ WRITE32_HANDLER( namco_rozcontrol32_w )
 	rozcontrol16[offset+1] = v&0xffff;
 }
 
+READ32_HANDLER( namco_rozcontrol32_le_r )
+{
+	offset *= 2;
+	return (rozcontrol16[offset]<<16)|rozcontrol16[offset+1];
+}
+
+WRITE32_HANDLER( namco_rozcontrol32_le_w )
+{
+	data32_t v;
+	offset *=2;
+	v = (rozcontrol16[offset+1]<<16)|rozcontrol16[offset];
+	COMBINE_DATA(&v);
+	rozcontrol16[offset+1] = v>>16;
+	rozcontrol16[offset] = v&0xffff;
+}
+
 READ32_HANDLER( namco_rozbank32_r )
 {
 	offset *= 2;
@@ -907,6 +964,22 @@ WRITE32_HANDLER( namco_rozvideoram32_w )
 	COMBINE_DATA( &v );
 	writerozvideo(offset,v>>16);
 	writerozvideo(offset+1,v&0xffff);
+}
+
+READ32_HANDLER( namco_rozvideoram32_le_r )
+{
+	offset *= 2;
+	return (rozvideoram16[offset+1]<<16)|rozvideoram16[offset];
+}
+
+WRITE32_HANDLER( namco_rozvideoram32_le_w )
+{
+	data32_t v;
+	offset *= 2;
+	v = (rozvideoram16[offset+1]<<16)|rozvideoram16[offset];
+	COMBINE_DATA( &v );
+	writerozvideo(offset+1,v>>16);
+	writerozvideo(offset,v&0xffff);
 }
 
 /**************************************************************************************************************/

@@ -1526,7 +1526,7 @@ static void cpu_vblankreset(void)
 	hs_update();
 
 	/* read keyboard & update the status of the input ports */
-	update_input_ports();
+	inputport_vblank_start();
 
 	/* reset the cycle counters */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)

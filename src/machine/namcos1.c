@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "machine/random.h"
 
@@ -1035,8 +1036,10 @@ MACHINE_INIT( namcos1 ) {
 	mcu_patch_data = 0;
 
 	berabohm_input_counter = 4; /* for berabohm pressure sensitive buttons */
-}
 
+	/* Register volatile user memory immediately after CPU-4's memory space for save state */
+	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "REGION_USER2", memory_region(REGION_USER2), 0x14000);
+}
 
 /*******************************************************************************
 *                                                                              *

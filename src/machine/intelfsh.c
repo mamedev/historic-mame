@@ -34,7 +34,7 @@ static void intelflash_init(int chip)
 	memset(chips[chip].flash_memory, 0xff, 2*1024*1024);
 }
 
-static void nvram_handler_at28c16(int chip,mame_file *file,int read_or_write)
+static void nvram_handler_intelflash(int chip,mame_file *file,int read_or_write)
 {
 	if( chip >= FLASH_CHIPS_MAX )
 	{
@@ -55,10 +55,10 @@ static void nvram_handler_at28c16(int chip,mame_file *file,int read_or_write)
 	}
 }
 
-void nvram_handler_intelflash_0(mame_file *file,int read_or_write) { nvram_handler_at28c16( 0, file, read_or_write ); }
-void nvram_handler_intelflash_1(mame_file *file,int read_or_write) { nvram_handler_at28c16( 1, file, read_or_write ); }
-void nvram_handler_intelflash_2(mame_file *file,int read_or_write) { nvram_handler_at28c16( 2, file, read_or_write ); }
-void nvram_handler_intelflash_3(mame_file *file,int read_or_write) { nvram_handler_at28c16( 3, file, read_or_write ); }
+void nvram_handler_intelflash_0(mame_file *file,int read_or_write) { nvram_handler_intelflash( 0, file, read_or_write ); }
+void nvram_handler_intelflash_1(mame_file *file,int read_or_write) { nvram_handler_intelflash( 1, file, read_or_write ); }
+void nvram_handler_intelflash_2(mame_file *file,int read_or_write) { nvram_handler_intelflash( 2, file, read_or_write ); }
+void nvram_handler_intelflash_3(mame_file *file,int read_or_write) { nvram_handler_intelflash( 3, file, read_or_write ); }
 
 data8_t intelflash_read_byte(int chip, data32_t address)
 {

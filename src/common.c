@@ -55,9 +55,9 @@ struct malloc_info
 
 /* These globals are only kept on a machine basis - LBO 042898 */
 unsigned int dispensed_tickets;
-unsigned int coins[COIN_COUNTERS];
-unsigned int lastcoin[COIN_COUNTERS];
+unsigned int coin_count[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
+static unsigned int lastcoin[COIN_COUNTERS];
 
 int snapno;
 
@@ -410,6 +410,17 @@ void free_memory_region(int num)
 
 ***************************************************************************/
 
+void coin_counter_reset(void)
+{
+	int counternum;
+	for (counternum = 0; counternum < COIN_COUNTERS; counternum++)
+	{
+		lastcoin[counternum] = 0;
+		coinlockedout[counternum] = 0;
+	}
+}
+
+
 /*-------------------------------------------------
 	coin_counter_w - sets input for coin counter
 -------------------------------------------------*/
@@ -420,7 +431,7 @@ void coin_counter_w(int num,int on)
 	/* Count it only if the data has changed from 0 to non-zero */
 	if (on && (lastcoin[num] == 0))
 	{
-		coins[num]++;
+		coin_count[num]++;
 	}
 	lastcoin[num] = on;
 }

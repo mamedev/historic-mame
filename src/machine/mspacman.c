@@ -35,8 +35,6 @@
 */
 
 
-void machine_init_pacman(void);
-
 
 
 static unsigned char decryptd(unsigned char e)
@@ -185,8 +183,6 @@ MACHINE_INIT( mspacman )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mspacman_decode();
 	cpu_setbank (1, &RAM[0x00000]);
-
-	machine_init_pacman();
 }
 
 

@@ -98,6 +98,8 @@ READ16_HANDLER( namco_obj16_r );
 
 WRITE32_HANDLER( namco_obj32_w );
 READ32_HANDLER( namco_obj32_r );
+WRITE32_HANDLER( namco_obj32_le_w );
+READ32_HANDLER( namco_obj32_le_r );
 
 WRITE16_HANDLER( namco_spritepos16_w );
 READ16_HANDLER( namco_spritepos16_r );
@@ -120,10 +122,14 @@ WRITE16_HANDLER( namco_rozvideoram16_w );
 
 READ32_HANDLER( namco_rozcontrol32_r );
 WRITE32_HANDLER( namco_rozcontrol32_w );
+READ32_HANDLER( namco_rozcontrol32_le_r );
+WRITE32_HANDLER( namco_rozcontrol32_le_w );
 READ32_HANDLER( namco_rozbank32_r );
 WRITE32_HANDLER( namco_rozbank32_w );
 READ32_HANDLER( namco_rozvideoram32_r );
 WRITE32_HANDLER( namco_rozvideoram32_w );
+READ32_HANDLER( namco_rozvideoram32_le_r );
+WRITE32_HANDLER( namco_rozvideoram32_le_w );
 
 /***********************************************************************************/
 /* C45 Land (Road) Emulation */

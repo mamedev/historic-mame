@@ -11,34 +11,20 @@
 #include "state.h"
 #include "machine/at28c16.h"
 
+#define MAX_AT28C16_CHIPS ( 4 )
+
 #define DATA_SIZE ( 0x800 )
 #define ID_SIZE ( 0x020 )
 #define ID_OFFSET ( DATA_SIZE - ID_SIZE )
 
 struct at28c16_chip
 {
-	data8_t *p_n_data;
-	data8_t *p_n_id;
+	data8_t p_n_data[ DATA_SIZE ];
+	data8_t p_n_id[ ID_SIZE ];
 	data8_t b_a9_12v;
 };
 
 static struct at28c16_chip at28c16[ MAX_AT28C16_CHIPS ];
-
-void at28c16_init( void )
-{
-	int chip;
-
-	for( chip = 0; chip < MAX_AT28C16_CHIPS; chip++ )
-	{
-		at28c16[ chip ].p_n_data = auto_malloc( DATA_SIZE );
-		at28c16[ chip ].p_n_id = auto_malloc( ID_SIZE );
-		at28c16[ chip ].b_a9_12v = 0;
-
-		state_save_register_UINT8( "at28c16", chip, "p_n_data", at28c16[ chip ].p_n_data, DATA_SIZE );
-		state_save_register_UINT8( "at28c16", chip, "p_n_id", at28c16[ chip ].p_n_id, ID_SIZE );
-		state_save_register_UINT8( "at28c16", chip, "b_a9_12v", &at28c16[ chip ].b_a9_12v, 1 );
-	}
-}
 
 void at28c16_a9_12v( int chip, int a9_12v )
 {
@@ -46,6 +32,15 @@ void at28c16_a9_12v( int chip, int a9_12v )
 }
 
 /* nvram handlers */
+
+static void at28c16_init( int chip )
+{
+	at28c16[ chip ].b_a9_12v = 0;
+
+	state_save_register_UINT8( "at28c16", chip, "p_n_data", at28c16[ chip ].p_n_data, DATA_SIZE );
+	state_save_register_UINT8( "at28c16", chip, "p_n_id", at28c16[ chip ].p_n_id, ID_SIZE );
+	state_save_register_UINT8( "at28c16", chip, "b_a9_12v", &at28c16[ chip ].b_a9_12v, 1 );
+}
 
 static void nvram_handler_at28c16( int chip, mame_file *file, int read_or_write )
 {
@@ -59,15 +54,19 @@ static void nvram_handler_at28c16( int chip, mame_file *file, int read_or_write 
 		mame_fwrite( file, at28c16[ chip ].p_n_data, DATA_SIZE );
 		mame_fwrite( file, at28c16[ chip ].p_n_id, ID_SIZE );
 	}
-	else if( file )
-	{
-		mame_fread( file, at28c16[ chip ].p_n_data, DATA_SIZE );
-		mame_fread( file, at28c16[ chip ].p_n_id, ID_SIZE );
-	}
 	else
 	{
-		memset( at28c16[ chip ].p_n_data, 0, DATA_SIZE );
-		memset( at28c16[ chip ].p_n_id, 0, ID_SIZE );
+		at28c16_init( chip );
+		if( file )
+		{
+			mame_fread( file, at28c16[ chip ].p_n_data, DATA_SIZE );
+			mame_fread( file, at28c16[ chip ].p_n_id, ID_SIZE );
+		}
+		else
+		{
+			memset( at28c16[ chip ].p_n_data, 0, DATA_SIZE );
+			memset( at28c16[ chip ].p_n_id, 0, ID_SIZE );
+		}
 	}
 }
 

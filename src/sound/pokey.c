@@ -881,7 +881,16 @@ int pokey_register_r(int chip, int offs)
 		break;
 
     case ALLPOT_C:
-		if( p->allpot_r )
+		/****************************************************************
+		 * If the 2 least significant bits of SKCTL are 0, the ALLPOTs
+		 * are disabled (SKRESET). Thanks to MikeJ for pointing this out.
+		 ****************************************************************/
+    	if( (p->SKCTL & SK_RESET) == 0)
+    	{
+    		data = 0;
+			LOG(("POKEY #%d ALLPOT internal $%02x (reset)\n", chip, data));
+		}
+		else if( p->allpot_r )
 		{
 			data = (*p->allpot_r)(offs);
 			LOG(("POKEY #%d ALLPOT callback $%02x\n", chip, data));

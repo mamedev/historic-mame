@@ -61,7 +61,7 @@ VIDEO_START( generic )
 
 	if (videoram_size == 0)
 	{
-logerror("Error: video_start_generic() called but videoram_size not initialized\n");
+		logerror("Error: video_start_generic() called but videoram_size not initialized\n");
 		return 1;
 	}
 
@@ -82,6 +82,10 @@ VIDEO_START( generic_bitmapped )
 {
 	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
+
+	/* Generic_Bitmapped games (with no dirtybuffer) must store the current screen tmpbitmap 
+	   in a save state to insure the screen redraws properly upon load                    */
+	state_save_register_UINT8("video", 0, "tmpbitmap", (UINT8*)tmpbitmap->base, tmpbitmap->rowbytes * tmpbitmap->height ) ;
 
 	return 0;
 }

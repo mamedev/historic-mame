@@ -959,7 +959,7 @@ INPUT_PORTS_START( changela )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Control Type" )
-	PORT_DIPSETTING(    0x00, "Joystick" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(    0x20, "Steering Wheel" )
 	PORT_DIPNAME( 0x40, 0x40, "Diagnostic" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -975,15 +975,15 @@ INPUT_PORTS_START( changela )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x03, "99" )
 	PORT_DIPNAME( 0x0c, 0x00, "Game Difficulty" )
-	PORT_DIPSETTING(    0xc0, "Very Easy" )
-	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Very_Easy) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x30, 0x00, "Traffic Difficulty" )
-	PORT_DIPSETTING(    0x30, "Very Easy" )
-	PORT_DIPSETTING(    0x20, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Very_Easy) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x40, 0x00, "Land Collisions Enabled" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -1053,7 +1053,7 @@ INPUT_PORTS_START( changela )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START /* 5 */ /* 0xDx2C */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_TOGGLE, "Gear Shift", KEYCODE_SPACE, IP_JOY_DEFAULT ) /* Gear shift */
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Gear Shift") PORT_CODE(KEYCODE_SPACE) PORT_TOGGLE /* Gear shift */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* FWD - negated bit 7 */
@@ -1066,8 +1066,8 @@ INPUT_PORTS_START( changela )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) //gas2
 
 	PORT_START /* 7 */ /* 0xDx30 DRIVING_WHEEL */
-	PORT_ANALOG( 0x0f, 0x00, IPT_AD_STICK_X | IPF_CENTER, 50, 1,      0, 0x0f)
-//PORT_ANALOG(  mask,default,type,               sensitivity,delta, min,max)
+	PORT_BIT( 0x0f, 0x00, IPT_PADDLE ) PORT_MINMAX(0,0x0f) PORT_SENSITIVITY(50) PORT_KEYDELTA(1)
+//PORT_BIT(  mask,default,type ) PORT_MINMAX(min,max) PORT_SENSITIVITY(sensitivity) PORT_KEYDELTA(delta)
 
 	
 INPUT_PORTS_END

@@ -96,10 +96,10 @@ PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_ANALOG( 0xe0, 0x00, IPT_PEDAL, 50, 0x20, 0, 0xe0 )
+	PORT_BIT( 0xe0, 0x00, IPT_PEDAL ) PORT_MINMAX(0,0xe0) PORT_SENSITIVITY(50) PORT_KEYDELTA(0x20)
 
  PORT_START
-	PORT_ANALOG( 0xff, 0x80, IPT_DIAL | IPF_REVERSE , 50, 4, 0x00, 0xff)
+	PORT_BIT( 0xff, 0x80, IPT_DIAL  ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(4) PORT_REVERSE
 
 
  PORT_START
@@ -107,8 +107,8 @@ PORT_START
  PORT_BIT( 0xf, IP_ACTIVE_LOW, IPT_BUTTON2  )  /* code @ $eef  , tested when controls = type4 */
 
  PORT_DIPNAME(0x30, 0x00, DEF_STR( Difficulty ) ) /* ??? code @ $62c */
- PORT_DIPSETTING(   0x10, "Easy" )
- PORT_DIPSETTING(   0x00, "Normal" )
+ PORT_DIPSETTING(   0x10, DEF_STR( Easy ) )
+ PORT_DIPSETTING(   0x00, DEF_STR( Normal ) )
  PORT_DIPSETTING(   0x20, "Difficult" )
  PORT_DIPSETTING(   0x30, "Very Difficult" )
 
@@ -134,7 +134,7 @@ PORT_START
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_DIPNAME( 0x030, 0x000, "Controls" ) /* 'press button to start' message, and wait for button2 */
+	PORT_DIPNAME( 0x030, 0x000, DEF_STR( Controls ) ) /* 'press button to start' message, and wait for button2 */
 	PORT_DIPSETTING(    0x00, "Type 1" )
 	PORT_DIPSETTING(    0x10, "Type 2" )
 	PORT_DIPSETTING(    0x20, "Type 3" )

@@ -82,7 +82,7 @@ WRITE32_HANDLER( psx_irq_w )
 	case 0x01:
 		verboselog( 2, "psx irq mask ( %08x, %08x ) %08x -> %08x\n", data, mem_mask, m_n_irqmask, ( m_n_irqmask & mem_mask ) | data );
 		m_n_irqmask = ( m_n_irqmask & mem_mask ) | data;
-		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x100 | 0x200 | 0x400 ) ) != 0 )
+		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x80 | 0x100 | 0x200 | 0x400 ) ) != 0 )
 		{
 			verboselog( 0, "psx_irq_w( %08x, %08x, %08x ) unknown irq\n", offset, data, mem_mask );
 		}
@@ -532,8 +532,6 @@ static psx_sio_handler m_p_f_sio_handler[ 2 ];
 #define SIO_CONTROL_DSR_IENA ( 1 << 12 )
 #define SIO_CONTROL_DTR ( 1 << 13 )
 
-#define BITS_PER_TICK ( 8 )
-
 static void sio_interrupt( int n_port )
 {
 	verboselog( 1, "sio_interrupt( %d )\n", n_port );
@@ -550,106 +548,108 @@ static void sio_interrupt( int n_port )
 
 static void sio_timer( int n_port )
 {
-	int n_prescaler;
 	double n_time;
-
-	switch( m_p_n_sio_mode[ n_port ] & 3 )
+	if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 || m_p_n_sio_tx_bits[ n_port ] != 0 )
 	{
-	case 1:
-		n_prescaler = 1;
-		break;
-	case 2:
-		n_prescaler = 16;
-		break;
-	case 3:
-		n_prescaler = 64;
-		break;
-	default:
-		n_prescaler = 0;
-		break;
-	}
+		int n_prescaler;
 
-	n_prescaler *= BITS_PER_TICK;
-	if( m_p_n_sio_baud[ n_port ] != 0 && n_prescaler != 0 )
-	{
-		n_time = TIME_IN_SEC( (double)( n_prescaler * m_p_n_sio_baud[ n_port ] ) / 33868800 );
-		verboselog( 2, "sio_timer( %f ) %d %d\n", n_time, n_prescaler, m_p_n_sio_baud[ n_port ] );
+		switch( m_p_n_sio_mode[ n_port ] & 3 )
+		{
+		case 1:
+			n_prescaler = 1;
+			break;
+		case 2:
+			n_prescaler = 16;
+			break;
+		case 3:
+			n_prescaler = 64;
+			break;
+		default:
+			n_prescaler = 0;
+			break;
+		}
+
+		if( m_p_n_sio_baud[ n_port ] != 0 && n_prescaler != 0 )
+		{
+			n_time = TIME_IN_SEC( (double)( n_prescaler * m_p_n_sio_baud[ n_port ] ) / 33868800 );
+			verboselog( 2, "sio_timer( %d ) = %f ( %d x %d )\n", n_port, n_time, n_prescaler, m_p_n_sio_baud[ n_port ] );
+		}
+		else
+		{
+			n_time = TIME_NEVER;
+			verboselog( 0, "sio_timer( %d ) invalid baud rate ( %d x %d )\n", n_port, n_prescaler, m_p_n_sio_baud[ n_port ] );
+		}
 	}
 	else
 	{
 		n_time = TIME_NEVER;
-		verboselog( 2, "sio_timer( NEVER )\n" );
+		verboselog( 2, "sio_timer( %d ) finished\n", n_port );
 	}
 	timer_adjust( m_p_timer_sio[ n_port ], n_time, n_port, 0 );
 }
 
 static void sio_clock( int n_port )
 {
-	int n_bit;
-
 	verboselog( 2, "sio tick\n" );
 
-	for( n_bit = 0; n_bit < BITS_PER_TICK; n_bit++ )
+	if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
+		( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_ENA ) != 0 &&
+		( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 )
 	{
-		if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
-			( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_ENA ) != 0 &&
-			( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 )
+		m_p_n_sio_tx_bits[ n_port ] = 8;
+		m_p_n_sio_tx_shift[ n_port ] = m_p_n_sio_tx_data[ n_port ];
+		if( n_port == 0 )
 		{
-			m_p_n_sio_tx_bits[ n_port ] = 8;
-			m_p_n_sio_tx_shift[ n_port ] = m_p_n_sio_tx_data[ n_port ];
+			m_p_n_sio_rx_bits[ n_port ] = 8;
+			m_p_n_sio_rx_shift[ n_port ] = 0;
+		}
+		m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_EMPTY;
+		m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
+	}
+
+	if( m_p_n_sio_tx_bits[ n_port ] != 0 )
+	{
+		m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
+		m_p_n_sio_tx_shift[ n_port ] >>= 1;
+		m_p_n_sio_tx_bits[ n_port ]--;
+
+		if( m_p_f_sio_handler[ n_port ] != NULL )
+		{
 			if( n_port == 0 )
 			{
-				m_p_n_sio_rx_bits[ n_port ] = 8;
-				m_p_n_sio_rx_shift[ n_port ] = 0;
+				m_p_n_sio_tx[ n_port ] &= ~PSX_SIO_OUT_CLOCK;
+				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+				m_p_n_sio_tx[ n_port ] |= PSX_SIO_OUT_CLOCK;
 			}
-			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_EMPTY;
-			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
+			m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
 		}
 
-		if( m_p_n_sio_tx_bits[ n_port ] != 0 )
+		if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
+			( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_IENA ) != 0 )
 		{
-			m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
-			m_p_n_sio_tx_shift[ n_port ] >>= 1;
-			m_p_n_sio_tx_bits[ n_port ]--;
+			sio_interrupt( n_port );
+		}
+	}
 
-			if( m_p_f_sio_handler[ n_port ] != NULL )
+	if( m_p_n_sio_rx_bits[ n_port ] != 0 )
+	{
+		m_p_n_sio_rx_shift[ n_port ] = ( m_p_n_sio_rx_shift[ n_port ] >> 1 ) | ( ( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DATA ) / PSX_SIO_IN_DATA ) << 7 );
+		m_p_n_sio_rx_bits[ n_port ]--;
+
+		if( m_p_n_sio_rx_bits[ n_port ] == 0 )
+		{
+			if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_RX_RDY ) != 0 )
 			{
-				if( n_port == 0 )
-				{
-					m_p_n_sio_tx[ n_port ] &= ~PSX_SIO_OUT_CLOCK;
-					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
-					m_p_n_sio_tx[ n_port ] |= PSX_SIO_OUT_CLOCK;
-				}
-				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+				m_p_n_sio_status[ n_port ] |= SIO_STATUS_OVERRUN;
 			}
-
-			if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
-				( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_IENA ) != 0 )
+			else
+			{
+				m_p_n_sio_rx_data[ n_port ] = m_p_n_sio_rx_shift[ n_port ];
+				m_p_n_sio_status[ n_port ] |= SIO_STATUS_RX_RDY;
+			}
+			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RX_IENA ) != 0 )
 			{
 				sio_interrupt( n_port );
-			}
-		}
-
-		if( m_p_n_sio_rx_bits[ n_port ] != 0 )
-		{
-			m_p_n_sio_rx_shift[ n_port ] = ( m_p_n_sio_rx_shift[ n_port ] >> 1 ) | ( ( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DATA ) / PSX_SIO_IN_DATA ) << 7 );
-			m_p_n_sio_rx_bits[ n_port ]--;
-
-			if( m_p_n_sio_rx_bits[ n_port ] == 0 )
-			{
-				if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_RX_RDY ) != 0 )
-				{
-					m_p_n_sio_status[ n_port ] |= SIO_STATUS_OVERRUN;
-				}
-				else
-				{
-					m_p_n_sio_rx_data[ n_port ] = m_p_n_sio_rx_shift[ n_port ];
-					m_p_n_sio_status[ n_port ] |= SIO_STATUS_RX_RDY;
-				}
-				if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RX_IENA ) != 0 )
-				{
-					sio_interrupt( n_port );
-				}
 			}
 		}
 	}
@@ -691,6 +691,7 @@ WRITE32_HANDLER( psx_sio_w )
 		m_p_n_sio_tx_data[ n_port ] = data;
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_RDY );
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_EMPTY );
+		sio_timer( n_port );
 		break;
 	case 1:
 		verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
@@ -700,7 +701,6 @@ WRITE32_HANDLER( psx_sio_w )
 		{
 			m_p_n_sio_mode[ n_port ] = data & 0xffff;
 			verboselog( 1, "psx_sio_w %d mode %04x\n", n_port, data & 0xffff );
-			sio_timer( n_port );
 		}
 		if( ACCESSING_MSW32 )
 		{
@@ -710,8 +710,6 @@ WRITE32_HANDLER( psx_sio_w )
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RESET ) != 0 )
 			{
 				verboselog( 1, "psx_sio_w reset\n" );
-				m_p_n_sio_rx_bits[ n_port ] = 0;
-				m_p_n_sio_tx_bits[ n_port ] = 0;
 				m_p_n_sio_status[ n_port ] = SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
 			}
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_IACK ) != 0 )
@@ -749,7 +747,6 @@ WRITE32_HANDLER( psx_sio_w )
 		{
 			m_p_n_sio_baud[ n_port ] = data >> 16;
 			verboselog( 1, "psx_sio_w %d baud %04x\n", n_port, data >> 16 );
-			sio_timer( n_port );
 		}
 		break;
 	default:

@@ -304,11 +304,44 @@ static WRITE16_HANDLER( aburner_road_w ){
 	COMBINE_DATA( &sys16_extraram2[offset] );
 }
 #endif
+#define ABURN_COINAGE PORT_START_TAG("DSWA") \
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x05, "6 Coins/4 Credits" ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) ) \
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x03, "5 Coins/6 Credits" ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_5C ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1" ) \
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x50, "6 Coins/4 Credits" ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_3C ) ) \
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x30, "5 Coins/6 Credits" ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_5C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1" )
 
 INPUT_PORTS_START( aburner )
-	PORT_START /* player 1 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* vulcan */
@@ -316,9 +349,9 @@ INPUT_PORTS_START( aburner )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	SYS16_COINAGE /* DSWA */ /* wrong! */
+	ABURN_COINAGE // 0x06 and 0x60 duplicate 2C/3C
 
-	PORT_START /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x03, 0x01, "Cabinet Type" )
 	PORT_DIPSETTING(    0x01, "Upright 1" )
 	PORT_DIPSETTING(    0x00, "N/A" )
@@ -333,29 +366,29 @@ INPUT_PORTS_START( aburner )
 	PORT_DIPNAME( 0x10, 0x00, "Ship Increase" )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_X | IPF_CENTER, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_CENTER | IPF_REVERSE, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START /* throttle (old player2 hack removed, now uses Z axis) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Z | IPF_CENTER, 100, 79, 0x00, 0xff )
+	PORT_START_TAG("IN5") /* throttle (old player2 hack removed, now uses Z axis) */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(79)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( aburner2 )
-	PORT_START /* player 1 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* vulcan */
@@ -363,7 +396,7 @@ INPUT_PORTS_START( aburner2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 7C_1C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 6C_1C ) )
@@ -371,17 +404,16 @@ INPUT_PORTS_START( aburner2 )
 	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x05, "6 Coins 4 Credits" ) //DEF_STR( 6C_4C ) )
+	PORT_DIPSETTING(    0x05, "6 Coins/4 Credits" ) //DEF_STR( 6C_4C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0x03, "5 Coins 6 Credits" ) //DEF_STR( 5C_6C ) )
+	PORT_DIPSETTING(    0x03, "5 Coins/6 Credits" ) //DEF_STR( 5C_6C ) )
 	//PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1" )
-
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 7C_1C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 6C_1C ) )
@@ -389,11 +421,11 @@ INPUT_PORTS_START( aburner2 )
 	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x50, "6 Coins 4 Credits" ) //DEF_STR( 6C_4C ) )
+	PORT_DIPSETTING(    0x50, "6 Coins/4 Credits" ) //DEF_STR( 6C_4C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 4C_3C ) ) // 1.33
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) // 1
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_5C ) ) // .8
-	PORT_DIPSETTING(    0x30, "5 Coins 6 Credits" ) // 8.3 DEF_STR( 5C_6C ) )
+	PORT_DIPSETTING(    0x30, "5 Coins/6 Credits" ) // 8.3 DEF_STR( 5C_6C ) )
 	//PORT_DIPSETTING(    0x10, DEF_STR( 2C_3C ) ) // .66
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) ) // .66
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) ) // .5
@@ -401,7 +433,7 @@ INPUT_PORTS_START( aburner2 )
 	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1" )
 	/* note that Free Play doesn't seem to work! */
 
-	PORT_START /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x03, 0x01, "Cabinet Type" )
 	PORT_DIPSETTING(    0x01, "Upright 1" )
 	PORT_DIPSETTING(    0x00, "Upright 2" )
@@ -416,29 +448,29 @@ INPUT_PORTS_START( aburner2 )
 	PORT_DIPNAME( 0x10, 0x00, "Ship Increase" )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_X | IPF_CENTER, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_CENTER | IPF_REVERSE, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START /* throttle (old player2 hack removed, now uses Z axis) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Z | IPF_CENTER, 100, 79, 0x00, 0xff )
+	PORT_START_TAG("IN5") /* throttle (old player2 hack removed, now uses Z axis) */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(79)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( thndrbld )
-	PORT_START /* player 1 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE(0x02, IP_ACTIVE_LOW)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* gun */
@@ -446,9 +478,9 @@ INPUT_PORTS_START( thndrbld )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	SYS16_COINAGE /* DSWA */ /* wrong! */
+	ABURN_COINAGE /* Not checked, may be correct */
 
-	PORT_START /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x01, 0x01, "Cabinet Type" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, "Deluxe" )
@@ -463,23 +495,23 @@ INPUT_PORTS_START( thndrbld )
 	PORT_DIPSETTING(    0x18, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_X | IPF_CENTER | IPF_REVERSE, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START /* throttle (old player2 hack removed, now uses Z axis) */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Z | IPF_CENTER, 100, 79, 0x00, 0xff )
+	PORT_START_TAG("IN4") /* throttle (old player2 hack removed, now uses Z axis) */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(79)
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_CENTER, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN5")
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 INPUT_PORTS_END
 
 /*****************************************************************************/
@@ -536,9 +568,9 @@ static WRITE16_HANDLER( aburner_analog_select_w ){
 
 static READ16_HANDLER( aburner_analog_r ){
 	switch( sys16_analog_select ){
-	case 0x00: return readinputport(3);
-	case 0x04: return readinputport(4);
-	case 0x08: return readinputport(5);
+	case 0x00: return readinputportbytag("IN3");
+	case 0x04: return readinputportbytag("IN4");
+	case 0x08: return readinputportbytag("IN5");
 	case 0x0c: return aburner_motor_ypos();
 	case 0x10: return aburner_motor_xpos();
 	default: return 0x00; /* unused? */

@@ -136,6 +136,18 @@ READ8_HANDLER(st0016_vregs_r)
 {
 /* 
 	    $0, $1 = max scanline(including vblank)/timer? ($3e7)
+	    
+	    $8-$40 = bg tilemaps  (8 bytes each) :
+	    	       0 - ? = usually 0/20/ba*
+	    	       1 - 0 = disabled , !zero = address of tilemap in spriteram /$1000  (for example: 3 -> tilemap at $3000 )
+	    	       2 - ? = usually ff/1f/af*
+	    	       3 - priority ? = 0 - under sprites , $ff - over sprites \
+	    	       4 - ? = $7f/$ff
+	    	       5 - ? = $29/$20 (29 when tilemap must be drawn over sprites . maybe this is real priority ?)
+	    	       6 - ? = 0
+	    	       7 - ? =$20/$10/$12* 
+	    
+	    
 	    $40-$60 = scroll registers , X.w, Y.w 
 	   
 */
@@ -181,7 +193,6 @@ WRITE8_HANDLER(st0016_vregs_w)
 	          f - DMA start latch 
 
 	*/
-	
 	
 	st0016_vregs[offset]=data;
 	if(offset==0xa8 && (data&0x20))
@@ -418,6 +429,11 @@ VIDEO_START( st0016 )
 			spr_dy=8;
 		break;
 		
+		case 4: //mayjinsen 1&2
+			set_visible_area(0,32*8-1,0,28*8-1);
+		break;	
+
+		
 		default:
 			spr_dx=0;
 			spr_dy=0;
@@ -427,13 +443,86 @@ VIDEO_START( st0016 )
 }
 
 
+static void drawbgmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int priority)
+{
+	int j;
+	for(j=8;j<0x40;j+=8)
+	{
+		if(st0016_vregs[j+1] && ((priority && (st0016_vregs[j+3]==0xff))||((!priority)&&(st0016_vregs[j+3]!=0xff))))
+		{
+			int x,y,code,color;
+			int i=st0016_vregs[j+1]*0x1000;	
+			for(x=0;x<32;x++)
+	 			for(y=0;y<8*4;y++)	
+	 			{
+				 	
+				 	code=st0016_spriteram[i]+256*st0016_spriteram[i+1];
+	 				color=st0016_spriteram[i+2];
+				 	
+				 	if(priority)
+				 	{
+				 		drawgfx(bitmap,Machine->gfx[0],
+										code,
+										color,
+										0,0,
+										x*8+spr_dx,y*8+spr_dy,
+										&Machine->visible_area,TRANSPARENCY_PEN,0);
+					}
+					else
+					{
+							UINT16 *destline;
+							int yloop,xloop;
+							int ypos, xpos;
+							const struct GfxElement *gfx = Machine->gfx[0];
+							data8_t *srcgfx;
+							int gfxoffs;
+							ypos = y*8+spr_dy+((st0016_vregs[j+2]==0xaf)?0x50:0);//hack for mayjinsen title screen
+							xpos = x*8+spr_dx;
+							gfxoffs = 0;
+							srcgfx= gfx->gfxdata+(64*code);
+							
+							for (yloop=0; yloop<8; yloop++)
+							{
+								UINT16 drawypos;
+
+								drawypos = ypos+yloop;
+								destline = (UINT16 *)(bitmap->line[drawypos]);
+
+								for (xloop=0; xloop<8; xloop++)
+								{
+									UINT16 drawxpos;
+									int pixdata;
+									pixdata = srcgfx[gfxoffs];
+
+									drawxpos = xpos+xloop;
+
+									if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) )
+									{
+										if(st0016_vregs[j+7]==0x12)
+											destline[drawxpos] |= pixdata<<4;
+										else
+											if(pixdata || destline[drawxpos]==UNUSED_PEN)
+												destline[drawxpos] = pixdata + (color*16);
+									}
+
+									gfxoffs++;
+								}
+							}
+						}
+	 			i+=4;	
+	 			}
+	 	}
+	}
+}
+
+
 VIDEO_UPDATE( st0016 )
 {
 #ifdef MAME_DEBUG
 	if(code_pressed_memory(KEYCODE_Z))
 	{
 		int h,j;
-		FILE *p=fopen("vram_renjyu.bin","wb");
+		FILE *p=fopen("vram.bin","wb");
 		fwrite(st0016_spriteram,1,0x1000*ST0016_MAX_SPR_BANK,p);
 		fclose(p);
 	
@@ -451,6 +540,8 @@ VIDEO_UPDATE( st0016 )
 	}
 #endif	
 	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->visible_area);
-	drawsprites(bitmap,cliprect);
+	drawbgmap(bitmap,cliprect,0);
+ 	drawsprites(bitmap,cliprect);
+	drawbgmap(bitmap,cliprect,1);
 }
 

@@ -30,9 +30,6 @@
  *
  **************************************************************************** */
 
-/* GLmame and FXmame provide their own vector implementations */
-#if !(defined xgl)
-
 #include <math.h>
 #include "osinline.h"
 #include "driver.h"
@@ -786,5 +783,3 @@ VIDEO_UPDATE( vector )
 
 	vector_dirty_list[dirty_index] = VECTOR_PIXEL_END;
 }
-
-#endif /* if !(defined xgl) */

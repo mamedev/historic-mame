@@ -485,6 +485,11 @@ void midway_serial_pic2_w(UINT8 data)
 						fprintf(nvramlog, "Read byte %02X = %02X\n", pic.nvram_addr, pic.nvram[pic.nvram_addr]);
 				}
 				break;
+			
+			/* reflect inverted? (Cruisin' Exotica) */
+			case 8:
+				pic.latch = 0x400 | (~cmd & 0xff);
+				break;
 		}
 	}
 }
@@ -530,7 +535,6 @@ enum
 	IOASIC_INTCTL		/* f: interrupt control */
 };
 
-
 static UINT16 ioasic_fifo_r(void);
 static UINT16 ioasic_fifo_status_r(void);
 static void ioasic_fifo_reset_w(int state);
@@ -551,6 +555,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		{ 0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x7,0x8,0x9,0xb,0xa,0x5,0x6,0x4 },	/* Gauntlet Dark Legacy */
 		{ 0x7,0x4,0x5,0x6,0x2,0x0,0x1,0x3,0x8,0x9,0xa,0xb,0xd,0xc,0xe,0xf },	/* Vapor TRX */
 		{ 0x7,0x4,0x5,0x6,0x2,0x0,0x1,0x3,0x8,0x9,0xa,0xb,0xd,0xc,0xe,0xf },	/* San Francisco Rush: The Rock */
+		{ 0x1,0x2,0x3,0x0,0x4,0x5,0x6,0x7,0xa,0xb,0x8,0x9,0xc,0xd,0xe,0xf },	/* Hyperdrive */
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
@@ -586,6 +591,12 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 void midway_ioasic_set_auto_ack(int auto_ack)
 {
 	ioasic.auto_ack = auto_ack;
+}
+
+
+void midway_ioasic_set_shuffle_state(int state)
+{
+	ioasic.shuffle_active = state;
 }
 
 

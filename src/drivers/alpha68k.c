@@ -56,7 +56,7 @@ Stephh's additional notes (based on the games M68000 code and some tests) :
 
  3)  'paddlema'
 
-  - "Game Time" Dip Switch is the time for match type A. Here is what you
+  - DEF_STR( Game_Time ) Dip Switch is the time for match type A. Here is what you
     have to add for games B to E :
 
       Match Type       B        C        D        E
@@ -89,7 +89,7 @@ Stephh's additional notes (based on the games M68000 code and some tests) :
     is writable :
 
       * bit 4 (when "Unused" Dip Switch is set to "On") determines invulnerability
-      * bit 6 (when "Difficulty" Dip Switch is set to "Hard" or "Hardest")
+      * bit 6 (when "Difficulty" Dip Switch is set to DEF_STR( Hard ) or DEF_STR( Hardest ))
         determines if some coordonates are displayed.
 
  8)  'gangwarb'
@@ -248,13 +248,13 @@ static WRITE16_HANDLER( alpha_microcontroller_w )
 
 static READ16_HANDLER( kyros_dip_r )
 {
-	return readinputport(1)<<8;
+	return readinputportbytag("IN1")<<8;
 }
 
 static READ16_HANDLER( control_1_r )
 {
 	if (invert_controls)
-		return ~(readinputport(0) + (readinputport(1) << 8));
+		return ~(readinputportbytag("IN0") + (readinputportbytag("IN1") << 8));
 
 	return (readinputport(0) + (readinputport(1) << 8));
 }
@@ -262,39 +262,39 @@ static READ16_HANDLER( control_1_r )
 static READ16_HANDLER( control_2_r )
 {
 	if (invert_controls)
-		return ~(readinputport(3) + ((~(1 << (readinputport(5) * 12 / 256))) << 8));
+		return ~(readinputportbytag("IN3") + ((~(1 << (readinputportbytag("IN5") * 12 / 256))) << 8));
 
-	return readinputport(3) + /* Low byte of CN1 */
-		((~(1 << (readinputport(5) * 12 / 256))) << 8);
+	return readinputportbytag("IN3") + /* Low byte of CN1 */
+		((~(1 << (readinputportbytag("IN5") * 12 / 256))) << 8);
 }
 
 static READ16_HANDLER( control_2_V_r )
 {
-	return readinputport(3);
+	return readinputportbytag("IN3");
 }
 
 static READ16_HANDLER( control_3_r )
 {
 	if (invert_controls)
-		return ~((( ~(1 << (readinputport(6) * 12 / 256)) )<<8)&0xff00);
+		return ~((( ~(1 << (readinputportbytag("IN6") * 12 / 256)) )<<8)&0xff00);
 
-	return (( ~(1 << (readinputport(6) * 12 / 256)) )<<8)&0xff00;
+	return (( ~(1 << (readinputportbytag("IN6") * 12 / 256)) )<<8)&0xff00;
 }
 
 /* High 4 bits of CN1 & CN2 */
 static READ16_HANDLER( control_4_r )
 {
 	if (invert_controls)
-		return ~(((( ~(1 << (readinputport(6) * 12 / 256))  ) <<4)&0xf000)
-		 + ((( ~(1 << (readinputport(5) * 12 / 256))  )    )&0x0f00));
+		return ~(((( ~(1 << (readinputportbytag("IN6") * 12 / 256))  ) <<4)&0xf000)
+		 + ((( ~(1 << (readinputportbytag("IN5") * 12 / 256))  )    )&0x0f00));
 
-	return ((( ~(1 << (readinputport(6) * 12 / 256))  ) <<4)&0xf000)
-		 + ((( ~(1 << (readinputport(5) * 12 / 256))  )    )&0x0f00);
+	return ((( ~(1 << (readinputportbytag("IN6") * 12 / 256))  ) <<4)&0xf000)
+		 + ((( ~(1 << (readinputportbytag("IN5") * 12 / 256))  )    )&0x0f00);
 }
 
 static READ16_HANDLER( jongbou_inputs_r )
 {
-	return readinputport(0) | readinputport(3);
+	return readinputportbytag("IN0") | readinputportbytag("IN3");
 }
 
 /******************************************************************************/
@@ -360,14 +360,14 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 			return 0;
 		case 0x29: /* Query microcontroller for coin insert */
 			trigstate++;
-			if ((readinputport(2)&0x3)==3) latch=0;
-			if ((readinputport(2)&0x1)==0 && !latch)
+			if ((readinputportbytag("IN2")&0x3)==3) latch=0;
+			if ((readinputportbytag("IN2")&0x1)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id&0xff);	// coinA
 				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 
-				coinvalue = (~readinputport(1)>>1) & 7;
+				coinvalue = (~readinputportbytag("IN1")>>1) & 7;
 				deposits1++;
 				if (deposits1 == coinage1[coinvalue][0])
 				{
@@ -377,13 +377,13 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 				else
 					credits = 0;
 			}
-			else if ((readinputport(2)&0x2)==0 && !latch)
+			else if ((readinputportbytag("IN2")&0x2)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id>>8);	// coinB
 				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 
-				coinvalue = (~readinputport(1)>>1) & 7;
+				coinvalue = (~readinputportbytag("IN1")>>1) & 7;
 				deposits2++;
 				if (deposits2 == coinage2[coinvalue][0])
 				{
@@ -439,7 +439,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 	switch (offset)
 	{
 		case 0: /* Dipswitch 2 */
-			shared_ram[0] = (source&0xff00)|readinputport(4);
+			shared_ram[0] = (source&0xff00)|readinputportbytag("IN4");
 			return 0;
 
 		case 0x22: /* Coin value */
@@ -447,8 +447,8 @@ static READ16_HANDLER( alpha_II_trigger_r )
 			return 0;
 
 		case 0x29: /* Query microcontroller for coin insert */
-			if ((readinputport(2)&0x3)==3) latch=0;
-			if ((readinputport(2)&0x1)==0 && !latch)
+			if ((readinputportbytag("IN2")&0x3)==3) latch=0;
+			if ((readinputportbytag("IN2")&0x1)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id&0xff);	// coinA
 				shared_ram[0x22] = (source&0xff00)|0x0;
@@ -456,7 +456,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 
 				if ((coin_id&0xff) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>0) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>0) & 7;
 					deposits1++;
 					if (deposits1 == coinage1[coinvalue][0])
 					{
@@ -467,7 +467,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 						credits = 0;
 				}
 			}
-			else if ((readinputport(2)&0x2)==0 && !latch)
+			else if ((readinputportbytag("IN2")&0x2)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id>>8);	// coinB
 				shared_ram[0x22] = (source&0xff00)|0x0;
@@ -475,7 +475,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 
 				if ((coin_id>>8) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>0) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>0) & 7;
 					deposits2++;
 					if (deposits2 == coinage2[coinvalue][0])
 					{
@@ -527,14 +527,14 @@ static READ16_HANDLER( alpha_V_trigger_r )
 	switch (offset)
 	{
 		case 0: /* Dipswitch 1 */
-			shared_ram[0] = (source&0xff00)|readinputport(4);
+			shared_ram[0] = (source&0xff00)|readinputportbytag("IN4");
 			return 0;
 		case 0x22: /* Coin value */
 			shared_ram[0x22] = (source&0xff00)|(credits&0x00ff);
 			return 0;
 		case 0x29: /* Query microcontroller for coin insert */
-			if ((readinputport(2)&0x3)==3) latch=0;
-			if ((readinputport(2)&0x1)==0 && !latch)
+			if ((readinputportbytag("IN2")&0x3)==3) latch=0;
+			if ((readinputportbytag("IN2")&0x1)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id&0xff);	// coinA
 				shared_ram[0x22] = (source&0xff00)|0x0;
@@ -542,7 +542,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 
 				if ((coin_id&0xff) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>1) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>1) & 7;
 					deposits1++;
 					if (deposits1 == coinage1[coinvalue][0])
 					{
@@ -553,7 +553,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 						credits = 0;
 				}
 			}
-			else if ((readinputport(2)&0x2)==0 && !latch)
+			else if ((readinputportbytag("IN2")&0x2)==0 && !latch)
 			{
 				shared_ram[0x29] = (source&0xff00)|(coin_id>>8);	// coinB
 				shared_ram[0x22] = (source&0xff00)|0x0;
@@ -561,7 +561,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 
 				if ((coin_id>>8) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>1) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>1) & 7;
 					deposits2++;
 					if (deposits2 == coinage2[coinvalue][0])
 					{
@@ -587,11 +587,11 @@ static READ16_HANDLER( alpha_V_trigger_r )
 			break;
 
 		case 0x1f00: /* Dipswitch 1 */
-			shared_ram[0x1f00] = (source&0xff00)|readinputport(4);
+			shared_ram[0x1f00] = (source&0xff00)|readinputportbytag("IN4");
 			return 0;
 		case 0x1f29: /* Query microcontroller for coin insert */
-			if ((readinputport(2)&0x3)==3) latch=0;
-			if ((readinputport(2)&0x1)==0 && !latch)
+			if ((readinputportbytag("IN2")&0x3)==3) latch=0;
+			if ((readinputportbytag("IN2")&0x1)==0 && !latch)
 			{
 				shared_ram[0x1f29] = (source&0xff00)|(coin_id&0xff);	// coinA
 				shared_ram[0x1f22] = (source&0xff00)|0x0;
@@ -599,7 +599,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 
 				if ((coin_id&0xff) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>1) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>1) & 7;
 					deposits1++;
 					if (deposits1 == coinage1[coinvalue][0])
 					{
@@ -610,7 +610,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 						credits = 0;
 				}
 			}
-			else if ((readinputport(2)&0x2)==0 && !latch)
+			else if ((readinputportbytag("IN2")&0x2)==0 && !latch)
 			{
 				shared_ram[0x1f29] = (source&0xff00)|(coin_id>>8);	// coinB
 				shared_ram[0x1f22] = (source&0xff00)|0x0;
@@ -618,7 +618,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 
 				if ((coin_id>>8) == 0x22)
 				{
-					coinvalue = (~readinputport(4)>>1) & 7;
+					coinvalue = (~readinputportbytag("IN4")>>1) & 7;
 					deposits2++;
 					if (deposits2 == coinage2[coinvalue][0])
 					{
@@ -639,7 +639,7 @@ static READ16_HANDLER( alpha_V_trigger_r )
 			   the microcontroller supplies it (it does for all the other games,
 			   but usually to 0x0 in RAM) when 0x21 is read (code at 0x009332) */
 			source=shared_ram[0x0163];
-			shared_ram[0x0163] = (source&0x00ff)|(readinputport(4)<<8);
+			shared_ram[0x0163] = (source&0x00ff)|(readinputportbytag("IN4")<<8);
 
 			return 0;
 		case 0x1ffe:  /* Custom ID check */
@@ -913,43 +913,43 @@ ADDRESS_MAP_END
 /******************************************************************************/
 
 #define ALPHA68K_PLAYER_INPUT_LSB( player, button3, start, active ) \
-	PORT_BIT( 0x0001, active, IPT_JOYSTICK_UP    | player ) \
-	PORT_BIT( 0x0002, active, IPT_JOYSTICK_DOWN  | player ) \
-	PORT_BIT( 0x0004, active, IPT_JOYSTICK_LEFT  | player ) \
-	PORT_BIT( 0x0008, active, IPT_JOYSTICK_RIGHT | player ) \
-	PORT_BIT( 0x0010, active, IPT_BUTTON1        | player ) \
-	PORT_BIT( 0x0020, active, IPT_BUTTON2        | player ) \
-	PORT_BIT( 0x0040, active, button3            | player ) \
+	PORT_BIT( 0x0001, active, IPT_JOYSTICK_UP    ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0002, active, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0004, active, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0008, active, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0010, active, IPT_BUTTON1        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0020, active, IPT_BUTTON2        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0040, active, button3            ) PORT_PLAYER(player) \
 	PORT_BIT( 0x0080, active, start )
 
 #define ALPHA68K_PLAYER_INPUT_MSB( player, button3, start, active ) \
-	PORT_BIT( 0x0100, active, IPT_JOYSTICK_UP    | player ) \
-	PORT_BIT( 0x0200, active, IPT_JOYSTICK_DOWN  | player ) \
-	PORT_BIT( 0x0400, active, IPT_JOYSTICK_LEFT  | player ) \
-	PORT_BIT( 0x0800, active, IPT_JOYSTICK_RIGHT | player ) \
-	PORT_BIT( 0x1000, active, IPT_BUTTON1        | player ) \
-	PORT_BIT( 0x2000, active, IPT_BUTTON2        | player ) \
-	PORT_BIT( 0x4000, active, button3            | player ) \
+	PORT_BIT( 0x0100, active, IPT_JOYSTICK_UP    ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0200, active, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0400, active, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0800, active, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) \
+	PORT_BIT( 0x1000, active, IPT_BUTTON1        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x2000, active, IPT_BUTTON2        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x4000, active, button3            ) PORT_PLAYER(player) \
 	PORT_BIT( 0x8000, active, start )
 
 #define ALPHA68K_PLAYER_INPUT_SWAP_LR_LSB( player, button3, start, active ) \
-	PORT_BIT( 0x0001, active, IPT_JOYSTICK_UP    | player ) \
-	PORT_BIT( 0x0002, active, IPT_JOYSTICK_DOWN  | player ) \
-	PORT_BIT( 0x0004, active, IPT_JOYSTICK_RIGHT | player ) \
-	PORT_BIT( 0x0008, active, IPT_JOYSTICK_LEFT  | player ) \
-	PORT_BIT( 0x0010, active, IPT_BUTTON1        | player ) \
-	PORT_BIT( 0x0020, active, IPT_BUTTON2        | player ) \
-	PORT_BIT( 0x0040, active, button3            | player ) \
+	PORT_BIT( 0x0001, active, IPT_JOYSTICK_UP    ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0002, active, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0004, active, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0008, active, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0010, active, IPT_BUTTON1        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0020, active, IPT_BUTTON2        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0040, active, button3            ) PORT_PLAYER(player) \
 	PORT_BIT( 0x0080, active, start )
 
 #define ALPHA68K_PLAYER_INPUT_SWAP_LR_MSB( player, button3, start, active ) \
-	PORT_BIT( 0x0100, active, IPT_JOYSTICK_UP    | player ) \
-	PORT_BIT( 0x0200, active, IPT_JOYSTICK_DOWN  | player ) \
-	PORT_BIT( 0x0400, active, IPT_JOYSTICK_RIGHT | player ) \
-	PORT_BIT( 0x0800, active, IPT_JOYSTICK_LEFT  | player ) \
-	PORT_BIT( 0x1000, active, IPT_BUTTON1        | player ) \
-	PORT_BIT( 0x2000, active, IPT_BUTTON2        | player ) \
-	PORT_BIT( 0x4000, active, button3            | player ) \
+	PORT_BIT( 0x0100, active, IPT_JOYSTICK_UP    ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0200, active, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0400, active, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) \
+	PORT_BIT( 0x0800, active, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(player) \
+	PORT_BIT( 0x1000, active, IPT_BUTTON1        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x2000, active, IPT_BUTTON2        ) PORT_PLAYER(player) \
+	PORT_BIT( 0x4000, active, button3            ) PORT_PLAYER(player) \
 	PORT_BIT( 0x8000, active, start )
 
 #define ALPHA68K_COINAGE_BITS_0TO2 \
@@ -985,13 +985,18 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(    0x04, "A 2C/3C B 7C/1C" )	\
 	PORT_DIPSETTING(    0x00, "A 3C/2C B 8C/1C" )
 
+#define ALPHA68K_MCU \
+	PORT_START_TAG("IN2")  /* Coin input to microcontroller */\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )\
+
 
 INPUT_PORTS_START( sstingry )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_SWAP_LR_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_HIGH )
-	ALPHA68K_PLAYER_INPUT_SWAP_LR_MSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_HIGH )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_SWAP_LR_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_HIGH )
+	ALPHA68K_PLAYER_INPUT_SWAP_LR_MSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_HIGH )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -1008,17 +1013,15 @@ INPUT_PORTS_START( sstingry )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 INPUT_PORTS_END
 
 INPUT_PORTS_START( kyros )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_SWAP_LR_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_HIGH )
-	ALPHA68K_PLAYER_INPUT_SWAP_LR_MSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_HIGH )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_SWAP_LR_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_HIGH )
+	ALPHA68K_PLAYER_INPUT_SWAP_LR_MSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_HIGH )
 
-	PORT_START  /* dipswitches */
+	PORT_START_TAG("IN1")  /* dipswitches */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1029,26 +1032,24 @@ INPUT_PORTS_START( kyros )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-	PORT_START /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 INPUT_PORTS_END
 
 INPUT_PORTS_START( jongbou )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x0fff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
@@ -1062,10 +1063,10 @@ INPUT_PORTS_START( jongbou )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x30, "Very Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -1073,20 +1074,18 @@ INPUT_PORTS_START( jongbou )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0, IPT_DIAL, 15, 20, 0, 0)
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_SENSITIVITY(15) PORT_KEYDELTA(20)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( paddlema )
-	PORT_START	// control port 0 (bottom players)
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
-	ALPHA68K_PLAYER_INPUT_MSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")	// (bottom players)
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
+	ALPHA68K_PLAYER_INPUT_MSB( 2, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
 
-	PORT_START	// control port 1
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1095,8 +1094,8 @@ INPUT_PORTS_START( paddlema )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(0x0100, IP_ACTIVE_LOW, IPT_START1, "Button A (Start)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_START2, "Button B (Start)", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT(0x0100, IP_ACTIVE_LOW, IPT_START1 ) PORT_NAME("Button A (Start)")
+	PORT_BIT(0x0200, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Button B (Start)")
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1104,11 +1103,11 @@ INPUT_PORTS_START( paddlema )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	// control port 2 (top players)
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER3, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
-	ALPHA68K_PLAYER_INPUT_MSB( IPF_PLAYER4, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN2")	// (top players)
+	ALPHA68K_PLAYER_INPUT_LSB( 3, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
+	ALPHA68K_PLAYER_INPUT_MSB( 4, IPT_UNKNOWN, IPT_UNKNOWN, IP_ACTIVE_LOW )
 
-	PORT_START	// DSW0
+	PORT_START_TAG("IN3") //DSW0
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
@@ -1119,7 +1118,7 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x30, 0x30, "Game Time" )				// See notes
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Game_Time ) )				// See notes
 	PORT_DIPSETTING(    0x00, "1:00" )
 	PORT_DIPSETTING(    0x20, "1:10" )
 	PORT_DIPSETTING(    0x10, "1:20" )
@@ -1130,7 +1129,7 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPSETTING(    0x40, "A to E" )
 //	PORT_DIPSETTING(    0xc0, "A to B" )				// Possibility of "A only" in another version ?
 
-	PORT_START	// DSW1
+	PORT_START_TAG("IN4")	// DSW1
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -1144,51 +1143,49 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPNAME( 0x30, 0x00, "Game Mode" )
 	PORT_DIPSETTING(    0x20, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x00, "Demo Sounds On" )
-	PORT_BITX( 0,       0x10, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Win Match Against CPU", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, "Win Match Against CPU (Cheat)")
 	PORT_DIPSETTING(    0x30, "Freeze" )
-	PORT_DIPNAME( 0x40, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x40, "Japanese" )
-	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Japanese ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( timesold )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* Service + dip */
+	ALPHA68K_MCU
+	
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
-//	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )					// "Difficult"
-	PORT_DIPNAME( 0x20, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// See notes
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	ALPHA68K_COINAGE_BITS_0TO2
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -1200,49 +1197,47 @@ INPUT_PORTS_START( timesold )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, KEYCODE_Z, KEYCODE_X, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_START_TAG("IN5")  /* player 1 12-way rotary control - converted in controls_r() */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
 
-	PORT_START  /* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, KEYCODE_N, KEYCODE_M, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
 INPUT_PORTS_END
 
 /* Same as 'timesold' but different default settings for the "Language" Dip Switch */
 INPUT_PORTS_START( btlfield )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 
-	PORT_START  /* Service + dip */
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
-//	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )					// "Difficult"
-	PORT_DIPNAME( 0x20, 0x20, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// See notes
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	ALPHA68K_COINAGE_BITS_0TO2
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -1254,48 +1249,46 @@ INPUT_PORTS_START( btlfield )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 8, 0, 0, KEYCODE_Z, KEYCODE_X, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_START_TAG("IN5")  /* player 1 12-way rotary control - converted in controls_r() */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
 
-	PORT_START  /* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, KEYCODE_N, KEYCODE_M, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skysoldr )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 
-	PORT_START  /* Service + dip */
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )					// "1"
-	PORT_DIPSETTING(    0x10, "Normal" )				// "2"
-	PORT_DIPSETTING(    0x18, "Hard" )					// "3"
-	PORT_DIPSETTING(    0x00, "Hardest" )				// "4"
-	PORT_DIPNAME( 0x20, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )					// "1"
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )				// "2"
+	PORT_DIPSETTING(    0x18, DEF_STR( Hard ) )					// "3"
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )				// "4"
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, "Manufacturer" )			// See notes
 	PORT_DIPSETTING(    0x40, "SNK" )
 	PORT_DIPSETTING(    0x00, "Romstar" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	ALPHA68K_COINAGE_BITS_0TO2
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -1307,41 +1300,39 @@ INPUT_PORTS_START( skysoldr )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 1 12-way rotary control */
+	PORT_START_TAG("IN5")  /* player 1 12-way rotary control */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 2 12-way rotary control */
+	PORT_START_TAG("IN6")  /* player 2 12-way rotary control */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( goldmedl )
-	PORT_START  /* 3 buttons per player, no joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_START_TAG("IN0")  /* 3 buttons per player, no joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* START3 is mapped elsewhere */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START  /* 3 buttons per player, no joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+	PORT_START_TAG("IN1")  /* 3 buttons per player, no joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	ALPHA68K_MCU
 
-	PORT_START  /* Service + dip */
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x00, "Event Select" )
@@ -1361,39 +1352,37 @@ INPUT_PORTS_START( goldmedl )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x80, "4" )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	ALPHA68K_COINAGE_BITS_2TO4
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 1 12-way rotary control */
+	PORT_START_TAG("IN5")  /* player 1 12-way rotary control */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START  /* player 2 12-way rotary control */
+	PORT_START_TAG("IN6")  /* player 2 12-way rotary control */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skyadvnt )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* Service + dip */
+	ALPHA68K_MCU
+	
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1405,15 +1394,15 @@ INPUT_PORTS_START( skyadvnt )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )	// See notes
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1429,19 +1418,17 @@ INPUT_PORTS_END
 
 /* Same as 'skyadvnt' but bits 0-3 of 2nd set of Dip Switches are different */
 INPUT_PORTS_START( skyadvnu )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* Service + dip */
+	ALPHA68K_MCU
+	
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1453,19 +1440,19 @@ INPUT_PORTS_START( skyadvnu )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )	// See notes
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x01, 0x00, "Price to Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, "Same as Start" )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
@@ -1483,19 +1470,17 @@ INPUT_PORTS_START( skyadvnu )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gangwars )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* Service + dip */
+	ALPHA68K_MCU
+	
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1504,22 +1489,22 @@ INPUT_PORTS_START( gangwars )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x10, 0x00, "Timer Speed" )		// Check code at 0x01923a
-	PORT_DIPSETTING(    0x00, "Normal" )		// 1 second = 0x01ff
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )		// 1 second = 0x01ff
 	PORT_DIPSETTING(    0x10, "Fast" )			// 1 second = 0x013f
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x01, 0x00, "Price to Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, "Same as Start" )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
@@ -1538,19 +1523,17 @@ INPUT_PORTS_END
 
 /* Same as 'gangwars' but bits 0-3 of 2nd set of Dip Switches are different */
 INPUT_PORTS_START( gangwarb )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )	// See notes
-
-	PORT_START  /* Service + dip */
+	ALPHA68K_MCU /* See notes */
+	
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
@@ -1560,18 +1543,18 @@ INPUT_PORTS_START( gangwarb )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x10, 0x00, "Timer Speed" )		// Check code at 0x01923a
-	PORT_DIPSETTING(    0x00, "Normal" )		// 1 second = 0x01ff
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )		// 1 second = 0x01ff
 	PORT_DIPSETTING(    0x10, "Fast" )			// 1 second = 0x013f
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x01, 0x00, "Coin Slots" )
 	PORT_DIPSETTING(    0x00, "Common" )
 	PORT_DIPSETTING(    0x01, "Individual" )
@@ -1594,13 +1577,13 @@ INPUT_PORTS_START( gangwarb )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sbasebal )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_BUTTON3, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_BUTTON3, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START  /* Coin input to microcontroller */
+	PORT_START_TAG("IN2")  /* Coin input to microcontroller */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 #if SBASEBAL_HACK
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1608,9 +1591,9 @@ INPUT_PORTS_START( sbasebal )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )	// COIN2 - unused due to code at 0x0002b4
 #endif
 
-	PORT_START  /* Service + dip */
+	PORT_START_TAG("IN3")  /* Service + dip */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 
 	/* 2 physical sets of _6_ dip switches */
 	PORT_DIPNAME( 0x04, 0x04, "Freeze" )
@@ -1625,7 +1608,7 @@ INPUT_PORTS_START( sbasebal )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	// Check code at 0x0089e6
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x80, "Game Time" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Game_Time ) )
 #if SBASEBAL_HACK
 	PORT_DIPSETTING(    0x00, "4:30" )
 	PORT_DIPSETTING(    0x80, "4:00" )
@@ -1638,12 +1621,12 @@ INPUT_PORTS_START( sbasebal )
 	PORT_DIPSETTING(    0xc0, "2:00" )
 #endif
 
-	PORT_START /* A 6 way dip switch */
+	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )	// Check code at 0x009d3a
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 #if SBASEBAL_HACK
 	ALPHA68K_COINAGE_BITS_2TO4
 #else
@@ -1663,13 +1646,13 @@ INPUT_PORTS_START( sbasebal )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnexspce )
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN0")
+	ALPHA68K_PLAYER_INPUT_LSB( 1, IPT_UNKNOWN, IPT_START1, IP_ACTIVE_LOW )
 
-	PORT_START
-	ALPHA68K_PLAYER_INPUT_LSB( IPF_PLAYER2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
+	PORT_START_TAG("IN1")
+	ALPHA68K_PLAYER_INPUT_LSB( 2, IPT_UNKNOWN, IPT_START2, IP_ACTIVE_LOW )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -1679,7 +1662,7 @@ INPUT_PORTS_START( tnexspce )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
+	PORT_START_TAG("IN3")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1703,23 +1686,23 @@ INPUT_PORTS_START( tnexspce )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Game Mode" )
 	PORT_DIPSETTING(    0x08, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x0c, "Demo Sounds On" )
-	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, "Infinite Lives (Cheat)")
 	PORT_DIPSETTING(    0x00, "Freeze" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x30, "100000 200000" )
 	PORT_DIPSETTING(    0x20, "150000 300000" )
 	PORT_DIPSETTING(    0x10, "300000 500000" )
-	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )

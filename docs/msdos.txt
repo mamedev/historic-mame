@@ -269,7 +269,8 @@ command:
 
 -listgames    list the supported games, year, manufacturer
 
--listinfo     list comprehensive details for all of the supported games
+-listxml      list comprehensive details for all of the supported games in XML
+              format
 
 -listclones   Lists clones of the specified game. When no game is specified,
               this generates a list of all MAME-supported clones.

@@ -17,7 +17,7 @@
 
 static UINT8 namcond1_h8_irq5_enabled;
 static UINT8 coin_state;
-static UINT8 coin_count[4];
+static UINT8 coin_counter[4];
 int namcond1_gfxbank;
 
 MACHINE_INIT( namcond1 )
@@ -43,8 +43,8 @@ MACHINE_INIT( namcond1 )
     // initialise MCU states
     namcond1_h8_irq5_enabled = 0;
     coin_state = 0;
-    coin_count[0] = coin_count[1] =
-    coin_count[2] = coin_count[3] = 0;
+    coin_counter[0] = coin_counter[1] =
+    coin_counter[2] = coin_counter[3] = 0;
 }
 
 // instance of the shared ram pointer
@@ -88,11 +88,11 @@ READ16_HANDLER( namcond1_shared_ram_r )
             break;
 
 	    case (0x18>>1) : // coin #1
-		    data = (coin_count[0]<<8) | coin_count[1];
+		    data = (coin_counter[0]<<8) | coin_counter[1];
             break;
 
         case (0x1a>>1) : // coin #2
-		    data = (coin_count[2]<<8) | coin_count[3];
+		    data = (coin_counter[2]<<8) | coin_counter[3];
             break;
 
         case (0x51>>1) : // player 1 latched
@@ -116,10 +116,10 @@ READ16_HANDLER( namcond1_shared_ram_r )
 
     // Is this the best place to so this? maybe not...
 	poll_coins = readinputport( 3 );
-	if( ( poll_coins & 0x8 ) & ~( coin_state & 0x8 ) ) coin_count[0]++;
-	if( ( poll_coins & 0x4 ) & ~( coin_state & 0x4 ) ) coin_count[1]++;
-	if( ( poll_coins & 0x2 ) & ~( coin_state & 0x2 ) ) coin_count[2]++;
-	if( ( poll_coins & 0x1 ) & ~( coin_state & 0x1 ) ) coin_count[3]++;
+	if( ( poll_coins & 0x8 ) & ~( coin_state & 0x8 ) ) coin_counter[0]++;
+	if( ( poll_coins & 0x4 ) & ~( coin_state & 0x4 ) ) coin_counter[1]++;
+	if( ( poll_coins & 0x2 ) & ~( coin_state & 0x2 ) ) coin_counter[2]++;
+	if( ( poll_coins & 0x1 ) & ~( coin_state & 0x1 ) ) coin_counter[3]++;
 	coin_state = poll_coins;
 
     return( data );

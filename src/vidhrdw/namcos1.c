@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 
 #define get_gfx_pointer(gfxelement,c,line) (gfxelement->gfxdata + (c*gfxelement->height+line) * gfxelement->line_modulo)
@@ -595,6 +596,9 @@ VIDEO_START( namcos1 )
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3] || !tilemap[4] || !tilemap[5] || !namcos1_videoram)
 		return 1;
+
+	/* register videoram to the save state system (post-allocation) */
+	state_save_register_UINT8 ("video", 0, "vram", namcos1_videoram, 0x9000) ;
 
 	namcos1_set_flipscreen(0);
 

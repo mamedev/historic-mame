@@ -200,6 +200,9 @@ struct MachineSound
 #if (HAS_ST0016)
 #include "sound/st0016.h"
 #endif
+#if (HAS_C352)
+#include "sound/c352.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -432,6 +435,9 @@ enum
 #endif
 #if (HAS_ST0016)
 	SOUND_ST0016,
+#endif
+#if (HAS_C352)
+	SOUND_C352,
 #endif
 
 #ifdef MESS

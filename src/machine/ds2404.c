@@ -134,7 +134,7 @@ static void ds2404_writemem(UINT8 value)
 				ds2404.rtc |= ((UINT64)value << 24);
 				break;
 			case 0x206:
-				ds2404.rtc &= ~(UINT64)0xff00000000;
+				ds2404.rtc &= ~(UINT64)U64(0xff00000000);
 				ds2404.rtc |= ((UINT64)value << 32);
 				break;
 		}

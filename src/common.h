@@ -376,6 +376,19 @@ enum
 
 /***************************************************************************
 
+	Global variables
+
+***************************************************************************/
+
+#define COIN_COUNTERS	8	/* total # of coin counters */
+
+extern unsigned int dispensed_tickets;
+extern unsigned int coin_count[COIN_COUNTERS];
+extern unsigned int coinlockedout[COIN_COUNTERS];
+
+
+/***************************************************************************
+
 	Function prototypes
 
 ***************************************************************************/
@@ -397,7 +410,7 @@ int new_memory_region(int num, size_t length, UINT32 flags);
 void free_memory_region(int num);
 
 /* common coin counter helpers */
-#define COIN_COUNTERS	8	/* total # of coin counters */
+void coin_counter_reset(void);
 void coin_counter_w(int num,int on);
 void coin_lockout_w(int num,int on);
 void coin_lockout_global_w(int on);  /* Locks out all coin inputs */

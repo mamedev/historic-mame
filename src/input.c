@@ -1,909 +1,1342 @@
-/******************************************************************************
+/***************************************************************************
 
-  input.c
+	input.c
 
-  Handle input from the user - keyboard, joystick, etc.
+	Handle input from the user.
 
-******************************************************************************/
+***************************************************************************/
 
 #include "driver.h"
-
 #include <time.h>
-#include <assert.h>
+#include <ctype.h>
 
-/***************************************************************************/
-/* Codes */
 
-/* Subtype of codes */
-#define CODE_TYPE_NONE 0U /* code not assigned */
-#define CODE_TYPE_KEYBOARD 1U /* keyboard code */
-#define CODE_TYPE_JOYSTICK 2U /* joystick code */
 
-/* Informations for every input code */
-struct code_info {
-	int memory; /* boolean memory */
-	unsigned oscode; /* os dependant code */
-	unsigned type; /* subtype: CODE_TYPE_KEYBOARD or CODE_TYPE_JOYSTICK */
+/*************************************
+ *
+ *	Constants
+ *
+ *************************************/
+
+#define MAX_TOKEN_LEN		64
+
+/* max time between key presses */
+#define RECORD_TIME			(CLOCKS_PER_SEC*2/3)
+
+
+
+/*************************************
+ *
+ *	Type definitions
+ *
+ *************************************/
+
+struct input_code_info
+{
+	UINT8						analogtype;				/* analog type */
+	INT32						memory;					/* memory */
+	const struct OSCodeInfo *	osinfo;					/* pointer to the OS code info */
+	char						token[MAX_TOKEN_LEN];	/* token string */
 };
 
-/* Main code table, generic KEYCODE_*, JOYCODE_* are indexes in this table */
-static struct code_info* code_map;
 
-/* Size of the table */
-static unsigned code_mac;
 
-/* Create the code table */
+/*************************************
+ *
+ *	String <-> code matching
+ *
+ *************************************/
+
+#define STANDARD_CODE_STRING(x)	{ x, #x },
+
+static struct
+{
+	int				code;
+	const char *	codename;
+} standard_code_strings[] =
+{
+	STANDARD_CODE_STRING(KEYCODE_A)
+ 	STANDARD_CODE_STRING(KEYCODE_B)
+ 	STANDARD_CODE_STRING(KEYCODE_C)
+ 	STANDARD_CODE_STRING(KEYCODE_D)
+ 	STANDARD_CODE_STRING(KEYCODE_E)
+ 	STANDARD_CODE_STRING(KEYCODE_F)
+	STANDARD_CODE_STRING(KEYCODE_G)
+ 	STANDARD_CODE_STRING(KEYCODE_H)
+ 	STANDARD_CODE_STRING(KEYCODE_I)
+ 	STANDARD_CODE_STRING(KEYCODE_J)
+ 	STANDARD_CODE_STRING(KEYCODE_K)
+ 	STANDARD_CODE_STRING(KEYCODE_L)
+	STANDARD_CODE_STRING(KEYCODE_M)
+ 	STANDARD_CODE_STRING(KEYCODE_N)
+ 	STANDARD_CODE_STRING(KEYCODE_O)
+ 	STANDARD_CODE_STRING(KEYCODE_P)
+ 	STANDARD_CODE_STRING(KEYCODE_Q)
+ 	STANDARD_CODE_STRING(KEYCODE_R)
+	STANDARD_CODE_STRING(KEYCODE_S)
+ 	STANDARD_CODE_STRING(KEYCODE_T)
+ 	STANDARD_CODE_STRING(KEYCODE_U)
+ 	STANDARD_CODE_STRING(KEYCODE_V)
+ 	STANDARD_CODE_STRING(KEYCODE_W)
+ 	STANDARD_CODE_STRING(KEYCODE_X)
+	STANDARD_CODE_STRING(KEYCODE_Y)
+ 	STANDARD_CODE_STRING(KEYCODE_Z)
+ 	STANDARD_CODE_STRING(KEYCODE_0)
+ 	STANDARD_CODE_STRING(KEYCODE_1)
+ 	STANDARD_CODE_STRING(KEYCODE_2)
+ 	STANDARD_CODE_STRING(KEYCODE_3)
+	STANDARD_CODE_STRING(KEYCODE_4)
+ 	STANDARD_CODE_STRING(KEYCODE_5)
+ 	STANDARD_CODE_STRING(KEYCODE_6)
+ 	STANDARD_CODE_STRING(KEYCODE_7)
+ 	STANDARD_CODE_STRING(KEYCODE_8)
+ 	STANDARD_CODE_STRING(KEYCODE_9)
+	STANDARD_CODE_STRING(KEYCODE_F1)
+ 	STANDARD_CODE_STRING(KEYCODE_F2)
+ 	STANDARD_CODE_STRING(KEYCODE_F3)
+ 	STANDARD_CODE_STRING(KEYCODE_F4)
+ 	STANDARD_CODE_STRING(KEYCODE_F5)
+	STANDARD_CODE_STRING(KEYCODE_F6)
+ 	STANDARD_CODE_STRING(KEYCODE_F7)
+ 	STANDARD_CODE_STRING(KEYCODE_F8)
+ 	STANDARD_CODE_STRING(KEYCODE_F9)
+ 	STANDARD_CODE_STRING(KEYCODE_F10)
+	STANDARD_CODE_STRING(KEYCODE_F11)
+ 	STANDARD_CODE_STRING(KEYCODE_F12)
+ 	STANDARD_CODE_STRING(KEYCODE_F13)
+ 	STANDARD_CODE_STRING(KEYCODE_F14)
+ 	STANDARD_CODE_STRING(KEYCODE_F15)
+	STANDARD_CODE_STRING(KEYCODE_ESC)
+ 	STANDARD_CODE_STRING(KEYCODE_TILDE)
+ 	STANDARD_CODE_STRING(KEYCODE_MINUS)
+ 	STANDARD_CODE_STRING(KEYCODE_EQUALS)
+ 	STANDARD_CODE_STRING(KEYCODE_BACKSPACE)
+	STANDARD_CODE_STRING(KEYCODE_TAB)
+ 	STANDARD_CODE_STRING(KEYCODE_OPENBRACE)
+ 	STANDARD_CODE_STRING(KEYCODE_CLOSEBRACE)
+ 	STANDARD_CODE_STRING(KEYCODE_ENTER)
+ 	STANDARD_CODE_STRING(KEYCODE_COLON)
+	STANDARD_CODE_STRING(KEYCODE_QUOTE)
+ 	STANDARD_CODE_STRING(KEYCODE_BACKSLASH)
+ 	STANDARD_CODE_STRING(KEYCODE_BACKSLASH2)
+ 	STANDARD_CODE_STRING(KEYCODE_COMMA)
+ 	STANDARD_CODE_STRING(KEYCODE_STOP)
+	STANDARD_CODE_STRING(KEYCODE_SLASH)
+ 	STANDARD_CODE_STRING(KEYCODE_SPACE)
+ 	STANDARD_CODE_STRING(KEYCODE_INSERT)
+ 	STANDARD_CODE_STRING(KEYCODE_DEL)
+	STANDARD_CODE_STRING(KEYCODE_HOME)
+ 	STANDARD_CODE_STRING(KEYCODE_END)
+ 	STANDARD_CODE_STRING(KEYCODE_PGUP)
+ 	STANDARD_CODE_STRING(KEYCODE_PGDN)
+	STANDARD_CODE_STRING(KEYCODE_LEFT)
+	STANDARD_CODE_STRING(KEYCODE_RIGHT)
+ 	STANDARD_CODE_STRING(KEYCODE_UP)
+ 	STANDARD_CODE_STRING(KEYCODE_DOWN)
+	STANDARD_CODE_STRING(KEYCODE_0_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_1_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_2_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_3_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_4_PAD)
+	STANDARD_CODE_STRING(KEYCODE_5_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_6_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_7_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_8_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_9_PAD)
+	STANDARD_CODE_STRING(KEYCODE_SLASH_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_ASTERISK)
+ 	STANDARD_CODE_STRING(KEYCODE_MINUS_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_PLUS_PAD)
+	STANDARD_CODE_STRING(KEYCODE_DEL_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_ENTER_PAD)
+ 	STANDARD_CODE_STRING(KEYCODE_PRTSCR)
+ 	STANDARD_CODE_STRING(KEYCODE_PAUSE)
+	STANDARD_CODE_STRING(KEYCODE_LSHIFT)
+ 	STANDARD_CODE_STRING(KEYCODE_RSHIFT)
+ 	STANDARD_CODE_STRING(KEYCODE_LCONTROL)
+ 	STANDARD_CODE_STRING(KEYCODE_RCONTROL)
+	STANDARD_CODE_STRING(KEYCODE_LALT)
+ 	STANDARD_CODE_STRING(KEYCODE_RALT)
+ 	STANDARD_CODE_STRING(KEYCODE_SCRLOCK)
+ 	STANDARD_CODE_STRING(KEYCODE_NUMLOCK)
+ 	STANDARD_CODE_STRING(KEYCODE_CAPSLOCK)
+	STANDARD_CODE_STRING(KEYCODE_LWIN)
+ 	STANDARD_CODE_STRING(KEYCODE_RWIN)
+ 	STANDARD_CODE_STRING(KEYCODE_MENU)
+ 	
+	STANDARD_CODE_STRING(JOYCODE_1_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_1_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_1_UP)
+	STANDARD_CODE_STRING(JOYCODE_1_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_1_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_1_START)
+ 	STANDARD_CODE_STRING(JOYCODE_1_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_2_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_2_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_2_UP)
+	STANDARD_CODE_STRING(JOYCODE_2_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_2_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_2_START)
+ 	STANDARD_CODE_STRING(JOYCODE_2_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_3_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_3_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_3_UP)
+	STANDARD_CODE_STRING(JOYCODE_3_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_3_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_3_START)
+ 	STANDARD_CODE_STRING(JOYCODE_3_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_4_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_4_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_4_UP)
+	STANDARD_CODE_STRING(JOYCODE_4_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_4_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_4_START)
+ 	STANDARD_CODE_STRING(JOYCODE_4_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_5_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_5_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_5_UP)
+	STANDARD_CODE_STRING(JOYCODE_5_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_5_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_5_START)
+ 	STANDARD_CODE_STRING(JOYCODE_5_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_6_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_6_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_6_UP)
+	STANDARD_CODE_STRING(JOYCODE_6_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_6_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_6_START)
+ 	STANDARD_CODE_STRING(JOYCODE_6_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_7_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_7_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_7_UP)
+	STANDARD_CODE_STRING(JOYCODE_7_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_7_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_7_START)
+ 	STANDARD_CODE_STRING(JOYCODE_7_SELECT)
+	STANDARD_CODE_STRING(JOYCODE_8_LEFT)
+	STANDARD_CODE_STRING(JOYCODE_8_RIGHT)
+	STANDARD_CODE_STRING(JOYCODE_8_UP)
+	STANDARD_CODE_STRING(JOYCODE_8_DOWN)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON1)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON2)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON3)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON4)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON5)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON6)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON7)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON8)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON9)
+	STANDARD_CODE_STRING(JOYCODE_8_BUTTON10)
+ 	STANDARD_CODE_STRING(JOYCODE_8_START)
+ 	STANDARD_CODE_STRING(JOYCODE_8_SELECT)
+
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_1_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_2_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_3_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_4_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_5_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_6_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_7_BUTTON6)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON1)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON2)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON3)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON4)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON5)
+	STANDARD_CODE_STRING(MOUSECODE_8_BUTTON6)
+
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_1_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_2_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_3_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_4_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_5_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_6_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_7_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_X)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_Y)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_Z)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_PEDAL1)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_PEDAL2)
+	STANDARD_CODE_STRING(JOYCODE_8_ANALOG_PEDAL3)
+	STANDARD_CODE_STRING(MOUSECODE_1_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_1_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_1_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_2_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_2_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_2_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_3_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_3_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_3_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_4_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_4_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_4_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_5_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_5_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_5_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_6_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_6_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_6_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_7_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_7_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_7_ANALOG_Z)
+	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_X)
+	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_Y)
+	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_Z)
+};
+
+
+
+/*************************************
+ *
+ *	Macros
+ *
+ *************************************/
+
+#define ANALOG_TYPE(code) (((code) < code_count) ? code_map[code].analogtype : ANALOG_TYPE_NONE)
+
+
+
+/*************************************
+ *
+ *	Local variables
+ *
+ *************************************/
+
+static struct input_code_info *code_map;
+static input_code_t code_count;
+
+/* Static information used in key/joy recording */
+static input_code_t record_seq[SEQ_MAX];		/* buffer for key recording */
+static int record_count;						/* number of key/joy press recorded */
+static clock_t record_last;						/* time of last key/joy press */
+static UINT8 record_analog;						/* are we recording an analog sequence? */
+
+
+
+/*************************************
+ *
+ *	Code table creation
+ *
+ *************************************/
+
 int code_init(void)
 {
-	unsigned i;
+	const struct OSCodeInfo *codelist = osd_get_code_list();
+	const struct OSCodeInfo *info;
+	input_code_t codenum;
+	int extras;
 
-	assert(	__code_key_first == 0
-		&& __code_key_last + 1 == __code_joy_first
-		&& __code_joy_last + 1 == __code_max );
-
-	/* allocate */
-	code_map = (struct code_info*)malloc( __code_max * sizeof(struct code_info) );
+	/* go through and count how many non-standard inputs we have */
+	extras = 0;
+	for (info = codelist; info->name != NULL; info++)
+		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE || 
+			info->inputcode == CODE_OTHER_ANALOG_RELATIVE || info->inputcode >= __code_max)
+		{
+			extras++;
+		}
+	
+	/* allocate the table */
+	code_map = (struct input_code_info *)malloc((__code_max + extras) * sizeof(code_map[0]));
 	if (!code_map)
 		return -1;
-
-	code_mac = 0;
-
-	/* insert all known codes */
-	for(i=0;i<__code_max;++i)
+	memset(code_map, 0, (__code_max + extras) * sizeof(code_map[0]));
+	
+	/* now go through and match up the OS codes to the standard codes */
+	code_count = __code_max;
+	for (info = codelist; info->name != NULL; info++)
 	{
-		code_map[code_mac].memory = 0;
-		code_map[code_mac].oscode = 0; /* not used */
-
-		if (__code_key_first <= i && i <= __code_key_last)
-			code_map[code_mac].type = CODE_TYPE_KEYBOARD;
-		else if (__code_joy_first <= i && i <= __code_joy_last)
-			code_map[code_mac].type = CODE_TYPE_JOYSTICK;
-		else {
-			/* never happen */
-			assert(0);
-			code_map[code_mac].type = CODE_TYPE_NONE;
-		}
-		++code_mac;
-	}
-
-	return 0;
-}
-
-/* Find the osd record of an oscode */
-INLINE const struct KeyboardInfo* internal_oscode_find_keyboard(unsigned oscode)
-{
-	const struct KeyboardInfo *keyinfo;
-	keyinfo = osd_get_key_list();
-	while (keyinfo->name)
-	{
-		if (keyinfo->code == oscode)
-			return keyinfo;
-		++keyinfo;
-	}
-	return 0;
-}
-
-INLINE const struct JoystickInfo* internal_oscode_find_joystick(unsigned oscode)
-{
-	const struct JoystickInfo *joyinfo;
-	joyinfo = osd_get_joy_list();
-	while (joyinfo->name)
-	{
-		if (joyinfo->code == oscode)
-			return joyinfo;
-		++joyinfo;
-	}
-	return 0;
-}
-
-/* Find a oscode in the table */
-static int internal_oscode_find(unsigned oscode, unsigned type)
-{
-	unsigned i;
-	const struct KeyboardInfo *keyinfo;
-	const struct JoystickInfo *joyinfo;
-
-	/* Search in the main table for an oscode */
-	for(i=__code_max;i<code_mac;++i)
-		if (code_map[i].type == type && code_map[i].oscode == oscode)
-			return i;
-
-	/* Search in the osd table for a standard code */
-	switch (type)
-	{
-		case CODE_TYPE_KEYBOARD :
-			keyinfo = internal_oscode_find_keyboard(oscode);
-			if (keyinfo && keyinfo->standardcode != CODE_OTHER)
-				return keyinfo->standardcode;
-			break;
-		case CODE_TYPE_JOYSTICK :
-			joyinfo = internal_oscode_find_joystick(oscode);
-			if (joyinfo && joyinfo->standardcode != CODE_OTHER)
-				return joyinfo->standardcode;
-			break;
-	}
-
-	/* oscode not found */
-	return CODE_NONE;
-}
-
-/* Add a new oscode in the table */
-static int internal_oscode_add(unsigned oscode, unsigned type)
-{
-	struct code_info* new_code_map;
-	new_code_map = realloc( code_map, (code_mac+1) * sizeof(struct code_info) );
-	if (new_code_map)
-	{
-		code_map = new_code_map;
-		code_map[code_mac].memory = 0;
-		code_map[code_mac].oscode = oscode;
-		code_map[code_mac].type = type;
-		return code_mac++;
-	} else {
-		return CODE_NONE;
-        }
-}
-
-/* Find the osd record of a standard code */
-INLINE const struct KeyboardInfo* internal_code_find_keyboard(InputCode code)
-{
-	const struct KeyboardInfo *keyinfo;
-	keyinfo = osd_get_key_list();
-
-	assert( code < code_mac );
-
-	if (code < __code_max)
-	{
-		while (keyinfo->name)
+		if (info->inputcode == CODE_OTHER_DIGITAL || info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE || 
+			info->inputcode == CODE_OTHER_ANALOG_RELATIVE || info->inputcode >= __code_max)
 		{
-			if (keyinfo->standardcode == code)
-				return keyinfo;
-			++keyinfo;
+			if (info->inputcode == CODE_OTHER_ANALOG_ABSOLUTE)
+				code_map[code_count].analogtype = ANALOG_TYPE_ABSOLUTE;
+			else if (info->inputcode == CODE_OTHER_ANALOG_RELATIVE)
+				code_map[code_count].analogtype = ANALOG_TYPE_RELATIVE;
+			else
+				code_map[code_count].analogtype = ANALOG_TYPE_NONE;
+			code_map[code_count++].osinfo = info;
 		}
-	} else {
-		while (keyinfo->name)
+		else
 		{
-			if (keyinfo->standardcode == CODE_OTHER && keyinfo->code == code_map[code].oscode)
-				return keyinfo;
-	      		++keyinfo;
+			if (info->inputcode >= __code_absolute_analog_start && info->inputcode <= __code_absolute_analog_end)
+				code_map[info->inputcode].analogtype = ANALOG_TYPE_ABSOLUTE;
+			else if (info->inputcode >= __code_relative_analog_start && info->inputcode <= __code_relative_analog_end)
+				code_map[info->inputcode].analogtype = ANALOG_TYPE_RELATIVE;
+			else
+				code_map[info->inputcode].analogtype = ANALOG_TYPE_NONE;
+			code_map[info->inputcode].osinfo = info;
+		}
+	}
+	
+	/* finally, go through and make tokens for all the codes */
+	for (codenum = 0; codenum < code_count; codenum++)
+	{
+		int nameindex;
+		
+		/* look up the name in the standard table if we can */
+		if (codenum < __code_max)
+			for (nameindex = 0; nameindex < sizeof(standard_code_strings) / sizeof(standard_code_strings[0]); nameindex++)
+				if (standard_code_strings[nameindex].code == codenum)
+					strncpy(code_map[codenum].token, standard_code_strings[nameindex].codename, sizeof(code_map[codenum].token) - 1);
+		
+		/* otherwise, make one out of the OSD name */
+		if (code_map[codenum].token[0] == 0 && code_map[codenum].osinfo != NULL && code_map[codenum].osinfo->name != NULL)
+		{
+			int charindex;
+			
+			/* copy the user-friendly string */
+			strncpy(code_map[codenum].token, code_map[codenum].osinfo->name, sizeof(code_map[codenum].token) - 1);
+			
+			/* replace spaces with underscores and convert to uppercase */
+			for (charindex = 0; code_map[codenum].token[charindex] != 0; charindex++)
+			{
+				if (code_map[codenum].token[charindex] == ' ')
+					code_map[codenum].token[charindex] = '_';
+				else
+					code_map[codenum].token[charindex] = toupper(code_map[codenum].token[charindex]);
+			}
 		}
 	}
 	return 0;
 }
 
-INLINE const struct JoystickInfo* internal_code_find_joystick(InputCode code)
-{
-	const struct JoystickInfo *joyinfo;
-	joyinfo = osd_get_joy_list();
 
-	assert( code < code_mac );
-
-	if (code < __code_max)
-	{
-		while (joyinfo->name)
-		{
-			if (joyinfo->standardcode == code)
-				return joyinfo;
-			++joyinfo;
-		}
-	} else {
-		while (joyinfo->name)
-		{
-			if (joyinfo->standardcode == CODE_OTHER && joyinfo->code == code_map[code].oscode)
-				return joyinfo;
-			++joyinfo;
-		}
-	}
-	return 0;
-}
-
-/* Check if a code is pressed */
-static int internal_code_pressed(InputCode code)
-{
-	const struct KeyboardInfo *keyinfo;
-	const struct JoystickInfo *joyinfo;
-
-	assert( code < code_mac );
-
-	if (code < __code_max)
-	{
-		switch (code_map[code].type)
-		{
-			case CODE_TYPE_KEYBOARD :
-				keyinfo = internal_code_find_keyboard(code);
-				if (keyinfo)
-					return osd_is_key_pressed(keyinfo->code);
-				break;
-			case CODE_TYPE_JOYSTICK :
-				joyinfo = internal_code_find_joystick(code);
-				if (joyinfo)
-					return osd_is_joy_pressed(joyinfo->code);
-				break;
-		}
-	} else {
-		switch (code_map[code].type)
-		{
-			case CODE_TYPE_KEYBOARD :
-				return osd_is_key_pressed(code_map[code].oscode);
-			case CODE_TYPE_JOYSTICK :
-				return osd_is_joy_pressed(code_map[code].oscode);
-		}
-	}
-	return 0;
-}
-
-/* Return the name of the code */
-static const char* internal_code_name(InputCode code)
-{
-	const struct KeyboardInfo *keyinfo;
-	const struct JoystickInfo *joyinfo;
-
-	assert( code < code_mac );
-
-	switch (code_map[code].type)
-	{
-		case CODE_TYPE_KEYBOARD :
-			keyinfo = internal_code_find_keyboard(code);
-			if (keyinfo)
-				return keyinfo->name;
-			break;
-		case CODE_TYPE_JOYSTICK :
-			joyinfo = internal_code_find_joystick(code);
-			if (joyinfo)
-				return joyinfo->name;
-			break;
-	}
-	return "n/a";
-}
-
-/* Update the code table */
-static void internal_code_update(void)
-{
-	const struct KeyboardInfo *keyinfo;
-	const struct JoystickInfo *joyinfo;
-
-	/* add only oscode because all standard codes are already present */
-
-	keyinfo = osd_get_key_list();
-	while (keyinfo->name)
-	{
-		if (keyinfo->standardcode == CODE_OTHER)
-			if (internal_oscode_find(keyinfo->code,CODE_TYPE_KEYBOARD) == CODE_NONE)
-				internal_oscode_add(keyinfo->code,CODE_TYPE_KEYBOARD);
-		++keyinfo;
-	}
-
-	joyinfo = osd_get_joy_list();
-	while (joyinfo->name)
-	{
-		if (joyinfo->standardcode == CODE_OTHER)
-                        if (internal_oscode_find(joyinfo->code,CODE_TYPE_JOYSTICK)==CODE_NONE)
-				internal_oscode_add(joyinfo->code,CODE_TYPE_JOYSTICK);
-		++joyinfo;
-	}
-}
-
-/* Delete the code table */
 void code_close(void)
 {
-#if 0
-	int i;
-	logerror("List of OS dependant input codes:\n");
-	for(i=__code_max;i<code_mac;++i)
-		logerror("\tcode %d, oscode %d, %s, %s\n",i,code_map[i].oscode,code_map[i].type == CODE_TYPE_KEYBOARD ? "keyboard" : "joystick", internal_code_name(i));
-#endif
-
-	code_mac = 0;
+	code_count = 0;
 	free(code_map);
-	code_map = 0;
+	code_map = NULL;
 }
 
-/***************************************************************************/
-/* Save support */
 
-/* Flags used for saving codes to file */
-#define SAVECODE_FLAGS_TYPE_STANDARD 0x10000000 /* code */
-#define SAVECODE_FLAGS_TYPE_KEYBOARD 0x20000000 /* keyboard oscode */
-#define SAVECODE_FLAGS_TYPE_JOYSTICK 0x30000000 /* joystick oscode */
-#define SAVECODE_FLAGS_TYPE_MASK     0xF0000000
 
-/* Convert one key oscode to one standard code */
-InputCode keyoscode_to_code(unsigned oscode)
+/*************************************
+ *
+ *	Return the analog value of a code.
+ *
+ *************************************/
+
+INT32 code_analog_value(input_code_t code)
 {
-	InputCode code;
-
-	code = internal_oscode_find(oscode,CODE_TYPE_KEYBOARD);
-
-	/* insert if missing */
-	if (code == CODE_NONE)
-		code = internal_oscode_add(oscode,CODE_TYPE_KEYBOARD);
-
-	return code;
-}
-
-/* Convert one joystick oscode to one code */
-InputCode joyoscode_to_code(unsigned oscode)
-{
-	InputCode code = internal_oscode_find(oscode,CODE_TYPE_JOYSTICK);
-
-	/* insert if missing */
-	if (code == CODE_NONE)
-		code = internal_oscode_add(oscode,CODE_TYPE_JOYSTICK);
-
-	return code;
-}
-
-/* Convert one saved code to one code */
-InputCode savecode_to_code(unsigned savecode)
-{
-	unsigned type = savecode & SAVECODE_FLAGS_TYPE_MASK;
-	InputCode code = savecode & ~SAVECODE_FLAGS_TYPE_MASK;
-
-	switch (type)
-	{
-		case SAVECODE_FLAGS_TYPE_STANDARD :
-			return code;
-		case SAVECODE_FLAGS_TYPE_KEYBOARD :
-			return keyoscode_to_code(code);
-		case SAVECODE_FLAGS_TYPE_JOYSTICK :
-			return joyoscode_to_code(code);
-	}
-
-	/* never happen */
-	assert(0);
-	return CODE_NONE;
-}
-
-/* Convert one code to one saved code */
-unsigned code_to_savecode(InputCode code)
-{
-	if (code < __code_max || code >= code_mac)
-               	/* if greather than code_mac is a special CODE like CODE_OR */
-		return code | SAVECODE_FLAGS_TYPE_STANDARD;
-
-	switch (code_map[code].type)
-	{
-		case CODE_TYPE_KEYBOARD : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_KEYBOARD;
-		case CODE_TYPE_JOYSTICK : return code_map[code].oscode | SAVECODE_FLAGS_TYPE_JOYSTICK;
-	}
-
-	/* never happen */
-	assert(0);
-	return 0;
-}
-
-/***************************************************************************/
-/* Interface */
-
-const char *code_name(InputCode code)
-{
-	if (code < code_mac)
-		return internal_code_name(code);
-
-	switch (code)
-	{
-		case CODE_NONE : return "None";
-		case CODE_NOT : return "not";
-		case CODE_OR : return "or";
-	}
-
-	return "n/a";
-}
-
-int code_pressed(InputCode code)
-{
-	int pressed;
+	INT32 value = 0;
 
 	profiler_mark(PROFILER_INPUT);
-
-	pressed = internal_code_pressed(code);
-
+	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
+		value = osd_get_code_value(code_map[code].osinfo->oscode);
 	profiler_mark(PROFILER_END);
+	return value;
+}
 
+
+
+/*************************************
+ *
+ *	Is a code currently pressed?
+ *	(Returns 1 indefinitely while
+ *	the code is pressed.)
+ *
+ *************************************/
+
+int code_pressed(input_code_t code)
+{
+	int pressed = 0;
+
+	profiler_mark(PROFILER_INPUT);
+	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
+		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
+	profiler_mark(PROFILER_END);
 	return pressed;
 }
 
-int code_pressed_memory(InputCode code)
+
+
+/*************************************
+ *
+ *	Is a code currently pressed?
+ *	(Returns 1 only once for each
+ *	press.)
+ *
+ *************************************/
+
+int code_pressed_memory(input_code_t code)
 {
-	int pressed;
+	int pressed = 0;
 
+	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
+		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
-	pressed = internal_code_pressed(code);
-
+	/* if so, handle it specially */
 	if (pressed)
 	{
+		/* if this is the first press, leave pressed = 1 */
 		if (code_map[code].memory == 0)
 			code_map[code].memory = 1;
+
+		/* otherwise, reset pressed = 0 */
 		else
 			pressed = 0;
-	} else
+	}
+
+	/* if we're not pressed, reset the memory field */
+	else
 		code_map[code].memory = 0;
 
 	profiler_mark(PROFILER_END);
-
 	return pressed;
 }
 
-/* Report the pressure only if isn't already signaled with one of the */
-/* functions code_memory and code_memory_repeat */
-static int code_pressed_not_memorized(InputCode code)
-{
-	int pressed;
 
-	profiler_mark(PROFILER_INPUT);
 
-	pressed = internal_code_pressed(code);
+/*************************************
+ *
+ *	Is a code currently pressed?
+ *	(Returns 1 only once for each
+ *	press, plus once for each
+ *	autorepeat.)
+ *
+ *************************************/
 
-	if (pressed)
-	{
-		if (code_map[code].memory != 0)
-			pressed = 0;
-	} else
-		code_map[code].memory = 0;
-
-	profiler_mark(PROFILER_END);
-
-	return pressed;
-}
-
-int code_pressed_memory_repeat(InputCode code, int speed)
+int code_pressed_memory_repeat(input_code_t code, int speed)
 {
 	static int counter;
 	static int keydelay;
-	int pressed;
+	int pressed = 0;
 
+	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
+		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
-	pressed = internal_code_pressed(code);
-
+	/* if so, handle it specially */
 	if (pressed)
 	{
+		/* if this is the first press, set a 3x delay and leave pressed = 1 */
 		if (code_map[code].memory == 0)
 		{
 			code_map[code].memory = 1;
 			keydelay = 3;
 			counter = 0;
 		}
+		
+		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
 		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
 		{
 			keydelay = 1;
 			counter = 0;
-		} else
+		}
+		
+		/* otherwise, reset pressed = 0 */
+		else
 			pressed = 0;
-	} else
+	}
+	
+	/* if we're not pressed, reset the memory field */
+	else
 		code_map[code].memory = 0;
 
 	profiler_mark(PROFILER_END);
-
 	return pressed;
 }
 
-InputCode code_read_async(void)
+
+
+/*************************************
+ *
+ *	Is a code currently pressed?
+ *	(Returns 1 if it is not pressed
+ *	and hasn't been tracked by the
+ *	code_pressed_memory functions
+ *	above.)
+ *
+ *************************************/
+
+static int code_pressed_not_memorized(input_code_t code)
 {
-	unsigned i;
+	int pressed = 0;
 
+	/* determine if the code is still being pressed */
 	profiler_mark(PROFILER_INPUT);
+	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) == ANALOG_TYPE_NONE)
+		pressed = (osd_get_code_value(code_map[code].osinfo->oscode) != 0);
 
-	/* update the table */
-	internal_code_update();
-
-	for(i=0;i<code_mac;++i)
-		if (code_pressed_memory(i))
-			return i;
+	/* if so, handle it specially */
+	if (pressed)
+	{
+		if (code_map[code].memory != 0)
+			pressed = 0;
+	}
+	
+	/* if we're not pressed, reset the memory field */
+	else
+		code_map[code].memory = 0;
 
 	profiler_mark(PROFILER_END);
+	return pressed;
+}
+
+
+
+/*************************************
+ *
+ *	Return the input code if any
+ *	code is pressed; otherwise return
+ *	CODE_NONE.
+ *
+ *************************************/
+
+input_code_t code_read_async(void)
+{
+	input_code_t code;
+
+	profiler_mark(PROFILER_INPUT);
+	
+	/* scan all codes for one that is pressed */
+	for (code = 0; code < code_count; code++)
+		if (code_pressed_memory(code))
+			break;
+
+	profiler_mark(PROFILER_END);
+	return (code == code_count) ? CODE_NONE : code;
+}
+
+
+
+/*************************************
+ *
+ *	Code utilities.
+ *
+ *************************************/
+
+int code_analog_type(input_code_t code)
+{
+	return ANALOG_TYPE(code);
+}
+
+
+const char *code_name(input_code_t code)
+{
+	/* in-range codes just return either the OSD name or the standard name */
+	if (code < code_count && code_map[code].osinfo)
+		return code_map[code].osinfo->name;
+
+	/* a few special other codes */
+	switch (code)
+	{
+		case CODE_NONE : return DEF_STR( None );
+		case CODE_NOT : return "not";
+		case CODE_OR : return "or";
+	}
+
+	/* everything else is n/a */
+	return "n/a";
+}
+
+
+input_code_t token_to_code(const char *token)
+{
+	input_code_t code;
+	
+	/* look for special cases */
+	if (!stricmp(token, "OR"))
+		return CODE_OR;
+	if (!stricmp(token, "NOT"))
+		return CODE_NOT;
+	if (!stricmp(token, "NONE"))
+		return CODE_NONE;
+	if (!stricmp(token, "DEFAULT"))
+		return CODE_DEFAULT;
+
+	/* look for a match against any of the codes in the table */	
+	for (code = 0; code < code_count; code++)
+		if (!strcmp(token, code_map[code].token))
+			return code;
 
 	return CODE_NONE;
 }
 
-/* returns the numerical value of a typed hex digit, or -1 if none */
-INT8 code_read_hex_async(void)
+
+void code_to_token(input_code_t code, char *token)
 {
-	unsigned i;
-
-	profiler_mark(PROFILER_INPUT);
-
-	/* update the table */
-	internal_code_update();
-
-	for(i=0;i<code_mac;++i)
-		if (code_pressed_memory(i))
-		{
-			if ((i >= KEYCODE_A) && (i <= KEYCODE_F))
-				return i - KEYCODE_A + 10;
-			else if ((i >= KEYCODE_0) && (i <= KEYCODE_9))
-				return i - KEYCODE_0;
-			else
-				return -1;
-		}
-
-	profiler_mark(PROFILER_END);
-
-	return -1;
+	/* first look in the table if we can */
+	if (code < code_count)
+	{
+		strcpy(token, code_map[code].token);
+		return;
+	}
+	
+	/* some extra names */
+	switch (code)
+	{
+		case CODE_OR:		strcpy(token, "OR");		return;
+		case CODE_NOT:		strcpy(token, "NOT");		return;
+		case CODE_NONE:		strcpy(token, "NONE");		return;
+		case CODE_DEFAULT:	strcpy(token, "DEFAULT");	return;
+	}
+	
+	/* return an empty token */
+	token[0] = 0;
+	return;
 }
 
-/***************************************************************************/
-/* Sequences */
 
-void seq_set_0(InputSeq* a)
+
+/*************************************
+ *
+ *	Sequence setting helpers.
+ *
+ *************************************/
+
+void seq_set_0(input_seq_t *seq)
 {
-	int j;
-	for(j=0;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	for (codenum = 0; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_set_1(InputSeq* a, InputCode code)
+
+void seq_set_1(input_seq_t *seq, input_code_t code)
 {
-	int j;
-	(*a)[0] = code;
-	for(j=1;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	seq->code[0] = code;
+	for (codenum = 1; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_set_2(InputSeq* a, InputCode code1, InputCode code2)
+
+void seq_set_2(input_seq_t *seq, input_code_t code1, input_code_t code2)
 {
-	int j;
-	(*a)[0] = code1;
-	(*a)[1] = code2;
-	for(j=2;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	seq->code[0] = code1;
+	seq->code[1] = code2;
+	for (codenum = 2; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_set_3(InputSeq* a, InputCode code1, InputCode code2, InputCode code3)
+
+void seq_set_3(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3)
 {
-	int j;
-	(*a)[0] = code1;
-	(*a)[1] = code2;
-	(*a)[2] = code3;
-	for(j=3;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	seq->code[0] = code1;
+	seq->code[1] = code2;
+	seq->code[2] = code3;
+	for (codenum = 3; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_set_4(InputSeq* a, InputCode code1, InputCode code2, InputCode code3, InputCode code4)
+
+void seq_set_4(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4)
 {
-	int j;
-	(*a)[0] = code1;
-	(*a)[1] = code2;
-	(*a)[2] = code3;
-	(*a)[3] = code4;
-	for(j=4;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	seq->code[0] = code1;
+	seq->code[1] = code2;
+	seq->code[2] = code3;
+	seq->code[3] = code4;
+	for (codenum = 4; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_set_5(InputSeq* a, InputCode code1, InputCode code2, InputCode code3, InputCode code4, InputCode code5)
+
+void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4, input_code_t code5)
 {
-	int j;
-	(*a)[0] = code1;
-	(*a)[1] = code2;
-	(*a)[2] = code3;
-	(*a)[3] = code4;
-	(*a)[4] = code5;
-	for(j=5;j<SEQ_MAX;++j)
-		(*a)[j] = CODE_NONE;
+	int codenum;
+	seq->code[0] = code1;
+	seq->code[1] = code2;
+	seq->code[2] = code3;
+	seq->code[3] = code4;
+	seq->code[4] = code5;
+	for (codenum = 5; codenum < SEQ_MAX; codenum++)
+		seq->code[codenum] = CODE_NONE;
 }
 
-void seq_copy(InputSeq* a, InputSeq* b)
+
+
+/*************************************
+ *
+ *	Copy and compare helpers.
+ *
+ *************************************/
+
+void seq_copy(input_seq_t *seqdst, const input_seq_t *seqsrc)
 {
-	int j;
-	for(j=0;j<SEQ_MAX;++j)
-		(*a)[j] = (*b)[j];
+	*seqdst = *seqsrc;
 }
 
-int seq_cmp(InputSeq* a, InputSeq* b)
+
+int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb)
 {
-	int j;
-	for(j=0;j<SEQ_MAX;++j)
-		if ((*a)[j] != (*b)[j])
+	int codenum;
+	for (codenum = 0; codenum < SEQ_MAX; codenum++)
+		if (seqa->code[codenum] != seqb->code[codenum])
 			return -1;
 	return 0;
 }
 
-void seq_name(InputSeq* code, char* buffer, unsigned max)
+
+
+/*************************************
+ *
+ *	Is a given sequence pressed?
+ *
+ *************************************/
+
+int seq_pressed(const input_seq_t *seq)
 {
-	int j;
-	char* dest = buffer;
-	for(j=0;j<SEQ_MAX;++j)
+	int codenum;
+	int result = 1;
+	int invert = 0;
+	int count = 0;
+
+	/* iterate over all of the codes */
+	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
+	{
+		input_code_t code = seq->code[codenum];
+		
+		switch (code)
+		{
+			/* OR: if the preceding result was non-zero after processing at least one code, stop there */
+			/* otherwise, reset the state and continue */
+			case CODE_OR:
+				if (result != 0 && count > 0)
+					return 1;
+				result = 1;
+				invert = 0;
+				count = 0;
+				break;
+
+			/* NOT set the invert flag */
+			case CODE_NOT:
+				invert = !invert;
+				break;
+
+			/* default: check the code if we are still live; otherwise just keep going */
+			default:
+				if (result)
+				{
+					int pressed = code_pressed_not_memorized(code);
+					if ((pressed != 0) == invert)
+						result = 0;
+					count++;
+				}
+				invert = 0;
+				break;
+		}
+	}
+	return (result != 0 && count > 0);
+}
+
+
+
+/*************************************
+ *
+ *	Determine the analog value of
+ *	a sequence.
+ *
+ *************************************/
+
+INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
+{
+	int codenum, type = ANALOG_TYPE_NONE;
+	INT32 result = 0;
+	int enable = 1;
+	int invert = 0;
+	int count = 0;
+
+	/* iterate over all of the codes */
+	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
+	{
+		input_code_t code = seq->code[codenum];
+		
+		switch (code)
+		{
+			/* OR: if the preceding enable was non-zero after processing at least one code, stop there */
+			/* otherwise, reset the state and continue */
+			case CODE_OR:
+				if (enable != 0 && count > 0 && result != 0)
+				{
+					*analogtype = type;
+					return result;
+				}
+				enable = 1;
+				invert = 0;
+				count = 0;
+				break;
+
+			/* NOT set the invert flag */
+			case CODE_NOT:
+				invert = !invert;
+				break;
+
+			/* default: check the code if we are still live; otherwise just keep going */
+			default:
+				if (enable)
+				{
+					/* for analog codes, that becomes the result (only one analog code per OR section) */
+					if (ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
+					{
+						result = code_analog_value(code);
+						type = ANALOG_TYPE(code);
+						count++;
+					}
+					
+					/* for digital codes, update the enable state */
+					else
+					{
+						int pressed = code_pressed_not_memorized(code);
+						if ((pressed != 0) == invert)
+							enable = 0;
+					}
+				}
+				invert = 0;
+				break;
+		}
+	}
+	if (enable != 0 && count > 0 && result != 0)
+	{
+		*analogtype = type;
+		return result;
+	}
+	*analogtype = ANALOG_TYPE_NONE;
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Return the friendly name for a
+ *	sequence
+ *
+ *************************************/
+
+void seq_name(const input_seq_t *seq, char *buffer, unsigned max)
+{
+	char *dest = buffer;
+	int codenum;
+
+	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
 	{
 		const char* name;
 
 		/* this reduces those pesky "blah or n/a" constructs */
-		if (((*code)[j]==CODE_OR) && (j+1>=SEQ_MAX || !strcmp(code_name((*code)[j+1]), "n/a")))
+		if (seq->code[codenum] == CODE_OR && (codenum + 1 >= SEQ_MAX || !strcmp(code_name(seq->code[codenum + 1]), "n/a")))
 		{
-			++j;
+			codenum++;
 			continue;
 		}
 
-		if ((*code)[j]==CODE_NONE)
-			break;
-
-		if (j && 1 + 1 <= max)
+		/* append a space if we are not the first code */
+		if (codenum != 0 && 1 + 1 <= max)
 		{
-			*dest = ' ';
-			dest += 1;
+			*dest++ = ' ';
 			max -= 1;
 		}
 
-		name = code_name((*code)[j]);
+		/* get the friendly name */
+		name = code_name(seq->code[codenum]);
 		if (!name)
 			break;
 
+		/* append it */
 		if (strlen(name) + 1 <= max)
 		{
-			strcpy(dest,name);
+			strcpy(dest, name);
 			dest += strlen(name);
 			max -= strlen(name);
 		}
 	}
 
+	/* if we ended up with nothing, say DEF_STR( None ), otherwise NULL-terminate */
 	if (dest == buffer && 4 + 1 <= max)
-		strcpy(dest,"None");
+		strcpy(dest, DEF_STR( None ));
 	else
 		*dest = 0;
 }
 
-int seq_pressed(InputSeq* code)
-{
-	int j;
-	int res = 1;
-	int invert = 0;
-	int count = 0;
 
-	for(j=0;j<SEQ_MAX;++j)
+
+/*************************************
+ *
+ *	Sequence validation
+ *
+ *************************************/
+
+static int is_seq_valid(const input_seq_t *seq)
+{
+	int last_code_was_operand = 0;
+	int positive_code_count = 0;
+	int pending_not = 0;
+	int analog_count = 0;
+	int seqnum;
+	
+	for (seqnum = 0; seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE; seqnum++)
 	{
-		switch ((*code)[j])
+		input_code_t code = seq->code[seqnum];
+		
+		switch (code)
 		{
-			case CODE_NONE :
-				return res && count;
-			case CODE_OR :
-				if (res && count)
-					return 1;
-				res = 1;
-				count = 0;
+			case CODE_OR:
+				/* if the last code was't an operand or if there were no positive codes, this is invalid */
+				if (!last_code_was_operand || positive_code_count == 0)
+					return 0;
+				
+				/* reset the state after an OR */
+				pending_not = 0;
+				positive_code_count = 0;
+				last_code_was_operand = 0;
+				analog_count = 0;
 				break;
-			case CODE_NOT :
-				invert = !invert;
+				
+			case CODE_NOT:
+				/* disallow a double not */
+				if (pending_not)
+					return 0;
+				
+				/* note that there is a pending NOT, and that this was not an operand */
+				pending_not = 1;
+				last_code_was_operand = 0;
 				break;
+				
 			default:
-				if (res)
+				/* if this code wasn't NOT-ed, increment the number of positive codes */
+				if (!pending_not)
+					positive_code_count++;
+				
+				/* some special checks for analog codes */
+				if (ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
 				{
-					int pressed = code_pressed_not_memorized((*code)[j]);
-					if ((pressed != 0) == invert)
-						res = 0;
+					/* NOT is invalid before an analog code */
+					if (pending_not)
+						return 0;
+					
+					/* there can only be one per OR section */
+					analog_count++;
+					if (analog_count > 1)
+						return 0;
 				}
-				invert = 0;
-				++count;
+				
+				/* clear any pending NOTs and note that this was an operand */
+				pending_not = 0;
+				last_code_was_operand = 1;
+				break;
 		}
 	}
-	return res && count;
+	
+	/* we must end with an operand, and must have at least one positive code */
+	return (positive_code_count > 0) && last_code_was_operand;
 }
 
-/* Static informations used in key/joy recording */
-static InputCode record_seq[SEQ_MAX]; /* buffer for key recording */
-static int record_count; /* number of key/joy press recorded */
-static clock_t record_last; /* time of last key/joy press */
 
-#define RECORD_TIME (CLOCKS_PER_SEC*2/3) /* max time between key press */
 
-/* Start a sequence recording */
-void seq_read_async_start(void)
+/*************************************
+ *
+ *	Sequence recording
+ *
+ *************************************/
+
+void seq_read_async_start(int analog)
 {
-	unsigned i;
+	input_code_t codenum;
 
+	/* reset the recording count and the clock */
 	record_count = 0;
 	record_last = clock();
+	record_analog = analog;
 
 	/* reset code memory, otherwise this memory may interferes with the input memory */
-	for(i=0;i<code_mac;++i)
-		code_map[i].memory = 1;
-}
-
-/* Check that almost one key/joy must be pressed */
-static int seq_valid(InputSeq* seq)
-{
-	int j;
-	int positive = 0;
-	int pred_not = 0;
-	int operand = 0;
-	for(j=0;j<SEQ_MAX;++j)
+	/* for analog codes, get the current value so we can look for changes */
+	for (codenum = 0; codenum < code_count; codenum++)
 	{
-		switch ((*seq)[j])
-		{
-			case CODE_NONE :
-				break;
-			case CODE_OR :
-				if (!operand || !positive)
-					return 0;
-				pred_not = 0;
-				positive = 0;
-				operand = 0;
-				break;
-			case CODE_NOT :
-				if (pred_not)
-					return 0;
-				pred_not = !pred_not;
-				operand = 0;
-				break;
-			default:
-				if (!pred_not)
-					positive = 1;
-				pred_not = 0;
-				operand = 1;
-				break;
-		}
+		if (code_map[codenum].analogtype == ANALOG_TYPE_NONE)
+			code_map[codenum].memory = 1;
+		else
+			code_map[codenum].memory = code_analog_value(codenum);
 	}
-	return positive && operand;
 }
 
-/* Record a key/joy sequence
-	return <0 if more input is needed
-	return ==0 if sequence succesfully recorded
-	return >0 if aborted
-*/
-int seq_read_async(InputSeq* seq, int first)
-{
-	InputCode newkey;
 
+int seq_read_async(input_seq_t *seq, int first)
+{
+	input_code_t newcode;
+
+	/* if UI_CANCEL is pressed, return 1 (abort) */
 	if (input_ui_pressed(IPT_UI_CANCEL))
 		return 1;
 
-	if (record_count == SEQ_MAX
-		|| (record_count > 0 && clock() > record_last + RECORD_TIME))	{
-		int k = 0;
+	/* if we're at the end, or if the RECORD_TIME has passed, we're done */
+	if (record_count == SEQ_MAX || (record_count > 0 && clock() > record_last + RECORD_TIME))
+	{
+		int seqnum = 0;
+
+		/* if this isn't the first code, append it to the end */
 		if (!first)
-		{
-			/* search the first space free */
-			while (k < SEQ_MAX && (*seq)[k] != CODE_NONE)
-				++k;
-		}
+			while (seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE)
+				seqnum++;
 
 		/* if no space restart */
-		if (k + record_count + (k!=0) > SEQ_MAX)
-			k = 0;
+		if (seqnum + record_count + (seqnum != 0) > SEQ_MAX)
+			seqnum = 0;
 
-		/* insert */
-		if (k + record_count + (k!=0) <= SEQ_MAX)
+		/* insert at the current location */
+		if (seqnum + record_count + (seqnum != 0) <= SEQ_MAX)
 		{
-			int j;
-			if (k!=0)
-				(*seq)[k++] = CODE_OR;
-			for(j=0;j<record_count;++j,++k)
-				(*seq)[k] = record_seq[j];
-		}
-		/* fill to end */
-		while (k < SEQ_MAX)
-		{
-			(*seq)[k] = CODE_NONE;
-			++k;
+			int recordnum;
+
+			if (seqnum != 0)
+				seq->code[seqnum++] = CODE_OR;
+			for (recordnum = 0; recordnum < record_count; recordnum++)
+				seq->code[seqnum++] = record_seq[recordnum];
 		}
 
-		if (!seq_valid(seq))
-			seq_set_1(seq,CODE_NONE);
+		/* fill with CODE_NONE until the end */
+		while (seqnum < SEQ_MAX)
+			seq->code[seqnum++] = CODE_NONE;
 
+		/* if the final result is invalid, reset to nothing */
+		if (!is_seq_valid(seq))
+			seq_set_1(seq, CODE_NONE);
+		
+		/* return 0 to indicate that we are finished */
 		return 0;
 	}
 
-	newkey = code_read_async();
-
-	if (newkey != CODE_NONE)
+	/* digital case: see if we have a new code to process */
+	if (!record_analog)
 	{
-		/* if code is duplicate negate the code */
-		if (record_count && newkey == record_seq[record_count-1])
-			record_seq[record_count-1] = CODE_NOT;
+		newcode = code_read_async();
+		if (newcode != CODE_NONE)
+		{
+			/* if code is duplicate negate the code */
+			if (record_count > 0 && newcode == record_seq[record_count - 1])
+				record_seq[record_count - 1] = CODE_NOT;
 
-		record_seq[record_count++] = newkey;
-		record_last = clock();
+			/* append the code and reset the clock */
+			record_seq[record_count++] = newcode;
+			record_last = clock();
+		}
 	}
-
+	
+	/* analog case: see if we have an analog change of sufficient amount (>25%) */
+	else
+	{
+		/* scan all the analog codes for change */
+		for (newcode = 0; newcode < code_count; newcode++)
+			if (ANALOG_TYPE(newcode) != ANALOG_TYPE_NONE)
+			{
+				INT32 diff = code_analog_value(newcode);
+				if (ANALOG_TYPE(newcode) == ANALOG_TYPE_ABSOLUTE)
+					diff = code_map[newcode].memory - diff;
+				if (diff < 0) diff = -diff;
+				if (diff > (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / 4)
+					break;
+			}
+		
+		/* if we got one, add it to the sequence and force an update next time round */
+		if (newcode != code_count)
+		{
+			record_seq[record_count++] = newcode;
+			record_last = clock() - RECORD_TIME;
+		}
+	}
+	
+	/* return -1 to indicate that we are still reading */
 	return -1;
 }
 
-/***************************************************************************/
-/* input ui */
 
-/* Static buffer for memory input */
-struct ui_info {
-	int memory;
-};
 
-static struct ui_info ui_map[__ipt_max];
+/*************************************
+ *
+ *	Sequence utilities
+ *
+ *************************************/
 
-int input_ui_pressed(int code)
+int string_to_seq(const char *string, input_seq_t *seq)
 {
-	int pressed;
+	char token[MAX_TOKEN_LEN + 1];
+	int tokenpos, seqnum = 0;
 
-	profiler_mark(PROFILER_INPUT);
-
-	pressed = seq_pressed(input_port_type_seq(code));
-
-	if (pressed)
+	/* start with a blank sequence */
+	seq_set_0(seq);
+	
+	/* loop until we're done */
+	while (1)
 	{
-		if (ui_map[code].memory == 0)
-		{
-			ui_map[code].memory = 1;
-		} else
-			pressed = 0;
-	} else
-		ui_map[code].memory = 0;
-
-	profiler_mark(PROFILER_END);
-
-	return pressed;
+		/* trim any leading spaces */
+		while (*string != 0 && isspace(*string))
+			string++;
+		
+		/* bail if we're done */
+		if (*string == 0)
+			break;
+			
+		/* build up a token */
+		tokenpos = 0;
+		while (*string != 0 && !isspace(*string) && tokenpos < MAX_TOKEN_LEN)
+			token[tokenpos++] = toupper(*string++);
+		token[tokenpos] = 0;
+		
+		/* translate and add to the sequence */
+		seq->code[seqnum++] = token_to_code(token);
+	}
+	return seqnum;
 }
 
-int input_ui_pressed_repeat(int code,int speed)
+
+void seq_to_string(const input_seq_t *seq, char *string, int maxlen)
 {
-	static int counter,inputdelay;
-	int pressed;
-
-	profiler_mark(PROFILER_INPUT);
-
-	pressed = seq_pressed(input_port_type_seq(code));
-
-	if (pressed)
+	int seqnum;
+	
+	/* reset the output string */
+	*string = 0;
+	
+	/* loop over each code and translate to a string */
+	for (seqnum = 0; seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE; seqnum++)
 	{
-		if (ui_map[code].memory == 0)
+		char token[MAX_TOKEN_LEN];
+		
+		/* get the token */
+		code_to_token(seq->code[seqnum], token);
+		
+		/* if we will fit, append the token to the string */
+		if (strlen(string) + strlen(token) + (seqnum != 0) < maxlen)
 		{
-			ui_map[code].memory = 1;
-			inputdelay = 3;
-			counter = 0;
-		}
-		else if (++counter > inputdelay * speed * Machine->refresh_rate / 60)
-		{
-			inputdelay = 1;
-			counter = 0;
-		} else
-			pressed = 0;
-	} else
-		ui_map[code].memory = 0;
-
-	profiler_mark(PROFILER_END);
-
-	return pressed;
-}
-
-int is_joystick_axis_code(unsigned code)
-{
-	const struct JoystickInfo *joyinfo;
-
-	assert( code < code_mac );
-
-	if (code_map[code].type == CODE_TYPE_JOYSTICK)
-	{
-		if (code < __code_max)
-		{
-			joyinfo = internal_code_find_joystick(code);
-			if (joyinfo)
-				return osd_is_joystick_axis_code(joyinfo->code);
-		}
-		else
-		{
-			return osd_is_joystick_axis_code(code_map[code].oscode);
+			if (seqnum != 0)
+				strcat(string, " ");
+			strcat(string, token);
 		}
 	}
-
-	return 0;
-}
-
-int return_os_joycode(InputCode code)
-{
-	const struct JoystickInfo *joyinfo;
-
-	assert( code < code_mac );
-
-	if (code < __code_max)
-	{
-		if (code_map[code].type == CODE_TYPE_JOYSTICK)
-		{
-			joyinfo = internal_code_find_joystick(code);
-			if (joyinfo)
-				return joyinfo->code;
-		}
-	} else {
-		if (code_map[code].type == CODE_TYPE_JOYSTICK)
-		{
-			return code_map[code].oscode;
-		}
-	}
-	return 0;
 }

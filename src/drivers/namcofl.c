@@ -135,6 +135,16 @@ static READ32_HANDLER( fl_unk1_r )
 	return 0xffffffff;
 }
 
+static READ32_HANDLER( fl_network_r )
+{
+	return 0xffffffff;
+}
+
+static READ32_HANDLER( namcofl_sysreg_r )
+{
+	return 0;
+}
+
 static WRITE32_HANDLER( namcofl_sysreg_w )
 {
 	if ((offset == 2) && !(mem_mask & 0xff))  // address space configuration
@@ -160,15 +170,15 @@ static ADDRESS_MAP_START( sysfl_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x30100000, 0x30100003) AM_WRITENOP	/* watchdog? */
 	AM_RANGE(0x30280000, 0x3028ffff) AM_RAM	AM_BASE(&namcofl_mcuram) /* shared RAM with C75 MCU */
 	AM_RANGE(0x30300000, 0x30303fff) AM_RAM /* COMRAM */
-	AM_RANGE(0x30380000, 0x303800ff) AM_RAM
+	AM_RANGE(0x30380000, 0x303800ff) AM_READ( fl_network_r )	/* network registers */
 	AM_RANGE(0x30400000, 0x3040ffff) AM_RAM AM_BASE(&paletteram32)
 	AM_RANGE(0x30800000, 0x3080ffff) AM_READWRITE(MRA32_RAM, namcofl_videoram_w) AM_BASE(&videoram32)
 	AM_RANGE(0x30a00000, 0x30a0003f) AM_RAM AM_BASE(&namcofl_scrollram32)
-	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_r, namco_rozvideoram32_w)
-	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_r, namco_rozcontrol32_w)
-	AM_RANGE(0x30e00000, 0x30e1ffff) AM_READWRITE(namco_obj32_r, namco_obj32_w)
+	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_le_r, namco_rozvideoram32_le_w)
+	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_le_r, namco_rozcontrol32_le_w)
+	AM_RANGE(0x30e00000, 0x30e1ffff) AM_READWRITE(namco_obj32_le_r, namco_obj32_le_w)
 	AM_RANGE(0x30f00000, 0x30f0000f) AM_RAM /* NebulaM2 code says this is int enable at 0000, int request at 0004, but doesn't do much about it */
-	AM_RANGE(0x40000000, 0x4000005f) AM_RAM AM_WRITE( namcofl_sysreg_w )
+	AM_RANGE(0x40000000, 0x4000005f) AM_READWRITE( namcofl_sysreg_r, namcofl_sysreg_w )
 	AM_RANGE(0xfffffffc, 0xffffffff) AM_READ( fl_unk1_r )
 ADDRESS_MAP_END
 
@@ -176,7 +186,7 @@ INPUT_PORTS_START( sysfl )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -297,11 +307,11 @@ static MACHINE_DRIVER_START( sysfl )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
 // correct size
-//	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
-//	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
+	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
+	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
 // for debugger
-	MDRV_SCREEN_SIZE(96*8, 64*8)
-	MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
+//	MDRV_SCREEN_SIZE(96*8, 64*8)
+//	MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_GFXDECODE(gfxdecodeinfo2)
@@ -333,10 +343,10 @@ ROM_START( speedrcr )
 	ROM_LOAD("se1_sch3.18p",   0x300000, 0x100000, CRC(f817027a) SHA1(71745476f496c60d89c8563b3e46bc85eebc79ce) )
 
 	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
-	ROM_LOAD16_BYTE("se1obj0l.ic1", 0x000001, 0x200000, CRC(17585218) SHA1(3332afa9bd194ac37b8d6f352507c523a0f2e2b3) )
-	ROM_LOAD16_BYTE("se1obj0u.ic2", 0x000000, 0x200000, CRC(d14b1236) SHA1(e5447732ef3acec88fb7a00e0deca3e71a40ae65) )
-	ROM_LOAD16_BYTE("se1obj1l.ic3", 0x400001, 0x200000, CRC(c4809fd5) SHA1(e0b80fccc17c83fb9d08f7f1cf2cd2f0f3a510b4) )
-	ROM_LOAD16_BYTE("se1obj1u.ic4", 0x400000, 0x200000, CRC(0beefa56) SHA1(012fb7b330dbf851ab2217da0a0e7136ddc3d23f) )
+	ROM_LOAD16_BYTE("se1obj0l.ic1", 0x400001, 0x200000, CRC(17585218) SHA1(3332afa9bd194ac37b8d6f352507c523a0f2e2b3) )
+	ROM_LOAD16_BYTE("se1obj0u.ic2", 0x400000, 0x200000, CRC(d14b1236) SHA1(e5447732ef3acec88fb7a00e0deca3e71a40ae65) )
+	ROM_LOAD16_BYTE("se1obj1l.ic3", 0x000001, 0x200000, CRC(c4809fd5) SHA1(e0b80fccc17c83fb9d08f7f1cf2cd2f0f3a510b4) )
+	ROM_LOAD16_BYTE("se1obj1u.ic4", 0x000000, 0x200000, CRC(0beefa56) SHA1(012fb7b330dbf851ab2217da0a0e7136ddc3d23f) )
 
 	ROM_REGION( 0x100000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
 	ROM_LOAD("se1_rsh.14k",    0x000000, 0x100000, CRC(7aa5a962) SHA1(ff936dfcfcc4ee1f5f2232df62def76ff99e671e) )
@@ -369,10 +379,10 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1sch3.18p",   0x300000, 0x100000, CRC(50a14f54) SHA1(ab9c2f2e11f006a9dc7e5aedd5788d7d67166d36) )
 
 	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
-	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x000001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
-	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x000000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
-	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x400001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
-	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x400000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
+	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x400001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
+	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x400000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
+	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x000001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
+	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x000000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
 
 	ROM_REGION( 0x80000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
 	ROM_LOAD("flr1rsh.14k",    0x000000, 0x080000, CRC(037c0983) SHA1(c48574a8ad125cedfaf2538c5ff824e121204629) )
@@ -387,7 +397,7 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
 ROM_END
 
-static DRIVER_INIT( namcofl )
+static void namcofl_common_init(void)
 {
 	namcofl_workram = auto_malloc(0x100000);
 
@@ -395,5 +405,17 @@ static DRIVER_INIT( namcofl )
 	cpu_setbank( 2, namcofl_workram );
 }
 
-GAMEX( 1995, speedrcr,         0, sysfl, sysfl, namcofl, ROT0, "Namco", "Speed Racer", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, finalapr,         0, sysfl, sysfl, namcofl, ROT0, "Namco", "Final Lap R", GAME_NOT_WORKING | GAME_NO_SOUND )
+static DRIVER_INIT(speedrcr)
+{
+	namcofl_common_init();
+	namcos2_gametype = NAMCOFL_SPEED_RACER;
+}
+
+static DRIVER_INIT(finalapr)
+{
+	namcofl_common_init();
+	namcos2_gametype = NAMCOFL_FINAL_LAP_R;
+}
+
+GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

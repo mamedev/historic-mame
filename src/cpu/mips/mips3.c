@@ -517,7 +517,14 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	/* config register: set the system clock divider */
 	divisor = 2;
 	if (config->system_clock != 0)
+	{
 		divisor = Machine->drv->cpu[cpu_getactivecpu()].cpu_clock / config->system_clock;
+		if (config->system_clock * divisor != Machine->drv->cpu[cpu_getactivecpu()].cpu_clock)
+		{
+			configreg |= 0x80000000;
+			divisor = Machine->drv->cpu[cpu_getactivecpu()].cpu_clock * 2 / config->system_clock;
+		}
+	}
 	configreg |= (((divisor < 2) ? 2 : (divisor > 8) ? 8 : divisor) - 2) << 28;
 	
 	/* set up the architecture */

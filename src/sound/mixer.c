@@ -466,24 +466,6 @@ static unsigned mixer_channel_resample_8_pan(struct mixer_channel_data *channel,
 {
 	unsigned count;
 
-#ifdef MMSND
-	if( mmsnd_stereomono ){
-	  /**** all sound mono mode ****/
-	  /* save */
-	  unsigned save_pivot = channel->pivot;
-	  unsigned save_frac = channel->frac;
-	  INT8* save_src = *src;
-	  count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
-	  /* restore */
-	  channel->pivot = save_pivot;
-	  channel->frac = save_frac;
-	  *src = save_src;
-	  mixer_channel_resample_8(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
-	  channel->samples_available += count;
-	  return count;
-	}
-#endif
-
 	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
 		count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
 	} else if (channel->pan == MIXER_PAN_RIGHT) {
@@ -509,24 +491,6 @@ static unsigned mixer_channel_resample_8_pan(struct mixer_channel_data *channel,
 static unsigned mixer_channel_resample_16_pan(struct mixer_channel_data *channel, int* volume, unsigned dst_len, INT16** src, unsigned src_len)
 {
 	unsigned count;
-
-#ifdef MMSND
-	if( mmsnd_stereomono ){
-	  /**** all sound mono mode ****/
-	  /* save */
-	  unsigned save_pivot = channel->pivot;
-	  unsigned save_frac = channel->frac;
-	  INT16* save_src = *src;
-	  count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
-	  /* restore */
-	  channel->pivot = save_pivot;
-	  channel->frac = save_frac;
-	  *src = save_src;
-	  mixer_channel_resample_16(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
-	  channel->samples_available += count;
-	  return count;
-	}
-#endif
 
 	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
 		count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
@@ -692,6 +656,7 @@ int mixer_sh_start(void)
 {
 	struct mixer_channel_data *channel;
 	int i;
+	int r;
 
 	/* reset all channels to their defaults */
 	memset(&mixer_channel, 0, sizeof(mixer_channel));
@@ -715,7 +680,11 @@ int mixer_sh_start(void)
 	memset(left_accum, 0, sizeof(left_accum));
 	memset(right_accum, 0, sizeof(right_accum));
 
-	samples_this_frame = osd_start_audio_stream(is_stereo);
+	r = osd_start_audio_stream(is_stereo);
+	if (r < 0)
+		return -1;
+
+	samples_this_frame = r;
 
 	mixer_sound_enabled = 1;
 
@@ -785,10 +754,6 @@ void mixer_sh_update(void)
 	int i;
 
 	profiler_mark(PROFILER_MIXER);
-
-#ifdef MMSND
-	WaveDataOutStart();
-#endif
 
 	/* update all channels (for streams this is a no-op) */
 	for (i = 0, channel = mixer_channel; i < first_free_channel; i++, channel++)
@@ -864,9 +829,6 @@ void mixer_sh_update(void)
 	}
 
 	/* play the result */
-#ifdef MMSND
-	WaveDataOutEnd( mix_buffer, samples_this_frame, is_stereo );
-#endif
 	samples_this_frame = osd_update_audio_stream(mix_buffer);
 
 	accum_base = accum_pos;
@@ -1076,39 +1038,6 @@ void mixer_save_config(struct mixer_config *config)
 		config->default_levels[i] = mixer_channel[i].default_mixing_level;
 		config->mixing_levels[i] = mixer_channel[i].mixing_level;
 	}
-}
-
-
-/***************************************************************************
-	mixer_read_config
-***************************************************************************/
-
-void mixer_read_config(mame_file *f)
-{
-	struct mixer_config config;
-
-	if (mame_fread(f, config.default_levels, MIXER_MAX_CHANNELS) < MIXER_MAX_CHANNELS ||
-	    mame_fread(f, config.mixing_levels, MIXER_MAX_CHANNELS) < MIXER_MAX_CHANNELS)
-	{
-		memset(config.default_levels, 0xff, sizeof(config.default_levels));
-		memset(config.mixing_levels, 0xff, sizeof(config.mixing_levels));
-	}
-
-	mixer_load_config(&config);
-}
-
-
-/***************************************************************************
-	mixer_write_config
-***************************************************************************/
-
-void mixer_write_config(mame_file *f)
-{
-	struct mixer_config config;
-
-	mixer_save_config(&config);
-	mame_fwrite(f, config.default_levels, MIXER_MAX_CHANNELS);
-	mame_fwrite(f, config.mixing_levels, MIXER_MAX_CHANNELS);
 }
 
 

@@ -429,7 +429,7 @@ static WRITE8_HANDLER( led_w )
 }
 
 
-static READ8_HANDLER( centipdb_rand_r )
+static READ8_HANDLER( caterplr_rand_r )
 {
 	return mame_rand() % 0xff;
 }
@@ -454,14 +454,14 @@ static WRITE8_HANDLER( bullsdrt_coin_count_w )
  *
  *************************************/
 
-static WRITE8_HANDLER( centipdb_AY8910_w )
+static WRITE8_HANDLER( caterplr_AY8910_w )
 {
 	AY8910_control_port_0_w(0, offset);
 	AY8910_write_port_0_w(0, data);
 }
 
 
-static READ8_HANDLER( centipdb_AY8910_r )
+static READ8_HANDLER( caterplr_AY8910_r )
 {
 	AY8910_control_port_0_w(0, offset);
 	return AY8910_read_port_0_r(0);
@@ -500,7 +500,7 @@ static ADDRESS_MAP_START( centiped_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( centipb2_map, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( centipdb_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
 	AM_RANGE(0x0000, 0x03ff) AM_MIRROR(0x4000) AM_RAM
 	AM_RANGE(0x0400, 0x07bf) AM_MIRROR(0x4000) AM_READWRITE(MRA8_RAM, centiped_videoram_w) AM_BASE(&videoram)
@@ -647,7 +647,7 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )									\
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )									\
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )								\
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )					\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL					\
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )									\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )									\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )									\
@@ -659,20 +659,20 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball sign bit */	\
 																				\
 	PORT_START	/* IN3 */														\
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )\
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )	\
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )\
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )\
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )					\
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )				\
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )				\
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )				\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL	\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY					\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY				\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY				\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY				\
 																				\
 	PORT_START	/* IN4 */														\
-	PORT_DIPNAME( 0x03, 0x00, "Language" )										\
-	PORT_DIPSETTING(    0x00, "English" )										\
-	PORT_DIPSETTING(    0x01, "German" )										\
-	PORT_DIPSETTING(    0x02, "French" )										\
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )										\
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )										\
+	PORT_DIPSETTING(    0x01, DEF_STR( German ) )										\
+	PORT_DIPSETTING(    0x02, DEF_STR( French ) )										\
 	PORT_DIPSETTING(    0x03, FOURTH_LANGUAGE )									\
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))									\
 	PORT_DIPSETTING(    0x00, "2" )												\
@@ -685,8 +685,8 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_DIPSETTING(    0x20, "15000" )											\
 	PORT_DIPSETTING(    0x30, "20000" )											\
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ))							\
-	PORT_DIPSETTING(    0x40, "Easy" )											\
-	PORT_DIPSETTING(    0x00, "Hard" )											\
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )											\
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )											\
 	PORT_DIPNAME( 0x80, 0x00, "Credit Minimum" )								\
 	PORT_DIPSETTING(    0x00, "1" )												\
 	PORT_DIPSETTING(    0x80, "2" )												\
@@ -706,7 +706,7 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_DIPSETTING(    0x00, "*1" )											\
 	PORT_DIPSETTING(    0x10, "*2" )											\
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )									\
-	PORT_DIPSETTING(    0x00, "None" )											\
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )											\
 	PORT_DIPSETTING(    0x20, "3 credits/2 coins" )								\
 	PORT_DIPSETTING(    0x40, "5 credits/4 coins" )								\
 	PORT_DIPSETTING(    0x60, "6 credits/4 coins" )								\
@@ -714,20 +714,20 @@ INPUT_PORTS_START( GAMENAME )													\
 	PORT_DIPSETTING(    0xa0, "4 credits/3 coins" )								\
 																				\
 	PORT_START	/* IN6, fake trackball input port. */							\
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE	\
 																				\
 	PORT_START	/* IN7, fake trackball input port. */							\
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE ) \
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) \
 																				\
 	PORT_START	/* IN8, fake trackball input port. */							\
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_COCKTAIL	\
 																				\
 	PORT_START	/* IN9, fake trackball input port. */							\
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_COCKTAIL | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL	\
 INPUT_PORTS_END
 
-PORTS(centiped, "Spanish")
-PORTS(centipdb, "Italian")
+PORTS(centiped, DEF_STR( Spanish ))
+PORTS(caterplr, DEF_STR( Italian ))
 
 
 INPUT_PORTS_START( centtime )
@@ -755,17 +755,17 @@ INPUT_PORTS_START( centtime )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 
 	PORT_START	/* IN4 */
-	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x01, "German" )
-	PORT_DIPSETTING(    0x02, "French" )
-	PORT_DIPSETTING(    0x03, "Spanish" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Spanish ) )
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
@@ -777,8 +777,8 @@ INPUT_PORTS_START( centtime )
 	PORT_DIPSETTING(    0x20, "15000" )
 	PORT_DIPSETTING(    0x30, "20000" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ))
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x80, 0x00, "Credit Minimum" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
@@ -789,7 +789,7 @@ INPUT_PORTS_START( centtime )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ))
-	PORT_DIPNAME( 0x1c, 0x00, "Game Time" )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Game_Time ) )
 	PORT_DIPSETTING(    0x00, "Untimed" )
 	PORT_DIPSETTING(    0x04, "1 Minute" )
 	PORT_DIPSETTING(    0x08, "2 Minutes" )
@@ -799,7 +799,7 @@ INPUT_PORTS_START( centtime )
 	PORT_DIPSETTING(    0x18, "6 Minutes" )
 	PORT_DIPSETTING(    0x1c, "7 Minutes" )
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x20, "3 credits/2 coins" )
 	PORT_DIPSETTING(    0x40, "5 credits/4 coins" )
 	PORT_DIPSETTING(    0x60, "6 credits/4 coins" )
@@ -807,10 +807,10 @@ INPUT_PORTS_START( centtime )
 	PORT_DIPSETTING(    0xa0, "4 credits/3 coins" )
 
 	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE
 
 	PORT_START	/* IN7, fake trackball input port. */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 
 	PORT_START	/* IN8, place for cocktail trackball (not used) */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -834,7 +834,7 @@ INPUT_PORTS_START( magworm )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -859,11 +859,11 @@ INPUT_PORTS_START( magworm )
 	PORT_DIPSETTING(    0x04, "*7" )
 	PORT_DIPSETTING(    0x08, "*1/2" )
 	PORT_DIPSETTING(    0x0c, "*6" )
-	PORT_DIPNAME( 0x30, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x10, "German" )
-	PORT_DIPSETTING(    0x20, "French" )
-	PORT_DIPSETTING(    0x30, "Spanish" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Spanish ) )
 	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Lives ))
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x40, "3" )
@@ -875,7 +875,7 @@ INPUT_PORTS_START( magworm )
 	PORT_DIPSETTING(    0x00, "*1" )
 	PORT_DIPSETTING(    0x01, "*2" )
 	PORT_DIPNAME( 0x0e, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x02, "3 credits/2 coins" )
 	PORT_DIPSETTING(    0x04, "5 credits/4 coins" )
 	PORT_DIPSETTING(    0x06, "6 credits/4 coins" )
@@ -887,33 +887,33 @@ INPUT_PORTS_START( magworm )
 	PORT_DIPSETTING(    0x20, "15000" )
 	PORT_DIPSETTING(    0x30, "20000" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ))
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x80, 0x00, "Credit Minimum" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
 
 	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE
 
 	PORT_START	/* IN7, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 
 	PORT_START	/* IN8, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 50, 10, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_COCKTAIL
 
 	PORT_START	/* IN9, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_COCKTAIL | IPF_REVERSE, 50, 10, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( milliped )
 	PORT_START	/* IN0 $2000 */ /* see port 6 for x trackball */
-	PORT_DIPNAME(0x03, 0x00, "Language" )
-	PORT_DIPSETTING(   0x00, "English" )
-	PORT_DIPSETTING(   0x01, "German" )
-	PORT_DIPSETTING(   0x02, "French" )
-	PORT_DIPSETTING(   0x03, "Spanish" )
+	PORT_DIPNAME(0x03, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( German ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( French ) )
+	PORT_DIPSETTING(   0x03, DEF_STR( Spanish ) )
 	PORT_DIPNAME(0x0c, 0x04, "Bonus" )
 	PORT_DIPSETTING(   0x00, "0" )
 	PORT_DIPSETTING(   0x04, "0 1x" )
@@ -937,26 +937,26 @@ INPUT_PORTS_START( milliped )
 	PORT_DIPNAME(0x08, 0x00, "Coin Counters" )
 	PORT_DIPSETTING(   0x00, "1" )
 	PORT_DIPSETTING(   0x08, "2" )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* trackball sign bit */
 
 	PORT_START	/* IN2 $2010 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START	/* IN3 $2011 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -964,11 +964,11 @@ INPUT_PORTS_START( milliped )
 
 	PORT_START	/* 4 */ /* DSW1 $0408 */
 	PORT_DIPNAME(0x01, 0x00, "Millipede Head" )
-	PORT_DIPSETTING(   0x00, "Easy" )
-	PORT_DIPSETTING(   0x01, "Hard" )
+	PORT_DIPSETTING(   0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( Hard ) )
 	PORT_DIPNAME(0x02, 0x00, "Beetle" )
-	PORT_DIPSETTING(   0x00, "Easy" )
-	PORT_DIPSETTING(   0x02, "Hard" )
+	PORT_DIPSETTING(   0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( Hard ) )
 	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ))
 	PORT_DIPSETTING(   0x00, "2" )
 	PORT_DIPSETTING(   0x04, "3" )
@@ -978,10 +978,10 @@ INPUT_PORTS_START( milliped )
 	PORT_DIPSETTING(   0x00, "12000" )
 	PORT_DIPSETTING(   0x10, "15000" )
 	PORT_DIPSETTING(   0x20, "20000" )
-	PORT_DIPSETTING(   0x30, "None" )
+	PORT_DIPSETTING(   0x30, DEF_STR( None ) )
 	PORT_DIPNAME(0x40, 0x00, "Spider" )
-	PORT_DIPSETTING(   0x00, "Easy" )
-	PORT_DIPSETTING(   0x40, "Hard" )
+	PORT_DIPSETTING(   0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Hard ) )
 	PORT_DIPNAME(0x80, 0x00, "Starting Score Select" )
 	PORT_DIPSETTING(   0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(   0x00, DEF_STR( On ))
@@ -1001,7 +1001,7 @@ INPUT_PORTS_START( milliped )
 	PORT_DIPSETTING(   0x00, "*1" )
 	PORT_DIPSETTING(   0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING(   0x00, "None" )
+	PORT_DIPSETTING(   0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(   0x20, "3 credits/2 coins" )
 	PORT_DIPSETTING(   0x40, "5 credits/4 coins" )
 	PORT_DIPSETTING(   0x60, "6 credits/4 coins" )
@@ -1010,10 +1010,10 @@ INPUT_PORTS_START( milliped )
 	PORT_DIPSETTING(   0xc0, "Demo mode" )
 
 	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE
 
 	PORT_START	/* IN7, fake trackball input port. */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 10, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
 
@@ -1030,21 +1030,21 @@ INPUT_PORTS_START( warlords )
 	PORT_DIPSETTING(    0x00, "Cocktail (overlay)" )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x01, "French" )
-	PORT_DIPSETTING(    0x02, "Spanish" )
-	PORT_DIPSETTING(    0x03, "German" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Spanish ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( German ) )
 	PORT_DIPNAME( 0x04, 0x00, "Music" )
 	PORT_DIPSETTING(    0x00, "End of game" )
 	PORT_DIPSETTING(    0x04, "High score only" )
@@ -1069,7 +1069,7 @@ INPUT_PORTS_START( warlords )
 	PORT_DIPSETTING(    0x00, "*1" )
 	PORT_DIPSETTING(    0x10, "*2" )
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x20, "3 credits/2 coins" )
 	PORT_DIPSETTING(    0x40, "5 credits/4 coins" )
 	PORT_DIPSETTING(    0x60, "6 credits/4 coins" )
@@ -1077,16 +1077,16 @@ INPUT_PORTS_START( warlords )
 
 	/* IN4-7 fake to control player paddles */
 	PORT_START
-	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(1)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(3)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(4)
 INPUT_PORTS_END
 
 
@@ -1168,10 +1168,10 @@ INPUT_PORTS_START( bullsdrt )
 	/* not used */
 
 	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE
 
 	PORT_START	/* IN7, fake trackball input port. */
-	PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y, 50, 10, 0x1d, 0xcb )
+	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_MINMAX(0x1d,0xcb) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
 
@@ -1272,7 +1272,7 @@ static struct POKEYinterface centiped_pokey_interface =
 };
 
 
-static struct AY8910interface centipdb_ay8910_interface =
+static struct AY8910interface caterplr_ay8910_interface =
 {
 	1,
 	12096000/8,
@@ -1284,12 +1284,12 @@ static struct AY8910interface centipdb_ay8910_interface =
 };
 
 
-static struct AY8910interface centipb2_ay8910_interface =
+static struct AY8910interface centipdb_ay8910_interface =
 {
 	1,
 	12096000/8,
 	{ 100 },
-	{ centipdb_rand_r },
+	{ caterplr_rand_r },
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -1377,25 +1377,25 @@ static MACHINE_DRIVER_START( centiped )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( caterplr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(centiped)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("pokey", AY8910, caterplr_ay8910_interface)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( centipdb )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(centipdb_map,0)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", AY8910, centipdb_ay8910_interface)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( centipb2 )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(centiped)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(centipb2_map,0)
-
-	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", AY8910, centipb2_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -1406,7 +1406,7 @@ static MACHINE_DRIVER_START( magworm )
 	MDRV_MACHINE_INIT(magworm)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", AY8910, centipb2_ay8910_interface)
+	MDRV_SOUND_REPLACE("pokey", AY8910, centipdb_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -1526,7 +1526,7 @@ ROM_START( centtime )
 ROM_END
 
 
-ROM_START( centipdb )
+ROM_START( caterplr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, CRC(8a744e57) SHA1(0bc83fe01d929af4e5c7f2a8d1236560df41f9ce) )
 	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, CRC(bb897b10) SHA1(bb1039fe64774277870f675eb72dd9f3f596f865) )
@@ -1535,11 +1535,11 @@ ROM_START( centipdb )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, CRC(d91b9724) SHA1(5ff9ccb2769c853b44764bfe829ad1df08686dc6) )
-	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, CRC(1a6acd02) SHA1(9c5daa8195705669d59b018a89ff8d03bc18999e) )
+	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, CRC(c2b08489) SHA1(9427e54537312ee0a70ec7bd1c039e92f8cfadad) ) 
 ROM_END
 
 
-ROM_START( centipb2 )
+ROM_START( centipdb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "d1",  		  0x2000, 0x0800, CRC(b17b8e0b) SHA1(01944cf040cf23aeb4c50d4f2e63181e08a07310) )
 	ROM_LOAD( "e1",  		  0x2800, 0x0800, CRC(7684398e) SHA1(eea8e05506a7af2fec55c2689e3caafc62ea524f) )
@@ -1639,11 +1639,11 @@ ROM_END
  *
  *************************************/
 
-static DRIVER_INIT( centipdb )
+static DRIVER_INIT( caterplr )
 {
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, centipdb_AY8910_w);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, centipdb_AY8910_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1780, 0x1780, 0, 0, centipdb_rand_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, caterplr_AY8910_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, caterplr_AY8910_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1780, 0x1780, 0, 0, caterplr_rand_r);
 }
 
 
@@ -1671,9 +1671,9 @@ static DRIVER_INIT( bullsdrt )
 GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)" )
 GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)" )
 GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)" )
-GAME( 1980, centipdb, centiped, centipdb, centipdb, centipdb, ROT270, "bootleg", "Centipede (bootleg set 1)" )
-GAME( 1980, centipb2, centiped, centipb2, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg set 2)" )
-GAME( 1980, millpac,  centiped, centipb2, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac" )
+GAME( 1980, centipdb, centiped, centipdb, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg)" )
+GAME( 1980, caterplr, centiped, caterplr, caterplr, caterplr, ROT270, "bootleg", "Caterpillar" )
+GAME( 1980, millpac,  centiped, centipdb, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac" )
 GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)" )
 GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede" )
 

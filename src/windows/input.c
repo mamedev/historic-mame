@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <winioctl.h>
+#include <ctype.h>
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
@@ -39,6 +40,7 @@ extern int win_window_mode;
 #define MAX_KEYBOARDS		1
 #define MAX_MICE			8
 #define MAX_JOYSTICKS		8
+#define MAX_LIGHTGUNS		2
 
 #define MAX_KEYS			256
 
@@ -46,6 +48,28 @@ extern int win_window_mode;
 #define MAX_AXES			8
 #define MAX_BUTTONS			32
 #define MAX_POV				4
+
+enum
+{
+	ANALOG_TYPE_PADDLE = 0,
+	ANALOG_TYPE_ADSTICK,
+	ANALOG_TYPE_LIGHTGUN,
+	ANALOG_TYPE_PEDAL,
+	ANALOG_TYPE_DIAL,
+	ANALOG_TYPE_TRACKBALL,
+#ifdef MESS
+	ANALOG_TYPE_MOUSE,
+#endif // MESS
+	ANALOG_TYPE_COUNT
+};
+
+enum
+{
+	SELECT_TYPE_KEYBOARD = 0,
+	SELECT_TYPE_MOUSE,
+	SELECT_TYPE_JOYSTICK,
+	SELECT_TYPE_LIGHTGUN
+};
 
 
 
@@ -72,6 +96,10 @@ int							win_use_mouse;
 //	LOCAL VARIABLES
 //============================================================
 
+// this will be filled in dynamically
+static struct OSCodeInfo	codelist[MAX_KEYS+MAX_JOY];
+static int					total_codes;
+
 // DirectInput variables
 static LPDIRECTINPUT		dinput;
 static int					dinput_version;
@@ -81,8 +109,6 @@ static int					input_paused;
 static cycles_t				last_poll;
 
 // Controller override options
-//static int					hotrod;
-//static int					hotrodse;
 static float				a2d_deadzone;
 static int					use_joystick;
 static int					use_lightgun;
@@ -91,20 +117,8 @@ static int					use_lightgun_reload;
 static int					use_keyboard_leds;
 static const char *			ledmode;
 static int					steadykey;
-static const char*			ctrlrtype;
-static const char*			ctrlrname;
-static const char*			trackball_ini;
-static const char*			paddle_ini;
-static const char*			dial_ini;
-static const char*			ad_stick_ini;
-static const char*			pedal_ini;
-static const char*			lightgun_ini;
-
-// this is used for the ipdef_custom_rc_func
-static struct ipd 			*ipddef_ptr = NULL;
-
-static int					num_osd_ik = 0;
-static int					size_osd_ik = 0;
+static UINT8				analog_type[ANALOG_TYPE_COUNT];
+static int					dummy[10];
 
 // keyboard states
 static int					keyboard_count;
@@ -135,11 +149,18 @@ static LPDIRECTINPUTDEVICE2	joystick_device2[MAX_JOYSTICKS];
 static DIDEVCAPS			joystick_caps[MAX_JOYSTICKS];
 static DIJOYSTATE			joystick_state[MAX_JOYSTICKS];
 static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
+static UINT8				joystick_digital[MAX_JOYSTICKS][MAX_AXES];
+static char					joystick_name[MAX_JOYSTICKS][MAX_PATH];
+
+// gun states
+static INT32				gun_axis[MAX_LIGHTGUNS][2];
 
 // led states
-static int original_leds;
-static HANDLE hKbdDev;
-static int ledmethod;
+static int					original_leds;
+static HANDLE				hKbdDev;
+static int					ledmethod;
+
+
 
 //============================================================
 //	OPTIONS
@@ -147,14 +168,14 @@ static int ledmethod;
 
 // prototypes
 static int decode_ledmode(struct rc_option *option, const char *arg, int priority);
+static int decode_analog_select(struct rc_option *option, const char *arg, int priority);
+static int decode_digital(struct rc_option *option, const char *arg, int priority);
 
 // global input options
 struct rc_option input_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-//	{ "hotrod", NULL, rc_bool, &hotrod, "0", 0, 0, NULL, "preconfigure for hotrod" },
-//	{ "hotrodse", NULL, rc_bool, &hotrodse, "0", 0, 0, NULL, "preconfigure for hotrod se" },
 	{ "mouse", NULL, rc_bool, &win_use_mouse, "0", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
 	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable lightgun input" },
@@ -164,66 +185,68 @@ struct rc_option input_opts[] =
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
 	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
-	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
-struct rc_option *ctrlr_input_opts = NULL;
-
-struct rc_option ctrlr_input_opts2[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
-	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
-	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
-	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
-	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
-	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
-	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
+	{ "paddle_device", "paddle", rc_string, &dummy[0], "joystick", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
+	{ "adstick_device", "adstick", rc_string, &dummy[1], "joystick", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
+	{ "pedal_device", "pedal", rc_string, &dummy[2], "joystick", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
+	{ "dial_device", "dial", rc_string, &dummy[3], "mouse", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
+	{ "trackball_device", "trackball", rc_string, &dummy[4], "mouse", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
+	{ "lightgun_device", NULL, rc_string, &dummy[5], "mouse", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
+#ifdef MESS
+	{ "mouse_device", NULL, rc_string, &dummy[6], "mouse", ANALOG_TYPE_MOUSE, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a mouse control is present" },
+#endif // MESS
+	{ "digital", NULL, rc_string, &dummy[7], "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
 
-//============================================================
-//	decode_cleanstretch
-//============================================================
-
-static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
-{
-	if( strcmp( arg, "ps/2" ) != 0 &&
-		strcmp( arg, "usb" ) != 0 )
-	{
-		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
-		return -1;
-	}
-	option->priority = priority;
-	return 0;
-}
 
 //============================================================
 //	PROTOTYPES
 //============================================================
 
 static void updatekeyboard(void);
-static void init_keylist(void);
-static void init_joylist(void);
+static void init_keycodes(void);
+static void init_joycodes(void);
+static void poll_lightguns(void);
 
 
 
 //============================================================
-//	KEYBOARD LIST
+//	KEYBOARD/JOYSTICK LIST
 //============================================================
 
-// this will be filled in dynamically
-static struct KeyboardInfo keylist[MAX_KEYS];
-
-// macros for building/mapping keycodes
+// macros for building/mapping keyboard codes
 #define KEYCODE(dik, vk, ascii)		((dik) | ((vk) << 8) | ((ascii) << 16))
 #define DICODE(keycode)				((keycode) & 0xff)
 #define VKCODE(keycode)				(((keycode) >> 8) & 0xff)
 #define ASCIICODE(keycode)			(((keycode) >> 16) & 0xff)
 
-// master translation table
+// macros for building/mapping joystick codes
+#define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12) | 0x80000000)
+#define JOYINDEX(joycode)			((joycode) & 0xff)
+#define CODETYPE(joycode)			(((joycode) >> 8) & 0xf)
+#define JOYNUM(joycode)				(((joycode) >> 12) & 0xf)
+
+// macros for differentiating the two
+#define IS_KEYBOARD_CODE(code)		(((code) & 0x80000000) == 0)
+#define IS_JOYSTICK_CODE(code)		(((code) & 0x80000000) != 0)
+
+// joystick types
+#define CODETYPE_KEYBOARD			0
+#define CODETYPE_AXIS_NEG			1
+#define CODETYPE_AXIS_POS			2
+#define CODETYPE_POV_UP				3
+#define CODETYPE_POV_DOWN			4
+#define CODETYPE_POV_LEFT			5
+#define CODETYPE_POV_RIGHT			6
+#define CODETYPE_BUTTON				7
+#define CODETYPE_JOYAXIS			8
+#define CODETYPE_MOUSEAXIS			9
+#define CODETYPE_MOUSEBUTTON		10
+#define CODETYPE_GUNAXIS			11
+
+// master keyboard translation table
 const int win_key_trans_table[][4] =
 {
 	// MAME key				dinput key			virtual key		ascii
@@ -312,9 +335,9 @@ const int win_key_trans_table[][4] =
 	{ KEYCODE_DEL_PAD, 		DIK_DECIMAL,		VK_DECIMAL, 	0 },
 	{ KEYCODE_F11, 			DIK_F11,			VK_F11, 		0 },
 	{ KEYCODE_F12, 			DIK_F12,			VK_F12, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F13,			VK_F13, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F14,			VK_F14, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F15,			VK_F15, 		0 },
+	{ KEYCODE_F13, 			DIK_F13,			VK_F13, 		0 },
+	{ KEYCODE_F14, 			DIK_F14,			VK_F14, 		0 },
+	{ KEYCODE_F15, 			DIK_F15,			VK_F15, 		0 },
 	{ KEYCODE_ENTER_PAD,	DIK_NUMPADENTER,	VK_RETURN, 		0 },
 	{ KEYCODE_RCONTROL, 	DIK_RCONTROL,		VK_CONTROL, 	0 },
 	{ KEYCODE_SLASH_PAD,	DIK_DIVIDE,			VK_DIVIDE, 		0 },
@@ -337,127 +360,349 @@ const int win_key_trans_table[][4] =
 };
 
 
-
-//============================================================
-//	JOYSTICK LIST
-//============================================================
-
-// this will be filled in dynamically
-static struct JoystickInfo joylist[MAX_JOY];
-
-// macros for building/mapping keycodes
-#define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12))
-#define JOYINDEX(joycode)			((joycode) & 0xff)
-#define JOYTYPE(joycode)			(((joycode) >> 8) & 0xf)
-#define JOYNUM(joycode)				(((joycode) >> 12) & 0xf)
-
-// joystick types
-#define JOYTYPE_AXIS_NEG			0
-#define JOYTYPE_AXIS_POS			1
-#define JOYTYPE_POV_UP				2
-#define JOYTYPE_POV_DOWN			3
-#define JOYTYPE_POV_LEFT			4
-#define JOYTYPE_POV_RIGHT			5
-#define JOYTYPE_BUTTON				6
-#define JOYTYPE_MOUSEBUTTON			7
-
-// master translation table
+// master joystick translation table
 static int joy_trans_table[][2] =
 {
 	// internal code					MAME code
-	{ JOYCODE(0, JOYTYPE_AXIS_NEG, 0),	JOYCODE_1_LEFT },
-	{ JOYCODE(0, JOYTYPE_AXIS_POS, 0),	JOYCODE_1_RIGHT },
-	{ JOYCODE(0, JOYTYPE_AXIS_NEG, 1),	JOYCODE_1_UP },
-	{ JOYCODE(0, JOYTYPE_AXIS_POS, 1),	JOYCODE_1_DOWN },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 0),	JOYCODE_1_BUTTON1 },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 1),	JOYCODE_1_BUTTON2 },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 2),	JOYCODE_1_BUTTON3 },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 3),	JOYCODE_1_BUTTON4 },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 4),	JOYCODE_1_BUTTON5 },
-	{ JOYCODE(0, JOYTYPE_BUTTON, 5),	JOYCODE_1_BUTTON6 },
+	{ JOYCODE(0, CODETYPE_AXIS_NEG, 0),	JOYCODE_1_LEFT },
+	{ JOYCODE(0, CODETYPE_AXIS_POS, 0),	JOYCODE_1_RIGHT },
+	{ JOYCODE(0, CODETYPE_AXIS_NEG, 1),	JOYCODE_1_UP },
+	{ JOYCODE(0, CODETYPE_AXIS_POS, 1),	JOYCODE_1_DOWN },
+	{ JOYCODE(0, CODETYPE_BUTTON, 0),	JOYCODE_1_BUTTON1 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 1),	JOYCODE_1_BUTTON2 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 2),	JOYCODE_1_BUTTON3 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 3),	JOYCODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 4),	JOYCODE_1_BUTTON5 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 5),	JOYCODE_1_BUTTON6 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 6),	JOYCODE_1_BUTTON7 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 7),	JOYCODE_1_BUTTON8 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 8),	JOYCODE_1_BUTTON9 },
+	{ JOYCODE(0, CODETYPE_BUTTON, 9),	JOYCODE_1_BUTTON10 },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 0),	JOYCODE_1_ANALOG_X },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 1),	JOYCODE_1_ANALOG_Y },
+	{ JOYCODE(0, CODETYPE_JOYAXIS, 2),	JOYCODE_1_ANALOG_Z },
 
-	{ JOYCODE(1, JOYTYPE_AXIS_NEG, 0),	JOYCODE_2_LEFT },
-	{ JOYCODE(1, JOYTYPE_AXIS_POS, 0),	JOYCODE_2_RIGHT },
-	{ JOYCODE(1, JOYTYPE_AXIS_NEG, 1),	JOYCODE_2_UP },
-	{ JOYCODE(1, JOYTYPE_AXIS_POS, 1),	JOYCODE_2_DOWN },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 0),	JOYCODE_2_BUTTON1 },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 1),	JOYCODE_2_BUTTON2 },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 2),	JOYCODE_2_BUTTON3 },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 3),	JOYCODE_2_BUTTON4 },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 4),	JOYCODE_2_BUTTON5 },
-	{ JOYCODE(1, JOYTYPE_BUTTON, 5),	JOYCODE_2_BUTTON6 },
+	{ JOYCODE(1, CODETYPE_AXIS_NEG, 0),	JOYCODE_2_LEFT },
+	{ JOYCODE(1, CODETYPE_AXIS_POS, 0),	JOYCODE_2_RIGHT },
+	{ JOYCODE(1, CODETYPE_AXIS_NEG, 1),	JOYCODE_2_UP },
+	{ JOYCODE(1, CODETYPE_AXIS_POS, 1),	JOYCODE_2_DOWN },
+	{ JOYCODE(1, CODETYPE_BUTTON, 0),	JOYCODE_2_BUTTON1 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 1),	JOYCODE_2_BUTTON2 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 2),	JOYCODE_2_BUTTON3 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 3),	JOYCODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 4),	JOYCODE_2_BUTTON5 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 5),	JOYCODE_2_BUTTON6 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 6),	JOYCODE_2_BUTTON7 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 7),	JOYCODE_2_BUTTON8 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 8),	JOYCODE_2_BUTTON9 },
+	{ JOYCODE(1, CODETYPE_BUTTON, 9),	JOYCODE_2_BUTTON10 },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 0),	JOYCODE_2_ANALOG_X },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 1),	JOYCODE_2_ANALOG_Y },
+	{ JOYCODE(1, CODETYPE_JOYAXIS, 2),	JOYCODE_2_ANALOG_Z },
 
-	{ JOYCODE(2, JOYTYPE_AXIS_NEG, 0),	JOYCODE_3_LEFT },
-	{ JOYCODE(2, JOYTYPE_AXIS_POS, 0),	JOYCODE_3_RIGHT },
-	{ JOYCODE(2, JOYTYPE_AXIS_NEG, 1),	JOYCODE_3_UP },
-	{ JOYCODE(2, JOYTYPE_AXIS_POS, 1),	JOYCODE_3_DOWN },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 0),	JOYCODE_3_BUTTON1 },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 1),	JOYCODE_3_BUTTON2 },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 2),	JOYCODE_3_BUTTON3 },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 3),	JOYCODE_3_BUTTON4 },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 4),	JOYCODE_3_BUTTON5 },
-	{ JOYCODE(2, JOYTYPE_BUTTON, 5),	JOYCODE_3_BUTTON6 },
+	{ JOYCODE(2, CODETYPE_AXIS_NEG, 0),	JOYCODE_3_LEFT },
+	{ JOYCODE(2, CODETYPE_AXIS_POS, 0),	JOYCODE_3_RIGHT },
+	{ JOYCODE(2, CODETYPE_AXIS_NEG, 1),	JOYCODE_3_UP },
+	{ JOYCODE(2, CODETYPE_AXIS_POS, 1),	JOYCODE_3_DOWN },
+	{ JOYCODE(2, CODETYPE_BUTTON, 0),	JOYCODE_3_BUTTON1 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 1),	JOYCODE_3_BUTTON2 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 2),	JOYCODE_3_BUTTON3 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 3),	JOYCODE_3_BUTTON4 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 4),	JOYCODE_3_BUTTON5 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 5),	JOYCODE_3_BUTTON6 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 6),	JOYCODE_3_BUTTON7 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 7),	JOYCODE_3_BUTTON8 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 8),	JOYCODE_3_BUTTON9 },
+	{ JOYCODE(2, CODETYPE_BUTTON, 9),	JOYCODE_3_BUTTON10 },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 0),	JOYCODE_3_ANALOG_X },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 1),	JOYCODE_3_ANALOG_Y },
+	{ JOYCODE(2, CODETYPE_JOYAXIS, 2),	JOYCODE_3_ANALOG_Z },
 
-	{ JOYCODE(3, JOYTYPE_AXIS_NEG, 0),	JOYCODE_4_LEFT },
-	{ JOYCODE(3, JOYTYPE_AXIS_POS, 0),	JOYCODE_4_RIGHT },
-	{ JOYCODE(3, JOYTYPE_AXIS_NEG, 1),	JOYCODE_4_UP },
-	{ JOYCODE(3, JOYTYPE_AXIS_POS, 1),	JOYCODE_4_DOWN },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 0),	JOYCODE_4_BUTTON1 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 1),	JOYCODE_4_BUTTON2 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 2),	JOYCODE_4_BUTTON3 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 3),	JOYCODE_4_BUTTON4 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 4),	JOYCODE_4_BUTTON5 },
-	{ JOYCODE(3, JOYTYPE_BUTTON, 5),	JOYCODE_4_BUTTON6 },
+	{ JOYCODE(3, CODETYPE_AXIS_NEG, 0),	JOYCODE_4_LEFT },
+	{ JOYCODE(3, CODETYPE_AXIS_POS, 0),	JOYCODE_4_RIGHT },
+	{ JOYCODE(3, CODETYPE_AXIS_NEG, 1),	JOYCODE_4_UP },
+	{ JOYCODE(3, CODETYPE_AXIS_POS, 1),	JOYCODE_4_DOWN },
+	{ JOYCODE(3, CODETYPE_BUTTON, 0),	JOYCODE_4_BUTTON1 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 1),	JOYCODE_4_BUTTON2 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 2),	JOYCODE_4_BUTTON3 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 3),	JOYCODE_4_BUTTON4 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 4),	JOYCODE_4_BUTTON5 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 5),	JOYCODE_4_BUTTON6 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 6),	JOYCODE_4_BUTTON7 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 7),	JOYCODE_4_BUTTON8 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 8),	JOYCODE_4_BUTTON9 },
+	{ JOYCODE(3, CODETYPE_BUTTON, 9),	JOYCODE_4_BUTTON10 },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 0),	JOYCODE_4_ANALOG_X },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 1),	JOYCODE_4_ANALOG_Y },
+	{ JOYCODE(3, CODETYPE_JOYAXIS, 2),	JOYCODE_4_ANALOG_Z },
 
-	{ JOYCODE(4, JOYTYPE_AXIS_NEG, 0),	JOYCODE_5_LEFT },
-	{ JOYCODE(4, JOYTYPE_AXIS_POS, 0),	JOYCODE_5_RIGHT },
-	{ JOYCODE(4, JOYTYPE_AXIS_NEG, 1),	JOYCODE_5_UP },
-	{ JOYCODE(4, JOYTYPE_AXIS_POS, 1),	JOYCODE_5_DOWN },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 0),	JOYCODE_5_BUTTON1 },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 1),	JOYCODE_5_BUTTON2 },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 2),	JOYCODE_5_BUTTON3 },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 3),	JOYCODE_5_BUTTON4 },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 4),	JOYCODE_5_BUTTON5 },
-	{ JOYCODE(4, JOYTYPE_BUTTON, 5),	JOYCODE_5_BUTTON6 },
+	{ JOYCODE(4, CODETYPE_AXIS_NEG, 0),	JOYCODE_5_LEFT },
+	{ JOYCODE(4, CODETYPE_AXIS_POS, 0),	JOYCODE_5_RIGHT },
+	{ JOYCODE(4, CODETYPE_AXIS_NEG, 1),	JOYCODE_5_UP },
+	{ JOYCODE(4, CODETYPE_AXIS_POS, 1),	JOYCODE_5_DOWN },
+	{ JOYCODE(4, CODETYPE_BUTTON, 0),	JOYCODE_5_BUTTON1 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 1),	JOYCODE_5_BUTTON2 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 2),	JOYCODE_5_BUTTON3 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 3),	JOYCODE_5_BUTTON4 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 4),	JOYCODE_5_BUTTON5 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 5),	JOYCODE_5_BUTTON6 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 6),	JOYCODE_5_BUTTON7 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 7),	JOYCODE_5_BUTTON8 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 8),	JOYCODE_5_BUTTON9 },
+	{ JOYCODE(4, CODETYPE_BUTTON, 9),	JOYCODE_5_BUTTON10 },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 0),	JOYCODE_5_ANALOG_X },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 1), 	JOYCODE_5_ANALOG_Y },
+	{ JOYCODE(4, CODETYPE_JOYAXIS, 2),	JOYCODE_5_ANALOG_Z },
 
-	{ JOYCODE(5, JOYTYPE_AXIS_NEG, 0),	JOYCODE_6_LEFT },
-	{ JOYCODE(5, JOYTYPE_AXIS_POS, 0),	JOYCODE_6_RIGHT },
-	{ JOYCODE(5, JOYTYPE_AXIS_NEG, 1),	JOYCODE_6_UP },
-	{ JOYCODE(5, JOYTYPE_AXIS_POS, 1),	JOYCODE_6_DOWN },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 0),	JOYCODE_6_BUTTON1 },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 1),	JOYCODE_6_BUTTON2 },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 2),	JOYCODE_6_BUTTON3 },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 3),	JOYCODE_6_BUTTON4 },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 4),	JOYCODE_6_BUTTON5 },
-	{ JOYCODE(5, JOYTYPE_BUTTON, 5),	JOYCODE_6_BUTTON6 },
+	{ JOYCODE(5, CODETYPE_AXIS_NEG, 0),	JOYCODE_6_LEFT },
+	{ JOYCODE(5, CODETYPE_AXIS_POS, 0),	JOYCODE_6_RIGHT },
+	{ JOYCODE(5, CODETYPE_AXIS_NEG, 1),	JOYCODE_6_UP },
+	{ JOYCODE(5, CODETYPE_AXIS_POS, 1),	JOYCODE_6_DOWN },
+	{ JOYCODE(5, CODETYPE_BUTTON, 0),	JOYCODE_6_BUTTON1 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 1),	JOYCODE_6_BUTTON2 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 2),	JOYCODE_6_BUTTON3 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 3),	JOYCODE_6_BUTTON4 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 4),	JOYCODE_6_BUTTON5 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 5),	JOYCODE_6_BUTTON6 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 6),	JOYCODE_6_BUTTON7 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 7),	JOYCODE_6_BUTTON8 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 8),	JOYCODE_6_BUTTON9 },
+	{ JOYCODE(5, CODETYPE_BUTTON, 9),	JOYCODE_6_BUTTON10 },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 0),	JOYCODE_6_ANALOG_X },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 1),	JOYCODE_6_ANALOG_Y },
+	{ JOYCODE(5, CODETYPE_JOYAXIS, 2),	JOYCODE_6_ANALOG_Z },
 
-	{ JOYCODE(6, JOYTYPE_AXIS_NEG, 0),	JOYCODE_7_LEFT },
-	{ JOYCODE(6, JOYTYPE_AXIS_POS, 0),	JOYCODE_7_RIGHT },
-	{ JOYCODE(6, JOYTYPE_AXIS_NEG, 1),	JOYCODE_7_UP },
-	{ JOYCODE(6, JOYTYPE_AXIS_POS, 1),	JOYCODE_7_DOWN },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 0),	JOYCODE_7_BUTTON1 },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 1),	JOYCODE_7_BUTTON2 },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 2),	JOYCODE_7_BUTTON3 },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 3),	JOYCODE_7_BUTTON4 },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 4),	JOYCODE_7_BUTTON5 },
-	{ JOYCODE(6, JOYTYPE_BUTTON, 5),	JOYCODE_7_BUTTON6 },
+	{ JOYCODE(6, CODETYPE_AXIS_NEG, 0),	JOYCODE_7_LEFT },
+	{ JOYCODE(6, CODETYPE_AXIS_POS, 0),	JOYCODE_7_RIGHT },
+	{ JOYCODE(6, CODETYPE_AXIS_NEG, 1),	JOYCODE_7_UP },
+	{ JOYCODE(6, CODETYPE_AXIS_POS, 1),	JOYCODE_7_DOWN },
+	{ JOYCODE(6, CODETYPE_BUTTON, 0),	JOYCODE_7_BUTTON1 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 1),	JOYCODE_7_BUTTON2 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 2),	JOYCODE_7_BUTTON3 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 3),	JOYCODE_7_BUTTON4 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 4),	JOYCODE_7_BUTTON5 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 5),	JOYCODE_7_BUTTON6 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 6),	JOYCODE_7_BUTTON7 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 7),	JOYCODE_7_BUTTON8 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 8),	JOYCODE_7_BUTTON9 },
+	{ JOYCODE(6, CODETYPE_BUTTON, 9),	JOYCODE_7_BUTTON10 },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 0),	JOYCODE_7_ANALOG_X },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 1),	JOYCODE_7_ANALOG_Y },
+	{ JOYCODE(6, CODETYPE_JOYAXIS, 2),	JOYCODE_7_ANALOG_Z },
 
-	{ JOYCODE(7, JOYTYPE_AXIS_NEG, 0),	JOYCODE_8_LEFT },
-	{ JOYCODE(7, JOYTYPE_AXIS_POS, 0),	JOYCODE_8_RIGHT },
-	{ JOYCODE(7, JOYTYPE_AXIS_NEG, 1),	JOYCODE_8_UP },
-	{ JOYCODE(7, JOYTYPE_AXIS_POS, 1),	JOYCODE_8_DOWN },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 0),	JOYCODE_8_BUTTON1 },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 1),	JOYCODE_8_BUTTON2 },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 2),	JOYCODE_8_BUTTON3 },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 3),	JOYCODE_8_BUTTON4 },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 4),	JOYCODE_8_BUTTON5 },
-	{ JOYCODE(7, JOYTYPE_BUTTON, 5),	JOYCODE_8_BUTTON6 },
+	{ JOYCODE(7, CODETYPE_AXIS_NEG, 0),	JOYCODE_8_LEFT },
+	{ JOYCODE(7, CODETYPE_AXIS_POS, 0),	JOYCODE_8_RIGHT },
+	{ JOYCODE(7, CODETYPE_AXIS_NEG, 1),	JOYCODE_8_UP },
+	{ JOYCODE(7, CODETYPE_AXIS_POS, 1),	JOYCODE_8_DOWN },
+	{ JOYCODE(7, CODETYPE_BUTTON, 0),	JOYCODE_8_BUTTON1 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 1),	JOYCODE_8_BUTTON2 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 2),	JOYCODE_8_BUTTON3 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 3),	JOYCODE_8_BUTTON4 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 4),	JOYCODE_8_BUTTON5 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 5),	JOYCODE_8_BUTTON6 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 6),	JOYCODE_8_BUTTON7 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 7),	JOYCODE_8_BUTTON8 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 8),	JOYCODE_8_BUTTON9 },
+	{ JOYCODE(7, CODETYPE_BUTTON, 9),	JOYCODE_8_BUTTON10 },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 0),	JOYCODE_8_ANALOG_X },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 1),	JOYCODE_8_ANALOG_Y },
+	{ JOYCODE(7, CODETYPE_JOYAXIS, 2),	JOYCODE_8_ANALOG_Z },
 
-	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 0), 	JOYCODE_MOUSE_1_BUTTON1 },
-	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 1), 	JOYCODE_MOUSE_1_BUTTON2 },
-	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 2), 	JOYCODE_MOUSE_1_BUTTON3 },
-	{ JOYCODE(0, JOYTYPE_MOUSEBUTTON, 3), 	JOYCODE_MOUSE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_1_BUTTON1 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_1_BUTTON2 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_1_BUTTON3 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_1_ANALOG_X },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_1_ANALOG_Y },
+	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_1_ANALOG_Z },
+
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_2_BUTTON1 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_2_BUTTON2 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_2_BUTTON3 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_2_ANALOG_X },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
+	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
+
+	{ JOYCODE(0, CODETYPE_GUNAXIS, 0),		GUNCODE_1_ANALOG_X },
+	{ JOYCODE(0, CODETYPE_GUNAXIS, 1),		GUNCODE_1_ANALOG_Y },
+
+	{ JOYCODE(1, CODETYPE_GUNAXIS, 0),		GUNCODE_2_ANALOG_X },
+	{ JOYCODE(1, CODETYPE_GUNAXIS, 1),		GUNCODE_2_ANALOG_Y },
 };
+
+
+
+//============================================================
+//	decode_ledmode
+//============================================================
+
+static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
+{
+	if( strcmp( arg, "ps/2" ) != 0 &&
+		strcmp( arg, "usb" ) != 0 )
+	{
+		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_analog_select
+//============================================================
+
+static int decode_analog_select(struct rc_option *option, const char *arg, int priority)
+{
+	if (strcmp(arg, "keyboard") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_KEYBOARD;
+	else if (strcmp(arg, "mouse") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_MOUSE;
+	else if (strcmp(arg, "joystick") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_JOYSTICK;
+	else if (strcmp(arg, "lightgun") == 0)
+		analog_type[(int)option->min] = SELECT_TYPE_LIGHTGUN;
+	else
+	{
+		fprintf(stderr, "error: invalid value for %s: %s\n", option->name, arg);
+		return -1;
+	}
+	option->priority = priority;
+	return 0;
+}
+
+
+
+//============================================================
+//	decode_digital
+//============================================================
+
+static int decode_digital(struct rc_option *option, const char *arg, int priority)
+{
+	if (strcmp(arg, "none") == 0)
+		memset(joystick_digital, 0, sizeof(joystick_digital));
+	else if (strcmp(arg, "all") == 0)
+		memset(joystick_digital, 1, sizeof(joystick_digital));
+	else
+	{
+		/* scan the string */
+		while (1)
+		{
+			int joynum = 0;
+			int axisnum = 0;
+			
+			/* stop if we hit the end */
+			if (arg[0] == 0)
+				break;
+			
+			/* we require the next bits to be j<N> */
+			if (tolower(arg[0]) != 'j' || sscanf(&arg[1], "%d", &joynum) != 1)
+				goto usage;
+			arg++;
+			while (arg[0] != 0 && isdigit(arg[0]))
+				arg++;
+			
+			/* if we are followed by a comma or an end, mark all the axes digital */
+			if (arg[0] == 0 || arg[0] == ',')
+			{
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS)
+					memset(&joystick_digital[joynum - 1], 1, sizeof(joystick_digital[joynum - 1]));
+				if (arg[0] == 0)
+					break;
+				arg++;
+				continue;
+			}
+
+			/* loop over axes */
+			while (1)
+			{
+				/* stop if we hit the end */
+				if (arg[0] == 0)
+					break;
+				
+				/* if we hit a comma, skip it and break out */
+				if (arg[0] == ',')
+				{
+					arg++;
+					break;
+				}
+				
+				/* we require the next bits to be a<N> */
+				if (tolower(arg[0]) != 'a' || sscanf(&arg[1], "%d", &axisnum) != 1)
+					goto usage;
+				arg++;
+				while (arg[0] != 0 && isdigit(arg[0]))
+					arg++;
+				
+				/* set that axis to digital */
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS && axisnum < MAX_AXES)
+					joystick_digital[joynum - 1][axisnum] = 1;
+			}
+		}
+	}
+	option->priority = priority;
+	return 0;
+
+usage:
+	fprintf(stderr, "error: invalid value for digital: %s -- valid values are:\n", arg);
+	fprintf(stderr, "         none -- no axes on any joysticks are digital\n");
+	fprintf(stderr, "         all -- all axes on all joysticks are digital\n");
+	fprintf(stderr, "         j<N> -- all axes on joystick <N> are digital\n");
+	fprintf(stderr, "         j<N>a<M> -- axis <M> on joystick <N> is digital\n");
+	fprintf(stderr, "    Multiple axes can be specified for one joystick:\n");
+	fprintf(stderr, "         j1a5a6 -- axes 5 and 6 on joystick 1 are digital\n");
+	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
+	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
+	return -1;
+}
+
+
+
+//============================================================
+//	autoselect_analog_devices
+//============================================================
+
+static void autoselect_analog_devices(const struct InputPort *inp, int type1, int type2, int type3, int anatype, const char *ananame)
+{
+	// loop over input ports
+	for ( ; inp->type != IPT_END; inp++)
+	
+		// if this port type is in use, apply the autoselect criteria
+		if ((type1 != 0 && inp->type == type1) || 
+			(type2 != 0 && inp->type == type2) ||
+			(type3 != 0 && inp->type == type3))
+		{
+			// autoenable mouse devices
+			if (analog_type[anatype] == SELECT_TYPE_MOUSE && !win_use_mouse)
+			{
+				win_use_mouse = 1;
+				if (verbose)
+					printf("Autoenabling mice due to presence of a %s\n", ananame);
+			}
+				
+			// autoenable joystick devices
+			if (analog_type[anatype] == SELECT_TYPE_JOYSTICK && !use_joystick)
+			{
+				use_joystick = 1;
+				if (verbose)
+					printf("Autoenabling joysticks due to presence of a %s\n", ananame);
+			}
+				
+			// autoenable lightgun devices
+			if (analog_type[anatype] == SELECT_TYPE_LIGHTGUN && !use_lightgun)
+			{
+				use_lightgun = 1;
+				if (verbose)
+					printf("Autoenabling lightguns due to presence of a %s\n", ananame);
+			}
+			
+			// all done
+			break;
+		}	
+}
 
 
 
@@ -472,7 +717,7 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	// if we're not out of mice, log this one
 	if (keyboard_count >= MAX_KEYBOARDS)
 		goto out_of_keyboards;
-
+	
 	// attempt to create a device
 	result = IDirectInput_CreateDevice(dinput, &instance->guidInstance, &keyboard_device[keyboard_count], NULL);
 	if (result != DI_OK)
@@ -615,6 +860,9 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_QueryInterface(joystick_device[joystick_count], &IID_IDirectInputDevice2, (void **)&joystick_device2[joystick_count]);
 	if (result != DI_OK)
 		joystick_device2[joystick_count] = NULL;
+	
+	// remember the name
+	strcpy(joystick_name[joystick_count], instance->tszInstanceName);
 
 	// get the caps
 	joystick_caps[joystick_count].dwSize = STRUCTSIZE(DIDEVCAPS);
@@ -643,8 +891,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 #else
 	flags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
 #endif
-	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window,
-					flags);
+	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window, flags);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
 
@@ -672,6 +919,7 @@ out_of_joysticks:
 
 int win_init_input(void)
 {
+	const struct InputPort *inp;
 	HRESULT result;
 
 	// first attempt to initialize DirectInput
@@ -686,6 +934,23 @@ int win_init_input(void)
 	}
 	if (verbose)
 		fprintf(stderr, "Using DirectInput %d\n", dinput_version >> 8);
+	
+	// enable devices based on autoselect
+	if (Machine != NULL && Machine->gamedrv != NULL)
+	{
+		begin_resource_tracking();
+		inp = input_port_allocate(Machine->gamedrv->construct_ipt);
+		autoselect_analog_devices(inp, IPT_PADDLE,     IPT_PADDLE_V,   0,             ANALOG_TYPE_PADDLE,   "paddle");
+		autoselect_analog_devices(inp, IPT_AD_STICK_X, IPT_AD_STICK_Y, IPT_AD_STICK_Z,ANALOG_TYPE_ADSTICK,  "analog joystick");
+		autoselect_analog_devices(inp, IPT_LIGHTGUN_X, IPT_LIGHTGUN_Y, 0,             ANALOG_TYPE_LIGHTGUN, "lightgun");
+		autoselect_analog_devices(inp, IPT_PEDAL,      IPT_PEDAL2,     IPT_PEDAL3,    ANALOG_TYPE_PEDAL,    "pedal");
+		autoselect_analog_devices(inp, IPT_DIAL,       IPT_DIAL_V,     0,             ANALOG_TYPE_DIAL,     "dial");
+		autoselect_analog_devices(inp, IPT_TRACKBALL_X,IPT_TRACKBALL_Y,0,             ANALOG_TYPE_TRACKBALL,"trackball");
+#ifdef MESS
+		autoselect_analog_devices(inp, IPT_MOUSE_X,    IPT_MOUSE_Y,    0,             ANALOG_TYPE_MOUSE,    "mouse");
+#endif // MESS
+		end_resource_tracking();
+	}
 
 	// initialize keyboard devices
 	keyboard_count = 0;
@@ -696,27 +961,40 @@ int win_init_input(void)
 	// initialize mouse devices
 	lightgun_count = 0;
 	mouse_count = 0;
-	lightgun_dual_player_state[0]=lightgun_dual_player_state[1]=0;
-	lightgun_dual_player_state[2]=lightgun_dual_player_state[3]=0;
-	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
-	if (result != DI_OK)
-		goto cant_init_mouse;
+	if (win_use_mouse || use_lightgun)
+	{
+		lightgun_dual_player_state[0] = lightgun_dual_player_state[1] = 0;
+		lightgun_dual_player_state[2] = lightgun_dual_player_state[3] = 0;
+		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
+		if (result != DI_OK)
+			goto cant_init_mouse;
+	}
 
 	// initialize joystick devices
 	joystick_count = 0;
-	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
-	if (result != DI_OK)
-		goto cant_init_joystick;
+	if (use_joystick)
+	{
+		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_JOYSTICK, enum_joystick_callback, 0, DIEDFL_ATTACHEDONLY);
+		if (result != DI_OK)
+			goto cant_init_joystick;
+	}
 
 	// init the keyboard list
-	init_keylist();
+	init_keycodes();
 
 	// init the joystick list
-	init_joylist();
+	init_joycodes();
+
+	// terminate array
+	memset(&codelist[total_codes], 0, sizeof(codelist[total_codes]));
 
 	// print the results
 	if (verbose)
-		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d Lightguns=%d\n", keyboard_count, mouse_count, joystick_count, lightgun_count);
+	{
+		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d  Lightguns=%d\n", keyboard_count, mouse_count, joystick_count, lightgun_count);
+		if (options.controller)
+			fprintf(stderr,"\"%s\" controller support enabled\n", options.controller);
+	}
 	return 0;
 
 cant_init_joystick:
@@ -738,9 +1016,9 @@ void win_shutdown_input(void)
 {
 	int i;
 
-
 	// release all our keyboards
-	for (i = 0; i < keyboard_count; i++) {
+	for (i = 0; i < keyboard_count; i++)
+	{
 		IDirectInputDevice_Release(keyboard_device[i]);
 		if (keyboard_device2[i])
 			IDirectInputDevice_Release(keyboard_device2[i]);
@@ -748,7 +1026,8 @@ void win_shutdown_input(void)
 	}
 
 	// release all our joysticks
-	for (i = 0; i < joystick_count; i++) {
+	for (i = 0; i < joystick_count; i++)
+	{
 		IDirectInputDevice_Release(joystick_device[i]);
 		if (joystick_device2[i])
 			IDirectInputDevice_Release(joystick_device2[i]);
@@ -756,7 +1035,8 @@ void win_shutdown_input(void)
 	}
 
 	// release all our mice
-	for (i = 0; i < mouse_count; i++) {
+	for (i = 0; i < mouse_count; i++)
+	{
 		IDirectInputDevice_Release(mouse_device[i]);
 		if (mouse_device2[i])
 			IDirectInputDevice_Release(mouse_device2[i]);
@@ -800,7 +1080,7 @@ void win_pause_input(int paused)
 
 		// acquire all our mice if active
 		if (mouse_active && !win_has_menu())
-			for (i = 0; i < mouse_count && (win_use_mouse||use_lightgun); i++)
+			for (i = 0; i < mouse_count && (win_use_mouse || use_lightgun); i++)
 				IDirectInputDevice_Acquire(mouse_device[i]);
 	}
 
@@ -861,15 +1141,16 @@ void win_poll_input(void)
 
 	// if we couldn't poll the keyboard that way, poll it via GetAsyncKeyState
 	if (result != DI_OK)
-		for (i = 0; keylist[i].code; i++)
-		{
-			int dik = DICODE(keylist[i].code);
-			int vk = VKCODE(keylist[i].code);
+		for (i = 0; codelist[i].oscode; i++)
+			if (IS_KEYBOARD_CODE(codelist[i].oscode))
+			{
+				int dik = DICODE(codelist[i].oscode);
+				int vk = VKCODE(codelist[i].oscode);
 
-			// if we have a non-zero VK, query it
-			if (vk)
-				keyboard_state[0][dik] = (GetAsyncKeyState(vk) >> 15) & 1;
-		}
+				// if we have a non-zero VK, query it
+				if (vk)
+					keyboard_state[0][dik] = (GetAsyncKeyState(vk) >> 15) & 1;
+			}
 
 	// update the lagged keyboard
 	updatekeyboard();
@@ -879,7 +1160,7 @@ void win_poll_input(void)
 		return;
 
 	// poll all joysticks
-	for (i = 0; i < joystick_count && use_joystick; i++)
+	for (i = 0; i < joystick_count; i++)
 	{
 		// first poll the device
 		if (joystick_device2[i])
@@ -916,6 +1197,9 @@ void win_poll_input(void)
 					result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
 			}
 		}
+	
+	// poll the lightguns
+	poll_lightguns();
 }
 
 
@@ -927,17 +1211,6 @@ void win_poll_input(void)
 int win_is_mouse_captured(void)
 {
 	return (!input_paused && mouse_active && mouse_count > 0 && win_use_mouse && !win_has_menu());
-}
-
-
-
-//============================================================
-//	osd_get_key_list
-//============================================================
-
-const struct KeyboardInfo *osd_get_key_list(void)
-{
-	return keylist;
 }
 
 
@@ -976,10 +1249,10 @@ static void updatekeyboard(void)
 
 
 //============================================================
-//	osd_is_key_pressed
+//	is_key_pressed
 //============================================================
 
-int osd_is_key_pressed(int keycode)
+static int is_key_pressed(os_code_t keycode)
 {
 	int dik = DICODE(keycode);
 
@@ -1034,13 +1307,12 @@ int osd_readkey_unicode(int flush)
 
 
 //============================================================
-//	init_joylist
+//	init_keycodes
 //============================================================
 
-static void init_keylist(void)
+static void init_keycodes(void)
 {
-	int keycount = 0, key;
-	struct ik *temp;
+	int key;
 
 	// iterate over all possible keys
 	for (key = 0; key < MAX_KEYS; key++)
@@ -1059,7 +1331,8 @@ static void init_keylist(void)
 			char *namecopy = malloc(strlen(instance.tszName) + 1);
 			if (namecopy)
 			{
-				unsigned code, standardcode;
+				input_code_t standardcode;
+				os_code_t code;
 				int entry;
 
 				// find the table entry, if there is one
@@ -1069,7 +1342,7 @@ static void init_keylist(void)
 
 				// compute the code, which encodes DirectInput, virtual, and ASCII codes
 				code = KEYCODE(key, 0, 0);
-				standardcode = KEYCODE_OTHER;
+				standardcode = CODE_OTHER_DIGITAL;
 				if (entry < win_key_trans_table[entry][0] >= 0)
 				{
 					code = KEYCODE(key, win_key_trans_table[entry][VIRTUAL_KEY], win_key_trans_table[entry][ASCII_KEY]);
@@ -1077,65 +1350,13 @@ static void init_keylist(void)
 				}
 
 				// fill in the key description
-				keylist[keycount].name = strcpy(namecopy, instance.tszName);
-				keylist[keycount].code = code;
-				keylist[keycount].standardcode = standardcode;
-				keycount++;
-
-				// make sure we have enough room for the new entry and the terminator (2 more)
-				if ((num_osd_ik + 2) > size_osd_ik)
-				{
-					// attempt to allocate 16 more
-					temp = realloc (osd_input_keywords, (size_osd_ik + 16)*sizeof (struct ik));
-
-					// if the realloc was successful
-					if (temp)
-					{
-						// point to the new buffer and increase the size indicator
-						osd_input_keywords =  temp;
-						size_osd_ik += 16;
-					}
-				}
-
-				// if we have enough room for the new entry and the terminator
-				if ((num_osd_ik + 2) <= size_osd_ik)
-				{
-					const char *src;
-					char *dst;
-
-					osd_input_keywords[num_osd_ik].name = malloc (strlen(instance.tszName) + 4 + 1);
-
-					src = instance.tszName;
-					dst = (char *)osd_input_keywords[num_osd_ik].name;
-
-					strcpy (dst, "Key_");
-					dst += strlen(dst);
-
-					// copy name converting all spaces to underscores
-					while (*src != 0)
-					{
-						if (*src == ' ')
-							*dst++ = '_';
-						else
-							*dst++ = *src;
-						src++;
-					}
-					*dst = 0;
-
-					osd_input_keywords[num_osd_ik].type = IKT_OSD_KEY;
-					osd_input_keywords[num_osd_ik].val = code;
-
-					num_osd_ik++;
-
-					// indicate end of list
-					osd_input_keywords[num_osd_ik].name = 0;
-				}
+				codelist[total_codes].name = strcpy(namecopy, instance.tszName);
+				codelist[total_codes].oscode = code;
+				codelist[total_codes].inputcode = standardcode;
+				total_codes++;
 			}
 		}
 	}
-
-	// terminate the list
-	memset(&keylist[keycount], 0, sizeof(keylist[keycount]));
 }
 
 
@@ -1144,11 +1365,8 @@ static void init_keylist(void)
 //	add_joylist_entry
 //============================================================
 
-static void add_joylist_entry(const char *name, int code, int *joycount)
+static void add_joylist_entry(const char *name, os_code_t code, input_code_t standardcode)
 {
-	int standardcode = JOYCODE_OTHER;
- 	struct ik *temp;
-
 	// copy the name
 	char *namecopy = malloc(strlen(name) + 1);
 	if (namecopy)
@@ -1161,75 +1379,36 @@ static void add_joylist_entry(const char *name, int code, int *joycount)
 				break;
 
 		// fill in the joy description
-		joylist[*joycount].name = strcpy(namecopy, name);
-		joylist[*joycount].code = code;
+		codelist[total_codes].name = strcpy(namecopy, name);
+		codelist[total_codes].oscode = code;
 		if (entry < ELEMENTS(joy_trans_table))
 			standardcode = joy_trans_table[entry][1];
-		joylist[*joycount].standardcode = standardcode;
-		*joycount += 1;
-
-		// make sure we have enough room for the new entry and the terminator (2 more)
-		if ((num_osd_ik + 2) > size_osd_ik)
-		{
-			// attempt to allocate 16 more
-			temp = realloc (osd_input_keywords, (size_osd_ik + 16)*sizeof (struct ik));
-
-			// if the realloc was successful
-			if (temp)
-			{
-				// point to the new buffer and increase the size indicator
-				osd_input_keywords =  temp;
-				size_osd_ik += 16;
-			}
-		}
-
-		// if we have enough room for the new entry and the terminator
-		if ((num_osd_ik + 2) <= size_osd_ik)
-		{
-			const char *src;
-			char *dst;
-
-			osd_input_keywords[num_osd_ik].name = malloc (strlen(name) + 1);
-
-			src = name;
-			dst = (char *)osd_input_keywords[num_osd_ik].name;
-
-			// copy name converting all spaces to underscores
-			while (*src != 0)
-			{
-				if (*src == ' ')
-					*dst++ = '_';
-				else
-					*dst++ = *src;
-				src++;
-			}
-			*dst = 0;
-
-			osd_input_keywords[num_osd_ik].type = IKT_OSD_JOY;
-			osd_input_keywords[num_osd_ik].val = code;
-
-			num_osd_ik++;
-
-			// indicate end of list
-			osd_input_keywords[num_osd_ik].name = 0;
-		}
+		codelist[total_codes].inputcode = standardcode;
+		total_codes++;
 	}
 }
 
 
 
 //============================================================
-//	init_joylist
+//	init_joycodes
 //============================================================
 
-static void init_joylist(void)
+static void init_joycodes(void)
 {
-	int mouse, stick, axis, button, pov;
+	int mouse, gun, stick, axis, button, pov;
 	char tempname[MAX_PATH];
-	int joycount = 0;
 
-	// first of all, map mouse buttons
+	// map mice first
 	for (mouse = 0; mouse < mouse_count; mouse++)
+	{
+		// add analog axes (fix me -- should enumerate these)
+		sprintf(tempname, "Mouse %d X", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
+		sprintf(tempname, "Mouse %d Y", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+
+		// add mouse buttons
 		for (button = 0; button < 4; button++)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
@@ -1245,13 +1424,28 @@ static void init_joylist(void)
 					sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
 				else
 					sprintf(tempname, "Mouse %s", instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(mouse, JOYTYPE_MOUSEBUTTON, button), &joycount);
+				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 		}
+	}
+
+	// map lightguns second
+	for (gun = 0; gun < lightgun_count; gun++)
+	{
+		// add lightgun axes (fix me -- should enumerate these)
+		sprintf(tempname, "Lightgun %d X", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
+		sprintf(tempname, "Lightgun %d Y", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
+	}
 
 	// now map joysticks
 	for (stick = 0; stick < joystick_count; stick++)
 	{
+		// log the info
+		if (verbose)
+			fprintf(stderr, "Joystick %d: %s (%d axes, %d buttons, %d POVs)\n", stick + 1, joystick_name[stick], (int)joystick_caps[stick].dwAxes, (int)joystick_caps[stick].dwButtons, (int)joystick_caps[stick].dwPOVs);
+
 		// loop over all axes
 		for (axis = 0; axis < MAX_AXES; axis++)
 		{
@@ -1263,13 +1457,23 @@ static void init_joylist(void)
 			result = IDirectInputDevice_GetObjectInfo(joystick_device[stick], &instance, offsetof(DIJOYSTATE, lX) + axis * sizeof(LONG), DIPH_BYOFFSET);
 			if (result == DI_OK)
 			{
+				if (verbose)
+					fprintf(stderr, "  Axis %d (%s)%s\n", axis, instance.tszName, joystick_digital[stick][axis] ? " - digital" : "");
+
+				// add analog axis
+				if (!joystick_digital[stick][axis])
+				{
+					sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+				}
+
 				// add negative value
 				sprintf(tempname, "J%d %s -", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_AXIS_NEG, axis), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_NEG, axis), CODE_OTHER_DIGITAL);
 
 				// add positive value
 				sprintf(tempname, "J%d %s +", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_AXIS_POS, axis), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_POS, axis), CODE_OTHER_DIGITAL);
 
 				// get the axis range while we're here
 				joystick_range[stick][axis].diph.dwSize = sizeof(DIPROPRANGE);
@@ -1293,7 +1497,7 @@ static void init_joylist(void)
 			{
 				// make the name for this item
 				sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_BUTTON, button), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_BUTTON, button), CODE_OTHER_DIGITAL);
 			}
 		}
 
@@ -1310,55 +1514,41 @@ static void init_joylist(void)
 			{
 				// add up direction
 				sprintf(tempname, "J%d %s U", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_UP, pov), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_UP, pov), CODE_OTHER_DIGITAL);
 
 				// add down direction
 				sprintf(tempname, "J%d %s D", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_DOWN, pov), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_DOWN, pov), CODE_OTHER_DIGITAL);
 
 				// add left direction
 				sprintf(tempname, "J%d %s L", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_LEFT, pov), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_LEFT, pov), CODE_OTHER_DIGITAL);
 
 				// add right direction
 				sprintf(tempname, "J%d %s R", stick + 1, instance.tszName);
-				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_RIGHT, pov), &joycount);
+				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_RIGHT, pov), CODE_OTHER_DIGITAL);
 			}
 		}
 	}
-
-	// terminate array
-	memset(&joylist[joycount], 0, sizeof(joylist[joycount]));
 }
 
 
 
 //============================================================
-//	osd_get_joy_list
+//	get_joycode_value
 //============================================================
 
-const struct JoystickInfo *osd_get_joy_list(void)
-{
-	return joylist;
-}
-
-
-
-//============================================================
-//	osd_is_joy_pressed
-//============================================================
-
-int osd_is_joy_pressed(int joycode)
+static INT32 get_joycode_value(os_code_t joycode)
 {
 	int joyindex = JOYINDEX(joycode);
-	int joytype = JOYTYPE(joycode);
+	int codetype = CODETYPE(joycode);
 	int joynum = JOYNUM(joycode);
 	DWORD pov;
 
 	// switch off the type
-	switch (joytype)
+	switch (codetype)
 	{
-		case JOYTYPE_MOUSEBUTTON:
+		case CODETYPE_MOUSEBUTTON:
 			/* ActLabs lightgun - remap button 2 (shot off-screen) as button 1 */
 			if (use_lightgun_dual && joyindex<4) {
 				if (use_lightgun_reload && joynum==0) {
@@ -1384,11 +1574,11 @@ int osd_is_joy_pressed(int joycode)
 			}
 			return mouse_state[joynum].rgbButtons[joyindex] >> 7;
 
-		case JOYTYPE_BUTTON:
+		case CODETYPE_BUTTON:
 			return joystick_state[joynum].rgbButtons[joyindex] >> 7;
 
-		case JOYTYPE_AXIS_POS:
-		case JOYTYPE_AXIS_NEG:
+		case CODETYPE_AXIS_POS:
+		case CODETYPE_AXIS_NEG:
 		{
 			LONG val = ((LONG *)&joystick_state[joynum].lX)[joyindex];
 			LONG top = joystick_range[joynum][joyindex].lMax;
@@ -1398,32 +1588,71 @@ int osd_is_joy_pressed(int joycode)
 			// watch for movement greater "a2d_deadzone" along either axis
 			// FIXME in the two-axis joystick case, we need to find out
 			// the angle. Anything else is unprecise.
-			if (joytype == JOYTYPE_AXIS_POS)
+			if (codetype == CODETYPE_AXIS_POS)
 				return (val > middle + ((top - middle) * a2d_deadzone));
 			else
 				return (val < middle - ((middle - bottom) * a2d_deadzone));
 		}
 
 		// anywhere from 0-45 (315) deg to 0+45 (45) deg
-		case JOYTYPE_POV_UP:
+		case CODETYPE_POV_UP:
 			pov = joystick_state[joynum].rgdwPOV[joyindex];
 			return ((pov & 0xffff) != 0xffff && (pov >= 31500 || pov <= 4500));
 
 		// anywhere from 90-45 (45) deg to 90+45 (135) deg
-		case JOYTYPE_POV_RIGHT:
+		case CODETYPE_POV_RIGHT:
 			pov = joystick_state[joynum].rgdwPOV[joyindex];
 			return ((pov & 0xffff) != 0xffff && (pov >= 4500 && pov <= 13500));
 
 		// anywhere from 180-45 (135) deg to 180+45 (225) deg
-		case JOYTYPE_POV_DOWN:
+		case CODETYPE_POV_DOWN:
 			pov = joystick_state[joynum].rgdwPOV[joyindex];
 			return ((pov & 0xffff) != 0xffff && (pov >= 13500 && pov <= 22500));
 
 		// anywhere from 270-45 (225) deg to 270+45 (315) deg
-		case JOYTYPE_POV_LEFT:
+		case CODETYPE_POV_LEFT:
 			pov = joystick_state[joynum].rgdwPOV[joyindex];
 			return ((pov & 0xffff) != 0xffff && (pov >= 22500 && pov <= 31500));
 
+		// analog joystick axis
+		case CODETYPE_JOYAXIS:
+		{
+			LONG val = ((LONG *)&joystick_state[joynum].lX)[joyindex];
+			LONG top = joystick_range[joynum][joyindex].lMax;
+			LONG bottom = joystick_range[joynum][joyindex].lMin;
+
+			if (!use_joystick)
+				return 0;
+			val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
+			if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
+			if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
+			return val;
+		}
+
+		// analog mouse axis
+		case CODETYPE_MOUSEAXIS:
+			// if the mouse isn't yet active, make it so
+			if (!mouse_active && win_use_mouse && !win_has_menu())
+			{
+				mouse_active = 1;
+				win_pause_input(0);
+			}
+
+			// return the latest mouse info
+			if (joyindex == 0)
+				return mouse_state[joynum].lX * 512;
+			if (joyindex == 1)
+				return mouse_state[joynum].lY * 512;
+			return 0;
+		
+		// analog gun axis
+		case CODETYPE_GUNAXIS:
+			// return the latest gun info
+			if (joynum >= MAX_LIGHTGUNS)
+				return 0;
+			if (joyindex >= 2)
+				return 0;
+			return gun_axis[joynum][joyindex];
 	}
 
 	// keep the compiler happy
@@ -1433,58 +1662,28 @@ int osd_is_joy_pressed(int joycode)
 
 
 //============================================================
-//	osd_analogjoy_read
+//	osd_is_code_pressed
 //============================================================
 
-void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
+INT32 osd_get_code_value(os_code_t code)
 {
-	LONG top, bottom, middle;
-	int i;
-
-	// if the mouse isn't yet active, make it so
-	if (!mouse_active && win_use_mouse && !win_has_menu())
-	{
-		mouse_active = 1;
-		win_pause_input(0);
-	}
-
-	for (i=0; i<MAX_ANALOG_AXES; i++)
-	{
-		int joyindex, joytype, joynum;
-
-		analog_axis[i] = 0;
-
-		if (analogjoy_input[i] == CODE_NONE || !use_joystick)
-			continue;
-
-		joyindex = JOYINDEX( analogjoy_input[i] );
-		joytype = JOYTYPE( analogjoy_input[i] );
-		joynum = JOYNUM( analogjoy_input[i] );
-
-		top = joystick_range[joynum][joyindex].lMax;
-		bottom = joystick_range[joynum][joyindex].lMin;
-		middle = (top + bottom) / 2;
-		analog_axis[i] = (((LONG *)&joystick_state[joynum].lX)[joyindex] - middle) * 257 / (top - bottom);
-		if (analog_axis[i] < -128) analog_axis[i] = -128;
-		if (analog_axis[i] >  128) analog_axis[i] =  128;
-		if (joytype == JOYTYPE_AXIS_POS)
-			analog_axis[i] = -analog_axis[i];
-	}
+	if (IS_KEYBOARD_CODE(code))
+		return is_key_pressed(code);
+	else
+		return get_joycode_value(code);
 }
 
 
-int osd_is_joystick_axis_code(int joycode)
+
+//============================================================
+//	osd_get_code_list
+//============================================================
+
+const struct OSCodeInfo *osd_get_code_list(void)
 {
-	switch (JOYTYPE( joycode ))
-	{
-		case JOYTYPE_AXIS_POS:
-		case JOYTYPE_AXIS_NEG:
-			return 1;
-		default:
-			return 0;
-	}
-	return 0;
+	return codelist;
 }
+
 
 
 //============================================================
@@ -1511,117 +1710,101 @@ void input_mouse_button_up(int button)
 	lightgun_dual_player_state[button]=0;
 }
 
-void osd_lightgun_read(int player,int *deltax,int *deltay)
+static void poll_lightguns(void)
 {
 	POINT point;
+	int player;
 
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active && (win_use_mouse||use_lightgun) && !win_has_menu())
+	if (!mouse_active && (win_use_mouse || use_lightgun) && !win_has_menu())
 	{
 		mouse_active = 1;
 		win_pause_input(0);
 	}
 
 	// if out of range, skip it
-	if (!use_lightgun || !win_physical_width || !win_physical_height || player >= (lightgun_count + use_lightgun_dual))
-	{
-		*deltax = *deltay = 0;
+	if (!use_lightgun || !win_physical_width || !win_physical_height)
 		return;
-	}
 
 	// Warning message to users - design wise this probably isn't the best function to put this in...
 	if (win_window_mode)
 		usrintf_showmessage("Lightgun not supported in windowed mode");
 
-	// Hack - if button 2 is pressed on lightgun, then return 0,0 (off-screen) to simulate reload
-	if (use_lightgun_reload)
+	// loop over players
+	for (player = 0; player < MAX_LIGHTGUNS; player++)
 	{
-		int return_offscreen=0;
+		// Hack - if button 2 is pressed on lightgun, then return 0,0 (off-screen) to simulate reload
+		if (use_lightgun_reload)
+		{
+			int return_offscreen=0;
 
-		// In dualmode we need to use the buttons returned from Windows messages
+			// In dualmode we need to use the buttons returned from Windows messages
+			if (use_lightgun_dual)
+			{
+				if (player==0 && lightgun_dual_player_state[1])
+					return_offscreen=1;
+
+				if (player==1 && lightgun_dual_player_state[3])
+					return_offscreen=1;
+			}
+			else
+			{
+				if (mouse_state[0].rgbButtons[1]&0x80)
+					return_offscreen=1;
+			}
+
+			if (return_offscreen)
+			{
+				gun_axis[player][0] = ANALOG_VALUE_MIN;
+				gun_axis[player][1] = ANALOG_VALUE_MIN;
+				continue;
+			}
+		}
+
+		// Act-Labs dual lightgun - _only_ works with Windows messages for input location
 		if (use_lightgun_dual)
 		{
-			if (player==0 && lightgun_dual_player_state[1])
-				return_offscreen=1;
+			if (player==0)
+			{
+				point.x=lightgun_dual_player_pos[0].x; // Button 0 is player 1
+				point.y=lightgun_dual_player_pos[0].y; // Button 0 is player 1
+			}
+			else if (player==1)
+			{
+				point.x=lightgun_dual_player_pos[2].x; // Button 2 is player 2
+				point.y=lightgun_dual_player_pos[2].y; // Button 2 is player 2
+			}
+			else
+			{
+				point.x=point.y=0;
+			}
 
-			if (player==1 && lightgun_dual_player_state[3])
-				return_offscreen=1;
+			// Map absolute pixel values into -128 -> 128 range
+			gun_axis[player][0] = (point.x * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_width/2) / (win_physical_width-1) + ANALOG_VALUE_MIN;
+			gun_axis[player][1] = (point.y * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_height/2) / (win_physical_height-1) + ANALOG_VALUE_MIN;
 		}
 		else
 		{
-			if (mouse_state[0].rgbButtons[1]&0x80)
-				return_offscreen=1;
+			// I would much prefer to use DirectInput to read the gun values but there seem to be
+			// some problems...  DirectInput (8.0 tested) on Win98 returns garbage for both buffered
+			// and immediate, absolute and relative axis modes.  Win2k (DX 8.1) returns good data
+			// for buffered absolute reads, but WinXP (8.1) returns garbage on all modes.  DX9 betas
+			// seem to exhibit the same behaviour.  I have no idea of the cause of this, the only
+			// consistent way to read the location seems to be the Windows system call GetCursorPos
+			// which requires the application have non-exclusive access to the mouse device
+			//
+			GetCursorPos(&point);
+
+			// Map absolute pixel values into ANALOG_VALUE_MIN -> ANALOG_VALUE_MAX range
+			gun_axis[player][0] = (point.x * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_width/2) / (win_physical_width-1) + ANALOG_VALUE_MIN;
+			gun_axis[player][1] = (point.y * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_height/2) / (win_physical_height-1) + ANALOG_VALUE_MIN;
 		}
 
-		if (return_offscreen)
-		{
-			*deltax = -128;
-			*deltay = -128;
-			return;
-		}
+		if (gun_axis[player][0] < ANALOG_VALUE_MIN) gun_axis[player][0] = ANALOG_VALUE_MIN;
+		if (gun_axis[player][0] > ANALOG_VALUE_MAX) gun_axis[player][0] = ANALOG_VALUE_MAX;
+		if (gun_axis[player][1] < ANALOG_VALUE_MIN) gun_axis[player][1] = ANALOG_VALUE_MIN;
+		if (gun_axis[player][1] > ANALOG_VALUE_MAX) gun_axis[player][1] = ANALOG_VALUE_MAX;
 	}
-
-	// Act-Labs dual lightgun - _only_ works with Windows messages for input location
-	if (use_lightgun_dual)
-	{
-		if (player==0)
-		{
-			point.x=lightgun_dual_player_pos[0].x; // Button 0 is player 1
-			point.y=lightgun_dual_player_pos[0].y; // Button 0 is player 1
-		}
-		else if (player==1)
-		{
-			point.x=lightgun_dual_player_pos[2].x; // Button 2 is player 2
-			point.y=lightgun_dual_player_pos[2].y; // Button 2 is player 2
-		}
-		else
-		{
-			point.x=point.y=0;
-		}
-
-		// Map absolute pixel values into -128 -> 128 range
-		*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
-		*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
-	}
-	else
-	{
-		// I would much prefer to use DirectInput to read the gun values but there seem to be
-		// some problems...  DirectInput (8.0 tested) on Win98 returns garbage for both buffered
-		// and immediate, absolute and relative axis modes.  Win2k (DX 8.1) returns good data
-		// for buffered absolute reads, but WinXP (8.1) returns garbage on all modes.  DX9 betas
-		// seem to exhibit the same behaviour.  I have no idea of the cause of this, the only
-		// consistent way to read the location seems to be the Windows system call GetCursorPos
-		// which requires the application have non-exclusive access to the mouse device
-		//
-		GetCursorPos(&point);
-
-		// Map absolute pixel values into -128 -> 128 range
-		*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
-		*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
-	}
-
-	if (*deltax < -128) *deltax = -128;
-	if (*deltax > 128) *deltax = 128;
-	if (*deltay < -128) *deltay = -128;
-	if (*deltay > 128) *deltay = 128;
-}
-
-//============================================================
-//	osd_trak_read
-//============================================================
-
-void osd_trak_read(int player, int *deltax, int *deltay)
-{
-	// if the mouse isn't yet active, make it so
-	if (!mouse_active && win_use_mouse && !win_has_menu())
-	{
-		mouse_active = 1;
-		win_pause_input(0);
-	}
-
-	// return the latest mouse info
-	*deltax = mouse_state[player].lX;
-	*deltay = mouse_state[player].lY;
 }
 
 
@@ -1679,387 +1862,69 @@ void osd_joystick_end_calibration(void)
 
 
 //============================================================
-//	osd_customize_inputport_defaults
+//	osd_customize_inputport_list
 //============================================================
 
-extern struct rc_struct *rc;
-
-void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
+void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 {
-	mame_file *f;
-
-	// open the specified controller type/filename
-	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
-
-	if (f)
-	{
-		if (verbose)
-		{
-			if (ctype)
-				fprintf (stderr, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
-			else
-				fprintf (stderr, "trying to parse ctrlr file %s.ini\n", filename);
-		}
-
-		// process this file
-		if(osd_rc_read(iptrc, f, filename, 1, 1))
-		{
-			if (verbose)
-			{
-				if (ctype)
-					fprintf (stderr, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
-				else
-					fprintf (stderr, "problem parsing ctrlr file %s.ini\n", filename);
-			}
-		}
-	}
-
-	// close the file
-	if (f)
-		mame_fclose (f);
-}
-
-void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	// recursive call to process parents first
-	if (drv->clone_of)
-		process_ctrlr_game (iptrc, ctype, drv->clone_of);
-
-	// now process this game
-	if (drv->name && *(drv->name) != 0)
-		process_ctrlr_file (iptrc, ctype, drv->name);
-}
-
-// nice hack: load source_file.ini (omit if referenced later any)
-void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
-{
-	char buffer[128];
-	const struct GameDriver *tmp_gd;
-
-	sprintf(buffer, "%s", drv->source_file+12);
-	buffer[strlen(buffer) - 2] = 0;
-
-	tmp_gd = drv;
-	while (tmp_gd != NULL)
-	{
-		if (strcmp(tmp_gd->name, buffer) == 0) break;
-		tmp_gd = tmp_gd->clone_of;
-	}
-
-	// not referenced later, so load it here
-	if (tmp_gd == NULL)
-		// now process this system
-		process_ctrlr_file (iptrc, ctype, buffer);
-}
-
-static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
-{
-	struct ik *pinput_keywords = (struct ik *)option->dest;
-	struct ipd *idef = ipddef_ptr;
-
-	// only process the default definitions if the input port definitions
-	// pointer has been defined
-	if (idef)
-	{
-		// if a keycode was re-assigned
-		if (pinput_keywords->type == IKT_STD)
-		{
-			InputSeq is;
-
-			// get the new keycode
-			seq_set_string (&is, arg);
-
-			// was a sequence was assigned to a keycode? - not valid!
-			if (is[1] != CODE_NONE)
-			{
-				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
-			}
-
-			// for all definitions
-			while (idef->type != IPT_END)
-			{
-				int j;
-
-				// reassign all matching keystrokes to the given argument
-				for (j = 0; j < SEQ_MAX; j++)
-				{
-					// if the keystroke matches
-					if (idef->seq[j] == pinput_keywords->val)
-					{
-						// re-assign
-						idef->seq[j] = is[0];
-					}
-				}
-				// move to the next definition
-				idef++;
-			}
-		}
-
-		// if an input definition was re-defined
-		else if (pinput_keywords->type == IKT_IPT ||
-                 pinput_keywords->type == IKT_IPT_EXT)
-		{
-			// loop through all definitions
-			while (idef->type != IPT_END)
-			{
-				// if the definition matches
-				if (idef->type == pinput_keywords->val)
-				{
-                    if (pinput_keywords->type == IKT_IPT_EXT)
-                        idef++;
-					seq_set_string(&idef->seq, arg);
-					// and abort (there shouldn't be duplicate definitions)
-					break;
-				}
-
-				// move to the next definition
-				idef++;
-			}
-		}
-	}
-
-	return 0;
-}
-
-
-void osd_customize_inputport_defaults(struct ipd *defaults)
-{
-	static InputSeq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
-	UINT32 next_reserved = IPT_OSD_1;
-	struct ipd *idef = defaults;
-	int i;
+	static input_seq_t no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+	struct InputPortDefinition *idef = defaults;
 
 	// loop over all the defaults
 	while (idef->type != IPT_END)
 	{
-		// if the type is OSD reserved
-		if (idef->type == IPT_OSD_RESERVED)
+		// map in some OSD-specific keys
+		switch (idef->type)
 		{
-			// process the next reserved entry
-			switch (next_reserved)
-			{
-				// OSD_1 is alt-enter for fullscreen
-				case IPT_OSD_1:
-					idef->type = next_reserved;
-					idef->name = "Toggle fullscreen";
-					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
+			// alt-enter for fullscreen
+			case IPT_OSD_1:
+				idef->token = "TOGGLE_FULLSCREEN";
+				idef->name = "Toggle fullscreen";
+				seq_set_2(&idef->defaultseq, KEYCODE_LALT, KEYCODE_ENTER);
 				break;
 
 #ifdef MESS
-				case IPT_OSD_2:
-					if (options.disable_normal_ui)
-					{
-						idef->type = next_reserved;
-						idef->name = "Toggle menubar";
-						seq_set_1 (&idef->seq, KEYCODE_SCRLOCK);
-					}
+			case IPT_OSD_2:
+				if (options.disable_normal_ui)
+				{
+					idef->token = "TOGGLE_MENUBAR";
+					idef->name = "Toggle menubar";
+					seq_set_1 (&idef->defaultseq, KEYCODE_SCRLOCK);
+				}
 				break;
 #endif /* MESS */
-
-				default:
-				break;
-			}
-			next_reserved++;
 		}
 
 		// disable the config menu if the ALT key is down
 		// (allows ALT-TAB to switch between windows apps)
 		if (idef->type == IPT_UI_CONFIGURE)
-		{
-			seq_copy(&idef->seq, &no_alt_tab_seq);
-		}
+			seq_copy(&idef->defaultseq, &no_alt_tab_seq);
 
 #ifdef MESS
 		if (idef->type == IPT_UI_THROTTLE)
-		{
-			static InputSeq empty_seq = SEQ_DEF_0;
-			seq_copy(&idef->seq, &empty_seq);
-		}
+			seq_set_0(&idef->defaultseq);
 #endif /* MESS */
 
 		// Dual lightguns - remap default buttons to suit
-		if (use_lightgun && use_lightgun_dual) {
-			static InputSeq p1b2 = SEQ_DEF_3(KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
-			static InputSeq p1b3 = SEQ_DEF_3(KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
-			static InputSeq p2b1 = SEQ_DEF_5(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1, CODE_OR, JOYCODE_MOUSE_1_BUTTON3);
-			static InputSeq p2b2 = SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
+		if (use_lightgun && use_lightgun_dual)
+		{
+			static input_seq_t p1b2 = SEQ_DEF_3(KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
+			static input_seq_t p1b3 = SEQ_DEF_3(KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
+			static input_seq_t p2b1 = SEQ_DEF_5(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1, CODE_OR, MOUSECODE_1_BUTTON3);
+			static input_seq_t p2b2 = SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
 
-			if (idef->type == (IPT_BUTTON2 | IPF_PLAYER1))
-				seq_copy(&idef->seq, &p1b2);
-			if (idef->type == (IPT_BUTTON3 | IPF_PLAYER1))
-				seq_copy(&idef->seq, &p1b3);
-			if (idef->type == (IPT_BUTTON1 | IPF_PLAYER2))
-				seq_copy(&idef->seq, &p2b1);
-			if (idef->type == (IPT_BUTTON2 | IPF_PLAYER2))
-				seq_copy(&idef->seq, &p2b2);
+			if (idef->type == IPT_BUTTON2 && idef->player == 1)
+				seq_copy(&idef->defaultseq, &p1b2);
+			if (idef->type == IPT_BUTTON3 && idef->player == 1)
+				seq_copy(&idef->defaultseq, &p1b3);
+			if (idef->type == IPT_BUTTON1 && idef->player == 2)
+				seq_copy(&idef->defaultseq, &p2b1);
+			if (idef->type == IPT_BUTTON2 && idef->player == 2)
+				seq_copy(&idef->defaultseq, &p2b2);
 		}
 
 		// find the next one
 		idef++;
-	}
-
-#if 0
-	// if a controller type hasn't been specified
-	if (ctrlrtype == NULL || *ctrlrtype == 0 || (stricmp(ctrlrtype,"Standard") == 0))
-	{
-		// default to the legacy controller types if selected
-		if (hotrod)
-			ctrlrtype = "hotrod";
-
-		if (hotrodse)
-			ctrlrtype = "hotrodse";
-	}
-#endif
-
-	// create a structure for the input port options
-	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
-	{
-		fprintf(stderr, "error on ctrlr_input_opts creation\n");
-		exit(1);
-	}
-
-	// Populate the structure with the input_keywords.
-	// For all, use the ipdef_custom_rc_func callback.
-	// Also, reference the original ik structure.
-	for (i=0; i<num_ik+num_osd_ik; i++)
-	{
-		if (i < num_ik)
-		{
-	   		ctrlr_input_opts[i].name = input_keywords[i].name;
-			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
-		}
-		else
-		{
-	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
-			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
-		}
-		ctrlr_input_opts[i].shortname = NULL;
-		ctrlr_input_opts[i].type = rc_use_function;
-		ctrlr_input_opts[i].deflt = NULL;
-		ctrlr_input_opts[i].min = 0.0;
-		ctrlr_input_opts[i].max = 0.0;
-		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
-		ctrlr_input_opts[i].help = NULL;
-		ctrlr_input_opts[i].priority = 0;
-	}
-
-	// add an end-of-opts indicator
-	ctrlr_input_opts[i].type = rc_end;
-
-	if (rc_register(rc, ctrlr_input_opts))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts\n");
-		exit(1);
-	}
-
-	if (rc_register(rc, ctrlr_input_opts2))
-	{
-		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
-		exit(1);
-	}
-
-	// set a static variable for the ipdef_custom_rc_func callback
-	ipddef_ptr = defaults;
-
-	// process the main platform-specific default file
-	process_ctrlr_file (rc, NULL, "windows");
-
-	// if a custom controller has been selected
-	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
-	{
-		const struct InputPort* input = Machine->input_ports;
-		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
-
-		// process the controller-specific default file
-		process_ctrlr_file (rc, ctrlrtype, "default");
-
-		// process the system-specific files for this controller
-		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
-
-		// process the game-specific files for this controller
-		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
-
-
-		while ((input->type & ~IPF_MASK) != IPT_END)
-		{
-			switch (input->type & ~IPF_MASK)
-			{
-				case IPT_PADDLE:
-				case IPT_PADDLE_V:
-					if (!paddle)
-					{
-						if ((paddle_ini != NULL) && (*paddle_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
-						paddle = 1;
-					}
-					break;
-
-				case IPT_DIAL:
-				case IPT_DIAL_V:
-					if (!dial)
-					{
-						if ((dial_ini != NULL) && (*dial_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, dial_ini);
-						dial = 1;
-					}
-					break;
-
-				case IPT_TRACKBALL_X:
-				case IPT_TRACKBALL_Y:
-					if (!trackball)
-					{
-						if ((trackball_ini != NULL) && (*trackball_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
-						trackball = 1;
-					}
-					break;
-
-				case IPT_AD_STICK_X:
-				case IPT_AD_STICK_Y:
-					if (!adstick)
-					{
-						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
-						adstick = 1;
-					}
-					break;
-
-				case IPT_LIGHTGUN_X:
-				case IPT_LIGHTGUN_Y:
-					if (!lightgun)
-					{
-						if ((lightgun_ini != NULL) && (*lightgun_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, lightgun_ini);
-						lightgun = 1;
-					}
-					break;
-
-				case IPT_PEDAL:
-					if (!pedal)
-					{
-						if ((pedal_ini != NULL) && (*pedal_ini != 0))
-							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
-						pedal = 1;
-					}
-					break;
-
-			}
-			++input;
-		}
-	}
-
-	// print the results
-	if (verbose)
-	{
-		if (ctrlrname)
-			fprintf (stderr,"\"%s\" controller support enabled\n",ctrlrname);
-
-		fprintf(stderr, "Mouse support %sabled\n",win_use_mouse ? "en" : "dis");
-		fprintf(stderr, "Joystick support %sabled\n",use_joystick ? "en" : "dis");
-		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d\n",
-			keyboard_count,
-			win_use_mouse ? mouse_count : 0,
-			use_joystick ? joystick_count : 0);
 	}
 }
 

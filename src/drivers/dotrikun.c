@@ -81,7 +81,7 @@ static MACHINE_DRIVER_START( dotrikun )
 	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
 	MDRV_PALETTE_LENGTH(2)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(dotrikun)
 
 	/* sound hardware */

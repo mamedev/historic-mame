@@ -140,6 +140,11 @@ Otherwise, the outcome may be unpredictable and not consistent across releases.
 	This directory holds controller-specific input port mapping .ini files.
 	The default is CTRLR.
 
+-cheat_file
+
+	The default is CHEAT.DAT. Modifying the default may not work at the
+	moment.
+
 -history_file
 
 	The default is HISTORY.DAT. Modifying the default may not work at the
@@ -148,11 +153,6 @@ Otherwise, the outcome may be unpredictable and not consistent across releases.
 -mameinfo_file
 
 	The default is MAMEINFO.DAT. Modifying the default may not work at the
-	moment.
-
--cheat_file
-
-	The default is CHEAT.DAT. Modifying the default may not work at the
 	moment.
 
 
@@ -213,6 +213,15 @@ Windows video options
 	-hwstretch all won't work). It will generally run really slowly. If
 	anyone has a legitimate use for this option, we'd be curious to know.
 	The default is ON (-ddraw).
+
+-[no]direct3d / -[no]d3d
+
+	Use Direct3D to display the image. This does not render 3D games using
+	3D hardware, it just uses 3D hardware to display the image, and apply
+	effects to it. -triplebuffer, -waitvsync, -resolution, -refresh,
+	-switchres, -switchbpp, -resolution all work with this option. This
+	option overrides -ddraw and implies -hwstretch. The default is OFF
+	(-nodirect3d).
 
 -[no]hwstretch / -[no]hws
 
@@ -385,14 +394,11 @@ Windows video options
 Windows video options (Direct3D)
 --------------------------------
 
--[no]direct3d / -[no]d3d
+-zoom [z] / -z [z]
 
-	Use Direct3D to display the image. This does not render 3D games using
-	3D hardware, it just uses 3D hardware to display the image, and apply
-	effects to it. -triplebuffer, -waitvsync, -resolution, -refresh,
-	-switchres, -switchbpp, -resolution all work with this option. This
-	option overrides -ddraw and implies -hwstretch. The default is OFF
-	(-nodirect3d).
+	Try to get a resolution that enlarges the emulated game z times. The
+	default is -zoom 2. MAME determines the resolution automatically. This
+	option only works with -direct3d.
 
 -[no]d3dtexmanage
 
@@ -402,12 +408,6 @@ Windows video options (Direct3D)
 	(-d3dtexmanage). Using -nod3dtexmanage can eliminate a loss of
 	performance that may occur with some graphics cards when using
 	-direct3d. This option requires -direct3d.
-
--zoom [z] / -z [z]
-
-	Try to get a resolution that enlarges the emulated game z times. The
-	default is -zoom 2. MAME determines the resolution automatically. This
-	option only works with -direct3d.
 
 -d3dfilter [f] / -flt [f]
 
@@ -419,18 +419,23 @@ Windows video options (Direct3D)
 	anisotropic filtering. The default is bi-linear filtering (-d3dfilter
 	1). This option requires -direct3d.
 
--d3dscan [i]
-
-	Select the scanline effect intensity in percentages. 0 is black lines
-	between scanlines, 100 is disable scanline effect. The default is
-	DISABLE (-d3dscan 100). This option requires -direct3d.
-
 -d3dfeedback [i]
 
 	Select the feedback effect intensity in percentages. 0 is disable,
 	higher values feed back the previous frame to the current one at the
 	specified intensity. The default is DISABLE (-d3dfeedback 0). This
 	option requires -direct3d.
+
+-d3dscan [i]
+
+	Select the scanline effect intensity in percentages. 0 is black lines
+	between scanlines, 100 is disable scanline effect. The default is
+	DISABLE (-d3dscan 100). This option requires -direct3d.
+
+-[no]d3deffectrotate
+
+	Apply rotatation so that any effects are rotated along with the game
+	image. The default is ON. This option requires -direct3d.
 
 -d3dprescale [option]
 
@@ -503,6 +508,32 @@ Windows video options (Direct3D)
 	requires -direct3d.
 
 
+Windows misc options
+--------------------
+
+-[no]sleep
+
+	Since MAME is running in a multitasking environment, it should be nice
+	to its fellow processes. Therefore, if MAME does not need all
+	processing power to emulate a game, it gives back already granted
+	processor time to the operating system. This may not work in every
+	case, so it can be disabled and MAME turned once again into a CPU hog.
+	The default is ON (-sleep).
+
+-[no]rdtsc
+
+	Prefer RDTSC over QueryPerformanceCounter for timing. The default is
+	OFF (-nordtsc). -rdtsc sometimes causes problems on laptops, and
+	-nordtsc may cause problems on desktop computers. If MAME does not
+	operate smoothly (and you are sure you have enough CPU power for
+	the emulation), try toggling this.
+
+-[no]high_priority
+
+	Increases the thread priority so MAME runs better. The default is OFF
+	(-nohigh_priority).
+
+
 Windows sound options
 ---------------------
 
@@ -519,32 +550,6 @@ Windows sound options
 -wavwrite <filename>
 
 	Writes the final mixer output to the given <filename> in .WAV format.
-
-
-Windows misc options
---------------------
-
--[no]sleep
-
-	Since MAME is running in a multitasking environment, it should be nice
-	to its fellow processes. Therefore, if MAME does not need all
-	processing power to emulate a game, it gives back already granted
-	processor time to the operating system. This may not work in every
-	case, so it can be disabled and MAME turned once again into a CPU hog.
-	The default is ON (-sleep).
-
--[no]high_priority
-
-	Increases the thread priority so MAME runs better. The default is OFF
-	(-nohigh_priority).
-
--[no]rdtsc
-
-	Prefer RDTSC over QueryPerformanceCounter for timing. The default is
-	OFF (-nordtsc). -rdtsc sometimes causes problems on laptops, and
-	-nordtsc may cause problems on desktop computers. If MAME does not
-	operate smoothly (and you are sure you have enough CPU power for
-	the emulation), try toggling this.
 
 
 Input device options
@@ -564,6 +569,26 @@ Input device options
 	When this is enabled, MAME will ask DirectInput about which controllers
 	are connected. The default is OFF (-nojoystick).
 
+-[no]lightgun/ -[no]gun
+
+	Controls whether or not MAME treats mouse inputs as lightgun inputs.
+	Note that most lightguns map to the mouse, so using -lightgun and
+	-mouse together may produce strange results. The default is OFF
+	(-nolightgun).
+
+-[no]dual_lightgun / -[no]dual
+
+	Controls whether or not MAME attempts to track two lightguns connected
+	at the same time. This option requires -lightgun. The default is OFF
+	(-nodual_lightgun).
+
+-[no]offscreen_reload / -[no]reload
+
+	Controls whether or not MAME treats a second button input from a
+	lightgun as a reload signal. In this case, MAME will report the gun's
+	position as (0,0) with the trigger held, which is equivalent to an
+	offscreen reload. The default is OFF (-nooffscreen_reload).
+
 -[no]steadykey / -[no]steady
 
 	Some games require two or more buttons to be pressed at exactly the
@@ -582,18 +607,14 @@ Input device options
 	after exiting MAME (i.e. CAPS LOCK remains ON), so you can disable it
 	here. The default is ON (-keyboard_leds).
 
--ctrlr <controller>
+-led_mode <ps/2|usb>
 
-	Enables support for special controllers. Configuration files are
-	provided for:
-
-		hotrod	    HotRod
-		hotrodse    HotRod SE
-		slikstik    SlikStik
-		xarcade     X-Arcade
-
-	There is extra documentation available about this in the file
-	ctrlr.txt.
+	For Windows NT and later systems, determines how LEDs on the keyboard
+	are controlled. In PS/2 mode, MAME uses the low-level keyboard driver
+	directly to control the LEDs. In USB mode, MAME attempts to post fake
+	keypresses on the Caps Lock, Scroll Lock, and Num Lock keys in order to
+	induce the LEDs to change. If you have a PS/2 keyboard, PS/2 mode is the
+	more reliable approach. Default is PS/2.
 
 -a2d_deadzone / -a2d
 
@@ -606,15 +627,66 @@ Input device options
 	is a known problem but it requires some major rework of the input
 	handling code to fix it.
 
+-ctrlr <controller>
+
+	Enables support for special controllers. Configuration files are
+	provided for:
+
+		hotrod	    HotRod
+		hotrodse    HotRod SE
+		slikstik    SlikStik
+		xarcade     X-Arcade
+
+-paddle_device <keyboard|mouse|joystick|lightgun> / -paddle
+-adstick_device <keyboard|mouse|joystick|lightgun> / -adstick
+-pedal_device <keyboard|mouse|joystick|lightgun> / -pedal
+-dial_device <keyboard|mouse|joystick|lightgun> / -dial
+-trackball_device <keyboard|mouse|joystick|lightgun> / -trackball
+-lightgun_device <keyboard|mouse|joystick|lightgun>
+
+	Each of these options controls autoenabling the mouse, joystick, or
+	lightgun depending on the presence of a particular class of analog
+	control for a particular game. For example, if you specify the option
+	-paddle mouse, then any game that has a paddle control will automatically
+	enable mouse controls just as if you had explicitly specified -mouse.
+	Note that these controls override the values of -[no]mouse, -[no]joystick,
+	etc.
+
+-digital <all|none|j<N>[a<M>[a<K>...]][,j<X>[a<Y>...]][,...]>
+
+	Controls which joystick axes are considered digital. If MAME knows that
+	a given joystick axis is digital, it can make much better decisions about
+	how to treat that axis. If you are using a digital gamepad with MAME, 
+	you will want to use this option. There are a number of ways to do this:
+
+	-digital all means that all axes of all connected joysticks will be 
+		treated as digital.
+
+	-digital none means that all axes of all connected joysticks will be 
+		treated as analog (this is the default behavior).
+    
+	-digital j2 will treat all axes of joystick #2 as digital; axes on all 
+		other joysticks will be treated as analog.
+
+	-digital j1a0a1 will treat axis 0 and 1 on joystick #1 as digital; all 
+		other axes will be treated as analog.
+
+	-digital j1a0a1,j2a5 will treat axis 0 and 1 on joystick #1 as digital, 
+		as well as axis 5 on joystick #2; all other axes will be treated 
+		as analog.
+
+	Make use of the information provided by -verbose to determine which 
+	joysticks and axes you should be configuring this way.
+
 
 MAME core video options
 -----------------------
 
 -[no]norotate
--[no]autorol
--[no]autoror
--[no]rol
 -[no]ror
+-[no]rol
+-[no]autoror
+-[no]autorol
 -[no]flipx
 -[no]flipy
 
@@ -680,20 +752,6 @@ MAME core vector options
 MAME core sound options
 -----------------------
 
--[no]sound
-
-	Enable or disable sound altogether. The default is ON (-sound).
-
--[no]samples
-
-	Use samples if available. The default is ON (-samples).
-
--volume / -vol
-
-	Sets the startup volume. It can later be changed with the On Screen
-	Display (see Keys section). The volume is an attenuation in dB: e.g.,
-	"-volume -12" will start with -12dB attenuation. The default is 0.
-
 -samplerate / -sr
 
 	Sets the audio sample rate. Smaller values (e.g. 11025) cause lower
@@ -701,12 +759,26 @@ MAME core sound options
 	cause higher audio quality but slower emulation speed. The default is
 	44100.
 
+-[no]samples
+
+	Use samples if available. The default is ON (-samples).
+
 -[no]resamplefilter
 
 	If the samplerate of the original hardware does not match the
 	samplerate actually used by an integer factor, apply a filter. This is
 	more faithful to the original sound, however, the sound may not be as
 	crisp. The default is ON (-resamplefilter).
+
+-[no]sound
+
+	Enable or disable sound altogether. The default is ON (-sound).
+
+-volume / -vol
+
+	Sets the startup volume. It can later be changed with the On Screen
+	Display (see Keys section). The volume is an attenuation in dB: e.g.,
+	"-volume -12" will start with -12dB attenuation. The default is 0.
 
 
 MAME core misc options
@@ -742,21 +814,6 @@ MAME core misc options
 	Scale the game by this factor to accommodate for higher resolution
 	artwork. The default is 0 (auto).
 
--bios
-
-	Expects a BIOS name as the parameter. -listinfo/xml will list the
-	possible BIOS names for a game/system.
-
--[no]skip_disclaimer
-
-	Forces MAME to skip displaying the disclaimer screen. The default is
-	OFF (-noskip_disclaimer).
-
--[no]skip_gameinfo
-
-	Forces MAME to skip displaying the game info screen. The default is OFF
-	(-noskip_gameinfo).
-
 -[no]cheat / -[no]c
 
 	Cheats, like the speedup in Pac Man or the level-skip in many other
@@ -791,6 +848,36 @@ MAME core misc options
 	hits that number, MAME will exit. By default, this is set fairly low
 	(10 MB). This is in effect only if you are actually generating the
 	error.log file.
+
+-[no]oslog
+
+	Outputs error.log data to the Windows debugger instead of to a file.
+	Default is OFF (-nooslog).
+
+-[no]skip_disclaimer
+
+	Forces MAME to skip displaying the disclaimer screen. The default is
+	OFF (-noskip_disclaimer).
+
+-[no]skip_gameinfo
+
+	Forces MAME to skip displaying the game info screen. The default is OFF
+	(-noskip_gameinfo).
+
+-[no]crconly
+
+	Tells MAME to only use CRCs for ROM integrity checks. This disables
+	checking against the more reliable SHA1 hashes. Default is OFF
+	(-nocrconly).
+
+-bios
+
+	Expects a BIOS name as the parameter. -listxml will list the possible
+	BIOS names for a game/system.
+
+-state <slot>
+
+	Starts MAME and loads a saved state immediately from the specified slot.
 
 
 Other MAME frontend options
@@ -834,12 +921,6 @@ command:
 	Displays the source file (in the drivers directory) containing the
 	driver for the specified game. Useful for finding which driver a game
 	runs on in order to fix bugs.
-
--listinfo / -li
-
-	List comprehensive details for all of the supported games. The output
-	is quite long, so better redirect this into a file. The output is in
-	MAME's own format, see listinfo.txt for details.
 
 -listxml / -lx
 

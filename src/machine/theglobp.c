@@ -63,8 +63,6 @@
 
 #include "driver.h"
 
-void machine_init_pacman(void);
-
 static int counter=0;
 
 
@@ -256,6 +254,4 @@ MACHINE_INIT( theglobp )
 	/* The initial state of the counter is 0x0A */
 	counter = 0x0A;
 	cpu_setbank (1, &RAM[0x18000]);
-
-	machine_init_pacman();
 }

@@ -89,8 +89,22 @@ enum
 
 	/* input stuff */
 	UI_keyjoyspeed,
+	UI_centerspeed,
 	UI_reverse,
 	UI_sensitivity,
+	
+	/* input groups */
+	UI_uigroup,
+	UI_p1group,
+	UI_p2group,
+	UI_p3group,
+	UI_p4group,
+	UI_p5group,
+	UI_p6group,
+	UI_p7group,
+	UI_p8group,
+	UI_othergroup,
+	UI_returntogroup,
 
 	/* stats */
 	UI_tickets,
@@ -169,6 +183,9 @@ enum
 	UI_search_select_value,
 	UI_search_all_values_saved,
 	UI_search_one_match_found_added,
+	
+	/* refresh rate */
+	UI_refresh_rate,
 
 	UI_last_mame_entry
 };

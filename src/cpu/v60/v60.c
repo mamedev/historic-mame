@@ -76,11 +76,6 @@ typedef struct
 	UINT8 Z;
 } Flags;
 
-/* Workaround for LinuxPPC. */
-#ifdef PPC
-#undef PPC
-#endif
-
 // v60 Register Inside (Hm... It's not a pentium inside :-))) )
 struct v60info {
 	struct cpu_info info;

@@ -1402,7 +1402,7 @@ INLINE void cave_tilemap_draw(
 	}
 	else
 	{
-		/* "Normal" scrolling */
+		/* DEF_STR( Normal ) scrolling */
 		tilemap_set_scroll_rows(TILEMAP, 1);
 		tilemap_set_scroll_cols(TILEMAP, 1);
 		tilemap_set_scrollx(TILEMAP, 0, sx );

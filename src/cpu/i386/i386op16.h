@@ -426,16 +426,16 @@ static void (*i386_opcode_table2_16[256])(void) =
 	I386OP(pop_fs16),			/* 0xa1 */
 	I386OP(invalid),			/* 0xa2 */		/* CPUID (486) */
 	I386OP(bt_rm16_r16),		/* 0xa3 */
-	I386OP(unimplemented),		/* 0xa4 */		/* TODO: SHLD */
-	I386OP(unimplemented),		/* 0xa5 */		/* TODO: SHLD */
+	I386OP(shld16_i8),			/* 0xa4 */
+	I386OP(shld16_cl),			/* 0xa5 */
 	I386OP(invalid),			/* 0xa6 */
 	I386OP(invalid),			/* 0xa7 */
 	I386OP(push_gs16),			/* 0xa8 */
 	I386OP(pop_gs16),			/* 0xa9 */
 	I386OP(unimplemented),		/* 0xaa */		/* TODO: RSM */
 	I386OP(bts_rm16_r16),		/* 0xab */
-	I386OP(unimplemented),		/* 0xac */		/* TODO: SHRD */
-	I386OP(unimplemented),		/* 0xad */		/* TODO: SHRD */
+	I386OP(shrd16_i8),			/* 0xac */
+	I386OP(shrd16_cl),			/* 0xad */
 	I386OP(invalid),			/* 0xae */		/* SSE */
 	I386OP(imul_r16_rm16),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
@@ -450,8 +450,8 @@ static void (*i386_opcode_table2_16[256])(void) =
 	I386OP(invalid),			/* 0xb9 */
 	I386OP(group0FBA_16),		/* 0xba */
 	I386OP(btc_rm16_r16),		/* 0xbb */
-	I386OP(unimplemented),		/* 0xbc */		/* TODO: BSF */
-	I386OP(unimplemented),		/* 0xbd */		/* TODO: BSR */
+	I386OP(bsf_r16_rm16),		/* 0xbc */
+	I386OP(bsr_r16_rm16),		/* 0xbd */
 	I386OP(movsx_r16_rm8),		/* 0xbe */
 	I386OP(invalid),			/* 0xbf */
 	I386OP(invalid),			/* 0xc0 */		/* XADD (486) */

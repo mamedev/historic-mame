@@ -350,12 +350,16 @@ static void m6502_set_irq_line(int irqline, int state)
 
 static offs_t m6502_dasm(char *buffer, offs_t pc)
 {
+	offs_t ret;
+	change_pc( pc );
 #ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
+	ret = Dasm6502( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
+	ret = 1;
 #endif
+	change_pc( m6502.pc.w.l );
+	return ret;
 }
 
 

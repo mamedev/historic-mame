@@ -97,6 +97,8 @@ CPUS+=SPC700@
 CPUS+=E132XS@
 CPUS+=I386@
 CPUS+=I960@
+CPUS+=H83002@ 
+CPUS+=V810@ 
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -171,6 +173,7 @@ SOUNDS+=PSXSPU@
 SOUNDS+=CDDA@
 SOUNDS+=ICS2115@
 SOUNDS+=ST0016@
+SOUNDS+=C352@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -322,6 +325,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/machine/midwunit.o $(OBJ)/drivers/midwunit.o \
 	$(OBJ)/vidhrdw/midvunit.o $(OBJ)/drivers/midvunit.o \
 	$(OBJ)/machine/midtunit.o $(OBJ)/vidhrdw/midtunit.o $(OBJ)/drivers/midtunit.o \
+	$(OBJ)/drivers/midzeus.o \
 
 $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/skychut.o $(OBJ)/drivers/skychut.o \
@@ -1027,6 +1031,8 @@ $(OBJ)/igs.a: \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
+	$(OBJ)/drivers/vbowl.o \
+	$(OBJ)/drivers/chmplst2.o \
 
 $(OBJ)/ramtek.a: \
 	$(OBJ)/drivers/hitme.o \
@@ -1153,6 +1159,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/1945kiii.o \
 	$(OBJ)/drivers/pbchmp95.o \
 	$(OBJ)/drivers/bmcbowl.o \
+	$(OBJ)/drivers/trvgns.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

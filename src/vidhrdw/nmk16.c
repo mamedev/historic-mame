@@ -297,7 +297,36 @@ WRITE16_HANDLER( nmk_txvideoram_w )
 	}
 }
 
+static int mustang_bg_xscroll;
+
 WRITE16_HANDLER( mustang_scroll_w )
+{
+//	printf("mustang %04x %04x %04x\n",offset,data,mem_mask);
+
+	switch (data & 0xff00)
+	{
+		case 0x0000:
+			mustang_bg_xscroll = (mustang_bg_xscroll & 0x00ff) | ((data & 0x00ff)<<8);
+			break;
+
+		case 0x0100:
+			mustang_bg_xscroll = (mustang_bg_xscroll & 0xff00) | (data & 0x00ff);
+			break;
+
+		case 0x0200:
+			break;
+
+		case 0x0300:
+			break;
+
+		default:
+			break;
+		}
+
+	tilemap_set_scrollx(bg_tilemap,0,mustang_bg_xscroll - videoshift);
+}
+
+WRITE16_HANDLER( bioshipbg_scroll_w )
 {
 	static UINT8 scroll[4];
 

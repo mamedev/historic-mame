@@ -54,12 +54,8 @@ static READ8_HANDLER( williams_49way_port_0_r );
 static WRITE8_HANDLER( williams2_snd_cmd_w );
 
 /* Defender-specific code */
-READ8_HANDLER( defender_input_port_0_r );
 static READ8_HANDLER( defender_io_r );
 static WRITE8_HANDLER( defender_io_w );
-
-/* Stargate-specific code */
-READ8_HANDLER( stargate_input_port_0_r );
 
 /* Lotto Fun-specific code */
 static READ8_HANDLER( lottofun_input_port_0_r );
@@ -144,22 +140,6 @@ struct pia6821_interface williams_snd_pia_intf =
  *	Game-specific old-Williams PIA interfaces
  *
  *************************************/
-
-/* Special PIA 0 for Defender, to handle the controls */
-struct pia6821_interface defender_pia_0_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ defender_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
-	/*irqs   : A/B             */ 0, 0
-};
-
-/* Special PIA 0 for Stargate, to handle the controls */
-struct pia6821_interface stargate_pia_0_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ stargate_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
-	/*irqs   : A/B             */ 0, 0
-};
 
 /* Special PIA 0 for Lotto Fun, to handle the controls and ticket dispenser */
 struct pia6821_interface lottofun_pia_0_intf =
@@ -435,40 +415,32 @@ READ8_HANDLER( williams_input_port_1_4_r )
 /*
  *  Williams 49-way joystick
  *
- * The joystick has 48 positions + center.
+ *	The joystick works on a 7x7 grid system:
  *
- * I'm not 100% sure but it looks like it's mapped this way:
+ *		+ + + | + + +
+ *		+ + + | + + +
+ *		+ + + | + + +
+ *		------+------
+ *		+ + + | + + +
+ *		+ + + | + + +
+ *		+ + + | + + +
  *
- *	xxxx1000 = up full
- *	xxxx1100 = up 2/3
- *	xxxx1110 = up 1/3
- *	xxxx0111 = center
- *	xxxx0011 = down 1/3
- *	xxxx0001 = down 2/3
- *	xxxx0000 = down full
+ *	Each axis has 7 positions, reported as follows
+ *	in 4 bits/axis:
  *
- *	1000xxxx = right full
- *	1100xxxx = right 2/3
- *	1110xxxx = right 1/3
- *	0111xxxx = center
- *	0011xxxx = left 1/3
- *	0001xxxx = left 2/3
- *	0000xxxx = left full
- *
+ *		0000 = left/up full
+ *		0100 = left/up 2/3
+ *		0110 = left/up 1/3
+ *		0111 = center
+ *		1011 = right/down 1/3
+ *		1001 = right/down 2/3
+ *		1000 = right/down full
  */
 
 READ8_HANDLER( williams_49way_port_0_r )
 {
-	int joy_x, joy_y;
-	int bits_x, bits_y;
-
-	joy_x = readinputport(3) >> 4;	/* 0 = left 3 = center 6 = right */
-	joy_y = readinputport(4) >> 4;	/* 0 = down 3 = center 6 = up */
-
-	bits_x = (0x70 >> (7 - joy_x)) & 0x0f;
-	bits_y = (0x70 >> (7 - joy_y)) & 0x0f;
-
-	return (bits_x << 4) | bits_y;
+	static const UINT8 translate49[7] = { 0x0, 0x4, 0x6, 0x7, 0xb, 0x9, 0x8 };
+	return (translate49[readinputportbytag("49WAYX") >> 4] << 4) | translate49[readinputportbytag("49WAYY") >> 4];
 }
 
 
@@ -770,38 +742,6 @@ READ8_HANDLER( mayday_protection_r )
 	/* the protection from resetting the machine, we just return $a193 for $a190,  */
 	/* and $a194 for $a191. */
 	return mayday_protection[offset + 3];
-}
-
-
-
-/*************************************
- *
- *	Stargate-specific routines
- *
- *************************************/
-
-READ8_HANDLER( stargate_input_port_0_r )
-{
-	int keys, altkeys;
-
-	/* read the standard keys and the cheat keys */
-	keys = input_port_0_r(0);
-	altkeys = input_port_3_r(0);
-
-	/* modify the standard keys with the cheat keys */
-	if (altkeys)
-	{
-		keys |= altkeys;
-		if (memory_region(REGION_CPU1)[0x9c92] == 0xfd)
-		{
-			if (keys & 0x02)
-				keys = (keys & 0xfd) | 0x40;
-			else if (keys & 0x40)
-				keys = (keys & 0xbf) | 0x02;
-		}
-	}
-
-	return keys;
 }
 
 

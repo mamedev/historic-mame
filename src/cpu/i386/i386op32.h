@@ -427,7 +427,7 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(invalid),			/* 0xa2 */		/* CPUID (486) */
 	I386OP(bt_rm32_r32),		/* 0xa3 */
 	I386OP(shld32_i8),			/* 0xa4 */
-	I386OP(unimplemented),		/* 0xa5 */		/* TODO: SHLD */
+	I386OP(shld32_cl),			/* 0xa5 */
 	I386OP(invalid),			/* 0xa6 */
 	I386OP(invalid),			/* 0xa7 */
 	I386OP(push_gs32),			/* 0xa8 */
@@ -435,7 +435,7 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(unimplemented),		/* 0xaa */		/* TODO: RSM */
 	I386OP(bts_rm32_r32),		/* 0xab */
 	I386OP(shrd32_i8),			/* 0xac */
-	I386OP(unimplemented),		/* 0xad */		/* TODO: SHRD */
+	I386OP(shrd32_cl),			/* 0xad */
 	I386OP(invalid),			/* 0xae */		/* SSE */
 	I386OP(imul_r32_rm32),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
@@ -450,7 +450,7 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(invalid),			/* 0xb9 */
 	I386OP(group0FBA_32),		/* 0xba */
 	I386OP(btc_rm32_r32),		/* 0xbb */
-	I386OP(unimplemented),		/* 0xbc */		/* TODO: BSF */
+	I386OP(bsf_r32_rm32),		/* 0xbc */
 	I386OP(bsr_r32_rm32),		/* 0xbd */
 	I386OP(movsx_r32_rm8),		/* 0xbe */
 	I386OP(movsx_r32_rm16),		/* 0xbf */

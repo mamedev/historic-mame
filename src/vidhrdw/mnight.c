@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 
 #define COLORTABLE_START(gfxn,color)	Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
@@ -22,6 +23,12 @@ static unsigned char     *bg_dirtybuffer;
 static int       bg_enable = 1;
 static int       sp_overdraw = 0;
 
+void mnight_mark_background_dirty(void)
+{
+	/* set 1024 bytes allocated in VIDEO_START( mnight ) to 'true' */
+	memset(bg_dirtybuffer,1,1024);
+}
+
 VIDEO_START( mnight )
 {
 	if ((bg_dirtybuffer = auto_malloc(1024)) == 0)
@@ -33,7 +40,9 @@ VIDEO_START( mnight )
 	if ((bitmap_sp = auto_bitmap_alloc (Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	memset(bg_dirtybuffer,1,1024);
+	mnight_mark_background_dirty() ;
+
+	state_save_register_func_postload(mnight_mark_background_dirty) ;
 
 	return 0;
 }

@@ -93,6 +93,7 @@
 #include "cpu/m6809/m6809.h"
 #include "capbowl.h"
 
+#define MASTER_CLOCK		8000000		/* 8MHz crystal */
 
 static UINT8 last_trackball_val[2];
 
@@ -269,8 +270,8 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( capbowl )
 	PORT_START	/* IN0 */
 	/* low 4 bits are for the trackball */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) ) /* This version of Bowl-O-Rama */
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )			   /* is Upright only */
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -284,15 +285,15 @@ INPUT_PORTS_START( capbowl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 40, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(20) PORT_KEYDELTA(40) PORT_REVERSE
 
 	PORT_START	/* FAKE */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 20, 40, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(20) PORT_KEYDELTA(40)
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 INPUT_PORTS_END
 
 
@@ -305,9 +306,9 @@ INPUT_PORTS_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz */
-	{ YM2203_VOL(40,40) },
+	1,				/* 1 chip */
+	MASTER_CLOCK/2,	/* 4 MHz */
+	{ YM2203_VOL(75,7) },
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },
@@ -333,11 +334,11 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( capbowl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6809, 2000000)
+	MDRV_CPU_ADD_TAG("main", M6809E, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(capbowl_map,0)
 	MDRV_CPU_VBLANK_INT(capbowl_interrupt,1)
 
-	MDRV_CPU_ADD(M6809,2000000)
+	MDRV_CPU_ADD(M6809E, MASTER_CLOCK/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
@@ -408,12 +409,24 @@ ROM_END
 ROM_START( capbowl3 )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "bowl30.bin",   0x08000, 0x8000, CRC(32e30928) SHA1(db47b6ace949d86aa1cdd1e5c7a5981f30b590af) )
-	ROM_LOAD( "grom-gr0.bin", 0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
-	ROM_LOAD( "grom-gr1.bin", 0x10000, 0x8000, NO_DUMP )
-	ROM_LOAD( "grom-gr2.bin", 0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
+	ROM_LOAD( "bfb.gr0",      0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
+	ROM_LOAD( "bfb.gr1",      0x18000, 0x8000, CRC(880e4e1c) SHA1(9f88b26877596667f1ac4e0083795bf266712879) )
+	ROM_LOAD( "bfb.gr2",      0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound-r2.bin",  0x8000, 0x8000, CRC(43ac1658) SHA1(1fab23d649d0c565ef1a7f45b30806f9d1bb4afd) )
+ROM_END
+
+
+ROM_START( capbowl4 )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
+	ROM_LOAD( "bfb.u6",        0x08000, 0x8000, CRC(79f1d083) SHA1(36e9a90403fc9b876d7660ee46c5fbb855321769) )
+	ROM_LOAD( "bfb.gr0",       0x10000, 0x8000, CRC(2b5eb091) SHA1(43976bfa9fbe9694c7274f113641f671fa32bbb7) )
+	ROM_LOAD( "bfb.gr1",       0x18000, 0x8000, CRC(880e4e1c) SHA1(9f88b26877596667f1ac4e0083795bf266712879) )
+	ROM_LOAD( "bfb.gr2",       0x20000, 0x8000, CRC(f3d2468d) SHA1(0348ee5d0000b753ad90a525048d05bfb552bee1) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "bfb.u30",     0x8000, 0x8000, CRC(6fe2c4ff) SHA1(862823264d243be590fd29a228a32e7a0a818e57) )
 ROM_END
 
 
@@ -466,5 +479,6 @@ static DRIVER_INIT( capbowl )
 GAME( 1988, capbowl,  0,       capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 1)" )
 GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 2)" )
 GAME( 1988, capbowl3, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 3)" )
+GAME( 1988, capbowl4, capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Capcom Bowling (set 4)" )
 GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, capbowl, ROT270, "Incredible Technologies", "Coors Light Bowling" )
 GAME( 1991, bowlrama, 0,       bowlrama, capbowl, capbowl, ROT270, "P&P Marketing", "Bowl-O-Rama" )

@@ -525,6 +525,7 @@ static int palette_alloc(void)
 	dirty_palette = auto_malloc((max_total_colors + 31) / 32 * sizeof(dirty_palette[0]));
 	if (!dirty_palette)
 		return 1;
+	dirty_palette[(max_total_colors - 1) / 32] = 0; /* initialize all the bits of the last dirty entry */
 	for (i = 0; i < max_total_colors; i++)
 		mark_pen_dirty(i);
 

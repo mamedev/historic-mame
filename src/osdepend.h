@@ -172,20 +172,21 @@ void osd_sound_enable(int enable);
 
 /******************************************************************************
 
-	Keyboard
+	Controls
 
 ******************************************************************************/
 
 /*
-  return a list of all available keys (see input.h)
+  return a list of all available inputs (see input.h)
 */
-const struct KeyboardInfo *osd_get_key_list(void);
+const struct OSCodeInfo *osd_get_code_list(void);
 
 /*
-  tell whether the specified key is pressed or not. keycode is the OS dependent
-  code specified in the list returned by osd_get_key_list().
+  return the value of the specified input. digital inputs return 0 or 1. analog
+  inputs should return a value between -65536 and +65536. oscode is the OS dependent
+  code specified in the list returned by osd_get_code_list().
 */
-int osd_is_key_pressed(int keycode);
+INT32 osd_get_code_value(os_code_t oscode);
 
 /*
   Return the Unicode value of the most recently pressed key. This
@@ -198,37 +199,17 @@ int osd_is_key_pressed(int keycode);
 */
 int osd_readkey_unicode(int flush);
 
-
-
-/******************************************************************************
-
-	Joystick & Mouse/Trackball
-
-******************************************************************************/
-
 /*
-  return a list of all available joystick inputs (see input.h)
+  inptport.c defines some general purpose defaults for key and joystick bindings.
+  They may be further adjusted by the OS dependent code to better match the
+  available keyboard, e.g. one could map pause to the Pause key instead of P, or
+  snapshot to PrtScr instead of F12. Of course the user can further change the
+  settings to anything he/she likes.
+  This function is called on startup, before reading the configuration from disk.
+  Scan the list, and change the keys/joysticks you want.
 */
-const struct JoystickInfo *osd_get_joy_list(void);
+void osd_customize_inputport_list(struct InputPortDefinition *defaults);
 
-/*
-  tell whether the specified joystick direction/button is pressed or not.
-  joycode is the OS dependent code specified in the list returned by
-  osd_get_joy_list().
-*/
-int osd_is_joy_pressed(int joycode);
-
-
-/* We support 4 players for each analog control / trackball */
-#define OSD_MAX_JOY_ANALOG	4
-#define X_AXIS			0
-#define Y_AXIS			1
-#define Z_AXIS			2
-#define PEDAL_AXIS		3
-#define MAX_ANALOG_AXES	4
-
-/* added for building joystick seq for analog inputs */
-int osd_is_joystick_axis_code(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
 /* Do we need to calibrate the joystick at all? */
@@ -242,24 +223,6 @@ const char *osd_joystick_calibrate_next(void);
 void osd_joystick_calibrate(void);
 /* Postprocessing (e.g. saving joystick data to config) */
 void osd_joystick_end_calibration(void);
-
-void osd_lightgun_read(int player, int *deltax, int *deltay);
-void osd_trak_read(int player, int *deltax, int *deltay);
-
-/* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode analogjoy_input[MAX_ANALOG_AXES]);
-
-
-/*
-  inptport.c defines some general purpose defaults for key and joystick bindings.
-  They may be further adjusted by the OS dependent code to better match the
-  available keyboard, e.g. one could map pause to the Pause key instead of P, or
-  snapshot to PrtScr instead of F12. Of course the user can further change the
-  settings to anything he/she likes.
-  This function is called on startup, before reading the configuration from disk.
-  Scan the list, and change the keys/joysticks you want.
-*/
-void osd_customize_inputport_defaults(struct ipd *defaults);
 
 
 

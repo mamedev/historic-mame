@@ -2,6 +2,81 @@
 
 	Midway DCS Audio Board
 
+****************************************************************************
+
+	There are several variations of this board, which was in use by
+	Midway and eventually Atari for almost 10 years.
+	
+	DCS ROM-based mono:
+		* ADSP-2105 @ 10MHz
+		* single channel output
+		* ROM-based, up to 8MB total
+		* used in:
+			Mortal Kombat 2 (1993)
+			Mortal Kombat 3 (1994)
+			Ultimate Mortal Kombat 3 (1994)
+			Cruisin' USA (1994)
+			Revolution X (1994)
+			Killer Instinct (1994)
+			2 On 2 Open Ice Challenge (1995)
+			WWF Wrestlemania (1995)
+			Killer Instinct 2 (1995)
+			NBA Hangtime (1996)
+			NBA Maximum Hangtime (1996)
+			Cruisin' World (1996)
+			Rampage World Tour (1997)
+			Offroad Challenge (1997)
+	
+	DCS RAM-based stereo (Seattle):
+		* ADSP-2115 @ 16MHz
+		* dual channel output (stereo)
+		* RAM-based, 2-4MB total
+		* used in:
+			War Gods (1995)
+			Wayne Gretzky's 3D Hockey (1996)
+			Mace: The Dark Age (1996)
+			Biofreaks (1997)
+			NFL Blitz (1997)
+			California Speed (1998)
+			Vapor TRX (1998)
+			NFL Blitz '99 (1998)
+			CarnEvil (1998)
+			Hyperdrive (1998)
+			NFL Blitz 2000 Gold (1999)
+			
+	DCS ROM-based stereo (Zeus):
+		* ADSP-2104 @ 16MHz
+		* dual channel output (stereo)
+		* ROM-based, up to 12MB total
+		* used in:
+			Mortal Kombat 4 (1997)
+			Invasion (1999)
+			Cruisin' Exotica (1999)
+			The Grid (2001)
+	
+	DCS RAM-based stereo (Vegas):
+		* ADSP-2104 @ 16MHz
+		* dual channel output (stereo)
+		* RAM-based, 4MB total
+		* used in:
+			Gauntlet Legends (1998)
+			Tenth Degree (1998)
+			Gauntlet Dark Legacy (1999)
+			War: The Final Assault (1999)
+	
+	ADAGE/ADCS RAM-based multichannel:
+		* ADSP-2181 @ 16.667MHz
+		* 2-6 channel output
+		* RAM-based, 4MB total
+		* used in:
+			San Francisco Rush: 2049 (1998)
+			Road Burners (1999)
+			
+	Unknown other DCS boards:
+		* NBA Showtime
+		* NBA Showtime / NFL Blitz 2000 Gold
+		* Cart Fury
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -69,7 +144,8 @@ struct dcs_state
 	UINT8	auto_ack;
 	UINT8	channels;
 
-	UINT8 * sounddata;
+	UINT16 *soundboot;
+	UINT16 *sounddata;
 	UINT16	size;
 	UINT16	incs;
 	void  * reg_timer;
@@ -78,11 +154,9 @@ struct dcs_state
 	UINT16	ireg_base;
 	UINT16	control_regs[32];
 
-	UINT16	rombank;
-	UINT16	rombank_count;
+	UINT16	databank;
+	UINT16	databank_count;
 	UINT16	srambank;
-	UINT16	drambank;
-	UINT16	drambank_count;
 
 	UINT16	latch_control;
 	UINT16	input_data;
@@ -111,12 +185,14 @@ static struct dcs_state dcs;
 
 static data16_t *dcs_sram_bank0;
 static data16_t *dcs_sram_bank1;
-static data16_t *dcs_expanded_rom;
 
 static data16_t *dcs_polling_base;
 
 static data16_t *dcs_data_ram;
 static data32_t *dcs_program_ram;
+
+static size_t bank20_size;
+static size_t bootbank_stride;
 
 static int dcs_state;
 static int transfer_state;
@@ -137,12 +213,10 @@ static mame_timer *transfer_watchdog;
 
 static READ16_HANDLER( dcs_sdrc_asic_ver_r );
 
-static WRITE16_HANDLER( dcs_rombank_select_w );
-static READ16_HANDLER( dcs_rombank_data_r );
-static WRITE16_HANDLER( dcs_sram_bank_w );
-static READ16_HANDLER( dcs_sram_bank_r );
-static WRITE16_HANDLER( dcs_dram_bank_w );
-static READ16_HANDLER( dcs_dram_bank_r );
+static WRITE16_HANDLER( dcs_data_bank_select_w );
+static READ16_HANDLER( dcs_data_bank_select_r );
+static WRITE16_HANDLER( dcs2_sram_bank_w );
+static READ16_HANDLER( dcs2_sram_bank_r );
 
 static WRITE16_HANDLER( dcs_control_w );
 
@@ -177,8 +251,8 @@ ADDRESS_MAP_END
 
 ADDRESS_MAP_START( dcs_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&dcs_data_ram)		/* ??? */
-	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)		/* bank selector */
+	AM_RANGE(0x2000, 0x2fff) AM_ROMBANK(20) AM_SIZE(&bank20_size)/* banked roms read */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_data_bank_select_w)	/* bank selector */
 	AM_RANGE(0x3400, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
 	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
@@ -188,8 +262,8 @@ ADDRESS_MAP_END
 /* DCS with UART readmem/writemem structures */
 ADDRESS_MAP_START( dcs_uart_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_BASE(&dcs_data_ram)		/* ??? */
-	AM_RANGE(0x2000, 0x2fff) AM_READ(dcs_rombank_data_r)		/* banked roms read */
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_rombank_select_w)		/* bank selector */
+	AM_RANGE(0x2000, 0x2fff) AM_ROMBANK(20) AM_SIZE(&bank20_size)/* banked roms read */
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_data_bank_select_w)	/* bank selector */
 	AM_RANGE(0x3400, 0x3402) AM_READNOP							/* UART (ignored) */
 	AM_RANGE(0x3400, 0x3402) AM_WRITENOP						/* UART (ignored) */
 	AM_RANGE(0x3403, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
@@ -209,15 +283,36 @@ ADDRESS_MAP_END
 
 ADDRESS_MAP_START( dcs2_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20)	AM_BASE(&dcs_data_ram) /* D/RAM */
+	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20) AM_SIZE(&bank20_size)	AM_BASE(&dcs_data_ram) /* D/RAM */
 	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
 	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
 	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
 	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
 	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
-	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs_sram_bank_r, dcs_sram_bank_w) /* S/RAM bank */
+	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs2_sram_bank_r, dcs2_sram_bank_w) /* S/RAM bank */
 	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
-	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_dram_bank_r, dcs_dram_bank_w) /* D/RAM bank */
+	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_data_bank_select_r, dcs_data_bank_select_w) /* D/RAM bank */
+	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
+	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3a00, 0x3a00) AM_READNOP							/* controls final sample rate */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+ADDRESS_MAP_END
+
+
+ADDRESS_MAP_START( dcs2_rom_data_map, ADDRESS_SPACE_DATA, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x03ff) AM_ROMBANK(20) AM_SIZE(&bank20_size) AM_BASE(&dcs_data_ram) /* banked ROM */
+	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
+	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
+	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
+	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
+	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
+	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs2_sram_bank_r, dcs2_sram_bank_w) /* S/RAM bank */
+	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
+	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_data_bank_select_r, dcs_data_bank_select_w) /* ROM bank */
 	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
 	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
 	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
@@ -286,6 +381,13 @@ MACHINE_DRIVER_START( dcs2_audio_2104 )
 MACHINE_DRIVER_END
 
 
+MACHINE_DRIVER_START( dcs2_audio_2104_rom )
+	MDRV_IMPORT_FROM(dcs2_audio_2104)
+	MDRV_CPU_MODIFY("dcs2")
+	MDRV_CPU_DATA_MAP(dcs2_rom_data_map,0)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 	INITIALIZATION
@@ -293,18 +395,13 @@ MACHINE_DRIVER_END
 
 static void dcs_boot(void)
 {
-	switch (Machine->drv->cpu[dcs_cpunum].cpu_type)
-	{
-		case CPU_ADSP2104:
-			adsp2104_load_boot_data(dcs.sounddata + 0x2000 * ((dcs.control_regs[SYSCONTROL_REG] >> 6) & 7), dcs_program_ram);
-			break;
-		case CPU_ADSP2105:
-			adsp2105_load_boot_data(dcs.sounddata + (dcs.rombank & 0x7ff) * 0x1000, dcs_program_ram);
-			break;
-		case CPU_ADSP2115:
-			adsp2115_load_boot_data(dcs.sounddata + (dcs.rombank & 0x7ff) * 0x1000, dcs_program_ram);
-			break;
-	}
+	UINT32 max_banks = dcs.databank_count * bank20_size / 0x1000;
+	UINT8 buffer[0x1000];
+	int i;
+	
+	for (i = 0; i < 0x1000; i++)
+		buffer[i] = dcs.soundboot[(dcs.databank % max_banks) * 0x1000 + i];
+	adsp2105_load_boot_data(buffer, dcs_program_ram);
 }
 
 
@@ -322,14 +419,11 @@ static void dcs_reset(void)
 		dcs.control_regs[i] = 0;
 
 	/* initialize banking */
-	dcs.rombank = 0;
+	dcs.databank = 0;
 	dcs.srambank = 0;
-	dcs.drambank = 0;
+	cpu_setbank(20, dcs.sounddata);
 	if (dcs_sram_bank0)
-	{
-		cpu_setbank(20, dcs.sounddata + 0x8000);
 		cpu_setbank(21, dcs_sram_bank0);
-	}
 
 	/* initialize the ADSP Tx callback */
 	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
@@ -366,7 +460,9 @@ void dcs_init(void)
 	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs");
 	dcs.channels = 1;
-	dcs.sounddata = memory_region(REGION_SOUND1);
+	dcs.soundboot = (UINT16 *)memory_region(REGION_SOUND1);
+	dcs.sounddata = dcs.soundboot;
+	dcs.databank_count = memory_region_length(REGION_SOUND1) / bank20_size;
 
 	/* reset RAM-based variables */
 	dcs_sram_bank0 = dcs_sram_bank1 = NULL;
@@ -389,21 +485,16 @@ void dcs_init(void)
 
 void dcs2_init(offs_t polling_offset)
 {
-	int page, i;
-
 	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs2");
 	dcs.channels = 2;
-	dcs.sounddata = memory_region(REGION_SOUND1);
+	dcs.soundboot = (UINT16 *)memory_region(REGION_SOUND1);
+	dcs.sounddata = dcs.soundboot + 0x10000/2;
+	dcs.databank_count = (memory_region_length(REGION_SOUND1) - 0x10000) / bank20_size;
 
 	/* borrow memory for the extra 8k */
 	dcs_sram_bank1 = auto_malloc(0x1000*2);
-
-	/* borrow memory also for the expanded ROM data and expand it */
-	dcs_expanded_rom = auto_malloc(0x2000*2);
-	for (page = 0; page < 8; page++)
-		for (i = 0; i < 0x400; i++)
-			dcs_expanded_rom[0x400 * page + i] = dcs.sounddata[BYTE_XOR_LE(0x1000 * page + i)];
+	bootbank_stride = bank20_size*4;
 
 	/* create the timer */
 	dcs.reg_timer = timer_alloc(dcs_irq);
@@ -423,6 +514,37 @@ void dcs2_init(offs_t polling_offset)
 	/* allocate a watchdog timer for HLE transfers */
 	if (HLE_TRANSFERS)
 		transfer_watchdog = timer_alloc(transfer_watchdog_callback);
+
+	/* reset the system */
+	dcs_reset();
+}
+
+
+void dcs2_rom_init(offs_t polling_offset)
+{
+	/* find the DCS CPU and the sound ROMs */
+	dcs_cpunum = mame_find_cpu_index("dcs2");
+	dcs.channels = 2;
+	dcs.soundboot = (UINT16 *)memory_region(REGION_SOUND1);
+	dcs.sounddata = dcs.soundboot;
+	dcs.databank_count = memory_region_length(REGION_SOUND1) / bank20_size;
+
+	/* borrow memory for the extra 8k */
+	dcs_sram_bank1 = auto_malloc(0x1000*2);
+	bootbank_stride = bank20_size;
+
+	/* create the timer */
+	dcs.reg_timer = timer_alloc(dcs_irq);
+	dcs.sport_timer = timer_alloc(sport0_irq);
+
+	/* RAM based doesn't do auto-ack, but it has a FIFO */
+	dcs.auto_ack = 0;
+	dcs.output_full_cb = NULL;
+	dcs.input_empty_cb = NULL;
+
+	/* install the speedup handler */
+	if (polling_offset)
+		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, 0, dcs_polling_r);
 
 	/* reset the system */
 	dcs_reset();
@@ -451,9 +573,10 @@ static READ16_HANDLER( dcs_sdrc_asic_ver_r )
 	DCS ROM BANK SELECT
 ****************************************************************************/
 
-static WRITE16_HANDLER( dcs_rombank_select_w )
+static WRITE16_HANDLER( dcs_data_bank_select_w )
 {
-	dcs.rombank = data & 0x7ff;
+	dcs.databank = data;
+	cpu_setbank(20, &dcs.sounddata[(dcs.databank % dcs.databank_count) * bank20_size/2]);
 
 	/* bit 11 = sound board led */
 #if 0
@@ -462,10 +585,9 @@ static WRITE16_HANDLER( dcs_rombank_select_w )
 }
 
 
-static READ16_HANDLER( dcs_rombank_data_r )
+static READ16_HANDLER( dcs_data_bank_select_r )
 {
-	offset += (dcs.rombank & 0x7ff) << 12;
-	return dcs.sounddata[BYTE_XOR_LE(offset)];
+	return dcs.databank;
 }
 
 
@@ -474,38 +596,20 @@ static READ16_HANDLER( dcs_rombank_data_r )
 	DCS STATIC RAM BANK SELECT
 ****************************************************************************/
 
-static WRITE16_HANDLER( dcs_sram_bank_w )
+static WRITE16_HANDLER( dcs2_sram_bank_w )
 {
 	COMBINE_DATA(&dcs.srambank);
 	cpu_setbank(21, (dcs.srambank & 0x1000) ? dcs_sram_bank1 : dcs_sram_bank0);
 
 	/* it appears that the Vegas games also access the boot ROM via this location */
-	if (((dcs.srambank >> 7) & 7) == dcs.drambank)
-		cpu_setbank(20, dcs_expanded_rom + ((dcs.srambank >> 7) & 7) * 0x400);
+	if (((dcs.srambank >> 7) & 7) == dcs.databank)
+		cpu_setbank(20, &dcs.soundboot[dcs.databank * bootbank_stride/2]);
 }
 
 
-static READ16_HANDLER( dcs_sram_bank_r )
+static READ16_HANDLER( dcs2_sram_bank_r )
 {
 	return dcs.srambank;
-}
-
-
-
-/***************************************************************************
-	DCS DRAM BANK SELECT
-****************************************************************************/
-
-static WRITE16_HANDLER( dcs_dram_bank_w )
-{
-	dcs.drambank = data;
-	cpu_setbank(20, dcs.sounddata + 0x8000 + (dcs.drambank & 0x7ff) * 0x400*2);
-}
-
-
-static READ16_HANDLER( dcs_dram_bank_r )
-{
-	return dcs.drambank;
 }
 
 
@@ -756,7 +860,7 @@ static WRITE16_HANDLER( dcs_control_w )
 				/* boot force */
 				cpunum_set_input_line(dcs_cpunum, INPUT_LINE_RESET, PULSE_LINE);
 				dcs_boot();
-				dcs.control_regs[SYSCONTROL_REG] &= ~0x0200;
+				dcs.control_regs[SYSCONTROL_REG] = 0;
 			}
 
 			/* see if SPORT1 got disabled */
@@ -1034,7 +1138,7 @@ static int preprocess_stage_1(data16_t data)
 			if (HLE_TRANSFERS)
 			{
 				if (transfer_type == 2)
-					dcs_sram_bank_w(0, 0x1000, 0);
+					dcs2_sram_bank_w(0, 0x1000, 0);
 				return 1;
 			}
 			break;
@@ -1165,8 +1269,7 @@ static int preprocess_stage_2(data16_t data)
 			if (HLE_TRANSFERS)
 			{
 				/* write the new data to memory */
-				data16_t *base = (data16_t *)(dcs.sounddata + 0x8000);
-				base[transfer_start++] = data;
+				dcs.sounddata[transfer_start++] = data;
 
 				/* if we're done, start a timer to send the response words */
 				if (transfer_state == 0)

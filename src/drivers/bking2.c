@@ -317,22 +317,22 @@ INPUT_PORTS_START( bking )
 	PORT_DIPSETTING(    0x20, DEF_STR(On))
 	PORT_DIPNAME( 0x40, 0x40, "Check" )
 	PORT_DIPSETTING(    0x00, "Check" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPNAME( 0x80, 0x80, "Coin Chutes" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
 
 	PORT_START  /* IN5 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN6 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_REVERSE /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN7 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_COCKTAIL /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN8 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL /* Sensitivity, clip, min, max */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bking2 )
@@ -431,22 +431,22 @@ INPUT_PORTS_START( bking2 )
 	PORT_DIPSETTING(    0x20, DEF_STR(On))
 	PORT_DIPNAME( 0x40, 0x40, "Check" )
 	PORT_DIPSETTING(    0x00, "Check" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPNAME( 0x80, 0x80, "Coin Chutes" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
 
 	PORT_START  /* IN5 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN6 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_REVERSE /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN7 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_COCKTAIL /* Sensitivity, clip, min, max */
 
 	PORT_START  /* IN8 */
-	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 25, 10, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_REVERSE PORT_COCKTAIL /* Sensitivity, clip, min, max */
 INPUT_PORTS_END
 
 

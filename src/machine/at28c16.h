@@ -10,9 +10,6 @@
 
 #include "driver.h"
 
-#define MAX_AT28C16_CHIPS ( 4 )
-
-extern void at28c16_init( void );
 extern void at28c16_a9_12v( int chip, int a9_12v );
 
 /* nvram handlers */

@@ -932,9 +932,6 @@ static void tms34010_exit(void)
 	for (i = 0; i < MAX_CPU; i++)
 		dpyint_timer[i] = vsblnk_timer[i] = NULL;
 
-	/* free memory */
-	if (state.shiftreg)
-		free(state.shiftreg);
 	state.shiftreg = NULL;
 }
 

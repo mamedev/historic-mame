@@ -1,173 +1,469 @@
+/***************************************************************************
+
+	input.h
+
+	Handle input from the user.
+
+***************************************************************************/
+
 #ifndef INPUT_H
 #define INPUT_H
 
-typedef unsigned InputCode;
 
-struct KeyboardInfo
-{
-	char *name; /* OS dependant name; 0 terminates the list */
-	unsigned code; /* OS dependant code */
-	InputCode standardcode;	/* CODE_xxx equivalent from list below, or CODE_OTHER if n/a */
-};
 
-struct JoystickInfo
+/*************************************
+ *
+ *	Constants
+ *
+ *************************************/
+
+/* NOTE: If you modify this value you need also to modify the SEQ_DEF declarations */
+#define SEQ_MAX				16
+
+/* MIN/MAX values for analog axes */
+/* absolute values should range min..max in its entirety */
+#define ANALOG_VALUE_MIN	-65536
+#define ANALOG_VALUE_MAX	65536
+
+/* types of analog controls */
+enum
 {
-	char *name; /* OS dependant name; 0 terminates the list */
-	unsigned code; /* OS dependant code */
-	InputCode standardcode;	/* CODE_xxx equivalent from list below, or CODE_OTHER if n/a */
+	ANALOG_TYPE_NONE = 0,
+	ANALOG_TYPE_ABSOLUTE = 1,
+	ANALOG_TYPE_RELATIVE = 2
 };
 
 enum
 {
-	/* key */
-	KEYCODE_A, KEYCODE_B, KEYCODE_C, KEYCODE_D, KEYCODE_E, KEYCODE_F,
-	KEYCODE_G, KEYCODE_H, KEYCODE_I, KEYCODE_J, KEYCODE_K, KEYCODE_L,
-	KEYCODE_M, KEYCODE_N, KEYCODE_O, KEYCODE_P, KEYCODE_Q, KEYCODE_R,
-	KEYCODE_S, KEYCODE_T, KEYCODE_U, KEYCODE_V, KEYCODE_W, KEYCODE_X,
-	KEYCODE_Y, KEYCODE_Z, KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3,
-	KEYCODE_4, KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9,
-	KEYCODE_0_PAD, KEYCODE_1_PAD, KEYCODE_2_PAD, KEYCODE_3_PAD, KEYCODE_4_PAD,
-	KEYCODE_5_PAD, KEYCODE_6_PAD, KEYCODE_7_PAD, KEYCODE_8_PAD, KEYCODE_9_PAD,
-	KEYCODE_F1, KEYCODE_F2, KEYCODE_F3, KEYCODE_F4, KEYCODE_F5,
-	KEYCODE_F6, KEYCODE_F7, KEYCODE_F8, KEYCODE_F9, KEYCODE_F10,
-	KEYCODE_F11, KEYCODE_F12,
-	KEYCODE_ESC, KEYCODE_TILDE, KEYCODE_MINUS, KEYCODE_EQUALS, KEYCODE_BACKSPACE,
-	KEYCODE_TAB, KEYCODE_OPENBRACE, KEYCODE_CLOSEBRACE, KEYCODE_ENTER, KEYCODE_COLON,
-	KEYCODE_QUOTE, KEYCODE_BACKSLASH, KEYCODE_BACKSLASH2, KEYCODE_COMMA, KEYCODE_STOP,
-	KEYCODE_SLASH, KEYCODE_SPACE, KEYCODE_INSERT, KEYCODE_DEL,
-	KEYCODE_HOME, KEYCODE_END, KEYCODE_PGUP, KEYCODE_PGDN, KEYCODE_LEFT,
-	KEYCODE_RIGHT, KEYCODE_UP, KEYCODE_DOWN,
-	KEYCODE_SLASH_PAD, KEYCODE_ASTERISK, KEYCODE_MINUS_PAD, KEYCODE_PLUS_PAD,
-	KEYCODE_DEL_PAD, KEYCODE_ENTER_PAD, KEYCODE_PRTSCR, KEYCODE_PAUSE,
-	KEYCODE_LSHIFT, KEYCODE_RSHIFT, KEYCODE_LCONTROL, KEYCODE_RCONTROL,
-	KEYCODE_LALT, KEYCODE_RALT, KEYCODE_SCRLOCK, KEYCODE_NUMLOCK, KEYCODE_CAPSLOCK,
-	KEYCODE_LWIN, KEYCODE_RWIN, KEYCODE_MENU,
-#define __code_key_first KEYCODE_A
-#define __code_key_last KEYCODE_MENU
+	/* digital keyboard codes */
+	KEYCODE_A,
+	KEYCODE_B,
+	KEYCODE_C,
+	KEYCODE_D,
+	KEYCODE_E,
+	KEYCODE_F,
+	KEYCODE_G,
+	KEYCODE_H,
+	KEYCODE_I,
+	KEYCODE_J,
+	KEYCODE_K,
+	KEYCODE_L,
+	KEYCODE_M,
+	KEYCODE_N,
+	KEYCODE_O,
+	KEYCODE_P,
+	KEYCODE_Q,
+	KEYCODE_R,
+	KEYCODE_S,
+	KEYCODE_T,
+	KEYCODE_U,
+	KEYCODE_V,
+	KEYCODE_W,
+	KEYCODE_X,
+	KEYCODE_Y,
+	KEYCODE_Z,
+	KEYCODE_0,
+	KEYCODE_1,
+	KEYCODE_2,
+	KEYCODE_3,
+	KEYCODE_4,
+	KEYCODE_5,
+	KEYCODE_6,
+	KEYCODE_7,
+	KEYCODE_8,
+	KEYCODE_9,
+	KEYCODE_F1,
+	KEYCODE_F2,
+	KEYCODE_F3,
+	KEYCODE_F4,
+	KEYCODE_F5,
+	KEYCODE_F6,
+	KEYCODE_F7,
+	KEYCODE_F8,
+	KEYCODE_F9,
+	KEYCODE_F10,
+	KEYCODE_F11,
+	KEYCODE_F12,
+	KEYCODE_F13,
+	KEYCODE_F14,
+	KEYCODE_F15,
+	KEYCODE_ESC,
+	KEYCODE_TILDE,
+	KEYCODE_MINUS,
+	KEYCODE_EQUALS,
+	KEYCODE_BACKSPACE,
+	KEYCODE_TAB,
+	KEYCODE_OPENBRACE,
+	KEYCODE_CLOSEBRACE,
+	KEYCODE_ENTER,
+	KEYCODE_COLON,
+	KEYCODE_QUOTE,
+	KEYCODE_BACKSLASH,
+	KEYCODE_BACKSLASH2,
+	KEYCODE_COMMA,
+	KEYCODE_STOP,
+	KEYCODE_SLASH,
+	KEYCODE_SPACE,
+	KEYCODE_INSERT,
+	KEYCODE_DEL,
+	KEYCODE_HOME,
+	KEYCODE_END,
+	KEYCODE_PGUP,
+	KEYCODE_PGDN,
+	KEYCODE_LEFT,
+	KEYCODE_RIGHT,
+	KEYCODE_UP,
+	KEYCODE_DOWN,
+	KEYCODE_0_PAD,
+	KEYCODE_1_PAD,
+	KEYCODE_2_PAD,
+	KEYCODE_3_PAD,
+	KEYCODE_4_PAD,
+	KEYCODE_5_PAD,
+	KEYCODE_6_PAD,
+	KEYCODE_7_PAD,
+	KEYCODE_8_PAD,
+	KEYCODE_9_PAD,
+	KEYCODE_SLASH_PAD,
+	KEYCODE_ASTERISK,
+	KEYCODE_MINUS_PAD,
+	KEYCODE_PLUS_PAD,
+	KEYCODE_DEL_PAD,
+	KEYCODE_ENTER_PAD,
+	KEYCODE_PRTSCR,
+	KEYCODE_PAUSE,
+	KEYCODE_LSHIFT,
+	KEYCODE_RSHIFT,
+	KEYCODE_LCONTROL,
+	KEYCODE_RCONTROL,
+	KEYCODE_LALT,
+	KEYCODE_RALT,
+	KEYCODE_SCRLOCK,
+	KEYCODE_NUMLOCK,
+	KEYCODE_CAPSLOCK,
+	KEYCODE_LWIN,
+	KEYCODE_RWIN,
+	KEYCODE_MENU,
 
-	/* joy */
-	JOYCODE_1_LEFT,JOYCODE_1_RIGHT,JOYCODE_1_UP,JOYCODE_1_DOWN,
-	JOYCODE_1_BUTTON1,JOYCODE_1_BUTTON2,JOYCODE_1_BUTTON3,
-	JOYCODE_1_BUTTON4,JOYCODE_1_BUTTON5,JOYCODE_1_BUTTON6,
-	JOYCODE_1_BUTTON7,JOYCODE_1_BUTTON8,JOYCODE_1_BUTTON9,
-	JOYCODE_1_BUTTON10, JOYCODE_1_START, JOYCODE_1_SELECT,
-	JOYCODE_2_LEFT,JOYCODE_2_RIGHT,JOYCODE_2_UP,JOYCODE_2_DOWN,
-	JOYCODE_2_BUTTON1,JOYCODE_2_BUTTON2,JOYCODE_2_BUTTON3,
-	JOYCODE_2_BUTTON4,JOYCODE_2_BUTTON5,JOYCODE_2_BUTTON6,
-	JOYCODE_2_BUTTON7,JOYCODE_2_BUTTON8,JOYCODE_2_BUTTON9,
-	JOYCODE_2_BUTTON10, JOYCODE_2_START, JOYCODE_2_SELECT,
-	JOYCODE_3_LEFT,JOYCODE_3_RIGHT,JOYCODE_3_UP,JOYCODE_3_DOWN,
-	JOYCODE_3_BUTTON1,JOYCODE_3_BUTTON2,JOYCODE_3_BUTTON3,
-	JOYCODE_3_BUTTON4,JOYCODE_3_BUTTON5,JOYCODE_3_BUTTON6,
-	JOYCODE_3_BUTTON7,JOYCODE_3_BUTTON8,JOYCODE_3_BUTTON9,
-	JOYCODE_3_BUTTON10, JOYCODE_3_START, JOYCODE_3_SELECT,
-	JOYCODE_4_LEFT,JOYCODE_4_RIGHT,JOYCODE_4_UP,JOYCODE_4_DOWN,
-	JOYCODE_4_BUTTON1,JOYCODE_4_BUTTON2,JOYCODE_4_BUTTON3,
-	JOYCODE_4_BUTTON4,JOYCODE_4_BUTTON5,JOYCODE_4_BUTTON6,
-	JOYCODE_4_BUTTON7,JOYCODE_4_BUTTON8,JOYCODE_4_BUTTON9,
-	JOYCODE_4_BUTTON10, JOYCODE_4_START, JOYCODE_4_SELECT,
-	JOYCODE_MOUSE_1_BUTTON1,JOYCODE_MOUSE_1_BUTTON2,JOYCODE_MOUSE_1_BUTTON3,
-	JOYCODE_MOUSE_2_BUTTON1,JOYCODE_MOUSE_2_BUTTON2,JOYCODE_MOUSE_2_BUTTON3,
-	JOYCODE_MOUSE_3_BUTTON1,JOYCODE_MOUSE_3_BUTTON2,JOYCODE_MOUSE_3_BUTTON3,
-	JOYCODE_MOUSE_4_BUTTON1,JOYCODE_MOUSE_4_BUTTON2,JOYCODE_MOUSE_4_BUTTON3,
-	JOYCODE_5_LEFT,JOYCODE_5_RIGHT,JOYCODE_5_UP,JOYCODE_5_DOWN,			/* JOYCODEs 5-8 placed here, */
-	JOYCODE_5_BUTTON1,JOYCODE_5_BUTTON2,JOYCODE_5_BUTTON3,				/* after original joycode mouse button */
-	JOYCODE_5_BUTTON4,JOYCODE_5_BUTTON5,JOYCODE_5_BUTTON6,				/* so old cfg files won't be broken */
-	JOYCODE_5_BUTTON7,JOYCODE_5_BUTTON8,JOYCODE_5_BUTTON9,				/* as much by their addition */
-	JOYCODE_5_BUTTON10, JOYCODE_5_START, JOYCODE_5_SELECT,
-	JOYCODE_6_LEFT,JOYCODE_6_RIGHT,JOYCODE_6_UP,JOYCODE_6_DOWN,
-	JOYCODE_6_BUTTON1,JOYCODE_6_BUTTON2,JOYCODE_6_BUTTON3,
-	JOYCODE_6_BUTTON4,JOYCODE_6_BUTTON5,JOYCODE_6_BUTTON6,
-	JOYCODE_6_BUTTON7,JOYCODE_6_BUTTON8,JOYCODE_6_BUTTON9,
-	JOYCODE_6_BUTTON10, JOYCODE_6_START, JOYCODE_6_SELECT,
-	JOYCODE_7_LEFT,JOYCODE_7_RIGHT,JOYCODE_7_UP,JOYCODE_7_DOWN,
-	JOYCODE_7_BUTTON1,JOYCODE_7_BUTTON2,JOYCODE_7_BUTTON3,
-	JOYCODE_7_BUTTON4,JOYCODE_7_BUTTON5,JOYCODE_7_BUTTON6,
-	JOYCODE_7_BUTTON7,JOYCODE_7_BUTTON8,JOYCODE_7_BUTTON9,
-	JOYCODE_7_BUTTON10, JOYCODE_7_START, JOYCODE_7_SELECT,
-	JOYCODE_8_LEFT,JOYCODE_8_RIGHT,JOYCODE_8_UP,JOYCODE_8_DOWN,
-	JOYCODE_8_BUTTON1,JOYCODE_8_BUTTON2,JOYCODE_8_BUTTON3,
-	JOYCODE_8_BUTTON4,JOYCODE_8_BUTTON5,JOYCODE_8_BUTTON6,
-	JOYCODE_8_BUTTON7,JOYCODE_8_BUTTON8,JOYCODE_8_BUTTON9,
-	JOYCODE_8_BUTTON10, JOYCODE_8_START, JOYCODE_8_SELECT,
-	JOYCODE_MOUSE_5_BUTTON1,JOYCODE_MOUSE_5_BUTTON2,JOYCODE_MOUSE_5_BUTTON3,
-	JOYCODE_MOUSE_6_BUTTON1,JOYCODE_MOUSE_6_BUTTON2,JOYCODE_MOUSE_6_BUTTON3,
-	JOYCODE_MOUSE_7_BUTTON1,JOYCODE_MOUSE_7_BUTTON2,JOYCODE_MOUSE_7_BUTTON3,
-	JOYCODE_MOUSE_8_BUTTON1,JOYCODE_MOUSE_8_BUTTON2,JOYCODE_MOUSE_8_BUTTON3,
-	JOYCODE_MOUSE_1_BUTTON4,JOYCODE_MOUSE_1_BUTTON5,JOYCODE_MOUSE_1_BUTTON6, /* Placed here so old cfg files won't break */
-	JOYCODE_MOUSE_2_BUTTON4,JOYCODE_MOUSE_2_BUTTON5,JOYCODE_MOUSE_2_BUTTON6,
-	JOYCODE_MOUSE_3_BUTTON4,JOYCODE_MOUSE_3_BUTTON5,JOYCODE_MOUSE_3_BUTTON6,
-	JOYCODE_MOUSE_4_BUTTON4,JOYCODE_MOUSE_4_BUTTON5,JOYCODE_MOUSE_4_BUTTON6, 
-	JOYCODE_MOUSE_5_BUTTON4,JOYCODE_MOUSE_5_BUTTON5,JOYCODE_MOUSE_5_BUTTON6,
-	JOYCODE_MOUSE_6_BUTTON4,JOYCODE_MOUSE_6_BUTTON5,JOYCODE_MOUSE_6_BUTTON6,
-	JOYCODE_MOUSE_7_BUTTON4,JOYCODE_MOUSE_7_BUTTON5,JOYCODE_MOUSE_7_BUTTON6,
-	JOYCODE_MOUSE_8_BUTTON4,JOYCODE_MOUSE_8_BUTTON5,JOYCODE_MOUSE_8_BUTTON6, 
+	/* digital joystick codes */
+	JOYCODE_1_LEFT,
+	JOYCODE_1_RIGHT,
+	JOYCODE_1_UP,
+	JOYCODE_1_DOWN,
+	JOYCODE_1_BUTTON1,
+	JOYCODE_1_BUTTON2,
+	JOYCODE_1_BUTTON3,
+	JOYCODE_1_BUTTON4,
+	JOYCODE_1_BUTTON5,
+	JOYCODE_1_BUTTON6,
+	JOYCODE_1_BUTTON7,
+	JOYCODE_1_BUTTON8,
+	JOYCODE_1_BUTTON9,
+	JOYCODE_1_BUTTON10,
+	JOYCODE_1_START,
+	JOYCODE_1_SELECT,
+	JOYCODE_2_LEFT,
+	JOYCODE_2_RIGHT,
+	JOYCODE_2_UP,
+	JOYCODE_2_DOWN,
+	JOYCODE_2_BUTTON1,
+	JOYCODE_2_BUTTON2,
+	JOYCODE_2_BUTTON3,
+	JOYCODE_2_BUTTON4,
+	JOYCODE_2_BUTTON5,
+	JOYCODE_2_BUTTON6,
+	JOYCODE_2_BUTTON7,
+	JOYCODE_2_BUTTON8,
+	JOYCODE_2_BUTTON9,
+	JOYCODE_2_BUTTON10,
+	JOYCODE_2_START,
+	JOYCODE_2_SELECT,
+	JOYCODE_3_LEFT,
+	JOYCODE_3_RIGHT,
+	JOYCODE_3_UP,
+	JOYCODE_3_DOWN,
+	JOYCODE_3_BUTTON1,
+	JOYCODE_3_BUTTON2,
+	JOYCODE_3_BUTTON3,
+	JOYCODE_3_BUTTON4,
+	JOYCODE_3_BUTTON5,
+	JOYCODE_3_BUTTON6,
+	JOYCODE_3_BUTTON7,
+	JOYCODE_3_BUTTON8,
+	JOYCODE_3_BUTTON9,
+	JOYCODE_3_BUTTON10,
+	JOYCODE_3_START,
+	JOYCODE_3_SELECT,
+	JOYCODE_4_LEFT,
+	JOYCODE_4_RIGHT,
+	JOYCODE_4_UP,
+	JOYCODE_4_DOWN,
+	JOYCODE_4_BUTTON1,
+	JOYCODE_4_BUTTON2,
+	JOYCODE_4_BUTTON3,
+	JOYCODE_4_BUTTON4,
+	JOYCODE_4_BUTTON5,
+	JOYCODE_4_BUTTON6,
+	JOYCODE_4_BUTTON7,
+	JOYCODE_4_BUTTON8,
+	JOYCODE_4_BUTTON9,
+	JOYCODE_4_BUTTON10,
+	JOYCODE_4_START,
+	JOYCODE_4_SELECT,
+	JOYCODE_5_LEFT,
+	JOYCODE_5_RIGHT,
+	JOYCODE_5_UP,
+	JOYCODE_5_DOWN,
+	JOYCODE_5_BUTTON1,
+	JOYCODE_5_BUTTON2,
+	JOYCODE_5_BUTTON3,
+	JOYCODE_5_BUTTON4,
+	JOYCODE_5_BUTTON5,
+	JOYCODE_5_BUTTON6,
+	JOYCODE_5_BUTTON7,
+	JOYCODE_5_BUTTON8,
+	JOYCODE_5_BUTTON9,
+	JOYCODE_5_BUTTON10,
+	JOYCODE_5_START,
+	JOYCODE_5_SELECT,
+	JOYCODE_6_LEFT,
+	JOYCODE_6_RIGHT,
+	JOYCODE_6_UP,
+	JOYCODE_6_DOWN,
+	JOYCODE_6_BUTTON1,
+	JOYCODE_6_BUTTON2,
+	JOYCODE_6_BUTTON3,
+	JOYCODE_6_BUTTON4,
+	JOYCODE_6_BUTTON5,
+	JOYCODE_6_BUTTON6,
+	JOYCODE_6_BUTTON7,
+	JOYCODE_6_BUTTON8,
+	JOYCODE_6_BUTTON9,
+	JOYCODE_6_BUTTON10,
+	JOYCODE_6_START,
+	JOYCODE_6_SELECT,
+	JOYCODE_7_LEFT,
+	JOYCODE_7_RIGHT,
+	JOYCODE_7_UP,
+	JOYCODE_7_DOWN,
+	JOYCODE_7_BUTTON1,
+	JOYCODE_7_BUTTON2,
+	JOYCODE_7_BUTTON3,
+	JOYCODE_7_BUTTON4,
+	JOYCODE_7_BUTTON5,
+	JOYCODE_7_BUTTON6,
+	JOYCODE_7_BUTTON7,
+	JOYCODE_7_BUTTON8,
+	JOYCODE_7_BUTTON9,
+	JOYCODE_7_BUTTON10,
+	JOYCODE_7_START,
+	JOYCODE_7_SELECT,
+	JOYCODE_8_LEFT,
+	JOYCODE_8_RIGHT,
+	JOYCODE_8_UP,
+	JOYCODE_8_DOWN,
+	JOYCODE_8_BUTTON1,
+	JOYCODE_8_BUTTON2,
+	JOYCODE_8_BUTTON3,
+	JOYCODE_8_BUTTON4,
+	JOYCODE_8_BUTTON5,
+	JOYCODE_8_BUTTON6,
+	JOYCODE_8_BUTTON7,
+	JOYCODE_8_BUTTON8,
+	JOYCODE_8_BUTTON9,
+	JOYCODE_8_BUTTON10,
+	JOYCODE_8_START,
+	JOYCODE_8_SELECT,
+	
+	/* digital mouse codes */
+	MOUSECODE_1_BUTTON1,
+	MOUSECODE_1_BUTTON2,
+	MOUSECODE_1_BUTTON3,
+	MOUSECODE_1_BUTTON4,
+	MOUSECODE_1_BUTTON5,
+	MOUSECODE_1_BUTTON6,
+	MOUSECODE_2_BUTTON1,
+	MOUSECODE_2_BUTTON2,
+	MOUSECODE_2_BUTTON3,
+	MOUSECODE_2_BUTTON4,
+	MOUSECODE_2_BUTTON5,
+	MOUSECODE_2_BUTTON6,
+	MOUSECODE_3_BUTTON1,
+	MOUSECODE_3_BUTTON2,
+	MOUSECODE_3_BUTTON3,
+	MOUSECODE_3_BUTTON4,
+	MOUSECODE_3_BUTTON5,
+	MOUSECODE_3_BUTTON6,
+	MOUSECODE_4_BUTTON1,
+	MOUSECODE_4_BUTTON2,
+	MOUSECODE_4_BUTTON3,
+	MOUSECODE_4_BUTTON4,
+	MOUSECODE_4_BUTTON5,
+	MOUSECODE_4_BUTTON6,
+	MOUSECODE_5_BUTTON1,
+	MOUSECODE_5_BUTTON2,
+	MOUSECODE_5_BUTTON3,
+	MOUSECODE_5_BUTTON4,
+	MOUSECODE_5_BUTTON5,
+	MOUSECODE_5_BUTTON6,
+	MOUSECODE_6_BUTTON1,
+	MOUSECODE_6_BUTTON2,
+	MOUSECODE_6_BUTTON3,
+	MOUSECODE_6_BUTTON4,
+	MOUSECODE_6_BUTTON5,
+	MOUSECODE_6_BUTTON6,
+	MOUSECODE_7_BUTTON1,
+	MOUSECODE_7_BUTTON2,
+	MOUSECODE_7_BUTTON3,
+	MOUSECODE_7_BUTTON4,
+	MOUSECODE_7_BUTTON5,
+	MOUSECODE_7_BUTTON6,
+	MOUSECODE_8_BUTTON1,
+	MOUSECODE_8_BUTTON2,
+	MOUSECODE_8_BUTTON3,
+	MOUSECODE_8_BUTTON4,
+	MOUSECODE_8_BUTTON5,
+	MOUSECODE_8_BUTTON6, 
+	
+	/* analog codes of all sorts */
+#define __code_absolute_analog_start JOYCODE_1_ANALOG_X
+	JOYCODE_1_ANALOG_X,
+	JOYCODE_1_ANALOG_Y,
+	JOYCODE_1_ANALOG_Z,
+	JOYCODE_1_ANALOG_PEDAL1,
+	JOYCODE_1_ANALOG_PEDAL2,
+	JOYCODE_1_ANALOG_PEDAL3,
+	JOYCODE_2_ANALOG_X,
+	JOYCODE_2_ANALOG_Y,
+	JOYCODE_2_ANALOG_Z,
+	JOYCODE_2_ANALOG_PEDAL1,
+	JOYCODE_2_ANALOG_PEDAL2,
+	JOYCODE_2_ANALOG_PEDAL3,
+	JOYCODE_3_ANALOG_X,
+	JOYCODE_3_ANALOG_Y,
+	JOYCODE_3_ANALOG_Z,
+	JOYCODE_3_ANALOG_PEDAL1,
+	JOYCODE_3_ANALOG_PEDAL2,
+	JOYCODE_3_ANALOG_PEDAL3,
+	JOYCODE_4_ANALOG_X,
+	JOYCODE_4_ANALOG_Y,
+	JOYCODE_4_ANALOG_Z,
+	JOYCODE_4_ANALOG_PEDAL1,
+	JOYCODE_4_ANALOG_PEDAL2,
+	JOYCODE_4_ANALOG_PEDAL3,
+	JOYCODE_5_ANALOG_X,
+	JOYCODE_5_ANALOG_Y,
+	JOYCODE_5_ANALOG_Z,
+	JOYCODE_5_ANALOG_PEDAL1,
+	JOYCODE_5_ANALOG_PEDAL2,
+	JOYCODE_5_ANALOG_PEDAL3,
+	JOYCODE_6_ANALOG_X,
+	JOYCODE_6_ANALOG_Y,
+	JOYCODE_6_ANALOG_Z,
+	JOYCODE_6_ANALOG_PEDAL1,
+	JOYCODE_6_ANALOG_PEDAL2,
+	JOYCODE_6_ANALOG_PEDAL3,
+	JOYCODE_7_ANALOG_X,
+	JOYCODE_7_ANALOG_Y,
+	JOYCODE_7_ANALOG_Z,
+	JOYCODE_7_ANALOG_PEDAL1,
+	JOYCODE_7_ANALOG_PEDAL2,
+	JOYCODE_7_ANALOG_PEDAL3,
+	JOYCODE_8_ANALOG_X,
+	JOYCODE_8_ANALOG_Y,
+	JOYCODE_8_ANALOG_Z,
+	JOYCODE_8_ANALOG_PEDAL1,
+	JOYCODE_8_ANALOG_PEDAL2,
+	JOYCODE_8_ANALOG_PEDAL3,
+	GUNCODE_1_ANALOG_X,
+	GUNCODE_1_ANALOG_Y,
+	GUNCODE_2_ANALOG_X,
+	GUNCODE_2_ANALOG_Y,
+	GUNCODE_3_ANALOG_X,
+	GUNCODE_3_ANALOG_Y,
+	GUNCODE_4_ANALOG_X,
+	GUNCODE_4_ANALOG_Y,
+	GUNCODE_5_ANALOG_X,
+	GUNCODE_5_ANALOG_Y,
+	GUNCODE_6_ANALOG_X,
+	GUNCODE_6_ANALOG_Y,
+	GUNCODE_7_ANALOG_X,
+	GUNCODE_7_ANALOG_Y,
+	GUNCODE_8_ANALOG_X,
+	GUNCODE_8_ANALOG_Y,
+#define __code_absolute_analog_end GUNCODE_8_ANALOG_Y
+#define __code_relative_analog_start MOUSECODE_1_ANALOG_X
+	MOUSECODE_1_ANALOG_X,
+	MOUSECODE_1_ANALOG_Y,
+	MOUSECODE_1_ANALOG_Z,
+	MOUSECODE_2_ANALOG_X,
+	MOUSECODE_2_ANALOG_Y,
+	MOUSECODE_2_ANALOG_Z,
+	MOUSECODE_3_ANALOG_X,
+	MOUSECODE_3_ANALOG_Y,
+	MOUSECODE_3_ANALOG_Z,
+	MOUSECODE_4_ANALOG_X,
+	MOUSECODE_4_ANALOG_Y,
+	MOUSECODE_4_ANALOG_Z,
+	MOUSECODE_5_ANALOG_X,
+	MOUSECODE_5_ANALOG_Y,
+	MOUSECODE_5_ANALOG_Z,
+	MOUSECODE_6_ANALOG_X,
+	MOUSECODE_6_ANALOG_Y,
+	MOUSECODE_6_ANALOG_Z,
+	MOUSECODE_7_ANALOG_X,
+	MOUSECODE_7_ANALOG_Y,
+	MOUSECODE_7_ANALOG_Z,
+	MOUSECODE_8_ANALOG_X,
+	MOUSECODE_8_ANALOG_Y,
+	MOUSECODE_8_ANALOG_Z,
+#define __code_relative_analog_end MOUSECODE_8_ANALOG_Z
 
-#define __code_joy_first JOYCODE_1_LEFT
-#define __code_joy_last JOYCODE_MOUSE_8_BUTTON6
-
-	__code_max, /* Temination of standard code */
+	__code_max,					/* Temination of standard code */
 
 	/* special */
-	CODE_NONE = 0x8000, /* no code, also marker of sequence end */
-	CODE_OTHER, /* OS code not mapped to any other code */
-	CODE_DEFAULT, /* special for input port definitions */
-        CODE_PREVIOUS, /* special for input port definitions */
-	CODE_NOT, /* operators for sequences */
-	CODE_OR /* operators for sequences */
+	CODE_NONE = 0x8000,			/* no code, also marker of sequence end */
+	CODE_OTHER_DIGITAL,			/* OS code not mapped to any other code */
+	CODE_OTHER_ANALOG_ABSOLUTE,	/* OS code not mapped to any other code */
+	CODE_OTHER_ANALOG_RELATIVE,	/* OS code not mapped to any other code */
+	CODE_DEFAULT,				/* special for input port definitions */
+	CODE_NOT,					/* operators for sequences */
+	CODE_OR						/* operators for sequences */
 };
 
-/* Wrapper for compatibility */
-#define KEYCODE_OTHER CODE_OTHER
-#define JOYCODE_OTHER CODE_OTHER
-#define KEYCODE_NONE CODE_NONE
-#define JOYCODE_NONE CODE_NONE
 
-/***************************************************************************/
-/* Single code functions */
 
-int code_init(void);
-void code_close(void);
+/*************************************
+ *
+ *	Type definitions
+ *
+ *************************************/
 
-InputCode keyoscode_to_code(unsigned oscode);
-InputCode joyoscode_to_code(unsigned oscode);
-InputCode savecode_to_code(unsigned savecode);
-unsigned code_to_savecode(InputCode code);
+typedef UINT32 input_code_t;
+typedef UINT32 os_code_t;
 
-const char *code_name(InputCode code);
-int code_pressed(InputCode code);
-int code_pressed_memory(InputCode code);
-int code_pressed_memory_repeat(InputCode code, int speed);
-InputCode code_read_async(void);
-INT8 code_read_hex_async(void);
+typedef struct
+{
+	input_code_t code[SEQ_MAX];
+} input_seq_t;
 
-/***************************************************************************/
-/* Sequence code funtions */
+struct OSCodeInfo
+{
+	char *			name;			/* OS dependant name; 0 terminates the list */
+	os_code_t		oscode;			/* OS dependant code */
+	input_code_t	inputcode;		/* CODE_xxx equivalent from list below, or one of CODE_OTHER_* if n/a */
+};
 
-/* NOTE: If you modify this value you need also to modify the SEQ_DEF declarations */
-#define SEQ_MAX 16
 
-typedef InputCode InputSeq[SEQ_MAX];
 
-INLINE InputCode seq_get_1(InputSeq* a) {
-	return (*a)[0];
-}
+/*************************************
+ *
+ *	Macros
+ *
+ *************************************/
 
-void seq_set_0(InputSeq* seq);
-void seq_set_1(InputSeq* seq, InputCode code);
-void seq_set_2(InputSeq* seq, InputCode code1, InputCode code2);
-void seq_set_3(InputSeq* seq, InputCode code1, InputCode code2, InputCode code3);
-void seq_set_4(InputSeq* seq, InputCode code1, InputCode code2, InputCode code3, InputCode code4);
-void seq_set_5(InputSeq* seq, InputCode code1, InputCode code2, InputCode code3, InputCode code4, InputCode code5);
-void seq_copy(InputSeq* seqdst, InputSeq* seqsrc);
-int seq_cmp(InputSeq* seq1, InputSeq* seq2);
-void seq_name(InputSeq* seq, char* buffer, unsigned max);
-int seq_pressed(InputSeq* seq);
-void seq_read_async_start(void);
-int seq_read_async(InputSeq* code, int first);
-
-/* NOTE: It's very important that this sequence is EXACLY long SEQ_MAX */
-#define SEQ_DEF_6(a,b,c,d,e,f) { a, b, c, d, e, f, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE }
+/* NOTE: It's very important that this sequence is EXACTLY as long as SEQ_MAX */
+#define SEQ_DEF_6(a,b,c,d,e,f) {{ a, b, c, d, e, f, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE, CODE_NONE }}
 #define SEQ_DEF_5(a,b,c,d,e) SEQ_DEF_6(a,b,c,d,e,CODE_NONE)
 #define SEQ_DEF_4(a,b,c,d) SEQ_DEF_5(a,b,c,d,CODE_NONE)
 #define SEQ_DEF_3(a,b,c) SEQ_DEF_4(a,b,c,CODE_NONE)
@@ -175,16 +471,46 @@ int seq_read_async(InputSeq* code, int first);
 #define SEQ_DEF_1(a) SEQ_DEF_2(a,CODE_NONE)
 #define SEQ_DEF_0 SEQ_DEF_1(CODE_NONE)
 
-/***************************************************************************/
-/* input_ui */
 
-int input_ui_pressed(int code);
-int input_ui_pressed_repeat(int code, int speed);
 
-/***************************************************************************/
-/* analog joy code functions */
+/*************************************
+ *
+ *	Function prototypes
+ *
+ *************************************/
 
-int is_joystick_axis_code(unsigned code);
-int return_os_joycode(InputCode code);
+/* single code functions */
+int code_init(void);
+void code_close(void);
+
+INT32 code_analog_value(input_code_t code);
+int code_pressed(input_code_t code);
+int code_pressed_memory(input_code_t code);
+int code_pressed_memory_repeat(input_code_t code, int speed);
+input_code_t code_read_async(void);
+
+int code_analog_type(input_code_t code);
+const char *code_name(input_code_t code);
+input_code_t token_to_code(const char *token);
+void code_to_token(input_code_t code, char *token);
+
+/* Sequence code funtions */
+void seq_set_0(input_seq_t *seq);
+void seq_set_1(input_seq_t *seq, input_code_t code);
+void seq_set_2(input_seq_t *seq, input_code_t code1, input_code_t code2);
+void seq_set_3(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3);
+void seq_set_4(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4);
+void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4, input_code_t code5);
+void seq_copy(input_seq_t *seqdst, const input_seq_t *seqsrc);
+int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb);
+void seq_name(const input_seq_t *seq, char *buffer, unsigned max);
+int seq_pressed(const input_seq_t *seq);
+INT32 seq_analog_value(const input_seq_t *seq, int *analogtype);
+void seq_read_async_start(int analog);
+int seq_read_async(input_seq_t *seq, int first);
+int string_to_seq(const char *string, input_seq_t *seq);
+void seq_to_string(const input_seq_t *seq, char *string, int maxlen);
+
+INLINE input_code_t seq_get_1(const input_seq_t *seq) { return seq->code[0]; }
 
 #endif

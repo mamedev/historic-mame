@@ -76,8 +76,12 @@ typedef struct
 	void *timA, *timB;
 
 	INT8  reg0, reg1, reg2, reg3, pcmreg, timerreg;
+	UINT32 ext_address;
+	UINT8 ext_read;
 
 	const UINT8 *rom;
+	read8_handler ext_mem_read;
+	write8_handler ext_mem_write;
 	void (*irq_callback)(int);
 } YMF271Chip;
 
@@ -357,6 +361,24 @@ static void ymf271_timer_b_tick(int num)
 	}
 }
 
+static UINT8 ymf271_read_ext_memory(int chipnum, UINT32 address)
+{
+	if( YMF271[chipnum].ext_mem_read ) {
+		return YMF271[chipnum].ext_mem_read(address);
+	} else {
+		if( address < 0x800000)
+			return YMF271[chipnum].rom[address];
+	}
+	return 0xff;
+}
+
+static void ymf271_write_ext_memory(int chipnum, UINT32 address, UINT8 data)
+{
+	if( YMF271[chipnum].ext_mem_write ) {
+		YMF271[chipnum].ext_mem_write(address, data);
+	}
+}
+
 static void ymf271_write_timer(int chipnum, int data)
 {
 	int slotnum;
@@ -435,6 +457,26 @@ static void ymf271_write_timer(int chipnum, int data)
 				}
 
 				break;
+
+			case 0x14:
+				chip->ext_address &= ~0xff;
+				chip->ext_address |= data;
+				break;
+			case 0x15:
+				chip->ext_address &= ~0xff00;
+				chip->ext_address |= data << 8;
+				break;
+			case 0x16:
+				chip->ext_address &= ~0xff0000;
+				chip->ext_address |= (data & 0x7f) << 16;
+				chip->ext_read = (data & 0x80) ? 1 : 0;
+				if( !chip->ext_read )
+					chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
+				break;
+			case 0x17:
+				ymf271_write_ext_memory( chipnum, chip->ext_address, data );
+				chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
+				break;
 		}
 	}
 }
@@ -486,17 +528,24 @@ static void ymf271_w(int chipnum, int offset, int data)
 
 static int ymf271_r(int chipnum, int offset)
 {
+	UINT8 value;
 	YMF271Chip *chip = &YMF271[chipnum];
 
-	if (!offset)
+	switch(offset)
 	{
-		return chip->status;
+		case 0:
+			return chip->status;
+
+		case 2:
+			value = ymf271_read_ext_memory( chipnum, chip->ext_address );
+			chip->ext_address = (chip->ext_address + 1) & 0x7fffff;
+			return value;
 	}
 
 	return 0;
 }
 
-static void ymf271_init(int i, UINT8 *rom, void (*cb)(int))
+static void ymf271_init(int i, UINT8 *rom, void (*cb)(int), read8_handler ext_read, write8_handler ext_write)
 {
 	memset(&YMF271[i], 0, sizeof(YMF271Chip));
 
@@ -505,6 +554,9 @@ static void ymf271_init(int i, UINT8 *rom, void (*cb)(int))
 	
 	YMF271[i].rom = rom;
 	YMF271[i].irq_callback = cb;
+
+	YMF271[i].ext_mem_read = ext_read;
+	YMF271[i].ext_mem_write = ext_write;
 }
 
 int YMF271_sh_start( const struct MachineSound *msound )
@@ -525,7 +577,7 @@ int YMF271_sh_start( const struct MachineSound *msound )
 		name[1] = buf[1];
 		vol[0]=intf->mixing_level[i] >> 16;
 		vol[1]=intf->mixing_level[i] & 0xffff;
-		ymf271_init(i, memory_region(intf->region[0]), intf->irq_callback[i]);
+		ymf271_init(i, memory_region(intf->region[0]), intf->irq_callback[i], intf->ext_read[i], intf->ext_write[i]);
 		stream_init_multi(2, name, vol, Machine->sample_rate, i, ymf271_pcm_update);
 	}
 

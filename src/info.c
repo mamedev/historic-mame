@@ -672,10 +672,26 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 	expand_machine_driver(game->drv, &driver);
 
 	fprintf(out, "\t\t<driver");
-	if (game->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
+
+	/* The status entry is an hint for frontend authors */
+	/* to select working and not working games without */
+	/* the need to know all the other status entries. */
+	/* Games marked as status=good are perfectly emulated, games */
+	/* marked as status=imperfect are emulated with only */
+	/* some minor issues, games marked as status=preliminary */
+	/* don't work or have major emulation problems. */
+
+	if (game->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_WRONG_COLORS))
 		fprintf(out, " status=\"preliminary\"");
+	else if (game->flags & (GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS))
+		fprintf(out, " status=\"imperfect\"");
 	else
 		fprintf(out, " status=\"good\"");
+
+	if (game->flags & GAME_NOT_WORKING)
+		fprintf(out, " emulation=\"preliminary\"");
+	else
+		fprintf(out, " emulation=\"good\"");
 
 	if (game->flags & GAME_WRONG_COLORS)
 		fprintf(out, " color=\"preliminary\"");
@@ -690,6 +706,17 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 		fprintf(out, " sound=\"imperfect\"");
 	else
 		fprintf(out, " sound=\"good\"");
+
+	if (game->flags & GAME_IMPERFECT_GRAPHICS)
+		fprintf(out, " graphic=\"imperfect\"");
+	else
+		fprintf(out, " graphic=\"good\"");
+
+	if (game->flags & GAME_NO_COCKTAIL)
+		fprintf(out, " cocktail=\"preliminary\"");
+
+	if (game->flags & GAME_UNEMULATED_PROTECTION)
+		fprintf(out, " protection=\"preliminary\"");
 
 	fprintf(out, " palettesize=\"%d\"", driver.total_colors);
 
@@ -727,10 +754,18 @@ static void print_game_device(FILE* out, const struct GameDriver* game)
 static void print_game_info(FILE* out, const struct GameDriver* game)
 {
 	extern struct GameDriver driver_0;
+	const char *start;
 
 	fprintf(out, "\t<" XML_TOP);
 
 	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
+
+	start = strrchr(game->source_file, '/');
+	if (!start)
+		start = strrchr(game->source_file, '\\');
+	if (!start)
+		start = game->source_file - 1;
+	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
 
 	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER))
 		fprintf(out, " cloneof=\"%s\"", normalize_string(game->clone_of->name));
@@ -769,10 +804,15 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 	fprintf(out, "\t</" XML_TOP ">\n");
 }
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE)
 /* Print the resource info */
 static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
+	/* The runnable entry is an hint for frontend authors */
+	/* to easily know which game can be started. */
+	/* Games marked as runnable=yes can be started putting */
+	/* the game name as argument in the program command line, */
+	/* games marked as runnable=no cannot be started. */
 	fprintf(out, "\t<" XML_TOP " runnable=\"no\"");
 
 	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
@@ -843,7 +883,7 @@ static void print_mame_data(FILE* out, const struct GameDriver* games[])
 	for(j=0;games[j];++j)
 		print_game_info(out, games[j]);
 
-#if !defined(MESS) && !defined(TINY_COMPILE) && !defined(MMSND)
+#if !defined(MESS) && !defined(TINY_COMPILE)
 	/* print resources */
 	print_resources_data(out, games);
 #endif
@@ -862,6 +902,7 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
 		"\t\t<!ATTLIST " XML_TOP " name CDATA #REQUIRED>\n"
+		"\t\t<!ATTLIST " XML_TOP " sourcefile CDATA #IMPLIED>\n"
 		"\t\t<!ATTLIST " XML_TOP " runnable (yes|no) \"yes\">\n"
 		"\t\t<!ATTLIST " XML_TOP " cloneof CDATA #IMPLIED>\n"
 		"\t\t<!ATTLIST " XML_TOP " romof CDATA #IMPLIED>\n"
@@ -923,9 +964,13 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t\t\t\t<!ATTLIST dipvalue name CDATA #REQUIRED>\n"
 		"\t\t\t\t<!ATTLIST dipvalue default (yes|no) \"no\">\n"
 		"\t\t<!ELEMENT driver EMPTY>\n"
-		"\t\t\t<!ATTLIST driver status (good|preliminary|test) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver status (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver emulation (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver color (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver sound (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver graphic (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver cocktail (good|imperfect|preliminary) #IMPLIED>\n"
+		"\t\t\t<!ATTLIST driver protection (good|imperfect|preliminary) #IMPLIED>\n"
 		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
 #ifdef MESS
 		"\t\t<!ELEMENT device (extension*)>\n"

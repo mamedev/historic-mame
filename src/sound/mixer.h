@@ -113,8 +113,6 @@ struct mixer_config
 
 void mixer_load_config(const struct mixer_config *config);
 void mixer_save_config(struct mixer_config *config);
-void mixer_read_config(mame_file *f);
-void mixer_write_config(mame_file *f);
 
 void mixer_set_stereo_volume(int ch, int l_vol, int r_vol );
 

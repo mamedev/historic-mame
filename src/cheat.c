@@ -118,6 +118,7 @@ MSB						 	    LSB
 												00011		assign activation key
 												00100		enable
 												00101		overclock
+												00110		refresh rate
 												...			others?
 											type ==	100	address	size, CPU
 												---00		8 bit
@@ -322,6 +323,19 @@ To convert a percent to 16.16 fixed point notation, take the percentage as a
 decimal value (eg. 65% = .65) and multiply it by 65536. Then, convert the value
 to hex.
 
+Refresh rate: (01100110 -------- -1------ --------) 0x66004000
+
+Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed 
+point notation for the refresh rate.
+
+Example 1: set the refresh rate to 56.3333333
+
+:gamename:66004000:00000000:00385555:00000000:
+
+To convert a refresh rate to 16.16 fixed point notation, take the refresh rate as a
+decimal value (eg. 60.606060) and multiply it by 65536. Then, convert the value
+to hex.
+
 Cheat Engine Commands:
 
 These special cheat lines are used to set global preferences for the cheat engine. They follow
@@ -486,7 +500,8 @@ enum
 	kCustomLocation_Select,
 	kCustomLocation_AssignActivationKey,
 	kCustomLocation_Enable,
-	kCustomLocation_Overclock
+	kCustomLocation_Overclock,
+	kCustomLocation_RefreshRate
 };
 
 enum
@@ -1468,7 +1483,7 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 
 	const int	kDelayRampTimer = 10;
 
-	if(seq_pressed(input_port_type_seq(code)))
+	if(input_port_type_pressed(code,0))
 	{
 		if(lastCode != code)
 		{
@@ -3731,10 +3746,10 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 			case kType_ActivationKey:
 				entry->activationKey--;
 
-				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_joy_last;
-				if(entry->activationKey > __code_joy_last)
-					entry->activationKey = __code_key_first;
+				if(entry->activationKey < 0)
+					entry->activationKey = __code_max - 1;
+				if(entry->activationKey >= __code_max)
+					entry->activationKey = 0;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
 				break;
@@ -4005,10 +4020,10 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 			case kType_ActivationKey:
 				entry->activationKey++;
 
-				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_joy_last;
-				if(entry->activationKey > __code_joy_last)
-					entry->activationKey = __code_key_first;
+				if(entry->activationKey < 0)
+					entry->activationKey = __code_max - 1;
+				if(entry->activationKey >= __code_max)
+					entry->activationKey = 0;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
 				break;
@@ -8403,6 +8418,16 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 						cpunum_set_clockscale(address, overclock);
 					}
+				}
+				break;
+
+				case kCustomLocation_RefreshRate:
+				{
+					double	refresh = data;
+
+					refresh /= 65536.0;
+
+					set_refresh_rate(refresh);
 				}
 				break;
 			}

@@ -24,7 +24,7 @@ mnemonic_t mnemonic[256] = {
 	{ "bno", 8 }, { "bg", 8 }, { "be", 8 }, { "bge", 8 }, { "bl", 8 }, { "ble", 8 }, { "bne", 8 }, { "bo", 8 }, // 10
 	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 20
+	{ "testno", 10 }, { "testg", 10 }, { "teste", 10 }, { "testge", 10 }, { "testl", 10 }, { "testne", 10 }, { "testle", 10 }, { "testo", 10 }, // 20
 	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
 	{ "bbc", 6 }, { "cmpobg", 7 }, { "cmpobe", 7 }, { "cmpobge", 7 }, { "cmpobl", 7 }, { "cmpobne", 7 }, { "cmpoble", 7 }, { "bbs", 6 }, // 30
@@ -260,6 +260,9 @@ char *i960_disassemble(disassemble_t *diss)
 		break;
 	case 9: // no operands
 		DIS "%s",NEM);
+		break;
+	case 10: // TEST type: register only
+		DIS "%s %s", NEM, REG_DST);
 		break;
 	}
 	return diss->buffer;

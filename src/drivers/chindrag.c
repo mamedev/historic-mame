@@ -164,4 +164,44 @@ ROM_START( chindrag )
 	ROM_LOAD( "sp",         0x00000, 0x40000, CRC(fde63ce1) SHA1(cc32d2cace319fe4d5d0aa96d7addb2d1def62f2) )
 ROM_END
 
+/*
+
+chuugokuryuu (china dragon jpn ver.)
+(c)IGS
+Distributed by ALTA
+
+
+
+MAIN CPU   : 68000
+I/O        : IGS003 (=8255)
+SOUND ?    : 6564L  (=OPL?)  , AR17961 (=M6295?)
+CRTC ?     : IGS011
+SOUND CPU? : IGSD0301 (DIP 42P)
+OSC        : 22Mhz , 3.579545Mhz
+DIPSW      : 8bitx 3 (SW3 is not used)
+OTHER      : IGS012
+
+MAIN PRG   : "CHINA DRAGON U020J" (japan)
+SOUND PRG? : "CHINA DRAGON SP"
+SOUND DATA?: "CHINA DRAGON U44"
+
+*/
+
+ROM_START( chugokur )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "china_jp.v20",         0x00000, 0x80000, CRC(9e018d1a) SHA1(fe14e6344434cabf43685e50fd49c90f05f565be) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* GFX? */
+	/* wasn't in this set .. */
+	ROM_LOAD( "d0301",         0x00000, 0x400000, CRC(78ab45d9) SHA1(c326ee9f150d766edd6886075c94dea3691b606d) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* GFX? */
+	ROM_LOAD( "china.u44",         0x00000, 0x20000, CRC(10549746) SHA1(aebd83796679c85b43ad514b2771897f94e61294) ) // 1xxxxxxxxxxxxxxxx = 0x00 hmm
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples? */
+	ROM_LOAD( "sp",         0x00000, 0x40000, CRC(fde63ce1) SHA1(cc32d2cace319fe4d5d0aa96d7addb2d1def62f2) )
+ROM_END
+
+
 GAMEX( 1994, chindrag, 0, chindrag, chindrag, chindrag, ROT0, "IGS", "China Dragon / Dragon World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1994, chugokur, chindrag, chindrag, chindrag, chindrag, ROT0, "IGS", "Chuugokuryuu (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )

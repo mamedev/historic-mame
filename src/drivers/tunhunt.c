@@ -95,44 +95,44 @@ WRITE8_HANDLER( tunhunt_control_w )
 
 static READ8_HANDLER( tunhunt_button_r )
 {
-	int data = readinputport( 0 );
+	int data = readinputportbytag("IN0");
 	return ((data>>offset)&1)?0x00:0x80;
 }
 
 
 static READ8_HANDLER( dsw1_r )
 {
-	return readinputport(3)&0xff;
+	return readinputportbytag("DSW")&0xff;
 }
 
 
 static READ8_HANDLER( dsw2_0r )
 {
-	return (readinputport(3)&0x0100)?0x80:0x00;
+	return (readinputportbytag("DSW")&0x0100)?0x80:0x00;
 }
 
 
 static READ8_HANDLER( dsw2_1r )
 {
-	return (readinputport(3)&0x0200)?0x80:0x00;
+	return (readinputportbytag("DSW")&0x0200)?0x80:0x00;
 }
 
 
 static READ8_HANDLER( dsw2_2r )
 {
-	return (readinputport(3)&0x0400)?0x80:0x00;
+	return (readinputportbytag("DSW")&0x0400)?0x80:0x00;
 }
 
 
 static READ8_HANDLER( dsw2_3r )
 {
-	return (readinputport(3)&0x0800)?0x80:0x00;
+	return (readinputportbytag("DSW")&0x0800)?0x80:0x00;
 }
 
 
 static READ8_HANDLER( dsw2_4r )
 {
-	return (readinputport(3)&0x1000)?0x80:0x00;
+	return (readinputportbytag("DSW")&0x1000)?0x80:0x00;
 }
 
 
@@ -181,25 +181,27 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( tunhunt )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING (	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (	0x04, DEF_STR( On ) )
+	//Should the above switch be described as:
+	//PORT_SERVICE(0x04, IP_ACTIVE_HIGH) 	?
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
-	PORT_START
-	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE, 100, 4, 0x00, 0xff )
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START /* dip switches */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME (0x0003, 0x0002, DEF_STR( Coinage ) )
 	PORT_DIPSETTING (     0x0003, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING (     0x0002, DEF_STR( 1C_1C ) )
@@ -214,15 +216,15 @@ INPUT_PORTS_START( tunhunt )
 	PORT_DIPSETTING (     0x0000, "*1" )
 	PORT_DIPSETTING (     0x0010, "*2" )
 	PORT_DIPNAME (0x0060, 0x0000, "Bonus Credits" )
-	PORT_DIPSETTING (     0x0000, "None" )
+	PORT_DIPSETTING (     0x0000, DEF_STR( None ) )
 	PORT_DIPSETTING (     0x0060, "5 credits, 1 bonus" )
 	PORT_DIPSETTING (     0x0040, "4 credits, 1 bonus" )
 	PORT_DIPSETTING (     0x0020, "2 credits, 1 bonus" )
-	PORT_DIPNAME (0x0880, 0x0000, "Language" )
-	PORT_DIPSETTING (     0x0000, "English" )
-	PORT_DIPSETTING (     0x0080, "German" )
-	PORT_DIPSETTING (     0x0800, "French" )
-	PORT_DIPSETTING (     0x0880, "Spanish" )
+	PORT_DIPNAME (0x0880, 0x0000, DEF_STR( Language ) )
+	PORT_DIPSETTING (     0x0000, DEF_STR( English ) )
+	PORT_DIPSETTING (     0x0080, DEF_STR( German ) )
+	PORT_DIPSETTING (     0x0800, DEF_STR( French ) )
+	PORT_DIPSETTING (     0x0880, DEF_STR( Spanish ) )
 	PORT_DIPNAME (0x0100, 0x0000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING (     0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING (     0x0100, DEF_STR( On ) )
@@ -233,7 +235,7 @@ INPUT_PORTS_START( tunhunt )
 	PORT_DIPSETTING (     0x0600, "5" )
 	PORT_DIPNAME (0x1000, 0x1000, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING (     0x1000, "30000" )
-	PORT_DIPSETTING (     0x0000, "None" )
+	PORT_DIPSETTING (     0x0000, DEF_STR( None ) )
 INPUT_PORTS_END
 
 

@@ -17,8 +17,6 @@ extern struct pia6821_interface williams_pia_1_intf;
 extern struct pia6821_interface williams_snd_pia_intf;
 
 /* Game-specific old-Williams PIA interfaces */
-extern struct pia6821_interface defender_pia_0_intf;
-extern struct pia6821_interface stargate_pia_0_intf;
 extern struct pia6821_interface lottofun_pia_0_intf;
 extern struct pia6821_interface sinistar_snd_pia_intf;
 extern struct pia6821_interface playball_pia_1_intf;

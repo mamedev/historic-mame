@@ -119,9 +119,23 @@ static const char *mame_default_text[] =
 	"Memory Card",
 
 	/* input */
-	"Key/Joy Speed",
+	"Digital Speed",
+	"Autocenter Speed",
 	"Reverse",
 	"Sensitivity",
+	
+	/* input groups */
+	"User Interface",
+	"Player 1 Controls",
+	"Player 2 Controls",
+	"Player 3 Controls",
+	"Player 4 Controls",
+	"Player 5 Controls",
+	"Player 6 Controls",
+	"Player 7 Controls",
+	"Player 8 Controls",
+	"Other Controls",
+	"Return to Groups",
 
 	/* stats */
 	"Tickets dispensed",
@@ -200,6 +214,9 @@ static const char *mame_default_text[] =
 	"Select a value",
 	"All values saved",
 	"One match found - added to list",
+
+	/* refresh rate */
+	"Refresh rate",
 
 	NULL
 };

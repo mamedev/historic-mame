@@ -14,12 +14,15 @@
 // Warning, IP = Instruction Pointer, called PC outside of Intel
 //          PC = Process Control
 
-enum { RCACHE_SIZE = 4, RCACHE_FREE=0x00000001 };
+enum { RCACHE_SIZE = 4 };
 
 typedef struct {
 	UINT32 r[0x20];
 	UINT32 rcache[RCACHE_SIZE][0x10];
-	UINT32 rcache_fp[RCACHE_SIZE];
+	UINT32 rcache_frame_addr[RCACHE_SIZE];
+	// rcache_pos = how deep in the stack we are.  0-(RCACHE_SIZE-1) means in-cache.
+	// RCACHE_SIZE or greater means out of cache, must save to memory.
+	INT32 rcache_pos;
 
 	double fp[4];
 
@@ -36,26 +39,46 @@ static void do_call(UINT32 adr, int type, UINT32 stack);
 
 INLINE UINT32 i960_read_dword_unaligned(UINT32 address)
 {
-	return program_read_byte_32le(address) | program_read_byte_32le(address+1)<<8 | program_read_byte_32le(address+2)<<16 | program_read_byte_32le(address+3)<<24;
+	if (address & 3)
+		return program_read_byte_32le(address) | program_read_byte_32le(address+1)<<8 | program_read_byte_32le(address+2)<<16 | program_read_byte_32le(address+3)<<24;
+	else
+		return program_read_dword_32le(address);
 }
 
 INLINE UINT16 i960_read_word_unaligned(UINT32 address)
 {
-	return program_read_byte_32le(address) | program_read_byte_32le(address+1)<<8;
+	if (address & 1)
+		return program_read_byte_32le(address) | program_read_byte_32le(address+1)<<8;
+	else
+		return program_read_word_32le(address);
 }
 
 INLINE void i960_write_dword_unaligned(UINT32 address, UINT32 data)
 {
-	program_write_byte_32le(address, data & 0xff);
-	program_write_byte_32le(address+1, (data>>8)&0xff);
-	program_write_byte_32le(address+2, (data>>16)&0xff);
-	program_write_byte_32le(address+3, (data>>24)&0xff);
+	if (address & 3)
+	{
+		program_write_byte_32le(address, data & 0xff);
+		program_write_byte_32le(address+1, (data>>8)&0xff);
+		program_write_byte_32le(address+2, (data>>16)&0xff);
+		program_write_byte_32le(address+3, (data>>24)&0xff);
+	}
+	else
+	{
+		program_write_dword_32le(address, data);
+	}
 }
 
 INLINE void i960_write_word_unaligned(UINT32 address, UINT16 data)
 {
-	program_write_byte_32le(address, data & 0xff);
-	program_write_byte_32le(address+1, (data>>8)&0xff);
+	if (address & 1)
+	{
+		program_write_byte_32le(address, data & 0xff);
+		program_write_byte_32le(address+1, (data>>8)&0xff);
+	}
+	else
+	{
+		program_write_word_32le(address, data);
+	}
 }
 
 static float u2f(UINT32 v)
@@ -337,6 +360,24 @@ static void cmp_u(UINT32 v1, UINT32 v2)
 		i960.AC |= 1;
 }
 
+static void concmp_s(INT32 v1, INT32 v2)
+{
+	i960.AC &= ~7;
+	if(v1 <= v2)
+		i960.AC |= 2;
+	else
+		i960.AC |= 1;
+}
+
+static void concmp_u(UINT32 v1, UINT32 v2)
+{
+	i960.AC &= ~7;
+	if(v1 <= v2)
+		i960.AC |= 2;
+	else
+		i960.AC |= 1;
+}
+
 static void cmp_d(double v1, double v2)
 {
 	i960.AC &= ~7;
@@ -370,6 +411,16 @@ INLINE void test(UINT32 opcode, int mask)
 		i960.r[(opcode>>19) & 0x1f] = 1;
 	else
 		i960.r[(opcode>>19) & 0x1f] = 0;
+}
+
+static const char *i960_get_strflags(void)
+{
+	static const char *conditions[8] =
+	{
+		"no", "g", "e", "ge", "l", "ne", "le", "o"
+	};
+
+	return (conditions[i960.AC & 7]); 
 }
 
 static void check_irqs(void)
@@ -423,7 +474,7 @@ static void check_irqs(void)
 
 			// get the vector back
 			take += ((lvl/4) * 32);
-
+			
 			// start the process
 			if(!(i960.PC & 0x0020))	// if this is a nested interrupt, don't re-get int_SP
 				do_call(program_read_dword_32le(int_tab + 36 + (take-8)*4), 7, int_SP);
@@ -442,78 +493,71 @@ static void check_irqs(void)
 	}
 }
 
-static void rcache_flush_entry(int entry)
-{
-	int i;
-	UINT32 fp;
-	if(i960.rcache_fp[entry] == RCACHE_FREE)
-		return;
-
-	// 24 additional cycles if flushing out an entry
-	i960_icount -= 24;
-	fp = i960.rcache_fp[entry];
-	for(i=0; i<0x10; i++)
-		program_write_dword_32le(fp+4*i, i960.rcache[entry][i]);
-	i960.rcache_fp[entry] = RCACHE_FREE;
-}
-
 static void do_call(UINT32 adr, int type, UINT32 stack)
 {
-	int entry;
-	UINT32 entry_adr;
 	int i;
-	entry = 0;
-	entry_adr = i960.rcache_fp[0];
-	for(i=1; entry_adr != RCACHE_FREE && i<RCACHE_SIZE; i++) {
-		if(i960.rcache_fp[i] == RCACHE_FREE || i960.rcache_fp[i] < entry_adr) {
-			entry_adr = i960.rcache_fp[i];
-			entry = i;
-		}
-	}
+	UINT32 FP;
 
 	// call and callx take 9 cycles base
 	i960_icount -= 9;
-	rcache_flush_entry(entry);
 
+	// set the new RIP
 	i960.r[I960_RIP] = i960.IP;
-	i960.rcache_fp[entry] = i960.r[I960_FP] & ~0x3f;
-	memcpy(i960.rcache[entry], i960.r, 0x10*sizeof(UINT32));
+
+	// are we out of cache entries?
+	if (i960.rcache_pos >= RCACHE_SIZE) {
+		// flush the current register set to the current frame
+		FP = i960.r[I960_FP] & ~7;
+		for (i = 0; i < 16; i++) {
+			program_write_dword_32le(FP + (i*4), i960.r[i]);
+		}
+	}
+	else	// a cache entry is available, use it
+	{
+		memcpy(&i960.rcache[i960.rcache_pos][0], i960.r, 0x10 * sizeof(UINT32));
+		i960.rcache_frame_addr[i960.rcache_pos] = i960.r[I960_FP] & ~0x3f;
+	}
+	i960.rcache_pos++;
+
 	i960.IP = adr;
-	i960.r[I960_PFP] = i960.rcache_fp[entry] | type;
+	i960.r[I960_PFP] = i960.r[I960_FP] & ~7;
+	i960.r[I960_PFP] |= type;
 
 	if(type == 7) {	// interrupts need special handling
 		// set the stack to the passed-in value to properly handle nested interrupts
 		// (can't set it externally or the original program's SP will be lost)
 		i960.r[I960_SP] = stack;
+	}
 
-		// make room for the interrupt record (also, use a largeish value to avoid FP conflicts)
-		i960.r[I960_FP]  = (i960.r[I960_SP] + 128);
+	i960.r[I960_FP]  = (i960.r[I960_SP] + 63) & ~63;
+	i960.r[I960_SP]  = i960.r[I960_FP] + 64;
 
-		// now build the frame as usual
-		i960.r[I960_FP]  = (i960.r[I960_FP] + 63) & ~63;
-	} else
-		i960.r[I960_FP]  = (i960.r[I960_SP] + 63) & ~63;
-
-	i960.r[I960_SP]  = i960.r[I960_FP]+64;
 	change_pc(i960.IP);
 }
 
 static void do_ret_0(void)
 {
-	int entry;
 	i960.r[I960_FP] = i960.r[I960_PFP] & ~7;
 
-	for(entry = 0; entry < RCACHE_SIZE && i960.rcache_fp[entry] != i960.r[I960_FP]; entry++);
-	if(entry == RCACHE_SIZE)
+	i960.rcache_pos--;
+
+	// normal situation: if we're still above rcache size, we're not in cache.
+	// abnormal situation (after the app does a FLUSHREG): rcache_pos will be 0
+	// coming in, but we must still treat it as a not-in-cache situation.
+	if ((i960.rcache_pos >= RCACHE_SIZE) || (i960.rcache_pos < 0))
 	{
 		int i;
 		for(i=0; i<0x10; i++)
 			i960.r[i] = program_read_dword_32le(i960.r[I960_FP]+4*i);
+
+		if (i960.rcache_pos < 0)
+		{
+			i960.rcache_pos = 0;
+		}
 	}
 	else
 	{
-		memcpy(i960.r, i960.rcache[entry], 0x10*sizeof(UINT32));
-		i960.rcache_fp[entry] = RCACHE_FREE;
+		memcpy(i960.r, i960.rcache[i960.rcache_pos], 0x10*sizeof(UINT32));
 	}
 
 	i960.IP = i960.r[I960_RIP];
@@ -533,9 +577,9 @@ static void do_ret(void)
 		x = program_read_dword(i960.r[I960_FP]-16);
 		y = program_read_dword(i960.r[I960_FP]-12);
 		do_ret_0();
-		i960.AC = y;
+		i960.AC = x;
 		// #### test supervisor
-		i960.PC = x;
+		i960.PC = y;
 
 		// check for another IRQ now that we're back
 		check_irqs();
@@ -991,7 +1035,7 @@ static int i960_execute(int cycles)
 				if(!(i960.AC & 0x4)) {
 					t1 = get_1_ri(opcode);
 					t2 = get_2_ri(opcode);
-					cmp_u(t1, t2);
+					concmp_u(t1, t2);
 				}
 				break;
 
@@ -1000,7 +1044,7 @@ static int i960_execute(int cycles)
 				if(!(i960.AC & 0x4)) {
 					t1 = get_1_ri(opcode);
 					t2 = get_2_ri(opcode);
-					cmp_s(t1, t2);
+					concmp_s(t1, t2);
 				}
 				break;
 
@@ -1182,8 +1226,16 @@ static int i960_execute(int cycles)
 		case 0x66:
 			switch((opcode >> 7) & 0xf) {
 			case 0xd: // flushreg
-				for(t1=0; t1<RCACHE_SIZE; t1++)
-					rcache_flush_entry(t1);
+				for(t1=0; t1<(i960.rcache_pos & 3); t1++)
+				{
+					int i;
+
+					for (i = 0; i < 0x10; i++)
+					{
+						program_write_dword_32le(i960.rcache_frame_addr[t1] + (i * sizeof(UINT32)), i960.r[i]);
+					}
+				}
+				i960.rcache_pos = 0;
 				break;
 
 			default:
@@ -1352,7 +1404,7 @@ static int i960_execute(int cycles)
 				src1 = (INT32)get_1_ri(opcode);
 				src2 = (INT32)get_2_ri(opcode);
 				dst = src2 - ((src2/src1)*src1);
-				if(((src2*src1) > 0) && (dst != 0))
+				if(((src2*src1) < 0) && (dst != 0))
 					dst += src1;
 				set_ri(opcode, dst);
 				break;
@@ -1656,6 +1708,7 @@ static void set_irq_line(int irqline, int state)
 		return;
 	}
 
+
 	priority = vector / 8;
 
 	if(state) {
@@ -1670,6 +1723,9 @@ static void set_irq_line(int irqline, int state)
 		pend = program_read_dword_32le(int_tab + word);
 		pend |= (1 << wordofs);
 		program_write_dword_32le(int_tab + word, pend);
+
+		// and ack it to the core now that it's queued
+		(*i960.irq_cb)(irqline);
 	}
 }
 
@@ -1682,6 +1738,7 @@ static void i960_set_info(UINT32 state, union cpuinfo *info)
 
 	switch(state) {
 		// Interfacing
+	case CPUINFO_INT_REGISTER+I960_IP: i960.IP = info->i; change_pc(i960.IP); 	break;
 	case CPUINFO_PTR_IRQ_CALLBACK:          i960.irq_cb = info->irqcallback;        break;
 	case CPUINFO_INT_INPUT_STATE + I960_IRQ0:set_irq_line(I960_IRQ0, info->i);		break;
 	case CPUINFO_INT_INPUT_STATE + I960_IRQ1:set_irq_line(I960_IRQ1, info->i);		break;
@@ -1708,7 +1765,7 @@ static void i960_init(void)
 	state_save_register_UINT32("i960", cpu, "regs",      i960.r, 0x20);
  	state_save_register_double("i960", cpu, "fpregs",    i960.fp, 4);
 	state_save_register_UINT32("i960", cpu, "rcache",    &i960.rcache[0][0], RCACHE_SIZE*0x10);
-	state_save_register_UINT32("i960", cpu, "rcache_fp", i960.rcache_fp, RCACHE_SIZE);
+	state_save_register_UINT32("i960", cpu, "rcache_fp", i960.rcache_frame_addr, RCACHE_SIZE);
 }
 
 static offs_t i960_disasm(char *buffer, offs_t pc)
@@ -1729,7 +1786,6 @@ static offs_t i960_disasm(char *buffer, offs_t pc)
 
 static void i960_reset(void *param)
 {
-	int i;
 	i960.SAT        = program_read_dword_32le(0);
 	i960.PRCB       = program_read_dword_32le(4);
 	i960.IP         = program_read_dword_32le(12);
@@ -1743,8 +1799,7 @@ static void i960_reset(void *param)
 
 	i960.r[I960_FP] = program_read_dword_32le(i960.PRCB+24);
 	i960.r[I960_SP] = i960.r[I960_FP] + 64;
-	for(i=0; i<RCACHE_SIZE; i++)
-		i960.rcache_fp[i] = RCACHE_FREE;
+	i960.rcache_pos = 0;
 }
 
 static UINT8 i960_reg_layout[] =
@@ -1765,7 +1820,7 @@ static UINT8 i960_reg_layout[] =
 	I960_G8, I960_G9, -1,
 	I960_G10, I960_G11, -1,
 	I960_G12, I960_G13, -1,
-	I960_G14, -1,
+	I960_G14, I960_AC, -1,
 	0
 };
 
@@ -1822,7 +1877,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 		// CPU misc parameters
 	case CPUINFO_STR_NAME:               strcpy(info->s = cpuintrf_temp_str(), "i960KB"); break;
 	case CPUINFO_STR_CORE_FILE:          strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), " ");      break;
+	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), i960_get_strflags()); break;
 	case CPUINFO_INT_ENDIANNESS:         info->i = CPU_IS_LE;                             break;
 	case CPUINFO_INT_INPUT_LINES:        info->i = 4;                                     break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR: info->i = -1;                                    break;

@@ -224,16 +224,16 @@ INPUT_PORTS_START( wallc )
 	PORT_DIPSETTING(	0x04, "60K/120K/240K/480K" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPNAME( 0x10, 0x00, "Curve Effect" )
-	PORT_DIPSETTING(	0x10, "Normal" )
+	PORT_DIPSETTING(	0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(	0x00, "More" )
 	PORT_DIPNAME( 0x60, 0x60, "Timer Speed" )
 	PORT_DIPSETTING(	0x60, "Slow" )
-	PORT_DIPSETTING(	0x40, "Normal" )
+	PORT_DIPSETTING(	0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(	0x20, "Fast" )
 	PORT_DIPSETTING(	0x00, "Super Fast" )
 	PORT_DIPNAME( 0x80, 0x00, "Service" )
 	PORT_DIPSETTING(	0x80, "Free Play With Level Select" )
-	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
 
 	PORT_START	/* b200 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )	//Right curve button; select current playfield in test mode
@@ -246,7 +246,7 @@ INPUT_PORTS_START( wallc )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )	//ok
 
 	PORT_START	/* b400 - player position 8 bit analog input - value read is used as position of the player directly - what type of input is that ? DIAL ?*/
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_PLAYER1 | IPF_REVERSE, 50, 3, 0, 0 )
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(3) PORT_REVERSE PORT_PLAYER(1)
 
 	PORT_START	/* b600 - bits 0-5: coinage */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )

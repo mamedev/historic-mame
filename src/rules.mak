@@ -1183,11 +1183,36 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i960
 CPUDEFS += -DHAS_I960=1
 CPUOBJS += $(OBJ)/cpu/i960/i960.o
-CPUOBJS += $(OBJ)/cpu/i960/i960dis.o
+DBGOBJS += $(OBJ)/cpu/i960/i960dis.o
 $(OBJ)/cpu/i960/i960.o: i960.c i960.h
 else
 CPUDEFS += -DHAS_I960=0
 endif
+
+CPU=$(strip $(findstring H83002@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/h83002
+CPUDEFS += -DHAS_H83002=1
+CPUOBJS += $(OBJ)/cpu/h83002/h83002.o $(OBJ)/cpu/h83002/h8periph.o
+DBGOBJS += $(OBJ)/cpu/h83002/h8disasm.o
+$(OBJ)/cpu/h83002/h83002.o: h83002.c h83002.h h8priv.h
+$(OBJ)/cpu/h83002/h8disasm.o: h8disasm.c
+$(OBJ)/cpu/h83002/h8periph.o: h8periph.c h8priv.h
+else
+CPUDEFS += -DHAS_H83002=0
+endif
+
+CPU=$(strip $(findstring V810@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/v810
+CPUDEFS += -DHAS_V810=1
+CPUOBJS += $(OBJ)/cpu/v810/v810.o
+DBGOBJS += $(OBJ)/cpu/v810/v810dasm.o
+$(OBJ)/cpu/v810/v810.o: v810.c v810.h
+else
+CPUDEFS += -DHAS_V810=0
+endif
+
 
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)
@@ -1762,3 +1787,12 @@ SOUNDOBJS += $(OBJ)/sound/st0016.o
 else
 SOUNDDEFS += -DHAS_ST0016=0
 endif
+
+SOUND=$(strip $(findstring C352@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_C352=1
+SOUNDOBJS += $(OBJ)/sound/c352.o
+else
+SOUNDDEFS += -DHAS_C352=0
+endif
+

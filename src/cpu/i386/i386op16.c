@@ -268,6 +268,65 @@ static void I386OP(and_ax_i16)(void)		// Opcode 0x25
 	CYCLES(C_ALU_I_ACC);
 }
 
+static void I386OP(bsf_r16_rm16)(void)		// Opcode 0x0f bc
+{
+	UINT16 src, dst, temp;
+	UINT8 modrm = FETCH();
+
+	if( modrm >= 0xc0 ) {
+		src = LOAD_RM16(modrm);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		src = READ16(ea);
+	}
+
+	dst = 0;
+
+	if( src == 0 ) {
+		I.ZF = 1;
+	} else {
+		I.ZF = 0;
+		temp = 0;
+		while( (src & (1 << temp)) == 0 ) {
+			temp++;
+			dst = temp;
+			CYCLES(3);
+		}
+	}
+	CYCLES(11);
+	STORE_REG16(modrm, dst);
+}
+
+static void I386OP(bsr_r16_rm16)(void)		// Opcode 0x0f bd
+{
+	UINT16 src, dst, temp;
+	UINT8 modrm = FETCH();
+
+	if( modrm >= 0xc0 ) {
+		src = LOAD_RM16(modrm);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		src = READ16(ea);
+	}
+
+	dst = 0;
+
+	if( src == 0 ) {
+		I.ZF = 1;
+	} else {
+		I.ZF = 0;
+		temp = 15;
+		while( (src & (1 << temp)) == 0 ) {
+			temp--;
+			dst = temp;
+			CYCLES(3);
+		}
+	}
+	CYCLES(9);
+	STORE_REG16(modrm, dst);
+}
+
+
 static void I386OP(bt_rm16_r16)(void)		// Opcode 0x0f a3
 {
 	UINT8 modrm = FETCH();
@@ -1564,6 +1623,158 @@ static void I386OP(scasw)(void)				// Opcode 0xaf
 	SUB16(dst, src);
 	BUMP_DI(2);
 	CYCLES(8);
+}
+
+static void I386OP(shld16_i8)(void)			// Opcode 0x0f a4
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT16 dst = LOAD_RM16(modrm);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = FETCH();
+		if( shift > 31 || shift == 0 ) {
+
+		} else if( shift > 15 ) {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (upper << (shift-16)) | (upper >> (32-shift));
+			SetSZPF16(dst);
+		} else {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;		
+			dst = (dst << shift) | (upper >> (16-shift));
+			SetSZPF16(dst);
+		}
+		STORE_RM16(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT16 dst = READ16(ea);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = FETCH();
+		if( shift > 31 || shift == 0 ) {
+
+		} else if( shift > 15 ) {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (upper << (shift-16)) | (upper >> (32-shift));
+			SetSZPF16(dst);
+		} else {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (dst << shift) | (upper >> (16-shift));
+			SetSZPF16(dst);
+		}
+		WRITE16(ea, dst);
+		CYCLES(7);
+	}
+}
+
+static void I386OP(shld16_cl)(void)			// Opcode 0x0f a5
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT16 dst = LOAD_RM16(modrm);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 31 || shift == 0 ) {
+
+		} else if( shift > 15 ) {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (upper << (shift-16)) | (upper >> (32-shift));
+			SetSZPF16(dst);
+		} else {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (dst << shift) | (upper >> (16-shift));
+			SetSZPF16(dst);
+		}
+		STORE_RM16(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT16 dst = READ16(ea);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 31 || shift == 0 ) {
+
+		} else if( shift > 15 ) {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (upper << (shift-16)) | (upper >> (32-shift));
+			SetSZPF16(dst);
+		} else {
+			I.CF = (dst & (1 << (16-shift))) ? 1 : 0;
+			dst = (dst << shift) | (upper >> (16-shift));
+			SetSZPF16(dst);
+		}
+		WRITE16(ea, dst);
+		CYCLES(7);
+	}
+}
+
+static void I386OP(shrd16_i8)(void)			// Opcode 0x0f ac
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT16 dst = LOAD_RM16(modrm);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = FETCH();
+		if( shift > 15 || shift == 0) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (16-shift));
+			SetSZPF16(dst);
+		}
+		STORE_RM16(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT16 dst = READ16(ea);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = FETCH();
+		if( shift > 15 || shift == 0) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (16-shift));
+			SetSZPF16(dst);
+		}
+		WRITE16(ea, dst);
+		CYCLES(7);
+	}
+}
+
+static void I386OP(shrd16_cl)(void)			// Opcode 0x0f ad
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT16 dst = LOAD_RM16(modrm);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 15 || shift == 0) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (16-shift));
+			SetSZPF16(dst);
+		}
+		STORE_RM16(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT16 dst = READ16(ea);
+		UINT16 upper = LOAD_REG16(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 15 || shift == 0) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (16-shift));
+			SetSZPF16(dst);
+		}
+		WRITE16(ea, dst);
+		CYCLES(7);
+	}
 }
 
 static void I386OP(stosw)(void)				// Opcode 0xab

@@ -80,7 +80,11 @@ enum
 
 	/* Namco NB2 */
 	NAMCONB2_OUTFOXIES,
-	NAMCONB2_MACH_BREAKERS
+	NAMCONB2_MACH_BREAKERS,
+
+	/* Namco System FL */
+	NAMCOFL_SPEED_RACER,
+	NAMCOFL_FINAL_LAP_R
 };
 
 extern int namcos2_gametype;

@@ -164,4 +164,4 @@ ROM_START( meijinsn )
 ROM_END
 
 
-GAMEX( 1986, meijinsn, 0, meijinsn, meijinsn, 0, ROT0, "SNK / Alpha Denshi", "Meijinsen ", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1986, meijinsn, 0, meijinsn, meijinsn, 0, ROT0, "SNK / Alpha Denshi", "Meijinsen", GAME_NOT_WORKING|GAME_NO_SOUND )

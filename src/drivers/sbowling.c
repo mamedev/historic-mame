@@ -227,10 +227,10 @@ INPUT_PORTS_START( sbowling )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 		
 	PORT_START
-	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y, 30, 30, 0, 0)
+	PORT_BIT( 0xff, 0, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30)
 
 	PORT_START
-	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_X|IPF_REVERSE, 30, 30, 0, 0)
+	PORT_BIT( 0xff, 0, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_REVERSE
 		
 	PORT_START	/* coin slots: A 4 LSB, B 4 MSB */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -320,12 +320,13 @@ static PALETTE_INIT( sbowling )
 
 	const int resistances_rg[3] = { 470, 270, 100 };
 	const int resistances_b[2]  = { 270, 100 };
-	double weights_r[3], weights_g[3], weights_b[2];
+	double outputs_r[1<<3], outputs_g[1<<3], outputs_b[1<<2];
 
-	compute_resistor_weights(0,	255,	-1.0,
-			3,	resistances_rg,	weights_r,	0,	100,
-			3,	resistances_rg,	weights_g,	0,	100,
-			2,	resistances_b,	weights_b,	0,	100);
+	/* the game uses output collector PROMs type: NEC B406  */
+	compute_resistor_net_outputs(0, 255,	-1.0,
+		3,	resistances_rg, outputs_r,	0,	100,
+		3,	resistances_rg, outputs_g,	0,	100,
+		2,	resistances_b,  outputs_b,	0,	100);
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -334,19 +335,19 @@ static PALETTE_INIT( sbowling )
 		/* blue component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
-		b = combine_2_weights(weights_b, bit0, bit1);
+		b = (int)(outputs_b[ (bit0<<0) | (bit1<<1) ] + 0.5);
 
 		/* green component */
 		bit0 = (color_prom[i] >> 2) & 0x01;
 		bit1 = (color_prom[i] >> 3) & 0x01;
 		bit2 = (color_prom[i+0x400] >> 0) & 0x01;
-		g = combine_3_weights(weights_g, bit0, bit1, bit2);
+		g = (int)(outputs_g[ (bit0<<0) | (bit1<<1) | (bit2<<2) ] + 0.5);
 
 		/* red component */
 		bit0 = (color_prom[i+0x400] >> 1) & 0x01;
 		bit1 = (color_prom[i+0x400] >> 2) & 0x01;
 		bit2 = (color_prom[i+0x400] >> 3) & 0x01;
-		r = combine_3_weights(weights_r, bit0, bit1, bit2);
+		r = (int)(outputs_r[ (bit0<<0) | (bit1<<1) | (bit2<<2) ] + 0.5);
 
 		palette_set_color(i,r,g,b);
 	}
@@ -392,5 +393,5 @@ ROM_START( sbowling )
 	ROM_LOAD( "kb09.6m",        0x0400, 0x0400, CRC(e29191a6) SHA1(9a2c78a96ef6d118f4dacbea0b7d454b66a452ae))
 ROM_END
 
-GAMEX( 1982, sbowling, 0, sbowling, sbowling, 0, ROT90, "Taito Corporation", "Strike Bowling",GAME_IMPERFECT_SOUND|GAME_IMPERFECT_COLORS)
+GAMEX( 1982, sbowling, 0, sbowling, sbowling, 0, ROT90, "Taito Corporation", "Strike Bowling",GAME_IMPERFECT_SOUND)
 

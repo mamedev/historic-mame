@@ -1940,9 +1940,15 @@ static UINT8 stv_vdp2_check_vram_cycle_pattern_registers(
 {
 	int i;
 	UINT8  access_command_ok = 0;
-	UINT16 cp_regs[] = 
-	{ STV_VDP2_CYCA0L, STV_VDP2_CYCA0U, STV_VDP2_CYCA1L, STV_VDP2_CYCA1U,
-	STV_VDP2_CYCA2L, STV_VDP2_CYCA2U, STV_VDP2_CYCA3L, STV_VDP2_CYCA3U };
+	UINT16 cp_regs[8]; 
+	cp_regs[0] = STV_VDP2_CYCA0L;
+	cp_regs[1] = STV_VDP2_CYCA0U;
+	cp_regs[2] = STV_VDP2_CYCA1L;
+	cp_regs[3] = STV_VDP2_CYCA1U;
+	cp_regs[4] = STV_VDP2_CYCA2L;
+	cp_regs[5] = STV_VDP2_CYCA2U;
+	cp_regs[6] = STV_VDP2_CYCA3L;
+	cp_regs[7] = STV_VDP2_CYCA3U;
 
 	if ( bitmap_enable ) access_command_ok = 1;
 
@@ -3820,14 +3826,10 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	UINT8  interlace_framebuffer;
 	static const UINT16 sprite_colormask_table[] = { 0x07ff, 0x07ff, 0x07ff, 0x07ff, 0x03ff, 0x07ff, 0x03ff, 0x01ff,
 										0x007f, 0x003f, 0x003f, 0x003f, 0x0ff, 0x0ff, 0x0ff, 0x0ff };
-	UINT8 sprite_priorities[] = { STV_VDP2_S0PRIN, STV_VDP2_S1PRIN, STV_VDP2_S2PRIN, STV_VDP2_S3PRIN, 
-								  STV_VDP2_S4PRIN, STV_VDP2_S5PRIN, STV_VDP2_S6PRIN, STV_VDP2_S7PRIN };
 	static const UINT16 priority_shift_table[] = { 14, 13, 14, 13, 13, 12, 12, 12, 7, 7, 6, 0, 7, 7, 6, 0 };
 	static const UINT16 priority_mask_table[]  = {  3,  7,  1,  3,  3,  7,  7,  7, 1, 1, 3, 0, 1, 1, 3, 0 };
 	static const UINT16 ccrr_shift_table[] =	 { 11, 11, 11, 11, 10, 11, 10,  9, 0, 6, 0, 6, 0, 6, 0, 6 };
 	static const UINT16 ccrr_mask_table[] =	     {  7,  3,  7,  3,  7,  1,  3,  7, 0, 1, 0, 3, 0, 1, 0, 3 };
-	UINT8 sprite_ccr[] = { STV_VDP2_S0CCRT, STV_VDP2_S1CCRT, STV_VDP2_S2CCRT, STV_VDP2_S3CCRT, 
-						   STV_VDP2_S4CCRT, STV_VDP2_S5CCRT, STV_VDP2_S6CCRT, STV_VDP2_S7CCRT };
 	UINT16 alpha_enabled;
 
 	int sprite_type;
@@ -3836,6 +3838,26 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	UINT16 sprite_priority_shift, sprite_priority_mask, sprite_ccrr_shift, sprite_ccrr_mask;
 	UINT8	priority;
 	UINT8	ccr = 0;
+	UINT8 sprite_priorities[8];
+	UINT8 sprite_ccr[8];
+
+	sprite_priorities[0] = STV_VDP2_S0PRIN;
+	sprite_priorities[1] = STV_VDP2_S1PRIN;
+	sprite_priorities[2] = STV_VDP2_S2PRIN;
+	sprite_priorities[3] = STV_VDP2_S3PRIN;
+	sprite_priorities[4] = STV_VDP2_S4PRIN;
+	sprite_priorities[5] = STV_VDP2_S5PRIN;
+	sprite_priorities[6] = STV_VDP2_S6PRIN;
+	sprite_priorities[7] = STV_VDP2_S7PRIN;
+
+	sprite_ccr[0] = STV_VDP2_S0CCRT;
+	sprite_ccr[1] = STV_VDP2_S1CCRT;
+	sprite_ccr[2] = STV_VDP2_S2CCRT;
+	sprite_ccr[3] = STV_VDP2_S3CCRT;
+	sprite_ccr[4] = STV_VDP2_S4CCRT;
+	sprite_ccr[5] = STV_VDP2_S5CCRT;
+	sprite_ccr[6] = STV_VDP2_S6CCRT;
+	sprite_ccr[7] = STV_VDP2_S7CCRT;
 
 	for ( i = 0; i < 8; i++ ) if ( sprite_priorities[i] == pri ) break;
 	if ( i == 8 ) return;

@@ -54,6 +54,8 @@ INLINE data8_t RDSPC(int space, offs_t addr)
 			return (*address_space[space].accessors->read_word)(addr) >> (8 * ((addr & 1) ^ (ENDIAN == CPU_IS_BE ? 1 : 0)));
 		case 4:
 			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
+		case 8:
+			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
 	}
 	return 0;
 }
@@ -618,7 +620,7 @@ static int readkey(void)
 		draw_screen();	/* so we can change stuff in RAM and see the effect on screen */
 		update_video_and_audio();
 
-		k = KEYCODE_NONE;
+		k = CODE_NONE;
 		if (code_pressed_memory_repeat(KEYCODE_A,dbg_key_repeat)) k = KEYCODE_A;
 		if (code_pressed_memory_repeat(KEYCODE_B,dbg_key_repeat)) k = KEYCODE_B;
 		if (code_pressed_memory_repeat(KEYCODE_C,dbg_key_repeat)) k = KEYCODE_C;
@@ -719,10 +721,10 @@ static int readkey(void)
 /*		if (code_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
 /*		if (code_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
 
-		if (k == KEYCODE_NONE)
+		if (k == CODE_NONE)
 			debugger_idle = 1;
 
-	} while (k == KEYCODE_NONE);
+	} while (k == CODE_NONE);
 	debugger_idle = 0;
 	if (cursor_on)
 		toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
@@ -3611,30 +3613,30 @@ static void cmd_help( void )
 		case KEYCODE_UP:
 			if( top > 0 )
 				top--;
-			k = KEYCODE_NONE;
+			k = CODE_NONE;
 			break;
 		case KEYCODE_ENTER:
 		case KEYCODE_DOWN:
 			if( top < lines - h )
 				top++;
-			k = KEYCODE_NONE;
+			k = CODE_NONE;
 			break;
 		case KEYCODE_PGUP:
 			if( top - h > 0 )
 				top -= h;
 			else
 				top = 0;
-			k = KEYCODE_NONE;
+			k = CODE_NONE;
 			break;
 		case KEYCODE_PGDN:
 			if( top + h < lines - h )
 				top += h;
 			else
 				top = lines - h;
-			k = KEYCODE_NONE;
+			k = CODE_NONE;
 			break;
 		}
-	} while( k == KEYCODE_NONE );
+	} while( k == CODE_NONE );
 
 	free( help );
 
@@ -5374,7 +5376,7 @@ void MAME_Debug(void)
 	{
 		debug_key_delay = 0;
 		if (!debug_key_pressed)
-			debug_key_pressed = seq_pressed(input_port_type_seq(IPT_UI_ON_SCREEN_DISPLAY));
+			debug_key_pressed = input_port_type_pressed(IPT_UI_ON_SCREEN_DISPLAY,0);
 	}
 
 	if( dbg_fast )

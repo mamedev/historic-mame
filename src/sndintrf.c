@@ -1272,6 +1272,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_C352)
+	{
+		SOUND_C352,
+		"C352",
+		0,
+		0,
+		c352_sh_start,
+		c352_sh_stop,
+		0,
+		0
+	},
+#endif
 
 
 

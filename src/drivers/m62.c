@@ -510,29 +510,29 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) \
 	/* service coin must be active for 19 frames to be consistently recognized */ \
-	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1, 19 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(19) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 #define IN1_PORT \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY ) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 #define IN2_PORT \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 
 #define	COINAGE_DSW \
 	/* TODO: support the different settings which happen in Coin Mode 2 */ \
@@ -596,33 +596,33 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( kungfum )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x02, "Energy Loss" )
 	PORT_DIPSETTING(    0x02, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
@@ -633,7 +633,7 @@ INPUT_PORTS_START( kungfum )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -645,48 +645,48 @@ INPUT_PORTS_START( kungfum )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	/* In slowmo mode, press 2 to slow game speed */
-	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Slow Motion Mode (Cheat)")
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Level Selection Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( battroad )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Fuel Decrease" )
 	PORT_DIPSETTING(    0x03, "Slow" )
-	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -701,32 +701,32 @@ INPUT_PORTS_START( battroad )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Stop Mode (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Timer" )
 	PORT_DIPSETTING(    0x03, "Slow" )
-	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -736,7 +736,7 @@ INPUT_PORTS_START( ldrun )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -751,36 +751,36 @@ INPUT_PORTS_START( ldrun )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Stop Mode (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Level Selection Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun2 )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
-	PORT_DIPSETTING(    0x00, "Low" )
-	PORT_DIPSETTING(    0x02, "High" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( High ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
@@ -788,7 +788,7 @@ INPUT_PORTS_START( ldrun2 )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -803,36 +803,36 @@ INPUT_PORTS_START( ldrun2 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Level Selection Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun3 )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
-	PORT_DIPSETTING(    0x00, "Low" )
-	PORT_DIPSETTING(    0x02, "High" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( High ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
@@ -840,7 +840,7 @@ INPUT_PORTS_START( ldrun3 )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -855,30 +855,30 @@ INPUT_PORTS_START( ldrun3 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Stop Mode (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Level Selection Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun4 )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
@@ -892,7 +892,7 @@ INPUT_PORTS_START( ldrun4 )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -910,28 +910,28 @@ INPUT_PORTS_START( ldrun4 )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Level Selection Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode (must set 2P game to No)", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(    0x80, 0x80, IPT_DIPSWITCH_NAME ) PORT_NAME("Service Mode (must set 2P game to No)") PORT_TOGGLE PORT_CODE(KEYCODE_F2)
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lotlot )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Speed" )
 	PORT_DIPSETTING(    0x03, "Very Slow" )
 	PORT_DIPSETTING(    0x02, "Slow" )
@@ -944,7 +944,7 @@ INPUT_PORTS_START( lotlot )
 	PORT_DIPSETTING(    0x00, "4" )
 	COINAGE2_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -959,43 +959,43 @@ INPUT_PORTS_START( lotlot )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( kidniki )
-	PORT_START
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Normal" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "50000" )
 	PORT_DIPSETTING(    0x00, "80000" )
 	COINAGE2_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1008,33 +1008,33 @@ INPUT_PORTS_START( kidniki )
 	PORT_DIPNAME( 0x08, 0x08, "Game Repeats" )
 	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spelunkr )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease" )
 	PORT_DIPSETTING(    0x03, "Slow" )
-	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1044,7 +1044,7 @@ INPUT_PORTS_START( spelunkr )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE2_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1055,37 +1055,37 @@ INPUT_PORTS_START( spelunkr )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
-	PORT_DIPNAME( 0x08, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	/* In teleport mode, keep 1 pressed and press up or down to move the character */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Teleport", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Teleport (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spelunk2 )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease" )
 	PORT_DIPSETTING(    0x03, "Slow" )
-	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -1095,7 +1095,7 @@ INPUT_PORTS_START( spelunk2 )
 	PORT_DIPSETTING(    0x00, "5" )
 	COINAGE2_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1106,33 +1106,33 @@ INPUT_PORTS_START( spelunk2 )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
-	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( youjyudn )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -1146,7 +1146,7 @@ INPUT_PORTS_START( youjyudn )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	COINAGE2_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1164,26 +1164,26 @@ INPUT_PORTS_START( youjyudn )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( horizon )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	IN0_PORT
 
-	PORT_START	/* IN1 */
+	PORT_START_TAG("IN1")
 	IN1_PORT
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")
 	IN2_PORT
 
-	PORT_START	/* DSW1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -1196,7 +1196,7 @@ INPUT_PORTS_START( horizon )
 	PORT_DIPSETTING(    0x04, "80000 160000" )
 	COINAGE3_DSW
 
-	PORT_START	/* DSW2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1208,17 +1208,17 @@ INPUT_PORTS_START( horizon )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	/* In freeze mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In frame advance mode, press 1 then 2 to advance a frame */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Frame Advance", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Frame Advance (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -2460,36 +2460,36 @@ ROM_START( horizon )
 ROM_END
 
 
-static void init_m62(void)
+static DRIVER_INIT( m62 )
 {
 	state_save_register_int("main", 0, "bankaddress", &bankaddress);
 	state_save_register_func_postload(set_m64_bank);
 }
 
-static void init_spelunk2(void)
+static DRIVER_INIT( spelunk2 )
 {
 	state_save_register_int("main", 0, "bankaddress", &bankaddress);
 	state_save_register_int("main", 0, "bankaddress2", &bankaddress2);
 	state_save_register_func_postload(set_m64_bank2);
 }
 
-GAME( 1984, kungfum,  0,        kungfum,  kungfum,  m62,      ROT0,   "Irem", "Kung-Fu Master" )
-GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  m62,      ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
-GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  m62,      ROT0,   "Irem", "Spartan X (Japan)" )
-GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  m62,      ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
-GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  m62,      ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
+GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0,        ROT0,   "Irem", "Kung-Fu Master" )
+GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
+GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem", "Spartan X (Japan)" )
+GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
+GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
 GAME( 1984, battroad, 0,        battroad, battroad, m62,      ROT90,  "Irem", "The Battle-Road" )
-GAME( 1984, ldrun,    0,        ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
-GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
+GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
+GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
 GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
-GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
-GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
+GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
+GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
 GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
-GAME( 1985, lotlot,   0,        lotlot,   lotlot,   m62,      ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
+GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0,        ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
 GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  m62,      ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
 GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  m62,      ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
 GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
 GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, spelunk2, ROT0,   "Irem (licensed from Broderbund)", "Spelunker II" )
 GAME( 1986, youjyudn, 0,        youjyudn, youjyudn, m62,      ROT270, "Irem", "Youjyuden (Japan)" )
-GAMEX(1985, horizon,  0,        horizon,  horizon,  m62,      ROT0,   "Irem", "Horizon", GAME_IMPERFECT_SOUND )
+GAMEX(1985, horizon,  0,        horizon,  horizon,  0,        ROT0,   "Irem", "Horizon", GAME_IMPERFECT_SOUND )

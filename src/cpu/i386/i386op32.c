@@ -270,6 +270,35 @@ static void I386OP(and_eax_i32)(void)		// Opcode 0x25
 	CYCLES(C_ALU_I_ACC);
 }
 
+static void I386OP(bsf_r32_rm32)(void)		// Opcode 0x0f bc
+{
+	UINT32 src, dst, temp;
+	UINT8 modrm = FETCH();
+
+	if( modrm >= 0xc0 ) {
+		src = LOAD_RM32(modrm);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		src = READ32(ea);
+	}
+
+	dst = 0;
+
+	if( src == 0 ) {
+		I.ZF = 1;
+	} else {
+		I.ZF = 0;
+		temp = 0;
+		while( (src & (1 << temp)) == 0 ) {
+			temp++;
+			dst = temp;
+			CYCLES(3);
+		}
+	}
+	CYCLES(11);
+	STORE_REG32(modrm, dst);
+}
+
 static void I386OP(bsr_r32_rm32)(void)		// Opcode 0x0f bd
 {
 	UINT32 src, dst, temp;
@@ -1654,6 +1683,40 @@ static void I386OP(shld32_i8)(void)			// Opcode 0x0f a4
 	}
 }
 
+static void I386OP(shld32_cl)(void)			// Opcode 0x0f a5
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT32 dst = LOAD_RM32(modrm);
+		UINT32 upper = LOAD_REG32(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 31 || shift == 0 ) {
+
+		} else {
+			I.CF = (dst & (1 << (32-shift))) ? 1 : 0;
+			dst = (dst << shift) | (upper >> (32-shift));
+			SetSZPF32(dst);
+		}
+		STORE_RM32(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT32 dst = READ32(ea);
+		UINT32 upper = LOAD_REG32(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 31 || shift == 0 ) {
+
+		} else {
+			I.CF = (dst & (1 << (32-shift))) ? 1 : 0;
+			dst = (dst << shift) | (upper >> (32-shift));
+			SetSZPF32(dst);
+		}
+		WRITE32(ea, dst);
+		CYCLES(7);
+	}
+}
+
 static void I386OP(shrd32_i8)(void)			// Opcode 0x0f ac
 {
 	/* TODO: Correct flags */
@@ -1676,6 +1739,40 @@ static void I386OP(shrd32_i8)(void)			// Opcode 0x0f ac
 		UINT32 dst = READ32(ea);
 		UINT32 upper = LOAD_REG32(modrm);
 		UINT8 shift = FETCH();
+		if( shift > 31 || shift == 0 ) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (32-shift));
+			SetSZPF32(dst);
+		}
+		WRITE32(ea, dst);
+		CYCLES(7);
+	}
+}
+
+static void I386OP(shrd32_cl)(void)			// Opcode 0x0f ad
+{
+	/* TODO: Correct flags */
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT32 dst = LOAD_RM32(modrm);
+		UINT32 upper = LOAD_REG32(modrm);
+		UINT8 shift = REG8(CL);
+		if( shift > 31 || shift == 0 ) {
+
+		} else {
+			I.CF = (dst & (1 << (shift-1))) ? 1 : 0;
+			dst = (dst >> shift) | (upper << (32-shift));
+			SetSZPF32(dst);
+		}
+		STORE_RM32(modrm, dst);
+		CYCLES(3);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT32 dst = READ32(ea);
+		UINT32 upper = LOAD_REG32(modrm);
+		UINT8 shift = REG8(CL);
 		if( shift > 31 || shift == 0 ) {
 
 		} else {

@@ -63,7 +63,7 @@ static MACHINE_DRIVER_START( minivadr )
 	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(minivadr)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(minivadr)
 
 	/* sound hardware */

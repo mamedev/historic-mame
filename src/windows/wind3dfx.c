@@ -176,6 +176,7 @@ struct rc_option win_d3d_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ "Windows Direct3D 2D video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "zoom", "z", rc_int, &win_gfx_zoom, "2", 1, 8, NULL, "force specific zoom level" },
 	{ "d3dtexmanage", NULL, rc_bool, &win_d3d_tex_manage, "1", 0, 0, NULL, "use DirectX texture management" },
 	{ "d3dfilter", "flt", rc_int, &win_d3d_use_filter, "1", 0, 4, NULL, "interpolation method" },
 

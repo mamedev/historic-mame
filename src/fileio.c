@@ -117,6 +117,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 		case FILETYPE_ARTWORK:
 		case FILETYPE_HISTORY:
 		case FILETYPE_LANGUAGE:
+		case FILETYPE_CTRLR:
 #ifndef MESS
 		case FILETYPE_INI:
 #endif
@@ -244,7 +245,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* ctrlr files */
 		case FILETYPE_CTRLR:
-			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD);
 
 		/* game specific ini files */
 		case FILETYPE_INI:
@@ -831,6 +832,7 @@ static const char *get_extension_for_filetype(int filetype)
 			extension = "lng";
 			break;
 
+		case FILETYPE_CTRLR:		/* controller files */
 		case FILETYPE_CONFIG:		/* config files */
 			extension = "cfg";
 			break;
@@ -847,7 +849,6 @@ static const char *get_extension_for_filetype(int filetype)
 			extension = "mem";
 			break;
 
-		case FILETYPE_CTRLR:		/* config files */
 		case FILETYPE_INI:			/* game specific ini files */
 			extension = "ini";
 			break;
@@ -1086,9 +1087,8 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					{
 						char crcn[9];
 
-						hash_data_extract_printable_checksum(hash, HASH_CRC, crcn);
-
-						err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
+						if (hash_data_extract_printable_checksum(hash, HASH_CRC, crcn) != 0)
+							err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
 					}
 
 					if (err == 0)
@@ -1217,9 +1217,35 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 	mame_fputs
 ***************************************************************************/
 
+#if !defined(CRLF) || (CRLF < 1) || (CRLF > 3)
+#error CRLF undefined: must be 1 (CR), 2 (LF) or 3 (CR/LF)
+#endif
+
 int mame_fputs(mame_file *f, const char *s)
 {
-	return mame_fwrite(f, s, strlen(s));
+	char convbuf[1024];
+	char *pconvbuf;
+
+	for (pconvbuf = convbuf; *s; s++)
+	{
+		if (*s == '\n')
+		{
+			if (CRLF == 1)		/* CR only */
+				*pconvbuf++ = 13;
+			else if (CRLF == 2)	/* LF only */
+				*pconvbuf++ = 10;
+			else if (CRLF == 3)	/* CR+LF */
+			{
+				*pconvbuf++ = 13;
+				*pconvbuf++ = 10;
+			}
+		}
+		else
+			*pconvbuf++ = *s;
+	}
+	*pconvbuf++ = 0;
+
+	return mame_fwrite(f, convbuf, strlen(convbuf));
 }
 
 
@@ -1230,7 +1256,7 @@ int mame_fputs(mame_file *f, const char *s)
 
 int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
 {
-	char buf[512];
+	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, va);
 	return mame_fputs(f, buf);
 }

@@ -14,8 +14,6 @@ David Widel d_widel@hotmail.com
 
 #include "driver.h"
 
-void machine_init_pacman(void);
-
 static int counter=0;
 
 
@@ -202,6 +200,4 @@ MACHINE_INIT( acitya )
 	/* The initial state of the counter is 0x0B */
 	counter = 0x0B;
 	cpu_setbank (1, &RAM[0x1c000]);
-
-	machine_init_pacman();
 }

@@ -179,8 +179,8 @@ static I386_OPCODE opcode_table1[256] =
 	{"pop",				0,				PARAM_ESI,			0,					0				},
 	{"pop",				0,				PARAM_EDI,			0,					0				},
 	// 0x60
-	{"pusha\0pushad",	VAR_NAME,		0,					0,					6				},
-	{"popa\0popad",		VAR_NAME,		0,					0,					5				},
+	{"pusha\0pushad",	VAR_NAME,		0,					0,					0				},
+	{"popa\0popad",		VAR_NAME,		0,					0,					0				},
 	{"bound",			MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"arpl",			MODRM,			PARAM_RM,			PARAM_REG16,		0				},
 	{"seg_fs",			SEG_FS,			0,					0,					0				},
@@ -192,9 +192,9 @@ static I386_OPCODE opcode_table1[256] =
 	{"push",			0,				PARAM_I8,			0,					0				},
 	{"imul",			MODRM,			PARAM_REG,			PARAM_RM,			PARAM_I8		},
 	{"insb",			0,				0,					0,					0				},
-	{"insw\0insd",		VAR_NAME,		0,					0,					5				},
+	{"insw\0insd",		VAR_NAME,		0,					0,					0				},
 	{"outsb",			0,				0,					0,					0				},
-	{"outsw\0outsd",	VAR_NAME,		0,					0,					6				},
+	{"outsw\0outsd",	VAR_NAME,		0,					0,					0				},
 	// 0x70
 	{"jo",				0,				PARAM_REL8,			0,					0				},
 	{"jno",				0,				PARAM_REL8,			0,					0				},
@@ -238,12 +238,12 @@ static I386_OPCODE opcode_table1[256] =
 	{"xchg",			0,				PARAM_EAX,			PARAM_EBP,			0				},
 	{"xchg",			0,				PARAM_EAX,			PARAM_ESI,			0				},
 	{"xchg",			0,				PARAM_EAX,			PARAM_EDI,			0				},
-	{"cbw\0cwde",		VAR_NAME,		0,					0,					4				},
-	{"cwd\0cdq",		VAR_NAME,		0,					0,					4				},
+	{"cbw\0cwde",		VAR_NAME,		0,					0,					0				},
+	{"cwd\0cdq",		VAR_NAME,		0,					0,					0				},
 	{"call",			0,				PARAM_ADDR,			0,					0				},
 	{"wait",			0,				0,					0,					0				},
-	{"pushf\0pushfd",	VAR_NAME,		0,					0,					6				},
-	{"popf\0popfd",		VAR_NAME,		0,					0,					5				},
+	{"pushf\0pushfd",	VAR_NAME,		0,					0,					0				},
+	{"popf\0popfd",		VAR_NAME,		0,					0,					0				},
 	{"sahf",			0,				0,					0,					0				},
 	{"lahf",			0,				0,					0,					0				},
 	// 0xa0
@@ -252,17 +252,17 @@ static I386_OPCODE opcode_table1[256] =
 	{"mov",				0,				PARAM_MEM_OFFS_V,	PARAM_AL,			0				},
 	{"mov",				0,				PARAM_MEM_OFFS_V,	PARAM_EAX,			0				},
 	{"movsb",			0,				0,					0,					0				},
-	{"movsw\0movsd",	VAR_NAME,		0,					0,					6				},
+	{"movsw\0movsd",	VAR_NAME,		0,					0,					0				},
 	{"cmpsb",			0,				0,					0,					0				},
-	{"cmpsw\0cmpsd",	VAR_NAME,		0,					0,					6				},
+	{"cmpsw\0cmpsd",	VAR_NAME,		0,					0,					0				},
 	{"test",			0,				PARAM_AL,			PARAM_I8,			0				},
 	{"test",			0,				PARAM_EAX,			PARAM_IMM,			0				},
 	{"stosb",			0,				0,					0,					0				},
-	{"stosw\0stosd",	VAR_NAME,		0,					0,					6				},
+	{"stosw\0stosd",	VAR_NAME,		0,					0,					0				},
 	{"lodsb",			0,				0,					0,					0				},
-	{"lodsw\0lodsd",	VAR_NAME,		0,					0,					6				},
+	{"lodsw\0lodsd",	VAR_NAME,		0,					0,					0				},
 	{"scasb",			0,				0,					0,					0				},
-	{"scasw\0scasd",	VAR_NAME,		0,					0,					6				},
+	{"scasw\0scasd",	VAR_NAME,		0,					0,					0				},
 	// 0xb0
 	{"mov",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"mov",				0,				PARAM_CL,			PARAM_I8,			0				},
@@ -318,7 +318,7 @@ static I386_OPCODE opcode_table1[256] =
 	{"loopne",			0,				PARAM_REL8,			0,					0				},
 	{"loopz",			0,				PARAM_REL8,			0,					0				},
 	{"loop",			0,				PARAM_REL8,			0,					0				},
-	{"jcxz\0jecxz",		VAR_NAME,		PARAM_REL8,			0,					4				},
+	{"jcxz\0jecxz",		VAR_NAME,		PARAM_REL8,			0,					0				},
 	{"in",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"in",				0,				PARAM_EAX,			PARAM_I8,			0				},
 	{"out",				0,				PARAM_AL,			PARAM_I8,			0				},
@@ -909,17 +909,16 @@ static char* handle_sib_byte( char* s, UINT8 mod )
 		case 6: s += sprintf( s, "esi"); break;
 		case 7: s += sprintf( s, "edi"); break;
 	}
-	s += sprintf( s, "+" );
 	switch( i )
 	{
-		case 0: s += sprintf( s, "eax*%d", (1 << scale)); break;
-		case 1: s += sprintf( s, "ecx*%d", (1 << scale)); break;
-		case 2: s += sprintf( s, "edx*%d", (1 << scale)); break;
-		case 3: s += sprintf( s, "ebx*%d", (1 << scale)); break;
+		case 0: s += sprintf( s, "+eax*%d", (1 << scale)); break;
+		case 1: s += sprintf( s, "+ecx*%d", (1 << scale)); break;
+		case 2: s += sprintf( s, "+edx*%d", (1 << scale)); break;
+		case 3: s += sprintf( s, "+ebx*%d", (1 << scale)); break;
 		case 4: break;
-		case 5: s += sprintf( s, "ebp*%d", (1 << scale)); break;
-		case 6: s += sprintf( s, "esi*%d", (1 << scale)); break;
-		case 7: s += sprintf( s, "edi*%d", (1 << scale)); break;
+		case 5: s += sprintf( s, "+ebp*%d", (1 << scale)); break;
+		case 6: s += sprintf( s, "+esi*%d", (1 << scale)); break;
+		case 7: s += sprintf( s, "+edi*%d", (1 << scale)); break;
 	}
 	return s;
 }
@@ -1191,7 +1190,12 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 
 		case VAR_NAME:
 			if( operand_size ) {
-				s += sprintf( s, "%s", &op->mnemonic[op->param3] );
+				int p=0;
+				while(op->mnemonic[p] != 0)
+				{
+					p++;
+				};
+				s += sprintf( s, "%s", &op->mnemonic[p+1] );
 			} else {
 				s += sprintf( s, "%s", op->mnemonic );
 			}
