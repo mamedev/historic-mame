@@ -12,6 +12,8 @@
 
    09/20/98 - Added Emulated Sound Support		FMP
 
+ TODO: support stereo sound in Gorf (and maybe others)
+
  ****************************************************************************
  * To make it easier to differentiate between each machine's settings
  * I have split it into a separate section for each driver.
@@ -1001,7 +1003,8 @@ static struct MachineDriver gorf_machine_driver =
 	/* video hardware */
 	/* it may look like the right hand side of the screen needs clipping, but */
 	/* this isn't the case: cocktail mode would be clipped on the wrong side */
-	204, 320, { 0, 204-1, 0, 320-1 },
+
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -1088,7 +1091,7 @@ struct GameDriver gorf_driver =
 	gorf_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
 };
@@ -1114,7 +1117,7 @@ struct GameDriver gorfpgm1_driver =
 	gorf_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
 };

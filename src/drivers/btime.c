@@ -1556,32 +1556,6 @@ MACHINE_DRIVER(     disco,     750000, btime_irq_interrupt, nmi_interrupt,      
 
 ROM_START( btime_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, 0x0a98b230 )
-	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, 0x797e5f75 )
-	ROM_LOAD( "ab06.13b",     0xd000, 0x1000, 0xc77f3f64 )
-	ROM_LOAD( "ab05.10b",     0xe000, 0x1000, 0xb0d3640f )
-	ROM_LOAD( "ab07.15b",     0xf000, 0x1000, 0xa142f862 )
-
-	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ab12.7k",      0x0000, 0x1000, 0x6c79f79f )    /* charset #1 */
-	ROM_LOAD( "ab13.9k",      0x1000, 0x1000, 0xac01042f )
-	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
-	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
-	ROM_LOAD( "ab8.13k",      0x4000, 0x1000, 0x70b35bbe )
-	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
-	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
-	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
-	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
-
-	ROM_REGION(0x0800)      /* background graphics */
-	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
-ROM_END
-
-ROM_START( btimed_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0x368a25b5 )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
@@ -1605,7 +1579,7 @@ ROM_START( btimed_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( btimed2_rom )
+ROM_START( btime2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, 0xa041e25b )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
@@ -1618,6 +1592,32 @@ ROM_START( btimed2_rom )
 	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
 	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
 	ROM_LOAD( "aa8.13k",      0x4000, 0x1000, 0x8650c788 )
+	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
+	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
+	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+
+	ROM_REGION(0x0800)      /* background graphics */
+	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
+ROM_END
+
+ROM_START( btimem_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, 0x0a98b230 )
+	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, 0x797e5f75 )
+	ROM_LOAD( "ab06.13b",     0xd000, 0x1000, 0xc77f3f64 )
+	ROM_LOAD( "ab05.10b",     0xe000, 0x1000, 0xb0d3640f )
+	ROM_LOAD( "ab07.15b",     0xf000, 0x1000, 0xa142f862 )
+
+	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ab12.7k",      0x0000, 0x1000, 0x6c79f79f )    /* charset #1 */
+	ROM_LOAD( "ab13.9k",      0x1000, 0x1000, 0xac01042f )
+	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
+	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
+	ROM_LOAD( "ab8.13k",      0x4000, 0x1000, 0x70b35bbe )
 	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
 	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
 	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
@@ -1774,11 +1774,11 @@ ROM_START( mmonkey_rom )
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
-ROM_START( bnj_rom )
+ROM_START( brubber_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
-	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, 0xfb3a2cdd )
-	ROM_LOAD( "bnj12d.bin",   0xe000, 0x2000, 0xb88bc99e )
+	/* a000-bfff space for the service ROM */
+	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
+	ROM_LOAD( "brubber.12d",  0xe000, 0x2000, 0xb2ce51f5 )
 
 	ROM_REGION_DISPOSE(0x8000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bnj4e.bin",    0x0000, 0x2000, 0xb864d082 )
@@ -1791,11 +1791,11 @@ ROM_START( bnj_rom )
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
-ROM_START( brubber_rom )
+ROM_START( bnj_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	/* a000-bfff space for the service ROM */
-	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
-	ROM_LOAD( "brubber.12d",  0xe000, 0x2000, 0xb2ce51f5 )
+	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
+	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, 0xfb3a2cdd )
+	ROM_LOAD( "bnj12d.bin",   0xe000, 0x2000, 0xb88bc99e )
 
 	ROM_REGION_DISPOSE(0x8000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bnj4e.bin",    0x0000, 0x2000, 0xb864d082 )
@@ -2241,14 +2241,15 @@ static void disco_hisave(void)
 	}
 }
 
+
 struct GameDriver btime_driver =
 {
 	__FILE__,
 	0,
 	"btime",
-	"Burger Time (Midway)",
+	"Burger Time (Data East set 1)",
 	"1982",
-	"Data East (Bally Midway license)",
+	"Data East Corporation",
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
 	0,
 	&btime_machine_driver,
@@ -2267,12 +2268,12 @@ struct GameDriver btime_driver =
 	btime_hiload, btime_hisave
 };
 
-struct GameDriver btimed_driver =
+struct GameDriver btime2_driver =
 {
 	__FILE__,
 	&btime_driver,
-	"btimed",
-	"Burger Time (Data East set 1)",
+	"btime2",
+	"Burger Time (Data East set 2)",
 	"1982",
 	"Data East Corporation",
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
@@ -2280,7 +2281,7 @@ struct GameDriver btimed_driver =
 	&btime_machine_driver,
 	0,
 
-	btimed_rom,
+	btime2_rom,
 	0, btime_decode,
 	0,
 	0,	/* sound_prom */
@@ -2293,20 +2294,20 @@ struct GameDriver btimed_driver =
 	btime_hiload, btime_hisave
 };
 
-struct GameDriver btimed2_driver =
+struct GameDriver btimem_driver =
 {
 	__FILE__,
 	&btime_driver,
-	"btimed2",
-	"Burger Time (Data East set 2)",
+	"btime",
+	"Burger Time (Midway)",
 	"1982",
-	"Data East Corporation",
+	"Data East (Bally Midway license)",
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
 	0,
 	&btime_machine_driver,
 	0,
 
-	btimed2_rom,
+	btimem_rom,
 	0, btime_decode,
 	0,
 	0,	/* sound_prom */
@@ -2475,20 +2476,20 @@ struct GameDriver mmonkey_driver =
 	0, 0
 };
 
-struct GameDriver bnj_driver =
+struct GameDriver brubber_driver =
 {
 	__FILE__,
 	0,
-	"bnj",
-	"Bump 'n' Jump",
+	"brubber",
+	"Burnin' Rubber",
 	"1982",
-	"Data East USA (Bally Midway license)",
+	"Data East",
 	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&bnj_machine_driver,
 	0,
 
-	bnj_rom,
+	brubber_rom,
 	0, lnc_decode,
 	0,
 	0,	/* sound_prom */
@@ -2501,20 +2502,20 @@ struct GameDriver bnj_driver =
 	bnj_hiload, bnj_hisave
 };
 
-struct GameDriver brubber_driver =
+struct GameDriver bnj_driver =
 {
 	__FILE__,
-	&bnj_driver,
-	"brubber",
-	"Burnin' Rubber",
+	&brubber_driver,
+	"bnj",
+	"Bump 'n' Jump",
 	"1982",
-	"Data East",
+	"Data East USA (Bally Midway license)",
 	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&bnj_machine_driver,
 	0,
 
-	brubber_rom,
+	bnj_rom,
 	0, lnc_decode,
 	0,
 	0,	/* sound_prom */

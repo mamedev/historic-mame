@@ -177,7 +177,7 @@ static void init_machine(void)
 	cpu_setOPbaseoverride(opbase_override);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
+	atarigen_show_slapstic_message();
 }
 
 
@@ -562,33 +562,33 @@ static void rom_decode(void)
 
 ROM_START( rampart_rom )
 	ROM_REGION(0x148000)
-	ROM_LOAD_EVEN( "082-1033.13L", 0x00000, 0x80000, 0x5c36795f )
-	ROM_LOAD_ODD ( "082-1032.13J", 0x00000, 0x80000, 0xec7bc38c )
-	ROM_LOAD_EVEN( "082-2031.13L", 0x00000, 0x10000, 0x07650c7e )
-	ROM_LOAD_ODD ( "082-2030.13H", 0x00000, 0x10000, 0xe2bf2a26 )
+	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
+	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
+	ROM_LOAD_EVEN( "082-2031.13l", 0x00000, 0x10000, 0x07650c7e )
+	ROM_LOAD_ODD ( "082-2030.13h", 0x00000, 0x10000, 0xe2bf2a26 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "082-1009.2N",   0x000000, 0x20000, 0x23b95f59 )
+	ROM_LOAD( "082-1009.2n",   0x000000, 0x20000, 0x23b95f59 )
 
 	ROM_REGION(0x40000)	/* ADPCM data */
-	ROM_LOAD( "082-1007.2D", 0x00000, 0x20000, 0xc96a0fc3 )
-	ROM_LOAD( "082-1008.1D", 0x20000, 0x20000, 0x518218d9 )
+	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
+	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
 
 
 ROM_START( ramprt2p_rom )
 	ROM_REGION(0x148000)
-	ROM_LOAD_EVEN( "082-1033.13L", 0x00000, 0x80000, 0x5c36795f )
-	ROM_LOAD_ODD ( "082-1032.13J", 0x00000, 0x80000, 0xec7bc38c )
-	ROM_LOAD_EVEN( "205113KL.ROM", 0x00000, 0x20000, 0xd4e26d0f )
-	ROM_LOAD_ODD ( "205013H.ROM",  0x00000, 0x20000, 0xed2a49bd )
+	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
+	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
+	ROM_LOAD_EVEN( "205113kl.rom", 0x00000, 0x20000, 0xd4e26d0f )
+	ROM_LOAD_ODD ( "205013h.rom",  0x00000, 0x20000, 0xed2a49bd )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "10192N.ROM",   0x000000, 0x20000, 0xefa38bef )
+	ROM_LOAD( "10192n.rom",   0x000000, 0x20000, 0xefa38bef )
 
 	ROM_REGION(0x40000)	/* ADPCM data */
-	ROM_LOAD( "082-1007.2D", 0x00000, 0x20000, 0xc96a0fc3 )
-	ROM_LOAD( "082-1008.1D", 0x20000, 0x20000, 0x518218d9 )
+	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
+	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
 
 

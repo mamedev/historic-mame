@@ -22,6 +22,16 @@ unsigned char *irem_textram;
 int irem_textram_size;
 
 
+static const struct rectangle kungfum_spritevisiblearea =
+{
+	16*8, (64-16)*8-1,
+	10*8, 32*8-1
+};
+static const struct rectangle kungfum_flipspritevisiblearea =
+{
+	16*8, (64-16)*8-1,
+	0*8, 22*8-1
+};
 
 /***************************************************************************
 
@@ -385,7 +395,9 @@ void spelunk2_gfxport_w(int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap,
+					     const struct rectangle *spritevisiblearea,
+					     const struct rectangle *flipspritevisiblearea )
 {
 	int offs;
 
@@ -436,7 +448,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					code + i * incr,col,
 					flipx,flipy,
 					sx,sy + 16 * i,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					flipscreen ? flipspritevisiblearea : spritevisiblearea,TRANSPARENCY_PEN,0);
 
 			i--;
 		} while (i >= 0);
@@ -1050,7 +1062,7 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	kungfum_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &kungfum_spritevisiblearea, &kungfum_flipspritevisiblearea);
 }
 
 void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -1073,32 +1085,32 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	ldrun4_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
 }
 
 void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	lotlot_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
 }
 
 void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	kidniki_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
 	kidniki_draw_text(bitmap);
 }
 
 void spelunkr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunkr_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
 	spelunkr_draw_text(bitmap);
 }
 
 void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunk2_draw_background(bitmap);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
 	spelunkr_draw_text(bitmap);
 }

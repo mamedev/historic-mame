@@ -59,7 +59,7 @@ static UINT8 i8039_win_layout[] = {
 
 typedef struct
 {
-	PAIR	PPC;			/* previous program counter */
+	PAIR	PREPC;			/* previous program counter */
     PAIR    PC;             /* program counter */
     UINT8   A, SP, PSW;
     UINT8   RAM[128];
@@ -604,7 +604,7 @@ int i8039_execute(int cycles)
 		}
         R.pending_irq = I8039_IGNORE_INT;
 
-        R.PPC = R.PC;
+        R.PREPC = R.PC;
 
 		CALL_MAME_DEBUG;
 
@@ -715,7 +715,7 @@ unsigned i8039_get_reg (int regnum)
 		case I8039_PSW: return R.PSW;
         case I8039_A: return R.A;
 		case I8039_IRQ_STATE: return R.irq_state;
-		case REG_PREVIOUSPC: return R.PPC.w.l;
+		case REG_PREVIOUSPC: return R.PREPC.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{

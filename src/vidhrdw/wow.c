@@ -460,8 +460,8 @@ int gorf_vh_start(void)
 
 			if (bit1 ^ bit2) generator |= 1;
 
-			if (y >= Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y &&
+			if (y >= Machine->drv->visible_area.min_x &&
+				y <= Machine->drv->visible_area.max_x &&
 				((~generator >> 16) & 1) &&
 				(generator & 0x3f) == 0x3f)
 			{
@@ -475,7 +475,7 @@ int gorf_vh_start(void)
                     ex = x;
                     ey = y;
 
-                    if (Machine->orientation & ORIENTATION_SWAP_XY)
+                    if (!(Machine->orientation & ORIENTATION_SWAP_XY))
                     {
                     	ey = x;
                         ex = y;
@@ -513,7 +513,7 @@ void Gorf_CopyLine(int Line)
 
         /* Handle Line swops outside of loop */
 
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
+        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
   		    if (Machine->orientation & ORIENTATION_FLIP_Y)
                 ey = 203 - Line;
@@ -540,16 +540,16 @@ void Gorf_CopyLine(int Line)
             {
             	color = data & 0x03;
 
-                if (Machine->orientation & ORIENTATION_SWAP_XY)
+                if (!(Machine->orientation & ORIENTATION_SWAP_XY))
                 {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
+					if (!(Machine->orientation & ORIENTATION_FLIP_X))
 						tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
                     else
                     	tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
                 }
                 else
                 {
-					if (Machine->orientation & ORIENTATION_FLIP_Y)
+					if (!(Machine->orientation & ORIENTATION_FLIP_Y))
 						tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
                     else
                     	tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
@@ -583,7 +583,7 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
         if (Speed==0)								/* Time to change colour */
         {
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
 				osd_mark_dirty(0,0,319,203,0);
 			else
 				osd_mark_dirty(0,0,203,319,0);
@@ -625,7 +625,7 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     {
     	int Line;
 
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
+        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
     	    for (Line = SparkleLow;Line <= SparkleHigh;Line++)
         	    for (offs=203;offs>=0;offs--)

@@ -314,6 +314,17 @@ int atarisys2_adc_r(int offset)
 
 int atarisys2_leta_r(int offset)
 {
+    if (atarisys2_pedal_count == -1)   /* 720 */
+	{
+		switch (offset & 3)
+		{
+			case 0: return readinputport(7) >> 8;
+			case 1: return readinputport(7) & 0xff;
+			case 2: return 0xff;
+			case 3: return 0xff;
+		}
+	}
+
 	return readinputport(7 + (offset & 3));
 }
 

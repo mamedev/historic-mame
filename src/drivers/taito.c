@@ -1708,7 +1708,7 @@ ROM_START( frontlin_rom )
 	ROM_LOAD( "fl71.u71",     0x1000, 0x1000, 0xc3eb38e7 )
 
 	ROM_REGION(0x0800)	/* 2k for the microcontroller */
-	ROM_LOAD( "aa1.13",       0x0080, 0x0780, 0xa5273366 )
+	ROM_LOAD( "aa1.13",       0x0000, 0x0800, 0x7e78bdd3 )
 ROM_END
 
 ROM_START( elevator_rom )
@@ -1742,7 +1742,7 @@ ROM_START( elevator_rom )
 	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
 
 	ROM_REGION(0x0800)	/* 2k for the microcontroller */
-	ROM_LOAD( "ba3.11",       0x0080, 0x0780, 0x47b8d449 )
+	ROM_LOAD( "ba3.11",       0x0000, 0x0800, 0x9ce75afc )
 ROM_END
 
 ROM_START( elevatob_rom )
@@ -1809,7 +1809,7 @@ ROM_START( tinstar_rom )
 	ROM_LOAD( "ts.72",        0x2000, 0x1000, 0xbeeed8f3 )
 
 	ROM_REGION(0x0800)	/* 2k for the microcontroller */
-	ROM_LOAD( "a10-12",       0x0080, 0x0780, 0x53c1617c )
+	ROM_LOAD( "a10-12",       0x0000, 0x0800, 0x889eefc9 )
 ROM_END
 
 ROM_START( waterski_rom )

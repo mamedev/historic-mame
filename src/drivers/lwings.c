@@ -737,12 +737,37 @@ ROM_START( sectionz_rom )
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
 ROM_END
 
+ROM_START( sctionza_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "sz-01a.bin",   0x00000, 0x8000, 0x98df49fd )
+	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
+	ROM_LOAD( "sz-03j.bin",   0x18000, 0x8000, 0x94547abf )
+
+	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9h_sz05.bin",  0x00000, 0x4000, 0x3173ba2e )  /* characters */
+	ROM_LOAD( "3e_sz14.bin",  0x10000, 0x8000, 0x63782e30 )  /* tiles */
+	ROM_LOAD( "1e_sz08.bin",  0x18000, 0x8000, 0xd57d9f13 )
+	ROM_LOAD( "3d_sz13.bin",  0x20000, 0x8000, 0x1b3d4d7f )
+	ROM_LOAD( "1d_sz07.bin",  0x28000, 0x8000, 0xf5b3a29f )
+	ROM_LOAD( "3b_sz12.bin",  0x30000, 0x8000, 0x11d47dfd )
+	ROM_LOAD( "1b_sz06.bin",  0x38000, 0x8000, 0xdf703b68 )
+	ROM_LOAD( "3f_sz15.bin",  0x40000, 0x8000, 0x36bb9bf7 )
+	ROM_LOAD( "1f_sz09.bin",  0x48000, 0x8000, 0xda8f06c9 )
+	ROM_LOAD( "3j_sz17.bin",  0x50000, 0x8000, 0x8df7b24a )  /* sprites */
+	ROM_LOAD( "1j_sz11.bin",  0x58000, 0x8000, 0x685d4c54 )
+	ROM_LOAD( "3h_sz16.bin",  0x60000, 0x8000, 0x500ff2bb )
+	ROM_LOAD( "1h_sz10.bin",  0x68000, 0x8000, 0x00b3d244 )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
+ROM_END
+
 struct GameDriver sectionz_driver =
 {
 	__FILE__,
 	0,
 	"sectionz",
-	"Section Z",
+	"Section Z (set 1)",
 	"1985",
 	"Capcom",
 	"Paul Leaman\nMarco Cassili (dip switches)",
@@ -751,6 +776,31 @@ struct GameDriver sectionz_driver =
 	0,
 
 	sectionz_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	sectionz_input_ports,
+
+	NULL, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver sctionza_driver =
+{
+	__FILE__,
+	&sectionz_driver,
+	"sctionza",
+	"Section Z (set 2)",
+	"1985",
+	"Capcom",
+	"Paul Leaman\nMarco Cassili (dip switches)",
+	0,
+	&machine_driver,
+	0,
+
+	sctionza_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

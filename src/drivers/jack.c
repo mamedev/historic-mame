@@ -381,7 +381,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	1789750,	/* 1.78975 MHz?????? */
+	18000000/12,	/* 1.5 MHz */
 	{ 100 },
 	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
@@ -397,14 +397,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz? */
+			18000000/6,	/* 3 MHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 MHz?????? */
+			18000000/12,	/* 1.5 MHz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */

@@ -1430,6 +1430,27 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
+ROM_START( uniwars_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
+	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
+	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
+	ROM_LOAD( "m07_4a.bin",   0x1800, 0x0800, 0xddc80bc5 )
+	ROM_LOAD( "d08p_5a.bin",  0x2000, 0x0800, 0x62354351 )
+	ROM_LOAD( "gg6",          0x2800, 0x0800, 0x270a3f4d )
+	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
+	ROM_LOAD( "n08p_8a.bin",  0x3800, 0x0800, 0x797d45c7 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "egg10",        0x0000, 0x0800, 0x012941e0 )
+	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
+	ROM_LOAD( "egg9",         0x1000, 0x0800, 0xfc8b58fd )
+	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
+ROM_END
+
 ROM_START( gteikoku_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
@@ -1449,27 +1470,6 @@ ROM_START( gteikoku_rom )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
-ROM_END
-
-ROM_START( uniwars_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
-	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
-	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
-	ROM_LOAD( "m07_4a.bin",   0x1800, 0x0800, 0xddc80bc5 )
-	ROM_LOAD( "u5",           0x2000, 0x0800, 0xa0847fe4 )
-	ROM_LOAD( "u6",           0x2800, 0x0800, 0x270a3f4d )
-	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
-	ROM_LOAD( "u8",           0x3800, 0x0800, 0x5760b65c )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "u10",          0x0000, 0x0800, 0x012941e0 )
-	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
-	ROM_LOAD( "u9",           0x1000, 0x0800, 0xfc8b58fd )
-	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
 ROM_END
 
 ROM_START( spacbatt_rom )
@@ -2336,10 +2336,36 @@ struct GameDriver pisces_driver =
 	pisces_hiload, pisces_hisave
 };
 
-struct GameDriver gteikoku_driver =
+struct GameDriver uniwars_driver =
 {
 	__FILE__,
 	0,
+	"uniwars",
+	"UniWar S",
+	"1980",
+	"Irem",
+	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
+	0,
+	&pisces_machine_driver,
+	pisces_driver_init,
+
+	uniwars_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	superg_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	galaxian_hiload, galaxian_hisave
+};
+
+struct GameDriver gteikoku_driver =
+{
+	__FILE__,
+	&uniwars_driver,
 	"gteikoku",
 	"Gingateikoku No Gyakushu",
 	"1980",
@@ -2362,36 +2388,10 @@ struct GameDriver gteikoku_driver =
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver uniwars_driver =
-{
-	__FILE__,
-	&gteikoku_driver,
-	"uniwars",
-	"Uniwars",
-	"1980",
-	"Karateco",
-	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
-	0,
-	&pisces_machine_driver,
-	pisces_driver_init,
-
-	uniwars_rom,
-	0, 0,
-	mooncrst_sample_names,
-	0,	/* sound_prom */
-
-	superg_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
-};
-
 struct GameDriver spacbatt_driver =
 {
 	__FILE__,
-	&gteikoku_driver,
+	&uniwars_driver,
 	"spacbatt",
 	"Space Battle",
 	"1980",
@@ -2472,7 +2472,7 @@ struct GameDriver pacmanbl_driver =
 	__FILE__,
 	&pacman_driver,
 	"pacmanbl",
-	"Pac Man (bootleg on Pisces hardware)",
+	"Pac-Man (bootleg on Pisces hardware)",
 	"1981",
 	"bootleg",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",

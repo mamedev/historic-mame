@@ -295,10 +295,23 @@ static struct IOWritePort chplft_writeport[] =
 };
 
 
+static unsigned char *work_ram;
+
+static int work_ram_r(int offset)
+{
+	return work_ram[offset];
+}
+
+static void work_ram_w(int offset,int data)
+{
+	work_ram[offset] = data;
+}
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8000, 0x87ff, work_ram_r },
+	{ 0x8800, 0x8fff, work_ram_r },
 	{ 0xe000, 0xe000, soundlatch_r },
 	{ -1 } /* end of table */
 };
@@ -306,7 +319,8 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8000, 0x87ff, work_ram_w, &work_ram },
+	{ 0x8800, 0x8fff, work_ram_w },
 	{ 0xa000, 0xa003, SN76496_0_w },	/* Choplifter writes to the four addresses */
 	{ 0xc000, 0xc003, SN76496_1_w },	/* in sequence */
 	{ -1 } /* end of table */
@@ -1562,9 +1576,9 @@ INPUT_PORTS_START( wbml_input_ports )
 	IN0_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Unknown" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )

@@ -766,8 +766,8 @@ ROM_START( wardner_rom )
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
 ROM_START( pyros_rom )
@@ -798,8 +798,8 @@ ROM_START( pyros_rom )
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
 ROM_START( wardnerj_rom )
@@ -830,9 +830,52 @@ ROM_START( wardnerj_rom )
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
+
+
+
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x7117],"\x20\x00\x00\x20",4) == 0) &&
+		(memcmp(&RAM[0x7170],"\x02\x01\x01",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x7119], 10*3);	/* score values */
+			osd_fread(f,&RAM[0x7137], 10*5);	/* initials */
+			osd_fread(f,&RAM[0x7169], 10);		/* levels */
+/*			osd_fread(f,&RAM[0x71b2], 3);		 * current players score */
+/*			osd_fread(f,&RAM[0x7230], 3);		 * other players score */
+
+			RAM[0x7116] = RAM[0x7119];		/* update high score */
+			RAM[0x7117] = RAM[0x711a];		/* on top of screen */
+			RAM[0x7118] = RAM[0x711b];
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x7119],30+50+10);		/* HS table */
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver wardner_driver =
@@ -843,18 +886,22 @@ struct GameDriver wardner_driver =
 	"Wardner (World)",
 	"1987",
 	"[Toaplan] Taito Corporation Japan",
-	"Quench\n",
+	"Quench",
 	0,
 	&machine_driver,
 	0,
+
 	wardner_rom,
 	0, 0,
 	0,
 	0,
+
 	wardner_input_ports,
+
 	0, 0, 0,
 	0,
-	0, 0
+
+	hiload, hisave
 };
 
 struct GameDriver pyros_driver =
@@ -865,18 +912,22 @@ struct GameDriver pyros_driver =
 	"Pyros (US)",
 	"1987",
 	"[Toaplan] Taito America Corporation",
-	"Quench\n",
+	"Quench",
 	0,
 	&machine_driver,
 	0,
+
 	pyros_rom,
 	0, 0,
 	0,
 	0,
+
 	pyros_input_ports,
+
 	0, 0, 0,
 	0,
-	0, 0
+
+	hiload, hisave
 };
 
 struct GameDriver wardnerj_driver =
@@ -887,18 +938,21 @@ struct GameDriver wardnerj_driver =
 	"Wardner no Mori (Japan)",
 	"1987",
 	"[Toaplan] Taito Corporation Japan",
-	"Quench\n",
+	"Quench",
 	0,
 	&machine_driver,
 	0,
+
 	wardnerj_rom,
 	0, 0,
 	0,
 	0,
+
 	wardnerj_input_ports,
+
 	0, 0, 0,
 	0,
-	0, 0
-};
 
+	hiload, hisave
+};
 

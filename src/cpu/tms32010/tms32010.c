@@ -38,7 +38,7 @@
 #endif
 typedef struct
 {
-	UINT16	PPC;		/* previous program counter */
+	UINT16	PREPC;		/* previous program counter */
 	UINT16  PC;
 	INT32   ACC, Preg;
 	INT32   ALU;
@@ -686,7 +686,7 @@ int tms320c10_execute(int cycles)
 				tms320c10_ICount -= Ext_IRQ();
 		}
 
-		R.PPC = R.PC;
+		R.PREPC = R.PC;
 
 		CALL_MAME_DEBUG;
 
@@ -914,7 +914,7 @@ unsigned tms320c10_dasm(char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
     return Dasm32010( buffer, pc );
 #else
-	sprintf( buffer, "$%04X", cpu_readop16((pc<<1)&0xffff) );
+	sprintf( buffer, "$%04X", TMS320C10_RDOP(pc) );
 	return 2;
 #endif
 }

@@ -54,7 +54,7 @@ static int beam_diameter_is_one;		  /* flag that beam is one pixel wide */
 static int vector_scale_x;                /* scaling to screen */
 static int vector_scale_y;                /* scaling to screen */
 
-static float gamma_correction = 1.0;
+static float gamma_correction = 1.2;
 
 /* The vectices are buffered here */
 typedef struct

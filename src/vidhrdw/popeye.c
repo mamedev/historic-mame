@@ -346,8 +346,7 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer2[offs])
 		{
-			int sx,sy,y,colour;
-
+			int sx,sy,y,colour,colour2;
 
 			dirtybuffer2[offs] = 0;
 
@@ -359,20 +358,68 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					sy >= Machine->drv->visible_area.min_y &&
 					sy+7 <= Machine->drv->visible_area.max_y)
 			{
-				colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
-				for (y = 0;y < 4;y++)
-					memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+            	/* Screen Rotation */
 
-				colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
-				for (y = 4;y < 8;y++)
-					memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+				if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+                {
+                	if (Machine->orientation & ORIENTATION_FLIP_X)
+                    	sx = 504 - sx;
+
+                 	if (Machine->orientation & ORIENTATION_FLIP_Y)
+                    {
+                    	sy = 472 - sy;
+
+						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
+						for (y = 4;y < 8;y++)
+							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+
+						colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
+						for (y = 0;y < 4;y++)
+							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+                    }
+                    else
+                    {
+						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
+						for (y = 0;y < 4;y++)
+							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+
+						colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
+						for (y = 4;y < 8;y++)
+							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
+                    }
+                }
+                else
+                {
+                	if (Machine->orientation & ORIENTATION_FLIP_Y)
+                    	sx = 504 - sx;
+
+                 	if (Machine->orientation & ORIENTATION_FLIP_X)
+                    {
+						colour2 = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
+                        colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
+
+                    	sy = 472 - sy;
+                    }
+                    else
+                    {
+                        colour2 = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
+						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
+                    }
+
+					for (y = 0;y < 8;y++)
+                    {
+						memset(&tmpbitmap2->line[sx+y][sy],colour,4);
+						memset(&tmpbitmap2->line[sx+y][sy+4],colour2,4);
+                    }
+                }
 			}
 		}
 	}
 
 	{
 		static int lastpos[2] = { -1, -1 };
-		if (/*popeye_background_pos[0] != 0 ||*/ popeye_background_pos[0] != lastpos[0] ||
+
+		if (popeye_background_pos[0] != lastpos[0] ||
 		    popeye_background_pos[1] != lastpos[1])
 		{
 			/* mark the whole screen dirty if we're scrolling */
@@ -390,7 +437,6 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (dirtybuffer[offs])
 			{
 				int sx,sy;
-
 
 				dirtybuffer[offs] = 0;
 
@@ -411,9 +457,13 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else
 	{
 		/* copy the background graphics */
+
+       	int x = 400 - 2 * popeye_background_pos[0];
+        int y = 2 * (256 - popeye_background_pos[1]);
+
 		copybitmap(bitmap,tmpbitmap2,0,0,
-			400 - 2 * popeye_background_pos[0],
-			2 * (256 - popeye_background_pos[1]),
+			x,
+			y,
 			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 

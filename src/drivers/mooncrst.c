@@ -922,6 +922,27 @@ ROM_START( mooncrsg_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( smooncrs_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "927",          0x0000, 0x0800, 0x55c5b994 )
+	ROM_LOAD( "928a",         0x0800, 0x0800, 0x77ae26d3 )
+	ROM_LOAD( "929",          0x1000, 0x0800, 0x716eaa10 )
+	ROM_LOAD( "930",          0x1800, 0x0800, 0xcea864f2 )
+	ROM_LOAD( "931",          0x2000, 0x0800, 0x702c5f51 )
+	ROM_LOAD( "932a",         0x2800, 0x0800, 0xe6a2039f )
+	ROM_LOAD( "933",          0x3000, 0x0800, 0x73783cee )
+	ROM_LOAD( "934",          0x3800, 0x0800, 0xc1a14aa2 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "bepr194",      0x0000, 0x0800, 0x6a23ec6d )
@@ -1549,6 +1570,32 @@ struct GameDriver mooncrsg_driver =
 	ORIENTATION_ROTATE_90,
 
 	mooncrsg_hiload, mooncrsg_hisave
+};
+
+struct GameDriver smooncrs_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"smooncrs",
+	"Super Moon Cresta",
+	"1980?",
+	"Gremlin",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&mooncrst_machine_driver,
+	0,
+
+	smooncrs_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	mooncrst_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrst_hiload, mooncrst_hisave
 };
 
 struct GameDriver mooncrsb_driver =

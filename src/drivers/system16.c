@@ -3592,28 +3592,28 @@ struct GameDriver timscanr_driver =
 
 ROM_START( tturfbl_rom )
 	ROM_REGION( 0x40000 ) /* 68000 code */
-	ROM_LOAD_ODD ( "tt06c794.ROM", 0x00000, 0x10000, 0x90e6a95a )
-	ROM_LOAD_EVEN( "tt042197.ROM", 0x00000, 0x10000, 0xdeee5af1 )
-	ROM_LOAD_ODD ( "tt05ef8a.ROM", 0x20000, 0x10000, 0xf787a948 )
-	ROM_LOAD_EVEN( "tt030be3.ROM", 0x20000, 0x10000, 0x100264a2 )
+	ROM_LOAD_ODD ( "tt06c794.rom", 0x00000, 0x10000, 0x90e6a95a )
+	ROM_LOAD_EVEN( "tt042197.rom", 0x00000, 0x10000, 0xdeee5af1 )
+	ROM_LOAD_ODD ( "tt05ef8a.rom", 0x20000, 0x10000, 0xf787a948 )
+	ROM_LOAD_EVEN( "tt030be3.rom", 0x20000, 0x10000, 0x100264a2 )
 
 	ROM_REGION( 0x30000 ) /* tiles */
-	ROM_LOAD( "tt1574b3.ROM", 0x00000, 0x10000, 0xe9e630da )
-	ROM_LOAD( "tt16cf44.ROM", 0x10000, 0x10000, 0x4c467735 )
-	ROM_LOAD( "tt17d59e.ROM", 0x20000, 0x10000, 0x60c0f2fe )
+	ROM_LOAD( "tt1574b3.rom", 0x00000, 0x10000, 0xe9e630da )
+	ROM_LOAD( "tt16cf44.rom", 0x10000, 0x10000, 0x4c467735 )
+	ROM_LOAD( "tt17d59e.rom", 0x20000, 0x10000, 0x60c0f2fe )
 
 	ROM_REGION( 0x80000*2 ) /* sprites */
-	ROM_LOAD( "tt11081e.ROM", 0x00000, 0x10000, 0x7a169fb1 )
-	ROM_LOAD( "tt07c5aa.ROM", 0x10000, 0x10000, 0xae0fa085 )
-	ROM_LOAD( "tt128958.ROM", 0x20000, 0x10000, 0x961d06b7 )
-	ROM_LOAD( "tt083acc.ROM", 0x30000, 0x10000, 0xe8671ee1 )
-	ROM_LOAD( "tt13e508.ROM", 0x40000, 0x10000, 0xf16b6ba2 )
-	ROM_LOAD( "tt09aae6.ROM", 0x50000, 0x10000, 0x1ef1077f )
-	ROM_LOAD( "tt14489c.ROM", 0x60000, 0x10000, 0x838bd71f )
-	ROM_LOAD( "tt107319.ROM", 0x70000, 0x10000, 0x639a57cb )
+	ROM_LOAD( "tt11081e.rom", 0x00000, 0x10000, 0x7a169fb1 )
+	ROM_LOAD( "tt07c5aa.rom", 0x10000, 0x10000, 0xae0fa085 )
+	ROM_LOAD( "tt128958.rom", 0x20000, 0x10000, 0x961d06b7 )
+	ROM_LOAD( "tt083acc.rom", 0x30000, 0x10000, 0xe8671ee1 )
+	ROM_LOAD( "tt13e508.rom", 0x40000, 0x10000, 0xf16b6ba2 )
+	ROM_LOAD( "tt09aae6.rom", 0x50000, 0x10000, 0x1ef1077f )
+	ROM_LOAD( "tt14489c.rom", 0x60000, 0x10000, 0x838bd71f )
+	ROM_LOAD( "tt107319.rom", 0x70000, 0x10000, 0x639a57cb )
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "tt014d68.ROM", 0x0000, 0x10000, 0xd4aab1d9 )
+	ROM_LOAD( "tt014d68.rom", 0x0000, 0x10000, 0xd4aab1d9 )
 ROM_END
 
 /***************************************************************************/

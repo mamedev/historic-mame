@@ -36,17 +36,16 @@ II. Cost
 
 III. ROM Images
 ---------------
-   You are not allowed to distribute MAME and ROM images on the same physical
-   medium. You are allowed to make them available for download on the same web
-   site, but only if you warn users about the copyright status of the ROMs and
-   the legal issues involved. You are NOT allowed to make MAME available for
-   download together with one giant big file containing all of the supported
-   ROMs, or any files containing more than one game each.
+   ROM images are copyrighted material, and most of them cannot be distributed
+   freely. Distribution of MAME on the same physical medium as illegal copies
+   of ROM images is strictly forbidden.
    You are not allowed to distribute MAME in any form if you sell, advertise or
    publicize illegal CD-ROMs or other media containing ROM images. Note that
    the restriction applies even if you don't directly make money out of that.
-   The restriction of course does not apply if the CD-ROMs are published by the
-   ROMs copyrights owners.
+   You are allowed to make ROMs and MAME available for download on the same web
+   site, but only if you warn users about the copyright status of the ROMs and
+   make it clear that they must not download the ROMs unless they are entitled
+   to do so.
 
 IV. Source Code Distribution
 ----------------------------
@@ -56,29 +55,35 @@ IV. Source Code Distribution
 
 V. Distribution Integrity
 -------------------------
-   This chapter applies to the official MAME distribution. See next chapter for
+   This chapter applies to the official MAME distribution. See below for
    limitations on the distribution of derivative works.
    MAME must be distributed only in the original archives. You are not allowed
    to distribute a modified version, nor to remove and/or add files to the
    archive.
 
 VI. Reuse of Source Code
--------------------------
+--------------------------
    This chapter might not apply to specific portions of MAME (e.g. CPU
    emulators) which bear different copyright notices.
    The source code cannot be used in a commercial product without a written
    authorization of the authors. Use in non commercial products is allowed and
    indeed encouraged; however if you use portions of the MAME source code in
    your program, you must make the full source code freely available as well.
+   Usage of the _information_ contained in the source code is free for any use.
+   However, given the amount of time and energy it took to collect this
+   information, we would appreciate if you made the additional information you
+   might have freely available as well.
+
+VII. Derivative Works
+---------------------
    Derivative works are allowed (provided source code is available), but
    discouraged: MAME is a project continuously evolving, and you should, in
    your best interest, submit your contributions to the development team, so
-   that they are integrated in the main distribution. Usage of the
-   _information_ contained in the source code is free for any use. However,
-   given the amount of time and energy it took to collect this information, we
-   would appreciate if you made the additional information you might have
-   freely available as well.
-
+   that they are integrated in the main distribution.
+   There are a certain number of drivers in the source which are disabled in
+   the official distribution. Enabling them is NOT considered a derivative
+   work, and distribution of executables with those drivers enabled is strictly
+   forbidden.
 
 
 How to Contact Us

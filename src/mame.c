@@ -1,4 +1,5 @@
 #include "driver.h"
+#include <ctype.h>
 
 
 static struct RunningMachine machine;
@@ -30,23 +31,54 @@ void shutdown_machine(void);
 int run_machine(void);
 
 
-int run_game(int game)
+static int validitychecks(void)
 {
-	int i,err;
+	int i;
 
-
-	/* validity checks */
-	i = 0;
-#ifdef MAME_DEBUG
-	while (drivers[i])
+	for (i = 0;drivers[i];i++)
 	{
+		const struct RomModule *romp;
+
 		if (drivers[i]->clone_of == drivers[i])
 		{
 			printf("%s is set as a clone of itself\n",drivers[i]->name);
 			return 1;
 		}
-		i++;
+
+		romp = drivers[i]->rom;
+		while (romp->name || romp->offset || romp->length)
+		{
+			const char *c;
+			if (romp->name && romp->name != (char *)-1)
+			{
+				c = romp->name;
+				while (*c)
+				{
+					if (tolower(*c) != *c)
+					{
+						printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+						return 1;
+					}
+					c++;
+				}
+			}
+
+			romp++;
+		}
 	}
+
+	return 0;
+}
+
+
+int run_game(int game)
+{
+	int err;
+
+
+#ifdef MAME_DEBUG
+	/* validity checks */
+	if (validitychecks()) return 1;
 #endif
 
 

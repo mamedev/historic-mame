@@ -110,6 +110,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
+	{ 0xc003, 0xc004, coin_counter_w },
 	{ 0xff3c, 0xff3e, zaxxon_sound_w },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
 	{ 0xfff1, 0xfff1, MWA_RAM, &zaxxon_char_color_bank },
@@ -590,6 +591,34 @@ ROM_START( zaxxon2_rom )
 	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, 0xa9e1fb43 ) /* char lookup table */
 ROM_END
 
+ROM_START( zaxxonb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, 0x125bca1c )
+	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, 0xc088df92 )
+	ROM_LOAD( "zaxxonb.1",    0x4000, 0x1000, 0xe7bdc417 )
+
+	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )	/* characters */
+	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "zaxxon.6",     0x1800, 0x2000, 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x3800, 0x2000, 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4",     0x5800, 0x2000, 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.11",    0x7800, 0x2000, 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
+	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
+	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
+	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
+	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
+ROM_END
+
 ROM_START( szaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, 0xaf7221da )
@@ -645,6 +674,80 @@ ROM_START( futspy_rom )
 	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x9ba2acaa ) /* palette */
 	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0xf9e26790 ) /* char lookup table */
 ROM_END
+
+
+
+static void zaxxonb_decode(void)
+{
+/*
+	the values vary, but the translation mask is always laid out like this:
+
+	  0 1 2 3 4 5 6 7 8 9 a b c d e f
+	0 A A B B A A B B C C D D C C D D
+	1 A A B B A A B B C C D D C C D D
+	2 E E F F E E F F G G H H G G H H
+	3 E E F F E E F F G G H H G G H H
+	4 A A B B A A B B C C D D C C D D
+	5 A A B B A A B B C C D D C C D D
+	6 E E F F E E F F G G H H G G H H
+	7 E E F F E E F F G G H H G G H H
+	8 H H G G H H G G F F E E F F E E
+	9 H H G G H H G G F F E E F F E E
+	a D D C C D D C C B B A A B B A A
+	b D D C C D D C C B B A A B B A A
+	c H H G G H H G G F F E E F F E E
+	d H H G G H H G G F F E E F F E E
+	e D D C C D D C C B B A A B B A A
+	f D D C C D D C C B B A A B B A A
+
+	(e.g. 0xc0 is XORed with H)
+	therefore in the following tables we only keep track of A, B, C, D, E, F, G and H.
+*/
+	static const unsigned char data_xortable[2][8] =
+	{
+		{ 0x0a,0x0a,0x22,0x22,0xaa,0xaa,0x82,0x82 },	/* ...............0 */
+		{ 0xa0,0xaa,0x28,0x22,0xa0,0xaa,0x28,0x22 },	/* ...............1 */
+	};
+	static const unsigned char opcode_xortable[8][8] =
+	{
+		{ 0x8a,0x8a,0x02,0x02,0x8a,0x8a,0x02,0x02 },	/* .......0...0...0 */
+		{ 0x80,0x80,0x08,0x08,0xa8,0xa8,0x20,0x20 },	/* .......0...0...1 */
+		{ 0x8a,0x8a,0x02,0x02,0x8a,0x8a,0x02,0x02 },	/* .......0...1...0 */
+		{ 0x02,0x08,0x2a,0x20,0x20,0x2a,0x08,0x02 },	/* .......0...1...1 */
+		{ 0x88,0x0a,0x88,0x0a,0xaa,0x28,0xaa,0x28 },	/* .......1...0...0 */
+		{ 0x80,0x80,0x08,0x08,0xa8,0xa8,0x20,0x20 },	/* .......1...0...1 */
+		{ 0x88,0x0a,0x88,0x0a,0xaa,0x28,0xaa,0x28 },	/* .......1...1...0 */
+		{ 0x02,0x08,0x2a,0x20,0x20,0x2a,0x08,0x02 } 	/* .......1...1...1 */
+	};
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	for (A = 0x0000;A < 0x8000;A++)
+	{
+		int i,j;
+		unsigned char src;
+
+
+		src = RAM[A];
+
+		/* pick the translation table from bit 0 of the address */
+		i = A & 1;
+
+		/* pick the offset in the table from bits 1, 3 and 5 of the source data */
+		j = ((src >> 1) & 1) + (((src >> 3) & 1) << 1) + (((src >> 5) & 1) << 2);
+		/* the bottom half of the translation table is the mirror image of the top */
+		if (src & 0x80) j = 7 - j;
+
+		/* decode the ROM data */
+		RAM[A] = src ^ data_xortable[i][j];
+
+		/* now decode the opcodes */
+		/* pick the translation table from bits 0, 4, and 8 of the address */
+		i = ((A >> 0) & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2);
+		ROM[A] = src ^ opcode_xortable[i][j];
+	}
+}
 
 
 
@@ -775,6 +878,32 @@ struct GameDriver zaxxon2_driver =
 
 	zaxxon2_rom,
 	0, 0,
+	zaxxon_sample_names,
+	0,	/* sound_prom */
+
+	zaxxon_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver zaxxonb_driver =
+{
+	__FILE__,
+	&zaxxon_driver,
+	"zaxxonb",
+	"Jackson",
+	"1982",
+	"bootleg",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
+	0,
+	&zaxxon_machine_driver,
+	0,
+
+	zaxxonb_rom,
+	0, zaxxonb_decode,
 	zaxxon_sample_names,
 	0,	/* sound_prom */
 

@@ -4,7 +4,7 @@
   ===============
 
   Driver provided by:
-  Paul Leaman
+  Paul Leaman (paul@vortexcomputing.demon.co.uk)
 
   M680000 for game, Z80, YM-2151 and OKIM6295 for sound.
 
@@ -14,6 +14,7 @@ TODO:
 - 3rd player controls in wof, dino
 - 3rd & 4th player controls, 3rd & 4th coin input, lockout & counter in
   slammast, mbomber
+- input ports for sfzch, I just copied the sf2 ones which are wrong
 
 ***************************************************************************/
 
@@ -98,6 +99,20 @@ static int cps1_interrupt(void)
 *
 ********************************************************************/
 
+
+extern void cpsq_set_command(int command, int data);
+extern int cpsq_sh_start(const struct MachineSound *msound);
+extern void cpsq_sh_stop (void);
+extern void cpsq_sh_update(void);
+
+static struct CustomSound_interface custom_interface =
+{
+	cpsq_sh_start,
+	cpsq_sh_stop,
+	cpsq_sh_update
+};
+
+
 static unsigned char *qsound_sharedram;
 
 int cps1_qsound_interrupt(void)
@@ -117,6 +132,48 @@ static int qsound_sharedram_r(int offset)
 static void qsound_sharedram_w(int offset,int data)
 {
 	qsound_sharedram[offset / 2] = data;
+}
+
+static int qsound_status_r(int offset)
+{
+	/* Port ready bit (0x80 if ready) */
+	return 0x80;
+}
+
+static int cps1_qsound_data;
+
+static void qsound_data_h_w(int offset,int data)
+{
+	cps1_qsound_data=(cps1_qsound_data&0xff)|(data<<8);
+}
+
+static void qsound_data_l_w(int offset,int data)
+{
+	cps1_qsound_data=(cps1_qsound_data&0xff00)|data;
+}
+
+static void qsound_cmd_w(int offset,int data)
+{
+	cpsq_set_command(data, cps1_qsound_data);
+}
+
+static void qsound_banksw_w(int offset,int data)
+{
+	/*
+	Z80 bank register for music note data. It's odd that it isn't encrypted
+	though.
+	*/
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	int bankaddress=0x10000+((data&0x0f)*0x4000);
+	if (bankaddress >= Machine->memory_region_length[Machine->drv->cpu[1].memory_region])
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "WARNING: Q sound bank overflow (%02x)\n", data);
+		}
+		bankaddress=0x10000;
+	}
+	cpu_setbank(1, &RAM[bankaddress]);
 }
 
 
@@ -261,7 +318,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct MemoryReadAddress qsound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
 	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xd007, 0xd007, qsound_status_r },
 	{ 0xf000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -270,6 +329,10 @@ static struct MemoryWriteAddress qsound_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram },
+	{ 0xd000, 0xd000, qsound_data_h_w },
+	{ 0xd001, 0xd001, qsound_data_l_w },
+	{ 0xd002, 0xd002, qsound_cmd_w },
+	{ 0xd003, 0xd003, qsound_banksw_w },
 	{ 0xf000, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -2666,7 +2729,7 @@ INPUT_PORTS_START( slammast_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mbomber_input_ports )
+INPUT_PORTS_START( mbombrd_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -3296,6 +3359,125 @@ INPUT_PORTS_START( megaman_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sfzch_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	 PORT_START      /* DSWA */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, "2 Coins to Start, 1 to Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "Easier" )
+	PORT_DIPSETTING(    0x06, "Very Easy" )
+	PORT_DIPSETTING(    0x05, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x03, "Difficult" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x01, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSWC */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Extra buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 
 /********************************************************************
@@ -3433,7 +3615,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
 			ignore_interrupt,0                               \
 		}                                                        \
 	},                                                               \
-	60, 4000, /* wrong, but reduces jerkiness */                     \
+    60, 0,                      \
 	1,                                                               \
 	0,                                                               \
 									 \
@@ -3452,7 +3634,52 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
 	cps1_vh_screenrefresh,                                           \
 									 \
 	/* sound hardware */                                             \
-	SOUND_SUPPORTS_STEREO,0,0,0,                                     \
+	0,0,0,0,                                     \
+	{ { SOUND_YM2151,  &ym2151_interface },                          \
+	  { SOUND_OKIM6295,  &okim6295_interface }                       \
+	}                            \
+};
+
+#define MACHINE_DRIVER_16BIT(CPS1_DRVNAME, CPS1_CPU_FRQ) \
+static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
+{                                                                        \
+	/* basic machine hardware */                                     \
+	{                                                                \
+		{                                                        \
+			CPU_M68000,                                      \
+			CPS1_CPU_FRQ,                                    \
+			0,                                               \
+			cps1_readmem,cps1_writemem,0,0,                  \
+			cps1_interrupt, 1										\
+		},                                                       \
+		{                                                        \
+			CPU_Z80 | CPU_AUDIO_CPU,                         \
+			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
+			2,      /* memory region #2 */                   \
+			sound_readmem,sound_writemem,0,0,                \
+			ignore_interrupt,0                               \
+		}                                                        \
+	},                                                               \
+	60, 4000, /* wrong, but reduces jerkiness */                     \
+	1,                                                               \
+	0,                                                               \
+									 \
+	/* video hardware */                                             \
+	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 }, \
+									 \
+	cps1_gfxdecodeinfo,                                              \
+	32*16+32*16+32*16+32*16,   /* lotsa colours */                   \
+	32*16+32*16+32*16+32*16,   /* Colour table length */             \
+	0,                                                               \
+									 \
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT, \
+	0,                                                               \
+	cps1_vh_start,                                                   \
+	cps1_vh_stop,                                                    \
+	cps1_vh_screenrefresh,                                           \
+									 \
+	/* sound hardware */                                             \
+	0,0,0,0,                                     \
 	{ { SOUND_YM2151,  &ym2151_interface },                          \
 	  { SOUND_OKIM6295,  &okim6295_interface }                       \
 	}                            \
@@ -3475,7 +3702,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
 			2,      /* memory region #2 */                   \
 			qsound_readmem,qsound_writemem,0,0,              \
-			ignore_interrupt,0                               \
+			interrupt,1                               \
 	}                                                        \
 	},                                                               \
 	60, 4000, /* wrong, but reduces jerkiness */                     \
@@ -3497,7 +3724,8 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 	cps1_vh_screenrefresh,                                           \
 									 \
 	/* sound hardware */                                             \
-	SOUND_SUPPORTS_STEREO,0,0,0,                                     \
+	SOUND_SUPPORTS_STEREO,0,0,0,   \
+	{ { SOUND_CUSTOM, &custom_interface } } \
 };
 
 
@@ -3524,17 +3752,18 @@ MACHINE_DRIVER( kod,       CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( captcomm,  CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( knights,   CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( varth,     CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( cworld2j,  CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER_16BIT( cworld2j,  CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( wof,      CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( dino,     CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( punisher, CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( slammast, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( mbomber,  CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( mbombrd,  CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( pnickj,    CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( qad,       CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( qtono2,    CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER_16BIT( pang3,     CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( megaman,   CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( pang3,     CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED )
 
 
 
@@ -4461,6 +4690,40 @@ ROM_START( sf2j_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
+ROM_START( sf2jb_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_EVEN( "sf2e_30b.rom",   0x00000, 0x20000, 0x57bd7051 )
+	ROM_LOAD_ODD ( "sf2j_37b.rom",   0x00000, 0x20000, 0x1e1f6844 )
+	ROM_LOAD_EVEN( "sf2e_31b.rom",   0x40000, 0x20000, 0xa673143d )
+	ROM_LOAD_ODD ( "sf2e_38b.rom",   0x40000, 0x20000, 0x4c2ccef7 )
+	ROM_LOAD_EVEN( "sf2_28b.rom",    0x80000, 0x20000, 0x4009955e )
+	ROM_LOAD_ODD ( "sf2_35b.rom",    0x80000, 0x20000, 0x8c1f3994 )
+	ROM_LOAD_EVEN( "sf2_29b.rom",    0xc0000, 0x20000, 0xbb4af315 )
+	ROM_LOAD_ODD ( "sf2_36b.rom",    0xc0000, 0x20000, 0xc02a13eb )
+
+	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sf2gfx01.rom",       0x000000, 0x80000, 0xba529b4f )
+	ROM_LOAD( "sf2gfx10.rom",       0x080000, 0x80000, 0x14b84312 )
+	ROM_LOAD( "sf2gfx20.rom",       0x100000, 0x80000, 0xc1befaa8 )
+	ROM_LOAD( "sf2gfx02.rom",       0x180000, 0x80000, 0x22c9cc8e )
+	ROM_LOAD( "sf2gfx11.rom",       0x200000, 0x80000, 0x2c7e2229 )
+	ROM_LOAD( "sf2gfx21.rom",       0x280000, 0x80000, 0x994bfa58 )
+	ROM_LOAD( "sf2gfx03.rom",       0x300000, 0x80000, 0x4b1b33a8 )
+	ROM_LOAD( "sf2gfx12.rom",       0x380000, 0x80000, 0x5e9cd89a )
+	ROM_LOAD( "sf2gfx22.rom",       0x400000, 0x80000, 0x0627c831 )
+	ROM_LOAD( "sf2gfx04.rom",       0x480000, 0x80000, 0x57213be8 )
+	ROM_LOAD( "sf2gfx13.rom",       0x500000, 0x80000, 0xb5548f17 )
+	ROM_LOAD( "sf2gfx23.rom",       0x580000, 0x80000, 0x3e66ad9d )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2_09.rom",   0x00000, 0x08000, 0xa4823a1b )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "sf2_18.rom",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
 ROM_START( c3wonders_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "3wonders.30",  0x00000, 0x20000, 0x0b156fd8 )
@@ -5040,8 +5303,9 @@ ROM_START( wof_rom )
 	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
 	ROM_LOAD( "tk2_gfx7.rom",   0x380000, 0x80000, 0x3edeb949 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x20000, 0xc9183a0d )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(                0x10000, 0x18000 )
 
 	ROM_REGION(0x80000) /* QSound samples */
 	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
@@ -5066,7 +5330,8 @@ ROM_START( wofj_rom )
 	ROM_LOAD( "tk206.bin",      0x380000, 0x80000, 0x58066ba8 )
 
 	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x20000, 0xc9183a0d )
+	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(                0x10000, 0x18000 )
 
 	ROM_REGION(0x80000) /* QSound samples */
 	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
@@ -5149,14 +5414,15 @@ ROM_START( dino_rom )
 	ROM_LOAD( "cd_gfx03.rom",   0x300000, 0x80000, 0x6c40f603 )
 	ROM_LOAD( "cd_gfx07.rom",   0x380000, 0x80000, 0x22bfb7a3 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "cd_q.rom",       0x00000, 0x20000, 0x605fdb0b )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "cd_q.rom",       0x00000, 0x08000, 0x605fdb0b )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "cd_q1.rom",      0x00000, 0x80000, 0x60927775 )
-	ROM_LOAD( "cd_q2.rom",      0x00000, 0x80000, 0x770f4c47 )
-	ROM_LOAD( "cd_q3.rom",      0x00000, 0x80000, 0x2f273ffc )
-	ROM_LOAD( "cd_q4.rom",      0x00000, 0x80000, 0x2c67821d )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "cd_q1.rom",      0x000000, 0x80000, 0x60927775 )
+	ROM_LOAD( "cd_q2.rom",      0x080000, 0x80000, 0x770f4c47 )
+	ROM_LOAD( "cd_q3.rom",      0x100000, 0x80000, 0x2f273ffc )
+	ROM_LOAD( "cd_q4.rom",      0x180000, 0x80000, 0x2c67821d )
 ROM_END
 
 ROM_START( dinoj_rom )
@@ -5175,14 +5441,15 @@ ROM_START( dinoj_rom )
 	ROM_LOAD( "cd_gfx03.rom",   0x300000, 0x80000, 0x6c40f603 )
 	ROM_LOAD( "cd_gfx07.rom",   0x380000, 0x80000, 0x22bfb7a3 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "cd_q.rom",       0x00000, 0x20000, 0x605fdb0b )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "cd_q.rom",       0x00000, 0x08000, 0x605fdb0b )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "cd_q1.rom",      0x00000, 0x80000, 0x60927775 )
-	ROM_LOAD( "cd_q2.rom",      0x00000, 0x80000, 0x770f4c47 )
-	ROM_LOAD( "cd_q3.rom",      0x00000, 0x80000, 0x2f273ffc )
-	ROM_LOAD( "cd_q4.rom",      0x00000, 0x80000, 0x2c67821d )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "cd_q1.rom",      0x000000, 0x80000, 0x60927775 )
+	ROM_LOAD( "cd_q2.rom",      0x080000, 0x80000, 0x770f4c47 )
+	ROM_LOAD( "cd_q3.rom",      0x100000, 0x80000, 0x2f273ffc )
+	ROM_LOAD( "cd_q4.rom",      0x180000, 0x80000, 0x2c67821d )
 ROM_END
 
 ROM_START( punisher_rom )
@@ -5207,14 +5474,15 @@ ROM_START( punisher_rom )
 	ROM_LOAD( "ps_gfx3.rom",   0x300000, 0x80000, 0x0122720b )
 	ROM_LOAD( "ps_gfx7.rom",   0x380000, 0x80000, 0x04c5acbd )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "ps_q.rom",       0x00000, 0x20000, 0x49ff4446 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "ps_q.rom",       0x00000, 0x08000, 0x49ff4446 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "ps_q1.rom",      0x00000, 0x80000, 0x31fd8726 )
-	ROM_LOAD( "ps_q2.rom",      0x00000, 0x80000, 0x980a9eef )
-	ROM_LOAD( "ps_q3.rom",      0x00000, 0x80000, 0x0dd44491 )
-	ROM_LOAD( "ps_q4.rom",      0x00000, 0x80000, 0xbed42f03 )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "ps_q1.rom",      0x000000, 0x80000, 0x31fd8726 )
+	ROM_LOAD( "ps_q2.rom",      0x080000, 0x80000, 0x980a9eef )
+	ROM_LOAD( "ps_q3.rom",      0x100000, 0x80000, 0x0dd44491 )
+	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
 ROM_END
 
 ROM_START( punishrj_rom )
@@ -5233,14 +5501,15 @@ ROM_START( punishrj_rom )
 	ROM_LOAD( "ps_gfx3.rom",   0x300000, 0x80000, 0x0122720b )
 	ROM_LOAD( "ps_gfx7.rom",   0x380000, 0x80000, 0x04c5acbd )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "ps_q.rom",       0x00000, 0x20000, 0x49ff4446 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "ps_q.rom",       0x00000, 0x08000, 0x49ff4446 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "ps_q1.rom",      0x00000, 0x80000, 0x31fd8726 )
-	ROM_LOAD( "ps_q2.rom",      0x00000, 0x80000, 0x980a9eef )
-	ROM_LOAD( "ps_q3.rom",      0x00000, 0x80000, 0x0dd44491 )
-	ROM_LOAD( "ps_q4.rom",      0x00000, 0x80000, 0xbed42f03 )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "ps_q1.rom",      0x000000, 0x80000, 0x31fd8726 )
+	ROM_LOAD( "ps_q2.rom",      0x080000, 0x80000, 0x980a9eef )
+	ROM_LOAD( "ps_q3.rom",      0x100000, 0x80000, 0x0dd44491 )
+	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
 ROM_END
 
 ROM_START( slammast_rom )
@@ -5267,21 +5536,61 @@ ROM_START( slammast_rom )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "mb_qa.rom",      0x00000, 0x20000, 0xe21a03c4 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "mb_qa.rom",      0x00000, 0x08000, 0xe21a03c4 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x400000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x100000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x180000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x200000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x280000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x300000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( mbomber_rom )
+ROM_START( mbomberj_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "mbj23e",       0x000000, 0x80000, 0x0d06036a )
+	ROM_LOAD_EVEN( "mbe_24b.rom",       0x080000, 0x20000, 0x95d5e729 )
+	ROM_LOAD_ODD ( "mbe_28b.rom",       0x080000, 0x20000, 0xb1c7cbcb )
+	ROM_LOAD_EVEN( "mbe_25b.rom",       0x0c0000, 0x20000, 0xa50d3fd4 )
+	ROM_LOAD_ODD ( "mbe_29b.rom",       0x0c0000, 0x20000, 0x08e32e56 )
+	ROM_LOAD_WIDE_SWAP( "mbe_21a.rom",  0x100000, 0x80000, 0xd5007b05 )
+	ROM_LOAD_WIDE_SWAP( "mbe_20a.rom",  0x180000, 0x80000, 0xaeb557b0 )
+
+	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mb03",           0x000000, 0x80000, 0xcb866c2f )
+	ROM_LOAD( "mb_gfx06.rom",   0x080000, 0x80000, 0xb76c70e9 )
+	ROM_LOAD( "mb_gfx11.rom",   0x100000, 0x80000, 0x8fb94743 )
+	ROM_LOAD( "mb01",           0x180000, 0x80000, 0xa53b1c81 )
+	ROM_LOAD( "mb_gfx05.rom",   0x200000, 0x80000, 0x506b9dc9 )
+	ROM_LOAD( "mb_gfx10.rom",   0x280000, 0x80000, 0x97976ff5 )
+	ROM_LOAD( "mb04",           0x300000, 0x80000, 0xc9143e75 )
+	ROM_LOAD( "mb_gfx08.rom",   0x380000, 0x80000, 0xe60c9556 )
+	ROM_LOAD( "mb_gfx13.rom",   0x400000, 0x80000, 0xda810d5f )
+	ROM_LOAD( "mb02",           0x480000, 0x80000, 0x23fe10f6 )
+	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
+	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
+
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "mb_qa.rom",      0x00000, 0x08000, 0xe21a03c4 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION(0x400000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x100000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x180000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x200000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x280000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x300000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
+ROM_END
+
+ROM_START( mbombrd_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "mbde_26.rom",       0x000000, 0x20000, 0x72b7451c )
 	ROM_LOAD_ODD ( "mbde_30.rom",       0x000000, 0x20000, 0xa036dc16 )
@@ -5308,21 +5617,22 @@ ROM_START( mbomber_rom )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "mb_q.rom",       0x00000, 0x20000, 0xd6fa76d1 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "mb_q.rom",       0x00000, 0x08000, 0xd6fa76d1 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x400000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x100000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x180000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x200000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x280000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x300000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( mbomberj_rom )
+ROM_START( mbombrdj_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "mbde_26.rom",       0x000000, 0x20000, 0x72b7451c )
 	ROM_LOAD_ODD ( "mbde30.rom",        0x000000, 0x20000, 0xbeff31cf )
@@ -5336,31 +5646,32 @@ ROM_START( mbomberj_rom )
 	ROM_LOAD_WIDE_SWAP( "mbde_20.rom",  0x180000, 0x80000, 0xb8b2139b )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mb_gfx02.rom",   0x000000, 0x80000, 0x2ffbfea8 )
+	ROM_LOAD( "mb03",           0x000000, 0x80000, 0xcb866c2f )
 	ROM_LOAD( "mb_gfx06.rom",   0x080000, 0x80000, 0xb76c70e9 )
 	ROM_LOAD( "mb_gfx11.rom",   0x100000, 0x80000, 0x8fb94743 )
-	ROM_LOAD( "mbgfx01.rom",    0x180000, 0x80000, 0xa53b1c81 )
+	ROM_LOAD( "mb01",           0x180000, 0x80000, 0xa53b1c81 )
 	ROM_LOAD( "mb_gfx05.rom",   0x200000, 0x80000, 0x506b9dc9 )
 	ROM_LOAD( "mb_gfx10.rom",   0x280000, 0x80000, 0x97976ff5 )
-	ROM_LOAD( "mb_gfx04.rom",   0x300000, 0x80000, 0x1eb9841d )
+	ROM_LOAD( "mb04",           0x300000, 0x80000, 0xc9143e75 )
 	ROM_LOAD( "mb_gfx08.rom",   0x380000, 0x80000, 0xe60c9556 )
 	ROM_LOAD( "mb_gfx13.rom",   0x400000, 0x80000, 0xda810d5f )
-	ROM_LOAD( "mbgfx03.rom",    0x480000, 0x80000, 0x23fe10f6 )
+	ROM_LOAD( "mb02",           0x480000, 0x80000, 0x23fe10f6 )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "mb_q.rom",       0x00000, 0x20000, 0xd6fa76d1 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "mb_q.rom",       0x00000, 0x08000, 0xd6fa76d1 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x400000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x100000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x180000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x200000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x280000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x300000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
 ROM_START( pnickj_rom )
@@ -5492,8 +5803,8 @@ ROM_END
 
 ROM_START( megaman_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
-	ROM_LOAD_WIDE_SWAP( "rcma_23b.rom",   0x00000, 0x80000, 0x61e4a397 )
-	ROM_LOAD_WIDE_SWAP( "rcma_22b.rom",   0x80000, 0x80000, 0x708268c4 )
+	ROM_LOAD_WIDE_SWAP( "rcma_23b.rom",   0x000000, 0x80000, 0x61e4a397 )
+	ROM_LOAD_WIDE_SWAP( "rcma_22b.rom",   0x080000, 0x80000, 0x708268c4 )
 	ROM_LOAD_WIDE_SWAP( "rcma_21a.rom",   0x100000, 0x80000, 0x4376ea95 )
 
 	ROM_REGION_DISPOSE(0x800000)     /* temporary space for graphics (disposed after conversion) */
@@ -5525,8 +5836,8 @@ ROM_END
 
 ROM_START( rockmanj_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
-	ROM_LOAD_WIDE_SWAP( "rcm23a.bin",   0x00000, 0x80000, 0xefd96cb2 )
-	ROM_LOAD_WIDE_SWAP( "rcm22a.bin",   0x80000, 0x80000, 0x8729a689 )
+	ROM_LOAD_WIDE_SWAP( "rcm23a.bin",   0x000000, 0x80000, 0xefd96cb2 )
+	ROM_LOAD_WIDE_SWAP( "rcm22a.bin",   0x080000, 0x80000, 0x8729a689 )
 	ROM_LOAD_WIDE_SWAP( "rcm21a.bin",   0x100000, 0x80000, 0x517ccde2 )
 
 	ROM_REGION_DISPOSE(0x800000)     /* temporary space for graphics (disposed after conversion) */
@@ -5555,6 +5866,41 @@ ROM_START( rockmanj_rom )
 	ROM_LOAD( "rcm_18.rom",    0x00000, 0x20000, 0x80f1f8aa )
 	ROM_LOAD( "rcm_19.rom",    0x20000, 0x20000, 0xf257dbe1 )
 ROM_END
+
+ROM_START( sfzch_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "sfzch23",        0x000000, 0x80000, 0x1140743f )
+	ROM_LOAD_WIDE_SWAP( "sfza22",         0x080000, 0x80000, 0x8d9b2480 )
+	ROM_LOAD_WIDE_SWAP( "sfzch21",        0x100000, 0x80000, 0x5435225d )
+	ROM_LOAD_WIDE_SWAP( "sfza20",         0x180000, 0x80000, 0x806e8f38 )
+
+	ROM_REGION_DISPOSE(0x800000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sfz03",         0x000000, 0x80000, 0x9584ac85 )
+	ROM_LOAD( "sfz07",         0x080000, 0x80000, 0xbb2c734d )
+	ROM_LOAD( "sfz12",         0x100000, 0x80000, 0xf122693a )
+	ROM_LOAD( "sfz16",         0x180000, 0x80000, 0x19a5abd6 )
+	ROM_LOAD( "sfz01",         0x200000, 0x80000, 0x0dd53e62 )
+	ROM_LOAD( "sfz05",         0x280000, 0x80000, 0x2b47b645 )
+	ROM_LOAD( "sfz10",         0x300000, 0x80000, 0x2a7d675e )
+	ROM_LOAD( "sfz14",         0x380000, 0x80000, 0x09038c81 )
+	ROM_LOAD( "sfz04",         0x400000, 0x80000, 0xb983624c )
+	ROM_LOAD( "sfz08",         0x480000, 0x80000, 0x454f7868 )
+	ROM_LOAD( "sfz13",         0x500000, 0x80000, 0x7cf942c8 )
+	ROM_LOAD( "sfz17",         0x580000, 0x80000, 0x248b3b73 )
+	ROM_LOAD( "sfz02",         0x600000, 0x80000, 0x94c31e3f )
+	ROM_LOAD( "sfz06",         0x680000, 0x80000, 0x74fd9fb1 )
+	ROM_LOAD( "sfz11",         0x700000, 0x80000, 0xe35546c8 )
+	ROM_LOAD( "sfz15",         0x780000, 0x80000, 0x1aa17391 )
+
+	ROM_REGION(0x28000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfz09",         0x000000, 0x08000, 0xc772628b )
+	ROM_CONTINUE(              0x010000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "sfz18",         0x00000, 0x20000, 0x61022b2d )
+	ROM_LOAD( "sfz19",         0x20000, 0x20000, 0x3b5886d5 )
+ROM_END
+
 
 
 #define CPS1_CREDITS "Paul Leaman"
@@ -5729,8 +6075,8 @@ GAME_DRIVER      (forgottn,          "Forgotten Worlds (US)",             "1988"
 GAME_DRIVER      (ghouls,            "Ghouls'n Ghosts (World?)",          "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(ghoulsj, ghouls,   "Dai Makai-Mura (Japan)",            "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (strider,           "Strider (US)",                      "1989","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(striderj,strider,  "Strider (Japan)",                   "1989","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (dwj,               "Tenchi o Kurau",                    "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(striderj,strider,  "Strider Hiryu (Japan)",             "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (dwj,               "Tenchi wo Kurau",                   "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (willow,            "Willow (Japan, English)",           "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(willowj, willow,   "Willow (Japan, Japanese)",          "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (unsquad,           "UN Squadron (US)",                  "1989","Capcom",ORIENTATION_DEFAULT)
@@ -5752,13 +6098,14 @@ GAME_DRIVER      (cawing,            "Carrier Air Wing (World)",          "1990"
 GAME_DRIVER_CLONE(cawingj, cawing,   "U.S. Navy (Japan)",                 "1990","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (nemo,              "Nemo (World)",                      "1990","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(nemoj,   nemo,     "Nemo (Japan)",                      "1990","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (sf2,               "Street Fighter II - The World Warrior (World rev B)", "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2a,    sf2,      "Street Fighter II - The World Warrior (US rev A)",    "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2b,    sf2,      "Street Fighter II - The World Warrior (US rev B)",    "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2e,    sf2,      "Street Fighter II - The World Warrior (US rev E)",    "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2j,    sf2,      "Street Fighter II - The World Warrior (Japan)",       "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (sf2,               "Street Fighter II - The World Warrior (World 910214)","1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2a,    sf2,      "Street Fighter II - The World Warrior (US 910206)",   "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2b,    sf2,      "Street Fighter II - The World Warrior (US 910214)",   "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2e,    sf2,      "Street Fighter II - The World Warrior (US 910228)",   "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2j,    sf2,      "Street Fighter II - The World Warrior (Japan 911210)","1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2jb,   sf2,      "Street Fighter II - The World Warrior (Japan 910214)","1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVERX      (c3wonders,3wonders,          "Three Wonders (US)",     "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONEX(c3wonderj,3wonderj,c3wonders,"Three Wonders (Japan)",  "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONEX(c3wonderj,3wonderj,c3wonders,"Wonder 3 (Japan)",       "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (kod,               "The King of Dragons (World)",       "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(kodj,    kod,      "The King of Dragons (Japan)",       "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (captcomm,          "Captain Commando (World)",          "1991","Capcom",ORIENTATION_DEFAULT)
@@ -5776,7 +6123,7 @@ GAME_DRIVER      (varth,             "Varth - Operation Thunderstorm (World)", "
 GAME_DRIVER_CLONE(varthj,  varth,    "Varth - Operation Thunderstorm (Japan)", "1992","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER      (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (wof,               "Warriors of Fate (World)",        "1992","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi o Kurau 2 (Japan)",        "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi wo Kurau II - Sekiheki no Tatakai (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II' Turbo - Hyper Fighting (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "1993","Capcom",ORIENTATION_DEFAULT)
@@ -5789,6 +6136,7 @@ GAME_DRIVER_CLONEI(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994
 GAME_DRIVER      (qtono2,            "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (megaman,           "Mega Man - The Power Battle (Asia)","1995","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(rockmanj,megaman,  "Rockman - The Power Battle (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (sfzch,             "Street Fighter ZERO (Japan CPS Changer)", "1995","Capcom",ORIENTATION_DEFAULT)
 
 
 
@@ -5867,42 +6215,17 @@ struct GameDriver slammast_driver =
 	cps1_eeprom_load, cps1_eeprom_save
 };
 
-struct GameDriver mbomber_driver =
-{
-	__FILE__,
-	&slammast_driver,
-	"mbomber",
-	"Muscle Bomber Duo (World)",
-	"1993",
-	"Capcom",
-	CPS1_CREDITS,
-	GAME_NOT_WORKING,
-	&mbomber_machine_driver,
-	qsound_eeprom_init,
-
-	mbomber_rom,
-	0, slammast_decode,
-	0,
-	0,      /* sound_prom */
-
-	mbomber_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	cps1_eeprom_load, cps1_eeprom_save
-};
-
 struct GameDriver mbomberj_driver =
 {
 	__FILE__,
 	&slammast_driver,
 	"mbomberj",
-	"Muscle Bomber Duo (Japan)",
+	"Muscle Bomber (Japan)",
 	"1993",
 	"Capcom",
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
-	&mbomber_machine_driver,
+	&slammast_machine_driver,
 	qsound_eeprom_init,
 
 	mbomberj_rom,
@@ -5910,7 +6233,57 @@ struct GameDriver mbomberj_driver =
 	0,
 	0,      /* sound_prom */
 
-	mbomber_input_ports,
+	slammast_input_ports,
+	0, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_eeprom_load, cps1_eeprom_save
+};
+
+struct GameDriver mbombrd_driver =
+{
+	__FILE__,
+	&slammast_driver,
+	"mbombrd",
+	"Muscle Bomber Duo (World)",
+	"1993",
+	"Capcom",
+	CPS1_CREDITS,
+	GAME_NOT_WORKING,
+	&mbombrd_machine_driver,
+	qsound_eeprom_init,
+
+	mbombrd_rom,
+	0, slammast_decode,
+	0,
+	0,      /* sound_prom */
+
+	mbombrd_input_ports,
+	0, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_eeprom_load, cps1_eeprom_save
+};
+
+struct GameDriver mbombrdj_driver =
+{
+	__FILE__,
+	&slammast_driver,
+	"mbombrdj",
+	"Muscle Bomber Duo (Japan)",
+	"1993",
+	"Capcom",
+	CPS1_CREDITS,
+	GAME_NOT_WORKING,
+	&mbombrd_machine_driver,
+	qsound_eeprom_init,
+
+	mbombrdj_rom,
+	0, slammast_decode,
+	0,
+	0,      /* sound_prom */
+
+	mbombrd_input_ports,
 	0, 0, 0,
 
 	ORIENTATION_DEFAULT,

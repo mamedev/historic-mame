@@ -22,7 +22,6 @@ unsigned char *tp84_scrolly;
 int col0;
 
 
-unsigned char *tp84_sharedram;
 
 
 static struct rectangle topvisiblearea =
@@ -35,18 +34,6 @@ static struct rectangle bottomvisiblearea =
 	30*8, 32*8-1,
 	2*8, 30*8-1
 };
-
-
-
-int tp84_sharedram_r(int offset)
-{
-	return tp84_sharedram[offset];
-}
-
-void tp84_sharedram_w(int offset,int data)
-{
-	tp84_sharedram[offset] = data;
-}
 
 
 
@@ -221,6 +208,7 @@ void tp84_col0_w(int offset,int data)
 		col0 = data;
 
 		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
 	}
 }
 
@@ -235,7 +223,6 @@ void tp84_col0_w(int offset,int data)
 ***************************************************************************/
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i;
 	int offs;
 	int coloffset;
 
@@ -257,8 +244,7 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0x30) << 4),
 					(colorram[offs] & 0x0f) + coloffset,
-					0, /*colorram[offs] & 0x40,*/ /* Not sure, not used */
-					0, /*colorram[offs] & 0x80,*/ /* Not sure, not used */
+					colorram[offs] & 0x40,colorram[offs] & 0x80,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -298,22 +284,22 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the sprites. */
 	coloffset = ((col0&0x07) << 4);
-	for (i = 95;i >= 0; i--)
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-/*		if (tp84_sharedram[4*i+1])  Is there not a flag to tell us to display or not? */
+		int sx,sy,flipx,flipy;
 
-/*I think there is a special case for sprite 94, this one is supossed to
-	be black because it is the shadow of the player */
-/* How can I do that? */
+
+		sx = spriteram[offs + 0];
+		sy = 240-spriteram[offs + 3];
+		flipx = !(spriteram[offs + 2] & 0x40);
+		flipy = spriteram[offs + 2] & 0x80;
 
 		drawgfx(bitmap,Machine->gfx[1],
-				tp84_sharedram[4*i + 1],
-				(i>=94?15:((tp84_sharedram[4*i + 2]&0x0F)+coloffset)),
-				!(tp84_sharedram[4*i + 2] & 0x40),   /*hflip*/
-				tp84_sharedram[4*i + 2] & 0x80,      /*vflip*/
-				tp84_sharedram[4*i + 0],             /*xpos*/
-				240-tp84_sharedram[4*i + 3],         /*ypos*/
-				&Machine->drv->visible_area,(i>=94?TRANSPARENCY_PEN:TRANSPARENCY_COLOR),0);
+				spriteram[offs + 1],
+				(spriteram[offs + 2] & 0x0f) + coloffset,
+				flipx,flipy,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 

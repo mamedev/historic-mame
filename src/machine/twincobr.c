@@ -16,6 +16,7 @@ unsigned char *wardner_mainram;
 extern unsigned char *spriteram;
 extern unsigned char *paletteram;
 
+
 extern int twincobr_fg_rom_bank;
 extern int twincobr_bg_ram_bank;
 extern int twincobr_display_on;
@@ -24,30 +25,72 @@ extern int twincobr_flip_x_base;
 extern int twincobr_flip_y_base;
 extern int wardner_sprite_hack;
 
-static int coin_count = 0;	/* coin count increments on startup ? , so stop it */
-static int dsp_execute = 0;
-static unsigned int dsp_addr_w = 0, main_ram_seg = 0;
-static int toaplan_main_cpu = 0;	/* Main CPU type.  0 = 68000, 1 = Z80 */
+static int coin_count;	/* coin count increments on startup ? , so stop it */
+static int dsp_execute;
+static unsigned int dsp_addr_w, main_ram_seg;
+int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 static char *toaplan_cpu_type[2] = { "68K"   , "Z80" } ;
 static int  toaplan_port_type[2] = { 0x7800c , 0x5c  } ;
 
-int intenable = 0;
-int fsharkbt_8741 = -1;
+int intenable;
+int fsharkbt_8741;
 
 
 void fsharkbt_reset_8741_mcu(void)
 {
+	int twincobr_cnt;
+
 	toaplan_main_cpu = 0;		/* 68000 */
 	twincobr_display_on = 0;
 	fsharkbt_8741 = -1;
+	intenable = 0;
+	dsp_addr_w = dsp_execute = 0;
+	main_ram_seg = 0;
+
+	/* coin count increments on startup ? , so stop it */
+	coin_count = 0;
+
+	/* blank out the screen */
+	osd_clearbitmap(Machine->scrbitmap);
+
+	/* clean out high score tables in these game hardware */
+	for (twincobr_cnt=1; twincobr_cnt < 13; twincobr_cnt++)
+	{
+		int twinc_hisc_addr[12] =
+		{
+			0x15a4, 0x15a8, 0x170a, 0x170c, /* Twin Cobra */
+			0x1282, 0x1284, 0x13ea, 0x13ec, /* Kyukyo Tiger */
+			0x016c, 0x0170, 0x02d2, 0x02d4	/* Flying shark */
+		};
+
+		WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_hisc_addr[twincobr_cnt])],0xffff);
+	}
 }
 
 void wardner_reset(void)
 {
 	toaplan_main_cpu = 1;		/* Z80 */
+	intenable = 0;
 	twincobr_display_on = 1;
-}
+	dsp_addr_w = dsp_execute = 0;
+	main_ram_seg = 0;
 
+	/* coin count increments on startup ? , so stop it */
+	coin_count = 0;
+
+	/* blank out the screen */
+	osd_clearbitmap(Machine->scrbitmap);
+
+	/* clean out high score tables in these game hardware */
+	wardner_mainram[0x0117] = 0xff;
+	wardner_mainram[0x0118] = 0xff;
+	wardner_mainram[0x0119] = 0xff;
+	wardner_mainram[0x011a] = 0xff;
+	wardner_mainram[0x011b] = 0xff;
+	wardner_mainram[0x0170] = 0xff;
+	wardner_mainram[0x0171] = 0xff;
+	wardner_mainram[0x0172] = 0xff;
+}
 
 int twincobr_dsp_in(int offset)
 {
@@ -58,10 +101,9 @@ int twincobr_dsp_in(int offset)
 		case 0x30000:	input_data = READ_WORD(&twincobr_68k_dsp_ram[dsp_addr_w]); break;
 		case 0x40000:	input_data = READ_WORD(&spriteram[dsp_addr_w]); break;
 		case 0x50000:	input_data = READ_WORD(&paletteram[dsp_addr_w]); break;
-		case 0x7000:	input_data = READ_WORD(&wardner_mainram[dsp_addr_w]); break;
-		case 0x8000:	input_data = READ_WORD(&spriteram[dsp_addr_w]); break;
-		case 0xa000:	input_data = READ_WORD(&paletteram[dsp_addr_w]); break;
-
+		case 0x7000:	input_data = wardner_mainram[dsp_addr_w] + (wardner_mainram[dsp_addr_w+1]<<8); break;
+		case 0x8000:	input_data = spriteram[dsp_addr_w] + (spriteram[dsp_addr_w+1]<<8); break;
+		case 0xa000:	input_data = paletteram[dsp_addr_w] + (paletteram[dsp_addr_w+1]<<8); break;
 		default:		if (errorlog)
 							fprintf(errorlog,"DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 	}
@@ -71,7 +113,7 @@ int twincobr_dsp_in(int offset)
 	return input_data;
 }
 
-int fsharkbt_dsp_in(int offset,int data)
+int fsharkbt_dsp_in(int offset)
 {
 	/* Flying Shark bootleg uses IO port 2 */
 	/* DSP reads data from an extra MCU (8741) at IO port 2 */
@@ -116,10 +158,13 @@ void twincobr_dsp_out(int fnction,int data)
 								if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
 			case 0x40000:	WRITE_WORD(&spriteram[dsp_addr_w],data); break;
 			case 0x50000:	WRITE_WORD(&paletteram[dsp_addr_w],data); break;
-			case 0x7000:	WRITE_WORD(&wardner_mainram[dsp_addr_w],data);
-								if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
-			case 0x8000:	WRITE_WORD(&spriteram[dsp_addr_w],data); break;
-			case 0xa000:	WRITE_WORD(&paletteram[dsp_addr_w],data); break;
+			case 0x7000:	wardner_mainram[dsp_addr_w] = data & 0xff;
+							wardner_mainram[dsp_addr_w + 1] = (data >> 8) & 0xff;
+							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
+			case 0x8000:	spriteram[dsp_addr_w] = data & 0xff;
+							spriteram[dsp_addr_w + 1] = (data >> 8) & 0xff;break;
+			case 0xa000:	paletteram[dsp_addr_w] = data & 0xff;
+							paletteram[dsp_addr_w + 1] = (data >> 8) & 0xff; break;
 			default:		if (errorlog)
 								fprintf(errorlog,"DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 		}

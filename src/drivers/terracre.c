@@ -578,7 +578,7 @@ struct GameDriver terracre_driver =
 	__FILE__,
 	0,
 	"terracre",
-	"Terra Cresta (YM3526 set 2)",
+	"Terra Cresta (YM3526 set 1)",
 	"1985",
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",

@@ -351,7 +351,6 @@ ROM_START( klax_rom )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
-
 ROM_START( klax2_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075.006",   0x00000, 0x10000, 0x05c98fc0 )
@@ -372,13 +371,32 @@ ROM_START( klax2_rom )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
-
 ROM_START( klax3_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "5006",         0x00000, 0x10000, 0x65eb9a31 )
 	ROM_LOAD_ODD ( "5005",         0x00000, 0x10000, 0x7be27349 )
 	ROM_LOAD_EVEN( "4008",         0x20000, 0x10000, 0xf3c79106 )
 	ROM_LOAD_ODD ( "4007",         0x20000, 0x10000, 0xa23cde5d )
+
+	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
+	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
+	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
+	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
+
+	ROM_REGION(0x20000)	/* ADPCM data */
+	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
+	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
+ROM_END
+
+ROM_START( klaxj_rom )
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "136075-3.406", 0x00000, 0x10000, 0xab2aa50b )
+	ROM_LOAD_ODD ( "136075-3.405", 0x00000, 0x10000, 0x9dc9a590 )
+	ROM_LOAD_EVEN( "136075-2.408", 0x20000, 0x10000, 0x89d515ce )
+	ROM_LOAD_ODD ( "136075-2.407", 0x20000, 0x10000, 0x48ce4edb )
 
 	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
@@ -427,7 +445,6 @@ struct GameDriver klax_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
-
 struct GameDriver klax2_driver =
 {
 	__FILE__,
@@ -454,7 +471,6 @@ struct GameDriver klax2_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
-
 struct GameDriver klax3_driver =
 {
 	__FILE__,
@@ -469,6 +485,32 @@ struct GameDriver klax3_driver =
 	0,
 
 	klax3_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	klax_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+struct GameDriver klaxj_driver =
+{
+	__FILE__,
+	&klax_driver,
+	"klaxj",
+	"Klax (Japan)",
+	"1989",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
+	0,
+	&machine_driver,
+	0,
+
+	klaxj_rom,
 	0,
 	0,
 	0,

@@ -80,3 +80,15 @@ void ddrible_snd_sharedram_w( int offset,int data )
 {
 	ddrible_snd_sharedram[offset] = data;
 }
+
+void ddrible_coin_counter_w(int offset,int data)
+{
+	/* b4-b7: unused */
+	/* b2-b3: unknown */
+	/* b1: coin counter 2 */
+	/* b0: coin counter 1 */
+
+	coin_counter_w(0,(data) & 0x01);
+	coin_counter_w(1,(data >> 1) & 0x01);
+}
+

@@ -113,14 +113,19 @@ struct osd_bitmap
 #define OSD_KEY_PGDN        81
 #define OSD_KEY_INSERT      82
 #define OSD_KEY_DEL         83
-#define OSD_KEY_RCONTROL    84  /* different from Allegro */
-#define OSD_KEY_ALTGR       85  /* different from Allegro */
-#define OSD_KEY_PAUSE       86  /* different from Allegro */
+#define OSD_KEY_PRTSCR      84
+/* 85 - 86 */
 #define OSD_KEY_F11         87
 #define OSD_KEY_F12         88
 #define OSD_KEY_COMMAND     89
 #define OSD_KEY_OPTION      90
-/* 91 - 100 */
+#define OSD_KEY_LWIN        91
+#define OSD_KEY_RWIN        92
+#define OSD_KEY_MENU        93
+#define OSD_KEY_RCONTROL    94  /* different from Allegro */
+#define OSD_KEY_ALTGR       95  /* different from Allegro */
+#define OSD_KEY_PAUSE       96  /* different from Allegro */
+/* 97 - 100 */
 /* The following are all undefined in Allegro */
 #define OSD_KEY_1_PAD		101
 #define OSD_KEY_2_PAD		102

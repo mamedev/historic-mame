@@ -104,7 +104,7 @@ Chip #     Game                Bank Select Addresses      Disable Mask Ignore Ma
 137412-111 Pit Fighter
 137412-116 Hydra &             $0044, $004c, $0054, $005c
            Cyberball 2072 Tournament
-137412-117 STUN Runner
+137412-117 STUN Runner?
 137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002       *$1950  *$1958,*$1960,*$1968,*$1970
            & Rampart
 

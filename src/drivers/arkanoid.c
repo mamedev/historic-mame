@@ -3,12 +3,6 @@
 	Arkanoid driver (Preliminary)
 
 
-	The location BFFFh can be changed to indicate the country:
-
-	0x33 - Probably the world version (Copyright Taito Corp. Japan)
-	0x76 - Japan (Copyright Taito Corporation with Japanese only warning)
-	0x92 - USA (Copyright Taito America Corp. - Licensed to ROMSTAR for U.S.A)
-
 	Japanese version support cocktail mode (DSW #7), the others don't.
 
 	Here are the versions we have:
@@ -16,7 +10,12 @@
 	arkanoid	World version, probably an earlier revision
 	arknoidu	USA version, probably a later revision; There has been code
 			    inserted, NOT patched, so I don't think it's a bootleg
-	arkbl2		Bootleg of the early Japanese version we don't have.
+				The 68705 code for this one was not available; I made it up from
+				the World version changing the level data pointer table.
+	arknoidj	Japanese version with level selector.
+				The 68705 code for this one was not available; I made it up from
+				the World version changing the level data pointer table.
+	arkbl2		Bootleg of the early Japanese version.
 				The only difference is that the warning text has been replaced
 				by "WAIT"
 				ROM	E2.6F should be identical to the real Japanese one.
@@ -25,6 +24,7 @@
 	arkatayt	Another bootleg of the early Japanese one, more heavily modified
 	arkblock	Another bootleg of the early Japanese one, more heavily modified
 	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
+	arkangc		Game Corporation bootleg with level selector
 
 ***************************************************************************/
 
@@ -32,8 +32,6 @@
 #include "vidhrdw/generic.h"
 
 
-
-extern unsigned char *arkanoid_stat;
 
 void arkanoid_init_machine(void);
 
@@ -44,11 +42,13 @@ void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int arkanoid_Z80_mcu_r (int value);
 void arkanoid_Z80_mcu_w (int offset, int value);
 
-int arkanoid_68705_mcu_r (int offset);
-void arkanoid_68705_mcu_w (int offset, int value);
+int arkanoid_68705_portA_r(int offset);
+void arkanoid_68705_portA_w(int offset,int data);
+void arkanoid_68705_ddrA_w(int offset,int data);
 
-int arkanoid_68705_stat_r (int offset);
-void arkanoid_68705_stat_w (int offset, int data);
+int arkanoid_68705_portC_r(int offset);
+void arkanoid_68705_portC_w(int offset,int data);
+void arkanoid_68705_ddrC_w(int offset,int data);
 
 int arkanoid_68705_input_0_r (int offset);
 int arkanoid_input_2_r (int offset);
@@ -115,10 +115,9 @@ static struct MemoryWriteAddress boot_writemem[] =
 
 static struct MemoryReadAddress mcu_readmem[] =
 {
-	{ 0x0000, 0x0000, arkanoid_68705_mcu_r },
+	{ 0x0000, 0x0000, arkanoid_68705_portA_r },
 	{ 0x0001, 0x0001, arkanoid_input_2_r },
-	{ 0x0002, 0x0002, arkanoid_68705_stat_r, &arkanoid_stat },
-	{ 0x0003, 0x000f, MRA_RAM },
+	{ 0x0002, 0x0002, arkanoid_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -126,10 +125,10 @@ static struct MemoryReadAddress mcu_readmem[] =
 
 static struct MemoryWriteAddress mcu_writemem[] =
 {
-	{ 0x0000, 0x0000, arkanoid_68705_mcu_w },
-	{ 0x0001, 0x0001, MWA_RAM },
-	{ 0x0002, 0x0002, arkanoid_68705_stat_w },
-	{ 0x0003, 0x000f, MWA_RAM },
+	{ 0x0000, 0x0000, arkanoid_68705_portA_w },
+	{ 0x0002, 0x0002, arkanoid_68705_portC_w },
+	{ 0x0004, 0x0004, arkanoid_68705_ddrA_w },
+	{ 0x0006, 0x0006, arkanoid_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -144,7 +143,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )	/* input from the 68705 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
 
 	PORT_START	/* IN1 */
@@ -185,7 +184,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 INPUT_PORTS_END
 
-/* These are the input ports of the real Japanese ROM set (we don't have it yet) */
+/* These are the input ports of the real Japanese ROM set                        */
 /* 'Block' uses the these ones as well.	The Tayto bootleg is different			 */
 /*  in coinage and # of lives.                    								 */
 
@@ -197,8 +196,8 @@ INPUT_PORTS_START( japan_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -384,7 +383,7 @@ ROM_START( arkanoid_rom )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc",  0x0080, 0x0780, 0x8a02f903 )
+	ROM_LOAD( "arkanoid.uc",  0x0000, 0x0800, 0x515d77b6 )
 ROM_END
 
 ROM_START( arknoidu_rom )
@@ -403,7 +402,26 @@ ROM_START( arknoidu_rom )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc",  0x0080, 0x0780, 0x8a02f903 )
+	ROM_LOAD( "arknoidu.uc",  0x0000, 0x0800, BADCRC( 0xde518e47 ) )
+ROM_END
+
+ROM_START( arknoidj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a75-21.rom",   0x0000, 0x8000, 0xbf0455fc )
+	ROM_LOAD( "a75-22.rom",   0x8000, 0x8000, 0x3a2688d3 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "arknoidj.uc",  0x0000, 0x0800, BADCRC( 0x0a4abef6 ) )
 ROM_END
 
 ROM_START( arkbl2_rom )
@@ -422,7 +440,7 @@ ROM_START( arkbl2_rom )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "68705p3.6i",   0x0080, 0x0780, 0xe3c5024e )
+	ROM_LOAD( "68705p3.6i",   0x0000, 0x0800, 0x389a8cfb )
 ROM_END
 
 ROM_START( arkbl3_rom )
@@ -472,6 +490,23 @@ ROM_START( arkblock_rom )
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
+
+ROM_START( arkangc_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "arkgc.1",  0x0000, 0x8000, 0xc54232e6 )
+	ROM_LOAD( "arkgc.2",  0x8000, 0x8000, 0x9f0d4754 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
+
 
 
 static int hiload(void)
@@ -523,7 +558,7 @@ struct GameDriver arkanoid_driver =
 	"arkanoid",
 	"Arkanoid (World)",
 	"1986",
-	"Taito Corp Japan",
+	"Taito Corporation Japan",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
 	0,
 	&machine_driver,
@@ -547,15 +582,41 @@ struct GameDriver arknoidu_driver =
 	__FILE__,
 	&arkanoid_driver,
 	"arknoidu",
-	"Arkanoid (USA)",
+	"Arkanoid (US)",
 	"1986",
-	"Taito America Corp (Romstar license)",
+	"Taito America Corporation (Romstar license)",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
 	0,
 	&machine_driver,
 	0,
 
 	arknoidu_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver arknoidj_driver =
+{
+	__FILE__,
+	&arkanoid_driver,
+	"arknoidj",
+	"Arkanoid (Japan)",
+	"1986",
+	"Taito Corporation",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
+	0,
+	&machine_driver,
+	0,
+
+	arknoidj_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -661,6 +722,33 @@ struct GameDriver arkblock_driver =
 	0,
 
 	arkblock_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	japan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+/** Arkanoid (Game Corporation) with round selector - RJF (April 23, 1999) **/
+struct GameDriver arkangc_driver =
+{
+	__FILE__,
+	&arkanoid_driver,
+	"arkangc",
+	"Arkanoid (Game Corporation bootleg)",
+	"1986",
+	"bootleg",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
+	&bootleg_machine_driver,
+	0,
+
+	arkangc_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

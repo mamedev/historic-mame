@@ -809,6 +809,7 @@ obj/irem.a: \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
          obj/vidhrdw/m62.o obj/drivers/m62.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
+         obj/drivers/m97.o \
 
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
@@ -869,7 +870,7 @@ obj/capcom.a: \
          obj/vidhrdw/sf1.o obj/drivers/sf1.o \
          obj/machine/kabuki.o obj/machine/eeprom.o \
          obj/vidhrdw/mitchell.o obj/drivers/mitchell.o \
-         obj/vidhrdw/cps1.o obj/drivers/cps1.o \
+         obj/vidhrdw/cps1.o obj/drivers/cps1.o obj/sndhrdw/cpsq.o \
 
 obj/capbowl.a: \
          obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/vidhrdw/tms34061.o obj/drivers/capbowl.o \
@@ -1099,7 +1100,7 @@ obj/cinemar.a: \
          obj/vidhrdw/jack.o obj/drivers/jack.o \
 
 obj/cinemav.a: \
-         obj/drivers/cinemat.o \
+         obj/drivers/cinemat.o obj/sndhrdw/cinemat.o \
 
 obj/thepit.a: \
          obj/vidhrdw/thepit.o obj/drivers/thepit.o \
@@ -1164,10 +1165,10 @@ obj/other.a: \
          obj/vidhrdw/airbustr.o obj/drivers/airbustr.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
-         obj/vidhrdw/sichuan2.o obj/sndhrdw/sichuan2.o obj/drivers/sichuan2.o \
+         obj/vidhrdw/shisen.o obj/sndhrdw/shisen.o obj/drivers/shisen.o \
+         obj/drivers/shanghai.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
          obj/drivers/dlair.o \
-         obj/drivers/shanghai.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h

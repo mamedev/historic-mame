@@ -375,7 +375,7 @@ void pengo_sound_w(int offset,int data)
 		voice->frequency = voice->frequency * 16 + namco_soundregs[0x13 + base];
 		voice->frequency = voice->frequency * 16 + namco_soundregs[0x12 + base];
 		voice->frequency = voice->frequency * 16 + namco_soundregs[0x11 + base];
-		if (voice == 0)
+		if (base == 0)	/* the first voice has extra frequency bits */
 			voice->frequency = voice->frequency * 16 + namco_soundregs[0x10 + base];
 		else
 			voice->frequency = voice->frequency * 16;

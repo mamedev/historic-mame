@@ -1440,6 +1440,30 @@ ROM_END
 
 ROM_START( ponpoko_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ppokoj1.bin",  0x0000, 0x1000, 0xffa3c004 )
+	ROM_LOAD( "ppokoj2.bin",  0x1000, 0x1000, 0x4a496866 )
+	ROM_LOAD( "ppokoj3.bin",  0x2000, 0x1000, 0x17da6ca3 )
+	ROM_LOAD( "ppokoj4.bin",  0x3000, 0x1000, 0x9d39a565 )
+	ROM_LOAD( "ppoko5.bin",   0x8000, 0x1000, 0x54ca3d7d )
+	ROM_LOAD( "ppoko6.bin",   0x9000, 0x1000, 0x3055c7e0 )
+	ROM_LOAD( "ppoko7.bin",   0xa000, 0x1000, 0x3cbe47ca )
+	ROM_LOAD( "ppokoj8.bin",  0xb000, 0x1000, 0x04b63fc6 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ppoko9.bin",   0x0000, 0x1000, 0xb73e1a06 )
+	ROM_LOAD( "ppoko10.bin",  0x1000, 0x1000, 0x62069b5d )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( ponpokov_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ppoko1.bin",   0x0000, 0x1000, 0x49077667 )
 	ROM_LOAD( "ppoko2.bin",   0x1000, 0x1000, 0x5101781a )
 	ROM_LOAD( "ppoko3.bin",   0x2000, 0x1000, 0xd790ed22 )
@@ -2773,6 +2797,32 @@ struct GameDriver ponpoko_driver =
 	0,
 
 	ponpoko_rom,
+	ponpoko_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	ponpoko_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,	/* probably correct */
+	ORIENTATION_DEFAULT,
+
+	ponpoko_hiload, ponpoko_hisave
+};
+
+struct GameDriver ponpokov_driver =
+{
+	__FILE__,
+	&ponpoko_driver,
+	"ponpokov",
+	"Ponpoko (Venture Line)",
+	"1982",
+	"Sigma Ent. Inc. (Venture Line license)",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	ponpokov_rom,
 	ponpoko_decode, 0,
 	0,
 	0,	/* sound_prom */

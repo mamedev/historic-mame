@@ -748,7 +748,6 @@ static void neogeo_custom_memory(void)
 		WRITE_WORD(&RAM[0x0000],0x0010);
 	}
 
-#if I_SWEAR_I_WILL_NOT_DISTRIBUTE_A_MODIFIED_BINARY
 	if (!strcmp(Machine->gamedrv->name,"mslugx"))
 	{
 		/* patch out protection checks */
@@ -776,7 +775,6 @@ static void neogeo_custom_memory(void)
 		WRITE_WORD(&RAM[0x3c36],0x4e71);
 		WRITE_WORD(&RAM[0x3c38],0x4e71);
 	}
-#endif
 }
 
 

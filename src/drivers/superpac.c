@@ -15,6 +15,7 @@ CPU #1:
 4040-43ff RAM shared with CPU #2
 4800-480f custom I/O chip #1
 4810-481f custom I/O chip #2
+5000      reset CPU #2
 5002-5003 IRQ enable
 5008-5009 sound enable
 500a-500b CPU #2 enable
@@ -35,8 +36,6 @@ CPU #2 uses no interrupts
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 extern unsigned char *mappy_soundregs;
 void mappy_sound_enable_w(int offset,int data);
 void mappy_sound_w(int offset,int data);
@@ -54,6 +53,7 @@ int superpac_customio_r_2(int offset);
 void superpac_interrupt_enable_1_w(int offset,int data);
 void superpac_cpu_enable_w(int offset,int data);
 int superpac_interrupt_1(void);
+void superpac_reset_2_w(int offset,int data);
 
 int pacnpal_sharedram_r2(int offset);
 void pacnpal_sharedram_w2(int offset,int data);
@@ -73,7 +73,7 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x4040, 0x43ff, superpac_sharedram_r, &superpac_sharedram },     /* shared RAM */
 	{ 0x4800, 0x480f, superpac_customio_r_1, &superpac_customio_1 },   /* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, superpac_customio_r_2, &superpac_customio_2 },   /* custom I/O chip #2 interface */
-	{ 0xa000, 0xffff, MRA_ROM },                        /* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
+	{ 0xa000, 0xffff, MRA_ROM },						/* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
 	{ -1 }                                              /* end of table */
 };
 
@@ -93,6 +93,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x4040, 0x43ff, MWA_RAM },                        /* shared RAM */
 	{ 0x4800, 0x480f, superpac_customio_w_1 },          /* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, superpac_customio_w_2 },          /* custom I/O chip #2 interface */
+	{ 0x5000, 0x5000, superpac_reset_2_w },				/* reset CPU #2 */
 	{ 0x5002, 0x5003, superpac_interrupt_enable_1_w },  /* interrupt enable */
 	{ 0x5008, 0x5009, mappy_sound_enable_w },           /* sound enable */
 	{ 0x500a, 0x500b, superpac_cpu_enable_w },          /* interrupt enable */

@@ -218,6 +218,7 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2b",    0x48,0x0407, 0x00,0x00,0x00,0x00, 0x54,0x52,0x50,0x4e,0x4c,0x4a, 0x08,0x12,0x12, 2,2,2 , 3},
 	{"sf2e",    0xd0,0x0408, 0x00,0x00,0x00,0x00, 0xdc,0xda,0xd8,0xd6,0xd4,0xd2, 0x10,0x0a,0x0a, 2,2,2 , 3},
 	{"sf2j",    0x6e,0x0403, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 2,2,2 , 3},
+	{"sf2jb",   0x48,0x0407, 0x00,0x00,0x00,0x00, 0x54,0x52,0x50,0x4e,0x4c,0x4a, 0x08,0x12,0x12, 2,2,2 , 3},
 	{"3wonders",0x72,0x0800, 0x4e,0x4c,0x4a,0x48, 0x68,0x66,0x64,0x62,0x60,0x70, 0x20,0x04,0x08, 0,1,1 , 2},
 	{"3wonderj",0x72,0x0800, 0x4e,0x4c,0x4a,0x48, 0x68,0x66,0x64,0x62,0x60,0x70, 0x20,0x04,0x08, 0,1,1 , 2},
 	{"kod",     0x00,0x0000, 0x5e,0x5c,0x5a,0x58, 0x60,0x6e,0x6c,0x6a,0x68,0x70, 0x30,0x08,0x30, 0,0,0 },
@@ -237,7 +238,7 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2rb",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 2,2,2 , 3},
 	{"varth",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x6e,0x66,0x70,0x68,0x72,0x6a, 0x02,0x0c,0x0c, 0,0,0 },	/* CPSB test has been patched out (60=0008) */
 	{"varthj",  0x00,0x0000, 0x4e,0x4c,0x4a,0x48, 0x60,0x6e,0x6c,0x6a,0x68,0x70, 0x20,0x06,0x06, 0,0,0 },	/* CPSB test has been patched out (72=0001) */
-	{"cworld2j",0x00,0x0000, 0x00,0x00,0x00,0x00, 0x60,0x00,0x00,0x00,0x00,0x70, 0x20,0x14,0x14, 0,0,0 },
+	{"cworld2j",0x00,0x0000, 0x00,0x00,0x00,0x00, 0x60,0x6e,0x6c,0x6a,0x68,0x70, 0x20,0x14,0x14, 0,0,0 },
 	{"wof",     0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x04,0x08, 0,0,0 },
 	{"wofj",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x10,0x08,0x04, 0,0,0 },
 	{"dino",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,0x4c,0x4e,0x40,0x42,0x44, 0x16,0x16,0x16, 0,0,0 },	/* layer enable never used */
@@ -245,8 +246,9 @@ static struct CPS1config cps1_config_table[]=
 	{"punisher",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0 },
 	{"punishrj",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0 },
 	{"slammast",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0 },
-	{"mbomber", 0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0 },
-	{"mbomberj",0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0 },
+	{"mbomberj",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0 },
+	{"mbombrd", 0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0 },
+	{"mbombrdj",0x5e,0x0c02, 0x00,0x00,0x00,0x00, 0x6a,0x6c,0x6e,0x70,0x72,0x5c, 0x10,0x0c,0x0c, 0,0,0 },
 	{"sf2t",    0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 2,2,2 , 3},
 	{"sf2tj",   0x00,0x0000, 0x40,0x42,0x44,0x46, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 2,2,2 , 3},
 	{"pnickj",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x00,0x00,0x00,0x00,0x70, 0x0e,0x0e,0x0e, 0,0,0 },
@@ -256,6 +258,7 @@ static struct CPS1config cps1_config_table[]=
 	{"pang3",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0 , 5},	/* EEPROM port is among the CPS registers */
 	{"megaman", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0 },
 	{"rockmanj",0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0 },
+	{"sfzch",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x66,0x68,0x6a,0x6c,0x6e,0x70, 0x02,0x0c,0x0c, 0,0,0 , 3 },
 	{0}		/* End of table */
 };
 
@@ -290,12 +293,12 @@ static void cps1_init_machine(void)
 		WRITE_WORD(&RAM[0x61930+2], 0x0000);
 		WRITE_WORD(&RAM[0x61930+4], 0x0400);
 	}
-	else if (strcmp(gamename, "slammast" )==0)
+	else if (strcmp(gamename, "slammast" )==0 || strcmp(gamename, "mbomberj" )==0)
 	{
 		/* temporary patch until the protection is understood */
 		WRITE_WORD(&RAM[0x0fbe], 0x4e75);
 	}
-	else if (strcmp(gamename, "mbomber" )==0 || strcmp(gamename, "mbomberj" )==0)
+	else if (strcmp(gamename, "mbombrd" )==0 || strcmp(gamename, "mbombrdj" )==0)
 	{
 		/* temporary patch until the protection is understood */
 		WRITE_WORD(&RAM[0x0f1a], 0x4e75);
@@ -987,15 +990,386 @@ INLINE void cps1_draw_gfx(
        }
 }
 
+INLINE void cps1_draw_gfx16(
+	struct osd_bitmap *dest,
+	const struct GfxElement *gfx,
+	unsigned int code,
+	int color,
+	int flipx,
+	int flipy,
+	int sx,
+	int sy,
+	int tpens,
+	int *pusage,
+	int size,
+	int max,
+	int delta,
+	int srcdelta)
+{
+	int i, j, ex, ey;
+	UINT32 dwval,n;
+	UINT32 *src;
+	const unsigned short *paldata;
+
+    tpens=(~tpens) & 0xffff;
+
+    if ( code > max || !(tpens & pusage[code]))
+	{
+		/* No pens to draw (object is empty) */
+		return;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+		temp=sx;
+		sx=sy;
+	sy=dest->height-temp-size;
+		temp=flipx;
+		flipx=flipy;
+	flipy=!temp;
+	}
+
+	if (cps1_flip_screen)
+	{
+		/* Handle flipped screen */
+		flipx=!flipx;
+		flipy=!flipy;
+		sx=dest->width-sx-size;
+		sy=dest->height-sy-size;
+	}
+
+	if (sx<0 || sx > dest->width-size || sy<0 || sy>dest->height-size )
+	{
+		return;
+	}
+
+
+	src = cps1_gfx+code*delta;
+	paldata = &gfx->colortable[gfx->color_granularity * color];
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		if (flipy)
+		{
+		      sy+=size;
+		      if (flipx)
+		      {
+				sx+=size;
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm;
+					int ny=sy;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-1])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-2])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-3])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-4])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-5])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-6])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-7])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=dwval&0x0f;
+					      bm=((unsigned short *)dest->line[ny-8])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      ny-=8;
+					      src++;
+					}
+					sx--;
+					src+=srcdelta;
+				}
+		      }
+		      else
+		      {
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm;
+					int ny=sy;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-1])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-2])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-3])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-4])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-5])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-6])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      bm=((unsigned short *)dest->line[ny-7])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=dwval&0x0f;
+					      bm=((unsigned short *)dest->line[ny-8])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      ny-=8;
+					      src++;
+					}
+					sx++;
+					src+=srcdelta;
+				}
+		       }
+		}
+		else
+		{
+		       if (flipx)
+		       {
+				sx+=size;
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm;
+					int ny=sy;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+0])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+1])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+2])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+3])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+4])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+5])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+6])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=dwval&0x0f;
+					      bm=((unsigned short *)dest->line[ny+7])+sx;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      ny+=8;
+					      src++;
+					}
+					sx--;
+					src+=srcdelta;
+				}
+			}
+			else
+			{
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm;
+					int ny=sy;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+0])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+1])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+2])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+3])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+4])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+5])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      bm=((unsigned short *)dest->line[ny+6])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=dwval&0x0f;
+					      bm=((unsigned short *)dest->line[ny+7])+sx;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      src++;
+					      ny+=8;
+					}
+					sx++;
+					src+=srcdelta;
+				 }
+			}
+		}
+
+	}
+	else
+	{
+		if (flipy)
+		{
+		      sy+=size-1;
+		      if (flipx)
+		      {
+				sx+=size;
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm=((unsigned short *)dest->line[sy-i])+sx;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-2]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-3]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-4]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-5]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-6]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-7]=paldata[n];
+					      n=dwval&0x0f;
+					      if (tpens & (0x01 << n)) bm[-8]=paldata[n];
+					      src++;
+					      bm-=8;
+					}
+					src+=srcdelta;
+				}
+		      }
+		      else
+		      {
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm=((unsigned short *)dest->line[sy-i])+sx;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      if (tpens & (0x01 << n)) bm[1]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      if (tpens & (0x01 << n)) bm[2]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      if (tpens & (0x01 << n)) bm[3]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      if (tpens & (0x01 << n)) bm[4]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      if (tpens & (0x01 << n)) bm[5]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      if (tpens & (0x01 << n)) bm[6]=paldata[n];
+					      n=dwval&0x0f;
+					      if (tpens & (0x01 << n)) bm[7]=paldata[n];
+					      bm+=8;
+					      src++;
+					}
+					src+=srcdelta;
+				}
+		       }
+		}
+		else
+		{
+		       if (flipx)
+		       {
+				sx+=size;
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm=((unsigned short *)dest->line[sy+i])+sx;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-1]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-2]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-3]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-4]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-5]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-6]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      if (tpens & (0x01 << n)) bm[-7]=paldata[n];
+					      n=dwval&0x0f;
+					      if (tpens & (0x01 << n)) bm[-8]=paldata[n];
+					      bm-=8;
+					      src++;
+					}
+					src+=srcdelta;
+				}
+			}
+			else
+			{
+				for (i=0; i<size; i++)
+				{
+					unsigned short *bm=((unsigned short *)dest->line[sy+i])+sx;
+					for (j=0; j<size/8; j++)
+					{
+					      dwval=*src;
+					      n=(dwval>>28)&0x0f;
+					      if (tpens & (0x01 << n)) bm[0]=paldata[n];
+					      n=(dwval>>24)&0x0f;
+					      if (tpens & (0x01 << n)) bm[1]=paldata[n];
+					      n=(dwval>>20)&0x0f;
+					      if (tpens & (0x01 << n)) bm[2]=paldata[n];
+					      n=(dwval>>16)&0x0f;
+					      if (tpens & (0x01 << n)) bm[3]=paldata[n];
+					      n=(dwval>>12)&0x0f;
+					      if (tpens & (0x01 << n)) bm[4]=paldata[n];
+					      n=(dwval>>8)&0x0f;
+					      if (tpens & (0x01 << n)) bm[5]=paldata[n];
+					      n=(dwval>>4)&0x0f;
+					      if (tpens & (0x01 << n)) bm[6]=paldata[n];
+					      n=dwval&0x0f;
+					      if (tpens & (0x01 << n)) bm[7]=paldata[n];
+					      src++;
+					      bm+=8;
+					}
+					src+=srcdelta;
+				 }
+			}
+		}
+       }
+}
+
 INLINE void cps1_draw_scroll1(
 	struct osd_bitmap *dest,
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-	cps1_draw_gfx(dest,
-		Machine->gfx[0],
-		code,color,flipx,flipy,sx,sy,
-		tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+	if (Machine->scrbitmap->depth == 16)
+		cps1_draw_gfx16(dest,
+			Machine->gfx[0],
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
+	else
+		cps1_draw_gfx(dest,
+			Machine->gfx[0],
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
 }
 
 
@@ -1004,10 +1378,16 @@ INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-	cps1_draw_gfx(dest,
-		gfx,
-		code,color,flipx,flipy,sx,sy,
-		tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	if (Machine->scrbitmap->depth == 16)
+		cps1_draw_gfx16(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
+	else
+		cps1_draw_gfx(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
 }
 
 INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
@@ -1015,10 +1395,16 @@ INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
 	unsigned int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
-	cps1_draw_gfx(dest,
-		gfx,
-		code,color,flipx,flipy,sx,sy,
-		tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+	if (Machine->scrbitmap->depth == 16)
+		cps1_draw_gfx16(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
+	else
+		cps1_draw_gfx(dest,
+			gfx,
+			code,color,flipx,flipy,sx,sy,
+			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
 }
 
 
@@ -2062,7 +2448,7 @@ void cps1_render_high_layer(struct osd_bitmap *bitmap, int layer)
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned short palette_usage[cps1_palette_entries];
-	int layercontrol;
+	int layercontrol,l0,l1,l2,l3;
 	int i,offset;
 	int distort_scroll2=0;
 	int layer;
@@ -2078,7 +2464,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		memset(cps1_scroll2_old, 0xff, cps1_scroll2_size);
 	}
 
-	layercontrol=READ_WORD(&cps1_output[cps1_game_config->layer_control]);
+	layercontrol = READ_WORD(&cps1_output[cps1_game_config->layer_control]);
 
 	distort_scroll2 = layercontrol & 0x01;
 
@@ -2139,36 +2525,16 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* Draw layers */
-	cps1_render_layer(bitmap, (layercontrol>>0x06)&03, distort_scroll2);
-	cps1_render_layer(bitmap, (layercontrol>>0x08)&03, distort_scroll2);
-	cps1_render_layer(bitmap, (layercontrol>>0x0a)&03, distort_scroll2);
-	layer=(layercontrol>>0x0c)&03;
-	if (layer != 1)
-	{
-		/*
-		Don't draw layer 1 if it is the highest priority layer
-		We will draw it later.
-		*/
-		cps1_render_layer(bitmap, (layercontrol>>0x0c)&03, distort_scroll2);
-	}
+	l0 = (layercontrol >> 0x06) & 03;
+	l1 = (layercontrol >> 0x08) & 03;
+	l2 = (layercontrol >> 0x0a) & 03;
+	l3 = (layercontrol >> 0x0c) & 03;
 
-	/* Draw high priority layers */
-	cps1_render_high_layer(bitmap, (layercontrol>>0x06)&03);
-	cps1_render_high_layer(bitmap, (layercontrol>>0x08)&03);
-	cps1_render_high_layer(bitmap, (layercontrol>>0x0a)&03);
-	if (layer==1)
-	{
-		/*
-		Scroll 1 is highest priority. Must draw it over high
-		priority scroll parts of 2 and 3. This is correct
-		behaviour since Magic Sword interludes do not
-		look correct unless we do this.
-		*/
-		if (cps1_layer_enabled[1])
-			cps1_render_scroll1(bitmap, 0);
-	}
-	else
-	{
-		cps1_render_high_layer(bitmap, (layercontrol>>0x0c)&03);
-	}
+	cps1_render_layer(bitmap,l0,distort_scroll2);
+	cps1_render_layer(bitmap,l1,distort_scroll2);
+	if (l1 == 0) cps1_render_high_layer(bitmap,l0);	/* overlay sprites */
+	cps1_render_layer(bitmap,l2,distort_scroll2);
+	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* overlay sprites */
+	cps1_render_layer(bitmap,l3,distort_scroll2);
+	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* overlay sprites */
 }

@@ -20,7 +20,6 @@ static int coin1, coin2, credits, start1, start2;
 static int crednum[] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
 
-
 void superpac_init_machine(void)
 {
 	/* Reset all flags */
@@ -65,6 +64,11 @@ void pacnpal_sharedram_w2(int offset,int data)
 void superpac_sharedram_w(int offset,int data)
 {
 	superpac_sharedram[offset] = data;
+}
+
+void superpac_reset_2_w(int offset,int data)
+{
+	cpu_reset( 1 );
 }
 
 

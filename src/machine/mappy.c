@@ -16,7 +16,7 @@ unsigned char *mappy_customio_1,*mappy_customio_2;
 
 static unsigned char interrupt_enable_1,interrupt_enable_2;
 static int credits, coin, start1, start2;
-
+static int io_chip_1_enabled, io_chip_2_enabled;
 
 void mappy_init_machine(void)
 {
@@ -28,7 +28,6 @@ void mappy_init_machine(void)
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
-
 void motos_init_machine(void)
 {
 	/* Reset all flags */
@@ -36,7 +35,6 @@ void motos_init_machine(void)
 
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-//	m6809_Flags = M6809_FAST_NONE;
 }
 
 
@@ -133,6 +131,16 @@ void mappy_customio_w_2(int offset,int data)
 	mappy_customio_2[offset] = data;
 }
 
+void mappy_reset_2_w(int offset,int data)
+{
+	io_chip_1_enabled = io_chip_2_enabled = 0;
+	cpu_reset( 1 );
+}
+
+void mappy_io_chips_enable_w(int offset,int data)
+{
+	io_chip_1_enabled = io_chip_2_enabled = 1;
+}
 
 /*************************************************************************************
  *
@@ -284,60 +292,62 @@ int digdug2_customio_r_1(int offset)
 	/*if (errorlog)
 		fprintf (errorlog, "I/O read 1: mode %d offset %d\n", mode, offset);*/
 
-	/* mode 3 is the standard, and returns actual important values */
-	if (mode == 1 || mode == 3)
+	if (io_chip_1_enabled)
 	{
-		switch (offset)
+		/* mode 3 is the standard, and returns actual important values */
+		if (mode == 1 || mode == 3)
 		{
-			case 0:		/* Coin slots, low nibble of port 4 */
+			switch (offset)
 			{
-				static int lastval;
+				case 0:		/* Coin slots, low nibble of port 4 */
+				{
+					static int lastval;
 
-				val = readinputport (4) & 0x0f;
+					val = readinputport (4) & 0x0f;
 
-				/* bit 0 is a trigger for the coin slot */
-				if ((val & 1) && ((val ^ lastval) & 1)) ++credits;
+					/* bit 0 is a trigger for the coin slot */
+					if ((val & 1) && ((val ^ lastval) & 1)) ++credits;
 
-				return lastval = val;
+					return lastval = val;
+				}
+
+				case 1:		/* Start buttons, high nibble of port 4 */
+				{
+					static int lastval;
+
+					temp = (readinputport (0) >> 6) & 3;
+					val = readinputport (4) >> 4;
+
+					/* bit 0 is a trigger for the 1 player start */
+					if ((val & 1) && ((val ^ lastval) & 1))
+						if (credits >= credden[temp]) credits -= credden[temp];
+					/* bit 1 is a trigger for the 2 player start */
+					if ((val & 2) && ((val ^ lastval) & 2))
+						if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
+
+					return lastval = val;
+				}
+
+				case 2:		/* High BCD of credits */
+					temp = (readinputport (0) >> 6) & 3;
+					return (credits * crednum[temp] / credden[temp]) / 10;
+
+				case 3:		/* Low BCD of credits */
+					temp = (readinputport (0) >> 6) & 3;
+					return (credits * crednum[temp] / credden[temp]) % 10;
+
+				case 4:		/* Player 1 joystick */
+					return readinputport (3) & 0x0f;
+
+				case 5:		/* Player 1 buttons */
+					return readinputport (3) >> 4;
+
+				case 6:		/* Read, but unknown */
+				case 7:		/* Read, but unknown */
+					return 0;
 			}
-
-			case 1:		/* Start buttons, high nibble of port 4 */
-			{
-				static int lastval;
-
-				temp = (readinputport (0) >> 6) & 3;
-				val = readinputport (4) >> 4;
-
-				/* bit 0 is a trigger for the 1 player start */
-				if ((val & 1) && ((val ^ lastval) & 1))
-					if (credits >= credden[temp]) credits -= credden[temp];
-				/* bit 1 is a trigger for the 2 player start */
-				if ((val & 2) && ((val ^ lastval) & 2))
-					if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
-
-				return lastval = val;
-			}
-
-			case 2:		/* High BCD of credits */
-				temp = (readinputport (0) >> 6) & 3;
-				return (credits * crednum[temp] / credden[temp]) / 10;
-
-			case 3:		/* Low BCD of credits */
-				temp = (readinputport (0) >> 6) & 3;
-				return (credits * crednum[temp] / credden[temp]) % 10;
-
-			case 4:		/* Player 1 joystick */
-				return readinputport (3) & 0x0f;
-
-			case 5:		/* Player 1 buttons */
-				return readinputport (3) >> 4;
-
-			case 6:		/* Read, but unknown */
-			case 7:		/* Read, but unknown */
-				return 0;
 		}
 	}
-
 	/* by default, return what was stored there */
 	return mappy_customio_1[offset];
 }
@@ -350,33 +360,35 @@ int digdug2_customio_r_2(int offset)
 	/*if (errorlog)
 		fprintf (errorlog, "I/O read 2: mode %d, offset %d\n", mode, offset);*/
 
-	/* mode 4 is the standard, and returns actual important values */
-	if (mode == 4)
+	if (io_chip_2_enabled)
 	{
-		switch (offset)
+		/* mode 4 is the standard, and returns actual important values */
+		if (mode == 4)
 		{
-			case 2:		/* DSW0, low nibble */
-				return readinputport (0) & 0x0f;
+			switch (offset)
+			{
+				case 2:		/* DSW0, low nibble */
+					return readinputport (0) & 0x0f;
 
-			case 4:		/* DSW0, high nibble */
-				return readinputport (0) >> 4;
+				case 4:		/* DSW0, high nibble */
+					return readinputport (0) >> 4;
 
-			case 5:		/* DSW1, high nibble */
-				return readinputport (1) >> 4;
+				case 5:		/* DSW1, high nibble */
+					return readinputport (1) >> 4;
 
-			case 6:		/* DSW1, low nibble */
-				return readinputport (1) & 0x0f;
+				case 6:		/* DSW1, low nibble */
+					return readinputport (1) & 0x0f;
 
-			case 7:		/* DSW2 - service switch */
-				return readinputport (2) & 0x0f;
+				case 7:		/* DSW2 - service switch */
+					return readinputport (2) & 0x0f;
 
-			case 0:		/* read, but unknown */
-			case 1:		/* read, but unknown */
-			case 3:		/* read, but unknown */
-				return 0;
+				case 0:		/* read, but unknown */
+				case 1:		/* read, but unknown */
+				case 3:		/* read, but unknown */
+					return 0;
+			}
 		}
 	}
-
 	/* by default, return what was stored there */
 	return mappy_customio_2[offset];
 }
@@ -429,6 +441,21 @@ int motos_customio_r_1(int offset)
 				return 0;
 		}
 	}
+	else if (mode == 8)  /* I/O tests chip 1 */
+    {
+        switch (offset)
+        {
+            case 0:
+                return 0x06;
+                break;
+            case 1:
+                return 0x09;
+                break;
+            default:
+				/* by default, return what was stored there */
+                return mappy_customio_2[offset];
+        }
+    }
 
 	/* by default, return what was stored there */
 	return mappy_customio_1[offset];
@@ -464,6 +491,21 @@ int motos_customio_r_2(int offset)
 				return 0;
 		}
 	}
+	else if (mode == 8)  /* I/O tests chip 2 */
+    {
+        switch (offset)
+        {
+            case 0:
+                return 0x06;
+                break;
+            case 1:
+                return 0x09;
+                break;
+            default:
+				/* by default, return what was stored there */
+                return mappy_customio_2[offset];
+        }
+    }
 
 	/* by default, return what was stored there */
 	return mappy_customio_2[offset];
@@ -485,63 +527,65 @@ int todruaga_customio_r_1(int offset)
 	if (errorlog)
 		fprintf (errorlog, "%04x: I/O read 1: mode %d offset %d\n", cpu_get_pc(), mode, offset);
 
-	/* mode 3 is the standard, and returns actual important values */
-	if (mode == 1 || mode == 3)
+	if (io_chip_1_enabled)
 	{
-		switch (offset)
+		/* mode 3 is the standard, and returns actual important values */
+		if (mode == 1 || mode == 3)
 		{
-			case 0:		/* Coin slots, low nibble of port 5 */
+			switch (offset)
 			{
-				static int lastval;
+				case 0:		/* Coin slots, low nibble of port 5 */
+				{
+					static int lastval;
 
-				val = readinputport (5) & 0x0f;
+					val = readinputport (5) & 0x0f;
 
-				/* bit 0 is a trigger for the coin slot */
-				if ((val & 1) && ((val ^ lastval) & 1)) ++credits;
+					/* bit 0 is a trigger for the coin slot */
+					if ((val & 1) && ((val ^ lastval) & 1)) ++credits;
 
-				return lastval = val;
+					return lastval = val;
+				}
+
+				case 1:		/* Start buttons, high nibble of port 5 */
+				{
+					static int lastval;
+
+					temp = (readinputport (0) >> 6) & 3;
+					val = readinputport (5) >> 4;
+					val |= (readinputport (3) & 0x80) >> 7;	/* player 1 start */
+
+					/* bit 0 is a trigger for the 1 player start */
+					if ((val & 1) && ((val ^ lastval) & 1))
+						if (credits >= credden[temp]) credits -= credden[temp];
+					/* bit 1 is a trigger for the 2 player start */
+					if ((val & 2) && ((val ^ lastval) & 2))
+						if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
+
+					return lastval = val;
+				}
+
+				case 2:		/* High BCD of credits */
+					temp = (readinputport (0) >> 6) & 3;
+					return (credits * crednum[temp] / credden[temp]) / 10;
+
+				case 3:		/* Low BCD of credits */
+					temp = (readinputport (0) >> 6) & 3;
+					return (credits * crednum[temp] / credden[temp]) % 10;
+
+				case 4:		/* Player 1 joystick */
+					return readinputport (3) & 0x0f;
+
+				case 5:		/* Player 1 buttons */
+					return readinputport (3) >> 4;
+
+				case 6:		/* read, but unknown */
+					return 0;
+
+				case 7:		/* More player 1 buttons? */
+					return readinputport (4) >> 4;
 			}
-
-			case 1:		/* Start buttons, high nibble of port 5 */
-			{
-				static int lastval;
-
-				temp = (readinputport (0) >> 6) & 3;
-				val = readinputport (5) >> 4;
-				val |= (readinputport (3) & 0x80) >> 7;	/* player 1 start */
-
-				/* bit 0 is a trigger for the 1 player start */
-				if ((val & 1) && ((val ^ lastval) & 1))
-					if (credits >= credden[temp]) credits -= credden[temp];
-				/* bit 1 is a trigger for the 2 player start */
-				if ((val & 2) && ((val ^ lastval) & 2))
-					if (credits >= 2 * credden[temp]) credits -= 2 * credden[temp];
-
-				return lastval = val;
-			}
-
-			case 2:		/* High BCD of credits */
-				temp = (readinputport (0) >> 6) & 3;
-				return (credits * crednum[temp] / credden[temp]) / 10;
-
-			case 3:		/* Low BCD of credits */
-				temp = (readinputport (0) >> 6) & 3;
-				return (credits * crednum[temp] / credden[temp]) % 10;
-
-			case 4:		/* Player 1 joystick */
-				return readinputport (3) & 0x0f;
-
-			case 5:		/* Player 1 buttons */
-				return readinputport (3) >> 4;
-
-			case 6:		/* read, but unknown */
-				return 0;
-
-			case 7:		/* More player 1 buttons? */
-				return readinputport (4) >> 4;
 		}
 	}
-
 	/* by default, return what was stored there */
 	return mappy_customio_1[offset];
 }
@@ -554,30 +598,33 @@ int todruaga_customio_r_2(int offset)
 	if (errorlog)
 		fprintf (errorlog, "%04x: I/O read 2: mode %d, offset %d\n", cpu_get_pc(), mode, offset);
 
-	/* mode 4 is the standard, and returns actual important values */
-	if (mode == 4)
+	if (io_chip_1_enabled)
 	{
-		switch (offset)
+		/* mode 4 is the standard, and returns actual important values */
+		if (mode == 4)
 		{
-			case 2:		/* DSW0, low nibble */
-				return readinputport (0) & 0x0f;
+			switch (offset)
+			{
+				case 2:		/* DSW0, low nibble */
+					return readinputport (0) & 0x0f;
 
-			case 4:		/* DSW0, high nibble */
-				return readinputport (0) >> 4;
+				case 4:		/* DSW0, high nibble */
+					return readinputport (0) >> 4;
 
-			case 5:		/* DSW1, high nibble */
-				return readinputport (1) >> 4;
+				case 5:		/* DSW1, high nibble */
+					return readinputport (1) >> 4;
 
-			case 6:		/* DSW1, low nibble */
-				return readinputport (1) & 0x0f;
+				case 6:		/* DSW1, low nibble */
+					return readinputport (1) & 0x0f;
 
-			case 7:		/* DSW2 - service switch */
-				return readinputport (2) & 0x0f;
+				case 7:		/* DSW2 - service switch */
+					return readinputport (2) & 0x0f;
 
-			case 0:		/* read, but unknown */
-			case 1:		/* read, but unknown */
-			case 3:		/* read, but unknown */
-				return 0;
+				case 0:		/* read, but unknown */
+				case 1:		/* read, but unknown */
+				case 3:		/* read, but unknown */
+					return 0;
+			}
 		}
 	}
 

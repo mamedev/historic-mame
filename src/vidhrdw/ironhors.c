@@ -180,28 +180,45 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			if (sr[offs+2])
 			{
-				int sx,sy,flipx,flipy;
+				int sx,sy,flipx,flipy,color;
 
 
 				sy = sr[offs+2];
 				sx = sr[offs+3];
 				flipx = sr[offs+4] & 0x20;
 				flipy = sr[offs+4] & 0x40;  /* not sure yet */
+				color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
 
-				if ((sr[offs+4] & 0x0c) == 0x04)    /* half sized sprite */
+				if ((sr[offs+4] & 0x0c) == 0x04)    /* horizontal half sized sprite */
 				{
 					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum,
-							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
+							color,
 							flipx,flipy,
 							flipx?sx+8:sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum+1,
-							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
+							color,
 							flipx,flipy,
 							flipx?sx:sx+8,sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
+				else if ((sr[offs+4] & 0x0c) == 0x08)    /* vertical half sized sprite */
+				{
+					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
+					drawgfx(bitmap,Machine->gfx[2],
+							spritenum,
+							color,
+							flipx,flipy,
+							sx,flipy?sy+8:sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,Machine->gfx[2],
+							spritenum+2,
+							color,
+							flipx,flipy,
+							sx,flipy?sy:sy+8,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 				else if ((sr[offs+4] & 0x0c) == 0x0c)    /* quarter sized sprite */
@@ -209,7 +226,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum,
-							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
+							color,
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -217,7 +234,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				else
 					drawgfx(bitmap,Machine->gfx[1],
 							sr[offs] + 256 * (sr[offs+1] & 1),
-							((sr[offs+1] & 0xf0)>>4) + 16 * palettebank,
+							color,
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

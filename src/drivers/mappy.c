@@ -16,6 +16,8 @@ CPU #1:
 4800-480f custom I/O chip #1
 4810-481f custom I/O chip #2
 5002-5003 IRQ enable
+5008      CPU #2 reset & disable I/O chips
+5009      enable I/O chips
 500a-500b CPU #2 enable
 8000      watchdog timer
 a000-ffff ROM
@@ -52,6 +54,8 @@ int mappy_interrupt_2(void);
 void mappy_interrupt_enable_1_w(int offset,int data);
 void mappy_interrupt_enable_2_w(int offset,int data);
 void mappy_cpu_enable_w(int offset,int data);
+void mappy_reset_2_w(int offset,int data);
+void mappy_io_chips_enable_w(int offset,int data);
 
 int mappy_sharedram_r2(int offset);
 int mappy_cpu1ram_r(int offset);
@@ -106,8 +110,8 @@ static struct MemoryReadAddress digdug2_readmem_cpu1[] =
 {
 	{ 0x8000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, digdug2_customio_r_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, digdug2_customio_r_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
+	{ 0x4800, 0x480f, digdug2_customio_r_1, &mappy_customio_1 }, /* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, digdug2_customio_r_2, &mappy_customio_2 }, /* custom I/O chip #2 interface */
 	{ 0x4820, 0x4bff, MRA_RAM },                                 /* extra RAM for Dig Dug 2 */
 	{ 0x0000, 0x7fff, digdug2_cpu1ram_r },                       /* RAM everywhere else */
 
@@ -120,7 +124,7 @@ static struct MemoryReadAddress motos_readmem_cpu1[] =
 	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, motos_customio_r_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, motos_customio_r_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, motos_cpu1ram_r },                       /* RAM everywhere else */
+	{ 0x0000, 0x7fff, motos_cpu1ram_r },						 /* RAM everywhere else */
 
 	{ -1 }  /* end of table */
 };
@@ -129,9 +133,9 @@ static struct MemoryReadAddress todruaga_readmem_cpu1[] =
 {
 	{ 0x8000, 0xffff, MRA_ROM },                                 /* ROM code */
 	{ 0x4040, 0x43ff, MRA_RAM, &mappy_sharedram },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, todruaga_customio_r_1, &mappy_customio_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, todruaga_customio_r_2, &mappy_customio_2 },   /* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, todruaga_cpu1ram_r },                       /* RAM everywhere else */
+	{ 0x4800, 0x480f, todruaga_customio_r_1, &mappy_customio_1 },/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, todruaga_customio_r_2, &mappy_customio_2 },/* custom I/O chip #2 interface */
+	{ 0x0000, 0x7fff, todruaga_cpu1ram_r },                      /* RAM everywhere else */
 
 	{ -1 }  /* end of table */
 };
@@ -154,6 +158,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x4800, 0x480f, mappy_customio_w_1 },                      /* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, mappy_customio_w_2 },                      /* custom I/O chip #2 interface */
 	{ 0x5002, 0x5003, mappy_interrupt_enable_1_w },              /* interrupt enable */
+	{ 0x5008, 0x5008, mappy_reset_2_w },						 /* reset CPU #2 & disable I/O chips */
+	{ 0x5009, 0x5009, mappy_io_chips_enable_w },				 /* enable I/O chips */
 	{ 0x500a, 0x500b, mappy_cpu_enable_w },                      /* sound CPU enable */
 	{ 0x8000, 0x8000, MWA_NOP },                                 /* watchdog timer */
 	{ 0x8000, 0xffff, MWA_ROM },                                 /* ROM code */
@@ -182,7 +188,7 @@ static struct MemoryReadAddress digdug2_readmem_cpu2[] =
 static struct MemoryReadAddress motos_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, motos_sharedram_r2 },                    /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, motos_sharedram_r2 },						 /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };
@@ -190,7 +196,7 @@ static struct MemoryReadAddress motos_readmem_cpu2[] =
 static struct MemoryReadAddress todruaga_readmem_cpu2[] =
 {
 	{ 0xe000, 0xffff, MRA_ROM },                                 /* ROM code */
-	{ 0x0040, 0x03ff, motos_sharedram_r2 },                    /* shared RAM with the main CPU */
+	{ 0x0040, 0x03ff, motos_sharedram_r2 },						 /* shared RAM with the main CPU */
 
 	{ -1 }  /* end of table */
 };

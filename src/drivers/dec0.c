@@ -13,8 +13,8 @@
     * Hippodrome                              (USA set)
     * Fighting Fantasy                        (Japanese version of above)
     * Sly Spy                                 (USA set)
+    * Midnight Resistance                     (World set)
 	* Midnight Resistance                     (USA set)
-    * Midnight Resistance                     (Japanese set)
 	* Boulderdash                             (Japanese set?)
 
 	Heavy Barrel, Bad Dudes, Robocop, Birdy Try & Hippodrome use the 'MEC-M1'
@@ -1732,42 +1732,6 @@ ROM_END
 
 ROM_START( midres_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN ( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
-	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
-	ROM_LOAD_EVEN ( "fl15",         0x40000, 0x20000, 0x1328354e )
-	ROM_LOAD_ODD  ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
-
-	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fl05",         0x008000, 0x08000, 0xd75aba06 )	/* chars */
-	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "fl04",         0x018000, 0x08000, 0x8f5bbb79 )
-	ROM_CONTINUE(     0x010000, 0x08000 )
-	ROM_LOAD( "fl09",         0x020000, 0x20000, 0x907d5910 )	/* tiles */
-	ROM_LOAD( "fl08",         0x040000, 0x20000, 0xa936c03c )
-	ROM_LOAD( "fl07",         0x060000, 0x20000, 0x2068c45c )
-	ROM_LOAD( "fl06",         0x080000, 0x20000, 0xb7241ab9 )
-	ROM_LOAD( "fl11",         0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
-	/* 0d0000-0dffff empty */
-	ROM_CONTINUE(     0x0c0000, 0x10000 )
-	/* 110000-11ffff empty */
-	ROM_LOAD( "fl10",         0x0e0000, 0x10000, 0x92245b29 )
-	/* 0b0000-0bffff empty */
-	ROM_CONTINUE(     0x100000, 0x10000 )
-	/* 0f0000-0fffff empty */
-	ROM_LOAD( "fl01",         0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
-	ROM_LOAD( "fl03",         0x140000, 0x20000, 0x1eefed3c )
-	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
-	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
-
-	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
-ROM_END
-
-ROM_START( midresj_rom )
-	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN ( "fk_14.rom", 0x00000, 0x20000, 0xde7522df )
 	ROM_LOAD_ODD  ( "fk_12.rom", 0x00000, 0x20000, 0x3494b8c9 )
 	ROM_LOAD_EVEN ( "fl15", 0x40000, 0x20000, 0x1328354e )
@@ -1800,6 +1764,42 @@ ROM_START( midresj_rom )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fl17", 0x00000, 0x20000, 0x9029965d )
+ROM_END
+
+ROM_START( midresu_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+	ROM_LOAD_EVEN ( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
+	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
+	ROM_LOAD_EVEN ( "fl15",         0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD  ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
+
+	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fl05",         0x008000, 0x08000, 0xd75aba06 )	/* chars */
+	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fl04",         0x018000, 0x08000, 0x8f5bbb79 )
+	ROM_CONTINUE(     0x010000, 0x08000 )
+	ROM_LOAD( "fl09",         0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08",         0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07",         0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06",         0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11",         0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
+	/* 0d0000-0dffff empty */
+	ROM_CONTINUE(     0x0c0000, 0x10000 )
+	/* 110000-11ffff empty */
+	ROM_LOAD( "fl10",         0x0e0000, 0x10000, 0x92245b29 )
+	/* 0b0000-0bffff empty */
+	ROM_CONTINUE(     0x100000, 0x10000 )
+	/* 0f0000-0fffff empty */
+	ROM_LOAD( "fl01",         0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03",         0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
 ROM_END
 
 ROM_START( bouldash_rom )
@@ -2506,9 +2506,9 @@ struct GameDriver midres_driver =
 	__FILE__,
 	0,
 	"midres",
-	"Midnight Resistance (US)",
+	"Midnight Resistance (World)",
 	"1989",
-	"Data East USA",
+	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
@@ -2526,20 +2526,20 @@ struct GameDriver midres_driver =
 	midres_hiload, midres_hisave
 };
 
-struct GameDriver midresj_driver =
+struct GameDriver midresu_driver =
 {
 	__FILE__,
 	&midres_driver,
-	"midresj",
-	"Midnight Resistance (Japan)",
+	"midresu",
+	"Midnight Resistance (US)",
 	"1989",
-	"Data East Corporation",
+	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
 	dec0_custom_memory,
 
-	midresj_rom,
+	midresu_rom,
 	0, 0,
 	0,
 	0,

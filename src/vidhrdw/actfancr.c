@@ -2,36 +2,15 @@
 
 	actfancr - Bryan McPhail, mish@tendril.force9.net
 
-little endian addressed BAC-06 MXC-06 chips
-Same as Oscar, Cobra Command, Bad Dudes, etc
-
-
 *******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned *dirty_f;
-static struct osd_bitmap *pf1_bitmap;
 static int actfancr_control_1[0x20],actfancr_control_2[0x20];
-
 unsigned char *actfancr_pf1_data,*actfancr_pf2_data;
-
-void actfancr_palette_w(int offset, int data)
-{
-	int r,g,b;
-
-	data=data&0xfb; //pull out 4
-
-	paletteram[offset]=data;
-	offset=offset&0xffe;
-
-	r = ((paletteram[offset]) >> 0) & 0xf;
-	g = ((paletteram[offset]) >> 4) & 0xf;
-	b = ((paletteram[offset+1]) >> 0) & 0xf;
-
-	palette_change_color(offset / 2,r*0x11,g*0x11,b*0x11);
-}
+static struct tilemap *pf1_tilemap;
+static int flipscreen,last_flip;
 
 /******************************************************************************/
 
@@ -47,12 +26,12 @@ void actfancr_pf2_control_w(int offset, int data)
 
 void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int my,mx,offs,color,tile,pal_base,colmask[16],i;
-	int scrolly=actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8);
-	int scrollx=actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8);
+	int my,mx,offs,color,tile,pal_base,colmask[16],i,mult;
+	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
+	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
+	tilemap_update(pf1_tilemap);
 	palette_init_used_colors();
-	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
@@ -72,18 +51,19 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x2000; offs += 2)
+	for (offs = 0; offs < 0x800; offs += 2)
 	{
-		tile = actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
-		colmask[tile>>12] |= Machine->gfx[2]->pen_usage[tile&0xfff];
+		tile = spriteram[offs+2]+(spriteram[offs+3]<<8);
+		color=spriteram[offs+5]>>4;
+		colmask[color] |= Machine->gfx[1]->pen_usage[tile&0xfff];
 	}
 	for (color = 0;color < 16;color++)
 	{
 		if (colmask[color] & (1 << 0))
 			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 0;i < 16;i++)
+		for (i = 1;i < 16;i++)
 		{
 			if (colmask[color] & (1 << i))
 				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
@@ -91,45 +71,18 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	if (palette_recalc())
-    	memset(dirty_f,1,0x400);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	/* Playfield */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x400; offs += 2) {
-		mx++;
-		if (mx==16) {mx=0; my++;}
-		if (!dirty_f[offs/2]) continue;
-		dirty_f[offs/2]=0;
+	/* Draw playfield */
+	flipscreen=actfancr_control_2[0]&0x80;
+	if (last_flip!=flipscreen)
+		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	last_flip=flipscreen;
 
-		tile=actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-
-		drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-			color, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-	/* Playfield */
-	mx=-1; my=0;
-	for (offs = 0x400;offs < 0x800; offs += 2) {
-		mx++;
-		if (mx==16) {mx=0; my++;}
-		if (!dirty_f[offs/2]) continue;
-		dirty_f[offs/2]=0;
-
-		tile=actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-
-		drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-			color, 0,0, (16*mx)+256,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-	scrolly=-scrolly;
-	scrollx=-scrollx;
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
+	tilemap_set_scrollx( pf1_tilemap,0, scrollx );
+	tilemap_set_scrolly( pf1_tilemap,0, scrolly );
+	tilemap_render(ALL_TILEMAPS);
+	tilemap_draw(bitmap,pf1_tilemap,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)
@@ -167,13 +120,22 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			inc = 1;
 		}
 
+		if (flipscreen) {
+			y=240-y;
+			x=240-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
 		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y - 16 * multi,
+					x,y + mult * multi,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			multi--;
 		}
@@ -187,18 +149,42 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tile=tile&0xfff;
 		mx = (offs/2) % 32;
 		my = (offs/2) / 32;
+		if (flipscreen) {mx=31-mx; my=31-my;}
 		drawgfx(bitmap,Machine->gfx[0],
-			tile,color,0,0,8*mx,8*my,
+			tile,color,flipscreen,flipscreen,8*mx,8*my,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
 /******************************************************************************/
 
+static void get_tile_info( int col, int row )
+{
+	int offs,tile,color;
+
+	offs=(col/16)*0x200; /* Find base */
+	offs+=(col%16)*2 + row *32;
+
+	tile=actfancr_pf1_data[offs]+(actfancr_pf1_data[offs+1]<<8);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(2,tile,color)
+}
+
 void actfancr_pf1_data_w(int offset, int data)
 {
+	int dx,dy;
+
 	actfancr_pf1_data[offset]=data;
-	dirty_f[offset/2] = 1;
+	offset=offset&0xfffe;
+
+	/* Playfield is 16 blocks of 256 by 256 laid side to side */
+	dx=(offset>>9)*16;
+	offset&=0x1ff;
+
+	dx+=(offset%32)/2; dy=offset/32;
+	tilemap_mark_tile_dirty(pf1_tilemap,dx,dy);
 }
 
 int actfancr_pf1_data_r(int offset)
@@ -218,21 +204,17 @@ int actfancr_pf2_data_r(int offset)
 
 /******************************************************************************/
 
-void actfancr_vh_stop (void)
-{
-	free(dirty_f);
-	osd_free_bitmap (pf1_bitmap);
-}
-
 int actfancr_vh_start (void)
 {
-	/* Allocate bitmaps */
-	if ((pf1_bitmap = osd_create_bitmap(512,512)) == 0) {
-		actfancr_vh_stop ();
-		return 1;
-	}
+	pf1_tilemap = tilemap_create(
+		get_tile_info,
+		0,
+		16,16,
+		256,16 /* 4096 by 256 */
+	);
 
-	dirty_f=malloc(0x4000); //test later
+	tilemap_set_scroll_rows(pf1_tilemap,1);
+	tilemap_set_scroll_cols(pf1_tilemap,1);
 
 	return 0;
 }

@@ -181,6 +181,7 @@ void twincobr_txscroll_w(int offset,int data);
 void twincobr_bgscroll_w(int offset,int data);
 void twincobr_fgscroll_w(int offset,int data);
 void twincobr_exscroll_w(int offset,int data);
+int  twincobr_txoffs_r(void);
 void twincobr_txoffs_w(int offset,int data);
 void twincobr_bgoffs_w(int offset,int data);
 void twincobr_fgoffs_w(int offset,int data);
@@ -195,6 +196,7 @@ int  twincobr_vh_start(void);
 void twincobr_vh_stop(void);
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+extern int twincobr_flip_screen;
 
 
 /**************** Machine stuff ******************/
@@ -214,6 +216,12 @@ extern unsigned char *twincobr_68k_dsp_ram;
 extern unsigned char *twincobr_sharedram;
 extern int intenable;
 
+/**************** High Score stuff ***************/
+static int twinc_scores;
+static int twinc_names;
+static int twinc_levels;
+static int twinc_end;
+static int twinc_vid_test;
 
 
 int twincobr_input_r(int offset)
@@ -1006,7 +1014,7 @@ ROM_START( twincobr_rom )
 	ROM_REGION(0x10000)		/* 32k for second CPU */
 	ROM_LOAD( "tc12",			0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_REGION(0x10000)		/* For TI TMS320C10 Microcontroller */
 	ROM_LOAD_EVEN( "tc1b",		0x0000, 0x0800, 0x1757cc33 )
 	ROM_LOAD_ODD ( "tc2a",		0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
@@ -1038,7 +1046,7 @@ ROM_START( twincobu_rom )
 	ROM_REGION(0x10000)		/* 32k for second CPU */
 	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_REGION(0x10000)		/* For TI TMS320C10 Microcontroller */
 	ROM_LOAD_EVEN( "dsp_22.bin",	0x0000, 0x0800, 0x79389a71 )
 	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
 ROM_END
@@ -1071,8 +1079,8 @@ ROM_START( ktiger_rom )
 	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp-22",	0x0000, 0x0800, BADCRC( 0x8a1d48d9 ) )
+	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, BADCRC( 0x33d99bc2 ) )
 ROM_END
 
 ROM_START( fshark_rom )
@@ -1105,8 +1113,8 @@ ROM_START( fshark_rom )
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0xacb21beb ) )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
 ROM_START( skyshark_rom )
@@ -1115,9 +1123,9 @@ ROM_START( skyshark_rom )
 	ROM_LOAD_ODD ( "17-2",		0x00000, 0x10000, 0x066d67be )
 
 	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
-    ROM_LOAD( "7-2",            0x00000, 0x04000, 0xaf48c4e6 )  /* chars */
+	ROM_LOAD( "7-2",			0x00000, 0x04000, 0xaf48c4e6 )	/* chars */
 	ROM_LOAD( "6-2",			0x04000, 0x04000, 0x9a29a862 )
-    ROM_LOAD( "5-2",            0x08000, 0x04000, 0xfb7cad55 )
+	ROM_LOAD( "5-2",			0x08000, 0x04000, 0xfb7cad55 )
 	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
 		/* 14000-1bfff not used */
 	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
@@ -1139,8 +1147,8 @@ ROM_START( skyshark_rom )
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
 	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, 0x00000000 )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0xacb21beb ) )
+	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
 ROM_START( hishouza_rom )
@@ -1149,9 +1157,9 @@ ROM_START( hishouza_rom )
 	ROM_LOAD_ODD ( "b02-17.rom",	0x00000, 0x10000, 0xcdac7228 )
 
 	ROM_REGION_DISPOSE(0xac000)		/* temporary space for graphics */
-    ROM_LOAD( "b02-07.rom",     0x00000, 0x04000, 0xc13a775e )  /* chars */
-    ROM_LOAD( "b02-06.rom",     0x04000, 0x04000, 0xad5f1371 )
-    ROM_LOAD( "b02-05.rom",     0x08000, 0x04000, 0x85a7bff6 )
+	ROM_LOAD( "b02-07.rom",		0x00000, 0x04000, 0xc13a775e )	/* chars */
+	ROM_LOAD( "b02-06.rom",		0x04000, 0x04000, 0xad5f1371 )
+	ROM_LOAD( "b02-05.rom",		0x08000, 0x04000, 0x85a7bff6 )
 	ROM_LOAD( "b02_12.rom",		0x0c000, 0x08000, 0x733b9997 )	/* fg tiles */
 		/* 14000-1bfff not used */
 	ROM_LOAD( "b02_15.rom",		0x1c000, 0x08000, 0x8b70ef32 )
@@ -1172,15 +1180,26 @@ ROM_START( hishouza_rom )
 	ROM_REGION(0x10000)		/* 64k for second CPU */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_ODD ( "dsp-a1.bpr",	0x0000, 0x0400, 0x45d4d1b1 )
-	ROM_LOAD_EVEN( "dsp-a2.bpr",	0x0000, 0x0400, 0xedd227fa )
-	ROM_LOAD_ODD ( "dsp-a3.bpr",	0x0800, 0x0400, 0xdf88e79b )
-	ROM_LOAD_EVEN( "dsp-a4.bpr",	0x0800, 0x0400, 0xa2094a7f )
-	ROM_LOAD_ODD ( "dsp-b5.bpr",	0x1000, 0x0400, 0x85ca5d47 )
-	ROM_LOAD_EVEN( "dsp-b6.bpr",	0x1000, 0x0400, 0x81816b2c )
-	ROM_LOAD_ODD ( "dsp-b7.bpr",	0x1800, 0x0400, 0xe87540cd )
-	ROM_LOAD_EVEN( "dsp-b8.bpr",	0x1800, 0x0400, 0xd3c16c5c )
+	ROM_REGION(0x10000)		/* For TI TMS320C10 Microcontroller */
+#ifndef LSB_FIRST
+	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x1000, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x1000, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x1400, 0x0400, 0xe87540cd )
+	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x1400, 0x0400, 0xd3c16c5c )
+	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x1800, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x1800, 0x0400, 0xedd227fa )
+	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x1c00, 0x0400, 0x85ca5d47 )
+	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x1c00, 0x0400, 0x81816b2c )
+#else
+	ROM_LOAD_NIB_HIGH( "dsp-a1.bpr", 0x1000, 0x0400, 0x45d4d1b1 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "dsp-a2.bpr", 0x1000, 0x0400, 0xedd227fa )
+	ROM_LOAD_NIB_HIGH( "dsp-b5.bpr", 0x1400, 0x0400, 0x85ca5d47 )
+	ROM_LOAD_NIB_LOW ( "dsp-b6.bpr", 0x1400, 0x0400, 0x81816b2c )
+	ROM_LOAD_NIB_HIGH( "dsp-a3.bpr", 0x1800, 0x0400, 0xdf88e79b ) /* msb */
+	ROM_LOAD_NIB_LOW ( "dsp-a4.bpr", 0x1800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "dsp-b7.bpr", 0x1c00, 0x0400, 0xe87540cd )
+	ROM_LOAD_NIB_LOW ( "dsp-b8.bpr", 0x1c00, 0x0400, 0xd3c16c5c )
+#endif
 ROM_END
 
 ROM_START( fsharkbt_rom )
@@ -1212,15 +1231,26 @@ ROM_START( fsharkbt_rom )
 	ROM_REGION(0x10000)		/* 64k for second CPU */
 	ROM_LOAD( "b02_16.rom",		0x0000, 0x8000, 0xcdd1a153 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_ODD ( "mcu-1.bpr",		0x0000, 0x0400, 0x45d4d1b1 )
-	ROM_LOAD_EVEN( "mcu-2.bpr",		0x0000, 0x0400, 0x651336d1 )
-	ROM_LOAD_ODD ( "mcu-3.bpr",		0x0800, 0x0400, 0xdf88e79b )
-	ROM_LOAD_EVEN( "mcu-4.bpr",		0x0800, 0x0400, 0xa2094a7f )
-	ROM_LOAD_ODD ( "mcu-5.bpr",		0x1000, 0x0400, 0xf97a58da )
-	ROM_LOAD_EVEN( "mcu-6.bpr",		0x1000, 0x0400, 0xffcc422d )
-	ROM_LOAD_ODD ( "mcu-7.bpr",		0x1800, 0x0400, 0x0cd30d49 )
-	ROM_LOAD_EVEN( "mcu-8.bpr",		0x1800, 0x0400, 0x3379bbff )
+	ROM_REGION(0x10000)		/* For TI TMS320C10 Microcontroller */
+#ifndef LSB_FIRST
+	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x1000, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x1000, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x1400, 0x0400, 0x0cd30d49 )
+	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x1400, 0x0400, 0x3379bbff )
+	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x1800, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x1800, 0x0400, 0x651336d1 )
+	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x1c00, 0x0400, 0xf97a58da )
+	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x1c00, 0x0400, 0xffcc422d )
+#else
+	ROM_LOAD_NIB_HIGH( "mcu-1.bpr",  0x1000, 0x0400, 0x45d4d1b1 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "mcu-2.bpr",  0x1000, 0x0400, 0x651336d1 )
+	ROM_LOAD_NIB_HIGH( "mcu-5.bpr",  0x1400, 0x0400, 0xf97a58da )
+	ROM_LOAD_NIB_LOW ( "mcu-6.bpr",  0x1400, 0x0400, 0xffcc422d )
+	ROM_LOAD_NIB_HIGH( "mcu-3.bpr",  0x1800, 0x0400, 0xdf88e79b ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "mcu-4.bpr",  0x1800, 0x0400, 0xa2094a7f )
+	ROM_LOAD_NIB_HIGH( "mcu-7.bpr",  0x1c00, 0x0400, 0x0cd30d49 )
+	ROM_LOAD_NIB_LOW ( "mcu-8.bpr",  0x1c00, 0x0400, 0x3379bbff )
+#endif
 ROM_END
 
 
@@ -1247,7 +1277,6 @@ static void twincobr_decode(void)
 
 static void fsharkbt_decode(void)
 {
-	/* TMS320C10 code resides in nibble PROMS. Convert code to bytes. */
 	int A;
 	unsigned char datamsb;
 	unsigned char datalsb;
@@ -1255,25 +1284,170 @@ static void fsharkbt_decode(void)
 
 	DSP_ROMS = Machine->memory_region[Machine->drv->cpu[2].memory_region];
 
-	for (A = 0;A < 0x0800;A+=2) {
-		datamsb  = DSP_ROMS[(A+0x0000)] << 4;
-		datamsb |= DSP_ROMS[(A+0x0001)];
-		datalsb  = DSP_ROMS[(A+0x0800)] << 4;
-		datalsb |= DSP_ROMS[(A+0x0801)];
-		DSP_ROMS[(A+0x0000)] = datamsb;
-		DSP_ROMS[(A+0x0001)] = datalsb;
-		datamsb  = DSP_ROMS[(A+0x1000)] << 4;
-		datamsb |= DSP_ROMS[(A+0x1001)];
-		datalsb  = DSP_ROMS[(A+0x1800)] << 4;
-		datalsb |= DSP_ROMS[(A+0x1801)];
-		DSP_ROMS[(A+0x0800)] = datamsb;
-		DSP_ROMS[(A+0x0801)] = datalsb;
+	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
+
+	for (A = 0;A < 0x0800;A++)
+	{
+		datamsb = DSP_ROMS[0x1000 + A];
+		datalsb = DSP_ROMS[0x1800 + A];
+		DSP_ROMS[A*2]   = datamsb;
+		DSP_ROMS[A*2+1] = datalsb;
 	}
-	for (A = 0x1000;A < 0x2000;A++) {
+		for (A = 0x1000;A < 0x2000;A++)
+	{
 		DSP_ROMS[A] = 00;
 	}
 }
 
+void twincobr_hiscore_init_tests(void)
+{
+	/* Initialise hi score variables. Tables are contiguous */
+	/* Memory is cleared out in the machine driver before hi score is tested */
+
+	twinc_scores = 0x15a2;  	/* 54 * first four bytes are the top of screen */
+                                /*      screen hi score. The hi score table */
+								/*		then starts after that */
+	twinc_names  = 0x15f6;		/* f0 * start of names table */
+	twinc_levels = 0x16e6;		/* 28 * start of level acheived table */
+	twinc_end    = 0x170e;		/* 		end of table */
+	twinc_vid_test = 0x5803;	/* green digit 3 in 30000 from screen memory to test */
+}
+void ktiger_hiscore_init_tests(void)
+{
+	twinc_scores = 0x1280;
+	twinc_names  = 0x12d4;
+	twinc_levels = 0x13c4;
+	twinc_end    = 0x13ec;
+	twinc_vid_test = 0x3803;	/* red 3 */
+}
+void fshark_hiscore_init_tests(void)
+{
+	twinc_scores = 0x016a;
+	twinc_names  = 0x01be;
+	twinc_levels = 0x02ae;
+	twinc_end    = 0x02d6;
+	twinc_vid_test = 0x0003;	/* white 3 */
+}
+
+
+static int twincobr_hiload(void)
+{
+	/* check if the hi score table has already been initialized */
+
+	int twinc_tx_offset;
+	int twinc_tx_data;
+	int twinc_scrn1=0x466;	/* video ram locations of high score */
+	int twinc_scrn2=0x426;
+	int twinc_scrn3=0x3e6;
+	int twinc_scrn4=0x3a6;
+	int twinc_scrn5=0x366;
+	int twinc_scrn6=0x326;
+	int twinc_scrn7=0x2e6;
+
+	twinc_tx_offset = twincobr_txoffs_r();	/* save current video offset */
+	twincobr_txoffs_w(0,twinc_scrn4);
+	twinc_tx_data = twincobr_txram_r(0);
+
+
+	if ((READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)])==0x3000) && /* start of table */
+		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+6)])==0x3000) &&
+		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_end-4)])==0x0001) &&
+		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_end-2)])==0x0001) && /* end of table */
+		(twinc_tx_data == twinc_vid_test))						   /* video layer initialised ? */
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			int twinc_hiscore;
+			int twinc_zero_flag = 0;
+			int twinc_digit1, twinc_digit2, twinc_digit3, twinc_digit4;
+
+			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_scores],
+				twinc_names - twinc_scores);					/* score values */
+			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_names],
+				twinc_levels - twinc_names);					/* initials */
+			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_levels],
+				twinc_end - twinc_levels);					/* levels */
+
+			WRITE_WORD(&twincobr_68k_dsp_ram[twinc_scores],		/* update high score on top of screen */
+				(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+4)])));
+			WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)],
+				(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+6)])));
+
+			twinc_hiscore = READ_WORD(&twincobr_68k_dsp_ram[twinc_scores]);
+			twinc_digit1 =  twinc_hiscore & 0xf;
+			twinc_digit2 = (twinc_hiscore >>  4) & 0xf;
+			twinc_digit3 = (twinc_hiscore >>  8) & 0xf;
+
+			if (twinc_digit3)
+			{
+				twincobr_txoffs_w(0,twinc_scrn7);
+				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+				twincobr_txram_w(0,(twinc_tx_data | twinc_digit3));
+				twinc_zero_flag = 1;
+			}
+
+			if ((twinc_digit2) || (twinc_zero_flag))
+			{
+				twincobr_txoffs_w(0,twinc_scrn6);
+				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+				twincobr_txram_w(0,(twinc_tx_data | twinc_digit2));
+				twinc_zero_flag = 1;
+			}
+
+			if ((twinc_digit1) || (twinc_zero_flag))
+			{
+				twincobr_txoffs_w(0,twinc_scrn5);
+				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+				twincobr_txram_w(0,(twinc_tx_data | twinc_digit1));
+			}
+
+			twinc_hiscore = READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)]);
+			twinc_digit4 = (twinc_hiscore >> 12) & 0xf;
+			twinc_digit3 = (twinc_hiscore >>  8) & 0xf;
+			twinc_digit2 = (twinc_hiscore >>  4) & 0xf;
+			twinc_digit1 =  twinc_hiscore & 0xf;
+
+			twincobr_txoffs_w(0,twinc_scrn4);
+			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+			twincobr_txram_w(0,(twinc_tx_data | twinc_digit4));
+
+			twincobr_txoffs_w(0,twinc_scrn3);
+			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+			twincobr_txram_w(0,(twinc_tx_data | twinc_digit3));
+
+			twincobr_txoffs_w(0,twinc_scrn2);
+			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+			twincobr_txram_w(0,(twinc_tx_data | twinc_digit2));
+
+			twincobr_txoffs_w(0,twinc_scrn1);
+			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
+			twincobr_txram_w(0,(twinc_tx_data | twinc_digit1));
+
+			osd_fclose(f);
+		}
+		twincobr_txoffs_w(0,twinc_tx_offset);
+		return 1;
+	}
+	else
+	{
+		twincobr_txoffs_w(0,twinc_tx_offset);	/* restore video offset */
+		return 0;			/* we can't load the hi scores yet */
+	}
+}
+
+static void twincobr_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&twincobr_68k_dsp_ram[twinc_scores],
+			twinc_end - twinc_scores);						/* HS table */
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver twincobr_driver =
@@ -1287,7 +1461,7 @@ struct GameDriver twincobr_driver =
 	"Quench\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	twincobr_hiscore_init_tests,
 	twincobr_rom,
 	twincobr_decode, 0,
 	0,
@@ -1295,7 +1469,7 @@ struct GameDriver twincobr_driver =
 	twincobr_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };
 
 struct GameDriver twincobu_driver =
@@ -1309,7 +1483,7 @@ struct GameDriver twincobu_driver =
 	"Quench\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	twincobr_hiscore_init_tests,
 	twincobu_rom,
 	0, 0,
 	0,
@@ -1331,7 +1505,7 @@ struct GameDriver ktiger_driver =
 	"Quench\nNicola Salmoria\nCarl-Henrik (HW Advice)",
 	0,
 	&machine_driver,
-	0,
+	ktiger_hiscore_init_tests,
 	ktiger_rom,
 	0, 0,
 	0,
@@ -1339,7 +1513,7 @@ struct GameDriver ktiger_driver =
 	ktiger_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };
 
 struct GameDriver fshark_driver =
@@ -1353,7 +1527,7 @@ struct GameDriver fshark_driver =
 	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
 	0,
 	&machine_driver,
-	0,
+	fshark_hiscore_init_tests,
 	fshark_rom,
 	0, 0,
 	0,
@@ -1361,7 +1535,7 @@ struct GameDriver fshark_driver =
 	fshark_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };
 
 struct GameDriver skyshark_driver =
@@ -1375,7 +1549,7 @@ struct GameDriver skyshark_driver =
 	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
 	0,
 	&machine_driver,
-	0,
+	fshark_hiscore_init_tests,
 	skyshark_rom,
 	0, 0,
 	0,
@@ -1383,7 +1557,7 @@ struct GameDriver skyshark_driver =
 	skyshark_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };
 
 struct GameDriver hishouza_driver =
@@ -1397,7 +1571,7 @@ struct GameDriver hishouza_driver =
 	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
 	0,
 	&machine_driver,
-	0,
+	fshark_hiscore_init_tests,
 	hishouza_rom,
 	fsharkbt_decode, 0,
 	0,
@@ -1405,7 +1579,7 @@ struct GameDriver hishouza_driver =
 	hishouza_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };
 
 struct GameDriver fsharkbt_driver =
@@ -1419,7 +1593,7 @@ struct GameDriver fsharkbt_driver =
 	"Quench\nNicola Salmoria\nCarl-Henrik Starstedt - DSC (HW info)\nMagnus Danielsson - DSC (HW info)\nRuben Panossian (HW info)",
 	0,
 	&machine_driver,
-	0,
+	fshark_hiscore_init_tests,
 	fsharkbt_rom,
 	fsharkbt_decode, 0,
 	0,
@@ -1427,5 +1601,5 @@ struct GameDriver fsharkbt_driver =
 	skyshark_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	twincobr_hiload, twincobr_hisave
 };

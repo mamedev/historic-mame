@@ -70,11 +70,12 @@ const struct GameDriver *drivers[] =
 	DRIVER( eyes2 )		/* (c) 1982 Techstar + "Rockola presents" */
 	DRIVER( mrtnt )		/* (c) 1983 Telko */
 	DRIVER( ponpoko )	/* (c) 1982 Sigma Ent. Inc. */
+	DRIVER( ponpokov )	/* (c) 1982 Sigma Ent. Inc. + Venture Line license */
 	DRIVER( lizwiz )	/* (c) 1985 Techstar + "Sunn presents" */
 	DRIVER( theglob )	/* (c) 1983 Epos Corporation */
 	DRIVER( beastf )	/* (c) 1984 Epos Corporation */
 	DRIVER( jumpshot )
-	DRIVER( vanvan )	/* (c) 1983 Karateco */
+	DRIVER( vanvan )	/* (c) 1983 Karateco (bootleg?) */
 	DRIVER( vanvanb )	/* bootleg */
 	DRIVER( alibaba )	/* (c) 1982 Sega */
 	DRIVER( pengo )		/* 834-0386 (c) 1982 Sega */
@@ -93,8 +94,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( galap4 )	/* hack */
 	DRIVER( galturbo )	/* hack */
 	DRIVER( pisces )	/* ? */
+	DRIVER( uniwars )	/* (c) Irem */
 	DRIVER( gteikoku )	/* (c) Irem */
-	DRIVER( uniwars )	/* (c) Karateco (bootleg?) */
 	DRIVER( spacbatt )	/* bootleg */
 	DRIVER( warofbug )	/* (c) 1981 Armenia */
 	DRIVER( redufo )	/* ? */
@@ -109,6 +110,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( mooncrgx )	/* bootleg */
 	DRIVER( mooncrst )	/* (c) 1980 Nichibutsu */
 	DRIVER( mooncrsg )	/* (c) 1980 Gremlin */
+	DRIVER( smooncrs )	/* Gremlin */
 	DRIVER( mooncrsb )	/* bootleg */
 	DRIVER( mooncrs2 )	/* bootleg */
 	DRIVER( fantazia )	/* bootleg */
@@ -126,6 +128,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( scrambls )	/* GX387 (c) 1981 Stern */
 	DRIVER( scramblb )	/* bootleg */
 	DRIVER( atlantis )	/* (c) 1981 Comsoft */
+	DRIVER( atlants2 )	/* (c) 1981 Comsoft */
 	DRIVER( theend )	/* (c) 1980 Stern */
 	DRIVER( ckongs )	/* bootleg */
 	DRIVER( froggers )	/* bootleg */
@@ -157,8 +160,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( losttmbh )	/* (c) 1982 Stern */
 	DRIVER( superbon )	/* bootleg */
 	DRIVER( hustler )	/* GX343 (c) 1981 Konami */
-	DRIVER( pool )
 	DRIVER( billiard )	/* bootleg */
+	DRIVER( hustlerb )	/* bootleg */
 	DRIVER( frogger )	/* 834-0068 (c) 1981 Sega */
 	DRIVER( frogsega )	/* (c) 1981 Sega */
 	DRIVER( frogger2 )	/* 800-3110 (c) 1981 Sega */
@@ -239,6 +242,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( jungler )	/* GX327 (c) 1981 Konami */
 	DRIVER( junglers )	/* GX327 (c) 1981 Stern */
 	DRIVER( locomotn )	/* GX359 (c) 1982 Konami + Centuri license */
+	DRIVER( cottong )	/* bootleg */
 	DRIVER( commsega )	/* (c) 1983 Sega */
 	/* the following ones all have a custom I/O chip */
 	DRIVER( bosco )		/* (c) 1981 */
@@ -656,6 +660,7 @@ Six Flags (?)
 */
 
 	/* Irem games */
+	/* trivia: IREM means "International Rental Electronics Machines" */
 	DRIVER( skychut )	/* (c) [1980] */
 	DRIVER( mpatrol )	/* (c) 1982 */
 	DRIVER( mpatrolw )	/* (c) 1982 + Williams license */
@@ -666,6 +671,7 @@ Six Flags (?)
 	DRIVER( vsyard2 )	/* (c) 1983/1984 */
 	DRIVER( travrusa )	/* (c) 1983 */
 	DRIVER( motorace )	/* (c) 1983 Williams license */
+	/* M62 */
 	DRIVER( kungfum )	/* (c) 1984 */
 	DRIVER( kungfud )	/* (c) 1984 + Data East license */
 	DRIVER( kungfub )	/* bootleg */
@@ -680,9 +686,14 @@ Six Flags (?)
 	DRIVER( kidniki )	/* (c) 1986 + Data East USA license */
 	DRIVER( spelunkr )	/* (c) 1985 licensed from Broderbund */
 	DRIVER( spelunk2 )	/* (c) 1986 licensed from Broderbund */
+
 	DRIVER( vigilant )	/* (c) 1988 */
 	DRIVER( vigilntu )	/* (c) 1988 */
 	DRIVER( vigilntj )	/* (c) 1988 */
+	/* M97 */
+//	DRIVER( riskchal )
+//	DRIVER( shisen2 )
+//	DRIVER( quizf1 )
 
 	/* Gottlieb/Mylstar games (Gottlieb became Mylstar in 1983) */
 	DRIVER( reactor )	/* GV-100 (c) 1982 Gottlieb */
@@ -697,9 +708,6 @@ Six Flags (?)
 	DRIVER( qbertqub )	/* GV-119 (c) 1983 Mylstar */
 	DRIVER( curvebal )	/* GV-134 (c) 1984 Mylstar */
 
-	/* NOTE: Taito games with "Taito Corporation Japan" copyright notice are usually */
-	/* *NOT* Japanese versions. They are usually World versions. Japanese versions */
-	/* have "Taito Corporation" only, US versions have "Taito America Corporation". */
 	/* older Taito games */
 	DRIVER( crbaloon )	/* (c) 1980 Taito Corporation */
 	DRIVER( crbalon2 )	/* (c) 1980 Taito Corporation */
@@ -732,22 +740,24 @@ Six Flags (?)
 	DRIVER( tinstar )	/* (c) 1983 Taito Corporation */
 	DRIVER( waterski )	/* (c) 1983 Taito Corporation */
 	DRIVER( bioatack )	/* (c) 1983 Taito Corporation + Fox Video Games license */
-	DRIVER( sfposeid )	/* (c) 1984 */
+	DRIVER( sfposeid )	/* 1984 */
 
 	/* other Taito games */
-	DRIVER( bking2 )	/* (c) 1983 */
-	DRIVER( gsword )	/* (c) 1984 */
-	DRIVER( retofinv )	/* (c) 1985 */
+	DRIVER( bking2 )	/* (c) 1983 Taito Corporation */
+	DRIVER( gsword )	/* (c) 1984 Taito Corporation */
+	DRIVER( lkage )		/* (c) 1984 Taito Corporation */
+	DRIVER( lkageb )	/* bootleg */
+	DRIVER( retofinv )	/* (c) 1985 Taito Corporation */
 	DRIVER( retofin1 )	/* bootleg */
 	DRIVER( retofin2 )	/* bootleg */
 	DRIVER( gladiatr )	/* (c) 1986 Taito America Corporation (US) */
 	DRIVER( ogonsiro )	/* (c) 1986 Taito Corporation (Japan) */
-	DRIVER( gcastle )	/* (c) 1986 Taito Corporation */
-	DRIVER( bublbobl )	/* (c) 1986 */
-	DRIVER( bublbobr )	/* (c) 1986 */
+//	DRIVER( gcastle )	/* bootleg */ temporarily removed since a complete dump is not available
+	DRIVER( bublbobl )	/* (c) 1986 Taito Corporation */
+	DRIVER( bublbobr )	/* (c) 1986 Taito America Corporation */
 	DRIVER( boblbobl )	/* bootleg */
 	DRIVER( sboblbob )	/* bootleg */
-	DRIVER( tokio )		/* (c) 1986 */
+	DRIVER( tokio )		/* 1986 */
 	DRIVER( tokiob )	/* bootleg */
 //	DRIVER( mexico86 )
 //	DRIVER( kicknrun )
@@ -755,25 +765,25 @@ Six Flags (?)
 	DRIVER( rastanu )	/* (c) 1987 Taito America Corporation (US) */
 	DRIVER( rastanu2 )	/* (c) 1987 Taito America Corporation (US) */
 	DRIVER( rastsaga )	/* (c) 1987 Taito Corporation (Japan)*/
-	DRIVER( rainbow )	/* (c) 1987 */
-	DRIVER( rainbowe )	/* (c) 1988 */
+	DRIVER( rainbow )	/* (c) 1987 Taito Corporation */
+	DRIVER( rainbowe )	/* (c) 1988 Taito Corporation */
 	DRIVER( jumping )	/* bootleg */
-	DRIVER( arkanoid )	/* (c) 1986 Taito */
-	DRIVER( arknoidu )	/* (c) 1986 Taito America + Romstar license */
+	DRIVER( arkanoid )	/* (c) 1986 Taito Corporation Japan (World) */
+	DRIVER( arknoidu )	/* (c) 1986 Taito America Corporation + Romstar license (US) */
+	DRIVER( arknoidj )	/* (c) 1986 Taito Corporation (Japan) */
 	DRIVER( arkbl2 )	/* bootleg */
 	DRIVER( arkatayt )	/* bootleg */
-	DRIVER( superqix )	/* (c) 1987 */
+	DRIVER( arkangc )	/* bootleg */
+	DRIVER( superqix )	/* 1987 */
 	DRIVER( sqixbl )	/* bootleg? but (c) 1987 */
 	DRIVER( extrmatn )	/* (c) 1987 World Games */
-	DRIVER( arkanoi2 )	/* (c) 1987 Taito Japan (World?) */
-	DRIVER( ark2us )	/* (c) 1987 + Romstar license */
-	DRIVER( tnzs )		/* (c) 1988 Taito (Japan) */
-	DRIVER( tnzsb )		/* bootleg but Taito Japan (World?) */
-	DRIVER( tnzs2 )		/* (c) 1988 Taito Japan (World?) */
-	DRIVER( insectx )	/* (c) 1989 Taito Japan (World?) */
-	DRIVER( superman )	/* (c) 1988 */
-	DRIVER( lkage )		/* (c) 1984 */
-	DRIVER( lkageb )	/* bootleg */
+	DRIVER( arkanoi2 )	/* (c) 1987 Taito Corporation Japan (World) */
+	DRIVER( ark2us )	/* (c) 1987 Taito America Corporation + Romstar license */
+	DRIVER( tnzs )		/* (c) 1988 Taito Corporation (Japan) (new logo) */
+	DRIVER( tnzsb )		/* bootleg but Taito Corporation Japan (World) (new logo) */
+	DRIVER( tnzs2 )		/* (c) 1988 Taito Corporation Japan (World) (old logo) */
+	DRIVER( insectx )	/* (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( superman )	/* (c) 1988 Taito Corporation */
 
 	/* Taito F2 games */
 	DRIVER( ssi )		/* (c) 1990 Taito Corporation Japan (World) */
@@ -787,15 +797,15 @@ Six Flags (?)
 	/* Runark (c) 1990 Taito Corporation (Japan) */
 
 	/* Toaplan games */
-	DRIVER( tigerh )	/* GX-551 [not a Konami board!] (c) 1985 Taito */
-	DRIVER( tigerh2 )	/* GX-551 [not a Konami board!] (c) 1985 Taito */
-	DRIVER( tigerhb1 )	/* bootleg */
-	DRIVER( tigerhb2 )	/* bootleg */
-	DRIVER( slapfigh )	/* TP-??? (c) 1986 Taito */
-	DRIVER( slapbtjp )	/* bootleg */
-	DRIVER( slapbtuk )	/* bootleg */
-	DRIVER( alcon )		/* TP-???  */
-	DRIVER( getstar )	/* TP-??? (c) 1986 Taito, but bootleg */
+	DRIVER( tigerh )	/* GX-551 [not a Konami board!] */
+	DRIVER( tigerh2 )	/* GX-551 [not a Konami board!] */
+	DRIVER( tigerhb1 )	/* bootleg but (c) 1985 Taito Corporation */
+	DRIVER( tigerhb2 )	/* bootleg but (c) 1985 Taito Corporation */
+	DRIVER( slapfigh )	/* TP-??? */
+	DRIVER( slapbtjp )	/* bootleg but (c) 1986 Taito Corporation */
+	DRIVER( slapbtuk )	/* bootleg but (c) 1986 Taito Corporation */
+	DRIVER( alcon )		/* TP-??? */
+	DRIVER( getstar )	/* TP-??? bootleg but (c) 1986 Taito Corporation */
 
 	DRIVER( fshark )	/* TP-007 (c) 1987 Taito Corporation (World) */
 	DRIVER( skyshark )	/* TP-007 (c) 1987 Taito America Corporation + Romstar license (US) */
@@ -810,10 +820,10 @@ Six Flags (?)
 
 	DRIVER( rallybik )	/* TP-012 (c) 1988 Taito */
 	DRIVER( truxton )	/* TP-013B (c) 1988 Taito */
+	DRIVER( hellfire )	/* TP-??? (c) 1989 Toaplan + Taito license */
 	DRIVER( zerowing )	/* TP-015 (c) 1989 Toaplan */
 	DRIVER( demonwld )	/* TP-016 (c) 1989 Toaplan + Taito license */
-	DRIVER( hellfire )	/* TP-??? (c) 1989 Toaplan + Taito license */
-	DRIVER( outzone )	/* TP-??? (c) 1990 Toaplan */
+	DRIVER( outzone )	/* TP-018 (c) 1990 Toaplan */
 	DRIVER( vimana )	/* TP-019 (c) 1991 Toaplan (+ Tecmo license when set to Japan) */
 	DRIVER( vimana2 )	/* TP-019 (c) 1991 Toaplan (+ Tecmo license when set to Japan)  */
 
@@ -822,20 +832,45 @@ Six Flags (?)
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
 
 /*
+Toa Plan's board list
+(translated from http://www.aianet.ne.jp/~eisetu/rom/rom_toha.html)
+
+Title              ROMno.   Remark(1)   Remark(2)
+--------------------------------------------------
+Tiger Heli           A47      GX-551
+Hishouzame           B02      TP-007
+Kyukyoku Tiger       B30      TP-011
+Dash Yarou           B45      TP-012
+Tatsujin             B65      TP-013B   M6100649A
+Zero Wing            O15      TP-015
+Horror Story         O16      TP-016
+Same!Same!Same!      O17      TP-017
+Out Zone                      TP-018
+Vimana                        TP-019
+Teki Paki            O20      TP-020
+Ghox               TP-21      TP-021
+Dogyuun                       TP-022
+Tatsujin Oh                   TP-024    *1
+Fixeight                      TP-026
+V-V                           TP-027
+
+*1 There is a doubt this game uses TP-024 board and TP-025 romsets.
+
    86 Mahjong Sisters                                 Kit 2P 8W+2B     HC    Mahjong TP-
    88 Dash                                            Kit 2P 8W+2B                   TP-
    89 Fire Shark                                      Kit 2P 8W+2B     VC    Shooter TP-017
    89 Twin Hawk                                       Kit 2P 8W+2B     VC    Shooter TP-
    91 Whoopie                                         Kit 2P 8W+2B     HC    Action
-10/92 Dogyuun                                         Kit 2P 8W+2B     VC    Shooter TP-
-   92 Fix Eight                                       Kit 2P 8W+2B     VC    Action  TP-
-   92 Ghox                                            Kit 2P Paddle+1B VC    Action  TP-
-10/92 Tatsujin II/Truxton II       Taito              Kit 2P 8W+2B     VC    Shooter TP-029
    92 Teki Paki                                       Kit 2P                         TP-020
-10/92 Truxton II/Tatsujin II       Taito              Kit 2P 8W+2B     VC    Shooter TP-029
-12/92 V  -  V (5)/Grind Stormer                       Kit 2P 8W+2B     VC    Shooter TP-
+   92 Ghox                                            Kit 2P Paddle+1B VC    Action  TP-021
+10/92 Dogyuun                                         Kit 2P 8W+2B     VC    Shooter TP-022
 92/93 Knuckle Bash                 Atari Games        Kit 2P 8W+2B     HC    Action  TP-023
- 1/93 Grind Stormer/V - V (Five)                      Kit 2P 8W+2B     VC    Shooter TP-
+10/92 Tatsujin II/Truxton II       Taito              Kit 2P 8W+2B     VC    Shooter TP-029(?)
+10/92 Truxton II/Tatsujin II       Taito              Kit 2P 8W+2B     VC    Shooter TP-029(?)
+      Pipi & Bipi                                                                    TP-025
+   92 Fix Eight                                       Kit 2P 8W+2B     VC    Action  TP-026
+12/92 V  -  V (5)/Grind Stormer                       Kit 2P 8W+2B     VC    Shooter TP-027
+ 1/93 Grind Stormer/V - V (Five)                      Kit 2P 8W+2B     VC    Shooter TP-027
  2/94 Batsugun                                        Kit 2P 8W+2B     VC            TP-
  4/94 Snow Bros. 2                                    Kit 2P 8W+2B     HC    Action  TP-
 */
@@ -872,6 +907,7 @@ Six Flags (?)
 	/* quotes, because I couldn't find the English name (might not have been exported). */
 	/* The name in quotes is the title Capcom used for the html page. */
 	DRIVER( vulgus )	/*  5/1984 (c) 1984 */
+	DRIVER( vulgus2 )	/*  5/1984 (c) 1984 */
 	DRIVER( vulgusj )	/*  5/1984 (c) 1984 */
 	DRIVER( sonson )	/*  7/1984 (c) 1984 */
 	DRIVER( higemaru )	/*  9/1984 (c) 1984 */
@@ -896,6 +932,7 @@ Six Flags (?)
 	DRIVER( gunsmoka )	/* 11/1985 (c) 1985 (US) */
 	DRIVER( gunsmokj )	/* 11/1985 (c) 1985 (Japan) */
 	DRIVER( sectionz )	/* 12/1985 (c) 1985 */
+	DRIVER( sctionza )	/* 12/1985 (c) 1985 */
 	DRIVER( trojan )	/*  4/1986 (c) 1986 + Romstar */
 	DRIVER( trojanj )	/*  4/1986 (c) 1986 */
 	DRIVER( srumbler )	/*  9/1986 (c) 1986 */	/* aka Rush'n Crash */
@@ -980,6 +1017,7 @@ Six Flags (?)
 	DRIVER( sf2b )		/*  2/14/1991 (c) 1991 (US)    */
 	DRIVER( sf2e )		/*  2/28/1991 (c) 1991 (US)    */
 	DRIVER( sf2j )		/* 12/10/1991 (c) 1991 (Japan) */
+	DRIVER( sf2jb )		/*  2/14/1991 (c) 1991 (Japan) */
 	DRIVER( c3wonders )	/*  5/20/1991 (c) 1991 (US) */
 	DRIVER( c3wonderj )	/*  5/20/1991 (c) 1991 (Japan) */
 	DRIVER( kod )		/*  7/11/1991 (c) 1991 (World) */
@@ -1008,9 +1046,10 @@ Six Flags (?)
 	DRIVER( dinoj )		/*  2/ 1/1993 (c) 1993 (Japan) (CPS1 + QSound) */
 	DRIVER( punisher )	/*  4/22/1993 (c) 1993 (World) (CPS1 + QSound) */
 	DRIVER( punishrj )	/*  4/22/1993 (c) 1993 (Japan) (CPS1 + QSound) */
-	DRIVER( slammast )	/*  7/13/1993 (c) 1993 (World) (CPS1 + QSound) */	/* aka Muscle Bomber */
-	DRIVER( mbomber )	/* 12/ 6/1993 (c) 1993 (World) (CPS1 + QSound) */
-	DRIVER( mbomberj )	/* 12/ 6/1993 (c) 1993 (Japan) (CPS1 + QSound) */
+	DRIVER( slammast )	/*  7/13/1993 (c) 1993 (World) (CPS1 + QSound) */
+	DRIVER( mbomberj )	/*  7/13/1993 (c) 1993 (Japan) (CPS1 + QSound) */
+	DRIVER( mbombrd )	/* 12/ 6/1993 (c) 1993 (World) (CPS1 + QSound) */
+	DRIVER( mbombrdj )	/* 12/ 6/1993 (c) 1993 (Japan) (CPS1 + QSound) */
 	DRIVER( pnickj )	/*  6/ 8/1994 (c) 1994 + Compile license (Japan) not listed on Capcom's site */
 	DRIVER( qad )		/*  7/ 1/1992 (c) 1992 (US)    */
 	DRIVER( qadj )		/*  9/21/1994 (c) 1994 (Japan) */
@@ -1018,6 +1057,7 @@ Six Flags (?)
 	DRIVER( pang3 )		/*  5/11/1995 (c) 1995 Mitchell (Japan) not listed on Capcom's site */
 	DRIVER( megaman )	/* 10/ 6/1995 (c) 1995 (Asia)  */
 	DRIVER( rockmanj )	/*  9/22/1995 (c) 1995 (Japan) */
+	DRIVER( sfzch )		/* 10/20/1995 (c) 1995 (Japan) (CPS Changer) */
 
 	/* Capcom CPS2 games */
 	/* list completed with Chris Mullins' FAQ */
@@ -1195,6 +1235,7 @@ Capcom Bowling - (Strata)
 	/* Sega "Zaxxon hardware" games */
 	DRIVER( zaxxon )	/* (c) 1982 */
 	DRIVER( zaxxon2 )	/* (c) 1982 */
+	DRIVER( zaxxonb )	/* bootleg */
 	DRIVER( szaxxon )	/* (c) 1982 */
 	DRIVER( futspy )	/* (c) 1984 */
 	DRIVER( congo )		/* 605-5167 (c) 1983 */
@@ -1291,12 +1332,12 @@ DokiDoki Penguin Land *not confirmed
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
 	DRIVER( zoar )		/* (c) 1982 */
-	DRIVER( btime )		/* (c) 1982 + Midway */
-	DRIVER( btimed )	/* (c) 1982 */
-	DRIVER( btimed2 )	/* (c) 1982 */
+	DRIVER( btime )		/* (c) 1982 */
+	DRIVER( btime2 )	/* (c) 1982 */
+	DRIVER( btimem )	/* (c) 1982 + Midway */
 	DRIVER( wtennis )	/* bootleg 1982 */
-	DRIVER( bnj )		/* (c) 1982 + Midway */
 	DRIVER( brubber )	/* (c) 1982 */
+	DRIVER( bnj )		/* (c) 1982 + Midway */
 	DRIVER( caractn )	/* bootleg */
 	DRIVER( disco )		/* (c) 1982 */
 	DRIVER( mmonkey )	/* (c) 1982 Technos Japan + Roller Tron */
@@ -1332,6 +1373,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( spool3 )	/* (c) 1989 Data East Corporation (World?) */
 	DRIVER( spool3i )	/* (c) 1990 Data East Corporation + I-Vics license */
 	DRIVER( actfancr )	/* (c) 1989 Data East Corporation */
+	DRIVER( actfancj )	/* (c) 1989 Data East Corporation */
 
 	/* Data East 8-bit games */
 	DRIVER( lastmiss )	/* (c) 1986 Data East USA (US) */
@@ -1362,8 +1404,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( robocopp )	/* bootleg */
 	DRIVER( hippodrm )	/* (c) 1989 Data East USA (US) */
 	DRIVER( ffantasy )	/* (c) 1989 Data East Corporation (Japan) */
-	DRIVER( midres )	/* (c) 1989 Data East USA (US) */
-	DRIVER( midresj )	/* (c) 1989 Data East Corporation (Japan) */
+	DRIVER( midres )	/* (c) 1989 Data East Corporation (World) */
+	DRIVER( midresu )	/* (c) 1989 Data East USA (US) */
 	DRIVER( slyspy )	/* (c) 1989 Data East USA (US) */
 	DRIVER( slyspy2 )	/* (c) 1989 Data East USA (US) */
 	DRIVER( bouldash )	/* (c) 1990 Data East Corporation */
@@ -1407,6 +1449,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( wildfang )	/* (c) 1989 Tecmo */
 	DRIVER( wc90 )		/* (c) 1989 Tecmo */
 	DRIVER( wc90b )		/* bootleg */
+
+/* Other Tehkan games:
+6009 Tank Busters
+*/
 
 	/* Konami bitmap games */
 	DRIVER( tutankhm )	/* GX350 (c) 1982 Konami */
@@ -1541,7 +1587,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( temptube )	/* hack */
 	DRIVER( starwars )	/* (c) 1983 */
 	DRIVER( starwar1 )	/* (c) 1983 */
-	DRIVER( empire )	/* (c) 1985 */
+	DRIVER( esb )		/* (c) 1985 */
 	DRIVER( mhavoc )	/* (c) 1983 */
 	DRIVER( mhavoc2 )	/* (c) 1983 */
 	DRIVER( mhavocp )	/* (c) 1983 */
@@ -1635,6 +1681,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( klax )		/* (c) 1989 */
 	DRIVER( klax2 )		/* (c) 1989 */
 	DRIVER( klax3 )		/* (c) 1989 */
+	DRIVER( klaxj )		/* (c) 1989 (Japan) */
 	DRIVER( blstroid )	/* (c) 1987 */
 	DRIVER( blstroi2 )	/* (c) 1987 */
 	DRIVER( xybots )	/* (c) 1987 */
@@ -1814,18 +1861,19 @@ Bio Ship Paladin    UPL-90062
 	/* Cinematronics vector games */
 	DRIVER( spacewar )
 	DRIVER( barrier )
-	DRIVER( starcas )
-	DRIVER( tgunner )
+	DRIVER( starcas )	/* (c) 1980 */
+	DRIVER( starcas1 )	/* (c) 1980 */
+	DRIVER( tailg )
 	DRIVER( ripoff )
 	DRIVER( armora )
 	DRIVER( wotw )
 	DRIVER( warrior )
 	DRIVER( starhawk )
-	DRIVER( solarq )
-	DRIVER( boxingb )
+	DRIVER( solarq )	/* (c) 1981 */
+	DRIVER( boxingb )	/* (c) 1981 */
 	DRIVER( speedfrk )
 	DRIVER( sundance )
-	DRIVER( demon )
+	DRIVER( demon )		/* (c) 1982 Rock-ola */
 
 	/* "The Pit hardware" games */
 	DRIVER( roundup )	/* (c) 1981 Amenip/Centuri */
@@ -1836,6 +1884,7 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( portman )	/* (c) 1982 Nova Games Ltd. */
 	DRIVER( suprmous )	/* (c) 1982 Taito */
 	DRIVER( suprmou2 )	/* (c) 1982 Chu Co. Ltd. */
+	DRIVER( machomou )	/* (c) 1982 Techstar */
 
 	/* Valadon Automation games */
 	DRIVER( bagman )	/* (c) 1982 */
@@ -1953,10 +2002,10 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( starcrus )	/* [1977 Ramtek] */
 	DRIVER( sichuan2 )	/* (c) 1989 Tamtex */
 	DRIVER( shisen )	/* (c) 1989 Tamtex */
+//	DRIVER( shanghai )	/* (c) 1988 Sun Electronics */
 	DRIVER( goindol )	/* (c) 1987 Sun a Electronics */
 	DRIVER( homo )		/* bootleg */
 //	DRIVER( dlair )
-//	DRIVER( shanghai )	/* (c) 1988 Sun Electronics */
 
 #endif /* NEOMAME */
 
@@ -2043,7 +2092,7 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( zedblade )	/* 0076 (c) 1994 NMK */
 	/* 0077 */
 	DRIVER( galaxyfg )	/* 0078 (c) 1995 Sunsoft */
-	DRIVER( strhoops )	/* 0079 (c) 1994 Data East Corporation */
+	DRIVER( strhoop )	/* 0079 (c) 1994 Data East Corporation */
 	DRIVER( quizkof )	/* 0080 (c) 1995 Saurus */
 	DRIVER( ssideki3 )	/* 0081 (c) 1995 SNK */
 	DRIVER( doubledr )	/* 0082 (c) 1995 Technos */
@@ -2112,7 +2161,6 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( breakrev )	/* 0245 (c) 1998 Visco */
 	DRIVER( shocktr2 )	/* 0246 (c) 1998 Saurus */
 	DRIVER( flipshot )	/* 0247 (c) 1998 Visco */
-/* the following are new games. Please don't distribute a binary supporting them. */
 //	DRIVER( pbobble2 )	/* 0248 (c) 1999 Taito (SNK license) */
 //	DRIVER( ctomaday )	/* 0249 (c) 1999 Visco */
 //	DRIVER( mslugx )	/* 0250 (c) 1999 SNK */

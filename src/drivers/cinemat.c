@@ -10,7 +10,7 @@ Current drivers:
 extern struct GameDriver spacewar_driver;
 extern struct GameDriver barrier_driver;
 extern struct GameDriver starcas_driver;
-extern struct GameDriver tgunner_driver;
+extern struct GameDriver tailg_driver;
 extern struct GameDriver ripoff_driver;
 extern struct GameDriver armora_driver;
 extern struct GameDriver wotw_driver;
@@ -18,7 +18,6 @@ extern struct GameDriver warrior_driver;
 extern struct GameDriver starhawk_driver;
 extern struct GameDriver solarq_driver;
 extern struct GameDriver demon_driver;
-extern struct GameDriver tgunner_driver;
 extern struct GameDriver boxingb_driver;
 
 Don't work due to bug in the input handling
@@ -40,18 +39,26 @@ to do:
 #include "cpu/ccpu/ccpu.h"
 
 
-void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int cinemat_vh_start (void);
-void cinemat_vh_stop (void);
-void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
-int cinemat_clear_list(void);
+/* from vidhrdw/cinemat.c */
+extern void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern int cinemat_vh_start (void);
+extern void cinemat_vh_stop (void);
+extern void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern int cinemat_clear_list(void);
+
+/* from sndhrdw/cinemat.c */
+extern void cinemat_sound_init (void);
+extern void starcas_sound(UINT8 sound_val, UINT8 bits_changed);
+extern void solarq_sound(UINT8 sound_val, UINT8 bits_changed);
+extern void ripoff_sound(UINT8 sound_val, UINT8 bits_changed);
+extern void spacewar_sound(UINT8 sound_val, UINT8 bits_changed);
+
 
 static int cinemat_readport (int offset);
 static void cinemat_writeport (int offset, int data);
 
 static int speedfrk_readports (int offset);
 static int boxingb_readports (int offset);
-
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -89,10 +96,7 @@ static struct IOReadPort boxingb_readport[] =
 	{ -1 }  /* end of table */
 };
 
-
-
-
-static int cinemat_outputs;
+static int cinemat_outputs = 0xff;
 
 static int cinemat_readport (int offset)
 {
@@ -117,18 +121,23 @@ static int cinemat_readport (int offset)
 	return 0;
 }
 
+static void (*cinemat_sound_handler) (UINT8, UINT8);
 
 static void cinemat_writeport (int offset, int data)
 {
 	switch (offset)
 	{
 		case CCPU_PORT_IOOUTPUTS:
-			cinemat_outputs = data;
-			if (errorlog) fprintf (errorlog, "ccpu output: %04x:%04x\n", offset, data);
+            if ((cinemat_outputs ^ data) & 0x9f)
+            {
+                if (cinemat_sound_handler)
+                    cinemat_sound_handler (data & 0x9f, (cinemat_outputs ^ data) & 0x9f);
+
+            }
+            cinemat_outputs = data;
 			break;
 	}
 }
-
 
 static struct GfxLayout fakelayout =
 {
@@ -151,12 +160,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface cinemat_samples_interface =
 {
-	7,	/* 7 channels */
+	8,	/* 8 channels */
 	25	/* volume */
 };
 
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
-   the core are fixed at 1 cycle per opcode, which is probably wrong. */
+   the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy) \
 static struct MachineDriver driver##_machine_driver = \
 { \
@@ -260,7 +269,6 @@ void cinemat_interleave (int romSize, int numRoms)
 	}
 }
 
-
 void cinemat4k_rom_decode (void)
 {
 	cinemat_interleave (0x800, 2);
@@ -280,8 +288,6 @@ void cinemat32k_rom_decode (void)
 {
 	cinemat_interleave (0x1000, 8);
 }
-
-
 
 static unsigned char color_prom_bilevel_overlay[] = { CCPU_MONITOR_BILEV | 0x80 };
 static unsigned char color_prom_bilevel_backdrop[] = { CCPU_MONITOR_BILEV | 0x40 };
@@ -328,7 +334,7 @@ static unsigned char color_prom_wotw[] = { CCPU_MONITOR_WOWCOL };
 
 INPUT_PORTS_START ( spacewar_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW2|SW1, SW2ON|SW1ON, "Game Time" )
 	PORT_DIPSETTING( SW2OFF|SW1OFF, "1:30/coin" )
 	PORT_DIPSETTING( SW2ON |SW1ON,  "2:00/coin" )
@@ -377,13 +383,22 @@ ROM_END
 
 static const char *spacewar_sample_names[] =
 {
+	"*spacewar",
+	"explode1.wav",
+	"fire1.wav",
+	"idle.wav",
+	"thrust1.wav",
+	"thrust2.wav",
+	"pop.wav",
+	"explode2.wav",
+	"fire2.wav",
     0	/* end of array */
 };
-
 
 void spacewar_init_machine (void)
 {
 	ccpu_Config (0, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = spacewar_sound;
 }
 
 
@@ -426,7 +441,7 @@ struct GameDriver spacewar_driver =
 
 INPUT_PORTS_START ( barrier_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW1, SW1ON, "Innings/Game" )
 	PORT_DIPSETTING(    SW1ON,  "3" )
 	PORT_DIPSETTING(    SW1OFF, "5" )
@@ -479,6 +494,7 @@ static const char *barrier_sample_names[] =
 void barrier_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -542,20 +558,20 @@ INPUT_PORTS_START ( starhawk_input_ports )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON4 | IPF_PLAYER1 )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
 
 	PORT_START /* inputs low */
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1 )
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -581,6 +597,7 @@ static const char *starhawk_sample_names[] =
 void starhawk_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -624,7 +641,7 @@ struct GameDriver starhawk_driver =
 
 INPUT_PORTS_START ( starcas_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Pattern", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7ON,               DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7OFF,              DEF_STR( On ) )
@@ -670,6 +687,14 @@ INPUT_PORTS_END
 
 ROM_START( starcas_rom )
 	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_LOAD( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
+	ROM_LOAD( "starcas3.p7", 0x0800, 0x0800, 0xf6bc2f4d )
+	ROM_LOAD( "starcas3.u7", 0x1000, 0x0800, 0x188cd97c )
+	ROM_LOAD( "starcas3.r7", 0x1800, 0x0800, 0xc367b69d )
+ROM_END
+
+ROM_START( starcas1_rom )
+	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
 	ROM_LOAD( "starcast.p7", 0x0800, 0x0800, 0xd8f58d9a )
 	ROM_LOAD( "starcast.u7", 0x1000, 0x0800, 0xd4f35b82 )
@@ -679,25 +704,33 @@ ROM_END
 
 static const char *starcas_sample_names[] =
 {
+	"*starcas",
+	"lexplode.wav",
+	"sexplode.wav",
+	"cfire.wav",
+	"pfire.wav",
+	"drone.wav",
+	"shield.wav",
+	"star.wav",
+	"thrust.wav",
     0	/* end of array */
 };
-
 
 void starcas_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = starcas_sound;
+    cinemat_sound_init ();
 }
 
-
 CINEMA_MACHINE (starcas, 0, 0, 1024, 768)
-
 
 struct GameDriver starcas_driver =
 {
 	__FILE__,
 	0,
 	"starcas",
-	"Star Castle",
+	"Star Castle (version 3)",
 	"1980",
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
@@ -719,6 +752,32 @@ struct GameDriver starcas_driver =
 	0,0
 };
 
+struct GameDriver starcas1_driver =
+{
+	__FILE__,
+	&starcas_driver,
+	"starcas1",
+	"Star Castle (older)",
+	"1980",
+	"Cinematronics",
+	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
+	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
+	0,
+	&starcas_machine_driver,
+	0,
+
+	starcas1_rom,
+	cinemat8k_rom_decode, 0,
+	starcas_sample_names,
+	0,	/* sound_prom */
+
+	starcas_input_ports,
+
+	color_prom_bilevel_sc, 0, 0,
+	ORIENTATION_FLIP_Y,
+
+	0,0
+};
 
 /***************************************************************************
 
@@ -728,7 +787,7 @@ struct GameDriver starcas_driver =
 
 INPUT_PORTS_START ( tgunner_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW6|SW2|SW1, SW6OFF|SW2OFF|SW1OFF, "Shield Points" )
 	PORT_DIPSETTING( SW6ON |SW2ON |SW1ON,  "15" )
 	PORT_DIPSETTING( SW6ON |SW2OFF|SW1ON,  "20" )
@@ -789,13 +848,14 @@ static const char *tgunner_sample_names[] =
 void tgunner_init_machine (void)
 {
 	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
 CINEMA_MACHINE (tgunner, 0, 0, 1024, 768)
 
 
-struct GameDriver tgunner_driver =
+struct GameDriver tailg_driver =
 {
 	__FILE__,
 	0,
@@ -831,7 +891,7 @@ struct GameDriver tgunner_driver =
 
 INPUT_PORTS_START ( ripoff_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7OFF,           DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7ON,            DEF_STR( On ) )
@@ -891,13 +951,28 @@ ROM_END
 
 static const char *ripoff_sample_names[] =
 {
+	"*ripoff",
+    "efire.wav",
+	"eattack.wav",
+	"bonuslvl.wav",
+	"explosn.wav",
+	"shipfire.wav",
+	"bg1.wav",
+	"bg2.wav",
+	"bg3.wav",
+	"bg4.wav",
+	"bg5.wav",
+	"bg6.wav",
+	"bg7.wav",
+	"bg8.wav",
     0	/* end of array */
 };
-
 
 void ripoff_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = ripoff_sound;
+    cinemat_sound_init ();
 }
 
 
@@ -941,6 +1016,8 @@ struct GameDriver ripoff_driver =
 
 int speedfrk_gear = 1;
 
+static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x01, 0x3, 0x7, 0xf};
+
 int speedfrk_in2_r(int offset)
 {
 	int gear;
@@ -963,12 +1040,7 @@ int speedfrk_in2_r(int offset)
 	else val &= ~0x80;
 
 	/* and for the cherry on top, we add the scrambled analog steering */
-	{
-		int steer = input_port_2_r(0) & 0x0f;
-
-		steer = ((steer & 0x08) >> 3) | ((steer & 0x07) << 1);
-		val |= steer;
-	}
+    val |= speedfrk_steer[input_port_2_r(0) & 0x07];
 
 	return val;
 }
@@ -998,7 +1070,7 @@ static int speedfrk_readports (int offset)
 
 INPUT_PORTS_START ( speedfrk_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, DEF_STR( Unknown ) )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( On ) )
@@ -1033,7 +1105,7 @@ INPUT_PORTS_START ( speedfrk_input_ports )
 	PORT_START /* inputs low */
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT ( 0x70, IP_ACTIVE_LOW,  IPT_UNUSED ) /* actually the gear shift, see fake below */
-	PORT_ANALOG ( 0x0f, 0x08, IPT_DIAL, 25, 1, 0, 0x03, 0x0a )
+	PORT_ANALOG ( 0x0f, 0x04, IPT_AD_STICK_X|IPF_CENTER, 25, 1, 0, 0x00, 0x08 )
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1068,6 +1140,7 @@ static const char *speedfrk_sample_names[] =
 void speedfrk_init_machine (void)
 {
 	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 /* we use custom input ports */
@@ -1111,7 +1184,7 @@ struct GameDriver speedfrk_driver =
 
 INPUT_PORTS_START ( sundance_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT ( SW7|SW6|SW5, SW7OFF|SW6OFF|SW5OFF,  IPT_UNUSED )
 	PORT_DIPNAME( SW4, SW4ON, DEF_STR( Coinage ) )
 	PORT_DIPSETTING( SW4ON,  "1 coin/2 players" )
@@ -1171,6 +1244,7 @@ static const char *sundance_sample_names[] =
 void sundance_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -1214,7 +1288,7 @@ struct GameDriver sundance_driver =
 
 INPUT_PORTS_START ( warrior_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, DEF_STR( Unknown ) )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( On ) )
@@ -1283,6 +1357,7 @@ static const char *warrior_sample_names[] =
 void warrior_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -1326,7 +1401,7 @@ struct GameDriver warrior_driver =
 
 INPUT_PORTS_START ( armora_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( On ) )
@@ -1374,10 +1449,10 @@ INPUT_PORTS_END
 
 ROM_START( armora_rom )
 	ROM_REGION(0x4000)	/* 16k for code */
-	ROM_LOAD( "AR414LE.T6", 0x0000, 0x1000, 0xd7e71f84 )
-	ROM_LOAD( "AR414LO.P6", 0x1000, 0x1000, 0xdf1c2370 )
-	ROM_LOAD( "AR414UE.U6", 0x2000, 0x1000, 0xb0276118 )
-	ROM_LOAD( "AR414UO.R6", 0x3000, 0x1000, 0x229d779f )
+	ROM_LOAD( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
+	ROM_LOAD( "ar414lo.p6", 0x1000, 0x1000, 0xdf1c2370 )
+	ROM_LOAD( "ar414ue.u6", 0x2000, 0x1000, 0xb0276118 )
+	ROM_LOAD( "ar414uo.r6", 0x3000, 0x1000, 0x229d779f )
 ROM_END
 
 
@@ -1390,10 +1465,11 @@ static const char *armora_sample_names[] =
 void armora_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
-CINEMA_MACHINE (armora, 0, 0, 1024, 768)
+CINEMA_MACHINE (armora, 0, 0, 1024, 772)
 
 
 struct GameDriver armora_driver =
@@ -1433,26 +1509,26 @@ struct GameDriver armora_driver =
 
 INPUT_PORTS_START ( solarq_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( On ) )
-	PORT_DIPNAME( SW6, SW6OFF, "Extra Ship" )
-	PORT_DIPSETTING( SW6OFF, "25 captures" )
-	PORT_DIPSETTING( SW6ON,  "40 captures" )
-	PORT_DIPNAME( SW5, SW5OFF, "Mode" )
-	PORT_DIPSETTING( SW5OFF, "Normal" )
-	PORT_DIPSETTING( SW5ON,  DEF_STR( Free_Play ) )
-	PORT_DIPNAME( SW4|SW3, SW4OFF|SW3OFF, DEF_STR( Coinage ) )
-	PORT_DIPSETTING( SW4ON |SW3OFF, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( SW4ON |SW3ON,  DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING( SW4OFF|SW3OFF, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( SW4OFF|SW3ON,  DEF_STR( 2C_3C ) )
-	PORT_DIPNAME( SW2|SW1, SW2OFF|SW1OFF, "Ships" )
-	PORT_DIPSETTING( SW2OFF|SW1OFF, "2" )
-	PORT_DIPSETTING( SW2ON |SW1OFF, "3" )
-	PORT_DIPSETTING( SW2OFF|SW1ON,  "4" )
-	PORT_DIPSETTING( SW2ON |SW1ON,  "5" )
+	PORT_DIPNAME( SW2, SW2OFF, "Extra Ship" )
+	PORT_DIPSETTING( SW2OFF, "25 captures" )
+	PORT_DIPSETTING( SW2ON,  "40 captures" )
+	PORT_DIPNAME( SW6, SW6OFF, "Mode" )
+	PORT_DIPSETTING( SW6OFF, "Normal" )
+	PORT_DIPSETTING( SW6ON,  DEF_STR( Free_Play ) )
+	PORT_DIPNAME( SW1|SW3, SW1OFF|SW3OFF, DEF_STR( Coinage ) )
+	PORT_DIPSETTING( SW3ON |SW1OFF, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING( SW3ON |SW1ON,  DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING( SW3OFF|SW1OFF, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING( SW3OFF|SW1ON,  DEF_STR( 2C_3C ) )
+	PORT_DIPNAME( SW5|SW4, SW5OFF|SW5OFF, "Ships" )
+	PORT_DIPSETTING( SW5OFF|SW4OFF, "2" )
+	PORT_DIPSETTING( SW5ON |SW4OFF, "3" )
+	PORT_DIPSETTING( SW5OFF|SW4ON,  "4" )
+	PORT_DIPSETTING( SW5ON |SW4ON,  "5" )
 
 	PORT_START /* inputs high */
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1470,9 +1546,11 @@ INPUT_PORTS_START ( solarq_input_ports )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_START1 ) /* also hyperspace */
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_START2 ) /* also nova */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON4 | IPF_PLAYER1 )
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1493,6 +1571,18 @@ ROM_END
 
 static const char *solarq_sample_names[] =
 {
+	"*solarq",
+    "bigexpl.wav",
+	"smexpl.wav",
+	"lthrust.wav",
+	"slaser.wav",
+	"pickup.wav",
+	"nuke1.wav",
+	"nuke2.wav",
+	"hypersp.wav",
+    "extra.wav",
+    "phase.wav",
+    "efire.wav",
     0	/* end of array */
 };
 
@@ -1500,6 +1590,8 @@ static const char *solarq_sample_names[] =
 void solarq_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = solarq_sound;
+    cinemat_sound_init();
 }
 
 
@@ -1542,7 +1634,7 @@ struct GameDriver solarq_driver =
 
 INPUT_PORTS_START ( demon_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, "Game Mode" )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( Free_Play ) )
 	PORT_DIPSETTING( SW7OFF, "Normal" )
@@ -1612,6 +1704,7 @@ static const char *demon_sample_names[] =
 void demon_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -1655,7 +1748,7 @@ struct GameDriver demon_driver =
 
 INPUT_PORTS_START ( wotw_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( On ) )
@@ -1716,6 +1809,7 @@ static const char *wotw_sample_names[] =
 void wotw_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_WOWCOL);
+    cinemat_sound_handler = 0;
 }
 
 
@@ -1757,13 +1851,6 @@ struct GameDriver wotw_driver =
 
 ***************************************************************************/
 
-static int boxingb_in1_r(int offset)
-{
-    int dial = input_port_1_r(0) & 0xf0;
-    dial = ((dial & 0xe0) >> 1) | ((dial & 0x10) << 3);
-	return dial;
-}
-
 static int boxingb_readports (int offset)
 {
 	switch (offset)
@@ -1772,7 +1859,10 @@ static int boxingb_readports (int offset)
 			return readinputport (0);
 
 		case CCPU_PORT_IOINPUTS:
-			return (boxingb_in1_r(0) << 8) + readinputport (2);
+            if (cinemat_outputs  & 0x80)
+                return ((input_port_1_r(0) & 0x0f) << 12) + readinputport (2);
+            else
+                return ((input_port_1_r(0) & 0xf0) << 8) + readinputport (2);
 
 		case CCPU_PORT_IOOUTPUTS:
 			return cinemat_outputs;
@@ -1783,7 +1873,7 @@ static int boxingb_readports (int offset)
 
 INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_START /* switches */
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( SW7OFF, DEF_STR( Off ) )
 	PORT_DIPSETTING( SW7ON,  DEF_STR( On ) )
@@ -1806,7 +1896,7 @@ INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_DIPSETTING( SW2OFF|SW1ON,  DEF_STR( 2C_3C ) )
 
 	PORT_START /* inputs high */
-	PORT_ANALOG ( 0xf0, 0x80, IPT_DIAL, 100, 10, 0, 0x0f, 0xff )
+	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL, 100, 5, 0, 0x00, 0xff )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1849,6 +1939,7 @@ static const char *boxingb_sample_names[] =
 void boxingb_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_32K, CCPU_MONITOR_WOWCOL);
+    cinemat_sound_handler = 0;
 }
 
 

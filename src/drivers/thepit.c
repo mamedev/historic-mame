@@ -778,22 +778,22 @@ ROM_END
 
 ROM_START( portman_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "pe1",       0x0000, 0x1000, 0xa5cf6083 )
-	ROM_LOAD( "pe2",       0x1000, 0x1000, 0x0b53d48a )
-	ROM_LOAD( "pe3",       0x2000, 0x1000, 0x1c923057 )
-	ROM_LOAD( "pe4",       0x3000, 0x1000, 0x555c71ef )
-	ROM_LOAD( "pe5",       0x4000, 0x1000, 0xf749e2d4 )
+	ROM_LOAD( "pe1",          0x0000, 0x1000, 0xa5cf6083 )
+	ROM_LOAD( "pe2",          0x1000, 0x1000, 0x0b53d48a )
+	ROM_LOAD( "pe3",          0x2000, 0x1000, 0x1c923057 )
+	ROM_LOAD( "pe4",          0x3000, 0x1000, 0x555c71ef )
+	ROM_LOAD( "pe5",          0x4000, 0x1000, 0xf749e2d4 )
 
 	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pe8",       0x0000, 0x1000, 0x4d8c2974 )
-	ROM_LOAD( "pe9",       0x1000, 0x1000, 0x4e4ea162 )
+	ROM_LOAD( "pe8",          0x0000, 0x1000, 0x4d8c2974 )
+	ROM_LOAD( "pe9",          0x1000, 0x1000, 0x4e4ea162 )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "ic3",       0x0000, 0x0020, 0x6440dc61 )
+	ROM_LOAD( "ic3",          0x0000, 0x0020, 0x6440dc61 )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "pe7",       0x0000, 0x0800, 0xd2094e4a )
-	ROM_LOAD( "pe6",       0x0800, 0x0800, 0x1cf447f4 )
+	ROM_LOAD( "pe7",          0x0000, 0x0800, 0xd2094e4a )
+	ROM_LOAD( "pe6",          0x0800, 0x0800, 0x1cf447f4 )
 ROM_END
 
 ROM_START( suprmous_rom )
@@ -819,16 +819,16 @@ ROM_END
 
 ROM_START( suprmou2_rom )
 	ROM_REGION(0x10000)	    /* 64k for main CPU */
-	ROM_LOAD( "suprmous.x1",         0x0000, 0x1000, 0xad72b467 )
-	ROM_LOAD( "suprmous.x2",         0x1000, 0x1000, 0x53f5be5e )
-	ROM_LOAD( "suprmous.x3",         0x2000, 0x1000, 0xb5b8d34d )
-	ROM_LOAD( "suprmous.x4",         0x3000, 0x1000, 0x603333df )
-	ROM_LOAD( "suprmous.x5",         0x4000, 0x1000, 0x2ef9cbf1 )
+	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
+	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
+	ROM_LOAD( "suprmous.x3",  0x2000, 0x1000, 0xb5b8d34d )
+	ROM_LOAD( "suprmous.x4",  0x3000, 0x1000, 0x603333df )
+	ROM_LOAD( "suprmous.x5",  0x4000, 0x1000, 0x2ef9cbf1 )
 
 	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "suprmous.x7",         0x0000, 0x1000, 0xe9295071 )
-	ROM_LOAD( "suprmous.x8",         0x1000, 0x1000, 0xdbef9db8 )
-	ROM_LOAD( "suprmous.x9",         0x2000, 0x1000, 0x700d996e )
+	ROM_LOAD( "suprmous.x7",  0x0000, 0x1000, 0xe9295071 )
+	ROM_LOAD( "suprmous.x8",  0x1000, 0x1000, 0xdbef9db8 )
+	ROM_LOAD( "suprmous.x9",  0x2000, 0x1000, 0x700d996e )
 
 	ROM_REGION(0x0040)      /* Color PROMs */
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
@@ -836,6 +836,27 @@ ROM_START( suprmou2_rom )
 
 	ROM_REGION(0x10000)	   /* 64k for audio CPU */
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
+ROM_END
+
+ROM_START( machomou_rom )
+	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_LOAD( "mm1.2g",       0x0000, 0x1000, 0x91f116be )
+	ROM_LOAD( "mm2.2h",       0x1000, 0x1000, 0x3aa88c9b )
+	ROM_LOAD( "mm3.2i",       0x2000, 0x1000, 0x3b66b519 )
+	ROM_LOAD( "mm4.2j",       0x3000, 0x1000, 0xd4f99896 )
+	ROM_LOAD( "mm5.3f",       0x4000, 0x1000, 0x5bfc3874 )
+
+	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mm7.3d",       0x0000, 0x1000, 0xa6f60ed2 )
+	ROM_LOAD( "mm8.3c",       0x1000, 0x1000, 0x062e77cb )
+	ROM_LOAD( "mm9.3a",       0x2000, 0x1000, 0xa2f0cfb3 )
+
+	ROM_REGION(0x0040)      /* Color PROMs */
+	ROM_LOAD( "mmouse2.clr",  0x0000, 0x0020, 0x00000000 )
+	ROM_LOAD( "mmouse1.clr",  0x0020, 0x0020, 0x00000000 )
+
+	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_LOAD( "mm6.e6",       0x0000, 0x1000, 0x20816913 )
 ROM_END
 
 
@@ -1178,7 +1199,6 @@ struct GameDriver suprmous_driver =
 	suprmous_hiload, suprmous_hisave
 };
 
-
 struct GameDriver suprmou2_driver =
 {
 	__FILE__,
@@ -1203,4 +1223,30 @@ struct GameDriver suprmou2_driver =
 	ORIENTATION_ROTATE_90,
 
 	suprmous_hiload, suprmous_hisave
+};
+
+struct GameDriver machomou_driver =
+{
+	__FILE__,
+	0,
+	"machomou",
+	"Macho Mouse",
+	"1982",
+	"Techstar",
+	"Brad Oliver",
+	GAME_WRONG_COLORS,
+	&suprmous_machine_driver,
+	0,
+
+	machomou_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	suprmous_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

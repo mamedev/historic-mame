@@ -111,6 +111,8 @@ void (*update_screen)(void) = update_screen_dummy;
 
 #define MAX_X_MULTIPLY 4
 #define MAX_Y_MULTIPLY 3
+#define MAX_X_MULTIPLY16 2
+#define MAX_Y_MULTIPLY16 2
 
 static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
 {			/* 1 x 1 */
@@ -156,16 +158,13 @@ static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
 	}
 };
 
-static void (*updaters16[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
+static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(void) =
 {			/* 1 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
 		},	/* 1 x 2 */
 		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_16bpp, blitscreen_dirty1_vesa_1x_2xs_16bpp }
-		},	/* 1 x 3 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy },
 		}
 	},		/* 2 x 1 */
 	{	{	{ update_screen_dummy, update_screen_dummy },
@@ -173,29 +172,6 @@ static void (*updaters16[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
 		},	/* 2 x 2 */
 		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_16bpp, blitscreen_dirty1_vesa_2x_2xs_16bpp }
-		},	/* 2 x 3 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy },
-		}
-	},		/* 3 x 1 */
-	{	{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		},	/* 3 x 2 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		},	/* 3 x 3 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		}
-	},		/* 4 x 1 */
-	{	{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		},	/* 4 x 2 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
-		},	/* 4 x 3 */
-		{	{ update_screen_dummy, update_screen_dummy },
-			{ update_screen_dummy, update_screen_dummy }
 		}
 	}
 };
@@ -692,47 +668,75 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 		}
 		else
 		{
+			int xm,ym;
+
+			xm = ym = 1;
+
+			if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+					== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+			{
+				if (Machine->orientation & ORIENTATION_SWAP_XY)
+					xm++;
+				else ym++;
+			}
+
 			if (scanlines && stretch)
 			{
+				if (ym == 1)
+				{
+					xm *= 2;
+					ym *= 2;
+				}
+
 				/* see if pixel doubling can be applied at 640x480 */
-				if (height <= 240 && width <= 320)
+				if (ym*height <= 480 && xm*width <= 640 &&
+						((ym+1)*height > 768 || xm > 1 || (xm+1)*width > 1024))
 				{
 					gfx_width = 640;
 					gfx_height = 480;
 				}
 				/* see if pixel doubling can be applied at 800x600 */
-				else if (height <= 300 && width <= 400)
+				else if (ym*height <= 600 && xm*width <= 800 &&
+						((ym+1)*height > 768 || (xm+1)*width > 1024))
 				{
 					gfx_width = 800;
 					gfx_height = 600;
 				}
 				/* don't use 1024x768 right away. If 512x384 is available, it */
 				/* will provide hardware scanlines. */
+
+				if (ym > 1 && xm > 1)
+				{
+					xm /= 2;
+					ym /= 2;
+				}
 			}
 
 			if (!gfx_width && !gfx_height)
 			{
-				if (height <= 240 && width <= 320)
+				if (ym*height <= 240 && xm*width <= 320)
 				{
 					gfx_width = 320;
 					gfx_height = 240;
 				}
-				else if (height <= 300 && width <= 400)
+				else if (ym*height <= 300 && xm*width <= 400)
 				{
 					gfx_width = 400;
 					gfx_height = 300;
 				}
-				else if (height <= 384 && width <= 512)
+				else if (ym*height <= 384 && xm*width <= 512)
 				{
 					gfx_width = 512;
 					gfx_height = 384;
 				}
-				else if (height <= 480 && width <= 640)
+				else if (ym*height <= 480 && xm*width <= 640 &&
+						(!stretch || (ym+1)*height > 768 || (xm+1)*width > 1024))
 				{
 					gfx_width = 640;
 					gfx_height = 480;
 				}
-				else if (height <= 600 && width <= 800)
+				else if (ym*height <= 600 && xm*width <= 800 &&
+						(!stretch || (ym+1)*height > 768 || (xm+1)*width > 1024))
 				{
 					gfx_width = 800;
 					gfx_height = 600;
@@ -794,40 +798,86 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 
 	if (use_vesa && !vector_game)
 	{
-		if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
-				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		{
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-				xmultiply++;
-			else ymultiply++;
-		}
-
-		/* Hack for 320x480 and 400x600 "vmame" video modes */
-		if ((gfx_width == 320 && gfx_height == 480) ||
-				(gfx_width == 400 && gfx_height == 600))
-			ymultiply++;
-
 		if (stretch)
 		{
-			while ((xmultiply+1) * viswidth <= gfx_width &&
-					(ymultiply+1) * visheight <= gfx_height)
-			{
-				xmultiply++;
-				ymultiply++;
-			}
-
 			if (!(Machine->orientation & ORIENTATION_SWAP_XY) &&
 					!(Machine->drv->video_attributes & VIDEO_DUAL_MONITOR))
 			{
-				/* horizontal, non dual monitor games may be further stretched horizontally */
-				if ((xmultiply+1) * viswidth <= gfx_width)
+				/* horizontal, non dual monitor games may be stretched at will */
+				while ((xmultiply+1) * viswidth <= gfx_width)
 					xmultiply++;
+				while ((ymultiply+1) * visheight <= gfx_height)
+					ymultiply++;
 			}
+			else
+			{
+				int tw,th;
+
+				tw = gfx_width;
+				th = gfx_height;
+
+				if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+						== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+				{
+					if (Machine->orientation & ORIENTATION_SWAP_XY)
+						tw /= 2;
+					else th /= 2;
+				}
+
+				/* Hack for 320x480 and 400x600 "vmame" video modes */
+				if ((gfx_width == 320 && gfx_height == 480) ||
+						(gfx_width == 400 && gfx_height == 600))
+					th /= 2;
+
+				/* maintain aspect ratio for other games */
+				while ((xmultiply+1) * viswidth <= tw &&
+						(ymultiply+1) * visheight <= th)
+				{
+					xmultiply++;
+					ymultiply++;
+				}
+
+				if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+						== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+				{
+					if (Machine->orientation & ORIENTATION_SWAP_XY)
+						xmultiply *= 2;
+					else ymultiply *= 2;
+				}
+
+				/* Hack for 320x480 and 400x600 "vmame" video modes */
+				if ((gfx_width == 320 && gfx_height == 480) ||
+						(gfx_width == 400 && gfx_height == 600))
+					ymultiply *= 2;
+			}
+		}
+		else
+		{
+			if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+					== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+			{
+				if (Machine->orientation & ORIENTATION_SWAP_XY)
+					xmultiply *= 2;
+				else ymultiply *= 2;
+			}
+
+			/* Hack for 320x480 and 400x600 "vmame" video modes */
+			if ((gfx_width == 320 && gfx_height == 480) ||
+					(gfx_width == 400 && gfx_height == 600))
+				ymultiply *= 2;
 		}
 	}
 
-	if (xmultiply > MAX_X_MULTIPLY) xmultiply = MAX_X_MULTIPLY;
-	if (ymultiply > MAX_Y_MULTIPLY) ymultiply = MAX_Y_MULTIPLY;
+	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	{
+		if (xmultiply > MAX_X_MULTIPLY16) xmultiply = MAX_X_MULTIPLY16;
+		if (ymultiply > MAX_Y_MULTIPLY16) ymultiply = MAX_Y_MULTIPLY16;
+	}
+	else
+	{
+		if (xmultiply > MAX_X_MULTIPLY) xmultiply = MAX_X_MULTIPLY;
+		if (ymultiply > MAX_Y_MULTIPLY) ymultiply = MAX_Y_MULTIPLY;
+	}
 
 	gfx_display_lines = visheight;
 	gfx_display_columns = viswidth;
@@ -878,11 +928,13 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 	if (errorlog)
 		fprintf(errorlog,
 				"gfx_width = %d gfx_height = %d\n"
+				"gfx_xoffset = %d gfx_yoffset = %d\n"
 				"xmin %d ymin %d xmax %d ymax %d\n"
 				"skiplines %d skipcolumns %d\n"
 				"gfx_display_lines %d gfx_display_columns %d\n"
 				"xmultiply %d ymultiply %d\n",
 				gfx_width,gfx_height,
+				gfx_xoffset,gfx_yoffset,
 				xmin, ymin, xmax, ymax, skiplines, skipcolumns,gfx_display_lines,gfx_display_columns,xmultiply,ymultiply);
 
 	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
@@ -1018,9 +1070,13 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	else
 	{
 		if (scrbitmap->depth == 16)
+		{
 			update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
 		else
+		{
 			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
 	}
 
     return scrbitmap;

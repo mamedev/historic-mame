@@ -90,7 +90,11 @@
 
 #define CPUINFO_SIZE	(5*sizeof(int)+4*sizeof(void*)+2*sizeof(double))
 /* How do I calculate the next power of two from CPUINFO_SIZE using a macro? */
+#ifdef __LP64__
+#define CPUINFO_ALIGN   (128-CPUINFO_SIZE)
+#else
 #define CPUINFO_ALIGN   (64-CPUINFO_SIZE)
+#endif
 
 struct cpuinfo
 {
@@ -103,8 +107,8 @@ struct cpuinfo
 	double vblankint_period;		/* timing period of the VBLANK interrupt */
 	void *timedint_timer;			/* reference to this CPU's timer */
 	double timedint_period; 		/* timing period of the timed interrupt */
-	int save_context;				/* need to context switch this CPU? yes or no */
 	void *context;					/* dynamically allocated context buffer */
+	int save_context;				/* need to context switch this CPU? yes or no */
 	UINT8 filler[CPUINFO_ALIGN];	/* make the array aligned to next power of 2 */
 };
 
@@ -606,7 +610,7 @@ struct cpu_interface cpuintf[] =
         cpu_readmem16,                      /* Memory read */
         cpu_writemem16,                     /* Memory write */
         cpu_setOPbase16,                    /* Update CPU opcode base */
-		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
     },
 #endif
@@ -640,7 +644,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -674,7 +678,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
@@ -708,7 +712,7 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif

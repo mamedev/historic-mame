@@ -1419,7 +1419,17 @@ CINESTATE opLSRe_A_AA (int opcode)
 
 CINESTATE opLSRe_B_AA (int opcode)
 {
-	UNFINISHED ("opLSRe B 1\n");
+	CINEWORD temp_word = 0x0BEB;
+
+	cmp_new = temp_word;
+	SETA0 (register_A);
+	cmp_old = register_B;
+
+	temp_word += register_B;
+	SETFC (temp_word);
+
+	register_B >>= 1;
+
 	return state_AA;
 }
 

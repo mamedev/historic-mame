@@ -477,7 +477,7 @@ unsigned tms9900_dasm(char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
     return Dasm9900(buffer,pc);
 #else
-	sprintf( buffer, "$%04X", cpu_readop16(pc) );
+	sprintf( buffer, "$%04X", readword(pc) );
 	return 2;
 #endif
 }

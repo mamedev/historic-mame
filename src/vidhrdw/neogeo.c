@@ -274,7 +274,7 @@ void neogeo_paletteram_w(int offset,int data)
 
 /******************************************************************************/
 
-static const unsigned char *neogeo_palette(void)
+static const unsigned char *neogeo_palette(const struct rectangle *clip)
 {
 	int color,code,pal_base,y,my=0,x,count,offs,i;
  	int colmask[256];
@@ -345,10 +345,10 @@ static const unsigned char *neogeo_palette(void)
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x100) sy -= 0x200;
+			if (sy > 0x110) sy -= 0x200;
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				while (sy < -16) sy += 2 * (rzy + 1);
+				while (sy < 0) sy += 2 * (rzy + 1);
 			}
 			oy = sy;
 
@@ -404,13 +404,13 @@ static const unsigned char *neogeo_palette(void)
 
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				if (sy >= 256) sy -= 2 * (rzy + 1);
+				if (sy >= 248) sy -= 2 * (rzy + 1);
 			}
 			else if (fullmode == 1)
 			{
 				if (y == 0x10) sy -= 2 * (rzy + 1);
 			}
-			else if (sy > 0x100) sy -= 0x200;	/* NS990105 mslug2 fix */
+			else if (sy > 0x110) sy -= 0x200;	/* NS990105 mslug2 fix */
 
 			if(rzy!=255) {
 				yskip=0;
@@ -425,7 +425,7 @@ static const unsigned char *neogeo_palette(void)
 
 			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 									// it breaks OverTop radar so it can't be right
-			if (sy<256)
+			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
 				tileatr=tileatr>>8;
 				tileno %= no_of_tiles;
@@ -932,7 +932,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	if (palette_swap_pending) swap_palettes();
 
 	/* Do compressed palette stuff */
-	neogeo_palette();
+	neogeo_palette(clip);
 
 	fillbitmap(bitmap,Machine->pens[4095],clip);
 
@@ -972,10 +972,10 @@ if (!dotiles) { 					/* debug */
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (sy > 0x100) sy -= 0x200;
+			if (sy > 0x110) sy -= 0x200;
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				while (sy < -16) sy += 2 * (rzy + 1);
+				while (sy < 0) sy += 2 * (rzy + 1);
 			}
 			oy = sy;
 
@@ -1033,13 +1033,13 @@ if (!dotiles) { 					/* debug */
 
 			if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
 			{
-				if (sy >= 256) sy -= 2 * (rzy + 1);
+				if (sy >= 248) sy -= 2 * (rzy + 1);
 			}
 			else if (fullmode == 1)
 			{
 				if (y == 0x10) sy -= 2 * (rzy + 1);
 			}
-			else if (sy > 0x100) sy -= 0x200;	/* NS990105 mslug2 fix */
+			else if (sy > 0x110) sy -= 0x200;	/* NS990105 mslug2 fix */
 
 			if(rzy!=255)
 			{
@@ -1097,21 +1097,18 @@ if (!dotiles) { 					/* debug */
  	for (y=0;y<32;y++) {
  		for (x=0;x<40;x++) {
 
-  			int byte1 = (READ_WORD( &vidram[0xE000 + 2*y + x*64] ));
+  			int byte1 = (READ_WORD(&vidram[0xE000 + 2*(y + 32*x)]));
   			int byte2 = byte1 >> 12;
 		   	byte1 = byte1 & 0xfff;
 
-			if((pen_usage[byte1] & ~ 1) == 0) continue;
+			if ((pen_usage[byte1] & ~1) == 0) continue;
 
-  			drawgfx(bitmap,
-  				gfx,
-  				byte1,
-  				byte2,
-  				0,0,
-  				x*8,y*8,
-  				clip,
-  				TRANSPARENCY_PEN,
-  				0);
+  			drawgfx(bitmap,gfx,
+					byte1,
+					byte2,
+					0,0,
+					x*8,y*8,
+					clip,TRANSPARENCY_PEN,0);
   		}
 	}
 

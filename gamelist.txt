@@ -19,7 +19,7 @@ to list them.
 | 4D Warriors          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 4dwarrio |
 | 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | 64street |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
-| APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
+| Act Fancer           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | actfancr |
 | Adv.Quiz 2 Hatena no Dai-Bouken  Yes   |Partial |   No   |  Yes   | hatena   |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
@@ -28,6 +28,7 @@ to list them.
 | Ali Baba and 40 Thieves Yes   |   No   |  Bad   |   No   |  Yes   | alibaba  |
 | Alien Storm          |   No   |  Yes   |   No   |   No   |   No   | astormbl |
 | Alien Syndrome       |Slowdowns  Yes   |  Yes   |   No   |   No   | aliensyn |
+| APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
 | Alpine Ski           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | alpine   |
 | Altered Beast        |  Yes   |  Yes   |  Yes   |   No   |   No   | altbeast |
 | Amazing Maze Game,The|  Yes   |  b/w   |   No   |  n/a   |   No   | maze     |
@@ -61,7 +62,7 @@ to list them.
 | Bank Panic           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bankp    |
 | Battle Lane Vol. 5   |   No   |   No   |  Yes   |   No   |   No   | battlane |
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
-| Battle of Atlantis   |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | atlantis |
+| Battle of Atlantis   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | atlantis |
 | Battle-Road,The      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | battroad |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
@@ -87,8 +88,8 @@ to list them.
 | Bubble Bobble        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bublbobl |
 | Bubbles              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bubbles  |
 | Bull Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bullfgtj |
-| Bump 'n Jump         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bnj      |
 | Burger Time          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
+| Burnin' Rubber       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | brubber  |
 | Cabal                |  Yes   |  Yes   | Wrong  |   No   |   No   | cabal    |
 | Calipso              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | calipso  |
 | Canyon Bomber        |  Yes   |  b/w   |   No   |  Yes   |   No   | canyon   |
@@ -121,7 +122,7 @@ to list them.
 | Combat               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | combat   |
 | Combat School        |  Yes   | Close  |  Yes   |  Yes   |   No   | combasc  |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
-| Commando (Sega)      |  Yes   |   No   |  Yes   |  Yes   |  Yes   | commsega |
+| Commando (Sega)      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commsega |
 | Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
 | Congo Bongo          |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | congo    |
 | Contra               |  Yes   | Close  |  Yes   |  Yes   |   No   | contra   |
@@ -610,7 +611,7 @@ to list them.
 | Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tigeroad |
 | Timber               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | timber   |
 | Time Pilot           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
-| Time Pilot 84        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | tp84     |
+| Time Pilot 84        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tp84     |
 | Time Scanner         |   No   |  Yes   |  Yes   |   No   |   No   | timscanr |
 | Time Tunnel          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | timetunl |
 | Tin Star,The         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | tinstar  |
@@ -654,7 +655,7 @@ to list them.
 | Vastar               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vastar   |
 | Venture              |  Yes   |  Yes   |   No   |  Yes   |   No   | venture  |
 | Victory Road         |  Yes   |  Yes   |Partial |  Yes   |   No   | victroad |
-| Video Hustler        |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hustler  |
+| Video Hustler        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hustler  |
 | Vigilante            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vigilant |
 | Vimana               |  Yes   |  Yes   |   No   |   No   |   No   | vimana   |
 | Vindicators          |  Yes   |   No   |  Yes   |  Yes   |   No   | vindictr |
@@ -663,7 +664,7 @@ to list them.
 | Wacko                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wacko    |
 | Wanted               |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wanted   |
 | War of the Bugs      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | warofbug |
-| Wardners Forest      |  Yes   |  Yes   |  Yes   |   No   |  Yes   | wardner  |
+| Wardners Forest      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | wardner  |
 | Warlords             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | warlord  |
 | Warp Warp            |  Yes   |  Yes   |   No   |  Yes   |   No   | warpwarp |
 | Water Ski            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | waterski |
@@ -675,7 +676,7 @@ to list them.
 | Wizard of Wor        |  Yes   | Maybe  | Yes(1) |  Yes   |  n/a   | wow      |
 | Wonder Boy           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wboy     |
 | Wonder Boy 3         |   No   |  Yes   |   No   |   No   |   No   | wb3bl    |
-| Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
+| Wonder Boy in M.L.   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wbml     |
 | Wonder Momo          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | wndrmomo |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wc90     |
 | World Tennis         |  Yes   |  Yes?  |  Yes   |   No   |  Yes   | wtennis  |
@@ -1004,34 +1005,30 @@ Clones supported:
 
 
 
-Bump 'n Jump ("bnj")
-====================
-In test mode, press 3 to advance through the various tests.
-
-Clones supported:
-  Burnin' Rubber ("brubber") the service ROM is missing for this one so
-    service mode doesn't work.
-  bootleg called Car Action ("caractn") no service ROM here either
-
-Known issues:
-- The continue clock counts too fast
-
-
-
 Burger Time ("btime")
 =====================
-In test mode, press 3 to advance through the various tests.
-
 Clones supported:
-  different ROM set, without Midway copyright and different attract mode
-     ("btimed")
   same as above, but with two instructions NOPed out (function unknown)
-     ("btimed2")
+     ("btime2")
+  Midway license, with different attract mode and service ROM. In test mode,
+  press 3 to advance through the various tests. ("btimem")
   Cook Race bootleg of the cassette version (different hardware and different
      gameplay) ("cookrace")
 
 Known issues:
 - No high score save in Cook Race
+
+
+
+Burnin' Rubber ("brubber")
+==========================
+Clones supported:
+  Bump'n Jump ("bnj") this one also has the service ROM which is missing in
+  the other two. In test mode, press 3 to advance through the various tests.
+  bootleg called Car Action ("caractn") no service ROM here either
+
+Known issues:
+- The continue clock counts too fast
 
 
 
@@ -3097,17 +3094,6 @@ Venture ("venture")
 Clones supported:
   alternate version ("venture2")
   version 4 (the other two are version 5) ("venture4")
-
-
-
-Video Hustler ("hustler")
-=========================
-Clones supported:
-  Pool ("pool")
-  bootleg called The Billiards ("billiard")
-
-Known issues:
-- Pool doesn't work due to a different encryption.
 
 
 

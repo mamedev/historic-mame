@@ -196,7 +196,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				badarchive = 1;
 				break;
 			case AUD_BAD_CHECKSUM:
-				if (aud->expchecksum)
+				if (aud->expchecksum && aud->expchecksum != BADCRC(aud->checksum))
 					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
 						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->checksum);
 				else

@@ -1098,15 +1098,6 @@ static struct GfxDecodeInfo newsin7_gfxdecodeinfo[] =
 
 
 
-/* this is NOT the original color PROM - it's the Scramble one */
-static unsigned char wrong_color_prom[] =
-{
-	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
-};
-
-
-
 static struct AY8910interface scramble_ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -1353,8 +1344,31 @@ ROM_START( atlantis_rom )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xe989f325 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	/* missing in action */
-	ROM_LOAD( "atlantis.clr", 0x0000, 0x0020, 0x00000000 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
+	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
+ROM_END
+
+ROM_START( atlants2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "rom1",         0x0000, 0x0800, 0xad348089 )
+	ROM_LOAD( "rom2",         0x0800, 0x0800, 0xcaa705d1 )
+	ROM_LOAD( "rom3",         0x1000, 0x0800, 0xe420641d )
+	ROM_LOAD( "rom4",         0x1800, 0x0800, 0x04792d90 )
+	ROM_LOAD( "rom5",         0x2000, 0x0800, 0x6eaf510d )
+	ROM_LOAD( "rom6",         0x2800, 0x0800, 0xb297bd4b )
+	ROM_LOAD( "rom7",         0x3000, 0x0800, 0xa50bf8d5 )
+	ROM_LOAD( "rom8",         0x3800, 0x0800, 0xd2c5c984 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "rom9",         0x0000, 0x0800, 0x55cd5acd )
+	ROM_LOAD( "rom10",        0x0800, 0x0800, 0x72e773b8 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
@@ -1905,11 +1919,11 @@ struct GameDriver atlantis_driver =
 	__FILE__,
 	0,
 	"atlantis",
-	"Battle of Atlantis",
+	"Battle of Atlantis (set 1)",
 	"1981",
 	"Comsoft",
 	"Nicola Salmoria\nMike Balfour",
-	GAME_WRONG_COLORS,
+	0,
 	&scramble_machine_driver,
 	0,
 
@@ -1920,7 +1934,33 @@ struct GameDriver atlantis_driver =
 
 	atlantis_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	atlantis_hiload, atlantis_hisave
+};
+
+struct GameDriver atlants2_driver =
+{
+	__FILE__,
+	&atlantis_driver,
+	"atlants2",
+	"Battle of Atlantis (set 2)",
+	"1981",
+	"Comsoft",
+	"Nicola Salmoria\nMike Balfour",
+	0,
+	&scramble_machine_driver,
+	0,
+
+	atlants2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	atlantis_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	atlantis_hiload, atlantis_hisave

@@ -432,7 +432,7 @@ struct GameDriver bking2_driver =
 	"bking2",
 	"Birdie King 2",
 	"1983",
-	"Taito",
+	"Taito Corporation",
 	"Ed. Mueller\nMike Balfour\nZsolt Vasvari",
 	0,
 	&machine_driver,

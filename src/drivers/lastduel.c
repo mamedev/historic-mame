@@ -783,7 +783,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
 	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
-	ROM_LOAD( "gfx1",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx2",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
@@ -812,7 +812,7 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
 	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
 	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
-	ROM_LOAD( "gfx1",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "gfx2",         0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
 	ROM_REGION( 0x18000 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )

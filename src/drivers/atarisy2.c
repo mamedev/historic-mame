@@ -397,11 +397,11 @@ INPUT_PORTS_START( a720_input_ports )
 	PORT_START	/* ADC3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* LETA0 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_START	/* LETA0/1 */
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER1, 30, 10, 0, 0, 0 )
 
-	PORT_START	/* LETA1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
+	PORT_START	/* filler */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* LETA2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1113,7 +1113,7 @@ static void a720_init(void)
 	atarigen_slapstic_num = 107;
 	atarigen_eeprom_default = NULL;
 
-	atarisys2_pedal_count = 0;
+	atarisys2_pedal_count = -1;
 	atarisys2_mo_mask = 0x1fff;
 
 	/* speed up the 6502 */
@@ -1648,7 +1648,7 @@ struct GameDriver a720_driver =
 	"1986",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&a720_machine_driver,
 	a720_init,
 
@@ -1675,7 +1675,7 @@ struct GameDriver a720b_driver =
 	"1986",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&a720_machine_driver,
 	a720_init,
 

@@ -61,6 +61,49 @@ F2 Game List
 ? Dinorex (no number)
 ? Pulirula (no number)
 
+This list is translated version of
+http://www.aianet.or.jp/~eisetu/rom/rom_tait.html
+This page also contains info for other Taito boards.
+
+F2 Motherboard ( Big ) K1100432A, J1100183A
+               (Small) K1100608A, J1100242A
+
+*Apr.1989 Final Blow (B82, M4300123A, K1100433A)
+*Jul.1989 Don Doko Don (B95, M4300131A, K1100454A, J1100195A)
+*Oct.1989 Mega Blast (C11)
+Feb.1990 Quiz Torimonochou (C41, K1100554A)
+*Apr.1990 Cameltry (C38, M4300167A, K1100556A)
+Jul.1990 Quiz H.Q. (C53, K1100594A)
+*Aug.1990 Thunder Fox (C28, M4300181A, K1100580A)
+*Sep.1990 Liquid Kids/Mizubaku Daibouken (C49, K1100593A)
+*Nov.1990 MJ-12/Super Space Invaders (C64, M4300195A, K1100616A, J1100248A)
+Jan.1991 Gun Frontier (C71, M4300199A, K1100625A, K1100629A(overseas))
+*Feb.1991 Growl/Runark (C74, M4300210A, K1100639A)
+Mar.1991 Hat Trick Hero/Euro Football Championship (C80, K11J0646A)
+Mar.1991 Yuu-yu no Quiz de Go!Go! (C83, K11J0652A)
+Apr.1991 Ah Eikou no Koshien (C81, M43J0214A, K11J654A)
+*Apr.1991 Ninja Kids (C85, M43J0217A, K11J0659A)
+May.1991 Mahjong Quest (C77, K1100637A, K1100637B)
+Jul.1991 Quiz Quest (C92, K11J0678A)
+Sep.1991 Metal Black (D12)
+Oct.1991 Drift Out (Visco) (M43X0241A, K11X0695A)
+*Nov.1991 PuLiRuLa (C98, M43J0225A, K11J0672A)
+Feb.1992 Quiz Chikyu Boueigun (D19, K11J0705A)
+Jul.1992 Dead Connection (D28, K11J0715A)
+*Nov.1992 Dinorex (D39, K11J0254A)
+Mar.1993 Quiz Jinsei Gekijou (D48, M43J0262A, K11J0742A)
+Aug.1993 Quiz Crayon Shinchan (D55, K11J0758A)
+Dec.1993 Crayon Shinchan Orato Asobo (D63, M43J0276A, K11J0779A)
+
+Mar.1992 Yes.No. Shinri Tokimeki Chart (Fortune teller machine) (D20, K11J0706B)
+
+* means emulated by Raine. I don't know driftout in Raine is
+F2 version or not.
+Thunder Fox, Drift Out, "Quiz Crayon Shinchan", and "Crayon Shinchan
+Orato Asobo" has "Not F2" version PCB.
+Foreign version of Cameltry uses different hardware (B89's PLD,
+K1100573A, K1100574A).
+
 ***************************************************************************/
 
 #include "driver.h"

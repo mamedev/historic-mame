@@ -391,26 +391,48 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 	}
 }
 
-static void print_game_video(FILE* out, const struct GameDriver* game) {
+static void print_game_video(FILE* out, const struct GameDriver* game)
+{
 	const struct MachineDriver* driver = game->drv;
+
+	int dx;
+	int dy;
+	int showxy;
+	int orientation;
 
 	fprintf(out, L1P "video" L2B);
 	if (driver->video_attributes & VIDEO_TYPE_VECTOR)
+	{
 		fprintf(out, L2P "screen vector" L2N);
-	else {
-		int dx;
-		int dy;
+		showxy = 0;
+	}
+	else
+	{
 		fprintf(out, L2P "screen raster" L2N);
-		if (game->orientation & ORIENTATION_SWAP_XY) {
-			dx = driver->visible_area.max_y - driver->visible_area.min_y + 1;
-			dy = driver->visible_area.max_x - driver->visible_area.min_x + 1;
-		} else {
-			dx = driver->visible_area.max_x - driver->visible_area.min_x + 1;
-			dy = driver->visible_area.max_y - driver->visible_area.min_y + 1;
-		}
+		showxy = 1;
+	}
+
+	if (game->orientation & ORIENTATION_SWAP_XY)
+	{
+		dx = driver->visible_area.max_y - driver->visible_area.min_y + 1;
+		dy = driver->visible_area.max_x - driver->visible_area.min_x + 1;
+		orientation = 1;
+	}
+	else
+	{
+		dx = driver->visible_area.max_x - driver->visible_area.min_x + 1;
+		dy = driver->visible_area.max_y - driver->visible_area.min_y + 1;
+		orientation = 0;
+	}
+
+
+	fprintf(out, L2P "orientation %s" L2N, orientation ? "vertical" : "horizontal" );
+	if (showxy)
+	{
 		fprintf(out, L2P "x %d" L2N, dx);
 		fprintf(out, L2P "y %d" L2N, dy);
 	}
+
 	fprintf(out, L2P "colors %d" L2N, driver->total_colors);
 	fprintf(out, L2P "freq %d" L2N, driver->frames_per_second);
 	fprintf(out, L2E L1N);

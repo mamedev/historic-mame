@@ -128,19 +128,23 @@ static unsigned char *shared_ram, *io_ram, *shared_auxram;
 
 static unsigned char snk_adpcm_control_index;
 static unsigned char snk_adpcm_register[256];
-static int snk_adpcm_status_r( int offset ){
+static int snk_adpcm_status_r( int offset )
+{
 	return 0xff;
 }
-static void snk_adpcm_control_w( int offset, int data ){
+static void snk_adpcm_control_w( int offset, int data )
+{
 	snk_adpcm_control_index = data;
 }
-static void snk_adpcm_write_w( int offset, int data ){
+static void snk_adpcm_write_w( int offset, int data )
+{
 	if( errorlog ) fprintf( errorlog, "sound write:(%02x)%02x\n",
         	snk_adpcm_control_index,data );
 
 	snk_adpcm_register[snk_adpcm_control_index] = data;
 
-	if( snk_adpcm_control_index==0x0c ){
+	if( snk_adpcm_control_index==0x0c )
+	{
 		int chan = snk_adpcm_register[0x08];
 		int start = snk_adpcm_register[0x09] + snk_adpcm_register[0x0a]*256;
 		int finish = snk_adpcm_register[0x0b] + snk_adpcm_register[0x0c]*256;
@@ -150,14 +154,17 @@ static void snk_adpcm_write_w( int offset, int data ){
 	}
 }
 
-static int snk_read_joy( int which ){
+static int snk_read_joy( int which )
+{
 	int result = readinputport(which+1);
 
-	if( dial_type==DIAL_BOOTLEG ){
+	if( dial_type==DIAL_BOOTLEG )
+	{
 		static int dial_8[8]   = { 0xf0,0x30,0x10,0x50,0x40,0xc0,0x80,0xa0 };
 		result |= dial_8[readinputport(which+7) * 8 / 256];
 	}
-	else if( dial_type==DIAL_NORMAL ){
+	else if( dial_type==DIAL_NORMAL )
+	{
 		static int dial_12[12] = { 0xb0,0xa0,0x90,0x80,0x70,0x60,0x50,0x40,0x30,0x20,0x10,0x00 };
 		result |= dial_12[readinputport(which+7) * 12 / 256];
 	}
@@ -165,29 +172,36 @@ static int snk_read_joy( int which ){
 	return result;
 }
 
-static int snk_soundcommand_r(int offset){
+static int snk_soundcommand_r(int offset)
+{
 	int val = snk_soundcommand;
 	snk_soundcommand = 0;
 	return val;
 }
 
-static int shared_ram_r( int offset ){
+static int shared_ram_r( int offset )
+{
 	return shared_ram[offset];
 }
-static void shared_ram_w( int offset, int data ){
+static void shared_ram_w( int offset, int data )
+{
 	shared_ram[offset] = data;
 }
 
-static int shared_auxram_r( int offset ){
+static int shared_auxram_r( int offset )
+{
 	return shared_auxram[offset];
 }
-static void shared_auxram_w( int offset, int data ){
+static void shared_auxram_w( int offset, int data )
+{
 	shared_auxram[offset] = data;
 }
 
-static int cpuA_io_r( int offset ){
+static int cpuA_io_r( int offset )
+{
 
-	switch( offset ){
+	switch( offset )
+	{
 		case 0x000: return input_port_0_r( 0 );
 		case 0x100: return snk_read_joy( 0 );
 		case 0x200: return snk_read_joy( 1 );
@@ -202,7 +216,8 @@ static int cpuA_io_r( int offset ){
 		case 0x600: return input_port_5_r( 0 );
 */
 		case 0x700:
-		if( cpuB_latch & SNK_NMI_ENABLE ){
+		if( cpuB_latch & SNK_NMI_ENABLE )
+		{
 			cpu_cause_interrupt( 1, Z80_NMI_INT );
 			cpuB_latch = 0;
 		}
@@ -224,9 +239,11 @@ static int cpuA_io_r( int offset ){
 }
 
 /* Ikari Warrios, Victory Road, Guerrilla War */
-static int cpuA_io_r2( int offset ){
+static int cpuA_io_r2( int offset )
+{
 
-	switch( offset ){
+	switch( offset )
+	{
 		case 0x000: return input_port_0_r( 0 );
 		case 0x100: return snk_read_joy( 0 );
 		case 0x200: return snk_read_joy( 1 );
@@ -236,14 +253,14 @@ static int cpuA_io_r2( int offset ){
 		case 0x600: return input_port_5_r( 0 );
 
 		case 0x700:
-		if( cpuB_latch & SNK_NMI_ENABLE ){
-			cpu_cause_interrupt( 1, Z80_NMI_INT );
-			cpuB_latch = 0;
-		}
-		 else {
-			cpuB_latch |= SNK_NMI_PENDING;
-		}
-		return 0xff;
+			if( cpuB_latch & SNK_NMI_ENABLE )
+			{
+				cpu_cause_interrupt( 1, Z80_NMI_INT );
+				cpuB_latch = 0;
+			}
+			else
+				cpuB_latch |= SNK_NMI_PENDING;
+			return 0xff;
 
 		/* "Hard Flags" */
 		case 0xe00:
@@ -252,13 +269,21 @@ static int cpuA_io_r2( int offset ){
 		case 0xe60:
 		case 0xe80:
 		case 0xea0:
-		case 0xee0: if( hard_flags ) return 0xff;
+		case 0xee0:
+			if( hard_flags ) return 0xff;
+			break;
+
+		default:
+if (errorlog) fprintf(errorlog,"%04x: cpuA_io_r2 %03x\n",cpu_get_pc(),offset);
+			break;
 	}
 	return io_ram[offset];
 }
 
-static void cpuA_io_w( int offset, int data ){
-	switch( offset ){
+static void cpuA_io_w( int offset, int data )
+{
+	switch( offset )
+	{
 		case 0x000:
 		break;
 
@@ -268,7 +293,8 @@ static void cpuA_io_w( int offset, int data ){
 		break;
 
 		case 0x700:
-		if( cpuA_latch&SNK_NMI_PENDING ){
+		if( cpuA_latch&SNK_NMI_PENDING )
+		{
 			cpu_cause_interrupt( 0, Z80_NMI_INT );
 			cpuA_latch = 0;
 		}
@@ -284,12 +310,15 @@ static void cpuA_io_w( int offset, int data ){
 }
 
 
-static int cpuB_io_r( int offset ){
+static int cpuB_io_r( int offset )
+{
 
-	switch( offset ){
+	switch( offset )
+	{
 		case 0x000:
 		case 0x700:
-		if( cpuA_latch & SNK_NMI_ENABLE ){
+		if( cpuA_latch & SNK_NMI_ENABLE )
+		{
 			cpu_cause_interrupt( 0, Z80_NMI_INT );
 			cpuA_latch = 0;
 		}
@@ -310,11 +339,14 @@ static int cpuB_io_r( int offset ){
 	return io_ram[offset];
 }
 
-static void cpuB_io_w( int offset, int data ){
+static void cpuB_io_w( int offset, int data )
+{
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if( offset==0 || offset==0x700 ){
-		if( cpuB_latch&SNK_NMI_PENDING ){
+	if( offset==0 || offset==0x700 )
+	{
+		if( cpuB_latch&SNK_NMI_PENDING )
+		{
 			cpu_cause_interrupt( 1, Z80_NMI_INT );
 			cpuB_latch = 0;
 		}
@@ -337,7 +369,8 @@ static struct ADPCMinterface adpcm_interface =
 	{ 50,50,50,50 }	/* volume */
 };
 
-static struct YM3526interface ym3526_interface = {
+static struct YM3526interface ym3526_interface =
+{
 	1,		/* needs 2, but only 1 supported */
 	4000000,	/* 4 MHz? (hand tuned) */
 	{ 50 }		/* (not supported) */
@@ -345,21 +378,24 @@ static struct YM3526interface ym3526_interface = {
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
 
-static struct MemoryReadAddress o_readmem_cpuA[] = {
+static struct MemoryReadAddress o_readmem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
 	{ 0xd000, 0xf7ff, MRA_RAM, &shared_auxram },
 	{ 0xf800, 0xffff, MRA_RAM, &shared_ram },
 	{ -1 }
 };
-static struct MemoryWriteAddress o_writemem_cpuA[] = {
+static struct MemoryWriteAddress o_writemem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_w },
 	{ 0xd000, 0xffff, MWA_RAM },
 	{ -1 }
 };
 
-static struct MemoryReadAddress o_readmem_cpuB[] = {
+static struct MemoryReadAddress o_readmem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, cpuB_io_r },
 	{ 0xc800, 0xefff, shared_auxram_r },
@@ -367,7 +403,8 @@ static struct MemoryReadAddress o_readmem_cpuB[] = {
 	{ 0xf800, 0xffff, shared_ram_r },
 	{ -1 }
 };
-static struct MemoryWriteAddress o_writemem_cpuB[] = {
+static struct MemoryWriteAddress o_writemem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, cpuB_io_w },
 	{ 0xc800, 0xefff, shared_auxram_w },
@@ -376,7 +413,8 @@ static struct MemoryWriteAddress o_writemem_cpuB[] = {
 	{ -1 }
 };
 
-static struct MemoryReadAddress tnk3_readmem_sound[] = {
+static struct MemoryReadAddress tnk3_readmem_sound[] =
+{
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, snk_soundcommand_r },
@@ -387,7 +425,8 @@ static struct MemoryReadAddress tnk3_readmem_sound[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress tnk3_writemem_sound[] = {
+static struct MemoryWriteAddress tnk3_writemem_sound[] =
+{
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xe000, 0xe000, YM3526_control_port_0_w }, /* YM3526 #1 control port? */
@@ -395,7 +434,8 @@ static struct MemoryWriteAddress tnk3_writemem_sound[] = {
 	{ -1 }
 };
 
-static struct MemoryReadAddress aso_readmem_sound[] = {
+static struct MemoryReadAddress aso_readmem_sound[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, snk_soundcommand_r },
@@ -403,7 +443,8 @@ static struct MemoryReadAddress aso_readmem_sound[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress aso_writemem_sound[] = {
+static struct MemoryWriteAddress aso_writemem_sound[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM3526_control_port_0_w }, /* YM3526 #1 control port? */
@@ -413,7 +454,8 @@ static struct MemoryWriteAddress aso_writemem_sound[] = {
 
 /* Chopper I, T.D.Fever, Psycho S., Bermuda T. */
 
-static struct MemoryReadAddress readmem_cpuA[] = {
+static struct MemoryReadAddress readmem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
 	{ 0xd000, 0xffff, MRA_RAM, &shared_ram },
@@ -421,34 +463,39 @@ static struct MemoryReadAddress readmem_cpuA[] = {
 };
 
 /* Ikari Warriors, Victroy Road, Guerrilla War */
-static struct MemoryReadAddress readmem2_cpuA[] = {
+static struct MemoryReadAddress readmem2_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_r2, &io_ram },
 	{ 0xd000, 0xffff, MRA_RAM, &shared_ram },
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem_cpuA[] = {
+static struct MemoryWriteAddress writemem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_w },
 	{ 0xd000, 0xffff, MWA_RAM },
 	{ -1 }
 };
 
-static struct MemoryReadAddress readmem_cpuB[] = {
+static struct MemoryReadAddress readmem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, cpuB_io_r },
 	{ 0xd000, 0xffff, shared_ram_r },
 	{ -1 }
 };
-static struct MemoryWriteAddress writemem_cpuB[] = {
+static struct MemoryWriteAddress writemem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, cpuB_io_w },
 	{ 0xd000, 0xffff, shared_ram_w },
 	{ -1 }
 };
 
-static struct MemoryReadAddress readmem_sound[] = {
+static struct MemoryReadAddress readmem_sound[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xe000, snk_soundcommand_r },
@@ -463,7 +510,8 @@ static struct MemoryReadAddress readmem_sound[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem_sound[] = {
+static struct MemoryWriteAddress writemem_sound[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 #if 1
@@ -484,7 +532,8 @@ static struct MemoryWriteAddress writemem_sound[] = {
 /**************************** ASO/Alpha Mission *************************/
 // Notes: Sound (Read: d000, f000, f002, f004, f006 : Write: f001)
 
-static struct MemoryReadAddress aso_readmem_cpuA[] = {
+static struct MemoryReadAddress aso_readmem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
 	{ 0xd000, 0xd7ff, MRA_RAM },
@@ -493,14 +542,16 @@ static struct MemoryReadAddress aso_readmem_cpuA[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress aso_writemem_cpuA[] = {
+static struct MemoryWriteAddress aso_writemem_cpuA[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, cpuA_io_w },
 	{ 0xd000, 0xffff, MWA_RAM },
 	{ -1 }
 };
 
-static struct MemoryReadAddress aso_readmem_cpuB[] = {
+static struct MemoryReadAddress aso_readmem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, cpuB_io_r },
 	{ 0xc800, 0xe7ff, shared_auxram_r },
@@ -508,7 +559,8 @@ static struct MemoryReadAddress aso_readmem_cpuB[] = {
 	{ 0xf800, 0xffff, shared_ram_r },
 	{ -1 }
 };
-static struct MemoryWriteAddress aso_writemem_cpuB[] = {
+static struct MemoryWriteAddress aso_writemem_cpuB[] =
+{
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, cpuB_io_w },
 	{ 0xc800, 0xe7ff, shared_auxram_w },
@@ -520,19 +572,19 @@ static struct MemoryWriteAddress aso_writemem_cpuB[] = {
 /***********************************************************************/
 
 #define ROTARY \
-PORT_START \
+	PORT_START \
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 ) \
-PORT_START \
+	PORT_START \
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
 
 #define CONTROLS \
-PORT_START \
+	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) \
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED ) \
-PORT_START \
+	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) \
@@ -540,7 +592,7 @@ PORT_START \
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED ) // dial CONTROL 4 bits
 
 #define BUTTONS \
-PORT_START \
+	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
@@ -564,7 +616,7 @@ PORT_START \
 
 
 INPUT_PORTS_START( ikarius_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -577,13 +629,13 @@ PORT_START
 CONTROLS
 BUTTONS
 
-PORT_START /* DSW 1 */
+	PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow killing each other" )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "P1 & P2 Fire Buttons" )
+	PORT_DIPSETTING(    0x02, "Separate" )
+	PORT_DIPSETTING(    0x00, "Common" )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -592,7 +644,7 @@ PORT_START /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START /* DSW 2 */
+	PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -615,7 +667,7 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
@@ -624,7 +676,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( ikarijp_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -638,13 +690,13 @@ CONTROLS
 
 BUTTONS
 
-PORT_START /* DSW 1 */
+	PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow killing each other" )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "P1 & P2 Fire Buttons" )
+	PORT_DIPSETTING(    0x02, "Separate" )
+	PORT_DIPSETTING(    0x00, "Common" )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -653,7 +705,7 @@ PORT_START /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START /* DSW 2 */
+	PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -676,7 +728,7 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
@@ -685,7 +737,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( victroad_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 	/* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -699,13 +751,13 @@ CONTROLS
 
 BUTTONS
 
-PORT_START /* DSW 1 */
+	PORT_START /* DSW 1 */
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Kill friend & walk everywhere" ,0 ,0 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "P1 & P2 Fire Buttons" )
+	PORT_DIPSETTING(    0x02, "Separate" )
+	PORT_DIPSETTING(    0x00, "Common" )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x04, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -714,7 +766,7 @@ PORT_START /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START /* DSW 2 */
+	PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -737,7 +789,7 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
@@ -746,7 +798,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( gwar_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 	/* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* causes reset */
@@ -760,7 +812,7 @@ CONTROLS
 
 BUTTONS
 
-PORT_START /* DSW 1 */
+	PORT_START /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
@@ -775,7 +827,7 @@ PORT_START /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START /* DSW 2 */
+	PORT_START /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -799,7 +851,7 @@ PORT_START /* DSW 2 */
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 ROTARY
@@ -809,7 +861,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( athena_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -819,7 +871,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -829,7 +881,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -839,13 +891,13 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START	/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -860,7 +912,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START /* DSW2 */
+	PORT_START /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -880,14 +932,14 @@ PORT_START /* DSW2 */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Energy" )
+	PORT_DIPSETTING(    0x80, "12" )
+	PORT_DIPSETTING(    0x00, "14" )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( tnk3_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -897,21 +949,21 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED ) /*DIAL P1*/
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED ) /*DIAL P2*/
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -921,7 +973,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -931,7 +983,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START	/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Walk everywhere", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -955,7 +1007,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x40, "50k 120k" )
 	PORT_DIPSETTING(    0x00, "None" )
 
-PORT_START	/* DSW2 */
+	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurance" )
 	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -985,7 +1037,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( bermudat_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related???*/
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) /* Behaves like COIN 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Reset */
@@ -999,10 +1051,10 @@ CONTROLS
 
 BUTTONS
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START  /* DSW 1 */
+	PORT_START  /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1017,7 +1069,7 @@ PORT_START  /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START  /* DSW 2 */
+	PORT_START  /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
 	PORT_DIPSETTING(    0x02, "Easy?" )
 	PORT_DIPSETTING(    0x03, "Normal?" )
@@ -1040,11 +1092,14 @@ PORT_START  /* DSW 2 */
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+ROTARY
+
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( psychos_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related???*/
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Reset */
@@ -1054,7 +1109,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -1066,13 +1121,13 @@ PORT_START
 
 BUTTONS
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START  /* DSW 1 */
+	PORT_START  /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Service_Mode ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1087,7 +1142,7 @@ PORT_START  /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START  /* DSW 2 */
+	PORT_START  /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x03, "Normal" )
@@ -1114,7 +1169,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( aso_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1124,7 +1179,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -1134,7 +1189,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -1144,13 +1199,13 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
@@ -1175,7 +1230,7 @@ PORT_START
 	PORT_DIPSETTING(    0x40, "100k 200k" )
 	PORT_DIPSETTING(    0x00, "None" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrance" )
 	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
@@ -1202,7 +1257,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( chopper1_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Reset */
@@ -1212,7 +1267,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -1222,7 +1277,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1232,13 +1287,13 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START  /* DSW 1 */
+	PORT_START  /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1253,7 +1308,7 @@ PORT_START  /* DSW 1 */
 	PORT_DIPSETTING(    0x00, "5" )
 COINAGE
 
-PORT_START  /* DSW 2 */
+	PORT_START  /* DSW 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x03, "Normal" )
@@ -1279,7 +1334,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( fitegolf_input_ports )
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1289,7 +1344,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -1299,7 +1354,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
@@ -1309,13 +1364,13 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START	/* DSW1 */
+	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Continue?" )
 	PORT_DIPSETTING(    0x01, "Coin Up" )
 	PORT_DIPSETTING(    0x00, "Standard" )
@@ -1339,7 +1394,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-PORT_START /* DSW2 */
+	PORT_START /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -1366,7 +1421,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( ftsoccer_input_ports )
-	PORT_START
+		PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1376,7 +1431,7 @@ INPUT_PORTS_START( ftsoccer_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -1386,7 +1441,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
@@ -1396,22 +1451,22 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
@@ -1440,7 +1495,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( tdfever_input_ports )
-	PORT_START
+		PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 ) /* Or Service? */
@@ -1450,7 +1505,7 @@ INPUT_PORTS_START( tdfever_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -1460,7 +1515,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 
-PORT_START
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
@@ -1470,22 +1525,22 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "Unknown" )
 	PORT_DIPSETTING(    0xff, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-PORT_START
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
@@ -1514,7 +1569,8 @@ INPUT_PORTS_END
 
 /*********************************************************************/
 
-static struct GfxLayout char512 = {
+static struct GfxLayout char512 =
+{
 	8,8,
 	512,
 	4,
@@ -1524,7 +1580,8 @@ static struct GfxLayout char512 = {
 	256
 };
 
-static struct GfxLayout char1024 = {
+static struct GfxLayout char1024 =
+{
 	8,8,
 	1024,
 	4,
@@ -1534,7 +1591,8 @@ static struct GfxLayout char1024 = {
 	256
 };
 
-static struct GfxLayout tile1024 = {
+static struct GfxLayout tile1024 =
+{
 	16,16,
 	1024,
 	4,
@@ -1546,7 +1604,8 @@ static struct GfxLayout tile1024 = {
 	128*8
 };
 
-static struct GfxLayout tile2048 = {
+static struct GfxLayout tile2048 =
+{
 	16,16,
 	2048,
 	4,
@@ -1558,7 +1617,8 @@ static struct GfxLayout tile2048 = {
 	128*8
 };
 
-static struct GfxLayout tdfever_tiles = {
+static struct GfxLayout tdfever_tiles =
+{
 	16,16,
 	512*5,
 	4,
@@ -1570,7 +1630,8 @@ static struct GfxLayout tdfever_tiles = {
 	128*8
 };
 
-static struct GfxLayout sprite512 = {
+static struct GfxLayout sprite512 =
+{
 	16,16,
 	512,
 	3,
@@ -1581,7 +1642,8 @@ static struct GfxLayout sprite512 = {
 	256
 };
 
-static struct GfxLayout sprite1024 = {
+static struct GfxLayout sprite1024 =
+{
 	16,16,
 	1024,
 	3,
@@ -1592,7 +1654,8 @@ static struct GfxLayout sprite1024 = {
 	256
 };
 
-static struct GfxLayout big_sprite512 = {
+static struct GfxLayout big_sprite512 =
+{
 	32,32,
 	512,
 	3,
@@ -1614,7 +1677,8 @@ static struct GfxLayout big_sprite512 = {
 	16*32*2
 };
 
-static struct GfxLayout gwar_sprite1024 = {
+static struct GfxLayout gwar_sprite1024 =
+{
 	16,16,
 	1024,
 	4,
@@ -1628,7 +1692,8 @@ static struct GfxLayout gwar_sprite1024 = {
 	256
 };
 
-static struct GfxLayout gwar_sprite2048 = {
+static struct GfxLayout gwar_sprite2048 =
+{
 	16,16,
 	2048,
 	4,
@@ -1639,7 +1704,8 @@ static struct GfxLayout gwar_sprite2048 = {
 	256
 };
 
-static struct GfxLayout gwar_big_sprite1024 = {
+static struct GfxLayout gwar_big_sprite1024 =
+{
 	32,32,
 	1024,
 	4,
@@ -1661,7 +1727,8 @@ static struct GfxLayout gwar_big_sprite1024 = {
 	1024
 };
 
-static struct GfxLayout tdfever_big_sprite1024 = {
+static struct GfxLayout tdfever_big_sprite1024 =
+{
 	32,32,
 	1024,
 	4,
@@ -1685,7 +1752,8 @@ static struct GfxLayout tdfever_big_sprite1024 = {
 
 /*********************************************************************/
 
-static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char512,	128*3,  8 },
 	{ MEM_GFX_TILES,      0x0, &char1024,	128*1, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &sprite512,	128*0, 16 },
@@ -1701,7 +1769,8 @@ static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo ikari_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo ikari_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char512,             256, 16 },
 	{ MEM_GFX_TILES,      0x0, &tile1024,            256, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &sprite1024,            0, 16 },
@@ -1709,7 +1778,8 @@ static struct GfxDecodeInfo ikari_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gwar_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo gwar_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char1024,             256*0, 16 },
 	{ MEM_GFX_TILES,      0x0, &tile2048,             256*3, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &gwar_sprite2048,      256*1, 16 },
@@ -1717,7 +1787,8 @@ static struct GfxDecodeInfo gwar_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char1024,             256*0, 16 },
 	{ MEM_GFX_TILES,      0x0, &tile2048,             256*3, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &gwar_sprite1024,      256*1, 16 },
@@ -1725,7 +1796,8 @@ static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct GfxDecodeInfo psychos_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo psychos_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char1024,             256*0, 16 },
 	{ MEM_GFX_TILES,      0x0, &tile2048,             256*3, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &gwar_sprite1024,      256*1, 16 },
@@ -1733,7 +1805,8 @@ static struct GfxDecodeInfo psychos_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
+{
 	{ MEM_GFX_CHARS,      0x0, &char1024,            	0, 16 },
 	{ MEM_GFX_TILES,      0x0, &tdfever_tiles,        512, 16 },
 	{ MEM_GFX_SPRITES,    0x0, &tdfever_big_sprite1024,  256, 16 },
@@ -1742,7 +1815,8 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] = {
 
 /**********************************************************************/
 
-static struct MachineDriver tnk3_machine_driver = {
+static struct MachineDriver tnk3_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -1799,7 +1873,8 @@ static struct MachineDriver tnk3_machine_driver = {
 	}
 };
 
-static struct MachineDriver athena_machine_driver = {
+static struct MachineDriver athena_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -1856,7 +1931,8 @@ static struct MachineDriver athena_machine_driver = {
 	}
 };
 
-static struct MachineDriver aso_machine_driver = {
+static struct MachineDriver aso_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -1912,7 +1988,8 @@ static struct MachineDriver aso_machine_driver = {
 	}
 };
 
-static struct MachineDriver ikari_machine_driver = {
+static struct MachineDriver ikari_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -1967,7 +2044,8 @@ static struct MachineDriver ikari_machine_driver = {
 	}
 };
 
-static struct MachineDriver gwar_machine_driver = {
+static struct MachineDriver gwar_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -2021,7 +2099,8 @@ static struct MachineDriver gwar_machine_driver = {
 	}
 };
 
-static struct MachineDriver bermudat_machine_driver = {
+static struct MachineDriver bermudat_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -2075,7 +2154,8 @@ static struct MachineDriver bermudat_machine_driver = {
 	}
 };
 
-static struct MachineDriver psychos_machine_driver = {
+static struct MachineDriver psychos_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -2129,7 +2209,8 @@ static struct MachineDriver psychos_machine_driver = {
 	}
 };
 
-static struct MachineDriver tdfever_machine_driver = {
+static struct MachineDriver tdfever_machine_driver =
+{
 	{
 		{
 			CPU_Z80,
@@ -2299,8 +2380,7 @@ ROM_START( athena_rom )
 	ROM_LOAD( "up02_m8.rom",  0x4000, 0x8000, 0xf3c933df )
 
 	ROM_REGION( 0x10000 ) /* 64k for sound code */
-	ROM_LOAD( "up02_g6.rom",  0x0000, 0x4000, 0xe890ce09 )
-	ROM_CONTINUE( 0x00000, 0x4000 )  /* skip 0x4000 bytes */
+	ROM_LOAD( "up02_g6.rom",  0x0000, 0x4000, 0x42dbe029 )
 	ROM_LOAD( "up02_k6.rom",  0x4000, 0x8000, 0x596f1c8a )
 
 	ROM_REGION( 0xC00 )	/* color proms */
@@ -3033,12 +3113,15 @@ HI_SAVE(ftsoccer, 0xe349, 5*4)
 HI_SAVE(tdfever, 0xdf28, 10*4)
 
 /****  TNK3 high score save routine  -  RJF (Mar 26, 1999)  ****/
-static int tnk3_hiload(void){
+static int tnk3_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xfed1],"\x13\x29\x00",3) == 0){
+        if (memcmp(&RAM[0xfed1],"\x13\x29\x00",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xfed1], 10*13);
 			osd_fclose(f);
 
@@ -3053,12 +3136,15 @@ static int tnk3_hiload(void){
 }
 
 /****  ASO high score save routine  -  RJF (Apr 05, 1999)  ****/
-static int aso_hiload(void){
+static int aso_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xd83b],"\x00\x50\x00",3) == 0){
+        if (memcmp(&RAM[0xd83b],"\x00\x50\x00",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xd83b], 10*13);
 			osd_fclose(f);
 
@@ -3073,12 +3159,15 @@ static int aso_hiload(void){
 }
 
 /****  Athena high score save routine  -  RJF (Apr 5, 1999)  ****/
-static int athena_hiload(void){
+static int athena_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xfe52],"\x41\x54\x48",3) == 0){
+        if (memcmp(&RAM[0xfe52],"\x41\x54\x48",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xfe50], 6*19);
 			osd_fclose(f);
 
@@ -3089,12 +3178,15 @@ static int athena_hiload(void){
 }
 
 /****  Fighting Golf high score save routine  -  RJF (Apr 5, 1999)  ****/
-static int fitegolf_hiload(void){
+static int fitegolf_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xff70],"\x53\x4e\x4b",3) == 0){
+        if (memcmp(&RAM[0xff70],"\x53\x4e\x4b",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xff70], 10*8);
 			osd_fclose(f);
                 }
@@ -3103,12 +3195,15 @@ static int fitegolf_hiload(void){
 	return 0;  /* we can't load the hi scores yet */
 }
 
-static int ikari_hiload(void){
+static int ikari_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0){
+	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0)
+	{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
 			osd_fread(f,&RAM[0xff0b], 0x50);
 			osd_fclose(f);
 
@@ -3123,12 +3218,15 @@ static int ikari_hiload(void){
 	return 0;  /* we can't load the hi scores yet */
 }
 
-static int victroad_hiload(void){
+static int victroad_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0){
+	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0)
+	{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
 			osd_fread(f,&RAM[0xff2c], 0x50);
 			osd_fclose(f);
 
@@ -3143,30 +3241,36 @@ static int victroad_hiload(void){
 	return 0;  /* we can't load the hi scores yet */
 }
 
-static void ikari_hisave(void){
+static void ikari_hisave(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	/* The game clears hi score table after reset, */
 	/* so we must be sure that hi score table was already loaded */
 
-	if (memcmp(&RAM[0xfc2a],"\x48\x49",2) == 0){
-		if (f){
+	if (memcmp(&RAM[0xfc2a],"\x48\x49",2) == 0)
+	{
+		if (f)
+		{
 			osd_fwrite(f,&RAM[0xff0b],0x50);
 			osd_fclose(f);
 		}
 	}
 }
 
-static void victroad_hisave(void){
+static void victroad_hisave(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	/* The game clears hi score table after reset, */
 	/* so we must be sure that hi score table was already loaded */
 
-	if (memcmp(&RAM[0xfc2a],"\x48\x49",2) == 0){
-		if (f){
+	if (memcmp(&RAM[0xfc2a],"\x48\x49",2) == 0)
+	{
+		if (f)
+		{
 			osd_fwrite(f,&RAM[0xff2c],0x50);
 			osd_fclose(f);
 		}
@@ -3174,12 +3278,15 @@ static void victroad_hisave(void){
 }
 
 /****  Guerrilla War high score save routine  -  RJF (Apr 5, 1999)  ****/
-static int gwar_hiload(void){
+static int gwar_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xe4b9],"\x00\x30\x00",3) == 0){
+        if (memcmp(&RAM[0xe4b9],"\x00\x30\x00",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xe4b9], 10*8);
 			osd_fclose(f);
 
@@ -3194,12 +3301,15 @@ static int gwar_hiload(void){
 }
 
 /****  Bermuda Triangle high score save routine  -  RJF (Apr 5, 1999)  ****/
-static int bermudat_hiload(void){
+static int bermudat_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xfec1],"\x54\x4f\x4b",3) == 0){
+        if (memcmp(&RAM[0xfec1],"\x54\x4f\x4b",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xfebe], 10*8);
 			osd_fclose(f);
 
@@ -3214,12 +3324,15 @@ static int bermudat_hiload(void){
 }
 
 /*** Psycho Soldier (2 sets) high score save routine - RJF (Apr 5, 1999) ***/
-static int psychos_hiload(void){
+static int psychos_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xdd09],"\x38\x30\x30",3) == 0){
+        if (memcmp(&RAM[0xdd09],"\x38\x30\x30",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xdd05], 245);
 			osd_fclose(f);
 
@@ -3239,12 +3352,15 @@ static int psychos_hiload(void){
 }
 
 /** Chopper I / Legend of Air high score save routine - RJF (Apr 5, 1999) **/
-static int chopper_hiload(void){
+static int chopper_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xe4c8],"\x53\x4e\x4b",3) == 0){
+        if (memcmp(&RAM[0xe4c8],"\x53\x4e\x4b",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xe4c5], 10*6);
 			osd_fclose(f);
 
@@ -3259,12 +3375,15 @@ static int chopper_hiload(void){
 }
 
 /***  Fighting Soccer high score save routine - RJF (May 22, 1999)  ***/
-static int ftsoccer_hiload(void){
+static int ftsoccer_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xe349],"\x48\x41\x4d",3) == 0){
+        if (memcmp(&RAM[0xe349],"\x48\x41\x4d",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xe349], 5*4);
 			osd_fclose(f);
 
@@ -3275,12 +3394,15 @@ static int ftsoccer_hiload(void){
 }
 
 /** TouchDown Fever (2 sets) high score save routine - RJF (Apr 5, 1999) **/
-static int tdfever_hiload(void){
+static int tdfever_hiload(void)
+{
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0xdf28],"\xc5\xa0\xb8",3) == 0){
+        if (memcmp(&RAM[0xdf28],"\xc5\xa0\xb8",3) == 0)
+		{
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
+		if (f)
+		{
                         osd_fread(f,&RAM[0xdf28], 10*4);
 			osd_fclose(f);
 
@@ -3293,7 +3415,8 @@ static int tdfever_hiload(void){
 
 /***********************************************/
 
-static void ikarius_decode(void){
+static void ikarius_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/*  Hack ROM test */
@@ -3310,7 +3433,8 @@ static void ikarius_decode(void){
 	hard_flags = 1;
 }
 
-static void ikarijp_decode(void){
+static void ikarijp_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 	RAM[0x190b] = 0xc9; /* faster test */
 
@@ -3318,7 +3442,8 @@ static void ikarijp_decode(void){
 	hard_flags = 1;
 }
 
-static void ikarijpb_decode( void ){
+static void ikarijpb_decode( void )
+{
         unsigned char *RAM = Machine->memory_region[0];
        	RAM[0x190b] = 0xc9; /* faster test */
 
@@ -3326,13 +3451,15 @@ static void ikarijpb_decode( void ){
 	hard_flags = 1;
 }
 
-static void aso_decode(void){
+static void aso_decode(void)
+{
 
 	dial_type = DIAL_NONE;
 	hard_flags = 0;
 }
 
-static void victroad_decode(void){
+static void victroad_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Hack ROM test */
@@ -3349,7 +3476,8 @@ static void victroad_decode(void){
 	hard_flags = 1;
 }
 
-static void dogosoke_decode(void){
+static void dogosoke_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 	/* Hack ROM test */
 	RAM[0x179f] = 0x00;
@@ -3365,7 +3493,8 @@ static void dogosoke_decode(void){
 	hard_flags = 1;
 }
 
-static void gwar_decode(void){
+static void gwar_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Hack ROM Test */
@@ -3384,7 +3513,8 @@ static void gwar_decode(void){
 	hard_flags = 0;
 }
 
-static void chopper_decode(void){
+static void chopper_decode(void)
+{
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Hack ROM Test */
@@ -3403,7 +3533,8 @@ static void chopper_decode(void){
 	hard_flags = 0;
 }
 
-static void bermudat_decode(void){
+static void bermudat_decode(void)
+{
 	/* Bermuda Triangle  (NOT WORKING)*/
 	unsigned char *RAM = Machine->memory_region[0];
 
@@ -3416,22 +3547,26 @@ static void bermudat_decode(void){
 	hard_flags = 0;
 }
 
-static void tdfever_decode( void ){
+static void tdfever_decode( void )
+{
 	dial_type = DIAL_NONE;
 	hard_flags = 0;
 }
 
-static void tnk3_decode( void ){
+static void tnk3_decode( void )
+{
 	dial_type = DIAL_NORMAL;
 	hard_flags = 0;
 }
 
-static void athena_decode( void ){
+static void athena_decode( void )
+{
 	dial_type = DIAL_NONE;
 	hard_flags = 0;
 }
 
-static void psychos_decode( void ){
+static void psychos_decode( void )
+{
 	dial_type = DIAL_NONE;
 	hard_flags = 0;
 }
@@ -3568,7 +3703,8 @@ struct GameDriver fitegolf_driver =
         fitegolf_hiload, fitegolf_hisave
 };
 
-struct GameDriver ikari_driver = {
+struct GameDriver ikari_driver =
+{
 	__FILE__,
 	0,
 	"ikari",

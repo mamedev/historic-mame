@@ -419,7 +419,7 @@ static void tmnt_drawsprites(struct osd_bitmap *bitmap)
 			flipy = READ_WORD(&spriteram[offs+4]) & 0x0200;
 
 			if (flipx) sx += 16 * (w - 1);
-			if (flipy) sy += 16 * (h - 1);
+			if (flipy) sy += 16 * h - 1;
 
 			for (y = 0;y < h;y++)
 			{

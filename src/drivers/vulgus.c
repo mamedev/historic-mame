@@ -58,16 +58,16 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-int vulgus_interrupt(void)
+static void vulgus_control_w(int offset, int data)
 {
-	static int count;
+	/* bit 0-1 coin counters */
+	coin_counter_w(0, data & 1);
+	coin_counter_w(1, data & 2);
 
-	count = (count + 1) % 2;
+	/* bit 7   flip screen
 
-	if (count) return 0x00cf;	/* RST 08h */
-	else return 0x00d7;	/* RST 10h */
+	   in vulgus this is active LO, in vulgusj this is active HI !!! */
 }
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -87,6 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scrolllow },
+	{ 0xc804, 0xc804, vulgus_control_w },
 	{ 0xc805, 0xc805, vulgus_palette_bank_w, &vulgus_palette_bank },
 	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scrollhigh },
 	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
@@ -102,20 +103,20 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
-	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
 	{ 0xc000, 0xc000, AY8910_control_port_1_w },
 	{ 0xc001, 0xc001, AY8910_write_port_1_w },
-	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -127,9 +128,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -323,13 +324,45 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-
 ROM_START( vulgus_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
 	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
 	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
 	ROM_LOAD( "v5",           0x6000, 0x2000, 0x4ca7f10e )
+	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
+
+	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
+	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
+	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
+	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
+	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
+	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
+	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
+ROM_END
+
+ROM_START( vulgus2_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "vulgus.002",   0x0000, 0x2000, 0xe49d6c5d )
+	ROM_LOAD( "vulgus.003",   0x2000, 0x2000, 0x51acef76 )
+	ROM_LOAD( "vulgus.004",   0x4000, 0x2000, 0x489e7f60 )
+	ROM_LOAD( "vulgus.005",   0x6000, 0x2000, 0xde3a24a8 )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
 	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
@@ -391,6 +424,7 @@ ROM_START( vulgusj_rom )
 ROM_END
 
 
+
 static int hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -398,7 +432,7 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xee00],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0xee34],"\x00\x32\x50",3) == 0)
+		memcmp(&RAM[0xee34],"\x00\x32\x50",3) == 0)
 	{
 		void *f;
 
@@ -439,7 +473,7 @@ struct GameDriver vulgus_driver =
 	__FILE__,
 	0,
 	"vulgus",
-	"Vulgus (US?)",
+	"Vulgus (set 1)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
@@ -448,6 +482,32 @@ struct GameDriver vulgus_driver =
 	0,
 
 	vulgus_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver vulgus2_driver =
+{
+	__FILE__,
+	&vulgus_driver,
+	"vulgus2",
+	"Vulgus (set 2)",
+	"1984",
+	"Capcom",
+	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	vulgus2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

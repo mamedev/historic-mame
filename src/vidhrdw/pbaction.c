@@ -94,7 +94,7 @@ void pbaction_colorram2_w(int offset,int data)
 
 void pbaction_scroll_w(int offset,int data)
 {
-	scroll = data-3;
+	scroll = -(data-3);
 }
 
 
@@ -229,11 +229,11 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs],
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
-				sx,sy,
+				sx+scroll,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
 	/* copy the foreground */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }

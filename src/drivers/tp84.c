@@ -1,9 +1,8 @@
 /***************************************************************************
 
 to do:
--Better sound emulation
--Speed!!!
- -The Z80 spends most of its time reading the timer, we should trap that.
+- the slave CPU multiplexes sprites. We are cheating now, and reading them
+  from somewhere else.
 
 
 Time Pilot 84 Memory Map (preliminary)
@@ -58,7 +57,7 @@ Read/Write
  0000-1fff SAFR Watch dog ?
  2000      seem to be the beam position (if always 0, no player collision is detected)
  4000      enable or reset IRQ
- 6000-7fff DRA ?
+ 6000-67ff DRA
  8000-87ff Ram (Common for the Master and Slave 6809)
  E000-ffff Rom
 
@@ -71,7 +70,7 @@ There are 3 or 4 76489AN chips driven by the Z80
 4000-43ff Ram
 6000-7fff Sound data in
 8000-9fff Timer
-A000-Bfff
+A000-Bfff Filters
 C000      Store Data that will go to one of the 76489AN
 C001      76489 #1 trigger
 C002      76489 #2 (optional) trigger
@@ -86,14 +85,8 @@ C004      76489 #4 trigger
 
 /* In Machine */
 extern int tp84_beam_r(int offset);
-extern int tp84_interrupt(void);
 void tp84_catchloop_w(int offset,int data); /* JB 970829 */
 void tp84_init_machine(void); /* JB 970829 */
-
-/* In Vidhrdw */
-extern unsigned char *tp84_sharedram;
-int tp84_sharedram_r(int offset);
-void tp84_sharedram_w(int offset,int data);
 
 extern unsigned char *tp84_videoram2;
 extern unsigned char *tp84_colorram2;
@@ -108,16 +101,56 @@ void tp84_vh_stop(void);
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *sharedram;
+
+static int sharedram_r(int offset)
+{
+	return sharedram[offset];
+}
+
+static void sharedram_w(int offset,int data)
+{
+	sharedram[offset] = data;
+}
+
 
 int tp84_sh_timer_r(int offset)
 {
-	int clock;
+	int timer;
 
-#define TIMER_RATE 256
 
-	clock = cpu_gettotalcycles() / TIMER_RATE;
+	/* main xtal 14.318MHz, divided by 4 to get the CPU clock, further */
+	/* divided by 2048 to get this timer */
+	/* (divide by (2048/2), and not 1024, because the CPU cycle counter is */
+	/* incremented every other state change of the clock) */
+	return (cpu_gettotalcycles() / (2048/2)) & 0x0f;
+}
 
-	return clock;
+void tp84_filter_w(int offset,int data)
+{
+	int C;
+
+	/* 76489 #0 */
+	C = 0;
+	if (offset & 0x008) C +=  47000;	/*  47000pF = 0.047uF */
+	if (offset & 0x010) C += 470000;	/* 470000pF = 0.47uF */
+	set_RC_filter(0,1000,2200,1000,C);
+
+	/* 76489 #1 (optional) */
+	C = 0;
+	if (offset & 0x020) C +=  47000;	/*  47000pF = 0.047uF */
+	if (offset & 0x040) C += 470000;	/* 470000pF = 0.47uF */
+//	set_RC_filter(1,1000,2200,1000,C);
+
+	/* 76489 #2 */
+	C = 0;
+	if (offset & 0x080) C += 470000;	/* 470000pF = 0.47uF */
+	set_RC_filter(1,1000,2200,1000,C);
+
+	/* 76489 #3 */
+	C = 0;
+	if (offset & 0x100) C += 470000;	/* 470000pF = 0.47uF */
+	set_RC_filter(2,1000,2200,1000,C);
 }
 
 void tp84_sh_irqtrigger_w(int offset,int data)
@@ -136,7 +169,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2860, 0x2860, input_port_3_r },
 	{ 0x3000, 0x3000, input_port_4_r },
 	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x5000, 0x57ff, tp84_sharedram_r },
+	{ 0x5000, 0x57ff, sharedram_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -155,7 +188,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4400, 0x47ff, tp84_videoram2_w, &tp84_videoram2 },
 	{ 0x4800, 0x4bff, colorram_w, &colorram },
 	{ 0x4c00, 0x4fff, tp84_colorram2_w, &tp84_colorram2 },
-	{ 0x5000, 0x57ff, tp84_sharedram_w, &tp84_sharedram },   /* 0x5000-0x517f sprites definitions*/
+	{ 0x5000, 0x57ff, sharedram_w, &sharedram },
+	{ 0x5000, 0x5177, MWA_RAM, &spriteram, &spriteram_size },	/* FAKE (see below) */
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -166,8 +200,8 @@ static struct MemoryReadAddress readmem_cpu2[] =
 {
 	{ 0x0000, 0x0000, MRA_RAM },
 	{ 0x2000, 0x2000, tp84_beam_r }, /* beam position */
-	{ 0x6000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0x87ff, tp84_sharedram_r },  /* shared RAM with the main CPU */
+	{ 0x6000, 0x67ff, MRA_RAM },
+	{ 0x8000, 0x87ff, sharedram_r },
 	{ 0xe000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -177,16 +211,17 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 {
 	{ 0x0000, 0x0000, MWA_RAM }, /* Watch dog ?*/
 	{ 0x4000, 0x4000, tp84_catchloop_w }, /* IRQ enable */ /* JB 970829 */
-	{ 0x6000, 0x7fff, MWA_RAM },
-	{ 0x8000, 0x87ff, tp84_sharedram_w },    /* shared RAM with the main CPU */
-	{ 0xe000, 0xffff, MWA_ROM },              /* ROM code */
+	{ 0x6000, 0x67ff, MWA_RAM },
+//	{ 0x67a0, 0x67ff, MWA_RAM, &spriteram, &spriteram_size },	/* REAL (multiplexed) */
+	{ 0x8000, 0x87ff, sharedram_w },
+	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, tp84_sh_timer_r },
@@ -195,14 +230,17 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0xa000, 0xa1ff, tp84_filter_w },
 	{ 0xc000, 0xc000, MWA_NOP },
 	{ 0xc001, 0xc001, SN76496_0_w },
 	{ 0xc003, 0xc003, SN76496_1_w },
 	{ 0xc004, 0xc004, SN76496_2_w },
 	{ -1 }	/* end of table */
 };
+
+
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
@@ -331,7 +369,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
-	1789750,	/* 1.78975 Mhz ? */
+	14318180/8,
 	{ 75, 75, 75 }
 };
 
@@ -343,28 +381,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			1500000,			/* ? Mhz 1.1 seem too slow */
+			1500000,	/* ??? */
 			0,					/* memory region */
-			readmem,			/* MemoryReadAddress */
-			writemem,			/* MemoryWriteAddress */
-			0,					/* IOReadPort */
-			0,					/* IOWritePort */
-			interrupt,			/* interrupt routine */
-			1					/* interrupts per frame */
+			readmem,writemem,0,0,
+			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1100000,			/* ? Mhz */
+			1500000,	/* ??? */
 			3,	/* memory region #3 */
-			readmem_cpu2,
-			writemem_cpu2,
-			0,
-			0,
-			tp84_interrupt,1	/* JB 970829 */ /*256*/
+			readmem_cpu2,writemem_cpu2,0,0,
+			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ? */
+			14318180/4,
 			4,	/* memory region #4 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */

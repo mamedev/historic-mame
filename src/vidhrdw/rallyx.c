@@ -621,7 +621,7 @@ if (flipscreen) sx += 32;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				((spriteram[offs] & 0x7c) >> 2) + 0x20 + ((spriteram[offs] & 0x80) >> 1),
-0,//				spriteram_2[offs + 1],
+				spriteram_2[offs + 1],
 				flipx,flipy,
 				sx,sy,
 				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
@@ -644,7 +644,7 @@ if (flipscreen) sx += 32;
 
 		/* TODO: map to the correct color */
 		color = ((rallyx_radarcarcolor[offs & 0x0f] >> 1) - 1) & 0x03;	/* ?????? */
-color = 1;
+//color = 1;
 
 /* the following doesn't work in commsega */
 //		x = rallyx_radarcarx[offs] + 256 * (1 - (rallyx_radarcarcolor[offs & 0x0f] & 1));

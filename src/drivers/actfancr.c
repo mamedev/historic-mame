@@ -1,9 +1,14 @@
 /*******************************************************************************
 
-	Actfancer						(c) 1989 Data East Corporation
+	Act Fancer (USA?)				(c) 1989 Data East Corporation
+	Act Fancer (Japan?)				(c) 1989 Data East Corporation
 
-	Doesn't work due to bad program rom dump.
-	Dip switches are wrong...
+	The 'USA' set has rom code FE, the 'Japan' set has rom code FD.
+
+	Most Data East games give the Japanese version the earlier code, though
+	there is no real difference between the sets
+
+	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 *******************************************************************************/
 
@@ -20,40 +25,26 @@ void actfancr_pf2_data_w(int offset, int data);
 int actfancr_pf2_data_r(int offset);
 void actfancr_pf2_control_w(int offset, int data);
 int actfancr_vh_start (void);
-void actfancr_vh_stop (void);
-
-void actfancr_palette_w(int offset, int data);
 
 extern unsigned char *actfancr_pf1_data,*actfancr_pf2_data;
+static unsigned char *actfancr_ram;
 
 /******************************************************************************/
 
 static int actfan_control_0_r(int offset)
 {
-	switch (offset) {
-		case 0: /* VBL */
-			return readinputport(2);
-	}
-
-	return 0xff;
+	return readinputport(2); /* VBL */
 }
 
 static int actfan_control_1_r(int offset)
 {
-
-if (errorlog) fprintf(errorlog,"%04x: Control 1 : %02x\n",cpu_get_pc(),offset);
-
 	switch (offset) {
-		case 0: /* Dip 1 */
-			return readinputport(0);
-
-		case 1: /* Dip 2 */
-			return readinputport(1);
-
+		case 0: return readinputport(0); /* Player 1 */
+		case 1: return readinputport(1); /* Player 2 */
+		case 2: return readinputport(3); /* Dip 1 */
+		case 3: return readinputport(4); /* Dip 2 */
 	}
-
 	return 0xff;
-
 }
 
 static void actfancr_sound_w(int offset, int data)
@@ -69,7 +60,7 @@ static struct MemoryReadAddress actfan_readmem[] =
 	{ 0x000000, 0x02ffff, MRA_ROM },
 	{ 0x062000, 0x063fff, actfancr_pf1_data_r },
 	{ 0x072000, 0x0727ff, actfancr_pf2_data_r },
-	{ 0x100000, 0x1007ff, MRA_BANK1 },
+	{ 0x100000, 0x1007ff, MRA_RAM },
 	{ 0x130000, 0x130003, actfan_control_1_r },
 	{ 0x140000, 0x140001, actfan_control_0_r },
 	{ 0x120000, 0x1205ff, paletteram_r },
@@ -84,11 +75,11 @@ static struct MemoryWriteAddress actfan_writemem[] =
 	{ 0x062000, 0x063fff, actfancr_pf1_data_w, &actfancr_pf1_data },
 	{ 0x070000, 0x07001f, actfancr_pf2_control_w },
 	{ 0x072000, 0x0727ff, actfancr_pf2_data_w, &actfancr_pf2_data },
-	{ 0x100000, 0x1007ff, MWA_BANK1, &spriteram },
+	{ 0x100000, 0x1007ff, MWA_RAM, &spriteram },
 	{ 0x110000, 0x110001, MWA_NOP },
-	{ 0x120000, 0x1205ff, actfancr_palette_w, &paletteram },
+	{ 0x120000, 0x1205ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0x150000, 0x150001, actfancr_sound_w },
-	{ 0x1f0000, 0x1f3fff, MWA_RAM }, /* Main ram */
+	{ 0x1f0000, 0x1f3fff, MWA_RAM, &actfancr_ram }, /* Main ram */
 	{ -1 }  /* end of table */
 };
 
@@ -119,23 +110,23 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 
 INPUT_PORTS_START( actfancr_input_ports )
 	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
- 	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* start buttons */
@@ -148,50 +139,53 @@ INPUT_PORTS_START( actfancr_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x00, "Infinite" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Number of K for bonus" )
-	PORT_DIPSETTING(    0x0c, "50" )
-	PORT_DIPSETTING(    0x08, "70" )
-	PORT_DIPSETTING(    0x04, "90" )
-	PORT_DIPSETTING(    0x00, "100" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
-	PORT_DIPSETTING(    0x30, "Easy" )
-	PORT_DIPSETTING(    0x10, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x40, 0x40, "Atract Mode Sound" )
-	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPNAME( 0x80, 0x80, "Timer Speed" )
-	PORT_DIPSETTING(    0x80, "Normal" )
-	PORT_DIPSETTING(    0x00, "Fast" )
-
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Right Coin" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Left Coin" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x20, 0x20, "Screen Rotation" )
-	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x00, "Reverse" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet" )
-	PORT_DIPSETTING(    0x40, "Cocktail" )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPNAME( 0x80, 0x80, "No Die Mode" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_BITX(0,  0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -212,7 +206,7 @@ static struct GfxLayout tiles =
 	16,16,	/* 16*16 sprites */
 	2048,
 	4,
-	{ 0x30000*8, 0x10000*8,0x20000*8, 0,    },	/* plane offset */
+	{ 0x30000*8, 0x10000*8,0x20000*8, 0 },	/* plane offset */
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -225,7 +219,7 @@ static struct GfxLayout sprites =
 	16,16,	/* 16*16 sprites */
 	2048+1024,
 	4,
-	{ 0x18000*8,  0x48000*8, 0, 0x30000*8 },	/* plane offset */
+	{ 0x18000*8, 0x48000*8, 0, 0x30000*8 },	/* plane offset */
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -236,8 +230,8 @@ static struct GfxLayout sprites =
 static struct GfxDecodeInfo actfan_gfxdecodeinfo[] =
 {
 	{ 1, 0x60000, &chars,       0, 16 },
-	{ 1, 0x00000, &sprites,   256, 16 },
-	{ 1, 0x80000, &tiles,     512, 16 },
+	{ 1, 0x00000, &sprites,   512, 16 },
+	{ 1, 0x80000, &tiles,     256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -251,9 +245,8 @@ static void sound_irq(void)
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	1500000,
+	1500000, /* Should be accurate */
 	{ YM2203_VOL(50,90) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -263,7 +256,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3.000000 MHz */
+	3000000,	/* 3.000000 MHz (Should be accurate) */
 	{ 45 },
 	sound_irq,
 };
@@ -289,14 +282,14 @@ static struct MachineDriver actfan_machine_driver =
 	{
 		{
 			CPU_H6280,
-			4000000,	/* 4 Mhz????? */
+			21477200/3, /* Should be accurate */
 			0,
 			actfan_readmem,actfan_writemem,0,0,
 			actfan_interrupt,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
+			1500000, /* Should be accurate */
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
@@ -307,8 +300,7 @@ static struct MachineDriver actfan_machine_driver =
 	0,
 
 	/* video hardware */
-32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-//	64*8, 64*8, { 0*8, 64*8-1, 1*8, 63*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	actfan_gfxdecodeinfo,
 	768, 768,
@@ -317,7 +309,7 @@ static struct MachineDriver actfan_machine_driver =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	actfancr_vh_start,
-	actfancr_vh_stop,
+	0,
 	actfancr_vh_screenrefresh,
 
 	/* sound hardware */
@@ -340,21 +332,52 @@ static struct MachineDriver actfan_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( actfancr_rom )
+ROM_START( actfan_rom )
 	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "08-1", 0x00000, 0x10000, 0x3bf214a4 )
 	ROM_LOAD( "09-1", 0x10000, 0x10000, 0x13ae78d5 )
-	ROM_LOAD( "10",   0x20000, 0x10000, 0x00000000 )
+	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
 
 	ROM_REGION_DISPOSE(0xc0000)
-	ROM_LOAD( "00", 0x08000, 0x10000, 0xd50a9550 ) /* Sprites */
-	ROM_LOAD( "01", 0x00000, 0x08000, 0x34935e93 )
-	ROM_LOAD( "02", 0x20000, 0x10000, 0xb1db0efc )
-	ROM_LOAD( "03", 0x18000, 0x08000, 0xf313e04f )
-	ROM_LOAD( "04", 0x38000, 0x10000, 0xbcf41795 )
-	ROM_LOAD( "05", 0x30000, 0x08000, 0xd38b94aa )
-	ROM_LOAD( "06", 0x50000, 0x10000, 0x8cb6dd87 )
-	ROM_LOAD( "07", 0x48000, 0x08000, 0xdd345def )
+	ROM_LOAD( "00", 0x00000, 0x10000, 0xd50a9550 ) /* Sprites */
+	ROM_LOAD( "01", 0x10000, 0x08000, 0x34935e93 )
+	ROM_LOAD( "02", 0x18000, 0x10000, 0xb1db0efc )
+	ROM_LOAD( "03", 0x28000, 0x08000, 0xf313e04f )
+	ROM_LOAD( "04", 0x30000, 0x10000, 0xbcf41795 )
+	ROM_LOAD( "05", 0x40000, 0x08000, 0xd38b94aa )
+	ROM_LOAD( "06", 0x48000, 0x10000, 0x8cb6dd87 )
+	ROM_LOAD( "07", 0x58000, 0x08000, 0xdd345def )
+
+	ROM_LOAD( "15", 0x60000, 0x10000, 0xa1baf21e ) /* Chars */
+	ROM_LOAD( "16", 0x70000, 0x10000, 0x22e64730 )
+
+	ROM_LOAD( "11", 0x80000, 0x10000, 0x1f006d9f ) /* Tiles */
+	ROM_LOAD( "12", 0x90000, 0x10000, 0x08787b7a )
+	ROM_LOAD( "13", 0xa0000, 0x10000, 0xc30c37dc )
+	ROM_LOAD( "14", 0xb0000, 0x10000, 0xd6457420 )
+
+	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
+
+	ROM_REGION(0x10000) /* ADPCM sounds */
+	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
+ROM_END
+
+ROM_START( actfanj_rom )
+	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
+	ROM_LOAD( "fd08-1.bin", 0x00000, 0x10000, 0x69004b60 )
+	ROM_LOAD( "fd09-1.bin", 0x10000, 0x10000, 0xa455ae3e )
+	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
+
+	ROM_REGION_DISPOSE(0xc0000)
+	ROM_LOAD( "00", 0x00000, 0x10000, 0xd50a9550 ) /* Sprites */
+	ROM_LOAD( "01", 0x10000, 0x08000, 0x34935e93 )
+	ROM_LOAD( "02", 0x18000, 0x10000, 0xb1db0efc )
+	ROM_LOAD( "03", 0x28000, 0x08000, 0xf313e04f )
+	ROM_LOAD( "04", 0x30000, 0x10000, 0xbcf41795 )
+	ROM_LOAD( "05", 0x40000, 0x08000, 0xd38b94aa )
+	ROM_LOAD( "06", 0x48000, 0x10000, 0x8cb6dd87 )
+	ROM_LOAD( "07", 0x58000, 0x08000, 0xdd345def )
 
 	ROM_LOAD( "15", 0x60000, 0x10000, 0xa1baf21e ) /* Chars */
 	ROM_LOAD( "16", 0x70000, 0x10000, 0x22e64730 )
@@ -373,20 +396,86 @@ ROM_END
 
 /******************************************************************************/
 
+static int cycle_r(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=actfancr_ram[0x26];
+
+	if (offset==1) return actfancr_ram[0x27];
+
+	if (pc==0xe29a && ret==0) {
+		cpu_spinuntil_int();
+		return 1;
+	}
+
+	return ret;
+}
+
+static int cyclej_r(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=actfancr_ram[0x26];
+
+	if (offset==1) return actfancr_ram[0x27];
+
+	if (pc==0xe2b1 && ret==0) {
+		cpu_spinuntil_int();
+		return 1;
+	}
+
+	return ret;
+}
+
+static void usa_patch(void)
+{
+	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cycle_r);
+}
+
+static void jap_patch(void)
+{
+	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cyclej_r);
+}
+
 struct GameDriver actfancr_driver =
 {
 	__FILE__,
 	0,
 	"actfancr",
-	"Act Fancer",
+	"Act-Fancer Cybernetick Hyper Weapon (US?)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&actfan_machine_driver,
 	0,
+	&actfan_machine_driver,
+	usa_patch,
 
-	actfancr_rom,
+	actfan_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	actfancr_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver actfancj_driver =
+{
+	__FILE__,
+	&actfancr_driver,
+	"actfancj",
+	"Act-Fancer Cybernetick Hyper Weapon (Japan?)",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&actfan_machine_driver,
+	jap_patch,
+
+	actfanj_rom,
 	0,
 	0,
 	0,

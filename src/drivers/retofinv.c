@@ -599,7 +599,7 @@ struct GameDriver retofinv_driver =
 	"retofinv",
 	"Return of the Invaders",
 	"1985",
-	"Taito",
+	"Taito Corporation",
 	"Jarek Parchanski (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
 	GAME_WRONG_COLORS,
 	&machine_driver,

@@ -352,11 +352,18 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
+	if (color_depth != 8) color_depth = 16;
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
+	if (f_beam < 1.0) f_beam = 1.0;
+	if (f_beam > 16.0) f_beam = 16.0;
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
+	if (f_flicker < 0.0) f_flicker = 0.0;
+	if (f_flicker > 100.0) f_flicker = 100.0;
 	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
+	if (osd_gamma_correction < 0.5) osd_gamma_correction = 0.5;
+	if (osd_gamma_correction > 2.0) osd_gamma_correction = 2.0;
 
 	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
 	if (!stricmp(tmpstr,"auto"))
@@ -379,9 +386,14 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
+	if (options.samplerate < 5000) options.samplerate = 5000;
+	if (options.samplerate > 50000) options.samplerate = 50000;
 	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
+	if (options.samplebits != 16) options.samplebits = 8;
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 	attenuation         = get_int  ("config", "volume",  NULL,  0);
+	if (attenuation < -32) attenuation = -32;
+	if (attenuation > 0) attenuation = 0;
 
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
@@ -427,7 +439,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw256x256ns_57_h     = get_int ("tweaked", "256x256ns_57_h",    NULL, 0x5f);
 	tw256x256ns_57_v     = get_int ("tweaked", "256x256ns_57_v",    NULL, 0x23);
 	tw256x256sc_57_h     = get_int ("tweaked", "256x256sc_57_h",    NULL, 0x5f);
-	tw256x256sc_57_v     = get_int ("tweaked", "256x256sc_57_v",    NULL, 0x10);
+	tw256x256sc_57_v     = get_int ("tweaked", "256x256sc_57_v",    NULL, 0x12);
 	tw256x256ns_h57_h     = get_int ("tweaked", "256x256ns_h57_h",    NULL, 0x55);
 	tw256x256ns_h57_v     = get_int ("tweaked", "256x256ns_h57_v",    NULL, 0x61);
 	tw256x256sc_h57_h     = get_int ("tweaked", "256x256sc_h57_h",    NULL, 0x54);
@@ -528,16 +540,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	for (i = 1; i < argc; i++)
 	{
 		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
-	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
-	/* and to -volume */
-	/* and to -centerx (req. for 15.75KHz Modes)*/
-	/* and to -centery (req. for 15.75KHz Modes)*/
-			(i == 1 || (stricmp(argv[i-1],"-skiplines") &&
-						stricmp(argv[i-1],"-skipcolumns") &&
-						stricmp(argv[i-1],"-volume") &&
-						stricmp(argv[i-1],"-centerx") &&
-						stricmp(argv[i-1],"-centery"))))
-
+				(strstr(argv[i],"x") || strstr(argv[i],"X")))
 			resolution = &argv[i][1];
 	}
 

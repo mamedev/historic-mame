@@ -418,7 +418,7 @@ struct GameDriver superman_driver =
 	"superman",
 	"Superman",
 	"1988",
-	"Taito",
+	"Taito Corporation",
 	"Howie Cohen\nRichard Bush (Raine and C-Chip info)\nBrad Oliver",
 	0,
 	&machine_driver,

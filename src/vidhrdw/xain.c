@@ -174,14 +174,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		int numtile = spriteram[offs+2] | ((attr & 7) << 8);
 		int color = (attr & 0x38) >> 3;
 
-		sx = 240 - spriteram[offs+3];
+		sx = 239 - spriteram[offs+3];
 		if (sx <= -7) sx += 256;
 		sy = 240 - spriteram[offs];
 		if (sy <= -7) sy += 256;
 		flipx = attr & 0x40;
 		if (flipscreen)
 		{
-			sx = 240 - sx;
+			sx = 239 - sx;
 			sy = 240 - sy;
 			flipx = !flipx;
 		}
@@ -192,13 +192,13 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					numtile,
 					color,
 					flipx,flipscreen,
-					sx,flipscreen?sy+16:sy-16,
+					sx-1,flipscreen?sy+16:sy-16,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			drawgfx(bitmap,Machine->gfx[3],
 					numtile+1,
 					color,
 					flipx,flipscreen,
-					sx,sy,
+					sx-1,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else

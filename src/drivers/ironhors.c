@@ -60,17 +60,6 @@ int ironhors_interrupt(void)
 	return ignore_interrupt();
 }
 
-int ironhors_sh_timer_r(int offset)
-{
-	int clock;
-
-#define TIMER_RATE 256
-
-	clock = cpu_gettotalcycles() / TIMER_RATE;
-
-	return clock;
-}
-
 void ironhors_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
@@ -130,7 +119,7 @@ static struct MemoryWriteAddress ironhors_sound_writemem[] =
 
 static struct IOReadPort ironhors_sound_readport[] =
 {
-	{ 0x00, 0x00, ironhors_sh_timer_r },
+	{ 0x00, 0x00, YM2203_status_port_0_r },
 	{ -1 }	/* end of table */
 };
 

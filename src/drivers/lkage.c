@@ -429,7 +429,7 @@ struct GameDriver lkage_driver = {
 	"lkage",
 	"The Legend of Kage",
 	"1984",
-	"Taito",
+	"Taito Corporation",
 	CREDITS,
 	0, // MCU not hooked up
 	&machine_driver,

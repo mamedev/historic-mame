@@ -245,13 +245,13 @@ static struct MachineDriver machine_driver =
 
 ROM_START( canyon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "9496-01.D1", 0x3800, 0x0800, 0x8be15080 )
+	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
 	ROM_REGION(0x600)     /* 1.5k for graphics */
-	ROM_LOAD( "9492-01.N8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.N5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.M5", 0x0500, 0x0100, 0x0d63396a )
+	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
+	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
 ROM_END
 
 
@@ -265,9 +265,9 @@ ROM_START( canbprot_rom )
 	ROM_RELOAD_NIB_HIGH (             0xf800, 0x0800 ) /* for 6502 vectors */
 
 	ROM_REGION(0x600)     /* 1.5k for graphics */
-	ROM_LOAD( "9492-01.N8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.N5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.M5", 0x0500, 0x0100, 0x0d63396a )
+	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
+	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
 ROM_END
 
 

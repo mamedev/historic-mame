@@ -299,7 +299,7 @@ ROM_START( panic_rom )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
 	ROM_REGION(0x0820)	/* color PROMs */
-	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 
@@ -320,7 +320,7 @@ ROM_START( panica_rom )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
 	ROM_REGION(0x0820)	/* color PROMs */
-	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 
@@ -341,7 +341,7 @@ ROM_START( panicger_rom )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
 	ROM_REGION(0x0820)	/* color PROMs */
-	ROM_LOAD( "82S123.SP",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 

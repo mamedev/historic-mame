@@ -50,6 +50,7 @@ int unk;
 int int_enable;
 int credits;
 int latch;
+int toaplan1_coin_count = 0;	/* coin count increments on startup ? , so stop it */
 
 extern int vblank ;
 extern int framedone  ;
@@ -67,11 +68,11 @@ extern int colorram2_size;
 int rallybik_rom_r(int offset)
 {
 	unsigned char *m = Machine->memory_region[0];
-   // return the actual rom values not the patched ones.
-   if ( offset == 0x18d4 ) return 0x6622 ;
-   if ( offset == 0x18f0 ) return 0x6606 ;
+	// return the actual rom values not the patched ones.
+	if ( offset == 0x18d4 ) return 0x6622 ;
+	if ( offset == 0x18f0 ) return 0x6606 ;
 
-   return READ_WORD( m+offset ) ;
+	return READ_WORD( m+offset ) ;
 }
 
 static int zerowing_interrupt(void)
@@ -169,7 +170,7 @@ static void demonwld_init_machine(void)
 	unsigned char *m = Machine->memory_region[0];
 	WRITE_WORD(m+0x1824,0x600a); /* change BEQ to BRA  */
 	WRITE_WORD(m+0x181c,0x4e71); /* NOP  */
-   toaplan_init_machine();
+	toaplan_init_machine();
 }
 
 static void rallybik_init_machine(void)
@@ -177,22 +178,23 @@ static void rallybik_init_machine(void)
 	unsigned char *m = Machine->memory_region[0];
 	WRITE_WORD(m+0x18d4,0x4e71); /* NOP  */
 	WRITE_WORD(m+0x18f0,0x4e71); /* NOP  */
-   toaplan_init_machine();
+	toaplan_init_machine();
 }
 
-/* Sound Routines */
-
-static void toaplan_opl_w(int offset, int data)
+void toaplan1_coin_w(int offset,int data)
 {
-	if ( (offset & 1)==0 )
-		{
-		YM3812_control_port_0_w( 0, data ) ;
-		}
-	else
-		{
-		YM3812_write_port_0_w(0, data);
-		}
+	switch (data) {
+		case 0x08: if (toaplan1_coin_count) { coin_counter_w(0,1); coin_counter_w(0,0); } break;
+		case 0x09: if (toaplan1_coin_count) { coin_counter_w(2,1); coin_counter_w(2,0); } break;
+		case 0x0a: if (toaplan1_coin_count) { coin_counter_w(1,1); coin_counter_w(1,0); } break;
+		case 0x0b: if (toaplan1_coin_count) { coin_counter_w(3,1); coin_counter_w(3,0); } break;
+		case 0x0c: coin_lockout_w(0,1); coin_lockout_w(2,1); break;
+		case 0x0d: coin_lockout_w(0,0); coin_lockout_w(2,0); break;
+		case 0x0e: coin_lockout_w(1,1); coin_lockout_w(3,1); break;
+		case 0x0f: coin_lockout_w(1,0); coin_lockout_w(3,0); toaplan1_coin_count=1; break;
+	}
 }
+
 
 static struct MemoryReadAddress vm_readmem[] =
 {
@@ -487,7 +489,8 @@ static struct IOReadPort demonwld_sound_readport[] =
 
 static struct IOWritePort demonwld_sound_writeport[] =
 {
-	{ 0x00, 0x01, toaplan_opl_w },
+	{ 0x00, 0x00, YM3812_control_port_0_w },
+	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -519,7 +522,8 @@ static struct IOReadPort zw_sound_readport[] =
 
 static struct IOWritePort zw_sound_writeport[] =
 {
-	{ 0xa8, 0xa9, toaplan_opl_w },
+	{ 0xa8, 0xa8, YM3812_control_port_0_w },
+	{ 0xa9, 0xa9, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -537,7 +541,8 @@ static struct IOReadPort hf_sound_readport[] =
 
 static struct IOWritePort hf_sound_writeport[] =
 {
-	{ 0x70, 0x71, toaplan_opl_w },
+	{ 0x70, 0x70, YM3812_control_port_0_w },
+	{ 0x71, 0x71, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -555,7 +560,8 @@ static struct IOReadPort outzone_sound_readport[] =
 
 static struct IOWritePort outzone_sound_writeport[] =
 {
-	{ 0x00, 0x01, toaplan_opl_w },
+	{ 0x00, 0x00, YM3812_control_port_0_w },
+	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -563,24 +569,26 @@ static struct IOReadPort truxton_sound_readport[] =
 {
 	{ 0x00, 0x00, input_port_2_r }, /* DSW1 */
 	{ 0x10, 0x10, input_port_3_r }, /* DSW2 */
+	{ 0x20, 0x20, input_port_5_r }, /* DSW3 */
 	{ 0x40, 0x40, input_port_0_r }, /* player 1 */
 	{ 0x50, 0x50, input_port_1_r }, /* player 2 */
-	{ 0x70, 0x70, input_port_4_r }, /* DSWX */
-	{ 0x20, 0x20, input_port_5_r }, /* DSW3 */
 	{ 0x60, 0x60, YM3812_status_port_0_r },
+	{ 0x70, 0x70, input_port_4_r }, /* DSWX */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort truxton_sound_writeport[] =
 {
-	{ 0x60, 0x61, toaplan_opl_w },
+	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout for Rally bike */
+	{ 0x60, 0x60, YM3812_control_port_0_w },
+	{ 0x61, 0x61, YM3812_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
 
 
 INPUT_PORTS_START( zerowing_input_ports )
-	PORT_START      /* PLAYER 1 */
+	PORT_START		/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -590,7 +598,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* PLAYER 2 */
+	PORT_START		/* PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -600,7 +608,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSWA */
+	PORT_START		/* DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -624,7 +632,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* DSWB */
+	PORT_START		/* DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -647,7 +655,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-	PORT_START      /* DSWX */
+	PORT_START		/* DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -657,7 +665,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSW3 */
+	PORT_START		/* DSW3 */
 	PORT_DIPNAME( 0x03, 0x03, "Territory" )
 	PORT_DIPSETTING(    0x03, "Europe" )
 	PORT_DIPSETTING(    0x01, "US" )
@@ -671,7 +679,7 @@ INPUT_PORTS_START( zerowing_input_ports )
 	PORT_DIPSETTING(    0x08, DEF_STR ( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -679,7 +687,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( hellfire_input_ports )
-	PORT_START      /* PLAYER 1 */
+	PORT_START		/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -689,7 +697,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* PLAYER 2 */
+	PORT_START		/* PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -699,7 +707,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSWA */
+	PORT_START		/* DSWA */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -723,7 +731,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* DSWB */
+	PORT_START		/* DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -746,7 +754,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START      /* DSWX */
+	PORT_START		/* DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -756,7 +764,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSW3 */
+	PORT_START		/* DSW3 */
 	PORT_DIPNAME( 0x03, 0x03, "Territory" )
 	PORT_DIPSETTING(    0x03, "Europe" )
 	PORT_DIPSETTING(    0x01, "US" )
@@ -770,7 +778,7 @@ INPUT_PORTS_START( hellfire_input_ports )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -778,7 +786,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( truxton_input_ports )
-	PORT_START	/* (0) DSWA */
+	PORT_START		/* (0) DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -802,7 +810,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 
-	PORT_START	/* (3) DSWB */
+	PORT_START		/* (3) DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -825,7 +833,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-	PORT_START      /* PLAYER 1 */
+	PORT_START		/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -835,7 +843,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* PLAYER 2 */
+	PORT_START		/* PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -845,7 +853,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSWA */
+	PORT_START		/* DSWA */
 	PORT_DIPNAME( 0x07, 0x02, "Territory/Copyright" )
 	PORT_DIPSETTING(    0x00, "Japan/Taito Corp" )
 	PORT_DIPSETTING(    0x01, "US/Romstar" )
@@ -862,7 +870,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( On ) )
 
-	PORT_START      /* DSWX */
+	PORT_START		/* DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -872,7 +880,7 @@ INPUT_PORTS_START( truxton_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -880,7 +888,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( outzone_input_ports )
-	PORT_START      /* (0) PLAYER 1 */
+	PORT_START		/* (0) PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -890,7 +898,7 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* (1) PLAYER 2 */
+	PORT_START		/* (1) PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -900,7 +908,7 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* (2) DSWA */
+	PORT_START		/* (2) DSWA */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -924,7 +932,7 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* (3) DSWB */
+	PORT_START		/* (3) DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -947,7 +955,7 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /*  (4) DSWX */
+	PORT_START		/*  (4) DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -957,7 +965,7 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* (5) DSW3 */
+	PORT_START		/* (5) DSW3 */
 	PORT_DIPNAME( 0x0f, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, "Europe" )
 	PORT_DIPSETTING(    0x01, "US" )
@@ -967,14 +975,14 @@ INPUT_PORTS_START( outzone_input_ports )
 	PORT_DIPSETTING(    0x05, "Taiwan" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( vimana_input_ports )
-	PORT_START      /* (0) PLAYER 1 */
+	PORT_START		/* (0) PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -984,7 +992,7 @@ INPUT_PORTS_START( vimana_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* (1) PLAYER 2 */
+	PORT_START		/* (1) PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -994,7 +1002,7 @@ INPUT_PORTS_START( vimana_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* (2) DSWA */
+	PORT_START		/* (2) DSWA */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -1018,7 +1026,7 @@ INPUT_PORTS_START( vimana_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* (3) DSWB */
+	PORT_START		/* (3) DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -1041,7 +1049,7 @@ INPUT_PORTS_START( vimana_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-	PORT_START      /*  (4) DSWX */
+	PORT_START		/*  (4) DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1051,7 +1059,7 @@ INPUT_PORTS_START( vimana_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* (5) DSW3 */
+	PORT_START		/* (5) DSW3 */
 	PORT_DIPNAME( 0x0f, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, "Europe" )
 	PORT_DIPSETTING(    0x01, "US" )
@@ -1071,14 +1079,14 @@ INPUT_PORTS_START( vimana_input_ports )
 //	PORT_DIPSETTING(    0x0f, "Japan" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( demonwld_input_ports )
-	PORT_START	/* (0) DSWA */
+	PORT_START		/* (0) DSWA */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -1102,7 +1110,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
-	PORT_START	/* (3) DSWB */
+	PORT_START		/* (3) DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -1125,7 +1133,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START      /* PLAYER 1 */
+	PORT_START		/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -1135,7 +1143,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* PLAYER 2 */
+	PORT_START		/* PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -1145,7 +1153,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* DSWA */
+	PORT_START		/* DSWA */
 	PORT_DIPNAME( 0x03, 0x02, "Territory/Copyright" )
 	PORT_DIPSETTING(    0x00, "Japan/Taito Corp" )
 	PORT_DIPSETTING(    0x01, "US/Taito America" )
@@ -1161,7 +1169,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( On ) )
 
-	PORT_START      /* DSWX */
+	PORT_START		/* DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1171,7 +1179,7 @@ INPUT_PORTS_START( demonwld_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -1179,7 +1187,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( rallybik_input_ports )
-	PORT_START	/* (0) DSWA */
+	PORT_START		/* (0) DSWA */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -1204,7 +1212,7 @@ INPUT_PORTS_START( rallybik_input_ports )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 
 
-	PORT_START	/* (3) DSWB */
+	PORT_START		/* (3) DSWB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
@@ -1228,7 +1236,7 @@ INPUT_PORTS_START( rallybik_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-	PORT_START      /* PLAYER 1 */
+	PORT_START		/* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -1238,7 +1246,7 @@ INPUT_PORTS_START( rallybik_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* PLAYER 2 */
+	PORT_START		/* PLAYER 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -1248,10 +1256,10 @@ INPUT_PORTS_START( rallybik_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* ? */
+	PORT_START		/* ? */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* DSWX */
+	PORT_START		/* DSWX */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 ) /* Service switch */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1261,7 +1269,7 @@ INPUT_PORTS_START( rallybik_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* vblank */
+	PORT_START		/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -1272,8 +1280,8 @@ INPUT_PORTS_END
 static struct GfxLayout tilelayout =
 {
 	8,8,	/* 8x8 */
-	16384,/* 16384 tiles */
-	4,	/* 4 bits per pixel */
+	16384,	/* 16384 tiles */
+	4,		/* 4 bits per pixel */
 	{ 3*8*0x20000, 2*8*0x20000, 1*8*0x20000, 0*8*0x20000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38 },
@@ -1283,8 +1291,8 @@ static struct GfxLayout tilelayout =
 static struct GfxLayout vm_tilelayout =
 {
 	8,8,	/* 8x8 */
-	32768,/* 16384 tiles */
-	4,	/* 4 bits per pixel */
+	32768,	/* 16384 tiles */
+	4,		/* 4 bits per pixel */
 	{ 8*0x80000+8, 8*0x80000, 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70 },
@@ -1294,8 +1302,8 @@ static struct GfxLayout vm_tilelayout =
 static struct GfxLayout rallybik_spr_layout =
 {
 	16,16,	/* 8x8 */
-	4096, /* 16384 tiles */
-	4,	/* 4 bits per pixel */
+	4096,	/* 16384 tiles */
+	4,		/* 4 bits per pixel */
 	{ 8*0x30000, 8*0x20000, 8*0x10000, 8*0x00000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70,
@@ -1305,29 +1313,29 @@ static struct GfxLayout rallybik_spr_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,      0, 64 },
-	{ 1, 0x80000, &tilelayout,  64*16, 64 },
+	{ 1, 0x00000, &tilelayout,		0, 64 },
+	{ 1, 0x80000, &tilelayout,	64*16, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rallybik_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,        0, 64 },
+	{ 1, 0x00000, &tilelayout,				0, 64 },
 	{ 1, 0x80000, &rallybik_spr_layout, 64*16, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo vm_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,        0, 64 },
+	{ 1, 0x00000, &tilelayout,		  0, 64 },
 	{ 1, 0x80000, &vm_tilelayout, 64*16, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo outzone_gfxdecodeinfo[] =
 {
-	{ 1, 0x80000, &vm_tilelayout,        0, 64 },
-	{ 1, 0x00000, &tilelayout, 64*16, 64 },
+	{ 1, 0x80000, &vm_tilelayout,	0, 64 },
+	{ 1, 0x00000, &tilelayout, 	64*16, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -1844,7 +1852,7 @@ struct GameDriver zerowing_driver =
 
 	zerowing_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -1869,7 +1877,7 @@ struct GameDriver hellfire_driver =
 
 	hellfire_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -1894,7 +1902,7 @@ struct GameDriver truxton_driver =
 
 	truxton_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
@@ -1919,7 +1927,7 @@ struct GameDriver outzone_driver =
 
 	outzone_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
@@ -1944,7 +1952,7 @@ struct GameDriver vimana_driver =
 
 	vimana_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
@@ -1969,7 +1977,7 @@ struct GameDriver vimana2_driver =
 
 	vimana_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
@@ -1993,7 +2001,7 @@ struct GameDriver demonwld_driver =
 
 	demonwld_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -2018,7 +2026,7 @@ struct GameDriver rallybik_driver =
 
 	rallybik_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,	/* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };

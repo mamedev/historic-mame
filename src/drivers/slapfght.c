@@ -1394,7 +1394,7 @@ struct GameDriver slapbtjp_driver =
 	__FILE__,
 	&slapfigh_driver,
 	"slapbtjp",
-	"Slap Fight (Japanese bootleg)",
+	"Slap Fight (Japan bootleg)",
 	"1986",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",

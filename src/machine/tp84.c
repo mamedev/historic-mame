@@ -33,15 +33,8 @@ void tp84_init_machine(void)
 */
 int tp84_beam_r(int offset)
 {
-/*	return 255 - cpu_getiloops();	* return beam position */
+//	return cpu_getscanline();
 	return 255; /* always return beam position 255 */ /* JB 970829 */
-}
-
-int tp84_interrupt(void)
-{
-	return interrupt(); /* JB 970829 */
-/*	if (cpu_getiloops() == 0) return interrupt();
-	else return ignore_interrupt();*/
 }
 
 /* JB 970829 - catch a busy loop for CPU 1
@@ -51,8 +44,5 @@ int tp84_interrupt(void)
 */
 void tp84_catchloop_w(int offset,int data)
 {
-	extern unsigned char *RAM;
-
 	if( cpu_get_pc()==0xe0f2 ) cpu_spinuntil_int();
-	RAM[0x4000] = data;
 }

@@ -62,6 +62,10 @@ Notes:
   set to 2. It's set to 1 no matter how many players are playing.
   It's possible that there is a cocktail version of the game.
 
+- Video Hustler and its two bootlegs all have identical code, the only
+  differences are the title, copyright removed, different encryptions or
+  no encryption, plus hustlerb has a different memory map.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -219,6 +223,35 @@ static struct MemoryWriteAddress hustler_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress hustlerb_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0xb000, 0xb000, watchdog_reset_r },
+	{ 0xc100, 0xc100, input_port_0_r },	/* IN0 */
+	{ 0xc101, 0xc101, input_port_1_r },	/* IN1 */
+	{ 0xc102, 0xc102, input_port_2_r },	/* IN2 */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress hustlerb_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
+	{ 0x9000, 0x903f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9040, 0x905f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0xa801, 0xa801, interrupt_enable_w },
+	{ 0xa802, 0xa802, MWA_NOP },	/* coin counters */
+	{ 0xa806, 0xa806, galaxian_flipy_w },
+	{ 0xa807, 0xa807, galaxian_flipx_w },
+	{ 0xc200, 0xc200, soundlatch_w },
+	{ 0xc201, 0xc201, scramble_sh_irqtrigger_w },
+	{ -1 }	/* end of table */
+};
+
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -275,6 +308,19 @@ static struct IOWritePort hustler_sound_writeport[] =
 {
 	{ 0x40, 0x40, AY8910_write_port_0_w },
 	{ 0x80, 0x80, AY8910_control_port_0_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort hustlerb_sound_readport[] =
+{
+	{ 0x80, 0x80, AY8910_read_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort hustlerb_sound_writeport[] =
+{
+	{ 0x40, 0x40, AY8910_control_port_0_w },
+	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1448,6 +1494,51 @@ static struct MachineDriver hustler_machine_driver =
 	}
 };
 
+static struct MachineDriver hustlerb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			hustlerb_readmem,hustlerb_writemem,0,0,
+			scramble_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318000/8,	/* 1.78975 Mhz */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,hustlerb_sound_readport,hustlerb_sound_writeport,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	scobra_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&hustler_ay8910_interface
+		}
+	}
+};
+
 static struct MachineDriver calipso_machine_driver =
 {
 	/* basic machine hardware */
@@ -1920,27 +2011,8 @@ ROM_START( hustler_rom )
 	/* 3000-3fff space for diagnostics ROM */
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hustler.5",    0x0000, 0x0800, 0x0bdfad0e )
-	ROM_LOAD( "hustler.4",    0x0800, 0x0800, 0x8e062177 )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
-	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
-ROM_END
-
-ROM_START( pool_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a",            0x0000, 0x1000, 0xb7eb50c0 )
-	ROM_LOAD( "b",            0x1000, 0x1000, 0x988fe1c5 )
-	ROM_LOAD( "c",            0x2000, 0x1000, 0x7b8de793 )
-	/* 3000-3fff space for diagnostics ROM */
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hustler.5",    0x0000, 0x0800, 0x0bdfad0e )
-	ROM_LOAD( "hustler.4",    0x0800, 0x0800, 0x8e062177 )
+	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
+	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
@@ -1952,14 +2024,14 @@ ROM_END
 
 ROM_START( billiard_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1",            0x0000, 0x1000, 0xe39204ff )
-	ROM_LOAD( "2",            0x1000, 0x1000, 0xdc6752ec )
-	ROM_LOAD( "3",            0x2000, 0x1000, 0x23092f67 )
+	ROM_LOAD( "a",            0x0000, 0x1000, 0xb7eb50c0 )
+	ROM_LOAD( "b",            0x1000, 0x1000, 0x988fe1c5 )
+	ROM_LOAD( "c",            0x2000, 0x1000, 0x7b8de793 )
 	/* 3000-3fff space for diagnostics ROM */
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hustler.5",    0x0000, 0x0800, 0x0bdfad0e )
-	ROM_LOAD( "hustler.4",    0x0800, 0x0800, 0x8e062177 )
+	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
+	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
@@ -1967,6 +2039,26 @@ ROM_START( billiard_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
+ROM_END
+
+/* this is identical to billiard, but with a different memory map */
+ROM_START( hustlerb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "hustler.2c",   0x0000, 0x1000, 0x3a1ac6a9 )
+	ROM_LOAD( "hustler.2f",   0x1000, 0x1000, 0xdc6752ec )
+	ROM_LOAD( "hustler.2j",   0x2000, 0x1000, 0x27c1e0f8 )
+	/* 3000-3fff space for diagnostics ROM */
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
+	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "hustler.11d",  0x0000, 0x0800, 0xb559bfde )
+	ROM_LOAD( "hustler.10d",  0x0800, 0x0800, 0x6ef96cfb )
 ROM_END
 
 
@@ -2001,7 +2093,7 @@ static void anteater_decode(void)
 	for (i = 0;i < 0x1000;i++)
 	{
 		j = i & 0x9bf;
-		j |= ( bit(i,4) ^ bit(i,9) ^ ( bit(i,2) & bit (i,10) ) ) << 6;
+		j |= ( bit(i,4) ^ bit(i,9) ^ ( bit(i,2) & bit(i,10) ) ) << 6;
 		j |= ( bit(i,2) ^ bit(i,10) ) << 9;
 		j |= ( bit(i,0) ^ bit(i,6) ^ 1 ) << 10;
 		RAM[i] = RAM[j + 0x1000];
@@ -2121,25 +2213,25 @@ static void hustler_decode(void)
 	for (A = 0;A < 0x4000;A++)
 	{
 		unsigned char xormask;
-		int adr[8];
+		int bits[8];
 		int i;
 		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 		for (i = 0;i < 8;i++)
-			adr[i] = (~A >> i) & 1;
+			bits[i] = (A >> i) & 1;
 
-		xormask = 0;
-		if (adr[0] ^ adr[1]) xormask |= 0x01;
-		if (adr[3] ^ adr[6]) xormask |= 0x02;
-		if (adr[4] ^ adr[5]) xormask |= 0x04;
-		if (adr[0] ^ adr[2]) xormask |= 0x08;
-		if (adr[2] ^ adr[3]) xormask |= 0x10;
-		if (adr[1] ^ adr[5]) xormask |= 0x20;
-		if (adr[0] ^ adr[7]) xormask |= 0x40;
-		if (adr[4] ^ adr[6]) xormask |= 0x80;
+		xormask = 0xff;
+		if (bits[0] ^ bits[1]) xormask ^= 0x01;
+		if (bits[3] ^ bits[6]) xormask ^= 0x02;
+		if (bits[4] ^ bits[5]) xormask ^= 0x04;
+		if (bits[0] ^ bits[2]) xormask ^= 0x08;
+		if (bits[2] ^ bits[3]) xormask ^= 0x10;
+		if (bits[1] ^ bits[5]) xormask ^= 0x20;
+		if (bits[0] ^ bits[7]) xormask ^= 0x40;
+		if (bits[4] ^ bits[6]) xormask ^= 0x80;
 
-		RAM[A] ^= ~xormask;
+		RAM[A] ^= xormask;
 	}
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
@@ -2156,6 +2248,43 @@ static void billiard_decode(void)
 {
 	int A;
 
+
+	for (A = 0;A < 0x4000;A++)
+	{
+		unsigned char xormask;
+		int bits[8];
+		int i;
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+		for (i = 0;i < 8;i++)
+			bits[i] = (A >> i) & 1;
+
+		xormask = 0x55;
+		if (bits[2] ^ ( bits[3] &  bits[6])) xormask ^= 0x01;
+		if (bits[4] ^ ( bits[5] &  bits[7])) xormask ^= 0x02;
+		if (bits[0] ^ ( bits[7] & !bits[3])) xormask ^= 0x04;
+		if (bits[3] ^ (!bits[0] &  bits[2])) xormask ^= 0x08;
+		if (bits[5] ^ (!bits[4] &  bits[1])) xormask ^= 0x10;
+		if (bits[6] ^ (!bits[2] & !bits[5])) xormask ^= 0x20;
+		if (bits[1] ^ (!bits[6] & !bits[4])) xormask ^= 0x40;
+		if (bits[7] ^ (!bits[1] &  bits[0])) xormask ^= 0x80;
+
+		RAM[A] ^= xormask;
+
+		for (i = 0;i < 8;i++)
+			bits[i] = (RAM[A] >> i) & 1;
+
+		RAM[A] =
+			(bits[7] << 0) +
+			(bits[0] << 1) +
+			(bits[3] << 2) +
+			(bits[4] << 3) +
+			(bits[5] << 4) +
+			(bits[2] << 5) +
+			(bits[1] << 6) +
+			(bits[6] << 7);
+	}
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
@@ -2616,60 +2745,6 @@ static int superbon_hiload(void)
 	}
 	return 0;
 }
-
-
-
-static int hustler_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[0];
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x84c0],0xff,16);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x84c0], "\x00\x00\x00",3) == 0 && memcmp(&RAM[0x84cd], "\x00\x00\x00",3)==0
-		&& memcmp(&RAM[0x80a8],"\x00\x00\x02",3) == 0)
-	{
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x84c0],16);
-		osd_fclose(f);
-			RAM[0x80a8] = RAM[0x84c0];
-			RAM[0x80a9] = RAM[0x84c1];
-			RAM[0x80aa] = RAM[0x84c2];
-		}
-
-
-	firsttime = 0;
-	return 1;
-	}
-	return 0;
-}
-
-
-
-static void hustler_hisave(void)
-{
-	unsigned char *RAM = Machine->memory_region[0];
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x84c0],16);
-		osd_fclose(f);
-	}
-}
-
 
 
 
@@ -3215,34 +3290,7 @@ struct GameDriver hustler_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	hustler_hiload, hustler_hisave
-};
-
-/* not working due to different encryption */
-struct GameDriver pool_driver =
-{
-	__FILE__,
-	&hustler_driver,
-	"pool",
-	"Pool",
-	"????",
-	"?????",
-	"Nicola Salmoria",
-	GAME_NOT_WORKING,
-	&hustler_machine_driver,
-	0,
-
-	pool_rom,
-	hustler_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	hustler_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hustler_hiload, hustler_hisave
+	0, 0
 };
 
 struct GameDriver billiard_driver =
@@ -3268,5 +3316,31 @@ struct GameDriver billiard_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	hustler_hiload, hustler_hisave
+	0, 0
+};
+
+struct GameDriver hustlerb_driver =
+{
+	__FILE__,
+	&hustler_driver,
+	"hustlerb",
+	"Video Hustler (bootleg)",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
+	&hustlerb_machine_driver,
+	0,
+
+	hustlerb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hustler_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

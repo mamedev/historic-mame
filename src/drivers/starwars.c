@@ -91,7 +91,7 @@ int slapstic_tweak (int offset);
 extern unsigned char *atarigen_slapstic;
 unsigned char *slapstic_area;
 
-static int empire_setopbase (int pc)
+static int esb_setopbase (int pc)
 {
 	int prevpc = cpu_getpreviouspc ();
 	int bank;
@@ -130,12 +130,12 @@ if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
 }
 
 extern int m6809_slapstic;
-void empire_init_machine (void)
+void esb_init_machine (void)
 {
 	/* Set up the slapstic */
 	slapstic_init (101);
 	m6809_slapstic = 1;
-	cpu_setOPbaseoverride (empire_setopbase);
+	cpu_setOPbaseoverride (esb_setopbase);
 
 	/* Reset all the banks */
 	starwars_out_w (4, 0);
@@ -149,7 +149,7 @@ void empire_init_machine (void)
  *
  *************************************/
 
-int empire_slapstic_r (int offset)
+int esb_slapstic_r (int offset)
 {
 	int val;
 
@@ -160,7 +160,7 @@ int empire_slapstic_r (int offset)
 }
 
 
-void empire_slapstic_w (int offset, int data)
+void esb_slapstic_w (int offset, int data)
 {
 //	if (errorlog) fprintf (errorlog, "esb slapstic tweak via write\n");
 	slapstic_tweak (offset);
@@ -243,7 +243,7 @@ static struct MemoryWriteAddress writemem2[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryReadAddress empire_readmem[] =
+static struct MemoryReadAddress esb_readmem[] =
 {
 //	{ 0x6000, 0x1dfff, MRA_ROM },		/* vector_rom */
 	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
@@ -263,7 +263,7 @@ static struct MemoryReadAddress empire_readmem[] =
 /*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0x9fff, empire_slapstic_r, &slapstic_area },
+	{ 0x8000, 0x9fff, esb_slapstic_r, &slapstic_area },
 	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
 
 	/* Dummy entry to set up the slapstic */
@@ -271,7 +271,7 @@ static struct MemoryReadAddress empire_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress empire_writemem[] =
+static struct MemoryWriteAddress esb_writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
@@ -289,7 +289,7 @@ static struct MemoryWriteAddress empire_writemem[] =
 /*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
 	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x8000, 0x9fff, empire_slapstic_w },		/* slapstic write */
+	{ 0x8000, 0x9fff, esb_slapstic_w },		/* slapstic write */
 	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ -1 }	/* end of table */
 };
@@ -373,7 +373,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( empire_input_ports )
+INPUT_PORTS_START( esb_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -556,7 +556,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver empire_machine_driver =
+static struct MachineDriver esb_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -565,7 +565,7 @@ static struct MachineDriver empire_machine_driver =
 			CPU_M6809,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
 			0,							/* Memory region #0 */
-			empire_readmem, empire_writemem,0,0,
+			esb_readmem, esb_writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
 		},
@@ -582,7 +582,7 @@ static struct MachineDriver empire_machine_driver =
 	},
 	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,		/* 1 CPU slice per frame. */
-	empire_init_machine,  /* Name of initialization handler */
+	esb_init_machine,  /* Name of initialization handler */
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
@@ -678,7 +678,7 @@ ROM_START( starwars_rom )
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START( empire_rom )
+ROM_START( esb_rom )
 	ROM_REGION(0x22000)     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
@@ -798,25 +798,25 @@ struct GameDriver starwar1_driver =
 	novram_load, novram_save /* Highscore load, save */
 };
 
-struct GameDriver empire_driver =
+struct GameDriver esb_driver =
 {
 	__FILE__,
 	0,
-	"empire",
+	"esb",
 	"The Empire Strikes Back",
 	"1985",
 	"Atari Games",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&empire_machine_driver,
+	&esb_machine_driver,
 	0,
 
-	empire_rom,
+	esb_rom,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	empire_input_ports,
+	esb_input_ports,
 	color_prom, /* Colour PROM */
 	0,          /* palette */
 	0,          /* colourtable */

@@ -100,7 +100,7 @@ static UINT8 z80_win_layout[] = {
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
 /****************************************************************************/
 typedef struct {
-/* 00 */    PAIR    PPC,PC,SP,AF,BC,DE,HL,IX,IY;
+/* 00 */    PAIR    PREPC,PC,SP,AF,BC,DE,HL,IX,IY;
 /* 24 */    PAIR    AF2,BC2,DE2,HL2;
 /* 34 */    UINT8   R,R2,IFF1,IFF2,HALT,IM,I;
 /* 3B */    UINT8   irq_max;            /* number of daisy chain devices        */
@@ -131,7 +131,7 @@ typedef struct {
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
 
-#define	_PPC	Z80.PPC.d		/* previous program counter */
+#define	_PPC	Z80.PREPC.d		/* previous program counter */
 
 #define _PCD	Z80.PC.d
 #define _PC 	Z80.PC.w.l
@@ -624,21 +624,12 @@ INLINE UINT16 ARG16(void)
 	return result;
 }
 #else
-#ifdef  LSB_FIRST
-INLINE UINT16 ARG16(void)
-{
-	unsigned pc = _PCD;
-	_PC += 2;
-	return cpu_readop_arg16(pc);
-}
-#else
 INLINE UINT16 ARG16(void)
 {
 	unsigned pc = _PCD;
     _PC += 2;
 	return cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8);
 }
-#endif
 #endif
 
 /***************************************************************
@@ -3921,7 +3912,7 @@ unsigned z80_get_reg (int regnum)
 		case Z80_BANK6: return Z80.bank[6];
 		case Z80_BANK7: return Z80.bank[7];
 #endif
-        case REG_PREVIOUSPC: return Z80.PPC.w.l;
+        case REG_PREVIOUSPC: return Z80.PREPC.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{

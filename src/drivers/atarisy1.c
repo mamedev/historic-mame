@@ -958,14 +958,14 @@ ROM_START( indytem3_rom )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
-	ROM_LOAD_EVEN( "232.10B",      0x10000, 0x08000, 0x1e80108f )
-	ROM_LOAD_ODD ( "231.10A",      0x10000, 0x08000, 0x8ae54c0c )
-	ROM_LOAD_EVEN( "234.12B",      0x20000, 0x08000, 0x86be7e07 )
-	ROM_LOAD_ODD ( "233.12A",      0x20000, 0x08000, 0xbfcea7ae )
-	ROM_LOAD_EVEN( "256.15B",      0x30000, 0x04000, 0x3a076fd2 )
-	ROM_LOAD_ODD ( "257.15A",      0x30000, 0x04000, 0x15293606 )
-	ROM_LOAD_EVEN( "158.16B",      0x80000, 0x04000, 0x10372888 )
-	ROM_LOAD_ODD ( "159.16A",      0x80000, 0x04000, 0x50f890a8 )
+	ROM_LOAD_EVEN( "232.10b",      0x10000, 0x08000, 0x1e80108f )
+	ROM_LOAD_ODD ( "231.10a",      0x10000, 0x08000, 0x8ae54c0c )
+	ROM_LOAD_EVEN( "234.12b",      0x20000, 0x08000, 0x86be7e07 )
+	ROM_LOAD_ODD ( "233.12a",      0x20000, 0x08000, 0xbfcea7ae )
+	ROM_LOAD_EVEN( "256.15b",      0x30000, 0x04000, 0x3a076fd2 )
+	ROM_LOAD_ODD ( "257.15a",      0x30000, 0x04000, 0x15293606 )
+	ROM_LOAD_EVEN( "158.16b",      0x80000, 0x04000, 0x10372888 )
+	ROM_LOAD_ODD ( "159.16a",      0x80000, 0x04000, 0x50f890a8 )
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
@@ -1245,7 +1245,7 @@ struct GameDriver indytemp_driver =
 	__FILE__,
 	0,
 	"indytemp",
-	"Indiana Jones and the Temple of Doom",
+	"Indiana Jones and the Temple of Doom (set 1)",
 	"1985",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",

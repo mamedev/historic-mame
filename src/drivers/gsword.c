@@ -723,7 +723,7 @@ struct GameDriver gsword_driver =
 	"gsword",
 	"Great Swordsman",
 	"1984",
-	"Taito",
+	"Taito Corporation",
 	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
 	GAME_WRONG_COLORS,
 	&machine_driver,

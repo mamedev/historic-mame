@@ -349,7 +349,7 @@ int readroms(void)
 				if (expchecksum != osd_fcrc (f))
 				{
 					warning = 1;
-					if (expchecksum)
+					if (expchecksum && expchecksum != BADCRC(osd_fcrc(f)))
 						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
 								name,expchecksum,osd_fcrc(f));
 					else
@@ -392,13 +392,18 @@ int readroms(void)
 
 	if (warning || fatalerror)
 	{
+		extern int bailing;
+
 		if (fatalerror)
+		{
 			strcat (buf, "ERROR: required files are missing, the game cannot be run.\n");
+			bailing = 1;
+		}
 		else
 			strcat (buf, "WARNING: the game might not run correctly.\n");
 		printf ("%s", buf);
 
-		if (!options.gui_host)
+		if (!options.gui_host && !bailing)
 		{
 			printf ("Press return to continue\n");
 			getchar();

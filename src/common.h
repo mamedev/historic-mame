@@ -46,6 +46,8 @@ struct RomModule
 /* Optional */
 #define ROM_REGION_OPTIONAL(length) { 0, length | ROMFLAG_IGNORE, 0, 0 },
 
+#define BADCRC( crc ) (~(crc))
+
 /* ROM to load */
 #define ROM_LOAD(name,offset,length,crc) { name, offset, length, crc },
 

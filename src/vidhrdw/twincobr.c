@@ -23,6 +23,11 @@ static unsigned char *twincobr_fgvideoram;
 int wardner_sprite_hack = 0;	/* Required for weird sprite priority in wardner  */
 								/* when hero is in shop. Hero should cover shop owner */
 
+extern int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
+
+#define READ_WORD_Z80(x) (*(unsigned char *)(x) + (*(unsigned char *)(x+1) << 8))
+#define WRITE_WORD_Z80(a, d) (*(unsigned char *)(a) = d & 0xff, (*(unsigned char *)(a+1) = (d>>8) & 0xff))
+
 static int twincobr_bgvideoram_size,twincobr_fgvideoram_size;
 static int txscrollx = 0;
 static int txscrolly = 0;
@@ -46,7 +51,7 @@ static int scroll_y = 0;
 static int vidbaseaddr = 0;
 static int scroll_realign_x = 0;
 
-/************************* Warnder variables *******************************/
+/************************* Wardner variables *******************************/
 
 static int tx_offset_lsb = 0;
 static int tx_offset_msb = 0;
@@ -140,6 +145,10 @@ void twincobr_crtc_w(int offset,int data)
 	if (offset == 2) crtc6845_register_w(offset, data);
 }
 
+int twincobr_txoffs_r(void)
+{
+	return txoffs / 2;
+}
 void twincobr_txoffs_w(int offset,int data)
 {
 	txoffs = (2 * data) % videoram_size;
@@ -309,13 +318,73 @@ void wardner_videoram_w(int offset, int data)
 	}
 }
 
+static void twincobr_draw_sprites (struct osd_bitmap *bitmap, int priority)
+{
+	int offs;
+
+	if (toaplan_main_cpu == 0) /* 68k */
+	{
+		for (offs = 0;offs < spriteram_size;offs += 8)
+		{
+			int attribute,sx,sy,flipx,flipy;
+			int sprite, color;
+
+			attribute = READ_WORD(&spriteram[offs + 2]);
+			if ((attribute & 0x0c00) == priority) {	/* low priority */
+				sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+				if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
+					sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+					color  = attribute & 0x3f;
+					sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+					flipx = attribute & 0x100;
+					if (flipx) sx -= 14;		/* should really be 15 */
+					flipy = attribute & 0x200;
+					drawgfx(bitmap,Machine->gfx[3],
+						sprite,
+						color,
+						flipx,flipy,
+						sx-32,sy-16,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
+			}
+		}
+	}
+	else /* Z80 */
+	{
+		for (offs = 0;offs < spriteram_size;offs += 8)
+		{
+			int attribute,sx,sy,flipx,flipy;
+			int sprite, color;
+
+			attribute = READ_WORD_Z80(&spriteram[offs + 2]);
+			if ((attribute & 0x0c00) == priority) {	/* low priority */
+				sy = READ_WORD_Z80(&spriteram[offs + 6]) >> 7;
+				if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
+					sprite = READ_WORD_Z80(&spriteram[offs]) & 0x7ff;
+					color  = attribute & 0x3f;
+					sx = READ_WORD_Z80(&spriteram[offs + 4]) >> 7;
+					flipx = attribute & 0x100;
+					if (flipx) sx -= 14;		/* should really be 15 */
+					flipy = attribute & 0x200;
+					drawgfx(bitmap,Machine->gfx[3],
+						sprite,
+						color,
+						flipx,flipy,
+						sx-32,sy-16,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
+			}
+		}
+	}
+}
 
 
 
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-  static int offs,code,tile,color,sprite,i,pal_base;
+  static int offs,code,tile,i,pal_base,sprite,color;
   static int colmask[64];
+
 
   if (twincobr_display_on) {
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
@@ -383,14 +452,30 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (color = 0;color < 64;color++) colmask[color] = 0;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	if (toaplan_main_cpu == 0) /* 68k */
 	{
-		int sy;
-		sy = READ_WORD(&spriteram[offs + 6]);
-		if (sy != 0x8000) {					/* Is sprite is turned off ? */
-			sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
-			color = READ_WORD(&spriteram[offs + 2]) & 0x3f;
-			colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
+		for (offs = 0;offs < spriteram_size;offs += 8)
+		{
+			int sy;
+			sy = READ_WORD(&spriteram[offs + 6]);
+			if (sy != 0x8000) {					/* Is sprite is turned off ? */
+				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
+				color = READ_WORD(&spriteram[offs + 2]) & 0x3f;
+				colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
+			}
+		}
+	}
+	else /* Z80 */
+	{
+		for (offs = 0;offs < spriteram_size;offs += 8)
+		{
+			int sy;
+			sy = READ_WORD_Z80(&spriteram[offs + 6]);
+			if (sy != 0x8000) {					/* Is sprite is turned off ? */
+				sprite = READ_WORD_Z80(&spriteram[offs]) & 0x7ff;
+				color = READ_WORD_Z80(&spriteram[offs + 2]) & 0x3f;
+				colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
+			}
 		}
 	}
 
@@ -491,30 +576,7 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* draw the sprites in low priority (Twin Cobra tanks under roofs) */
-	for (offs = 0;offs < spriteram_size;offs += 8)
-	{
-		int attribute,sx,sy,flipx,flipy;
-
-		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0400) {	/* low priority */
-			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
-				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
-				color  = attribute & 0x3f;
-				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-				flipx = attribute & 0x100;
-				if (flipx) sx -= 14;		/* should really be 15 */
-				flipy = attribute & 0x200;
-				drawgfx(bitmap,Machine->gfx[3],
-					sprite,
-					color,
-					flipx,flipy,
-					sx-32,sy-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-
+	twincobr_draw_sprites (bitmap, 0x0400);
 
 	/* draw the foreground */
 	scroll_x = (twincobr_flip_x_base + fgscrollx) & 0x01ff;
@@ -549,53 +611,29 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /*********  Begin ugly sprite hack for Wardner when hero is in shop *********/
 	if ((wardner_sprite_hack) && (fgscrollx != bgscrollx)) {	/* Wardner ? */
 		if ((fgscrollx==0x1c9) || (twincobr_flip_screen && (fgscrollx==0x17a))) {	/* in the shop ? */
-			int wardner_hack = READ_WORD(&spriteram[0x0b04]);
+			int wardner_hack = READ_WORD_Z80(&spriteram[0x0b04]);
 		/* sprite position 0x6300 to 0x8700 -- hero on shop keeper (normal) */
 		/* sprite position 0x3900 to 0x5e00 -- hero on shop keeper (flip) */
 			if ((wardner_hack > 0x3900) && (wardner_hack < 0x8700)) {	/* hero at shop keeper ? */
-					wardner_hack = READ_WORD(&spriteram[0x0b02]);
+					wardner_hack = READ_WORD_Z80(&spriteram[0x0b02]);
 					wardner_hack |= 0x0400;			/* make hero top priority */
-					WRITE_WORD(&spriteram[0x0b02],wardner_hack);
-					wardner_hack = READ_WORD(&spriteram[0x0b0a]);
+					WRITE_WORD_Z80(&spriteram[0x0b02],wardner_hack);
+					wardner_hack = READ_WORD_Z80(&spriteram[0x0b0a]);
 					wardner_hack |= 0x0400;
-					WRITE_WORD(&spriteram[0x0b0a],wardner_hack);
-					wardner_hack = READ_WORD(&spriteram[0x0b12]);
+					WRITE_WORD_Z80(&spriteram[0x0b0a],wardner_hack);
+					wardner_hack = READ_WORD_Z80(&spriteram[0x0b12]);
 					wardner_hack |= 0x0400;
-					WRITE_WORD(&spriteram[0x0b12],wardner_hack);
-					wardner_hack = READ_WORD(&spriteram[0x0b1a]);
+					WRITE_WORD_Z80(&spriteram[0x0b12],wardner_hack);
+					wardner_hack = READ_WORD_Z80(&spriteram[0x0b1a]);
 					wardner_hack |= 0x0400;
-					WRITE_WORD(&spriteram[0x0b1a],wardner_hack);
+					WRITE_WORD_Z80(&spriteram[0x0b1a],wardner_hack);
 			}
 		}
 	}
 /**********  End ugly sprite hack for Wardner when hero is in shop **********/
 
-	/* draw the sprites in normal priority, underneath front layer */
-	for (offs = 0;offs < spriteram_size;offs += 8)
-	{
-		int attribute,sx,sy,flipx,flipy;
-
-		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0800) {	/* normal priority */
-			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
-				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
-				color  = attribute & 0x3f;
-				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-				flipx = attribute & 0x100;
-				if (flipx) sx -= 14;		/* should really be 15 */
-				flipy = attribute & 0x200;
-				drawgfx(bitmap,Machine->gfx[3],
-					sprite,
-					color,
-					flipx,flipy,
-					sx-32,sy-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-
-
+	/* draw the sprites in normal priority */
+	twincobr_draw_sprites (bitmap, 0x0800);
 
 	/* draw the top layer */
 	scroll_x = (twincobr_flip_x_base + txscrollx) & 0x01ff;
@@ -627,31 +665,9 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+	/* draw the sprites in high priority */
+	twincobr_draw_sprites (bitmap, 0x0c00);
 
-	/* draw the sprites on the very top layer (title screen only) */
-	for (offs = 0;offs < spriteram_size;offs += 8)
-	{
-		int attribute,sx,sy,flipx,flipy;
-
-		attribute = READ_WORD(&spriteram[offs + 2]);
-		if ((attribute & 0x0c00) == 0x0c00) {	/* highest priority */
-			sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-			if (sy != 0x0100) {		/* sx = 0x01a0 or 0x0040*/
-				sprite = READ_WORD(&spriteram[offs]) & 0x7ff;
-				color  = attribute & 0x3f;
-				sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-				flipx = attribute & 0x100;
-				if (flipx) sx -= 14;		/* should really be 15 */
-				flipy = attribute & 0x200;
-				drawgfx(bitmap,Machine->gfx[3],
-					sprite,
-					color,
-					flipx,flipy,
-					sx-32,sy-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
   }
 }
 
