@@ -32,13 +32,23 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int crash_interrupt(void);
 
+static int circus_interrupt;
+
+static int ripcord_IN2_r (int offset)
+{
+	circus_interrupt ++;
+	if (errorlog) fprintf (errorlog, "circus_int: %02x\n", circus_interrupt);
+	return readinputport (2);
+}
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x01FF, MRA_RAM },
 	{ 0x4000, 0x43FF, MRA_RAM },
 	{ 0x1000, 0x1fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0xD000, 0xD000, input_port_2_r },
+//	{ 0xd000, 0xd000, input_port_2_r },
+	{ 0xd000, 0xd000, ripcord_IN2_r },
 	{ 0xA000, 0xA000, input_port_0_r },
 	{ 0xC000, 0xC000, input_port_1_r }, /* DSW */
 	{ -1 }  /* end of table */
@@ -159,7 +169,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -169,7 +179,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -194,22 +204,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( circus_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "CIRCUS.1A", 0x1000, 0x0200, 0xa00e7662 ) /* Code */
-	ROM_LOAD( "CIRCUS.2A", 0x1200, 0x0200, 0xd22eb9bc )
-	ROM_LOAD( "CIRCUS.3A", 0x1400, 0x0200, 0xe91e9440 )
-	ROM_LOAD( "CIRCUS.5A", 0x1600, 0x0200, 0x07a49052 )
-	ROM_LOAD( "CIRCUS.6A", 0x1800, 0x0200, 0x91cc58b4 )
-	ROM_LOAD( "CIRCUS.7A", 0x1A00, 0x0200, 0xa543ddd3 )
-	ROM_LOAD( "CIRCUS.8A", 0x1C00, 0x0200, 0xa95bf207 )
-	ROM_LOAD( "CIRCUS.9A", 0x1E00, 0x0200, 0xfddf3b77 )
+	ROM_LOAD( "circus.1a", 0x1000, 0x0200, 0xa00e7662 , 0x7654ea75 ) /* Code */
+	ROM_LOAD( "circus.2a", 0x1200, 0x0200, 0xd22eb9bc , 0xb8acdbc5 )
+	ROM_LOAD( "circus.3a", 0x1400, 0x0200, 0xe91e9440 , 0x901dfff6 )
+	ROM_LOAD( "circus.5a", 0x1600, 0x0200, 0x07a49052 , 0x9dfdae38 )
+	ROM_LOAD( "circus.6a", 0x1800, 0x0200, 0x91cc58b4 , 0xc8681cf6 )
+	ROM_LOAD( "circus.7a", 0x1A00, 0x0200, 0xa543ddd3 , 0x585f633e )
+	ROM_LOAD( "circus.8a", 0x1C00, 0x0200, 0xa95bf207 , 0x69cc409f )
+	ROM_LOAD( "circus.9a", 0x1E00, 0x0200, 0xfddf3b77 , 0xaff835eb )
 	ROM_RELOAD(            0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
 
-	ROM_REGION(0x0A00)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "CIRCUS.1C", 0x0600, 0x0200, 0x452b3c39 )     /* Character Set */
-	ROM_LOAD( "CIRCUS.2C", 0x0400, 0x0200, 0xdab9d9e3 )
-	ROM_LOAD( "CIRCUS.3C", 0x0200, 0x0200, 0xc0e43dd4 )
-	ROM_LOAD( "CIRCUS.4C", 0x0000, 0x0200, 0xe62e88d0 )
-	ROM_LOAD( "CIRCUS.14D", 0x0800, 0x0200, 0xb6e09ca0 ) /* Clown */
+	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "circus.1c", 0x0600, 0x0200, 0x452b3c39 , 0x1f954bb3 )     /* Character Set */
+	ROM_LOAD( "circus.2c", 0x0400, 0x0200, 0xdab9d9e3 , 0x361da7ee )
+	ROM_LOAD( "circus.3c", 0x0200, 0x0200, 0xc0e43dd4 , 0x30d72ef5 )
+	ROM_LOAD( "circus.4c", 0x0000, 0x0200, 0xe62e88d0 , 0x6efc315a )
+	ROM_LOAD( "circus.14d", 0x0800, 0x0200, 0xb6e09ca0 , 0x2fde3930 ) /* Clown */
 
 ROM_END
 
@@ -284,21 +294,21 @@ struct GameDriver circus_driver =
 
 ROM_START( robotbowl_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROBOTBWL.1A", 0xF000, 0x0200, 0x4cdc172c ) /* Code */
-	ROM_LOAD( "ROBOTBWL.2A", 0xF200, 0x0200, 0x35c12993 )
-	ROM_LOAD( "ROBOTBWL.3A", 0xF400, 0x0200, 0x80e1b1c1 )
-	ROM_LOAD( "ROBOTBWL.5A", 0xF600, 0x0200, 0xa14ca8e4 )
-	ROM_LOAD( "ROBOTBWL.6A", 0xF800, 0x0200, 0x6d84dbc2 )
-	ROM_LOAD( "ROBOTBWL.7A", 0xFA00, 0x0200, 0xd7a66e30 )
-	ROM_LOAD( "ROBOTBWL.8A", 0xFC00, 0x0200, 0xd2d9c2fd )
-	ROM_LOAD( "ROBOTBWL.9A", 0xFE00, 0x0200, 0x2f416fa5 )
+	ROM_LOAD( "robotbwl.1a", 0xF000, 0x0200, 0x4cdc172c , 0xdf387a0b ) /* Code */
+	ROM_LOAD( "robotbwl.2a", 0xF200, 0x0200, 0x35c12993 , 0xc948274d )
+	ROM_LOAD( "robotbwl.3a", 0xF400, 0x0200, 0x80e1b1c1 , 0x8fdb3ec5 )
+	ROM_LOAD( "robotbwl.5a", 0xF600, 0x0200, 0xa14ca8e4 , 0xba9a6929 )
+	ROM_LOAD( "robotbwl.6a", 0xF800, 0x0200, 0x6d84dbc2 , 0x16fd8480 )
+	ROM_LOAD( "robotbwl.7a", 0xFA00, 0x0200, 0xd7a66e30 , 0x4cadbf06 )
+	ROM_LOAD( "robotbwl.8a", 0xFC00, 0x0200, 0xd2d9c2fd , 0xbc809ed3 )
+	ROM_LOAD( "robotbwl.9a", 0xFE00, 0x0200, 0x2f416fa5 , 0x07487e27 )
 
-	ROM_REGION(0x0A00)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ROBOTBWL.1C", 0x0600, 0x0200, 0x0a3e3466 )     /* Character Set */
-	ROM_LOAD( "ROBOTBWL.2C", 0x0400, 0x0200, 0xefaa87b4 )
-	ROM_LOAD( "ROBOTBWL.3C", 0x0200, 0x0200, 0xdfb1d383 )
-	ROM_LOAD( "ROBOTBWL.4C", 0x0000, 0x0200, 0x0efd8a75 )
-	ROM_LOAD( "ROBOTBWL.14D", 0x0800, 0x0020, 0xab9c2424 ) /* Ball */
+	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "robotbwl.1c", 0x0600, 0x0200, 0x0a3e3466 , 0xb2991e7e )     /* Character Set */
+	ROM_LOAD( "robotbwl.2c", 0x0400, 0x0200, 0xefaa87b4 , 0x47b3e39c )
+	ROM_LOAD( "robotbwl.3c", 0x0200, 0x0200, 0xdfb1d383 , 0xd5380c9b )
+	ROM_LOAD( "robotbwl.4c", 0x0000, 0x0200, 0x0efd8a75 , 0xa5f7acb9 )
+	ROM_LOAD( "robotbwl.14d", 0x0800, 0x0020, 0xab9c2424 , 0xa402ac06 ) /* Ball */
 
 ROM_END
 
@@ -370,7 +380,7 @@ static struct MachineDriver robotbowl_machine_driver =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -380,7 +390,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -429,22 +439,22 @@ struct GameDriver robotbwl_driver =
 
 ROM_START( crash_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "CRASH.A1", 0x1000, 0x0200, 0xb43221da ) /* Code */
-	ROM_LOAD( "CRASH.A2", 0x1200, 0x0200, 0x7eef07ef )
-	ROM_LOAD( "CRASH.A3", 0x1400, 0x0200, 0xdb35fe5d )
-	ROM_LOAD( "CRASH.A4", 0x1600, 0x0200, 0x99c59ef9 )
-	ROM_LOAD( "CRASH.A5", 0x1800, 0x0200, 0xdbd7928f )
-	ROM_LOAD( "CRASH.A6", 0x1A00, 0x0200, 0x7f79c719 )
-	ROM_LOAD( "CRASH.A7", 0x1C00, 0x0200, 0x26c42afa )
-	ROM_LOAD( "CRASH.A8", 0x1E00, 0x0200, 0xd79d983b )
+	ROM_LOAD( "crash.a1", 0x1000, 0x0200, 0xb43221da , 0xb9571203 ) /* Code */
+	ROM_LOAD( "crash.a2", 0x1200, 0x0200, 0x7eef07ef , 0xb4581a95 )
+	ROM_LOAD( "crash.a3", 0x1400, 0x0200, 0xdb35fe5d , 0x597555ae )
+	ROM_LOAD( "crash.a4", 0x1600, 0x0200, 0x99c59ef9 , 0x0a15d69f )
+	ROM_LOAD( "crash.a5", 0x1800, 0x0200, 0xdbd7928f , 0xa9c7a328 )
+	ROM_LOAD( "crash.a6", 0x1A00, 0x0200, 0x7f79c719 , 0xc7d62d27 )
+	ROM_LOAD( "crash.a7", 0x1C00, 0x0200, 0x26c42afa , 0x5e5af244 )
+	ROM_LOAD( "crash.a8", 0x1E00, 0x0200, 0xd79d983b , 0x3dc50839 )
 	ROM_RELOAD(            0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
 
-	ROM_REGION(0x0A00)      /* temporary space for graphics */
-	ROM_LOAD( "CRASH.C1", 0x0600, 0x0200, 0xc05ac420 )  /* Character Set */
-	ROM_LOAD( "CRASH.C2", 0x0400, 0x0200, 0xd82dddbb )
-	ROM_LOAD( "CRASH.C3", 0x0200, 0x0200, 0xa595e3c7 )
-	ROM_LOAD( "CRASH.C4", 0x0000, 0x0200, 0xdbccbdbc )
-	ROM_LOAD( "CRASH.D14",0x0800, 0x0200, 0xbd1e3d80 ) /* Cars */
+	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics */
+	ROM_LOAD( "crash.c1", 0x0600, 0x0200, 0xc05ac420 , 0xe9adf1e1 )  /* Character Set */
+	ROM_LOAD( "crash.c2", 0x0400, 0x0200, 0xd82dddbb , 0x38f3e4ed )
+	ROM_LOAD( "crash.c3", 0x0200, 0x0200, 0xa595e3c7 , 0x3c8f7560 )
+	ROM_LOAD( "crash.c4", 0x0000, 0x0200, 0xdbccbdbc , 0xba16f9e8 )
+	ROM_LOAD( "crash.d14", 0x0800, 0x0200, 0xbd1e3d80 , 0x833f81e4 ) /* Cars */
 ROM_END
 
 INPUT_PORTS_START( crash_input_ports )
@@ -523,7 +533,7 @@ static struct MachineDriver crash_machine_driver =
 			interrupt,2
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 3500,	/* frames per second, vblank duration (complete guess) */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -533,7 +543,7 @@ static struct MachineDriver crash_machine_driver =
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -572,4 +582,132 @@ struct GameDriver crash_driver =
 	ORIENTATION_DEFAULT,
 
 	crash_hiload,crash_hisave
+};
+
+/***************************************************************************
+
+ Rip Cord
+
+***************************************************************************/
+
+ROM_START( ripcord_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "9027.1a", 0x1000, 0x0200, 0xee04b88a , 0x56b8dc06 ) /* Code */
+	ROM_LOAD( "9028.2a", 0x1200, 0x0200, 0xb4a30a67 , 0xa8a78a30 )
+	ROM_LOAD( "9029.4a", 0x1400, 0x0200, 0x9a525e4a , 0xfc5c8e07 )
+	ROM_LOAD( "9030.5a", 0x1600, 0x0200, 0x48a7a653 , 0xb496263c )
+	ROM_LOAD( "9031.6a", 0x1800, 0x0200, 0x7ab57a6d , 0xcdc7d46e )
+	ROM_LOAD( "9032.7a", 0x1A00, 0x0200, 0xadaebc3c , 0xa6588bec )
+	ROM_LOAD( "9033.8a", 0x1C00, 0x0200, 0x44419c09 , 0xfd49b806 )
+	ROM_LOAD( "9034.9a", 0x1E00, 0x0200, 0xa221324f , 0x7caf926d )
+	ROM_RELOAD(          0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
+
+	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9026.5c", 0x0000, 0x0200, 0xf29a2d1c , 0x06e7adbb )
+	ROM_LOAD( "9025.4c", 0x0200, 0x0200, 0x4789f9ff , 0x3129527e )
+	ROM_LOAD( "9024.2c", 0x0400, 0x0200, 0x21cfa8cf , 0xbcb88396 )
+	ROM_LOAD( "9023.1c", 0x0600, 0x0200, 0x60606060 , 0x9f86ed5b )     /* Character Set */
+	ROM_LOAD( "9035.14d", 0x0800, 0x0200, 0x6f4641b4 , 0xc9979802 )
+ROM_END
+
+INPUT_PORTS_START( ripcord_input_ports )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* Dip Switch */
+	PORT_DIPNAME( 0x03, 0x03, "Jumps", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x02, "7" )
+	PORT_DIPSETTING(    0x03, "9" )
+	PORT_DIPNAME( 0x0C, 0x04, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Player - 1 Coin" )
+	PORT_DIPSETTING(    0x04, "1 Player - 1 Coin" )
+	PORT_DIPSETTING(    0x08, "1 Player - 2 Coin" )
+	PORT_DIPNAME( 0x10, 0x10, "Top Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Credit Awarded" )
+	PORT_DIPSETTING(    0x00, "No Award" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START      /* IN2 - paddle */
+	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 50, 0, 64, 167 )
+INPUT_PORTS_END
+
+static int ripcord_interrupt (void)
+{
+	circus_interrupt = 0;
+	if (1)
+		return ignore_interrupt();
+	else
+		return interrupt();
+}
+
+static struct MachineDriver ripcord_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			705562,        /* 11.289MHz / 16 */
+			0,
+			readmem,writemem,0,0,
+			ripcord_interrupt,1
+		}
+	},
+	60, 3500,	/* frames per second, vblank duration (complete guess) */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	crash_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+struct GameDriver ripcord_driver =
+{
+	__FILE__,
+	0,
+	"ripcord",
+	"Rip Cord",
+	"1977",
+	"Exidy",
+	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
+	GAME_NOT_WORKING,
+	&ripcord_machine_driver,
+
+	ripcord_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	ripcord_input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };

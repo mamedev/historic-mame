@@ -234,19 +234,19 @@ static struct MachineDriver machine_driver =
 
 ROM_START( aeroboto_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "AEROBOTO.8", 0x4000, 0x4000, 0x34ce3000 )
-	ROM_LOAD( "AEROBOTO.7", 0x8000, 0x4000, 0xa97571c3 )
-	ROM_LOAD( "AEROBOTO.6", 0xC000, 0x4000, 0xc435f7dd )
+	ROM_LOAD( "aeroboto.8", 0x4000, 0x4000, 0x34ce3000 , 0x4d3fc049 )
+	ROM_LOAD( "aeroboto.7", 0x8000, 0x4000, 0xa97571c3 , 0x522f51c1 )
+	ROM_LOAD( "aeroboto.6", 0xC000, 0x4000, 0xc435f7dd , 0x1a295ffb )
 
-	ROM_REGION(0x7000)	/* temporary space for graphics */
-	ROM_LOAD( "AEROBOTO.5", 0x0000, 0x2000, 0xcdf85fa4 )	/* characters */
-	ROM_LOAD( "AEROBOTO.4", 0x2000, 0x2000, 0xae97d893 )	/* characters */
-	ROM_LOAD( "AEROBOTO.1", 0x4000, 0x1000, 0x36dbf4bb )	/* sprites */
-	ROM_LOAD( "AEROBOTO.2", 0x5000, 0x1000, 0xada29ee6 )	/* sprites */
-	ROM_LOAD( "AEROBOTO.3", 0x6000, 0x1000, 0xedaa5368 )	/* sprites */
+	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
+	ROM_LOAD( "aeroboto.5", 0x0000, 0x2000, 0xcdf85fa4 , 0x32fc00f9 )	/* characters */
+	ROM_LOAD( "aeroboto.4", 0x2000, 0x2000, 0xae97d893 , 0x910375a0 )	/* characters */
+	ROM_LOAD( "aeroboto.1", 0x4000, 0x1000, 0x36dbf4bb , 0x7820eeaf )	/* sprites */
+	ROM_LOAD( "aeroboto.2", 0x5000, 0x1000, 0xada29ee6 , 0xc7f81a3c )	/* sprites */
+	ROM_LOAD( "aeroboto.3", 0x6000, 0x1000, 0xedaa5368 , 0x5203ad04 )	/* sprites */
 
 	ROM_REGION(0x10000)     /* 64k for sound CPU */
-	ROM_LOAD( "AEROBOTO.9", 0xf000, 0x1000, 0x36f5b5b3 )
+	ROM_LOAD( "aeroboto.9", 0xf000, 0x1000, 0x36f5b5b3 , 0x6b9215ad )
 ROM_END
 
 

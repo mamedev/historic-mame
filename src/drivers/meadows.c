@@ -554,39 +554,39 @@ static struct MachineDriver gypsyjug_machine_driver =
 
 ROM_START( deadeye_rom )
 	ROM_REGION(0x08000) 	/* 32K for code */
-	ROM_LOAD( "de1.8h",      0x0000, 0x0400, 0x776191dd )
-	ROM_LOAD( "de2.9h",      0x0400, 0x0400, 0x99ae4100 )
-	ROM_LOAD( "de3.10h",     0x0800, 0x0400, 0x0d389a70 )
-	ROM_LOAD( "de4.11h",     0x1000, 0x0400, 0x6270031e )
-	ROM_LOAD( "de5.12h",     0x1400, 0x0400, 0xc38ac92e )
-	ROM_LOAD( "de6.13h",     0x1800, 0x0400, 0xc6546fce )
+	ROM_LOAD( "de1.8h", 0x0000, 0x0400, 0x776191dd , 0xbd09e4dc )
+	ROM_LOAD( "de2.9h", 0x0400, 0x0400, 0x99ae4100 , 0xb89edec3 )
+	ROM_LOAD( "de3.10h", 0x0800, 0x0400, 0x0d389a70 , 0xacf24438 )
+	ROM_LOAD( "de4.11h", 0x1000, 0x0400, 0x6270031e , 0x8b68f792 )
+	ROM_LOAD( "de5.12h", 0x1400, 0x0400, 0xc38ac92e , 0x7bdb535c )
+	ROM_LOAD( "de6.13h", 0x1800, 0x0400, 0xc6546fce , 0x847f9467 )
 
 	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "de_char.15e", 0x0000, 0x0400, 0xda8e0f10 )
-	ROM_LOAD( "de_mov1.5a",  0x0400, 0x0400, 0xacbe0c08 )
-	ROM_LOAD( "de_mov2.13a", 0x0800, 0x0400, 0xe3925bbe )
+	ROM_LOAD( "de_char.15e", 0x0000, 0x0400, 0xda8e0f10 , 0xb032bd8d )
+	ROM_LOAD( "de_mov1.5a", 0x0400, 0x0400, 0xacbe0c08 , 0xc046b4c6 )
+	ROM_LOAD( "de_mov2.13a", 0x0800, 0x0400, 0xe3925bbe , 0xb89c5df9 )
 
 	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
-	ROM_LOAD( "de_snd",      0x0000, 0x0400, 0xf8d44164 )
+	ROM_LOAD( "de_snd", 0x0000, 0x0400, 0xf8d44164 , 0xc10a1b1a )
 ROM_END
 
 ROM_START( gypsyjug_rom )
 	ROM_REGION(0x08000) 	/* 32K for code */
-	ROM_LOAD( "GJ.1B",  0x0000, 0x0400, 0xec901a2e )
-	ROM_LOAD( "GJ.2B",  0x0400, 0x0400, 0x837a7804 )
-	ROM_LOAD( "GJ.3B",  0x0800, 0x0400, 0x0f1e56691 )
-	ROM_LOAD( "GJ.4B",  0x1000, 0x0400, 0x8879a2a7 )
-	ROM_LOAD( "GJ.5B",  0x1400, 0x0400, 0x3b862d96 )
+	ROM_LOAD( "gj.1b", 0x0000, 0x0400, 0xec901a2e , 0xf6a71d9f )
+	ROM_LOAD( "gj.2b", 0x0400, 0x0400, 0x837a7804 , 0x94c14455 )
+	ROM_LOAD( "gj.3b", 0x0800, 0x0400, 0x0f1e56691 , 0x87ee0490 )
+	ROM_LOAD( "gj.4b", 0x1000, 0x0400, 0x8879a2a7 , 0xdca519c8 )
+	ROM_LOAD( "gj.5b", 0x1400, 0x0400, 0x3b862d96 , 0x7d83f9d0 )
 
 	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "GJ.E15", 0x0000, 0x0400, 0x7947c4b9 )
-	ROM_LOAD( "GJ.A",   0x0400, 0x0400, 0x25898ed5 )
+	ROM_LOAD( "gj.e15", 0x0000, 0x0400, 0x7947c4b9 , 0xadb25e13 )
+	ROM_LOAD( "gj.a", 0x0400, 0x0400, 0x25898ed5 , 0xd3725193 )
 	ROM_RELOAD(         0x0800, 0x0400 )
 
 	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
-	ROM_LOAD( "GJ.A4S", 0x0000, 0x0400, 0xa61fe099 )
-	ROM_LOAD( "GJ.A5S", 0x0400, 0x0400, 0x2673523f )
-	ROM_LOAD( "GJ.A6S", 0x0800, 0x0400, 0xf0a6b806 )
+	ROM_LOAD( "gj.a4s", 0x0000, 0x0400, 0xa61fe099 , 0x17a116bc )
+	ROM_LOAD( "gj.a5s", 0x0400, 0x0400, 0x2673523f , 0xfc23ae09 )
+	ROM_LOAD( "gj.a6s", 0x0800, 0x0400, 0xf0a6b806 , 0x9e7bd71e )
 ROM_END
 
 /* A fake for the missing ball sprites #3 and #4 */

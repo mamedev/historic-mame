@@ -44,6 +44,7 @@ int vectorram_size;
 int antialias;                            /* flag for anti-aliasing */
 int beam;                                 /* size of vector beam    */
 int flicker;                              /* beam flicker value     */
+int translucency;
 
 static int beam_diameter_is_one = 0;      /* flag that beam is one pixel wide */
 

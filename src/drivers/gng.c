@@ -630,104 +630,104 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gng_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
-	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gg3.bin", 0x8000, 0x8000, 0x019eaa7c , 0x9e01c65e )
+	ROM_LOAD( "gg4.bin", 0x4000, 0x4000, 0xf74cb35c , 0x66606beb )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 , 0xd6397b2b )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin", 0x00000, 0x4000, 0x0d95960b , 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b , 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 , 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin", 0x0c000, 0x4000, 0xf6433b0f , 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin", 0x10000, 0x4000, 0x24a66776 , 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin", 0x14000, 0x4000, 0x6e6e3ec0 , 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin", 0x18000, 0x4000, 0x248ddf8b , 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e , 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 , 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 , 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 , 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 , 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f , 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 , 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( gngcross_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
-	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gg3.bin", 0x8000, 0x8000, 0x019eaa7c , 0x9e01c65e )
+	ROM_LOAD( "gg4.bin", 0x4000, 0x4000, 0xf74cb35c , 0x66606beb )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 , 0xd6397b2b )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",     0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin",    0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin",    0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",     0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",     0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",     0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",     0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "cross17.bin", 0x1c000, 0x4000, 0xb59f663d )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin",    0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin",    0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "cross14.bin", 0x28000, 0x4000, 0xce3dc76f )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin",    0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin",    0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin", 0x00000, 0x4000, 0x0d95960b , 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b , 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 , 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin", 0x0c000, 0x4000, 0xf6433b0f , 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin", 0x10000, 0x4000, 0x24a66776 , 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin", 0x14000, 0x4000, 0x6e6e3ec0 , 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin", 0x18000, 0x4000, 0x248ddf8b , 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "cross17.bin", 0x1c000, 0x4000, 0xb59f663d , 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 , 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 , 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "cross14.bin", 0x28000, 0x4000, 0xce3dc76f , 0x608d68d5 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 , 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f , 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 , 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( gngjap_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "8n.rom",   0x8000, 0x8000, 0xe787d6cf )
-	ROM_LOAD( "10n.rom",  0x4000, 0x4000, 0x6ae8f4b8 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "8n.rom", 0x8000, 0x8000, 0xe787d6cf , 0x9612d66c )
+	ROM_LOAD( "10n.rom", 0x4000, 0x4000, 0x6ae8f4b8 , 0x81e567e0 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc , 0x65a6a97b )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin", 0x00000, 0x4000, 0x0d95960b , 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b , 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 , 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin", 0x0c000, 0x4000, 0xf6433b0f , 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin", 0x10000, 0x4000, 0x24a66776 , 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin", 0x14000, 0x4000, 0x6e6e3ec0 , 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin", 0x18000, 0x4000, 0x248ddf8b , 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e , 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 , 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 , 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 , 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 , 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f , 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 , 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( diamond_rom )
 	ROM_REGION(0x1a000)	/* 64k for code * 6 pages (is it really 6?) */
-	ROM_LOAD( "d5",       0x0000, 0x8000, 0x89e5a985 )
-	ROM_LOAD( "d3",       0x8000, 0x8000, 0x38d5bcc9 )
-	ROM_LOAD( "d3o",      0x4000, 0x2000, 0x76c09ea4 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "d5", 0x0000, 0x8000, 0x89e5a985 , 0x453f3f9e )
+	ROM_LOAD( "d3", 0x8000, 0x8000, 0x38d5bcc9 , 0xf436d6fa )
+	ROM_LOAD( "d3o", 0x4000, 0x2000, 0x76c09ea4 , 0xba4bf9f1 )	/* 4000-5fff is page 0 */
 	ROM_CONTINUE(        0x18000, 0x2000 )
-	ROM_LOAD( "d5o",     0x10000, 0x8000, 0x06f68aa8 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "d5o", 0x10000, 0x8000, 0x06f68aa8 , 0xae58bd3a )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d1",  0x00000, 0x4000, 0x7da60000 )	/* characters */
-	ROM_LOAD( "d11", 0x04000, 0x4000, 0xc592534e )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "d10", 0x08000, 0x4000, 0x2c5520ed )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "d9",  0x0c000, 0x4000, 0x0e971c4b )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "d8",  0x10000, 0x4000, 0x1505a1c7 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "d7",  0x14000, 0x4000, 0x5cfe0000 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "d6",  0x18000, 0x4000, 0x7428a122 )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "d17", 0x1c000, 0x4000, 0x821a03ee )	/* sprites 0 Plane 1-2 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d1", 0x00000, 0x4000, 0x7da60000 , 0x3a24e504 )	/* characters */
+	ROM_LOAD( "d11", 0x04000, 0x4000, 0xc592534e , 0x754357d7 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "d10", 0x08000, 0x4000, 0x2c5520ed , 0x7531edcd )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "d9", 0x0c000, 0x4000, 0x0e971c4b , 0x22eeca08 )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "d8", 0x10000, 0x4000, 0x1505a1c7 , 0x6b61be60 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "d7", 0x14000, 0x4000, 0x5cfe0000 , 0xfd595274 )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "d6", 0x18000, 0x4000, 0x7428a122 , 0x7f51dcd2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "d17", 0x1c000, 0x4000, 0x821a03ee , 0x8164b005 )	/* sprites 0 Plane 1-2 */
 	/* empty space for unused sprites 1 Plane 1-2 */
 	/* empty space for unused sprites 2 Plane 1-2 */
-	ROM_LOAD( "d14", 0x28000, 0x4000, 0x465e000e )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "d14", 0x28000, 0x4000, 0x465e000e , 0x6f132163 )	/* sprites 0 Plane 3-4 */
 	/* empty space for unused sprites 1 Plane 3-4 */
 	/* empty space for unused sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "d2", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "d2", 0x0000, 0x8000, 0x0b7edfd2 , 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 

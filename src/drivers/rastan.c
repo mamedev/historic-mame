@@ -424,72 +424,72 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 ROM_START( rastan_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "IC19_38.bin", 0x00000, 0x10000, 0x7407497b )
-	ROM_LOAD_ODD ( "IC07_37.bin", 0x00000, 0x10000, 0x7938d6ce )
-	ROM_LOAD_EVEN( "IC20_40.bin", 0x20000, 0x10000, 0xb7e92d83 )
-	ROM_LOAD_ODD ( "IC08_39.bin", 0x20000, 0x10000, 0xd5ca9e04 )
-	ROM_LOAD_EVEN( "IC21_42.bin", 0x40000, 0x10000, 0x975f77ad )
-	ROM_LOAD_ODD ( "IC09_43.bin", 0x40000, 0x10000, 0x5ad5c7ab )
+	ROM_LOAD_EVEN( "ic19_38.bin", 0x00000, 0x10000, 0x7407497b , 0x1c91dbb1 )
+	ROM_LOAD_ODD ( "ic07_37.bin", 0x00000, 0x10000, 0x7938d6ce , 0xecf20bdd )
+	ROM_LOAD_EVEN( "ic20_40.bin", 0x20000, 0x10000, 0xb7e92d83 , 0x0930d4b3 )
+	ROM_LOAD_ODD ( "ic08_39.bin", 0x20000, 0x10000, 0xd5ca9e04 , 0xd95ade5e )
+	ROM_LOAD_EVEN( "ic21_42.bin", 0x40000, 0x10000, 0x975f77ad , 0x1857a7cb )
+	ROM_LOAD_ODD ( "ic09_43.bin", 0x40000, 0x10000, 0x5ad5c7ab , 0xc34b9152 )
 
-	ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC40_01.bin",   0x00000, 0x10000, 0x67dad0cc )        /* 8x8 0 */
-	ROM_LOAD( "IC40_01H.bin",  0x10000, 0x10000, 0x114df5eb )        /* 8x8 0 */
-	ROM_LOAD( "IC39_03.bin",   0x20000, 0x10000, 0xe8b5dfe5 )        /* 8x8 0 */
-	ROM_LOAD( "IC39_03H.bin",  0x30000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic40_01.bin", 0x00000, 0x10000, 0x67dad0cc , 0x6aac8f67 )        /* 8x8 0 */
+	ROM_LOAD( "ic40_01h.bin", 0x10000, 0x10000, 0x114df5eb , 0xe8b64ced )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin", 0x20000, 0x10000, 0xe8b5dfe5 , 0x225e19fa )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03h.bin", 0x30000, 0x10000, 0xc3dd6377 , 0xb037691f )        /* 8x8 0 */
 
-	ROM_LOAD( "IC67_02.bin",   0x40000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
-	ROM_LOAD( "IC67_02H.bin",  0x50000, 0x10000, 0x8eefac47 )        /* 8x8 1 */
-	ROM_LOAD( "IC66_04.bin",   0x60000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
-	ROM_LOAD( "IC66_04H.bin",  0x70000, 0x10000, 0x80000000 )        /* 8x8 1 */
+	ROM_LOAD( "ic67_02.bin", 0x40000, 0x10000, 0xe6a11bdb , 0x8c184637 )        /* 8x8 1 */
+	ROM_LOAD( "ic67_02h.bin", 0x50000, 0x10000, 0x8eefac47 , 0x27f6c59b )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin", 0x60000, 0x10000, 0xfde7e2cf , 0xaa3a2d5e )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04h.bin", 0x70000, 0x10000, 0x80000000 , 0xdeab7e4e )        /* 8x8 1 */
 
-	ROM_LOAD( "IC15_05.bin",   0x80000, 0x10000, 0xecd6fbcc )        /* sprites 1a */
-	ROM_LOAD( "IC15_05H.bin",  0x90000, 0x10000, 0x1fe25954 )        /* sprites 2a */
-	ROM_LOAD( "IC14_07.bin",   0xa0000, 0x10000, 0x022daf1d )        /* sprites 3a */
-	ROM_LOAD( "IC14_07H.bin",  0xb0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
-	ROM_LOAD( "IC28_06.bin",   0xc0000, 0x10000, 0x81e8d0be )        /* sprites 1b */
-	ROM_LOAD( "IC28_06H.bin",  0xd0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
-	ROM_LOAD( "IC27_08.bin",   0xe0000, 0x10000, 0xbf187cba )        /* sprites 3b */
-	ROM_LOAD( "IC27_08H.bin",  0xf0000, 0x10000, 0xb7eaa116 )        /* sprites 4b */
+	ROM_LOAD( "ic15_05.bin", 0x80000, 0x10000, 0xecd6fbcc , 0x0791ad66 )        /* sprites 1a */
+	ROM_LOAD( "ic15_05h.bin", 0x90000, 0x10000, 0x1fe25954 , 0xd221fcc6 )        /* sprites 2a */
+	ROM_LOAD( "ic14_07.bin", 0xa0000, 0x10000, 0x022daf1d , 0x9d8b5fb6 )        /* sprites 3a */
+	ROM_LOAD( "ic14_07h.bin", 0xb0000, 0x10000, 0x22a736c3 , 0x358ef7f2 )        /* sprites 4a */
+	ROM_LOAD( "ic28_06.bin", 0xc0000, 0x10000, 0x81e8d0be , 0x6c9067be )        /* sprites 1b */
+	ROM_LOAD( "ic28_06h.bin", 0xd0000, 0x10000, 0xab0be5c7 , 0xcd99944f )        /* sprites 2b */
+	ROM_LOAD( "ic27_08.bin", 0xe0000, 0x10000, 0xbf187cba , 0x0af8e358 )        /* sprites 3b */
+	ROM_LOAD( "ic27_08h.bin", 0xf0000, 0x10000, 0xb7eaa116 , 0x32570597 )        /* sprites 4b */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "IC49_19.bin", 0x0000, 0x10000, 0x73fbbecf )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "ic49_19.bin", 0x0000, 0x10000, 0x73fbbecf , 0xee81fdd8 )   /* Audio CPU is a Z80  */
                                                      /* sound chip is YM2151*/
 	ROM_REGION(0x10000)	/* 64k for the samples */
-	ROM_LOAD( "IC76_20.bin", 0x0000, 0x10000, 0x121edf84 ) /* samples are 4bit ADPCM */
+	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0x121edf84 , 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
 ROM_START( rastsaga_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "RS19_38.bin", 0x00000, 0x10000, 0x7428495a )
-	ROM_LOAD_ODD ( "RS07_37.bin", 0x00000, 0x10000, 0x7632da3c )
-	ROM_LOAD_EVEN( "RS20_40.bin", 0x20000, 0x10000, 0x092456b0 )
-	ROM_LOAD_ODD ( "RS08_39.bin", 0x20000, 0x10000, 0x5c4a02b4 )
-	ROM_LOAD_EVEN( "RS21_42.bin", 0x40000, 0x10000, 0x1193f1a5 )
-	ROM_LOAD_ODD ( "RS09_43.bin", 0x40000, 0x10000, 0x149b90fd )
+	ROM_LOAD_EVEN( "rs19_38.bin", 0x00000, 0x10000, 0x7428495a , 0xa38ac909 )
+	ROM_LOAD_ODD ( "rs07_37.bin", 0x00000, 0x10000, 0x7632da3c , 0xbad60872 )
+	ROM_LOAD_EVEN( "rs20_40.bin", 0x20000, 0x10000, 0x092456b0 , 0x6bcf70dc )
+	ROM_LOAD_ODD ( "rs08_39.bin", 0x20000, 0x10000, 0x5c4a02b4 , 0x8838ecc5 )
+	ROM_LOAD_EVEN( "rs21_42.bin", 0x40000, 0x10000, 0x1193f1a5 , 0xb626c439 )
+	ROM_LOAD_ODD ( "rs09_43.bin", 0x40000, 0x10000, 0x149b90fd , 0xc928a516 )
 
-	ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC40_01.bin",   0x00000, 0x10000, 0x67dad0cc )        /* 8x8 0 */
-	ROM_LOAD( "IC40_01H.bin",  0x10000, 0x10000, 0x114df5eb )        /* 8x8 0 */
-	ROM_LOAD( "IC39_03.bin",   0x20000, 0x10000, 0xe8b5dfe5 )        /* 8x8 0 */
-	ROM_LOAD( "IC39_03H.bin",  0x30000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
-	ROM_LOAD( "IC67_02.bin",   0x40000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
-	ROM_LOAD( "IC67_02H.bin",  0x50000, 0x10000, 0x8eefac47 )        /* 8x8 1 */
-	ROM_LOAD( "IC66_04.bin",   0x60000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
-	ROM_LOAD( "IC66_04H.bin",  0x70000, 0x10000, 0x80000000 )        /* 8x8 1 */
-	ROM_LOAD( "IC15_05.bin",   0x80000, 0x10000, 0xecd6fbcc )        /* sprites 1a */
-	ROM_LOAD( "IC15_05H.bin",  0x90000, 0x10000, 0x1fe25954 )        /* sprites 2a */
-	ROM_LOAD( "IC14_07.bin",   0xa0000, 0x10000, 0x022daf1d )        /* sprites 3a */
-	ROM_LOAD( "IC14_07H.bin",  0xb0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
-	ROM_LOAD( "IC28_06.bin",   0xc0000, 0x10000, 0x81e8d0be )        /* sprites 1b */
-	ROM_LOAD( "IC28_06H.bin",  0xd0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
-	ROM_LOAD( "IC27_08.bin",   0xe0000, 0x10000, 0xbf187cba )        /* sprites 3b */
-	ROM_LOAD( "IC27_08H.bin",  0xf0000, 0x10000, 0xb7eaa116 )        /* sprites 4b */
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic40_01.bin", 0x00000, 0x10000, 0x67dad0cc , 0x6aac8f67 )        /* 8x8 0 */
+	ROM_LOAD( "ic40_01h.bin", 0x10000, 0x10000, 0x114df5eb , 0xe8b64ced )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin", 0x20000, 0x10000, 0xe8b5dfe5 , 0x225e19fa )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03h.bin", 0x30000, 0x10000, 0xc3dd6377 , 0xb037691f )        /* 8x8 0 */
+	ROM_LOAD( "ic67_02.bin", 0x40000, 0x10000, 0xe6a11bdb , 0x8c184637 )        /* 8x8 1 */
+	ROM_LOAD( "ic67_02h.bin", 0x50000, 0x10000, 0x8eefac47 , 0x27f6c59b )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin", 0x60000, 0x10000, 0xfde7e2cf , 0xaa3a2d5e )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04h.bin", 0x70000, 0x10000, 0x80000000 , 0xdeab7e4e )        /* 8x8 1 */
+	ROM_LOAD( "ic15_05.bin", 0x80000, 0x10000, 0xecd6fbcc , 0x0791ad66 )        /* sprites 1a */
+	ROM_LOAD( "ic15_05h.bin", 0x90000, 0x10000, 0x1fe25954 , 0xd221fcc6 )        /* sprites 2a */
+	ROM_LOAD( "ic14_07.bin", 0xa0000, 0x10000, 0x022daf1d , 0x9d8b5fb6 )        /* sprites 3a */
+	ROM_LOAD( "ic14_07h.bin", 0xb0000, 0x10000, 0x22a736c3 , 0x358ef7f2 )        /* sprites 4a */
+	ROM_LOAD( "ic28_06.bin", 0xc0000, 0x10000, 0x81e8d0be , 0x6c9067be )        /* sprites 1b */
+	ROM_LOAD( "ic28_06h.bin", 0xd0000, 0x10000, 0xab0be5c7 , 0xcd99944f )        /* sprites 2b */
+	ROM_LOAD( "ic27_08.bin", 0xe0000, 0x10000, 0xbf187cba , 0x0af8e358 )        /* sprites 3b */
+	ROM_LOAD( "ic27_08h.bin", 0xf0000, 0x10000, 0xb7eaa116 , 0x32570597 )        /* sprites 4b */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "IC49_19.bin", 0x0000, 0x10000, 0x73fbbecf )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "ic49_19.bin", 0x0000, 0x10000, 0x73fbbecf , 0xee81fdd8 )   /* Audio CPU is a Z80  */
                                                      /* sound chip is YM2151*/
 	ROM_REGION(0x10000)	/* 64k for the samples */
-	ROM_LOAD( "IC76_20.bin", 0x0000, 0x10000, 0x121edf84 ) /* samples are 4bit ADPCM */
+	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0x121edf84 , 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
 

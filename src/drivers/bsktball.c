@@ -401,15 +401,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bsktball_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-		ROM_LOAD( "034765.D1", 0x2000, 0x0800, 0x2f135e4d )
-		ROM_LOAD( "034764.C1", 0x2800, 0x0800, 0xcc53c7cb )
-		ROM_LOAD( "034766.F1", 0x3000, 0x0800, 0xd399435f )
-		ROM_LOAD( "034763.B1", 0x3800, 0x0800, 0xfeae3438 )
+		ROM_LOAD( "034765.d1", 0x2000, 0x0800, 0x2f135e4d , 0x798cea39 )
+		ROM_LOAD( "034764.c1", 0x2800, 0x0800, 0xcc53c7cb , 0xa087109e )
+		ROM_LOAD( "034766.f1", 0x3000, 0x0800, 0xd399435f , 0xa82e9a9f )
+		ROM_LOAD( "034763.b1", 0x3800, 0x0800, 0xfeae3438 , 0x1fc69359 )
 		ROM_RELOAD( 			0xF800, 0x0800 )
 
-	ROM_REGION(0x1000)	   /* 2k for graphics */
-		ROM_LOAD( "034757.A6", 0x0000, 0x0800, 0x884145c1 )
-		ROM_LOAD( "034758.B6", 0x0800, 0x0800, 0xed570c41 )
+	ROM_REGION_DISPOSE(0x1000)	   /* 2k for graphics */
+		ROM_LOAD( "034757.a6", 0x0000, 0x0800, 0x884145c1 , 0x010e8ad3 )
+		ROM_LOAD( "034758.b6", 0x0800, 0x0800, 0xed570c41 , 0xf7bea344 )
 
 ROM_END
 

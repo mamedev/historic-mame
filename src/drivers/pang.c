@@ -292,23 +292,23 @@ MACHINE_DRIVER(machine_driver_pang, gfxdecodeinfo_pang)
 
 ROM_START( pang_rom )
 	ROM_REGION(0x60000)     /* 64k for code */
-	ROM_LOAD( "PANG_02.BIN",  0x10000, 0x20000,  0x416d8771 )   /* Decrypted op codes */
-	ROM_LOAD( "PANG_03.BIN",  0x30000, 0x20000,  0x8f23ed1b )   /* Decrypted data */
-	ROM_LOAD( "PANG_04.BIN",  0x50000, 0x10000,  0x3df42bf4 )   /* Decrypted opcode + data */
+	ROM_LOAD( "pang_02.bin", 0x10000, 0x20000, 0x416d8771 , 0x3f15bb61 )   /* Decrypted op codes */
+	ROM_LOAD( "pang_03.bin", 0x30000, 0x20000, 0x8f23ed1b , 0x0c8477ae )   /* Decrypted data */
+	ROM_LOAD( "pang_04.bin", 0x50000, 0x10000, 0x3df42bf4 , 0xf68f88a5 )   /* Decrypted opcode + data */
 
-	ROM_REGION(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "PANG_09.BIN", 0x00000, 0x20000, 0xe3d65458 )
-	ROM_LOAD( "PANG_10.BIN", 0x20000, 0x20000, 0xf88398d7 )
-	ROM_LOAD( "PANG_08.BIN", 0x40000, 0x10000, 0xeece3644 )
-	ROM_LOAD( "PANG_07.BIN", 0x50000, 0x10000, 0x0c0930d3 )
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pang_09.bin", 0x00000, 0x20000, 0xe3d65458 , 0x3a5883f5 )
+	ROM_LOAD( "pang_10.bin", 0x20000, 0x20000, 0xf88398d7 , 0x79a8ed08 )
+	ROM_LOAD( "pang_08.bin", 0x40000, 0x10000, 0xeece3644 , 0xf3188aa1 )
+	ROM_LOAD( "pang_07.bin", 0x50000, 0x10000, 0x0c0930d3 , 0x011da14b )
 
-	ROM_LOAD( "PANG_11.BIN", 0x60000, 0x20000, 0xccfaff16 )
-	ROM_LOAD( "PANG_12.BIN", 0x80000, 0x20000, 0xc15b2c57 )
-	ROM_LOAD( "PANG_06.BIN", 0xa0000, 0x10000, 0xc59f48c1 )
-	ROM_LOAD( "PANG_05.BIN", 0xb0000, 0x10000, 0xe9861aae )
+	ROM_LOAD( "pang_11.bin", 0x60000, 0x20000, 0xccfaff16 , 0x166a16ae )
+	ROM_LOAD( "pang_12.bin", 0x80000, 0x20000, 0xc15b2c57 , 0x2fb3db6c )
+	ROM_LOAD( "pang_06.bin", 0xa0000, 0x10000, 0xc59f48c1 , 0x0e25e797 )
+	ROM_LOAD( "pang_05.bin", 0xb0000, 0x10000, 0xe9861aae , 0x6daa4e27 )
 
 	ROM_REGION(0x10000)     /* OKIM */
-	ROM_LOAD( "PANG_01.BIN", 0x00000, 0x10000, 0x419a37c8 )
+	ROM_LOAD( "pang_01.bin", 0x00000, 0x10000, 0x419a37c8 , 0xb6463907 )
 ROM_END
 
 static void pang_decode(void)
@@ -317,6 +317,44 @@ static void pang_decode(void)
 
 	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
 	memcpy(RAM, RAM+0x58000, 0x8000);   /* Data */
+}
+
+static int pang_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0xf9e3],"\x01\x00\x00",3) == 0) &&
+            (memcmp(&RAM[0xfa73],"\x00\x05\x00",3) == 0))
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xf9e3],160);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0xe00d] = RAM[0xf9e3];
+                        RAM[0xe00e] = RAM[0xf9e4];
+                        RAM[0xe00f] = RAM[0xf9e5];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void pang_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xf9e3],160);
+		osd_fclose(f);
+	}
 }
 
 struct GameDriver pang_driver =
@@ -340,7 +378,7 @@ struct GameDriver pang_driver =
 
 	NULL, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+        pang_hiload, pang_hisave
 };
 
 /***************************************************************************
@@ -384,20 +422,20 @@ ROM_START( bbros_rom )
 	ROM_REGION(0x30000)     /* 64k for code */
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "BB7.BIN",  0x10000, 0x20000,  0xd228e558 )
-	ROM_LOAD( "BB6.BIN",  0x10000, 0x08000,  0x4ca4c8d0 )
+	ROM_LOAD( "bb7.bin", 0x10000, 0x20000, 0xd228e558 , 0x0 )
+	ROM_LOAD( "bb6.bin", 0x10000, 0x08000, 0x4ca4c8d0 , 0x0 )
 
-	ROM_REGION(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BB2.BIN",     0x00000, 0x20000, 0x5b9137f1 )
-	ROM_LOAD( "BB3.BIN",     0x20000, 0x20000, 0xf88398d7 )
-	ROM_LOAD( "BB10.BIN",    0x40000, 0x20000, 0xfad70697 )
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bb2.bin", 0x00000, 0x20000, 0x5b9137f1 , 0x0 )
+	ROM_LOAD( "bb3.bin", 0x20000, 0x20000, 0xf88398d7 , 0x0 )
+	ROM_LOAD( "bb10.bin", 0x40000, 0x20000, 0xfad70697 , 0x0 )
 
-	ROM_LOAD( "BB4.BIN",     0x60000, 0x20000, 0x8ab5fdc3 )
-	ROM_LOAD( "BB5.BIN",     0x80000, 0x20000, 0xc15b2c57 )
-	ROM_LOAD( "BB9.BIN",     0xa0000, 0x20000, 0xaf25526f )
+	ROM_LOAD( "bb4.bin", 0x60000, 0x20000, 0x8ab5fdc3 , 0x0 )
+	ROM_LOAD( "bb5.bin", 0x80000, 0x20000, 0xc15b2c57 , 0x0 )
+	ROM_LOAD( "bb9.bin", 0xa0000, 0x20000, 0xaf25526f , 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "BB1.BIN",  0x0000, 0x20000, 0xc19a37c8 )
+	ROM_LOAD( "bb1.bin", 0x0000, 0x20000, 0xc19a37c8 , 0x0 )
 ROM_END
 
 static void bbros_decode(void)
@@ -462,21 +500,21 @@ ROM_START( spang_rom )
 	ROM_REGION(0x60000)     /* 64k for code */
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "SPE_08.ROM",  0x10000, 0x20000,  0x6e202f9c )
-	ROM_LOAD( "SPE_07.ROM",  0x30000, 0x20000,  0xe6b9c603 )
-	ROM_LOAD( "SPE_06.ROM",  0x50000, 0x08000,  0x34ad7595 )
+	ROM_LOAD( "spe_08.rom", 0x10000, 0x20000, 0x6e202f9c , 0x0 )
+	ROM_LOAD( "spe_07.rom", 0x30000, 0x20000, 0xe6b9c603 , 0x0 )
+	ROM_LOAD( "spe_06.rom", 0x50000, 0x08000, 0x34ad7595 , 0x0 )
 
-	ROM_REGION(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SPE_04.ROM", 0x00000, 0x20000, 0xc57d2b7f )
-	ROM_LOAD( "SPE_03.ROM", 0x20000, 0x20000, 0xc51460ca )
-	ROM_LOAD( "SPE_09.ROM", 0x40000, 0x20000, 0x50d3dc59 )
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spe_04.rom", 0x00000, 0x20000, 0xc57d2b7f , 0x0 )
+	ROM_LOAD( "spe_03.rom", 0x20000, 0x20000, 0xc51460ca , 0x0 )
+	ROM_LOAD( "spe_09.rom", 0x40000, 0x20000, 0x50d3dc59 , 0x0 )
 
-	ROM_LOAD( "SPE_02.ROM", 0x60000, 0x20000, 0xaec0d78e )
-	ROM_LOAD( "SPE_05.ROM", 0x80000, 0x20000, 0x5fc5f9df )
-	ROM_LOAD( "SPE_10.ROM", 0xa0000, 0x20000, 0xa78d0beb )
+	ROM_LOAD( "spe_02.rom", 0x60000, 0x20000, 0xaec0d78e , 0x0 )
+	ROM_LOAD( "spe_05.rom", 0x80000, 0x20000, 0x5fc5f9df , 0x0 )
+	ROM_LOAD( "spe_10.rom", 0xa0000, 0x20000, 0xa78d0beb , 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "SPE_01.ROM",  0x0000, 0x20000, 0x5d617e19 )
+	ROM_LOAD( "spe_01.rom", 0x0000, 0x20000, 0x5d617e19 , 0x0 )
 ROM_END
 
 
@@ -554,21 +592,21 @@ ROM_START( block_rom )
 	ROM_REGION(0x60000)
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "BLE_07.ROM",  0x10000, 0x20000,  0xc2b54ea7 )
-	ROM_LOAD( "BLE_06.ROM",  0x30000, 0x20000,  0x6e149906 )
-	ROM_LOAD( "BLE_05.ROM",  0x00000, 0x08000,  0x11fa6de8 )
+	ROM_LOAD( "ble_07.rom", 0x10000, 0x20000, 0xc2b54ea7 , 0x0 )
+	ROM_LOAD( "ble_06.rom", 0x30000, 0x20000, 0x6e149906 , 0x0 )
+	ROM_LOAD( "ble_05.rom", 0x00000, 0x08000, 0x11fa6de8 , 0x0 )
 
-	ROM_REGION(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BL_18.ROM", 0x00000, 0x20000, 0x9483f0d9 )
-	ROM_LOAD( "BL_17.ROM", 0x20000, 0x20000, 0x4a8b7547 )
-	ROM_LOAD( "BL_19.ROM", 0x40000, 0x20000, 0x84324744 )
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bl_18.rom", 0x00000, 0x20000, 0x9483f0d9 , 0x0 )
+	ROM_LOAD( "bl_17.rom", 0x20000, 0x20000, 0x4a8b7547 , 0x0 )
+	ROM_LOAD( "bl_19.rom", 0x40000, 0x20000, 0x84324744 , 0x0 )
 
-	ROM_LOAD( "BL_08.ROM", 0x60000, 0x20000, 0x66ce706e )
-	ROM_LOAD( "BL_16.ROM", 0x80000, 0x20000, 0x5ccf8823 )
-	ROM_LOAD( "BL_09.ROM", 0xa0000, 0x20000, 0xa4abab1f )
+	ROM_LOAD( "bl_08.rom", 0x60000, 0x20000, 0x66ce706e , 0x0 )
+	ROM_LOAD( "bl_16.rom", 0x80000, 0x20000, 0x5ccf8823 , 0x0 )
+	ROM_LOAD( "bl_09.rom", 0xa0000, 0x20000, 0xa4abab1f , 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "BL_01.ROM", 0x0000, 0x20000, 0x8b495435 )
+	ROM_LOAD( "bl_01.rom", 0x0000, 0x20000, 0x8b495435 , 0x0 )
 ROM_END
 
 

@@ -229,43 +229,43 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bankp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "epr6175.bin", 0x0000, 0x4000, 0xb50160d9 )
-	ROM_LOAD( "epr6174.bin", 0x4000, 0x4000, 0x30064be0 )
-	ROM_LOAD( "epr6173.bin", 0x8000, 0x4000, 0x73d2b6a2 )
-	ROM_LOAD( "epr6176.bin", 0xc000, 0x2000, 0xbef2c314 )
+	ROM_LOAD( "epr6175.bin", 0x0000, 0x4000, 0xb50160d9 , 0x044552b8 )
+	ROM_LOAD( "epr6174.bin", 0x4000, 0x4000, 0x30064be0 , 0xd29b1598 )
+	ROM_LOAD( "epr6173.bin", 0x8000, 0x4000, 0x73d2b6a2 , 0xb8405d38 )
+	ROM_LOAD( "epr6176.bin", 0xc000, 0x2000, 0xbef2c314 , 0xc98ac200 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "epr6165.bin", 0x0000, 0x2000, 0xb90527b7 )	/* playfield #1 chars */
-	ROM_LOAD( "epr6166.bin", 0x2000, 0x2000, 0x4868650a )
-	ROM_LOAD( "epr6172.bin", 0x4000, 0x2000, 0xc951eaf9 )	/* playfield #2 chars */
-	ROM_LOAD( "epr6171.bin", 0x6000, 0x2000, 0xe9d98839 )
-	ROM_LOAD( "epr6170.bin", 0x8000, 0x2000, 0x1ec6c8fe )
-	ROM_LOAD( "epr6169.bin", 0xa000, 0x2000, 0xb32c9638 )
-	ROM_LOAD( "epr6168.bin", 0xc000, 0x2000, 0x6343f68b )
-	ROM_LOAD( "epr6167.bin", 0xe000, 0x2000, 0xb5f4080e )
+	ROM_REGION_DISPOSE(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr6165.bin", 0x0000, 0x2000, 0xb90527b7 , 0xaef34a93 )	/* playfield #1 chars */
+	ROM_LOAD( "epr6166.bin", 0x2000, 0x2000, 0x4868650a , 0xca13cb11 )
+	ROM_LOAD( "epr6172.bin", 0x4000, 0x2000, 0xc951eaf9 , 0xc4c4878b )	/* playfield #2 chars */
+	ROM_LOAD( "epr6171.bin", 0x6000, 0x2000, 0xe9d98839 , 0xa18165a1 )
+	ROM_LOAD( "epr6170.bin", 0x8000, 0x2000, 0x1ec6c8fe , 0xb58aa8fa )
+	ROM_LOAD( "epr6169.bin", 0xa000, 0x2000, 0xb32c9638 , 0x1aa37fce )
+	ROM_LOAD( "epr6168.bin", 0xc000, 0x2000, 0x6343f68b , 0x05f3a867 )
+	ROM_LOAD( "epr6167.bin", 0xe000, 0x2000, 0xb5f4080e , 0x3fa337e1 )
 
 	ROM_REGION(0x00220)	/* color proms */
-	ROM_LOAD( "pr6177.clr", 0x0000, 0x020, 0xa19b006f ) 	/* palette */
-	ROM_LOAD( "pr6178.clr", 0x0020, 0x100, 0xdd02010a ) 	/* charset #1 lookup table */
-	ROM_LOAD( "pr6179.clr", 0x0120, 0x100, 0x101f0207 ) 	/* charset #2 lookup table */
+	ROM_LOAD( "pr6177.clr", 0x0000, 0x020, 0xa19b006f , 0xeb70c5ae ) 	/* palette */
+	ROM_LOAD( "pr6178.clr", 0x0020, 0x100, 0xdd02010a , 0x0acca001 ) 	/* charset #1 lookup table */
+	ROM_LOAD( "pr6179.clr", 0x0120, 0x100, 0x101f0207 , 0xe53bafdb ) 	/* charset #2 lookup table */
 ROM_END
 
 
 
 static int hiload(void)
 {
-	static int loop = 0;
+	static int firsttime = 0;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
 	/* we dirty it, then we wait for it to be cleared again */
-	if (loop == 0)
+	if (firsttime == 0)
 	{
 		memset(&RAM[0x0e590],0xff,16*10);
 		memset(&RAM[0xe018],0xff,7);	/* high score */
-		loop = 1;
+		firsttime = 1;
 	}
 
 	if (memcmp(&RAM[0xe590],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
@@ -282,7 +282,7 @@ static int hiload(void)
 			osd_fclose(f);
 		}
 
-		loop = 0;
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;   /* we can't load the hi scores yet */

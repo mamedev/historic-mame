@@ -56,27 +56,65 @@ Known problems:
 
 
 
-int mystston_DSW2_r(int offset);
-int mystston_interrupt(void);
-
 extern unsigned char *mystston_videoram2,*mystston_colorram2;
 extern int mystston_videoram2_size;
-extern unsigned char *mystston_videoram3,*mystston_colorram3;
-extern int mystston_videoram3_size;
 extern unsigned char *mystston_scroll;
 
-void mystston_videoram3_w(int offset,int data);
-void mystston_colorram3_w(int offset,int data);
 int mystston_vh_start(void);
 void mystston_vh_stop(void);
+void mystston_2000_w(int offset,int data);
 void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-/* extern unsigned char *mystston_pageselect; */
+
+
+int mystston_interrupt(void)
+{
+	if ((readinputport(0) & 0xc0) != 0xc0) return nmi_interrupt();
+
+	return interrupt();
+}
+
+
+static int psg_latch;
+
+void mystston_8910_latch_w(int offset,int data)
+{
+	psg_latch = data;
+}
+
+void mystston_8910_control_w(int offset,int data)
+{
+	static int last;
+
+
+	/* bit 5 goes to 8910 #0 BDIR pin  */
+	if ((last & 0x20) == 0x20 && (data & 0x20) == 0x00)
+	{
+		/* bit 4 goes to the 8910 #0 BC1 pin */
+		if (last & 0x10)
+			AY8910_control_port_0_w(0,psg_latch);
+		else
+			AY8910_write_port_0_w(0,psg_latch);
+	}
+	/* bit 7 goes to 8910 #1 BDIR pin  */
+	if ((last & 0x80) == 0x80 && (data & 0x80) == 0x00)
+	{
+		/* bit 6 goes to the 8910 #1 BC1 pin */
+		if (last & 0x40)
+			AY8910_control_port_1_w(0,psg_latch);
+		else
+			AY8910_write_port_1_w(0,psg_latch);
+	}
+
+	last = data;
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x077f, MRA_RAM },
+	{ 0x0800, 0x0fff, MRA_RAM },	/* work RAM? */
 	{ 0x1000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2000, input_port_0_r },
 	{ 0x2010, 0x2010, input_port_1_r },
@@ -90,15 +128,17 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x077f, MWA_RAM },
 	{ 0x0780, 0x07df, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x0800, 0x0fff, MWA_RAM },	/* work RAM? */
 	{ 0x1000, 0x13ff, MWA_RAM, &mystston_videoram2, &mystston_videoram2_size },
 	{ 0x1400, 0x17ff, MWA_RAM, &mystston_colorram2 },
 	{ 0x1800, 0x19ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1a00, 0x1bff, colorram_w, &colorram },
-	{ 0x1c00, 0x1dff, mystston_videoram3_w, &mystston_videoram3, &mystston_videoram3_size },
-	{ 0x1e00, 0x1fff, mystston_colorram3_w, &mystston_colorram3 },
-/*	{ 0x2000, 0x2000, MWA_RAM, &mystston_pageselect }, */
-/*	{ 0x2010, 0x2010, soundlatch_w }, */
+	{ 0x1c00, 0x1fff, MWA_RAM },	/* work RAM? This gets copied to videoram */
+	{ 0x2000, 0x2000, mystston_2000_w },	/* flip screen & coin counters */
+	{ 0x2010, 0x2010, watchdog_reset_w },	/* or IRQ acknowledge maybe? */
 	{ 0x2020, 0x2020, MWA_RAM, &mystston_scroll },
+	{ 0x2030, 0x2030, mystston_8910_latch_w },
+	{ 0x2040, 0x2040, mystston_8910_control_w },
 	{ 0x2060, 0x2077, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -109,20 +149,20 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START1 )
@@ -130,15 +170,29 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME (0x01, 0x01, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "5" )
 	PORT_DIPSETTING (   0x01, "3" )
-	PORT_DIPNAME (0x02, 0x02, "Switch 1", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0x00, "5" )
+	PORT_DIPNAME (0x02, 0x02, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x02, "Off" )
-	PORT_DIPNAME (0x04, 0x04, "Switch 2", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x04, 0x04, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x04, "Off" )
-	PORT_BIT ( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x20, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME (0x03, 0x03, "Coin B", IP_KEY_NONE )
@@ -151,13 +205,18 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x0c, "1 Coin/1 Credit" )
 	PORT_DIPSETTING (   0x08, "1 Coin/2 Credits" )
 	PORT_DIPSETTING (   0x04, "1 Coin/3 Credits" )
-	PORT_BIT ( 0x30, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME (0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x20, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
 	PORT_DIPNAME (0x40, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Upright" )
 	PORT_DIPSETTING (   0x40, "Cocktail" )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
 INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -209,6 +268,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,      /* 2 chips */
+	1500000,        /* 1.5 MHz ? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -218,7 +290,7 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 MHz ???? */
 			0,
 			readmem,writemem,0,0,
-			mystston_interrupt,1
+			mystston_interrupt,16	/* ? controls music tempo */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -238,7 +310,13 @@ static struct MachineDriver machine_driver =
 	mystston_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -253,26 +331,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mystston_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ms0", 0x4000, 0x2000, 0xdc153dbd )
-	ROM_LOAD( "ms1", 0x6000, 0x2000, 0xfee91da9 )
-	ROM_LOAD( "ms2", 0x8000, 0x2000, 0x6a8e9056 )
-	ROM_LOAD( "ms3", 0xa000, 0x2000, 0x01236275 )
-	ROM_LOAD( "ms4", 0xc000, 0x2000, 0x4b454e47 )
-	ROM_LOAD( "ms5", 0xe000, 0x2000, 0x3d2ed112 )
+	ROM_LOAD( "ms0", 0x4000, 0x2000, 0xdc153dbd , 0x6dacc05f )
+	ROM_LOAD( "ms1", 0x6000, 0x2000, 0xfee91da9 , 0xa3546df7 )
+	ROM_LOAD( "ms2", 0x8000, 0x2000, 0x6a8e9056 , 0x43bc6182 )
+	ROM_LOAD( "ms3", 0xa000, 0x2000, 0x01236275 , 0x9322222b )
+	ROM_LOAD( "ms4", 0xc000, 0x2000, 0x4b454e47 , 0x47cefe9b )
+	ROM_LOAD( "ms5", 0xe000, 0x2000, 0x3d2ed112 , 0xb37ae12b )
 
-	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ms6",  0x00000, 0x2000, 0x36d91451 )
-	ROM_LOAD( "ms7",  0x02000, 0x2000, 0x1c50b31a )
-	ROM_LOAD( "ms8",  0x04000, 0x2000, 0x8fa87372 )
-	ROM_LOAD( "ms9",  0x06000, 0x2000, 0xdb1e1106 )
-	ROM_LOAD( "ms10", 0x08000, 0x2000, 0xf58ef682 )
-	ROM_LOAD( "ms11", 0x0a000, 0x2000, 0xb435a9c1 )
-	ROM_LOAD( "ms12", 0x0c000, 0x2000, 0x86001ec2 )
-	ROM_LOAD( "ms13", 0x0e000, 0x2000, 0x9db56e87 )
-	ROM_LOAD( "ms14", 0x10000, 0x2000, 0x1406c3f8 )
-	ROM_LOAD( "ms15", 0x12000, 0x2000, 0x511f13b1 )
-	ROM_LOAD( "ms16", 0x14000, 0x2000, 0x382355d5 )
-	ROM_LOAD( "ms17", 0x16000, 0x2000, 0xf2d7eb01 )
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ms6", 0x00000, 0x2000, 0x36d91451 , 0x85c83806 )
+	ROM_LOAD( "ms7", 0x02000, 0x2000, 0x1c50b31a , 0xd025f84d )
+	ROM_LOAD( "ms8", 0x04000, 0x2000, 0x8fa87372 , 0x53765d89 )
+	ROM_LOAD( "ms9", 0x06000, 0x2000, 0xdb1e1106 , 0xb146c6ab )
+	ROM_LOAD( "ms10", 0x08000, 0x2000, 0xf58ef682 , 0xd85015b5 )
+	ROM_LOAD( "ms11", 0x0a000, 0x2000, 0xb435a9c1 , 0x919ee527 )
+	ROM_LOAD( "ms12", 0x0c000, 0x2000, 0x86001ec2 , 0x72d8331d )
+	ROM_LOAD( "ms13", 0x0e000, 0x2000, 0x9db56e87 , 0x845a1f9b )
+	ROM_LOAD( "ms14", 0x10000, 0x2000, 0x1406c3f8 , 0x822874b0 )
+	ROM_LOAD( "ms15", 0x12000, 0x2000, 0x511f13b1 , 0x4594e53c )
+	ROM_LOAD( "ms16", 0x14000, 0x2000, 0x382355d5 , 0x2f470b0f )
+	ROM_LOAD( "ms17", 0x16000, 0x2000, 0xf2d7eb01 , 0x38966d1b )
 ROM_END
 
 
@@ -327,7 +405,7 @@ struct GameDriver mystston_driver =
 	"1984",
 	"Technos",
 	"Nicola Salmoria\nMike Balfour\nBrad Oliver",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 
 	mystston_rom,
@@ -342,6 +420,3 @@ struct GameDriver mystston_driver =
 
 	hiload, hisave
 };
-
-
-

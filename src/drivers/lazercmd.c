@@ -422,14 +422,14 @@ static struct MachineDriver lazercmd_machine_driver =
 
 	ROM_START(lazercmd_rom)
 	ROM_REGION(0x8000)			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD("lc.e5", 0x0000, 0x0400, 0xb900090e)
-	ROM_LOAD("lc.e6", 0x0400, 0x0400, 0xc1fc0c0a)
-	ROM_LOAD("lc.e7", 0x0800, 0x0400, 0xc1c60304)
-	ROM_LOAD("lc.f5", 0x1000, 0x0400, 0xf09d030b)
-	ROM_LOAD("lc.f6", 0x1400, 0x0400, 0x16fb0a0d)
-	ROM_LOAD("lc.f7", 0x1800, 0x0400, 0x7d5b0103)
+	ROM_LOAD( "lc.e5", 0x0000, 0x0400, 0xb900090e, 0x56dc7a40 )
+	ROM_LOAD( "lc.e6", 0x0400, 0x0400, 0xc1fc0c0a, 0xb1ef0aa2 )
+	ROM_LOAD( "lc.e7", 0x0800, 0x0400, 0xc1c60304, 0x8e6ffc97 )
+	ROM_LOAD( "lc.f5", 0x1000, 0x0400, 0xf09d030b, 0xfc5b38a4 )
+	ROM_LOAD( "lc.f6", 0x1400, 0x0400, 0x16fb0a0d, 0x26eaee21 )
+	ROM_LOAD( "lc.f7", 0x1800, 0x0400, 0x7d5b0103, 0x9ec3534d )
 	ROM_REGION_DISPOSE(0x0c00)	   /* 4 times 32, 8x8 character generator */
-	ROM_LOAD("lc.b8", 0x0a00, 0x0200, 0x0f08dc74)
+	ROM_LOAD( "lc.b8", 0x0a00, 0x0200, 0x0f08dc74, 0x6d708edd )
 	ROM_END
 
 void lazercmd_rom_decode(void)

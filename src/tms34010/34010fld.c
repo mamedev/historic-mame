@@ -11,6 +11,10 @@
 #include "tms34010.h"
 #include "driver.h"
 
+#ifdef MAME_DEBUG
+extern int debug_key_pressed;
+#endif
+
 #define WFIELDMAC1(m) 													\
 	unsigned int shift = bitaddr&0x0f;     								\
 	unsigned int loword;				   								\
@@ -91,16 +95,7 @@ void WFIELD_16(unsigned int bitaddr, unsigned int data)
 {
 	if (bitaddr&0x0f)
 	{
-		unsigned int shift = bitaddr&0x0f;
-		unsigned int loword;
-		unsigned int hiword;
-		bitaddr &= 0xfffffff0;
-		loword = ((unsigned int) TMS34010_RDMEM_WORD(bitaddr>>3)&(0xffff>>(0x10-shift)));
-		hiword = ((unsigned int) TMS34010_RDMEM_WORD((bitaddr+16)>>3)&(0xffff<<shift));
-		data &= 0xffff;
-		TMS34010_WRMEM_WORD( bitaddr>>3,   ((data<<shift)|loword)&0xffff);
-		TMS34010_WRMEM_WORD((bitaddr+16)>>3,(data>>(0x10-shift))|hiword);
-//				if (errorlog) fprintf(errorlog,"l %04x,h %04x,l %04x,h %04x\n",loword,hiword,((((unsigned int) data)<<shift)|loword)&0xffff,(((unsigned int) data)>>(0x10-shift))|hiword);
+		WFIELDMAC1(0xffff);
 	}
 	else
 	{
@@ -109,48 +104,108 @@ void WFIELD_16(unsigned int bitaddr, unsigned int data)
 }
 void WFIELD_17(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"17-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_18(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"18-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_19(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"19-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_20(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"20-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_21(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"21-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_22(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"22-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_23(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"23-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_24(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"24-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_25(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"25-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_26(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"26-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_27(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"27-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_28(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"28-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_29(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"29-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_30(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"30-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_31(unsigned int bitaddr, unsigned int data)
 {
+	if (errorlog) fprintf(errorlog,"31-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 }
 void WFIELD_32(unsigned int bitaddr, unsigned int data)
 {
@@ -164,7 +219,6 @@ void WFIELD_32(unsigned int bitaddr, unsigned int data)
 		hiword = ((unsigned int) TMS34010_RDMEM_DWORD((bitaddr+32)>>3)&(0xffffffff<<shift));
 		TMS34010_WRMEM_DWORD( bitaddr>>3   ,(data<<shift)|loword);
 		TMS34010_WRMEM_DWORD((bitaddr+32)>>3,(data>>(0x20-shift))|hiword);
-//				if (errorlog) fprintf(errorlog,"l %08x,h %08x,l %08x,h %08x\n",loword,hiword,(((unsigned int) data)<<shift)|loword,(((unsigned int) data)>>(0x20-shift))|hiword);
 	}
 	else
 	{
@@ -174,14 +228,16 @@ void WFIELD_32(unsigned int bitaddr, unsigned int data)
 
 
 
-#define RFIELDMAC1(m)											\
+#define RFIELDMAC1(m)										\
 	unsigned int shift = bitaddr&0x0f;						\
 	bitaddr &= 0xfffffff0;									\
 	return ((TMS34010_RDMEM_DWORD(bitaddr>>3)>>shift)&(m))
 
 int RFIELD_01(unsigned int bitaddr)
 {
-	RFIELDMAC1(0x01);
+	unsigned int shift = bitaddr&0x0f;					
+	bitaddr &= 0xfffffff0;									
+	return (TMS34010_RDMEM_WORD(bitaddr>>3)>>shift)&1;
 }
 int RFIELD_02(unsigned int bitaddr)
 {
@@ -250,10 +306,7 @@ int RFIELD_16(unsigned int bitaddr)
 {
 	if (bitaddr&0x0f)
 	{
-		unsigned int shift = bitaddr&0x0f;
-		bitaddr &= 0xfffffff0;
-		return ((TMS34010_RDMEM_WORD (bitaddr>>3)   >>      shift) |
-			    (TMS34010_RDMEM_WORD ((bitaddr+16)>>3)<<(0x10-shift)))&0xffff;
+		RFIELDMAC1(0xffff);
 	}
 	else
 	{
@@ -262,62 +315,122 @@ int RFIELD_16(unsigned int bitaddr)
 }
 int RFIELD_17(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"17-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_18(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"18-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_19(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"19-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_20(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"20-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_21(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"21-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_22(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"22-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_23(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"23-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_24(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"24-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_25(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"25-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_26(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"26-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_27(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"27-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_28(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"28-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_29(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"29-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_30(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"30-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_31(unsigned int bitaddr)
 {
+	if (errorlog) fprintf(errorlog,"31-bit fields are not implemented!\n");
+#ifdef MAME_DEBUG
+	debug_key_pressed=1;
+#endif
 	return 0;
 }
 int RFIELD_32(unsigned int bitaddr)

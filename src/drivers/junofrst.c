@@ -369,29 +369,29 @@ static struct MachineDriver machine_driver =
 
 ROM_START( junofrst_rom )
 	ROM_REGION( 0x22000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "jfa_b9.bin", 0x0a000, 0x2000, 0x96fc9afe ) /* program ROMs */
-	ROM_LOAD( "jfb_b10.bin",0x0c000, 0x2000, 0x0603256f )
-	ROM_LOAD( "jfc_a10.bin",0x0e000, 0x2000, 0xa646f7fc )
+	ROM_LOAD( "jfa_b9.bin", 0x0a000, 0x2000, 0x96fc9afe , 0xf5a7ab9d ) /* program ROMs */
+	ROM_LOAD( "jfb_b10.bin", 0x0c000, 0x2000, 0x0603256f , 0xf20626e0 )
+	ROM_LOAD( "jfc_a10.bin", 0x0e000, 0x2000, 0xa646f7fc , 0x1e7744a7 )
 
-	ROM_LOAD( "jfc1_a4.bin", 0x10000, 0x2000, 0x6ff156c9 ) /* graphic and code ROMs (banked) */
-	ROM_LOAD( "jfc2_a5.bin", 0x12000, 0x2000, 0x98aa5112 )
-	ROM_LOAD( "jfc3_a6.bin", 0x14000, 0x2000, 0x3a80fdee )
-	ROM_LOAD( "jfc4_a7.bin", 0x16000, 0x2000, 0x02cdc3df )
-	ROM_LOAD( "jfc5_a8.bin", 0x18000, 0x2000, 0xd9cae0bc )
-	ROM_LOAD( "jfc6_a9.bin", 0x1a000, 0x2000, 0x32367f4a )
+	ROM_LOAD( "jfc1_a4.bin", 0x10000, 0x2000, 0x6ff156c9 , 0x03ccbf1d ) /* graphic and code ROMs (banked) */
+	ROM_LOAD( "jfc2_a5.bin", 0x12000, 0x2000, 0x98aa5112 , 0xcb372372 )
+	ROM_LOAD( "jfc3_a6.bin", 0x14000, 0x2000, 0x3a80fdee , 0x879d194b )
+	ROM_LOAD( "jfc4_a7.bin", 0x16000, 0x2000, 0x02cdc3df , 0xf28af80b )
+	ROM_LOAD( "jfc5_a8.bin", 0x18000, 0x2000, 0xd9cae0bc , 0x0539f328 )
+	ROM_LOAD( "jfc6_a9.bin", 0x1a000, 0x2000, 0x32367f4a , 0x1da2ad6e )
 
-	ROM_LOAD( "jfs3_c7.bin", 0x1c000, 0x2000, 0xc9718f5b )
-	ROM_LOAD( "jfs4_d7.bin", 0x1e000, 0x2000, 0x93c610ee )
-	ROM_LOAD( "jfs5_e7.bin", 0x20000, 0x2000, 0xd1b7bce9 )
+	ROM_LOAD( "jfs3_c7.bin", 0x1c000, 0x2000, 0xc9718f5b , 0xaeacf6db )
+	ROM_LOAD( "jfs4_d7.bin", 0x1e000, 0x2000, 0x93c610ee , 0x206d954c )
+	ROM_LOAD( "jfs5_e7.bin", 0x20000, 0x2000, 0xd1b7bce9 , 0x1eb87a6e )
 
 
-	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
+	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "jfs1_j3.bin", 0x0000, 0x1000, 0x27aefd76 )
-	ROM_LOAD( "jfs2_p4.bin", 0x1000, 0x1000, 0xb364d1e6 )
+	ROM_LOAD( "jfs1_j3.bin", 0x0000, 0x1000, 0x27aefd76 , 0x235a2893 )
+	ROM_LOAD( "jfs2_p4.bin", 0x1000, 0x1000, 0xb364d1e6 , 0xd0fa5d5f )
 ROM_END
 
 

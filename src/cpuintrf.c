@@ -806,6 +806,43 @@ double cpu_getscanlineperiod(void)
 }
 
 
+/***************************************************************************
+
+  Returns the number of cycles in a scanline
+
+ ***************************************************************************/
+int cpu_getscanlinecycles(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return TIME_TO_CYCLES (cpunum, scanline_period);
+}
+
+
+/***************************************************************************
+
+  Returns the number of cycles since the beginning of this frame
+
+ ***************************************************************************/
+int cpu_getcurrentcycles(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return TIME_TO_CYCLES (cpunum, timer_timeelapsed (refresh_timer));
+}
+
+
+/***************************************************************************
+
+  Returns the current horizontal beam position in pixels
+
+ ***************************************************************************/
+int cpu_gethorzbeampos(void)
+{
+	int scanlinecycles = cpu_getscanlinecycles();
+	int horzposcycles = cpu_getcurrentcycles() % scanlinecycles;
+
+	return (Machine->drv->screen_width * horzposcycles) / scanlinecycles;
+}
+
 
 void cpu_seticount(int cycles)
 {

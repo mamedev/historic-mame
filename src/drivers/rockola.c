@@ -830,22 +830,22 @@ static struct MachineDriver pballoon_machine_driver =
 
 ROM_START( sasuke_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "SC1",  0x4000, 0x0800, 0x12a881a4 )
-	ROM_LOAD( "SC2",  0x4800, 0x0800, 0xa1946562 )
-	ROM_LOAD( "SC3",  0x5000, 0x0800, 0x254da44f )
-	ROM_LOAD( "SC4",  0x5800, 0x0800, 0x4d01ee7b )
-	ROM_LOAD( "SC5",  0x6000, 0x0800, 0x5ec9b25f )
-	ROM_LOAD( "SC6",  0x6800, 0x0800, 0xbe8bec87 )
-	ROM_LOAD( "SC7",  0x7000, 0x0800, 0xb1e635b6 )
-	ROM_LOAD( "SC8",  0x7800, 0x0800, 0x87741232 )
+	ROM_LOAD( "sc1", 0x4000, 0x0800, 0x12a881a4 , 0x34cbbe03 )
+	ROM_LOAD( "sc2", 0x4800, 0x0800, 0xa1946562 , 0x38cc14f0 )
+	ROM_LOAD( "sc3", 0x5000, 0x0800, 0x254da44f , 0x54c41285 )
+	ROM_LOAD( "sc4", 0x5800, 0x0800, 0x4d01ee7b , 0x23edafcf )
+	ROM_LOAD( "sc5", 0x6000, 0x0800, 0x5ec9b25f , 0xca410e4f )
+	ROM_LOAD( "sc6", 0x6800, 0x0800, 0xbe8bec87 , 0x80406afb )
+	ROM_LOAD( "sc7", 0x7000, 0x0800, 0xb1e635b6 , 0x04d0f104 )
+	ROM_LOAD( "sc8", 0x7800, 0x0800, 0x87741232 , 0x0219104b )
 	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-	ROM_LOAD( "SC9",  0x8000, 0x0800, 0xa77bfbd5 )
-	ROM_LOAD( "SC10", 0x8800, 0x0800, 0x2f630cfd )
-	ROM_LOAD( "SC11", 0x9000, 0x0800, 0x082d1239 )
+	ROM_LOAD( "sc9", 0x8000, 0x0800, 0xa77bfbd5 , 0xd6ff889a )
+	ROM_LOAD( "sc10", 0x8800, 0x0800, 0x2f630cfd , 0x19df6b9a )
+	ROM_LOAD( "sc11", 0x9000, 0x0800, 0x082d1239 , 0x24a0e121 )
 
-	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "MCS_C", 0x0000, 0x0800, 0x84b9646f )
-	ROM_LOAD( "MCS_D", 0x0800, 0x0800, 0x4b6bdedf )
+	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mcs_c", 0x0000, 0x0800, 0x84b9646f , 0xaff9743d )
+	ROM_LOAD( "mcs_d", 0x0800, 0x0800, 0x4b6bdedf , 0x9c805120 )
 
 	ROM_REGION(0x0020)  /* color prom */
 	/* missing! */
@@ -855,81 +855,81 @@ ROM_END
 
 ROM_START( satansat_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "SS1",  0x4000, 0x0800, 0x48ea6052 )
-	ROM_LOAD( "SS2",  0x4800, 0x0800, 0x15c02424 )
-	ROM_LOAD( "SS3",  0x5000, 0x0800, 0xd6a4739a )
-	ROM_LOAD( "SS4",  0x5800, 0x0800, 0x6de8e7f2 )
-	ROM_LOAD( "SS5",  0x6000, 0x0800, 0x2b0d3f3b )
-	ROM_LOAD( "SS6",  0x6800, 0x0800, 0x1ca8acee )
-	ROM_LOAD( "SS7",  0x7000, 0x0800, 0xfbc89252 )
-	ROM_LOAD( "SS8",  0x7800, 0x0800, 0xc7440c84 )
+	ROM_LOAD( "ss1", 0x4000, 0x0800, 0x48ea6052 , 0x549dd13a )
+	ROM_LOAD( "ss2", 0x4800, 0x0800, 0x15c02424 , 0x04972fa8 )
+	ROM_LOAD( "ss3", 0x5000, 0x0800, 0xd6a4739a , 0x9caf9057 )
+	ROM_LOAD( "ss4", 0x5800, 0x0800, 0x6de8e7f2 , 0xe1bdcfe1 )
+	ROM_LOAD( "ss5", 0x6000, 0x0800, 0x2b0d3f3b , 0xd454de19 )
+	ROM_LOAD( "ss6", 0x6800, 0x0800, 0x1ca8acee , 0x7fbd5d30 )
+	ROM_LOAD( "ss7", 0x7000, 0x0800, 0xfbc89252 , 0x93ea2df9 )
+	ROM_LOAD( "ss8", 0x7800, 0x0800, 0xc7440c84 , 0xe67ec873 )
 	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-	ROM_LOAD( "SS9",  0x8000, 0x0800, 0x78362c82 )
-	ROM_LOAD( "SS10", 0x8800, 0x0800, 0xa6dd58a9 )
-	ROM_LOAD( "SS11", 0x9000, 0x0800, 0xa9c2a90a )
+	ROM_LOAD( "ss9", 0x8000, 0x0800, 0x78362c82 , 0x22c44650 )
+	ROM_LOAD( "ss10", 0x8800, 0x0800, 0xa6dd58a9 , 0x8f1b313a )
+	ROM_LOAD( "ss11", 0x9000, 0x0800, 0xa9c2a90a , 0xe74f98e0 )
 
-	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SS14", 0x0000, 0x0800, 0xbc67fa61 )
-	ROM_LOAD( "SS15", 0x0800, 0x0800, 0x2364fe46 )
+	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ss14", 0x0000, 0x0800, 0xbc67fa61 , 0xe837c62b )
+	ROM_LOAD( "ss15", 0x0800, 0x0800, 0x2364fe46 , 0x83f61623 )
 
 	ROM_REGION(0x0020)  /* color prom */
-	ROM_LOAD( "zarz138.03", 0x0000, 0x0020, 0xaf0225fc )
+	ROM_LOAD( "zarz138.03", 0x0000, 0x0020, 0xaf0225fc , 0x5dd6933a )
 
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
-	ROM_LOAD( "SS12", 0x0000, 0x0800, 0xc7de2350 )
-	ROM_LOAD( "SS13", 0x0800, 0x0800, 0x01380400 )
+	ROM_LOAD( "ss12", 0x0000, 0x0800, 0xc7de2350 , 0xdee01f24 )
+	ROM_LOAD( "ss13", 0x0800, 0x0800, 0x01380400 , 0x580934d2 )
 ROM_END
 
 ROM_START( zarzon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ZARZ122.07", 0x4000, 0x0800, 0xa260b9f8 )
-	ROM_LOAD( "ZARZ123.08", 0x4800, 0x0800, 0xf2b8072c )
-	ROM_LOAD( "ZARZ124.09", 0x5000, 0x0800, 0xdea47b9a )
-	ROM_LOAD( "ZARZ125.10", 0x5800, 0x0800, 0xa30532d5 )
-	ROM_LOAD( "ZARZ126.13", 0x6000, 0x0800, 0x043c84ba )
-	ROM_LOAD( "ZARZ127.14", 0x6800, 0x0800, 0xa3f1286b )
-	ROM_LOAD( "ZARZ128.15", 0x7000, 0x0800, 0xfbc89252 )
-	ROM_LOAD( "ZARZ129.16", 0x7800, 0x0800, 0xc7440c84 )
+	ROM_LOAD( "zarz122.07", 0x4000, 0x0800, 0xa260b9f8 , 0xbdfa67e2 )
+	ROM_LOAD( "zarz123.08", 0x4800, 0x0800, 0xf2b8072c , 0xd034e61e )
+	ROM_LOAD( "zarz124.09", 0x5000, 0x0800, 0xdea47b9a , 0x296397ea )
+	ROM_LOAD( "zarz125.10", 0x5800, 0x0800, 0xa30532d5 , 0x26dc5e66 )
+	ROM_LOAD( "zarz126.13", 0x6000, 0x0800, 0x043c84ba , 0xcee18d7f )
+	ROM_LOAD( "zarz127.14", 0x6800, 0x0800, 0xa3f1286b , 0xbbd2cc0d )
+	ROM_LOAD( "zarz128.15", 0x7000, 0x0800, 0xfbc89252 , 0x93ea2df9 )
+	ROM_LOAD( "zarz129.16", 0x7800, 0x0800, 0xc7440c84 , 0xe67ec873 )
 	ROM_RELOAD(             0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-	ROM_LOAD( "ZARZ130.22", 0x8000, 0x0800, 0x78362c82 )
-	ROM_LOAD( "ZARZ131.23", 0x8800, 0x0800, 0x566914b5 )
-	ROM_LOAD( "ZARZ132.24", 0x9000, 0x0800, 0x7c4f3143 )
+	ROM_LOAD( "zarz130.22", 0x8000, 0x0800, 0x78362c82 , 0x22c44650 )
+	ROM_LOAD( "zarz131.23", 0x8800, 0x0800, 0x566914b5 , 0x7be20678 )
+	ROM_LOAD( "zarz132.24", 0x9000, 0x0800, 0x7c4f3143 , 0x72b2cb76 )
 
-	ROM_REGION(0x1000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ZARZ135.73", 0x0000, 0x0800, 0xbc67fa61 )
-	ROM_LOAD( "ZARZ136.75", 0x0800, 0x0800, 0x2364fe46 )
+	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zarz135.73", 0x0000, 0x0800, 0xbc67fa61 , 0xe837c62b )
+	ROM_LOAD( "zarz136.75", 0x0800, 0x0800, 0x2364fe46 , 0x83f61623 )
 
 	ROM_REGION(0x0020)  /* color prom */
-	ROM_LOAD( "zarz138.03", 0x0000, 0x0020, 0xaf0225fc )
+	ROM_LOAD( "zarz138.03", 0x0000, 0x0020, 0xaf0225fc , 0x5dd6933a )
 
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
-	ROM_LOAD( "ZARZ133.53", 0x0000, 0x0800, 0x4b404b14 )
-	ROM_LOAD( "ZARZ134.54", 0x0800, 0x0800, 0x01380400 )
+	ROM_LOAD( "zarz133.53", 0x0000, 0x0800, 0x4b404b14 , 0xb253cf78 )
+	ROM_LOAD( "zarz134.54", 0x0800, 0x0800, 0x01380400 , 0x580934d2 )
 ROM_END
 
 ROM_START( vanguard_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sk4_ic07.bin", 0x4000, 0x1000, 0x8dd6cf9a )
-	ROM_LOAD( "sk4_ic08.bin", 0x5000, 0x1000, 0xa3740a46 )
-	ROM_LOAD( "sk4_ic09.bin", 0x6000, 0x1000, 0x27c429cc )
-	ROM_LOAD( "sk4_ic10.bin", 0x7000, 0x1000, 0x1e153237 )
-	ROM_LOAD( "sk4_ic13.bin", 0x8000, 0x1000, 0x32820c48 )
+	ROM_LOAD( "sk4_ic07.bin", 0x4000, 0x1000, 0x8dd6cf9a , 0x6a29e354 )
+	ROM_LOAD( "sk4_ic08.bin", 0x5000, 0x1000, 0xa3740a46 , 0x302bba54 )
+	ROM_LOAD( "sk4_ic09.bin", 0x6000, 0x1000, 0x27c429cc , 0x424755f6 )
+	ROM_LOAD( "sk4_ic10.bin", 0x7000, 0x1000, 0x1e153237 , 0x54603274 )
+	ROM_LOAD( "sk4_ic13.bin", 0x8000, 0x1000, 0x32820c48 , 0xfde157d0 )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "sk4_ic14.bin", 0x9000, 0x1000, 0x4b34aaea )
-	ROM_LOAD( "sk4_ic15.bin", 0xa000, 0x1000, 0x64432d1d )
-	ROM_LOAD( "sk4_ic16.bin", 0xb000, 0x1000, 0xb4d9810f )
+	ROM_LOAD( "sk4_ic14.bin", 0x9000, 0x1000, 0x4b34aaea , 0x0d5b47d0 )
+	ROM_LOAD( "sk4_ic15.bin", 0xa000, 0x1000, 0x64432d1d , 0x8549b8f8 )
+	ROM_LOAD( "sk4_ic16.bin", 0xb000, 0x1000, 0xb4d9810f , 0x062e0be2 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0x6a6bc3f7 )
-	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x7eb71bd1 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0x6a6bc3f7 , 0x0e899b23 )
+	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x7eb71bd1 , 0x96e87858 )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "sk5_ic7.bin", 0x0000, 0x0020, 0x5b6ec616 ) /* foreground colors */
-	ROM_LOAD( "sk5_ic6.bin", 0x0020, 0x0020, 0xa555896b ) /* background colors */
+	ROM_LOAD( "sk5_ic7.bin", 0x0000, 0x0020, 0x5b6ec616 , 0xad782a73 ) /* foreground colors */
+	ROM_LOAD( "sk5_ic6.bin", 0x0020, 0x0020, 0xa555896b , 0x7dc9d450 ) /* background colors */
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0x7f305f4c )  /* sound ROM 1 */
-	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xe6fb89fb )  /* sound ROM 2 */
+	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0x7f305f4c , 0xd2a64006 )  /* sound ROM 1 */
+	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xe6fb89fb , 0xcc4a0b6f )  /* sound ROM 2 */
 ROM_END
 
 static const char *vanguard_sample_names[] =
@@ -941,28 +941,28 @@ static const char *vanguard_sample_names[] =
 
 ROM_START( fantasy_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic12.cpu", 0x3000, 0x1000, 0xbe01e827 )
-	ROM_LOAD( "ic07.cpu", 0x4000, 0x1000, 0x66f038dc )
-	ROM_LOAD( "ic08.cpu", 0x5000, 0x1000, 0x89f3afb1 )
-	ROM_LOAD( "ic09.cpu", 0x6000, 0x1000, 0x3cc9498f )
-	ROM_LOAD( "ic10.cpu", 0x7000, 0x1000, 0x120a97b6 )
-	ROM_LOAD( "ic14.cpu", 0x8000, 0x1000, 0xf3845850 )
+	ROM_LOAD( "ic12.cpu", 0x3000, 0x1000, 0xbe01e827 , 0x22cb2249 )
+	ROM_LOAD( "ic07.cpu", 0x4000, 0x1000, 0x66f038dc , 0x0e2880b6 )
+	ROM_LOAD( "ic08.cpu", 0x5000, 0x1000, 0x89f3afb1 , 0x4c331317 )
+	ROM_LOAD( "ic09.cpu", 0x6000, 0x1000, 0x3cc9498f , 0x6ac1dbfc )
+	ROM_LOAD( "ic10.cpu", 0x7000, 0x1000, 0x120a97b6 , 0xc796a406 )
+	ROM_LOAD( "ic14.cpu", 0x8000, 0x1000, 0xf3845850 , 0x6f1f0698 )
 	ROM_RELOAD(           0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "ic15.cpu", 0x9000, 0x1000, 0xfa21e08f )
-	ROM_LOAD( "ic16.cpu", 0xa000, 0x1000, 0x757af434 )
-	ROM_LOAD( "ic17.cpu", 0xb000, 0x1000, 0xb5417a91 )
+	ROM_LOAD( "ic15.cpu", 0x9000, 0x1000, 0xfa21e08f , 0x5534d57e )
+	ROM_LOAD( "ic16.cpu", 0xa000, 0x1000, 0x757af434 , 0x6c2aeb6e )
+	ROM_LOAD( "ic17.cpu", 0xb000, 0x1000, 0xb5417a91 , 0xf6aa5de1 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic50.vid", 0x0000, 0x1000, 0xcfa87668 )
-	ROM_LOAD( "ic51.vid", 0x1000, 0x1000, 0xf9730c57 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic50.vid", 0x0000, 0x1000, 0xcfa87668 , 0x86a801c3 )
+	ROM_LOAD( "ic51.vid", 0x1000, 0x1000, 0xf9730c57 , 0x9dfff71c )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "fantasy.ic7", 0x0000, 0x0020, 0x5374e400 ) /* foreground colors */
-	ROM_LOAD( "fantasy.ic6", 0x0020, 0x0020, 0x55979ae3 ) /* background colors */
+	ROM_LOAD( "fantasy.ic7", 0x0000, 0x0020, 0x5374e400 , 0x361a5e99 ) /* foreground colors */
+	ROM_LOAD( "fantasy.ic6", 0x0020, 0x0020, 0x55979ae3 , 0x33d974f7 ) /* background colors */
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "ic51.cpu", 0x0000, 0x0800, 0xf433dd21 )
-	ROM_LOAD( "ic52.cpu", 0x0800, 0x0800, 0xd968fa48 )
+	ROM_LOAD( "ic51.cpu", 0x0000, 0x0800, 0xf433dd21 , 0x48094ec5 )
+	ROM_LOAD( "ic52.cpu", 0x0800, 0x0800, 0xd968fa48 , 0x1d0316e8 )
 
 /*	ROM_LOAD( "ic53.cpu", 0x????, 0x0800 ) ?? */
 /*	ROM_LOAD( "ic07.dau", 0x????, 0x0800 ) ?? */
@@ -972,79 +972,79 @@ ROM_END
 
 ROM_START( pballoon_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "sk7_ic12.bin", 0x3000, 0x1000, 0x9fef177d )
-	ROM_LOAD( "sk7_ic07.bin", 0x4000, 0x1000, 0x04216b23 )
-	ROM_LOAD( "sk7_ic08.bin", 0x5000, 0x1000, 0xc186fcb8 )
-	ROM_LOAD( "sk7_ic09.bin", 0x6000, 0x1000, 0x45265972 )
-	ROM_LOAD( "sk7_ic10.bin", 0x7000, 0x1000, 0xf7c9c595 )
-	ROM_LOAD( "sk7_ic14.bin", 0x8000, 0x1000, 0x1862375a )
+	ROM_LOAD( "sk7_ic12.bin", 0x3000, 0x1000, 0x9fef177d , 0xdfe2ae05 )
+	ROM_LOAD( "sk7_ic07.bin", 0x4000, 0x1000, 0x04216b23 , 0x736e67df )
+	ROM_LOAD( "sk7_ic08.bin", 0x5000, 0x1000, 0xc186fcb8 , 0x7a2032b2 )
+	ROM_LOAD( "sk7_ic09.bin", 0x6000, 0x1000, 0x45265972 , 0x2d63cf3a )
+	ROM_LOAD( "sk7_ic10.bin", 0x7000, 0x1000, 0xf7c9c595 , 0x7b88cbd4 )
+	ROM_LOAD( "sk7_ic14.bin", 0x8000, 0x1000, 0x1862375a , 0x6a8817a5 )
 	ROM_RELOAD(               0xf000, 0x1000 )  /* for the reset and interrupt vectors */
-	ROM_LOAD( "sk7_ic15.bin", 0x9000, 0x1000, 0x7ed30423 )
+	ROM_LOAD( "sk7_ic15.bin", 0x9000, 0x1000, 0x7ed30423 , 0x1f78d814 )
 
-	ROM_REGION(0x2000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sk8_ic50.bin", 0x0000, 0x1000, 0xda255685 )
-	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd40a2fd2 )
+	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sk8_ic50.bin", 0x0000, 0x1000, 0xda255685 , 0x560df07f )
+	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd40a2fd2 , 0xd415de51 )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "sk8_ic7.bin", 0x0000, 0x0020, 0x43259b2d ) /* foreground colors */
-	ROM_LOAD( "sk8_ic6.bin", 0x0020, 0x0020, 0x6fc0b0ca ) /* background colors */
+	ROM_LOAD( "sk8_ic7.bin", 0x0000, 0x0020, 0x43259b2d , 0xef6c82a0 ) /* foreground colors */
+	ROM_LOAD( "sk8_ic6.bin", 0x0020, 0x0020, 0x6fc0b0ca , 0xeabc6a00 ) /* background colors */
 
 	ROM_REGION(0x1800)  /* space for the sound ROMs */
-	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0xecf5012f )  /* sound ROM 1 */
-	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0xfe490c2f )  /* sound ROM 2 */
-	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0x1dee0008 )  /* sound ROM 3 */
+	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0xecf5012f , 0x0345f8b7 )  /* sound ROM 1 */
+	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0xfe490c2f , 0x5d6d68ea )  /* sound ROM 2 */
+	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0x1dee0008 , 0xa4c505cd )  /* sound ROM 3 */
 ROM_END
 
 ROM_START( nibbler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC12", 0x3000, 0x1000, 0x63b52ccf )
-	ROM_LOAD( "IC07", 0x4000, 0x1000, 0x5de3931d )
-	ROM_LOAD( "IC08", 0x5000, 0x1000, 0x4f2b5fc9 )
-	ROM_LOAD( "IC09", 0x6000, 0x1000, 0x157dbec5 )
-	ROM_LOAD( "IC10", 0x7000, 0x1000, 0xa04d2ef5 )
-	ROM_LOAD( "IC14", 0x8000, 0x1000, 0x4d9217c2 )
+	ROM_LOAD( "ic12", 0x3000, 0x1000, 0x63b52ccf , 0x6dfa1be5 )
+	ROM_LOAD( "ic07", 0x4000, 0x1000, 0x5de3931d , 0x808e1a03 )
+	ROM_LOAD( "ic08", 0x5000, 0x1000, 0x4f2b5fc9 , 0x1571d4a2 )
+	ROM_LOAD( "ic09", 0x6000, 0x1000, 0x157dbec5 , 0xa599df10 )
+	ROM_LOAD( "ic10", 0x7000, 0x1000, 0xa04d2ef5 , 0xa6b5abe5 )
+	ROM_LOAD( "ic14", 0x8000, 0x1000, 0x4d9217c2 , 0x9f537185 )
 	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "IC15", 0x9000, 0x1000, 0x88b3edc7 )
-	ROM_LOAD( "IC16", 0xa000, 0x1000, 0x7a1d25a9 )
-	ROM_LOAD( "IC17", 0xb000, 0x1000, 0xd000eafc )
+	ROM_LOAD( "ic15", 0x9000, 0x1000, 0x88b3edc7 , 0x7205fb8d )
+	ROM_LOAD( "ic16", 0xa000, 0x1000, 0x7a1d25a9 , 0x4bb39815 )
+	ROM_LOAD( "ic17", 0xb000, 0x1000, 0xd000eafc , 0xed680f19 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC50", 0x0000, 0x1000, 0x2bc0b3f0 )
-	ROM_LOAD( "IC51", 0x1000, 0x1000, 0x27bd8de9 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic50", 0x0000, 0x1000, 0x2bc0b3f0 , 0x01d4d0c2 )
+	ROM_LOAD( "ic51", 0x1000, 0x1000, 0x27bd8de9 , 0xfeff7faf )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "ic7", 0x0000, 0x0020, 0x838d95ad ) /* foreground colors */
-	ROM_LOAD( "ic6", 0x0020, 0x0020, 0x583f8e3f ) /* background colors */
+	ROM_LOAD( "ic7", 0x0000, 0x0020, 0x838d95ad , 0xa5709ff3 ) /* foreground colors */
+	ROM_LOAD( "ic6", 0x0020, 0x0020, 0x583f8e3f , 0xdacd592d ) /* background colors */
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "G960-45.53", 0x0000, 0x0800, 0xaafe2944 )
-	ROM_LOAD( "IC52", 0x0800, 0x0800, 0x9ad746f9 )
+	ROM_LOAD( "g960-45.53", 0x0000, 0x0800, 0xaafe2944 , 0x33189917 )
+	ROM_LOAD( "ic52", 0x0800, 0x0800, 0x9ad746f9 , 0x87d67dee )
 ROM_END
 
 ROM_START( nibblera_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "G960-52.12", 0x3000, 0x1000, 0xdb018bff )
-	ROM_LOAD( "G960-48.07", 0x4000, 0x1000, 0xe07e2a60 )
-	ROM_LOAD( "G960-49.08", 0x5000, 0x1000, 0x9499252b )
-	ROM_LOAD( "G960-50.09", 0x6000, 0x1000, 0xa06e7e18 )
-	ROM_LOAD( "G960-51.10", 0x7000, 0x1000, 0x5fddf069 )
-	ROM_LOAD( "G960-53.14", 0x8000, 0x1000, 0xb4cd5f77 )
+	ROM_LOAD( "g960-52.12", 0x3000, 0x1000, 0xdb018bff , 0xac6a802b )
+	ROM_LOAD( "g960-48.07", 0x4000, 0x1000, 0xe07e2a60 , 0x35971364 )
+	ROM_LOAD( "g960-49.08", 0x5000, 0x1000, 0x9499252b , 0x6b33b806 )
+	ROM_LOAD( "g960-50.09", 0x6000, 0x1000, 0xa06e7e18 , 0x91a4f98d )
+	ROM_LOAD( "g960-51.10", 0x7000, 0x1000, 0x5fddf069 , 0xa151d934 )
+	ROM_LOAD( "g960-53.14", 0x8000, 0x1000, 0xb4cd5f77 , 0x063f05cc )
 	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "G960-54.15", 0x9000, 0x1000, 0x88b3edc7 )
-	ROM_LOAD( "G960-55.16", 0xa000, 0x1000, 0x7a1d25a9 )
-	ROM_LOAD( "G960-56.17", 0xb000, 0x1000, 0xd000eafc )
+	ROM_LOAD( "g960-54.15", 0x9000, 0x1000, 0x88b3edc7 , 0x7205fb8d )
+	ROM_LOAD( "g960-55.16", 0xa000, 0x1000, 0x7a1d25a9 , 0x4bb39815 )
+	ROM_LOAD( "g960-56.17", 0xb000, 0x1000, 0xd000eafc , 0xed680f19 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "G960-57.50", 0x0000, 0x1000, 0x2bc0b3f0 )
-	ROM_LOAD( "G960-58.51", 0x1000, 0x1000, 0xab79f1ad )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g960-57.50", 0x0000, 0x1000, 0x2bc0b3f0 , 0x01d4d0c2 )
+	ROM_LOAD( "g960-58.51", 0x1000, 0x1000, 0xab79f1ad , 0x04b7e54f )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "ic7", 0x0000, 0x0020, 0x838d95ad ) /* foreground colors */
-	ROM_LOAD( "ic6", 0x0020, 0x0020, 0x583f8e3f ) /* background colors */
+	ROM_LOAD( "ic7", 0x0000, 0x0020, 0x838d95ad , 0xa5709ff3 ) /* foreground colors */
+	ROM_LOAD( "ic6", 0x0020, 0x0020, 0x583f8e3f , 0xdacd592d ) /* background colors */
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "G960-45.53", 0x0000, 0x0800, 0xaafe2944 )
-	ROM_LOAD( "G960-44.52", 0x0800, 0x0800, 0x9ad646f8 )
+	ROM_LOAD( "g960-45.53", 0x0000, 0x0800, 0xaafe2944 , 0x33189917 )
+	ROM_LOAD( "g960-44.52", 0x0800, 0x0800, 0x9ad646f8 , 0x5b443702 )
 ROM_END
 
 

@@ -470,137 +470,137 @@ static struct MachineDriver machine_driver =
 
 ROM_START( galaga_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec , 0xa3a0f743 )
+	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 , 0x43bb0d5c )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 , 0x753ce503 )
+	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 , 0x83874442 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 , 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b , 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae , 0xdd6f1afc )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 , 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 , 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 , 0xb6f585fb )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d , 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 , 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 )
+	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 , 0x86d92b24 )
 ROM_END
 
 ROM_START( galagamw_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
+	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf , 0x3ef0b053 )
+	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b , 0x1b280831 )
+	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 , 0x16233d33 )
+	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b , 0x0aaf5c23 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 , 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b , 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae , 0xdd6f1afc )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 , 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 , 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 , 0xb6f585fb )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
+	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 , 0xbc556e76 )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c , 0xb07f0aa4 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 )
+	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 , 0x86d92b24 )
 ROM_END
 
 ROM_START( galagads_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
+	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf , 0x3ef0b053 )
+	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b , 0x1b280831 )
+	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 , 0x16233d33 )
+	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b , 0x0aaf5c23 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 , 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b , 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae , 0xdd6f1afc )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 , 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 , 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 , 0xb6f585fb )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0xe8074051 )
+	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0xe8074051 , 0x7419f373 )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c , 0xb07f0aa4 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 )
+	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 , 0x86d92b24 )
 ROM_END
 
 ROM_START( gallag_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "gallag.2",    0x1000, 0x1000, 0x7ca470a4 )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec , 0xa3a0f743 )
+	ROM_LOAD( "gallag.2", 0x1000, 0x1000, 0x7ca470a4 , 0x5eda60a7 )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 , 0x753ce503 )
+	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 , 0x83874442 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gallag.8", 0x0000, 0x1000, 0x0c670ff9 , 0x169a98a4 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b , 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae , 0xdd6f1afc )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 , 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 , 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 , 0xb6f585fb )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d , 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 , 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 )
+	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 , 0x86d92b24 )
 ROM_END
 
 ROM_START( galagab2_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "g1",          0x0000, 0x1000, 0x7aecbece )
-	ROM_LOAD( "g2",          0x1000, 0x1000, 0xb778a4da )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "g4",          0x3000, 0x1000, 0x21f8c6ba )
+	ROM_LOAD( "g1", 0x0000, 0x1000, 0x7aecbece , 0xab036c9f )
+	ROM_LOAD( "g2", 0x1000, 0x1000, 0xb778a4da , 0xd9232240 )
+	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 , 0x753ce503 )
+	ROM_LOAD( "g4", 0x3000, 0x1000, 0x21f8c6ba , 0x499fcc76 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gallag.8", 0x0000, 0x1000, 0x0c670ff9 , 0x169a98a4 )
+	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b , 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae , 0xdd6f1afc )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 , 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 , 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 , 0xb6f585fb )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d , 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 , 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 )
+	ROM_LOAD( "1d.bin", 0x0000, 0x0100, 0x33940c04 , 0x86d92b24 )
 ROM_END
 
 

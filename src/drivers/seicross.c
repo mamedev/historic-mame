@@ -308,47 +308,85 @@ static struct MachineDriver machine_driver =
 
 ROM_START( seicross_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "smc1", 0x0000, 0x1000, 0x05933acb )
-	ROM_LOAD( "smc2", 0x1000, 0x1000, 0xc2e976d5 )
-	ROM_LOAD( "smc3", 0x2000, 0x1000, 0x2a0a1a9a )
-	ROM_LOAD( "smc4", 0x3000, 0x1000, 0xed8b26a7 )
-	ROM_LOAD( "smc5", 0x4000, 0x1000, 0x17996809 )
-	ROM_LOAD( "smc6", 0x5000, 0x1000, 0x4ef8da3e )
-	ROM_LOAD( "smc7", 0x6000, 0x1000, 0xd30a5b96 )
-	ROM_LOAD( "smc8", 0x7000, 0x0800, 0xd8629306 )
+	ROM_LOAD( "smc1", 0x0000, 0x1000, 0x05933acb , 0xf6c3aeca )
+	ROM_LOAD( "smc2", 0x1000, 0x1000, 0xc2e976d5 , 0x0ec6c218 )
+	ROM_LOAD( "smc3", 0x2000, 0x1000, 0x2a0a1a9a , 0xceb3c8f4 )
+	ROM_LOAD( "smc4", 0x3000, 0x1000, 0xed8b26a7 , 0x3112af59 )
+	ROM_LOAD( "smc5", 0x4000, 0x1000, 0x17996809 , 0xb494a993 )
+	ROM_LOAD( "smc6", 0x5000, 0x1000, 0x4ef8da3e , 0x09d5b9da )
+	ROM_LOAD( "smc7", 0x6000, 0x1000, 0xd30a5b96 , 0x13052b03 )
+	ROM_LOAD( "smc8", 0x7000, 0x0800, 0xd8629306 , 0x2093461d )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "smcc", 0x0000, 0x1000, 0x7c5e0864 )
-	ROM_LOAD( "smcd", 0x1000, 0x1000, 0x7e8ee1ca )
-	ROM_LOAD( "smca", 0x2000, 0x1000, 0x006b5bd9 )
-	ROM_LOAD( "smcb", 0x3000, 0x1000, 0x44a1bb81 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "smcc", 0x0000, 0x1000, 0x7c5e0864 , 0xfbd9b91d )
+	ROM_LOAD( "smcd", 0x1000, 0x1000, 0x7e8ee1ca , 0xc3c953c4 )
+	ROM_LOAD( "smca", 0x2000, 0x1000, 0x006b5bd9 , 0x4819f0cd )
+	ROM_LOAD( "smcb", 0x3000, 0x1000, 0x44a1bb81 , 0x4c268778 )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "sz73", 0x0000, 0x0020, 0x8815560f )
-	ROM_LOAD( "sz74", 0x0020, 0x0020, 0x2d1fbd85 )
+	ROM_LOAD( "sz73", 0x0000, 0x0020, 0x8815560f , 0x4d218a3c )
+	ROM_LOAD( "sz74", 0x0020, 0x0020, 0x2d1fbd85 , 0xc550531c )
 ROM_END
 
 ROM_START( friskyt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ftom.01",   0x0000, 0x1000, 0xb470690c )
-	ROM_LOAD( "ftom.02",   0x1000, 0x1000, 0x3ed50877 )
-	ROM_LOAD( "ftom.03",   0x2000, 0x1000, 0xf7a4dfdc )
-	ROM_LOAD( "ftom.04",   0x3000, 0x1000, 0xa3524850 )
-	ROM_LOAD( "ftom.05",   0x4000, 0x1000, 0x5e0a3478 )
-	ROM_LOAD( "ftom.06",   0x5000, 0x1000, 0xddcd90b3 )
-	ROM_LOAD( "ftom.07",   0x6000, 0x1000, 0x7a9bb4b9 )
-	ROM_LOAD( "ft8_8.rom", 0x7000, 0x0800, 0x53d8d1b2 )
+	ROM_LOAD( "ftom.01", 0x0000, 0x1000, 0xb470690c , 0xbce5d486 )
+	ROM_LOAD( "ftom.02", 0x1000, 0x1000, 0x3ed50877 , 0x63157d6e )
+	ROM_LOAD( "ftom.03", 0x2000, 0x1000, 0xf7a4dfdc , 0xc8d9ef2c )
+	ROM_LOAD( "ftom.04", 0x3000, 0x1000, 0xa3524850 , 0x23a01aac )
+	ROM_LOAD( "ftom.05", 0x4000, 0x1000, 0x5e0a3478 , 0xbfaf702a )
+	ROM_LOAD( "ftom.06", 0x5000, 0x1000, 0xddcd90b3 , 0xbce70b9c )
+	ROM_LOAD( "ftom.07", 0x6000, 0x1000, 0x7a9bb4b9 , 0xb2ef303a )
+	ROM_LOAD( "ft8_8.rom", 0x7000, 0x0800, 0x53d8d1b2 , 0x10461a24 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ftom.11", 0x0000, 0x1000, 0xd04cb5a0 )
-	ROM_LOAD( "ftom.12", 0x1000, 0x1000, 0x72890739 )
-	ROM_LOAD( "ftom.09", 0x2000, 0x1000, 0x4f95d4dd )
-	ROM_LOAD( "ftom.10", 0x3000, 0x1000, 0x9450edb0 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ftom.11", 0x0000, 0x1000, 0xd04cb5a0 , 0x1ec6ff65 )
+	ROM_LOAD( "ftom.12", 0x1000, 0x1000, 0x72890739 , 0x3b8f40b5 )
+	ROM_LOAD( "ftom.09", 0x2000, 0x1000, 0x4f95d4dd , 0x60642f25 )
+	ROM_LOAD( "ftom.10", 0x3000, 0x1000, 0x9450edb0 , 0x07b9dcfc )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "ft.9c", 0x0000, 0x0020, 0x17a5a81d )
-	ROM_LOAD( "ft.9b", 0x0020, 0x0020, 0x7eefcabf )
+	ROM_LOAD( "ft.9c", 0x0000, 0x0020, 0x17a5a81d , 0x0032167e )
+	ROM_LOAD( "ft.9b", 0x0020, 0x0020, 0x7eefcabf , 0x6b364e69 )
 ROM_END
+
+
+
+static int seicross_hiload(void)
+{
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+        /* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x7ad4],"\x00\x50\x02",3) == 0)
+        {
+                void *f;
+
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&RAM[0x7ad4],6*5);
+                        osd_fclose(f);
+                }
+
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void seicross_hisave(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0x7ad4],6*5);
+                osd_fclose(f);
+        }
+}
+
 
 
 struct GameDriver friskyt_driver =
@@ -398,5 +436,5 @@ struct GameDriver seicross_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	seicross_hiload, seicross_hisave
 };

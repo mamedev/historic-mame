@@ -409,21 +409,21 @@ static struct MachineDriver maketrax_machine_driver =
 
 ROM_START( maketrax_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "maketrax.6e", 0x0000, 0x1000, 0xb25ba5a5 )
-	ROM_LOAD( "maketrax.6f", 0x1000, 0x1000, 0xbe0c6060 )
-	ROM_LOAD( "maketrax.6h", 0x2000, 0x1000, 0x59fca6a6 )
-	ROM_LOAD( "maketrax.6j", 0x3000, 0x1000, 0xc5ad1d1d )
+	ROM_LOAD( "maketrax.6e", 0x0000, 0x1000, 0xb25ba5a5 , 0x0150fb4a )
+	ROM_LOAD( "maketrax.6f", 0x1000, 0x1000, 0xbe0c6060 , 0x77531691 )
+	ROM_LOAD( "maketrax.6h", 0x2000, 0x1000, 0x59fca6a6 , 0xa2cdc51e )
+	ROM_LOAD( "maketrax.6j", 0x3000, 0x1000, 0xc5ad1d1d , 0x0b4b5e0a )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "maketrax.5e", 0x0000, 0x1000, 0xf4366ee0 )
-	ROM_LOAD( "maketrax.5f", 0x1000, 0x1000, 0x4a383bfc )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "maketrax.5e", 0x0000, 0x1000, 0xf4366ee0 , 0x91bad2da )
+	ROM_LOAD( "maketrax.5f", 0x1000, 0x1000, 0x4a383bfc , 0xaea79f55 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "maketrax.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "maketrax.pr2", 0x0010, 0x0080, 0x0f38090c )
+	ROM_LOAD( "maketrax.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "maketrax.pr2", 0x0010, 0x0080, 0x0f38090c , 0xa8596d01 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "maketrax.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "maketrax.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 

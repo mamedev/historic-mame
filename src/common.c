@@ -986,7 +986,6 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				break;
 
 			case TRANSPARENCY_PENS:
-				trans4 = transparent_color * 0x01010101;
 #define PEN_IS_OPAQUE ((1<<col)&transparent_color) == 0
 
 				if (flipx) /* X flip */
@@ -998,17 +997,15 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) -3);
 						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
+							col4=read_dword(sd4);
+							col = (col4>>24)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
+							col = (col4>>16)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
+							col = (col4>>8)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
+							col = col4&0xff;
+							if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
 							sd4--;
 						}
 						sd = (unsigned char *)sd4+3;
@@ -1029,17 +1026,15 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
 						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
+							col4=read_dword(sd4);
+							col = col4&0xff;
+							if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
+							col = (col4>>8)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
+							col = (col4>>16)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
+							col = (col4>>24)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
 							sd4++;
 						}
 						sd = (unsigned char *)sd4;
@@ -1558,7 +1553,6 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 				break;
 
 			case TRANSPARENCY_PENS:
-				trans4 = transparent_color * 0x01010101;
 #define PEN_IS_OPAQUE ((1<<col)&transparent_color) == 0
 
 				if (flipx) /* X flip */
@@ -1570,17 +1564,15 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) -3);
 						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
+							col4=read_dword(sd4);
+							col = (col4>>24)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
+							col = (col4>>16)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
+							col = (col4>>8)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
+							col = col4&0xff;
+							if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
 							sd4--;
 						}
 						sd = (unsigned char *)sd4+3;
@@ -1601,17 +1593,15 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
 						for( bm += sx ; bm <= bme-3 ; bm+=4 )
 						{
-							if ((col4=read_dword(sd4)) != trans4)
-							{
-								col = col4&0xff;
-								if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
-								col = (col4>>8)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
-								col = (col4>>16)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
-								col = (col4>>24)&0xff;
-								if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
-							}
+							col4=read_dword(sd4);
+							col = col4&0xff;
+							if (PEN_IS_OPAQUE) bm[BL0] = paldata[col];
+							col = (col4>>8)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL1] = paldata[col];
+							col = (col4>>16)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL2] = paldata[col];
+							col = (col4>>24)&0xff;
+							if (PEN_IS_OPAQUE) bm[BL3] = paldata[col];
 							sd4++;
 						}
 						sd = (unsigned char *)sd4;

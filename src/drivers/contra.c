@@ -364,101 +364,138 @@ static struct MachineDriver contra_machine_driver =
 
 ROM_START( contra_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
-	ROM_LOAD( "633E03.18A", 0x20000, 0x08000, 0xbe527910 )
+	ROM_LOAD( "633e03.18a", 0x20000, 0x08000, 0xbe527910 , 0x7fc0d8cf )
 	ROM_CONTINUE(           0x08000, 0x08000 )
-	ROM_LOAD( "633E02.17A", 0x10000, 0x10000, 0x5896aac0 )
+	ROM_LOAD( "633e02.17a", 0x10000, 0x10000, 0x5896aac0 , 0xb2f7bd9a )
 
-	ROM_REGION(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "G-7.ROM",  0x00000, 0x10000, 0x9604ff70 )	/* foreground tiles */
-	ROM_LOAD( "G-10.ROM", 0x10000, 0x10000, 0x5aaedcd8 )
-	ROM_LOAD( "G-9.ROM",  0x20000, 0x10000, 0x4507411d )
-	ROM_LOAD( "G-8.ROM",  0x30000, 0x10000, 0x2a2885a6 )
-	ROM_LOAD( "G-4.ROM",  0x40000, 0x10000, 0x8f3dce9d )	/* background tiles */
-	ROM_LOAD( "G-5.ROM",  0x50000, 0x10000, 0xfc164a46 )
-	ROM_LOAD( "G-6.ROM",  0x60000, 0x10000, 0x647d9bfb )
+	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
+	ROM_LOAD( "g-7.rom", 0x00000, 0x10000, 0x9604ff70 , 0x57f467d2 )	/* foreground tiles */
+	ROM_LOAD( "g-10.rom", 0x10000, 0x10000, 0x5aaedcd8 , 0xe6db9685 )
+	ROM_LOAD( "g-9.rom", 0x20000, 0x10000, 0x4507411d , 0x875c61de )
+	ROM_LOAD( "g-8.rom", 0x30000, 0x10000, 0x2a2885a6 , 0x642765d6 )
+	ROM_LOAD( "g-4.rom", 0x40000, 0x10000, 0x8f3dce9d , 0x2cc7e52c )	/* background tiles */
+	ROM_LOAD( "g-5.rom", 0x50000, 0x10000, 0xfc164a46 , 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom", 0x60000, 0x10000, 0x647d9bfb , 0xaeea6744 )
 	/* 0x70000 is unpopulated */
-	ROM_LOAD( "G-11.ROM", 0x80000, 0x10000, 0xf9bfc617 )	/* enemy sprites */
-	ROM_LOAD( "G-12.ROM", 0x90000, 0x10000, 0x6034f3c4 )
-	ROM_LOAD( "G-13.ROM", 0xA0000, 0x10000, 0x6348373a )
-	ROM_LOAD( "G-14.ROM", 0xB0000, 0x10000, 0x3ad2d46c )
-	ROM_LOAD( "G-15.ROM", 0xC0000, 0x10000, 0x8d51d22d )	/* player sprites */
-	ROM_LOAD( "G-16.ROM", 0xD0000, 0x10000, 0xcc2341bf )
-	ROM_LOAD( "G-17.ROM", 0xE0000, 0x10000, 0xc4abe365 )
-	ROM_LOAD( "G-18.ROM", 0xF0000, 0x10000, 0x17b9e7a7 )
+	ROM_LOAD( "g-11.rom", 0x80000, 0x10000, 0xf9bfc617 , 0xbd9ba92c )	/* enemy sprites */
+	ROM_LOAD( "g-12.rom", 0x90000, 0x10000, 0x6034f3c4 , 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom", 0xA0000, 0x10000, 0x6348373a , 0x2b513d12 )
+	ROM_LOAD( "g-14.rom", 0xB0000, 0x10000, 0x3ad2d46c , 0xfca77c5a )
+	ROM_LOAD( "g-15.rom", 0xC0000, 0x10000, 0x8d51d22d , 0xdaa2324b )	/* player sprites */
+	ROM_LOAD( "g-16.rom", 0xD0000, 0x10000, 0xcc2341bf , 0xe27cc835 )
+	ROM_LOAD( "g-17.rom", 0xE0000, 0x10000, 0xc4abe365 , 0xce4330b9 )
+	ROM_LOAD( "g-18.rom", 0xF0000, 0x10000, 0x17b9e7a7 , 0x1571ce42 )
 
 	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633E09.12G", 0x0000, 0x0100, 0x83b90005 )	/* fg lookup table */
-	ROM_LOAD( "633E08.10G", 0x0100, 0x0100, 0x75af0007 )	/* ? bg lookup table ? */
+	ROM_LOAD( "633e09.12g", 0x0000, 0x0100, 0x83b90005 , 0x14ca5e19 )	/* fg lookup table */
+	ROM_LOAD( "633e08.10g", 0x0100, 0x0100, 0x75af0007 , 0x9f0949fa )	/* ? bg lookup table ? */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633E01.12A", 0x08000, 0x08000, 0x88f7a4c3 )
+	ROM_LOAD( "633e01.12a", 0x08000, 0x08000, 0x88f7a4c3 , 0xd1549255 )
 ROM_END
 
 ROM_START( contrab_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
-	ROM_LOAD( "contra.20",  0x20000, 0x08000, 0xd1f77183 )
+	ROM_LOAD( "contra.20", 0x20000, 0x08000, 0xd1f77183 , 0xd045e1da )
 	ROM_CONTINUE(           0x08000, 0x08000 )
-	ROM_LOAD( "633E02.17A", 0x10000, 0x10000, 0x5896aac0 )
+	ROM_LOAD( "633e02.17a", 0x10000, 0x10000, 0x5896aac0 , 0xb2f7bd9a )
 
-	ROM_REGION(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "G-7.ROM",  0x00000, 0x10000, 0x9604ff70 )	/* foreground tiles */
-	ROM_LOAD( "G-10.ROM", 0x10000, 0x10000, 0x5aaedcd8 )
-	ROM_LOAD( "G-9.ROM",  0x20000, 0x10000, 0x4507411d )
-	ROM_LOAD( "G-8.ROM",  0x30000, 0x10000, 0x2a2885a6 )
-	ROM_LOAD( "G-4.ROM",  0x40000, 0x10000, 0x8f3dce9d )	/* background tiles */
-	ROM_LOAD( "G-5.ROM",  0x50000, 0x10000, 0xfc164a46 )
-	ROM_LOAD( "G-6.ROM",  0x60000, 0x10000, 0x647d9bfb )
+	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
+	ROM_LOAD( "g-7.rom", 0x00000, 0x10000, 0x9604ff70 , 0x57f467d2 )	/* foreground tiles */
+	ROM_LOAD( "g-10.rom", 0x10000, 0x10000, 0x5aaedcd8 , 0xe6db9685 )
+	ROM_LOAD( "g-9.rom", 0x20000, 0x10000, 0x4507411d , 0x875c61de )
+	ROM_LOAD( "g-8.rom", 0x30000, 0x10000, 0x2a2885a6 , 0x642765d6 )
+	ROM_LOAD( "g-4.rom", 0x40000, 0x10000, 0x8f3dce9d , 0x2cc7e52c )	/* background tiles */
+	ROM_LOAD( "g-5.rom", 0x50000, 0x10000, 0xfc164a46 , 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom", 0x60000, 0x10000, 0x647d9bfb , 0xaeea6744 )
 	/* 0x70000 is unpopulated */
-	ROM_LOAD( "G-11.ROM", 0x80000, 0x10000, 0xf9bfc617 )	/* enemy sprites */
-	ROM_LOAD( "G-12.ROM", 0x90000, 0x10000, 0x6034f3c4 )
-	ROM_LOAD( "G-13.ROM", 0xA0000, 0x10000, 0x6348373a )
-	ROM_LOAD( "G-14.ROM", 0xB0000, 0x10000, 0x3ad2d46c )
-	ROM_LOAD( "G-15.ROM", 0xC0000, 0x10000, 0x8d51d22d )	/* player sprites */
-	ROM_LOAD( "G-16.ROM", 0xD0000, 0x10000, 0xcc2341bf )
-	ROM_LOAD( "G-17.ROM", 0xE0000, 0x10000, 0xc4abe365 )
-	ROM_LOAD( "G-18.ROM", 0xF0000, 0x10000, 0x17b9e7a7 )
+	ROM_LOAD( "g-11.rom", 0x80000, 0x10000, 0xf9bfc617 , 0xbd9ba92c )	/* enemy sprites */
+	ROM_LOAD( "g-12.rom", 0x90000, 0x10000, 0x6034f3c4 , 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom", 0xA0000, 0x10000, 0x6348373a , 0x2b513d12 )
+	ROM_LOAD( "g-14.rom", 0xB0000, 0x10000, 0x3ad2d46c , 0xfca77c5a )
+	ROM_LOAD( "g-15.rom", 0xC0000, 0x10000, 0x8d51d22d , 0xdaa2324b )	/* player sprites */
+	ROM_LOAD( "g-16.rom", 0xD0000, 0x10000, 0xcc2341bf , 0xe27cc835 )
+	ROM_LOAD( "g-17.rom", 0xE0000, 0x10000, 0xc4abe365 , 0xce4330b9 )
+	ROM_LOAD( "g-18.rom", 0xF0000, 0x10000, 0x17b9e7a7 , 0x1571ce42 )
 
 	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633E09.12G", 0x0000, 0x0100, 0x83b90005 )	/* fg lookup table */
-	ROM_LOAD( "633E08.10G", 0x0100, 0x0100, 0x75af0007 )	/* ? bg lookup table ? */
+	ROM_LOAD( "633e09.12g", 0x0000, 0x0100, 0x83b90005 , 0x14ca5e19 )	/* fg lookup table */
+	ROM_LOAD( "633e08.10g", 0x0100, 0x0100, 0x75af0007 , 0x9f0949fa )	/* ? bg lookup table ? */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633E01.12A", 0x08000, 0x08000, 0x88f7a4c3 )
+	ROM_LOAD( "633e01.12a", 0x08000, 0x08000, 0x88f7a4c3 , 0xd1549255 )
 ROM_END
 
 ROM_START( gryzorb_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
-	ROM_LOAD( "G-2.ROM", 0x20000, 0x08000, 0x7fd17acb )
+	ROM_LOAD( "g-2.rom", 0x20000, 0x08000, 0x7fd17acb , 0xbdb9196d )
 	ROM_CONTINUE(        0x08000, 0x08000 )
-	ROM_LOAD( "G-3.ROM", 0x10000, 0x10000, 0x89c07176 )
+	ROM_LOAD( "g-3.rom", 0x10000, 0x10000, 0x89c07176 , 0x5d5f7438 )
 
-	ROM_REGION(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "G-7.ROM",  0x00000, 0x10000, 0x9604ff70 )	/* foreground tiles */
-	ROM_LOAD( "G-10.ROM", 0x10000, 0x10000, 0x5aaedcd8 )
-	ROM_LOAD( "G-9.ROM",  0x20000, 0x10000, 0x4507411d )
-	ROM_LOAD( "G-8.ROM",  0x30000, 0x10000, 0x2a2885a6 )
-	ROM_LOAD( "G-4.ROM",  0x40000, 0x10000, 0x8f3dce9d )	/* background tiles */
-	ROM_LOAD( "G-5.ROM",  0x50000, 0x10000, 0xfc164a46 )
-	ROM_LOAD( "G-6.ROM",  0x60000, 0x10000, 0x647d9bfb )
+	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
+	ROM_LOAD( "g-7.rom", 0x00000, 0x10000, 0x9604ff70 , 0x57f467d2 )	/* foreground tiles */
+	ROM_LOAD( "g-10.rom", 0x10000, 0x10000, 0x5aaedcd8 , 0xe6db9685 )
+	ROM_LOAD( "g-9.rom", 0x20000, 0x10000, 0x4507411d , 0x875c61de )
+	ROM_LOAD( "g-8.rom", 0x30000, 0x10000, 0x2a2885a6 , 0x642765d6 )
+	ROM_LOAD( "g-4.rom", 0x40000, 0x10000, 0x8f3dce9d , 0x2cc7e52c )	/* background tiles */
+	ROM_LOAD( "g-5.rom", 0x50000, 0x10000, 0xfc164a46 , 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom", 0x60000, 0x10000, 0x647d9bfb , 0xaeea6744 )
 	/* 0x70000 is unpopulated */
-	ROM_LOAD( "G-11.ROM", 0x80000, 0x10000, 0xf9bfc617 )	/* enemy sprites */
-	ROM_LOAD( "G-12.ROM", 0x90000, 0x10000, 0x6034f3c4 )
-	ROM_LOAD( "G-13.ROM", 0xA0000, 0x10000, 0x6348373a )
-	ROM_LOAD( "G-14.ROM", 0xB0000, 0x10000, 0x3ad2d46c )
-	ROM_LOAD( "G-15.ROM", 0xC0000, 0x10000, 0x8d51d22d )	/* player sprites */
-	ROM_LOAD( "G-16.ROM", 0xD0000, 0x10000, 0xcc2341bf )
-	ROM_LOAD( "G-17.ROM", 0xE0000, 0x10000, 0xc4abe365 )
-	ROM_LOAD( "G-18.ROM", 0xF0000, 0x10000, 0x17b9e7a7 )
+	ROM_LOAD( "g-11.rom", 0x80000, 0x10000, 0xf9bfc617 , 0xbd9ba92c )	/* enemy sprites */
+	ROM_LOAD( "g-12.rom", 0x90000, 0x10000, 0x6034f3c4 , 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom", 0xA0000, 0x10000, 0x6348373a , 0x2b513d12 )
+	ROM_LOAD( "g-14.rom", 0xB0000, 0x10000, 0x3ad2d46c , 0xfca77c5a )
+	ROM_LOAD( "g-15.rom", 0xC0000, 0x10000, 0x8d51d22d , 0xdaa2324b )	/* player sprites */
+	ROM_LOAD( "g-16.rom", 0xD0000, 0x10000, 0xcc2341bf , 0xe27cc835 )
+	ROM_LOAD( "g-17.rom", 0xE0000, 0x10000, 0xc4abe365 , 0xce4330b9 )
+	ROM_LOAD( "g-18.rom", 0xF0000, 0x10000, 0x17b9e7a7 , 0x1571ce42 )
 
 	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633E09.12G", 0x0000, 0x0100, 0x83b90005 )	/* fg lookup table */
-	ROM_LOAD( "633E08.10G", 0x0100, 0x0100, 0x75af0007 )	/* ? bg lookup table ? */
+	ROM_LOAD( "633e09.12g", 0x0000, 0x0100, 0x83b90005 , 0x14ca5e19 )	/* fg lookup table */
+	ROM_LOAD( "633e08.10g", 0x0100, 0x0100, 0x75af0007 , 0x9f0949fa )	/* ? bg lookup table ? */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
-	ROM_LOAD( "633E01.12A", 0x08000, 0x08000, 0x88f7a4c3 )
+	ROM_LOAD( "633e01.12a", 0x08000, 0x08000, 0x88f7a4c3 , 0xd1549255 )
 ROM_END
 
 
+static int contra_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x1125],"\x02\x58\x00",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x1120],64);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0x1118] = RAM[0x1124];
+                        RAM[0x1119] = RAM[0x1125];
+                        RAM[0x111a] = RAM[0x1126];
+                        RAM[0x111b] = RAM[0x1127];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void contra_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x1120],64);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver contra_driver =
 {
@@ -482,7 +519,7 @@ struct GameDriver contra_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+        contra_hiload, contra_hisave
 };
 
 struct GameDriver contrab_driver =
@@ -507,7 +544,7 @@ struct GameDriver contrab_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+        contra_hiload, contra_hisave
 };
 
 struct GameDriver gryzorb_driver =
@@ -532,5 +569,5 @@ struct GameDriver gryzorb_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+        contra_hiload, contra_hisave
 };

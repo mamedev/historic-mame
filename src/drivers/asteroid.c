@@ -776,22 +776,22 @@ static const char *asteroid_sample_names[] =
 
 ROM_START( asteroi1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.01", 0x6800, 0x0800, 0xd84a7878 )
-	ROM_LOAD( "035144.01", 0x7000, 0x0800, 0x15f39999 )
-	ROM_LOAD( "035143.01", 0x7800, 0x0800, 0x93d25050 )
+	ROM_LOAD( "035145.01", 0x6800, 0x0800, 0xd84a7878 , 0xe9bfda64 )
+	ROM_LOAD( "035144.01", 0x7000, 0x0800, 0x15f39999 , 0xe53c28a9 )
+	ROM_LOAD( "035143.01", 0x7800, 0x0800, 0x93d25050 , 0x7d4e3d05 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.01", 0x5000, 0x0800, 0xa144e0e0 )
+	ROM_LOAD( "035127.01", 0x5000, 0x0800, 0xa144e0e0 , 0x99699366 )
 ROM_END
 
 ROM_START( asteroid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d )
-	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 )
-	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x0454f0f0 )
+	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d , 0x0cc75459 )
+	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 , 0x096ed35c )
+	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x0454f0f0 , 0x312caa02 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xed041c1c )
+	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xed041c1c , 0x8b71fd9e )
 ROM_END
 
 
@@ -848,28 +848,28 @@ struct GameDriver asteroi1_driver =
 
 ROM_START( astdelux_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.02", 0x6000, 0x0800, 0x4eb73d37 )
-	ROM_LOAD( "036431.02", 0x6800, 0x0800, 0x859ee29c )
-	ROM_LOAD( "036432.02", 0x7000, 0x0800, 0x49c7b38d )
-	ROM_LOAD( "036433.03", 0x7800, 0x0800, 0x39b00100 )
+	ROM_LOAD( "036430.02", 0x6000, 0x0800, 0x4eb73d37 , 0xa4d7a525 )
+	ROM_LOAD( "036431.02", 0x6800, 0x0800, 0x859ee29c , 0xd4004aae )
+	ROM_LOAD( "036432.02", 0x7000, 0x0800, 0x49c7b38d , 0x6d720c41 )
+	ROM_LOAD( "036433.03", 0x7800, 0x0800, 0x39b00100 , 0x0dcc0be6 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.02", 0x4800, 0x0800, 0x6ea4e6c6 )
-	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
+	ROM_LOAD( "036800.02", 0x4800, 0x0800, 0x6ea4e6c6 , 0xbb8cabe1 )
+	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d , 0x7d511572 )
 ROM_END
 
 /* 036433.02 with the checksum below is _broken_! */
 /* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e )
-	ROM_LOAD( "036431.01", 0x6800, 0x0800, 0x2d01a733 )
-	ROM_LOAD( "036432.01", 0x7000, 0x0800, 0xf432f48a )
-	ROM_LOAD( "036433.02", 0x7800, 0x0800, 0x8c188eea )
+	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e , 0x0 )
+	ROM_LOAD( "036431.01", 0x6800, 0x0800, 0x2d01a733 , 0x0 )
+	ROM_LOAD( "036432.01", 0x7000, 0x0800, 0xf432f48a , 0x0 )
+	ROM_LOAD( "036433.02", 0x7800, 0x0800, 0x8c188eea , 0x0 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 )
-	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
+	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 , 0x0 )
+	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d , 0x0 )
 ROM_END
 
 
@@ -936,34 +936,34 @@ struct GameDriver astdelu1_driver =
 
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "034572.02", 0x6000, 0x0800, 0xee299da1 )
-	ROM_LOAD( "034571.02", 0x6800, 0x0800, 0xed92222e )
-	ROM_LOAD( "034570.02", 0x7000, 0x0800, 0xfe8b233f )
-	ROM_LOAD( "034569.02", 0x7800, 0x0800, 0x5cdbe9e5 )
+	ROM_LOAD( "034572.02", 0x6000, 0x0800, 0xee299da1 , 0xb8763eea )
+	ROM_LOAD( "034571.02", 0x6800, 0x0800, 0xed92222e , 0x77da4b2f )
+	ROM_LOAD( "034570.02", 0x7000, 0x0800, 0xfe8b233f , 0x2724e591 )
+	ROM_LOAD( "034569.02", 0x7800, 0x0800, 0x5cdbe9e5 , 0x72837a4e )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
-	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de , 0x355a9371 )
+	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c , 0x9c4ffa68 )
 	/* This _should_ be the rom for international versions. */
 	/* Unfortunately, is it not currently available. We use */
 	/* a fake one. */
-	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 , 0x3f55d17f )
 ROM_END
 
 ROM_START( llander1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "034572.01", 0x6000, 0x0800, 0x7b348ab6 )
-	ROM_LOAD( "034571.01", 0x6800, 0x0800, 0xc0ffbbb7 )
-	ROM_LOAD( "034570.01", 0x7000, 0x0800, 0xfe8b233f )
-	ROM_LOAD( "034569.01", 0x7800, 0x0800, 0xac0dcbc7 )
+	ROM_LOAD( "034572.01", 0x6000, 0x0800, 0x7b348ab6 , 0x2aff3140 )
+	ROM_LOAD( "034571.01", 0x6800, 0x0800, 0xc0ffbbb7 , 0x493e24b7 )
+	ROM_LOAD( "034570.01", 0x7000, 0x0800, 0xfe8b233f , 0x2724e591 )
+	ROM_LOAD( "034569.01", 0x7800, 0x0800, 0xac0dcbc7 , 0xb11a7d01 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
-	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de , 0x355a9371 )
+	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c , 0x9c4ffa68 )
 	/* This _should_ be the rom for international versions. */
 	/* Unfortunately, is it not currently available. We use */
 	/* a fake one. */
-	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 , 0x3f55d17f )
 ROM_END
 
 struct GameDriver llander_driver =

@@ -1380,348 +1380,385 @@ ROM_START( ghostb_rom )
 	ROM_REGION(0x50000)
 
   /* NOTE!!! 2nd 32k of dz-01 appears to be same as 1st, so only load 1st */
- 	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x463d0ead )
- 	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0xc76c007a )
-  ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0xc76c007a )
-  ROM_LOAD( "dz-04.rom", 0x30000, 0x10000, 0xc76c007a )
-  ROM_LOAD( "dz-05.rom", 0x40000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x463d0ead , 0x0 )
+ 	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0xc76c007a , 0x0 )
+  ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0xc76c007a , 0x0 )
+  ROM_LOAD( "dz-04.rom", 0x30000, 0x10000, 0xc76c007a , 0x0 )
+  ROM_LOAD( "dz-05.rom", 0x40000, 0x10000, 0xc76c007a , 0x0 )
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-	ROM_LOAD( "dz-00.rom", 0x00000, 0x8000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+	ROM_LOAD( "dz-00.rom", 0x00000, 0x8000, 0x1b793a0b , 0x0 )	/* characters */
 
 	/* sprites bank 1 */
-  ROM_LOAD( "dz-15.rom", 0x08000, 0x10000, 0xe7ca5c28 )
-	ROM_LOAD( "dz-12.rom", 0x18000, 0x10000, 0x50691d89 )
-	ROM_LOAD( "dz-17.rom", 0x28000, 0x10000, 0x92f174b5 )
-  ROM_LOAD( "dz-11.rom", 0x38000, 0x10000, 0xe7ca5c28 )
+  ROM_LOAD( "dz-15.rom", 0x08000, 0x10000, 0xe7ca5c28 , 0x0 )
+	ROM_LOAD( "dz-12.rom", 0x18000, 0x10000, 0x50691d89 , 0x0 )
+	ROM_LOAD( "dz-17.rom", 0x28000, 0x10000, 0x92f174b5 , 0x0 )
+  ROM_LOAD( "dz-11.rom", 0x38000, 0x10000, 0xe7ca5c28 , 0x0 )
 
 	/* sprites bank 2 */
-	ROM_LOAD( "dz-14.rom", 0x48000, 0x10000, 0xe7ca5c28 )
-	ROM_LOAD( "dz-16.rom", 0x58000, 0x10000, 0x50691d89 )
-	ROM_LOAD( "dz-18.rom", 0x68000, 0x10000, 0x92f174b5 )
-  ROM_LOAD( "dz-13.rom", 0x78000, 0x10000, 0x50691d89 )
+	ROM_LOAD( "dz-14.rom", 0x48000, 0x10000, 0xe7ca5c28 , 0x0 )
+	ROM_LOAD( "dz-16.rom", 0x58000, 0x10000, 0x50691d89 , 0x0 )
+	ROM_LOAD( "dz-18.rom", 0x68000, 0x10000, 0x92f174b5 , 0x0 )
+  ROM_LOAD( "dz-13.rom", 0x78000, 0x10000, 0x50691d89 , 0x0 )
 
   /* tiles 1 */
-  ROM_LOAD( "dz-07.rom", 0x88000, 0x10000, 0xe7ca5c28 )
- 	ROM_LOAD( "dz-08.rom", 0x98000, 0x10000, 0x50691d89 )
- 	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0x92f174b5 )
-  ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x92f174b5 )
+  ROM_LOAD( "dz-07.rom", 0x88000, 0x10000, 0xe7ca5c28 , 0x0 )
+ 	ROM_LOAD( "dz-08.rom", 0x98000, 0x10000, 0x50691d89 , 0x0 )
+ 	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0x92f174b5 , 0x0 )
+  ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x92f174b5 , 0x0 )
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 ROM_END
 
 
 ROM_START( srdarwin_rom )
 	ROM_REGION(0x44000)
- 	ROM_LOAD( "dy_01.rom", 0x10000, 0x08000, 0x463d0ead )
+ 	ROM_LOAD( "dy_01.rom", 0x10000, 0x08000, 0x463d0ead , 0x0 )
   ROM_CONTINUE(	0x8000, 0x8000 )
 
- 	ROM_LOAD( "dy_02.rom", 0x18000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "dy_02.rom", 0x18000, 0x10000, 0xc76c007a , 0x0 )
 //  ROM_LOAD( "dy_03.rom", 0x28000, 0x10000, 0xc76c007a )
 //  ROM_LOAD( "dy_01.rom", 0x38000, 0x08000, 0xc76c007a )
 //  ROM_LOAD( "dy_05.rom", 0x40000, 0x04000, 0xc76c007a )
 
   /* 4 6 */
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-	ROM_LOAD( "dy_00.rom", 0x00000, 0x8000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+	ROM_LOAD( "dy_00.rom", 0x00000, 0x8000, 0x1b793a0b , 0x0 )	/* characters */
 
 	/* sprites bank 1 */
-  ROM_LOAD( "dy_06.rom", 0x08000, 0x8000, 0xe7ca5c28 )
-	ROM_LOAD( "dy_07.rom", 0x18000, 0x8000, 0x50691d89 )
-	ROM_LOAD( "dy_08.rom", 0x28000, 0x8000, 0x92f174b5 )
+  ROM_LOAD( "dy_06.rom", 0x08000, 0x8000, 0xe7ca5c28 , 0x0 )
+	ROM_LOAD( "dy_07.rom", 0x18000, 0x8000, 0x50691d89 , 0x0 )
+	ROM_LOAD( "dy_08.rom", 0x28000, 0x8000, 0x92f174b5 , 0x0 )
 //  ROM_LOAD( "dz-11.rom", 0x38000, 0x10000, 0xe7ca5c28 )
 
 	/* sprites bank 2 */
-	ROM_LOAD( "dy_09.rom", 0x48000, 0x8000, 0xe7ca5c28 )
-	ROM_LOAD( "dy_10.rom", 0x58000, 0x8000, 0x50691d89 )
-	ROM_LOAD( "dy_11.rom", 0x68000, 0x8000, 0x92f174b5 )
+	ROM_LOAD( "dy_09.rom", 0x48000, 0x8000, 0xe7ca5c28 , 0x0 )
+	ROM_LOAD( "dy_10.rom", 0x58000, 0x8000, 0x50691d89 , 0x0 )
+	ROM_LOAD( "dy_11.rom", 0x68000, 0x8000, 0x92f174b5 , 0x0 )
 //  ROM_LOAD( "dz-13.rom", 0x78000, 0x10000, 0x50691d89 )
 
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 ROM_END
 
 
 ROM_START( cobracom_rom )
 	ROM_REGION(0x30000)
- 	ROM_LOAD( "eh-11.rom", 0x08000, 0x08000, 0x4443d8d7 )
- 	ROM_LOAD( "eh-12.rom", 0x10000, 0x10000, 0x600d4151 )
- 	ROM_LOAD( "eh-13.rom", 0x20000, 0x10000, 0xb10ad1ce )
+ 	ROM_LOAD( "eh-11.rom", 0x08000, 0x08000, 0x4443d8d7 , 0x868637e1 )
+ 	ROM_LOAD( "eh-12.rom", 0x10000, 0x10000, 0x600d4151 , 0x7c878a83 )
+ 	ROM_LOAD( "eh-13.rom", 0x20000, 0x10000, 0xb10ad1ce , 0x04505acb )
 
-	ROM_REGION(0xc0000)	/* temporary space for graphics */
-	ROM_LOAD( "eh-14.rom", 0x00000, 0x8000, 0x323bdb89 )	/* Characters */
-  ROM_LOAD( "eh-00.rom", 0x08000, 0x10000, 0xf648425c ) /* Sprites */
-	ROM_LOAD( "eh-01.rom", 0x18000, 0x10000, 0xa3e62bd2 )
-	ROM_LOAD( "eh-02.rom", 0x28000, 0x10000, 0x8f7fdbbd )
-  ROM_LOAD( "eh-03.rom", 0x38000, 0x10000, 0xa6b316f3 )
-	ROM_LOAD( "eh-05.rom", 0x48000, 0x10000, 0x6b305826 ) /* Tiles */
-	ROM_LOAD( "eh-06.rom", 0x58000, 0x10000, 0x0b1b4b7d )
-	ROM_LOAD( "eh-04.rom", 0x68000, 0x10000, 0x43e9af03 )
-  ROM_LOAD( "eh-07.rom", 0x78000, 0x10000, 0x92c8787e )
-  ROM_LOAD( "eh-08.rom", 0x88000, 0x08000, 0xea3d163b ) /* Tiles 2 */
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics */
+	ROM_LOAD( "eh-14.rom", 0x00000, 0x8000, 0x323bdb89 , 0x47246177 )	/* Characters */
+  ROM_LOAD( "eh-00.rom", 0x08000, 0x10000, 0xf648425c , 0xd96b6797 ) /* Sprites */
+	ROM_LOAD( "eh-01.rom", 0x18000, 0x10000, 0xa3e62bd2 , 0x3fef9c02 )
+	ROM_LOAD( "eh-02.rom", 0x28000, 0x10000, 0x8f7fdbbd , 0xbfae6c34 )
+  ROM_LOAD( "eh-03.rom", 0x38000, 0x10000, 0xa6b316f3 , 0xd56790f8 )
+	ROM_LOAD( "eh-05.rom", 0x48000, 0x10000, 0x6b305826 , 0x1c4f6033 ) /* Tiles */
+	ROM_LOAD( "eh-06.rom", 0x58000, 0x10000, 0x0b1b4b7d , 0xd24ba794 )
+	ROM_LOAD( "eh-04.rom", 0x68000, 0x10000, 0x43e9af03 , 0xd80a49ce )
+  ROM_LOAD( "eh-07.rom", 0x78000, 0x10000, 0x92c8787e , 0x6d771fc3 )
+  ROM_LOAD( "eh-08.rom", 0x88000, 0x08000, 0xea3d163b , 0xcb0dcf4c ) /* Tiles 2 */
   ROM_CONTINUE(0x98000,0x8000)
-	ROM_LOAD( "eh-09.rom", 0xa8000, 0x08000, 0x3847cd1f )
+	ROM_LOAD( "eh-09.rom", 0xa8000, 0x08000, 0x3847cd1f , 0x1fae5be7 )
   ROM_CONTINUE(0xb8000,0x8000)
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "eh-10.rom", 0x8000, 0x8000, 0xf38bbfdf )
+	ROM_LOAD( "eh-10.rom", 0x8000, 0x8000, 0xf38bbfdf , 0x62ca5e89 )
 ROM_END
 
 ROM_START( gondo_rom )
 	ROM_REGION(0x44000)
- 	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0x463d0ead )
- 	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc76c007a )
-  ROM_LOAD( "dt-02.512", 0x20000, 0x10000, 0xc76c007a )
-  ROM_LOAD( "dt-03.512", 0x30000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0x463d0ead , 0x0 )
+ 	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc76c007a , 0x0 )
+  ROM_LOAD( "dt-02.512", 0x20000, 0x10000, 0xc76c007a , 0x0 )
+  ROM_LOAD( "dt-03.512", 0x30000, 0x10000, 0xc76c007a , 0x0 )
 
-	ROM_REGION(0x100000)	/* temporary space for graphics */
-  ROM_LOAD( "dt-14.256", 0x00000, 0x08000, 0x434ccb9e )
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics */
+  ROM_LOAD( "dt-14.256", 0x00000, 0x08000, 0x434ccb9e , 0x0 )
 
-  ROM_LOAD( "dt-15.512", 0x08000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dt-16.512", 0x18000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dt-15.512", 0x08000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-19.512", 0x28000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dt-16.512", 0x18000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-21.512", 0x38000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dt-19.512", 0x28000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-
-
-
-  ROM_LOAD( "dt-17.256", 0x48000, 0x8000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dt-18.256", 0x58000, 0x8000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dt-20.256", 0x68000, 0x8000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dt-22.256", 0x78000, 0x8000, 0x434ccb9e )
+  ROM_LOAD( "dt-21.512", 0x38000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
 
 
-  ROM_LOAD( "dt-06.512", 0x88000, 0x10000, 0x434ccb9e )
-  ROM_LOAD( "dt-08.512", 0x98000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dt-17.256", 0x48000, 0x8000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-10.512", 0xa8000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dt-18.256", 0x58000, 0x8000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-12.512", 0xb8000, 0x10000, 0x434ccb9e )
-
-  ROM_LOAD( "dt-09.256", 0xc8000, 0x8000, 0x434ccb9e )
-  ROM_LOAD( "dt-11.256", 0xd8000, 0x8000, 0x434ccb9e )
+  ROM_LOAD( "dt-20.256", 0x68000, 0x8000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-13.256", 0xe8000, 0x8000, 0x434ccb9e )
+  ROM_LOAD( "dt-22.256", 0x78000, 0x8000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dt-07.256", 0xf8000, 0x8000, 0x434ccb9e )
+
+
+
+  ROM_LOAD( "dt-06.512", 0x88000, 0x10000, 0x434ccb9e , 0x0 )
+  ROM_LOAD( "dt-08.512", 0x98000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dt-10.512", 0xa8000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dt-12.512", 0xb8000, 0x10000, 0x434ccb9e , 0x0 )
+
+  ROM_LOAD( "dt-09.256", 0xc8000, 0x8000, 0x434ccb9e , 0x0 )
+  ROM_LOAD( "dt-11.256", 0xd8000, 0x8000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dt-13.256", 0xe8000, 0x8000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dt-07.256", 0xf8000, 0x8000, 0x434ccb9e , 0x0 )
 
 
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dt-05.256", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "dt-05.256", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 ROM_END
 
 ROM_START( mazeh_rom )
 	ROM_REGION(0x20000)
- 	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x463d0ead )
- 	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x463d0ead , 0x0 )
+ 	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0xc76c007a , 0x0 )
 
   // 3 4   6 7 8 9 to place
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-  ROM_LOAD( "dw-00.rom", 0x00000, 0x8000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+  ROM_LOAD( "dw-00.rom", 0x00000, 0x8000, 0x1b793a0b , 0x0 )	/* characters */
 
-  ROM_LOAD( "dw-12.rom", 0x08000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dw-13.rom", 0x18000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-12.rom", 0x08000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dw-15.rom", 0x28000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-13.rom", 0x18000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dw-17.rom", 0x38000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-15.rom", 0x28000, 0x10000, 0x434ccb9e , 0x0 )
 
 
+  ROM_LOAD( "dw-17.rom", 0x38000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
-  ROM_LOAD( "dw-10.rom", 0x48000, 0x10000, 0x434ccb9e )
 
 
-  ROM_LOAD( "dw-11.rom", 0x58000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-10.rom", 0x48000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dw-14.rom", 0x68000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-11.rom", 0x58000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dw-16.rom", 0x78000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dw-14.rom", 0x68000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dw-16.rom", 0x78000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
 
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 ROM_END
 
 
 ROM_START( oscar_rom )
 	ROM_REGION(0x20000)
- 	ROM_LOAD( "du_10.rom", 0x08000, 0x08000, 0x463d0ead )
- 	ROM_LOAD( "du_09.rom", 0x10000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "du_10.rom", 0x08000, 0x08000, 0x463d0ead , 0x0 )
+ 	ROM_LOAD( "du_09.rom", 0x10000, 0x10000, 0xc76c007a , 0x0 )
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-  ROM_LOAD( "du_08.rom", 0x00000, 0x4000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+  ROM_LOAD( "du_08.rom", 0x00000, 0x4000, 0x1b793a0b , 0x0 )	/* characters */
 
-  ROM_LOAD( "du_04.rom", 0x08000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "du_05.rom", 0x18000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_04.rom", 0x08000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "du_06.rom", 0x28000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_05.rom", 0x18000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "du_07.rom", 0x38000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_06.rom", 0x28000, 0x10000, 0x434ccb9e , 0x0 )
 
 
+  ROM_LOAD( "du_07.rom", 0x38000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
-  ROM_LOAD( "du_00.rom", 0x48000, 0x10000, 0x434ccb9e )
 
 
-  ROM_LOAD( "du_01.rom", 0x58000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_00.rom", 0x48000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "du_02.rom", 0x68000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_01.rom", 0x58000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "du_03.rom", 0x78000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "du_02.rom", 0x68000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "du_03.rom", 0x78000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
 
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "du_12.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "du_12.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 
   ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "du_11.rom", 0x0000, 0x10000, 0x364efd26 )
+	ROM_LOAD( "du_11.rom", 0x0000, 0x10000, 0x364efd26 , 0x0 )
 ROM_END
 
 ROM_START( lastmiss_rom )
 	ROM_REGION(0x20000)
- 	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x463d0ead )
- 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0xc76c007a )
+ 	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x463d0ead , 0x0 )
+ 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0xc76c007a , 0x0 )
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-  ROM_LOAD( "lm_dl01.rom", 0x00000, 0x8000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+  ROM_LOAD( "lm_dl01.rom", 0x00000, 0x8000, 0x1b793a0b , 0x0 )	/* characters */
 
-  ROM_LOAD( "lm_dl10.rom", 0x08000, 0x8000, 0x434ccb9e )
-  ROM_LOAD( "lm_dl11.rom", 0x18000, 0x8000, 0x434ccb9e )
-
-
-  ROM_LOAD( "lm_dl12.rom", 0x28000, 0x8000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl10.rom", 0x08000, 0x8000, 0x434ccb9e , 0x0 )
+  ROM_LOAD( "lm_dl11.rom", 0x18000, 0x8000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "lm_dl13.rom", 0x38000, 0x8000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl12.rom", 0x28000, 0x8000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "lm_dl13.rom", 0x38000, 0x8000, 0x434ccb9e , 0x0 )
 
 
 
-  ROM_LOAD( "lm_dl06.rom", 0x48000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl06.rom", 0x48000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "lm_dl07.rom", 0x58000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl07.rom", 0x58000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "lm_dl08.rom", 0x68000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl08.rom", 0x68000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "lm_dl09.rom", 0x78000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "lm_dl09.rom", 0x78000, 0x10000, 0x434ccb9e , 0x0 )
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 
   ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0x364efd26 )
+	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0x364efd26 , 0x0 )
 ROM_END
 
 ROM_START( shackled_rom )
 	ROM_REGION(0x20000)
- 	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x463d0ead )
+ 	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x463d0ead , 0x0 )
  //	ROM_LOAD( "dk-11.rom", 0x10000, 0x10000, 0xc76c007a )
 
 // 3 4 5 6
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics */
-  ROM_LOAD( "dk-00.rom", 0x00000, 0x8000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+  ROM_LOAD( "dk-00.rom", 0x00000, 0x8000, 0x1b793a0b , 0x0 )	/* characters */
 
-  ROM_LOAD( "dk-12.rom", 0x08000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dk-14.rom", 0x18000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-12.rom", 0x08000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dk-16.rom", 0x28000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-14.rom", 0x18000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dk-18.rom", 0x38000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-16.rom", 0x28000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-
-
-
-  ROM_LOAD( "dk-13.rom", 0x48000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dk-15.rom", 0x58000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dk-17.rom", 0x68000, 0x10000, 0x434ccb9e )
-
-
-  ROM_LOAD( "dk-19.rom", 0x78000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-18.rom", 0x38000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
 
 
-  ROM_LOAD( "dk-08.rom", 0x88000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-13.rom", 0x48000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dk-09.rom", 0x98000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-15.rom", 0x58000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dk-10.rom", 0xa8000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-17.rom", 0x68000, 0x10000, 0x434ccb9e , 0x0 )
 
 
-  ROM_LOAD( "dk-11.rom", 0xb8000, 0x10000, 0x434ccb9e )
+  ROM_LOAD( "dk-19.rom", 0x78000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+
+
+
+  ROM_LOAD( "dk-08.rom", 0x88000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dk-09.rom", 0x98000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dk-10.rom", 0xa8000, 0x10000, 0x434ccb9e , 0x0 )
+
+
+  ROM_LOAD( "dk-11.rom", 0xb8000, 0x10000, 0x434ccb9e , 0x0 )
 
 
 
 
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dk-07.rom", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "dk-07.rom", 0x8000, 0x8000, 0x364efd26 , 0x0 )
 
   ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "dk-01.rom", 0x0000, 0x10000, 0x364efd26 )
+	ROM_LOAD( "dk-01.rom", 0x0000, 0x10000, 0x364efd26 , 0x0 )
 ROM_END
+
+static int cobracom_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x06c6],"\x00\x84\x76",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x06c6],30);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0x0135] = RAM[0x06c6];
+                        RAM[0x0136] = RAM[0x06c7];
+                        RAM[0x0137] = RAM[0x06c8];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void cobracom_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x06c6],30);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver ghostb_driver =
 {
@@ -1795,7 +1832,7 @@ struct GameDriver cobracom_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0,0
+        cobracom_hiload, cobracom_hisave
 };
 
 struct GameDriver gondo_driver =

@@ -414,6 +414,13 @@ void AY8910_sh_update(void)
 		}
 		else
 		{
+#if 1
+void apply_RC_filter(int channel,signed char *buf,int len,int sample_rate);
+
+apply_RC_filter(channelAY+3*i,bufferAY[i],buffer_lenAY,emulation_rateAY);
+apply_RC_filter(channelAY+3*i+1,(signed char *)bufferAY[i]+buffer_lenAY,buffer_lenAY,emulation_rateAY);
+apply_RC_filter(channelAY+3*i+2,(signed char *)bufferAY[i]+2*buffer_lenAY,buffer_lenAY,emulation_rateAY);
+#endif
 			osd_play_streamed_sample(channelAY+3*i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
 			osd_play_streamed_sample(channelAY+3*i+1,(signed char *)bufferAY[i]+buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);
 			osd_play_streamed_sample(channelAY+3*i+2,(signed char *)bufferAY[i]+2*buffer_lenAY,buffer_lenAY,emulation_rateAY,volumeAY[i]);

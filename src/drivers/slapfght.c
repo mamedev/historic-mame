@@ -483,89 +483,89 @@ static struct MachineDriver machine_driver =
 
 ROM_START( slapfigh_rom )
 	ROM_REGION(0x20000)
-	ROM_LOAD( "sf_r19.bin",  0x00000, 0x8000, 0x418aa5d8 )
-	ROM_LOAD( "sf_rh.bin" ,  0x10000, 0x8000, 0xa976a578 )
+	ROM_LOAD( "sf_r19.bin", 0x00000, 0x8000, 0x418aa5d8 , 0x674c0e0f )
+	ROM_LOAD( "sf_rh.bin", 0x10000, 0x8000, 0xa976a578 , 0x3c42e4a7 )
 
-	ROM_REGION(0x44000)
-	ROM_LOAD( "sf_r11.bin",  0x00000, 0x2000, 0x61fa52ca )  /* Chars */
-	ROM_LOAD( "sf_r10.bin",  0x02000, 0x2000, 0xe471aa15 )  /* Chars */
+	ROM_REGION_DISPOSE(0x44000)
+	ROM_LOAD( "sf_r11.bin", 0x00000, 0x2000, 0x61fa52ca , 0x2ac7b943 )  /* Chars */
+	ROM_LOAD( "sf_r10.bin", 0x02000, 0x2000, 0xe471aa15 , 0x33cadc93 )  /* Chars */
 
-	ROM_LOAD( "sf_r06.bin",  0x04000, 0x8000, 0x7553c3df )  /* Tiles */
-	ROM_LOAD( "sf_r09.bin",  0x0c000, 0x8000, 0x252d3deb )
-	ROM_LOAD( "sf_r08.bin",  0x14000, 0x8000, 0x07db6739 )
-	ROM_LOAD( "sf_r07.bin",  0x1c000, 0x8000, 0xff758785 )
+	ROM_LOAD( "sf_r06.bin", 0x04000, 0x8000, 0x7553c3df , 0xb6358305 )  /* Tiles */
+	ROM_LOAD( "sf_r09.bin", 0x0c000, 0x8000, 0x252d3deb , 0xe92d9d60 )
+	ROM_LOAD( "sf_r08.bin", 0x14000, 0x8000, 0x07db6739 , 0x5faeeea3 )
+	ROM_LOAD( "sf_r07.bin", 0x1c000, 0x8000, 0xff758785 , 0x974e2ea9 )
 
-	ROM_LOAD( "sf_r03.bin",  0x24000, 0x8000, 0xcbac2464 )  /* Sprites */
-	ROM_LOAD( "sf_r01.bin",  0x2c000, 0x8000, 0x03f9d2e3 )
-	ROM_LOAD( "sf_r04.bin",  0x34000, 0x8000, 0x227b9fad )
-	ROM_LOAD( "sf_r02.bin",  0x3c000, 0x8000, 0x4c273307 )
+	ROM_LOAD( "sf_r03.bin", 0x24000, 0x8000, 0xcbac2464 , 0x8545d397 )  /* Sprites */
+	ROM_LOAD( "sf_r01.bin", 0x2c000, 0x8000, 0x03f9d2e3 , 0xb1b7b925 )
+	ROM_LOAD( "sf_r04.bin", 0x34000, 0x8000, 0x227b9fad , 0x422d946b )
+	ROM_LOAD( "sf_r02.bin", 0x3c000, 0x8000, 0x4c273307 , 0x587113ae )
 
 	ROM_REGION(0x300)
-	ROM_LOAD( "sf_col21.bin",0x00000, 0x0100, 0x3d370c0b )
-	ROM_LOAD( "sf_col20.bin",0x00100, 0x0100, 0x8baa0604 )
-	ROM_LOAD( "sf_col19.bin",0x00200, 0x0100, 0xc187010b )
+	ROM_LOAD( "sf_col21.bin", 0x00000, 0x0100, 0x3d370c0b , 0xa0efaf99 )
+	ROM_LOAD( "sf_col20.bin", 0x00100, 0x0100, 0x8baa0604 , 0xa56d57e5 )
+	ROM_LOAD( "sf_col19.bin", 0x00200, 0x0100, 0xc187010b , 0x5cbf9fbf )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "sf_r05.bin",  0x0000, 0x2000, 0xa330146a )
+	ROM_LOAD( "sf_r05.bin", 0x0000, 0x2000, 0xa330146a , 0x87f4705a )
 ROM_END
 
 
 ROM_START( slapbtjp_rom )
 	ROM_REGION(0x20000)
-	ROM_LOAD( "sf_r19jb.bin",0x00000, 0x8000, 0x4075880b )
-	ROM_LOAD( "sf_rh.bin" ,  0x10000, 0x8000, 0xa976a578 )
+	ROM_LOAD( "sf_r19jb.bin", 0x00000, 0x8000, 0x4075880b , 0x9a7ac8b3 )
+	ROM_LOAD( "sf_rh.bin", 0x10000, 0x8000, 0xa976a578 , 0x3c42e4a7 )
 
-	ROM_REGION(0x44000)
-	ROM_LOAD( "sf_r11.bin",  0x00000, 0x2000, 0x61fa52ca )  /* Chars */
-	ROM_LOAD( "sf_r10.bin",  0x02000, 0x2000, 0xe471aa15 )  /* Chars */
+	ROM_REGION_DISPOSE(0x44000)
+	ROM_LOAD( "sf_r11.bin", 0x00000, 0x2000, 0x61fa52ca , 0x2ac7b943 )  /* Chars */
+	ROM_LOAD( "sf_r10.bin", 0x02000, 0x2000, 0xe471aa15 , 0x33cadc93 )  /* Chars */
 
-	ROM_LOAD( "sf_r06.bin",  0x04000, 0x8000, 0x7553c3df )  /* Tiles */
-	ROM_LOAD( "sf_r09.bin",  0x0c000, 0x8000, 0x252d3deb )
-	ROM_LOAD( "sf_r08.bin",  0x14000, 0x8000, 0x07db6739 )
-	ROM_LOAD( "sf_r07.bin",  0x1c000, 0x8000, 0xff758785 )
+	ROM_LOAD( "sf_r06.bin", 0x04000, 0x8000, 0x7553c3df , 0xb6358305 )  /* Tiles */
+	ROM_LOAD( "sf_r09.bin", 0x0c000, 0x8000, 0x252d3deb , 0xe92d9d60 )
+	ROM_LOAD( "sf_r08.bin", 0x14000, 0x8000, 0x07db6739 , 0x5faeeea3 )
+	ROM_LOAD( "sf_r07.bin", 0x1c000, 0x8000, 0xff758785 , 0x974e2ea9 )
 
-	ROM_LOAD( "sf_r03.bin",  0x24000, 0x8000, 0xcbac2464 )  /* Sprites */
-	ROM_LOAD( "sf_r01.bin",  0x2c000, 0x8000, 0x03f9d2e3 )
-	ROM_LOAD( "sf_r04.bin",  0x34000, 0x8000, 0x227b9fad )
-	ROM_LOAD( "sf_r02.bin",  0x3c000, 0x8000, 0x4c273307 )
+	ROM_LOAD( "sf_r03.bin", 0x24000, 0x8000, 0xcbac2464 , 0x8545d397 )  /* Sprites */
+	ROM_LOAD( "sf_r01.bin", 0x2c000, 0x8000, 0x03f9d2e3 , 0xb1b7b925 )
+	ROM_LOAD( "sf_r04.bin", 0x34000, 0x8000, 0x227b9fad , 0x422d946b )
+	ROM_LOAD( "sf_r02.bin", 0x3c000, 0x8000, 0x4c273307 , 0x587113ae )
 
 	ROM_REGION(0x300)
-	ROM_LOAD( "sf_col21.bin",0x00000, 0x0100, 0x3d370c0b )
-	ROM_LOAD( "sf_col20.bin",0x00100, 0x0100, 0x8baa0604 )
-	ROM_LOAD( "sf_col19.bin",0x00200, 0x0100, 0xc187010b )
+	ROM_LOAD( "sf_col21.bin", 0x00000, 0x0100, 0x3d370c0b , 0xa0efaf99 )
+	ROM_LOAD( "sf_col20.bin", 0x00100, 0x0100, 0x8baa0604 , 0xa56d57e5 )
+	ROM_LOAD( "sf_col19.bin", 0x00200, 0x0100, 0xc187010b , 0x5cbf9fbf )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "sf_r05.bin",  0x0000, 0x2000, 0xa330146a )
+	ROM_LOAD( "sf_r05.bin", 0x0000, 0x2000, 0xa330146a , 0x87f4705a )
 ROM_END
 
 
 ROM_START( slapbtuk_rom )
 	ROM_REGION(0x20000)
-	ROM_LOAD( "sf_r19eb.bin",0x00000, 0x4000, 0xf533ed37 )
-	ROM_LOAD( "sf_r20eb.bin",0x04000, 0x4000, 0xc37e72b8 )
-	ROM_LOAD( "sf_rh.bin" ,  0x10000, 0x8000, 0xa976a578 )
+	ROM_LOAD( "sf_r19eb.bin", 0x00000, 0x4000, 0xf533ed37 , 0x2efe47af )
+	ROM_LOAD( "sf_r20eb.bin", 0x04000, 0x4000, 0xc37e72b8 , 0xf42c7951 )
+	ROM_LOAD( "sf_rh.bin", 0x10000, 0x8000, 0xa976a578 , 0x3c42e4a7 )
 
-	ROM_REGION(0x44000)
-	ROM_LOAD( "sf_r11.bin",  0x00000, 0x2000, 0x61fa52ca )  /* Chars */
-	ROM_LOAD( "sf_r10.bin",  0x02000, 0x2000, 0xe471aa15 )  /* Chars */
+	ROM_REGION_DISPOSE(0x44000)
+	ROM_LOAD( "sf_r11.bin", 0x00000, 0x2000, 0x61fa52ca , 0x2ac7b943 )  /* Chars */
+	ROM_LOAD( "sf_r10.bin", 0x02000, 0x2000, 0xe471aa15 , 0x33cadc93 )  /* Chars */
 
-	ROM_LOAD( "sf_r06.bin",  0x04000, 0x8000, 0x7553c3df )  /* Tiles */
-	ROM_LOAD( "sf_r09.bin",  0x0c000, 0x8000, 0x252d3deb )
-	ROM_LOAD( "sf_r08.bin",  0x14000, 0x8000, 0x07db6739 )
-	ROM_LOAD( "sf_r07.bin",  0x1c000, 0x8000, 0xff758785 )
+	ROM_LOAD( "sf_r06.bin", 0x04000, 0x8000, 0x7553c3df , 0xb6358305 )  /* Tiles */
+	ROM_LOAD( "sf_r09.bin", 0x0c000, 0x8000, 0x252d3deb , 0xe92d9d60 )
+	ROM_LOAD( "sf_r08.bin", 0x14000, 0x8000, 0x07db6739 , 0x5faeeea3 )
+	ROM_LOAD( "sf_r07.bin", 0x1c000, 0x8000, 0xff758785 , 0x974e2ea9 )
 
-	ROM_LOAD( "sf_r03.bin",  0x24000, 0x8000, 0xcbac2464 )  /* Sprites */
-	ROM_LOAD( "sf_r01.bin",  0x2c000, 0x8000, 0x03f9d2e3 )
-	ROM_LOAD( "sf_r04.bin",  0x34000, 0x8000, 0x227b9fad )
-	ROM_LOAD( "sf_r02.bin",  0x3c000, 0x8000, 0x4c273307 )
+	ROM_LOAD( "sf_r03.bin", 0x24000, 0x8000, 0xcbac2464 , 0x8545d397 )  /* Sprites */
+	ROM_LOAD( "sf_r01.bin", 0x2c000, 0x8000, 0x03f9d2e3 , 0xb1b7b925 )
+	ROM_LOAD( "sf_r04.bin", 0x34000, 0x8000, 0x227b9fad , 0x422d946b )
+	ROM_LOAD( "sf_r02.bin", 0x3c000, 0x8000, 0x4c273307 , 0x587113ae )
 
 	ROM_REGION(0x300)
-	ROM_LOAD( "sf_col21.bin",0x00000, 0x0100, 0x3d370c0b )
-	ROM_LOAD( "sf_col20.bin",0x00100, 0x0100, 0x8baa0604 )
-	ROM_LOAD( "sf_col19.bin",0x00200, 0x0100, 0xc187010b )
+	ROM_LOAD( "sf_col21.bin", 0x00000, 0x0100, 0x3d370c0b , 0xa0efaf99 )
+	ROM_LOAD( "sf_col20.bin", 0x00100, 0x0100, 0x8baa0604 , 0xa56d57e5 )
+	ROM_LOAD( "sf_col19.bin", 0x00200, 0x0100, 0xc187010b , 0x5cbf9fbf )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "sf_r05.bin",  0x0000, 0x2000, 0xa330146a )
+	ROM_LOAD( "sf_r05.bin", 0x0000, 0x2000, 0xa330146a , 0x87f4705a )
 ROM_END
 
 static void slapfigh_decode(void)

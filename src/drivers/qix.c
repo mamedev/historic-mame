@@ -582,261 +582,267 @@ static struct MachineDriver zoo_machine_driver =
 
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12", 0xC000, 0x800, 0x87bd3a11 )
-	ROM_LOAD( "u13", 0xC800, 0x800, 0x85586b74 )
-	ROM_LOAD( "u14", 0xD000, 0x800, 0x541d5c6f )
-	ROM_LOAD( "u15", 0xD800, 0x800, 0xcbd010de )
-	ROM_LOAD( "u16", 0xE000, 0x800, 0xf9da5efe )
-	ROM_LOAD( "u17", 0xE800, 0x800, 0x14c09e2a )
-	ROM_LOAD( "u18", 0xF000, 0x800, 0x22ae35fa )
-	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff )
+	ROM_LOAD( "u12", 0xC000, 0x800, 0x87bd3a11 , 0xaad35508 )
+	ROM_LOAD( "u13", 0xC800, 0x800, 0x85586b74 , 0x46c13504 )
+	ROM_LOAD( "u14", 0xD000, 0x800, 0x541d5c6f , 0x5115e896 )
+	ROM_LOAD( "u15", 0xD800, 0x800, 0xcbd010de , 0xccd52a1b )
+	ROM_LOAD( "u16", 0xE000, 0x800, 0xf9da5efe , 0xcd1c36ee )
+	ROM_LOAD( "u17", 0xE800, 0x800, 0x14c09e2a , 0x1acb682d )
+	ROM_LOAD( "u18", 0xF000, 0x800, 0x22ae35fa , 0xde77728b )
+	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff , 0xc0994776 )
 
-	ROM_REGION(0x800)
+	ROM_REGION_DISPOSE(0x800)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD(  "u4", 0xC800, 0x800, 0x08bbfc51 )
-	ROM_LOAD(  "u5", 0xD000, 0x800, 0xdd0f67b3 )
-	ROM_LOAD(  "u6", 0xD800, 0x800, 0x37f8ce3c )
-	ROM_LOAD(  "u7", 0xE000, 0x800, 0x733acfe0 )
-	ROM_LOAD(  "u8", 0xE800, 0x800, 0xe1c7b84b )
-	ROM_LOAD(  "u9", 0xF000, 0x800, 0xb662095a )
-	ROM_LOAD( "u10", 0xF800, 0x800, 0x559ebf32 )
+	ROM_LOAD(  "u4", 0xC800, 0x800, 0x08bbfc51 , 0x5b906a09 )
+	ROM_LOAD(  "u5", 0xD000, 0x800, 0xdd0f67b3 , 0x254a3587 )
+	ROM_LOAD(  "u6", 0xD800, 0x800, 0x37f8ce3c , 0xace30389 )
+	ROM_LOAD(  "u7", 0xE000, 0x800, 0x733acfe0 , 0x8ebcfa7c )
+	ROM_LOAD(  "u8", 0xE800, 0x800, 0xe1c7b84b , 0xb8a3c8f9 )
+	ROM_LOAD(  "u9", 0xF000, 0x800, 0xb662095a , 0x26cbcd55 )
+	ROM_LOAD( "u10", 0xF800, 0x800, 0x559ebf32 , 0x568be942 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27", 0xF800, 0x800, 0xdc9c8536 )
+	ROM_LOAD( "u27", 0xF800, 0x800, 0xdc9c8536 , 0xf3782bd0 )
 ROM_END
 
 ROM_START( qix2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12.rmb", 0xC000, 0x800, 0x2ff446f6 )
-	ROM_LOAD( "u13.rmb", 0xC800, 0x800, 0x51a32aeb )
-	ROM_LOAD( "u14.rmb", 0xD000, 0x800, 0xa887b715 )
-	ROM_LOAD( "u15.rmb", 0xD800, 0x800, 0x0c84a5e8 )
-	ROM_LOAD( "u16.rmb", 0xE000, 0x800, 0xcf49e3e5 )
-	ROM_LOAD( "u17.rmb", 0xE800, 0x800, 0x026e58b0 )
-	ROM_LOAD( "u18.rmb", 0xF000, 0x800, 0x5be9ed5f )
-	ROM_LOAD( "u19.rmb", 0xF800, 0x800, 0x83908386 )
+	ROM_LOAD( "u12.rmb", 0xC000, 0x800, 0x2ff446f6 , 0x484280fd )
+	ROM_LOAD( "u13.rmb", 0xC800, 0x800, 0x51a32aeb , 0x3d089fcb )
+	ROM_LOAD( "u14.rmb", 0xD000, 0x800, 0xa887b715 , 0x362123a9 )
+	ROM_LOAD( "u15.rmb", 0xD800, 0x800, 0x0c84a5e8 , 0x60f3913d )
+	ROM_LOAD( "u16.rmb", 0xE000, 0x800, 0xcf49e3e5 , 0xcc139e34 )
+	ROM_LOAD( "u17.rmb", 0xE800, 0x800, 0x026e58b0 , 0xcf31dc49 )
+	ROM_LOAD( "u18.rmb", 0xF000, 0x800, 0x5be9ed5f , 0x1f91ed7a )
+	ROM_LOAD( "u19.rmb", 0xF800, 0x800, 0x83908386 , 0x68e8d5a6 )
 
-	ROM_REGION(0x800)
+	ROM_REGION_DISPOSE(0x800)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD(  "u3.rmb", 0xC000, 0x800, 0xfae6cc6e )
-	ROM_LOAD(  "u4.rmb", 0xC800, 0x800, 0xfa03efcb )
-	ROM_LOAD(  "u5.rmb", 0xD000, 0x800, 0x55b90e87 )
-	ROM_LOAD(  "u6.rmb", 0xD800, 0x800, 0xdfabdc37 )
-	ROM_LOAD(  "u7.rmb", 0xE000, 0x800, 0x11800d28 )
-	ROM_LOAD(  "u8.rmb", 0xE800, 0x800, 0x57303416 )
-	ROM_LOAD(  "u9.rmb", 0xF000, 0x800, 0xf875b473 )
-	ROM_LOAD( "u10.rmb", 0xF800, 0x800, 0xd6a50cbb )
+	ROM_LOAD(  "u3.rmb", 0xC000, 0x800, 0xfae6cc6e , 0x19cebaca )
+	ROM_LOAD(  "u4.rmb", 0xC800, 0x800, 0xfa03efcb , 0x6cfb4185 )
+	ROM_LOAD(  "u5.rmb", 0xD000, 0x800, 0x55b90e87 , 0x948f53f3 )
+	ROM_LOAD(  "u6.rmb", 0xD800, 0x800, 0xdfabdc37 , 0x8630120e )
+	ROM_LOAD(  "u7.rmb", 0xE000, 0x800, 0x11800d28 , 0xbad037c9 )
+	ROM_LOAD(  "u8.rmb", 0xE800, 0x800, 0x57303416 , 0x3159bc00 )
+	ROM_LOAD(  "u9.rmb", 0xF000, 0x800, 0xf875b473 , 0xe80e9b1d )
+	ROM_LOAD( "u10.rmb", 0xF800, 0x800, 0xd6a50cbb , 0x9a55d360 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 )
+	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 , 0xf3782bd0 )
 ROM_END
 
 ROM_START( sdungeon_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e )
-    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 )
-    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 )
-    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 )
-    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 )
-    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 )
+    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e , 0x7024b55a )
+    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 , 0xa3ac9040 )
+    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 , 0xcc20b580 )
+    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 , 0x4663e4b8 )
+    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 , 0x7ef1ffc0 )
+    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 , 0x7b20b7ac )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 )
-    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a )
+    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 , 0x0b2bf48e )
+    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a , 0xf86db512 )
 
-    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa )
-    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 )
-    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 )
-    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
+    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa , 0x7b796831 )
+    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 , 0x5fbe7068 )
+    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 , 0x89bc51ea )
+    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 , 0x754de734 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "sd26.u26", 0xF000, 0x0800, 0xa078ff04)
-    ROM_LOAD( "sd27.u27", 0xF800, 0x0800, 0x51c8f2e2 )
+    ROM_LOAD( "sd26.u26", 0xF000, 0x0800, 0xa078ff04, 0x3df8630d )
+    ROM_LOAD( "sd27.u27", 0xF800, 0x0800, 0x51c8f2e2 , 0x0386f351 )
 
 	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
-	ROM_LOAD( "sd101", 0x0000, 0x0800, 0x6de00de8 )
+	ROM_LOAD( "sd101", 0x0000, 0x0800, 0x6de00de8 , 0xe255af9a )
 ROM_END
 
 ROM_START( zookeep_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
-	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
-	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
-	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
-	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
-	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
-	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
-	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
+	ROM_LOAD( "zb12", 0x8000, 0x1000, 0x04506034 , 0x17c02aa2 )
+	ROM_LOAD( "za13", 0x9000, 0x1000, 0x91f9297d , 0xeebd5248 )
+	ROM_LOAD( "za14", 0xA000, 0x1000, 0xa9a036e4 , 0xfab43297 )
+	ROM_LOAD( "za15", 0xB000, 0x1000, 0x56a14af7 , 0xef8cd67c )
+	ROM_LOAD( "za16", 0xC000, 0x1000, 0x01f7597d , 0xccfc15bc )
+	ROM_LOAD( "za17", 0xD000, 0x1000, 0x3dd0c4e0 , 0x358013f4 )
+	ROM_LOAD( "za18", 0xE000, 0x1000, 0xdc96af3a , 0x37886afe )
+	ROM_LOAD( "za19", 0xF000, 0x1000, 0xfd5cd200 , 0xbbfb30d9 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-	ROM_LOAD(  "ZA5", 0x0A000, 0x1000, 0x05e61772 )
-	ROM_LOAD(  "ZA3", 0x10000, 0x1000, 0x8f54bbe8 )
-	ROM_LOAD(  "ZA6", 0x0B000, 0x1000, 0x3b0092ac )
-	ROM_LOAD(  "ZA4", 0x11000, 0x1000, 0x8979a0b3 )
+	ROM_LOAD(  "za5", 0x0A000, 0x1000, 0x05e61772 , 0xdc0c3cbd )
+	ROM_LOAD(  "za3", 0x10000, 0x1000, 0x8f54bbe8 , 0xcc4d0aee )
+	ROM_LOAD(  "za6", 0x0B000, 0x1000, 0x3b0092ac , 0x27c787dd )
+	ROM_LOAD(  "za4", 0x11000, 0x1000, 0x8979a0b3 , 0xec3b10b1 )
 
-	ROM_LOAD(  "ZA7", 0x0C000, 0x1000, 0xe01d57bd )
-	ROM_LOAD(  "ZA8", 0x0D000, 0x1000, 0x62a73b67 )
-	ROM_LOAD(  "ZA9", 0x0E000, 0x1000, 0x7feb3005 )
-	ROM_LOAD( "ZA10", 0x0F000, 0x1000, 0x0729e957 )
+	ROM_LOAD(  "za7", 0x0C000, 0x1000, 0xe01d57bd , 0x1479f480 )
+	ROM_LOAD(  "za8", 0x0D000, 0x1000, 0x62a73b67 , 0x4c96cdb2 )
+	ROM_LOAD(  "za9", 0x0E000, 0x1000, 0x7feb3005 , 0xa4f7d9e0 )
+	ROM_LOAD( "za10", 0x0F000, 0x1000, 0x0729e957 , 0x05df1a5a )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
-	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
-	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+	ROM_LOAD( "za25", 0xD000, 0x1000, 0x6b0469ba , 0x779b8558 )
+	ROM_LOAD( "za26", 0xE000, 0x1000, 0x1b46045a , 0x60a810ce )
+	ROM_LOAD( "za27", 0xF000, 0x1000, 0xd583f705 , 0x99ed424e )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
+	ROM_LOAD( "za_coin.bin", 0x0000, 0x0800, 0xde34fbc8 , 0x364d3557 )
 ROM_END
 
 ROM_START( zookeepa_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
-	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
-	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
-	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
-	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
-	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
-	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
-	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
+	ROM_LOAD( "zb12", 0x8000, 0x1000, 0x04506034 , 0x17c02aa2 )
+	ROM_LOAD( "za13", 0x9000, 0x1000, 0x91f9297d , 0xeebd5248 )
+	ROM_LOAD( "za14", 0xA000, 0x1000, 0xa9a036e4 , 0xfab43297 )
+	ROM_LOAD( "za15", 0xB000, 0x1000, 0x56a14af7 , 0xef8cd67c )
+	ROM_LOAD( "za16", 0xC000, 0x1000, 0x01f7597d , 0xccfc15bc )
+	ROM_LOAD( "za17", 0xD000, 0x1000, 0x3dd0c4e0 , 0x358013f4 )
+	ROM_LOAD( "za18", 0xE000, 0x1000, 0xdc96af3a , 0x37886afe )
+	ROM_LOAD( "za19", 0xF000, 0x1000, 0xfd5cd200 , 0xbbfb30d9 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-	ROM_LOAD( "ZA5",     0x0A000, 0x1000, 0x05e61772 )
-	ROM_LOAD( "ZA3",     0x10000, 0x1000, 0x8f54bbe8 )
-	ROM_LOAD( "ZA6",     0x0B000, 0x1000, 0x3b0092ac )
-	ROM_LOAD( "ZA4",     0x11000, 0x1000, 0x8979a0b3 )
+	ROM_LOAD( "za5", 0x0A000, 0x1000, 0x05e61772 , 0xdc0c3cbd )
+	ROM_LOAD( "za3", 0x10000, 0x1000, 0x8f54bbe8 , 0xcc4d0aee )
+	ROM_LOAD( "za6", 0x0B000, 0x1000, 0x3b0092ac , 0x27c787dd )
+	ROM_LOAD( "za4", 0x11000, 0x1000, 0x8979a0b3 , 0xec3b10b1 )
 
-	ROM_LOAD( "ZA7",     0x0C000, 0x1000, 0xe01d57bd )
-	ROM_LOAD( "ZA8",     0x0D000, 0x1000, 0x62a73b67 )
-	ROM_LOAD( "ZV35.9",  0x0E000, 0x1000, 0xb3b4499a )
-	ROM_LOAD( "ZV36.10", 0x0F000, 0x1000, 0x46f9a17d )
+	ROM_LOAD( "za7", 0x0C000, 0x1000, 0xe01d57bd , 0x1479f480 )
+	ROM_LOAD( "za8", 0x0D000, 0x1000, 0x62a73b67 , 0x4c96cdb2 )
+	ROM_LOAD( "zv35.9", 0x0E000, 0x1000, 0xb3b4499a , 0xd14123b7 )
+	ROM_LOAD( "zv36.10", 0x0F000, 0x1000, 0x46f9a17d , 0x23705777 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
-	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
-	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+	ROM_LOAD( "za25", 0xD000, 0x1000, 0x6b0469ba , 0x779b8558 )
+	ROM_LOAD( "za26", 0xE000, 0x1000, 0x1b46045a , 0x60a810ce )
+	ROM_LOAD( "za27", 0xF000, 0x1000, 0xd583f705 , 0x99ed424e )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
+	ROM_LOAD( "za_coin.bin", 0x0000, 0x0800, 0xde34fbc8 , 0x364d3557 )
 ROM_END
 
 ROM_START( elecyoyo_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "yy14",   0xA000, 0x1000, 0xfcbb8e07 )
-    ROM_LOAD( "yy15",   0xB000, 0x1000, 0xf030cd9c )
-    ROM_LOAD( "yy16-1", 0xC000, 0x1000, 0xff28ad70 )
-    ROM_LOAD( "yy17",   0xD000, 0x1000, 0x5f35d715 )
-    ROM_LOAD( "yy18",   0xE000, 0x1000, 0xa1a90507 )
-    ROM_LOAD( "yy19-1", 0xF000, 0x1000, 0x6032737e )
+    ROM_LOAD( "yy14", 0xA000, 0x1000, 0xfcbb8e07 , 0x0d2edcb9 )
+    ROM_LOAD( "yy15", 0xB000, 0x1000, 0xf030cd9c , 0xa91f01e3 )
+    ROM_LOAD( "yy16-1", 0xC000, 0x1000, 0xff28ad70 , 0x2710f360 )
+    ROM_LOAD( "yy17", 0xD000, 0x1000, 0x5f35d715 , 0x25fd489d )
+    ROM_LOAD( "yy18", 0xE000, 0x1000, 0xa1a90507 , 0x0b6661c0 )
+    ROM_LOAD( "yy19-1", 0xF000, 0x1000, 0x6032737e , 0x95b8b244 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "yy5", 0x0A000, 0x1000, 0xdde1afdd )
-    ROM_LOAD(  "yy6", 0x0B000, 0x1000, 0x49b01744 )
+    ROM_LOAD(  "yy5", 0x0A000, 0x1000, 0xdde1afdd , 0x3793fec5 )
+    ROM_LOAD(  "yy6", 0x0B000, 0x1000, 0x49b01744 , 0x2e8b1265 )
 
-    ROM_LOAD(  "yy7", 0x0C000, 0x1000, 0x5a3d84f3 )
-    ROM_LOAD(  "yy8", 0x0D000, 0x1000, 0x02d55101 )
-    ROM_LOAD(  "yy9", 0x0E000, 0x1000, 0x881fe68f )
-    ROM_LOAD( "yy10", 0x0F000, 0x1000, 0x6c1cad38 )
+    ROM_LOAD(  "yy7", 0x0C000, 0x1000, 0x5a3d84f3 , 0x20f93411 )
+    ROM_LOAD(  "yy8", 0x0D000, 0x1000, 0x02d55101 , 0x926f90c8 )
+    ROM_LOAD(  "yy9", 0x0E000, 0x1000, 0x881fe68f , 0x2f999480 )
+    ROM_LOAD( "yy10", 0x0F000, 0x1000, 0x6c1cad38 , 0xb31d20e2 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "yy27", 0xF800, 0x0800, 0x58bb94af )
+    ROM_LOAD( "yy27", 0xF800, 0x0800, 0x58bb94af , 0x5a2aa0f3 )
 
 	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
-	ROM_LOAD( "yy101", 0x0000, 0x0800, 0x61420b28 )
+	ROM_LOAD( "yy101", 0x0000, 0x0800, 0x72c85152 , 0x3cf13038 )
 ROM_END
 
 ROM_START( elecyoy2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "yy14", 0xA000, 0x1000, 0xfcbb8e07 )
-    ROM_LOAD( "yy15", 0xB000, 0x1000, 0xf030cd9c )
-    ROM_LOAD( "yy16", 0xC000, 0x1000, 0xb1814279 )
-    ROM_LOAD( "yy17", 0xD000, 0x1000, 0x5f35d715 )
-    ROM_LOAD( "yy18", 0xE000, 0x1000, 0xa1a90507 )
-    ROM_LOAD( "yy19", 0xF000, 0x1000, 0x90f6a35a )
+    ROM_LOAD( "yy14", 0xA000, 0x1000, 0xfcbb8e07 , 0x0d2edcb9 )
+    ROM_LOAD( "yy15", 0xB000, 0x1000, 0xf030cd9c , 0xa91f01e3 )
+    ROM_LOAD( "yy16", 0xC000, 0x1000, 0xb1814279 , 0xcab19f3a )
+    ROM_LOAD( "yy17", 0xD000, 0x1000, 0x5f35d715 , 0x25fd489d )
+    ROM_LOAD( "yy18", 0xE000, 0x1000, 0xa1a90507 , 0x0b6661c0 )
+    ROM_LOAD( "yy19", 0xF000, 0x1000, 0x90f6a35a , 0xd0215d2e )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "yy5", 0x0A000, 0x1000, 0xdde1afdd )
-    ROM_LOAD(  "yy6", 0x0B000, 0x1000, 0x49b01744 )
+    ROM_LOAD(  "yy5", 0x0A000, 0x1000, 0xdde1afdd , 0x3793fec5 )
+    ROM_LOAD(  "yy6", 0x0B000, 0x1000, 0x49b01744 , 0x2e8b1265 )
 
-    ROM_LOAD(  "yy7", 0x0C000, 0x1000, 0x5a3d84f3 )
-    ROM_LOAD(  "yy8", 0x0D000, 0x1000, 0x02d55101 )
-    ROM_LOAD(  "yy9", 0x0E000, 0x1000, 0x881fe68f )
-    ROM_LOAD( "yy10", 0x0F000, 0x1000, 0x6c1cad38 )
+    ROM_LOAD(  "yy7", 0x0C000, 0x1000, 0x5a3d84f3 , 0x20f93411 )
+    ROM_LOAD(  "yy8", 0x0D000, 0x1000, 0x02d55101 , 0x926f90c8 )
+    ROM_LOAD(  "yy9", 0x0E000, 0x1000, 0x881fe68f , 0x2f999480 )
+    ROM_LOAD( "yy10", 0x0F000, 0x1000, 0x6c1cad38 , 0xb31d20e2 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "yy27", 0xF800, 0x0800, 0x58bb94af )
+    ROM_LOAD( "yy27", 0xF800, 0x0800, 0x58bb94af , 0x5a2aa0f3 )
 
 	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
-	ROM_LOAD( "yy101", 0x0000, 0x0800, 0x61420b28 )
+	ROM_LOAD( "yy101", 0x0000, 0x0800, 0x72c85152 , 0x3cf13038 )
 ROM_END
 
 ROM_START( kram_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "ks14-1", 0xA000, 0x1000, 0x24086576 )
-    ROM_LOAD( "ks15",   0xB000, 0x1000, 0xb17cf28c )
-    ROM_LOAD( "ks16",   0xC000, 0x1000, 0xa07e5b9a )
-    ROM_LOAD( "ks17",   0xD000, 0x1000, 0xf3510c63 )
-    ROM_LOAD( "ks18",   0xE000, 0x1000, 0xe0ece654 )
-    ROM_LOAD( "ks19-1", 0xF000, 0x1000, 0x0ff8b6a8 )
+    ROM_LOAD( "ks14-1", 0xA000, 0x1000, 0x24086576 , 0x0 )
+    ROM_LOAD( "ks15", 0xB000, 0x1000, 0xb17cf28c , 0x0 )
+    ROM_LOAD( "ks16", 0xC000, 0x1000, 0xa07e5b9a , 0x0 )
+    ROM_LOAD( "ks17", 0xD000, 0x1000, 0xf3510c63 , 0x0 )
+    ROM_LOAD( "ks18", 0xE000, 0x1000, 0xe0ece654 , 0x0 )
+    ROM_LOAD( "ks19-1", 0xF000, 0x1000, 0x0ff8b6a8 , 0x0 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "ks5", 0x0A000, 0x1000, 0x46c6cafa )
-    ROM_LOAD(  "ks6", 0x0B000, 0x1000, 0xef34edd8 )
-    ROM_LOAD(  "ks7", 0x0C000, 0x1000, 0xa41f29dd )
-    ROM_LOAD(  "ks8", 0x0D000, 0x1000, 0x4eb32b49 )
-    ROM_LOAD(  "ks9", 0x0E000, 0x1000, 0x42a2104a )
-    ROM_LOAD( "ks10", 0x0F000, 0x1000, 0x8dbbb0c7 )
+    ROM_LOAD(  "ks5", 0x0A000, 0x1000, 0x46c6cafa , 0x0 )
+    ROM_LOAD(  "ks6", 0x0B000, 0x1000, 0xef34edd8 , 0x0 )
+    ROM_LOAD(  "ks7", 0x0C000, 0x1000, 0xa41f29dd , 0x0 )
+    ROM_LOAD(  "ks8", 0x0D000, 0x1000, 0x4eb32b49 , 0x0 )
+    ROM_LOAD(  "ks9", 0x0E000, 0x1000, 0x42a2104a , 0x0 )
+    ROM_LOAD( "ks10", 0x0F000, 0x1000, 0x8dbbb0c7 , 0x0 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "ks27", 0xF800, 0x0800, 0xf4f57c05 )
+    ROM_LOAD( "ks27", 0xF800, 0x0800, 0xf4f57c05 , 0x0 )
 ROM_END
 
 ROM_START( kram2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "ks14", 0xA000, 0x1000, 0x26ff9aff )
-    ROM_LOAD( "ks15", 0xB000, 0x1000, 0xb17cf28c )
-    ROM_LOAD( "ks16", 0xC000, 0x1000, 0xa07e5b9a )
-    ROM_LOAD( "ks17", 0xD000, 0x1000, 0xf3510c63 )
-    ROM_LOAD( "ks18", 0xE000, 0x1000, 0xe0ece654 )
-    ROM_LOAD( "ks19", 0xF000, 0x1000, 0x0ff8b6a8 )
+    ROM_LOAD( "ks14", 0xA000, 0x1000, 0x26ff9aff , 0x0 )
+    ROM_LOAD( "ks15", 0xB000, 0x1000, 0xb17cf28c , 0x0 )
+    ROM_LOAD( "ks16", 0xC000, 0x1000, 0xa07e5b9a , 0x0 )
+    ROM_LOAD( "ks17", 0xD000, 0x1000, 0xf3510c63 , 0x0 )
+    ROM_LOAD( "ks18", 0xE000, 0x1000, 0xe0ece654 , 0x0 )
+    ROM_LOAD( "ks19", 0xF000, 0x1000, 0x0ff8b6a8 , 0x0 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "ks5", 0x0A000, 0x1000, 0x46c6cafa )
-    ROM_LOAD(  "ks6", 0x0B000, 0x1000, 0xef34edd8 )
-    ROM_LOAD(  "ks7", 0x0C000, 0x1000, 0xa41f29dd )
-    ROM_LOAD(  "ks8", 0x0D000, 0x1000, 0x4eb32b49 )
-    ROM_LOAD(  "ks9", 0x0E000, 0x1000, 0x42a2104a )
-    ROM_LOAD( "ks10", 0x0F000, 0x1000, 0x8dbbb0c7 )
+    ROM_LOAD(  "ks5", 0x0A000, 0x1000, 0x46c6cafa , 0x0 )
+    ROM_LOAD(  "ks6", 0x0B000, 0x1000, 0xef34edd8 , 0x0 )
+    ROM_LOAD(  "ks7", 0x0C000, 0x1000, 0xa41f29dd , 0x0 )
+    ROM_LOAD(  "ks8", 0x0D000, 0x1000, 0x4eb32b49 , 0x0 )
+    ROM_LOAD(  "ks9", 0x0E000, 0x1000, 0x42a2104a , 0x0 )
+    ROM_LOAD( "ks10", 0x0F000, 0x1000, 0x8dbbb0c7 , 0x0 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "ks27", 0xF800, 0x0800, 0xf4f57c05 )
+    ROM_LOAD( "ks27", 0xF800, 0x0800, 0xf4f57c05 , 0x0 )
 ROM_END
 
 

@@ -23,6 +23,8 @@ MAIN BOARD:
 
 
 
+extern unsigned char *trackfld_scroll;
+extern unsigned char *trackfld_scroll2;
 void trackfld_flipscreen_w(int offset,int data);
 void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -37,10 +39,13 @@ void konami_sh_irqtrigger_w(int offset,int data);
 int trackfld_sh_timer_r(int offset);
 int trackfld_speech_r(int offset);
 void trackfld_sound_w(int offset , int data);
+int hyprolyb_speech_r(int offset);
+void hyprolyb_ADPCM_data_w(int offset , int data);
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
+extern struct ADPCMinterface hyprolyb_adpcm_interface;
 void konami_dac_w(int offset,int data);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
@@ -52,9 +57,6 @@ void trackfld_init_machine(void)
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
-
-extern unsigned char *trackfld_scroll;
-extern unsigned char *trackfld_scroll2;
 
 
 
@@ -100,7 +102,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, trackfld_sh_timer_r },
-	{ 0xe002, 0xe002, trackfld_speech_r},
+	{ 0xe002, 0xe002, trackfld_speech_r },
 	{ -1 }	/* end of table */
 };
 
@@ -119,8 +121,34 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
 	{ 0xe004, 0xe004, VLM5030_data_w },
 	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech control */
+	{ -1 }	/* end of table */
+};
 
-	{ 0xe079, 0xe079, MWA_NOP },  /* ???? */
+static struct MemoryReadAddress hyprolyb_sound_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
+	{ 0x8000, 0x8000, trackfld_sh_timer_r },
+	{ 0xe002, 0xe002, hyprolyb_speech_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
+	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
+	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
+/* There are lots more addresses which are used for setting a two bit volume
+	controls for speech and music
+
+	Currently these are un-supported by Mame
+*/
+	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
+	{ 0xe004, 0xe004, hyprolyb_ADPCM_data_w },
+	{ 0xe000, 0xefff, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -273,6 +301,8 @@ static const char *trackfld_sample_names[] =
 	0
 };
 
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -326,6 +356,61 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+/* same as the original, but uses ADPCM instead of VLM5030 */
+/* also different memory handlers do handle that */
+static struct MachineDriver hyprolyb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			2048000,        /* 1.400 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			3,	/* memory region #3 */
+			hyprolyb_sound_readmem,hyprolyb_sound_writemem,0,0,
+			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	trackfld_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32,16*16+16*16,
+	trackfld_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	trackfld_vh_start,
+	trackfld_vh_stop,
+	trackfld_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&konami_dac_interface
+		},
+		{
+			SOUND_SN76496,
+			&konami_sn76496_interface
+		},
+		{
+			SOUND_ADPCM,
+			&hyprolyb_adpcm_interface
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -336,100 +421,94 @@ static struct MachineDriver machine_driver =
 
 ROM_START( trackfld_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a01_e01.bin", 0x6000, 0x2000, 0xca01e553 )
-	ROM_LOAD( "a02_e02.bin", 0x8000, 0x2000, 0x21213565 )
-	ROM_LOAD( "a03_k03.bin", 0xA000, 0x2000, 0xfb67e07f )
-	ROM_LOAD( "a04_e04.bin", 0xC000, 0x2000, 0x33b1674b )
-	ROM_LOAD( "a05_e05.bin", 0xE000, 0x2000, 0xf6600ba4 )
+	ROM_LOAD( "a01_e01.bin", 0x6000, 0x2000, 0xca01e553 , 0x2882f6d4 )
+	ROM_LOAD( "a02_e02.bin", 0x8000, 0x2000, 0x21213565 , 0x1743b5ee )
+	ROM_LOAD( "a03_k03.bin", 0xA000, 0x2000, 0xfb67e07f , 0x6c0d1ee9 )
+	ROM_LOAD( "a04_e04.bin", 0xC000, 0x2000, 0x33b1674b , 0x21d6c448 )
+	ROM_LOAD( "a05_e05.bin", 0xE000, 0x2000, 0xf6600ba4 , 0xf08c7b7e )
 
-	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "h16_e12.bin", 0x0000, 0x2000, 0xeee82d14 )
-	ROM_LOAD( "h15_e11.bin", 0x2000, 0x2000, 0x9fd214e8 )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 )
-
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 )
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "h16_e12.bin", 0x0000, 0x2000, 0xeee82d14 , 0x50075768 )
+	ROM_LOAD( "h15_e11.bin", 0x2000, 0x2000, 0x9fd214e8 , 0xdda9e29f )
+	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
+	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 , 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolym_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x16be0b86 )
-	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f )
-	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0x32591b7b )
-	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 )
-	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 )
+	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x16be0b86 , 0x82257fb7 )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f , 0x15b83099 )
+	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0x32591b7b , 0xe54cc960 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 , 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 , 0x974ff815 )
 
-	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c )
-	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 )
-	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0x36c0fa04 )
-
-	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x0e569456 )
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c , 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 , 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
+	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 , 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolyb_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x26ce1b96 )
-	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f )
-	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x0e8be755 )
-	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 )
-	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 )
+	ROM_LOAD( "a1.1", 0x6000, 0x2000, 0x26ce1b96 , 0x9aee2d5a )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f , 0x15b83099 )
+	ROM_LOAD( "a3.3", 0xA000, 0x2000, 0x0e8be755 , 0x2d6fc308 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 , 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 , 0x974ff815 )
 
-	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c )
-	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 )
-	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0x36c0fa04 )
-
-	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x0e569456 )
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c , 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 , 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
 
-	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
-
-	/* David Winter - 30/7/98 : Note concerning sound emulation
-	Since the sounds are same than the original Hyper Olympic hardware,
-	we can bypass the emulation of the ADPCM samples (contained in the
-	2764.1, 2764.2, 2764.3 and 2764.4 ROMs of this bootleg ROM set).
-	This is why it is possible to emulate the sound from the original
-	audio CPU and speeh ROMs, instead of the bootleg ADPCM ROMs...
-	*/
+	ROM_REGION(0x10000)	/*  64k for the 6802 which plays ADPCM samples */
+	/* this bootleg uses a 6802 to "emulate" the VLM5030 speech chip */
+	/* I didn't bother to emulate the 6802, I just play the samples. */
+	ROM_LOAD( "2764.1", 0x8000, 0x2000, 0xd0ac8e38 , 0xa4cddeb8 )
+	ROM_LOAD( "2764.2", 0xa000, 0x2000, 0xc03975f7 , 0xe9919365 )
+	ROM_LOAD( "2764.3", 0xc000, 0x2000, 0xede0316c , 0xc3ec42e1 )
+	ROM_LOAD( "2764.4", 0xe000, 0x2000, 0xb1323462 , 0x76998389 )
 ROM_END
 
 
@@ -586,12 +665,6 @@ struct GameDriver hyprolym_driver =
 	hiload, hisave
 };
 
-/*
-This driver is made using the Hyper Olympic driver. Note that
-the sound hardware of this bootleg system is a bit different,
-but it does not matter since the sounds are same. Just to
-speed up emulation...
-*/
 struct GameDriver hyprolyb_driver =
 {
 	__FILE__,
@@ -602,7 +675,7 @@ struct GameDriver hyprolyb_driver =
 	"bootleg",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&machine_driver,
+	&hyprolyb_machine_driver,
 
 	hyprolyb_rom,
 	0, trackfld_decode,

@@ -391,23 +391,34 @@ static struct MachineDriver machine_driver =
 
 ROM_START( missile_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "035820.02", 0x5000, 0x0800, 0x899d091b )
-	ROM_LOAD( "035821.02", 0x5800, 0x0800, 0x25543e0a )
-	ROM_LOAD( "035822.02", 0x6000, 0x0800, 0x8067194f )
-	ROM_LOAD( "035823.02", 0x6800, 0x0800, 0xfc0f6b13 )
-	ROM_LOAD( "035824.02", 0x7000, 0x0800, 0xa3e9d74d )
-	ROM_LOAD( "035825.02", 0x7800, 0x0800, 0x6050ea56 )
+	ROM_LOAD( "035820.02", 0x5000, 0x0800, 0x899d091b , 0x7a62ce6a )
+	ROM_LOAD( "035821.02", 0x5800, 0x0800, 0x25543e0a , 0xdf3bd57f )
+	ROM_LOAD( "035822.02", 0x6000, 0x0800, 0x8067194f , 0xa1cd384a )
+	ROM_LOAD( "035823.02", 0x6800, 0x0800, 0xfc0f6b13 , 0x82e552bb )
+	ROM_LOAD( "035824.02", 0x7000, 0x0800, 0xa3e9d74d , 0x606e42e0 )
+	ROM_LOAD( "035825.02", 0x7800, 0x0800, 0x6050ea56 , 0xf752eaeb )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
+ROM_END
+
+ROM_START( missile2_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "35820-01.h1", 0x5000, 0x0800, 0x76fba3b1 , 0x41cbb8f2 )
+	ROM_LOAD( "35821-01.jk1", 0x5800, 0x0800, 0xdd48b88c , 0x728702c8 )
+	ROM_LOAD( "35822-01.kl1", 0x6000, 0x0800, 0xbde195c3 , 0x28f0999f )
+	ROM_LOAD( "35823-01.mn1", 0x6800, 0x0800, 0x0e4e6a12 , 0xbcc93c94 )
+	ROM_LOAD( "35824-01.np1", 0x7000, 0x0800, 0x659a1882 , 0x0ca089c8 )
+	ROM_LOAD( "35825-01.r1", 0x7800, 0x0800, 0x99a6f448 , 0x428cf0d5 )
+	ROM_RELOAD( 		      0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
 ROM_START( suprmatk_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "035820.SMA", 0x5000, 0x0800, 0xbb306b5e )
-	ROM_LOAD( "035821.SMA", 0x5800, 0x0800, 0x8fb48b0a )
-	ROM_LOAD( "035822.SMA", 0x6000, 0x0800, 0x0ac4e004 )
-	ROM_LOAD( "035823.SMA", 0x6800, 0x0800, 0x0bcb03b7 )
-	ROM_LOAD( "035824.SMA", 0x7000, 0x0800, 0xbdc91101 )
-	ROM_LOAD( "035825.SMA", 0x7800, 0x0800, 0x43836d2d )
+	ROM_LOAD( "035820.sma", 0x5000, 0x0800, 0xbb306b5e , 0x75f01b87 )
+	ROM_LOAD( "035821.sma", 0x5800, 0x0800, 0x8fb48b0a , 0x3320d67e )
+	ROM_LOAD( "035822.sma", 0x6000, 0x0800, 0x0ac4e004 , 0xe6be5055 )
+	ROM_LOAD( "035823.sma", 0x6800, 0x0800, 0x0bcb03b7 , 0xa6069185 )
+	ROM_LOAD( "035824.sma", 0x7000, 0x0800, 0xbdc91101 , 0x90a06be8 )
+	ROM_LOAD( "035825.sma", 0x7800, 0x0800, 0x43836d2d , 0x1298213d )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
@@ -453,7 +464,7 @@ struct GameDriver missile_driver =
 	__FILE__,
 	0,
 	"missile",
-	"Missile Command",
+	"Missile Command (set 1)",
 	"1980",
 	"Atari",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
@@ -461,6 +472,31 @@ struct GameDriver missile_driver =
 	&machine_driver,
 
 	missile_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver missile2_driver =
+{
+	__FILE__,
+	&missile_driver,
+	"missile2",
+	"Missile Command (set 2)",
+	"1980",
+	"Atari",
+	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
+	0,
+	&machine_driver,
+
+	missile2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

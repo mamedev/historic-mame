@@ -471,59 +471,59 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tutankhm_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "h1.bin", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
-	ROM_LOAD( "h2.bin", 0x0b000, 0x1000, 0x4cff2ad5 )
-	ROM_LOAD( "h3.bin", 0x0c000, 0x1000, 0x0a8bae5d )
-	ROM_LOAD( "h4.bin", 0x0d000, 0x1000, 0x0c36af12 )
-	ROM_LOAD( "h5.bin", 0x0e000, 0x1000, 0xf6bc4352 )
-	ROM_LOAD( "h6.bin", 0x0f000, 0x1000, 0xf7ce5fda )
-	ROM_LOAD( "j1.bin", 0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "j2.bin", 0x11000, 0x1000, 0x7c5691fa )
-	ROM_LOAD( "j3.bin", 0x12000, 0x1000, 0xda9a4984 )
-	ROM_LOAD( "j4.bin", 0x13000, 0x1000, 0x8938bdc0 )
-	ROM_LOAD( "j5.bin", 0x14000, 0x1000, 0x6643cec3 )
-	ROM_LOAD( "j6.bin", 0x15000, 0x1000, 0x2721bb0b )
-	ROM_LOAD( "j7.bin", 0x16000, 0x1000, 0xe48c0550 )
-	ROM_LOAD( "j8.bin", 0x17000, 0x1000, 0x7a2c6b34 )
-	ROM_LOAD( "j9.bin", 0x18000, 0x1000, 0x8e1e46ce )
+	ROM_LOAD( "h1.bin", 0x0a000, 0x1000, 0xc0622dc2 , 0xda18679f ) /* program ROMs */
+	ROM_LOAD( "h2.bin", 0x0b000, 0x1000, 0x4cff2ad5 , 0xa0f02c85 )
+	ROM_LOAD( "h3.bin", 0x0c000, 0x1000, 0x0a8bae5d , 0xea03a1ab )
+	ROM_LOAD( "h4.bin", 0x0d000, 0x1000, 0x0c36af12 , 0xbd06fad0 )
+	ROM_LOAD( "h5.bin", 0x0e000, 0x1000, 0xf6bc4352 , 0xbf9fd9b0 )
+	ROM_LOAD( "h6.bin", 0x0f000, 0x1000, 0xf7ce5fda , 0xfe079c5b )
+	ROM_LOAD( "j1.bin", 0x10000, 0x1000, 0x076360bf , 0x7eb59b21 ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin", 0x11000, 0x1000, 0x7c5691fa , 0x6615eff3 )
+	ROM_LOAD( "j3.bin", 0x12000, 0x1000, 0xda9a4984 , 0xa10d4444 )
+	ROM_LOAD( "j4.bin", 0x13000, 0x1000, 0x8938bdc0 , 0x58cd143c )
+	ROM_LOAD( "j5.bin", 0x14000, 0x1000, 0x6643cec3 , 0xd7e7ae95 )
+	ROM_LOAD( "j6.bin", 0x15000, 0x1000, 0x2721bb0b , 0x91f62b82 )
+	ROM_LOAD( "j7.bin", 0x16000, 0x1000, 0xe48c0550 , 0xafd0a81f )
+	ROM_LOAD( "j8.bin", 0x17000, 0x1000, 0x7a2c6b34 , 0xdabb609b )
+	ROM_LOAD( "j9.bin", 0x18000, 0x1000, 0x8e1e46ce , 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
+	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
-	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
+	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 , 0xb52d01fa )
+	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 , 0x9db5c0ce )
 ROM_END
 
 
 ROM_START( tutankst_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "h1.bin",     0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
-	ROM_LOAD( "h2.bin",     0x0b000, 0x1000, 0x4cff2ad5 )
-	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 )
-	ROM_LOAD( "h4.bin",     0x0d000, 0x1000, 0x0c36af12 )
-	ROM_LOAD( "h5.bin",     0x0e000, 0x1000, 0xf6bc4352 )
-	ROM_LOAD( "ra1_6h.cpu", 0x0f000, 0x1000, 0x7397e4d1 )
-	ROM_LOAD( "j1.bin",     0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "j2.bin",     0x11000, 0x1000, 0x7c5691fa )
-	ROM_LOAD( "j3.bin",     0x12000, 0x1000, 0xda9a4984 )
-	ROM_LOAD( "j4.bin",     0x13000, 0x1000, 0x8938bdc0 )
-	ROM_LOAD( "j5.bin",     0x14000, 0x1000, 0x6643cec3 )
-	ROM_LOAD( "j6.bin",     0x15000, 0x1000, 0x2721bb0b )
-	ROM_LOAD( "j7.bin",     0x16000, 0x1000, 0xe48c0550 )
-	ROM_LOAD( "j8.bin",     0x17000, 0x1000, 0x7a2c6b34 )
-	ROM_LOAD( "j9.bin",     0x18000, 0x1000, 0x8e1e46ce )
+	ROM_LOAD( "h1.bin", 0x0a000, 0x1000, 0xc0622dc2 , 0xda18679f ) /* program ROMs */
+	ROM_LOAD( "h2.bin", 0x0b000, 0x1000, 0x4cff2ad5 , 0xa0f02c85 )
+	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 , 0x2d62d7b1 )
+	ROM_LOAD( "h4.bin", 0x0d000, 0x1000, 0x0c36af12 , 0xbd06fad0 )
+	ROM_LOAD( "h5.bin", 0x0e000, 0x1000, 0xf6bc4352 , 0xbf9fd9b0 )
+	ROM_LOAD( "ra1_6h.cpu", 0x0f000, 0x1000, 0x7397e4d1 , 0xc43b3865 )
+	ROM_LOAD( "j1.bin", 0x10000, 0x1000, 0x076360bf , 0x7eb59b21 ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin", 0x11000, 0x1000, 0x7c5691fa , 0x6615eff3 )
+	ROM_LOAD( "j3.bin", 0x12000, 0x1000, 0xda9a4984 , 0xa10d4444 )
+	ROM_LOAD( "j4.bin", 0x13000, 0x1000, 0x8938bdc0 , 0x58cd143c )
+	ROM_LOAD( "j5.bin", 0x14000, 0x1000, 0x6643cec3 , 0xd7e7ae95 )
+	ROM_LOAD( "j6.bin", 0x15000, 0x1000, 0x2721bb0b , 0x91f62b82 )
+	ROM_LOAD( "j7.bin", 0x16000, 0x1000, 0xe48c0550 , 0xafd0a81f )
+	ROM_LOAD( "j8.bin", 0x17000, 0x1000, 0x7a2c6b34 , 0xdabb609b )
+	ROM_LOAD( "j9.bin", 0x18000, 0x1000, 0x8e1e46ce , 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
+	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
-	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
+	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 , 0xb52d01fa )
+	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 , 0x9db5c0ce )
 ROM_END
 
 

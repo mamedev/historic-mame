@@ -383,26 +383,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( spiders_rom )
 	ROM_REGION(0x10000)
-	ROM_LOAD( "SP1.BIN",    0x0c000, 0x1000, 0xffa06f9a )
-	ROM_LOAD( "SP2.BIN" ,   0x0d000, 0x1000, 0xf0cf54c9 )
-	ROM_LOAD( "SP3.BIN" ,   0x0e000, 0x1000, 0xa359ba35 )
-	ROM_LOAD( "SP4.BIN" ,   0x0f000, 0x1000, 0x6c38eeb8 )
+	ROM_LOAD( "sp1.bin", 0x0c000, 0x1000, 0xffa06f9a , 0x6a2578f6 )
+	ROM_LOAD( "sp2.bin", 0x0d000, 0x1000, 0xf0cf54c9 , 0xcf71d12b )
+	ROM_LOAD( "sp3.bin", 0x0e000, 0x1000, 0xa359ba35 , 0x464125da )
+	ROM_LOAD( "sp4.bin", 0x0f000, 0x1000, 0x6c38eeb8 , 0xf3d126bb )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "SP10B.BIN" , 0x0f000, 0x1000, 0xc86d8bc3 )
+	ROM_LOAD( "sp10b.bin", 0x0f000, 0x1000, 0xc86d8bc3 , 0x88d2c44d )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
-	ROM_LOAD( "SP5.BIN",    0x00000, 0x1000, 0xc21346b1 )
-	ROM_LOAD( "SP6.BIN" ,   0x01000, 0x1000, 0x95b93aad )
-	ROM_LOAD( "SP7.BIN" ,   0x02000, 0x1000, 0x0eddb719 )
-	ROM_LOAD( "SP8.BIN" ,   0x03000, 0x1000, 0xc7c4ec1c )
-	ROM_LOAD( "SP9A.BIN",   0x04000, 0x1000, 0xc108f776 )
-	ROM_LOAD( "SP10A.BIN" , 0x05000, 0x1000, 0xe72fe3e5 )
-	ROM_LOAD( "SP9B.BIN" ,  0x06000, 0x1000, 0x2750f0ee )
+	ROM_LOAD( "sp5.bin", 0x00000, 0x1000, 0xc21346b1 , 0xb6731baa )
+	ROM_LOAD( "sp6.bin", 0x01000, 0x1000, 0x95b93aad , 0xbaec64e7 )
+	ROM_LOAD( "sp7.bin", 0x02000, 0x1000, 0x0eddb719 , 0xa40a5517 )
+	ROM_LOAD( "sp8.bin", 0x03000, 0x1000, 0xc7c4ec1c , 0x3ca08053 )
+	ROM_LOAD( "sp9a.bin", 0x04000, 0x1000, 0xc108f776 , 0x07ea073c )
+	ROM_LOAD( "sp10a.bin", 0x05000, 0x1000, 0xe72fe3e5 , 0x41b344b4 )
+	ROM_LOAD( "sp9b.bin", 0x06000, 0x1000, 0x2750f0ee , 0x4d37da5a )
 ROM_END
 
 

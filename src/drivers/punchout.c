@@ -914,88 +914,88 @@ static struct MachineDriver machine_driver =
 
 ROM_START( punchout_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "chp1-c.8l",  0x0000, 0x2000, 0xc13743e5 )
-	ROM_LOAD( "chp1-c.8k",  0x2000, 0x2000, 0xc7e699da )
-	ROM_LOAD( "chp1-c.8j",  0x4000, 0x2000, 0xd8348e68 )
-	ROM_LOAD( "chp1-c.8h",  0x6000, 0x2000, 0x6e4b5c2d )
-	ROM_LOAD( "chp1-c.8f",  0x8000, 0x4000, 0x2b8a61f6 )
+	ROM_LOAD( "chp1-c.8l", 0x0000, 0x2000, 0xc13743e5 , 0xa4003adc )
+	ROM_LOAD( "chp1-c.8k", 0x2000, 0x2000, 0xc7e699da , 0x745ecf40 )
+	ROM_LOAD( "chp1-c.8j", 0x4000, 0x2000, 0xd8348e68 , 0x7a7f870e )
+	ROM_LOAD( "chp1-c.8h", 0x6000, 0x2000, 0x6e4b5c2d , 0x5d8123d7 )
+	ROM_LOAD( "chp1-c.8f", 0x8000, 0x4000, 0x2b8a61f6 , 0xc8a55ddb )
 
-	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chp1-b.4c",  0x00000, 0x2000, 0x87da31ee )	/* chars #1 */
-	ROM_LOAD( "chp1-b.4d",  0x02000, 0x2000, 0x595ba5a5 )
-	ROM_LOAD( "chp1-b.4a",  0x04000, 0x2000, 0xe4db3e1f )	/* chars #2 */
-	ROM_LOAD( "chp1-b.4b",  0x06000, 0x2000, 0x7d8ace36 )
-	ROM_LOAD( "chp1-v.2r",  0x08000, 0x4000, 0x2098df66 )	/* chars #3 */
-	ROM_LOAD( "chp1-v.2t",  0x0c000, 0x4000, 0x64066ce4 )
-	ROM_LOAD( "chp1-v.2u",  0x10000, 0x2000, 0x6b5c1b2e )
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chp1-b.4c", 0x00000, 0x2000, 0x87da31ee , 0xe26dc8b3 )	/* chars #1 */
+	ROM_LOAD( "chp1-b.4d", 0x02000, 0x2000, 0x595ba5a5 , 0xdd1310ca )
+	ROM_LOAD( "chp1-b.4a", 0x04000, 0x2000, 0xe4db3e1f , 0x20fb4829 )	/* chars #2 */
+	ROM_LOAD( "chp1-b.4b", 0x06000, 0x2000, 0x7d8ace36 , 0xedc34594 )
+	ROM_LOAD( "chp1-v.2r", 0x08000, 0x4000, 0x2098df66 , 0xbd1d4b2e )	/* chars #3 */
+	ROM_LOAD( "chp1-v.2t", 0x0c000, 0x4000, 0x64066ce4 , 0xdd9a688a )
+	ROM_LOAD( "chp1-v.2u", 0x10000, 0x2000, 0x6b5c1b2e , 0xda6a3c4b )
 	/* 12000-13fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.2v",  0x14000, 0x2000, 0x96c570a9 )
+	ROM_LOAD( "chp1-v.2v", 0x14000, 0x2000, 0x96c570a9 , 0x8c734a67 )
 	/* 16000-17fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.3r",  0x18000, 0x4000, 0xf8d949ef )
-	ROM_LOAD( "chp1-v.3t",  0x1c000, 0x4000, 0xb77806f8 )
-	ROM_LOAD( "chp1-v.3u",  0x20000, 0x2000, 0x87040284 )
+	ROM_LOAD( "chp1-v.3r", 0x18000, 0x4000, 0xf8d949ef , 0x2e74ad1d )
+	ROM_LOAD( "chp1-v.3t", 0x1c000, 0x4000, 0xb77806f8 , 0x630ba9fb )
+	ROM_LOAD( "chp1-v.3u", 0x20000, 0x2000, 0x87040284 , 0x6440321d )
 	/* 22000-23fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.3v",  0x24000, 0x2000, 0xce3207da )
+	ROM_LOAD( "chp1-v.3v", 0x24000, 0x2000, 0xce3207da , 0xbb7b7198 )
 	/* 26000-27fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.4r",  0x28000, 0x4000, 0xb1fb2ff3 )
-	ROM_LOAD( "chp1-v.4t",  0x2c000, 0x4000, 0x6ff58bf3 )
-	ROM_LOAD( "chp1-v.4u",  0x30000, 0x2000, 0x8ffd2fef )
+	ROM_LOAD( "chp1-v.4r", 0x28000, 0x4000, 0xb1fb2ff3 , 0x4e5b0fe9 )
+	ROM_LOAD( "chp1-v.4t", 0x2c000, 0x4000, 0x6ff58bf3 , 0x37ffc940 )
+	ROM_LOAD( "chp1-v.4u", 0x30000, 0x2000, 0x8ffd2fef , 0x1a7521d4 )
 	/* 32000-33fff empty (space for 16k ROM) */
 	/* 34000-37fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chp1-v.6p",  0x38000, 0x2000, 0x25774659 )	/* chars #4 */
-	ROM_LOAD( "chp1-v.6n",  0x3a000, 0x2000, 0x09e19979 )
+	ROM_LOAD( "chp1-v.6p", 0x38000, 0x2000, 0x25774659 , 0x16588f7a )	/* chars #4 */
+	ROM_LOAD( "chp1-v.6n", 0x3a000, 0x2000, 0x09e19979 , 0xdc743674 )
 	/* 3c000-3ffff empty (space for 6l and 6k) */
-	ROM_LOAD( "chp1-v.8p",  0x40000, 0x2000, 0xe3a2249a )
-	ROM_LOAD( "chp1-v.8n",  0x42000, 0x2000, 0xfd94b194 )
+	ROM_LOAD( "chp1-v.8p", 0x40000, 0x2000, 0xe3a2249a , 0xc2db5b4e )
+	ROM_LOAD( "chp1-v.8n", 0x42000, 0x2000, 0xfd94b194 , 0xe6af390e )
 	/* 44000-47fff empty (space for 8l and 8k) */
 
 	ROM_REGION(0x10000)	/* 64k for the sound CPU */
-	ROM_LOAD( "chp1-c.4k",  0xe000, 0x2000, 0x89829a5c )
+	ROM_LOAD( "chp1-c.4k", 0xe000, 0x2000, 0x89829a5c , 0xcb6ef376 )
 
 	ROM_REGION(0x4000)	/* 16k for the VLM5030 data */
-	ROM_LOAD( "chp1-c.6p",  0x0000, 0x4000, 0x49ccbe4e )
+	ROM_LOAD( "chp1-c.6p", 0x0000, 0x4000, 0x49ccbe4e , 0xea0bbb31 )
 ROM_END
 
 ROM_START( spnchout_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "chs1-v.8l",  0x0000, 0x2000, 0xe7d24b78 )
-	ROM_LOAD( "chs1-v.8k",  0x2000, 0x2000, 0xd02dd58d )
-	ROM_LOAD( "chs1-v.8j",  0x4000, 0x2000, 0xbfe3fb4b )
-	ROM_LOAD( "chs1-v.8h",  0x6000, 0x2000, 0x444a1ab8 )
-	ROM_LOAD( "chs1-v.8f",  0x8000, 0x4000, 0x440a5850 )
+	ROM_LOAD( "chs1-v.8l", 0x0000, 0x2000, 0xe7d24b78 , 0x703b9780 )
+	ROM_LOAD( "chs1-v.8k", 0x2000, 0x2000, 0xd02dd58d , 0xe13719f6 )
+	ROM_LOAD( "chs1-v.8j", 0x4000, 0x2000, 0xbfe3fb4b , 0x1fa629e8 )
+	ROM_LOAD( "chs1-v.8h", 0x6000, 0x2000, 0x444a1ab8 , 0x15a6c068 )
+	ROM_LOAD( "chs1-v.8f", 0x8000, 0x4000, 0x440a5850 , 0x4ff3cdd9 )
 
-	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
 	/* the following two ROMs are BAD! */
-	ROM_LOAD( "chs1-b.4c",  0x00000, 0x2000, 0xf0000000 )	/* chars #1 */
-	ROM_LOAD( "chs1-b.4d",  0x02000, 0x2000, 0x6a808080 )
-	ROM_LOAD( "chs1-b.4a",  0x04000, 0x2000, 0xe4db3e1f )	/* chars #2 */
-	ROM_LOAD( "chs1-b.4b",  0x06000, 0x2000, 0x7d8ace36 )
-	ROM_LOAD( "chs1-v.2r",  0x08000, 0x4000, 0x24fa739e )	/* chars #3 */
-	ROM_LOAD( "chs1-v.2t",  0x0c000, 0x4000, 0x3b68563e )
-	ROM_LOAD( "chs1-v.2u",  0x10000, 0x4000, 0x8e88ab58 )
-	ROM_LOAD( "chs1-v.2v",  0x14000, 0x2000, 0x74d6b436 )
+	ROM_LOAD( "chs1-b.4c", 0x00000, 0x2000, 0xf0000000 , 0xb4293435 )	/* chars #1 */
+	ROM_LOAD( "chs1-b.4d", 0x02000, 0x2000, 0x6a808080 , 0x0266cae9 )
+	ROM_LOAD( "chs1-b.4a", 0x04000, 0x2000, 0xe4db3e1f , 0x20fb4829 )	/* chars #2 */
+	ROM_LOAD( "chs1-b.4b", 0x06000, 0x2000, 0x7d8ace36 , 0xedc34594 )
+	ROM_LOAD( "chs1-v.2r", 0x08000, 0x4000, 0x24fa739e , 0xff33405d )	/* chars #3 */
+	ROM_LOAD( "chs1-v.2t", 0x0c000, 0x4000, 0x3b68563e , 0xf507818b )
+	ROM_LOAD( "chs1-v.2u", 0x10000, 0x4000, 0x8e88ab58 , 0x0995fc95 )
+	ROM_LOAD( "chs1-v.2v", 0x14000, 0x2000, 0x74d6b436 , 0xf44d9878 )
 	/* 16000-17fff empty (space for 16k ROM) */
-	ROM_LOAD( "chs1-v.3r",  0x18000, 0x4000, 0xc98157a9 )
-	ROM_LOAD( "chs1-v.3t",  0x1c000, 0x4000, 0x155a80e4 )
-	ROM_LOAD( "chs1-v.3u",  0x20000, 0x4000, 0x4cc452a0 )
-	ROM_LOAD( "chs1-v.3v",  0x24000, 0x2000, 0x1689f7b9 )
+	ROM_LOAD( "chs1-v.3r", 0x18000, 0x4000, 0xc98157a9 , 0x09570945 )
+	ROM_LOAD( "chs1-v.3t", 0x1c000, 0x4000, 0x155a80e4 , 0x42c6861c )
+	ROM_LOAD( "chs1-v.3u", 0x20000, 0x4000, 0x4cc452a0 , 0xbf5d02dd )
+	ROM_LOAD( "chs1-v.3v", 0x24000, 0x2000, 0x1689f7b9 , 0x5673f4fc )
 	/* 26000-27fff empty (space for 16k ROM) */
-	ROM_LOAD( "chs1-v.4r",  0x28000, 0x4000, 0xfc9d7f17 )
-	ROM_LOAD( "chs1-v.4t",  0x2c000, 0x4000, 0xb61eac96 )
-	ROM_LOAD( "chs1-v.4u",  0x30000, 0x4000, 0xaed19cf1 )
+	ROM_LOAD( "chs1-v.4r", 0x28000, 0x4000, 0xfc9d7f17 , 0x8e155758 )
+	ROM_LOAD( "chs1-v.4t", 0x2c000, 0x4000, 0xb61eac96 , 0xb4e43448 )
+	ROM_LOAD( "chs1-v.4u", 0x30000, 0x4000, 0xaed19cf1 , 0x74e0d956 )
 	/* 34000-37fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chp1-v.6p",  0x38000, 0x2000, 0x25774659 )	/* chars #4 */
-	ROM_LOAD( "chp1-v.6n",  0x3a000, 0x2000, 0x09e19979 )
+	ROM_LOAD( "chp1-v.6p", 0x38000, 0x2000, 0x25774659 , 0x16588f7a )	/* chars #4 */
+	ROM_LOAD( "chp1-v.6n", 0x3a000, 0x2000, 0x09e19979 , 0xdc743674 )
 	/* 3c000-3ffff empty (space for 6l and 6k) */
-	ROM_LOAD( "chp1-v.8p",  0x40000, 0x2000, 0xe3a2249a )
-	ROM_LOAD( "chp1-v.8n",  0x42000, 0x2000, 0xfd94b194 )
+	ROM_LOAD( "chp1-v.8p", 0x40000, 0x2000, 0xe3a2249a , 0xc2db5b4e )
+	ROM_LOAD( "chp1-v.8n", 0x42000, 0x2000, 0xfd94b194 , 0xe6af390e )
 	/* 44000-47fff empty (space for 8l and 8k) */
 
 	ROM_REGION(0x10000)	/* 64k for the sound CPU */
-	ROM_LOAD( "chs1-v.4k",  0xe000, 0x2000, 0x89829a5c )
+	ROM_LOAD( "chs1-v.4k", 0xe000, 0x2000, 0x89829a5c , 0xcb6ef376 )
 
 	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
-	ROM_LOAD( "chs1-v.6p",  0x0000, 0x4000, 0x439375b9 )
+	ROM_LOAD( "chs1-v.6p", 0x0000, 0x4000, 0x439375b9 , 0xad8b64b8 )
 ROM_END
 
 static void punchout_decode(void)

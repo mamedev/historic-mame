@@ -9,48 +9,53 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-unsigned char *sharkatt_videoram;
-
-enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE };
-
-
+static int color_plane = 0;
 
 /***************************************************************************
+ sharkatt_vtcsel_w
 
-  Start the video hardware emulation.
-
-***************************************************************************/
-int sharkatt_vh_start(void)
+ TODO:  This writes to a TMS9927 VTAC.  Do we care?
+ **************************************************************************/
+void sharkatt_vtcsel_w(int offset, int data)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
 }
-
 
 /***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void sharkatt_vh_stop(void)
+ sharkatt_color_plane_w
+ **************************************************************************/
+void sharkatt_color_plane_w(int offset, int data)
 {
-	osd_free_bitmap(tmpbitmap);
+	/* D0-D3 = WS0-WS3, D4-D5 = RS0-RS1 */
+	/* RS = CPU Memory Plane Read Multiplex Select */
+	color_plane = (data & 0x3F);
 }
 
+/***************************************************************************
+ sharkatt_color_map_w
+ **************************************************************************/
+void sharkatt_color_map_w(int offset, int data)
+{
+    int vals[4] = {0x00,0x55,0xAA,0xFF};
+    int r,g,b;
 
+    r = vals[(data & 0x03) >> 0];
+    g = vals[(data & 0x0C) >> 2];
+    b = vals[(data & 0x30) >> 4];
+	palette_change_color(offset,r,g,b);
+}
 
+/***************************************************************************
+ sharkatt_videoram_w
+ **************************************************************************/
 void sharkatt_videoram_w(int offset,int data)
 {
-	if (sharkatt_videoram[offset] != data)
+	if ((dirtybuffer[offset]) || (videoram[offset] != data))
 	{
 		int i,x,y;
 
+        dirtybuffer[offset] = 0;
 
-		sharkatt_videoram[offset] = data;
+		videoram[offset] = data;
 
 		y = offset / 32;
 		x = 256+16 + 8 * (offset % 32);
@@ -60,10 +65,10 @@ void sharkatt_videoram_w(int offset,int data)
 			int col;
 
 
-			col = Machine->pens[WHITE];
+			col = Machine->pens[color_plane & 0x0F];
 
 			if (data & 0x80) tmpbitmap->line[y][x] = col;
-			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
+			else tmpbitmap->line[y][x] = Machine->pens[0];
 
 			osd_mark_dirty(x,y,x+1,y+1,0);
 

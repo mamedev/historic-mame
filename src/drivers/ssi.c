@@ -253,11 +253,11 @@ static struct MachineDriver machine_driver =
 ROM_START( ssi_rom )
 	ROM_REGION(0x80000)     /* 524k for 68000 code */
 
-	ROM_LOAD_EVEN( "ssi_15-1.rom",  0x00000, 0x40000, 0xa67c15aa )
-	ROM_LOAD_ODD ( "ssi_16-1.rom",   0x00000, 0x40000, 0x7224f9bc )
+	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xa67c15aa , 0xce9308a6 )
+	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x7224f9bc , 0x470a483a )
 
-	ROM_REGION(0x100000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ssi_m01.rom", 0x000000, 0x100000, 0x83fc9e0e )
+	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ssi_m01.rom", 0x000000, 0x100000, 0x83fc9e0e , 0xa1b4f486 )
 
 //	ROM_REGION(0x10000)      /* sound cpu */
 //	ROM_LOAD( "ssi_09.rom",  0x0000, 0x10000, 0x87997597 )

@@ -274,8 +274,9 @@ void osd_ym3812_control(int reg);
 void osd_ym3812_write(int data);
 void osd_set_mastervolume(int volume);
 int osd_key_pressed(int keycode);
-int osd_read_key(void);
-int osd_read_keyrepeat(void);
+/* the following two should return pseudo key codes if translate != 0 */
+int osd_read_key(int translate);
+int osd_read_keyrepeat(int translate);
 const char *osd_joy_name(int joycode);
 const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);

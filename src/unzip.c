@@ -150,6 +150,7 @@ static debug_print_end_central_dir (t_end_of_cent_dir *ecd);
 static long	gZipLen;				/* length of zipfile */
 static char input_buffer[BUFSIZE];	/* small input buffer */
 static char *gZipfileName;			/* store pointer to basename of zipfile globally */
+static int	gZipfileCorrupt = 0;	/* flag is set when corruption is detected during inflate */
 
 /* the following globals allow checksum_zipped_file() to cache the input_buffer and ecd */
 static unsigned int cached_zip;			/* CRC-32 hash of path to zipfile that is "cached" */
@@ -165,21 +166,44 @@ extern FILE *errorlog;				/* MAME's errorlog */
 
 
 /* public globals */
-int	gUnzipQuiet = 1;				/* flag controls error messages */
+int	gUnzipQuiet = 0;				/* flag controls error messages */
 
 /*----------------------------------
         inflate.c support
 ----------------------------------*/
 extern int mame_inflate (void);
 
-unsigned char *slide;			/* 32K sliding window for inflate.c */
-unsigned char *g_nextbyte;		/* pointer to next byte of input */
-static unsigned char *g_outbuf;	/* pointer to next byte in output buffer */
+unsigned char *slide;					/* 32K sliding window for inflate.c */
+static unsigned char *g_nextbyte;		/* pointer to next byte of input */
+static unsigned char *g_inputlimit;		/* pointer to first byte beyond input buffer */
+static unsigned char *g_outbuf;			/* pointer to next byte in output buffer */
+static unsigned char *g_outputlimit;	/* pointer to first byte beyond output buffer */
 
+
+/* flush data to output buffer -- used by mame_inflate() */
 void inflate_FLUSH (unsigned char *buffer, unsigned long n)
 {
-	memcpy (g_outbuf, buffer, n);
-	g_outbuf += n;
+	if ( (g_outbuf + n) <= g_outputlimit)
+	{
+		memcpy (g_outbuf, buffer, n);
+		g_outbuf += n;
+	}
+	else
+	{
+		/* inflate attempted write beyond end of output buffer */
+		gZipfileCorrupt = 1;
+	}
+}
+
+/* read next byte of input -- used by mame_inflate() */
+int mame_nextbyte (void)
+{
+	if (g_nextbyte < g_inputlimit)
+		return *g_nextbyte++;
+
+	/* inflate attempted read beyond end of input buffer */
+	gZipfileCorrupt = 1;
+	return 256;	/* signal EOF */
 }
 /*----------------------------------
      end of inflate.c support
@@ -221,6 +245,11 @@ static void errormsg (char *fmt, ...)
 		printf (s);
 	}
 }
+
+
+#ifdef macintosh
+#pragma mark -
+#endif
 
 
 /*	Pass the path to the zipfile and the name of the file within the zipfile.
@@ -285,7 +314,7 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 	err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, cached);
 	if (err!=0)
 	{
-		errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
+//		errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
 		goto bail;
 	}
 
@@ -344,7 +373,7 @@ int /* error */ stat_zipped_file (const char *zipfile, const char *filename)
 		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, 0);
 		if (err!=0)
 		{
-			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
+//			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
 			goto bail;
 		}
     }
@@ -410,7 +439,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd, 0);
 		if (err!=0)
 		{
-			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
+//			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
 			goto bail;
 		}
 
@@ -439,9 +468,14 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 			if (err==0)
 			{
 				g_nextbyte = inbuf;
+				g_inputlimit = inbuf + lfh.compressed_size;
+
 				outbuf = malloc (lfh.uncompressed_size);
 				if (outbuf!=0)
+				{
 					g_outbuf = outbuf;
+					g_outputlimit = outbuf + lfh.uncompressed_size;
+				}
 				else
 				{
 					errormsg ("Couldn't allocate %d bytes for zipfile %s output buffer\n",
@@ -474,6 +508,12 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 					errormsg ("Error %d inflating compressed file from zipfile %s\n",
 						err, gZipfileName);
 				}
+				if (gZipfileCorrupt)
+				{
+					errormsg ("Could not extract file. %s appears to be corrupt.\n", gZipfileName);
+					err = -1;
+					gZipfileCorrupt = 0;	/* reset flag */
+				}
 			}
 		}
 
@@ -502,6 +542,11 @@ bail:
 	}
 	return err;
 }
+
+
+#ifdef macintosh
+#pragma mark -
+#endif
 
 
 /* malloc() and fill input buffer with compressed file data (all of it) */

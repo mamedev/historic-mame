@@ -251,31 +251,68 @@ static struct MachineDriver machine_driver =
 
 ROM_START( superqix_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "sq01.97",  0x00000, 0x08000, 0x1a65d6a9 )
-	ROM_LOAD( "sq02.96",  0x10000, 0x10000, 0x25dd66f5 )
+	ROM_LOAD( "sq01.97", 0x00000, 0x08000, 0x1a65d6a9 , 0x0888b7de )
+	ROM_LOAD( "sq02.96", 0x10000, 0x10000, 0x25dd66f5 , 0x9c23cb64 )
 
-	ROM_REGION(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sq04.2",  0x00000, 0x08000, 0x165430fc )
-	ROM_LOAD( "sq03.3",  0x08000, 0x10000, 0xfa8039c6 )
-	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c )
-	ROM_LOAD( "sq05.1",  0x28000, 0x10000, 0x03c81564 )
+	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sq04.2", 0x00000, 0x08000, 0x165430fc , 0xf815ef45 )
+	ROM_LOAD( "sq03.3", 0x08000, 0x10000, 0xfa8039c6 , 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c , 0x38154517 )
+	ROM_LOAD( "sq05.1", 0x28000, 0x10000, 0x03c81564 , 0xdf326540 )
 
 	ROM_REGION(0x1000)	/* Unknown (protection related?) */
-	ROM_LOAD( "sq07.108",  0x00000, 0x1000, 0x708cf304 )
+	ROM_LOAD( "sq07.108", 0x00000, 0x1000, 0x708cf304 , 0x071a598c )
 ROM_END
 
 ROM_START( sqixbl_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "CPU.2",  0x00000, 0x08000, 0x8cf43590 )
-	ROM_LOAD( "sq02.96",  0x10000, 0x10000, 0x25dd66f5 )
+	ROM_LOAD( "cpu.2", 0x00000, 0x08000, 0x8cf43590 , 0x682e28e3 )
+	ROM_LOAD( "sq02.96", 0x10000, 0x10000, 0x25dd66f5 , 0x9c23cb64 )
 
-	ROM_REGION(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sq04.2",  0x00000, 0x08000, 0x165430fc )
-	ROM_LOAD( "sq03.3",  0x08000, 0x10000, 0xfa8039c6 )
-	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c )
-	ROM_LOAD( "sq05.1",  0x28000, 0x10000, 0x03c81564 )
+	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sq04.2", 0x00000, 0x08000, 0x165430fc , 0xf815ef45 )
+	ROM_LOAD( "sq03.3", 0x08000, 0x10000, 0xfa8039c6 , 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c , 0x38154517 )
+	ROM_LOAD( "sq05.1", 0x28000, 0x10000, 0x03c81564 , 0xdf326540 )
 ROM_END
 
+static int superqix_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xf4c0],"\x00\x00\x32",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xf4c0],40);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0xf8f4] = RAM[0xf4c0];
+                        RAM[0xf8f3] = RAM[0xf4c1];
+                        RAM[0xf8f2] = RAM[0xf4c2];
+                        RAM[0xf8f1] = RAM[0xf4c3];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void superqix_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xf4c0],40);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver superqix_driver =
@@ -325,5 +362,5 @@ struct GameDriver sqixbl_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+        superqix_hiload, superqix_hisave
 };

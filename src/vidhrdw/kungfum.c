@@ -207,30 +207,29 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int bank,incr,code,col,flipx,flipy,sx,sy;
+		int incr,code,col,flipx,flipy,sx,sy;
 
 
-		bank = spriteram[offs+5] & 0x03;
-		code = spriteram[offs+4];
+		code = spriteram[offs+4] + 256 * (spriteram[offs+5] & 0x03);
 
-		if (code != 0 || bank != 0)
+		if (code != 0)
 		{
 			col = spriteram[offs+0] & 0x1f;
-			sx = (256 * spriteram[offs+7] + spriteram[offs+6]) - 128,
-			sy = 256+128-15 - (256 * spriteram[offs+3] + spriteram[offs+2]),
+			sx = 256 * (spriteram[offs+7] & 1) + spriteram[offs+6] - 128,
+			sy = 256+128-15 - (256 * (spriteram[offs+3] & 1) + spriteram[offs+2]),
 			flipx = spriteram[offs+5] & 0x40;
 			flipy = spriteram[offs+5] & 0x80;
 
-			i = sprite_height_prom[(256 * bank + code) / 32];
+			i = sprite_height_prom[code / 32];
 			if (i == 1)	/* double height */
 			{
-				code &= 0xfe;
+				code &= ~1;
 				sy -= 16;
 			}
 			else if (i == 2)	/* quadruple height */
 			{
 				i = 3;
-				code &= 0xfc;
+				code &= ~3;
 				sy -= 3*16;
 			}
 
@@ -251,7 +250,7 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			do
 			{
-				drawgfx(bitmap,Machine->gfx[1 + bank],
+				drawgfx(bitmap,Machine->gfx[1],
 						code + i * incr,col,
 						flipx,flipy,
 						sx,sy + 16 * i,

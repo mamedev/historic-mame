@@ -1,6 +1,15 @@
 #include "driver.h"
 #include "strings.h"
 #include "audit.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dos.h>
+#include <sys/stat.h>
+#include <sys/errno.h>
+
+extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+
 
 /* Mame frontend interface & commandline */
 /* parsing rountines by Maurizio Zanello */
@@ -61,12 +70,144 @@ int strwildcmp(const char *sp1, const char *sp2)
 }
 
 
+void identifyfile(const char *name)
+{
+	int i,sum;
+	FILE *f;
+
+
+	sum = 0;
+	f = fopen(name,"rb");
+	if (f)
+	{
+		int	err, length, rd;
+		unsigned char *data = NULL;
+
+
+		/* determine length of file */
+		err = fseek (f, 0L, SEEK_END);
+		if (err==0)
+		{
+			length = ftell (f);
+			if (length == -1L)
+				err = -1;
+		}
+		if (err==0)
+		{
+			/* allocate space for entire file */
+			data = malloc (length);
+			if (data == NULL)
+				err = -1;
+		}
+		if (err==0)
+		{
+			/* read entire file into memory */
+			fseek (f, 0L, SEEK_SET);
+			rd = fread (data, sizeof (unsigned char), length, f);
+			if (rd != length)
+				err = -1;
+		}
+		if (err==0)
+{
+int j,xor;
+//					sum = crc32 (0L, data, length);
+
+sum = 0;
+xor = 0;
+for (i = 0;i < (length & ~1);i += 2)
+{
+j = 256 * data[i] + data[i+1];
+sum += j;
+xor ^= j;
+}
+sum = ((sum & 0xffff) << 16) | (xor & 0xffff);
+}
+
+		if (data)
+			free (data);
+
+		fclose (f);
+	}
+
+	/* remove directory name */
+	for (i = strlen(name)-1;i >= 0;i--)
+	{
+		if (name[i] == '/' || name[i] == '\\')
+		{
+			i++;
+			break;
+		}
+	}
+	printf("%-12s ",&name[i]);
+
+	if (sum)
+	{
+		int found = 0;
+
+		for (i = 0; drivers[i]; i++)
+		{
+			const struct RomModule *romp;
+
+			romp = drivers[i]->rom;
+
+			while (romp->name || romp->offset || romp->length)
+			{
+				if (sum == romp->checksum)
+				{
+					if (found != 0) printf("             ");
+					printf("= %s/%s\n",drivers[i]->name,romp->name);
+					found++;
+				}
+				romp++;
+			}
+		}
+		if (found == 0) printf("NO MATCH\n");
+	}
+	else printf("ERROR\n");
+}
+
+
+void romident(const char *name)
+{
+	struct stat s;
+	char buf[100];
+	struct find_t fd;
+
+
+	if (stat(name,&s) != 0)
+	{
+		printf("%s: %s\n",name,strerror(errno));
+		return;
+	}
+
+	if (!S_ISDIR(s.st_mode))
+	{
+		identifyfile(name);
+		return;
+	}
+	else
+	{
+		strcpy(buf,name);
+		strcat(buf,"/*.*");
+		if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&fd) == 0)
+		{
+			do
+			{
+				sprintf(buf,"%s/%s",name,fd.name);
+				identifyfile(buf);
+			} while (_dos_findnext(&fd) == 0);
+		}
+	}
+}
+
+
 int frontend_help (int argc, char **argv)
 {
 	int i, j;
 	int list = 0;
 	int listclones = 1;
 	int verify = 0;
+	int ident = 0;
 	int help = 1;    /* by default is TRUE */
 	int crc = 0;
 	char gamename[9];
@@ -114,6 +255,7 @@ int frontend_help (int argc, char **argv)
 			if (!stricmp(argv[i],"-listsamples")) list = 5;
 			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
 			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
+			if (!stricmp(argv[i],"-romident")) ident = 1;
 			if (!stricmp(argv[i],"-crc")) crc = 1;
 		}
 	}
@@ -475,6 +617,19 @@ int frontend_help (int argc, char **argv)
 			else
 				return 0;
 		}
+	}
+	if (ident)
+	{
+		for (i = 1;i < argc;i++)
+		{
+			/* find the FIRST "name" field (without '-') */
+			if (argv[i][0] != '-')
+			{
+				romident(argv[i]);
+				break;
+			}
+		}
+		return 0;
 	}
 
 	/* use a special return value if no frontend function used */

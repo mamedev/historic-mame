@@ -265,57 +265,57 @@ static struct MachineDriver machine_driver =
 
 ROM_START( exerion_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "exerion.07", 0x0000, 0x2000, 0x9b868f9c )
-	ROM_LOAD( "exerion.08", 0x2000, 0x2000, 0x61dec9ec )
-	ROM_LOAD( "exerion.09", 0x4000, 0x2000, 0x64e47d18 )
+	ROM_LOAD( "exerion.07", 0x0000, 0x2000, 0x9b868f9c , 0x4c78d57d )
+	ROM_LOAD( "exerion.08", 0x2000, 0x2000, 0x61dec9ec , 0xdcadc1df )
+	ROM_LOAD( "exerion.09", 0x4000, 0x2000, 0x64e47d18 , 0x34cc4d14 )
 
-	ROM_REGION(0x1c000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1c000)     /* temporary space for graphics (disposed after conversion) */
 	/* Set aside 0xe000 for the unscrambled graphics */
-	ROM_LOAD( "exerion.06", 0x0e000, 0x2000, 0xcd93f589 )
-	ROM_LOAD( "exerion.01", 0x10000, 0x2000, 0x47c3cac1 )
-	ROM_LOAD( "exerion.02", 0x12000, 0x2000, 0xc4fe0d02 )
-	ROM_LOAD( "exerion.03", 0x14000, 0x2000, 0xa32c1e5a )
-	ROM_LOAD( "exerion.04", 0x16000, 0x2000, 0xf7c668aa )
+	ROM_LOAD( "exerion.06", 0x0e000, 0x2000, 0xcd93f589 , 0x435a85a4 )
+	ROM_LOAD( "exerion.01", 0x10000, 0x2000, 0x47c3cac1 , 0x5bb755cb )
+	ROM_LOAD( "exerion.02", 0x12000, 0x2000, 0xc4fe0d02 , 0xa7ecbb70 )
+	ROM_LOAD( "exerion.03", 0x14000, 0x2000, 0xa32c1e5a , 0x790595b8 )
+	ROM_LOAD( "exerion.04", 0x16000, 0x2000, 0xf7c668aa , 0xd7abd0b9 )
 	/* sprites */
-	ROM_LOAD( "exerion.11", 0x18000, 0x2000, 0xece32a3b )
-	ROM_LOAD( "exerion.10", 0x1a000, 0x2000, 0xff808bd0 )
+	ROM_LOAD( "exerion.11", 0x18000, 0x2000, 0xece32a3b , 0xf0633a09 )
+	ROM_LOAD( "exerion.10", 0x1a000, 0x2000, 0xff808bd0 , 0x80312de0 )
 
 	ROM_REGION(0x420)       /* color/lookup proms */
-	ROM_LOAD( "exerion.e1",  0x0000, 0x020, 0x6af1612f ) /* palette */
-	ROM_LOAD( "exerion.i3",  0x0020, 0x100, 0x46870903 ) /* ?? */
-	ROM_LOAD( "exerion.k4",  0x0120, 0x100, 0x49230303 ) /* ?? */
-	ROM_LOAD( "exerion.i8",  0x0220, 0x100, 0xdb000108 ) /* ?? */
-	ROM_LOAD( "exerion.h10", 0x0320, 0x100, 0xc5b20900 ) /* ?? */
+	ROM_LOAD( "exerion.e1", 0x0000, 0x020, 0x6af1612f , 0x2befcc20 ) /* palette */
+	ROM_LOAD( "exerion.i3", 0x0020, 0x100, 0x46870903 , 0xfe72ab79 ) /* ?? */
+	ROM_LOAD( "exerion.k4", 0x0120, 0x100, 0x49230303 , 0xffc2ba43 ) /* ?? */
+	ROM_LOAD( "exerion.i8", 0x0220, 0x100, 0xdb000108 , 0x31db0e08 ) /* ?? */
+	ROM_LOAD( "exerion.h10", 0x0320, 0x100, 0xc5b20900 , 0xcdd23f3e ) /* ?? */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "exerion.05", 0x0000, 0x2000, 0x16090891 )
+	ROM_LOAD( "exerion.05", 0x0000, 0x2000, 0x16090891 , 0x32f6bff5 )
 ROM_END
 
 ROM_START( exerionb_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "eb5.bin", 0x0000, 0x4000, 0x2d79663f )
-	ROM_LOAD( "eb6.bin", 0x4000, 0x2000, 0x02543120 )
+	ROM_LOAD( "eb5.bin", 0x0000, 0x4000, 0x2d79663f , 0xda175855 )
+	ROM_LOAD( "eb6.bin", 0x4000, 0x2000, 0x02543120 , 0x0dbe2eff )
 
-	ROM_REGION(0x1c000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1c000)     /* temporary space for graphics (disposed after conversion) */
 	/* Set aside 0xe000 for the unscrambled graphics */
-	ROM_LOAD( "exerion.06", 0x0e000, 0x2000, 0xcd93f589 )
-	ROM_LOAD( "exerion.01", 0x10000, 0x2000, 0x47c3cac1 )
-	ROM_LOAD( "exerion.02", 0x12000, 0x2000, 0xc4fe0d02 )
-	ROM_LOAD( "exerion.03", 0x14000, 0x2000, 0xa32c1e5a )
-	ROM_LOAD( "exerion.04", 0x16000, 0x2000, 0xf7c668aa )
+	ROM_LOAD( "exerion.06", 0x0e000, 0x2000, 0xcd93f589 , 0x435a85a4 )
+	ROM_LOAD( "exerion.01", 0x10000, 0x2000, 0x47c3cac1 , 0x5bb755cb )
+	ROM_LOAD( "exerion.02", 0x12000, 0x2000, 0xc4fe0d02 , 0xa7ecbb70 )
+	ROM_LOAD( "exerion.03", 0x14000, 0x2000, 0xa32c1e5a , 0x790595b8 )
+	ROM_LOAD( "exerion.04", 0x16000, 0x2000, 0xf7c668aa , 0xd7abd0b9 )
 	/* sprites */
-	ROM_LOAD( "exerion.11", 0x18000, 0x2000, 0xece32a3b )
-	ROM_LOAD( "exerion.10", 0x1a000, 0x2000, 0xff808bd0 )
+	ROM_LOAD( "exerion.11", 0x18000, 0x2000, 0xece32a3b , 0xf0633a09 )
+	ROM_LOAD( "exerion.10", 0x1a000, 0x2000, 0xff808bd0 , 0x80312de0 )
 
 	ROM_REGION(0x420)       /* color/lookup proms */
-	ROM_LOAD( "exerion.e1",  0x0000, 0x020, 0x6af1612f ) /* palette */
-	ROM_LOAD( "exerion.i3",  0x0020, 0x100, 0x46870903 ) /* ?? */
-	ROM_LOAD( "exerion.k4",  0x0120, 0x100, 0x49230303 ) /* ?? */
-	ROM_LOAD( "exerion.i8",  0x0220, 0x100, 0xdb000108 ) /* ?? */
-	ROM_LOAD( "exerion.h10", 0x0320, 0x100, 0xc5b20900 ) /* ?? */
+	ROM_LOAD( "exerion.e1", 0x0000, 0x020, 0x6af1612f , 0x2befcc20 ) /* palette */
+	ROM_LOAD( "exerion.i3", 0x0020, 0x100, 0x46870903 , 0xfe72ab79 ) /* ?? */
+	ROM_LOAD( "exerion.k4", 0x0120, 0x100, 0x49230303 , 0xffc2ba43 ) /* ?? */
+	ROM_LOAD( "exerion.i8", 0x0220, 0x100, 0xdb000108 , 0x31db0e08 ) /* ?? */
+	ROM_LOAD( "exerion.h10", 0x0320, 0x100, 0xc5b20900 , 0xcdd23f3e ) /* ?? */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "exerion.05", 0x0000, 0x2000, 0x16090891 )
+	ROM_LOAD( "exerion.05", 0x0000, 0x2000, 0x16090891 , 0x32f6bff5 )
 ROM_END
 
 

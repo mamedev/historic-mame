@@ -49,6 +49,9 @@ on screen, increasing cpu speed (from 10 to 14) seems to have helped.
 #include "vidhrdw/generic.h"
 #include "M6502/M6502.h"
 
+static unsigned char *ram_k;
+static unsigned char *ram_c;
+
 extern unsigned char *karnov_foreground,*karnov_sprites;
 extern int karnov_scroll[4];
 
@@ -205,7 +208,7 @@ int chelnov_c_read(int offset)
 static struct MemoryReadAddress karnov_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0x060000, 0x063fff, MRA_BANK1 },
+	{ 0x060000, 0x063fff, MRA_BANK1, &ram_k },
 	{ 0x080000, 0x080fff, MRA_BANK2 },
 	{ 0x0a0000, 0x0a07ff, MRA_BANK3 },
 	{ 0x0c0000, 0x0c0007, karnov_c_read },
@@ -215,7 +218,7 @@ static struct MemoryReadAddress karnov_readmem[] =
 static struct MemoryReadAddress chelnov_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0x060000, 0x063fff, MRA_BANK1 },
+	{ 0x060000, 0x063fff, MRA_BANK1, &ram_c },
 	{ 0x080000, 0x080fff, MRA_BANK2 },
 	{ 0x0a0000, 0x0a07ff, MRA_BANK3 },
 	{ 0x0c0000, 0x0c0007, chelnov_c_read },
@@ -589,126 +592,126 @@ static struct MachineDriver chelnov_machine_driver =
 
 ROM_START( karnov_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "dn08-5", 0x00000, 0x10000, 0x87776617 )
-	ROM_LOAD_ODD ( "dn11-5", 0x00000, 0x10000, 0xd6ecaea4 )
-	ROM_LOAD_EVEN( "dn07-",  0x20000, 0x10000, 0x730e1ed8 )
-	ROM_LOAD_ODD ( "dn10-",  0x20000, 0x10000, 0x9813e18f )
-	ROM_LOAD_EVEN( "dn06-5", 0x40000, 0x10000, 0xc54bcfa1 )
-	ROM_LOAD_ODD ( "dn09-5", 0x40000, 0x10000, 0xb678cfd8 )
+	ROM_LOAD_EVEN( "dn08-5", 0x00000, 0x10000, 0x87776617 , 0xdb92c264 )
+	ROM_LOAD_ODD ( "dn11-5", 0x00000, 0x10000, 0xd6ecaea4 , 0x05669b4b )
+	ROM_LOAD_EVEN( "dn07-", 0x20000, 0x10000, 0x730e1ed8 , 0xfc14291b )
+	ROM_LOAD_ODD ( "dn10-", 0x20000, 0x10000, 0x9813e18f , 0xa4a34e37 )
+	ROM_LOAD_EVEN( "dn06-5", 0x40000, 0x10000, 0xc54bcfa1 , 0x29d64e42 )
+	ROM_LOAD_ODD ( "dn09-5", 0x40000, 0x10000, 0xb678cfd8 , 0x072d7c49 )
 
-	ROM_REGION(0xa8000)
-	ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 )	/* Characters */
-	ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 )	/* Backgrounds */
-	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 )
-	ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf )
-	ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed )
-	ROM_LOAD( "dn12-",  0x48000, 0x10000, 0x0300f4c8 )	/* Sprites - 2 sets of 4, interleaved here */
-	ROM_LOAD( "dn14-5", 0x58000, 0x08000, 0xb6b9f841 )
-	ROM_LOAD( "dn13-",  0x60000, 0x10000, 0x7d211a85 )
-	ROM_LOAD( "dn15-5", 0x70000, 0x08000, 0xcf18d74a )
-	ROM_LOAD( "dn16-",  0x78000, 0x10000, 0xc945ee31 )
-	ROM_LOAD( "dn17-5", 0x88000, 0x08000, 0x06e9df53 )
-	ROM_LOAD( "dn18-",  0x90000, 0x10000, 0xbb24da3a )
-	ROM_LOAD( "dn19-5", 0xa0000, 0x08000, 0x83fcbe26 )
+	ROM_REGION_DISPOSE(0xa8000)
+	ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 , 0x0ed77c6d )	/* Characters */
+	ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 , 0xa9121653 )	/* Backgrounds */
+	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 , 0x18697c9e )
+	ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf , 0x90d9dd9c )
+	ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed , 0x1e04d7b9 )
+	ROM_LOAD( "dn12-", 0x48000, 0x10000, 0x0300f4c8 , 0x9806772c )	/* Sprites - 2 sets of 4, interleaved here */
+	ROM_LOAD( "dn14-5", 0x58000, 0x08000, 0xb6b9f841 , 0xac9e6732 )
+	ROM_LOAD( "dn13-", 0x60000, 0x10000, 0x7d211a85 , 0xa03308f9 )
+	ROM_LOAD( "dn15-5", 0x70000, 0x08000, 0xcf18d74a , 0x8933fcb8 )
+	ROM_LOAD( "dn16-", 0x78000, 0x10000, 0xc945ee31 , 0x55e63a11 )
+	ROM_LOAD( "dn17-5", 0x88000, 0x08000, 0x06e9df53 , 0xb70ae950 )
+	ROM_LOAD( "dn18-", 0x90000, 0x10000, 0xbb24da3a , 0x2ad53213 )
+	ROM_LOAD( "dn19-5", 0xa0000, 0x08000, 0x83fcbe26 , 0x8fd4fa40 )
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 )
-	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 )
+	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 , 0xaab0bb93 )
+	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 , 0x02f78ffb )
 
 	/* 6502 Sound CPU */
 	ROM_REGION(0x10000)
-	ROM_LOAD( "dn05-5", 0x8000, 0x8000, 0x4fc9a353 )
+	ROM_LOAD( "dn05-5", 0x8000, 0x8000, 0x4fc9a353 , 0xfa1a31a8 )
 ROM_END
 
 ROM_START( karnovj_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "kar8",  0x00000, 0x10000, 0xc945f329 )
-	ROM_LOAD_ODD ( "kar11", 0x00000, 0x10000, 0x347e4e36 )
-	ROM_LOAD_EVEN( "dn07-", 0x20000, 0x10000, 0x730e1ed8 )
-	ROM_LOAD_ODD ( "dn10-", 0x20000, 0x10000, 0x9813e18f )
-	ROM_LOAD_EVEN( "kar6",  0x40000, 0x10000, 0x062d7e77 )
-	ROM_LOAD_ODD ( "kar9",  0x40000, 0x10000, 0x37c0a23a )
+	ROM_LOAD_EVEN( "kar8", 0x00000, 0x10000, 0xc945f329 , 0x3e17e268 )
+	ROM_LOAD_ODD ( "kar11", 0x00000, 0x10000, 0x347e4e36 , 0x417c936d )
+	ROM_LOAD_EVEN( "dn07-", 0x20000, 0x10000, 0x730e1ed8 , 0xfc14291b )
+	ROM_LOAD_ODD ( "dn10-", 0x20000, 0x10000, 0x9813e18f , 0xa4a34e37 )
+	ROM_LOAD_EVEN( "kar6", 0x40000, 0x10000, 0x062d7e77 , 0xc641e195 )
+	ROM_LOAD_ODD ( "kar9", 0x40000, 0x10000, 0x37c0a23a , 0xd420658d )
 
-	ROM_REGION(0xa8000)
-	ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 )	/* Characters */
-	ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 )	/* Backgrounds */
-	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 )
-	ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf )
-	ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed )
-	ROM_LOAD( "dn12-", 0x48000, 0x10000, 0x0300f4c8 )	/* Sprites - 2 sets of 4, interleaved here */
-	ROM_LOAD( "kar14", 0x58000, 0x08000, 0x3d95baef )
-	ROM_LOAD( "dn13-", 0x60000, 0x10000, 0x7d211a85 )
-	ROM_LOAD( "kar15", 0x70000, 0x08000, 0xbb2d9d09 )
-	ROM_LOAD( "dn16-", 0x78000, 0x10000, 0xc945ee31 )
-	ROM_LOAD( "kar17", 0x88000, 0x08000, 0xc1a153c7 )
-	ROM_LOAD( "dn18-", 0x90000, 0x10000, 0xbb24da3a )
-	ROM_LOAD( "kar19", 0xa0000, 0x08000, 0x77773ad5 )
+	ROM_REGION_DISPOSE(0xa8000)
+	ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 , 0x0ed77c6d )	/* Characters */
+	ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 , 0xa9121653 )	/* Backgrounds */
+	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 , 0x18697c9e )
+	ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf , 0x90d9dd9c )
+	ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed , 0x1e04d7b9 )
+	ROM_LOAD( "dn12-", 0x48000, 0x10000, 0x0300f4c8 , 0x9806772c )	/* Sprites - 2 sets of 4, interleaved here */
+	ROM_LOAD( "kar14", 0x58000, 0x08000, 0x3d95baef , 0xc6b39595 )
+	ROM_LOAD( "dn13-", 0x60000, 0x10000, 0x7d211a85 , 0xa03308f9 )
+	ROM_LOAD( "kar15", 0x70000, 0x08000, 0xbb2d9d09 , 0x2f72cac0 )
+	ROM_LOAD( "dn16-", 0x78000, 0x10000, 0xc945ee31 , 0x55e63a11 )
+	ROM_LOAD( "kar17", 0x88000, 0x08000, 0xc1a153c7 , 0x7851c70f )
+	ROM_LOAD( "dn18-", 0x90000, 0x10000, 0xbb24da3a , 0x2ad53213 )
+	ROM_LOAD( "kar19", 0xa0000, 0x08000, 0x77773ad5 , 0x7bc174bb )
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 )
-	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 )
+	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 , 0xaab0bb93 )
+	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 , 0x02f78ffb )
 
 	/* 6502 Sound CPU */
 	ROM_REGION(0x10000)
-	ROM_LOAD( "kar5", 0x8000, 0x8000, 0x50cf61cf )
+	ROM_LOAD( "kar5", 0x8000, 0x8000, 0x50cf61cf , 0x7c9158f1 )
 ROM_END
 
 ROM_START( chelnov_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "ee08-a.j15", 0x00000, 0x10000, 0x6727fe5d )
-	ROM_LOAD_ODD ( "ee11-a.j20", 0x00000, 0x10000, 0x9ea7dc0d )
-	ROM_LOAD_EVEN( "ee07-a.j14", 0x20000, 0x10000, 0x01080e4a )
-	ROM_LOAD_ODD ( "ee10-a.j18", 0x20000, 0x10000, 0xe68e006a )
-	ROM_LOAD_EVEN( "ee06-e.j13", 0x40000, 0x10000, 0x463270f6 )
-	ROM_LOAD_ODD ( "ee09-e.j17", 0x40000, 0x10000, 0x18020e86 )
+	ROM_LOAD_EVEN( "ee08-a.j15", 0x00000, 0x10000, 0x6727fe5d , 0x2f2fb37b )
+	ROM_LOAD_ODD ( "ee11-a.j20", 0x00000, 0x10000, 0x9ea7dc0d , 0xf306d05f )
+	ROM_LOAD_EVEN( "ee07-a.j14", 0x20000, 0x10000, 0x01080e4a , 0x9c69ed56 )
+	ROM_LOAD_ODD ( "ee10-a.j18", 0x20000, 0x10000, 0xe68e006a , 0xd5c5fe4b )
+	ROM_LOAD_EVEN( "ee06-e.j13", 0x40000, 0x10000, 0x463270f6 , 0x55acafdb )
+	ROM_LOAD_ODD ( "ee09-e.j17", 0x40000, 0x10000, 0x18020e86 , 0x303e252c )
 
-	ROM_REGION(0x88000)
-	ROM_LOAD( "ee00-e.c5", 0x00000, 0x08000, 0x25ad554f )	/* Characters */
-	ROM_LOAD( "ee04-.d18", 0x08000, 0x10000, 0xd447b383 )	/* Backgrounds */
-	ROM_LOAD( "ee01-.c15", 0x18000, 0x10000, 0x476a4d90 )
-	ROM_LOAD( "ee03-.d15", 0x28000, 0x10000, 0xe23fd4ff )
-	ROM_LOAD( "ee02-.c18", 0x38000, 0x10000, 0x7897fcb7 )
-	ROM_LOAD( "ee12-.f8",  0x48000, 0x10000, 0x62adc797 )	/* Sprites */
-	ROM_LOAD( "ee13-.f9",  0x58000, 0x10000, 0x4524d74c )
-	ROM_LOAD( "ee14-.f13", 0x68000, 0x10000, 0x47efa38b )
-	ROM_LOAD( "ee15-.f15", 0x78000, 0x10000, 0x0aaca864 )
+	ROM_REGION_DISPOSE(0x88000)
+	ROM_LOAD( "ee00-e.c5", 0x00000, 0x08000, 0x25ad554f , 0xe06e5c6b )	/* Characters */
+	ROM_LOAD( "ee04-.d18", 0x08000, 0x10000, 0xd447b383 , 0x96884f95 )	/* Backgrounds */
+	ROM_LOAD( "ee01-.c15", 0x18000, 0x10000, 0x476a4d90 , 0xf4b54057 )
+	ROM_LOAD( "ee03-.d15", 0x28000, 0x10000, 0xe23fd4ff , 0x7178e182 )
+	ROM_LOAD( "ee02-.c18", 0x38000, 0x10000, 0x7897fcb7 , 0x9d7c45ae )
+	ROM_LOAD( "ee12-.f8", 0x48000, 0x10000, 0x62adc797 , 0x9b1c53a5 )	/* Sprites */
+	ROM_LOAD( "ee13-.f9", 0x58000, 0x10000, 0x4524d74c , 0x72b8ae3e )
+	ROM_LOAD( "ee14-.f13", 0x68000, 0x10000, 0x47efa38b , 0xd8f4bbde )
+	ROM_LOAD( "ee15-.f15", 0x78000, 0x10000, 0x0aaca864 , 0x81e3e68b )
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "ee21.k8", 0x0000, 0x0400, 0xe6be044a )	/* different from the other set; */
+	ROM_LOAD( "ee21.k8", 0x0000, 0x0400, 0xe6be044a , 0xb1db6586 )	/* different from the other set; */
 														/* might be bad */
-	ROM_LOAD( "ee20.l6", 0x0400, 0x0400, 0xfeba090e )
+	ROM_LOAD( "ee20.l6", 0x0400, 0x0400, 0xfeba090e , 0x41816132 )
 
 	ROM_REGION(0x10000)	/* 6502 Sound CPU */
-	ROM_LOAD( "ee05-.f3", 0x8000, 0x8000, 0xc9f33353 )
+	ROM_LOAD( "ee05-.f3", 0x8000, 0x8000, 0xc9f33353 , 0x6a8936b4 )
 ROM_END
 
 ROM_START( chelnovj_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "a-j15.bin", 0x00000, 0x10000, 0x4af03e04 )
-	ROM_LOAD_ODD ( "a-j20.bin", 0x00000, 0x10000, 0x7ff4255c )
-	ROM_LOAD_EVEN( "a-j14.bin", 0x20000, 0x10000, 0x639164ef )
-	ROM_LOAD_ODD ( "a-j18.bin", 0x20000, 0x10000, 0x53df7af1 )
-	ROM_LOAD_EVEN( "a-j13.bin", 0x40000, 0x10000, 0xb60270c6 )
-	ROM_LOAD_ODD ( "a-j17.bin", 0x40000, 0x10000, 0x1a1f248f )
+	ROM_LOAD_EVEN( "a-j15.bin", 0x00000, 0x10000, 0x4af03e04 , 0x1978cb52 )
+	ROM_LOAD_ODD ( "a-j20.bin", 0x00000, 0x10000, 0x7ff4255c , 0xe0ed3d99 )
+	ROM_LOAD_EVEN( "a-j14.bin", 0x20000, 0x10000, 0x639164ef , 0x51465486 )
+	ROM_LOAD_ODD ( "a-j18.bin", 0x20000, 0x10000, 0x53df7af1 , 0xd09dda33 )
+	ROM_LOAD_EVEN( "a-j13.bin", 0x40000, 0x10000, 0xb60270c6 , 0xcd991507 )
+	ROM_LOAD_ODD ( "a-j17.bin", 0x40000, 0x10000, 0x1a1f248f , 0x977f601c )
 
-	ROM_REGION(0x88000)
-	ROM_LOAD( "a-c5.bin",  0x00000, 0x08000, 0x25c8aab0 )	/* Characters */
-	ROM_LOAD( "ee04-.d18", 0x08000, 0x10000, 0xd447b383 )	/* Backgrounds */
-	ROM_LOAD( "ee01-.c15", 0x18000, 0x10000, 0x476a4d90 )
-	ROM_LOAD( "ee03-.d15", 0x28000, 0x10000, 0xe23fd4ff )
-	ROM_LOAD( "ee02-.c18", 0x38000, 0x10000, 0x7897fcb7 )
-	ROM_LOAD( "ee12-.f8",  0x48000, 0x10000, 0x62adc797 )	/* Sprites */
-	ROM_LOAD( "ee13-.f9",  0x58000, 0x10000, 0x4524d74c )
-	ROM_LOAD( "ee14-.f13", 0x68000, 0x10000, 0x47efa38b )
-	ROM_LOAD( "ee15-.f15", 0x78000, 0x10000, 0x0aaca864 )
+	ROM_REGION_DISPOSE(0x88000)
+	ROM_LOAD( "a-c5.bin", 0x00000, 0x08000, 0x25c8aab0 , 0x1abf2c6d )	/* Characters */
+	ROM_LOAD( "ee04-.d18", 0x08000, 0x10000, 0xd447b383 , 0x96884f95 )	/* Backgrounds */
+	ROM_LOAD( "ee01-.c15", 0x18000, 0x10000, 0x476a4d90 , 0xf4b54057 )
+	ROM_LOAD( "ee03-.d15", 0x28000, 0x10000, 0xe23fd4ff , 0x7178e182 )
+	ROM_LOAD( "ee02-.c18", 0x38000, 0x10000, 0x7897fcb7 , 0x9d7c45ae )
+	ROM_LOAD( "ee12-.f8", 0x48000, 0x10000, 0x62adc797 , 0x9b1c53a5 )	/* Sprites */
+	ROM_LOAD( "ee13-.f9", 0x58000, 0x10000, 0x4524d74c , 0x72b8ae3e )
+	ROM_LOAD( "ee14-.f13", 0x68000, 0x10000, 0x47efa38b , 0xd8f4bbde )
+	ROM_LOAD( "ee15-.f15", 0x78000, 0x10000, 0x0aaca864 , 0x81e3e68b )
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "a-k7.bin", 0x0000, 0x0400, 0xd97d37c5 )	/* different from the other set; */
+	ROM_LOAD( "a-k7.bin", 0x0000, 0x0400, 0xd97d37c5 , 0x309c49d8 )	/* different from the other set; */
 														/* might be bad */
-	ROM_LOAD( "a-l6.bin", 0x0400, 0x0400, 0xfeba090e )
+	ROM_LOAD( "a-l6.bin", 0x0400, 0x0400, 0xfeba090e , 0x41816132 )
 
 	ROM_REGION(0x10000)	/* 6502 Sound CPU */
-	ROM_LOAD( "ee05-.f3", 0x8000, 0x8000, 0xc9f33353 )
+	ROM_LOAD( "ee05-.f3", 0x8000, 0x8000, 0xc9f33353 , 0x6a8936b4 )
 ROM_END
 
 
@@ -770,6 +773,80 @@ static void chelnovj_patch(void)
 	WRITE_WORD (&RAM[0x09A6],0x4E75);
 }
 
+
+
+static int karnov_hiload(void)
+{
+        void *f;
+
+        /* check if the hi score table has already been initialized */
+
+        if (memcmp(&ram_k[0x3d00],"\x41\x0\x41\x41",4) == 0 )
+        {
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&ram_k[0x3c00],4*10);
+                        osd_fread(f,&ram_k[0x3d00],4*10);
+                        ram_k[0x0a]=ram_k[0x3c00];
+                        ram_k[0x0b]=ram_k[0x3c01];
+                        ram_k[0x0c]=ram_k[0x3c02];
+                        ram_k[0x0d]=ram_k[0x3c03];
+                        osd_fclose(f);
+                }
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void karnov_hisave(void)
+{
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&ram_k[0x3c00],4*10);
+                osd_fwrite(f,&ram_k[0x3d00],4*10);
+                osd_fclose(f);
+        }
+}
+
+static int chelnov_hiload(void)
+{
+        void *f;
+
+        /* check if the hi score table has already been initialized */
+
+        if (memcmp(&ram_c[0xc0],"BA",2) == 0 )
+        {
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f,&ram_c[0x80],4*11);
+                        osd_fread(f,&ram_c[0xc0],4*11);
+                        ram_c[0x0048]=ram_c[0x0080];
+                        ram_c[0x0049]=ram_c[0x0081];
+                        ram_c[0x004a]=ram_c[0x0082];
+                        ram_c[0x004b]=ram_c[0x0083];
+                        osd_fclose(f);
+                }
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
+}
+
+static void chelnov_hisave(void)
+{
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&ram_c[0x0080],4*11);
+                osd_fwrite(f,&ram_c[0x00c0],4*11);
+                osd_fclose(f);
+        }
+}
+
+
+
 struct GameDriver karnov_driver =
 {
 	__FILE__,
@@ -792,7 +869,7 @@ struct GameDriver karnov_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	karnov_hiload, karnov_hisave
 };
 
 struct GameDriver karnovj_driver =
@@ -817,7 +894,7 @@ struct GameDriver karnovj_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	karnov_hiload, karnov_hisave
 };
 
 struct GameDriver chelnov_driver =
@@ -842,7 +919,7 @@ struct GameDriver chelnov_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	chelnov_hiload, chelnov_hisave
 };
 
 struct GameDriver chelnovj_driver =
@@ -867,6 +944,5 @@ struct GameDriver chelnovj_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	chelnov_hiload, chelnov_hisave
 };
-

@@ -26,10 +26,10 @@ int kangaroo_sec_chip_r(int offset)
 {
 /*  kangaroo_clock = (kangaroo_clock << 1) + 1; */
   kangaroo_clock++;
-  return (kangaroo_clock & 0xff);
+  return (kangaroo_clock & 0x0f);
 }
 
 void kangaroo_sec_chip_w(int offset, int val)
 {
-/*  kangaroo_clock = val & 0xff; */
+/*  kangaroo_clock = val & 0x0f; */
 }

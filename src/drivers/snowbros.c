@@ -234,7 +234,7 @@ static void irqhandler(void)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
+	3000000,	/* 3.000000 MHz ? (partially supported) */
 	{ 255 },		/* (not supported) */
 	irqhandler,
 };
@@ -296,17 +296,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( snowbros_rom )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "snowbros.3a", 0x00000, 0x20000, 0x254fde1f )
-	ROM_LOAD_ODD ( "snowbros.2a", 0x00000, 0x20000, 0xe13f9fdf )
+	ROM_LOAD_EVEN( "snowbros.3a", 0x00000, 0x20000, 0x254fde1f , 0x10cb37e1 )
+	ROM_LOAD_ODD ( "snowbros.2a", 0x00000, 0x20000, 0xe13f9fdf , 0xab91cc1e )
 
-	ROM_REGION(0x80000)
-	ROM_LOAD( "ch0", 0x00000, 0x20000, 0xef931505 )
-	ROM_LOAD( "ch1", 0x20000, 0x20000, 0x17afaa2f )
-	ROM_LOAD( "ch2", 0x40000, 0x20000, 0x23a8394a )
-	ROM_LOAD( "ch3", 0x60000, 0x20000, 0xfb5633da )
+	ROM_REGION_DISPOSE(0x80000)
+	ROM_LOAD( "ch0", 0x00000, 0x20000, 0xef931505 , 0x36d84dfe )
+	ROM_LOAD( "ch1", 0x20000, 0x20000, 0x17afaa2f , 0x76347256 )
+	ROM_LOAD( "ch2", 0x40000, 0x20000, 0x23a8394a , 0xfdaa634c )
+	ROM_LOAD( "ch3", 0x60000, 0x20000, 0xfb5633da , 0x34024aef )
 
 	ROM_REGION(0x10000)	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4", 0x0000, 0x8000, 0x185f25af )
+	ROM_LOAD( "snowbros.4", 0x0000, 0x8000, 0x185f25af , 0xe6eab4e4 )
 ROM_END
 
 

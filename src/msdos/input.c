@@ -63,7 +63,10 @@ int osd_key_pressed(int keycode)
             case OSD_KEY_SHOW_GFX:
                 return key[OSD_KEY_F5];
 
-			case OSD_KEY_FRAMESKIP:
+			case OSD_KEY_JOY_CALIBRATE:
+				return key[OSD_KEY_F7];
+
+            case OSD_KEY_FRAMESKIP:
                 return key[OSD_KEY_F8];
 
             case OSD_KEY_RESET_MACHINE:
@@ -106,11 +109,14 @@ int osd_key_pressed(int keycode)
             case OSD_KEY_SHOW_GFX:
 				return key[OSD_KEY_F4];
 
-			case OSD_KEY_FRAMESKIP:
-                return key[OSD_KEY_F8];
-
 			case OSD_KEY_RESET_MACHINE:
                 return key[OSD_KEY_F3];
+
+            case OSD_KEY_JOY_CALIBRATE:
+				return key[OSD_KEY_F7];
+
+            case OSD_KEY_FRAMESKIP:
+                return key[OSD_KEY_F8];
 
             case OSD_KEY_THROTTLE:
                 return key[OSD_KEY_F10];
@@ -154,29 +160,49 @@ int osd_key_pressed(int keycode)
  * Translate certain keys (or key combinations) back to
  * the pseudo key values defined in osdepend.h.
  */
-int osd_read_key(void)
+int osd_read_key(int translate)
 {
 	int res;
 
-	/* wait for all keys to be released (including pseudo keys) */
-	do
+	if (translate)
 	{
-		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-			if (osd_key_pressed(res))
-				break;
-	} while (res >= 0);
+		/* wait for all keys to be released (including pseudo keys) */
+		do
+		{
+			for (res = OSD_MAX_PSEUDO; res >= 0; res--)
+				if (osd_key_pressed(res))
+					break;
+		} while (res >= 0);
 
-	/* wait for a key press (including pseudo keys) */
-	do
+		/* wait for a key press (including pseudo keys) */
+		do
+		{
+			for (res = OSD_MAX_PSEUDO; res >= 0; res--)
+				if (osd_key_pressed(res))
+					break;
+		} while (res < 0);
+	}
+	else
 	{
-		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-			if (osd_key_pressed(res))
-				break;
-	} while (res < 0);
+		/* wait for all keys to be released (standard keys) */
+		do
+		{
+			for (res = OSD_MAX_KEY; res >= 0; res--)
+				if (osd_key_pressed(res))
+					break;
+		} while (res >= 0);
 
-	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
+		/* wait for a key press (standard keys) */
+		do
+		{
+			for (res = OSD_MAX_KEY; res >= 0; res--)
+				if (osd_key_pressed(res))
+					break;
+        } while (res < 0);
+    }
+
+    if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
 	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
-
 	return res;
 }
 
@@ -193,6 +219,9 @@ static int key_to_pseudo_code(int k)
 
         case OSD_KEY_F5:
             return OSD_KEY_SHOW_GFX;
+
+		case OSD_KEY_F7:
+			return OSD_KEY_JOY_CALIBRATE;
 
         case OSD_KEY_F8:
             return OSD_KEY_FRAMESKIP;
@@ -231,6 +260,9 @@ static int key_to_pseudo_code(int k)
         case OSD_KEY_F4:
             return OSD_KEY_SHOW_GFX;
 
+		case OSD_KEY_F7:
+			return OSD_KEY_JOY_CALIBRATE;
+
         case OSD_KEY_F8:
             return OSD_KEY_FRAMESKIP;
 
@@ -258,14 +290,13 @@ static int key_to_pseudo_code(int k)
 
         case OSD_KEY_P:
             return OSD_KEY_PAUSE;
-
-#endif
     }
+#endif
     return k;
 }
 
 /* Wait for a key press and return keycode.  Support repeat */
-int osd_read_keyrepeat(void)
+int osd_read_keyrepeat(int translate)
 {
 	int res;
 
@@ -275,7 +306,9 @@ int osd_read_keyrepeat(void)
 	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
 	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
 
-	return key_to_pseudo_code(res);
+	if (translate)
+		res = key_to_pseudo_code(res);
+	return res;
 }
 
 int osd_debug_readkey(void)
@@ -495,7 +528,7 @@ void joy_calibration(void)
 			osd_clearbitmap(Machine->scrbitmap);
 			my_textout(msg);
 			update_screen();
-			(void)osd_read_key();
+			(void)osd_read_key(0);
 			if (calibrate_joystick(i))
 				continue; /* continue with next joystick on error */
 		}

@@ -564,30 +564,30 @@ static void vindictr_rom_decode (void)
 
 ROM_START( vindictr_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "vin.d1", 0x00000, 0x10000, 0x926a2756 )
-	ROM_LOAD_ODD ( "vin.d3", 0x00000, 0x10000, 0xc201d145 )
-	ROM_LOAD_EVEN( "vin.j1", 0x20000, 0x10000, 0xcb718c11 )
-	ROM_LOAD_ODD ( "vin.j3", 0x20000, 0x10000, 0xfc9567af )
-	ROM_LOAD_EVEN( "vin.k1", 0x40000, 0x10000, 0x7f71242b )
-	ROM_LOAD_ODD ( "vin.k3", 0x40000, 0x10000, 0xe94357c7 )
+	ROM_LOAD_EVEN( "vin.d1", 0x00000, 0x10000, 0x926a2756 , 0x2e5135e4 )
+	ROM_LOAD_ODD ( "vin.d3", 0x00000, 0x10000, 0xc201d145 , 0xe357fa79 )
+	ROM_LOAD_EVEN( "vin.j1", 0x20000, 0x10000, 0xcb718c11 , 0x44c77ee0 )
+	ROM_LOAD_ODD ( "vin.j3", 0x20000, 0x10000, 0xfc9567af , 0x4deaa77f )
+	ROM_LOAD_EVEN( "vin.k1", 0x40000, 0x10000, 0x7f71242b , 0x9a0444ee )
+	ROM_LOAD_ODD ( "vin.k3", 0x40000, 0x10000, 0xe94357c7 , 0xd5022d78 )
 
-	ROM_REGION(0x104000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vin.p13", 0x00000, 0x20000, 0x11de9888 )
-	ROM_LOAD( "vin.p14", 0x20000, 0x10000, 0x32e973b9 )
+	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vin.p13", 0x00000, 0x20000, 0x11de9888 , 0x062f8e52 )
+	ROM_LOAD( "vin.p14", 0x20000, 0x10000, 0x32e973b9 , 0x0e4366fa )
 	ROM_RELOAD(          0x30000, 0x10000 )
-	ROM_LOAD( "vin.p8",  0x40000, 0x20000, 0x48f06482 )
-	ROM_LOAD( "vin.p6",  0x60000, 0x10000, 0x93b1dceb )
+	ROM_LOAD( "vin.p8", 0x40000, 0x20000, 0x48f06482 , 0x09123b57 )
+	ROM_LOAD( "vin.p6", 0x60000, 0x10000, 0x93b1dceb , 0x6b757bca )
 	ROM_RELOAD(          0x70000, 0x10000 )
-	ROM_LOAD( "vin.r13", 0x80000, 0x20000, 0xf343ec43 )
-	ROM_LOAD( "vin.r14", 0xa0000, 0x10000, 0x9232bb7e )
+	ROM_LOAD( "vin.r13", 0x80000, 0x20000, 0xf343ec43 , 0xa5268c4f )
+	ROM_LOAD( "vin.r14", 0xa0000, 0x10000, 0x9232bb7e , 0x609f619e )
 	ROM_RELOAD(          0xb0000, 0x10000 )
-	ROM_LOAD( "vin.r8",  0xc0000, 0x20000, 0x41d92527 )
-	ROM_LOAD( "vin.r6",  0xe0000, 0x10000, 0x73476917 )
+	ROM_LOAD( "vin.r8", 0xc0000, 0x20000, 0x41d92527 , 0x2d07fdaa )
+	ROM_LOAD( "vin.r6", 0xe0000, 0x10000, 0x73476917 , 0x0a2aba63 )
 	ROM_RELOAD(          0xf0000, 0x10000 )
-	ROM_LOAD( "vin.n17", 0x100000, 0x04000, 0x2201b667 )        /* alpha font */
+	ROM_LOAD( "vin.n17", 0x100000, 0x04000, 0x2201b667 , 0xf99b631a )        /* alpha font */
 
 	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
-	ROM_LOAD( "vin.snd", 0x10000, 0x4000, 0xa035562f )
+	ROM_LOAD( "vin.snd", 0x10000, 0x4000, 0xa035562f , 0xd2212c0a )
 	ROM_CONTINUE(        0x04000, 0xc000 )
 ROM_END
 

@@ -575,11 +575,11 @@ ROM_START( blockade_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       blockade_rom_init()                           */
-    ROM_LOAD( "316-04.u2",    0x1000, 0x0400, 0xb4090e07 )
-    ROM_LOAD( "316-03.u3",    0x1400, 0x0400, 0xff5a0c08 )
-    ROM_REGION(0x200)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "316-02.u29",   0x0000, 0x0100, 0x2c2b0a0d )
-    ROM_LOAD( "316-01.u43",   0x0100, 0x0100, 0x35720802 )
+    ROM_LOAD( "316-04.u2", 0x1000, 0x0400, 0xb4090e07 , 0xa93833e9 )
+    ROM_LOAD( "316-03.u3", 0x1400, 0x0400, 0xff5a0c08 , 0x85960d3b )
+    ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "316-02.u29", 0x0000, 0x0100, 0x2c2b0a0d , 0x409f610f )
+    ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x35720802 , 0x41a00b28 )
 ROM_END
 
 ROM_START( comotion_rom )
@@ -588,13 +588,13 @@ ROM_START( comotion_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "316-07.u2",    0x1000, 0x0400, 0x434a0d04 )
-    ROM_LOAD( "316-08.u3",    0x1400, 0x0400, 0x45a40d0e )
-    ROM_LOAD( "316-09.u4",    0x1800, 0x0400, 0x2d060906 )
-    ROM_LOAD( "316-10.u5",    0x1c00, 0x0400, 0x43b9040d )
-    ROM_REGION(0x200)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "316-06.u43",   0x0000, 0x0100, 0x6fcc050e )  /* Note: these are reversed */
-    ROM_LOAD( "316-05.u29",   0x0100, 0x0100, 0x7ee00a0a )
+    ROM_LOAD( "316-07.u2", 0x1000, 0x0400, 0x434a0d04 , 0x5b9bd054 )
+    ROM_LOAD( "316-08.u3", 0x1400, 0x0400, 0x45a40d0e , 0x1a856042 )
+    ROM_LOAD( "316-09.u4", 0x1800, 0x0400, 0x2d060906 , 0x2590f87c )
+    ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, 0x43b9040d , 0xfb49a69b )
+    ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "316-06.u43", 0x0000, 0x0100, 0x6fcc050e , 0x8f071297 )  /* Note: these are reversed */
+    ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x7ee00a0a , 0x53fb8821 )
 ROM_END
 
 ROM_START( blasto_rom )
@@ -603,13 +603,13 @@ ROM_START( blasto_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "blasto.u2",    0x1000, 0x0400, 0x6c2e0106 )
-    ROM_LOAD( "blasto.u3",    0x1400, 0x0400, 0x9c780f06 )
-    ROM_LOAD( "blasto.u4",    0x1800, 0x0400, 0x36220b08 )
-    ROM_LOAD( "blasto.u5",    0x1c00, 0x0400, 0xe8df0a09 )
-    ROM_REGION(0x400)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0xfd1c0904 )
-    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0xc00f0b05 )
+    ROM_LOAD( "blasto.u2", 0x1000, 0x0400, 0x6c2e0106 , 0xec99d043 )
+    ROM_LOAD( "blasto.u3", 0x1400, 0x0400, 0x9c780f06 , 0xbe333415 )
+    ROM_LOAD( "blasto.u4", 0x1800, 0x0400, 0x36220b08 , 0x1c889993 )
+    ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, 0xe8df0a09 , 0xefb640cb )
+    ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0xfd1c0904 , 0x4dd69499 )
+    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0xc00f0b05 , 0x104051a4 )
 ROM_END
 
 ROM_START( hustle_rom )
@@ -618,13 +618,13 @@ ROM_START( hustle_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "3160016.u2",    0x1000, 0x0400, 0x33200108 )
-    ROM_LOAD( "3160017.u3",    0x1400, 0x0400, 0xf456010c )
-    ROM_LOAD( "3160018.u4",    0x1800, 0x0400, 0x50540300 )
-    ROM_LOAD( "3160019.u5",    0x1c00, 0x0400, 0xeb7b0d05 )
-    ROM_REGION(0x400)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0xeaf60700 )
-    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0x6e1c0808 )
+    ROM_LOAD( "3160016.u2", 0x1000, 0x0400, 0x33200108 , 0xd983de7c )
+    ROM_LOAD( "3160017.u3", 0x1400, 0x0400, 0xf456010c , 0xedec9cb9 )
+    ROM_LOAD( "3160018.u4", 0x1800, 0x0400, 0x50540300 , 0xf599b9c0 )
+    ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, 0xeb7b0d05 , 0x7794bc7e )
+    ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0xeaf60700 , 0x541d2c67 )
+    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0x6e1c0808 , 0xb5083128 )
 ROM_END
 
 static const char *blockade_sample_name[] =

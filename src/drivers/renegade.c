@@ -10,27 +10,11 @@ By Carlos A. Lozano & Rob Rosenbrock & Phil Stroffolino
 
 To enter test mode, hold down Player#1 and Player#2 start buttons as the game starts up.
 
-known issues:
+to do:
 	68705 emulation (not needed for bootleg)
-
 	cocktail mode not yet supported
-
-	adpcm samples need to be hooked up
-
-	high score save
-
-	some of the graphics ROMs may be glitched (look at the knife guys on
-	the last stage)
-
-	minor sprite glitches:
-
-	- sprites are visible on high score screen
-
-	- first stage boss (before he enters the playfield) isn't fully
-	  drawn when the playfield is scrolled to the left
-
-	- third stage boss's lower body is garbled when she is knocked
-	  down
+	sprites are visible on high score screen
+	stage 3 boss's lower body is garbled when she is knocked down
 
 Misc Info:
 
@@ -78,50 +62,39 @@ $3804w	send data from 68705
 		sets a flip flop
 		clears bit 0 of port C
 		generates an interrupt
-
 	a read from (?) sets bit 1 of port C
-
 $3804r	receive data from 68705
-
-
-
 $3805w	bankswitch
-
-
 $3806w	watchdog?
 $3807w	?
-
 $3800r	'player1'
-		x	x							start buttons
-				x	x					fire buttons
-						x	x	x	x	joystick state
+		xx		start buttons
+		  xx		fire buttons
+		    xxxx	joystick state
 
 $3801r	'player2'
-		x	x							coin inputs
-				x	x					fire buttons
-						x	x	x	x	joystick state
+		xx		coin inputs
+		  xx		fire buttons
+		    xxxx	joystick state
 
 $3802r	'DIP2'
-		x								unused?
-			x							vblank
-				x						0: 68705 is ready to send information
-					x					1: 68705 is ready to receive information
-						x	x			3rd fire buttons for player 2,1
-								x	x	difficulty
+		x		unused?
+		 x		vblank
+		  x		0: 68705 is ready to send information
+		   x		1: 68705 is ready to receive information
+		    xx		3rd fire buttons for player 2,1
+		      xx	difficulty
 
 $3803r 'DIP1'
-		x								screen flip
-			x							cabinet type
-				x						bonus (extra life for high score)
-					x					starting lives: 1 or 2
-						x	x	x	x	coins per play
+		x		screen flip
+		 x		cabinet type
+		  x		bonus (extra life for high score)
+		   x		starting lives: 1 or 2
+		    xxxx	coins per play
 
 ROM
 $4000 - $7fff	bankswitched ROM
 $8000 - $ffff	ROM
-
-b8	insert coin
-a0	silence?
 
 ***************************************************************************/
 
@@ -136,11 +109,10 @@ static void Write68705( int data ){
 
 static int Read68705( void );
 static int Read68705( void ){
-	return 0x00;
+	return 0xda;
 }
 
 extern void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh);
-extern void renegade_paletteram_w(int offset, int data);
 extern int renegade_vh_start( void );
 extern void renegade_vh_stop( void );
 
@@ -148,19 +120,34 @@ extern unsigned char *renegade_textram;
 extern int renegade_scrollx;
 extern int renegade_video_refresh;
 
-static int interrupt_renegade_e = 0x00;
+static int interrupt_enable = 1;
 static unsigned char renegade_waitIRQsound = 0;
 static int bank = 0;
+
+static void adpcm_play_w( int offset,int data );
+static void adpcm_play_w( int offset,int data ){
+	ADPCM_play( 0, 0x2000*(data-0x2c), 0x2000 );
+}
+
+static struct ADPCMinterface adpcm_interface =
+{
+	1,			/* 1 channel */
+	8000,       		/* 8000Hz playback */
+	3,			/* memory region */
+	0,			/* init function */
+	{ 255 }			/* volume? */
+};
+
 
 void renegade_register_w( int offset, int data );
 void renegade_register_w( int offset, int data ){
 	switch( offset ){
 		case 0x0:
-		renegade_scrollx = (renegade_scrollx&0x300)|data;
+		renegade_scrollx = (renegade_scrollx&0xff00)|data;
 		break;
 
 		case 0x1:
-		renegade_scrollx = (renegade_scrollx&0xFF)|((data&3)<<8);
+		renegade_scrollx = (renegade_scrollx&0xFF)|(data<<8);
 		break;
 
 		case 0x2:
@@ -169,7 +156,7 @@ void renegade_register_w( int offset, int data ){
 		break;
 
 		case 0x3:
-		interrupt_renegade_e = data;
+		interrupt_enable = data;
 		break;
 
 		case 0x4:
@@ -225,24 +212,21 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ -1 }
 };
 
+static int renegade_interrupt(void);
 static int renegade_interrupt(void){
-	static int count = 0;
-
-	/* IRQ is used to handle coin insertion */
 	static int last = 0xC0;
 	int current = readinputport(1) & 0xC0;
-	if( current!=last ){
+
+	static int count = 0;
+	count = 1-count;
+
+	/* IRQ is used to handle coin insertion */
+	if( count && current!=last ){
 		last = current;
 		if( current!=0xC0 ) return interrupt();
 	}
 
-	/* hack! */
-	count++;
-	if( count>=2 ){
-		count = 0;
-		renegade_video_refresh = 1;
-		if( interrupt_renegade_e ) return nmi_interrupt();
-	}
+	if( count && interrupt_enable ) return nmi_interrupt();
 
 	return ignore_interrupt();
 }
@@ -259,11 +243,9 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-/*
-	1800 \
-	2000 - adpcm related?
-	3000 /
-*/
+
+	/* 0x1800 and 0x3000 also appear to be adpcm-related */
+	{ 0x2000, 0x2000, adpcm_play_w },
 
 	{ 0x2800, 0x2800, YM3526_control_port_0_w },
 	{ 0x2801, 0x2801, YM3526_write_port_0_w },
@@ -336,7 +318,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(	0x08, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(	0x0C, "1 Coin/1 Credits" )
 
- 	PORT_DIPNAME (0x10, 0x00, "Lives", IP_KEY_NONE )
+ 	PORT_DIPNAME (0x10, 0x10, "Lives", IP_KEY_NONE )
  	PORT_DIPSETTING (   0x10, "1" )
  	PORT_DIPSETTING (   0x00, "2" )
 
@@ -498,10 +480,10 @@ static struct MachineDriver renegade_machine_driver =
 	{
 		{
  			CPU_M6502,
-			1500000,	/* 1.5 MHz */
+			3000000,	/* should be 1.5 MHz? */
 			0,
 			main_readmem,main_writemem,0,0,
-			renegade_interrupt,1
+			renegade_interrupt,2
 		}
 		,{
  			CPU_M6809 | CPU_AUDIO_CPU,
@@ -512,14 +494,16 @@ static struct MachineDriver renegade_machine_driver =
 		}
 	},
 	60,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+
+	DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
+
 	1, /* cpu slices */
 	0, /* init machine */
 
 	32*8, 32*8,
 	{ 8, 31*8-1, 0, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256,256,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -531,107 +515,136 @@ static struct MachineDriver renegade_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-	    {
-	       SOUND_YM3526,
-	       &ym3526_interface
-	    }
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		},
+		{
+			SOUND_ADPCM,
+			&adpcm_interface
+		}
 	}
 };
 
 ROM_START( renegade_rom )
 	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
-	ROM_LOAD( "nb-5.BIN", 0x8000, 0x8000, 0x6d1f3113 )
-	ROM_LOAD( "na-5.BIN", 0x4000, 0x4000, 0x6b5ecea0 )
+	ROM_LOAD( "nb-5.bin", 0x8000, 0x8000, 0x6d1f3113 , 0xba683ddf )
+	ROM_LOAD( "na-5.bin", 0x4000, 0x4000, 0x6b5ecea0 , 0xde7e7df4 )
 	ROM_CONTINUE( 0x10000, 0x4000 )
 
-	ROM_REGION(0x98000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x98000) /* temporary space for graphics (disposed after conversion) */
 
 	/* characters */
-	ROM_LOAD( "nc-5.BIN",  0x00000, 0x8000, 0xd69c081e )	/* 4 bitplanes */
+	ROM_LOAD( "nc-5.bin", 0x00000, 0x8000, 0xd69c081e , 0x9adfaa5d )	/* 4 bitplanes */
 
 	/* tiles */
-	ROM_LOAD( "n1-5.bin",  0x08000, 0x8000, 0xf4b647ce )	/* bitplane 3 */
-	ROM_LOAD( "n6-5.bin",  0x10000, 0x8000, 0x1b1d27db )	/* bitplanes 1,2 */
-	ROM_LOAD( "n7-5.bin",  0x18000, 0x8000, 0xcf04d9a0 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n1-5.bin", 0x08000, 0x8000, 0xf4b647ce , 0x4a9f47f3 )	/* bitplane 3 */
+	ROM_LOAD( "n6-5.bin", 0x10000, 0x8000, 0x1b1d27db , 0xd62a0aa8 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n7-5.bin", 0x18000, 0x8000, 0xcf04d9a0 , 0x7ca5a532 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "n2-5.bin",  0x20000, 0x8000, 0x458feab7 )	/* bitplane 3 */
-	ROM_LOAD( "n8-5.bin",  0x28000, 0x8000, 0xef22bb06 )	/* bitplanes 1,2 */
-	ROM_LOAD( "n9-5.bin",  0x30000, 0x8000, 0x77f07e56 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n2-5.bin", 0x20000, 0x8000, 0x458feab7 , 0x8d2e7982 )	/* bitplane 3 */
+	ROM_LOAD( "n8-5.bin", 0x28000, 0x8000, 0xef22bb06 , 0x0dba31d3 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n9-5.bin", 0x30000, 0x8000, 0x77f07e56 , 0x5b621b6a )	/* bitplanes 1,2 */
 
 	/* sprites */
-	ROM_LOAD( "nh-5.bin",  0x38000, 0x8000, 0x7f9d5463 )	/* bitplane 3 */
-	ROM_LOAD( "nd-5.bin",  0x40000, 0x8000, 0xdbc54395 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nj-5.bin",  0x48000, 0x8000, 0xeee3d7ef )	/* bitplanes 1,2 */
+	ROM_LOAD( "nh-5.bin", 0x38000, 0x8000, 0x7f9d5463 , 0xdcd7857c )	/* bitplane 3 */
+	ROM_LOAD( "nd-5.bin", 0x40000, 0x8000, 0xdbc54395 , 0x2de1717c )	/* bitplanes 1,2 */
+	ROM_LOAD( "nj-5.bin", 0x48000, 0x8000, 0xeee3d7ef , 0x0f96a18e )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "ni-5.bin",  0x50000, 0x8000, 0x2792480c )	/* bitplane 3 */
-	ROM_LOAD( "nf-5.bin",  0x58000, 0x8000, 0x5ca5d811 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nl-5.bin",  0x60000, 0x8000, 0x7d932607 )	/* bitplanes 1,2 */
+	ROM_LOAD( "ni-5.bin", 0x50000, 0x8000, 0x2792480c , 0x6f597ed2 )	/* bitplane 3 */
+	ROM_LOAD( "nf-5.bin", 0x58000, 0x8000, 0x5ca5d811 , 0x0efc8d45 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nl-5.bin", 0x60000, 0x8000, 0x7d932607 , 0x14778336 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "nn-5.bin",  0x68000, 0x8000, 0xf918fb7a )	/* bitplane 3 */
-	ROM_LOAD( "ne-5.bin",  0x70000, 0x8000, 0x5b800b36 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nk-5.bin",  0x78000, 0x8000, 0xbd328ea8 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nn-5.bin", 0x68000, 0x8000, 0xf918fb7a , 0x1bf15787 )	/* bitplane 3 */
+	ROM_LOAD( "ne-5.bin", 0x70000, 0x8000, 0x5b800b36 , 0x924c7388 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nk-5.bin", 0x78000, 0x8000, 0xbd328ea8 , 0x69499a94 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "no-5.bin",  0x80000, 0x8000, 0x43b494d0 )	/* bitplane 3 */
-	ROM_LOAD( "ng-5.bin",  0x88000, 0x8000, 0x6943ff3b )	/* bitplanes 1,2 */
-	ROM_LOAD( "nm-5.bin",  0x90000, 0x8000, 0xffd47a0a )	/* bitplanes 1,2 */
+	ROM_LOAD( "no-5.bin", 0x80000, 0x8000, 0x43b494d0 , 0x147dd23b )	/* bitplane 3 */
+	ROM_LOAD( "ng-5.bin", 0x88000, 0x8000, 0x6943ff3b , 0xa8ee3720 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nm-5.bin", 0x90000, 0x8000, 0xffd47a0a , 0xc100258e )	/* bitplanes 1,2 */
 
 	ROM_REGION(0x10000) /* audio CPU (M6809) */
-	ROM_LOAD( "n0-5.bin", 0x08000,0x08000,	0xb6094bf9 )
+	ROM_LOAD( "n0-5.bin", 0x08000, 0x08000, 	0xb6094bf9 , 0x3587de3b )
 
-/*
-	4-bit adpcm sampled sound:
-		ROM_LOAD( "n3-5.bin" )
-		ROM_LOAD( "n4-5.bin" )
-		ROM_LOAD( "n5-5.bin" )
-*/
+	ROM_REGION(0x20000) /* adpcm */
+	ROM_LOAD( "n5-5.bin", 0x00000, 0x8000, 0xc4184c92 , 0x7ee43a3c )
+	ROM_LOAD( "n4-5.bin", 0x10000, 0x8000, 0x0937575b , 0x6557564c )
+	ROM_LOAD( "n3-5.bin", 0x18000, 0x8000, 0x7f35d81d , 0x78fd6190 )
 ROM_END
 
 ROM_START( kuniokun_rom )
 	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
-	ROM_LOAD( "TA18-10.BIN", 0x8000, 0x8000, 0x2e0e998e )
-	ROM_LOAD( "TA18-11.BIN", 0x4000, 0x4000, 0xd6362034 )
+	ROM_LOAD( "ta18-10.bin", 0x8000, 0x8000, 0x2e0e998e , 0xa90cf44a )
+	ROM_LOAD( "ta18-11.bin", 0x4000, 0x4000, 0xd6362034 , 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
 
-	ROM_REGION(0x98000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x98000) /* temporary space for graphics (disposed after conversion) */
 
 	/* characters */
-	ROM_LOAD( "TA18-25.BIN",  0x00000, 0x8000, 0x67cd0a2b )	/* 4 bitplanes */
+	ROM_LOAD( "ta18-25.bin", 0x00000, 0x8000, 0x67cd0a2b , 0x9bd2bea3 )	/* 4 bitplanes */
 
-	ROM_LOAD( "TA18-01.BIN",  0x08000, 0x8000, 0x134b2dd1 )
-	ROM_LOAD( "TA18-06.BIN",  0x10000, 0x8000, 0x6a47d299 )
-	ROM_LOAD( "TA18-05.BIN",  0x18000, 0x8000, 0xcf04d9a0 )
+	ROM_LOAD( "ta18-01.bin", 0x08000, 0x8000, 0x134b2dd1 , 0xdaf15024 )
+	ROM_LOAD( "ta18-06.bin", 0x10000, 0x8000, 0x6a47d299 , 0x1f59a248 )
+	ROM_LOAD( "ta18-05.bin", 0x18000, 0x8000, 0xcf04d9a0 , 0x7ca5a532 )
 
-	ROM_LOAD( "TA18-02.BIN",  0x20000, 0x8000, 0x4c3d1cd5 )
-	ROM_LOAD( "TA18-04.bin",  0x28000, 0x8000, 0xc0000000 )	/* bad! */
-	ROM_LOAD( "TA18-03.BIN",  0x30000, 0x8000, 0x75efad31 )
+	ROM_LOAD( "ta18-02.bin", 0x20000, 0x8000, 0x4c3d1cd5 , 0x994c0021 )
+	ROM_LOAD( "ta18-04.bin", 0x28000, 0x8000, 0 , 0x1b43eabd )
+	ROM_LOAD( "ta18-03.bin", 0x30000, 0x8000, 0x75efad31 , 0x0475c99a )
 
 	/* sprites */
-	ROM_LOAD( "TA18-20.BIN",  0x38000, 0x8000, 0x9b1d3b5b )
-	ROM_LOAD( "TA18-24.BIN",  0x40000, 0x8000, 0x77c9072f )
-	ROM_LOAD( "TA18-18.BIN",  0x48000, 0x8000, 0xab207ec0 )
+	ROM_LOAD( "ta18-20.bin", 0x38000, 0x8000, 0x9b1d3b5b , 0xc7d54139 )
+	ROM_LOAD( "ta18-24.bin", 0x40000, 0x8000, 0x77c9072f , 0x84677d45 )
+	ROM_LOAD( "ta18-18.bin", 0x48000, 0x8000, 0xab207ec0 , 0x1c770853 )
 
-	ROM_LOAD( "TA18-19.BIN",  0x50000, 0x8000, 0xeb9dfbef )
-	ROM_LOAD( "TA18-22.BIN",  0x58000, 0x8000, 0xc6d659a8 )
-	ROM_LOAD( "TA18-16.BIN",  0x60000, 0x8000, 0x9dacf54e )
+	ROM_LOAD( "ta18-19.bin", 0x50000, 0x8000, 0xeb9dfbef , 0xc8795fd7 )
+	ROM_LOAD( "ta18-22.bin", 0x58000, 0x8000, 0xc6d659a8 , 0xdf3a2ff5 )
+	ROM_LOAD( "ta18-16.bin", 0x60000, 0x8000, 0x9dacf54e , 0x7244bad0 )
 
-	ROM_LOAD( "TA18-14.BIN",  0x68000, 0x8000, 0x4b8853b6 )
-	ROM_LOAD( "TA18-23.BIN",  0x70000, 0x8000, 0x1855745b )
-	ROM_LOAD( "TA18-17.BIN",  0x78000, 0x8000, 0x83d283e4 )
+	ROM_LOAD( "ta18-14.bin", 0x68000, 0x8000, 0x4b8853b6 , 0xaf656017 )
+	ROM_LOAD( "ta18-23.bin", 0x70000, 0x8000, 0x1855745b , 0x3fd19cf7 )
+	ROM_LOAD( "ta18-17.bin", 0x78000, 0x8000, 0x83d283e4 , 0x74c64c6e )
 
-	ROM_LOAD( "TA18-13.BIN",  0x80000, 0x8000, 0x61a0bfaa )
-	ROM_LOAD( "TA18-21.BIN",  0x88000, 0x8000, 0xa2487992 )
-	ROM_LOAD( "TA18-15.BIN",  0x90000, 0x8000, 0xf42e859c )
+	ROM_LOAD( "ta18-13.bin", 0x80000, 0x8000, 0x61a0bfaa , 0xb6b14d46 )
+	ROM_LOAD( "ta18-21.bin", 0x88000, 0x8000, 0xa2487992 , 0xc95e009b )
+	ROM_LOAD( "ta18-15.bin", 0x90000, 0x8000, 0xf42e859c , 0xa5d61d01 )
 
 	ROM_REGION(0x10000) /* audio CPU (M6809) */
-	ROM_LOAD( "TA18-00.BIN", 0x08000,0x08000,	0xb6094bf9 )
+	ROM_LOAD( "ta18-00.bin", 0x08000, 0x08000, 0xb6094bf9 , 0x3587de3b )
 
-	ROM_REGION(0x40000) /* adpcm */
-	ROM_LOAD( "TA18-07.BIN", 0x00000, 0x8000, 0xdb1f09d7 )
-	ROM_LOAD( "TA18-08.BIN", 0x08000, 0x8000, 0xa6e4c8aa )
-	ROM_LOAD( "TA18-09.BIN", 0x10000, 0x8000, 0xc121b46f )
+	ROM_REGION(0x20000) /* adpcm */
+	ROM_LOAD( "ta18-07.bin", 0x00000, 0x8000, 0xdb1f09d7 , 0x02e3f3ed )
+	ROM_LOAD( "ta18-08.bin", 0x10000, 0x8000, 0xa6e4c8aa , 0xc9312613 )
+	ROM_LOAD( "ta18-09.bin", 0x18000, 0x8000, 0xc121b46f , 0x07ed4705 )
 ROM_END
 
+/*
+static int hiload(void){
+	if( osd_key_pressed( OSD_KEY_L ) ){
+		void *f;
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x1020],8*5);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
+static void hisave(void){
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x1020],8*5);
+		osd_fclose(f);
+	}
+}
+*/
 
 struct GameDriver renegade_driver =
 {
@@ -655,7 +668,7 @@ struct GameDriver renegade_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	0,0 /*hiload, hisave*/
 };
 
 struct GameDriver kuniokub_driver =
@@ -680,5 +693,5 @@ struct GameDriver kuniokub_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	0,0 /*hiload, hisave*/
 };

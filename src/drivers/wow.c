@@ -398,13 +398,13 @@ static unsigned short colortable[] =
 
 ROM_START( wow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0x222baf9b )
-	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0xccb3fafb )
-	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0xe4a6665e )
-	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xf3659d69 )
-	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0xda26e8d8 )
-	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x550a3720 )
-	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0x0ef6502c )
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0x222baf9b , 0xc1295786 )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0xccb3fafb , 0x9be93215 )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0xe4a6665e , 0x75e5a22e )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xf3659d69 , 0xef28eb84 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0xda26e8d8 , 0x16912c2b )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x550a3720 , 0x35797f82 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0x0ef6502c , 0xce404305 )
 /*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
 ROM_END
 
@@ -611,16 +611,16 @@ struct GameDriver wow_driver =
 
 ROM_START( robby_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0x90debdc2 )
-	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0xfa125fb2 )
-	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0x88e6e5bc )
-	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0x111241ea )
-	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x3b7e01f0 )
-	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x478421ee )
-	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0xf9ac77a0 )
-	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x799f8a3d )
-  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0xaa9f62f5 )
-	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0x55a239fa )
+	ROM_LOAD( "rotox1.bin", 0x0000, 0x1000, 0x90debdc2 , 0xa431b85a )
+	ROM_LOAD( "rotox2.bin", 0x1000, 0x1000, 0xfa125fb2 , 0x33cdda83 )
+	ROM_LOAD( "rotox3.bin", 0x2000, 0x1000, 0x88e6e5bc , 0xdbf97491 )
+	ROM_LOAD( "rotox4.bin", 0x3000, 0x1000, 0x111241ea , 0xa3b90ac8 )
+	ROM_LOAD( "rotox5.bin", 0x8000, 0x1000, 0x3b7e01f0 , 0x46ae8a94 )
+	ROM_LOAD( "rotox6.bin", 0x9000, 0x1000, 0x478421ee , 0x7916b730 )
+	ROM_LOAD( "rotox7.bin", 0xa000, 0x1000, 0xf9ac77a0 , 0x276dc4a5 )
+	ROM_LOAD( "rotox8.bin", 0xb000, 0x1000, 0x799f8a3d , 0x1ef13457 )
+  	ROM_LOAD( "rotox9.bin", 0xc000, 0x1000, 0xaa9f62f5 , 0x370352bf )
+	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0x55a239fa , 0xe762cbda )
 ROM_END
 
 static struct MemoryReadAddress robby_readmem[] =
@@ -808,26 +808,26 @@ struct GameDriver robby_driver =
 
 ROM_START( gorf_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x4dbb1c41 )
-	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0xed7b0427 )
-	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0xe101f49b )
-	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0xd12d3e47 )
-	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x07ab966d )
-	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7d14e9b )
-	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x0ddd505f )
-	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0x5e488f10 )
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x4dbb1c41 , 0x5b348321 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0xed7b0427 , 0x62d6de77 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0xe101f49b , 0x1d3bc9c9 )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0xd12d3e47 , 0x70046e56 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x07ab966d , 0x2d456eb5 )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7d14e9b , 0xf7e4e155 )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x0ddd505f , 0x4e2bd9b9 )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0x5e488f10 , 0xfe7b863d )
 ROM_END
 
 ROM_START( gorfpgm1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "873A", 0x0000, 0x1000, 0x0502e112 )
-	ROM_LOAD( "873B", 0x1000, 0x1000, 0x0583aa5b )
-	ROM_LOAD( "873C", 0x2000, 0x1000, 0x59d14edf )
-	ROM_LOAD( "873D", 0x3000, 0x1000, 0xab70013a )
-	ROM_LOAD( "873E", 0x8000, 0x1000, 0x249b4863 )
-	ROM_LOAD( "873F", 0x9000, 0x1000, 0x1bc8e906 )
-	ROM_LOAD( "873G", 0xa000, 0x1000, 0x22c5c02b )
-	ROM_LOAD( "873H", 0xb000, 0x1000, 0xc8318449 )
+	ROM_LOAD( "873a", 0x0000, 0x1000, 0x0502e112 , 0x97cb4a6a )
+	ROM_LOAD( "873b", 0x1000, 0x1000, 0x0583aa5b , 0x257236f8 )
+	ROM_LOAD( "873c", 0x2000, 0x1000, 0x59d14edf , 0x16b0638b )
+	ROM_LOAD( "873d", 0x3000, 0x1000, 0xab70013a , 0xb5e821dc )
+	ROM_LOAD( "873e", 0x8000, 0x1000, 0x249b4863 , 0x8e82804b )
+	ROM_LOAD( "873f", 0x9000, 0x1000, 0x1bc8e906 , 0x715fb4d9 )
+	ROM_LOAD( "873g", 0xa000, 0x1000, 0x22c5c02b , 0x8a066456 )
+	ROM_LOAD( "873h", 0xb000, 0x1000, 0xc8318449 , 0x56d40c7c )
 ROM_END
 
 /* Here's the same words in English : Missing bite, dust, conquer, another, galaxy, try, again, devour, attack, power */
@@ -1084,10 +1084,10 @@ struct GameDriver gorfpgm1_driver =
 
 ROM_START( spacezap_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xaf642ac8 )
-	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x0cb6228e )
-	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0x2986a6d6 )
-	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0xb3037b39 )
+	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xaf642ac8 , 0xa92de312 )
+	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x0cb6228e , 0x4836ebf1 )
+	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0x2986a6d6 , 0xd8193a80 )
+	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0xb3037b39 , 0x3784228d )
 ROM_END
 
 INPUT_PORTS_START( spacezap_input_ports )
@@ -1249,10 +1249,10 @@ struct GameDriver spacezap_driver =
 
 ROM_START( seawolf2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0x8a11d667 )
-	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0x1d7d50a1 )
-	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x60364550 )
-	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0xd28a15b2 )
+	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0x8a11d667 , 0x46cbd50a )
+	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0x1d7d50a1 , 0x1f35aa11 )
+	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x60364550 , 0x76d686f6 )
+	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0xd28a15b2 , 0x1a1a14a2 )
 ROM_END
 
 static struct MemoryReadAddress seawolf2_readmem[] =
@@ -1443,10 +1443,10 @@ struct GameDriver seawolf2_driver =
 
 ROM_START( ebases_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x77a1bb35 )
-	ROM_LOAD( "m761b", 0x1000, 0x1000, 0xeeb409ae )
-	ROM_LOAD( "m761c", 0x2000, 0x1000, 0x5127bc37 )
-	ROM_LOAD( "m761d", 0x3000, 0x1000, 0xce6c3532 )
+	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x77a1bb35 , 0x34422147 )
+	ROM_LOAD( "m761b", 0x1000, 0x1000, 0xeeb409ae , 0x4f28dfd6 )
+	ROM_LOAD( "m761c", 0x2000, 0x1000, 0x5127bc37 , 0xbff6c97e )
+	ROM_LOAD( "m761d", 0x3000, 0x1000, 0xce6c3532 , 0x5173781a )
 ROM_END
 
 static struct MemoryReadAddress ebases_readmem[] =

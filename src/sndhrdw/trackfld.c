@@ -19,9 +19,19 @@ struct DACinterface konami_dac_interface =
 {
 	1,
 	441000,
-	{255,255 },
-	{  1,  1 }
+	{ 100 },
+	{  1 }
 };
+
+struct ADPCMinterface hyprolyb_adpcm_interface =
+{
+	1,			/* 1 channel */
+	4000,       /* 4000Hz playback */
+	4,			/* memory region 4 */
+	0,			/* init function */
+	{ 255 }
+};
+
 
 unsigned char *konami_dac;
 static int SN76496_latch;
@@ -143,3 +153,23 @@ void konami_SN76496_0_w(int offset,int data)
 }
 
 
+
+
+int hyprolyb_speech_r(int offset)
+{
+	return ADPCM_playing(0) ? 0x10 : 0x00;
+}
+
+void hyprolyb_ADPCM_data_w(int offset,int data)
+{
+	int cmd,start,end;
+	unsigned char *RAM = Machine->memory_region[4];
+
+
+	/* simulate the operation of the 6802 */
+	cmd = RAM[0xfe01 + data] + 256 * RAM[0xfe00 + data];
+	start = RAM[cmd + 1] + 256 * RAM[cmd];
+	end = RAM[cmd + 3] + 256 * RAM[cmd + 2];
+	if (end > start)
+		ADPCM_play(0,start,(end - start - 1)*2);
+}

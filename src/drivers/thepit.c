@@ -1,16 +1,16 @@
 /***************************************************************************
 
-The Pit/Round Up/Intrepid memory map (preliminary)
+The Pit/Round Up/Intrepid/Super Mouse memory map (preliminary)
 
 
 Main CPU:
 
 0000-4fff ROM
 8000-87ff RAM
-8800-8bff Color RAM        (Not used in Intrepid)
-8c00-8fff Mirror for above (Not used in Intrepid)
+8800-8bff Color RAM        (Not used in Intrepid/Super Mouse)
+8c00-8fff Mirror for above (Not used in Intrepid/Super Mouse)
 9000-93ff Video RAM
-9400-97ff Mirror for above (Color RAM in Intrepid)
+9400-97ff Mirror for above (Color RAM in Intrepid/Super Mouse)
 9800-983f Attributes RAM
 9840-985f Sprite RAM
 
@@ -46,8 +46,8 @@ Port I/O Read:
 Port I/O Write:
 
 00  Reset Sound Command
-8c  AY8910 #2 Control Port    (Intrepid only)
-8d  AY8910 #2 Write Port	  (Intrepid only)
+8c  AY8910 #2 Control Port    (Intrepid/Super Mouse only)
+8d  AY8910 #2 Write Port	  (Intrepid/Super Mouse only)
 8e  AY8910 #1 Control Port
 8f  AY8910 #1 Write Port
 
@@ -253,7 +253,7 @@ INPUT_PORTS_START( roundup_input_ports )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x03, "1 Coin/3 Credits" )
@@ -349,6 +349,65 @@ INPUT_PORTS_START( intrepid_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( suprmous_input_ports )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x18, 0x00, "Lives", IP_KEY_NONE )  /* The game reads these together */
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "5" )
+  //PORT_DIPSETTING(    0x10, "5" )
+  //PORT_DIPSETTING(    0x18, "5" )
+	PORT_DIPNAME( 0x20, 0x00, "Bonus Life At", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10,000" )
+	PORT_DIPSETTING(    0x10, "5,000" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	/* Since the real inputs are multiplexed, we used this fake port
+	   to read the 2nd player controls when the screen is flipped */
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -376,6 +435,32 @@ static struct GfxLayout spritelayout =
 };
 
 
+static struct GfxLayout suprmous_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	3,	    /* 3 bits per pixel */
+	{ 0, 0x1000*8, 0x2000*8 },	/* the three bitplanes for 4 pixels are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	    /* every char takes 8 consecutive bytes */
+};
+
+
+static struct GfxLayout suprmous_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	64,		/* 64 sprites */
+	3,	    /* 3 bits per pixel */
+	{ 0, 0x1000*8, 0x2000*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+	  8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+
+
 static struct GfxDecodeInfo thepit_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,     0, 8 },
@@ -392,6 +477,13 @@ static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo suprmous_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &suprmous_charlayout,   0, 8 },
+	{ 1, 0x0800, &suprmous_spritelayout, 0, 8 },
+	{ -1 } /* end of array */
+};
+
 
 static struct AY8910interface ay8910_interface =
 {
@@ -405,7 +497,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-#define MACHINE_DRIVER(GAMENAME)							\
+#define MACHINE_DRIVER(GAMENAME, COLORS)		            \
 static struct MachineDriver GAMENAME##_machine_driver =		\
 {									  			            \
 	/* basic machine hardware */							\
@@ -433,7 +525,7 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 	/* video hardware */									\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
 	GAMENAME##_gfxdecodeinfo,								\
-	32,32,													\
+	COLORS, COLORS,											\
 	thepit_vh_convert_color_prom,							\
 															\
 	VIDEO_TYPE_RASTER,										\
@@ -452,8 +544,13 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 	}														\
 };
 
-MACHINE_DRIVER(thepit)
-MACHINE_DRIVER(intrepid)
+
+#define suprmous_readmem   intrepid_readmem
+#define suprmous_writemem  intrepid_writemem
+
+MACHINE_DRIVER(thepit,   4*8)
+MACHINE_DRIVER(intrepid, 4*8)
+MACHINE_DRIVER(suprmous, 8*8)
 
 /***************************************************************************
 
@@ -463,61 +560,81 @@ MACHINE_DRIVER(intrepid)
 
 ROM_START( thepit_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "p38b",       0x0000, 0x1000, 0xe4348d92 )
-	ROM_LOAD( "p39b",       0x1000, 0x1000, 0x8d281512 )
-	ROM_LOAD( "p40b",       0x2000, 0x1000, 0x8123601b )
-	ROM_LOAD( "p41b",       0x3000, 0x1000, 0x8d962efe )
-	ROM_LOAD( "p33b",       0x4000, 0x1000, 0x04776851 )
+	ROM_LOAD( "p38b", 0x0000, 0x1000, 0xe4348d92 , 0x7315e1bc )
+	ROM_LOAD( "p39b", 0x1000, 0x1000, 0x8d281512 , 0xc9cc30fe )
+	ROM_LOAD( "p40b", 0x2000, 0x1000, 0x8123601b , 0x986738b5 )
+	ROM_LOAD( "p41b", 0x3000, 0x1000, 0x8d962efe , 0x31ceb0a1 )
+	ROM_LOAD( "p33b", 0x4000, 0x1000, 0x04776851 , 0x614ec454 )
 
-	ROM_REGION(0x1800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "p8",         0x0000, 0x0800, 0x878e996c )
-	ROM_LOAD( "p9",         0x1000, 0x0800, 0x57841574 )
+	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "p8", 0x0000, 0x0800, 0x878e996c , 0x2ddd5045 )
+	ROM_LOAD( "p9", 0x1000, 0x0800, 0x57841574 , 0x69502afc )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "pitclr.ic4", 0x0000, 0x0020, 0x480d8e59 )
+	ROM_LOAD( "pitclr.ic4", 0x0000, 0x0020, 0x480d8e59 , 0xa758b567 )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "p30",        0x0000, 0x0800, 0xc01d290d )
+	ROM_LOAD( "p30", 0x0000, 0x0800, 0xc01d290d , 0x1b79dfb6 )
 ROM_END
 
 ROM_START( roundup_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "roundup.u38",0x0000, 0x1000, 0xcb0ec56c )
-	ROM_LOAD( "roundup.u39",0x1000, 0x1000, 0xc327c76b )
-	ROM_LOAD( "roundup.u40",0x2000, 0x1000, 0x3f57c585 )
-	ROM_LOAD( "roundup.u41",0x3000, 0x1000, 0x3bd6e3ce )
-	ROM_LOAD( "roundup.u33",0x4000, 0x1000, 0xde80606e )
+	ROM_LOAD( "roundup.u38", 0x0000, 0x1000, 0xcb0ec56c , 0xd62c3b7a )
+	ROM_LOAD( "roundup.u39", 0x1000, 0x1000, 0xc327c76b , 0x37bf554b )
+	ROM_LOAD( "roundup.u40", 0x2000, 0x1000, 0x3f57c585 , 0x5109d0c5 )
+	ROM_LOAD( "roundup.u41", 0x3000, 0x1000, 0x3bd6e3ce , 0x1c5ed660 )
+	ROM_LOAD( "roundup.u33", 0x4000, 0x1000, 0xde80606e , 0x2fa711f3 )
 
-	ROM_REGION(0x1800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "roundup.u10",0x0000, 0x0800, 0xbc970d0d )
-	ROM_LOAD( "roundup.u9", 0x1000, 0x0800, 0xe9351d81 )
+	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "roundup.u10", 0x0000, 0x0800, 0xbc970d0d , 0xa38d708d )
+	ROM_LOAD( "roundup.u9", 0x1000, 0x0800, 0xe9351d81 , 0x394676a2 )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "roundup.clr",0x0000, 0x0020, 0x480d8e59 )
+	ROM_LOAD( "roundup.clr", 0x0000, 0x0020, 0x480d8e59 , 0xa758b567 )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "roundup.u30",0x0000, 0x0800, 0xf51031e2 )
-	ROM_LOAD( "roundup.u31",0x0800, 0x0800, 0xfcb31285 )
+	ROM_LOAD( "roundup.u30", 0x0000, 0x0800, 0xf51031e2 , 0x1b18faee )
+	ROM_LOAD( "roundup.u31", 0x0800, 0x0800, 0xfcb31285 , 0x76cf4394 )
 ROM_END
 
 ROM_START( intrepid_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "ic19.1", 0x0000, 0x1000, 0x06858f25 )
-	ROM_LOAD( "ic18.2", 0x1000, 0x1000, 0x4ed85476 )
-	ROM_LOAD( "ic17.3", 0x2000, 0x1000, 0x63fb89a7 )
-	ROM_LOAD( "ic16.4", 0x3000, 0x1000, 0xb2416897 )
-	ROM_LOAD( "ic15.5", 0x4000, 0x1000, 0x3a8fe683 )
+	ROM_LOAD( "ic19.1", 0x0000, 0x1000, 0x06858f25 , 0x7d927b23 )
+	ROM_LOAD( "ic18.2", 0x1000, 0x1000, 0x4ed85476 , 0xdcc22542 )
+	ROM_LOAD( "ic17.3", 0x2000, 0x1000, 0x63fb89a7 , 0xfd11081e )
+	ROM_LOAD( "ic16.4", 0x3000, 0x1000, 0xb2416897 , 0x74a51841 )
+	ROM_LOAD( "ic15.5", 0x4000, 0x1000, 0x3a8fe683 , 0x4fef643d )
 
-	ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic8.8",  0x0000, 0x1000, 0x26d682a4 )
-	ROM_LOAD( "ic9.9",  0x1000, 0x1000, 0x70ca7462 )
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic8.8", 0x0000, 0x1000, 0x26d682a4 , 0x04d067d3 )
+	ROM_LOAD( "ic9.9", 0x1000, 0x1000, 0x70ca7462 , 0x8c70d18d )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "ic3.prm",0x0000, 0x0020, 0xcfdfb04b )
+	ROM_LOAD( "ic3.prm", 0x0000, 0x0020, 0xcfdfb04b , 0x927ff40a )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "ic22.7", 0x0000, 0x0800, 0x31d27c00 )
-	ROM_LOAD( "ic23.6", 0x0800, 0x0800, 0x8016223e )
+	ROM_LOAD( "ic22.7", 0x0000, 0x0800, 0x31d27c00 , 0x1a7cc392 )
+	ROM_LOAD( "ic23.6", 0x0800, 0x0800, 0x8016223e , 0x91ca7097 )
+ROM_END
+
+ROM_START( suprmous_rom )
+	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_LOAD( "sm.1", 0x0000, 0x1000, 0xe2160eb0 , 0x9db2b786 )
+	ROM_LOAD( "sm.2", 0x1000, 0x1000, 0xad39e245 , 0x0a3d91d3 )
+	ROM_LOAD( "sm.3", 0x2000, 0x1000, 0xe6851c6d , 0x32af6285 )
+	ROM_LOAD( "sm.4", 0x3000, 0x1000, 0xa571d335 , 0x46091524 )
+	ROM_LOAD( "sm.5", 0x4000, 0x1000, 0x6571e1ed , 0xf15fd5d2 )
+
+	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sm.7", 0x0000, 0x1000, 0x3a4d8b6b , 0x1d476696 )
+	ROM_LOAD( "sm.8", 0x1000, 0x1000, 0x3b88e0ae , 0x2f81ab5f )
+	ROM_LOAD( "sm.9", 0x2000, 0x1000, 0xb4d332c3 , 0x8463af89 )
+
+	ROM_REGION(0x0040)      /* Color PROM */
+	/* We don't have this yet */
+
+	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_LOAD( "sm.6", 0x0000, 0x1000, 0xcba9ee97 , 0xfba71785 )
 ROM_END
 
 
@@ -559,7 +676,7 @@ static void thepit_hisave(void)
 }
 
 
-static int roundup_hiload(void)
+static int roundup_suprmous_common_hiload(int address)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -575,16 +692,16 @@ static int roundup_hiload(void)
 		{
 			int pos;
 
-			osd_fread(f,&RAM[0x8050],0x03);
+			osd_fread(f,&RAM[address],0x03);
 			osd_fclose(f);
 
 			/* Copy it to the screen and remove leading zeroes */
-			videoram_w(0x0221, RAM[0x8050] >> 4);
-			videoram_w(0x0201, RAM[0x8050] & 0x0f);
-			videoram_w(0x01e1, RAM[0x8051] >> 4);
-			videoram_w(0x01c1, RAM[0x8051] & 0x0f);
-			videoram_w(0x01a1, RAM[0x8052] >> 4);
-			videoram_w(0x0181, RAM[0x8052] & 0x0f);
+			videoram_w(0x0221, RAM[address  ] >> 4);
+			videoram_w(0x0201, RAM[address  ] & 0x0f);
+			videoram_w(0x01e1, RAM[address+1] >> 4);
+			videoram_w(0x01c1, RAM[address+1] & 0x0f);
+			videoram_w(0x01a1, RAM[address+2] >> 4);
+			videoram_w(0x0181, RAM[address+2] & 0x0f);
 
 			for (pos = 0x0221; pos >= 0x01a1; pos -= 0x20 )
 			{
@@ -597,6 +714,11 @@ static int roundup_hiload(void)
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
+}
+
+static int roundup_hiload(void)
+{
+	return roundup_suprmous_common_hiload(0x8050);
 }
 
 static void roundup_hisave(void)
@@ -652,6 +774,24 @@ static void intrepid_hisave(void)
 }
 
 
+static int suprmous_hiload(void)
+{
+	return roundup_suprmous_common_hiload(0x804a);
+}
+
+static void suprmous_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x804a],0x03);
+		osd_fclose(f);
+	}
+}
+
 struct GameDriver thepit_driver =
 {
 	__FILE__,
@@ -704,7 +844,6 @@ struct GameDriver roundup_driver =
 };
 
 
-
 struct GameDriver intrepid_driver =
 {
 	__FILE__,
@@ -729,3 +868,30 @@ struct GameDriver intrepid_driver =
 
 	intrepid_hiload, intrepid_hisave
 };
+
+
+struct GameDriver suprmous_driver =
+{
+	__FILE__,
+	0,
+	"suprmous",
+	"Super Mouse",
+	"1982",
+	"Taito",
+	"Brad Oliver",
+	GAME_WRONG_COLORS,
+	&suprmous_machine_driver,
+
+	suprmous_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	suprmous_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	suprmous_hiload, suprmous_hisave
+};
+

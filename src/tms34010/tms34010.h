@@ -25,8 +25,17 @@ typedef struct
 {
 	unsigned int op;
 	unsigned int pc;
-	unsigned int st;
-	int fw[2];
+	unsigned int st;        /* Only here so we can display it in the debug window */
+	unsigned int nflag;
+	unsigned int cflag;
+	unsigned int notzflag;  /* So we can just do an assignment to set it */
+	unsigned int vflag;
+	unsigned int pflag;
+	unsigned int ieflag;
+	unsigned int fe0flag;
+	unsigned int fe1flag;
+	unsigned int fw[2];
+	unsigned int fw_inc[2];  /* Same as fw[], except when fw = 0, fw_inc = 32 */
 	int Aregs[16];
 	int Bregs[16];
 	unsigned int IOregs[32];
@@ -37,8 +46,8 @@ typedef struct
     int (*pixel_write)(unsigned int address, unsigned int value);
     int (*pixel_read)(unsigned int address);
 	int transparency;
+	int window_checking;
 	int (*raster_op)(int newpix, int oldpix);
-	int lastpixaddr_valid;
 	unsigned int lastpixaddr;
 	unsigned int lastpixword;
 	int lastpixwordchanged;
@@ -46,6 +55,8 @@ typedef struct
 	int xytolshiftcount2;
 	unsigned int shiftreg;
 } TMS34010_Regs;
+
+#define INVALID_PIX_ADDRESS  0xffffffe0  /* This is the reset vector, this should be ok */
 
 #ifndef INLINE
 #define INLINE static inline

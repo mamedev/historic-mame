@@ -121,8 +121,7 @@ void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void tmnt_sound_command_w(int offset,int data)
 {
-	if (offset == 0)
-		soundlatch_w(0,data & 0xff);
+	soundlatch_w(0,data & 0xff);
 }
 
 void tmnt_s_9000_w(int offset,int data)
@@ -271,7 +270,7 @@ static struct MemoryWriteAddress tmnt_writemem[] =
 	{ 0x060000, 0x063fff, MWA_BANK1 },	/* main RAM */
 	{ 0x080000, 0x080fff, tmnt_paletteram_w, &paletteram },
 	{ 0x0a0000, 0x0a0003, tmnt_0a0000_w },
-	{ 0x0a0008, 0x0a000b, tmnt_sound_command_w },
+	{ 0x0a0008, 0x0a0009, tmnt_sound_command_w },
 	{ 0x0a0010, 0x0a0013, watchdog_reset_w },
 	{ 0x0c0000, 0x0c0003, tmnt_priority_w },
 	{ 0x100000, 0x105fff, punkshot_vidram_w, &punkshot_vidram, &punkshot_vidram_size },
@@ -305,7 +304,7 @@ static struct MemoryWriteAddress punkshot_writemem[] =
 	{ 0x080000, 0x083fff, MWA_BANK1 },	/* main RAM */
 	{ 0x090000, 0x090fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x0a0020, 0x0a0023, punkshot_0a0020_w },
-	{ 0x0a0040, 0x0a0043, tmnt_sound_command_w },
+	{ 0x0a0040, 0x0a0041, tmnt_sound_command_w },
 	{ 0x0a0068, 0x0a006b, punkshot_priority_w },
 	{ 0x0a0080, 0x0a0083, watchdog_reset_w },
 	{ 0x100000, 0x105fff, punkshot_vidram_w, &punkshot_vidram, &punkshot_vidram_size },
@@ -424,17 +423,23 @@ INPUT_PORTS_START( tmnt_input_ports )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x60, 0x40, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START      /* PLAYER 4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER4 | IPF_8WAY )
@@ -528,17 +533,23 @@ INPUT_PORTS_START( tmnt2p_input_ports )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x60, 0x40, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START      /* PLAYER 4 */
 //	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER4 | IPF_8WAY )
@@ -810,7 +821,7 @@ static struct MachineDriver tmnt_machine_driver =
 	0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -860,7 +871,7 @@ static struct MachineDriver punkshot_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		}
 	}
@@ -876,146 +887,146 @@ static struct MachineDriver punkshot_machine_driver =
 
 ROM_START( tmnt_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD_EVEN( "963-r23", 0x00000, 0x20000, 0xdef10569 )
-	ROM_LOAD_ODD ( "963-r24", 0x00000, 0x20000, 0x2329a9ad )
-	ROM_LOAD_EVEN( "963-r21", 0x40000, 0x10000, 0xe8e08288 )
-	ROM_LOAD_ODD ( "963-r22", 0x40000, 0x10000, 0x63225ce0 )
+	ROM_LOAD_EVEN( "963-r23", 0x00000, 0x20000, 0xdef10569 , 0xa7f61195 )
+	ROM_LOAD_ODD ( "963-r24", 0x00000, 0x20000, 0x2329a9ad , 0x661e056a )
+	ROM_LOAD_EVEN( "963-r21", 0x40000, 0x10000, 0xe8e08288 , 0xde047bb6 )
+	ROM_LOAD_ODD ( "963-r22", 0x40000, 0x10000, 0x63225ce0 , 0xd86a0888 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
-	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
-	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
-	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 , 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 , 0x8069cd2e )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 , 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 , 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 , 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 , 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc , 0x1692a6d6 )
 
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
-	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 , 0xfca078c7 )
 
 	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 , 0xfebae232 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 , 0x8567a007 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmntj_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD_EVEN( "963-x23", 0x00000, 0x20000, 0xc9912b5f )
-	ROM_LOAD_ODD ( "963-x24", 0x00000, 0x20000, 0x922ca238 )
-	ROM_LOAD_EVEN( "963-x21", 0x40000, 0x10000, 0x087ca14c )
-	ROM_LOAD_ODD ( "963-x22", 0x40000, 0x10000, 0x0af12787 )
+	ROM_LOAD_EVEN( "963-x23", 0x00000, 0x20000, 0xc9912b5f , 0xa9549004 )
+	ROM_LOAD_ODD ( "963-x24", 0x00000, 0x20000, 0x922ca238 , 0xe5cc9067 )
+	ROM_LOAD_EVEN( "963-x21", 0x40000, 0x10000, 0x087ca14c , 0x5789cf92 )
+	ROM_LOAD_ODD ( "963-x22", 0x40000, 0x10000, 0x0af12787 , 0x0a74e277 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
-	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
-	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
-	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 , 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 , 0x8069cd2e )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 , 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 , 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 , 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 , 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc , 0x1692a6d6 )
 
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
-	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 , 0xfca078c7 )
 
 	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 , 0xfebae232 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 , 0x8567a007 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmht2p_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD_EVEN( "963-u23", 0x00000, 0x20000, 0x2f4f59a1 )
-	ROM_LOAD_ODD ( "963-u24", 0x00000, 0x20000, 0x337f4fc1 )
-	ROM_LOAD_EVEN( "963-u21", 0x40000, 0x10000, 0x84939371 )
-	ROM_LOAD_ODD ( "963-u22", 0x40000, 0x10000, 0xe59729c5 )
+	ROM_LOAD_EVEN( "963-u23", 0x00000, 0x20000, 0x2f4f59a1 , 0x58bec748 )
+	ROM_LOAD_ODD ( "963-u24", 0x00000, 0x20000, 0x337f4fc1 , 0xdce87c8d )
+	ROM_LOAD_EVEN( "963-u21", 0x40000, 0x10000, 0x84939371 , 0xabce5ead )
+	ROM_LOAD_ODD ( "963-u22", 0x40000, 0x10000, 0xe59729c5 , 0x4ecc8d6b )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
-	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
-	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
-	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 , 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 , 0x8069cd2e )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 , 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 , 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 , 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 , 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc , 0x1692a6d6 )
 
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
-	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 , 0xfca078c7 )
 
 	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 , 0xfebae232 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 , 0x8567a007 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmnt2pj_rom )
 	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
-	ROM_LOAD_EVEN( "963-123", 0x00000, 0x20000, 0x464f1b3b )
-	ROM_LOAD_ODD ( "963-124", 0x00000, 0x20000, 0x2fb48d9e )
-	ROM_LOAD_EVEN( "963-121", 0x40000, 0x10000, 0x3f760ff0 )
-	ROM_LOAD_ODD ( "963-122", 0x40000, 0x10000, 0x938c6808 )
+	ROM_LOAD_EVEN( "963-123", 0x00000, 0x20000, 0x464f1b3b , 0x6a3527c9 )
+	ROM_LOAD_ODD ( "963-124", 0x00000, 0x20000, 0x2fb48d9e , 0x2c4bfa15 )
+	ROM_LOAD_EVEN( "963-121", 0x40000, 0x10000, 0x3f760ff0 , 0x4181b733 )
+	ROM_LOAD_ODD ( "963-122", 0x40000, 0x10000, 0x938c6808 , 0xc64eb5ff )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
-	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
-	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
-	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
-	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 , 0xdb4769a8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 , 0x8069cd2e )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 , 0xb5239a44 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 , 0xdd51adef )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 , 0x1f324eed )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 , 0xd4bd9984 )        /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc , 0x1692a6d6 )
 
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
-	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 )
+	ROM_LOAD( "963-a25", 0x00000, 0x80000, 0x5d8ee020 , 0xfca078c7 )
 
 	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples for UPD7759C */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 , 0xfebae232 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 , 0x8567a007 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( punkshot_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "907m02.i7",  0x00000, 0x20000, 0xf9623894 )
-	ROM_LOAD_ODD ( "907m03.i10", 0x00000, 0x20000, 0xb50aa024 )
+	ROM_LOAD_EVEN( "907m02.i7", 0x00000, 0x20000, 0xf9623894 , 0x59e14575 )
+	ROM_LOAD_ODD ( "907m03.i10", 0x00000, 0x20000, 0xb50aa024 , 0xadb14b1e )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x280000)	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "907d06.e23", 0x000000, 0x40000, 0x29981d58 )
-	ROM_LOAD( "907d05.e22", 0x040000, 0x40000, 0x33eff079 )
-	ROM_LOAD( "907d08l.k7", 0x080000, 0x80000, 0x14a4f278 )
-	ROM_LOAD( "907d08h.k7", 0x100000, 0x80000, 0xa846e18c )
-	ROM_LOAD( "907d07l.k2", 0x180000, 0x80000, 0xdeb882ba )
-	ROM_LOAD( "907d07h.k2", 0x200000, 0x80000, 0x3d550ced )
+	ROM_LOAD( "907d06.e23", 0x000000, 0x40000, 0x29981d58 , 0xf5cc38f4 )
+	ROM_LOAD( "907d05.e22", 0x040000, 0x40000, 0x33eff079 , 0xe25774c1 )
+	ROM_LOAD( "907d08l.k7", 0x080000, 0x80000, 0x14a4f278 , 0x05f3d196 )
+	ROM_LOAD( "907d08h.k7", 0x100000, 0x80000, 0xa846e18c , 0xeaf18c22 )
+	ROM_LOAD( "907d07l.k2", 0x180000, 0x80000, 0xdeb882ba , 0xfeeb345a )
+	ROM_LOAD( "907d07h.k2", 0x200000, 0x80000, 0x3d550ced , 0x0bff4383 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "907f01.e8", 0x0000, 0x8000, 0x7b3417c4 )
+	ROM_LOAD( "907f01.e8", 0x0000, 0x8000, 0x7b3417c4 , 0xf040c484 )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
-	ROM_LOAD( "907d04.d3", 0x0000, 0x40000, 0xb9ab081b )
+	ROM_LOAD( "907d04.d3", 0x0000, 0x40000, 0xb9ab081b , 0x090feb5e )
 ROM_END
 
 

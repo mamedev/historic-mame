@@ -68,8 +68,6 @@ void rastan_updatehook1(int offset)
 		TILE_TRANSPARENCY_OPAQUE);		/* transparency */
 }
 
-
-
 void rastan_videocontrol_w (int offset, int data)
 {
 	if (offset == 0)
@@ -232,7 +230,6 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int num = READ_WORD (&rastan_spriteram[offs+4]);
 
-
 		if (num)
 		{
 			int sx,sy,col,data1;
@@ -273,6 +270,90 @@ layer_mark_rectangle_dirty(Machine->layer[0],sx,sx+15,sy,sy+15);
 			if (sy > 400) sy = sy - 512;
 
 layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
+		}
+	}
+}
+
+
+/* Jumping uses different sprite controller   */
+/* than rainbow island. - values are remapped */
+/* at address 0x2EA in the code. Apart from   */
+/* physical layout, the main change is that   */
+/* the Y settings are active low              */
+
+/* Tiles are not working with transparency properly */
+
+void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	if (palette_recalc())
+		layer_mark_full_screen_dirty();
+
+	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */
+			READ_WORD(&rastan_scrollx[0]) - 16,-READ_WORD(&rastan_scrolly[0]),		/* scroll x/y */
+			0,0,										/* flip x/y */
+			0,0);										/* global attributes */
+
+
+    /* Scroll Registers seem strange for this screen */
+    /* X always seems to be 0                        */
+	/* Y is either 0,0x164 or 0x264 ?                */
+
+	set_tile_layer_attributes(0,bitmap,					/* layer number, bitmap */
+			-16,0,										/* scroll x/y */
+			0,0,										/* flip x/y */
+			0,0);										/* global attributes */
+
+	update_tile_layer(1,bitmap);
+
+	/* Draw the sprites. 128 sprites in total */
+
+	for (offs = 0x07F0; offs >= 0; offs -= 16)
+	{
+		int num = READ_WORD (&rastan_spriteram[offs]);
+
+		if (num)
+		{
+			int  sx,col,data1;
+            word sy;
+
+			sy = ((READ_WORD(&rastan_spriteram[offs+2]) - 0xFFF1) ^ 0xFFFF) & 0x1FF;
+  			if (sy > 400) sy = sy - 512;
+			sx = (READ_WORD(&rastan_spriteram[offs+4]) - 0x38) & 0x1ff;
+			if (sx > 400) sx = sx - 512;
+
+			data1 = READ_WORD(&rastan_spriteram[offs+6]);
+			col   = (READ_WORD(&rastan_spriteram[offs+8]) + 0x10) & 0x7F;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					num,
+					col,
+					data1 & 0x40, data1 & 0x80,
+					sx,sy+1,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+
+			layer_mark_rectangle_dirty(Machine->layer[0],sx,sx+15,sy+1,sy+16);
+		}
+	}
+
+	update_tile_layer(0,bitmap);
+
+	for (offs = 0x07F0; offs >= 0; offs -= 16)
+	{
+		int num = READ_WORD (&rastan_spriteram[offs]);
+
+		if (num)
+		{
+			int  sx,col,data1;
+            word sy;
+
+			sy = ((READ_WORD(&rastan_spriteram[offs+2]) - 0xFFF1) ^ 0xFFFF) & 0x1FF;
+  			if (sy > 400) sy = sy - 512;
+			sx = (READ_WORD(&rastan_spriteram[offs+4]) - 0x38) & 0x1ff;
+			if (sx > 400) sx = sx - 512;
+
+			layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy+1,sy+16);
 		}
 	}
 }

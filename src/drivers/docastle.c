@@ -329,65 +329,65 @@ static struct MachineDriver machine_driver =
 
 ROM_START( docastle_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "01P_A1.BIN", 0x0000, 0x2000, 0xd80a3ed2 )
-	ROM_LOAD( "01N_A2.BIN", 0x2000, 0x2000, 0x5c022c7a )
-	ROM_LOAD( "01L_A3.BIN", 0x4000, 0x2000, 0x8e6aea18 )
-	ROM_LOAD( "01K_A4.BIN", 0x6000, 0x2000, 0x38d8dc40 )
+	ROM_LOAD( "01p_a1.bin", 0x0000, 0x2000, 0xd80a3ed2 , 0x17c6fc24 )
+	ROM_LOAD( "01n_a2.bin", 0x2000, 0x2000, 0x5c022c7a , 0x1d2fc7f4 )
+	ROM_LOAD( "01l_a3.bin", 0x4000, 0x2000, 0x8e6aea18 , 0x71a70ba9 )
+	ROM_LOAD( "01k_a4.bin", 0x6000, 0x2000, 0x38d8dc40 , 0x479a745e )
 
-	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03A_A5.BIN", 0x0000, 0x4000, 0x85e90c0d )
-	ROM_LOAD( "04M_A6.BIN", 0x4000, 0x2000, 0xc53b3bc7 )
-	ROM_LOAD( "04L_A7.BIN", 0x6000, 0x2000, 0x3ed9763d )
-	ROM_LOAD( "04J_A8.BIN", 0x8000, 0x2000, 0xc159accb )
-	ROM_LOAD( "04H_A9.BIN", 0xa000, 0x2000, 0x4d6a5692 )
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03a_a5.bin", 0x0000, 0x4000, 0x85e90c0d , 0x0636b8f4 )
+	ROM_LOAD( "04m_a6.bin", 0x4000, 0x2000, 0xc53b3bc7 , 0x3bbc9b26 )
+	ROM_LOAD( "04l_a7.bin", 0x6000, 0x2000, 0x3ed9763d , 0x3dfaa9d1 )
+	ROM_LOAD( "04j_a8.bin", 0x8000, 0x2000, 0xc159accb , 0x9afb16e9 )
+	ROM_LOAD( "04h_a9.bin", 0xa000, 0x2000, 0x4d6a5692 , 0xaf24bce0 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "09C.BIN", 0x0000, 0x0200, 0xcef54dad )
+	ROM_LOAD( "09c.bin", 0x0000, 0x0200, 0xcef54dad , 0x066f52bc )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "07N_A0.BIN", 0x0000, 0x4000, 0xe955939f )
+	ROM_LOAD( "07n_a0.bin", 0x0000, 0x4000, 0xe955939f , 0xf23b5cdb )
 ROM_END
 
 ROM_START( docastl2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "A1",  0x0000, 0x2000, 0x3da4962a )
-	ROM_LOAD( "A2",  0x2000, 0x2000, 0x95c22212 )
-	ROM_LOAD( "A3",  0x4000, 0x2000, 0xbb0a5c16 )
-	ROM_LOAD( "A4",  0x6000, 0x2000, 0x3006fcde )
+	ROM_LOAD( "a1", 0x0000, 0x2000, 0x3da4962a , 0x0d81fafc )
+	ROM_LOAD( "a2", 0x2000, 0x2000, 0x95c22212 , 0xa13dc4ac )
+	ROM_LOAD( "a3", 0x4000, 0x2000, 0xbb0a5c16 , 0xa1f04ffb )
+	ROM_LOAD( "a4", 0x6000, 0x2000, 0x3006fcde , 0x1fb14aa6 )
 
-	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03A_A5.BIN", 0x0000, 0x4000, 0x85e90c0d )
-	ROM_LOAD( "04M_A6.BIN", 0x4000, 0x2000, 0xc53b3bc7 )
-	ROM_LOAD( "04L_A7.BIN", 0x6000, 0x2000, 0x3ed9763d )
-	ROM_LOAD( "04J_A8.BIN", 0x8000, 0x2000, 0xc159accb )
-	ROM_LOAD( "04H_A9.BIN", 0xa000, 0x2000, 0x4d6a5692 )
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03a_a5.bin", 0x0000, 0x4000, 0x85e90c0d , 0x0636b8f4 )
+	ROM_LOAD( "04m_a6.bin", 0x4000, 0x2000, 0xc53b3bc7 , 0x3bbc9b26 )
+	ROM_LOAD( "04l_a7.bin", 0x6000, 0x2000, 0x3ed9763d , 0x3dfaa9d1 )
+	ROM_LOAD( "04j_a8.bin", 0x8000, 0x2000, 0xc159accb , 0x9afb16e9 )
+	ROM_LOAD( "04h_a9.bin", 0xa000, 0x2000, 0x4d6a5692 , 0xaf24bce0 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "09C.BIN", 0x0000, 0x0200, 0xcef54dad )
+	ROM_LOAD( "09c.bin", 0x0000, 0x0200, 0xcef54dad , 0x066f52bc )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "A10", 0x0000, 0x4000, 0xda659397 )
+	ROM_LOAD( "a10", 0x0000, 0x4000, 0xda659397 , 0x45f7f69b )
 ROM_END
 
 ROM_START( dounicorn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "DOREV1.BIN", 0x0000, 0x2000, 0x37a4cc78 )
-	ROM_LOAD( "DOREV2.BIN", 0x2000, 0x2000, 0xadbc98e4 )
-	ROM_LOAD( "DOREV3.BIN", 0x4000, 0x2000, 0x3d89c3d9 )
-	ROM_LOAD( "DOREV4.BIN", 0x6000, 0x2000, 0x4010e2d6 )
+	ROM_LOAD( "dorev1.bin", 0x0000, 0x2000, 0x37a4cc78 , 0x1e2cbb3c )
+	ROM_LOAD( "dorev2.bin", 0x2000, 0x2000, 0xadbc98e4 , 0x18418f83 )
+	ROM_LOAD( "dorev3.bin", 0x4000, 0x2000, 0x3d89c3d9 , 0x7b9e2061 )
+	ROM_LOAD( "dorev4.bin", 0x6000, 0x2000, 0x4010e2d6 , 0xe013954d )
 
-	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "DOREV5.BIN", 0x0000, 0x4000, 0x85e90c0d )
-	ROM_LOAD( "DOREV6.BIN", 0x4000, 0x2000, 0x31cdcc51 )
-	ROM_LOAD( "DOREV7.BIN", 0x6000, 0x2000, 0x4dcfe391 )
-	ROM_LOAD( "DOREV8.BIN", 0x8000, 0x2000, 0x56488818 )
-	ROM_LOAD( "DOREV9.BIN", 0xa000, 0x2000, 0x20de2a92 )
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dorev5.bin", 0x0000, 0x4000, 0x85e90c0d , 0x0636b8f4 )
+	ROM_LOAD( "dorev6.bin", 0x4000, 0x2000, 0x31cdcc51 , 0x9e335bf8 )
+	ROM_LOAD( "dorev7.bin", 0x6000, 0x2000, 0x4dcfe391 , 0xf5d5701d )
+	ROM_LOAD( "dorev8.bin", 0x8000, 0x2000, 0x56488818 , 0x7143ca68 )
+	ROM_LOAD( "dorev9.bin", 0xa000, 0x2000, 0x20de2a92 , 0x893fc004 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "DOREVC9.BIN", 0x0000, 0x0200, 0xbf6884ee )
+	ROM_LOAD( "dorevc9.bin", 0x0000, 0x0200, 0xbf6884ee , 0x96624ebe )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "DOREV10.BIN", 0x0000, 0x4000, 0x92ad5143 )
+	ROM_LOAD( "dorev10.bin", 0x0000, 0x4000, 0x92ad5143 , 0x4b1925e3 )
 ROM_END
 
 

@@ -275,7 +275,9 @@ void taito_characterram_w(int offset,int data)
 ***************************************************************************/
 int taito_collision_detection_r(int offset)
 {
-	if (offset == 1 || offset == 2)
+	extern struct GameDriver frontlin_driver;
+
+	if (Machine->gamedrv == &frontlin_driver && (offset == 1 || offset == 2))
 		return 0xff;	/* simulate collision for Front Line */
 	else return 0;
 }

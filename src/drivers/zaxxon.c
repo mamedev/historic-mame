@@ -578,86 +578,86 @@ static const char *zaxxon_sample_names[] =
 
 ROM_START( zaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "zaxxon.3", 0x0000, 0x2000, 0x5ab9126b )
-	ROM_LOAD( "zaxxon.2", 0x2000, 0x2000, 0x37df69f1 )
-	ROM_LOAD( "zaxxon.1", 0x4000, 0x1000, 0xba9f739d )
+	ROM_LOAD( "zaxxon.3", 0x0000, 0x2000, 0x5ab9126b , 0x6e2b4a30 )
+	ROM_LOAD( "zaxxon.2", 0x2000, 0x2000, 0x37df69f1 , 0x1c9ea398 )
+	ROM_LOAD( "zaxxon.1", 0x4000, 0x1000, 0xba9f739d , 0x1c123ef9 )
 
-	ROM_REGION(0xd800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zaxxon.14", 0x0000, 0x0800, 0xec944b06 )	/* characters */
-	ROM_LOAD( "zaxxon.15", 0x0800, 0x0800, 0x77cd19bf )
+	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zaxxon.14", 0x0000, 0x0800, 0xec944b06 , 0x07bf8c52 )	/* characters */
+	ROM_LOAD( "zaxxon.15", 0x0800, 0x0800, 0x77cd19bf , 0xc215edcb )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "zaxxon.6",  0x1800, 0x2000, 0x27b35545 )	/* background tiles */
-	ROM_LOAD( "zaxxon.5",  0x3800, 0x2000, 0x1b73959d )
-	ROM_LOAD( "zaxxon.4",  0x5800, 0x2000, 0x3deedf22 )
-	ROM_LOAD( "zaxxon.11", 0x7800, 0x2000, 0x666b4c71 )	/* sprites */
-	ROM_LOAD( "zaxxon.12", 0x9800, 0x2000, 0x4b4f1449 )
-	ROM_LOAD( "zaxxon.13", 0xb800, 0x2000, 0xe2f87f5c )
+	ROM_LOAD( "zaxxon.6", 0x1800, 0x2000, 0x27b35545 , 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5", 0x3800, 0x2000, 0x1b73959d , 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4", 0x5800, 0x2000, 0x3deedf22 , 0xa5bf1465 )
+	ROM_LOAD( "zaxxon.11", 0x7800, 0x2000, 0x666b4c71 , 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12", 0x9800, 0x2000, 0x4b4f1449 , 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13", 0xb800, 0x2000, 0xe2f87f5c , 0xab4e8a9a )
 
 	ROM_REGION(0x8000)	/* background graphics */
-	ROM_LOAD( "zaxxon.8",  0x0000, 0x2000, 0x974ee47c )
-	ROM_LOAD( "zaxxon.7",  0x2000, 0x2000, 0xa9dc2e00 )
-	ROM_LOAD( "zaxxon.10", 0x4000, 0x2000, 0x46743110 )
-	ROM_LOAD( "zaxxon.9",  0x6000, 0x2000, 0x6be85050 )
+	ROM_LOAD( "zaxxon.8", 0x0000, 0x2000, 0x974ee47c , 0x28d65063 )
+	ROM_LOAD( "zaxxon.7", 0x2000, 0x2000, 0xa9dc2e00 , 0x6284c200 )
+	ROM_LOAD( "zaxxon.10", 0x4000, 0x2000, 0x46743110 , 0xa95e61fd )
+	ROM_LOAD( "zaxxon.9", 0x6000, 0x2000, 0x6be85050 , 0x7e42691f )
 
 	ROM_REGION(0x0200)	/* color proms */
-	ROM_LOAD( "zaxxon.u98", 0x0000, 0x0100, 0xef8c094c ) /* palette */
-	ROM_LOAD( "zaxxon.u72", 0x0100, 0x0100, 0x51b70301 ) /* char lookup table */
+	ROM_LOAD( "zaxxon.u98", 0x0000, 0x0100, 0xef8c094c , 0x6cc6695b ) /* palette */
+	ROM_LOAD( "zaxxon.u72", 0x0100, 0x0100, 0x51b70301 , 0xdeaa21f7 ) /* char lookup table */
 ROM_END
 
 ROM_START( szaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "suzaxxon.3", 0x0000, 0x2000, 0x48c0840e )
-	ROM_LOAD( "suzaxxon.2", 0x2000, 0x2000, 0xe25f4a85 )
-	ROM_LOAD( "suzaxxon.1", 0x4000, 0x1000, 0xd996ee1a )
+	ROM_LOAD( "suzaxxon.3", 0x0000, 0x2000, 0x48c0840e , 0xaf7221da )
+	ROM_LOAD( "suzaxxon.2", 0x2000, 0x2000, 0xe25f4a85 , 0x1b90fb2a )
+	ROM_LOAD( "suzaxxon.1", 0x4000, 0x1000, 0xd996ee1a , 0x07258b4a )
 
-	ROM_REGION(0xd800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "suzaxxon.14", 0x0000, 0x0800, 0xe48a4b06 )	/* characters */
-	ROM_LOAD( "suzaxxon.15", 0x0800, 0x0800, 0xc6f7e543 )
+	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "suzaxxon.14", 0x0000, 0x0800, 0xe48a4b06 , 0xbccf560c )	/* characters */
+	ROM_LOAD( "suzaxxon.15", 0x0800, 0x0800, 0xc6f7e543 , 0xd28c628b )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "suzaxxon.6",  0x1800, 0x2000, 0xd3a4530c )	/* background tiles */
-	ROM_LOAD( "suzaxxon.5",  0x3800, 0x2000, 0x292e67e4 )
-	ROM_LOAD( "suzaxxon.4",  0x5800, 0x2000, 0xe2ad3d31 )
-	ROM_LOAD( "suzaxxon.11", 0x7800, 0x2000, 0x06ace32c )	/* sprites */
-	ROM_LOAD( "suzaxxon.12", 0x9800, 0x2000, 0xc4a9c83d )
-	ROM_LOAD( "suzaxxon.13", 0xb800, 0x2000, 0x4d02ddce )
+	ROM_LOAD( "suzaxxon.6", 0x1800, 0x2000, 0xd3a4530c , 0xf51af375 )	/* background tiles */
+	ROM_LOAD( "suzaxxon.5", 0x3800, 0x2000, 0x292e67e4 , 0xa7de021d )
+	ROM_LOAD( "suzaxxon.4", 0x5800, 0x2000, 0xe2ad3d31 , 0x5bfb3b04 )
+	ROM_LOAD( "suzaxxon.11", 0x7800, 0x2000, 0x06ace32c , 0x1503ae41 )	/* sprites */
+	ROM_LOAD( "suzaxxon.12", 0x9800, 0x2000, 0xc4a9c83d , 0x3b53d83f )
+	ROM_LOAD( "suzaxxon.13", 0xb800, 0x2000, 0x4d02ddce , 0x581e8793 )
 
 	ROM_REGION(0x8000)	/* background graphics */
-	ROM_LOAD( "suzaxxon.8",  0x0000, 0x2000, 0x1e73bfd5 )
-	ROM_LOAD( "suzaxxon.7",  0x2000, 0x2000, 0x67046918 )
-	ROM_LOAD( "suzaxxon.10", 0x4000, 0x2000, 0x9d8b2333 )
-	ROM_LOAD( "suzaxxon.9",  0x6000, 0x2000, 0xb0d97103 )
+	ROM_LOAD( "suzaxxon.8", 0x0000, 0x2000, 0x1e73bfd5 , 0xdd1b52df )
+	ROM_LOAD( "suzaxxon.7", 0x2000, 0x2000, 0x67046918 , 0xb5bc07f0 )
+	ROM_LOAD( "suzaxxon.10", 0x4000, 0x2000, 0x9d8b2333 , 0x68e84174 )
+	ROM_LOAD( "suzaxxon.9", 0x6000, 0x2000, 0xb0d97103 , 0xa509994b )
 
 	ROM_REGION(0x0200)	/* color proms */
-	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, 0x60a5c643 ) /* palette */
-	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0x51b70301 ) /* char lookup table */
+	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, 0x60a5c643 , 0x15727a9f ) /* palette */
+	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0x51b70301 , 0xdeaa21f7 ) /* char lookup table */
 ROM_END
 
 ROM_START( futspy_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "fs_snd.u27", 0x0000, 0x2000, 0x3423c119 )
-	ROM_LOAD( "fs_snd.u28", 0x2000, 0x2000, 0x785c0e84 )
-	ROM_LOAD( "fs_snd.u29", 0x4000, 0x1000, 0x5448fa68 )
+	ROM_LOAD( "fs_snd.u27", 0x0000, 0x2000, 0x3423c119 , 0x7578fe7f )
+	ROM_LOAD( "fs_snd.u28", 0x2000, 0x2000, 0x785c0e84 , 0x8ade203c )
+	ROM_LOAD( "fs_snd.u29", 0x4000, 0x1000, 0x5448fa68 , 0x734299c3 )
 
-	ROM_REGION(0x13800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fs_snd.u68", 0x0000, 0x0800, 0x27ac8fb0 )	/* characters */
-	ROM_LOAD( "fs_snd.u69", 0x0800, 0x0800, 0x47472653 )
+	ROM_REGION_DISPOSE(0x13800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fs_snd.u68", 0x0000, 0x0800, 0x27ac8fb0 , 0x305fae2d )	/* characters */
+	ROM_LOAD( "fs_snd.u69", 0x0800, 0x0800, 0x47472653 , 0x3c5658c0 )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "fs_vid.113", 0x1800, 0x2000, 0x8fc6d336 )	/* background tiles */
-	ROM_LOAD( "fs_vid.112", 0x3800, 0x2000, 0x1fdb0ad1 )
-	ROM_LOAD( "fs_vid.111", 0x5800, 0x2000, 0xd739fde1 )
-	ROM_LOAD( "fs_vid.u77", 0x7800, 0x4000, 0x0c546754 )	/* sprites */
-	ROM_LOAD( "fs_vid.u78", 0xb800, 0x4000, 0x65348620 )
-	ROM_LOAD( "fs_vid.u79", 0xf800, 0x4000, 0x9df771f5 )
+	ROM_LOAD( "fs_vid.113", 0x1800, 0x2000, 0x8fc6d336 , 0x36d2bdf6 )	/* background tiles */
+	ROM_LOAD( "fs_vid.112", 0x3800, 0x2000, 0x1fdb0ad1 , 0x3740946a )
+	ROM_LOAD( "fs_vid.111", 0x5800, 0x2000, 0xd739fde1 , 0x4cd4df98 )
+	ROM_LOAD( "fs_vid.u77", 0x7800, 0x4000, 0x0c546754 , 0x1b93c9ec )	/* sprites */
+	ROM_LOAD( "fs_vid.u78", 0xb800, 0x4000, 0x65348620 , 0x50e55262 )
+	ROM_LOAD( "fs_vid.u79", 0xf800, 0x4000, 0x9df771f5 , 0xbfb02e3e )
 
 	ROM_REGION(0x8000)	/* background graphics */
-	ROM_LOAD( "fs_vid.u91", 0x0000, 0x2000, 0x74c8b47e )
-	ROM_LOAD( "fs_vid.u90", 0x2000, 0x2000, 0x794d9111 )
-	ROM_LOAD( "fs_vid.u93", 0x4000, 0x2000, 0xa5cb5131 )
-	ROM_LOAD( "fs_vid.u92", 0x6000, 0x2000, 0xc7693001 )
+	ROM_LOAD( "fs_vid.u91", 0x0000, 0x2000, 0x74c8b47e , 0x86da01f4 )
+	ROM_LOAD( "fs_vid.u90", 0x2000, 0x2000, 0x794d9111 , 0x2bd41d2d )
+	ROM_LOAD( "fs_vid.u93", 0x4000, 0x2000, 0xa5cb5131 , 0xb82b4997 )
+	ROM_LOAD( "fs_vid.u92", 0x6000, 0x2000, 0xc7693001 , 0xaf4015af )
 
 	ROM_REGION(0x0200)	/* color proms */
-	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x581fac07 ) /* palette */
-	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0x46460000 ) /* char lookup table */
+	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x581fac07 , 0x9ba2acaa ) /* palette */
+	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0x46460000 , 0xf9e26790 ) /* char lookup table */
 ROM_END
 
 

@@ -5,8 +5,6 @@
 /*#define USE_SAMPLES*/
 
 
-static unsigned char voltable[255];
-
 static unsigned char soundcommand = 0;
 
 
@@ -41,15 +39,6 @@ int gyruss_i8039_command_r(int offset)
 	so we wedge in there and return the correct jump address */
 
 	return ROM[0x32+(soundcommand&0x0f)];
-}
-
-
-
-void gyruss_digital_out(int offset,int data)
-{
-#ifndef USE_SAMPLES
-	DAC_data_w(0,voltable[data]);
-#endif
 }
 
 
@@ -90,58 +79,39 @@ int gyruss_portA_r(int offset)
 
 
 
-void gyruss_sh_irqtrigger_w(int offset,int data)
+static void filter_w(int chip,int data)
 {
-	/* writing to this register triggers IRQ on the sound CPU */
-	cpu_cause_interrupt(1,0xff);
+	int i;
+void set_RC_filter(int channel,int R1,int R2,int R3,int C);
+
+
+	for (i = 0;i < 3;i++)
+	{
+		int C;
+
+
+		C = 0;
+		if (data & 1) C += 47000;	/* 47000pF = 0.047uF */
+		if (data & 2) C += 220000;	/* 220000pF = 0.22uF */
+		data >>= 2;
+		set_RC_filter(3*chip + i,1000,2200,200,C);
+	}
+}
+
+void gyruss_filter0_w(int offset,int data)
+{
+	filter_w(0,data);
+}
+
+void gyruss_filter1_w(int offset,int data)
+{
+	filter_w(1,data);
 }
 
 
 
-
-void gyruss_init_machine(void)
+void gyruss_sh_irqtrigger_w(int offset,int data)
 {
-	int i,j;
-	int weight[8],totweight;
-
-
-	/* reproduce the resistor ladder
-
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+
-	          100
-	   -- 200 -+-------- out
-	*/
-
-	totweight = 0;
-	for (i = 0;i < 8;i++)
-	{
-		weight[i] = 252000 / (200 + (7-i) * 100);
-		totweight += weight[i];
-	}
-
-	for (i = 0;i < 8;i++)
-		weight[i] = (255 * weight[i] + totweight / 2) / totweight;
-
-	for (i = 0;i < 256;i++)
-	{
-		voltable[i] = 0;
-
-		for (j = 0;j < 8;j++)
-		{
-			if ((i >> j) & 1)
-				voltable[i] += weight[j];
-		}
-	}
+	/* writing to this register triggers IRQ on the sound CPU */
+	cpu_cause_interrupt(1,0xff);
 }

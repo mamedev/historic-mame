@@ -11,6 +11,8 @@
 
 #include "osdepend.h"
 
+#define CRCS_ADDED 1
+
 struct RomModule
 {
 	const char *name;			/* name of the file to load */
@@ -41,7 +43,7 @@ struct RomModule
 
 #ifdef CRCS_ADDED
 	/* ROM to load */
-	#define ROM_LOAD(name,offset,length,crc,checksum) { name, offset, length, checksum, crc },
+	#define ROM_LOAD(name,offset,length,checksum,crc) { name, offset, length, checksum, crc },
 #else
 	/* ROM to load */
 	#define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum, 0 },
@@ -55,11 +57,11 @@ struct RomModule
 #ifdef CRCS_ADDED
 	/* The following ones are for code ONLY - don't use for graphics data!!! */
 	/* load the ROM at even/odd addresses. Useful with 16 bit games */
-	#define ROM_LOAD_EVEN(name,offset,length,crc,checksum) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum, crc },
-	#define ROM_LOAD_ODD(name,offset,length,crc,checksum)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum, crc },
+	#define ROM_LOAD_EVEN(name,offset,length,checksum,crc) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum, crc },
+	#define ROM_LOAD_ODD(name,offset,length,checksum,crc)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum, crc },
 	/* load the ROM at even/odd addresses. Useful with 16 bit games */
-	#define ROM_LOAD_WIDE(name,offset,length,crc,checksum) { name, offset, length | ROMFLAG_WIDE, checksum, crc },
-	#define ROM_LOAD_WIDE_SWAP(name,offset,length,crc,checksum) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum, crc },
+	#define ROM_LOAD_WIDE(name,offset,length,checksum,crc) { name, offset, length | ROMFLAG_WIDE, checksum, crc },
+	#define ROM_LOAD_WIDE_SWAP(name,offset,length,checksum,crc) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum, crc },
 #else
 	/* The following ones are for code ONLY - don't use for graphics data!!! */
 	/* load the ROM at even/odd addresses. Useful with 16 bit games */

@@ -341,26 +341,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( redalert_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "RAG5",	 0x5000, 0x1000, 0x73e366e1 )
-	ROM_LOAD( "RAG6",	 0x6000, 0x1000, 0x14c2fb04 )
-	ROM_LOAD( "RAG7N",	 0x7000, 0x1000, 0x4e8ca3b2 )
-	ROM_LOAD( "RAG8N",	 0x8000, 0x1000, 0xbb20e5a2 )
+	ROM_LOAD( "rag5", 	 0x5000, 0x1000, 0x73e366e1 , 0xd7c9cdd6 )
+	ROM_LOAD( "rag6", 	 0x6000, 0x1000, 0x14c2fb04 , 0xcb2a308c )
+	ROM_LOAD( "rag7n", 	 0x7000, 0x1000, 0x4e8ca3b2 , 0x82ab2dae )
+	ROM_LOAD( "rag8n", 	 0x8000, 0x1000, 0xbb20e5a2 , 0xb80eece9 )
 	ROM_RELOAD( 		 0xF000, 0x1000 )
-	ROM_LOAD( "RAG9",	 0x9000, 0x1000, 0x76d8c402 )
-	ROM_LOAD( "RAGAB",	 0xa000, 0x1000, 0x104383a9 )
-	ROM_LOAD( "RAGB",	 0xb000, 0x1000, 0xb8f2925c )
+	ROM_LOAD( "rag9", 	 0x9000, 0x1000, 0x76d8c402 , 0x2b7d1295 )
+	ROM_LOAD( "ragab", 	 0xa000, 0x1000, 0x104383a9 , 0xab99f5ed )
+	ROM_LOAD( "ragb", 	 0xb000, 0x1000, 0xb8f2925c , 0x8e0d1661 )
 
-	ROM_REGION(0x100) /* temporary for graphics - unused */
+	ROM_REGION_DISPOSE(0x100) /* temporary for graphics - unused */
 
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "W3S1",	 0x7800, 0x0800, 0x283b3023 )
+	ROM_LOAD( "w3s1", 	 0x7800, 0x0800, 0x283b3023 , 0x4af956a5 )
 	ROM_RELOAD( 		 0xF800, 0x0800 )
 
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "RAS1B",	 0x0000, 0x1000, 0x21cf7edb )
-	ROM_LOAD( "RAS2",	 0x1000, 0x1000, 0x2e81d96b )
-	ROM_LOAD( "RAS3",	 0x2000, 0x1000, 0x495b2183 )
-	ROM_LOAD( "RAS4",	 0x3000, 0x1000, 0x0418b74e )
+	ROM_LOAD( "ras1b", 	 0x0000, 0x1000, 0x21cf7edb , 0xec690845 )
+	ROM_LOAD( "ras2", 	 0x1000, 0x1000, 0x2e81d96b , 0xfae94cfc )
+	ROM_LOAD( "ras3", 	 0x2000, 0x1000, 0x495b2183 , 0x20d56f3e )
+	ROM_LOAD( "ras4", 	 0x3000, 0x1000, 0x0418b74e , 0x130e66db )
 ROM_END
 
 /***************************************************************************

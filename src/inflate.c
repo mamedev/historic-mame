@@ -231,13 +231,13 @@ static struct tGlobals G;
 
 
 extern unsigned char *slide;		/* 32K sliding window -- malloced in unzip.c */
-extern unsigned char *g_nextbyte;	/* pointer to next byte of input -- unzip.c */
 extern FILE *errorlog;				/* MAME's errorlog */
 
 #define redirSlide slide
 
-/* support function in unzip.c */
+/* support functions in unzip.c */
 extern void inflate_FLUSH (unsigned char *buffer, unsigned long n);
+extern int mame_nextbyte (void);
 
 #define PKZIP_BUG_WORKAROUND    /* PKZIP 1.93a problem--live with it */
 
@@ -267,14 +267,14 @@ extern void inflate_FLUSH (unsigned char *buffer, unsigned long n);
 #define wsize WSIZE		/* wsize is a constant */
 
 /* default is to simply get a byte from stdin */
-/* we'll read directly from buffer -- JB */
-#define NEXTBYTE (*g_nextbyte++)
+/* we'll read from input buffer -- JB */
+#define NEXTBYTE	mame_nextbyte()
 
 /* only used twice, for fixed strings--NOT general-purpose */
 #define MESSAGE(str,len,flag)  {if (errorlog) fprintf(errorlog,(char *)(str));}
 
 /* default is to simply write the buffer to stdout */
-/* we'll write directly to a buffer -- JB */
+/* we'll write to output buffer -- JB */
 #define FLUSH(n) inflate_FLUSH(redirSlide,n)
 /* Warning: the fwrite above might not work on 16-bit compilers, since
    0x8000 might be interpreted as -32,768 by the library function. */
@@ -364,7 +364,13 @@ const ush mask_bits[] = {
    block.  See the huft_build() routine.
  */
 
-#define NEEDBITS(n) {while(k<(n)){b|=((ulg)NEXTBYTE)<<k;k+=8;}}
+#define CHECK_EOF
+
+#ifndef CHECK_EOF
+#  define NEEDBITS(n) {while(k<(n)){b|=((ulg)NEXTBYTE)<<k;k+=8;}}
+#else
+#  define NEEDBITS(n) {while(k<(n)){int c=NEXTBYTE;if(c==256)return 1;b|=((ulg)c)<<k;k+=8;}}
+#endif
 
 #define DUMPBITS(n) {b>>=(n);k-=(n);}
 

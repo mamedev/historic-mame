@@ -368,22 +368,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( yiear_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D12_8.BIN", 0x8000, 0x4000, 0x53e66644 )
-	ROM_LOAD( "D14_7.BIN", 0xC000, 0x4000, 0xd5f1fb77 )
+	ROM_LOAD( "d12_8.bin", 0x8000, 0x4000, 0x53e66644 , 0x49ecd9dd )
+	ROM_LOAD( "d14_7.bin", 0xC000, 0x4000, 0xd5f1fb77 , 0xbc2e1208 )
 
-	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "G16_1.BIN", 0x00000, 0x2000, 0x12fd01fd )
-	ROM_LOAD( "G15_2.BIN", 0x02000, 0x2000, 0xf889b63f )
-	ROM_LOAD( "G06_3.BIN", 0x04000, 0x4000, 0x5c60737a )
-	ROM_LOAD( "G05_4.BIN", 0x08000, 0x4000, 0xe9a3d4d9 )
-	ROM_LOAD( "G04_5.BIN", 0x0c000, 0x4000, 0x35ca933a )
-	ROM_LOAD( "G03_6.BIN", 0x10000, 0x4000, 0x9e25b6cb )
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g16_1.bin", 0x00000, 0x2000, 0x12fd01fd , 0xb68fd91d )
+	ROM_LOAD( "g15_2.bin", 0x02000, 0x2000, 0xf889b63f , 0xd9b167c6 )
+	ROM_LOAD( "g06_3.bin", 0x04000, 0x4000, 0x5c60737a , 0xe6aa945b )
+	ROM_LOAD( "g05_4.bin", 0x08000, 0x4000, 0xe9a3d4d9 , 0xcc187c22 )
+	ROM_LOAD( "g04_5.bin", 0x0c000, 0x4000, 0x35ca933a , 0x45109b29 )
+	ROM_LOAD( "g03_6.bin", 0x10000, 0x4000, 0x9e25b6cb , 0x1d650790 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "yiear.clr", 0x00000, 0x0020, 0xab6c8ad8 )
+	ROM_LOAD( "yiear.clr", 0x00000, 0x0020, 0xab6c8ad8 , 0xc283d71f )
 
 	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
-	ROM_LOAD( "A12_9.BIN", 0x0000, 0x2000, 0x1e331185 )
+	ROM_LOAD( "a12_9.bin", 0x0000, 0x2000, 0x1e331185 , 0xf75a1539 )
 ROM_END
 
 

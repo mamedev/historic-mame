@@ -12,7 +12,7 @@
 /* from main() */
 extern int ignorecfg;
 
-/* from vector.h */
+/* from vector.c */
 extern int translucency;
 
 /* from video.c */

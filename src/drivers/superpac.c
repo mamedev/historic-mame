@@ -483,66 +483,66 @@ static struct MachineDriver pacnpal_machine_driver =
 
 ROM_START( superpac_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "SPC-2.1C", 0xc000, 0x2000, 0x8da57a9b )
-	ROM_LOAD( "SPC-1.1B", 0xe000, 0x2000, 0xcb391cdf )
+	ROM_LOAD( "spc-2.1c", 0xc000, 0x2000, 0x8da57a9b , 0x1a38c30e )
+	ROM_LOAD( "spc-1.1b", 0xe000, 0x2000, 0xcb391cdf , 0x730e95a9 )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SPV-1.3C", 0x0000, 0x1000, 0xac21e9f9 )
-	ROM_LOAD( "SPV-2.3F", 0x1000, 0x2000, 0x19a3fd43 )
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spv-1.3c", 0x0000, 0x1000, 0xac21e9f9 , 0x78337e74 )
+	ROM_LOAD( "spv-2.3f", 0x1000, 0x2000, 0x19a3fd43 , 0x670a42f2 )
 
 	ROM_REGION(0x0220)	/* color proms */
-	ROM_LOAD( "superpac.4c", 0x0000, 0x0020, 0x598c4aa6 ) /* palette */
-	ROM_LOAD( "superpac.4e", 0x0020, 0x0100, 0x854a0402 ) /* chars */
-	ROM_LOAD( "superpac.3l", 0x0120, 0x0100, 0x75970007 ) /* sprites */
+	ROM_LOAD( "superpac.4c", 0x0000, 0x0020, 0x598c4aa6 , 0x9ce22c46 ) /* palette */
+	ROM_LOAD( "superpac.4e", 0x0020, 0x0100, 0x854a0402 , 0x1253c5c1 ) /* chars */
+	ROM_LOAD( "superpac.3l", 0x0120, 0x0100, 0x75970007 , 0xd4d7026f ) /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "SPC-3.1K", 0xf000, 0x1000, 0x6d32e9fa )
+	ROM_LOAD( "spc-3.1k", 0xf000, 0x1000, 0x6d32e9fa , 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "superpac.spr", 0x0000, 0x0100, 0x55d20e04 )
+	ROM_LOAD( "superpac.spr", 0x0000, 0x0100, 0x55d20e04 , 0xad43688f )
 ROM_END
 
 ROM_START( superpcn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "SP1.2", 0xc000, 0x2000, 0x6d520c38 )
-	ROM_LOAD( "SP1.1", 0xe000, 0x2000, 0x181e2450 )
+	ROM_LOAD( "sp1.2", 0xc000, 0x2000, 0x6d520c38 , 0x4bb33d9c )
+	ROM_LOAD( "sp1.1", 0xe000, 0x2000, 0x181e2450 , 0x846fbb4a )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SP1.6",    0x0000, 0x1000, 0xcb510929 )
-	ROM_LOAD( "SPV-2.3F", 0x1000, 0x2000, 0x19a3fd43 )
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sp1.6", 0x0000, 0x1000, 0xcb510929 , 0x91c5935c )
+	ROM_LOAD( "spv-2.3f", 0x1000, 0x2000, 0x19a3fd43 , 0x670a42f2 )
 
 	ROM_REGION(0x0220)	/* color proms */
-	ROM_LOAD( "superpac.4c", 0x0000, 0x0020, 0x598c4aa6 ) /* palette */
-	ROM_LOAD( "superpac.4e", 0x0020, 0x0100, 0x854a0402 ) /* chars */
-	ROM_LOAD( "superpac.3l", 0x0120, 0x0100, 0x75970007 ) /* sprites */
+	ROM_LOAD( "superpac.4c", 0x0000, 0x0020, 0x598c4aa6 , 0x9ce22c46 ) /* palette */
+	ROM_LOAD( "superpac.4e", 0x0020, 0x0100, 0x854a0402 , 0x1253c5c1 ) /* chars */
+	ROM_LOAD( "superpac.3l", 0x0120, 0x0100, 0x75970007 , 0xd4d7026f ) /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "SPC-3.1K", 0xf000, 0x1000, 0x6d32e9fa )
+	ROM_LOAD( "spc-3.1k", 0xf000, 0x1000, 0x6d32e9fa , 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "superpac.spr", 0x0000, 0x0100, 0x55d20e04 )
+	ROM_LOAD( "superpac.spr", 0x0000, 0x0100, 0x55d20e04 , 0xad43688f )
 ROM_END
 
 ROM_START( pacnpal_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pap13b.cpu", 0xa000, 0x2000, 0x3c456471 )
-	ROM_LOAD( "pap12b.cpu", 0xc000, 0x2000, 0x773e919c )
-	ROM_LOAD( "pap11b.cpu", 0xe000, 0x2000, 0x30f54a3d )
+	ROM_LOAD( "pap13b.cpu", 0xa000, 0x2000, 0x3c456471 , 0xed64a565 )
+	ROM_LOAD( "pap12b.cpu", 0xc000, 0x2000, 0x773e919c , 0x15308bcf )
+	ROM_LOAD( "pap11b.cpu", 0xe000, 0x2000, 0x30f54a3d , 0x3cac401c )
 
-	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pap16.cpu", 0x0000, 0x1000, 0x9565c97b )
-	ROM_LOAD( "pap15.vid", 0x1000, 0x2000, 0x5a90f48c )
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pap16.cpu", 0x0000, 0x1000, 0x9565c97b , 0xa36b96cb )
+	ROM_LOAD( "pap15.vid", 0x1000, 0x2000, 0x5a90f48c , 0xfb6f56e3 )
 
 	ROM_REGION(0x0220)	/* color proms */
-	ROM_LOAD( "papi6.vid", 0x0000, 0x0020, 0x4e18189a ) /* palette */
-	ROM_LOAD( "papi5.vid", 0x0020, 0x0100, 0xd5c5030d ) /* chars */
-	ROM_LOAD( "papi4.vid", 0x0120, 0x0100, 0xf4b6040c ) /* sprites */
+	ROM_LOAD( "papi6.vid", 0x0000, 0x0020, 0x4e18189a , 0x52634b41 ) /* palette */
+	ROM_LOAD( "papi5.vid", 0x0020, 0x0100, 0xd5c5030d , 0xac46203c ) /* chars */
+	ROM_LOAD( "papi4.vid", 0x0120, 0x0100, 0xf4b6040c , 0x686bde84 ) /* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu", 0xf000, 0x1000, 0xcda756c1 )
+	ROM_LOAD( "pap14.cpu", 0xf000, 0x1000, 0xcda756c1 , 0x330e20de )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "papi3.cpu", 0x0000, 0x0100, 0x75820108 )
+	ROM_LOAD( "papi3.cpu", 0x0000, 0x0100, 0x75820108 , 0x83c31a98 )
 ROM_END
 
 

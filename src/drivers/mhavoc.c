@@ -431,25 +431,25 @@ ROM_START( mhavoc_rom )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
-	ROM_LOAD( "136025.210", 0x5000, 0x1000, 0xcb9c0606 )
+	ROM_LOAD( "136025.210", 0x5000, 0x1000, 0xcb9c0606 , 0xc67284ca )
 
 	/* Program ROM */
-	ROM_LOAD( "136025.216", 0x8000, 0x4000, 0x8e55f0f5 )
-	ROM_LOAD( "136025.217", 0xc000, 0x4000, 0x8f547076 )
+	ROM_LOAD( "136025.216", 0x8000, 0x4000, 0x8e55f0f5 , 0x522a9cc0 )
+	ROM_LOAD( "136025.217", 0xc000, 0x4000, 0x8f547076 , 0xea3d6877 )
 
 	/* Paged Program ROM */
-	ROM_LOAD( "136025.215", 0x10000, 0x4000, 0xa2b87778 )   /* page 0+1 */
-	ROM_LOAD( "136025.318", 0x14000, 0x4000, 0x59e1b0b3 )	/* page 2+3 */
+	ROM_LOAD( "136025.215", 0x10000, 0x4000, 0xa2b87778 , 0xa4d380ca )   /* page 0+1 */
+	ROM_LOAD( "136025.318", 0x14000, 0x4000, 0x59e1b0b3 , 0xba935067 )	/* page 2+3 */
 
 	/* Paged Vector Generator ROM */
-	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 )	/* page 0+1 */
-	ROM_LOAD( "136025.107", 0x1c000, 0x4000, 0x088dcec9 )	/* page 2+3 */
+	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 , 0x2ca83c76 )	/* page 0+1 */
+	ROM_LOAD( "136025.107", 0x1c000, 0x4000, 0x088dcec9 , 0x5f81c5f3 )	/* page 2+3 */
 
-	ROM_REGION(0x100)	/* Dummy area to be disposed by engine */
+	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
 	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.108", 0x8000, 0x4000, 0xf6cceaea )
+	ROM_LOAD( "136025.108", 0x8000, 0x4000, 0xf6cceaea , 0x93faf210 )
 	ROM_RELOAD(             0xc000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
@@ -457,26 +457,26 @@ ROM_START( mhavoc2_rom )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)
 	/* Vector Generator ROM */
-	ROM_LOAD( "136025.110", 0x05000, 0x1000, 0x9a81efef )
+	ROM_LOAD( "136025.110", 0x05000, 0x1000, 0x9a81efef , 0x16eef583 )
 
 	/* Program ROM */
-	ROM_LOAD( "136025.103", 0x08000, 0x4000, 0x4c7a494c )
-	ROM_LOAD( "136025.104", 0x0c000, 0x4000, 0x7dbeaaac )
+	ROM_LOAD( "136025.103", 0x08000, 0x4000, 0x4c7a494c , 0xbf192284 )
+	ROM_LOAD( "136025.104", 0x0c000, 0x4000, 0x7dbeaaac , 0x833c5d4e )
 
 	/* Paged Program ROM - switched to 2000-3fff */
-	ROM_LOAD( "136025.101", 0x10000, 0x4000, 0xa8218689 ) /* page 0+1 */
-	ROM_LOAD( "136025.109", 0x14000, 0x4000, 0x110b2e2d ) /* page 2+3 */
+	ROM_LOAD( "136025.101", 0x10000, 0x4000, 0xa8218689 , 0x2b3b591f ) /* page 0+1 */
+	ROM_LOAD( "136025.109", 0x14000, 0x4000, 0x110b2e2d , 0x4d766827 ) /* page 2+3 */
 
 	/* Paged Vector Generator ROM */
-	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 ) /* page 0+1 */
-	ROM_LOAD( "136025.107", 0x1c000, 0x4000, 0x088dcec9 ) /* page 2+3 */
+	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 , 0x2ca83c76 ) /* page 0+1 */
+	ROM_LOAD( "136025.107", 0x1c000, 0x4000, 0x088dcec9 , 0x5f81c5f3 ) /* page 2+3 */
 
 	/* the last 0x1000 is used for the 2 RAM pages */
-	ROM_REGION(0x100)	/* Dummy area to be disposed by engine */
+	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
 	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.108", 0x8000, 0x4000, 0xf6cceaea )
+	ROM_LOAD( "136025.108", 0x8000, 0x4000, 0xf6cceaea , 0x93faf210 )
 	ROM_RELOAD(             0xc000, 0x4000 )/* reset+interrupt vectors */
 ROM_END
 
@@ -484,25 +484,25 @@ ROM_START( mhavoc_rv_rom )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
-	ROM_LOAD( "136025.210", 0x5000, 0x1000, 0xcb9c0606 )
+	ROM_LOAD( "136025.210", 0x5000, 0x1000, 0xcb9c0606 , 0xc67284ca )
 
 	/* Program ROM */
-	ROM_LOAD( "136025.916", 0x8000, 0x4000, 0x56c5c59f )
-	ROM_LOAD( "136025.917", 0xc000, 0x4000, 0x476bd9df )
+	ROM_LOAD( "136025.916", 0x8000, 0x4000, 0x56c5c59f , 0x1255bd7f )
+	ROM_LOAD( "136025.917", 0xc000, 0x4000, 0x476bd9df , 0x21889079 )
 
 	/* Paged Program ROM */
-	ROM_LOAD( "136025.915", 0x10000, 0x4000, 0x97da1e52 )   /* page 0+1 */
-	ROM_LOAD( "136025.918", 0x14000, 0x4000, 0x76d5d81d )	/* page 2+3 */
+	ROM_LOAD( "136025.915", 0x10000, 0x4000, 0x97da1e52 , 0x4c7235dc )   /* page 0+1 */
+	ROM_LOAD( "136025.918", 0x14000, 0x4000, 0x76d5d81d , 0x84735445 )	/* page 2+3 */
 
 	/* Paged Vector Generator ROM */
-	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 )	/* page 0+1 */
-	ROM_LOAD( "136025.907", 0x1c000, 0x4000, 0x91d546a1 )	/* page 2+3 */
+	ROM_LOAD( "136025.106", 0x18000, 0x4000, 0x4b8d3231 , 0x2ca83c76 )	/* page 0+1 */
+	ROM_LOAD( "136025.907", 0x1c000, 0x4000, 0x91d546a1 , 0x4deea2c9 )	/* page 2+3 */
 
-	ROM_REGION(0x100)	/* Dummy area to be disposed by engine */
+	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
 	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.908", 0x8000, 0x4000, 0x3f147884 )
+	ROM_LOAD( "136025.908", 0x8000, 0x4000, 0x3f147884 , 0xc52ec664 )
 	ROM_RELOAD(             0xc000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 

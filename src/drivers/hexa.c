@@ -183,20 +183,63 @@ static struct MachineDriver machine_driver =
 
 ROM_START( hexa_rom )
 	ROM_REGION(0x18000)		/* 64k for code + 32k for banked ROM */
-	ROM_LOAD( "hexa.20" , 0x00000, 0x8000, 0xe3dadfe2 )
-	ROM_LOAD( "hexa.21",  0x10000, 0x8000, 0x6f9727b7 )
+	ROM_LOAD( "hexa.20", 0x00000, 0x8000, 0xe3dadfe2 , 0x98b00586 )
+	ROM_LOAD( "hexa.21", 0x10000, 0x8000, 0x6f9727b7 , 0x3d5d006c )
 
-	ROM_REGION(0x18000)		/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hexa.17", 0x00000,  0x8000, 0x97ee32e2 )
-	ROM_LOAD( "hexa.18", 0x08000,  0x8000, 0xa32a141c )
-	ROM_LOAD( "hexa.19", 0x10000,  0x8000, 0xce17ce79 )
+	ROM_REGION_DISPOSE(0x18000)		/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hexa.17", 0x00000, 0x8000, 0x97ee32e2 , 0xf6911dd6 )
+	ROM_LOAD( "hexa.18", 0x08000, 0x8000, 0xa32a141c , 0x6e3d95d2 )
+	ROM_LOAD( "hexa.19", 0x10000, 0x8000, 0xce17ce79 , 0xffe97a31 )
 
 	ROM_REGION(0x0300)		/* color proms */
-	ROM_LOAD( "hexa.001", 0x0000,  0x0100, 0x8efe070e )
-	ROM_LOAD( "hexa.003", 0x0100,  0x0100, 0x7de90603 )
-	ROM_LOAD( "hexa.002", 0x0200,  0x0100, 0x4ebb0b0f )
+	ROM_LOAD( "hexa.001", 0x0000, 0x0100, 0x8efe070e , 0x88a055b4 )
+	ROM_LOAD( "hexa.003", 0x0100, 0x0100, 0x7de90603 , 0x3e9d4932 )
+	ROM_LOAD( "hexa.002", 0x0200, 0x0100, 0x4ebb0b0f , 0xff15366c )
 ROM_END
 
+static int hexa_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+	static int firsttime = 0;
+
+
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		RAM[0xc70a] = 1;
+		firsttime = 1;
+	}
+
+	if (memcmp(&RAM[0xc709],"\x00\x00",2) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc709],2);
+			osd_fclose(f);
+
+		}
+
+		firsttime = 0;
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hexa_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc709],2);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver hexa_driver =
@@ -221,6 +264,6 @@ struct GameDriver hexa_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hexa_hiload, hexa_hisave
 };
 

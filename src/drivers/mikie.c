@@ -316,74 +316,74 @@ static struct MachineDriver mikie_machine_driver =
 
 ROM_START( mikie_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "11c_n14.bin", 0x6000, 0x2000, 0xd00e7ee2 )
-	ROM_LOAD( "12a_o13.bin", 0x8000, 0x4000, 0x2caf1c65 )
-	ROM_LOAD( "12d_o17.bin", 0xc000, 0x4000, 0xdca5bcb3 )
+	ROM_LOAD( "11c_n14.bin", 0x6000, 0x2000, 0xd00e7ee2 , 0xf698e6dd )
+	ROM_LOAD( "12a_o13.bin", 0x8000, 0x4000, 0x2caf1c65 , 0x826e7035 )
+	ROM_LOAD( "12d_o17.bin", 0xc000, 0x4000, 0xdca5bcb3 , 0x161c25c8 )
 
-	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "O11", 0x00000, 0x4000, 0x4d061d56 )
-	ROM_LOAD( "001", 0x04000, 0x4000, 0x4b7d6439 )
-	ROM_LOAD( "003", 0x08000, 0x4000, 0xf6cf4ab5 )
-	ROM_LOAD( "005", 0x0c000, 0x4000, 0x5d89e8ed )
-	ROM_LOAD( "007", 0x10000, 0x4000, 0xca74f5e0 )
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "o11", 0x00000, 0x4000, 0x4d061d56 , 0x3c82aaf3 )
+	ROM_LOAD( "001", 0x04000, 0x4000, 0x4b7d6439 , 0xa2ba0df5 )
+	ROM_LOAD( "003", 0x08000, 0x4000, 0xf6cf4ab5 , 0x9775ab32 )
+	ROM_LOAD( "005", 0x0c000, 0x4000, 0x5d89e8ed , 0xba44aeef )
+	ROM_LOAD( "007", 0x10000, 0x4000, 0xca74f5e0 , 0x31afc153 )
 
 	ROM_REGION(0x0500)	/* color PROMs */
-	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b )	/* red component */
-	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 )	/* green component */
-	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 )	/* blue component */
-	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 )	/* character lookup table */
-	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 )	/* sprite lookup table */
+	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b , 0x64c2c015 )	/* red component */
+	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 , 0x4e1889f7 )	/* green component */
+	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 , 0x9a8bb958 )	/* blue component */
+	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 , 0x6bb0a5b0 )	/* character lookup table */
+	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 , 0x64f7d0a2 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "06e_n10.bin", 0x0000, 0x2000, 0xe1ef92bb )
+	ROM_LOAD( "06e_n10.bin", 0x0000, 0x2000, 0xe1ef92bb , 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiej_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "11c_n14.bin", 0x6000, 0x2000, 0xd00e7ee2 )
-	ROM_LOAD( "12a_o13.bin", 0x8000, 0x4000, 0x2caf1c65 )
-	ROM_LOAD( "12d_o17.bin", 0xc000, 0x4000, 0xdca5bcb3 )
+	ROM_LOAD( "11c_n14.bin", 0x6000, 0x2000, 0xd00e7ee2 , 0xf698e6dd )
+	ROM_LOAD( "12a_o13.bin", 0x8000, 0x4000, 0x2caf1c65 , 0x826e7035 )
+	ROM_LOAD( "12d_o17.bin", 0xc000, 0x4000, 0xdca5bcb3 , 0x161c25c8 )
 
-	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "08i_q11.bin", 0x00000, 0x4000, 0x52ad3ce9 )
-	ROM_LOAD( "f01_q01.bin", 0x04000, 0x4000, 0x7e4908f3 )
-	ROM_LOAD( "f03_q03.bin", 0x08000, 0x4000, 0x1b1f89a7 )
-	ROM_LOAD( "h01_q05.bin", 0x0c000, 0x4000, 0x3e86314c )
-	ROM_LOAD( "h03_q07.bin", 0x10000, 0x4000, 0x38bfcc27 )
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "08i_q11.bin", 0x00000, 0x4000, 0x52ad3ce9 , 0xc48b269b )
+	ROM_LOAD( "f01_q01.bin", 0x04000, 0x4000, 0x7e4908f3 , 0x31551987 )
+	ROM_LOAD( "f03_q03.bin", 0x08000, 0x4000, 0x1b1f89a7 , 0x34414df0 )
+	ROM_LOAD( "h01_q05.bin", 0x0c000, 0x4000, 0x3e86314c , 0xf9e1ebb1 )
+	ROM_LOAD( "h03_q07.bin", 0x10000, 0x4000, 0x38bfcc27 , 0x15dc093b )
 
 	ROM_REGION(0x0500)	/* color PROMs */
-	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b )	/* red component */
-	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 )	/* green component */
-	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 )	/* blue component */
-	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 )	/* character lookup table */
-	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 )	/* sprite lookup table */
+	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b , 0x64c2c015 )	/* red component */
+	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 , 0x4e1889f7 )	/* green component */
+	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 , 0x9a8bb958 )	/* blue component */
+	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 , 0x6bb0a5b0 )	/* character lookup table */
+	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 , 0x64f7d0a2 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "06e_n10.bin", 0x0000, 0x2000, 0xe1ef92bb )
+	ROM_LOAD( "06e_n10.bin", 0x0000, 0x2000, 0xe1ef92bb , 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiehs_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "11c_l14.bin", 0x6000, 0x2000, 0x27e58f1f )
-	ROM_LOAD( "12a_m13.bin", 0x8000, 0x4000, 0x6e515b31 )
-	ROM_LOAD( "12d_m17.bin", 0xc000, 0x4000, 0x0ef94351 )
+	ROM_LOAD( "11c_l14.bin", 0x6000, 0x2000, 0x27e58f1f , 0x633f3a6d )
+	ROM_LOAD( "12a_m13.bin", 0x8000, 0x4000, 0x6e515b31 , 0x9c42d715 )
+	ROM_LOAD( "12d_m17.bin", 0xc000, 0x4000, 0x0ef94351 , 0xcb5c03c9 )
 
-	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "08i_l11.bin", 0x00000, 0x4000, 0xf881dbd1 )
-	ROM_LOAD( "f01_i01.bin", 0x04000, 0x4000, 0xd69bebe3 )
-	ROM_LOAD( "f03_i03.bin", 0x08000, 0x4000, 0x180819fa )
-	ROM_LOAD( "h01_i05.bin", 0x0c000, 0x4000, 0xc0d054ec )
-	ROM_LOAD( "h03_i07.bin", 0x10000, 0x4000, 0xba498b1f )
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "08i_l11.bin", 0x00000, 0x4000, 0xf881dbd1 , 0x5ba9d86b )
+	ROM_LOAD( "f01_i01.bin", 0x04000, 0x4000, 0xd69bebe3 , 0x0c0cab5f )
+	ROM_LOAD( "f03_i03.bin", 0x08000, 0x4000, 0x180819fa , 0x694da32f )
+	ROM_LOAD( "h01_i05.bin", 0x0c000, 0x4000, 0xc0d054ec , 0x00e357e1 )
+	ROM_LOAD( "h03_i07.bin", 0x10000, 0x4000, 0xba498b1f , 0xceeba6ac )
 
 	ROM_REGION(0x0500)	/* color PROMs */
-	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b )	/* red component */
-	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 )	/* green component */
-	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 )	/* blue component */
-	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 )	/* character lookup table */
-	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 )	/* sprite lookup table */
+	ROM_LOAD( "01i_d19.bin", 0x0000, 0x0100, 0xbee3030b , 0x64c2c015 )	/* red component */
+	ROM_LOAD( "03i_d21.bin", 0x0100, 0x0100, 0xa6b10d03 , 0x4e1889f7 )	/* green component */
+	ROM_LOAD( "02i_d20.bin", 0x0200, 0x0100, 0xbe0f0c05 , 0x9a8bb958 )	/* blue component */
+	ROM_LOAD( "12h_d22.bin", 0x0300, 0x0100, 0xbd1c0308 , 0x6bb0a5b0 )	/* character lookup table */
+	ROM_LOAD( "f09_d18.bin", 0x0400, 0x0100, 0xccbc0f02 , 0x64f7d0a2 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "06e_h10.bin", 0x0000, 0x2000, 0xbfecc040 )
+	ROM_LOAD( "06e_h10.bin", 0x0000, 0x2000, 0xbfecc040 , 0x4ed887d2 )
 ROM_END
 
 

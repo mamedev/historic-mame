@@ -440,38 +440,38 @@ static void hisave(void)
 
 ROM_START( berzerk1_rom )
         ROM_REGION(0x10000)
-        ROM_LOAD( "rom0.1c", 0x0000, 0x0800, 0x6a3d0405 )
-        ROM_LOAD( "rom1.1d", 0x1000, 0x0800, 0xa014ad50 )
-        ROM_LOAD( "rom2.3d", 0x1800, 0x0800, 0x9501b63b )
-        ROM_LOAD( "rom3.5d", 0x2000, 0x0800, 0x5c2a2996 )
-        ROM_LOAD( "rom4.6d", 0x2800, 0x0800, 0x1558c1da )
-        ROM_LOAD( "rom5.5c", 0x3000, 0x0800, 0xd35649e0 )
+        ROM_LOAD( "rom0.1c", 0x0000, 0x0800, 0x6a3d0405 , 0x5b7eb77d )
+        ROM_LOAD( "rom1.1d", 0x1000, 0x0800, 0xa014ad50 , 0xe58c8678 )
+        ROM_LOAD( "rom2.3d", 0x1800, 0x0800, 0x9501b63b , 0x705bb339 )
+        ROM_LOAD( "rom3.5d", 0x2000, 0x0800, 0x5c2a2996 , 0x6a1936b4 )
+        ROM_LOAD( "rom4.6d", 0x2800, 0x0800, 0x1558c1da , 0xfa5dce40 )
+        ROM_LOAD( "rom5.5c", 0x3000, 0x0800, 0xd35649e0 , 0x2579b9f4 )
 ROM_END
 
 ROM_START( berzerk_rom )
         ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0", 0x0000, 0x0800, 0x20874015 )
-        ROM_LOAD( "1d-1", 0x1000, 0x0800, 0x98ca9778 )
-        ROM_LOAD( "3d-2", 0x1800, 0x0800, 0x75212e73 )
-        ROM_LOAD( "5d-3", 0x2000, 0x0800, 0xfd913cd1 )
-        ROM_LOAD( "6d-4", 0x2800, 0x0800, 0x255e05f8 )
-        ROM_LOAD( "5c-5", 0x3000, 0x0800, 0x5c8d0cf9 )
+        ROM_LOAD( "1c-0", 0x0000, 0x0800, 0x20874015 , 0xca566dbc )
+        ROM_LOAD( "1d-1", 0x1000, 0x0800, 0x98ca9778 , 0x7ba69fde )
+        ROM_LOAD( "3d-2", 0x1800, 0x0800, 0x75212e73 , 0xa1d5248b )
+        ROM_LOAD( "5d-3", 0x2000, 0x0800, 0xfd913cd1 , 0xfcaefa95 )
+        ROM_LOAD( "6d-4", 0x2800, 0x0800, 0x255e05f8 , 0x1e35b9a0 )
+        ROM_LOAD( "5c-5", 0x3000, 0x0800, 0x5c8d0cf9 , 0xc8c665e5 )
 ROM_END
 
 ROM_START( frenzy_rom )
         ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0", 0x0000, 0x1000, 0x434eba7a )
-        ROM_LOAD( "1d-1", 0x1000, 0x1000, 0x08328452 )
-        ROM_LOAD( "3d-2", 0x2000, 0x1000, 0x3fbf1ce1 )
-        ROM_LOAD( "5d-3", 0x3000, 0x1000, 0xb90ff16d )
-        ROM_LOAD( "6d-4", 0xc000, 0x1000, 0x44cf1045 )
+        ROM_LOAD( "1c-0", 0x0000, 0x1000, 0x434eba7a , 0xabdd25b8 )
+        ROM_LOAD( "1d-1", 0x1000, 0x1000, 0x08328452 , 0x536e4ae8 )
+        ROM_LOAD( "3d-2", 0x2000, 0x1000, 0x3fbf1ce1 , 0x3eb9bc9b )
+        ROM_LOAD( "5d-3", 0x3000, 0x1000, 0xb90ff16d , 0xe1d3133c )
+        ROM_LOAD( "6d-4", 0xc000, 0x1000, 0x44cf1045 , 0x5581a7b1 )
         /* 1c & 2c are the voice ROMs */
 ROM_END
 
 ROM_START( frenzy1_rom )
         ROM_REGION(0x10000)
-        ROM_LOAD( "frenzy01.bin", 0x0000, 0x4000, 0x444ed3a4 )
-        ROM_LOAD( "frenzy02.bin", 0xc000, 0x1000, 0x44cf1045 )
+        ROM_LOAD( "frenzy01.bin", 0x0000, 0x4000, 0x444ed3a4 , 0xeb70f964 )
+        ROM_LOAD( "frenzy02.bin", 0xc000, 0x1000, 0x44cf1045 , 0x5581a7b1 )
 ROM_END
 
 static const char *berzerk_sample_names[] =

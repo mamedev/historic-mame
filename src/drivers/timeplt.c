@@ -355,44 +355,44 @@ static struct MachineDriver machine_driver =
 
 ROM_START( timeplt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tm1", 0x0000, 0x2000, 0x3eb31db9 )
-	ROM_LOAD( "tm2", 0x2000, 0x2000, 0x776f0771 )
-	ROM_LOAD( "tm3", 0x4000, 0x2000, 0x5dac80dc )
+	ROM_LOAD( "tm1", 0x0000, 0x2000, 0x3eb31db9 , 0x1551f1b9 )
+	ROM_LOAD( "tm2", 0x2000, 0x2000, 0x776f0771 , 0x58636cb5 )
+	ROM_LOAD( "tm3", 0x4000, 0x2000, 0x5dac80dc , 0xff4e0d83 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm6", 0x0000, 0x2000, 0xfb1dbeb5 )
-	ROM_LOAD( "tm4", 0x2000, 0x2000, 0x985d9d73 )
-	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm6", 0x0000, 0x2000, 0xfb1dbeb5 , 0xc2507f40 )
+	ROM_LOAD( "tm4", 0x2000, 0x2000, 0x985d9d73 , 0x7e437c3e )
+	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d , 0xe8ca87b9 )
 
 	ROM_REGION(0x0240)	/* color proms */
-	ROM_LOAD( "timeplt.b4",  0x0000, 0x0020, 0x28644298 ) /* palette */
-	ROM_LOAD( "timeplt.b5",  0x0020, 0x0020, 0xf3d09860 ) /* palette */
-	ROM_LOAD( "timeplt.e9",  0x0040, 0x0100, 0xb4b30707 ) /* sprite lookup table */
-	ROM_LOAD( "timeplt.e12", 0x0140, 0x0100, 0x4d3e0e06 ) /* char lookup table */
+	ROM_LOAD( "timeplt.b4", 0x0000, 0x0020, 0x28644298 , 0x34c91839 ) /* palette */
+	ROM_LOAD( "timeplt.b5", 0x0020, 0x0020, 0xf3d09860 , 0x463b2b07 ) /* palette */
+	ROM_LOAD( "timeplt.e9", 0x0040, 0x0100, 0xb4b30707 , 0x4bbb2150 ) /* sprite lookup table */
+	ROM_LOAD( "timeplt.e12", 0x0140, 0x0100, 0x4d3e0e06 , 0xf7b7663e ) /* char lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d )
+	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d , 0xd66da813 )
 ROM_END
 
 ROM_START( spaceplt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sp1", 0x0000, 0x2000, 0xfe1e8a6c )
-	ROM_LOAD( "sp2", 0x2000, 0x2000, 0xa4bcaa6c )
-	ROM_LOAD( "sp3", 0x4000, 0x2000, 0xf83edd76 )
+	ROM_LOAD( "sp1", 0x0000, 0x2000, 0xfe1e8a6c , 0xac8ca3ae )
+	ROM_LOAD( "sp2", 0x2000, 0x2000, 0xa4bcaa6c , 0x1f0308ef )
+	ROM_LOAD( "sp3", 0x4000, 0x2000, 0xf83edd76 , 0x90aeca50 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sp6", 0x0000, 0x2000, 0x539af2ba )
-	ROM_LOAD( "sp4", 0x2000, 0x2000, 0x67f96215 )
-	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sp6", 0x0000, 0x2000, 0x539af2ba , 0x76caa8af )
+	ROM_LOAD( "sp4", 0x2000, 0x2000, 0x67f96215 , 0x3781ce7a )
+	ROM_LOAD( "tm5", 0x4000, 0x2000, 0x935f9c5d , 0xe8ca87b9 )
 
 	ROM_REGION(0x0240)	/* color proms */
-	ROM_LOAD( "timeplt.b4",  0x0000, 0x0020, 0x28644298 ) /* palette */
-	ROM_LOAD( "timeplt.b5",  0x0020, 0x0020, 0xf3d09860 ) /* palette */
-	ROM_LOAD( "timeplt.e9",  0x0040, 0x0100, 0xb4b30707 ) /* sprite lookup table */
-	ROM_LOAD( "timeplt.e12", 0x0140, 0x0100, 0x4d3e0e06 ) /* char lookup table */
+	ROM_LOAD( "timeplt.b4", 0x0000, 0x0020, 0x28644298 , 0x34c91839 ) /* palette */
+	ROM_LOAD( "timeplt.b5", 0x0020, 0x0020, 0xf3d09860 , 0x463b2b07 ) /* palette */
+	ROM_LOAD( "timeplt.e9", 0x0040, 0x0100, 0xb4b30707 , 0x4bbb2150 ) /* sprite lookup table */
+	ROM_LOAD( "timeplt.e12", 0x0140, 0x0100, 0x4d3e0e06 , 0xf7b7663e ) /* char lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d )
+	ROM_LOAD( "tm7", 0x0000, 0x1000, 0xcaf1131d , 0xd66da813 )
 ROM_END
 
 

@@ -332,75 +332,75 @@ static struct MachineDriver bootleg_machine_driver =
 
 ROM_START( arkanoid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a75_01-1.rom", 0x0000, 0x8000, 0x3f362d52 )
-	ROM_LOAD( "a75_11.rom",   0x8000, 0x8000, 0x0f946676 )
+	ROM_LOAD( "a75_01-1.rom", 0x0000, 0x8000, 0x3f362d52 , 0x5bcda3b0 )
+	ROM_LOAD( "a75_11.rom", 0x8000, 0x8000, 0x0f946676 , 0xeafd7191 )
 
-	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a75_03.rom",  0x00000, 0x8000, 0x08db46ed )
-	ROM_LOAD( "a75_04.rom",  0x08000, 0x8000, 0x56e6b2de )
-	ROM_LOAD( "a75_05.rom",  0x10000, 0x8000, 0x861d955f )
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom", 0x00000, 0x8000, 0x08db46ed , 0x038b74ba )
+	ROM_LOAD( "a75_04.rom", 0x08000, 0x8000, 0x56e6b2de , 0x71fae199 )
+	ROM_LOAD( "a75_05.rom", 0x10000, 0x8000, 0x861d955f , 0xc76374e2 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 )	/* red component */
-	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
-	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
+	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 , 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 , 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 , 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e )
+	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e , 0x8a02f903 )
 ROM_END
 
 ROM_START( arknoidu_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a75-19.bin", 0x0000, 0x8000, 0xdf73005f )
-	ROM_LOAD( "a75-18.bin", 0x8000, 0x8000, 0xb416b738 )
+	ROM_LOAD( "a75-19.bin", 0x0000, 0x8000, 0xdf73005f , 0xd3ad37d7 )
+	ROM_LOAD( "a75-18.bin", 0x8000, 0x8000, 0xb416b738 , 0xcdc08301 )
 
-	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a75_03.rom",  0x00000, 0x8000, 0x08db46ed )
-	ROM_LOAD( "a75_04.rom",  0x08000, 0x8000, 0x56e6b2de )
-	ROM_LOAD( "a75_05.rom",  0x10000, 0x8000, 0x861d955f )
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom", 0x00000, 0x8000, 0x08db46ed , 0x038b74ba )
+	ROM_LOAD( "a75_04.rom", 0x08000, 0x8000, 0x56e6b2de , 0x71fae199 )
+	ROM_LOAD( "a75_05.rom", 0x10000, 0x8000, 0x861d955f , 0xc76374e2 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 )	/* red component */
-	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
-	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
+	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 , 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 , 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 , 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e )
+	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e , 0x8a02f903 )
 ROM_END
 
 ROM_START( arkbl2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "e1.6d",      0x0000, 0x8000, 0xdd988bae )
-	ROM_LOAD( "e2.6f",      0x8000, 0x8000, 0x0fd76633 )
+	ROM_LOAD( "e1.6d", 0x0000, 0x8000, 0xdd988bae , 0xdd4f2b72 )
+	ROM_LOAD( "e2.6f", 0x8000, 0x8000, 0x0fd76633 , 0xbbc33ceb )
 
-	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a75_03.rom",  0x00000, 0x8000, 0x08db46ed )
-	ROM_LOAD( "a75_04.rom",  0x08000, 0x8000, 0x56e6b2de )
-	ROM_LOAD( "a75_05.rom",  0x10000, 0x8000, 0x861d955f )
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom", 0x00000, 0x8000, 0x08db46ed , 0x038b74ba )
+	ROM_LOAD( "a75_04.rom", 0x08000, 0x8000, 0x56e6b2de , 0x71fae199 )
+	ROM_LOAD( "a75_05.rom", 0x10000, 0x8000, 0x861d955f , 0xc76374e2 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 )	/* red component */
-	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
-	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
+	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 , 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 , 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 , 0xa7c6c277 )	/* blue component */
 
 	ROM_REGION(0x0800)	/* 8k for the microcontroller */
-	ROM_LOAD( "68705p3.6i", 0x0080, 0x0780, 0xe53f6dcd )
+	ROM_LOAD( "68705p3.6i", 0x0080, 0x0780, 0xe53f6dcd , 0xe3c5024e )
 ROM_END
 
 ROM_START( arkatayt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "arkanoid.1", 0x0000, 0x8000, 0x8ec5be51 )
-	ROM_LOAD( "arkanoid.2", 0x8000, 0x8000, 0x9abfd993 )
+	ROM_LOAD( "arkanoid.1", 0x0000, 0x8000, 0x8ec5be51 , 0x6e0a2b6f )
+	ROM_LOAD( "arkanoid.2", 0x8000, 0x8000, 0x9abfd993 , 0x5a97dd56 )
 
-	ROM_REGION(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a75_03.rom",  0x00000, 0x8000, 0x08db46ed )
-	ROM_LOAD( "a75_04.rom",  0x08000, 0x8000, 0x56e6b2de )
-	ROM_LOAD( "a75_05.rom",  0x10000, 0x8000, 0x861d955f )
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom", 0x00000, 0x8000, 0x08db46ed , 0x038b74ba )
+	ROM_LOAD( "a75_04.rom", 0x08000, 0x8000, 0x56e6b2de , 0x71fae199 )
+	ROM_LOAD( "a75_05.rom", 0x10000, 0x8000, 0x861d955f , 0xc76374e2 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 )	/* red component */
-	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
-	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
+	ROM_LOAD( "07.bpr", 0x0000, 0x0200, 0xcd8e0a06 , 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 , 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 , 0xa7c6c277 )	/* blue component */
 ROM_END
 
 

@@ -143,7 +143,7 @@ static void print_relative_8bit(void)
 
 static void print_relative_5bit(void)
 {
-	signed short ls = (signed short)rs;
+	signed char ls = (signed char)((op >> 5) & 0x1f);
 	if (op & 0x0400) ls = -ls;
 
 	sprintf(temp, "%lXh", __pc + 16 + (ls << 4));
@@ -930,7 +930,9 @@ int Dasm34010 (unsigned char *pBase, char *buff, int _pc)
 
 	case 0x8c00:
 		sprintf (buffer, "MOVB   ");
-		print_src_des_reg();
+		print_src_reg();
+		strcat(buffer, ",*");
+		print_des_reg();
 		break;
 
 

@@ -77,7 +77,11 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* character and sprite lookup table */
 	/* they use colors 0-63 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	{
+		/* pen 0 always uses color 0 (background in River Patrol and Silver Land) */
+		if (i % 4 == 0) COLOR(0,i) = 0;
+		else COLOR(0,i) = i;
+	}
 
 	/* big sprite lookup table */
 	/* it uses colors 64-95 */
@@ -471,15 +475,21 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scroll[32];
 
 
-		if (flipscreen[1])
+		if (flipscreen[0])
 		{
 			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = cclimber_column_scroll[31 - offs];
+			{
+				scroll[offs] = -cclimber_column_scroll[31 - offs];
+				if (flipscreen[1]) scroll[offs] = -scroll[offs];
+			}
 		}
 		else
 		{
 			for (offs = 0;offs < 32;offs++)
+			{
 				scroll[offs] = -cclimber_column_scroll[offs];
+				if (flipscreen[1]) scroll[offs] = -scroll[offs];
+			}
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

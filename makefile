@@ -84,6 +84,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
 		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
+		 obj/sndhrdw/rcfilter.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
@@ -142,8 +143,7 @@ obj/scramble.a: \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
-         obj/vidhrdw/fastfred.o obj/drivers/fastfred.o \
-         obj/vidhrdw/suprmous.o obj/drivers/suprmous.o
+         obj/vidhrdw/fastfred.o obj/drivers/fastfred.o
 
 obj/cclimber.a: \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
@@ -205,7 +205,7 @@ obj/irem.a: \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
-         obj/vidhrdw/lrunner.o obj/drivers/lrunner.o
+         obj/vidhrdw/ldrun.o obj/drivers/ldrun.o
 
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o
@@ -282,8 +282,7 @@ obj/system8.a: \
          obj/vidhrdw/system8.o obj/drivers/system8.o
 
 obj/system16.a: \
-         obj/machine/system16.o obj/vidhrdw/shinobi.o \
-         obj/drivers/shinobi.o obj/drivers/altbeast.o obj/drivers/goldnaxe.o
+         obj/vidhrdw/system16.o obj/drivers/system16.o
 
 obj/btime.a: \
          obj/vidhrdw/btime.o obj/drivers/btime.o \
@@ -402,7 +401,7 @@ obj/rockola.a: \
          obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o
 
 obj/technos.a: \
-         obj/machine/mystston.o obj/vidhrdw/mystston.o obj/drivers/mystston.o \
+         obj/vidhrdw/mystston.o obj/drivers/mystston.o \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o \
          obj/vidhrdw/renegade.o obj/drivers/renegade.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \
@@ -423,7 +422,8 @@ obj/zaccaria.a: \
 
 obj/upl.a: \
          obj/vidhrdw/nova2001.o obj/drivers/nova2001.o \
-         obj/vidhrdw/ninjakd2.o obj/drivers/ninjakd2.o \
+         obj/vidhrdw/pkunwar.o obj/drivers/pkunwar.o \
+         obj/vidhrdw/ninjakd2.o obj/drivers/ninjakd2.o
 
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o
@@ -440,6 +440,7 @@ obj/other.a: \
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
          obj/vidhrdw/champbas.o obj/drivers/champbas.o \
+         obj/drivers/sinbadm.o \
          obj/vidhrdw/exerion.o obj/drivers/exerion.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/vidhrdw/jack.o obj/drivers/jack.o \
@@ -450,6 +451,7 @@ obj/other.a: \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
+         obj/vidhrdw/stinger.o obj/drivers/stinger.o \
          obj/vidhrdw/wiz.o obj/drivers/wiz.o \
          obj/vidhrdw/thepit.o obj/drivers/thepit.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
@@ -465,8 +467,9 @@ obj/other.a: \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
          obj/vidhrdw/cop01.o obj/drivers/cop01.o \
+         obj/vidhrdw/terracre.o obj/drivers/terracre.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
-         obj/drivers/exterm.o
+         obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h

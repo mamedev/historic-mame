@@ -45,6 +45,11 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 {
 	int i;
 
+	/* Get out if color PROM is not available (Super Mouse)	*/
+	if (!color_prom)
+	{
+		return;
+	}
 
 	for (i = 0;i < 32;i++)
 	{

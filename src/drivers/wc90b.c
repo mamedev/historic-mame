@@ -441,35 +441,35 @@ static struct MachineDriver wc90b_machine_driver =
 
 ROM_START( wc90b_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "A02.BIN",  0x00000, 0x10000, 0xef0cef88 )	/* c000-ffff is not used */
-	ROM_LOAD( "A03.BIN",  0x10000, 0x10000, 0x5551ca5f )	/* banked at f000-f7ff */
+	ROM_LOAD( "a02.bin", 0x00000, 0x10000, 0xef0cef88 , 0x192a03dd )	/* c000-ffff is not used */
+	ROM_LOAD( "a03.bin", 0x10000, 0x10000, 0x5551ca5f , 0xf54ff17a )	/* banked at f000-f7ff */
 
-	ROM_REGION(0x110000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "A06.BIN",  0x00000, 0x04000, 0xaddacdf6 )
-	ROM_LOAD( "A08.BIN",  0x04000, 0x04000, 0xb141722b )
-	ROM_LOAD( "A10.BIN",  0x08000, 0x04000, 0xa1981564 )
-	ROM_LOAD( "A20.BIN",  0x0C000, 0x04000, 0x6f22be54 )
+	ROM_REGION_DISPOSE(0x110000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a06.bin", 0x00000, 0x04000, 0xaddacdf6 , 0x3b5387b7 )
+	ROM_LOAD( "a08.bin", 0x04000, 0x04000, 0xb141722b , 0xc622a5a3 )
+	ROM_LOAD( "a10.bin", 0x08000, 0x04000, 0xa1981564 , 0x0923d9f6 )
+	ROM_LOAD( "a20.bin", 0x0C000, 0x04000, 0x6f22be54 , 0xb8dec83e )
 
-	ROM_LOAD( "A07.BIN",  0x10000, 0x20000, 0x9008f22c )
-	ROM_LOAD( "A09.BIN",  0x30000, 0x20000, 0x6e26fe7a )
-	ROM_LOAD( "A11.BIN",  0x50000, 0x20000, 0x1476fe84 )
-	ROM_LOAD( "A21.BIN",  0x70000, 0x20000, 0x8a404c94 )
+	ROM_LOAD( "a07.bin", 0x10000, 0x20000, 0x9008f22c , 0x38c31817 )
+	ROM_LOAD( "a09.bin", 0x30000, 0x20000, 0x6e26fe7a , 0x32e39e29 )
+	ROM_LOAD( "a11.bin", 0x50000, 0x20000, 0x1476fe84 , 0x5ccec796 )
+	ROM_LOAD( "a21.bin", 0x70000, 0x20000, 0x8a404c94 , 0x0c54a091 )
 
-	ROM_LOAD( "146_A12.BIN",  0x090000, 0x10000, 0xdd097e9d )
-	ROM_LOAD( "147_A13.BIN",  0x0a0000, 0x10000, 0x7378c0c0 )
-	ROM_LOAD( "148_A14.BIN",  0x0b0000, 0x10000, 0x20efeb67 )
-	ROM_LOAD( "149_A15.BIN",  0x0c0000, 0x10000, 0x1ea1204d )
-	ROM_LOAD( "150_A16.BIN",  0x0d0000, 0x10000, 0x18da1942 )
-	ROM_LOAD( "151_A17.BIN",  0x0e0000, 0x10000, 0xe1776b79 )
-	ROM_LOAD( "152_A18.BIN",  0x0f0000, 0x10000, 0x872a2e5a )
-	ROM_LOAD( "153_A19.BIN",  0x100000, 0x10000, 0x122c1dde )
+	ROM_LOAD( "146_a12.bin", 0x090000, 0x10000, 0xdd097e9d , 0xd5a60096 )
+	ROM_LOAD( "147_a13.bin", 0x0a0000, 0x10000, 0x7378c0c0 , 0x36bbf467 )
+	ROM_LOAD( "148_a14.bin", 0x0b0000, 0x10000, 0x20efeb67 , 0x26371c18 )
+	ROM_LOAD( "149_a15.bin", 0x0c0000, 0x10000, 0x1ea1204d , 0x75aa9b86 )
+	ROM_LOAD( "150_a16.bin", 0x0d0000, 0x10000, 0x18da1942 , 0x0da825f9 )
+	ROM_LOAD( "151_a17.bin", 0x0e0000, 0x10000, 0xe1776b79 , 0x228429d8 )
+	ROM_LOAD( "152_a18.bin", 0x0f0000, 0x10000, 0x872a2e5a , 0x516b6c09 )
+	ROM_LOAD( "153_a19.bin", 0x100000, 0x10000, 0x122c1dde , 0xf36390a9 )
 
 	ROM_REGION(0x20000)	/* 96k for code */  /* Second CPU */
-	ROM_LOAD( "A04.BIN",  0x00000, 0x10000, 0xfde1ea3f )	/* c000-ffff is not used */
-	ROM_LOAD( "A05.BIN",  0x10000, 0x10000, 0xe9b1aeb7 )	/* banked at f000-f7ff */
+	ROM_LOAD( "a04.bin", 0x00000, 0x10000, 0xfde1ea3f , 0x3d535e2f )	/* c000-ffff is not used */
+	ROM_LOAD( "a05.bin", 0x10000, 0x10000, 0xe9b1aeb7 , 0x9e421c4b )	/* banked at f000-f7ff */
 
 	ROM_REGION(0x10000)	/* 192k for the audio CPU */
-	ROM_LOAD( "A01.BIN",  0x00000, 0x10000, 0x746c3214 )
+	ROM_LOAD( "a01.bin", 0x00000, 0x10000, 0x746c3214 , 0x3d317622 )
 ROM_END
 
 

@@ -278,42 +278,42 @@ static struct MachineDriver shaolins_machine_driver =
 
 ROM_START( kicker_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "kikrd8.bin",  0x6000, 0x2000, 0xb6c97203 )
-	ROM_LOAD( "kikrd9.bin",  0x8000, 0x4000, 0x3665bf81 )
-	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b )
+	ROM_LOAD( "kikrd8.bin", 0x6000, 0x2000, 0xb6c97203 , 0x2598dfdd )
+	ROM_LOAD( "kikrd9.bin", 0x8000, 0x4000, 0x3665bf81 , 0x0cf0351a )
+	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b , 0x654037f8 )
 
-	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kikra10.bin", 0x0000, 0x2000, 0x841f8f71 )
-	ROM_LOAD( "kikra11.bin", 0x2000, 0x2000, 0x244bd67d )
-	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 )
-	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 )
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "kikra10.bin", 0x0000, 0x2000, 0x841f8f71 , 0x4d156afc )
+	ROM_LOAD( "kikra11.bin", 0x2000, 0x2000, 0x244bd67d , 0xff6ca5df )
+	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 , 0xb94e645b )
+	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 , 0x61bbf797 )
 
 	ROM_REGION(0x0500)	/* color proms */
-	ROM_LOAD( "kicker.a12", 0x0000, 0x0100, 0xc4850c0d ) /* palette red component */
-	ROM_LOAD( "kicker.a13", 0x0100, 0x0100, 0x53da0b04 ) /* palette green component */
-	ROM_LOAD( "kicker.a14", 0x0200, 0x0100, 0x6aec070c ) /* palette blue component */
-	ROM_LOAD( "kicker.b8",  0x0300, 0x0100, 0x64080c0a ) /* character lookup table */
-	ROM_LOAD( "kicker.f16", 0x0400, 0x0100, 0xda2a0e00 ) /* sprite lookup table */
+	ROM_LOAD( "kicker.a12", 0x0000, 0x0100, 0xc4850c0d , 0xb09db4b4 ) /* palette red component */
+	ROM_LOAD( "kicker.a13", 0x0100, 0x0100, 0x53da0b04 , 0x270a2bf3 ) /* palette green component */
+	ROM_LOAD( "kicker.a14", 0x0200, 0x0100, 0x6aec070c , 0x83e95ea8 ) /* palette blue component */
+	ROM_LOAD( "kicker.b8", 0x0300, 0x0100, 0x64080c0a , 0xaa900724 ) /* character lookup table */
+	ROM_LOAD( "kicker.f16", 0x0400, 0x0100, 0xda2a0e00 , 0x80009cf5 ) /* sprite lookup table */
 ROM_END
 
 ROM_START( shaolins_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "kikrd8.bin",  0x6000, 0x2000, 0xb6c97203 )
-	ROM_LOAD( "kikrd9.bin",  0x8000, 0x4000, 0x3665bf81 )
-	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b )
+	ROM_LOAD( "kikrd8.bin", 0x6000, 0x2000, 0xb6c97203 , 0x2598dfdd )
+	ROM_LOAD( "kikrd9.bin", 0x8000, 0x4000, 0x3665bf81 , 0x0cf0351a )
+	ROM_LOAD( "kikrd11.bin", 0xC000, 0x4000, 0xc369280b , 0x654037f8 )
 
-	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "shaolins.6",  0x0000, 0x2000, 0x4d23d183 )
-	ROM_LOAD( "shaolins.7",  0x2000, 0x2000, 0xa97b56ed )
-	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 )
-	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 )
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "shaolins.6", 0x0000, 0x2000, 0x4d23d183 , 0xff18a7ed )
+	ROM_LOAD( "shaolins.7", 0x2000, 0x2000, 0xa97b56ed , 0x5f53ae61 )
+	ROM_LOAD( "kikrh14.bin", 0x4000, 0x4000, 0xbbb429b6 , 0xb94e645b )
+	ROM_LOAD( "kikrh13.bin", 0x8000, 0x4000, 0xee8e4448 , 0x61bbf797 )
 
 	ROM_REGION(0x0500)	/* color proms */
-	ROM_LOAD( "kicker.a12", 0x0000, 0x0100, 0xc4850c0d ) /* palette red component */
-	ROM_LOAD( "kicker.a13", 0x0100, 0x0100, 0x53da0b04 ) /* palette green component */
-	ROM_LOAD( "kicker.a14", 0x0200, 0x0100, 0x6aec070c ) /* palette blue component */
-	ROM_LOAD( "kicker.b8",  0x0300, 0x0100, 0x64080c0a ) /* character lookup table */
-	ROM_LOAD( "kicker.f16", 0x0400, 0x0100, 0xda2a0e00 ) /* sprite lookup table */
+	ROM_LOAD( "kicker.a12", 0x0000, 0x0100, 0xc4850c0d , 0xb09db4b4 ) /* palette red component */
+	ROM_LOAD( "kicker.a13", 0x0100, 0x0100, 0x53da0b04 , 0x270a2bf3 ) /* palette green component */
+	ROM_LOAD( "kicker.a14", 0x0200, 0x0100, 0x6aec070c , 0x83e95ea8 ) /* palette blue component */
+	ROM_LOAD( "kicker.b8", 0x0300, 0x0100, 0x64080c0a , 0xaa900724 ) /* character lookup table */
+	ROM_LOAD( "kicker.f16", 0x0400, 0x0100, 0xda2a0e00 , 0x80009cf5 ) /* sprite lookup table */
 ROM_END
 
 

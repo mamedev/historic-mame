@@ -305,7 +305,7 @@ void palette_init(void)
 			Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
 		}
 
-		palette_transparent_pen = shrinked_pens[0];	/* we are forced to use black for the transaprent pen */
+		palette_transparent_pen = shrinked_pens[0];	/* we are forced to use black for the transparent pen */
 	}
 	else
 	{

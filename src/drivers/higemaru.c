@@ -226,22 +226,59 @@ static struct MachineDriver machine_driver =
 
 ROM_START( higemaru_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "hg4", 0x0000, 0x2000, 0xb08e7e22 )
-	ROM_LOAD( "hg5", 0x2000, 0x2000, 0x17e539af )
-	ROM_LOAD( "hg6", 0x4000, 0x2000, 0x88baad76 )
-	ROM_LOAD( "hg7", 0x6000, 0x2000, 0x1e905354 )
+	ROM_LOAD( "hg4", 0x0000, 0x2000, 0xb08e7e22 , 0xdc67a7f9 )
+	ROM_LOAD( "hg5", 0x2000, 0x2000, 0x17e539af , 0xf65a4b68 )
+	ROM_LOAD( "hg6", 0x4000, 0x2000, 0x88baad76 , 0x5f5296aa )
+	ROM_LOAD( "hg7", 0x6000, 0x2000, 0x1e905354 , 0xdc5d455d )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hg3", 0x00000, 0x2000, 0xf9397b3b )	/* characters */
-	ROM_LOAD( "hg1", 0x02000, 0x2000, 0x447c9074 )	/* tiles */
-	ROM_LOAD( "hg2", 0x04000, 0x2000, 0x8a37a96b )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hg3", 0x00000, 0x2000, 0xf9397b3b , 0xb37b88c8 )	/* characters */
+	ROM_LOAD( "hg1", 0x02000, 0x2000, 0x447c9074 , 0xef4c2f5d )	/* tiles */
+	ROM_LOAD( "hg2", 0x04000, 0x2000, 0x8a37a96b , 0x9133f804 )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "hgb3",  0x0000, 0x0020, 0xfe99c64b )	/* palette */
-	ROM_LOAD( "hgb5",  0x0020, 0x0100, 0x397b0409 )	/* char lookup table */
-	ROM_LOAD( "hgb1",  0x0120, 0x0100, 0xc23c0e08 )	/* sprite lookup table */
+	ROM_LOAD( "hgb3", 0x0000, 0x0020, 0xfe99c64b , 0x629cebd8 )	/* palette */
+	ROM_LOAD( "hgb5", 0x0020, 0x0100, 0x397b0409 , 0xdbaa4443 )	/* char lookup table */
+	ROM_LOAD( "hgb1", 0x0120, 0x0100, 0xc23c0e08 , 0x07c607ce )	/* sprite lookup table */
 ROM_END
 
+static int higemaru_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0xee00],"\x00\x20\x00",3) == 0) &&
+            (memcmp(&RAM[0xee75],"\x00\x10\x00",3) == 0))
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xee00],130);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0xee97] = RAM[0xee00];
+                        RAM[0xee98] = RAM[0xee01];
+                        RAM[0xee99] = RAM[0xee02];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void higemaru_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xee00],130);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver higemaru_driver =
@@ -266,5 +303,5 @@ struct GameDriver higemaru_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	higemaru_hiload, higemaru_hisave
 };

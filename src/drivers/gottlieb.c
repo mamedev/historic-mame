@@ -156,7 +156,8 @@ int gottlieb_sh_init (const char *gamename);
 int stooges_sound_input_r(int offset);
 void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
-void stooges_sound_timer_w(int offset,int data);
+void gottlieb_nmi_rate_w(int offset,int data);
+void gottlieb_cause_dac_nmi_w(int offset, int data);
 
 int gottlieb_nvram_load(void);
 void gottlieb_nvram_save(void);
@@ -477,8 +478,7 @@ static struct MemoryReadAddress stooges_sound_readmem[] =
 struct MemoryWriteAddress stooges_sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x4000, MWA_NOP },	/* DAC volume control (TODO: support it) */
-	{ 0x4001, 0x4001, DAC_data_w },
+	{ 0x4000, 0x4001, DAC_data_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -501,8 +501,8 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 									/* checks a DATA REQUEST bit in 6000. */
 	{ 0x4000, 0x4000, stooges_sound_control_w },
 	{ 0x8000, 0x8000, stooges_8910_latch_w },
-	{ 0xa000, 0xa000, stooges_sound_timer_w },	/* the timer generates NMIs */
-/*	{ 0xb000, 0xb000 } should generate a NMI on the first CPU, I think */
+	{ 0xa000, 0xa000, gottlieb_nmi_rate_w },	/* the timer generates NMIs */
+	{ 0xb000, 0xb000, gottlieb_cause_dac_nmi_w },
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1098,12 +1098,20 @@ static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
 
 
 
-static struct DACinterface dac_interface =
+static struct DACinterface dac1_interface =
 {
 	1,
 	441000,
 	{ 255 },
 	{ 0 },
+};
+
+static struct DACinterface dac2_interface =
+{
+	2,
+	441000,
+	{ 255, 255 },
+	{ 0, 0 },
 };
 
 static struct Samplesinterface samples_interface =
@@ -1178,7 +1186,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	{                                                           	\
 		{                                                   		\
 			SOUND_DAC,												\
-			&dac_interface											\
+			&dac1_interface											\
 		},															\
 		{															\
 			SOUND_SAMPLES,	/* only for Q*Bert */					\
@@ -1237,7 +1245,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	{                                                           	\
 		{                                                   		\
 			SOUND_DAC,												\
-			&dac_interface											\
+			&dac2_interface											\
 		},															\
 		{															\
 			SOUND_AY8910,											\
@@ -1265,250 +1273,250 @@ MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecod
 
 ROM_START( reactor_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM7", 0x8000, 0x1000, 0xd8f16275 )
-	ROM_LOAD( "ROM6", 0x9000, 0x1000, 0x7aadbabf )
-	ROM_LOAD( "ROM5", 0xa000, 0x1000, 0x9e2453f0 )
-	ROM_LOAD( "ROM4", 0xb000, 0x1000, 0x2f1839e2 )
-	ROM_LOAD( "ROM3", 0xc000, 0x1000, 0x70123534 )
-	ROM_LOAD( "ROM2", 0xd000, 0x1000, 0xb50b26f3 )
-	ROM_LOAD( "ROM1", 0xe000, 0x1000, 0xeaf1c223 )
-	ROM_LOAD( "ROM0", 0xf000, 0x1000, 0xe126beca )
+	ROM_LOAD( "rom7", 0x8000, 0x1000, 0xd8f16275 , 0xa62d86fd )
+	ROM_LOAD( "rom6", 0x9000, 0x1000, 0x7aadbabf , 0x6ed841f3 )
+	ROM_LOAD( "rom5", 0xa000, 0x1000, 0x9e2453f0 , 0xd90576a3 )
+	ROM_LOAD( "rom4", 0xb000, 0x1000, 0x2f1839e2 , 0x0155daae )
+	ROM_LOAD( "rom3", 0xc000, 0x1000, 0x70123534 , 0xf8881385 )
+	ROM_LOAD( "rom2", 0xd000, 0x1000, 0xb50b26f3 , 0x3caba35b )
+	ROM_LOAD( "rom1", 0xe000, 0x1000, 0xeaf1c223 , 0x944e1ddf )
+	ROM_LOAD( "rom0", 0xf000, 0x1000, 0xe126beca , 0x55930aed )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
 	/* 0000-0fff empty */
-	ROM_LOAD( "FG0", 0x1000, 0x1000, 0x80076d89 )	/* sprites */
+	ROM_LOAD( "fg0", 0x1000, 0x1000, 0x80076d89 , 0xd1f20e15 )	/* sprites */
 	/* 2000-2fff empty */
-	ROM_LOAD( "FG1", 0x3000, 0x1000, 0x0577a58b )
+	ROM_LOAD( "fg1", 0x3000, 0x1000, 0x0577a58b , 0x18396c57 )
 	/* 4000-4fff empty */
-	ROM_LOAD( "FG2", 0x5000, 0x1000, 0xe1ecaede )
+	ROM_LOAD( "fg2", 0x5000, 0x1000, 0xe1ecaede , 0x5489605a )
 	/* 6000-6fff empty */
-	ROM_LOAD( "FG3", 0x7000, 0x1000, 0x50087b04 )
+	ROM_LOAD( "fg3", 0x7000, 0x1000, 0x50087b04 , 0x8416ad53 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "SND1", 0xf000, 0x800, 0x1367334b )
+	ROM_LOAD( "snd1", 0xf000, 0x800, 0x1367334b , 0xd958a0fd )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "SND2", 0xf800, 0x800, 0x10e64e0a )
+	ROM_LOAD( "snd2", 0xf800, 0x800, 0x10e64e0a , 0x5dc86942 )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mplanets_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM4", 0x6000, 0x2000, 0xf09b30bb )
-	ROM_LOAD( "ROM3", 0x8000, 0x2000, 0x52223738 )
-	ROM_LOAD( "ROM2", 0xa000, 0x2000, 0xe406bbb6 )
-	ROM_LOAD( "ROM1", 0xc000, 0x2000, 0x385a7fa6 )
-	ROM_LOAD( "ROM0", 0xe000, 0x2000, 0x29df430b )
+	ROM_LOAD( "rom4", 0x6000, 0x2000, 0xf09b30bb , 0x5402077f )
+	ROM_LOAD( "rom3", 0x8000, 0x2000, 0x52223738 , 0x5d18d740 )
+	ROM_LOAD( "rom2", 0xa000, 0x2000, 0xe406bbb6 , 0x960c3bb1 )
+	ROM_LOAD( "rom1", 0xc000, 0x2000, 0x385a7fa6 , 0xeb515f10 )
+	ROM_LOAD( "rom0", 0xe000, 0x2000, 0x29df430b , 0x74de78aa )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BG0", 0x0000, 0x1000, 0xb85b00c3 )	/* chars */
-	ROM_LOAD( "BG1", 0x1000, 0x1000, 0x175bc547 )
-	ROM_LOAD( "FG3", 0x2000, 0x2000, 0x7c6a72bc )	/* sprites */
-	ROM_LOAD( "FG2", 0x4000, 0x2000, 0x6ab56cc7 )
-	ROM_LOAD( "FG1", 0x6000, 0x2000, 0x16c596b7 )
-	ROM_LOAD( "FG0", 0x8000, 0x2000, 0x96727f86 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg0", 0x0000, 0x1000, 0xb85b00c3 , 0x709aa24c )	/* chars */
+	ROM_LOAD( "bg1", 0x1000, 0x1000, 0x175bc547 , 0x4921e345 )
+	ROM_LOAD( "fg3", 0x2000, 0x2000, 0x7c6a72bc , 0xc990b39f )	/* sprites */
+	ROM_LOAD( "fg2", 0x4000, 0x2000, 0x6ab56cc7 , 0x735e2522 )
+	ROM_LOAD( "fg1", 0x6000, 0x2000, 0x16c596b7 , 0x6456cc1c )
+	ROM_LOAD( "fg0", 0x8000, 0x2000, 0x96727f86 , 0xa920e325 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "SND1", 0xf000, 0x800, 0xca36c072 )
+	ROM_LOAD( "snd1", 0xf000, 0x800, 0xca36c072 , 0x453193a1 )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "SND2", 0xf800, 0x800, 0x66461044 )
+	ROM_LOAD( "snd2", 0xf800, 0x800, 0x66461044 , 0xf5ffc98f )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbert_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xd1c1dad7 )
-	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xdc2bbad9 )
-	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xc23a8cfe )
+	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xd1c1dad7 , 0xfe434526 )
+	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xdc2bbad9 , 0x55635447 )
+	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xc23a8cfe , 0x8e318641 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 , 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 , 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf , 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae , 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 , 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f , 0x2f695b85 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb , 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 , 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbertjp_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x22b59259 )
-	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 )
-	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0xf20e301e )
+	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x22b59259 , 0x67bb1cb2 )
+	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 , 0xc61216e7 )
+	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0xf20e301e , 0x69679d5c )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 , 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 , 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf , 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae , 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 , 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f , 0x2f695b85 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb , 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 , 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( sqbert_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xe4417b2b )
-	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0x97ded634 )
-	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0x15050cd5 )
+	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xe4417b2b , 0x1e3d4038 )
+	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0x97ded634 , 0xeaf3076c )
+	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0x15050cd5 , 0x61260a7e )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x3be1e889 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0x0e5c8e52 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x6d4c679c )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x78869f58 )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0xb6cc7972 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0xf7b7f189 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x3be1e889 , 0xc3118eef )	/* chars */
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0x0e5c8e52 , 0x4f6d8075 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x6d4c679c , 0xee595eda )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x78869f58 , 0x59884c78 )
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0xb6cc7972 , 0x2a60e3ad )
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0xf7b7f189 , 0xb11ad9d8 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb , 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 , 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbertqub_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qq-rom3.bin", 0x8000, 0x2000, 0xac3cb8e2 )
-	ROM_LOAD( "qq-rom2.bin", 0xa000, 0x2000, 0x64167070 )
-	ROM_LOAD( "qq-rom1.bin", 0xc000, 0x2000, 0xdc7d6dc1 )
-	ROM_LOAD( "qq-rom0.bin", 0xe000, 0x2000, 0xf2bad75a )
+	ROM_LOAD( "qq-rom3.bin", 0x8000, 0x2000, 0xac3cb8e2 , 0xc4dbdcd7 )
+	ROM_LOAD( "qq-rom2.bin", 0xa000, 0x2000, 0x64167070 , 0x21a6c6cc )
+	ROM_LOAD( "qq-rom1.bin", 0xc000, 0x2000, 0xdc7d6dc1 , 0x63e6c43d )
+	ROM_LOAD( "qq-rom0.bin", 0xe000, 0x2000, 0xf2bad75a , 0x8ddbe438 )
 
-	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qq-bg0.bin", 0x0000, 0x1000, 0x13c600e6 )	/* chars */
-	ROM_LOAD( "qq-bg1.bin", 0x1000, 0x1000, 0x542c9488 )
-	ROM_LOAD( "qq-fg3.bin", 0x2000, 0x4000, 0xacd201f8 )	/* sprites */
-	ROM_LOAD( "qq-fg2.bin", 0x6000, 0x4000, 0xa6a4660c )
-	ROM_LOAD( "qq-fg1.bin", 0xa000, 0x4000, 0x038fc633 )
-	ROM_LOAD( "qq-fg0.bin", 0xe000, 0x4000, 0x65b1f0f1 )
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qq-bg0.bin", 0x0000, 0x1000, 0x13c600e6 , 0x050badde )	/* chars */
+	ROM_LOAD( "qq-bg1.bin", 0x1000, 0x1000, 0x542c9488 , 0x8875902f )
+	ROM_LOAD( "qq-fg3.bin", 0x2000, 0x4000, 0xacd201f8 , 0x91a949cc )	/* sprites */
+	ROM_LOAD( "qq-fg2.bin", 0x6000, 0x4000, 0xa6a4660c , 0x782d9431 )
+	ROM_LOAD( "qq-fg1.bin", 0xa000, 0x4000, 0x038fc633 , 0x71c3ac4c )
+	ROM_LOAD( "qq-fg0.bin", 0xe000, 0x4000, 0x65b1f0f1 , 0x6192853f )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb , 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 , 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( krull_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "RAM2.BIN", 0x1000, 0x1000, 0x03fa87a8 )
-	ROM_LOAD( "RAM4.BIN", 0x2000, 0x1000, 0x8d50227a )
-	ROM_LOAD( "ROM4.BIN", 0x6000, 0x2000, 0x5e10647c )
-	ROM_LOAD( "ROM3.BIN", 0x8000, 0x2000, 0xdda2011c )
-	ROM_LOAD( "ROM2.BIN", 0xa000, 0x2000, 0x2ab22372 )
-	ROM_LOAD( "ROM1.BIN", 0xc000, 0x2000, 0x5341023f )
-	ROM_LOAD( "ROM0.BIN", 0xe000, 0x2000, 0x16e7bc1d )
+	ROM_LOAD( "ram2.bin", 0x1000, 0x1000, 0x03fa87a8 , 0x302feadf )
+	ROM_LOAD( "ram4.bin", 0x2000, 0x1000, 0x8d50227a , 0x79355a60 )
+	ROM_LOAD( "rom4.bin", 0x6000, 0x2000, 0x5e10647c , 0x2b696394 )
+	ROM_LOAD( "rom3.bin", 0x8000, 0x2000, 0xdda2011c , 0x14b0ee42 )
+	ROM_LOAD( "rom2.bin", 0xa000, 0x2000, 0x2ab22372 , 0xb5fad94a )
+	ROM_LOAD( "rom1.bin", 0xc000, 0x2000, 0x5341023f , 0x1ad956a3 )
+	ROM_LOAD( "rom0.bin", 0xe000, 0x2000, 0x16e7bc1d , 0xa466afae )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "FG3.BIN", 0x0000, 0x2000, 0xf7bee74c )	/* sprites */
-	ROM_LOAD( "FG2.BIN", 0x2000, 0x2000, 0xcf79bc05 )
-	ROM_LOAD( "FG1.BIN", 0x4000, 0x2000, 0xf2f27094 )
-	ROM_LOAD( "FG0.BIN", 0x6000, 0x2000, 0xdae82e5a )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fg3.bin", 0x0000, 0x2000, 0xf7bee74c , 0x82d77a45 )	/* sprites */
+	ROM_LOAD( "fg2.bin", 0x2000, 0x2000, 0xcf79bc05 , 0x25a24317 )
+	ROM_LOAD( "fg1.bin", 0x4000, 0x2000, 0xf2f27094 , 0x7e3ad7b0 )
+	ROM_LOAD( "fg0.bin", 0x6000, 0x2000, 0xdae82e5a , 0x7402dc19 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "snd1.bin", 0xe000, 0x1000, 0x7390800c )
+	ROM_LOAD( "snd1.bin", 0xe000, 0x1000, 0x7390800c , 0xdd2b30b4 )
 	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
-	ROM_LOAD( "snd2.bin", 0xf000, 0x1000, 0xe65ea116 )
+	ROM_LOAD( "snd2.bin", 0xf000, 0x1000, 0xe65ea116 , 0x8cab901b )
 	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mach3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M3ROM4.BIN", 0x6000, 0x2000, 0x194f83f9 )
-	ROM_LOAD( "M3ROM3.BIN", 0x8000, 0x2000, 0x59ac0e24 )
-	ROM_LOAD( "M3ROM2.BIN", 0xa000, 0x2000, 0x04150291 )
-	ROM_LOAD( "M3ROM1.BIN", 0xc000, 0x2000, 0xdccb6551 )
-	ROM_LOAD( "M3ROM0.BIN", 0xe000, 0x2000, 0xf044e698 )
+	ROM_LOAD( "m3rom4.bin", 0x6000, 0x2000, 0x194f83f9 , 0x8bfd5a44 )
+	ROM_LOAD( "m3rom3.bin", 0x8000, 0x2000, 0x59ac0e24 , 0xb1b045af )
+	ROM_LOAD( "m3rom2.bin", 0xa000, 0x2000, 0x04150291 , 0xfbdfb03d )
+	ROM_LOAD( "m3rom1.bin", 0xc000, 0x2000, 0xdccb6551 , 0x3b0ba80b )
+	ROM_LOAD( "m3rom0.bin", 0xe000, 0x2000, 0xf044e698 , 0x70c12bf4 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "MACH3BG0.BIN", 0x0000, 0x1000, 0xfe6435c0 )
-	ROM_LOAD( "MACH3BG1.BIN", 0x1000, 0x1000, 0x4a264336 )
-	ROM_LOAD( "MACH3FG3.BIN", 0x2000, 0x2000, 0x665d2bb7 )
-	ROM_LOAD( "MACH3FG2.BIN", 0x4000, 0x2000, 0x861095d6 )
-	ROM_LOAD( "MACH3FG1.BIN", 0x6000, 0x2000, 0x8bb34a6b )
-	ROM_LOAD( "MACH3FG0.BIN", 0x8000, 0x2000, 0x9ab588af )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xfe6435c0 , 0xea2f5257 )
+	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0x4a264336 , 0xf543e4ce )
+	ROM_LOAD( "mach3fg3.bin", 0x2000, 0x2000, 0x665d2bb7 , 0x472128b4 )
+	ROM_LOAD( "mach3fg2.bin", 0x4000, 0x2000, 0x861095d6 , 0x2a59e99e )
+	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x8bb34a6b , 0x9b88767b )
+	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x9ab588af , 0x0bae12a5 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "M3DROM1.BIN", 0xf000, 0x1000, 0x38c85fce )
+	ROM_LOAD( "m3drom1.bin", 0xf000, 0x1000, 0x38c85fce , 0xa6e29212 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "M3YROM1.BIN", 0xf000, 0x1000, 0x63f4c3a2 )
+	ROM_LOAD( "m3yrom1.bin", 0xf000, 0x1000, 0x63f4c3a2 , 0xeddf8872 )
 ROM_END
 
 ROM_START( usvsthem_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "USVS.RM4", 0x6000, 0x2000, 0x6a22ed88 )
-	ROM_LOAD( "USVS.RM3", 0x8000, 0x2000, 0xc8f37c2b )
-	ROM_LOAD( "USVS.RM2", 0xa000, 0x2000, 0x50a19c93 )
-	ROM_LOAD( "USVS.RM1", 0xc000, 0x2000, 0xc7d6abda )
-	ROM_LOAD( "USVS.RM0", 0xe000, 0x2000, 0xc35a57da )
+	ROM_LOAD( "usvs.rm4", 0x6000, 0x2000, 0x6a22ed88 , 0x0d7a4072 )
+	ROM_LOAD( "usvs.rm3", 0x8000, 0x2000, 0xc8f37c2b , 0x6f32a671 )
+	ROM_LOAD( "usvs.rm2", 0xa000, 0x2000, 0x50a19c93 , 0x36770716 )
+	ROM_LOAD( "usvs.rm1", 0xc000, 0x2000, 0xc7d6abda , 0x697bc989 )
+	ROM_LOAD( "usvs.rm0", 0xe000, 0x2000, 0xc35a57da , 0x30cf6bd9 )
 
-	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "USVS.BG0", 0x0000, 0x1000, 0xb33ab5f0 )
-	ROM_LOAD( "USVS.BG1", 0x1000, 0x1000, 0xe0d8c600 )
-	ROM_LOAD( "USVS.FG3", 0x2000, 0x4000, 0x3c6f6455 )
-	ROM_LOAD( "USVS.FG2", 0x6000, 0x4000, 0xb6d219a4 )
-	ROM_LOAD( "USVS.FG1", 0xa000, 0x4000, 0x61b9c2b5 )
-	ROM_LOAD( "USVS.FG0", 0xe000, 0x4000, 0x27beba12 )
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "usvs.bg0", 0x0000, 0x1000, 0xb33ab5f0 , 0x8a0de09f )
+	ROM_LOAD( "usvs.bg1", 0x1000, 0x1000, 0xe0d8c600 , 0x6fb64d3c )
+	ROM_LOAD( "usvs.fg3", 0x2000, 0x4000, 0x3c6f6455 , 0x98703015 )
+	ROM_LOAD( "usvs.fg2", 0x6000, 0x4000, 0xb6d219a4 , 0xd3990707 )
+	ROM_LOAD( "usvs.fg1", 0xa000, 0x4000, 0x61b9c2b5 , 0xa2057430 )
+	ROM_LOAD( "usvs.fg0", 0xe000, 0x4000, 0x27beba12 , 0x7734e53f )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "USVSDROM.1", 0xe000, 0x2000, 0x9fb80d54 )
+	ROM_LOAD( "usvsdrom.1", 0xe000, 0x2000, 0x9fb80d54 , 0xc0b5cab0 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "USVSYROM.1", 0xe000, 0x2000, 0x58c73a2f )
+	ROM_LOAD( "usvsyrom.1", 0xe000, 0x2000, 0x58c73a2f , 0xc3d245ca )
 ROM_END
 
 ROM_START( stooges_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "GV113RAM.4", 0x2000, 0x1000, 0x64249570 )
-	ROM_LOAD( "GV113ROM.4", 0x6000, 0x2000, 0x8fdb5ff5 )
-	ROM_LOAD( "GV113ROM.3", 0x8000, 0x2000, 0x8d135dd7 )
-	ROM_LOAD( "GV113ROM.2", 0xa000, 0x2000, 0x093ee71e )
-	ROM_LOAD( "GV113ROM.1", 0xc000, 0x2000, 0x65319da1 )
-	ROM_LOAD( "GV113ROM.0", 0xe000, 0x2000, 0x20f3727b )
+	ROM_LOAD( "gv113ram.4", 0x2000, 0x1000, 0x64249570 , 0x533bff2a )
+	ROM_LOAD( "gv113rom.4", 0x6000, 0x2000, 0x8fdb5ff5 , 0x8b6e52b8 )
+	ROM_LOAD( "gv113rom.3", 0x8000, 0x2000, 0x8d135dd7 , 0xb816d8c4 )
+	ROM_LOAD( "gv113rom.2", 0xa000, 0x2000, 0x093ee71e , 0xb45b2a79 )
+	ROM_LOAD( "gv113rom.1", 0xc000, 0x2000, 0x65319da1 , 0x34ab051e )
+	ROM_LOAD( "gv113rom.0", 0xe000, 0x2000, 0x20f3727b , 0xab124329 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "GV113FG3", 0x0000, 0x2000, 0xf3e09a2a )	/* sprites */
-	ROM_LOAD( "GV113FG2", 0x2000, 0x2000, 0x5bde03f8 )
-	ROM_LOAD( "GV113FG1", 0x4000, 0x2000, 0x3904746a )
-	ROM_LOAD( "GV113FG0", 0x6000, 0x2000, 0xa2b57805 )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gv113fg3", 0x0000, 0x2000, 0xf3e09a2a , 0x28071212 )	/* sprites */
+	ROM_LOAD( "gv113fg2", 0x2000, 0x2000, 0x5bde03f8 , 0x9fa3dfde )
+	ROM_LOAD( "gv113fg1", 0x4000, 0x2000, 0x3904746a , 0xfb223854 )
+	ROM_LOAD( "gv113fg0", 0x6000, 0x2000, 0xa2b57805 , 0x95762c53 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "DROM1", 0xe000, 0x2000, 0x3aa5d107 )
+	ROM_LOAD( "drom1", 0xe000, 0x2000, 0x3aa5d107 , 0x87a9fa10 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "YROM2", 0xc000, 0x2000, 0xae8c7f26 )
-	ROM_LOAD( "YROM1", 0xe000, 0x2000, 0xf3bd9399 )
+	ROM_LOAD( "yrom2", 0xc000, 0x2000, 0xae8c7f26 , 0x90f9c940 )
+	ROM_LOAD( "yrom1", 0xe000, 0x2000, 0xf3bd9399 , 0x55f8ab30 )
 ROM_END
 
 ROM_START( curvebal_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x139d406d )
-	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xb523573d )
-	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0x82b0f7d8 )
-	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x2d9d1867 )
+	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x139d406d , 0x72ad4d45 )
+	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xb523573d , 0xd46c3db5 )
+	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0x82b0f7d8 , 0xeb1e08bd )
+	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x2d9d1867 , 0x401fc7e3 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cb-bg-0.chp", 0x0000, 0x1000, 0x2b3409b0 )
-	ROM_LOAD( "cb-bg-1.chp", 0x1000, 0x1000, 0x50cb3569 )
-	ROM_LOAD( "cb-fg-3.chp", 0x2000, 0x2000, 0x77ca2334 )
-	ROM_LOAD( "cb-fg-2.chp", 0x4000, 0x2000, 0x6700be86 )
-	ROM_LOAD( "cb-fg-1.chp", 0x6000, 0x2000, 0x90ba2ec8 )
-	ROM_LOAD( "cb-fg-0.chp", 0x8000, 0x2000, 0x112e7ee6 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cb-bg-0.chp", 0x0000, 0x1000, 0x2b3409b0 , 0xd666a179 )
+	ROM_LOAD( "cb-bg-1.chp", 0x1000, 0x1000, 0x50cb3569 , 0x5e34ff4e )
+	ROM_LOAD( "cb-fg-3.chp", 0x2000, 0x2000, 0x77ca2334 , 0x9c9452fe )
+	ROM_LOAD( "cb-fg-2.chp", 0x4000, 0x2000, 0x6700be86 , 0x065131af )
+	ROM_LOAD( "cb-fg-1.chp", 0x6000, 0x2000, 0x90ba2ec8 , 0x1b7b7f94 )
+	ROM_LOAD( "cb-fg-0.chp", 0x8000, 0x2000, 0x112e7ee6 , 0xe3a8230e )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "yrom.sbd", 0xe000, 0x1000, 0x6066d74a )
-	ROM_LOAD( "drom.sbd", 0xf000, 0x1000, 0x607b0ee3 )
+	ROM_LOAD( "yrom.sbd", 0xe000, 0x1000, 0x6066d74a , 0x4c313d9b )
+	ROM_LOAD( "drom.sbd", 0xf000, 0x1000, 0x607b0ee3 , 0xcecece88 )
 ROM_END
 
 

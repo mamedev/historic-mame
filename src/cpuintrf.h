@@ -76,6 +76,12 @@ int cpu_getscanline(void);
 double cpu_getscanlinetime(int scanline);
 /* Returns the duration of a single scanline */
 double cpu_getscanlineperiod(void);
+/* Returns the duration of a single scanline in cycles */
+int cpu_getscanlinecycles(void);
+/* Returns the number of cycles since the beginning of this frame */
+int cpu_getcurrentcycles(void);
+/* Returns the current horizontal beam position in pixels */
+int cpu_gethorzbeampos(void);
 
 void cpu_seticount(int cycles);
 /*

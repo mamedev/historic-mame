@@ -693,326 +693,326 @@ static struct MachineDriver theglob_machine_driver =
 
 ROM_START( pacman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacman.6e", 0x0000, 0x1000, 0x8200be38 )
-	ROM_LOAD( "pacman.6f", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "pacman.6h", 0x2000, 0x1000, 0xd800986c )
-	ROM_LOAD( "pacman.6j", 0x3000, 0x1000, 0xbca63c60 )
+	ROM_LOAD( "pacman.6e", 0x0000, 0x1000, 0x8200be38 , 0xc1e6ab10 )
+	ROM_LOAD( "pacman.6f", 0x1000, 0x1000, 0xd800bc8a , 0x1a6fb2d4 )
+	ROM_LOAD( "pacman.6h", 0x2000, 0x1000, 0xd800986c , 0xbcdd1beb )
+	ROM_LOAD( "pacman.6j", 0x3000, 0x1000, 0xbca63c60 , 0x817d94e3 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pacman.5e", 0x0000, 0x1000, 0x45346da8 )
-	ROM_LOAD( "pacman.5f", 0x1000, 0x1000, 0x0f80461c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacman.5e", 0x0000, 0x1000, 0x45346da8 , 0x0c944964 )
+	ROM_LOAD( "pacman.5f", 0x1000, 0x1000, 0x0f80461c , 0x958fedf9 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( namcopac_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "namcopac.6e", 0x0000, 0x1000, 0x86002ca0 )
-	ROM_LOAD( "namcopac.6f", 0x1000, 0x1000, 0xd700205a )
-	ROM_LOAD( "namcopac.6h", 0x2000, 0x1000, 0xd70098ec )
-	ROM_LOAD( "namcopac.6j", 0x3000, 0x1000, 0x2700e81e )
+	ROM_LOAD( "namcopac.6e", 0x0000, 0x1000, 0x86002ca0 , 0xfee263b3 )
+	ROM_LOAD( "namcopac.6f", 0x1000, 0x1000, 0xd700205a , 0x39d1fc83 )
+	ROM_LOAD( "namcopac.6h", 0x2000, 0x1000, 0xd70098ec , 0x02083b03 )
+	ROM_LOAD( "namcopac.6j", 0x3000, 0x1000, 0x2700e81e , 0x7a36fe55 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "namcopac.5e", 0x0000, 0x1000, 0x45346da8 )
-	ROM_LOAD( "namcopac.5f", 0x1000, 0x1000, 0x0f80461c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "namcopac.5e", 0x0000, 0x1000, 0x45346da8 , 0x0c944964 )
+	ROM_LOAD( "namcopac.5f", 0x1000, 0x1000, 0x0f80461c , 0x958fedf9 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( pacmanjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "prg1", 0x0000, 0x0800, 0xd577c995 )
-	ROM_LOAD( "prg2", 0x0800, 0x0800, 0xac8977ad )
-	ROM_LOAD( "prg3", 0x1000, 0x0800, 0xda22d9ac )
-	ROM_LOAD( "prg4", 0x1800, 0x0800, 0xfdde6526 )
-	ROM_LOAD( "prg5", 0x2000, 0x0800, 0x31818df5 )
-	ROM_LOAD( "prg6", 0x2800, 0x0800, 0xa67f1599 )
-	ROM_LOAD( "prg7", 0x3000, 0x0800, 0xc56be265 )
-	ROM_LOAD( "prg8", 0x3800, 0x0800, 0x61950c2f )
+	ROM_LOAD( "prg1", 0x0000, 0x0800, 0xd577c995 , 0xf36e88ab )
+	ROM_LOAD( "prg2", 0x0800, 0x0800, 0xac8977ad , 0x618bd9b3 )
+	ROM_LOAD( "prg3", 0x1000, 0x0800, 0xda22d9ac , 0x7d177853 )
+	ROM_LOAD( "prg4", 0x1800, 0x0800, 0xfdde6526 , 0xd3e8914c )
+	ROM_LOAD( "prg5", 0x2000, 0x0800, 0x31818df5 , 0x6bf4f625 )
+	ROM_LOAD( "prg6", 0x2800, 0x0800, 0xa67f1599 , 0xa948ce83 )
+	ROM_LOAD( "prg7", 0x3000, 0x0800, 0xc56be265 , 0xb6289b26 )
+	ROM_LOAD( "prg8", 0x3800, 0x0800, 0x61950c2f , 0x17a88c13 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chg1", 0x0000, 0x0800, 0x2a2a6b44 )
-	ROM_LOAD( "chg2", 0x0800, 0x0800, 0xb4a4608a )
-	ROM_LOAD( "chg3", 0x1000, 0x0800, 0x971c3192 )
-	ROM_LOAD( "chg4", 0x1800, 0x0800, 0x7864778e )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chg1", 0x0000, 0x0800, 0x2a2a6b44 , 0x2066a0b7 )
+	ROM_LOAD( "chg2", 0x0800, 0x0800, 0xb4a4608a , 0x3591b89d )
+	ROM_LOAD( "chg3", 0x1000, 0x0800, 0x971c3192 , 0x9e39323a )
+	ROM_LOAD( "chg4", 0x1800, 0x0800, 0x7864778e , 0x1b1d9096 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( pacmod_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacmanh.6e", 0x0000, 0x1000, 0x8200b62a )
-	ROM_LOAD( "pacmanh.6f", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "pacmanh.6h", 0x2000, 0x1000, 0xd80098fc )
-	ROM_LOAD( "pacmanh.6j", 0x3000, 0x1000, 0xbea73c61 )
+	ROM_LOAD( "pacmanh.6e", 0x0000, 0x1000, 0x8200b62a , 0x3b2ec270 )
+	ROM_LOAD( "pacmanh.6f", 0x1000, 0x1000, 0xd800bc8a , 0x1a6fb2d4 )
+	ROM_LOAD( "pacmanh.6h", 0x2000, 0x1000, 0xd80098fc , 0x18811780 )
+	ROM_LOAD( "pacmanh.6j", 0x3000, 0x1000, 0xbea73c61 , 0x5c96a733 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pacmanh.5e", 0x0000, 0x1000, 0xcd1138b9 )
-	ROM_LOAD( "pacmanh.5f", 0x1000, 0x1000, 0x0f80461c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacmanh.5e", 0x0000, 0x1000, 0xcd1138b9 , 0x299fb17a )
+	ROM_LOAD( "pacmanh.5f", 0x1000, 0x1000, 0x0f80461c , 0x958fedf9 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( hangly_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "hangly.6e", 0x0000, 0x1000, 0x1b05a9d7 )
-	ROM_LOAD( "hangly.6f", 0x1000, 0x1000, 0xa1fff4c3 )
-	ROM_LOAD( "hangly.6h", 0x2000, 0x1000, 0xb7e9ae83 )
-	ROM_LOAD( "hangly.6j", 0x3000, 0x1000, 0xe29b0d5d )
+	ROM_LOAD( "hangly.6e", 0x0000, 0x1000, 0x1b05a9d7 , 0x5fe8610a )
+	ROM_LOAD( "hangly.6f", 0x1000, 0x1000, 0xa1fff4c3 , 0x73726586 )
+	ROM_LOAD( "hangly.6h", 0x2000, 0x1000, 0xb7e9ae83 , 0x4e7ef99f )
+	ROM_LOAD( "hangly.6j", 0x3000, 0x1000, 0xe29b0d5d , 0x7f4147e6 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hangly.5e", 0x0000, 0x1000, 0x45346da8 )
-	ROM_LOAD( "hangly.5f", 0x1000, 0x1000, 0x0f80461c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hangly.5e", 0x0000, 0x1000, 0x45346da8 , 0x0c944964 )
+	ROM_LOAD( "hangly.5f", 0x1000, 0x1000, 0x0f80461c , 0x958fedf9 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( puckman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "puckman.6e", 0x0000, 0x1000, 0xec1056cc )
-	ROM_LOAD( "puckman.6f", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "puckman.6h", 0x2000, 0x1000, 0x73409a0c )
-	ROM_LOAD( "puckman.6j", 0x3000, 0x1000, 0x1f99fa09 )
+	ROM_LOAD( "puckman.6e", 0x0000, 0x1000, 0xec1056cc , 0xa8ae23c5 )
+	ROM_LOAD( "puckman.6f", 0x1000, 0x1000, 0xd800bc8a , 0x1a6fb2d4 )
+	ROM_LOAD( "puckman.6h", 0x2000, 0x1000, 0x73409a0c , 0x197443f8 )
+	ROM_LOAD( "puckman.6j", 0x3000, 0x1000, 0x1f99fa09 , 0x2e64a3ba )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "puckman.5e", 0x0000, 0x1000, 0x45346da8 )
-	ROM_LOAD( "puckman.5f", 0x1000, 0x1000, 0x0f80461c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "puckman.5e", 0x0000, 0x1000, 0x45346da8 , 0x0c944964 )
+	ROM_LOAD( "puckman.5f", 0x1000, 0x1000, 0x0f80461c , 0x958fedf9 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( piranha_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pr1.cpu", 0x0000, 0x1000, 0xafe7d1ef )
-	ROM_LOAD( "pr2.cpu", 0x1000, 0x1000, 0xd800bc8a )
-	ROM_LOAD( "pr3.cpu", 0x2000, 0x1000, 0xa999a679 )
-	ROM_LOAD( "pr4.cpu", 0x3000, 0x1000, 0x7c3cd3da )
+	ROM_LOAD( "pr1.cpu", 0x0000, 0x1000, 0xafe7d1ef , 0xbc5ad024 )
+	ROM_LOAD( "pr2.cpu", 0x1000, 0x1000, 0xd800bc8a , 0x1a6fb2d4 )
+	ROM_LOAD( "pr3.cpu", 0x2000, 0x1000, 0xa999a679 , 0x473c379d )
+	ROM_LOAD( "pr4.cpu", 0x3000, 0x1000, 0x7c3cd3da , 0x63fbf895 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pr5.cpu", 0x0000, 0x0800, 0xbbb52019 )
-	ROM_LOAD( "pr7.cpu", 0x0800, 0x0800, 0xb1b07de2 )
-	ROM_LOAD( "pr6.cpu", 0x1000, 0x0800, 0x8cd0b26c )
-	ROM_LOAD( "pr8.cpu", 0x1800, 0x0800, 0xb44bf835 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pr5.cpu", 0x0000, 0x0800, 0xbbb52019 , 0x3fc4030c )
+	ROM_LOAD( "pr7.cpu", 0x0800, 0x0800, 0xb1b07de2 , 0x30b9a010 )
+	ROM_LOAD( "pr6.cpu", 0x1000, 0x0800, 0x8cd0b26c , 0xf3e9c9d5 )
+	ROM_LOAD( "pr8.cpu", 0x1800, 0x0800, 0xb44bf835 , 0x133d720d )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( pacplus_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0xaae57d89 )
-	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xdc79a0cb )
-	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xc1d651d4 )
-	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0x0a6c5cd6 )
+	ROM_LOAD( "pacplus.6e", 0x0000, 0x1000, 0xaae57d89 , 0xd611ef68 )
+	ROM_LOAD( "pacplus.6f", 0x1000, 0x1000, 0xdc79a0cb , 0xc7207556 )
+	ROM_LOAD( "pacplus.6h", 0x2000, 0x1000, 0xc1d651d4 , 0xae379430 )
+	ROM_LOAD( "pacplus.6j", 0x3000, 0x1000, 0x0a6c5cd6 , 0x5a6dff7b )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pacplus.5e", 0x0000, 0x1000, 0xd635f515 )
-	ROM_LOAD( "pacplus.5f", 0x1000, 0x1000, 0x58751f9d )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacplus.5e", 0x0000, 0x1000, 0xd635f515 , 0x022c35da )
+	ROM_LOAD( "pacplus.5f", 0x1000, 0x1000, 0x58751f9d , 0x4de65cdd )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacplus.pr1", 0x0000, 0x0010, 0xb7381aa2 )
-	ROM_LOAD( "pacplus.pr2", 0x0010, 0x0080, 0x7b800808 )
+	ROM_LOAD( "pacplus.pr1", 0x0000, 0x0010, 0xb7381aa2 , 0x3e2991d6 )
+	ROM_LOAD( "pacplus.pr2", 0x0010, 0x0080, 0x7b800808 , 0x6a1a9e2e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( mspacman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "boot1", 0x0000, 0x1000, 0xbefc1968 )
-	ROM_LOAD( "boot2", 0x1000, 0x1000, 0xee8a0d34 )
-	ROM_LOAD( "boot3", 0x2000, 0x1000, 0xd16668e8 )
-	ROM_LOAD( "boot4", 0x3000, 0x1000, 0x0652d280 )
-	ROM_LOAD( "boot5", 0x8000, 0x1000, 0x5723a645 )
-	ROM_LOAD( "boot6", 0x9000, 0x1000, 0xefd154c7 )
+	ROM_LOAD( "boot1", 0x0000, 0x1000, 0xbefc1968 , 0xd16b31b7 )
+	ROM_LOAD( "boot2", 0x1000, 0x1000, 0xee8a0d34 , 0x0d32de5e )
+	ROM_LOAD( "boot3", 0x2000, 0x1000, 0xd16668e8 , 0x1821ee0b )
+	ROM_LOAD( "boot4", 0x3000, 0x1000, 0x0652d280 , 0x165a9dd8 )
+	ROM_LOAD( "boot5", 0x8000, 0x1000, 0x5723a645 , 0x8c3e6de6 )
+	ROM_LOAD( "boot6", 0x9000, 0x1000, 0xefd154c7 , 0x368cb165 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 )
-	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 , 0x5c281d01 )
+	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 , 0x615af909 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( mspacatk_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "boot1",      0x0000, 0x1000, 0xbefc1968 )
-	ROM_LOAD( "mspacatk.2", 0x1000, 0x1000, 0xe800e6f4 )
-	ROM_LOAD( "boot3",      0x2000, 0x1000, 0xd16668e8 )
-	ROM_LOAD( "boot4",      0x3000, 0x1000, 0x0652d280 )
-	ROM_LOAD( "mspacatk.5", 0x8000, 0x1000, 0xf98d457b )
-	ROM_LOAD( "mspacatk.6", 0x9000, 0x1000, 0x33f15633 )
+	ROM_LOAD( "boot1", 0x0000, 0x1000, 0xbefc1968 , 0xd16b31b7 )
+	ROM_LOAD( "mspacatk.2", 0x1000, 0x1000, 0xe800e6f4 , 0x0af09d31 )
+	ROM_LOAD( "boot3", 0x2000, 0x1000, 0xd16668e8 , 0x1821ee0b )
+	ROM_LOAD( "boot4", 0x3000, 0x1000, 0x0652d280 , 0x165a9dd8 )
+	ROM_LOAD( "mspacatk.5", 0x8000, 0x1000, 0xf98d457b , 0xe6e06954 )
+	ROM_LOAD( "mspacatk.6", 0x9000, 0x1000, 0x33f15633 , 0x3b5db308 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 )
-	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e", 0x0000, 0x1000, 0x02d51d73 , 0x5c281d01 )
+	ROM_LOAD( "5f", 0x1000, 0x1000, 0x26da1654 , 0x615af909 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( crush_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "CR1", 0x0000, 0x0800, 0x00f93d3d )
-	ROM_LOAD( "CR5", 0x0800, 0x0800, 0x13f49f60 )
-	ROM_LOAD( "CR2", 0x1000, 0x0800, 0xa4dfa051 )
-	ROM_LOAD( "CR6", 0x1800, 0x0800, 0x934c3836 )
-	ROM_LOAD( "CR3", 0x2000, 0x0800, 0x2c2fe2f3 )
-	ROM_LOAD( "CR7", 0x2800, 0x0800, 0x6154f01e )
-	ROM_LOAD( "CR4", 0x3000, 0x0800, 0x14031ae5 )
-	ROM_LOAD( "CR8", 0x3800, 0x0800, 0xa9ada1a1 )
+	ROM_LOAD( "cr1", 0x0000, 0x0800, 0x00f93d3d , 0xf276592e )
+	ROM_LOAD( "cr5", 0x0800, 0x0800, 0x13f49f60 , 0x3d302abe )
+	ROM_LOAD( "cr2", 0x1000, 0x0800, 0xa4dfa051 , 0x25f42e70 )
+	ROM_LOAD( "cr6", 0x1800, 0x0800, 0x934c3836 , 0x98279cbe )
+	ROM_LOAD( "cr3", 0x2000, 0x0800, 0x2c2fe2f3 , 0x8377b4cb )
+	ROM_LOAD( "cr7", 0x2800, 0x0800, 0x6154f01e , 0xd8e76c8c )
+	ROM_LOAD( "cr4", 0x3000, 0x0800, 0x14031ae5 , 0x90b28fa3 )
+	ROM_LOAD( "cr8", 0x3800, 0x0800, 0xa9ada1a1 , 0x10854e1b )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "CRA", 0x0000, 0x0800, 0xab2e4160 )
-	ROM_LOAD( "CRC", 0x0800, 0x0800, 0x09082f80 )
-	ROM_LOAD( "CRB", 0x1000, 0x0800, 0x80f4e38a )
-	ROM_LOAD( "CRD", 0x1800, 0x0800, 0x49c458f6 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cra", 0x0000, 0x0800, 0xab2e4160 , 0xce1e3a28 )
+	ROM_LOAD( "crc", 0x0800, 0x0800, 0x09082f80 , 0xe129d76a )
+	ROM_LOAD( "crb", 0x1000, 0x0800, 0x80f4e38a , 0xd1899f05 )
+	ROM_LOAD( "crd", 0x1800, 0x0800, 0x49c458f6 , 0x0e9879b7 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "crush.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "crush.pr2", 0x0010, 0x0080, 0x0f38090c )
+	ROM_LOAD( "crush.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "crush.pr2", 0x0010, 0x0080, 0x0f38090c , 0xa8596d01 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( ponpoko_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ppoko1.bin", 0x0000, 0x1000, 0x31c72f35 )
-	ROM_LOAD( "ppoko2.bin", 0x1000, 0x1000, 0xcd981984 )
-	ROM_LOAD( "ppoko3.bin", 0x2000, 0x1000, 0xeba2e5ba )
-	ROM_LOAD( "ppoko4.bin", 0x3000, 0x1000, 0x4c240e52 )
-	ROM_LOAD( "ppoko5.bin", 0x8000, 0x1000, 0xe4781ed8 )
-	ROM_LOAD( "ppoko6.bin", 0x9000, 0x1000, 0x2cd69040 )
-	ROM_LOAD( "ppoko7.bin", 0xa000, 0x1000, 0xcc5420c8 )
-	ROM_LOAD( "ppoko8.bin", 0xb000, 0x1000, 0xe09979bf )
+	ROM_LOAD( "ppoko1.bin", 0x0000, 0x1000, 0x31c72f35 , 0x49077667 )
+	ROM_LOAD( "ppoko2.bin", 0x1000, 0x1000, 0xcd981984 , 0x5101781a )
+	ROM_LOAD( "ppoko3.bin", 0x2000, 0x1000, 0xeba2e5ba , 0xd790ed22 )
+	ROM_LOAD( "ppoko4.bin", 0x3000, 0x1000, 0x4c240e52 , 0x4e449069 )
+	ROM_LOAD( "ppoko5.bin", 0x8000, 0x1000, 0xe4781ed8 , 0x54ca3d7d )
+	ROM_LOAD( "ppoko6.bin", 0x9000, 0x1000, 0x2cd69040 , 0x3055c7e0 )
+	ROM_LOAD( "ppoko7.bin", 0xa000, 0x1000, 0xcc5420c8 , 0x3cbe47ca )
+	ROM_LOAD( "ppoko8.bin", 0xb000, 0x1000, 0xe09979bf , 0xb39be27d )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ppoko9.bin",  0x0000, 0x1000, 0x5b359d43 )
-	ROM_LOAD( "ppoko10.bin", 0x1000, 0x1000, 0xe3fe3e40 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ppoko9.bin", 0x0000, 0x1000, 0x5b359d43 , 0xb73e1a06 )
+	ROM_LOAD( "ppoko10.bin", 0x1000, 0x1000, 0xe3fe3e40 , 0x62069b5d )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( eyes_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D7", 0x0000, 0x1000, 0xf98019b2 )
-	ROM_LOAD( "E7", 0x1000, 0x1000, 0xa1f59e25 )
-	ROM_LOAD( "F7", 0x2000, 0x1000, 0x03bd58d3 )
-	ROM_LOAD( "H7", 0x3000, 0x1000, 0x5125cc69 )
+	ROM_LOAD( "d7", 0x0000, 0x1000, 0xf98019b2 , 0x3b09ac89 )
+	ROM_LOAD( "e7", 0x1000, 0x1000, 0xa1f59e25 , 0x97096855 )
+	ROM_LOAD( "f7", 0x2000, 0x1000, 0x03bd58d3 , 0x731e294e )
+	ROM_LOAD( "h7", 0x3000, 0x1000, 0x5125cc69 , 0x22f7a719 )
 
-	ROM_REGION(0x2000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "D5", 0x0000, 0x1000, 0x8555fbeb )
-	ROM_LOAD( "E5", 0x1000, 0x1000, 0x73ec4d68 )
+	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d5", 0x0000, 0x1000, 0x8555fbeb , 0xd6af0030 )
+	ROM_LOAD( "e5", 0x1000, 0x1000, 0x73ec4d68 , 0xa42b5201 )
 
 	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 )
-	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 )
+	ROM_LOAD( "pacman.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
+	ROM_LOAD( "pacman.pr2", 0x0010, 0x0080, 0x9bb30005 , 0x346ae10e )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( lizwiz_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "6e.cpu", 0x0000, 0x1000, 0x658b3c05 )
-	ROM_LOAD( "6f.cpu", 0x1000, 0x1000, 0xf912af24 )
-	ROM_LOAD( "6h.cpu", 0x2000, 0x1000, 0x4934df4c )
-	ROM_LOAD( "6j.cpu", 0x3000, 0x1000, 0xc357a8ed )
-	ROM_LOAD( "wiza",   0x8000, 0x1000, 0x9b295f93 )
-	ROM_LOAD( "wizb",   0x9000, 0x1000, 0x25d07606 )
+	ROM_LOAD( "6e.cpu", 0x0000, 0x1000, 0x658b3c05 , 0x32bc1990 )
+	ROM_LOAD( "6f.cpu", 0x1000, 0x1000, 0xf912af24 , 0xef24b414 )
+	ROM_LOAD( "6h.cpu", 0x2000, 0x1000, 0x4934df4c , 0x30bed83d )
+	ROM_LOAD( "6j.cpu", 0x3000, 0x1000, 0xc357a8ed , 0xdd09baeb )
+	ROM_LOAD( "wiza", 0x8000, 0x1000, 0x9b295f93 , 0xf6dea3a6 )
+	ROM_LOAD( "wizb", 0x9000, 0x1000, 0x25d07606 , 0xf27fb5a8 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5e.cpu", 0x0000, 0x1000, 0xa0d0ddaa )
-	ROM_LOAD( "5f.cpu", 0x1000, 0x1000, 0x61defb68 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e.cpu", 0x0000, 0x1000, 0xa0d0ddaa , 0x45059e73 )
+	ROM_LOAD( "5f.cpu", 0x1000, 0x1000, 0x61defb68 , 0xd2469717 )
 
 	ROM_REGION(0x0110)	/* color PROMs */
-	ROM_LOAD( "7f.cpu", 0x0000, 0x0010, 0x5a5001c4 )
-	ROM_LOAD( "4a.cpu", 0x0010, 0x0100, 0xd1bf0203 )
+	ROM_LOAD( "7f.cpu", 0x0000, 0x0010, 0x5a5001c4 , 0x7549a947 )
+	ROM_LOAD( "4a.cpu", 0x0010, 0x0100, 0xd1bf0203 , 0x5fdca536 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( theglob_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "glob.u2", 0x0000, 0x2000, 0x1d8944bf )
-	ROM_LOAD( "glob.u3", 0x2000, 0x2000, 0x9b0ef710 )
+	ROM_LOAD( "glob.u2", 0x0000, 0x2000, 0x1d8944bf , 0x829d0bea )
+	ROM_LOAD( "glob.u3", 0x2000, 0x2000, 0x9b0ef710 , 0x31de6628 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "glob.5e", 0x0000, 0x1000, 0x4e3f2f45 )
-	ROM_LOAD( "glob.5f", 0x1000, 0x1000, 0x5cdd1d37 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "glob.5e", 0x0000, 0x1000, 0x4e3f2f45 , 0x53688260 )
+	ROM_LOAD( "glob.5f", 0x1000, 0x1000, 0x5cdd1d37 , 0x051f59c7 )
 
 	ROM_REGION(0x0110)	/* color PROMs */
-	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 )
-	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a )
+	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 , 0x1f617527 )
+	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a , 0x28faa769 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 ROM_START( beastf_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "bf-u2.bin", 0x0000, 0x2000, 0x941283da )
-	ROM_LOAD( "bf-u3.bin", 0x2000, 0x2000, 0xc31c1c40 )
+	ROM_LOAD( "bf-u2.bin", 0x0000, 0x2000, 0x941283da , 0x3afc517b )
+	ROM_LOAD( "bf-u3.bin", 0x2000, 0x2000, 0xc31c1c40 , 0x8dbd76d0 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "beastf.5e", 0x0000, 0x1000, 0x093ae858 )
-	ROM_LOAD( "beastf.5f", 0x1000, 0x1000, 0x2347671b )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "beastf.5e", 0x0000, 0x1000, 0x093ae858 , 0x5654dc34 )
+	ROM_LOAD( "beastf.5f", 0x1000, 0x1000, 0x2347671b , 0x1b30ca61 )
 
 	ROM_REGION(0x0110)	/* color PROMs */
-	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 )
-	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a )
+	ROM_LOAD( "glob.7f", 0x0000, 0x0010, 0x13e9f753 , 0x1f617527 )
+	ROM_LOAD( "glob.4a", 0x0010, 0x0100, 0xcd4e000a , 0x28faa769 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e )
+	ROM_LOAD( "pacman.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
 ROM_END
 
 
@@ -1309,15 +1309,16 @@ static void ponpoko_hisave(void)
 static int theglob_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        int address = 0x4c48;
+        if (strcmp(Machine->gamedrv->name, "beastf") == 0) address = 0x4c46;
 
-
-	if (memcmp(&RAM[0x4c48],"MOB",3) == 0)
+        if (memcmp(&RAM[address],"MOB",3) == 0)
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x4c48],0x50);
+                        osd_fread(f,&RAM[address],0x50);
 
 			osd_fclose(f);
 		}
@@ -1331,11 +1332,13 @@ static void theglob_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        int address = 0x4c48;
+        if (strcmp(Machine->gamedrv->name, "beastf") == 0) address = 0x4c46;
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x4c48],0x50);
+                osd_fwrite(f,&RAM[address],0x50);
 		osd_fclose(f);
 	}
 }
@@ -1742,5 +1745,5 @@ struct GameDriver beastf_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	theglob_hiload,theglob_hisave
+        theglob_hiload,theglob_hisave
 };

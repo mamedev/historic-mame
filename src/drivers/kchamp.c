@@ -114,6 +114,14 @@ static void sound_command_w( int offset, int data ) {
         cpu_cause_interrupt( 1, 0xff );
 }
 
+static int msm_data = 0;
+static int msm_play_lo_nibble = 1;
+
+static void sound_msm_w( int offset, int data ) {
+        msm_data = data;
+	msm_play_lo_nibble = 1;
+}
+
 static struct IOReadPort readport[] =
 {
         { 0x00, 0x00, input_port_0_r }, /* Player 1 controls - ACTIVE LOW */
@@ -144,7 +152,7 @@ static struct IOWritePort sound_writeport[] =
         { 0x01, 0x01, AY8910_control_port_0_w },
         { 0x02, 0x02, AY8910_write_port_1_w },
         { 0x03, 0x03, AY8910_control_port_1_w },
-        { 0x04, 0x04, MSM5205_data_w },
+        { 0x04, 0x04, sound_msm_w },
         { 0x05, 0x05, sound_control_w },
 	{ -1 }	/* end of table */
 };
@@ -258,15 +266,27 @@ static struct AY8910interface ay8910_interface = {
 };
 
 static void msmint( int data ) {
-        if ( sound_nmi_enable ) {
-                cpu_cause_interrupt( 1, Z80_NMI_INT );
-        }
+
+	static int counter = 0;
+
+	if ( msm_play_lo_nibble )
+		MSM5205_data_w( 0, msm_data & 0x0f );
+	else
+		MSM5205_data_w( 0, ( msm_data >> 4 ) & 0x0f );
+
+	msm_play_lo_nibble ^= 1;
+
+	if ( !( counter ^= 1 ) ) {
+		if ( sound_nmi_enable ) {
+	                cpu_cause_interrupt( 1, Z80_NMI_INT );
+	        }
+	}
 }
 
 static struct MSM5205interface msm_interface =
 {
         1,              /* 1 chips */
-        2000, //1953,           /* 12Mhz / 32 / 2 / 96 = 1953.125Hz playback */
+        3906,           /* 12Mhz / 16 / 2 / 96 = 3906.25Hz playback */
         &msmint,              /* irq */
         { 255 }
 };
@@ -331,83 +351,83 @@ static struct MachineDriver kchampvs_machine_driver =
 ROM_START( kchampvs_rom )
         ROM_REGION(0x10000)     /* 64k for code */
 
-        ROM_LOAD( "bs24", 0x0000, 0x2000, 0xbbf65ae0 )
-        ROM_LOAD( "bs23", 0x2000, 0x2000, 0x95ec50f6 )
-        ROM_LOAD( "bs22", 0x4000, 0x2000, 0x15368e1e )
-        ROM_LOAD( "bs21", 0x6000, 0x2000, 0x55fdc4c5 )
-        ROM_LOAD( "bs20", 0x8000, 0x2000, 0x81c9421f )
-        ROM_LOAD( "bs19", 0xa000, 0x4000, 0x3bf0a236 )
+        ROM_LOAD( "bs24", 0x0000, 0x2000, 0xbbf65ae0 , 0x829da69b )
+        ROM_LOAD( "bs23", 0x2000, 0x2000, 0x95ec50f6 , 0x091f810e )
+        ROM_LOAD( "bs22", 0x4000, 0x2000, 0x15368e1e , 0xd4df2a52 )
+        ROM_LOAD( "bs21", 0x6000, 0x2000, 0x55fdc4c5 , 0x3d4ef0da )
+        ROM_LOAD( "bs20", 0x8000, 0x2000, 0x81c9421f , 0x623a467b )
+        ROM_LOAD( "bs19", 0xa000, 0x4000, 0x3bf0a236 , 0x43e196c4 )
 
 
-        ROM_REGION(0x20000)
+        ROM_REGION_DISPOSE(0x20000)
 
-        ROM_LOAD( "bs00", 0x00000, 0x2000, 0xcc047a96 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "bs06", 0x02000, 0x2000, 0x3112184c )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "bs01", 0x04000, 0x2000, 0x9726c4e0 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "bs07", 0x06000, 0x2000, 0xef179213 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "bs02", 0x08000, 0x2000, 0x603fa0f7 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "bs08", 0x0A000, 0x2000, 0xb7e4f594 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "bs03", 0x0C000, 0x2000, 0x6dfc8f78 )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "bs09", 0x0E000, 0x2000, 0x332f8bd5 )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "bs04", 0x10000, 0x2000, 0xb9bd437d )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "bs10", 0x12000, 0x2000, 0xa41a8436 )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "bs05", 0x14000, 0x2000, 0xf04a7a4c )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "bs11", 0x16000, 0x2000, 0xac13895f )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "bs12", 0x18000, 0x2000, 0x721bf5f5 )  /* plane0 */ /* tiles */
-        ROM_LOAD( "bs13", 0x1A000, 0x2000, 0xef143ff4 )  /* plane0 */ /* tiles */
-        ROM_LOAD( "bs14", 0x1C000, 0x2000, 0x6c95c965 )  /* plane1 */ /* tiles */
-        ROM_LOAD( "bs15", 0x1E000, 0x2000, 0x293daa05 )  /* plane1 */ /* tiles */
+        ROM_LOAD( "bs00", 0x00000, 0x2000, 0xcc047a96 , 0x51eda56c )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "bs06", 0x02000, 0x2000, 0x3112184c , 0x593264cf )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "bs01", 0x04000, 0x2000, 0x9726c4e0 , 0xb4842ea9 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "bs07", 0x06000, 0x2000, 0xef179213 , 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "bs02", 0x08000, 0x2000, 0x603fa0f7 , 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "bs08", 0x0A000, 0x2000, 0xb7e4f594 , 0x6be342a6 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "bs03", 0x0C000, 0x2000, 0x6dfc8f78 , 0x8dcd271a )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "bs09", 0x0E000, 0x2000, 0x332f8bd5 , 0x4ee1dba7 )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "bs04", 0x10000, 0x2000, 0xb9bd437d , 0x7346db8a )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "bs10", 0x12000, 0x2000, 0xa41a8436 , 0xb78714fc )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "bs05", 0x14000, 0x2000, 0xf04a7a4c , 0xb2557102 )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "bs11", 0x16000, 0x2000, 0xac13895f , 0xc85aba0e )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "bs12", 0x18000, 0x2000, 0x721bf5f5 , 0x4c574ecd )  /* plane0 */ /* tiles */
+        ROM_LOAD( "bs13", 0x1A000, 0x2000, 0xef143ff4 , 0x750b66af )  /* plane0 */ /* tiles */
+        ROM_LOAD( "bs14", 0x1C000, 0x2000, 0x6c95c965 , 0x9ad6227c )  /* plane1 */ /* tiles */
+        ROM_LOAD( "bs15", 0x1E000, 0x2000, 0x293daa05 , 0x3b6d5de5 )  /* plane1 */ /* tiles */
 
         ROM_REGION(0x0300) /* color proms */
-        ROM_LOAD( "br27", 0x0000, 0x0100, 0xfd18060a ) /* red */
-        ROM_LOAD( "br26", 0x0100, 0x0100, 0xf3490701 ) /* green */
-        ROM_LOAD( "br25", 0x0200, 0x0100, 0x8c790a05 ) /* blue */
+        ROM_LOAD( "br27", 0x0000, 0x0100, 0xfd18060a , 0xf683c54a ) /* red */
+        ROM_LOAD( "br26", 0x0100, 0x0100, 0xf3490701 , 0x3ddbb6c4 ) /* green */
+        ROM_LOAD( "br25", 0x0200, 0x0100, 0x8c790a05 , 0xba4a5651 ) /* blue */
         ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
-        ROM_LOAD( "bs18", 0x00000, 0x2000, 0x6e65646f )
-        ROM_LOAD( "bs17", 0x02000, 0x2000, 0x6433b0ab ) /* adpcm */
-        ROM_LOAD( "bs16", 0x04000, 0x2000, 0x3cecc35a ) /* adpcm */
+        ROM_LOAD( "bs18", 0x00000, 0x2000, 0x6e65646f , 0xeaa646eb )
+        ROM_LOAD( "bs17", 0x02000, 0x2000, 0x6433b0ab , 0xd71031ad ) /* adpcm */
+        ROM_LOAD( "bs16", 0x04000, 0x2000, 0x3cecc35a , 0x6f811c43 ) /* adpcm */
 ROM_END
 
 ROM_START( karatedo_rom )
         ROM_REGION(0x10000)     /* 64k for code */
 
-        ROM_LOAD( "br24", 0x0000, 0x2000, 0x7dc6a6ec )
-        ROM_LOAD( "br23", 0x2000, 0x2000, 0xfaab867d )
-        ROM_LOAD( "br22", 0x4000, 0x2000, 0xe2480a4a )
-        ROM_LOAD( "br21", 0x6000, 0x2000, 0x9977dbab )
-        ROM_LOAD( "br20", 0x8000, 0x2000, 0x1616e608 )
-        ROM_LOAD( "br19", 0xa000, 0x4000, 0x11a07290 )
+        ROM_LOAD( "br24", 0x0000, 0x2000, 0x7dc6a6ec , 0xea9cda49 )
+        ROM_LOAD( "br23", 0x2000, 0x2000, 0xfaab867d , 0x46074489 )
+        ROM_LOAD( "br22", 0x4000, 0x2000, 0xe2480a4a , 0x294f67ba )
+        ROM_LOAD( "br21", 0x6000, 0x2000, 0x9977dbab , 0x934ea874 )
+        ROM_LOAD( "br20", 0x8000, 0x2000, 0x1616e608 , 0x97d7816a )
+        ROM_LOAD( "br19", 0xa000, 0x4000, 0x11a07290 , 0xdd2239d2 )
 
-        ROM_REGION(0x20000)
+        ROM_REGION_DISPOSE(0x20000)
 
-        ROM_LOAD( "br00", 0x00000, 0x2000, 0x6c3bf4ed )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "br06", 0x02000, 0x2000, 0x7f610f11 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "bs01", 0x04000, 0x2000, 0x9726c4e0 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "bs07", 0x06000, 0x2000, 0xef179213 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "bs02", 0x08000, 0x2000, 0x603fa0f7 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "bs08", 0x0A000, 0x2000, 0xb7e4f594 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "br03", 0x0C000, 0x2000, 0x83d23180 )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "br09", 0x0E000, 0x2000, 0xf7c94f97 )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "bs04", 0x10000, 0x2000, 0xb9bd437d )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "bs10", 0x12000, 0x2000, 0xa41a8436 )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "bs05", 0x14000, 0x2000, 0xf04a7a4c )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "bs11", 0x16000, 0x2000, 0xac13895f )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "br12", 0x18000, 0x2000, 0xf723fad3 )  /* plane0 */ /* tiles */
-        ROM_LOAD( "bs13", 0x1A000, 0x2000, 0xef143ff4 )  /* plane0 */ /* tiles */
-        ROM_LOAD( "br14", 0x1C000, 0x2000, 0xc473b833 )  /* plane1 */ /* tiles */
-        ROM_LOAD( "bs15", 0x1E000, 0x2000, 0x293daa05 )  /* plane1 */ /* tiles */
+        ROM_LOAD( "br00", 0x00000, 0x2000, 0x6c3bf4ed , 0xc46a8b88 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "br06", 0x02000, 0x2000, 0x7f610f11 , 0xcf8982ff )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "bs01", 0x04000, 0x2000, 0x9726c4e0 , 0xb4842ea9 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "bs07", 0x06000, 0x2000, 0xef179213 , 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "bs02", 0x08000, 0x2000, 0x603fa0f7 , 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "bs08", 0x0A000, 0x2000, 0xb7e4f594 , 0x6be342a6 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "br03", 0x0C000, 0x2000, 0x83d23180 , 0xbde8a52b )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "br09", 0x0E000, 0x2000, 0xf7c94f97 , 0xe9a5f945 )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "bs04", 0x10000, 0x2000, 0xb9bd437d , 0x7346db8a )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "bs10", 0x12000, 0x2000, 0xa41a8436 , 0xb78714fc )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "bs05", 0x14000, 0x2000, 0xf04a7a4c , 0xb2557102 )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "bs11", 0x16000, 0x2000, 0xac13895f , 0xc85aba0e )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "br12", 0x18000, 0x2000, 0xf723fad3 , 0x9ed6f00d )  /* plane0 */ /* tiles */
+        ROM_LOAD( "bs13", 0x1A000, 0x2000, 0xef143ff4 , 0x750b66af )  /* plane0 */ /* tiles */
+        ROM_LOAD( "br14", 0x1C000, 0x2000, 0xc473b833 , 0xfc399229 )  /* plane1 */ /* tiles */
+        ROM_LOAD( "bs15", 0x1E000, 0x2000, 0x293daa05 , 0x3b6d5de5 )  /* plane1 */ /* tiles */
 
         ROM_REGION(0x0300) /* color proms */
 
-        ROM_LOAD( "br27", 0x0000, 0x0100, 0xfd18060a ) /* red */
-        ROM_LOAD( "br26", 0x0100, 0x0100, 0xf3490701 ) /* green */
-        ROM_LOAD( "br25", 0x0200, 0x0100, 0x8c790a05 ) /* blue */
+        ROM_LOAD( "br27", 0x0000, 0x0100, 0xfd18060a , 0xf683c54a ) /* red */
+        ROM_LOAD( "br26", 0x0100, 0x0100, 0xf3490701 , 0x3ddbb6c4 ) /* green */
+        ROM_LOAD( "br25", 0x0200, 0x0100, 0x8c790a05 , 0xba4a5651 ) /* blue */
 
         ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
 
-        ROM_LOAD( "br18", 0x00000, 0x2000, 0xaeb12479 )
-        ROM_LOAD( "bs17", 0x02000, 0x2000, 0x6433b0ab ) /* adpcm */
-        ROM_LOAD( "br16", 0x04000, 0x2000, 0xd950b492 ) /* adpcm */
+        ROM_LOAD( "br18", 0x00000, 0x2000, 0xaeb12479 , 0x00ccb8ea )
+        ROM_LOAD( "bs17", 0x02000, 0x2000, 0x6433b0ab , 0xd71031ad ) /* adpcm */
+        ROM_LOAD( "br16", 0x04000, 0x2000, 0xd950b492 , 0x2512d961 ) /* adpcm */
 ROM_END
 
 static void kchamp_decode( void ) {
@@ -493,51 +513,51 @@ static void kchampvs_hisave(void)
 
 struct GameDriver kchampvs_driver =
 {
-	__FILE__,
-	0,
-	"kchampvs",
-	"Karate Champ (VS version)",
-	"1984",
-	"Data East USA",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&kchampvs_machine_driver,
+        __FILE__,
+        0,
+        "kchampvs",
+        "Karate Champ (VS version)",
+        "1984",
+        "Data East",
+        "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
+        0,
+        &kchampvs_machine_driver,
 
-	kchampvs_rom,
-	0, kchampvs_decode,
-	0,
-	0,
+        kchampvs_rom,
+        0, kchampvs_decode,
+        0,
+        0,
 
-	input_ports,
+        input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+        PROM_MEMORY_REGION(2), 0, 0,
+        ORIENTATION_ROTATE_90,
 
-	kchampvs_hiload, kchampvs_hisave
+        kchampvs_hiload, kchampvs_hisave
 };
 
 struct GameDriver karatedo_driver =
 {
-	__FILE__,
-	&kchampvs_driver,
-	"karatedo",
-	"Taisen Karate Dou",
-	"1984",
-	"Data East Corporation",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&kchampvs_machine_driver,
+        __FILE__,
+        &kchampvs_driver,
+        "karatedo",
+        "Karate Champ (JAP version)",
+        "1984",
+        "Data East",
+        "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
+        0,
+        &kchampvs_machine_driver,
 
-	karatedo_rom,
-	0, karatedo_decode,
-	0,
-	0,
+        karatedo_rom,
+        0, karatedo_decode,
+        0,
+        0,
 
-	input_ports,
+        input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+        PROM_MEMORY_REGION(2), 0, 0,
+        ORIENTATION_ROTATE_90,
 
-	kchampvs_hiload, kchampvs_hisave
+        kchampvs_hiload, kchampvs_hisave
 };
 

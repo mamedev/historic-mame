@@ -1462,382 +1462,382 @@ static struct MachineDriver moonwar2_machine_driver =
 
 ROM_START( scobra_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0x0fe64f76 )
-	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0x205664e2 )
-	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0x59e8525e )
-	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0x303ac596 )
-	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x156d771d )
-	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0xbc79c629 )
+	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0x0fe64f76 , 0xe15ade38 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0x205664e2 , 0xa270e44d )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0x59e8525e , 0xbdd70346 )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0x303ac596 , 0xdca5ec31 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x156d771d , 0x0d8f6b6e )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0xbc79c629 , 0x6f80f3a9 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800, 0x4b2a202a )
-	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800, 0x4b2a202a , 0x64d113b4 )
+	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 , 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 )
+	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 , 0xfd35c561 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	/* the ROMs were bad - I took the ones from the Konami version */
-	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0x5b7ffd15 )
-	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xc1522792 )
-	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0xc4b1e3e7 )
+	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800, 0x5b7ffd15 , 0xd4346959 )
+	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800, 0xc1522792 , 0xcc025d95 )
+	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800, 0xc4b1e3e7 , 0x1628c53f )
 ROM_END
 
 ROM_START( scobrak_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c", 0x0000, 0x1000, 0x71fcefba )
-	ROM_LOAD( "2e", 0x1000, 0x1000, 0xd8edcd97 )
-	ROM_LOAD( "2f", 0x2000, 0x1000, 0xd884517c )
-	ROM_LOAD( "2h", 0x3000, 0x1000, 0x81707f54 )
-	ROM_LOAD( "2j", 0x4000, 0x1000, 0xe9ac3850 )
-	ROM_LOAD( "2l", 0x5000, 0x1000, 0x3b37371b )
+	ROM_LOAD( "2c", 0x0000, 0x1000, 0x71fcefba , 0xa0744b3f )
+	ROM_LOAD( "2e", 0x1000, 0x1000, 0xd8edcd97 , 0x8e7245cd )
+	ROM_LOAD( "2f", 0x2000, 0x1000, 0xd884517c , 0x47a4e6fb )
+	ROM_LOAD( "2h", 0x3000, 0x1000, 0x81707f54 , 0x7244f21c )
+	ROM_LOAD( "2j", 0x4000, 0x1000, 0xe9ac3850 , 0xe1f8a801 )
+	ROM_LOAD( "2l", 0x5000, 0x1000, 0x3b37371b , 0xd52affde )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f", 0x0000, 0x0800, 0x4b2a202a )
-	ROM_LOAD( "5h", 0x0800, 0x0800, 0xaa5bbcd1 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800, 0x4b2a202a , 0x64d113b4 )
+	ROM_LOAD( "5h", 0x0800, 0x0800, 0xaa5bbcd1 , 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 )
+	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 , 0xfd35c561 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c", 0x0000, 0x0800, 0x5b7ffd15 )
-	ROM_LOAD( "5d", 0x0800, 0x0800, 0xc1522792 )
-	ROM_LOAD( "5e", 0x1000, 0x0800, 0xc4b1e3e7 )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0x5b7ffd15 , 0xd4346959 )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0xc1522792 , 0xcc025d95 )
+	ROM_LOAD( "5e", 0x1000, 0x0800, 0xc4b1e3e7 , 0x1628c53f )
 ROM_END
 
 ROM_START( scobrab_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800, 0x9eab7bb3 )
-	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800, 0x3b6585fd )
-	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800, 0x3336090a )
-	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800, 0xed206de8 )
-	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800, 0xbefdffe5 )
-	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800, 0x9aebadbb )
-	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800, 0x2a29599d )
-	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800, 0x06119c0b )
-	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800, 0xf35e2d38 )
-	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800, 0x220f5a25 )
-	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800, 0xef190401 )
-	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800, 0xcd60c228 )
+	ROM_LOAD( "vid_2c.bin", 0x0000, 0x0800, 0x9eab7bb3 , 0xaeddf391 )
+	ROM_LOAD( "vid_2e.bin", 0x0800, 0x0800, 0x3b6585fd , 0x72b57eb7 )
+	ROM_LOAD( "vid_2f.bin", 0x1000, 0x0800, 0x3336090a , 0xa26ded8c )
+	ROM_LOAD( "vid_2h.bin", 0x1800, 0x0800, 0xed206de8 , 0xdf1a0519 )
+	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800, 0xbefdffe5 , 0x2db3e68c )
+	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800, 0x9aebadbb , 0xa40158db )
+	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800, 0x2a29599d , 0xb9e07c80 )
+	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800, 0x06119c0b , 0x96ea7388 )
+	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800, 0xf35e2d38 , 0x97aefb83 )
+	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800, 0x220f5a25 , 0x72254b10 )
+	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800, 0xef190401 , 0xd3b91f19 )
+	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800, 0xcd60c228 , 0x1bcc7875 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_5f.bin", 0x0000, 0x0800, 0x4b2a202a )
-	ROM_LOAD( "vid_5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_5f.bin", 0x0000, 0x0800, 0x4b2a202a , 0x64d113b4 )
+	ROM_LOAD( "vid_5h.bin", 0x0800, 0x0800, 0xaa5bbcd1 , 0xa96316d3 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 )
+	ROM_LOAD( "scobra.clr", 0x0000, 0x0020, 0xa0a0f682 , 0xfd35c561 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin", 0x0000, 0x0800, 0xb5c45422 )
-	ROM_LOAD( "snd_5d.bin", 0x0800, 0x0800, 0xaa50e11a )
-	ROM_LOAD( "snd_5e.bin", 0x1000, 0x0800, 0xb7b4dd96 )
+	ROM_LOAD( "snd_5c.bin", 0x0000, 0x0800, 0xb5c45422 , 0xdeeb0dd3 )
+	ROM_LOAD( "snd_5d.bin", 0x0800, 0x0800, 0xaa50e11a , 0x872c1a74 )
+	ROM_LOAD( "snd_5e.bin", 0x1000, 0x0800, 0xb7b4dd96 , 0xccd7a110 )
 ROM_END
 
 ROM_START( stratgyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c.cpu", 0x0000, 0x1000, 0xfd8e7706 )
-	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0xb66185fd )
-	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0x02b94693 )
-	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0xdaf466b4 )
-	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0x437c8c5c )
-	ROM_LOAD( "2l.cpu", 0x5000, 0x1000, 0xf195e343 )
+	ROM_LOAD( "2c.cpu", 0x0000, 0x1000, 0xfd8e7706 , 0xf2aaaf2b )
+	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0xb66185fd , 0x5873fdc8 )
+	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0x02b94693 , 0x532d604f )
+	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0xdaf466b4 , 0x82b1d95e )
+	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0x437c8c5c , 0x66e84cde )
+	ROM_LOAD( "2l.cpu", 0x5000, 0x1000, 0xf195e343 , 0x62b032d0 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0xe1c5eea1 )
-	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0xc842da6c )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0xe1c5eea1 , 0xf4aa5ddd )
+	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0xc842da6c , 0x548e4635 )
 
 	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 )
-	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 )
+	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 , 0x713a5db8 )
+	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 , 0x46079411 )
 ROM_END
 
 ROM_START( stratgyb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "st3", 0x0000, 0x1000, 0xf5bef1a8 )
-	ROM_LOAD( "st4", 0x1000, 0x1000, 0xd161e28b )
-	ROM_LOAD( "st5", 0x2000, 0x1000, 0x21cd4e83 )
-	ROM_LOAD( "st6", 0x3000, 0x1000, 0x8a8756f7 )
-	ROM_LOAD( "st7", 0x4000, 0x1000, 0x2e84d152 )
-	ROM_LOAD( "st8", 0x5000, 0x1000, 0x0d2736f1 )
+	ROM_LOAD( "st3", 0x0000, 0x1000, 0xf5bef1a8 , 0xc2f7268c )
+	ROM_LOAD( "st4", 0x1000, 0x1000, 0xd161e28b , 0x0dded1ef )
+	ROM_LOAD( "st5", 0x2000, 0x1000, 0x21cd4e83 , 0x849e2504 )
+	ROM_LOAD( "st6", 0x3000, 0x1000, 0x8a8756f7 , 0x8a64069b )
+	ROM_LOAD( "st7", 0x4000, 0x1000, 0x2e84d152 , 0x78b9b898 )
+	ROM_LOAD( "st8", 0x5000, 0x1000, 0x0d2736f1 , 0x20bae414 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "st9",  0x0000, 0x0800, 0xe2bcee5e )
-	ROM_LOAD( "st10", 0x0800, 0x0800, 0xc939da93 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "st9", 0x0000, 0x0800, 0xe2bcee5e , 0x7121b679 )
+	ROM_LOAD( "st10", 0x0800, 0x0800, 0xc939da93 , 0xd105ad91 )
 
 	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 )
-	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 )
+	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xac5c8db8 , 0x713a5db8 )
+	ROM_LOAD( "5d.snd", 0x1000, 0x1000, 0x03f78e87 , 0x46079411 )
 ROM_END
 
 ROM_START( armorcar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cpu.2c", 0x0000, 0x1000, 0x81345184 )
-	ROM_LOAD( "cpu.2e", 0x1000, 0x1000, 0x503fa409 )
-	ROM_LOAD( "cpu.2f", 0x2000, 0x1000, 0xdd06ed0e )
-	ROM_LOAD( "cpu.2h", 0x3000, 0x1000, 0x1cab9ae7 )
-	ROM_LOAD( "cpu.2j", 0x4000, 0x1000, 0x0906ebe6 )
+	ROM_LOAD( "cpu.2c", 0x0000, 0x1000, 0x81345184 , 0x0d7bfdfb )
+	ROM_LOAD( "cpu.2e", 0x1000, 0x1000, 0x503fa409 , 0x76463213 )
+	ROM_LOAD( "cpu.2f", 0x2000, 0x1000, 0xdd06ed0e , 0x2cc6d5f0 )
+	ROM_LOAD( "cpu.2h", 0x3000, 0x1000, 0x1cab9ae7 , 0x61278dbb )
+	ROM_LOAD( "cpu.2j", 0x4000, 0x1000, 0x0906ebe6 , 0xfb158d8c )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu.5f", 0x0000, 0x0800, 0x5a5bc7f1 )
-	ROM_LOAD( "cpu.5h", 0x0800, 0x0800, 0x73b9f0db )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu.5f", 0x0000, 0x0800, 0x5a5bc7f1 , 0x8a3da4d1 )
+	ROM_LOAD( "cpu.5h", 0x0800, 0x0800, 0x73b9f0db , 0x85bdb113 )
 
 	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sound.5c", 0x0000, 0x0800, 0x926e6408 )
-	ROM_LOAD( "sound.5d", 0x0800, 0x0800, 0x2afc8972 )
+	ROM_LOAD( "sound.5c", 0x0000, 0x0800, 0x926e6408 , 0x54ee7753 )
+	ROM_LOAD( "sound.5d", 0x0800, 0x0800, 0x2afc8972 , 0x5218fec0 )
 ROM_END
 
 ROM_START( moonwar2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mw2.2c", 0x0000, 0x1000, 0xdd4e216e )
-	ROM_LOAD( "mw2.2e", 0x1000, 0x1000, 0x4fd203bc )
-	ROM_LOAD( "mw2.2f", 0x2000, 0x1000, 0x6487bc59 )
-	ROM_LOAD( "mw2.2h", 0x3000, 0x1000, 0x95d0a376 )
+	ROM_LOAD( "mw2.2c", 0x0000, 0x1000, 0xdd4e216e , 0x7c11b4d9 )
+	ROM_LOAD( "mw2.2e", 0x1000, 0x1000, 0x4fd203bc , 0x1b6362be )
+	ROM_LOAD( "mw2.2f", 0x2000, 0x1000, 0x6487bc59 , 0x4fd8ba4b )
+	ROM_LOAD( "mw2.2h", 0x3000, 0x1000, 0x95d0a376 , 0x56879f0d )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mw2.5f", 0x0000, 0x0800, 0x8a0a55b2 )
-	ROM_LOAD( "mw2.5h", 0x0800, 0x0800, 0x3d364ee0 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mw2.5f", 0x0000, 0x0800, 0x8a0a55b2 , 0xc5fa1aa0 )
+	ROM_LOAD( "mw2.5h", 0x0800, 0x0800, 0x3d364ee0 , 0xa6ccc652 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "mw2.clr", 0x0000, 0x20, 0x00517b73 )
+	ROM_LOAD( "mw2.clr", 0x0000, 0x20, 0x00517b73 , 0x99614c6c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "mw2.5c", 0x0000, 0x0800, 0xc66f1aed )
-	ROM_LOAD( "mw2.5d", 0x0800, 0x0800, 0x5ed01ec6 )
+	ROM_LOAD( "mw2.5c", 0x0000, 0x0800, 0xc66f1aed , 0xc26231eb )
+	ROM_LOAD( "mw2.5d", 0x0800, 0x0800, 0x5ed01ec6 , 0xbb48a646 )
 ROM_END
 
 ROM_START( darkplnt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "drkplt2c.dat", 0x0000, 0x1000, 0x71eb388b )
-	ROM_LOAD( "drkplt2e.dat", 0x1000, 0x1000, 0xca7e0382 )
-	ROM_LOAD( "drkplt2g.dat", 0x2000, 0x1000, 0x31600f5a )
-	ROM_LOAD( "drkplt2j.dat", 0x3000, 0x1000, 0x3af0013c )
-	ROM_LOAD( "drkplt2k.dat", 0x4000, 0x1000, 0xbdb18695 )
-	ROM_LOAD( "drkplt2l.dat", 0x5000, 0x1000, 0x1876af34 )
-	ROM_LOAD( "drkplt2m.dat", 0x6000, 0x1000, 0x99be094e )
-	ROM_LOAD( "drkplt2p.dat", 0x7000, 0x1000, 0xc3e7f2d5 )
+	ROM_LOAD( "drkplt2c.dat", 0x0000, 0x1000, 0x71eb388b , 0x5a0ca559 )
+	ROM_LOAD( "drkplt2e.dat", 0x1000, 0x1000, 0xca7e0382 , 0x52e2117d )
+	ROM_LOAD( "drkplt2g.dat", 0x2000, 0x1000, 0x31600f5a , 0x4093219c )
+	ROM_LOAD( "drkplt2j.dat", 0x3000, 0x1000, 0x3af0013c , 0xb974c78d )
+	ROM_LOAD( "drkplt2k.dat", 0x4000, 0x1000, 0xbdb18695 , 0x71a37385 )
+	ROM_LOAD( "drkplt2l.dat", 0x5000, 0x1000, 0x1876af34 , 0x5ad25154 )
+	ROM_LOAD( "drkplt2m.dat", 0x6000, 0x1000, 0x99be094e , 0x8d2f0122 )
+	ROM_LOAD( "drkplt2p.dat", 0x7000, 0x1000, 0xc3e7f2d5 , 0x2d66253b )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "drkplt5f.dat", 0x0000, 0x0800, 0x8d47bb07 )
-	ROM_LOAD( "drkplt5h.dat", 0x0800, 0x0800, 0x0551adfb )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "drkplt5f.dat", 0x0000, 0x0800, 0x8d47bb07 , 0x2af0ee66 )
+	ROM_LOAD( "drkplt5h.dat", 0x0800, 0x0800, 0x0551adfb , 0x66ef3225 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "6e.cpu", 0x0000, 0x0020, 0xef110007 )
+	ROM_LOAD( "6e.cpu", 0x0000, 0x0020, 0xef110007 , 0x86b6e124 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xa8bcba7a )
+	ROM_LOAD( "5c.snd", 0x0000, 0x1000, 0xa8bcba7a , 0x672b9454 )
 ROM_END
 
 ROM_START( tazmania_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c.cpu", 0x0000, 0x1000, 0xf1e5b623 )
-	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0x57a62bb0 )
-	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0xd60bd211 )
-	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0x7071301b )
-	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0xd641c641 )
-	ROM_LOAD( "2k.cpu", 0x5000, 0x1000, 0x4512af78 )
+	ROM_LOAD( "2c.cpu", 0x0000, 0x1000, 0xf1e5b623 , 0x932c5a06 )
+	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0x57a62bb0 , 0xef17ce65 )
+	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0xd60bd211 , 0x43c7c39d )
+	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0x7071301b , 0xbe829694 )
+	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0xd641c641 , 0x6e197271 )
+	ROM_LOAD( "2k.cpu", 0x5000, 0x1000, 0x4512af78 , 0xa1eb453b )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0x0abd9559 )
-	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0x7daaccb4 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0x0abd9559 , 0x2c5b612b )
+	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0x7daaccb4 , 0x3f5ff3ac )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "colr6f.cpu", 0x0000, 0x0020, 0x4df3f3a1 )
+	ROM_LOAD( "colr6f.cpu", 0x0000, 0x0020, 0x4df3f3a1 , 0xfce333c7 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rom0.snd", 0x0000, 0x0800, 0x292ad1dc )
+	ROM_LOAD( "rom0.snd", 0x0000, 0x0800, 0x292ad1dc , 0xb8d741f1 )
 ROM_END
 
 ROM_START( calipso_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "calipso.2c", 0x0000, 0x1000, 0xb6209dfa )
-	ROM_LOAD( "calipso.2e", 0x1000, 0x1000, 0x9d67ce59 )
-	ROM_LOAD( "calipso.2f", 0x2000, 0x1000, 0x86c21320 )
-	ROM_LOAD( "calipso.2h", 0x3000, 0x1000, 0x64c56a2b )
-	ROM_LOAD( "calipso.2j", 0x4000, 0x1000, 0x505b3077 )
-	ROM_LOAD( "calipso.2l", 0x5000, 0x1000, 0x50993eab )
+	ROM_LOAD( "calipso.2c", 0x0000, 0x1000, 0xb6209dfa , 0x0fcb703c )
+	ROM_LOAD( "calipso.2e", 0x1000, 0x1000, 0x9d67ce59 , 0xc6622f14 )
+	ROM_LOAD( "calipso.2f", 0x2000, 0x1000, 0x86c21320 , 0x7bacbaba )
+	ROM_LOAD( "calipso.2h", 0x3000, 0x1000, 0x64c56a2b , 0xa3a8111b )
+	ROM_LOAD( "calipso.2j", 0x4000, 0x1000, 0x505b3077 , 0xfcbd7b9e )
+	ROM_LOAD( "calipso.2l", 0x5000, 0x1000, 0x50993eab , 0xf7630cab )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "calipso.5f", 0x0000, 0x2000, 0x18a04e00 )
-	ROM_LOAD( "calipso.5h", 0x2000, 0x2000, 0x44f067e4 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "calipso.5f", 0x0000, 0x2000, 0x18a04e00 , 0xfd4252e9 )
+	ROM_LOAD( "calipso.5h", 0x2000, 0x2000, 0x44f067e4 , 0x1663a73a )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "calipso.clr", 0x0000, 0x20, 0xc55f36a5 )
+	ROM_LOAD( "calipso.clr", 0x0000, 0x20, 0xc55f36a5 , 0x01165832 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "calipso.5c", 0x0000, 0x0800, 0x368fc8d1 )
-	ROM_LOAD( "calipso.5d", 0x0800, 0x0800, 0x749e9608 )
+	ROM_LOAD( "calipso.5c", 0x0000, 0x0800, 0x368fc8d1 , 0x9cbc65ab )
+	ROM_LOAD( "calipso.5d", 0x0800, 0x0800, 0x749e9608 , 0xa225ee3b )
 ROM_END
 
 ROM_START( anteater_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ra1-2c", 0x0000, 0x1000, 0x3a99be31 )
-	ROM_LOAD( "ra1-2e", 0x1000, 0x1000, 0xb46154bb )
-	ROM_LOAD( "ra1-2f", 0x2000, 0x1000, 0xd467888d )
-	ROM_LOAD( "ra1-2h", 0x3000, 0x1000, 0xfbcffc91 )
+	ROM_LOAD( "ra1-2c", 0x0000, 0x1000, 0x3a99be31 , 0x58bc9393 )
+	ROM_LOAD( "ra1-2e", 0x1000, 0x1000, 0xb46154bb , 0x574fc6f6 )
+	ROM_LOAD( "ra1-2f", 0x2000, 0x1000, 0xd467888d , 0x2f7c1fe5 )
+	ROM_LOAD( "ra1-2h", 0x3000, 0x1000, 0xfbcffc91 , 0xae8a5da3 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ra6-5f", 0x1000, 0x0800, 0x5a8a7eb6 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "ra6-5h", 0x1800, 0x0800, 0x491cbf24 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ra6-5f", 0x1000, 0x0800, 0x5a8a7eb6 , 0x4c3f8a08 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "ra6-5h", 0x1800, 0x0800, 0x491cbf24 , 0xb30c7c9f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ra4-5c", 0x0000, 0x0800, 0xa8a615f0 )
-	ROM_LOAD( "ra4-5d", 0x0800, 0x0800, 0x2ff74b03 )
+	ROM_LOAD( "ra4-5c", 0x0000, 0x0800, 0xa8a615f0 , 0x87300b4f )
+	ROM_LOAD( "ra4-5d", 0x0800, 0x0800, 0x2ff74b03 , 0xaf4e5ffe )
 ROM_END
 
 ROM_START( rescue_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000, 0x2d7f947b )
-	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000, 0x09fbbe11 )
-	ROM_LOAD( "rb15ccpu.bin", 0x2000, 0x1000, 0x7d76d748 )
-	ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000, 0x592c8dd0 )
-	ROM_LOAD( "rb15ecpu.bin", 0x4000, 0x1000, 0x9c059431 )
+	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000, 0x2d7f947b , 0xd7e654ba )
+	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000, 0x09fbbe11 , 0xa93ea158 )
+	ROM_LOAD( "rb15ccpu.bin", 0x2000, 0x1000, 0x7d76d748 , 0x058cd3d0 )
+	ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000, 0x592c8dd0 , 0xd6505742 )
+	ROM_LOAD( "rb15ecpu.bin", 0x4000, 0x1000, 0x9c059431 , 0x604df3a4 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rb15fcpu.bin", 0x1000, 0x0800, 0xb55f561f )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "rb15hcpu.bin", 0x1800, 0x0800, 0x7a13c447 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "rb15fcpu.bin", 0x1000, 0x0800, 0xb55f561f , 0x4489d20c )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "rb15hcpu.bin", 0x1800, 0x0800, 0x7a13c447 , 0x5512c547 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
 	/* This is the original color PROM, however the colors are not entirely correct - */
 	/* there is some additional hardware coloring the sky and sea. */
-	ROM_LOAD( "rescue.clr", 0x0000, 0x0020, 0x4b086088 )
+	ROM_LOAD( "rescue.clr", 0x0000, 0x0020, 0x4b086088 , 0x40c6bcbd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0xfd8c78cc )
-	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xfdbb116f )
+	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0xfd8c78cc , 0x8b24bf17 )
+	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xfdbb116f , 0xd96e4fb3 )
 ROM_END
 
 ROM_START( minefld_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ma22c", 0x0000, 0x1000, 0x76549dee )
-	ROM_LOAD( "ma22e", 0x1000, 0x1000, 0x080495f0 )
-	ROM_LOAD( "ma22f", 0x2000, 0x1000, 0xe0129b76 )
-	ROM_LOAD( "ma22h", 0x3000, 0x1000, 0xc8b5487f )
-	ROM_LOAD( "ma22j", 0x4000, 0x1000, 0x31277229 )
-	ROM_LOAD( "ma22l", 0x5000, 0x1000, 0xbb011a9d )
+	ROM_LOAD( "ma22c", 0x0000, 0x1000, 0x76549dee , 0x1367a035 )
+	ROM_LOAD( "ma22e", 0x1000, 0x1000, 0x080495f0 , 0x68946d21 )
+	ROM_LOAD( "ma22f", 0x2000, 0x1000, 0xe0129b76 , 0x7663aee5 )
+	ROM_LOAD( "ma22h", 0x3000, 0x1000, 0xc8b5487f , 0x9787475d )
+	ROM_LOAD( "ma22j", 0x4000, 0x1000, 0x31277229 , 0x2ceceb54 )
+	ROM_LOAD( "ma22l", 0x5000, 0x1000, 0xbb011a9d , 0x85138fc9 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ma15f", 0x1000, 0x0800, 0xa801b143 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "ma15h", 0x1800, 0x0800, 0x818f5e89 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ma15f", 0x1000, 0x0800, 0xa801b143 , 0x9f703006 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "ma15h", 0x1800, 0x0800, 0x818f5e89 , 0xed0dccb1 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
 	/* This is the original color PROM, however the colors are not entirely correct - */
 	/* there is some additional hardware coloring the sky and sea. */
-	ROM_LOAD( "minefld.clr", 0x0000, 0x0020, 0xbf91db37 )
+	ROM_LOAD( "minefld.clr", 0x0000, 0x0020, 0xbf91db37 , 0x1877368e )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ma15c", 0x0000, 0x0800, 0x5ddc5d4c )
-	ROM_LOAD( "ma15d", 0x0800, 0x0800, 0x73ef5b99 )
+	ROM_LOAD( "ma15c", 0x0000, 0x0800, 0x5ddc5d4c , 0x8bef736b )
+	ROM_LOAD( "ma15d", 0x0800, 0x0800, 0x73ef5b99 , 0xf67b3f97 )
 ROM_END
 
 ROM_START( losttomb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c",      0x0000, 0x1000, 0x55248120 )
-	ROM_LOAD( "2e",      0x1000, 0x1000, 0x8d5d9663 )
-	ROM_LOAD( "2f",      0x2000, 0x1000, 0xb53e6390 )
-	ROM_LOAD( "2h-easy", 0x3000, 0x1000, 0x18d580a9 )
-	ROM_LOAD( "2j",      0x4000, 0x1000, 0x5d21f893 )
-	ROM_LOAD( "2l",      0x5000, 0x1000, 0x030788df )
-	ROM_LOAD( "2m",      0x6000, 0x1000, 0x24205f0e )
+	ROM_LOAD( "2c", 0x0000, 0x1000, 0x55248120 , 0xd6176d2c )
+	ROM_LOAD( "2e", 0x1000, 0x1000, 0x8d5d9663 , 0xa5f55f4a )
+	ROM_LOAD( "2f", 0x2000, 0x1000, 0xb53e6390 , 0x0169fa3c )
+	ROM_LOAD( "2h-easy", 0x3000, 0x1000, 0x18d580a9 , 0x054481b6 )
+	ROM_LOAD( "2j", 0x4000, 0x1000, 0x5d21f893 , 0x249ee040 )
+	ROM_LOAD( "2l", 0x5000, 0x1000, 0x030788df , 0xc7d2e608 )
+	ROM_LOAD( "2m", 0x6000, 0x1000, 0x24205f0e , 0xbc4bc5b1 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f",      0x1000, 0x0800, 0x5be70b13 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "5h",      0x1800, 0x0800, 0xd6e32f73 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x1000, 0x0800, 0x5be70b13 , 0x61f137e7 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "5h", 0x1800, 0x0800, 0xd6e32f73 , 0x5581de5f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 )
+	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 , 0x1108b816 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
-	ROM_LOAD( "5d",      0x0800, 0x0800, 0x70ea19ea )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0xa28e0d60 , 0xb899be2a )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0x70ea19ea , 0x6907af31 )
 ROM_END
 
 ROM_START( losttmbh_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c",     0x0000, 0x1000, 0x55248120 )
-	ROM_LOAD( "2e",     0x1000, 0x1000, 0x8d5d9663 )
-	ROM_LOAD( "2f",     0x2000, 0x1000, 0xb53e6390 )
-	ROM_LOAD( "lthard", 0x3000, 0x1000, 0x30bdb65d )
-	ROM_LOAD( "2j",     0x4000, 0x1000, 0x5d21f893 )
-	ROM_LOAD( "2l",     0x5000, 0x1000, 0x030788df )
-	ROM_LOAD( "2m",     0x6000, 0x1000, 0x24205f0e )
+	ROM_LOAD( "2c", 0x0000, 0x1000, 0x55248120 , 0xd6176d2c )
+	ROM_LOAD( "2e", 0x1000, 0x1000, 0x8d5d9663 , 0xa5f55f4a )
+	ROM_LOAD( "2f", 0x2000, 0x1000, 0xb53e6390 , 0x0169fa3c )
+	ROM_LOAD( "lthard", 0x3000, 0x1000, 0x30bdb65d , 0xe32cbf0e )
+	ROM_LOAD( "2j", 0x4000, 0x1000, 0x5d21f893 , 0x249ee040 )
+	ROM_LOAD( "2l", 0x5000, 0x1000, 0x030788df , 0xc7d2e608 )
+	ROM_LOAD( "2m", 0x6000, 0x1000, 0x24205f0e , 0xbc4bc5b1 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f",      0x1000, 0x0800, 0x5be70b13 )	/* we load the roms at 0x1000-0x1fff, they */
-	ROM_LOAD( "5h",      0x1800, 0x0800, 0xd6e32f73 )	/* will be decrypted at 0x0000-0x0fff */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x1000, 0x0800, 0x5be70b13 , 0x61f137e7 )	/* we load the roms at 0x1000-0x1fff, they */
+	ROM_LOAD( "5h", 0x1800, 0x0800, 0xd6e32f73 , 0x5581de5f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 )
+	ROM_LOAD( "ltprom", 0x0000, 0x0020, 0xca063056 , 0x1108b816 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",      0x0000, 0x0800, 0xa28e0d60 )
-	ROM_LOAD( "5d",      0x0800, 0x0800, 0x70ea19ea )
+	ROM_LOAD( "5c", 0x0000, 0x0800, 0xa28e0d60 , 0xb899be2a )
+	ROM_LOAD( "5d", 0x0800, 0x0800, 0x70ea19ea , 0x6907af31 )
 ROM_END
 
 ROM_START( superbon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2d.cpu", 0x0000, 0x1000, 0x00028b0e )
-	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0x83c736e7 )
-	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0xb4e5df69 )
-	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0x71e68756 )
-	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0xbc7207b8 )
-	ROM_LOAD( "2l.cpu", 0x5000, 0x1000, 0x2fae95f2 )
-	ROM_LOAD( "2m.cpu", 0x6000, 0x1000, 0x84791ba5 )
+	ROM_LOAD( "2d.cpu", 0x0000, 0x1000, 0x00028b0e , 0x60c0ba18 )
+	ROM_LOAD( "2e.cpu", 0x1000, 0x1000, 0x83c736e7 , 0xddcf44bf )
+	ROM_LOAD( "2f.cpu", 0x2000, 0x1000, 0xb4e5df69 , 0xbb66c2d5 )
+	ROM_LOAD( "2h.cpu", 0x3000, 0x1000, 0x71e68756 , 0x74f4f04d )
+	ROM_LOAD( "2j.cpu", 0x4000, 0x1000, 0xbc7207b8 , 0x78effb08 )
+	ROM_LOAD( "2l.cpu", 0x5000, 0x1000, 0x2fae95f2 , 0xe9dcecbd )
+	ROM_LOAD( "2m.cpu", 0x6000, 0x1000, 0x84791ba5 , 0x3ed0337e )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0xfd44d404 )
-	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0x177c7dfc )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f.cpu", 0x0000, 0x0800, 0xfd44d404 , 0x5b9d4686 )
+	ROM_LOAD( "5h.cpu", 0x0800, 0x0800, 0x177c7dfc , 0x58c29927 )
 
 	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c.snd", 0x0000, 0x0800, 0xa28e0d60 )
-	ROM_LOAD( "5d.snd", 0x0800, 0x0800, 0x70e419ec )
+	ROM_LOAD( "5c.snd", 0x0000, 0x0800, 0xa28e0d60 , 0xb899be2a )
+	ROM_LOAD( "5d.snd", 0x0800, 0x0800, 0x70e419ec , 0x80640a04 )
 ROM_END
 
 ROM_START( hustler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "hustler.1", 0x0000, 0x1000, 0x1264f260 )
-	ROM_LOAD( "hustler.2", 0x1000, 0x1000, 0xc6af76a7 )
-	ROM_LOAD( "hustler.3", 0x2000, 0x1000, 0x78fb91dd )
+	ROM_LOAD( "hustler.1", 0x0000, 0x1000, 0x1264f260 , 0x94479a3e )
+	ROM_LOAD( "hustler.2", 0x1000, 0x1000, 0xc6af76a7 , 0x3cc67bcc )
+	ROM_LOAD( "hustler.3", 0x2000, 0x1000, 0x78fb91dd , 0x9422226a )
 	/* 3000-3fff space for diagnostics ROM */
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hustler.5", 0x0000, 0x0800, 0x47866ee0 )
-	ROM_LOAD( "hustler.4", 0x0800, 0x0800, 0x1bb72927 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hustler.5", 0x0000, 0x0800, 0x47866ee0 , 0x0bdfad0e )
+	ROM_LOAD( "hustler.4", 0x0800, 0x0800, 0x1bb72927 , 0x8e062177 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "hustler.clr", 0x0000, 0x0020, 0x99723f42 )
+	ROM_LOAD( "hustler.clr", 0x0000, 0x0020, 0x99723f42 , 0xaa1f7f5e )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.6", 0x0000, 0x0800, 0x20f7835f )
-	ROM_LOAD( "hustler.7", 0x0800, 0x0800, 0xb122b54e )
+	ROM_LOAD( "hustler.6", 0x0000, 0x0800, 0x20f7835f , 0x7a946544 )
+	ROM_LOAD( "hustler.7", 0x0800, 0x0800, 0xb122b54e , 0x3db57351 )
 ROM_END
 
 ROM_START( pool_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "A", 0x0000, 0x1000, 0xffc0df06 )
-	ROM_LOAD( "B", 0x1000, 0x1000, 0x60452fcd )
-	ROM_LOAD( "C", 0x2000, 0x1000, 0x342d1a2b )
+	ROM_LOAD( "a", 0x0000, 0x1000, 0xffc0df06 , 0xb7eb50c0 )
+	ROM_LOAD( "b", 0x1000, 0x1000, 0x60452fcd , 0x988fe1c5 )
+	ROM_LOAD( "c", 0x2000, 0x1000, 0x342d1a2b , 0x7b8de793 )
 	/* 3000-3fff space for diagnostics ROM */
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hustler.5", 0x0000, 0x0800, 0x47866ee0 )
-	ROM_LOAD( "hustler.4", 0x0800, 0x0800, 0x1bb72927 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hustler.5", 0x0000, 0x0800, 0x47866ee0 , 0x0bdfad0e )
+	ROM_LOAD( "hustler.4", 0x0800, 0x0800, 0x1bb72927 , 0x8e062177 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "hustler.clr", 0x0000, 0x0020, 0x99723f42 )
+	ROM_LOAD( "hustler.clr", 0x0000, 0x0020, 0x99723f42 , 0xaa1f7f5e )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.6", 0x0000, 0x0800, 0x20f7835f )
-	ROM_LOAD( "hustler.7", 0x0800, 0x0800, 0xb122b54e )
+	ROM_LOAD( "hustler.6", 0x0000, 0x0800, 0x20f7835f , 0x7a946544 )
+	ROM_LOAD( "hustler.7", 0x0800, 0x0800, 0xb122b54e , 0x3db57351 )
 ROM_END
 
 

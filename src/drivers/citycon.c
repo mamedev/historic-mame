@@ -255,25 +255,25 @@ static struct MachineDriver machine_driver =
 
 ROM_START( citycon_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "c10", 0x4000, 0x4000, 0x9bbcad06 )
-	ROM_LOAD( "c11", 0x8000, 0x8000, 0x36808a32 )
+	ROM_LOAD( "c10", 0x4000, 0x4000, 0x9bbcad06 , 0xae88b53c )
+	ROM_LOAD( "c11", 0x8000, 0x8000, 0x36808a32 , 0x139eb1aa )
 
-	ROM_REGION(0x1e000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c4",  0x00000, 0x2000, 0x92aaa220 )	/* Characters */
-	ROM_LOAD( "c12", 0x02000, 0x2000, 0x14035885 )	/* Sprites    */
-	ROM_LOAD( "c13", 0x04000, 0x2000, 0x96f0b2f0 )
-	ROM_LOAD( "c9",  0x06000, 0x8000, 0xcedecdd6 )	/* Background tiles */
-	ROM_LOAD( "c8",  0x0e000, 0x4000, 0xba9bd1c5 )
-	ROM_LOAD( "c6",  0x12000, 0x8000, 0x1af35b57 )
-	ROM_LOAD( "c7",  0x1a000, 0x4000, 0x501683b4 )
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c4", 0x00000, 0x2000, 0x92aaa220 , 0xa6b32fc6 )	/* Characters */
+	ROM_LOAD( "c12", 0x02000, 0x2000, 0x14035885 , 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13", 0x04000, 0x2000, 0x96f0b2f0 , 0x1819aafb )
+	ROM_LOAD( "c9", 0x06000, 0x8000, 0xcedecdd6 , 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8", 0x0e000, 0x4000, 0xba9bd1c5 , 0x0d7a1eeb )
+	ROM_LOAD( "c6", 0x12000, 0x8000, 0x1af35b57 , 0x2246fe9d )
+	ROM_LOAD( "c7", 0x1a000, 0x4000, 0x501683b4 , 0xe8b97de9 )
 
 	ROM_REGION(0xe000)
-	ROM_LOAD( "c2", 0x0000, 0x8000, 0x944dca0d )	/* background maps */
-	ROM_LOAD( "c3", 0x8000, 0x4000, 0x39ca10d4 )
-	ROM_LOAD( "c5", 0xc000, 0x2000, 0xb6988172 )	/* color codes for the background */
+	ROM_LOAD( "c2", 0x0000, 0x8000, 0x944dca0d , 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3", 0x8000, 0x4000, 0x39ca10d4 , 0x7ef3ac1b )
+	ROM_LOAD( "c5", 0xc000, 0x2000, 0xb6988172 , 0xc03d8b1b )	/* color codes for the background */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "c1", 0x8000, 0x8000, 0x19887776 )
+	ROM_LOAD( "c1", 0x8000, 0x8000, 0x19887776 , 0x1fad7589 )
 ROM_END
 
 

@@ -1,6 +1,7 @@
 #ifndef _MAMEDBG_H
 #define _MAMEDBG_H
 
+#include "driver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +26,6 @@
 #endif
 #endif
 
-#include "driver.h"
 #include "osdepend.h"
 #include "osd_dbg.h"
 #include "cpuintrf.h"

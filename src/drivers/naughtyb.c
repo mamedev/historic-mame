@@ -110,6 +110,7 @@ extern unsigned char *naughtyb_scrollreg;
 void naughtyb_videoram2_w(int offset,int data);
 void naughtyb_scrollreg_w (int offset,int data);
 void naughtyb_videoreg_w (int offset,int data);
+void popflame_videoreg_w (int offset,int data);
 int naughtyb_vh_start(void);
 void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -133,8 +134,6 @@ int pleiads_sh_init(const char *gamename);
 int pleiads_sh_start(void);
 void pleiads_sh_update(void);
 
-#define USE_PLEIADS
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -152,16 +151,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8800, 0x8fff, naughtyb_videoram2_w, &naughtyb_videoram2 },
 	{ 0x9000, 0x97ff, naughtyb_videoreg_w },
 	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
-//        { 0xa000, 0xa7ff, naughtyb_sound_control_a_w },
-//        { 0xa800, 0xafff, naughtyb_sound_control_b_w },
-#ifdef USE_PHOENIX
-	{ 0xa000, 0xa7ff, phoenix_sound_control_a_w },
-	{ 0xa800, 0xafff, phoenix_sound_control_b_w },
-#endif
-#ifdef USE_PLEIADS
 	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
 	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
-#endif
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress popflame_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x7fff, MWA_RAM },
+	{ 0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8800, 0x8fff, naughtyb_videoram2_w, &naughtyb_videoram2 },
+	{ 0x9000, 0x97ff, popflame_videoreg_w },
+	{ 0x9800, 0x9fff, MWA_RAM, &naughtyb_scrollreg },
+	{ 0xa000, 0xa7ff, pleiads_sound_control_a_w },
+	{ 0xa800, 0xafff, pleiads_sound_control_b_w },
 	{ -1 }  /* end of table */
 };
 
@@ -320,19 +324,46 @@ static struct MachineDriver machine_driver =
 	naughtyb_vh_screenrefresh,
 
 	/* sound hardware */
-#ifdef USE_PHOENIX
-	phoenix_sh_init,
-	phoenix_sh_start,
-	0,
-	phoenix_sh_update
-#endif
-#ifdef USE_PLEIADS
 	pleiads_sh_init,
 	pleiads_sh_start,
 	0,
 	pleiads_sh_update
-#endif
-//	0, 0, 0, 0
+};
+
+/* Exactly the same but for the writemem handler */
+static struct MachineDriver popflame_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			1500000,	/* 3 Mhz ? */
+			0,
+			readmem,popflame_writemem,0,0,
+			naughtyb_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	gfxdecodeinfo,
+	256,32*4+32*4,
+	naughtyb_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	naughtyb_vh_start,
+	naughtyb_vh_stop,
+	naughtyb_vh_screenrefresh,
+
+	/* sound hardware */
+	pleiads_sh_init,
+	pleiads_sh_start,
+	0,
+	pleiads_sh_update
 };
 
 
@@ -345,46 +376,46 @@ static struct MachineDriver machine_driver =
 
 ROM_START( naughtyb_rom )
 	ROM_REGION(0x10000)      /* 64k for code */
-	ROM_LOAD( "nb1ic30", 0x0000, 0x0800, 0xe786dfc2 )
-	ROM_LOAD( "nb2ic29", 0x0800, 0x0800, 0x3529d2bd )
-	ROM_LOAD( "nb3ic28", 0x1000, 0x0800, 0xc2f542bd )
-	ROM_LOAD( "nb4ic27", 0x1800, 0x0800, 0xcfbf8b5b )
-	ROM_LOAD( "nb5ic26", 0x2000, 0x0800, 0x9974a746 )
-	ROM_LOAD( "nb6ic25", 0x2800, 0x0800, 0x3f95af23 )
-	ROM_LOAD( "nb7ic24", 0x3000, 0x0800, 0xc0994fa1 )
-	ROM_LOAD( "nb8ic23", 0x3800, 0x0800, 0x22d97209 )
+	ROM_LOAD( "nb1ic30", 0x0000, 0x0800, 0xe786dfc2 , 0x3f482fa3 )
+	ROM_LOAD( "nb2ic29", 0x0800, 0x0800, 0x3529d2bd , 0x7ddea141 )
+	ROM_LOAD( "nb3ic28", 0x1000, 0x0800, 0xc2f542bd , 0x8c72a069 )
+	ROM_LOAD( "nb4ic27", 0x1800, 0x0800, 0xcfbf8b5b , 0x30feae51 )
+	ROM_LOAD( "nb5ic26", 0x2000, 0x0800, 0x9974a746 , 0x05242fd0 )
+	ROM_LOAD( "nb6ic25", 0x2800, 0x0800, 0x3f95af23 , 0x7a12ffea )
+	ROM_LOAD( "nb7ic24", 0x3000, 0x0800, 0xc0994fa1 , 0x9cc287df )
+	ROM_LOAD( "nb8ic23", 0x3800, 0x0800, 0x22d97209 , 0x4d84ff2c )
 
-	ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nb15ic44", 0x0000, 0x0800, 0x57092643 )
-	ROM_LOAD( "nb16ic43", 0x0800, 0x0800, 0x88e94dcf )
-	ROM_LOAD( "nb13ic46", 0x1000, 0x0800, 0xa7e78c51 )
-	ROM_LOAD( "nb14ic45", 0x1800, 0x0800, 0xc07b7ad3 )
-	ROM_LOAD( "nb11ic48", 0x2000, 0x0800, 0xc7130b4d )
-	ROM_LOAD( "nb12ic47", 0x2800, 0x0800, 0x5e0eaa60 )
-	ROM_LOAD( "nb9ic50",  0x3000, 0x0800, 0x56e6b6e8 )
-	ROM_LOAD( "nb10ic49", 0x3800, 0x0800, 0x874eec76 )
+	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nb15ic44", 0x0000, 0x0800, 0x57092643 , 0xd692f9c7 )
+	ROM_LOAD( "nb16ic43", 0x0800, 0x0800, 0x88e94dcf , 0xd3ba8b27 )
+	ROM_LOAD( "nb13ic46", 0x1000, 0x0800, 0xa7e78c51 , 0xc1669cd5 )
+	ROM_LOAD( "nb14ic45", 0x1800, 0x0800, 0xc07b7ad3 , 0xeef2c8e5 )
+	ROM_LOAD( "nb11ic48", 0x2000, 0x0800, 0xc7130b4d , 0x23271a13 )
+	ROM_LOAD( "nb12ic47", 0x2800, 0x0800, 0x5e0eaa60 , 0xef0706c3 )
+	ROM_LOAD( "nb9ic50", 0x3000, 0x0800, 0x56e6b6e8 , 0xd6949c27 )
+	ROM_LOAD( "nb10ic49", 0x3800, 0x0800, 0x874eec76 , 0xc97c97b9 )
 
 	ROM_REGION(0x0200)      /* color proms */
-	ROM_LOAD( "naughtyb.633", 0x0000, 0x0100, 0x44380702 ) /* palette low bits */
-	ROM_LOAD( "naughtyb.h4",  0x0100, 0x0100, 0x6e760704 ) /* palette high bits */
+	ROM_LOAD( "naughtyb.633", 0x0000, 0x0100, 0x44380702 , 0x7838b973 ) /* palette low bits */
+	ROM_LOAD( "naughtyb.h4", 0x0100, 0x0100, 0x6e760704 , 0x70043706 ) /* palette high bits */
 ROM_END
 
 ROM_START( popflame_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic86.pop",  0x0000, 0x1000, 0x3874201e )
-	ROM_LOAD( "ic80.pop",  0x1000, 0x1000, 0x62c9e875 )
-	ROM_LOAD( "ic94.pop",  0x2000, 0x1000, 0xef0139a5 )
-	ROM_LOAD( "ic100.pop", 0x3000, 0x1000, 0x782f7f4d )
+	ROM_LOAD( "ic86.pop", 0x0000, 0x1000, 0x3874201e , 0x5e32bbdf )
+	ROM_LOAD( "ic80.pop", 0x1000, 0x1000, 0x62c9e875 , 0xb77abf3d )
+	ROM_LOAD( "ic94.pop", 0x2000, 0x1000, 0xef0139a5 , 0x945a3c0f )
+	ROM_LOAD( "ic100.pop", 0x3000, 0x1000, 0x782f7f4d , 0xf9f2343b )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic13.pop", 0x0000, 0x1000, 0xb40c561a )
-	ROM_LOAD( "ic3.pop",  0x1000, 0x1000, 0xde7c7614 )
-	ROM_LOAD( "ic29.pop", 0x2000, 0x1000, 0x8244c820 )
-	ROM_LOAD( "ic38.pop", 0x3000, 0x1000, 0x19ed84eb )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic13.pop", 0x0000, 0x1000, 0xb40c561a , 0x2367131e )
+	ROM_LOAD( "ic3.pop", 0x1000, 0x1000, 0xde7c7614 , 0xdeed0a8b )
+	ROM_LOAD( "ic29.pop", 0x2000, 0x1000, 0x8244c820 , 0x7b54f60f )
+	ROM_LOAD( "ic38.pop", 0x3000, 0x1000, 0x19ed84eb , 0xdd2d9601 )
 
 	ROM_REGION(0x0200)      /* color proms */
-	ROM_LOAD( "ic53", 0x0000, 0x0100, 0x68670705 ) /* palette low bits */
-	ROM_LOAD( "ic54", 0x0100, 0x0100, 0x34240304 ) /* palette high bits */
+	ROM_LOAD( "ic53", 0x0000, 0x0100, 0x68670705 , 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54", 0x0100, 0x0100, 0x34240304 , 0x236bc771 ) /* palette high bits */
 ROM_END
 
 
@@ -552,7 +583,7 @@ struct GameDriver popflame_driver =
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
-	&machine_driver,
+	&popflame_machine_driver,
 
 	popflame_rom,
 	0, 0,

@@ -275,6 +275,8 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	/* selection, but it is also set in Pitfall2 */
 	if (system8_backgroundram[2 * (32 * yr + xr) + 1] & 0x10)
 		system8_background_collisionram[0x20 + spr_number] = 0xff;
+	/* TODO: collision should probably be checked with the foreground as well */
+	/* (TeddyBoy Blues, head of the tiger in girl bonus round) */
 }
 
 void system8_background_collisionram_w(int offset,int data)
@@ -315,7 +317,7 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 
 	Height		= SprReg[SPR_Y_BOTTOM] - SprReg[SPR_Y_TOP];
 	SprPalette	= Machine->colortable + 0x10 * spr_number;
-	SprX = SprReg[SPR_X_LO] + ((SprReg[SPR_X_HI] & 1) << 8);
+	SprX = SprReg[SPR_X_LO] + ((SprReg[SPR_X_HI] & 0x01) << 8);
 	SprX /= 2;	/* the hardware has sub-pixel placement, it seems */
 if (Machine->gamedrv == &wbml_driver) SprX += 7;
 	SprY = SprReg[SPR_Y_TOP] + 1;
@@ -471,142 +473,167 @@ void system8_backgroundram_w(int offset,int data)
 	bg_dirtybuffer[offset>>1] = 1;
 }
 
-void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static int system8_draw_fg(struct osd_bitmap *bitmap,int priority)
 {
 	int sx,sy,offs;
+	int drawn = 0;
 
 
-	system8_compute_palette();
-
-	background_scrollx = ((system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 14) & 0xff;
-	background_scrolly = (-*system8_scroll_y) & 0xff;
-
-	/* for every character in the background video RAM, check if it has
-	 * been modified since last time and update it accordingly.
-	 */
-
-	for (offs = 0;offs < system8_backgroundram_size;offs += 2)
-	{
-		if (bg_dirtybuffer[offs / 2])
-		{
-			int code;
-
-			bg_dirtybuffer[offs / 2] = 0;
-
-			code = (system8_backgroundram[offs] + (system8_backgroundram[offs+1] << 8)) & 0x7ff;
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-
-			drawgfx(bitmap1,Machine->gfx[0],
-					code,
-					((code >> 5) & 0x3f) + 0x40,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copyscrollbitmap(bitmap,bitmap1,1,&background_scrollx,1,&background_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
+	priority <<= 3;
 
 	for (offs = 0;offs < system8_videoram_size;offs += 2)
 	{
-		if ((system8_videoram[offs+1] & 0x08) == 0)
-		{
-			int code;
-
-			code = (system8_videoram[offs] | (system8_videoram[offs+1] << 8)) & 0x7ff;
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					(code >> 5) & 0x3f,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_PEN,0);
-		}
-	}
-
-
-	DrawSprites(bitmap);
-
-
-	/* redraw tiles which have priority over sprites */
-	for (offs = 0;offs < system8_backgroundram_size;offs += 2)
-	{
-		if (system8_backgroundram[offs+1] & 0x08)
+		if ((system8_videoram[offs+1] & 0x08) == priority)
 		{
 			int code,color;
 
 
-			code = (system8_backgroundram[offs] + (system8_backgroundram[offs+1] << 8)) & 0x7ff;
-			color = ((code >> 5) & 0x3f) + 0x40;
+			code = (system8_videoram[offs] | (system8_videoram[offs+1] << 8));
+			code = ((code >> 4) & 0x800) | (code & 0x7ff);	/* Heavy Metal only */
+			color = ((code >> 5) & 0x3f);
 			sx = (offs/2) % 32;
 			sy = (offs/2) / 32;
 
-			sx = 8*sx + background_scrollx;
-			sy = 8*sy + background_scrolly;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					color,
-					0,0,
-					sx,sy,
-					0,TRANSPARENCY_PEN,0);
-			if (sx > 248)
-				drawgfx(bitmap,Machine->gfx[0],
-						code,
-						color,
-						0,0,
-						sx-256,sy,
-						0,TRANSPARENCY_PEN,0);
-			if (sy > 248)
+			if (Machine->gfx[0]->pen_usage[code] & ~1)
 			{
+				drawn = 1;
+
 				drawgfx(bitmap,Machine->gfx[0],
 						code,
 						color,
 						0,0,
-						sx,sy-256,
-						0,TRANSPARENCY_PEN,0);
+						8*sx,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+
+	return drawn;
+}
+
+static void system8_draw_bg(struct osd_bitmap *bitmap,int priority)
+{
+	int sx,sy,offs;
+
+
+	background_scrollx = ((system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 14) & 0xff;
+	background_scrolly = (-*system8_scroll_y) & 0xff;
+
+	if (priority == -1)
+	{
+		/* optimized far background */
+
+		/* for every character in the background video RAM, check if it has
+		 * been modified since last time and update it accordingly.
+		 */
+
+		for (offs = 0;offs < system8_backgroundram_size;offs += 2)
+		{
+			if (bg_dirtybuffer[offs / 2])
+			{
+				int code,color;
+
+
+				bg_dirtybuffer[offs / 2] = 0;
+
+				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));
+				code = ((code >> 4) & 0x800) | (code & 0x7ff);	/* Heavy Metal only */
+				color = ((code >> 5) & 0x3f) + 0x40;
+				sx = (offs/2) % 32;
+				sy = (offs/2) / 32;
+
+				drawgfx(bitmap1,Machine->gfx[0],
+						code,
+						color,
+						0,0,
+						8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
+		}
+
+		/* copy the temporary bitmap to the screen */
+		copyscrollbitmap(bitmap,bitmap1,1,&background_scrollx,1,&background_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else
+	{
+		priority <<= 3;
+
+		for (offs = 0;offs < system8_backgroundram_size;offs += 2)
+		{
+			if ((system8_backgroundram[offs+1] & 0x08) == priority)
+			{
+				int code,color,transp;
+
+
+				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));
+				code = ((code >> 4) & 0x800) | (code & 0x7ff);	/* Heavy Metal only */
+				color = ((code >> 5) & 0x3f) + 0x40;
+				sx = (offs/2) % 32;
+				sy = (offs/2) / 32;
+
+				sx = 8*sx + background_scrollx;
+				sy = 8*sy + background_scrolly;
+
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						0,0,
+						sx,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				if (sx > 248)
 					drawgfx(bitmap,Machine->gfx[0],
 							code,
 							color,
 							0,0,
-							sx-256,sy-256,
-							0,TRANSPARENCY_PEN,0);
+							sx-256,sy,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				if (sy > 248)
+				{
+					drawgfx(bitmap,Machine->gfx[0],
+							code,
+							color,
+							0,0,
+							sx,sy-256,
+							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					if (sx > 248)
+						drawgfx(bitmap,Machine->gfx[0],
+								code,
+								color,
+								0,0,
+								sx-256,sy-256,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				}
 			}
 		}
 	}
+}
+
+void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int drawn;
 
 
-	for (offs = 0;offs < system8_videoram_size;offs += 2)
-	{
-		if ((system8_videoram[offs+1] & 0x08) != 0)
-		{
-			int code;
+	system8_compute_palette();
 
-			code = (system8_videoram[offs] | (system8_videoram[offs+1] << 8)) & 0x7ff;
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					(code >> 5) & 0x3f,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_PEN,0);
-		}
-	}
-
+	system8_draw_bg(bitmap,-1);
+	drawn = system8_draw_fg(bitmap,0);
+	/* redraw low priority bg tiles if necessary */
+	if (drawn) system8_draw_bg(bitmap,0);
+	DrawSprites(bitmap);
+	system8_draw_bg(bitmap,1);
+	system8_draw_fg(bitmap,1);
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system8_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 }
+
+
+
+
+
+
 
 
 
@@ -617,126 +644,102 @@ void choplifter_scroll_x_w(int offset,int data)
 	scrollx_row[offset/2] = (system8_scrollx_ram[offset & ~1] >> 1) + ((system8_scrollx_ram[offset | 1] & 1) << 7);
 }
 
-
-void choplifter_backgroundrefresh(struct osd_bitmap *bitmap, int layer)
+void chplft_draw_bg(struct osd_bitmap *bitmap, int priority)
 {
-	int code,palette,priority,sx,sy,i;
+	int sx,sy,offs;
 	int choplifter_scroll_x_on = (system8_scrollx_ram[0] == 0xE5 && system8_scrollx_ram[1] == 0xFF) ? 0:1;
 
-	/*	for every character in the background & text video RAM,
-	 *	check if it has been modified since last time and update it accordingly.
-	 */
 
-	for (i = 0; i < system8_backgroundram_size>>1; i++)
+	if (priority == -1)
 	{
-		code = system8_backgroundram[i*2] + (system8_backgroundram[i*2+1] << 8);
-		priority = (code >> 11) & 0x0f;
-		palette = (code>>5) & 0x3f;
+		/* optimized far background */
 
-		if (bg_dirtybuffer[i])
+		/* for every character in the background video RAM, check if it has
+		 * been modified since last time and update it accordingly.
+		 */
+
+		for (offs = 0;offs < system8_backgroundram_size;offs += 2)
 		{
-			if (!priority)
-				bg_dirtybuffer[i]=0;
-			sx = (i % 32)<<3;
-			sy = ((i >> 5)<<3);
-			code = ((code >> 4) & 0x800) | (code & 0x7ff);
-
-			if (!layer)
-				drawgfx(bitmap1,Machine->gfx[0],
-					code,palette + 64,0,0,sx,sy,0,TRANSPARENCY_NONE,0);
-			else
-			if (priority & layer)
+			if (bg_dirtybuffer[offs / 2])
 			{
-				if (choplifter_scroll_x_on)
-				{
-					int row = (i >> 5);
-					sx = (((i % 32)<<3)+scrollx_row[row]) % 256;
-					sy = row<<3;
-					drawgfx(bitmap,Machine->gfx[0],
-							code,palette + 64,0,0,sx,sy,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
-				else
-				{
-					sx = ((i % 32)<<3);
-					sy = ((i >> 5)<<3);
-					drawgfx(bitmap,Machine->gfx[0],
-							code,palette + 64,0,0,sx,sy,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
+				int code,color;
+
+
+				bg_dirtybuffer[offs / 2] = 0;
+
+				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));
+				code = ((code >> 4) & 0x800) | (code & 0x7ff);	/* Heavy Metal only */
+				color = ((code >> 5) & 0x3f) + 0x40;
+				sx = (offs/2) % 32;
+				sy = (offs/2) / 32;
+
+				drawgfx(bitmap1,Machine->gfx[0],
+						code,
+						color,
+						0,0,
+						8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
 			}
 		}
-	}
 
-	if (!layer)
-	{
+		/* copy the temporary bitmap to the screen */
 		if (choplifter_scroll_x_on)
 			copyscrollbitmap(bitmap,bitmap1,32,scrollx_row,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		else
 			copybitmap(bitmap,bitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
-}
 
-void choplifter_textrefresh(struct osd_bitmap *bitmap, int layer)
-{
-	int offs;
-
-
-	for (offs = 0;offs < system8_videoram_size;offs += 2)
+	else
 	{
-		int sx,sy,code,priority;
+		priority <<= 3;
 
-
-		sx = (offs/2) % 32;
-		sy = (offs/2) / 32;
-		code = system8_videoram[offs] | (system8_videoram[offs+1] << 8);
-		priority = code & 0x800;
-		code = ((code >> 4) & 0x800) | (code & 0x7ff);
-
-		if (layer)
+		for (offs = 0;offs < system8_backgroundram_size;offs += 2)
 		{
-			if (priority)
+			if ((system8_backgroundram[offs+1] & 0x08) == priority)
 			{
+				int code,color,transp;
+
+
+				code = (system8_backgroundram[offs] | (system8_backgroundram[offs+1] << 8));
+				code = ((code >> 4) & 0x800) | (code & 0x7ff);	/* Heavy Metal only */
+				color = ((code >> 5) & 0x3f) + 0x40;
+				sx = 8*((offs/2) % 32);
+				sy = (offs/2) / 32;
+
+				if (choplifter_scroll_x_on)
+					sx = (sx + scrollx_row[sy]) & 0xff;
+				sy = 8*sy;
+
 				drawgfx(bitmap,Machine->gfx[0],
 						code,
-						(code >> 5) & 0x3f,
+						color,
 						0,0,
-						8*sx,8*sy,
+						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
-		else
-		{
-			if (tx_dirtybuffer[offs/2])
-			{
-				tx_dirtybuffer[offs/2] = 0;
-
-				drawgfx(bitmap2,Machine->gfx[0],
-						code,
-						(code >> 5) & 0x3f,
-						0,0,
-						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-			}
-		}
 	}
-
-	if (!layer)
-		copybitmap(bitmap,bitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
 void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	system8_compute_palette ();
+	int drawn;
 
-	choplifter_backgroundrefresh(bitmap,0);
-	choplifter_textrefresh(bitmap,0);
-	choplifter_backgroundrefresh(bitmap,2);
+
+	system8_compute_palette();
+
+	chplft_draw_bg(bitmap,-1);
+	drawn = system8_draw_fg(bitmap,0);
+	/* redraw low priority bg tiles if necessary */
+	if (drawn) chplft_draw_bg(bitmap,0);
 	DrawSprites(bitmap);
-	choplifter_backgroundrefresh(bitmap,1);
-	choplifter_textrefresh(bitmap,1);
+	chplft_draw_bg(bitmap,1);
+	system8_draw_fg(bitmap,1);
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system8_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+
 
 #ifdef MAME_DEBUG
 	if (osd_key_pressed(OSD_KEY_SPACE))		// goto next level
@@ -758,6 +761,12 @@ void wbml_bg_bankselect_w(int offset, int data)
 	bg_bank_latch = data;
 	bg_bank = (data >> 1) & 0x03;	/* Select 4 banks of 4k, bit 2,1 */
 }
+
+int wbml_paged_videoram_r(int offset)
+{
+	return bg_ram[0x1000*bg_bank + offset];
+}
+
 void wbml_paged_videoram_w(int offset,int data)
 {
 	bg_ram[0x1000*bg_bank + offset] = data;

@@ -5,6 +5,10 @@
  *   Library to transcode from an ADPCM source to raw PCM.
  *   Written by Buffoni Mirko in 08/06/97
  *   References: various sources and documents.
+ *
+ *	 HJB 08/31/98
+ *	 modified to use an automatically selected oversampling factor
+ *	 for the current Machine->sample_rate
  */
 
 
@@ -14,6 +18,8 @@
 
 #include "driver.h"
 #include "adpcm.h"
+
+#define OVERSAMPLING	1
 
 /* signed/unsigned 8-bit conversion macros */
 #ifdef SIGNED_SAMPLES
@@ -54,6 +60,9 @@ static int channel;
 /* global buffer length and emulation output rate */
 static int buffer_len;
 static int emulation_rate;
+#if OVERSAMPLING
+static int oversampling;
+#endif
 
 /* step size index shift table */
 static int index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
@@ -131,8 +140,15 @@ int ADPCM_sh_start (struct ADPCMinterface *intf)
 	channel = get_play_channels (intf->num);
 
 	/* compute the emulation rate and buffer size */
+
+#if OVERSAMPLING
+	oversampling = (intf->frequency) ? Machine->sample_rate / intf->frequency + 1 : 1;
+	if (errorlog) fprintf(errorlog, "adpcm: using %d times oversampling\n", oversampling);
+    buffer_len = intf->frequency * oversampling / Machine->drv->frames_per_second;
+#else
 	buffer_len = intf->frequency / Machine->drv->frames_per_second;
-	emulation_rate = buffer_len * Machine->drv->frames_per_second;
+#endif
+    emulation_rate = buffer_len * Machine->drv->frames_per_second;
 
 	/* initialize the voices */
 	memset (adpcm, 0, sizeof (adpcm));
@@ -201,13 +217,17 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 			int step = voice->step;
 			int mask = voice->mask;
 			int val;
+#if OVERSAMPLING
+            int oldsignal = signal;
+			int delta, i;
+#endif
 
 			/* 16-bit case */
 			if (Machine->sample_bits == 16)
 			{
 				short *buffer = (short *)voice->buffer + voice->bufpos;
 
-				while (left--)
+				while (left)
 				{
 					/* compute the new amplitude and update the current step */
 					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
@@ -218,10 +238,18 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 					if (step > 48) step = 48;
 					else if (step < 0) step = 0;
 
-					/* convert that to a sample */
+#if OVERSAMPLING
+                    /* antialiasing samples */
+                    delta = signal - oldsignal;
+					for (i = 1; left && i <= oversampling; left--, i++)
+						*buffer++ = (oldsignal + delta * i / oversampling) * 16;
+					oldsignal = signal;
+#else
 					*buffer++ = signal * 16;
+					left--;
+#endif
 
-					/* next! */
+                    /* next! */
 					if (++sample > count)
 					{
 						/* if we're not streaming, fill with silence and stop */
@@ -249,7 +277,7 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 			{
 				unsigned char *buffer = (unsigned char *)voice->buffer + voice->bufpos;
 
-				while (left--)
+				while (left)
 				{
 					/* compute the new amplitude and update the current step */
 					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
@@ -260,10 +288,16 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 					if (step > 48) step = 48;
 					else if (step < 0) step = 0;
 
-					/* convert that to a sample */
+#if OVERSAMPLING
+                    delta = signal - oldsignal;
+					for (i = 1; left && i <= oversampling; left--, i++)
+						*buffer++ = AUDIO_CONV((oldsignal + delta * i / oversampling) / 16);
+                    oldsignal = signal;
+#else
 					*buffer++ = AUDIO_CONV(signal / 16);
-
-					/* next! */
+					left--;
+#endif
+                    /* next! */
 					if (++sample > count)
 					{
 						/* if we're not streaming, fill with silence and stop */

@@ -376,38 +376,38 @@ static struct MachineDriver machine_driver =
 
 ROM_START( rallyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rallyx.1b", 0x0000, 0x1000, 0xbea90675 )
-	ROM_LOAD( "rallyx.1e", 0x1000, 0x1000, 0xe4021276 )
-	ROM_LOAD( "rallyx.1h", 0x2000, 0x1000, 0x429161ad )
-	ROM_LOAD( "rallyx.1k", 0x3000, 0x1000, 0x8551812b )
+	ROM_LOAD( "rallyx.1b", 0x0000, 0x1000, 0xbea90675 , 0x5882700d )
+	ROM_LOAD( "rallyx.1e", 0x1000, 0x1000, 0xe4021276 , 0x786585ec )
+	ROM_LOAD( "rallyx.1h", 0x2000, 0x1000, 0x429161ad , 0x110d7dcd )
+	ROM_LOAD( "rallyx.1k", 0x3000, 0x1000, 0x8551812b , 0x473ab447 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rallyx.8e", 0x0000, 0x1000, 0xd007b15b )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "rallyx.8e", 0x0000, 0x1000, 0xd007b15b , 0x277c1de5 )
 
 	ROM_REGION(0x0120)	/* color proms */
-	ROM_LOAD( "rallyx.11n", 0x0000, 0x0020, 0x44b51e95 )
-	ROM_LOAD( "rallyx.8p",  0x0020, 0x0100, 0x899f0005 )
+	ROM_LOAD( "rallyx.11n", 0x0000, 0x0020, 0x44b51e95 , 0xc7865434 )
+	ROM_LOAD( "rallyx.8p", 0x0020, 0x0100, 0x899f0005 , 0x7fbc714a )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "rallyx.spr", 0x0000, 0x0100, 0x2f140008 )
+	ROM_LOAD( "rallyx.spr", 0x0000, 0x0100, 0x2f140008 , 0xb75c4e87 )
 ROM_END
 
 ROM_START( nrallyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "nrallyx.1b", 0x0000, 0x1000, 0x23704378 )
-	ROM_LOAD( "nrallyx.1e", 0x1000, 0x1000, 0xd037b01f )
-	ROM_LOAD( "nrallyx.1h", 0x2000, 0x1000, 0x2f558f09 )
-	ROM_LOAD( "nrallyx.1k", 0x3000, 0x1000, 0xa37e7abe )
+	ROM_LOAD( "nrallyx.1b", 0x0000, 0x1000, 0x23704378 , 0x9404c8d6 )
+	ROM_LOAD( "nrallyx.1e", 0x1000, 0x1000, 0xd037b01f , 0xac01bf3f )
+	ROM_LOAD( "nrallyx.1h", 0x2000, 0x1000, 0x2f558f09 , 0xaeba29b5 )
+	ROM_LOAD( "nrallyx.1k", 0x3000, 0x1000, 0xa37e7abe , 0x78f17da7 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nrallyx.8e", 0x0000, 0x1000, 0xe47b6ec7 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nrallyx.8e", 0x0000, 0x1000, 0xe47b6ec7 , 0xca7a174a )
 
 	ROM_REGION(0x0120)	/* color proms */
-	ROM_LOAD( "nrallyx.pr1", 0x0000, 0x0020, 0xf74fce15 )
-	ROM_LOAD( "nrallyx.pr2", 0x0020, 0x0100, 0x97c70a05 )
+	ROM_LOAD( "nrallyx.pr1", 0x0000, 0x0020, 0xf74fce15 , 0xa0a49017 )
+	ROM_LOAD( "nrallyx.pr2", 0x0020, 0x0100, 0x97c70a05 , 0xb2b7ca15 )
 
 	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "nrallyx.spr", 0x0000, 0x0100, 0x2f140008 )
+	ROM_LOAD( "nrallyx.spr", 0x0000, 0x0100, 0x2f140008 , 0xb75c4e87 )
 ROM_END
 
 

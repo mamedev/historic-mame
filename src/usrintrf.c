@@ -34,26 +34,34 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 
 
 
-static int findbestcolor(unsigned char r,unsigned char g,unsigned char b,int current)
+static int findbestcolor(unsigned char r,unsigned char g,unsigned char b,unsigned short current)
 {
 	int i;
 	int best,mindist;
 	unsigned char r1,g1,b1;
 
+
+	/* 4 bits per gun are enough for our needs */
+	r &= 0xf0;
+	g &= 0xf0;
+	b &= 0xf0;
+
 	mindist = 200000;
 	best = 0;
 
-	if (current >= 0 && current < Machine->drv->total_colors)
-	{
-		osd_get_pen(current,&r1,&g1,&b1);
-		if (r1 == r && g1 == g && b1 == b) return current;
-	}
+	osd_get_pen(current,&r1,&g1,&b1);
+	/* keep the current pen if it is close enough */
+	if ((r1 & 0xc0) == (r & 0xc0) && (g1 & 0xc0) == (g & 0xc0) && (b1 & 0xc0) == (b & 0xc0))
+		return current;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int d1,d2,d3,dist;
 
 		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
+		r1 &= 0xf0;
+		g1 &= 0xf0;
+		b1 &= 0xf0;
 
 		/* don't pick black for non-black colors */
 		if (r1+g1+b1 > 0 || r+g+b == 0)
@@ -67,6 +75,7 @@ static int findbestcolor(unsigned char r,unsigned char g,unsigned char b,int cur
 			{
 				best = i;
 				mindist = dist;
+				if (dist == 0) break;	/* perfect match */
 			}
 		}
 	}
@@ -233,6 +242,7 @@ struct GfxElement *builduifont(void)
 	if ((font = decodegfx(fontdata,&fontlayout)) != 0)
 	{
 		/* colortable will be set at run time */
+		memset(colortable,0,sizeof(colortable));
 		font->colortable = colortable;
 		font->total_colors = 3;
 	}
@@ -435,7 +445,7 @@ int showcharset(void)
 		dt[1].text = 0;
 		displaytext(dt,0);
 
-		key = osd_read_keyrepeat();
+		key = osd_read_keyrepeat(1);
 
 		switch (key)
 		{
@@ -552,7 +562,7 @@ static int setdipswitches(void)
 
 		displayset(dt,total,s);
 
-		key = osd_read_keyrepeat();
+		key = osd_read_keyrepeat(1);
 
 		switch (key)
 		{
@@ -687,7 +697,7 @@ static int setkeysettings(void)
 
 		displayset(dt,total,s);
 
-		key = osd_read_keyrepeat();
+		key = osd_read_keyrepeat(1);
 
 		switch (key)
 		{
@@ -711,7 +721,7 @@ static int setkeysettings(void)
 					dt[2 * s + 1].text = "            ";
 					dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 					displayset(dt,total,s);
-					newkey = osd_read_key();
+					newkey = osd_read_key(1);
 					if (newkey > OSD_MAX_KEY)	/* pseudo key code ? */
 						entry[s]->keyboard = IP_KEY_DEFAULT;
 					else
@@ -798,7 +808,7 @@ static int setjoysettings(void)
 
 		displayset(dt,total,s);
 
-		key = osd_read_keyrepeat();
+		key = osd_read_keyrepeat(1);
 		osd_poll_joystick();
 
 		switch (key)
@@ -992,7 +1002,7 @@ static int settraksettings(void)
 
 		displayset(dt,total2,s);
 
-		pkey = osd_read_keyrepeat();
+		pkey = osd_read_keyrepeat(1);
 
 		switch (pkey)
 		{
@@ -1098,7 +1108,7 @@ static int settraksettings(void)
 							dt[2 * s + 1].text = "            ";
 							dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
 							displayset(dt,total2,s);
-							newkey = osd_read_key();
+							newkey = osd_read_key(1);
 							if (newkey == OSD_KEY_ESC ||
 								newkey == OSD_KEY_FAST_EXIT)
 							{
@@ -1261,7 +1271,7 @@ void mame_stats (void)
 	dt[1].text = 0;
 	displaytext(dt,1);
 
-	key = osd_read_key();
+	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 }
 
@@ -1284,7 +1294,7 @@ int showcopyright(void)
 	dt[1].text = 0;
 	displaytext(dt,1);
 
-	key = osd_read_key();
+	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 	if (key == OSD_KEY_FAST_EXIT ||
 		key == OSD_KEY_ESC)
@@ -1313,7 +1323,7 @@ int showcredits(void)
 	dt[1].text = 0;
 	displaytext(dt,1);
 
-	key = osd_read_key();
+	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1421,7 +1431,7 @@ int showgameinfo(void)
 
 		do
 		{
-			key = osd_read_key();
+			key = osd_read_key(1);
 			if (key == OSD_KEY_ESC ||
 				key == OSD_KEY_FAST_EXIT)
 			{
@@ -1504,7 +1514,7 @@ int showgameinfo(void)
 	dt[1].text = 0;
 	displaytext(dt,1);
 
-	key = osd_read_key();
+	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 	if (key == OSD_KEY_ESC ||
 		key == OSD_KEY_FAST_EXIT)
@@ -1581,7 +1591,7 @@ int setup_menu (void)
 
 		displaytext (dt,1);
 
-		key = osd_read_keyrepeat ();
+		key = osd_read_keyrepeat (1);
 
 		switch (key)
 		{

@@ -213,16 +213,16 @@ static struct MachineDriver cosmicalien_machine_driver =
 
 ROM_START( cosmicalien_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "r1",  0x0000, 0x0800, 0xfef0da96 )
-	ROM_LOAD( "r2",  0x0800, 0x0800, 0x43809e72 )
-	ROM_LOAD( "r3",  0x1000, 0x0800, 0x444fb0c3 )
-	ROM_LOAD( "r4",  0x1800, 0x0800, 0xb468ce18 )
-	ROM_LOAD( "r5",  0x2000, 0x0800, 0x08bde255 )
+	ROM_LOAD( "r1", 0x0000, 0x0800, 0xfef0da96 , 0x535ee0c5 )
+	ROM_LOAD( "r2", 0x0800, 0x0800, 0x43809e72 , 0xed3cf8f7 )
+	ROM_LOAD( "r3", 0x1000, 0x0800, 0x444fb0c3 , 0x6a111e5e )
+	ROM_LOAD( "r4", 0x1800, 0x0800, 0xb468ce18 , 0xc9b5ca2a )
+	ROM_LOAD( "r5", 0x2000, 0x0800, 0x08bde255 , 0x43666d68 )
 
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "r6", 0x0000, 0x0800, 0xaaa5eac3 )
-	ROM_LOAD( "r7", 0x0800, 0x0800, 0xc281ff09 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "r6", 0x0000, 0x0800, 0xaaa5eac3 , 0x431e866c )
+	ROM_LOAD( "r7", 0x0800, 0x0800, 0xc281ff09 , 0xaa6c6079 )
 ROM_END
 
 

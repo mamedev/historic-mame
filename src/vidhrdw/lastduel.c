@@ -23,22 +23,22 @@ static int scroll[16];
 
 void lastduel_scroll_w( int offset, int data )
 {
-	scroll[offset]=data&0xffff;  // Scroll data, other bits unknown
+	scroll[offset]=data&0xffff;  /* Scroll data, other bits unknown */
 }
 
 int lastduel_sprites_r(int offset)
 {
-  return READ_WORD(&lastduel_sprites[offset]);
+	return READ_WORD(&lastduel_sprites[offset]);
 }
 
 void lastduel_sprites_w(int offset,int value)
 {
-  COMBINE_WORD_MEM(&lastduel_sprites[offset],value);
+	COMBINE_WORD_MEM(&lastduel_sprites[offset],value);
 }
 
 int lastduel_scroll1_r(int offset)
 {
-  return READ_WORD(&lastduel_scroll1[offset]);
+	return READ_WORD(&lastduel_scroll1[offset]);
 }
 
 void lastduel_scroll1_w(int offset,int value)
@@ -46,16 +46,16 @@ void lastduel_scroll1_w(int offset,int value)
 	int oldword = READ_WORD(&lastduel_scroll1[offset]);
 	int newword = COMBINE_WORD(oldword,value);
 
-  if (oldword != newword)
+	if (oldword != newword)
 	{
-  	WRITE_WORD(&lastduel_scroll1[offset],value);
-  	scroll1_dirty[offset/4]=1;
-  }
+		WRITE_WORD(&lastduel_scroll1[offset],value);
+		scroll1_dirty[offset/4]=1;
+	}
 }
 
 int lastduel_scroll2_r(int offset)
 {
-  return READ_WORD(&lastduel_scroll2[offset]);
+	return READ_WORD(&lastduel_scroll2[offset]);
 }
 
 void lastduel_scroll2_w(int offset,int value)
@@ -63,23 +63,30 @@ void lastduel_scroll2_w(int offset,int value)
 	int oldword = READ_WORD(&lastduel_scroll2[offset]);
 	int newword = COMBINE_WORD(oldword,value);
 
-  if (oldword != newword)
+	if (oldword != newword)
 	{
-  	WRITE_WORD(&lastduel_scroll2[offset],value);
-  	scroll2_dirty[offset/4]=1;
-  }
+		WRITE_WORD(&lastduel_scroll2[offset],value);
+		scroll2_dirty[offset/4]=1;
+	}
 }
 
 int lastduel_vram_r(int offset)
 {
-  return READ_WORD(&lastduel_vram[offset]);
+	return READ_WORD(&lastduel_vram[offset]);
 }
 
 void lastduel_vram_w(int offset,int value)
 {
-  COMBINE_WORD_MEM(&lastduel_vram[offset],value);
+ 	COMBINE_WORD_MEM(&lastduel_vram[offset],value);
 }
 
+#if 0
+void lastduel_set_dirty(void)
+{
+	memset(scroll1_dirty,1,0x1000);
+	memset(scroll2_dirty,1,0x1000);
+}
+#endif
 
 /***************************************************************************
 
@@ -90,9 +97,9 @@ void lastduel_vram_w(int offset,int value)
 int lastduel_vh_start(void)
 {
 	scroll1_bitmap=osd_create_bitmap(1024,1024);
-  scroll2_bitmap=osd_create_bitmap(1024,1024);
-  scroll1_dirty=(unsigned char *)malloc(0x1000);
-  scroll2_dirty=(unsigned char *)malloc(0x1000);
+	scroll2_bitmap=osd_create_bitmap(1024,1024);
+	scroll1_dirty=(unsigned char *)malloc(0x1000);
+	scroll2_dirty=(unsigned char *)malloc(0x1000);
 
 	return 0;
 }
@@ -106,9 +113,9 @@ int lastduel_vh_start(void)
 void lastduel_vh_stop(void)
 {
 	osd_free_bitmap(scroll1_bitmap);
-  osd_free_bitmap(scroll2_bitmap);
+	osd_free_bitmap(scroll2_bitmap);
 	free(scroll1_dirty);
-  free(scroll2_dirty);
+	free(scroll2_dirty);
 }
 
 /***************************************************************************/
@@ -136,32 +143,25 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-/* No need to bother allocating scroll 1 colours just now as there are
-no roms....
-
-for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
+	for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 	{
-		int color,code,i;
-
   	color=READ_WORD(&lastduel_scroll1[offs+2])&0xf;
-    code=READ_WORD(&lastduel_scroll1[offs])&0xfff;
+    code=READ_WORD(&lastduel_scroll1[offs])&0x1fff;
 
-  	palette_used_colors[(0*16) + (16 * color)] = PALETTE_COLOR_TRANSPARENT;
+  	palette_used_colors[(16*16) + (16 * color) ] = PALETTE_COLOR_TRANSPARENT;
  		for (i = 1;i < 16;i++)
 		{
-			if (Machine->gfx[2]->pen_usage[code] & (1 << i))
+			if (Machine->gfx[3]->pen_usage[code] & (1 << i))
 				palette_used_colors[(16*16) + (16 * color) + i] = PALETTE_COLOR_USED;
 		}
 	}
-*/
 
   for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 	{
   	color=READ_WORD(&lastduel_scroll2[offs+2])&0xf;
     code=READ_WORD(&lastduel_scroll2[offs])&0xfff;
 
-  	palette_used_colors[(0*16) + (16 * color)] = PALETTE_COLOR_TRANSPARENT;
- 		for (i = 1;i < 16;i++)
+ 		for (i = 0;i < 16;i++)
 		{
 			if (Machine->gfx[2]->pen_usage[code] & (1 << i))
 				palette_used_colors[(0*16) + (16 * color) + i] = PALETTE_COLOR_USED;
@@ -186,11 +186,11 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 	if (palette_recalc())
 	{
 		memset(scroll2_dirty,1,0x1000);
-//		memset(scroll1_dirty,1,0x1000);
+		memset(scroll1_dirty,1,0x1000);
 	}
 
-	/* Draw Background layer  */
- 	mx=0; my=-1;
+	/* Draw foreground layer  */
+ 	mx=-1; my=0;
   for (offs = 0 ;offs < 0x4000; offs += 4) {
     	mx++;
     	if (mx==64) {mx=0; my++;}
@@ -200,12 +200,12 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 
       color=READ_WORD(&lastduel_scroll1[offs+2]);
       code=READ_WORD(&lastduel_scroll1[offs]);
-		// THIS USES MISSING GRAPHICS ROMS!!!!!
-      drawgfx(scroll1_bitmap,Machine->gfx[2],code&0xfff,color&0xf,color&0x80,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
-    }
 
-  /* Foreground layer  */
- 	mx=0; my=-1;
+      drawgfx(scroll1_bitmap,Machine->gfx[3],code&0x1fff,color&0xf,color&0x20,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
+	}
+
+  /* Background layer  */
+ 	mx=-1; my=0;
   for (offs = 0 ;offs < 0x4000; offs += 4) {
     	mx++;
     	if (mx==64) {mx=0; my++;}
@@ -216,8 +216,8 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
       color=READ_WORD(&lastduel_scroll2[offs+2]);
       code=READ_WORD(&lastduel_scroll2[offs]);
 
-      drawgfx(scroll2_bitmap,Machine->gfx[2],code&0xfff,color&0xf,color&0x80,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
-    }
+      drawgfx(scroll2_bitmap,Machine->gfx[2],code&0xfff,color&0xf,color&0x20,color&0x40,mx*16,my*16,0,TRANSPARENCY_NONE,0);
+	}
 
 {
 	int scrollx,scrolly;
@@ -249,9 +249,6 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 		if( sy>0x100 )
     	sy -= 0x200;
 
-    sx+=16;
-    sy-=16;
-
 		drawgfx(bitmap,Machine->gfx[0],
 			code,
 			color,
@@ -262,7 +259,7 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
   }
 
   /* Text tiles */
-	mx=0; my=-1;
+	mx=-1; my=0;
   for (offs = 0 ;offs < 0x1000; offs += 2) {
     mx++;
     if (mx==64) {mx=0; my++;}
@@ -272,11 +269,10 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
     color = ((tile & 0xf000) >> 12);
     tile=tile&0xfff;
 
-    if (tile==0x20) continue; // Transparent tile
+    if (tile==0x20) continue; /* Transparent tile */
 
  	 	drawgfx(bitmap,Machine->gfx[1],tile,
-			color, 0,0, (8*mx)+8,(8*my)-8,
+			color, 0,0, 8*mx,8*my,
 		 	&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
-

@@ -714,7 +714,7 @@ void AYSetGain(int n,int gain)
 		if (out > MAX_OUTPUT) PSG->VolTable[i] = MAX_OUTPUT;
 		else PSG->VolTable[i] = out;
 
-		out /= 1.188502227;	/* = 10 ^ (1.5/20) */
+		out /= 1.188502227;	/* = 10 ^ (1.5/20) = 1.5dB */
 	}
 	PSG->VolTable[0] = 0;
 }

@@ -291,21 +291,21 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sidepocket_rom )
+ROM_START( sidepckt_rom )
     ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "SP_09.BIN",  0x04000, 0x4000, 0x11b0aaa4 )
-    ROM_LOAD( "SP_08.BIN",  0x08000, 0x8000, 0xb4d631cc )
+    ROM_LOAD( "sp_09.bin", 0x04000, 0x4000, 0x11b0aaa4, 0x3c6fe54b )
+    ROM_LOAD( "sp_08.bin", 0x08000, 0x8000, 0xb4d631cc, 0x347f81cd )
 
-    ROM_REGION(0x30000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "SP_05.BIN",  0x00000, 0x8000, 0x2e6417da ) /* characters */
-    ROM_LOAD( "SP_06.BIN",  0x08000, 0x8000, 0x01855b33 ) /* characters */
-    ROM_LOAD( "SP_07.BIN",  0x10000, 0x8000, 0xcbeeeec8 ) /* characters */
-    ROM_LOAD( "SP_01.BIN",  0x18000, 0x8000, 0xd6e534f5 ) /* sprites */
-    ROM_LOAD( "SP_02.BIN",  0x20000, 0x8000, 0xe9bde2b9 ) /* sprites */
-    ROM_LOAD( "SP_03.BIN",  0x28000, 0x8000, 0x04820416 ) /* sprites */
+    ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "sp_05.bin", 0x00000, 0x8000, 0x2e6417da, 0x05ab71d2 ) /* characters */
+    ROM_LOAD( "sp_06.bin", 0x08000, 0x8000, 0x01855b33, 0x580e4e43 ) /* characters */
+    ROM_LOAD( "sp_07.bin", 0x10000, 0x8000, 0xcbeeeec8, 0x9d6f7969 ) /* characters */
+    ROM_LOAD( "sp_01.bin", 0x18000, 0x8000, 0xd6e534f5, 0xa2cdfbea ) /* sprites */
+    ROM_LOAD( "sp_02.bin", 0x20000, 0x8000, 0xe9bde2b9, 0xeeb5c3e7 ) /* sprites */
+    ROM_LOAD( "sp_03.bin", 0x28000, 0x8000, 0x04820416, 0x8e18d21d ) /* sprites */
 
     ROM_REGION(0x10000)     /* 64k for the audio cpu */
-    ROM_LOAD( "SP_04.BIN",  0x08000, 0x8000, 0x3c36920a )
+    ROM_LOAD( "sp_04.bin", 0x08000, 0x8000, 0x3c36920a, 0xd076e62e )
 ROM_END
 
 struct GameDriver sidepckt_driver =
@@ -320,7 +320,7 @@ struct GameDriver sidepckt_driver =
 	0,
     &machine_driver,
 
-    sidepocket_rom,
+    sidepckt_rom,
     0, 0,
     0,
     0,      /* sound_prom */

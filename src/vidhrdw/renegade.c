@@ -10,18 +10,14 @@
 unsigned char *renegade_textram;
 int renegade_scrollx;
 static unsigned char *back_buffer;
-int renegade_video_refresh;
 
-int renegade_vh_start( void )
-{
+int renegade_vh_start( void ){
 	int i;
 
-
-	renegade_scrollx = renegade_video_refresh = 0;
+	renegade_scrollx = 0;
 
 	back_buffer = malloc(0x800);
-	if( back_buffer )
-	{
+	if( back_buffer ){
 		/* the scrolling background is 4 times as wide as the screen */
 		tmpbitmap = osd_create_bitmap( 4*Machine->drv->screen_width, Machine->drv->screen_height );
 		if( tmpbitmap ) return 0;
@@ -76,17 +72,17 @@ static void render_sprites( struct osd_bitmap *bitmap ){
 	unsigned char *finish = source+96*4;
 
 	while( source<finish ){
-		int attributes = source[1]; /* SFCCBBBB */
 		int sy = 240-source[0];
-		int sx = source[3];
-		int sprite_number = source[2];
-		int sprite_bank = 9 + (attributes&0xF);
-		int color = (attributes>>4)&0x3;
-		int xflip = attributes&0x40;
+		if( sy>=16 ){
+			int attributes = source[1]; /* SFCCBBBB */
+			int sx = source[3];
+			int sprite_number = source[2];
+			int sprite_bank = 9 + (attributes&0xF);
+			int color = (attributes>>4)&0x3;
+			int xflip = attributes&0x40;
 
-		if( sx>248 ) sx -= 256;
+			if( sx>248 ) sx -= 256;
 
-		if( sy>=32 ){
 			if( attributes&0x80 ){ /* big sprite */
 				drawgfx(bitmap,Machine->gfx[sprite_bank],
 					sprite_number+1,
@@ -105,7 +101,6 @@ static void render_sprites( struct osd_bitmap *bitmap ){
 				sx,sy,
 				clip,TRANSPARENCY_PEN,0);
 		}
-
 		source+=4;
 	}
 }
@@ -140,7 +135,7 @@ static void render_background( struct osd_bitmap *bitmap ){
 	}
 
 	{
-		int scrollx = -(renegade_scrollx-256);
+		int scrollx = 256-(renegade_scrollx&0x3ff);
 		int scrolly = 0;
 
 		copyscrollbitmap(bitmap,tmpbitmap,
@@ -177,18 +172,10 @@ static void render_text( struct osd_bitmap *bitmap ){
 	}
 }
 
+void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh ){
+	palette_recalc();
 
-
-void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh )
-{
-	if( renegade_video_refresh )
-	{
-		palette_recalc();
-
-		render_background( bitmap );
-		render_sprites( bitmap );
-		render_text( bitmap );
-
-		renegade_video_refresh = 0;
-	}
+	render_background( bitmap );
+	render_sprites( bitmap );
+	render_text( bitmap );
 }

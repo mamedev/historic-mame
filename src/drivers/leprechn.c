@@ -302,40 +302,40 @@ static struct MachineDriver leprechn_machine_driver =
 
 ROM_START( leprechn_rom )
 	ROM_REGION(0x10000)  /* 64k for the main CPU */
-	ROM_LOAD( "lep1", 0x8000, 0x1000, 0x25cd602d )
-	ROM_LOAD( "lep2", 0x9000, 0x1000, 0x128b9183 )
-	ROM_LOAD( "lep3", 0xa000, 0x1000, 0x558efc6e )
-	ROM_LOAD( "lep4", 0xb000, 0x1000, 0xe3828c84 )
-	ROM_LOAD( "lep5", 0xc000, 0x1000, 0x5feda70d )
-	ROM_LOAD( "lep6", 0xd000, 0x1000, 0x8d7a408e )
-	ROM_LOAD( "lep7", 0xe000, 0x1000, 0xff916657 )
-	ROM_LOAD( "lep8", 0xf000, 0x1000, 0x3e225334 )
+	ROM_LOAD( "lep1", 0x8000, 0x1000, 0x25cd602d , 0x2c4a46ca )
+	ROM_LOAD( "lep2", 0x9000, 0x1000, 0x128b9183 , 0x6ed26b3e )
+	ROM_LOAD( "lep3", 0xa000, 0x1000, 0x558efc6e , 0xa2eaa016 )
+	ROM_LOAD( "lep4", 0xb000, 0x1000, 0xe3828c84 , 0x6c12a065 )
+	ROM_LOAD( "lep5", 0xc000, 0x1000, 0x5feda70d , 0x21ddb539 )
+	ROM_LOAD( "lep6", 0xd000, 0x1000, 0x8d7a408e , 0x03c34dce )
+	ROM_LOAD( "lep7", 0xe000, 0x1000, 0xff916657 , 0x7e06d56d )
+	ROM_LOAD( "lep8", 0xf000, 0x1000, 0x3e225334 , 0x097ede60 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)  /* 64k for the audio CPU */
-	ROM_LOAD( "lepsound", 0xf000, 0x1000, 0x0c313739 )
+	ROM_LOAD( "lepsound", 0xf000, 0x1000, 0x0c313739 , 0x6651e294 )
 ROM_END
 
 ROM_START( potogold_rom )
 	ROM_REGION(0x10000)  /* 64k for the main CPU */
-	ROM_LOAD( "pog.pg1", 0x8000, 0x1000, 0xb8d14389 )
-	ROM_LOAD( "pog.pg2", 0x9000, 0x1000, 0xfe87fd8f )
-	ROM_LOAD( "pog.pg3", 0xa000, 0x1000, 0x6fec6fee )
-	ROM_LOAD( "pog.pg4", 0xb000, 0x1000, 0x8bea990c )
-	ROM_LOAD( "pog.pg5", 0xc000, 0x1000, 0x404c8e58 )
-	ROM_LOAD( "pog.pg6", 0xd000, 0x1000, 0xb8f0895a )
-	ROM_LOAD( "pog.pg7", 0xe000, 0x1000, 0xa31dc1d9 )
-	ROM_LOAD( "pog.pg8", 0xf000, 0x1000, 0xf8d44778 )
+	ROM_LOAD( "pog.pg1", 0x8000, 0x1000, 0xb8d14389 , 0x9f1dbda6 )
+	ROM_LOAD( "pog.pg2", 0x9000, 0x1000, 0xfe87fd8f , 0xa70e3811 )
+	ROM_LOAD( "pog.pg3", 0xa000, 0x1000, 0x6fec6fee , 0x81cfb516 )
+	ROM_LOAD( "pog.pg4", 0xb000, 0x1000, 0x8bea990c , 0xd61b1f33 )
+	ROM_LOAD( "pog.pg5", 0xc000, 0x1000, 0x404c8e58 , 0xeee7597e )
+	ROM_LOAD( "pog.pg6", 0xd000, 0x1000, 0xb8f0895a , 0x25e682bc )
+	ROM_LOAD( "pog.pg7", 0xe000, 0x1000, 0xa31dc1d9 , 0x84399f54 )
+	ROM_LOAD( "pog.pg8", 0xf000, 0x1000, 0xf8d44778 , 0x9e995a1a )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)  /* 64k for the audio CPU */
-	ROM_LOAD( "pog.snd", 0xf000, 0x1000, 0x193bd8b3 )
+	ROM_LOAD( "pog.snd", 0xf000, 0x1000, 0x193bd8b3 , 0xec61f0a4 )
 ROM_END
 
 

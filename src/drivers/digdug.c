@@ -406,70 +406,70 @@ static struct MachineDriver machine_driver =
 
 ROM_START( digdug_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
-	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
-	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 )
-	ROM_LOAD( "136007.104", 0x3000, 0x1000, 0xc6c1f5e1 )
+	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c , 0xb9198079 )
+	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 , 0xb2acbe49 )
+	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 , 0xd6407b49 )
+	ROM_LOAD( "136007.104", 0x3000, 0x1000, 0xc6c1f5e1 , 0xb3ad42c3 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136007.108", 0x0000, 0x0800, 0xaf5e219e )
-	ROM_LOAD( "136007.115", 0x1000, 0x1000, 0x87be0000 )
-	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 )
-	ROM_LOAD( "136007.117", 0x3000, 0x1000, 0x0b276793 )
-	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d )
-	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136007.108", 0x0000, 0x0800, 0xaf5e219e , 0x3d24a3af )
+	ROM_LOAD( "136007.115", 0x1000, 0x1000, 0x87be0000 , 0x754539be )
+	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 , 0xe22957c8 )
+	ROM_LOAD( "136007.117", 0x3000, 0x1000, 0x0b276793 , 0xa3bbfd85 )
+	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d , 0x458499e9 )
+	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc , 0xc58252a0 )
 
 	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "digdug.5n", 0x0000, 0x020, 0xaebe9a40 )
-	ROM_LOAD( "digdug.1c", 0x0020, 0x100, 0x3f270c0f )
-	ROM_LOAD( "digdug.2n", 0x0120, 0x100, 0x12690309 )
+	ROM_LOAD( "digdug.5n", 0x0000, 0x020, 0xaebe9a40 , 0x4cb9da99 )
+	ROM_LOAD( "digdug.1c", 0x0020, 0x100, 0x3f270c0f , 0x00c7c419 )
+	ROM_LOAD( "digdug.2n", 0x0120, 0x100, 0x12690309 , 0xe9b3e08e )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "136007.105", 0x0000, 0x1000, 0xbdb75bb1 )
-	ROM_LOAD( "136007.106", 0x1000, 0x1000, 0xa3ac5198 )
+	ROM_LOAD( "136007.105", 0x0000, 0x1000, 0xbdb75bb1 , 0x0a2aef4a )
+	ROM_LOAD( "136007.106", 0x1000, 0x1000, 0xa3ac5198 , 0xa2876d6e )
 
 	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 )
+	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 , 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
-	ROM_LOAD( "136007.114", 0x0000, 0x1000, 0xcce929b7 )
+	ROM_LOAD( "136007.114", 0x0000, 0x1000, 0xcce929b7 , 0xd6822397 )
 
 	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "digdug.spr", 0x0000, 0x100, 0xbb940c04 )
+	ROM_LOAD( "digdug.spr", 0x0000, 0x100, 0xbb940c04 , 0x7a2815b4 )
 ROM_END
 
 ROM_START( digdugnm_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
-	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c )
-	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 )
-	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 )
-	ROM_LOAD( "dd1.4b",     0x3000, 0x1000, 0xaaddfff7 )
+	ROM_LOAD( "136007.101", 0x0000, 0x1000, 0x530a8d1c , 0xb9198079 )
+	ROM_LOAD( "136007.102", 0x1000, 0x1000, 0x3e4a1cb6 , 0xb2acbe49 )
+	ROM_LOAD( "136007.103", 0x2000, 0x1000, 0x2a1e5ce2 , 0xd6407b49 )
+	ROM_LOAD( "dd1.4b", 0x3000, 0x1000, 0xaaddfff7 , 0xf4cebc16 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dd1.9",      0x0000, 0x0800, 0x81dba5a5 )
-	ROM_LOAD( "dd1.11",     0x1000, 0x1000, 0xd6a41d2e )
-	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 )
-	ROM_LOAD( "dd1.14",     0x3000, 0x1000, 0xa3d074d0 )
-	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d )
-	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dd1.9", 0x0000, 0x0800, 0x81dba5a5 , 0xf14a6fe1 )
+	ROM_LOAD( "dd1.11", 0x1000, 0x1000, 0xd6a41d2e , 0x7b383983 )
+	ROM_LOAD( "136007.116", 0x2000, 0x1000, 0xff914d75 , 0xe22957c8 )
+	ROM_LOAD( "dd1.14", 0x3000, 0x1000, 0xa3d074d0 , 0x2829ec99 )
+	ROM_LOAD( "136007.118", 0x4000, 0x1000, 0x494d7f6d , 0x458499e9 )
+	ROM_LOAD( "136007.119", 0x5000, 0x1000, 0xfd468dcc , 0xc58252a0 )
 
 	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "digdug.5n", 0x0000, 0x020, 0xaebe9a40 )
-	ROM_LOAD( "digdug.1c", 0x0020, 0x100, 0x3f270c0f )
-	ROM_LOAD( "digdug.2n", 0x0120, 0x100, 0x12690309 )
+	ROM_LOAD( "digdug.5n", 0x0000, 0x020, 0xaebe9a40 , 0x4cb9da99 )
+	ROM_LOAD( "digdug.1c", 0x0020, 0x100, 0x3f270c0f , 0x00c7c419 )
+	ROM_LOAD( "digdug.2n", 0x0120, 0x100, 0x12690309 , 0xe9b3e08e )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
-	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb )
-	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 )
+	ROM_LOAD( "dd1.5b", 0x0000, 0x1000, 0xe09b56bb , 0x370ef9b4 )
+	ROM_LOAD( "dd1.6b", 0x1000, 0x1000, 0xee615c91 , 0x361eeb71 )
 
 	ROM_REGION(0x10000)	/* 64k for the third CPU  */
-	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 )
+	ROM_LOAD( "136007.107", 0x0000, 0x1000, 0xc7bdef23 , 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
-	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 )
+	ROM_LOAD( "dd1.10b", 0x0000, 0x1000, 0x581d2bb7 , 0x2cf399c2 )
 
 	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "digdug.spr", 0x0000, 0x100, 0xbb940c04 )
+	ROM_LOAD( "digdug.spr", 0x0000, 0x100, 0xbb940c04 , 0x7a2815b4 )
 ROM_END
 
 

@@ -298,47 +298,47 @@ MACHINEDRIVER(bowlrama, 239)
 
 ROM_START( capbowl_rom )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
-	ROM_LOAD( "u6",  0x08000, 0x8000, 0xb70297ae )
-	ROM_LOAD( "gr0", 0x10000, 0x8000, 0xfb7d35bd )
-	ROM_LOAD( "gr1", 0x18000, 0x8000, 0xe28dc4ef )
-	ROM_LOAD( "gr2", 0x20000, 0x8000, 0x325fce25 )
+	ROM_LOAD( "u6", 0x08000, 0x8000, 0xb70297ae , 0x14924c96 )
+	ROM_LOAD( "gr0", 0x10000, 0x8000, 0xfb7d35bd , 0xef53ca7a )
+	ROM_LOAD( "gr1", 0x18000, 0x8000, 0xe28dc4ef , 0x27ede6ce )
+	ROM_LOAD( "gr2", 0x20000, 0x8000, 0x325fce25 , 0xe49238f4 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)   /* 64k for sound */
-	ROM_LOAD( "sound", 0x8000, 0x8000, 0x1ec37619 )
+	ROM_LOAD( "sound", 0x8000, 0x8000, 0x1ec37619 , 0x8c9c3b8a )
 ROM_END
 
 ROM_START( clbowl_rom )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
-	ROM_LOAD( "u6.cl",  0x08000, 0x8000, 0x99fede6e )
-	ROM_LOAD( "gr0.cl", 0x10000, 0x8000, 0x64039867 )
-	ROM_LOAD( "gr1.cl", 0x18000, 0x8000, 0x3a758375 )
-	ROM_LOAD( "gr2.cl", 0x20000, 0x8000, 0xb63eb4f2 )
+	ROM_LOAD( "u6.cl", 0x08000, 0x8000, 0x99fede6e , 0x91e06bc4 )
+	ROM_LOAD( "gr0.cl", 0x10000, 0x8000, 0x64039867 , 0x899c8f15 )
+	ROM_LOAD( "gr1.cl", 0x18000, 0x8000, 0x3a758375 , 0x0ac0dc4c )
+	ROM_LOAD( "gr2.cl", 0x20000, 0x8000, 0xb63eb4f2 , 0x251f5da5 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)   /* 64k for sound */
-	ROM_LOAD( "sound.cl", 0x8000, 0x8000, 0xe27c494a )
+	ROM_LOAD( "sound.cl", 0x8000, 0x8000, 0xe27c494a , 0x1eba501e )
 ROM_END
 
 ROM_START( bowlrama_rom )
 	ROM_REGION(0x10000)      /* 64k for code */
-	ROM_LOAD( "u6",  0x08000, 0x08000, 0x5ba3c13d )
+	ROM_LOAD( "u6", 0x08000, 0x08000, 0x5ba3c13d , 0x7103ad55 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for sound */
-	ROM_LOAD( "u30", 0x8000, 0x8000, 0xa8bbc179 )
+	ROM_LOAD( "u30", 0x8000, 0x8000, 0xa8bbc179 , 0xf3168834 )
 
 	ROM_REGION(0x40000)     /* 256K for Graphics */
-	ROM_LOAD( "ux7", 0x00000, 0x40000, 0x9e8ae380 )
+	ROM_LOAD( "ux7", 0x00000, 0x40000, 0x9e8ae380 , 0x8727432a )
 ROM_END
 
 

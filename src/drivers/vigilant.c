@@ -392,58 +392,94 @@ static struct MachineDriver machine_driver =
 
 ROM_START( vigilant_rom )
 	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
-	ROM_LOAD( "G07_C03.BIN", 0x00000, 0x08000, 0xc794f0f8 )
-	ROM_LOAD( "J07_C04.BIN", 0x10000, 0x10000, 0xcfb9cb6b )
+	ROM_LOAD( "g07_c03.bin", 0x00000, 0x08000, 0xc794f0f8 , 0x9dcca081 )
+	ROM_LOAD( "j07_c04.bin", 0x10000, 0x10000, 0xcfb9cb6b , 0xe0159105 )
 
-	ROM_REGION(0xD0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "H05_C09.BIN", 0x00000, 0x10000, 0xe53fc57f )
-	ROM_LOAD( "F05_C08.BIN", 0x10000, 0x10000, 0xfcc92485 )
-	ROM_LOAD( "T07_C16.BIN", 0x20000, 0x10000, 0x27b12f35 )
-	ROM_LOAD( "V07_C17.BIN", 0x30000, 0x10000, 0xbad189ad )
-	ROM_LOAD( "P07_C14.BIN", 0x40000, 0x10000, 0xd3b7e507 )
-	ROM_LOAD( "S07_C15.BIN", 0x50000, 0x10000, 0xcf6c65b0 )
-	ROM_LOAD( "N07_C12.BIN", 0x60000, 0x10000, 0xd9cbc119 )
-	ROM_LOAD( "O07_C13.BIN", 0x70000, 0x10000, 0x0b9b467d )
-	ROM_LOAD( "K07_C10.BIN", 0x80000, 0x10000, 0x7ce2605a )
-	ROM_LOAD( "L07_C11.BIN", 0x90000, 0x10000, 0x7616ef1c )
-	ROM_LOAD( "D01_C05.BIN", 0xA0000, 0x10000, 0x27d3b929 )
-	ROM_LOAD( "E01_C06.BIN", 0xB0000, 0x10000, 0xd7124480 )
-	ROM_LOAD( "F01_C07.BIN", 0xC0000, 0x10000, 0xb92b0f3b )
+	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "h05_c09.bin", 0x00000, 0x10000, 0xe53fc57f , 0x4f5872f0 )
+	ROM_LOAD( "f05_c08.bin", 0x10000, 0x10000, 0xfcc92485 , 0x01579d20 )
+	ROM_LOAD( "t07_c16.bin", 0x20000, 0x10000, 0x27b12f35 , 0xf5425e42 )
+	ROM_LOAD( "v07_c17.bin", 0x30000, 0x10000, 0xbad189ad , 0x959ba3c7 )
+	ROM_LOAD( "p07_c14.bin", 0x40000, 0x10000, 0xd3b7e507 , 0xcb50a17c )
+	ROM_LOAD( "s07_c15.bin", 0x50000, 0x10000, 0xcf6c65b0 , 0x7f2e91c5 )
+	ROM_LOAD( "n07_c12.bin", 0x60000, 0x10000, 0xd9cbc119 , 0x10af8eb2 )
+	ROM_LOAD( "o07_c13.bin", 0x70000, 0x10000, 0x0b9b467d , 0xb1d9d4dc )
+	ROM_LOAD( "k07_c10.bin", 0x80000, 0x10000, 0x7ce2605a , 0x9576f304 )
+	ROM_LOAD( "l07_c11.bin", 0x90000, 0x10000, 0x7616ef1c , 0x4598be4a )
+	ROM_LOAD( "d01_c05.bin", 0xA0000, 0x10000, 0x27d3b929 , 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin", 0xB0000, 0x10000, 0xd7124480 , 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin", 0xC0000, 0x10000, 0xb92b0f3b , 0xaae81695 )
 
 	ROM_REGION(0x10000) /* region#2: 64k for sound */
-	ROM_LOAD( "G05_C02.BIN", 0x00000, 0x10000, 0x35b5d3a5 )
+	ROM_LOAD( "g05_c02.bin", 0x00000, 0x10000, 0x35b5d3a5 , 0x10582b2d )
 
 	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
-	ROM_LOAD( "D04_C01.BIN", 0x00000, 0x10000, 0x04a5685d )
+	ROM_LOAD( "d04_c01.bin", 0x00000, 0x10000, 0x04a5685d , 0x9b85101d )
 ROM_END
 
 ROM_START( vigilntj_rom )
 	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
-	ROM_LOAD( "VG_A-8H.ROM", 0x00000, 0x08000, 0x43b4082c )
-	ROM_LOAD( "VG_A-8L.ROM", 0x10000, 0x10000, 0xc8ec6266 )
+	ROM_LOAD( "vg_a-8h.rom", 0x00000, 0x08000, 0x43b4082c , 0xba848713 )
+	ROM_LOAD( "vg_a-8l.rom", 0x10000, 0x10000, 0xc8ec6266 , 0x3b12b1d8 )
 
-	ROM_REGION(0xD0000) /* region #1: graphics (disposed after conversion) */
-	ROM_LOAD( "H05_C09.BIN", 0x00000, 0x10000, 0xe53fc57f )
-	ROM_LOAD( "F05_C08.BIN", 0x10000, 0x10000, 0xfcc92485 )
-	ROM_LOAD( "T07_C16.BIN", 0x20000, 0x10000, 0x27b12f35 )
-	ROM_LOAD( "V07_C17.BIN", 0x30000, 0x10000, 0xbad189ad )
-	ROM_LOAD( "P07_C14.BIN", 0x40000, 0x10000, 0xd3b7e507 )
-	ROM_LOAD( "S07_C15.BIN", 0x50000, 0x10000, 0xcf6c65b0 )
-	ROM_LOAD( "N07_C12.BIN", 0x60000, 0x10000, 0xd9cbc119 )
-	ROM_LOAD( "O07_C13.BIN", 0x70000, 0x10000, 0x0b9b467d )
-	ROM_LOAD( "K07_C10.BIN", 0x80000, 0x10000, 0x7ce2605a )
-	ROM_LOAD( "L07_C11.BIN", 0x90000, 0x10000, 0x7616ef1c )
-	ROM_LOAD( "D01_C05.BIN", 0xA0000, 0x10000, 0x27d3b929 )
-	ROM_LOAD( "E01_C06.BIN", 0xB0000, 0x10000, 0xd7124480 )
-	ROM_LOAD( "F01_C07.BIN", 0xC0000, 0x10000, 0xb92b0f3b )
+	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "h05_c09.bin", 0x00000, 0x10000, 0xe53fc57f , 0x4f5872f0 )
+	ROM_LOAD( "f05_c08.bin", 0x10000, 0x10000, 0xfcc92485 , 0x01579d20 )
+	ROM_LOAD( "t07_c16.bin", 0x20000, 0x10000, 0x27b12f35 , 0xf5425e42 )
+	ROM_LOAD( "v07_c17.bin", 0x30000, 0x10000, 0xbad189ad , 0x959ba3c7 )
+	ROM_LOAD( "p07_c14.bin", 0x40000, 0x10000, 0xd3b7e507 , 0xcb50a17c )
+	ROM_LOAD( "s07_c15.bin", 0x50000, 0x10000, 0xcf6c65b0 , 0x7f2e91c5 )
+	ROM_LOAD( "n07_c12.bin", 0x60000, 0x10000, 0xd9cbc119 , 0x10af8eb2 )
+	ROM_LOAD( "o07_c13.bin", 0x70000, 0x10000, 0x0b9b467d , 0xb1d9d4dc )
+	ROM_LOAD( "k07_c10.bin", 0x80000, 0x10000, 0x7ce2605a , 0x9576f304 )
+	ROM_LOAD( "l07_c11.bin", 0x90000, 0x10000, 0x7616ef1c , 0x4598be4a )
+	ROM_LOAD( "d01_c05.bin", 0xA0000, 0x10000, 0x27d3b929 , 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin", 0xB0000, 0x10000, 0xd7124480 , 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin", 0xC0000, 0x10000, 0xb92b0f3b , 0xaae81695 )
 
 	ROM_REGION(0x10000) /* region#2: 64k for sound */
-	ROM_LOAD( "G05_C02.BIN", 0x00000, 0x10000, 0x35b5d3a5 )
+	ROM_LOAD( "g05_c02.bin", 0x00000, 0x10000, 0x35b5d3a5 , 0x10582b2d )
 
 	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
-	ROM_LOAD( "D04_C01.BIN", 0x00000, 0x10000, 0x04a5685d )
+	ROM_LOAD( "d04_c01.bin", 0x00000, 0x10000, 0x04a5685d , 0x9b85101d )
 ROM_END
 
+static int vigilant_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe04b],"\x00\x45\x11",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe04b],60);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0xe048] = RAM[0xe04b];
+                        RAM[0xe049] = RAM[0xe04c];
+                        RAM[0xe04a] = RAM[0xe04d];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void vigilant_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe04b],60);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver vigilant_driver =
@@ -467,7 +503,7 @@ struct GameDriver vigilant_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0,0
+        vigilant_hiload, vigilant_hisave
 };
 
 struct GameDriver vigilntj_driver =
@@ -491,5 +527,5 @@ struct GameDriver vigilntj_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0,0
+        vigilant_hiload, vigilant_hisave
 };

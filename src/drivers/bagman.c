@@ -301,84 +301,84 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bagman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "e9_b05.bin",  0x0000, 0x1000, 0x5b17051f )
-	ROM_LOAD( "f9_b06.bin",  0x1000, 0x1000, 0x8608d194 )
-	ROM_LOAD( "f9_b07.bin",  0x2000, 0x1000, 0xacf9d179 )
-	ROM_LOAD( "k9_b08.bin",  0x3000, 0x1000, 0xe5eec31a )
-	ROM_LOAD( "m9_b09s.bin", 0x4000, 0x1000, 0x252919ef )
-	ROM_LOAD( "n9_b10.bin",  0x5000, 0x1000, 0xe4c218e6 )
+	ROM_LOAD( "e9_b05.bin", 0x0000, 0x1000, 0x5b17051f , 0xe0156191 )
+	ROM_LOAD( "f9_b06.bin", 0x1000, 0x1000, 0x8608d194 , 0x7b758982 )
+	ROM_LOAD( "f9_b07.bin", 0x2000, 0x1000, 0xacf9d179 , 0x302a077b )
+	ROM_LOAD( "k9_b08.bin", 0x3000, 0x1000, 0xe5eec31a , 0xf04293cb )
+	ROM_LOAD( "m9_b09s.bin", 0x4000, 0x1000, 0x252919ef , 0x68e83e4f )
+	ROM_LOAD( "n9_b10.bin", 0x5000, 0x1000, 0xe4c218e6 , 0x1d6579f7 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "e1_b02.bin",  0x0000, 0x1000, 0x32db19bf )
-	ROM_LOAD( "j1_b04.bin",  0x1000, 0x1000, 0x8f29643f )
-	ROM_LOAD( "c1_b01.bin",  0x2000, 0x1000, 0xbc8186c3 )
-	ROM_LOAD( "f1_b03s.bin", 0x3000, 0x1000, 0x24038be5 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "e1_b02.bin", 0x0000, 0x1000, 0x32db19bf , 0x4a0a6b55 )
+	ROM_LOAD( "j1_b04.bin", 0x1000, 0x1000, 0x8f29643f , 0xc680ef04 )
+	ROM_LOAD( "c1_b01.bin", 0x2000, 0x1000, 0xbc8186c3 , 0x705193b2 )
+	ROM_LOAD( "f1_b03s.bin", 0x3000, 0x1000, 0x24038be5 , 0xdba1eda7 )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a )
-	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 )
+	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a , 0x2a855523 )
+	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 , 0xae6f1019 )
 
 	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin", 0x0000, 0x1000, 0x444e2070 )
-	ROM_LOAD( "t9_b12.bin", 0x1000, 0x1000, 0x7ee35909 )
+	ROM_LOAD( "r9_b11.bin", 0x0000, 0x1000, 0x444e2070 , 0x2e0057ff )
+	ROM_LOAD( "t9_b12.bin", 0x1000, 0x1000, 0x7ee35909 , 0xb2120edd )
 ROM_END
 
 ROM_START( bagmans_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000, 0xe17dcfb9 )
-	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000, 0x48832bdf )
-	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000, 0x3362d9aa )
-	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000, 0xf5c9257b )
-	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000, 0xb21ec12e )
-	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000, 0xdf38fc70 )
+	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000, 0xe17dcfb9 , 0x5fb0a1a3 )
+	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000, 0x48832bdf , 0x7871206e )
+	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000, 0x3362d9aa , 0xb2da8b77 )
+	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000, 0xf5c9257b , 0x36b6a944 )
+	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000, 0xb21ec12e , 0xb8e75eb6 )
+	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000, 0xdf38fc70 , 0x83fccb1c )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000, 0x1ec70dab )
-	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000, 0x8f29643f )
-	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000, 0xb0c20178 )
-	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000, 0x9a32388a )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000, 0x1ec70dab , 0xf217ac09 )
+	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000, 0x8f29643f , 0xc680ef04 )
+	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000, 0xb0c20178 , 0xf3e11bd7 )
+	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000, 0x9a32388a , 0xd0f7105b )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a )
-	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 )
+	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a , 0x2a855523 )
+	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 , 0xae6f1019 )
 
 	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
-	ROM_LOAD( "r9_b11.bin", 0x0000, 0x1000, 0x444e2070 )
-	ROM_LOAD( "t9_b12.bin", 0x1000, 0x1000, 0x7ee35909 )
+	ROM_LOAD( "r9_b11.bin", 0x0000, 0x1000, 0x444e2070 , 0x2e0057ff )
+	ROM_LOAD( "t9_b12.bin", 0x1000, 0x1000, 0x7ee35909 , 0xb2120edd )
 ROM_END
 
 ROM_START( sbagman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sbag_9e.bin", 0x0000, 0x1000, 0xe8698dcb )
-	ROM_LOAD( "sbag_9f.bin", 0x1000, 0x1000, 0xb0c4d060 )
-	ROM_LOAD( "sbag_9j.bin", 0x2000, 0x1000, 0xd2d6688e )
-	ROM_LOAD( "sbag_9k.bin", 0x3000, 0x1000, 0x1ce5b48d )
-	ROM_LOAD( "sbag_9m.bin", 0x4000, 0x1000, 0x5332ca3a )
-	ROM_LOAD( "sbag_9n.bin", 0x5000, 0x1000, 0x69de261e )
-	ROM_LOAD( "sbag_d8.bin", 0xc000, 0x0e00, 0x815748b3 )
+	ROM_LOAD( "sbag_9e.bin", 0x0000, 0x1000, 0xe8698dcb , 0xc19696f2 )
+	ROM_LOAD( "sbag_9f.bin", 0x1000, 0x1000, 0xb0c4d060 , 0xac49cb82 )
+	ROM_LOAD( "sbag_9j.bin", 0x2000, 0x1000, 0xd2d6688e , 0x9a1c778d )
+	ROM_LOAD( "sbag_9k.bin", 0x3000, 0x1000, 0x1ce5b48d , 0xb94fbb73 )
+	ROM_LOAD( "sbag_9m.bin", 0x4000, 0x1000, 0x5332ca3a , 0xb21e246e )
+	ROM_LOAD( "sbag_9n.bin", 0x5000, 0x1000, 0x69de261e , 0x5f750918 )
+	ROM_LOAD( "sbag_d8.bin", 0xc000, 0x0e00, 0x815748b3 , 0x944a4453 )
 	ROM_CONTINUE(            0xfe00, 0x0200 )
-	ROM_LOAD( "sbag_f8.bin", 0xd000, 0x0400, 0x25a5ff17 )
+	ROM_LOAD( "sbag_f8.bin", 0xd000, 0x0400, 0x25a5ff17 , 0x0f3e6de4 )
 	ROM_CONTINUE(            0xe400, 0x0200 )
 	ROM_CONTINUE(            0xd600, 0x0a00 )
-	ROM_LOAD( "sbag_j8.bin", 0xe000, 0x0400, 0x11f4f334 )
+	ROM_LOAD( "sbag_j8.bin", 0xe000, 0x0400, 0x11f4f334 , 0xfe924879 )
 	ROM_CONTINUE(            0xd400, 0x0200 )
 	ROM_CONTINUE(            0xe600, 0x0a00 )
-	ROM_LOAD( "sbag_k8.bin", 0xf000, 0x0e00, 0xbffa9184 )
+	ROM_LOAD( "sbag_k8.bin", 0xf000, 0x0e00, 0xbffa9184 , 0xb77eb1f5 )
 	ROM_CONTINUE(            0xce00, 0x0200 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sbag_1e.bin", 0x0000, 0x1000, 0x350318fd )
-	ROM_LOAD( "sbag_1j.bin", 0x1000, 0x1000, 0x4d7cbb5e )
-	ROM_LOAD( "sbag_1c.bin", 0x2000, 0x1000, 0x66c93bff )
-	ROM_LOAD( "sbag_1f.bin", 0x3000, 0x1000, 0xfbedb41f )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sbag_1e.bin", 0x0000, 0x1000, 0x350318fd , 0xf4d3d4e6 )
+	ROM_LOAD( "sbag_1j.bin", 0x1000, 0x1000, 0x4d7cbb5e , 0x2c6a510d )
+	ROM_LOAD( "sbag_1c.bin", 0x2000, 0x1000, 0x66c93bff , 0x262f870a )
+	ROM_LOAD( "sbag_1f.bin", 0x3000, 0x1000, 0xfbedb41f , 0x350ed0fb )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a )
-	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 )
+	ROM_LOAD( "p3.bin", 0x0000, 0x0020, 0x1b944a5a , 0x2a855523 )
+	ROM_LOAD( "r3.bin", 0x0020, 0x0020, 0x19d778c7 , 0xae6f1019 )
 
 	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
-	ROM_LOAD( "sbag_9r.bin", 0x0000, 0x1000, 0x444e2070 )
-	ROM_LOAD( "sbag_9t.bin", 0x1000, 0x1000, 0x7ee35909 )
+	ROM_LOAD( "sbag_9r.bin", 0x0000, 0x1000, 0x444e2070 , 0x2e0057ff )
+	ROM_LOAD( "sbag_9t.bin", 0x1000, 0x1000, 0x7ee35909 , 0xb2120edd )
 ROM_END
 
 

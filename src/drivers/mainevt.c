@@ -519,20 +519,20 @@ static struct MachineDriver dv_machine_driver =
 
 ROM_START( mainevt_rom )
 	ROM_REGION(0x40000)
-	ROM_LOAD( "799c02.k11", 0x10000, 0x08000, 0xa98c6cbe )
+	ROM_LOAD( "799c02.k11", 0x10000, 0x08000, 0xa98c6cbe , 0xe2e7dbd5 )
 	ROM_CONTINUE(0x8000,0x8000)
 
-	ROM_REGION(0x120000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "799c06.f22", 0x00000, 0x08000, 0xe96a5fe6 )
-	ROM_LOAD( "799c07.h22", 0x08000, 0x08000, 0x1aec2e1c )
-	ROM_LOAD( "799c08.j22", 0x10000, 0x08000, 0x01e9ceed )
-	ROM_LOAD( "799c09.k22", 0x18000, 0x08000, 0xe5c2ce32 )
+	ROM_REGION_DISPOSE(0x120000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "799c06.f22", 0x00000, 0x08000, 0xe96a5fe6 , 0xf839cb58 )
+	ROM_LOAD( "799c07.h22", 0x08000, 0x08000, 0x1aec2e1c , 0x176df538 )
+	ROM_LOAD( "799c08.j22", 0x10000, 0x08000, 0x01e9ceed , 0xd01e0078 )
+	ROM_LOAD( "799c09.k22", 0x18000, 0x08000, 0xe5c2ce32 , 0x9baec75e )
 
-	ROM_LOAD( "799b04.h4",  0x20000, 0x80000, 0xbef2b882 )
-	ROM_LOAD( "799b05.k4",  0xa0000, 0x80000, 0xe1d5418d )
+	ROM_LOAD( "799b04.h4", 0x20000, 0x80000, 0xbef2b882 , 0x323e0c2b )
+	ROM_LOAD( "799b05.k4", 0xa0000, 0x80000, 0xe1d5418d , 0x571c5831 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "799c01.f7", 0x00000, 0x08000, 0xa443606f )
+	ROM_LOAD( "799c01.f7", 0x00000, 0x08000, 0xa443606f , 0x447c4c5c )
 
 	ROM_REGION(0x80000) /* 2 sample roms? */
 //  ROM_LOAD( "799b03.d4", 0x00000, 0x80000, 0xbef2b882 )
@@ -541,23 +541,23 @@ ROM_END
 
 ROM_START( devstors_rom )
 	ROM_REGION(0x40000)
-	ROM_LOAD( "dev-x02.rom", 0x10000, 0x08000, 0x3b305b1a )
+	ROM_LOAD( "dev-x02.rom", 0x10000, 0x08000, 0x3b305b1a , 0xe58ebb35 )
 	ROM_CONTINUE(0x8000,0x8000)
 
-	ROM_REGION(0x120000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dev-f06.rom", 0x00000, 0x08000, 0x1c13a4df )
-	ROM_LOAD( "dev-f07.rom", 0x08000, 0x08000, 0xc0cb2637 )
-	ROM_LOAD( "dev-f08.rom", 0x10000, 0x08000, 0x84f10027 )
-	ROM_LOAD( "dev-f09.rom", 0x18000, 0x08000, 0xb7161788 )
+	ROM_REGION_DISPOSE(0x120000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dev-f06.rom", 0x00000, 0x08000, 0x1c13a4df , 0x26592155 )
+	ROM_LOAD( "dev-f07.rom", 0x08000, 0x08000, 0xc0cb2637 , 0x6c74fa2e )
+	ROM_LOAD( "dev-f08.rom", 0x10000, 0x08000, 0x84f10027 , 0x29e12e80 )
+	ROM_LOAD( "dev-f09.rom", 0x18000, 0x08000, 0xb7161788 , 0x67ca40d5 )
 
-	ROM_LOAD( "dev-f04.rom", 0x20000, 0x80000, 0x40376f11 )
-	ROM_LOAD( "dev-f05.rom", 0xa0000, 0x80000, 0xf64167af )
+	ROM_LOAD( "dev-f04.rom", 0x20000, 0x80000, 0x40376f11 , 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom", 0xa0000, 0x80000, 0xf64167af , 0xda37db05 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "dev-k01.rom", 0x00000, 0x08000, 0xac10731c )
+	ROM_LOAD( "dev-k01.rom", 0x00000, 0x08000, 0xac10731c , 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)
- 	ROM_LOAD( "dev-f03.rom", 0x00000, 0x80000, 0x9011002f )
+ 	ROM_LOAD( "dev-f03.rom", 0x00000, 0x80000, 0x9011002f , 0x19065031 )
 ROM_END
 
 struct GameDriver mainevt_driver =

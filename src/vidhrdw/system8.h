@@ -35,6 +35,7 @@ void system8_define_sprite_pixelmode(int Mode);
 
 int  wbml_bg_bankselect_r(int offset);
 void wbml_bg_bankselect_w(int offset, int data);
+int  wbml_paged_videoram_r(int offset);
 void wbml_paged_videoram_w(int offset,int data);
 void system8_background_collisionram_w(int offset,int data);
 void system8_sprites_collisionram_w(int offset,int data);

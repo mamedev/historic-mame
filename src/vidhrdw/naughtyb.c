@@ -13,11 +13,10 @@
 
 unsigned char *naughtyb_videoram2;
 
+int videoreg;
+
 /* use these to draw charset B */
 unsigned char *naughtyb_scrollreg;
-
-/* video/control register 1  */
-static unsigned char videoctlreg;
 
 /* use this to select palette */
 static unsigned char palreg;
@@ -132,14 +131,12 @@ void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 ***************************************************************************/
 int naughtyb_vh_start(void)
 {
-	palreg    = 0;
-	bankreg   = 0;
-	videoctlreg = 0;
+	videoreg = palreg = bankreg = 0;
 
 	/* Naughty Boy has a virtual screen twice as large as the visible screen */
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	memset(dirtybuffer, 1, videoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(28*8,68*8)) == 0)
 	{
@@ -177,21 +174,33 @@ void naughtyb_videoram2_w(int offset,int data)
 
 
 
-void naughtyb_videoreg_w (int offset,int data)
+void naughtyb_videoreg_w (int offset, int data)
 {
-//        if (videoctlreg != data) {
+	if ((videoreg & 0x0f) != (data & 0x0f))
+	{
+		videoreg = data;
 
-           videoctlreg = data;
+		palreg  = (data >> 1) & 0x03;	/* pallette sel is bit 1 & 2 */
+		bankreg = (data >> 2) & 0x01;	/* banksel is just bit 2 */
 
-  	   /*   REMEMBER - both bits 1&2 are used to set the pallette
-   	    *   Don't forget to add in bit 2, which doubles as the bank
-    	    *   select
-            */
+		memset (dirtybuffer, 1, videoram_size);
+	}
+}
 
-	   palreg  = (videoctlreg >> 1) & 0x01;       /* pallette sel is bit 1 */
-	   bankreg = ((videoctlreg >> 2) & 0x01); /* banksel is bit 2      */
+void popflame_videoreg_w (int offset, int data)
+{
+	if ((videoreg & 0x0f) != (data & 0x0f))
+	{
+		videoreg = data;
 
-//        }
+		palreg  = (data >> 1) & 0x03;	/* pallette sel is bit 1 & 2 */
+		bankreg = (data >> 3) & 0x01;	/* banksel is just bit 3 */
+
+		memset (dirtybuffer, 1, videoram_size);
+
+		/* TODO: looks like the upper 4 bits may control sound. They turn on
+		   when you fire your flamethrower */
+	}
 }
 
 
@@ -272,15 +281,15 @@ void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					naughtyb_videoram2[offs] + 256*bankreg,
-					(naughtyb_videoram2[offs] >> 5) + 8*palreg + 16*bankreg,
+					naughtyb_videoram2[offs] + 256 * bankreg,
+					(naughtyb_videoram2[offs] >> 5) + 8 * palreg,
 					0,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 256*bankreg,
-					(videoram[offs] >> 5) + 8*palreg + 16*bankreg,
+					(videoram[offs] >> 5) + 8 * palreg,
 					0,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_PEN,0);

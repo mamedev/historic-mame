@@ -319,17 +319,17 @@ static const char *tankbatt_sample_names[] =
 
 ROM_START( tankbatt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tb1-1.bin", 0x6000, 0x0800, 0x1ea14ff3 )
-	ROM_LOAD( "tb1-2.bin", 0x6800, 0x0800, 0x626762d7 )
-	ROM_LOAD( "tb1-3.bin", 0x7000, 0x0800, 0xb32ee1f6 )
-	ROM_LOAD( "tb1-4.bin", 0x7800, 0x0800, 0x8c2751c3 )
+	ROM_LOAD( "tb1-1.bin", 0x6000, 0x0800, 0x1ea14ff3 , 0x278a0b8c )
+	ROM_LOAD( "tb1-2.bin", 0x6800, 0x0800, 0x626762d7 , 0xe0923370 )
+	ROM_LOAD( "tb1-3.bin", 0x7000, 0x0800, 0xb32ee1f6 , 0x85005ea4 )
+	ROM_LOAD( "tb1-4.bin", 0x7800, 0x0800, 0x8c2751c3 , 0x3dfb5bcf )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION(0x800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tb1-5.bin", 0x0000, 0x0800, 0x1bab1563 )
+	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tb1-5.bin", 0x0000, 0x0800, 0x1bab1563 , 0xaabd4fb1 )
 
 	ROM_REGION(0x100)	/* color prom */
-	ROM_LOAD( "tankbatt.clr", 0x0000, 0x0100, 0x864e0100 )
+	ROM_LOAD( "tankbatt.clr", 0x0000, 0x0100, 0x864e0100 , 0x1150d613 )
 ROM_END
 
 

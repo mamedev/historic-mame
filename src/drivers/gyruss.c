@@ -70,12 +70,13 @@ void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int gyruss_portA_r(int offset);
+void gyruss_filter0_w(int offset,int data);
+void gyruss_filter1_w(int offset,int data);
 void gyruss_sh_irqtrigger_w(int offset,int data);
-void gyruss_init_machine(void);
 void gyruss_i8039_irq_w(int offset,int data);
 void gyruss_i8039_command_w(int offset,int data);
 int gyruss_i8039_command_r(int offset);
-void gyruss_digital_out(int offset, int data);
+void gyruss_dac_w(int offset, int data);
 
 
 
@@ -193,7 +194,7 @@ static struct IOReadPort i8039_readport[] =
 
 static struct IOWritePort i8039_writeport[] =
 {
-	{ I8039_p1, I8039_p1, gyruss_digital_out },
+	{ I8039_p1, I8039_p1, DAC_data_w },
 	{ I8039_p2, I8039_p2, IOWP_NOP },
 	{ -1 }	/* end of table */
 };
@@ -447,13 +448,13 @@ static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
 	1789772,	/* 1.789772727 MHz */
-	{ 0x00ff, 0x00ff, 0x10ff, 0x10ff, 0x10ff },
+	{ 0x28ef, 0x28ef, 0x28ef, 0x28ef, 0x28ef },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
 	{ 0, 0, gyruss_portA_r },
 	{ 0 },
 	{ 0 },
-	{ 0 }
+	{ gyruss_filter0_w, gyruss_filter1_w }
 };
 
 #ifndef USE_SAMPLES
@@ -461,7 +462,7 @@ static struct DACinterface dac_interface =
 {
 	1,
 	441000,
-	{ 150, 150 },
+	{ 255, 255 },
 	{  1,  1 }
 };
 #else
@@ -502,7 +503,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	gyruss_init_machine,
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -547,98 +548,98 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gyruss_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gyrussk.1", 0x0000, 0x2000, 0x859dab03 )
-	ROM_LOAD( "gyrussk.2", 0x2000, 0x2000, 0x99244034 )
-	ROM_LOAD( "gyrussk.3", 0x4000, 0x2000, 0xe77f026b )
+	ROM_LOAD( "gyrussk.1", 0x0000, 0x2000, 0x859dab03 , 0xc673b43d )
+	ROM_LOAD( "gyrussk.2", 0x2000, 0x2000, 0x99244034 , 0xa4ec03e4 )
+	ROM_LOAD( "gyrussk.3", 0x4000, 0x2000, 0xe77f026b , 0x27454a98 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",  0x0000, 0x2000, 0x98f88b6e )
-	ROM_LOAD( "gyrussk.6",  0x2000, 0x2000, 0x90c095a2 )
-	ROM_LOAD( "gyrussk.5",  0x4000, 0x2000, 0x2fb43a10 )
-	ROM_LOAD( "gyrussk.8",  0x6000, 0x2000, 0xe7297079 )
-	ROM_LOAD( "gyrussk.7",  0x8000, 0x2000, 0xff46ed2e )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gyrussk.4", 0x0000, 0x2000, 0x98f88b6e , 0x27d8329b )
+	ROM_LOAD( "gyrussk.6", 0x2000, 0x2000, 0x90c095a2 , 0xc949db10 )
+	ROM_LOAD( "gyrussk.5", 0x4000, 0x2000, 0x2fb43a10 , 0x4f22411a )
+	ROM_LOAD( "gyrussk.8", 0x6000, 0x2000, 0xe7297079 , 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7", 0x8000, 0x2000, 0xff46ed2e , 0x8e8d388c )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d )	/* character lookup table */
+	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 , 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 , 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d , 0xde823a81 )	/* character lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 )
-	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c )
+	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 , 0xf4ae1c17 )
+	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c , 0xba498115 )
 	/* the diagnostics ROM would go here */
 
 	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
 						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",  0x0000, 0x2000, 0xef92fcd8 )
+	ROM_LOAD( "gyrussk.9", 0x0000, 0x2000, 0xef92fcd8 , 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 )
+	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 , 0x3f9b5dea )
 ROM_END
 
 ROM_START( gyrussce_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gya-1.bin", 0x0000, 0x2000, 0x9fef8629 )
-	ROM_LOAD( "gya-2.bin", 0x2000, 0x2000, 0xe7243234 )
-	ROM_LOAD( "gya-3.bin", 0x4000, 0x2000, 0x8c1eeeec )
+	ROM_LOAD( "gya-1.bin", 0x0000, 0x2000, 0x9fef8629 , 0x85f8b7c2 )
+	ROM_LOAD( "gya-2.bin", 0x2000, 0x2000, 0xe7243234 , 0x1e1a970f )
+	ROM_LOAD( "gya-3.bin", 0x4000, 0x2000, 0x8c1eeeec , 0xf6dbb33b )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",  0x0000, 0x2000, 0x98f88b6e )
-	ROM_LOAD( "gyrussk.6",  0x2000, 0x2000, 0x90c095a2 )
-	ROM_LOAD( "gyrussk.5",  0x4000, 0x2000, 0x2fb43a10 )
-	ROM_LOAD( "gyrussk.8",  0x6000, 0x2000, 0xe7297079 )
-	ROM_LOAD( "gyrussk.7",  0x8000, 0x2000, 0xff46ed2e )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gyrussk.4", 0x0000, 0x2000, 0x98f88b6e , 0x27d8329b )
+	ROM_LOAD( "gyrussk.6", 0x2000, 0x2000, 0x90c095a2 , 0xc949db10 )
+	ROM_LOAD( "gyrussk.5", 0x4000, 0x2000, 0x2fb43a10 , 0x4f22411a )
+	ROM_LOAD( "gyrussk.8", 0x6000, 0x2000, 0xe7297079 , 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7", 0x8000, 0x2000, 0xff46ed2e , 0x8e8d388c )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d )	/* character lookup table */
+	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 , 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 , 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d , 0xde823a81 )	/* character lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 )
-	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c )
+	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 , 0xf4ae1c17 )
+	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c , 0xba498115 )
 	/* the diagnostics ROM would go here */
 
 	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
 						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",  0x0000, 0x2000, 0xef92fcd8 )
+	ROM_LOAD( "gyrussk.9", 0x0000, 0x2000, 0xef92fcd8 , 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 )
+	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 , 0x3f9b5dea )
 ROM_END
 
 ROM_START( venus_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "r1", 0x0000, 0x2000, 0xe7d207c2 )
-	ROM_LOAD( "r2", 0x2000, 0x2000, 0x80584fa2 )
-	ROM_LOAD( "r3", 0x4000, 0x2000, 0xe6d7cac1 )
+	ROM_LOAD( "r1", 0x0000, 0x2000, 0xe7d207c2 , 0xd030abb1 )
+	ROM_LOAD( "r2", 0x2000, 0x2000, 0x80584fa2 , 0xdbf65d4d )
+	ROM_LOAD( "r3", 0x4000, 0x2000, 0xe6d7cac1 , 0xdb246fcd )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gyrussk.4",  0x0000, 0x2000, 0x98f88b6e )
-	ROM_LOAD( "gyrussk.6",  0x2000, 0x2000, 0x90c095a2 )
-	ROM_LOAD( "gyrussk.5",  0x4000, 0x2000, 0x2fb43a10 )
-	ROM_LOAD( "gyrussk.8",  0x6000, 0x2000, 0xe7297079 )
-	ROM_LOAD( "gyrussk.7",  0x8000, 0x2000, 0xff46ed2e )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gyrussk.4", 0x0000, 0x2000, 0x98f88b6e , 0x27d8329b )
+	ROM_LOAD( "gyrussk.6", 0x2000, 0x2000, 0x90c095a2 , 0xc949db10 )
+	ROM_LOAD( "gyrussk.5", 0x4000, 0x2000, 0x2fb43a10 , 0x4f22411a )
+	ROM_LOAD( "gyrussk.8", 0x6000, 0x2000, 0xe7297079 , 0x47cd1fbc )
+	ROM_LOAD( "gyrussk.7", 0x8000, 0x2000, 0xff46ed2e , 0x8e8d388c )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 )	/* palette */
-	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 )	/* sprite lookup table */
-	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d )	/* character lookup table */
+	ROM_LOAD( "gyrussk.pr3", 0x0000, 0x0020, 0x16f96315 , 0x98782db3 )	/* palette */
+	ROM_LOAD( "gyrussk.pr1", 0x0020, 0x0100, 0x0dd30001 , 0x7ed057de )	/* sprite lookup table */
+	ROM_LOAD( "gyrussk.pr2", 0x0120, 0x0100, 0xddc70e0d , 0xde823a81 )	/* character lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 )
-	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c )
+	ROM_LOAD( "gyrussk.1a", 0x0000, 0x2000, 0x4fa107c1 , 0xf4ae1c17 )
+	ROM_LOAD( "gyrussk.2a", 0x2000, 0x2000, 0xd20aa58c , 0xba498115 )
 	/* the diagnostics ROM would go here */
 
 	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
 						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",  0x0000, 0x2000, 0xef92fcd8 )
+	ROM_LOAD( "gyrussk.9", 0x0000, 0x2000, 0xef92fcd8 , 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
-	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 )
+	ROM_LOAD( "gyrussk.3a", 0x0000, 0x1000, 0x18d6bc42 , 0x3f9b5dea )
 ROM_END
 
 

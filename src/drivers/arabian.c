@@ -342,20 +342,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( arabian_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic1.87", 0x0000, 0x2000, 0x71cadc52 )
-	ROM_LOAD( "ic2.88", 0x2000, 0x2000, 0xc24b12f9 )
-	ROM_LOAD( "ic3.89", 0x4000, 0x2000, 0x7aac9abe )
-	ROM_LOAD( "ic4.90", 0x6000, 0x2000, 0xcd8565b1 )
+	ROM_LOAD( "ic1.87", 0x0000, 0x2000, 0x71cadc52 , 0x51e9a6b1 )
+	ROM_LOAD( "ic2.88", 0x2000, 0x2000, 0xc24b12f9 , 0x1cdcc1ab )
+	ROM_LOAD( "ic3.89", 0x4000, 0x2000, 0x7aac9abe , 0xb7b7faa0 )
+	ROM_LOAD( "ic4.90", 0x6000, 0x2000, 0xcd8565b1 , 0xdbded961 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* space for graphics roms */
-	ROM_LOAD( "ic84.91", 0x0000, 0x2000, 0xb8edb68d )	/* because of very rare way */
-	ROM_LOAD( "ic85.92", 0x2000, 0x2000, 0x3e0048d8 )  /* CRT controller uses these roms */
-	ROM_LOAD( "ic86.93", 0x4000, 0x2000, 0xc871f425 )  /* there's no way, but to decode */
-	ROM_LOAD( "ic87.94", 0x6000, 0x2000, 0x46faa604 )	/* it at runtime - which is SLOW */
+	ROM_LOAD( "ic84.91", 0x0000, 0x2000, 0xb8edb68d , 0xc4637822 )	/* because of very rare way */
+	ROM_LOAD( "ic85.92", 0x2000, 0x2000, 0x3e0048d8 , 0xf7c6866d )  /* CRT controller uses these roms */
+	ROM_LOAD( "ic86.93", 0x4000, 0x2000, 0xc871f425 , 0x71acd48d )  /* there's no way, but to decode */
+	ROM_LOAD( "ic87.94", 0x6000, 0x2000, 0x46faa604 , 0x82160b9a )	/* it at runtime - which is SLOW */
 
 ROM_END
 

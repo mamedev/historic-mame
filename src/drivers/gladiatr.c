@@ -78,22 +78,26 @@ Main z80
   05 - CBK0 (unknown)
   06 - LOBJ (connected near graphic ROMs)
   07 - REVERS
+  9E - Send data to NEC 8741-0 (comunicate with 2nd z80)
+		(dip switch 1 is read in these ports too)
+  9F - Send commands to NEC 8741-0
 
-9E, 9F - Comunication ports to 2nd Z80 (dip switch 0 is read here too)
+  C0-DF 8251 (Debug port ?)
 
 2nd z80
 
 00 - YM2203 Control Reg.
 01 - YM2203 Data Read / Write Reg.
-		Port B of the YM2203 is connected to dip switch 1
-
-20 - Send data to NEC 8741 (comunicate with Main z80)
+		Port B of the YM2203 is connected to dip switch 3
+20 - Send data to NEC 8741-1 (comunicate with Main z80)
 		(dip switch 2 is read in these ports too)
+21 - Send commands to NEC 8741-1 (comunicate with Main z80)
+40 - Clear Interrupt latch
+60 - Send data to NEC 8741-2 (Read Joystick and Coin Slot (both players)
+61 - Send commands to NEC 8741-2
+80 - Send data to NEC 8741-3 (Read buttons (Fire 1, 2 and 3 (both players), service button) )
+81 - Send commands to NEC 8741-3
 
-21 - Send commands to NEC 8741 (comunicate with Main z80)
-
-80, 81 - Read buttons (Fire 1, 2 and 3 (both players), service button)
-60, 61 - Read Joystick and Coin Slot (both players)
 A0-BF  - Audio mixer control ?
 E0     - Comunication port to 6809
 */
@@ -123,18 +127,25 @@ void gladiatr_bankswitch_w(int offset,int data);
 int gladiatr_bankswitch_r(int offset);
 
 
-/* NEC 8741 */
-static unsigned char N8741M_rdata;
-static unsigned char N8741M_buf[8];
-static unsigned char N8741M_status = 0x01;
-static unsigned char N8741M_wpoint = 0;
+/* NEC 8741 program mode */
+#define GLADIATOR_8741_MASTER 0
+#define GLADIATOR_8741_SLAVE  1
+#define GLADIATOR_8741_PORT   2
 
-static unsigned char N8741S_rdata;
-static unsigned char N8741S_buf[8];
-static unsigned char N8741S_status = 0x01;
-static unsigned char N8741S_wpoint = 0;
+typedef struct gladiator_8741_status{
+	unsigned char rdata;
+	unsigned char status;
+	unsigned char mode;
+	unsigned char txd[8];
+	unsigned char rxd[8];
+	unsigned char parallelselect;
+	unsigned char txpoint;
+	unsigned char connect;
+	unsigned char pending_4a;
+	int (*portHandler)(unsigned char num);
+}I8741;
 
-static unsigned char port21_c2 = 0;
+static I8741 gladiator_8741[4];
 
 /*Rom bankswitching*/
 void gladiatr_bankswitch_w(int offset,int data){
@@ -150,9 +161,9 @@ int gladiatr_bankswitch_r(int offset){
 	return banka;
 }
 
-/*I/O Adjustments */
-static int adjust_p0(int orig)
+static int gladiator_dsw1_r(unsigned char num)
 {
+	int orig = readinputport(0); /* DSW1 */
 /*Reverse all bits for Input Port 0*/
 /*ie..Bit order is: 0,1,2,3,4,5,6,7*/
 return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
@@ -161,8 +172,9 @@ return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
        | ((orig&0x40)>>5) | ((orig&0x80)>>7);;
 }
 
-static int adjust_p1(int orig)
+static int gladiator_dsw2_r(unsigned char num)
 {
+	int orig = readinputport(1); /* DSW2 */
 /*Bits 2-7 are reversed for Input Port 1*/
 /*ie..Bit order is: 2,3,4,5,6,7,1,0*/
 return	  (orig&0x01) | (orig&0x02)
@@ -171,204 +183,288 @@ return	  (orig&0x01) | (orig&0x02)
 	| ((orig&0x40)>>3) | ((orig&0x80)>>5);
 }
 
-/* NEC 8741 emulation */
-
-/* Write from serial port */
-static void N8741S_writeSerial(int data)
+static int gladiator_controll_r(unsigned char num)
 {
-	if( N8741S_wpoint < 8 )
+	int coins = 0;
+
+	if( readinputport(4) & 0xc0 ) coins = 0x80;
+	switch(num)
 	{
-		N8741S_buf[N8741S_wpoint++] = data;
+	case 0x01: /* start button , coins */
+		return readinputport(3) | coins;
+	case 0x02: /* Player 1 Controller , coins */
+		return readinputport(5) | coins;
+	case 0x04: /* Player 2 Controller , coins */
+		return readinputport(6) | coins;
+	}
+	/* unknown */
+	return 0;
+}
+
+static int gladiator_button3_r(unsigned char num)
+{
+	switch(num)
+	{
+	case 0x01: /* button 3 */
+		return readinputport(7);
+	}
+	/* unknown */
+	return 0;
+}
+
+void gladiator_machine_init(void)
+{
+	int i;
+
+	memset( gladiator_8741,0,sizeof(gladiator_8741));
+	/* connect I8741 MASTER and SLAVE */
+	gladiator_8741[0].connect = 1;
+	gladiator_8741[1].connect = 0;
+	for(i=0;i<4;i++)
+	{
+		gladiator_8741[i].status = 0x00;
+	}
+	gladiator_8741[0].portHandler = gladiator_dsw1_r; /* DSW1 */
+	gladiator_8741[1].portHandler = gladiator_dsw2_r; /* DSW2 */
+	/* button controller */
+	gladiator_8741[2].portHandler = gladiator_button3_r; /* button3 */
+	/* joystick controller */
+	gladiator_8741[3].portHandler = gladiator_controll_r;
+}
+
+#if 1
+/* !!!!! patch to IRQ timming for 2nd CPU !!!!! */
+void gladiatr_irq_patch_w(int offset,int data)
+{
+	cpu_cause_interrupt(1,Z80_INT_REQ);
+}
+#endif
+
+/* YM2203 port A handler (input) */
+static int gladiator_dsw3_r(int offset)
+{
+	return input_port_2_r(offset)^0xff;
+}
+/* YM2203 port B handler (output) */
+static void gladiator_int_controll_w(int offer , int data)
+{
+	/* bit 7   : SSRST = sound reset ? */
+	/* bit 6-1 : N.C.                  */
+	/* bit 0   : ??                    */
+}
+/* YM2203 IRQ */
+static void gladiator_ym_irq(void)
+{
+	/* NMI IRQ is not used by gladiator sound program */
+	cpu_cause_interrupt(1,Z80_NMI_INT);
+}
+
+/* gladiator I8741 emulation */
+
+/* exchange data with serial port MASTER and SLAVE chip */
+static void I8741_exchange_serial_data(int num)
+{
+	I8741 *mst = &gladiator_8741[num];
+	I8741 *sst = &gladiator_8741[mst->connect];
+	int i;
+	int rp,wp;
+
+	/* master -> slave transfer */
+	rp = 0;
+	sst->rxd[rp++] = mst->portHandler ? mst->portHandler(0) : 0;
+	for( wp = 0 ; wp < 6 ; wp++)
+		sst->rxd[rp++] = mst->txd[wp];
+
+	/* slave -> master transfer */
+	rp = 0;
+	mst->rxd[rp++] = sst->portHandler ? sst->portHandler(0) : 0;
+	for( wp = 0 ; wp < 6 ; wp++)
+		mst->rxd[rp++] = sst->txd[wp];
+}
+
+/* read status port */
+int I8741_status_r(int num)
+{
+	I8741 *st = &gladiator_8741[num];
+#if 0
+	if(errorlog) fprintf(errorlog,"8741-%d ST Read %02x PC=%04x\n",num,st->status,cpu_getpc());
+#endif
+	return st->status;
+}
+
+/* read data port */
+int I8741_data_r(int num)
+{
+	I8741 *st = &gladiator_8741[num];
+	int ret = st->rdata;
+	st->status &= 0xfe;
+#if 0
+	if(errorlog) fprintf(errorlog,"8741-%d DATA Read %02x PC=%04x\n",num,ret,cpu_getpc());
+#endif
+
+	switch( st->mode )
+	{
+	case GLADIATOR_8741_PORT: /* parallel data */
+		st->rdata = st->portHandler ? st->portHandler(st->parallelselect) : 0;
+		st->status |= 0x01;
+		break;
+	}
+	return ret;
+}
+
+/* Write data port */
+void I8741_data_w(int num, int data)
+{
+	I8741 *st = &gladiator_8741[num];
+#if 0
+	if(errorlog) fprintf(errorlog,"8741-%d DATA Write %02x PC=%04x\n",num,data,cpu_getpc());
+#endif
+	switch( st->mode )
+	{
+	case GLADIATOR_8741_MASTER:
+	case GLADIATOR_8741_SLAVE:
+		/* buffering transmit data */
+		if( st->txpoint < 8 )
+		{
+			st->txd[st->txpoint++] = data;
+		}
+		break;
+	case GLADIATOR_8741_PORT:
+		st->parallelselect = data;
+		break;
 	}
 }
 
 /* Write command port */
-void N8741S_command_w(int offset, int data)
+void I8741_command_w(int num, int data)
 {
-	if(errorlog) fprintf(errorlog,"N8741S CMD  Write %02x PC=%04x\n",data,cpu_getpc());
+	I8741 *st = &gladiator_8741[num];
+	I8741 *sst;
 
+#if 0
+	if(errorlog) fprintf(errorlog,"8741-%d CMD Write %02x PC=%04x\n",num,data,cpu_getpc());
+#endif
 	switch( data )
 	{
-	case 0x00:
-	case 0x01:
-		N8741S_rdata = 0;
-		N8741S_status |= 0x01;
+	case 0x00: /* read parallel port */
+		st->rdata = st->portHandler ? st->portHandler(0) : 0;
+		st->status |= 0x01;
 		break;
-	case 0x02:
-		N8741S_rdata = N8741S_buf[0]; /* sound command */
-		N8741S_status |= 0x01;
+	case 0x01: /* read receive buffer 0 */
+	case 0x02: /* read receive buffer 1 */
+	case 0x03: /* read receive buffer 2 */
+	case 0x04: /* read receive buffer 3 */
+	case 0x05: /* read receive buffer 4 */
+	case 0x06: /* read receive buffer 5 */
+	case 0x07: /* read receive buffer 6 */
+		st->rdata = st->rxd[data-1];
+		st->status |= 0x01;
 		break;
-	case 0x03:
-	case 0x04:
-	case 0x05:
-	case 0x06:
-	case 0x07:
-		N8741S_rdata = 0;
-		N8741S_status |= 0x01;
+	case 0x08:	/* fix up transnit data */
+		if( st->mode == GLADIATOR_8741_SLAVE )
+		{
+			I8741_exchange_serial_data(num);
+			sst = &gladiator_8741[st->connect];
+			/* release MASTER command 4a holding */
+			if( sst->pending_4a )
+			{
+				sst->pending_4a = 0;
+				sst->rdata   = 0x00; /* return code */
+				sst->status |= 0x01;
+			}
+		}
+		st->txpoint = 0;
 		break;
-	case 0x08:	/* flash data */
-		N8741S_wpoint = 0;
+	case 0x0a:	/* 8741-0 : set serial comminucation mode 'MASTER' */
+		st->mode = GLADIATOR_8741_MASTER;
+		break;
+	case 0x0b:	/* 8741-1 : set serial comminucation mode 'SLAVE'  */
+		st->mode = GLADIATOR_8741_SLAVE;
+		break;
+	case 0x1f:  /* 8741-2,3 : ?? set parallelport mode ?? */
+	case 0x3f:  /* 8741-2,3 : ?? set parallelport mode ?? */
+	case 0xe1:  /* 8741-2,3 : ?? set parallelport mode ?? */
+		st->mode = GLADIATOR_8741_PORT;
+		st->parallelselect = 1; /* preset read number */
+		break;
+	case 0x62:  /* 8741-3   : ? */
+		break;
+	case 0x4a:	/* ?? syncronus with other cpu and return 00H */
+		st->pending_4a = 1;
+		if( st->mode == GLADIATOR_8741_MASTER )
+		{
+			sst = &gladiator_8741[st->connect];
+			/* release SLAVE command 4a holding */
+			if( sst->pending_4a )
+			{
+				sst->pending_4a = 0;
+				sst->rdata   = 0x00; /* return code */
+				sst->status |= 0x01;
+			}
+		}
+		break;
+	case 0x80:	/* 8741-3 : return check code */
+		st->rdata = 0x66;
+		st->status |= 0x01;
+		break;
+	case 0x81:	/* 8741-2 : return check code */
+		st->rdata = 0x48;
+		st->status |= 0x01;
 		break;
 	}
 }
 
 /* Write data port */
-void N8741S_data_w(int offset, int data)
+void gladiator_8741_0_w(int offset, int data)
 {
-	if(errorlog) fprintf(errorlog,"N8741S data Write %02x PC=%04x\n",data,cpu_getpc());
-	/* Write serial data to slave 8741 ?? */
-	//N8741M_writeSerial(data);
+	if(offset&1) I8741_command_w(0,data);
+	else         I8741_data_w(0,data);
+}
+void gladiator_8741_1_w(int offset, int data)
+{
+	if(offset&1) I8741_command_w(1,data);
+	else         I8741_data_w(1,data);
+}
+void gladiator_8741_2_w(int offset, int data)
+{
+	if(offset&1) I8741_command_w(2,data);
+	else         I8741_data_w(2,data);
+}
+void gladiator_8741_3_w(int offset, int data)
+{
+	if(offset&1) I8741_command_w(3,data);
+	else         I8741_data_w(3,data);
 }
 
 /* read data port */
-int N8741S_data_r(int offset){
-
-	//N8741S_status &= ~0x01;
-	return N8741S_rdata;
-}
-
-/* read status port */
-int N8741S_status_r(int offset)
+int gladiator_8741_0_r(int offset)
 {
-	return N8741S_status;
+	int ret;
+	if(offset&1) ret = I8741_status_r(0);
+	else         ret = I8741_data_r(0);
+	return ret;
 }
-
-/* Write from serial port */
-static void N8741M_writeSerial(int data)
+int gladiator_8741_1_r(int offset)
 {
-	if( N8741S_wpoint < 8 )
-	{
-		N8741S_buf[N8741S_wpoint++] = data;
-	}
+	int ret;
+	if(offset&1) ret = I8741_status_r(1);
+	else         ret = I8741_data_r(1);
+	return ret;
 }
-
-/* status read */
-int N8741M_status_r(int offset)
+int gladiator_8741_2_r(int offset)
 {
-	return N8741M_status;
+	int ret;
+	if(offset&1) ret = I8741_status_r(2);
+	else         ret = I8741_data_r(2);
+	return ret;
 }
-
-void N8741M_command_w(int offset, int data)
+int gladiator_8741_3_r(int offset)
 {
-	if(errorlog) fprintf(errorlog,"N8741M CMD Write %02x PC=%04x\n",data,cpu_getpc());
-
-	switch( data )
-	{
-	case 0x00:
-                N8741M_rdata = adjust_p0(readinputport( 0 )); /* difficulty, bonus, lives */
-		N8741M_status |= 0x01;
-		break;
-	case 0x01:
-                N8741M_rdata = adjust_p1(readinputport( 1 )); /* monitor type, coins per play */
-		N8741M_status |= 0x01;
-		break;
-	case 0x02:
-		N8741M_rdata =readinputport( 2 ); /* test mode */
-		N8741M_status |= 0x01;
-		break;
-	case 0x03:
-		{
-			int result = readinputport(3); /* Player 1 Controls */
-			int special = readinputport(5); /* coins, start buttons */
-
-			if( special&0x08 ) result |= 0x01; /* P1 start */
-			if( special&0x10 ) result |= 0x02; /* P2 start */
-			if( special&0x07 ) result |= 0x80; /* coins */
-			N8741M_rdata = result;
-		}
-		N8741M_status |= 0x01;
-		break;
-	case 0x04:
-		N8741M_rdata = readinputport(4); /* Player 2 Controls */
-		N8741M_status |= 0x01;
-		break;
-	case 0x05:
-	case 0x06:
-	case 0x07:
-		N8741M_rdata = 0;
-		N8741M_status |= 0x01;
-		break;
-	case 0x08:	/* fixup tx data */
-		N8741M_wpoint = 0;
-		/* ?? */
-		cpu_cause_interrupt(1,Z80_INT_REQ);
-		break;
-	}
-	/* clear write pointer */
-	N8741M_wpoint = 0;
+	int ret;
+	if(offset&1) ret = I8741_status_r(3);
+	else         ret = I8741_data_r(3);
+	return ret;
 }
-
-/* data port */
-int N8741M_data_r(int offset)
-{
-	//N8741M_status &= ~0x01;
-	return N8741M_rdata;
-}
-
-void N8741M_data_w(int offset, int data)
-{
-	if(errorlog) fprintf(errorlog,"N8741M data Write %02x PC=%04x\n",data,cpu_getpc());
-	/* Write data to slave 8741 ?? */
-	N8741S_writeSerial(data);
-}
-
-static unsigned char IO60_rdata;
-
-static int IO60_r(int offset)
-{
-	if(errorlog) fprintf(errorlog,"IO60 data Read %02x PC=%04x\n",IO60_rdata,cpu_getpc());
-	return IO60_rdata;
-}
-static void IO60_data_w(int offset, int data)
-{
-	if(errorlog) fprintf(errorlog,"IO60 data Write %02x PC=%04x\n",data,cpu_getpc());
-}
-
-static int IO61_r(int offset)
-{
-	if(errorlog) fprintf(errorlog,"IO61 ST  Read PC=%04x\n",cpu_getpc());
-	return 0x01;
-}
-static void IO61_command_w(int offset, int data)
-{
-	switch( data )
-	{
-	case 0x81:
-		IO60_rdata = 0x48;
-		break;
-	}
-	if(errorlog) fprintf(errorlog,"IO61 CMD Write %02x PC=%04x\n",data,cpu_getpc());
-}
-
-
-static unsigned char IO80_rdata;
-
-static int IO80_r(int offset)
-{
-	if(errorlog) fprintf(errorlog,"IO80 data Read %02x PC=%04x\n",IO80_rdata,cpu_getpc());
-	return IO80_rdata;
-}
-static void IO80_data_w(int offset, int data)
-{
-	if(errorlog) fprintf(errorlog,"IO80 data Write %02x PC=%04x\n",data,cpu_getpc());
-}
-
-static int IO81_r(int offset)
-{
-	if(errorlog) fprintf(errorlog,"IO81 ST  Read PC=%04x\n",cpu_getpc());
-	return 0x01;
-}
-static void IO81_command_w(int offset, int data)
-{
-	switch( data )
-	{
-	case 0x80:
-		IO80_rdata = 0x66;
-		break;
-	}
-	if(errorlog) fprintf(errorlog,"IO81 CMD Write %02x PC=%04x\n",data,cpu_getpc());
-}
-
 
 /*Sound Functions*/
 void glad_adpcm_w( int channel, int data ) {
@@ -442,8 +538,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x02, 0x02, gladiatr_bankswitch_r },
-	{ 0x9e, 0x9e, N8741M_data_r },
-	{ 0x9f, 0x9F, N8741M_status_r },
+	{ 0x9e, 0x9f, gladiator_8741_0_r },
 	{ -1 }	/* end of table */
 };
 
@@ -451,8 +546,8 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x01, 0x01, gladiatr_spritebank_w},
 	{ 0x02, 0x02, gladiatr_bankswitch_w},
-	{ 0x9e, 0x9e, N8741M_data_w },
-	{ 0x9f, 0x9f, N8741M_command_w },
+	{ 0x04, 0x04, gladiatr_irq_patch_w}, /* !!! patch to 2nd CPU IRQ !!! */
+	{ 0x9e, 0x9f, gladiator_8741_0_w },
 	{ 0xbf, 0xbf, IORP_NOP },
 	{ -1 }	/* end of table */
 };
@@ -461,12 +556,10 @@ static struct IOReadPort readport_cpu2[] =
 {
 	{ 0x00, 0x00, YM2203_status_port_0_r },
 	{ 0x01, 0x01, YM2203_read_port_0_r },
-	{ 0x20, 0x20, N8741S_data_r },
-	{ 0x21, 0x21, N8741S_status_r},
-	{ 0x60, 0x60, IO60_r },
-	{ 0x61, 0x61, IO61_r},
-	{ 0x80, 0x80, IO80_r },
-	{ 0x81, 0x81, IO81_r},
+	{ 0x20, 0x21, gladiator_8741_1_r },
+	{ 0x40, 0x40, IOWP_NOP },
+	{ 0x60, 0x61, gladiator_8741_2_r },
+	{ 0x80, 0x81, gladiator_8741_3_r },
 	{ -1 }	/* end of table */
 };
 
@@ -474,20 +567,16 @@ static struct IOWritePort writeport_cpu2[] =
 {
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x20, 0x20, N8741S_data_w },
-	{ 0x21, 0x21, N8741S_command_w},
-	{ 0x60, 0x60, IO60_data_w },
-	{ 0x61, 0x61, IO61_command_w},
-	{ 0x80, 0x80, IO80_data_w },
-	{ 0x81, 0x81, IO81_command_w},
-
+	{ 0x20, 0x21, gladiator_8741_1_w },
+	{ 0x60, 0x61, gladiator_8741_2_w },
+	{ 0x80, 0x81, gladiator_8741_3_w },
 /*	{ 0x40, 0x40, glad_sh_irq_clr }, */
 	{ 0xe0, 0xe0, glad_adpcm_w },
 	{ -1 }	/* end of table */
 };
 
 INPUT_PORTS_START( input_ports )
-	PORT_START		/* DSW0 */
+	PORT_START		/* DSW1 (8741-0 parallel port)*/
 	PORT_DIPNAME( 0x03, 0x01, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x01, "Medium" )
@@ -511,7 +600,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
-	PORT_START      /* DSW1  - Dips 6 Unused */
+	PORT_START      /* DSW2  (8741-1 parallel port) - Dips 6 Unused */
 	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
@@ -532,7 +621,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
-	PORT_START      /* DSW2 - Dips 5,6,7 Unused */
+	PORT_START      /* DSW3 (YM2203 port B) - Dips 5,6,7 Unused */
 	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
@@ -548,32 +637,54 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
-	PORT_START	/* IN0 */
+	PORT_START	/* IN0 (8741-3 parallel port 1) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
+
+	PORT_START	/* COINS (8741-3 parallel port bit7) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+
+	PORT_START	/* IN1 (8741-3 parallel port 2) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
 
-	PORT_START	/* IN1 */
+	PORT_START	/* IN2 (8741-3 parallel port 4) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* COINS */
 
-	PORT_START	/* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE, "Coin C", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_START	/* IN3 (8741-2 parallel port 1) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -662,9 +773,10 @@ static struct YM2203interface ym2203_interface =
 	1500000,	/* 1.5 MHz? */
 	{ YM2203_VOL(255,0xff) },
 	{ 0 },
- 	{ 0 },
+	{ gladiator_dsw3_r },         /* port B read */
+	{ gladiator_int_controll_w }, /* port A write */
 	{ 0 },
-	{ 0 }
+	{ gladiator_ym_irq }          /* NMI request for 2nd cpu */
 };
 
 static struct ADPCMinterface adpcm_interface =
@@ -711,7 +823,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION, /* fps, vblank duration */
 	10,	/* interleaving */
-	0,
+	gladiator_machine_init,
 
 	/* video hardware */
 	32*8, 32*8, { 0, 255, 0+16, 255-16 },
@@ -752,110 +864,110 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gladiatr_rom )
 	ROM_REGION(0x1c000)
-	ROM_LOAD( "QB0-5", 0x00000,	0x4000, 0x4f9d05a1 )
-	ROM_LOAD( "QB0-4", 0x04000,	0x2000, 0x4bc45fda )
-	ROM_LOAD( "QB0-1", 0x10000,	0x4000, 0x11836769 )
-	ROM_LOAD( "QC0-3", 0x14000,	0x8000, 0xabd3f7d7 )
+	ROM_LOAD( "qb0-5", 0x00000, 	0x4000, 0x4f9d05a1 , 0x25b19efb )
+	ROM_LOAD( "qb0-4", 0x04000, 	0x2000, 0x4bc45fda , 0x347ec794 )
+	ROM_LOAD( "qb0-1", 0x10000, 	0x4000, 0x11836769 , 0x040c9839 )
+	ROM_LOAD( "qc0-3", 0x14000, 	0x8000, 0xabd3f7d7 , 0x8d182326 )
 
-	ROM_REGION(0x44000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
 	/* sprites */
-	ROM_LOAD( "QC2-7",	0x00000, 0x8000, 0x4831f275 ) /* plane 3 */
-	ROM_LOAD( "QC1-10",	0x08000, 0x8000, 0x39a63d4a ) /* planes 1,2 */
-	ROM_LOAD( "QC2-11",	0x10000, 0x8000, 0x3a74528e ) /* planes 1,2 */
+	ROM_LOAD( "qc2-7", 	0x00000, 0x8000, 0x4831f275 , 0xc992c4f7 ) /* plane 3 */
+	ROM_LOAD( "qc1-10", 	0x08000, 0x8000, 0x39a63d4a , 0x364cdb58 ) /* planes 1,2 */
+	ROM_LOAD( "qc2-11", 	0x10000, 0x8000, 0x3a74528e , 0xc9fecfff ) /* planes 1,2 */
 
-	ROM_LOAD( "QC1-6",	0x30000, 0x4000, 0x43a8bd82 ) /* plane 3 */
-	ROM_LOAD( "QC0-8",	0x38000, 0x4000, 0x70b2dc78 ) /* planes 1,2 */
-	ROM_LOAD( "QC1-9",	0x40000, 0x4000, 0x5dbe5056 ) /* planes 1,2 */
+	ROM_LOAD( "qc1-6", 	0x30000, 0x4000, 0x43a8bd82 , 0x651e6e44 ) /* plane 3 */
+	ROM_LOAD( "qc0-8", 	0x38000, 0x4000, 0x70b2dc78 , 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "qc1-9", 	0x40000, 0x4000, 0x5dbe5056 , 0x01043e03 ) /* planes 1,2 */
 
 	/* tiles */
-	ROM_LOAD( "QB0-12",	0x18000, 0x8000, 0x021c6258 ) /* plane 3 */
-	ROM_LOAD( "QB0-13",	0x20000, 0x8000, 0x796ff62b ) /* planes 1,2 */
-	ROM_LOAD( "QB0-14",	0x28000, 0x8000, 0x2f23bdff ) /* planes 1,2 */
+	ROM_LOAD( "qb0-12", 	0x18000, 0x8000, 0x021c6258 , 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13", 	0x20000, 0x8000, 0x796ff62b , 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14", 	0x28000, 0x8000, 0x2f23bdff , 0x85b71211 ) /* planes 1,2 */
 
-	ROM_LOAD( "QC0-15",	0x34000, 0x2000, 0xe3f02c06 ) /* (monochrome) */
+	ROM_LOAD( "qc0-15", 	0x34000, 0x2000, 0xe3f02c06 , 0xa7efa340 ) /* (monochrome) */
 
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "QB0-17",	0x0000, 0x4000, 0xf68e3364 )
+	ROM_LOAD( "qb0-17", 	0x0000, 0x4000, 0xf68e3364 , 0xe78be010 )
 
 	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "QB0-18", 0x08000, 0x8000, 0x9437974d )
+	ROM_LOAD( "qb0-18", 0x08000, 0x8000, 0x9437974d , 0xe9591260 )
 
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
-	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
+	ROM_LOAD( "qb0-18", 0x00000, 0x8000, 0x9437974d , 0xe9591260 )
+	ROM_LOAD( "qb0-19", 0x08000, 0x8000, 0xa31d0a5f , 0x79caa7ed )
+	ROM_LOAD( "qb0-20", 0x10000, 0x8000, 0x8af2da92 , 0x15916eda )
 ROM_END
 
 ROM_START( ogonsiro_rom )
 	ROM_REGION(0x1c000)
-	ROM_LOAD( "QB0-5", 0x00000,	0x4000, 0x4f9d05a1 )
-	ROM_LOAD( "QB0-4", 0x04000,	0x2000, 0x4bc45fda )
-	ROM_LOAD( "QB0-1", 0x10000,	0x4000, 0x11836769 )
-	ROM_LOAD( "QB0_3", 0x14000,	0x8000, 0xacd3f737 )
+	ROM_LOAD( "qb0-5", 0x00000, 	0x4000, 0x4f9d05a1 , 0x25b19efb )
+	ROM_LOAD( "qb0-4", 0x04000, 	0x2000, 0x4bc45fda , 0x347ec794 )
+	ROM_LOAD( "qb0-1", 0x10000, 	0x4000, 0x11836769 , 0x040c9839 )
+	ROM_LOAD( "qb0_3", 0x14000, 	0x8000, 0xacd3f737 , 0xd6a342e7 )
 
-	ROM_REGION(0x44000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
 	/* sprites */
-	ROM_LOAD( "QB0_7",	0x00000, 0x8000, 0xa86b93a9 ) /* plane 3 */
-	ROM_LOAD( "QB0_10",	0x08000, 0x8000, 0x7c6f2813 ) /* planes 1,2 */
-	ROM_LOAD( "QB0_11",	0x10000, 0x8000, 0x8a96c5ec ) /* planes 1,2 */
+	ROM_LOAD( "qb0_7", 	0x00000, 0x8000, 0xa86b93a9 , 0x4b677bd9 ) /* plane 3 */
+	ROM_LOAD( "qb0_10", 	0x08000, 0x8000, 0x7c6f2813 , 0x87ab6cc4 ) /* planes 1,2 */
+	ROM_LOAD( "qb0_11", 	0x10000, 0x8000, 0x8a96c5ec , 0x25eaa4ff ) /* planes 1,2 */
 
-	ROM_LOAD( "QB0_6",	0x30000, 0x4000, 0xeaa88da2 ) /* plane 3 */
-	ROM_LOAD( "QC0-8",	0x38000, 0x4000, 0x70b2dc78 ) /* planes 1,2 */
-	ROM_LOAD( "QB0_9",	0x40000, 0x4000, 0x17ce0786 ) /* planes 1,2 */
+	ROM_LOAD( "qb0_6", 	0x30000, 0x4000, 0xeaa88da2 , 0x1a2bc769 ) /* plane 3 */
+	ROM_LOAD( "qc0-8", 	0x38000, 0x4000, 0x70b2dc78 , 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "qb0_9", 	0x40000, 0x4000, 0x17ce0786 , 0x38f5152d ) /* planes 1,2 */
 
 	/* tiles */
-	ROM_LOAD( "QB0-12",	0x18000, 0x8000, 0x021c6258 ) /* plane 3 */
-	ROM_LOAD( "QB0-13",	0x20000, 0x8000, 0x796ff62b ) /* planes 1,2 */
-	ROM_LOAD( "QB0-14",	0x28000, 0x8000, 0x2f23bdff ) /* planes 1,2 */
+	ROM_LOAD( "qb0-12", 	0x18000, 0x8000, 0x021c6258 , 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13", 	0x20000, 0x8000, 0x796ff62b , 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14", 	0x28000, 0x8000, 0x2f23bdff , 0x85b71211 ) /* planes 1,2 */
 
-	ROM_LOAD( "QB0_15",	0x34000, 0x2000, 0x598891f2 ) /* (monochrome) */
+	ROM_LOAD( "qb0_15", 	0x34000, 0x2000, 0x598891f2 , 0x5e1332b8 ) /* (monochrome) */
 
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "QB0-17",	0x0000, 0x4000, 0xf68e3364 )
+	ROM_LOAD( "qb0-17", 	0x0000, 0x4000, 0xf68e3364 , 0xe78be010 )
 
 	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "QB0-18", 0x08000, 0x8000, 0x9437974d )
+	ROM_LOAD( "qb0-18", 0x08000, 0x8000, 0x9437974d , 0xe9591260 )
 
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
-	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
+	ROM_LOAD( "qb0-18", 0x00000, 0x8000, 0x9437974d , 0xe9591260 )
+	ROM_LOAD( "qb0-19", 0x08000, 0x8000, 0xa31d0a5f , 0x79caa7ed )
+	ROM_LOAD( "qb0-20", 0x10000, 0x8000, 0x8af2da92 , 0x15916eda )
 ROM_END
 
 ROM_START( gcastle_rom )
 	ROM_REGION(0x1c000)
-	ROM_LOAD( "QB0-5", 0x00000,	0x4000, 0x4f9d05a1 )
-	ROM_LOAD( "QB0-4", 0x04000,	0x2000, 0x4bc45fda )
-	ROM_LOAD( "QB0-1", 0x10000,	0x4000, 0x11836769 )
-	ROM_LOAD( "QB0_3", 0x14000,	0x8000, 0xacd3f737 )
+	ROM_LOAD( "qb0-5", 0x00000, 	0x4000, 0x4f9d05a1 , 0x25b19efb )
+	ROM_LOAD( "qb0-4", 0x04000, 	0x2000, 0x4bc45fda , 0x347ec794 )
+	ROM_LOAD( "qb0-1", 0x10000, 	0x4000, 0x11836769 , 0x040c9839 )
+	ROM_LOAD( "qb0_3", 0x14000, 	0x8000, 0xacd3f737 , 0xd6a342e7 )
 
-	ROM_REGION(0x44000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
 	/* sprites */
-	ROM_LOAD( "GC2-7",	0x00000, 0x8000, 0x7991b291 ) /* plane 3 */
-	ROM_LOAD( "QB0_10",	0x08000, 0x8000, 0x7c6f2813 ) /* planes 1,2 */
-	ROM_LOAD( "GC2-11",	0x10000, 0x8000, 0xf8306b72 ) /* planes 1,2 */
+	ROM_LOAD( "gc2-7", 	0x00000, 0x8000, 0x7991b291 , 0xbb2cb454 ) /* plane 3 */
+	ROM_LOAD( "qb0_10", 	0x08000, 0x8000, 0x7c6f2813 , 0x87ab6cc4 ) /* planes 1,2 */
+	ROM_LOAD( "gc2-11", 	0x10000, 0x8000, 0xf8306b72 , 0x5c512365 ) /* planes 1,2 */
 
-	ROM_LOAD( "GC1-6",	0x30000, 0x4000, 0x6d07f2a3 ) /* plane 3 */
-	ROM_LOAD( "QC0-8",	0x38000, 0x4000, 0x70b2dc78 ) /* planes 1,2 */
-	ROM_LOAD( "GC1-9",	0x40000, 0x4000, 0x50b78557 ) /* planes 1,2 */
+	ROM_LOAD( "gc1-6", 	0x30000, 0x4000, 0x6d07f2a3 , 0x94f49be2 ) /* plane 3 */
+	ROM_LOAD( "qc0-8", 	0x38000, 0x4000, 0x70b2dc78 , 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "gc1-9", 	0x40000, 0x4000, 0x50b78557 , 0x69b977fd ) /* planes 1,2 */
 
 	/* tiles */
-	ROM_LOAD( "QB0-12",	0x18000, 0x8000, 0x021c6258 ) /* plane 3 */
-	ROM_LOAD( "QB0-13",	0x20000, 0x8000, 0x796ff62b ) /* planes 1,2 */
-	ROM_LOAD( "QB0-14",	0x28000, 0x8000, 0x2f23bdff ) /* planes 1,2 */
+	ROM_LOAD( "qb0-12", 	0x18000, 0x8000, 0x021c6258 , 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13", 	0x20000, 0x8000, 0x796ff62b , 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14", 	0x28000, 0x8000, 0x2f23bdff , 0x85b71211 ) /* planes 1,2 */
 
-	ROM_LOAD( "QB0_15",	0x34000, 0x2000, 0x598891f2 ) /* (monochrome) */
+	ROM_LOAD( "qb0_15", 	0x34000, 0x2000, 0x598891f2 , 0x5e1332b8 ) /* (monochrome) */
 
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
-	ROM_LOAD( "QB0-17",	0x0000, 0x4000, 0xf68e3364 )
+	ROM_LOAD( "qb0-17", 	0x0000, 0x4000, 0xf68e3364 , 0xe78be010 )
 
 	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "QB0-18", 0x08000, 0x8000, 0x9437974d )
+	ROM_LOAD( "qb0-18", 0x08000, 0x8000, 0x9437974d , 0xe9591260 )
 
 	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "QB0-18", 0x00000, 0x8000, 0x9437974d )
-	ROM_LOAD( "QB0-19", 0x08000, 0x8000, 0xa31d0a5f )
-	ROM_LOAD( "QB0-20", 0x10000, 0x8000, 0x8af2da92 )
+	ROM_LOAD( "qb0-18", 0x00000, 0x8000, 0x9437974d , 0xe9591260 )
+	ROM_LOAD( "qb0-19", 0x08000, 0x8000, 0xa31d0a5f , 0x79caa7ed )
+	ROM_LOAD( "qb0-20", 0x10000, 0x8000, 0x8af2da92 , 0x15916eda )
 ROM_END
 
 /*Manually combine samples: lgzaid - p1 with lgzaid p2!*/

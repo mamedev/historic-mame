@@ -53,7 +53,7 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
@@ -68,14 +68,21 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		bit0 = (color_prom[256] >> 0) & 0x01;
+		bit1 = (color_prom[256] >> 1) & 0x01;
+		bit2 = (color_prom[256] >> 2) & 0x01;
+		bit3 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
 	}
+
+	/* reserve the last color for the transparent pen (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+
 
 	/* characters use colors 0-63 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
@@ -85,7 +92,7 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
 		if (i % Machine->gfx[1]->color_granularity == 0)
-			COLOR(1,i) = 0;	/* preserve transparency */
+			COLOR(1,i) = 256;	/* transparent */
 		else COLOR(1,i) = i + 128;
 	}
 
@@ -298,7 +305,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrollx = -(firetrap_scroll1x[0] + 256 * firetrap_scroll1x[1]);
 			scrolly = -(firetrap_scroll1y[0] + 256 * firetrap_scroll1y[1]);
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
 	}
 
 

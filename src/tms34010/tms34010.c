@@ -31,21 +31,21 @@ static void TMS34010_io_intcallback(int param);
 
 static void (*WFIELD_functions[32]) (unsigned int bitaddr, unsigned int data) =
 {
-	WFIELD_01, WFIELD_02, WFIELD_03, WFIELD_04, WFIELD_05, WFIELD_06,
-	WFIELD_07, WFIELD_08, WFIELD_09, WFIELD_10, WFIELD_11, WFIELD_12,
-	WFIELD_13, WFIELD_14, WFIELD_15, WFIELD_16, WFIELD_17, WFIELD_18,
-	WFIELD_19, WFIELD_20, WFIELD_21, WFIELD_22, WFIELD_23, WFIELD_24,
-	WFIELD_25, WFIELD_26, WFIELD_27, WFIELD_28, WFIELD_29, WFIELD_30,
-	WFIELD_31, WFIELD_32
+	WFIELD_32, WFIELD_01, WFIELD_02, WFIELD_03, WFIELD_04, WFIELD_05,
+	WFIELD_06, WFIELD_07, WFIELD_08, WFIELD_09, WFIELD_10, WFIELD_11,
+	WFIELD_12, WFIELD_13, WFIELD_14, WFIELD_15, WFIELD_16, WFIELD_17,
+	WFIELD_18, WFIELD_19, WFIELD_20, WFIELD_21, WFIELD_22, WFIELD_23,
+	WFIELD_24, WFIELD_25, WFIELD_26, WFIELD_27, WFIELD_28, WFIELD_29,
+	WFIELD_30, WFIELD_31
 };
 static int (*RFIELD_functions[32]) (unsigned int bitaddr) =
 {
-	RFIELD_01, RFIELD_02, RFIELD_03, RFIELD_04, RFIELD_05, RFIELD_06,
-	RFIELD_07, RFIELD_08, RFIELD_09, RFIELD_10, RFIELD_11, RFIELD_12,
-	RFIELD_13, RFIELD_14, RFIELD_15, RFIELD_16, RFIELD_17, RFIELD_18,
-	RFIELD_19, RFIELD_20, RFIELD_21, RFIELD_22, RFIELD_23, RFIELD_24,
-	RFIELD_25, RFIELD_26, RFIELD_27, RFIELD_28, RFIELD_29, RFIELD_30,
-	RFIELD_31, RFIELD_32
+	RFIELD_32, RFIELD_01, RFIELD_02, RFIELD_03, RFIELD_04, RFIELD_05,
+	RFIELD_06, RFIELD_07, RFIELD_08, RFIELD_09, RFIELD_10, RFIELD_11,
+	RFIELD_12, RFIELD_13, RFIELD_14, RFIELD_15, RFIELD_16, RFIELD_17,
+	RFIELD_18, RFIELD_19, RFIELD_20, RFIELD_21, RFIELD_22, RFIELD_23,
+	RFIELD_24, RFIELD_25, RFIELD_26, RFIELD_27, RFIELD_28, RFIELD_29,
+	RFIELD_30, RFIELD_31
 };
 
 /* public globals */
@@ -53,15 +53,21 @@ int	TMS34010_ICount=50000;
 
 /* register definitions and shortcuts */
 #define PC (state.pc)
-#define ST (state.st)
-#define AREG(i) (state.Aregs[i])
-#define BREG(i) (state.Bregs[i])
-#define SP (state.Aregs[15])
-#define FW(i) (state.fw[i])
-#define FE0 (ST&FE0FLAG)
-#define FE1 (ST&FE1FLAG)
-#define SRCREG (((state.op)>>5)&0x0f)
-#define DSTREG ((state.op)&0x0f)
+#define N_FLAG    (state.nflag)
+#define NOTZ_FLAG (state.notzflag)
+#define C_FLAG    (state.cflag)
+#define V_FLAG    (state.vflag)
+#define P_FLAG    (state.pflag)
+#define IE_FLAG   (state.ieflag)
+#define FE0_FLAG  (state.fe0flag)
+#define FE1_FLAG  (state.fe1flag)
+#define AREG(i)   (state.Aregs[i])
+#define BREG(i)   (state.Bregs[i])
+#define SP        (state.Aregs[15])
+#define FW(i)     (state.fw[i])
+#define FW_INC(i) (state.fw_inc[i])
+#define SRCREG    (((state.op)>>5)&0x0f)
+#define DSTREG    ((state.op)&0x0f)
 #define PARAM_WORD ( ROPARG() )
 #define SKIP_WORD ( PC += (2<<3) )
 #define SKIP_LONG ( PC += (4<<3) )
@@ -95,12 +101,53 @@ int	TMS34010_ICount=50000;
 /* set the field widths - shortcut */
 INLINE void SET_FW(void)
 {
-	FW(0)=(((ST)&0x1f)?ST&0x1f:0x20);
-	FW(1)=(((ST>>6)&0x1f)?(ST>>6)&0x1f:0x20);
-	state.F0_write = WFIELD_functions[FW(0)-1];
-	state.F1_write = WFIELD_functions[FW(1)-1];
-	state.F0_read = RFIELD_functions[FW(0)-1];
-	state.F1_read = RFIELD_functions[FW(1)-1];
+	FW_INC(0) = (FW(0) ? FW(0) : 0x20);
+	FW_INC(1) = (FW(1) ? FW(1) : 0x20);
+	state.F0_write = WFIELD_functions[FW(0)];
+	state.F1_write = WFIELD_functions[FW(1)];
+	state.F0_read  = RFIELD_functions[FW(0)];
+	state.F1_read  = RFIELD_functions[FW(1)];
+}
+	
+/* Intialize Status to 0x0010 */
+INLINE void RESET_ST(void)
+{
+	N_FLAG = C_FLAG = V_FLAG = P_FLAG = IE_FLAG = FE0_FLAG = FE1_FLAG = 0;
+	NOTZ_FLAG = 1;
+	FW(0) = 0x10;
+	FW(1) = 0;
+	SET_FW();
+}
+
+/* Combine indiviual flags into the Status Register */
+INLINE unsigned int GET_ST(void)
+{
+	return (N_FLAG    ? 0x80000000 : 0) |
+		   (C_FLAG    ? 0x40000000 : 0) |
+		   (NOTZ_FLAG ? 0 : 0x20000000) |
+		   (V_FLAG    ? 0x10000000 : 0) |
+		   (P_FLAG    ? 0x02000000 : 0) |
+		   (IE_FLAG   ? 0x00200000 : 0) |
+		   (FE0_FLAG  ? 0x00000020 : 0) |
+		   (FE1_FLAG  ? 0x00000800 : 0) |
+		   FW(0) |
+		  (FW(1) << 6);
+}
+
+/* Break up Status Register into indiviual flags */
+INLINE void SET_ST(unsigned int st)
+{
+	N_FLAG    =    st & 0x80000000;
+	C_FLAG    =    st & 0x40000000;
+	NOTZ_FLAG =  !(st & 0x20000000);
+	V_FLAG    =    st & 0x10000000;
+	P_FLAG    =    st & 0x02000000;
+	IE_FLAG   =    st & 0x00200000;
+	FE0_FLAG  =    st & 0x00000020;
+	FE1_FLAG  =    st & 0x00000800;
+	FW(0)     =    st & 0x1f;
+	FW(1)     =   (st >> 6) & 0x1f;
+	SET_FW();
 }
 
 /* shortcuts for reading opcodes */
@@ -167,16 +214,15 @@ INLINE int POP (void)
 	int boundary = 0;	 																\
 	int a = (address&0xfffffff0)>>3;													\
 	int shiftcount = (address&m1);														\
-	if (!state.lastpixaddr_valid || state.lastpixaddr != a)								\
+	if (state.lastpixaddr != a)															\
 	{																					\
-		if (state.lastpixaddr_valid)													\
+		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
 		{																				\
 			TMS34010_WRMEM_WORD(state.lastpixaddr, state.lastpixword);					\
 			boundary = 1;																\
 		}																				\
 		state.lastpixword = TMS34010_RDMEM_WORD(a);										\
 		state.lastpixaddr = a;															\
-		state.lastpixaddr_valid = 1;													\
 	}																					\
 																						\
 	/* TODO: plane masking */															\
@@ -191,9 +237,9 @@ INLINE int POP (void)
 #define WP_T(m1,m2)  																	\
 	int boundary = 0;	 																\
 	int a = (address&0xfffffff0)>>3;													\
-	if (!state.lastpixaddr_valid || state.lastpixaddr != a)								\
+	if (state.lastpixaddr != a)															\
 	{																					\
-		if (state.lastpixaddr_valid)													\
+		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
 		{																				\
 			if (state.lastpixwordchanged)												\
 			{																			\
@@ -203,7 +249,6 @@ INLINE int POP (void)
 		}																				\
 		state.lastpixword = TMS34010_RDMEM_WORD(a);										\
 		state.lastpixaddr = a;															\
-		state.lastpixaddr_valid = 1;													\
 		state.lastpixwordchanged = 0;													\
 	}																					\
 																						\
@@ -226,16 +271,15 @@ INLINE int POP (void)
 	int boundary = 0;	 																\
 	int a = (address&0xfffffff0)>>3;													\
 	int shiftcount = (address&m1);														\
-	if (!state.lastpixaddr_valid || state.lastpixaddr != a)								\
+	if (state.lastpixaddr != a)															\
 	{																					\
-		if (state.lastpixaddr_valid)													\
+		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
 		{																				\
 			TMS34010_WRMEM_WORD(state.lastpixaddr, state.lastpixword);					\
 			boundary = 1;																\
 		}																				\
 		state.lastpixword = TMS34010_RDMEM_WORD(a);										\
 		state.lastpixaddr = a;															\
-		state.lastpixaddr_valid = 1;													\
 	}																					\
 																						\
 	/* TODO: plane masking */															\
@@ -254,9 +298,9 @@ INLINE int POP (void)
 	int boundary = 0;	 																\
 	int a = (address&0xfffffff0)>>3;													\
 	int shiftcount = (address&m1);														\
-	if (!state.lastpixaddr_valid || state.lastpixaddr != a)								\
+	if (state.lastpixaddr != a)															\
 	{																					\
-		if (state.lastpixaddr_valid)													\
+		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
 		{																				\
 			if (state.lastpixwordchanged)												\
 			{																			\
@@ -266,7 +310,6 @@ INLINE int POP (void)
 		}																				\
 		state.lastpixword = TMS34010_RDMEM_WORD(a);										\
 		state.lastpixaddr = a;															\
-		state.lastpixaddr_valid = 1;													\
 		state.lastpixwordchanged = 0;													\
 	}																					\
 																						\
@@ -295,7 +338,7 @@ static int write_pixel_16(unsigned int address, unsigned int value)
 {
 	// TODO: plane masking
 
-	TMS34010_WRMEM_WORD((address&0xfffffff0)>>3, value);
+	TMS34010_WRMEM_WORD((address&0xfffffff0)>>3, value);		
 	return 1;
 }
 
@@ -312,7 +355,7 @@ static int write_pixel_t_16(unsigned int address, unsigned int value)
 	// Transparency checking
 	if (value)
 	{
-		TMS34010_WRMEM_WORD((address&0xfffffff0)>>3, value);
+		TMS34010_WRMEM_WORD((address&0xfffffff0)>>3, value);		
 	}
 
 	return 1;
@@ -351,7 +394,7 @@ static int write_pixel_r_t_16(unsigned int address, unsigned int value)
 	// Transparency checking
 	if (value)
 	{
-		TMS34010_WRMEM_WORD(a, value);
+		TMS34010_WRMEM_WORD(a, value);		
 	}
 
 	return 1;
@@ -370,17 +413,17 @@ static int read_pixel_8 (unsigned int address) { RP(0x08,0xff) }
 static int read_pixel_16(unsigned int address)
 {
 	// TODO: Plane masking
-	return TMS34010_RDMEM_WORD((address&0xfffffff0)>>3);
+	return TMS34010_RDMEM_WORD((address&0xfffffff0)>>3);	
 }
 
 
 #define FINISH_PIX_OP												\
-	if (state.lastpixaddr_valid)									\
+	if (state.lastpixaddr != INVALID_PIX_ADDRESS)					\
 	{																\
 		TMS34010_WRMEM_WORD(state.lastpixaddr, state.lastpixword);	\
 	}																\
-	state.lastpixaddr_valid = 0;									\
-	CLR_P;
+	state.lastpixaddr = INVALID_PIX_ADDRESS;						\
+	P_FLAG = 0;
 
 
 /* Not sure how correct this is */
@@ -394,7 +437,7 @@ static int write_pixel_shiftreg (unsigned int address, unsigned int value)
 
 	for (; address < addressend; address+=4)
 	{
-		TMS34010_WRMEM_DWORD(address, data);
+		TMS34010_WRMEM_DWORD(address, data);			
 	}
 	return 1;
 }
@@ -496,8 +539,10 @@ static int raster_op_16(int newpix, int oldpix)
 }
 static int raster_op_17(int newpix, int oldpix)
 {
-	/*  ADDS(S,D) -> D */
-	return EXTEND(newpix,IOREG(REG_PSIZE)) + EXTEND(oldpix,IOREG(REG_PSIZE));
+	/*  S + D -> D with Saturation*/
+	int max = (unsigned int)0xffffffff>>(32-IOREG(REG_PSIZE));
+	int res = newpix + oldpix;
+	return (res > max) ? max : res;
 }
 static int raster_op_18(int newpix, int oldpix)
 {
@@ -506,8 +551,9 @@ static int raster_op_18(int newpix, int oldpix)
 }
 static int raster_op_19(int newpix, int oldpix)
 {
-	/*  SUBS(S,D) -> D */
-	return EXTEND(oldpix,IOREG(REG_PSIZE)) - EXTEND(newpix,IOREG(REG_PSIZE));
+	/*  D - S -> D with Saturation */
+	int res = oldpix - newpix;
+	return (res < 0) ? 0 : res;
 }
 static int raster_op_20(int newpix, int oldpix)
 {
@@ -557,17 +603,11 @@ void TMS34010_Reset(void)
 {
 	int i;
 	extern unsigned char *RAM;
-	//if (TMS34010_timer[cpu_getactivecpu()]==0)
-	//{
-	//  	TMS34010_timer[cpu_getactivecpu()] =
-	//	timer_pulse(TIME_IN_HZ (Machine->drv->frames_per_second),
-	//				cpu_getactivecpu(), TMS34010_io_intcallback);
-	//}
 	memset (&state, 0, sizeof (state));
+	state.lastpixaddr = INVALID_PIX_ADDRESS;					
 	PC = RLONG(0xffffffe0);
 	change_pc29(PC)
-	ST = 0x0010;
-	SET_FW();
+	RESET_ST();
 
 	/* The slave CPU starts out halted */
 	if (cpu_getactivecpu() == CPU_SLAVE)
@@ -575,9 +615,6 @@ void TMS34010_Reset(void)
 		IOREG(REG_HSTCTLH) = 0x8000;
 		cpu_halt(cpu_getactivecpu(), 0);
 	}
-
-//	TMS34010_io_register_w(REG_CONTROL<<1,IOREG(REG_CONTROL));
-//	TMS34010_io_register_w(REG_PSIZE<<1,IOREG(REG_PSIZE));
 }
 
 
@@ -606,10 +643,9 @@ static void Interrupt(void)
 		if (!(IOREG(REG_HSTCTLH) & 0x0200))  // NMI mode bit
 		{
 			PUSH(PC);
-			PUSH(ST);
+			PUSH(GET_ST());					
 		}
-		ST = 0x0010;
-		SET_FW();
+		RESET_ST();
 		PC = RLONG(0xfffffee0);
         change_pc29(PC);
 	}
@@ -618,38 +654,37 @@ static void Interrupt(void)
 		if ((IOREG(REG_INTPEND) & TMS34010_HI) &&
 			(IOREG(REG_INTENB)  & TMS34010_HI))
 		{
-			take = 0xfffffec0;
+			take = 0xfffffec0;		
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_DI)) /* This was only generated if enabled */
 		{
-			take = 0xfffffea0;
+			take = 0xfffffea0;		
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_WV) &&
 			(IOREG(REG_INTENB)  & TMS34010_WV))
 		{
-			take = 0xfffffe80;
+			take = 0xfffffe80;		
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT1) &&
 			(IOREG(REG_INTENB)  & TMS34010_INT1))
 		{
-			take = 0xffffffc0;
+			take = 0xffffffc0;		
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT2) &&
 			(IOREG(REG_INTENB)  & TMS34010_INT2))
 		{
-			take = 0xffffffa0;
+			take = 0xffffffa0;		
 		}
 
 		if (take)
 		{
 			PUSH(PC);
-			PUSH(ST);
-			ST = 0x0010;
-			SET_FW();
+			PUSH(GET_ST());
+			RESET_ST();
 			PC = RLONG(take);
 			change_pc29(PC);
 		}
@@ -664,7 +699,7 @@ int TMS34010_Execute(int cycles)
 	/* Get out if CPU is halted. Absolutely no interrupts must be taken!!! */
 	if (IOREG(REG_HSTCTLH) & 0x8000)
 	{
-		return cycles;
+		return cycles;		
 	}
 
 	TMS34010_ICount = cycles;
@@ -674,21 +709,25 @@ int TMS34010_Execute(int cycles)
 		/* Quickly reject the cases when there are no pending interrupts
 		   or they are disabled (as in an interrupt service routine) */
 		if (IOREG(REG_INTPEND) &&
-			(GET_IE || (IOREG(REG_INTPEND) & TMS34010_NMI)))
+			(IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI)))
 		{
-			Interrupt();
+			Interrupt();			
 		}
 
 #ifdef	MAME_DEBUG
 {
 	extern int mame_debug;
-	if (mame_debug) MAME_Debug();
+	if (mame_debug)
+	{
+		state.st = GET_ST();
+		MAME_Debug();		
+	}
 }
 #endif
 		state.op = ROPCODE ();
 		(*opcode_table[state.op >> 4])();
 
-		TMS34010_ICount -= 10;
+		TMS34010_ICount -= 5;
 
 	} while (TMS34010_ICount > 0);
 
@@ -740,7 +779,7 @@ static void set_pixel_function(void)
 	{
 		if (state.raster_op)
 		{
-			i1 = 3;
+			i1 = 3;			
 		}
 		else
 		{
@@ -751,12 +790,12 @@ static void set_pixel_function(void)
 	{
 		if (state.raster_op)
 		{
-			i1 = 1;
+			i1 = 1;			
 		}
 		else
 		{
 			i1 = 0;
-		}
+		}		
 	}
 
 	state.pixel_write = pixel_write_ops[i1][i2];
@@ -777,13 +816,10 @@ static int (*raster_ops[32]) (int newpix, int oldpix) =
 };
 
 
-/* Is the I/O operation coming through the host interface? */
-static int host_interface = 0;
-
 void TMS34010_io_register_w(int reg, int data)
 {
 	int cpu;
-
+							
 	/* Set register */
 	reg >>= 1;
 	IOREG(reg) = data;
@@ -795,16 +831,16 @@ void TMS34010_io_register_w(int reg, int data)
 		cpu = cpu_getactivecpu();
 		if (TMS34010_timer[cpu])
 		{
-			timer_remove(TMS34010_timer[cpu]);
+			timer_remove(TMS34010_timer[cpu]);		
 		}
-		TMS34010_timer[cpu] = timer_set(cpu_getscanlinetime(data-1), cpu, TMS34010_io_intcallback);
+		TMS34010_timer[cpu] = timer_set(cpu_getscanlinetime(data), cpu, TMS34010_io_intcallback);	
 		break;
 
 	case REG_CONTROL:
 		state.transparency = data & 0x20;
 		state.raster_op = raster_ops[(data >> 10) & 0x1f];
+		state.window_checking = (data >> 6) & 0x03;
 		set_pixel_function();
-		if ((data & 0xc0)  && errorlog) fprintf(errorlog, "Window Checking NOT supported. PC=%08X\n", cpu_getpc());
 		break;
 
 	case REG_PSIZE:
@@ -830,17 +866,18 @@ void TMS34010_io_register_w(int reg, int data)
 		break;
 
 	case REG_HSTCTLH:
-		if (!host_interface && (data & 0x8000))
+		if ((PC != 0) && (data & 0x8000))
 		{
 			/* CPU is halting itself, stop execution right away */
 			TMS34010_ICount = 0;
 		}
-		cpu_halt(host_interface ? CPU_SLAVE : cpu_getactivecpu(), !(data & 0x8000));
+		cpu = ((PC == 0) ? CPU_SLAVE : cpu_getactivecpu());
+		cpu_halt(cpu, !(data & 0x8000));
 
 		if (data & 0x0100)
 		{
 			/* NMI issued */
-			cpu_cause_interrupt(host_interface ? CPU_SLAVE : cpu_getactivecpu(), TMS34010_NMI);
+			cpu_cause_interrupt((PC == 0) ? CPU_SLAVE : cpu_getactivecpu(), TMS34010_NMI);
 		}
 		break;
 
@@ -850,7 +887,7 @@ void TMS34010_io_register_w(int reg, int data)
 		break;
 
 	case REG_HSTDATA:
-		if (host_interface)
+		if (PC == 0)
 		{
 			unsigned int addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
 
@@ -884,7 +921,7 @@ int TMS34010_io_register_r(int reg)
 	switch (reg)
 	{
 	case REG_HSTDATA:
-		if (host_interface)
+		if (PC == 0)
 		{
 			int data;
 
@@ -897,13 +934,16 @@ int TMS34010_io_register_r(int reg)
 				IOREG(REG_HSTADRH) = addr >> 16;
 				IOREG(REG_HSTADRL) = addr & 0xffff;
 			}
-
+			
             return TMS34010_RDMEM_WORD(addr>>3);
 		}
 		break;
 
 	case REG_VCOUNT:
 		return cpu_getscanline();
+
+	case REG_HCOUNT:
+		return cpu_gethorzbeampos();
 	}
 
 	return IOREG(reg);
@@ -927,7 +967,7 @@ static void TMS34010_io_intcallback(int param)
 
 	/* Reset timer for next frame */
 	double interval = TIME_IN_HZ (Machine->drv->frames_per_second);
-	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);
+	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);	
 
 	/* This is not 100% accurate, but faster */
 	if (context->IOregs[REG_INTENB] & TMS34010_DI)
@@ -936,65 +976,78 @@ static void TMS34010_io_intcallback(int param)
 	}
 }
 
-//extern struct cpuinfo cpu[MAX_CPU];
 
 void TMS34010_State_Save(int cpunum, void *f)
 {
-//	osd_fwrite(f,cpu[cpunum].context,sizeof(state));
+	osd_fwrite(f,cpu_getcontext(cpunum),sizeof(state));
+	osd_fwrite(f,&TMS34010_ICount,sizeof(int));
 }
 
 void TMS34010_State_Load(int cpunum, void *f)
 {
-//	osd_fread(f,cpu[cpunum].context,sizeof(state));
-//	change_pc29(PC);
-//	ST = 0x0010;
-//	SET_FW();
-//	TMS34010_io_register_w(REG_CONTROL<<1,IOREG(REG_CONTROL));
-//	TMS34010_io_register_w(REG_PSIZE<<1,IOREG(REG_PSIZE));
+	osd_fread(f,cpu_getcontext(cpunum),sizeof(state));
+	osd_fread(f,&TMS34010_ICount,sizeof(int));
+	change_pc29(PC);
+	SET_FW();
+	TMS34010_io_register_w(REG_DPYINT<<1,IOREG(REG_DPYINT));
+	TMS34010_io_register_w(REG_CONTROL<<1,IOREG(REG_CONTROL));
+	TMS34010_io_register_w(REG_PSIZE<<1,IOREG(REG_PSIZE));
 }
 
 
 /* Host interface */
 
-#define HSTREG_WRITE(HSTREG)						\
-	TMS34010_GetRegs(cpu_getcontext(CPU_MASTER));	\
-	memorycontextswap (CPU_SLAVE);					\
-	TMS34010_SetRegs(cpu_getcontext(CPU_SLAVE));	\
-	cpu_setactivecpu(CPU_SLAVE);					\
-													\
-	host_interface = 1;								\
-	TMS34010_io_register_w(HSTREG<<1, data);		\
-	host_interface = 0;								\
-													\
-	TMS34010_GetRegs(cpu_getcontext(CPU_SLAVE));	\
-	memorycontextswap (CPU_MASTER);					\
-	TMS34010_SetRegs(cpu_getcontext(CPU_MASTER));	\
-	cpu_setactivecpu(CPU_MASTER);
+static TMS34010_Regs* mastercontext;
+static TMS34010_Regs* slavecontext;			
+
+#define HSTREG_WRITE(HSTREG)					\
+	unsigned int PCsave;						\
+	*mastercontext = state;						\
+	memorycontextswap (CPU_SLAVE);				\
+	state = *slavecontext;						\
+	cpu_setactivecpu(CPU_SLAVE);				\
+												\
+	PCsave = PC;								\
+	PC = 0;										\
+	TMS34010_io_register_w(HSTREG<<1, data);	\
+	PC = PCsave;								\
+												\
+	*slavecontext = state;						\
+	memorycontextswap (CPU_MASTER);				\
+	state = *mastercontext;						\
+	cpu_setactivecpu(CPU_MASTER);				\
+	change_pc29(PC);							
 
 
-#define HSTREG_READ(HSTREG)							\
-	int data;										\
-													\
-	TMS34010_GetRegs(cpu_getcontext(CPU_MASTER));	\
-	memorycontextswap (CPU_SLAVE);					\
-	TMS34010_SetRegs(cpu_getcontext(CPU_SLAVE));	\
-	cpu_setactivecpu(CPU_SLAVE);					\
-													\
-	host_interface = 1;								\
-	data = TMS34010_io_register_r(HSTREG<<1);		\
-	host_interface = 0;								\
-													\
-	TMS34010_GetRegs(cpu_getcontext(CPU_SLAVE));	\
-	memorycontextswap (CPU_MASTER);					\
-	TMS34010_SetRegs(cpu_getcontext(CPU_MASTER));	\
-	cpu_setactivecpu(CPU_MASTER);					\
-													\
+#define HSTREG_READ(HSTREG)						\
+	int data;									\
+	unsigned int PCsave;						\
+	*mastercontext = state;						\
+	memorycontextswap (CPU_SLAVE);				\
+	state = *slavecontext;						\
+	cpu_setactivecpu(CPU_SLAVE);				\
+												\
+	PCsave = PC;								\
+	PC = 0;										\
+	data = TMS34010_io_register_r(HSTREG<<1);	\
+	PC = PCsave;								\
+												\
+	*slavecontext = state;						\
+	memorycontextswap (CPU_MASTER);				\
+	state = *mastercontext;						\
+	cpu_setactivecpu(CPU_MASTER);	  			\
+	change_pc29(PC);							\
+	 											\
 	return data
 
 
 void TMS34010_HSTADRL_w (int offset, int data)
 {
-	HSTREG_WRITE(REG_HSTADRL);
+	mastercontext = cpu_getcontext(CPU_MASTER);	
+	slavecontext  = cpu_getcontext(CPU_SLAVE);
+	{
+	HSTREG_WRITE(REG_HSTADRL);		
+	}
 }
 
 void TMS34010_HSTADRH_w (int offset, int data)
@@ -1014,7 +1067,11 @@ int  TMS34010_HSTDATA_r (int offset)
 
 void TMS34010_HSTCTLH_w (int offset, int data)
 {
-	HSTREG_WRITE(REG_HSTCTLH);
+	mastercontext = cpu_getcontext(CPU_MASTER);	
+	slavecontext  = cpu_getcontext(CPU_SLAVE);
+	{
+		HSTREG_WRITE(REG_HSTCTLH);		
+	}
 }
 
 

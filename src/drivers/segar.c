@@ -93,8 +93,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xE800, 0xEFFF, MRA_RAM, &segar_characterram },
 	{ 0xF000, 0xF03F, MRA_RAM, &segar_mem_colortable },	/* Dynamic color table */
 	{ 0xF040, 0xF07F, MRA_RAM, &segar_mem_bcolortable }, 	/* Dynamic color table for background (Monster Bash)*/
-        { 0xF080, 0xF7FF, MRA_RAM },
-        { 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
+	{ 0xF080, 0xF7FF, MRA_RAM },
+	{ 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
 	{ -1 }	/* end of table */
 };
 
@@ -107,8 +107,8 @@ static struct MemoryReadAddress monsterb_readmem[] =
 	{ 0xE800, 0xEFFF, MRA_RAM, &segar_characterram },
 	{ 0xF000, 0xF03F, MRA_RAM, &segar_mem_colortable },	/* Dynamic color table */
 	{ 0xF040, 0xF07F, MRA_RAM, &segar_mem_bcolortable }, 	/* Dynamic color table for background (Monster Bash)*/
-        { 0xF080, 0xF7FF, MRA_RAM },
-        { 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
+	{ 0xF080, 0xF7FF, MRA_RAM },
+	{ 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
     {0x10000,0x11FFF, MRA_ROM, &segar_mem_blookup }, /* Background pattern ROM */
 	{ -1 }	/* end of table */
 };
@@ -122,8 +122,8 @@ static struct MemoryReadAddress spaceod_readmem[] =
 	{ 0xE800, 0xEFFF, MRA_RAM, &segar_characterram },
 	{ 0xF000, 0xF03F, MRA_RAM, &segar_mem_colortable },	/* Dynamic color table */
 	{ 0xF040, 0xF07F, MRA_RAM, &segar_mem_bcolortable }, 	/* Dynamic color table for background (Monster Bash)*/
-        { 0xF080, 0xF7FF, MRA_RAM },
-        { 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
+	{ 0xF080, 0xF7FF, MRA_RAM },
+	{ 0xF800, 0xFFFF, MRA_RAM, &segar_characterram2 },
     {0x10000,0x13FFF, MRA_ROM, &segar_mem_blookup }, /* Background pattern ROMs */
 	{ -1 }	/* end of table */
 };
@@ -138,55 +138,47 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-        { 0x0e, 0x0e, monsterb_audio_port3_r },
-        { 0xf8, 0xfc, segar_read_ports },
+	{ 0x0e, 0x0e, monsterb_audio_port3_r },
+	{ 0xf8, 0xfc, segar_read_ports },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort astrob_writeport[] =
 {
-
-        { 0x38, 0x38, astrob_speech_port_w },
-        { 0x3E, 0x3E, astrob_audio_port1_w },
-        { 0x3F, 0x3F, astrob_audio_port2_w },
-
-        { 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on?, bit6=write to background color RAM */
-
+	{ 0x38, 0x38, astrob_speech_port_w },
+	{ 0x3e, 0x3e, astrob_audio_port1_w },
+	{ 0x3f, 0x3f, astrob_audio_port2_w },
+	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on?, bit6=write to background color RAM */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort spaceod_writeport[] =
 {
-        { 0x08, 0x08, spaceod_back_port_w },
-        { 0x09, 0x09, spaceod_backshift_clear_w },
-        { 0x0A, 0x0A, spaceod_backshift_w },
-        { 0x0B, 0x0C, spaceod_nobackfill_w }, /* I'm not sure what these ports really do */
-        { 0x0D, 0x0D, spaceod_backfill_w },
-        { 0x0E, 0x0E, spaceod_audio_port1_w },
-        { 0x0F, 0x0F, spaceod_audio_port2_w },
-
+	{ 0x08, 0x08, spaceod_back_port_w },
+	{ 0x09, 0x09, spaceod_backshift_clear_w },
+	{ 0x0a, 0x0a, spaceod_backshift_w },
+	{ 0x0b, 0x0c, spaceod_nobackfill_w }, /* I'm not sure what these ports really do */
+	{ 0x0d, 0x0d, spaceod_backfill_w },
+	{ 0x0e, 0x0e, spaceod_audio_port1_w },
+	{ 0x0f, 0x0f, spaceod_audio_port2_w },
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on?, bit6=write to background color RAM */
-
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort s005_writeport[] =
 {
-
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on?, bit6=write to background color RAM */
-
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort monsterb_writeport[] =
 {
-        { 0x0c, 0x0c, monsterb_sound_w },
-        { 0x0d, 0x0d, monsterb_audio_port2_w },
-        { 0x0e, 0x0e, monsterb_audio_port3_w },
-        { 0x0f, 0x0f, monsterb_audio_port4_w },
-        { 0xbc, 0xbc, monsterb_back_port_w },
+	{ 0x0c, 0x0c, monsterb_sound_w },
+	{ 0x0d, 0x0d, monsterb_audio_port2_w },
+	{ 0x0e, 0x0e, monsterb_audio_port3_w },
+	{ 0x0f, 0x0f, monsterb_audio_port4_w },
+	{ 0xbc, 0xbc, monsterb_back_port_w },
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on?, bit6=write to background color RAM */
-
 	{ -1 }	/* end of table */
 };
 
@@ -223,30 +215,30 @@ static int segar_interrupt(void)
 ***************************************************************************/
 static int segar_read_ports(int offset)
 {
-        int dip1, dip2;
+	int dip1, dip2;
 
-        dip1 = input_port_6_r(offset);
-        dip2 = input_port_7_r(offset);
+	dip1 = input_port_6_r(offset);
+	dip2 = input_port_7_r(offset);
 
-        switch(offset)
-        {
-                case 0:
-                   return ((input_port_0_r(0) & 0xF0) | ((dip2 & 0x08)>>3) | ((dip2 & 0x80)>>6) |
-                                                        ((dip1 & 0x08)>>1) | ((dip1 & 0x80)>>4));
-                case 1:
-                   return ((input_port_1_r(0) & 0xF0) | ((dip2 & 0x04)>>2) | ((dip2 & 0x40)>>5) |
-                                                        ((dip1 & 0x04)>>0) | ((dip1 & 0x40)>>3));
-                case 2:
-                   return ((input_port_2_r(0) & 0xF0) | ((dip2 & 0x02)>>1) | ((dip2 & 0x20)>>4) |
-                                                        ((dip1 & 0x02)<<1) | ((dip1 & 0x20)>>2));
-                case 3:
-                   return ((input_port_3_r(0) & 0xF0) | ((dip2 & 0x01)>>0) | ((dip2 & 0x10)>>3) |
-                                                        ((dip1 & 0x01)<<2) | ((dip1 & 0x10)>>1));
-                case 4:
-                   return input_port_4_r(0);
-        }
+	switch(offset)
+	{
+		case 0:
+		   return ((input_port_0_r(0) & 0xF0) | ((dip2 & 0x08)>>3) | ((dip2 & 0x80)>>6) |
+												((dip1 & 0x08)>>1) | ((dip1 & 0x80)>>4));
+		case 1:
+		   return ((input_port_1_r(0) & 0xF0) | ((dip2 & 0x04)>>2) | ((dip2 & 0x40)>>5) |
+												((dip1 & 0x04)>>0) | ((dip1 & 0x40)>>3));
+		case 2:
+		   return ((input_port_2_r(0) & 0xF0) | ((dip2 & 0x02)>>1) | ((dip2 & 0x20)>>4) |
+												((dip1 & 0x02)<<1) | ((dip1 & 0x20)>>2));
+		case 3:
+		   return ((input_port_3_r(0) & 0xF0) | ((dip2 & 0x01)>>0) | ((dip2 & 0x10)>>3) |
+												((dip1 & 0x01)<<2) | ((dip1 & 0x10)>>1));
+		case 4:
+		   return input_port_4_r(0);
+	}
 
-        return 0;
+	return 0;
 }
 /***************************************************************************
 Input Ports
@@ -657,9 +649,9 @@ static struct GfxLayout charlayout =
 static struct GfxLayout backlayout =
 {
 	8,8,	/* 8*8 characters */
-        256*4,  /* 256 characters per scene, 4 scenes */
+	256*4,  /* 256 characters per scene, 4 scenes */
 	2,	/* 2 bits per pixel */
-        { 0, 0x2000*8 },        /* separated by 0x2000 bytes */
+	{ 0, 0x2000*8 },        /* separated by 0x2000 bytes */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
 	8*8	/* every char takes 8 consecutive bytes */
@@ -667,33 +659,33 @@ static struct GfxLayout backlayout =
 
 static struct GfxLayout spacelayout =
 {
-        8,8,   /* 16*8 characters */
-        256*2,    /* 256 characters */
-        6,      /* 6 bits per pixel */
-        { 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },        /* separated by 0x1000 bytes (1 EPROM per bit) */
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8,8,   /* 16*8 characters */
+	256*2,    /* 256 characters */
+	6,      /* 6 bits per pixel */
+	{ 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },        /* separated by 0x1000 bytes (1 EPROM per bit) */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },	/* pretty straightforward layout */
-        8*8     /* every char takes 16 consecutive bytes */
+	8*8     /* every char takes 16 consecutive bytes */
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 0, 0xE800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
+	{ 0, 0xE800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
 {
-        { 0, 0xE800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
-        { 1, 0x0000, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
+	{ 0, 0xE800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
+	{ 1, 0x0000, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 {
-        { 0, 0xE800, &charlayout,   0x01, 0x10 }, /* offset into colors, # of colors */
-        { 1, 0x0000, &spacelayout,  0x41, 1 }, /* offset into colors, # of colors */
+	{ 0, 0xE800, &charlayout,   0x01, 0x10 }, /* offset into colors, # of colors */
+	{ 1, 0x0000, &spacelayout,  0x41, 1 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -703,179 +695,178 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
   Game ROMs
 ***************************************************************************/
 
-
 ROM_START( astrob_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "829b", 0x0000, 0x0800, 0xfaf1807b ) /* U25 */
-	ROM_LOAD( "888", 0x0800, 0x0800, 0x76d69726 ) /* U1 */
-	ROM_LOAD( "889", 0x1000, 0x0800, 0x0c99ac2d ) /* U2 */
-	ROM_LOAD( "890", 0x1800, 0x0800, 0x80a5dbc5 ) /* U3 */
-	ROM_LOAD( "891", 0x2000, 0x0800, 0x8de56827 ) /* U4 */
-	ROM_LOAD( "892", 0x2800, 0x0800, 0xfb499b4f ) /* U5 */
-	ROM_LOAD( "893", 0x3000, 0x0800, 0x5e481b08 ) /* U6 */
-	ROM_LOAD( "894", 0x3800, 0x0800, 0x515b704f ) /* U7 */
-	ROM_LOAD( "895", 0x4000, 0x0800, 0x2943b91f ) /* U8 */
-	ROM_LOAD( "896", 0x4800, 0x0800, 0xc1fee47a ) /* U9 */
-	ROM_LOAD( "897", 0x5000, 0x0800, 0xa3a1fbf3 ) /* U10 */
-	ROM_LOAD( "898", 0x5800, 0x0800, 0xa88f0d35 ) /* U11 */
-	ROM_LOAD( "899", 0x6000, 0x0800, 0xbc63f743 ) /* U12 */
-	ROM_LOAD( "900", 0x6800, 0x0800, 0xa4a29056 ) /* U13 */
-	ROM_LOAD( "901", 0x7000, 0x0800, 0x0960a790 ) /* U14 */
-	ROM_LOAD( "902", 0x7800, 0x0800, 0xaafa19a2 ) /* U15 */
-	ROM_LOAD( "903", 0x8000, 0x0800, 0xec35c73b ) /* U16 */
-	ROM_LOAD( "904", 0x8800, 0x0800, 0x5c40a316 ) /* U16 */
-	ROM_LOAD( "905", 0x9000, 0x0800, 0x0f21a0f1 ) /* U16 */
-	ROM_LOAD( "906", 0x9800, 0x0800, 0xd1a84b58 ) /* U16 */
+	ROM_LOAD( "829b", 0x0000, 0x0800, 0xfaf1807b , 0x14ae953c ) /* U25 */
+	ROM_LOAD( "888", 0x0800, 0x0800, 0x76d69726 , 0x42601744 ) /* U1 */
+	ROM_LOAD( "889", 0x1000, 0x0800, 0x0c99ac2d , 0xdd9ab173 ) /* U2 */
+	ROM_LOAD( "890", 0x1800, 0x0800, 0x80a5dbc5 , 0x26f5b4cf ) /* U3 */
+	ROM_LOAD( "891", 0x2000, 0x0800, 0x8de56827 , 0x6437c95f ) /* U4 */
+	ROM_LOAD( "892", 0x2800, 0x0800, 0xfb499b4f , 0x2d3c949b ) /* U5 */
+	ROM_LOAD( "893", 0x3000, 0x0800, 0x5e481b08 , 0xccdb1a76 ) /* U6 */
+	ROM_LOAD( "894", 0x3800, 0x0800, 0x515b704f , 0x66ae5ced ) /* U7 */
+	ROM_LOAD( "895", 0x4000, 0x0800, 0x2943b91f , 0x202cf3a3 ) /* U8 */
+	ROM_LOAD( "896", 0x4800, 0x0800, 0xc1fee47a , 0xb603fe23 ) /* U9 */
+	ROM_LOAD( "897", 0x5000, 0x0800, 0xa3a1fbf3 , 0x989198c6 ) /* U10 */
+	ROM_LOAD( "898", 0x5800, 0x0800, 0xa88f0d35 , 0xef2bab04 ) /* U11 */
+	ROM_LOAD( "899", 0x6000, 0x0800, 0xbc63f743 , 0xe0d189ee ) /* U12 */
+	ROM_LOAD( "900", 0x6800, 0x0800, 0xa4a29056 , 0x682d4604 ) /* U13 */
+	ROM_LOAD( "901", 0x7000, 0x0800, 0x0960a790 , 0x9ed11c61 ) /* U14 */
+	ROM_LOAD( "902", 0x7800, 0x0800, 0xaafa19a2 , 0xb4d6c330 ) /* U15 */
+	ROM_LOAD( "903", 0x8000, 0x0800, 0xec35c73b , 0x84acc38c ) /* U16 */
+	ROM_LOAD( "904", 0x8800, 0x0800, 0x5c40a316 , 0x5eba3097 ) /* U16 */
+	ROM_LOAD( "905", 0x9000, 0x0800, 0x0f21a0f1 , 0x4f08f9f4 ) /* U16 */
+	ROM_LOAD( "906", 0x9800, 0x0800, 0xd1a84b58 , 0x58149df1 ) /* U16 */
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for speech code */
-	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 ) /* U7 */
-	ROM_LOAD( "809a", 0x0800, 0x0800, 0x88f4cd68 ) /* U6 */
-	ROM_LOAD( "810",  0x1000, 0x0800, 0xefc511d1 ) /* U5 */
-	ROM_LOAD( "811",  0x1800, 0x0800, 0x17838277 ) /* U4 */
-	ROM_LOAD( "812a", 0x2000, 0x0800, 0x8e50ad22 ) /* U3 */
+	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 , 0x5988c767 ) /* U7 */
+	ROM_LOAD( "809a", 0x0800, 0x0800, 0x88f4cd68 , 0x893f228d ) /* U6 */
+	ROM_LOAD( "810", 0x1000, 0x0800, 0xefc511d1 , 0xff0163c5 ) /* U5 */
+	ROM_LOAD( "811", 0x1800, 0x0800, 0x17838277 , 0x219f3978 ) /* U4 */
+	ROM_LOAD( "812a", 0x2000, 0x0800, 0x8e50ad22 , 0x410ad0d2 ) /* U3 */
 ROM_END
 
 ROM_START( astrob1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "829", 0x0000, 0x0800, 0xa7c2d826 ) /* U25 */
-	ROM_LOAD( "837", 0x0800, 0x0800, 0xd0d3b713 ) /* U1 */
-	ROM_LOAD( "838", 0x1000, 0x0800, 0xe471b901 ) /* U2 */
-	ROM_LOAD( "839", 0x1800, 0x0800, 0xe13d7981 ) /* U3 */
-	ROM_LOAD( "840", 0x2000, 0x0800, 0xfac9b2e7 ) /* U4 */
-	ROM_LOAD( "841", 0x2800, 0x0800, 0x9b3ce336 ) /* U5 */
-	ROM_LOAD( "842", 0x3000, 0x0800, 0xdca661a8 ) /* U6 */
-	ROM_LOAD( "843", 0x3800, 0x0800, 0xf2a2461c ) /* U7 */
-	ROM_LOAD( "844", 0x4000, 0x0800, 0x710cf11c ) /* U8 */
-	ROM_LOAD( "845", 0x4800, 0x0800, 0x0744f834 ) /* U9 */
-	ROM_LOAD( "846", 0x5000, 0x0800, 0xe7b9be2d ) /* U10 */
-	ROM_LOAD( "847", 0x5800, 0x0800, 0x5ca4c3a2 ) /* U11 */
-	ROM_LOAD( "848", 0x6000, 0x0800, 0xd379e407 ) /* U12 */
-	ROM_LOAD( "849", 0x6800, 0x0800, 0x61230dc1 ) /* U13 */
-	ROM_LOAD( "850", 0x7000, 0x0800, 0x1e1039e8 ) /* U14 */
-	ROM_LOAD( "851", 0x7800, 0x0800, 0xf1403e8e ) /* U15 */
-	ROM_LOAD( "852", 0x8000, 0x0800, 0x2769427b ) /* U16 */
+	ROM_LOAD( "829", 0x0000, 0x0800, 0xa7c2d826 , 0x5f66046e ) /* U25 */
+	ROM_LOAD( "837", 0x0800, 0x0800, 0xd0d3b713 , 0xce9c3763 ) /* U1 */
+	ROM_LOAD( "838", 0x1000, 0x0800, 0xe471b901 , 0x3557289e ) /* U2 */
+	ROM_LOAD( "839", 0x1800, 0x0800, 0xe13d7981 , 0xc88bda24 ) /* U3 */
+	ROM_LOAD( "840", 0x2000, 0x0800, 0xfac9b2e7 , 0x24c9fe23 ) /* U4 */
+	ROM_LOAD( "841", 0x2800, 0x0800, 0x9b3ce336 , 0xf153c683 ) /* U5 */
+	ROM_LOAD( "842", 0x3000, 0x0800, 0xdca661a8 , 0x4c5452b2 ) /* U6 */
+	ROM_LOAD( "843", 0x3800, 0x0800, 0xf2a2461c , 0x673161a6 ) /* U7 */
+	ROM_LOAD( "844", 0x4000, 0x0800, 0x710cf11c , 0x6bfc59fd ) /* U8 */
+	ROM_LOAD( "845", 0x4800, 0x0800, 0x0744f834 , 0x018623f3 ) /* U9 */
+	ROM_LOAD( "846", 0x5000, 0x0800, 0xe7b9be2d , 0x4d7c5fb3 ) /* U10 */
+	ROM_LOAD( "847", 0x5800, 0x0800, 0x5ca4c3a2 , 0x24d1d50a ) /* U11 */
+	ROM_LOAD( "848", 0x6000, 0x0800, 0xd379e407 , 0x1c145541 ) /* U12 */
+	ROM_LOAD( "849", 0x6800, 0x0800, 0x61230dc1 , 0xd378c169 ) /* U13 */
+	ROM_LOAD( "850", 0x7000, 0x0800, 0x1e1039e8 , 0x9da673ae ) /* U14 */
+	ROM_LOAD( "851", 0x7800, 0x0800, 0xf1403e8e , 0x3d4cf9f0 ) /* U15 */
+	ROM_LOAD( "852", 0x8000, 0x0800, 0x2769427b , 0xaf88a97e ) /* U16 */
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for speech code */
-	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 ) /* U7 */
-	ROM_LOAD( "809a", 0x0800, 0x0800, 0x88f4cd68 ) /* U6 */
-	ROM_LOAD( "810",  0x1000, 0x0800, 0xefc511d1 ) /* U5 */
-	ROM_LOAD( "811",  0x1800, 0x0800, 0x17838277 ) /* U4 */
-	ROM_LOAD( "812a", 0x2000, 0x0800, 0x8e50ad22 ) /* U3 */
+	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 , 0x5988c767 ) /* U7 */
+	ROM_LOAD( "809a", 0x0800, 0x0800, 0x88f4cd68 , 0x893f228d ) /* U6 */
+	ROM_LOAD( "810", 0x1000, 0x0800, 0xefc511d1 , 0xff0163c5 ) /* U5 */
+	ROM_LOAD( "811", 0x1800, 0x0800, 0x17838277 , 0x219f3978 ) /* U4 */
+	ROM_LOAD( "812a", 0x2000, 0x0800, 0x8e50ad22 , 0x410ad0d2 ) /* U3 */
 ROM_END
 
 ROM_START( s005_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1346b.u25",0x0000, 0x0800, 0xd2388c1a ) /* U25 */
-	ROM_LOAD( "5092.u1",  0x0800, 0x0800, 0x57630baf ) /* U1 */
-	ROM_LOAD( "5093.u2",  0x1000, 0x0800, 0x716cdf04 ) /* U2 */
-	ROM_LOAD( "5094.u3",  0x1800, 0x0800, 0x58791775 ) /* U3 */
-	ROM_LOAD( "5095.u4",  0x2000, 0x0800, 0x46c98d7b ) /* U4 */
-	ROM_LOAD( "5096.u5",  0x2800, 0x0800, 0x68a0bce8 ) /* U5 */
-	ROM_LOAD( "5097.u6",  0x3000, 0x0800, 0x715c6f46 ) /* U6 */
-	ROM_LOAD( "5098.u7",  0x3800, 0x0800, 0xd85b9a91 ) /* U7 */
-	ROM_LOAD( "5099.u8",  0x4000, 0x0800, 0xa0171fb5 ) /* U8 */
-	ROM_LOAD( "5100.u9",  0x4800, 0x0800, 0x37ff4483 ) /* U9 */
-	ROM_LOAD( "5101.u10", 0x5000, 0x0800, 0x05f7b335 ) /* U10 */
-	ROM_LOAD( "5102.u11", 0x5800, 0x0800, 0x1015d135 ) /* U11 */
-	ROM_LOAD( "5103.u12", 0x6000, 0x0800, 0x20b78e49 ) /* U12 */
-	ROM_LOAD( "5104.u13", 0x6800, 0x0800, 0xddf3520d ) /* U13 */
-	ROM_LOAD( "5105.u14", 0x7000, 0x0800, 0x283fd429 ) /* U14 */
-	ROM_LOAD( "5106.u15", 0x7800, 0x0800, 0xe6f187a5 ) /* U15 */
-	ROM_LOAD( "5107.u16", 0x8000, 0x0800, 0xd08e94ea ) /* U16 */
-	ROM_LOAD( "5108.u17", 0x8800, 0x0800, 0x3bc012b8 ) /* U17 */
-	ROM_LOAD( "5109.u18", 0x9000, 0x0800, 0xb647bdb1 ) /* U18 */
-	ROM_LOAD( "5110.u19", 0x9800, 0x0800, 0x228b1921 ) /* U19 */
-	ROM_LOAD( "5111.u20", 0xA000, 0x0800, 0x2d069e9a ) /* U20 */
+	ROM_LOAD( "1346b.u25", 0x0000, 0x0800, 0xd2388c1a , 0x8e68533e ) /* U25 */
+	ROM_LOAD( "5092.u1", 0x0800, 0x0800, 0x57630baf , 0x29e10a81 ) /* U1 */
+	ROM_LOAD( "5093.u2", 0x1000, 0x0800, 0x716cdf04 , 0xe1edc3df ) /* U2 */
+	ROM_LOAD( "5094.u3", 0x1800, 0x0800, 0x58791775 , 0x995773bb ) /* U3 */
+	ROM_LOAD( "5095.u4", 0x2000, 0x0800, 0x46c98d7b , 0xf887f575 ) /* U4 */
+	ROM_LOAD( "5096.u5", 0x2800, 0x0800, 0x68a0bce8 , 0x5545241e ) /* U5 */
+	ROM_LOAD( "5097.u6", 0x3000, 0x0800, 0x715c6f46 , 0x428edb54 ) /* U6 */
+	ROM_LOAD( "5098.u7", 0x3800, 0x0800, 0xd85b9a91 , 0x5bcb9d63 ) /* U7 */
+	ROM_LOAD( "5099.u8", 0x4000, 0x0800, 0xa0171fb5 , 0x0ea24ba3 ) /* U8 */
+	ROM_LOAD( "5100.u9", 0x4800, 0x0800, 0x37ff4483 , 0xa79af131 ) /* U9 */
+	ROM_LOAD( "5101.u10", 0x5000, 0x0800, 0x05f7b335 , 0x8a1cdae0 ) /* U10 */
+	ROM_LOAD( "5102.u11", 0x5800, 0x0800, 0x1015d135 , 0x70826a15 ) /* U11 */
+	ROM_LOAD( "5103.u12", 0x6000, 0x0800, 0x20b78e49 , 0x7f80c5b0 ) /* U12 */
+	ROM_LOAD( "5104.u13", 0x6800, 0x0800, 0xddf3520d , 0x0140930e ) /* U13 */
+	ROM_LOAD( "5105.u14", 0x7000, 0x0800, 0x283fd429 , 0x17807a05 ) /* U14 */
+	ROM_LOAD( "5106.u15", 0x7800, 0x0800, 0xe6f187a5 , 0xc7cdfa9d ) /* U15 */
+	ROM_LOAD( "5107.u16", 0x8000, 0x0800, 0xd08e94ea , 0x95f8a2e6 ) /* U16 */
+	ROM_LOAD( "5108.u17", 0x8800, 0x0800, 0x3bc012b8 , 0xd371cacd ) /* U17 */
+	ROM_LOAD( "5109.u18", 0x9000, 0x0800, 0xb647bdb1 , 0x48a20617 ) /* U18 */
+	ROM_LOAD( "5110.u19", 0x9800, 0x0800, 0x228b1921 , 0x7d26111a ) /* U19 */
+	ROM_LOAD( "5111.u20", 0xA000, 0x0800, 0x2d069e9a , 0xa888e175 ) /* U20 */
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x800)	/* 2k for sound */
-	ROM_LOAD( "epr-1286.16",0x0000, 0x0800, 0x7b132c1b )
+	ROM_LOAD( "epr-1286.16", 0x0000, 0x0800, 0x7b132c1b , 0xfbe0d501 )
 ROM_END
 
 ROM_START( monsterb_rom )
 	ROM_REGION(0x12000)	/* 64k for code + 2k for background */
-	ROM_LOAD( "1778cpu.bin", 0x0000, 0x0800, 0x8ec4448a ) /* U25 */
-	ROM_LOAD( "1779.bin", 0x0800, 0x0800, 0xd50c5ffe ) /* U1 */
-	ROM_LOAD( "1780.bin", 0x1000, 0x0800, 0x7b559937 ) /* U2 */
-	ROM_LOAD( "1781.bin", 0x1800, 0x0800, 0xe06a9d1a ) /* U3 */
-	ROM_LOAD( "1782.bin", 0x2000, 0x0800, 0x0c964894 ) /* U4 */
-	ROM_LOAD( "1783.bin", 0x2800, 0x0800, 0x4714b3c8 ) /* U5 */
-	ROM_LOAD( "1784.bin", 0x3000, 0x0800, 0xbf1e2448 ) /* U6 */
-	ROM_LOAD( "1785.bin", 0x3800, 0x0800, 0x22a48b72 ) /* U7 */
-	ROM_LOAD( "1786.bin", 0x4000, 0x0800, 0x51258567 ) /* U8 */
-	ROM_LOAD( "1787.bin", 0x4800, 0x0800, 0x7973af07 ) /* U9 */
-	ROM_LOAD( "1788.bin", 0x5000, 0x0800, 0x55afea07 ) /* U10 */
-	ROM_LOAD( "1789.bin", 0x5800, 0x0800, 0xfa33f265 ) /* U11 */
-	ROM_LOAD( "1790.bin", 0x6000, 0x0800, 0xe072ff5e ) /* U12 */
-	ROM_LOAD( "1791.bin", 0x6800, 0x0800, 0x90406e64 ) /* U13 */
-	ROM_LOAD( "1792.bin", 0x7000, 0x0800, 0x0b8b9061 ) /* U14 */
-	ROM_LOAD( "1793.bin", 0x7800, 0x0800, 0x9df16e25 ) /* U15 */
-	ROM_LOAD( "1794.bin", 0x8000, 0x0800, 0xe97695ec ) /* U16 */
-	ROM_LOAD( "1795.bin", 0x8800, 0x0800, 0x414a37b2 ) /* U17 */
-	ROM_LOAD( "1796.bin", 0x9000, 0x0800, 0x685c5d0a ) /* U18 */
-	ROM_LOAD( "1797.bin", 0x9800, 0x0800, 0xbd86b83e ) /* U19 */
-	ROM_LOAD( "1798.bin", 0xA000, 0x0800, 0x99e2cdb2 ) /* U20 */
-	ROM_LOAD( "1799.bin", 0xA800, 0x0800, 0x864cef58 ) /* U21 */
-	ROM_LOAD( "1800.bin", 0xB000, 0x0800, 0xf21e93be ) /* U22 */
-	ROM_LOAD( "1801.bin", 0xB800, 0x0800, 0x1410ea9c ) /* U23 */
+	ROM_LOAD( "1778cpu.bin", 0x0000, 0x0800, 0x8ec4448a , 0x19761be3 ) /* U25 */
+	ROM_LOAD( "1779.bin", 0x0800, 0x0800, 0xd50c5ffe , 0x5b67dc4c ) /* U1 */
+	ROM_LOAD( "1780.bin", 0x1000, 0x0800, 0x7b559937 , 0xfac5aac6 ) /* U2 */
+	ROM_LOAD( "1781.bin", 0x1800, 0x0800, 0xe06a9d1a , 0x3b104103 ) /* U3 */
+	ROM_LOAD( "1782.bin", 0x2000, 0x0800, 0x0c964894 , 0xc1523553 ) /* U4 */
+	ROM_LOAD( "1783.bin", 0x2800, 0x0800, 0x4714b3c8 , 0xe0ea08c5 ) /* U5 */
+	ROM_LOAD( "1784.bin", 0x3000, 0x0800, 0xbf1e2448 , 0x48976d11 ) /* U6 */
+	ROM_LOAD( "1785.bin", 0x3800, 0x0800, 0x22a48b72 , 0x297d33ae ) /* U7 */
+	ROM_LOAD( "1786.bin", 0x4000, 0x0800, 0x51258567 , 0xef94c8f4 ) /* U8 */
+	ROM_LOAD( "1787.bin", 0x4800, 0x0800, 0x7973af07 , 0x1b62994e ) /* U9 */
+	ROM_LOAD( "1788.bin", 0x5000, 0x0800, 0x55afea07 , 0xa2e32d91 ) /* U10 */
+	ROM_LOAD( "1789.bin", 0x5800, 0x0800, 0xfa33f265 , 0x08a172dc ) /* U11 */
+	ROM_LOAD( "1790.bin", 0x6000, 0x0800, 0xe072ff5e , 0x4e320f9d ) /* U12 */
+	ROM_LOAD( "1791.bin", 0x6800, 0x0800, 0x90406e64 , 0x3b4cba31 ) /* U13 */
+	ROM_LOAD( "1792.bin", 0x7000, 0x0800, 0x0b8b9061 , 0x7707b9f8 ) /* U14 */
+	ROM_LOAD( "1793.bin", 0x7800, 0x0800, 0x9df16e25 , 0xa5d05155 ) /* U15 */
+	ROM_LOAD( "1794.bin", 0x8000, 0x0800, 0xe97695ec , 0xe4813da9 ) /* U16 */
+	ROM_LOAD( "1795.bin", 0x8800, 0x0800, 0x414a37b2 , 0x4cd6ed88 ) /* U17 */
+	ROM_LOAD( "1796.bin", 0x9000, 0x0800, 0x685c5d0a , 0x9f141a42 ) /* U18 */
+	ROM_LOAD( "1797.bin", 0x9800, 0x0800, 0xbd86b83e , 0xec14ad16 ) /* U19 */
+	ROM_LOAD( "1798.bin", 0xA000, 0x0800, 0x99e2cdb2 , 0x86743a4f ) /* U20 */
+	ROM_LOAD( "1799.bin", 0xA800, 0x0800, 0x864cef58 , 0x41198a83 ) /* U21 */
+	ROM_LOAD( "1800.bin", 0xB000, 0x0800, 0xf21e93be , 0x6a062a04 ) /* U22 */
+	ROM_LOAD( "1801.bin", 0xB800, 0x0800, 0x1410ea9c , 0xf38488fe ) /* U23 */
 
-	ROM_LOAD( "1518a.bin",0x10000,0x2000, 0xbbe8139e ) /* U25 */
+	ROM_LOAD( "1518a.bin", 0x10000, 0x2000, 0xbbe8139e , 0x2d5932fe ) /* U25 */
 
-	ROM_REGION(0x4000)	/* 16k for background graphics */
-	ROM_LOAD( "1516.bin", 0x0000, 0x2000, 0xee08373e ) /* U25 */
-	ROM_LOAD( "1517.bin", 0x2000, 0x2000, 0xa1a6c650 ) /* U25 */
+	ROM_REGION_DISPOSE(0x4000)	/* 16k for background graphics */
+	ROM_LOAD( "1516.bin", 0x0000, 0x2000, 0xee08373e , 0xe93a2281 ) /* U25 */
+	ROM_LOAD( "1517.bin", 0x2000, 0x2000, 0xa1a6c650 , 0x1e589101 ) /* U25 */
 
 	ROM_REGION(0x2000)      /* 8k for sound */
-	ROM_LOAD( "1543snd.bin", 0x0000, 0x1000, 0x8503b7d3 ) /* U25 */
-	ROM_LOAD( "1544snd.bin", 0x1000, 0x1000, 0x3f427e0e ) /* U25 */
+	ROM_LOAD( "1543snd.bin", 0x0000, 0x1000, 0x8503b7d3 , 0xb525ce8f ) /* U25 */
+	ROM_LOAD( "1544snd.bin", 0x1000, 0x1000, 0x3f427e0e , 0x56c79fb0 ) /* U25 */
 ROM_END
 
 ROM_START( spaceod_rom )
 	ROM_REGION(0x14000)     /* 64k for code + 4k for background lookup */
-	ROM_LOAD( "so-959.dat", 0x0000, 0x0800, 0x3a1abb14 ) /* U25 */
-	ROM_LOAD( "so-941.dat", 0x0800, 0x0800, 0x8eb435d6 ) /* U1 */
-	ROM_LOAD( "so-942.dat", 0x1000, 0x0800, 0xe3a8b98c ) /* U2 */
-	ROM_LOAD( "so-943.dat", 0x1800, 0x0800, 0x2fe83022 ) /* U3 */
-	ROM_LOAD( "so-944.dat", 0x2000, 0x0800, 0xa037fb9b ) /* U4 */
-	ROM_LOAD( "so-945.dat", 0x2800, 0x0800, 0xdbbb5573 ) /* U5 */
-	ROM_LOAD( "so-946.dat", 0x3000, 0x0800, 0xcfad4f97 ) /* U6 */
-	ROM_LOAD( "so-947.dat", 0x3800, 0x0800, 0xe22ff995 ) /* U7 */
-	ROM_LOAD( "so-948.dat", 0x4000, 0x0800, 0x9815ff77 ) /* U8 */
-	ROM_LOAD( "so-949.dat", 0x4800, 0x0800, 0xda3b95e9 ) /* U9 */
-	ROM_LOAD( "so-950.dat", 0x5000, 0x0800, 0x18112967 ) /* U10 */
-	ROM_LOAD( "so-951.dat", 0x5800, 0x0800, 0xcd0f2c33 ) /* U11 */
-	ROM_LOAD( "so-952.dat", 0x6000, 0x0800, 0xdb34988c ) /* U12 */
-	ROM_LOAD( "so-953.dat", 0x6800, 0x0800, 0x4b7bbbb3 ) /* U13 */
-	ROM_LOAD( "so-954.dat", 0x7000, 0x0800, 0xefb32701 ) /* U14 */
-	ROM_LOAD( "so-955.dat", 0x7800, 0x0800, 0x7f5426a8 ) /* U15 */
-	ROM_LOAD( "so-956.dat", 0x8000, 0x0800, 0x409090fa ) /* U16 */
-	ROM_LOAD( "so-957.dat", 0x8800, 0x0800, 0x13c86eec ) /* U17 */
-	ROM_LOAD( "so-958.dat", 0x9000, 0x0800, 0xffd5a7b9 ) /* U18 */
+	ROM_LOAD( "so-959.dat", 0x0000, 0x0800, 0x3a1abb14 , 0xbbae3cd1 ) /* U25 */
+	ROM_LOAD( "so-941.dat", 0x0800, 0x0800, 0x8eb435d6 , 0x8b63585a ) /* U1 */
+	ROM_LOAD( "so-942.dat", 0x1000, 0x0800, 0xe3a8b98c , 0x93e7d900 ) /* U2 */
+	ROM_LOAD( "so-943.dat", 0x1800, 0x0800, 0x2fe83022 , 0xe2f5dc10 ) /* U3 */
+	ROM_LOAD( "so-944.dat", 0x2000, 0x0800, 0xa037fb9b , 0xb5ab01e9 ) /* U4 */
+	ROM_LOAD( "so-945.dat", 0x2800, 0x0800, 0xdbbb5573 , 0x6c5fa1b1 ) /* U5 */
+	ROM_LOAD( "so-946.dat", 0x3000, 0x0800, 0xcfad4f97 , 0x4cef25d6 ) /* U6 */
+	ROM_LOAD( "so-947.dat", 0x3800, 0x0800, 0xe22ff995 , 0x7220fc42 ) /* U7 */
+	ROM_LOAD( "so-948.dat", 0x4000, 0x0800, 0x9815ff77 , 0x94bcd726 ) /* U8 */
+	ROM_LOAD( "so-949.dat", 0x4800, 0x0800, 0xda3b95e9 , 0xe11e7034 ) /* U9 */
+	ROM_LOAD( "so-950.dat", 0x5000, 0x0800, 0x18112967 , 0x70a7a3b4 ) /* U10 */
+	ROM_LOAD( "so-951.dat", 0x5800, 0x0800, 0xcd0f2c33 , 0xf5f0d3f9 ) /* U11 */
+	ROM_LOAD( "so-952.dat", 0x6000, 0x0800, 0xdb34988c , 0x5bf19a12 ) /* U12 */
+	ROM_LOAD( "so-953.dat", 0x6800, 0x0800, 0x4b7bbbb3 , 0x8066ac83 ) /* U13 */
+	ROM_LOAD( "so-954.dat", 0x7000, 0x0800, 0xefb32701 , 0x44ed6a0d ) /* U14 */
+	ROM_LOAD( "so-955.dat", 0x7800, 0x0800, 0x7f5426a8 , 0xb5e2748d ) /* U15 */
+	ROM_LOAD( "so-956.dat", 0x8000, 0x0800, 0x409090fa , 0x97de45a9 ) /* U16 */
+	ROM_LOAD( "so-957.dat", 0x8800, 0x0800, 0x13c86eec , 0xc14b98c4 ) /* U17 */
+	ROM_LOAD( "so-958.dat", 0x9000, 0x0800, 0xffd5a7b9 , 0x4c0a7242 ) /* U18 */
 
-	ROM_LOAD( "epr-09.dat", 0x10000, 0x1000, 0x422dc709 )
-	ROM_LOAD( "epr-10.dat", 0x11000, 0x1000, 0xceee55fe )
-	ROM_LOAD( "epr-11.dat", 0x12000, 0x1000, 0x615dab29 )
-	ROM_LOAD( "epr-12.dat", 0x13000, 0x1000, 0xbf615473 )
+	ROM_LOAD( "epr-09.dat", 0x10000, 0x1000, 0x422dc709 , 0xa87bfc0a )
+	ROM_LOAD( "epr-10.dat", 0x11000, 0x1000, 0xceee55fe , 0x8ce88100 )
+	ROM_LOAD( "epr-11.dat", 0x12000, 0x1000, 0x615dab29 , 0x1bdbdab5 )
+	ROM_LOAD( "epr-12.dat", 0x13000, 0x1000, 0xbf615473 , 0x629a4a1f )
 
 
-	ROM_REGION(0x6000)      /* for backgrounds */
-	ROM_LOAD( "epr-13.dat", 0x0000, 0x1000, 0xefcae6a6 )
-	ROM_LOAD( "epr-14.dat", 0x1000, 0x1000, 0x839535c3 )
-	ROM_LOAD( "epr-15.dat", 0x2000, 0x1000, 0xf372e574 )
-	ROM_LOAD( "epr-16.dat", 0x3000, 0x1000, 0xe6565672 )
-	ROM_LOAD( "epr-17.dat", 0x4000, 0x1000, 0xf0a1f50d )
-	ROM_LOAD( "epr-18.dat", 0x5000, 0x1000, 0x126e945e )
+	ROM_REGION_DISPOSE(0x6000)      /* for backgrounds */
+	ROM_LOAD( "epr-13.dat", 0x0000, 0x1000, 0xefcae6a6 , 0x74bd7f9a )
+	ROM_LOAD( "epr-14.dat", 0x1000, 0x1000, 0x839535c3 , 0xd2ebd915 )
+	ROM_LOAD( "epr-15.dat", 0x2000, 0x1000, 0xf372e574 , 0xae0e5d71 )
+	ROM_LOAD( "epr-16.dat", 0x3000, 0x1000, 0xe6565672 , 0xacdf203e )
+	ROM_LOAD( "epr-17.dat", 0x4000, 0x1000, 0xf0a1f50d , 0x6c7490c0 )
+	ROM_LOAD( "epr-18.dat", 0x5000, 0x1000, 0x126e945e , 0x24a81c04 )
 ROM_END
 
 /***************************************************************************
@@ -1100,20 +1091,20 @@ static struct MachineDriver astrob_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 28*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-        16*4+1,16*4+1,
+	16*4+1,16*4+1,
 	segar_init_colors,
 
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-        generic_vh_start,
-        generic_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	segar_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
-        segar_sh_start,
+	segar_sh_start,
 	0,
-        segar_sh_update
+	segar_sh_update
 };
 
 static struct MachineDriver spaceod_machine_driver =
@@ -1134,21 +1125,21 @@ static struct MachineDriver spaceod_machine_driver =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 28*8-1, 0*8, 32*8-1 },
-        spaceod_gfxdecodeinfo,
-        16*4*2+1,16*4*2+1,
+	spaceod_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,
 	segar_init_colors,
 
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-        spaceod_vh_start,
-        spaceod_vh_stop,
-        spaceod_vh_screenrefresh,
+	spaceod_vh_start,
+	spaceod_vh_stop,
+	spaceod_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
-        segar_sh_start,
+	segar_sh_start,
 	0,
-        segar_sh_update
+	segar_sh_update
 };
 
 static struct MachineDriver s005_machine_driver =
@@ -1170,20 +1161,20 @@ static struct MachineDriver s005_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 28*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-        16*4+1,16*4+1,
+	16*4+1,16*4+1,
 	segar_init_colors,
 
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-        generic_vh_start,
-        generic_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	segar_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
-        segar_sh_start,
+	segar_sh_start,
 	0,
-        segar_sh_update
+	segar_sh_update
 };
 
 

@@ -819,119 +819,119 @@ static struct MachineDriver gemini_machine_driver =
 
 ROM_START( rygar_rom )
 	ROM_REGION(0x18000)	/* 64k for code */
-	ROM_LOAD( "CPU_5P.BIN", 0x00000, 0x08000, 0xff6100e3 ) /* code */
-	ROM_LOAD( "CPU_5M.BIN", 0x08000, 0x04000, 0x94172f9f ) /* code */
-	ROM_LOAD( "CPU_5J.BIN", 0x10000, 0x08000, 0x48d6187c ) /* banked at f000-f7ff */
+	ROM_LOAD( "cpu_5p.bin", 0x00000, 0x08000, 0xff6100e3 , 0xe79c054a ) /* code */
+	ROM_LOAD( "cpu_5m.bin", 0x08000, 0x04000, 0x94172f9f , 0x7ac5191b ) /* code */
+	ROM_LOAD( "cpu_5j.bin", 0x10000, 0x08000, 0x48d6187c , 0xed76d606 ) /* banked at f000-f7ff */
 
-	ROM_REGION(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "CPU_8K.BIN",  0x00000, 0x08000, 0x4f88d512 )	/* characters */
+	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu_8k.bin", 0x00000, 0x08000, 0x4f88d512 , 0x4d482fb6 )	/* characters */
 
-	ROM_LOAD( "VID_6K.BIN",  0x08000, 0x08000, 0x97c92065 )	/* sprites */
-	ROM_LOAD( "VID_6J.BIN",  0x10000, 0x08000, 0x7f08b292 )	/* sprites */
-	ROM_LOAD( "VID_6H.BIN",  0x18000, 0x08000, 0x8fa1b533 )	/* sprites */
-	ROM_LOAD( "VID_6G.BIN",  0x20000, 0x08000, 0x3a9c929c )	/* sprites */
+	ROM_LOAD( "vid_6k.bin", 0x08000, 0x08000, 0x97c92065 , 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin", 0x10000, 0x08000, 0x7f08b292 , 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin", 0x18000, 0x08000, 0x8fa1b533 , 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin", 0x20000, 0x08000, 0x3a9c929c , 0x45839c9a )	/* sprites */
 
-	ROM_LOAD( "VID_6P.BIN",  0x28000, 0x08000, 0x13e6b7cc )
-	ROM_LOAD( "VID_6O.BIN",  0x30000, 0x08000, 0xe47401ce )
-	ROM_LOAD( "VID_6N.BIN",  0x38000, 0x08000, 0x0a5e9210 )
-	ROM_LOAD( "VID_6L.BIN",  0x40000, 0x08000, 0x970036da )
+	ROM_LOAD( "vid_6p.bin", 0x28000, 0x08000, 0x13e6b7cc , 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin", 0x30000, 0x08000, 0xe47401ce , 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin", 0x38000, 0x08000, 0x0a5e9210 , 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin", 0x40000, 0x08000, 0x970036da , 0x3cea7eaa )
 
-	ROM_LOAD( "VID_6F.BIN",  0x48000, 0x08000, 0x64eb6eb9 )
-	ROM_LOAD( "VID_6E.BIN",  0x50000, 0x08000, 0xd096db24 )
-	ROM_LOAD( "VID_6C.BIN",  0x58000, 0x08000, 0x9ff6bcd4 )
-	ROM_LOAD( "VID_6B.BIN",  0x60000, 0x08000, 0x9289536b )
+	ROM_LOAD( "vid_6f.bin", 0x48000, 0x08000, 0x64eb6eb9 , 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin", 0x50000, 0x08000, 0xd096db24 , 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin", 0x58000, 0x08000, 0x9ff6bcd4 , 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin", 0x60000, 0x08000, 0x9289536b , 0x35389a7b )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "CPU_4H.BIN",  0x0000, 0x4000, 0x3d840000 )
+	ROM_LOAD( "cpu_4h.bin", 0x0000, 0x4000, 0x3d840000 , 0x70522571 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
-	ROM_LOAD( "CPU_1F.BIN",  0x0000, 0x4000, 0xf592c358 )
+	ROM_LOAD( "cpu_1f.bin", 0x0000, 0x4000, 0xf592c358 , 0x3cc98c5a )
 ROM_END
 
 ROM_START( rygarj_rom )
 	ROM_REGION(0x18000)	/* 64k for code */
 
-	ROM_LOAD( "CPUJ_5P.BIN", 0x00000, 0x08000, 0x4ff67dda ) /* code */
-	ROM_LOAD( "CPUJ_5M.BIN", 0x08000, 0x04000, 0x55f3a025 ) /* code */
-	ROM_LOAD( "CPUJ_5J.BIN", 0x10000, 0x08000, 0x777a78aa ) /* banked at f000-f7ff */
+	ROM_LOAD( "cpuj_5p.bin", 0x00000, 0x08000, 0x4ff67dda , 0xb39698ba ) /* code */
+	ROM_LOAD( "cpuj_5m.bin", 0x08000, 0x04000, 0x55f3a025 , 0x3f180979 ) /* code */
+	ROM_LOAD( "cpuj_5j.bin", 0x10000, 0x08000, 0x777a78aa , 0x69e44e8f ) /* banked at f000-f7ff */
 
-	ROM_REGION(0x68000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "CPUJ_8K.BIN", 0x00000, 0x08000, 0xb94a3248 )	/* characters */
+	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpuj_8k.bin", 0x00000, 0x08000, 0xb94a3248 , 0x45047707 )	/* characters */
 
-	ROM_LOAD( "VID_6K.BIN",  0x08000, 0x08000, 0x97c92065 )	/* sprites */
-	ROM_LOAD( "VID_6J.BIN",  0x10000, 0x08000, 0x7f08b292 )	/* sprites */
-	ROM_LOAD( "VID_6H.BIN",  0x18000, 0x08000, 0x8fa1b533 )	/* sprites */
-	ROM_LOAD( "VID_6G.BIN",  0x20000, 0x08000, 0x3a9c929c )	/* sprites */
+	ROM_LOAD( "vid_6k.bin", 0x08000, 0x08000, 0x97c92065 , 0xaba6db9e )	/* sprites */
+	ROM_LOAD( "vid_6j.bin", 0x10000, 0x08000, 0x7f08b292 , 0xae1f2ed6 )	/* sprites */
+	ROM_LOAD( "vid_6h.bin", 0x18000, 0x08000, 0x8fa1b533 , 0x46d9e7df )	/* sprites */
+	ROM_LOAD( "vid_6g.bin", 0x20000, 0x08000, 0x3a9c929c , 0x45839c9a )	/* sprites */
 
-	ROM_LOAD( "VID_6P.BIN",  0x28000, 0x08000, 0x13e6b7cc )
-	ROM_LOAD( "VID_6O.BIN",  0x30000, 0x08000, 0xe47401ce )
-	ROM_LOAD( "VID_6N.BIN",  0x38000, 0x08000, 0x0a5e9210 )
-	ROM_LOAD( "VID_6L.BIN",  0x40000, 0x08000, 0x970036da )
+	ROM_LOAD( "vid_6p.bin", 0x28000, 0x08000, 0x13e6b7cc , 0x9eae5f8e )
+	ROM_LOAD( "vid_6o.bin", 0x30000, 0x08000, 0xe47401ce , 0x5a10a396 )
+	ROM_LOAD( "vid_6n.bin", 0x38000, 0x08000, 0x0a5e9210 , 0x7b12cf3f )
+	ROM_LOAD( "vid_6l.bin", 0x40000, 0x08000, 0x970036da , 0x3cea7eaa )
 
-	ROM_LOAD( "VID_6F.BIN",  0x48000, 0x08000, 0x64eb6eb9 )
-	ROM_LOAD( "VID_6E.BIN",  0x50000, 0x08000, 0xd096db24 )
-	ROM_LOAD( "VID_6C.BIN",  0x58000, 0x08000, 0x9ff6bcd4 )
-	ROM_LOAD( "VID_6B.BIN",  0x60000, 0x08000, 0x9289536b )
+	ROM_LOAD( "vid_6f.bin", 0x48000, 0x08000, 0x64eb6eb9 , 0x9840edd8 )
+	ROM_LOAD( "vid_6e.bin", 0x50000, 0x08000, 0xd096db24 , 0xff65e074 )
+	ROM_LOAD( "vid_6c.bin", 0x58000, 0x08000, 0x9ff6bcd4 , 0x89868c85 )
+	ROM_LOAD( "vid_6b.bin", 0x60000, 0x08000, 0x9289536b , 0x35389a7b )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "CPU_4H.BIN",  0x0000, 0x4000, 0x3d840000 )
+	ROM_LOAD( "cpu_4h.bin", 0x0000, 0x4000, 0x3d840000 , 0x70522571 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
-	ROM_LOAD( "CPU_1F.BIN",  0x0000, 0x4000, 0xf592c358 )
+	ROM_LOAD( "cpu_1f.bin", 0x0000, 0x4000, 0xf592c358 , 0x3cc98c5a )
 ROM_END
 
 ROM_START( silkworm_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "silkworm.4",  0x00000, 0x10000, 0x8242f71e )	/* c000-ffff is not used */
-	ROM_LOAD( "silkworm.5",  0x10000, 0x10000, 0xdc2e3a8c )	/* banked at f000-f7ff */
+	ROM_LOAD( "silkworm.4", 0x00000, 0x10000, 0x8242f71e , 0xa5277cce )	/* c000-ffff is not used */
+	ROM_LOAD( "silkworm.5", 0x10000, 0x10000, 0xdc2e3a8c , 0xa6c7bb51 )	/* banked at f000-f7ff */
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "silkworm.2",  0x00000, 0x08000, 0xcc03f6a3 )	/* characters */
-	ROM_LOAD( "silkworm.6",  0x08000, 0x10000, 0x9fa0b862 )	/* sprites */
-	ROM_LOAD( "silkworm.7",  0x18000, 0x10000, 0x61dfce63 )	/* sprites */
-	ROM_LOAD( "silkworm.8",  0x28000, 0x10000, 0xc7a80a5c )	/* sprites */
-	ROM_LOAD( "silkworm.9",  0x38000, 0x10000, 0x4b6e4340 )	/* sprites */
-	ROM_LOAD( "silkworm.10", 0x48000, 0x10000, 0xfad1bcad )	/* tiles #1 */
-	ROM_LOAD( "silkworm.11", 0x58000, 0x10000, 0x35f18a5b )	/* tiles #1 */
-	ROM_LOAD( "silkworm.12", 0x68000, 0x10000, 0xc4faff70 )	/* tiles #1 */
-	ROM_LOAD( "silkworm.13", 0x78000, 0x10000, 0x98692fdd )	/* tiles #1 */
-	ROM_LOAD( "silkworm.14", 0x88000, 0x10000, 0x23e5846f )	/* tiles #2 */
-	ROM_LOAD( "silkworm.15", 0x98000, 0x10000, 0xb389f5f5 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.16", 0xa8000, 0x10000, 0x783c76d8 )	/* tiles #2 */
-	ROM_LOAD( "silkworm.17", 0xb8000, 0x10000, 0xf292cf5e )	/* tiles #2 */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "silkworm.2", 0x00000, 0x08000, 0xcc03f6a3 , 0xe80a1cd9 )	/* characters */
+	ROM_LOAD( "silkworm.6", 0x08000, 0x10000, 0x9fa0b862 , 0x1138d159 )	/* sprites */
+	ROM_LOAD( "silkworm.7", 0x18000, 0x10000, 0x61dfce63 , 0xd96214f7 )	/* sprites */
+	ROM_LOAD( "silkworm.8", 0x28000, 0x10000, 0xc7a80a5c , 0x0494b38e )	/* sprites */
+	ROM_LOAD( "silkworm.9", 0x38000, 0x10000, 0x4b6e4340 , 0x8ce3cdf5 )	/* sprites */
+	ROM_LOAD( "silkworm.10", 0x48000, 0x10000, 0xfad1bcad , 0x8c7138bb )	/* tiles #1 */
+	ROM_LOAD( "silkworm.11", 0x58000, 0x10000, 0x35f18a5b , 0x6c03c476 )	/* tiles #1 */
+	ROM_LOAD( "silkworm.12", 0x68000, 0x10000, 0xc4faff70 , 0xbb0f568f )	/* tiles #1 */
+	ROM_LOAD( "silkworm.13", 0x78000, 0x10000, 0x98692fdd , 0x773ad0a4 )	/* tiles #1 */
+	ROM_LOAD( "silkworm.14", 0x88000, 0x10000, 0x23e5846f , 0x409df64b )	/* tiles #2 */
+	ROM_LOAD( "silkworm.15", 0x98000, 0x10000, 0xb389f5f5 , 0x6e4052c9 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.16", 0xa8000, 0x10000, 0x783c76d8 , 0x9292ed63 )	/* tiles #2 */
+	ROM_LOAD( "silkworm.17", 0xb8000, 0x10000, 0xf292cf5e , 0x3fa4563d )	/* tiles #2 */
 
 	ROM_REGION(0x20000)	/* 64k for the audio CPU */
-	ROM_LOAD( "silkworm.3",  0x0000, 0x8000, 0x0867f097 )
+	ROM_LOAD( "silkworm.3", 0x0000, 0x8000, 0x0867f097 , 0xb589f587 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples */
-	ROM_LOAD( "silkworm.1",  0x0000, 0x8000, 0x83601ea4 )
+	ROM_LOAD( "silkworm.1", 0x0000, 0x8000, 0x83601ea4 , 0x5b553644 )
 ROM_END
 
 ROM_START( gemini_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "gw04-5s.rom",  0x00000, 0x10000, 0x6ae20f36 )	/* c000-ffff is not used */
-	ROM_LOAD( "gw05-6s.rom",  0x10000, 0x10000, 0xe6dc716c )	/* banked at f000-f7ff */
+	ROM_LOAD( "gw04-5s.rom", 0x00000, 0x10000, 0x6ae20f36 , 0xff9de855 )	/* c000-ffff is not used */
+	ROM_LOAD( "gw05-6s.rom", 0x10000, 0x10000, 0xe6dc716c , 0x5a6947a9 )	/* banked at f000-f7ff */
 
-	ROM_REGION(0xc8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gw02-3h.rom",  0x00000, 0x08000, 0x1b7f9715 )	/* characters */
-	ROM_LOAD( "gw06-1c.rom",  0x08000, 0x10000, 0xa435719b )	/* sprites */
-	ROM_LOAD( "gw07-1d.rom",  0x18000, 0x10000, 0xb93f65df )	/* sprites */
-	ROM_LOAD( "gw08-1f.rom",  0x28000, 0x10000, 0xcdc53fb1 )	/* sprites */
-	ROM_LOAD( "gw09-1h.rom",  0x38000, 0x10000, 0xf7686c68 )	/* sprites */
-	ROM_LOAD( "gw10-1n.rom",  0x48000, 0x10000, 0x7ab6d402 )	/* tiles #1 */
-	ROM_LOAD( "gw11-2na.rom", 0x58000, 0x10000, 0x22d12005 )	/* tiles #1 */
-	ROM_LOAD( "gw12-2nb.rom", 0x68000, 0x10000, 0xd4873e8d )	/* tiles #1 */
-	ROM_LOAD( "gw13-3n.rom",  0x78000, 0x10000, 0xe80df095 )	/* tiles #1 */
-	ROM_LOAD( "gw14-1r.rom",  0x88000, 0x10000, 0x6e2bb603 )	/* tiles #2 */
-	ROM_LOAD( "gw15-2ra.rom", 0x98000, 0x10000, 0x5117008f )	/* tiles #2 */
-	ROM_LOAD( "gw16-2rb.rom", 0xa8000, 0x10000, 0x20036f93 )	/* tiles #2 */
-	ROM_LOAD( "gw17-3r.rom",  0xb8000, 0x10000, 0x9fe690b0 )	/* tiles #2 */
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gw02-3h.rom", 0x00000, 0x08000, 0x1b7f9715 , 0x7acc8d35 )	/* characters */
+	ROM_LOAD( "gw06-1c.rom", 0x08000, 0x10000, 0xa435719b , 0x4ea51631 )	/* sprites */
+	ROM_LOAD( "gw07-1d.rom", 0x18000, 0x10000, 0xb93f65df , 0xda42637e )	/* sprites */
+	ROM_LOAD( "gw08-1f.rom", 0x28000, 0x10000, 0xcdc53fb1 , 0x0b4e8d70 )	/* sprites */
+	ROM_LOAD( "gw09-1h.rom", 0x38000, 0x10000, 0xf7686c68 , 0xb65c5e4c )	/* sprites */
+	ROM_LOAD( "gw10-1n.rom", 0x48000, 0x10000, 0x7ab6d402 , 0x5e84cd4f )	/* tiles #1 */
+	ROM_LOAD( "gw11-2na.rom", 0x58000, 0x10000, 0x22d12005 , 0x08b458e1 )	/* tiles #1 */
+	ROM_LOAD( "gw12-2nb.rom", 0x68000, 0x10000, 0xd4873e8d , 0x229c9714 )	/* tiles #1 */
+	ROM_LOAD( "gw13-3n.rom", 0x78000, 0x10000, 0xe80df095 , 0xc5dfaf47 )	/* tiles #1 */
+	ROM_LOAD( "gw14-1r.rom", 0x88000, 0x10000, 0x6e2bb603 , 0x9c10e5b5 )	/* tiles #2 */
+	ROM_LOAD( "gw15-2ra.rom", 0x98000, 0x10000, 0x5117008f , 0x4cd18cfa )	/* tiles #2 */
+	ROM_LOAD( "gw16-2rb.rom", 0xa8000, 0x10000, 0x20036f93 , 0xf911c7be )	/* tiles #2 */
+	ROM_LOAD( "gw17-3r.rom", 0xb8000, 0x10000, 0x9fe690b0 , 0x79a9ce25 )	/* tiles #2 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gw03-5h.rom", 0x0000, 0x8000, 0x81722c2e )
+	ROM_LOAD( "gw03-5h.rom", 0x0000, 0x8000, 0x81722c2e , 0x9bc79596 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples */
-	ROM_LOAD( "gw01-6a.rom", 0x0000, 0x8000, 0xa0da9812 )
+	ROM_LOAD( "gw01-6a.rom", 0x0000, 0x8000, 0xa0da9812 , 0xd78afa05 )
 ROM_END
 
 

@@ -354,23 +354,18 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	1024,	/* 1024 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0x10000*8, 0x8000*8, 0 },
+	{ 2*1024*32*8, 1024*32*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7},
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8},
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,      0, 32 },	/* use colors   0-255 */
 	{ 1, 0x06000, &spritelayout, 32*8, 32 },	/* use colors 256-511 */
-	{ 1, 0x08000, &spritelayout, 32*8, 32 },
-	{ 1, 0x0a000, &spritelayout, 32*8, 32 },
-	{ 1, 0x0c000, &spritelayout, 32*8, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -457,78 +452,78 @@ static struct MachineDriver machine_driver =
 
 ROM_START( kungfum_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a-4e-c.bin", 0x0000, 0x4000, 0x2f0e3ee2 )
-	ROM_LOAD( "a-4d-c.bin", 0x4000, 0x4000, 0x8cba3ca0 )
+	ROM_LOAD( "a-4e-c.bin", 0x0000, 0x4000, 0x2f0e3ee2 , 0xb6e2d083 )
+	ROM_LOAD( "a-4d-c.bin", 0x4000, 0x4000, 0x8cba3ca0 , 0x7532918e )
 
-	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, 0x039d270f )	/* characters */
-	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 )
-	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, 0x8844653c )
-	ROM_LOAD( "b-4k-.bin",  0x06000, 0x2000, 0x8d7ed674 )	/* sprites */
-	ROM_LOAD( "b-4f-.bin",  0x08000, 0x2000, 0x5b150b93 )
-	ROM_LOAD( "b-4l-.bin",  0x0a000, 0x2000, 0xec6d1b3f )
-	ROM_LOAD( "b-4h-.bin",  0x0c000, 0x2000, 0x1a4951cf )
-	ROM_LOAD( "b-3n-.bin",  0x0e000, 0x2000, 0x914a85c8 )
-	ROM_LOAD( "b-4n-.bin",  0x10000, 0x2000, 0xc75445d4 )
-	ROM_LOAD( "b-4m-.bin",  0x12000, 0x2000, 0x7397e287 )
-	ROM_LOAD( "b-3m-.bin",  0x14000, 0x2000, 0x97089d1e )
-	ROM_LOAD( "b-4c-.bin",  0x16000, 0x2000, 0x21d4b868 )
-	ROM_LOAD( "b-4e-.bin",  0x18000, 0x2000, 0x01e029aa )
-	ROM_LOAD( "b-4d-.bin",  0x1a000, 0x2000, 0x1ae251dc )
-	ROM_LOAD( "b-4a-.bin",  0x1c000, 0x2000, 0x64f6568c )
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, 0x039d270f , 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 , 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, 0x8844653c , 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin", 0x06000, 0x2000, 0x8d7ed674 , 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin", 0x08000, 0x2000, 0x5b150b93 , 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin", 0x0a000, 0x2000, 0xec6d1b3f , 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin", 0x0c000, 0x2000, 0x1a4951cf , 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin", 0x0e000, 0x2000, 0x914a85c8 , 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin", 0x10000, 0x2000, 0xc75445d4 , 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin", 0x12000, 0x2000, 0x7397e287 , 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin", 0x14000, 0x2000, 0x97089d1e , 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin", 0x16000, 0x2000, 0x21d4b868 , 0x01298885 )
+	ROM_LOAD( "b-4e-.bin", 0x18000, 0x2000, 0x01e029aa , 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin", 0x1a000, 0x2000, 0x1ae251dc , 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin", 0x1c000, 0x2000, 0x64f6568c , 0x6189d626 )
 
 	ROM_REGION(0x0620)	/* color PROMs */
-	ROM_LOAD( "g-1j-.bin", 0x0000, 0x0100, 0xd0400a02 )	/* character palette red component */
-	ROM_LOAD( "b-1m-.bin", 0x0100, 0x0100, 0x0dd80902 )	/* sprite palette red component */
-	ROM_LOAD( "g-1f-.bin", 0x0200, 0x0100, 0x8e830b03 )	/* character palette green component */
-	ROM_LOAD( "b-1n-.bin", 0x0300, 0x0100, 0xe1b80206 )	/* sprite palette green component */
-	ROM_LOAD( "g-1h-.bin", 0x0400, 0x0100, 0x2647000d )	/* character palette blue component */
-	ROM_LOAD( "b-1l-.bin", 0x0500, 0x0100, 0xa8830605 )	/* sprite palette blue component */
-	ROM_LOAD( "b-5f-.bin", 0x0600, 0x0020, 0x0e0e0000 )	/* sprite height, one entry per 32 */
+	ROM_LOAD( "g-1j-.bin", 0x0000, 0x0100, 0xd0400a02 , 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin", 0x0100, 0x0100, 0x0dd80902 , 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin", 0x0200, 0x0100, 0x8e830b03 , 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin", 0x0300, 0x0100, 0xe1b80206 , 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin", 0x0400, 0x0100, 0x2647000d , 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin", 0x0500, 0x0100, 0xa8830605 , 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin", 0x0600, 0x0020, 0x0e0e0000 , 0x7a601c3d )	/* sprite height, one entry per 32 */
 														/*   sprites. Used at run time! */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "a-3e-.bin", 0xa000, 0x2000, 0x5d39e85b )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3f-.bin", 0xc000, 0x2000, 0x52c61b44 )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e )
+	ROM_LOAD( "a-3e-.bin", 0xa000, 0x2000, 0x5d39e85b , 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin", 0xc000, 0x2000, 0x52c61b44 , 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e , 0xd99fb995 )
 ROM_END
 
 ROM_START( kungfub_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kf4", 0x0000, 0x4000, 0xe189358b )
-	ROM_LOAD( "kf5", 0x4000, 0x4000, 0x3f93ee29 )
+	ROM_LOAD( "kf4", 0x0000, 0x4000, 0xe189358b , 0x3f65313f )
+	ROM_LOAD( "kf5", 0x4000, 0x4000, 0x3f93ee29 , 0x9ea325f3 )
 
-	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, 0x039d270f )	/* characters */
-	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 )
-	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, 0x8844653c )
-	ROM_LOAD( "b-4k-.bin",  0x06000, 0x2000, 0x8d7ed674 )	/* sprites */
-	ROM_LOAD( "b-4f-.bin",  0x08000, 0x2000, 0x5b150b93 )
-	ROM_LOAD( "b-4l-.bin",  0x0a000, 0x2000, 0xec6d1b3f )
-	ROM_LOAD( "b-4h-.bin",  0x0c000, 0x2000, 0x1a4951cf )
-	ROM_LOAD( "b-3n-.bin",  0x0e000, 0x2000, 0x914a85c8 )
-	ROM_LOAD( "b-4n-.bin",  0x10000, 0x2000, 0xc75445d4 )
-	ROM_LOAD( "b-4m-.bin",  0x12000, 0x2000, 0x7397e287 )
-	ROM_LOAD( "b-3m-.bin",  0x14000, 0x2000, 0x97089d1e )
-	ROM_LOAD( "b-4c-.bin",  0x16000, 0x2000, 0x21d4b868 )
-	ROM_LOAD( "b-4e-.bin",  0x18000, 0x2000, 0x01e029aa )
-	ROM_LOAD( "b-4d-.bin",  0x1a000, 0x2000, 0x1ae251dc )
-	ROM_LOAD( "b-4a-.bin",  0x1c000, 0x2000, 0x64f6568c )
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, 0x039d270f , 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, 0x63ea9db4 , 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, 0x8844653c , 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin", 0x06000, 0x2000, 0x8d7ed674 , 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin", 0x08000, 0x2000, 0x5b150b93 , 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin", 0x0a000, 0x2000, 0xec6d1b3f , 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin", 0x0c000, 0x2000, 0x1a4951cf , 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin", 0x0e000, 0x2000, 0x914a85c8 , 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin", 0x10000, 0x2000, 0xc75445d4 , 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin", 0x12000, 0x2000, 0x7397e287 , 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin", 0x14000, 0x2000, 0x97089d1e , 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin", 0x16000, 0x2000, 0x21d4b868 , 0x01298885 )
+	ROM_LOAD( "b-4e-.bin", 0x18000, 0x2000, 0x01e029aa , 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin", 0x1a000, 0x2000, 0x1ae251dc , 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin", 0x1c000, 0x2000, 0x64f6568c , 0x6189d626 )
 
 	ROM_REGION(0x0620)	/* color PROMs */
-	ROM_LOAD( "g-1j-.bin", 0x0000, 0x0100, 0xd0400a02 )	/* character palette red component */
-	ROM_LOAD( "b-1m-.bin", 0x0100, 0x0100, 0x0dd80902 )	/* sprite palette red component */
-	ROM_LOAD( "g-1f-.bin", 0x0200, 0x0100, 0x8e830b03 )	/* character palette green component */
-	ROM_LOAD( "b-1n-.bin", 0x0300, 0x0100, 0xe1b80206 )	/* sprite palette green component */
-	ROM_LOAD( "g-1h-.bin", 0x0400, 0x0100, 0x2647000d )	/* character palette blue component */
-	ROM_LOAD( "b-1l-.bin", 0x0500, 0x0100, 0xa8830605 )	/* sprite palette blue component */
-	ROM_LOAD( "b-5f-.bin", 0x0600, 0x0020, 0x0e0e0000 )	/* sprite height, one entry per 32 */
+	ROM_LOAD( "g-1j-.bin", 0x0000, 0x0100, 0xd0400a02 , 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin", 0x0100, 0x0100, 0x0dd80902 , 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin", 0x0200, 0x0100, 0x8e830b03 , 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin", 0x0300, 0x0100, 0xe1b80206 , 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin", 0x0400, 0x0100, 0x2647000d , 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin", 0x0500, 0x0100, 0xa8830605 , 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin", 0x0600, 0x0020, 0x0e0e0000 , 0x7a601c3d )	/* sprite height, one entry per 32 */
 														/*   sprites. Used at run time! */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "a-3e-.bin", 0xa000, 0x2000, 0x5d39e85b )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3f-.bin", 0xc000, 0x2000, 0x52c61b44 )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e )
+	ROM_LOAD( "a-3e-.bin", 0xa000, 0x2000, 0x5d39e85b , 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin", 0xc000, 0x2000, 0x52c61b44 , 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin", 0xe000, 0x2000, 0x9d1c669e , 0xd99fb995 )
 ROM_END
 
 

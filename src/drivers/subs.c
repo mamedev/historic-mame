@@ -216,23 +216,23 @@ static void subs_rom_init(void)
 
 ROM_START( subs_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "34190.p1",	 0x2800, 0x0800, 0x0b0e1476 )
-	ROM_LOAD( "34191.p2",	 0x3000, 0x0800, 0xc125bd5f )
-	ROM_LOAD( "34192.n2",	 0x3800, 0x0800, 0xdd4991f3 )
+	ROM_LOAD( "34190.p1", 	 0x2800, 0x0800, 0x0b0e1476 , 0xa88aef21 )
+	ROM_LOAD( "34191.p2", 	 0x3000, 0x0800, 0xc125bd5f , 0x2c652e72 )
+	ROM_LOAD( "34192.n2", 	 0x3800, 0x0800, 0xdd4991f3 , 0x3ce63d33 )
     ROM_RELOAD(              0xF800, 0x0800 )
 	/* Note: These are being loaded into a bogus location, */
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
 	/*		 subs_rom_init()							   */
-	ROM_LOAD( "34196.e2",	 0x8000, 0x0100, 0x190c0706 )	/* ROM 0 D4-D7 */
-	ROM_LOAD( "34194.e1",	 0x9000, 0x0100, 0xf303090b )	/* ROM 0 D0-D3 */
+	ROM_LOAD( "34196.e2", 	 0x8000, 0x0100, 0x190c0706 , 0x7c7a04c3 )	/* ROM 0 D4-D7 */
+	ROM_LOAD( "34194.e1", 	 0x9000, 0x0100, 0xf303090b , 0x6b1c4acc )	/* ROM 0 D0-D3 */
 
-	ROM_REGION(0x1000) /* graphics */
-	ROM_LOAD( "34211.m4", 0x0000, 0x0800, 0xb1f947ef )	/* Playfield */
-	ROM_LOAD( "34216.d7", 0x0800, 0x0200, 0x6efbee47 )	/* Motion */
-	ROM_LOAD( "34217.d8", 0x0a00, 0x0200, 0x06f70093 )	/* Motion */
-	ROM_LOAD( "34218.e7", 0x0c00, 0x0200, 0x7280d120 )	/* Motion */
-	ROM_LOAD( "34219.e8", 0x0e00, 0x0200, 0x13b7020b )	/* Motion */
+	ROM_REGION_DISPOSE(0x1000) /* graphics */
+	ROM_LOAD( "34211.m4", 0x0000, 0x0800, 0xb1f947ef , 0xfa8d4409 )	/* Playfield */
+	ROM_LOAD( "34216.d7", 0x0800, 0x0200, 0x6efbee47 , 0x941d28b4 )	/* Motion */
+	ROM_LOAD( "34217.d8", 0x0a00, 0x0200, 0x06f70093 , 0xa7a60da3 )	/* Motion */
+	ROM_LOAD( "34218.e7", 0x0c00, 0x0200, 0x7280d120 , 0xf4f4d874 )	/* Motion */
+	ROM_LOAD( "34219.e8", 0x0e00, 0x0200, 0x13b7020b , 0x99a5a49b )	/* Motion */
 
 ROM_END
 

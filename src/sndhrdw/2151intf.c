@@ -326,9 +326,9 @@ void YM2151_sh_update(void)
 			if( sample_bits == 16 )
 			{
 				/* Left channel  */
-				osd_play_streamed_sample_16(channel+i*2   ,bufferFM[i*2  ],buffer_len,emulation_rate,volume[i]);
+				osd_play_streamed_sample_16(channel+i*2   ,bufferFM[i*2 ],2*buffer_len,emulation_rate,volume[i]);
 				/* Right channel */
-				osd_play_streamed_sample_16(channel+i*2+1 ,bufferFM[i*2+1],buffer_len,emulation_rate,volume[i]);
+				osd_play_streamed_sample_16(channel+i*2+1,bufferFM[i*2+1],2*buffer_len,emulation_rate,volume[i]);
 			}
 			else
 			{
@@ -343,7 +343,7 @@ void YM2151_sh_update(void)
 		YM2151Update();
 		for (i = 0;i < intf->num;i++)
 			if (sample_bits==16)
-				osd_play_streamed_sample_16(channel+i,bufferFM[i],buffer_len,emulation_rate,intf->volume[i]);
+				osd_play_streamed_sample_16(channel+i,bufferFM[i],2*buffer_len,emulation_rate,intf->volume[i]);
 			else
 				osd_play_streamed_sample(channel+i,bufferFM[i],buffer_len,emulation_rate,intf->volume[i]);
 		/* reset sample position */

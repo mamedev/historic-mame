@@ -14,12 +14,6 @@ Changes:
 
 TODO:
 	* Need valid color prom for Fantazia. Current one is slightly damaged.
-	* Sound sample trigger points ("Help!") for King & Balloon aren't working.
-	There are speech samples, but they don't play. It
-	seems the game checks the self-test switch at startup, if it's _on_, then
-	it sets a flag to play the samples. I must be doing something wrong,
-	because this is an impossible scenario. Maybe someone who understands Z80
-	code better can take a look.
 
 ***************************************************************************/
 
@@ -61,6 +55,22 @@ void checkman_sound_command_w (int offset, int data)
 	cpu_cause_interrupt (1, Z80_NMI_INT);
 }
 
+static int kingball_speech_dip;
+
+/* Hack? If $b003 is high, we'll check our "fake" speech dipswitch */
+static int kingball_IN0_r (int offset)
+{
+	if (kingball_speech_dip)
+		return (readinputport (0) & 0x80) >> 1;
+	else
+		return readinputport (0);
+}
+
+static void kingball_speech_dip_w (int offset, int data)
+{
+	kingball_speech_dip = data;
+}
+
 static int kingball_sound;
 
 static void kingball_sound1_w (int offset, int data)
@@ -76,13 +86,13 @@ static void kingball_sound2_w (int offset, int data)
 	if (errorlog) fprintf (errorlog, "kingball_sample play: %02x (%02x)\n", kingball_sound, data);
 }
 
-
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x9fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
+	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
+	{ 0x9400, 0x97ff, videoram_r },	/* Checkman - video RAM mirror */
+	{ 0x9800, 0x9fff, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
@@ -137,6 +147,20 @@ static struct MemoryWriteAddress moonal2_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress kingball_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
+	{ 0x9400, 0x97ff, videoram_r },	/* Checkman - video RAM mirror */
+	{ 0x9800, 0x9fff, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0xa000, 0xa000, kingball_IN0_r },	/* IN0 */
+	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
+	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
+	{ 0xb800, 0xb800, watchdog_reset_r },
+	{ -1 }	/* end of table */
+};
+
 static struct MemoryWriteAddress kingball_writemem[] =
 {
 	{ 0x0000, 0x2fff, MWA_ROM },
@@ -155,6 +179,7 @@ static struct MemoryWriteAddress kingball_writemem[] =
 	{ 0xb001, 0xb001, interrupt_enable_w },
 	{ 0xb000, 0xb000, kingball_sound1_w },
 	{ 0xb002, 0xb002, kingball_sound2_w },
+	{ 0xb003, 0xb003, kingball_speech_dip_w },
 //	{ 0xb004, 0xb004, galaxian_stars_w },
 	{ 0xb006, 0xb006, galaxian_flipx_w },
 	{ 0xb007, 0xb007, galaxian_flipy_w },
@@ -403,7 +428,10 @@ INPUT_PORTS_START( kingball_input_ports )
 	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Hack? - possibly multiplexed via writes to $b003 */
+	PORT_DIPNAME( 0x80, 0x80, "Speech", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -691,14 +719,14 @@ static struct MachineDriver kingball_machine_driver =
 	{
 		{
 			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz? */
 			0,
-			readmem,kingball_writemem,0,0,
+			kingball_readmem,kingball_writemem,0,0,
 			galaxian_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1620000,	/* 1.62 MHz */
+			2500000,	/* 2.5 MHz */
 			3,
 			kb_sound_readmem,kb_sound_writemem,kb_sound_readport,kb_sound_writeport,
 			interrupt,1	/* NMIs are triggered by the main CPU */
@@ -744,83 +772,83 @@ static struct MachineDriver kingball_machine_driver =
 
 ROM_START( mooncrst_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mc1", 0x0000, 0x0800, 0x09517d4d )
-	ROM_LOAD( "mc2", 0x0800, 0x0800, 0xc38036ea )
-	ROM_LOAD( "mc3", 0x1000, 0x0800, 0x55850d07 )
-	ROM_LOAD( "mc4", 0x1800, 0x0800, 0xce9fa607 )
-	ROM_LOAD( "mc5", 0x2000, 0x0800, 0xbe597a3b )
-	ROM_LOAD( "mc6", 0x2800, 0x0800, 0xccf35bef )
-	ROM_LOAD( "mc7", 0x3000, 0x0800, 0x589bfa8f )
-	ROM_LOAD( "mc8", 0x3800, 0x0800, 0xc2ca7a86 )
+	ROM_LOAD( "mc1", 0x0000, 0x0800, 0x09517d4d , 0x7d954a7a )
+	ROM_LOAD( "mc2", 0x0800, 0x0800, 0xc38036ea , 0x44bb7cfa )
+	ROM_LOAD( "mc3", 0x1000, 0x0800, 0x55850d07 , 0x9c412104 )
+	ROM_LOAD( "mc4", 0x1800, 0x0800, 0xce9fa607 , 0x7e9b1ab5 )
+	ROM_LOAD( "mc5", 0x2000, 0x0800, 0xbe597a3b , 0x16c759af )
+	ROM_LOAD( "mc6", 0x2800, 0x0800, 0xccf35bef , 0x69bcafdb )
+	ROM_LOAD( "mc7", 0x3000, 0x0800, 0x589bfa8f , 0xb50dbc46 )
+	ROM_LOAD( "mc8", 0x3800, 0x0800, 0xc2ca7a86 , 0x18ca312b )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mcs_b", 0x0000, 0x0800, 0xec117295 )
-	ROM_LOAD( "mcs_d", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "mcs_a", 0x1000, 0x0800, 0xc5975785 )
-	ROM_LOAD( "mcs_c", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mcs_b", 0x0000, 0x0800, 0xec117295 , 0xfb0f1f81 )
+	ROM_LOAD( "mcs_d", 0x0800, 0x0800, 0xdfbc68ba , 0x13932a15 )
+	ROM_LOAD( "mcs_a", 0x1000, 0x0800, 0xc5975785 , 0x631ebb5a )
+	ROM_LOAD( "mcs_c", 0x1800, 0x0800, 0xc1dc1cde , 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 )
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 , 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsg_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x719fde2d )
-	ROM_LOAD( "EPR195", 0x0800, 0x0800, 0xb592b35a )
-	ROM_LOAD( "EPR196", 0x1000, 0x0800, 0xa68c9f7e )
-	ROM_LOAD( "EPR197", 0x1800, 0x0800, 0xdd96a2c2 )
-	ROM_LOAD( "EPR198", 0x2000, 0x0800, 0xb3df4fd5 )
-	ROM_LOAD( "EPR199", 0x2800, 0x0800, 0x4b7654e0 )
-	ROM_LOAD( "EPR200", 0x3000, 0x0800, 0x765799c9 )
-	ROM_LOAD( "EPR201", 0x3800, 0x0800, 0xb1cd92a3 )
+	ROM_LOAD( "epr194", 0x0000, 0x0800, 0x719fde2d , 0x0e5582b1 )
+	ROM_LOAD( "epr195", 0x0800, 0x0800, 0xb592b35a , 0x12cb201b )
+	ROM_LOAD( "epr196", 0x1000, 0x0800, 0xa68c9f7e , 0x18255614 )
+	ROM_LOAD( "epr197", 0x1800, 0x0800, 0xdd96a2c2 , 0x05ac1466 )
+	ROM_LOAD( "epr198", 0x2000, 0x0800, 0xb3df4fd5 , 0xc28a2e8f )
+	ROM_LOAD( "epr199", 0x2800, 0x0800, 0x4b7654e0 , 0x5a4571de )
+	ROM_LOAD( "epr200", 0x3000, 0x0800, 0x765799c9 , 0xb7c85bf1 )
+	ROM_LOAD( "epr201", 0x3800, 0x0800, 0xb1cd92a3 , 0x2caba07f )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "EPR203", 0x0000, 0x0800, 0xa27f5447 )
-	ROM_LOAD( "EPR172", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "EPR202", 0x1000, 0x0800, 0xec79cbdb )
-	ROM_LOAD( "EPR171", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr203", 0x0000, 0x0800, 0xa27f5447 , 0xbe26b561 )
+	ROM_LOAD( "epr172", 0x0800, 0x0800, 0xdfbc68ba , 0x13932a15 )
+	ROM_LOAD( "epr202", 0x1000, 0x0800, 0xec79cbdb , 0x26c7e800 )
+	ROM_LOAD( "epr171", 0x1800, 0x0800, 0xc1dc1cde , 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 )
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 , 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "BEPR194", 0x0000, 0x0800, 0x1c6e3b4a )
-	ROM_LOAD( "BEPR195", 0x0800, 0x0800, 0xa8901964 )
-	ROM_LOAD( "BEPR196", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "BEPR197", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "BEPR198", 0x2000, 0x0800, 0x981d7a7f )
-	ROM_LOAD( "BEPR199", 0x2800, 0x0800, 0x3def1bab )
-	ROM_LOAD( "BEPR200", 0x3000, 0x0800, 0xb31bfacf )
-	ROM_LOAD( "BEPR201", 0x3800, 0x0800, 0xe0a15117 )
+	ROM_LOAD( "bepr194", 0x0000, 0x0800, 0x1c6e3b4a , 0x6a23ec6d )
+	ROM_LOAD( "bepr195", 0x0800, 0x0800, 0xa8901964 , 0xee262ff2 )
+	ROM_LOAD( "bepr196", 0x1000, 0x0800, 0x3247a543 , 0x29a2b0ab )
+	ROM_LOAD( "bepr197", 0x1800, 0x0800, 0x8e22a4b2 , 0x4c6a5a6d )
+	ROM_LOAD( "bepr198", 0x2000, 0x0800, 0x981d7a7f , 0x06d378a6 )
+	ROM_LOAD( "bepr199", 0x2800, 0x0800, 0x3def1bab , 0x6e84a927 )
+	ROM_LOAD( "bepr200", 0x3000, 0x0800, 0xb31bfacf , 0xb45af1e8 )
+	ROM_LOAD( "bepr201", 0x3800, 0x0800, 0xe0a15117 , 0x66da55d5 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BEPR203", 0x0000, 0x0800, 0xa27f5447 )
-	ROM_LOAD( "BEPR172", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "BEPR202", 0x1000, 0x0800, 0xec79cbdb )
-	ROM_LOAD( "BEPR171", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bepr203", 0x0000, 0x0800, 0xa27f5447 , 0xbe26b561 )
+	ROM_LOAD( "bepr172", 0x0800, 0x0800, 0xdfbc68ba , 0x13932a15 )
+	ROM_LOAD( "bepr202", 0x1000, 0x0800, 0xec79cbdb , 0x26c7e800 )
+	ROM_LOAD( "bepr171", 0x1800, 0x0800, 0xc1dc1cde , 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 )
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 , 0x6a0c7d87 )
 ROM_END
 
 ROM_START( fantazia_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "F01.bin", 0x0000, 0x0800, 0x22693d4d )
-	ROM_LOAD( "F02.bin", 0x0800, 0x0800, 0xe65a30ae )
-	ROM_LOAD( "F03.bin", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "F04.bin", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "F09.bin", 0x2000, 0x0800, 0x730c6f5a )
-	ROM_LOAD( "F10.bin", 0x2800, 0x0800, 0x50694b53 )
-	ROM_LOAD( "F11.bin", 0x3000, 0x0800, 0x932f1ab9 )
-	ROM_LOAD( "F12.bin", 0x3800, 0x0800, 0xdc786302 )
+	ROM_LOAD( "f01.bin", 0x0000, 0x0800, 0x22693d4d , 0xd3e23863 )
+	ROM_LOAD( "f02.bin", 0x0800, 0x0800, 0xe65a30ae , 0x63fa4149 )
+	ROM_LOAD( "f03.bin", 0x1000, 0x0800, 0x3247a543 , 0x29a2b0ab )
+	ROM_LOAD( "f04.bin", 0x1800, 0x0800, 0x8e22a4b2 , 0x4c6a5a6d )
+	ROM_LOAD( "f09.bin", 0x2000, 0x0800, 0x730c6f5a , 0x75fd5ca1 )
+	ROM_LOAD( "f10.bin", 0x2800, 0x0800, 0x50694b53 , 0xe4da2dd4 )
+	ROM_LOAD( "f11.bin", 0x3000, 0x0800, 0x932f1ab9 , 0x42869646 )
+	ROM_LOAD( "f12.bin", 0x3800, 0x0800, 0xdc786302 , 0xa48d7fb0 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1h_1_10.bin", 0x0000, 0x0800, 0x22bd9067 )
-	ROM_LOAD( "1k_2_12.bin", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800, 0xf93f9153 )
-	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1h_1_10.bin", 0x0000, 0x0800, 0x22bd9067 , 0x528da705 )
+	ROM_LOAD( "1k_2_12.bin", 0x0800, 0x0800, 0xdfbc68ba , 0x13932a15 )
+	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800, 0xf93f9153 , 0x4e79ff6b )
+	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800, 0xc1dc1cde , 0x24cfd145 )
 
 	ROM_REGION(0x0020)	/* color prom */
 
@@ -828,141 +856,141 @@ ROM_END
 
 ROM_START( eagle_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "E1", 0x0000, 0x0800, 0xdf0c83ca )
-	ROM_LOAD( "E2", 0x0800, 0x0800, 0xfb3119cb )
-	ROM_LOAD( "E3", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "E4", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "E5", 0x2000, 0x0800, 0x981d7a7f )
-	ROM_LOAD( "E6", 0x2800, 0x0800, 0x3de71ba3 )
-	ROM_LOAD( "E7", 0x3000, 0x0800, 0xb31bfacf )
-	ROM_LOAD( "E8", 0x3800, 0x0800, 0xb722917e )
+	ROM_LOAD( "e1", 0x0000, 0x0800, 0xdf0c83ca , 0x224c9526 )
+	ROM_LOAD( "e2", 0x0800, 0x0800, 0xfb3119cb , 0xcc538ebd )
+	ROM_LOAD( "e3", 0x1000, 0x0800, 0x3247a543 , 0x29a2b0ab )
+	ROM_LOAD( "e4", 0x1800, 0x0800, 0x8e22a4b2 , 0x4c6a5a6d )
+	ROM_LOAD( "e5", 0x2000, 0x0800, 0x981d7a7f , 0x06d378a6 )
+	ROM_LOAD( "e6", 0x2800, 0x0800, 0x3de71ba3 , 0x0dea20d5 )
+	ROM_LOAD( "e7", 0x3000, 0x0800, 0xb31bfacf , 0xb45af1e8 )
+	ROM_LOAD( "e8", 0x3800, 0x0800, 0xb722917e , 0xc437a876 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "E10", 0x0000, 0x0800, 0xe31bdc41 )
-	ROM_LOAD( "E12", 0x0800, 0x0200, 0x48cd3351 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "e10", 0x0000, 0x0800, 0xe31bdc41 , 0x40ce58bf )
+	ROM_LOAD( "e12", 0x0800, 0x0200, 0x48cd3351 , 0x628fdeed )
 	ROM_CONTINUE(    0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
 	ROM_CONTINUE(    0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
 	ROM_CONTINUE(    0x0e00, 0x0200 )
-	ROM_LOAD( "E9",  0x1000, 0x0800, 0x6f97f19d )
-	ROM_LOAD( "E11", 0x1800, 0x0200, 0x9c42def2 )
+	ROM_LOAD( "e9", 0x1000, 0x0800, 0x6f97f19d , 0xba664099 )
+	ROM_LOAD( "e11", 0x1800, 0x0200, 0x9c42def2 , 0xee4ec5fd )
 	ROM_CONTINUE(    0x1c00, 0x0200 )
 	ROM_CONTINUE(    0x1a00, 0x0200 )
 	ROM_CONTINUE(    0x1e00, 0x0200 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 )
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 , 0x6a0c7d87 )
 ROM_END
 
 ROM_START( moonqsr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mq1", 0x0000, 0x0800, 0x158eb218 )
-	ROM_LOAD( "mq2", 0x0800, 0x0800, 0x59362b9c )
-	ROM_LOAD( "mq3", 0x1000, 0x0800, 0xa9e7a5e7 )
-	ROM_LOAD( "mq4", 0x1800, 0x0800, 0x8cac8d0e )
-	ROM_LOAD( "mq5", 0x2000, 0x0800, 0xd436f3fa )
-	ROM_LOAD( "mq6", 0x2800, 0x0800, 0xd9f90a93 )
-	ROM_LOAD( "mq7", 0x3000, 0x0800, 0x8ebe83a0 )
-	ROM_LOAD( "mq8", 0x3800, 0x0800, 0x5faa5ffe )
+	ROM_LOAD( "mq1", 0x0000, 0x0800, 0x158eb218 , 0x132c13ec )
+	ROM_LOAD( "mq2", 0x0800, 0x0800, 0x59362b9c , 0xc8eb74f1 )
+	ROM_LOAD( "mq3", 0x1000, 0x0800, 0xa9e7a5e7 , 0x33965a89 )
+	ROM_LOAD( "mq4", 0x1800, 0x0800, 0x8cac8d0e , 0xa3861d17 )
+	ROM_LOAD( "mq5", 0x2000, 0x0800, 0xd436f3fa , 0x8bcf9c67 )
+	ROM_LOAD( "mq6", 0x2800, 0x0800, 0xd9f90a93 , 0x5750cda9 )
+	ROM_LOAD( "mq7", 0x3000, 0x0800, 0x8ebe83a0 , 0x78d7fe5b )
+	ROM_LOAD( "mq8", 0x3800, 0x0800, 0x5faa5ffe , 0x4919eed5 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mqb", 0x0000, 0x0800, 0x7603cc0b )
-	ROM_LOAD( "mqd", 0x0800, 0x0800, 0x6552d98e )
-	ROM_LOAD( "mqa", 0x1000, 0x0800, 0x9a9e81d6 )
-	ROM_LOAD( "mqc", 0x1800, 0x0800, 0x3cf1ef43 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mqb", 0x0000, 0x0800, 0x7603cc0b , 0xb55ec806 )
+	ROM_LOAD( "mqd", 0x0800, 0x0800, 0x6552d98e , 0x9e7d0e13 )
+	ROM_LOAD( "mqa", 0x1000, 0x0800, 0x9a9e81d6 , 0x66eee0db )
+	ROM_LOAD( "mqc", 0x1800, 0x0800, 0x3cf1ef43 , 0xa6db5b0d )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "moonqsr.clr", 0x0000, 0x0020, 0x8cab8983 )
+	ROM_LOAD( "moonqsr.clr", 0x0000, 0x0020, 0x8cab8983 , 0x0b878b54 )
 ROM_END
 
 ROM_START( checkman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cm1", 0x0000, 0x0800, 0x778f0ed3 )
-	ROM_LOAD( "cm2", 0x0800, 0x0800, 0x43b09b92 )
-	ROM_LOAD( "cm3", 0x1000, 0x0800, 0x7fcab522 )
-	ROM_LOAD( "cm4", 0x1800, 0x0800, 0x07b3b9cd )
-	ROM_LOAD( "cm5", 0x2000, 0x0800, 0x21b7b633 )
+	ROM_LOAD( "cm1", 0x0000, 0x0800, 0x778f0ed3 , 0xe8cbdd28 )
+	ROM_LOAD( "cm2", 0x0800, 0x0800, 0x43b09b92 , 0xb8432d4d )
+	ROM_LOAD( "cm3", 0x1000, 0x0800, 0x7fcab522 , 0x15a97f61 )
+	ROM_LOAD( "cm4", 0x1800, 0x0800, 0x07b3b9cd , 0x8c12ecc0 )
+	ROM_LOAD( "cm5", 0x2000, 0x0800, 0x21b7b633 , 0x2352cfd6 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cm11", 0x0000, 0x0800, 0x7473dcf9 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cm11", 0x0000, 0x0800, 0x7473dcf9 , 0x8d1bcca0 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "cm9",  0x1000, 0x0800, 0x6ea84040 )
+	ROM_LOAD( "cm9", 0x1000, 0x0800, 0x6ea84040 , 0x3cd5c751 )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x848301bd )
+	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x848301bd , 0x57a45057 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "cm13", 0x0000, 0x0800, 0x489360c5 )
-	ROM_LOAD( "cm14", 0x0800, 0x0800, 0x8c673289 )
+	ROM_LOAD( "cm13", 0x0000, 0x0800, 0x489360c5 , 0x0b09a3e8 )
+	ROM_LOAD( "cm14", 0x0800, 0x0800, 0x8c673289 , 0x47f043be )
 ROM_END
 
 ROM_START( moonal2_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
-	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
-	ROM_LOAD( "ali3",  0x0800, 0x0400, 0xabd2cf90 )
-	ROM_LOAD( "ali4",  0x0c00, 0x0400, 0x1a807a06 )
-	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
-	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
-	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
-	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
-	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
-	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
-	ROM_LOAD( "ali11", 0x2800, 0x0400, 0x7abb0a83 )
+	ROM_LOAD( "ali1", 0x0000, 0x0400, 0x1a3f23c1 , 0x0dcecab4 )
+	ROM_LOAD( "ali2", 0x0400, 0x0400, 0x9d0a00ba , 0xc6ee75a7 )
+	ROM_LOAD( "ali3", 0x0800, 0x0400, 0xabd2cf90 , 0xcd1be7e9 )
+	ROM_LOAD( "ali4", 0x0c00, 0x0400, 0x1a807a06 , 0x83b03f08 )
+	ROM_LOAD( "ali5", 0x1000, 0x0400, 0xe14af8fe , 0x6f3cf61d )
+	ROM_LOAD( "ali6", 0x1400, 0x0400, 0x2b77be15 , 0xe169d432 )
+	ROM_LOAD( "ali7", 0x1800, 0x0400, 0x9bb5fe05 , 0x41f64b73 )
+	ROM_LOAD( "ali8", 0x1c00, 0x0400, 0xf55e7144 , 0xf72ee876 )
+	ROM_LOAD( "ali9", 0x2000, 0x0400, 0xe7545590 , 0xb7fb763c )
+	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 , 0xb1059179 )
+	ROM_LOAD( "ali11", 0x2800, 0x0400, 0x7abb0a83 , 0x9e79a1c6 )
 
-	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
+	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae , 0xa1287bf6 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
+	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 , 0x528f1481 )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ali.clr", 0x0000, 0x0020, 0x4019a389 )
+	ROM_LOAD( "ali.clr", 0x0000, 0x0020, 0x4019a389 , 0xc3ac9467 )
 ROM_END
 
 ROM_START( moonal2b_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
-	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
-	ROM_LOAD( "MD-2",  0x0800, 0x0800, 0xd643a5a7 )
-	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
-	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
-	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
-	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
-	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
-	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
-	ROM_LOAD( "MD-6",  0x2800, 0x0800, 0x225ff205 )
+	ROM_LOAD( "ali1", 0x0000, 0x0400, 0x1a3f23c1 , 0x0dcecab4 )
+	ROM_LOAD( "ali2", 0x0400, 0x0400, 0x9d0a00ba , 0xc6ee75a7 )
+	ROM_LOAD( "md-2", 0x0800, 0x0800, 0xd643a5a7 , 0x8318b187 )
+	ROM_LOAD( "ali5", 0x1000, 0x0400, 0xe14af8fe , 0x6f3cf61d )
+	ROM_LOAD( "ali6", 0x1400, 0x0400, 0x2b77be15 , 0xe169d432 )
+	ROM_LOAD( "ali7", 0x1800, 0x0400, 0x9bb5fe05 , 0x41f64b73 )
+	ROM_LOAD( "ali8", 0x1c00, 0x0400, 0xf55e7144 , 0xf72ee876 )
+	ROM_LOAD( "ali9", 0x2000, 0x0400, 0xe7545590 , 0xb7fb763c )
+	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 , 0xb1059179 )
+	ROM_LOAD( "md-6", 0x2800, 0x0800, 0x225ff205 , 0x9cc973e0 )
 
-	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
+	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae , 0xa1287bf6 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
+	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 , 0x528f1481 )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "ali.clr", 0x0000, 0x0020, 0x4019a389 )
+	ROM_LOAD( "ali.clr", 0x0000, 0x0020, 0x4019a389 , 0xc3ac9467 )
 ROM_END
 
 ROM_START( kingball_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "prg1.7f", 0x0000, 0x1000, 0xba988cfa )
-	ROM_LOAD( "prg2.7j", 0x1000, 0x1000, 0x037dc219 )
-	ROM_LOAD( "prg3.7l", 0x2000, 0x0800, 0x7e2cfa66 )
+	ROM_LOAD( "prg1.7f", 0x0000, 0x1000, 0xba988cfa , 0x6cb49046 )
+	ROM_LOAD( "prg2.7j", 0x1000, 0x1000, 0x037dc219 , 0xc223b416 )
+	ROM_LOAD( "prg3.7l", 0x2000, 0x0800, 0x7e2cfa66 , 0x453634c0 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "chg1.1h",  0x0000, 0x0800, 0x321c442a )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chg1.1h", 0x0000, 0x0800, 0x321c442a , 0x9cd550e7 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "chg2.1k",  0x1000, 0x0800, 0x20ef3ae9 )
+	ROM_LOAD( "chg2.1k", 0x1000, 0x0800, 0x20ef3ae9 , 0xa206757d )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x20)	/* color PROMs */
-	ROM_LOAD( "kb2-1", 0x0000, 0x20, 0x55033ac7 )
+	ROM_LOAD( "kb2-1", 0x0000, 0x20, 0x55033ac7 , 0x72551251 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "kbe1.ic4", 0x0000, 0x0800, 0xd5d38a4b )
-	ROM_LOAD( "kbe2.ic5", 0x0800, 0x0800, 0xaf469484 )
-	ROM_LOAD( "kbe3.ic6", 0x1000, 0x0800, 0x6e1b4007 )
-	ROM_LOAD( "kbe2.ic7", 0x1800, 0x0800, 0xaf469484 )
+	ROM_LOAD( "kbe1.ic4", 0x0000, 0x0800, 0xd5d38a4b , 0x5be2c80a )
+	ROM_LOAD( "kbe2.ic5", 0x0800, 0x0800, 0xaf469484 , 0xbb59e965 )
+	ROM_LOAD( "kbe3.ic6", 0x1000, 0x0800, 0x6e1b4007 , 0x1c94dd31 )
+	ROM_LOAD( "kbe2.ic7", 0x1800, 0x0800, 0xaf469484 , 0xbb59e965 )
 ROM_END
 
 
@@ -1516,8 +1544,8 @@ struct GameDriver kingball_driver =
 	0,
 	"kingball",
 	"King & Balloon",
-	"1981",
-	"bootleg? [Namco]",
+	"1980",
+	"Namco",
 	"Brad Oliver",
 	0,
 	&kingball_machine_driver,

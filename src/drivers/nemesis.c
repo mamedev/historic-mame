@@ -559,69 +559,69 @@ static struct MachineDriver salamand_machine_driver =
 
 ROM_START( nemesis_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.bin", 0x00000, 0x008000, 0xa89bc99d )
-	ROM_LOAD_ODD  ( "12c_05.bin", 0x00000, 0x008000, 0xe6b869d8 )
-	ROM_LOAD_EVEN ( "13a_02.bin", 0x10000, 0x008000, 0x85c767db )
-	ROM_LOAD_ODD  ( "13c_06.bin", 0x10000, 0x008000, 0x8fd78319 )
-	ROM_LOAD_EVEN ( "14a_03.bin", 0x20000, 0x008000, 0x8e3e63cc )
-	ROM_LOAD_ODD  ( "14c_07.bin", 0x20000, 0x008000, 0xb73cbe76 )
-	ROM_LOAD_EVEN ( "15a_04.bin", 0x30000, 0x008000, 0x192b4429 )
-	ROM_LOAD_ODD  ( "15c_08.bin", 0x30000, 0x008000, 0x78bd2de9 )
+	ROM_LOAD_EVEN ( "12a_01.bin", 0x00000, 0x008000, 0xa89bc99d , 0x35ff1aaa )
+	ROM_LOAD_ODD  ( "12c_05.bin", 0x00000, 0x008000, 0xe6b869d8 , 0x23155faa )
+	ROM_LOAD_EVEN ( "13a_02.bin", 0x10000, 0x008000, 0x85c767db , 0xac0cf163 )
+	ROM_LOAD_ODD  ( "13c_06.bin", 0x10000, 0x008000, 0x8fd78319 , 0x023f22a9 )
+	ROM_LOAD_EVEN ( "14a_03.bin", 0x20000, 0x008000, 0x8e3e63cc , 0x8cefb25f )
+	ROM_LOAD_ODD  ( "14c_07.bin", 0x20000, 0x008000, 0xb73cbe76 , 0xd50b82cb )
+	ROM_LOAD_EVEN ( "15a_04.bin", 0x30000, 0x008000, 0x192b4429 , 0x9ca75592 )
+	ROM_LOAD_ODD  ( "15c_08.bin", 0x30000, 0x008000, 0x78bd2de9 , 0x03c0b7f5 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)    /* 64k for sound */
-	ROM_LOAD  ( "09c_snd.bin", 0x0000, 0x4000, 0xc3ea5a3a )
+	ROM_LOAD  ( "09c_snd.bin", 0x0000, 0x4000, 0xc3ea5a3a , 0x26bf9636 )
 ROM_END
 
 ROM_START( nemesuk_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "12a_01.uk",  0x00000, 0x008000, 0x1c18a42a )
-	ROM_LOAD_ODD  ( "12c_05.uk",  0x00000, 0x008000, 0x3feaa154 )
-	ROM_LOAD_EVEN ( "13a_02.uk",  0x10000, 0x008000, 0x7ba92b17 )
-	ROM_LOAD_ODD  ( "13c_06.uk",  0x10000, 0x008000, 0xc07eb1d0 )
-	ROM_LOAD_EVEN ( "14a_03.bin", 0x20000, 0x008000, 0x8e3e63cc )
-	ROM_LOAD_ODD  ( "14c_07.bin", 0x20000, 0x008000, 0xb73cbe76 )
-	ROM_LOAD_EVEN ( "15a_04.uk",  0x30000, 0x008000, 0xc724f74e )
-	ROM_LOAD_ODD  ( "15c_08.uk",  0x30000, 0x008000, 0xc4a7a4d9 )
+	ROM_LOAD_EVEN ( "12a_01.uk", 0x00000, 0x008000, 0x1c18a42a , 0xe1993f91 )
+	ROM_LOAD_ODD  ( "12c_05.uk", 0x00000, 0x008000, 0x3feaa154 , 0xc9761c78 )
+	ROM_LOAD_EVEN ( "13a_02.uk", 0x10000, 0x008000, 0x7ba92b17 , 0xf6169c4b )
+	ROM_LOAD_ODD  ( "13c_06.uk", 0x10000, 0x008000, 0xc07eb1d0 , 0xaf58c548 )
+	ROM_LOAD_EVEN ( "14a_03.bin", 0x20000, 0x008000, 0x8e3e63cc , 0x8cefb25f )
+	ROM_LOAD_ODD  ( "14c_07.bin", 0x20000, 0x008000, 0xb73cbe76 , 0xd50b82cb )
+	ROM_LOAD_EVEN ( "15a_04.uk", 0x30000, 0x008000, 0xc724f74e , 0x322423d0 )
+	ROM_LOAD_ODD  ( "15c_08.uk", 0x30000, 0x008000, 0xc4a7a4d9 , 0xeb656266 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)    /* 64k for sound */
-	ROM_LOAD  ( "09c_snd.bin", 0x0000, 0x4000, 0xc3ea5a3a )
+	ROM_LOAD  ( "09c_snd.bin", 0x0000, 0x4000, 0xc3ea5a3a , 0x26bf9636 )
 ROM_END
 
 ROM_START( konamigt_rom )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
-	ROM_LOAD_EVEN ( "c01.rom", 0x00000, 0x008000, 0x0563a279 )
-	ROM_LOAD_ODD  ( "c05.rom", 0x00000, 0x008000, 0x4253b1a1 )
-	ROM_LOAD_EVEN ( "c02.rom", 0x10000, 0x008000, 0xcf5cbd68 )
-	ROM_LOAD_ODD  ( "c06.rom", 0x10000, 0x008000, 0x8719ec3b )
-	ROM_LOAD_EVEN ( "b03.rom", 0x20000, 0x008000, 0xfe60e84e )
-	ROM_LOAD_ODD  ( "b07.rom", 0x20000, 0x008000, 0x22b97847 )
-	ROM_LOAD_EVEN ( "b04.rom", 0x30000, 0x008000, 0x33066090 )
-	ROM_LOAD_ODD  ( "b08.rom", 0x30000, 0x008000, 0x5263d81d )
+	ROM_LOAD_EVEN ( "c01.rom", 0x00000, 0x008000, 0x0563a279 , 0x56245bfd )
+	ROM_LOAD_ODD  ( "c05.rom", 0x00000, 0x008000, 0x4253b1a1 , 0x8d651f44 )
+	ROM_LOAD_EVEN ( "c02.rom", 0x10000, 0x008000, 0xcf5cbd68 , 0x3407b7cb )
+	ROM_LOAD_ODD  ( "c06.rom", 0x10000, 0x008000, 0x8719ec3b , 0x209942d4 )
+	ROM_LOAD_EVEN ( "b03.rom", 0x20000, 0x008000, 0xfe60e84e , 0xaef7df48 )
+	ROM_LOAD_ODD  ( "b07.rom", 0x20000, 0x008000, 0x22b97847 , 0xe9bd6250 )
+	ROM_LOAD_EVEN ( "b04.rom", 0x30000, 0x008000, 0x33066090 , 0x94bd4bd7 )
+	ROM_LOAD_ODD  ( "b08.rom", 0x30000, 0x008000, 0x5263d81d , 0xb7236567 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)    /* 64k for sound */
-	ROM_LOAD  ( "b09.rom", 0x00000, 0x4000, 0x02f765f1 )
+	ROM_LOAD  ( "b09.rom", 0x00000, 0x4000, 0x02f765f1 , 0x539d0c49 )
 ROM_END
 
 ROM_START( salamand_rom )
 	ROM_REGION(0x200000)    /* 64k for code */
-	ROM_LOAD_EVEN ( "18b_d02.bin", 0x00000, 0x010000, 0x880a0c96 )
-	ROM_LOAD_ODD  ( "18c_d05.bin", 0x00000, 0x010000, 0x5cfa56e2 )
-	ROM_LOAD_EVEN ( "17b_u.bin",   0x20000, 0x010000, 0x0c8444d2 )
-	ROM_LOAD_ODD  ( "17c_u.bin",   0x20000, 0x010000, 0x78376965 )
+	ROM_LOAD_EVEN ( "18b_d02.bin", 0x00000, 0x010000, 0x880a0c96 , 0x0 )
+	ROM_LOAD_ODD  ( "18c_d05.bin", 0x00000, 0x010000, 0x5cfa56e2 , 0x0 )
+	ROM_LOAD_EVEN ( "17b_u.bin", 0x20000, 0x010000, 0x0c8444d2 , 0x0 )
+	ROM_LOAD_ODD  ( "17c_u.bin", 0x20000, 0x010000, 0x78376965 , 0x0 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 ROM_END

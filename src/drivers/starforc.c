@@ -379,136 +379,105 @@ static struct MachineDriver machine_driver =
 
 ROM_START( starforc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "starforc.3", 0x0000, 0x4000, 0x782481e8 )
-	ROM_LOAD( "starforc.2", 0x4000, 0x4000, 0x63eb0cc1 )
+	ROM_LOAD( "starforc.3", 0x0000, 0x4000, 0x782481e8 , 0x8ba27691 )
+	ROM_LOAD( "starforc.2", 0x4000, 0x4000, 0x63eb0cc1 , 0x0fc4d2d6 )
 
-	ROM_REGION(0x1e000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "starforc.7",  0x00000, 0x1000, 0xc2a35075 )
-	ROM_LOAD( "starforc.8",  0x01000, 0x1000, 0xc10380f7 )
-	ROM_LOAD( "starforc.9",  0x02000, 0x1000, 0xf907fc49 )
-	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c )
-	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb )
-	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc )
-	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 )
-	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 )
-	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 )
-	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed )
-	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a )
-	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 )
-	ROM_LOAD( "starforc.4",  0x12000, 0x4000, 0xbe304630 )
-	ROM_LOAD( "starforc.5",  0x16000, 0x4000, 0x178f15e9 )
-	ROM_LOAD( "starforc.6",  0x1a000, 0x4000, 0x1cd03e28 )
+	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "starforc.7", 0x00000, 0x1000, 0xc2a35075 , 0xf4803339 )
+	ROM_LOAD( "starforc.8", 0x01000, 0x1000, 0xc10380f7 , 0x96979684 )
+	ROM_LOAD( "starforc.9", 0x02000, 0x1000, 0xf907fc49 , 0xeead1d5c )
+	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c , 0xc62a19c1 )
+	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb , 0x668aea14 )
+	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc , 0xfdd9e38b )
+	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 , 0x84603285 )
+	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 , 0x9e9384fe )
+	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 , 0xc3bda12f )
+	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed , 0xce20b469 )
+	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a , 0x68c60d0f )
+	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 , 0x6455c3ad )
+	ROM_LOAD( "starforc.4", 0x12000, 0x4000, 0xbe304630 , 0xdd9d68a4 )
+	ROM_LOAD( "starforc.5", 0x16000, 0x4000, 0x178f15e9 , 0xf71717f8 )
+	ROM_LOAD( "starforc.6", 0x1a000, 0x4000, 0x1cd03e28 , 0x5468a21d )
 
 	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a )
+	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a , 0x2735bb22 )
 ROM_END
 
 ROM_START( megaforc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mf3.bin", 0x0000, 0x4000, 0xc2be1ca2 )
-	ROM_LOAD( "mf2.bin", 0x4000, 0x4000, 0xf112ba16 )
+	ROM_LOAD( "mf3.bin", 0x0000, 0x4000, 0xc2be1ca2 , 0xd3ea82ec )
+	ROM_LOAD( "mf2.bin", 0x4000, 0x4000, 0xf112ba16 , 0xaa320718 )
 
-	ROM_REGION(0x1e000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mf7.bin",     0x00000, 0x1000, 0xebe46dfc )
-	ROM_LOAD( "mf8.bin",     0x01000, 0x1000, 0xc23d186b )
-	ROM_LOAD( "mf9.bin",     0x02000, 0x1000, 0x77586a06 )
-	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c )
-	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb )
-	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc )
-	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 )
-	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 )
-	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 )
-	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed )
-	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a )
-	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 )
-	ROM_LOAD( "starforc.4",  0x12000, 0x4000, 0xbe304630 )
-	ROM_LOAD( "starforc.5",  0x16000, 0x4000, 0x178f15e9 )
-	ROM_LOAD( "starforc.6",  0x1a000, 0x4000, 0x1cd03e28 )
+	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mf7.bin", 0x00000, 0x1000, 0xebe46dfc , 0x43ef8d20 )
+	ROM_LOAD( "mf8.bin", 0x01000, 0x1000, 0xc23d186b , 0xc36fb746 )
+	ROM_LOAD( "mf9.bin", 0x02000, 0x1000, 0x77586a06 , 0x62e7c9ec )
+	ROM_LOAD( "starforc.10", 0x03000, 0x2000, 0x8ff8c55c , 0xc62a19c1 )
+	ROM_LOAD( "starforc.11", 0x05000, 0x2000, 0x647d74eb , 0x668aea14 )
+	ROM_LOAD( "starforc.12", 0x07000, 0x2000, 0x451c5ffc , 0xfdd9e38b )
+	ROM_LOAD( "starforc.13", 0x09000, 0x2000, 0x0be64664 , 0x84603285 )
+	ROM_LOAD( "starforc.14", 0x0b000, 0x2000, 0xff8c2118 , 0x9e9384fe )
+	ROM_LOAD( "starforc.15", 0x0d000, 0x2000, 0x44f6e3f8 , 0xc3bda12f )
+	ROM_LOAD( "starforc.16", 0x0f000, 0x1000, 0x111fb9ed , 0xce20b469 )
+	ROM_LOAD( "starforc.17", 0x10000, 0x1000, 0xb62c8e7a , 0x68c60d0f )
+	ROM_LOAD( "starforc.18", 0x11000, 0x1000, 0x4185c335 , 0x6455c3ad )
+	ROM_LOAD( "starforc.4", 0x12000, 0x4000, 0xbe304630 , 0xdd9d68a4 )
+	ROM_LOAD( "starforc.5", 0x16000, 0x4000, 0x178f15e9 , 0xf71717f8 )
+	ROM_LOAD( "starforc.6", 0x1a000, 0x4000, 0x1cd03e28 , 0x5468a21d )
 
 	ROM_REGION(0x10000)     /* 64k for sound board */
-	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a )
+	ROM_LOAD( "starforc.1", 0x0000, 0x2000, 0xfb4a6b5a , 0x2735bb22 )
 ROM_END
 
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
-	memcmp(&RAM[0x9181],"\x18",1) == 0 &&
-	memcmp(&RAM[0x91a1],"\x18",1) == 0 &&
-	memcmp(&RAM[0x91c1],"\x21",1) == 0 &&
-	memcmp(&RAM[0x91e1],"\x18",1) == 0 &&
-	memcmp(&RAM[0x9201],"\x1d",1) == 0)
+        if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
+        memcmp(&RAM[0x9181],"\x18",1) == 0 &&
+        memcmp(&RAM[0x91a1],"\x18",1) == 0 &&
+        memcmp(&RAM[0x91c1],"\x21",1) == 0 &&
+        memcmp(&RAM[0x91e1],"\x18",1) == 0 &&
+        memcmp(&RAM[0x9201],"\x1d",1) == 0)
 
-	{
-		void *f;
+        {
+                void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int highscore;
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        int p,temp;
 
-			osd_fread(f,&RAM[0x8038],112);
-			RAM[0x8348] = RAM[0x803d];
-			RAM[0x8349] = RAM[0x803c];
-			RAM[0x834a] = RAM[0x803b];
-			RAM[0x834b] = RAM[0x803a];
+                        osd_fread(f,&RAM[0x8038],112);
+                        RAM[0x8348] = RAM[0x803d];
+                        RAM[0x8349] = RAM[0x803c];
+                        RAM[0x834a] = RAM[0x803b];
+                        RAM[0x834b] = RAM[0x803a];
 
-			/* Highscore video displaying */
-			/* Algorythm by: Kevin Brisley */
-			/* Replay emulator */
-			highscore = (RAM[0x803d] & 0x0f) + (RAM[0x803d] >> 4) * 10 +
-			(RAM[0x803c] & 0x0f) * 100 + (RAM[0x803c] >> 4) * 1000 +
-			(RAM[0x803b] & 0x0f) * 10000 + (RAM[0x803b] >> 4) * 100000 +
-			(RAM[0x803a] & 0x0f) * 1000000 + (RAM[0x803a] >> 4) * 10000000;
+                        for (p=0;p<4;p++)
+                           {
+                            temp=0x18+(RAM[0x8348+p]%16);
+                            if (temp>=0x20) temp++;
+                            RAM[0x9181+(p*0x40)]=temp;
+                            temp=0x18+(RAM[0x8348+p]/16);
+                            if (temp>=0x20) temp++;
+                            RAM[0x91A1+(p*0x40)]=temp;
+                            }
 
+                        for (p=0;p<8;p++ )
+                        {
+                                if (RAM[0x9261-(p*0x20)]==0x18) RAM[0x9261-(p*0x20)]=0x23;
+                                else break;
+                        }
 
-			if (highscore > 9999999)
-			{
-				RAM[0x9261] = 0x18 + (RAM[0x803a] >> 4);
-				if (RAM[0x9261] >= 0x20) RAM[0x9261] = RAM[0x9261] + 1;
-			}
-			if (highscore > 999999)
-			{
-				RAM[0x9241] = 0x18 + (RAM[0x803a] & 0x0f);
-				if (RAM[0x9241] >= 0x20) RAM[0x9241] = RAM[0x9241] + 1;
-			}
-			if (highscore > 99999)
-			{
-				RAM[0x9221] = 0x18 + (RAM[0x803b] >> 4);
-				if (RAM[0x9221] >= 0x20) RAM[0x9221] = RAM[0x9221] + 1;
-			}
-			if (highscore > 9999)
-			{
-				RAM[0x9201] = 0x18 + (RAM[0x803b] & 0x0f);
-				if (RAM[0x9201] >= 0x20) RAM[0x9201] = RAM[0x9201] + 1;
-			}
-			if (highscore > 999)
-			{
-				RAM[0x91e1] = 0x18 + (RAM[0x803c] >> 4);
-				if (RAM[0x91e1] >= 0x20) RAM[0x91e1] = RAM[0x91e1] + 1;
-			}
-			if (highscore > 99)
-			{
-				RAM[0x91c1] = 0x18 + (RAM[0x803c] & 0x0f);
-				if (RAM[0x91c1] >= 0x20) RAM[0x91c1] = RAM[0x91c1] + 1;
-			}
-			if (highscore > 9)
-			{
-				RAM[0x91a1] = 0x18 + (RAM[0x803d] >> 4);
-				if (RAM[0x91a1] >= 0x20) RAM[0x91a1] = RAM[0x91a1] + 1;
-			}
-			RAM[0x9181] = 0x18 + (RAM[0x803d] & 0x0f);
-			if (RAM[0x9181] >= 0x20) RAM[0x9181] = RAM[0x9181] + 1;
+                        osd_fclose(f);
+                }
 
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
+                return 1;
+        }
+        else return 0;  /* we can't load the hi scores yet */
 
 }
 
@@ -516,21 +485,24 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	void *f;
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        void *f;
+        int i;
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* Bug to solve the problem about resetting in the hi-score screen */
-	for (i = 0x8039; i < 0x80a0; i+=0x0b)
-			if (RAM[i] == 0x02) RAM[i] = 0x01;
+        /* Bug to solve the problem about resetting in the hi-score screen */
+        for (i = 0x8039; i < 0x80a0; i+=0x0b)
+                        if (RAM[i] == 0x02) RAM[i] = 0x01;
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8038],112);
+        if ((RAM[0x8038] != 0) &&
+            ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0))
 
-		osd_fclose(f);
-	}
+
+        {
+                osd_fwrite(f,&RAM[0x8038],112);
+
+                osd_fclose(f);
+        }
 }
 
 

@@ -209,12 +209,12 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nitedrvr_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "6569-01.D2", 0x9000, 0x0800, 0x456431b6 )
-	ROM_LOAD( "6570-01.F2", 0x9800, 0x0800, 0xa868be6c )
+	ROM_LOAD( "6569-01.d2", 0x9000, 0x0800, 0x456431b6 , 0x7afa7542 )
+	ROM_LOAD( "6570-01.f2", 0x9800, 0x0800, 0xa868be6c , 0xbf5d77b1 )
 	ROM_RELOAD( 			0xF800, 0x0800 )
 
-	ROM_REGION(0x200)	  /* 0.5k for graphics */
-	ROM_LOAD( "6568-01.P2", 0x0000, 0x0200, 0x2ef2021e )
+	ROM_REGION_DISPOSE(0x200)	  /* 0.5k for graphics */
+	ROM_LOAD( "6568-01.p2", 0x0000, 0x0200, 0x2ef2021e , 0xf80d8889 )
 ROM_END
 
 /***************************************************************************

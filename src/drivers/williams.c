@@ -1875,48 +1875,48 @@ static unsigned char blaster_remap_prom[] =
 
 ROM_START( robotron_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROBOTRON.SB1", 0x0000, 0x1000, 0xd5778c45 )
-	ROM_LOAD( "ROBOTRON.SB2", 0x1000, 0x1000, 0x51fb054b )
-	ROM_LOAD( "ROBOTRON.SB3", 0x2000, 0x1000, 0x293ce6c2 )
-	ROM_LOAD( "ROBOTRON.SB4", 0x3000, 0x1000, 0x7c9557c1 )
-	ROM_LOAD( "ROBOTRON.SB5", 0x4000, 0x1000, 0x3dd77e9b )
-	ROM_LOAD( "ROBOTRON.SB6", 0x5000, 0x1000, 0x8c53f6cd )
-	ROM_LOAD( "ROBOTRON.SB7", 0x6000, 0x1000, 0x746ecd96 )
-	ROM_LOAD( "ROBOTRON.SB8", 0x7000, 0x1000, 0x5e442b24 )
-	ROM_LOAD( "ROBOTRON.SB9", 0x8000, 0x1000, 0x294d9c17 )
-	ROM_LOAD( "ROBOTRON.SBA", 0xd000, 0x1000, 0x17b8fc1e )
-	ROM_LOAD( "ROBOTRON.SBB", 0xe000, 0x1000, 0xe816f8e6 )
-	ROM_LOAD( "ROBOTRON.SBC", 0xf000, 0x1000, 0xcfc2d9aa )
+	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0xd5778c45 , 0x66c7d3ef )
+	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x51fb054b , 0x5bc6c614 )
+	ROM_LOAD( "robotron.sb3", 0x2000, 0x1000, 0x293ce6c2 , 0xe99a82be )
+	ROM_LOAD( "robotron.sb4", 0x3000, 0x1000, 0x7c9557c1 , 0xafb1c561 )
+	ROM_LOAD( "robotron.sb5", 0x4000, 0x1000, 0x3dd77e9b , 0x62691e77 )
+	ROM_LOAD( "robotron.sb6", 0x5000, 0x1000, 0x8c53f6cd , 0xbd2c853d )
+	ROM_LOAD( "robotron.sb7", 0x6000, 0x1000, 0x746ecd96 , 0x49ac400c )
+	ROM_LOAD( "robotron.sb8", 0x7000, 0x1000, 0x5e442b24 , 0x3a96e88c )
+	ROM_LOAD( "robotron.sb9", 0x8000, 0x1000, 0x294d9c17 , 0xb124367b )
+	ROM_LOAD( "robotron.sba", 0xd000, 0x1000, 0x17b8fc1e , 0x13797024 )
+	ROM_LOAD( "robotron.sbb", 0xe000, 0x1000, 0xe816f8e6 , 0x7e3c1b87 )
+	ROM_LOAD( "robotron.sbc", 0xf000, 0x1000, 0xcfc2d9aa , 0x645d543e )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "ROBOTRON.SND", 0xf000, 0x1000, 0x000f85e5 )
+	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0x000f85e5 , 0xc56c1d28 )
 ROM_END
 
 ROM_START( robotryo_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROBOTRON.YO1", 0x0000, 0x1000, 0xd5778c45 )
-	ROM_LOAD( "ROBOTRON.YO2", 0x1000, 0x1000, 0x51fb054b )
-	ROM_LOAD( "ROBOTRON.YO3", 0x2000, 0x1000, 0x8f4af95e )
-	ROM_LOAD( "ROBOTRON.YO4", 0x3000, 0x1000, 0xeef123ef )
-	ROM_LOAD( "ROBOTRON.YO5", 0x4000, 0x1000, 0x6327d431 )
-	ROM_LOAD( "ROBOTRON.YO6", 0x5000, 0x1000, 0x8b53f7cd )
-	ROM_LOAD( "ROBOTRON.YO7", 0x6000, 0x1000, 0x8f8cbcee )
-	ROM_LOAD( "ROBOTRON.YO8", 0x7000, 0x1000, 0x5e442b24 )
-	ROM_LOAD( "ROBOTRON.YO9", 0x8000, 0x1000, 0x294d9c17 )
-	ROM_LOAD( "ROBOTRON.YOA", 0xd000, 0x1000, 0x1ac7fceb )
-	ROM_LOAD( "ROBOTRON.YOB", 0xe000, 0x1000, 0xe615fee7 )
-	ROM_LOAD( "ROBOTRON.YOC", 0xf000, 0x1000, 0xd4bdec59 )
+	ROM_LOAD( "robotron.yo1", 0x0000, 0x1000, 0xd5778c45 , 0x66c7d3ef )
+	ROM_LOAD( "robotron.yo2", 0x1000, 0x1000, 0x51fb054b , 0x5bc6c614 )
+	ROM_LOAD( "robotron.yo3", 0x2000, 0x1000, 0x8f4af95e , 0x67a369bc )
+	ROM_LOAD( "robotron.yo4", 0x3000, 0x1000, 0xeef123ef , 0xb0de677a )
+	ROM_LOAD( "robotron.yo5", 0x4000, 0x1000, 0x6327d431 , 0x24726007 )
+	ROM_LOAD( "robotron.yo6", 0x5000, 0x1000, 0x8b53f7cd , 0x028181a6 )
+	ROM_LOAD( "robotron.yo7", 0x6000, 0x1000, 0x8f8cbcee , 0x4dfcceae )
+	ROM_LOAD( "robotron.yo8", 0x7000, 0x1000, 0x5e442b24 , 0x3a96e88c )
+	ROM_LOAD( "robotron.yo9", 0x8000, 0x1000, 0x294d9c17 , 0xb124367b )
+	ROM_LOAD( "robotron.yoa", 0xd000, 0x1000, 0x1ac7fceb , 0x4a9d5f52 )
+	ROM_LOAD( "robotron.yob", 0xe000, 0x1000, 0xe615fee7 , 0x2afc5e7f )
+	ROM_LOAD( "robotron.yoc", 0xf000, 0x1000, 0xd4bdec59 , 0x45da9202 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "ROBOTRON.SND", 0xf000, 0x1000, 0x000f85e5 )
+	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0x000f85e5 , 0xc56c1d28 )
 ROM_END
 
 
@@ -1979,71 +1979,71 @@ struct GameDriver robotryo_driver =
 
 ROM_START( joust_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "JOUST.WG1", 0x0000, 0x1000, 0x56ea72c8 )
-	ROM_LOAD( "JOUST.WG2", 0x1000, 0x1000, 0xe32af9c4 )
-	ROM_LOAD( "JOUST.WG3", 0x2000, 0x1000, 0x21ec9c8e )
-	ROM_LOAD( "JOUST.WG4", 0x3000, 0x1000, 0xad230361 )
-	ROM_LOAD( "JOUST.WG5", 0x4000, 0x1000, 0xd37f04e9 )
-	ROM_LOAD( "JOUST.WG6", 0x5000, 0x1000, 0x727b5c05 )
-	ROM_LOAD( "JOUST.WG7", 0x6000, 0x1000, 0x81aa3756 )
-	ROM_LOAD( "JOUST.WG8", 0x7000, 0x1000, 0x8d1829b6 )
-	ROM_LOAD( "JOUST.WG9", 0x8000, 0x1000, 0xcbfcd9a6 )
-	ROM_LOAD( "JOUST.WGa", 0xd000, 0x1000, 0xf102016a )
-	ROM_LOAD( "JOUST.WGb", 0xe000, 0x1000, 0x11b3700d )
-	ROM_LOAD( "JOUST.WGc", 0xf000, 0x1000, 0x0cd46bb8 )
+	ROM_LOAD( "joust.wg1", 0x0000, 0x1000, 0x56ea72c8 , 0xfe41b2af )
+	ROM_LOAD( "joust.wg2", 0x1000, 0x1000, 0xe32af9c4 , 0x501c143c )
+	ROM_LOAD( "joust.wg3", 0x2000, 0x1000, 0x21ec9c8e , 0x43f7161d )
+	ROM_LOAD( "joust.wg4", 0x3000, 0x1000, 0xad230361 , 0xdb5571b6 )
+	ROM_LOAD( "joust.wg5", 0x4000, 0x1000, 0xd37f04e9 , 0xc686bb6b )
+	ROM_LOAD( "joust.wg6", 0x5000, 0x1000, 0x727b5c05 , 0xfac5f2cf )
+	ROM_LOAD( "joust.wg7", 0x6000, 0x1000, 0x81aa3756 , 0x81418240 )
+	ROM_LOAD( "joust.wg8", 0x7000, 0x1000, 0x8d1829b6 , 0xba5359ba )
+	ROM_LOAD( "joust.wg9", 0x8000, 0x1000, 0xcbfcd9a6 , 0x39643147 )
+	ROM_LOAD( "joust.wga", 0xd000, 0x1000, 0xf102016a , 0x3f1c4f89 )
+	ROM_LOAD( "joust.wgb", 0xe000, 0x1000, 0x11b3700d , 0xea48b359 )
+	ROM_LOAD( "joust.wgc", 0xf000, 0x1000, 0x0cd46bb8 , 0xc710717b )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+	ROM_LOAD( "joust.snd", 0xf000, 0x1000, 0x5799e563 , 0xf1835bdd )
 ROM_END
 
 ROM_START( joustr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "JOUST.SR1", 0x0000, 0x1000, 0x56ea72c8 )
-	ROM_LOAD( "JOUST.SR2", 0x1000, 0x1000, 0xe32af9c4 )
-	ROM_LOAD( "JOUST.SR3", 0x2000, 0x1000, 0x21ec9c8e )
-	ROM_LOAD( "JOUST.SR4", 0x3000, 0x1000, 0xbd041382 )
-	ROM_LOAD( "JOUST.SR5", 0x4000, 0x1000, 0xd37f04e9 )
-	ROM_LOAD( "JOUST.SR6", 0x5000, 0x1000, 0x4e2153d3 )
-	ROM_LOAD( "JOUST.SR7", 0x6000, 0x1000, 0x8e102052 )
-	ROM_LOAD( "JOUST.SR8", 0x7000, 0x1000, 0xd092c808 )
-	ROM_LOAD( "JOUST.SR9", 0x8000, 0x1000, 0x341a43c8 )
-	ROM_LOAD( "JOUST.SRa", 0xd000, 0x1000, 0xc7d5d145 )
-	ROM_LOAD( "JOUST.SRb", 0xe000, 0x1000, 0x54b23102 )
-	ROM_LOAD( "JOUST.SRc", 0xf000, 0x1000, 0x0cd46bd8 )
+	ROM_LOAD( "joust.sr1", 0x0000, 0x1000, 0x56ea72c8 , 0xfe41b2af )
+	ROM_LOAD( "joust.sr2", 0x1000, 0x1000, 0xe32af9c4 , 0x501c143c )
+	ROM_LOAD( "joust.sr3", 0x2000, 0x1000, 0x21ec9c8e , 0x43f7161d )
+	ROM_LOAD( "joust.sr4", 0x3000, 0x1000, 0xbd041382 , 0xab347170 )
+	ROM_LOAD( "joust.sr5", 0x4000, 0x1000, 0xd37f04e9 , 0xc686bb6b )
+	ROM_LOAD( "joust.sr6", 0x5000, 0x1000, 0x4e2153d3 , 0x3d9a6fac )
+	ROM_LOAD( "joust.sr7", 0x6000, 0x1000, 0x8e102052 , 0x0a70b3d1 )
+	ROM_LOAD( "joust.sr8", 0x7000, 0x1000, 0xd092c808 , 0xa7f01504 )
+	ROM_LOAD( "joust.sr9", 0x8000, 0x1000, 0x341a43c8 , 0x978687ad )
+	ROM_LOAD( "joust.sra", 0xd000, 0x1000, 0xc7d5d145 , 0xc0c6e52a )
+	ROM_LOAD( "joust.srb", 0xe000, 0x1000, 0x54b23102 , 0xab11bcf9 )
+	ROM_LOAD( "joust.src", 0xf000, 0x1000, 0x0cd46bd8 , 0xea14574b )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+	ROM_LOAD( "joust.snd", 0xf000, 0x1000, 0x5799e563 , 0xf1835bdd )
 ROM_END
 
 ROM_START( joustwr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "JOUST.WR1", 0x0000, 0x1000, 0x56ea72c8 )
-	ROM_LOAD( "JOUST.WR2", 0x1000, 0x1000, 0xe32af9c4 )
-	ROM_LOAD( "JOUST.WR3", 0x2000, 0x1000, 0x21ec9c8e )
-	ROM_LOAD( "JOUST.WR4", 0x3000, 0x1000, 0xad230361 )
-	ROM_LOAD( "JOUST.WR5", 0x4000, 0x1000, 0xd37f04e9 )
-	ROM_LOAD( "JOUST.WR6", 0x5000, 0x1000, 0x727b5c05 )
-	ROM_LOAD( "JOUST.WR7", 0x6000, 0x1000, 0x81aacd2c )
-	ROM_LOAD( "JOUST.WR8", 0x7000, 0x1000, 0x8d1829b6 )
-	ROM_LOAD( "JOUST.WR9", 0x8000, 0x1000, 0xcbfcd9a6 )
-	ROM_LOAD( "JOUST.WRa", 0xd000, 0x1000, 0x4292d584 )
-	ROM_LOAD( "JOUST.WRb", 0xe000, 0x1000, 0x11b3700d )
-	ROM_LOAD( "JOUST.WRc", 0xf000, 0x1000, 0x0cd46bb8 )
+	ROM_LOAD( "joust.wr1", 0x0000, 0x1000, 0x56ea72c8 , 0xfe41b2af )
+	ROM_LOAD( "joust.wr2", 0x1000, 0x1000, 0xe32af9c4 , 0x501c143c )
+	ROM_LOAD( "joust.wr3", 0x2000, 0x1000, 0x21ec9c8e , 0x43f7161d )
+	ROM_LOAD( "joust.wr4", 0x3000, 0x1000, 0xad230361 , 0xdb5571b6 )
+	ROM_LOAD( "joust.wr5", 0x4000, 0x1000, 0xd37f04e9 , 0xc686bb6b )
+	ROM_LOAD( "joust.wr6", 0x5000, 0x1000, 0x727b5c05 , 0xfac5f2cf )
+	ROM_LOAD( "joust.wr7", 0x6000, 0x1000, 0x81aacd2c , 0xe6f439c4 )
+	ROM_LOAD( "joust.wr8", 0x7000, 0x1000, 0x8d1829b6 , 0xba5359ba )
+	ROM_LOAD( "joust.wr9", 0x8000, 0x1000, 0xcbfcd9a6 , 0x39643147 )
+	ROM_LOAD( "joust.wra", 0xd000, 0x1000, 0x4292d584 , 0x2039014a )
+	ROM_LOAD( "joust.wrb", 0xe000, 0x1000, 0x11b3700d , 0xea48b359 )
+	ROM_LOAD( "joust.wrc", 0xf000, 0x1000, 0x0cd46bb8 , 0xc710717b )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "JOUST.SND", 0xf000, 0x1000, 0x5799e563 )
+	ROM_LOAD( "joust.snd", 0xf000, 0x1000, 0x5799e563 , 0xf1835bdd )
 ROM_END
 
 
@@ -2131,46 +2131,46 @@ struct GameDriver joustwr_driver =
 
 ROM_START( sinistar_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "SINISTAR.01", 0x0000, 0x1000, 0xea8b43ef )
-	ROM_LOAD( "SINISTAR.02", 0x1000, 0x1000, 0x4be17573 )
-	ROM_LOAD( "SINISTAR.03", 0x2000, 0x1000, 0xcd47871d )
-	ROM_LOAD( "SINISTAR.04", 0x3000, 0x1000, 0xe7ceefca )
-	ROM_LOAD( "SINISTAR.05", 0x4000, 0x1000, 0xe708bd4c )
-	ROM_LOAD( "SINISTAR.06", 0x5000, 0x1000, 0x115f07eb )
-	ROM_LOAD( "SINISTAR.07", 0x6000, 0x1000, 0x97ba8096 )
-	ROM_LOAD( "SINISTAR.08", 0x7000, 0x1000, 0x3c5c3dc4 )
-	ROM_LOAD( "SINISTAR.09", 0x8000, 0x1000, 0x4a7953bf )
-	ROM_LOAD( "SINISTAR.10", 0xe000, 0x1000, 0xaf1de107 )
-	ROM_LOAD( "SINISTAR.11", 0xf000, 0x1000, 0x81481d1a )
+	ROM_LOAD( "sinistar.01", 0x0000, 0x1000, 0xea8b43ef , 0xf6f3a22c )
+	ROM_LOAD( "sinistar.02", 0x1000, 0x1000, 0x4be17573 , 0xcab3185c )
+	ROM_LOAD( "sinistar.03", 0x2000, 0x1000, 0xcd47871d , 0x1ce1b3cc )
+	ROM_LOAD( "sinistar.04", 0x3000, 0x1000, 0xe7ceefca , 0x6da632ba )
+	ROM_LOAD( "sinistar.05", 0x4000, 0x1000, 0xe708bd4c , 0xb662e8fc )
+	ROM_LOAD( "sinistar.06", 0x5000, 0x1000, 0x115f07eb , 0x2306183d )
+	ROM_LOAD( "sinistar.07", 0x6000, 0x1000, 0x97ba8096 , 0xe5dd918e )
+	ROM_LOAD( "sinistar.08", 0x7000, 0x1000, 0x3c5c3dc4 , 0x4785a787 )
+	ROM_LOAD( "sinistar.09", 0x8000, 0x1000, 0x4a7953bf , 0x50cb63ad )
+	ROM_LOAD( "sinistar.10", 0xe000, 0x1000, 0xaf1de107 , 0x3d670417 )
+	ROM_LOAD( "sinistar.11", 0xf000, 0x1000, 0x81481d1a , 0x3162bc50 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
+	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0x7400ae74 , 0xb82f4ddb )
 ROM_END
 
 ROM_START( oldsin_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "SINOLD01.ROM", 0x0000, 0x1000, 0xebf346e5 )
-	ROM_LOAD( "SINOLD02.ROM", 0x1000, 0x1000, 0x4be17573 )
-	ROM_LOAD( "SINOLD03.ROM", 0x2000, 0x1000, 0x9ec1fddb )
-	ROM_LOAD( "SINOLD04.ROM", 0x3000, 0x1000, 0x8b9a77d2 )
-	ROM_LOAD( "SINOLD05.ROM", 0x4000, 0x1000, 0x46289976 )
-	ROM_LOAD( "SINOLD06.ROM", 0x5000, 0x1000, 0xe6e4b9b6 )
-	ROM_LOAD( "SINOLD07.ROM", 0x6000, 0x1000, 0x0c0bee55 )
-	ROM_LOAD( "SINOLD08.ROM", 0x7000, 0x1000, 0xba851ef5 )
-	ROM_LOAD( "SINOLD09.ROM", 0x8000, 0x1000, 0x2e4ff0b9 )
-	ROM_LOAD( "SINOLD10.ROM", 0xe000, 0x1000, 0xd9a9f2fb )
-	ROM_LOAD( "SINOLD11.ROM", 0xf000, 0x1000, 0xa5ea8a3e )
+	ROM_LOAD( "sinold01.rom", 0x0000, 0x1000, 0xebf346e5 , 0x3810d7b8 )
+	ROM_LOAD( "sinold02.rom", 0x1000, 0x1000, 0x4be17573 , 0xcab3185c )
+	ROM_LOAD( "sinold03.rom", 0x2000, 0x1000, 0x9ec1fddb , 0x7c984ca9 )
+	ROM_LOAD( "sinold04.rom", 0x3000, 0x1000, 0x8b9a77d2 , 0xcc6c4f24 )
+	ROM_LOAD( "sinold05.rom", 0x4000, 0x1000, 0x46289976 , 0x12285bfe )
+	ROM_LOAD( "sinold06.rom", 0x5000, 0x1000, 0xe6e4b9b6 , 0x7a675f35 )
+	ROM_LOAD( "sinold07.rom", 0x6000, 0x1000, 0x0c0bee55 , 0xb0463243 )
+	ROM_LOAD( "sinold08.rom", 0x7000, 0x1000, 0xba851ef5 , 0x909040d4 )
+	ROM_LOAD( "sinold09.rom", 0x8000, 0x1000, 0x2e4ff0b9 , 0xcc949810 )
+	ROM_LOAD( "sinold10.rom", 0xe000, 0x1000, 0xd9a9f2fb , 0xea87a53f )
+	ROM_LOAD( "sinold11.rom", 0xf000, 0x1000, 0xa5ea8a3e , 0x88d36e80 )
 
-	ROM_REGION(0x1000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000) /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* 64k for the sound CPU */
-	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
+	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0x7400ae74 , 0xb82f4ddb )
 ROM_END
 
 /* Sinistar speech samples */
@@ -2247,48 +2247,48 @@ struct GameDriver oldsin_driver =
 
 ROM_START( bubbles_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "BUBBLES.1B",  0x0000, 0x1000, 0xc6383a74 )
-	ROM_LOAD( "BUBBLES.2B",  0x1000, 0x1000, 0xdb996db3 )
-	ROM_LOAD( "BUBBLES.3B",  0x2000, 0x1000, 0x40f5f815 )
-	ROM_LOAD( "BUBBLES.4B",  0x3000, 0x1000, 0xd0f4b4f0 )
-	ROM_LOAD( "BUBBLES.5B",  0x4000, 0x1000, 0x620a3f98 )
-	ROM_LOAD( "BUBBLES.6B",  0x5000, 0x1000, 0x4617e675 )
-	ROM_LOAD( "BUBBLES.7B",  0x6000, 0x1000, 0x16d20c98 )
-	ROM_LOAD( "BUBBLES.8B",  0x7000, 0x1000, 0xfb83ad41 )
-	ROM_LOAD( "BUBBLES.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
-	ROM_LOAD( "BUBBLES.10B", 0xd000, 0x1000, 0x5eb0c568 )
-	ROM_LOAD( "BUBBLES.11B", 0xe000, 0x1000, 0x31598c5d )
-	ROM_LOAD( "BUBBLES.12B", 0xf000, 0x1000, 0xfdb24d56 )
+	ROM_LOAD( "bubbles.1b", 0x0000, 0x1000, 0xc6383a74 , 0x8234f55c )
+	ROM_LOAD( "bubbles.2b", 0x1000, 0x1000, 0xdb996db3 , 0x4a188d6a )
+	ROM_LOAD( "bubbles.3b", 0x2000, 0x1000, 0x40f5f815 , 0x7728f07f )
+	ROM_LOAD( "bubbles.4b", 0x3000, 0x1000, 0xd0f4b4f0 , 0x040be7f9 )
+	ROM_LOAD( "bubbles.5b", 0x4000, 0x1000, 0x620a3f98 , 0x0b5f29e0 )
+	ROM_LOAD( "bubbles.6b", 0x5000, 0x1000, 0x4617e675 , 0x4dd0450d )
+	ROM_LOAD( "bubbles.7b", 0x6000, 0x1000, 0x16d20c98 , 0xe0a26ec0 )
+	ROM_LOAD( "bubbles.8b", 0x7000, 0x1000, 0xfb83ad41 , 0x4fd23d8d )
+	ROM_LOAD( "bubbles.9b", 0x8000, 0x1000, 0xc5ca8ce2 , 0xb48559fb )
+	ROM_LOAD( "bubbles.10b", 0xd000, 0x1000, 0x5eb0c568 , 0x26e7869b )
+	ROM_LOAD( "bubbles.11b", 0xe000, 0x1000, 0x31598c5d , 0x5a5b572f )
+	ROM_LOAD( "bubbles.12b", 0xf000, 0x1000, 0xfdb24d56 , 0xce22d2e2 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "BUBBLES.SND", 0xf000, 0x1000, 0x82ae5994 )
+	ROM_LOAD( "bubbles.snd", 0xf000, 0x1000, 0x82ae5994 , 0x689ce2aa )
 ROM_END
 
 ROM_START( bubblesr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "BUBBLESR.1B",  0x0000, 0x1000, 0x90409106 )
-	ROM_LOAD( "BUBBLESR.2B",  0x1000, 0x1000, 0x2eae0950 )
-	ROM_LOAD( "BUBBLESR.3B",  0x2000, 0x1000, 0xf6ad9f95 )
-	ROM_LOAD( "BUBBLESR.4B",  0x3000, 0x1000, 0x945d4b73 )
-	ROM_LOAD( "BUBBLESR.5B",  0x4000, 0x1000, 0xb002076e )
-	ROM_LOAD( "BUBBLESR.6B",  0x5000, 0x1000, 0x4617e675 )
-	ROM_LOAD( "BUBBLESR.7B",  0x6000, 0x1000, 0x16d20c98 )
-	ROM_LOAD( "BUBBLESR.8B",  0x7000, 0x1000, 0xfb8bad59 )
-	ROM_LOAD( "BUBBLESR.9B",  0x8000, 0x1000, 0xc5ca8ce2 )
-	ROM_LOAD( "BUBBLESR.10B", 0xd000, 0x1000, 0x8cc42496 )
-	ROM_LOAD( "BUBBLESR.11B", 0xe000, 0x1000, 0xfd0252a2 )
-	ROM_LOAD( "BUBBLESR.12B", 0xf000, 0x1000, 0xfcb24da2 )
+	ROM_LOAD( "bubblesr.1b", 0x0000, 0x1000, 0x90409106 , 0xdda4e782 )
+	ROM_LOAD( "bubblesr.2b", 0x1000, 0x1000, 0x2eae0950 , 0x3c8fa7f5 )
+	ROM_LOAD( "bubblesr.3b", 0x2000, 0x1000, 0xf6ad9f95 , 0xf869bb9c )
+	ROM_LOAD( "bubblesr.4b", 0x3000, 0x1000, 0x945d4b73 , 0x0c65eaab )
+	ROM_LOAD( "bubblesr.5b", 0x4000, 0x1000, 0xb002076e , 0x7ece4e13 )
+	ROM_LOAD( "bubblesr.6b", 0x5000, 0x1000, 0x4617e675 , 0x4dd0450d )
+	ROM_LOAD( "bubblesr.7b", 0x6000, 0x1000, 0x16d20c98 , 0xe0a26ec0 )
+	ROM_LOAD( "bubblesr.8b", 0x7000, 0x1000, 0xfb8bad59 , 0x598b9bd6 )
+	ROM_LOAD( "bubblesr.9b", 0x8000, 0x1000, 0xc5ca8ce2 , 0xb48559fb )
+	ROM_LOAD( "bubblesr.10b", 0xd000, 0x1000, 0x8cc42496 , 0x8b396db0 )
+	ROM_LOAD( "bubblesr.11b", 0xe000, 0x1000, 0xfd0252a2 , 0x096af43e )
+	ROM_LOAD( "bubblesr.12b", 0xf000, 0x1000, 0xfcb24da2 , 0x5c1244ef )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "BUBBLES.SND", 0xf000, 0x1000, 0x82ae5994 )
+	ROM_LOAD( "bubbles.snd", 0xf000, 0x1000, 0x82ae5994 , 0x689ce2aa )
 ROM_END
 
 
@@ -2352,25 +2352,25 @@ struct GameDriver bubblesr_driver =
 
 ROM_START( stargate_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "01", 0x0000, 0x1000, 0xe5fecedc )
-	ROM_LOAD( "02", 0x1000, 0x1000, 0xbd525dec )
-	ROM_LOAD( "03", 0x2000, 0x1000, 0xb5fed8d8 )
-	ROM_LOAD( "04", 0x3000, 0x1000, 0x41ba0bc0 )
-	ROM_LOAD( "05", 0x4000, 0x1000, 0xdde98c57 )
-	ROM_LOAD( "06", 0x5000, 0x1000, 0x1b795abd )
-	ROM_LOAD( "07", 0x6000, 0x1000, 0xe45af9ca )
-	ROM_LOAD( "08", 0x7000, 0x1000, 0xa1026964 )
-	ROM_LOAD( "09", 0x8000, 0x1000, 0xad03f4f1 )
-	ROM_LOAD( "10", 0xd000, 0x1000, 0x001c6dec )
-	ROM_LOAD( "11", 0xe000, 0x1000, 0xd33c4d64 )
-	ROM_LOAD( "12", 0xf000, 0x1000, 0x94afba0b )
+	ROM_LOAD( "01", 0x0000, 0x1000, 0xe5fecedc , 0x88824d18 )
+	ROM_LOAD( "02", 0x1000, 0x1000, 0xbd525dec , 0xafc614c5 )
+	ROM_LOAD( "03", 0x2000, 0x1000, 0xb5fed8d8 , 0x15077a9d )
+	ROM_LOAD( "04", 0x3000, 0x1000, 0x41ba0bc0 , 0xa8b4bf0f )
+	ROM_LOAD( "05", 0x4000, 0x1000, 0xdde98c57 , 0x2d306074 )
+	ROM_LOAD( "06", 0x5000, 0x1000, 0x1b795abd , 0x53598dde )
+	ROM_LOAD( "07", 0x6000, 0x1000, 0xe45af9ca , 0x23606060 )
+	ROM_LOAD( "08", 0x7000, 0x1000, 0xa1026964 , 0x4ec490c7 )
+	ROM_LOAD( "09", 0x8000, 0x1000, 0xad03f4f1 , 0x88187b64 )
+	ROM_LOAD( "10", 0xd000, 0x1000, 0x001c6dec , 0x60b07ff7 )
+	ROM_LOAD( "11", 0xe000, 0x1000, 0xd33c4d64 , 0x7d2c5daf )
+	ROM_LOAD( "12", 0xf000, 0x1000, 0x94afba0b , 0xa0396670 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "sg.snd", 0xf800, 0x0800, 0xe18a8e66 )
+	ROM_LOAD( "sg.snd", 0xf800, 0x0800, 0xe18a8e66 , 0x2fcf6c4d )
 ROM_END
 
 struct GameDriver stargate_driver =
@@ -2407,26 +2407,26 @@ struct GameDriver stargate_driver =
 
 ROM_START( defender_rom )
 	ROM_REGION(0x14000)
-	ROM_LOAD( "defend.1",  0x0d000, 0x0800, 0x4aa8c614 )
-	ROM_LOAD( "defend.4",  0x0d800, 0x0800, 0x99e9bb31 )
-	ROM_LOAD( "defend.2",  0x0e000, 0x1000, 0x8991dceb )
-	ROM_LOAD( "defend.3",  0x0f000, 0x1000, 0x3f6e9fe2 )
+	ROM_LOAD( "defend.1", 0x0d000, 0x0800, 0x4aa8c614 , 0xc3e52d7e )
+	ROM_LOAD( "defend.4", 0x0d800, 0x0800, 0x99e9bb31 , 0x9a72348b )
+	ROM_LOAD( "defend.2", 0x0e000, 0x1000, 0x8991dceb , 0x89b75984 )
+	ROM_LOAD( "defend.3", 0x0f000, 0x1000, 0x3f6e9fe2 , 0x94f51e9b )
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "defend.9",  0x10000, 0x0800, 0x3e2646ae )
-	ROM_LOAD( "defend.12", 0x10800, 0x0800, 0xd13eeb4a )
-	ROM_LOAD( "defend.8",  0x11000, 0x0800, 0x67afa299 )
-	ROM_LOAD( "defend.11", 0x11800, 0x0800, 0x287572ed )
-	ROM_LOAD( "defend.7",  0x12000, 0x0800, 0x344c9bd0 )
-	ROM_LOAD( "defend.10", 0x12800, 0x0800, 0xee30b06e )
+	ROM_LOAD( "defend.9", 0x10000, 0x0800, 0x3e2646ae , 0x6870e8a5 )
+	ROM_LOAD( "defend.12", 0x10800, 0x0800, 0xd13eeb4a , 0xf1f88938 )
+	ROM_LOAD( "defend.8", 0x11000, 0x0800, 0x67afa299 , 0xb649e306 )
+	ROM_LOAD( "defend.11", 0x11800, 0x0800, 0x287572ed , 0x9deaf6d9 )
+	ROM_LOAD( "defend.7", 0x12000, 0x0800, 0x344c9bd0 , 0x339e092e )
+	ROM_LOAD( "defend.10", 0x12800, 0x0800, 0xee30b06e , 0xa543b167 )
 	ROM_RELOAD(            0x13800, 0x0800 )
-	ROM_LOAD( "defend.6",  0x13000, 0x0800, 0x8c7b2da3 )
+	ROM_LOAD( "defend.6", 0x13000, 0x0800, 0x8c7b2da3 , 0x65f4efd1 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "defend.snd", 0xf800, 0x0800, 0xa7f601a4 )
+	ROM_LOAD( "defend.snd", 0xf800, 0x0800, 0xa7f601a4 , 0xfefd5b48 )
 ROM_END
 
 struct GameDriver defender_driver =
@@ -2463,25 +2463,25 @@ struct GameDriver defender_driver =
 
 ROM_START( splat_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "SPLAT.01", 0x0000, 0x1000, 0x43a37fff )
-	ROM_LOAD( "SPLAT.02", 0x1000, 0x1000, 0x6cfb15f1 )
-	ROM_LOAD( "SPLAT.03", 0x2000, 0x1000, 0xf55c6b64 )
-	ROM_LOAD( "SPLAT.04", 0x3000, 0x1000, 0x1130f8ba )
-	ROM_LOAD( "SPLAT.05", 0x4000, 0x1000, 0xb5e71503 )
-	ROM_LOAD( "SPLAT.06", 0x5000, 0x1000, 0x8ceda6f7 )
-	ROM_LOAD( "SPLAT.07", 0x6000, 0x1000, 0x1150f5f0 )
-	ROM_LOAD( "SPLAT.08", 0x7000, 0x1000, 0x91cd6cd5 )
-	ROM_LOAD( "SPLAT.09", 0x8000, 0x1000, 0xb78db4bf )
-	ROM_LOAD( "SPLAT.10", 0xd000, 0x1000, 0x148a9cbc )
-	ROM_LOAD( "SPLAT.11", 0xe000, 0x1000, 0x77ca0200 )
-	ROM_LOAD( "SPLAT.12", 0xf000, 0x1000, 0x9f4667ba )
+	ROM_LOAD( "splat.01", 0x0000, 0x1000, 0x43a37fff , 0x1cf26e48 )
+	ROM_LOAD( "splat.02", 0x1000, 0x1000, 0x6cfb15f1 , 0xac0d4276 )
+	ROM_LOAD( "splat.03", 0x2000, 0x1000, 0xf55c6b64 , 0x74873e59 )
+	ROM_LOAD( "splat.04", 0x3000, 0x1000, 0x1130f8ba , 0x70a7064e )
+	ROM_LOAD( "splat.05", 0x4000, 0x1000, 0xb5e71503 , 0xc6895221 )
+	ROM_LOAD( "splat.06", 0x5000, 0x1000, 0x8ceda6f7 , 0xea4ab7fd )
+	ROM_LOAD( "splat.07", 0x6000, 0x1000, 0x1150f5f0 , 0x82fd8713 )
+	ROM_LOAD( "splat.08", 0x7000, 0x1000, 0x91cd6cd5 , 0x7dded1b4 )
+	ROM_LOAD( "splat.09", 0x8000, 0x1000, 0xb78db4bf , 0x71cbfe5a )
+	ROM_LOAD( "splat.10", 0xd000, 0x1000, 0x148a9cbc , 0xd1a1f632 )
+	ROM_LOAD( "splat.11", 0xe000, 0x1000, 0x77ca0200 , 0xca8cde95 )
+	ROM_LOAD( "splat.12", 0xf000, 0x1000, 0x9f4667ba , 0x5bee3e60 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "SPLAT.SND", 0xf000, 0x1000, 0x999bcb87 )
+	ROM_LOAD( "splat.snd", 0xf000, 0x1000, 0x999bcb87 , 0xa878d5f3 )
 ROM_END
 
 
@@ -2519,31 +2519,31 @@ struct GameDriver splat_driver =
 
 ROM_START( blaster_rom )
 	ROM_REGION(0x3c000)
-	ROM_LOAD( "blaster.11", 0x04000, 0x2000, 0xdc7831b2 )
-	ROM_LOAD( "blaster.12", 0x06000, 0x2000, 0x68244eb6 )
-	ROM_LOAD( "blaster.17", 0x08000, 0x1000, 0xecbf6a51 )
-	ROM_LOAD( "blaster.16", 0x0d000, 0x1000, 0xd6e04ee2 )
-	ROM_LOAD( "blaster.13", 0x0e000, 0x2000, 0x376fc541 )
+	ROM_LOAD( "blaster.11", 0x04000, 0x2000, 0xdc7831b2 , 0x6371e62f )
+	ROM_LOAD( "blaster.12", 0x06000, 0x2000, 0x68244eb6 , 0x9804faac )
+	ROM_LOAD( "blaster.17", 0x08000, 0x1000, 0xecbf6a51 , 0xbf96182f )
+	ROM_LOAD( "blaster.16", 0x0d000, 0x1000, 0xd6e04ee2 , 0x54a40b21 )
+	ROM_LOAD( "blaster.13", 0x0e000, 0x2000, 0x376fc541 , 0xf4dae4c8 )
 
-	ROM_LOAD( "blaster.15", 0x00000, 0x4000, 0x1c345c06 )
-	ROM_LOAD( "blaster.8",  0x10000, 0x4000, 0xc297d5ab )
-	ROM_LOAD( "blaster.9",  0x14000, 0x4000, 0xe88478a0 )
-	ROM_LOAD( "blaster.10", 0x18000, 0x4000, 0xc68a1386 )
-	ROM_LOAD( "blaster.6",  0x1c000, 0x4000, 0x3142941e )
-	ROM_LOAD( "blaster.5",  0x20000, 0x4000, 0x2ebd56e5 )
-	ROM_LOAD( "blaster.14", 0x24000, 0x4000, 0xe0267262 )
-	ROM_LOAD( "blaster.7",  0x28000, 0x4000, 0x17bff9a5 )
-	ROM_LOAD( "blaster.1",  0x2c000, 0x4000, 0x37d9abe5 )
-	ROM_LOAD( "blaster.2",  0x30000, 0x4000, 0xd99ff133 )
-	ROM_LOAD( "blaster.4",  0x34000, 0x4000, 0x8d86011c )
-	ROM_LOAD( "blaster.3",  0x38000, 0x4000, 0x86ddd013 )
+	ROM_LOAD( "blaster.15", 0x00000, 0x4000, 0x1c345c06 , 0x1ad146a4 )
+	ROM_LOAD( "blaster.8", 0x10000, 0x4000, 0xc297d5ab , 0xf110bbb0 )
+	ROM_LOAD( "blaster.9", 0x14000, 0x4000, 0xe88478a0 , 0x5c5b0f8a )
+	ROM_LOAD( "blaster.10", 0x18000, 0x4000, 0xc68a1386 , 0xd47eb67f )
+	ROM_LOAD( "blaster.6", 0x1c000, 0x4000, 0x3142941e , 0x47fc007e )
+	ROM_LOAD( "blaster.5", 0x20000, 0x4000, 0x2ebd56e5 , 0x15c1b94d )
+	ROM_LOAD( "blaster.14", 0x24000, 0x4000, 0xe0267262 , 0xaea6b846 )
+	ROM_LOAD( "blaster.7", 0x28000, 0x4000, 0x17bff9a5 , 0x7a101181 )
+	ROM_LOAD( "blaster.1", 0x2c000, 0x4000, 0x37d9abe5 , 0x8d0ea9e7 )
+	ROM_LOAD( "blaster.2", 0x30000, 0x4000, 0xd99ff133 , 0x03c4012c )
+	ROM_LOAD( "blaster.4", 0x34000, 0x4000, 0x8d86011c , 0xfc9d39fb )
+	ROM_LOAD( "blaster.3", 0x38000, 0x4000, 0x86ddd013 , 0x253690fb )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-	ROM_LOAD( "blaster.18", 0xf000, 0x1000, 0x42c2fc80 )
+	ROM_LOAD( "blaster.18", 0xf000, 0x1000, 0x42c2fc80 , 0xc33a3145 )
 ROM_END
 
 
@@ -2581,44 +2581,44 @@ struct GameDriver blaster_driver =
 
 ROM_START( colony7_rom )
 	ROM_REGION(0x14000)
-	ROM_LOAD( "cs03.bin", 0x0d000, 0x1000, 0xd3fcbf64 )
-	ROM_LOAD( "cs02.bin", 0x0e000, 0x1000, 0x741ecfe4 )
-	ROM_LOAD( "cs01.bin", 0x0f000, 0x1000, 0xdfb0181c )
+	ROM_LOAD( "cs03.bin", 0x0d000, 0x1000, 0xd3fcbf64 , 0x7ee75ae5 )
+	ROM_LOAD( "cs02.bin", 0x0e000, 0x1000, 0x741ecfe4 , 0xc60b08cb )
+	ROM_LOAD( "cs01.bin", 0x0f000, 0x1000, 0xdfb0181c , 0x1bc97436 )
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 )
-	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 )
-	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da )
-	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 )
-	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 , 0x318b95af )
+	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 , 0xd740faee )
+	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da , 0x0b23638b )
+	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 , 0x59e406a8 )
+	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 , 0x3bfde87a )
 	ROM_RELOAD(           0x12800, 0x0800 )
 
-	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)		/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
+	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc , 0x6032293c ) /* Sound ROM */
 ROM_END
 
 ROM_START( colony7a_rom )
 	ROM_REGION(0x14000)
-	ROM_LOAD( "cs03a.bin", 0x0d000, 0x1000, 0x124fcfb1 )
-	ROM_LOAD( "cs02a.bin", 0x0e000, 0x1000, 0x9acb45f3 )
-	ROM_LOAD( "cs01a.bin", 0x0f000, 0x1000, 0xe3508de4 )
+	ROM_LOAD( "cs03a.bin", 0x0d000, 0x1000, 0x124fcfb1 , 0xe0b0d23b )
+	ROM_LOAD( "cs02a.bin", 0x0e000, 0x1000, 0x9acb45f3 , 0x370c6f41 )
+	ROM_LOAD( "cs01a.bin", 0x0f000, 0x1000, 0xe3508de4 , 0xba299946 )
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "cs06.bin",  0x10000, 0x0800, 0xb4d158c1 )
-	ROM_LOAD( "cs04.bin",  0x10800, 0x0800, 0x69594a21 )
-	ROM_LOAD( "cs07.bin",  0x11000, 0x0800, 0xc168b5da )
-	ROM_LOAD( "cs05.bin",  0x11800, 0x0800, 0x49741fe0 )
-	ROM_LOAD( "cs08.bin",  0x12000, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 , 0x318b95af )
+	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 , 0xd740faee )
+	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da , 0x0b23638b )
+	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 , 0x59e406a8 )
+	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 , 0x3bfde87a )
 	ROM_RELOAD(            0x12800, 0x0800 )
 
-	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)		/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
+	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc , 0x6032293c ) /* Sound ROM */
 ROM_END
 
 struct GameDriver colony7_driver =
@@ -2680,25 +2680,25 @@ struct GameDriver colony7a_driver =
 
 ROM_START( lottofun_rom )
 	ROM_REGION(0x10000) 	/* 64k for code */
-	ROM_LOAD( "vl4e.dat", 0x0000, 0x1000, 0x8c22de60 )
-	ROM_LOAD( "vl4c.dat", 0x1000, 0x1000, 0x76ffdc39 )
-	ROM_LOAD( "vl4a.dat", 0x2000, 0x1000, 0xaad204c2 )
-	ROM_LOAD( "vl5e.dat", 0x3000, 0x1000, 0x8cd1bc8b )
-	ROM_LOAD( "vl5c.dat", 0x4000, 0x1000, 0x61ca8076 )
-	ROM_LOAD( "vl5a.dat", 0x5000, 0x1000, 0x52705d22 )
-	ROM_LOAD( "vl6e.dat", 0x6000, 0x1000, 0xc8f2a4d6 )
-	ROM_LOAD( "vl6c.dat", 0x7000, 0x1000, 0x80f34965 )
-	ROM_LOAD( "vl6a.dat", 0x8000, 0x1000, 0x44305588 )
-	ROM_LOAD( "vl7a.dat", 0xd000, 0x1000, 0x041338f9 )
-	ROM_LOAD( "vl7c.dat", 0xe000, 0x1000, 0x864747f3 )
-	ROM_LOAD( "vl7e.dat", 0xf000, 0x1000, 0x820df961 )
+	ROM_LOAD( "vl4e.dat", 0x0000, 0x1000, 0x8c22de60 , 0x5e9af236 )
+	ROM_LOAD( "vl4c.dat", 0x1000, 0x1000, 0x76ffdc39 , 0x4b134ae2 )
+	ROM_LOAD( "vl4a.dat", 0x2000, 0x1000, 0xaad204c2 , 0xb2f1f95a )
+	ROM_LOAD( "vl5e.dat", 0x3000, 0x1000, 0x8cd1bc8b , 0xc8681c55 )
+	ROM_LOAD( "vl5c.dat", 0x4000, 0x1000, 0x61ca8076 , 0xeb9351e0 )
+	ROM_LOAD( "vl5a.dat", 0x5000, 0x1000, 0x52705d22 , 0x534f2fa1 )
+	ROM_LOAD( "vl6e.dat", 0x6000, 0x1000, 0xc8f2a4d6 , 0xbefac592 )
+	ROM_LOAD( "vl6c.dat", 0x7000, 0x1000, 0x80f34965 , 0xa73d7f13 )
+	ROM_LOAD( "vl6a.dat", 0x8000, 0x1000, 0x44305588 , 0x5730a43d )
+	ROM_LOAD( "vl7a.dat", 0xd000, 0x1000, 0x041338f9 , 0xfb2aec2c )
+	ROM_LOAD( "vl7c.dat", 0xe000, 0x1000, 0x864747f3 , 0x9a496519 )
+	ROM_LOAD( "vl7e.dat", 0xf000, 0x1000, 0x820df961 , 0x032cab4b )
 
-	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)		/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) 	/* 64k for the sound CPU */
-	ROM_LOAD( "vl2532.snd", 0xf000, 0x1000, 0x79b62d96 )
+	ROM_LOAD( "vl2532.snd", 0xf000, 0x1000, 0x79b62d96 , 0x214b8a04 )
 ROM_END
 
 

@@ -11,6 +11,7 @@
 #include "driver.h"
 #include <allegro.h>
 #include <dos.h>
+#include <signal.h>
 #include <time.h>
 
 
@@ -32,6 +33,13 @@ char **__crt0_glob_function(void)
 	return 0;
 }
 
+static void signal_handler(int num)
+{
+   allegro_exit();
+
+   signal(num, SIG_DFL);
+   raise(num);
+}
 
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
@@ -90,6 +98,19 @@ int main (int argc, char **argv)
 	}
 
 	allegro_init();
+
+	/* Allegro changed the signal handlers... change them again to ours, to */
+	/* avoid the "Shutting down Allegro" message which confuses users into */
+	/* thinking crashes are caused by Allegro. */
+	signal(SIGABRT, signal_handler);
+	signal(SIGFPE,  signal_handler);
+	signal(SIGILL,  signal_handler);
+	signal(SIGSEGV, signal_handler);
+	signal(SIGTERM, signal_handler);
+	signal(SIGINT,  signal_handler);
+	signal(SIGKILL, signal_handler);
+	signal(SIGQUIT, signal_handler);
+
 
 	set_config_file ("mame.cfg");
 

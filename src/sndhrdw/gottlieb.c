@@ -6,6 +6,8 @@
 
 void gottlieb_sh_w(int offset,int data)
 {
+	data &= 0xff;
+
 	if (data != 0xff)
 	{
 		if (Machine->gamedrv->samplenames)
@@ -36,9 +38,20 @@ void gottlieb_sh_w(int offset,int data)
 		}
 
 		soundlatch_w(offset,data);
-		cpu_cause_interrupt(1,M6502_INT_IRQ);
-		/* only the second sound board revision has the third CPU */
-		cpu_cause_interrupt(2,M6502_INT_IRQ);
+
+		switch (cpu_gettotalcpu())
+		{
+		case 2:
+			/* Revision 1 sound board */
+			cpu_cause_interrupt(1,M6502_INT_IRQ);
+			break;
+		case 3:
+		case 4:
+			/* Revision 2 & 3 sound board */
+			cpu_cause_interrupt(cpu_gettotalcpu()-1,M6502_INT_IRQ);
+			cpu_cause_interrupt(cpu_gettotalcpu()-2,M6502_INT_IRQ);
+			break;
+		}
 	}
 }
 
@@ -129,9 +142,10 @@ void gottlieb_riot_w(int offset, int data)
 
 
 
-static int psg_latch,nmi_enable;
+static int psg_latch;
 static void *nmi_timer;
-
+static int nmi_rate, nmi_enabled;
+static int ym2151_port;
 
 int gottlieb_sh_init (const char *gamename)
 {
@@ -157,15 +171,37 @@ void stooges_8910_latch_w(int offset,int data)
 	psg_latch = data;
 }
 
+/* callback for the timer */
+static void nmi_callback(int param)
+{
+	cpu_cause_interrupt(cpu_gettotalcpu()-1, M6502_INT_NMI);
+}
+
+static void common_sound_control_w(int offset, int data)
+{
+	/* Bit 0 enables and starts NMI timer */
+
+	if (nmi_timer)
+	{
+		timer_remove(nmi_timer);
+		nmi_timer = 0;
+	}
+
+	if (data & 0x01)
+	{
+		/* base clock is 250kHz divided by 256 */
+		double interval = TIME_IN_HZ(250000.0/256/(256-nmi_rate));
+		nmi_timer = timer_pulse(interval, 0, nmi_callback);
+	}
+
+	/* Bit 1 controls a LED on the sound board. I'm not emulating it */
+}
+
 void stooges_sound_control_w(int offset,int data)
 {
 	static int last;
 
-
-	/* bit 0 = NMI enable */
-	nmi_enable = data & 1;
-
-	/* bit 1 lights a led on the sound board */
+	common_sound_control_w(offset, data);
 
 	/* bit 2 goes to 8913 BDIR pin  */
 	if ((last & 0x04) == 0x04 && (data & 0x04) == 0x00)
@@ -201,22 +237,39 @@ void stooges_sound_control_w(int offset,int data)
 	last = data & 0x44;
 }
 
-/* callback for the timer */
-void stooges_nmi_generate(int param)
+void exterm_sound_control_w(int offset, int data)
 {
-	if (nmi_enable) cpu_cause_interrupt(2,M6502_INT_NMI);
+	common_sound_control_w(offset, data);
+
+	/* Bit 7 selects YM2151 register or data port */
+	ym2151_port = data & 0x80;
 }
 
-void stooges_sound_timer_w(int offset,int data)
+void gottlieb_nmi_rate_w(int offset, int data)
 {
-	double freq;
+	nmi_rate = data;
+}
 
+void gottlieb_cause_dac_nmi_w(int offset, int data)
+{
+	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
+	cpu_yield();
+}
 
-	/* base clock is 250kHz divided by 256 */
-	freq = TIME_IN_HZ(250000.0/256/(256-data));
+int gottlieb_cause_dac_nmi_r(int offset)
+{
+    gottlieb_cause_dac_nmi_w(offset, 0);
+	return 0;
+}
 
-	if (nmi_timer)
-		timer_reset(nmi_timer,freq);
+void exterm_ym2151_w(int offset, int data)
+{
+	if (ym2151_port)
+	{
+		YM2151_data_port_0_w(offset, data);
+	}
 	else
-		nmi_timer = timer_pulse(freq,0,stooges_nmi_generate);
+	{
+		YM2151_register_port_0_w(offset, data);
+	}
 }

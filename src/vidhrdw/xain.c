@@ -47,7 +47,7 @@ void xain_scrollyP3_w(int offset,int data)
         xain_scrollyP3[offset] = data;
 }
 
-void videoram2_w(int offset,int data)
+void xain_videoram2_w(int offset,int data)
 {
         if (xain_videoram2[offset] != data)
         {  dirtybuffer2[offset] = 1;

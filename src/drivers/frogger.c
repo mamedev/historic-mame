@@ -412,60 +412,60 @@ static struct MachineDriver frogger2_machine_driver =
 
 ROM_START( frogger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0xb77be5cb )
-	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x02dc7158 )
-	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0x71e62ce0 )
-	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000, 0x568b11cd )
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0xb77be5cb , 0xefab0c79 )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x02dc7158 , 0xaeca9c13 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0x71e62ce0 , 0xdd251066 )
+	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000, 0x568b11cd , 0xbf293a02 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a , 0xf524ee30 )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c , 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 , 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 , 0xe8ab0256 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 , 0x7380a48f )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e , 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogsega_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.26", 0x0000, 0x1000, 0x65a3e115 )
-	ROM_LOAD( "frogger.27", 0x1000, 0x1000, 0x039a96c8 )
-	ROM_LOAD( "frogger.34", 0x2000, 0x1000, 0xb48737eb )
+	ROM_LOAD( "frogger.26", 0x0000, 0x1000, 0x65a3e115 , 0x597696d6 )
+	ROM_LOAD( "frogger.27", 0x1000, 0x1000, 0x039a96c8 , 0xb6e6fcc3 )
+	ROM_LOAD( "frogger.34", 0x2000, 0x1000, 0xb48737eb , 0xed866bab )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a , 0xf524ee30 )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c , 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 , 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 , 0xe8ab0256 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 , 0x7380a48f )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e , 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogger2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "epr-1031.15", 0x0000, 0x1000, 0xea2517c3 )
-	ROM_LOAD( "epr-1032.16", 0x1000, 0x1000, 0x1ccaed52 )
-	ROM_LOAD( "epr-1033.33", 0x2000, 0x1000, 0xd495e393 )
-	ROM_LOAD( "epr-1034.34", 0x3000, 0x1000, 0xcc74908a )
+	ROM_LOAD( "epr-1031.15", 0x0000, 0x1000, 0xea2517c3 , 0x4b7c8d11 )
+	ROM_LOAD( "epr-1032.16", 0x1000, 0x1000, 0x1ccaed52 , 0xac00b9d9 )
+	ROM_LOAD( "epr-1033.33", 0x2000, 0x1000, 0xd495e393 , 0xbc1d6fbc )
+	ROM_LOAD( "epr-1034.34", 0x3000, 0x1000, 0xcc74908a , 0x9efe7399 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "epr-1036.1k", 0x0000, 0x0800, 0xf8175729 )
-	ROM_LOAD( "epr-1037.1h", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr-1036.1k", 0x0000, 0x0800, 0xf8175729 , 0xc18245e3 )
+	ROM_LOAD( "epr-1037.1h", 0x0800, 0x0800, 0xb474d87c , 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 , 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "epr-1082.42", 0x0000, 0x1000, 0x4aeb27b7 )
-	ROM_LOAD( "epr-1035.43", 0x1000, 0x0800, 0xed40329a )
+	ROM_LOAD( "epr-1082.42", 0x0000, 0x1000, 0x4aeb27b7 , 0x802843c2 )
+	ROM_LOAD( "epr-1035.43", 0x1000, 0x0800, 0xed40329a , 0x14e74148 )
 ROM_END
 
 

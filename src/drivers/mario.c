@@ -471,50 +471,50 @@ static const char *sample_names[] =
 
 ROM_START( mario_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mario.7f", 0x0000, 0x2000, 0x978dfc01 )
-	ROM_LOAD( "mario.7e", 0x2000, 0x2000, 0x587539fd )
-	ROM_LOAD( "mario.7d", 0x4000, 0x2000, 0x33b5e2c5 )
-	ROM_LOAD( "mario.7c", 0xf000, 0x1000, 0x7d313723 )
+	ROM_LOAD( "mario.7f", 0x0000, 0x2000, 0x978dfc01 , 0xc0c6e014 )
+	ROM_LOAD( "mario.7e", 0x2000, 0x2000, 0x587539fd , 0x116b3856 )
+	ROM_LOAD( "mario.7d", 0x4000, 0x2000, 0x33b5e2c5 , 0xdcceb6c1 )
+	ROM_LOAD( "mario.7c", 0xf000, 0x1000, 0x7d313723 , 0x4a63d96b )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mario.3f", 0x0000, 0x1000, 0xfd014e45 )
-	ROM_LOAD( "mario.3j", 0x1000, 0x1000, 0xfb393def )
-	ROM_LOAD( "mario.7m", 0x2000, 0x1000, 0x8b6216de )
-	ROM_LOAD( "mario.7n", 0x3000, 0x1000, 0xb5b1ef57 )
-	ROM_LOAD( "mario.7p", 0x4000, 0x1000, 0x97149ed8 )
-	ROM_LOAD( "mario.7s", 0x5000, 0x1000, 0x28de7ec8 )
-	ROM_LOAD( "mario.7t", 0x6000, 0x1000, 0x13f5f925 )
-	ROM_LOAD( "mario.7u", 0x7000, 0x1000, 0x43e11755 )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mario.3f", 0x0000, 0x1000, 0xfd014e45 , 0x28b0c42c )
+	ROM_LOAD( "mario.3j", 0x1000, 0x1000, 0xfb393def , 0x0c8cc04d )
+	ROM_LOAD( "mario.7m", 0x2000, 0x1000, 0x8b6216de , 0x22b7372e )
+	ROM_LOAD( "mario.7n", 0x3000, 0x1000, 0xb5b1ef57 , 0x4f3a1f47 )
+	ROM_LOAD( "mario.7p", 0x4000, 0x1000, 0x97149ed8 , 0x56be6ccd )
+	ROM_LOAD( "mario.7s", 0x5000, 0x1000, 0x28de7ec8 , 0x56f1d613 )
+	ROM_LOAD( "mario.7t", 0x6000, 0x1000, 0x13f5f925 , 0x641f0008 )
+	ROM_LOAD( "mario.7u", 0x7000, 0x1000, 0x43e11755 , 0x7baf5309 )
 
 	ROM_REGION(0x0200)	/* color prom */
-	ROM_LOAD( "mario.4p", 0x0000, 0x0200, 0xff800000 )
+	ROM_LOAD( "mario.4p", 0x0000, 0x0200, 0xff800000 , 0xafc9bd41 )
 
 	ROM_REGION(0x1000)	/* sound */
-	ROM_LOAD( "mario.6k", 0x0000, 0x1000, 0x0c278aa3 )
+	ROM_LOAD( "mario.6k", 0x0000, 0x1000, 0x0c278aa3 , 0x06b9ff85 )
 ROM_END
 
 ROM_START( masao_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "masao-4.rom", 0x0000, 0x2000, 0x50b1c9b1 )
-	ROM_LOAD( "masao-3.rom", 0x2000, 0x2000, 0x268c1db2 )
-	ROM_LOAD( "masao-2.rom", 0x4000, 0x2000, 0xffe2203e )
-	ROM_LOAD( "masao-1.rom", 0xf000, 0x1000, 0x3d37dab5 )
+	ROM_LOAD( "masao-4.rom", 0x0000, 0x2000, 0x50b1c9b1 , 0x07a75745 )
+	ROM_LOAD( "masao-3.rom", 0x2000, 0x2000, 0x268c1db2 , 0x55c629b6 )
+	ROM_LOAD( "masao-2.rom", 0x4000, 0x2000, 0xffe2203e , 0x42e85240 )
+	ROM_LOAD( "masao-1.rom", 0xf000, 0x1000, 0x3d37dab5 , 0xb2817af9 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "masao-6.rom",  0x0000, 0x1000, 0xd1b430f8 )
-	ROM_LOAD( "masao-7.rom",  0x1000, 0x1000, 0x963d7329 )
-	ROM_LOAD( "masao-8.rom",  0x2000, 0x1000, 0x897916c7 )
-	ROM_LOAD( "masao-9.rom",  0x3000, 0x1000, 0xbe350605 )
-	ROM_LOAD( "masao-10.rom", 0x4000, 0x1000, 0x97149ed8 )
-	ROM_LOAD( "masao-11.rom", 0x5000, 0x1000, 0xde10dbe8 )
-	ROM_LOAD( "masao-12.rom", 0x6000, 0x1000, 0x10f4f824 )
-	ROM_LOAD( "masao-13.rom", 0x7000, 0x1000, 0x4bc14527 )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "masao-6.rom", 0x0000, 0x1000, 0xd1b430f8 , 0x1c9e0be2 )
+	ROM_LOAD( "masao-7.rom", 0x1000, 0x1000, 0x963d7329 , 0x747c1349 )
+	ROM_LOAD( "masao-8.rom", 0x2000, 0x1000, 0x897916c7 , 0x186762f8 )
+	ROM_LOAD( "masao-9.rom", 0x3000, 0x1000, 0xbe350605 , 0x50be3918 )
+	ROM_LOAD( "masao-10.rom", 0x4000, 0x1000, 0x97149ed8 , 0x56be6ccd )
+	ROM_LOAD( "masao-11.rom", 0x5000, 0x1000, 0xde10dbe8 , 0x912ba80a )
+	ROM_LOAD( "masao-12.rom", 0x6000, 0x1000, 0x10f4f824 , 0x5cbb92a5 )
+	ROM_LOAD( "masao-13.rom", 0x7000, 0x1000, 0x4bc14527 , 0x13afb9ed )
 
 	ROM_REGION(0x0200)	/* color prom */
-	ROM_LOAD( "mario.4p", 0x0000, 0x0200, 0xff800000 )
+	ROM_LOAD( "mario.4p", 0x0000, 0x0200, 0xff800000 , 0xafc9bd41 )
 
 	ROM_REGION(0x10000) /* 64k for sound */
-	ROM_LOAD( "masao-5.rom", 0x0000, 0x1000, 0xb4d14c8f )
+	ROM_LOAD( "masao-5.rom", 0x0000, 0x1000, 0xb4d14c8f , 0xbd437198 )
 ROM_END
 
 static int hiload(void)

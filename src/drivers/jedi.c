@@ -339,24 +339,24 @@ static struct MachineDriver machine_driver =
 
 ROM_START( jedi_rom )
 	ROM_REGION(0x1C000)	/* 64k for code + 48k for banked ROMs */
-	ROM_LOAD( "14f_221.bin", 0x08000, 0x4000, 0x81b8d806 )
-	ROM_LOAD( "13f_222.bin", 0x0c000, 0x4000, 0x4ecc94fc )
-	ROM_LOAD( "13d_123.bin", 0x10000, 0x4000, 0xe7508418 )	/* Page 0 */
-	ROM_LOAD( "13b_124.bin", 0x14000, 0x4000, 0x3b502580 )	/* Page 1 */
-	ROM_LOAD( "13a_122.bin", 0x18000, 0x4000, 0xfcf2c162 )	/* Page 2 */
+	ROM_LOAD( "14f_221.bin", 0x08000, 0x4000, 0x81b8d806 , 0x414d05e3 )
+	ROM_LOAD( "13f_222.bin", 0x0c000, 0x4000, 0x4ecc94fc , 0x7b3f21be )
+	ROM_LOAD( "13d_123.bin", 0x10000, 0x4000, 0xe7508418 , 0x877f554a )	/* Page 0 */
+	ROM_LOAD( "13b_124.bin", 0x14000, 0x4000, 0x3b502580 , 0xe72d41db )	/* Page 1 */
+	ROM_LOAD( "13a_122.bin", 0x18000, 0x4000, 0xfcf2c162 , 0xcce7ced5 )	/* Page 2 */
 
-	ROM_REGION(0x32000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11t_215.bin", 0x00000, 0x2000, 0x9a6e2e9e )	/* Alphanumeric */
-	ROM_LOAD( "06r_126.bin", 0x02000, 0x8000, 0xb751b39f )	/* Playfield */
-	ROM_LOAD( "06n_127.bin", 0x0a000, 0x8000, 0x72c11703 )
-	ROM_LOAD( "01h_130.bin", 0x12000, 0x8000, 0xc10a8a70 )	/* Sprites */
-	ROM_LOAD( "01f_131.bin", 0x1a000, 0x8000, 0x60681a2c )
-	ROM_LOAD( "01m_128.bin", 0x22000, 0x8000, 0x1b26b546 )
-	ROM_LOAD( "01k_129.bin", 0x2a000, 0x8000, 0x7d487088 )
+	ROM_REGION_DISPOSE(0x32000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11t_215.bin", 0x00000, 0x2000, 0x9a6e2e9e , 0x3e49491f )	/* Alphanumeric */
+	ROM_LOAD( "06r_126.bin", 0x02000, 0x8000, 0xb751b39f , 0x9c55ece8 )	/* Playfield */
+	ROM_LOAD( "06n_127.bin", 0x0a000, 0x8000, 0x72c11703 , 0x4b09dcc5 )
+	ROM_LOAD( "01h_130.bin", 0x12000, 0x8000, 0xc10a8a70 , 0x2646a793 )	/* Sprites */
+	ROM_LOAD( "01f_131.bin", 0x1a000, 0x8000, 0x60681a2c , 0x60107350 )
+	ROM_LOAD( "01m_128.bin", 0x22000, 0x8000, 0x1b26b546 , 0x24663184 )
+	ROM_LOAD( "01k_129.bin", 0x2a000, 0x8000, 0x7d487088 , 0xac86b98c )
 
 	ROM_REGION(0x10000)	/* space for the sound ROMs */
-	ROM_LOAD( "01c_133.bin", 0x8000, 0x4000, 0x73521580 )
-	ROM_LOAD( "01a_134.bin", 0xC000, 0x4000, 0x3c5aa3aa )
+	ROM_LOAD( "01c_133.bin", 0x8000, 0x4000, 0x73521580 , 0x6c601c69 )
+	ROM_LOAD( "01a_134.bin", 0xC000, 0x4000, 0x3c5aa3aa , 0x5e36c564 )
 ROM_END
 
 static int novram_load(void)

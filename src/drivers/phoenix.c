@@ -376,112 +376,112 @@ static const char *phoenix_sample_names[] =
 
 ROM_START( phoenix_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic45", 0x0000, 0x0800, 0x2278c24a )
-	ROM_LOAD( "ic46", 0x0800, 0x0800, 0xfefbcdb1 )
-	ROM_LOAD( "ic47", 0x1000, 0x0800, 0x39e00a04 )
-	ROM_LOAD( "ic48", 0x1800, 0x0800, 0xdc27f959 )
-	ROM_LOAD( "ic49", 0x2000, 0x0800, 0x08391997 )
-	ROM_LOAD( "ic50", 0x2800, 0x0800, 0x0e45f309 )
-	ROM_LOAD( "ic51", 0x3000, 0x0800, 0x45f34a7b )
-	ROM_LOAD( "ic52", 0x3800, 0x0800, 0xce53b2e1 )
+	ROM_LOAD( "ic45", 0x0000, 0x0800, 0x2278c24a , 0x9f68086b )
+	ROM_LOAD( "ic46", 0x0800, 0x0800, 0xfefbcdb1 , 0x273a4a82 )
+	ROM_LOAD( "ic47", 0x1000, 0x0800, 0x39e00a04 , 0x3d4284b9 )
+	ROM_LOAD( "ic48", 0x1800, 0x0800, 0xdc27f959 , 0xcb5d9915 )
+	ROM_LOAD( "ic49", 0x2000, 0x0800, 0x08391997 , 0xa105e4e7 )
+	ROM_LOAD( "ic50", 0x2800, 0x0800, 0x0e45f309 , 0xac5e9ec1 )
+	ROM_LOAD( "ic51", 0x3000, 0x0800, 0x45f34a7b , 0x2eab35b4 )
+	ROM_LOAD( "ic52", 0x3800, 0x0800, 0xce53b2e1 , 0xaff8e9c5 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 )
-	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d )
-	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 , 0x3c7e623f )
+	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 , 0x59916d3b )
+	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d , 0x53413e8f )
+	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 , 0x0be2ba91 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 )	/* palette low bits */
-	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 )	/* palette high bits */
+	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 , 0xdbbadeae )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 , 0x8fdd30e1 )	/* palette high bits */
 ROM_END
 
 ROM_START( phoenixt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "phoenix.45", 0x0000, 0x0800, 0xb0ae4830 )
-	ROM_LOAD( "phoenix.46", 0x0800, 0x0800, 0xfafbc9b1 )
-	ROM_LOAD( "phoenix.47", 0x1000, 0x0800, 0x687116a3 )
-	ROM_LOAD( "phoenix.48", 0x1800, 0x0800, 0xeb71206d )
-	ROM_LOAD( "phoenix.49", 0x2000, 0x0800, 0xc7f9d957 )
-	ROM_LOAD( "ic50",       0x2800, 0x0800, 0x0e45f309 )
-	ROM_LOAD( "ic51",       0x3000, 0x0800, 0x45f34a7b )
-	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xd456acde )
+	ROM_LOAD( "phoenix.45", 0x0000, 0x0800, 0xb0ae4830 , 0x5b8c55a8 )
+	ROM_LOAD( "phoenix.46", 0x0800, 0x0800, 0xfafbc9b1 , 0xdbc942fa )
+	ROM_LOAD( "phoenix.47", 0x1000, 0x0800, 0x687116a3 , 0xcbbb8839 )
+	ROM_LOAD( "phoenix.48", 0x1800, 0x0800, 0xeb71206d , 0xcb65eff8 )
+	ROM_LOAD( "phoenix.49", 0x2000, 0x0800, 0xc7f9d957 , 0xc8a5d6d6 )
+	ROM_LOAD( "ic50", 0x2800, 0x0800, 0x0e45f309 , 0xac5e9ec1 )
+	ROM_LOAD( "ic51", 0x3000, 0x0800, 0x45f34a7b , 0x2eab35b4 )
+	ROM_LOAD( "phoenix.52", 0x3800, 0x0800, 0xd456acde , 0xb9915263 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 )
-	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d )
-	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 , 0x3c7e623f )
+	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 , 0x59916d3b )
+	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d , 0x53413e8f )
+	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 , 0x0be2ba91 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 )	/* palette low bits */
-	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 )	/* palette high bits */
+	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 , 0xdbbadeae )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 , 0x8fdd30e1 )	/* palette high bits */
 ROM_END
 
 ROM_START( phoenix3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "phoenix3.45", 0x0000, 0x0800, 0x585c1ef6 )
-	ROM_LOAD( "phoenix3.46", 0x0800, 0x0800, 0x19d5cb29 )
-	ROM_LOAD( "phoenix3.47", 0x1000, 0x0800, 0x687116a3 )
-	ROM_LOAD( "phoenix3.48", 0x1800, 0x0800, 0x83722aac )
-	ROM_LOAD( "phoenix3.49", 0x2000, 0x0800, 0x08391997 )
-	ROM_LOAD( "ic50",        0x2800, 0x0800, 0x0e45f309 )
-	ROM_LOAD( "ic51",        0x3000, 0x0800, 0x45f34a7b )
-	ROM_LOAD( "phoenix3.52", 0x3800, 0x0800, 0xcc51b4e3 )
+	ROM_LOAD( "phoenix3.45", 0x0000, 0x0800, 0x585c1ef6 , 0xa362cda0 )
+	ROM_LOAD( "phoenix3.46", 0x0800, 0x0800, 0x19d5cb29 , 0x5748f486 )
+	ROM_LOAD( "phoenix3.47", 0x1000, 0x0800, 0x687116a3 , 0xcbbb8839 )
+	ROM_LOAD( "phoenix3.48", 0x1800, 0x0800, 0x83722aac , 0xb5d97a4d )
+	ROM_LOAD( "phoenix3.49", 0x2000, 0x0800, 0x08391997 , 0xa105e4e7 )
+	ROM_LOAD( "ic50", 0x2800, 0x0800, 0x0e45f309 , 0xac5e9ec1 )
+	ROM_LOAD( "ic51", 0x3000, 0x0800, 0x45f34a7b , 0x2eab35b4 )
+	ROM_LOAD( "phoenix3.52", 0x3800, 0x0800, 0xcc51b4e3 , 0xd2c5c984 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 )
-	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 )
-	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d )
-	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23", 0x0000, 0x0800, 0x1461bf99 , 0x3c7e623f )
+	ROM_LOAD( "ic24", 0x0800, 0x0800, 0xa8b5c2b1 , 0x59916d3b )
+	ROM_LOAD( "ic39", 0x1000, 0x0800, 0x721b653d , 0x53413e8f )
+	ROM_LOAD( "ic40", 0x1800, 0x0800, 0x8ee80800 , 0x0be2ba91 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 )	/* palette low bits */
-	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 )	/* palette high bits */
+	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 , 0xdbbadeae )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 , 0x8fdd30e1 )	/* palette high bits */
 ROM_END
 
 ROM_START( pleiads_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic45.bin", 0x0000, 0x0800, 0x19613f7b )
-	ROM_LOAD( "ic46.bin", 0x0800, 0x0800, 0x64c4c8d2 )
-	ROM_LOAD( "ic47.bin", 0x1000, 0x0800, 0xc88cbee2 )
-	ROM_LOAD( "ic48.bin", 0x1800, 0x0800, 0x7b66cd1c )
-	ROM_LOAD( "ic49.bin", 0x2000, 0x0800, 0x5918e774 )
-	ROM_LOAD( "ic50.bin", 0x2800, 0x0800, 0xafa44e9c )
-	ROM_LOAD( "ic51.bin", 0x3000, 0x0800, 0x71f3d4cd )
-	ROM_LOAD( "ic52.bin", 0x3800, 0x0800, 0xbbd3b4b7 )
+	ROM_LOAD( "ic45.bin", 0x0000, 0x0800, 0x19613f7b , 0x93fc2958 )
+	ROM_LOAD( "ic46.bin", 0x0800, 0x0800, 0x64c4c8d2 , 0xe2b5b8cd )
+	ROM_LOAD( "ic47.bin", 0x1000, 0x0800, 0xc88cbee2 , 0x87e700bb )
+	ROM_LOAD( "ic48.bin", 0x1800, 0x0800, 0x7b66cd1c , 0x2d5198d0 )
+	ROM_LOAD( "ic49.bin", 0x2000, 0x0800, 0x5918e774 , 0x9dc73e63 )
+	ROM_LOAD( "ic50.bin", 0x2800, 0x0800, 0xafa44e9c , 0xf1a8a00d )
+	ROM_LOAD( "ic51.bin", 0x3000, 0x0800, 0x71f3d4cd , 0x6f56f317 )
+	ROM_LOAD( "ic52.bin", 0x3800, 0x0800, 0xbbd3b4b7 , 0xb1b5a8a6 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic23.bin", 0x0000, 0x0800, 0xf2e857b4 )
-	ROM_LOAD( "ic24.bin", 0x0800, 0x0800, 0x415293ee )
-	ROM_LOAD( "ic39.bin", 0x1000, 0x0800, 0x880280d4 )
-	ROM_LOAD( "ic40.bin", 0x1800, 0x0800, 0x96ac4eb6 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23.bin", 0x0000, 0x0800, 0xf2e857b4 , 0x4e30f9e7 )
+	ROM_LOAD( "ic24.bin", 0x0800, 0x0800, 0x415293ee , 0x5188fc29 )
+	ROM_LOAD( "ic39.bin", 0x1000, 0x0800, 0x880280d4 , 0x85866607 )
+	ROM_LOAD( "ic40.bin", 0x1800, 0x0800, 0x96ac4eb6 , 0xa841d511 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 )	/* palette low bits */
-	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 )	/* palette high bits */
+	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 , 0xdbbadeae )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 , 0x8fdd30e1 )	/* palette high bits */
 ROM_END
 
 ROM_START( pleiadce_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pleiades.47", 0x0000, 0x0800, 0x11a6373e )
-	ROM_LOAD( "pleiades.48", 0x0800, 0x0800, 0x63c4c9d2 )
-	ROM_LOAD( "ic47.bin",    0x1000, 0x0800, 0xc88cbee2 )
-	ROM_LOAD( "pleiades.50", 0x1800, 0x0800, 0x0bc4e7c0 )
-	ROM_LOAD( "pleiades.51", 0x2000, 0x0800, 0x48470843 )
-	ROM_LOAD( "ic50.bin",    0x2800, 0x0800, 0xafa44e9c )
-	ROM_LOAD( "pleiades.53", 0x3000, 0x0800, 0xa18f0cdd )
-	ROM_LOAD( "pleiades.54", 0x3800, 0x0800, 0x1d125968 )
+	ROM_LOAD( "pleiades.47", 0x0000, 0x0800, 0x11a6373e , 0x711e2ba0 )
+	ROM_LOAD( "pleiades.48", 0x0800, 0x0800, 0x63c4c9d2 , 0x93a36943 )
+	ROM_LOAD( "ic47.bin", 0x1000, 0x0800, 0xc88cbee2 , 0x87e700bb )
+	ROM_LOAD( "pleiades.50", 0x1800, 0x0800, 0x0bc4e7c0 , 0x5a9beba0 )
+	ROM_LOAD( "pleiades.51", 0x2000, 0x0800, 0x48470843 , 0x1d828719 )
+	ROM_LOAD( "ic50.bin", 0x2800, 0x0800, 0xafa44e9c , 0xf1a8a00d )
+	ROM_LOAD( "pleiades.53", 0x3000, 0x0800, 0xa18f0cdd , 0x037b319c )
+	ROM_LOAD( "pleiades.54", 0x3800, 0x0800, 0x1d125968 , 0xca264c7c )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pleiades.45", 0x0000, 0x0800, 0x3617f459 )
-	ROM_LOAD( "pleiades.44", 0x0800, 0x0800, 0x35271f77 )
-	ROM_LOAD( "ic39.bin",    0x1000, 0x0800, 0x880280d4 )
-	ROM_LOAD( "ic40.bin",    0x1800, 0x0800, 0x96ac4eb6 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pleiades.45", 0x0000, 0x0800, 0x3617f459 , 0x8dbd3785 )
+	ROM_LOAD( "pleiades.44", 0x0800, 0x0800, 0x35271f77 , 0x0db3e436 )
+	ROM_LOAD( "ic39.bin", 0x1000, 0x0800, 0x880280d4 , 0x85866607 )
+	ROM_LOAD( "ic40.bin", 0x1800, 0x0800, 0x96ac4eb6 , 0xa841d511 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 )	/* palette low bits */
-	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 )	/* palette high bits */
+	ROM_LOAD( "ic40_b.bin", 0x0000, 0x0100, 0x94800404 , 0xdbbadeae )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin", 0x0100, 0x0100, 0xdadc0204 , 0x8fdd30e1 )	/* palette high bits */
 ROM_END
 
 

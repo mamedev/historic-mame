@@ -3031,7 +3031,7 @@ int i86_Execute(int cycles)
     while(cycle_count>0)
     {
 
-#ifdef DEBUG
+#ifdef VERBOSE_DEBUG
 printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,GetMemB(CS,ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
 #endif
 

@@ -273,11 +273,11 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gundealr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gundealr.1", 0x0000, 0x10000, 0x470618b8 )
+	ROM_LOAD( "gundealr.1", 0x0000, 0x10000, 0x470618b8 , 0x5797e830 )
 
-	ROM_REGION(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gundealr.3", 0x00000, 0x10000, 0xe9f0448a )
-	ROM_LOAD( "gundealr.2", 0x10000, 0x20000, 0xe6541c1c )
+	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gundealr.3", 0x00000, 0x10000, 0xe9f0448a , 0x01f99de2 )
+	ROM_LOAD( "gundealr.2", 0x10000, 0x20000, 0xe6541c1c , 0x7874ec41 )
 ROM_END
 
 

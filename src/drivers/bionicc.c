@@ -389,34 +389,34 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bionicc_rom )
 	ROM_REGION(0x40000)      /* 68000 code */
-	ROM_LOAD_EVEN("TSU_02B.ROM", 0x00000, 0x10000, 0x2cfa1b7c ) /* 68000 code */
-	ROM_LOAD_ODD ("TSU_04B.ROM", 0x00000, 0x10000, 0xb8683c02 ) /* 68000 code */
-	ROM_LOAD_EVEN("TSU_03B.ROM", 0x20000, 0x10000, 0x00fc7968 ) /* 68000 code */
-	ROM_LOAD_ODD ("TSU_05B.ROM", 0x20000, 0x10000, 0x9752acdc ) /* 68000 code */
+	ROM_LOAD_EVEN( "tsu_02b.rom", 0x00000, 0x10000, 0x2cfa1b7c , 0xcf965a0a ) /* 68000 code */
+	ROM_LOAD_ODD ( "tsu_04b.rom", 0x00000, 0x10000, 0xb8683c02 , 0xc9884bfb ) /* 68000 code */
+	ROM_LOAD_EVEN( "tsu_03b.rom", 0x20000, 0x10000, 0x00fc7968 , 0x4e157ae2 ) /* 68000 code */
+	ROM_LOAD_ODD ( "tsu_05b.rom", 0x20000, 0x10000, 0x9752acdc , 0xe66ca0f9 ) /* 68000 code */
 
-	ROM_REGION(0x098000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "TSU_10.ROM", 0x000000, 0x08000, 0x11537a11 )	/* Sprites */
-	ROM_LOAD( "TSU_09.ROM", 0x008000, 0x08000, 0xc102ed0e )
-	ROM_LOAD( "TSU_15.ROM", 0x010000, 0x08000, 0x9df09b68 )
-	ROM_LOAD( "TSU_14.ROM", 0x018000, 0x08000, 0x4bebdef5 )
-	ROM_LOAD( "TSU_20.ROM", 0x020000, 0x08000, 0xe03c8ca6 )
-	ROM_LOAD( "TSU_19.ROM", 0x028000, 0x08000, 0xcc55b54f )
-	ROM_LOAD( "TSU_22.ROM", 0x030000, 0x08000, 0x21628a8e )
-	ROM_LOAD( "TSU_21.ROM", 0x038000, 0x08000, 0x2b4ea408 )
-	ROM_LOAD( "TSU_08.ROM", 0x040000, 0x08000, 0x8eda0000 )	/* VIDEORAM (text layer) tiles */
-	ROM_LOAD( "TSU_07.ROM", 0x048000, 0x08000, 0x137a62ce )	/* SCROLL2 Layer Tiles */
-	ROM_LOAD( "TSU_06.ROM", 0x050000, 0x08000, 0xecc9ec5d )
-	ROM_LOAD( "TS_12.ROM",  0x058000, 0x08000, 0x49c23374 )	/* SCROLL1 Layer Tiles */
-	ROM_LOAD( "TS_11.ROM",  0x060000, 0x08000, 0x452733d9 )
-	ROM_LOAD( "TS_17.ROM",  0x068000, 0x08000, 0xfecf91af )
-	ROM_LOAD( "TS_16.ROM",  0x070000, 0x08000, 0x130bc553 )
-	ROM_LOAD( "TS_13.ROM",  0x078000, 0x08000, 0xf8498663 )
-	ROM_LOAD( "TS_18.ROM",  0x080000, 0x08000, 0xb356a558 )
-	ROM_LOAD( "TS_23.ROM",  0x088000, 0x08000, 0x5d62bc70 )
-	ROM_LOAD( "TS_24.ROM",  0x090000, 0x08000, 0x00296253 )
+	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tsu_10.rom", 0x000000, 0x08000, 0x11537a11 , 0xf1180d02 )	/* Sprites */
+	ROM_LOAD( "tsu_09.rom", 0x008000, 0x08000, 0xc102ed0e , 0x6a049292 )
+	ROM_LOAD( "tsu_15.rom", 0x010000, 0x08000, 0x9df09b68 , 0xea912701 )
+	ROM_LOAD( "tsu_14.rom", 0x018000, 0x08000, 0x4bebdef5 , 0x46b2ad83 )
+	ROM_LOAD( "tsu_20.rom", 0x020000, 0x08000, 0xe03c8ca6 , 0x17857ad2 )
+	ROM_LOAD( "tsu_19.rom", 0x028000, 0x08000, 0xcc55b54f , 0xb5c82722 )
+	ROM_LOAD( "tsu_22.rom", 0x030000, 0x08000, 0x21628a8e , 0x5ee1ae6a )
+	ROM_LOAD( "tsu_21.rom", 0x038000, 0x08000, 0x2b4ea408 , 0x98777006 )
+	ROM_LOAD( "tsu_08.rom", 0x040000, 0x08000, 0x8eda0000 , 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
+	ROM_LOAD( "tsu_07.rom", 0x048000, 0x08000, 0x137a62ce , 0x9469efa4 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "tsu_06.rom", 0x050000, 0x08000, 0xecc9ec5d , 0x40bf0eb4 )
+	ROM_LOAD( "ts_12.rom", 0x058000, 0x08000, 0x49c23374 , 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom", 0x060000, 0x08000, 0x452733d9 , 0xab30237a )
+	ROM_LOAD( "ts_17.rom", 0x068000, 0x08000, 0xfecf91af , 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom", 0x070000, 0x08000, 0x130bc553 , 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom", 0x078000, 0x08000, 0xf8498663 , 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom", 0x080000, 0x08000, 0xb356a558 , 0x3b36948c )
+	ROM_LOAD( "ts_23.rom", 0x088000, 0x08000, 0x5d62bc70 , 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom", 0x090000, 0x08000, 0x00296253 , 0xf156e564 )
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
-	ROM_LOAD( "TSU_01B.ROM",0x00000, 0x8000, 0x0ae40f4a )
+	ROM_LOAD( "tsu_01b.rom", 0x00000, 0x8000, 0x0ae40f4a , 0xa9a6cafa )
 ROM_END
 
 

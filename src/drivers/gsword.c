@@ -749,32 +749,32 @@ static unsigned char color_prom[] =
 ROM_START( gsword_rom )
 
         ROM_REGION( 0x10000 ) /*64K for main CPU, Z80*/
-        ROM_LOAD( "GS1",  0x0000, 0x2000, 0x21e18b69 )
-        ROM_LOAD( "GS2",  0x2000, 0x2000, 0xaf4e2d1e )
-        ROM_LOAD( "GS3",  0x4000, 0x2000, 0x11db85a7 )
-        ROM_LOAD( "GS4",  0x6000, 0x2000, 0x6a45ed95 )
-        ROM_LOAD( "GS5",  0x8000, 0x1000, 0x14f6b720 )
+        ROM_LOAD( "gs1", 0x0000, 0x2000, 0x21e18b69 , 0x565c4d9e )
+        ROM_LOAD( "gs2", 0x2000, 0x2000, 0xaf4e2d1e , 0xd772accf )
+        ROM_LOAD( "gs3", 0x4000, 0x2000, 0x11db85a7 , 0x2cee1871 )
+        ROM_LOAD( "gs4", 0x6000, 0x2000, 0x6a45ed95 , 0xca9d206d )
+        ROM_LOAD( "gs5", 0x8000, 0x1000, 0x14f6b720 , 0x2a892326 )
 
-        ROM_REGION( 0x3E000 )   /* graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE( 0x3E000 )   /* graphics (disposed after conversion) */
         /* tiles */
-        ROM_LOAD( "GS10", 0x0000, 0x2000, 0x48ed5af5 )
-        ROM_LOAD( "GS11", 0x2000, 0x2000, 0x3b98168a )
+        ROM_LOAD( "gs10", 0x0000, 0x2000, 0x48ed5af5 , 0x517c571b )
+        ROM_LOAD( "gs11", 0x2000, 0x2000, 0x3b98168a , 0x7a1d8a3a )
 
         /* sprites */
-        ROM_LOAD( "GS6", 0x4000, 0x2000, 0x48e10f2d )
-        ROM_LOAD( "GS7", 0x6000, 0x2000, 0xc2927e7e )
-        ROM_LOAD( "GS8", 0x8000, 0x2000, 0x7499fecf )
+        ROM_LOAD( "gs6", 0x4000, 0x2000, 0x48e10f2d , 0x1b0a3cb7 )
+        ROM_LOAD( "gs7", 0x6000, 0x2000, 0xc2927e7e , 0xef5f28c6 )
+        ROM_LOAD( "gs8", 0x8000, 0x2000, 0x7499fecf , 0x46824b30 )
 
         /* 2nd Z80*/
         ROM_REGION( 0x10000 ) /*64K for 2nd z80 CPU*/
-        ROM_LOAD( "GS15",0x0000, 0x2000, 0x0702a010 )
-        ROM_LOAD( "GS16",0x2000, 0x2000, 0x23c11ad3 )
+        ROM_LOAD( "gs15", 0x0000, 0x2000, 0x0702a010 , 0x1aa4690e )
+        ROM_LOAD( "gs16", 0x2000, 0x2000, 0x23c11ad3 , 0x10accc10 )
 
         /* 3rd Z80*/
         ROM_REGION( 0x10000 ) /*64K for 3nd z80 CPU*/
-        ROM_LOAD( "GS12",0x0000, 0x2000, 0x786127b7 )
-        ROM_LOAD( "GS13",0x2000, 0x2000, 0x10e709a9 )
-        ROM_LOAD( "GS14",0x4000, 0x2000, 0xd93a7c7e )
+        ROM_LOAD( "gs12", 0x0000, 0x2000, 0x786127b7 , 0xa6589068 )
+        ROM_LOAD( "gs13", 0x2000, 0x2000, 0x10e709a9 , 0x4ee79796 )
+        ROM_LOAD( "gs14", 0x4000, 0x2000, 0xd93a7c7e , 0x455364b6 )
 
 ROM_END
 

@@ -1,25 +1,22 @@
 /**************************************************************************
 
-* Last Duel 						- Capcom, 1988
-* Mad Gear (Led Storm) 	- Capcom, 1989
+* Last Duel ('American' set)      - Capcom, 1988
+* Last Duel (Bootleg set)         - Capcom, 1988
+* Mad Gear (aka Led Storm)        - Capcom, 1989
 
 Emulation by Bryan McPhail, mish@tendril.force9.net
 
 Issues:
 
-* Currently set to 4 interrupts per frame on main cpu, controls aren't
-very responsive when set with the usual 2.  The games can also refuse
-to coin up if CPU speed is set to high...   Last Duel sometimes will not
-display title screen when a coin is inserted or the sprites on the 'car intro'.
-Again, related to interrupts/cpu speed.
+* American Last Duel set is missing 1 set of tile roms, the roms from
+the bootleg set are used.
 
-* Colours in level 1 of Last Duel seem strange... Other levels (including
-other road levels, are fine).
+* Strange bug in Last Duel, American set - the 'y' at the far right of
+the screen from the copyright message is not cleared. Weird...
 
 * Wrong dip switches for Mad Gear (service mode is in there somewhere..)
 
-* Major lack of tile roms!  But graphics code for them is there for when
-they turn up.
+* No tile roms for Mad Gear!
 
 **************************************************************************/
 
@@ -39,6 +36,9 @@ extern int lastduel_vh_start(void);
 extern void lastduel_vh_stop(void);
 extern void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void lastduel_scroll_w( int offset, int data );
+#if 0
+extern void lastduel_set_dirty(void);
+#endif
 
 extern unsigned char *lastduel_ram;
 extern unsigned char *lastduel_vram;
@@ -48,7 +48,7 @@ extern unsigned char *lastduel_sprites;
 
 /******************************************************************************/
 
-int madgear_inputs_r(int offset)
+static int madgear_inputs_r(int offset)
 {
 	switch (offset) {
   	case 4: /* Player 1 & Player 2 controls */
@@ -72,7 +72,7 @@ int madgear_inputs_r(int offset)
 	return 0xffff;
 }
 
-int lastduel_inputs_r(int offset)
+static int lastduel_inputs_r(int offset)
 {
 
   switch (offset) {
@@ -118,7 +118,7 @@ static struct MemoryReadAddress lastduel_readmem[] =
   { 0xfd4000, 0xfd7fff, lastduel_scroll2_r },
   { 0xfd8000, 0xfd87ff, paletteram_word_r },
   { 0xfe0000, 0xffffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
+  { -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress lastduel_writemem[] =
@@ -132,8 +132,8 @@ static struct MemoryWriteAddress lastduel_writemem[] =
   { 0xfd0000, 0xfd3fff, lastduel_scroll1_w, &lastduel_scroll1 },
   { 0xfd4000, 0xfd7fff, lastduel_scroll2_w, &lastduel_scroll2 },
   { 0xfd8000, 0xfd87ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
-  { 0xfe0000, 0xffffff, MWA_BANK1 },
-	{ -1 }	/* end of table */
+  { 0xfe0000, 0xffffff, MWA_BANK1, &lastduel_ram },
+  { -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress madgear_readmem[] =
@@ -146,12 +146,12 @@ static struct MemoryReadAddress madgear_readmem[] =
   { 0xfd4000, 0xfd7fff, lastduel_scroll1_r },
   { 0xfd8000, 0xfdffff, lastduel_scroll2_r },
   { 0xff0000, 0xffffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
+  { -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress madgear_writemem[] =
 {
-	{ 0x000000, 0x07ffff, MWA_ROM },
+  { 0x000000, 0x07ffff, MWA_ROM },
   { 0xfc4000, 0xfc4003, lastduel_sound_w },
   { 0xfd0000, 0xfd000f, lastduel_scroll_w },
   { 0xfc1800, 0xfc1fff, lastduel_sprites_w, &lastduel_sprites },
@@ -160,13 +160,13 @@ static struct MemoryWriteAddress madgear_writemem[] =
   { 0xfd4000, 0xfd7fff, lastduel_scroll1_w, &lastduel_scroll1 },
   { 0xfd8000, 0xfdffff, lastduel_scroll2_w, &lastduel_scroll2 },
   { 0xff0000, 0xffffff, MWA_BANK1 },
-	{ -1 }	/* end of table */
+  { -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0xdfff, MRA_ROM },
-  { 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xe800, YM2203_status_port_0_r },
 	{ 0xf000, 0xf000, YM2203_status_port_1_r },
 	{ 0xf800, 0xf800, soundlatch_r },
@@ -176,7 +176,7 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0xdfff, MWA_ROM },
-  { 0xe000, 0xe7ff, MWA_RAM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xe800, YM2203_control_port_0_w },
 	{ 0xe801, 0xe801, YM2203_write_port_0_w },
 	{ 0xf000, 0xf000, YM2203_control_port_1_w },
@@ -187,7 +187,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct MemoryReadAddress mg_sound_readmem[] =
 {
 	{ 0x0000, 0xcfff, MRA_ROM },
-  { 0xd000, 0xd7ff, MRA_RAM },
+	{ 0xd000, 0xd7ff, MRA_RAM },
  	{ 0xf000, 0xf000, YM2203_status_port_0_r },
  	{ 0xf002, 0xf002, YM2203_status_port_1_r },
  	{ 0xf006, 0xf006, soundlatch_r },
@@ -197,12 +197,12 @@ static struct MemoryReadAddress mg_sound_readmem[] =
 static struct MemoryWriteAddress mg_sound_writemem[] =
 {
 	{ 0x0000, 0xcfff, MWA_ROM },
-  { 0xd000, 0xd7ff, MWA_RAM },
+	{ 0xd000, 0xd7ff, MWA_RAM },
  	{ 0xf000, 0xf000, YM2203_control_port_0_w },
  	{ 0xf001, 0xf001, YM2203_write_port_0_w },
  	{ 0xf002, 0xf002, YM2203_control_port_1_w },
 	{ 0xf003, 0xf003, YM2203_write_port_1_w },
-  { 0xf00a, 0xf00a, MWA_NOP },
+	{ 0xf00a, 0xf00a, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -223,7 +223,7 @@ static struct GfxLayout sprites =
     0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
     8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
   },
-  256   /* every sprite takes 256 consecutive bits */
+  32*8   /* every sprite takes 32 consecutive bits */
 };
 
 static struct GfxLayout text_layout =
@@ -238,7 +238,7 @@ static struct GfxLayout text_layout =
   {
     0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16
   },
-  128   /* every character takes 128 consecutive bytes */
+  16*8   /* every character takes 16 consecutive bytes */
 };
 
 static struct GfxLayout scroll1layout =
@@ -256,68 +256,75 @@ static struct GfxLayout scroll1layout =
     0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
     8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16
   },
-  512   /* each tile takes 512 consecutive bytes */
+  64*8   /* each tile takes 64 consecutive bytes */
+};
+
+static struct GfxLayout scroll2layout =
+{
+  16,16,  /* 16*16 tiles */
+  4096,   /* 4096 tiles */
+  4,      /* 4 bits per pixel */
+  { 4,0,(0x040000*8)+4,0x040000*8, },
+  {
+    0,1,2,3,8,9,10,11,
+    (8*4*8)+0,(8*4*8)+1,(8*4*8)+2,(8*4*8)+3,
+    (8*4*8)+8,(8*4*8)+9,(8*4*8)+10,(8*4*8)+11
+  },
+  {
+    0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+    8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16
+  },
+  64*8   /* each tile takes 64 consecutive bytes */
 };
 
 static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
 {
-  {  1, 0x40000,&sprites, 		512, 16 },	/* colors 512-767 */
-  {  1, 0xC0000,&text_layout,   768, 16 },	/* colors 768-831 */
+  {  1, 0x40000,&sprites,       512, 16 },	/* colors 512-767 */
+  {  1, 0xc0000,&text_layout,   768, 16 },	/* colors 768-831 */
   {  1, 0x00000,&scroll1layout,   0, 16 },	/* colors   0-255 */
-  {  1, 0x00000,&scroll1layout,	256, 16 },	/* colors 256-511 */
+  {  1, 0xc8000,&scroll2layout,	256, 16 },	/* colors 256-511 */
   { -1 }
 };
 
-/******************************************************************************/
+/******************************************************************************
 
-ROM_START( lastduel_rom )
-	ROM_REGION(0x60000)	/* 68000 code */
-	ROM_LOAD_EVEN( "ldu-06.rom", 0x00000, 0x20000, 0xd83e77f8 )
-	ROM_LOAD_ODD(  "ldu-05.rom", 0x00000, 0x20000, 0x88a860f4 )
-	ROM_LOAD_EVEN( "ldu-04.rom", 0x40000, 0x10000, 0x3f7bbe05 )
-	ROM_LOAD_ODD(  "ldu-03.rom", 0x40000, 0x10000, 0xf5ee7de6 )
+Save States - shall be used someday ;) */
 
-	ROM_REGION(0xc8000) /* temporary space for graphics */
-	ROM_LOAD( "ld-15.rom", 0x000000, 0x20000, 0xaacd4ad1 ) /* tiles */
-	ROM_LOAD( "ld-13.rom", 0x020000, 0x20000, 0xbd6e333c)
-	ROM_LOAD( "ld-11.rom", 0x040000, 0x20000, 0xe23e7968 ) /* sprites */
-	ROM_LOAD( "ld-09.rom", 0x060000, 0x20000, 0xe93c454a )
-	ROM_LOAD( "ld-12.rom", 0x080000, 0x20000, 0xc1184326 )
-	ROM_LOAD( "ld-10.rom", 0x0a0000, 0x20000, 0x90c05b8e )
-	ROM_LOAD( "ld-01.rom", 0x0c0000, 0x08000, 0xe83c3e5c ) /* 8x8 text */
+#if 0
+extern int MC68000_State_Load(void *f);
+extern int MC68000_State_Save(void *f);
 
-	/* 1 set of tile roms missing */
+static void LoadState(void)
+{
+	void *f;
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0) {
+		MC68000_State_Load(f);
+		osd_fread(f,lastduel_ram,0x20000);
+		osd_fread(f,lastduel_sprites,0x506);
+		osd_fread(f,lastduel_vram,0x2000);
+		osd_fread(f,lastduel_scroll1,0x4000);
+		osd_fread(f,lastduel_scroll2,0x4000);
+		osd_fread(f,paletteram,0x800);
+		osd_fclose(f);
+		lastduel_set_dirty();
+	}
+}
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
-	ROM_LOAD( "ld-02.rom", 0x0000, 0x10000, 0xd7bc4084 )
-ROM_END
-
-
-ROM_START( madgear_rom )
-	ROM_REGION(0x80000)	/* 256K for 68000 code */
-	ROM_LOAD_EVEN( "mg_04.rom", 0x00000, 0x20000, 0xf7d95503 )
-	ROM_LOAD_ODD(  "mg_03.rom", 0x00000, 0x20000, 0xc90d6be1 )
-	ROM_LOAD_EVEN( "mg_02.rom", 0x40000, 0x20000, 0xf39cd962 )
-	ROM_LOAD_ODD(  "mg_01.rom", 0x40000, 0x20000, 0x3d29f765 )
-
-	ROM_REGION(0x188000) /* temporary space for graphics */
-
-	/* No tile roms :( :( */
-
-	ROM_LOAD( "mg_m07.rom", 0x050000, 0x10000, 0xaef62750 ) /* Interleaved sprites */
-	ROM_LOAD( "mg_m11.rom", 0x040000, 0x10000, 0x0ff379a7 )
-	ROM_LOAD( "mg_m08.rom", 0x070000, 0x10000, 0x44644240 )
-	ROM_LOAD( "mg_m12.rom", 0x060000, 0x10000, 0xcb3ae2ce )
-	ROM_LOAD( "mg_m09.rom", 0x090000, 0x10000, 0xb3cce30e )
-	ROM_LOAD( "mg_m13.rom", 0x080000, 0x10000, 0x589dddd5 )
-	ROM_LOAD( "mg_m10.rom", 0x0b0000, 0x10000, 0x122c4c0a )
-	ROM_LOAD( "mg_m14.rom", 0x0a0000, 0x10000, 0x10c704db )
-
-	ROM_LOAD( "mg_06.rom", 0x0c0000, 0x08000, 0x02d67a08 ) /* 8x8 text */
-
-	ROM_REGION( 0x10000 ) /* audio CPU */
-	ROM_LOAD( "mg_05.rom", 0x0000, 0x10000, 0x4f4f2133 )
-ROM_END
+static void SaveState(void)
+{
+	void *f;
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {
+		MC68000_State_Save(f);
+		osd_fwrite(f,lastduel_ram,0x20000);
+		osd_fwrite(f,lastduel_sprites,0x506);
+		osd_fwrite(f,lastduel_vram,0x2000);
+		osd_fwrite(f,lastduel_scroll1,0x4000);
+		osd_fwrite(f,lastduel_scroll2,0x4000);
+		osd_fwrite(f,paletteram,0x800);
+		osd_fclose(f);
+	}
+}
+#endif
 
 /******************************************************************************/
 
@@ -341,6 +348,12 @@ static struct YM2203interface ym2203_interface =
 
 int lastduel_interrupt(void)
 {
+#if 0
+	/* I use these to trigger save states:*/
+	if ((readinputport(0)&0x1)!=0x1) SaveState();
+	if ((readinputport(0)&0x2)!=0x2) LoadState();
+#endif
+
 	if (cpu_getiloops() == 0) return 2;
 	else return 4;
 }
@@ -350,8 +363,6 @@ int madgear_interrupt(void)
 	if (cpu_getiloops() == 0) return 5;
 	else return 6;
 }
-
-
 
 static struct MachineDriver lastduel_machine_driver =
 {
@@ -377,7 +388,7 @@ static struct MachineDriver lastduel_machine_driver =
 	0,
 
 	/* video hardware */
-	512, 256, { 63, 455, 0, 255-24 },
+	512, 256, { 63, 455, 0, 255 },
 
 	lastduel_gfxdecodeinfo,
 	1024, 1024,
@@ -423,7 +434,7 @@ static struct MachineDriver madgear_machine_driver =
 	0,
 
 	/* video hardware */
-	512, 256, { 63, 455, 0, 255-24 },
+	512, 256, { 63, 455, 0, 255 },
 
 	lastduel_gfxdecodeinfo,
 	1024, 1024,
@@ -556,7 +567,6 @@ INPUT_PORTS_START( lastduel_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( madgear_input_ports )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -652,6 +662,104 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
+ROM_START( lastduel_rom )
+	ROM_REGION(0x60000)	/* 68000 code */
+	ROM_LOAD_EVEN( "ldu-06.rom", 0x00000, 0x20000, 0xd83e77f8 , 0x4228a00b )
+	ROM_LOAD_ODD(  "ldu-05.rom", 0x00000, 0x20000, 0x88a860f4 , 0x7260434f )
+	ROM_LOAD_EVEN( "ldu-04.rom", 0x40000, 0x10000, 0x3f7bbe05 , 0x429fb964 )
+	ROM_LOAD_ODD(  "ldu-03.rom", 0x40000, 0x10000, 0xf5ee7de6 , 0x5aa4df72 )
+
+	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_LOAD( "ld_17.bin", 0x000000, 0x10000, 0x862d26b5 , 0x7188bfdd ) /* tiles */
+	ROM_LOAD( "ld_18.bin", 0x010000, 0x10000, 0xefa00364 , 0xa62af66a )
+	ROM_LOAD( "ld_19.bin", 0x020000, 0x10000, 0xe018713a , 0x4b762e50 )
+	ROM_LOAD( "ld_20.bin", 0x030000, 0x10000, 0xaa560106 , 0xb140188e )
+	ROM_LOAD( "ld_09.bin", 0x040000, 0x10000, 0x4cc8b3a6 , 0xf8fd5243 ) /* sprites */
+	ROM_LOAD( "ld_10.bin", 0x050000, 0x10000, 0x9cfc9bbc , 0xb49ad746 )
+	ROM_LOAD( "ld_11.bin", 0x060000, 0x10000, 0x2296c3ea , 0x1a0d180e )
+	ROM_LOAD( "ld_12.bin", 0x070000, 0x10000, 0x54725f92 , 0xb2745e26 )
+	ROM_LOAD( "ld_15.bin", 0x080000, 0x10000, 0x4fa6b8e2 , 0x96b13bbc )
+	ROM_LOAD( "ld_16.bin", 0x090000, 0x10000, 0x017217c4 , 0x9d80f7e6 )
+	ROM_LOAD( "ld_13.bin", 0x0a0000, 0x10000, 0xa905647f , 0xa1a598ac )
+	ROM_LOAD( "ld_14.bin", 0x0b0000, 0x10000, 0xbc0e93cc , 0xedf515cc )
+	ROM_LOAD( "ld_01.bin", 0x0c0000, 0x08000, 0xe83c3e5c , 0xad3c6f87 ) /* 8x8 text */
+	ROM_LOAD( "ld_28.bin", 0x0c8000, 0x10000, 0xa10dabdd , 0x06778248 ) /* tiles */
+	ROM_LOAD( "ld_26.bin", 0x0d8000, 0x10000, 0xd96e55d4 , 0xb0edac81 )
+	ROM_LOAD( "ld_24.bin", 0x0e8000, 0x10000, 0x7a56e540 , 0x66eac4df )
+	ROM_LOAD( "ld_22.bin", 0x0f8000, 0x10000, 0xad9c5008 , 0xf80f8812 )
+	ROM_LOAD( "ld_27.bin", 0x108000, 0x10000, 0x1e6f5cab , 0x48c78675 )
+	ROM_LOAD( "ld_25.bin", 0x118000, 0x10000, 0xdecbd6db , 0xc541ae9a )
+	ROM_LOAD( "ld_23.bin", 0x128000, 0x10000, 0x6ce496e0 , 0xd817332c )
+	ROM_LOAD( "ld_21.bin", 0x138000, 0x10000, 0x4768e472 , 0xb74f0c0e )
+
+	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_LOAD( "ld_02.bin", 0x0000, 0x10000, 0xd7bc4084 , 0x91834d0c )
+ROM_END
+
+ROM_START( lstduelb_rom )
+	ROM_REGION(0x60000)	/* 68000 code */
+	ROM_LOAD_EVEN( "ld_08.bin", 0x00000, 0x10000, 0xa415c21f , 0x43811a96 )
+	ROM_LOAD_ODD(  "ld_07.bin", 0x00000, 0x10000, 0x60cd7ba3 , 0x63c30946 )
+	ROM_LOAD_EVEN( "ld_04.bin", 0x20000, 0x10000, 0x3459b5b7 , 0x46a4e0f8 )
+	ROM_LOAD_ODD(  "ld_03.bin", 0x20000, 0x10000, 0x27b51b7d , 0x8d5f204a )
+	ROM_LOAD_EVEN( "ldu-04.rom", 0x40000, 0x10000, 0x3f7bbe05 , 0x429fb964 )
+	ROM_LOAD_ODD(  "ldu-03.rom", 0x40000, 0x10000, 0xf5ee7de6 , 0x5aa4df72 )
+
+	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_LOAD( "ld_17.bin", 0x000000, 0x10000, 0x862d26b5 , 0x7188bfdd ) /* tiles */
+	ROM_LOAD( "ld_18.bin", 0x010000, 0x10000, 0xefa00364 , 0xa62af66a )
+	ROM_LOAD( "ld_19.bin", 0x020000, 0x10000, 0xe018713a , 0x4b762e50 )
+	ROM_LOAD( "ld_20.bin", 0x030000, 0x10000, 0xaa560106 , 0xb140188e )
+	ROM_LOAD( "ld_09.bin", 0x040000, 0x10000, 0x4cc8b3a6 , 0xf8fd5243 ) /* sprites */
+	ROM_LOAD( "ld_10.bin", 0x050000, 0x10000, 0x9cfc9bbc , 0xb49ad746 )
+	ROM_LOAD( "ld_11.bin", 0x060000, 0x10000, 0x2296c3ea , 0x1a0d180e )
+	ROM_LOAD( "ld_12.bin", 0x070000, 0x10000, 0x54725f92 , 0xb2745e26 )
+	ROM_LOAD( "ld_15.bin", 0x080000, 0x10000, 0x4fa6b8e2 , 0x96b13bbc )
+	ROM_LOAD( "ld_16.bin", 0x090000, 0x10000, 0x017217c4 , 0x9d80f7e6 )
+	ROM_LOAD( "ld_13.bin", 0x0a0000, 0x10000, 0xa905647f , 0xa1a598ac )
+	ROM_LOAD( "ld_14.bin", 0x0b0000, 0x10000, 0xbc0e93cc , 0xedf515cc )
+	ROM_LOAD( "ld_01.bin", 0x0c0000, 0x08000, 0xe83c3e5c , 0xad3c6f87 ) /* 8x8 text */
+	ROM_LOAD( "ld_28.bin", 0x0c8000, 0x10000, 0xa10dabdd , 0x06778248 ) /* tiles */
+	ROM_LOAD( "ld_26.bin", 0x0d8000, 0x10000, 0xd96e55d4 , 0xb0edac81 )
+	ROM_LOAD( "ld_24.bin", 0x0e8000, 0x10000, 0x7a56e540 , 0x66eac4df )
+	ROM_LOAD( "ld_22.bin", 0x0f8000, 0x10000, 0xad9c5008 , 0xf80f8812 )
+	ROM_LOAD( "ld_27.bin", 0x108000, 0x10000, 0x1e6f5cab , 0x48c78675 )
+	ROM_LOAD( "ld_25.bin", 0x118000, 0x10000, 0xdecbd6db , 0xc541ae9a )
+	ROM_LOAD( "ld_23.bin", 0x128000, 0x10000, 0x6ce496e0 , 0xd817332c )
+	ROM_LOAD( "ld_21.bin", 0x138000, 0x10000, 0x4768e472 , 0xb74f0c0e )
+
+	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_LOAD( "ld_02.bin", 0x0000, 0x10000, 0xd7bc4084 , 0x91834d0c )
+ROM_END
+
+ROM_START( madgear_rom )
+	ROM_REGION(0x80000)	/* 256K for 68000 code */
+	ROM_LOAD_EVEN( "mg_04.rom", 0x00000, 0x20000, 0xf7d95503 , 0xb112257d )
+	ROM_LOAD_ODD(  "mg_03.rom", 0x00000, 0x20000, 0xc90d6be1 , 0xb2672465 )
+	ROM_LOAD_EVEN( "mg_02.rom", 0x40000, 0x20000, 0xf39cd962 , 0x9f5ebe16 )
+	ROM_LOAD_ODD(  "mg_01.rom", 0x40000, 0x20000, 0x3d29f765 , 0x1cea2af0 )
+
+	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+
+	/* No tile roms :( :( */
+
+	ROM_LOAD( "mg_m07.rom", 0x050000, 0x10000, 0xaef62750 , 0xe5c0b211 ) /* Interleaved sprites */
+	ROM_LOAD( "mg_m11.rom", 0x040000, 0x10000, 0x0ff379a7 , 0xee319a64 )
+	ROM_LOAD( "mg_m08.rom", 0x070000, 0x10000, 0x44644240 , 0x59709aa3 )
+	ROM_LOAD( "mg_m12.rom", 0x060000, 0x10000, 0xcb3ae2ce , 0x887ef120 )
+	ROM_LOAD( "mg_m09.rom", 0x090000, 0x10000, 0xb3cce30e , 0x40ee83eb )
+	ROM_LOAD( "mg_m13.rom", 0x080000, 0x10000, 0x589dddd5 , 0xeae07db4 )
+	ROM_LOAD( "mg_m10.rom", 0x0b0000, 0x10000, 0x122c4c0a , 0xb64afb54 )
+	ROM_LOAD( "mg_m14.rom", 0x0a0000, 0x10000, 0x10c704db , 0x21e5424c )
+
+	ROM_LOAD( "mg_06.rom", 0x0c0000, 0x08000, 0x02d67a08 , 0x382ee59b ) /* 8x8 text */
+
+	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_LOAD( "mg_05.rom", 0x0000, 0x10000, 0x4f4f2133 , 0x2fbfc945 )
+ROM_END
+
+/******************************************************************************/
+
 struct GameDriver lastduel_driver =
 {
 	__FILE__,
@@ -660,8 +768,8 @@ struct GameDriver lastduel_driver =
 	"Last Duel",
 	"1988",
 	"Capcom",
-	"Bryan McPhail\n\nDriver Notes: \n  One set of tile roms missing!\n",
-	GAME_NOT_WORKING,
+	"Bryan McPhail",
+	0,
 	&lastduel_machine_driver,
 
 	lastduel_rom,
@@ -674,6 +782,27 @@ struct GameDriver lastduel_driver =
 	0, 0
 };
 
+struct GameDriver lstduelb_driver =
+{
+	__FILE__,
+	&lastduel_driver,
+	"lstduelb",
+	"Last Duel (bootleg)",
+	"1988",
+	"bootleg",
+	"Bryan McPhail",
+	0,
+	&lastduel_machine_driver,
+
+	lstduelb_rom,
+	0,0,0,0,
+
+	lastduel_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
 
 struct GameDriver madgear_driver =
 {
@@ -696,4 +825,3 @@ struct GameDriver madgear_driver =
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
-

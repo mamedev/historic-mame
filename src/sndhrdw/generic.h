@@ -26,7 +26,7 @@ void soundlatch4_w(int offset,int data);
 int soundlatch4_r(int offset);
 void soundlatch4_clear_w(int offset,int data);
 
-/* If your're going to use soundlatchX_clear_w, and the cleared value is
+/* If you're going to use soundlatchX_clear_w, and the cleared value is
    something other than 0x00, use this function from machine_init. Note
    that this one call effects all 4 latches */
 void soundlatch_setclearedvalue(int value);

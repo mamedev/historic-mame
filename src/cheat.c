@@ -1016,7 +1016,7 @@ void EditCheat(int CheatNo)
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -1181,7 +1181,7 @@ void EditCheat(int CheatNo)
 				int length;
 
 				length = strlen (buffer);
-				key = osd_read_keyrepeat ();
+				key = osd_read_keyrepeat (0);
 
 				switch (key)
 				{
@@ -1351,7 +1351,7 @@ HardRefresh:
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -1731,7 +1731,7 @@ void StartCheat(void)
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -1827,7 +1827,7 @@ if(CurrentMethod == Method_1){
       xprintf(0,y,"%03d  (0x%02X)",s, s);
 /* JRT2 10-23-97 END */
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -1932,7 +1932,7 @@ if(CurrentMethod == Method_1){
 
   y += 4*Machine->uifont->height;
   xprintf(0,y,"Press A Key To Continue...");
-  key = osd_read_keyrepeat();
+  key = osd_read_keyrepeat(0);
   while (osd_key_pressed(key)) ; /* wait for key release */
 
   osd_clearbitmap(Machine->scrbitmap);
@@ -1988,7 +1988,7 @@ void ContinueCheat(void)
       xprintf(0,y,"%03d  (0x%02X)",s, s);
 /* JRT2 10-23-97 END */
 
-      key = osd_read_keyrepeat();
+	  key = osd_read_keyrepeat(0);
 
       switch (key)
       {
@@ -2035,8 +2035,9 @@ void ContinueCheat(void)
 	{
 		unsigned char *gameram = memory_find_base (0, ext->start);
 		for (i=0; i <= ext->end - ext->start; i++)
-			if ((gameram[i] != s) && (gameram[i] != s-1))
-				ext->data[i] = 0;
+			if (ext->data[i] != 0)
+				if ((gameram[i] != s) && (gameram[i] != s-1))
+					ext->data[i] = 0;
 	}
 #if 0
 /* Flag the value */
@@ -2089,7 +2090,7 @@ void ContinueCheat(void)
       xprintf(0,y,"%+04d  (0x%02X)",s, (unsigned char)s);
 /* JRT2 10-23-97 END */
 
-      key = osd_read_keyrepeat();
+	  key = osd_read_keyrepeat(0);
 
       switch (key)
       {
@@ -2206,7 +2207,7 @@ void ContinueCheat(void)
 
       displaytext(dt,0);
 
-      key = osd_read_keyrepeat();
+	  key = osd_read_keyrepeat(0);
 
       switch (key)
       {
@@ -2356,7 +2357,7 @@ void ContinueCheat(void)
 
       displaytext(dt,0);
 
-      key = osd_read_keyrepeat();
+	  key = osd_read_keyrepeat(0);
 
       switch (key)
       {
@@ -2486,7 +2487,7 @@ void ContinueCheat(void)
 
       displaytext(dt,0);
 
-      key = osd_read_keyrepeat();
+	  key = osd_read_keyrepeat(0);
 
       switch (key)
       {
@@ -2678,7 +2679,7 @@ void ContinueCheat(void)
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -3044,7 +3045,7 @@ void ChooseWatch(void)
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -3229,7 +3230,7 @@ int cheat_menu(void)
 
     displaytext(dt,0);
 
-    key = osd_read_keyrepeat();
+	key = osd_read_keyrepeat(0);
 
     switch (key)
     {
@@ -3330,7 +3331,7 @@ static void ShowHelp (struct DisplayText *dt)
 	}
 	osd_clearbitmap (Machine->scrbitmap);	/* Clear Screen*/
 	displaytext (text, 0);					/* Draw Help Text*/
-	osd_read_key ();						/* Wait For A Key*/
+	osd_read_key (0);						/* Wait For A Key*/
 	osd_clearbitmap (Machine->scrbitmap);	/* Clear Screen Again*/
 }
 

@@ -313,23 +313,23 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ckongs_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vid_2c.bin", 0x0000, 0x1000, 0x53b934a3 )
-	ROM_LOAD( "vid_2e.bin", 0x1000, 0x1000, 0xf563372f )
-	ROM_LOAD( "vid_2f.bin", 0x2000, 0x1000, 0xddf25a2e )
-	ROM_LOAD( "vid_2h.bin", 0x3000, 0x1000, 0x2fd70adf )
-	ROM_LOAD( "vid_2j.bin", 0x4000, 0x1000, 0xd42ea076 )
-	ROM_LOAD( "vid_2l.bin", 0x5000, 0x1000, 0x4e8eb49a )
+	ROM_LOAD( "vid_2c.bin", 0x0000, 0x1000, 0x53b934a3 , 0x49a8c234 )
+	ROM_LOAD( "vid_2e.bin", 0x1000, 0x1000, 0xf563372f , 0xf1b667f1 )
+	ROM_LOAD( "vid_2f.bin", 0x2000, 0x1000, 0xddf25a2e , 0xb194b75d )
+	ROM_LOAD( "vid_2h.bin", 0x3000, 0x1000, 0x2fd70adf , 0x2052ba8a )
+	ROM_LOAD( "vid_2j.bin", 0x4000, 0x1000, 0xd42ea076 , 0xb377afd0 )
+	ROM_LOAD( "vid_2l.bin", 0x5000, 0x1000, 0x4e8eb49a , 0xfe65e691 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_5f.bin", 0x0000, 0x1000, 0x53668c92 )
-	ROM_LOAD( "vid_5h.bin", 0x1000, 0x1000, 0xad49dd9b )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_5f.bin", 0x0000, 0x1000, 0x53668c92 , 0x7866d2cb )
+	ROM_LOAD( "vid_5h.bin", 0x1000, 0x1000, 0xad49dd9b , 0x7311a101 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "vid_6e.bin", 0x0000, 0x20, 0x83b00038 )
+	ROM_LOAD( "vid_6e.bin", 0x0000, 0x20, 0x83b00038 , 0x5039af97 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin", 0x0000, 0x1000, 0x90ecc748 )
-	ROM_LOAD( "snd_5d.bin", 0x1000, 0x1000, 0x657118a1 )
+	ROM_LOAD( "snd_5c.bin", 0x0000, 0x1000, 0x90ecc748 , 0xf0c30f9a )
+	ROM_LOAD( "snd_5d.bin", 0x1000, 0x1000, 0x657118a1 , 0x892c9547 )
 ROM_END
 
 

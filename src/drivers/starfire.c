@@ -209,17 +209,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( starfire_rom )
         ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "sfire.1a", 0x0000, 0x0800, 0x0d2f552d )
-        ROM_LOAD( "sfire.2a", 0x0800, 0x0800, 0xd11f059d )
-        ROM_LOAD( "sfire.1b", 0x1000, 0x0800, 0x4fa1db37 )
-        ROM_LOAD( "sfire.2b", 0x1800, 0x0800, 0x06a9c821 )
-        ROM_LOAD( "sfire.1c", 0x2000, 0x0800, 0x6ac59d37 )
-        ROM_LOAD( "sfire.2c", 0x2800, 0x0800, 0x5da6f2a2 )
-        ROM_LOAD( "sfire.1d", 0x3000, 0x0800, 0xa3876a03 )
-        ROM_LOAD( "sfire.2d", 0x3800, 0x0800, 0x6512ad78 )
-        ROM_LOAD( "sfire.1e", 0x4000, 0x0800, 0x7e8b4531 )
-        ROM_LOAD( "sfire.2e", 0x4800, 0x0800, 0x65220d9a )
-        ROM_LOAD( "sfire.1f", 0x5000, 0x0800, 0x286a8a0e )
+        ROM_LOAD( "sfire.1a", 0x0000, 0x0800, 0x0d2f552d , 0x9990af64 )
+        ROM_LOAD( "sfire.2a", 0x0800, 0x0800, 0xd11f059d , 0x6e17ba33 )
+        ROM_LOAD( "sfire.1b", 0x1000, 0x0800, 0x4fa1db37 , 0x946175d0 )
+        ROM_LOAD( "sfire.2b", 0x1800, 0x0800, 0x06a9c821 , 0x67be4275 )
+        ROM_LOAD( "sfire.1c", 0x2000, 0x0800, 0x6ac59d37 , 0xc56b4e07 )
+        ROM_LOAD( "sfire.2c", 0x2800, 0x0800, 0x5da6f2a2 , 0xb4b9d3a7 )
+        ROM_LOAD( "sfire.1d", 0x3000, 0x0800, 0xa3876a03 , 0xfd52ffb5 )
+        ROM_LOAD( "sfire.2d", 0x3800, 0x0800, 0x6512ad78 , 0x51c69fe3 )
+        ROM_LOAD( "sfire.1e", 0x4000, 0x0800, 0x7e8b4531 , 0x01994ec8 )
+        ROM_LOAD( "sfire.2e", 0x4800, 0x0800, 0x65220d9a , 0xef3d1b71 )
+        ROM_LOAD( "sfire.1f", 0x5000, 0x0800, 0x286a8a0e , 0xaf31dc39 )
 ROM_END
 
 struct GameDriver starfire_driver =
