@@ -420,7 +420,7 @@ F4           Show the game graphics. Use cursor keys to change set/color,
 F9           Change frame skip on the fly
 F10          Toggle speed throttling
 F11          Toggle speed display
-F12          Save a screen snapshot. The default target directory is PCX, you
+F12          Save a screen snapshot. The default target directory is SNAP, you
              have to create it yourself, it will not be created by the program
              if it isn't there.
 ESC          Exit emulator

@@ -602,7 +602,7 @@ static void select_display_mode(void)
 	/* Select desired tweaked mode for 256x224 */
 	/* still no real 256x224 mode supported */
 	/* changed to not override specific user request */
-	if (!gfx_width && !gfx_height && use_tweaked && width <= 256 && height <= 244)
+	if (!gfx_width && !gfx_height && use_tweaked && width <= 256 && height <= 224)
 	{
 		if (tw256x224_hor)
 		{
@@ -690,14 +690,14 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 
 				/* see if pixel doubling can be applied at 640x480 */
 				if (ym*height <= 480 && xm*width <= 640 &&
-						((ym+1)*height > 768 || xm > 1 || (xm+1)*width > 1024))
+						(xm > 1 || (ym+1)*height > 768 || (xm+1)*width > 1024))
 				{
 					gfx_width = 640;
 					gfx_height = 480;
 				}
 				/* see if pixel doubling can be applied at 800x600 */
 				else if (ym*height <= 600 && xm*width <= 800 &&
-						((ym+1)*height > 768 || (xm+1)*width > 1024))
+						(xm > 1 || (ym+1)*height > 768 || (xm+1)*width > 1024))
 				{
 					gfx_width = 800;
 					gfx_height = 600;

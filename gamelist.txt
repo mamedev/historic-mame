@@ -1768,19 +1768,6 @@ Known issues:
 
 
 
-King of Boxer ("kingofb")
-=========================
-Clones supported:
-  Ring King ("ringking")
-  Ring King on King of Boxer hardware ("ringkin2")
-
-Known issues:
-- Due to a missing color PROM, ringking colors are wrong. ringkin2 uses the
-  King of Boxer PROMs, but they are probably wrong.
-- One of the ringkin2 gfx ROMs is bad.
-
-
-
 Klax ("klax")
 =============
 Clones supported:

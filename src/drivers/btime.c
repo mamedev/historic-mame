@@ -2298,7 +2298,7 @@ struct GameDriver btimem_driver =
 {
 	__FILE__,
 	&btime_driver,
-	"btime",
+	"btimem",
 	"Burger Time (Midway)",
 	"1982",
 	"Data East (Bally Midway license)",
@@ -2531,7 +2531,7 @@ struct GameDriver bnj_driver =
 struct GameDriver caractn_driver =
 {
 	__FILE__,
-	&bnj_driver,
+	&brubber_driver,
 	"caractn",
 	"Car Action",
 	"1983",

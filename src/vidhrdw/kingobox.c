@@ -103,22 +103,12 @@ void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-/* PROM 2A is missing, so let's use the blue component toproduce a grayscale */
-bit0 = (color_prom[256] >> 0) & 0x01;
-bit1 = (color_prom[256] >> 1) & 0x01;
-bit2 = (color_prom[256] >> 2) & 0x01;
-bit3 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* green component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-/* PROM 2A is missing, so let's use the blue component toproduce a grayscale */
-bit0 = (color_prom[256] >> 0) & 0x01;
-bit1 = (color_prom[256] >> 1) & 0x01;
-bit2 = (color_prom[256] >> 2) & 0x01;
-bit3 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 0x10 * bit0 + 0x21 * bit1 + 0x45 * bit2 + 0x89 * bit3;
 		/* blue component */
 		bit0 = (color_prom[256] >> 0) & 0x01;
