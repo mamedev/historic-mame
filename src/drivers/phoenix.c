@@ -295,10 +295,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct TMS36XXinterface phoenix_tms36xx_interface =
 {
 	1,
-	{ 75 }, 		/* mixing levels */
-	{ TMS3615 },	/* TMS36xx subtype(s) */	/* WRONG it's not a 3615 */
+	{ 50 }, 		/* mixing levels */
+	{ MM6221AA },	/* TMS36xx subtype(s) */
 	{ 372  },		/* base frequency */
-	{ {0.50,0.12,0,1.05,0.27,0} }, /* decay times of voices */
+	{ {0.50,0,0,1.05,0,0} }, /* decay times of voices */
     { 0.21 },       /* tune speed (time between beats) */
 };
 
@@ -311,13 +311,17 @@ static struct CustomSound_interface phoenix_custom_interface =
 
 static struct TMS36XXinterface pleiads_tms36xx_interface =
 {
-	2,
-	{ 75,		75		},	/* mixing levels (the chips are triggered alternatingly) */
-	{ TMS3617,	TMS3617 },	/* TMS36xx subtype(s) */	/* WRONG it's a single 3617 */
-	{ 247,		247 	},	/* base frequencies (one octave below A) */
-	/* decay times of the voices */
-	{ {0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
-	  {0.5, 0.5, 0.5, 0.5, 0.5, 0.5} }
+	1,
+	{ 75		},	/* mixing levels */
+	{ TMS3615	},	/* TMS36xx subtype(s) */
+	{ 247		},	/* base frequencies (one octave below A) */
+	/*
+	 * Decay times of the voices; NOTE: it's unknown if
+	 * the the TMS3615 mixes more than one voice internally.
+	 * A wav taken from Pop Flamer sounds like there
+	 * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
+     */
+	{ {0.33,0.33,0,0.33,0,0.33} }
 };
 
 static struct CustomSound_interface pleiads_custom_interface =

@@ -114,6 +114,8 @@ struct { char *name; int id; } joy_table[] =
 	{ "n64lpt2",            JOY_TYPE_N64PAD_LPT2 },
 	{ "n64lpt3",            JOY_TYPE_N64PAD_LPT3 },
 	{ "wingwarrior",        JOY_TYPE_WINGWARRIOR },
+	{ "segaisa",            JOY_TYPE_IFSEGA_ISA },
+	{ "segapci",            JOY_TYPE_IFSEGA_PCI },
 	{ 0, 0 }
 } ;
 

@@ -161,6 +161,9 @@ void route16_out1_w(int offset,int data)
 ***************************************************************************/
 void stratvox_sn76477_w (int offset,int data)
 {
+	/* get out for Route 16 */
+	if (route16_hardware) return;
+
     /***************************************************************
      * AY8910 output bits are connected to...
      * 7    - direct: 5V * 30k/(100+30k) = 1.15V - via DAC??

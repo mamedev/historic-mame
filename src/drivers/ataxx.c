@@ -870,10 +870,10 @@ ROM_START( ataxx )
     ROM_LOAD( "ataxx.113",  0x40000, 0x20000, 0x08cf3e101 )
 
 	ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
-    ROM_LOAD_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
-    ROM_LOAD_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
-    ROM_LOAD_EVEN( "ataxx.016",  0xC0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
-    ROM_LOAD_ODD ( "ataxx.002",  0xC0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
+    ROM_LOAD_V20_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
+    ROM_LOAD_V20_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
+    ROM_LOAD_V20_EVEN( "ataxx.016",  0xC0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
+    ROM_LOAD_V20_ODD ( "ataxx.002",  0xC0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
     ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
@@ -897,10 +897,10 @@ ROM_START( ataxxa )
     ROM_LOAD( "ataxx.113",  0x40000, 0x20000, 0x08cf3e101 )
 
 	ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
-    ROM_LOAD_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
-    ROM_LOAD_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
-    ROM_LOAD_EVEN( "ataxx.016",  0xc0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
-    ROM_LOAD_ODD ( "ataxx.002",  0xc0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
+    ROM_LOAD_V20_EVEN( "ataxx.015",  0x80000, 0x20000, 0x08bb3233b )
+    ROM_LOAD_V20_ODD ( "ataxx.001",  0x80000, 0x20000, 0x0728d75f2 )
+    ROM_LOAD_V20_EVEN( "ataxx.016",  0xc0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
+    ROM_LOAD_V20_ODD ( "ataxx.002",  0xc0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
     ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
@@ -975,13 +975,13 @@ ROM_START( indyheat )
     ROM_LOAD( "u158_27c.010",  0xe0000, 0x20000, 0xd6ef27a3 )
 
     ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
-    ROM_LOAD_EVEN( "u6_27c.010",  0x20000, 0x20000, 0x15a89962 )  /* BAD in self-test */
-    ROM_LOAD_ODD ( "u3_27c.010",  0x20000, 0x20000, 0x97413818 )  /* BAD in self-test */
-    ROM_LOAD_WIDE( "u8_27c.010",  0x40000, 0x20000, 0x9f16e5b6 )  /* BAD in self-test */
-    ROM_LOAD_WIDE( "u9_27c.010",  0x60000, 0x20000, 0x0dc8f488 )  /* BAD in self-test */
+    ROM_LOAD_V20_EVEN( "u6_27c.010",  0x20000, 0x20000, 0x15a89962 )  /* BAD in self-test */
+    ROM_LOAD_V20_ODD ( "u3_27c.010",  0x20000, 0x20000, 0x97413818 )  /* BAD in self-test */
+    ROM_LOAD_V20_WIDE( "u8_27c.010",  0x40000, 0x20000, 0x9f16e5b6 )  /* BAD in self-test */
+    ROM_LOAD_V20_WIDE( "u9_27c.010",  0x60000, 0x20000, 0x0dc8f488 )  /* BAD in self-test */
     /* 0x80000-0xfffff = blank */
-    ROM_LOAD_EVEN( "u4_27c.010",  0xc0000, 0x20000, 0xfa7bfa04 )  /* BAD in self-test */
-    ROM_LOAD_ODD ( "u5_27c.010",  0xc0000, 0x20000, 0x198285d4 )  /* BAD in self-test */
+    ROM_LOAD_V20_EVEN( "u4_27c.010",  0xc0000, 0x20000, 0xfa7bfa04 )  /* BAD in self-test */
+    ROM_LOAD_V20_ODD ( "u5_27c.010",  0xc0000, 0x20000, 0x198285d4 )  /* BAD in self-test */
 
     ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "u68_27c.010",   0x00000, 0x20000, 0x9e88efb3)
@@ -1074,12 +1074,12 @@ ROM_START( wsf )
     ROM_LOAD( "30008-01.158",  0xe0000, 0x20000, 0x4d23836f )
 
     ROM_REGION( 0x100000, REGION_CPU3 ) /* 1M for sound cpu */
-    ROM_LOAD_EVEN( "30020-01.u6",  0x20000, 0x20000, 0x031a06d7 )
-    ROM_LOAD_ODD ( "30017-01.u3",  0x20000, 0x20000, 0x39ec13c1 )
-    ROM_LOAD_WIDE( "30021-01.u8",  0x40000, 0x20000, 0xbb91dc10 )
+    ROM_LOAD_V20_EVEN( "30020-01.u6",  0x20000, 0x20000, 0x031a06d7 )
+    ROM_LOAD_V20_ODD ( "30017-01.u3",  0x20000, 0x20000, 0x39ec13c1 )
+    ROM_LOAD_V20_WIDE( "30021-01.u8",  0x40000, 0x20000, 0xbb91dc10 )
     /* U9 = empty ? */
-    ROM_LOAD_EVEN( "30018-01.u4",  0xc0000, 0x20000, 0x1ec16735 )
-    ROM_LOAD_ODD ( "30019-01.u5",  0xc0000, 0x20000, 0x2881f73b )
+    ROM_LOAD_V20_EVEN( "30018-01.u4",  0xc0000, 0x20000, 0x1ec16735 )
+    ROM_LOAD_V20_ODD ( "30019-01.u5",  0xc0000, 0x20000, 0x2881f73b )
 
     ROM_REGION( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "30009-01.u68",   0x00000, 0x10000, 0xf2fbfc15)

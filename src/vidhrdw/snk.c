@@ -91,7 +91,9 @@ int snk_vh_start( void ){
 
 void snk_vh_stop( void ){
 	osd_free_bitmap( tmpbitmap );
+	tmpbitmap = 0;
 	free( dirtybuffer );
+	dirtybuffer = 0;
 }
 
 /**************************************************************************************/

@@ -263,6 +263,8 @@ void wms_vh_eof(void)
 
 void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc() || full_refresh)  last_update_scanline = 0;
+
 	wms_update_partial(Machine->drv->visible_area.max_y);
 	last_update_scanline = 0;
 	update_status = 2;

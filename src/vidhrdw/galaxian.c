@@ -558,9 +558,8 @@ int mariner_vh_start(void)
 
 int jumpbug_vh_start(void)
 {
-	int ret = common_vh_start();
+	int ret = galaxian_vh_start();
 
-	stars_type = 1;
 	modify_charcode   = jumpbug_modify_charcode;
 	modify_spritecode = jumpbug_modify_spritecode;
 	return ret;

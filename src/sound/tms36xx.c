@@ -15,34 +15,36 @@
 #define FSCALE	1024
 
 struct TMS36XX {
-	int channel;					/* returned by stream_init() */
+	char *subtype;		/* subtype name MM6221AA, TMS3615 or TMS3617 */
+	int channel;		/* returned by stream_init() */
 
-	int samplerate; 				/* from Machine->sample_rate */
+	int samplerate; 	/* from Machine->sample_rate */
 
-	int basefreq;					/* chip's base frequency */
-	int octave; 					/* octave select of the TMS3615 */
+	int basefreq;		/* chip's base frequency */
+	int octave; 		/* octave select of the TMS3615 */
 
-    int speed;                      /* speed of the tune */
-	int tune_counter;				/* tune counter */
-	int note_counter;				/* note counter */
+	int speed;			/* speed of the tune */
+	int tune_counter;	/* tune counter */
+	int note_counter;	/* note counter */
 
-	int voices; 					/* active voices */
-    int vol[6];                     /* (decaying) volume of harmonics notes */
-	int vol_counter[6]; 			/* volume adjustment counter */
-	int decay[6];					/* volume adjustment rate - dervied from decay */
+	int voices; 		/* active voices */
+	int shift;			/* shift toggles between 0 and 6 to allow decaying voices */
+	int vol[12];		/* (decaying) volume of harmonics notes */
+	int vol_counter[12];/* volume adjustment counter */
+	int decay[12];		/* volume adjustment rate - dervied from decay */
 
-	int counter[6]; 				/* tone frequency counter */
-	int frequency[6];				/* tone frequency */
-	int output; 					/* output signal bits */
-	int enable; 					/* mask which harmoics */
+	int counter[12];	/* tone frequency counter */
+	int frequency[12];	/* tone frequency */
+	int output; 		/* output signal bits */
+	int enable; 		/* mask which harmoics */
 
-    int tune_num;                   /* tune currently playing */
-	int tune_ofs;					/* note currently playing */
-	int tune_max;					/* end of tune */
+	int tune_num;		/* tune currently playing */
+	int tune_ofs;		/* note currently playing */
+	int tune_max;		/* end of tune */
 };
 
-struct TMS36XXinterface *intf;
-struct TMS36XX *tms36xx[MAX_TMS36XX];
+static struct TMS36XXinterface *intf;
+static struct TMS36XX *tms36xx[MAX_TMS36XX];
 
 #define C(n)	(int)((FSCALE<<(n-1))*1.18921)	/* 2^(3/12) */
 #define Cx(n)	(int)((FSCALE<<(n-1))*1.25992)	/* 2^(4/12) */
@@ -150,7 +152,7 @@ static int tune2[96*6] = {
 	D(2),	D(3),	D(4),	0,		0,		0,
 	Ax(2),	Ax(3),	Ax(4),	0,		0,		0,
 	A(2),	A(3),	A(4),	0,		0,		0,
-	0,		0,		0,		G(2),	0,		0,
+	0,		0,		0,		G(2),	G(3),	G(4),
 	D(1),	D(2),	D(3),	0,		0,		0,
 	G(1),	G(2),	G(3),	0,		0,		0,
 	0,		0,		0,		0,		0,		0
@@ -277,10 +279,10 @@ static int tune3[96*6] = {
 	0,		0,		0,		0,		 0, 	  0,
 	0,		0,		0,		0,		 0, 	  0,
 	0,		0,		0,		0,		 0, 	  0,
-	0,		0,		0,		0,		 0, 	  0,
+	0,		0,		0,		0,		 0, 	  0
 };
 
-/* This is used to play single notes for the TMS3617 */
+/* This is used to play single notes for the TMS3615/TMS3617 */
 static int tune4[13*6] = {
 /*	16'     8'      5 1/3'  4'      2 2/3'  2'      */
 	B(0),	B(1),	Dx(2),	B(2),	Dx(3),	B(3),
@@ -320,10 +322,10 @@ static int *tunes[] = {NULL,tune1,tune2,tune3,tune4};
 #define RESTART(voice)											\
 	if( tunes[tms->tune_num][tms->tune_ofs*6+voice] )			\
 	{															\
-		tms->frequency[voice] = 								\
+		tms->frequency[tms->shift+voice] =						\
 			tunes[tms->tune_num][tms->tune_ofs*6+voice] *		\
 			(tms->basefreq << tms->octave) / FSCALE;			\
-		tms->vol[voice] = VMAX; 								\
+		tms->vol[tms->shift+voice] = VMAX;						\
 	}
 
 #define TONE(voice)                                             \
@@ -359,9 +361,9 @@ static void tms36xx_sound_update(int param, INT16 *buffer, int length)
 	{
 		int sum = 0;
 
-		/* decay the six voices */
-        DECAY(0) DECAY(1) DECAY(2)
-		DECAY(3) DECAY(4) DECAY(5)
+		/* decay the twelve voices */
+		DECAY( 0) DECAY( 1) DECAY( 2) DECAY( 3) DECAY( 4) DECAY( 5)
+		DECAY( 6) DECAY( 7) DECAY( 8) DECAY( 9) DECAY(10) DECAY(11)
 
 		/* musical note timing */
 		tms->tune_counter -= tms->speed;
@@ -375,6 +377,9 @@ static void tms36xx_sound_update(int param, INT16 *buffer, int length)
 				tms->note_counter += VMAX;
 				if (tms->tune_ofs < tms->tune_max)
 				{
+					/* shift to the other 'bank' of voices */
+                    tms->shift ^= 6;
+					/* restart one 'bank' of voices */
 					RESTART(0) RESTART(1) RESTART(2)
 					RESTART(3) RESTART(4) RESTART(5)
 					tms->tune_ofs++;
@@ -382,11 +387,11 @@ static void tms36xx_sound_update(int param, INT16 *buffer, int length)
 			}
 		}
 
-		/* update the six harmonic voices */
-        TONE(0) TONE(1) TONE(2)
-		TONE(3) TONE(4) TONE(5)
+		/* update the twelve voices */
+		TONE( 0) TONE( 1) TONE( 2) TONE( 3) TONE( 4) TONE( 5)
+		TONE( 6) TONE( 7) TONE( 8) TONE( 9) TONE(10) TONE(11)
 
-		*buffer++ = sum / tms->voices;
+        *buffer++ = sum / tms->voices;
 	}
 }
 
@@ -399,7 +404,7 @@ static void tms36xx_reset_counters(int chip)
 	memset(tms->counter, 0, sizeof(tms->counter));
 }
 
-void tms3615_tune_w(int chip, int tune)
+void mm6221aa_tune_w(int chip, int tune)
 {
     struct TMS36XX *tms = tms36xx[chip];
 
@@ -407,6 +412,8 @@ void tms3615_tune_w(int chip, int tune)
     tune &= 3;
     if( tune == tms->tune_num )
         return;
+
+	LOG((errorlog,"%s tune:%X\n", tms->subtype, tune));
 
     /* update the stream before changing the tune */
     stream_update(tms->channel,0);
@@ -416,7 +423,7 @@ void tms3615_tune_w(int chip, int tune)
     tms->tune_max = 96; /* fixed for now */
 }
 
-void tms3617_note_w(int chip, int octave, int note)
+void tms36xx_note_w(int chip, int octave, int note)
 {
 	struct TMS36XX *tms = tms36xx[chip];
 
@@ -426,7 +433,7 @@ void tms3617_note_w(int chip, int octave, int note)
 	if (note > 12)
         return;
 
-    LOG((errorlog,"TMS3615 #%d octave:%X note:%X\n", chip, octave, note));
+	LOG((errorlog,"%s octave:%X note:%X\n", tms->subtype, octave, note));
 
 	/* update the stream before changing the tune */
     stream_update(tms->channel,0);
@@ -444,18 +451,37 @@ void tms3617_enable_w(int chip, int enable)
 	struct TMS36XX *tms = tms36xx[chip];
 	int i, bits = 0;
 
-	enable &= 0x3f;
+	/* duplicate the 6 voice enable bits */
+    enable = (enable & 0x3f) | ((enable & 0x3f) << 6);
 	if (enable == tms->enable)
 		return;
 
     /* update the stream before changing the tune */
     stream_update(tms->channel,0);
 
-	for (i = 0; i < 6; i++)
-		bits += (enable & (1 << i)) ? 1 : 0;
+	LOG((errorlog, "%s enable voices", tms->subtype));
+    for (i = 0; i < 6; i++)
+	{
+		if (enable & (1 << i))
+		{
+			bits += 2;	/* each voice has two instances */
+#if VERBOSE
+			switch (i)
+			{
+			case 0: LOG((errorlog," 16'")); break;
+			case 1: LOG((errorlog," 8'")); break;
+			case 2: LOG((errorlog," 5 1/3'")); break;
+			case 3: LOG((errorlog," 4'")); break;
+			case 4: LOG((errorlog," 2 2/3'")); break;
+			case 5: LOG((errorlog," 2'")); break;
+			}
+#endif
+        }
+    }
 	/* set the enable mask and number of active voices */
 	tms->enable = enable;
     tms->voices = bits;
+	LOG((errorlog, "%s\n", bits ? "" : " none"));
 }
 
 int tms36xx_sh_start(const struct MachineSound *msound)
@@ -469,7 +495,10 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 		struct TMS36XX *tms;
 		char name[16];
 
-		sprintf(name, "TMS36%02d #%d", intf->subtype[i], i);
+		if (intf->subtype[i] == MM6221AA)
+			sprintf(name, "MM6221AA #%d", i);
+		else
+			sprintf(name, "TMS36%02d #%d", intf->subtype[i], i);
 		tms36xx[i] = malloc(sizeof(struct TMS36XX));
 		if( !tms36xx[i] )
 		{
@@ -479,7 +508,9 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 		tms = tms36xx[i];
 		memset(tms, 0, sizeof(struct TMS36XX));
 
-		tms->channel = stream_init(name, intf->mixing_level[i], Machine->sample_rate, i, tms36xx_sound_update);
+		tms->subtype = malloc(strlen(name) + 1);
+		strcpy(tms->subtype, name);
+        tms->channel = stream_init(name, intf->mixing_level[i], Machine->sample_rate, i, tms36xx_sound_update);
 
         if( tms->channel == -1 )
 		{
@@ -493,8 +524,8 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 		{
 			if( intf->decay[i][j] > 0 )
 			{
-				tms->decay[j] = VMAX / intf->decay[i][j];
-				enable |= 1 << j;
+				tms->decay[j+0] = tms->decay[j+6] = VMAX / intf->decay[i][j];
+				enable |= 0x41 << j;
 			}
 		}
 		tms->speed = (intf->speed[i] > 0) ? VMAX / intf->speed[i] : VMAX;
@@ -502,10 +533,10 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 
         LOG((errorlog, "%s samplerate    %d\n", name, tms->samplerate));
 		LOG((errorlog, "%s basefreq      %d\n", name, tms->basefreq));
-		LOG((errorlog, "%s speed         %d\n", name, tms->speed));
 		LOG((errorlog, "%s decay         %d,%d,%d,%d,%d,%d\n", name,
 			tms->decay[0], tms->decay[1], tms->decay[2],
 			tms->decay[3], tms->decay[4], tms->decay[5]));
+        LOG((errorlog, "%s speed         %d\n", name, tms->speed));
     }
     return 0;
 }
@@ -516,7 +547,11 @@ void tms36xx_sh_stop(void)
 	for( i = 0; i < intf->num; i++ )
 	{
 		if( tms36xx[i] )
-			free(tms36xx[i]);
+		{
+			if (tms36xx[i]->subtype)
+				free(tms36xx[i]->subtype);
+            free(tms36xx[i]);
+		}
 		tms36xx[i] = NULL;
 	}
 }

@@ -791,6 +791,15 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 };
 
 
+struct YM2151interface atarijsa_ym2151_interface_stereo_swapped =
+{
+	1,			/* 1 chip */
+	ATARI_CLOCK_14MHz/4,
+	{ YM3012_VOL(60,MIXER_PAN_RIGHT,60,MIXER_PAN_LEFT) },
+	{ atarigen_ym2151_irq_gen }
+};
+
+
 struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 {
 	1,              /* 1 chip */

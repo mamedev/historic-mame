@@ -107,8 +107,17 @@ static UINT32 hexstr2num( const char **pString ){
 	that no game name starts with a decimal digit.
 */
 static int is_mem_range( const char *pBuf ){
-	char c = pBuf[0];
-	return ( c>='0' && c<='9' );
+	char c;
+	for(;;){
+		c = *pBuf++;
+		if( c == 0 ) return 0; /* premature EOL */
+		if( c == ':' ) break;
+	}
+	c = *pBuf; /* character following first ':' */
+
+	return	(c>='0' && c<='9') ||
+			(c>='a' && c<='f') ||
+			(c>='A' && c<='F');
 }
 
 /*	matching_game_name is used to skip over lines until we find <gamename>: */
@@ -227,8 +236,17 @@ void hs_open( const char *name ){
 					mem_range->start_value = hexstr2num( &pBuf );
 					mem_range->end_value = hexstr2num( &pBuf );
 
-					mem_range->next = state.mem_range;
-					state.mem_range = mem_range;
+					mem_range->next = NULL;
+					{
+						struct mem_range *last = state.mem_range;
+						while( last && last->next ) last = last->next;
+						if( last == NULL ){
+							state.mem_range = mem_range;
+						}
+						else {
+							last->next = mem_range;
+						}
+					}
 
 					mode = FETCH_DATA;
 				}

@@ -5105,7 +5105,7 @@ void MAME_Debug(void)
 		DBG.prev_sp = 0;
     }
 
-	if ( (hit_brk_exec() || hit_brk_data() || hit_brk_regs() || debug_key_pressed) && !dbg_active )
+	if ( (first_time || hit_brk_exec() || hit_brk_data() || hit_brk_regs() || debug_key_pressed) && !dbg_active )
     {
 		clock_t curr = clock();
 		unsigned w, h;

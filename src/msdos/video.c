@@ -450,7 +450,7 @@ struct mode_adjust  arcade_adjust[] = {
 	{ 224, 288, &tw224x288arc_h, &tw224x288arc_v, 1 },
 	{ 256, 240, &tw256x240arc_h, &tw256x240arc_v, 0 },
 	{ 256, 256, &tw256x256arc_h, &tw256x256arc_v, 0 },
-	{ 288, 224, &tw288x224arc_h, &tw256x256arc_v, 0 },
+	{ 288, 224, &tw288x224arc_h, &tw288x224arc_v, 0 },
 	{ 320, 240, &tw320x240arc_h, &tw320x240arc_v, 0 },
 	{ 352, 240, &tw352x240arc_h, &tw352x240arc_v, 0 },
 	{ 352, 256, &tw352x256arc_h, &tw352x256arc_v, 0 },

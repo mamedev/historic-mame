@@ -270,6 +270,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( naughtyc )	/* (c) 1982 Jaleco + Cinematronics */
 	DRIVER( popflame )	/* (c) 1982 Jaleco */
 	DRIVER( popflama )	/* (c) 1982 Jaleco */
+TESTDRIVER( popflamb )
 
 	/* Namco games (plus some intruders on similar hardware) */
 	DRIVER( geebee )	/* [1978] Namco */
@@ -560,8 +561,9 @@ TESTDRIVER( herocast )
 	DRIVER( helifira )	/* (c) Nintendo */
 	DRIVER( spacefev )
 	DRIVER( sfeverbw )
-	DRIVER( astlaser )
-	DRIVER( intruder )
+	DRIVER( spclaser )
+	DRIVER( laser )
+	DRIVER( spcewarl )
 	DRIVER( polaris )	/* (c) 1980 Taito */
 	DRIVER( polarisa )	/* (c) 1980 Taito */
 	DRIVER( ballbomb )	/* (c) 1980 Taito */
@@ -576,7 +578,6 @@ TESTDRIVER( herocast )
 	DRIVER( yosakdon )
 	DRIVER( spceking )
 	DRIVER( spcewars )
-	DRIVER( spcewarl )
 
 	/* "Midway" Z80 b/w games */
 	DRIVER( astinvad )	/* (c) 1980 Stern */

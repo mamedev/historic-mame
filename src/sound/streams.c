@@ -171,7 +171,7 @@ void streams_sh_update(void)
 		{
 			for (i = 0;i < stream_joined_channels[channel];i++)
 				mixer_play_streamed_sample_16(channel+i,
-						stream_buffer[channel+i],sizeof(INT16)*SAMPLES_THIS_FRAME(channel),
+						stream_buffer[channel+i],sizeof(INT16)*SAMPLES_THIS_FRAME(channel+i),
 						stream_sample_rate[channel]);
 		}
 	}

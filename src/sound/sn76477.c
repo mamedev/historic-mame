@@ -95,8 +95,8 @@ struct SN76477 {
 	INT16 vol_lookup[VMAX+1-VMIN];	/* volume lookup table */
 };
 
-struct SN76477interface *intf;
-struct SN76477 *sn76477[MAX_SN76477];
+static struct SN76477interface *intf;
+static struct SN76477 *sn76477[MAX_SN76477];
 
 static void attack_decay(int param)
 {
@@ -361,7 +361,8 @@ void SN76477_enable_w(int chip, int data)
             break;
 		case 1: /* One-Shot */
 			oneshot_envelope_cb(chip);
-            sn->oneshot_timer = timer_set(sn->oneshot_time, chip, oneshot_envelope_cb);
+			if (sn->oneshot_time > 0)
+	            sn->oneshot_timer = timer_set(sn->oneshot_time, chip, oneshot_envelope_cb);
 			break;
 		case 2: /* MIXER only */
 			sn->vol = VMAX;

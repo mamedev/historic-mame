@@ -198,7 +198,7 @@ static void KDAC_A_make_fncode( void ){
 #else
   for( i = 0; i < 0x200; i++ ){
     fncode[i] = (0x200 * 55) / (0x200 - i);
-    if (errorlog) fprintf( errorlog,"2 : fncode[%04x] = %.2f\n", i, fncode[i] );
+//    if (errorlog) fprintf( errorlog,"2 : fncode[%04x] = %.2f\n", i, fncode[i] );
   }
 
 #endif

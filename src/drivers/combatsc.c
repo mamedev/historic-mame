@@ -15,6 +15,7 @@ TODO:
 - hook up sound in bootleg (the current sound is a hack, making use of the
   Konami ROMset)
 - understand how the trackball really works
+- YM2203 pitch is wrong. Fixing it screws up the tempo.
 
 "Combat School" (also known as "Boot Camp") - (Konami GX611)
 
@@ -622,7 +623,8 @@ static struct GfxDecodeInfo combascb_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,							/* 1 chip */
-	3500000,					/* 3.5 MHz? */
+	3500000,					/* this is wrong but gives the correct music tempo. */
+	/* the correct value is 20MHz/8=2.5MHz, which gives correct pitch but wrong tempo */
 	{ YM2203_VOL(20,20) },
 	{ 0 },
 	{ 0 },
@@ -648,7 +650,7 @@ static struct MachineDriver machine_driver_combasc =
 	{
 		{
 			CPU_HD6309,
-			5000000,	/* 5 MHz? */
+			3000000,	/* 3 MHz? */
 			combasc_readmem,combasc_writemem,0,0,
 			interrupt,1
 		},
@@ -694,7 +696,7 @@ static struct MachineDriver machine_driver_combascb =
 	{
 		{
 			CPU_HD6309,
-			5000000,	/* 5 MHz? */
+			3000000,	/* 3 MHz? */
 			combascb_readmem,combascb_writemem,0,0,
 			interrupt,1
 		},
@@ -747,12 +749,12 @@ ROM_START( combasc )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_EVEN( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_ODD ( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_EVEN( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_ODD ( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
@@ -775,12 +777,12 @@ ROM_START( combasct )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_EVEN( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_ODD ( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_EVEN( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_ODD ( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
@@ -803,12 +805,12 @@ ROM_START( combascj )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_EVEN( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_ODD ( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_EVEN( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_ODD ( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */
@@ -831,12 +833,12 @@ ROM_START( bootcamp )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
-	ROM_LOAD_ODD ( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_EVEN( "611g07.rom",    0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_GFX_ODD ( "611g08.rom",    0x00000, 0x40000, 0x46e7d28c )
 
 	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
-	ROM_LOAD_ODD ( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_EVEN( "611g11.rom",    0x00000, 0x40000, 0x69687538 )
+	ROM_LOAD_GFX_ODD ( "611g12.rom",    0x00000, 0x40000, 0x9c6bf898 )
 
 	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14",  0x0000, 0x0100, 0xf916129a ) /* sprites lookup table */

@@ -202,7 +202,8 @@ void radarscp_grid_color_w(int offset,int data)
 	r = ((~data >> 0) & 0x01) * 0xff;
 	g = ((~data >> 1) & 0x01) * 0xff;
 	b = ((~data >> 2) & 0x01) * 0xff;
-	palette_change_color(257,r,g,b);
+//	palette_change_color(257,r,g,b);
+	palette_change_color(257,0x00,0x00,0xff);
 }
 
 void dkong_flipscreen_w(int offset,int data)
@@ -321,8 +322,8 @@ static void draw_grid(struct osd_bitmap *bitmap)
 	while (y <= Machine->drv->visible_area.max_y)
 	{
 		x = 4 * (table[counter] & 0x7f);
-		if (y >= Machine->drv->visible_area.min_y &&
-				x <= Machine->drv->visible_area.max_y)
+		if (x >= Machine->drv->visible_area.min_x &&
+				x <= Machine->drv->visible_area.max_x)
 		{
 			if (table[counter] & 0x80)	/* star */
 			{
@@ -336,16 +337,13 @@ static void draw_grid(struct osd_bitmap *bitmap)
 		counter++;
 
 		if (x >= 4 * (table[counter] & 0x7f))
-		{
-			x = Machine->drv->visible_area.min_x;
 			y++;
-		}
 	}
 }
 
 void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_change_color(256,0xff,0xff,0xff);	/* stars - likely wrong */
+	palette_change_color(256,0xff,0x00,0x00);	/* stars */
 
 	if (palette_recalc())
 		memset(dirtybuffer,1,videoram_size);

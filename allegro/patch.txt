@@ -1,9 +1,0 @@
-This patch must be applied over Allegro 3.9.31 to fix a couple of bugs that
-affect normal operation.
-
-The fixed bugs are:
-1) 400x300 VESA modes not working.
-2) some default parameters for tweaked modes being saved to mame.cfg with a
-   leading 0, and not being recognized afterwards.
-
-Don't forget to recompile the library after applying the patch!

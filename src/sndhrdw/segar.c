@@ -422,11 +422,11 @@ void monsterb_audio_8255_w( int offset, int data )
 		int enable_val;
 
 		/* Lower four data lines get decoded into 13 control lines */
-		tms3617_note_w(0, 0, data & 15);
+		tms36xx_note_w(0, 0, data & 15);
 
 		/* Top four data lines address an 82S123 ROM that enables/disables voices */
 		enable_val = memory_region(REGION_SOUND2)[(data & 0xF0) >> 4];
-		tms3617_enable_w(0,enable_val >> 2);
+		tms3617_enable_w(0, enable_val >> 2);
 	}
 	/* Port B controls the two discrete sound circuits */
 	else if (offset == 1)

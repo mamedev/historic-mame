@@ -420,9 +420,6 @@ static void blazer_key_w( int offset, int data )
 *																			   *
 *******************************************************************************/
 
-static int key_id;
-static int key_id_query;
-
 static int ws_key_r( int offset ) {
 //	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)

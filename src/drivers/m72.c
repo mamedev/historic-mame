@@ -18,7 +18,7 @@ Major Title                         M84        Y         N
 Hammerin' Harry	/ Daiku no Gensan   M82(3)     Y         N
 Ken-Go                              ?          N      Encrypted
 Gallop - Armed Police Unit          M73?(4)    Y         N
-Pound for Pound                     M83?       N(5)      N
+Pound for Pound                     M85        N(5)      N
 
 (1) different addressing PALs, so different memory map
 (2) rtype2j has M84 written on the board, but it's the same hardware as rtype2

@@ -24,18 +24,29 @@ extern struct MemoryWriteAddress atarijsa3s_writemem[];
 extern struct TMS5220interface atarijsa_tms5220_interface;
 extern struct YM2151interface atarijsa_ym2151_interface_mono;
 extern struct YM2151interface atarijsa_ym2151_interface_stereo;
+extern struct YM2151interface atarijsa_ym2151_interface_stereo_swapped;
 extern struct POKEYinterface atarijsa_pokey_interface;
 extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 extern struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1;
 
 
-/* Used by Xybots, Blasteroids */
+/* Used by Blasteroids */
 #define JSA_I_STEREO										\
 	SOUND_SUPPORTS_STEREO,0,0,0,							\
 	{														\
 		{													\
 			SOUND_YM2151, 									\
 			&atarijsa_ym2151_interface_stereo				\
+		}													\
+	}
+
+/* Used by Xybots */
+#define JSA_I_STEREO_SWAPPED								\
+	SOUND_SUPPORTS_STEREO,0,0,0,							\
+	{														\
+		{													\
+			SOUND_YM2151, 									\
+			&atarijsa_ym2151_interface_stereo_swapped		\
 		}													\
 	}
 

@@ -1164,7 +1164,7 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 	/* frequency base */
 	OPN->ST.freqbase = (OPN->ST.rate) ? ((double)OPN->ST.clock / OPN->ST.rate) / pris : 0;
 	/* Timer base time */
-	OPN->ST.TimerBase = (OPN->ST.rate) ? 1.0/((double)OPN->ST.clock / (double)TimerPris) : 0;
+	OPN->ST.TimerBase = 1.0/((double)OPN->ST.clock / (double)TimerPris);
 	/* SSG part  priscaler set */
 	if( SSGpris ) SSGClk( OPN->ST.index, OPN->ST.clock * 2 / SSGpris );
 	/* make time tables */

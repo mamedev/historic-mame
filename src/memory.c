@@ -473,6 +473,8 @@ int memory_init(void)
 	for( cpu = 0 ; cpu < MAX_CPU ; cpu++ )
 		cur_mr_element[cpu] = cur_mw_element[cpu] = 0;
 
+	ophw = 0xff;
+
 	/* ASG 980121 -- allocate external memory */
 	if (!memory_allocate_ext ())
 		return 0;

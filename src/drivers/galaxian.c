@@ -1924,7 +1924,7 @@ static struct MachineDriver machine_driver_jumpbug =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
 			jumpbug_readmem,jumpbug_writemem,0,0,
-			scramble_vh_interrupt,1
+			galaxian_vh_interrupt,1
 		}
 	},
 	16000.0/132/2, 2500,	/* frames per second, vblank duration */

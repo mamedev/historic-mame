@@ -40,7 +40,7 @@ int  astinvad_interrupt(void);
 int invaders_vh_start(void);
 void invaders_vh_stop(void);
 
-void astinvad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void invadpt2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void invaders_videoram_w(int offset,int data);
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -149,7 +149,7 @@ static struct MachineDriver machine_driver_astinvad = /* LT */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	8, 0,
-	astinvad_vh_convert_color_prom,
+	invadpt2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -294,7 +294,7 @@ static struct MachineDriver machine_driver_spaceint = /* 20-12-1998 LT */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
 	8, 0,
-	astinvad_vh_convert_color_prom,
+	invadpt2_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,

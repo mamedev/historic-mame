@@ -10,6 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
+/* from sndhrdw/pleiads.c */
+void pleiads_sound_control_c_w (int offset,int data);
 
 unsigned char *naughtyb_videoram2;
 
@@ -176,7 +178,10 @@ void naughtyb_videoram2_w(int offset,int data)
 
 void naughtyb_videoreg_w (int offset, int data)
 {
-	if ((videoreg & 0x0f) != (data & 0x0f))
+	/* bits 4+5 control the sound circuit */
+	pleiads_sound_control_c_w(offset,data);
+
+    if ((videoreg & 0x0f) != (data & 0x0f))
 	{
 		videoreg = data;
 
@@ -189,7 +194,10 @@ void naughtyb_videoreg_w (int offset, int data)
 
 void popflame_videoreg_w (int offset, int data)
 {
-	if ((videoreg & 0x0f) != (data & 0x0f))
+	/* bits 4+5 control the sound circuit */
+	pleiads_sound_control_c_w(offset,data);
+
+    if ((videoreg & 0x0f) != (data & 0x0f))
 	{
 		videoreg = data;
 
@@ -197,9 +205,6 @@ void popflame_videoreg_w (int offset, int data)
 		bankreg = (data >> 3) & 0x01;	/* banksel is just bit 3 */
 
 		memset (dirtybuffer, 1, videoram_size);
-
-		/* TODO: looks like the upper 4 bits may control sound. They turn on
-		   when you fire your flamethrower */
 	}
 }
 

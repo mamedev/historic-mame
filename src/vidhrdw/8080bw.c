@@ -494,19 +494,6 @@ static void invadpt2_videoram_w (int offset,int data)
 }
 
 
-void astinvad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = 0xff * ((i >> 2) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 0) & 1);
-	}
-}
-
-
 static void astinvad_videoram_w (int offset,int data)
 {
 	int i,x,y;
@@ -525,7 +512,7 @@ static void astinvad_videoram_w (int offset,int data)
 			col = memory_region(REGION_PROMS)[(31-y/8)*32+(31-x/8)] & 0x0f;
 	}
 	else
-		col = 4;	/* red */
+		col = 1; /* red */
 
 	for (i = 0; i < 8; i++)
 	{

@@ -9,7 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
+/* from sndhrdw/pleiads.c */
+void pleiads_sound_control_c_w(int offset, int data);
 
 static unsigned char *ram_page1;
 static unsigned char *ram_page2;
@@ -165,7 +166,7 @@ void phoenix_paged_ram_w (int offset,int data)
 
 void phoenix_videoreg_w (int offset,int data)
 {
-	if (current_ram_page_index != (data & 1))
+    if (current_ram_page_index != (data & 1))
 	{
 		/* Set memory bank */
 		current_ram_page_index = data & 1;
@@ -186,6 +187,9 @@ void phoenix_videoreg_w (int offset,int data)
 
 	/* I think bits 2 and 3 are used for something else in Pleiads as well,
 	   they are set in the routine starting at location 0x06bc */
+
+	/* send two bits to sound control C (not sure if they are there) */
+	pleiads_sound_control_c_w(offset, data);
 }
 
 

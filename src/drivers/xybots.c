@@ -257,7 +257,7 @@ static struct MachineDriver machine_driver_xybots =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO,
+	JSA_I_STEREO_SWAPPED,
 
 	atarigen_nvram_handler
 };

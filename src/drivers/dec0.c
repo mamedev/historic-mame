@@ -1543,7 +1543,7 @@ ROM_START( drgninja )
 	ROM_LOAD( "baddudes.22",  0x20000, 0x10000, 0xb893d880 )
 	ROM_LOAD( "baddudes.24",  0x30000, 0x10000, 0x6f226dda )
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
+	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE ) /* tiles */
 	ROM_LOAD( "drgninja.30",  0x08000, 0x08000, 0x2438e67e )
 	ROM_CONTINUE(             0x00000, 0x08000 )	/* the two halves are swapped */
 	ROM_LOAD( "drgninja.28",  0x18000, 0x08000, 0x5c692ab3 )

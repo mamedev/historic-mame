@@ -4,6 +4,8 @@
 
 TODO:
 - implement shadows properly
+- in Aliens shadows should be disabled (tubes at the beginning of the game
+  have a vertical line which is supposed to be white)
 - understand global Y position for the 053247
 - understand how the 051316 positioning works
 
@@ -432,7 +434,7 @@ lines.
 The 051960 can also genenrate IRQ, FIRQ and NMI signals.
 
 memory map:
-000-007 is for the 051937, but also sen by the 051960
+000-007 is for the 051937, but also seen by the 051960
 400-7ff is 051960 only
 000     R  bit 0 = unknown, looks like a status flag or something
                    aliens waits for it to be 0 before starting to copy sprite data

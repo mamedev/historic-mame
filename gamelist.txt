@@ -1,4 +1,4 @@
-This is the complete list of games supported by MAME 0.36 RELEASE CANDIDATE 2 (Mar 13 2000)
+This is the complete list of games supported by MAME 0.36 (Mar 21 2000)
 Variants of the same game are not included, you can use the -listclones command
 to get a list of the alternate versions of a given game.
 
@@ -9,7 +9,7 @@ correct them.
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the game
   not to work correctly. This can be anywhere from just showing a black screen
-  to to being playable with major problems.
+  to being playable with major problems.
 Correct Colors - "Yes" means that colors should be identical to the original,
   "Close" that they are very similar but wrong in places, "No" that they are
   completely wrong. In some cases, we were not able to find the color PROMs of
@@ -24,8 +24,8 @@ Sound - "Partial" means that sound support is either incomplete or not entirely
   than the emulation.
 Screen Flip - A large number of games have a dip switch setting for "Cocktail"
   cabinet, meaning that the players sit in front of each other, and the screen
-  is flipped when player 2 is playing. Some games also ahve a "Flip Screen" dip
-  switch. Those need special support in the driver, whcih is missing in many
+  is flipped when player 2 is playing. Some games also have a "Flip Screen" dip
+  switch. Those need special support in the driver, which is missing in many
   cases.
 Internal Name - This is the unique name that should be specified on the command
   line to run the game. ROMs must be placed in the ROM path, either in a .zip
@@ -95,7 +95,6 @@ Internal Name - This is the unique name that should be specified on the command
 | Astro Blaster                    |  Yes  |  Yes  | Yes(2)|  Yes  | astrob   |
 | Astro Fighter                    |  Yes  |  Yes  | Yes(2)|  Yes  | astrof   |
 | Astro Invader                    |  Yes  |  Yes  | Yes(2)|  Yes  | astinvad |
-| Astro Laser                      |  Yes  |  Yes  | Yes(2)|  Yes  | astlaser |
 | Astyanax, The                    |  Yes  |  Yes  |  Yes  |  Yes  | astyanax |
 | Atari Baseball                   |  Yes  |  Yes  |  Yes  |  Yes  | abaseb   |
 | Atari Football                   |  Yes  |  Yes  |  Yes  |  Yes  | atarifb  |
@@ -397,7 +396,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Ghouls'n Ghosts                  |  Yes  |  Yes  |  Yes  |  Yes  | ghouls   |
 | Ghox                             |  Yes  |  Yes  |   No  |  Yes  | ghox     |
 | Gimme A Break                    |  Yes  |  Yes  |  Yes  |  Yes  | gimeabrk |
-| Ginga NinkyouDen                 |  Yes  |  Yes  |Partial|  Yes  | ginganin |
+| Ginga NinkyouDen                 |  Yes  |  Yes  |  Yes  |  Yes  | ginganin |
 | Gladiator                        |  Yes  |  Yes  |  Yes  |   No  | gladiatr |
 | Glob, The                        |  Yes  |  Yes  |  Yes  |  Yes  | theglob  |
 | Go Go Mr. Yamaguchi / Yuke Yuke Y|  Yes  | Close |  Yes  |  Yes  | yamagchi |
@@ -928,6 +927,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Space Invaders                   |  Yes  |  Yes  | Yes(2)|  Yes  | invaders |
 | Space Invaders II                |  Yes  |  Yes  | Yes(2)|  Yes  | invad2ct |
 | Space Invaders Part II           |  Yes  |  Yes  | Yes(2)|  Yes  | invadpt2 |
+| Space Laser                      |  Yes  |  Yes  | Yes(2)|  Yes  | spclaser |
 | Space Odyssey                    |  Yes  |  Yes  | Yes(2)|  Yes  | spaceod  |
 | Space Panic                      |  Yes  |  Yes  | Yes(2)|  Yes  | panic    |
 | Space Seeker                     |  Yes  |  Yes  |  Yes  |  Yes  | spaceskr |
@@ -1000,7 +1000,7 @@ Internal Name - This is the unique name that should be specified on the command
 | Super Pang                       |  Yes  |  Yes  |  Yes  |  Yes  | spang    |
 | Super Punch-Out!!                |  Yes  |  Yes  |  Yes  |  Yes  | spnchout |
 | Super Qix                        | No(1) |  Yes  |  Yes  |   No  | superqix |
-| Super Real Darwin                |  Yes  |  Yes  |  Yes  |   No  | srdarwin |
+| Super Real Darwin                |  Yes  |  Yes  |  Yes  |  Yes  | srdarwin |
 | Super Sidekicks / Tokuten Ou     |  Yes  |  Yes  |  Yes  |  Yes  | ssideki  |
 | Super Sidekicks 2 - The World Cha|  Yes  |  Yes  |  Yes  |  Yes  | ssideki2 |
 | Super Sidekicks 3 - The Next Glor|  Yes  |  Yes  |  Yes  |  Yes  | ssideki3 |

@@ -1271,7 +1271,7 @@ static struct TMS36XXinterface monsterb_tms3617_interface =
     { 50 },         /* mixing levels */
 	{ TMS3617 },	/* TMS36xx subtype(s) */
 	{ 247 },		/* base clock (one octave below A) */
-	{ {0.75,0.75,0.75,0.75,0.75,0.75} }  /* decay times of voices */
+	{ {0.5,0.5,0.5,0.5,0.5,0.5} }  /* decay times of voices */
 };
 
 static struct MachineDriver machine_driver_monsterb =

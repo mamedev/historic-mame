@@ -1,9 +1,9 @@
-This is a patch that must be applied over SEAL 1.0.7 in order for sound
-to work properly on 16-bit cards.
+This patch must be applied over SEAL 1.0.7 to fix two problems:
 
-If this patch is not applied, there will be a noticeable background noise
-because the library only uses the 8 most significant bits of each sample
-and throws away the others.
+1) Sound not working on some SoundBlaster PCI128 cards.
+2) True 16-bit support (the unpatched library only uses the 8 most significant
+   bits of each sample and throws away the others, causing a noticeable
+   background noise).
 
 Don't forget to recompile the library after applying the patch, and to copy
-it into the djgpp/lib directory!
+it to the djgpp/lib directory!

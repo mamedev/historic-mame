@@ -1,8 +1,13 @@
 /***************************************************************************
 
-TODO: Radarscope does a check on bit 6 of 7d00 which prevent it from working.
-It's a sound status flag, maybe signaling whan a tune is finished.
-For now, we comment it out.
+TODO:
+- Radarscope does a check on bit 6 of 7d00 which prevent it from working.
+  It's a sound status flag, maybe signaling whan a tune is finished.
+  For now, we comment it out.
+
+- radarscp_grid_color_w() is wrong, it probably isn't supposed to change
+  the grid color. There are reports of the grid being constantly blue in
+  the real game, the flyer confirms this.
 
 
 Donkey Kong and Donkey Kong Jr. memory map (preliminary) (DKong 3 follows)

@@ -63,13 +63,12 @@ INLINE int tone1_vco1(int samplerate)
      * charge times = 0.639*(Ra+Rb)*C = 0.0092s, 0.0451s, 0.0949s, 0.1390s
      * discharge times = 0.639*Rb*C = 0.0064s, 0.0307s, 0.0645s, 0.0946s
      */
-	#define C18a	0.01e-6
+    #define C18a    0.01e-6
 	#define C18b	0.48e-6
 	#define C18c	1.01e-6
 	#define C18d	1.48e-6
 	#define R40 	47000
 	#define R41 	100000
-
     static int rate[2][4] = {
 		{
 			VMAX*2/3/(0.693*(R40+R41)*C18a),
@@ -86,29 +85,35 @@ INLINE int tone1_vco1(int samplerate)
 	};
 	if( output )
 	{
-		counter -= rate[1][tone1_vco1_cap];
-		if( counter <= 0 )
+		if (level > VMAX*1/3)
 		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level -= n) <= (VMAX*1/3) )
+			counter -= rate[1][tone1_vco1_cap];
+			if( counter <= 0 )
 			{
-				level = VMAX*1/3;
-				output = 0;
+				int steps = -counter / samplerate + 1;
+				counter += steps * samplerate;
+				if( (level -= steps) <= VMAX*1/3 )
+				{
+					level = VMAX*1/3;
+                    output = 0;
+				}
 			}
 		}
 	}
 	else
 	{
-		counter -= rate[0][tone1_vco1_cap];
-		if( counter <= 0 )
+		if (level < VMAX*2/3)
 		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level += n) >= (VMAX*2/3) )
+			counter -= rate[0][tone1_vco1_cap];
+			if( counter <= 0 )
 			{
-				level = VMAX*2/3;
-				output = 1;
+                int steps = -counter / samplerate + 1;
+				counter += steps * samplerate;
+				if( (level += steps) >= VMAX*2/3 )
+				{
+					level = VMAX*2/3;
+					output = 1;
+				}
 			}
 		}
 	}
@@ -130,29 +135,35 @@ INLINE int tone1_vco2(int samplerate)
 
 	if( output )
 	{
-		counter -= (int)(VMAX*2/3 / (0.693 * R44 * C20));
-		if( counter <= 0 )
+		if (level > VMIN)
 		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level -= n) <= (VMAX*1/3) )
+			counter -= (int)(VMAX*2/3 / (0.693 * R44 * C20));
+			if( counter <= 0 )
 			{
-				level = VMAX*1/3;
-				output = 0;
+				int steps = -counter / samplerate + 1;
+				counter += steps * samplerate;
+				if( (level -= steps) <= VMAX*1/3 )
+				{
+					level = VMAX*1/3;
+					output = 0;
+				}
 			}
 		}
 	}
 	else
 	{
-		counter -= (int)(VMAX*2/3 / (0.693 * (R43 + R44) * C20));
-		if( counter <= 0 )
+		if (level < VMAX)
 		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level += n) >= (VMAX*2/3) )
+			counter -= (int)(VMAX*2/3 / (0.693 * (R43 + R44) * C20));
+			if( counter <= 0 )
 			{
-				level = VMAX*2/3;
-				output = 1;
+				int steps = -counter / samplerate + 1;
+				counter += steps * samplerate;
+				if( (level += steps) >= VMAX*2/3 )
+				{
+					level = VMAX*2/3;
+					output = 1;
+				}
 			}
 		}
 	}
@@ -162,10 +173,30 @@ INLINE int tone1_vco2(int samplerate)
 
 INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 {
-	static int counter, level;
-	int charge, rate, voltage, frequency = 0;
+	static int counter, level, rate, charge;
+	int voltage;
 
-	if( vco2 )
+	if (level != charge)
+    {
+        /* charge or discharge C22 */
+        counter -= rate;
+        while( counter <= 0 )
+        {
+            counter += samplerate;
+            if( level < charge )
+            {
+				if( ++level == charge )
+                    break;
+            }
+            else
+            {
+				if( --level == charge )
+                    break;
+            }
+        }
+    }
+
+    if( vco2 )
 	{
 		#define C22 100.0e-6
 		#define R42 10000
@@ -185,8 +216,8 @@ INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 			 *			  0V
 			 */
 			charge = VMAX;
-			rate = (int)(VMAX / (RP * C22));
-			voltage = level + (VMAX-level) * R46 / (R42 + R46);
+			rate = (int)((charge - level) / (RP * C22));
+			voltage = level + (VMAX-level) * R46 / (R46 + R42);
 		}
 		else
 		{
@@ -200,8 +231,12 @@ INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 			 *			   |
 			 *			  0V
              */
-			charge = VMAX * (R42 + R46) / (R42 + R45 + R46);
-			rate = (int)(VMAX / (R45 * C22 * R45 / (R42 + R45 + R46)));
+			/* simplification: charge = (R42 + R46) / (R42 + R45 + R46); */
+            charge = VMAX * 27 / 50;
+			if (charge >= level)
+				rate = (int)((charge - level) / (R45 * C22));
+			else
+				rate = (int)((level - charge) / ((R46+R42) * C22));
 			voltage = level * R42 / (R46 + R42);
 		}
 	}
@@ -219,9 +254,13 @@ INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 			 *			   |
 			 *			  0V
 			 */
-			charge = VMAX * R45 / (R42 + R45 + R46);
-			rate = (int)(VMAX / ((R42 + R46) * C22 * (R42 + R46) / (R42 + R45 + R46)));
-			voltage = level + (VMAX-level) * R46 / (R42 + R46);
+			/* simplification: charge = VMAX * R45 / (R42 + R45 + R46); */
+            charge = VMAX * 23 / 50;
+			if (charge >= level)
+				rate = (int)((charge - level) / ((R42 + R46) * C22));
+			else
+				rate = (int)((level - charge) / (R45 * C22));
+			voltage = level + (VMAX - level) * R46 / (R42 + R46);
 		}
 		else
 		{
@@ -236,7 +275,7 @@ INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 			 *			  0V
 			 */
 			charge = VMIN;
-			rate = (int)(VMAX / (RP * C22));
+			rate = (int)((level - charge) / (RP * C22));
 			voltage = level * R42 / (R46 + R42);
 		}
 	}
@@ -244,41 +283,19 @@ INLINE int tone1_vco(int samplerate, int vco1, int vco2)
 	/* L507 (NE555): Ra=20k, Rb=20k, C=0.001uF
 	 * frequency 1.44/((Ra+2*Rb)*C) = 24kHz
 	 */
-	frequency = 24000*1/3 + 24000*2/3 * (VMAX-voltage) / 32768;
-
-	if (level != charge)
-	{
-		/* charge or discharge C22 */
-		counter -= rate;
-		if( counter <= 0 )
-		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( level < charge )
-			{
-				if( (level += n) > charge )
-					level = charge;
-			}
-			else
-			{
-				if( (level -= n) < charge )
-					level = charge;
-			}
-		}
-	}
-
-	return frequency;
+	return 24000*1/3 + 24000*2/3 * voltage / 32768;
 }
 
 INLINE int tone1(int samplerate)
 {
 	static int counter, divisor, output;
-	int vco1_out = tone1_vco1(samplerate);
-	int vco2_out = tone1_vco2(samplerate);
+	int vco1 = tone1_vco1(samplerate);
+	int vco2 = tone1_vco2(samplerate);
+	int frequency = tone1_vco(samplerate, vco1, vco2);
 
 	if( (sound_latch_a & 15) != 15 )
 	{
-		counter -= tone1_vco(samplerate, vco1_out, vco2_out);
+		counter -= frequency;
 		while( counter <= 0 )
 		{
 			counter += samplerate;
@@ -337,7 +354,7 @@ INLINE int tone2_vco(int samplerate)
 
 	if( (sound_latch_b & 0x10) == 0 )
 	{
-		counter -= (C7_MAX - level) * 3 / (R23 * C7);
+		counter -= (C7_MAX - level) * 12 / (R23 * C7) / 5;
 		if( counter <= 0 )
 		{
 			int n = (-counter / samplerate) + 1;
@@ -348,7 +365,7 @@ INLINE int tone2_vco(int samplerate)
 	}
 	else
 	{
-		counter -= (level - C7_MIN) * 3 / (R22pR24 * C7);
+		counter -= (level - C7_MIN) * 12 / (R22pR24 * C7) / 5;
 		if( counter <= 0 )
 		{
 			int n = (-counter / samplerate) + 1;
@@ -401,25 +418,31 @@ INLINE int update_c24(int samplerate)
 	#define R52 20000
 	if( sound_latch_a & 0x40 )
 	{
-		counter -= (int)((VMAX - level) / ((R51+R49) * C24));
-		if( counter <= 0 )
-        {
-            int n = -counter / samplerate + 1;
-            counter += n * samplerate;
-			if( (level += n) > VMAX)
-				level = VMAX;
-        }
+		if (level > VMIN)
+		{
+			counter -= (int)((level - VMIN) / (R52 * C24));
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				if( (level -= n) < VMIN)
+					level = VMIN;
+			}
+		}
     }
 	else
 	{
-		counter -= (int)(level / (R52 * C24));
-		if( counter <= 0 )
-        {
-            int n = -counter / samplerate + 1;
-            counter += n * samplerate;
-			if( (level -= n) < VMIN)
-				level = VMIN;
-        }
+		if (level < VMAX)
+		{
+			counter -= (int)((VMAX - level) / ((R51+R49) * C24));
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				if( (level += n) > VMAX)
+					level = VMAX;
+			}
+		}
     }
 	return VMAX - level;
 }
@@ -428,7 +451,7 @@ INLINE int update_c25(int samplerate)
 {
 	static int counter, level;
 	/*
-	 * Bit 7 hi charges C25 (6.8u) over a R53 (330) and when
+	 * Bit 7 hi charges C25 (6.8u) over a R50 (1k) and R53 (330) and when
 	 * bit 7 is lo, C25 is discharged through R54 (47k)
 	 * in about 47000 * 6.8e-6 = 0.3196 seconds
 	 */
@@ -439,24 +462,30 @@ INLINE int update_c25(int samplerate)
 
 	if( sound_latch_a & 0x80 )
 	{
-		counter -= (int)((VMAX - level) / ((R50+R53) * C25));
-		if( counter <= 0 )
+		if (level < VMAX)
 		{
-			int n = -counter / samplerate + 1;
-			counter += n * samplerate;
-			if( (level += n) > VMAX )
-				level = VMAX;
+			counter -= (int)((VMAX - level) / ((R50+R53) * C25));
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				if( (level += n) > VMAX )
+					level = VMAX;
+			}
 		}
 	}
 	else
 	{
-        counter -= (int)(level / (R54 * C25));
-		if( counter <= 0 )
+		if (level > VMIN)
 		{
-			int n = -counter / samplerate + 1;
-			counter += n * samplerate;
-			if( (level -= n) < VMIN )
-				level = VMIN;
+			counter -= (int)((level - VMIN) / (R54 * C25));
+			if( counter <= 0 )
+			{
+				int n = -counter / samplerate + 1;
+				counter += n * samplerate;
+				if( (level -= n) < VMIN )
+					level = VMIN;
+			}
 		}
 	}
 	return level;
@@ -476,11 +505,11 @@ INLINE int noise(int samplerate)
 	 * level = voltage at the output of the op-amp controlling the noise rate.
 	 */
 	if( vc24 < vc25 )
-		level = vc24 + (vc25 - vc24);
+		level = vc24 + (vc25 - vc24) / 2;
 	else
-		level = vc25 + (vc24 - vc25);
+		level = vc25 + (vc24 - vc25) / 2;
 
-	frequency = 6325 - (6325-588) * level / 32768;
+	frequency = 588 + 6325 * level / 32768;
 
     /*
 	 * NE555: Ra=47k, Rb=1k, C=0.05uF
@@ -497,9 +526,9 @@ INLINE int noise(int samplerate)
 		polybit = (poly18[polyoffs>>5] >> (polyoffs & 31)) & 1;
 	}
 	if (!polybit)
-		sum += VMAX - vc24;
+		sum += vc24;
 
-	/* 400Hz crude low pass filter: only a guess */
+	/* 400Hz crude low pass filter: this is only a guess!! */
 	lowpass_counter -= 400;
 	if( lowpass_counter <= 0 )
 	{
@@ -552,8 +581,8 @@ void phoenix_sound_control_b_w(int offset,int data)
 	else
 		tone2_level = VMAX;
 
-	/* eventually change the tune that the TMS3615 is playing */
-	tms3615_tune_w(0, sound_latch_b >> 6);
+	/* eventually change the tune that the MM6221AA is playing */
+	mm6221aa_tune_w(0, sound_latch_b >> 6);
 }
 
 int phoenix_sh_start(const struct MachineSound *msound)

@@ -77,7 +77,8 @@
 #define TMS34010_CLOCK_DIVIDER		8
 
 /* these are accurate for MK Rev 5 according to measurements done by Bryan on a real board */
-#define MKLA5_VBLANK_DURATION		263 /* ms */
+//#define MKLA5_VBLANK_DURATION		263 /* ms */
+#define MKLA5_VBLANK_DURATION		0
 #define MKLA5_FPS					53.204950
 
 
@@ -1265,7 +1266,7 @@ static struct MachineDriver machine_driver_narc =
 		},
 		SOUND_CPU_WILLIAMS_NARC
 	},
-	57, 2500,	/* frames per second, vblank duration */
+	57, 0,//2500,	/* frames per second, vblank duration */
 	1,
 	narc_init_machine,
 
