@@ -14,7 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 static unsigned char scrollreg[4];
-static unsigned char bgscroll1,bgscroll2;
+static unsigned char bg1xpos,bg1ypos,bg2xpos,bg2ypos,bgcontrol;
 static struct osd_bitmap *bgbitmap;
 
 
@@ -75,16 +75,37 @@ void mpatrol_scroll_w(int offset,int data)
 
 
 
-void mpatrol_bgscroll1_w(int offset,int data)
+void mpatrol_bg1xpos_w(int offset,int data)
 {
-	bgscroll1 = data;
+	bg1xpos = data;
 }
 
 
 
-void mpatrol_bgscroll2_w(int offset,int data)
+void mpatrol_bg1ypos_w(int offset,int data)
 {
-	bgscroll2 = data;
+	bg1ypos = data;
+}
+
+
+
+void mpatrol_bg2xpos_w(int offset,int data)
+{
+	bg2xpos = data;
+}
+
+
+
+void mpatrol_bg2ypos_w(int offset,int data)
+{
+	bg2ypos = data;
+}
+
+
+
+void mpatrol_bgcontrol_w(int offset,int data)
+{
+	bgcontrol = data;
 }
 
 
@@ -123,8 +144,8 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-#if 0
 	/* copy the background */
+	if (bgcontrol == 0x04)
 	{
 		struct rectangle clip;
 
@@ -132,17 +153,44 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-		clip.min_y = 16 * 8;
-		clip.max_y = 24 * 8 - 1;
-		copybitmap(bitmap,bgbitmap,0,0,bgscroll2,0,&clip,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,bgbitmap,0,0,bgscroll2 - 256,0,&clip,TRANSPARENCY_NONE,0);
+clip.min_y = bg2ypos+64;
+clip.max_y = bg2ypos+64+15;
+copybitmap(bitmap,bgbitmap,0,0,bg2xpos,bg2ypos-64*2+16,&clip,TRANSPARENCY_NONE,0);
+copybitmap(bitmap,bgbitmap,0,0,bg2xpos - 256,bg2ypos-64*2+16,&clip,TRANSPARENCY_NONE,0);
+		clip.min_y = bg2ypos;
+		clip.max_y = bg2ypos + 63;
+		copybitmap(bitmap,bgbitmap,0,0,bg2xpos,bg2ypos-64*2,&clip,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,bgbitmap,0,0,bg2xpos - 256,bg2ypos-64*2,&clip,TRANSPARENCY_NONE,0);
 
-		clip.min_y = 20 * 8;
-		clip.max_y = 28 * 8 - 1;
-		copybitmap(bitmap,bgbitmap,0,0,bgscroll1,96,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-		copybitmap(bitmap,bgbitmap,0,0,bgscroll1 - 256,96,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+clip.min_y = bg1ypos+64;
+clip.max_y = bg1ypos+64+15;
+copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-64+16,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-64+16,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		clip.min_y = bg1ypos;
+		clip.max_y = bg1ypos + 63;
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos-64,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos-64,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
-#endif
+	else if (bgcontrol == 0x03)
+	{
+		struct rectangle clip;
+
+
+		clip.min_x = Machine->drv->visible_area.min_x;
+		clip.max_x = Machine->drv->visible_area.max_x;
+
+		clip.min_y = bg2ypos;
+		clip.max_y = bg2ypos + 63;
+		copybitmap(bitmap,bgbitmap,0,0,bg2xpos,bg2ypos-64*2,&clip,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,bgbitmap,0,0,bg2xpos - 256,bg2ypos-64*2,&clip,TRANSPARENCY_NONE,0);
+
+		clip.min_y = bg1ypos;
+		clip.max_y = bg1ypos + 63;
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos,bg1ypos,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+		copybitmap(bitmap,bgbitmap,0,0,bg1xpos - 256,bg1ypos,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
+	}
+	else clearbitmap(bitmap);
+
 
 	/* copy the temporary bitmap to the screen */
 	{
@@ -153,30 +201,17 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 		clip.max_x = Machine->drv->visible_area.max_x;
 
 		clip.min_y = 0;
-		clip.max_y = 16 * 8 - 1;
+		clip.max_y = 13 * 8 - 1;
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
 
-		clip.min_y = 16 * 8;
+		clip.min_y = 13 * 8;
 		clip.max_y = 24 * 8 - 1;
-#if 0
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-#else
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
-#endif
 
 		clip.min_y = 24 * 8;
-		clip.max_y = 28 * 8 - 1;
-#if 0
+		clip.max_y = 32 * 8 - 1;
 		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
 		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_COLOR,Machine->background_pen);
-#else
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_NONE,0);
-#endif
-		clip.min_y = 28 * 8;
-		clip.max_y = 32 * 8 - 1;
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0],0,&clip,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap,0,0,scrollreg[0] - 256,0,&clip,TRANSPARENCY_NONE,0);
 	}
 
 

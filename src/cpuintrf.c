@@ -36,7 +36,7 @@ struct z80context
 
 void cpu_run(void)
 {
-	int totalcpu;
+	int totalcpu,usres;
 	unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
 	unsigned char *ROM0;	/* opcode decryption is currently supported only for the first memory region */
 extern void Reset6502(void *R,int IPeriod);
@@ -129,10 +129,10 @@ reset:
 			}
 		}
 
-		/* if F3 is pressed, reset the machine */
-		if (osd_key_pressed(OSD_KEY_F3))
+		usres = updatescreen();
+		if (usres == 2)	/* user asked to reset the machine */
 			goto reset;
-	} while (updatescreen() == 0);
+	} while (usres == 0);
 }
 
 

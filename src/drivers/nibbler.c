@@ -89,6 +89,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x3000, 0xbfff, MRA_ROM },
+	{ 0xfffa, 0xffff, MRA_ROM },
 	{ 0x2104, 0x2104, input_port_0_r },	/* IN0 */
 	{ 0x2105, 0x2105, input_port_1_r },	/* IN1 */
 	{ 0x2106, 0x2106, input_port_2_r },	/* DSW */

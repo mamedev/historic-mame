@@ -15,54 +15,55 @@ Here is a quick list of ther currently supported games; read on for details.
 The list doesn't include variants of the same game.
 
 
-Game                         Playable?   Accurate colors?    Sound?
+                                         Accurate            Hi score
+Game                         Playable?    colors?    Sound?    save?
 
-Pac Man                        Yes            Yes             Yes
-Ms Pac Man (bootleg)           Yes            Yes             Yes
-Crush Roller                   Yes            Yes             Yes
-Pengo                          Yes            Yes             Yes
-Lady Bug                       Yes            Yes           No noise
-Mr. Do!                        Yes            Yes             Yes
-Mr. Do's Castle                 No             No              No
-Crazy Climber                  Yes            Yes             Yes
-Crazy Kong                     Yes            Yes             Yes
-Donkey Kong                    Yes             No              No
-Donkey Kong Jr.                Yes             No              No
-Donkey Kong 3                  Yes             No              No
-Mario Bros.                    Yes             No              No
-Bagman                         Yes             No          Music only
-Wizard of Wor               Partially        Maybe             No
-The Adventures of Robby Roto    No             No              No
-Gorf                            No             No              No
-Galaxian                       Yes            Yes           Limited
-Pisces                         Yes            Yes           Limited
-"Japanese Irem game"           Yes            Yes           Limited
-War of the Bugs                Yes             No           Limited
-Moon Cresta                    Yes            Yes           Limited
-Moon Quasar                    Yes            Yes           Limited
-Scramble                       Yes            Yes              No
-Super Cobra                    Yes             No              No
-The End                        Yes             No              No
-Frogger                        Yes           Close             No
-Amidar                         Yes           Close             No
-Turtles                        Yes             No              No
-Rally X                        Yes             No              No
-Time Pilot                     Yes             No              No
-Pooyan                         Yes             No              No
-Phoenix                        Yes           Close             No
-Pleiades                       Yes             No              No
-Space Invaders                 Yes            Yes              No
-Carnival                        No             No              No
-Zaxxon                         Yes             No              No
-Congo Bongo                    Yes             No              No
-Bomb Jack                      Yes            Yes              No
-Centipede                      Yes             No             Yes
-Millipede                      Yes             No              No
-Nibbler                        Yes             No              No
-Moon Patrol                    Yes             No              No
-Burger Time                    Yes            Yes             Yes
-Lost Tomb                       No             No              No
-Jump Bug                        No             No              No
+Pac Man                        Yes         Yes        Yes        No
+Ms Pac Man (bootleg)           Yes         Yes        Yes        No
+Crush Roller                   Yes         Yes        Yes        No
+Pengo                          Yes         Yes        Yes       Yes
+Lady Bug                       Yes         Yes      No noise    Yes
+Mr. Do!                        Yes         Yes        Yes       Yes
+Mr. Do's Castle                 No          No         No       n/a
+Crazy Climber                  Yes         Yes        Yes       Yes
+Crazy Kong                     Yes         Yes        Yes       Yes
+Donkey Kong                    Yes          No         No       Yes
+Donkey Kong Jr.                Yes          No         No       Yes
+Donkey Kong 3                  Yes          No         No       Yes
+Mario Bros.                    Yes          No         No       Yes
+Bagman                         Yes          No     Music only    No
+Wizard of Wor               Partially     Maybe        No        No
+The Adventures of Robby Roto    No          No         No       n/a
+Gorf                            No          No         No       n/a
+Galaxian                       Yes         Yes      Limited      No
+Pisces                         Yes         Yes      Limited      No
+"Japanese Irem game"           Yes         Yes      Limited      No
+War of the Bugs                Yes          No      Limited      No
+Moon Cresta                    Yes         Yes      Limited      No
+Moon Quasar                    Yes         Yes      Limited      No
+Scramble                       Yes         Yes         No        No
+Super Cobra                    Yes          No         No        No
+The End                        Yes          No         No        No
+Frogger                        Yes        Close        No        No
+Amidar                         Yes        Close        No        No
+Turtles                        Yes          No         No        No
+Rally X                        Yes          No         No        No
+Time Pilot                     Yes          No         No        No
+Pooyan                         Yes          No         No        No
+Phoenix                        Yes        Close     Limited      No
+Pleiades                       Yes          No      Limited      No
+Space Invaders                 Yes         Yes         No        No
+Carnival                        No          No         No       n/a
+Zaxxon                         Yes          No         No        No
+Congo Bongo                    Yes          No         No        No
+Bomb Jack                      Yes         Yes         No       Yes
+Centipede                      Yes          No        Yes        No
+Millipede                      Yes          No         No        No
+Nibbler                        Yes          No         No       Yes
+Moon Patrol                    Yes          No         No        No
+Burger Time                    Yes         Yes        Yes        No
+Lost Tomb                       No          No         No       n/a
+Jump Bug                        No          No         No       n/a
 
 
 
@@ -97,8 +98,8 @@ POKEY emulator by Ron Fries (rfries@tcmail.frco.com).
 UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
   (dick@ph.tn.tudelft.nl).
 
-Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
-   Buffoni (mix@lim.dsi.unimi.it)
+Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
+   Buffoni (mix@lim.dsi.unimi.it) and Richard Davies (R.Davies@dcs.hull.ac.uk)
 Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
    by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
@@ -124,7 +125,6 @@ Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
    Emulator by Robert Anschuetz.
 Pooyan information provided by Michael Cuddy and Allard van der Bas
 Thanks to Mirko Buffoni for the Amidar and Frogger colors.
-Thanks to Richard Davies for info on Phoenix.
 Thanks to Brad Thomas, Jakob Frendsen and Conny Melin for the info on Bomb
    Jack.
 Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
@@ -139,17 +139,18 @@ Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
 Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
 Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
-Thanks to Marc Vergoossen for Zaxxon colors.
+Thanks to Marc Vergoossen and Marc Lafontaine (marclaf@sympatico.ca) for Zaxxon colors.
 Centipede information taken from Centipede emulator by Ivan Mackintosh, MageX
    0.3 by Edward Massey and memory map by Pete Rittwage.
 Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
 Thanks to Chris Hardy (chrish@kcbbs.gen.nz) for info on Moon Patrol.
-Thanks to Dave W. for all his help.
+Thanks to Dave W. (hbbuse08@csun.edu) for all his help.
 Thanks to Doug Jefferys (djeffery@multipath.com) for Crazy Kong color
    information.
 Thanks to Philip Chapman (Philip_Chapman@qsp.co.uk) for useful feedback on
    Bomb Jack.
 Thanks to Mike Cuddy for Pooyan and Time pilot colors.
+Thanks to Thomas Meyer for Moon Patrol screenshots.
 
 
 
@@ -171,6 +172,12 @@ options:
 -vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
               slower than the other video modes. Use this if you want
 			  scanlines and the default video mode doesn't work.
+-vgafreq n    where n can be 0 (default) 1, 2 or 3.
+              use different frequencies for the custom video modes. This
+              could reduce flicker, especially in the 224x288noscanlines
+              mode. WARNING: THE FREQUENCIES USED MIGHT BE WAY OUTSIDE OF
+			  YOUR MONITOR RANGE, AND COULD EVEN DAMAGE IT. USE THESE OPTIONS
+			  AT YOUR OWN RISK.
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
@@ -828,9 +835,10 @@ F1      \  Various tests.
 F2      |  Use F1 to cycle through tests while in test mode.
 F1+F2   /
 
+Clones supported:
+  different ROM set, without Midway copyright and different demo ("btimea")
+
 Known issues:
-- There are the same problems with ROM encryption that Replay 0.01a by Kevin
-  Brisley has.
 - Sprites are not turned off appropriately
 
 

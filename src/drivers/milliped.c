@@ -10,12 +10,12 @@ Millipede memory map (preliminary)
 13E0-13EF       SPRITE VERTICAL OFFSETS
 13F0-13FF       SPRITE COLOR OFFSETS
 
-2000            BIT 1-4 IS TRACKBALL HORIZONTAL
+2000            BIT 1-4 dip switch
                 BIT 5 IS P1 FIRE
                 BIT 6 IS P1 START
                 BIT 7 IS SERVICE
 
-2001            BIT 1-4 IS TRACKBALL VERTICAL
+2001            BIT 1-4 dip switch
                 BIT 5 IS P2 FIRE
                 BIT 6 IS P2 START
                 BIT 7,8 (?)
@@ -62,10 +62,14 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2001, 0x2001, input_port_1_r },
 	{ 0x2010, 0x2010, input_port_2_r },
    { 0x2011, 0x2011, input_port_3_r },
+   { 0x0408, 0x0408, input_port_4_r },
+   { 0x0808, 0x0808, input_port_5_r },
 	{ 0x40a, 0x40a, centiped_rand_r },
 	{ 0x80a, 0x80a, centiped_rand_r },
 	{ -1 }	/* end of table */
 };
+
+
 
 static struct MemoryWriteAddress writemem[] =
 {
@@ -83,30 +87,39 @@ static struct MemoryWriteAddress writemem[] =
 static struct InputPort input_ports[] =
 {
 	{
-		0xff,
-      { 0,0,0,0, OSD_KEY_CONTROL, OSD_KEY_1, 0,0},
-      { 0,0,0,0, OSD_JOY_FIRE, OSD_KEY_1, 0,0}
-   },
+		0xf8,
+		{ 0, 0, 0, 0, OSD_KEY_CONTROL, OSD_KEY_1, 0, 0},
+		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0,0}
+	},
 	{
-		0xff,
-      { 0,0,0,0, OSD_KEY_CONTROL, OSD_KEY_2, 0,0},
-      { 0,0,0,0, OSD_JOY_FIRE, OSD_KEY_2, 0,0}
-   },
+		0xf0,
+		{ 0, 0, 0, 0, OSD_KEY_CONTROL, OSD_KEY_2, 0, 0 },
+		{ 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0, 0}
+	},
 	{
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_3, 0,0,0},
+				0, 0, OSD_KEY_3, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_KEY_3, 0,0,0}
+				0, 0, 0, 0}
 	},
-   {
+	{
 		0xff,
 		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_3, 0,0,0},
+				0, 0, 0, 0 },
 		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_KEY_3, 0,0,0}
+				0, 0, 0, 0}
 	},
-
+	{	/* DSW1 */
+		0x14,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW2 */
+		0x02,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
 	{ -1 }	/* end of table */
 };
 
@@ -115,9 +128,13 @@ static struct InputPort input_ports[] =
 static struct DSW dsw[] =
 {
 	{ 4, 0x0c, "LIVES", { "2", "3", "4", "5" } },
-	{ 4, 0x30, "BONUS", { "10000", "12000", "15000", "20000" } },
-	{ 4, 0x40, "DIFFICULTY", { "HARD", "EASY" }, 1 },
-	{ 4, 0x03, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
+	{ 4, 0x30, "BONUS", { "12000", "15000", "20000", "NONE" } },
+	{ 4, 0x80, "STARTING SCORE SELECT", { "ON", "OFF" }, 1 },
+	{ 0, 0x0c, "", { "0", "0 1XBONUS", "0 1XBONUS 2XBONUS", "0 1XBONUS 2XBONUS 3XBONUS" } },
+	{ 4, 0x01, "MILLIPEDE HEAD", { "EASY", "HARD" } },
+	{ 4, 0x02, "BEETLE", { "EASY", "HARD" } },
+	{ 4, 0x40, "SPIDER", { "EASY", "HARD" } },
+	{ 0, 0x03, "LANGUAGE", { "ENGLISH", "GERMAN", "FRENCH", "SPANISH" } },
 	{ -1 }
 };
 

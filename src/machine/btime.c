@@ -19,6 +19,7 @@ static int vblank;
 
 int btime_init_machine(const char *gamename)
 {
+#if 0
         /* Encryption is a bit shuffle on some opcodes like this:
 
            7 6 5 4 3 2 1 0
@@ -338,7 +339,7 @@ int btime_init_machine(const char *gamename)
         RAM[0xf1e4] = 0xa5;
         RAM[0xf1ec] = 0xf8;
         RAM[0xff1e] = 0xad;
-
+#endif
 	return 0;
 }
 

@@ -65,6 +65,10 @@ int phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern void phoenix_sound_control_a_w(int offset, int data);
+extern void phoenix_sound_control_b_w(int offset, int data);
+extern int phoenix_sh_start(void);
+extern void phoenix_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -90,7 +94,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5400, 0x57ff, MWA_RAM },
 	{ 0x5800, 0x5bff, phoenix_scrollreg_w },
 	{ 0x5C00, 0x5fff, MWA_RAM },
+        { 0x6000, 0x63ff, phoenix_sound_control_a_w },
 	{ 0x6400, 0x67ff, MWA_RAM },
+        { 0x6800, 0x6bff, phoenix_sound_control_b_w },
 	{ 0x6C00, 0x6fff, MWA_RAM },
 	{ 0x7400, 0x77ff, MWA_RAM },
 	{ 0x7C00, 0x7fff, MWA_RAM },
@@ -213,6 +219,15 @@ static unsigned char colortable[] =
 
 
 
+/* waveforms for the audio hardware */
+static unsigned char samples[32] =
+{
+	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
+	0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,
+};
+
+
+
 const struct MachineDriver phoenix_driver =
 {
 	/* basic machine hardware */
@@ -243,9 +258,9 @@ const struct MachineDriver phoenix_driver =
 	phoenix_vh_screenrefresh,
 
 	/* sound hardware */
+        samples,
 	0,
+        phoenix_sh_start,
 	0,
-	0,
-	0,
-	0
+        phoenix_sh_update
 };

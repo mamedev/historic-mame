@@ -4,7 +4,7 @@ Burgertime memory map (preliminary)
 
 MAIN BOARD:
 
-0000-0fff RAM
+0000-07ff RAM
 0c00-0c1f palette
 1000-13ff Video RAM
 1400-17ff Attributes RAM
@@ -21,10 +21,10 @@ read:
 write
 4000      Coinbox enable
 4001      not used
-4002      ?
+4002      flip screen
 4003      command to sound board / trigger interrupt on sound board
 4004      Map number
-5005      ? PSG ?
+5005      ?
 
 IN0  Player 1 Joystick
 7\
@@ -36,7 +36,7 @@ IN0  Player 1 Joystick
 1 |  Left
 0/   Right
 
-IN1  Player 2 Joystick
+IN1  Player 2 Joystick (TABLE only)
 7\
 6 |
 5 |
@@ -58,7 +58,7 @@ Coin slot
 
 DSW1
 7    HVBlank input toggle (???)
-6
+6    TABLE or UPRIGHT cabinet select (0 = UPRIGHT)
 5\   Diagnostic bit 2
 4/   Diagnostic bit 1
 3\
@@ -130,13 +130,13 @@ extern void btime_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x4003, 0x4003, btime_DSW1_r },	/* DSW1 */
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x181f, MRA_RAM },
 	{ 0xb000, 0xffff, MRA_ROM },
 	{ 0x4000, 0x4000, input_port_0_r },	/* IN0 */
 	{ 0x4001, 0x4001, input_port_1_r },	/* IN1 */
 	{ 0x4002, 0x4002, input_port_2_r },	/* coin */
-	{ 0x4003, 0x4003, btime_DSW1_r },	/* DSW1 */
 	{ 0x4004, 0x4004, input_port_4_r },	/* DSW2 */
 	{ -1 }	/* end of table */
 };
@@ -215,7 +215,8 @@ static struct InputPort input_ports[] =
 static struct DSW dsw[] =
 {
 	{ 4, 0x01, "LIVES", { "5", "3" }, 1 },
-	{ 4, 0x06, "BONUS", { "50000", "40000", "30000", "20000" }, 1 },
+	{ 4, 0x06, "BONUS", { "30000", "20000", "15000", "10000" }, 1 },
+/*	{ 4, 0x06, "BONUS", { "50000", "40000", "30000", "20000" }, 1 },*/
 	{ 4, 0x08, "PURSUERS", { "6", "4" }, 1 },
 	{ 4, 0x10, "END OF LEVEL PEPPER", { "YES", "NO" } },
 	{ -1 }
@@ -296,10 +297,10 @@ const struct MachineDriver btime_driver =
 		},
 		{
 			CPU_M6502,
-			500000,	/*500 khz */
+			500000,	/* 500 khz */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			btime_sh_interrupt,10	/* 10 (??) interrupts per frame */
+			btime_sh_interrupt,14	/* 14 (??) interrupts per frame */
 		}
 	},
 	60,

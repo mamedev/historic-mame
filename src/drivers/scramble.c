@@ -275,11 +275,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
+static unsigned char scramble_color_prom[] =
 {
 	/* palette */
 	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
+};
+
+
+
+static unsigned char froggers_color_prom[] =
+{
+	/* palette */
+	0x00,0xF6,0x79,0x4F,0x00,0xC0,0x3F,0x17,0x00,0x87,0xF8,0x7F,0x00,0xC1,0x7F,0x38,
+	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
 };
 
 
@@ -311,7 +320,7 @@ const struct MachineDriver scramble_driver =
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	color_prom,scramble_vh_convert_color_prom,0,0,
+	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,
 	8*13,8*16,0x04,
@@ -350,7 +359,7 @@ const struct MachineDriver atlantis_driver =
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	color_prom,scramble_vh_convert_color_prom,0,0,
+	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,
 	8*13,8*16,0x04,
@@ -389,7 +398,7 @@ const struct MachineDriver theend_driver =
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	color_prom,scramble_vh_convert_color_prom,0,0,
+	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
 	0,17,
 	0x00,0x01,
 	8*13,8*16,0x04,
@@ -404,4 +413,43 @@ const struct MachineDriver theend_driver =
 	0,
 	0,
 	0
+};
+
+
+
+const struct MachineDriver froggers_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	60,
+	input_ports,scramble_dsw,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	froggers_color_prom,scramble_vh_convert_color_prom,0,0,
+	0,17,
+	0x07,0x02,
+	8*13,8*16,0x01,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	scramble_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	scramble_sh_start,
+	scramble_sh_stop,
+	scramble_sh_update
 };

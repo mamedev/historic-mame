@@ -181,9 +181,13 @@ struct GameDriver
 {
 	const char *name;
 	const struct RomModule *rom;
+	const struct MachineDriver *drv;
+	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
+											/* returns nonzero */
+	void (*hiscore_save)(const char *name);	/* will not be loaded if hiscore_load() hasn't yet */
+										/* returned nonzero, to avoid saving an invalid table */
 	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
 	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
-	const struct MachineDriver *drv;
 };
 
 

@@ -3,6 +3,7 @@
 #include "psg.h"
 
 
+#define AY8910_CLOCK 1789750000	/* 1.78975 MHZ ?? */
 
 #define UPDATES_PER_SECOND 60
 #define emulation_rate (400*UPDATES_PER_SECOND)
@@ -62,7 +63,7 @@ int scramble_sh_interrupt(void)
 
 int scramble_sh_start(void)
 {
-	if (AYInit(2,emulation_rate,buffer_len,0) == 0)
+	if (AYInit(2,AY8910_CLOCK,emulation_rate,buffer_len,0) == 0)
 	{
 		AYSetPortHandler(0,AY_PORTA,porthandler);
 		AYSetPortHandler(0,AY_PORTB,porthandler);

@@ -99,7 +99,7 @@ void bombjack_background_w(int offset,int data)
 ***************************************************************************/
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs,col;
+	int i,offs,col,base;
 
 
 	/* rebuild the color lookup table */
@@ -112,27 +112,46 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
+	base = 0x200 * (background_image & 0x07);
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
 		int sx,sy;
+		int bx,by;
+		int tilecode,tileattribute;
 
 
-		if (dirtybuffer[offs] || dirtycolor[colorram[offs] & 0x0f])
+		sx = 8 * (31 - offs / 32);
+		sy = 8 * (offs % 32);
+
+		if (background_image & 0x10)
 		{
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
+			int bgoffs;
 
+
+			bx = sx & 0xf0;
+			by = sy & 0xf0;
+
+			bgoffs = base+16*(15-bx/16)+by/16;
+
+			tilecode = Machine->memory_region[2][bgoffs],
+			tileattribute = Machine->memory_region[2][bgoffs + 0x100];
+		}
+		else tilecode = 0xff;
+
+		if (dirtybuffer[offs] || dirtycolor[colorram[offs] & 0x0f] ||
+				(tilecode != 0xff && dirtycolor[tileattribute & 0x0f]))
+		{
 			/* draw the background (this can be handled better) */
-			if (background_image & 0x10)
+			if (tilecode != 0xff)
 			{
 			/* don't redraw the background if only the foreground color has changed */
-				if (dirtybuffer[offs])
+				if (dirtybuffer[offs] ||
+						dirtycolor[tileattribute & 0x0f])
 				{
 					struct rectangle clip;
-					int bx,by;
-					int base,bgoffs;
 
 
 					clip.min_x = sx;
@@ -140,16 +159,10 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 					clip.min_y = sy;
 					clip.max_y = sy+7;
 
-					bx = sx & 0xf0;
-					by = sy & 0xf0;
-
-					base = 0x200 * (background_image & 0x07);
-					bgoffs = base+16*(15-bx/16)+by/16;
-
 					drawgfx(tmpbitmap,Machine->gfx[1],
-							Machine->memory_region[2][bgoffs],
-							Machine->memory_region[2][bgoffs + 0x100] & 0x0f,
-							Machine->memory_region[2][bgoffs + 0x100] & 0x80,0,
+							tilecode,
+							tileattribute & 0x0f,
+							tileattribute & 0x80,0,
 							bx,by,
 							&clip,TRANSPARENCY_NONE,0);
 				}

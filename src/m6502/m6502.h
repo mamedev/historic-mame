@@ -19,7 +19,7 @@
 /* #define DEBUG */            /* Compile debugging version  */
 /* #define LSB_FIRST */        /* Compile for low-endian CPU */
 
-                               /* Interrupt6502() returns:   */
+                               /* Loop6502() returns:        */
 #define INT_NONE  0            /* No interrupt required      */
 #define INT_IRQ	  1            /* Standard IRQ interrupt     */
 #define INT_NMI	  2            /* Non-maskable interrupt     */
@@ -62,8 +62,10 @@ typedef struct
   pair PC;
 
   int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
-                      /* between calls to Interrupt6502()    */
-  int missedinterrupt;
+                      /* between calls to Loop6502()         */
+  byte IRequest;      /* Set to the INT_IRQ when pending IRQ */
+  byte AfterCLI;      /* Private, don't touch                */
+  int IBackup;        /* Private, don't touch                */
   void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
   byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
   word Trap;          /* Set Trap to address to trace from   */
@@ -77,9 +79,23 @@ typedef struct
 /*************************************************************/
 void Reset6502(register M6502 *R,int IPeriod);
 
+/** Exec6502() ***********************************************/
+/** This function will execute a single 6502 opcode. It     **/
+/** will then return next PC, and current register values   **/
+/** in R.                                                   **/
+/*************************************************************/
+word Exec6502(register M6502 *R);
+
+/** Int6502() ************************************************/
+/** This function will generate interrupt of a given type.  **/
+/** INT_NMI will cause a non-maskable interrupt. INT_IRQ    **/
+/** will cause a normal interrupt, unless I_FLAG set in R.  **/
+/*************************************************************/
+void Int6502(register M6502 *R,register byte Type);
+
 /** Run6502() ************************************************/
-/** This function will run 6502 code until Interrupt6502()  **/
-/** call returns INT_QUIT. It will return the PC at which   **/
+/** This function will run 6502 code until Loop6502() call  **/
+/** returns INT_QUIT. It will return the PC at which        **/
 /** emulation stopped, and current register values in R.    **/
 /*************************************************************/
 word Run6502(register M6502 *R);
@@ -99,8 +115,10 @@ extern int cpu_readmem(register int A);
 #define Rd6502(A) ((unsigned)cpu_readmem(A))
 /*byte Op6502(register word Addr);*/
 extern byte *RAM;
+extern byte *ROM;
 #define FAST_RDOP
 #define Op6502(A) (RAM[A])
+#define Op6502_1(A) (ROM[A])
 
 /** Debug6502() **********************************************/
 /** This function should exist if DEBUG is #defined. When   **/
@@ -110,15 +128,15 @@ extern byte *RAM;
 /*************************************************************/
 byte Debug6502(register M6502 *R);
 
-/** Interrupt6502() ******************************************/
+/** Loop6502() ***********************************************/
 /** 6502 emulation calls this function periodically to      **/
 /** check if the system hardware requires any interrupts.   **/
 /** This function must return one of following values:      **/
-/** INT_NONE, INT_IRQ, INT_NMI. Return INT_QUIT to exit the **/
+/** INT_NONE, INT_IRQ, INT_NMI, or INT_QUIT to exit the     **/
 /** emulation loop.                                         **/
 /************************************ TO BE WRITTEN BY USER **/
-/*byte Interrupt6502(register M6502 *R);*/
+/*byte Loop6502(register M6502 *R);*/
 extern int cpu_interrupt(void);
-#define Interrupt6502(R) ((byte)cpu_interrupt())
+#define Loop6502(R) ((byte)cpu_interrupt())
 
 #endif /* M6502_H */

@@ -24,10 +24,10 @@ d000-d001 ?
 I/O ports
 write:
 1c-1f     scroll registers
-40        background scroll?
-60        ?
-80        background scroll?
-a0        ?
+40        background #1 x position
+60        background #1 y position
+80        background #2 x position
+a0        background #2 y position
 c0        background control?
 
 ***************************************************************************/
@@ -40,8 +40,11 @@ c0        background control?
 extern int mpatrol_protection_r(int offset);
 
 extern void mpatrol_scroll_w(int offset,int data);
-extern void mpatrol_bgscroll1_w(int offset,int data);
-extern void mpatrol_bgscroll2_w(int offset,int data);
+extern void mpatrol_bg1xpos_w(int offset,int data);
+extern void mpatrol_bg1ypos_w(int offset,int data);
+extern void mpatrol_bg2xpos_w(int offset,int data);
+extern void mpatrol_bg2ypos_w(int offset,int data);
+extern void mpatrol_bgcontrol_w(int offset,int data);
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
 extern void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -78,8 +81,11 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x1c, 0x1f, mpatrol_scroll_w },
-	{ 0x40, 0x40, mpatrol_bgscroll1_w },
-	{ 0x80, 0x80, mpatrol_bgscroll2_w },
+	{ 0x40, 0x40, mpatrol_bg1xpos_w },
+	{ 0x60, 0x60, mpatrol_bg1ypos_w },
+	{ 0x80, 0x80, mpatrol_bg2xpos_w },
+	{ 0xa0, 0xa0, mpatrol_bg2ypos_w },
+	{ 0xc0, 0xc0, mpatrol_bgcontrol_w },
 	{ -1 }	/* end of table */
 };
 
@@ -171,11 +177,11 @@ static struct GfxLayout bgcharlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x2000, &spritelayout,   0, 8 },
-	{ 1, 0x4000, &bgcharlayout,   0, 8 },
-	{ 1, 0x5000, &bgcharlayout,   0, 8 },
-	{ 1, 0x6000, &bgcharlayout,   0, 8 },
+	{ 1, 0x0000, &charlayout,      0, 32 },
+	{ 1, 0x2000, &spritelayout, 32*4, 16 },
+	{ 1, 0x4000, &bgcharlayout, 48*4,  1 },
+	{ 1, 0x5000, &bgcharlayout, 49*4,  1 },
+	{ 1, 0x6000, &bgcharlayout, 50*4,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -188,7 +194,7 @@ static unsigned char palette[] =
 	0xd8,0x00,0x00,   /* darkred    */
 	0xf8,0x64,0xd8,   /* pink       */
 	0x00,0xd8,0x00,   /* darkgreen  */
-	0x00,0xf8,0xd8,   /* darkcyan   */
+	0x00,0x00,0x80,   /* darkblue   */
 	0xd8,0xd8,0x94,   /* darkyellow */
 	0xd8,0xf8,0xd8,   /* darkwhite  */
 	0xf8,0x94,0x44,   /* orange     */
@@ -198,25 +204,76 @@ static unsigned char palette[] =
 	0x00,0xf8,0x00,   /* green  */
 	0x00,0xff,0xff,   /* cyan   */
 	0xf8,0xf8,0x00,   /* yellow */
-	0xff,0xff,0xff    /* white  */
+	0xff,0xff,0xff,    /* white  */
+	255,183,115,    /* LTBROWN */
+	167,3,3,        /* DKBROWN */
 };
 
 enum
 {
-	black, darkpurple, darkred, pink, darkgreen, darkcyan, darkyellow,
-		darkwhite, orange, blue, red, purple, green, cyan, yellow, white
+	black, darkpurple, darkred, pink, darkgreen, darkblue, darkyellow,
+		darkwhite, orange, blue, red, purple, green, cyan, yellow, white,
+		ltbrown,dkbrown
 };
 
 static unsigned char colortable[] =
 {
-	black, darkred,   blue,       darkyellow,   /* Area, white text */
-	black, green,     darkpurple, orange,       /* fruit */
-	black, darkgreen, darkred,    yellow,       /* yellow line on title screen */
-	black, darkred,   darkgreen,  yellow,       /* enemy vulnerable body, mouth, eyes */
-	black, yellow,    darkgreen,  red,          /* monkey body, stomach, arms */
-	black, green,     orange,     yellow,       /* enemy body, mouth, eyes */
-	black, darkwhite, red,        pink,         /* pink pig */
-	black, darkcyan,  red,        darkwhite     /* white pig */
+	/* chars */
+	0,cyan,white,3,	/* MOON PATROL on title screen */
+	blue,red,white,1,	/* score beginner course */
+	cyan,black,red,blue,	/* point / time beginner course */
+	cyan,3,red,2,	/* lit caution led on champion course */
+	0,orange,15,red,	/* ground */
+	0,1,3,5,
+	blue,black,1,2,	/* high score point letter on beginner course */
+	cyan,pink,1,2,	/* point letter on champion course */
+	0,4,6,8,
+	blue,black,red,2,	/* high score beginner course */
+	0,9,12,15,
+	pink,black,1,2,	/* high score point letter on champion course */
+	pink,red,yellow,1,	/* score champion course */
+	cyan,black,red,pink,	/* point / time champion course */
+	pink,black,red,2,	/* high score champion course */
+	0,7,10,13,
+	0,1,2,3,
+	0,4,5,6,
+	0,orange,white,9,	/* starting ramp */
+	0,10,11,12,
+	0,13,14,15,
+	0,1,3,5,
+	0,7,9,11,
+	0,13,15,2,
+	0,4,6,8,
+	0,10,12,14,
+	0,1,4,7,
+	0,10,13,2,
+	0,5,8,11,
+	0,14,3,6,
+	0,9,12,15,
+	0,7,10,13,
+
+	/* sprites */
+	0,black,pink,cyan,	/* moon patrol on beginner course */
+	0,4,5,6,
+	0,7,8,9,
+	0,10,11,12,
+	0,ltbrown,14,dkbrown,
+	0,1,3,5,
+	0,7,9,11,
+	0,13,15,2,
+	0,4,6,8,
+	0,10,12,14,
+	0,1,4,7,
+	0,10,13,2,
+	0,black,red,cyan,	/* moon patrol on champion course */
+	0,14,3,6,
+	0,9,12,15,
+	0,7,10,13,
+
+	/* backgrounds */
+	0,yellow,blue,green,
+	0,1,darkgreen,green,
+	0,white,darkblue,blue,
 };
 
 

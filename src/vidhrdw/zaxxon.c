@@ -74,12 +74,7 @@ int zaxxon_vh_start(void)
 
 		for (sx = 0;sx < 512;sx += 2)
 		{
-			if (offs + sx < 0 || offs + sx >= 4096)
-			{
-				backgroundbitmap->line[sy][sx] = Machine->background_pen;
-				backgroundbitmap->line[sy][sx+1] = Machine->background_pen;
-			}
-			else
+			if (offs + sx >= 0 && offs + sx < 4096)
 			{
 				backgroundbitmap->line[sy][sx] = prebitmap->line[sx/2][offs + sx];
 				backgroundbitmap->line[sy][sx+1] = prebitmap->line[sx/2][offs + sx+1];
@@ -142,7 +137,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-0,/*					colorram[offs],*/
+					videoram[offs] >> 4,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -204,7 +199,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (videoram[offs] != 0x60)	/* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-0,/*					colorram[offs],*/
+					videoram[offs] >> 4,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

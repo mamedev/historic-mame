@@ -3,6 +3,8 @@
 #include "psg.h"
 
 
+#define AY8910_CLOCK 1000000000	/* 1 MHZ ? */
+
 #define UPDATES_PER_SECOND 60
 #define emulation_rate (400*UPDATES_PER_SECOND)
 #define buffer_len (emulation_rate/UPDATES_PER_SECOND)
@@ -77,7 +79,7 @@ void btime_sh_write_port2_w(int offset,int data)
 
 int btime_sh_start(void)
 {
-	if (AYInit(2,emulation_rate,buffer_len,0) == 0)
+	if (AYInit(2,AY8910_CLOCK,emulation_rate,buffer_len,0) == 0)
 	{
 		return 0;
 	}

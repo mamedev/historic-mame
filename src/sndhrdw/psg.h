@@ -37,10 +37,6 @@
 #define AY_PORTB	(15)
 
 
-/* default clock frequency, frequency in MHz * 100 */
-#ifndef AY8910_CLOCK
-#define AY8910_CLOCK (1832727040)	/* 1.832727040 MHZ */
-#endif /* !defined AY8910_CLOCK */
 
 /* SAMPLE_16BIT is not supported, yet */
 #ifndef SAMPLE_16BIT
@@ -84,7 +80,7 @@ struct ay8910_f {
 ** varargs are user-supplied buffers, one for each PSG (or NULL
 ** to let PSG library allocate buffers)
 */
-int AYInit(int num, int rate, int bufsiz, ...);
+int AYInit(int num, int clock, int rate, int bufsiz, ...);
 
 /*
 ** shutdown the AY8910 emulators .. make sure that no sound system stuff

@@ -9,10 +9,13 @@
 #endif
 
 
+static struct GameDriver *gamedrv;
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct MachineDriver *drv;
 
+static int hiscoreloaded;
+static char hiscorename[32];
 
 
 int frameskip;
@@ -38,8 +41,10 @@ FILE *errorlog;
 
 int main(int argc,char **argv)
 {
-	int i,log;
+	int i,log,success;
 
+
+	success = 1;
 
 	log = 0;
 	for (i = 1;i < argc;i++)
@@ -54,8 +59,9 @@ int main(int argc,char **argv)
 	{
 		if (osd_init(argc,argv) == 0)
 		{
-			if (run_machine(argc > 1 && argv[1][0] != '-' ? argv[1] : DEFAULT_NAME) != 0)
-				printf("Unable to start emulation\n");
+			if (run_machine(argc > 1 && argv[1][0] != '-' ? argv[1] : DEFAULT_NAME) == 0)
+				success = 0;
+			else printf("Unable to start emulation\n");
 
 			osd_exit();
 		}
@@ -72,7 +78,7 @@ int main(int argc,char **argv)
 
 	if (errorlog) fclose(errorlog);
 
-	exit(0);
+	return success;
 }
 
 
@@ -115,26 +121,27 @@ int init_machine(const char *gamename,int argc,char **argv)
 		return 1;
 	}
 
-	drv = drivers[i].drv;
+	gamedrv = &drivers[i];
+	drv = gamedrv->drv;
 	Machine->drv = drv;
 
-	if (readroms(drivers[i].rom,gamename) != 0)
+	if (readroms(gamedrv->rom,gamename) != 0)
 		return 1;
 
 	RAM = Machine->memory_region[drv->cpu[0].memory_region];
 	ROM = RAM;
 
 	/* decrypt the ROMs if necessary */
-	if (drivers[i].rom_decode)
+	if (gamedrv->rom_decode)
 	{
 		int j;
 
 
 		for (j = 0;j < 0x10000;j++)
-			RAM[j] = (*drivers[i].rom_decode)(j);
+			RAM[j] = (*gamedrv->rom_decode)(j);
 	}
 
-	if (drivers[i].opcode_decode)
+	if (gamedrv->opcode_decode)
 	{
 		int j;
 
@@ -149,7 +156,7 @@ int init_machine(const char *gamename,int argc,char **argv)
 		Machine->memory_region[j] = ROM;
 
 		for (j = 0;j < 0x10000;j++)
-			ROM[j] = (*drivers[i].opcode_decode)(j);
+			ROM[j] = (*gamedrv->opcode_decode)(j);
 	}
 
 
@@ -281,8 +288,23 @@ int updatescreen(void)
 	static int framecount = 0;
 
 
+	/* read hi scores from disk */
+	if (hiscoreloaded == 0 && *gamedrv->hiscore_load)
+		hiscoreloaded = (*gamedrv->hiscore_load)(hiscorename);
+
 	/* if the user pressed ESC, stop the emulation */
 	if (osd_key_pressed(OSD_KEY_ESC)) return 1;
+
+	/* if the user pressed F3, reset the emulation */
+	if (osd_key_pressed(OSD_KEY_F3))
+	{
+		/* write hi scores to disk */
+		if (hiscoreloaded != 0 && *gamedrv->hiscore_save)
+			(*gamedrv->hiscore_save)(hiscorename);
+		hiscoreloaded = 0;
+
+		return 2;
+	}
 
 	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
 	{
@@ -432,10 +454,19 @@ int run_machine(const char *gamename)
 					fclose(f);
 				}
 
+				/* we have to load the hi scores, but this will be done while */
+				/* the game is running */
+				hiscoreloaded = 0;
+				sprintf(hiscorename,"%s/%s.hi",gamename,gamename);
+
 				cpu_run();	/* run the emulation! */
 
 				if (*drv->sh_stop) (*drv->sh_stop)();
 				if (*drv->vh_stop) (*drv->vh_stop)();
+
+				/* write hi scores to disk */
+				if (hiscoreloaded != 0 && *gamedrv->hiscore_save)
+					(*gamedrv->hiscore_save)(hiscorename);
 
 				/* write dipswitch settings to disk */
 				sprintf(name,"%s/%s.dsw",gamename,gamename);

@@ -1,10 +1,8 @@
 #include "driver.h"
-
-
-/*#define AY8910_CLOCK (1536000000)*/       /* 1.536000000 MHZ */
-/*#include "psg.c"*/
 #include "psg.h"
 
+
+#define AY8910_CLOCK 1536000000	/* 1.536000000 MHZ */
 #define SND_CLOCK 3072000	/* 3.072 Mhz */
 
 
@@ -74,7 +72,7 @@ int cclimber_sh_start(void)
 		samples[2 * i + 1] = ((bits << 4) | bits) + 0x80;
 	}
 
-	if (AYInit(1,emulation_rate,buffer_len,0) == 0)
+	if (AYInit(1,AY8910_CLOCK,emulation_rate,buffer_len,0) == 0)
 	{
 		AYSetPortHandler(0,AY_PORTA,porthandler);
 		AYSetPortHandler(0,AY_PORTB,porthandler);

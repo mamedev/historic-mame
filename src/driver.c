@@ -12,6 +12,7 @@ extern struct MachineDriver ckong_driver;
 extern struct MachineDriver dkong_driver;
 extern struct MachineDriver dkongjr_driver;
 extern struct MachineDriver dkong3_driver;
+extern struct MachineDriver mario_driver;
 extern struct MachineDriver bagman_driver;
 extern struct MachineDriver wow_driver;
 extern struct MachineDriver galaxian_driver;
@@ -23,6 +24,7 @@ extern struct MachineDriver mooncrst_driver;
 extern struct MachineDriver moonqsr_driver;
 extern struct MachineDriver theend_driver;
 extern struct MachineDriver frogger_driver;
+extern struct MachineDriver froggers_driver;
 extern struct MachineDriver scramble_driver;
 extern struct MachineDriver atlantis_driver;
 extern struct MachineDriver scobra_driver;
@@ -33,7 +35,6 @@ extern struct MachineDriver pooyan_driver;
 extern struct MachineDriver phoenix_driver;
 extern struct MachineDriver carnival_driver;
 extern struct MachineDriver invaders_driver;
-extern struct MachineDriver mario_driver;
 extern struct MachineDriver zaxxon_driver;
 extern struct MachineDriver congo_driver;
 extern struct MachineDriver bombjack_driver;
@@ -145,6 +146,44 @@ ROM_END
 
 
 
+int pengo_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
+			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8840],1,6*5,f);
+			RAM[0x880c] = RAM[0x8858];
+			RAM[0x880d] = RAM[0x8859];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void pengo_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8840],1,6*5,f);
+		fclose(f);
+	}
+}
+
+
+
 ROM_START( penta_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "penta.u8",  0x0000, 0x1000 )
@@ -181,6 +220,44 @@ ROM_END
 
 
 
+int ladybug_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6073],1,3*9,f);
+			fread(&RAM[0xd380],1,13*9,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void ladybug_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6073],1,3*9,f);
+		fwrite(&RAM[0xd380],1,13*9,f);
+		fclose(f);
+	}
+}
+
+
+
 ROM_START( mrdo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "D1",  0x0000, 0x2000 )
@@ -196,6 +273,42 @@ ROM_START( mrdo_rom )
 	ROM_LOAD( "D5",  0x4000, 0x1000 )
 	ROM_LOAD( "D6",  0x5000, 0x1000 )
 ROM_END
+
+
+
+int mrdo_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xe017],"\x01\x00\x00",3) == 0 &&
+			memcmp(&RAM[0xe071],"\x01\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0xe017],1,10*10+2,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void mrdo_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0xe017],1,10*10+2,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -257,6 +370,42 @@ ROM_START( cclimber_rom )
 	ROM_LOAD( "cc13", 0x0000, 0x1000 )
 	ROM_LOAD( "cc12", 0x1000, 0x1000 )
 ROM_END
+
+
+
+int cclimber_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8083],"\x02\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x808f],"\x02\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8083],1,17*5,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void cclimber_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8083],1,17*5,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -426,6 +575,45 @@ ROM_END
 
 
 
+int ckong_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
+			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6100],1,34*5,f);
+			RAM[0x60b8] = RAM[0x611d];
+			RAM[0x60b9] = RAM[0x611e];
+			RAM[0x60ba] = RAM[0x611f];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void ckong_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6100],1,34*5,f);
+		fclose(f);
+	}
+}
+
+
+
 ROM_START( dkong_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dk.5e",  0x0000, 0x1000 )
@@ -445,6 +633,52 @@ ROM_START( dkong_rom )
 	ROM_LOAD( "dk.3h",  0x0000, 0x0800 )
 	ROM_LOAD( "dk.3f",  0x0800, 0x0800 )
 ROM_END
+
+
+
+int dkong_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
+			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6100],1,34*5,f);
+			RAM[0x60b8] = RAM[0x611d];
+			RAM[0x60b9] = RAM[0x611e];
+			RAM[0x60ba] = RAM[0x611f];
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated until a new game is started */
+			cpu_writemem(0x7621,RAM[0x6108]);
+			cpu_writemem(0x7601,RAM[0x6109]);
+			cpu_writemem(0x75e1,RAM[0x610a]);
+			cpu_writemem(0x75c1,RAM[0x610b]);
+			cpu_writemem(0x75a1,RAM[0x610b]);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void dkong_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6100],1,34*5,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -493,6 +727,68 @@ ROM_START( dkong3_rom )
 	ROM_REGION(0x4000)	/* sound? */
 	ROM_LOAD( "dk3c.5l",  0x0000, 0x2000 )
 	ROM_LOAD( "dk3c.6h",  0x2000, 0x2000 )
+ROM_END
+
+
+
+int dkong3_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
+			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6b00],1,34*5,f);
+			RAM[0x68f3] = RAM[0x6b1f];
+			RAM[0x68f4] = RAM[0x6b1e];
+			RAM[0x68f5] = RAM[0x6b1d];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void dkong3_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6b00],1,34*5,f);
+		fclose(f);
+	}
+}
+
+
+
+ROM_START( mario_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.7f", 0x0000, 0x2000 )
+	ROM_LOAD( "%s.7e", 0x2000, 0x2000 )
+	ROM_LOAD( "%s.7d", 0x4000, 0x2000 )
+	ROM_LOAD( "%s.7c", 0xf000, 0x1000 )
+
+	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.3f", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.3j", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.7m", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.7n", 0x3000, 0x1000 )
+	ROM_LOAD( "%s.7p", 0x4000, 0x1000 )
+	ROM_LOAD( "%s.7s", 0x5000, 0x1000 )
+	ROM_LOAD( "%s.7t", 0x6000, 0x1000 )
+	ROM_LOAD( "%s.7u", 0x7000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "%s.6k", 0x0000, 0x1000 )
 ROM_END
 
 
@@ -1190,29 +1486,6 @@ ROM_END
 
 
 
-ROM_START( mario_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.7f", 0x0000, 0x2000 )
-	ROM_LOAD( "%s.7e", 0x2000, 0x2000 )
-	ROM_LOAD( "%s.7d", 0x4000, 0x2000 )
-	ROM_LOAD( "%s.7c", 0xf000, 0x1000 )
-
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.3f", 0x0000, 0x1000 )
-	ROM_LOAD( "%s.3j", 0x1000, 0x1000 )
-	ROM_LOAD( "%s.7m", 0x2000, 0x1000 )
-	ROM_LOAD( "%s.7n", 0x3000, 0x1000 )
-	ROM_LOAD( "%s.7p", 0x4000, 0x1000 )
-	ROM_LOAD( "%s.7s", 0x5000, 0x1000 )
-	ROM_LOAD( "%s.7t", 0x6000, 0x1000 )
-	ROM_LOAD( "%s.7u", 0x7000, 0x1000 )
-
-	ROM_REGION(0x1000)	/* sound? */
-	ROM_LOAD( "%s.6k", 0x0000, 0x1000 )
-ROM_END
-
-
-
 ROM_START( zaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "%s.3",  0x0000, 0x2000 )
@@ -1297,9 +1570,72 @@ ROM_START( bombjack_rom )
 	ROM_REGION(0x1000)	/* background graphics */
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000 )
 
-	ROM_REGION(0x10000)	/* 64 for sound board */
+	ROM_REGION(0x10000)	/* 64k for sound board */
 	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000 )
 ROM_END
+
+
+
+int bombjack_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 &&
+			memcmp(&RAM[0x8124],"\x00\x00\x01\x00",4) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			char buf[10];
+			int hi;
+
+
+			fread(&RAM[0x8100],1,15*10,f);
+			RAM[0x80e2] = RAM[0x8100];
+			RAM[0x80e3] = RAM[0x8101];
+			RAM[0x80e4] = RAM[0x8102];
+			RAM[0x80e5] = RAM[0x8103];
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated until a new game is started */
+			hi = (RAM[0x8100] & 0x0f) +
+					(RAM[0x8100] >> 4) * 10 +
+					(RAM[0x8101] & 0x0f) * 100 +
+					(RAM[0x8101] >> 4) * 1000 +
+					(RAM[0x8102] & 0x0f) * 10000 +
+					(RAM[0x8102] >> 4) * 100000 +
+					(RAM[0x8103] & 0x0f) * 1000000 +
+					(RAM[0x8103] >> 4) * 10000000;
+			sprintf(buf,"%8d",hi);
+			cpu_writemem(0x913f,buf[0]);
+			cpu_writemem(0x911f,buf[1]);
+			cpu_writemem(0x90ff,buf[2]);
+			cpu_writemem(0x90df,buf[3]);
+			cpu_writemem(0x90bf,buf[4]);
+			cpu_writemem(0x909f,buf[5]);
+			cpu_writemem(0x907f,buf[6]);
+			cpu_writemem(0x905f,buf[7]);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void bombjack_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8100],1,15*10,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -1352,6 +1688,44 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC50", 0x0000, 0x1000 )
 	ROM_LOAD( "IC51", 0x1000, 0x1000 )
 ROM_END
+
+
+
+int nibbler_hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0290],"\x00\x50\x00\x00",4) == 0 &&
+			memcmp(&RAM[0x02b4],"\x00\x05\x00\x00",4) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0290],1,4*10,f);
+			fread(&RAM[0x02d0],1,3*10,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+void nibbler_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0290],1,4*10,f);
+		fwrite(&RAM[0x02d0],1,3*10,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -1421,6 +1795,891 @@ ROM_END
 
 
 
+unsigned btime_decode(int A)
+{
+	/* the encryption is a simple bit rotation: 76543210 -> 65342710      */
+	/* it is not known, however, when it must be applied. Only opcodes at */
+	/* addresses with this bit pattern:                                   */
+	/* xxxx xxx1 xxxx x1xx                                                */
+	/* _can_ (but not necessarily are) be encrypted.                      */
+
+	switch (A)
+	{
+		case 0xb105:
+		case 0xb116:
+		case 0xb11e:
+		case 0xb12c:
+		case 0xb13d:
+		case 0xb146:
+		case 0xb14d:
+		case 0xb154:
+		case 0xb15e:
+		case 0xb175:
+		case 0xb18f:
+		case 0xb195:
+		case 0xb19d:
+		case 0xb1a4:
+		case 0xb1bd:
+		case 0xb1c4:
+		case 0xb1cf:
+		case 0xb1d4:
+		case 0xb1dd:
+		case 0xb1f4:
+		case 0xb31c:
+		case 0xb326:
+		case 0xb336:
+		case 0xb347:
+		case 0xb34f:
+		case 0xb35d:
+		case 0xb396:
+		case 0xb39e:
+		case 0xb3ad:
+		case 0xb3af:
+		case 0xb3bc:
+		case 0xb3cc:
+		case 0xb3dd:
+		case 0xb3ed:
+		case 0xb3f7:
+		case 0xb507:
+		case 0xb50c:
+		case 0xb516:
+		case 0xb525:
+		case 0xb52d:
+		case 0xb537:
+		case 0xb53c:
+		case 0xb544:
+		case 0xb55d:
+		case 0xb567:
+		case 0xb56c:
+		case 0xb56f:
+		case 0xb575:
+		case 0xb57d:
+		case 0xb587:
+		case 0xb58c:
+		case 0xb594:
+		case 0xb59e:
+		case 0xb5ac:
+		case 0xb5b6:
+		case 0xb5be:
+		case 0xb5d4:
+		case 0xb5df:
+		case 0xb5e4:
+		case 0xb5e6:
+		case 0xb5fd:
+		case 0xb5ff:
+		case 0xb707:
+		case 0xb70d:
+		case 0xb715:
+		case 0xb71f:
+		case 0xb73d:
+		case 0xb744:
+		case 0xb746:
+		case 0xb74c:
+		case 0xb755:
+		case 0xb757:
+		case 0xb76d:
+		case 0xb786:
+		case 0xb7d6:
+		case 0xb7dc:
+		case 0xb7fe:
+		case 0xb90e:
+		case 0xb916:
+		case 0xb91e:
+		case 0xb927:
+		case 0xb92d:
+		case 0xb92f:
+		case 0xb937:
+		case 0xb93f:
+		case 0xb947:
+		case 0xb965:
+		case 0xb96f:
+		case 0xb974:
+		case 0xb97e:
+		case 0xb986:
+		case 0xb98c:
+		case 0xb99f:
+		case 0xb9a5:
+		case 0xb9bc:
+		case 0xb9ce:
+		case 0xb9f6:
+		case 0xbb0d:
+		case 0xc105:
+		case 0xc10e:
+		case 0xc115:
+		case 0xc15e:
+		case 0xc16c:
+		case 0xc17f:
+		case 0xc187:
+		case 0xc18d:
+		case 0xc1b5:
+		case 0xc1bd:
+		case 0xc1bf:
+		case 0xc1de:
+		case 0xc1ed:
+		case 0xc1f5:
+		case 0xc347:
+		case 0xc34d:
+		case 0xc355:
+		case 0xc35c:
+		case 0xc35f:
+		case 0xc365:
+		case 0xc36e:
+		case 0xc377:
+		case 0xc37c:
+		case 0xc386:
+		case 0xc396:
+		case 0xc3a4:
+		case 0xc3ac:
+		case 0xc3b7:
+		case 0xc3bc:
+		case 0xc3d6:
+		case 0xc504:
+		case 0xc50c:
+		case 0xc51e:
+		case 0xc525:
+		case 0xc52e:
+		case 0xc534:
+		case 0xc537:
+		case 0xc53d:
+		case 0xc546:
+		case 0xc54c:
+		case 0xc54f:
+		case 0xc557:
+		case 0xc55e:
+		case 0xc56e:
+		case 0xc57d:
+		case 0xc587:
+		case 0xc58c:
+		case 0xc594:
+		case 0xc596:
+		case 0xc59c:
+		case 0xc5a6:
+		case 0xc5bd:
+		case 0xc7dd:
+		case 0xc7ee:
+		case 0xc7fd:
+		case 0xc7ff:
+		case 0xc906:
+		case 0xc92f:
+		case 0xc937:
+		case 0xc93c:
+		case 0xc946:
+		case 0xc955:
+		case 0xc95d:
+		case 0xc966:
+		case 0xc96f:
+		case 0xc976:
+		case 0xc97f:
+		case 0xc986:
+		case 0xc9b5:
+		case 0xc9dd:
+		case 0xcb17:
+		case 0xcb1e:
+		case 0xcb34:
+		case 0xcb44:
+		case 0xcb56:
+		case 0xcb5e:
+		case 0xcb6e:
+		case 0xcb76:
+		case 0xcb7e:
+		case 0xcb8c:
+		case 0xcb9e:
+		case 0xcbad:
+		case 0xcbb5:
+		case 0xcbe4:
+		case 0xcbe7:
+		case 0xcd0e:
+		case 0xcd14:
+		case 0xcd1e:
+		case 0xcd2d:
+		case 0xcd3e:
+		case 0xcd47:
+		case 0xcd4d:
+		case 0xcd56:
+		case 0xcd6f:
+		case 0xcd7c:
+		case 0xcd8e:
+		case 0xcda4:
+		case 0xcdaf:
+		case 0xcdb5:
+		case 0xcdbf:
+		case 0xcdc5:
+		case 0xcdc7:
+		case 0xcdce:
+		case 0xcdd4:
+		case 0xd105:
+		case 0xd117:
+		case 0xd11d:
+		case 0xd124:
+		case 0xd137:
+		case 0xd13c:
+		case 0xd15d:
+		case 0xd197:
+		case 0xd19f:
+		case 0xd1a7:
+		case 0xd1d6:
+		case 0xd1dc:
+		case 0xd1e4:
+		case 0xd1ff:
+		case 0xd306:
+		case 0xd30d:
+		case 0xd334:
+		case 0xd345:
+		case 0xd347:
+		case 0xd36c:
+		case 0xd394:
+		case 0xd3ac:
+		case 0xd3ae:
+		case 0xd3b4:
+		case 0xd3bf:
+		case 0xd3c4:
+		case 0xd3de:
+		case 0xd3e6:
+		case 0xd3ec:
+		case 0xd3ee:
+		case 0xd3ff:
+		case 0xd50f:
+		case 0xd526:
+		case 0xd52c:
+		case 0xd53c:
+		case 0xd557:
+		case 0xd55d:
+		case 0xd56d:
+		case 0xd57e:
+		case 0xd58f:
+		case 0xd597:
+		case 0xd5a6:
+		case 0xd5af:
+		case 0xd5bf:
+		case 0xd5ce:
+		case 0xd5df:
+		case 0xd5e7:
+		case 0xd5f6:
+		case 0xd72d:
+		case 0xd734:
+		case 0xd744:
+		case 0xd757:
+		case 0xd764:
+		case 0xd78d:
+		case 0xd90f:
+		case 0xd92e:
+		case 0xd937:
+		case 0xd94d:
+		case 0xd94f:
+		case 0xd956:
+		case 0xd95e:
+		case 0xd965:
+		case 0xd9b7:
+		case 0xd9c5:
+		case 0xd9cc:
+		case 0xd9d7:
+		case 0xd9f7:
+		case 0xdb1d:
+		case 0xdb45:
+		case 0xdb4d:
+		case 0xdb57:
+		case 0xdb6d:
+		case 0xdb77:
+		case 0xdb8c:
+		case 0xdba5:
+		case 0xdbaf:
+		case 0xdbb5:
+		case 0xdbb7:
+		case 0xdbbd:
+		case 0xdbc5:
+		case 0xdbd7:
+		case 0xdbe5:
+		case 0xdbed:
+		case 0xdd1c:
+		case 0xdd2e:
+		case 0xdd47:
+		case 0xdd6d:
+		case 0xdd8d:
+		case 0xdda4:
+		case 0xddae:
+		case 0xddb6:
+		case 0xddbd:
+		case 0xddd7:
+		case 0xdddc:
+		case 0xddde:
+		case 0xddee:
+		case 0xddfd:
+		case 0xdf0f:
+		case 0xdf15:
+		case 0xdf1c:
+		case 0xdf36:
+		case 0xdf3d:
+		case 0xdf67:
+		case 0xdf75:
+		case 0xdf87:
+		case 0xdf8d:
+		case 0xdf9f:
+		case 0xdfa5:
+		case 0xdfb7:
+		case 0xdfbd:
+		case 0xdfcf:
+		case 0xdfd6:
+		case 0xe10d:
+		case 0xe127:
+		case 0xe12e:
+		case 0xe134:
+		case 0xe13f:
+		case 0xe157:
+		case 0xe15c:
+		case 0xe167:
+		case 0xe16d:
+		case 0xe17e:
+		case 0xe18f:
+		case 0xe1b5:
+		case 0xe1be:
+		case 0xe1e5:
+		case 0xe1fe:
+		case 0xe305:
+		case 0xe315:
+		case 0xe32d:
+		case 0xe347:
+		case 0xe355:
+		case 0xe357:
+		case 0xe35d:
+		case 0xe36c:
+		case 0xe376:
+		case 0xe38d:
+		case 0xe38f:
+		case 0xe395:
+		case 0xe3a4:
+		case 0xe3ae:
+		case 0xe3c5:
+		case 0xe3c7:
+		case 0xe3cd:
+		case 0xe3dc:
+		case 0xe3e6:
+		case 0xe3fd:
+		case 0xe3ff:
+		case 0xe51c:
+		case 0xe524:
+		case 0xe53e:
+		case 0xe546:
+		case 0xe567:
+		case 0xe56c:
+		case 0xe586:
+		case 0xe5ac:
+		case 0xe5b5:
+		case 0xe5be:
+		case 0xe5c7:
+		case 0xe5cc:
+		case 0xe5ce:
+		case 0xe704:
+		case 0xe70f:
+		case 0xe72e:
+		case 0xe737:
+		case 0xe746:
+		case 0xe75e:
+		case 0xe764:
+		case 0xe775:
+		case 0xe784:
+		case 0xe794:
+		case 0xe7bf:
+		case 0xe7e7:
+		case 0xe90f:
+		case 0xe916:
+		case 0xe947:
+		case 0xe95e:
+		case 0xe966:
+		case 0xe96f:
+		case 0xe97f:
+		case 0xe986:
+		case 0xe994:
+		case 0xe99d:
+		case 0xe9a4:
+		case 0xe9ad:
+		case 0xe9f5:
+		case 0xeb26:
+		case 0xeb35:
+		case 0xeb75:
+		case 0xeb77:
+		case 0xeb7d:
+		case 0xebad:
+		case 0xebbd:
+		case 0xebc7:
+		case 0xebff:
+		case 0xed2d:
+		case 0xed3e:
+		case 0xed56:
+		case 0xf1af:
+		case 0xf1b4:
+		case 0xf1b6:
+		case 0xf1bf:
+		case 0xf1c5:
+		case 0xf1dc:
+		case 0xf1e4:
+		case 0xf1ec:
+		case 0xf306:
+		case 0xf317:
+		case 0xf31e:
+		case 0xf34d:
+		case 0xf35c:
+		case 0xf36c:
+		case 0xf37d:
+		case 0xf387:
+		case 0xf38c:
+		case 0xf38e:
+		case 0xf395:
+		case 0xf39d:
+		case 0xf39f:
+		case 0xf3ae:
+		case 0xf3b4:
+		case 0xf3c6:
+		case 0xf507:
+		case 0xf50f:
+		case 0xf51d:
+		case 0xf51f:
+		case 0xf524:
+		case 0xf52c:
+		case 0xf52e:
+		case 0xf535:
+		case 0xf537:
+		case 0xf54c:
+		case 0xf564:
+		case 0xf576:
+		case 0xf57f:
+		case 0xf5c7:
+		case 0xf5de:
+		case 0xf5ee:
+		case 0xf707:
+		case 0xf70f:
+		case 0xf714:
+		case 0xf736:
+		case 0xf73d:
+		case 0xf73f:
+		case 0xf745:
+		case 0xf747:
+		case 0xf74d:
+		case 0xf74f:
+		case 0xf756:
+		case 0xf767:
+		case 0xf76c:
+		case 0xf775:
+		case 0xf77d:
+		case 0xf796:
+		case 0xf79e:
+		case 0xf7ad:
+		case 0xf7b4:
+		case 0xf7c7:
+		case 0xf7dc:
+		case 0xf7f7:
+		case 0xf7fd:
+		case 0xff1c:
+		case 0xff1e:
+		case 0xff3f:
+			return (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
+					| ((RAM[A] & 0x08) << 2);
+			break;
+
+#ifdef ONELEVEL
+		case 0xdb47:
+		case 0xdb48:
+		case 0xdb49:
+			return 0xea;
+			break;
+#endif
+
+		default:
+			return RAM[A];
+			break;
+	}
+}
+
+
+
+ROM_START( btimea_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "aa04.9b",    0xc000, 0x1000 )
+	ROM_LOAD( "aa06.13b",   0xd000, 0x1000 )
+	ROM_LOAD( "aa05.10b",   0xe000, 0x1000 )
+	ROM_LOAD( "aa07.15b",   0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "aa8.13k",    0x0000, 0x1000 )	/* charset #1 */
+	ROM_LOAD( "aa10.10k",   0x1000, 0x1000 )
+	ROM_LOAD( "aa12.7k",    0x2000, 0x1000 )
+	ROM_LOAD( "aa9.15k",    0x3000, 0x1000 )	/* charset #2 */
+	ROM_LOAD( "aa11.12k",   0x4000, 0x1000 )
+	ROM_LOAD( "aa13.9k" ,   0x5000, 0x1000 )
+	ROM_LOAD( "aa02.4b",    0x6000, 0x0800 )	/* charset #3 */
+	ROM_LOAD( "aa01.3b",    0x6800, 0x0800 )
+	ROM_LOAD( "aa00.1b",    0x7000, 0x0800 )
+
+	ROM_REGION(0x0800)	/* background graphics */
+	ROM_LOAD( "aa03.6b",    0x0000, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "aa14.12h",   0xf000, 0x1000 )
+ROM_END
+
+
+
+unsigned btimea_decode(int A)
+{
+	/* the encryption is a simple bit rotation: 76543210 -> 65342710      */
+	/* it is not known, however, when it must be applied. Only opcodes at */
+	/* addresses with this bit pattern:                                   */
+	/* xxxx xxx1 xxxx x1xx                                                */
+	/* _can_ (but not necessarily are) be encrypted.                      */
+
+	switch (A)
+	{
+		case 0xc12e:
+		case 0xc13c:
+		case 0xc14f:
+		case 0xc157:
+		case 0xc15d:
+		case 0xc185:
+		case 0xc18d:
+		case 0xc18f:
+		case 0xc1ae:
+		case 0xc1bd:
+		case 0xc1c5:
+		case 0xc1de:
+		case 0xc1fc:
+		case 0xc317:
+		case 0xc31d:
+		case 0xc325:
+		case 0xc32c:
+		case 0xc32f:
+		case 0xc335:
+		case 0xc33e:
+		case 0xc347:
+		case 0xc34c:
+		case 0xc356:
+		case 0xc366:
+		case 0xc374:
+		case 0xc37c:
+		case 0xc387:
+		case 0xc38c:
+		case 0xc50c:
+		case 0xc56c:
+		case 0xc56e:
+		case 0xc576:
+		case 0xc57d:
+		case 0xc586:
+		case 0xc58c:
+		case 0xc58f:
+		case 0xc595:
+		case 0xc597:
+		case 0xc59d:
+		case 0xc5a7:
+		case 0xc5ac:
+		case 0xc5b6:
+		case 0xc5c4:
+		case 0xc5c6:
+		case 0xc5d7:
+		case 0xc70d:
+		case 0xc71e:
+		case 0xc72d:
+		case 0xc72f:
+		case 0xc736:
+		case 0xc74d:
+		case 0xc74f:
+		case 0xc75c:
+		case 0xc764:
+		case 0xc767:
+		case 0xc78c:
+		case 0xc795:
+		case 0xc79f:
+		case 0xc7c6:
+		case 0xc7d7:
+		case 0xc7dd:
+		case 0xc7ec:
+		case 0xc7f5:
+		case 0xc91d:
+		case 0xc927:
+		case 0xc94e:
+		case 0xc965:
+		case 0xc976:
+		case 0xc97f:
+		case 0xc985:
+		case 0xc98c:
+		case 0xc997:
+		case 0xc99e:
+		case 0xc9bc:
+		case 0xc9bf:
+		case 0xc9cc:
+		case 0xc9e5:
+		case 0xcb06:
+		case 0xcb0d:
+		case 0xcb1e:
+		case 0xcb34:
+		case 0xcb3e:
+		case 0xcb47:
+		case 0xcb55:
+		case 0xcb57:
+		case 0xcb5d:
+		case 0xcb6c:
+		case 0xcb74:
+		case 0xcb7d:
+		case 0xcb7f:
+		case 0xcb8d:
+		case 0xcba4:
+		case 0xcbb4:
+		case 0xcbb6:
+		case 0xcbce:
+		case 0xcbee:
+		case 0xcbf7:
+		case 0xcbfc:
+		case 0xcd36:
+		case 0xcd3e:
+		case 0xcd44:
+		case 0xcd54:
+		case 0xcd5d:
+		case 0xcd76:
+		case 0xcd87:
+		case 0xcd8d:
+		case 0xcd8f:
+		case 0xcd95:
+		case 0xcd9d:
+		case 0xcda7:
+		case 0xcdad:
+		case 0xcdb6:
+		case 0xcf3d:
+		case 0xcf46:
+		case 0xcf57:
+		case 0xcf8d:
+		case 0xcf9c:
+		case 0xcfd7:
+		case 0xcfef:
+		case 0xcff7:
+		case 0xd106:
+		case 0xd11e:
+		case 0xd125:
+		case 0xd12c:
+		case 0xd13f:
+		case 0xd16e:
+		case 0xd177:
+		case 0xd1ad:
+		case 0xd1b6:
+		case 0xd1cd:
+		case 0xd1d5:
+		case 0xd1e5:
+		case 0xd1e7:
+		case 0xd1fe:
+		case 0xd30c:
+		case 0xd31f:
+		case 0xd326:
+		case 0xd32c:
+		case 0xd32e:
+		case 0xd336:
+		case 0xd347:
+		case 0xd3d5:
+		case 0xd3de:
+		case 0xd3e5:
+		case 0xd3f4:
+		case 0xd3fc:
+		case 0xd51f:
+		case 0xd535:
+		case 0xd537:
+		case 0xd53c:
+		case 0xd53e:
+		case 0xd56f:
+		case 0xd584:
+		case 0xd594:
+		case 0xd5b7:
+		case 0xd5be:
+		case 0xd796:
+		case 0xd7a5:
+		case 0xd7be:
+		case 0xd7c4:
+		case 0xd7cf:
+		case 0xd7d5:
+		case 0xd7f5:
+		case 0xd906:
+		case 0xd917:
+		case 0xd93f:
+		case 0xd94e:
+		case 0xd954:
+		case 0xd95e:
+		case 0xd97f:
+		case 0xd987:
+		case 0xd994:
+		case 0xd996:
+		case 0xd99e:
+		case 0xd9be:
+		case 0xd9e4:
+		case 0xd9ed:
+		case 0xd9ef:
+		case 0xdb35:
+		case 0xdb3f:
+		case 0xdb5e:
+		case 0xdb65:
+		case 0xdb67:
+		case 0xdb6c:
+		case 0xdb6e:
+		case 0xdb74:
+		case 0xdb7d:
+		case 0xdb87:
+		case 0xdb95:
+		case 0xdbc4:
+		case 0xdbdf:
+		case 0xdbe6:
+		case 0xdbef:
+		case 0xdbf4:
+		case 0xdd04:
+		case 0xdd14:
+		case 0xdd1c:
+		case 0xdd1e:
+		case 0xdd65:
+		case 0xdd6e:
+		case 0xdd86:
+		case 0xdd95:
+		case 0xdd9d:
+		case 0xddd7:
+		case 0xdddd:
+		case 0xddec:
+		case 0xdf34:
+		case 0xdf4e:
+		case 0xdf54:
+		case 0xdf6e:
+		case 0xdfbc:
+		case 0xdfd6:
+		case 0xe107:
+		case 0xe116:
+		case 0xe11e:
+		case 0xe12e:
+		case 0xe13d:
+		case 0xe15c:
+		case 0xe166:
+		case 0xe16d:
+		case 0xe174:
+		case 0xe196:
+		case 0xe1a4:
+		case 0xe1ae:
+		case 0xe1c6:
+		case 0xe1ee:
+		case 0xe1fd:
+		case 0xe1ff:
+		case 0xe31f:
+		case 0xe334:
+		case 0xe357:
+		case 0xe36c:
+		case 0xe38f:
+		case 0xe3a4:
+		case 0xe3c7:
+		case 0xe3dc:
+		case 0xe3ff:
+		case 0xe516:
+		case 0xe55d:
+		case 0xe56e:
+		case 0xe57f:
+		case 0xe586:
+		case 0xe5b4:
+		case 0xe5be:
+		case 0xe5ce:
+		case 0xe5d7:
+		case 0xe5dc:
+		case 0xe5ff:
+		case 0xe717:
+		case 0xe726:
+		case 0xe737:
+		case 0xe73e:
+		case 0xe746:
+		case 0xe76f:
+		case 0xe786:
+		case 0xe7be:
+		case 0xe7cd:
+		case 0xe93c:
+		case 0xe93f:
+		case 0xe94c:
+		case 0xe965:
+		case 0xe98c:
+		case 0xe98f:
+		case 0xe99c:
+		case 0xe9af:
+		case 0xe9e7:
+		case 0xe9ed:
+		case 0xe9f7:
+		case 0xe9fe:
+		case 0xeb07:
+		case 0xeb0c:
+		case 0xeb2f:
+		case 0xeb34:
+		case 0xeb37:
+		case 0xeb3e:
+		case 0xeb44:
+		case 0xeb4c:
+		case 0xeb77:
+		case 0xeb7e:
+		case 0xeb87:
+		case 0xeb8c:
+		case 0xebb5:
+		case 0xebd5:
+		case 0xefff:
+		case 0xf107:
+		case 0xf10f:
+		case 0xf115:
+		case 0xf117:
+		case 0xf146:
+		case 0xf14c:
+		case 0xf15d:
+		case 0xf164:
+		case 0xf194:
+		case 0xf196:
+		case 0xf1ae:
+		case 0xf1b6:
+		case 0xf1bc:
+		case 0xf1c6:
+		case 0xf1d4:
+		case 0xf1dc:
+		case 0xf1ed:
+		case 0xf1fd:
+		case 0xf305:
+		case 0xf30f:
+		case 0xf317:
+		case 0xf324:
+		case 0xf32f:
+		case 0xf35e:
+		case 0xf365:
+		case 0xf36d:
+		case 0xf36f:
+		case 0xf376:
+		case 0xf37c:
+		case 0xf38d:
+		case 0xf3a5:
+		case 0xf3b7:
+		case 0xf3cc:
+		case 0xf504:
+		case 0xf515:
+		case 0xf51e:
+		case 0xf52f:
+		case 0xf535:
+		case 0xf53f:
+		case 0xf555:
+		case 0xf564:
+		case 0xf577:
+		case 0xf57e:
+		case 0xf584:
+		case 0xf586:
+		case 0xf58c:
+		case 0xf58e:
+		case 0xf597:
+		case 0xf59c:
+		case 0xf5ad:
+		case 0xf5b6:
+		case 0xf5be:
+		case 0xf5d7:
+		case 0xf5df:
+		case 0xf5ec:
+		case 0xf5ee:
+		case 0xf5f5:
+			return (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
+					| ((RAM[A] & 0x08) << 2);
+			break;
+		default:
+			return RAM[A];
+			break;
+	}
+}
+
+
+
 ROM_START( jumpbug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jb1", 0x0000, 0x1000 )
@@ -1444,81 +2703,82 @@ ROM_END
 
 struct GameDriver drivers[] =
 {
-	{ "pacman",   pacman_rom,   0, 0,               &pacman_driver },
-	{ "pacmod",   pacmod_rom,   0, 0,               &pacman_driver },
-	{ "namcopac", pacman_rom,   0, 0,               &pacman_driver },
-	{ "hangly",   pacman_rom,   0, 0,               &pacman_driver },
-	{ "puckman",  pacman_rom,   0, 0,               &pacman_driver },
-	{ "piranha",  piranha_rom,  0, 0,               &pacman_driver },
-	{ "mspacman", mspacman_rom, 0, 0,               &mspacman_driver },
-	{ "crush",    crush_rom,    0, 0,               &crush_driver },
-	{ "pengo",    pengo_rom,    0, 0,               &pengo_driver },
-	{ "penta",    penta_rom,    0, 0,               &pengo_driver },
-	{ "ladybug",  ladybug_rom,  0, 0,               &ladybug_driver },
-	{ "mrdo",     mrdo_rom,     0, 0,               &mrdo_driver },
-	{ "mrlo",     mrlo_rom,     0, 0,               &mrdo_driver },
-	{ "docastle", docastle_rom, 0, 0,               &docastle_driver },
-	{ "cclimber", cclimber_rom, 0, cclimber_decode, &cclimber_driver },
-	{ "ccjap",    ccjap_rom,    0, ccjap_decode,    &cclimber_driver },
-	{ "ccboot",   ccboot_rom,   0, ccjap_decode,    &cclimber_driver },
-	{ "ckong",    ckong_rom,    0, 0,               &ckong_driver },
-	{ "dkong",    dkong_rom,    0, 0,               &dkong_driver },
-	{ "dkongjr",  dkongjr_rom,  0, 0,               &dkongjr_driver },
-	{ "dkong3",   dkong3_rom,   0, 0,               &dkong3_driver },
-	{ "bagman",   bagman_rom,   0, 0,               &bagman_driver },
-	{ "wow",      wow_rom,      0, 0,               &wow_driver },
-	{ "robby",    robby_rom,    0, 0,               &wow_driver },
-	{ "gorf",     gorf_rom,     0, 0,               &wow_driver },
-	{ "galaxian", galaxian_rom, 0, 0,               &galaxian_driver },
-	{ "galnamco", galnamco_rom, 0, 0,               &galaxian_driver },
-	{ "superg",   galnamco_rom, 0, 0,               &galaxian_driver },
-	{ "galapx",   galapx_rom,   0, 0,               &galaxian_driver },
-	{ "galap1",   galap1_rom,   0, 0,               &galaxian_driver },
-	{ "galap4",   galap4_rom,   0, 0,               &galaxian_driver },
-	{ "galturbo", galnamco_rom, 0, 0,               &galaxian_driver },
-	{ "pisces",   pisces_rom,   0, 0,               &pisces_driver },
-	{ "japirem",  japirem_rom,  0, 0,               &japirem_driver },
-	{ "uniwars",  uniwars_rom,  0, 0,               &uniwars_driver },
-	{ "warofbug", galaxian_rom, 0, 0,               &warofbug_driver },
-	{ "mooncrst", mooncrst_rom, moonqsr_decode, 0,  &mooncrst_driver },
-	{ "mooncrsb", mooncrsb_rom, 0, 0,               &mooncrst_driver },
-	{ "moonqsr",  moonqsr_rom,  0, moonqsr_decode,  &moonqsr_driver },
-	{ "theend",   theend_rom,   0, 0,               &theend_driver },
-	{ "scramble", scramble_rom, 0, 0,               &scramble_driver },
-	{ "atlantis", atlantis_rom, 0, 0,               &atlantis_driver },
-	{ "scobra",   scobra_rom,   0, 0,               &scobra_driver },
-	{ "scobrak",  scobrak_rom,  0, 0,               &scobra_driver },
-	{ "scobrab",  scobrab_rom,  0, 0,               &scobra_driver },
-	{ "losttomb", losttomb_rom, 0, 0,               &scobra_driver },
-	{ "frogger",  frogger_rom,  0, 0,               &frogger_driver },
-	{ "froggers", froggers_rom, 0, 0,               &scramble_driver },
-	{ "amidar",   amidar_rom,   0, 0,               &amidar_driver },
-	{ "amidarus", amidarus_rom, 0, 0,               &amidar_driver },
-	{ "turtles",  turtles_rom,  0, 0,               &turtles_driver },
-	{ "rallyx",   rallyx_rom,   0, 0,               &rallyx_driver },
-	{ "timeplt",  timeplt_rom,  0, 0,               &timeplt_driver },
-	{ "spaceplt", timeplt_rom,  0, 0,               &timeplt_driver },
-	{ "pooyan",   pooyan_rom,   0, 0,               &pooyan_driver },
-	{ "phoenix",  phoenix_rom,  0, 0,               &phoenix_driver },
-	{ "pleiades", pleiades_rom, 0, 0,               &phoenix_driver },
-	{ "carnival", carnival_rom, 0, 0,               &carnival_driver },
-	{ "invaders", invaders_rom, 0, 0,               &invaders_driver },
-	{ "earthinv", invaders_rom, 0, 0,               &invaders_driver },
-	{ "spaceatt", spaceatt_rom, 0, 0,               &invaders_driver },
-	{ "invdelux", invdelux_rom, 0, 0,               &invaders_driver },
-	{ "galxwars", galxwars_rom, 0, 0,               &invaders_driver },
-	{ "lrescue",  lrescue_rom,  0, 0,               &invaders_driver },
-	{ "desterth", desterth_rom, 0, 0,               &invaders_driver },
-	{ "mario",    mario_rom,    0, 0,               &mario_driver },
-	{ "zaxxon",   zaxxon_rom,   0, 0,               &zaxxon_driver },
-	{ "congo",    congo_rom,    0, 0,               &congo_driver },
-	{ "bombjack", bombjack_rom, 0, 0,               &bombjack_driver },
-	{ "centiped", centiped_rom, 0, 0,               &centiped_driver },
-	{ "milliped", milliped_rom, 0, 0,               &milliped_driver },
-	{ "nibbler",  nibbler_rom,  0, 0,               &nibbler_driver },
-	{ "mpatrol",  mpatrol_rom,  0, 0,               &mpatrol_driver },
-	{ "mranger",  mranger_rom,  0, 0,               &mpatrol_driver },
-	{ "btime",    btime_rom,    0, 0,               &btime_driver },
-	{ "jumpbug",  jumpbug_rom,  0, 0,               &jumpbug_driver },
+	{ "pacman",   pacman_rom,   &pacman_driver },
+	{ "pacmod",   pacmod_rom,   &pacman_driver },
+	{ "namcopac", pacman_rom,   &pacman_driver },
+	{ "hangly",   pacman_rom,   &pacman_driver },
+	{ "puckman",  pacman_rom,   &pacman_driver },
+	{ "piranha",  piranha_rom,  &pacman_driver },
+	{ "mspacman", mspacman_rom, &mspacman_driver },
+	{ "crush",    crush_rom,    &crush_driver },
+	{ "pengo",    pengo_rom,    &pengo_driver,    pengo_hiload,    pengo_hisave },
+	{ "penta",    penta_rom,    &pengo_driver,    pengo_hiload,    pengo_hisave },
+	{ "ladybug",  ladybug_rom,  &ladybug_driver,  ladybug_hiload,  ladybug_hisave },
+	{ "mrdo",     mrdo_rom,     &mrdo_driver,     mrdo_hiload,     mrdo_hisave },
+	{ "mrlo",     mrlo_rom,     &mrdo_driver,     mrdo_hiload,     mrdo_hisave },
+	{ "docastle", docastle_rom, &docastle_driver },
+	{ "cclimber", cclimber_rom, &cclimber_driver, cclimber_hiload, cclimber_hisave, 0, cclimber_decode },
+	{ "ccjap",    ccjap_rom,    &cclimber_driver, cclimber_hiload, cclimber_hisave, 0, ccjap_decode },
+	{ "ccboot",   ccboot_rom,   &cclimber_driver, cclimber_hiload, cclimber_hisave, 0, ccjap_decode },
+	{ "ckong",    ckong_rom,    &ckong_driver,    ckong_hiload,    ckong_hisave },
+	{ "dkong",    dkong_rom,    &dkong_driver,    dkong_hiload,    dkong_hisave },
+	{ "dkongjr",  dkongjr_rom,  &dkongjr_driver,  dkong_hiload,    dkong_hisave },
+	{ "dkong3",   dkong3_rom,   &dkong3_driver,   dkong3_hiload,   dkong3_hisave },
+	{ "mario",    mario_rom,    &mario_driver,    dkong3_hiload,   dkong3_hisave },
+	{ "bagman",   bagman_rom,   &bagman_driver },
+	{ "wow",      wow_rom,      &wow_driver },
+	{ "robby",    robby_rom,    &wow_driver },
+	{ "gorf",     gorf_rom,     &wow_driver },
+	{ "galaxian", galaxian_rom, &galaxian_driver },
+	{ "galnamco", galnamco_rom, &galaxian_driver },
+	{ "superg",   galnamco_rom, &galaxian_driver },
+	{ "galapx",   galapx_rom,   &galaxian_driver },
+	{ "galap1",   galap1_rom,   &galaxian_driver },
+	{ "galap4",   galap4_rom,   &galaxian_driver },
+	{ "galturbo", galnamco_rom, &galaxian_driver },
+	{ "pisces",   pisces_rom,   &pisces_driver },
+	{ "japirem",  japirem_rom,  &japirem_driver },
+	{ "uniwars",  uniwars_rom,  &uniwars_driver },
+	{ "warofbug", galaxian_rom, &warofbug_driver },
+	{ "mooncrst", mooncrst_rom, &mooncrst_driver, 0, 0, moonqsr_decode, 0 },
+	{ "mooncrsb", mooncrsb_rom, &mooncrst_driver },
+	{ "moonqsr",  moonqsr_rom,  &moonqsr_driver, 0, 0, 0, moonqsr_decode },
+	{ "theend",   theend_rom,   &theend_driver },
+	{ "scramble", scramble_rom, &scramble_driver },
+	{ "atlantis", atlantis_rom, &atlantis_driver },
+	{ "scobra",   scobra_rom,   &scobra_driver },
+	{ "scobrak",  scobrak_rom,  &scobra_driver },
+	{ "scobrab",  scobrab_rom,  &scobra_driver },
+	{ "losttomb", losttomb_rom, &scobra_driver },
+	{ "frogger",  frogger_rom,  &frogger_driver },
+	{ "froggers", froggers_rom, &froggers_driver },
+	{ "amidar",   amidar_rom,   &amidar_driver },
+	{ "amidarus", amidarus_rom, &amidar_driver },
+	{ "turtles",  turtles_rom,  &turtles_driver },
+	{ "rallyx",   rallyx_rom,   &rallyx_driver },
+	{ "timeplt",  timeplt_rom,  &timeplt_driver },
+	{ "spaceplt", timeplt_rom,  &timeplt_driver },
+	{ "pooyan",   pooyan_rom,   &pooyan_driver },
+	{ "phoenix",  phoenix_rom,  &phoenix_driver },
+	{ "pleiades", pleiades_rom, &phoenix_driver },
+	{ "carnival", carnival_rom, &carnival_driver },
+	{ "invaders", invaders_rom, &invaders_driver },
+	{ "earthinv", invaders_rom, &invaders_driver },
+	{ "spaceatt", spaceatt_rom, &invaders_driver },
+	{ "invdelux", invdelux_rom, &invaders_driver },
+	{ "galxwars", galxwars_rom, &invaders_driver },
+	{ "lrescue",  lrescue_rom,  &invaders_driver },
+	{ "desterth", desterth_rom, &invaders_driver },
+	{ "zaxxon",   zaxxon_rom,   &zaxxon_driver },
+	{ "congo",    congo_rom,    &congo_driver },
+	{ "bombjack", bombjack_rom, &bombjack_driver, bombjack_hiload, bombjack_hisave },
+	{ "centiped", centiped_rom, &centiped_driver },
+	{ "milliped", milliped_rom, &milliped_driver },
+	{ "nibbler",  nibbler_rom,  &nibbler_driver,  nibbler_hiload,  nibbler_hisave },
+	{ "mpatrol",  mpatrol_rom,  &mpatrol_driver },
+	{ "mranger",  mranger_rom,  &mpatrol_driver },
+	{ "btime",    btime_rom,    &btime_driver, 0, 0, 0, btime_decode },
+	{ "btimea",   btimea_rom,   &btime_driver, 0, 0, 0, btimea_decode },
+	{ "jumpbug",  jumpbug_rom,  &jumpbug_driver },
 	{ 0	}	/* end of array */
 };

@@ -60,7 +60,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
-         obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/drivers/phoenix.o \
+         obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/drivers/carnival.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/drivers/invaders.o \
          obj/vidhrdw/mario.o obj/drivers/mario.o \

@@ -4,6 +4,9 @@
 
 void cpu_run(void);
 
+void cpu_writemem(register int A,register unsigned char V);
+int cpu_readmem(register int A);
+
 /* some useful general purpose functions for the memory map */
 int readinputport(int port);
 int input_port_0_r(int offset);

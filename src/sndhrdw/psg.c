@@ -26,6 +26,7 @@
 static int AYSoundRate; 	/* Output rate (Hz) */
 static int AYBufSize;		/* size of sound buffer, in samples */
 static int AYNumChips;		/* total # of PSG's emulated */
+static int AYClockFreq;	/* in deciHz */
 
 static AY8910 *AYPSG;		/* array of PSG's */
 
@@ -40,7 +41,7 @@ static void _AYFreeChip(int num);
 ** 'rate' is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int rate, int bufsiz, ... )
+int AYInit(int num, int clock, int rate, int bufsiz, ... )
 {
     int i;
     va_list ap;
@@ -52,6 +53,7 @@ int AYInit(int num, int rate, int bufsiz, ... )
     if (AYPSG) return (-1);	/* duplicate init. */
 
     AYNumChips = num;
+    AYClockFreq = clock;
     AYSoundRate = rate;
     AYBufSize = bufsiz;
 
@@ -236,19 +238,19 @@ static void _AYUpdateChip(int num)
     int c0, c1, l0, l1, l2;
 
     x = (PSG->Regs[AY_AFINE]+((unsigned)(PSG->Regs[AY_ACOARSE]&0xF)<<8));
-    PSG->Incr0 = x ? AY8910_CLOCK / AYSoundRate * 4 / x : 0;
+    PSG->Incr0 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = (PSG->Regs[AY_BFINE]+((unsigned)(PSG->Regs[AY_BCOARSE]&0xF)<<8));
-    PSG->Incr1 = x ? AY8910_CLOCK / AYSoundRate * 4 / x : 0;
+    PSG->Incr1 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = (PSG->Regs[AY_CFINE]+((unsigned)(PSG->Regs[AY_CCOARSE]&0xF)<<8));
-    PSG->Incr2 = x ? AY8910_CLOCK / AYSoundRate * 4 / x : 0;
+    PSG->Incr2 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;
 
     x = PSG->Regs[AY_NOISEPER]&0x1F;
-    PSG->Incrnoise = AY8910_CLOCK / AYSoundRate * 4 / ( x ? x : 1 );
+    PSG->Incrnoise = AYClockFreq / AYSoundRate * 4 / ( x ? x : 1 );
 
     x = (PSG->Regs[AY_EFINE]+((unsigned)PSG->Regs[AY_ECOARSE]<<8));
-    PSG->Increnv = x ? AY8910_CLOCK / AYSoundRate * 4 / x * AYBufSize : 0;
+    PSG->Increnv = x ? AYClockFreq / AYSoundRate * 4 / x * AYBufSize : 0;
 
     PSG->Envelope = _AYEnvForms[PSG->Regs[AY_ESHAPE]][(PSG->Countenv>>16)&0x1F];
 
