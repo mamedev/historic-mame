@@ -263,9 +263,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &charlayout,      0, 1 },
-    { 1, 0x02000, &pflayout,        4, 1 },
-    { 1, 0x12000, &spritelayout, 4+16, 1 },
+    { 1, 0x00000, &charlayout,    0, 1 },
+    { 1, 0x02000, &pflayout,      0, 1 },
+    { 1, 0x12000, &spritelayout,  0, 1 },
 	{ -1 }
 };
 
@@ -324,10 +324,10 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-    37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
+	37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-    4+16+16,4+16+16,
-    0,
+	1024,0,	/* no colortable, we do the lookups ourselves */
+	0,
 
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,

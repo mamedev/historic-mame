@@ -11,8 +11,6 @@
 #include <unzip.h>
 
 
-/* Mame frontend interface & commandline */
-/* parsing rountines by Maurizio Zanello */
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -359,13 +357,14 @@ int frontend_help (int argc, char **argv)
 				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->name))
 				{
-					printf("%10s",drivers[i]->name);
+					printf("%-8s",drivers[i]->name);
 					j++;
-					if (!(j % 7)) printf("\n");
+					if (!(j % 8)) printf("\n");
+					else printf("  ");
 				}
 				i++;
 			}
-			if (j % 7) printf("\n");
+			if (j % 8) printf("\n");
 			printf("\n");
 			if (j != i) printf("Total ROM sets displayed: %4d - ", j);
 			printf("Total ROM sets supported: %4d\n", i);
@@ -447,8 +446,8 @@ int frontend_help (int argc, char **argv)
 
             /* First, we shall print the header */
 
-            printf(" romname  driver      cpu 1   cpu 2   cpu 3   sound 1   sound 2   sound 3   name\n");
-            printf("--------  ----------  -----   -----   -----   -------   -------   -------   --------------------------\n");
+            printf(" romname driver     cpu 1    cpu 2    cpu 3    cpu 4    sound 1     sound 2     sound 3     sound 4     name\n");
+            printf("-------- ---------- -------- -------- -------- -------- ----------- ----------- ----------- ----------- --------------------------\n");
 
             /* Let's cycle through the drivers */
 
@@ -466,96 +465,33 @@ int frontend_help (int argc, char **argv)
 
 					/* First, the rom name */
 
-					printf("%-8s  ",drivers[i]->name);
+					printf("%-8s ",drivers[i]->name);
 
 					/* source file (skip the leading "src/drivers/" */
 
-					printf("%-10s  ",&drivers[i]->source_file[12]);
+					printf("%-10s ",&drivers[i]->source_file[12]);
 
 					/* Then, cpus */
 
-					for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+					for(j=0;j<MAX_CPU;j++)
 					{
-						switch(x_cpu[j].cpu_type & (~CPU_FLAGS_MASK | CPU_AUDIO_CPU))
-				{
-							case 0:         printf("        "); break;
-							case CPU_Z80:   printf("Z80     "); break;
-							case CPU_8085A: printf("I8085   "); break;
-							case CPU_M6502: printf("M6502   "); break;
-							case CPU_I86:   printf("I86     "); break;
-							case CPU_I8039: printf("I8039   "); break;
-							case CPU_M6803: printf("M6808   "); break;
-							case CPU_M6805: printf("M6805   "); break;
-							case CPU_M6809: printf("M6809   "); break;
-							case CPU_M68000:printf("M68000  "); break;
-							case CPU_T11   :printf("T-11    "); break;
-							case CPU_S2650 :printf("S2650   "); break;
-							case CPU_TMS34010 :printf("TMS34010"); break;
-							case CPU_TMS9900:printf("TMS9900"); break;
-
-							case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
-							case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
-							case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
-							case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
-							case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
-							case CPU_M6803 |CPU_AUDIO_CPU: printf("[M6808] "); break;
-							case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
-							case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
-							case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
-							case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
-							case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
-							case CPU_TMS34010 |CPU_AUDIO_CPU: printf("[TMS34010] "); break;
-							case CPU_TMS9900|CPU_AUDIO_CPU: printf("[TMS9900] "); break;
-						}
+						if (x_cpu[j].cpu_type & CPU_AUDIO_CPU)
+							printf("[%-6s] ",info_cpu_name(&x_cpu[j]));
+						else
+							printf("%-8s ",info_cpu_name(&x_cpu[j]));
 					}
 
-					for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+					/* Then, sound chips */
+
+					for(j=0;j<MAX_CPU;j++)
 					{
-
-						/* Dummy int to hold the number of specific sound chip.
-						   In every multiple-chip interface, number of chips
-						   is defined as the first variable, and it is integer. */
-
-						int *x_num = x_sound[j].sound_interface;
-
-						switch(x_sound[j].sound_type)
+						if (info_sound_num(&x_sound[j]))
 						{
-							case 0: printf("          "); break; /* These don't have a number of chips, only one possible */
-							case SOUND_CUSTOM:  printf("Custom    "); break;
-							case SOUND_SAMPLES: printf("Samples   "); break;
-							case SOUND_NAMCO:   printf("Namco     "); break;
-							case SOUND_TMS5220: printf("TMS5520   "); break;
-							case SOUND_VLM5030: printf("VLM5030   "); break;
-
-							default:
-
-									/* Let's print out the number of the chips */
-
-									printf("%dx",*x_num);
-
-									/* Then the chip's name */
-
-									switch(x_sound[j].sound_type)
-									{
-										case SOUND_DAC:        printf("DAC     "); break;
-										case SOUND_AY8910:     printf("AY-8910 "); break;
-										case SOUND_YM2203:     printf("YM-2203 "); break;
-										case SOUND_YM2151:     printf("YM-2151 "); break;
-										case SOUND_YM2151_ALT: printf("YM-2151a"); break;
-										case SOUND_YM2413:     printf("YM-2413 "); break;
-										case SOUND_YM2610:     printf("YM-2610 "); break;
-										case SOUND_YM3526:     printf("YM-3526 "); break;
-										case SOUND_YM3812:     printf("YM-3812 "); break;
-										case SOUND_SN76496:    printf("SN76496 "); break;
-										case SOUND_POKEY:      printf("Pokey   "); break;
-										case SOUND_NES:        printf("NES     "); break;
-										case SOUND_ADPCM:      printf("ADPCM   "); break;
-										case SOUND_OKIM6295:   printf("OKI6295 "); break;
-										case SOUND_MSM5205:    printf("MSM5205 "); break;
-										case SOUND_ASTROCADE:  printf("ASTRCADE"); break;
-									}
-									break;
+							printf("%dx",info_sound_num(&x_sound[j]));
+							printf("%-9s ",info_sound_name(&x_sound[j]));
 						}
+						else
+							printf("%-11s ",info_sound_name(&x_sound[j]));
 					}
 
 					/* Lastly, the name of the game and a \newline */
@@ -637,7 +573,7 @@ int frontend_help (int argc, char **argv)
 
 				while (romp->name || romp->offset || romp->length)
 				{
-					if (romp->name && romp->name != (char *)-1)
+					if (romp->name && romp->name != (char *)-1 && romp->crc)
 					{
 						j = i+1;
 						while (drivers[j])
@@ -684,6 +620,7 @@ int frontend_help (int argc, char **argv)
 		int incorrect = 0;
 		int res = 0;
 		int total;
+		int notfound = 0;
 
 		total = 0;
 		for (i = 0; drivers[i]; i++)
@@ -707,7 +644,11 @@ int frontend_help (int argc, char **argv)
 					/* if the game is a clone, try loading the ROM from the main version */
 					if (drivers[i]->clone_of == 0 ||
 							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
-						if (stricmp(gamename, drivers[i]->name) != 0) continue;
+						if (stricmp(gamename, drivers[i]->name) != 0)
+						{
+							notfound++;
+							goto nextloop;
+						}
 				}
 			}
 
@@ -715,7 +656,11 @@ int frontend_help (int argc, char **argv)
 			{
 				res = VerifyRomSet (i,(verify_printf_proc)printf);
 
-				if (res == CLONE_NOTFOUND) continue;
+				if (res == CLONE_NOTFOUND)
+				{
+					notfound++;
+					goto nextloop;
+				}
 
 				if (res != CORRECT)
 					printf ("romset %s ", drivers[i]->name);
@@ -733,7 +678,10 @@ int frontend_help (int argc, char **argv)
 			}
 
 			if (res == NOTFOUND)
+			{
 				printf ("not found\n\n");
+				notfound++;
+			}
 			else if (res == INCORRECT)
 			{
 				printf ("incorrect\n\n");
@@ -744,12 +692,16 @@ int frontend_help (int argc, char **argv)
 			if (res)
 				err = res;
 
-			fprintf(stderr,"%d%%\r",100 * (correct+incorrect) / total);
+nextloop:
+			fprintf(stderr,"%d%%\r",100 * (correct+incorrect+notfound) / total);
 		}
 
 		if (correct+incorrect == 0)
 		{
-			printf("Game \"%s\" not supported!\n",gamename);
+			if (notfound > 0)
+				printf("Game \"%s\" not found!\n",gamename);
+			else
+				printf("Game \"%s\" not supported!\n",gamename);
 			return 1;
 		}
 		else

@@ -431,10 +431,10 @@ ROM_START( digdug_rom )
 	ROM_LOAD( "136007.118",   0x4000, 0x1000, 0x458499e9 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "digdug.5n",    0x0000, 0x020, 0x4cb9da99 )
-	ROM_LOAD( "digdug.1c",    0x0020, 0x100, 0x00c7c419 )
-	ROM_LOAD( "digdug.2n",    0x0120, 0x100, 0xe9b3e08e )
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
+	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
+	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "136007.105",   0x0000, 0x1000, 0x0a2aef4a )
@@ -446,8 +446,8 @@ ROM_START( digdug_rom )
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
 	ROM_LOAD( "136007.114",   0x0000, 0x1000, 0xd6822397 )
 
-	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "digdug.spr",   0x0000, 0x100, 0x7a2815b4 )
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
 ROM_START( digdugnm_rom )
@@ -465,10 +465,10 @@ ROM_START( digdugnm_rom )
 	ROM_LOAD( "136007.118",   0x4000, 0x1000, 0x458499e9 )
 	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
 
-	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "digdug.5n",    0x0000, 0x020, 0x4cb9da99 )
-	ROM_LOAD( "digdug.1c",    0x0020, 0x100, 0x00c7c419 )
-	ROM_LOAD( "digdug.2n",    0x0120, 0x100, 0xe9b3e08e )
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
+	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
+	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "dd1.5b",       0x0000, 0x1000, 0x370ef9b4 )
@@ -480,10 +480,45 @@ ROM_START( digdugnm_rom )
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
 	ROM_LOAD( "dd1.10b",      0x0000, 0x1000, 0x2cf399c2 )
 
-	ROM_REGION(0x100)	/* sound prom */
-	ROM_LOAD( "digdug.spr",   0x0000, 0x100, 0x7a2815b4 )
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
+ROM_START( dzigzag_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
+	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
+	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
+	ROM_LOAD( "zigzag4",      0x3000, 0x1000, 0xda20d2f6 )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zigzag8",      0x0000, 0x0800, 0x86120541 )
+	ROM_LOAD( "dd1.11",       0x1000, 0x1000, 0x7b383983 )
+	ROM_LOAD( "136007.116",   0x2000, 0x1000, 0xe22957c8 )
+	ROM_LOAD( "zigzag12",     0x3000, 0x1000, 0x386a0956 )
+	ROM_LOAD( "zigzag13",     0x4000, 0x1000, 0x69f6e395 )
+	ROM_LOAD( "136007.119",   0x5000, 0x1000, 0xc58252a0 )
+
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, 0x4cb9da99 )
+	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
+	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "zigzag5",      0x0000, 0x2000, 0xf803c748 )
+
+	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
+
+	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
+	ROM_LOAD( "dd1.10b",      0x0000, 0x1000, 0x2cf399c2 )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "zigzag7",      0x0000, 0x1000, 0x24c3510c )
+ROM_END
 
 
 static int hiload(void)
@@ -563,6 +598,32 @@ struct GameDriver digdugnm_driver =
 	0,
 
 	digdugnm_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	digdug_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver dzigzag_driver =
+{
+	__FILE__,
+	&digdug_driver,
+	"dzigzag",
+	"Zig Zag (Dig Dug hardware)",
+	"1982",
+	"bootleg",
+	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
+	&machine_driver,
+	0,
+
+	dzigzag_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

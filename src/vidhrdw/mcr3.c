@@ -14,6 +14,7 @@
 
 static struct artwork *dotron_backdrop = NULL;
 static unsigned char dotron_palettes[3][3*256];
+static int light_status;
 
 #ifndef MIN
 #define MIN(x,y) (x)<(y)?(x):(y)
@@ -532,25 +533,9 @@ static void dotron_change_palette(int which)
 				     new_palette[i*3+1], new_palette[i*3+2]);
 }
 
-void dotron_change_light (int light)
+void dotron_change_light(int light)
 {
-	static int light_status=4;
-
-	if (dotron_backdrop != NULL)
-	{
-		light = (light & 0x01) + ((light>>1) & 0x01);
-		if (light != light_status)
-		{
-			dotron_change_palette(light);
-			if (light>light_status)
-			{
-				/* only flash if the light is turned on */
-				timer_set (0.05, light_status, dotron_change_palette);
-				timer_set (0.1, light, dotron_change_palette);
-			}
-			light_status = light;
-		}
-	}
+	light_status = light;
 }
 
 void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -560,6 +545,21 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int attr;
 	int color;
 	struct rectangle sclip;
+
+
+	/* handle background lights */
+	if (dotron_backdrop != NULL)
+	{
+		int light;
+
+
+		light = 0;
+		if (light_status & 1) light++;
+		if ((light_status & 2) && (cpu_getcurrentframe() & 1)) light++;	/* strobe */
+
+		dotron_change_palette(light);
+	}
+
 
 	/* Screen clip, because our backdrop is a different resolution than the game */
 	sclip.min_x = DOTRON_X_START + 0;

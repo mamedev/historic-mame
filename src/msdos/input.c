@@ -1,7 +1,7 @@
-#include "driver.h"
-#define inline __inline__	/* keep allegro.h happy */
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
 #include <allegro.h>
-#undef inline
+#undef __INLINE__
+#include "driver.h"
 
 
 void my_textout (char *buf, int x, int y);
@@ -24,21 +24,38 @@ void msdos_init_input (void)
 		/* if valid data was found, this also sets Allegro's joy_type */
 		err=load_joystick_data(0);
 
-		/* valid calibration? user has choosen another joystick type? */
-		if (err || (joystick != joy_type))
+		/* valid calibration? */
+		if (err)
 		{
-			if (install_joystick(joystick) != 0)
+			if (errorlog)
+					fprintf (errorlog, "No calibration data found\n");
+			if (install_joystick (joystick) != 0)
 			{
 				printf ("Joystick not found.\n");
 				joystick = JOY_TYPE_NONE;
 			}
 		}
-	}
-	else
-	{
-		joystick = JOY_TYPE_NONE;
-	}
+		else if (joystick != joy_type)
+		{
+			if (errorlog)
+				fprintf (errorlog, "Calibration data is from different joystick\n");
+			remove_joystick();
+			if (install_joystick (joystick) != 0)
+			{
+				printf ("Joystick not found.\n");
+				joystick = JOY_TYPE_NONE;
+			}
+		}
 
+		if (errorlog)
+		{
+			if (joystick == JOY_TYPE_NONE)
+				fprintf (errorlog, "Joystick not found\n");
+			else
+				fprintf (errorlog, "Installed %s %s\n",
+						joystick_driver->name, joystick_driver->desc);
+		}
+	}
 
 	if (use_mouse && install_mouse() != -1)
 		use_mouse = 1;

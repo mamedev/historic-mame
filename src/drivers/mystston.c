@@ -236,8 +236,8 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	3,	/* 3 bits per pixel */
 	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
@@ -247,10 +247,10 @@ static struct GfxLayout spritelayout =
 	256,    /* 256 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*256*16*16, 256*16*16, 0 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every sprite takes 16 consecutive bytes */
 };
 
@@ -260,10 +260,10 @@ static struct GfxLayout tilelayout =
 	512,    /* 512 tiles */
 	3,	/* 3 bits per pixel */
 	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every tile takes 16 consecutive bytes */
 };
 
@@ -309,7 +309,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	24, 24,
 	0,
@@ -428,7 +428,7 @@ struct GameDriver mystston_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

@@ -72,6 +72,8 @@ World Cup 90 bootleg.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "z80/z80.h"
+
 
 #define TEST_DIPS false /* enable to test unmapped dip switches */
 
@@ -376,7 +378,7 @@ static void irqhandler(void)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz ????? */
+	2000000,	/* 2 MHz ????? */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },

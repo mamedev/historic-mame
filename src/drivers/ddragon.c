@@ -21,6 +21,7 @@ multiple sampling rates, all samples currently play at 8khz.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "m6809/m6809.h"
+#include "z80/z80.h"
 
 /* from vidhrdw */
 extern unsigned char *dd_videoram;

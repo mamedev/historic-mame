@@ -50,6 +50,13 @@ write
 interrupts:
 interrupt mode 1 triggered by the main CPU
 
+
+Interesting tidbit:
+
+There is a bug in Amidars. Look at the loop at 0x2715. It expects DE to be
+saved during the call to 0x2726, but it can be destroyed, causing the loop
+to read all kinds of bogus memory locations.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -73,6 +80,7 @@ int scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int scramble_vh_interrupt(void);
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
+void scramble_filter_w(int offset, int data);
 
 int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
@@ -81,13 +89,14 @@ int frogger_portB_r(int offset);
 
 
 
+
 static struct MemoryReadAddress scramble_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x7000, 0x7000, MRA_NOP },
-	{ 0x7800, 0x7800, MRA_NOP },
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x7800, 0x7800, watchdog_reset_r },
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
 	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
 	{ 0x8102, 0x8102, scramble_IN2_r },	/* IN2 with protection check */
@@ -117,6 +126,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6801, 0x6801, interrupt_enable_w },
+	{ 0x6802, 0x6802, coin_counter_w },
 	{ 0x6803, 0x6803, scramble_background_w },
 	{ 0x6804, 0x6804, galaxian_stars_w },
 	{ 0x6806, 0x6806, galaxian_flipx_w },
@@ -139,6 +149,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x9000, 0x9fff, scramble_filter_w },
 	{ -1 }	/* end of table */
 };
 
@@ -154,8 +165,11 @@ static struct MemoryWriteAddress froggers_sound_writemem[] =
 {
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ -1 }	/* end of table */
+  //{ 0x6000, 0x6fff, scramble_filter_w },  /* There is probably a filter here,	 */
+							  	            /* but it can't possibly be the same */
+	{ -1 }	/* end of table */				/* as the one in Scramble. One 8910 only */
 };
+
 
 
 
@@ -402,6 +416,7 @@ INPUT_PORTS_START( amidars_input_ports )
 INPUT_PORTS_END
 
 
+
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -418,6 +433,28 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 64*16*16 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+static struct GfxLayout mariner_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	512,	/* 512 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 512*8*8 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout mariner_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	128,	/* 128 sprites */
+	2,	/* 2 bits per pixel */
+	{ 0, 128*16*16 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -462,6 +499,15 @@ static struct GfxDecodeInfo theend_gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ 1, 0x0000, &theend_bulletlayout, 8*4, 2 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo mariner_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &mariner_charlayout,     0, 8 },
+	{ 1, 0x0000, &mariner_spritelayout,   0, 8 },
+	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
+											/* shots will be yellow */
 	{ -1 } /* end of array */
 };
 
@@ -756,7 +802,6 @@ ROM_START( amidars_rom )
 ROM_END
 
 
-
 static void froggers_decode(void)
 {
 	int A;
@@ -987,7 +1032,7 @@ struct GameDriver atlantis_driver =
 	"1981",
 	"Comsoft",
 	"Nicola Salmoria\nMike Balfour",
-	0,
+	GAME_WRONG_COLORS,
 	&scramble_machine_driver,
 	0,
 
@@ -1092,6 +1137,14 @@ struct GameDriver amidars_driver =
 
 
 
+static int mariner_protection_1_r(int offset)
+{
+	return 7;
+}
+static int mariner_protection_2_r(int offset)
+{
+	return 3;
+}
 
 
 static struct MemoryReadAddress triplep_readmem[] =
@@ -1104,6 +1157,23 @@ static struct MemoryReadAddress triplep_readmem[] =
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
 	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
 	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
+	{ -1 }	/* end of table */
+};
+
+/* Extra ROM and protection locations */
+static struct MemoryReadAddress mariner_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x5800, 0x67ff, MRA_ROM },
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
+	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
+	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
+	{ 0x9008, 0x9008, mariner_protection_2_r },
+	{ 0xb401, 0xb401, mariner_protection_1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -1213,7 +1283,7 @@ static struct AY8910interface triplep_ay8910_interface =
 
 
 
-/* Triple Punch is different - only one CPU, one 8910 */
+/* Triple Punch and Mariner are different - only one CPU, one 8910 */
 static struct MachineDriver triplep_machine_driver =
 {
 	/* basic machine hardware */
@@ -1252,6 +1322,44 @@ static struct MachineDriver triplep_machine_driver =
 	}
 };
 
+static struct MachineDriver mariner_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 MHz */
+			0,
+			mariner_readmem,triplep_writemem,triplep_readport,triplep_writeport,
+			scramble_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	mariner_gfxdecodeinfo,
+	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&triplep_ay8910_interface
+		}
+	}
+};
+
 ROM_START( triplep_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "triplep.2g",   0x0000, 0x1000, 0xc583a93d )
@@ -1265,6 +1373,23 @@ ROM_START( triplep_rom )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
+ROM_END
+
+ROM_START( mariner_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
+	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
+	ROM_LOAD( "tm3",          0x2000, 0x1000, 0x027881a6 )
+	ROM_LOAD( "tm4",          0x3000, 0x1000, 0xa0fde7dc )
+	ROM_LOAD( "tm5",          0x6000, 0x0800, 0xd7ebcb8e )
+	ROM_CONTINUE(             0x5800, 0x0800             )
+
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm9",          0x0000, 0x1000, 0x8e4e999e )
+	ROM_LOAD( "tm8",          0x1000, 0x1000, 0x70ae611f )
+
+	ROM_REGION(0x0020)      /* Color PROM */
+	/* Missing */
 ROM_END
 
 struct GameDriver triplep_driver =
@@ -1291,4 +1416,30 @@ struct GameDriver triplep_driver =
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
+};
+
+struct GameDriver mariner_driver =
+{
+	__FILE__,
+	0,
+	"mariner",
+	"Mariner",
+	"1981",
+	"Amenip",
+	"Zsolt Vasvari",
+	GAME_WRONG_COLORS,
+	&mariner_machine_driver,
+	0,
+
+	mariner_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	scramble_input_ports, /* Seems to be same as Scramble */
+
+	wrong_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

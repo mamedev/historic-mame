@@ -19,19 +19,19 @@
  *
  *****************************************************************************/
 
-#include "memory.h"
-#include "strings.h"
-#include "osd_dbg.h"
-#include "M6502/m6502.h"
-#include "M6502/m6502ops.h"
-
 #include <stdio.h>
+#include "memory.h"
+#include "cpuintrf.h"
+#include "osd_dbg.h"
+#include "m6502/m6502.h"
+#include "m6502/m6502ops.h"
+
 extern FILE * errorlog;
 
-int     M6502_ICount = 0;
-int 	M6502_Type = M6502_PLAIN;
-static	void(**insn)(void);
-static	M6502_Regs	m6502;
+int m6502_ICount = 0;
+int M6502_Type = M6502_PLAIN;
+static void(**insn)(void);
+static M6502_Regs m6502;
 
 /***************************************************************
  * include the opcode macros, functions and tables
@@ -46,22 +46,22 @@ static	M6502_Regs	m6502;
  *
  *****************************************************************************/
 
-unsigned M6502_GetPC (void)
+unsigned m6502_GetPC (void)
 {
 	return PCD;
 }
 
-void M6502_GetRegs (M6502_Regs *Regs)
+void m6502_GetRegs (M6502_Regs *Regs)
 {
 	*Regs = m6502;
 }
 
-void M6502_SetRegs (M6502_Regs *Regs)
+void m6502_SetRegs (M6502_Regs *Regs)
 {
 	m6502 = *Regs;
 }
 
-void M6502_Reset(void)
+void m6502_Reset(void)
 {
 	switch (M6502_Type)
 	{
@@ -94,23 +94,64 @@ void M6502_Reset(void)
 	PCH = RDMEM(M6502_RST_VEC+1);
 	change_pc16(PCD);
 
+#if NEW_INTERRUPT_SYSTEM
+    m6502.pending_interrupt = 0;
+    m6502.nmi_state = 0;
+    m6502.irq_state = 0;
+#else
     /* clear pending interrupts */
-    M6502_Clear_Pending_Interrupts();
+	m6502_Clear_Pending_Interrupts();
+#endif
 }
 
-int M6502_Execute(int cycles)
+INLINE void take_nmi(void)
 {
-    M6502_ICount = cycles;
+	EAD = M6502_NMI_VEC;
+	m6502_ICount -= 7;
+	m6502.halt = 0;
+	PUSH(PCH);
+	PUSH(PCL);
+	COMPOSE_P;
+	PUSH(P & ~_fB);
+	P = (P & ~_fD) | _fI;		/* knock out D and set I flag */
+	PCL = RDMEM(EAD);
+	PCH = RDMEM(EAD+1);
+	change_pc16(PCD);
+	m6502.pending_interrupt &= ~M6502_INT_NMI;
+}
+
+INLINE void take_irq(void)
+{
+	EAD = M6502_IRQ_VEC;
+	m6502_ICount -= 7;
+	m6502.halt = 0;
+	PUSH(PCH);
+	PUSH(PCL);
+	COMPOSE_P;
+	PUSH(P & ~_fB);
+	P = (P & ~_fD) | _fI;		/* knock out D and set I flag */
+	PCL = RDMEM(EAD);
+	PCH = RDMEM(EAD+1);
+#if NEW_INTERRRUPT_SYSTEM
+    /* call back the cpuintrf to let it clear the line */
+	(void)(*m6502.irq_callack)(0);
+#else
+	m6502.pending_interrupt &= ~M6502_INT_IRQ;
+#endif
+    change_pc16(PCD);
+}
+
+int m6502_Execute(int cycles)
+{
+	m6502_ICount = cycles;
 
 	change_pc16(PCD);
 
-    do
-    {
+	do {
 #ifdef  MAME_DEBUG
         {
         extern int mame_debug;
-            if (mame_debug)
-            {
+			if (mame_debug) {
 				COMPOSE_P;
                 MAME_Debug();
             }
@@ -126,51 +167,58 @@ int M6502_Execute(int cycles)
 
         insn[RDOP()]();
 
+		if (m6502.pending_interrupt & M6502_INT_NMI)
+			take_nmi();
         /* check if the I flag was just reset (interrupts enabled) */
-        if (m6502.after_cli)
+		if (m6502.after_cli) {
             m6502.after_cli = 0;
-        else
-		if (m6502.pending_nmi || (m6502.pending_irq && !(P & _fI)))
-        {
-            if (m6502.pending_nmi)
-            {
-                m6502.pending_nmi = 0;
-				EAD = M6502_NMI_VEC;
-            }
-            else
-            {
-                m6502.pending_irq = 0;
-				EAD = M6502_IRQ_VEC;
-            }
-			M6502_ICount -= 7;
-			m6502.halt = 0;
-			PUSH(PCH);
-			PUSH(PCL);
-			COMPOSE_P;
-			PUSH(P & ~_fB);
-			P = (P & ~_fD) | _fI;		/* knock out D and set I flag */
-			PCL = RDMEM(EAD);
-			PCH = RDMEM(EAD+1);
-			change_pc16(PCD);
-        }
+#if NEW_INTERRUPT_SYSTEM
+			if (m6502.irq_state != CLEAR_LINE)
+				m6502.pending_interrupt |= M6502_INT_IRQ;
+#endif
+		} else if (m6502.pending_interrupt && !(P & _fI))
+			take_irq();
 
-    } while (M6502_ICount > 0);
+    } while (m6502_ICount > 0);
 
-    return cycles - M6502_ICount;
+	return cycles - m6502_ICount;
 }
 
-void M6502_Cause_Interrupt(int type)
+#if NEW_INTERRUPT_SYSTEM
+
+void m6502_set_nmi_line(int state)
 {
-	if (type == M6502_INT_NMI)
-		m6502.pending_nmi = 1;
-	else
-	if (type == M6502_INT_IRQ)
-		m6502.pending_irq = 1;
+	if (m6502.nmi_state == state) return;
+	m6502.nmi_state = state;
+	if (state != CLEAR_LINE)
+		m6502.pending_interrupt |= M6502_INT_NMI;
 }
 
-void M6502_Clear_Pending_Interrupts(void)
+void m6502_set_irq_line(int irqline, int state)
 {
-	m6502.pending_nmi = M6502_INT_NONE;
-	m6502.pending_irq = M6502_INT_NONE;
+	m6502.irq_state = state;
+	if (state == CLEAR_LINE) {
+		m6502.pending_interrupt &= ~M6502_INT_IRQ;
+	} else {
+		m6502.pending_interrupt |= M6502_INT_IRQ;
+	}
 }
 
+void m6502_set_irq_callback(int (*callback)(int))
+{
+	m6502.irq_callback = callback;
+}
+
+#else
+
+void m6502_Cause_Interrupt(int type)
+{
+	m6502.pending_interrupt |= type;
+}
+
+void m6502_Clear_Pending_Interrupts(void)
+{
+	m6502.pending_interrupt = M6502_INT_NONE;
+}
+
+#endif

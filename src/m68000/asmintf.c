@@ -97,6 +97,31 @@ void MC68000_GetRegs(MC68000_Regs *dst)
   	dst->regs = regs;
 }
 
+#if NEW_INTERRUPT_SYSTEM
+
+void MC68000_set_nmi_line(int state)
+{
+	/* the 68K does not have a dedicated NMI line */
+}
+
+void MC68000_set_irq_line(int irqline, int state)
+{
+	regs.irq_state = state;
+	if (state == CLEAR_LINE) {
+		regs.IRQ_level = 0;
+	} else {
+		/* the real IRQ level is retrieved inside interrupt handler */
+        regs.IRQ_level = 0x7f;  
+	}
+}
+
+void MC68000_set_irq_callback(int (*callback)(int irqline))
+{
+	regs.irq_callback = callback;
+}
+
+#else
+
 void MC68000_Cause_Interrupt(int level)
 {
 	if (level >= 1 && level <= 7)
@@ -107,6 +132,8 @@ void MC68000_Clear_Pending_Interrupts(void)
 {
 	regs.IRQ_level = 0;
 }
+
+#endif
 
 int  MC68000_GetPC(void)
 {

@@ -1,32 +1,35 @@
-/*******************************************************
+/*************************************************************************
  *
  *      Portable Signetics 2650 cpu emulation
  *
  *      Written by Juergen Buchmueller for use with MAME
  *
- *******************************************************/
+ *************************************************************************/
 
 /* define this to have some interrupt information logged */
-#define VERBOSE
+#define VERBOSE 0
 
-#include "strings.h"
-#include "memory.h"
-#include "types.h"
-#include "S2650/s2650.h"
-#include "S2650/s2650cpu.h"
+#include <strings.h>
+#include <memory.h>
+#include "cpuintrf.h"
+#include "s2650/s2650.h"
+#include "s2650/s2650cpu.h"
 
-#ifdef	VERBOSE
+#if VERBOSE
 #include <stdio.h>
+#define LOG(x) if( errorlog ) fprintf x
+#else
+#define LOG(x)
 #endif
 
 /* define this to expand all EA calculations inline */
-#define INLINE_EA
+#define INLINE_EA	1
 
-int     S2650_ICount    = 0;
-static  S2650_Regs      S;
+int S2650_ICount = 0;
+static S2650_Regs S;
 
 /* condition code changes for a byte */
-static  byte    ccc[0x200] = {
+static	UINT8 ccc[0x200] = {
 	0x00,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
 	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
 	0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,0x40,
@@ -65,17 +68,17 @@ static  byte    ccc[0x200] = {
 #define SET_CC_OVF(value,before) { S.psl = (S.psl & ~(OVF+CC)) | ccc[value + ( ( (value^before) << 1) & 256 )]; }
 
 /* read next opcode */
-static  byte RDOP(void)
+INLINE UINT8 RDOP(void)
 {
-byte result = cpu_readop(S.page + S.iar);
+	UINT8 result = cpu_readop(S.page + S.iar);
 	S.iar = (S.iar + 1) & PMSK;
 	return result;
 }
 
 /* read next opcode argument */
-static  byte RDOPARG(void)
+INLINE UINT8 RDOPARG(void)
 {
-byte result = cpu_readop_arg(S.page + S.iar);
+	UINT8 result = cpu_readop_arg(S.page + S.iar);
 	S.iar = (S.iar + 1) & PMSK;
 	return result;
 }
@@ -104,13 +107,12 @@ static	int 	S2650_relative[0x100] = {
 
 /* build effective address with relative addressing */
 #define _REL_EA(page) { 								\
-byte	hr; 											\
-	hr = RDOPARG(); /* get 'holding register' */        \
+	UINT8 hr = RDOPARG(); /* get 'holding register' */  \
 	/* build effective address within current 8K page */\
 	S.ea = page + ((S.iar + S2650_relative[hr]) & PMSK);\
 	if (hr & 0x80) /* indirect bit set ? */ 			\
 	{													\
-	int 	addr = S.ea;								\
+		int addr = S.ea;								\
 		S2650_ICount -= 2;								\
 		/* build indirect 32K address */				\
 		S.ea = RDMEM(addr) << 8;						\
@@ -122,7 +124,7 @@ byte	hr; 											\
 
 /* build effective address with absolute addressing */
 #define _ABS_EA() { 											\
-byte	hr, dr; 												\
+	UINT8 hr, dr;												\
 	hr = RDOPARG(); /* get 'holding register' */                \
 	dr = RDOPARG(); /* get 'data bus register' */               \
 	/* build effective address within current 8K page */		\
@@ -130,7 +132,7 @@ byte	hr, dr; 												\
 	/* indirect addressing ? */ 								\
 	if (hr & 0x80)												\
 	{															\
-	int addr = S.ea;											\
+		int addr = S.ea;										\
 		S2650_ICount -= 2;										\
 		/* build indirect 32K address */						\
 		/* build indirect 32K address */						\
@@ -163,7 +165,7 @@ byte	hr, dr; 												\
 
 /* build effective address with absolute addressing (branch) */
 #define _BRA_EA() { 											\
-byte	hr, dr; 												\
+	UINT8 hr, dr;												\
 	hr = RDOPARG(); /* get 'holding register' */                \
 	dr = RDOPARG(); /* get 'data bus register' */               \
 	/* build address in 32K address space */					\
@@ -171,7 +173,7 @@ byte	hr, dr; 												\
 	/* indirect addressing ? */ 								\
 	if (hr & 0x80)												\
 	{															\
-	int 	addr = S.ea;										\
+		int addr = S.ea;										\
 		S2650_ICount -= 2;										\
 		/* build indirect 32K address */						\
 		S.ea = RDMEM(addr) << 8;								\
@@ -184,16 +186,16 @@ byte	hr, dr; 												\
 /* swap registers 1-3 with 4-6 */
 /* this is done when the RS bit in PSL changes */
 #define SWAP_REGS { 		\
-byte swap;					\
-	swap = S.reg[1];		\
+	UINT8 tmp;				\
+	tmp = S.reg[1]; 		\
 	S.reg[1] = S.reg[4];	\
-	S.reg[4] = swap;		\
-	swap = S.reg[2];		\
+	S.reg[4] = tmp; 		\
+	tmp = S.reg[2]; 		\
 	S.reg[2] = S.reg[5];	\
-	S.reg[5] = swap;		\
-	swap = S.reg[3];		\
+	S.reg[5] = tmp; 		\
+	tmp = S.reg[3]; 		\
 	S.reg[3] = S.reg[6];	\
-	S.reg[6] = swap;		\
+	S.reg[6] = tmp; 		\
 }
 
 /* BRanch Relative if cond is true */
@@ -302,9 +304,9 @@ byte swap;					\
 }
 
 /* LOaD destination with source */
-#define S_LOD(dest,source) {  \
-	dest = source;		  \
-	SET_CC(dest);		  \
+#define S_LOD(dest,source) {	\
+	dest = source;				\
+	SET_CC(dest);				\
 }
 
 /* SToRe source to memory addr (CC unchanged) */
@@ -330,7 +332,7 @@ byte swap;					\
 
 /* add source to destination */
 #define S_ADD(dest,source) {							\
-byte before = dest; 									\
+	UINT8 before = dest;								\
 	/* add source; carry only if WC is set */			\
 	dest = dest + source + ((S.psl >> 3) & S.psl & C);	\
 	S.psl &= ~(C + OVF + IDC);							\
@@ -343,7 +345,7 @@ byte before = dest; 									\
 
 /* subtract source from destination */
 #define S_SUB(dest,source) {									\
-byte before = dest; 											\
+	UINT8 before = dest;										\
 	/* add source; carry only if WC is set */					\
 	dest = dest - source - ((S.psl >> 3) & (S.psl ^ C) & C);	\
 	S.psl &= ~(C + OVF + IDC);									\
@@ -358,9 +360,9 @@ byte before = dest; 											\
 int 	d;							\
 	S.psl &= ~CC;					\
 	if (S.psl & COM)				\
-		d = (byte)reg - (byte)val;	\
+		d = (UINT8)reg - (UINT8)val;\
 	else							\
-		d = (char)reg - (char)val;	\
+		d = (INT8)reg - (INT8)val;	\
 	if (d < 0)						\
 		S.psl |= 0x80;				\
 	else							\
@@ -377,10 +379,10 @@ int 	d;							\
 
 /* rotate register left */
 #define S_RRL(dest) {											\
-byte before = dest; 											\
+	UINT8 before = dest;										\
 	if (S.psl & WC) 											\
 	{															\
-	byte c = S.psl & C; 										\
+		UINT8 c = S.psl & C;									\
 		S.psl &= ~(C + IDC);									\
 		dest = (before << 1) | c;								\
 		S.psl |= (before >> 7) + (dest & IDC);					\
@@ -390,10 +392,10 @@ byte before = dest; 											\
 
 /* rotate register right */
 #define S_RRR(dest) {											\
-byte	before = dest;											\
+	UINT8 before = dest;										\
 	if (S.psl & WC) 											\
 	{															\
-	byte c = S.psl & C; 										\
+		UINT8 c = S.psl & C;									\
 		S.psl &= ~(C + IDC);									\
 		dest = (before >> 1) | (c << 7);						\
 		S.psl |= (before & C) + (dest & IDC);					\
@@ -415,28 +417,28 @@ byte	before = dest;											\
 
 /* clear processor status upper, selective */
 #define S_CPSU() {			\
-byte cpsu = RDOPARG();		\
+	UINT8 cpsu = RDOPARG(); \
 	S.psu = S.psu & ~cpsu;	\
 }
 
 /* clear processor status lower, selective */
-#define S_CPSL() {							\
-byte cpsl = RDOPARG();						\
-		/* select 1st register set now ? */ \
-		if ((cpsl & RS) && (S.psl & RS))	\
-				SWAP_REGS;					\
-		S.psl = S.psl & ~cpsl;				\
+#define S_CPSL() {						\
+	UINT8 cpsl = RDOPARG(); 			\
+	/* select 1st register set now ? */ \
+	if ((cpsl & RS) && (S.psl & RS))	\
+		SWAP_REGS;						\
+	S.psl = S.psl & ~cpsl;				\
 }
 
 /* preset processor status upper, selective */
-#define S_PPSU() {					\
-byte ppsu = RDOPARG() & ~PSU34; 	\
-	S.psu = S.psu | ppsu;			\
+#define S_PPSU() {						\
+	UINT8 ppsu = RDOPARG() & ~PSU34;	\
+	S.psu = S.psu | ppsu;				\
 }
 
 /* preset processor status lower, selective */
 #define S_PPSL() {							\
-byte ppsl = RDOPARG();						\
+	UINT8 ppsl = RDOPARG(); 				\
 	/* select 2nd register set now ? */ 	\
 	if ((ppsl & RS) && !(S.psl & RS))		\
 		SWAP_REGS;							\
@@ -445,7 +447,7 @@ byte ppsl = RDOPARG();						\
 
 /* test processor status upper */
 #define S_TPSU() {				\
-byte tpsu = RDOPARG();			\
+	UINT8 tpsu = RDOPARG(); 	\
 	S.psl &= ~CC;				\
 	if ((S.psu & tpsu) != tpsu) \
 		S.psl |= 0x80;			\
@@ -453,7 +455,7 @@ byte tpsu = RDOPARG();			\
 
 /* test processor status lower */
 #define S_TPSL() {						\
-byte tpsl = RDOPARG();					\
+	UINT8 tpsl = RDOPARG(); 			\
 	if ((S.psl & tpsl) != tpsl) 		\
 		S.psl = (S.psl & ~CC) | 0x80;	\
 	else								\
@@ -462,13 +464,13 @@ byte tpsl = RDOPARG();					\
 
 /* test under mask immediate */
 #define S_TMI(value) {			\
-byte	tmi = RDOPARG();		\
+	UINT8 tmi = RDOPARG();		\
 	S.psl &= ~CC;				\
 	if ((value & tmi) != tmi)	\
 		S.psl |= 0x80;			\
 }
 
-#ifdef  INLINE_EA
+#if INLINE_EA
 #define REL_EA(page)    _REL_EA(page)
 #define ABS_EA()        _ABS_EA()
 #define BRA_EA()        _BRA_EA()
@@ -509,7 +511,7 @@ int 	S2650_get_flag(void)
 	return (S.psu & FO) ? 1 : 0;
 }
 
-void    S2650_set_sense(int state)
+void S2650_set_sense(int state)
 {
 	if (state)
 		S.psu |= SI;
@@ -517,12 +519,12 @@ void    S2650_set_sense(int state)
 		S.psu &= ~SI;
 }
 
-int 	S2650_get_sense(void)
+int S2650_get_sense(void)
 {
 	return (S.psu & SI) ? 1 : 0;
 }
 
-void    S2650_Reset(void)
+void S2650_Reset(void)
 {
 	memset(&S, 0, sizeof(S));
 	S.irq = S2650_INT_NONE;
@@ -530,48 +532,76 @@ void    S2650_Reset(void)
 	S.psu = SI;
 }
 
-void    S2650_Cause_Interrupt(int type)
+#if NEW_INTERRUPT_SYSTEM
+
+void S2650_set_nmi_line(int state)
+{
+	/* no NMI line */
+}
+
+void S2650_set_irq_line(int irqline, int state)
+{
+	if (irqline) {
+		if (state == CLEAR_LINE)
+			S2650_set_sense(0);
+		else
+			S2650_set_sense(1);
+	} else {
+		S.irq_state = state;
+		if (state == CLEAR_LINE) {
+			if (S.psu & II) S.irq = S2650_INT_NONE;
+		} else {
+			if (!(S.psu & II)) S.irq = 1;
+		}
+	}
+}
+
+void S2650_set_irq_callback(int (*callback)(int irqline))
+{
+	S.irq_callback = callback;
+}
+
+#else
+
+void S2650_Cause_Interrupt(int type)
 {
 
 	S.irq = type;			/* set interrupt request (vector) */
 #ifdef	VERBOSE
-	if (S.irq != S2650_INT_NONE)
-	{
-	extern FILE * errorlog;
-		if (errorlog) fprintf(errorlog, "S2650_Cause_Interrupt $%02x\n", S.irq);
-	}
+	if (S.irq != S2650_INT_NONE) { LOG((errorlog, "S2650_Cause_Interrupt $%02x\n", S.irq)); }
 #endif
 }
 
-void    S2650_Clear_Pending_Interrupts(void)
+void S2650_Clear_Pending_Interrupts(void)
 {
-        S.irq = S2650_INT_NONE; /* clear interrupt request */
+	S.irq = S2650_INT_NONE; /* clear interrupt request */
 }
 
+#endif
+
 static  int S2650_Cycles[0x100] = {
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
-        2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
-        2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3,
+	2,2,2,2, 2,2,2,2, 3,3,3,3, 4,4,4,4,
+	2,2,2,2, 3,3,3,3, 3,3,3,3, 3,3,3,3
 };
 
 int     S2650_Execute(int cycles)
 {
 	S2650_ICount = cycles;
-	do
-	{
+	do {
 #ifdef  MAME_DEBUG
 {
 	extern int mame_debug;
@@ -580,18 +610,18 @@ int     S2650_Execute(int cycles)
 }
 #endif
 		/* interrupt request and not interrupt inhibit set ? */
-		if ((S.irq != S2650_INT_NONE) && !(S.psu & II))
-		{
-			if (S.halt)
-			{
+		if ((S.irq != S2650_INT_NONE) && !(S.psu & II)) {
+            if (S.halt) {
 				S.halt = 0;
 				S.iar = (S.iar + 1) & PMSK;
 			}
-			/* build effective address within first 8K page */
+#if NEW_INTERRUPT_SYSTEM
+			S.irq = (*S.irq_callback)(0);
+#endif
+            /* build effective address within first 8K page */
 			S.ea = S2650_relative[S.irq] & PMSK;
-			if (S.irq & 0x80) /* indirect bit set ? */
-			{
-			int 	addr = S.ea;
+			if (S.irq & 0x80) { /* indirect bit set ? */
+				int addr = S.ea;
 				S2650_ICount -= 2;
 				/* build indirect 32K address */
 				S.ea = RDMEM(addr) << 8;
@@ -599,23 +629,17 @@ int     S2650_Execute(int cycles)
 					addr -= PLEN;
 				S.ea = (S.ea + RDMEM(addr)) & AMSK;
 			}
-#ifdef	VERBOSE
-{
-extern FILE * errorlog;
-			if (errorlog) fprintf(errorlog, "S2650 interrupt to $%04x\n", S.ea);
-}
-#endif
+			LOG((errorlog, "S2650 interrupt to $%04x\n", S.ea));
 			S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP) | II;
 			S.ras[S.psu & SP] = S.iar;
 			S.page = S.ea & PAGE;
 			S.iar  = S.ea & PMSK;
 			S.irq  = S2650_INT_NONE;
 		}
-		S.ir = RDOP();
+        S.ir = RDOP();
 		S2650_ICount -= S2650_Cycles[S.ir];
 		S.r = S.ir & 3; 		/* register / value */
-		switch (S.ir)
-		{
+		switch (S.ir) {
 			case 0x00:		/* LODZ,0 */
 			case 0x01:		/* LODZ,1 */
 			case 0x02:		/* LODZ,2 */

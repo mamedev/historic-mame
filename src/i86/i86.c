@@ -5,10 +5,11 @@
 
 #include <stdio.h>
 #include "host.h"
-#include "I86.h"
-#include "I86intrf.h"
+#include "cpuintrf.h"
 #include "memory.h"
 #include "osd_dbg.h"
+#include "I86.h"
+#include "I86intrf.h"
 
 /***************************************************************************/
 /* cpu state                                                               */
@@ -17,9 +18,10 @@
 static i86basicregs regs;       /* ASG 971222 */
 
 int i86_ICount;
+int i86_AddrMask = 0x0000ffff;	/* HJB 12/13/98 default mask 64K for MAME */
 #define cycle_count i86_ICount
 
-static unsigned ip;     /* instruction pointer register */
+static unsigned ip; 			/* instruction pointer register */
 static unsigned sregs[4];       /* four segment registers */
 static unsigned base[4];        /* and their base addresses */
 static unsigned prefix_base;    /* base address of the latest prefix segment */
@@ -28,8 +30,19 @@ static char seg_prefix;         /* prefix segment indicator */
 static BYTE TF, IF, DF; /* 0 or 1 valued flags */
 static int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
 
-int int86_pending;   /* The interrupt number of a pending external interrupt pending */
-	/* NMI is number 2. For INTR interrupts, the level is caught on the bus during an INTA cycle */
+/* The interrupt number of a pending external interrupt pending NMI is 2.	*/
+/* For INTR interrupts, the level is caught on the bus during an INTA cycle */
+static int int86_vector;
+
+static int pending_irq;         /* pending interrupts (NMI/IRQ) flag mask */
+#define INT_IRQ 0x01
+#define NMI_IRQ 0x02
+
+#if NEW_INTERRUPT_SYSTEM
+static int irq_state;
+static int nmi_state;
+static int (*irq_callback)(int) = 0;
+#endif
 
 /* ASG 971222 static unsigned char *Memory;   * fetching goes directly to memory instead of going through MAME's cpu_readmem() */
 
@@ -50,8 +63,13 @@ void i86_Reset (void)
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
-    /* ASG 971222 cycles_per_run=cycles;*/
-    int86_pending=0;
+	int86_vector = 0;
+	pending_irq = 0;
+#if NEW_INTERRUPT_SYSTEM
+	nmi_state = 0;
+	irq_state = 0;
+	irq_callback = 0;
+#endif
     for (i = 0; i < 4; i++) sregs[i] = 0;
     sregs[CS]=0xFFFF;
 
@@ -59,6 +77,7 @@ void i86_Reset (void)
     base[DS] = SegBase(DS);
     base[ES] = SegBase(ES);
     base[SS] = SegBase(SS);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 
     for (i=0; i < 8; i++) regs.w[i] = 0;
     ip = 0;
@@ -73,7 +92,7 @@ void i86_Reset (void)
 	parity_table[i] = !(c & 1);
     }
 
-    TF = IF = DF = 0;
+	TF = IF = DF = 0;
     SignVal=CarryVal=AuxVal=OverVal=0;
     ZeroVal=ParityVal=1;
 
@@ -96,6 +115,11 @@ static void I86_interrupt(unsigned int_num)
     unsigned dest_seg, dest_off;
 
     i_pushf();
+	TF = IF = 0;
+#if NEW_INTERRUPT_SYSTEM
+	if (int_num == -1)
+		int_num = (*irq_callback)(0);
+#endif
     dest_off = ReadWord(int_num*4);
     dest_seg = ReadWord(int_num*4+2);
 
@@ -104,22 +128,44 @@ static void I86_interrupt(unsigned int_num)
     ip = (WORD)dest_off;
     sregs[CS] = (WORD)dest_seg;
     base[CS] = SegBase(CS);
-
-    TF = IF = 0;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 
 }
 
 void trap(void)
 {
-    instruction[FETCH]();
-    I86_interrupt(1);
+	instruction[FETCHOP]();
+	I86_interrupt(1);
 }
+
+#if NEW_INTERRUPT_SYSTEM
 
 static void external_int(void)
 {
-    I86_interrupt(int86_pending);
-    int86_pending = 0;
+	if( pending_irq & NMI_IRQ ) {
+		I86_interrupt(I86_NMI_INT);
+		pending_irq &= ~NMI_IRQ;
+    } else if( pending_irq ) {
+		/* the actual vector is retrieved after pushing flags */
+		/* and clearing the IF */
+		I86_interrupt(-1);
+	}
 }
+
+#else
+
+static void external_int(void)
+{
+	if( pending_irq & NMI_IRQ ) {
+		I86_interrupt(I86_NMI_INT);
+		pending_irq &= ~NMI_IRQ;
+    } else if( pending_irq ) {
+		I86_interrupt(int86_vector);
+		pending_irq &= ~INT_IRQ;
+	}
+}
+
+#endif
 
 /****************************************************************************/
 
@@ -309,7 +355,7 @@ static void i_pop_ss(void)    /* Opcode 0x17 */
     cycle_count-=2;
     POP(sregs[SS]);
     base[SS] = SegBase(SS);
-    instruction[FETCH](); /* no interrupt before next instruction */
+	instruction[FETCHOP](); /* no interrupt before next instruction */
 }
 
 static void i_sbb_br8(void)    /* Opcode 0x18 */
@@ -432,7 +478,7 @@ static void i_es(void)    /* Opcode 0x26 */
     seg_prefix=TRUE;
     prefix_base=base[ES];
     cycle_count-=2;
-    instruction[FETCH]();
+	instruction[FETCHOP]();
 }
 
 static void i_daa(void)    /* Opcode 0x27 */
@@ -508,7 +554,7 @@ static void i_cs(void)    /* Opcode 0x2e */
     seg_prefix=TRUE;
     prefix_base=base[CS];
     cycle_count-=2;
-    instruction[FETCH]();
+	instruction[FETCHOP]();
 }
 
 static void i_das(void)    /* Opcode 0x2f */
@@ -584,7 +630,7 @@ static void i_ss(void)    /* Opcode 0x36 */
     seg_prefix=TRUE;
     prefix_base=base[SS];
     cycle_count-=2;
-    instruction[FETCH]();
+	instruction[FETCHOP]();
 }
 
 static void i_aaa(void)    /* Opcode 0x37 */
@@ -651,7 +697,7 @@ static void i_ds(void)    /* Opcode 0x3e */
     seg_prefix=TRUE;
     prefix_base=base[DS];
     cycle_count-=2;
-    instruction[FETCH]();
+	instruction[FETCHOP]();
 }
 
 static void i_aas(void)    /* Opcode 0x3f */
@@ -900,7 +946,7 @@ static void i_popa(void)    /* Opcode 0x61 */
 
 static void i_bound(void)    /* Opcode 0x62 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     int low = (INT16)GetRMWord(ModRM);
     int high= (INT16)GetnextRMWord;
     int tmp= (INT16)RegWord(ModRM);
@@ -981,151 +1027,167 @@ static void i_outsw(void)    /* Opcode 0x6f */
 
 static void i_jo(void)    /* Opcode 0x70 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (OF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jno(void)    /* Opcode 0x71 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!OF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jb(void)    /* Opcode 0x72 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (CF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnb(void)    /* Opcode 0x73 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!CF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jz(void)    /* Opcode 0x74 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (ZF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnz(void)    /* Opcode 0x75 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!ZF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jbe(void)    /* Opcode 0x76 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (CF || ZF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnbe(void)    /* Opcode 0x77 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!(CF || ZF)) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_js(void)    /* Opcode 0x78 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (SF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jns(void)    /* Opcode 0x79 */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!SF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jp(void)    /* Opcode 0x7a */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (PF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnp(void)    /* Opcode 0x7b */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (!PF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jl(void)    /* Opcode 0x7c */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if ((SF!=OF)&&!ZF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnl(void)    /* Opcode 0x7d */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (ZF||(SF==OF)) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jle(void)    /* Opcode 0x7e */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if (ZF||(SF!=OF)) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_jnle(void)    /* Opcode 0x7f */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     if ((SF==OF)&&!ZF) {
 	ip = (WORD)(ip+tmp);
-	cycle_count-=16;
+    cycle_count-=16;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=4;
 }
 
 static void i_80pre(void)    /* Opcode 0x80 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned dst = GetRMByte(ModRM);
     unsigned src = FETCH;
     cycle_count-=4;
@@ -1171,7 +1233,7 @@ static void i_80pre(void)    /* Opcode 0x80 */
 
 static void i_81pre(void)    /* Opcode 0x81 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned dst = GetRMWord(ModRM);
     unsigned src = FETCH;
     src+= (FETCH << 8);
@@ -1189,7 +1251,7 @@ static void i_81pre(void)    /* Opcode 0x81 */
 	break;
     case 0x10:  /* ADC ew,d16 */
         src+=CF;
-        ADDW(dst,src);
+		ADDW(dst,src);
         PutbackRMWord(ModRM,dst);
 	break;
     case 0x18:  /* SBB ew,d16 */
@@ -1215,9 +1277,54 @@ static void i_81pre(void)    /* Opcode 0x81 */
     }
 }
 
+static void i_82pre(void)	 /* Opcode 0x82 */
+{
+	unsigned ModRM = FETCHOP;
+	unsigned dst = GetRMByte(ModRM);
+	unsigned src = FETCH;
+    cycle_count-=2;
+
+    switch (ModRM & 0x38)
+    {
+	case 0x00:	/* ADD eb,d8 */
+		ADDB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x08:	/* OR eb,d8 */
+		ORB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x10:	/* ADC eb,d8 */
+        src+=CF;
+		ADDB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x18:	/* SBB eb,d8 */
+        src+=CF;
+		SUBB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x20:	/* AND eb,d8 */
+		ANDB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x28:	/* SUB eb,d8 */
+		SUBB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x30:	/* XOR eb,d8 */
+		XORB(dst,src);
+		PutbackRMByte(ModRM,dst);
+	break;
+	case 0x38:	/* CMP eb,d8 */
+		SUBB(dst,src);
+	break;
+    }
+}
+
 static void i_83pre(void)    /* Opcode 0x83 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned dst = GetRMWord(ModRM);
     unsigned src = (WORD)((INT16)((INT8)FETCH));
     cycle_count-=2;
@@ -1292,7 +1399,7 @@ static void i_xchg_wr16(void)    /* Opcode 0x87 */
 
 static void i_mov_br8(void)    /* Opcode 0x88 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     BYTE src = RegByte(ModRM);
     cycle_count-=2;
     PutRMByte(ModRM,src);
@@ -1300,7 +1407,7 @@ static void i_mov_br8(void)    /* Opcode 0x88 */
 
 static void i_mov_wr16(void)    /* Opcode 0x89 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD src = RegWord(ModRM);
     cycle_count-=2;
     PutRMWord(ModRM,src);
@@ -1308,7 +1415,7 @@ static void i_mov_wr16(void)    /* Opcode 0x89 */
 
 static void i_mov_r8b(void)    /* Opcode 0x8a */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     BYTE src = GetRMByte(ModRM);
     cycle_count-=2;
     RegByte(ModRM)=src;
@@ -1316,7 +1423,7 @@ static void i_mov_r8b(void)    /* Opcode 0x8a */
 
 static void i_mov_r16w(void)    /* Opcode 0x8b */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD src = GetRMWord(ModRM);
     cycle_count-=2;
     RegWord(ModRM)=src;
@@ -1324,21 +1431,23 @@ static void i_mov_r16w(void)    /* Opcode 0x8b */
 
 static void i_mov_wsreg(void)    /* Opcode 0x8c */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     cycle_count-=2;
+	if (ModRM & 0x20) return;	/* HJB 12/13/98 1xx is invalid */
     PutRMWord(ModRM,sregs[(ModRM & 0x38) >> 3]);
 }
 
 static void i_lea(void)    /* Opcode 0x8d */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     cycle_count-=2;
-    RegWord(ModRM)=(*GetEA[ModRM])();
+	(void)(*GetEA[ModRM])();
+	RegWord(ModRM)=EO;	/* HJB 12/13/98 effective offset (no segment part) */
 }
 
 static void i_mov_sregw(void)    /* Opcode 0x8e */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD src = GetRMWord(ModRM);
 
     cycle_count-=2;
@@ -1355,7 +1464,7 @@ static void i_mov_sregw(void)    /* Opcode 0x8e */
     case 0x10:  /* mov ss,ew */
 	sregs[SS] = src;
 	base[SS] = SegBase(SS); /* no interrupt allowed before next instr */
-	instruction[FETCH]();
+	instruction[FETCHOP]();
 	break;
     case 0x08:  /* mov cs,ew */
 	break;  /* doesn't do a jump far */
@@ -1364,7 +1473,7 @@ static void i_mov_sregw(void)    /* Opcode 0x8e */
 
 static void i_popw(void)    /* Opcode 0x8f */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD tmp;
     POP(tmp);
     cycle_count-=4;
@@ -1439,11 +1548,11 @@ static void i_call_far(void)
 {
     unsigned tmp, tmp2;
 
-    tmp = FETCH;
-    tmp += FETCH << 8;
+	tmp = FETCHOP;
+	tmp += FETCHOP << 8;
 
-    tmp2 = FETCH;
-    tmp2 += FETCH << 8;
+	tmp2 = FETCHOP;
+	tmp2 += FETCHOP << 8;
 
     PUSH(sregs[CS]);
     PUSH(ip);
@@ -1452,6 +1561,7 @@ static void i_call_far(void)
     sregs[CS] = (WORD)tmp2;
     base[CS] = SegBase(CS);
     cycle_count-=14;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_wait(void)    /* Opcode 0x9b */
@@ -1492,8 +1602,8 @@ static void i_mov_aldisp(void)    /* Opcode 0xa0 */
 {
     unsigned addr;
 
-    addr = FETCH;
-    addr += FETCH << 8;
+	addr = FETCHOP;
+	addr += FETCHOP << 8;
 
     cycle_count-=4;
     regs.b[AL] = GetMemB(DS, addr);
@@ -1503,8 +1613,8 @@ static void i_mov_axdisp(void)    /* Opcode 0xa1 */
 {
     unsigned addr;
 
-    addr = FETCH;
-    addr += FETCH << 8;
+	addr = FETCHOP;
+	addr += FETCHOP << 8;
 
     cycle_count-=4;
     regs.b[AL] = GetMemB(DS, addr);
@@ -1515,8 +1625,8 @@ static void i_mov_dispal(void)    /* Opcode 0xa2 */
 {
     unsigned addr;
 
-    addr = FETCH;
-    addr += FETCH << 8;
+	addr = FETCHOP;
+	addr += FETCHOP << 8;
 
     cycle_count-=3;
     PutMemB(DS, addr, regs.b[AL]);
@@ -1526,8 +1636,8 @@ static void i_mov_dispax(void)    /* Opcode 0xa3 */
 {
     unsigned addr;
 
-    addr = FETCH;
-    addr += FETCH << 8;
+	addr = FETCHOP;
+	addr += FETCHOP << 8;
 
     cycle_count-=3;
     PutMemB(DS, addr, regs.b[AL]);
@@ -2061,16 +2171,16 @@ void rotate_shift_Word(unsigned ModRM, unsigned count)
 
 static void i_rotshft_bd8(void)    /* Opcode 0xc0 */
 {
-    unsigned ModRM=FETCH;
-    unsigned count=FETCH;
+	unsigned ModRM = FETCHOP;
+	unsigned count = FETCHOP;
 
     rotate_shift_Byte(ModRM,count);
 }
 
 static void i_rotshft_wd8(void)    /* Opcode 0xc1 */
 {
-    unsigned ModRM=FETCH;
-    unsigned count=FETCH;
+	unsigned ModRM = FETCHOP;
+	unsigned count = FETCHOP;
 
     rotate_shift_Word(ModRM,count);
 }
@@ -2078,22 +2188,24 @@ static void i_rotshft_wd8(void)    /* Opcode 0xc1 */
 
 static void i_ret_d16(void)    /* Opcode 0xc2 */
 {
-    unsigned count = FETCH;
-    count += FETCH << 8;
+	unsigned count = FETCHOP;
+	count += FETCHOP << 8;
     POP(ip);
     regs.w[SP]+=count;
     cycle_count-=14;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_ret(void)    /* Opcode 0xc3 */
 {
     POP(ip);
     cycle_count-=10;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_les_dw(void)    /* Opcode 0xc4 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD tmp = GetRMWord(ModRM);
 
     RegWord(ModRM)= tmp;
@@ -2104,7 +2216,7 @@ static void i_les_dw(void)    /* Opcode 0xc4 */
 
 static void i_lds_dw(void)    /* Opcode 0xc5 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     WORD tmp = GetRMWord(ModRM);
 
     RegWord(ModRM)=tmp;
@@ -2115,26 +2227,26 @@ static void i_lds_dw(void)    /* Opcode 0xc5 */
 
 static void i_mov_bd8(void)    /* Opcode 0xc6 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     cycle_count-=4;
     PutImmRMByte(ModRM);
 }
 
 static void i_mov_wd16(void)    /* Opcode 0xc7 */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     cycle_count-=4;
     PutImmRMWord(ModRM);
 }
 
 static void i_enter(void)    /* Opcode 0xc8 */
 {
-    unsigned nb = FETCH;
+	unsigned nb = FETCHOP;
     unsigned i,level;
 
     cycle_count-=11;
-    nb += FETCH << 8;
-    level=FETCH;
+	nb += FETCHOP << 8;
+	level = FETCHOP;
     PUSH(regs.w[BP]);
     regs.w[BP]=regs.w[SP];
     regs.w[SP] -= nb;
@@ -2154,13 +2266,14 @@ static void i_leave(void)    /* Opcode 0xc9 */
 
 static void i_retf_d16(void)    /* Opcode 0xca */
 {
-    unsigned count = FETCH;
-    count += FETCH << 8;
+	unsigned count = FETCHOP;
+	count += FETCHOP << 8;
     POP(ip);
     POP(sregs[CS]);
     base[CS] = SegBase(CS);
     regs.w[SP]+=count;
     cycle_count-=13;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_retf(void)    /* Opcode 0xcb */
@@ -2169,6 +2282,7 @@ static void i_retf(void)    /* Opcode 0xcb */
     POP(sregs[CS]);
     base[CS] = SegBase(CS);
     cycle_count-=14;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_int3(void)    /* Opcode 0xcc */
@@ -2179,7 +2293,7 @@ static void i_int3(void)    /* Opcode 0xcc */
 
 static void i_int(void)    /* Opcode 0xcd */
 {
-    unsigned int_num = FETCH;
+	unsigned int_num = FETCHOP;
     cycle_count-=15;
     I86_interrupt(int_num);
 }
@@ -2187,8 +2301,8 @@ static void i_int(void)    /* Opcode 0xcd */
 static void i_into(void)    /* Opcode 0xce */
 {
     if (OF) {
-	cycle_count-=17;
-	I86_interrupt(4);
+		cycle_count-=17;
+		I86_interrupt(4);
     } else cycle_count-=4;
 }
 
@@ -2199,50 +2313,51 @@ static void i_iret(void)    /* Opcode 0xcf */
     POP(sregs[CS]);
     base[CS] = SegBase(CS);
     i_popf();
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_rotshft_b(void)    /* Opcode 0xd0 */
 {
-    rotate_shift_Byte(FETCH,1);
+	rotate_shift_Byte(FETCHOP,1);
 }
 
 
 static void i_rotshft_w(void)    /* Opcode 0xd1 */
 {
-    rotate_shift_Word(FETCH,1);
+	rotate_shift_Word(FETCHOP,1);
 }
 
 
 static void i_rotshft_bcl(void)    /* Opcode 0xd2 */
 {
-    rotate_shift_Byte(FETCH,regs.b[CL]);
+	rotate_shift_Byte(FETCHOP,regs.b[CL]);
 }
 
 static void i_rotshft_wcl(void)    /* Opcode 0xd3 */
 {
-    rotate_shift_Word(FETCH,regs.b[CL]);
+	rotate_shift_Word(FETCHOP,regs.b[CL]);
 }
 
 static void i_aam(void)    /* Opcode 0xd4 */
 {
-    unsigned mult = FETCH;
+	unsigned mult = FETCHOP;
 
     cycle_count-=83;
     if (mult == 0)
-	I86_interrupt(0);
+		I86_interrupt(0);
     else
     {
-	regs.b[AH] = regs.b[AL] / mult;
-	regs.b[AL] %= mult;
+		regs.b[AH] = regs.b[AL] / mult;
+		regs.b[AL] %= mult;
 
-	SetSZPF_Word(regs.w[AX]);
+		SetSZPF_Word(regs.w[AX]);
     }
 }
 
 
 static void i_aad(void)    /* Opcode 0xd5 */
 {
-    unsigned mult = FETCH;
+	unsigned mult = FETCHOP;
 
     cycle_count-=60;
     regs.b[AL] = regs.b[AH] * mult + regs.b[AL];
@@ -2263,14 +2378,14 @@ static void i_xlat(void)    /* Opcode 0xd7 */
 
 static void i_escape(void)    /* Opcodes 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde and 0xdf */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     cycle_count-=2;
     GetRMByte(ModRM);
 }
 
 static void i_loopne(void)    /* Opcode 0xe0 */
 {
-    int disp = (int)((INT8)FETCH);
+	int disp = (int)((INT8)FETCHOP);
     unsigned tmp = regs.w[CX]-1;
 
     regs.w[CX]=tmp;
@@ -2278,12 +2393,13 @@ static void i_loopne(void)    /* Opcode 0xe0 */
     if (!ZF && tmp) {
 	cycle_count-=19;
 	ip = (WORD)(ip+disp);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=5;
 }
 
 static void i_loope(void)    /* Opcode 0xe1 */
 {
-    int disp = (int)((INT8)FETCH);
+	int disp = (int)((INT8)FETCHOP);
     unsigned tmp = regs.w[CX]-1;
 
     regs.w[CX]=tmp;
@@ -2291,12 +2407,13 @@ static void i_loope(void)    /* Opcode 0xe1 */
     if (ZF && tmp) {
 	cycle_count-=18;
 	ip = (WORD)(ip+disp);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=6;
 }
 
 static void i_loop(void)    /* Opcode 0xe2 */
 {
-    int disp = (int)((INT8)FETCH);
+	int disp = (int)((INT8)FETCHOP);
     unsigned tmp = regs.w[CX]-1;
 
     regs.w[CX]=tmp;
@@ -2304,22 +2421,24 @@ static void i_loop(void)    /* Opcode 0xe2 */
     if (tmp) {
 	cycle_count-=17;
 	ip = (WORD)(ip+disp);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=5;
 }
 
 static void i_jcxz(void)    /* Opcode 0xe3 */
 {
-    int disp = (int)((INT8)FETCH);
+	int disp = (int)((INT8)FETCHOP);
 
     if (regs.w[CX] == 0) {
 	cycle_count-=18;
 	ip = (WORD)(ip+disp);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
     } else cycle_count-=6;
 }
 
 static void i_inal(void)    /* Opcode 0xe4 */
 {
-    unsigned port = FETCH;
+	unsigned port = FETCHOP;
 
     cycle_count-=10;
     regs.b[AL] = read_port(port);
@@ -2327,7 +2446,7 @@ static void i_inal(void)    /* Opcode 0xe4 */
 
 static void i_inax(void)    /* Opcode 0xe5 */
 {
-    unsigned port = FETCH;
+	unsigned port = FETCHOP;
 
     cycle_count-=14;
     regs.b[AL] = read_port(port);
@@ -2336,7 +2455,7 @@ static void i_inax(void)    /* Opcode 0xe5 */
 
 static void i_outal(void)    /* Opcode 0xe6 */
 {
-    unsigned port = FETCH;
+	unsigned port = FETCHOP;
 
     cycle_count-=10;
     write_port(port, regs.b[AL]);
@@ -2344,7 +2463,7 @@ static void i_outal(void)    /* Opcode 0xe6 */
 
 static void i_outax(void)    /* Opcode 0xe7 */
 {
-    unsigned port = FETCH;
+	unsigned port = FETCHOP;
 
     cycle_count-=14;
     write_port(port, regs.b[AL]);
@@ -2353,43 +2472,46 @@ static void i_outax(void)    /* Opcode 0xe7 */
 
 static void i_call_d16(void)    /* Opcode 0xe8 */
 {
-    unsigned tmp = FETCH;
-    tmp += FETCH << 8;
+	unsigned tmp = FETCHOP;
+	tmp += FETCHOP << 8;
 
     PUSH(ip);
     ip = (WORD)(ip+(INT16)tmp);
     cycle_count-=12;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 
 static void i_jmp_d16(void)    /* Opcode 0xe9 */
 {
-    int tmp = FETCH;
-    tmp += FETCH << 8;
+	int tmp = FETCHOP;
+	tmp += FETCHOP << 8;
 
     ip = (WORD)(ip+(INT16)tmp);
     cycle_count-=15;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_jmp_far(void)    /* Opcode 0xea */
 {
     unsigned tmp,tmp1;
 
-    tmp = FETCH;
-    tmp += FETCH << 8;
+	tmp = FETCHOP;
+	tmp += FETCHOP << 8;
 
-    tmp1 = FETCH;
-    tmp1 += FETCH << 8;
+	tmp1 = FETCHOP;
+	tmp1 += FETCHOP << 8;
 
     sregs[CS] = (WORD)tmp1;
     base[CS] = SegBase(CS);
     ip = (WORD)tmp;
     cycle_count-=15;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 static void i_jmp_d8(void)    /* Opcode 0xeb */
 {
-    int tmp = (int)((INT8)FETCH);
+	int tmp = (int)((INT8)FETCHOP);
     ip = (WORD)(ip+tmp);
     cycle_count-=15;
 }
@@ -2427,7 +2549,7 @@ static void i_outdxax(void)    /* Opcode 0xef */
 static void i_lock(void)    /* Opcode 0xf0 */
 {
     cycle_count-=2;
-    instruction[FETCH]();  /* un-interruptible */
+	instruction[FETCHOP]();  /* un-interruptible */
 }
 
 static void rep(int flagval)
@@ -2435,7 +2557,7 @@ static void rep(int flagval)
     /* Handles rep- and repnz- prefixes. flagval is the value of ZF for the
        loop  to continue for CMPS and SCAS instructions. */
 
-    unsigned next = FETCH;
+	unsigned next = FETCHOP;
     unsigned count = regs.w[CX];
 
     switch(next)
@@ -2577,7 +2699,7 @@ static void i_cmc(void)    /* Opcode 0xf5 */
 static void i_f6pre(void)
 {
 	/* Opcode 0xf6 */
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned tmp = (unsigned)GetRMByte(ModRM);
     unsigned tmp2;
 
@@ -2645,24 +2767,17 @@ static void i_f6pre(void)
 
 	    result = regs.w[AX];
 
-	    if (tmp)
-	    {
-                if ((result / tmp) > 0xff)
-                {
-                        I86_interrupt(0);
-                        break;
-                }
-                else
-                {
-                        regs.b[AH] = result % tmp;
-                        regs.b[AL] = result / tmp;
-                }
-
-	    }
-	    else
-	    {
-                I86_interrupt(0);
-                break;
+		if (tmp) {
+			if ((result / tmp) > 0xff) {
+				I86_interrupt(0);
+				break;
+			} else {
+				regs.b[AH] = result % tmp;
+				regs.b[AL] = result / tmp;
+			}
+		} else {
+			I86_interrupt(0);
+			break;
 	    }
 	}
 	break;
@@ -2676,23 +2791,18 @@ static void i_f6pre(void)
 
 	    if (tmp)
 	    {
-                tmp2 = result % (INT16)((INT8)tmp);
+			tmp2 = result % (INT16)((INT8)tmp);
 
-                if ((result /= (INT16)((INT8)tmp)) > 0xff)
-                {
-                        I86_interrupt(0);
-                        break;
-                }
-                else
-                {
-                        regs.b[AL] = result;
-                        regs.b[AH] = tmp2;
-                }
-	    }
-	    else
-	    {
-                I86_interrupt(0);
-                break;
+			if ((result /= (INT16)((INT8)tmp)) > 0xff) {
+				I86_interrupt(0);
+				break;
+			} else {
+				regs.b[AL] = result;
+				regs.b[AH] = tmp2;
+			}
+		} else {
+			I86_interrupt(0);
+			break;
 	    }
 	}
 	break;
@@ -2703,7 +2813,7 @@ static void i_f6pre(void)
 static void i_f7pre(void)
 {
 	/* Opcode 0xf7 */
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned tmp = GetRMWord(ModRM);
     unsigned tmp2;
 
@@ -2780,25 +2890,19 @@ static void i_f7pre(void)
 
 	    result = (regs.w[DX] << 16) + regs.w[AX];
 
-	    if (tmp)
-	    {
-                tmp2 = result % tmp;
-                if ((result / tmp) > 0xffff)
-                {
-                        I86_interrupt(0);
-                        break;
-                }
-                else
-                {
-                        regs.w[DX]=tmp2;
-                        result /= tmp;
-                        regs.w[AX]=result;
-                }
-	    }
-	    else
-	    {
-                I86_interrupt(0);
-                break;
+		if (tmp) {
+			tmp2 = result % tmp;
+			if ((result / tmp) > 0xffff) {
+				I86_interrupt(0);
+				break;
+			} else {
+				regs.w[DX]=tmp2;
+				result /= tmp;
+				regs.w[AX]=result;
+			}
+		} else {
+			I86_interrupt(0);
+			break;
 	    }
 	}
 	break;
@@ -2809,25 +2913,18 @@ static void i_f7pre(void)
 
 	    result = (regs.w[DX] << 16) + regs.w[AX];
 
-	    if (tmp)
-	    {
-                tmp2 = result % (INT32)((INT16)tmp);
-
-                if ((result /= (INT32)((INT16)tmp)) > 0xffff)
-                {
-                        I86_interrupt(0);
-                        break;
-                }
-                else
-                {
-                        regs.w[AX]=result;
-                        regs.w[DX]=tmp2;
-                }
-	    }
-	    else
-	    {
-                I86_interrupt(0);
-                break;
+		if (tmp) {
+			tmp2 = result % (INT32)((INT16)tmp);
+			if ((result /= (INT32)((INT16)tmp)) > 0xffff) {
+				I86_interrupt(0);
+				break;
+			} else {
+				regs.w[AX]=result;
+				regs.w[DX]=tmp2;
+			}
+		} else {
+			I86_interrupt(0);
+			break;
 	    }
 	}
 	break;
@@ -2873,7 +2970,7 @@ static void i_std(void)    /* Opcode 0xfd */
 
 static void i_fepre(void)    /* Opcode 0xfe */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned tmp = GetRMByte(ModRM);
     unsigned tmp1;
 
@@ -2898,7 +2995,7 @@ static void i_fepre(void)    /* Opcode 0xfe */
 
 static void i_ffpre(void)    /* Opcode 0xff */
 {
-    unsigned ModRM = FETCH;
+	unsigned ModRM = FETCHOP;
     unsigned tmp;
     unsigned tmp1;
 
@@ -2933,28 +3030,34 @@ static void i_ffpre(void)    /* Opcode 0xff */
 	tmp = GetRMWord(ModRM);
 	PUSH(ip);
 	ip = (WORD)tmp;
-	break;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
+    break;
 
 	case 0x18:  /* CALL FAR ea */
 	cycle_count-=11;
-	PUSH(sregs[CS]);
-	PUSH(ip);
-	ip = GetRMWord(ModRM);
+	tmp = sregs[CS];		/* HJB 12/13/98 need to skip displacements of EA */
+	tmp1 = GetRMWord(ModRM);
 	sregs[CS] = GetnextRMWord;
-	base[CS] = SegBase(CS);
-	break;
+    base[CS] = SegBase(CS);
+	PUSH(tmp);
+	PUSH(ip);
+	ip = tmp1;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
+    break;
 
     case 0x20:  /* JMP ea */
 	cycle_count-=11; /* 8 if address in memory */
 	ip = GetRMWord(ModRM);
-	break;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
+    break;
 
     case 0x28:  /* JMP FAR ea */
 	cycle_count-=4;
 	ip = GetRMWord(ModRM);
 	sregs[CS] = GetnextRMWord;
 	base[CS] = SegBase(CS);
-	break;
+	change_pc20((base[CS]+ip) & i86_AddrMask);
+    break;
 
     case 0x30:  /* PUSH ea */
 	cycle_count-=3;
@@ -2968,6 +3071,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 static void i_invalid(void)
 {
     /* makes the cpu loops forever until user resets it */
+/*	{ extern int debug_key_pressed; debug_key_pressed = 1; } */
     ip--;
     cycle_count-=10;
 }
@@ -2983,12 +3087,19 @@ void i86_SetRegs(i86_Regs *Regs)
 	sregs[DS] = Regs->sregs[DS];
 	sregs[ES] = Regs->sregs[ES];
 	sregs[SS] = Regs->sregs[SS];
-	int86_pending = Regs->pending_interrupts;
+	int86_vector = Regs->int_vector;
+	pending_irq = Regs->pending_irq;
+#if NEW_INTERRUPT_SYSTEM
+    nmi_state = Regs->nmi_state;
+	irq_state = Regs->irq_state;
+    irq_callback = Regs->irq_callback;
+#endif
 
 	base[CS] = SegBase(CS);
 	base[DS] = SegBase(DS);
 	base[ES] = SegBase(ES);
 	base[SS] = SegBase(SS);
+	change_pc20((base[CS]+ip) & i86_AddrMask);
 }
 
 
@@ -3001,33 +3112,72 @@ void i86_GetRegs(i86_Regs *Regs)
 	Regs->sregs[DS] = sregs[DS];
 	Regs->sregs[ES] = sregs[ES];
 	Regs->sregs[SS] = sregs[SS];
-	Regs->pending_interrupts = int86_pending;
+	Regs->int_vector = int86_vector;
+	Regs->pending_irq = pending_irq;
+#if NEW_INTERRUPT_SYSTEM
+    Regs->nmi_state = nmi_state;
+	Regs->irq_state = irq_state;
+	Regs->irq_callback = irq_callback;
+#endif
 }
 
 
 unsigned i86_GetPC(void)
 {
-	return ip;
+	return (SegBase(CS)+(WORD)ip) & i86_AddrMask;
 }
 
+#if NEW_INTERRUPT_SYSTEM
+
+void i86_set_nmi_line(int state)
+{
+	nmi_state = state;
+	if (state != CLEAR_LINE) {
+		pending_irq |= NMI_IRQ;
+	}
+}
+
+void i86_set_irq_line(int irqline, int state)
+{
+	irq_state = state;
+	if (state == CLEAR_LINE) {
+		if (!IF)
+			pending_irq &= ~INT_IRQ;
+	} else {
+		if (IF)
+			pending_irq |= INT_IRQ;
+	}
+}
+
+void i86_set_irq_callback(int (*callback)(int))
+{
+	irq_callback = callback;
+}
+
+#else
 
 void i86_Cause_Interrupt(int type)
 {
-	int86_pending = type;
+	if (type) {
+		if (type == I86_NMI_INT) {
+			pending_irq |= NMI_IRQ;
+		} else {
+			pending_irq |= INT_IRQ;
+			int86_vector = type;
+		}
+	}
 }
 
 
 void i86_Clear_Pending_Interrupts(void)
 {
-	int86_pending = 0;
+	pending_irq = 0;
 }
 
-
+#endif
 
 int i86_Execute(int cycles)
 {
-/* ASG 971222    if (int86_pending) external_int();*/
-
     cycle_count=cycles;/* ASG 971222 cycles_per_run;*/
     while(cycle_count>0)
     {
@@ -3036,7 +3186,8 @@ int i86_Execute(int cycles)
 printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,GetMemB(CS,ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
 #endif
 
-	if (int86_pending) external_int();      /* ASG 971222 */
+	if ((pending_irq && IF) || (pending_irq & NMI_IRQ))
+		external_int(); 	 /* HJB 12/15/98 */
 
 #ifdef MAME_DEBUG
 	{
@@ -3048,7 +3199,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 	seg_prefix=FALSE;
 #if defined(BIGCASE) && !defined(RS6000)
   /* Some compilers cannot handle large case statements */
-	switch(FETCH)
+	switch(FETCHOP)
 	{
 	case 0x00:    i_add_br8(); break;
 	case 0x01:    i_add_wr16(); break;
@@ -3151,7 +3302,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
         case 0x62:    i_bound(); break;
 	case 0x63:    i_invalid(); break;
 	case 0x64:    i_invalid(); break;
-	case 0x65:    i_invalid(); break;
+	case 0x65:	  i_invalid(); break;
 	case 0x66:    i_invalid(); break;
 	case 0x67:    i_invalid(); break;
         case 0x68:    i_push_d16(); break;
@@ -3180,7 +3331,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 	case 0x7f:    i_jnle(); break;
 	case 0x80:    i_80pre(); break;
 	case 0x81:    i_81pre(); break;
-	case 0x82:    i_invalid(); break;
+	case 0x82:	  i_82pre(); break;
 	case 0x83:    i_83pre(); break;
 	case 0x84:    i_test_br8(); break;
 	case 0x85:    i_test_wr16(); break;
@@ -3308,9 +3459,9 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 	case 0xff:    i_ffpre(); break;
 	};
 #else
-	instruction[FETCH]();
+	instruction[FETCHOP]();
 #endif
+
     }
-/* ASG 971222    int86_pending=I86_NMI_INT;*/
 	return cycles - cycle_count;
 }

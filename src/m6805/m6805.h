@@ -9,18 +9,22 @@
 /****************************************************************************/
 /* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
 /****************************************************************************/
-#include "types.h"	/* -NS- */
+#include "osd_cpu.h"
 
 /* 6805 Registers */
 typedef struct
 {
-	word		pc;	/* Program counter */
-	byte		s;		/* Stack pointer */
-	byte		x;		/* Index register */
-	byte		a;		/* Accumulator */
-	byte		cc;
+	UINT16 pc; /* Program counter */
+	UINT8  s;  /* Stack pointer */
+	UINT8  x;	   /* Index register */
+	UINT8  a;	   /* Accumulator */
+	UINT8  cc;
 
 	int pending_interrupts;	/* MB */
+#if NEW_INTERRUPT_SYSTEM
+	int irq_state;
+	int (*irq_callback)(int irqline);
+#endif
 } m6805_Regs;
 
 #ifndef INLINE
@@ -38,8 +42,14 @@ extern void m6805_GetRegs(m6805_Regs *Regs);
 extern unsigned m6805_GetPC(void);
 extern void m6805_reset(void);
 extern int  m6805_execute(int cycles);             /* MB */
+#if NEW_INTERRUPT_SYSTEM
+extern void m6805_set_nmi_line(int state);
+extern void m6805_set_irq_line(int irqline, int state);
+extern void m6805_set_irq_callback(int (*callback)(int irqline));
+#else
 extern void m6805_Cause_Interrupt(int type);       /* MB */
 extern void m6805_Clear_Pending_Interrupts(void);  /* MB */
+#endif
 
 /* PUBLIC GLOBALS */
 extern int	m6805_ICount;

@@ -18,7 +18,13 @@ typedef struct
 	int ip;
 	word flags;
 	word sregs[4];
-	int pending_interrupts;
+	int int_vector;
+	int pending_irq;
+#if NEW_INTERRUPT_SYSTEM
+	int nmi_state;
+	int irq_state;
+	int (*irq_callback)(int irqline);
+#endif
 } i86_Regs;
 
 
@@ -33,9 +39,14 @@ extern void i86_GetRegs(i86_Regs *Regs);
 extern unsigned i86_GetPC(void);
 extern void i86_Reset(void);
 extern int i86_Execute(int cycles);
+#if NEW_INTERRUPT_SYSTEM
+extern void i86_set_nmi_line(int state);
+extern void i86_set_irq_line(int irqline, int state);
+extern void i86_set_irq_callback(int (*callback)(int irqline));
+#else
 extern void i86_Cause_Interrupt(int type);
 extern void i86_Clear_Pending_Interrupts(void);
-
+#endif
 
 extern int i86_ICount;
 

@@ -37,8 +37,6 @@ It's on the schematic, and it has a VMA pin, so I assume it must be a 68xx famil
 
 
 
-int seicross_protection_r(int offset);
-
 extern unsigned char *seicross_row_scroll;
 void seicross_colorram_w(int offset,int data);
 void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -66,12 +64,15 @@ if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_getpc(),data)
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 
-	/* bit 2 seems to trigger a curtom IC or microcontroller */
+	/* bit 1 flips screen */
+
+	/* bit 2 resets the microcontroller */
 	if (data & 4)
 	{
 		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-		if (cpu_getpc() == 0x2ea9)	/* Seicross */
+		if (cpu_getpc() == 0x2ea9 ||	/* Seicross */
+				cpu_getpc() == 0x2d9c)	/* Sector Zone */
 		{
 			RAM[0x7814] = 0x02;
 			RAM[0x7815] = 0x03;
@@ -157,9 +158,7 @@ INPUT_PORTS_START( seicross_input_ports )
 	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-/* actually it looks like bit 1 is not a test switch, but an error report from */
-/* a microcontroller on board. */
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Test 2", OSD_KEY_F1, 0, 0 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Connection Error", OSD_KEY_F1, 0, 0 )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START
@@ -200,9 +199,7 @@ INPUT_PORTS_START( friskyt_input_ports )
 	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-/* actually it looks like bit 1 is not a test switch, but an error report from */
-/* a microcontroller on board. */
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Test 2", OSD_KEY_F1, 0, 0 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Connection Error", OSD_KEY_F1, 0, 0 )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START
@@ -325,14 +322,36 @@ ROM_START( seicross_rom )
 	ROM_LOAD( "smc8",         0x7000, 0x0800, 0x2093461d )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "smcc",         0x0000, 0x1000, 0xfbd9b91d )
+	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
 	ROM_LOAD( "smcd",         0x1000, 0x1000, 0xc3c953c4 )
-	ROM_LOAD( "smca",         0x2000, 0x1000, 0x4819f0cd )
-	ROM_LOAD( "smcb",         0x3000, 0x1000, 0x4c268778 )
+	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
+	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "sz73",         0x0000, 0x0020, 0x4d218a3c )
-	ROM_LOAD( "sz74",         0x0020, 0x0020, 0xc550531c )
+	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
+	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
+ROM_END
+
+ROM_START( sectrzon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
+	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )
+	ROM_LOAD( "sz3.3d",       0x2000, 0x1000, 0xbaad4294 )
+	ROM_LOAD( "sz4.3e",       0x3000, 0x1000, 0x75f2ca75 )
+	ROM_LOAD( "sz5.3fg",      0x4000, 0x1000, 0xdc14f2c8 )
+	ROM_LOAD( "sz6.3h",       0x5000, 0x1000, 0x397a38c5 )
+	ROM_LOAD( "sz7.3i",       0x6000, 0x1000, 0x7b34dc1c )
+	ROM_LOAD( "sz8.3j",       0x7000, 0x0800, 0x9933526a )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
+	ROM_LOAD( "sz12.7m",      0x1000, 0x1000, 0x2bdef9ad )
+	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
+	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
+	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 ROM_END
 
 ROM_START( friskyt_rom )
@@ -436,6 +455,32 @@ struct GameDriver seicross_driver =
 	0,
 
 	seicross_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	seicross_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	seicross_hiload, seicross_hisave
+};
+
+struct GameDriver sectrzon_driver =
+{
+	__FILE__,
+	&seicross_driver,
+	"sectrzon",
+	"Sector Zone",
+	"1984",
+	"Nichibutsu + Alice",
+	"Mirko Buffoni\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	sectrzon_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

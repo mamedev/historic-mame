@@ -1066,7 +1066,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x3012, 0x3012 },	/* Ant Eater clips if the volume is set higher */
+	{ 0x3010, 0x3010 },	/* Ant Eater clips if the volume is set higher */
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },

@@ -22,7 +22,6 @@ Ring King specific:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 
 /* from vidhrdw */
 extern unsigned char *kingobox_videoram1;

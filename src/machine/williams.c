@@ -48,7 +48,6 @@ static unsigned char defender_video_counter;
 int williams_input_port_0_3 (int offset);
 int williams_input_port_1_4 (int offset);
 int stargate_input_port_0_r (int offset);
-int blaster_input_port_0_r (int offset);
 int sinistar_input_port_0_r (int offset);
 int defender_input_port_0_r (int offset);
 int lottofun_input_port_0_r (int offset);
@@ -190,7 +189,7 @@ static pia6821_interface blaster_pia_intf =
 {
 	3,                                              /* 3 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ blaster_input_port_0_r, input_port_2_r, 0 },  /* input port A */
+	{ sinistar_input_port_0_r, input_port_2_r, 0 },  /* input port A */
 	{ 0, 0, 0 },                                    /* input bit CA1 */
 	{ 0, 0, 0 },                                    /* input bit CA2 */
 	{ input_port_1_r, 0, 0 },                       /* input port B */
@@ -752,32 +751,41 @@ int splat_catch_loop_r(int offset)
 ***************************************************************************/
 
 /*
- *  Sinistar Joystick
+ *  Sinistar and Blaster Joystick
+ *
+ * The joystick has 48 positions + center.
+ *
+ * I'm not 100% sure but it looks like it's mapped this way:
+ *
+ *	xxxx1000 = up full
+ *	xxxx1100 = up 2/3
+ *	xxxx1110 = up 1/3
+ *	xxxx0111 = center
+ *	xxxx0011 = down 1/3
+ *	xxxx0001 = down 1/3
+ *	xxxx0000 = down 1/3
+ *
+ *	1000xxxx = right full
+ *	1100xxxx = right 2/3
+ *	1110xxxx = right 1/3
+ *	0111xxxx = center
+ *	0011xxxx = left 1/3
+ *	0001xxxx = left 1/3
+ *	0000xxxx = left 1/3
+ *
  */
-int sinistar_input_port_0_r (int offset)
+int sinistar_input_port_0_r(int offset)
 {
-	int i;
-	int keys;
+	int joy_x,joy_y;
+	int bits_x,bits_y;
 
+	joy_x = readinputport(3) >> 4;	/* 0 = left 3 = center 6 = right */
+	joy_y = readinputport(4) >> 4;	/* 0 = down 3 = center 6 = up */
 
-/*~~~~~ make it incremental */
-	keys = input_port_0_r (0);
+	bits_x = (0x70 >> (7 - joy_x)) & 0x0f;
+	bits_y = (0x70 >> (7 - joy_y)) & 0x0f;
 
-	if (keys & 0x04)
-		i = 0x40;
-	else if (keys & 0x08)
-		i = 0xC0;
-	else
-		i = 0x20;
-
-	if (keys&0x02)
-		i += 0x04;
-	else if (keys&0x01)
-		i += 0x0C;
-	else
-		i += 0x02;
-
-	return i;
+	return (bits_x << 4) | bits_y;
 }
 
 
@@ -822,33 +830,6 @@ static void sinistar_snd_cmd_w (int offset, int cmd)
 	Blaster-specific routines
 
 ***************************************************************************/
-
-/*
- *  Blaster Joystick
- */
-int blaster_input_port_0_r (int offset)
-{
-	int i;
-	int keys;
-
-	keys = input_port_0_r (0);
-
-	if (keys & 0x04)
-		i = 0x00;
-	else if (keys & 0x08)
-		i = 0x80;
-	else
-		i = 0x40;
-
-	if (keys&0x02)
-		i += 0x00;
-	else if (keys&0x01)
-		i += 0x08;
-	else
-		i += 0x04;
-
-	return i;
-}
 
 
 /*

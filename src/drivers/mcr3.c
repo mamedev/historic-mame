@@ -128,8 +128,8 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xe9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
 	{ 0xf800, 0xf8ff, mcr3_paletteram_w, &paletteram },
@@ -146,11 +146,11 @@ static struct MemoryReadAddress rampage_readmem[] =
 
 static struct MemoryWriteAddress rampage_writemem[] =
 {
-	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
 	{ 0xec00, 0xecff, mcr3_paletteram_w, &paletteram },
+	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
 	{ -1 }  /* end of table */
 };
 
@@ -164,29 +164,30 @@ static struct MemoryReadAddress spyhunt_readmem[] =
 
 static struct MemoryWriteAddress spyhunt_writemem[] =
 {
-	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xe800, 0xebff, MWA_RAM, &spyhunt_alpharam, &spyhunt_alpharam_size },
+	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xe800, 0xebff, MWA_RAM, &spyhunt_alpharam, &spyhunt_alpharam_size },
+	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xf9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xfa00, 0xfaff, mcr3_paletteram_w, &paletteram },
-	{ 0x0000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x9003, mcr_soundlatch_r },
 	{ 0xa001, 0xa001, AY8910_read_port_0_r },
 	{ 0xb001, 0xb001, AY8910_read_port_1_r },
-	{ 0xf000, 0xf000, input_port_5_r },
 	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0xf000, 0xf000, input_port_5_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xa000, 0xa000, AY8910_control_port_0_w },
 	{ 0xa002, 0xa002, AY8910_write_port_0_w },
@@ -194,25 +195,25 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xb002, 0xb002, AY8910_write_port_1_w },
 	{ 0xc000, 0xc000, mcr_soundstatus_w },
 	{ 0xe000, 0xe000, MWA_NOP },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress timber_sound_readmem[] =
 {
+	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_RAM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x9003, mcr_soundlatch_r },
 	{ 0xa001, 0xa001, AY8910_read_port_0_r },
 	{ 0xb001, 0xb001, AY8910_read_port_1_r },
-	{ 0xf000, 0xf000, input_port_5_r },
 	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0xf000, 0xf000, input_port_5_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress timber_sound_writemem[] =
 {
+	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x3fff, MWA_RAM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xa000, 0xa000, AY8910_control_port_0_w },
@@ -221,7 +222,6 @@ static struct MemoryWriteAddress timber_sound_writemem[] =
 	{ 0xb002, 0xb002, AY8910_write_port_1_w },
 	{ 0xc000, 0xc000, mcr_soundstatus_w },
 	{ 0xe000, 0xe000, MWA_NOP },
-	{ 0x0000, 0x2fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -1082,11 +1082,23 @@ static struct GfxDecodeInfo crater_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
+int mcr_sh_start(void)
+{
+	int i;
+
+
+	for (i = 0;i < 3;i++) stream_set_pan(3*0+i,OSD_PAN_LEFT);	/* AY8910 #0 */
+	for (i = 0;i < 3;i++) stream_set_pan(3*1+i,OSD_PAN_RIGHT);	/* AY8910 #1 */
+//	stream_set_pan(6,OSD_PAN_LEFT);	/* 5220 */
+	return 0;
+}
+
+
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz ?? */
-	{ 255, 255 },
+	{ 33, 33 },	/* dotron clips with anything higher */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1096,13 +1108,13 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 80 }
 };
 
 static struct TMS5220interface tms5220_interface =
 {
 	640000,
-	192,
+	30,
 	0
 };
 
@@ -1150,7 +1162,7 @@ static struct MachineDriver tapper_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1203,7 +1215,7 @@ static struct MachineDriver dotron_machine_driver =
 	dotron_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1252,7 +1264,7 @@ static struct MachineDriver destderb_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1297,7 +1309,7 @@ static struct MachineDriver timber_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1477,7 +1489,7 @@ static struct MachineDriver spyhunt_machine_driver =
 	spyhunt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1527,7 +1539,7 @@ static struct MachineDriver crater_machine_driver =
 	spyhunt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,

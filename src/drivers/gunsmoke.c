@@ -454,7 +454,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe683],"\x01\x00\x00",3) == 0)
+        if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01",4) == 0)
 	{
 		void *f;
 
@@ -487,7 +487,6 @@ static void hisave(void)
 		osd_fclose(f);
 	}
 }
-
 
 struct GameDriver gunsmoke_driver =
 {
@@ -564,7 +563,7 @@ struct GameDriver gunsmoka_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	hiload,hisave
 };
 
 struct GameDriver gunsmokj_driver =

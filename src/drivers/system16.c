@@ -261,7 +261,7 @@ static struct MachineDriver GAMENAME = \
 	sys16_vh_start, \
 	sys16_vh_stop, \
 	sys16_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
+	0,0,0,0, \
 	{ \
 		{ \
 			SOUND_YM2151, \
@@ -2283,8 +2283,15 @@ ROM_START( mjleague_rom )
 	ROM_LOAD( "epr-7061.04b", 0x028000, 0x008000, 0xc808dad5 )
 	ROM_LOAD( "epr-7058.08a", 0x030000, 0x008000, 0xb543675f )
 	ROM_LOAD( "epr-7062.05b", 0x038000, 0x008000, 0x9168eb47 )
-	ROM_LOAD( "epr-7055.05a", 0x040000, 0x008000, 0x1fb860bd )
-	ROM_LOAD( "epr-7059.02b", 0x048000, 0x008000, 0x3d14091d )
+//	ROM_LOAD( "epr-7055.05a", 0x040000, 0x008000, 0x1fb860bd ) loaded twice??
+//	ROM_LOAD( "epr-7059.02b", 0x048000, 0x008000, 0x3d14091d ) loaded twice??
+#if 0
+roms not loaded anywhere:
+epr-7063.01a
+epr-7064.03a
+epr-7065.02a
+epr-7066.04a
+#endif
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "eprc7054.01b", 0x0000, 0x8000, 0x4443b744 )
@@ -3188,7 +3195,7 @@ struct GameDriver timscanr_driver =
 	"1987",
 	"Sega",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&timscanr_machine_driver,
 	0,
 	timscanr_rom,

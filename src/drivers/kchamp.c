@@ -53,7 +53,8 @@ IO ports and memory map changes. Dip switches differ too.
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
+
 
 /* from vidhrdw */
 extern void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

@@ -256,8 +256,8 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
-int osd_skip_this_frame(int recommend);
-void osd_update_display(void);
+int osd_skip_this_frame(void);
+void osd_update_video_and_audio(void);
 void osd_set_gamma(float _gamma);
 float osd_get_gamma(void);
 void osd_set_brightness(int brightness);
@@ -267,7 +267,6 @@ void osd_save_snapshot(void);
 #define OSD_PAN_CENTER 0
 #define OSD_PAN_LEFT   1
 #define OSD_PAN_RIGHT  2
-void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
 void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
@@ -351,6 +350,10 @@ void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
 unsigned int osd_fcrc(void *file);
+
+/* called while loading ROMs. It is called a last time with name == 0 to signal */
+/* that the ROM loading process is finished. */
+void osd_display_loading_rom_message(const char *name,int current,int total);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);

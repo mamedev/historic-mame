@@ -24,19 +24,20 @@ address or I/O port.
 ***************************************************************************/
 struct InputPort
 {
-	unsigned char mask;	/* bits affected */
-	unsigned char default_value;	/* default value for the bits affected */
+	UINT16 mask;			/* bits affected */
+	UINT16 default_value;	/* default value for the bits affected */
 							/* you can also use one of the IP_ACTIVE defines below */
-	int type;	/* see defines below */
-	const char *name;	/* name to display */
-	int keyboard;	/* key affecting the input bits */
-	int joystick;	/* joystick command affecting the input bits */
-	int arg;	/* extra argument needed in some cases */
+	UINT32 type;			/* see defines below */
+	const char *name;		/* name to display */
+	UINT32 keyboard;		/* key affecting the input bits */
+	UINT32 joystick;		/* joystick command affecting the input bits */
+	UINT32 arg;				/* extra argument needed in some cases */
+	UINT16 min, max;		/* for analog controls */
 };
 
 
-#define IP_ACTIVE_HIGH 0x00
-#define IP_ACTIVE_LOW 0xff
+#define IP_ACTIVE_HIGH 0x0000
+#define IP_ACTIVE_LOW 0xffff
 
 enum { IPT_END=1,IPT_PORT,
 	/* use IPT_JOYSTICK for panels where the player has one single joystick */
@@ -114,11 +115,9 @@ enum { IPT_END=1,IPT_PORT,
 #define IPF_RESETCPU   0x02000000	/* when the key is pressed, reset the first CPU */
 
 
-/* LBO - These 4 byte values are packed into the arg field and are typically used with analog ports */
-#define IPF_SENSITIVITY(percent)	(percent&0xff)
-#define IPF_CLIP(clip)			((clip&0xff) << 8  )
-#define IPF_MIN(min)			((min&0xff)  << 16 )
-#define IPF_MAX(max)			((max&0xff)  << 24 )
+/* The "arg" field contains 2 bytes fields */
+#define IPF_SENSITIVITY(percent)   (percent &   0xff)
+#define IPF_CLIP(clip)			  ((clip    &   0xff) << 8  )
 
 /* LBO - these fields are packed into in->keyboard & in->joystick for analog controls */
 #define IPF_DEC(key)			((key&0xff)       )
@@ -149,12 +148,12 @@ enum { IPT_END=1,IPT_PORT,
 #define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) \
 	{ mask, default, type, IP_NAME_DEFAULT, \
 	IP_KEY_DEFAULT, IP_JOY_DEFAULT, \
-	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
+	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip), min, max },
 /* analog input with extended fields for defining default keys & sensitivities */
 #define PORT_ANALOGX(mask,default,type,sensitivity,clip,min,max,keydec,keyinc,joydec,joyinc,delta) \
 	{ mask, default, type, IP_NAME_DEFAULT, \
 	IPF_DEC(keydec) | IPF_INC(keyinc) | IPF_DELTA(delta), IPF_DEC(joydec) | IPF_INC(joyinc) | IPF_DELTA(delta), \
-	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip) | IPF_MIN(min) | IPF_MAX(max) },
+	IPF_SENSITIVITY(sensitivity) | IPF_CLIP(clip), min, max },
 
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
@@ -237,12 +236,14 @@ struct MachineSound
 #define SOUND_NES       14
 #define SOUND_ASTROCADE 15	/* Custom I/O chip from Bally/Midway */
 #define SOUND_NAMCO     16
-#define SOUND_TMS5220   17
-#define SOUND_VLM5030   18
-#define SOUND_ADPCM     19
-#define SOUND_OKIM6295  20	/* ROM-based ADPCM system */
-#define SOUND_MSM5205   21	/* CPU-based ADPCM system */
-#define SOUND_HC55516   22	/* Harris family of CVSD CODECs */
+#define SOUND_NAMCOS1   17
+#define SOUND_TMS5220   18
+#define SOUND_VLM5030   19
+#define SOUND_ADPCM     20
+#define SOUND_OKIM6295  21	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   22	/* CPU-based ADPCM system */
+#define SOUND_HC55516   23	/* Harris family of CVSD CODECs */
+#define SOUND_K007232   24	/* Konami 007232 */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */

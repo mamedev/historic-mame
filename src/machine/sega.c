@@ -15,7 +15,6 @@
  */
 
 #include "driver.h"
-#include "Z80/Z80.h"
 
 extern void (*sega_decrypt)(int,unsigned int *);
 unsigned char *sega_mem;

@@ -250,7 +250,7 @@ void TMS3617_doupdate(void)
 	int newpos;
 
 
-	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
+	newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
 
 	TMS3617_update(&output_buffer[sample_pos],newpos - sample_pos);
 	sample_pos = newpos;

@@ -7,21 +7,13 @@ Phoenix memory map
 
 0000-3fff 16Kb Program ROM
 4000-43ff 1Kb Video RAM Charset A (4340-43ff variables)
-4400-47ff 1Kb Work RAM
-4800-4bff 1Kb Video RAM Charset B (4840-4bff variables)
-4c00-4fff 1Kb Work RAM
+4800-4bff 1Kb Video RAM Charset B (4b40-4bff variables)
 5000-53ff 1Kb Video Control write-only (mirrored)
-5400-47ff 1Kb Work RAM
 5800-5bff 1Kb Video Scroll Register (mirrored)
-5c00-5fff 1Kb Work RAM
 6000-63ff 1Kb Sound Control A (mirrored)
-6400-67ff 1Kb Work RAM
 6800-6bff 1Kb Sound Control B (mirrored)
-6c00-6fff 1Kb Work RAM
 7000-73ff 1Kb 8bit Game Control read-only (mirrored)
-7400-77ff 1Kb Work RAM
 7800-7bff 1Kb 8bit Dip Switch read-only (mirrored)
-7c00-7fff 1Kb Work RAM
 
 memory mapped ports:
 
@@ -30,7 +22,7 @@ read-only:
 7800-7bff DSW
 
  * IN (all bits are inverted)
- * bit 7 : barrier
+ * bit 7 : Shield
  * bit 6 : Left
  * bit 5 : Right
  * bit 4 : Fire
@@ -52,80 +44,54 @@ read-only:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
-
-extern unsigned char *phoenix_videoram2;
-
-int phoenix_DSW_r (int offset);
-
+int  phoenix_paged_ram_r (int offset);
+void phoenix_paged_ram_w (int offset,int data);
 void phoenix_videoreg_w (int offset,int data);
 void phoenix_scroll_w (int offset,int data);
+int  phoenix_input_port_0_r (int offset);
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int  phoenix_vh_start(void);
+void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void phoenix_sound_control_a_w(int offset, int data);
 void phoenix_sound_control_b_w(int offset, int data);
-int phoenix_sh_start(void);
+int  phoenix_sh_start(void);
 void phoenix_sh_update(void);
+
 void pleiads_sound_control_a_w(int offset, int data);
 void pleiads_sound_control_b_w(int offset, int data);
-int pleiads_sh_start(void);
+int  pleiads_sh_start(void);
 void pleiads_sh_update(void);
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, MRA_RAM },	/* video RAM */
-	{ 0x5000, 0x6fff, MRA_RAM },
-	{ 0x7000, 0x73ff, input_port_0_r },	/* IN0 */
-	{ 0x7400, 0x77ff, MRA_RAM },
-	{ 0x7800, 0x7bff, input_port_1_r },	/* DSW */
-	{ 0x7c00, 0x7fff, MRA_RAM },
+	{ 0x4000, 0x4fff, phoenix_paged_ram_r },	/* 2 pages selected by Bit 0 of videoregister */
+	{ 0x7000, 0x73ff, phoenix_input_port_0_r },	/* IN0 */
+	{ 0x7800, 0x7bff, input_port_1_r },	        /* DSW */
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM, &phoenix_videoram2 },
-	{ 0x4400, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4C00, 0x4fff, MWA_RAM },
-	{ 0x5000, 0x53ff, phoenix_videoreg_w },
-	{ 0x5400, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */
-	{ 0x5C00, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x63ff, phoenix_sound_control_a_w },
-	{ 0x6400, 0x67ff, MWA_RAM },
-	{ 0x6800, 0x6bff, phoenix_sound_control_b_w },
-	{ 0x6C00, 0x6fff, MWA_RAM },
-	{ 0x7400, 0x77ff, MWA_RAM },
-	{ 0x7C00, 0x7fff, MWA_RAM },
-	{ -1 }	/* end of table */
+
+#define WRITEMEM(GAMENAME)										\
+																\
+static struct MemoryWriteAddress GAMENAME##_writemem[] =		\
+{																\
+	{ 0x0000, 0x3fff, MWA_ROM },								\
+	{ 0x4000, 0x4fff, phoenix_paged_ram_w },  /* 2 pages selected by Bit 0 of the video register */	\
+	{ 0x5000, 0x53ff, phoenix_videoreg_w },						\
+	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */		\
+	{ 0x6000, 0x63ff, GAMENAME##_sound_control_a_w },			\
+	{ 0x6800, 0x6bff, GAMENAME##_sound_control_b_w },			\
+	{ -1 }	/* end of table */	   								\
 };
 
-static struct MemoryWriteAddress pl_writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM, &phoenix_videoram2 },
-	{ 0x4400, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4C00, 0x4fff, MWA_RAM },
-	{ 0x5000, 0x53ff, phoenix_videoreg_w },
-	{ 0x5400, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5bff, phoenix_scroll_w },
-	{ 0x5C00, 0x5fff, MWA_RAM },
-	{ 0x6000, 0x63ff, pleiads_sound_control_a_w },
-	{ 0x6400, 0x67ff, MWA_RAM },
-	{ 0x6800, 0x6bff, pleiads_sound_control_b_w },
-	{ 0x6C00, 0x6fff, MWA_RAM },
-	{ 0x7400, 0x77ff, MWA_RAM },
-	{ 0x7C00, 0x7fff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+WRITEMEM(phoenix)
+WRITEMEM(pleiads)
 
 
 
@@ -237,7 +203,7 @@ INPUT_PORTS_START( pleiads_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	   /* Protection. See 0x0552 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -285,76 +251,48 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			3072000,	/* 3 Mhz ? */
-			0,
-			readmem,writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },
-	gfxdecodeinfo,
-	256,16*4+16*4,
-	phoenix_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	phoenix_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	phoenix_sh_start,
-	0,
-	phoenix_sh_update
+#define MACHINE_DRIVER(GAMENAME)									\
+																	\
+static struct MachineDriver GAMENAME##_machine_driver =				\
+{																	\
+	/* basic machine hardware */									\
+	{																\
+		{															\
+			CPU_8080,												\
+			3072000,	/* 3 Mhz ? */								\
+			0,														\
+			readmem,GAMENAME##_writemem,0,0,						\
+			ignore_interrupt,1										\
+		}															\
+	},																\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* single CPU, no need for interleaving */					\
+	0,																\
+																	\
+	/* video hardware */											\
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },						\
+	gfxdecodeinfo,													\
+	256,16*4+16*4,													\
+	phoenix_vh_convert_color_prom,									\
+																	\
+	VIDEO_TYPE_RASTER,												\
+	0,																\
+	phoenix_vh_start,												\
+	phoenix_vh_stop,												\
+	phoenix_vh_screenrefresh,										\
+																	\
+	/* sound hardware */											\
+	0,																\
+	GAMENAME##_sh_start,											\
+	0,																\
+	GAMENAME##_sh_update											\
 };
 
-static struct MachineDriver pleiads_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			3072000,	/* 3 Mhz ? */
-			0,
-                        readmem,pl_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },
-	gfxdecodeinfo,
-	256,16*4+16*4,
-	phoenix_vh_convert_color_prom,
+MACHINE_DRIVER(phoenix)
+MACHINE_DRIVER(pleiads)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	phoenix_vh_screenrefresh,
 
-	/* sound hardware */
-	0,
-	pleiads_sh_start,
-	0,
-	pleiads_sh_update
-};
 
 static const char *phoenix_sample_names[] =
 {
@@ -568,6 +506,7 @@ static void hisave(void)
 }
 
 
+#define CREDITS   "Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili"
 
 struct GameDriver phoenix_driver =
 {
@@ -577,9 +516,9 @@ struct GameDriver phoenix_driver =
 	"Phoenix (Amstar)",
 	"1980",
 	"Amstar",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	CREDITS,
 	0,
-	&machine_driver,
+	&phoenix_machine_driver,
 	0,
 
 	phoenix_rom,
@@ -603,9 +542,9 @@ struct GameDriver phoenixt_driver =
 	"Phoenix (Taito)",
 	"1980",
 	"Taito",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	CREDITS,
 	0,
-	&machine_driver,
+	&phoenix_machine_driver,
 	0,
 
 	phoenixt_rom,
@@ -629,9 +568,9 @@ struct GameDriver phoenix3_driver =
 	"Phoenix (T.P.N.)",
 	"1980",
 	"bootleg",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	CREDITS,
 	0,
-	&machine_driver,
+	&phoenix_machine_driver,
 	0,
 
 	phoenix3_rom,
@@ -655,9 +594,9 @@ struct GameDriver phoenixc_driver =
 	"Phoenix (IRECSA, G.G.I Corp)",
 	"1981",
 	"bootleg?",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	CREDITS,
 	0,
-	&machine_driver,
+	&phoenix_machine_driver,
 	0,
 
 	phoenixc_rom,
@@ -679,10 +618,10 @@ struct GameDriver pleiads_driver =
 	__FILE__,
 	0,
 	"pleiads",
-	"Pleiads (Tehkan)",
+	"Pleiads (Tehkan, bootleg)",
 	"1981",
 	"Tehkan",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
+	CREDITS,
 	0,
 	&pleiads_machine_driver,
 	0,
@@ -708,7 +647,7 @@ struct GameDriver pleiadce_driver =
 	"Pleiads (Centuri)",
 	"1981",
 	"Tehkan (Centuri license)",
-	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
+	CREDITS,
 	0,
 	&pleiads_machine_driver,
 	0,

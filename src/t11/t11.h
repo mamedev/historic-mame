@@ -26,9 +26,13 @@ typedef struct
 {
 	t11_Register reg[8];
 	t11_Register psw;
-	int  op;
-	int  pending_interrupts;
+	int op;
+	int pending_interrupts;
 	unsigned char *bank[8];
+#if NEW_INTERRUPT_SYSTEM
+	int irq_state[4];
+	int (*irq_callback)(int irqline);
+#endif
 } t11_Regs;
 
 #ifndef INLINE
@@ -37,9 +41,9 @@ typedef struct
 
 #define T11_INT_NONE    -1      /* No interrupt requested */
 #define T11_IRQ0        0      /* IRQ0 */
-#define T11_IRQ1        1      /* IRQ0 */
-#define T11_IRQ2        2      /* IRQ0 */
-#define T11_IRQ3        3      /* IRQ0 */
+#define T11_IRQ1		1	   /* IRQ1 */
+#define T11_IRQ2		2	   /* IRQ2 */
+#define T11_IRQ3		3	   /* IRQ3 */
 
 #define T11_RESERVED    0x000   /* Reserved vector */
 #define T11_TIMEOUT     0x004   /* Time-out/system error vector */
@@ -56,8 +60,14 @@ void t11_GetRegs(t11_Regs *Regs);
 unsigned t11_GetPC(void);
 void t11_reset(void);
 int t11_execute(int cycles);	/* NS 970908 */
-void t11_Cause_Interrupt(int type);	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+void t11_set_nmi_line(int state);
+void t11_set_irq_line(int irqline, int state);
+void t11_set_irq_callback(int (*callback)(int irqline));
+#else
+void t11_Cause_Interrupt(int type); /* NS 970908 */
 void t11_Clear_Pending_Interrupts(void);	/* NS 970908 */
+#endif
 
 void t11_SetBank(int banknum, unsigned char *address);
 

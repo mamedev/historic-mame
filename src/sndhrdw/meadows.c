@@ -9,11 +9,11 @@
 #include "driver.h"
 #include "S2650/s2650.h"
 
-byte meadows_0c00 = 0;
-byte meadows_0c01 = 0;
-byte meadows_0c02 = 0;
-byte meadows_0c03 = 0;
-byte meadows_dac  = 0;
+unsigned char meadows_0c00 = 0;
+unsigned char meadows_0c01 = 0;
+unsigned char meadows_0c02 = 0;
+unsigned char meadows_0c03 = 0;
+unsigned char meadows_dac  = 0;
 
 #define BASE_CLOCK		5000000
 #define BASE_CTR1       (BASE_CLOCK / 256)
@@ -63,9 +63,9 @@ void meadows_sh_stop(void)
 /************************************/
 void meadows_sh_update(void)
 {
-static  byte latched_0c01 = 0;
-static	byte latched_0c02 = 0;
-static	byte latched_0c03 = 0;
+static  unsigned char latched_0c01 = 0;
+static	unsigned char latched_0c02 = 0;
+static	unsigned char latched_0c03 = 0;
 int preset, amp;
 
     if (latched_0c01 != meadows_0c01 || latched_0c03 != meadows_0c03)

@@ -147,20 +147,20 @@ extern int MC68000_ICount ;
 
 typedef struct
 {
-		pair68000  d[8];
-            CPTR  a[8],usp,isp,msp;
-            ULONG pc;
-            UWORD sr;
-            flagtype t1;
-            flagtype t0;
-            flagtype s;
-            flagtype m;
-            flagtype x;
-            flagtype stopped;
-            int intmask;
-            ULONG vbr,sfc,dfc;
-            double fp[8];
-            ULONG fpcr,fpsr,fpiar;
+	pair68000  d[8];
+	CPTR  a[8],usp,isp,msp;
+	ULONG pc;
+	UWORD sr;
+	flagtype t1;
+	flagtype t0;
+	flagtype s;
+	flagtype m;
+	flagtype x;
+	flagtype stopped;
+	int intmask;
+	ULONG vbr,sfc,dfc;
+	double fp[8];
+	ULONG fpcr,fpsr,fpiar;
 } regstruct;
 
 extern regstruct regs, lastint_regs;
@@ -226,26 +226,26 @@ INLINE ULONG get_disp_ea (ULONG base)
 
 INLINE int cctrue(const int cc)
 {
-            switch(cc){
-              case 0: return 1;                       /* T */
-              case 1: return 0;                       /* F */
-              case 2: return !CFLG && !ZFLG;          /* HI */
-              case 3: return CFLG || ZFLG;            /* LS */
-              case 4: return !CFLG;                   /* CC */
-              case 5: return CFLG;                    /* CS */
-              case 6: return !ZFLG;                   /* NE */
-              case 7: return ZFLG;                    /* EQ */
-              case 8: return !VFLG;                   /* VC */
-              case 9: return VFLG;                    /* VS */
-              case 10:return !NFLG;                   /* PL */
-              case 11:return NFLG;                    /* MI */
-              case 12:return NFLG == VFLG;            /* GE */
-              case 13:return NFLG != VFLG;            /* LT */
-              case 14:return !ZFLG && (NFLG == VFLG); /* GT */
-              case 15:return ZFLG || (NFLG != VFLG);  /* LE */
-             }
-             abort();
-             return 0;
+	switch(cc){
+		case 0: return 1;						/* T */
+		case 1: return 0;						/* F */
+		case 2: return !CFLG && !ZFLG;			/* HI */
+		case 3: return CFLG || ZFLG;			/* LS */
+		case 4: return !CFLG;					/* CC */
+		case 5: return CFLG;					/* CS */
+		case 6: return !ZFLG;					/* NE */
+		case 7: return ZFLG;					/* EQ */
+		case 8: return !VFLG;					/* VC */
+		case 9: return VFLG;					/* VS */
+		case 10:return !NFLG;					/* PL */
+		case 11:return NFLG;					/* MI */
+		case 12:return NFLG == VFLG;			/* GE */
+		case 13:return NFLG != VFLG;			/* LT */
+		case 14:return !ZFLG && (NFLG == VFLG); /* GT */
+		case 15:return ZFLG || (NFLG != VFLG);	/* LE */
+	}
+	abort();
+	return 0;
 }
 
 INLINE void MakeSR(void)
@@ -364,6 +364,11 @@ typedef struct
     /* Backward compatible with C emulator - Only set in Debug compile */
 
     UWORD sr;
+
+#if NEW_INTERRUPT_SYSTEM
+	int irq_state;
+	int (*irq_callback)(int irqline);
+#endif
 
 #ifdef MAME_DEBUG
 

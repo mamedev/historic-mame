@@ -1,10 +1,26 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
-#define CPU_CONTEXT_SIZE 1500            /* Maximum size that a CPU structre may be */
+/* Maximum size that a CPU structre may be:
+ * HJB 01/02/98 changed to the next power of two
+ * the real context size is evaluated by subtracting
+ * the fixed part of struct cpuinfo
+ */
+#define CPU_CONTEXT_SIZE    2048
+
+#define NEW_INTERRUPT_SYSTEM	1
+
+#if NEW_INTERRUPT_SYSTEM
+#define MAX_IRQ_LINES	8		/* maximum number of IRQ lines per CPU */
+
+#define HOLD_LINE       -2      /* hold interrupt line until enable is true */
+#define ASSERT_LINE 	-1		/* assert an interrupt immediately */
+#define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
+#define PULSE_LINE		1		/* pulse interrupt line for one instruction */
+
+#endif
 
 #include "timer.h"
-#include "Z80/Z80.h"
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
@@ -14,9 +30,16 @@ struct cpu_interface
 	void (*set_regs)(void *reg);
 	void (*get_regs)(void *reg);
 	unsigned int (*get_pc)(void);
-	void (*cause_interrupt)(int type);
+#if NEW_INTERRUPT_SYSTEM
+	void (*set_nmi_line)(int state);
+	void (*set_irq_line)(int _line, int state);
+	void (*set_irq_callback)(int(*callback)(int irqline));
+	int num_irqs;
+#else
+    void (*cause_interrupt)(int type);
 	void (*clear_pending_interrupts)(void);
-	int *icount;
+#endif
+    int *icount;
 	int no_int, irq_int, nmi_int;
 
 	int (*memory_read)(int offset);
@@ -89,6 +112,9 @@ void cpu_seticount(int cycles);
 int cpu_getiloops(void);
 /* Returns the current VBLANK state */
 int cpu_getvblank(void);
+/* Returns the number of the video frame we are currently playing */
+int cpu_getcurrentframe(void);
+
 
 /* generate a trigger after a specific period of time */
 void cpu_triggertime (double duration, int trigger);
@@ -129,10 +155,31 @@ int m68_level6_irq(void);
 int m68_level7_irq(void);
 int ignore_interrupt(void);
 
+#if NEW_INTERRUPT_SYSTEM
+void cpu_set_nmi_line(int cpu, int state);
+void cpu_set_irq_line(int cpu, int _line, int state);
+#endif
+
 void* cpu_getcontext (int _activecpu);
 int cpu_is_saving_context(int _activecpu);
 
-/* IFDEF Z80_DAISYCHAIN */
+
+
+/* daisy-chain link */
+typedef struct {
+    void (*reset)(int);             /* reset callback     */
+    int  (*interrupt_entry)(int);   /* entry callback     */
+    void (*interrupt_reti)(int);    /* reti callback      */
+    int irq_param;                  /* callback paramater */
+}	Z80_DaisyChain;
+
+#define Z80_MAXDAISY	4		/* maximum of daisy chan device */
+
+#define Z80_INT_REQ     0x01    /* interrupt request mask       */
+#define Z80_INT_IEO     0x02    /* interrupt disable mask(IEO)  */
+
+#define Z80_VECTOR(device,state) (((device)<<8)|(state))
+
 void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain );
 
 #endif

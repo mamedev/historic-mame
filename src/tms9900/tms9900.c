@@ -124,6 +124,46 @@ int     TMS9900_GetPC(void)
 // Interupt mask decremented by 1 (this will stop the cpu being interepted unless its higher priority)
 /*********************************************************/
 
+#if NEW_INTERRUPT_SYSTEM
+
+void TMS9900_set_nmi_line(int state)
+{
+	/* TMS9900 has no dedicated NMI line? */
+}
+
+void TMS9900_set_irq_line(int irqline, int state)
+{
+	I.irq_state = state;
+	if (state == CLEAR_LINE) {
+		if (errorlog) fprintf(errorlog, "TMS9900.C: set_irq_line(CLEAR): Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
+    } else {
+		int intlevel = (*I.irq_callback)(irqline);
+		if (intlevel <= IMASK) {
+			word oldwp;
+
+			oldwp=I.WP;
+			I.STATUS = get_status();	/* Make sure status us uptodate before we store it */
+			I.WP=RDMEMW(intlevel*4);	/* get new workspace */
+			WRMEMW(R13,oldwp);			/* store old WP in new R13 */
+			WRMEMW(R14,I.PC);			/* store old PC in new R14 */
+			WRMEMW(R15,I.STATUS);		/* store old STATUS in R15 */
+
+			set_mask((IMASK&0xF)-1);	/* Decrement the interupt mask */
+
+			I.STATUS = get_status();	/* Update the status again */
+
+			I.PC=RDMEMW((intlevel*4)+2);	/* get new PC */
+		}
+    }
+}
+
+void TMS9900_set_irq_callback(int (*callback)(int irqline))
+{
+	I.irq_callback = callback;
+}
+
+#else
+
 void    TMS9900_Cause_Interrupt(int intlevel)
 {
 	if (intlevel <= IMASK)
@@ -150,6 +190,8 @@ void    TMS9900_Clear_Pending_Interrupts(void)
 {
 	if (errorlog) fprintf(errorlog, "TMS9900.C: Clear_Pending_Interrupts : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
 }
+
+#endif
 
 /********************************************************************************/
 /* Low opcodes jump redirection                                                 */

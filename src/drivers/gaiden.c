@@ -33,8 +33,8 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M68000/M68000.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
+
 
 extern unsigned char *gaiden_videoram;
 extern unsigned char *gaiden_spriteram;
@@ -476,7 +476,7 @@ static void irqhandler(void)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	2000000,	/* 2 MHz ? (hand tuned) */
+	4000000,	/* 4 MHz ? (hand tuned) */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
@@ -636,6 +636,28 @@ ROM_START( tknight_rom )
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
+ROM_START( wildfang_rom )
+	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_LOAD_EVEN( "1.3st",    0x00000, 0x20000, 0xab876c9b )
+	ROM_LOAD_ODD ( "2.5st",    0x00000, 0x20000, 0x1dc74b3b )
+
+	ROM_REGION_DISPOSE(0x210000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tkni5.bin",    0x000000, 0x10000, 0x5ed15896 )	/* 8x8 tiles */
+	ROM_LOAD( "14.3a",        0x010000, 0x20000, 0x0d20c10c )
+	ROM_LOAD( "15.3b",        0x030000, 0x20000, 0x3f40a6b4 )
+	ROM_LOAD( "16.1a",        0x050000, 0x20000, 0x0f31639e )
+	ROM_LOAD( "17.1b",        0x070000, 0x20000, 0xf32c158e )
+	ROM_LOAD( "tkni6.bin",    0x090000, 0x80000, 0xf68fafb1 )
+	ROM_LOAD( "tkni9.bin",    0x110000, 0x80000, 0xd22f4239 )	/* sprites */
+	ROM_LOAD( "tkni8.bin",    0x190000, 0x80000, 0x4931b184 )	/* sprites */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
+
+	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
+ROM_END
+
 
 
 struct GameDriver gaiden_driver =
@@ -702,6 +724,31 @@ struct GameDriver tknight_driver =
 	0,
 
 	tknight_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tknight_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver wildfang_driver =
+{
+	__FILE__,
+	&tknight_driver,
+	"wildfang",
+	"Wild Fang",
+	"1989",
+	"Tecmo",
+	"Alex Pasadyn\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	wildfang_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

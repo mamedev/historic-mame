@@ -55,6 +55,10 @@ MHELE ophw;				/* op-code hardware number */
 struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 
 static unsigned char *ramptr[MAX_CPU], *romptr[MAX_CPU];
+/* quick kludge: we support encrypted opcodes on only one CPU. This is usually */
+/* CPU #0, to use a different one, change this variable in opcode_decode() */
+/* TODO: handle this better!!! */
+int encrypted_cpu;
 
 /* element shift bits, mask bits */
 int mhshift[MAX_CPU][3], mhmask[MAX_CPU][3];
@@ -468,7 +472,7 @@ int initmemoryhandlers(void)
 		ramptr[cpu] = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
 
 		/* opcode decryption is currently supported only for the first memory region */
-		if (cpu == 0) romptr[cpu] = ROM;
+		if (cpu == encrypted_cpu) romptr[cpu] = ROM;
 		else romptr[cpu] = ramptr[cpu];
 
 

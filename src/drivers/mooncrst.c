@@ -19,8 +19,9 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "z80/z80.h"
 
-#include "Z80/Z80.h"
+
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;

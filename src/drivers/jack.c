@@ -646,7 +646,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x04506],"\x41\x41\x41",3) == 0 &&
+	if (memcmp(&RAM[0x4500],"\x00\x00\x05",3) == 0 &&
 			memcmp(&RAM[0x4560],"\x41\x41\x41",3) == 0)
 	{
 		void *f;

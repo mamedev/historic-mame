@@ -17,8 +17,6 @@ TODO:
 
 ***************************************************************************/
 #include "driver.h"
-#include "M68000/M68000.h"
-#include "Z80/Z80.h"
 #include "vidhrdw/generic.h"
 
 void zerozone_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -235,7 +233,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 1*8, 31*8-1 },
+	48*8, 32*8, { 1*8, 47*8-1, 2*8, 30*8-1 },
 
 	gfxdecodeinfo,
 	256, 256,

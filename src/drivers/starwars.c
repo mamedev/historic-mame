@@ -390,7 +390,7 @@ static struct POKEYinterface pokey_interface =
 {
 	4,			/* 4 chips */
 	1500000,	/* 1.5 MHz? */
-    30,    /* volume */
+	20,    /* volume */
 	POKEY_DEFAULT_GAIN,
 	USE_CLIP,
 	/* The 8 pot handlers */
@@ -409,7 +409,7 @@ static struct POKEYinterface pokey_interface =
 static struct TMS5220interface tms5220_interface =
 {
     640000,     /* clock speed (80*samplerate) */
-    100,        /* volume */
+    50,        /* volume */
     0           /* IRQ handler */
 };
 

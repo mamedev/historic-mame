@@ -556,8 +556,8 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 		case 0x04:		/* IRQ-RESET/CONTROL OF TIMER 1 AND 2*/
 			if( nData & ym3812_TCIRQRES )
 			{
-				nData &= ~ym3812_TCIRQRES;
 				pOPL->nStatus &= ~(ym3812_STIRQ|ym3812_STFLAG1|ym3812_STFLAG2);
+				return;
 			}
 
 			pOPL->nStatus &= ~(nData & 0x60);

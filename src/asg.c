@@ -5,9 +5,10 @@
 #include <string.h>
 
 #include "osdepend.h"
-#include "Z80/Z80.h"
-#include "Z80/Z80Dasm.h"
-extern int Dasm6502 (char *buf, int pc);
+#include "z80/z80.h"
+
+int DasmZ80(char *dest,int PC);
+int Dasm6502(char *buf,int pc);
 
 #define LOOP_CHECK 32
 #define MAX_CPU 10

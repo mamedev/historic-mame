@@ -75,7 +75,7 @@ static int palette_swap_pending,fix_bank;
 extern unsigned char *neogeo_ram;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
-int neogeo_red_mask,neogeo_green_mask,neogeo_blue_mask;
+int neogeo_red_bits,neogeo_green_bits,neogeo_blue_bits;
 
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -94,6 +94,7 @@ void neo_unknown4(int offset, int data) {if (cpu_getpc()!=0x4a44) WRITE_WORD(&ne
 
 int dotiles = 0;
 int screen_offs = 0x0000;
+int screen_yoffs = 0;
 
 #endif
 
@@ -103,13 +104,30 @@ static void swap_palettes(void)
 {
 	int i,newword,red,green,blue;
 
-    for (i=0; i<0x2000; i+=2) {
-       	newword = READ_WORD(&neogeo_paletteram[i]);
-    	red=   ((newword>>8)&neogeo_red_mask)*0x11;
-		green= ((newword>>4)&neogeo_green_mask)*0x11;
-		blue=  ((newword>>0)&neogeo_blue_mask)*0x11;
+    for (i=0; i<0x2000; i+=2)
+	{
+		int r,g,b;
 
-		palette_change_color(i / 2,red,green,blue);
+
+       	newword = READ_WORD(&neogeo_paletteram[i]);
+
+		r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
+		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
+		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
+
+		r >>= 5 - neogeo_red_bits;
+		g >>= 5 - neogeo_green_bits;
+		b >>= 5 - neogeo_blue_bits;
+
+		r <<= 8 - neogeo_red_bits;
+		g <<= 8 - neogeo_green_bits;
+		b <<= 8 - neogeo_blue_bits;
+
+		r = r | (r >> neogeo_red_bits) | (r >> 2*neogeo_red_bits);
+		g = g | (g >> neogeo_green_bits) | (g >> 2*neogeo_green_bits);
+		b = b | (b >> neogeo_blue_bits) | (b >> 2*neogeo_blue_bits);
+
+		palette_change_color(i / 2,r,g,b);
     }
 
     palette_swap_pending=0;
@@ -142,16 +160,28 @@ void neogeo_paletteram_w(int offset,int data)
 {
 	int oldword = READ_WORD (&neogeo_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	int red=((newword>>8)&neogeo_red_mask);
-	int green=((newword>>4)&neogeo_green_mask);
-	int blue=((newword>>0)&neogeo_blue_mask);
+	int r,g,b;
+
 
 	WRITE_WORD (&neogeo_paletteram[offset], newword);
-	red			= red*0x11;
-	green		= green*0x11;
-	blue		= blue*0x11;
 
-	palette_change_color(offset / 2,red,green,blue);
+	r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
+	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
+	b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
+
+	r >>= 5 - neogeo_red_bits;
+	g >>= 5 - neogeo_green_bits;
+	b >>= 5 - neogeo_blue_bits;
+
+	r <<= 8 - neogeo_red_bits;
+	g <<= 8 - neogeo_green_bits;
+	b <<= 8 - neogeo_blue_bits;
+
+	r = r | (r >> neogeo_red_bits) | (r >> 2*neogeo_red_bits);
+	g = g | (g >> neogeo_green_bits) | (g >> 2*neogeo_green_bits);
+	b = b | (b >> neogeo_blue_bits) | (b >> 2*neogeo_blue_bits);
+
+	palette_change_color(offset / 2,r,g,b);
 }
 
 /******************************************************************************/
@@ -212,7 +242,7 @@ static const unsigned char *neogeo_palette(void)
 	int sx =0,sy =0,oy =0,zx = 1, rzy = 1;
     int tileno,tileatr,t1,t2,t3;
     char fullmode=0;
-    int ddax=16,dday=256,rzx=15,yskip=0;
+    int ddax=16,dday=0,rzx=15,yskip=0;
 
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096);
 
@@ -316,7 +346,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 		if(rzy==255)
 			yskip=16;
 		else
-			dday=256;
+			dday=0;	/* =256; NS990105 mslug fix */
 
 		offs = count<<6;
 
@@ -342,6 +372,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 			{
 				if (y == 0x10) sy -= 2 * (rzy + 1);
 			}
+			else if (sy > 0x100) sy -= 0x200;	/* NS990105 mslug2 fix */
 
             if(rzy!=255) {
             	yskip=0;
@@ -384,34 +415,30 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
 void vidram_offset_w(int offset, int data)
 {
-	where = data*2;
+	where = data;
 }
 
 int vidram_data_r(int offset)
 {
-	return (READ_WORD(&vidram[where & 0x1ffff]));
+	return (READ_WORD(&vidram[where << 1]));
 }
 
 void vidram_data_w(int offset,int data)
 {
-	WRITE_WORD(&vidram[where & 0x1ffff],data);
-	where += modulo;
+	WRITE_WORD(&vidram[where << 1],data);
+	where = (where + modulo) & 0xffff;
 }
 
 /* Modulo can become negative , Puzzle Bobble Super Sidekicks and a lot */
 /* of other games use this */
-void vidram_modulo_w(int offset, int data) {
-	if (data & 0x8000) {
-		/* Sign extend it. */
-		/* Where is the SEX instruction when you need it :-) */
-		modulo = (data - 0x10000) << 1;
-	}
-	else
-		modulo = data << 1;
+void vidram_modulo_w(int offset, int data)
+{
+	modulo = data;
 }
 
-int vidram_modulo_r(int offset) {
-	return modulo >> 1;
+int vidram_modulo_r(int offset)
+{
+	return modulo;
 }
 
 
@@ -820,7 +847,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,i,count,y,x;
     int tileno,tileatr,t1,t2,t3;
     char fullmode=0;
-    int ddax=16,dday=256,rzx=15,yskip=0;
+    int ddax=16,dday=0,rzx=15,yskip=0;
 	unsigned char **line=bitmap->line;
     unsigned int *pen_usage;
 	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
@@ -837,17 +864,26 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* tile view - 0x80, connected to '9' */
-	if (osd_key_pressed(OSD_KEY_9))
+	if (osd_key_pressed(OSD_KEY_9) && !osd_key_pressed(OSD_KEY_LSHIFT))
 	{
 		if (screen_offs > 0)
 			screen_offs -= 0x80;
 	}
+	if (osd_key_pressed(OSD_KEY_9) && osd_key_pressed(OSD_KEY_LSHIFT))
+	{
+		if (screen_yoffs > 0)
+			screen_yoffs--;
+	}
 
 	/* tile view + 0x80, connected to '0' */
-	if (osd_key_pressed(OSD_KEY_0))
+	if (osd_key_pressed(OSD_KEY_0) && !osd_key_pressed(OSD_KEY_LSHIFT))
 	{
 		if (screen_offs < 0x10000)
 			screen_offs += 0x80;
+	}
+	if (osd_key_pressed(OSD_KEY_0) && osd_key_pressed(OSD_KEY_LSHIFT))
+	{
+		screen_yoffs++;
 	}
     #endif
 
@@ -941,7 +977,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 		if(rzy==255)
 			yskip=16;
 		else
-			dday=256;
+			dday=0;	/* =256; NS990105 mslug fix */
 
 		offs = count<<6;
 
@@ -967,6 +1003,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 			{
 				if (y == 0x10) sy -= 2 * (rzy + 1);
 			}
+			else if (sy > 0x100) sy -= 0x200;	/* NS990105 mslug2 fix */
 
             if(rzy!=255)
             {
@@ -1040,7 +1077,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 #ifdef NEO_DEBUG
 	} else {	/* debug */
 		offs = screen_offs;
-		for (y=0;y<15;y++) {
+		for (y=screen_yoffs;y<screen_yoffs+15;y++) {
 			for (x=0;x<20;x++) {
 
 				unsigned char byte1 = vidram[offs + 4*y+x*128];
@@ -1058,20 +1095,29 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 					tileno,
 					col,
 					byte3 & 0x01,byte3 & 0x02,
-					x*16,y*16,16,16
+					x*16,(y-screen_yoffs)*16,16,16
                  );
 
 
 			}
 		}
 
-		sprintf(buf,"POS : %04X , VDP regs %04X",screen_offs, (screen_offs >> 6) );
-		dt[0].text = buf;
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-//		displaytext(dt,0);
+{
+	int j;
+	sprintf(buf,"%04X",screen_offs+4*screen_yoffs);
+	for (j = 0;j < 4;j++)
+		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8+8*j,8*2,0,TRANSPARENCY_NONE,0);
+}
+if (osd_key_pressed(OSD_KEY_D))
+{
+	FILE *fp;
+
+    fp=fopen("video.dmp","wb");
+    if (fp) {
+    	fwrite(vidram,0x10c00, 1 ,fp);
+    	fclose(fp);
+    }
+}
 	}	/* debug */
 #endif
 

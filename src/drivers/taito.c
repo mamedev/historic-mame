@@ -149,7 +149,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
 
 
 
@@ -1328,7 +1328,7 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
-	{ 255, 255, 255, 0x20ff },
+	{ 15, 15, 15, 0x200f },
 	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
 	{ 0, DAC_data_w, 0, 0 },		/* port Awrite */
@@ -1338,7 +1338,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 15 }
 };
 
 

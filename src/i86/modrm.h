@@ -73,31 +73,31 @@ static struct {
 }
 
 #define DEF_br8(dst,src) \
-    unsigned ModRM = FETCH; \
+	unsigned ModRM = FETCHOP; \
     unsigned src = RegByte(ModRM); \
     unsigned dst = GetRMByte(ModRM)
 
 #define DEF_wr16(dst,src) \
-    unsigned ModRM = FETCH; \
+	unsigned ModRM = FETCHOP; \
     unsigned src = RegWord(ModRM); \
     unsigned dst = GetRMWord(ModRM)
 
 #define DEF_r8b(dst,src) \
-    unsigned ModRM = FETCH; \
+	unsigned ModRM = FETCHOP; \
     unsigned dst = RegByte(ModRM); \
     unsigned src = GetRMByte(ModRM)
 
 #define DEF_r16w(dst,src) \
-    unsigned ModRM = FETCH; \
+	unsigned ModRM = FETCHOP; \
     unsigned dst = RegWord(ModRM); \
     unsigned src = GetRMWord(ModRM)
 
 #define DEF_ald8(dst,src) \
-    unsigned src = FETCH; \
+	unsigned src = FETCHOP; \
     unsigned dst = regs.b[AL]
 
 #define DEF_axd16(dst,src) \
-    unsigned src = FETCH; \
+	unsigned src = FETCHOP; \
     unsigned dst = regs.w[AX]; \
     src += (FETCH << 8)
 

@@ -116,8 +116,7 @@ int tmnt_vh_start (void);
 void tmnt_vh_stop (void);
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-static int tmnt_soundlatch = 0;
+static int tmnt_soundlatch;
 
 
 void tmnt_sound_command_w(int offset,int data)
@@ -126,23 +125,23 @@ void tmnt_sound_command_w(int offset,int data)
 }
 
 int tmnt_sres_r(int offset)
-{
-	return tmnt_soundlatch;
-}
+ {
+ 	return tmnt_soundlatch;
+ }
 
-void tmnt_sres_w(int offset,int data)
-{
-	/* bit 1 resets the UPD7795C sound chip */
+ void tmnt_sres_w(int offset,int data)
+ {
+ 	/* bit 1 resets the UPD7759C sound chip */
+ 	/* bit 2 plays the title music */
+ 	if (data & 4)
+ 	{
+ 		if (!sample_playing(0))	sample_start(0,0,0);
+ 	}
+ 	else sample_stop(0);
 
-	/* bit 2 plays the title music */
-	if (data & 4)
-	{
-		if (!sample_playing(0))	sample_start(0,0,0);
-	}
-	else sample_stop(0);
+ 	tmnt_soundlatch = data;
+ }
 
-	tmnt_soundlatch = data;
-}
 
 int tmnt_decode_sample(void)
 {
@@ -336,6 +335,7 @@ static struct MemoryReadAddress tmnt_s_readmem[] =
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9000, tmnt_sres_r },	/* title music & UPD7759C reset */
 	{ 0xa000, 0xa000, soundlatch_r },
+	{ 0xb000, 0xb00d, K007232_ReadReg },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
 	{ -1 }	/* end of table */
 };
@@ -345,6 +345,7 @@ static struct MemoryWriteAddress tmnt_s_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, tmnt_sres_w },	/* title music & UPD7759C reset */
+	{ 0xb000, 0xb00d, K007232_WriteReg },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ -1 }	/* end of table */
@@ -785,6 +786,14 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
+
+static struct K007232_interface k007232_interface =
+{
+  5,  /* memory region */
+  100 /* volume */
+};
+
+
 static struct Samplesinterface samples_interface =
 {
 	1	/* 1 channel for the title music */
@@ -828,7 +837,7 @@ static struct MachineDriver tmnt_machine_driver =
 	tmnt_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,
+	0,
 	tmnt_decode_sample,
 	0,
 	0,
@@ -838,9 +847,15 @@ static struct MachineDriver tmnt_machine_driver =
 			&ym2151_interface
 		},
 		{
+			SOUND_K007232,
+			&k007232_interface,
+		},
+
+		{
 			SOUND_SAMPLES,
 			&samples_interface
 		}
+
 	}
 };
 
@@ -884,7 +899,7 @@ static struct MachineDriver punkshot_machine_driver =
 	punkshot_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -996,9 +1011,11 @@ ROM_START( tmnt_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_REGION(0x20000)	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmntj_rom )
@@ -1026,9 +1043,11 @@ ROM_START( tmntj_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_REGION(0x20000)	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmht2p_rom )
@@ -1056,9 +1075,11 @@ ROM_START( tmht2p_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_REGION(0x20000)	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmnt2pj_rom )
@@ -1086,9 +1107,11 @@ ROM_START( tmnt2pj_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_REGION(0x20000)	/* 128k for the samples */
 	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	ROM_LOAD( "963-a27",      0x00000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( punkshot_rom )

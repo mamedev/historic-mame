@@ -7,7 +7,7 @@ LD = gcc
 #ASM = nasm
 ASM = nasmw
 ASMFLAGS = -f coff
-VPATH=src src/Z80 src/M6502 src/I86 src/M6809 src/TMS34010 src/TMS9900
+VPATH=src src/z80 src/m6502 src/i86 src/m6809 src/m6808 src/tms34010 src/tms9900
 
 # uncomment next line to use Assembler 6808 engine
 # X86_ASM_6808 = 1
@@ -24,10 +24,10 @@ ifdef X86_ASM_68K
 M68KOBJS = obj/m68000/asmintf.o obj/m68000/68kem.oa
 M68KDEF  = -DA68KEM
 else
-M68KOBJS = obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \
-          obj/M68000/opcode6.o obj/M68000/opcode7.o obj/M68000/opcode8.o obj/M68000/opcode9.o obj/M68000/opcodeb.o \
-          obj/M68000/opcodec.o obj/M68000/opcoded.o obj/M68000/opcodee.o obj/M68000/mc68kmem.o \
-          obj/M68000/cpufunc.o
+M68KOBJS = obj/m68000/opcode0.o obj/m68000/opcode1.o obj/m68000/opcode2.o obj/m68000/opcode3.o obj/m68000/opcode4.o obj/m68000/opcode5.o \
+          obj/m68000/opcode6.o obj/m68000/opcode7.o obj/m68000/opcode8.o obj/m68000/opcode9.o obj/m68000/opcodeb.o \
+          obj/m68000/opcodec.o obj/m68000/opcoded.o obj/m68000/opcodee.o obj/m68000/mc68kmem.o \
+          obj/m68000/cpufunc.o
 M68KDEF  =
 endif
 
@@ -83,25 +83,27 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
 		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
+		 obj/sndhrdw/k007232.o \
 		 obj/sndhrdw/streams.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
-         obj/sndhrdw/namco.o \
+         obj/sndhrdw/namco.o obj/sndhrdw/namcos1.o \
          obj/machine/segacrpt.o \
          obj/machine/atarigen.o \
          obj/machine/slapstic.o \
          obj/machine/ticket.o \
-         obj/Z80/Z80.o obj/M6502/m6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
-         obj/M6809/m6809.o obj/M6805/m6805.o \
-         obj/S2650/s2650.o obj/T11/t11.o \
-         obj/TMS34010/tms34010.o obj/TMS34010/34010fld.o \
+         obj/z80/z80.o obj/m6502/m6502.o obj/i86/i86.o obj/i8039/i8039.o obj/i8085/i8085.o \
+         obj/m6809/m6809.o obj/m6805/m6805.o \
+         obj/s2650/s2650.o obj/t11/t11.o \
+         obj/tms34010/tms34010.o obj/tms34010/34010fld.o \
          $(M6808OBJS) \
          $(M68KOBJS) \
-         obj/TMS9900/tms9900.o obj/TMS9900/9900dasm.o \
-         obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I86/I86dasm.o obj/I8085/8085dasm.o \
-         obj/M6809/6809dasm.o obj/M6805/6805dasm.o  obj/I8039/8039dasm.o \
-         obj/S2650/2650dasm.o obj/T11/t11dasm.o obj/TMS34010/34010dsm.o obj/M68000/m68kdasm.o \
+         obj/tms9900/tms9900.o obj/tms9900/9900dasm.o \
+         obj/mamedbg.o obj/asg.o \
+         obj/z80/z80dasm.o obj/m6502/6502dasm.o obj/i86/i86dasm.o obj/i8085/8085dasm.o \
+         obj/m6809/6809dasm.o obj/m6805/6805dasm.o  obj/I8039/8039dasm.o \
+         obj/s2650/2650dasm.o obj/t11/t11dasm.o obj/tms34010/34010dsm.o obj/m68000/m68kdasm.o \
          obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
          obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o \
 		 obj/msdos/profiler.o
@@ -119,9 +121,9 @@ obj/m6808/m6808.asm:  src/m6808/make6808.c
 	 $(CC) -o obj/m6808/make6808.exe src/m6808/make6808.c
 	 obj/m6808/make6808 obj/m6808/m6808.asm -s -m -h
 
-obj/m68000/68kem.asm:  src/M68000/make68k.c
-	 $(CC) $(DEFS) $(CFLAGS) -DDOS -o obj/M68000/make68k.exe src/M68000/make68k.c
-	 obj/M68000/make68k obj/M68000/68kem.asm
+obj/m68000/68kem.asm:  src/m68000/make68k.c
+	 $(CC) $(DEFS) $(CFLAGS) -DDOS -o obj/m68000/make68k.exe src/m68000/make68k.c
+	 obj/m68000/make68k obj/m68000/68kem.asm
 
 obj/%.oa:  obj/%.asm
 	 $(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
@@ -168,7 +170,8 @@ obj/namco.a: \
          obj/vidhrdw/xevious.o obj/machine/xevious.o obj/drivers/xevious.o \
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
-         obj/vidhrdw/pacland.o obj/drivers/pacland.o
+         obj/vidhrdw/pacland.o obj/drivers/pacland.o \
+         obj/vidhrdw/rthunder.o obj/drivers/rthunder.o \
 
 obj/univers.a: \
          obj/vidhrdw/cosmica.o obj/drivers/cosmica.o \
@@ -190,7 +193,7 @@ obj/midw8080.a: \
          obj/vidhrdw/m79amb.o obj/drivers/m79amb.o \
 
 obj/midwz80.a: \
-         obj/machine/z80bw.o obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o
+         obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o
 
 obj/meadows.a: \
          obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
@@ -308,6 +311,7 @@ obj/dataeast.a: \
          obj/vidhrdw/shootout.o obj/drivers/shootout.o \
          obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
          obj/vidhrdw/exprraid.o obj/drivers/exprraid.o \
+         obj/vidhrdw/pcktgal.o obj/drivers/pcktgal.o \
 
 obj/dec8.a: \
          obj/vidhrdw/dec8.o obj/drivers/dec8.o \
@@ -394,7 +398,8 @@ obj/ataribw.a: \
          obj/vidhrdw/bsktball.o obj/machine/bsktball.o obj/drivers/bsktball.o \
          obj/vidhrdw/copsnrob.o obj/machine/copsnrob.o obj/drivers/copsnrob.o \
          obj/machine/avalnche.o obj/vidhrdw/avalnche.o obj/drivers/avalnche.o \
-         obj/machine/subs.o obj/vidhrdw/subs.o obj/drivers/subs.o
+         obj/machine/subs.o obj/vidhrdw/subs.o obj/drivers/subs.o \
+         obj/machine/atarifb.o obj/vidhrdw/atarifb.o obj/drivers/atarifb.o \
 
 obj/atarisy1.a: \
          obj/machine/atarisy1.o obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o
@@ -421,6 +426,7 @@ obj/technos.a: \
          obj/vidhrdw/matmania.o obj/drivers/matmania.o \
          obj/vidhrdw/renegade.o obj/drivers/renegade.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \
+         obj/vidhrdw/battlane.o obj/drivers/battlane.o \
          obj/vidhrdw/ddragon.o obj/drivers/ddragon.o \
          obj/vidhrdw/blockout.o obj/drivers/blockout.o
 
@@ -509,30 +515,30 @@ obj/other.a: \
          obj/vidhrdw/pow.o obj/drivers/pow.o \
 
 # dependencies
-obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
-obj/M6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
-obj/I86/I86.o:  I86.c I86.h I86intrf.h ea.h host.h instr.h modrm.h
-obj/M6809/m6809.o:  m6809.c m6809.h 6809ops.c
-obj/M6808/M6808.o:  m6808.c m6808.h
-obj/TMS34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
-obj/TMS9900/tms9900.o: tms9900.h
+obj/z80/z80.o:  z80.c z80.h z80daa.h
+obj/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
+obj/i86/i86.o:  i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
+obj/m6809/m6809.o:  m6809.c m6809.h 6809ops.c
+obj/m6808/m6808.o:  m6808.c m6808.h
+obj/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
+obj/tms9900/tms9900.o: tms9900.h
 
 
 makedir:
 	md obj
-	md obj\Z80
-	md obj\M6502
-	md obj\I86
-	md obj\I8039
-	md obj\I8085
-	md obj\M6809
-	md obj\M6808
-	md obj\M6805
-	md obj\M68000
-	md obj\S2650
-	md obj\T11
-	md obj\TMS34010
-	md obj\TMS9900
+	md obj\z80
+	md obj\m6502
+	md obj\i86
+	md obj\i8039
+	md obj\i8085
+	md obj\m6809
+	md obj\m6808
+	md obj\m6805
+	md obj\m68000
+	md obj\s2650
+	md obj\t11
+	md obj\tms34010
+	md obj\tms9900
 	md obj\drivers
 	md obj\machine
 	md obj\vidhrdw
@@ -542,24 +548,24 @@ makedir:
 clean:
 	del obj\*.o
 	del obj\*.a
-	del obj\Z80\*.o
-	del obj\M6502\*.o
-	del obj\I86\*.o
-	del obj\I8039\*.o
-	del obj\I8085\*.o
-	del obj\M6809\*.o
-	del obj\M6808\*.o
-	del obj\M6808\*.oa
-	del obj\M6808\*.exe
-	del obj\M6805\*.o
-	del obj\M68000\*.o
-	del obj\M68000\*.oa
-	del obj\M68000\*.asm
-	del obj\M68000\*.exe
-	del obj\S2650\*.o
-	del obj\T11\*.o
-	del obj\TMS34010\*.o
-	del obj\TMS9900\*.o
+	del obj\z80\*.o
+	del obj\m6502\*.o
+	del obj\i86\*.o
+	del obj\i8039\*.o
+	del obj\i8085\*.o
+	del obj\m6809\*.o
+	del obj\m6808\*.o
+	del obj\m6808\*.oa
+	del obj\m6808\*.exe
+	del obj\m6805\*.o
+	del obj\m68000\*.o
+	del obj\m68000\*.oa
+	del obj\m68000\*.asm
+	del obj\m68000\*.exe
+	del obj\s2650\*.o
+	del obj\t11\*.o
+	del obj\tms34010\*.o
+	del obj\tms9900\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
@@ -569,22 +575,22 @@ clean:
 
 cleandebug:
 	del obj\*.o
-	del obj\Z80\*.o
-	del obj\M6502\*.o
-	del obj\I86\*.o
-	del obj\I8039\*.o
-	del obj\I8085\*.o
-	del obj\M6809\*.o
-	del obj\M6808\*.o
-	del obj\M6808\*.oa
-	del obj\M6808\*.exe
-	del obj\M6805\*.o
-	del obj\M68000\*.o
-	del obj\M68000\*.oa
-	del obj\M68000\*.asm
-	del obj\M68000\*.exe
-	del obj\S2650\*.o
-	del obj\T11\*.o
-	del obj\TMS34010\*.o
-	del obj\TMS9900\*.o
+	del obj\z80\*.o
+	del obj\m6502\*.o
+	del obj\i86\*.o
+	del obj\i8039\*.o
+	del obj\i8085\*.o
+	del obj\m6809\*.o
+	del obj\m6808\*.o
+	del obj\m6808\*.oa
+	del obj\m6808\*.exe
+	del obj\m6805\*.o
+	del obj\m68000\*.o
+	del obj\m68000\*.oa
+	del obj\m68000\*.asm
+	del obj\m68000\*.exe
+	del obj\s2650\*.o
+	del obj\t11\*.o
+	del obj\tms34010\*.o
+	del obj\tms9900\*.o
 	del mame.exe

@@ -23,7 +23,9 @@ the variable wowBaseFrequency, this is defaulted to 8000
 **************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
+
+
 
 int	wowBaseFrequency;		/* Some games (Qbert) change this */
 int 	wowBaseVolume;

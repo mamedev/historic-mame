@@ -88,7 +88,7 @@ static void update(int chip)
 	int newpos;
 
 
-	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
+	newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
 
 	if( newpos - sample_pos[chip] < MIN_SLICE ) return;
 	NESUpdateOne(chip, newpos );

@@ -107,6 +107,43 @@ static struct MemoryWriteAddress writemem2[] =
 };
 #endif
 
+
+static struct MemoryReadAddress turtship_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xe800, input_port_0_r },
+	{ 0xe801, 0xe801, input_port_1_r },
+	{ 0xe802, 0xe802, input_port_2_r },
+	{ 0xe803, 0xe803, input_port_3_r },
+	{ 0xe804, 0xe804, input_port_4_r },
+	{ 0xe805, 0xe805, input_port_5_r },
+	{ 0xe806, 0xe806, input_port_6_r },
+	{ 0xe807, 0xe807, input_port_7_r },
+	{ 0xf000, 0xffff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress turtship_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xd000, 0xdfff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xe000, 0xe3ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
+	{ 0xe400, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
+	{ 0xe800, 0xe800, soundlatch_w },
+	{ 0xe801, 0xe801, sidearms_bankswitch_w },
+	{ 0xe805, 0xe805, MWA_RAM, &sidearms_bg2_scrollx },
+	{ 0xe806, 0xe806, MWA_RAM, &sidearms_bg2_scrolly },
+	{ 0xe808, 0xe809, MWA_RAM, &sidearms_bg_scrollx },
+	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
+	{ 0xf000, 0xf7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xf800, 0xffff, colorram_w, &colorram },
+	{ -1 }	/* end of table */
+};
+
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -213,9 +250,94 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x80, "On" )
 
-	PORT_START      /* DSW1 */
+	PORT_START      /* DSW2 */
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* not sure, but likely */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( turtship_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN6 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN7 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -276,6 +398,36 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct GfxLayout turtship_tilelayout =
+{
+	32,32,  /* 32*32 tiles */
+	768,    /* 768 tiles */
+	4,      /* 4 bits per pixel */
+	{ 768*256*8+4, 768*256*8+0, 4, 0 },
+	{
+		      0,       1,       2,       3,       8+0,       8+1,       8+2,       8+3,
+		32*16+0, 32*16+1, 32*16+2, 32*16+3, 32*16+8+0, 32*16+8+1, 32*16+8+2, 32*16+8+3,
+		64*16+0, 64*16+1, 64*16+2, 64*16+3, 64*16+8+0, 64*16+8+1, 64*16+8+2, 64*16+8+3,
+		96*16+0, 96*16+1, 96*16+2, 96*16+3, 96*16+8+0, 96*16+8+1, 96*16+8+2, 96*16+8+3,
+	},
+	{
+		 0*16,  1*16,  2*16,  3*16,  4*16,  5*16,  6*16,  7*16,
+		 8*16,  9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16,
+		16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
+		24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16
+	},
+	256*8	/* every tile takes 256 consecutive bytes */
+};
+
+static struct GfxDecodeInfo turtship_gfxdecodeinfo[] =
+{
+	/*   start    pointer       colour start   number of colours */
+	{ 1, 0x00000, &charlayout,            768, 64 },	/* colors 768-1023 */
+	{ 1, 0x08000, &turtship_tilelayout,     0, 32 },	/* colors   0-511 */
+	{ 1, 0x68000, &spritelayout,          512, 16 },	/* colors 512-767 */
+	{ -1 } /* end of array */
+};
+
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(void)
 {
@@ -286,7 +438,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
-	{ YM2203_VOL(15,35), YM2203_VOL(15,35) },
+	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -350,6 +502,50 @@ static struct MachineDriver sidearms_machine_driver =
 	}
 };
 
+static struct MachineDriver turtship_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz (?) */
+			0,
+			turtship_readmem,turtship_writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* 3 Mhz (?) */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	turtship_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	sidearms_vh_start,
+	sidearms_vh_stop,
+	sidearms_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
+};
 
 
 ROM_START( sidearms_rom )
@@ -463,6 +659,33 @@ ROM_START( sidearjp_rom )
 #endif
 ROM_END
 
+ROM_START( turtship_rom )
+	ROM_REGION(0x20000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "turtship.003",    0x00000, 0x08000, 0xe7a7fc2e )
+	ROM_LOAD( "turtship.002",    0x10000, 0x08000, 0xe576f482 )
+	ROM_LOAD( "turtship.001",    0x18000, 0x08000, 0xa9b64240 )
+
+	ROM_REGION_DISPOSE(0x108000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "turtship.005",    0x00000, 0x4000, 0x651fef75 )	/* characters */
+	ROM_LOAD( "turtship.006",    0x38000, 0x10000, 0xa7cce654 )	/* tiles */     /* 1-1 */
+	ROM_LOAD( "turtship.007",    0x48000, 0x10000, 0x3ccf11b9 ) /* 2-1 */
+	ROM_LOAD( "turtship.009",    0x58000, 0x10000, 0x44762916 ) /* 3-1 */
+	ROM_LOAD( "turtship.008",    0x08000, 0x10000, 0xe0658469 ) /* 1-2 */
+	ROM_LOAD( "turtship.010",    0x18000, 0x10000, 0x76bb73bb ) /* 2-2 */
+	ROM_LOAD( "turtship.011",    0x28000, 0x10000, 0x53da6cb1 ) /* 3-2 */
+	ROM_LOAD( "turtship.013",    0x68000, 0x10000, 0x599f5246 )	/* sprites */
+	ROM_LOAD( "turtship.015",    0x78000, 0x10000, 0x69fd202f )
+	ROM_LOAD( "turtship.012",    0x88000, 0x10000, 0xfb54cd33 )
+	ROM_LOAD( "turtship.014",    0x98000, 0x10000, 0xb3ea74a3 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "turtship.004",    0x0000, 0x8000, 0x1cbe48e8 )
+
+	ROM_REGION(0x08000)	/* 32k tile map */
+	ROM_LOAD( "turtship.016",    0x0000, 0x8000, 0xaffd51dd )
+
+ROM_END
+
 
 static int hiload(void)
 {
@@ -537,7 +760,7 @@ struct GameDriver sidearmr_driver =
 	&sidearms_driver,
 	"sidearmr",
 	"Sidearms (US)",
-	"1986",
+	"1988",
 	"Capcom (Romstar license)",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
@@ -579,4 +802,29 @@ struct GameDriver sidearjp_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hiload, hisave
+};
+
+struct GameDriver turtship_driver =
+{
+	__FILE__,
+	0,
+	"turtship",
+	"Turtle Ship",
+	"1988",
+	"Philko",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
+	0,
+	&turtship_machine_driver,
+	0,
+
+	turtship_rom,
+	0,0,
+	0,
+	0,	/* sound_prom */
+
+	turtship_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
 };

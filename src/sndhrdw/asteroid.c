@@ -408,7 +408,7 @@ void llander_sh_update_partial(void)
 
 	if (Machine->sample_rate == 0) return;
 
-	newpos = cpu_scalebyfcount(buffer_len); /* get current position based on the timer */
+	newpos = sound_scalebufferpos(buffer_len); /* get current position based on the timer */
 
 	if(newpos-sample_pos<MIN_SLICE) return;
 

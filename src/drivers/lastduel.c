@@ -22,7 +22,6 @@ the screen from the copyright message is not cleared. Weird...
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "z80/z80.h"
 
 extern int lastduel_vram_r(int offset);
 extern void lastduel_vram_w(int offset,int value);

@@ -755,7 +755,7 @@ struct GameDriver hyprolyb_driver =
 
 	hyprolyb_rom,
 	0, trackfld_decode,
-	trackfld_sample_names,
+	0,
 	0,	/* sound_prom */
 
 	input_ports,

@@ -10,11 +10,13 @@
 #include "sn76496.h"
 #include "pokey.h"
 #include "namco.h"
+#include "namcos1.h"
 #include "nesintf.h"
 #include "5220intf.h"
 #include "vlm5030.h"
 #include "adpcm.h"
 #include "astrocde.h"
+#include "k007232.h"
 
 
 void soundlatch_w(int offset,int data);
@@ -41,6 +43,8 @@ void reset_play_channels(void);
 int sound_start(void);
 void sound_stop(void);
 void sound_update(void);
+
+int sound_scalebufferpos(int value);
 
 
 /* structure for SOUND_CUSTOM sound drivers */

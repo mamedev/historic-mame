@@ -699,7 +699,7 @@ INPUT_PORTS_START ( carnival_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* unknown, but used */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but used */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -727,6 +727,54 @@ INPUT_PORTS_START ( carnival_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( carnvckt_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but used */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT    | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
@@ -1222,6 +1270,32 @@ ROM_START( carnival_rom )
 	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, 0x0dbaa2b0 )
 ROM_END
 
+ROM_START( carnvckt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "epr501",       0x0000, 0x0400, 0x688503d2 )
+	ROM_LOAD( "652u32.cpu",   0x0400, 0x0400, 0xa1f58beb )
+	ROM_LOAD( "653u31.cpu",   0x0800, 0x0400, 0x67b17922 )
+	ROM_LOAD( "654u30.cpu",   0x0c00, 0x0400, 0xbefb09a5 )
+	ROM_LOAD( "655u29.cpu",   0x1000, 0x0400, 0x623fcdad )
+	ROM_LOAD( "epr506",       0x1400, 0x0400, 0xba916e97 )
+	ROM_LOAD( "epr507",       0x1800, 0x0400, 0xd0bda4a5 )
+	ROM_LOAD( "epr508",       0x1c00, 0x0400, 0xf0258cad )
+	ROM_LOAD( "epr509",       0x2000, 0x0400, 0xdcc8a530 )
+	ROM_LOAD( "epr510",       0x2400, 0x0400, 0x92c2ba51 )
+	ROM_LOAD( "epr511",       0x2800, 0x0400, 0x3af899a0 )
+	ROM_LOAD( "epr512",       0x2c00, 0x0400, 0x09f7b3e6 )
+	ROM_LOAD( "epr513",       0x3000, 0x0400, 0x8f41974c )
+	ROM_LOAD( "epr514",       0x3400, 0x0400, 0x2788d140 )
+	ROM_LOAD( "epr515",       0x3800, 0x0400, 0x10decaa9 )
+	ROM_LOAD( "epr516",       0x3c00, 0x0400, 0x7c32b352 )
+
+	ROM_REGION(0x0020) /* Color PROMs */
+	ROM_LOAD( "316-633",      0x0000, 0x0020, 0xf0084d80 )
+
+	ROM_REGION(0x0800)	/* sound ROM */
+	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, 0x0dbaa2b0 )
+ROM_END
+
 ROM_START( pulsar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "790.u33",      0x0000, 0x0400, 0x5e3816da )
@@ -1330,6 +1404,7 @@ static unsigned char ho2ds_color_prom[] =
 
 static const char *carnival_sample_names[] =
 {
+	"*carnival",
 	"bear.sam",
 	"bonus1.sam",
 	"bonus2.sam",
@@ -1710,7 +1785,7 @@ struct GameDriver carnival_driver =
 	__FILE__,
 	0,
 	"carnival",
-	"Carnival",
+	"Carnival (Upright)",
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
@@ -1724,6 +1799,32 @@ struct GameDriver carnival_driver =
 	0,	/* sound_prom */
 
 	carnival_input_ports,
+
+	PROM_MEMORY_REGION(1), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	carnival_hiload, carnival_hisave
+};
+
+struct GameDriver carnvckt_driver =
+{
+	__FILE__,
+	&carnival_driver,
+	"carnvckt",
+	"Carnival (Cocktail)",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
+	0,
+	&carnival_machine_driver,
+	0,
+
+	carnvckt_rom,
+	vicdual_decode, 0,
+	carnival_sample_names,
+	0,	/* sound_prom */
+
+	carnvckt_input_ports,
 
 	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,

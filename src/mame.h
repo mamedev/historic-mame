@@ -47,7 +47,6 @@ struct GameOptions {
 	void *record;
 	void *playback;
 	int mame_debug;
-	int frameskip;
 	int cheat;
 	int samplerate;
 	int samplebits;

@@ -500,6 +500,43 @@ ROM_START( farwest_rom )
 ROM_END
 
 
+static int hiload(void) /* HSC 12/29/98 */
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x3300],"\x23\x2c\x1f",3) == 0 && memcmp(&RAM[0x333d],"\x01\x00\x00",3) == 0 )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+/* oddly enough the top score displays 2 numbers less then the hiscore table does */
+			osd_fread(f,&RAM[0x32f1],3);
+			osd_fread(f,&RAM[0x3300],64);
+			osd_fclose(f);
+        }
+
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void) /* HSC 12/29/98 */
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+		osd_fwrite(f,&RAM[0x32f1],3);
+        osd_fwrite(f,&RAM[0x3300],64);
+        osd_fclose(f);
+    }
+}
+
 
 struct GameDriver ironhors_driver =
 {
@@ -524,7 +561,7 @@ struct GameDriver ironhors_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver farwest_driver =
@@ -550,5 +587,5 @@ struct GameDriver farwest_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

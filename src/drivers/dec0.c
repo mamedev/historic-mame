@@ -1462,47 +1462,92 @@ ROM_END
 
 ROM_START( slyspy_rom )
 	ROM_REGION(0x40000) /* 68000 code */
-	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
-	ROM_LOAD_ODD ( "fa12-2.bin",   0x00000, 0x10000, 0x1b534294 )
-	ROM_LOAD_EVEN( "fa15-.bin",    0x20000, 0x10000, 0x04a79266 )
-	ROM_LOAD_ODD ( "fa13-.bin",    0x20000, 0x10000, 0x641cc4b3 )
+	ROM_LOAD_EVEN( "fa14-3.17l",   0x00000, 0x10000, 0x54353a84 )
+	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
+	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
+	ROM_LOAD_ODD ( "fa13.11l",     0x20000, 0x10000, 0x641cc4b3 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fa05-.bin",    0x008000, 0x04000, 0x09802924 )	/* chars */
+	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
 	/* 0c000-0ffff empty */
-	ROM_CONTINUE(          0x000000, 0x04000 )	/* the two halves are swapped */
+	ROM_CONTINUE(             0x000000, 0x04000 )	/* the two halves are swapped */
 	/* 04000-07fff empty */
-	ROM_LOAD( "fa04-.bin",    0x018000, 0x04000, 0xec25b895 )
+	ROM_LOAD( "fa04.9a",      0x018000, 0x04000, 0xec25b895 )
 	/* 1c000-1ffff empty */
-	ROM_CONTINUE(          0x010000, 0x04000 )
+	ROM_CONTINUE(             0x010000, 0x04000 )
 	/* 14000-17fff empty */
-	ROM_LOAD( "fa07-.bin",    0x020000, 0x08000, 0xe932268b )	/* tiles */
+	ROM_LOAD( "fa07.17a",     0x020000, 0x08000, 0xe932268b )	/* tiles */
 	/* 28000-3ffff empty */
-	ROM_CONTINUE(          0x040000, 0x08000 )
+	ROM_CONTINUE(             0x040000, 0x08000 )
 	/* 48000-5ffff empty */
-	ROM_LOAD( "fa06-.bin",    0x060000, 0x08000, 0xc4dd38c0 )
+	ROM_LOAD( "fa06.15a",     0x060000, 0x08000, 0xc4dd38c0 )
 	/* 68000-7ffff empty */
-	ROM_CONTINUE(          0x080000, 0x08000 )
+	ROM_CONTINUE(             0x080000, 0x08000 )
 	/* 88000-9ffff empty */
-	ROM_LOAD( "fa09-.bin",    0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
+	ROM_LOAD( "fa09.22a",     0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
 	/* b0000-bffff empty */
-	ROM_CONTINUE(          0x0c0000, 0x10000 )
+	ROM_CONTINUE(             0x0c0000, 0x10000 )
 	/* d0000-dffff empty */
-	ROM_LOAD( "fa08-.bin",    0x0e0000, 0x10000, 0x4d7464db )
+	ROM_LOAD( "fa08.21a",     0x0e0000, 0x10000, 0x4d7464db )
 	/* f0000-fffff empty */
-	ROM_CONTINUE(          0x100000, 0x10000 )
+	ROM_CONTINUE(             0x100000, 0x10000 )
 	/* 110000-11ffff empty */
-	ROM_LOAD( "fa01-.bin",    0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
-	ROM_LOAD( "fa03-.bin",    0x140000, 0x20000, 0x0e7ea74d )
-	ROM_LOAD( "fa00-.bin",    0x160000, 0x20000, 0xf7df3fd7 )
-	ROM_LOAD( "fa02-.bin",    0x180000, 0x20000, 0x84e8da9d )
+	ROM_LOAD( "fa01.4a",      0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
+	ROM_LOAD( "fa03.7a",      0x140000, 0x20000, 0x0e7ea74d )
+	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
+	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
 	ROM_REGION (0x10000)	/* Custom sound CPU */
-	ROM_LOAD( "fa10-.bin",    0x0e000, 0x02000, 0xdfd2ff25 )
+	ROM_LOAD( "fa10.5h",      0x0e000, 0x02000, 0xdfd2ff25 )
 	ROM_CONTINUE(0x0000,0xe000)
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fa11-.bin",    0x00000, 0x20000, 0x4e547bad )
+	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
+ROM_END
+
+ROM_START( slyspy2_rom )
+	ROM_REGION(0x40000) /* 68000 code */
+	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
+	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
+	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
+	ROM_LOAD_ODD ( "fa13.11l",     0x20000, 0x10000, 0x641cc4b3 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
+	/* 0c000-0ffff empty */
+	ROM_CONTINUE(             0x000000, 0x04000 )	/* the two halves are swapped */
+	/* 04000-07fff empty */
+	ROM_LOAD( "fa04.9a",      0x018000, 0x04000, 0xec25b895 )
+	/* 1c000-1ffff empty */
+	ROM_CONTINUE(             0x010000, 0x04000 )
+	/* 14000-17fff empty */
+	ROM_LOAD( "fa07.17a",     0x020000, 0x08000, 0xe932268b )	/* tiles */
+	/* 28000-3ffff empty */
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	/* 48000-5ffff empty */
+	ROM_LOAD( "fa06.15a",     0x060000, 0x08000, 0xc4dd38c0 )
+	/* 68000-7ffff empty */
+	ROM_CONTINUE(             0x080000, 0x08000 )
+	/* 88000-9ffff empty */
+	ROM_LOAD( "fa09.22a",     0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
+	/* b0000-bffff empty */
+	ROM_CONTINUE(             0x0c0000, 0x10000 )
+	/* d0000-dffff empty */
+	ROM_LOAD( "fa08.21a",     0x0e0000, 0x10000, 0x4d7464db )
+	/* f0000-fffff empty */
+	ROM_CONTINUE(             0x100000, 0x10000 )
+	/* 110000-11ffff empty */
+	ROM_LOAD( "fa01.4a",      0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
+	ROM_LOAD( "fa03.7a",      0x140000, 0x20000, 0x0e7ea74d )
+	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
+	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
+
+	ROM_REGION (0x10000)	/* Custom sound CPU */
+	ROM_LOAD( "fa10.5h",      0x0e000, 0x02000, 0xdfd2ff25 )
+	ROM_CONTINUE(0x0000,0xe000)
+
+	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 ROM_START( midres_rom )
@@ -2189,7 +2234,7 @@ struct GameDriver slyspy_driver =
 	__FILE__,
 	0,
 	"slyspy",
-	"Sly Spy",
+	"Sly Spy (set 1)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
@@ -2198,6 +2243,31 @@ struct GameDriver slyspy_driver =
 	dec0_custom_memory,
 
 	slyspy_rom,
+	slyspy_patch, 0,
+	0,
+	(void *)slyspy_samples,
+
+	slyspy_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	slyspy_hiload,slyspy_hisave
+};
+
+struct GameDriver slyspy2_driver =
+{
+	__FILE__,
+	&slyspy_driver,
+	"slyspy2",
+	"Sly Spy (set 2)",
+	"1989",
+	"Data East USA",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&slyspy_machine_driver,
+	dec0_custom_memory,
+
+	slyspy2_rom,
 	slyspy_patch, 0,
 	0,
 	(void *)slyspy_samples,

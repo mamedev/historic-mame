@@ -22,10 +22,7 @@
 #ifndef _M6502_H
 #define _M6502_H
 
-/****************************************************************************
- * sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4
- ****************************************************************************/
-#include "types.h"
+#include "osd_cpu.h"
 
 #ifndef INLINE
 #define INLINE static inline
@@ -36,51 +33,49 @@
 
 #define M6502_PLAIN 0		/* set M6502_Type to this for a plain 6502 emulation */
 
-#ifdef  SUPP65C02
+#if SUPP65C02
 #define M6502_65C02 1		/* set M6502_Type to this for a 65C02 emulation */
 #endif
 
-#ifdef  SUPP6510
+#if SUPP6510
 #define M6502_6510	2		/* set M6502_Type to this for a 6510 emulation */
 #endif
 
-#define FAST_MEMORY 1		/* set to 1 to test cur_mrhard/wmhard to avoid calls */
+/* set to 1 to test cur_mrhard/wmhard to avoid calls */
+#define FAST_MEMORY 1       
+/* set to 1 to use Bernd Wiebelt's idea for N and Z flags */
+#define LAZY_FLAGS  1       
 
-#define LAZY_FLAGS	1		/* set to 1 to use Bernd's idea for N and Z flags */
-
-/****************************************************************************
- * Define a 6502 word. Upper bytes are always zero
- ****************************************************************************/
 typedef 	union {
 #ifdef __128BIT__
  #ifdef LSB_FIRST
-   struct { byte l,h,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11,h12,h13,h14,h15; } B;
-   struct { word l,h,h2,h3,h4,h5,h6,h7; } W;
-   dword D;
+   struct { UINT8 l,h,h2,h3,h4,h5,h6,h7,h8,h9,h10,h11,h12,h13,h14,h15; } B;
+   struct { UINT16 l,h,h2,h3,h4,h5,h6,h7; } W;
+   UINT32 D;
  #else
-   struct { byte h15,h14,h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h,l; } B;
-   struct { word h7,h6,h5,h4,h3,h2,h,l; } W;
-   dword D;
+   struct { UINT8 h15,h14,h13,h12,h11,h10,h9,h8,h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { UINT16 h7,h6,h5,h4,h3,h2,h,l; } W;
+   UINT32 D;
  #endif
 #elif __64BIT__
  #ifdef LSB_FIRST
-   struct { byte l,h,h2,h3,h4,h5,h6,h7; } B;
-   struct { word l,h,h2,h3; } W;
-   dword D;
+   struct { UINT8 l,h,h2,h3,h4,h5,h6,h7; } B;
+   struct { UINT16 l,h,h2,h3; } W;
+   UINT32 D;
  #else
-   struct { byte h7,h6,h5,h4,h3,h2,h,l; } B;
-   struct { word h3,h2,h,l; } W;
-   dword D;
+   struct { UINT8 h7,h6,h5,h4,h3,h2,h,l; } B;
+   struct { UINT16 h3,h2,h,l; } W;
+   UINT32 D;
  #endif
 #else
  #ifdef LSB_FIRST
-   struct { byte l,h,h2,h3; } B;
-   struct { word l,h; } W;
-   dword D;
+   struct { UINT8 l,h,h2,h3; } B;
+   struct { UINT16 l,h; } W;
+   UINT32 D;
  #else
-   struct { byte h3,h2,h,l; } B;
-   struct { word h,l; } W;
-   dword D;
+   struct { UINT8 h3,h2,h,l; } B;
+   struct { UINT16 h,l; } W;
+   UINT32 D;
  #endif
 #endif
 }	m6502_pair;
@@ -90,7 +85,7 @@ typedef 	union {
  ****************************************************************************/
 
 /****************************************************************************
- * The 6502 registers. HALT is set to 1 when the CPU is halted (6502c)
+ * The 6502 registers. halt is set to 1 when the CPU is halted (6502c)
  ****************************************************************************/
 typedef struct
 {
@@ -98,14 +93,18 @@ typedef struct
 	m6502_pair sp;					/* stack pointer (always 100 - 1FF) */
 	m6502_pair zp;					/* zero page address */
 	m6502_pair ea;					/* effective address */
-	int a;							/* Accumulator */
-	int x;							/* X index register */
-	int y;							/* Y index register */
-	int p;							/* Processor status */
+	UINT8 a;						/* Accumulator */
+	UINT8 x;						/* X index register */
+	UINT8 y;						/* Y index register */
+	UINT8 p;						/* Processor status */
 	int halt;						/* nonzero if the CPU is halted */
-	int pending_irq;				/* nonzero if an IRQ is pending */
-	int pending_nmi;				/* nonzero if a NMI is pending */
+	int pending_interrupt;			/* nonzero if a NMI or IRQ is pending */
 	int after_cli;					/* pending IRQ and last insn cleared I */
+#if NEW_INTERRUPT_SYSTEM
+	int nmi_state;
+    int irq_state;
+	int (*irq_callback)(int irqline);	/* IRQ callback */
+#endif
 #if LAZY_FLAGS
 	int nz; 						/* last value (lazy N and Z flag) */
 #endif
@@ -119,16 +118,22 @@ typedef struct
 #define M6502_RST_VEC	0xfffc
 #define M6502_IRQ_VEC	0xfffe
 
-extern int M6502_ICount;                /* cycle count */
+extern int m6502_ICount;				/* cycle count */
 extern int M6502_Type;					/* CPU subtype */
 
-unsigned M6502_GetPC (void);			/* Get program counter */
-void M6502_GetRegs (M6502_Regs *Regs);	/* Get registers */
-void M6502_SetRegs (M6502_Regs *Regs);	/* Set registers */
-void M6502_Reset (void);				/* Reset registers to the initial values */
-int  M6502_Execute(int cycles); 		/* Execute cycles - returns number of cycles actually run */
-void M6502_Cause_Interrupt(int type);
-void M6502_Clear_Pending_Interrupts(void);
+extern unsigned m6502_GetPC (void); 		   /* Get program counter */
+extern void m6502_GetRegs (M6502_Regs *Regs);  /* Get registers */
+extern void m6502_SetRegs (M6502_Regs *Regs);  /* Set registers */
+extern void m6502_Reset (void); 			   /* Reset registers to the initial values */
+extern int	m6502_Execute(int cycles);		   /* Execute cycles - returns number of cycles actually run */
+#if NEW_INTERRUPT_SYSTEM
+extern void m6502_set_nmi_line(int state);
+extern void m6502_set_irq_line(int irqline, int state);
+extern void m6502_set_irq_callback(int (*callback)(int irqline));
+#else
+extern void m6502_Cause_Interrupt(int type);
+extern void m6502_Clear_Pending_Interrupts(void);
+#endif
 
 #endif /* _M6502_H */
 

@@ -469,53 +469,79 @@ static struct MachineDriver bl_machine_driver =
 
 ROM_START( exctsccr_rom )
     ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "1_g10.bin", 0x0000, 0x2000, 0xaa68df66 )
-    ROM_LOAD( "2_h10.bin", 0x2000, 0x2000, 0x2d8f8326 )
-    ROM_LOAD( "3_j10.bin", 0x4000, 0x2000, 0xdce4a04d )
+    ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
+    ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
+    ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
     ROM_REGION(0x08000)
-    ROM_LOAD( "4_a5.bin", 0x0000, 0x2000, 0xc342229b )
-    ROM_LOAD( "5_b5.bin", 0x2000, 0x2000, 0x35f4f8c9 )
-    ROM_LOAD( "6_c5.bin", 0x4000, 0x2000, 0xeda40e32 )
-    ROM_LOAD( "2_k5.bin", 0x6000, 0x1000, 0x7f9cace2 )
-    ROM_LOAD( "3_l5.bin", 0x7000, 0x1000, 0xdb2d9e0d )
+    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+    ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
+    ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "Prom1.e1", 0x000, 0x020, 0xd9b10bf0 ) /* palette */
-	ROM_LOAD( "Prom2.8r", 0x020, 0x100, 0x8a9c0edf ) /* lookup table */
-	ROM_LOAD( "Prom3.k5", 0x120, 0x100, 0xb5db1c2c ) /* lookup table */
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
     ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "0_h6.bin", 0x0000, 0x2000, 0x3babbd6b )
-    ROM_LOAD( "9_f6.bin", 0x2000, 0x2000, 0x639998f5 )
-    ROM_LOAD( "8_d6.bin", 0x4000, 0x2000, 0x88651ee1 )
-    ROM_LOAD( "7_c6.bin", 0x6000, 0x2000, 0x6d51521e )
-    ROM_LOAD( "1_a6.bin", 0x8000, 0x1000, 0x20f2207e )
+    ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
+    ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
+    ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
+    ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
+    ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
+ROM_END
+
+ROM_START( exctscca_rom )
+    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
+    ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
+    ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
+
+    ROM_REGION(0x08000)
+    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+    ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
+    ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
+
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
+
+    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
+    ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
+    ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
+    ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
+    ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
 ROM_END
 
 /* Bootleg */
 ROM_START( exctsccb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ES-1.E2", 0x0000, 0x2000, 0x997c6a82 )
-	ROM_LOAD( "ES-2.G2", 0x2000, 0x2000, 0x5c66e792 )
-	ROM_LOAD( "ES-3.H2", 0x4000, 0x2000, 0xe0d504c0 )
+	ROM_LOAD( "es-1.e2",      0x0000, 0x2000, 0x997c6a82 )
+	ROM_LOAD( "es-2.g2",      0x2000, 0x2000, 0x5c66e792 )
+	ROM_LOAD( "es-3.h2",      0x4000, 0x2000, 0xe0d504c0 )
 
 	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "4_a5.bin", 0x0000, 0x2000, 0xc342229b ) /* ES-4.E5 */
-    ROM_LOAD( "5_b5.bin", 0x2000, 0x2000, 0x35f4f8c9 ) /* ES-5.5G */
-    ROM_LOAD( "6_c5.bin", 0x4000, 0x2000, 0xeda40e32 ) /* ES-6.S  */
-	ROM_LOAD( "2_k5.bin", 0x6000, 0x1000, 0x7f9cace2 ) /* ES-7.S - bad read on the bootleg set */
-	ROM_LOAD( "3_l5.bin", 0x7000, 0x1000, 0xdb2d9e0d ) /* ES-8.S - bad read on the bootleg set */
+    ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b ) /* ES-4.E5 */
+    ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 ) /* ES-5.5G */
+    ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 ) /* ES-6.S  */
+	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 ) /* ES-7.S - bad read on the bootleg set */
+	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d ) /* ES-8.S - bad read on the bootleg set */
 
-	ROM_REGION(0x220)	/* color proms */
-	ROM_LOAD( "Prom1.e1", 0x000, 0x020, 0xd9b10bf0 ) /* palette */
-	ROM_LOAD( "Prom2.8r", 0x020, 0x100, 0x8a9c0edf ) /* lookup table */
-	ROM_LOAD( "Prom3.k5", 0x120, 0x100, 0xb5db1c2c ) /* lookup table */
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
 	ROM_REGION(0x10000)	/* sound */
-	ROM_LOAD( "ES-A.K2", 0x0000, 0x2000, 0x99e87b78 )
-	ROM_LOAD( "ES-B.L2", 0x2000, 0x2000, 0x8b3db794 )
-	ROM_LOAD( "ES-C.M2", 0x4000, 0x2000, 0x7bed2f81 )
+	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
+	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
+	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
 ROM_END
 
 
@@ -627,6 +653,31 @@ struct GameDriver exctsccr_driver =
 	hiload_es, hisave_es
 };
 
+struct GameDriver exctscca_driver =
+{
+	__FILE__,
+	&exctsccr_driver,
+	"exctscca",
+	"Exciting Soccer (alternate music)",
+	"1983",
+	"Alpha Denshi Co.",
+	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
+	0,
+	&machine_driver,
+	0,
+	exctscca_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
 /* Bootleg */
 struct GameDriver exctsccb_driver =
 {
@@ -635,7 +686,7 @@ struct GameDriver exctsccb_driver =
 	"exctsccb",
 	"Exciting Soccer (bootleg)",
 	"1984",
-	"Kazutomi",
+	"bootleg",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&bl_machine_driver,

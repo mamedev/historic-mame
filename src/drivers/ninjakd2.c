@@ -246,6 +246,39 @@ void ninjak2a_init_machine(void)
 	main_cpu_num = 1;
 }
 
+int ninjakd2_init_samples(void)
+{
+	int i,n;
+	unsigned char *source = Machine->memory_region[3];
+	struct GameSamples *samples;
+	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
+	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
+
+	if ((Machine->samples = malloc(sizeof(struct GameSamples))) == NULL)
+		return 1;
+
+	samples = Machine->samples;
+	samples->total = 8;
+
+	for (i=0;i<8;i++)
+	{
+		if ((samples->sample[i] = malloc(sizeof(struct GameSample) + (sample_info[i][1]))) == NULL)
+			return 1;
+
+		samples->sample[i]->length = sample_info[i][1];
+		samples->sample[i]->volume = 0xff;
+		samples->sample[i]->smpfreq = 11025;	/* 11 kHz ?? */
+		samples->sample[i]->resolution = 8;
+		for (n=0; n<sample_info[i][1]; n++)
+			samples->sample[i]->data[n] = source[sample_info[i][0]+n] ^ 0x80;
+	}
+
+	/*	The samples are now ready to be used.  They are a 8 bit, 11 khz samples. 	 */
+
+	return 0;
+}
+
+
 int ninjakd2_interrupt(void)
 {
 	return 0x00d7;	/* RST 10h */
@@ -268,6 +301,20 @@ void ninjakd2_bankselect_w(int offset, int data)
 		bankaddress = 0x10000 + ((data & 0x7) * 0x4000);
 		cpu_setbank(1,&RAM[bankaddress]);	 /* Select 8 banks of 16k */
 	}
+}
+
+void ninjakd2_pcm_play_w(int offset,int data)
+{
+	int i;
+	int sample_no[9] = { 0x00,0x0A,0x27,0x3E,0x53,0x5E,0x68,0x76,0xF0 };
+
+	for(i=0;i<9;i++)
+	 if (sample_no[i]==data) break;
+
+	if (i==8)
+		sample_stop(0);
+	else
+		sample_start(0,i,0);
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -314,7 +361,7 @@ static struct MemoryReadAddress snd_readmem[] =
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xf000, 0xf000, MRA_RAM },	 // UNKNOWN ??????
+	{ 0xefee, 0xefee, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -323,7 +370,9 @@ static struct MemoryWriteAddress snd_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, MWA_RAM },	// UNKNOWN ??????
+	{ 0xf000, 0xf000, ninjakd2_pcm_play_w },	/* PCM SAMPLE OFFSET*256 */
+	{ 0xeff5, 0xeff6, MWA_NOP },			/* SAMPLE FREQUENCY ??? */
+	{ 0xefee, 0xefee, MWA_NOP },			/* CHIP COMMAND ?? */
 	{ -1 }	/* end of table */
 };
 
@@ -453,9 +502,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct Samplesinterface samples_interface =
+{
+	1	/* 1 channel */
+};
+
 static struct YM2203interface ym2203_interface =
 {
-	2, /* 2 chips */
+	2, 	 /* 2 chips */
 	1250000, /* 5000000/4 MHz ???? */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
@@ -463,7 +517,6 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 	{ 0 }
 };
-
 
 
 static struct MachineDriver ninjakd2_machine_driver =
@@ -535,11 +588,18 @@ static struct MachineDriver ninjak2a_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
-	0,0,0,0,
+	0,
+	ninjakd2_init_samples,
+	0,
+	0,
 	{
 		{
 			SOUND_YM2203,
 			&ym2203_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
 		}
 	}
 };

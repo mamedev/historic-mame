@@ -7,6 +7,7 @@
 *********************************************************************/
 
 #include "driver.h"
+#include "info.h"
 
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
@@ -329,7 +330,7 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 
 	Machine->orientation = trueorientation;
 
-	if (update_screen) osd_update_display();
+	if (update_screen) osd_update_video_and_audio();
 }
 
 INLINE void drawpixel(int x, int y, unsigned short color)
@@ -742,9 +743,7 @@ static void showcharset(void)
 			changed = 0;
 		}
 
-		osd_skip_this_frame(0);	/* keep the Mac code happy */
-		osd_update_display();
-
+		osd_update_video_and_audio();
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
 		{
@@ -977,6 +976,120 @@ static int setdipswitches(int selected)
 	if (osd_key_pressed_memory(OSD_KEY_ENTER))
 	{
 		if (sel == total - 1) sel = -1;
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
+}
+
+
+
+static int setdefkeysettings(int selected)
+{
+	const char *menu_item[400];
+	const char *menu_subitem[400];
+	struct ipd *entry[400];
+	int i,sel;
+	struct ipd *in;
+	int total;
+	extern struct ipd inputport_defaults[];
+
+
+	sel = selected - 1;
+
+
+	if (Machine->input_ports == 0)
+		return 0;
+
+	in = inputport_defaults;
+
+	total = 0;
+	while (in->type != IPT_END)
+	{
+		if (in->name != 0 && in->keyboard != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
+			&& (((in->type & 0xff) < IPT_ANALOG_START) || ((in->type & 0xff) > IPT_ANALOG_END))
+			&& !(nocheat && (in->type & IPF_CHEAT)))
+		{
+			entry[total] = in;
+			menu_item[total] = in->name;
+
+			total++;
+		}
+
+		in++;
+	}
+
+	if (total == 0) return 0;
+
+	menu_item[total] = "Return to Main Menu";
+	menu_item[total + 1] = 0;	/* terminate array */
+	total++;
+
+	for (i = 0;i < total;i++)
+	{
+		if (i < total - 1)
+			menu_subitem[i] = osd_key_name(entry[i]->keyboard);
+		else menu_subitem[i] = 0;	/* no subitem */
+	}
+
+	if (sel > 255)	/* are we waiting for a new key? */
+	{
+		int newkey;
+
+
+		menu_subitem[sel & 0xff] = "    ";
+		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+		newkey = osd_read_key_immediate();
+		if (newkey != OSD_KEY_NONE)
+		{
+			sel &= 0xff;
+
+			if (key_to_pseudo_code(newkey) == newkey)	/* don't use pseudo key code */
+				entry[sel]->keyboard = newkey;
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+
+		return sel + 1;
+	}
+
+
+	displaymenu(menu_item,menu_subitem,sel,0);
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		if (sel == total - 1) sel = -1;
+		else
+		{
+			sel |= 0x100;	/* we'll ask for a key */
+
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -1264,9 +1377,6 @@ static int setjoysettings(int selected)
 }
 
 
-#ifdef macintosh
-static int calibratejoysticks(int selected) { return 0; }
-#else
 static int calibratejoysticks(int selected)
 {
 	int key;
@@ -1329,8 +1439,6 @@ static int calibratejoysticks(int selected)
 
 	return sel + 1;
 }
-
-#endif
 
 
 static int settraksettings(int selected)
@@ -1756,7 +1864,7 @@ int showcopyright(void)
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	osd_clearbitmap(Machine->scrbitmap);
-	osd_update_display();
+	osd_update_video_and_audio();
 
 	if (key == OSD_KEY_FAST_EXIT ||
 		key == OSD_KEY_CANCEL ||
@@ -1804,57 +1912,14 @@ static int displaycredits(int selected)
 void showcredits(void)
 {
 	while (displaycredits(1) == 1)
-		osd_update_display();
-	osd_update_display();
+		osd_update_video_and_audio();
+	osd_update_video_and_audio();
 }
 
 static int displaygameinfo(int selected)
 {
 	int i;
 	char buf[2048];
-	static char *cpunames[] =
-	{
-		"",
-		"Z80",
-		"I8085",
-		"6502",
-		"8086",
-		"8035",
-		"6803",
-		"6805",
-		"6809",
-		"68000",
-		"T-11",
-		"S2650",
-		"TMS34010",
-		"TMS9900"
-	};
-	static char *soundnames[] =
-	{
-		"",
-		"<custom>",
-		"<samples>",
-		"DAC",
-		"AY-3-8910",
-		"YM2203",
-		"YM2151",
-		"YM2151",
-		"YM2413",
-		"YM2610",
-		"YM3812",
-		"YM3526",
-		"SN76496",
-		"Pokey",
-		"NES",
-		"Astrocade 'IO' chip",
-		"Namco",
-		"TMS5220",
-		"VLM5030",
-		"ADPCM samples",
-		"OKIM6295 ADPCM",
-		"MSM5205 ADPCM",
-		"HC-55516 CVSD",
-	};
 	int sel;
 
 
@@ -1866,7 +1931,7 @@ static int displaygameinfo(int selected)
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
 		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
+				info_cpu_name(&Machine->drv->cpu[i]),
 				Machine->drv->cpu[i].cpu_clock / 1000000,
 				Machine->drv->cpu[i].cpu_clock % 1000000);
 
@@ -1886,18 +1951,15 @@ static int displaygameinfo(int selected)
 	i = 0;
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
-		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type < SOUND_NAMCO)
-			sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->num);
+		if (info_sound_num(&Machine->drv->sound[i]))
+			sprintf(&buf[strlen(buf)],"%dx",info_sound_num(&Machine->drv->sound[i]));
 
-		sprintf(&buf[strlen(buf)],"%s",
-				soundnames[Machine->drv->sound[i].sound_type]);
+		sprintf(&buf[strlen(buf)],"%s",info_sound_name(&Machine->drv->sound[i]));
 
-		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type < SOUND_NAMCO)
+		if (info_sound_clock(&Machine->drv->sound[i]))
 			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->baseclock / 1000000,
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->baseclock % 1000000);
+					info_sound_clock(&Machine->drv->sound[i]) / 1000000,
+					info_sound_clock(&Machine->drv->sound[i]) % 1000000);
 
 		strcat(buf,"\n");
 
@@ -2036,18 +2098,18 @@ int showgamewarnings(void)
 	counter = 10 * Machine->drv->frames_per_second;
 
 	while (displaygameinfo(1) == 1 && --counter > 0)
-		osd_update_display();
-	osd_update_display();
+		osd_update_video_and_audio();
+	osd_update_video_and_audio();
 
 	osd_clearbitmap(Machine->scrbitmap);
-	osd_update_display();
+	osd_update_video_and_audio();
 
 	return 0;
 }
 
 
 
-enum { UI_SWITCH = 0,UI_KEY, UI_JOY,UI_ANALOG, UI_CALIBRATE,
+enum { UI_SWITCH = 0,UI_DEFKEY, UI_KEY, UI_JOY,UI_ANALOG, UI_CALIBRATE,
 		UI_STATS,UI_CREDITS,UI_GAMEINFO,
 		UI_CHEAT,UI_RESET,UI_EXIT };
 
@@ -2061,9 +2123,10 @@ static void setup_menu_init(void)
 {
 	menu_total = 0;
 
-	menu_item[menu_total] = "Dip Switch Setup"; menu_action[menu_total++] = UI_SWITCH;
-	menu_item[menu_total] = "Keyboard Setup"; menu_action[menu_total++] = UI_KEY;
-	menu_item[menu_total] = "Joystick Setup"; menu_action[menu_total++] = UI_JOY;
+	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
+	menu_item[menu_total] = "Default Keys"; menu_action[menu_total++] = UI_DEFKEY;
+	menu_item[menu_total] = "Keys"; menu_action[menu_total++] = UI_KEY;
+	menu_item[menu_total] = "Joystick"; menu_action[menu_total++] = UI_JOY;
 
 	/* Determine if there are any analog controls */
 	{
@@ -2083,7 +2146,7 @@ static void setup_menu_init(void)
 
 		if (num != 0)
 		{
-			menu_item[menu_total] = "Analog Setup"; menu_action[menu_total++] = UI_ANALOG;
+			menu_item[menu_total] = "Analog Controls"; menu_action[menu_total++] = UI_ANALOG;
 		}
 	}
 
@@ -2124,6 +2187,17 @@ static int setup_menu(int selected)
 		{
 			case UI_SWITCH:
 				res = setdipswitches(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_DEFKEY:
+				res = setdefkeysettings(sel >> 8);
 				if (res == -1)
 				{
 					menu_lastselected = sel;
@@ -2214,7 +2288,7 @@ static int setup_menu(int selected)
 			case UI_CHEAT:
 osd_sound_enable(0);
 while (osd_key_pressed(OSD_KEY_ENTER))
-	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
+	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
 sel = sel & 0xff;
@@ -2238,6 +2312,7 @@ sel = sel & 0xff;
 		switch (menu_action[sel])
 		{
 			case UI_SWITCH:
+			case UI_DEFKEY:
 			case UI_KEY:
 			case UI_JOY:
 			case UI_ANALOG:
@@ -2572,7 +2647,7 @@ int handle_user_interface(void)
 	if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
 
 
-#ifdef MAME_DEBUG
+#if 0
 	if (osd_key_pressed_memory(OSD_KEY_BACKSPACE))
 	{
 		if (jukebox_selected != -1)
@@ -2648,9 +2723,15 @@ int handle_user_interface(void)
 			{
 				osd_clearbitmap(Machine->scrbitmap);
 				need_to_clear_bitmap = 0;
+				(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
+				bitmap_dirty = 0;
 			}
-			(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
-			bitmap_dirty = 0;
+#ifdef MAME_DEBUG
+/* keep calling vh_screenrefresh() while paused so we can stuff */
+/* debug code in there */
+(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
+bitmap_dirty = 0;
+#endif
 			osd_profiler(OSD_PROFILE_END);
 
 			if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
@@ -2685,8 +2766,7 @@ int handle_user_interface(void)
 			/* show popup message if any */
 			if (messagecounter > 0) displaymessage(messagetext);
 
-			osd_update_display();
-			osd_update_audio();
+			osd_update_video_and_audio();
 
 			if (!osd_key_pressed(OSD_KEY_PAUSE)) pressed = 0;
 		}
@@ -2711,9 +2791,6 @@ int handle_user_interface(void)
 	if (osd_key_pressed_memory(OSD_KEY_SHOW_GFX))
 	{
 		osd_sound_enable(0);
-
-		while (osd_key_pressed(OSD_KEY_SHOW_GFX))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
 
 		showcharset();
 

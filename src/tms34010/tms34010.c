@@ -9,9 +9,10 @@
 #include <stdlib.h>
 #include "osd_cpu.h"
 #include "osd_dbg.h"
+#include "cpuintrf.h"
+#include "driver.h"
 #include "tms34010.h"
 #include "34010ops.h"
-#include "driver.h"
 
 #ifdef MAME_DEBUG
 extern int debug_key_pressed;
@@ -690,6 +691,32 @@ void TMS34010_Reset(void)
 }
 
 
+#if NEW_INTERRUPT_SYSTEM
+
+void TMS34010_set_nmi_line(int linestate)
+{
+	if (state.nmi_state == linestate) return;
+    state.nmi_state = linestate;
+	if (linestate != CLEAR_LINE)
+		IOREG(REG_INTPEND) |= TMS34010_NMI;
+}
+
+void TMS34010_set_irq_line(int irqline, int linestate)
+{
+	state.irq_state = linestate;
+	if (linestate == CLEAR_LINE)
+		IOREG(REG_INTPEND) &= ~TMS34010_PENDING;
+	else
+		IOREG(REG_INTPEND) |= TMS34010_PENDING;
+}
+
+void TMS34010_set_irq_callback(int (*callback)(int irqline))
+{
+	state.irq_callback = callback;
+}
+
+#else
+
 void TMS34010_Cause_Interrupt(int type)
 {
 	/* NONE = 0 */
@@ -702,13 +729,21 @@ void TMS34010_Clear_Pending_Interrupts(void)
 	/* This doesn't apply */
 }
 
+#endif
 
 /* Generate interrupts */
 static void Interrupt(void)
 {
 	int take=0;
 
-	if (IOREG(REG_INTPEND) & TMS34010_NMI)
+#if NEW_INTERRUPT_SYSTEM
+    if (IOREG(REG_INTPEND) & TMS34010_PENDING) {
+		int type = (*state.irq_callback)(0);
+		IOREG(REG_INTPEND) |= type;
+    }
+#endif
+
+    if (IOREG(REG_INTPEND) & TMS34010_NMI)
 	{
 		IOREG(REG_INTPEND) &= ~TMS34010_NMI;
 

@@ -4,23 +4,24 @@
 #define _M6809_H
 
 #include "memory.h"
-
-/****************************************************************************/
-/* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
-/****************************************************************************/
-#include "types.h"	/* -NS- */
+#include "osd_cpu.h"
 
 /* 6809 Registers */
 typedef struct
 {
-	word		pc;		/* Program counter */
-	word		u, s;	/* Stack pointers */
-	word		x, y;	/* Index registers */
-	byte		dp;		/* Direct Page register */
-	byte		a, b;	/* Accumulator */
-	byte		cc;
+	UINT16	pc; 	/* Program counter */
+	UINT16	u, s;	/* Stack pointers */
+	UINT16	x, y;	/* Index registers */
+	UINT8	dp; 	/* Direct Page register */
+	UINT8	a, b;	/* Accumulator */
+	UINT8	cc;
 
 	int pending_interrupts;	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+	int nmi_state;
+    int irq_state;
+	int (*irq_callback)(int irqline);
+#endif
 } m6809_Regs;
 
 #ifndef INLINE
@@ -29,27 +30,35 @@ typedef struct
 
 
 #define M6809_INT_NONE  0			/* No interrupt required */
-#define M6809_INT_IRQ	  1 		/* Standard IRQ interrupt */
+#define M6809_INT_IRQ	1			/* Standard IRQ interrupt */
 #define M6809_INT_FIRQ  2			/* Fast IRQ */
 #define M6809_INT_NMI   4			/* NMI */	/* NS 970909 */
 #define M6809_CWAI   8				/* set when CWAI is waiting for an interrupt */	/* NS 980101 */
 #define M6809_SYNC   16				/* set when SYNC is waiting for an interrupt */
+#if NEW_INTERRUPT_SYSTEM
+#define M6809_PENDING	0x80000000	/* set when an IRQ type interrupt is pending */
+#endif
 
 /* PUBLIC FUNCTIONS */
-void m6809_SetRegs(m6809_Regs *Regs);
-void m6809_GetRegs(m6809_Regs *Regs);
-unsigned m6809_GetPC(void);
-void m6809_reset(void);
-int m6809_execute(int cycles);	/* NS 970908 */
-void m6809_Cause_Interrupt(int type);	/* NS 970908 */
-void m6809_Clear_Pending_Interrupts(void);	/* NS 970908 */
-
+extern void m6809_SetRegs(m6809_Regs *Regs);
+extern void m6809_GetRegs(m6809_Regs *Regs);
+extern unsigned m6809_GetPC(void);
+extern void m6809_reset(void);
+extern int m6809_execute(int cycles);  /* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+extern void m6809_set_nmi_line(int state);
+extern void m6809_set_irq_line(int irqline, int state);
+extern void m6809_set_irq_callback(int (*callback)(int irqline));
+#else
+extern void m6809_Cause_Interrupt(int type);   /* NS 970908 */
+extern void m6809_Clear_Pending_Interrupts(void);  /* NS 970908 */
+#endif
 /* PUBLIC GLOBALS */
 extern int	m6809_ICount;
 
 
 /****************************************************************************/
-/* Read a byte from given memory location                                   */
+/* Read a byte from given memory location									*/
 /****************************************************************************/
 /* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
 #define M6809_RDMEM(A) ((unsigned)cpu_readmem16(A))

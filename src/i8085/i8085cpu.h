@@ -36,7 +36,7 @@
 
 #define M_INR(R) ++R; I.AF.B.l=(I.AF.B.l&CF)|ZS[R]|((R==0x80)?VF:0)|((R&0x0F)?0:HF)
 #define M_DCR(R) I.AF.B.l=(I.AF.B.l&CF)|NF|((R==0x80)?VF:0)|((R&0x0F)?0:HF); I.AF.B.l|=ZS[--R]
-#define M_MVI(R) R=RDOPARG()
+#define M_MVI(R) R=ARG()
 
 #define M_ANA(R) I.AF.B.h&=R; I.AF.B.l=ZSP[I.AF.B.h]|HF
 #define M_ORA(R) I.AF.B.h|=R; I.AF.B.l=ZSP[I.AF.B.h]
@@ -96,8 +96,8 @@ int q = I.AF.B.h-R; \
           (((R^I.AF.B.h)&(I.AF.B.h^q)&SF)>>5); \
 }
 
-#define M_IN    I.XX.D=RDOPARG(); I.AF.B.h=cpu_readport(I.XX.D); I.AF.B.l=(I.AF.B.l&CF)|ZSP[I.AF.B.h]
-#define M_OUT   I.XX.D=RDOPARG(); cpu_writeport(I.XX.D,I.AF.B.h)
+#define M_IN	I.XX.D=ARG(); I.AF.B.h=cpu_readport(I.XX.D); I.AF.B.l=(I.AF.B.l&CF)|ZSP[I.AF.B.h]
+#define M_OUT	I.XX.D=ARG(); cpu_writeport(I.XX.D,I.AF.B.h)
 
 #define M_DAD(R) { \
 int q = I.HL.D + I.R.D; \
@@ -108,13 +108,13 @@ int q = I.HL.D + I.R.D; \
 }
 
 #define M_PUSH(R) { \
-        WRMEM(--I.SP.W.l, I.R.B.h); \
-        WRMEM(--I.SP.W.l, I.R.B.l); \
+		WM(--I.SP.W.l, I.R.B.h); \
+		WM(--I.SP.W.l, I.R.B.l); \
 }
 
 #define M_POP(R) { \
-        I.R.B.l = RDMEM(I.SP.W.l++); \
-        I.R.B.h = RDMEM(I.SP.W.l++); \
+		I.R.B.l = RM(I.SP.W.l++); \
+		I.R.B.h = RM(I.SP.W.l++); \
 }
 
 #define M_RET(cc) { \
@@ -127,14 +127,14 @@ int q = I.HL.D + I.R.D; \
 
 #define M_JMP(cc) { \
         if (cc) { \
-                I.PC.W.l = RDOPARG_WORD(); \
+				I.PC.W.l = ARG16(); \
                 change_pc16(I.PC.D); \
         } else I.PC.W.l += 2; \
 }
 
 #define M_CALL(cc) { \
         if (cc) { \
-                word a = RDOPARG_WORD(); \
+				word a = ARG16(); \
                 I8085_ICount -= 7; \
                 M_PUSH(PC); \
                 I.PC.D = a; \

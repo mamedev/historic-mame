@@ -46,7 +46,8 @@ Other than that, everything else seems to be complete.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
+
 
 extern unsigned char *wc90_shared;
 
@@ -370,7 +371,8 @@ static void irqhandler(void)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	6000000,	/* 6 MHz ????? */
+	6000000,	/* 6 MHz ????? seems awfully fast, I don't even know if the */
+				/*  YM2203 can go at that speed */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },

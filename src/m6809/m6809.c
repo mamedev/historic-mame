@@ -12,9 +12,9 @@
 		6809 Microcomputer Programming & Interfacing with Experiments"
 			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	word must be 16 bit unsigned int
-							byte must be 8 bit unsigned int
-							long must be more than 16 bits
+	System dependencies:	UINT16 must be 16 bit unsigned int
+							UINT8 must be 8 bit unsigned int
+							UINT32 must be more than 16 bits
 							arrays up to 65536 bytes must be supported
 							machine must be twos complement
 
@@ -23,30 +23,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "osd_dbg.h"
+#include "cpuintrf.h"
 #include "M6809.h"
-#include "driver.h"
 
-INLINE byte fetch_effective_address( void );
+extern FILE *errorlog;
+
+INLINE UINT8 fetch_effective_address( void );
 
 /* 6809 registers */
-static byte cc,dpreg;
+static UINT8 cc,dpreg;
 
 static union {
 #ifdef LSB_FIRST
-	struct {byte l,h;} b;
+	struct {UINT8 l,h;} b;
 #else
-	struct {byte h,l;} b;
+	struct {UINT8 h,l;} b;
 #endif
-	word w;
+	UINT16 w;
 }dbreg;
 #define areg (dbreg.b.h)
 #define breg (dbreg.b.l)
 
-static word xreg,yreg,ureg,sreg,pcreg;
+static UINT16 xreg,yreg,ureg,sreg,pcreg;
 
-static word eaddr; /* effective address */
+static UINT16 eaddr; /* effective address */
 
 static int pending_interrupts;	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+static int nmi_state;
+static int irq_state;		/* IRQ and FIRQ lines */
+static int (*irq_callback)(int irqline);
+#endif
 
 /* public globals */
 int	m6809_ICount=50000;
@@ -93,8 +100,8 @@ static void (*wr_s_handler_wd)(int,int);
 #define CLR_ZC		cc&=0xfa
 /* macros for CC -- CC bits affected should be reset before calling */
 #define SET_Z(a)		if(!a)SEZ
-#define SET_Z8(a)		SET_Z((byte)a)
-#define SET_Z16(a)		SET_Z((word)a)
+#define SET_Z8(a)		SET_Z((UINT8)a)
+#define SET_Z16(a)		SET_Z((UINT16)a)
 #define SET_N8(a)		cc|=((a&0x80)>>4)
 #define SET_N16(a)		cc|=((a&0x8000)>>12)
 #define SET_H(a,b,r)	cc|=(((a^b^r)&0x10)<<1)
@@ -103,7 +110,7 @@ static void (*wr_s_handler_wd)(int,int);
 #define SET_V8(a,b,r)	cc|=(((a^b^r^(r>>1))&0x80)>>6)
 #define SET_V16(a,b,r)	cc|=(((a^b^r^(r>>1))&0x8000)>>14)
 
-static byte flags8i[256]=	/* increment */
+static UINT8 flags8i[256]=	 /* increment */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -122,7 +129,7 @@ static byte flags8i[256]=	/* increment */
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08
 };
-static byte flags8d[256]= /* decrement */
+static UINT8 flags8d[256]= /* decrement */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -151,7 +158,7 @@ static byte flags8d[256]= /* decrement */
 #define SET_FLAGS16(a,b,r)	{SET_N16(r);SET_Z16(r);SET_V16(a,b,r);SET_C16(r);}
 
 /* for treating an unsigned byte as a signed word */
-#define SIGNED(b) ((word)(b&0x80?b|0xff00:b))
+#define SIGNED(b) ((UINT16)(b&0x80?b|0xff00:b))
 
 /* macros to access dreg */
 #define GETDREG (dbreg.w)
@@ -310,7 +317,7 @@ static void wr_fast_wd( int addr, int v )
 	RAM[(addr+1)&0xffff] = v&255;
 }
 
-INLINE unsigned M_RDMEM_WORD (dword A)
+INLINE unsigned M_RDMEM_WORD (UINT32 A)
 {
 	int i;
 
@@ -319,7 +326,7 @@ INLINE unsigned M_RDMEM_WORD (dword A)
 	return i;
 }
 
-INLINE void M_WRMEM_WORD (dword A,word V)
+INLINE void M_WRMEM_WORD (UINT32 A,UINT16 V)
 {
 	M_WRMEM (A,V>>8);
 	M_WRMEM (((A)+1)&0xFFFF,V&255);
@@ -341,6 +348,11 @@ void m6809_SetRegs(m6809_Regs *Regs)
 	cc = Regs->cc;
 
 	pending_interrupts = Regs->pending_interrupts;	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+	nmi_state = Regs->nmi_state;
+	irq_state = Regs->irq_state;
+	irq_callback = Regs->irq_callback;
+#endif
 }
 
 /****************************************************************************/
@@ -359,6 +371,11 @@ void m6809_GetRegs(m6809_Regs *Regs)
 	Regs->cc = cc;
 
 	Regs->pending_interrupts = pending_interrupts;	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+	Regs->nmi_state = nmi_state;
+	Regs->irq_state = irq_state;
+	Regs->irq_callback = irq_callback;
+#endif
 }
 
 /****************************************************************************/
@@ -369,14 +386,35 @@ unsigned m6809_GetPC(void)
 	return pcreg;
 }
 
+INLINE void check_SYNC_CWAI(int type)
+{
+    if (type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ))
+    {
+        pending_interrupts &= ~M6809_SYNC;
+        if (pending_interrupts & M6809_CWAI)
+        {
+            if ((pending_interrupts & M6809_INT_NMI) != 0)
+                pending_interrupts &= ~M6809_CWAI;
+            else if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
+                pending_interrupts &= ~M6809_CWAI;
+            else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
+                pending_interrupts &= ~M6809_CWAI;
+        }
+    }
+}
+
 
 /* Generate interrupts */
 static void Interrupt(void)	/* NS 970909 */
 {
-	if ((pending_interrupts & M6809_INT_NMI) != 0)
-	{
-		pending_interrupts &= ~M6809_INT_NMI;
-
+#if NEW_INTERRUPT_SYSTEM
+	if (pending_interrupts & M6809_PENDING) {
+		int type = (*irq_callback)(0);
+        pending_interrupts |= type;
+		check_SYNC_CWAI(type);
+    }
+#endif
+    if ((pending_interrupts & M6809_INT_NMI) != 0) {
 		/* NMI */
 		cc|=0x80;	/* ASG 971016 */
 		PUSHWORD(pcreg);
@@ -390,11 +428,10 @@ static void Interrupt(void)	/* NS 970909 */
 		cc|=0xd0;
 		pcreg=M_RDMEM_WORD(0xfffc);change_pc(pcreg);	/* TS 971002 */
 		m6809_ICount -= 19;
-	}
-	else if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
-	{
-		pending_interrupts &= ~M6809_INT_IRQ;
 
+        pending_interrupts &= ~M6809_INT_NMI;
+	} else
+	if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0) {
 		/* standard IRQ */
 		cc|=0x80;	/* ASG 971016 */
 		PUSHWORD(pcreg);
@@ -408,11 +445,10 @@ static void Interrupt(void)	/* NS 970909 */
 		cc|=0x90;
 		pcreg=M_RDMEM_WORD(0xfff8);change_pc(pcreg);	/* TS 971002 */
 		m6809_ICount -= 19;
-	}
-	else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
-	{
-		pending_interrupts &= ~M6809_INT_FIRQ;
 
+        pending_interrupts &= ~M6809_INT_IRQ;
+	} else
+	if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0) {
 		/* fast IRQ */
 		PUSHWORD(pcreg);
 		cc&=0x7f;	/* ASG 971016 */
@@ -420,6 +456,8 @@ static void Interrupt(void)	/* NS 970909 */
 		cc|=0x50;
 		pcreg=M_RDMEM_WORD(0xfff6);change_pc(pcreg);	/* TS 971002 */
 		m6809_ICount -= 10;
+
+        pending_interrupts &= ~M6809_INT_FIRQ;
 	}
 }
 
@@ -435,7 +473,14 @@ void m6809_reset(void)
 	cc |= 0x40;			/* FIRQ disabled */
 	areg = 0x00;		/* clear accumulator a */
 	breg = 0x00;		/* clear accumulator b */
-	m6809_Clear_Pending_Interrupts();	/* NS 970908 */
+#if NEW_INTERRUPT_SYSTEM
+	m6809_set_nmi_line(CLEAR_LINE);
+	m6809_set_irq_line(0,CLEAR_LINE);
+	m6809_set_irq_line(1,CLEAR_LINE);
+	pending_interrupts = 0;
+#else
+    m6809_Clear_Pending_Interrupts();   /* NS 970908 */
+#endif
 
 	/* default to unoptimized memory access */
 	rd_u_handler = rd_slow;
@@ -460,40 +505,62 @@ void m6809_reset(void)
 	}
 }
 
+#if NEW_INTERRUPT_SYSTEM
 
-void m6809_Cause_Interrupt(int type)	/* NS 970908 */
+void m6809_set_nmi_line(int state)
+{
+	if (nmi_state == state) return;
+	nmi_state = state;
+	if (state != CLEAR_LINE)
+		pending_interrupts |= M6809_INT_NMI;
+	check_SYNC_CWAI(M6809_INT_NMI);
+}
+
+void m6809_set_irq_line(int irqline, int state)
+{
+	irq_state = state;
+	if (state == CLEAR_LINE)
+		pending_interrupts &= ~M6809_PENDING;
+	else
+		pending_interrupts |= M6809_PENDING;
+}
+
+void m6809_set_irq_callback(int (*callback)(int irqline))
+{
+	irq_callback = callback;
+}
+
+#else
+
+void m6809_Cause_Interrupt(int type)    /* NS 970908 */
 {
 	pending_interrupts |= type;
-	if (type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ))
-	{
-		pending_interrupts &= ~M6809_SYNC;
-		if (pending_interrupts & M6809_CWAI)
-		{
-			if ((pending_interrupts & M6809_INT_NMI) != 0)
-				pending_interrupts &= ~M6809_CWAI;
-			else if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
-				pending_interrupts &= ~M6809_CWAI;
-			else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
-				pending_interrupts &= ~M6809_CWAI;
-		}
-	}
+	check_SYNC_CWAI(type);
 }
-void m6809_Clear_Pending_Interrupts(void)	/* NS 970908 */
+
+void m6809_Clear_Pending_Interrupts(void)   /* NS 970908 */
 {
 	pending_interrupts &= ~(M6809_INT_IRQ | M6809_INT_FIRQ | M6809_INT_NMI);
 }
 
+#endif
 
 #include "6809ops.c"
 
 /* execute instructions on this CPU until icount expires */
 int m6809_execute(int cycles)	/* NS 970908 */
 {
-	byte op_count;	/* op code clock count */
-	byte ireg;
+	UINT8 op_count;  /* op code clock count */
+	UINT8 ireg;
 	m6809_ICount = cycles;	/* NS 970908 */
 
-	if (pending_interrupts & (M6809_CWAI | M6809_SYNC))
+#if NEW_INTERRUPT_SYSTEM
+	/* needed to eventually reset the CWAI / SYNC state */
+    if (pending_interrupts & M6809_PENDING)
+		Interrupt();
+#endif
+
+    if (pending_interrupts & (M6809_CWAI | M6809_SYNC))
 	{
 		m6809_ICount = 0;
 		goto getout;
@@ -781,7 +848,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 		}
 		else
 		{
-			byte ireg2;
+			UINT8 ireg2;
 			ireg2=M_RDOP(pcreg++);
 
 			if( (op_count=cycles2[ireg2]) &0x80 ) fetch_effective_address();
@@ -855,9 +922,9 @@ getout:
 	return cycles - m6809_ICount;	/* NS 970908 */
 }
 
-INLINE byte fetch_effective_address( void )
+INLINE UINT8 fetch_effective_address( void )
 {
-	byte postbyte, ec=0;
+	UINT8 postbyte, ec=0;
 
 
 	postbyte=M_RDOP_ARG(pcreg++);

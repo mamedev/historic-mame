@@ -120,17 +120,17 @@ int     meadows_sh_start(void);
 void    meadows_sh_stop(void);
 void	meadows_sh_dac_w(int data);
 void    meadows_sh_update(void);
-extern	byte	meadows_0c00;
-extern	byte	meadows_0c01;
-extern	byte	meadows_0c02;
-extern	byte	meadows_0c03;
+extern	unsigned char	meadows_0c00;
+extern	unsigned char	meadows_0c01;
+extern	unsigned char	meadows_0c02;
+extern	unsigned char	meadows_0c03;
 
 /*************************************************************/
 /*                                                           */
 /* Statics                                                   */
 /*                                                           */
 /*************************************************************/
-static  byte flip_bits[0x100] = {
+static  unsigned char flip_bits[0x100] = {
 	0x00,0x80,0x40,0xc0,0x20,0xa0,0x60,0xe0,0x10,0x90,0x50,0xd0,0x30,0xb0,0x70,0xf0,
 	0x08,0x88,0x48,0xc8,0x28,0xa8,0x68,0xe8,0x18,0x98,0x58,0xd8,0x38,0xb8,0x78,0xf8,
 	0x04,0x84,0x44,0xc4,0x24,0xa4,0x64,0xe4,0x14,0x94,0x54,0xd4,0x34,0xb4,0x74,0xf4,
@@ -188,7 +188,7 @@ void    meadows_hardware_w(int offset, int data)
 			if (errorlog) fprintf(errorlog, "meadows_hardware_w %d $%02x\n", offset, data);
             break;
 		case 3:
-			S2650_Clear_Pending_Interrupts();
+//			S2650_Clear_Pending_Interrupts();
 			break;
 	}
 }
@@ -592,7 +592,7 @@ ROM_END
 static void gypsyjug_rom_decode(void)
 {
 int i;
-static byte ball[16*2] = {
+static unsigned char ball[16*2] = {
 	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
 	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
 	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,

@@ -95,6 +95,7 @@ Points to note, known and proven information deleted from this map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/pd4990a.h"
+#include "z80/z80.h"
 
 extern unsigned char *vidram;
 extern unsigned char *neogeo_ram;
@@ -353,6 +354,8 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 /*	{ 0x200000, 0x200fff, whp copies ROM data here. Why? Is there RAM in the banked ROM space? */
 /* trally writes to 200000-200003 as well */
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
+/* sidkicks reads and writes to several addresses in this range, using this for copy */
+/* protection. Custom parts instead of the banked ROMs? */
 //	{ 0x280050, 0x280051, neo_pd4990a_control_w },
 	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },      /* NOTE THIS CHANGE TO END AT FF !!! */
 	{ 0x300000, 0x300001, watchdog_reset_w },
@@ -2186,7 +2189,7 @@ ROM_START( sidkicks_rom )
     ROM_LOAD( "sidek_c1.rom", 0x000000, 0x100000, 0x53e1c002 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x100000 )
 
-	ROM_REGION(0x300000) /* CHECK THIS LATER */
+	ROM_REGION(0x300000)
     ROM_LOAD( "sidek_c2.rom", 0x000000, 0x100000, 0x776a2d1f ) /* Plane 2,3 */
 	ROM_CONTINUE(             0x200000, 0x100000 )
 

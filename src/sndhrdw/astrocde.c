@@ -231,7 +231,7 @@ void astrocade_sound_w(int num, int offset, int data)
 	int i, bvalue, temp_vib;
 
 	/* update */
-	astrocade_update(num,cpu_scalebyfcount(buffer_len));
+	astrocade_update(num,sound_scalebufferpos(buffer_len));
 
 	switch(offset)
 	{

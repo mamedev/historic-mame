@@ -1,6 +1,17 @@
 #ifndef _MAMEDBG_H
 #define _MAMEDBG_H
 
+#ifndef macintosh
+#ifndef WIN32
+#ifndef UNIX
+	#include <conio.h>
+	#define __INLINE__ static __inline__	/* keep allegro.h happy */
+	#include <allegro.h>
+	#undef __INLINE__
+#endif
+#endif
+#endif
+
 #include "driver.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,22 +29,10 @@
 #include "xmame.h" /* defines uclock types depending on arch */
 #endif
 
-#ifndef macintosh
-#ifndef WIN32
-#ifndef UNIX
-	#include <conio.h>
-	#define inline __inline__	/* keep allegro.h happy */
-	#include <allegro.h>
-	#undef inline
-#endif
-#endif
-#endif
-
 #include "osdepend.h"
 #include "osd_dbg.h"
 #include "cpuintrf.h"
 #include "z80/z80.h"
-#include "z80/z80dasm.h"
 #include "m6502/m6502.h"
 #include "i86/i86intrf.h"
 #include "i8039/i8039.h"
@@ -48,6 +47,7 @@
 #include "tms9900/tms9900.h"
 
 
+int DasmZ80(char *dest,int PC);
 int Dasm6502 (char *buf, int pc);
 int Dasm6808 (unsigned char *base, char *buf, int pc);
 int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
@@ -81,8 +81,8 @@ extern int traceon;
 
 extern int CurrentVolume;
 
-#define	MEM1DEFAULT             0xc000
-#define	MEM2DEFAULT             0xc200
+#define	MEM1DEFAULT             0x0000
+#define	MEM2DEFAULT             0x0200
 #define	HEADING_COLOUR          LIGHTGREEN
 #define	LINE_COLOUR             LIGHTCYAN
 #define	REGISTER_COLOUR         WHITE

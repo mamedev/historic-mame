@@ -160,6 +160,12 @@ void reset_play_channels(void)
 
 
 ***************************************************************************/
+
+static void *sound_update_timer;
+static double refresh_period;
+static double refresh_period_inv;
+
+
 int sound_start(void)
 {
 	int totalsound = 0;
@@ -232,6 +238,10 @@ int sound_start(void)
 				if (namco_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
+			case SOUND_NAMCOS1:
+				if (namcos1_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
 			case SOUND_NES:
 				if (NESPSG_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
@@ -241,23 +251,27 @@ int sound_start(void)
 					goto getout;
 				break;
 			case SOUND_VLM5030:
-				if( VLM5030_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+				if (VLM5030_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_ADPCM:
-				if( ADPCM_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+				if (ADPCM_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_OKIM6295:
-				if( OKIM6295_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+				if (OKIM6295_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_MSM5205:
-				if( MSM5205_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+				if (MSM5205_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_ASTROCADE:
-				if( astrocade_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+				if (astrocade_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
+			case SOUND_K007232:
+				if (K007232_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 		}
@@ -269,6 +283,10 @@ int sound_start(void)
 	/* so it can tweak the default parameters (like panning) */
 	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
 		return 1;
+
+	refresh_period = TIME_IN_HZ (Machine->drv->frames_per_second);
+	refresh_period_inv = 1.0 / refresh_period;
+	sound_update_timer = timer_set (TIME_NEVER, 0, NULL);
 
 	return 0;
 
@@ -336,6 +354,9 @@ void sound_stop(void)
 			case SOUND_NAMCO:
 				namco_sh_stop();
 				break;
+			case SOUND_NAMCOS1:
+				namcos1_sh_stop();
+				break;
 			case SOUND_NES:
 				NESPSG_sh_stop();
 				break;
@@ -357,11 +378,20 @@ void sound_stop(void)
 			case SOUND_ASTROCADE:
 				astrocade_sh_stop();
 				break;
+			case SOUND_K007232:
+				K007232_sh_stop();
+				break;
 		}
 		totalsound++;
 	}
 
 	streams_sh_stop();
+
+	if (sound_update_timer)
+	{
+		timer_remove (sound_update_timer);
+		sound_update_timer = 0;
+	}
 }
 
 
@@ -424,6 +454,9 @@ void sound_update(void)
 			case SOUND_NAMCO:
 				namco_sh_update();
 				break;
+			case SOUND_NAMCOS1:
+				namcos1_sh_update();
+				break;
 			case SOUND_NES:
 				NESPSG_sh_update();
 				break;
@@ -445,6 +478,9 @@ void sound_update(void)
 			case SOUND_ASTROCADE:
 				astrocade_sh_update();
 				break;
+			case SOUND_K007232:
+				K007232_sh_update();
+				break;
 		}
 
 		totalsound++;
@@ -452,7 +488,16 @@ void sound_update(void)
 
 	streams_sh_update();
 
-	osd_update_audio();
+	timer_reset (sound_update_timer, TIME_NEVER);
 
 	osd_profiler(OSD_PROFILE_END);
+}
+
+
+
+int sound_scalebufferpos(int value)
+{
+	int result = (int)((double)value * timer_timeelapsed (sound_update_timer) * refresh_period_inv);
+	if (value >= 0) return (result < value) ? result : value;
+	else return (result > value) ? result : value;
 }

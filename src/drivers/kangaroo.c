@@ -97,7 +97,7 @@ interrupts:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
 
 
 

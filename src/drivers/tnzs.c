@@ -46,7 +46,6 @@ f000-f003 ???
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 
 
 
@@ -258,7 +257,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz ??? */
+	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(255,255) },
 	{ input_port_6_r },
 	{ input_port_7_r },

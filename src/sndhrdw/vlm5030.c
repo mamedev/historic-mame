@@ -473,7 +473,7 @@ void VLM5030_update(void)
 	if( !sampling_mode )
 	{
 		/* docode mode */
-		newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
+		newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
 
 		if (newpos - sample_pos < MIN_SLICE)
 			return;

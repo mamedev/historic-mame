@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
 
 
 unsigned char *bosco_sharedram;

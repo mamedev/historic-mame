@@ -114,6 +114,18 @@ int readroms(void)
 	const struct RomModule *romp;
 	int checksumwarning = 0;
 	int lengthwarning = 0;
+	int total_roms,current_rom;
+
+
+	total_roms = current_rom = 0;
+	romp = Machine->gamedrv->rom;
+	while (romp->name || romp->offset || romp->length)
+	{
+		if (romp->name && romp->name != (char *)-1)
+			total_roms++;
+
+		romp++;
+	}
 
 
 	romp = Machine->gamedrv->rom;
@@ -178,6 +190,10 @@ int readroms(void)
 			}
 
 			name = romp->name;
+
+			/* update status display */
+			osd_display_loading_rom_message(name,++current_rom,total_roms);
+
 			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
@@ -294,8 +310,8 @@ int readroms(void)
 
 			if (explength != osd_fsize (f))
 			{
-				printf ("Length mismatch on ROM '%s'. (Expected: %08x  Found: %08x)\n",
-					name, explength, osd_fsize (f));
+				printf ("%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
+						name,explength,osd_fsize(f));
 				lengthwarning++;
 			}
 
@@ -306,13 +322,10 @@ int readroms(void)
 							"WARNING: the game might not run correctly.\r"
 							"Expected:%08x  Found:%08x\r", name, expchecksum, osd_fcrc (f));
 				#else
-				if (checksumwarning == 0)
-					printf ("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
-							"WARNING: the game might not run correctly.\n"
-							"Name         Expected  Found\n");
 				checksumwarning++;
 				if (expchecksum)
-					printf("%-12s %08x %08x\n", name, expchecksum, osd_fcrc (f));
+					printf("%-12s WRONG CRC (expected: %08x found: %08x)\n",
+							name,expchecksum,osd_fcrc(f));
 				else
 					printf("%-12s NO GOOD DUMP EXISTS\n",name);
 				#endif
@@ -324,10 +337,14 @@ int readroms(void)
 		region++;
 	}
 
+	/* final status display */
+	osd_display_loading_rom_message(0,current_rom,total_roms);
+
 #ifndef macintosh
 	if ((checksumwarning > 0) || (lengthwarning > 0))
 	{
-		printf("Press return to continue\n");
+		printf ("This ROM set is not the same MAME was tested with.\n"
+				"WARNING: the game might not run correctly.\nPress return to continue\n");
 		getchar();
 	}
 #endif
@@ -336,6 +353,9 @@ int readroms(void)
 
 
 printromlist:
+
+	/* final status display */
+	osd_display_loading_rom_message(0,current_rom,total_roms);
 
 #ifndef macintosh
 	printf("\n");                         /* MAURY_BEGIN: dichiarazione */
@@ -352,6 +372,7 @@ getout:
 		free(Machine->memory_region[region]);
 		Machine->memory_region[region] = 0;
 	}
+
 	return 1;
 }
 
@@ -656,6 +677,7 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 
 	if ((gfx = malloc(sizeof(struct GfxElement))) == 0)
 		return 0;
+	memset(gfx,0,sizeof(struct GfxElement));
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

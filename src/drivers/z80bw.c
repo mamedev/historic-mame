@@ -30,7 +30,6 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int  astinvad_interrupt(void);
 
 extern unsigned char *astinvad_videoram;
 

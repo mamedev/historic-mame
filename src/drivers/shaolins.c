@@ -195,8 +195,8 @@ static struct GfxLayout shaolins_charlayout =
 	512,	/* 512 characters */
 	4,	/* 4 bits per pixel */
 	{ 512*16*8+4, 512*16*8+0, 4, 0 },
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
@@ -206,10 +206,10 @@ static struct GfxLayout shaolins_spritelayout =
 	256,	/* 256 sprites */
 	4,	/* 4 bits per pixel */
 	{ 256*64*8+4, 256*64*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	{ 24*8+3, 24*8+2, 24*8+1, 24*8+0, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-			8*8+3, 8*8+2, 8*8+1, 8*8+0 , 3, 2, 1, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -248,7 +248,7 @@ static struct MachineDriver shaolins_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	shaolins_gfxdecodeinfo,
 	256,16*8*16+16*8*16,
 	shaolins_vh_convert_color_prom,
@@ -383,7 +383,7 @@ struct GameDriver kicker_driver =
 	shaolins_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -409,7 +409,7 @@ struct GameDriver shaolins_driver =
 	shaolins_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

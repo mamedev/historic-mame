@@ -276,6 +276,29 @@ ROM_START( citycon_rom )
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
+ROM_START( citycona_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
+	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
+
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
+	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
+	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGION(0xe000)
+	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
+	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -324,7 +347,7 @@ struct GameDriver citycon_driver =
 	__FILE__,
 	0,
 	"citycon",
-	"City Connection",
+	"City Connection (set 1)",
 	"1985",
 	"Jaleco",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
@@ -333,6 +356,33 @@ struct GameDriver citycon_driver =
 	0,
 
 	citycon_rom,
+	0, 0,
+	0,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver citycona_driver =
+{
+	__FILE__,
+	&citycon_driver,
+	"citycona",
+	"City Connection (set 2)",
+	"1985",
+	"Jaleco",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	citycona_rom,
 	0, 0,
 	0,
 

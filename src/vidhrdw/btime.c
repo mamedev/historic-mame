@@ -651,3 +651,48 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	drawsprites(bitmap, 0, 0, 0);
 }
+
+
+
+
+
+
+static unsigned char dirtycharacter[1024];
+unsigned char *decocass_characterram;
+
+void decocass_characterram_w(int offset,int data)
+{
+	if (decocass_characterram[offset] != data)
+	{
+		dirtycharacter[(offset / 8) & 0x3ff] = 1;
+		decocass_characterram[offset] = data;
+	}
+}
+
+
+void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	for (offs = 0;offs < 1024;offs++)
+	{
+		if (dirtycharacter[offs])
+		{
+			dirtycharacter[offs] = 0;
+
+			decodechar(Machine->gfx[0],offs,decocass_characterram,
+					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
+			decodechar(Machine->gfx[1],offs/4,decocass_characterram,
+					Machine->drv->gfxdecodeinfo[1].gfxlayout);
+		}
+	}
+
+	drawchars(bitmap, 0, 0);
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	drawsprites(bitmap, 0, 0, 0);
+}

@@ -43,7 +43,6 @@ out:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 
 
 unsigned char *speedbal_foreground_videoram;

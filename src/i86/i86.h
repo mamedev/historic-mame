@@ -63,7 +63,8 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 /************************************************************************/
 
 /* drop lines A16-A19 for a 64KB memory (yes, I know this should be done after adding the offset 8-) */
-#define SegBase(Seg) ((sregs[Seg] << 4) & 0xFFFF)
+/* HJB 12/13/98 instead mask address lines with a driver supplied value */
+#define SegBase(Seg) (sregs[Seg] << 4)
 
 #define DefaultBase(Seg) ((seg_prefix && (Seg==DS || Seg==SS)) ? prefix_base : base[Seg])
 
@@ -83,10 +84,11 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 
 /* no need to go through cpu_readmem for these ones... */
 /* ASG 971222 -- PUSH/POP now use the standard mechanisms; opcode reading is the same */
-#define FETCH ((BYTE)cpu_readop(base[CS]+ip++))
-#define FETCHWORD(var) { var=cpu_readop(base[CS]+ip)+(cpu_readop(base[CS]+ip+1)<<8); ip+=2; }
-#define PUSH(val) { regs.w[SP]-=2; WriteWord(base[SS]+regs.w[SP],val); }
-#define POP(var) { var = ReadWord(base[SS]+regs.w[SP]); regs.w[SP]+=2; }
+#define FETCH ((BYTE)cpu_readop_arg((base[CS]+ip++)&i86_AddrMask))
+#define FETCHOP ((BYTE)cpu_readop((base[CS]+ip++)&i86_AddrMask))
+#define FETCHWORD(var) { var=cpu_readop_arg(((base[CS]+ip)&i86_AddrMask))+(cpu_readop_arg(((base[CS]+ip+1)&i86_AddrMask))<<8); ip+=2; }
+#define PUSH(val) { regs.w[SP]-=2; WriteWord(((base[SS]+regs.w[SP])&i86_AddrMask),val); }
+#define POP(var) { var = ReadWord(((base[SS]+regs.w[SP])&i86_AddrMask)); regs.w[SP]+=2; }
 /************************************************************************/
 #define CompressFlags() (WORD)(CF | (PF << 2) | (AF << 4) | (ZF << 6) \
 			    | (SF << 7) | (TF << 8) | (IF << 9) \

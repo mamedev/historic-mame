@@ -4,23 +4,24 @@
 #define _M6808_H
 
 #include "memory.h"
-
-
-/****************************************************************************/
-/* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
-/****************************************************************************/
-#include "types.h"	/* -NS- */
+#include "cpuintrf.h"
+#include "osd_cpu.h"
 
 /* 6808 Registers */
 typedef struct
 {
-	word		pc;		/* Program counter */
-	word		s;		/* Stack pointer */
-	word		x;		/* Index register */
-	byte		a, b;	/* Accumulators */
-	byte		cc;
+	UINT16	pc; 	/* Program counter */
+	UINT16	s;		/* Stack pointer */
+	UINT16	x;		/* Index register */
+	UINT8	a, b;	/* Accumulators */
+	UINT8	cc;
 
 	int pending_interrupts;	/* MB */
+#if NEW_INTERRUPT_SYSTEM
+	int nmi_state;
+    int irq_state;
+	int (*irq_callback)(int irqline);
+#endif
 } m6808_Regs;
 
 #ifndef INLINE
@@ -33,6 +34,9 @@ typedef struct
 #define M6808_INT_NMI	2			/* NMI interrupt          */
 #define M6808_INT_OCI	4			/* Output Compare interrupt (timer) */
 #define M6808_WAI		8			/* set when WAI is waiting for an interrupt */
+#if NEW_INTERRUPT_SYSTEM
+#define M6808_PENDING	0x80000000
+#endif
 
 
 /* PUBLIC FUNCTIONS */
@@ -41,14 +45,20 @@ extern void m6808_GetRegs(m6808_Regs *Regs);
 extern unsigned m6808_GetPC(void);
 extern void m6808_reset(void);
 extern int  m6808_execute(int cycles);             /* MB */
+#if NEW_INTERRUPT_SYSTEM
+extern void m6808_set_nmi_line(int state);
+extern void m6808_set_irq_line(int irqline, int state);
+extern void m6808_set_irq_callback(int (*callback)(int irqline));
+#else
 extern void m6808_Cause_Interrupt(int type);       /* MB */
 extern void m6808_Clear_Pending_Interrupts(void);  /* MB */
+#endif
 
 /* PUBLIC GLOBALS */
 extern int	m6808_ICount;
 
 /****************************************************************************/
-/* Read a byte from given memory location                                   */
+/* Read a byte from given memory location									*/
 /****************************************************************************/
 /* ASG 971005 -- changed to cpu_readmem16/cpu_writemem16 */
 #define M6808_RDMEM(A) ((unsigned)cpu_readmem16(A))

@@ -4,7 +4,7 @@
 /* needed in vidhrdw/stactics.c */
 int stactics_vert_pos;
 int stactics_horiz_pos;
-int stactics_motor_on;
+unsigned char *stactics_motor_on;
 
 /* defined in vidhrdw/stactics.c */
 extern int stactics_vblank_count;
@@ -13,7 +13,7 @@ extern int stactics_shot_arrive;
 
 int stactics_port_0_r(int offset)
 {
-    if (stactics_motor_on)
+    if (*stactics_motor_on & 0x01)
     {
         return (input_port_0_r(0)&0x7f);
     }
@@ -48,27 +48,25 @@ int stactics_horiz_pos_r(int offset)
     return stactics_horiz_pos+0x80;
 }
 
-extern void stactics_motor_w(int offset, int data)
-{
-    stactics_motor_on = data&0x01;
-}
-
 int stactics_interrupt(void)
 {
     /* Run the monitor motors */
 
-    if (stactics_motor_on) /* under joystick control */
+    if (*stactics_motor_on & 0x01) /* under joystick control */
     {
-		if ((readinputport(4) & 0x01) == 0)	/* up */
+		int ip3 = readinputport(3);
+		int ip4 = readinputport(4);
+
+		if ((ip4 & 0x01) == 0)	/* up */
 			if (stactics_vert_pos > -128)
 				stactics_vert_pos--;
-		if ((readinputport(4) & 0x02) == 0)	/* down */
+		if ((ip4 & 0x02) == 0)	/* down */
 			if (stactics_vert_pos < 127)
 				stactics_vert_pos++;
-		if ((readinputport(3) & 0x20) == 0)	/* left */
+		if ((ip3 & 0x20) == 0)	/* left */
 			if (stactics_horiz_pos < 127)
 				stactics_horiz_pos++;
-		if ((readinputport(3) & 0x40) == 0)	/* right */
+		if ((ip3 & 0x40) == 0)	/* right */
 			if (stactics_horiz_pos > -128)
 				stactics_horiz_pos--;
     }
@@ -85,5 +83,10 @@ int stactics_interrupt(void)
     }
 
     return interrupt();
+}
+
+void stactics_coin_lockout_w(int offset, int data)
+{
+	coin_lockout_w(offset, ~data & 0x01);
 }
 

@@ -285,7 +285,7 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx,sy,
+				sx,sy + xoffsethack,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 
         /* also plot the sprite with wraparound (tunnel in Crush Roller) */
@@ -293,7 +293,7 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 2,spriteram[offs] & 1,
-				sx - 256,sy,
+				sx - 256,sy + xoffsethack,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
     }
 }

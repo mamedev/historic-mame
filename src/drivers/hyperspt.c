@@ -713,6 +713,47 @@ static void hisave(void)
 
 
 
+static int roadf_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x3bd0],"\x01\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x3c7d],"\x43\x3f\x20",3) == 0)
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x3bd0],176);
+            osd_fclose(f);
+        	memcpy(&RAM[0x3066],&RAM[0x3bd0],3);	/* copy high score */
+		}
+
+        return 1;
+    }
+    else
+        return 0;  /* we can't load the hi scores yet */
+}
+
+static void roadf_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+
+		osd_fwrite(f,&RAM[0x3bd0],176);
+		osd_fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver hyperspt_driver =
 {
 	__FILE__,
@@ -762,7 +803,7 @@ struct GameDriver roadf_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	roadf_hiload, roadf_hisave
 };
 
 struct GameDriver roadf2_driver =
@@ -788,5 +829,5 @@ struct GameDriver roadf2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	roadf_hiload, roadf_hisave
 };

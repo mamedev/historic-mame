@@ -328,6 +328,7 @@ static int jailbrek_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x1620],80);
+			memcpy(&RAM[0x157e],&RAM[0x1620],3); /* copy high score */
 			osd_fclose(f);
 		}
 

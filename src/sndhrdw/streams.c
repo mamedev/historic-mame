@@ -316,7 +316,7 @@ void stream_update(int channel,int min_interval)
 		return;
 
 	/* get current position based on the timer */
-	newpos = cpu_scalebyfcount(stream_buffer_len[channel]);
+	newpos = sound_scalebufferpos(stream_buffer_len[channel]);
 
 	buflen = newpos - stream_buffer_pos[channel];
 

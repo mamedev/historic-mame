@@ -36,7 +36,6 @@ VRAM(Sprites)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "M68000/M68000.h"
-#include "Z80/Z80.h"
 
 unsigned char* terrac_ram;
 

@@ -59,7 +59,10 @@
 #include "m68kdasm.c"
 #include "cycletbl.h"
 
-#define	VERSION 	"0.09"
+/* needed for NEW_INTERRUPT_SYSTEM */
+#include "../cpuintrf.h"
+
+#define VERSION 	"0.10"
 
 #define TRUE -1
 #define FALSE 0
@@ -89,6 +92,10 @@
 #define REG_PC      "R_PC"
 #define REG_IRQ		"R_IRQ"
 #define REG_SR		"R_SR"
+#if NEW_INTERRUPT_SYSTEM
+#define REG_IRQ_STATE		"R_IRQ_STATE"
+#define REG_IRQ_CALLBACK	"R_IRQ_CALLBACK"
+#endif
 
 #define FASTCALL_CPU_READMEM24        "@cpu_readmem24@4"
 #define FASTCALL_CPU_READMEM24_WORD   "@cpu_readmem24_word@4"
@@ -5976,7 +5983,18 @@ void CodeSegmentBegin(void)
     fprintf(fp, "; Interrupt check\n\n");
 
 	fprintf(fp, "interrupt:\n");
-	fprintf(fp, "\t\t mov   al,byte [%s]\n",REG_IRQ);
+#if NEW_INTERRUPT_SYSTEM
+	fprintf(fp, "\t\t pushad\t\t; just to be safe.. probably way to much\n");
+    fprintf(fp, "\t\t push  dword 0\t\t; irq line 0\n");
+	fprintf(fp, "\t\t call  dword [%s]\t; get the IRQ level\n", REG_IRQ_CALLBACK);
+	fprintf(fp, "\t\t add   esp, byte 4\n");
+	fprintf(fp, "\t\t lea   ecx, [eax-1]\n");
+	fprintf(fp, "\t\t mov   al, 1\n");
+	fprintf(fp, "\t\t rol   al, cl\n");
+	fprintf(fp, "\t\t or    byte [%s], al\n", REG_IRQ);
+	fprintf(fp, "\t\t popad\t\t; get back everything\n");
+#endif
+    fprintf(fp, "\t\t mov   al,byte [%s]\n",REG_IRQ);
 	fprintf(fp, "\t\t mov   ah,40h\t\t; Mask\n");
     fprintf(fp, "\t\t mov   ecx,7h\t\t; Int #\n");
     fprintf(fp, "inttest:\n");
@@ -6108,6 +6126,11 @@ void CodeSegmentEnd(void)
     fprintf(fp, "R_PC\t DD 0\t\t\t ; Program Counter\n");
     fprintf(fp, "R_IRQ\t DD 0\t\t\t ; IRQ Request Level\n\n");
     fprintf(fp, "R_SR\t DD 0\t\t\t ; Motorola Format SR\n\n");
+
+#if NEW_INTERRUPT_SYSTEM
+	fprintf(fp, "R_IRQ_STATE\t DD 0\t\t\t ; irq line state\n\n");
+	fprintf(fp, "R_IRQ_CALLBACK\t DD 0\t\t\t ; irq callback (get vector)\n\n");
+#endif
 
     /* Extra space for variables mame uses for debugger */
 

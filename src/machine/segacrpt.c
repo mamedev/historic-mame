@@ -150,20 +150,6 @@
   317-0030 Perfect Billiards
   317-0064 Ufo Senshi Yohko Chan
 
-  The following are System 16 games, the CPU is a custom 68000 built by
-  Hitachi (FD1089 or FD1094).
-
-  314-0033? ??????
-  317-0080 Passing Shot
-  317-0092 Tetris (16A)
-  317-0093 Cotton
-  317-0110 Golden Axe
-  317-0116 Bay Route
-  317-0139 Bloxeed
-  317-0168 Aurail
-  317-0179ATetris (16B)
-  317-0181ACotton
-  317-???? Line of Fire
 
 
   Some text found in the ROMs:

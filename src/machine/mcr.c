@@ -12,10 +12,10 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "z80/z80.h"
 #include "machine/z80fmly.h"
 #include "m6808/m6808.h"
 #include "m6809/m6809.h"
+#include "z80/z80.h"
 #include "machine/6821pia.h"
 #include "timer.h"
 
@@ -37,7 +37,7 @@ static int maxrpm_p2_shift;
 static unsigned char soundlatch[4];
 static unsigned char soundstatus;
 
-extern void dotron_change_light (int light);
+extern void dotron_change_light(int light);
 
 /* z80 ctc */
 static void ctc_interrupt (int state)
@@ -525,11 +525,32 @@ void sarge_writeport(int port,int value)
 
 
 
-void dotron_delayed_write (int param)
+void dotron_delayed_write(int param)
 {
-	pia_1_porta_w (0, ~param & 0x0f);
-	pia_1_cb1_w (0, ~param & 0x10);
-	dotron_change_light (param >> 6);
+	pia_1_porta_w(0,~param & 0x0f);
+	pia_1_cb1_w(0,~param & 0x10);
+	dotron_change_light(param >> 6);
+
+#ifdef MAME_DEBUG
+	switch (param & 0x27)
+	{
+		case 0x24:
+			usrintf_showmessage("Stop");
+			break;
+		case 0x23:
+			usrintf_showmessage("Forward Fast");
+			break;
+		case 0x22:
+			usrintf_showmessage("Forward Slow");
+			break;
+		case 0x21:
+			usrintf_showmessage("Reverse Fast");
+			break;
+		case 0x20:
+			usrintf_showmessage("Reverse Slow");
+			break;
+	}
+#endif
 }
 
 void dotron_writeport(int port,int value)
@@ -773,11 +794,8 @@ int mcr_pia_1_r (int offset)
  */
 static void csd_porta_w (int offset, int data)
 {
-	int temp;
 	dacval = (dacval & ~0x3fc) | (data << 2);
-	temp = dacval/2;
-	if (temp > 0xff) temp = 0xff;
-	DAC_data_w (0, temp);
+	DAC_signed_data_w (0, dacval >> 2);
 }
 
 static void csd_portb_w (int offset, int data)
@@ -800,11 +818,8 @@ static void csd_irq (void)
  */
 static void sg_porta_w (int offset, int data)
 {
-	int temp;
 	dacval = (dacval & ~0x3fc) | (data << 2);
-	temp = dacval/2;
-	if (temp > 0xff) temp = 0xff;
-	DAC_data_w (0, temp);
+	DAC_signed_data_w (0, dacval >> 2);
 }
 
 static void sg_portb_w (int offset, int data)

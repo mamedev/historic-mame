@@ -307,6 +307,9 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* draw the sprites */
+/* kludge to avoid leftover sprites on the title screen */
+if ((videoram[0x20] & 2) || !(videoram[0x21] & 2))
+{
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
@@ -319,6 +322,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx,sy,
 				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
+}
 
 
 	/* draw the cars on the radar */

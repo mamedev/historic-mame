@@ -13,7 +13,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
+
+
 
 void Gorf_CopyLine(int Line);
 
@@ -583,7 +585,11 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
         if (Speed==0)								/* Time to change colour */
         {
-        	osd_mark_dirty(0,0,203,319,0);
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				osd_mark_dirty(0,0,319,203,0);
+			else
+				osd_mark_dirty(0,0,203,319,0);
+
 		    for (offs = total_stars-1;offs >= 0;offs--)
 				stars[offs].colour = (stars[offs].colour + 1) & 7;
         }
@@ -834,7 +840,10 @@ void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
 
         if (Speed==0)								/* Time to change colour */
         {
-        	osd_mark_dirty(0,0,203,319,0);
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				osd_mark_dirty(0,0,203,319,0);
+			else
+				osd_mark_dirty(0,0,319,203,0);
 		    for (offs = total_stars-1;offs >= 0;offs--)
 				stars[offs].colour = (stars[offs].colour + 1) & 7;
         }

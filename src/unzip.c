@@ -649,10 +649,11 @@ int /* error */ load_zipped_file (const char* zipfile, const char* filename, uns
 	if (!zip)
 		return -1;
 
-	ent = readzip(zip);
-	while (ent) {
+	while (readzip(zip)) {
 		/* NS981003: support for "load by CRC" */
 		char crc[9];
+
+		ent = &(zip->ent);
 
 		sprintf(crc,"%08x",ent->crc32);
 		if (equal_filename(ent->name, filename) ||
@@ -674,9 +675,6 @@ int /* error */ load_zipped_file (const char* zipfile, const char* filename, uns
 			cache_suspendzip(zip);
 			return 0;
 		}
-
-		/* next entry */
-		ent = readzip(zip);
 	}
 
 	cache_suspendzip(zip);
@@ -694,8 +692,9 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 	if (!zip)
 		return -1;
 
-	ent = readzip(zip);
-	while (ent) {
+	while (readzip(zip)) {
+		ent = &(zip->ent);
+
 		if (equal_filename(ent->name, filename))
 		{
 			*length = ent->uncompressed_size;
@@ -703,9 +702,6 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 			cache_suspendzip(zip);
 			return 0;
 		}
-
-		/* next entry */
-		ent = readzip(zip);
 	}
 
 	cache_suspendzip(zip);
@@ -715,8 +711,9 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 	if (!zip)
 		return -1;
 
-	ent = readzip(zip);
-	while (ent) {
+	while (readzip(zip)) {
+		ent = &(zip->ent);
+
 		if (*sum && ent->crc32 == *sum)
 		{
 			*length = ent->uncompressed_size;
@@ -724,9 +721,6 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 			cache_suspendzip(zip);
 			return 0;
 		}
-
-		/* next entry */
-		ent = readzip(zip);
 	}
 
 	cache_suspendzip(zip);

@@ -14,11 +14,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "osd_dbg.h"
+#include "cpuintrf.h"
 #include "t11.h"
-#include "driver.h"
 
 
-static t11_Regs state;
+static t11_Regs t11;
 
 /* public globals */
 int	t11_ICount=50000;
@@ -30,22 +30,26 @@ int	t11_ICount=50000;
 #define T11_IRQ3_BIT    0x0008
 #define T11_WAIT        0x8000      /* Wait is pending */
 
+#if NEW_INTERRUPT_SYSTEM
+#define T11_PENDING 	0x4000		/* IRQ is pending */
+#endif
+
 /* register definitions and shortcuts */
-#define REGD(x) state.reg[x].d
-#define REGW(x) state.reg[x].w.l
-#define REGB(x) state.reg[x].b.l
+#define REGD(x) t11.reg[x].d
+#define REGW(x) t11.reg[x].w.l
+#define REGB(x) t11.reg[x].b.l
 #define SP REGW(6)
 #define PC REGW(7)
 #define SPD REGD(6)
 #define PCD REGD(7)
-#define PSW state.psw.b.l
+#define PSW t11.psw.b.l
 
 /* shortcuts for reading opcodes */
 INLINE int ROPCODE (void)
 {
 	int pc = PCD;
 	PC += 2;
-	return READ_WORD (&state.bank[pc >> 13][pc & 0x1fff]);
+	return READ_WORD (&t11.bank[pc >> 13][pc & 0x1fff]);
 }
 
 /* shortcuts for reading/writing memory bytes */
@@ -113,7 +117,7 @@ INLINE int POP (void)
 /****************************************************************************/
 void t11_SetRegs(t11_Regs *Regs)
 {
-	state = *Regs;
+	t11 = *Regs;
 }
 
 /****************************************************************************/
@@ -121,7 +125,7 @@ void t11_SetRegs(t11_Regs *Regs)
 /****************************************************************************/
 void t11_GetRegs(t11_Regs *Regs)
 {
-	*Regs = state;
+	*Regs = t11;
 }
 
 /****************************************************************************/
@@ -137,7 +141,7 @@ unsigned t11_GetPC(void)
 /****************************************************************************/
 void t11_SetBank(int offset, unsigned char *base)
 {
-	state.bank[offset >> 13] = base;
+	t11.bank[offset >> 13] = base;
 }
 
 
@@ -146,66 +150,108 @@ void t11_reset(void)
 	int i;
 	extern unsigned char *RAM;
 
-	memset (&state, 0, sizeof (state));
+	memset (&t11, 0, sizeof (t11));
 	SP = 0x0400;
 	PC = 0x8000;
 	PSW = 0xe0;
 
 	for (i = 0; i < 8; i++)
-		state.bank[i] = &RAM[i * 0x2000];
-
-	t11_Clear_Pending_Interrupts();
+		t11.bank[i] = &RAM[i * 0x2000];
+#if NEW_INTERRUPT_SYSTEM
+	for (i = 0; i < 4; i++)
+		t11.irq_state[i] = CLEAR_LINE;
+	t11.pending_interrupts = 0;
+#else
+    t11_Clear_Pending_Interrupts();
+#endif
 }
 
+
+#if NEW_INTERRUPT_SYSTEM
+
+void t11_set_nmi_line(int state)
+{
+	/* T-11 has no dedicated NMI line */
+}
+
+void t11_set_irq_line(int irqline, int state)
+{
+	t11.irq_state[irqline] = state;
+	if (state == CLEAR_LINE) {
+		t11.pending_interrupts &= ~T11_PENDING;
+	} else {
+        t11.pending_interrupts &= ~T11_WAIT;
+		t11.pending_interrupts |= T11_PENDING;
+    }
+}
+
+void t11_set_irq_callback(int (*callback)(int irqline))
+{
+	t11.irq_callback = callback;
+}
+
+#else
 
 void t11_Cause_Interrupt(int type)
 {
 	if (type >= 0 && type <= 3)
 	{
-		state.pending_interrupts |= 1 << type;
-		state.pending_interrupts &= ~T11_WAIT;
+		t11.pending_interrupts |= 1 << type;
+		t11.pending_interrupts &= ~T11_WAIT;
 	}
 }
 
-
 void t11_Clear_Pending_Interrupts(void)
 {
-	state.pending_interrupts &= ~(T11_IRQ3_BIT | T11_IRQ2_BIT | T11_IRQ1_BIT | T11_IRQ0_BIT);
+	t11.pending_interrupts &= ~(T11_IRQ3_BIT | T11_IRQ2_BIT | T11_IRQ1_BIT | T11_IRQ0_BIT);
 }
 
+#endif
 
 /* Generate interrupts - I don't really know how this works, but this is how Paperboy uses them */
 static void Interrupt(void)
 {
 	int level = (PSW >> 5) & 3;
 
-	if (state.pending_interrupts & T11_IRQ3_BIT)
+#if NEW_INTERRUPT_SYSTEM
+	if (t11.pending_interrupts & T11_PENDING) {
+		int type;
+		if (*t11.irq_callback) {
+			/* get the type (vector) */
+			type = (*t11.irq_callback)(0);
+			/* and set the corresponding bit */
+			t11.pending_interrupts |= 1 << type;
+		}
+    }
+#endif
+
+    if (t11.pending_interrupts & T11_IRQ3_BIT)
 	{
-		state.pending_interrupts &= ~T11_IRQ3_BIT;
+		t11.pending_interrupts &= ~T11_IRQ3_BIT;
 		PUSH (PSW);
 		PUSH (PC);
 		PCD = RWORD (0x60);
 		PSW = RWORD (0x62);
 	}
-	else if ((state.pending_interrupts & T11_IRQ2_BIT) && level < 3)
+	else if ((t11.pending_interrupts & T11_IRQ2_BIT) && level < 3)
 	{
-		state.pending_interrupts &= ~T11_IRQ2_BIT;
+		t11.pending_interrupts &= ~T11_IRQ2_BIT;
 		PUSH (PSW);
 		PUSH (PC);
 		PCD = RWORD (0x50);
 		PSW = RWORD (0x52);
 	}
-	else if ((state.pending_interrupts & T11_IRQ1_BIT) && level < 2)
+	else if ((t11.pending_interrupts & T11_IRQ1_BIT) && level < 2)
 	{
-		state.pending_interrupts &= ~T11_IRQ1_BIT;
+		t11.pending_interrupts &= ~T11_IRQ1_BIT;
 		PUSH (PSW);
 		PUSH (PC);
 		PCD = RWORD (0x40);
 		PSW = RWORD (0x42);
 	}
-	else if ((state.pending_interrupts & T11_IRQ0_BIT) && level < 1)
+	else if ((t11.pending_interrupts & T11_IRQ0_BIT) && level < 1)
 	{
-		state.pending_interrupts &= ~T11_IRQ0_BIT;
+		t11.pending_interrupts &= ~T11_IRQ0_BIT;
 		PUSH (PSW);
 		PUSH (PC);
 		PCD = RWORD (0x38);
@@ -220,7 +266,7 @@ int t11_execute(int cycles)
 {
 	t11_ICount = cycles;
 
-	if (state.pending_interrupts & T11_WAIT)
+	if (t11.pending_interrupts & T11_WAIT)
 	{
 		t11_ICount = 0;
 		goto getout;
@@ -229,7 +275,7 @@ int t11_execute(int cycles)
 change_pc (0xffff);
 	do
 	{
-		if (state.pending_interrupts != 0)
+		if (t11.pending_interrupts != 0)
 			Interrupt();
 
 #if 0
@@ -243,7 +289,7 @@ change_pc (0xffff);
 
 			pclist[pcindex] = PCD;
 			for (i = 0; i < 8; i++)
-				inst[pcindex][i] = state.bank[(PCD + i) >> 13][(PCD + i) & 0x1fff];
+				inst[pcindex][i] = t11.bank[(PCD + i) >> 13][(PCD + i) & 0x1fff];
 			pcindex = (pcindex + 1) & 255;
 
 			if (PCD < 0x4000)
@@ -282,8 +328,8 @@ change_pc (0xffff);
 }
 #endif
 
-		state.op = ROPCODE ();
-		(*opcode_table[state.op >> 3])();
+		t11.op = ROPCODE ();
+		(*opcode_table[t11.op >> 3])();
 
 		t11_ICount -= 22;
 

@@ -104,7 +104,6 @@ Chris Moore        chris.moore@writeme.com
 Brad Oliver        bradman@primenet.com
 Andrew Scott       ascott@utkux.utcc.utk.edu
 Zsolt Vasvari      vaszs01@banet.net
-Bernd Wiebelt      bernardo@studi.mathematik.hu-berlin.de
 
 DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
 
@@ -137,10 +136,8 @@ Without the Repository, I would never have even tried to write an emulator.
 Unfortunately, the original Repository is now closed, but its spirit lives
 on in MAME.
 
-Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
-   Note: the version used in MAME is slightly modified. You can find the
-   original version at http://www.komkon.org/~dekogel/misc.html.
-M6502 emulator by Juergen Buchmueller.
+Z80 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
@@ -195,15 +192,18 @@ options:
               if the default mode doesn't work with your monitor/video card
               (double image/picture squashed vertically), use -noscanlines
               or -vesa.
--vesa/-novesa (default: -novesa)
+-vesa/-novesa (default: auto)
               Decides whether to use tweaked VGA modes or standard VESA modes.
               Note that some hires games require VESA modes, -novesa is
               ignored in this case.
 -ntsc         a 288x224 mode with standard NTSC frequencies. You need some
               additional hardware (VGA2TV converter) to make use of this.
--vesa1        discontinued. use -vesa
--vesa2b       discontinued. use -vesa
--vesa2l       discontinued. use -vesa
+-vesa1        discontinued. use "-vesa -vesamode vesa1"
+-vesa2b       discontinued. use "-vesa -vesamode vesa2b"
+-vesa2l       discontinued. use "-vesa -vesamode vesa2l"
+-vesamode vesa1/vesa2b/vesa2l/vesa3
+              In conjunction with "-vesa", selects the VESA modes to try.
+              The default is vesa2l.
 -resolution XxY
               where X and Y are width and height (ex: '-resolution 800x600')
               MAME goes some lengths to autoselect a good resolution. You can
@@ -305,23 +305,32 @@ options:
               always be used in 16 bit mode, if possible.
 -stereo/-nostereo (default: -stereo)
               enables stereo output for games supporting it.
--joy n/-nojoy (default: -nojoy) allows joystick input, n can be:
-              0 - no joystick
-              1 - normal 2 button joystick
-              2 - dual joysticks
-              3 - Stick/Pad with 4 buttons
-              4 - Stick/Pad with 6 buttons
-              5 - Stick/Pad with 8 buttons
-              6 - CH Flightstick Pro
-              7 - Wingman Extreme (or Wingman Warrior without spinner)
-              8 - Microsoft Sidewinder (up to 4)
-              9 - Gravis GamePad Pro
+-joy n (default: none) allows joystick input, n can be:
+              0/none       - no joystick
+              1/standard   - normal 2 button joystick
+              2/dual       - dual joysticks
+              3/button4    - Stick/Pad with 4 buttons
+              4/button6    - Stick/Pad with 6 buttons
+              5/button8    - Stick/Pad with 8 buttons
+              6/fspro      - CH Flightstick Pro
+              7/wingex     - Wingman Extreme
+                           - Wingman Warrior without spinner
+              8/sidewinder - Microsoft Sidewinder (up to 4)
+              9/gamepadpro - Gravis GamePad Pro
+              sneslpt1     - SNES pad on LPT1 (needs special hardware)
+              sneslpt2     - SNES pad on LPT2 (needs special hardware)
+              sneslpt3     - SNES pad on LPT3 (needs special hardware)
 
-              Use the TAB menu to calibrate analog joysticks. Calibration data
-              will be saved in mame.cfg. If you're using different joytypes
-              for different games, you may need to recalibrate your joystick
-              every time.
-
+              Notes:
+              1) Use the TAB menu to calibrate analog joysticks. Calibration
+              data will be saved in mame.cfg. If you're using different
+              joytypes for different games, you may need to recalibrate your
+              joystick every time.
+              2) Joystick description by number may not be supported by
+              future versions of MAME. Use the symbolic name instead.
+              3) Extra buttons of noname joysticks may not work.
+			  4) the "official" Snespad-Support site is
+              http://snespad.emulationworld.com
 -ym2203opl/-noym2203opl (default: -noym2203opl) use the SoundBlaster OPL chip
               for music emulation of the YM2203 chip. This is faster, but
               emulation is less faithful.
@@ -346,13 +355,17 @@ options:
               run the Pac Man driver but load the roms from the "pachack" dir
               or "pachack.zip" archive.
 -mouse/-nomouse (default: -mouse) enable/disable mouse support
--frameskip n  skip frames to speed up the emulation. For example, if the game
-              normally runs at 60 fps, "-frameskip 1" will make it run at 30
-              fps, and "-frameskip 2" at 20 fps. Use F11 to check the speed
-              your computer is actually reaching. If the game is too slow,
-              increase the frameskip value. Note that this setting can also
-              affect audio quality (some games sound better, others sound
-              worse).  Maximum value for frameskip is 3.
+-frameskip n (default: auto)
+              skip frames to speed up the emulation. The argument is the number
+              of frames to skip out of 12. For example, if the game normally
+              runs at 60 fps, "-frameskip 2" will make it run at 50 fps, and
+              "-frameskip 6" at 30 fps. Use F11 to check the speed your
+              computer is actually reaching. If it is below 100%, increase the
+              frameskip value. You can press F8 to change frameskip while
+              running the game.
+			  When set to auto (the default), the frameskip setting is
+              dynamically adjusted at run time to display the maximum possible
+              frames without dropping below 100% speed.
 -antialias/-noantialias (default: -antialias)
               antialiasing for the vector games.
 -beam n       sets the width in pixels of the vectors. n is a float in the

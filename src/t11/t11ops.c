@@ -30,8 +30,8 @@
 #define MAKE_EAW_IXD(r) MAKE_EAB_IXD(r)
 
 /* extracts the source/destination register index from the opcode into 'sreg' or 'dreg' */
-#define GET_SREG sreg = (state.op >> 6) & 7
-#define GET_DREG dreg = state.op & 7
+#define GET_SREG sreg = (t11.op >> 6) & 7
+#define GET_DREG dreg = t11.op & 7
 
 /* for a byte-sized source operand: extracts 'sreg', computes 'ea', and loads the value into 'source' */
 #define GET_SB_RG  GET_SREG; source = REGB(sreg)
@@ -164,7 +164,7 @@
 #define BITB_R(s,d) int sreg, dreg, source, dest, result;     GET_SB_##s; GET_DB_##d; CLR_NZV; result = dest & source; SETB_NZ;
 #define BITB_M(s,d) int sreg, dreg, source, dest, result, ea; GET_SB_##s; GET_DB_##d; CLR_NZV; result = dest & source; SETB_NZ;
 /* BR: if (condition) branch */
-#define BR(c)       if (c) { PC += 2 * (signed char)(state.op & 0xff); }
+#define BR(c)		if (c) { PC += 2 * (signed char)(t11.op & 0xff); }
 /* CLR: dst = 0 */
 #define CLR_R(d)    int dreg;     PUT_DW_##d(0); CLR_NZVC; SET_Z
 #define CLR_M(d)    int dreg, ea; PUT_DW_##d(0); CLR_NZVC; SET_Z
@@ -252,10 +252,10 @@
 
 static void op_0000(void)
 {
-	switch (state.op & 0x3f)
+	switch (t11.op & 0x3f)
 	{
 		case 0x00:	/* HALT  */ t11_ICount = 0; break;
-		case 0x01:	/* WAIT  */ state.pending_interrupts |= T11_WAIT; t11_ICount = 0; break;
+		case 0x01:	/* WAIT  */ t11.pending_interrupts |= T11_WAIT; t11_ICount = 0; break;
 		case 0x02:	/* RTI   */ PC = POP(); PSW = POP(); break;
 		case 0x03:	/* BPT   */ PUSH(PSW); PUSH(PC); PC = RWORD (0x0c); PSW = RWORD (0x0e); break;
 		case 0x04:	/* IOT   */ PUSH(PSW); PUSH(PC); PC = RWORD (0x10); PSW = RWORD (0x12); break;
@@ -290,8 +290,8 @@ static void rts(void)
 	REGW(dreg) = POP(); 
 }
 
-static void ccc(void)           { PSW &= ~(state.op & 15); }
-static void scc(void)           { PSW |=  (state.op & 15); }
+static void ccc(void)			{ PSW &= ~(t11.op & 15); }
+static void scc(void)			{ PSW |=  (t11.op & 15); }
 
 static void swab_rg(void)       { SWAB_R(RG); }
 static void swab_rgd(void)      { SWAB_M(RGD); }
@@ -842,7 +842,7 @@ static void sob(void)
 	source -= 1;
 	REGW(sreg) = source;
 	if (source)
-		PC -= 2 * (state.op & 0x3f);
+		PC -= 2 * (t11.op & 0x3f);
 }
 
 static void bpl(void)           { BR(!GET_N); }

@@ -11,8 +11,8 @@
 
 #define SPRITE_Y		0
 #define SPRITE_TILE		2
-#define SPRITE_FLIP_X	2
-#define SPRITE_PAL_BANK	4
+#define SPRITE_FLIP_X		2
+#define SPRITE_PAL_BANK		4
 #define SPRITE_X		6
 
 #define XBG1SCROLL_ADJUST(x) (-(x)+0x103)
@@ -35,9 +35,9 @@ static unsigned char *frg_dirtybuffer;		/* foreground */
 static unsigned char *bg1_dirtybuffer;		/* background 1 */
 static unsigned char *bg2_dirtybuffer;		/* background 2 */
 
-static struct osd_bitmap *bitmap_frg; 			/* foreground bitmap */
-static struct osd_bitmap *bitmap_bg1; 			/* background bitmap 1 */
-static struct osd_bitmap *bitmap_bg2; 			/* background bitmap 2 */
+static struct osd_bitmap *bitmap_frg;		/* foreground bitmap */
+static struct osd_bitmap *bitmap_bg1;		/* background bitmap 1 */
+static struct osd_bitmap *bitmap_bg2;		/* background bitmap 2 */
 
 static int bg1_scrollx, bg1_scrolly;
 static int bg2_scrollx, bg2_scrolly;
@@ -216,10 +216,11 @@ void toki_render_sprites (struct osd_bitmap *bitmap)
 			if (SprX > 256)
 				SprX -= 512;
 
-			SprY = READ_WORD (&SprRegs[SPRITE_Y]);
+			SprY = READ_WORD (&SprRegs[SPRITE_Y]) & 0x1ff;
 			if (SprY > 256)
-				SprY -= 512;
-			SprY = 240-SprY;
+			  SprY = (512-SprY)+240;
+			else
+	       		  SprY = 240-SprY;
 
 			SprFlipX   = READ_WORD (&SprRegs[SPRITE_FLIP_X]) & 0x4000;
 			SprTile    = READ_WORD (&SprRegs[SPRITE_TILE]) & 0x1fff;
@@ -411,7 +412,8 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrollx[i] = bg2_scrollx - toki_linescroll[i];
 
 		copyscrollbitmap (bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		copyscrollbitmap (bitmap,bitmap_bg2,512,scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		if (bg2_scrollx!=-32768)
+			copyscrollbitmap (bitmap,bitmap_bg2,512,scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	} else
 	{
 		copyscrollbitmap (bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -457,6 +459,5 @@ int toki_interrupt(void)
 	while (lastline < 256)
 		toki_linescroll[lastline++] = lastdata;
 	lastline = 0;
-
 	return 1;  /*Interrupt vector 1*/
 }

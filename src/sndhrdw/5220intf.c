@@ -170,7 +170,7 @@ static void tms5220_update (int force)
     int newpos;
 
 
-	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
+	newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
 
     /* if we need more than MIN_SLICE samples, or if we're not yet talking, generate them now */
     if (newpos > buffer_len)

@@ -18,7 +18,6 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 #include "M6809/m6809.h"
 
 void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);

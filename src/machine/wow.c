@@ -7,7 +7,6 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
 
 
 
@@ -147,7 +146,8 @@ int gorf_interrupt(void)
 
 /*	cpu_clear_pending_interrupts(0); */
 
-	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
+//	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
+	cpu_set_irq_line(0,0,CLEAR_LINE);
 
     return res;
 }

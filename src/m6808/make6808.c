@@ -52,6 +52,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "../cpuintrf.h"
+
 #define WIN32_CPU_READMEM16   "cpu_readmem16@4"
 #define WIN32_CPU_WRITEMEM16  "cpu_writemem16@8"
 #define WIN32_FIRST_REG "ecx"
@@ -3201,16 +3203,16 @@ DataSegment()
 		fprintf(fp, "\n");
 		fprintf(fp, "; DO NOT CHANGE THE ORDER OF THE FOLLOWING REGISTERS!\n");
 		fprintf(fp, "\n");
-		fprintf(fp, "_%sBase	dd	0	; Base address for 6808 stuff\n", basename);
-		fprintf(fp, "_%sMemRead	dd	0	; Offset of memory read structure array\n", basename);
+		fprintf(fp, "_%sBase            dd      0       ; Base address for 6808 stuff\n", basename);
+		fprintf(fp, "_%sMemRead         dd      0       ; Offset of memory read structure array\n", basename);
 		fprintf(fp, "_%sMemWrite	dd	0	; Offset of memory write structure array\n", basename);
-		fprintf(fp, "_%saf	dw	0	; A register and flags\n", basename);
-		fprintf(fp, "_%spc	dw	0	; 6808 Program counter\n", basename);
+		fprintf(fp, "_%saf              dw      0       ; A register and flags\n", basename);
+		fprintf(fp, "_%spc              dw      0       ; 6808 Program counter\n", basename);
 		fprintf(fp, "_%sx		dw	0	; Index register\n", basename);
-		fprintf(fp, "_%ssp	dw	0	; Stack pointer\n", basename);
+		fprintf(fp, "_%ssp              dw      0       ; Stack pointer\n", basename);
 		fprintf(fp, "_%sb		db	0	; B register\n", basename);
 		fprintf(fp, "_irqPending	db	0	; Non-zero if an IRQ is pending\n");
-		fprintf(fp, "\n");
+                fprintf(fp, "\n");
 		fprintf(fp, "_%scontextEnd:\n", basename);
 	}
 	else   /* MAME 6808 Context */
@@ -3227,6 +3229,11 @@ DataSegment()
 		fprintf(fp, "_%scc		db	0	; CC register\n", basename);
 		fprintf(fp, "			db	0,0,0\n");
 		fprintf(fp, "_%sirqPending	dd	0	; Non-zero if an IRQ is pending\n", basename);
+#if NEW_INTERRUPT_SYSTEM
+		fprintf(fp, "_%sirq_callback    dd   0       ; IRQ callback\n", basename);
+                fprintf(fp, "_%sirq_state       db      0       ; state of the IRQ line\n", basename);
+                fprintf(fp, "_%snmi_state       db      0       ; state of the NMI line\n", basename);
+#endif
 
 		fprintf(fp, "\n");
 		fprintf(fp, "_%scontextEnd:\n", basename);
@@ -3641,16 +3648,116 @@ PushAll()
 	else StdPushAll();
 }
 
+#if NEW_INTERRUPT_SYSTEM
+SetNmiLineCode()
+{
+	fprintf(fp, "           global  _%s_set_nmi_line\n", basename);
+	fprintf(fp, "           global  %s_set_nmi_line_\n", basename);
+	fprintf(fp, "       global  %s%s_set_nmi_line@4\n", function_prefix,basename);
+
+	sprintf(procname, "%s_set_nmi_line_", basename);
+	ProcBegin(0xffffffff);
+	fprintf(fp, "_%s_set_nmi_line:\n", basename);
+	fprintf(fp, "%s%s_set_nmi_line@4:\n", function_prefix, basename);
+
+    if (bUseStack)
+    {
+	fprintf(fp, "       mov eax, [esp+4]    ; Get our line state\n");
+    }
+    else if (bVC5Format)
+    {
+	fprintf(fp, "       mov eax, %s         ; Get our line state\n",
+            WIN32_FIRST_REG);
+    }
+	fprintf(fp, "           cmp     eax, [ds:_%snmi_state]; Same state?\n", basename);
+	fprintf(fp, "           jz      noNMINow        ; Yes - skip out\n");
+        fprintf(fp, "           cmp     eax, byte CLEAR_LINE\n");
+        fprintf(fp, "           jz      noNMINow        ; Nope - skip out\n");
+	fprintf(fp, "           or      [ds:_%sirqPending], dword M6808_INT_NMI ; NMI\n", basename);
+        fprintf(fp, "		and	[ds:_%sirqPending], dword ~M6808_WAI\n", basename);
+        fprintf(fp, "noNMINow:\n");
+	fprintf(fp, "           mov     [ds:_%snmi_state], eax  ; save NMI state\n", basename);
+	fprintf(fp, "		ret\n");
+}
+
+SetIrqLineCode()
+{
+	fprintf(fp, "           global  _%s_set_irq_line\n", basename);
+	fprintf(fp, "           global  %s_set_irq_line_\n", basename);
+	fprintf(fp, "       global  %s%s_set_irq_line@8\n", function_prefix,basename);
+
+	sprintf(procname, "%s_set_irq_line_", basename);
+	ProcBegin(0xffffffff);
+	fprintf(fp, "_%s_set_irq_line:\n", basename);
+	fprintf(fp, "%s%s_set_irq_line@8:\n", function_prefix, basename);
+
+    if (bUseStack)
+    {
+	fprintf(fp, "       mov ebx, [esp+4]    ; Get our irqline number\n");
+	fprintf(fp, "       mov eax, [esp+8]    ; Get our line state\n");
+    }
+    else if (bVC5Format)
+    {
+	fprintf(fp, "       mov ebx, %s         ; Get our irqline number\n",
+            WIN32_FIRST_REG);
+	fprintf(fp, "       mov eax, %s         ; Get our line state\n",
+	    WIN32_SECOND_REG);
+    }
+	fprintf(fp, "           cmp     eax, byte CLEAR_LINE\n");
+	fprintf(fp, "           jz      noIRQNow        ; Nope - skip out\n");
+	if (bUseStack) {
+		fprintf(fp, "           push    ebx             ; irq callback\n");
+	} else if (bVC5Format) {
+		fprintf(fp, "           mov     %s, ebx         ; irq callback\n",
+			WIN32_FIRST_REG);
+        }
+	fprintf(fp, "           mov     eax, [ds:_%sirq_callback]\n", basename);
+	fprintf(fp, "           call    eax\n");
+	fprintf(fp, "           or      [ds:_%sirqPending], eax\n", basename);
+        fprintf(fp, "		and	[ds:_%sirqPending], dword ~M6808_WAI\n", basename);
+	if (bUseStack) {
+		fprintf(fp, "           add     sp, byte 4      ; Clean up stack\n");
+	}
+	fprintf(fp, "noIRQNow:\n");
+        fprintf(fp, "           ret\n");
+}
+
+SetIrqCallbackCode()
+{
+	fprintf(fp, "           global  _%s_set_irq_callback\n", basename);
+	fprintf(fp, "           global  %s_set_irq_callback_\n", basename);
+	fprintf(fp, "       global  %s%s_set_irq_callback@4\n", function_prefix,basename);
+
+	sprintf(procname, "%s_set_irq_callback_", basename);
+	ProcBegin(0xffffffff);
+	fprintf(fp, "_%s_set_irq_callback:\n", basename);
+	fprintf(fp, "%s%s_set_irq_callback@4:\n", function_prefix, basename);
+
+    if (bUseStack)
+    {
+	fprintf(fp, "       mov eax, [esp+4]    ; Get the irq callback function\n");
+    }
+    else if (bVC5Format)
+    {
+	fprintf(fp, "       mov eax, %s         ; Get our irq callback function\n",
+            WIN32_FIRST_REG);
+    }
+	fprintf(fp, "           mov     [ds:_%sirq_callback], eax\n", basename);
+        fprintf(fp, "           ret\n");
+}
+
+#else
+
 CauseIntCode()
 {
 	fprintf(fp, "		global	_%s_Cause_Interrupt\n", basename);
 	fprintf(fp, "		global	%s_Cause_Interrupt_\n", basename);
-    fprintf(fp, "       global  %s%s_Cause_Interrupt@4\n", function_prefix,basename);
+	fprintf(fp, "       global  %s%s_Cause_Interrupt@4\n", function_prefix,basename);
 
 	sprintf(procname, "%s_Cause_Interrupt_", basename);
 	ProcBegin(0xffffffff);
 	fprintf(fp, "_%s_Cause_Interrupt:\n", basename);
-    fprintf(fp, "%s%s_Cause_Interrupt@4:\n", function_prefix, basename);
+	fprintf(fp, "%s%s_Cause_Interrupt@4:\n", function_prefix, basename);
 
     if (bUseStack)
     {
@@ -3690,6 +3797,8 @@ ClearIntsCode()
         fprintf(fp, "		and	[ds:_%sirqPending], dword ~( M6808_INT_IRQ | M6808_INT_NMI | M6808_INT_OCI )\n", basename);
 	fprintf(fp, "		ret\n");
 }
+
+#endif
 
 NmiCode()
 {
@@ -3739,10 +3848,10 @@ IntCode()
 	// Set the pending byte
 
 	fprintf(fp, "setPending:\n");
-	fprintf(fp, "		mov	[ds:_irqPending], byte 1 ; We have a pending IRQ\n");
+    fprintf(fp, "       mov [ds:_irqPending], byte 1 ; We have a pending IRQ\n");
 	fprintf(fp, "		mov	eax, -1	; We didn't take it!\n");
 	fprintf(fp, "intExit:\n");
-	fprintf(fp, "		ret\n");
+    fprintf(fp, "       ret\n");
 
 	ProcEnd(procname);
 }
@@ -3792,6 +3901,16 @@ MameIntCode()
         fprintf(fp, "		jmp	short TakeInt	; yes, do it\n");
 
 	fprintf(fp, "IntNotOCI:	\n");
+#if NEW_INTERRUPT_SYSTEM
+	fprintf(fp, "       cmp [ds:_%snmi_state], byte CLEAR_LINE\n", basename);
+	fprintf(fp, "       jnz IntNmiAsserted  ; not cleared\n", basename);
+	fprintf(fp, "       and [ds:_%sirqPending], dword ~M6808_INT_NMI\n", basename);
+	fprintf(fp, "IntNmiAsserted: \n");
+    fprintf(fp, "       cmp [ds:_%sirq_state], byte CLEAR_LINE\n", basename);
+	fprintf(fp, "       jnz IntIrqAsserted  ; not cleared\n", basename);
+	fprintf(fp, "       and [ds:_%sirqPending], dword ~M6808_INT_IRQ\n", basename);
+	fprintf(fp, "IntIrqAsserted: \n");
+#endif
 
 	fprintf(fp, "		ret\n");
 
@@ -4013,7 +4132,10 @@ MameDefines()
 	fprintf(fp, "		%%define M6808_INT_NMI   2\n");
 	fprintf(fp, "		%%define M6808_INT_OCI   4\n");
 	fprintf(fp, "		%%define M6808_WAI       8\n");
-	CallMameDebugCode();
+#if NEW_INTERRUPT_SYSTEM
+	fprintf(fp, "       %%define CLEAR_LINE      %d\n", CLEAR_LINE);
+#endif
+    CallMameDebugCode();
 }
 
 EmitCode()
@@ -4032,9 +4154,15 @@ EmitCode()
 	ResetCode();
 	PushAll();
 	if (FALSE == bMameFormat) IntCode(); else MameIntCode();
+#if NEW_INTERRUPT_SYSTEM
+	if (FALSE != bMameFormat) SetNmiLineCode();
+	if (FALSE != bMameFormat) SetIrqLineCode();
+	if (FALSE != bMameFormat) SetIrqCallbackCode();
+#else
 	if (FALSE != bMameFormat) CauseIntCode();
-	if (FALSE != bMameFormat) ClearIntsCode();
-	if (FALSE == bMameFormat) NmiCode();
+    if (FALSE != bMameFormat) ClearIntsCode();
+#endif
+    if (FALSE == bMameFormat) NmiCode();
 	ExecCode();
 	CodeSegmentEnd();
 }

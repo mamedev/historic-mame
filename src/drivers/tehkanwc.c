@@ -19,6 +19,8 @@ NOTES:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "z80/z80.h"
+
 
 extern unsigned char *tehkanwc_videoram1;
 extern int tehkanwc_videoram1_size;

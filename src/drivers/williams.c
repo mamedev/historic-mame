@@ -942,12 +942,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sinistar_input_ports )
 	PORT_START      /* IN0 */
-/* Not really the hardware bits, see sinistar_input_port_0() */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* pseudo analog joystick, see below */
 
 	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -963,6 +958,12 @@ INPUT_PORTS_START( sinistar_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 0, 0x00, 0x6f )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x00, 0x6f )
 INPUT_PORTS_END
 
 
@@ -1045,12 +1046,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( blaster_input_ports )
 	PORT_START      /* IN0 */
-/* Not really the hardware bits */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* pseudo analog joystick, see below */
 
 	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust panel", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -1069,6 +1065,12 @@ INPUT_PORTS_START( blaster_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 0, 0x00, 0x6f )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x00, 0x6f )
 INPUT_PORTS_END
 
 

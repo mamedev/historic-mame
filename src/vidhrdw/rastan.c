@@ -612,7 +612,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (num)
 		{
 			int  sx,col,data1;
-            word sy;
+            int sy;
 
 			sy = ((READ_WORD(&rastan_spriteram[offs+2]) - 0xFFF1) ^ 0xFFFF) & 0x1FF;
   			if (sy > 400) sy = sy - 512;

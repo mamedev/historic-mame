@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 ("__DATE__")";
+char mameversion[] = "0.35 BETA 1 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -11,7 +11,6 @@ static const struct MachineDriver *drv;
 int nocheat;    /* 0 when the -cheat option was specified */
 int mame_debug; /* !0 when -debug option is specified */
 
-int frameskip;
 int VolumePTR = 0;
 static int settingsloaded;
 
@@ -45,7 +44,6 @@ int run_game(int game, struct GameOptions *options)
 	/* copy configuration */
 	Machine->sample_rate = options->samplerate;
 	Machine->sample_bits = options->samplebits;
-	frameskip = options->frameskip;
 	nocheat = !options->cheat;
 
 	/* get orientation right */
@@ -156,6 +154,7 @@ int init_machine(void)
 	if (gamedrv->opcode_decode)
 	{
 		int j;
+		extern int encrypted_cpu;
 
 
 		/* find the first available memory region pointer */
@@ -173,6 +172,7 @@ int init_machine(void)
 		Machine->memory_region[j] = ROM;
 		Machine->memory_region_length[j] = Machine->memory_region_length[0];
 
+		encrypted_cpu = 0;
 		(*gamedrv->opcode_decode)();
 	}
 
@@ -275,7 +275,8 @@ static int vh_open(void)
 				vh_close();
 				return 1;
 			}
-			Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
+			if (Machine->colortable)
+				Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}
@@ -320,20 +321,10 @@ int need_to_clear_bitmap;	/* set by the user interface */
 
 int updatescreen(void)
 {
-	static int framecount = 0;
-	int skipme = 1;
+	/* update sound */
+	sound_update();
 
-
-	/* see if we recomend skipping this frame */
-	if (++framecount > frameskip)
-	{
-		framecount = 0;
-		skipme = 0;
-	}
-	skipme = osd_skip_this_frame(skipme);
-
-	/* if not, go for it */
-	if (!skipme)
+	if (osd_skip_this_frame() == 0)
 	{
 		osd_profiler(OSD_PROFILE_VIDEO);
 		if (need_to_clear_bitmap)
@@ -353,8 +344,7 @@ int updatescreen(void)
 		/* quit if the user asked to */
 		return 1;
 
-	if (!skipme)
-		osd_update_display();
+	osd_update_video_and_audio();
 
 	return 0;
 }

@@ -14,7 +14,8 @@ static unsigned char targ_sh_ctrl0=0;
 static unsigned char targ_sh_ctrl1=0;
 static unsigned char tone_vol;
 
-#define MAXFREQ_A 525000
+#define MAXFREQ_A_TARG 125000
+#define MAXFREQ_A_SPECTAR 525000
 
 static int sound_a_freq;
 static unsigned char tone_pointer;
@@ -41,12 +42,18 @@ static unsigned char waveform1[32] =
 
 void targ_tone_generator(int data)
 {
+	int maxfreq;
+
+
+	if (targ_spec_flag) maxfreq = MAXFREQ_A_TARG;
+	else maxfreq = MAXFREQ_A_SPECTAR;
+
     sound_a_freq = data;
     if (sound_a_freq == 0xFF || sound_a_freq == 0x00) {
-        osd_adjust_sample(tone_channel,MAXFREQ_A,0);
+        osd_adjust_sample(tone_channel,maxfreq,0);
     }
     else
-        osd_adjust_sample(tone_channel,MAXFREQ_A/(0xFF-sound_a_freq),tone_vol);
+        osd_adjust_sample(tone_channel,maxfreq/(0xFF-sound_a_freq),tone_vol);
 }
 
 int targ_sh_start(void)
@@ -68,6 +75,12 @@ void targ_sh_stop(void)
 
 void targ_sh_w(int offset,int data)
 {
+	int maxfreq;
+
+
+	if (targ_spec_flag) maxfreq = MAXFREQ_A_TARG;
+	else maxfreq = MAXFREQ_A_SPECTAR;
+
     if (offset) {
         if (targ_spec_flag) {
             if (data & 0x02)
@@ -126,10 +139,10 @@ void targ_sh_w(int offset,int data)
            tone_pointer=0;
            tone_vol=0;
            if (sound_a_freq == 0xFF || sound_a_freq == 0x00) {
-                osd_adjust_sample(tone_channel,MAXFREQ_A,0);
+                osd_adjust_sample(tone_channel,maxfreq,0);
            }
            else
-             osd_adjust_sample(tone_channel,MAXFREQ_A/(0xFF-sound_a_freq),tone_vol);
+             osd_adjust_sample(tone_channel,maxfreq/(0xFF-sound_a_freq),tone_vol);
         }
         if RISING_EDGE(0x80) {
             tone_vol=128;

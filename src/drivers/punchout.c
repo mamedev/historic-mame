@@ -109,6 +109,7 @@ int punchout_vh_start(void);
 int armwrest_vh_start(void);
 void punchout_vh_stop(void);
 void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void spnchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void armwrest_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -138,71 +139,232 @@ void punchout_2a03_reset_w(int offset,int data)
 	}
 }
 
+static int prot_mode_sel = -1; /* Mode selector */
+static int prot_mem[16];
 
+static int spunchout_prot_r( int offset ) {
 
-static int prot[7];
+	switch ( offset ) {
+		case 0x00:
+			if ( prot_mode_sel == 0x0a )
+				return cpu_readmem16(0xd012);
+
+			if ( prot_mode_sel == 0x0b || prot_mode_sel == 0x23 )
+				return cpu_readmem16(0xd7c1);
+
+			return prot_mem[offset];
+		break;
+
+		case 0x01:
+			if ( prot_mode_sel == 0x08 ) /* PC = 0x0b6a */
+				return 0x00; /* under 6 */
+		break;
+
+		case 0x02:
+			if ( prot_mode_sel == 0x0b ) /* PC = 0x0613 */
+				return 0x09; /* write "JMP (HL)"code to 0d79fh */
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x20f9, 0x22d9 */
+				return prot_mem[offset]; /* act as registers */
+		break;
+
+		case 0x03:
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x1e4c */
+				return prot_mem[offset] & 0x07; /* act as registers with mask */
+		break;
+
+		case 0x05:
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x29D1 */
+				return prot_mem[offset] & 0x03; /* AND 0FH -> AND 06H */
+		break;
+
+		case 0x06:
+			if ( prot_mode_sel == 0x0b ) /* PC = 0x2dd8 */
+				return 0x0a; /* E=00, HL=23E6, D = (ret and 0x0f), HL+DE = 2de6 */
+
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x2289 */
+				return prot_mem[offset] & 0x07; /* act as registers with mask */
+		break;
+
+		case 0x09:
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x0313 */
+				return ( prot_mem[15] << 4 ); /* pipe through register 0xf7 << 4 */
+				/* (ret or 0x10) -> (D7DF),(D7A0) - (D7DF),(D7A0) = 0d0h(ret nc) */
+		break;
+
+		case 0x0a:
+			if ( prot_mode_sel == 0x0b ) /* PC = 0x060a */
+				return 0x05; /* write "JMP (IX)"code to 0d79eh */
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x1bd7 */
+				return prot_mem[offset] & 0x01; /* AND 0FH -> AND 01H */
+		break;
+
+		case 0x0b:
+			if ( prot_mode_sel == 0x09 ) /* PC = 0x2AA3 */
+				return prot_mem[11] & 0x03;	/* AND 0FH -> AND 03H */
+		break;
+
+		case 0x0c:
+			/* PC = 0x2162 */
+			/* B = 0(return value) */
+			return 0x00;
+		case 0x0d:
+			return prot_mode_sel;
+		break;
+	}
+
+	if ( errorlog )
+		fprintf( errorlog, "Read from unknown protection? port %02x ( selector = %02x )\n", offset, prot_mode_sel );
+
+	return prot_mem[offset];
+}
+
+static void spunchout_prot_w( int offset, int data ) {
+
+	switch ( offset ) {
+		case 0x00:
+			if ( prot_mode_sel == 0x0a ) {
+				cpu_writemem16(0xd012, data);
+				return;
+			}
+
+			if ( prot_mode_sel == 0x0b || prot_mode_sel == 0x23 ) {
+				cpu_writemem16(0xd7c1, data);
+				return;
+			}
+
+			prot_mem[offset] = data;
+			return;
+		break;
+
+		case 0x02:
+			if ( prot_mode_sel == 0x09 ) { /* PC = 0x20f7, 0x22d7 */
+				prot_mem[offset] = data;
+				return;
+			}
+		break;
+
+		case 0x03:
+			if ( prot_mode_sel == 0x09 ) { /* PC = 0x1e4c */
+				prot_mem[offset] = data;
+				return;
+			}
+		break;
+
+		case 0x05:
+			prot_mem[offset] = data;
+			return;
+
+		case 0x06:
+			if ( prot_mode_sel == 0x09 ) { /* PC = 0x2287 */
+				prot_mem[offset] = data;
+				return;
+			}
+		break;
+
+		case 0x0b:
+			prot_mem[offset] = data;
+			return;
+
+		case 0x0d: /* PC = all over the code */
+			prot_mode_sel = data;
+			return;
+		case 0x0f:
+			prot_mem[offset] = data;
+			return;
+	}
+
+	if ( errorlog )
+		fprintf( errorlog, "Wrote to unknown protection? port %02x ( %02x )\n", offset, data );
+
+	prot_mem[offset] = data;
+}
 
 static int spunchout_prot_0_r( int offset ) {
-	return prot[0];
+	return spunchout_prot_r( 0 );
 }
 
 static void spunchout_prot_0_w( int offset, int data ) {
-	prot[0] = data;
+	spunchout_prot_w( 0, data );
 }
 
-static int spunchout_prot_2_r( int offset )
-{
-	if( cpu_getpc() == 0x0615 ) return 0x09; /*write "JMP (HL)"code to 0d79fh*/
-	else return prot[2];
+static int spunchout_prot_1_r( int offset ) {
+	return spunchout_prot_r( 1 );
+}
+
+static void spunchout_prot_1_w( int offset, int data ) {
+	spunchout_prot_w( 1, data );
+}
+
+static int spunchout_prot_2_r( int offset ) {
+	return spunchout_prot_r( 2 );
 }
 
 static void spunchout_prot_2_w( int offset, int data ) {
-	prot[2] = data;
+	spunchout_prot_w( 2, data );
 }
 
 static int spunchout_prot_3_r( int offset ) {
-	return prot[3];
+	return spunchout_prot_r( 3 );
 }
 
 static void spunchout_prot_3_w( int offset, int data ) {
-	prot[3] = data;
-}
-
-static int spunchout_prot_4_r( int offset ) {
-	return prot[4];
-}
-
-static void spunchout_prot_4_w( int offset, int data ) {
-	prot[4] = data;
+	spunchout_prot_w( 3, data );
 }
 
 static int spunchout_prot_5_r( int offset ) {
-	return prot[5];
+	return spunchout_prot_r( 5 );
 }
 
 static void spunchout_prot_5_w( int offset, int data ) {
-	prot[5] = data;
+	spunchout_prot_w( 5, data );
 }
 
+
 static int spunchout_prot_6_r( int offset ) {
-	return prot[6];
+	return spunchout_prot_r( 6 );
 }
 
 static void spunchout_prot_6_w( int offset, int data ) {
-	prot[6] = data;
+	spunchout_prot_w( 6, data );
 }
 
-/* test handlers */
-static int punchout_prot_t;
-
-static int spunchout_prot_t_r( int offset ) {
-	return punchout_prot_t;
+static int spunchout_prot_9_r( int offset ) {
+	return spunchout_prot_r( 9 );
 }
 
-static void spunchout_prot_t_w( int offset, int data ) {
-	punchout_prot_t = data;
+static int spunchout_prot_b_r( int offset ) {
+	return spunchout_prot_r( 11 );
 }
 
+static void spunchout_prot_b_w( int offset, int data ) {
+	spunchout_prot_w( 11, data );
+}
+
+static int spunchout_prot_c_r( int offset ) {
+	return spunchout_prot_r( 12 );
+}
+
+static void spunchout_prot_d_w( int offset, int data ) {
+	spunchout_prot_w( 13, data );
+}
+
+static int spunchout_prot_a_r( int offset ) {
+	return spunchout_prot_r( 10 );
+}
+
+static void spunchout_prot_a_w( int offset, int data ) {
+	spunchout_prot_w( 10, data );
+}
+
+#if 0
+static int spunchout_prot_f_r( int offset ) {
+	return spunchout_prot_r( 15 );
+}
+#endif
+
+static void spunchout_prot_f_w( int offset, int data ) {
+	spunchout_prot_w( 15, data );
+}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -235,11 +397,18 @@ static struct IOReadPort readport[] =
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, punchout_input_3_r },
 
+	/* protection ports */
+	{ 0x07, 0x07, spunchout_prot_0_r },
+	{ 0x17, 0x17, spunchout_prot_1_r },
 	{ 0x27, 0x27, spunchout_prot_2_r },
 	{ 0x37, 0x37, spunchout_prot_3_r },
-	{ 0x67, 0x67, spunchout_prot_4_r },
-	{ 0x97, 0x97, spunchout_prot_5_r }, /* $d7*/
-	{ 0xa7, 0xa7, spunchout_prot_6_r },
+	{ 0x57, 0x57, spunchout_prot_5_r },
+	{ 0x67, 0x67, spunchout_prot_6_r },
+	{ 0x97, 0x97, spunchout_prot_9_r },
+	{ 0xa7, 0xa7, spunchout_prot_a_r },
+	{ 0xb7, 0xb7, spunchout_prot_b_r },
+	{ 0xc7, 0xc7, spunchout_prot_c_r },
+	/* { 0xf7, 0xf7, spunchout_prot_f_r }, */
 	{ -1 }	/* end of table */
 };
 
@@ -259,11 +428,19 @@ static struct IOWritePort writeport[] =
 	{ 0x0e, 0x0e, punchout_speech_vcu   },	/* VLM5030 */
 	{ 0x0f, 0x0f, IOWP_NOP },	/* enable NVRAM ? */
 
-	{ 0x27, 0x27, spunchout_prot_2_w }, /* 1:1 */
-	{ 0x37, 0x37, spunchout_prot_3_w }, /* 1:1 */
-	{ 0x67, 0x67, spunchout_prot_4_w }, /* 1:1 */
-	{ 0xa7, 0xa7, spunchout_prot_6_w }, /* 1:1 */
-	{ 0xd7, 0xd7, spunchout_prot_5_w }, /* $97 */
+	{ 0x06, 0x06, IOWP_NOP},
+
+	/* protection ports */
+	{ 0x07, 0x07, spunchout_prot_0_w },
+	{ 0x17, 0x17, spunchout_prot_1_w },
+	{ 0x27, 0x27, spunchout_prot_2_w },
+	{ 0x37, 0x37, spunchout_prot_3_w },
+	{ 0x57, 0x57, spunchout_prot_5_w },
+	{ 0x67, 0x67, spunchout_prot_6_w },
+	{ 0xa7, 0xa7, spunchout_prot_a_w },
+	{ 0xb7, 0xb7, spunchout_prot_b_w },
+	{ 0xd7, 0xd7, spunchout_prot_d_w },
+	{ 0xf7, 0xf7, spunchout_prot_f_w },
 	{ -1 }	/* end of table */
 };
 
@@ -297,6 +474,79 @@ INPUT_PORTS_START( punchout_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x01, "Medium" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, "Time", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0 (Longest)" )
+	PORT_DIPSETTING(    0x04, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3 (Shortest)" )
+	PORT_DIPNAME( 0x10, 0x10, "Demo Music", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Rematch at a Discount", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0e, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "4 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x0c, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+/*	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )*/
+/*	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits (2 min.)" )*/
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits (2 min.)" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+/*	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )*/
+/*	PORT_DIPSETTING(    0x09, "1 Coin/2 Credits" )*/
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x0f, "Free Play" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* VLM5030 busy signal */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x00, "Copyright", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Nintendo" )
+	PORT_DIPSETTING(    0x80, "Nintendo of America" )
+	PORT_START
+INPUT_PORTS_END
+
+/* same as punchout with additional duck button */
+INPUT_PORTS_START( spnchout_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_BUTTON4 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
@@ -539,7 +789,7 @@ static struct VLM5030interface vlm5030_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver punchout_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -568,6 +818,61 @@ static struct MachineDriver machine_driver =
 	gfxdecodeinfo,
 	1024+1, 128*4+128*4+64*8+128*4,
 	punchout_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	punchout_vh_start,
+	punchout_vh_stop,
+	punchout_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NES,
+			&nes_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+		{
+			SOUND_VLM5030,
+			&vlm5030_interface
+		}
+	}
+};
+
+/* same as Punch Out, different convert_color_prom */
+static struct MachineDriver spnchout_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			8000000/2,	/* 4 Mhz */
+			0,
+			readmem,writemem,readport,writeport,
+			nmi_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			21477270/16,	/* ??? the external clock is right, I assume it is */
+							/* demultiplied internally by the CPU */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
+	gfxdecodeinfo,
+	1024+1, 128*4+128*4+64*8+128*4,
+	spnchout_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -710,18 +1015,29 @@ ROM_END
 
 ROM_START( spnchout_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "chs1-v.8l",    0x0000, 0x2000, 0x703b9780 )
-	ROM_LOAD( "chs1-v.8k",    0x2000, 0x2000, 0xe13719f6 )
-	ROM_LOAD( "chs1-v.8j",    0x4000, 0x2000, 0x1fa629e8 )
-	ROM_LOAD( "chs1-v.8h",    0x6000, 0x2000, 0x15a6c068 )
-	ROM_LOAD( "chs1-v.8f",    0x8000, 0x4000, 0x4ff3cdd9 )
+	ROM_LOAD( "chs1-c.8l",    0x0000, 0x2000, 0x703b9780 )
+	ROM_LOAD( "chs1-c.8k",    0x2000, 0x2000, 0xe13719f6 )
+	ROM_LOAD( "chs1-c.8j",    0x4000, 0x2000, 0x1fa629e8 )
+	ROM_LOAD( "chs1-c.8h",    0x6000, 0x2000, 0x15a6c068 )
+	ROM_LOAD( "chs1-c.8f",    0x8000, 0x4000, 0x4ff3cdd9 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	/* the following two ROMs are BAD! */
-	ROM_LOAD( "chs1-b.4c",    0x00000, 0x2000, 0x00000000 )	/* chars #1 */
-	ROM_LOAD( "chs1-b.4d",    0x02000, 0x2000, 0x00000000 )
-	ROM_LOAD( "chs1-b.4a",    0x04000, 0x2000, 0x20fb4829 )	/* chars #2 */
-	ROM_LOAD( "chs1-b.4b",    0x06000, 0x2000, 0xedc34594 )
+	ROM_LOAD( "chs1-b.4c",    0x00000, 0x0800, 0x9f2ede2d )	/* chars #1 */
+	ROM_CONTINUE(             0x01000, 0x0800 )
+	ROM_CONTINUE(             0x00800, 0x0800 )
+	ROM_CONTINUE(             0x01800, 0x0800 )
+	ROM_LOAD( "chs1-b.4d",    0x02000, 0x0800, 0x143ae5c6 )
+	ROM_CONTINUE(             0x03000, 0x0800 )
+	ROM_CONTINUE(             0x02800, 0x0800 )
+	ROM_CONTINUE(             0x03800, 0x0800 )
+	ROM_LOAD( "chp1-b.4a",    0x04000, 0x0800, 0xc075f831 )	/* chars #2 */
+	ROM_CONTINUE(             0x05000, 0x0800 )
+	ROM_CONTINUE(             0x04800, 0x0800 )
+	ROM_CONTINUE(             0x05800, 0x0800 )
+	ROM_LOAD( "chp1-b.4b",    0x06000, 0x0800, 0xc4cc2b5a )
+	ROM_CONTINUE(             0x07000, 0x0800 )
+	ROM_CONTINUE(             0x06800, 0x0800 )
+	ROM_CONTINUE(             0x07800, 0x0800 )
 	ROM_LOAD( "chs1-v.2r",    0x08000, 0x4000, 0xff33405d )	/* chars #3 */
 	ROM_LOAD( "chs1-v.2t",    0x0c000, 0x4000, 0xf507818b )
 	ROM_LOAD( "chs1-v.2u",    0x10000, 0x4000, 0x0995fc95 )
@@ -736,39 +1052,40 @@ ROM_START( spnchout_rom )
 	ROM_LOAD( "chs1-v.4t",    0x2c000, 0x4000, 0xb4e43448 )
 	ROM_LOAD( "chs1-v.4u",    0x30000, 0x4000, 0x74e0d956 )
 	/* 34000-37fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chp1-v.6p",    0x38000, 0x2000, 0x16588f7a )	/* chars #4 */
-	ROM_LOAD( "chp1-v.6n",    0x3a000, 0x2000, 0xdc743674 )
+	ROM_LOAD( "chp1-v.6p",    0x38000, 0x0800, 0x75be7aae )	/* chars #4 */
+	ROM_CONTINUE(             0x39000, 0x0800 )
+	ROM_CONTINUE(             0x38800, 0x0800 )
+	ROM_CONTINUE(             0x39800, 0x0800 )
+	ROM_LOAD( "chp1-v.6n",    0x3a000, 0x0800, 0xdaf74de0 )
+	ROM_CONTINUE(             0x3b000, 0x0800 )
+	ROM_CONTINUE(             0x3a800, 0x0800 )
+	ROM_CONTINUE(             0x3b800, 0x0800 )
 	/* 3c000-3ffff empty (space for 6l and 6k) */
-	ROM_LOAD( "chp1-v.8p",    0x40000, 0x2000, 0xc2db5b4e )
-	ROM_LOAD( "chp1-v.8n",    0x42000, 0x2000, 0xe6af390e )
+	ROM_LOAD( "chp1-v.8p",    0x40000, 0x0800, 0x4cb7ea82 )
+	ROM_CONTINUE(             0x41000, 0x0800 )
+	ROM_CONTINUE(             0x40800, 0x0800 )
+	ROM_CONTINUE(             0x41800, 0x0800 )
+	ROM_LOAD( "chp1-v.8n",    0x42000, 0x0800, 0x1c0d09aa )
+	ROM_CONTINUE(             0x43000, 0x0800 )
+	ROM_CONTINUE(             0x42800, 0x0800 )
+	ROM_CONTINUE(             0x43800, 0x0800 )
 	/* 44000-47fff empty (space for 8l and 8k) */
 
 	ROM_REGION(0x1000)	/* color PROMs */
 	ROM_LOAD( "chs1-b.6e",    0x0000, 0x0200, 0x0ad4d727 )	/* red component */
-	ROM_LOAD( "chs1-b.7e",    0x0200, 0x0200, 0x4c7e3a67 )	/* red component */
+	ROM_LOAD( "chs1-b.7e",    0x0200, 0x0200, 0x9e170f64 )	/* red component */
 	ROM_LOAD( "chs1-b.6f",    0x0400, 0x0200, 0x86f5cfdb )	/* green component */
-	ROM_LOAD( "chs1-b.8e",    0x0600, 0x0200, 0xec659313 )	/* green component */
+	ROM_LOAD( "chs1-b.8e",    0x0600, 0x0200, 0x3a2e333b )	/* green component */
 	ROM_LOAD( "chs1-b.7f",    0x0800, 0x0200, 0x8bd406f8 )	/* blue component */
-	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x8b493c09 )	/* blue component */
+	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x1663eed7 )	/* blue component */
 	ROM_LOAD( "chs1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
 	ROM_REGION(0x10000)	/* 64k for the sound CPU */
-	ROM_LOAD( "chs1-v.4k",    0xe000, 0x2000, 0xcb6ef376 )
+	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
 
 	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
-	ROM_LOAD( "chs1-v.6p",    0x0000, 0x4000, 0xad8b64b8 )
+	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, 0xad8b64b8 )
 ROM_END
-
-static void punchout_decode(void)
-{
-	unsigned char *RAM;
-
-
-	/* there is no encryption in Punch Out, however one graphics ROM (4v) doesn't */
-	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	RAM = Machine->memory_region[1];
-	memset(&RAM[0x34000],0xff,0x4000);
-}
 
 ROM_START( armwrest_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -800,7 +1117,7 @@ ROM_START( armwrest_rom )
 	/* 46000-47fff empty (space for 16k ROM) */
 	/* 48000-4bfff empty (space for 6l and 6k) */
 	ROM_LOAD( "chv1-v.8p",    0x4c000, 0x2000, 0xa2f531db )
-	/* 4e000-4ffff empty (space for 8k ROM) */
+	/* 4e000-4ffff empty (space for 16k ROM) */
 	/* 50000-53fff empty (space for 8l and 8k) */
 
 	ROM_REGION(0x0e00)	/* color PROMs */
@@ -819,6 +1136,17 @@ ROM_START( armwrest_rom )
 	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
 	ROM_LOAD( "chv1-c.6p",    0x0000, 0x4000, 0x31b52896 )
 ROM_END
+
+static void punchout_decode(void)
+{
+	unsigned char *RAM;
+
+
+	/* there is no encryption in Punch Out, however one graphics ROM (4v) doesn't */
+	/* exist but must be seen as a 0xff fill for colors to come out properly */
+	RAM = Machine->memory_region[1];
+	memset(&RAM[0x34000],0xff,0x4000);
+}
 
 static void armwrest_decode(void)
 {
@@ -878,7 +1206,7 @@ struct GameDriver punchout_driver =
 	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&machine_driver,
+	&punchout_machine_driver,
 	0,
 
 	punchout_rom,
@@ -902,9 +1230,9 @@ struct GameDriver spnchout_driver =
 	"Super Punch Out",
 	"1984",
 	"Nintendo",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)",
-	GAME_NOT_WORKING | GAME_WRONG_COLORS,
-	&machine_driver,
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh (protection)\nErnesto Corvi (protection)",
+	0,
+	&spnchout_machine_driver,
 	0,
 
 	spnchout_rom,
@@ -912,7 +1240,7 @@ struct GameDriver spnchout_driver =
 	spunchout_sample_names,
 	0,	/* sound_prom */
 
-	punchout_input_ports,
+	spnchout_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,

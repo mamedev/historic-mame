@@ -57,20 +57,17 @@ static struct rectangle backgroundvisiblearea =
 
   Punch Out has a six 512x4 palette PROMs (one per gun; three for the top
   monitor chars, three for everything else).
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output. I assumed these values (the same as Commando)
+  The PROMs are connected to the RGB output this way:
 
-  bit 3 -- 220 ohm resistor -- inverter  -- RED/GREEN/BLUE
+  bit 3 -- 240 ohm resistor -- inverter  -- RED/GREEN/BLUE
         -- 470 ohm resistor -- inverter  -- RED/GREEN/BLUE
         -- 1  kohm resistor -- inverter  -- RED/GREEN/BLUE
-  bit 0 -- 2.2kohm resistor -- inverter  -- RED/GREEN/BLUE
+  bit 0 -- 2  kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+static void convert_palette(unsigned char *palette,const unsigned char *color_prom)
 {
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
+	int i,j;
 
 
 	for (i = 0;i < 1024;i++)
@@ -82,17 +79,17 @@ void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[1024] >> 0) & 0x01;
 		bit1 = (color_prom[1024] >> 1) & 0x01;
 		bit2 = (color_prom[1024] >> 2) & 0x01;
 		bit3 = (color_prom[1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[2*1024] >> 0) & 0x01;
 		bit1 = (color_prom[2*1024] >> 1) & 0x01;
 		bit2 = (color_prom[2*1024] >> 2) & 0x01;
 		bit3 = (color_prom[2*1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 
 		color_prom++;
 	}
@@ -102,67 +99,82 @@ void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	*(palette++) = 1;
 	*(palette++) = 1;
 	*(palette++) = 1;
+}
+
+void punchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	/* top monitor chars - palette order is inverted */
+	convert_palette(palette,color_prom);
+
+
+	/* top monitor chars - pen order is inverted */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i ^ 3) = i;
 
-	/* bottom monitor chars */
+	/* bottom monitor chars - color code order is inverted */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i + 512;
+		COLOR(1,i ^ 0xfc) = i + 512;
 
-	/* big sprite #1 - palette order is inverted */
+	/* big sprite #1 - pen and color code order is inverted */
 	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if (i % 8 == 0) COLOR(2,i ^ 7) = 1024;	/* transparent */
-		else COLOR(2,i ^ 7) = i + 512;
+		if (i % 8 == 0) COLOR(2,i ^ 0xff) = 1024;	/* transparent */
+		else COLOR(2,i ^ 0xff) = i + 512;
 	}
 
-	/* big sprite #2 */
+	/* big sprite #2 - color code order is inverted */
 	for (i = 0;i < TOTAL_COLORS(3);i++)
 	{
-		if (i % 4 == 0) COLOR(3,i) = 1024;	/* transparent */
-		else COLOR(3,i) = i + 512;
+		if (i % 4 == 0) COLOR(3,i ^ 0xfc) = 1024;	/* transparent */
+		else COLOR(3,i ^ 0xfc) = i + 512;
 	}
 }
 
-void armwrest_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void spnchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	for (i = 0;i < 1024;i++)
+	convert_palette(palette,color_prom);
+
+
+	/* top monitor chars */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* bottom monitor chars - pen and color code order is inverted */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i ^ 0xff) = i + 512;
+
+	/* big sprite #1 - pen and color code order is inverted */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		int bit0,bit1,bit2,bit3;
-
-
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-		bit0 = (color_prom[1024] >> 0) & 0x01;
-		bit1 = (color_prom[1024] >> 1) & 0x01;
-		bit2 = (color_prom[1024] >> 2) & 0x01;
-		bit3 = (color_prom[1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-		bit0 = (color_prom[2*1024] >> 0) & 0x01;
-		bit1 = (color_prom[2*1024] >> 1) & 0x01;
-		bit2 = (color_prom[2*1024] >> 2) & 0x01;
-		bit3 = (color_prom[2*1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
-
-		color_prom++;
+		if (i % 8 == 0) COLOR(2,i ^ 0xff) = 1024;	/* transparent */
+		else COLOR(2,i ^ 0xff) = i + 512;
 	}
 
-	/* reserve the last color for the transparent pen (none of the game colors can have */
-	/* these RGB components) */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
+	/* big sprite #2 - pen and color code order is inverted */
+	for (i = 0;i < TOTAL_COLORS(3);i++)
+	{
+		if (i % 4 == 0) COLOR(3,i ^ 0xff) = 1024;	/* transparent */
+		else COLOR(3,i ^ 0xff) = i + 512;
+	}
+}
+
+void armwrest_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
+
+
+	convert_palette(palette,color_prom);
 
 
 	/* top monitor / bottom monitor backround chars */
@@ -180,7 +192,7 @@ void armwrest_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		else COLOR(2,i) = i + 512;
 	}
 
-	/* big sprite #2 - palette order is inverted */
+	/* big sprite #2 - pen order is inverted */
 	for (i = 0;i < TOTAL_COLORS(3);i++)
 	{
 		if (i % 4 == 3) COLOR(3,i ^ 3) = 1024;	/* transparent */
@@ -444,7 +456,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03),
-					32 + ((~punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
+					((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
 					punchout_videoram2[offs + 1] & 0x80,0,
 					8*sx,8*sy + 8*TOP_MONITOR_ROWS,
 					&backgroundvisiblearea,TRANSPARENCY_NONE,0);
@@ -467,7 +479,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bs1tmpbitmap,Machine->gfx[2],
 					punchout_bigsprite1ram[offs] + 256 * (punchout_bigsprite1ram[offs + 1] & 0x1f),
-					(~punchout_bigsprite1ram[offs + 3] & 0x1f) + 32 * bottom_palette_bank,
+					(punchout_bigsprite1ram[offs + 3] & 0x1f) + 32 * bottom_palette_bank,
 					punchout_bigsprite1ram[offs + 3] & 0x80,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -490,7 +502,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bs2tmpbitmap,Machine->gfx[3],
 					punchout_bigsprite2ram[offs] + 256 * (punchout_bigsprite2ram[offs + 1] & 0x0f),
-					(~punchout_bigsprite2ram[offs + 3] & 0x3f) + 64 * bottom_palette_bank,
+					(punchout_bigsprite2ram[offs + 3] & 0x3f) + 64 * bottom_palette_bank,
 					punchout_bigsprite2ram[offs + 3] & 0x80,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);

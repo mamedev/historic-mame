@@ -803,6 +803,32 @@ ROM_START( puckman_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( pacheart_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
+	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
+	ROM_LOAD( "pacheart.pg3", 0x1000, 0x0800, 0x7d177853 )
+	ROM_LOAD( "pacheart.pg4", 0x1800, 0x0800, 0x842d6574 )
+	ROM_LOAD( "pacheart.pg5", 0x2000, 0x0800, 0x9045a44c )
+	ROM_LOAD( "pacheart.pg6", 0x2800, 0x0800, 0x888f3c3e )
+	ROM_LOAD( "pacheart.pg7", 0x3000, 0x0800, 0xf5265c10 )
+	ROM_LOAD( "pacheart.pg8", 0x3800, 0x0800, 0x1a21a381 )
+
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacheart.ch1", 0x0000, 0x0800, 0xc62bbabf )
+	ROM_LOAD( "pacheart.ch2", 0x0800, 0x0800, 0x3591b89d )
+	ROM_LOAD( "pacheart.ch3", 0x1000, 0x0800, 0xca8c184c )
+	ROM_LOAD( "pacheart.ch4", 0x1800, 0x0800, 0x1b1d9096 )
+
+	ROM_REGION(0x0120)      /* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION(0x0200)      /* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
+ROM_END
+
 ROM_START( piranha_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pr1.cpu",      0x0000, 0x1000, 0xbc5ad024 )
@@ -1344,6 +1370,45 @@ static void mrtnt_hisave(void)
 }
 
 
+static int lizwiz_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (memcmp(&RAM[0x4de8],"\x40\x86\x01",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4daf],0x3c);
+
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			copytoscreen(0x4db5, 3, 0x3f2, -1);
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void lizwiz_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4daf],0x3c);
+		osd_fclose(f);
+	}
+}
+
+
 static int ponpoko_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1572,6 +1637,32 @@ struct GameDriver puckman_driver =
 	0, 0,
 	0,
 	0,	/* sound_prom */
+
+	pacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver pacheart_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"pacheart",
+	"Pac Man (Hearts)",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	pacheart_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
 
 	pacman_input_ports,
 
@@ -1813,7 +1904,7 @@ struct GameDriver lizwiz_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	lizwiz_hiload, lizwiz_hisave
 };
 
 struct GameDriver theglob_driver =

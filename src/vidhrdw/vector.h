@@ -18,7 +18,7 @@
 
 #define MAX_POINTS 5000	/* Maximum # of points we can queue in a vector list */
 
-#define MAX_PIXELS 250000  /* Maximum of pixels we can remember */
+#define MAX_PIXELS 850000  /* Maximum of pixels we can remember */
 
 
 extern int translucency;  /* translucent vectors  */

@@ -436,7 +436,7 @@ static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
 	1789772,	/* 1.789772727 MHz */
-	{ 0x201e, 0x201e, 0x3023, 0x3023, 0x3023 },
+	{ 0x2012, 0x2012, 0x3014, 0x3014, 0x3014 },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
 	{ 0, 0, gyruss_portA_r },
@@ -449,7 +449,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 80 }
+	{ 50 }
 };
 #else
 static struct Samplesinterface samples_interface =

@@ -126,6 +126,7 @@ static void i_jnl(void);
 static void i_jle(void);
 static void i_jnle(void);
 static void i_80pre(void);
+static void i_82pre(void);
 static void i_81pre(void);
 static void i_83pre(void);
 static void i_test_br8(void);
@@ -378,7 +379,7 @@ void (*instruction[256])(void) =
     i_jnle,             /* 0x7f */
     i_80pre,            /* 0x80 */
     i_81pre,            /* 0x81 */
-    i_invalid,
+	i_82pre,			/* 0x82 */
     i_83pre,            /* 0x83 */
     i_test_br8,         /* 0x84 */
     i_test_wr16,        /* 0x85 */

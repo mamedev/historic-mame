@@ -1,7 +1,7 @@
-#include "M68000.h"
-#include "driver.h"
 #include "cpuintrf.h"
+#include "M68000.h"
 #include "readcpu.h"
+#include "driver.h"
 #include "osd_dbg.h"
 #include <stdio.h>
 /* BFV 061298 - added include for instruction timing table */
@@ -28,6 +28,10 @@ extern void BuildCPU(void);
 
 int MC68000_ICount;
 int pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+int irq_state;
+int (*irq_callback)(int irq_line);
+#endif
 
 static int InitStatus=0;
 
@@ -143,20 +147,24 @@ if (!InitStatus)
 	InitStatus=1;
 }
 
-   regs.a[7]=get_long(0);
-   m68k_setpc(get_long(4));
+	regs.a[7]=get_long(0);
+	m68k_setpc(get_long(4));
 
-   regs.s = 1;
-   regs.m = 0;
-   regs.stopped = 0;
-   regs.t1 = 0;
-   regs.t0 = 0;
-   ZFLG = CFLG = NFLG = VFLG = 0;
-   regs.intmask = 7;
-   regs.vbr = regs.sfc = regs.dfc = 0;
-   regs.fpcr = regs.fpsr = regs.fpiar = 0;
+	regs.s = 1;
+	regs.m = 0;
+	regs.stopped = 0;
+	regs.t1 = 0;
+	regs.t0 = 0;
+	ZFLG = CFLG = NFLG = VFLG = 0;
+	regs.intmask = 7;
+	regs.vbr = regs.sfc = regs.dfc = 0;
+	regs.fpcr = regs.fpsr = regs.fpiar = 0;
 
-   pending_interrupts = 0;
+	pending_interrupts = 0;
+#if NEW_INTERRUPT_SYSTEM
+	irq_state = CLEAR_LINE;
+	irq_callback = 0;
+#endif
 }
 
 
@@ -172,6 +180,10 @@ void MC68000_SetRegs(MC68000_Regs *src)
 	VFLG = (sr >> 1) & 1;
 	CFLG = sr & 1;
 	pending_interrupts = src->pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+	irq_state = src->irq_state;
+	irq_callback = src->irq_callback;
+#endif
 }}
 
 void MC68000_GetRegs(MC68000_Regs *dst)
@@ -180,8 +192,36 @@ void MC68000_GetRegs(MC68000_Regs *dst)
 	regs.sr = (regs.sr & 0xfff0) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1) | CFLG;
 	dst->regs = regs;
 	dst->pending_interrupts = pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+	dst->irq_state = irq_state;
+	dst->irq_callback = irq_callback;
+#endif
 }
 
+
+#if NEW_INTERRUPT_SYSTEM
+
+void MC68000_set_nmi_line(int state)
+{
+	/* the 68K has no dedicated NMI line */
+}
+
+void MC68000_set_irq_line(int irqline, int state)
+{
+	irq_state = state;
+    if (state == CLEAR_LINE) {
+		pending_interrupts &= ~1;
+	} else {
+		pending_interrupts |= 1;
+	}
+}
+
+void MC68000_set_irq_callback(int (*callback)(int irqline))
+{
+	irq_callback = callback;
+}
+
+#else
 
 void MC68000_Cause_Interrupt(int level)
 {
@@ -195,6 +235,7 @@ void MC68000_Clear_Pending_Interrupts(void)
 	pending_interrupts &= ~0xff000000;
 }
 
+#endif
 
 int  MC68000_GetPC(void)
 {
@@ -221,7 +262,13 @@ int MC68000_Execute(int cycles)
 		}
 #endif
 
-		if (pending_interrupts & 0xff000000)
+#if NEW_INTERRUPT_SYSTEM
+		if (pending_interrupts & 0x00000001) {
+			int level = (*irq_callback)(0);
+			pending_interrupts |= 1 << (level+24);
+		}
+#endif
+        if (pending_interrupts & 0xff000000)
 		{
 			int level, mask = 0x80000000;
 			for (level = 7; level; level--, mask >>= 1)

@@ -9,7 +9,7 @@ static int sram_locked;
 static int sram_protection_hack;
 
 int neogeo_game_fix;
-extern int neogeo_red_mask,neogeo_green_mask,neogeo_blue_mask; /* From vidhrdw */
+extern int neogeo_red_bits,neogeo_green_bits,neogeo_blue_bits; /* From vidhrdw */
 
 extern void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
 static void neogeo_custom_memory(void);
@@ -50,19 +50,6 @@ static void fixbadsamples(unsigned char *buf,int length)
 if (errorlog) fprintf(errorlog,"improving bad sample ROM...\n");
 			for (i = 1;i < 0x200000;i += 2)
 				buf[i] = 0x80;
-		}
-		else
-		{
-			/* special case for miexchng */
-			for (i = 2;i < 0x200000;i += 4)
-				if (buf[i] != 0xff || buf[i+1] != 0xff) break;	/* good ROM */
-
-			if (i >= 0x200000)
-			{
-if (errorlog) fprintf(errorlog,"improving bad sample ROM...\n");
-				for (i = 2;i < 0x200000;i += 4)
-					buf[i] = buf[i+1] = 0x80;
-			}
 		}
 
 		buf += 0x200000;
@@ -545,17 +532,36 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))
 		sram_protection_hack = 0x35a;
 
+	if (!strcmp(Machine->gamedrv->name,"sidkicks"))
+	{
+		/* patch out protection check */
+		/* the protection routines are at 0x25dcc and involve reading and writing */
+		/* addresses in the 0x2xxxxx range */
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	    WRITE_WORD(&RAM[0x2240],0x4e71);
+	}
+
+
 	/* Improve games which don't work in 8 bit colour very well */
-    neogeo_red_mask=0xf;
-    neogeo_green_mask=0xf;
-	neogeo_blue_mask=0xf;
-	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_blue_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"karnov_r")) neogeo_blue_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"kof95")) neogeo_blue_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"kof96")) neogeo_blue_mask=neogeo_red_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"kof97")) neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"ragnagrd")) neogeo_blue_mask=neogeo_red_mask=neogeo_green_mask=0xe;
-	if (!strcmp(Machine->gamedrv->name,"whp")) neogeo_blue_mask=neogeo_red_mask=0xe;
+	neogeo_red_bits = 5;
+	neogeo_green_bits = 5;
+	neogeo_blue_bits = 5;
+	if (!strcmp(Machine->gamedrv->name,"blazstar"))
+		neogeo_blue_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"karnov_r"))
+		neogeo_blue_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"kizuna"))
+		neogeo_blue_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"kof95"))
+		neogeo_blue_bits = neogeo_red_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"kof96"))
+		neogeo_blue_bits = neogeo_red_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"kof97"))
+		neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"ragnagrd"))
+		neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3;
+	if (!strcmp(Machine->gamedrv->name,"whp"))
+		neogeo_blue_bits = neogeo_red_bits = 3;
 }
 
 

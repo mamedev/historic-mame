@@ -7,6 +7,9 @@ to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 
 #include "driver.h"
 #include "vidhrdw/system8.h"
+#include "z80/z80.h"
+
+
 
 /* in machine/segacrpt.c */
 void regulus_decode(void);
@@ -1566,9 +1569,9 @@ INPUT_PORTS_START( wbml_input_ports )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 /*	PORT_DIPSETTING(    0x00, "4" ) */
-	PORT_DIPNAME( 0x10, 0x00, "Unknown (Difficulty?)", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "30000 100000 200000" )
+	PORT_DIPSETTING(    0x00, "50000 150000 250000" )
 	PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )

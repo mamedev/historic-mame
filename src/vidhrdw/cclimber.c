@@ -120,6 +120,13 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
         -- 500 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
+  Additionally, the background color of the score panel is determined by
+  these resistors:
+
+                  /--- tri-state --  470 -- BLUE
+  +5V -- 1kohm ------- tri-state --  390 -- GREEN
+                  \--- tri-state -- 1000 -- RED
+
 ***************************************************************************/
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -149,7 +156,12 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	palette[3] = 0;
 	palette[4] = 0;
 	palette[5] = 0;
-	used = 2;
+	/* side panel background color */
+	allocated[2] = 0;
+	palette[6] = 0x24;
+	palette[7] = 0x5d;
+	palette[8] = 0x4e;
+	used = 3;
 
 	realcnt = TOTAL_COLORS(0) / 2;
 	for (i = 0;i < realcnt;i++)
@@ -189,15 +201,15 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 		COLOR(0,i) = j;
 
-		/* Black background for the side panel */
+		/* side panel */
 		if (i % 8)
 		{
 		    COLOR(0,i+realcnt) = j;
 		}
 		else
 		{
-			/* Opaque black */
-			COLOR(0,i+realcnt) = 1;
+			/* background */
+			COLOR(0,i+realcnt) = 2;
 		}
 	}
 

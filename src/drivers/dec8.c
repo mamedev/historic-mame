@@ -27,8 +27,6 @@ video hardware file are subject to massive alteration any time :)
 Emulation Notes:
 
 * Dip switches only confirmed for Oscar, the others seem reasonable.
-* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound.  The code
-is encrypted.  See attempts to decrypt it at the bottom of this file.
 * Darwin crashes at end of attract mode/end of level 1
 * Maze Hunter is using Ghostbusters proms for now...
 
@@ -211,13 +209,13 @@ static void ghostb_bank_w(int offset, int data)
 static void dec8_sound_w(int offset, int data)
 {
  	soundlatch_w(0,data);
-	cpu_cause_interrupt(1, M6502_INT_NMI);
+	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 static void oscar_sound_w(int offset, int data)
 {
  	soundlatch_w(0,data);
-	cpu_cause_interrupt(2, M6502_INT_NMI);
+	cpu_cause_interrupt(2,M6502_INT_NMI);
 }
 
 /******************************************************************************/
@@ -1424,18 +1422,40 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
+
+/* handler called by the 3812 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,M6502_INT_IRQ);
+}
+
+static void oscar_irqhandler(void)
+{
+	cpu_cause_interrupt(2,M6502_INT_IRQ);
+}
+
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
-	{ 255 }		/* (not supported) */
+	3000000,	/* 3 MHz ? */
+	{ 255 },	/* (not supported) */
+	irqhandler,
+};
+
+static struct YM3526interface oscar_ym3526_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3000000,	/* 3 MHz ? */
+	{ 255 },		/* (not supported) */
+	oscar_irqhandler,
 };
 
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? (not supported) */
-	{ 255 }		/* (not supported) */
+	3000000,	/* 3 MHz ? */
+	{ 255 },		/* (not supported) */
+	irqhandler,
 };
 
 /******************************************************************************/
@@ -1521,7 +1541,8 @@ static struct MachineDriver cobra_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+								/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -1566,18 +1587,15 @@ static struct MachineDriver ghostb_machine_driver =
 			0,
 			ghostb_readmem,ghostb_writemem,0,0,
 			ghost_interrupt,2
-		}
-#if 0
-,
-
+		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+								/* NMIs are caused by the main CPU */
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1626,7 +1644,8 @@ static struct MachineDriver mazeh_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
   			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+								/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1670,17 +1689,15 @@ static struct MachineDriver srdarwin_machine_driver =
 			0,
 			srdarwin_readmem,srdarwin_writemem,0,0,
 			nmi_interrupt,1
-		}
-#if 0
-,
+		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+								/* NMIs are caused by the main CPU */
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1730,7 +1747,8 @@ static struct MachineDriver gondo_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
+								/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1782,17 +1800,15 @@ static struct MachineDriver oscar_machine_driver =
 			3,
 			oscar_sub_readmem,oscar_sub_writemem,0,0,
 			ignore_interrupt,0
-		}
-#if 0
-,
+		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			cobra_s_readmem,cobra_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
+								/* NMIs are caused by the main CPU */
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -1820,7 +1836,7 @@ static struct MachineDriver oscar_machine_driver =
 		},
 		{
 			SOUND_YM3526,
-			&ym3526_interface
+			&oscar_ym3526_interface
 		}
 	}
 };
@@ -1848,7 +1864,8 @@ static struct MachineDriver lastmiss_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			lastmiss_s_readmem,lastmiss_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
+								/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1878,7 +1895,7 @@ static struct MachineDriver lastmiss_machine_driver =
 		},
 		{
 			SOUND_YM3526,
-			&ym3526_interface
+			&oscar_ym3526_interface
 		}
 	}
 };
@@ -1911,7 +1928,8 @@ static struct MachineDriver shackled_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			lastmiss_s_readmem,lastmiss_s_writemem,0,0,
-			interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
+								/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1950,7 +1968,7 @@ C
 		},
 		{
 			SOUND_YM3526,
-			&ym3526_interface
+			&oscar_ym3526_interface
 		}
 	}
 };
@@ -2257,6 +2275,28 @@ ROM_END
 
 /******************************************************************************/
 
+/* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound. */
+
+static void deco222_decode(void)
+{
+	int A;
+	unsigned char *RAM;
+	extern int encrypted_cpu;
+	int sound_cpu;
+
+
+	sound_cpu = 1;
+	/* Oscar has three CPUs */
+	if (Machine->drv->cpu[2].cpu_type != 0) sound_cpu = 2;
+
+	/* bits 5 and 6 of the opcodes are swapped */
+	RAM = Machine->memory_region[Machine->drv->cpu[sound_cpu].memory_region];
+	encrypted_cpu = sound_cpu;
+	for (A = 0;A < 0x10000;A++)
+		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+}
+
+
 static void mazeh_patch(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
@@ -2264,44 +2304,15 @@ static void mazeh_patch(void)
 	memset(RAM+0x20,0,0xe0);
 }
 
-static void ghostb_patch(void)
+static void ghostb_decode(void)
 {
-	/* Decrypt sound CPU - NOT YET CORRECT! */
-	unsigned char *RAM = Machine->memory_region[2];
-	int i;
+	unsigned char *RAM;
 
-	for (i=0x8000; i<0x9000; i++) {
- 		int swap1=RAM[i]&0x20;
-		int swap2=RAM[i]&0x40;
 
-		/* Mask to 0x9f, misses bits 5 & 6 */
-			RAM[i]=(RAM[i]&0x9f);
-			if (swap1) RAM[i]+=0x40;
-			if (swap2) RAM[i]+=0x20;
-	}
-
-   RAM[0x828f]=0xcf;
-
-#if 0
-{
-    FILE *fp;
-
-    fp=fopen("dump.rom","wb");
-    fwrite(RAM+0x8000,1,0x8000,fp);
-    fclose(fp);
-}
-
-{
-    FILE *fp;
-
-    fp=fopen("dw-05.rom","rb");
-    fread(RAM+0x8000,1,0x1000,fp);
-    fclose(fp);
-}
-#endif
+	deco222_decode();
 
 	/* A few patches */
-	RAM = Machine->memory_region[0];
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0x83d8]=0x12;
 	RAM[0x83d9]=0x12;
 	memset(RAM+0x83c8,0x12,0x11);
@@ -2311,39 +2322,9 @@ static void ghostb_patch(void)
 	memset(RAM+0x20,0,0xe0);
 }
 
-static void srdarwin_patch(void)
-{
-	/* Decrypt sound CPU - NOT YET WORKING! */
-	unsigned char *RAM = Machine->memory_region[2];
-	int i;
-
-    for (i=0x8000; i<0xf000; i++) {
-		int swap1=RAM[i]&0x20;
-		int swap2=RAM[i]&0x40;
-		int hi=RAM[i]>>4,lo=RAM[i]&0xf;
-
-		/* Only swap bits if != 3 or 5 */
-		if (hi!=3 && hi!=5 && lo!=3) {
-			/* Mask to 0x9f, misses bits 5 & 6 */
-			RAM[i]=(RAM[i]&0x9f);
-			if (swap1) RAM[i]+=0x40;
-			if (swap2) RAM[i]+=0x20;
-    	}
-	}
-
-#if 0
-{
-	FILE *fp;
-	fp=fopen("dump.rom","wb");
-	fwrite(RAM+0x8000,1,0x8000,fp);
-	fclose(fp);
-}
-#endif
-}
-
 static void gondo_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	RAM = Machine->memory_region[0];
  /*	RAM[0x80d3]=0x12;
@@ -2352,7 +2333,7 @@ static void gondo_patch(void)
 
 static void lastmiss_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	RAM = Machine->memory_region[0];
 	RAM[0xf9d4]=0x12;
@@ -2371,45 +2352,6 @@ static void shackled_patch(void)
 
 }
 
-static void oscar_patch(void)
-{
-	/* Decrypt sound CPU - NOT YET CORRECT! */
-	unsigned char *RAM = Machine->memory_region[2];
-	int i;
-
-	for (i=0x8000; i<0x9000; i++) {
- 		int swap1=RAM[i]&0x20;
-		int swap2=RAM[i]&0x40;
-
-		/* Mask to 0x9f, misses bits 5 & 6 */
-        if ((RAM[i]&0xf0)!=0x20 && (RAM[i]&0xf0)!=0x30 && (RAM[i]&0xf0)!=0x50 && (RAM[i]&0x0f)!=0x04) {
-			RAM[i]=(RAM[i]&0x9f);
-			if (swap1) RAM[i]+=0x40;
-			if (swap2) RAM[i]+=0x20;
-        }
-	}
-
-//   RAM[0x828f]=0xcf;
-
-#if 0
-{
-    FILE *fp;
-
-    fp=fopen("dump.rom","wb");
-    fwrite(RAM+0x8000,1,0x8000,fp);
-    fclose(fp);
-}
-
-{
-    FILE *fp;
-
-    fp=fopen("dw-05.rom","rb");
-    fread(RAM+0x8000,1,0x1000,fp);
-    fclose(fp);
-}
-#endif
-
-}
 
 /******************************************************************************/
 
@@ -2490,7 +2432,7 @@ struct GameDriver ghostb_driver =
 	0,
 
 	ghostb_rom,
-	ghostb_patch, 0,
+	0, ghostb_decode,
 	0,
 	0,
 
@@ -2542,7 +2484,7 @@ struct GameDriver srdarwin_driver =
 	0,
 
 	srdarwin_rom,
-	srdarwin_patch, 0,
+	0, deco222_decode,
 	0,
 	0,
 
@@ -2594,7 +2536,7 @@ struct GameDriver oscar_driver =
 	0,
 
 	oscar_rom,
-	oscar_patch, 0,
+	0, deco222_decode,
 	0,
 	0,
 
@@ -2620,7 +2562,7 @@ struct GameDriver oscarj_driver =
 	0,
 
 	oscarj_rom,
-	oscar_patch, 0,
+	0, deco222_decode,
 	0,
 	0,
 

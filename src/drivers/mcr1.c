@@ -234,11 +234,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+extern int mcr_sh_start(void);
+
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz ?? */
-	{ 255, 255 },
+	{ 33, 33 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -283,7 +285,7 @@ static struct MachineDriver machine_driver =
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
 	{
 		{
 			SOUND_AY8910,

@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-#define inline __inline__	/* keep allegro.h happy */
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
 #include <allegro.h>
-#undef inline
+#undef __INLINE__
+#include "driver.h"
 #include <dos.h>
 #include <signal.h>
 #include <time.h>

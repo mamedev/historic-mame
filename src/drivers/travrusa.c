@@ -9,7 +9,6 @@ Loosely based on the our previous 10 Yard Fight driver.
 ****************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
 #include "vidhrdw/generic.h"
 
 
@@ -75,7 +74,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( travrusa_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -109,30 +108,30 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x02, "Fuel Reduced on Collision", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x03, "Low" )
-	PORT_DIPSETTING( 0x02, "Med" )
-	PORT_DIPSETTING( 0x01, "Hi" )
-	PORT_DIPSETTING( 0x00, "Max" )
+	PORT_DIPNAME( 0x03, 0x03, "Fuel Reduced on Collision", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Low" )
+	PORT_DIPSETTING(    0x02, "Med" )
+	PORT_DIPSETTING(    0x01, "Hi" )
+	PORT_DIPSETTING(    0x00, "Max" )
 	PORT_DIPNAME( 0x04, 0x04, "Fuel Consumption", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x04, "Low" )
-	PORT_DIPSETTING( 0x00, "Hi" )
-	PORT_DIPNAME( 0x08, 0x00, "Continue", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x08, "No" )
-	PORT_DIPSETTING( 0x00, "Yes" )
+	PORT_DIPSETTING(    0x04, "Low" )
+	PORT_DIPSETTING(    0x00, "Hi" )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING( 0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING( 0xe0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING( 0xd0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING( 0xc0, "4 Coins/1 Credit" )
-	PORT_DIPSETTING( 0xb0, "5 Coins/1 Credit" )
-	PORT_DIPSETTING( 0xa0, "6 Coins/1 Credit" )
-	PORT_DIPSETTING( 0x70, "1 Coin/2 Credit" )
-	PORT_DIPSETTING( 0x60, "1 Coins/3 Credit" )
-	PORT_DIPSETTING( 0x50, "3 Coins/4 Credit" )
-	PORT_DIPSETTING( 0x40, "4 Coins/5 Credit" )
-	PORT_DIPSETTING( 0x30, "5 Coins/6 Credit" )
-	PORT_DIPSETTING( 0x20, "UNKNOWN" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x60, "1 Coins/3 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/4 Credit" )
+	PORT_DIPSETTING(    0x40, "4 Coins/5 Credit" )
+	PORT_DIPSETTING(    0x30, "5 Coins/6 Credit" )
+	PORT_DIPSETTING(    0x20, "UNKNOWN" )
 
 	/* PORT_DIPSETTING( 0x10, "INVALID" ) */
 	/* PORT_DIPSETTING( 0x00, "INVALID" ) */
@@ -142,24 +141,116 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x00, "Upright" )
-	PORT_DIPSETTING( 0x02, "Cocktail" )
-	PORT_DIPNAME( 0x04, 0x04, "Coin Shute B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x04, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, "Speed Type", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x08, "M/H" )
-	PORT_DIPSETTING( 0x00, "KM/H" )
+	PORT_DIPSETTING(    0x08, "M/H" )
+	PORT_DIPSETTING(    0x00, "KM/H" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Title", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Traverse USA" )
+	PORT_DIPSETTING(    0x00, "Zippy Race" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/* same as travrusa, no "Title" switch */
+INPUT_PORTS_START( motorace_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	/* coin input must be active for 19 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
+		"Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 19 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Accelerate", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON2, "Brake", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW1 */
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Fuel Reduced on Collision", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Low" )
+	PORT_DIPSETTING(    0x02, "Med" )
+	PORT_DIPSETTING(    0x01, "Hi" )
+	PORT_DIPSETTING(    0x00, "Max" )
+	PORT_DIPNAME( 0x04, 0x04, "Fuel Consumption", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Low" )
+	PORT_DIPSETTING(    0x00, "Hi" )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x60, "1 Coins/3 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/4 Credit" )
+	PORT_DIPSETTING(    0x40, "4 Coins/5 Credit" )
+	PORT_DIPSETTING(    0x30, "5 Coins/6 Credit" )
+	PORT_DIPSETTING(    0x20, "UNKNOWN" )
+
+	/* PORT_DIPSETTING( 0x10, "INVALID" ) */
+	/* PORT_DIPSETTING( 0x00, "INVALID" ) */
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, "Speed Type", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "M/H" )
+	PORT_DIPSETTING(    0x00, "KM/H" )
 	/* In stop mode, press 2 to stop and 1 to restart */
 	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x20, "SW6B", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x20, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Invulnerability", IP_KEY_NONE )
-	PORT_DIPSETTING( 0x40, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -401,7 +492,7 @@ struct GameDriver travrusa_driver =
 	__FILE__,
 	0,
 	"travrusa",
-	"Traverse USA",
+	"Traverse USA / Zippy Race",
 	"1983",
 	"Irem",
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)",
@@ -414,7 +505,7 @@ struct GameDriver travrusa_driver =
 	0,
 	0,
 
-	input_ports,
+	travrusa_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -440,7 +531,7 @@ struct GameDriver motorace_driver =
 	0,
 	0,
 
-	input_ports,
+	motorace_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,

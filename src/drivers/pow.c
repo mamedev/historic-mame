@@ -16,6 +16,7 @@ Issues:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "z80/z80.h"
 
 void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 

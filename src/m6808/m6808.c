@@ -12,9 +12,9 @@
 		6809 Microcomputer Programming & Interfacing with Experiments"
 			by Andrew C. Staugaard, Jr.; Howard W. Sams & Co., Inc.
 
-	System dependencies:	word must be 16 bit unsigned int
-							byte must be 8 bit unsigned int
-							long must be more than 16 bits
+	System dependencies:	UINT16 must be 16 bit unsigned int
+							UINT8 must be 8 bit unsigned int
+							UINT32 must be more than 16 bits
 							arrays up to 65536 bytes must be supported
 							machine must be twos complement
 
@@ -23,16 +23,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "cpuintrf.h"
 #include "osd_dbg.h"
-#include "m6808.h"
-#include "driver.h"
+#include "m6808/m6808.h"
+
+extern FILE *errorlog;
 
 /* 6808 registers */
-static byte cc,areg,breg;
-static word xreg,sreg,pcreg;
+static UINT8 cc,areg,breg;
+static UINT16 xreg,sreg,pcreg;
 
-static word eaddr; /* effective address */
+static UINT16 eaddr; /* effective address */
 static int pending_interrupts;
+static int nmi_state;
+static int irq_state;
+static int (*irq_callback)(int irqline);
 
 /* public globals */
 int	m6808_ICount=50000;
@@ -71,8 +76,8 @@ static void (*wr_s_handler_wd)(int,int);
 
 /* macros for CC -- CC bits affected should be reset before calling */
 #define SET_Z(a)		if(!a)SEZ
-#define SET_Z8(a)		SET_Z((byte)a)
-#define SET_Z16(a)		SET_Z((word)a)
+#define SET_Z8(a)		SET_Z((UINT8)a)
+#define SET_Z16(a)		SET_Z((UINT16)a)
 #define SET_N8(a)		cc|=((a&0x80)>>4)
 #define SET_N16(a)		cc|=((a&0x8000)>>12)
 #define SET_H(a,b,r)	cc|=(((a^b^r)&0x10)<<1)
@@ -81,7 +86,7 @@ static void (*wr_s_handler_wd)(int,int);
 #define SET_V8(a,b,r)	cc|=(((a^b^r^(r>>1))&0x80)>>6)
 #define SET_V16(a,b,r)	cc|=(((a^b^r^(r>>1))&0x8000)>>14)
 
-static byte flags8i[256]=	/* increment */
+static UINT8 flags8i[256]=	 /* increment */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -100,7 +105,7 @@ static byte flags8i[256]=	/* increment */
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
 0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08
 };
-static byte flags8d[256]= /* decrement */
+static UINT8 flags8d[256]= /* decrement */
 {
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -128,8 +133,8 @@ static byte flags8d[256]= /* decrement */
 #define SET_FLAGS8(a,b,r)	{SET_N8(r);SET_Z8(r);SET_V8(a,b,r);SET_C8(r);}
 #define SET_FLAGS16(a,b,r)	{SET_N16(r);SET_Z16(r);SET_V16(a,b,r);SET_C16(r);}
 
-/* for treating an unsigned byte as a signed word */
-#define SIGNED(b) ((word)(b&0x80?b|0xff00:b))
+/* for treating an UINT8 as a signed INT16 */
+#define SIGNED(b) ((INT16)(b&0x80?b|0xff00:b))
 
 /* macros to access dreg */
 #define GETDREG ((areg<<8)|breg)
@@ -140,7 +145,7 @@ static byte flags8d[256]= /* decrement */
 #define IMM8 eaddr=pcreg++
 #define IMM16 {eaddr=pcreg;pcreg+=2;}
 #define EXTENDED IMMWORD(eaddr)
-#define INDEXED {eaddr=xreg+(byte)M_RDOP(pcreg++);}
+#define INDEXED {eaddr=xreg+(UINT8)M_RDOP(pcreg++);}
 
 /* macros to set status flags */
 #define SEC cc|=0x01
@@ -243,16 +248,16 @@ static void wr_fast_wd( int addr, int v )
 	RAM[(addr+1)&0xffff] = v&255;
 }
 
-INLINE unsigned M_RDMEM_WORD (dword A)
+INLINE unsigned M_RDMEM_WORD (UINT32 A)
 {
-	int i;
+	unsigned i;
 
     i = M_RDMEM(A)<<8;
     i |= M_RDMEM(((A)+1)&0xFFFF);
 	return i;
 }
 
-INLINE void M_WRMEM_WORD (dword A,word V)
+INLINE void M_WRMEM_WORD (UINT32 A,UINT16 V)
 {
 	M_WRMEM (A,V>>8);
 	M_WRMEM (((A)+1)&0xFFFF,V&255);
@@ -272,6 +277,11 @@ void m6808_SetRegs(m6808_Regs *Regs)
 	cc = Regs->cc;
 
 	pending_interrupts = Regs->pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+	nmi_state = Regs->nmi_state;
+    irq_state = Regs->irq_state;
+	irq_callback = Regs->irq_callback;
+#endif
 }
 
 
@@ -288,6 +298,11 @@ void m6808_GetRegs(m6808_Regs *Regs)
 	Regs->cc = cc;
 
 	Regs->pending_interrupts = pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+	Regs->nmi_state = nmi_state;
+    Regs->irq_state = irq_state;
+	Regs->irq_callback = irq_callback;
+#endif
 }
 
 
@@ -303,10 +318,20 @@ unsigned m6808_GetPC(void)
 /* Generate interrupts */
 static void Interrupt(void)
 {
-	if ((pending_interrupts & M6808_INT_NMI) != 0)
-	{
-		pending_interrupts &= ~M6808_INT_NMI;
-
+#if NEW_INTERRUPT_SYSTEM
+	if (pending_interrupts & M6808_PENDING) {
+		int type = (*irq_callback)(0);
+		pending_interrupts |= type;
+		if (pending_interrupts & M6808_WAI)
+		{
+			if (pending_interrupts & M6808_INT_NMI)
+				pending_interrupts &= ~M6808_WAI;
+			else if ( (cc & 0x10) == 0 )
+					pending_interrupts &= ~M6808_WAI;
+		}
+    }
+#endif
+	if (pending_interrupts & M6808_INT_NMI) {
 		/* NMI */
 		PUSHWORD(pcreg);
 		PUSHWORD(xreg);
@@ -314,13 +339,14 @@ static void Interrupt(void)
 		PUSHBYTE(areg);
 		PUSHBYTE(cc);
 		SEI;
-		pcreg=M_RDMEM_WORD(0xfffc);change_pc(pcreg);
+		pcreg=M_RDMEM_WORD(0xfffc);
+		change_pc(pcreg);
 		m6808_ICount -= 19;
-	} else
-		if  ( ( cc & 0x10 ) == 0 ) {
-			if ((pending_interrupts & M6808_INT_IRQ) != 0) {
-				pending_interrupts &= ~M6808_INT_IRQ;
 
+        pending_interrupts &= ~M6808_INT_NMI;
+	} else {
+		if  ( ( cc & 0x10 ) == 0 ) {
+			if (pending_interrupts & M6808_INT_IRQ) {
 				/* standard IRQ */
 				PUSHWORD(pcreg)
 				PUSHWORD(xreg)
@@ -328,13 +354,14 @@ static void Interrupt(void)
 				PUSHBYTE(areg)
 				PUSHBYTE(cc)
 				SEI;
-				pcreg=M_RDMEM_WORD(0xfff8);change_pc(pcreg);
+				pcreg=M_RDMEM_WORD(0xfff8);
+				change_pc(pcreg);
 				m6808_ICount -= 19;
+
+                pending_interrupts &= ~M6808_INT_IRQ;
 			}
 			else
-			if ((pending_interrupts & M6808_INT_OCI) != 0) {
-				pending_interrupts &= ~M6808_INT_OCI;
-
+			if (pending_interrupts & M6808_INT_OCI) {
 				/* standard IRQ */
 				PUSHWORD(pcreg)
 				PUSHWORD(xreg)
@@ -342,22 +369,33 @@ static void Interrupt(void)
 				PUSHBYTE(areg)
 				PUSHBYTE(cc)
 				SEI;
-				pcreg=M_RDMEM_WORD(0xfff4);change_pc(pcreg);
+				pcreg=M_RDMEM_WORD(0xfff4);
+				change_pc(pcreg);
 				m6808_ICount -= 19;
+
+                pending_interrupts &= ~M6808_INT_OCI;
 			}
 		}
+	}
 }
 
 
 void m6808_reset(void)
 {
-	pcreg = M_RDMEM_WORD(0xfffe);change_pc(pcreg);
+	pcreg = M_RDMEM_WORD(0xfffe);
+	change_pc(pcreg);
 
 	cc = 0x00;		/* Clear all flags */
 	SEI;			/* IRQ disabled */
 	areg = 0x00;	/* clear accumulator a */
 	breg = 0x00;	/* clear accumulator b */
-	m6808_Clear_Pending_Interrupts();
+#if NEW_INTERRUPT_SYSTEM
+	nmi_state = CLEAR_LINE;
+	irq_state = CLEAR_LINE;
+	pending_interrupts = 0;
+#else
+    m6808_Clear_Pending_Interrupts();
+#endif
 
 	/* default to unoptimized memory access */
 	rd_s_handler = rd_slow;
@@ -373,6 +411,33 @@ void m6808_reset(void)
 	}
 }
 
+
+#if NEW_INTERRUPT_SYSTEM
+
+
+void m6808_set_nmi_line(int state)
+{
+	if (nmi_state == state) return;
+	nmi_state = state;
+	if (state != CLEAR_LINE)
+		pending_interrupts |= M6808_INT_NMI;
+}
+
+void m6808_set_irq_line(int irqline, int state)
+{
+	irq_state = state;
+	if (state == CLEAR_LINE)
+		pending_interrupts &= ~M6808_PENDING;
+	else
+		pending_interrupts |= M6808_PENDING;
+}
+
+void m6808_set_irq_callback(int (*callback)(int irqline))
+{
+	irq_callback = callback;
+}
+
+#else
 
 void m6808_Cause_Interrupt(int type)
 {
@@ -392,6 +457,7 @@ void m6808_Clear_Pending_Interrupts(void)
 	pending_interrupts &= ~( M6808_INT_IRQ | M6808_INT_NMI | M6808_INT_OCI );
 }
 
+#endif
 
 #include "6808ops.c"
 
@@ -399,7 +465,7 @@ void m6808_Clear_Pending_Interrupts(void)
 /* execute instructions on this CPU until icount expires */
 int m6808_execute(int cycles)
 {
-	byte ireg;
+	UINT8 ireg;
 	m6808_ICount = cycles;
 
 	if ((pending_interrupts & M6808_WAI) != 0)

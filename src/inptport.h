@@ -30,4 +30,12 @@ int input_port_13_r(int offset);
 int input_port_14_r(int offset);
 int input_port_15_r(int offset);
 
+struct ipd
+{
+	UINT32 type;
+	const char *name;
+	UINT32 keyboard;
+	UINT32 joystick;
+};
+
 #endif

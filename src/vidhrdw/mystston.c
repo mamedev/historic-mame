@@ -35,7 +35,7 @@ int mystston_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Mysterious Stones has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -95,24 +95,24 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy,flipx;
+			int sx,sy,flipy;
 
 
 			dirtybuffer[offs] = 0;
 
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = (sx >= 16) ? 1 : 0;	/* flip horizontally tiles on the right half of the bitmap */
+			sx = 15 - offs / 32;
+			sy = offs % 32;
+			flipy = (sy >= 16) ? 1 : 0;	/* flip horizontally tiles on the right half of the bitmap */
 			if (flipscreen)
 			{
-				sx = 31 - sx;
-				sy = 15 - sy;
-				flipx = !flipx;
+				sx = 15 - sx;
+				sy = 31 - sy;
+				flipy = !flipy;
 			}
 			drawgfx(tmpbitmap,Machine->gfx[2],
 					videoram[offs] + 256 * (colorram[offs] & 0x01),
 					0,
-					flipx,flipscreen,
+					flipscreen,flipy,
 					16*sx,16*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -121,13 +121,13 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrollx;
+		int scrolly;
 
 
-		scrollx = -*mystston_scroll;
-		if (flipscreen) scrollx = 256 - scrollx;
+		scrolly = -*mystston_scroll;
+		if (flipscreen) scrolly = 256 - scrolly;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -139,10 +139,10 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int sx,sy,flipx,flipy;
 
 
-			sx = (240 - spriteram[offs+2]) & 0xff;
-			sy = spriteram[offs+3];
-			flipx = spriteram[offs] & 0x02;
-			flipy = spriteram[offs] & 0x04;
+			sx = 240 - spriteram[offs+3];
+			sy = (240 - spriteram[offs+2]) & 0xff;
+			flipx = spriteram[offs] & 0x04;
+			flipy = spriteram[offs] & 0x02;
 			if (flipscreen)
 			{
 				sx = 240 - sx;
@@ -167,8 +167,8 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int sx,sy;
 
 
-		sx = offs % 32;
-		sy = offs / 32;
+		sx = 31 - offs / 32;
+		sy = offs % 32;
 		if (flipscreen)
 		{
 			sx = 31 - sx;
@@ -183,4 +183,3 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
-

@@ -1,22 +1,15 @@
 /*
  * Configuration routines.
  *
- * 971219 support for mame.cfg by Valerio Verrando
- * 980402 moved out of msdos.c (N.S.), generalized routines (BW)
+ * 19971219 support for mame.cfg by Valerio Verrando
+ * 19980402 moved out of msdos.c (N.S.), generalized routines (BW)
+ * 19980917 added a "-cheatfile" option (misc) in MAME.CFG	JCK
  */
 
-/*|*\
-|*|
-|*|  Modifications by JCK from The Ultimate Patchers
-|*|
-|*|	JCK 980917:	Added a "-cheatfile" option (misc) in MAME.CFG
-|*|
-\*|*/
-
-#include "driver.h"
-#define inline __inline__	/* keep allegro.h happy */
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
 #include <allegro.h>
-#undef inline
+#undef __INLINE__
+#include "driver.h"
 #include <ctype.h>
 
 /* from main() */
@@ -26,7 +19,8 @@ extern int ignorecfg;
 extern int translucency;
 
 /* from video.c */
-extern int scanlines, use_double, video_sync, antialias, ntsc;
+extern int frameskip,autoframeskip;
+extern int scanlines, use_vesa, use_double, video_sync, antialias, ntsc;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
 extern float gamma_correction;
@@ -39,10 +33,8 @@ extern int use_emulated_ym3812;
 /* from input.c */
 extern int use_mouse, joystick;
 
-/* JCK 980917 BEGIN */
 /* from cheat.c */
 extern char *cheatfile;
-/* JCK 980917 END */
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
@@ -56,6 +48,25 @@ static int mame_argc;
 static char **mame_argv;
 static int game;
 char *rompath, *samplepath;
+
+struct { char *name; int id; } joy_table[] =
+{
+	{ "none",	 	JOY_TYPE_NONE },
+	{ "standard",	JOY_TYPE_STANDARD },
+	{ "dual",		JOY_TYPE_2PADS },
+	{ "4button",	JOY_TYPE_4BUTTON },
+	{ "6button",	JOY_TYPE_6BUTTON },
+	{ "8button",	JOY_TYPE_8BUTTON },
+	{ "fspro",		JOY_TYPE_FSPRO },
+	{ "wingex",		JOY_TYPE_WINGEX },
+	{ "sidewinder",	JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro",	JOY_TYPE_GAMEPAD_PRO },
+	{ "sneslpt1",	JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",	JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",	JOY_TYPE_SNESPAD_LPT3 },
+	{ NULL, NULL }
+} ;
+
 
 /*
  * gets some boolean config value.
@@ -258,12 +269,12 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
 	static float f_beam, f_flicker;
-	static int _vesa;
 	static char *resolution;
 	static char *vesamode;
+	static char *joyname;
 	char tmpres[10];
 	int i;
-
+	char *tmpstr;
 	mame_argc = argc;
 	mame_argv = argv;
 	game = game_index;
@@ -273,7 +284,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
-	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
+	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
 	translucency = get_bool    ("config", "translucency", NULL, 1);
 	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
@@ -286,7 +297,17 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
 	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
-	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
+	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
+	if (!strcmp(tmpstr,"auto"))
+	{
+		frameskip = 0;
+		autoframeskip = 1;
+	}
+	else
+	{
+		frameskip = atoi(tmpstr);
+		autoframeskip = 0;
+	}
 	options->norotate  = get_bool ("config", "norotate",  NULL, 0);
 	options->ror       = get_bool ("config", "ror",       NULL, 0);
 	options->rol       = get_bool ("config", "rol",       NULL, 0);
@@ -302,8 +323,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 
 	/* read input configuration */
-	use_mouse = get_bool ("config", "mouse",   NULL,  1);
-	joystick  = get_int  ("config", "joystick", "joy", 0);
+	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
+	joyname   = get_string ("config", "joystick", "joy", "none");
 
 	/* misc configuration */
 	options->cheat      = get_bool ("config", "cheat", NULL, 0);
@@ -338,17 +359,24 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	if (flicker > 255)
 		flicker = 255;
 
-	if (_vesa == 1)
+	if (use_vesa == 1)
 	{
 		if (stricmp (vesamode, "vesa1") == 0)
 			gfx_mode = GFX_VESA1;
 		else if (stricmp (vesamode, "vesa2b") == 0)
 			gfx_mode = GFX_VESA2B;
-		else
+		else if (stricmp (vesamode, "vesa2l") == 0)
 			gfx_mode = GFX_VESA2L;
+		else if (stricmp (vesamode, "vesa3") == 0)
+			gfx_mode = GFX_VESA3;
+		else
+		{
+			if (errorlog)
+				fprintf (errorlog, "%s is not a valid entry for vesamode\n",
+						vesamode);
+			gfx_mode = GFX_VESA2L; /* default to VESA2L */
+		}
 	}
-//	else
-//		gfx_mode = GFX_VGA;
 
 	/* any option that starts with a digit is taken as a resolution option */
 	/* this is to handle the old "-wxh" commandline option. */
@@ -372,4 +400,28 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 		if (tmp)
 			gfx_height = atoi (tmp);
 	}
+
+	/* convert joystick name into an Allegro-compliant joystick signature */
+	joystick = -2; /* default to invalid value */
+
+	for (i = 0; joy_table[i].name != NULL; i++)
+	{
+		char tmpnum[33];
+		(void) itoa (i, tmpnum, 10); /* old Allegro joystick index */
+		if ((stricmp (joy_table[i].name, joyname) == 0) ||
+			(stricmp (tmpnum, joyname) == 0))
+		{
+			joystick = joy_table[i].id;
+			break;
+		}
+	}
+
+	if (joystick == -2)
+	{
+		if (errorlog)
+			fprintf (errorlog, "%s is not a valid entry for a joystick\n",
+					joyname);
+		joystick = JOY_TYPE_NONE;
+	}
 }
+

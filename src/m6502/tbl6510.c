@@ -39,7 +39,7 @@
 #define m6510_20 m6502_20									// 6 JSR
 #define m6510_40 m6502_40									// 6 RTI
 #define m6510_60 m6502_60									// 6 RTS
-OP(80) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(80) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_a0 m6502_a0									// 2 LDY IMM
 #define m6510_c0 m6502_c0									// 2 CPY IMM
 #define m6510_e0 m6502_e0									// 2 CPX IMM
@@ -75,10 +75,10 @@ OP(80) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_22 m6502_22									// 2 ILL
 #define m6510_42 m6502_42									// 2 ILL
 #define m6510_62 m6502_62									// 2 ILL
-OP(82) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(82) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_a2 m6502_a2									// 2 LDX IMM
-OP(c2) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(e2) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(c2) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(e2) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 
 #define m6510_12 m6502_12									// 2 ILL
 #define m6510_32 m6502_32									// 2 ILL
@@ -89,41 +89,41 @@ OP(e2) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_d2 m6502_d2									// 2 ILL
 #define m6510_f2 m6502_f2									// 2 ILL
 
-OP(03) { int tmp; M6502_ICount -= 7; RD_IDX; SLO; WB_EA;  } // 6 SLO IDX
-OP(23) { int tmp; M6502_ICount -= 7; RD_IDX; RLA; WB_EA;  } // 6 RLA IDX
-OP(43) { int tmp; M6502_ICount -= 7; RD_IDX; SRE; WB_EA;  } // 6 SRE IDX
-OP(63) { int tmp; M6502_ICount -= 7; RD_IDX; RRA; WB_EA;  } // 6 RRA IDX
-OP(83) { int tmp; M6502_ICount -= 6;		 SAX; WR_IDX; } // 6 SAX IDX
-OP(a3) { int tmp; M6502_ICount -= 6; RD_IDX; LAX;		  } // 6 LAX IDX
-OP(c3) { int tmp; M6502_ICount -= 7; RD_IDX; DCP; WB_EA;  } // 7 DCP IDX
-OP(e3) { int tmp; M6502_ICount -= 7; RD_IDX; ISB; WB_EA;  } // 7 ISB IDX
+OP(03) { int tmp; m6502_ICount -= 7; RD_IDX; SLO; WB_EA;  } // 6 SLO IDX
+OP(23) { int tmp; m6502_ICount -= 7; RD_IDX; RLA; WB_EA;  } // 6 RLA IDX
+OP(43) { int tmp; m6502_ICount -= 7; RD_IDX; SRE; WB_EA;  } // 6 SRE IDX
+OP(63) { int tmp; m6502_ICount -= 7; RD_IDX; RRA; WB_EA;  } // 6 RRA IDX
+OP(83) { int tmp; m6502_ICount -= 6;		 SAX; WR_IDX; } // 6 SAX IDX
+OP(a3) { int tmp; m6502_ICount -= 6; RD_IDX; LAX;		  } // 6 LAX IDX
+OP(c3) { int tmp; m6502_ICount -= 7; RD_IDX; DCP; WB_EA;  } // 7 DCP IDX
+OP(e3) { int tmp; m6502_ICount -= 7; RD_IDX; ISB; WB_EA;  } // 7 ISB IDX
 
-OP(13) { int tmp; M6502_ICount -= 6; RD_IDY; SLO; WB_EA;  } // 5 SLO IDY
-OP(33) { int tmp; M6502_ICount -= 6; RD_IDY; RLA; WB_EA;  } // 5 RLA IDY
-OP(53) { int tmp; M6502_ICount -= 6; RD_IDY; SRE; WB_EA;  } // 5 SRE IDY
-OP(73) { int tmp; M6502_ICount -= 6; RD_IDY; RRA; WB_EA;  } // 5 RRA IDY
-OP(93) { int tmp; M6502_ICount -= 5;		 SAX; WR_IDY; } // 5 SAH IDY
-OP(b3) { int tmp; M6502_ICount -= 5; RD_IDY; LAX;		  } // 5 LAX IDY
-OP(d3) { int tmp; M6502_ICount -= 6; RD_IDY; DCP; WB_EA;  } // 6 DCP IDY
-OP(f3) { int tmp; M6502_ICount -= 6; RD_IDY; ISB; WB_EA;  } // 6 ISB IDY
+OP(13) { int tmp; m6502_ICount -= 6; RD_IDY; SLO; WB_EA;  } // 5 SLO IDY
+OP(33) { int tmp; m6502_ICount -= 6; RD_IDY; RLA; WB_EA;  } // 5 RLA IDY
+OP(53) { int tmp; m6502_ICount -= 6; RD_IDY; SRE; WB_EA;  } // 5 SRE IDY
+OP(73) { int tmp; m6502_ICount -= 6; RD_IDY; RRA; WB_EA;  } // 5 RRA IDY
+OP(93) { int tmp; m6502_ICount -= 5;		 SAX; WR_IDY; } // 5 SAH IDY
+OP(b3) { int tmp; m6502_ICount -= 5; RD_IDY; LAX;		  } // 5 LAX IDY
+OP(d3) { int tmp; m6502_ICount -= 6; RD_IDY; DCP; WB_EA;  } // 6 DCP IDY
+OP(f3) { int tmp; m6502_ICount -= 6; RD_IDY; ISB; WB_EA;  } // 6 ISB IDY
 
-OP(04) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(04) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_24 m6502_24									// 3 BIT ZPG
-OP(44) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(64) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(44) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(64) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_84 m6502_84									// 3 STY ZPG
 #define m6510_a4 m6502_a4									// 3 LDY ZPG
 #define m6510_c4 m6502_c4									// 3 CPY ZPG
 #define m6510_e4 m6502_e4									// 3 CPX ZPG
 
-OP(14) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(34) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(54) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(74) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(14) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(34) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(54) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(74) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_94 m6502_94									// 4 STY ZP_X
 #define m6510_b4 m6502_b4									// 4 LDY ZP_X
-OP(d4) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
-OP(f4) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(d4) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(f4) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 
 #define m6510_05 m6502_05									// 3 ORA ZPG
 #define m6510_25 m6502_25									// 3 AND ZPG
@@ -161,23 +161,23 @@ OP(f4) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_d6 m6502_d6									// 6 DEC ZPX
 #define m6510_f6 m6502_f6									// 6 INC ZPX
 
-OP(07) { int tmp; M6502_ICount -= 5; RD_ZPG; SLO; WB_EA;  } // 5 SLO ZPG
-OP(27) { int tmp; M6502_ICount -= 5; RD_ZPG; RLA; WB_EA;  } // 5 RLA ZPG
-OP(47) { int tmp; M6502_ICount -= 5; RD_ZPG; SRE; WB_EA;  } // 5 SRE ZPG
-OP(67) { int tmp; M6502_ICount -= 5; RD_ZPG; RRA; WB_EA;  } // 5 RRA ZPG
-OP(87) { int tmp; M6502_ICount -= 3;		 SAX; WR_ZPG; } // 3 SAX ZPG
-OP(a7) { int tmp; M6502_ICount -= 3; RD_ZPG; LAX;		  } // 3 LAX ZPG
-OP(c7) { int tmp; M6502_ICount -= 5; RD_ZPG; DCP; WB_EA;  } // 5 DCP ZPG
-OP(e7) { int tmp; M6502_ICount -= 5; RD_ZPG; ISB; WB_EA;  } // 5 ISB ZPG
+OP(07) { int tmp; m6502_ICount -= 5; RD_ZPG; SLO; WB_EA;  } // 5 SLO ZPG
+OP(27) { int tmp; m6502_ICount -= 5; RD_ZPG; RLA; WB_EA;  } // 5 RLA ZPG
+OP(47) { int tmp; m6502_ICount -= 5; RD_ZPG; SRE; WB_EA;  } // 5 SRE ZPG
+OP(67) { int tmp; m6502_ICount -= 5; RD_ZPG; RRA; WB_EA;  } // 5 RRA ZPG
+OP(87) { int tmp; m6502_ICount -= 3;		 SAX; WR_ZPG; } // 3 SAX ZPG
+OP(a7) { int tmp; m6502_ICount -= 3; RD_ZPG; LAX;		  } // 3 LAX ZPG
+OP(c7) { int tmp; m6502_ICount -= 5; RD_ZPG; DCP; WB_EA;  } // 5 DCP ZPG
+OP(e7) { int tmp; m6502_ICount -= 5; RD_ZPG; ISB; WB_EA;  } // 5 ISB ZPG
 
-OP(17) { int tmp; M6502_ICount -= 6; RD_ZPX; SLO; WB_EA;  } // 4 SLO ZPX
-OP(37) { int tmp; M6502_ICount -= 6; RD_ZPX; RLA; WB_EA;  } // 4 RLA ZPX
-OP(57) { int tmp; M6502_ICount -= 6; RD_ZPX; SRE; WB_EA;  } // 4 SRE ZPX
-OP(77) { int tmp; M6502_ICount -= 6; RD_ZPX; RRA; WB_EA;  } // 4 RRA ZPX
-OP(97) { int tmp; M6502_ICount -= 4;		 SAX; WR_ZPX; } // 4 SAX ZPY
-OP(b7) { int tmp; M6502_ICount -= 4; RD_ZPX; LAX;		  } // 4 LAX ZPY
-OP(d7) { int tmp; M6502_ICount -= 6; RD_ZPX; DCP; WB_EA;  } // 6 DCP ZPX
-OP(f7) { int tmp; M6502_ICount -= 6; RD_ZPX; ISB; WB_EA;  } // 6 ISB ZPX
+OP(17) { int tmp; m6502_ICount -= 6; RD_ZPX; SLO; WB_EA;  } // 4 SLO ZPX
+OP(37) { int tmp; m6502_ICount -= 6; RD_ZPX; RLA; WB_EA;  } // 4 RLA ZPX
+OP(57) { int tmp; m6502_ICount -= 6; RD_ZPX; SRE; WB_EA;  } // 4 SRE ZPX
+OP(77) { int tmp; m6502_ICount -= 6; RD_ZPX; RRA; WB_EA;  } // 4 RRA ZPX
+OP(97) { int tmp; m6502_ICount -= 4;		 SAX; WR_ZPX; } // 4 SAX ZPY
+OP(b7) { int tmp; m6502_ICount -= 4; RD_ZPX; LAX;		  } // 4 LAX ZPY
+OP(d7) { int tmp; m6502_ICount -= 6; RD_ZPX; DCP; WB_EA;  } // 6 DCP ZPX
+OP(f7) { int tmp; m6502_ICount -= 6; RD_ZPX; ISB; WB_EA;  } // 6 ISB ZPX
 
 #define m6510_08 m6502_08									// 2 PHP
 #define m6510_28 m6502_28									// 2 PLP
@@ -201,7 +201,7 @@ OP(f7) { int tmp; M6502_ICount -= 6; RD_ZPX; ISB; WB_EA;  } // 6 ISB ZPX
 #define m6510_29 m6502_29									// 2 AND IMM
 #define m6510_49 m6502_49									// 2 EOR IMM
 #define m6510_69 m6502_69									// 2 ADC IMM
-OP(89) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
+OP(89) {		  m6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_a9 m6502_a9									// 2 LDA IMM
 #define m6510_c9 m6502_c9									// 2 CMP IMM
 #define m6510_e9 m6502_e9									// 2 SBC IMM
@@ -224,34 +224,34 @@ OP(89) {		  M6502_ICount -= 2;		 DOP;		  } // 2 DOP
 #define m6510_ca m6502_ca									// 2 DEX
 #define m6510_ea m6502_ea									// 2 NOP
 
-OP(1a) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
-OP(3a) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
-OP(5a) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
-OP(7a) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(1a) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(3a) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(5a) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(7a) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
 #define m6510_9a m6502_9a									// 2 TXS
 #define m6510_ba m6502_ba									// 2 TSX
-OP(da) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
-OP(fa) {		  M6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(da) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
+OP(fa) {		  m6502_ICount -= 2;		 NOP;		  } // 2 NOP
 
-OP(0b) { int tmp; M6502_ICount -= 2; RD_IMM; ANC;		  } // 2 ANC IMM
-OP(2b) { int tmp; M6502_ICount -= 2; RD_IMM; ANC;		  } // 2 ANC IMM
-OP(4b) { int tmp; M6502_ICount -= 2; RD_IMM; ASR; WB_EA;  } // 2 ASR IMM
-OP(6b) { int tmp; M6502_ICount -= 2; RD_IMM; ARR; WB_EA;  } // 2 ARR IMM
-OP(8b) { int tmp; M6502_ICount -= 2; RD_IMM; AXA; WB_EA;  } // 2 AXA IMM
-OP(ab) { int tmp; M6502_ICount -= 2; RD_IMM; LAX;		  } // 2 LAX IMM
-OP(cb) { int tmp; M6502_ICount -= 2; RD_IMM; ASX;		  } // 2 ASX IMM
-OP(eb) { int tmp; M6502_ICount -= 2; RD_IMM; SBC;		  } // 2 SBC IMM
+OP(0b) { int tmp; m6502_ICount -= 2; RD_IMM; ANC;		  } // 2 ANC IMM
+OP(2b) { int tmp; m6502_ICount -= 2; RD_IMM; ANC;		  } // 2 ANC IMM
+OP(4b) { int tmp; m6502_ICount -= 2; RD_IMM; ASR; WB_EA;  } // 2 ASR IMM
+OP(6b) { int tmp; m6502_ICount -= 2; RD_IMM; ARR; WB_EA;  } // 2 ARR IMM
+OP(8b) { int tmp; m6502_ICount -= 2; RD_IMM; AXA; WB_EA;  } // 2 AXA IMM
+OP(ab) { int tmp; m6502_ICount -= 2; RD_IMM; LAX;		  } // 2 LAX IMM
+OP(cb) { int tmp; m6502_ICount -= 2; RD_IMM; ASX;		  } // 2 ASX IMM
+OP(eb) { int tmp; m6502_ICount -= 2; RD_IMM; SBC;		  } // 2 SBC IMM
 
-OP(1b) { int tmp; M6502_ICount -= 4; RD_ABY; SLO;		  } // 4 SLO ABY
-OP(3b) { int tmp; M6502_ICount -= 4; RD_ABY; RLA;		  } // 4 RLA ABY
-OP(5b) { int tmp; M6502_ICount -= 4; RD_ABY; SRE;		  } // 4 SRE ABY
-OP(7b) { int tmp; M6502_ICount -= 4; RD_ABY; RRA;		  } // 4 RRA ABY
-OP(9b) { int tmp; M6502_ICount -= 5;		 SSH; WR_ABY; } // 5 SSH ABY
-OP(bb) { int tmp; M6502_ICount -= 4; RD_ABY; AST;		  } // 4 AST ABY
-OP(db) { int tmp; M6502_ICount -= 6; RD_ABY; DCP; WB_EA;  } // 6 DCP ABY
-OP(fb) { int tmp; M6502_ICount -= 6; RD_ABY; ISB; WB_EA;  } // 6 ISB ABY
+OP(1b) { int tmp; m6502_ICount -= 4; RD_ABY; SLO;		  } // 4 SLO ABY
+OP(3b) { int tmp; m6502_ICount -= 4; RD_ABY; RLA;		  } // 4 RLA ABY
+OP(5b) { int tmp; m6502_ICount -= 4; RD_ABY; SRE;		  } // 4 SRE ABY
+OP(7b) { int tmp; m6502_ICount -= 4; RD_ABY; RRA;		  } // 4 RRA ABY
+OP(9b) { int tmp; m6502_ICount -= 5;		 SSH; WR_ABY; } // 5 SSH ABY
+OP(bb) { int tmp; m6502_ICount -= 4; RD_ABY; AST;		  } // 4 AST ABY
+OP(db) { int tmp; m6502_ICount -= 6; RD_ABY; DCP; WB_EA;  } // 6 DCP ABY
+OP(fb) { int tmp; m6502_ICount -= 6; RD_ABY; ISB; WB_EA;  } // 6 ISB ABY
 
-OP(0c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(0c) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
 #define m6510_2c m6502_2c									// 4 BIT ABS
 #define m6510_4c m6502_4c									// 3 JMP ABS
 #define m6510_6c m6502_6c									// 5 JMP IND
@@ -260,14 +260,14 @@ OP(0c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
 #define m6510_cc m6502_cc									// 4 CPY ABS
 #define m6510_ec m6502_ec									// 4 CPX ABS
 
-OP(1c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
-OP(3c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
-OP(5c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
-OP(7c) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
-OP(9c) { int tmp; M6502_ICount -= 5;		 SYH; WR_ABX; } // 5 SYH ABX
+OP(1c) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(3c) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(5c) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(7c) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(9c) { int tmp; m6502_ICount -= 5;		 SYH; WR_ABX; } // 5 SYH ABX
 #define m6510_bc m6502_bc									// 4 LDY ABX
-OP(dc) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
-OP(fc) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(dc) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
+OP(fc) {		  m6502_ICount -= 2;		 TOP;		  } // 2 TOP
 
 #define m6510_0d m6502_0d									// 4 ORA ABS
 #define m6510_2d m6502_2d									// 4 AND ABS
@@ -305,23 +305,23 @@ OP(fc) {		  M6502_ICount -= 2;		 TOP;		  } // 2 TOP
 #define m6510_de m6502_de									// 7 DEC ABX
 #define m6510_fe m6502_fe									// 7 INC ABX
 
-OP(0f) { int tmp; M6502_ICount -= 6; RD_ABS; SLO; WB_EA;  } // 4 SLO ABS
-OP(2f) { int tmp; M6502_ICount -= 6; RD_ABS; RLA; WB_EA;  } // 4 RLA ABS
-OP(4f) { int tmp; M6502_ICount -= 6; RD_ABS; SRE; WB_EA;  } // 4 SRE ABS
-OP(6f) { int tmp; M6502_ICount -= 6; RD_ABS; RRA; WB_EA;  } // 4 RRA ABS
-OP(8f) { int tmp; M6502_ICount -= 4;		 SAX; WR_ABS; } // 4 SAX ABS
-OP(af) { int tmp; M6502_ICount -= 5; RD_ABS; LAX;		  } // 4 LAX ABS
-OP(cf) { int tmp; M6502_ICount -= 6; RD_ABS; DCP; WB_EA;  } // 6 DCP ABS
-OP(ef) { int tmp; M6502_ICount -= 6; RD_ABS; ISB; WB_EA;  } // 6 ISB ABS
+OP(0f) { int tmp; m6502_ICount -= 6; RD_ABS; SLO; WB_EA;  } // 4 SLO ABS
+OP(2f) { int tmp; m6502_ICount -= 6; RD_ABS; RLA; WB_EA;  } // 4 RLA ABS
+OP(4f) { int tmp; m6502_ICount -= 6; RD_ABS; SRE; WB_EA;  } // 4 SRE ABS
+OP(6f) { int tmp; m6502_ICount -= 6; RD_ABS; RRA; WB_EA;  } // 4 RRA ABS
+OP(8f) { int tmp; m6502_ICount -= 4;		 SAX; WR_ABS; } // 4 SAX ABS
+OP(af) { int tmp; m6502_ICount -= 5; RD_ABS; LAX;		  } // 4 LAX ABS
+OP(cf) { int tmp; m6502_ICount -= 6; RD_ABS; DCP; WB_EA;  } // 6 DCP ABS
+OP(ef) { int tmp; m6502_ICount -= 6; RD_ABS; ISB; WB_EA;  } // 6 ISB ABS
 
-OP(1f) { int tmp; M6502_ICount -= 4; RD_ABX; SLO; WB_EA;  } // 4 SLO ABX
-OP(3f) { int tmp; M6502_ICount -= 4; RD_ABX; RLA; WB_EA;  } // 4 RLA ABX
-OP(5f) { int tmp; M6502_ICount -= 4; RD_ABX; SRE; WB_EA;  } // 4 SRE ABX
-OP(7f) { int tmp; M6502_ICount -= 4; RD_ABX; RRA; WB_EA;  } // 4 RRA ABX
-OP(9f) { int tmp; M6502_ICount -= 6;		 SAH; WR_ABY; } // 5 SAH ABY
-OP(bf) { int tmp; M6502_ICount -= 6; RD_ABY; LAX;		  } // 4 LAX ABY
-OP(df) { int tmp; M6502_ICount -= 7; RD_ABX; DCP; WB_EA;  } // 7 DCP ABX
-OP(ff) { int tmp; M6502_ICount -= 7; RD_ABX; ISB; WB_EA;  } // 7 ISB ABX
+OP(1f) { int tmp; m6502_ICount -= 4; RD_ABX; SLO; WB_EA;  } // 4 SLO ABX
+OP(3f) { int tmp; m6502_ICount -= 4; RD_ABX; RLA; WB_EA;  } // 4 RLA ABX
+OP(5f) { int tmp; m6502_ICount -= 4; RD_ABX; SRE; WB_EA;  } // 4 SRE ABX
+OP(7f) { int tmp; m6502_ICount -= 4; RD_ABX; RRA; WB_EA;  } // 4 RRA ABX
+OP(9f) { int tmp; m6502_ICount -= 6;		 SAH; WR_ABY; } // 5 SAH ABY
+OP(bf) { int tmp; m6502_ICount -= 6; RD_ABY; LAX;		  } // 4 LAX ABY
+OP(df) { int tmp; m6502_ICount -= 7; RD_ABX; DCP; WB_EA;  } // 7 DCP ABX
+OP(ff) { int tmp; m6502_ICount -= 7; RD_ABX; ISB; WB_EA;  } // 7 ISB ABX
 
 static void (*insn6510[0x100])(void) = {
 	m6510_00,m6510_01,m6510_02,m6510_03,m6510_04,m6510_05,m6510_06,m6510_07,

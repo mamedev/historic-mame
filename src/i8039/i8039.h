@@ -19,21 +19,16 @@
 #ifndef EMU_TYPES_8039
 #define EMU_TYPES_8039
 
-/**************************************************************************
- * sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                       *
- **************************************************************************/
-/* #define LSB_FIRST  */              /* Compile for low-endian CPU       */
-
-#include "types.h"	/* -NS- */
+#include "osd_cpu.h"
 
 typedef union
 {
 #ifdef LSB_FIRST
-   struct { byte l,h; } B;
-   word W;
+   struct { UINT8 l,h; } B;
+   UINT16 W;
 #else
-   struct { byte h,l; } B;
-   word W;
+   struct { UINT8 h,l; } B;
+   UINT16 W;
 #endif
 } i8039_pair;
 
@@ -49,43 +44,57 @@ typedef union
 
 typedef struct
 {
-  i8039_pair PC;	        	/* -NS- */
-  byte       A, SP, PSW;
-  byte       RAM[128];
-  byte       bus, f1;		/* Bus data, and flag1			  */
+	i8039_pair	PC; 		/* -NS- */
+	UINT8	A, SP, PSW;
+	UINT8	RAM[128];
+	UINT8	bus, f1;		/* Bus data, and flag1 */
 
-  int   pending_irq,irq_executing, masterClock, regPtr;
-  byte  t_flag, timer, timerON, countON, xirq_en, tirq_en;
-  word  A11, A11ff;
+	int 	pending_irq,irq_executing, masterClock, regPtr;
+	UINT8	t_flag, timer, timerON, countON, xirq_en, tirq_en;
+	UINT16	A11, A11ff;
+#if NEW_INTERRUPT_SYSTEM
+	int 	irq_state;
+	int 	(*irq_callback)(int irqline);
+#endif
 } I8039_Regs;
 
 extern   int I8039_ICount;      /* T-state count                          */
 
-#define  I8039_IGNORE_INT   0   /* Ignore interrupt                       */
-#define  I8039_EXT_INT     -1   /* Execute a normal extern interrupt      */
-#define  I8039_TIMER_INT   -2   /* Execute a Timer interrupt              */
-#define  I8039_COUNT_INT   -3   /* Execute a Counter interrupt            */
+/* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
+#define I8039_IGNORE_INT    0   /* Ignore interrupt                     */
+#define I8039_EXT_INT		1	/* Execute a normal extern interrupt	*/
+#define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
+#define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
+#if NEW_INTERRUPT_SYSTEM
+#define I8039_PENDING		0x80000000
+#endif
 
-unsigned I8039_GetPC  (void);             /* Get program counter          */
-void     I8039_GetRegs(I8039_Regs *Regs); /* Get registers                */
-void     I8039_SetRegs(I8039_Regs *Regs); /* Set registers                */
-void     I8039_Reset  (void);             /* Reset processor & registers  */
-int      I8039_Execute(int cycles);       /* Execute cycles T-States - returns number of cycles actually run */
+unsigned I8039_GetPC  (void);			/* Get program counter			*/
+void I8039_GetRegs(I8039_Regs *Regs);	/* Get registers				*/
+void I8039_SetRegs(I8039_Regs *Regs);	/* Set registers				*/
+void I8039_Reset  (void);				/* Reset processor & registers	*/
+int I8039_Execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
 
-void     I8039_Cause_Interrupt(int type);	/* NS 970904 */
-void     I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
+#if NEW_INTERRUPT_SYSTEM
+void I8039_set_nmi_line(int state);
+void I8039_set_irq_line(int irqline, int state);
+void I8039_set_irq_callback(int (*callback)(int irqline));
+#else
+void I8039_Cause_Interrupt(int type);	/* NS 970904 */
+void I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
+#endif
 
 /*   This handling of special I/O ports should be better for actual MAME
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
  */
 
 #if OLDPORTHANDLING
-        byte     I8039_port_r(byte port);
-        void     I8039_port_w(byte port, byte data);
-        byte     I8039_test_r(byte port);
-        void     I8039_test_w(byte port, byte data);
-        byte     I8039_bus_r(void);
-        void     I8039_bus_w(byte data);
+		UINT8	 I8039_port_r(UINT8 port);
+		void	 I8039_port_w(UINT8 port, UINT8 data);
+		UINT8	 I8039_test_r(UINT8 port);
+		void	 I8039_test_w(UINT8 port, UINT8 data);
+		UINT8	 I8039_bus_r(void);
+		void	 I8039_bus_w(UINT8 data);
 #else
         #define  I8039_p0	0x100   /* Not used */
         #define  I8039_p1	0x101
@@ -102,25 +111,25 @@ void     I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
 #include "memory.h"
 
 /*
- *   Input a byte from given I/O port
+ *	 Input a UINT8 from given I/O port
  */
-#define I8039_In(Port) ((byte)cpu_readport(Port))
+#define I8039_In(Port) ((UINT8)cpu_readport(Port))
 
 
 /*
- *   Output a byte to given I/O port
+ *	 Output a UINT8 to given I/O port
  */
 #define I8039_Out(Port,Value) (cpu_writeport(Port,Value))
 
 
 /*
- *   Read a byte from given memory location
+ *	 Read a UINT8 from given memory location
  */
 #define I8039_RDMEM(A) ((unsigned)cpu_readmem16(A))
 
 
 /*
- *   Write a byte to given memory location
+ *	 Write a UINT8 to given memory location
  */
 #define I8039_WRMEM(A,V) (cpu_writemem16(A,V))
 

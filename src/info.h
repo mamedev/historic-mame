@@ -1,22 +1,12 @@
 #ifndef __INFO_H
 #define __INFO_H
 
-/* CPU information table */
-extern struct cpu_desc {
-	int cpu_type;
-	const char* desc;
-} CPU_DESC[];
-
-/* SOUND information table */
-typedef unsigned (*SOUND_clock)(void* interface);
-typedef unsigned (*SOUND_num)(void* interface);
-
-extern struct sound_desc {
-	int sound_type;
-	SOUND_num num;
-	SOUND_clock clock;
-	const char* desc;
-} SOUND_DESC[];
+const char *info_cpu_name(const struct MachineCPU *cpu);
+const char *info_sound_name(const struct MachineSound *sound);
+/* returns 0 if the sound type doesn't support multiple instances */
+int info_sound_num(const struct MachineSound *sound);
+/* returns 0 if the sound type doesn't support a clock frequency */
+int info_sound_clock(const struct MachineSound *sound);
 
 /* Print all the MAME info records */
 void print_mame_info(FILE* out, const struct GameDriver* games[]);

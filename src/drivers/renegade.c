@@ -121,7 +121,6 @@ extern int renegade_scrollx;
 extern int renegade_video_refresh;
 
 static int interrupt_enable = 1;
-static unsigned char renegade_waitIRQsound = 0;
 static int bank = 0;
 
 static void adpcm_play_w( int offset,int data );
@@ -135,7 +134,7 @@ static struct ADPCMinterface adpcm_interface =
 	8000,       		/* 8000Hz playback */
 	3,			/* memory region */
 	0,			/* init function */
-	{ 255 }			/* volume? */
+	{ 100 }			/* volume? */
 };
 
 
@@ -151,8 +150,8 @@ void renegade_register_w( int offset, int data ){
 		break;
 
 		case 0x2:
-		renegade_waitIRQsound = 1;
 		soundlatch_w(offset,data);
+		cpu_cause_interrupt(1,M6809_INT_IRQ);
 		break;
 
 		case 0x3:
@@ -252,15 +251,6 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
-
-
-static int renegade_sound_interrupt(void){
-	if (renegade_waitIRQsound){
-		renegade_waitIRQsound = 0;
-		return (M6809_INT_IRQ);
-	}
-	return (M6809_INT_FIRQ);
-}
 
 
 
@@ -472,11 +462,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* handler called by the 3526 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+}
+
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3250000,	/* 3.25 MHz ? (hand tuned) */
-	{ 255 }		/* (not supported) */
+	{ 255 },	/* (not supported) */
+	irqhandler,
 };
 
 
@@ -496,7 +493,8 @@ static struct MachineDriver renegade_machine_driver =
 			1200000,	/* ? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			renegade_sound_interrupt,16
+			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
+								/* IRQs are caused by the main CPU */
 		}
 	},
 	60,

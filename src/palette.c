@@ -311,7 +311,10 @@ void palette_init(void)
 		if (((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) &&
 				Machine->drv->total_colors <= DYNAMIC_MAX_PENS) ||
 				(!(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) &&
-				Machine->drv->total_colors <= STATIC_MAX_PENS))
+//				Machine->drv->total_colors <= STATIC_MAX_PENS))
+				Machine->drv->total_colors <= DYNAMIC_MAX_PENS))
+/* I use DYNAMIC_MAX_PENS instead of STATIC_MAX_PENS to leave free pens for the */
+/* user interface whenever possible */
 		{
 			for (i = 0;i < Machine->drv->total_colors;i++)
 			{
@@ -320,6 +323,11 @@ void palette_init(void)
 				shrinked_palette[3*i + 1] = game_palette[3*i + 1];
 				shrinked_palette[3*i + 2] = game_palette[3*i + 2];
 			}
+
+			osd_allocate_colors(
+					Machine->drv->total_colors,
+					shrinked_palette,
+					shrinked_pens);
 		}
 		else
 		{
@@ -354,6 +362,11 @@ void palette_init(void)
 				{
 					palette_map[i] = (i & 7) + 8;
 				}
+
+				osd_allocate_colors(
+						DYNAMIC_MAX_PENS,
+						shrinked_palette,
+						shrinked_pens);
 			}
 			else
 			{
@@ -382,6 +395,7 @@ if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->
 						if (used > STATIC_MAX_PENS)
 						{
 							used = STATIC_MAX_PENS;
+							palette_map[i] = STATIC_MAX_PENS-1;
 if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
 						}
 						else
@@ -395,28 +409,13 @@ if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palett
 
 if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
 
-				/* fill out the remaining palette entries with black */
-				while (used < STATIC_MAX_PENS)
-				{
-					shrinked_palette[3*used + 0] = 0;
-					shrinked_palette[3*used + 1] = 0;
-					shrinked_palette[3*used + 2] = 0;
-
-					used++;
-				}
+				osd_allocate_colors(
+						used,
+						shrinked_palette,
+						shrinked_pens);
 			}
 		}
 
-		if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-			osd_allocate_colors(
-					(Machine->drv->total_colors > DYNAMIC_MAX_PENS) ? DYNAMIC_MAX_PENS : Machine->drv->total_colors,
-					shrinked_palette,
-					shrinked_pens);
-		else
-			osd_allocate_colors(
-					(Machine->drv->total_colors > STATIC_MAX_PENS) ? STATIC_MAX_PENS : Machine->drv->total_colors,
-					shrinked_palette,
-					shrinked_pens);
 
 		for (i = 0;i < Machine->drv->total_colors;i++)
 			Machine->pens[i] = shrinked_pens[palette_map[i]];

@@ -1,9 +1,9 @@
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
+#include <allegro.h>
+#undef __INLINE__
 #include "driver.h"
 #include "unzip.h"
 #include <sys/stat.h>
-#define inline __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef inline
 #include <unistd.h>
 
 #define MAXPATHC 20 /* at most 20 path entries */
@@ -745,3 +745,15 @@ unsigned int osd_fcrc (void *file)
 	return f->crc;
 }
 
+
+
+/* called while loading ROMs. It is called a last time with name == 0 to signal */
+/* that the ROM loading process is finished. */
+void osd_display_loading_rom_message(const char *name,int current,int total)
+{
+	if (name)
+		printf("loading %-12s\r",name);
+	else
+		printf("                    \r");
+	fflush(stdout);
+}

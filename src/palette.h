@@ -113,7 +113,7 @@
 #define PALETTE_H
 
 #define DYNAMIC_MAX_PENS 254	/* the Mac cannot handle more than 254 dynamic pens */
-#define STATIC_MAX_PENS 254	/* but theoretically static pens could be increased to 256 */
+#define STATIC_MAX_PENS 256		/* but 256 static pens can be handled */
 
 int palette_start(void);
 void palette_stop(void);

@@ -1,8 +1,8 @@
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
+#include <allegro.h>
+#undef __INLINE__
 #include "driver.h"
 #include <math.h>
-#define inline __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef inline
 
 
 extern struct osd_bitmap *bitmap;

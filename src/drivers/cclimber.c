@@ -817,6 +817,38 @@ ROM_START( ckongjeu_rom )
 	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
+ROM_START( ckongo_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "o55a-1",       0x0000, 0x1000, 0x8bfb4623 )
+	ROM_LOAD( "o55a-2",       0x1000, 0x1000, 0x9ae8089b )
+	ROM_LOAD( "o55a-3",       0x2000, 0x1000, 0xe82b33c8 )
+	ROM_LOAD( "o55a-4",       0x3000, 0x1000, 0xf038f941 )
+	ROM_LOAD( "o55a-5",       0x4000, 0x1000, 0x5182db06 )
+	/* no ROM at 5000 */
+
+	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	/* same as ckong but with halves switched */
+	ROM_LOAD( "o50b-1",       0x0000, 0x0800, 0xcae9e2bf )
+	ROM_CONTINUE(             0x2000, 0x0800 )
+	ROM_LOAD( "o50b-2",       0x0800, 0x0800, 0xfba82114 )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_LOAD( "o50b-3",       0x1000, 0x0800, 0x1714764b )
+	ROM_CONTINUE(             0x3000, 0x0800 )
+	ROM_LOAD( "o50b-4",       0x1800, 0x0800, 0xb7008b57 )
+	ROM_CONTINUE(             0x3800, 0x0800 )
+	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
+	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
+
+	ROM_REGION(0x60)        /* color proms */
+	ROM_LOAD( "prom.v6",      0x0000, 0x20, 0xb3fc1505 )
+	ROM_LOAD( "prom.u6",      0x0020, 0x20, 0x26aada9e )
+	ROM_LOAD( "prom.t6",      0x0040, 0x20, 0x676b3166 )
+
+	ROM_REGION(0x2000)      /* samples */
+	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, 0x9003ffbd )
+ROM_END
+
 ROM_START( ckongalc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
@@ -1208,6 +1240,32 @@ struct GameDriver ckongjeu_driver =
 	0,
 
 	ckongjeu_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	ckong_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	ckong_hiload, ckong_hisave
+};
+
+struct GameDriver ckongo_driver =
+{
+	__FILE__,
+	&ckong_driver,
+	"ckongo",
+	"Crazy Kong (Orca bootleg)",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	ckongo_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */
@@ -1843,7 +1901,7 @@ struct GameDriver swimmer_driver =
 	"1982",
 	"Tehkan",
 	"Brad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&swimmer_machine_driver,
 	0,
 
@@ -1869,7 +1927,7 @@ struct GameDriver swimmera_driver =
 	"1982",
 	"Tehkan",
 	"Brad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&swimmer_machine_driver,
 	0,
 

@@ -11,7 +11,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "z80/z80.h"
 
 
 
@@ -359,6 +359,12 @@ ROM_START( blktiger_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
 ROM_START( bktigerb_rom )
@@ -382,6 +388,12 @@ ROM_START( bktigerb_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
 ROM_START( blkdrgon_rom )
@@ -405,6 +417,41 @@ ROM_START( blkdrgon_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+ROM_END
+
+ROM_START( blkdrgnb_rom )
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "j1-5e",        0x00000, 0x08000, 0x97e84412 )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
+	ROM_LOAD( "j3-8e",        0x20000, 0x10000, 0xf4cd0f39 )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0x4d1d6680 )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0xc8d0c45e )	/* 6+7 */
+
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j15-2n",       0x00000, 0x08000, 0x852ad2b7 )	/* characters */
+	ROM_LOAD( "blkdrgon.5b",  0x10000, 0x10000, 0x22d0a4b0 )	/* tiles */
+	ROM_LOAD( "j11-4b",       0x20000, 0x10000, 0x053ab15c )
+	ROM_LOAD( "blkdrgon.9b",  0x30000, 0x10000, 0x9498c378 )
+	ROM_LOAD( "j13-8b",       0x40000, 0x10000, 0x663d5afa )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
 
@@ -470,9 +517,9 @@ struct GameDriver blktiger_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
-
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 
@@ -496,9 +543,9 @@ struct GameDriver bktigerb_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
-
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 
@@ -522,8 +569,34 @@ struct GameDriver blkdrgon_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
-
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver blkdrgnb_driver =
+{
+	__FILE__,
+	&blktiger_driver,
+	"blkdrgnb",
+	"Black Dragon (bootleg)",
+	"1987",
+	"bootleg",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
+	0,
+	&machine_driver,
+	0,
+
+	blkdrgnb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };

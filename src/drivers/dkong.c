@@ -679,7 +679,7 @@ static unsigned char hunchy_color_prom[] =
 static struct DACinterface dkong_dac_interface =
 {
 	1,
-	{ 100 }
+	{ 55 }
 };
 
 static struct Samplesinterface dkong_samples_interface =

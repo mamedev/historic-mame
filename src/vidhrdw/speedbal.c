@@ -174,7 +174,7 @@ int speedbal_background_videoram_r (int offset)
 void speedbal_draw_sprites (struct osd_bitmap *bitmap)
 {
 	int SPTX,SPTY,SPTTile,SPTColor,offset,f;
-	byte carac;
+	unsigned char carac;
 	unsigned char *SPTRegs;
 
 	/* Drawing sprites: 64 in total */

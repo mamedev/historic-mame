@@ -25,22 +25,21 @@ typedef union {
 }       I8085_Pair;
 
 typedef struct {
-        I8085_Pair      PC;
-        I8085_Pair      SP;
-        I8085_Pair      BC;
-        I8085_Pair      DE;
-        I8085_Pair      HL;
-        I8085_Pair      AF;
-        I8085_Pair      XX;     /* temporary storage for EA, immediates */
-        int             HALT;
-        int             IM;     /* interrupt mask */
-        int             IREQ;   /* requested interrupts */
-        int             ISRV;   /* serviced interrupt */
-        int             INTR;   /* vector for INTR */
-        int             IRQ2;   /* scheduled interrupt address */
-        int             IRQ1;   /* executed interrupt address */
-        void (*SOD_callback)(int state);
-}       I8085_Regs;
+	I8085_Pair	PC, SP, BC, DE, HL, AF, XX;
+	int HALT;
+	int IM; 	/* interrupt mask */
+	int IREQ;	/* requested interrupts */
+	int ISRV;	/* serviced interrupt */
+	int INTR;	/* vector for INTR */
+	int IRQ2;	/* scheduled interrupt address */
+	int IRQ1;	/* executed interrupt address */
+#if NEW_INTERRUPT_SYSTEM
+	int nmi_state;
+	int irq_state[4];
+	int (*irq_callback)(int);
+#endif
+    void (*SOD_callback)(int state);
+}	I8085_Regs;
 
 #define I8085_INTR      0xff
 #define I8085_SID       0x10
@@ -52,15 +51,21 @@ typedef struct {
 
 extern  int     I8085_ICount;
 
-void    I8085_SetRegs(I8085_Regs * regs);
-void    I8085_GetRegs(I8085_Regs * regs);
-int     I8085_GetPC(void);
-void    I8085_SetSID(int state);
-void    I8085_SetSOD_callback(void (*callback)(int state));
-void    I8085_Reset(void);
-int     I8085_Execute(int cycles);
-void    I8085_Cause_Interrupt(int type);
-void    I8085_Clear_Pending_Interrupts(void);
+void I8085_SetRegs(I8085_Regs * regs);
+void I8085_GetRegs(I8085_Regs * regs);
+unsigned I8085_GetPC(void);
+void I8085_SetSID(int state);
+void I8085_SetSOD_callback(void (*callback)(int state));
+void I8085_Reset(void);
+int I8085_Execute(int cycles);
+#if NEW_INTERRUPT_SYSTEM
+void I8085_set_nmi_line(int state);
+void I8085_set_irq_line(int irqline, int state);
+void I8085_set_irq_callback(int (*callback)(int irqline));
+#else
+void I8085_Cause_Interrupt(int type);
+void I8085_Clear_Pending_Interrupts(void);
+#endif
 
 #ifdef  MAME_DEBUG
 int     Dasm8085(char * dst, int PC);

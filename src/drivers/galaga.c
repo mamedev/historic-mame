@@ -480,10 +480,11 @@ ROM_START( galaga_rom )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGION(0x0320)	/* color PROMs */
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
@@ -507,10 +508,11 @@ ROM_START( galagamw_rom )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGION(0x0320)	/* color PROMs */
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
@@ -534,10 +536,11 @@ ROM_START( galagads_rom )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGION(0x0320)	/* color PROMs */
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
@@ -561,10 +564,11 @@ ROM_START( gallag_rom )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGION(0x0320)	/* color PROMs */
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
@@ -574,6 +578,9 @@ ROM_START( gallag_rom )
 
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
 ROM_END
 
 ROM_START( galagab2_rom )
@@ -588,10 +595,11 @@ ROM_START( galagab2_rom )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGION(0x0320)	/* color PROMs */
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
@@ -601,6 +609,9 @@ ROM_START( galagab2_rom )
 
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
 

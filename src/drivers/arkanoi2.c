@@ -211,32 +211,22 @@ void arkanoi2_inputport_w(int offset, int data)
 }
 
 
-
-/* Here we simulate a 12 bit dial position with mame's built-in 8 bit one */
 int arkanoi2_sh_f000_r(int offs)
 {
-static int pos=0;
-static int lastval=0;
-int val;
-int cur_pos;
-char diff;
+	int val;
 
-	cur_pos=pos;
-	val = readinputport(0)&0xff;
-	diff = (char)val-(char)lastval;
-	lastval = val;
-
-	pos += diff;
-
-	if(offs==0) cur_pos=pos;
-
-	val = (readinputport(4)<<8)+(cur_pos&0x0fff);
-	if (offs==0)
-		return val&0xff;
+	val = readinputport(0);
+	if (offs == 0)
+	{
+		if (errorlog) fprintf (errorlog, "f000_r: %02x\n", val & 0xff);
+		return val & 0xff;
+	}
 	else
-		return val>>8;
+	{
+		if (errorlog) fprintf (errorlog, "f001_r: %02x\n", (val >> 8) & 0xff);
+		return ((val >> 8) & 0xff);
+	}
 }
-
 
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -273,7 +263,11 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 - spinner (1 paddle?) */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_BITX(0x1000, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BITX(0x2000, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 ) /* Service */
+	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT (0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 - read at c000 (sound cpu) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -282,53 +276,48 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* DSW1 - IN2 */
-	PORT_DIPNAME( 0x01, 0x01, "Game Style", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Table")
-	PORT_DIPSETTING(    0x00, "Upright")
-	PORT_DIPNAME( 0x02, 0x02, "Monitor", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Normal")
-	PORT_DIPSETTING(    0x00, "Invert")
-	PORT_DIPNAME( 0x04, 0x04, "Test", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Normal Game")
-	PORT_DIPSETTING(    0x00, "Test Mode")
-	PORT_DIPNAME( 0x08, 0x08, "Attract Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "On")
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPNAME( 0x30, 0x30, "Coin 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x30, "1 Coin/1 Play")
-	PORT_DIPSETTING(    0x20, "1 Coin/2 Play")
-	PORT_DIPSETTING(    0x10, "2 Coin/1 Play")
-	PORT_DIPSETTING(    0x00, "2 Coin/3 Play")
-	PORT_DIPNAME( 0xc0, 0xc0, "Coin 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0xc0, "1 Coin/1 Play")
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Play")
-	PORT_DIPSETTING(    0x40, "2 Coin/1 Play")
-	PORT_DIPSETTING(    0x00, "2 Coin/3 Play")
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 
 	PORT_START	/* DSW2 - IN3 */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Easy")
-	PORT_DIPSETTING(    0x03, "Normal")
-	PORT_DIPSETTING(    0x01, "Hard")
-	PORT_DIPSETTING(    0x00, "Very Hard")
-	PORT_DIPNAME( 0x0c, 0x0c, "Bonus", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x0c, "100K/200K")
-	PORT_DIPSETTING(    0x08, "100K Only")
-	PORT_DIPSETTING(    0x04, "50K Only")
-	PORT_DIPSETTING(    0x00, "50K/150K")
-	PORT_DIPNAME( 0x30, 0x30, "Number of VAUS", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x30, "3")
-	PORT_DIPSETTING(    0x20, "2")
-	PORT_DIPSETTING(    0x10, "4")
-	PORT_DIPSETTING(    0x00, "5")
-	PORT_DIPNAME( 0x80, 0x80, "Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-
-	PORT_START      /* IN4 */
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, "Coin[2]", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Service?", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin[1]", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "50k 150k" )
+	PORT_DIPSETTING(    0x0c, "100k 200k" )
+	PORT_DIPSETTING(    0x04, "50k Only" )
+	PORT_DIPSETTING(    0x08, "100k Only" )
+	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
 
 
@@ -519,7 +508,7 @@ struct GameDriver arkanoi2_driver =
 	__FILE__,
 	0,
 	"arkanoi2",
-	"Arkanoid 2 - Revenge of DOH",
+	"Arkanoid - Revenge of DOH",
 	"1987",
 	"Taito",
 	"Luca Elia\nMirko Buffoni",
@@ -546,7 +535,7 @@ struct GameDriver ark2us_driver =
 	__FILE__,
 	&arkanoi2_driver,
 	"ark2us",
-	"Arkanoid 2 - Revenge of DOH (Romstar)",
+	"Arkanoid - Revenge of DOH (Romstar)",
 	"1987",
 	"Taito (Romstar license)",
 	"Luca Elia\nMirko Buffoni",

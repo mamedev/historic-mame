@@ -1,7 +1,10 @@
 /***************************************************************************
 
   Dark Seal, (c) 1990 Data East Corporation (Japanese version)
-  Gate Of Doom, (c) 1990 Data East Corporation (USA version)
+  Gate Of Doom, (c) 1990 Data East Corporation (2 USA versions)
+
+  Gate of Doom (set 2) is a different revision, but I don't know which one is
+newer.
 
   Basically an improved version of Midnight Resistance hardware:
     More sprites,
@@ -31,7 +34,6 @@ Driver notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-static unsigned char *ram_drkseal; /* used by high scores */
 
 int  darkseal_vh_start(void);
 void darkseal_vh_stop(void);
@@ -73,13 +75,12 @@ static void darkseal_control_w(int offset,int data)
   if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
-
 /******************************************************************************/
 
 static struct MemoryReadAddress darkseal_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1, &ram_drkseal},
+	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_r },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_r },
@@ -298,7 +299,7 @@ static struct MachineDriver darkseal_machine_driver =
 
 ROM_START( darkseal_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-  /* Nothing :) */
+	/* Nothing :) */
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
@@ -352,6 +353,33 @@ ROM_START( gatedoom_rom )
  	ROM_LOAD( "gb05.bin",     0x60000, 0x20000, 0x252d7e14 )
 ROM_END
 
+ROM_START( gatedoma_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+	/* Nothing :) */
+
+	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+
+	ROM_REGION(0x10000)	/* Unknown sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGION(0x40000)	/* ADPCM samples */
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-07.rom",    0x20000, 0x20000, 0x588dd3cb )
+
+	ROM_REGION(0x80000) /* Encrypted code */
+	ROM_LOAD( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd ) /* Paired with 1 */
+	ROM_LOAD( "ga-00.rom",    0x20000, 0x20000, 0xfbf3ac63 ) /* Paired with 5 */
+	ROM_LOAD( "gb01-4",       0x40000, 0x20000, 0x8d0fd383 )
+	ROM_LOAD( "ga-05.rom",    0x60000, 0x20000, 0xd5e3ae3f )
+ROM_END
+
 /******************************************************************************/
 
 static void darkseal_decrypt(void)
@@ -390,7 +418,6 @@ static void darkseal_decrypt(void)
 
 /******************************************************************************/
 
-/* Why do I have to double length???  Bug in ADPCM code? */
 ADPCM_SAMPLES_START(darkseal_samples)
 ADPCM_SAMPLE(0x47,0x00f8,0x1000*2)
 ADPCM_SAMPLE(0x48,0x10f8,0x0600*2)
@@ -425,7 +452,7 @@ ADPCM_SAMPLE(0x64,0x1c6f8,0x0600*2)
 ADPCM_SAMPLE(0x65,0x1ccf8,0x2000*2)
 ADPCM_SAMPLES_END
 
-
+/******************************************************************************/
 
 /* hi load / save added 12/02/98 HSC */
 
@@ -433,11 +460,11 @@ static int hiload(void)
 {
     void *f;
     /* check if the hi score table has already been initialized */
-    if (READ_WORD(&ram_drkseal[0x3e00])==0x50 && READ_WORD(&ram_drkseal[0x3e04])==0x50 && READ_WORD(&ram_drkseal[0x3e32])==0x4800 && READ_WORD(&ram_drkseal[0x3e34])==0x462e)
+    if (READ_WORD(&darkseal_ram[0x3e00])==0x50 && READ_WORD(&darkseal_ram[0x3e04])==0x50 && READ_WORD(&darkseal_ram[0x3e32])==0x4800 && READ_WORD(&darkseal_ram[0x3e34])==0x462e)
     {
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
-			osd_fread_msbfirst(f,&ram_drkseal[0x3e00],56);
+			osd_fread_msbfirst(f,&darkseal_ram[0x3e00],56);
 			osd_fclose(f);
 
 		}
@@ -453,11 +480,13 @@ static void hisave(void)
 
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
-				osd_fwrite_msbfirst(f,&ram_drkseal[0x3e00],56);
+				osd_fwrite_msbfirst(f,&darkseal_ram[0x3e00],56);
 				osd_fclose(f);
         }
 }
 
+
+/******************************************************************************/
 
 struct GameDriver darkseal_driver =
 {
@@ -489,7 +518,7 @@ struct GameDriver gatedoom_driver =
 	__FILE__,
 	&darkseal_driver,
 	"gatedoom",
-	"Gate Of Doom",
+	"Gate Of Doom (set 1)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -509,3 +538,27 @@ struct GameDriver gatedoom_driver =
 	hiload , hisave /* hsc 12/02/98 */
 };
 
+struct GameDriver gatedoma_driver =
+{
+	__FILE__,
+	&darkseal_driver,
+	"gatedoma",
+	"Gate Of Doom (set 2)",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&darkseal_machine_driver,
+	0,
+
+	gatedoma_rom,
+	0, darkseal_decrypt,
+	0,
+	(void *)darkseal_samples,
+
+	darkseal_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};

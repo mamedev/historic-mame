@@ -309,6 +309,7 @@ The first sprite data is located at f20b,then f21b and so on.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+void psychic5_init_machine(void);
 int  psychic5_vh_start(void);
 void psychic5_vh_stop(void);
 void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -525,7 +526,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,		/* 2 chips   */
-	1500000,    /* 6000000/4 */
+	1500000,    	/* 6000000/4 */
 	{ YM2203_VOL(255,127), YM2203_VOL(255,127) },
 	{ 0 },
 	{ 0 },
@@ -554,7 +555,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,                                     /* Allow time for 2nd cpu to interleave*/
-	0,
+	psychic5_init_machine,
 	/* video hardware */
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 2*8, 30*8-1 },

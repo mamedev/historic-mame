@@ -27,7 +27,6 @@ TODO:
 - Add proper colors
 - Fix sprites enable/disable? (entering a High Score sprites remain onscreen, maybe hidden by color?)
 - Clip out sprites?
-- Find input ports settings
 - Fix High Score rectangles
 
 ***************************************************************************/
@@ -40,36 +39,36 @@ TODO:
 /* from vidhrdw */
 extern void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-/* stub for reading input ports as active low (makes building ports much easier) */
-static int low_input_r( int offset ) {
-    return ~readinputport( offset );
-}
 
-static void sound_cpu_command_w( int offset, int v ) {
-    soundlatch_w( offset, v );
-    cpu_cause_interrupt( 1, M6502_INT_NMI );
+static void sound_cpu_command_w(int offset,int data)
+{
+    soundlatch_w(offset,data);
+    cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 static struct MemoryReadAddress readmem[] =
 {
-    { 0x0000, 0x0fff, MRA_RAM },
-    { 0x1000, 0x13ff, videoram_r },
-    { 0x1800, 0x1bff, colorram_r },
-    { 0x2000, 0x20ff, MRA_RAM },
-    { 0x3000, 0x3003, low_input_r },
-    { 0x4000, 0xffff, MRA_ROM },
-    { -1 }  /* end of table */
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x1000, 0x13ff, videoram_r },
+	{ 0x1800, 0x1bff, colorram_r },
+	{ 0x2000, 0x20ff, MRA_RAM },
+	{ 0x3000, 0x3000, input_port_0_r },
+	{ 0x3001, 0x3001, input_port_1_r },
+	{ 0x3002, 0x3002, input_port_2_r },
+	{ 0x3003, 0x3003, input_port_3_r },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-    { 0x0000, 0x0fff, MWA_RAM },
-    { 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
-    { 0x1800, 0x1bff, colorram_w, &colorram },
-    { 0x2000, 0x20ff, MWA_RAM, &spriteram, &spriteram_size },
-    { 0x3004, 0x3004, sound_cpu_command_w },
-    { 0x4000, 0xffff, MWA_ROM },
-    { -1 }  /* end of table */
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
+	{ 0x1800, 0x1bff, colorram_w, &colorram },
+	{ 0x2000, 0x20ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3004, 0x3004, sound_cpu_command_w },
+	{ 0x4000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -93,22 +92,70 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( input_ports )
     PORT_START /* 0x3000 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
     PORT_START /* 0x3001 */
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) /* adds 2 credits? */
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+	/* I haven't found a way to make the game use the 2p controls */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
     PORT_START /* 0x3002 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x10, 0x10, "Unused?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unused?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unused?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
     PORT_START /* 0x3003 */
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_DIPNAME( 0x03, 0x03, "Timer Speed", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Stopped", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x03, "Slow" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Fast" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "6" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x30, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_DIPNAME( 0x80, 0x80, "Unused?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -308,28 +355,30 @@ ROM_START( sidepckt_rom )
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
+
+
 struct GameDriver sidepckt_driver =
 {
 	__FILE__,
 	0,
-    "sidepckt",
-    "Side Pocket",
+	"sidepckt",
+	"Side Pocket",
 	"1986",
 	"Data East Corporation",
-    "Ernesto Corvi\nMarc Vergoossen (hardware info)",
+	"Ernesto Corvi\nMarc Vergoossen (hardware info)",
+	GAME_WRONG_COLORS,
+	&machine_driver,
 	0,
-    &machine_driver,
+
+	sidepckt_rom,
+	0, 0,
 	0,
+	0,      /* sound_prom */
 
-    sidepckt_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
+	input_ports,
 
-    input_ports,
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
 
-    0, palette, colortable,
-    ORIENTATION_DEFAULT,
-
-    0, 0
+	0, 0
 };

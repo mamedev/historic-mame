@@ -274,8 +274,7 @@ static void dec0_update_palette(int pf23priority)
 static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
-	static int flash_counter;
-	flash_counter++;
+
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
@@ -289,7 +288,7 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 		if ((colour & pri_mask) != pri_val) continue;
 
 		flash=x&0x800;
-		if (flash && flash_counter%2) continue;
+		if (flash && (cpu_getcurrentframe() & 1)) continue;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;

@@ -1,3 +1,6 @@
+#define __INLINE__ static __inline__	/* keep allegro.h happy */
+#include <allegro.h>
+#undef __INLINE__
 #include "driver.h"
 #include <pc.h>
 #include <conio.h>
@@ -5,23 +8,23 @@
 #include <go32.h>
 #include <time.h>
 #include "TwkUser.c"
-#define inline __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef inline
 #include <math.h>
 #include "vgafreq.h"
 #include "vidhrdw/vector.h"
 
-DECLARE_GFX_DRIVER_LIST(
+BEGIN_GFX_DRIVER_LIST
 	GFX_DRIVER_VGA
+	GFX_DRIVER_VESA3
 	GFX_DRIVER_VESA2L
 	GFX_DRIVER_VESA2B
-	GFX_DRIVER_VESA1)
+	GFX_DRIVER_VESA1
+END_GFX_DRIVER_LIST
 
-DECLARE_COLOR_DEPTH_LIST(
+BEGIN_COLOR_DEPTH_LIST
 	COLOR_DEPTH_8
 	COLOR_DEPTH_15
-	COLOR_DEPTH_16)
+	COLOR_DEPTH_16
+END_COLOR_DEPTH_LIST
 
 #define BACKGROUND 0
 
@@ -41,6 +44,12 @@ char *dirty_old=grid1;
 char *dirty_new=grid2;
 
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
+
+
+
+/* in msdos/sound.c */
+int msdos_update_audio(void);
+
 
 extern int use_profiler;
 void osd_profiler_display(void);
@@ -82,7 +91,10 @@ static unsigned char dirtycolor[256];
 static int dirtypalette;
 
 
-int vesa;
+int frameskip,autoframeskip;
+#define FRAMESKIP_LEVELS 12
+
+
 int ntsc;
 int vgafreq;
 int always_synced;
@@ -92,6 +104,8 @@ int skiplines;
 int skipcolumns;
 int scanlines;
 int use_double;
+int use_vesa;
+int gfx_mode;
 float gamma_correction = 1.0;
 int brightness = 100;
 char *pcxdir;
@@ -125,6 +139,7 @@ static int vdoubling = 0;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
+static int frameskip_counter;
 static int frames_displayed;
 static uclock_t start_time,end_time;	/* to calculate fps average on exit */
 #define FRAMES_TO_SKIP 20	/* skip the first few frames from the FPS calculation */
@@ -152,14 +167,6 @@ struct vga_tweak vga_tweaked[] = {
 	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0 },
 	{ 0, 0 }
 };
-
-static char *vesa_desc[6]= {
-	"AUTO_DETECT", "VGA", "MODEX (not supported)",
-	"VESA 1.2", "VESA 2.0 (banked)", "VESA 2.0 (linear)"
-};
-
-
-
 
 
 /* Create a bitmap. Also calls osd_clearbitmap() to appropriately initialize */
@@ -347,12 +354,18 @@ static void select_display_mode(void)
 
 	/* 16 bit color is supported only by VESA modes */
 	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
-		gfx_mode = GFX_VESA2L;
+	{
+		if (errorlog)
+			fprintf (errorlog, "Game needs 16-bit colors. Using VESA\n");
+		use_vesa = 1;
+	}
 
 	/* Check for special NTSC mode */
 	if (ntsc == 1)
 	{
-		gfx_mode = GFX_VGA; gfx_width = 288; gfx_height = 224;
+		if (errorlog)
+			fprintf (errorlog, "Using special NTSC video mode.\n");
+		use_vesa = 0; gfx_width = 288; gfx_height = 224;
 	}
 
 	/* If a specific resolution was given, reconsider VESA against */
@@ -360,23 +373,34 @@ static void select_display_mode(void)
 	if (gfx_width && gfx_height)
 	{
 		if (gfx_width >= 320 && gfx_height >= 240)
-			gfx_mode = GFX_VESA2L;
+			use_vesa = 1;
 		else
-			gfx_mode = GFX_VGA;
+			use_vesa = 0;
 	}
-	/* if no gfx mode specified, choose the best one */
-	else if (!gfx_mode)
+
+	/* Hack for 320x480 and 400x600 "vmame" video modes */
+	if ((gfx_width == 320 && gfx_height == 480) ||
+		(gfx_width == 400 && gfx_height == 600))
+	{
+		use_vesa = 1;
+		doubling = 0;
+		vdoubling = 1;
+		height *= 2;
+	}
+
+	/* -autovesa ? */
+	if (use_vesa == -1)
 	{
 		if (width >= 320 && height >= 240)
-			gfx_mode = GFX_VESA2L;
+			use_vesa = 1;
 		else
-			gfx_mode = GFX_VGA;
+			use_vesa = 0;
 	}
 
 
 	/* If using tweaked modes, check if there exists one to fit
 	   the screen in, otherwise use VESA */
-	if (gfx_mode==GFX_VGA && !gfx_width && !gfx_height)
+	if (use_vesa == 0 && !gfx_width && !gfx_height)
 	{
 		int i;
 		for (i=0; vga_tweaked[i].x != 0; i++)
@@ -397,14 +421,18 @@ static void select_display_mode(void)
 		}
 		/* If we didn't find a tweaked VGA mode, use VESA */
 		if (gfx_width == 0)
-			gfx_mode = GFX_VESA2L;
+		{
+			if (errorlog)
+				fprintf (errorlog, "Did not find a tweaked VGA mode. Using VESA.\n");
+			use_vesa = 1;
+		}
 	}
 
 
 	/* If no VESA resolution has been given, we choose a sensible one. */
 	/* 640x480, 800x600 and 1024x768 are common to all VESA drivers. */
 
-	if ((gfx_mode!=GFX_VGA) && !gfx_width && !gfx_height)
+	if ((use_vesa == 1) && !gfx_width && !gfx_height)
 	{
 		auto_resolution = 1;
 
@@ -518,7 +546,7 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	viswidth  = xmax - xmin + 1;
 	visheight = ymax - ymin + 1;
 
-	if (doubling == 0 || gfx_mode == GFX_VGA ||
+	if (doubling == 0 || use_vesa == 0 ||
 			(doubling != 1 && (viswidth > gfx_width/2 || visheight > gfx_height/2)))
 		doubling = 0;
 	else
@@ -611,6 +639,11 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
+
+	if (frameskip < 0) frameskip = 0;
+	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
+
+
 	gone_to_gfx_mode = 0;
 
 	/* Look if this is a vector game */
@@ -666,7 +699,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 	if (use_dirty) /* supports dirty ? */
 	{
-		if (gfx_mode == GFX_VGA)
+		if (use_vesa == 0)
 		{
 			update_screen = update_screen_dirty1_vga;
 			if (errorlog) fprintf (errorlog, "update_screen_dirty1_vga\n");
@@ -729,7 +762,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	}
 	else	/* does not support dirty */
 	{
-		if (gfx_mode == GFX_VGA)
+		if (use_vesa == 0)
 		{
 			update_screen = update_screen_dirty0_vga;
 			if (errorlog) fprintf (errorlog, "update_screen_dirty0_vga\n");
@@ -834,7 +867,7 @@ int osd_set_display(int width,int height, int attributes)
 	}
 	dirtypalette = 1;
 
-	if (gfx_mode == GFX_VGA)
+	if (use_vesa == 0)
 	{
 		int found;
 
@@ -911,51 +944,91 @@ int osd_set_display(int width,int height, int attributes)
 		else if (videofreq > 3) videofreq = 3;
 	}
 
-	if (gfx_mode!=GFX_VGA)
+	if (use_vesa == 1)
 	{
-		int mode, bits;
+		int mode, bits, err, found;
 
+		mode = gfx_mode;
+		found = 0;
+		bits = scrbitmap->depth;
 
-retry:
-		/* Try the specified vesamode and all lower ones BW 131097 */
-		for (mode=gfx_mode; mode>=GFX_VESA1; mode--)
+		/* Try the specified vesamode, 565 and 555 for 16 bit color modes, */
+		/* doubled resolution in case of noscanlines and if not succesful  */
+		/* repeat for all "lower" VESA modes. NS/BW 19980102 */
+
+		while (!found)
 		{
-			/* try 5-6-5 first and 5-5-5 in case of 16 bit colors */
-			bits = scrbitmap->depth;
 			set_color_depth(bits);
 
-			if (errorlog)
-				fprintf (errorlog,"Trying %s, %dx%d, %d bit\n", vesa_desc[mode],gfx_width,gfx_height,bits);
-			if (set_gfx_mode(mode,gfx_width,gfx_height,0,0) == 0)
-				break;
-			if (errorlog)
-				fprintf (errorlog,"%s\n",allegro_error);
+			err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
 
-			if (bits ==8 )
+			if (errorlog)
+			{
+				fprintf (errorlog,"Trying ");
+				if      (mode == GFX_VESA1)
+					fprintf (errorlog, "VESA1");
+				else if (mode == GFX_VESA2B)
+					fprintf (errorlog, "VESA2B");
+				else if (mode == GFX_VESA2L)
+				    fprintf (errorlog, "VESA2L");
+				else if (mode == GFX_VESA3)
+					fprintf (errorlog, "VESA3");
+			    fprintf (errorlog, "  %dx%d, %d bit\n",
+						gfx_width, gfx_height, bits);
+			}
+
+			if (err == 0)
+			{
+				found = 1;
 				continue;
-
-			bits = 15;
-			set_color_depth(bits);
-
-			if (errorlog)
-				fprintf (errorlog,"Trying %s, %d bit\n", vesa_desc[mode],bits);
-			if (set_gfx_mode(mode,gfx_width,gfx_height,0,0) == 0)
-				break;
-			if (errorlog)
+			}
+			else if (errorlog)
 				fprintf (errorlog,"%s\n",allegro_error);
-		}
 
-		if (mode < GFX_VESA1)
-		{
+			/* Now adjust parameters for the next loop */
+
+			/* try 5-5-5 in case there is no 5-6-5 16 bit color mode */
+			if (scrbitmap->depth == 16)
+			{
+				if (bits == 16)
+				{
+					bits = 15;
+					continue;
+				}
+				else
+					bits = 16; /* reset to 5-6-5 */
+			}
+
+			/* try VESA modes in VESA3-VESA2L-VESA2B-VESA1 order */
+
+			if (mode == GFX_VESA3)
+			{
+				mode = GFX_VESA2L;
+				continue;
+			}
+			else if (mode == GFX_VESA2L)
+			{
+				mode = GFX_VESA2B;
+				continue;
+			}
+			else if (mode == GFX_VESA2B)
+			{
+				mode = GFX_VESA1;
+				continue;
+			}
+			else if (mode == GFX_VESA1)
+				mode = gfx_mode; /* restart with the mode given in mame.cfg */
+
+			/* try higher resolutions */
 			if (auto_resolution && gfx_width <= 512)
 			{
 				/* low res VESA mode not available, try an high res one */
 				if (use_double == 0)
 				{
-					/* if pixel doubling disabledm use 640x480 */
+					/* if pixel doubling disabled use 640x480 */
 					gfx_width = 640;
 					gfx_height = 480;
-					goto retry;
+					continue;
 				}
 				else
 				{
@@ -963,10 +1036,16 @@ retry:
 					doubling = 1;
 					gfx_width *= 2;
 					gfx_height *= 2;
-					goto retry;
+					continue;
 				}
 			}
 
+			/* If there was no continue up to this point, we give up */
+			break;
+		}
+
+		if (found == 0)
+		{
 			printf ("\nNo %d-bit %dx%d VESA mode available.\n",
 					scrbitmap->depth,gfx_width,gfx_height);
 			printf ("\nPossible causes:\n"
@@ -985,8 +1064,12 @@ retry:
 "   resolution ('-640x480', '-800x600').\n");
 			return 0;
 		}
-
-		gfx_mode = mode;
+		else
+		{
+			if (errorlog)
+				fprintf (errorlog, "Found matching %s mode\n", gfx_driver->desc);
+			gfx_mode = mode;
+		}
 	}
 	else
 	{
@@ -1173,12 +1256,6 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			current_palette[pens[i]][2] = palette[3*i+2];
 		}
 	}
-
-	/* do a first screen update to pick the */
-	/* background pen before the copyright screen is displayed. */
-	osd_update_display();
-	/* the first call picked the color, the second call actually refreshes the screen */
-	osd_update_display();
 }
 
 
@@ -2059,7 +2136,7 @@ void clear_screen(void)
 	char buf[MAX_GFX_WIDTH * 2];
 
 
-	if (gfx_mode==GFX_VGA)
+	if (use_vesa == 0)
 	{
 		int columns4,y;
 		unsigned long address;
@@ -2181,7 +2258,7 @@ void osd_save_snapshot(void)
 	} while (f != 0);
 
 	get_palette(pal);
-	if (gfx_mode == GFX_VGA)
+	if (use_vesa == 0)
 	{
 		bmp = create_bitmap(scrbitmap->width,scrbitmap->height);
 		for (y = 0;y < scrbitmap->height;y++)
@@ -2210,34 +2287,270 @@ void osd_save_snapshot(void)
 }
 
 
-int osd_skip_this_frame(int recommend)
+int osd_skip_this_frame(void)
 {
-	return recommend;
+	static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
+	{
+		{ 0,0,0,0,0,0,0,0,0,0,0,0 },
+		{ 0,0,0,0,0,0,0,0,0,0,0,1 },
+		{ 0,0,0,0,0,1,0,0,0,0,0,1 },
+		{ 0,0,0,1,0,0,0,1,0,0,0,1 },
+		{ 0,0,1,0,0,1,0,0,1,0,0,1 },
+		{ 0,1,0,0,1,0,1,0,0,1,0,1 },
+		{ 0,1,0,1,0,1,0,1,0,1,0,1 },
+		{ 0,1,0,1,1,0,1,0,1,1,0,1 },
+		{ 0,1,1,0,1,1,0,1,1,0,1,1 },
+		{ 0,1,1,1,0,1,1,1,0,1,1,1 },
+		{ 0,1,1,1,1,1,0,1,1,1,1,1 },
+		{ 0,1,1,1,1,1,1,1,1,1,1,1 }
+	};
+
+	return skiptable[frameskip][frameskip_counter];
 }
 
 /* Update the display. */
-void osd_update_display(void)
+void osd_update_video_and_audio(void)
 {
+	static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
+	{
+		{ 1,1,1,1,1,1,1,1,1,1,1,1 },
+		{ 2,1,1,1,1,1,1,1,1,1,1,0 },
+		{ 2,1,1,1,1,0,2,1,1,1,1,0 },
+		{ 2,1,1,0,2,1,1,0,2,1,1,0 },
+		{ 2,1,0,2,1,0,2,1,0,2,1,0 },
+		{ 2,0,2,1,0,2,0,2,1,0,2,0 },
+		{ 2,0,2,0,2,0,2,0,2,0,2,0 },
+		{ 2,0,2,0,0,3,0,2,0,0,3,0 },
+		{ 3,0,0,3,0,0,3,0,0,3,0,0 },
+		{ 4,0,0,0,4,0,0,0,4,0,0,0 },
+		{ 6,0,0,0,0,0,6,0,0,0,0,0 },
+		{12,0,0,0,0,0,0,0,0,0,0,0 }
+	};
 	int i;
 	static int showfps,showfpstemp,showprofile;
 	uclock_t curr;
-	#define MEMORY 10
-	static uclock_t prev[MEMORY];
-	static int memory,speed;
-	extern int frameskip;
+	static uclock_t prev_frames[FRAMESKIP_LEVELS],prev;
+	int speed=0;
 	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
+	static int frameskipadjust;
+	int already_synced;
 
 
+	already_synced = msdos_update_audio();
 
-	/* Check for PGUP, PGDN and pan screen */
-	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
-		pan_display();
+	if (osd_skip_this_frame() == 0)
+	{
+		/* Check for PGUP, PGDN and pan screen */
+		if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
+			pan_display();
+
+		if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
+		{
+			showfpstemp--;
+			if ((showfps == 0) && (showfpstemp == 0))
+			{
+				need_to_clear_bitmap = 1;
+			}
+		}
+
+		/* now wait until it's time to update the screen */
+		if (throttle)
+		{
+			osd_profiler(OSD_PROFILE_IDLE);
+			if (video_sync)
+			{
+				static uclock_t last;
+
+
+				do
+				{
+					vsync();
+					curr = uclock();
+				} while (UCLOCKS_PER_SEC / (curr - last) > Machine->drv->frames_per_second * 11 /10);
+
+				last = curr;
+			}
+			else
+			{
+				uclock_t target,target2;
+
+
+				curr = uclock();
+
+				/* wait until enough time has passed since last frame... */
+				target = prev +
+						waittable[frameskip][frameskip_counter] * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
+
+				/* ... OR since FRAMESKIP_LEVELS frames ago. This way, if a frame takes */
+				/* longer than the allotted time, we can compensate in the following frames. */
+				target2 = prev_frames[frameskip_counter] +
+						FRAMESKIP_LEVELS * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
+
+				if (target > target2) target = target2;
+
+				if (curr < target)
+				{
+					/* wait only if the audio update hasn't synced us already */
+					if (already_synced == 0)
+					{
+						do
+						{
+							curr = uclock();
+						} while (curr < target);
+					}
+				}
+
+				if (curr - target > UCLOCKS_PER_SEC/4/Machine->drv->frames_per_second)
+				{
+					/* we are behind, we need to increase frameskip */
+					frameskipadjust++;
+				}
+				else if (curr - target < UCLOCKS_PER_SEC/8/Machine->drv->frames_per_second)
+				{
+					/* we are on time, we might try decreasing frameskip */
+					frameskipadjust--;
+				}
+			}
+			osd_profiler(OSD_PROFILE_END);
+		}
+		else curr = uclock();
+
+
+		/* for the FPS average calculation */
+		if (++frames_displayed == FRAMES_TO_SKIP)
+			start_time = curr;
+		else
+			end_time = curr;
+
+
+		if (curr - prev_frames[frameskip_counter])
+		{
+			int divdr;
+
+
+			divdr = Machine->drv->frames_per_second * (curr - prev_frames[frameskip_counter]) / (100 * FRAMESKIP_LEVELS);
+			speed = (UCLOCKS_PER_SEC + divdr/2) / divdr;
+		}
+
+		prev = curr;
+		for (i = 0;i < waittable[frameskip][frameskip_counter];i++)
+			prev_frames[(frameskip_counter + FRAMESKIP_LEVELS - i) % FRAMESKIP_LEVELS] = curr;
+
+		vfcount += waittable[frameskip][frameskip_counter];
+		if (vfcount >= Machine->drv->frames_per_second)
+		{
+			extern int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
+
+
+			vfcount = 0;
+			vups = vector_updates;
+			vector_updates = 0;
+		}
+
+		if (showfps || showfpstemp)
+		{
+			int trueorientation;
+			int fps,l;
+			char buf[30];
+			int divdr;
+
+
+			/* hack: force the display into standard orientation to avoid */
+			/* rotating the text */
+			trueorientation = Machine->orientation;
+			Machine->orientation = ORIENTATION_DEFAULT;
+
+			divdr = 100 * FRAMESKIP_LEVELS;
+			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
+			sprintf(buf,"fskp%2d %3d%%(%3d/%d fps)",frameskip,speed,fps,Machine->drv->frames_per_second);
+			l = strlen(buf);
+			for (i = 0;i < l;i++)
+				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines,0,TRANSPARENCY_NONE,0);
+			if (vector_game)
+			{
+				sprintf(buf," %d vector updates",vups);
+				l = strlen(buf);
+				for (i = 0;i < l;i++)
+					drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines+Machine->uifont->height,0,TRANSPARENCY_NONE,0);
+			}
+
+			Machine->orientation = trueorientation;
+		}
+
+
+		if (showprofile) osd_profiler_display();
+
+
+		if (scrbitmap->depth == 8)
+		{
+			if (dirtypalette)
+			{
+				dirtypalette = 0;
+
+				for (i = 0;i < 256;i++)
+				{
+					if (dirtycolor[i])
+					{
+						int r,g,b;
+
+
+						dirtycolor[i] = 0;
+
+						r = 255 * brightness * pow(current_palette[i][0] / 255.0, 1 / gamma_correction) / 100;
+						g = 255 * brightness * pow(current_palette[i][1] / 255.0, 1 / gamma_correction) / 100;
+						b = 255 * brightness * pow(current_palette[i][2] / 255.0, 1 / gamma_correction) / 100;
+
+						adjusted_palette[i].r = r >> 2;
+						adjusted_palette[i].g = g >> 2;
+						adjusted_palette[i].b = b >> 2;
+
+						set_color(i,&adjusted_palette[i]);
+					}
+				}
+			}
+		}
+
+
+		/* copy the bitmap to screen memory */
+		osd_profiler(OSD_PROFILE_BLIT);
+		update_screen();
+		osd_profiler(OSD_PROFILE_END);
+
+		if (need_to_clear_bitmap)
+			osd_clearbitmap(scrbitmap);
+
+		if (use_dirty)
+		{
+			if (!vector_game)
+				swap_dirty();
+			init_dirty(0);
+		}
+
+		if (need_to_clear_bitmap)
+			osd_clearbitmap(scrbitmap);
+
+
+		if (autoframeskip)
+		{
+			/* decrease frameskip slowly, increase it quickly */
+			if (frameskipadjust <= -12)
+			{
+				frameskipadjust = 0;
+				if (frameskip > 0) frameskip--;
+			}
+			else if (frameskipadjust >= 3)
+			{
+				frameskipadjust = 0;
+				if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
+			}
+		}
+	}
 
 
 	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP))
 	{
-		frameskip = (frameskip + 1) % 4;
+		frameskip = (frameskip + 1) % 12;
 		if (showfps == 0)
 			showfpstemp = 2*Machine->drv->frames_per_second;
 
@@ -2279,153 +2592,8 @@ void osd_update_display(void)
 			need_to_clear_bitmap = 1;
 	}
 
-	if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
-	{
-		showfpstemp--;
-		if ((showfps == 0) && (showfpstemp == 0))
-		{
-			need_to_clear_bitmap = 1;
-		}
-	}
 
-	/* now wait until it's time to update the screen */
-	if (throttle)
-	{
-		osd_profiler(OSD_PROFILE_IDLE);
-		if (video_sync)
-		{
-			static uclock_t last;
-
-
-			do
-			{
-				vsync();
-				curr = uclock();
-			} while (UCLOCKS_PER_SEC / (curr - last) > Machine->drv->frames_per_second * 11 /10);
-
-			last = curr;
-		}
-		else
-		{
-			do
-			{
-				curr = uclock();
-			} while ((curr - prev[memory]) < (frameskip+1) * UCLOCKS_PER_SEC/Machine->drv->frames_per_second);
-		}
-		osd_profiler(OSD_PROFILE_END);
-	}
-	else curr = uclock();
-
-
-	/* for the FPS average calculation */
-	if (++frames_displayed == FRAMES_TO_SKIP)
-		start_time = curr;
-	else
-		end_time = curr;
-
-
-	memory = (memory+1) % MEMORY;
-
-	if (curr - prev[memory])
-	{
-		int divdr;
-
-
-		divdr = Machine->drv->frames_per_second * (curr - prev[memory]) / (100 * MEMORY);
-		speed = (UCLOCKS_PER_SEC * (frameskip+1) + divdr/2) / divdr;
-	}
-
-	prev[memory] = curr;
-
-	vfcount += frameskip+1;
-	if (vfcount >= Machine->drv->frames_per_second)
-	{
-		extern int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
-
-
-		vfcount = 0;
-		vups = vector_updates;
-		vector_updates = 0;
-	}
-
-	if (showfps || showfpstemp)
-	{
-		int trueorientation;
-		int fps,l;
-		char buf[30];
-
-
-		/* hack: force the display into standard orientation to avoid */
-		/* rotating the text */
-		trueorientation = Machine->orientation;
-		Machine->orientation = ORIENTATION_DEFAULT;
-
-		fps = (Machine->drv->frames_per_second / (frameskip+1) * speed + 50) / 100;
-		sprintf(buf," %3d%%(%3d/%d fps)",speed,fps,Machine->drv->frames_per_second);
-		l = strlen(buf);
-		for (i = 0;i < l;i++)
-			drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines,0,TRANSPARENCY_NONE,0);
-		if (vector_game)
-		{
-			sprintf(buf," %d vector updates",vups);
-			l = strlen(buf);
-			for (i = 0;i < l;i++)
-				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines+Machine->uifont->height,0,TRANSPARENCY_NONE,0);
-		}
-
-		Machine->orientation = trueorientation;
-	}
-
-	if (showprofile) osd_profiler_display();
-
-
-	if (scrbitmap->depth == 8)
-	{
-		if (dirtypalette)
-		{
-			dirtypalette = 0;
-
-			for (i = 0;i < 256;i++)
-			{
-				if (dirtycolor[i])
-				{
-					int r,g,b;
-
-
-					dirtycolor[i] = 0;
-
-					r = 255 * brightness * pow(current_palette[i][0] / 255.0, 1 / gamma_correction) / 100;
-					g = 255 * brightness * pow(current_palette[i][1] / 255.0, 1 / gamma_correction) / 100;
-					b = 255 * brightness * pow(current_palette[i][2] / 255.0, 1 / gamma_correction) / 100;
-
-					adjusted_palette[i].r = r >> 2;
-					adjusted_palette[i].g = g >> 2;
-					adjusted_palette[i].b = b >> 2;
-
-					set_color(i,&adjusted_palette[i]);
-				}
-			}
-		}
-	}
-
-
-	/* copy the bitmap to screen memory */
-	osd_profiler(OSD_PROFILE_BLIT);
-	update_screen();
-	osd_profiler(OSD_PROFILE_END);
-
-    if (need_to_clear_bitmap)
-		osd_clearbitmap(scrbitmap);
-
-	if (use_dirty)
-	{
-		if (!vector_game)
-			swap_dirty();
-		init_dirty(0);
-	}
-
-	if (need_to_clear_bitmap)
-		osd_clearbitmap(scrbitmap);
+	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
 }
 
 

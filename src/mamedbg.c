@@ -1720,7 +1720,7 @@ void MAME_Debug (void)
 	    osd_sound_enable(0);
 		do
 		{
-			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
+			osd_update_video_and_audio();	/* give time to the sound hardware to apply the volume change */
 		} while (uclock() < (curr + (UCLOCKS_PER_SEC / 15)));
 
 		set_gfx_mode (GFX_TEXT,80,25,0,0);

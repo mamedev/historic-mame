@@ -64,13 +64,12 @@ bottom line of the screen
 /* These are defined in machine/stactics.c */
 extern int stactics_vert_pos;
 extern int stactics_horiz_pos;
-extern int stactics_motor_on;
+extern unsigned char *stactics_motor_on;
 
 /* These are needed by machine/stactics.c  */
 int stactics_vblank_count;
 int stactics_shot_standby;
 int stactics_shot_arrive;
-int stactics_display_buffer[16];
 
 /* These are needed by driver/stactics.c   */
 unsigned char *stactics_scroll_ram;
@@ -82,15 +81,16 @@ unsigned char *stactics_videoram_e;
 unsigned char *stactics_chardata_e;
 unsigned char *stactics_videoram_f;
 unsigned char *stactics_chardata_f;
+unsigned char *stactics_display_buffer;
 
-static char dirty_videoram_b[0x400];
-static char dirty_chardata_b[0x100];
-static char dirty_videoram_d[0x400];
-static char dirty_chardata_d[0x100];
-static char dirty_videoram_e[0x400];
-static char dirty_chardata_e[0x100];
-static char dirty_videoram_f[0x400];
-static char dirty_chardata_f[0x100];
+static unsigned char *dirty_videoram_b;
+static unsigned char *dirty_chardata_b;
+static unsigned char *dirty_videoram_d;
+static unsigned char *dirty_chardata_d;
+static unsigned char *dirty_videoram_e;
+static unsigned char *dirty_chardata_e;
+static unsigned char *dirty_videoram_f;
+static unsigned char *dirty_chardata_f;
 
 static int d_offset;
 static int e_offset;
@@ -104,29 +104,32 @@ static struct osd_bitmap *bitmap_D;
 static struct osd_bitmap *bitmap_E;
 static struct osd_bitmap *bitmap_F;
 
-static unsigned char stactics_beamdata[0x0800];
-static int stactics_states_per_frame;
+static unsigned char *beamdata;
+static int states_per_frame;
+
+#define DIRTY_CHARDATA_SIZE  0x100
+#define BEAMDATA_SIZE        0x800
 
 /* The first 16 came from the 7448 BCD to 7-segment decoder data sheet */
 /* The rest are made up */
 
 static unsigned char stactics_special_chars[32*8] = {
-    0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0, 0x00,   /* 0 */
-    0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00,   /* 1 */
-    0xf0, 0x10, 0x10, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* 2 */
-    0xf0, 0x10, 0x10, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 3 */
-    0x90, 0x90, 0x90, 0xf0, 0x10, 0x10, 0x10, 0x00,   /* 4 */
-    0xf0, 0x80, 0x80, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 5 */
-    0xf0, 0x80, 0x80, 0xf0, 0x90, 0x90, 0xf0, 0x00,   /* 6 */
-    0xf0, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00,   /* 7 */
-    0xf0, 0x90, 0x90, 0xf0, 0x90, 0x90, 0xf0, 0x00,   /* 8 */
-    0xf0, 0x90, 0x90, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 9 */
-    0x00, 0x00, 0x00, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* extras... */
-    0x00, 0x00, 0x00, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* extras... */
-    0x90, 0x90, 0x90, 0xf0, 0x00, 0x00, 0x00, 0x00,   /* extras... */
-    0xf0, 0x80, 0x80, 0xf0, 0x00, 0x00, 0xf0, 0x00,   /* extras... */
-    0x80, 0x80, 0x80, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* extras... */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* Space */
+    0x80, 0x80, 0x80, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* extras... */
+    0xf0, 0x80, 0x80, 0xf0, 0x00, 0x00, 0xf0, 0x00,   /* extras... */
+    0x90, 0x90, 0x90, 0xf0, 0x00, 0x00, 0x00, 0x00,   /* extras... */
+    0x00, 0x00, 0x00, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* extras... */
+    0x00, 0x00, 0x00, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* extras... */
+    0xf0, 0x90, 0x90, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 9 */
+    0xf0, 0x90, 0x90, 0xf0, 0x90, 0x90, 0xf0, 0x00,   /* 8 */
+    0xf0, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00,   /* 7 */
+    0xf0, 0x80, 0x80, 0xf0, 0x90, 0x90, 0xf0, 0x00,   /* 6 */
+    0xf0, 0x80, 0x80, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 5 */
+    0x90, 0x90, 0x90, 0xf0, 0x10, 0x10, 0x10, 0x00,   /* 4 */
+    0xf0, 0x10, 0x10, 0xf0, 0x10, 0x10, 0xf0, 0x00,   /* 3 */
+    0xf0, 0x10, 0x10, 0xf0, 0x80, 0x80, 0xf0, 0x00,   /* 2 */
+    0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00,   /* 1 */
+    0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0, 0x00,   /* 0 */
 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* Space */
     0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* 1 pip */
@@ -229,27 +232,31 @@ int stactics_vh_start(void)
     const unsigned char *firebeam_data;
     unsigned char firechar[256*8*9];
 
-    if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-    if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-    if ((bitmap_B = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-    if ((bitmap_D = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-    if ((bitmap_E = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-    if ((bitmap_F = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
+    if ((tmpbitmap  = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+    if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+    if ((bitmap_B = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_D = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_E = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_F = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
 
-    memset(dirty_videoram_b,1,sizeof(dirty_videoram_b));
-    memset(dirty_chardata_b,1,sizeof(dirty_chardata_b));
-    memset(dirty_videoram_d,1,sizeof(dirty_videoram_d));
-    memset(dirty_chardata_d,1,sizeof(dirty_chardata_d));
-    memset(dirty_videoram_e,1,sizeof(dirty_videoram_e));
-    memset(dirty_chardata_e,1,sizeof(dirty_chardata_e));
-    memset(dirty_videoram_f,1,sizeof(dirty_videoram_f));
-    memset(dirty_chardata_f,1,sizeof(dirty_chardata_f));
+	/* Allocate dirty buffers */
+	if ((dirty_videoram_b = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_d = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_e = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_f = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_chardata_b = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_d = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_e = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_f = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+
+    memset(dirty_videoram_b,1,videoram_size);
+    memset(dirty_videoram_d,1,videoram_size);
+    memset(dirty_videoram_e,1,videoram_size);
+    memset(dirty_videoram_f,1,videoram_size);
+    memset(dirty_chardata_b,1,DIRTY_CHARDATA_SIZE);
+    memset(dirty_chardata_d,1,DIRTY_CHARDATA_SIZE);
+    memset(dirty_chardata_e,1,DIRTY_CHARDATA_SIZE);
+    memset(dirty_chardata_f,1,DIRTY_CHARDATA_SIZE);
 
     d_offset = 0;
     e_offset = 0;
@@ -289,18 +296,20 @@ int stactics_vh_start(void)
     /* (I am basically just juggling the bytes */
     /* and storing it again to make it easier) */
 
+	if ((beamdata = (unsigned char *)malloc(BEAMDATA_SIZE)) == 0) return 1;
+
     firebeam_data = Machine->memory_region[1];
 
     for(i=0;i<256;i++)
     {
-        stactics_beamdata[i*8]   = firebeam_data[i                   ];
-        stactics_beamdata[i*8+1] = firebeam_data[i + 1024            ];
-        stactics_beamdata[i*8+2] = firebeam_data[i              + 256];
-        stactics_beamdata[i*8+3] = firebeam_data[i + 1024       + 256];
-        stactics_beamdata[i*8+4] = firebeam_data[i        + 512      ];
-        stactics_beamdata[i*8+5] = firebeam_data[i + 1024 + 512      ];
-        stactics_beamdata[i*8+6] = firebeam_data[i        + 512 + 256];
-        stactics_beamdata[i*8+7] = firebeam_data[i + 1024 + 512 + 256];
+        beamdata[i*8]   = firebeam_data[i                   ];
+        beamdata[i*8+1] = firebeam_data[i + 1024            ];
+        beamdata[i*8+2] = firebeam_data[i              + 256];
+        beamdata[i*8+3] = firebeam_data[i + 1024       + 256];
+        beamdata[i*8+4] = firebeam_data[i        + 512      ];
+        beamdata[i*8+5] = firebeam_data[i + 1024 + 512      ];
+        beamdata[i*8+6] = firebeam_data[i        + 512 + 256];
+        beamdata[i*8+7] = firebeam_data[i + 1024 + 512 + 256];
     }
 
     /* Build some characters for simulating the LED displays */
@@ -316,7 +325,7 @@ int stactics_vh_start(void)
     stactics_vblank_count = 0;
     stactics_vert_pos = 0;
     stactics_horiz_pos = 0;
-    stactics_motor_on = 0;
+    *stactics_motor_on = 0;
 
     return 0;
 }
@@ -329,6 +338,17 @@ int stactics_vh_start(void)
 ***************************************************************************/
 void stactics_vh_stop(void)
 {
+	free(dirty_videoram_b);
+	free(dirty_videoram_d);
+	free(dirty_videoram_e);
+	free(dirty_videoram_f);
+	free(dirty_chardata_b);
+	free(dirty_chardata_d);
+	free(dirty_chardata_e);
+	free(dirty_chardata_f);
+
+	free(beamdata);
+
     osd_free_bitmap(tmpbitmap);
     osd_free_bitmap(tmpbitmap2);
     osd_free_bitmap(bitmap_B);
@@ -337,45 +357,6 @@ void stactics_vh_stop(void)
     osd_free_bitmap(bitmap_F);
 }
 
-int stactics_videoram_b_r(int offset)
-{
-    return stactics_videoram_b[offset];
-}
-
-int stactics_chardata_b_r(int offset)
-{
-    return stactics_chardata_b[offset];
-}
-
-int stactics_videoram_d_r(int offset)
-{
-    return stactics_videoram_d[offset];
-}
-
-int stactics_chardata_d_r(int offset)
-{
-    return stactics_chardata_d[offset];
-}
-
-int stactics_videoram_e_r(int offset)
-{
-    return stactics_videoram_e[offset];
-}
-
-int stactics_chardata_e_r(int offset)
-{
-    return stactics_chardata_e[offset];
-}
-
-int stactics_videoram_f_r(int offset)
-{
-    return stactics_videoram_f[offset];
-}
-
-int stactics_chardata_f_r(int offset)
-{
-    return stactics_chardata_f[offset];
-}
 
 void stactics_palette_w(int offset,int data)
 {
@@ -395,22 +376,14 @@ void stactics_palette_w(int offset,int data)
 
     if (old_palette_select != palette_select)
     {
-        memset(dirty_videoram_b,1,sizeof(dirty_videoram_b));
-        memset(dirty_videoram_d,1,sizeof(dirty_videoram_d));
-        memset(dirty_videoram_e,1,sizeof(dirty_videoram_e));
-        memset(dirty_videoram_f,1,sizeof(dirty_videoram_f));
+        memset(dirty_videoram_b,1,videoram_size);
+        memset(dirty_videoram_d,1,videoram_size);
+        memset(dirty_videoram_e,1,videoram_size);
+        memset(dirty_videoram_f,1,videoram_size);
     }
     return;
 }
 
-
-void stactics_score_w(int offset, int data)
-{
-    if (offset < 16)
-    {
-        stactics_display_buffer[offset] = (data&0x0f)^0x0f;
-    }
-}
 
 void stactics_scroll_ram_w(int offset,int data)
 {
@@ -465,7 +438,7 @@ void stactics_speed_latch_w(int offset, int data)
             num_rising_edges++;
     }
 
-    stactics_states_per_frame = num_rising_edges*19/8;
+    states_per_frame = num_rising_edges*19/8;
 }
 
 void stactics_shot_trigger_w(int offset, int data)
@@ -520,7 +493,6 @@ void stactics_videoram_e_w(int offset,int data)
     {
         stactics_videoram_e[offset] = data;
         dirty_videoram_e[offset] = 1;
-        //page_e_dirty = 1;
     }
 }
 
@@ -773,7 +745,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     for(i=7;i<9;i++)
     {
         drawgfx(bitmap,Machine->gfx[5],
-                16+(stactics_display_buffer[i]&0x0f),
+                16 + (~stactics_display_buffer[i]&0x0f),
                 16,
                 0,0,
                 pixel_x,pixel_y,
@@ -805,7 +777,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     for(i=9;i<12;i++)
     {
         drawgfx(bitmap,Machine->gfx[5],
-                16 + (stactics_display_buffer[i]&0x0f),
+                16 + (~stactics_display_buffer[i]&0x0f),
                 16,
                 0,0,
                 pixel_x,pixel_y,
@@ -836,7 +808,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     for(i=12;i<16;i++)
     {
         drawgfx(bitmap,Machine->gfx[5],
-                16 + (stactics_display_buffer[i]&0x0f),
+                16 + (~stactics_display_buffer[i]&0x0f),
                 16,
                 0,0,
                 pixel_x,pixel_y,
@@ -853,7 +825,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     old_firebeam_state = firebeam_state;
     if (stactics_shot_standby == 0)
     {
-        firebeam_state = (firebeam_state + stactics_states_per_frame)%512;
+        firebeam_state = (firebeam_state + states_per_frame)%512;
     }
 
     /* These are thresholds for the two shots from the LED fire ROM */
@@ -883,13 +855,13 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         {
             /* Draw 7 LEDS on each side */
             drawgfx(bitmap,Machine->gfx[4],
-                    stactics_beamdata[firebeam_state*8+i]&0x7f,
+                    beamdata[firebeam_state*8+i]&0x7f,
                     16*2,  /* Make it green */
                     0,0,
                     pixel_x,pixel_y,
                     &Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
             drawgfx(bitmap,Machine->gfx[4],
-                    stactics_beamdata[firebeam_state*8+i]&0x7f,
+                    beamdata[firebeam_state*8+i]&0x7f,
                     16*2,  /* Make it green */
                     1,0,
                     255-pixel_x,pixel_y,
@@ -901,13 +873,13 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         {
             /* Draw 8 LEDS on each side */
             drawgfx(bitmap,Machine->gfx[4],
-                    stactics_beamdata[firebeam_state*8+i],
+                    beamdata[firebeam_state*8+i],
                     16*2,  /* Make it green */
                     0,0,
                     pixel_x,pixel_y,
                     &Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
             drawgfx(bitmap,Machine->gfx[4],
-                    stactics_beamdata[firebeam_state*8+i],
+                    beamdata[firebeam_state*8+i],
                     16*2,  /* Make it green */
                     1,0,
                     255-pixel_x,pixel_y,
@@ -923,7 +895,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     pixel_x = 134;
     pixel_y = 112;
 
-    if (stactics_motor_on)
+    if (*stactics_motor_on & 0x01)
     {
         drawgfx(bitmap,Machine->gfx[5],
                 26,

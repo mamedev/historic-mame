@@ -76,14 +76,14 @@ OP(80) { int tmp;							 BRA(1);	  } // 2 BRA
 #define m65c02_c2 m6502_c2									// 2 ILL
 #define m65c02_e2 m6502_e2									// 2 ILL
 
-OP(12) { int tmp; M6502_ICount -= 3; RD_ZPI; ORA;		  } // 3 ORA ZPI
-OP(32) { int tmp; M6502_ICount -= 3; RD_ZPI; AND;		  } // 3 AND ZPI
-OP(52) { int tmp; M6502_ICount -= 3; RD_ZPI; EOR;		  } // 3 EOR ZPI
-OP(72) { int tmp; M6502_ICount -= 3; RD_ZPI; ADC;		  } // 3 ADC ZPI
-OP(92) { int tmp; M6502_ICount -= 4;		 STA; WR_ZPI; } // 3 STA ZPI
-OP(b2) { int tmp; M6502_ICount -= 3; RD_ZPI; LDA;		  } // 3 LDA ZPI
-OP(d2) { int tmp; M6502_ICount -= 3; RD_ZPI; CMP;		  } // 3 CMP ZPI
-OP(f2) { int tmp; M6502_ICount -= 3; RD_ZPI; SBC;		  } // 3 SBC ZPI
+OP(12) { int tmp; m6502_ICount -= 3; RD_ZPI; ORA;		  } // 3 ORA ZPI
+OP(32) { int tmp; m6502_ICount -= 3; RD_ZPI; AND;		  } // 3 AND ZPI
+OP(52) { int tmp; m6502_ICount -= 3; RD_ZPI; EOR;		  } // 3 EOR ZPI
+OP(72) { int tmp; m6502_ICount -= 3; RD_ZPI; ADC;		  } // 3 ADC ZPI
+OP(92) { int tmp; m6502_ICount -= 4;		 STA; WR_ZPI; } // 3 STA ZPI
+OP(b2) { int tmp; m6502_ICount -= 3; RD_ZPI; LDA;		  } // 3 LDA ZPI
+OP(d2) { int tmp; m6502_ICount -= 3; RD_ZPI; CMP;		  } // 3 CMP ZPI
+OP(f2) { int tmp; m6502_ICount -= 3; RD_ZPI; SBC;		  } // 3 SBC ZPI
 
 #define m65c02_03 m6502_03									// 2 ILL
 #define m65c02_23 m6502_23									// 2 ILL
@@ -103,21 +103,21 @@ OP(f2) { int tmp; M6502_ICount -= 3; RD_ZPI; SBC;		  } // 3 SBC ZPI
 #define m65c02_d3 m6502_d3									// 2 ILL
 #define m65c02_f3 m6502_f3									// 2 ILL
 
-OP(04) { int tmp; M6502_ICount -= 3; RD_ZPG; TSB; WB_EA;  } // 3 TSB ZPG
+OP(04) { int tmp; m6502_ICount -= 3; RD_ZPG; TSB; WB_EA;  } // 3 TSB ZPG
 #define m65c02_24 m6502_24									// 3 BIT ZPG
 #define m65c02_44 m6502_44									// 2 ILL
-OP(64) { int tmp; M6502_ICount -= 2;		 STZ; WR_ZPG; } // 3 STZ ZPG
+OP(64) { int tmp; m6502_ICount -= 2;		 STZ; WR_ZPG; } // 3 STZ ZPG
 #define m65c02_84 m6502_84									// 3 STY ZPG
 #define m65c02_a4 m6502_a4									// 3 LDY ZPG
 #define m65c02_c4 m6502_c4									// 3 CPY ZPG
 #define m65c02_e4 m6502_e4									// 3 CPX ZPG
 
-OP(14) { int tmp; M6502_ICount -= 3; RD_ZPG; TRB; WB_EA;  } // 3 TRB ZPG
-OP(34) { int tmp; M6502_ICount -= 4; RD_ZPX; BIT;		  } // 4 BIT ZPX
+OP(14) { int tmp; m6502_ICount -= 3; RD_ZPG; TRB; WB_EA;  } // 3 TRB ZPG
+OP(34) { int tmp; m6502_ICount -= 4; RD_ZPX; BIT;		  } // 4 BIT ZPX
 #define m65c02_54 m6502_54									// 2 ILL
-OP(74) { int tmp; M6502_ICount -= 4;		 STZ; WR_ZPX; } // 4 STZ ZPX
-OP(94) { int tmp; M6502_ICount -= 4;		 STY; WR_ZPX; } // 4 STY ZPX
-OP(b4) { int tmp; M6502_ICount -= 4; RD_ZPX; LDY;		  } // 4 LDY ZPX
+OP(74) { int tmp; m6502_ICount -= 4;		 STZ; WR_ZPX; } // 4 STZ ZPX
+OP(94) { int tmp; m6502_ICount -= 4;		 STY; WR_ZPX; } // 4 STY ZPX
+OP(b4) { int tmp; m6502_ICount -= 4; RD_ZPX; LDY;		  } // 4 LDY ZPX
 #define m65c02_d4 m6502_d4									// 2 ILL
 #define m65c02_f4 m6502_f4									// 2 ILL
 
@@ -157,23 +157,23 @@ OP(b4) { int tmp; M6502_ICount -= 4; RD_ZPX; LDY;		  } // 4 LDY ZPX
 #define m65c02_d6 m6502_d6									// 6 DEC ZPX
 #define m65c02_f6 m6502_f6									// 6 INC ZPX
 
-OP(07) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(0);WB_EA;} // 5 RMB0 ZPG
-OP(27) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(2);WB_EA;} // 5 RMB2 ZPG
-OP(47) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(4);WB_EA;} // 5 RMB4 ZPG
-OP(67) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(6);WB_EA;} // 5 RMB6 ZPG
-OP(87) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(0);WB_EA;} // 5 SMB0 ZPG
-OP(a7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(2);WB_EA;} // 5 SMB2 ZPG
-OP(c7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(4);WB_EA;} // 5 SMB4 ZPG
-OP(e7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(6);WB_EA;} // 5 SMB6 ZPG
+OP(07) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(0);WB_EA;} // 5 RMB0 ZPG
+OP(27) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(2);WB_EA;} // 5 RMB2 ZPG
+OP(47) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(4);WB_EA;} // 5 RMB4 ZPG
+OP(67) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(6);WB_EA;} // 5 RMB6 ZPG
+OP(87) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(0);WB_EA;} // 5 SMB0 ZPG
+OP(a7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(2);WB_EA;} // 5 SMB2 ZPG
+OP(c7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(4);WB_EA;} // 5 SMB4 ZPG
+OP(e7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(6);WB_EA;} // 5 SMB6 ZPG
 
-OP(17) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(1);WB_EA;} // 5 RMB1 ZPG
-OP(37) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(3);WB_EA;} // 5 RMB3 ZPG
-OP(57) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(5);WB_EA;} // 5 RMB5 ZPG
-OP(77) { int tmp; M6502_ICount -= 5; RD_ZPG; RMB(7);WB_EA;} // 5 RMB7 ZPG
-OP(97) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(1);WB_EA;} // 5 SMB1 ZPG
-OP(b7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(3);WB_EA;} // 5 SMB3 ZPG
-OP(d7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(5);WB_EA;} // 5 SMB5 ZPG
-OP(f7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(7);WB_EA;} // 5 SMB7 ZPG
+OP(17) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(1);WB_EA;} // 5 RMB1 ZPG
+OP(37) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(3);WB_EA;} // 5 RMB3 ZPG
+OP(57) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(5);WB_EA;} // 5 RMB5 ZPG
+OP(77) { int tmp; m6502_ICount -= 5; RD_ZPG; RMB(7);WB_EA;} // 5 RMB7 ZPG
+OP(97) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(1);WB_EA;} // 5 SMB1 ZPG
+OP(b7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(3);WB_EA;} // 5 SMB3 ZPG
+OP(d7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(5);WB_EA;} // 5 SMB5 ZPG
+OP(f7) { int tmp; m6502_ICount -= 5; RD_ZPG; SMB(7);WB_EA;} // 5 SMB7 ZPG
 
 #define m65c02_08 m6502_08                                  // 3 PHP
 #define m65c02_28 m6502_28									// 4 PLP
@@ -197,7 +197,7 @@ OP(f7) { int tmp; M6502_ICount -= 5; RD_ZPG; SMB(7);WB_EA;} // 5 SMB7 ZPG
 #define m65c02_29 m6502_29									// 2 AND IMM
 #define m65c02_49 m6502_49									// 2 EOR IMM
 #define m65c02_69 m6502_69									// 2 ADC IMM
-OP(89) { int tmp; M6502_ICount -= 2; RD_IMM; BIT;		  } // 2 BIT IMM
+OP(89) { int tmp; m6502_ICount -= 2; RD_IMM; BIT;		  } // 2 BIT IMM
 #define m65c02_a9 m6502_a9									// 2 LDA IMM
 #define m65c02_c9 m6502_c9									// 2 CMP IMM
 #define m65c02_e9 m6502_e9									// 2 SBC IMM
@@ -220,14 +220,14 @@ OP(89) { int tmp; M6502_ICount -= 2; RD_IMM; BIT;		  } // 2 BIT IMM
 #define m65c02_ca m6502_ca									// 2 DEX
 #define m65c02_ea m6502_ea									// 2 NOP
 
-OP(1a) {		  M6502_ICount -= 2;		 INA;		  } // 2 INA
-OP(3a) {		  M6502_ICount -= 2;		 DEA;		  } // 2 DEA
-OP(5a) {		  M6502_ICount -= 3;		 PHY;		  } // 3 PHY
-OP(7a) {		  M6502_ICount -= 4;		 PLY;		  } // 4 PLY
+OP(1a) {		  m6502_ICount -= 2;		 INA;		  } // 2 INA
+OP(3a) {		  m6502_ICount -= 2;		 DEA;		  } // 2 DEA
+OP(5a) {		  m6502_ICount -= 3;		 PHY;		  } // 3 PHY
+OP(7a) {		  m6502_ICount -= 4;		 PLY;		  } // 4 PLY
 #define m65c02_9a m6502_9a									// 2 TXS
 #define m65c02_ba m6502_ba									// 2 TSX
-OP(da) {		  M6502_ICount -= 3;		 PHX;		  } // 3 PHX
-OP(fa) {		  M6502_ICount -= 4;		 PLX;		  } // 4 PLX
+OP(da) {		  m6502_ICount -= 3;		 PHX;		  } // 3 PHX
+OP(fa) {		  m6502_ICount -= 4;		 PLX;		  } // 4 PLX
 
 #define m65c02_0b m6502_0b									// 2 ILL
 #define m65c02_2b m6502_2b									// 2 ILL
@@ -247,7 +247,7 @@ OP(fa) {		  M6502_ICount -= 4;		 PLX;		  } // 4 PLX
 #define m65c02_db m6502_db									// 2 ILL
 #define m65c02_fb m6502_fb									// 2 ILL
 
-OP(0c) { int tmp; M6502_ICount -= 2; RD_ABS; TSB; WB_EA;  } // 4 TSB ABS
+OP(0c) { int tmp; m6502_ICount -= 2; RD_ABS; TSB; WB_EA;  } // 4 TSB ABS
 #define m65c02_2c m6502_2c									// 4 BIT ABS
 #define m65c02_4c m6502_4c									// 3 JMP ABS
 #define m65c02_6c m6502_6c									// 5 JMP IND
@@ -256,12 +256,12 @@ OP(0c) { int tmp; M6502_ICount -= 2; RD_ABS; TSB; WB_EA;  } // 4 TSB ABS
 #define m65c02_cc m6502_cc									// 4 CPY ABS
 #define m65c02_ec m6502_ec									// 4 CPX ABS
 
-OP(1c) { int tmp; M6502_ICount -= 4; RD_ABS; TRB; WB_EA;  } // 4 TRB ABS
-OP(3c) { int tmp; M6502_ICount -= 4; RD_ABX; BIT;		  } // 4 BIT ABX
+OP(1c) { int tmp; m6502_ICount -= 4; RD_ABS; TRB; WB_EA;  } // 4 TRB ABS
+OP(3c) { int tmp; m6502_ICount -= 4; RD_ABX; BIT;		  } // 4 BIT ABX
 #define m65c02_5c m6502_5c									// 2 ILL
-OP(7c) { int tmp; M6502_ICount -= 2; EA_IAX; JMP;		  } // 6 JMP IAX
-OP(9c) { int tmp; M6502_ICount -= 4;		 STZ; WR_ABS; } // 4 STZ ABS
-OP(bc) { int tmp; M6502_ICount -= 4; RD_ABX; LDY;		  } // 4 LDY ABX
+OP(7c) { int tmp; m6502_ICount -= 2; EA_IAX; JMP;		  } // 6 JMP IAX
+OP(9c) { int tmp; m6502_ICount -= 4;		 STZ; WR_ABS; } // 4 STZ ABS
+OP(bc) { int tmp; m6502_ICount -= 4; RD_ABX; LDY;		  } // 4 LDY ABX
 #define m65c02_dc m6502_dc									// 2 ILL
 #define m65c02_fc m6502_fc									// 2 ILL
 
@@ -301,23 +301,23 @@ OP(bc) { int tmp; M6502_ICount -= 4; RD_ABX; LDY;		  } // 4 LDY ABX
 #define m65c02_de m6502_de									// 7 DEC ABX
 #define m65c02_fe m6502_fe									// 7 INC ABX
 
-OP(0f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(0);	  } // 5 BBR0 ZPG
-OP(2f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(2);	  } // 5 BBR2 ZPG
-OP(4f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(4);	  } // 5 BBR4 ZPG
-OP(6f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(6);	  } // 5 BBR6 ZPG
-OP(8f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(0);	  } // 5 BBS0 ZPG
-OP(af) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(2);	  } // 5 BBS2 ZPG
-OP(cf) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(4);	  } // 5 BBS4 ZPG
-OP(ef) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(6);	  } // 5 BBS6 ZPG
+OP(0f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(0);	  } // 5 BBR0 ZPG
+OP(2f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(2);	  } // 5 BBR2 ZPG
+OP(4f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(4);	  } // 5 BBR4 ZPG
+OP(6f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(6);	  } // 5 BBR6 ZPG
+OP(8f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(0);	  } // 5 BBS0 ZPG
+OP(af) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(2);	  } // 5 BBS2 ZPG
+OP(cf) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(4);	  } // 5 BBS4 ZPG
+OP(ef) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(6);	  } // 5 BBS6 ZPG
 
-OP(1f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(1);	  } // 5 BBR1 ZPG
-OP(3f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(3);	  } // 5 BBR3 ZPG
-OP(5f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(5);	  } // 5 BBR5 ZPG
-OP(7f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBR(7);	  } // 5 BBR7 ZPG
-OP(9f) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(1);	  } // 5 BBS1 ZPG
-OP(bf) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(3);	  } // 5 BBS3 ZPG
-OP(df) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(5);	  } // 5 BBS5 ZPG
-OP(ff) { int tmp; M6502_ICount -= 5; RD_ZPG; BBS(7);	  } // 5 BBS7 ZPG
+OP(1f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(1);	  } // 5 BBR1 ZPG
+OP(3f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(3);	  } // 5 BBR3 ZPG
+OP(5f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(5);	  } // 5 BBR5 ZPG
+OP(7f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBR(7);	  } // 5 BBR7 ZPG
+OP(9f) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(1);	  } // 5 BBS1 ZPG
+OP(bf) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(3);	  } // 5 BBS3 ZPG
+OP(df) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(5);	  } // 5 BBS5 ZPG
+OP(ff) { int tmp; m6502_ICount -= 5; RD_ZPG; BBS(7);	  } // 5 BBS7 ZPG
 
 static void (*insn65c02[0x100])(void) = {
 	m65c02_00,m65c02_01,m65c02_02,m65c02_03,m65c02_04,m65c02_05,m65c02_06,m65c02_07,

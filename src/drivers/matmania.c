@@ -32,6 +32,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "M6502/m6502.h"
+#include "M6809/M6809.h"
 
 extern unsigned char *matmania_videoram2,*matmania_colorram2;
 extern int matmania_videoram2_size;
@@ -60,28 +61,35 @@ void matmania_sh_command_w (int offset, int data)
 
 void matmania_dac_w(int offset,int data)
 {
-	DAC_data_w(0,data);
+	DAC_signed_data_w(0,data);
 }
 
 
 static int maniach_3040;
 
-void maniach_3040_w (int offset, int data)
+void maniach_3040_w(int offset,int data)
 {
 	maniach_3040 = data + 4;
 }
 
-int maniach_3040_r (int offset)
+int maniach_3040_r(int offset)
 {
 	if (errorlog) fprintf (errorlog, "3040_r @ pc:%04x\n", cpu_getpc());
 /*	return 0x4a; */
 	return maniach_3040;
 }
 
-int maniach_3041_r (int offset)
+int maniach_3041_r(int offset)
 {
 	if (errorlog) fprintf (errorlog, "3041_r @ pc:%04x\n", cpu_getpc());
 	return 0x02;
+}
+
+
+void maniach_sh_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
 
@@ -131,7 +139,7 @@ static struct MemoryWriteAddress maniach_writemem[] =
 	{ 0x2400, 0x25ff, matmania_videoram3_w, &matmania_videoram3, &matmania_videoram3_size },
 	{ 0x2600, 0x27ff, matmania_colorram3_w, &matmania_colorram3 },
 	{ 0x3000, 0x3000, MWA_RAM, &matmania_pageselect },
-	{ 0x3010, 0x3010, matmania_sh_command_w },
+	{ 0x3010, 0x3010, maniach_sh_command_w },
 	{ 0x3020, 0x3020, MWA_RAM, &matmania_scroll },
 	{ 0x3030, 0x3030, MWA_NOP },	/* ?? */
 	{ 0x3040, 0x3040, maniach_3040_w },	/* ??? */
@@ -162,21 +170,18 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct MemoryReadAddress maniach_sound_readmem[] =
 {
-	{ 0x0000, 0x01ff, MRA_RAM },
-//	{ 0x2007, 0x2007, soundlatch_r },
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x2004, 0x2004, soundlatch_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress maniach_sound_writemem[] =
 {
-	{ 0x0000, 0x01ff, MWA_RAM },
-//	{ 0x2000, 0x2000, AY8910_write_port_0_w },
-//	{ 0x2001, 0x2001, AY8910_control_port_0_w },
-//	{ 0x2002, 0x2002, AY8910_write_port_1_w },
-//	{ 0x2003, 0x2003, AY8910_control_port_1_w },
-//	{ 0x2004, 0x2004, AY8910_write_port_2_w },
-//	{ 0x2005, 0x2005, AY8910_control_port_2_w },
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM3526_control_port_0_w },
+	{ 0x2001, 0x2001, YM3526_write_port_0_w },
+	{ 0x2002, 0x2002, matmania_dac_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -256,8 +261,8 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	3,	/* 3 bits per pixel */
 	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
@@ -267,10 +272,10 @@ static struct GfxLayout tilelayout =
 	512,    /* 512 tiles */
 	3,	/* 3 bits per pixel */
 	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every tile takes 16 consecutive bytes */
 };
 
@@ -280,10 +285,10 @@ static struct GfxLayout matmania_spritelayout =
 	3584,    /* 3584 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*3584*16*16, 3584*16*16, 0 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every sprite takes 16 consecutive bytes */
 };
 
@@ -293,10 +298,10 @@ static struct GfxLayout maniach_spritelayout =
 	3584,    /* 3584 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 3584*16*16, 2*3584*16*16 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every sprite takes 16 consecutive bytes */
 };
 
@@ -306,10 +311,10 @@ static struct GfxLayout maniach_tilelayout =
 	1024,    /* 1024 tiles */
 	3,	/* 3 bits per pixel */
 	{ 2*1024*16*16, 1024*16*16, 0 },	/* the bitplanes are separated */
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0,
-			16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0 },
 	32*8	/* every tile takes 16 consecutive bytes */
 };
 
@@ -330,11 +335,12 @@ static struct GfxDecodeInfo maniach_gfxdecodeinfo[] =
 };
 
 
+
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 50, 50 },
+	{ 30, 30 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -344,7 +350,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 100 }
+	{ 40 }
 };
 
 
@@ -366,6 +372,7 @@ static struct MachineDriver matmania_machine_driver =
 			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,15	/* ???? */
+								/* IRQs are caused by the main CPU */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -373,7 +380,7 @@ static struct MachineDriver matmania_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	matmania_gfxdecodeinfo,
 	64+16, 64+16,
 	matmania_vh_convert_color_prom,
@@ -398,6 +405,23 @@ static struct MachineDriver matmania_machine_driver =
 	}
 };
 
+
+
+/* handler called by the 3526 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+}
+
+static struct YM3526interface ym3526_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3600000,	/* 3.6 MHz ? */
+	{ 255 },		/* (not supported) */
+	irqhandler,
+};
+
+
 static struct MachineDriver maniach_machine_driver =
 {
 	/* basic machine hardware */
@@ -410,11 +434,12 @@ static struct MachineDriver maniach_machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6502 | CPU_AUDIO_CPU,
+			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,	/* 1.2 Mhz ???? */
 			3,
 			maniach_sound_readmem,maniach_sound_writemem,0,0,
-			nmi_interrupt,15	/* ???? */
+			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
+								/* IRQs are caused by the main CPU */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -422,7 +447,7 @@ static struct MachineDriver maniach_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	maniach_gfxdecodeinfo,
 	64+16, 64+16,
 	matmania_vh_convert_color_prom,
@@ -434,7 +459,17 @@ static struct MachineDriver maniach_machine_driver =
 	maniach_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 /***************************************************************************
@@ -583,7 +618,7 @@ ROM_START( maniach_rom )
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
-	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 ) /* definitely 6502 code, for 1st CPU? */
+	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
 ROM_END
 
 ROM_START( maniach2_rom )
@@ -633,7 +668,7 @@ ROM_START( maniach2_rom )
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
-	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 ) /* definitely 6502 code, for 1st CPU? */
+	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 )
 ROM_END
 
 
@@ -725,7 +760,7 @@ struct GameDriver matmania_driver =
 	matmania_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	matmania_hiload, matmania_hisave
 };
@@ -752,7 +787,7 @@ struct GameDriver excthour_driver =
 	matmania_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	excthour_hiload, matmania_hisave
 };
@@ -778,7 +813,7 @@ struct GameDriver maniach_driver =
 	matmania_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
@@ -804,7 +839,7 @@ struct GameDriver maniach2_driver =
 	matmania_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

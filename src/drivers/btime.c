@@ -223,7 +223,7 @@ static struct MemoryReadAddress cookrace_readmem[] =
 	{ 0xd400, 0xd7ff, MRA_RAM },	/* background? */
 	{ 0xe000, 0xe000, input_port_3_r },     /* DSW1 */
 	{ 0xe300, 0xe300, input_port_3_r },     /* mirror address used on high score name enter */
-											/* screen - could also be a bad ROM read */
+											/* screen */
 	{ 0xe001, 0xe001, input_port_4_r },     /* DSW2 */
 	{ 0xe002, 0xe002, input_port_0_r },     /* IN0 */
 	{ 0xe003, 0xe003, input_port_1_r },     /* IN1 */
@@ -240,7 +240,6 @@ static struct MemoryWriteAddress cookrace_writemem[] =
 	{ 0xc400, 0xc7ff, colorram_w, &colorram },
 	{ 0xc800, 0xcbff, btime_mirrorvideoram_w },
 	{ 0xcc00, 0xcfff, btime_mirrorcolorram_w },
-	{ 0xd000, 0xd0ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
 	{ 0xd000, 0xd0ff, MWA_RAM },	/* background? */
 	{ 0xd100, 0xd3ff, MWA_RAM },	/* ? */
 	{ 0xd400, 0xd7ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
@@ -1171,9 +1170,34 @@ ROM_START( btime_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( btimea_rom )
+ROM_START( btimed_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0xa041e25b )
+	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0x368a25b5 )
+	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
+	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
+	ROM_LOAD( "aa07.15b",     0xf000, 0x1000, 0x086440ad )
+
+	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "aa8.13k",      0x0000, 0x1000, 0x8650c788 )    /* charset #1 */
+	ROM_LOAD( "ab9.15k",      0x1000, 0x1000, 0x8dec15e6 )
+	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
+	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
+	ROM_LOAD( "aa12.7k",      0x4000, 0x1000, 0xc4617243 )
+	ROM_LOAD( "ab13.9k",      0x5000, 0x1000, 0xac01042f )
+	ROM_LOAD( "ab02.4b",      0x6000, 0x0800, 0xb8ef56c3 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
+	ROM_LOAD( "ab00.1b",      0x7000, 0x0800, 0xc7a14485 )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+
+	ROM_REGION(0x0800)      /* background graphics */
+	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
+ROM_END
+
+ROM_START( btimed2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, 0xa041e25b )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
 	ROM_LOAD( "aa07.15b",     0xf000, 0x1000, 0x086440ad )
@@ -1725,12 +1749,12 @@ struct GameDriver btime_driver =
 	btime_hiload, btime_hisave
 };
 
-struct GameDriver btimea_driver =
+struct GameDriver btimed_driver =
 {
 	__FILE__,
 	&btime_driver,
-	"btimea",
-	"Burger Time (Data East)",
+	"btimed",
+	"Burger Time (Data East set 1)",
 	"1982",
 	"Data East Corporation",
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
@@ -1738,7 +1762,33 @@ struct GameDriver btimea_driver =
 	&btime_machine_driver,
 	0,
 
-	btimea_rom,
+	btimed_rom,
+	0, btime_decode,
+	0,
+	0,	/* sound_prom */
+
+	btime_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	btime_hiload, btime_hisave
+};
+
+struct GameDriver btimed2_driver =
+{
+	__FILE__,
+	&btime_driver,
+	"btimed2",
+	"Burger Time (Data East set 2)",
+	"1982",
+	"Data East Corporation",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
+	0,
+	&btime_machine_driver,
+	0,
+
+	btimed2_rom,
 	0, btime_decode,
 	0,
 	0,	/* sound_prom */
@@ -1957,5 +2007,272 @@ struct GameDriver zoar_driver =
 	ORIENTATION_DEFAULT,
 
 	zoar_hiload, zoar_hisave
+};
+
+
+
+
+
+
+extern unsigned char *decocass_characterram;
+
+void decocass_characterram_w(int offset,int data);
+void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+static int pip(int offset)
+{
+	return rand();
+}
+
+static struct MemoryReadAddress decocass_readmem[] =
+{
+	{ 0x0000, 0x01ff, MRA_RAM },
+	{ 0xe300, 0xe300, input_port_3_r },     /* DSW1 */
+	{ 0xe500, 0xe502, pip },	/* read data from tape */
+#if 0
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0500, 0x3fff, MRA_ROM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xcbff, btime_mirrorvideoram_r },
+	{ 0xcc00, 0xcfff, btime_mirrorcolorram_r },
+	{ 0xd000, 0xd0ff, MRA_RAM },	/* background */
+	{ 0xd100, 0xd3ff, MRA_RAM },	/* ? */
+	{ 0xd400, 0xd7ff, MRA_RAM },	/* background? */
+	{ 0xe000, 0xe000, input_port_3_r },     /* DSW1 */
+	{ 0xe001, 0xe001, input_port_4_r },     /* DSW2 */
+	{ 0xe002, 0xe002, input_port_0_r },     /* IN0 */
+	{ 0xe003, 0xe003, input_port_1_r },     /* IN1 */
+	{ 0xe004, 0xe004, input_port_2_r },     /* coin */
+#endif
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress decocass_writemem[] =
+{
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x6000, 0xbfff, decocass_characterram_w, &decocass_characterram },
+	{ 0xc000, 0xc3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xc400, 0xc7ff, colorram_w, &colorram },
+	{ 0xc800, 0xcbff, btime_mirrorvideoram_w },
+	{ 0xcc00, 0xcfff, btime_mirrorcolorram_w },
+	{ 0xe000, 0xe01f, btime_paletteram_w, &paletteram },	/* The "bios" doesn't write to e000 */
+									/* but the "loading" background should be blue, not black */
+#if 0
+	{ 0x0500, 0x3fff, MWA_ROM },
+	{ 0xd000, 0xd0ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
+	{ 0xd000, 0xd0ff, MWA_RAM },	/* background? */
+	{ 0xd100, 0xd3ff, MWA_RAM },	/* ? */
+	{ 0xd400, 0xd7ff, MWA_RAM, &bnj_backgroundram, &bnj_backgroundram_size },
+	{ 0xe000, 0xe000, bnj_video_control_w },
+	{ 0xe001, 0xe001, sound_command_w },
+	{ 0x4004, 0x4004, bnj_scroll1_w },
+#endif
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress decocass_sound_readmem[] =
+{
+	{ 0x0000, 0x01ff, MRA_RAM },
+#if 0
+	{ 0xa000, 0xafff, soundlatch_r },
+#endif
+	{ 0xf800, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress decocass_sound_writemem[] =
+{
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x2000, 0x2fff, AY8910_write_port_0_w },
+	{ 0x4000, 0x4fff, AY8910_control_port_0_w },
+	{ 0x6000, 0x6fff, AY8910_write_port_1_w },
+	{ 0x8000, 0x8fff, AY8910_control_port_1_w },
+#if 0
+	{ 0xc000, 0xcfff, interrupt_enable_w },
+#endif
+	{ 0xf800, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+INPUT_PORTS_START( decocass_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_UNUSED )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH,IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_UNUSED )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH,IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH,IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )	/* used by the "bios" */
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )	/* used by the "bios" */
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "20000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "40000"  )
+	PORT_DIPSETTING(    0x00, "50000"  )
+	PORT_DIPNAME( 0x08, 0x08, "Enemies", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
+{
+	{ 0, 0x6000, &charlayout,          0, 4 }, /* char set #1 */
+	{ 0, 0x6000, &spritelayout,        0, 4 }, /* sprites */
+//	{ 0, 0x6000, &cookrace_tilelayout, 8, 1 }, /* background tiles */
+	{ -1 } /* end of array */
+};
+
+static struct MachineDriver decocass_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1500000,	/* ? I guess it should be 750000 like in bnj */
+			0,
+			decocass_readmem,decocass_writemem,0,0,
+			nmi_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			500000, /* 500 kHz */
+			1,      /* memory region #1 */
+			decocass_sound_readmem,decocass_sound_writemem,0,0,
+ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU */
+		}
+	},
+	57, 3072,        /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,//GAMENAME##_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	decocass_gfxdecodeinfo,
+	32,32,//COLOR,COLOR,
+	0,//GAMENAME##_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	decocass_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
+ROM_START( decocass_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "rms8.cpu",     0xf000, 0x1000, 0x23d929b7 )
+/* the following two are just about the same stuff as the one above */
+//	ROM_LOAD( "dsp3.p0b",     0xf000, 0x0800, 0xb67a91d9 )
+//	ROM_LOAD( "dsp3.p1b",     0xf800, 0x0800, 0x3bfff5f3 )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "rms8.snd",     0xf800, 0x0800, 0xb66b2c2a )
+ROM_END
+
+static void decocass_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	for (A = 0xe000;A < 0x10000;A++)
+		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+}
+
+struct GameDriver decocass_driver =
+{
+	__FILE__,
+	0,
+	"decocass",
+	"decocass",
+	"????",
+	"?????",
+	"Nicola Salmoria",
+	0,
+	&decocass_machine_driver,
+	0,
+
+	decocass_rom,
+	0, decocass_decode,
+	0,
+	0,	/* sound_prom */
+
+	decocass_input_ports,
+
+    0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 

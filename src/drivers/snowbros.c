@@ -4,8 +4,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M68000/M68000.h"
-#include "Z80/Z80.h"
+#include "m68000/m68000.h"
+#include "z80/z80.h"
 
 static unsigned char *ram;
 

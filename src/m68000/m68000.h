@@ -16,14 +16,24 @@ typedef struct
 {
 	regstruct regs;
 	int pending_interrupts;
+#if NEW_INTERRUPT_SYSTEM
+    int irq_state;
+    int (*irq_callback)(int irqline);
+#endif
 } MC68000_Regs;
 
 extern void MC68000_Reset(void);                      /* ASG 971105 */
 extern int  MC68000_Execute(int);                     /* ASG 971105 */
 extern void MC68000_SetRegs(MC68000_Regs *);          /* ASG 971105 */
 extern void MC68000_GetRegs(MC68000_Regs *);          /* ASG 971105 */
+#if NEW_INTERRUPT_SYSTEM
+extern void MC68000_set_nmi_line(int);
+extern void MC68000_set_irq_line(int, int);
+extern void MC68000_set_irq_callback(int (*callback)(int));
+#else
 extern void MC68000_Cause_Interrupt(int);             /* ASG 971105 */
 extern void MC68000_Clear_Pending_Interrupts(void);   /* ASG 971105 */
+#endif
 extern int  MC68000_GetPC(void);                      /* ASG 971105 */
 
 extern void MC68000_disasm(CPTR, CPTR*, int);

@@ -18,7 +18,8 @@ TODO:	remove the 1 analog device per port limitation
 #define MRU_JOYSTICK
 
 /* header identifying the version of the game.cfg file */
-#define MAMECFGSTRING "MAMECFG\2"
+#define MAMECFGSTRING "MAMECFG\3"
+#define MAMEDEFSTRING "MAMEDEF\1"
 
 extern int nocheat;
 extern void *record;
@@ -29,13 +30,13 @@ extern unsigned int coins[COIN_COUNTERS];
 extern unsigned int lastcoin[COIN_COUNTERS];
 extern unsigned int coinlockedout[COIN_COUNTERS];
 
-static unsigned char input_port_value[MAX_INPUT_PORTS];
+static unsigned short input_port_value[MAX_INPUT_PORTS];
 static unsigned char input_vblank[MAX_INPUT_PORTS];
 
 /* Assuming a maxium of one analog input device per port BW 101297 */
 static struct InputPort *input_analog[MAX_INPUT_PORTS];
 static int input_analog_value[MAX_INPUT_PORTS];
-static char input_analog_init[MAX_INPUT_PORTS];
+static int input_analog_init[MAX_INPUT_PORTS];
 
 static int mouse_last_x,mouse_last_y;
 static int mouse_current_x,mouse_current_y;
@@ -50,13 +51,121 @@ static int analog_previous_x, analog_previous_y;
 
 ***************************************************************************/
 
-static int readint(void *f,int *num)
+struct ipd inputport_defaults[] =
+{
+	{ IPT_COIN1,  "Coin A",          OSD_KEY_3, 0 },
+	{ IPT_COIN2,  "Coin B",          OSD_KEY_4, 0 },
+	{ IPT_COIN3,  "Coin C",          OSD_KEY_5, 0 },
+	{ IPT_COIN4,  "Coin D",          OSD_KEY_6, 0 },
+	{ IPT_TILT,   "Tilt",            OSD_KEY_T, IP_JOY_NONE },
+	{ IPT_START1, "1 Player Start",  OSD_KEY_1, 0 },
+	{ IPT_START2, "2 Players Start", OSD_KEY_2, 0 },
+	{ IPT_START3, "3 Players Start", OSD_KEY_7, 0 },
+	{ IPT_START4, "4 Players Start", OSD_KEY_8, 0 },
+
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          OSD_KEY_UP,      OSD_JOY_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        OSD_KEY_DOWN,    OSD_JOY_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        OSD_KEY_LEFT,    OSD_JOY_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER1, "P1 Right",       OSD_KEY_RIGHT,   OSD_JOY_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER1, "P1 Button 1",    OSD_KEY_LCONTROL,OSD_JOY_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER1, "P1 Button 2",    OSD_KEY_ALT,     OSD_JOY_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER1, "P1 Button 3",    OSD_KEY_SPACE,   OSD_JOY_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    OSD_KEY_LSHIFT,  OSD_JOY_FIRE4 },
+	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    OSD_KEY_Z,       OSD_JOY_FIRE5 },
+	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    OSD_KEY_X,       OSD_JOY_FIRE6 },
+	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    OSD_KEY_C,       OSD_JOY_FIRE7 },
+	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    OSD_KEY_V,       OSD_JOY_FIRE8 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    OSD_KEY_I,       OSD_JOY_FIRE2 },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  OSD_KEY_K,       OSD_JOY_FIRE3 },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  OSD_KEY_J,       OSD_JOY_FIRE1 },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", OSD_KEY_L,       OSD_JOY_FIRE4 },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     OSD_KEY_E,       OSD_JOY_UP },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   OSD_KEY_D,       OSD_JOY_DOWN },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   OSD_KEY_S,       OSD_JOY_LEFT },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1, "P1 Left/Right",  OSD_KEY_F,       OSD_JOY_RIGHT },
+
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER2, "P2 Up",          OSD_KEY_R,       OSD_JOY2_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER2, "P2 Down",        OSD_KEY_F,       OSD_JOY2_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER2, "P2 Left",        OSD_KEY_D,       OSD_JOY2_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER2, "P2 Right",       OSD_KEY_G,       OSD_JOY2_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER2, "P2 Button 1",    OSD_KEY_A,       OSD_JOY2_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER2, "P2 Button 2",    OSD_KEY_S,       OSD_JOY2_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER2, "P2 Button 3",    OSD_KEY_Q,       OSD_JOY2_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    OSD_KEY_W,       OSD_JOY2_FIRE4 },
+	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    0,               OSD_JOY2_FIRE5 },
+	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    0,               OSD_JOY2_FIRE6 },
+	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    0,               OSD_JOY2_FIRE7 },
+	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    0,               OSD_JOY2_FIRE8 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    0,               0 },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  0,               0 },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  0,               0 },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "P2 Right/Right", 0,               0 },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "P2 Left/Up",     0,               0 },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "P2 Left/Down",   0,               0 },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "P2 Left/Left",   0,               0 },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "P2 Left/Right",  0,               0 },
+
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER3, "P3 Up",          OSD_KEY_I,       OSD_JOY3_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER3, "P3 Down",        OSD_KEY_K,       OSD_JOY3_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER3, "P3 Left",        OSD_KEY_J,       OSD_JOY3_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER3, "P3 Right",       OSD_KEY_L,       OSD_JOY3_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER3, "P3 Button 1",    OSD_KEY_RCONTROL,OSD_JOY3_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER3, "P3 Button 2",    OSD_KEY_RSHIFT,  OSD_JOY3_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER3, "P3 Button 3",    OSD_KEY_ENTER,   OSD_JOY3_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    0,               OSD_JOY3_FIRE4 },
+
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER4, "P4 Up",          0,               OSD_JOY4_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER4, "P4 Down",        0,               OSD_JOY4_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER4, "P4 Left",        0,               OSD_JOY4_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER4, "P4 Right",       0,               OSD_JOY4_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER4, "P4 Button 1",    0,               OSD_JOY4_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER4, "P4 Button 2",    0,               OSD_JOY4_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    0,               OSD_JOY4_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    0,               OSD_JOY4_FIRE4 },
+
+	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
+	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_DIAL | IPF_PLAYER1,  "Dial",            IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
+	{ IPT_DIAL | IPF_PLAYER2,  "Dial 2",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_DIAL | IPF_PLAYER3,  "Dial 3",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_DIAL | IPF_PLAYER4,  "Dial 4",          IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Trak X",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Trak Y",          IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",      IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
+	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",      IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
+	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", IPF_DELTA(4), IPF_DELTA(4) },
+	{ IPT_UNKNOWN,             "UNKNOWN",         IP_KEY_NONE,     IP_JOY_NONE },
+	{ IPT_END,                 0,                 IP_KEY_NONE,     IP_JOY_NONE }
+};
+
+
+
+static int readint(void *f,UINT32 *num)
 {
 	int i;
 
 
 	*num = 0;
-	for (i = 0;i < sizeof(int);i++)
+	for (i = 0;i < sizeof(UINT32);i++)
 	{
 		unsigned char c;
 
@@ -70,35 +179,151 @@ static int readint(void *f,int *num)
 	return 0;
 }
 
-static void writeint(void *f,int num)
+static void writeint(void *f,UINT32 num)
 {
 	int i;
 
 
-	for (i = 0;i < sizeof(int);i++)
+	for (i = 0;i < sizeof(UINT32);i++)
 	{
 		unsigned char c;
 
 
-		c = (num >> 8 * (sizeof(int)-1)) & 0xff;
+		c = (num >> 8 * (sizeof(UINT32)-1)) & 0xff;
 		osd_fwrite(f,&c,1);
 		num <<= 8;
 	}
 }
 
+static int readword(void *f,UINT16 *num)
+{
+	int i;
+
+
+	*num = 0;
+	for (i = 0;i < sizeof(UINT16);i++)
+	{
+		unsigned char c;
+
+
+		*num <<= 8;
+		if (osd_fread(f,&c,1) != 1)
+			return -1;
+		*num |= c;
+	}
+
+	return 0;
+}
+
+static void writeword(void *f,UINT16 num)
+{
+	int i;
+
+
+	for (i = 0;i < sizeof(UINT16);i++)
+	{
+		unsigned char c;
+
+
+		c = (num >> 8 * (sizeof(UINT16)-1)) & 0xff;
+		osd_fwrite(f,&c,1);
+		num <<= 8;
+	}
+}
+
+
+
+static void load_default_keys(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen("default",0,OSD_FILETYPE_CONFIG,0)) != 0)
+	{
+		char buf[8];
+
+
+		/* read header */
+		if (osd_fread(f,buf,8) != 8)
+			goto getout;
+		if (memcmp(buf,MAMEDEFSTRING,8) != 0)
+			goto getout;	/* header invalid */
+
+		for (;;)
+		{
+			UINT32 type,keyboard,joystick;
+			int i;
+
+
+			if (readint(f,&type) != 0)
+				goto getout;
+			if (readint(f,&keyboard) != 0)
+				goto getout;
+			if (readint(f,&joystick) != 0)
+				goto getout;
+
+			i = 0;
+			while (inputport_defaults[i].type != IPT_END)
+			{
+				if (inputport_defaults[i].type == type)
+				{
+					inputport_defaults[i].keyboard = keyboard;
+					inputport_defaults[i].joystick = joystick;
+				}
+				i++;
+			}
+		}
+
+getout:
+		osd_fclose(f);
+	}
+}
+
+static void save_default_keys(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen("default",0,OSD_FILETYPE_CONFIG,1)) != 0)
+	{
+		int i;
+
+
+		/* write header */
+		osd_fwrite(f,MAMEDEFSTRING,8);
+
+		i = 0;
+		while (inputport_defaults[i].type != IPT_END)
+		{
+			writeint(f,inputport_defaults[i].type);
+			writeint(f,inputport_defaults[i].keyboard);
+			writeint(f,inputport_defaults[i].joystick);
+			i++;
+		}
+
+		osd_fclose(f);
+	}
+}
+
+
+
 static int readip(void *f,struct InputPort *in)
 {
 	if (readint(f,&in->type) != 0)
 		return -1;
-	if (osd_fread(f,&in->mask,1) != 1)
+	if (readword(f,&in->mask) != 0)
 		return -1;
-	if (osd_fread(f,&in->default_value,1) != 1)
+	if (readword(f,&in->default_value) != 0)
 		return -1;
 	if (readint(f,&in->keyboard) != 0)
 		return -1;
 	if (readint(f,&in->joystick) != 0)
 		return -1;
 	if (readint(f,&in->arg) != 0)
+		return -1;
+	if (readword(f,&in->min) != 0)
+		return -1;
+	if (readword(f,&in->max) != 0)
 		return -1;
 
 	return 0;
@@ -107,11 +332,13 @@ static int readip(void *f,struct InputPort *in)
 static void writeip(void *f,struct InputPort *in)
 {
 	writeint(f,in->type);
-	osd_fwrite(f,&in->mask,1);
-	osd_fwrite(f,&in->default_value,1);
+	writeword(f,in->mask);
+	writeword(f,in->default_value);
 	writeint(f,in->keyboard);
 	writeint(f,in->joystick);
 	writeint(f,in->arg);
+	writeword(f,in->min);
+	writeword(f,in->max);
 }
 
 
@@ -121,10 +348,12 @@ int load_input_port_settings(void)
 	void *f;
 
 
+	load_default_keys();
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,0)) != 0)
 	{
 		struct InputPort *in;
-		int total,savedtotal;
+		unsigned int total,savedtotal;
 		char buf[8];
 		int i;
 
@@ -160,6 +389,7 @@ int load_input_port_settings(void)
 
 			if (readip(f,&saved) != 0)
 				goto getout;
+
 			if (in->type != saved.type ||
 					in->mask != saved.mask ||
 					in->default_value != saved.default_value ||
@@ -177,7 +407,6 @@ int load_input_port_settings(void)
 		{
 			if (readip(f,in) != 0)
 				goto getout;
-
 			in++;
 		}
 
@@ -189,10 +418,10 @@ int load_input_port_settings(void)
 		/* read in the coin/ticket counters */
 		for (i = 0; i < COIN_COUNTERS; i ++)
 		{
-			if (readint(f, (int *)&coins[i]) != 0)
+			if (readint(f,&coins[i]) != 0)
 				goto getout;
 		}
-		if (readint (f, (int *)&dispensed_tickets) != 0)
+		if (readint(f,&dispensed_tickets) != 0)
 			goto getout;
 
 getout:
@@ -220,6 +449,8 @@ void save_input_port_settings(void)
 {
 	void *f;
 
+
+	save_default_keys();
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,1)) != 0)
 	{
@@ -259,119 +490,14 @@ void save_input_port_settings(void)
 
 		/* write out the coin/ticket counters for this machine - LBO 042898 */
 		for (i = 0; i < COIN_COUNTERS; i ++)
-			writeint (f, coins[i]);
-		writeint (f, dispensed_tickets);
+			writeint(f,coins[i]);
+		writeint(f,dispensed_tickets);
 
 		osd_fclose(f);
 	}
 }
 
 
-
-
-
-struct ipd
-{
-	int type;
-	const char *name;
-	int keyboard;
-	int joystick;
-};
-struct ipd inputport_defaults[] =
-{
-	{ IPT_JOYSTICK_UP,        "Up",              OSD_KEY_UP,      OSD_JOY_UP },
-	{ IPT_JOYSTICK_DOWN,      "Down",            OSD_KEY_DOWN,    OSD_JOY_DOWN },
-	{ IPT_JOYSTICK_LEFT,      "Left",            OSD_KEY_LEFT,    OSD_JOY_LEFT },
-	{ IPT_JOYSTICK_RIGHT,     "Right",           OSD_KEY_RIGHT,   OSD_JOY_RIGHT },
-	{ IPT_JOYSTICK_UP    | IPF_PLAYER2, "2 Up",            OSD_KEY_R,       0 },
-	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER2, "2 Down",          OSD_KEY_F,       0 },
-	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER2, "2 Left",          OSD_KEY_D,       0 },
-	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "2 Right",         OSD_KEY_G,       0 },
-	{ IPT_JOYSTICK_UP    | IPF_PLAYER3, "3 Up",            OSD_KEY_I,       0 },
-	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER3, "3 Down",          OSD_KEY_K,       0 },
-	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER3, "3 Left",          OSD_KEY_J,       0 },
-	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER3, "3 Right",         OSD_KEY_L,       0 },
-	{ IPT_JOYSTICK_UP    | IPF_PLAYER4, "4 Up",            0,               0 },
-	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER4, "4 Down",          0,               0 },
-	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER4, "4 Left",          0,               0 },
-	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER4, "4 Right",         0,               0 },
-	{ IPT_JOYSTICKRIGHT_UP,    "Right/Up",        OSD_KEY_I,       OSD_JOY_FIRE2 },
-	{ IPT_JOYSTICKRIGHT_DOWN,  "Right/Down",      OSD_KEY_K,       OSD_JOY_FIRE3 },
-	{ IPT_JOYSTICKRIGHT_LEFT,  "Right/Left",      OSD_KEY_J,       OSD_JOY_FIRE1 },
-	{ IPT_JOYSTICKRIGHT_RIGHT, "Right/Right",     OSD_KEY_L,       OSD_JOY_FIRE4 },
-	{ IPT_JOYSTICKLEFT_UP,     "Left/Up",         OSD_KEY_E,       OSD_JOY_UP },
-	{ IPT_JOYSTICKLEFT_DOWN,   "Left/Down",       OSD_KEY_D,       OSD_JOY_DOWN },
-	{ IPT_JOYSTICKLEFT_LEFT,   "Left/Left",       OSD_KEY_S,       OSD_JOY_LEFT },
-	{ IPT_JOYSTICKLEFT_RIGHT,  "Left/Right",      OSD_KEY_F,       OSD_JOY_RIGHT },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "2 Right/Up",        0,               0 },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "2 Right/Down",      0,               0 },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "2 Right/Left",      0,               0 },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "2 Right/Right",     0,               0 },
-	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "2 Left/Up",         0,               0 },
-	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "2 Left/Down",       0,               0 },
-	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "2 Left/Left",       0,               0 },
-	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "2 Left/Right",      0,               0 },
-	{ IPT_BUTTON1,             "Button 1",        OSD_KEY_LCONTROL,OSD_JOY_FIRE1 },
-	{ IPT_BUTTON2,             "Button 2",        OSD_KEY_ALT,     OSD_JOY_FIRE2 },
-	{ IPT_BUTTON3,             "Button 3",        OSD_KEY_SPACE,   OSD_JOY_FIRE3 },
-	{ IPT_BUTTON4,             "Button 4",        OSD_KEY_LSHIFT,  OSD_JOY_FIRE4 },
-	{ IPT_BUTTON5,             "Button 5",        OSD_KEY_Z,       OSD_JOY_FIRE5 },
-	{ IPT_BUTTON6,             "Button 6",        OSD_KEY_X,       OSD_JOY_FIRE6 },
-	{ IPT_BUTTON7,             "Button 7",        OSD_KEY_C,       OSD_JOY_FIRE7 },
-	{ IPT_BUTTON8,             "Button 8",        OSD_KEY_V,       OSD_JOY_FIRE8 },	{ IPT_BUTTON1 | IPF_PLAYER2, "2 Button 1",        OSD_KEY_A,       0 },
-	{ IPT_BUTTON2 | IPF_PLAYER2, "2 Button 2",        OSD_KEY_S,       0 },
-	{ IPT_BUTTON3 | IPF_PLAYER2, "2 Button 3",        OSD_KEY_Q,       0 },
-	{ IPT_BUTTON4 | IPF_PLAYER2, "2 Button 4",        OSD_KEY_W,       0 },
-	{ IPT_BUTTON1 | IPF_PLAYER3, "3 Button 1",        OSD_KEY_RCONTROL,0 },
-	{ IPT_BUTTON2 | IPF_PLAYER3, "3 Button 2",        OSD_KEY_RSHIFT,  0 },
-	{ IPT_BUTTON3 | IPF_PLAYER3, "3 Button 3",        OSD_KEY_ENTER,   0 },
-	{ IPT_BUTTON4 | IPF_PLAYER3, "3 Button 4",        0,               0 },
-	{ IPT_BUTTON1 | IPF_PLAYER4, "4 Button 1",        0,               0 },
-	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
-	{ IPT_BUTTON3 | IPF_PLAYER4, "4 Button 3",        0,               0 },
-	{ IPT_BUTTON4 | IPF_PLAYER4, "4 Button 4",        0,               0 },
-	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,           0 },
-	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,           0 },
-	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,           0 },
-	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,           0 },
-	{ IPT_TILT,                "Tilt",            OSD_KEY_T,       IP_JOY_NONE },
-	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,           0 },
-	{ IPT_START2,              "2 Players Start", OSD_KEY_2,           0 },
-	{ IPT_START3,              "3 Players Start", OSD_KEY_7,           0 },
-	{ IPT_START4,              "4 Players Start", OSD_KEY_8,           0 },
-	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
-	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_DIAL,                "Dial",            IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
-	{ IPT_DIAL | IPF_PLAYER2,  "Dial 2",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_DIAL | IPF_PLAYER3,  "Dial 3",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_DIAL | IPF_PLAYER4,  "Dial 4",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_X,         "Trak X",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
-	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_Y,         "Trak Y",          IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_X,          "AD Stick X",      IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
-	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y,          "AD Stick Y",      IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
-	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_UNKNOWN,             "UNKNOWN",         IP_KEY_NONE,     IP_JOY_NONE },
-	{ IPT_END,                 0,                 IP_KEY_NONE,     IP_JOY_NONE }
-};
 
 /* Note that the following 3 routines have slightly different meanings with analog ports */
 const char *default_name(const struct InputPort *in)
@@ -423,6 +549,8 @@ int default_joy(const struct InputPort *in)
 	return inputport_defaults[i].joystick;
 }
 
+
+
 void update_analog_port(int port)
 {
 	struct InputPort *in;
@@ -473,11 +601,15 @@ void update_analog_port(int port)
 
 	sensitivity = in->arg & 0x000000ff;
 	clip = (in->arg & 0x0000ff00) >> 8;
-	min = (in->arg & 0x00ff0000) >> 16;
-	max = (in->arg & 0xff000000) >> 24;
+	min = in->min;
+	max = in->max;
 	default_value = in->default_value * 100 / sensitivity;
 	/* extremes can be either signed or unsigned */
-	if (min > max) min = min - 256;
+	if (min > max)
+	{
+		if (in->mask > 0xff) min = min - 0x10000;
+		else min = min - 0x100;
+	}
 
 	/* if IPF_CENTER go back to the default position, but without */
 	/* throwing away sub-precision movements which might have been done. */
@@ -571,21 +703,33 @@ void update_analog_port(int port)
 
 				new = cpu_scalebyfcount(new - prev) + prev;
 
-#if 1 /* logarithmic scale */
-				if (new > 0)
+				/* apply sensitivity using a logarithmic scale */
+				if (in->mask > 0xff)
 				{
-					current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
-							+ in->default_value) * 100 / sensitivity;
+					if (new > 0)
+					{
+						current = (pow(new / 32768.0, 100.0 / sensitivity) * (max-in->default_value)
+								+ in->default_value) * 100 / sensitivity;
+					}
+					else
+					{
+						current = (pow(-new / 32768.0, 100.0 / sensitivity) * (min-in->default_value)
+								+ in->default_value) * 100 / sensitivity;
+					}
 				}
 				else
 				{
-					current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
-							+ in->default_value) * 100 / sensitivity;
+					if (new > 0)
+					{
+						current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+								+ in->default_value) * 100 / sensitivity;
+					}
+					else
+					{
+						current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+								+ in->default_value) * 100 / sensitivity;
+					}
 				}
-#else
-				current = default_value + (new * (max-min) * 100) / (256 * sensitivity);
-#endif
-
 			}
 		}
 	}
@@ -606,9 +750,9 @@ void update_analog_port(int port)
 	input_port_value[port] |= (current * sensitivity / 100) & in->mask;
 
 	if (playback)
-		osd_fread(playback,&input_port_value[port],1);
+		readword(playback,&input_port_value[port]);
 	else if (record)
-		osd_fwrite(record,&input_port_value[port],1);
+		writeword(record,input_port_value[port]);
 }
 
 
@@ -892,9 +1036,19 @@ if (errorlog && in->arg == 0)
 	}
 
 	if (playback)
-		osd_fread(playback,input_port_value,MAX_INPUT_PORTS);
+	{
+		int i;
+
+		for (i = 0; i < MAX_INPUT_PORTS; i ++)
+			readword(playback,&input_port_value[i]);
+	}
 	else if (record)
-		osd_fwrite(record,input_port_value,MAX_INPUT_PORTS);
+	{
+		int i;
+
+		for (i = 0; i < MAX_INPUT_PORTS; i ++)
+			writeword(record,input_port_value[i]);
+	}
 }
 
 

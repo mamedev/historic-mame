@@ -140,7 +140,7 @@ static const unsigned char op65c02[512]=
   _bra,_rel, _sta,_idx, _ill,_non, _ill,_non, _sty,_zpg, _sta,_zpg, _stx,_zpg, _ill,_non, /* 80 */
   _dey,_imp, _bit,_imm, _txa,_imp, _ill,_non, _sty,_abs, _sta,_abs, _stx,_abs, _ill,_non,
   _bcc,_rel, _sta,_idy, _sta,_zpi, _ill,_non, _sty,_zpx, _sta,_zpx, _stx,_zpy, _ill,_non, /* 90 */
-  _tya,_imp, _sta,_aby, _txs,_imp, _ill,_non, _stz,_abs, _sta,_abx, _ill,_non, _ill,_non,
+  _tya,_imp, _sta,_aby, _txs,_imp, _ill,_non, _stz,_abs, _sta,_abx, _stz,_abx, _ill,_non,
   _ldy,_imm, _lda,_idx, _ldx,_imm, _ill,_non, _ldy,_zpg, _lda,_zpg, _ldx,_zpg, _ill,_non, /* a0 */
   _tay,_imp, _lda,_imm, _tax,_imp, _ill,_non, _ldy,_abs, _lda,_abs, _ldx,_abs, _ill,_non,
   _bcs,_rel, _lda,_idy, _lda,_zpi, _ill,_non, _ldy,_zpx, _lda,_zpx, _ldx,_zpy, _ill,_non, /* b0 */

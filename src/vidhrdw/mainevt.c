@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
 
 static struct osd_bitmap *back_bitmap;
 static struct osd_bitmap *front_bitmap;

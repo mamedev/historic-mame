@@ -71,7 +71,7 @@
 #if FAST_MEMORY
 extern  MHELE   *cur_mwhard;
 extern	MHELE	*cur_mrhard;
-extern	byte	*RAM;
+extern	UINT8	*RAM;
 #endif
 
 /***************************************************************
@@ -117,14 +117,14 @@ extern	byte	*RAM;
 	{															\
 		tmp = RDOPARG();										\
 		EAW = PCW + (signed char)tmp;							\
-		M6502_ICount -= (PCH == EAH) ? 3 : 4;					\
+		m6502_ICount -= (PCH == EAH) ? 3 : 4;					\
 		PCD = EAD;												\
 		change_pc16(PCD);										\
 	}															\
 	else														\
 	{															\
 		PCW++;													\
-		M6502_ICount -= 2;										\
+		m6502_ICount -= 2;										\
 	}
 
 /***************************************************************
@@ -203,7 +203,7 @@ extern	byte	*RAM;
 	ZPL++;														\
 	EAH = RDMEM(ZPD);											\
     if (EAL + Y > 0xff)                                         \
-		M6502_ICount--; 										\
+		m6502_ICount--; 										\
 	EAW += Y
 
 /***************************************************************
@@ -222,7 +222,7 @@ extern	byte	*RAM;
 #define EA_IAX                                                  \
 	EA_IND; 													\
 	if (EAL + X > 0xff) /* assumption; probably wrong ? */		\
-		M6502_ICount--; 										\
+		m6502_ICount--; 										\
     EAW += X
 
 /* read a value into tmp */
@@ -250,7 +250,7 @@ extern	byte	*RAM;
 #define WR_IDY	EA_IDY; WRMEM(EAD, tmp)
 
 /* write back a value from tmp to the last EA */
-#define WB_ACC	A = (byte)tmp;
+#define WB_ACC	A = (UINT8)tmp;
 #define WB_EA	WRMEM(EAD, tmp)
 
 /***************************************************************
@@ -317,7 +317,7 @@ extern	byte	*RAM;
 			P |= _fV;											\
 		if (sum & 0xff00)										\
 			P |= _fC;											\
-		A = (byte) sum; 										\
+		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
@@ -325,7 +325,7 @@ extern	byte	*RAM;
  *	AND Logical and
  ***************************************************************/
 #define AND 													\
-	A = (byte)(A & tmp);										\
+	A = (UINT8)(A & tmp);										\
 	SET_NZ(A)
 
 /* 6502 ********************************************************
@@ -333,7 +333,7 @@ extern	byte	*RAM;
  ***************************************************************/
 #define ASL 													\
 	P = (P & ~_fC) | ((tmp >> 7) & _fC);						\
-	tmp = (byte)(tmp << 1); 									\
+	tmp = (UINT8)(tmp << 1);									\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
@@ -444,7 +444,7 @@ extern	byte	*RAM;
  * CLI	Clear interrupt flag
  ***************************************************************/
 #define CLI 													\
-	if (m6502.pending_irq && (P & _fI)) 						\
+	if (m6502.pending_interrupt && (P & _fI))					\
 		m6502.after_cli = 1;									\
 	P &= ~_fI
 
@@ -461,7 +461,7 @@ extern	byte	*RAM;
 	P &= ~_fC;													\
 	if (A >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(A - tmp))
+	SET_NZ((UINT8)(A - tmp))	  
 
 /* 6502 ********************************************************
  *	CPX Compare index X
@@ -470,7 +470,7 @@ extern	byte	*RAM;
 	P &= ~_fC;													\
 	if (X >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(X - tmp))
+	SET_NZ((UINT8)(X - tmp))
 
 /* 6502 ********************************************************
  *	CPY Compare index Y
@@ -479,34 +479,34 @@ extern	byte	*RAM;
 	P &= ~_fC;													\
 	if (Y >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(Y - tmp))
+	SET_NZ((UINT8)(Y - tmp))
 
 /* 6502 ********************************************************
  *	DEC Decrement memory
  ***************************************************************/
 #define DEC 													\
-	tmp = (byte)--tmp;											\
+	tmp = (UINT8)--tmp; 										\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
  *	DEX Decrement index X
  ***************************************************************/
 #define DEX 													\
-	X = (byte)--X;												\
+	X = (UINT8)--X; 											\
 	SET_NZ(X)
 
 /* 6502 ********************************************************
  *	DEY Decrement index Y
  ***************************************************************/
 #define DEY 													\
-	Y = (byte)--Y;												\
+	Y = (UINT8)--Y; 											\
 	SET_NZ(Y)
 
 /* 6502 ********************************************************
  *	EOR Logical exclusive or
  ***************************************************************/
 #define EOR 													\
-	A = (byte)(A ^ tmp);										\
+	A = (UINT8)(A ^ tmp);										\
 	SET_NZ(A)
 
 /* 6502 ********************************************************
@@ -521,21 +521,21 @@ extern	byte	*RAM;
  *	INC Increment memory
  ***************************************************************/
 #define INC 													\
-	tmp = (byte)++tmp;											\
+	tmp = (UINT8)++tmp; 										\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
  *	INX Increment index X
  ***************************************************************/
 #define INX 													\
-	X = (byte)++X;												\
+	X = (UINT8)++X; 											\
 	SET_NZ(X)
 
 /* 6502 ********************************************************
  *	INY Increment index Y
  ***************************************************************/
 #define INY 													\
-	Y = (byte)++Y;												\
+	Y = (UINT8)++Y; 											\
 	SET_NZ(Y)
 
 /* 6502 ********************************************************
@@ -563,21 +563,21 @@ extern	byte	*RAM;
  *	LDA Load accumulator
  ***************************************************************/
 #define LDA 													\
-	A = (byte)tmp;												\
+	A = (UINT8)tmp; 											\
 	SET_NZ(A)
 
 /* 6502 ********************************************************
  *	LDX Load index X
  ***************************************************************/
 #define LDX 													\
-	X = (byte)tmp;												\
+	X = (UINT8)tmp; 											\
 	SET_NZ(X)
 
 /* 6502 ********************************************************
  *	LDY Load index Y
  ***************************************************************/
 #define LDY 													\
-	Y = (byte)tmp;												\
+	Y = (UINT8)tmp; 											\
 	SET_NZ(Y)
 
 /* 6502 ********************************************************
@@ -586,7 +586,7 @@ extern	byte	*RAM;
  ***************************************************************/
 #define LSR 													\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)tmp >> 1;										\
+	tmp = (UINT8)tmp >> 1;										\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
@@ -598,7 +598,7 @@ extern	byte	*RAM;
  *	ORA Logical inclusive or
  ***************************************************************/
 #define ORA 													\
-	A = (byte)(A | tmp);										\
+	A = (UINT8)(A | tmp);										\
 	SET_NZ(A)
 
 /* 6502 ********************************************************
@@ -631,7 +631,7 @@ extern	byte	*RAM;
 	if (P & _fI)												\
 	{															\
 		PULL(P);												\
-		if (m6502.pending_irq && !(P & _fI))					\
+		if (m6502.pending_interrupt && !(P & _fI))				\
 			m6502.after_cli = 1;								\
 	}															\
 	else														\
@@ -647,7 +647,7 @@ extern	byte	*RAM;
 	if (P & _fI)												\
 	{															\
 		PULL(P);												\
-		if (m6502.pending_irq && !(P & _fI))					\
+		if (m6502.pending_interrupt && !(P & _fI))				\
 			m6502.after_cli = 1;								\
 	}															\
 	else														\
@@ -665,7 +665,7 @@ extern	byte	*RAM;
 #define ROL 													\
 	tmp = (tmp << 1) | (P & _fC);								\
 	P = (P & ~_fC) | ((tmp >> 8) & _fC);						\
-	tmp = (byte)tmp;											\
+	tmp = (UINT8)tmp;											\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
@@ -675,7 +675,7 @@ extern	byte	*RAM;
 #define ROR 													\
 	tmp |= (P & _fC) << 8;										\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)(tmp >> 1); 									\
+	tmp = (UINT8)(tmp >> 1);									\
 	SET_NZ(tmp)
 
 /* 6502 ********************************************************
@@ -691,7 +691,7 @@ extern	byte	*RAM;
     PULL(PCH);                                                  \
     P |= _fT;                                                   \
 	NZ = ((P & _fN) << 8) | ((P & _fZ) ^ _fZ);					\
-	if (m6502.pending_irq && !(P & _fI))						\
+	if (m6502.pending_interrupt && !(P & _fI))					\
 		m6502.after_cli = 1;									\
 	change_pc16(PCD)
 
@@ -702,7 +702,7 @@ extern	byte	*RAM;
 	PULL(PCL);													\
     PULL(PCH);                                                  \
     P |= _fT;                                                   \
-    if (m6502.pending_irq && !(P & _fI))                        \
+	if (m6502.pending_interrupt && !(P & _fI))					\
 		m6502.after_cli = 1;									\
     change_pc16(PCD)
 
@@ -750,7 +750,7 @@ extern	byte	*RAM;
 			P |= _fV;											\
 		if ((sum & 0xff00) == 0)								\
 			P |= _fC;											\
-		A = (byte) sum; 										\
+		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
@@ -854,14 +854,14 @@ extern	byte	*RAM;
  *	DEA Decrement accumulator
  ***************************************************************/
 #define DEA 													\
-	A = (byte)--A;												\
+	A = (UINT8)--A; 											\
 	SET_NZ(A)
 
 /* 65C02 *******************************************************
  *	INA Increment accumulator
  ***************************************************************/
 #define INA 													\
-	A = (byte)++A;												\
+	A = (UINT8)++A; 											\
 	SET_NZ(A)
 
 /* 65C02 *******************************************************
@@ -931,7 +931,7 @@ extern	byte	*RAM;
  ***************************************************************/
 #define ANC 													\
 	P &= ~_fC;													\
-	A = (byte)(A & tmp);										\
+	A = (UINT8)(A & tmp);										\
 	if (A & 0x80)												\
 		P |= _fC;												\
 	SET_NZ(A)
@@ -940,7 +940,7 @@ extern	byte	*RAM;
  *	ASR logical and, logical shift right
  ***************************************************************/
 #define ASR 													\
-	tmp = (byte)(A & tmp);										\
+	tmp = (UINT8)(A & tmp); 									\
 	LSR
 
 /* 6510 ********************************************************
@@ -957,7 +957,7 @@ extern	byte	*RAM;
  *	ARR logical and, rotate right
  ***************************************************************/
 #define ARR 													\
-	tmp = (byte)(A & tmp);										\
+	tmp = (UINT8)(A & tmp); 									\
 	ROR
 
 /* 6510 ********************************************************
@@ -968,25 +968,25 @@ extern	byte	*RAM;
 	X &= A; 													\
 	if (X >= tmp)												\
 		P |= _fC;												\
-	X = (byte)(X - tmp);										\
+	X = (UINT8)(X - tmp);										\
 	SET_NZ(X)
 
 /* 6510 ********************************************************
  *	AXA transfer index X to accumulator, logical and
  ***************************************************************/
 #define AXA 													\
-	tmp = (byte)(X & tmp);										\
+	tmp = (UINT8)(X & tmp); 									\
 	SET_NZ(tmp)
 
 /* 6510 ********************************************************
  *	DCP decrement data and compare
  ***************************************************************/
 #define DCP 													\
-	tmp = (byte)--tmp;											\
+	tmp = (UINT8)--tmp; 										\
 	P &= ~_fC;													\
 	if (A >= tmp)												\
 		P |= _fC;												\
-    SET_NZ((byte)(A - tmp))
+	SET_NZ((UINT8)(A - tmp))
 
 /* 6502 ********************************************************
  *	DOP double no operation
@@ -998,14 +998,14 @@ extern	byte	*RAM;
  *	ISB increment and subtract with carry
  ***************************************************************/
 #define ISB 													\
-	tmp = (byte)++tmp;											\
+	tmp = (UINT8)++tmp; 										\
     SBC
 
 /* 6510 ********************************************************
  *  LAX load accumulator and index X
  ***************************************************************/
 #define LAX 													\
-	A = X = (byte)tmp;											\
+	A = X = (UINT8)tmp; 										\
 	SET_NZ(A)
 
 /* 6510 ********************************************************
@@ -1015,7 +1015,7 @@ extern	byte	*RAM;
 #define RLA 													\
 	tmp = (tmp << 1) | (P & _fC);								\
 	P = (P & ~_fC) | ((tmp >> 8) & _fC);						\
-	tmp = (byte)tmp;											\
+	tmp = (UINT8)tmp;											\
 	A &= tmp;													\
     SET_NZ(A)
 
@@ -1026,7 +1026,7 @@ extern	byte	*RAM;
 #define RRA 													\
 	tmp |= (P & _fC) << 8;										\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)(tmp >> 1); 									\
+	tmp = (UINT8)(tmp >> 1);									\
     ADC
 
 /* 6510 ********************************************************
@@ -1041,7 +1041,7 @@ extern	byte	*RAM;
  ***************************************************************/
 #define SLO 													\
 	P = (P & ~_fC) | ((tmp >> 7) & _fC);						\
-	tmp = (byte)(tmp << 1); 									\
+	tmp = (UINT8)(tmp << 1);									\
 	A |= tmp;													\
     SET_NZ(A)
 
@@ -1051,7 +1051,7 @@ extern	byte	*RAM;
  ***************************************************************/
 #define SRE 													\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)tmp >> 1;										\
+	tmp = (UINT8)tmp >> 1;										\
 	A ^= tmp;													\
     SET_NZ(A)
 
@@ -1070,21 +1070,21 @@ extern	byte	*RAM;
  ***************************************************************/
 #define SSH 													\
 	tmp = S = A & X;											\
-	tmp &= (byte)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
+	tmp &= (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
 
 /* 6510 ********************************************************
  * SXH	store index X high
  * logical and index X with memory[PC+1] and store the result
  ***************************************************************/
 #define SXH 													\
-	tmp = X & (byte)(cpu_readop_arg((PCW + 1) & 0xffff)
+	tmp = X & (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff)
 
 /* 6510 ********************************************************
  * SYH	store index Y and (high + 1)
  * logical and index Y with memory[PC+1] + 1 and store the result
  ***************************************************************/
 #define SYH 													\
-	tmp = Y & (byte)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
+	tmp = Y & (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
 
 /* 6510 ********************************************************
  *	TOP triple no operation
