@@ -1,137 +1,255 @@
-# Makefile for MAME 0.81
-# Configuration options can be found under lines marked with '***'
+##############################################################################
+#
+# Makefile for X-Mame-0.23.1
+#
+# by Juan Antonio Martinez
+# http://www.dit.upm.es/~jantonio/mame
+# mailto:mame@drake.dit.upm.es
+#
+##############################################################################
+# *** compiler  options
+###############################################################################
+#
+# *** Choose your make command. Some native ones does not suppport GNU features
+#     so I suggest you to use GNU make where available
+#
+MAKE	= make
 
-# *** Choose your compiler. Make it ANSI-compatible (e.g. 'cc -ansi').
-# for SGI irix native compiler use next line
+# *** Choose your compiler. Be sure that is ANSI-C compatible (e.g. 'cc -ansi').
 CC	= gcc
 LD	= $(CC)
 
-# *** If you have the MIT-SHM extension, uncomment the following:
+# *** set to aproppiate flag if want to debug
+# DBGFLAGS     = -g
+
+##############################################################################
+# *** Capabilities
+##############################################################################
+
+# *** If you have the MIT-SHM X extensions, uncomment the following:
 MS		= -DMITSHM
 
 # *** If you have the Linux joystick module, uncomment the following:
 JS		= -DJOYSTICK
 
-#set to aproppiate flag if want to debug
-DBGFLAGS     = -g
+# X-Mame uses the XPM library to make snapshots. If you want to, uncomment
+# following section to support them ( you should have libxpm available :-) )
+XPM	       = -I/usr/local/include -DHAS_XPM
+XPMLIB	       = -L/usr/local/lib -lXpm
 
-# choose your OS (one of linux, FREEBSD,  sunos, solaris, irix).
-ARCH  = linux
-
+##############################################################################
 # *** architecture.
+##############################################################################
+
+# *** Choose your OS (!!only one!!)
+
+ARCH  = linux
+# ARCH  = FREEBSD
+# ARCH  = netbsd_i386
+# ARCH  = sunos
+# ARCH  = solaris
+# ARCH  = irix
+# ARCH  = hpux
+# ARCH  = aix
+
+#
+# Architecture dependent definitions. Only change if you know what are you
+# doing...
+#
 
 # Linux
-DEFS.linux   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -m486
+#####################
+DEFS.linux   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux
 LIBS.linux   = -L/usr/X11/lib -lX11 -lXext -lm
+CFLAGS.linux = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 -Isrc/unix -m486 \
+		-fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -Wall
 
 # FreeBSD
-DEFS.FREEBSD   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -DFREEBSD -DFREEBSD_SOUND_WORKAROUND -m486 -I/usr/X11R6/include
+#####################
+DEFS.FREEBSD   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -DFREEBSD -DFREEBSD_SOUND_WORKAROUND
 LIBS.FREEBSD   = -L/usr/X11R6/lib -lX11 -lXext -lm
+CFLAGS.FREEBSD = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 -m486 -I/usr/X11R6/include \
+		-Isrc/unix -fstrength-reduce -funroll-loops \
+		-fomit-frame-pointer -O3 -Wall
+
+# netbsd_i386
+#####################
+DEFS.netbsd_i386   = -DX86_ASM -DLSB_FIRST -DUNIX -Dnetbsd_i386 -DNETBSD -DHAVE_GETTIMEOFDAY 
+LIBS.netbsd_i386   = -L/usr/X11R6/lib -lX11 -lXext -lm
+CFLAGS.netbsd_i386 = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 -m486 -I/usr/X11R6/include \
+		-Isrc/unix -fstrength-reduce -funroll-loops \
+		-fomit-frame-pointer -O3 -Wall
 
 # SunOS
+#####################
 DEFS.sunos	 = -DUNIX -Dsun -Dsunos -DCLOCKS_PER_SEC=1000000
-LIBS.sunos   = -L/usr/X11/lib -lX11 -lXext -lm
+LIBS.sunos       = -L/usr/X11/lib -lX11 -lXext -lm
+CFLAGS.sunos	 = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+		-Isrc/unix -fstrength-reduce -funroll-loops \
+		-fomit-frame-pointer -O3 -Wall
 
 # Solaris
+#####################
 DEFS.solaris	 = -DUNIX -Dsun -Dsolaris
-LIBS.solaris   = -L/usr/X11/lib -lX11 -lXext -lnsl -lsocket -lm
+LIBS.solaris     = -L/usr/X11/lib -lX11 -lXext -lnsl -lsocket -lm
+CFLAGS.solaris   = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+		-Isrc/unix -fstrength-reduce -funroll-loops \
+		-fomit-frame-pointer -O3 -Wall
 
 # IRIX
-DEFS.irix	 = -DUNIX -Dsgi
-LIBS.irix   = -L/usr/X11/lib -lX11 -lXext -lm -laudio
+#####################
+# configurable sound support thanks to entropy@zippy.bernstein.com
+# if your IRIX system has the dmedia package installed use following defs
+DEFS.irix	 = -DUNIX -Dsgi -DHAVE_GETTIMEOFDAY
+LIBS.irix        = -L/usr/X11/lib -lX11 -lXext -lm -laudio
+CFLAGS.irix      = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+		-Isrc/unix -DINLINE=static -O2 -w
+# else if you have no sound support ( dmedia package not installed )
+# or you don't want sound, use these definitions instead of above
+# DEFS.irix	 = -DUNIX -Dsgi -DHAVE_GETTIMEOFDAY -DIRIX_NOSOUND
+# LIBS.irix        = -L/usr/X11/lib -lX11 -lXext -lm
+# CFLAGS.irix      = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+# 		-Isrc/unix -DINLINE=static -O2 -w
 
-# If using IRIX native C compiler, use next line as CFLAGS
-#CFLAGS = $(DBGFLAGS) -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/unix -DINLINE=static -O3 -w
-CFLAGS = $(DBGFLAGS) -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/unix -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -Wall
 
+# AIX
+#####################
+# Thanks to Chris Sharp for writing sound driver and sending patches
+# you'll need the UMS and SOM lpp's installed ( under AIX4 )
+# Also, don't now why but TIMER_FREQ should be 10x bigger than normal 
+DEFS.aix	 = -DUNIX -Daix -DUSE_AUDIO
+LIBS.aix         = -L/usr/X11/lib -lX11 -lXext -lm -lUMSobj
+CFLAGS.aix	 = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+		-Isrc/unix -O2 -I/usr/include/UMS -I/usr/lpp/som/include 
+# But if you have no sound libs availables in AIX, you should disable audio
+# so use these definitions instead of above ones
+# DEFS.aix	 = -DUNIX -Daix
+# LIBS.aix       = -L/usr/X11/lib -lX11 -lXext -lm
+# CFLAGS.aix	 = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 -Isrc/unix -O2
+
+# HP-UX
+#####################
+# you MUST use GNU compiler and GNU make to get it run
+DEFS.hpux	 = -DUNIX -Dhpux
+LIBS.hpux        = -L/usr/X11/lib -lX11 -lXext -lm
+CFLAGS.hpux 	 = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/M6809 \
+		   -Isrc/unix -DINLINE=static -O3
+
+###########################################################################
 # No configurable options below this line....
+###########################################################################
 
-COMMON     = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
+CFLAGS	= $(JS) $(DBGFLAGS) $(XPM) $(MS) $(CFLAGS.$(ARCH)) -Dstricmp=strcasecmp
+
+
+## NOTE: ym2203.o is just a dummy file for Unix, not real one...
+COMMON = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
 	     obj.$(ARCH)/driver.o obj.$(ARCH)/cpuintrf.o \
              obj.$(ARCH)/vidhrdw/generic.o obj.$(ARCH)/sndhrdw/generic.o \
 	     obj.$(ARCH)/sndhrdw/psg.o obj.$(ARCH)/sndhrdw/8910intf.o \
-	     obj.$(ARCH)/sndhrdw/pokey.o obj.$(ARCH)/sndhrdw/sn76496.o
+	     obj.$(ARCH)/sndhrdw/pokey.o obj.$(ARCH)/sndhrdw/sn76496.o \
+	     obj.$(ARCH)/sndhrdw/ym2203.o
 
-OBJMICROS  = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o obj.$(ARCH)/I86/I86.o
+OBJMICROS = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o \
+	    obj.$(ARCH)/I86/I86.o obj.$(ARCH)/M6809/M6809.o
 
-OBJOSDEP   = obj.$(ARCH)/osdepend.o
+OBJOSDEP = obj.$(ARCH)/unix/osdepend.a
 
-OBJGAMES = obj.$(ARCH)/machine/pacman.o obj.$(ARCH)/vidhrdw/pacman.o obj.$(ARCH)/drivers/pacman.o \
-         obj.$(ARCH)/vidhrdw/pengo.o obj.$(ARCH)/sndhrdw/pengo.o obj.$(ARCH)/drivers/pengo.o \
-         obj.$(ARCH)/machine/ladybug.o obj.$(ARCH)/vidhrdw/ladybug.o obj.$(ARCH)/sndhrdw/ladybug.o obj.$(ARCH)/drivers/ladybug.o \
-         obj.$(ARCH)/machine/mrdo.o obj.$(ARCH)/vidhrdw/mrdo.o obj.$(ARCH)/drivers/mrdo.o \
-         obj.$(ARCH)/machine/docastle.o obj.$(ARCH)/vidhrdw/docastle.o obj.$(ARCH)/drivers/docastle.o \
-         obj.$(ARCH)/vidhrdw/cclimber.o obj.$(ARCH)/sndhrdw/cclimber.o obj.$(ARCH)/drivers/cclimber.o \
-         obj.$(ARCH)/machine/seicross.o obj.$(ARCH)/drivers/seicross.o \
-         obj.$(ARCH)/vidhrdw/ckong.o obj.$(ARCH)/drivers/ckong.o \
-         obj.$(ARCH)/drivers/ckongs.o \
-         obj.$(ARCH)/vidhrdw/dkong.o obj.$(ARCH)/sndhrdw/dkong.o obj.$(ARCH)/drivers/dkong.o \
-         obj.$(ARCH)/vidhrdw/dkong3.o obj.$(ARCH)/drivers/dkong3.o \
-         obj.$(ARCH)/machine/bagman.o obj.$(ARCH)/vidhrdw/bagman.o obj.$(ARCH)/sndhrdw/bagman.o obj.$(ARCH)/drivers/bagman.o \
-         obj.$(ARCH)/vidhrdw/wow.o obj.$(ARCH)/drivers/wow.o \
-         obj.$(ARCH)/drivers/galaxian.o \
-         obj.$(ARCH)/vidhrdw/mooncrst.o obj.$(ARCH)/sndhrdw/mooncrst.o obj.$(ARCH)/drivers/mooncrst.o \
-         obj.$(ARCH)/vidhrdw/moonqsr.o obj.$(ARCH)/drivers/moonqsr.o \
-         obj.$(ARCH)/vidhrdw/frogger.o obj.$(ARCH)/sndhrdw/frogger.o obj.$(ARCH)/drivers/frogger.o \
-         obj.$(ARCH)/machine/scramble.o obj.$(ARCH)/vidhrdw/scramble.o obj.$(ARCH)/sndhrdw/scramble.o obj.$(ARCH)/drivers/scramble.o \
-         obj.$(ARCH)/drivers/scobra.o \
-         obj.$(ARCH)/vidhrdw/warpwarp.o obj.$(ARCH)/drivers/warpwarp.o \
-         obj.$(ARCH)/vidhrdw/popeye.o obj.$(ARCH)/sndhrdw/popeye.o obj.$(ARCH)/drivers/popeye.o \
-         obj.$(ARCH)/vidhrdw/amidar.o obj.$(ARCH)/sndhrdw/amidar.o obj.$(ARCH)/drivers/amidar.o \
-         obj.$(ARCH)/vidhrdw/rallyx.o obj.$(ARCH)/drivers/rallyx.o \
-         obj.$(ARCH)/vidhrdw/pooyan.o obj.$(ARCH)/sndhrdw/pooyan.o obj.$(ARCH)/drivers/pooyan.o \
-         obj.$(ARCH)/vidhrdw/timeplt.o obj.$(ARCH)/drivers/timeplt.o \
-         obj.$(ARCH)/machine/phoenix.o obj.$(ARCH)/vidhrdw/phoenix.o obj.$(ARCH)/sndhrdw/phoenix.o obj.$(ARCH)/drivers/phoenix.o \
-         obj.$(ARCH)/machine/carnival.o obj.$(ARCH)/vidhrdw/carnival.o obj.$(ARCH)/drivers/carnival.o \
-         obj.$(ARCH)/machine/invaders.o obj.$(ARCH)/vidhrdw/invaders.o obj.$(ARCH)/sndhrdw/invaders.o obj.$(ARCH)/drivers/invaders.o \
-         obj.$(ARCH)/vidhrdw/mario.o obj.$(ARCH)/drivers/mario.o \
-         obj.$(ARCH)/machine/zaxxon.o obj.$(ARCH)/vidhrdw/zaxxon.o obj.$(ARCH)/drivers/zaxxon.o \
-         obj.$(ARCH)/vidhrdw/congo.o obj.$(ARCH)/drivers/congo.o \
-         obj.$(ARCH)/vidhrdw/bombjack.o obj.$(ARCH)/sndhrdw/bombjack.o obj.$(ARCH)/drivers/bombjack.o \
-         obj.$(ARCH)/machine/centiped.o obj.$(ARCH)/drivers/centiped.o \
-         obj.$(ARCH)/vidhrdw/milliped.o obj.$(ARCH)/sndhrdw/milliped.o obj.$(ARCH)/drivers/milliped.o \
-         obj.$(ARCH)/machine/nibbler.o obj.$(ARCH)/vidhrdw/nibbler.o obj.$(ARCH)/drivers/nibbler.o \
-         obj.$(ARCH)/machine/mpatrol.o obj.$(ARCH)/vidhrdw/mpatrol.o obj.$(ARCH)/drivers/mpatrol.o \
-         obj.$(ARCH)/machine/btime.o obj.$(ARCH)/vidhrdw/btime.o obj.$(ARCH)/sndhrdw/btime.o obj.$(ARCH)/drivers/btime.o \
-         obj.$(ARCH)/sndhrdw/jumpbug.o obj.$(ARCH)/drivers/jumpbug.o \
-         obj.$(ARCH)/machine/vanguard.o obj.$(ARCH)/vidhrdw/vanguard.o obj.$(ARCH)/drivers/vanguard.o \
-         obj.$(ARCH)/machine/gberet.o obj.$(ARCH)/vidhrdw/gberet.o obj.$(ARCH)/sndhrdw/gberet.o obj.$(ARCH)/drivers/gberet.o \
-         obj.$(ARCH)/vidhrdw/venture.o obj.$(ARCH)/drivers/venture.o \
-         obj.$(ARCH)/drivers/pepper2.o \
-         obj.$(ARCH)/vidhrdw/gottlieb.o obj.$(ARCH)/drivers/reactor.o \
-         obj.$(ARCH)/sndhrdw/gottlieb.o obj.$(ARCH)/drivers/qbert.o \
-         obj.$(ARCH)/machine/gottlieb.o obj.$(ARCH)/drivers/krull.o \
-         obj.$(ARCH)/drivers/mplanets.o \
-         obj.$(ARCH)/vidhrdw/junglek.o obj.$(ARCH)/sndhrdw/junglek.o obj.$(ARCH)/drivers/junglek.o \
-         obj.$(ARCH)/machine/elevator.o obj.$(ARCH)/vidhrdw/elevator.o obj.$(ARCH)/drivers/elevator.o \
-         obj.$(ARCH)/machine/panic.o obj.$(ARCH)/vidhrdw/panic.o obj.$(ARCH)/drivers/panic.o \
-         obj.$(ARCH)/machine/arabian.o obj.$(ARCH)/vidhrdw/arabian.o obj.$(ARCH)/sndhrdw/arabian.o obj.$(ARCH)/drivers/arabian.o \
-         obj.$(ARCH)/machine/1942.o obj.$(ARCH)/vidhrdw/1942.o obj.$(ARCH)/sndhrdw/1942.o obj.$(ARCH)/drivers/1942.o \
-         obj.$(ARCH)/vidhrdw/gyruss.o obj.$(ARCH)/sndhrdw/gyruss.o obj.$(ARCH)/drivers/gyruss.o \
-         obj.$(ARCH)/machine/superpac.o obj.$(ARCH)/vidhrdw/superpac.o obj.$(ARCH)/drivers/superpac.o \
-         obj.$(ARCH)/machine/galaga.o obj.$(ARCH)/vidhrdw/galaga.o obj.$(ARCH)/drivers/galaga.o \
-         obj.$(ARCH)/machine/kangaroo.o obj.$(ARCH)/vidhrdw/kangaroo.o obj.$(ARCH)/sndhrdw/kangaroo.o obj.$(ARCH)/drivers/kangaroo.o \
+MCH = obj.$(ARCH)/machine
+DRV = obj.$(ARCH)/drivers
+VID = obj.$(ARCH)/vidhrdw
+SND = obj.$(ARCH)/sndhrdw
 
-OBJS= $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
+OBJGAMES = $(MCH)/pacman.o $(DRV)/pacman.o   $(VID)/pacman.o 		         \
+		           $(DRV)/pengo.o    $(VID)/pengo.o    $(SND)/pengo.o    \
+         $(MCH)/ladybug.o  $(DRV)/ladybug.o  $(VID)/ladybug.o  $(SND)/ladybug.o  \
+         $(MCH)/mrdo.o 	   $(DRV)/mrdo.o     $(VID)/mrdo.o 			 \
+         $(MCH)/docastle.o $(DRV)/docastle.o $(VID)/docastle.o		         \
+			   $(DRV)/cclimber.o $(VID)/cclimber.o $(SND)/cclimber.o \
+         $(MCH)/seicross.o $(DRV)/seicross.o $(VID)/seicross.o $(SND)/seicross.o \
+			   $(DRV)/ckong.o    $(VID)/ckong.o 			 \
+			   $(DRV)/ckongs.o					 \
+			   $(DRV)/dkong.o    $(VID)/dkong.o    $(SND)/dkong.o    \
+			   $(DRV)/dkong3.o   $(VID)/dkong3.o 		         \
+         $(MCH)/bagman.o   $(DRV)/bagman.o   $(VID)/bagman.o   $(SND)/bagman.o   \
+			   $(DRV)/wow.o      $(VID)/wow.o 			 \
+         		   $(DRV)/galaxian.o 					 \
+			   $(DRV)/mooncrst.o $(VID)/mooncrst.o $(SND)/mooncrst.o \
+			   $(DRV)/moonqsr.o  $(VID)/moonqsr.o 		         \
+			   $(DRV)/frogger.o  $(VID)/frogger.o  $(SND)/frogger.o  \
+         $(MCH)/scramble.o $(DRV)/scramble.o $(VID)/scramble.o $(SND)/scramble.o \
+			   $(DRV)/scobra.o 					 \
+         $(MCH)/warpwarp.o $(DRV)/warpwarp.o $(VID)/warpwarp.o 		         \
+			   $(DRV)/popeye.o   $(VID)/popeye.o   $(SND)/popeye.o   \
+			   $(DRV)/amidar.o   $(VID)/amidar.o   $(SND)/amidar.o   \
+			   $(DRV)/rallyx.o   $(VID)/rallyx.o 		         \
+			   $(DRV)/pooyan.o   $(VID)/pooyan.o   $(SND)/pooyan.o   \
+			   $(DRV)/timeplt.o  $(VID)/timeplt.o  $(SND)/timeplt.o  \
+         $(MCH)/phoenix.o  $(DRV)/phoenix.o  $(VID)/phoenix.o  $(SND)/phoenix.o  \
+         $(MCH)/carnival.o $(DRV)/carnival.o $(VID)/carnival.o                   \
+         $(MCH)/invaders.o $(DRV)/invaders.o $(VID)/invaders.o $(SND)/invaders.o \
+			   $(DRV)/mario.o    $(VID)/mario.o 			 \
+         $(MCH)/zaxxon.o   $(DRV)/zaxxon.o   $(VID)/zaxxon.o 			 \
+			   $(DRV)/congo.o    $(VID)/congo.o 			 \
+			   $(DRV)/bombjack.o $(VID)/bombjack.o $(SND)/bombjack.o \
+         $(MCH)/centiped.o $(DRV)/centiped.o $(VID)/centiped.o 			 \
+			   $(DRV)/milliped.o $(VID)/milliped.o $(SND)/milliped.o \
+	 $(MCH)/nibbler.o  $(DRV)/nibbler.o  $(VID)/nibbler.o                    \
+         $(MCH)/mpatrol.o  $(DRV)/mpatrol.o  $(VID)/mpatrol.o 			 \
+         $(MCH)/btime.o    $(DRV)/btime.o    $(VID)/btime.o    $(SND)/btime.o 	 \
+			   $(DRV)/jumpbug.o                    $(SND)/jumpbug.o  \
+         $(MCH)/vanguard.o $(DRV)/vanguard.o $(VID)/vanguard.o                   \
+         $(MCH)/gberet.o   $(DRV)/gberet.o   $(VID)/gberet.o   $(SND)/gberet.o   \
+			   $(DRV)/venture.o  $(VID)/venture.o                    \
+         $(MCH)/gottlieb.o                   $(VID)/gottlieb.o $(SND)/gottlieb.o \
+         		   $(DRV)/pepper2.o 					 \
+	 		   $(DRV)/qbert.o 					 \
+	 		   $(DRV)/reactor.o                                      \
+         		   $(DRV)/krull.o                                        \
+         		   $(DRV)/mplanets.o                                     \
+			   $(DRV)/junglek.o  $(VID)/junglek.o  $(SND)/junglek.o  \
+         $(MCH)/elevator.o $(DRV)/elevator.o $(VID)/elevator.o $(SND)/elevator.o \
+         $(MCH)/panic.o    $(DRV)/panic.o    $(VID)/panic.o                      \
+         $(MCH)/arabian.o  $(DRV)/arabian.o  $(VID)/arabian.o  $(SND)/arabian.o  \
+         $(MCH)/1942.o     $(DRV)/1942.o     $(VID)/1942.o     $(SND)/1942.o     \
+			   $(DRV)/gyruss.o   $(VID)/gyruss.o   $(SND)/gyruss.o   \
+         $(MCH)/superpac.o $(DRV)/superpac.o $(VID)/superpac.o                   \
+         $(MCH)/galaga.o   $(DRV)/galaga.o   $(VID)/galaga.o                     \
+         $(MCH)/kangaroo.o $(DRV)/kangaroo.o $(VID)/kangaroo.o $(SND)/kangaroo.o \
+         		   $(DRV)/commando.o $(VID)/commando.o                   \
+         $(MCH)/gng.o      $(DRV)/gng.o      $(VID)/gng.o                        \
+         $(MCH)/vulgus.o   $(DRV)/vulgus.o   $(VID)/vulgus.o   $(SND)/vulgus.o   \
+			   $(DRV)/kungfum.o  $(VID)/kungfum.o                    \
+         $(MCH)/qix.o      $(DRV)/qix.o      $(VID)/qix.o                        \
+         $(MCH)/williams.o $(DRV)/williams.o $(VID)/williams.o $(SND)/williams.o
 
-VPATH = src src/Z80 src/M6502 src/I86
+OBJS = $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
 
-all: objdirs xmame.$(ARCH)
+VPATH = src src/Z80 src/M6502 src/I86 src/M6809
+
+all: objdirs osdepend xmame.$(ARCH) sndserver.$(ARCH)
 
 objdirs: 
 	-mkdir obj.$(ARCH) obj.$(ARCH)/msdos obj.$(ARCH)/unix 2>/dev/null
-	-mkdir obj.$(ARCH)/I86 obj.$(ARCH)/Z80 obj.$(ARCH)/M6502 2>/dev/null
-	-mkdir obj.$(ARCH)/drivers obj.$(ARCH)/machine obj.$(ARCH)/sndhrdw obj.$(ARCH)/vidhrdw 2>/dev/null
+	-mkdir obj.$(ARCH)/I86 obj.$(ARCH)/Z80 obj.$(ARCH)/M6502 obj.$(ARCH)/M6809 2>/dev/null
+	-mkdir $(DRV) $(MCH) $(SND) $(VID) 2>/dev/null
 
-xmame.$(ARCH):  $(OBJS)
-	$(LD) -g3 -o  xmame.$(ARCH) $(OBJS) $(LIBS.$(ARCH))
+xmame.$(ARCH):	$(OBJS)
+	$(LD) -g3 -o  xmame.$(ARCH) $(OBJS) $(XPMLIB) $(LIBS.$(ARCH))
 
-obj.$(ARCH)/osdepend.o: src/unix/unix.c src/unix/linux.c src/unix/irix.c \
-		src/unix/sunos.c src/unix/solaris.c
-	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -Isrc/unix -o $@ -c src/unix/unix.c
+# obj.$(ARCH)/unix/osdepend.a:
 
+osdepend:
+	 ( \
+	 cd src/unix; \
+	  $(MAKE) CC="$(CC)" ARCH="$(ARCH)" DEFS="$(DEFS.$(ARCH))" CFLAGS="$(CFLAGS)" \
+	 )
+
+sndserver.$(ARCH): obj.$(ARCH)/unix/sndserver.o obj.$(ARCH)/unix/osdepend.a 
+	$(LD) -g3 -o  sndserver.$(ARCH) obj.$(ARCH)/unix/sndserver.o $(LIBS.$(ARCH))
+	
 obj.$(ARCH)/%.o: src/%.c
-	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -o $@ -c $<
+	 $(CC) $(DEFS.$(ARCH)) $(CFLAGS) -o $@ -c $<
 
 sndtest: sndtest.c
 	gcc -o sndtest sndtest.c
@@ -140,12 +258,14 @@ sndtest: sndtest.c
 obj.$(ARCH)/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
 obj.$(ARCH)/Z80/Z80.o:  src/Z80/Z80.c src/Z80/Z80.h src/Z80/Z80Codes.h src/Z80/Z80IO.h src/Z80/Z80DAA.h
 obj.$(ARCH)/M6502/M6502.o:	src/M6502/M6502.c src/M6502/M6502.h src/M6502/Tables.h src/M6502/Codes.h
+obj.$(ARCH)/M6809/M6809.o:	src/M6809/M6809.c src/M6809/M6809.h
 obj.$(ARCH)/I86/I86.o:	src/I86/I86.c src/I86/I86.h src/I86/global.h src/I86/instr.h src/I86/mytypes.h
 
 clean:
 	rm -f obj.$(ARCH)/*.o 
 	rm -f obj.$(ARCH)/Z80/*.o 
 	rm -f obj.$(ARCH)/M6502/*.o 
+	rm -f obj.$(ARCH)/M6809/*.o 
 	rm -f obj.$(ARCH)/I86/*.o 
 	rm -f obj.$(ARCH)/drivers/*.o 
 	rm -f obj.$(ARCH)/machine/*.o 
@@ -158,6 +278,4 @@ clean:
 pristine:
 	rm -rf *.o */*.o */*/*.o
 	rm -rf obj.*
-	rm -f xmame.* Makefile
-
-
+	rm -f xmame.* sndserver.* Makefile

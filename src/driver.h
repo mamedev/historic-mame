@@ -182,7 +182,9 @@ struct MachineDriver
 
 struct GameDriver
 {
+	const char *description;
 	const char *name;
+	const char *credits;
 	const struct MachineDriver *drv;
 
 	const struct RomModule *rom;
@@ -208,7 +210,7 @@ struct GameDriver
 		/* digits and the 26 letters in the game's character set. They will */
 		/* usually be consecutive, but in some cases (e.g. Time Pilot) they */
 		/* are scattered. */
-	const short int charset[10+26];
+	const short int charset[10+26];         /* short int size must be 16-bit */
 	int white_text,yellow_text;	        /* color codes - used by the dip switch menu */
 	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
 						/* paused_color is also used for the startup notice */

@@ -71,12 +71,12 @@ CPU #2 (Video):
 
 BOTH CPUS:
     $8000 - $83FF:  Dual port RAM accessible by both processors
-    
+
 NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 	$86A9 - $86AA:	When CMOS is valid, these bytes are $55AA
 	$86AC - $86C3:	AUDIT TOTALS -- 4 4-bit BCD digits per setting
 					(All totals default to: 0000)
-					$86AC: TOTAL PAID CREDITS 
+					$86AC: TOTAL PAID CREDITS
 					$86AE: LEFT COINS
 					$86B0: CENTER COINS
 					$86B2: RIGHT COINS
@@ -378,13 +378,13 @@ static int hiload(const char *name)
 {
 	FILE *f;
 	unsigned char *ram;
-	
+
 	/* data is in second CPU's memory region */
 	ram = Machine->memory_region[2];
-	
+
 	/* check if already loaded */
 	if( ram[0x86a9]==0x55 ) return 0;
-	
+
 	if ((f = fopen(name,"rb")) != 0)
 	{
 		ram = Machine->memory_region[2];
@@ -412,7 +412,9 @@ static void hisave(const char *name)
 
 struct GameDriver qix_driver =
 {
+	"Qix",
 	"qix",
+	"JOHN BUTLER\nED MUELLER",
 	&machine_driver,
 
 	qix_rom,

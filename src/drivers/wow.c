@@ -1,3 +1,7 @@
+/* ------------------------------------------------------------------ */
+/* This driver is currently being worked on by Mike@Dissfulfils.co.uk */
+/* ------------------------------------------------------------------ */
+
 /***************************************************************************
 
 Wizard of Wor memory map (preliminary)
@@ -23,6 +27,7 @@ IN:
 11        IN1
 12        IN2
 13        DSW
+14		  Video Retrace
 15        ?
 17        ?
 
@@ -96,8 +101,7 @@ OUT:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
+#include "Z80.h"
 
 extern unsigned char *wow_videoram;
 extern int wow_intercept_r(int offset);
@@ -108,33 +112,59 @@ extern void wow_magicram_w(int offset,int data);
 extern void wow_pattern_board_w(int offset,int data);
 extern void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern int wow_video_retrace_r(int offset);
 
+extern void gorf_interrupt_w(int offset, int data);
+extern void scanline_interrupt_w(int offset, int data);
+extern int  gorf_interrupt(void);
+
+/* These calls don't do anything (yet) but they stop
+   unwanted lines appearing in the logfile! */
+
+extern void colour_register_w(int offset, int data);
+extern void paging_register_w(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xd000, 0xd3ff, MRA_RAM },
+        { 0xD000, 0xDfff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0xafff, MRA_ROM },
-	{ 0xc000, 0xcfff, MRA_ROM },
+	{ 0x8000, 0xcfff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xd000, 0xd3ff, MWA_RAM },
+        { 0xD000, 0xDfff, MWA_RAM },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
 	{ 0x0000, 0x3fff, wow_magicram_w },
-	{ 0x8000, 0xafff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_ROM },
+	{ 0x8000, 0xcfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress robby_readmem[] =
+{
+	{ 0xe000, 0xffff, MRA_RAM },
+	{ 0x4000, 0x7fff, MRA_RAM },
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0xdfff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress robby_writemem[] =
+{
+	{ 0xe000, 0xffff, MWA_RAM },
+	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
+	{ 0x0000, 0x3fff, wow_magicram_w },
+	{ 0x8000, 0xdfff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
 
 
 static struct IOReadPort readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
+        { 0x0E, 0x0E, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -148,10 +178,12 @@ static struct IOWritePort writeport[] =
 	{ 0x19, 0x19, wow_magic_expand_color_w },
 	{ 0x0c, 0x0c, wow_magic_control_w },
 	{ 0x78, 0x7e, wow_pattern_board_w },
+        { 0x0E, 0x0E, gorf_interrupt_w },
+        { 0x0F, 0x0F, scanline_interrupt_w },
+        { 0x00, 0x08, colour_register_w },
+        { 0x5B, 0x5B, paging_register_w },
 	{ -1 }	/* end of table */
 };
-
-
 
 static struct InputPort input_ports[] =
 {
@@ -203,8 +235,9 @@ static struct DSW dsw[] =
 
 
 
-/* Wizard of Wor doesn't have character mapped graphics, this definition is here */
-/* only for the dip switch menu */
+/* Wizard of Wor doesn't have character mapped graphics, */
+/* this definition is here only for the dip switch menu  */
+
 static struct GfxLayout charlayout =
 {
 	8,10,	/* 8*10 characters */
@@ -216,7 +249,62 @@ static struct GfxLayout charlayout =
 	10*8	/* every char takes 10 consecutive bytes */
 };
 
+static struct GfxLayout gorf_charlayout =
+{
+	6,16,	/* 6*16 characters */
+	44,	/* 44 characters */
+	1,	/* 1 bit per pixel */
+	{ 0 },
+	{ 0*8, 1*16, 2*16, 3*16, 4*16, 5*16 },
+	{ 15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 },	/* pretty straightforward layout */
+	6*16	/* every char takes 12 consecutive bytes */
+};
 
+static struct GfxLayout robby_charlayout1 =
+{
+	7,10,					/* 7*10 characters */
+	25,						/* 25 characters */
+	1,						/* 1 bit per pixel */
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
+	15*8					/* every char takes 15 consecutive bytes */
+};
+
+static struct GfxLayout robby_charlayout2 =
+{
+	7,10,					/* 7*10 characters */
+	6,						/* 6 characters */
+	1,						/* 1 bit per pixel */
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5 , 6},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
+	15*8					/* every char takes 15 consecutive bytes */
+};
+
+static struct GfxLayout robby_charlayout3 =
+{
+	11,10,					/* 10*10 characters */
+	1,						/* 1 character */
+	1,						/* 1 bit per pixel */
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8, 16*8, 18*8 },
+	25*8					/* every char takes 25 consecutive bytes */
+};
+
+static struct GfxLayout robby_charlayout4 =
+{
+	4,10,					/* 4*10 characters */
+	1,						/* 1 character */
+	1,						/* 1 bit per pixel */
+	{ 0 },
+	{ 2, 0, 1, 2 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
+	15*8					/* every char takes 15 consecutive bytes */
+};
+
+/* Wizard of Wor */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -224,7 +312,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+/* Space Zap */
 
+static struct GfxDecodeInfo spacezap_gfxdecodeinfo[] =
+{
+	{ 0, 0x13BA, &charlayout,      0, 4 },
+	{ -1 } /* end of array */
+};
+
+/* Gorf */
+
+static struct GfxDecodeInfo gorf_gfxdecodeinfo[] =
+{
+	{ 0, 0x076A, &gorf_charlayout,0, 4 },
+	{ -1 } /* end of array */
+};
+
+/* Robby Roto - This will give us all of the characters, but in 6 banks! */
+/* So I've altered common.c to allow bank selection in the charset array */
+
+static struct GfxDecodeInfo robby_gfxdecodeinfo[] =
+{
+	{ 0, 0x0EAC, &robby_charlayout1, 0, 4 },		/* B - A */
+	{ 0, 0x1023, &robby_charlayout3, 0, 4 },		/* M */
+	{ 0, 0x103C, &robby_charlayout2, 0, 4 },		/* S - V */
+	{ 0, 0x1096, &robby_charlayout3, 0, 4 },		/* W */
+	{ 0, 0x10AF, &robby_charlayout2, 0, 4 },		/* X - Z */
+	{ 0, 0x0F15, &robby_charlayout4, 0, 4 },		/* I */
+	{ -1 } /* end of array */
+};
 
 static unsigned char palette[] =
 {
@@ -244,8 +360,10 @@ static unsigned char colortable[] =
 };
 
 
+/* Wizard of Wor */
 
-static struct MachineDriver machine_driver =
+
+static struct MachineDriver wow_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -263,6 +381,120 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	wow_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+/* Space Zap */
+
+/* This uses a scanline driven interrupt at scanlines 0,100 and 200 */
+/* I haven't implemented this, instead do 3 interrupts per frame    */
+
+static struct MachineDriver spacezap_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,readport,writeport,
+			interrupt,3
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	320, 204, { 0, 320-1, 0, 204-1 },
+	spacezap_gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	wow_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+/* Gorf - Not Working */
+
+static struct MachineDriver gorf_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,readport,writeport,
+			gorf_interrupt,1
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	320, 204, { 0, 320-1, 0, 204-1 },
+	gorf_gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	wow_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+/* Robby Roto - Not Working */
+
+/* This uses a scanline driven interrupt at scanlines 50,100 and 200 */
+/* I haven't implemented this, instead do 3 interrupts per frame     */
+
+static struct MachineDriver robby_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			robby_readmem,robby_writemem,readport,writeport,
+			interrupt,3
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	320, 204, { 0, 320-1, 0, 204-1 },
+	robby_gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -299,6 +531,14 @@ ROM_START( wow_rom )
 /*	ROM_LOAD( "wow.x8", 0xc000, 0x1000 )	here would go the foreign language ROM */
 ROM_END
 
+ROM_START( spacezap_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "0662.01", 0x0000, 0x1000 )
+	ROM_LOAD( "0663.xx", 0x1000, 0x1000 )
+	ROM_LOAD( "0664.xx", 0x2000, 0x1000 )
+	ROM_LOAD( "0665.xx", 0x3000, 0x1000 )
+ROM_END
+
 ROM_START( robby_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "robbya", 0x0000, 0x1000 )
@@ -329,8 +569,10 @@ ROM_END
 
 struct GameDriver wow_driver =
 {
+        "Wizard of Wor",
 	"wow",
-	&machine_driver,
+        "NICOLA SALMORIA\nMIKE COATES",
+	&wow_machine_driver,
 
 	wow_rom,
 	0, 0,
@@ -348,10 +590,35 @@ struct GameDriver wow_driver =
 	0, 0
 };
 
+struct GameDriver spacezap_driver =
+{
+        "Space Zap",
+	"spacezap",
+        "NICOLA SALMORIA\nMIKE COATES",
+	&spacezap_machine_driver,
+
+	spacezap_rom,
+	0, 0,
+	0,
+
+	input_ports, dsw, keys,
+
+	0, palette, colortable,
+	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09, 0x0A,					/* numbers */
+		0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,	/* letters */
+		0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25 },
+	2, 0,
+	(320-8*6)/2, (204-10)/2, 3,
+
+	0, 0
+};
+
 struct GameDriver robby_driver =
 {
+        "Robby Roto",
 	"robby",
-	&machine_driver,
+        "NICOLA SALMORIA\nMIKE COATES",
+	&robby_machine_driver,
 
 	robby_rom,
 	0, 0,
@@ -360,9 +627,9 @@ struct GameDriver robby_driver =
 	input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
-		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
+	{ 0x015,0x00D,0x00E,0x00F,0x010,0x011,0x012,0x013,0x016,0x014,						/* numbers */
+	  0x018,0x000,0x001,0x002,0x003,0x004,0x005,0x006,0x500,0x008,0x009,0x017,0x100,	/* letters */
+	  0x00A,0x00B,0x202,0x203,0x00C,0x200,0x204,0x201,0x205,0x300,0x400,0x401,0x402 },
 	2, 0,
 	(320-8*6)/2, (204-10)/2, 3,
 
@@ -371,8 +638,10 @@ struct GameDriver robby_driver =
 
 struct GameDriver gorf_driver =
 {
+        "Gorf",
 	"gorf",
-	&machine_driver,
+        "NICOLA SALMORIA\nMIKE COATES",
+	&gorf_machine_driver,
 
 	gorf_rom,
 	0, 0,
@@ -381,7 +650,7 @@ struct GameDriver gorf_driver =
 	input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,	/* numbers */
 		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
 		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
 	2, 0,

@@ -99,6 +99,7 @@ struct DisplayText
 #define TRANSPARENCY_NONE 0
 #define TRANSPARENCY_PEN 1
 #define TRANSPARENCY_COLOR 2
+#define TRANSPARENCY_THROUGH 3
 
 int readroms(const struct RomModule *romp,const char *basename);
 struct GameSamples *readsamples(const char **samplenames,const char *basename);
@@ -116,11 +117,11 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
 
-int setup_menu(void);
-int setdipswitches(void);
-int setkeysettings(void);
+
 void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
 
+
+int setup_menu(void);
 
 #endif

@@ -252,6 +252,12 @@ static struct DSW turtles_dsw[] =
 	{ -1 }
 };
 
+static struct DSW turpin_dsw[] =
+{
+	{ 4, 0x03, "LIVES", { "2", "4", "6", "126" } },
+	{ -1 }
+};
+
 
 
 static struct GfxLayout charlayout =
@@ -438,12 +444,29 @@ ROM_START( turtles_rom )
 	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turt_vid.5f", 0x0000, 0x0800 )
-	ROM_LOAD( "turt_vid.5h", 0x0800, 0x0800 )
+	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800 )
+	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000 )
 	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000 )
+ROM_END
+
+ROM_START( turpin_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "M1", 0x0000, 0x1000 )
+	ROM_LOAD( "M2", 0x1000, 0x1000 )
+	ROM_LOAD( "M3", 0x2000, 0x1000 )
+	ROM_LOAD( "M4", 0x3000, 0x1000 )
+	ROM_LOAD( "M5", 0x4000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "C1", 0x0000, 0x0800 )
+	ROM_LOAD( "C2", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "D1", 0x0000, 0x1000 )
+	ROM_LOAD( "D2", 0x1000, 0x1000 )
 ROM_END
 
 
@@ -497,7 +520,9 @@ static void amidar_hisave(const char *name)
 
 struct GameDriver amidar_driver =
 {
+	"Amidar (US version)",
 	"amidar",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
 	&amidar_machine_driver,
 
 	amidar_rom,
@@ -518,7 +543,9 @@ struct GameDriver amidar_driver =
 
 struct GameDriver amidarjp_driver =
 {
+	"Amidar (Japanese version)",
 	"amidarjp",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
 	&amidar_machine_driver,
 
 	amidarjp_rom,
@@ -539,7 +566,9 @@ struct GameDriver amidarjp_driver =
 
 struct GameDriver turtles_driver =
 {
+	"Turtles",
 	"turtles",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
 	&turtles_machine_driver,
 
 	turtles_rom,
@@ -547,6 +576,29 @@ struct GameDriver turtles_driver =
 	0,
 
 	input_ports, turtles_dsw, turtles_keys,
+
+	turtles_color_prom, 0, 0,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
+	0x06, 0x02,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver turpin_driver =
+{
+	"Turpin",
+	"turpin",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nALAN J MCCORMICK",
+	&turtles_machine_driver,
+
+	turpin_rom,
+	0, 0,
+	0,
+
+	input_ports, turpin_dsw, turtles_keys,
 
 	turtles_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

@@ -647,6 +647,23 @@ int osd_read_key(void)
 	}
 }
 
+/* src/msdos/msdos.c added in mame 0.22.1 Not sure why, but.... */
+int osd_read_keyrepeat() 
+{
+/*
+ * msdos code:
+ * {
+ * clear_keybuf();
+ * return readkey();
+ * }
+ *
+ * so i'll write:
+ */
+	int i;
+	for (i=0;i<OSD_NUMKEYS;i++) key[i]=FALSE;
+	return osd_read_key();
+}
+
 /*
  * Parse keyboard events
  * If request < 0 empty event queue

@@ -389,7 +389,9 @@ static void hisave(const char *name)
 
 struct GameDriver mario_driver =
 {
+	"Mario Bros.",
 	"mario",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nSTEFANO MOZZI",
 	&machine_driver,
 
 	mario_rom,

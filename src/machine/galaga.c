@@ -13,12 +13,22 @@
 
 unsigned char *galaga_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-static int do_nmi, testdone;
+static int do_nmi;
+unsigned char galaga_hiscoreloaded,testdone;
+
+
+int galaga_reset_r(int offset)
+{
+        galaga_hiscoreloaded = 0;
+        testdone = 0;
+
+	return RAM[offset];
+}
 
 
 int galaga_hiscore_print_r(int offset)
 {
-        if (cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) {
+        if ((cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) && galaga_hiscoreloaded) {
           if (offset == 4)
             RAM[0x83f2] = RAM[0x8a25];  /* Adjust the 6th digit */
 
@@ -144,11 +154,9 @@ extern void galaga_customio_w(int offset,int data)
 			cpu_writemem(regs.DE2.D + 2,0);
 			break;
 
-                case 0xa8:
-                        testdone = 0;
-                        break;
 #if 0
                 case 0xa8:
+                        testdone = 0;
                         if (Machine->samples->sample[0])
                          osd_play_sample(7,Machine->samples->sample[0]->data,
                                       Machine->samples->sample[0]->length,

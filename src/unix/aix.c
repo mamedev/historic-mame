@@ -5,7 +5,7 @@
 *
 */
 
-#ifndef aix
+#ifdef aix
 
 #include "xmame.h"
 #include <stdio.h>
@@ -13,6 +13,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stropts.h>
+
+#ifdef USE_AUDIO
+/* set in makefile.unix to allow compile with or without audio support */
 #include <UMS/UMSAudioDevice.h>
 #include <UMS/UMSBAUDDevice.h>
 
@@ -38,14 +41,17 @@ char* audio_inputs_alias;
 char* audio_outputs_alias;
 char* obyte_order;
 
+#endif
+
 int sysdep_init(void) {
 	struct itimerval        timer_value;
 	int 			i;
 	if (use_joystick) {
-		printf("Joystick is no still supported under AIX. Sorry\n");
+		printf("Joystick is still not supported under AIX. Sorry\n");
 		use_joystick = FALSE;
 	}
 	if (play_sound) {
+#ifdef USE_AUDIO
 		int supported=FALSE;
 		channels = 2;
                 printf ("AIX sound device initialization...\n");
@@ -100,11 +106,16 @@ int sysdep_init(void) {
     		rc = UMSAudioDevice_start(audio_device, ev);
     		abuf_ptr = 0;
     		abuf_inc = abuf_size / 4;
+#else
+		fprintf(stderr,"Audio support not compiled in. Disabling...\n");
+		play_sound=FALSE;
+#endif
         }
         return (TRUE);
 }
 
 void sysdep_exit(void) {
+#ifdef USE_AUDIO
 	if (play_sound) {
           rc = UMSAudioDevice_play_remaining_data(audio_device, ev, TRUE);
           UMSAudioDevice_stop(audio_device, ev);
@@ -112,24 +123,30 @@ void sysdep_exit(void) {
           _somFree(audio_device);
           free(buffer._buffer);
 	}
+#endif
 }	
 
 void sysdep_poll_joystick() {
-	/* !! no joystick available on Sparc :-( */
+	/* !! no joystick available on RS6000 :-( */
 }
 
 int sysdep_play_audio(byte *buf, int bufsize) {
+#ifdef USE_AUDIO
         buffer._length = bufsize;
         rc = UMSAudioDevice_write(audio_device, ev, &buffer, bufsize, &samples_written);
         return rc;
+#else
+	return 0;
+#endif
 }
 
 void sysdep_fill_audio_buffer( long *in, char *out, int start,int end ) {
-
+#ifdef USE_AUDIO
         /* 8 bits linear 22050hz */
         /* for(; start<end; start++) out[start]=(char)( in[start] >> 7);*/
         for (;start < end; start++)
         buffer._buffer[start] = in[start] >> 10;
+#endif
 	return;	
 }
 

@@ -13,14 +13,54 @@
 static Screen	*screen;
 
 /*
- * Make a snapshot of the screen. Not implemented yet.
- * Current bug : because the path is set to the rom directory, PCX files
- * will be saved there.
+ * makes a snapshot of screen when F12 is pressed.
+ *
+ * store it in xpm pixmap format
+ * save in users'home dir as gamename-XXX.xpm ( XXX equals to #snapshot )
+ * 
  */
 
 int osd_snapshot(void)
 {
-	return (OSD_OK);
+#ifdef HAS_XPM
+	char name[1024];
+	FILE *f;
+	int res;
+	extern char *GameName;
+	XpmAttributes *xpmattr;
+	do
+	{
+		sprintf(name,"%s/%s-snap%03d.xpm",getenv("HOME"),GameName,snapshot_no);
+		/* avoid overwriting of existing files */
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fclose(f);
+			snapshot_no++;
+		}
+	} while (f != 0);
+	/* set propper colormap */
+	xpmattr=calloc(1,sizeof(XpmAttributes));
+	if ( ! xpmattr ) { 
+		fprintf(stderr,"calloc() Failed in osd_snapshot\n");
+		return (OSD_NOT_OK);
+	}
+	xpmattr->valuemask	= XpmColormap;
+	xpmattr->colormap	= colormap;	/* set my own colormap */
+	res = XpmWriteFileFromImage(display,name,image,0,xpmattr);
+	free(xpmattr);				/* cleanup task */
+	if ( res != XpmSuccess ) {
+		fprintf(stderr,"Failed to save snapshot %s\n",name);
+		return (OSD_NOT_OK);
+	} else {
+		fprintf(stderr,"Saved snapshot as %s\n",name);
+		/* wait until key released */
+		while( osd_key_pressed(OSD_KEY_F12) );
+		return (OSD_OK);
+	}
+#else
+	fprintf(stderr,"Sorry: XPM library not included. Cannot make snapshot\n");
+	return (OSD_NOT_OK);
+#endif
 }
 
 struct osd_bitmap *osd_create_bitmap (int width, int height)
@@ -379,37 +419,40 @@ void osd_update_display (void)
   /* CS: scaling - here's the CPU burner.  Buy a faster computer
          sez Micro$oft. Ignore the ugly framerate stuff.*/
 	
+    int needupdate=0;
     int xsize=bitmap->width*widthscale;
     int ysize=bitmap->height*heightscale;
+    /* if F12 pressed, make a snapshot of the screen */
+    if(osd_key_pressed(OSD_KEY_F12) ) osd_snapshot(); 
     if (scaling) { /* IF SCALING ACTIVE */
-    	byte *start,*end;
     	int x,y,i,linechanged;
    	register byte *from = buffer_ptr;
     	register byte *to   = scaled_buffer_ptr;
 	
-    	start=end=to; /* not really needed, but compiler blames */
     	for (y=0;y<bitmap->height;y++,to+=(heightscale-1)*xsize) {
     	    linechanged=0;
     	    for (x=0; x<bitmap->width; x++,from++,to+=widthscale) {
     		if ( *to == *from ) continue;
     		for (i=0;i<widthscale;i++) *(to+i)=*from;
-    		if (!linechanged) { start=to; linechanged++; }
-    		end=to+i-1;
+    		linechanged++;
     	    } /* end of x search. if line changed, use memcpy to update */
-    	    if(linechanged) for (i=1;i<heightscale;i++)
-    		memcpy((start+i*xsize),start,end-start+1);
+    	    if(linechanged) {
+		for (i=1;i<heightscale;i++) memcpy((to+(i-1)*xsize),to-xsize,xsize);
+		needupdate=1;
+	    }
     	} /* end of lines in bitmap */
-    } /* if scaling */
+    } /* if scaling */  else { needupdate=1; }
     /* now put image */
 #ifdef MITSHM
-    if (mit_shm_avail) {
+    if (mit_shm_avail && needupdate) {
 	XShmPutImage (display, window, gc, image, 0, 0, 0, 0, xsize, ysize, FALSE);
+   	XSync (display,False); /* be sure to get request processed */
     } else { /* no shm: just use XPutImage */
 #endif
-        XPutImage (display, window, gc, image, 0, 0, 0, 0, xsize, ysize);
+        if(needupdate) XPutImage (display, window, gc, image, 0, 0, 0, 0, xsize, ysize);
+   	XFlush (display);
 #ifdef MITSHM
     }
 #endif
-   XFlush (display);
 }
 

@@ -598,7 +598,9 @@ static void galaxian_hisave(const char *name)
 
 struct GameDriver galaxian_driver =
 {
+	"Galaxian (Namco)",
 	"galaxian",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galaxian_rom,
@@ -619,7 +621,9 @@ struct GameDriver galaxian_driver =
 
 struct GameDriver galmidw_driver =
 {
+	"Galaxian (Midway)",
 	"galmidw",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galmidw_rom,
@@ -640,7 +644,9 @@ struct GameDriver galmidw_driver =
 
 struct GameDriver galnamco_driver =
 {
+	"Galaxian (Namco, modified)",
 	"galnamco",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galnamco_rom,
@@ -661,7 +667,9 @@ struct GameDriver galnamco_driver =
 
 struct GameDriver superg_driver =
 {
+	"Super Galaxian",
 	"superg",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galnamco_rom,
@@ -682,7 +690,9 @@ struct GameDriver superg_driver =
 
 struct GameDriver galapx_driver =
 {
+	"Galaxian Part X",
 	"galapx",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galapx_rom,
@@ -703,7 +713,9 @@ struct GameDriver galapx_driver =
 
 struct GameDriver galap1_driver =
 {
+	"Galaxian Part 1",
 	"galap1",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galap1_rom,
@@ -724,7 +736,9 @@ struct GameDriver galap1_driver =
 
 struct GameDriver galap4_driver =
 {
+	"Galaxian Part 4",
 	"galap4",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galap4_rom,
@@ -745,7 +759,9 @@ struct GameDriver galap4_driver =
 
 struct GameDriver galturbo_driver =
 {
+	"Galaxian Turbo",
 	"galturbo",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	galnamco_rom,
@@ -766,7 +782,9 @@ struct GameDriver galturbo_driver =
 
 struct GameDriver pisces_driver =
 {
+	"Pisces",
 	"pisces",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&pisces_machine_driver,
 
 	pisces_rom,
@@ -787,7 +805,9 @@ struct GameDriver pisces_driver =
 
 struct GameDriver japirem_driver =
 {
+	"Gingateikoku No Gyakushu",
 	"japirem",
+	"NICOLA SALMORIA\nLIONEL THEUNISSEN",
 	&pisces_machine_driver,
 
 	japirem_rom,
@@ -808,7 +828,9 @@ struct GameDriver japirem_driver =
 
 struct GameDriver uniwars_driver =
 {
+	"Uniwars",
 	"uniwars",
+	"NICOLA SALMORIA\nGARY WALTON",
 	&pisces_machine_driver,
 
 	uniwars_rom,
@@ -829,7 +851,9 @@ struct GameDriver uniwars_driver =
 
 struct GameDriver warofbug_driver =
 {
+	"War of the Bugs",
 	"warofbug",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&galaxian_machine_driver,
 
 	warofbug_rom,

@@ -4,6 +4,7 @@
 
 extern struct GameDriver pacman_driver;
 extern struct GameDriver pacplus_driver;
+extern struct GameDriver jrpacman_driver;
 extern struct GameDriver pacmod_driver;
 extern struct GameDriver namcopac_driver;
 extern struct GameDriver hangly_driver;
@@ -33,6 +34,7 @@ extern struct GameDriver bagman_driver;
 extern struct GameDriver wow_driver;
 extern struct GameDriver robby_driver;
 extern struct GameDriver gorf_driver;
+extern struct GameDriver spacezap_driver;
 extern struct GameDriver galaxian_driver;
 extern struct GameDriver galmidw_driver;
 extern struct GameDriver galnamco_driver;
@@ -62,6 +64,7 @@ extern struct GameDriver frogsega_driver;
 extern struct GameDriver amidar_driver;
 extern struct GameDriver amidarjp_driver;
 extern struct GameDriver turtles_driver;
+extern struct GameDriver turpin_driver;
 extern struct GameDriver rallyx_driver;
 extern struct GameDriver timeplt_driver;
 extern struct GameDriver spaceplt_driver;
@@ -100,6 +103,7 @@ extern struct GameDriver mtrap_driver;
 extern struct GameDriver pepper2_driver;
 extern struct GameDriver qbert_driver;
 extern struct GameDriver qbertjp_driver;
+extern struct GameDriver qbertqub_driver;
 extern struct GameDriver mplanets_driver;
 extern struct GameDriver junglek_driver;
 extern struct GameDriver jungleh_driver;
@@ -118,20 +122,30 @@ extern struct GameDriver kangaroo_driver;
 extern struct GameDriver galaga_driver;
 extern struct GameDriver galagabl_driver;
 extern struct GameDriver commando_driver;
-
 extern struct GameDriver vulgus_driver;
 extern struct GameDriver gng_driver;
 extern struct GameDriver diamond_driver;
 extern struct GameDriver kungfum_driver;
+extern struct GameDriver kungfub_driver;
+extern struct GameDriver qix_driver;
+
 extern struct GameDriver robotron_driver;
 extern struct GameDriver stargate_driver;
 extern struct GameDriver joust_driver;
-extern struct GameDriver qix_driver;
+extern struct GameDriver sinistar_driver;
+extern struct GameDriver bubbles_driver;
+extern struct GameDriver defender_driver;
+extern struct GameDriver splat_driver;
+extern struct GameDriver blaster_driver;
+
+
+
 
 const struct GameDriver *drivers[] =
 {
 	&pacman_driver,
         &pacplus_driver,
+        &jrpacman_driver,
 	&pacmod_driver,
 	&namcopac_driver,
 	&hangly_driver,
@@ -161,6 +175,7 @@ const struct GameDriver *drivers[] =
 	&wow_driver,
 	&robby_driver,
 	&gorf_driver,
+        &spacezap_driver,
 	&galaxian_driver,
 	&galmidw_driver,
 	&galnamco_driver,
@@ -190,6 +205,7 @@ const struct GameDriver *drivers[] =
 	&amidar_driver,
 	&amidarjp_driver,
 	&turtles_driver,
+	&turpin_driver,
 	&rallyx_driver,
 	&timeplt_driver,
 	&spaceplt_driver,
@@ -228,6 +244,7 @@ const struct GameDriver *drivers[] =
 	&pepper2_driver,
 	&qbert_driver,
 	&qbertjp_driver,
+        &qbertqub_driver,
 	&mplanets_driver,
 	&junglek_driver,
 	&jungleh_driver,
@@ -250,9 +267,15 @@ const struct GameDriver *drivers[] =
         &gng_driver,
         &diamond_driver,
         &kungfum_driver,
+        &kungfub_driver,
+        &qix_driver,
         &robotron_driver,
         &stargate_driver,
         &joust_driver,
-        &qix_driver,
+        &sinistar_driver,
+        &bubbles_driver,
+        &defender_driver,
+        &splat_driver,
+        &blaster_driver,
 	0	/* end of array */
 };

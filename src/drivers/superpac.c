@@ -59,7 +59,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x10c5, 0x10c5, input_port_1_r }, /* DSW-3 */
 	{ 0x10c0, 0x10c0, input_port_2_r }, /* Insert Coin */
 	{ 0x10c1, 0x10c1, input_port_3_r }, /* Start Game */
-	{ 0x10c2, 0x10c2, input_port_4_r }, /* Controls */	
+	{ 0x10c2, 0x10c2, input_port_4_r }, /* Controls */
 	{ -1 }	/* end of table */
 };
 
@@ -152,7 +152,7 @@ static struct GfxLayout spritelayout =
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
 			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
-	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 
+	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	64*8	/* every sprite takes 64 bytes */
 };
@@ -231,12 +231,12 @@ static unsigned char superpac_palette[] =
 	   						Bonus Star:		$28 	sprite+$08			blue ghosts
 	   						Key:			$44 	sprite+$24			n/a
 	   						Ghost Pts:		$3C		sprite+$1C			bell
-   						
-	   						CHARACTERS				USES ENTRY		SHARES ENTRY WITH	
+
+	   						CHARACTERS				USES ENTRY		SHARES ENTRY WITH
 	   						Pacmen Remain. 	$41		sprite+$21			n/a
 	   						Score Digits	$42		sprite+$22			n/a
 	   						1UP,HIGH SCORE	$43		sprite+$23			n/a
-   						
+
 */
 
 static unsigned char superpac_color_table[] =
@@ -244,7 +244,7 @@ static unsigned char superpac_color_table[] =
 	0x00,0x00/*off*/,0x0B,0x0c, /* power pill blink OFF */
 	0x00,0x09,0x09,0x00, /* pacman, [PAUSED] */
 	0x00,0x0f,0x0f,0x0f, /* score digits,CREDIT 0, ROM test */
-	0x00,0x03/*doors*/,0x0f/*text*/,0x0b/*maze*/, /* attract screen maze & doors */   
+	0x00,0x03/*doors*/,0x0f/*text*/,0x0b/*maze*/, /* attract screen maze & doors */
 	0x00,0x03/*doors*/,0x0f/*text*/,0x0b/*maze*/, /* POWER,SUPER,(C)notice,maze&doors,PUSH START,STAGE 1,READY! */
 	0x00,0x03/*cloak*/,0x0F/*eyes*/,0x0B/*pupils*/, /* was ghost 1 */
 	0x00,0x05/*cloak*/,0x0F/*eyes*/,0x0B/*pupils*/, /* was ghost 2 */
@@ -252,7 +252,7 @@ static unsigned char superpac_color_table[] =
 	0x00,0x0b/*cloak*/,0x03/*mouth*/,0x0f, /* was blue ghosts */
 	0x00,0x09,0x07,0x03, /* top of logo (containing SUPER) */
 	0x00,0x09,0x07,0x01, /* bottom of logo (containing PAC-MAN)*/
-	0x00,0x0f,0x0f,0x0f, /* maze/doors blink */   
+	0x00,0x0f,0x0f,0x0f, /* maze/doors blink */
 	0x00,0x01,0x02,0x0f, /* level indicator apple */
 	0x00,0x09,0x0f,0x02, /* level indicator banana */
 	0x00,0x02,0x07,0x0f, /* level indicator donut */
@@ -277,7 +277,7 @@ static unsigned char superpac_color_table[] =
 	0x00,0x00/*off*/,0x00/*eaten.ghst*/,0x0c, /* power pill blink OFF, ghost as eaten (invis.) */
 	0x00,0x09,0x09,0x00, /* pacman */
 	0x00,0x0f,0x0f,0x0f, /* fruit pts, blinking pacman */
-	0x00,0x0f/*doors/bl.ghst*/,0x01/*text*/,0x0b/*maze*/, /* blinking ghost,1UP,HIGH SCORE,GAME OVER,attract maze,doors */   
+	0x00,0x0f/*doors/bl.ghst*/,0x01/*text*/,0x0b/*maze*/, /* blinking ghost,1UP,HIGH SCORE,GAME OVER,attract maze,doors */
 	0x00,0x01/*cloak*/,0x0F/*eyes*/,0x0B/*pupils*/, /* ghost0 */
 	0x00,0x03/*cloak*/,0x0F/*eyes*/,0x0B/*pupils*/, /* ghost 1 */
 	0x00,0x05/*cloak*/,0x0F/*eyes*/,0x0B/*pupils*/, /* ghost 2 */
@@ -285,9 +285,9 @@ static unsigned char superpac_color_table[] =
 	0x00,0x0b/*cloak*/,0x03/*mouth*/,0x0f, /* blue ghosts, bonus star */
 	0x00,0x09,0x07,0x03, /* top of logo (containing SUPER) */
 	0x00,0x00,0x0f,0x0b, /* dead ghosts (eyes) */
-	0x00,0x0e,0x00,0x0b, /* power pill blink ON */   
+	0x00,0x0e,0x00,0x0b, /* power pill blink ON */
 	0x00,0x0c,0x0c,0x0c, /* super pill blink (big) */
-	0x00,0x0c,0x0c,0x00, /* super pill blink (intermediate) */  
+	0x00,0x0c,0x0c,0x00, /* super pill blink (intermediate) */
 	0x00,0x0c,0x00,0x00, /* super pill blink (small) */
 	0x00,0x00,0x00,0x00, /* super pill blink OFF */
 	0x00,0x01/*red*/,0x02/*tan*/,0x0F/*white*/,	/* apple */
@@ -358,7 +358,7 @@ ROM_START( superpac_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "SPC-2.1C", 0xc000, 0x2000 )
 	ROM_LOAD( "SPC-1.1B", 0xe000, 0x2000 )
-	
+
 	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "SPV-1.3C", 0x0000, 0x1000 )
 	ROM_LOAD( "SPV-2.3F", 0x1000, 0x2000 )
@@ -366,7 +366,9 @@ ROM_END
 
 struct GameDriver superpac_driver =
 {
+	"Super Pac Man",
 	"superpac",
+	"KEVIN BRISLEY",
 	&machine_driver,		/* MachineDriver * */
 
 	superpac_rom,			/* RomModule * */

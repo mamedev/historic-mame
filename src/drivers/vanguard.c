@@ -229,7 +229,9 @@ ROM_END
 
 struct GameDriver vanguard_driver =
 {
+	"Vanguard",
 	"vanguard",
+	"BRIAN LEVINE\nBRAD OLIVER\nMIRKO BUFFONI",
 	&machine_driver,
 
 	vanguard_rom,

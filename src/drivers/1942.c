@@ -740,6 +740,8 @@ static void hisave(const char *name)
 struct GameDriver c1942_driver =
 {
 	"1942",
+	"1942",
+	"PAUL LEAMAN\nNICOLA SALMORIA",
 	&machine_driver,
 
 	c1942_rom,

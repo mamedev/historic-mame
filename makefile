@@ -7,8 +7,10 @@ CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
+         obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
+         obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
@@ -20,7 +22,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/dkong.o obj/sndhrdw/dkong.o obj/drivers/dkong.o \
          obj/vidhrdw/dkong3.o obj/drivers/dkong3.o \
          obj/machine/bagman.o obj/vidhrdw/bagman.o obj/sndhrdw/bagman.o obj/drivers/bagman.o \
-         obj/vidhrdw/wow.o obj/drivers/wow.o \
+         obj/machine/wow.o obj/vidhrdw/wow.o obj/drivers/wow.o \
          obj/drivers/galaxian.o \
          obj/vidhrdw/mooncrst.o obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
          obj/vidhrdw/moonqsr.o obj/drivers/moonqsr.o \
@@ -53,6 +55,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/gottlieb.o obj/drivers/reactor.o \
          obj/sndhrdw/gottlieb.o obj/drivers/qbert.o \
          obj/machine/gottlieb.o obj/drivers/krull.o \
+         obj/drivers/qbertqub.o \
          obj/drivers/mplanets.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
          obj/machine/elevator.o obj/sndhrdw/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
@@ -66,7 +69,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/commando.o obj/drivers/commando.o \
          obj/machine/gng.o obj/vidhrdw/gng.o obj/drivers/gng.o \
          obj/machine/vulgus.o obj/sndhrdw/vulgus.o obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
-         obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
+         obj/sndhrdw/kungfum.o obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
          obj/machine/williams.o obj/sndhrdw/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
@@ -87,7 +90,7 @@ obj/%.o: src/%.c mame.h common.h driver.h
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 obj/M6502/M6502.o:	M6502.c M6502.h Tables.h Codes.h
-obj/I86/I86.o:  I86.c I86.h global.h instr.h mytypes.h
+obj/I86/I86.o:  I86.c I86.h I86intrf.h ea.h host.h instr.h modrm.h
 obj/M6809/M6809.o:  M6809.c M6809.h
 
 

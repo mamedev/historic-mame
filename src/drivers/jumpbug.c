@@ -286,7 +286,7 @@ ROM_END
 
 
 static unsigned jumpbug_decode(int A)
-{                        
+{
 	switch (A)
 	{
                 case 0x265a:
@@ -315,7 +315,9 @@ static unsigned jumpbug_decode(int A)
 
 struct GameDriver jumpbug_driver =
 {
+	"Jump Bug",
 	"jumpbug",
+	"RICHARD DAVIES\nBRAD OLIVER\nNICOLA SALMORIA",
 	&machine_driver,
 
 	jumpbug_rom,
@@ -336,7 +338,9 @@ struct GameDriver jumpbug_driver =
 
 struct GameDriver jbugsega_driver =
 {
+	"Jump Bug (bootleg)",
 	"jbugsega",
+	"RICHARD DAVIES\nBRAD OLIVER\nNICOLA SALMORIA",
 	&machine_driver,
 
 	jbugsega_rom,

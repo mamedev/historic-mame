@@ -628,7 +628,9 @@ static void crush_hisave(const char *name)
 
 struct GameDriver pacman_driver =
 {
+	"Pac Man (Midway)",
 	"pacman",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacman_rom,
@@ -649,7 +651,9 @@ struct GameDriver pacman_driver =
 
 struct GameDriver pacplus_driver =
 {
+	"Pac Man with Pac Man Plus graphics",
 	"pacplus",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacman_rom,
@@ -670,7 +674,9 @@ struct GameDriver pacplus_driver =
 
 struct GameDriver pacmod_driver =
 {
+	"Pac Man (modified)",
 	"pacmod",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacmod_rom,
@@ -691,7 +697,9 @@ struct GameDriver pacmod_driver =
 
 struct GameDriver namcopac_driver =
 {
+	"Pac Man (Namco)",
 	"namcopac",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacman_rom,
@@ -712,7 +720,9 @@ struct GameDriver namcopac_driver =
 
 struct GameDriver hangly_driver =
 {
+	"Hangly Man",
 	"hangly",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacman_rom,
@@ -733,7 +743,9 @@ struct GameDriver hangly_driver =
 
 struct GameDriver puckman_driver =
 {
+	"Puck Man",
 	"puckman",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pacman_rom,
@@ -754,7 +766,9 @@ struct GameDriver puckman_driver =
 
 struct GameDriver piranha_driver =
 {
+	"Piranha",
 	"piranha",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	piranha_rom,
@@ -775,7 +789,9 @@ struct GameDriver piranha_driver =
 
 struct GameDriver mspacman_driver =
 {
+	"Ms. Pac Man",
 	"mspacman",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	mspacman_rom,
@@ -796,7 +812,9 @@ struct GameDriver mspacman_driver =
 
 struct GameDriver crush_driver =
 {
+	"Crush Roller",
 	"crush",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA\nGARY WALTON",
 	&machine_driver,
 
 	crush_rom,

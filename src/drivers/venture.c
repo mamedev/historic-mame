@@ -360,7 +360,9 @@ ROM_END
 
 struct GameDriver venture_driver =
 {
+	"Venture",
 	"venture",
+	"MARC LAFONTAINE\nNICOLA SALMORIA",
 	&venture_machine_driver,
 
 	venture_rom,
@@ -381,7 +383,9 @@ struct GameDriver venture_driver =
 
 struct GameDriver mtrap_driver =
 {
+	"Mouse Trap",
 	"mtrap",
+	"MARC LAFONTAINE",
 	&mtrap_machine_driver,
 
 	mtrap_rom,

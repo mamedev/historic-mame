@@ -567,7 +567,9 @@ static void hisave(const char *name)
 
 struct GameDriver gng_driver =
 {
+	"Ghosts'n Goblins",
 	"gng",
+	"ROBERTO VENTURA\nMIRKO BUFFONI\nNICOLA SALMORIA\nGABRIO SECCO",
 	&machine_driver,
 
 	gng_rom,
@@ -588,7 +590,9 @@ struct GameDriver gng_driver =
 
 struct GameDriver diamond_driver =
 {
+	"Diamond Run",
 	"diamond",
+	"ROBERTO VENTURA\nMIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	diamond_rom,

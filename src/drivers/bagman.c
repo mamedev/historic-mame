@@ -353,7 +353,9 @@ ROM_END
 
 struct GameDriver bagman_driver =
 {
+	"Bagman",
 	"bagman",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA",
 	&machine_driver,
 
 	bagman_rom,

@@ -471,7 +471,9 @@ ROM_END
 
 struct GameDriver scramble_driver =
 {
+	"Scramble",
 	"scramble",
+	"NICOLA SALMORIA",
 	&scramble_machine_driver,
 
 	scramble_rom,
@@ -492,7 +494,9 @@ struct GameDriver scramble_driver =
 
 struct GameDriver atlantis_driver =
 {
+	"Battle of Atlantis",
 	"atlantis",
+	"NICOLA SALMORIA",
 	&scramble_machine_driver,
 
 	atlantis_rom,
@@ -513,7 +517,9 @@ struct GameDriver atlantis_driver =
 
 struct GameDriver theend_driver =
 {
+	"The End",
 	"theend",
+	"NICOLA SALMORIA\nVILLE LAITINEN",
 	&scramble_machine_driver,
 
 	theend_rom,
@@ -534,7 +540,9 @@ struct GameDriver theend_driver =
 
 struct GameDriver froggers_driver =
 {
+	"Frog",
 	"froggers",
+	"NICOLA SALMORIA",
 	&scramble_nosound_machine_driver,
 
 	froggers_rom,

@@ -5,12 +5,14 @@
 #define __IRIX_C_
 #include "xmame.h"
 
+#ifndef IRIX_NOSOUND
 #include <sys/stropts.h>
 #include <dmedia/audio.h>
 #include <errno.h>
 
 ALport devAudio;
 ALconfig devAudioConfig;
+#endif
 	
 int sysdep_init(void) {
 	long parambuf[16];
@@ -21,6 +23,7 @@ int sysdep_init(void) {
 	    use_joystick = FALSE;
 	}
 
+#ifndef IRIX_NOSOUND
 	if (play_sound) {
 
 	    printf("IRIX sound system initializing ...");
@@ -71,14 +74,17 @@ int sysdep_init(void) {
 	    for (i=0; i< AUDIO_NUM_VOICES; i++) audio_on[i]=0;
 
 	} /* if (play_sound) */
+#endif
 	return TRUE;
 }
 
 void sysdep_exit(void) {
+#ifndef IRIX_NOSOUND
 	if(play_sound){
 		ALcloseport(devAudio);
 		ALfreeconfig(devAudioConfig);
 	}
+#endif
 }	
 
 void sysdep_poll_joystick() {
@@ -86,13 +92,17 @@ void sysdep_poll_joystick() {
 
 /* routine to dump audio samples into audio device */
 int sysdep_play_audio(byte *buff, int size) {
+#ifndef IRIX_NOSOUND
 /* in a first approach, try only to send samples that no cause blocking */
         long maxsize=ALgetfillable(devAudio);
 	return ALwritesamps(devAudio,(void *)buff,(size<=maxsize)?size:maxsize);	
+#endif
 }
 
 void sysdep_fill_audio_buffer( long *in, char *out, int start,int end ) {
+#ifndef IRIX_NOSOUND
 	for(; start<end; start++) out[start]=(char)( in[start] >> 7) ; 
+#endif
 }
 
 #endif 

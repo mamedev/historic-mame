@@ -90,7 +90,7 @@ int vulgus_vh_start(void)
 		generic_vh_stop();
 		return 1;
 	}
-	memset(dirtybuffer,0,BACKGROUND_SIZE);
+	memset(dirtybuffer2,0,BACKGROUND_SIZE);
 
 	/* the background area is twice as tall and twice as large as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_width)) == 0)

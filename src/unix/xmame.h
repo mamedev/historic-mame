@@ -52,6 +52,10 @@
 #include <X11/extensions/XShm.h>
 #endif
 
+#ifdef HAS_XPM
+#include <X11/xpm.h>
+#endif
+
 #include "osdepend.h"
 
 /*
@@ -105,6 +109,7 @@ EXTERN int			 play_sound;
 EXTERN int			 video_sync;
 EXTERN int	 		 first_free_pen;
 EXTERN int			 use_private_cmap;
+EXTERN unsigned char		 No_FM;
 
 EXTERN int      osd_joy_up, osd_joy_down, osd_joy_left, osd_joy_right;
 EXTERN int 	osd_joy_b1, osd_joy_b2, osd_joy_b3, osd_joy_b4;

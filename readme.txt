@@ -35,8 +35,14 @@
 Important note:  from now on I, Mirko, am the coordinator of project MAME.
 I created a new account address for those of you who intend to contribute to
 MAME with drivers, or bug fixes.  The address is  "mame@lim.dsi.unimi.it".
-If you have personal mails (requests or other) send them to my standard
-e-mail address.  Thank you for collaboration.
+Do not use previous address for non-source code bug reports.
+If you feel to have problems with this software I suggest you to read this
+document carefully.  If you don't find the solution, send a comment to
+Dave W. (hbbuse08@csun.edu).  Most questions are already answered and this
+can help making a complete FAQ.  Dave will forward me emails concerning
+more technical aspects.  Please understand me:  replying all messages is very
+much time consuming and I cannot work on MAME if I must reply e-mails.
+Thank you for collaboration.
 
 Please note that many people helped with this project, either directly or
 by making source code available which I examined to write the drivers. I am
@@ -60,7 +66,11 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Bagman                      |  Yes   |   No   | Music  |   No   | bagman   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Blaster                     |  Yes   |  Yes   | Yes(1) |  Yes   | blaster  |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Bomb Jack                   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Bubbles                     |  Yes   |  Yes   | Yes(1) |  Yes   | bubbles  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Burger Time                 |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -77,6 +87,8 @@ The list doesn't include variants of the same game.
 | Crazy Kong                  |  Yes   |  Yes   |  Yes   |  Yes   | ckong    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Crush Roller                |  Yes   |  Yes   |  Yes   |  Yes   | crush    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Defender                    |  Yes   |  Yes   | Yes(1) |  Yes   | defender |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Diamond Run                 |  Yes   |  Yes   | Yes(2) |   No   | diamond  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -110,7 +122,9 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Joust                       |  Yes   |  Yes?  |   No   |  Yes   | joust    |
+| Jr. Pacman                  |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Joust                       |  Yes   |  Yes?  | Yes(1) |  Yes   | joust    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Jump Bug                    |  Yes   |   No   |  Yes   |   No   | jumpbug  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -120,11 +134,11 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Krull                       |  Yes   |  Yes   |   No   |  n/a   | krull    |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Kung Fu Master              |  Yes   |   No   |   No   |  n/a   | kungfum  |
+| Kung Fu Master              |  Yes   |  Yes   |Partial.|  Yes   | kungfum  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Lady Bug                    |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Lost Tomb                   |   No   |   No   |  Yes   |  n/a   | losttomb |
+| Lost Tomb                   |  Yes   |   No   |  Yes   |  n/a   | losttomb |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -168,19 +182,27 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Q*Bert                      |  Yes   |  Yes   | Yes(1) |   No   | qbert    |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Q*Bert Qubes                |  Yes   |  Yes   | Yes(1) |   No   | qbertqub |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Rally X                     |  Yes   |   No   |Partial.|   No   | rallyx   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Robotron                    |  Yes   |  Yes?  |   No   |  Yes   | robotron |
+| Robotron                    |  Yes   |  Yes?  | Yes(1) |  Yes   | robotron |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Scramble                    |  Yes   |  Yes   |  Yes   |   No   | scramble |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Seicross                    |  Yes   |   No   |  Yes   |  n/a   | seicross |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Sinistar                    |   No   |  Yes   | Yes(1) |  Yes   | sinistar |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Space Invaders              |  Yes   |  Yes   | Yes(1) |  Yes   | invaders |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Space Panic                 |  Yes   | Close  |   No   |  Yes   | panic    |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Stargate (Defender II)      |  Yes   |  Yes?  |   No   |  Yes   | stargate |
+| Space Zap                   |  Yes   | Maybe  |   No   |   No   | spacezap |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Splat                       |  Yes   |  Yes   | Yes(1) |  Yes   | splat    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Stargate (Defender II)      |  Yes   |  Yes   | Yes(1) |  Yes   | stargate |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -269,6 +291,12 @@ Known issues:
 
 
 
+Bubbles ("bubbles")
+===================
+Doesn't start.  It hangs after boot.
+
+
+
 Burger Time ("btime")
 =====================
 Arrows  Move around
@@ -344,9 +372,6 @@ CTRL    Jump
 
 Clones supported:
   version running on Scramble hardware ("ckongs")
-
-Known issues:
-- Some problems with sound
 
 
 
@@ -540,10 +565,22 @@ Joust ("joust")
 ====================
 Arrows  Move around
 CTRL    Flap
+F,G     Player 2 move
+S       Player 2 flap
+
+
+
+Jr. Pac Man ("jrpacman")
+========================
+Arrows  Move around
+F1      Skip level
+F2      Test mode
 
 Known issues:
-- The sprites sometimes disappear.
-- Where the characters are stored?
+- Maybe decryption is not correct yet.  For example in the third intermission
+  the background is quite black and a line appear on left.  I'm not sure
+  about this.
+- I don't know what a dip switch does.
 
 
 
@@ -569,7 +606,7 @@ Arrows  Move around
 CTRL    Jump
 
 Clones supported:
-  bootleg version called Jungle Hunt ("jhunt")
+  Another official version called Jungle Hunt ("jhunt")
 
 Known issues:
 - Sound support implemented.  Tarzan yell sample missing.  Is the pitch of
@@ -603,6 +640,9 @@ Ctrl    Kick
 Alt     Punch
 F1+F3   Test mode
 
+Clones supported:
+  bootleg version copyright by O.K. ("kungfub")
+
 
 
 Lady Bug ("ladybug")
@@ -616,9 +656,12 @@ Lost Tomb ("losttomb")
 ======================
 This runs on a Super Cobra hardware.
 
+Arrows   Move around
+CTRL     Whip
+E,S,D,F  Fire
+
 Known issues:
-- Not playable. Crashes during demo. Graphics are garbled. I think the ROMs
-  are corrupted.
+- Graphics are now perfect
 
 
 
@@ -689,9 +732,6 @@ F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
 Clones supported:
   bootleg version, called Moon Ranger ("mranger")
 
-Known issues:
-- No background graphics. I don't know where to place them... can anyone
-  provide a screen snapshot?
 
 
 
@@ -905,6 +945,18 @@ Clones supported:
 
 
 
+Q*Bert Qubes ("qbertqub")
+=========================
+Arrows  Move around
+To enter your name in the high score list, use 1 or 2.
+
+Known issues:
+- you have to reset (F3) the game at first time when the empty
+  supreme noser table appears, then the table will be correctly filled.
+  Alternatively, you can insert a coin before this empty table appears...
+- Hiscore save not supported yet.
+
+
 Rally X ("rallyx")
 ==================
 Arrows  Move around
@@ -919,13 +971,24 @@ Known issues:
 
 
 
+Reactor ("reactor")
+===================
+Arrows  Move around
+CTRL    Player 1 Energy
+ALT     Player 1 Decoy
+1       Player 2 Energy
+2       Player 3 Decoy
+
+Known issues:
+- The screen sometimes flips horizzontally and vertically
+
+
+
 Robotron ("robotron")
 =====================
 Arrows  Move around
 E,S,D,F Fire
 
-Known issues:
-- Controls don't work right yet
 
 
 
@@ -955,9 +1018,11 @@ Seicross ("seicross")
 Runs on almost the same hardware as Crazy Climber, but not exactly the same.
 
 Arrows  Move around
+CTRL    Fire (if SW7B is enabled)
 
 Known issues:
 - You must remember to setup "Debug and Demo" mode to OFF
+- Setting SW7B to 1 will turn on FIRE facility
 - Colors are wrong
 
 
@@ -1014,6 +1079,14 @@ Space Panic ("panic")
 Arrows  Move around
 CTRL    Fire1
 ALT     Fire2
+
+
+
+Space Zap ("spacezap")
+======================
+Arrows  Move the base
+CTRL    Fire1
+ALT     Fire2 (Direction arrow must be pressed together)
 
 
 
@@ -1107,6 +1180,9 @@ Known issues:
 Turtles ("turtles")
 ===================
 This runs on the same hardware as Amidar
+
+Clones supported:
+  Another official version called Turpin ("turpin")
 
 Arrows  Move around
 CTRL    Bomb
@@ -1222,7 +1298,8 @@ UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
 
 Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
    Buffoni (mix@lim.dsi.unimi.it) and Richard Davies (R.Davies@dcs.hull.ac.uk)
-1942, Commando, Elevator Action and Galaga drivers by Nicola Salmoria.
+1942, Commando, Elevator Action, Jr. Pacman, Turpin and Galaga drivers by
+   Nicola Salmoria.
 Gyruss, Ghost 'n Goblin, Mario Bros., Vulgus, Zaxxon, Bomb Jack, Burger Time
    and Donkey Kong 3 drivers provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
@@ -1243,8 +1320,11 @@ Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
 Venture, Mouse Trap and Pepper II drivers by Marc Lafontaine
    (marclaf@sympatico.ca).
-Q*Bert, Mad Planets, Reactor and Krull drivers by Fabrice Frances
-   (frances@ensica.fr)
+Q*Bert, Q*Bert Qubes, Mad Planets, Reactor and Krull drivers by
+   Fabrice Frances (frances@ensica.fr)
+Robotron, Splat, Defender, Joust, Stargate, Bubbles, Blaster and Sinistar
+   drivers by Marc LaFontaine (marclaf@sympatico.ca).  Robotron, Joust and
+   Stargate drivers also provided by Steven Hugg (hugg@pobox.com).
 Space Panic driver by Mike Coates (mike@dissfulfils.co.uk)
 
 
@@ -1326,19 +1406,20 @@ MAME [name of the game to run] [options]
 
 for example
 
-MAME mspacman -nosound   will run Ms Pac Man without sound
+MAME mspacman -soundcard 0    will run Ms Pac Man without sound
 
 options:
 -noscanlines  use alternate video mode (not availble in all games). Use this
               if the default mode doesn't work with your monitor/video card.
--vesa         use standard 640x480x256 VESA 1.2 mode instead of custom video
+-vesa         use standard 800x600x256 VESA 1.2 mode instead of custom video
               mode. Use this as a last resort if -noscanlines doesn't solve
               your video problems.
 -vesa2b       use VESA2.0 banked mode extension
 -vesa2l       use VESA2.0 linear mode extension
 -640          tell MAME to use a vesa 640x480 video mode
--800          same as above, video mode is 800x600
+-800          same as above, video mode is 800x600.  This is the default mode
 -1024         same as above, video mode is 1024x768
+-XxY          where X and Y are width and height (ex: 800x600)
 
 -vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
               slower than the other video modes. Use this if you want
@@ -1363,32 +1444,35 @@ options:
               utilities to set the VESA refresh rate to 60 Hz.
               Note that when this option is turned on, speed will NOT
               downgrade nicely if your system is not fast enough.
+-rotate       display the whole screen rotated by 90 degree.  VESA is used
+              to do this, and max resolution supported is 320 x 240.
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
--nofm         disable FM sound synthesis (if you don't have Adlib/Sb card)
+-nofm         suppress FM support.  If you have problems and don't have a
+              soundblaster I suggest you to use this option
 -log          create a log of illegal memory accesses in ERROR.LOG
 -list         display a list of currently supported games
 -frameskip n  skip frames to speed up the emulation. For example, if the game
-              normally runs at 60 fps, "-skipframe 1" will make it run at 30
-              fps, and "-skipframe 2" at 20 fps. Use F11 to check the fps your
+              normally runs at 60 fps, "-frameskip 1" will make it run at 30
+              fps, and "-frameskip 2" at 20 fps. Use F11 to check the fps your
               computer is actually displaying. If the game is too slow,
               increase the frameskip value. Note that this setting can also
               affect audio quality (some games sound better, others sound
-              worse).
+              worse).  Maximum value for frameskip is 3.
 
 
 The following keys work in all emulators:
 
-3       Insert coin
-1       Start 1 player game
-2       Start 2 players game
-Tab     Enter dip switch settings and keys assignment menu
-P       Pause
-F3      Reset
-F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit
-F9      To change volume percentage thru 100,75,50,25,0 values
-F10     Toggle speed throttling
-F11     Toggle fps counter
-F12     Save a screen snapshot
-ESC     Exit emulator
+3         Insert coin
+1         Start 1 player game
+2         Start 2 players game
+Tab       Enter dip switch settings and keys assignment and credits display menu
+ScrlLock  Pause
+F3        Reset
+F4        Show the game graphics. Use cursor keys to change set/color, F4 to exit
+F9        To change volume percentage thru 100,75,50,25,0 values
+F10       Toggle speed throttling
+F11       Toggle fps counter
+F12       Save a screen snapshot
+ESC       Exit emulator

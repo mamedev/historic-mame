@@ -382,7 +382,9 @@ static void hisave(const char *name)
 
 struct GameDriver centiped_driver =
 {
+	"Centipede",
 	"centiped",
+	"IVAN MACKINTOSH\nEDWARD MASSEY\nPETE RITTWAGE\nNICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
 
 	centiped_rom,

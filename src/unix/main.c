@@ -8,40 +8,41 @@
 
 extern int frameskip; /* defined in src/mame.c */
 
-char *title="X-Mame version 0.21.7";
+char *title="X-Mame version 0.23.2";
 
 /* 
  * show help and exit
  */
 int show_usage() 
 {
-char message[]="%s\n
-Usage: xmame [game] [options]
-Options:
-	-sound				Enable sound ( if available )
-	-nojoy				Disable joystick ( if supported )
-	-heightscale	<scale> 	Set Y-Scale aspect ratio
-	-widthscale	<scale> 	Set X-Scale aspect ratio
-	-scale 		<scale>		Set X-Y Scale to the same aspect ratio
-	-frameskip	<#frames>	Skip <#frames> in video refresh
-	-help				Show this help
-	-mamedir	<dir>		Tell XMame where roms base tree resides
-	-display	<display>	To select display
-	-nomitshm			Disable MIT shared memory usage (if any)
-	-privatecmap			To use private color maps
-	-mapkey	    <Xcode>,<Mamecode>  Set an specific key mapping
-
-Files: 
-	${HOME}/.xmamerc			User configuration file
-
-Environment variables:
-
-	HOME				Users's home directory
-	MAMEDIR				Arcade Roms base directory
-	DISPLAY				X-Server to display in
-
-Mame is an Original Idea of Nicola Salmoria and Mirko Buffoni
-X-Mame port mantained by Juan Antonio Martinez
+char message[]="%s\n\
+Usage: xmame [game] [options]\n\
+Options:\n\
+	-sound				Enable sound ( if available )\n\
+	-nofm				Disable use of FM Synthesis\n\
+	-nojoy				Disable joystick ( if supported )\n\
+	-heightscale	<scale> 	Set Y-Scale aspect ratio\n\
+	-widthscale	<scale> 	Set X-Scale aspect ratio\n\
+	-scale 		<scale>		Set X-Y Scale to the same aspect ratio\n\
+	-frameskip	<#frames>	Skip <#frames> in video refresh\n\
+	-help				Show this help\n\
+	-mamedir	<dir>		Tell XMame where roms base tree resides\n\
+	-display	<display>	To select display\n\
+	-nomitshm			Disable MIT shared memory usage (if any)\n\
+	-privatecmap			To use private color maps\n\
+	-mapkey	    <Xcode>,<Mamecode>  Set an specific key mapping\n\
+\n\
+Files: \n\
+	${HOME}/.xmamerc			User configuration file\n\
+\n\
+Environment variables:\n\
+\n\
+	HOME				Users's home directory\n\
+	MAMEDIR				Arcade Roms base directory\n\
+	DISPLAY				X-Server to display in\n\
+\n\
+Mame is an Original Idea of Nicola Salmoria and Mirko Buffoni\n\
+X-Mame port mantained by Juan Antonio Martinez\n\
 ";
 	fprintf(stderr,message,title);
 	return (OSD_NOT_OK); /* force exit on return */
@@ -95,6 +96,10 @@ int parse_xmamerc_file()
 		play_sound        = atoi( q[1] );
 		continue;
 	    } /* sound */
+	    if (strcasecmp(q[0], "dontuse_fm_synth") == 0) {
+		No_FM        = atoi( q[1] );
+		continue;
+	    } /* sound */
 	    if (strcasecmp(q[0], "use_joystick") == 0) {
 		use_joystick = atoi( q[1] ) ;
 		continue; 
@@ -130,14 +135,14 @@ int parse_xmamerc_file()
 	    } /* mit shared memory */
 	    if (strcasecmp(q[0], "defaultgame") == 0) {
 		char *pt;
-		extern char *defaultgame;
+		extern char *GameName;
 		pt=malloc(1+strlen(q[1]) );
 		if( ! pt ) { 
 			fprintf(stderr,"Malloc error: line %d\n",lineno);
 			return (OSD_NOT_OK);
 		}
 		strcpy(pt,q[1]);
-		defaultgame=pt;
+		GameName=pt;
 		continue;
 	    } /* mamedir */
 	    if (strcasecmp(q[0], "mamedir") == 0) {
@@ -188,6 +193,7 @@ int osd_init_environment (void)
 	use_joystick            = TRUE;
 	use_private_cmap	= FALSE;
 	play_sound              = FALSE;
+	No_FM			= FALSE; /* by default use it */
 	widthscale              = 1;
 	heightscale             = 1;
 	mit_shm_avail           = 0;
@@ -240,6 +246,10 @@ int osd_init (int argc, char *argv[])
 			return show_game_info(argv[++i]);;
 		}
 */
+		if (strcasecmp(argv[i], "-nofm") == 0) {
+			No_FM = TRUE;
+			continue;
+		}
 		if (strcasecmp(argv[i], "-nojoy") == 0) {
 			use_joystick = FALSE;
 			continue;
@@ -413,3 +423,20 @@ int osd_joy_pressed (int joycode)
 	}
 }
 
+#ifdef HAVE_GETTIMEOFDAY
+/* Standard UNIX clock() is based on CPU time, not real time.
+   Here is a real-time drop in replacement for UNIX systems that have the
+   gettimeofday() routine.  This results in much more accurate timing for
+   throttled emulation.
+*/
+clock_t clock()
+{
+  static long init_sec = 0;
+
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  if (init_sec == 0)
+    init_sec = tv.tv_sec;
+  return (tv.tv_sec - init_sec) * 1000000 + tv.tv_usec;
+}
+#endif

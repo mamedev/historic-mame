@@ -12,7 +12,7 @@
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
 #else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 
+#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x &
 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
 
@@ -410,6 +410,10 @@ void freegfx(struct GfxElement *gfx)
 									 transparency.
   transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == transparent_color
                                      are transparent. This is used by e.g. Pac Man.
+  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == transparent_color,
+                                     the source pixel is drawn over it. This is used by
+									 e.g. Jr. Pac Man to draw the sprites when the background
+									 has priority over them.
 
 ***************************************************************************/
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
@@ -648,6 +652,75 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 					}
 				}
 				break;
+
+			case TRANSPARENCY_THROUGH:
+				if (flipx)
+				{
+					if (flipy)	/* XY flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = paldata[*sd];
+								bm++;
+								sd--;
+							}
+						}
+					}
+					else 	/* X flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = paldata[*sd];
+								bm++;
+								sd--;
+							}
+						}
+					}
+				}
+				else
+				{
+					if (flipy)	/* Y flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = paldata[*sd];
+								bm++;
+								sd++;
+							}
+						}
+					}
+					else		/* normal */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = paldata[*sd];
+								bm++;
+								sd++;
+							}
+						}
+					}
+				}
+				break;
 		}
 	}
 	else
@@ -837,6 +910,75 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 									}
 									sd4++;
 								}
+							}
+						}
+					}
+				}
+				break;
+
+			case TRANSPARENCY_THROUGH:
+				if (flipx)
+				{
+					if (flipy)	/* XY flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = *sd;
+								bm++;
+								sd--;
+							}
+						}
+					}
+					else 	/* X flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = *sd;
+								bm++;
+								sd--;
+							}
+						}
+					}
+				}
+				else
+				{
+					if (flipy)	/* Y flip */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = *sd;
+								bm++;
+								sd++;
+							}
+						}
+					}
+					else		/* normal */
+					{
+						for (y = sy;y <= ey;y++)
+						{
+							bm = dest->line[y] + sx;
+							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
+							for (x = sx;x <= ex;x++)
+							{
+								if (*bm == transparent_color)
+									*bm = *sd;
+								bm++;
+								sd++;
 							}
 						}
 					}
@@ -1096,87 +1238,174 @@ void clearbitmap(struct osd_bitmap *bitmap)
 
 
 
-int setup_menu(void)
+/***************************************************************************
+
+  Display text on the screen. If erase is 0, it superimposes the text on
+  the last frame displayed.
+
+***************************************************************************/
+void displaytext(const struct DisplayText *dt,int erase)
 {
-	struct DisplayText dt[10];
-	int i,s,key,done;
-	int total;
+	if (erase) clearbitmap(Machine->scrbitmap);
 
-
-	total = 3;
-	dt[0].text = "DIP SWITCH SETUP";
-	dt[0].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[0].text)) / 2;
-	dt[0].y = 0 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-	dt[1].text = "KEYBOARD SETUP";
-	dt[1].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[1].text)) / 2;
-	dt[1].y = 1 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-	dt[2].text = "RETURN TO GAME";
-	dt[2].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2].text)) / 2;
-	dt[2].y = 3 * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-	dt[3].text = 0;	/* terminate array */
-
-	s = 0;
-	done = 0;
-	do
+	while (dt->text)
 	{
-		for (i = 0;i < total;i++)
+		int x,y;
+		const char *c;
+
+
+		x = dt->x;
+		y = dt->y;
+		c = dt->text;
+
+		while (*c)
 		{
-			dt[i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
+			if (*c == '\n')
+			{
+				x = dt->x;
+				y += Machine->gfx[0]->height + 1;
+			}
+			else if (*c == ' ')
+			{
+				/* don't try to word wrap at the beginning of a line (this would cause */
+				/* an endless loop if a word is longer than a line) */
+				if (x == dt->x)
+					x += Machine->gfx[0]->width;
+				else
+				{
+					int nextlen=0;
+					const char *nc;
+
+
+					x += Machine->gfx[0]->width;
+					nc = c+1;
+					while (*nc && *nc != ' ' && *nc != '\n')
+                                        {
+				                if (*nc >= '0' && *nc <= '9')
+                	                           nextlen += Machine->gfx[Machine->gamedrv->charset[*nc - '0'] / 256]->width;
+				                else if (*nc >= 'A' && *nc <= 'Z')
+                	                           nextlen += Machine->gfx[Machine->gamedrv->charset[*nc - 'A' + 10] / 256]->width;
+						nc++;
+                                        }
+
+					/* word wrap */
+
+					if (x + nextlen >= Machine->drv->screen_width)
+					{
+						x = dt->x;
+						y += Machine->gfx[0]->height + 1;
+					}
+				}
+			}
+			else
+			{
+				int bank=-1;
+				int offs=0;
+
+				if (*c >= '0' && *c <= '9')
+                                {
+                	            bank = Machine->gamedrv->charset[*c - '0'] / 256;
+                                    offs = Machine->gamedrv->charset[*c - '0'] & 255;
+                                }
+				else if (*c >= 'A' && *c <= 'Z')
+                                {
+                	            bank = Machine->gamedrv->charset[*c - 'A' + 10] / 256;
+                                    offs = Machine->gamedrv->charset[*c - 'A' + 10] & 255;
+                                }
+
+                                if(bank >= 0)
+                                {
+					drawgfx(Machine->scrbitmap,Machine->gfx[bank],offs,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+					x += Machine->gfx[bank]->width;
+                                }
+			}
+
+			c++;
 		}
 
-		displaytext(dt,1);
+		dt++;
+	}
+
+	osd_update_display();
+}
+
+
+
+int showcharset(void)
+{
+	int i,key,cpl;
+	struct DisplayText dt[2];
+	char buf[80];
+	int bank,color;
+
+
+	bank = 0;
+	color = 0;
+
+	do
+	{
+		clearbitmap(Machine->scrbitmap);
+
+		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
+
+		for (i = 0;i < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total;i++)
+		{
+			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
+					i,color,
+					0,0,
+					(i % cpl) * Machine->gfx[bank]->width,
+					Machine->gfx[0]->height+1 + (i / cpl) * Machine->gfx[bank]->height,
+					0,TRANSPARENCY_NONE,0);
+		}
+
+		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
+		dt[0].text = buf;
+		dt[0].color = Machine->gamedrv->paused_color;
+		dt[0].x = 0;
+		dt[0].y = 0;
+		dt[1].text = 0;
+		displaytext(dt,0);
+
 
 		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
+			case OSD_KEY_RIGHT:
+				if (Machine->gfx[bank + 1]) bank++;
+				break;
+
+			case OSD_KEY_LEFT:
+				if (bank > 0) bank--;
 				break;
 
 			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
+				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
+					color++;
 				break;
 
-			case OSD_KEY_ENTER:
-				switch (s)
-				{
-					case 0:
-						if (setdipswitches())
-							done = 2;
-						break;
-
-					case 1:
-						if (setkeysettings())
-							done = 2;
-						break;
-
-					case 2:
-						done = 1;
-						break;
-				}
-				break;
-
-			case OSD_KEY_ESC:
-				done = 2;
+			case OSD_KEY_DOWN:
+				if (color > 0) color--;
 				break;
 		}
-	} while (done == 0);
+	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
-	if (done == 2) return 1;
+	if (key == OSD_KEY_ESC) return 1;
 	else return 0;
 }
 
 
 
-int setdipswitches(void)
+
+
+
+
+static int setdipswitches(void)
 {
 	struct DisplayText dt[40];
 	int settings[20];
@@ -1318,7 +1547,8 @@ int setdipswitches(void)
 }
 
 
-int setkeysettings(void)
+
+static int setkeysettings(void)
 {
 	struct DisplayText dt[40];
 	int i,s,key,done;
@@ -1411,145 +1641,111 @@ int setkeysettings(void)
 
 
 
-/***************************************************************************
-
-  Display text on the screen. If erase is 0, it superimposes the text on
-  the last frame displayed.
-
-***************************************************************************/
-void displaytext(const struct DisplayText *dt,int erase)
+static int showcredits(void)
 {
-	if (erase) clearbitmap(Machine->scrbitmap);
-
-	while (dt->text)
-	{
-		int x,y;
-		const char *c;
+	int key;
+	struct DisplayText dt[2];
+	char buf[256];
 
 
-		x = dt->x;
-		y = dt->y;
-		c = dt->text;
+	strcpy(buf,"THE FOLLOWING PEOPLE CONTRIBUTED TO THIS DRIVER\n\n");
+	strcat(buf,Machine->gamedrv->credits);
+	dt[0].text = buf;
+	dt[0].color = Machine->gamedrv->white_text;
+	dt[0].x = 0;
+	dt[0].y = 0;
+	dt[1].text = 0;
+	displaytext(dt,1);
 
-		while (*c)
-		{
-			if (*c == '\n')
-			{
-				x = dt->x;
-				y += Machine->gfx[0]->height + 1;
-			}
-			else if (*c == ' ')
-			{
-				/* don't try to word wrap at the beginning of a line (this would cause */
-				/* an endless loop if a word is longer than a line) */
-				if (x == dt->x)
-					x += Machine->gfx[0]->width;
-				else
-				{
-					int nextlen;
-					const char *nc;
+	key = osd_read_key();
+	while (osd_key_pressed(key));	/* wait for key release */
+	if (key == OSD_KEY_ESC) return 1;
 
-
-					x += Machine->gfx[0]->width;
-					nc = c+1;
-					while (*nc && *nc != ' ' && *nc != '\n')
-						nc++;
-
-					nextlen = nc - c - 1;
-
-					/* word wrap */
-					if (x + nextlen * Machine->gfx[0]->width >= Machine->drv->screen_width)
-					{
-						x = dt->x;
-						y += Machine->gfx[0]->height + 1;
-					}
-				}
-			}
-			else
-			{
-				if (*c >= '0' && *c <= '9')
-					drawgfx(Machine->scrbitmap,Machine->gfx[0],Machine->gamedrv->charset[*c - '0'],dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-				else if (*c >= 'A' && *c <= 'Z')
-					drawgfx(Machine->scrbitmap,Machine->gfx[0],Machine->gamedrv->charset[*c - 'A' + 10],dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-
-				x += Machine->gfx[0]->width;
-			}
-
-			c++;
-		}
-
-		dt++;
-	}
-
-	osd_update_display();
+	return 0;
 }
 
 
 
-int showcharset(void)
+int setup_menu(void)
 {
-	int i,key,cpl;
-	struct DisplayText dt[2];
-	char buf[80];
-	int bank,color;
+	struct DisplayText dt[10];
+	int i,s,key,done;
+	int total;
 
 
-	bank = 0;
-	color = 0;
+	total = 4;
+	dt[0].text = "DIP SWITCH SETUP";
+	dt[1].text = "KEYBOARD SETUP";
+	dt[2].text = "CREDITS";
+	dt[3].text = "RETURN TO GAME";
+	for (i = 0;i < total;i++)
+	{
+		dt[i].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[i].text)) / 2;
+		dt[i].y = i * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
+		if (i == total-1) dt[i].y += 2*Machine->gfx[0]->height;
+	}
+	dt[4].text = 0;	/* terminate array */
 
+	s = 0;
+	done = 0;
 	do
 	{
-		clearbitmap(Machine->scrbitmap);
-
-		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
-
-		for (i = 0;i < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total;i++)
+		for (i = 0;i < total;i++)
 		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-					i,color,
-					0,0,
-					(i % cpl) * Machine->gfx[bank]->width,
-					Machine->gfx[0]->height+1 + (i / cpl) * Machine->gfx[bank]->height,
-					0,TRANSPARENCY_NONE,0);
+			dt[i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
 		}
 
-		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
-		dt[0].text = buf;
-		dt[0].color = Machine->gamedrv->paused_color;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext(dt,0);
-
+		displaytext(dt,1);
 
 		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
-			case OSD_KEY_RIGHT:
-				if (Machine->gfx[bank + 1]) bank++;
-				break;
-
-			case OSD_KEY_LEFT:
-				if (bank > 0) bank--;
+			case OSD_KEY_DOWN:
+				if (s < total - 1) s++;
+				else s = 0;
 				break;
 
 			case OSD_KEY_UP:
-				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
-					color++;
+				if (s > 0) s--;
+				else s = total - 1;
 				break;
 
-			case OSD_KEY_DOWN:
-				if (color > 0) color--;
+			case OSD_KEY_ENTER:
+				switch (s)
+				{
+					case 0:
+						if (setdipswitches())
+							done = 2;
+						break;
+
+					case 1:
+						if (setkeysettings())
+							done = 2;
+						break;
+
+					case 2:
+						if (showcredits())
+							done = 2;
+						break;
+
+					case 3:
+						done = 1;
+						break;
+				}
+				break;
+
+			case OSD_KEY_ESC:
+				done = 2;
 				break;
 		}
-	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
+	} while (done == 0);
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
 
-	if (key == OSD_KEY_ESC) return 1;
+	if (done == 2) return 1;
 	else return 0;
 }

@@ -476,7 +476,9 @@ static void hisave(const char *name)
 
 struct GameDriver congo_driver =
 {
+	"Congo Bongo",
 	"congo",
+	"VILLE LAITINEN\nNICOLA SALMORIA\nMARC LAFONTAINE\nPAUL BERBERICH",
 	&machine_driver,
 
 	congo_rom,

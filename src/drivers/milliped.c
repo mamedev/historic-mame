@@ -323,7 +323,9 @@ static void hisave(const char *name)
 
 struct GameDriver milliped_driver =
 {
+	"Millipede",
 	"milliped",
+	"IVAN MACKINTOSH\nNICOLA SALMORIA",
 	&machine_driver,
 
 	milliped_rom,

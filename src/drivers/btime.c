@@ -1294,7 +1294,9 @@ static void hisave(const char *name)
 
 struct GameDriver btime_driver =
 {
+	"Burger Time (Midway)",
 	"btime",
+	"KEVIN BRISLEY\nMIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	btime_rom,
@@ -1315,7 +1317,9 @@ struct GameDriver btime_driver =
 
 struct GameDriver btimea_driver =
 {
+	"Burger Time (Data East)",
 	"btimea",
+	"KEVIN BRISLEY\nMIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	btimea_rom,

@@ -441,7 +441,9 @@ static void hisave(const char *name)
 
 struct GameDriver gyruss_driver =
 {
+	"Gyruss",
 	"gyruss",
+	"MIKE CUDDY\nMIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	gyruss_rom,

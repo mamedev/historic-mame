@@ -8,18 +8,16 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "z80.h"
 
 
 unsigned char *wow_videoram;
+
 int magic_expand_color, magic_control, collision;
-
-
 
 int wow_intercept_r(int offset)
 {
 	int res;
-
 
 	res = collision;
 	collision = 0;
@@ -27,7 +25,14 @@ int wow_intercept_r(int offset)
 	return res;
 }
 
+int wow_video_retrace_r(int offset)
+{
+    /* Current cycles divided by no.of cycles per scan line */
 
+    /* Possibly should be reversed ! (i.e. scanlines - answer) */
+
+    return cpu_geticount() / (Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / Machine->drv->screen_height);
+}
 
 void wow_videoram_w(int offset,int data)
 {
@@ -232,7 +237,6 @@ void wow_pattern_board_w(int offset,int data)
 	static int length;	/* row length */
 	static int loops;	/* rows to copy - 1 */
 
-
 	switch (offset)
 	{
 		case 0:
@@ -242,7 +246,7 @@ void wow_pattern_board_w(int offset,int data)
 			src = src + data * 256;
 			break;
 		case 2:
-			mode = data & 0x3f;	/* register is 6 bit wide */
+			mode = data & 0x3f;			/* register is 6 bit wide */
 			break;
 		case 3:
 			skip = data;
@@ -262,30 +266,31 @@ void wow_pattern_board_w(int offset,int data)
 	{
 		int i,j;
 
-
-if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
+		if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 		cpu_getpc(),src,mode,skip,dest,length,loops);
-
 
 		for (i = 0; i <= loops;i++)
 		{
 			for (j = 0;j <= length;j++)
 			{
-if (!(mode & 0x08) || j < length)
-				cpu_writemem(dest,RAM[src]);
-				if (mode & 0x20) dest++;	/* copy forwards */
-				else dest--;				/* backwards */
+				if (!(mode & 0x08) || j < length)
+                  if(dest >= 0) cpu_writemem(dest,RAM[src]);
 
-				if ((j & 1) || !(mode & 0x02))	/* don't increment source on odd loops */
-					if (mode & 0x04) src++;
+				if (mode & 0x20) dest++;		/* copy forwards */
+				else dest--;					/* backwards */
+
+				if ((j & 1) || !(mode & 0x02))  /* Expand Mode - don't increment source on odd loops */
+					if (mode & 0x04) src++;		/* Constant mode - don't increment at all! */
 			}
 
-			if ((j & 1) && (mode & 0x02))	/* always increment source at end of line */
-				if (mode & 0x04) src++;
-if (mode & 0x08) src--;
+			if ((j & 1) && (mode & 0x02))	    /* always increment source at end of line */
+				if (mode & 0x04) src++;			/* Constant mode - don't increment at all! */
 
-if (mode & 0x20) dest--;	/* copy forwards */
-else dest++;				/* backwards */
+			if ((mode & 0x08) && (mode & 0x04)) /* Correct src if in flush mode */
+				src--;                          /* and NOT in Constant mode */
+
+			if (mode & 0x20) dest--;			/* copy forwards */
+			else dest++;						/* backwards */
 
 			dest += (int)((signed char)skip);	/* extend the sign of the skip register */
 

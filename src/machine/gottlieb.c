@@ -61,7 +61,7 @@ int mplanets_dial_r(int offset)
 int reactor_tb_H_r(int offset)
 {
 	int res = 0x00;
-	const speed = 3;
+	const speed = 2;
 
 	if (osd_key_pressed(OSD_KEY_LEFT) || osd_joy_pressed(OSD_JOY_LEFT))
 		res = -speed;
@@ -74,7 +74,7 @@ int reactor_tb_H_r(int offset)
 int reactor_tb_V_r(int offset)
 {
 	int res = 0x00;
-	const speed = 3;
+	const speed = 2;
 
 	if (osd_key_pressed(OSD_KEY_UP) || osd_joy_pressed(OSD_JOY_UP))
 		res = -speed;

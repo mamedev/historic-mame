@@ -138,7 +138,7 @@ static struct InputPort input_ports[] =
 		OSD_KEY_E,OSD_KEY_F,OSD_KEY_D,OSD_KEY_S,
 		OSD_KEY_UP,OSD_KEY_RIGHT,OSD_KEY_DOWN,OSD_KEY_LEFT},
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
-					0, 0, 0, 0 }
+                OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT } /* V.V */
 	},
 	{ -1 }  /* end of table */
 };
@@ -310,7 +310,9 @@ static unsigned short krull_colors[256]={
 
 struct GameDriver krull_driver =
 {
+        "Krull",
 	"krull",
+        "FABRICE FRANCES",
 	&machine_driver,
 
 	krull_rom,

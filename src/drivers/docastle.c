@@ -220,7 +220,9 @@ ROM_END
 
 struct GameDriver docastle_driver =
 {
+	"Mr. Do's Castle",
 	"docastle",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	docastle_rom,

@@ -395,7 +395,9 @@ ROM_END
 
 struct GameDriver xevious_driver =
 {
+	"Xevious",
 	"xevious",
+	"NICOLA SALMORIA\nMIRKO BUFFONI",
 	&machine_driver,
 
 	xevious_rom,

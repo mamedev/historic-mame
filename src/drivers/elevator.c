@@ -434,7 +434,9 @@ ROM_END
 
 struct GameDriver elevator_driver =
 {
+	"Elevator Action",
 	"elevator",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	elevator_rom,
@@ -455,7 +457,9 @@ struct GameDriver elevator_driver =
 
 struct GameDriver elevatob_driver =
 {
+	"Elevator Action (bootleg)",
 	"elevatob",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	elevatob_rom,

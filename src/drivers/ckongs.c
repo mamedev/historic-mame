@@ -347,7 +347,9 @@ ROM_END
 
 struct GameDriver ckongs_driver =
 {
+	"Crazy Kong (Scramble Hardware)",
 	"ckongs",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	ckongs_rom,

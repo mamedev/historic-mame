@@ -322,7 +322,9 @@ static void hisave(const char *name)
 
 struct GameDriver moonqsr_driver =
 {
+	"Moon Quasar",
 	"moonqsr",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
 	&machine_driver,
 
 	moonqsr_rom,

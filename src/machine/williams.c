@@ -10,272 +10,256 @@
 #include "driver.h"
 #include "M6809.h"
 
+int defender_bank;
+int bank_address;
+
+extern void williams_sh_w(int offset,int data);
+extern void Williams_Palette_w(int offset,int data);
+
+int  video_counter;
+int  Index;
+int  Stargate_IntTable[] = {0,0xFF,0x00,0xff};
+
+/*
+ *  int IntTable[] = {0,0x40,0xC0,0xff};
+ *  int IntTable[] = {0,0x24,0x48,0x6c,0x90,0xB4,0xD8,0xff};
+ *  int IntTable[] = {0,0x55,0xAA,0xff};
+ *
+ *  MUST be in this order to have the Back Zone not in the playfield
+ *  in Joust.
+ */
+
+int  IntTable[] = {0xAA,0xff,0,0x55};
+
+
+/*
+ *  int IntTable[] = {0x00,0x00,0x00,0x00};
+ *  int IntTable[] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xa0,0xb0,0xc0,0xd0,0xe0,0xff};
+ *
+ *  Here is some test that I have done, This is for the value of 0xCB00
+ *  It affect the color cycling and/or the speed of the game
+ *  0xCB00 is the value of the video counter (6 hi bits)
+ *  IRQ is supposed to be at 4 ms interval.
+ *  I put IRQ 4 times by frame so we are supposed to have near 4 ms
+ *
+ *  So, the value of CB00 normally pass all the values from 0 to 0xFC each
+ *  frame.
+ *  After trying many combination, I found that Stargate have to have
+ *  more time than the others games between IRQs, but will work if he see
+ *  only 00 and FF at $CB00. So I call IRQ just 2 times by frame.
+ *  If I do like the others, IRQ 4 time by frames, I need to boost the
+ *  CPU speed, but even pass 2 mhz, the game will freeze if he dont have
+ *  time to execute all he is supposed to before the next IRQ.
+ *  Same thing with Defender. This thing was observed even on the arcade
+ *  board. In defender, on the first wave try to catch more than 7 man,
+ *  stop your ship, press DOWN to drop the mens. You will see the
+ *  game slowdown. If you had the 10 men, it will freeze for a long
+ *  period of time. On the emulator, it crash if there is not enough
+ *  instructions executed before the video counter reached a certain
+ *  value.
+ *  But Robotron will not work if only 0 and FF pass at CB00, he want
+ *  more value.With only 0 and FF the color cycling do not work.
+ *  Joust is like Robotron, but, the values has to match the real
+ *  thing. What I mean is that normally the first IRQ is supposed
+ *  to be after the first Quarter of a screen refresh, the second
+ *  is supposed to appen at the middle of the screen...
+ *  So, the value at CB00 has to follow that rule.
+ *  In Joust, when a shape is erased, it is displayed at the new position
+ *  just at the next IRQ. So we have a blackout area in the screen.
+ *  If the value of CB00 are not synchronized with our computer, this
+ *  blackout zone can be in the middle of the screen.
+ *  Thats why the values in the table are 0xAA,0xff,0,0x55 and not
+ *  0,0x55,0xAA,0xff. It seem to work fine.
+ */
+
+
+int Williams_Interrupt(void)
+{
+  video_counter = IntTable[Index&0x03];
+  Index++;
+
+  return INT_IRQ;
+}
+
+
+int Stargate_Interrupt(void)
+{
+  video_counter = Stargate_IntTable[Index&0x03];
+  Index++;
+
+  return INT_IRQ;
+}
+
+int Defender_Interrupt(void)
+{
+  video_counter = Stargate_IntTable[Index&0x03];
+  Index++;
+
+  /*
+   *  IRQ only if enabled (0x3C will it work all the time? or should
+   *  I check for a bit?)
+   *  I think I should check for 111 in bits 5-3 but it work anyway
+   */
+
+  if (RAM[0x10000+0xc07] == 0x3C)
+    return INT_IRQ;
+
+  return INT_NONE;
+}
+
+
+
+
+
+int video_counter_r(int offset)
+{
+/*
+	if (errorlog)
+	  fprintf(errorlog,"### Get Video counter %02X at %04X\n",video_counter,m6809_GetPC());
+*/
+        return video_counter;
+}
+
+
+
+/**************
+ *
+ */
 int williams_init_machine(const char *gamename)
 {
-/*
-	char *sndram;
-	sndram = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	if (sndram)
-	{
-		sndram[0xfffe] = 0xf0;
-		sndram[0xffff] = 0x00;
-	}
-*/
-	return 0;
+  if(strcmp(gamename,"blaster") == 0){
+/*So we do not have to copy the roms in RAM[] when bank switching
+   On my system its much faster.*/
+    m6809_Flags = M6809_FAST_NONE;
+    return 0;
+  }
+  if(strcmp(gamename,"defender") == 0){
+/*So we do not have to copy the roms in RAM[] when bank switching*/
+    m6809_Flags = M6809_FAST_NONE;
+    return 0;
+  }
+
+/*The cpu will fetch its instructions directly in RAM[]*/
+  m6809_Flags = M6809_FAST_OP;
+  return 0;
+
 }
 
-static int romenable = 1;
 
-void williams_rom_enable(int offset,int data)
-{
-	if (errorlog) fprintf(errorlog, "romenable %x = %x\n", offset, data);
-	romenable = (data > 0);
-}
 
-static char *get_read_addr(int offset)
-{
-	if ((offset <= 0x9000 && romenable) || (offset > 0xc000))
-		return &RAM[offset];
-	else
-		return &RAM[offset + 0x10000];
-}
-
-int williams_paged_read(int offset)
-{
-	if (romenable)
-	{
-/*		if (errorlog) fprintf(errorlog, "ROM %x = %x\n", offset, RAM[offset]);*/
-		return RAM[offset];
-	} else {
-/*		if (errorlog) fprintf(errorlog, "RAM %x = %x\n", offset, RAM[offset + 0x10000]);*/
-		return RAM[offset + 0x10000];
-	}
-}
-
-int williams_paged_read_ram(int offset)
-{
-/*	if (errorlog) fprintf(errorlog, "RAM read %x = %x\n", offset+0x9000, RAM[offset+0x19000]);*/
-	return RAM[offset + 0x19000];
-}
 
 /*
- * We define dirty regions as 8x8 blocks
- * So we have a 16 x 19 dirty area, which we can define with 19 ints
+ *  For Joust
  */
-extern char *williams_dirty;
-
-void williams_paged_write(int offset, int value)
+int input_port_0_1(int offset)
 {
-/*	if (errorlog) fprintf(errorlog, "RAM write %x = %x\n", offset, value); */
-	if (RAM[offset + 0x10000] != value)
-	{
-		RAM[offset + 0x10000] = value;
-		williams_dirty[offset >> 8] = 1;
+        if((RAM[0xc807] & 0x1C) == 0x1C)
+           return input_port_1_r(0);
+        else
+           return input_port_0_r(0);
+}
+
+/*
+ *  For Blaster
+ */
+int blaster_input_port_0(int offset)
+{
+        int i;
+        int keys;
+
+        keys = input_port_0_r(0);
+
+        if(keys & 0x04)
+          i = 0x00;
+        else if(keys & 0x08)
+          i = 0x80;
+        else
+          i = 0x40;
+
+        if(keys&0x02)
+          i += 0x00;
+        else if(keys&0x01)
+          i += 0x08;
+        else
+          i += 0x04;
+
+        return i;
+}
+
+
+/*
+ *   Defender Read at C000-CFFF
+ */
+
+int defender_bank_r(int offset)
+{
+	if(defender_bank == 0){         /* If bank = 0 then we are in the I/O */
+	  if(offset == 0xc00)           /* Buttons IN 0  */
+ 	    return input_port_0_r(0);
+	  if(offset == 0xc04)           /* Buttons IN 1  */
+	    return input_port_1_r(0);
+	  if(offset == 0xc06)           /* Buttons IN 2  */
+	    return input_port_2_r(0);
+	  if(offset == 0x800)           /* video counter */
+	    return video_counter;
+/*  Log
+ *    if (errorlog)
+ *      fprintf(errorlog,"-- Read %04X at %04X\n",0xC000+offset,m6809_GetPC());
+ *    else = RAM
+ */
+          return RAM[0x10000+offset];
 	}
-/*	williams_dirty[(offset & 0xff)>>4] |= (offset>>8); */
+
+        /* If not bank 0 then read RAM[] */
+
+        return RAM[bank_address+offset];
 }
 
-int blit_w, blit_h, blit_src, blit_dest, blit_mask, blit_op;
 
-#define BLIT(func) 								\
-	for (y=0; y<height; y++) {					\
-		for (x=0; x<width; x++) {				\
-			dest = blit_dest + x*0x100 + y;		\
-			if (dest < 0x9800)	{				\
-				func;							\
-			}									\
-			src++;								\
-		}										\
-	}
+/*
+ *  Defender Write at C000-CFFF
+ */
 
-static void do_blitting()
+void defender_bank_w(int offset,int data)
 {
-	int x,y;
-	int src, dest;
-	int width, height;
-	int blit1 = blit_mask & 0x0f;
-	int blit2 = blit_mask & 0xf0;
-	int b,c;
-
-	if (errorlog) fprintf(errorlog, "doblit op=%x, src=%x, dest=%x, w=%x, h=%x, mask=%x\n",
-		blit_op, blit_src, blit_dest, blit_w, blit_h, blit_mask);
-		
-	width = (blit_h ^ 4);
-	height = (blit_w ^ 4);
-	src = blit_src;
-
-#if 0
-	BLIT(cpu_writemem(dest, blit_mask))
-#else
-	switch (blit_op)
-	{
-		case 0x12:
-			BLIT(cpu_writemem(dest, blit_mask))
-			break;
-		case 0x0a:
-		case 0x2a:	/* for drawing? */
-			BLIT(
-				b = cpu_readmem(src);
-				c = RAM[dest + 0x10000];
-				if ((b & 0x0f) != blit1)
-					c = (c & 0xf0) | (b & 0x0f);
-				if ((b & 0xf0) != blit2)
-					c = (c & 0x0f) | (b & 0xf0);
-				cpu_writemem(dest, c)
-			)
-			break;
-		case 0x1a:	/* for erasing ? */
-		case 0x3a:
-			BLIT(
-				b = cpu_readmem(src);
-				c = RAM[dest + 0x10000];
-				if ((b & 0x0f) != 0)
-					c = (c & 0xf0) | blit1;
-				if ((b & 0xf0) != 0)
-					c = (c & 0x0f) | blit2;
-				cpu_writemem(dest, c)
-			)
-			break;
-		case 0x52:
-		case 0x92:
-			BLIT(
-				b = cpu_readmem(src);
-				cpu_writemem(dest, b)
-			)
-		default:
-			if (errorlog) fprintf(errorlog, "Unsupported blit op %x\n", blit_op);
-			break;
-	}
-#endif
+        if (defender_bank == 0) {
+	    RAM[0x10000+offset] = data;
+        /* WatchDog */
+            if (offset == 0x03FC)
+              return;
+        /* Palette  */
+  	    if (offset < 0x10)
+	      Williams_Palette_w(offset,data);
+        /* Sound    */
+            if (offset == 0x0c02)
+              williams_sh_w(offset,data);
+        }
 }
 
-void williams_blitter_w(int offset, int value)
+
+/*
+ *  Defender Select a bank
+ *  There is just data in bank 0
+ */
+
+void defender_bank_select_w(int offset,int data)
 {
-/*	if (errorlog) fprintf(errorlog, "blitter write %x = %x\n", offset, value); */
-	switch (offset & 7)
-	{
-		case 0:		/* start blitter */
-			blit_op = value;
-			do_blitting();
-			break;
-		case 1:		/* mask */
-			blit_mask = value;
-			break;
-		case 2:		/* src-hi */
-			blit_src = (blit_src & 0xff) | (value << 8);
-			break;
-		case 3:		/* src-lo */
-			blit_src = (blit_src & 0xff00) | value;
-			break;
-		case 4:		/* dest-hi */
-			blit_dest = (blit_dest & 0xff) | (value << 8);
-			break;
-		case 5:		/* dest-lo */
-			blit_dest = (blit_dest & 0xff00) | value;
-			break;
-		case 6:		/* height */
-			blit_h = value;
-			break;
-		case 7:		/* width */
-			blit_w = value;
-			break;
-	}
+	if (data == 7) data = 4;      /*  more convenient for us  */
+		if (defender_bank == data)
+			return;
+
+	defender_bank = data;
+        bank_address = data*0x1000 + 0x10000; /*Address of the ROM */
 }
 
-static int watchdog = 0;
-static int ypos = 0;
+/*
+ *  Blaster bank select
+ */
 
-int williams_sound_interrupt(void)
+void blaster_bank_select_w(int offset,int data)
 {
-	return INT_NONE;
+	if (defender_bank == data)
+		return;
+        bank_address = data*0x4000 + 0x10000; /*Address of the ROM */
+	defender_bank = data;   /* Banks are 0x4000 byte long from 0x10000 in RAM */
 }
-
-int williams_interrupt(void)
-{
-	RAM[0xcb00] = ypos;
-/*	if (errorlog) fprintf(errorlog, "cb00 = %x\n", RAM[0xcb00]); */
-	ypos += 0x10;
-	if (ypos >= 0x100)
-	{
-		ypos = 0x0;
-		watchdog++;
-/*		if (errorlog) fprintf(errorlog, "interrupt, wd = %x\n", watchdog); */
-		if (watchdog > 32)
-		{
-			watchdog = 0;
-			m6809_reset();
-			return INT_NONE;
-		}
-	}
-	return (ypos == 0x10 || ypos == 0x90) ? INT_IRQ : INT_NONE;
-}
-
-void williams_watchdog(int offset, int value)
-{
-/*	if (errorlog) fprintf(errorlog, "wd reset %x\n", watchdog); */
-	/* only watch for this value */
-	if (value == 0x39)
-		watchdog = 0;
-}
-
-int williams_rand(int offset)
-{
-	int value = rand() & 0xff;
-	if (errorlog) fprintf(errorlog, "RND %x = %x\n", offset, value);
-	return value;
-}
-
-static unsigned char pia_pdr[5];		/* data registers */
-static unsigned char pia_ddr[5];		/* direction registers */
-static unsigned char pia_cr[5];		/* control registers */
-static char offsettoport[] = { 0, 0, 1, 1, 4, 4, 4, 4, 2, 2, 3, 3, 4, 4, 4, 4 };
-
-int williams_pia_read(int offset)
-{
-	int port = offsettoport[offset];
-	int reg = offset&1;
-	int value;
-	
-	if (reg) {
-		/* control reg */
-		value = pia_cr[port];
-	} else {
-		if (pia_cr[port] & 0x4) {
-			/* PDR */
-			value = readinputport(port) & ~pia_ddr[port];
-			if (errorlog) fprintf(errorlog, "input port %x = %x\n",
-				port, readinputport(port));
-		} else {
-			/* DDR */
-			value = pia_ddr[port];
-		}
-	}
-	if (errorlog) fprintf(errorlog, "PIA read %x:%x = %x\n", port, reg, value);
-	return value;
-}
-
-extern void williams_play_sound(int n);
-
-void williams_pia_write(int offset, int value)
-{
-	int port = offsettoport[offset];
-	int reg = offset&1;
-	if (errorlog) fprintf(errorlog, "PIA write %x:%x = %x\n", port, reg, value);
-	if (reg) {
-		/* control reg */
-		pia_cr[port] = value;
-	} else {
-		if (pia_cr[port] & 0x4) {
-			/* PDR */
-			pia_pdr[port] = value & pia_ddr[port];
-			if (port == 3)
-			{
-				williams_play_sound(value);
-			}
-		} else {
-			/* DDR */
-			pia_ddr[port] = value;
-		}
-	}
-}
-

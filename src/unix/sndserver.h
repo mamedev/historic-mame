@@ -16,10 +16,10 @@
 #define MAX_SAMPLES	32
 
 /* default port to start server listening on */
-#define DEFAULT_PORT	3456
+#define DEFAULT_PORT	"3456"
 
-/* each play packet is DATA_SIZE long */
-#define DATA_SIZE	512
+/* maximum data packet size */
+#define MAX_DATA_SIZE	512
 
 /* available status of each audio channel */
 typedef enum PMode { 
@@ -40,7 +40,7 @@ typedef enum NETOPS {
 		STOP,		/* stop playing of specific channel     */ 
 		PLAY, 		/* play samples over a given channel    */
 		PLAY_STREAMED,  /* syncronous play over a channel	*/
-		SYNC,		/* reply from server to play command	*/
+		SYNC,		/* flush and empty audio buffers	*/
 		SET_VOL, 	/* set master volume control		*/
 		ADJUST 		/* select vol & frec of a given channel */
 		} netops;
@@ -48,6 +48,7 @@ typedef enum NETOPS {
 /* data sample structure definition */
 typedef struct Ss_Sample {
 	int len;		/* buffer length			*/
+	int channel;		/* -1:empty else: channel asigned to	*/
 	char *buffer;		/* pointer to malloc'd sample buffer 	*/
 } ss_sample;
 
@@ -73,7 +74,7 @@ typedef struct Net_Data {
 	pmode 		playmode;	/* mode used in play command	*/
 	int		length;		/* sample length (play command) */
 	int		offset;		/* data sample offset (play)    */	
-	char		data[DATA_SIZE];/* data sample packet		*/
+	char		data[4];	/* data region; expandable	*/
 } network_data;
 
 /* global variables */

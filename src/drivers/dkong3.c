@@ -515,7 +515,9 @@ static void hisave(const char *name)
 
 struct GameDriver dkong3_driver =
 {
+	"Donkey Kong 3",
 	"dkong3",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nMATTHEW HILLMER",
 	&machine_driver,
 
 	dkong3_rom,

@@ -266,7 +266,9 @@ ROM_END
 
 struct GameDriver carnival_driver =
 {
+	"Carnival",
 	"carnival",
+	"MIKE COATES\nRICHARD DAVIES\nNICOLA SALMORIA",
 	&machine_driver,
 
 	carnival_rom,

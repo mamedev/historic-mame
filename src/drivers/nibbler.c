@@ -334,7 +334,9 @@ static void hisave(const char *name)
 
 struct GameDriver nibbler_driver =
 {
+	"Nibbler",
 	"nibbler",
+	"NICOLA SALMORIA\nBRIAN LEVINE\nMIRKO BUFFONI",
 	&machine_driver,
 
 	nibbler_rom,
@@ -355,7 +357,9 @@ struct GameDriver nibbler_driver =
 
 struct GameDriver fantasy_driver =
 {
+	"Fantasy",
 	"fantasy",
+	"NICOLA SALMORIA\nBRIAN LEVINE\nMIRKO BUFFONI",
 	&machine_driver,
 
 	fantasy_rom,

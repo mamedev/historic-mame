@@ -366,7 +366,9 @@ ROM_END
 
 struct GameDriver rallyx_driver =
 {
+	"Rally X",
 	"rallyx",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	rallyx_rom,

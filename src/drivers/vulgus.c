@@ -447,7 +447,9 @@ static void hisave(const char *name)
 
 struct GameDriver vulgus_driver =
 {
+	"Vulgus",
 	"vulgus",
+	"PAUL LEAMAN\nMIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	vulgus_rom,

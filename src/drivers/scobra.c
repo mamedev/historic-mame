@@ -69,6 +69,7 @@ a002      protection check control?
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
+int losttomb_decodegfx(const char *gamename);
 
 
 extern int scramble_IN2_r(int offset);
@@ -212,13 +213,13 @@ static struct InputPort LTinput_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_7, OSD_KEY_8, OSD_KEY_W, OSD_KEY_S, OSD_KEY_D, OSD_KEY_A, OSD_KEY_CONTROL, OSD_KEY_1 },
+		0xfd,
+		{ 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_CONTROL, OSD_KEY_1 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
 		0xff,
-		{ OSD_KEY_Z, OSD_KEY_X, OSD_KEY_C, OSD_KEY_V, OSD_KEY_B, OSD_KEY_N, OSD_KEY_M, OSD_KEY_O },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{ -1 }	/* end of table */
@@ -301,6 +302,10 @@ static unsigned char color_prom[] =
 
 
 
+
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -329,7 +334,7 @@ static struct MachineDriver machine_driver =
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	scramble_vh_convert_color_prom,
 
-	0,
+	losttomb_decodegfx,
 	scramble_vh_start,
 	generic_vh_stop,
 	scramble_vh_screenrefresh,
@@ -341,7 +346,6 @@ static struct MachineDriver machine_driver =
 	AY8910_sh_stop,
 	AY8910_sh_update
 };
-
 
 
 /***************************************************************************
@@ -434,9 +438,13 @@ ROM_END
 
 
 
+
+
 struct GameDriver scobra_driver =
 {
+	"Super Cobra (Stern)",
 	"scobra",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	scobra_rom,
@@ -457,7 +465,9 @@ struct GameDriver scobra_driver =
 
 struct GameDriver scobrak_driver =
 {
+	"Super Cobra (Konami)",
 	"scobrak",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	scobrak_rom,
@@ -478,7 +488,9 @@ struct GameDriver scobrak_driver =
 
 struct GameDriver scobrab_driver =
 {
+	"Super Cobra (bootleg)",
 	"scobrab",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	scobrab_rom,
@@ -499,7 +511,9 @@ struct GameDriver scobrab_driver =
 
 struct GameDriver losttomb_driver =
 {
+	"Lost Tomb",
 	"losttomb",
+	"NICOLA SALMORIA\nJAMES TWINE\nMIRKO BUFFONI",
 	&machine_driver,
 
 	losttomb_rom,
@@ -517,3 +531,55 @@ struct GameDriver losttomb_driver =
 
 	0, 0
 };
+
+void swapmem1(int x1, int x2)
+{
+        int swaptemp;
+        swaptemp = Machine->memory_region[1][x1];
+        Machine->memory_region[1][x1] = Machine->memory_region[1][x2];
+        Machine->memory_region[1][x2] = swaptemp;
+}
+
+int losttomb_decodegfx(const char *gamename)
+{
+        if (stricmp(gamename,"losttomb") == 0)
+        {
+            int i;
+
+            for (i=0x80; i < 0x100; i++)
+            {
+                 if (i & 2) {
+                   swapmem1( i, i ^ 0x480 );
+                   swapmem1( i+0x800, (i+0x800) ^ 0x480 );
+                   swapmem1( i+0x100, (i+0x100) ^ 0x480 );
+                   swapmem1( i+0x900, (i+0x900) ^ 0x480 );
+                   swapmem1( i+0x200, (i+0x200) ^ 0x480 );
+                   swapmem1( i+0xa00, (i+0xa00) ^ 0x480 );
+                   swapmem1( i+0x300, (i+0x300) ^ 0x480 );
+                   swapmem1( i+0xb00, (i+0xb00) ^ 0x480 );
+                 }
+                 else {
+                   swapmem1( i, i ^ 0x180 );
+                   swapmem1( i+0x800, (i+0x800) ^ 0x180 );
+                   swapmem1( i+0x200, (i+0x200) ^ 0x180 );
+                   swapmem1( i+0xa00, (i+0xa00) ^ 0x180 );
+                   swapmem1( i+0x400, (i+0x400) ^ 0x180 );
+                   swapmem1( i+0xc00, (i+0xc00) ^ 0x180 );
+                   swapmem1( i+0x600, (i+0x600) ^ 0x180 );
+                   swapmem1( i+0xe00, (i+0xe00) ^ 0x180 );
+                 }
+            }
+            for (i=0x100; i < 0x200; i++)
+            {
+                swapmem1( i, i + 0x300);
+                swapmem1( i+0x800, (i+0x800) + 0x300);
+            }
+            for (i=0x300; i < 0x400; i++)
+            {
+                swapmem1( i, i + 0x300);
+                swapmem1( i+0x800, (i+0x800) + 0x300);
+            }
+        }
+
+        return 0;
+}

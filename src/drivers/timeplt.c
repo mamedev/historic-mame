@@ -367,7 +367,9 @@ static void hisave(const char *name)
 
 struct GameDriver timeplt_driver =
 {
+	"Time Pilot",
 	"timeplt",
+	"NICOLA SALMORIA\nALAN J MCCORMICK\nMIKE CUDDY",
 	&machine_driver,
 
 	timeplt_rom,
@@ -389,7 +391,9 @@ struct GameDriver timeplt_driver =
 
 struct GameDriver spaceplt_driver =
 {
+	"Space Pilot",
 	"spaceplt",
+	"NICOLA SALMORIA\nALAN J MCCORMICK\nMIKE CUDDY",
 	&machine_driver,
 
 	timeplt_rom,

@@ -94,8 +94,8 @@ static struct InputPort input_ports[] =
 	},
 	{	/* IN1 */
 		0x00,	/* standup cabinet */
-		{ 0, 0, 0, 0, OSD_KEY_3, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ 0, 0, 0, 0, OSD_KEY_3, 0, OSD_KEY_CONTROL, 0 },
+		{ 0, 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0 }
 	},
 	{	/* test */
 		0x00,
@@ -250,6 +250,8 @@ ROM_END
 struct GameDriver seicross_driver =
 {
 	"seicross",
+        "seicross",
+        "MIRKO BUFFONI\nNICOLA SALMORIA",
 	&machine_driver,
 
 	seicross_rom,

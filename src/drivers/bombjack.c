@@ -457,7 +457,9 @@ static void hisave(const char *name)
 
 struct GameDriver bombjack_driver =
 {
+	"Bomb Jack",
 	"bombjack",
+	"BRAD THOMAS\nJAKOB FRENDSEN\nCONNY MELIN\nMIRKO BUFFONI\nNICOLA SALMORIA\nJAREK BURCZYNSKI",
 	&machine_driver,
 
 	bombjack_rom,

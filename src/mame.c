@@ -333,7 +333,7 @@ int vh_open(void)
 	dt[0].x = 0;
 	dt[0].y = 0;
 	dt[1].text = 0;
-	displaytext(dt,0);
+	displaytext(dt,1);
 
 	i = osd_read_key();
 	while (osd_key_pressed(i));	/* wait for key release */
@@ -388,7 +388,7 @@ int updatescreen(void)
                 }
         }
 
-	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
+	if (osd_key_pressed(OSD_KEY_SCRLOCK)) /* pause the game */
 	{
 		struct DisplayText dt[2];
 		int key;
@@ -403,7 +403,7 @@ int updatescreen(void)
 
                 osd_set_mastervolume(0);
 
-		while (osd_key_pressed(OSD_KEY_P))
+		while (osd_key_pressed(OSD_KEY_SCRLOCK))
 			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
 
 		do
@@ -413,11 +413,11 @@ int updatescreen(void)
 			if (key == OSD_KEY_ESC) return 1;
 			else if (key == OSD_KEY_TAB)
 			{
-				if (setdipswitches()) return 1;
+				if (setup_menu()) return 1;
 				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
 				displaytext(dt,0);
 			}
-		} while (key != OSD_KEY_P);
+		} while (key != OSD_KEY_SCRLOCK);
 		while (osd_key_pressed(key));
                 osd_set_mastervolume(CurrentVolume);
 	}

@@ -25,23 +25,23 @@ Space Invaders
 --------------
 Input:
 Port 1
-   
+
    bit 0 = CREDIT (0 if deposit)
    bit 1 = 2P start(1 if pressed)
    bit 2 = 1P start(1 if pressed)
-   bit 3 = 0 if TILT 
+   bit 3 = 0 if TILT
    bit 4 = shot(1 if pressed)
    bit 5 = left(1 if pressed)
    bit 6 = right(1 if pressed)
    bit 7 = Always 1
-   
+
 Port 2
    bit 0 = 00 = 3 ships  10 = 5 ships
    bit 1 = 01 = 4 ships  11 = 6 ships
-   bit 2 = Always 0 (1 if TILT)  
-   bit 3 = 0 = extra ship at 1500, 1 = extra ship at 1000 
-   bit 4 = shot player 2 (1 if pressed) 
-   bit 5 = left player 2 (1 if pressed) 
+   bit 2 = Always 0 (1 if TILT)
+   bit 3 = 0 = extra ship at 1500, 1 = extra ship at 1000
+   bit 4 = shot player 2 (1 if pressed)
+   bit 5 = left player 2 (1 if pressed)
    bit 6 = right player 2 (1 if pressed)
    bit 7 = Coin info if 0, last screen
 
@@ -56,7 +56,7 @@ http://www.eecs.umich.edu/~bovine/space_invaders/index.html
 
 Input:
 Port 0
-   bit 0 = SW 8 unused 
+   bit 0 = SW 8 unused
    bit 1 = Always 0
    bit 2 = Always 1
    bit 3 = Always 0
@@ -69,20 +69,20 @@ Port 1
    bit 0 = CREDIT (0 if deposit)
    bit 1 = 2P start(1 if pressed)
    bit 2 = 1P start(1 if pressed)
-   bit 3 = 0 if TILT 
+   bit 3 = 0 if TILT
    bit 4 = shot(1 if pressed)
    bit 5 = left(1 if pressed)
    bit 6 = right(1 if pressed)
    bit 7 = Always 1
-   
+
 Port 2
    bit 0 = Number of bases 0 - 3 , 1 - 4  (SW 4)
    bit 1 = 1 or 0 connected to SW 3 not used
-   bit 2 = Always 0  (1 if TILT)  
+   bit 2 = Always 0  (1 if TILT)
    bit 3 = Preset         (SW 2)
    bit 4 = shot player 2 (1 if pressed)  These are also used
    bit 5 = left player 2 (1 if pressed)  to enter the name in the
-   bit 6 = right player 2 (1 if pressed) high score field. 
+   bit 6 = right player 2 (1 if pressed) high score field.
    bit 7 = Coin info if 0 (SW 1) last screen
 
 Invaders and Invaders Deluxe both write to I/O port 6 but
@@ -204,12 +204,12 @@ static struct InputPort input_ports[] =
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{	/* IN1 */
-		0x00,  
+		0x00,
 		{ 0, 0, OSD_KEY_T, 0,
 				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
-	}, 
+	},
 	{ -1 }
 };
 
@@ -569,7 +569,9 @@ static void invdelux_hisave(const char *name)
 
 struct GameDriver invaders_driver =
 {
+	"Space Invaders",
 	"invaders",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	invaders_rom,
@@ -590,7 +592,9 @@ struct GameDriver invaders_driver =
 
 struct GameDriver earthinv_driver =
 {
+	"Super Earth Invasion",
 	"earthinv",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	invaders_rom,
@@ -612,7 +616,9 @@ struct GameDriver earthinv_driver =
 
 struct GameDriver spaceatt_driver =
 {
+	"Space Attack II",
 	"spaceatt",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	spaceatt_rom,
@@ -633,7 +639,9 @@ struct GameDriver spaceatt_driver =
 
 struct GameDriver invrvnge_driver =
 {
+	"Invaders Revenge",
 	"invrvnge",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	invrvnge_rom,
@@ -654,7 +662,9 @@ struct GameDriver invrvnge_driver =
 
 struct GameDriver invdelux_driver =
 {
+	"Invaders Deluxe",
 	"invdelux",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&invdelux_machine_driver,
 
 	invdelux_rom,
@@ -675,7 +685,9 @@ struct GameDriver invdelux_driver =
 
 struct GameDriver galxwars_driver =
 {
+	"Galaxy Wars",
 	"galxwars",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	galxwars_rom,
@@ -696,7 +708,9 @@ struct GameDriver galxwars_driver =
 
 struct GameDriver lrescue_driver =
 {
+	"Lunar Rescue",
 	"lrescue",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	lrescue_rom,
@@ -717,7 +731,9 @@ struct GameDriver lrescue_driver =
 
 struct GameDriver desterth_driver =
 {
+	"Destination Earth",
 	"desterth",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
 	&machine_driver,
 
 	desterth_rom,

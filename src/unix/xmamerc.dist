@@ -35,6 +35,10 @@ defaultgame	galturbo
 # Use sound if available. default is 0 (Don't)
 play_sound 	0
 
+# to disable use of FM synthetizer chip emulation features set next to 1
+# ( of course, sound should be enabled to take effect.... )
+dontuse_fm_synth 0
+
 # Use joystick if available ( At this moment only in linux if support compiled)
 use_joystick	1
 

@@ -1,6 +1,10 @@
 /***************************************************************************
 
-Qbert memory map (from my understanding of the schematics...)
+Q*bert's driver : dedicated to Jeff Lee & Warren Davis 
+
+****************************************************************************
+
+Q*bert machine's memory map (from my understanding of the schematics... FF )
 
 Main processor (8088 minimum mode)  memory map.
 0000-0fff RAM
@@ -67,6 +71,7 @@ to 22kHz)
 
 extern int qbert_vh_start(void);
 extern void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern void gottlieb_output(int offset, int data);
@@ -145,11 +150,11 @@ static struct InputPort input_ports[] =
 
 static struct KEYSet keys[] =
 {
-        { 4, 0, "MOVE DOWN RIGHT" },
-        { 4, 1, "MOVE UP LEFT"  },
-        { 4, 2, "MOVE UP RIGHT" },
-        { 4, 3, "MOVE DOWN LEFT" },
-        { -1 }
+	{ 4, 0, "MOVE DOWN RIGHT" },
+	{ 4, 1, "MOVE UP LEFT"  },
+	{ 4, 2, "MOVE UP RIGHT" },
+	{ 4, 3, "MOVE DOWN LEFT" },
+	{ -1 }
 };
 
 
@@ -161,7 +166,7 @@ static struct DSW dsw[] =
 	{ 0, 0x04, "", { "UPRIGHT", "COCKTAIL" } },
 	{ 0, 0x02, "KICKER", { "OFF", "ON" } },
 /* the following switch must be connected to the IP16 line */
-/*	{ 1, 0x40, "TEST MODE", {"ON", "OFF"} },*/
+/*      { 1, 0x40, "TEST MODE", {"ON", "OFF"} },*/
 	{ -1 }
 };
 
@@ -228,7 +233,7 @@ static const struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	256,256+3*16,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
-	gottlieb_vh_init_optimized_color_palette,
+	gottlieb_vh_init_basic_color_palette,
 
 	0,      /* init vh */
 	qbert_vh_start,
@@ -346,7 +351,9 @@ static unsigned short qbert_colors[256]={
 
 struct GameDriver qbert_driver =
 {
+        "Q*Bert",
 	"qbert",
+        "FABRICE FRANCES",
 	&machine_driver,
 
 	qbert_rom,
@@ -369,7 +376,9 @@ struct GameDriver qbert_driver =
 
 struct GameDriver qbertjp_driver =
 {
+        "Q*Bert Japanese",
 	"qbertjp",
+        "FABRICE FRANCES",
 	&machine_driver,
 
 	qbert_rom,

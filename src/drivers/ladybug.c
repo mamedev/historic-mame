@@ -326,7 +326,9 @@ static void hisave(const char *name)
 
 struct GameDriver ladybug_driver =
 {
+	"Lady Bug",
 	"ladybug",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	ladybug_rom,

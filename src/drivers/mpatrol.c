@@ -372,7 +372,9 @@ ROM_END
 
 struct GameDriver mpatrol_driver =
 {
+	"Moon Patrol",
 	"mpatrol",
+	"NICOLA SALMORIA\nCHRIS HARDY",
 	&machine_driver,
 
 	mpatrol_rom,
@@ -393,7 +395,9 @@ struct GameDriver mpatrol_driver =
 
 struct GameDriver mranger_driver =
 {
+	"Moon Ranger",
 	"mranger",
+	"NICOLA SALMORIA\nCHRIS HARDY",
 	&machine_driver,
 
 	mranger_rom,

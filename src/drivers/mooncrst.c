@@ -343,7 +343,9 @@ static void hisave(const char *name)
 
 struct GameDriver mooncrst_driver =
 {
+	"Moon Cresta (Nichibutsu)",
 	"mooncrst",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
 	&machine_driver,
 
 	mooncrst_rom,
@@ -364,7 +366,9 @@ struct GameDriver mooncrst_driver =
 
 struct GameDriver mooncrsb_driver =
 {
+	"Moon Cresta (Gremlin)",
 	"mooncrsb",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
 	&machine_driver,
 
 	mooncrsb_rom,
@@ -385,7 +389,9 @@ struct GameDriver mooncrsb_driver =
 
 struct GameDriver fantazia_driver =
 {
+	"Fantazia",
 	"fantazia",
+	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON",
 	&machine_driver,
 
 	fantazia_rom,

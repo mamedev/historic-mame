@@ -454,7 +454,9 @@ ROM_END
 
 struct GameDriver junglek_driver =
 {
+	"Jungle King",
 	"junglek",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	junglek_rom,
@@ -477,7 +479,9 @@ struct GameDriver junglek_driver =
 
 struct GameDriver jungleh_driver =
 {
+	"Jungle Hunt",
 	"jhunt",
+	"NICOLA SALMORIA",
 	&machine_driver,
 
 	jungleh_rom,

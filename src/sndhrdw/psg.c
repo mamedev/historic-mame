@@ -35,8 +35,7 @@ static AY8910 *AYPSG;		/* array of PSG's */
 static int _AYInitChip(int num, SAMPLE *buf);
 static void _AYFreeChip(int num);
 
-unsigned char RegistersYM[264*5];   /* max 5 YM-2203 */
-
+unsigned char RegistersYM[264*5];
 extern unsigned char No_FM;
 
 /*
@@ -58,10 +57,10 @@ int AYInit(int num, int clock, int rate, int bufsiz, ... )
 
     if (AYPSG) return (-1);	/* duplicate init. */
 
-    /* Get Soundblaster base address from environment variabler BLASTER   */
-    /* Soundblaster OPL base port, at some compatibles this must be 0x388 */
-
     if (!No_FM) {
+       /* Get Soundblaster base address from environment variabler BLASTER   */
+       /* Soundblaster OPL base port, at some compatibles this must be 0x388 */
+
        blaster_env = getenv("BLASTER");
        BaseSb = i = 0;
        while ((blaster_env[i] & 0x5f) != 0x41) i++;        /* Look for 'A' char */
@@ -106,10 +105,8 @@ void AYShutdown()
     }
     free(AYPSG); AYPSG = NULL;
 
-    if (!No_FM) {
-        InitOpl();  /* Do this only before quiting , or some cards will make noise during playing */
-                    /* It resets entire OPL registers to zero */
-    }
+    InitOpl();  /* Do this only before quiting , or some cards will make noise during playing */
+                /* It resets entire OPL registers to zero */
 
     AYSoundRate = AYBufSize = 0;
 }
@@ -272,6 +269,8 @@ static void _AYUpdateChip(int num)
     AY8910 *PSG = &(AYPSG[num]);
     int i, x;
     int c0, c1, l0, l1, l2;
+
+    YM2203();  /* this is absolutely necesary */
 
     x = (PSG->Regs[AY_AFINE]+((unsigned)(PSG->Regs[AY_ACOARSE]&0xF)<<8));
     PSG->Incr0 = x ? AYClockFreq / AYSoundRate * 4 / x : 0;

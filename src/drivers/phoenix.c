@@ -410,8 +410,9 @@ static int hiload(const char *name)
 
 unsigned long get_score(char *score)
 {
-   return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
-//   return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
+     return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
+/*   return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
+ */
 }
 
 static void hisave(const char *name)
@@ -442,7 +443,9 @@ static void hisave(const char *name)
 
 struct GameDriver phoenix_driver =
 {
+	"Phoenix (Centuri)",
 	"phoenix",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
 	&machine_driver,
 
 	phoenix_rom,
@@ -463,7 +466,9 @@ struct GameDriver phoenix_driver =
 
 struct GameDriver phoenixa_driver =
 {
+	"Phoenix (Amstar)",
 	"phoenixa",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
 	&machine_driver,
 
 	phoenixa_rom,
@@ -484,7 +489,9 @@ struct GameDriver phoenixa_driver =
 
 struct GameDriver phoenix3_driver =
 {
+	"Phoenix (T.P.N.)",
 	"phoenix3",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
 	&machine_driver,
 
 	phoenix3_rom,
@@ -505,7 +512,9 @@ struct GameDriver phoenix3_driver =
 
 struct GameDriver pleiads_driver =
 {
+	"Pleiads",
 	"pleiads",
+	"RICHARD DAVIES\nBRAD OLIVER\nMIRKO BUFFONI\nNICOLA SALMORIA\nSHAUN STEPHENSON",
 	&machine_driver,
 
 	pleiads_rom,

@@ -386,7 +386,9 @@ static void hisave(const char *name)
 
 struct GameDriver popeyebl_driver =
 {
+	"Popeye (bootleg)",
 	"popeyebl",
+	"MARC LAFONTAINE\nNICOLA SALMORIA",
 	&machine_driver,
 
 	popeyebl_rom,

@@ -270,7 +270,9 @@ ROM_END
 
 struct GameDriver reactor_driver =
 {
+        "Reactor",
 	"reactor",
+        "FABRICE FRANCES",
 	&machine_driver,
 
 	reactor_rom,

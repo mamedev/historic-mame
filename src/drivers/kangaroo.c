@@ -46,7 +46,7 @@ ed00 - IN 1
 ee00 - IN 2
 
 efxx - security chip in/out
-       it seems to work like a clock. 
+       it seems to work like a clock.
 
 e400 - DSW 0
 
@@ -100,7 +100,7 @@ extern int kangaroo_sh_start(void);
 static struct MemoryReadAddress readmem[] =
 {
         { 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_RAM },	
+	{ 0x8000, 0xbfff, MRA_RAM },
         { 0xee00, 0xee00, input_port_3_r },
         { 0xe400, 0xe400, input_port_7_r },
         { 0xe000, 0xe3ff, MRA_RAM },
@@ -311,7 +311,7 @@ static unsigned char palette[] =
         63*4,21*4,63*4, /* DKORG */
         63*4,63*4,21*4, /* ORANGE */
         63*4,63*4,63*4, /* GREEN1 */
-        
+
 };
 
 enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
@@ -408,7 +408,9 @@ ROM_END
 
 struct GameDriver kangaroo_driver =
 {
-        "kangaroo",
+	"Kangaroo",
+	"kangaroo",
+	"VILLE LAITINEN",
 	&machine_driver,
 
         kangaroo_rom,

@@ -519,7 +519,9 @@ static void hisave(const char *name)
 
 struct GameDriver cclimber_driver =
 {
+	"Crazy Climber (US version)",
 	"cclimber",
+	"LIONEL THEUNISSEN\nNICOLA SALMORIA",
 	&machine_driver,
 
 	cclimber_rom,
@@ -540,7 +542,9 @@ struct GameDriver cclimber_driver =
 
 struct GameDriver ccjap_driver =
 {
+	"Crazy Climber (Japanese version)",
 	"ccjap",
+	"LIONEL THEUNISSEN\nNICOLA SALMORIA",
 	&machine_driver,
 
 	ccjap_rom,
@@ -561,7 +565,9 @@ struct GameDriver ccjap_driver =
 
 struct GameDriver ccboot_driver =
 {
+	"Crazy Climber (bootleg)",
 	"ccboot",
+	"LIONEL THEUNISSEN\nNICOLA SALMORIA",
 	&machine_driver,
 
 	ccboot_rom,

@@ -27,7 +27,7 @@ int play_sound;
 int use_joystick;
 
 int use_vesa_scan;
-int use_vesa_linear;
+int use_rotate;
 int vesa_mode;
 int vesa_width;
 int vesa_height;
@@ -37,6 +37,23 @@ int vesa_yoffset;
 int vesa_display_lines;
 
 int noscanlines;
+
+struct { char *desc; int x, y; } gfx_res[] = {
+	{ "-320x240"	, 320, 240 },
+	{ "-320"	, 320, 240 },
+	{ "-512x384"	, 512, 384 },
+	{ "-512"	, 512, 384 },
+	{ "-640x480"	, 640, 480 },
+	{ "-640"	, 640, 480 },
+	{ "-800x600"	, 800, 600 },
+	{ "-800"	, 800, 600 },
+	{ "-1024x768"	, 1024, 768 },
+	{ "-1024"	, 1024, 768 },
+	{ NULL		, 0, 0 }
+	};
+
+
+
 
 /* audio related stuff */
 #define NUMVOICES 8
@@ -53,17 +70,17 @@ unsigned char No_FM = 0;
 /* initialization was successful, nonzero otherwise. */
 int osd_init(int argc,char **argv)
 {
-	int i;
+	int i,j;
 	int soundcard;
 
 
 	first_free_pen = 0;
 
 	vesa_mode = 0;
-	vesa_width=0;
-	vesa_height=0;
-	vesa_skiplines=0;
+	vesa_width = 0;
+	vesa_height = 0;
 	noscanlines = 0;
+	use_rotate = 0;
 	videofreq = 0;
 	video_sync = 0;
 	play_sound = 1;
@@ -71,39 +88,39 @@ int osd_init(int argc,char **argv)
 	soundcard = -1;
 	for (i = 1;i < argc;i++)
 	{
-		/* The first option is obsolete */
-		if (stricmp(argv[i],"-vesascan") == 0) {
-			vesa_mode = GFX_VESA1;
-                }
 
-		if (stricmp(argv[i],"-vesa") == 0)
+		if ((stricmp(argv[i],"-vesa") == 0) ||
+		    (stricmp(argv[i],"-vesascan") == 0))
 			vesa_mode = GFX_VESA1;
 		if (stricmp(argv[i],"-vesa2b") == 0)
 			vesa_mode = GFX_VESA2B;
 		if (stricmp(argv[i],"-vesa2l") == 0)
 			vesa_mode = GFX_VESA2L;
-		if (stricmp(argv[i],"-640") == 0)
-		{
-			vesa_width = 640;
-			vesa_height = 480;
-		}
-		if (stricmp(argv[i],"-800") == 0)
-		{
-			vesa_width = 800;
-			vesa_height = 600;
-		}
-		if (stricmp(argv[i],"-1024") == 0)
-		{
-			vesa_width = 1024;
-			vesa_height = 768;
-		}
 		if (stricmp(argv[i],"-vesaskip") == 0)
 		{
 			i++;
 			if (i < argc) vesa_skiplines = atoi(argv[i]);
+			if (!vesa_width)
+			{
+				vesa_width=640;
+				vesa_height=480;
+			}
 		}
-		
-
+                for (j=0; gfx_res[j].desc != NULL; j++)
+		{
+			if (stricmp(argv[i], gfx_res[j].desc) == 0)
+			{
+				vesa_width=gfx_res[j].x;
+				vesa_height=gfx_res[j].y;
+				break;
+			}
+		}
+		if (stricmp(argv[i],"-rotate") == 0)
+		{
+			use_rotate=1;
+			vesa_width = 320;
+			vesa_height = 240;
+		}
 		if (stricmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
@@ -403,8 +420,13 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	Register *reg = 0;
 	int reglen = 0;
 
- 	/* Check for if there exists a tweaked mode to fit
+ 	/* Check if there exists a tweaked mode to fit
            the screen in, otherwise use VESA */
+
+	bitmap = osd_create_bitmap(width,height);
+
+        if (use_rotate)
+	{ int t; t = width; width = height; height = t; }
 
 	if (!(width == 224 && height == 288) &&
             !(width == 256 && height == 256) &&
@@ -413,13 +435,9 @@ struct osd_bitmap *osd_create_display(int width,int height)
             !(width == 240 && height == 272))
  		vesa_mode = GFX_VESA1;
 
- 	if (vesa_mode || vesa_skiplines || vesa_width)
+ 	if (vesa_mode || vesa_width)
   	{
  		if (!vesa_mode) vesa_mode = GFX_VESA1;
- 		if (vesa_mode == GFX_VESA2L)
- 			use_vesa_linear = 1;
-  		else
- 			use_vesa_linear = 0;
  		if (!vesa_width)
   		{
  			vesa_width=800;
@@ -427,11 +445,15 @@ struct osd_bitmap *osd_create_display(int width,int height)
   		}
 
  		if (set_gfx_mode(vesa_mode,vesa_width,vesa_height,0,0) != 0)
-  			return 0;
- 	
- 		if (noscanlines || (width > vesa_width/2))
+  		{
+			printf ("%dx%d not possible\n", vesa_width,vesa_height);
+			printf ("%s\n",allegro_error);
+			return 0;
+ 		}	
+ 		if (width > vesa_width/2)
  		{
- 			use_vesa_scan = 0;
+ 			noscanlines = 1;
+                        use_vesa_scan = 0;
  			vesa_yoffset = (vesa_height - height) / 2;
  			vesa_xoffset = (vesa_width - width) / 2;
  			vesa_display_lines = height - vesa_skiplines;
@@ -439,8 +461,9 @@ struct osd_bitmap *osd_create_display(int width,int height)
  				vesa_display_lines = vesa_height;
  		}
  		else
- 		{	
- 			use_vesa_scan = 1; 
+ 		{
+/*/			noscanlines = 0;*/
+                        use_vesa_scan = 1;
  			vesa_yoffset = (vesa_height - height * 2) / 2;
  			vesa_xoffset = (vesa_width - width * 2) / 2;
  			vesa_display_lines = height - vesa_skiplines;
@@ -516,7 +539,6 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		outRegArray(reg,reglen);
 	}
 
-	bitmap = osd_create_bitmap(width,height);
 
 	return bitmap;
 }
@@ -589,16 +611,20 @@ inline void update_vesa(void)
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->width /4;
-	lb = bitmap->private + bitmap->width*vesa_skiplines/4;
-	
+	lb = bitmap->private + bitmap->width*vesa_skiplines;
+
 	for (y = vesa_display_lines;y !=0 ; y--)
 	{
 		address = bmp_write_line (screen, vesa_line) + vesa_xoffset;
 		if (use_vesa_scan)
 		{
 			double_pixels(lb,dest_seg,address,width4);
+                        if (noscanlines) {
+		           address = bmp_write_line (screen, vesa_line+1) + vesa_xoffset;
+			   double_pixels(lb,dest_seg,address,width4);
+                        }
 			vesa_line+=2;
-		}	
+		}
 		else
 		{
 			_movedatal (src_seg,(unsigned long)lb,dest_seg,address,width4);
@@ -608,6 +634,63 @@ inline void update_vesa(void)
 	}
 }
 
+inline void rotate_pixels(unsigned char *lb, short seg,
+			  unsigned long address, int height, int width4)
+{
+	__asm__ __volatile__ ("
+	pushw %%es		\n
+	movw %%dx, %%es		\n
+	.align 4		\n
+	0:			\n
+	lodsb			\n
+	rorl $8, %%eax		\n
+	subl %%ebx, %%esi	\n
+	lodsb			\n
+	rorl $8, %%eax		\n
+	subl %%ebx, %%esi	\n
+	lodsb			\n
+	rorl $8, %%eax		\n
+	subl %%ebx, %%esi	\n
+	lodsb			\n
+	rorl $8, %%eax		\n
+	subl %%ebx, %%esi	\n
+	stosl			\n
+	loop 0b			\n
+	popw %%ax		\n
+	movw %%ax, %%es		\n
+	"
+	::
+	"d" (seg),
+	"c" (width4),
+	"b" (height+1),
+	"S" (lb),
+	"D" (address):
+	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");	
+}
+
+inline void update_rotate(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4;
+	unsigned char *lb;
+        unsigned long address;
+
+ 	src_seg	= _my_ds();	
+	dest_seg = screen->seg;
+	vesa_line = vesa_yoffset;
+	width4 = bitmap->height/4;
+
+	lb = bitmap->private + (bitmap->height-1)*bitmap->width
+             +vesa_skiplines;
+	
+	for (y = vesa_display_lines;y !=0 ; y--)
+	{
+		address = bmp_write_line (screen, vesa_line) +vesa_xoffset;
+		rotate_pixels (lb, dest_seg, address, bitmap->width, width4);
+		vesa_line++;
+		lb++;
+	}
+}
 
 /* Update the display. */
 /* As an additional bonus, this function also saves the screen as a PCX file */
@@ -618,12 +701,21 @@ void osd_update_display(void)
 
 	if (vesa_mode)
 	{
-		update_vesa();
-
+		int height;
+		if (use_rotate)
+		{
+			update_rotate();
+			height = bitmap->width;
+		}
+		else
+		{
+			update_vesa();
+			height = bitmap->height;
+		}
 		/* Check for PGUP, PGDN and scroll screen */
 
 		if (osd_key_pressed(OSD_KEY_PGDN) &&
-			(vesa_skiplines+vesa_display_lines < bitmap->height))
+			(vesa_skiplines+vesa_display_lines < height))
 			vesa_skiplines++;
 		if (osd_key_pressed(OSD_KEY_PGUP) && (vesa_skiplines>0))
 			vesa_skiplines--;

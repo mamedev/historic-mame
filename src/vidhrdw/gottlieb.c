@@ -27,6 +27,7 @@ static unsigned char vflip=0;
 static unsigned char bottomupchars;
 static int rotated90;
 static int palette_style;
+static int currentbank;
 	  
 int qbert_vh_start(void)
 {
@@ -122,6 +123,7 @@ void gottlieb_output(int offset,int data)
       background_priority= data & 1;
       hflip= (data&2)?255:0;
       vflip= (data&4)?255:0;
+      currentbank= (data&0x10)?256:0;
       if ((data&6)!=(last&6))
 	      for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 		      dirtybuffer[offs] = 1;
@@ -245,7 +247,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	    if (gottlieb_spriteram[offs]||gottlieb_spriteram[offs+1])
 		drawgfx(bitmap,Machine->gfx[2],
-				255^gottlieb_spriteram[offs+2], /* object # */
+				currentbank+(255^gottlieb_spriteram[offs+2]), /* object # */
 				0, /* color tuple */
 				hflip, vflip,
 				sx,sy,

@@ -769,7 +769,9 @@ static void hisave(const char *name)
 
 struct GameDriver dkong_driver =
 {
+	"Donkey Kong (US version)",
 	"dkong",
+	"GARY SHEPHERDSON\nBRAD THOMAS\nEDWARD MASSEY\nNICOLA SALMORIA\nRON FRIES\nPAUL BERBERICH",
 	&dkong_machine_driver,
 
 	dkong_rom,
@@ -790,7 +792,9 @@ struct GameDriver dkong_driver =
 
 struct GameDriver dkongjp_driver =
 {
+	"Donkey Kong (Japanese version)",
 	"dkongjp",
+	"GARY SHEPHERDSON\nBRAD THOMAS\nEDWARD MASSEY\nNICOLA SALMORIA\nRON FRIES\nPAUL BERBERICH",
 	&dkong_machine_driver,
 
 	dkongjp_rom,
@@ -811,7 +815,9 @@ struct GameDriver dkongjp_driver =
 
 struct GameDriver dkongjr_driver =
 {
+	"Donkey Kong Jr.",
 	"dkongjr",
+	"GARY SHEPHERDSON\nBRAD THOMAS\nNICOLA SALMORIA\nPAUL BERBERICH",
 	&dkongjr_machine_driver,
 
 	dkongjr_rom,

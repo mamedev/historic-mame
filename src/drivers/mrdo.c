@@ -372,7 +372,9 @@ static void hisave(const char *name)
 
 struct GameDriver mrdo_driver =
 {
+	"Mr. Do! (Universal)",
 	"mrdo",
+	"NICOLA SALMORIA\nPAUL SWAN",
 	&machine_driver,
 
 	mrdo_rom,
@@ -393,7 +395,9 @@ struct GameDriver mrdo_driver =
 
 struct GameDriver mrdot_driver =
 {
+	"Mr. Do! (Taito)",
 	"mrdot",
+	"NICOLA SALMORIA\nPAUL SWAN",
 	&machine_driver,
 
 	mrdot_rom,
@@ -414,7 +418,9 @@ struct GameDriver mrdot_driver =
 
 struct GameDriver mrlo_driver =
 {
+	"Mr. Lo!",
 	"mrlo",
+	"NICOLA SALMORIA\nPAUL SWAN",
 	&machine_driver,
 
 	mrlo_rom,

@@ -6,7 +6,7 @@ Arabian memory map (preliminary)
 2000-3fff ROM 1
 4000-5fff ROM 2
 6000-7fff ROM 3
-8000-bfff VIDEO RAM 
+8000-bfff VIDEO RAM
 
 d000-dfff RAM
 e000-e100 CRT controller  ? blitter ?
@@ -88,11 +88,11 @@ extern int arabian_sh_start(void);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_RAM },	
+	{ 0x8000, 0xbfff, MRA_RAM },
         { 0xc000, 0xc000, input_port_0_r },
         { 0xc200, 0xc200, input_port_1_r },
         { 0xd000, 0xd7ef, MRA_RAM },
-        { 0xd7f0, 0xd7f8, arabian_input_port }, 
+        { 0xd7f0, 0xd7f8, arabian_input_port },
         { 0xd7f9, 0xdfff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -188,7 +188,7 @@ static struct DSW dsw[] =
 	{ 1, 0x01, "LIVES       ", { "  3", "  5" } },
 	{ 1, 0x08, "BOWLS       ", { "CARRY TO NEXT LEVEL",
 				     "       DO NOT CARRY" } },
-	{ 1, 0xf0, "COIN SELECT ", { "1 COIN 1 CREDIT", "SET 2", "SET 3", "SET 4", 
+	{ 1, 0xf0, "COIN SELECT ", { "1 COIN 1 CREDIT", "SET 2", "SET 3", "SET 4",
 				    "SET 5", "SET 6", "SET 7", "FREE PLAY"} },
 	{ 7, 0x02, "ATTRACT SOUND", { " ON", "OFF" } },
 	{ 7, 0x0c, "BONUS        ", { "   NO BONUS", "20000 1 MEN", "30000 1 MEN", "FORGET BONUS"} },
@@ -219,39 +219,39 @@ static unsigned char palette[] =
 {
 
 /*colors for plane 1*/
-	0   , 0   , 0,	
-	0   , 37*4, 53*4,	
-	0   , 40*4, 63*4,	
-	0   , 44*4, 63*4,	
-	48*4, 22*4, 0,	
-	58*4, 48*4, 0,	
-	63*4, 56*4, 0,	
-	60*4, 60*4, 60*4,	
-	0   , 0   , 0,	
-	32*4, 12*4, 0,	
-	39*4, 18*4, 0,	
-	0   , 24*4, 51*4,	
-	45*4, 20*4, 1*4,	
-	51*4, 30*4, 5*4,	
-	57*4, 41*4, 10*4,	
-	63*4, 53*4, 16*4,	
+	0   , 0   , 0,
+	0   , 37*4, 53*4,
+	0   , 40*4, 63*4,
+	0   , 44*4, 63*4,
+	48*4, 22*4, 0,
+	58*4, 48*4, 0,
+	63*4, 56*4, 0,
+	60*4, 60*4, 60*4,
+	0   , 0   , 0,
+	32*4, 12*4, 0,
+	39*4, 18*4, 0,
+	0   , 24*4, 51*4,
+	45*4, 20*4, 1*4,
+	51*4, 30*4, 5*4,
+	57*4, 41*4, 10*4,
+	63*4, 53*4, 16*4,
 /*colors for plane 2*/
-	0   , 0   , 0,	
-	0   , 28*4, 0,	
+	0   , 0   , 0,
+	0   , 28*4, 0,
 	0   , 11*4, 0,
-	0   , 40*4, 0,	
-	48*4, 22*4, 0,	
-	58*4, 48*4, 0,	
-	44*4, 18*4, 0,	
-	60*4, 60*4, 60*4,	
-	25*4, 6*4 , 0,	
-	28*4, 21*4, 0,	
-	26*4, 18*4, 0,	
-	0   , 24*4, 0,	
-	45*4, 20*4, 1*4,	
-	51*4, 30*4, 5*4,	
-	57*4, 41*4, 10*4,	
-	63*4, 53*4, 16*4,	
+	0   , 40*4, 0,
+	48*4, 22*4, 0,
+	58*4, 48*4, 0,
+	44*4, 18*4, 0,
+	60*4, 60*4, 60*4,
+	25*4, 6*4 , 0,
+	28*4, 21*4, 0,
+	26*4, 18*4, 0,
+	0   , 24*4, 0,
+	45*4, 20*4, 1*4,
+	51*4, 30*4, 5*4,
+	57*4, 41*4, 10*4,
+	63*4, 53*4, 16*4,
 };
 
 
@@ -322,12 +322,14 @@ ROM_START( arabian_rom )
 	ROM_LOAD( "ic85.92",  0x2000, 0x2000 )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",  0x4000, 0x2000 )  /* there's no way, but to decode */
 	ROM_LOAD( "ic87.94",  0x6000, 0x2000 )	/* it at runtime - which is SLOW */
-                                                
+
 ROM_END
 
 struct GameDriver arabian_driver =
 {
+	"Arabian",
 	"arabian",
+	"JAREK BURCZYNSKI",
 	&machine_driver,
 
 	arabian_rom,

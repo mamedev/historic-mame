@@ -275,7 +275,9 @@ ROM_END
 
 struct GameDriver pepper2_driver =
 {
+	"Pepper II",
 	"pepper2",
+	"MARC LAFONTAINE",
 	&machine_driver,
 
 	pepper2_rom,

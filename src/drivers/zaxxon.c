@@ -530,7 +530,9 @@ static void hisave(const char *name)
 
 struct GameDriver zaxxon_driver =
 {
+	"Zaxxon",
 	"zaxxon",
+	"MIRKO BUFFONI\nNICOLA SALMORIA\nMARC VERGOOSSEN\nMARC LAFONTAINE",
 	&machine_driver,
 
 	zaxxon_rom,

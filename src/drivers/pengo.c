@@ -390,7 +390,9 @@ static void hisave(const char *name)
 
 struct GameDriver pengo_driver =
 {
+	"Pengo",
 	"pengo",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA\nSERGIO MUNOZ",
 	&machine_driver,
 
 	pengo_rom,
@@ -411,7 +413,9 @@ struct GameDriver pengo_driver =
 
 struct GameDriver penta_driver =
 {
+	"Penta",
 	"penta",
+	"ALLARD VAN DER BAS\nNICOLA SALMORIA\nSERGIO MUNOZ",
 	&machine_driver,
 
 	penta_rom,

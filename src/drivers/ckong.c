@@ -341,7 +341,9 @@ static void hisave(const char *name)
 
 struct GameDriver ckong_driver =
 {
+	"Crazy Kong (Crazy Climber hardware)",
 	"ckong",
+	"VILLE LAITINEN\nNICOLA SALMORIA\nDOUG JEFFERYS",
 	&machine_driver,
 
 	ckong_rom,

@@ -306,7 +306,9 @@ ROM_END
 
 struct GameDriver panic_driver =
 {
+	"Space Panic",
 	"panic",
+	"MIKE COATES",
 	&machine_driver,
 
 	panic_rom,

@@ -301,7 +301,9 @@ static unsigned short mplanets_colors[256]={
 
 struct GameDriver mplanets_driver =
 {
+        "Mad Planets",
 	"mplanets",
+        "FABRICE FRANCES",
 	&machine_driver,
 
 	mplanets_rom,

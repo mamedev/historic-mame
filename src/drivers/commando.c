@@ -425,7 +425,9 @@ static void hisave(const char *name)
 
 struct GameDriver commando_driver =
 {
+	"Commando",
 	"commando",
+	"PAUL JOHNSON\nNICOLA SALMORIA",
 	&machine_driver,
 
 	commando_rom,

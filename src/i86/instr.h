@@ -1,250 +1,230 @@
-/****************************************************************************
-*                                                                           *
-*                            Third Year Project                             *
-*                                                                           *
-*                            An IBM PC Emulator                             *
-*                          For Unix and X Windows                           *
-*                                                                           *
-*                             By David Hedley                               *
-*                                                                           *
-*                                                                           *
-* This program is Copyrighted.  Consult the file COPYRIGHT for more details *
-*                                                                           *
-****************************************************************************/
+static void i_add_br8(void);
+static void i_add_wr16(void);
+static void i_add_r8b(void);
+static void i_add_r16w(void);
+static void i_add_ald8(void);
+static void i_add_axd16(void);
+static void i_push_es(void);
+static void i_pop_es(void);
+static void i_or_br8(void);
+static void i_or_r8b(void);
+static void i_or_wr16(void);
+static void i_or_r16w(void);
+static void i_or_ald8(void);
+static void i_or_axd16(void);
+static void i_push_cs(void);
+static void i_adc_br8(void);
+static void i_adc_wr16(void);
+static void i_adc_r8b(void);
+static void i_adc_r16w(void);
+static void i_adc_ald8(void);
+static void i_adc_axd16(void);
+static void i_push_ss(void);
+static void i_pop_ss(void);
+static void i_sbb_br8(void);
+static void i_sbb_wr16(void);
+static void i_sbb_r8b(void);
+static void i_sbb_r16w(void);
+static void i_sbb_ald8(void);
+static void i_sbb_axd16(void);
+static void i_push_ds(void);
+static void i_pop_ds(void);
+static void i_and_br8(void);
+static void i_and_r8b(void);
+static void i_and_wr16(void);
+static void i_and_r16w(void);
+static void i_and_ald8(void);
+static void i_and_axd16(void);
+static void i_es(void);
+static void i_daa(void);
+static void i_sub_br8(void);
+static void i_sub_wr16(void);
+static void i_sub_r8b(void);
+static void i_sub_r16w(void);
+static void i_sub_ald8(void);
+static void i_sub_axd16(void);
+static void i_cs(void);
+static void i_das(void);
+static void i_xor_br8(void);
+static void i_xor_r8b(void);
+static void i_xor_wr16(void);
+static void i_xor_r16w(void);
+static void i_xor_ald8(void);
+static void i_xor_axd16(void);
+static void i_ss(void);
+static void i_aaa(void);
+static void i_cmp_br8(void);
+static void i_cmp_wr16(void);
+static void i_cmp_r8b(void);
+static void i_cmp_r16w(void);
+static void i_cmp_ald8(void);
+static void i_cmp_axd16(void);
+static void i_ds(void);
+static void i_aas(void);
+static void i_inc_ax(void);
+static void i_inc_cx(void);
+static void i_inc_dx(void);
+static void i_inc_bx(void);
+static void i_inc_sp(void);
+static void i_inc_bp(void);
+static void i_inc_si(void);
+static void i_inc_di(void);
+static void i_dec_ax(void);
+static void i_dec_cx(void);
+static void i_dec_dx(void);
+static void i_dec_bx(void);
+static void i_dec_sp(void);
+static void i_dec_bp(void);
+static void i_dec_si(void);
+static void i_dec_di(void);
+static void i_push_ax(void);
+static void i_push_cx(void);
+static void i_push_dx(void);
+static void i_push_bx(void);
+static void i_push_sp(void);
+static void i_push_bp(void);
+static void i_push_si(void);
+static void i_push_di(void);
+static void i_pop_ax(void);
+static void i_pop_cx(void);
+static void i_pop_dx(void);
+static void i_pop_bx(void);
+static void i_pop_sp(void);
+static void i_pop_bp(void);
+static void i_pop_si(void);
+static void i_pop_di(void);
+static void i_jo(void);
+static void i_jno(void);
+static void i_jb(void);
+static void i_jnb(void);
+static void i_jz(void);
+static void i_jnz(void);
+static void i_jbe(void);
+static void i_jnbe(void);
+static void i_js(void);
+static void i_jns(void);
+static void i_jp(void);
+static void i_jnp(void);
+static void i_jl(void);
+static void i_jnl(void);
+static void i_jle(void);
+static void i_jnle(void);
+static void i_80pre(void);
+static void i_81pre(void);
+static void i_83pre(void);
+static void i_test_br8(void);
+static void i_test_wr16(void);
+static void i_xchg_br8(void);
+static void i_xchg_wr16(void);
+static void i_mov_br8(void);
+static void i_mov_r8b(void);
+static void i_mov_wr16(void);
+static void i_mov_r16w(void);
+static void i_mov_wsreg(void);
+static void i_lea(void);
+static void i_mov_sregw(void);
+static void i_invalid(void);
+static void i_popw(void);
+static void i_nop(void);
+static void i_xchg_axcx(void);
+static void i_xchg_axdx(void);
+static void i_xchg_axbx(void);
+static void i_xchg_axsp(void);
+static void i_xchg_axbp(void);
+static void i_xchg_axsi(void);
+static void i_xchg_axdi(void);
+static void i_cbw(void);
+static void i_cwd(void);
+static void i_call_far(void);
+static void i_pushf(void);
+static void i_popf(void);
+static void i_sahf(void);
+static void i_lahf(void);
+static void i_mov_aldisp(void);
+static void i_mov_axdisp(void);
+static void i_mov_dispal(void);
+static void i_mov_dispax(void);
+static void i_movsb(void);
+static void i_movsw(void);
+static void i_cmpsb(void);
+static void i_cmpsw(void);
+static void i_test_ald8(void);
+static void i_test_axd16(void);
+static void i_stosb(void);
+static void i_stosw(void);
+static void i_lodsb(void);
+static void i_lodsw(void);
+static void i_scasb(void);
+static void i_scasw(void);
+static void i_mov_ald8(void);
+static void i_mov_cld8(void);
+static void i_mov_dld8(void);
+static void i_mov_bld8(void);
+static void i_mov_ahd8(void);
+static void i_mov_chd8(void);
+static void i_mov_dhd8(void);
+static void i_mov_bhd8(void);
+static void i_mov_axd16(void);
+static void i_mov_cxd16(void);
+static void i_mov_dxd16(void);
+static void i_mov_bxd16(void);
+static void i_mov_spd16(void);
+static void i_mov_bpd16(void);
+static void i_mov_sid16(void);
+static void i_mov_did16(void);
+static void i_ret_d16(void);
+static void i_ret(void);
+static void i_les_dw(void);
+static void i_lds_dw(void);
+static void i_mov_bd8(void);
+static void i_mov_wd16(void);
+static void i_retf_d16(void);
+static void i_retf(void);
+static void i_int3(void);
+static void i_int(void);
+static void i_into(void);
+static void i_iret(void);
+static void i_d0pre(void);
+static void i_d1pre(void);
+static void i_d2pre(void);
+static void i_d3pre(void);
+static void i_aam(void);
+static void i_aad(void);
+static void i_xlat(void);
+static void i_escape(void);
+static void i_loopne(void);
+static void i_loope(void);
+static void i_loop(void);
+static void i_jcxz(void);
+static void i_inal(void);
+static void i_inax(void);
+static void i_outal(void);
+static void i_outax(void);
+static void i_call_d16(void);
+static void i_jmp_d16(void);
+static void i_jmp_far(void);
+static void i_jmp_d8(void);
+static void i_inaldx(void);
+static void i_inaxdx(void);
+static void i_outdxal(void);
+static void i_outdxax(void);
+static void i_lock(void);
+static void i_repne(void);
+static void i_repe(void);
+static void i_hlt(void);
+static void i_cmc(void);
+static void i_f6pre(void);
+static void i_f7pre(void);
+static void i_clc(void);
+static void i_stc(void);
+static void i_cli(void);
+static void i_sti(void);
+static void i_cld(void);
+static void i_std(void);
+static void i_fepre(void);
+static void i_ffpre(void);
 
-/* This is INSTR.H  It contains the functions corresponding to each individual
-   instruction in the 80x86 set */
-
-#ifndef INSTR_H
-#define INSTR_H
-
-static INLINE2 void i_add_br8(void);
-static INLINE2 void i_add_wr16(void);
-static INLINE2 void i_add_r8b(void);
-static INLINE2 void i_add_r16w(void);
-static INLINE2 void i_add_ald8(void);
-static INLINE2 void i_add_axd16(void);
-static INLINE2 void i_push_es(void);
-static INLINE2 void i_pop_es(void);
-static INLINE2 void i_or_br8(void);
-static INLINE2 void i_or_r8b(void);
-static INLINE2 void i_or_wr16(void);
-static INLINE2 void i_or_r16w(void);
-static INLINE2 void i_or_ald8(void);
-static INLINE2 void i_or_axd16(void);
-static INLINE2 void i_push_cs(void);
-static INLINE2 void i_adc_br8(void);
-static INLINE2 void i_adc_wr16(void);
-static INLINE2 void i_adc_r8b(void);
-static INLINE2 void i_adc_r16w(void);
-static INLINE2 void i_adc_ald8(void);
-static INLINE2 void i_adc_axd16(void);
-static INLINE2 void i_push_ss(void);
-static INLINE2 void i_pop_ss(void);
-static INLINE2 void i_sbb_br8(void);
-static INLINE2 void i_sbb_wr16(void);
-static INLINE2 void i_sbb_r8b(void);
-static INLINE2 void i_sbb_r16w(void);
-static INLINE2 void i_sbb_ald8(void);
-static INLINE2 void i_sbb_axd16(void);
-static INLINE2 void i_push_ds(void);
-static INLINE2 void i_pop_ds(void);
-static INLINE2 void i_and_br8(void);
-static INLINE2 void i_and_r8b(void);
-static INLINE2 void i_and_wr16(void);
-static INLINE2 void i_and_r16w(void);
-static INLINE2 void i_and_ald8(void);
-static INLINE2 void i_and_axd16(void);
-static INLINE2 void i_es(void);
-static INLINE2 void i_daa(void);
-static INLINE2 void i_sub_br8(void);
-static INLINE2 void i_sub_wr16(void);
-static INLINE2 void i_sub_r8b(void);
-static INLINE2 void i_sub_r16w(void);
-static INLINE2 void i_sub_ald8(void);
-static INLINE2 void i_sub_axd16(void);
-static INLINE2 void i_cs(void);
-static INLINE2 void i_das(void);
-static INLINE2 void i_xor_br8(void);
-static INLINE2 void i_xor_r8b(void);
-static INLINE2 void i_xor_wr16(void);
-static INLINE2 void i_xor_r16w(void);
-static INLINE2 void i_xor_ald8(void);
-static INLINE2 void i_xor_axd16(void);
-static INLINE2 void i_ss(void);
-static INLINE2 void i_aaa(void);
-static INLINE2 void i_cmp_br8(void);
-static INLINE2 void i_cmp_wr16(void);
-static INLINE2 void i_cmp_r8b(void);
-static INLINE2 void i_cmp_r16w(void);
-static INLINE2 void i_cmp_ald8(void);
-static INLINE2 void i_cmp_axd16(void);
-static INLINE2 void i_ds(void);
-static INLINE2 void i_aas(void);
-static INLINE2 void i_inc_ax(void);
-static INLINE2 void i_inc_cx(void);
-static INLINE2 void i_inc_dx(void);
-static INLINE2 void i_inc_bx(void);
-static INLINE2 void i_inc_sp(void);
-static INLINE2 void i_inc_bp(void);
-static INLINE2 void i_inc_si(void);
-static INLINE2 void i_inc_di(void);
-static INLINE2 void i_dec_ax(void);
-static INLINE2 void i_dec_cx(void);
-static INLINE2 void i_dec_dx(void);
-static INLINE2 void i_dec_bx(void);
-static INLINE2 void i_dec_sp(void);
-static INLINE2 void i_dec_bp(void);
-static INLINE2 void i_dec_si(void);
-static INLINE2 void i_dec_di(void);
-static INLINE2 void i_push_ax(void);
-static INLINE2 void i_push_cx(void);
-static INLINE2 void i_push_dx(void);
-static INLINE2 void i_push_bx(void);
-static INLINE2 void i_push_sp(void);
-static INLINE2 void i_push_bp(void);
-static INLINE2 void i_push_si(void);
-static INLINE2 void i_push_di(void);
-static INLINE2 void i_pop_ax(void);
-static INLINE2 void i_pop_cx(void);
-static INLINE2 void i_pop_dx(void);
-static INLINE2 void i_pop_bx(void);
-static INLINE2 void i_pop_sp(void);
-static INLINE2 void i_pop_bp(void);
-static INLINE2 void i_pop_si(void);
-static INLINE2 void i_pop_di(void);
-static INLINE2 void i_jo(void);
-static INLINE2 void i_jno(void);
-static INLINE2 void i_jb(void);
-static INLINE2 void i_jnb(void);
-static INLINE2 void i_jz(void);
-static INLINE2 void i_jnz(void);
-static INLINE2 void i_jbe(void);
-static INLINE2 void i_jnbe(void);
-static INLINE2 void i_js(void);
-static INLINE2 void i_jns(void);
-static INLINE2 void i_jp(void);
-static INLINE2 void i_jnp(void);
-static INLINE2 void i_jl(void);
-static INLINE2 void i_jnl(void);
-static INLINE2 void i_jle(void);
-static INLINE2 void i_jnle(void);
-static INLINE2 void i_80pre(void);
-static INLINE2 void i_81pre(void);
-static INLINE2 void i_83pre(void);
-static INLINE2 void i_test_br8(void);
-static INLINE2 void i_test_wr16(void);
-static INLINE2 void i_xchg_br8(void);
-static INLINE2 void i_xchg_wr16(void);
-static INLINE2 void i_mov_br8(void);
-static INLINE2 void i_mov_r8b(void);
-static INLINE2 void i_mov_wr16(void);
-static INLINE2 void i_mov_r16w(void);
-static INLINE2 void i_mov_wsreg(void);
-static INLINE2 void i_lea(void);
-static INLINE2 void i_mov_sregw(void);
-static INLINE2 void i_notdone(void);
-static INLINE2 void i_popw(void);
-static INLINE2 void i_nop(void);
-static INLINE2 void i_xchg_axcx(void);
-static INLINE2 void i_xchg_axdx(void);
-static INLINE2 void i_xchg_axbx(void);
-static INLINE2 void i_xchg_axsp(void);
-static INLINE2 void i_xchg_axbp(void);
-static INLINE2 void i_xchg_axsi(void);
-static INLINE2 void i_xchg_axdi(void);
-static INLINE2 void i_cbw(void);
-static INLINE2 void i_cwd(void);
-static INLINE2 void i_call_far(void);
-static INLINE2 void i_pushf(void);
-static INLINE2 void i_popf(void);
-static INLINE2 void i_sahf(void);
-static INLINE2 void i_lahf(void);
-static INLINE2 void i_mov_aldisp(void);
-static INLINE2 void i_mov_axdisp(void);
-static INLINE2 void i_mov_dispal(void);
-static INLINE2 void i_mov_dispax(void);
-static INLINE2 void i_movsb(void);
-static INLINE2 void i_movsw(void);
-static INLINE2 void i_cmpsb(void);
-static INLINE2 void i_cmpsw(void);
-static INLINE2 void i_test_ald8(void);
-static INLINE2 void i_test_axd16(void);
-static INLINE2 void i_stosb(void);
-static INLINE2 void i_stosw(void);
-static INLINE2 void i_lodsb(void);
-static INLINE2 void i_lodsw(void);
-static INLINE2 void i_scasb(void);
-static INLINE2 void i_scasw(void);
-static INLINE2 void i_mov_ald8(void);
-static INLINE2 void i_mov_cld8(void);
-static INLINE2 void i_mov_dld8(void);
-static INLINE2 void i_mov_bld8(void);
-static INLINE2 void i_mov_ahd8(void);
-static INLINE2 void i_mov_chd8(void);
-static INLINE2 void i_mov_dhd8(void);
-static INLINE2 void i_mov_bhd8(void);
-static INLINE2 void i_mov_axd16(void);
-static INLINE2 void i_mov_cxd16(void);
-static INLINE2 void i_mov_dxd16(void);
-static INLINE2 void i_mov_bxd16(void);
-static INLINE2 void i_mov_spd16(void);
-static INLINE2 void i_mov_bpd16(void);
-static INLINE2 void i_mov_sid16(void);
-static INLINE2 void i_mov_did16(void);
-static INLINE2 void i_ret_d16(void);
-static INLINE2 void i_ret(void);
-static INLINE2 void i_les_dw(void);
-static INLINE2 void i_lds_dw(void);
-static INLINE2 void i_mov_bd8(void);
-static INLINE2 void i_mov_wd16(void);
-static INLINE2 void i_retf_d16(void);
-static INLINE2 void i_retf(void);
-static INLINE2 void i_int3(void);
-static INLINE2 void i_int(void);
-static INLINE2 void i_into(void);
-static INLINE2 void i_iret(void);
-static INLINE2 void i_d0pre(void);
-static INLINE2 void i_d1pre(void);
-static INLINE2 void i_d2pre(void);
-static INLINE2 void i_d3pre(void);
-static INLINE2 void i_aam(void);
-static INLINE2 void i_aad(void);
-static INLINE2 void i_xlat(void);
-static INLINE2 void i_escape(void);
-static INLINE2 void i_loopne(void);
-static INLINE2 void i_loope(void);
-static INLINE2 void i_loop(void);
-static INLINE2 void i_jcxz(void);
-static INLINE2 void i_inal(void);
-static INLINE2 void i_inax(void);
-static INLINE2 void i_outal(void);
-static INLINE2 void i_outax(void);
-static INLINE2 void i_call_d16(void);
-static INLINE2 void i_jmp_d16(void);
-static INLINE2 void i_jmp_far(void);
-static INLINE2 void i_jmp_d8(void);
-static INLINE2 void i_inaldx(void);
-static INLINE2 void i_inaxdx(void);
-static INLINE2 void i_outdxal(void);
-static INLINE2 void i_outdxax(void);
-static INLINE2 void i_lock(void);
-static INLINE2 void i_repne(void);
-static INLINE2 void i_repe(void);
-static INLINE2 void i_cmc(void);
-static INLINE2 void i_f6pre(void);
-static INLINE2 void i_f7pre(void);
-static INLINE2 void i_clc(void);
-static INLINE2 void i_stc(void);
-static INLINE2 void i_cli(void);
-static INLINE2 void i_sti(void);
-static INLINE2 void i_cld(void);
-static INLINE2 void i_std(void);
-static INLINE2 void i_fepre(void);
-static INLINE2 void i_ffpre(void);
-
-static INLINE2 void i_wait(void);
-static INLINE2 void i_gobios(void);
+static void i_wait(void);
 
 void (*instruction[256])(void) =
 {
@@ -263,7 +243,7 @@ void (*instruction[256])(void) =
     i_or_ald8,          /* 0x0c */
     i_or_axd16,         /* 0x0d */
     i_push_cs,          /* 0x0e */
-    i_notdone,
+    i_invalid,
     i_adc_br8,          /* 0x10 */
     i_adc_wr16,         /* 0x11 */
     i_adc_r8b,          /* 0x12 */
@@ -303,7 +283,7 @@ void (*instruction[256])(void) =
     i_xor_ald8,         /* 0x34 */
     i_xor_axd16,        /* 0x35 */
     i_ss,               /* 0x36 */
-    i_aaa,
+    i_aaa,		/* 0x37 */
     i_cmp_br8,          /* 0x38 */
     i_cmp_wr16,         /* 0x39 */
     i_cmp_r8b,          /* 0x3a */
@@ -311,7 +291,7 @@ void (*instruction[256])(void) =
     i_cmp_ald8,         /* 0x3c */
     i_cmp_axd16,        /* 0x3d */
     i_ds,               /* 0x3e */
-    i_aas,
+    i_aas,		/* 0x3f */
     i_inc_ax,           /* 0x40 */
     i_inc_cx,           /* 0x41 */
     i_inc_dx,           /* 0x42 */
@@ -344,22 +324,22 @@ void (*instruction[256])(void) =
     i_pop_bp,           /* 0x5d */
     i_pop_si,           /* 0x5e */
     i_pop_di,           /* 0x5f */
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
-    i_notdone,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
+    i_invalid,
     i_jo,               /* 0x70 */
     i_jno,              /* 0x71 */
     i_jb,               /* 0x72 */
@@ -378,7 +358,7 @@ void (*instruction[256])(void) =
     i_jnle,             /* 0x7f */
     i_80pre,            /* 0x80 */
     i_81pre,            /* 0x81 */
-    i_notdone,
+    i_invalid,
     i_83pre,            /* 0x83 */
     i_test_br8,         /* 0x84 */
     i_test_wr16,        /* 0x85 */
@@ -440,16 +420,16 @@ void (*instruction[256])(void) =
     i_mov_bpd16,        /* 0xbd */
     i_mov_sid16,        /* 0xbe */
     i_mov_did16,        /* 0xbf */
-    i_notdone,
-    i_notdone,
+    i_invalid,
+    i_invalid,
     i_ret_d16,          /* 0xc2 */
     i_ret,              /* 0xc3 */
     i_les_dw,           /* 0xc4 */
     i_lds_dw,           /* 0xc5 */
     i_mov_bd8,          /* 0xc6 */
     i_mov_wd16,         /* 0xc7 */
-    i_notdone,
-    i_notdone,
+    i_invalid,
+    i_invalid,
     i_retf_d16,         /* 0xca */
     i_retf,             /* 0xcb */
     i_int3,             /* 0xcc */
@@ -462,7 +442,7 @@ void (*instruction[256])(void) =
     i_d3pre,            /* 0xd3 */
     i_aam,              /* 0xd4 */
     i_aad,              /* 0xd5 */
-    i_notdone,
+    i_invalid,
     i_xlat,             /* 0xd7 */
     i_escape,           /* 0xd8 */
     i_escape,           /* 0xd9 */
@@ -489,10 +469,10 @@ void (*instruction[256])(void) =
     i_outdxal,          /* 0xee */
     i_outdxax,          /* 0xef */
     i_lock,             /* 0xf0 */
-    i_gobios,           /* 0xf1 */
+    i_invalid,          /* 0xf1 */
     i_repne,            /* 0xf2 */
     i_repe,             /* 0xf3 */
-    i_notdone,
+    i_hlt,		/* 0xf4 */
     i_cmc,              /* 0xf5 */
     i_f6pre,            /* 0xf6 */
     i_f7pre,            /* 0xf7 */
@@ -505,5 +485,3 @@ void (*instruction[256])(void) =
     i_fepre,            /* 0xfe */
     i_ffpre             /* 0xff */
 };
-
-#endif

@@ -375,7 +375,9 @@ static void hisave(const char *name)
 
 struct GameDriver pooyan_driver =
 {
+	"Pooyan",
 	"pooyan",
+	"MIKE CUDDY\nALLARD VAN DER BAS\nNICOLA SALMORIA",
 	&machine_driver,
 
 	pooyan_rom,
