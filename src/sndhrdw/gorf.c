@@ -23,7 +23,7 @@ the variable GorfBaseFrequency, this is defaulted to 8000
 **************************************************************************/
 
 #include "driver.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 
 

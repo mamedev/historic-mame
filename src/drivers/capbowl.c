@@ -80,7 +80,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
 #include "machine/ticket.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 void capbowl_init_machine(void);
 
@@ -214,7 +214,7 @@ INPUT_PORTS_END
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? */
+	4000000,	/* 4 MHz */
 	{ YM2203_VOL(40,40) },
 	{ ticket_dispenser_r },
 	{ 0 },
@@ -308,6 +308,21 @@ ROM_START( capbowl_rom )
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
 
+ROM_START( capbowl2_rom )
+	ROM_REGION(0x28000)   /* 160k for code and graphics */
+	ROM_LOAD( "progrev3.u6",  0x08000, 0x8000, 0x9162934a )
+	ROM_LOAD( "gr0",          0x10000, 0x8000, 0xef53ca7a )
+	ROM_LOAD( "gr1",          0x18000, 0x8000, 0x27ede6ce )
+	ROM_LOAD( "gr2",          0x20000, 0x8000, 0xe49238f4 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)   /* 64k for sound */
+	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
+ROM_END
+
 ROM_START( clbowl_rom )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
 	ROM_LOAD( "u6.cl",        0x08000, 0x8000, 0x91e06bc4 )
@@ -383,7 +398,7 @@ struct GameDriver capbowl_driver =
 	__FILE__,
 	0,
 	"capbowl",
-	"Capcom Bowling",
+	"Capcom Bowling (set 1)",
 	"1988",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
@@ -392,6 +407,32 @@ struct GameDriver capbowl_driver =
 	0,
 
 	capbowl_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver capbowl2_driver =
+{
+	__FILE__,
+	&capbowl_driver,
+	"capbowl2",
+	"Capcom Bowling (set 2)",
+	"1988",
+	"Incredible Technologies",
+	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
+	0,
+	&capbowl_machine_driver,
+	0,
+
+	capbowl2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -60,7 +60,7 @@
  ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 
 int  leprechn_vh_start(void);

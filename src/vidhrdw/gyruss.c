@@ -89,9 +89,9 @@ void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 /* convert sprite coordinates from polar to cartesian */
 static int SprTrans(Sprites *u)
 {
-#define YTABLE_START (0x0000)
-#define SINTABLE_START (0x0400)
-#define COSTABLE_START (0x0600)
+#define YTABLE_START (0xe000)
+#define SINTABLE_START (0xe400)
+#define COSTABLE_START (0xe600)
 	int ro;
 	int theta2;
 	unsigned char *table;
@@ -246,6 +246,14 @@ void gyruss_flipscreen_w(int offset,int data)
 
 
 
+/* Return the current video scan line */
+int gyruss_scanline_r(int offset)
+{
+	return cpu_scalebyfcount(256);
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -371,6 +379,91 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		if (colorram[offs] & 0x10)
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+}
+
+void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	{
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			drawgfx(bitmap,Machine->gfx[1 + (spriteram[offs + 1] & 1)],
+					spriteram[offs + 1]/2 + 4*(spriteram[offs + 2] & 0x20),
+					spriteram[offs + 2] & 0x0f,
+					!(spriteram[offs + 2] & 0x40),spriteram[offs + 2] & 0x80,
+					spriteram[offs],240-spriteram[offs + 3]+1,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+
+
+	/* redraw the characters which have priority over sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = offs % 32;
+		sy = offs / 32;
+		flipx = colorram[offs] & 0x40;
+		flipy = colorram[offs] & 0x80;
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		if ((colorram[offs] & 0x10) != 0)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,

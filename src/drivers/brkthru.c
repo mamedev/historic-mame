@@ -13,7 +13,6 @@ UNK-1.6    (32Kb)  GFX Background
 UNK-1.7    (32Kb)  GFX Background
 UNK-1.8    (32Kb)  GFX Background
 
-Sprites ROMs haven't been dumped, but are probably the same format as the background.
 UNK-1.9    (32Kb)  GFX Sprites
 UNK-1.10   (32Kb)  GFX Sprites
 UNK-1.11   (32Kb)  GFX Sprites
@@ -46,7 +45,7 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
@@ -265,7 +264,7 @@ INPUT_PORTS_START( darwin_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* used only by the self test */
 
 	PORT_START	/* IN2 */
@@ -590,6 +589,43 @@ ROM_START( brkthru_rom )
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
+ROM_START( brkthruj_rom )
+	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_LOAD( "1",            0x04000, 0x4000, 0x09bd60ee )
+	ROM_LOAD( "2",            0x08000, 0x8000, 0xf2b2cd1c )
+	ROM_LOAD( "4",            0x10000, 0x8000, 0xb42b3359 )
+	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
+
+	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_LOAD( "12",   0x00000, 0x2000, 0x3d9a7003 )	/* characters */
+	/* background */
+	/* we do a lot of scatter loading here, to place the data in a format */
+	/* which can be decoded by MAME's standard functions */
+	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "6",            0x12000, 0x4000, 0xcb47b395 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "8",            0x06000, 0x1000, 0x5e5a2cd7 )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
+	/* sprites */
+	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
+	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
+
+	ROM_REGION(0x200)	/* color proms */
+	ROM_LOAD( "brkthru.13",   0x0000, 0x100, 0xaae44269 ) /* red and green component */
+	ROM_LOAD( "brkthru.14",   0x0100, 0x100, 0xf2d4822a ) /* blue component */
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
+ROM_END
+
 ROM_START( darwin_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, 0x0eabf21c )
@@ -734,6 +770,33 @@ struct GameDriver brkthru_driver =
 
 	hiload, hisave
 };
+
+struct GameDriver brkthruj_driver =
+{
+	__FILE__,
+	&brkthru_driver,
+	"brkthruj",
+	"Kyohkoh-Toppa",
+	"1986",
+	"Data East Corporation",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
+	0,
+	&brkthru_machine_driver,
+	0,
+
+	brkthruj_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
 struct GameDriver darwin_driver =
 {
 	__FILE__,

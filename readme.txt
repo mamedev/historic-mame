@@ -115,8 +115,9 @@ First of all, read the docs carefully. If you still can't find an answer to
 your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
 on the official MAME message board, http://www.macmame.org/wwwboard/mame/.
-For help in compiling MAME, check this page:
-http://seagate.cns.net.au/~ben/emu/compilemame.html
+For help in compiling MAME, check these pages:
+http://zan.emuunlim.com/mame/compile/compilemame.html
+http://zan.emuunlim.com/mame/compile/compilemamebeta.html
 
 Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
 info on the game hardware or, even better, own the board and have the technical
@@ -142,7 +143,8 @@ I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
 M6808 based on L.C. Benschop's 6809 Simulator V09.
 80x86 asm M6808 emulator Copyright 1998, Neil Bradley, All rights reserved
-M68000 emulator taken from the System 16 Arcade Emulator by Thierry Lescot.
+M68000 emulator Copyright 1999 Karl Stenerud.  All rights reserved.
+80x86 M68000 emulator Copyright 1998, Mike Coates, Darren Olafson.
 8039 emulator by Mirko Buffoni, based on 8048 emulator by Dan Boris.
 T-11 emulator Copyright (C) Aaron Giles 1998
 TMS34010 emulator by Alex Pasadyn and Zsolt Vasvari.
@@ -152,7 +154,6 @@ TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
 YM-2203 and YM-2151 emulation by Tatsuyuki Satoh.
-OPL based YM-2203 emulation by Ishmair (ishmair@vnet.es).
 POKEY emulator by Ron Fries (rfries@aol.com).
 Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
@@ -331,9 +332,6 @@ options:
               3) Extra buttons of noname joysticks may not work.
 			  4) the "official" Snespad-Support site is
               http://snespad.emulationworld.com
--ym2203opl/-noym2203opl (default: -noym2203opl) use the SoundBlaster OPL chip
-              for music emulation of the YM2203 chip. This is faster, but
-              emulation is less faithful.
 -ym3812opl/-noym3812opl (default: -ym3812opl) use the SoundBlaster OPL chip for
               music emulation of the YM3812 chip. This is faster, and is
               reasonably accurate since the chips are 100% compatible. However,
@@ -348,6 +346,7 @@ options:
 -listdetails  display a detailed list of drivers and the hardware they use
 -listgames    list the supported games, year, manufacturer
 -listinfo     list comprehensive details for all of the supported games
+-listclones   list all clones of the specified game
 -verifyroms   check selected game for missing and invalid ROMs.
 -verifysamples check selected game for missing samples.
 -romdir       specify an alternate directory/zip name where to load the ROMs
@@ -361,7 +360,7 @@ options:
               runs at 60 fps, "-frameskip 2" will make it run at 50 fps, and
               "-frameskip 6" at 30 fps. Use F11 to check the speed your
               computer is actually reaching. If it is below 100%, increase the
-              frameskip value. You can press F8 to change frameskip while
+              frameskip value. You can press F9 to change frameskip while
               running the game.
 			  When set to auto (the default), the frameskip setting is
               dynamically adjusted at run time to display the maximum possible
@@ -395,7 +394,7 @@ P            Pause
 F3           Reset
 F4           Show the game graphics. Use cursor keys to change set/color,
              F4 or Esc to return to the emulation.
-F8           Change frame skip on the fly (60, 30, 20, or 15)
+F9           Change frame skip on the fly
 F10          Toggle speed throttling
 F11          Toggle speed display
 F12          Save a screen snapshot. The default target directory is PCX, you

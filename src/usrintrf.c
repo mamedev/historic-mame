@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "info.h"
 
+
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 
@@ -443,7 +444,7 @@ static void drawbar(int leftx,int topy,int width,int height,int percentage)
 }
 
 
-void displaymenu(const char **items,const char **subitems,int selected,int arrowize_subitem)
+void displaymenu(const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem)
 {
 	struct DisplayText dt[256];
 	int curr_dt;
@@ -516,14 +517,20 @@ void displaymenu(const char **items,const char **subitems,int selected,int arrow
 		{
 			if (subitems && subitems[item])
 			{
+				int length;
+
 				dt[curr_dt].text = items[item];
 				dt[curr_dt].color = DT_COLOR_WHITE;
 				dt[curr_dt].x = leftoffs + 3*Machine->uifont->width/2;
 				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
 				curr_dt++;
 				dt[curr_dt].text = subitems[item];
-				dt[curr_dt].color = DT_COLOR_WHITE;
-				dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1 - strlen(subitems[item])) - Machine->uifont->width/2;
+				/* If this item is flagged, draw it in inverse print */
+				if (flag && flag[item])
+					dt[curr_dt].color = DT_COLOR_YELLOW;
+				else
+					dt[curr_dt].color = DT_COLOR_WHITE;
+				dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1 - strlen(dt[curr_dt].text)) - Machine->uifont->width/2;
 				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
 				curr_dt++;
 			}
@@ -578,7 +585,6 @@ void displaymenu(const char **items,const char **subitems,int selected,int arrow
 }
 
 
-
 static void displaymessagewindow(const char *text)
 {
 	struct DisplayText dt[256];
@@ -587,28 +593,54 @@ static void displaymessagewindow(const char *text)
 	int i,len,maxlen,lines;
 	char textcopy[2048];
 	int leftoffs,topoffs;
+	int	maxcols,maxrows;
 
+	maxcols = (Machine->uiwidth / Machine->uifont->width) - 1;
+	maxrows = (2 * Machine->uiheight - Machine->uifont->height) / (3 * Machine->uifont->height);
 
-	strcpy(textcopy,text);
-
+	/* copy text, calculate max len, count lines, wrap long lines and crop height to fit */
 	maxlen = 0;
 	lines = 0;
-	c = textcopy;
+	c = (char *)text;
+	c2 = textcopy;
 	while (*c)
 	{
 		len = 0;
 		while (*c && *c != '\n')
 		{
+			*c2++ = *c++;
 			len++;
-			c++;
+			if (len == maxcols && *c != '\n')
+			{
+				/* attempt word wrap */
+				char *csave = c, *c2save = c2;
+				int lensave = len;
+
+				/* back up to last space or beginning of line */
+				while (*c != ' ' && *c != '\n' && c > text)
+					--c, --c2, --len;
+
+				/* if no space was found, hard wrap instead */
+				if (*c != ' ')
+					c = csave, c2 = c2save, len = lensave;
+				else
+					c++;
+
+				*c2++ = '\n'; /* insert wrap */
+				break;
+			}
 		}
 
-		if (*c == '\n') c++;
+		if (*c == '\n')
+			*c2++ = *c++;
 
 		if (len > maxlen) maxlen = len;
 
 		lines++;
+		if (lines == maxrows)
+			break;
 	}
+	*c2 = '\0';
 
 	maxlen += 1;
 
@@ -657,12 +689,15 @@ static void displaymessagewindow(const char *text)
 
 
 
-
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
         int zx,int zy);
 extern struct GameDriver neogeo_bios;
+#endif
+#endif
 
 static void showcharset(void)
 {
@@ -679,8 +714,11 @@ static void showcharset(void)
 			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
 		return;	/* no gfx sets, return */
 
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 	if(Machine->gamedrv->clone_of == &neogeo_bios) game_is_neogeo=1;
-
+#endif
+#endif
 
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the user interface */
@@ -696,6 +734,8 @@ static void showcharset(void)
 
 	do
 	{
+		int skip_rows = ((Machine->uiheight - Machine->uifont->height+1) / Machine->gfx[bank]->height) - 1;
+
 		if (changed)
 		{
 			osd_clearbitmap(Machine->scrbitmap);
@@ -717,6 +757,8 @@ static void showcharset(void)
 						0,TRANSPARENCY_NONE,0);
 				}
 			}
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 			else	/* neogeo sprite tiles */
 			{
 				maxline = (no_of_tiles + cpx - 1) / cpx;
@@ -731,6 +773,8 @@ static void showcharset(void)
 						16,16);
 				}
 			}
+#endif
+#endif
 
 			sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
 			dt[0].text = buf;
@@ -743,9 +787,18 @@ static void showcharset(void)
 			changed = 0;
 		}
 
+		/* Necessary to keep the video from getting stuck if a frame happens to be skipped in here */
+/* I beg to differ - the OS dependant code must not assume that */
+/* osd_skip_this_frame() is called before osd_update_video_and_audio() - NS */
+//		osd_skip_this_frame();
 		osd_update_video_and_audio();
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+		if (osd_key_pressed(OSD_KEY_LCONTROL) || osd_key_pressed(OSD_KEY_RCONTROL))
+		{
+			skip_rows = 1;
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 		{
 			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 			{
@@ -755,7 +808,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 		{
 			if (bank > 0)
 			{
@@ -767,23 +820,19 @@ static void showcharset(void)
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
 		{
-			if (line < maxline-1)
-			{
-				line++;
-				changed = 1;
-			}
+			line += skip_rows;
+			if (line >= maxline) line = maxline - 1;
+			changed = 1;
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
 		{
-			if (line > 0)
-			{
-				line--;
-				changed = 1;
-			}
+			line -= skip_rows;
+			if (line < 0) line = 0;
+			changed = 1;
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UP,6))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,6))
 		{
 			if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
 			{
@@ -792,7 +841,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,6))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,6))
 		{
 			if (color > 0)
 			{
@@ -825,6 +874,7 @@ static int setdipswitches(int selected)
 	const char *menu_item[40];
 	const char *menu_subitem[40];
 	struct InputPort *entry[40];
+	char flag[40];
 	int i,sel;
 	struct InputPort *in;
 	int total;
@@ -861,6 +911,7 @@ static int setdipswitches(int selected)
 
 	for (i = 0;i < total;i++)
 	{
+		flag[i] = 0; /* TODO: flag the dip if it's not the real default */
 		if (i < total - 1)
 		{
 			in = entry[i] + 1;
@@ -911,21 +962,21 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	displaymenu(menu_item,menu_subitem,sel,arrowize);
+	displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -949,7 +1000,7 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -973,7 +1024,7 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 	}
@@ -1000,6 +1051,7 @@ static int setdefkeysettings(int selected)
 	const char *menu_item[400];
 	const char *menu_subitem[400];
 	struct ipd *entry[400];
+	char flag[400];
 	int i,sel;
 	struct ipd *in;
 	int total;
@@ -1041,6 +1093,7 @@ static int setdefkeysettings(int selected)
 		if (i < total - 1)
 			menu_subitem[i] = osd_key_name(entry[i]->keyboard);
 		else menu_subitem[i] = 0;	/* no subitem */
+		flag[i] = 0;
 	}
 
 	if (sel > 255)	/* are we waiting for a new key? */
@@ -1049,13 +1102,13 @@ static int setdefkeysettings(int selected)
 
 
 		menu_subitem[sel & 0xff] = "    ";
-		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 		newkey = osd_read_key_immediate();
 		if (newkey != OSD_KEY_NONE)
 		{
 			sel &= 0xff;
 
-			if (key_to_pseudo_code(newkey) == newkey)	/* don't use pseudo key code */
+			if (!osd_key_invalid(newkey))	/* don't use pseudo key code */
 				entry[sel]->keyboard = newkey;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1066,21 +1119,21 @@ static int setdefkeysettings(int selected)
 	}
 
 
-	displaymenu(menu_item,menu_subitem,sel,0);
+	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1114,6 +1167,7 @@ static int setkeysettings(int selected)
 	const char *menu_item[40];
 	const char *menu_subitem[40];
 	struct InputPort *entry[40];
+	char flag[40];
 	int i,sel;
 	struct InputPort *in;
 	int total;
@@ -1152,7 +1206,15 @@ static int setkeysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
+		{
 			menu_subitem[i] = osd_key_name(default_key(entry[i]));
+			/* If the key isn't the default, flag it */
+			if (entry[i]->keyboard != IP_KEY_DEFAULT)
+				flag[i] = 1;
+			else
+				flag[i] = 0;
+
+		}
 		else menu_subitem[i] = 0;	/* no subitem */
 	}
 
@@ -1162,14 +1224,15 @@ static int setkeysettings(int selected)
 
 
 		menu_subitem[sel & 0xff] = "    ";
-		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 		newkey = osd_read_key_immediate();
 		if (newkey != OSD_KEY_NONE)
 		{
 			sel &= 0xff;
 
-			if (key_to_pseudo_code(newkey) != newkey)	/* pseudo key code ? */
+			if (osd_key_invalid(newkey))	/* pseudo key code? */
 				entry[sel]->keyboard = IP_KEY_DEFAULT;
+				/* BUG: hitting a pseudo-key to restore the default for a custom key removes it */
 			else
 				entry[sel]->keyboard = newkey;
 
@@ -1181,21 +1244,21 @@ static int setkeysettings(int selected)
 	}
 
 
-	displaymenu(menu_item,menu_subitem,sel,0);
+	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1229,6 +1292,7 @@ static int setjoysettings(int selected)
 	const char *menu_item[40];
 	const char *menu_subitem[40];
 	struct InputPort *entry[40];
+	char flag[40];
 	int i,sel;
 	struct InputPort *in;
 	int total;
@@ -1267,7 +1331,13 @@ static int setjoysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
+		{
 			menu_subitem[i] = osd_joy_name(default_joy(entry[i]));
+			if (entry[i]->joystick != IP_JOY_DEFAULT)
+				flag[i] = 1;
+			else
+				flag[i] = 0;
+		}
 		else menu_subitem[i] = 0;	/* no subitem */
 	}
 
@@ -1278,7 +1348,7 @@ static int setjoysettings(int selected)
 
 
 		menu_subitem[sel & 0xff] = "    ";
-		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
 		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -1335,21 +1405,21 @@ static int setjoysettings(int selected)
 	}
 
 
-	displaymenu(menu_item,menu_subitem,sel,0);
+	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1402,7 +1472,7 @@ static int calibratejoysticks(int selected)
 			calibration_started = 0;
 			sel = -1;
 		}
-		else if (osd_key_pressed_memory(OSD_KEY_ENTER))
+		else if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 		{
 			osd_joystick_calibrate();
 			sel &= 0xff;
@@ -1559,13 +1629,13 @@ static int settraksettings(int selected)
 				int oldkey = default_key(entry[(sel & 0xff)/ENTRIES]);
 
 				menu_subitem[sel & 0xff] = "    ";
-				displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+				displaymenu(menu_item,menu_subitem,0,sel & 0xff,3);
 				newkey = osd_read_key_immediate();
 				if (newkey != OSD_KEY_NONE)
 				{
 					sel &= 0xff;
 
-					if (key_to_pseudo_code(newkey) != newkey)	/* pseudo key code ? */
+					if (osd_key_invalid(newkey))	/* pseudo key code ? */
 						newkey = 0;/*IP_KEY_DEFAULT;*/
 
 					if (sel % ENTRIES)
@@ -1592,7 +1662,7 @@ static int settraksettings(int selected)
 
 
 				menu_subitem[sel & 0xff] = "    ";
-				displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+				displaymenu(menu_item,menu_subitem,0,sel & 0xff,3);
 
 				/* Check all possible joystick values for switch or button press */
 				newjoy = -1;
@@ -1657,21 +1727,21 @@ static int settraksettings(int selected)
 	}
 
 
-	displaymenu(menu_item,menu_subitem,sel,arrowize);
+	displaymenu(menu_item,menu_subitem,0,sel,arrowize);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 	{
 		if (sel < total2 - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total2 - 1;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 	{
 		if ((sel % ENTRIES) == 4)
 		/* keyboard/joystick delta */
@@ -1710,7 +1780,7 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 	{
 		if ((sel % ENTRIES) == 4)
 		/* keyboard/joystick delta */
@@ -1749,7 +1819,7 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		if (sel == total2 - 1) sel = -1;
 		else if ((sel % ENTRIES) <= 3) sel |= 0x100;	/* we'll ask for a key/joy */
@@ -1769,8 +1839,6 @@ static int settraksettings(int selected)
 
 	return sel + 1;
 }
-
-
 
 static int mame_stats(int selected)
 {
@@ -1818,19 +1886,21 @@ static int mame_stats(int selected)
 		strcat (buf, temp);
 	}
 
-	displaymessagewindow(buf);
+	{
+		/* menu system, use the normal menu keys */
+		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
-			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
-			|| osd_key_pressed_memory(OSD_KEY_ENTER)
-			|| osd_key_pressed_memory(OSD_KEY_LEFT)
-			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
-			|| osd_key_pressed_memory(OSD_KEY_UP)
-			|| osd_key_pressed_memory(OSD_KEY_DOWN))
-		sel = -1;
+		displaymessagewindow(buf);
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
-		sel = -2;
+		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			sel = -2;
+	}
 
 	if (sel == -1 || sel == -2)
 	{
@@ -1844,32 +1914,37 @@ static int mame_stats(int selected)
 int showcopyright(void)
 {
 #ifndef macintosh /* LBO - This text is displayed in a dialog box. */
-	int key;
-	struct DisplayText dt[2];
-
-
-	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
+	int done;
+	char buf[] =
+			"DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
 			"APPLICATION WITH ANY ROM IMAGES.\n"
 			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
 			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
-			"OF ANY ROM IMAGES.";
+			"OF ANY ROM IMAGES.\n"
+			"\n"
+			"IF YOU DON'T AGREE WITH THE ABOVE, PRESS ESC.\n"
+			"If you agree, type OK";
 
-	dt[0].color = DT_COLOR_RED;
-	dt[0].x = 0;
-	dt[0].y = 0;
-	dt[1].text = 0;
-	displaytext(dt,1,1);
+	displaymessagewindow(buf);
 
-	key = osd_read_key(1);
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+	done = 0;
+	do
+	{
+		osd_update_video_and_audio();
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
+				osd_key_pressed_memory(OSD_KEY_CANCEL))
+			return 1;
+		if (osd_key_pressed_memory(OSD_KEY_O) ||
+				osd_key_pressed_memory(OSD_KEY_UI_LEFT))
+			done = 1;
+		if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
+				osd_key_pressed_memory(OSD_KEY_UI_RIGHT)))
+			done = 2;
+	} while (done < 2);
 
 	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_video_and_audio();
 
-	if (key == OSD_KEY_FAST_EXIT ||
-		key == OSD_KEY_CANCEL ||
-		key == OSD_KEY_ESC)
-		return 1;
 #endif
 
 	return 0;
@@ -1886,19 +1961,33 @@ static int displaycredits(int selected)
 
 	sprintf(buf,"The following people\ncontributed to this driver:\n\n%s",Machine->gamedrv->credits);
 
-	displaymessagewindow(buf);
+	if (sel == -1)
+	{
+		/* startup info, ask for any key */
+		strcat(buf,"\n\tPress any key");
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
-			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
-			|| osd_key_pressed_memory(OSD_KEY_ENTER)
-			|| osd_key_pressed_memory(OSD_KEY_LEFT)
-			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
-			|| osd_key_pressed_memory(OSD_KEY_UP)
-			|| osd_key_pressed_memory(OSD_KEY_DOWN))
-		sel = -1;
+		displaymessagewindow(buf);
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
-		sel = -2;
+		sel = 0;
+		if (osd_key_pressed_memory (OSD_KEY_ANY))
+			sel = -1;
+	}
+	else
+	{
+		/* menu system, use the normal menu keys */
+		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
+
+		displaymessagewindow(buf);
+
+		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			sel = -2;
+	}
 
 	if (sel == -1 || sel == -2)
 	{
@@ -1911,7 +2000,7 @@ static int displaycredits(int selected)
 
 void showcredits(void)
 {
-	while (displaycredits(1) == 1)
+	while (displaycredits(0) == 1)
 		osd_update_video_and_audio();
 	osd_update_video_and_audio();
 }
@@ -1989,23 +2078,36 @@ static int displaygameinfo(int selected)
 		else strcat(buf,"(static)\n");
 	}
 
-	strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
-	strcat(buf,mameversion);
 
+	if (sel == -1)
+	{
+		/* startup info, print MAME version and ask for any key */
+		strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
+		strcat(buf,mameversion);
+		strcat(buf,"\n\tPress any key");
 
-	displaymessagewindow(buf);
+		displaymessagewindow(buf);
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
-			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
-			|| osd_key_pressed_memory(OSD_KEY_ENTER)
-			|| osd_key_pressed_memory(OSD_KEY_LEFT)
-			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
-			|| osd_key_pressed_memory(OSD_KEY_UP)
-			|| osd_key_pressed_memory(OSD_KEY_DOWN))
-		sel = -1;
+		sel = 0;
+		if (osd_key_pressed_memory (OSD_KEY_ANY))
+			sel = -1;
+	}
+	else
+	{
+		/* menu system, use the normal menu keys */
+		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
-		sel = -2;
+		displaymessagewindow(buf);
+
+		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			sel = -2;
+	}
 
 	if (sel == -1 || sel == -2)
 	{
@@ -2019,13 +2121,15 @@ static int displaygameinfo(int selected)
 int showgamewarnings(void)
 {
 	int i;
-	int key;
 	int counter;
 	char buf[2048];
 	struct DisplayText dt[3];
 
 	if (Machine->gamedrv->flags)
 	{
+		int done;
+
+
 		strcpy(buf, "There are known problems with this game:\n\n");
 
 		if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
@@ -2056,7 +2160,7 @@ int showgamewarnings(void)
 					if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
 					{
 						if (foundworking == 0)
-							strcat(buf,"\n\n\nThere are clones of this game which work. They are:\n\n");
+							strcat(buf,"\n\nThere are clones of this game which work. They are:\n\n");
 						foundworking = 1;
 
 						sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
@@ -2066,29 +2170,24 @@ int showgamewarnings(void)
 			}
 		}
 
-		strcat(buf,"\n\n\nType OK to continue");
+		strcat(buf,"\n\nType OK to continue");
 
-		dt[0].text = buf;
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext(dt,1,1);
+		displaymessagewindow(buf);
 
+		done = 0;
 		do
 		{
-			key = osd_read_key(1);
-			if (key == OSD_KEY_ESC ||
-				key == OSD_KEY_CANCEL ||
-				key == OSD_KEY_FAST_EXIT)
-			{
-				while (osd_key_pressed(key)) ;	/* wait for key release */
+			osd_update_video_and_audio();
+			if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
+					osd_key_pressed_memory(OSD_KEY_CANCEL))
 				return 1;
-			}
-		} while (key != OSD_KEY_O && key != OSD_KEY_LEFT);
-
-		while (osd_key_pressed(OSD_KEY_K) == 0 && osd_key_pressed(OSD_KEY_RIGHT) == 0) ;
-		while (osd_key_pressed(OSD_KEY_K) || osd_key_pressed(OSD_KEY_RIGHT)) ;
+			if (osd_key_pressed_memory(OSD_KEY_O) ||
+					osd_key_pressed_memory(OSD_KEY_UI_LEFT))
+				done = 1;
+			if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
+					osd_key_pressed_memory(OSD_KEY_UI_RIGHT)))
+				done = 2;
+		} while (done < 2);
 	}
 
 
@@ -2097,7 +2196,7 @@ int showgamewarnings(void)
 	/* don't stay on screen for more than 10 seconds */
 	counter = 10 * Machine->drv->frames_per_second;
 
-	while (displaygameinfo(1) == 1 && --counter > 0)
+	while (displaygameinfo(0) == 1 && --counter > 0)
 		osd_update_video_and_audio();
 	osd_update_video_and_audio();
 
@@ -2125,7 +2224,7 @@ static void setup_menu_init(void)
 
 	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
 	menu_item[menu_total] = "Default Keys"; menu_action[menu_total++] = UI_DEFKEY;
-	menu_item[menu_total] = "Keys"; menu_action[menu_total++] = UI_KEY;
+	menu_item[menu_total] = "Keys for This Game"; menu_action[menu_total++] = UI_KEY;
 	menu_item[menu_total] = "Joystick"; menu_action[menu_total++] = UI_JOY;
 
 	/* Determine if there are any analog controls */
@@ -2287,7 +2386,7 @@ static int setup_menu(int selected)
 
 			case UI_CHEAT:
 osd_sound_enable(0);
-while (osd_key_pressed(OSD_KEY_ENTER))
+while (osd_key_pressed(OSD_KEY_UI_SELECT))
 	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
@@ -2299,15 +2398,15 @@ sel = sel & 0xff;
 	}
 
 
-	displaymenu(menu_item,0,sel,0);
+	displaymenu(menu_item,0,0,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 		sel = (sel + 1) % menu_total;
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 		sel = (sel + menu_total - 1) % menu_total;
 
-	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 	{
 		switch (menu_action[sel])
 		{
@@ -2537,13 +2636,13 @@ static int on_screen_display(int selected)
 	else sel = selected - 1;
 
 	increment = 0;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
         increment = -1;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
         increment = 1;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 		sel = (sel + 1) % onscrd_total_items;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
 
 	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);
@@ -2671,19 +2770,19 @@ int handle_user_interface(void)
 			soundlatch_w(0,jukebox_selected);
 			cpu_cause_interrupt(1,Z80_NMI_INT);
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 		{
 			jukebox_selected = (jukebox_selected + 1) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 		{
 			jukebox_selected = (jukebox_selected - 1) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
 		{
 			jukebox_selected = (jukebox_selected + 16) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
 		{
 			jukebox_selected = (jukebox_selected - 16) & 0xff;
 		}
@@ -2719,7 +2818,7 @@ int handle_user_interface(void)
 			osd_net_sync();
 #endif /* MAME_NET */
 			osd_profiler(OSD_PROFILE_VIDEO);
-			if (need_to_clear_bitmap)
+			if (need_to_clear_bitmap || bitmap_dirty)
 			{
 				osd_clearbitmap(Machine->scrbitmap);
 				need_to_clear_bitmap = 0;

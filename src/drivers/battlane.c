@@ -10,7 +10,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 int battlane_vh_start(void);
 void battlane_vh_stop(void);
@@ -387,7 +387,7 @@ static struct MachineDriver machine_driver =
 
 ROM_START( battlane_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "da00-5",       0x4000, 0x8000, 0x85b4ed73 )	/* first half goes here... */
+	/* first half of da00-5 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-5",       0x8000, 0x8000, 0x7a6c3f02 )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
@@ -409,7 +409,7 @@ ROM_END
 
 ROM_START( battlan2_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "da00-3",       0x4000, 0x8000, 0x7a0a5d58 )	/* first half goes here... */
+	/* first half of da00-3 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-3",       0x8000, 0x8000, 0xd9e40800 )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
@@ -421,7 +421,7 @@ ROM_START( battlan2_rom )
 	ROM_LOAD( "da07",         0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
 	ROM_REGION(0x10000)     /* 64K for slave CPU */
-	ROM_LOAD( "da00-3",       0x0000, 0x8000, 0x7a0a5d58 )	/* ...second half goes here */
+	ROM_LOAD( "da00-3",       0x0000, 0x8000, 0x7a0a5d58 )
 	ROM_LOAD( "da02-2",       0x8000, 0x8000, 0x69d8dafe )
 
 	ROM_REGION(0x0040)     /* PROMs (function unknown) */
@@ -431,7 +431,7 @@ ROM_END
 
 ROM_START( battlan3_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "bl_04.rom",    0x4000, 0x8000, 0x5681564c )	/* first half goes here... */
+	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "bl_05.rom",    0x8000, 0x8000, 0x001c4bbe )
 
 	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
@@ -453,6 +453,22 @@ ROM_END
 
 
 
+static void battlane_decode(void)
+{
+	unsigned char *src,*dest;
+	int A;
+
+	/* no encryption, but one ROM is shared among two CPUs. We loaded it into the */
+	/* second CPU address space, let's copy it to the first CPU's one */
+	src = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	dest = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	for(A = 0;A < 0x4000;A++)
+		dest[A + 0x4000] = src[A];
+}
+
+
+
 struct GameDriver battlane_driver =
 {
 	__FILE__,
@@ -467,7 +483,7 @@ struct GameDriver battlane_driver =
 	0,
 
 	battlane_rom,
-	0, 0,
+	battlane_decode, 0,
 	0,
 	0,
 
@@ -493,7 +509,7 @@ struct GameDriver battlan2_driver =
 	0,
 
 	battlan2_rom,
-	0, 0,
+	battlane_decode, 0,
 	0,
 	0,
 
@@ -519,7 +535,7 @@ struct GameDriver battlan3_driver =
 	0,
 
 	battlan3_rom,
-	0, 0,
+	battlane_decode, 0,
 	0,
 	0,
 

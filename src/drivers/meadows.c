@@ -101,7 +101,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "S2650/s2650.h"
+#include "cpu/s2650/s2650.h"
+
 
 /*************************************************************/
 /*                                                           */

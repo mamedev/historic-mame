@@ -7,7 +7,7 @@ Data East machine functions - Bryan McPhail, mish@tendril.force9.net
 *******************************************************************************/
 
 #include "driver.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 extern unsigned char *dec0_ram;
 static int GAME,i8751_return;
@@ -419,13 +419,13 @@ WRITE_WORD (&RAM[0xb3e],0x8008);
 
 static void baddudes_custom_memory(void)
 {
-	install_mem_read_handler(0, 0xff8212, 0xff8213, dude_skip);
+//	install_mem_read_handler(0, 0xff8212, 0xff8213, dude_skip);
 	GAME=2;
 }
 
 static void robocop_custom_memory(void)
 {
-	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
+//	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
 	install_mem_read_handler (0, 0x242800, 0x243fff, MRA_BANK3); /* Extra ram bank */
 	install_mem_write_handler(0, 0x242800, 0x243fff, MWA_BANK3);
 }
@@ -440,12 +440,12 @@ static void hippodrm_custom_memory(void)
 
 static void midres_custom_memory(void)
 {
-	install_mem_read_handler(0, 0x10207c, 0x10207d, midres_skip);
+//	install_mem_read_handler(0, 0x10207c, 0x10207d, midres_skip);
 }
 
 static void slyspy_custom_memory(void)
 {
-	install_mem_read_handler(0, 0x306018, 0x306019, slyspy_skip);
+//	install_mem_read_handler(0, 0x306018, 0x306019, slyspy_skip);
 }
 
 void dec0_custom_memory(void)

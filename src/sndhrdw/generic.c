@@ -266,12 +266,20 @@ int sound_start(void)
 				if (MSM5205_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
+			case SOUND_UPD7759:
+				if (UPD7759_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
 			case SOUND_ASTROCADE:
 				if (astrocade_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 			case SOUND_K007232:
 				if (K007232_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
+			case SOUND_HC55516:
+				if (CVSD_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
 		}
@@ -375,11 +383,17 @@ void sound_stop(void)
 			case SOUND_MSM5205:
 				MSM5205_sh_stop();
 				break;
+			case SOUND_UPD7759:
+				UPD7759_sh_stop();
+				break;
 			case SOUND_ASTROCADE:
 				astrocade_sh_stop();
 				break;
 			case SOUND_K007232:
 				K007232_sh_stop();
+				break;
+			case SOUND_HC55516:
+				CVSD_sh_stop();
 				break;
 		}
 		totalsound++;
@@ -475,11 +489,17 @@ void sound_update(void)
 			case SOUND_MSM5205:
 				MSM5205_sh_update();
 				break;
+			case SOUND_UPD7759:
+				UPD7759_sh_update();
+				break;
 			case SOUND_ASTROCADE:
 				astrocade_sh_update();
 				break;
 			case SOUND_K007232:
 				K007232_sh_update();
+				break;
+			case SOUND_HC55516:
+				CVSD_sh_update();
 				break;
 		}
 

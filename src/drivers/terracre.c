@@ -35,7 +35,7 @@ VRAM(Sprites)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M68000/M68000.h"
+#include "cpu/m68000/m68000.h"
 
 unsigned char* terrac_ram;
 
@@ -56,20 +56,22 @@ void terracre_r_write (int offset,int data)
 {
 	switch (offset)
 	{
-		case 0: /* ??? */
-			break;
+//		case 0: /* ??? */
+//			break;
 		case 2: /* Scroll Y */
 			COMBINE_WORD_MEM(terrac_scrolly,data);
+			return;
 			break;
-		case 4: /* ??? */
-			break;
-		case 0xa: /* ??? */
-			break;
+//		case 4: /* ??? */
+//			break;
+//		case 0xa: /* ??? */
+//			break;
 		case 0xc: /* sound command */
 			soundlatch_w(offset,((data & 0x7f) << 1) | 1);
+			return;
 			break;
-		case 0xe: /* ??? */
-			break;
+//		case 0xe: /* ??? */
+//			break;
 	}
 
 	if( errorlog ) fprintf( errorlog, "OUTPUT [%x] <- %08x\n", offset,data );

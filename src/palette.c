@@ -901,7 +901,7 @@ if (errorlog) fprintf(errorlog,"Error: no way to shrink the palette to 256 color
 
 	if (need_refresh)
 	{
-		if (errorlog)
+		if (errorlog && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT) == 0)
 		{
 			int used;
 

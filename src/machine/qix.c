@@ -9,8 +9,8 @@
 
 #include "driver.h"
 #include "timer.h"
-#include "M6809/M6809.h"
-#include "M6805/M6805.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6805/m6805.h"
 #include "6821pia.h"
 
 static int sdungeon_coin_r (int offset);

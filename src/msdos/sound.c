@@ -6,7 +6,6 @@
 #include <conio.h>
 #include <time.h>
 #include <audio.h>
-#include "ym2203.h"
 
 /* cut down Allegro size */
 DECLARE_DIGI_DRIVER_LIST()
@@ -17,11 +16,9 @@ DECLARE_MIDI_DRIVER_LIST()
 #define NUMVOICES 16
 HAC hVoice[NUMVOICES];
 LPAUDIOWAVE lpWave[NUMVOICES];
-unsigned char No_FM = 1;
-unsigned char No_OPL = 1;
-unsigned char RegistersYM[264*5];  /* MAX 5 YM-2203 */
+static int used_3812;
 int nominal_sample_rate;
-int soundcard,usefm,usestereo;
+int soundcard,usestereo;
 
 AUDIOINFO info;
 AUDIOCAPS caps;
@@ -39,8 +36,6 @@ int msdos_init_sound(void)
 {
 	int i;
 	char *blaster_env;
-
-	No_OPL = No_FM = !usefm;
 
 	/* Ask the user if no soundcard was chosen */
 	if (soundcard == -1)
@@ -184,29 +179,7 @@ int msdos_init_sound(void)
 	}
 
 
-	{
-		int totalsound = 0;
-
-
-		while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
-		{
-			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM2203 &&
-					((struct YM2203interface *)Machine->drv->sound[totalsound].sound_interface)->handler[0])
-				No_OPL = No_FM = 1;      /* YM2203 must trigger interrupts, cannot emulate it with the OPL */
-
-			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM3812
-					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM3526
-					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM2413)
-			{
-				No_FM = 1;      /* can't use the OPL chip to emulate the YM2203 */
-				No_OPL = 0;     /* but the OPL chip is used */
-			}
-
-			totalsound++;
-		}
-	}
-
-	if (!No_FM) {
+#if 0
 		/* Get Soundblaster base address from environment variabler BLASTER   */
 		/* Soundblaster OPL base port, at some compatibles this must be 0x388 */
 
@@ -223,13 +196,9 @@ int msdos_init_sound(void)
 			while (blaster_env[++i] != 0x20) {
 				BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
 			}
-
-			DelayReg=4;   /* Delay after an OPL register write increase it to avoid problems ,but you'll lose speed */
-			DelayData=7;  /* same as above but after an OPL data write this usually is greater than above */
-			InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
 		}
-	}
-
+#endif
+	used_3812 = 0;
 
 	osd_set_mastervolume(0);	/* start at maximum volume */
 
@@ -242,9 +211,20 @@ void msdos_shutdown_sound(void)
 	{
 		int n;
 
-		if (!No_OPL)
-		   InitOpl();  /* Do this only before quiting , or some cards will make noise during playing */
-				   /* It resets entire OPL registers to zero */
+		if (used_3812)
+		{
+			/* silence the OPL */
+			for (n = 0x40;n <= 0x55;n++)
+			{
+				osd_ym3812_control(n);
+				osd_ym3812_write(0x3f);
+			}
+			for (n = 0x60;n <= 0x95;n++)
+			{
+				osd_ym3812_control(n);
+				osd_ym3812_write(0xff);
+			}
+		}
 
 		/* stop and release voices */
 		for (n = 0; n < NUMVOICES; n++)
@@ -337,7 +317,8 @@ static int stream_cache_volume[NUMVOICES];
 static int stream_cache_pan[NUMVOICES];
 static int stream_cache_bits[NUMVOICES];
 static int streams_playing;
-#define NUM_BUFFERS 3	/* the higher number, the better the performance with frameskip */
+#define NUM_BUFFERS 3	/* raising this number should improve performance with frameskip, */
+						/* but also increases the latency. */
 
 static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan,int bits)
 {
@@ -537,26 +518,6 @@ int msdos_update_audio(void)
 
 
 
-void osd_ym2203_write(int n, int r, int v)
-{
-      if (No_FM) return;
-      else {
-	YMNumber = n;
-	RegistersYM[r+264*n] = v;
-	if (r == 0x28) SlotCh();
-	return;
-      }
-}
-
-
-void osd_ym2203_update(void)
-{
-      if (No_FM) return;
-      YM2203();  /* this is absolutely necesary */
-}
-
-
-
 static int attenuation = 0;
 static int master_volume = 256;
 
@@ -618,4 +579,6 @@ void osd_ym3812_write(int data)
 
     tenmicrosec();
     outportb(0x389,data);
+
+	used_3812 = 1;
 }

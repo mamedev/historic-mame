@@ -136,7 +136,6 @@ Changes:
 
 Known issues:
 
-* The rev1 set doesn't seem to work with the trackball
 * Are coins supposed to take over a second to register?
 * Need to confirm CPU and Pokey clocks
 
@@ -159,14 +158,29 @@ int centiped_interrupt(void);	/* in vidhrdw */
 
 
 
-void centiped_led_w(int offset,int data)
+static void centiped_led_w(int offset,int data)
 {
 	osd_led_w(offset,~data >> 7);
 }
 
+static int centipdb_rand_r(int offset)
+{
+	return rand() % 0xff;
+}
 
+static void centipdb_AY8910_w(int offset, int data)
+{
+	AY8910_control_port_0_w(0, offset);
+	AY8910_write_port_0_w(0, data);
+}
 
-static struct MemoryReadAddress readmem[] =
+static int centipdb_AY8910_r(int offset)
+{
+	AY8910_control_port_0_w(0, offset);
+	return AY8910_read_port_0_r(0);
+}
+
+static struct MemoryReadAddress centiped_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
@@ -183,7 +197,26 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+/* Same as the regular one, except it uses an AY8910 and an external RNG */
+static struct MemoryReadAddress centipdb_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0400, 0x07ff, MRA_RAM },
+	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
+	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
+	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
+	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
+	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
+	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
+	{ 0x1000, 0x100f, centipdb_AY8910_r },
+	{ 0x1700, 0x173f, atari_vg_earom_r },
+	{ 0x1780, 0x1780, centipdb_rand_r },
+	{ 0x2000, 0x3fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress centiped_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
@@ -201,95 +234,121 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
+/* Same as the regular one, except it uses an AY8910 */
+static struct MemoryWriteAddress centipdb_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
+	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
+	{ 0x1000, 0x100f, centipdb_AY8910_w },
+	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
+	{ 0x1600, 0x163f, atari_vg_earom_w },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
+	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c03, 0x1c04, centiped_led_w },
+	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
+	{ 0x2000, 0x2000, watchdog_reset_w },
+	{ 0x2000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
 
 
-INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 */
-	/* The lower 4 bits and bit 7 are for trackball x input. */
-	/* They are handled by fake input port 6 and a custom routine. */
-	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME (0x10, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Upright" )
-	PORT_DIPSETTING (   0x10, "Cocktail" )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+/* The input ports are identical for the real one and the bootleg one, except
+   that one of the languages is Italian in the bootleg one instead of Spanish */
 
-	PORT_START	/* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
-
-	PORT_START	/* IN2 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
-	/* The lower 4 bits are the input, and bit 7 is the direction. */
-	/* The state of bit 7 does not change if the trackball is not moved.*/
-
-	PORT_START	/* IN3 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-
-	PORT_START	/* IN4 */
-	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x01, "German" )
-	PORT_DIPSETTING (   0x02, "French" )
-	PORT_DIPSETTING (   0x03, "Spanish" )
-	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "2" )
-	PORT_DIPSETTING (   0x04, "3" )
-	PORT_DIPSETTING (   0x08, "4" )
-	PORT_DIPSETTING (   0x0c, "5" )
-	PORT_DIPNAME (0x30, 0x10, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "10000" )
-	PORT_DIPSETTING (   0x10, "12000" )
-	PORT_DIPSETTING (   0x20, "15000" )
-	PORT_DIPSETTING (   0x30, "20000" )
-	PORT_DIPNAME (0x40, 0x40, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x40, "Easy" )
-	PORT_DIPSETTING (   0x00, "Hard" )
-	PORT_DIPNAME (0x80, 0x00, "Credit Minimum", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "1" )
-	PORT_DIPSETTING (   0x80, "2" )
-
-	PORT_START	/* IN5 */
-	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Free Play" )
-	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
-	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
-
-	PORT_START	/* IN6, fake trackball input port. */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+#define PORTS(GAMENAME, FOURTH_LANGUAGE)										\
+																				\
+INPUT_PORTS_START( GAMENAME##_input_ports )										\
+	PORT_START	/* IN0 */														\
+	/* The lower 4 bits and bit 7 are for trackball x input. */					\
+	/* They are handled by fake input port 6 and a custom routine. */			\
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )								\
+	PORT_DIPNAME (0x10, 0x00, "Cabinet", IP_KEY_NONE )							\
+	PORT_DIPSETTING (   0x00, "Upright" )										\
+	PORT_DIPSETTING (   0x10, "Cocktail" )										\
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )	\
+	PORT_DIPSETTING(    0x20, "Off" )											\
+	PORT_DIPSETTING(    0x00, "On" )											\
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )								\
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )								\
+																				\
+	PORT_START	/* IN1 */														\
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )								\
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )								\
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )								\
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )					\
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )									\
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )									\
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )									\
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )									\
+																				\
+	PORT_START	/* IN2 */														\
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )  \
+	/* The lower 4 bits are the input, and bit 7 is the direction. */			\
+	/* The state of bit 7 does not change if the trackball is not moved.*/		\
+																				\
+	PORT_START	/* IN3 */														\
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )		\
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )	\
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )				\
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )				\
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )				\
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )				\
+																				\
+	PORT_START	/* IN4 */														\
+	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )							\
+	PORT_DIPSETTING (   0x00, "English" )										\
+	PORT_DIPSETTING (   0x01, "German" )										\
+	PORT_DIPSETTING (   0x02, "French" )										\
+	PORT_DIPSETTING (   0x03, FOURTH_LANGUAGE )									\
+	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )							\
+	PORT_DIPSETTING (   0x00, "2" )												\
+	PORT_DIPSETTING (   0x04, "3" )												\
+	PORT_DIPSETTING (   0x08, "4" )												\
+	PORT_DIPSETTING (   0x0c, "5" )												\
+	PORT_DIPNAME (0x30, 0x10, "Bonus Life", IP_KEY_NONE )						\
+	PORT_DIPSETTING (   0x00, "10000" )											\
+	PORT_DIPSETTING (   0x10, "12000" )											\
+	PORT_DIPSETTING (   0x20, "15000" )											\
+	PORT_DIPSETTING (   0x30, "20000" )											\
+	PORT_DIPNAME (0x40, 0x40, "Difficulty", IP_KEY_NONE )						\
+	PORT_DIPSETTING (   0x40, "Easy" )											\
+	PORT_DIPSETTING (   0x00, "Hard" )											\
+	PORT_DIPNAME (0x80, 0x00, "Credit Minimum", IP_KEY_NONE )					\
+	PORT_DIPSETTING (   0x00, "1" )												\
+	PORT_DIPSETTING (   0x80, "2" )												\
+																				\
+	PORT_START	/* IN5 */														\
+	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )							\
+	PORT_DIPSETTING (   0x00, "Free Play" )										\
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )								\
+	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )								\
+	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )								\
+	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )						\
+	PORT_DIPSETTING (   0x00, "*1" )											\
+	PORT_DIPSETTING (   0x04, "*4" )											\
+	PORT_DIPSETTING (   0x08, "*5" )											\
+	PORT_DIPSETTING (   0x0c, "*6" )											\
+	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )						\
+	PORT_DIPSETTING (   0x00, "*1" )											\
+	PORT_DIPSETTING (   0x10, "*2" )											\
+	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )						\
+	PORT_DIPSETTING (   0x00, "None" )											\
+	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )								\
+	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )								\
+	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )								\
+	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )								\
+	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )								\
+																				\
+	PORT_START	/* IN6, fake trackball input port. */							\
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )	\
 INPUT_PORTS_END
+
+PORTS(centiped, "Spanish")
+PORTS(centipdb, "Italian")
 
 
 static struct GfxLayout charlayout =
@@ -346,44 +405,63 @@ static struct POKEYinterface pokey_interface =
 	{ 0 },
 };
 
-static struct MachineDriver machine_driver =
+static struct AY8910interface ay8910_interface =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			12096000/8,	/* 1.512 Mhz (slows down to 0.75MHz while accessing playfield RAM) */
-			0,
-			readmem,writemem,0,0,
-			centiped_interrupt,4
-		}
-	},
-	60, 1460,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	centiped_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	4+4*4, 4+4*4,
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	centiped_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
+	1,	/* 1 chips */
+	12096000/8,	/* 1.512 MHz */
+	{ 0x30ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
+
+#define DRIVER(GAMENAME, SOUND_TYPE, SOUND_INTERFACE)							\
+																				\
+static struct MachineDriver GAMENAME##_machine_driver =							\
+{																				\
+	/* basic machine hardware */												\
+	{																			\
+		{																		\
+			CPU_M6502,															\
+			12096000/8,	/* 1.512 Mhz (slows down to 0.75MHz while accessing playfield RAM) */	\
+			0,																	\
+			GAMENAME##_readmem,GAMENAME##_writemem,0,0,							\
+			centiped_interrupt,4												\
+		}																		\
+	},																			\
+	60, 1460,	/* frames per second, vblank duration */						\
+	1,	/* single CPU, no need for interleaving */								\
+	centiped_init_machine,														\
+																				\
+	/* video hardware */														\
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },									\
+	gfxdecodeinfo,																\
+	4+4*4, 4+4*4,																\
+	0,																			\
+																				\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,				\
+	0,																			\
+	generic_vh_start,															\
+	generic_vh_stop,															\
+	centiped_vh_screenrefresh,													\
+																				\
+	/* sound hardware */														\
+	0,0,0,0,																	\
+	{																			\
+		{																		\
+			SOUND_TYPE,															\
+			SOUND_INTERFACE,													\
+		}																		\
+	}																			\
+};
+
+
+DRIVER(centiped, SOUND_POKEY, &pokey_interface)
+
+/* In the bootleg the Pokey has been replaced by an AY8910 */
+DRIVER(centipdb, SOUND_AY8910, &ay8910_interface)
 
 
 /***************************************************************************
@@ -418,6 +496,19 @@ ROM_START( centipd2_rom )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
+ROM_START( centipdb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, 0x8a744e57 )
+	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, 0xbb897b10 )
+	ROM_LOAD( "olympia.c30",  0x3000, 0x0800, 0x2297c2ac )
+	ROM_LOAD( "olympia.c31",  0x3800, 0x0800, 0xcc529d6b )
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, 0xd91b9724 )
+	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
+ROM_END
+
 
 struct GameDriver centiped_driver =
 {
@@ -429,7 +520,7 @@ struct GameDriver centiped_driver =
 	"Atari",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&machine_driver,
+	&centiped_machine_driver,
 	0,
 
 	centiped_rom,
@@ -437,7 +528,7 @@ struct GameDriver centiped_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	centiped_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -454,8 +545,8 @@ struct GameDriver centipd2_driver =
 	"1980",
 	"Atari",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	GAME_NOT_WORKING,
-	&machine_driver,
+	0,
+	&centiped_machine_driver,
 	0,
 
 	centipd2_rom,
@@ -463,7 +554,33 @@ struct GameDriver centipd2_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	centiped_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver centipdb_driver =
+{
+	__FILE__,
+	&centiped_driver,
+	"centipdb",
+	"Centipede (bootleg)",
+	"1980",
+	"bootleg",
+	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
+	0,
+	&centipdb_machine_driver,
+	0,
+
+	centipdb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	centipdb_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -26,11 +26,15 @@ struct RomModule
 /* the macros below. */
 
 #define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
-#define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd */
+/* Masks for ROM regions */
 #define ROMFLAG_DISPOSE       0x80000000           /* Dispose of this region when done */
 #define ROMFLAG_IGNORE        0x40000000           /* BM: Ignored - drivers must load this region themselves */
+
+/* Masks for individual ROMs */
+#define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd, or nibbles, low or high */
 #define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
 #define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
+#define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
 
 /* start of table */
 #define ROM_START(name) static struct RomModule name[] = {
@@ -49,6 +53,12 @@ struct RomModule
 #define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
 /* restart loading the previous ROM to a new address */
 #define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
+
+/* These are for nibble-wide ROMs, can be used with code or data */
+#define ROM_LOAD_NIB_LOW(name,offset,length,crc) { name, offset, length | ROMFLAG_NIBBLE, crc },
+#define ROM_LOAD_NIB_HIGH(name,offset,length,crc) { name, offset, length | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, crc },
+#define ROM_RELOAD_NIB_LOW(offset,length) { (char *)-1, offset, length | ROMFLAG_NIBBLE, 0 },
+#define ROM_RELOAD_NIB_HIGH(offset,length) { (char *)-1, offset, length | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, 0 },
 
 /* The following ones are for code ONLY - don't use for graphics data!!! */
 /* load the ROM at even/odd addresses. Useful with 16 bit games */

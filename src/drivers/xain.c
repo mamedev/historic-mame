@@ -27,7 +27,7 @@ Remaining Issues:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 unsigned char *xain_sharedram;
 static int xain_timer = 0xff;
@@ -554,7 +554,7 @@ struct GameDriver xsleena_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver solarwar_driver =
@@ -580,5 +580,5 @@ struct GameDriver solarwar_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

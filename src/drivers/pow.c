@@ -8,7 +8,6 @@ Issues:
 	Wrong ADPCM samples are sometimes played.
 	Priority is sometimes wrong, eg, end of first level - player goes behind
 	ladder instead of in front...
-	Title screen is wrong (view bottom layer with TRANSPARENCY_NONE to see).
 	Japanese text is wrong (I can't find bank select).
 	A bit slow...
 
@@ -16,7 +15,7 @@ Issues:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
@@ -46,15 +45,9 @@ static int dip_2_r(int offset)
 
 static void pow_sound_w(int offset, int data)
 {
-	int mybyte=(data>>8)&0xff;
-
-	if (mybyte>0xbf) {
-                ADPCM_trigger(0,mybyte);
-	}
-	else {
+	    int mybyte=(data>>8)&0xff;
 		soundlatch_w(0,mybyte);
 		cpu_cause_interrupt(1,Z80_NMI_INT);
-	}
 }
 
 static int high_ret(int offset) { return 0xffff; }
@@ -154,11 +147,21 @@ static struct IOReadPort pow_sound_readport[] =
    { -1 }
 };
 
-static struct IOWritePort pow_sound_writeport[] =
+static void D7759_write_port_0_w(int offset, int data)
+ {
+	UPD7759_reset_w (0,0);
+	UPD7759_message_w(offset,data);
+	UPD7759_start_w (0,1);
+
+ }
+
+
+ static struct IOWritePort pow_sound_writeport[] =
 {
    { 0x00, 0x00, YM3812_control_port_0_w },
    { 0x20, 0x20, YM3812_write_port_0_w },
-   /* 0x40 & 0x80 - adpcm ports, an unknown chip */
+   { 0x40, 0x40, D7759_write_port_0_w},
+   //{ 0x80, 0x80, }, /* IRQ ack? */
    { -1 }
 };
 
@@ -373,13 +376,14 @@ static struct YM3812interface ym3812_interface =
 	{ 255 }		/* (not supported) */
 };
 
-static struct ADPCMinterface adpcm_interface =
+static struct UPD7759_interface upd7759_interface =
 {
-	1,			/* 1 chip */
-	8000,   /* 8000Hz playback */
-	3,			/* memory region 3 */
-	0,			/* init function */
-	{ 255 }
+	1,		/* number of chips */
+	UPD7759_STANDARD_CLOCK,
+	{ 50 }, /* volume */
+	3,		/* memory region */
+	UPD7759_STANDALONE_MODE,		/* chip mode */
+	{0}
 };
 
 /******************************************************************************/
@@ -439,8 +443,8 @@ static struct MachineDriver pow_machine_driver =
 			&ym3812_interface
 		},
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_UPD7759,
+			&upd7759_interface
 		}
 	}
 };
@@ -475,7 +479,7 @@ ROM_START( pow_rom )
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "dg8",  0x000000, 0x10000, 0xd1d61da3 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",  0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
@@ -507,40 +511,12 @@ ROM_START( powj_rom )
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "dg8",  0x000000, 0x10000, 0xd1d61da3 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",  0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
 /******************************************************************************/
 
-ADPCM_SAMPLES_START(pow_samples)
-ADPCM_SAMPLE(0xc0,0x0033,0x0573*2)
-ADPCM_SAMPLE(0xc1,0x05a6,0x0e4d*2)
-ADPCM_SAMPLE(0xc2,0x13f3,0x14a4*2)
-ADPCM_SAMPLE(0xc3,0x2897,0x01e1*2)
-ADPCM_SAMPLE(0xc4,0x2a78,0x00ff*2)
-ADPCM_SAMPLE(0xc5,0x2b77,0x0034*2)
-ADPCM_SAMPLE(0xc6,0x2bab,0x0001*2)
-ADPCM_SAMPLE(0xc7,0x2bac,0x033c*2)
-ADPCM_SAMPLE(0xc8,0x2ee8,0x07e7*2)
-ADPCM_SAMPLE(0xc9,0x36cf,0x0cd4*2)
-ADPCM_SAMPLE(0xca,0x43a3,0x1455*2)
-ADPCM_SAMPLE(0xcb,0x57f8,0x005d*2)
-ADPCM_SAMPLE(0xcc,0x5855,0x1b42*2)
-ADPCM_SAMPLE(0xcd,0x7397,0x0316*2)
-ADPCM_SAMPLE(0xce,0x76ad,0x1079*2)
-ADPCM_SAMPLE(0xcf,0x8726,0x0684*2)
-ADPCM_SAMPLE(0xd0,0x8daa,0x0307*2)
-ADPCM_SAMPLE(0xd1,0x90b1,0x0ac2*2)
-ADPCM_SAMPLE(0xd2,0x9b73,0x0c27*2)
-ADPCM_SAMPLE(0xd3,0xa79a,0x0209*2)
-ADPCM_SAMPLE(0xd4,0xa9a3,0x07e5*2)
-ADPCM_SAMPLE(0xd5,0xb188,0x0001*2)
-ADPCM_SAMPLE(0xd6,0xb189,0x032a*2)
-ADPCM_SAMPLE(0xd7,0xb4b3,0x1748*2)
-ADPCM_SAMPLE(0xd8,0xcbfb,0x03d4*2)
-ADPCM_SAMPLE(0xd9,0xcfcf,0x1836*2)
-ADPCM_SAMPLES_END
 
 struct GameDriver pow_driver =
 {
@@ -558,7 +534,7 @@ struct GameDriver pow_driver =
 	pow_rom,
 	0, 0,
 	0,
-	(void *)pow_samples,	/* sound_prom */
+	0,	/* sound_prom */
 
 	pow_input_ports,
 
@@ -583,7 +559,7 @@ struct GameDriver powj_driver =
 	powj_rom,
 	0, 0,
 	0,
-	(void *)pow_samples,	/* sound_prom */
+	0,	/* sound_prom */
 
 	powj_input_ports,
 

@@ -19,7 +19,7 @@
 			Machine->samples->sample[soundnum]->data, \
 			Machine->samples->sample[soundnum]->length, \
 			Machine->samples->sample[soundnum]->smpfreq, \
-			Machine->samples->sample[soundnum]->volume,loop); }
+			60,loop); }
 
 
 #define SAFREQ  1400

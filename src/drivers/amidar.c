@@ -558,7 +558,7 @@ ROM_START( amidar_rom )
 	ROM_LOAD( "amidarus.5h",  0x0800, 0x0800, 0x57c4fd0d )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "amidar.clr",   0x0000, 0x20, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
@@ -577,7 +577,7 @@ ROM_START( amidarjp_rom )
 	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, 0x2f7f1c30 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "amidar.clr",   0x0000, 0x20, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
@@ -596,11 +596,11 @@ ROM_START( amigo_rom )
 	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "amidar.clr",   0x0000, 0x20, 0xf940dcc3 )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "2732.a7",      0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "2732.a8",      0x1000, 0x1000, 0x9b5bdc0a )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( turtles_rom )
@@ -616,7 +616,7 @@ ROM_START( turtles_rom )
 	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "turtles.clr",  0x0000, 0x20, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
@@ -636,7 +636,7 @@ ROM_START( turpin_rom )
 	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "turtles.clr",  0x0000, 0x20, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
@@ -656,7 +656,7 @@ ROM_START( k600_rom )
 	ROM_LOAD( "600_vid.5f",   0x0800, 0x0800, 0x7dbc0426 )
 
 	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "turtles.clr",  0x0000, 0x20, 0xf3ef02dd )
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )

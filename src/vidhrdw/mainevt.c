@@ -82,39 +82,6 @@ void mainevt_fg_attr_w (int offset, int data)
 	dirty_f[offset] = 1;
 }
 
-void mainevt_control_w(int offset, int data)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	int bankaddress;
-
-	switch (offset) {
-  	case 0: /* Rom Bank Switch */
-		bankaddress = 0x10000 + (data & 0x03) * 0x2000;
-		cpu_setbank(1,&RAM[bankaddress]);
-		return;
-    case 4:
-		/* Sound? */
-		soundlatch_w(0,data);
-//		cpu_cause_interrupt(1,Z80_NMI_INT);
-		return;
-    case 8:
-		/* Sound? Usually same value as above */
-		soundlatch_w(0,data);
-//		cpu_cause_interrupt(1,Z80_NMI_INT);
-		return;
-    case 12:
-		/* Voice? */
-	//  soundlatch_w(0,data);
-	//  cpu_cause_interrupt(1,Z80_NMI_INT);
-		return;
-    case 16:
-		/* Voice? */
-		soundlatch_w(0,data);
-//		cpu_cause_interrupt(1,Z80_NMI_INT);
-		return;
-	}
-	if (errorlog) fprintf(errorlog,"Control %d %02x\n",offset,data);
-}
 
 /*****************************************************************************/
 

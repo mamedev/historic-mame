@@ -6,7 +6,7 @@ TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 
 

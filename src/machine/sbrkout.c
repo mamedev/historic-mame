@@ -7,8 +7,8 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/m6502.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m6502/m6502.h"
 
 #define SBRKOUT_PROGRESSIVE 0x00
 #define SBRKOUT_DOUBLE      0x01

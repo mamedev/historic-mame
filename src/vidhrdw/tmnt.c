@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M68000/M68000.h"
+#include "cpu/m68000/m68000.h"
 
 
 
@@ -518,7 +518,7 @@ static unsigned char bit_pick_table[9][8] =
 								c & 0x03fff,
 								col,
 								flipx,flipy,
-								sx + 16 * x * (flipx ? -1 : 1),sy + (16 * y + subcount) * (flipy ? -1 : 1),
+								(sx + 16 * x * (flipx ? -1 : 1)) & 0x1ff,sy + (16 * y + subcount) * (flipy ? -1 : 1),
 								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 					}
 				}

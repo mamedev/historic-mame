@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 unsigned char *capbowl_rowaddress;
 

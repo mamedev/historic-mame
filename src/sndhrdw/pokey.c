@@ -1112,7 +1112,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 			if ((AUDC[chan + chip_offs] & VOL_ONLY) ||
 			   !(AUDC[chan + chip_offs] & VOLUME_MASK)
 #if USE_SAMP_N_MAX
-				|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)) */
+				|| (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8))
 #endif
                )
 			{

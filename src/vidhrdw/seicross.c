@@ -137,11 +137,20 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				(spriteram[offs] & 0x3f) + ((spriteram[offs + 1] & 0x10) << 2),
+				(spriteram[offs] & 0x3f) + ((spriteram[offs + 1] & 0x10) << 2) + 128,
 				spriteram[offs + 1] & 0x0f,
 				spriteram[offs] & 0x40,spriteram[offs] & 0x80,
 				spriteram[offs + 3],240-spriteram[offs + 2],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+	for (offs = spriteram_2_size - 4;offs >= 0;offs -= 4)
+	{
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram_2[offs] & 0x3f) + ((spriteram_2[offs + 1] & 0x10) << 2),
+				spriteram_2[offs + 1] & 0x0f,
+				spriteram_2[offs] & 0x40,spriteram_2[offs] & 0x80,
+				spriteram_2[offs + 3],240-spriteram_2[offs + 2],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
 }

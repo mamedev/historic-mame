@@ -254,7 +254,7 @@ int ninjakd2_init_samples(void)
 	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
 	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
 
-	if ((Machine->samples = malloc(sizeof(struct GameSamples))) == NULL)
+	if ((Machine->samples = malloc(sizeof(struct GameSamples) + 9 * sizeof(struct GameSample *))) == NULL)
 		return 1;
 
 	samples = Machine->samples;

@@ -79,7 +79,7 @@ int neogeo_red_bits,neogeo_green_bits,neogeo_blue_bits;
 
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-        int zx,int zy);
+        int zx,int zy,const struct rectangle *clip);
 
 static char dda_x_skip[16];
 static char dda_y_skip[17];
@@ -242,7 +242,7 @@ static const unsigned char *neogeo_palette(void)
 	int sx =0,sy =0,oy =0,zx = 1, rzy = 1;
     int tileno,tileatr,t1,t2,t3;
     char fullmode=0;
-    int ddax=16,dday=0,rzx=15,yskip=0;
+    int ddax=0,dday=0,rzx=15,yskip=0;
 
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096);
 
@@ -321,7 +321,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
             if(my>0x20) my=0x20;
 
-            ddax=16;		/* setup x zoom */
+            ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
 
 		/* No point doing anything if tile strip is 0 */
@@ -511,7 +511,7 @@ INLINE int read_dword(int *address)
 
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-        int zx,int zy)
+        int zx,int zy,const struct rectangle *clip)
 {
 	int /*ox,*/oy,ex,ey,y,start,dy;
 	unsigned char *bm;
@@ -555,8 +555,8 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
   	ey = sy + zy -1; 	/* Clip for size of zoomed object */
 
 	if (sx <= -8) return;
-	if (sy < 0) sy = 0;
-    if (ey >= 224) ey = 224-1;
+	if (sy < clip->min_y) sy = clip->min_y;
+    if (ey >= clip->max_y) ey = clip->max_y;
 
 	if (flipy)	/* Y flip */
 	{
@@ -841,13 +841,13 @@ static void neo_drawgfx_char(struct osd_bitmap *dest,const struct GfxElement *gf
 
 /******************************************************************************/
 
-void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 {
 	int sx =0,sy =0,oy =0,my =0,zx = 1, rzy = 1;
 	int offs,i,count,y,x;
     int tileno,tileatr,t1,t2,t3;
     char fullmode=0;
-    int ddax=16,dday=0,rzx=15,yskip=0;
+    int ddax=0,dday=0,rzx=15,yskip=0;
 	unsigned char **line=bitmap->line;
     unsigned int *pen_usage;
 	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
@@ -892,7 +892,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     /* Do compressed palette stuff */
 	neogeo_palette();
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,clip);
 
 #ifdef NEO_DEBUG
 if (!dotiles) { 					/* debug */
@@ -950,7 +950,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 
             if(my>0x20) my=0x20;
 
-            ddax=16;		/* setup x zoom */
+            ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
 
 		/* No point doing anything if tile strip is 0 */
@@ -1030,7 +1030,8 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
                 tileno,
 				tileatr >> 8,
 				tileatr & 0x01,tileatr & 0x02,
-				sx,sy,rzx,yskip
+				sx,sy,rzx,yskip,
+				clip
             );
 
 			sy +=yskip;
@@ -1053,22 +1054,23 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 
 			if((pen_usage[byte1] & ~ 1) == 0) continue;
 
-/*
   			drawgfx(bitmap,
   				gfx,
   				byte1,
   				byte2,
   				0,0,
   				x*8,(y-2)*8,
-  				&Machine->drv->visible_area,
+  				clip,
   				TRANSPARENCY_PEN,
   				0);
-*/
+/*
   			neo_drawgfx_char(bitmap,
   				gfx,
   				byte1,
   				byte2,
-  				x*8,(y-2)*8);
+  				x*8,(y-2)*8,
+				clip);
+*/
   		}
 	}
 
@@ -1173,6 +1175,57 @@ for (i = 0;i < 8;i+=2)
 }
 #endif
 
+}
+
+void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	screenrefresh(bitmap,&Machine->drv->visible_area);
+}
+
+static int next_update_first_line;
+
+void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line)
+{
+	struct rectangle clip;
+
+	clip.min_x = Machine->drv->visible_area.min_x;
+	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_y = next_update_first_line;
+	clip.max_y = current_line;
+	if (clip.min_y < Machine->drv->visible_area.min_y)
+		clip.min_y = Machine->drv->visible_area.min_y;
+	if (clip.max_y > Machine->drv->visible_area.max_y)
+		clip.max_y = Machine->drv->visible_area.max_y;
+
+	if (clip.max_y >= clip.min_y)
+	{
+if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
+		screenrefresh(bitmap,&clip);
+	}
+
+	next_update_first_line = current_line + 1;
+}
+
+void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	struct rectangle clip;
+
+	clip.min_x = Machine->drv->visible_area.min_x;
+	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_y = next_update_first_line;
+	clip.max_y = Machine->drv->visible_area.max_y;
+	if (clip.min_y < Machine->drv->visible_area.min_y)
+		clip.min_y = Machine->drv->visible_area.min_y;
+	if (clip.max_y > Machine->drv->visible_area.max_y)
+		clip.max_y = Machine->drv->visible_area.max_y;
+
+	if (clip.max_y >= clip.min_y)
+	{
+if (errorlog) fprintf(errorlog,"REFRESH %d-%d\n",clip.min_y,clip.max_y);
+		screenrefresh(bitmap,&clip);
+	}
+
+	next_update_first_line = 0;
 }
 
 

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
 unsigned char spacefb_sound_latch;
 

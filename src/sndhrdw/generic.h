@@ -15,8 +15,10 @@
 #include "5220intf.h"
 #include "vlm5030.h"
 #include "adpcm.h"
+#include "upd7759.h"
 #include "astrocde.h"
 #include "k007232.h"
+#include "cvsd.h"
 
 
 void soundlatch_w(int offset,int data);

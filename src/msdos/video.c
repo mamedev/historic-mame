@@ -2354,6 +2354,30 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
+		if (osd_key_pressed_memory(OSD_KEY_SHOW_FPS))
+		{
+			if (showfpstemp)
+			{
+				showfpstemp = 0;
+				need_to_clear_bitmap = 1;
+			}
+			else
+			{
+				showfps ^= 1;
+				if (showfps == 0)
+				{
+					need_to_clear_bitmap = 1;
+				}
+			}
+		}
+
+		if (use_profiler && osd_key_pressed_memory(OSD_KEY_SHOW_PROFILE))
+		{
+			showprofile ^= 1;
+			if (showprofile == 0)
+				need_to_clear_bitmap = 1;
+		}
+
 		/* now wait until it's time to update the screen */
 		if (throttle)
 		{
@@ -2534,15 +2558,17 @@ void osd_update_video_and_audio(void)
 		if (autoframeskip)
 		{
 			/* decrease frameskip slowly, increase it quickly */
-			if (frameskipadjust <= -12)
+			if (frameskipadjust <= -8)
 			{
 				frameskipadjust = 0;
 				if (frameskip > 0) frameskip--;
 			}
-			else if (frameskipadjust >= 3)
+			else if (frameskipadjust >= 2)
 			{
 				frameskipadjust = 0;
-				if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
+//				if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
+				/* don't go above frameskip 8 */
+				if (frameskip < 8) frameskip++;
 			}
 		}
 	}
@@ -2566,30 +2592,6 @@ void osd_update_video_and_audio(void)
 		/* reset the frame counter every time the throttle key is pressed, so */
 		/* we'll measure the average FPS on a consistent status. */
 		frames_displayed = 0;
-	}
-
-	if (osd_key_pressed_memory(OSD_KEY_SHOW_FPS))
-	{
-		if (showfpstemp)
-		{
-			showfpstemp = 0;
-			need_to_clear_bitmap = 1;
-		}
-		else
-		{
-			showfps ^= 1;
-			if (showfps == 0)
-			{
-				need_to_clear_bitmap = 1;
-			}
-		}
-	}
-
-	if (use_profiler && osd_key_pressed_memory(OSD_KEY_SHOW_PROFILE))
-	{
-		showprofile ^= 1;
-		if (showprofile == 0)
-			need_to_clear_bitmap = 1;
 	}
 
 

@@ -33,8 +33,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
-#include "M6502/m6502.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6502/m6502.h"
 
 /* from vidhrdw */
 extern void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -355,6 +355,47 @@ ROM_START( sidepckt_rom )
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
+/***************************************************************************
+
+  High score save - DW 1/18/99
+
+***************************************************************************/
+
+
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if  (memcmp(&RAM[0x0A0E],"\x11\x00\x53",3) == 0 &&
+			memcmp(&RAM[0x0A3D],"\x54\x54\x54",3) == 0 )
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0A0E],50);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0A0E],50);
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver sidepckt_driver =
@@ -380,5 +421,5 @@ struct GameDriver sidepckt_driver =
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

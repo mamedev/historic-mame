@@ -18,7 +18,7 @@ static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 /* externals: from vidhrdw */
 extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

@@ -9,19 +9,20 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "z80/z80.h"
-#include "i8039/i8039.h"
-#include "i8085/i8085.h"
-#include "m6502/m6502.h"
-#include "m6809/m6809.h"
-#include "m6808/m6808.h"
-#include "m6805/m6805.h"
-#include "m68000/m68000.h"
-#include "s2650/s2650.h"
-#include "t11/t11.h"
-#include "TMS34010/tms34010.h"
-#include "i86/i86intrf.h"
-#include "TMS9900/TMS9900.h"
+#include "cpu/z80/z80.h"
+#include "cpu/i8039/i8039.h"
+#include "cpu/i8085/i8085.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6808/m6808.h"
+#include "cpu/m6805/m6805.h"
+#include "cpu/m68000/m68000.h"
+#include "cpu/s2650/s2650.h"
+#include "cpu/t11/t11.h"
+#include "cpu/tms34010/tms34010.h"
+#include "cpu/i86/i86intrf.h"
+#include "cpu/tms9900/tms9900.h"
+#include "cpu/z8000/z8000.h"
 #include "timer.h"
 
 
@@ -75,6 +76,11 @@ int previouspc;
 static int interrupt_enable[MAX_CPU];
 static int interrupt_vector[MAX_CPU];
 
+#if NEW_INTERRUPT_SYSTEM
+static int irq_line_state[MAX_CPU * MAX_IRQ_LINES];
+static int irq_line_vector[MAX_CPU * MAX_IRQ_LINES];
+#endif
+
 static int watchdog_counter;
 
 static void *vblank_timer;
@@ -99,6 +105,10 @@ static int current_frame;
 static void cpu_generate_interrupt (int _cpu, int (*func)(void), int num);
 static void cpu_vblankintcallback (int param);
 static void cpu_timedintcallback (int param);
+#if NEW_INTERRUPT_SYSTEM
+static void cpu_manualnmicallback(int param);
+static void cpu_manualirqcallback(int param);
+#endif
 static void cpu_manualintcallback (int param);
 static void cpu_clearintcallback (int param);
 static void cpu_resetcallback (int param);
@@ -109,6 +119,24 @@ static void cpu_updatecallback (int param);
 static double cpu_computerate (int value);
 static void cpu_inittimers (void);
 
+
+#if NEW_INTERRUPT_SYSTEM
+
+/* default irq callback handlers */
+static int cpu_0_irq_callback(int irqline);
+static int cpu_1_irq_callback(int irqline);
+static int cpu_2_irq_callback(int irqline);
+static int cpu_3_irq_callback(int irqline);
+
+/* and a list of them for indexed access */
+static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
+    cpu_0_irq_callback,
+    cpu_1_irq_callback,
+    cpu_2_irq_callback,
+    cpu_3_irq_callback
+};
+
+#endif
 
 /* dummy interfaces for non-CPUs */
 static int dummy_icount;
@@ -150,6 +178,9 @@ static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 #define INT_TYPE_IRQ(index) 			(cpu[index].intf->irq_int)
 #define INT_TYPE_NMI(index)             (cpu[index].intf->nmi_int)
 #define SET_OP_BASE(index,pc)           ((*cpu[index].intf->set_op_base)(pc))
+
+#define CPU_TYPE(index) 				(Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK)
+#define CPU_AUDIO(index)				(Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU)
 
 /* warning these must match the defines in driver.h! */
 struct cpu_interface cpuintf[] =
@@ -357,7 +388,7 @@ struct cpu_interface cpuintf[] =
 		m6809_set_nmi_line, 				/* Set state of the NMI line */
 		m6809_set_irq_line, 				/* Set state of the IRQ line */
 		m6809_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		2,									/* Number of IRQ lines */
 #else
 		m6809_Cause_Interrupt,				/* Generate an interrupt */
 		m6809_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -393,8 +424,8 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase24,					/* Update CPU opcode base */
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
-	},
-	/* #define CPU_T11  10 */
+        },
+    /* #define CPU_T11  10 */
 	{
 		t11_reset,							/* Reset CPU */
 		t11_execute,						/* Execute a number of cycles */
@@ -490,7 +521,31 @@ struct cpu_interface cpuintf[] =
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
         /* Were all ...LEW */
-	}
+	},
+	/* #define CPU_Z8000 14 */
+	{
+		Z8000_Reset,						/* Reset CPU */
+		Z8000_Execute,						/* Execute a number of cycles */
+		(void (*)(void *))Z8000_SetRegs,	/* Set the contents of the registers */
+		(void (*)(void *))Z8000_GetRegs,	/* Get the contents of the registers */
+		(unsigned int (*)(void))Z8000_GetPC,/* Return the current PC */
+#if NEW_INTERRUPT_SYSTEM
+		Z8000_set_nmi_line, 				/* Set state of the NMI line */
+		Z8000_set_irq_line, 				/* Set state of the IRQ line */
+		Z8000_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		2,									/* Number of IRQ lines */
+#else
+		Z8000_Cause_Interrupt,				/* Generate an interrupt */
+		Z8000_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
+#endif
+		&Z8000_ICount,						/* Pointer to the instruction count */
+		Z8000_INT_NONE,Z8000_NVI,Z8000_NMI, /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
 };
 
 void cpu_init(void)
@@ -502,7 +557,7 @@ void cpu_init(void)
 
 	while (totalcpu < MAX_CPU)
 	{
-		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
+		if (CPU_TYPE(totalcpu) == 0) break;
 		totalcpu++;
 	}
 
@@ -511,7 +566,7 @@ void cpu_init(void)
 
 	/* Set up the interface functions */
 	for (i = 0; i < MAX_CPU; i++)
-		cpu[i].intf = &cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK];
+		cpu[i].intf = &cpuintf[CPU_TYPE(i)];
 	for (i = 0; i < MAX_CPU; i++)
 		Z80_daisychain[i] = 0;
 
@@ -519,95 +574,6 @@ void cpu_init(void)
 	timer_init ();
 	timeslice_timer = refresh_timer = vblank_timer = NULL;
 }
-
-#if NEW_INTERRUPT_SYSTEM
-/* stores the irq line state per CPU and irq line # */
-/* used to detect lines to be CLEARed after a HOLD state in a irq_callback */
-static int interrupt_line[MAX_CPU * MAX_IRQ_LINES];
-
-/* stores vectors per CPU and per irq line */
-/* cpu_generate_interrupt uses this array to store the vector passed to it */
-static int interrupt_type[MAX_CPU * MAX_IRQ_LINES];
-
-static int cpu_0_irq_callback(int line)
-{
-	if (interrupt_line[0 * MAX_IRQ_LINES + line] == HOLD_LINE)
-		cpu_set_irq_line(0, line, CLEAR_LINE);
-	return interrupt_type[0 * MAX_IRQ_LINES + line];
-}
-static int cpu_1_irq_callback(int line)
-{
-	if (interrupt_line[1 * MAX_IRQ_LINES + line] == HOLD_LINE)
-		cpu_set_irq_line(1, line, CLEAR_LINE);
-	return interrupt_type[1 * MAX_IRQ_LINES + line];
-}
-static int cpu_2_irq_callback(int line)
-{
-	if (interrupt_line[2 * MAX_IRQ_LINES + line] == HOLD_LINE)
-		cpu_set_irq_line(2, line, CLEAR_LINE);
-	return interrupt_type[2 * MAX_IRQ_LINES + line];
-}
-static int cpu_3_irq_callback(int line)
-{
-	if (interrupt_line[3 * MAX_IRQ_LINES + line] == HOLD_LINE)
-		cpu_set_irq_line(3, line, CLEAR_LINE);
-	return interrupt_type[3 * MAX_IRQ_LINES + line];
-}
-
-static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
-	cpu_0_irq_callback,
-	cpu_1_irq_callback,
-	cpu_2_irq_callback,
-	cpu_3_irq_callback
-};
-
-void cpu_irq_line_vector_w(int cpunum, int irq, int vector)
-{
-	cpunum %= MAX_CPU;
-    irq %= cpu[cpunum].intf->num_irqs;
-	interrupt_type[cpunum * MAX_IRQ_LINES + irq] = vector;
-}
-
-void cpu_set_nmi_line(int num, int state)
-{
-	switch (state) {
-		case PULSE_LINE:
-			SET_NMI_LINE(num,ASSERT_LINE);
-			SET_NMI_LINE(num,CLEAR_LINE);
-			break;
-		case HOLD_LINE:
-        case ASSERT_LINE:
-			SET_NMI_LINE(num,ASSERT_LINE);
-			break;
-		case CLEAR_LINE:
-			SET_NMI_LINE(num,CLEAR_LINE);
-			break;
-		default:
-			if( errorlog ) fprintf( errorlog, "cpu_set_nmi_line unknown state %d\n", state);
-	}
-}
-
-void cpu_set_irq_line(int num, int line, int state)
-{
-	interrupt_line[num * MAX_IRQ_LINES + line] = state;
-    switch (state) {
-		case PULSE_LINE:
-			SET_IRQ_LINE(num,line,ASSERT_LINE);
-			SET_IRQ_LINE(num,line,CLEAR_LINE);
-			break;
-		case HOLD_LINE:
-        case ASSERT_LINE:
-			SET_IRQ_LINE(num,line,ASSERT_LINE);
-			break;
-        case CLEAR_LINE:
-			SET_IRQ_LINE(num,line,CLEAR_LINE);
-			break;
-		default:
-			if( errorlog ) fprintf( errorlog, "cpu_set_irq_line unknown state %d\n", state);
-    }
-}
-
-#endif
 
 void cpu_run(void)
 {
@@ -622,7 +588,7 @@ void cpu_run(void)
 		cpu[i].save_context = 0;
 
 		for (j = 0; j < totalcpu; j++)
-			if (i != j && (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK) == (Machine->drv->cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+			if ( i != j && CPU_TYPE(i) == CPU_TYPE(j) )
 				cpu[i].save_context = 1;
 
 		#ifdef MAME_DEBUG
@@ -643,7 +609,7 @@ reset:
 
 	/* enable all CPUs (except for audio CPUs if the sound is off) */
 	for (i = 0; i < totalcpu; i++)
-		if (!(Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+		if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
 			timer_suspendcpu (i, 0);
 
 	have_to_reset = 0;
@@ -803,7 +769,7 @@ void cpu_halt(int cpunum,int _running)
 	if (cpunum >= MAX_CPU) return;
 
 	/* don't resume audio CPUs if sound is disabled */
-	if (!(Machine->drv->cpu[cpunum].cpu_type & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+	if (!CPU_AUDIO(cpunum) || Machine->sample_rate != 0)
 		timer_suspendcpu (cpunum, !_running);
 }
 
@@ -865,7 +831,7 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 
-	switch(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)
+	switch(CPU_TYPE(cpunum))
 	{
 		case CPU_Z80:
 		case CPU_I8039:
@@ -876,7 +842,7 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 			break;
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",Machine->drv->cpu[cpunum].cpu_type);
+	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",CPU_TYPE(cpunum));
 			return -1;
 			break;
 	}
@@ -896,8 +862,8 @@ int cpu_getreturnpc(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 
-	switch(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)
-	{
+	switch(CPU_TYPE(cpunum))
+    {
 		case CPU_Z80:
 			{
 				Z80_Regs _regs;
@@ -909,7 +875,7 @@ int cpu_getreturnpc(void)
 			break;
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",Machine->drv->cpu[cpunum].cpu_type);
+	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",CPU_TYPE(cpunum));
 			return -1;
 			break;
 	}
@@ -1104,6 +1070,109 @@ int cpu_getiloops(void)
   Interrupt handling
 
 ***************************************************************************/
+
+#if NEW_INTERRUPT_SYSTEM
+
+/***************************************************************************
+
+  These functions are called when a cpu calls the callback sent to it's
+  set_irq_callback function. It clears the irq line if the current state
+  is HOLD_LINE and returns the interrupt vector for that line.
+
+***************************************************************************/
+static int cpu_0_irq_callback(int irqline)
+{
+	if (irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+        SET_IRQ_LINE(0, irqline, CLEAR_LINE);
+		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
+    }
+	LOG((errorlog, "cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
+	return irq_line_vector[0 * MAX_IRQ_LINES + irqline];
+}
+
+static int cpu_1_irq_callback(int irqline)
+{
+	if (irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+        SET_IRQ_LINE(1, irqline, CLEAR_LINE);
+		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
+    }
+	LOG((errorlog, "cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
+	return irq_line_vector[1 * MAX_IRQ_LINES + irqline];
+}
+
+static int cpu_2_irq_callback(int irqline)
+{
+	if (irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+        SET_IRQ_LINE(2, irqline, CLEAR_LINE);
+		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
+	}
+	LOG((errorlog, "cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
+	return irq_line_vector[2 * MAX_IRQ_LINES + irqline];
+}
+
+static int cpu_3_irq_callback(int irqline)
+{
+	if (irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+        SET_IRQ_LINE(3, irqline, CLEAR_LINE);
+		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
+	}
+	LOG((errorlog, "cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
+	return irq_line_vector[3 * MAX_IRQ_LINES + irqline];
+}
+
+/***************************************************************************
+
+  Use this functions to set the vector for a irq line of a CPU
+
+***************************************************************************/
+void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
+{
+	cpunum &= (MAX_CPU - 1);
+	irqline &= (MAX_IRQ_LINES - 1);
+	if (irqline < cpu[cpunum].intf->num_irqs) {
+		LOG((errorlog,"cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
+		irq_line_vector[cpunum * MAX_IRQ_LINES + irqline] = vector;
+	} else {
+		if (errorlog)
+			fprintf(errorlog, "cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline);
+	}
+}
+
+/***************************************************************************
+
+  Use these functions to set the vector (data) for a irq line (offset)
+  of CPU #0 to #3
+
+***************************************************************************/
+void cpu_0_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(0, offset, data); }
+void cpu_1_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(1, offset, data); }
+void cpu_2_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(2, offset, data); }
+void cpu_3_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(3, offset, data); }
+
+/***************************************************************************
+
+  Use this function to set the state the NMI line of a CPU
+
+***************************************************************************/
+void cpu_set_nmi_line(int cpunum, int state)
+{
+	LOG((errorlog,"cpu_set_nmi_line(%d,%d)\n",cpunum,state));
+	timer_set (TIME_NOW, (cpunum & 7) | (state << 3), cpu_manualnmicallback);
+}
+
+/***************************************************************************
+
+  Use this function to set the state of an IRQ line of a CPU
+  The meaning of irqline varies between the different CPU types
+
+***************************************************************************/
+void cpu_set_irq_line(int cpunum, int irqline, int state)
+{
+	LOG((errorlog,"cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
+	timer_set (TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
+}
+
+#endif
 
 /***************************************************************************
 
@@ -1334,6 +1403,61 @@ int cpu_getcurrentframe(void)
   Internal CPU event processors.
 
 ***************************************************************************/
+
+#if NEW_INTERRUPT_SYSTEM
+
+static void cpu_manualnmicallback(int param)
+{
+    int cpunum, state;
+	cpunum = param & 7;
+	state = param >> 3;
+	LOG((errorlog,"cpu_manunalnmicallback %d,%d\n",cpunum,state));
+
+    switch (state) {
+        case PULSE_LINE:
+			SET_NMI_LINE(cpunum,ASSERT_LINE);
+			SET_NMI_LINE(cpunum,CLEAR_LINE);
+            break;
+        case HOLD_LINE:
+        case ASSERT_LINE:
+			SET_NMI_LINE(cpunum,ASSERT_LINE);
+            break;
+        case CLEAR_LINE:
+			SET_NMI_LINE(cpunum,CLEAR_LINE);
+            break;
+        default:
+			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
+    }
+}
+
+static void cpu_manualirqcallback(int param)
+{
+    int cpunum, irqline, state;
+	irqline = param & 7;
+	cpunum = (param >> 3) & 7;
+	state = param >> 6;
+	LOG((errorlog,"cpu_manunalirqcallback %d,%d,%d\n",cpunum,irqline,state));
+
+	irq_line_state[cpunum * MAX_IRQ_LINES + irqline] = state;
+    switch (state) {
+        case PULSE_LINE:
+			SET_IRQ_LINE(cpunum,irqline,ASSERT_LINE);
+			SET_IRQ_LINE(cpunum,irqline,CLEAR_LINE);
+            break;
+        case HOLD_LINE:
+        case ASSERT_LINE:
+			SET_IRQ_LINE(cpunum,irqline,ASSERT_LINE);
+            break;
+        case CLEAR_LINE:
+			SET_IRQ_LINE(cpunum,irqline,CLEAR_LINE);
+            break;
+        default:
+			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
+    }
+}
+
+#endif
+
 static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 {
 	int oldactive = activecpu;
@@ -1348,19 +1472,222 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 
 #if NEW_INTERRUPT_SYSTEM
 	/* wrapper for the new system */
-	if (num != INT_TYPE_NONE(activecpu)) {
-		LOG((errorlog,"CPU#%d interrupt type $%04x\n", activecpu, num));
+	if (num != INT_TYPE_NONE(cpunum)) {
+		LOG((errorlog,"CPU#%d interrupt type $%04x: ", cpunum, num));
 		/* is it the NMI type interrupt of that CPU? */
-		if (num == INT_TYPE_NMI(activecpu)) {
-			cpu_set_nmi_line(activecpu,PULSE_LINE);
-		} else {
-			/* else it should be an IRQ type; assume line 0 and store vector */
-            cpu_irq_line_vector_w(activecpu, 0, num);
-			cpu_set_irq_line(activecpu,0,HOLD_LINE);
+		if (num == INT_TYPE_NMI(cpunum)) {
+
+            LOG((errorlog,"NMI\n"));
+			cpu_manualnmicallback (cpunum | (PULSE_LINE << 3) );
+
+        } else {
+
+			switch (CPU_TYPE(cpunum)) {
+
+            case CPU_Z80:
+				LOG((errorlog,"Z80 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_8085A:
+				switch (num) {
+					case I8085_INTR:
+						LOG((errorlog,"I8085_INTR\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case I8085_RST55:
+						LOG((errorlog,"I8085_RST55\n"));
+						cpu_irq_line_vector_w(cpunum, 1, num);
+						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case I8085_RST65:
+						LOG((errorlog,"I8085_RST65\n"));
+						cpu_irq_line_vector_w(cpunum, 2, num);
+						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case I8085_RST75:
+						LOG((errorlog,"I8085_RST75\n"));
+						cpu_irq_line_vector_w(cpunum, 3, num);
+						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					default:
+						LOG((errorlog,"I8085 unknown\n"));
+						irq_line_vector[cpunum * MAX_IRQ_LINES + 0] = num;
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+				break;
+
+            case CPU_M6502:
+				LOG((errorlog,"M6502 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_I86:
+				LOG((errorlog,"I86 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_I8039:
+				LOG((errorlog,"I8039 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_M6803:
+				LOG((errorlog,"M6803 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_M6805:
+				LOG((errorlog,"M6805 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				break;
+
+            case CPU_M6809:
+				switch (num) {
+					case M6809_INT_IRQ:
+						LOG((errorlog,"M6809 IRQ\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case M6809_INT_FIRQ:
+						LOG((errorlog,"M6809 FIRQ\n"));
+						cpu_irq_line_vector_w(cpunum, 1, num);
+						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					default:
+						LOG((errorlog,"M6809 unknown\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+				break;
+
+            case CPU_M68000:
+				switch (num) {
+					case MC68000_IRQ_1:
+						LOG((errorlog,"M68000 IRQ1\n"));
+						cpu_irq_line_vector_w(cpunum, 1, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_2:
+						LOG((errorlog,"M68000 IRQ2\n"));
+						cpu_irq_line_vector_w(cpunum, 2, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_3:
+						LOG((errorlog,"M68000 IRQ3\n"));
+						cpu_irq_line_vector_w(cpunum, 3, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_4:
+						LOG((errorlog,"M68000 IRQ4\n"));
+						cpu_irq_line_vector_w(cpunum, 4, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (4 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_5:
+						LOG((errorlog,"M68000 IRQ5\n"));
+						cpu_irq_line_vector_w(cpunum, 5, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (5 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_6:
+						LOG((errorlog,"M68000 IRQ6\n"));
+						cpu_irq_line_vector_w(cpunum, 6, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (6 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case MC68000_IRQ_7:
+						LOG((errorlog,"M68000 IRQ7\n"));
+						cpu_irq_line_vector_w(cpunum, 7, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (7 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					default:
+						LOG((errorlog,"M68000 unknown\n"));
+						cpu_irq_line_vector_w(cpunum, 0, MC68000_INT_ACK_AUTOVECTOR);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+				break;
+
+            case CPU_T11:
+				switch (num) {
+					case T11_IRQ0:
+						LOG((errorlog,"T11 IRQ0\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case T11_IRQ1:
+						LOG((errorlog,"T11 IRQ1\n"));
+						cpu_irq_line_vector_w(cpunum, 1, num);
+						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case T11_IRQ2:
+						LOG((errorlog,"T11 IRQ2\n"));
+						cpu_irq_line_vector_w(cpunum, 2, num);
+						cpu_manualirqcallback (2 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case T11_IRQ3:
+						LOG((errorlog,"T11 IRQ3\n"));
+						cpu_irq_line_vector_w(cpunum, 3, num);
+						cpu_manualirqcallback (3 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					default:
+						LOG((errorlog,"T11 unknown\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+                break;
+
+            case CPU_S2650:
+				LOG((errorlog,"S2650 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+                break;
+
+            case CPU_TMS34010:
+				LOG((errorlog,"TMS34010 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+                break;
+
+            case CPU_TMS9900:
+				LOG((errorlog,"TMS9900 IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+                break;
+
+            case CPU_Z8000:
+				switch (num) {
+					case Z8000_NVI:
+						LOG((errorlog,"Z8000 NVI\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					case Z8000_VI:
+						LOG((errorlog,"Z8000 VI\n"));
+						cpu_irq_line_vector_w(cpunum, 1, num);
+						cpu_manualirqcallback (1 | (cpunum << 3) | (HOLD_LINE << 6) );
+						break;
+					default:
+						LOG((errorlog,"Z8000 unknown\n"));
+						cpu_irq_line_vector_w(cpunum, 0, num);
+						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+                break;
+
+            default:
+				/* else it should be an IRQ type; assume line 0 and store vector */
+				LOG((errorlog,"unknown IRQ\n"));
+				cpu_irq_line_vector_w(cpunum, 0, num);
+				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+			}
 		}
 	}
 #else
-    CAUSE_INTERRUPT (cpunum, num);
+	CAUSE_INTERRUPT (cpunum, num);
 #endif
 
 	/* update the CPU's context */
@@ -1411,6 +1738,10 @@ static void cpu_reset_cpu (int cpunum)
 
 	/* reset the CPU */
 	RESET (cpunum);
+#if NEW_INTERRUPT_SYSTEM
+	/* Set the irq callback for the cpu */
+	SET_IRQ_CALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
+#endif
 
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);

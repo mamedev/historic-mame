@@ -41,9 +41,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/2151intf.h"
-
-//#include "sys16gcs.c"
+#include "cpu/z80/z80.h"
+ //#include "sys16gcs.c"
 
 /***************************************************************************/
 
@@ -230,7 +229,7 @@ static void define_mirror3( int hi_addr, int lo_addr ){
 
 /***************************************************************************/
 
-#define MACHINE_DRIVER( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE ) \
+#define MACHINE_DRIVER( GAMENAME,READMEM,WRITEMEM,INITMACHINE,GFXSIZE, UPD7759INTF ) \
 static struct MachineDriver GAMENAME = \
 { \
 	{ \
@@ -266,6 +265,9 @@ static struct MachineDriver GAMENAME = \
 		{ \
 			SOUND_YM2151, \
 			&ym2151_interface \
+		}, { \
+			SOUND_UPD7759, \
+			&UPD7759INTF \
 		} \
 	} \
 };
@@ -278,9 +280,15 @@ int sys16_interrupt( void ){
 
 /***************************************************************************/
 
+static void sound_cause_nmi(int chip)
+{
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xf7ff, UPD7759_0_data_r },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -299,12 +307,13 @@ static struct IOReadPort sound_readport[] =
 	{ -1 }	/* end of table */
 };
 
+
 static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
-	{ 0x40, 0x40, IOWP_NOP },   /* adpcm? */
-	{ 0x80, 0x80, IOWP_NOP },   /* ??? */
+	{ 0x40, 0x40, UPD7759_message_w },
+	{ 0x80, 0x80, UPD7759_start_w },
 	{ -1 }
 };
 
@@ -314,16 +323,30 @@ static void sound_command_w(int offset, int data){
 	cpu_cause_interrupt( 1, 0 );
 }
 
-static void irq_handler_mus(void){
+static void irq_handler_mus(void)
+{
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4096000,	/* 3.58 MHZ ? */
-	{ 60 },
+	{ 40 },
 	{ irq_handler_mus }
 };
+
+
+
+static struct UPD7759_interface upd7759_interface =
+{
+	1,			/* 1 chip */
+	UPD7759_STANDARD_CLOCK,
+	{ 60 }, 	/* volumes */
+	3,			/* memory region 3 contains the sample data */
+    UPD7759_SLAVE_MODE,
+	{ sound_cause_nmi },
+};
+
 
 /***************************************************************************/
 
@@ -644,11 +667,12 @@ ROM_START( alexkidd_rom )
 	ROM_LOAD( "10443.24", 0x028000, 0x008000, 0x95d32635 )
 	ROM_LOAD( "10440.29", 0x030000, 0x008000, 0x23939508 )
 	ROM_LOAD( "10444.30", 0x038000, 0x008000, 0x82115823 )
-	ROM_LOAD( "10437.10", 0x040000, 0x008000, 0x522f7618 )
-	ROM_LOAD( "10441.11", 0x048000, 0x008000, 0x74e3a35c )
+//	ROM_LOAD( "10437.10", 0x040000, 0x008000, 0x522f7618 ) twice?
+//	ROM_LOAD( "10441.11", 0x048000, 0x008000, 0x74e3a35c ) twice?
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "10434.12", 0x0000, 0x8000, 0x77141cce )
+
 ROM_END
 
 /***************************************************************************/
@@ -727,7 +751,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( alexkidd_machine_driver, \
-	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine,gfx8 )
+	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine,gfx8,upd7759_interface )
 
 struct GameDriver alexkidd_driver =
 {
@@ -777,8 +801,11 @@ ROM_START( aliensyn_rom )
 	ROM_LOAD( "10712.b4", 0x60000, 0x10000, 0x876ad019 )
 	ROM_LOAD( "10716.b8", 0x70000, 0x10000, 0x40ba1d48 )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x28000 ) /* sound CPU */
 	ROM_LOAD( "10723.a7", 0x0000, 0x8000, 0x99953526 )
+	ROM_LOAD( "10724.a8", 0x10000, 0x8000, 0xf971a817 )
+	ROM_LOAD( "10725.a9", 0x18000, 0x8000, 0x6a50e08f )
+	ROM_LOAD( "10726.a10",0x20000, 0x8000, 0xd50b7736 )
 ROM_END
 
 /***************************************************************************/
@@ -873,8 +900,20 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
+static struct UPD7759_interface aliensyn_upd7759_interface =
+{
+	1,			/* 1 chip */
+	480000,
+	{ 60 }, 	/* volumes */
+	3,			/* memory region 3 contains the sample data */
+    UPD7759_SLAVE_MODE,
+	{ sound_cause_nmi },
+};
+
+/****************************************************************************/
+
 MACHINE_DRIVER( aliensyn_machine_driver, \
-	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, gfx1 )
+	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, gfx1, aliensyn_upd7759_interface )
 
 struct GameDriver aliensyn_driver =
 {
@@ -926,8 +965,10 @@ ROM_START( altbeast_rom )
 	ROM_LOAD( "ab11680.bin", 0xc0000, 0x10000, 0x339987f7 )
 	ROM_LOAD( "ab11684.bin", 0xd0000, 0x10000, 0x4fe406aa )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x50000 ) /* sound CPU */
 	ROM_LOAD( "ab11671.bin", 0x0000, 0x8000, 0x2b71343b )
+	ROM_LOAD( "opr11672", 0x10000, 0x20000, 0xbbd7f460 )
+ 	ROM_LOAD( "opr11673", 0x30000, 0x20000, 0x400c4a36 )
 ROM_END
 
 /***************************************************************************/
@@ -957,6 +998,8 @@ static struct MemoryReadAddress altbeast_readmem[] =
 
 	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{ 0x000000, 0x03ffff, MRA_ROM },
+
+
 	{-1}
 };
 
@@ -1032,7 +1075,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( altbeast_machine_driver, \
-	altbeast_readmem,altbeast_writemem,altbeast_init_machine, gfx2 )
+	altbeast_readmem,altbeast_writemem,altbeast_init_machine, gfx2,upd7759_interface )
 
 struct GameDriver altbeast_driver =
 {
@@ -1218,7 +1261,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( astormbl_machine_driver, \
-	astormbl_readmem,astormbl_writemem,astormbl_init_machine, gfx4 )
+	astormbl_readmem,astormbl_writemem,astormbl_init_machine, gfx4,upd7759_interface )
 
 struct GameDriver astormbl_driver =
 {
@@ -1281,8 +1324,9 @@ ROM_START( aurail_rom )
 	ROM_LOAD( "aurail.a4",  0x1c0000, 0x020000, 0x77a8989e )
 	ROM_LOAD( "aurail.b13", 0x1e0000, 0x020000, 0x551df422 )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x30000 ) /* sound CPU */
 	ROM_LOAD( "13448",      0x0000, 0x8000, 0xb5183fb9 )
+	ROM_LOAD( "aurail.a12", 0x10000,0x20000, 0xd3d9aaf9 )
 ROM_END
 
 /***************************************************************************/
@@ -1376,7 +1420,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( aurail_machine_driver, \
-	aurail_readmem,aurail_writemem,aurail_init_machine, gfx4 )
+	aurail_readmem,aurail_writemem,aurail_init_machine, gfx4,upd7759_interface )
 
 struct GameDriver aurail_driver =
 {
@@ -1528,7 +1572,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( dduxbl_machine_driver, \
-	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1 )
+	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1,upd7759_interface)
 
 struct GameDriver dduxbl_driver =
 {
@@ -1668,7 +1712,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( eswatbl_machine_driver, \
-	eswatbl_readmem,eswatbl_writemem,eswatbl_init_machine, gfx4 )
+	eswatbl_readmem,eswatbl_writemem,eswatbl_init_machine, gfx4,upd7759_interface )
 
 struct GameDriver eswatbl_driver =
 {
@@ -1796,7 +1840,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( fantzone_machine_driver, \
-	fantzone_readmem,fantzone_writemem,fantzone_init_machine, gfx8 )
+	fantzone_readmem,fantzone_writemem,fantzone_init_machine, gfx8,upd7759_interface )
 
 struct GameDriver fantzone_driver =
 {
@@ -1951,7 +1995,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( fpointbl_machine_driver, \
-	fpointbl_readmem,fpointbl_writemem,fpointbl_init_machine, gfx1 )
+	fpointbl_readmem,fpointbl_writemem,fpointbl_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver fpointbl_driver =
 {
@@ -1997,8 +2041,10 @@ ROM_START( goldnaxe_rom )
 	ROM_LOAD( "ga12382.bin", 0x100000, 0x40000, 0x81601c6f )
 	ROM_LOAD( "ga12383.bin", 0x140000, 0x40000, 0x5dbacf7a )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x30000 ) /* sound CPU */
 	ROM_LOAD( "ga12390.bin", 0x0000, 0x8000, 0x399fc5f5 )
+	ROM_LOAD( "ga12384.bin",0x10000, 0x10000, 0x50eb5a56)
+	ROM_LOAD( "ga2.a17"	   ,0x20000, 0x10000, 0xb372eb94)
 ROM_END
 
 /***************************************************************************/
@@ -2107,7 +2153,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( goldnaxe_machine_driver, \
-	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine, gfx2 )
+	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine, gfx2,upd7759_interface )
 
 struct GameDriver goldnaxe_driver =
 {
@@ -2234,7 +2280,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( hwchamp_machine_driver, \
-	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine, gfx2 )
+	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine, gfx2 ,upd7759_interface)
 
 struct GameDriver hwchamp_driver =
 {
@@ -2293,8 +2339,9 @@ epr-7065.02a
 epr-7066.04a
 #endif
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "eprc7054.01b", 0x0000, 0x8000, 0x4443b744 )
+	ROM_REGION( 0x20000 ) /* sound CPU */
+	ROM_LOAD( "eprc7054.01b", 0x00000, 0x8000, 0x4443b744 )
+
 ROM_END
 
 /***************************************************************************/
@@ -2377,7 +2424,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( mjleague_machine_driver, \
-	mjleague_readmem,mjleague_writemem,mjleague_init_machine, gfx8 )
+	mjleague_readmem,mjleague_writemem,mjleague_init_machine, gfx8 ,upd7759_interface)
 
 struct GameDriver mjleague_driver =
 {
@@ -2421,8 +2468,12 @@ ROM_START( passshtb_rom )
 	ROM_LOAD( "passshot.b3", 0x40000, 0x010000, 0x05733ca8 )
 	ROM_LOAD( "passshot.b7", 0x50000, 0x010000, 0x81e49697 )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x30000 ) /* sound CPU */
 	ROM_LOAD( "passshot.a7", 0x0000, 0x8000, 0x789edc06 )
+	ROM_LOAD( "passshot.a8", 0x10000, 0x8000, 0x08ab0018)
+	ROM_LOAD( "passshot.a9", 0x18000, 0x8000, 0x8673e01b)
+	ROM_LOAD( "passshot.a10", 0x20000, 0x8000, 0x10263746 )
+	ROM_LOAD( "passshot.a11", 0x28000, 0x8000, 0x38b54a71 )
 ROM_END
 
 /***************************************************************************/
@@ -2520,7 +2571,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( passshtb_machine_driver, \
-	passshtb_readmem,passshtb_writemem,passshtb_init_machine, gfx1 )
+	passshtb_readmem,passshtb_writemem,passshtb_init_machine, gfx1 ,upd7759_interface)
 
 struct GameDriver passshtb_driver =
 {
@@ -2569,8 +2620,8 @@ ROM_START( quartet2_rom )
 	ROM_LOAD( "quartet2.b4", 0x028000, 0x008000, 0x13fad5ac )
 	ROM_LOAD( "quartet2.c8", 0x030000, 0x008000, 0xddfd40c0 )
 	ROM_LOAD( "quartet2.b5", 0x038000, 0x008000, 0x8e2762ec )
-	ROM_LOAD( "quartet2.c5", 0x040000, 0x008000, 0x8a1ab7d7 )
-	ROM_LOAD( "quartet2.b2", 0x048000, 0x008000, 0xcb65ae4f )
+//	ROM_LOAD( "quartet2.c5", 0x040000, 0x008000, 0x8a1ab7d7 ) twice?
+//	ROM_LOAD( "quartet2.b2", 0x048000, 0x008000, 0xcb65ae4f ) twice?
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "quartet2.b1", 0x0000, 0x8000, 0x9f291306 )
@@ -2652,7 +2703,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( quartet2_machine_driver, \
-	quartet2_readmem,quartet2_writemem,quartet2_init_machine, gfx8 )
+	quartet2_readmem,quartet2_writemem,quartet2_init_machine, gfx8 ,upd7759_interface)
 
 struct GameDriver quartet2_driver =
 {
@@ -2778,7 +2829,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( sdi_machine_driver, \
-	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1 )
+	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1 ,upd7759_interface)
 
 struct GameDriver sdi_driver =
 {
@@ -2826,8 +2877,11 @@ ROM_START( shinobi_rom )
 	ROM_LOAD( "shinobi.b4", 0x60000, 0x10000, 0x41f41063 )
 	ROM_LOAD( "shinobi.b8", 0x70000, 0x10000, 0xb6e1fd72 )
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGION( 0x20000 ) /* sound CPU */
 	ROM_LOAD( "shinobi.a7", 0x0000, 0x8000, 0x2457a7cf )
+	ROM_LOAD( "shinobi.a8", 0x10000, 0x8000, 0xc8df8460 )
+	ROM_LOAD( "shinobi.a9", 0x18000, 0x8000, 0xe5a4cf30 )
+
 ROM_END
 
 /***************************************************************************/
@@ -2920,7 +2974,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( shinobi_machine_driver, \
-	shinobi_readmem,shinobi_writemem,shinobi_init_machine, gfx1 )
+	shinobi_readmem,shinobi_writemem,shinobi_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver shinobi_driver =
 {
@@ -3059,7 +3113,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( tetrisbl_machine_driver, \
-	tetrisbl_readmem,tetrisbl_writemem,tetrisbl_init_machine, gfx1 )
+	tetrisbl_readmem,tetrisbl_writemem,tetrisbl_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver tetrisbl_driver =
 {
@@ -3184,7 +3238,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( timscanr_machine_driver, \
-	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx1 )
+	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver timscanr_driver =
 {
@@ -3324,7 +3378,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( tturfbl_machine_driver, \
-	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1 )
+	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver tturfbl_driver =
 {
@@ -3479,7 +3533,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( wb3bl_machine_driver, \
-	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 )
+	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 ,upd7759_interface)
 
 struct GameDriver wb3bl_driver =
 {
@@ -3631,7 +3685,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 MACHINE_DRIVER( wrestwar_machine_driver, \
-	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine, gfx2 )
+	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine, gfx2,upd7759_interface )
 
 struct GameDriver wrestwar_driver =
 {

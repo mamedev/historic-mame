@@ -5,8 +5,8 @@
 **************************************************************************/
 #include "driver.h"
 #include "osd_cpu.h"
-#include "TMS34010/tms34010.h"
-#include "M6809/M6809.h"
+#include "cpu/tms34010/tms34010.h"
+#include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "vidhrdw/generic.h"
 
@@ -23,10 +23,13 @@
 #define GFX_ROM	     cpu_bankbase[8]
 #define SCRATCH_RAM	 cpu_bankbase[2]
 
+static unsigned char *gfxrombackup;
+
 void narc_sound_w (int offset,int data);
 void mk_sound_w (int offset,int data);
 void smashtv_sound_w (int offset,int data);
 void trog_sound_w (int offset,int data);
+void nbajam_sound_w (int offset,int data);
 
 void wms_vram_w(int offset, int data);
 void wms_objpalram_w(int offset, int data);
@@ -60,12 +63,23 @@ static unsigned int wms_dma_stat=0;
 static unsigned int wms_dma_fgcol=0;
 static        short wms_dma_woffset=0;
 
-static unsigned int wms_dma_odd_nibble=0;  /* are we not on a byte boundary? */
+static unsigned short wms_dma_preskip=0;
+static unsigned short wms_dma_postskip=0;
+
+static unsigned int wms_dma_temp=0;
+
+static unsigned int wms_dma_8pos=0;  /* are we not on a byte boundary? */
+static unsigned int wms_dma_preclip=0;
+static unsigned int wms_dma_postclip=0;
+
+static unsigned short wms_unk1=0;
+static unsigned short wms_unk2=0;
+static unsigned short wms_sysreg2=0;
 
 static unsigned int wms_dma_14=0;
 static unsigned int wms_dma_16=0;
-static unsigned int wms_dma_18=0;
-static unsigned int wms_dma_1a=0;
+static unsigned int wms_dma_tclip=0;
+static unsigned int wms_dma_bclip=0;
 static unsigned int wms_dma_1c=0;
 static unsigned int wms_dma_1e=0;
 
@@ -150,6 +164,11 @@ static void dma_callback(int param)
 	wms_dma_stat = 0; /* tell the cpu we're done */
 	cpu_cause_interrupt(0,TMS34010_INT1);
 }
+static void dma2_callback(int param)
+{
+	wms_dma_stat = 0; /* tell the cpu we're done */
+	cpu_cause_interrupt(0,TMS34010_INT1);
+}
 
 int wms_dma_r(int offset)
 {
@@ -178,7 +197,8 @@ int wms_dma_r(int offset)
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_getpc());
+//			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_getpc());
+			break;
 		}
 	}
 	return wms_dma_stat;
@@ -252,6 +272,8 @@ void wms_dma_w(int offset, int data)
 			rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
 			wms_dma_stat = data;
 
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_getpc(), data);
+					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 			/*
 			 * DMA registers
 			 * ------------------
@@ -378,6 +400,397 @@ void wms_dma_w(int offset, int data)
 			break;
 	}
 }
+
+#define DMA2_GET_SKIPS(xdir)									\
+	for (j=1;((j>=0)&&(data&0x0080));j--)						\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x0f;			\
+				break;											\
+			case 1:												\
+			case 2:												\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x0f); \
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);	\
+				break;											\
+		}														\
+		if (j)													\
+		{														\
+			wrva ##xdir##= wms_dma_preskip*write_data;			\
+			wms_dma_temp = wms_dma_preskip*write_data;			\
+		}														\
+		else													\
+		{														\
+			write_cols_do -= ((wms_dma_postskip*write_data)+wms_dma_temp);	\
+			if (write_cols_do&0x80000000) write_cols_do = 1;	\
+		}														\
+		wms_dma_8pos+=4;										\
+	}															\
+
+#define DMA2_DRAW_1BPP(check, writedata, advance)				\
+	for (j=write_cols;j>=0;j--)									\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:  /* 0x00 - 0x06 */							\
+			case 1:												\
+			case 2:												\
+			case 3:												\
+			case 4:												\
+			case 5:												\
+			case 6:												\
+				write_data = ((*BYTE_XOR_LE(rda))>>(wms_dma_8pos&0x07))&0x01;	\
+				break;											\
+			case 7:  /* 0x07 */									\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos++;											\
+	}															\
+
+#define DMA2_DRAW_2BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x03;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x03);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x03);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x03);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>4)&0x03);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>5)&0x03);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x02);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=2;										\
+	}															\
+
+#define DMA2_DRAW_3BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x07;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x07);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x07);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x07);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>4)&0x07);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x04);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x06);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=3;										\
+	}															\
+
+#define DMA2_DRAW_4BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x0f;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x0f);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x0f);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>3)&0x0f);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x08);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x0c);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x0e);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=4;										\
+	}															\
+
+#define DMA2_DRAW_5BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x1f;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x1f);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>2)&0x1f);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x10);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x18);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x1c);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x1e);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=5;										\
+	}															\
+
+#define DMA2_DRAW_6BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x3f;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda))>>1)&0x3f);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x20);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x30);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x38);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x3c);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x3e);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=6;										\
+	}															\
+
+#define DMA2_DRAW_7BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda))&0x7f;			\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<6)&0x40);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0x60);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0x70);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0x78);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0x7c);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0x7e);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+		wms_dma_8pos+=7;										\
+	}															\
+
+#define DMA2_DRAW_8BPP(check, writedata, advance)				\
+	for (j=write_cols_do;j>=0;j--)								\
+	{															\
+		switch(wms_dma_8pos&0x07)								\
+		{														\
+			case 0:												\
+				write_data = (*BYTE_XOR_LE(rda++))&0xff;		\
+				break;											\
+			case 1:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>1)&0x7f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<7)&0x80);	\
+				break;											\
+			case 2:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>2)&0x3f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<6)&0xc0);	\
+				break;											\
+			case 3:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>3)&0x1f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<5)&0xe0);	\
+				break;											\
+			case 4:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<4)&0xf0);	\
+				break;											\
+			case 5:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>5)&0x07);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<3)&0xf8);	\
+				break;											\
+			case 6:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>6)&0x03);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<2)&0xfc);	\
+				break;											\
+			case 7:												\
+				write_data = (((*BYTE_XOR_LE(rda++))>>7)&0x01);	\
+				write_data |= (((*BYTE_XOR_LE(rda))<<1)&0xfe);	\
+				break;											\
+		}														\
+		if (check)												\
+		{														\
+			*wrva = wms_dma_pal | (writedata);					\
+		}														\
+		wrva##advance;											\
+	}															\
+
+#define DMA2_CLIP(bpp, xdir, clip)								\
+	if (clip)													\
+	{															\
+		wms_dma_8pos&=0x07;										\
+		wms_dma_8pos+=((clip)*(bpp));							\
+		rda+=(wms_dma_8pos>>3);									\
+		wrva##xdir##=clip;										\
+	}															\
+
+#define DMA2_DRAW(bpp, xdir, ydir, check, writedata, advance)	\
+	for (i=0;i<(wms_dma_write_rows<<9);i+=512)					\
+	{															\
+		wrva = &(wms_videoram[(wms_dma_dst##ydir##i)&0x3ffff]);	\
+		write_cols_do = write_cols;								\
+		DMA2_GET_SKIPS(xdir);									\
+		if ((wrva>=wrvatop)&&(wrva<=wrvabot))					\
+		{														\
+			DMA2_DRAW_##bpp##BPP(check, writedata, advance);	\
+			DMA2_CLIP(bpp, xdir, wms_dma_postclip);				\
+		}														\
+		else													\
+		{														\
+			wms_dma_8pos&=0x07;									\
+			wms_dma_8pos+=((write_cols_do+1)*bpp);				\
+			rda+=(wms_dma_8pos>>3);								\
+		}														\
+	}															\
+
+
 void wms_dma2_w(int offset, int data)
 {
 	/*
@@ -387,22 +800,40 @@ void wms_dma2_w(int offset, int data)
 	 * --> approximately 2 cycles per pixel
 	 */
 
-	unsigned int i, pal, write_data, line_skip, dma_skip;
-	int j, write_cols;
+	unsigned int i, pal, write_data=0, line_skip, dma_skip;
+	int j, write_cols, write_cols_do;
 	unsigned char *rda;
-	unsigned short *wrva;
+	unsigned short *wrva, *wrvatop, *wrvabot;
 
 	switch (offset)
 	{
 		case 0:
 			break;
 		case 2:
-			write_cols = (wms_dma_cols+wms_dma_x<512?wms_dma_cols:512-wms_dma_x)-1;   /* Note the -1 */
-			wms_dma_write_rows = (wms_dma_rows+wms_dma_y<512?wms_dma_rows:512-wms_dma_y);
+			if (wms_dma_bclip >= 512) wms_dma_bclip = 512;
+			wms_dma_write_rows = wms_dma_rows;
+			wrvatop = &(wms_videoram[(wms_dma_tclip<<9)]);
+			wrvabot = &(wms_videoram[(wms_dma_bclip<<9)+0x1ff]);
+
+			write_cols = wms_dma_cols-1;
+			wms_dma_postclip = (wms_dma_cols+wms_dma_x >= 512?wms_dma_cols+wms_dma_x - 512:0);
+			wms_dma_preclip = 0;
+			wms_dma_postclip = 0;
+
+
 			wms_dma_dst = ((wms_dma_y<<9) + (wms_dma_x)); /* byte addr */
+
 			rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
 			wms_dma_stat = data;
+			if (wms_dma_bank+wms_dma_subbank > wms_gfx_rom_size) data = 0x8000;
+			wms_dma_postskip = 1<<((data&0x0c00)>>10);
+			wms_dma_preskip = 1<<((data&0x0300)>>8);
 
+			if (0)
+			  {
+					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_getpc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
+					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
+			  }
 			/*
 			 * DMA registers
 			 * ------------------
@@ -410,13 +841,16 @@ void wms_dma2_w(int offset, int data)
 			 *  Register | Bit              | Use
 			 * ----------+-FEDCBA9876543210-+------------
 			 *     0     | x--------------- | trigger write (or clear if zero)
-			 *           | ---184-1-------- | unknown
-			 *           | ----------x----- | flip y
-			 *           | -----------x---- | flip x
-			 *           | ------------x--- | blit nonzero pixels as color
-			 *           | -------------x-- | blit zero pixels as color
-			 *           | --------------x- | blit nonzero pixels
-			 *           | ---------------x | blit zero pixels
+			 *           | -421------------ | image bpp (0=8)
+			 *           | ----84---------- | post skip size = (1<<x)
+			 *           | ------21-------- | pre skip size = (1<<x)
+			 *           | --------8------- | pre/post skip enable
+			 *           | ----------2----- | flip y
+			 *           | -----------1---- | flip x
+			 *           | ------------8--- | blit nonzero pixels as color
+			 *           | -------------4-- | blit zero pixels as color
+			 *           | --------------2- | blit nonzero pixels
+			 *           | ---------------1 | blit zero pixels
 			 *     1     | xxxxxxxxxxxxxxxx | width offset
 			 *     2     | xxxxxxxxxxxxxxxx | source address low word
 			 *     3     | xxxxxxxxxxxxxxxx | source address high word
@@ -427,129 +861,125 @@ void wms_dma2_w(int offset, int data)
 			 *     8     | xxxxxxxxxxxxxxxx | palette
 			 *     9     | xxxxxxxxxxxxxxxx | color
 			 */
-			switch(data&0xe03f)
+			switch(data&0xf07f)
 			{
 				case 0x0000: /* clear registers */
 					dma_skip=0;
-					wms_dma_cols=0;
+					wms_dma_cols=1;
 					wms_dma_rows=0;
 //					wms_dma_pal=0;
 					wms_dma_fgcol=0;
 					break;
+				case 0xf000: /* draw nothing ???*/
+				case 0xb000: /* draw nothing ???*/
+				case 0xa000: /* draw nothing ???*/
+				case 0xe000: /* draw nothing ???*/
 				case 0x8000: /* draw nothing */
 					break;
-				case 0x8002: /* draw only nonzero pixels */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,++);
+				case 0x8002: /* draw only nonzero pixels (8bpp) */
+					DMA2_DRAW(8, +, +, write_data, write_data, ++);
 					break;
-				case 0xc002: /* draw only nonzero pixels ??? */
-//				case 0xe002: /* draw only nonzero pixels ??? */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+1)&(~1)) - wms_dma_cols;
-					for (i=0;i<(wms_dma_write_rows<<9);i+=512)
-					{
-						wrva = &(wms_videoram[wms_dma_dst+i]);
-						for (j=write_cols;j>=0;j--)
-						{
-							if (wms_dma_odd_nibble&0x01)
-							{
-								write_data = (((*BYTE_XOR_LE(rda++))>>4)&0x0f);
-								if (write_data)
-								{
-									*wrva = wms_dma_pal | write_data;
-//									if (errorlog) fprintf(errorlog, "wr: %x\n", write_data);
-								}
-							}
-							else
-							{
-								write_data = (*BYTE_XOR_LE(rda))&0x0f;
-								if (write_data)
-								{
-									*wrva = wms_dma_pal | write_data;
-//									if (errorlog) fprintf(errorlog, "wr: %x\n", write_data);
-								}
-							}
-							wrva++;
-							wms_dma_odd_nibble++;
-						}
-						rda+=dma_skip/2;
-					}
+				case 0x9002: /* draw only nonzero pixels (1bpp) */
+					DMA2_DRAW(1, +, +, write_data, write_data, ++);
+					break;
+				case 0xa002: /* draw only nonzero pixels (2bpp) */
+					DMA2_DRAW(2, +, +, write_data, write_data, ++);
+					break;
+				case 0xb002: /* draw only nonzero pixels (3bpp) */
+					DMA2_DRAW(3, +, +, write_data, write_data, ++);
+					break;
+				case 0xc002: /* draw only nonzero pixels (4bpp) */
+					DMA2_DRAW(4, +, +, write_data, write_data, ++);
+					break;
+				case 0xd002: /* draw only nonzero pixels (5bpp) */
+					DMA2_DRAW(5, +, +, write_data, write_data, ++);
+					break;
+				case 0xe042: /* draw only nonzero pixels (6bpp) ????? */
+					// fixme 0x0040 ?????
+				case 0xe002: /* draw only nonzero pixels (6bpp) */
+					DMA2_DRAW(6, +, +, write_data, write_data, ++);
+					break;
+				case 0xf002: /* draw only nonzero pixels (7bpp) */
+					DMA2_DRAW(7, +, +, write_data, write_data, ++);
 					break;
 				case 0x8003: /* draw all pixels */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
 					break;
-				case 0x8008: /* draw nonzero pixels as color */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,++);
+				case 0x8008: /* draw nonzero pixels as color (8bpp) */
+					DMA2_DRAW(8, +, +, write_data, wms_dma_fgcol, ++);
 					break;
-				case 0xc008: /* draw nonzero nibbles as color */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+1)&(~1)) - wms_dma_cols;
-					for (i=0;i<(wms_dma_write_rows<<9);i+=512)
-					{
-						wrva = &(wms_videoram[wms_dma_dst+i]);
-						for (j=write_cols;j>=0;j--)
-						{
-							if (wms_dma_odd_nibble&0x01)
-							{
-								if ((*BYTE_XOR_LE(rda++))&0xf0)
-								{
-									*wrva = wms_dma_pal | wms_dma_fgcol;
-								}
-							}
-							else
-							{
-								if ((*BYTE_XOR_LE(rda))&0x0f)
-								{
-									*wrva = wms_dma_pal | wms_dma_fgcol;
-								}
-							}
-							wrva++;
-							wms_dma_odd_nibble++;
-						}
-						rda+=dma_skip/2;
-					}
+				case 0x9008: /* draw nonzero pixels as color (1bpp) */
+					DMA2_DRAW(1, +, +, write_data, wms_dma_fgcol, ++);
+					break;
+				case 0xc008: /* draw nonzero pixels as color (4bpp) */
+					DMA2_DRAW(4, +, +, write_data, wms_dma_fgcol, ++);
+					break;
+				case 0xe008: /* draw nonzero pixels as color (6bpp) */
+					DMA2_DRAW(6, +, +, write_data, wms_dma_fgcol, ++);
 					break;
 				case 0x8009: /* draw nonzero pixels as color, zero as zero */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
+					dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 					DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
 					break;
 				case 0xe00c: /* draw all pixels as color (fill) */
+				case 0xd00c: /* draw all pixels as color (fill) */
+				case 0xc00c: /* draw all pixels as color (fill) */
+				case 0xb00c: /* draw all pixels as color (fill) */
+				case 0xa00c: /* draw all pixels as color (fill) */
+				case 0x900c: /* draw all pixels as color (fill) */
 				case 0x800c: /* draw all pixels as color (fill) */
 					DMA_DRAW_ALL_BYTES(wms_dma_fgcol);
 					break;
-				case 0x8010: /* draw nothing */
+				case 0x8010: /* draw nothing ???? */
 					break;
-				case 0xe012: /* draw only nonzero pixels x-flipped???? */
-				case 0x8012: /* draw nonzero pixels x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,--);
+				case 0x8012: /* draw nonzero pixels x-flipped (8bpp) */
+					DMA2_DRAW(8, -, +, write_data, write_data, --);
 					break;
-				case 0x8013: /* draw all pixels x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
+				case 0xc012: /* draw nonzero pixels x-flipped (4bpp) */
+					DMA2_DRAW(4, -, +, write_data, write_data, --);
+					break;
+				case 0xd012: /* draw nonzero pixels x-flipped (5bpp) */
+					DMA2_DRAW(5, -, +, write_data, write_data, --);
+					break;
+				case 0xe012: /* draw nonzero pixels x-flipped (6bpp) */
+					DMA2_DRAW(6, -, +, write_data, write_data, --);
+					break;
+				case 0x8013: /* draw all pixels x-flipped (8bpp) */
+					dma_skip = ((wms_dma_woffset - wms_dma_cols)) + wms_dma_cols;
 					DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
+					if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_getpc(), data, wms_dma_8pos&0x07);
 					break;
-				case 0x8018: /* draw nonzero pixels as color x-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(wms_dma_fgcol,--);
+				case 0x8018: /* draw nonzero pixels as color x-flipped (8bpp)*/
+					DMA2_DRAW(8, -, +, write_data, wms_dma_fgcol, --);
 					break;
-				case 0x8022: /* draw nonzero pixels y-flipped */
-					dma_skip = ((wms_dma_cols + wms_dma_woffset+3)&(~3)) - wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,++);
+				case 0xe018: /* draw only nonzero pixels (6bpp) */
+					DMA2_DRAW(6, -, +, write_data, wms_dma_fgcol, --);
 					break;
-				case 0x8032: /* draw nonzero pixels x-flipped and y-flipped */
-					dma_skip = ((wms_dma_woffset + 3 - wms_dma_cols)&(~3)) + wms_dma_cols;
-					DMA_DRAW_NONZERO_BYTES(write_data,--);
+				case 0x8022: /* draw nonzero pixels y-flipped (8bpp) */
+					DMA2_DRAW(8, +, -, write_data, write_data, ++);
+					break;
+				case 0xe022: /* draw nonzero pixels y-flipped (6bpp) */
+					DMA2_DRAW(6, +, -, write_data, write_data, ++);
+					break;
+				case 0x8032: /* draw nonzero pixels x- and y-flipped (8pp) */
+					DMA2_DRAW(8, -, -, write_data, write_data, --);
+					break;
+				case 0xe032: /* draw nonzero pixels x- and y-flipped (6bpp) */
+					DMA2_DRAW(6, -, -, write_data, write_data, --);
 					break;
 				default:
 					if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_getpc(), data);
-					if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_18, wms_dma_1a, wms_dma_1c, wms_dma_1e );
+					if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 					break;
 			}
-			timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma_callback);
+			timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma2_callback);
 			break;
 		case 4:
 			wms_dma_subbank = data>>3;
-			wms_dma_odd_nibble=data>>2;
+			wms_dma_8pos = data&0x07;
 			break;
 		case 6:
 			wms_dma_bank = ((data&0xfe00)?(data-0x200)*0x2000:data*0x2000);
@@ -569,6 +999,7 @@ void wms_dma2_w(int offset, int data)
 			break;
 		case 0x10:  /* set palette */
     		wms_dma_pal = (data&0xff00);  /* changed from rev1? */
+//    		wms_dma_pal = (data&0xffff);
 			wms_dma_pal_word = data;
 			break;
 		case 0x12:  /* set color for 1-bit */
@@ -581,10 +1012,10 @@ void wms_dma2_w(int offset, int data)
 			wms_dma_16 = data;
 			break;
 		case 0x18:
-			wms_dma_18 = data;
+			wms_dma_tclip = data;
 			break;
 		case 0x1a:
-			wms_dma_1a = data;
+			wms_dma_bclip = data;
 			break;
 		case 0x1c:
 			wms_dma_1c = data;
@@ -593,7 +1024,7 @@ void wms_dma2_w(int offset, int data)
 			wms_dma_1e = data;
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"bs %x: %x\n",offset, data);
+			if (errorlog) fprintf(errorlog,"dma offset %x: %x\n",offset, data);
 			break;
 	}
 }
@@ -679,7 +1110,9 @@ void wms_sysreg_w(int offset, int data)
 }
 void wms_sysreg2_w(int offset, int data)
 {
-	wms_cmos_page = (data&0xc0)<<7; /* 0x2000 offsets */
+	wms_sysreg2 = data;
+//	wms_cmos_page = (data&0xc0)<<8; /* 0x4000 offsets */
+	wms_cmos_page = 0; /* 0x4000 offsets */
 	if(data&0x20&&wms_objpalram_select) /* access VRAM */
 	{
 		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_vram_w);
@@ -700,6 +1133,71 @@ void wms_sysreg2_w(int offset, int data)
 //		wms_autoerase_enable = 1;
 //		wms_autoerase_start  = cpu_getscanline();
 //	}
+}
+
+void wms_unk1_w(int offset, int data)
+{
+	char buf[80];
+	wms_unk1 = data;
+	if (data == 0x4472)
+	{
+		/* 0x4472 --> load ug14, ug16  */
+		cpu_bankbase[8] = &(gfxrombackup[0x000000]);
+	}
+	else if (data == 0x44f2)
+	{
+		/* 0x44f2 --> load ug17 low ?*/
+		cpu_bankbase[8] = &(gfxrombackup[0x400000]);
+	}
+	else
+	/* 0x00f2 --> load ug17 high */
+	{
+		cpu_bankbase[8] = &(gfxrombackup[0x000000]);
+	}
+	wms_sysreg2 = data;
+//	wms_cmos_page = (data&0xc0)<<8; /* 0x4000 offsets */
+	wms_cmos_page = 0; /* 0x4000 offsets */
+	if(data&0x20&&wms_objpalram_select) /* access VRAM */
+	{
+		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_vram_w);
+		install_mem_read_handler (0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_vram_r);
+	}
+	else if(!(data&0x20)&&!wms_objpalram_select) /* access OBJPALRAM */
+	{
+		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_objpalram_w);
+		install_mem_read_handler (0, TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_objpalram_r);
+	}
+	wms_objpalram_select = ((data&0x20)?0:0x40000);
+//	if (data&0x10) /* turn off auto-erase */
+//	{
+//		wms_autoerase_enable = 0;
+//	}
+//	else /* enable auto-erase */
+//	{
+//		wms_autoerase_enable = 1;
+//		wms_autoerase_start  = cpu_getscanline();
+//	}
+
+//	if (errorlog) fprintf(errorlog, "wms_unk1:       %04x\n", data);
+//#ifdef MAME_DEBUG
+//	sprintf(buf,"write: 0x%04x",data);
+//	usrintf_showmessage(buf);
+//#endif
+}
+extern int debug_key_pressed;
+void wms_unk2_w(int offset, int data)
+{
+	char buf[80];
+	if (offset==2)
+	{
+		wms_unk2 = data;
+//#ifdef MAME_DEBUG
+//		sprintf(buf,"unk2 write: 0x%04x",data);
+//		usrintf_showmessage(buf);
+//#endif
+	}
+//	if (offset == 2) debug_key_pressed = 1;
+	if (errorlog&&(offset!=6)) fprintf(errorlog, "wms_unk2(%04x): %04x\n", offset<<3, data);
 }
 
 static int narc_unknown_r (int offset)
@@ -1044,6 +1542,44 @@ static int mk_speedup_r(int offset)
 		return value1;
 	}
 }
+static int mkla1_speedup_r(int offset)
+{
+  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_getpc());
+	if (offset)
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f010)]);
+	}
+	else
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f000)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_getpc() == 0xffcddc00 && !value1)
+		{
+			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
+		}
+		return value1;
+	}
+}
+static int mkla2_speedup_r(int offset)
+{
+  if (errorlog) fprintf(errorlog, "PC=%08x\n", cpu_getpc());
+	if (offset)
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f030)]);
+	}
+	else
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x4f020)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_getpc() == 0xffcde000 && !value1)
+		{
+			DO_SPEEDUP_LOOP_3(0x104b6b0, 0x104b6f0, 0x104b710);
+		}
+		return value1;
+	}
+}
 static int hiimpact_speedup_r(int offset)
 {
 	if (!offset)
@@ -1289,6 +1825,24 @@ static int mk2_speedup_r(int offset)
 		return value1;
 	}
 }
+static int mk2r14_speedup_r(int offset)
+{
+	if (offset)
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x68df0)]);
+	}
+	else
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x68de0)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_getpc() == 0xff80d960 && !value1)
+		{
+			DO_SPEEDUP_LOOP_3(0x105d480, 0x105d4a0, 0x105d4c0);
+		}
+		return value1;
+	}
+}
 static int nbajam_speedup_r(int offset)
 {
 	if (offset)
@@ -1455,6 +2009,22 @@ static void wms_modify_pen(int i, int rgb)
 	Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
 }
 
+static void wms_8bit_t_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
+{
+	int i;
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	int base = offset / 2;
+
+	WRITE_WORD(&paletteram[offset],newword);
+
+	for (i = 0; i < 1; i++)
+	{
+		wms_modify_pen(base | (i << 16), newword);
+	}
+}
+
 static void wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
 {
 	int i;
@@ -1537,6 +2107,11 @@ static void wms_4bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
 	}
 }
 
+static void init_8bit_t(void)
+{
+	install_mem_write_handler(0, TOBYTE(0x01800000), TOBYTE(0x018fffff), wms_8bit_t_paletteram_xRRRRRGGGGGBBBBB_word_w);
+	install_mem_read_handler (0, TOBYTE(0x01800000), TOBYTE(0x018fffff), paletteram_word_r);
+}
 static void init_8bit(void)
 {
 	install_mem_write_handler(0, TOBYTE(0x01800000), TOBYTE(0x0181ffff), wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w);
@@ -1640,6 +2215,26 @@ void mk_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 }
+void mkla1_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x0104f000), TOBYTE(0x0104f01f), mkla1_speedup_r);
+	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+	wms_protect_s = 0xffc96e20;
+	wms_protect_d = 0xffc96ce0;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+}
+void mkla2_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x0104f020), TOBYTE(0x0104f03f), mkla2_speedup_r);
+	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+	wms_protect_s = 0xffc96d00;
+	wms_protect_d = 0xffc96bc0;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+}
 void term2_driver_init(void)
 {
 	/* extra input handler */
@@ -1677,11 +2272,24 @@ void mk2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01068e60), TOBYTE(0x01068e7f), mk2_speedup_r);
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
+	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
+}
+void mk2r14_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x01068de0), TOBYTE(0x01068dff), mk2r14_speedup_r);
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
+	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
 }
 void nbajam_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010754c0), TOBYTE(0x010754df), nbajam_speedup_r);
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK8);
 }
 
 /* init_machine functions */
@@ -1828,10 +2436,11 @@ void mk2_init_machine(void)
 		wms_load_code_roms();
 		load_gfx_roms_8bit();
 		wms_rom_loaded = 1;
+		gfxrombackup = GFX_ROM;
 	}
 
 	/* set up palette */
-	init_8bit();
+	init_8bit_t();
 
 	/*for (i=0;i<256;i++)
 	{
@@ -1852,10 +2461,11 @@ void nbajam_init_machine(void)
 		wms_load_code_roms();
 		load_gfx_roms_8bit();
 		wms_rom_loaded = 1;
+		gfxrombackup = GFX_ROM;
 	}
 
 	/* set up palette */
-	init_8bit();
+	init_8bit_t();
 
 	/*for (i=0;i<256;i++)
 	{
@@ -1869,7 +2479,7 @@ void nbajam_init_machine(void)
 	/* set up sound board */
 	mk_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
-//	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
+	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
 
 	TMS34010_set_shiftreg_functions(0, wms_to_shiftreg, wms_from_shiftreg);
 }

@@ -61,6 +61,7 @@ void popeye_videoram_w(int offset,int data);
 void popeye_colorram_w(int offset,int data);
 void popeye_palettebank_w(int offset,int data);
 void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void popeyebl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  popeye_vh_start(void);
 void popeye_vh_stop(void);
@@ -206,27 +207,14 @@ static struct GfxLayout spritelayout =
     7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8, },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the background color table. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0800, &charlayout,        32, 16 },	/* chars */
-	{ 1, 0x1000, &spritelayout, 32+16*2, 64 },	/* sprites */
-	{ 1, 0x2000, &spritelayout, 32+16*2, 64 },	/* sprites */
-	{ 0, 0,      &fakelayout,         0, 32 },	/* background bitmap */
+	{ 1, 0x0800, &charlayout,      0, 16 },	/* chars */
+	{ 1, 0x1000, &spritelayout, 16*2, 64 },	/* sprites */
+	{ 1, 0x2000, &spritelayout, 16*2, 64 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -266,7 +254,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver popeyebl_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -285,8 +273,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*16, 30*16, { 0*16, 32*16-1, 1*16, 29*16-1 },
 	gfxdecodeinfo,
-	32+16+256, 32+16*2+64*4,
-	popeye_vh_convert_color_prom,
+	32+16+256, 16*2+64*4,
+	popeyebl_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -326,11 +314,34 @@ ROM_START( popeye_rom )
 	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
 	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
-	ROM_REGION(0x0240)	/* color proms */
-	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
-	ROM_LOAD( "popeye.pr2",   0x0020, 0x0020, 0x0f364007 ) /* char palette */
-	ROM_LOAD( "popeye.pr3",   0x0040, 0x0100, 0xca4d7b6a ) /* sprite palette - low 4 bits */
-	ROM_LOAD( "popeye.pr4",   0x0140, 0x0100, 0xcab9bc53 ) /* sprite palette - high 4 bits */
+	ROM_REGION(0x0340)	/* PROMs */
+	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
+	ROM_LOAD( "prom-cpu.3a",  0x0020, 0x0020, 0xe950bea1 ) /* char palette */
+	ROM_LOAD( "prom-cpu.5b",  0x0040, 0x0100, 0xc5826883 ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "prom-cpu.5a",  0x0140, 0x0100, 0xc576afba ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
+ROM_END
+
+ROM_START( popeye2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "7a",           0x0000, 0x2000, 0x0bd04389 )
+	ROM_LOAD( "7b",           0x2000, 0x2000, 0xefdf02c3 )
+	ROM_LOAD( "7c",           0x4000, 0x2000, 0x8eee859e )
+	ROM_LOAD( "7e",           0x6000, 0x2000, 0xb64aa314 )
+
+	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
+	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
+
+	ROM_REGION(0x0340)	/* PROMs */
+	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
+	ROM_LOAD( "prom-cpu.3a",  0x0020, 0x0020, 0xe950bea1 ) /* char palette */
+	ROM_LOAD( "prom-cpu.5b",  0x0040, 0x0100, 0xc5826883 ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "prom-cpu.5a",  0x0140, 0x0100, 0xc576afba ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
 ROM_END
 
 ROM_START( popeyebl_rom )
@@ -348,7 +359,7 @@ ROM_START( popeyebl_rom )
 	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
 	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
-	ROM_REGION(0x0240)	/* color proms */
+	ROM_REGION(0x0240)	/* PROMs */
 	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
 	ROM_LOAD( "popeye.pr2",   0x0020, 0x0020, 0x0f364007 ) /* char palette */
 	ROM_LOAD( "popeye.pr3",   0x0040, 0x0100, 0xca4d7b6a ) /* sprite palette - low 4 bits */
@@ -427,15 +438,41 @@ struct GameDriver popeye_driver =
 	__FILE__,
 	0,
 	"popeye",
-	"Popeye",
+	"Popeye (set 1)",
 	"1982?",
 	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	GAME_NOT_WORKING,
-	&machine_driver,
+	&popeyebl_machine_driver,
 	0,
 
 	popeye_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver popeye2_driver =
+{
+	__FILE__,
+	&popeye_driver,
+	"popeye2",
+	"Popeye (set 2)",
+	"1982?",
+	"Nintendo",
+	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
+	GAME_NOT_WORKING,
+	&popeyebl_machine_driver,
+	0,
+
+	popeye2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -458,7 +495,7 @@ struct GameDriver popeyebl_driver =
 	"bootleg",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
-	&machine_driver,
+	&popeyebl_machine_driver,
 	0,
 
 	popeyebl_rom,

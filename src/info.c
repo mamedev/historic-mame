@@ -1,5 +1,5 @@
-#include <driver.h>
-#include <info.h>
+#include "driver.h"
+#include "info.h"
 
 /* CPU information table */
 struct cpu_desc
@@ -46,6 +46,7 @@ struct cpu_desc CPU_DESC[] =
 	{ CPU_S2650,    "S2650"    },
 	{ CPU_TMS34010, "TMS34010" },
 	{ CPU_TMS9900,  "TMS9900"  },
+	{ CPU_Z8000,    "Z8000"    },
 	{ 0,0 }
 };
 
@@ -56,6 +57,7 @@ unsigned DAC_num(const void* interface) { return ((struct DACinterface*)interfac
 unsigned ADPCM_num(const void* interface) { return ((struct ADPCMinterface*)interface)->num; }
 unsigned OKIM6295_num(const void* interface) { return ((struct OKIM6295interface*)interface)->num; }
 unsigned MSM5205_num(const void* interface) { return ((struct MSM5205interface*)interface)->num; }
+unsigned HC55516_num(const void* interface) { return ((struct CVSDinterface*)interface)->num; }
 unsigned AY8910_clock(const void* interface) { return ((struct AY8910interface*)interface)->baseclock; }
 unsigned AY8910_num(const void* interface) { return ((struct AY8910interface*)interface)->num; }
 unsigned YM2203_clock(const void* interface) { return ((struct YM2203interface*)interface)->baseclock; }
@@ -76,6 +78,7 @@ unsigned NES_clock(const void* interface) { return ((struct NESinterface*)interf
 unsigned NES_num(const void* interface) { return ((struct NESinterface*)interface)->num; }
 unsigned SN76496_clock(const void* interface) { return ((struct SN76496interface*)interface)->baseclock; }
 unsigned SN76496_num(const void* interface) { return ((struct SN76496interface*)interface)->num; }
+unsigned UPD7759_clock(const void* interface) { return ((struct UPD7759_interface*)interface)->clock_rate; }
 unsigned ASTROCADE_clock(const void* interface) { return ((struct astrocade_interface*)interface)->baseclock; }
 unsigned ASTROCADE_num(const void* interface) { return ((struct astrocade_interface*)interface)->num; }
 
@@ -102,7 +105,8 @@ struct sound_desc SOUND_DESC[] =
 	{ SOUND_ADPCM,      ADPCM_num,     0,               "ADPCM"     },
 	{ SOUND_OKIM6295,   OKIM6295_num,  0,               "OKI6295"   },
 	{ SOUND_MSM5205,    MSM5205_num,   0,               "MSM5205"   },
-	{ SOUND_HC55516,    0,             0,               "HC55516"   },
+	{ SOUND_UPD7759,    0,             UPD7759_clock,   "uPD7759"   },
+	{ SOUND_HC55516,    HC55516_num,   0,               "HC55516"   },
 	{ SOUND_ASTROCADE,  ASTROCADE_num, ASTROCADE_clock, "Astrocade" },
 	{ SOUND_K007232,    0,             0,               "007232"    },
 	{ 0,0 }

@@ -19,11 +19,12 @@ To do:
 Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg).
 Birdie Try runs on this hardware, roms are needed.
 
-Sprite/background priority in boat stage of Sly Spy & forest level of Bad
-Dudes, current drivers MAY be correct (Sly Spy is certainly wrong), we
-need real boards to check against.
-
 Figure out weapon placement in Heavy Barrel.
+
+The truck tires in level 2 of Bad Dudes are misplaced (they are sprites).
+
+Sprite and background scrolling is not syncronized in Sly Spy (check the posters
+on the walls)
 
 
 Notes:
@@ -63,7 +64,7 @@ SEE 0xdede in slyspy - scroll register from start of level 3
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 /* Video emulation definitions */
 int  dec0_vh_start(void);
@@ -170,9 +171,6 @@ static void slyspy_control_w(int offset, int data)
 			//soundlatch_w(0,data & 0xff);
 			break;
 		case 2:
-			/* This is set to 0x80 in the boat level, so could be sprite/playfield
-				priority - it fits for all cases except boat level where this is
-                also 0x80 :( */
 			dec0_priority_w(0,data);
 			break;
     }
@@ -398,7 +396,7 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )										\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )										\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service */						\
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 #define DEC0_COIN_SETTING \
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )	\
@@ -620,7 +618,7 @@ INPUT_PORTS_START( slyspy_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )	/* could be ACTIVE_LOW, not sure */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )	/* screwed up colors with ACTIVE_LOW */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -668,7 +666,7 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )	/* ACTIVE_HIGH causes slowdowns */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2234,7 +2232,7 @@ struct GameDriver slyspy_driver =
 	__FILE__,
 	0,
 	"slyspy",
-	"Sly Spy (set 1)",
+	"Sly Spy (revision 3)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
@@ -2259,7 +2257,7 @@ struct GameDriver slyspy2_driver =
 	__FILE__,
 	&slyspy_driver,
 	"slyspy2",
-	"Sly Spy (set 2)",
+	"Sly Spy (revision 2)",
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",

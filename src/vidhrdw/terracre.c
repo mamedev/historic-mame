@@ -64,7 +64,7 @@ void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	/* background tiles use colors 192-255 in four banks */
 	/* the bottom two bits of the color code select the palette bank for */
-	/* pens 0-7; the top two bits for pesn 8-15. */
+	/* pens 0-7; the top two bits for pens 8-15. */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
 		if (i & 8) COLOR(1,i) = 192 + (i & 0x0f) + ((i & 0xc0) >> 2);
@@ -196,11 +196,34 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/*  XX ?? NN ?? AT ?? YY ??
 
-	AT: ?PPP YXBM
-	P = Pallete, X = Flip X, Y = Flip Y, B = Bank
-	*/
+	/* draw characters which don't have priority over sprites - this is most certainly */
+	/* wrong, but I haven't found a real priority control to make the ball appear. */
+	/* above the title. */
+	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	{
+		int code;
+
+
+		code = READ_WORD(&videoram[offs]) & 0xff;
+
+		if (code >= 0x50)
+		{
+			int sx,sy;
+
+
+			sx = (offs/2) / 32;
+			sy = (offs/2) % 32;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					0,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		}
+	}
+
 
 	for (x = 0;x <spriteram_size;x += 8)
 	{
@@ -214,7 +237,7 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int sx,sy;
 
 		code += 256 * bank;
-		sx = (READ_WORD(&spriteram[x+6]) & 0xff) - 0x70 + 256 * (attr & 1);
+		sx = (READ_WORD(&spriteram[x+6]) & 0xff) - 0x80 + 256 * (attr & 1);
 		sy = READ_WORD(&spriteram[x]) & 0xff;
 
 		drawgfx(bitmap,Machine->gfx[2],
@@ -226,19 +249,30 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
+	/* draw characters which have priority over sprites - this is most certainly */
+	/* wrong, but I haven't found a real priority control to make the ball appear. */
+	/* above the title. */
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{
-		int sx,sy;
+		int code;
 
 
-		sx = (offs/2) / 32;
-		sy = (offs/2) % 32;
+		code = READ_WORD(&videoram[offs]) & 0xff;
 
-		drawgfx(bitmap,Machine->gfx[0],
-				READ_WORD(&videoram[offs]) & 0xff,
-				0,
-				0,0,
-				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		if (code < 0x50)
+		{
+			int sx,sy;
+
+
+			sx = (offs/2) / 32;
+			sy = (offs/2) % 32;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					0,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		}
 	}
 }

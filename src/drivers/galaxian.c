@@ -76,13 +76,15 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
+extern unsigned char *pisces_gfx_bank;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-void pisces_gfxbank_w(int offset,int data);
 int galaxian_vh_start(void);
+int mooncrst_vh_start(void);
+int pisces_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int galaxian_vh_interrupt(void);
 
@@ -99,6 +101,12 @@ void mooncrst_sh_update(void);
 
 
 
+static int galapx_funky_r(int offset)
+{
+	return 0xff;
+}
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },	/* not all games use all the space */
@@ -108,6 +116,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW */
 	{ 0x7800, 0x7800, watchdog_reset_r },
+	{ 0x7800, 0x78ff, galapx_funky_r },	/* for the title screen */
 	{ -1 }	/* end of table */
 };
 
@@ -142,7 +151,7 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6000, 0x6001, osd_led_w },
-	{ 0x6002, 0x6002, pisces_gfxbank_w },
+	{ 0x6002, 0x6002, MWA_RAM, &pisces_gfx_bank },
 	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
 	{ 0x6803, 0x6803, mooncrst_noise_w },
@@ -241,11 +250,6 @@ static struct MemoryWriteAddress zigzag_writemem[] =
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x587f, MWA_RAM, &spriteram, &spriteram_size },	/* no bulletsram, all sprites */
-
-	/* I'm just setting the bulltsram somewhere to keep galaxian_vh_screenrefresh() happy. */
-	/* There really isn't a bulletsram, we should use a different video refresh function */
-	{ 0x5880, 0x5880, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7002, 0x7002, zigzag_sillyprotection_w },
 	{ 0x7006, 0x7006, galaxian_flipx_w },
@@ -379,15 +383,15 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_DIPSETTING(    0x80, "Cocktail" )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPNAME( 0x02, 0x00, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "LC 2C/1C RC 1C/2C 2C/5C" )
 	PORT_DIPSETTING(    0x00, "LC 1C/1C RC 1C/5C" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
@@ -428,9 +432,9 @@ INPUT_PORTS_START( warofbug_input_ports )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "500000" )
+	PORT_DIPSETTING(    0x00, "750000" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -544,13 +548,13 @@ INPUT_PORTS_START( zigzag_input_ports )
 	PORT_DIPSETTING(    0xc0, "Free Play" )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPNAME( 0x02, 0x02, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "10000 60000" )
 	PORT_DIPSETTING(    0x04, "20000 60000" )
 	PORT_DIPSETTING(    0x08, "30000 60000" )
@@ -565,11 +569,7 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )	/* works only in the Gremlin version */
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -578,25 +578,24 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-	PORT_DIPNAME( 0x40, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "30000" )
-	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Japanese" )
-	PORT_DIPSETTING(    0x80, "English" )
+	PORT_DIPNAME( 0x40, 0x40, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
 
 	PORT_START	/* DSW */
- 	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
- 	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "Free Play" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "30000" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
+  //PORT_DIPNAME( 0x04, 0x00, "Language", IP_KEY_NONE ) /* This version is always in English */
+													  	/* Code has been commented out at 0x2f4b */
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 INPUT_PORTS_END
 
 
@@ -678,6 +677,17 @@ static struct GfxLayout bulletlayout =
 	{ 0 },			/* graphics ROMs is 1 */
 	0	/* no use */
 };
+static struct GfxLayout backgroundlayout =
+{
+	/* there is no gfx ROM for this one, it is generated by the hardware */
+	8,8,
+	32,	/* one for each column */
+	7,	/* 128 colors max */
+	{ 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56 },
+	8*8*8	/* each character takes 64 bytes */
+};
 
 
 
@@ -686,6 +696,7 @@ static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 	{ 1, 0x0000, &galaxian_charlayout,    0,  8 },
 	{ 1, 0x0000, &galaxian_spritelayout,  0,  8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
@@ -693,6 +704,7 @@ static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 	{ 1, 0x0000, &pisces_charlayout,    0,  8 },
 	{ 1, 0x0000, &pisces_spritelayout,  0,  8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
@@ -700,6 +712,7 @@ static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
 	{ 1, 0x0000, &pacmanbl_charlayout,    0,  8 },
 	{ 1, 0x0800, &pacmanbl_spritelayout,  0,  8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -733,7 +746,7 @@ static struct MachineDriver galaxian_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	galaxian_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -771,12 +784,12 @@ static struct MachineDriver pisces_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pisces_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	pisces_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -809,12 +822,12 @@ static struct MachineDriver mooncrgx_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pisces_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	mooncrst_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -848,12 +861,12 @@ static struct MachineDriver pacmanbl_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pacmanbl_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	pisces_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -897,7 +910,7 @@ static struct MachineDriver zigzag_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pacmanbl_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

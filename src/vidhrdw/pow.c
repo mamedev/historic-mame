@@ -100,9 +100,10 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 	}
 
+	palette_transparent_color=2047;
+	palette_used_colors[2047] = PALETTE_COLOR_USED;
 	palette_recalc();
-	osd_clearbitmap(bitmap);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 	/* This appears to be correct priority (with a few glitches) */
 	draw_sprites(bitmap,1);

@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "TMS34010/tms34010.h"
+#include "cpu/tms34010/tms34010.h"
 
 
 #define FORCOL_TO_PEN(COL)	\
@@ -137,7 +137,7 @@ void exterm_paletteram_w(int offset, int data)
 	}																	\
 																		\
 	memcpy(&exterm_master_videoram[address>>3], shiftreg, 256*sizeof(unsigned short));
-																		
+
 
 static void to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
 {
@@ -224,17 +224,17 @@ int exterm_vh_start(void)
 	{
 		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_16);
 		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_16);
-	
-		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w);		
-		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w);		
+
+		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w);
+		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w);
 	}
 	else
 	{
 		TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master_8);
 		TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave_8);
-	
-		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w);				
-		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w);		
+
+		install_mem_write_handler(0, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w);
+		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w);
 	}
 
 	return 0;
@@ -306,7 +306,7 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);		
+		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
     if (TMS34010_get_DPYSTRT(1) & 0x800)

@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6805/m6805.h"
+#include "cpu/m6805/m6805.h"
 #include "vidhrdw/generic.h"
 
 
@@ -33,6 +33,7 @@ void taito_init_machine(void)
 
 	zaccept = 1;
 	zready = 0;
+	cpu_set_irq_line(2,0,CLEAR_LINE);
 }
 
 
@@ -133,8 +134,8 @@ void taito_mcu_data_w(int offset,int data)
 {
 if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_getpc(),data);
 
-	if (zready == 0) cpu_cause_interrupt(2,M6805_INT_IRQ);
 	zready = 1;
+	cpu_set_irq_line(2,0,ASSERT_LINE);
 	fromz80 = data;
 }
 
@@ -200,6 +201,7 @@ if (errorlog) fprintf(errorlog,"%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",cpu_g
 	if (~data & 0x02)
 	{
 		zready = 0;	/* 68705 is going to read data from the Z80 */
+		cpu_set_irq_line(2,0,CLEAR_LINE);
 		portA_in = fromz80;
 if (errorlog) fprintf(errorlog,"%04x: 68705 <- Z80 %02x\n",cpu_getpc(),portA_in);
 	}
@@ -264,9 +266,4 @@ int taito_68705_portC_r(int offset)
 	res = (zready << 0) | (zaccept << 1);
 if (errorlog) fprintf(errorlog,"%04x: 68705 port C read %02x\n",cpu_getpc(),res);
 	return res;
-}
-
-int taito_68705_ih(void)
-{
-	return !zready;
 }

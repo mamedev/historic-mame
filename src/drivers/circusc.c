@@ -6,7 +6,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 
@@ -88,23 +88,23 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, circusc_sh_timer_r },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, MWA_NOP },	/* latch command for the 76496. We should buffer this */
+	{ 0xa000, 0xa000, MWA_NOP },    /* latch command for the 76496. We should buffer this */
 									/* command and send it to the chip, but we just use */
 									/* the triggers below because the program always writes */
 									/* the same number here and there. */
-	{ 0xa001, 0xa001, SN76496_0_w },	/* trigger the 76496 to read the latch */
-	{ 0xa002, 0xa002, SN76496_1_w },	/* trigger the 76496 to read the latch */
+	{ 0xa001, 0xa001, SN76496_0_w },        /* trigger the 76496 to read the latch */
+	{ 0xa002, 0xa002, SN76496_1_w },        /* trigger the 76496 to read the latch */
 	{ 0xa003, 0xa003, circusc_dac_w },
-	{ 0xa004, 0xa004, MWA_NOP },		/* ??? */
-	{ 0xa07c, 0xa07c, MWA_NOP },		/* ??? */
-	{ -1 }	/* end of table */
+	{ 0xa004, 0xa004, MWA_NOP },            /* ??? */
+	{ 0xa07c, 0xa07c, MWA_NOP },            /* ??? */
+	{ -1 }  /* end of table */
 };
 
 
@@ -206,19 +206,19 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the four bitplanes are packed in one nibble */
+	8,8,    /* 8*8 characters */
+	512,    /* 512 characters */
+	4,      /* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the four bitplanes are packed in one nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every char takes 8 consecutive bytes */
+	32*8    /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
-	384,	/* 384 sprites */
+	384,    /* 384 sprites */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },        /* the bitplanes are packed */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -239,8 +239,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct SN76496interface sn76496_interface =
 {
-	2,	/* 2 chips */
-	14318180/8,	/*  1.7897725 Mhz */
+	2,      /* 2 chips */
+	14318180/8,     /*  1.7897725 Mhz */
 	{ 100, 100 }
 };
 
@@ -265,14 +265,14 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #2 */
+			14318180/4,     /* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			3,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	circusc_init_machine,
 
 	/* video hardware */
@@ -308,35 +308,8 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( circusc_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
-	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
-	ROM_LOAD( "h05_n03.bin",  0xA000, 0x2000, 0x5ef5b3b5 )
-	ROM_LOAD( "h06_n02.bin",  0xC000, 0x2000, 0xa5a5e796 )
-	ROM_LOAD( "h07_n01.bin",  0xE000, 0x2000, 0x70d26721 )
-
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
-	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
-	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
-	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
-	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
-	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
-	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
-	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
-
-	ROM_REGION(0x220)      /* color proms */
-	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
-	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
-	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
-	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
-ROM_END
-
-ROM_START( circusc2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
@@ -359,7 +332,63 @@ ROM_START( circusc2_rom )
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+ROM_END
+
+ROM_START( circusc2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
+	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
+	ROM_LOAD( "h05_n03.bin",  0xA000, 0x2000, 0x5ef5b3b5 )
+	ROM_LOAD( "h06_n02.bin",  0xC000, 0x2000, 0xa5a5e796 )
+	ROM_LOAD( "h07_n01.bin",  0xE000, 0x2000, 0x70d26721 )
+
+	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
+	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
+	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGION(0x220)      /* color proms */
+	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
+	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
+	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+ROM_END
+
+ROM_START( circuscc_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
+	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
+	ROM_LOAD( "p03",          0xA000, 0x2000, 0x190247af )
+	ROM_LOAD( "p02",          0xC000, 0x2000, 0x7e63725e )
+	ROM_LOAD( "p01",          0xE000, 0x2000, 0xeedaa5b2 )
+
+	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
+	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
+	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGION(0x220)      /* color proms */
+	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
+	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
+	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
@@ -444,7 +473,7 @@ struct GameDriver circusc_driver =
 	circusc_rom,
 	0, circusc_decode,
 	0,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
 	input_ports,
 
@@ -459,7 +488,7 @@ struct GameDriver circusc2_driver =
 	__FILE__,
 	&circusc_driver,
 	"circusc2",
-	"Circus Charlie (level select)",
+	"Circus Charlie (no level select)",
 	"1984",
 	"Konami",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
@@ -470,7 +499,33 @@ struct GameDriver circusc2_driver =
 	circusc2_rom,
 	0, circusc_decode,
 	0,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver circuscc_driver =
+{
+	__FILE__,
+	&circusc_driver,
+	"circuscc",
+	"Circus Charlie (Centuri)",
+	"1984",
+	"Konami (Centuri licence)",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	circuscc_rom,
+	0, circusc_decode,
+	0,
+	0,      /* sound_prom */
 
 	input_ports,
 

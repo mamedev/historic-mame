@@ -17,13 +17,18 @@ extern "C" {
 #define ym3812_Sign16(n) (n^0x8000)
 #endif
 
-// This frequency is from Yamaha 2413 documentation
+
+// This specifies whether the update routine updates the timers. Remove define if not automatic timers
+
+#define ym3812_AUTOMATIC
+
+// This frequency is from Yamaha 3812 and 2413 documentation
 
 #define ym3812_StdClock 3579545
 
 // This volume is something I made up that sounds ok
 
-#define ym3812_StdVolume 128
+#define ym3812_StdVolume 256
 
 // Some bit defines (Status and Timer Control bit masks)
 
@@ -41,6 +46,12 @@ extern "C" {
 
 enum EnvStat { ADSR_Silent, ADSR_Attack, ADSR_Decay, ADSR_Sustain, ADSR_Release };
 
+typedef union
+{
+	short	parts[2];
+	int		whole;
+} int16_16;
+
 typedef struct ym3812_s {
 
 	// TIMER Related stuff
@@ -50,12 +61,14 @@ typedef struct ym3812_s {
 	double			vTimer1;			// Timer 1 (80 microseconds)
 	double			vTimer2;			// Timer 2 (320 microseconds)
 	int				nTimerCtrl;			// Timer control...
+	double			vTimer1IntCnt;		// Counts up each update and down each Z80 int. In milliseconds.
+	double			vTimer2IntCnt;		// Counter for timer B
 	int				nYM3812Clk;			// The input clock rate for the chip
 	int				nYM3812DivClk;		// The clock frequency divided by 72...
 
 	// ym3812 Registers
 
-	int				fWave;				// If true=>Rythm sounds are used
+	int				fWave;				// If true=>Rhythm sounds are used
 	int				nDepthRhythm;		// 0xbd - control of depth and rhythm
 	int				nCSM;				// Computer Speech Mode - NOT EMULATED!!!
 	int				fEGTyp[18];			// true=>continuing sound (use keyoff); false=>diminishing sound (no keyoff).
@@ -84,6 +97,7 @@ typedef struct ym3812_s {
 	int				nVibratoOffs;		// Vibrato sinus offset
 	int				nAMDepthOffs;		// AM offset
 	int				nSinValue[18];		// Keep the sinus value for each channel for the feedback stuff
+	int16_16		nPrevVol[18];
 
 	// Read back stuff table..
 
@@ -92,34 +106,38 @@ typedef struct ym3812_s {
 	// Initialized by emulator
 	int				nSubDivide;			// Number of times to subdivide the sample buffer generation
 	int				f16Bit;				// True if 16 bit samples.
-	int				aVolumes[256];		// Volume conversion table
+	int				aVolumes[4096];		// Volume conversion table
 	signed char		*pDrum[5];			// Pointer to samples (11025 Hz)
 	int				nDrumSize[5];		// Size of samples
 	int				nDrumOffs[5];		// Current (playing) offset of samples
-	int				nDrumRate[5];		// Rate of each individual drum
+	int				nDrumRate[5];		// The rate of each individual drum
 	int				nReplayFrq;			// The replay frequency (for calculating number of samples to play)
+	int				nOPLVol;			// Extra setting to control this chip's portion of the full volume
 	void			(*SetTimer)(int, double, struct ym3812_s *, int);	// Routine that starts/removes an IRQ timer.
 } ym3812;
 
-#ifndef cFALSE
-#define cFALSE 0
-#endif
 #ifndef cTRUE
 #define cTRUE 1
 #endif
+#ifndef cFALSE
+#define cFALSE 0
+#endif
+
 
 extern ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit );
 extern ym3812* ym3812_DeInit( ym3812 *pOPL );
-extern void ym3812_Update_stream( ym3812* pOPL, void *pBuffer_in, int nLength );
+void ym3812_Update( ym3812* pOPL, void *pBuffer_in, int nLength );
 extern int ym3812_ReadStatus( ym3812 *pOPL );
 extern int	ym3812_ReadReg( ym3812 *pOPL );
 extern void ym3812_SetReg( ym3812 *pOPL, unsigned char nReg );
 extern void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData);
+extern int ym3812_CheckTimer1Int( ym3812 *pOPL );
+extern int ym3812_CheckTimer2Int( ym3812 *pOPL );
 extern int ym3812_TimerEvent( ym3812 *pOPL, int nTimer );
 
 #ifdef __cplusplus
 };
 #endif
-#endif
 
+#endif
 

@@ -44,7 +44,7 @@ can take. Should the game reset????
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 extern unsigned char *lnc_charbank;
 extern unsigned char *bnj_backgroundram;
@@ -1223,26 +1223,28 @@ ROM_END
 ROM_START( cookrace_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	/* code is in the range 0500-3fff, encrypted */
-	ROM_LOAD( "inc.1",        0x0000, 0x2000, 0x68759d32 )
-	ROM_LOAD( "inc.2",        0x2000, 0x2000, 0xbe7d72d1 )
+	ROM_LOAD( "1f.1",         0x0000, 0x2000, 0x68759d32 )
+	ROM_LOAD( "2f.2",         0x2000, 0x2000, 0xbe7d72d1 )
+	ROM_LOAD( "2k",           0xffe0, 0x0020, 0xe2553b3d )	/* reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "inc.9",        0x0000, 0x2000, 0xd0d94477 ) /* charset #1 */
-	ROM_LOAD( "inc.8",        0x2000, 0x2000, 0x1104f497 )
-	ROM_LOAD( "inc.7",        0x4000, 0x2000, 0xa1a0d5a6 )
-	ROM_LOAD( "inc.5",        0x6000, 0x0800, 0x611c686f ) /* garbage?? */
+	ROM_LOAD( "m6.9",         0x0000, 0x2000, 0xd0d94477 ) /* charset #1 */
+	ROM_LOAD( "m7.8",         0x2000, 0x2000, 0x1104f497 )
+	ROM_LOAD( "m8.7",         0x4000, 0x2000, 0xa1a0d5a6 )
+	ROM_LOAD( "5f.5",         0x6000, 0x0800, 0x611c686f ) /* garbage?? */
 	ROM_CONTINUE(             0x6000, 0x0800 )             /* charset #2 */
-	ROM_LOAD( "inc.4",        0x6800, 0x0800, 0x7742e771 ) /* garbage?? */
+	ROM_LOAD( "4f.4",         0x6800, 0x0800, 0x7742e771 ) /* garbage?? */
 	ROM_CONTINUE(             0x6800, 0x0800 )
-	ROM_LOAD( "inc.3",        0x7000, 0x0800, 0x28609a75 ) /* garbage?? */
+	ROM_LOAD( "2f.3",         0x7000, 0x0800, 0x28609a75 ) /* garbage?? */
 	ROM_CONTINUE(             0x7000, 0x0800 )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "inc.6",        0x0000, 0x1000, 0x6b8e0272 ) /* starts at 0000, not f000; 0000-01ff is RAM */
+	ROM_LOAD( "6f.6",         0x0000, 0x1000, 0x6b8e0272 ) /* starts at 0000, not f000; 0000-01ff is RAM */
 	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
-    ROM_REGION(0x0020)
-    ROM_LOAD( "hamburge.clr", 0x0000, 0x0020, 0xc2348c1d )
+    ROM_REGION(0x0040)
+    ROM_LOAD( "f9.clr",       0x0000, 0x0020, 0xc2348c1d )	/* palette */
+    ROM_LOAD( "b7",           0x0020, 0x0020, 0xe4268fa6 )	/* unknown */
 ROM_END
 
 static void cookrace_decode(void)
@@ -1251,18 +1253,8 @@ static void cookrace_decode(void)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	for (A = 0;A < 0x4000;A++)
+	for (A = 0;A < 0x10000;A++)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
-
-	/* fill in the reset/interrupt vectors */
-	ROM[0xfff9] = 0x40;
-
-	RAM[0xfffa] = 0x00;
-	RAM[0xfffb] = 0x05;
-	RAM[0xfffc] = 0x03;
-	RAM[0xfffd] = 0x05;
-	RAM[0xfffe] = 0xF9;
-	RAM[0xffff] = 0xFF;
 }
 
 

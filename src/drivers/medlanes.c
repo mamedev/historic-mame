@@ -57,7 +57,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "S2650/s2650.h"
+#include "cpu/s2650/s2650.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/medlanes.h"
 

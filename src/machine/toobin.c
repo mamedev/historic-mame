@@ -7,8 +7,8 @@
 #include "machine/atarigen.h"
 #include "sndhrdw/5220intf.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
-#include "m68000/m68000.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/m68000/m68000.h"
 
 
 void toobin_update_display_list (int scanline);

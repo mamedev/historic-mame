@@ -57,17 +57,22 @@ and 1 SFX channel controlled by an 8039:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
 
 /*#define USE_SAMPLES*/
+/*#define EMULATE_6809*/
 
 
 extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
 void gyruss_queuereg_w(int offset, int data);
 void gyruss_flipscreen_w(int offset, int data);
+int gyruss_scanline_r(int offset);
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 int gyruss_sh_start(void);
 int gyruss_portA_r(int offset);
@@ -77,14 +82,30 @@ void gyruss_sh_irqtrigger_w(int offset,int data);
 void gyruss_i8039_irq_w(int offset,int data);
 
 
+unsigned char *gyruss_sharedram;
+
+int gyruss_sharedram_r(int offset)
+{
+	return gyruss_sharedram[offset];
+}
+
+void gyruss_sharedram_w(int offset,int data)
+{
+	gyruss_sharedram[offset] = data;
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_RAM },
-	{ 0xa700, 0xa700, MRA_RAM },
-	{ 0xa7fc, 0xa7fd, MRA_RAM },
+#ifdef EMULATE_6809
+	{ 0xa000, 0xa7ff, gyruss_sharedram_r },
+#else
+	{ 0xa000, 0xa7ff, MRA_RAM },
+#endif
 	{ 0xc000, 0xc000, input_port_4_r },	/* DSW1 */
 	{ 0xc080, 0xc080, input_port_0_r },	/* IN0 */
 	{ 0xc0a0, 0xc0a0, input_port_1_r },	/* IN1 */
@@ -100,6 +121,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0x9fff, MWA_RAM },
+#ifdef EMULATE_6809
+	{ 0xa000, 0xa7ff, gyruss_sharedram_w, &gyruss_sharedram },
+#else
 	{ 0xa000, 0xa17f, MWA_RAM, &spriteram, &spriteram_size },     /* odd frame spriteram */
 	{ 0xa200, 0xa37f, MWA_RAM, &spriteram_2 },   /* even frame spriteram */
 	{ 0xa700, 0xa700, MWA_RAM, &gyruss_spritebank },
@@ -107,6 +131,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa702, 0xa702, gyruss_queuereg_w },       /* semaphore system   */
 	{ 0xa7fc, 0xa7fc, MWA_RAM, &gyruss_6809_drawplanet },
 	{ 0xa7fd, 0xa7fd, MWA_RAM, &gyruss_6809_drawship },
+#endif
 	{ 0xc000, 0xc000, MWA_NOP },	/* watchdog reset */
 	{ 0xc080, 0xc080, gyruss_sh_irqtrigger_w },
 	{ 0xc100, 0xc100, soundlatch_w },         /* command to soundb  */
@@ -160,6 +185,26 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
+#ifdef EMULATE_6809
+static struct MemoryReadAddress m6809_readmem[] =
+{
+	{ 0x0000, 0x0000, gyruss_scanline_r },
+	{ 0x4000, 0x47ff, MRA_RAM },
+	{ 0x6000, 0x67ff, gyruss_sharedram_r },
+	{ 0xe000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress m6809_writemem[] =
+{
+	{ 0x2000, 0x2000, interrupt_enable_w },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4040, 0x40ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6000, 0x67ff, gyruss_sharedram_w },
+	{ 0xe000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+#endif
 
 #ifndef USE_SAMPLES
 static struct MemoryReadAddress i8039_readmem[] =
@@ -484,11 +529,25 @@ static struct MachineDriver machine_driver =
 			5,	/* memory region #5 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
-		}
+		},
+#endif
+#ifdef EMULATE_6809
+		{
+			CPU_M6809,
+			2000000,        /* 2 Mhz ??? */
+			4,	/* memory region #4 */
+			m6809_readmem,m6809_writemem,0,0,
+			interrupt,1
+		},
 #endif
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+#ifdef EMULATE_6809
+	20,	/* 20 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
+#else
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+#endif
 	0,
 
 	/* video hardware */
@@ -501,7 +560,11 @@ static struct MachineDriver machine_driver =
 	0,
 	generic_vh_start,
 	generic_vh_stop,
+#ifndef EMULATE_6809
 	gyruss_vh_screenrefresh,
+#else
+	gyruss_6809_vh_screenrefresh,
+#endif
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,gyruss_sh_start,0,0,
@@ -556,9 +619,8 @@ ROM_START( gyruss_rom )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
-						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",    0x0000, 0x2000, 0x822bf27e )
+	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
@@ -588,9 +650,8 @@ ROM_START( gyrussce_rom )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
-						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",    0x0000, 0x2000, 0x822bf27e )
+	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
@@ -620,9 +681,8 @@ ROM_START( venus_rom )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION(0x2000)	/* Gyruss also contains a 6809, we don't need to emulate it */
-						/* but need the data tables contained in its ROM */
-	ROM_LOAD( "gyrussk.9",    0x0000, 0x2000, 0x822bf27e )
+	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
+	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
 	ROM_REGION(0x1000)	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
@@ -643,6 +703,22 @@ static const char *gyruss_sample_names[] =
 	0	/* end of array */
 };
 #endif
+
+
+static void gyruss_decode(void)
+{
+	int A;
+	unsigned char *RAM;
+	extern int encrypted_cpu;
+
+
+	RAM = Machine->memory_region[Machine->drv->cpu[3].memory_region];
+	encrypted_cpu = 3;
+	for (A = 0xe000;A < 0x10000;A++)
+	{
+		ROM[A] = KonamiDecode(RAM[A],A);
+	}
+}
 
 
 
@@ -701,7 +777,7 @@ struct GameDriver gyruss_driver =
 	0,
 
 	gyruss_rom,
-	0, 0,
+	0, gyruss_decode,
 #ifdef USE_SAMPLES
 	gyruss_sample_names,
 #else
@@ -731,7 +807,7 @@ struct GameDriver gyrussce_driver =
 	0,
 
 	gyrussce_rom,
-	0, 0,
+	0, gyruss_decode,
 #ifdef USE_SAMPLES
 	gyruss_sample_names,
 #else
@@ -761,7 +837,7 @@ struct GameDriver venus_driver =
 	0,
 
 	venus_rom,
-	0, 0,
+	0, gyruss_decode,
 #ifdef USE_SAMPLES
 	gyruss_sample_names,
 #else

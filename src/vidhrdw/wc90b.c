@@ -149,7 +149,7 @@ static void wc90b_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 						bank&2, /* flipy */
 						spriteram[offs + 2], /* sx */
 						240 - spriteram[offs + 1], /* sy */
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0 );
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,15 );
 			}
 		}
 	}

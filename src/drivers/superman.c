@@ -36,7 +36,7 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "M68000/M68000.h"
+#include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 
 
@@ -306,7 +306,7 @@ static struct MachineDriver machine_driver =
 			m68_level6_irq,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
 			2,
 			sound_readmem, sound_writemem,0,0,

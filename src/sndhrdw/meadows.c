@@ -7,7 +7,8 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "S2650/s2650.h"
+#include "cpu/s2650/s2650.h"
+
 
 unsigned char meadows_0c00 = 0;
 unsigned char meadows_0c01 = 0;

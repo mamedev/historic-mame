@@ -126,19 +126,23 @@ void tmnt_sound_command_w(int offset,int data)
 
 int tmnt_sres_r(int offset)
  {
- 	return tmnt_soundlatch;
+		return tmnt_soundlatch;
  }
 
  void tmnt_sres_w(int offset,int data)
  {
- 	/* bit 1 resets the UPD7759C sound chip */
+ 	/* bit 1 resets the UPD7795C sound chip */
+ 	if ((data & 0x02) == 0)
+ 	{
+ 		UPD7759_reset_w(0,(data & 0x02) >> 1);
+ 	}
+
  	/* bit 2 plays the title music */
- 	if (data & 4)
+ 	if (data & 0x04)
  	{
  		if (!sample_playing(0))	sample_start(0,0,0);
  	}
  	else sample_stop(0);
-
  	tmnt_soundlatch = data;
  }
 
@@ -160,7 +164,7 @@ int tmnt_decode_sample(void)
 		return 1;
 
 	samples->sample[0]->length = 0x40000*2;
-	samples->sample[0]->volume = 0xff;
+	samples->sample[0]->volume = 20;
 	samples->sample[0]->smpfreq = 20000;	/* 20 kHz */
 	samples->sample[0]->resolution = 16;
 	dest = (signed short *)samples->sample[0]->data;
@@ -272,6 +276,8 @@ static struct MemoryReadAddress tmnt_readmem[] =
 												/* The area of the char ROMs appearing here */
 												/* is controlled by 106b00 and 106e00 */
 	{ 0x140400, 0x1407ff, punkshot_spriteram_r },
+
+	//{ 0x140004, 0x140007, MRA_RAM},
 	{ -1 }	/* end of table */
 };
 
@@ -291,6 +297,14 @@ static struct MemoryWriteAddress tmnt_writemem[] =
 //	{ 0x106c00, 0x106c03, punkshot_charromsubbank_w },
 	{ 0x106e00, 0x106e03, punkshot_charrombank1_w },
 	{ 0x140400, 0x1407ff, punkshot_spriteram_w, &spriteram, &spriteram_size },
+/*
+	{ 0x10e800, 0x10e801, MWA_RAM},
+	{ 0x140000, 0x140007, MWA_RAM},
+	{ 0x106d00, 0x106d01, MWA_RAM},
+	{ 0x106900, 0x106901, MWA_RAM},
+	{ 0x106c00, 0x106c01, MWA_RAM},
+	{ 0x10e800, 0x10e801, MWA_RAM},
+*/
 	{ -1 }	/* end of table */
 };
 
@@ -337,6 +351,7 @@ static struct MemoryReadAddress tmnt_s_readmem[] =
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xb000, 0xb00d, K007232_ReadReg },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
+	{ 0xf000, 0xf000, UPD7759_busy_r },
 	{ -1 }	/* end of table */
 };
 
@@ -345,9 +360,11 @@ static struct MemoryWriteAddress tmnt_s_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x9000, tmnt_sres_w },	/* title music & UPD7759C reset */
-	{ 0xb000, 0xb00d, K007232_WriteReg },
+	{ 0xb000, 0xb00d, K007232_WriteReg  },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
+	{ 0xd000, 0xd000, UPD7759_message_w },
+	{ 0xe000, 0xe000, UPD7759_start_w },
 	{ -1 }	/* end of table */
 };
 
@@ -782,15 +799,25 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ 60 },
+	{ 35 },
 	{ 0 }
 };
 
 
 static struct K007232_interface k007232_interface =
 {
-  5,  /* memory region */
-  100 /* volume */
+	5,5,	/* memory regions */
+	20		/* volume */
+};
+
+static struct UPD7759_interface upd7759_interface =
+{
+	1,		/* number of chips */
+	UPD7759_STANDARD_CLOCK,
+	{ 60 }, /* volume */
+	6,		/* memory region */
+	UPD7759_STANDALONE_MODE,		/* chip mode */
+	{0}
 };
 
 
@@ -850,12 +877,14 @@ static struct MachineDriver tmnt_machine_driver =
 			SOUND_K007232,
 			&k007232_interface,
 		},
-
+		{
+			SOUND_UPD7759,
+			&upd7759_interface
+		},
 		{
 			SOUND_SAMPLES,
 			&samples_interface
 		}
-
 	}
 };
 
@@ -1148,7 +1177,7 @@ struct GameDriver tmnt_driver =
 	"TMNT (4 Players USA)",
 	"1989",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
 	&tmnt_machine_driver,
 	0,
@@ -1174,7 +1203,7 @@ struct GameDriver tmntj_driver =
 	"TMNT (4 Players Japanese)",
 	"1989",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
 	&tmnt_machine_driver,
 	0,
@@ -1200,7 +1229,7 @@ struct GameDriver tmht2p_driver =
 	"TMHT (2 Players UK)",
 	"1989",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
 	&tmnt_machine_driver,
 	0,
@@ -1226,7 +1255,7 @@ struct GameDriver tmnt2pj_driver =
 	"TMNT (2 Players Japanese)",
 	"1990",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
 	&tmnt_machine_driver,
 	0,
@@ -1252,7 +1281,7 @@ struct GameDriver punkshot_driver =
 	"Punk Shot",
 	"1990",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
 	&punkshot_machine_driver,
 	0,

@@ -867,6 +867,23 @@ ROM_START( gravitar_rom )
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
 	ROM_LOAD( "136010.208",   0x4000, 0x1000, 0x358f25d9 )
+	ROM_LOAD( "136010.309",   0x5000, 0x1000, 0x4ac78df4 )
+	/* Program ROM */
+	ROM_LOAD( "136010.301",   0x9000, 0x1000, 0xa2a55013 )
+	ROM_LOAD( "136010.302",   0xa000, 0x1000, 0xd3700b3c )
+	ROM_LOAD( "136010.303",   0xb000, 0x1000, 0x8e12e3e0 )
+	ROM_LOAD( "136010.304",   0xc000, 0x1000, 0x467ad5da )
+	ROM_LOAD( "136010.305",   0xd000, 0x1000, 0x840603af )
+	ROM_LOAD( "136010.306",   0xe000, 0x1000, 0x3f3805ad )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+ROM_END
+
+ROM_START( gravitr2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* Vector ROM */
+	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
+	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
+	ROM_LOAD( "136010.208",   0x4000, 0x1000, 0x358f25d9 )
 	ROM_LOAD( "136010.209",   0x5000, 0x1000, 0x37034287 )
 	/* Program ROM */
 	ROM_LOAD( "136010.201",   0x9000, 0x1000, 0x167315e4 )
@@ -884,7 +901,7 @@ struct GameDriver gravitar_driver =
 	__FILE__,
 	0,
 	"gravitar",
-	"Gravitar",
+	"Gravitar (version 3)",
 	"1982",
 	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
@@ -904,6 +921,33 @@ struct GameDriver gravitar_driver =
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
+
+struct GameDriver gravitr2_driver =
+{
+	__FILE__,
+	&gravitar_driver,
+	"gravitr2",
+	"Gravitar (version 2)",
+	"1982",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
+	&gravitar_machine_driver,
+	0,
+
+	gravitr2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	gravitar_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
 
 /***************************************************************************
 

@@ -3,7 +3,8 @@
 Various Data East 8 bit games:
 
 	Cobra Command               (c) 1988 Data East Corporation (6809)
-	The Real Ghostbusters       (c) 1987 Data East USA (6809 + I8751)
+	The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
+	The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
 	Mazehunter                  (c) 1987 Data East Corporation (6809 + I8751)
 	Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
 	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
@@ -34,8 +35,8 @@ Emulation Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/m6809.h"
-#include "M6502/M6502.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6502/m6502.h"
 
 int dec8_video_r(int offset);
 void dec8_video_w(int offset, int data);
@@ -74,8 +75,21 @@ void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 extern unsigned char *dec8_row;
 static int prota, protb;
-static int coin_flag;
+
 static int ghost_prot;
+
+static int i8751_return, i8751_value;
+
+static int i8751_h_r(int offset)
+{
+	return i8751_return>>8; /* MSB */
+}
+
+static int i8751_l_r(int offset)
+{
+	return i8751_return&0xff; /* LSB */
+}
+
 
 static int gondo_prot1_r(int offset)
 {
@@ -91,8 +105,9 @@ static int gondo_prot2_r(int offset)
 
 static int prot3_r(int offset)
 {
-//  	if (errorlog) fprintf(errorlog,"PC %06x - Read from vbl\n",cpu_getpc());
-	return ((readinputport(2)+rand()%0xf)&0xfc) + readinputport(2);
+//if (errorlog && cpu_getpc()!=0x8eff && cpu_getpc()!=0x89b3 && cpu_getpc()!=0x8f2e) fprintf(errorlog,"PC %06x - Read from vbl %04x\n",cpu_getpc(),((readinputport(3)+rand()%0xf)&0xfc) + readinputport(3));
+//	return ((readinputport(3)+rand()%0xf)&0xfc) + readinputport(3);
+return ((readinputport(3)+rand()%0xf)&0x08) | readinputport(3);
 }
 
 static int lastmiss_prot1(int offset)
@@ -105,24 +120,13 @@ static int lastmiss_prot2(int offset)
  // 	if (errorlog) fprintf(errorlog,"PC %06x - Read from prot2\n",cpu_getpc());
 	return 1;
 }
-static int i8751_l_r(int offset)
+static int oldi8751_l_r(int offset)
 {
 	static int latch[3];
 	int i8751_out=readinputport(3);
 
  	if (errorlog && cpu_getpc()!=0x8a20) fprintf(errorlog,"PC %06x - Read from 8751 low\n",cpu_getpc());
 
-	/* Ghostbusters protection */
-	if ((i8751_out & 0x4) == 0x4) latch[0]=1;
-	if ((i8751_out & 0x2) == 0x2) latch[1]=1;
-	if ((i8751_out & 0x1) == 0x1) latch[2]=1;
-
-	if (((i8751_out & 0x4) != 0x4) && latch[0]) {latch[0]=0; return 0x80; } /* Player 1 coin */
-	if (((i8751_out & 0x2) != 0x2) && latch[1]) {latch[1]=0; return 0x40; } /* Player 2 coin */
-	if (((i8751_out & 0x1) != 0x1) && latch[2]) {latch[2]=0; return 0x10; } /* Service */
-
-	if (protb==0xaa && prota==0) return 6;
-	if (protb==0x1a && prota==2) return 6;
 
 	/* Darwin */
 	if (protb==0x00 && prota==0x00) return 0x00;
@@ -135,13 +139,10 @@ static int i8751_l_r(int offset)
 	return 0;
 }
 
-static int i8751_h_r(int offset)
+static int oldi8751_h_r(int offset)
 {
 	if (errorlog) fprintf(errorlog,"PC %06x - Read from 8751 high\n",cpu_getpc());
 
-	/* Ghostbusters protection */
-	if (protb==0xaa && prota==0) return 0x55;
-	if (protb==0x1a && prota==2) return 0xe5;
 
 	/* Darwin */
 	if (protb==0x00 && prota==0x00) return 0x00;
@@ -150,14 +151,49 @@ static int i8751_h_r(int offset)
 	if (protb==0x0f && prota==0x40) return 0x0f;
 	if (protb==0x00 && prota==0x50) return 3; /* number of credits */
 
-	/* Maze Hunter */
-	if (coin_flag) {
-		coin_flag=0;
-		return 1;
-	}
-	if (protb==0x1b && prota==0x02) return 0xe4;
 
 	return 0;
+}
+
+/******************************************************************************/
+
+static void ghostb_i8751_w(int offset, int data)
+{
+	i8751_return=0;
+
+	switch (offset) {
+	case 0: /* High byte */
+		i8751_value=(i8751_value&0xff) | (data<<8);
+		break;
+	case 1: /* Low byte */
+		i8751_value=(i8751_value&0xff00) | data;
+		break;
+	}
+
+	if (i8751_value==0xaa) i8751_return=0x655;
+	if (i8751_value==0x21a) i8751_return=0x6e5; /* Ghostbusters ID */
+	if (i8751_value==0x21b) i8751_return=0x6e4; /* Mazehunter ID */
+}
+
+static void srdarwin_i8751_w(int offset, int data)
+{
+	i8751_return=0;
+ if (errorlog) fprintf(errorlog,"PC %06x - write %04x to 8751 %02x\n",cpu_getpc(),data,offset);
+
+	switch (offset) {
+	case 0: /* High byte */
+		i8751_value=(i8751_value&0xff) | (data<<8);
+		break;
+	case 1: /* Low byte */
+		i8751_value=(i8751_value&0xff00) | data;
+		break;
+	}
+
+	if (i8751_value==0) i8751_return=0;
+	if (i8751_value==0x3063) i8751_return=0x9c;
+	if (i8751_value==0x4000) i8751_return=0x4000;
+	if (i8751_value==0x400f) i8751_return=0x400f;
+ 	if (i8751_value==0x5000) i8751_return=1;
 }
 
 /******************************************************************************/
@@ -204,6 +240,11 @@ static void ghostb_bank_w(int offset, int data)
 	bankaddress = 0x10000 + (data >> 4) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
 	ghost_prot=data;
+
+	/* Screen flip == bit 4 (mask 0x8) */
+
+//	if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to bank\n",cpu_getpc(),data);
+
 }
 
 static void dec8_sound_w(int offset, int data)
@@ -267,29 +308,39 @@ static void shackled_int_w(int offset, int data)
 	switch (offset) {
 		case 0: /* IRQ1??? */
        //   cpu_cause_interrupt (0, M6809_INT_IRQ);
+//cpu_cause_interrupt (1, M6809_INT_FIRQ);
+
             return;
         case 1: /* IRQ 2 Request */
-			cpu_cause_interrupt (1, M6809_INT_FIRQ);
+
         	return;
 
         case 2: /* IRQ 2 Acknowledge */
+
             return;
 
         case 3: /* IRC 1? */
+cpu_cause_interrupt (0, M6809_INT_IRQ);   /* stops flickering? */
           //    cpu_cause_interrupt (0, M6809_INT_IRQ);
 
      //        cpu_cause_interrupt (1, M6809_INT_FIRQ);
 			return;
 	}
 }
-
-static int ghostb_cycle_r(int offset)
+void generate_irq(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
-	int p=cpu_getpc();
+//cpu_cause_interrupt (1, M6809_INT_FIRQ);
+if (errorlog) fprintf(errorlog,"PC %06x - Prot %02x %d\n",cpu_getpc(),data,offset);
+cpu_cause_interrupt (1, M6809_INT_FIRQ);
 
-	if (p==0x8db8 || p==0x846c) cpu_spinuntil_int();
-	return RAM[0x69];
+}
+
+void generate_irq2(int offset, int data)
+{
+//cpu_cause_interrupt (1, M6809_INT_FIRQ);
+if (errorlog) fprintf(errorlog,"PC %06x - Prot %02x %d\n",cpu_getpc(),data,offset);
+cpu_cause_interrupt (0, M6809_INT_FIRQ);
+
 }
 
 /******************************************************************************/
@@ -324,7 +375,7 @@ static struct MemoryWriteAddress cobra_writemem[] =
 	{ 0x3a00, 0x3a06, dec8_pf2_w },
  	{ 0x3a10, 0x3a13, dec8_scroll2_w },
 	{ 0x3c00, 0x3c00, dec8_bank_w },
-	{ 0x3c02, 0x3c02, MWA_NOP }, /* Lots of 1s written here, don't think it's a watchdog */
+	{ 0x3c02, 0x3c02, MWA_NOP }, /* DMA flag? */
  	{ 0x3e00, 0x3e00, dec8_sound_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -332,19 +383,18 @@ static struct MemoryWriteAddress cobra_writemem[] =
 
 static struct MemoryReadAddress ghostb_readmem[] =
 {
-//	{ 0x0069, 0x0069, ghostb_cycle_r },
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x27ff, dec8_video_r },
 	{ 0x2800, 0x2dff, MRA_RAM },
 	{ 0x3000, 0x37ff, MRA_RAM },
 	{ 0x3800, 0x3800, input_port_0_r }, /* Player 1 */
 	{ 0x3801, 0x3801, input_port_1_r }, /* Player 2 */
-	{ 0x3802, 0x3802, input_port_0_r }, /* ????? Mazeh only */
-/*{ 0x3803, 0x3803, input_port_2_r },*/ /* Start buttons + VBL */
-	{ 0x3803, 0x3803, prot3_r },
- 	{ 0x3820, 0x3820, input_port_4_r }, /* Dip */
-	{ 0x3840, 0x3840, i8751_l_r },
-	{ 0x3860, 0x3860, i8751_h_r },
+	{ 0x3802, 0x3802, input_port_2_r }, /* Player 3 */
+//{ 0x3803, 0x3803, input_port_3_r }, /* Start buttons + VBL */
+{ 0x3803, 0x3803, prot3_r },
+ 	{ 0x3820, 0x3820, input_port_5_r }, /* Dip */
+	{ 0x3840, 0x3840, i8751_h_r },
+	{ 0x3860, 0x3860, i8751_l_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -364,8 +414,7 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 	{ 0x3820, 0x3827, dec8_pf2_w },
 	{ 0x3830, 0x3833, dec8_scroll2_w },
 	{ 0x3840, 0x3840, ghostb_bank_w },
-	{ 0x3860, 0x3860, i8751_l_w },
-	{ 0x3861, 0x3861, i8751_h_w },
+	{ 0x3860, 0x3861, ghostb_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -376,8 +425,8 @@ static struct MemoryReadAddress srdarwin_readmem[] =
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x0800, 0x13ff, MRA_RAM },
 	{ 0x1400, 0x17ff, dec8_video_r },
-	{ 0x2000, 0x2000, i8751_l_r },
-	{ 0x2001, 0x2001, i8751_h_r },
+	{ 0x2000, 0x2000, i8751_h_r },
+	{ 0x2001, 0x2001, i8751_l_r },
 	{ 0x3800, 0x3800, input_port_1_r }, /* dip? */
 	{ 0x3801, 0x3801, input_port_0_r }, /* Player 1 */
 	{ 0x3802, 0x3802, input_port_2_r }, /* */
@@ -394,8 +443,7 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 	{ 0x0800, 0x0fff, MWA_RAM, &videoram },
 	{ 0x1000, 0x13ff, MWA_RAM },
 	{ 0x1400, 0x17ff, dec8_video_w },
-	{ 0x1800, 0x1800, i8751_l_w },
-	{ 0x1801, 0x1801, i8751_h_w },
+	{ 0x1800, 0x1801, srdarwin_i8751_w },
 	{ 0x1802, 0x180f, srdarwin_control_w },
 	{ 0x2000, 0x2000, dec8_sound_w },
 	{ 0x2800, 0x288f, srdarwin_palette_rg },
@@ -615,6 +663,10 @@ void shackled_sprite_w(int offset,int data)
 	spriteram[offset]=data;
 }
 
+void shackled_video_w(int offset,int data)
+{
+	videoram[offset]=data;
+}
 
 
 
@@ -651,7 +703,7 @@ static struct MemoryWriteAddress shackled_writemem[] =
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 
-//	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, shackled_video_w },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
 	{ 0x3000, 0x37ff, shackled_share_w },
 	{ 0x3800, 0x3fff, dec8_video_w },
@@ -702,7 +754,7 @@ static struct MemoryReadAddress shackled_sub_readmem[] =
 { 0x1807, 0x1807, random_ret2 },
 
 	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x2800, 0x37ff, shackled_sprite_r },
+	{ 0x2800, 0x2fff, shackled_sprite_r },
 	{ 0x3000, 0x37ff, shackled_share_r },
 	{ 0x3800, 0x3fff, dec8_video_r },
 	{ 0x4000, 0xffff, MRA_ROM },
@@ -722,7 +774,8 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
-	{ 0x180e, 0x180f, MWA_NOP },
+{ 0x180e, 0x180f, generate_irq },
+//	{ 0x180e, 0x180f, MWA_NOP },
 
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
@@ -870,43 +923,61 @@ INPUT_PORTS_START( ghostb_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
+ 	PORT_START	/* Player 3 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
 	PORT_START
  	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
  	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
- 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK )  /* Dummy */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dummy input for i8751 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* Dip switch */
 	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty?", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x30, 0x30, "Timer", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, "Scene Time", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4.00" )
+	PORT_DIPSETTING(    0x10, "4.30" )
 	PORT_DIPSETTING(    0x30, "5.00" )
 	PORT_DIPSETTING(    0x20, "6.00" )
-	PORT_DIPSETTING(    0x10, "4.30" )
-	PORT_DIPSETTING(    0x00, "4.00" )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup", IP_KEY_NONE ) /* Ghostb only */
+	PORT_DIPSETTING(    0x00, "Up 1.5%" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+//	PORT_DIPNAME( 0x80, 0x80, "Video Hold", IP_KEY_NONE ) /* Mazeh only */
+//	PORT_DIPSETTING(    0x00, "On" )
+//	PORT_DIPSETTING(    0x80, "Off" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( darwin_input_ports )
@@ -1460,30 +1531,23 @@ static struct YM3812interface ym3812_interface =
 
 /******************************************************************************/
 
-static int ghost_interrupt(void)
+static int ghostb_interrupt(void)
 {
-	static int a=0;
+	static int latch[3];
+	int i8751_out=readinputport(4);
 
- 	if (a) {a=0; return M6809_INT_NMI;}
- 	a=1;
-	return M6809_INT_IRQ;
-}
+	/* Ghostbusters coins are controlled by the i8751 */
+	if ((i8751_out & 0x8) == 0x8) latch[0]=1;
+	if ((i8751_out & 0x4) == 0x4) latch[1]=1;
+	if ((i8751_out & 0x2) == 0x2) latch[2]=1;
+	if ((i8751_out & 0x1) == 0x1) latch[3]=1;
 
-/* IRQ on coin insert only */
-static int mazeh_interrupt(void)
-{
-	static int a=0,latch;
+	if (((i8751_out & 0x8) != 0x8) && latch[0]) {latch[0]=0; cpu_cause_interrupt(0,M6809_INT_IRQ); i8751_return=0x8001; } /* Player 1 coin */
+	if (((i8751_out & 0x4) != 0x4) && latch[1]) {latch[1]=0; cpu_cause_interrupt(0,M6809_INT_IRQ); i8751_return=0x4001; } /* Player 2 coin */
+	if (((i8751_out & 0x2) != 0x2) && latch[2]) {latch[2]=0; cpu_cause_interrupt(0,M6809_INT_IRQ); i8751_return=0x2001; } /* Player 3 coin */
+	if (((i8751_out & 0x1) != 0x1) && latch[3]) {latch[3]=0; cpu_cause_interrupt(0,M6809_INT_IRQ); i8751_return=0x1001; } /* Service */
 
- 	if (a) {a=0; return M6809_INT_NMI;}
- 	a=1;
-
-	if ((readinputport(3) & 0x7) == 0x7) latch=1;
-	if (!coin_flag && latch && (readinputport(3) & 0x7) != 0x7) {
-		coin_flag=1;
-		latch=0;
-		return M6809_INT_IRQ;
-   }
-	return 0;
+	return M6809_INT_NMI; /* VBL */
 }
 
 static int gondo_interrupt(void)
@@ -1586,7 +1650,7 @@ static struct MachineDriver ghostb_machine_driver =
 			3000000,  /* Could be 4? */
 			0,
 			ghostb_readmem,ghostb_writemem,0,0,
-			ghost_interrupt,2
+			ghostb_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -1603,57 +1667,6 @@ static struct MachineDriver ghostb_machine_driver =
 
 	/* video hardware */
   	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-
-	ghostb_gfxdecodeinfo,
-	1024,1024,
-	ghostb_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	dec8_vh_start,
-	dec8_vh_stop,
-	ghostb_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
-
-static struct MachineDriver mazeh_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,  /* Really HD6309 */
-			3000000,
-			0,
-			ghostb_readmem,ghostb_writemem,0,0,
-			mazeh_interrupt,2
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
-			2,	/* memory region #2 */
-  			cobra_s_readmem,cobra_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
-								/* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,	/* init machine */
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	ghostb_gfxdecodeinfo,
 	1024,1024,
@@ -1909,7 +1922,7 @@ static struct MachineDriver shackled_machine_driver =
 			2000000,
 			0,
 			shackled_readmem,shackled_writemem,0,0,
-		   //	ignore_interrupt,0
+		   	//ignore_interrupt,0
 			interrupt,1
 		},
      	{
@@ -1917,11 +1930,7 @@ static struct MachineDriver shackled_machine_driver =
 			2000000,
 			3,
 			shackled_sub_readmem,shackled_sub_writemem,0,0,
-     //	oscar_readmem,oscar_writemem,0,0,
-
-
 			ignore_interrupt,0
-            //linterrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -1937,8 +1946,8 @@ static struct MachineDriver shackled_machine_driver =
 	0,	/* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-  //64*8, 64*8, { 0*8, 64*8-1, 1*8, 64*8-1 },
+	//32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+  64*8, 64*8, { 0*8, 64*8-1, 1*8, 64*8-1 },
 
 	lastmiss_gfxdecodeinfo,
 	1024,1024,
@@ -2007,6 +2016,39 @@ ROM_START( ghostb_rom )
 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
 	ROM_LOAD( "dz-04.rom", 0x30000, 0x10000, 0xd09bad99 )
 	ROM_LOAD( "dz-05.rom", 0x40000, 0x10000, 0x0315f691 )
+
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+	ROM_LOAD( "dz-00.rom", 0x00000, 0x08000, 0x992b4f31 )  /* Characters */
+
+	ROM_LOAD( "dz-11.rom", 0x08000, 0x10000, 0xa5e19c24 ) /* Sprites - two banks interleaved */
+	ROM_LOAD( "dz-13.rom", 0x18000, 0x10000, 0x3e7c0405 )
+	ROM_LOAD( "dz-12.rom", 0x28000, 0x10000, 0x817fae99 )
+	ROM_LOAD( "dz-14.rom", 0x38000, 0x10000, 0x0abbf76d )
+	ROM_LOAD( "dz-15.rom", 0x48000, 0x10000, 0xa01a5fd9 )
+	ROM_LOAD( "dz-16.rom", 0x58000, 0x10000, 0x5a9a344a )
+	ROM_LOAD( "dz-17.rom", 0x68000, 0x10000, 0x40361b8b )
+	ROM_LOAD( "dz-18.rom", 0x78000, 0x10000, 0x8d219489 )
+
+	ROM_LOAD( "dz-07.rom", 0x88000, 0x10000, 0xe7455167 ) /* Tiles */
+ 	ROM_LOAD( "dz-08.rom", 0x98000, 0x10000, 0x32f9ddfe )
+ 	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0xbb6efc02 )
+	ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x6ef9963b )
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
+
+	ROM_REGION_DISPOSE(0x800)	/* Colour proms */
+	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, 0x47e1f83b )
+	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
+ROM_END
+
+ROM_START( ghostb3_rom )
+	ROM_REGION(0x50000)
+ 	ROM_LOAD( "dz01-3b",   0x08000, 0x08000, 0xc8cc862a )
+ 	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
+	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
+	ROM_LOAD( "dz04-1",    0x30000, 0x10000, 0x3c3eb09f )
+	ROM_LOAD( "dz05",      0x40000, 0x10000, 0xb4971d33 )
 
 	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
 	ROM_LOAD( "dz-00.rom", 0x00000, 0x08000, 0x992b4f31 )  /* Characters */
@@ -2175,58 +2217,88 @@ ROM_END
 
 ROM_START( lastmiss_rom )
 	ROM_REGION(0x20000)
- 	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x0 )
- 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x0 )
+ 	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
+ 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
 
 	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
-	ROM_LOAD( "lm_dl01.rom", 0x00000, 0x8000, 0x0 )	/* characters */
-	ROM_LOAD( "lm_dl13.rom", 0x08000, 0x8000, 0x0 )
-	ROM_LOAD( "lm_dl12.rom", 0x28000, 0x8000, 0x0 )
-	ROM_LOAD( "lm_dl11.rom", 0x48000, 0x8000, 0x0 )
-	ROM_LOAD( "lm_dl10.rom", 0x68000, 0x8000, 0x0 )
+	ROM_LOAD( "lm_dl01.rom", 0x00000, 0x8000, 0xf3787a5d )	/* characters */
+	ROM_LOAD( "lm_dl13.rom", 0x08000, 0x8000, 0x39a7dc93 )
+	ROM_LOAD( "lm_dl12.rom", 0x28000, 0x8000, 0x2ba6737e )
+	ROM_LOAD( "lm_dl11.rom", 0x48000, 0x8000, 0x36579d3b )
+	ROM_LOAD( "lm_dl10.rom", 0x68000, 0x8000, 0xfe275ea8 )
 
-	ROM_LOAD( "lm_dl09.rom", 0x88000, 0x10000, 0x0 )
-	ROM_LOAD( "lm_dl08.rom", 0x98000, 0x10000, 0x0 )
-	ROM_LOAD( "lm_dl07.rom", 0xa8000, 0x10000, 0x0 )
-	ROM_LOAD( "lm_dl06.rom", 0xb8000, 0x10000, 0x0 )
+	ROM_LOAD( "lm_dl09.rom", 0x88000, 0x10000, 0x6a5a0c5d )
+	ROM_LOAD( "lm_dl08.rom", 0x98000, 0x10000, 0x3b38cfce )
+	ROM_LOAD( "lm_dl07.rom", 0xa8000, 0x10000, 0x1b60604d )
+	ROM_LOAD( "lm_dl06.rom", 0xb8000, 0x10000, 0xc43c26a7 )
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x0 )
+	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
 
 	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0x0 )
+	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "mb7052.9c",   0x0000, 0x0100, 0x2e55aa12 )	/* unknown */
+ROM_END
+
+ROM_START( lastmss2_rom )
+	ROM_REGION(0x20000)
+ 	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
+ 	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
+
+	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
+	ROM_LOAD( "lm_dl01.rom", 0x00000, 0x8000, 0xf3787a5d )	/* characters */
+	ROM_LOAD( "lm_dl13.rom", 0x08000, 0x8000, 0x39a7dc93 )
+	ROM_LOAD( "lm_dl12.rom", 0x28000, 0x8000, 0x2ba6737e )
+	ROM_LOAD( "lm_dl11.rom", 0x48000, 0x8000, 0x36579d3b )
+	ROM_LOAD( "lm_dl10.rom", 0x68000, 0x8000, 0xfe275ea8 )
+
+	ROM_LOAD( "lm_dl09.rom", 0x88000, 0x10000, 0x6a5a0c5d )
+	ROM_LOAD( "lm_dl08.rom", 0x98000, 0x10000, 0x3b38cfce )
+	ROM_LOAD( "lm_dl07.rom", 0xa8000, 0x10000, 0x1b60604d )
+	ROM_LOAD( "lm_dl06.rom", 0xb8000, 0x10000, 0xc43c26a7 )
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
+
+	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "mb7052.9c",   0x0000, 0x0100, 0x2e55aa12 )	/* unknown */
 ROM_END
 
 ROM_START( shackled_rom )
 	ROM_REGION(0x48000)
- 	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x0 )
-	ROM_LOAD( "dk-06.rom", 0x10000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-05.rom", 0x20000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-04.rom", 0x30000, 0x10000, 0x0 )
-    ROM_LOAD( "dk-03.rom", 0x40000, 0x08000, 0x0 )
+ 	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x87f8fa85 )
+	ROM_LOAD( "dk-06.rom", 0x10000, 0x10000, 0x69ad62d1 )
+	ROM_LOAD( "dk-05.rom", 0x20000, 0x10000, 0x598dd128 )
+	ROM_LOAD( "dk-04.rom", 0x30000, 0x10000, 0x36d305d4 )
+    ROM_LOAD( "dk-03.rom", 0x40000, 0x08000, 0x6fd90fd1 )
 
 	ROM_REGION_DISPOSE(0xc8000)	/* temporary space for graphics */
-	ROM_LOAD( "dk-00.rom", 0x00000, 0x8000, 0x0 )	/* characters */
+	ROM_LOAD( "dk-00.rom", 0x00000, 0x8000, 0x69b975aa )	/* characters */
 
-	ROM_LOAD( "dk-12.rom", 0x08000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-13.rom", 0x18000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-14.rom", 0x28000, 0x10000,  0x0 )
-	ROM_LOAD( "dk-15.rom", 0x38000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-16.rom", 0x48000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-17.rom", 0x58000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-18.rom", 0x68000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-19.rom", 0x78000, 0x10000, 0x0 )
+	ROM_LOAD( "dk-12.rom", 0x08000, 0x10000, 0x615c2371 )
+	ROM_LOAD( "dk-13.rom", 0x18000, 0x10000, 0x479aa503 )
+	ROM_LOAD( "dk-14.rom", 0x28000, 0x10000, 0xcdc24246 )
+	ROM_LOAD( "dk-15.rom", 0x38000, 0x10000, 0x88db811b )
+	ROM_LOAD( "dk-16.rom", 0x48000, 0x10000, 0x061a76bd )
+	ROM_LOAD( "dk-17.rom", 0x58000, 0x10000, 0xa6c5d8af )
+	ROM_LOAD( "dk-18.rom", 0x68000, 0x10000, 0x4d466757 )
+	ROM_LOAD( "dk-19.rom", 0x78000, 0x10000, 0x1911e83e )
 
-	ROM_LOAD( "dk-08.rom", 0x88000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-09.rom", 0x98000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-10.rom", 0xa8000, 0x10000, 0x0 )
-	ROM_LOAD( "dk-11.rom", 0xb8000, 0x10000, 0x0 )
+	ROM_LOAD( "dk-08.rom", 0x88000, 0x10000, 0x5e54e9f5 )
+	ROM_LOAD( "dk-09.rom", 0x98000, 0x10000, 0xc1557fac )
+	ROM_LOAD( "dk-10.rom", 0xa8000, 0x10000, 0x408e6d08 )
+	ROM_LOAD( "dk-11.rom", 0xb8000, 0x10000, 0x5cf5719f )
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "dk-07.rom", 0x8000, 0x8000,  0x0 )
+	ROM_LOAD( "dk-07.rom", 0x8000, 0x8000,  0x887e4bcc )
 
 	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "dk-01.rom", 0x0000, 0x10000,  0x0 )
+	ROM_LOAD( "dk-01.rom", 0x0000, 0x10000,  0x71fe3bda )
 ROM_END
 
 ROM_START( breywood_rom )
@@ -2276,14 +2348,11 @@ ROM_END
 /******************************************************************************/
 
 /* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound. */
-
 static void deco222_decode(void)
 {
-	int A;
+	int A,sound_cpu;
 	unsigned char *RAM;
 	extern int encrypted_cpu;
-	int sound_cpu;
-
 
 	sound_cpu = 1;
 	/* Oscar has three CPUs */
@@ -2296,7 +2365,6 @@ static void deco222_decode(void)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
 }
 
-
 static void mazeh_patch(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
@@ -2306,20 +2374,8 @@ static void mazeh_patch(void)
 
 static void ghostb_decode(void)
 {
-	unsigned char *RAM;
-
-
 	deco222_decode();
-
-	/* A few patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	RAM[0x83d8]=0x12;
-	RAM[0x83d9]=0x12;
-	memset(RAM+0x83c8,0x12,0x11);
-
-	/* Blank out garbage in colour prom to avoid colour overflow */
-	RAM = Machine->memory_region[3];
-	memset(RAM+0x20,0,0xe0);
+	mazeh_patch();
 }
 
 static void gondo_patch(void)
@@ -2423,7 +2479,7 @@ struct GameDriver ghostb_driver =
 	__FILE__,
 	0,
 	"ghostb",
-	"The Real Ghostbusters",
+	"The Real Ghostbusters (2 players)",
 	"1987",
 	"Data East USA",
 	"Bryan McPhail",
@@ -2444,17 +2500,43 @@ struct GameDriver ghostb_driver =
 	0,0
 };
 
+struct GameDriver ghostb3_driver =
+{
+	__FILE__,
+	&ghostb_driver,
+	"ghostb3",
+	"The Real Ghostbusters (3 players)",
+	"1987",
+	"Data East USA",
+	"Bryan McPhail",
+	0,
+	&ghostb_machine_driver,
+	0,
+
+	ghostb3_rom,
+	0, ghostb_decode,
+	0,
+	0,
+
+	ghostb_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
 struct GameDriver mazeh_driver =
 {
 	__FILE__,
 	&ghostb_driver,
 	"mazeh",
-	"Maze Hunter (Japan)",
+	"Maze Hunter",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&mazeh_machine_driver,
+	&ghostb_machine_driver,
 	0,
 
 	mazeh_rom,
@@ -2501,6 +2583,32 @@ struct GameDriver gondo_driver =
 	__FILE__,
 	0,
 	"gondo",
+	"Gondomania",
+	"????",
+	"?????",
+	"Bryan McPhail",
+	0,
+	&gondo_machine_driver,
+	0,
+
+	gondo_rom,
+	gondo_patch, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
+struct GameDriver mekyosen_driver =
+{
+	__FILE__,
+	0,
+	"mekyosen",
 	"Gondomania",
 	"????",
 	"?????",
@@ -2579,15 +2687,41 @@ struct GameDriver lastmiss_driver =
 	__FILE__,
 	0,
 	"lastmiss",
-	"Last Mission",
+	"Last Mission (Rev 6)",
 	"1986",
 	"Data East USA",
-	"Bm",
+	"Bryan McPhail",
 	0,
 	&lastmiss_machine_driver,
 	0,
 
 	lastmiss_rom,
+	lastmiss_patch, 0,
+	0,
+	0,
+
+	shackled_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
+struct GameDriver lastmss2_driver =
+{
+	__FILE__,
+	&lastmiss_driver,
+	"lastmss2",
+	"Last Mission (Rev 5)",
+	"1986",
+	"Data East USA",
+	"Bryan McPhail",
+	0,
+	&lastmiss_machine_driver,
+	0,
+
+	lastmss2_rom,
 	lastmiss_patch, 0,
 	0,
 	0,
@@ -2608,7 +2742,7 @@ struct GameDriver shackled_driver =
 	"Shackled",
 	"1986",
 	"Data East USA",
-	"Bm",
+	"Bryan McPhail",
 	0,
 	&shackled_machine_driver,
 	0,
@@ -2634,7 +2768,7 @@ struct GameDriver breywood_driver =
 	"breywood",
 	"????",
 	"?????",
-	"Bm",
+	"Bryan McPhail",
 	0,
 	&shackled_machine_driver,
 	0,

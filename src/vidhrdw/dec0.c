@@ -33,8 +33,8 @@
     0x400 - tiles 1
   	0x600 - tiles 2
 
-	  Bad Dudes, Robocop, Heavy Barrel, Hippodrome - 24 bit rgb
- 		Sly Spy, Midnight Resistance - 12 bit rgb
+	Bad Dudes, Robocop, Heavy Barrel, Hippodrome - 24 bit rgb
+	Sly Spy, Midnight Resistance - 12 bit rgb
 
   Tile data
 
@@ -72,15 +72,23 @@ Rowscroll style - bank 1 register 6:
 	5: 8? (Hippodrome)
 	6: 4 scroll registers (Heavy Barrel)
 	7: 2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
+	8: 1? (ie, none)
 
-Priority:
+Playfield priority (Bad Dudes, etc):
+	In the bottommost playfield, pens 8-15 can have priority over the next playfield.
+	In that next playfield, pens 8-15 can have priority over sprites.
+
+Bit 0:  Playfield inversion
+Bit 1:  Enable playfield mixing (for palettes 8-15 only)
+Bit 2:  Enable playfield/sprite mixing (for palettes 8-15 only)
+
+Priority word (Midres):
 	Bit 0 set = Playfield 3 drawn over Playfield 2
 			~ = Playfield 2 drawn over Playfield 3
 	Bit 1 set = Sprites are drawn inbetween playfields
 			~ = Sprites are on top of playfields
 	Bit 2
 	Bit 3 set = ...
-
 
 ***************************************************************************/
 
@@ -89,7 +97,6 @@ Priority:
 
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x800	/* Size of background and foreground */
-
 
 /* Video */
 unsigned char *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
@@ -100,6 +107,8 @@ static struct osd_bitmap *dec0_pf2_bitmap;
 static int dec0_pf2_current_shape;
 static struct osd_bitmap *dec0_pf3_bitmap;
 static int dec0_pf3_current_shape;
+static struct osd_bitmap *dec0_tf2_bitmap;
+static struct osd_bitmap *dec0_tf3_bitmap;
 
 unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
 unsigned char *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
@@ -111,9 +120,6 @@ static unsigned char dec0_pf3_control_0[8];
 static unsigned char dec0_pf3_control_1[8];
 
 static int dec0_pri;
-
-/* Prototypes for this file */
-void dec0_vh_stop (void);
 
 /******************************************************************************/
 
@@ -151,6 +157,7 @@ static void dec0_update_palette(int pf23priority)
 	int colmask[16];
 	int pal_base;
 
+
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
@@ -174,7 +181,6 @@ static void dec0_update_palette(int pf23priority)
 		}
 	}
 
-
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
@@ -195,7 +201,6 @@ static void dec0_update_palette(int pf23priority)
 				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
-
 
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
@@ -218,8 +223,8 @@ static void dec0_update_palette(int pf23priority)
 		}
 	}
 
-
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
+	palette_used_colors[pal_base] = PALETTE_COLOR_TRANSPARENT; /* Always set this, for priorities to work */
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
@@ -425,7 +430,7 @@ static void dec0_pf1_update(void)
 	}
 }
 
-static void dec0_pf2_update(int transparent)
+static void dec0_pf2_update(int transparent, int special)
 {
 	int offs,mx,my,color,tile,quarter;
 	int offsetx[4],offsety[4];
@@ -452,6 +457,8 @@ static void dec0_pf2_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf2_bitmap);
 				dec0_pf2_bitmap = osd_create_bitmap(1024,256);
+				osd_free_bitmap(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = osd_create_bitmap(1024,256);
 				dec0_pf2_current_shape = 0;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -469,6 +476,8 @@ static void dec0_pf2_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf2_bitmap);
 				dec0_pf2_bitmap = osd_create_bitmap(512,512);
+				osd_free_bitmap(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = osd_create_bitmap(512,512);
 				dec0_pf2_current_shape = 1;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -486,6 +495,8 @@ static void dec0_pf2_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf2_bitmap);
 				dec0_pf2_bitmap = osd_create_bitmap(256,1024);
+				osd_free_bitmap(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = osd_create_bitmap(256,1024);
 				dec0_pf2_current_shape = 2;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -494,7 +505,6 @@ static void dec0_pf2_update(int transparent)
 			if (errorlog) fprintf(errorlog,"error: pf2_update with unknown shape %04x\n",READ_WORD(&dec0_pf2_control_0[6]));
 			return;
 	}
-
 
 	for (quarter = 0;quarter < 4;quarter++)
 	{
@@ -512,22 +522,41 @@ static void dec0_pf2_update(int transparent)
 
 			if (dec0_pf2_dirty[offs])
 			{
-				dec0_pf2_dirty[offs] = 0;
 				tile = READ_WORD(&dec0_pf2_data[offs]);
 				color = (tile & 0xf000) >> 12;
 
-				drawgfx(dec0_pf2_bitmap,Machine->gfx[1],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
+				/* 'Special' - Render foreground pens (8-15) to a seperate bitmap */
+				if (special) {
+					/* Blank tile */
+					drawgfx(dec0_tf2_bitmap,Machine->gfx[3],
+							0,
+							0,
+							0,0,
+							16*mx + offsetx[quarter],16*my + offsety[quarter],
+							0,TRANSPARENCY_NONE,0);
+
+					if (color>7)
+						drawgfx(dec0_tf2_bitmap,Machine->gfx[1],
+								tile & 0x0fff,
+								color,
+								0,0,
+								16*mx + offsetx[quarter],16*my + offsety[quarter],
+								0,TRANSPARENCY_PENS,0xff);
+				} else { /* Else, business as usual */
+					dec0_pf2_dirty[offs] = 0;
+					drawgfx(dec0_pf2_bitmap,Machine->gfx[1],
+							tile & 0x0fff,
+							color,
+							0,0,
+							16*mx + offsetx[quarter],16*my + offsety[quarter],
+							0,TRANSPARENCY_NONE,0);
+				}
 			}
 		}
 	}
 }
 
-static void dec0_pf3_update(int transparent)
+static void dec0_pf3_update(int transparent, int special)
 {
 	int offs,mx,my,color,tile,quarter;
 	int offsetx[4],offsety[4];
@@ -554,6 +583,8 @@ static void dec0_pf3_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf3_bitmap);
 				dec0_pf3_bitmap = osd_create_bitmap(1024,256);
+				osd_free_bitmap(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = osd_create_bitmap(1024,256);
 				dec0_pf3_current_shape = 0;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -571,6 +602,8 @@ static void dec0_pf3_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf3_bitmap);
 				dec0_pf3_bitmap = osd_create_bitmap(512,512);
+				osd_free_bitmap(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = osd_create_bitmap(512,512);
 				dec0_pf3_current_shape = 1;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -588,6 +621,8 @@ static void dec0_pf3_update(int transparent)
 			{
 				osd_free_bitmap(dec0_pf3_bitmap);
 				dec0_pf3_bitmap = osd_create_bitmap(256,1024);
+				osd_free_bitmap(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = osd_create_bitmap(256,1024);
 				dec0_pf3_current_shape = 2;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -613,16 +648,35 @@ static void dec0_pf3_update(int transparent)
 
 			if (dec0_pf3_dirty[offs])
 			{
-				dec0_pf3_dirty[offs] = 0;
 				tile = READ_WORD(&dec0_pf3_data[offs]);
 				color = (tile & 0xf000) >> 12;
 
-				drawgfx(dec0_pf3_bitmap,Machine->gfx[2],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
+				/* 'Special' - Render foreground pens (8-15) to a seperate bitmap */
+				if (special) {
+					/* Blank tile */
+					drawgfx(dec0_tf3_bitmap,Machine->gfx[3],
+							0,
+							0,
+							0,0,
+							16*mx + offsetx[quarter],16*my + offsety[quarter],
+							0,TRANSPARENCY_NONE,0);
+
+					if (color>7)
+						drawgfx(dec0_tf3_bitmap,Machine->gfx[2],
+							tile & 0x0fff,
+							color,
+							0,0,
+							16*mx + offsetx[quarter],16*my + offsety[quarter],
+							0,TRANSPARENCY_PENS,0xff);
+				} else { /* Else, business as usual */
+					dec0_pf3_dirty[offs] = 0;
+					drawgfx(dec0_pf3_bitmap,Machine->gfx[2],
+							tile & 0x0fff,
+							color,
+							0,0,
+							16*mx + offsetx[quarter],16*my + offsety[quarter],
+							0,TRANSPARENCY_NONE,0);
+				}
 			}
 		}
 	}
@@ -686,6 +740,7 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
+/* trans=0 - bottom playfield, trans=1 - top playfield, trans=2 - special foreground section */
 void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
 {
 	int offs,lines,height,scrolly,scrollx;
@@ -727,13 +782,17 @@ void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
 		for (offs = 0; offs < lines*height; offs++)
 			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf2_rowscroll[offs<<1]);
 
-		if (trans)
+		if (trans==2)
+			copyscrollbitmap(bitmap,dec0_tf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else if (trans==1)
 			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
 			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else { /* Scroll registers not enabled */
-		if (trans)
+		if (trans==2)
+			copyscrollbitmap(bitmap,dec0_tf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else if (trans==1)
 			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
 			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -781,13 +840,17 @@ void dec0_pf3_draw(struct osd_bitmap *bitmap, int trans)
 		for (offs = 0; offs < lines*height; offs++)
 			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf3_rowscroll[offs<<1]);
 
-		if (trans)
+		if (trans==2)
+			copyscrollbitmap(bitmap,dec0_tf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else if (trans==1)
 			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
 			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else { /* Scroll registers not enabled */
-		if (trans)
+		if (trans==2)
+			copyscrollbitmap(bitmap,dec0_tf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		else if (trans==1)
 			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
 			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -798,8 +861,6 @@ void dec0_pf3_draw(struct osd_bitmap *bitmap, int trans)
 
 void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-
 	/* WARNING: priority inverted wrt all the other games */
 	dec0_update_palette(~dec0_pri & 0x01);
 	dec0_pf1_update();
@@ -807,27 +868,39 @@ void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* WARNING: inverted wrt Midnight Resistance */
 	if ((dec0_pri & 0x01) == 0)
 	{
-		dec0_pf2_update(0);
-		dec0_pf3_update(1);
+		dec0_pf2_update(0,1); /* Foreground pens of pf2 only */
+		dec0_pf2_update(0,0);
+		dec0_pf3_update(1,1);
+		dec0_pf3_update(1,0);
 
 		dec0_pf2_draw(bitmap,0);
 		dec0_pf3_draw(bitmap,1);
 
-		/* I'm not supporting sprite priority because I can't figure out how it works. */
-		/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
+		if (dec0_pri & 2)
+			dec0_pf2_draw(bitmap,2); /* Foreground pens only */
+
 		dec0_drawsprites(bitmap,0x00,0x00);
+
+		if (dec0_pri & 4)
+			dec0_pf3_draw(bitmap,2); /* Foreground pens only */
 	}
 	else
 	{
-		dec0_pf3_update(0);
-		dec0_pf2_update(1);
+		dec0_pf3_update(0,1);
+		dec0_pf3_update(0,0);
+		dec0_pf2_update(1,1);
+		dec0_pf2_update(1,0);
 
 		dec0_pf3_draw(bitmap,0);
 		dec0_pf2_draw(bitmap,1);
 
-		/* I'm not supporting sprite priority because I can't figure out how it works. */
-		/* I would exepct e.g. the trees to cover the sprites in level 4 (forest) */
+		if (dec0_pri & 2)
+			dec0_pf3_draw(bitmap,2);
+
 		dec0_drawsprites(bitmap,0x00,0x00);
+
+		if (dec0_pri & 4)
+			dec0_pf2_draw(bitmap,2);
 	}
 
 	dec0_pf1_draw(bitmap);
@@ -844,8 +917,8 @@ void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int trans;
 
-		dec0_pf2_update(0);
-		dec0_pf3_update(1);
+		dec0_pf2_update(0,0);
+		dec0_pf3_update(1,0);
 
 		/* WARNING: inverted wrt Midnight Resistance */
 		/* Robocop uses it only for the title screen, so this might be just */
@@ -866,13 +939,13 @@ void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
 		else
 			dec0_drawsprites(bitmap,0x00,0x00);
-}
-else
-{
+	}
+	else
+	{
 		int trans;
 
-		dec0_pf3_update(0);
-		dec0_pf2_update(1);
+		dec0_pf3_update(0,0);
+		dec0_pf2_update(1,0);
 
 		/* WARNING: inverted wrt Midnight Resistance */
 		/* Robocop uses it only for the title screen, so this might be just */
@@ -893,9 +966,10 @@ else
 			dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
 		else
 			dec0_drawsprites(bitmap,0x00,0x00);
-}
+	}
 
 	dec0_pf1_draw(bitmap);
+
 }
 
 /******************************************************************************/
@@ -905,8 +979,8 @@ void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	dec0_update_palette(dec0_pri & 0x01);
 
 	dec0_pf1_update();
-	dec0_pf3_update(0);
-	dec0_pf2_update(1);
+	dec0_pf3_update(0,0);
+	dec0_pf2_update(1,0);
 
 	dec0_pf3_draw(bitmap,0);
 	dec0_pf2_draw(bitmap,1);
@@ -922,7 +996,7 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	dec0_update_palette(dec0_pri & 0x01);
 
 	dec0_pf1_update();
-	dec0_pf2_update(0); /* This is really the top layer.. */
+	dec0_pf2_update(0,0); /* This is really the top layer.. */
 	dec0_pf2_draw(bitmap,0);
 
 	dec0_drawsprites(bitmap,0x00,0x00);
@@ -934,15 +1008,14 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	dec0_update_palette(dec0_pri & 0x01);
-
 	dec0_pf1_update();
 
 if (dec0_pri & 0x01)
 {
 	int trans;
 
-	dec0_pf2_update(0);
-	dec0_pf3_update(1);
+	dec0_pf2_update(0,0);
+	dec0_pf3_update(1,0);
 
 	if (dec0_pri & 0x04)
 		trans = 0x00;
@@ -964,9 +1037,8 @@ else
 {
 	int trans;
 
-
-	dec0_pf3_update(0);
-	dec0_pf2_update(1);
+	dec0_pf3_update(0,0);
+	dec0_pf2_update(1,0);
 
 	if (dec0_pri & 0x04)
 		trans = 0x00;
@@ -992,16 +1064,21 @@ else
 
 void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	dec0_update_palette(dec0_pri & 0x01);
+	dec0_update_palette(0);
 
 	dec0_pf1_update();
-	dec0_pf3_update(0);
-	dec0_pf2_update(1);
+	dec0_pf3_update(0,0);
+	dec0_pf2_update(1,1);
+	dec0_pf2_update(1,0);
 
 	dec0_pf3_draw(bitmap,0);
 	dec0_pf2_draw(bitmap,1);
 
 	dec0_drawsprites(bitmap,0x00,0x00);
+
+	if (dec0_pri&0x80)
+		dec0_pf2_draw(bitmap,2);
+
 	dec0_pf1_draw(bitmap);
 }
 
@@ -1125,10 +1202,22 @@ int dec0_pf3_data_r(int offset)
 
 void dec0_priority_w(int offset,int data)
 {
-  	dec0_pri = data;
+  	dec0_pri = COMBINE_WORD(dec0_pri,data);
 }
 
 /******************************************************************************/
+
+void dec0_vh_stop (void)
+{
+	osd_free_bitmap(dec0_pf3_bitmap);
+	osd_free_bitmap(dec0_pf2_bitmap);
+	osd_free_bitmap(dec0_pf1_bitmap);
+	osd_free_bitmap(dec0_tf2_bitmap);
+	osd_free_bitmap(dec0_tf3_bitmap);
+	free(dec0_pf3_dirty);
+	free(dec0_pf2_dirty);
+	free(dec0_pf1_dirty);
+}
 
 int dec0_vh_start (void)
 {
@@ -1151,6 +1240,16 @@ int dec0_vh_start (void)
 	}
 	dec0_pf3_current_shape = 1;
 
+	if ((dec0_tf2_bitmap = osd_create_bitmap(512,512)) == 0) {
+		dec0_vh_stop ();
+		return 1;
+	}
+
+	if ((dec0_tf3_bitmap = osd_create_bitmap(512,512)) == 0) {
+		dec0_vh_stop ();
+		return 1;
+	}
+
 	dec0_pf1_dirty = malloc(TEXTRAM_SIZE);
 	dec0_pf3_dirty = malloc(TILERAM_SIZE);
 	dec0_pf2_dirty = malloc(TILERAM_SIZE);
@@ -1164,12 +1263,3 @@ int dec0_vh_start (void)
 
 /******************************************************************************/
 
-void dec0_vh_stop (void)
-{
-	osd_free_bitmap(dec0_pf2_bitmap);
-	osd_free_bitmap(dec0_pf3_bitmap);
-	osd_free_bitmap(dec0_pf1_bitmap);
-	free(dec0_pf3_dirty);
-	free(dec0_pf2_dirty);
-	free(dec0_pf1_dirty);
-}

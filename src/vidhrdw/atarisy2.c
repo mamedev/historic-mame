@@ -134,7 +134,7 @@ int atarisys2_vh_start(void)
 		int i;
 		memset (palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
 		for (i = 0; i < 4; i++)
-			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[15 + i * 16] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 0; i < 8; i++)
 			palette_used_colors[64 + i * 4] = PALETTE_COLOR_TRANSPARENT;
 	}

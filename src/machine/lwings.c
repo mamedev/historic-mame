@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 
 int lwings_bank_register=0xff;

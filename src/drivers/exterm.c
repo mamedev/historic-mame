@@ -55,7 +55,7 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "TMS34010/tms34010.h"
+#include "cpu/tms34010/tms34010.h"
 
 static unsigned char *eeprom;
 static int eeprom_size;

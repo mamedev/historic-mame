@@ -15,8 +15,14 @@
 /* 2 = 2nd half */
 /* E = Even bytes */
 /* O = Odd butes */
+/* E1 = Even bytes 1st half */
+/* O1 = Odd butes 1st half */
+/* E2 = Even bytes 2nd half */
+/* O2 = Odd butes 2nd half */
 enum {	MODE_A_A, MODE_1_A, MODE_2_A, MODE_E_A, MODE_O_A,
+		          MODE_E1_A, MODE_O1_A, MODE_E2_A, MODE_O2_A,
 		          MODE_A_1, MODE_A_2, MODE_A_E, MODE_A_O,
+		          MODE_A_E1, MODE_A_O1, MODE_A_E2, MODE_A_O2,
 		TOTAL_MODES };
 char *modenames[][2] =
 {
@@ -25,10 +31,18 @@ char *modenames[][2] =
 	{ "[2nd half]", "          " },
 	{ "[even]    ", "          " },
 	{ "[odd]     ", "          " },
+	{ "[even 1st]", "          " },
+	{ "[odd 1st] ", "          " },
+	{ "[even 2nd]", "          " },
+	{ "[odd 2nd] ", "          " },
 	{ "          ", "[1st half]" },
 	{ "          ", "[2nd half]" },
 	{ "          ", "[even]    " },
-	{ "          ", "[odd]     " }
+	{ "          ", "[odd]     " },
+	{ "          ", "[even 1st]" },
+	{ "          ", "[odd 1st] " },
+	{ "          ", "[even 2nd]" },
+	{ "          ", "[odd 2nd] " }
 };
 
 struct fileinfo
@@ -178,7 +192,7 @@ void checkintegrity(const struct fileinfo *file,int side)
 	}
 
 	if (i == file->size/4)
-		printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "",mask0);
+		printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "");
 }
 
 
@@ -191,10 +205,10 @@ float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int 
 
 	if (file1->buf == 0 || file2->buf == 0) return 0.0;
 
-	if (mode >= MODE_A_1 && mode <= MODE_A_O)
+	if (mode >= MODE_A_1 && mode <= MODE_A_O2)
 	{
 		const struct fileinfo *temp;
-		mode -= 4;
+		mode -= MODE_A_O2 - MODE_A_1 + 1;
 
 		temp = file1;
 		file1 = file2;
@@ -209,17 +223,14 @@ float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int 
 	{
 		if (file1->size != 2*file2->size) return 0.0;
 	}
+	else if (mode >= MODE_E1_A && mode <= MODE_O2_A)
+	{
+		if (file1->size != 4*file2->size) return 0.0;
+	}
 
 	switch (mode)
 	{
 		case MODE_A_A:
-			for (i = 0;i < file1->size;i++)
-			{
-				if (file1->buf[i] == file2->buf[i]) match++;
-			}
-			score = (float)match/file1->size;
-			break;
-
 		case MODE_1_A:
 			for (i = 0;i < file2->size;i++)
 			{
@@ -237,6 +248,7 @@ float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int 
 			break;
 
 		case MODE_E_A:
+		case MODE_E1_A:
 			for (i = 0;i < file2->size;i++)
 			{
 				if (file1->buf[2*i] == file2->buf[i]) match++;
@@ -245,14 +257,30 @@ float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int 
 			break;
 
 		case MODE_O_A:
+		case MODE_O1_A:
 			for (i = 0;i < file2->size;i++)
 			{
 				if (file1->buf[2*i+1] == file2->buf[i]) match++;
 			}
 			score = (float)match/file2->size;
 			break;
-	}
 
+		case MODE_E2_A:
+			for (i = 0;i < file2->size;i++)
+			{
+				if (file1->buf[2*i + 2*file2->size] == file2->buf[i]) match++;
+			}
+			score = (float)match/file2->size;
+			break;
+
+		case MODE_O2_A:
+			for (i = 0;i < file2->size;i++)
+			{
+				if (file1->buf[2*i+1 + 2*file2->size] == file2->buf[i]) match++;
+			}
+			score = (float)match/file2->size;
+			break;
+	}
 
 	return score;
 }

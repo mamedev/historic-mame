@@ -1146,7 +1146,7 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 100 }
+	{ 50 }
 };
 
 
@@ -1379,9 +1379,10 @@ static struct MachineDriver bubbles_machine_driver =
  *   Sinistar driver
  */
 
-static struct Samplesinterface sinistar_samples_interface =
+static struct CVSDinterface sinistar_cvsd_interface =
 {
-	1	/* 1 channel */
+	1,	/* 1 chip */
+	{ 80 },
 };
 
 static struct MachineDriver sinistar_machine_driver =
@@ -1433,8 +1434,8 @@ static struct MachineDriver sinistar_machine_driver =
 			&dac_interface
 		},
 		{
-			SOUND_SAMPLES,
-			&sinistar_samples_interface
+			SOUND_HC55516,
+			&sinistar_cvsd_interface
 		}
 	}
 };
@@ -1450,7 +1451,7 @@ static struct MachineDriver defender_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			1000000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
 			0,                      /* memory region */
 			defender_readmem,       /* MemoryReadAddress */
 			defender_writemem,      /* MemoryWriteAddress */
@@ -1730,7 +1731,7 @@ static struct MachineDriver defcomnd_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			1000000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
 			0,                      /* memory region */
 			defcomnd_readmem,       /* MemoryReadAddress */
 			defcomnd_writemem,      /* MemoryWriteAddress */
@@ -1785,7 +1786,7 @@ static struct MachineDriver mayday_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			1000000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
 			0,                      /* memory region */
             mayday_readmem,       /* MemoryReadAddress */
             mayday_writemem,      /* MemoryWriteAddress */
@@ -2069,15 +2070,15 @@ ROM_END
 
 ROM_START( robotryo_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "robotron.yo1", 0x0000, 0x1000, 0x66c7d3ef )
-	ROM_LOAD( "robotron.yo2", 0x1000, 0x1000, 0x5bc6c614 )
+	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0x66c7d3ef )
+	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x5bc6c614 )
 	ROM_LOAD( "robotron.yo3", 0x2000, 0x1000, 0x67a369bc )
 	ROM_LOAD( "robotron.yo4", 0x3000, 0x1000, 0xb0de677a )
 	ROM_LOAD( "robotron.yo5", 0x4000, 0x1000, 0x24726007 )
 	ROM_LOAD( "robotron.yo6", 0x5000, 0x1000, 0x028181a6 )
 	ROM_LOAD( "robotron.yo7", 0x6000, 0x1000, 0x4dfcceae )
-	ROM_LOAD( "robotron.yo8", 0x7000, 0x1000, 0x3a96e88c )
-	ROM_LOAD( "robotron.yo9", 0x8000, 0x1000, 0xb124367b )
+	ROM_LOAD( "robotron.sb8", 0x7000, 0x1000, 0x3a96e88c )
+	ROM_LOAD( "robotron.sb9", 0x8000, 0x1000, 0xb124367b )
 	ROM_LOAD( "robotron.yoa", 0xd000, 0x1000, 0x4a9d5f52 )
 	ROM_LOAD( "robotron.yob", 0xe000, 0x1000, 0x2afc5e7f )
 	ROM_LOAD( "robotron.yoc", 0xf000, 0x1000, 0x45da9202 )
@@ -2173,20 +2174,20 @@ ROM_START( joust_rom )
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
-ROM_START( joustr_rom )
+ROM_START( joustwr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "joust.sr1",    0x0000, 0x1000, 0xfe41b2af )
-	ROM_LOAD( "joust.sr2",    0x1000, 0x1000, 0x501c143c )
-	ROM_LOAD( "joust.sr3",    0x2000, 0x1000, 0x43f7161d )
-	ROM_LOAD( "joust.sr4",    0x3000, 0x1000, 0xab347170 )
-	ROM_LOAD( "joust.sr5",    0x4000, 0x1000, 0xc686bb6b )
-	ROM_LOAD( "joust.sr6",    0x5000, 0x1000, 0x3d9a6fac )
-	ROM_LOAD( "joust.sr7",    0x6000, 0x1000, 0x0a70b3d1 )
-	ROM_LOAD( "joust.sr8",    0x7000, 0x1000, 0xa7f01504 )
-	ROM_LOAD( "joust.sr9",    0x8000, 0x1000, 0x978687ad )
-	ROM_LOAD( "joust.sra",    0xd000, 0x1000, 0xc0c6e52a )
-	ROM_LOAD( "joust.srb",    0xe000, 0x1000, 0xab11bcf9 )
-	ROM_LOAD( "joust.src",    0xf000, 0x1000, 0xea14574b )
+	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
+	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
+	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
+	ROM_LOAD( "joust.wg4",    0x3000, 0x1000, 0xdb5571b6 )
+	ROM_LOAD( "joust.wg5",    0x4000, 0x1000, 0xc686bb6b )
+	ROM_LOAD( "joust.wg6",    0x5000, 0x1000, 0xfac5f2cf )
+	ROM_LOAD( "joust.wr7",    0x6000, 0x1000, 0xe6f439c4 )
+	ROM_LOAD( "joust.wg8",    0x7000, 0x1000, 0xba5359ba )
+	ROM_LOAD( "joust.wg9",    0x8000, 0x1000, 0x39643147 )
+	ROM_LOAD( "joust.wra",    0xd000, 0x1000, 0x2039014a )
+	ROM_LOAD( "joust.wgb",    0xe000, 0x1000, 0xea48b359 )
+	ROM_LOAD( "joust.wgc",    0xf000, 0x1000, 0xc710717b )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -2196,20 +2197,20 @@ ROM_START( joustr_rom )
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
-ROM_START( joustwr_rom )
+ROM_START( joustr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "joust.wr1",    0x0000, 0x1000, 0xfe41b2af )
-	ROM_LOAD( "joust.wr2",    0x1000, 0x1000, 0x501c143c )
-	ROM_LOAD( "joust.wr3",    0x2000, 0x1000, 0x43f7161d )
-	ROM_LOAD( "joust.wr4",    0x3000, 0x1000, 0xdb5571b6 )
-	ROM_LOAD( "joust.wr5",    0x4000, 0x1000, 0xc686bb6b )
-	ROM_LOAD( "joust.wr6",    0x5000, 0x1000, 0xfac5f2cf )
-	ROM_LOAD( "joust.wr7",    0x6000, 0x1000, 0xe6f439c4 )
-	ROM_LOAD( "joust.wr8",    0x7000, 0x1000, 0xba5359ba )
-	ROM_LOAD( "joust.wr9",    0x8000, 0x1000, 0x39643147 )
-	ROM_LOAD( "joust.wra",    0xd000, 0x1000, 0x2039014a )
-	ROM_LOAD( "joust.wrb",    0xe000, 0x1000, 0xea48b359 )
-	ROM_LOAD( "joust.wrc",    0xf000, 0x1000, 0xc710717b )
+	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
+	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
+	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
+	ROM_LOAD( "joust.sr4",    0x3000, 0x1000, 0xab347170 )
+	ROM_LOAD( "joust.wg5",    0x4000, 0x1000, 0xc686bb6b )
+	ROM_LOAD( "joust.sr6",    0x5000, 0x1000, 0x3d9a6fac )
+	ROM_LOAD( "joust.sr7",    0x6000, 0x1000, 0x0a70b3d1 )
+	ROM_LOAD( "joust.sr8",    0x7000, 0x1000, 0xa7f01504 )
+	ROM_LOAD( "joust.sr9",    0x8000, 0x1000, 0x978687ad )
+	ROM_LOAD( "joust.sra",    0xd000, 0x1000, 0xc0c6e52a )
+	ROM_LOAD( "joust.srb",    0xe000, 0x1000, 0xab11bcf9 )
+	ROM_LOAD( "joust.src",    0xf000, 0x1000, 0xea14574b )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -2324,6 +2325,10 @@ ROM_START( sinistar_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
+	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
+	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
+	ROM_LOAD( "speech.ic4",   0xe000, 0x1000, 0x4b56a626 )
 	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
 ROM_END
 
@@ -2346,6 +2351,10 @@ ROM_START( sinista1_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
+	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
+	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
+	ROM_LOAD( "speech.ic4",   0xe000, 0x1000, 0x4b56a626 )
 	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
 ROM_END
 
@@ -2368,24 +2377,12 @@ ROM_START( sinista2_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
+	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
+	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
+	ROM_LOAD( "speech.ic4",   0xe000, 0x1000, 0x4b56a626 )
 	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
 ROM_END
-
-
-/* Sinistar speech samples */
-const char *sinistar_sample_names[]=
-{
-	"*sinistar",
-	"ilive.sam",
-	"ihunger.sam",
-	"roar.sam",
-	"runrun.sam",
-	"iamsin.sam",
-	"bewarcow.sam",
-	"ihungerc.sam",
-	"runcow.sam",
-	0 /*array end*/
-};
 
 struct GameDriver sinistar_driver =
 {
@@ -2402,7 +2399,7 @@ struct GameDriver sinistar_driver =
 
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
-	sinistar_sample_names,          /* samplenames */
+	0,          /* samplenames */
 	0,      /* sound_prom */
 
 	sinistar_input_ports,
@@ -2428,7 +2425,7 @@ struct GameDriver sinista1_driver =
 
 	sinista1_rom, /* RomModule * */
 	0, 0, /* ROM decrypt routines; not sure if these are needed here */
-	sinistar_sample_names, /* samplenames */
+	0, /* samplenames */
 	0, /* sound_prom */
 
 	sinistar_input_ports,
@@ -2454,7 +2451,7 @@ struct GameDriver sinista2_driver =
 
 	sinista2_rom, /* RomModule * */
 	0, 0, /* ROM decrypt routines; not sure if these are needed here */
-	sinistar_sample_names, /* samplenames */
+	0, /* samplenames */
 	0, /* sound_prom */
 
 	sinistar_input_ports,
@@ -2501,10 +2498,10 @@ ROM_START( bubblesr_rom )
 	ROM_LOAD( "bubblesr.3b",  0x2000, 0x1000, 0xf869bb9c )
 	ROM_LOAD( "bubblesr.4b",  0x3000, 0x1000, 0x0c65eaab )
 	ROM_LOAD( "bubblesr.5b",  0x4000, 0x1000, 0x7ece4e13 )
-	ROM_LOAD( "bubblesr.6b",  0x5000, 0x1000, 0x4dd0450d )
-	ROM_LOAD( "bubblesr.7b",  0x6000, 0x1000, 0xe0a26ec0 )
+	ROM_LOAD( "bubbles.6b",   0x5000, 0x1000, 0x4dd0450d )
+	ROM_LOAD( "bubbles.7b",   0x6000, 0x1000, 0xe0a26ec0 )
 	ROM_LOAD( "bubblesr.8b",  0x7000, 0x1000, 0x598b9bd6 )
-	ROM_LOAD( "bubblesr.9b",  0x8000, 0x1000, 0xb48559fb )
+	ROM_LOAD( "bubbles.9b",   0x8000, 0x1000, 0xb48559fb )
 	ROM_LOAD( "bubblesr.10b", 0xd000, 0x1000, 0x8b396db0 )
 	ROM_LOAD( "bubblesr.11b", 0xe000, 0x1000, 0x096af43e )
 	ROM_LOAD( "bubblesr.12b", 0xf000, 0x1000, 0x5c1244ef )
@@ -2647,8 +2644,32 @@ ROM_START( defender_rom )
 	ROM_LOAD( "defend.11",    0x11800, 0x0800, 0x9deaf6d9 )
 	ROM_LOAD( "defend.7",     0x12000, 0x0800, 0x339e092e )
 	ROM_LOAD( "defend.10",    0x12800, 0x0800, 0xa543b167 )
-	ROM_RELOAD(            0x13800, 0x0800 )
+	ROM_RELOAD(               0x13800, 0x0800 )
 	ROM_LOAD( "defend.6",     0x13000, 0x0800, 0x65f4efd1 )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
+ROM_END
+
+ROM_START( defendg_rom )
+	ROM_REGION(0x14000)
+	ROM_LOAD( "defeng01.bin", 0x0d000, 0x0800, 0x6111d74d )
+	ROM_LOAD( "defeng04.bin", 0x0d800, 0x0800, 0x3cfc04ce )
+	ROM_LOAD( "defeng02.bin", 0x0e000, 0x1000, 0xd184ab6b )
+	ROM_LOAD( "defeng03.bin", 0x0f000, 0x1000, 0x788b76d7 )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "defeng09.bin", 0x10000, 0x0800, 0xf57caa62 )
+	ROM_LOAD( "defeng12.bin", 0x10800, 0x0800, 0x33db686f )
+	ROM_LOAD( "defeng08.bin", 0x11000, 0x0800, 0x9a9eb3d2 )
+	ROM_LOAD( "defeng11.bin", 0x11800, 0x0800, 0x5ca4e860 )
+	ROM_LOAD( "defeng07.bin", 0x12000, 0x0800, 0x545c3326 )
+	ROM_LOAD( "defeng10.bin", 0x12800, 0x0800, 0x941cf34e )
+	ROM_RELOAD(               0x13800, 0x0800 )
+	ROM_LOAD( "defeng06.bin", 0x13000, 0x0800, 0x3af34c05 )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -2663,7 +2684,7 @@ struct GameDriver defender_driver =
 	__FILE__,
 	0,
 	"defender",
-	"Defender",
+	"Defender (Red label)",
 	"1980",
 	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
@@ -2672,6 +2693,32 @@ struct GameDriver defender_driver =
 	0,
 
 	defender_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+struct GameDriver defendg_driver =
+{
+	__FILE__,
+	&defender_driver,
+	"defendg",
+	"Defender (Green label)",
+	"1980",
+	"Williams",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
+	&defender_machine_driver,       /* MachineDriver * */
+	0,
+
+	defendg_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
 	0,      /* sound_prom */

@@ -66,7 +66,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
 
 
@@ -355,6 +355,33 @@ INPUT_PORTS_START( headon_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( headon2_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x18, 0x18, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+/*	PORT_DIPSETTING(    0x08, "5" )*/
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but used (sound related?) */
+	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
 INPUT_PORTS_END
 
@@ -1092,6 +1119,18 @@ ROM_START( headon_rom )
 	ROM_LOAD( "193a",         0x1800, 0x0400, 0x37a1df4c )
 ROM_END
 
+ROM_START( headon2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u27.bin",      0x0000, 0x0400, 0xfa47d2fb )
+	ROM_LOAD( "u26.bin",      0x0400, 0x0400, 0x61c47b15 )
+	ROM_LOAD( "u25.bin",      0x0800, 0x0400, 0xbb16db92 )
+	ROM_LOAD( "u24.bin",      0x0c00, 0x0400, 0x17a09f24 )
+	ROM_LOAD( "u23.bin",      0x1000, 0x0400, 0x0024895e )
+	ROM_LOAD( "u22.bin",      0x1400, 0x0400, 0xf798304d )
+	ROM_LOAD( "u21.bin",      0x1800, 0x0400, 0x4c19dd40 )
+	ROM_LOAD( "u20.bin",      0x1c00, 0x0400, 0x25887ff2 )
+ROM_END
+
 ROM_START( invho2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "271b.u33",     0x0000, 0x0400, 0x44356a73 )
@@ -1368,6 +1407,13 @@ static unsigned char headon_color_prom[] =
 	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
 };
 
+static unsigned char headon2_color_prom[] =
+{
+	/* selected palette from the invho2 and ho2ds PROMs */
+	0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
+	0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
+};
+
 static unsigned char sspaceat_color_prom[] =
 {
 	/* Guessed palette! */
@@ -1399,7 +1445,6 @@ static unsigned char ho2ds_color_prom[] =
 	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
 };
 #endif
-
 
 
 static const char *carnival_sample_names[] =
@@ -1590,6 +1635,32 @@ struct GameDriver headon_driver =
 	headon_input_ports,
 
 	headon_color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver headon2_driver =
+{
+	__FILE__,
+	0,
+	"headon2",
+	"Head On 2",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	GAME_IMPERFECT_COLORS,
+	&vicdual_3ports_machine_driver,
+	0,
+
+	headon2_rom,
+	vicdual_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	headon2_input_ports,
+
+	headon2_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

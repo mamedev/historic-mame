@@ -6,12 +6,11 @@
 *	Ernesto Corvi
 *
 * UPDATE LOG
+*	CHS 1999-01-09	Fixes new ym3812 emulation interface.
 *	CHS 1998-10-23	Mame streaming sound chip update
 *	EC	1998		Created Interface
 *
 * NOTES
-*	The ym3812 emulator supports several OPL (OPL1/OPL2/OPLL etc.) chips, update the
-*	interface if you want to use this feature!!!
 *
 ***************************************************************************************/
 #include "driver.h"
@@ -68,8 +67,7 @@ void timer1_callback (int param)
 		if (intf->handler) (*intf->handler)();
 
 		/* set the IRQ and timer 1 signal bits */
-		status_register |= 0x80;
-		status_register |= 0x40;
+		status_register |= 0x80|0x40;
 	}
 
 	/* next! */
@@ -83,8 +81,7 @@ void timer2_callback (int param)
 		if (intf->handler) (*intf->handler)();
 
 		/* set the IRQ and timer 2 signal bits */
-		status_register |= 0x80;
-		status_register |= 0x20;
+		status_register |= 0x80|0x20;
 	}
 
 	/* next! */
@@ -280,7 +277,7 @@ void timer_handler( int timer, double period, ym3812 *pOPL, int Tremove ) {
 void emu_ym3812_fixed_pointer_problem_update( int nNoll, void *pBuffer, int nLength )
 {
 	// The ym3812 supports several ym chips, update the interface if you want to use this feature!!!
-	ym3812_Update_stream( ym, pBuffer, nLength );
+	ym3812_Update( ym, pBuffer, nLength );
 }
 
 int emu_YM3812_sh_start( struct YM3812interface *interface ) {
@@ -340,7 +337,7 @@ void emu_YM3812_control_port_0_w( int offset, int data ) {
 }
 
 void emu_YM3812_write_port_0_w( int offset, int data ) {
-//	stream_update( ym_channel, 0 );	// Update the buffer before writing new regs
+	stream_update( ym_channel, 0 );	// Update the buffer before writing new regs
 	ym3812_WriteReg( ym, data );
 }
 

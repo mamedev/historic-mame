@@ -72,7 +72,7 @@ World Cup 90 bootleg.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 
 #define TEST_DIPS false /* enable to test unmapped dip switches */
@@ -329,7 +329,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 32*32 characters */
 	4096,	/* 1024 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 0x20000*8, 0x40000*8, 0x60000*8 },	/* the bitplanes are separated */
+	{ 3*0x20000*8, 2*0x20000*8, 1*0x20000*8, 0*0x20000*8 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		(16*8)+0, (16*8)+1, (16*8)+2, (16*8)+3, (16*8)+4, (16*8)+5, (16*8)+6, (16*8)+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -474,6 +474,15 @@ ROM_START( wc90b_rom )
 	ROM_LOAD( "a01.bin",      0x00000, 0x10000, 0x3d317622 )
 ROM_END
 
+void wc90b_decode (void)
+{
+	int i;
+
+	/* sprite graphics are inverted */
+	for (i = 0x90000; i < 0x110000; i++)
+		Machine->memory_region[1][i] ^= 0xff;
+}
+
 
 extern struct GameDriver wc90_driver;
 struct GameDriver wc90b_driver =
@@ -481,7 +490,7 @@ struct GameDriver wc90b_driver =
 	__FILE__,
 	&wc90_driver,
 	"wc90b",
-	"World Cup 90 (bootleg)",
+	"Euro League",
 	"1989",
 	"bootleg",
     "Ernesto Corvi",
@@ -490,7 +499,7 @@ struct GameDriver wc90b_driver =
 	0,
 
 	wc90b_rom,
-	0, 0,
+	wc90b_decode, 0,
 	0,
 	0,	/* sound_prom */
 

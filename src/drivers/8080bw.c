@@ -107,8 +107,8 @@ int  invaders_interrupt(void);
 int  boothill_shift_data_r(int offset);                  /* MJC 310198 */
 int  boothill_port_0_r(int offset);                      /* MJC 310198 */
 int  boothill_port_1_r(int offset);                      /* MJC 310198 */
-void boothill_sh_port3_w(int offset, int data);          /* HSC 4/14/98 */
-void boothill_sh_port5_w(int offset, int data);          /* HSC 4/14/98 */
+void boothill_sh_port3_w(int offset, int data);          /* HC 4/14/98 */
+void boothill_sh_port5_w(int offset, int data);          /* HC 4/14/98 */
 
 int  gray6bit_controller0_r(int offset);
 int  gray6bit_controller1_r(int offset);
@@ -125,7 +125,6 @@ void invdelux_videoram_w(int offset,int data);   /* V.V */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
-void astinvad_videoram_w(int offset,int data);   /* HSC used for astinv (z80bw.c)*/
 
 int  invaders_vh_start(void);
 void invaders_vh_stop(void);
@@ -168,7 +167,7 @@ enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 /*				case 1 : horizontal using colors from lrescue				*/
 /*				case 2 : plain vertical										*/
 /*				case 3 : inverted vertical									*/
-/* 				case 4 : astinvad horizontal (z80bw.c)						*/
+
 
 /* HSC 11/16/98 */
 void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,int romarea, int offset, int type)
@@ -183,27 +182,23 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 	switch (type)
 		{
 		case 0:
-			invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
-			Machine->memory_region[0][romarea+offset+disp+i]);
+		invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
+								Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 1:
-			lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
-			Machine->memory_region[0][romarea+offset+disp+i]);
+					lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
+								Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 2:
-			boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-			Machine->memory_region[0][romarea+offset+disp+i]);
+					boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
+								Machine->memory_region[0][romarea+offset+disp+i]);
 		break;
 
 		case 3:
-			boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-			~(Machine->memory_region[0][romarea+offset+disp+i]));
-		break;
-		case 4:
-			astinvad_videoram_w((31-y) + (i+adjust)*32 + j*256,
-			Machine->memory_region[0][romarea+offset+disp+i]);
+		boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
+										~(Machine->memory_region[0][romarea+offset+disp+i]));
 		break;
 		}
 
@@ -1846,127 +1841,6 @@ struct GameDriver cosmicmo_driver =
 };
 
 
-/*******************************************************/
-/*                                                     */
-/* Zilec "Space Phantoms"                              */
-/*                                                     */
-/*******************************************************/
-
-ROM_START( spaceph_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
-	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
-	ROM_LOAD( "sv03.bin",     0x0800, 0x0400, 0xdbda38b9 )
-	ROM_LOAD( "sv04.bin",     0x0c00, 0x0400, 0xf51544a5 )
-	ROM_LOAD( "sv05.bin",     0x1000, 0x0400, 0x98d02683 )
-	ROM_LOAD( "sv06.bin",     0x1400, 0x0400, 0x4ec390fd )
-	ROM_LOAD( "sv07.bin",     0x1800, 0x0400, 0x170862fd )
-	ROM_LOAD( "sv08.bin",     0x1c00, 0x0400, 0x511b12cf )
-	ROM_LOAD( "sv09.bin",     0x4000, 0x0400, 0xaf1cd1af )
-	ROM_LOAD( "sv10.bin",     0x4400, 0x0400, 0x31b7692e )
-	ROM_LOAD( "sv11.bin",     0x4800, 0x0400, 0x50257351 )
-	ROM_LOAD( "sv12.bin",     0x4c00, 0x0400, 0xa2a3366a )
-ROM_END
-
-INPUT_PORTS_START( spaceph_input_ports )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Fuel", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "35000" )
-	PORT_DIPSETTING(    0x02, "25000" )
-	PORT_DIPSETTING(    0x01, "20000" )
-	PORT_DIPSETTING(    0x00, "15000" )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt */
-	PORT_DIPNAME( 0x08, 0x00, "Bonus Fuel", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "10000" )
-	PORT_DIPSETTING(    0x00, "15000" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Fire */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
-	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-INPUT_PORTS_END
-
-static int spaceph_hiload(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&RAM[0x275d],"\x45\x41",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int hi;
-			osd_fread(f,&RAM[0x2043],2);
-			osd_fclose(f);
-
-			hi = (RAM[0x2043] & 0x0f) +
-				 (RAM[0x2043] >> 4) * 10 +
-				 (RAM[0x2044] & 0x0f) * 100 +
-				 (RAM[0x2044] >> 4) * 1000;
-			mix_hiscoreprint(12, 2, hi, 4, 8, 1,0x1400, 0x25c, 1);
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void spaceph_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2043],2);
-		osd_fclose(f);
-		RAM[0x275d] = 0;
-	}
-}
-
-
-
-/* LT 3-12-1997 */
-struct GameDriver spaceph_driver =
-{
-	__FILE__,
-	0,
-	"spaceph",
-	"Space Phantoms",
-	"????",
-	"Zilec Games",
-	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan\nMarco Cassili",
-	0,
-	&lrescue_machine_driver,
-	0,
-
-	spaceph_rom,
-	0, 0,
-	invaders_sample_names,
-	0,      /* sound_prom */
-
-	spaceph_input_ports,
-
-	0, palette, 0,
-	ORIENTATION_ROTATE_270,
-
-	spaceph_hiload,spaceph_hisave
-};
 
 /*******************************************************/
 /*                                                     */
@@ -2892,11 +2766,11 @@ INPUT_PORTS_START( clowns_input_ports )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x20, "4000" )
 	PORT_DIPNAME( 0x40, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3")
-	PORT_DIPSETTING(    0x40, "4")
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "On")
-	PORT_DIPSETTING(    0x00, "Off")
+	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, "Off" )
 INPUT_PORTS_END
 
 static struct MachineDriver clowns_machine_driver =
@@ -3479,10 +3353,10 @@ INPUT_PORTS_START( zzzap_input_ports )
 	PORT_DIPSETTING(    0x20, "None" )
 /* 0x30 same as 0x20 */
 	PORT_DIPNAME( 0xc0, 0x00, "Language", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x00, "English")
-	PORT_DIPSETTING(    0x40, "German")
-	PORT_DIPSETTING(    0x80, "French")
-	PORT_DIPSETTING(    0xc0, "Spanish")
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x40, "German" )
+	PORT_DIPSETTING(    0x80, "French" )
+	PORT_DIPSETTING(    0xc0, "Spanish" )
 INPUT_PORTS_END
 
 static struct MachineDriver zzzap_machine_driver =
@@ -3871,13 +3745,13 @@ INPUT_PORTS_START( helifire_input_ports )
         PORT_DIPSETTING(    0x02, "5" )
         PORT_DIPSETTING(    0x03, "6" )
         PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x0c, "5000")
-        PORT_DIPSETTING(    0x04, "6000")
-        PORT_DIPSETTING(    0x08, "8000")
-        PORT_DIPSETTING(    0x00, "10000")
+        PORT_DIPSETTING(    0x0c, "5000" )
+        PORT_DIPSETTING(    0x04, "6000" )
+        PORT_DIPSETTING(    0x08, "8000" )
+        PORT_DIPSETTING(    0x00, "10000" )
         PORT_DIPNAME( 0x10, 0x00, "Coinage", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit")
-        PORT_DIPSETTING(    0x00, "1 Coin/1 Credit")
+        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
         PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
         PORT_DIPSETTING(    0x80, "Upright" )
         PORT_DIPSETTING(    0x00, "Cocktail" )
@@ -4491,10 +4365,10 @@ INPUT_PORTS_START( lagunar_input_ports )
 	PORT_DIPSETTING(    0x20, "450" )
 	PORT_DIPSETTING(    0x30, "500" )
 	PORT_DIPNAME( 0xc0, 0x00, "Test Modes", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x00, "Play Mode")
-	PORT_DIPSETTING(    0x40, "RAM/ROM")
-	PORT_DIPSETTING(    0x80, "Steering")
-	PORT_DIPSETTING(    0xc0, "No Extended Play")
+	PORT_DIPSETTING(    0x00, "Play Mode" )
+	PORT_DIPSETTING(    0x40, "RAM/ROM" )
+	PORT_DIPSETTING(    0x80, "Steering" )
+	PORT_DIPSETTING(    0xc0, "No Extended Play" )
 INPUT_PORTS_END
 
 
@@ -4887,6 +4761,8 @@ INPUT_PORTS_START( dogpatch_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_ANALOG ( 0x38, 0x1f, IPT_AD_STICK_X |IPF_PLAYER2 , 25, 0, 0x05, 0x48)
+	/* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
@@ -4910,13 +4786,13 @@ INPUT_PORTS_START( dogpatch_input_ports )
 	PORT_DIPSETTING(    0x10, "3 extra cans" )
 	PORT_DIPSETTING(    0x00, "5 extra cans" )
 	PORT_DIPNAME( 0x20, 0x20, "Test", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_DIPSETTING(    0x20, "Off")
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPNAME( 0xc0, 0x00, "Extended Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0xc0, "150 Pts")
-	PORT_DIPSETTING(    0x80, "175 Pts")
-	PORT_DIPSETTING(    0x40, "225 Pts")
-	PORT_DIPSETTING(    0x00, "275 Pts")
+	PORT_DIPSETTING(    0xc0, "150 Pts" )
+	PORT_DIPSETTING(    0x80, "175 Pts" )
+	PORT_DIPSETTING(    0x40, "225 Pts" )
+	PORT_DIPSETTING(    0x00, "275 Pts" )
 INPUT_PORTS_END
 
 static struct MachineDriver dogpatch_machine_driver =
@@ -5039,8 +4915,8 @@ INPUT_PORTS_START( midwbowl_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* effects button 1 */
 	PORT_DIPNAME( 0x80, 0x00, "Test", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off")
-	PORT_DIPSETTING(    0x80, "On")
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -5201,8 +5077,8 @@ INPUT_PORTS_START( blueshrk_input_ports )
 	PORT_DIPSETTING(    0x60, "22000" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x80, 0x80, "Test", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off")
-	PORT_DIPSETTING(    0x00, "On")
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* IN1 */
 	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 0, 0xf, 0x7f)
@@ -5354,12 +5230,12 @@ INPUT_PORTS_START( einnings_input_ports )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x07, 0x00, "Coins / Inning", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x02, "2 Coins/1 inning")
-	PORT_DIPSETTING(    0x00, "1 Coin/1 inning")
-	PORT_DIPSETTING(    0x01, "1 C/1 inning 2Cs/3 innings")
+	PORT_DIPSETTING(    0x02, "2 Coins/1 inning" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 inning" )
+	PORT_DIPSETTING(    0x01, "1 C/1 inning 2Cs/3 innings" )
 	PORT_DIPNAME( 0x40, 0x40, "Test", IP_KEY_NONE)
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_DIPSETTING(    0x40, "Off")
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
@@ -5830,6 +5706,32 @@ ROM_START( ozmawars_rom )
 	ROM_LOAD( "mw06", 0x4800, 0x0800, 0x99ca2eae )
 ROM_END
 
+ROM_START( solfight_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "solfight.m", 0x0000, 0x0800, 0xa4f2814e )
+	ROM_LOAD( "solfight.n", 0x0800, 0x0800, 0x5657ec07 )
+	ROM_LOAD( "solfight.p", 0x1000, 0x0800, 0xef9ce96d )
+	ROM_LOAD( "solfight.r", 0x1800, 0x0800, 0x4f1ef540 )
+	ROM_LOAD( "mw05",       0x4000, 0x0800, 0x3bc7d4c7 )
+	ROM_LOAD( "solfight.t", 0x4800, 0x0800, 0x3b6fb206 )
+ROM_END
+
+ROM_START( spaceph_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
+	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
+	ROM_LOAD( "sv03.bin",     0x0800, 0x0400, 0xdbda38b9 )
+	ROM_LOAD( "sv04.bin",     0x0c00, 0x0400, 0xf51544a5 )
+	ROM_LOAD( "sv05.bin",     0x1000, 0x0400, 0x98d02683 )
+	ROM_LOAD( "sv06.bin",     0x1400, 0x0400, 0x4ec390fd )
+	ROM_LOAD( "sv07.bin",     0x1800, 0x0400, 0x170862fd )
+	ROM_LOAD( "sv08.bin",     0x1c00, 0x0400, 0x511b12cf )
+	ROM_LOAD( "sv09.bin",     0x4000, 0x0400, 0xaf1cd1af )
+	ROM_LOAD( "sv10.bin",     0x4400, 0x0400, 0x31b7692e )
+	ROM_LOAD( "sv11.bin",     0x4800, 0x0400, 0x50257351 )
+	ROM_LOAD( "sv12.bin",     0x4c00, 0x0400, 0xa2a3366a )
+ROM_END
+
 INPUT_PORTS_START( ozmawars_input_ports )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -5881,6 +5783,79 @@ INPUT_PORTS_START( ozmawars_input_ports )
 	PORT_DIPSETTING(    0x01, "Cocktail" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( spaceph_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Fuel", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "35000" )
+	PORT_DIPSETTING(    0x02, "25000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt */
+	PORT_DIPNAME( 0x08, 0x00, "Bonus Fuel", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "10000" )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Fire */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+	PORT_DIPNAME( 0x80, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+INPUT_PORTS_END
+
+
+static int ozmawars_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+
+	if (memcmp(&RAM[0x275d],"\x45\x41",2) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			int hi;
+			osd_fread(f,&RAM[0x2043],2);
+			osd_fclose(f);
+
+			hi = (RAM[0x2043] & 0x0f) +
+				 (RAM[0x2043] >> 4) * 10 +
+				 (RAM[0x2044] & 0x0f) * 100 +
+				 (RAM[0x2044] >> 4) * 1000;
+			mix_hiscoreprint(12, 2, hi, 4, 8, 1,0x1400, 0x25c, 1);
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void ozmawars_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x2043],2);
+		osd_fclose(f);
+		RAM[0x275d] = 0;
+	}
+}
+
+
 struct GameDriver ozmawars_driver =
 {
 	__FILE__,
@@ -5901,10 +5876,62 @@ struct GameDriver ozmawars_driver =
 
 	ozmawars_input_ports,
 
-	0,palette, 0,
+	0, palette, 0,
 	ORIENTATION_ROTATE_270,
-	spaceph_hiload, spaceph_hisave
+	ozmawars_hiload, ozmawars_hisave
 
+};
+
+struct GameDriver solfight_driver =
+{
+	__FILE__,
+	&ozmawars_driver,
+	"solfight",
+	"Solar Fight",
+	"1979",
+	"bootleg",
+	"The Space Invaders Team",
+	0,
+	&invadpt2_machine_driver,
+	0,
+
+	solfight_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	ozmawars_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+	ozmawars_hiload, ozmawars_hisave
+
+};
+
+struct GameDriver spaceph_driver =
+{
+	__FILE__,
+	&ozmawars_driver,
+	"spaceph",
+	"Space Phantoms",
+	"1979",
+	"Zilec Games",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan\nMarco Cassili",
+	0,
+	&lrescue_machine_driver,
+	0,
+
+	spaceph_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	spaceph_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	ozmawars_hiload, ozmawars_hisave
 };
 
 
@@ -5984,6 +6011,436 @@ struct GameDriver sinvemag_driver =
 	0,      /* sound_prom */
 
 	sinvemag_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	invaders_hiload, invaders_hisave
+};
+
+
+
+/*******************************************************/
+/*                                                     */
+/* "Alien Invaders 2"                                  */
+/* LT 24-12-1998                                       */
+/*******************************************************/
+
+INPUT_PORTS_START( alieninv2_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coins Per Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+INPUT_PORTS_END
+
+ROM_START( alieninv2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
+        ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
+        ROM_LOAD( "1f.bin",   0x1000, 0x0800, 0Xadca18a5 )
+        ROM_LOAD( "1e.bin",   0x1800, 0x0800, 0x0449CB52 )
+ROM_END
+
+struct GameDriver alieninv2_driver =
+{
+	__FILE__,
+	&invaders_driver,
+	"alieninv",
+	"Alien Invaders 2",
+	"????",
+	"bootleg",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	alieninv2_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	alieninv2_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	invaders_hiload, invaders_hisave
+};
+
+
+/*******************************************************/
+/*                                                     */
+/* Space Invaders TV Version (Taito)                   */
+/*                                                     */
+/*LT 24-12-1998                                        */
+/*******************************************************/
+
+
+static struct IOReadPort sitv_readport[] =
+{
+	{ 0x00, 0x00, input_port_4_r },
+	{ 0x01, 0x01, input_port_0_r },
+	{ 0x02, 0x02, input_port_1_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
+	{ -1 }  /* end of table */
+};
+
+
+
+static struct IOWritePort sitv_writeport[] =
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+	{ 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
+	{ -1 }  /* end of table */
+};
+
+
+INPUT_PORTS_START( sitv_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_START		/* TEST MODE */
+  	PORT_BITX(0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "ON" )
+	PORT_DIPSETTING(    0x01, "OFF" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+static struct MachineDriver sitv_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,writemem,sitv_readport,sitv_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+
+ROM_START( sitv_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
+        ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
+        ROM_LOAD( "tv03.n1",   0x1000, 0x0800, 0x0ad3657f )
+        ROM_LOAD( "tv02.rp1",  0x0800, 0x0800, 0x3c759a90 )
+ROM_END
+
+struct GameDriver sitv_driver =
+{
+	__FILE__,
+	&invaders_driver,
+	"si_tv",
+	"Space Invaders (TV Version)",
+	"Taito",
+	"1978",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&sitv_machine_driver,
+	0,
+
+	sitv_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	sitv_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	invaders_hiload, invaders_hisave
+};
+
+/*******************************************************/
+/*                                                     */
+/* Space Invaders Colour(Taito)                        */
+/* LT 24-12-1998                                       */
+/*******************************************************/
+
+
+static struct IOReadPort sicv_readport[] =
+{
+	{ 0x01, 0x01, input_port_0_r },
+	{ 0x02, 0x02, input_port_1_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
+	{ -1 }  /* end of table */
+};
+
+
+static struct IOWritePort sicv_writeport[] =
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+	{ 0x03, 0x03, invadpt2_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
+	{ -1 }  /* end of table */
+};
+
+
+INPUT_PORTS_START( sicv_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+INPUT_PORTS_END
+
+
+
+
+static struct MachineDriver sicv_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem, invadpt2_writemem, sicv_readport, sicv_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+
+ROM_START( sicv_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
+        ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
+        ROM_LOAD( "cv19.bin",   0x1000, 0x0800, 0xd202b41c )
+        ROM_LOAD( "cv20.bin",   0x1800, 0x0800, 0xc74ee7b6 )
+ROM_END
+
+struct GameDriver sicv_driver =
+{
+	__FILE__,
+	&invaders_driver,
+	"si_cv",
+	"Space Invaders Colour  (CV Version)",
+	"Taito",
+	"1979",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&sicv_machine_driver,
+	0,
+
+	sicv_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	sicv_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	invaders_hiload, invaders_hisave
+};
+
+
+/*******************************************************/
+/*                                                     */
+/* Space Invaders SV VERSION(Taito)                    */
+/* LT 24-12-1998                                       */
+/*******************************************************/
+
+/* LT 24-12-1998 */
+ROM_START( sisv_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "SV0H.BIN",   0x0000, 0x0400, 0x86bb8cb6 )
+
+        ROM_LOAD( "SV10.BIN",   0x0800, 0x0400, 0x483e651e )
+        ROM_LOAD( "SV04.BIN",   0x1400, 0x0400, 0x1293b826 )
+        ROM_LOAD( "SV09.BIN",   0x1800, 0x0400, 0xcd80b13f )
+
+        ROM_LOAD( "SV06.BIN",   0x1c00, 0x0400, 0x2c68e0b4 )
+        ROM_LOAD( "SV02.BIN",   0x0400, 0x0400, 0x0e159534 )
+
+
+ROM_END
+
+
+/* LT 24-12-1998 */
+struct GameDriver sisv_driver =
+{
+	__FILE__,
+	&invaders_driver,
+	"si_sv",
+	"Space Invaders (SV Version)",
+	"Taito",
+	"1978",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	sisv_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	sicv_input_ports,	/* ?? */
 
 	0, palette, 0,
 	ORIENTATION_ROTATE_270,

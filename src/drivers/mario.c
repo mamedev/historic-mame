@@ -67,7 +67,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };

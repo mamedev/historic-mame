@@ -23,16 +23,6 @@ unsigned char *irem_textram;
 int irem_textram_size;
 
 
-static struct rectangle spritevisiblearea =
-{
-	8*8, (64-8)*8-1,
-	1*8, 32*8-1
-};
-static struct rectangle flipspritevisiblearea =
-{
-	8*8, (64-8)*8-1,
-	0*8, 31*8-1
-};
 
 /***************************************************************************
 
@@ -49,7 +39,7 @@ static struct rectangle flipspritevisiblearea =
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void ldrun_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void irem_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -156,6 +146,14 @@ void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
+int ldrun_vh_start(void)
+{
+	/* only ldrun3 has scrolling, so I have to init the variable for ldrun and ldrun2 */
+	scroll[0] = 0;
+	return generic_vh_start();
+}
+
+
 static int irem_vh_start( int width, int height )
 {
 	irem_background_hscroll = 0;
@@ -186,7 +184,31 @@ int spelunk2_vh_start(void)
 
 
 
-void ldrun2p_scroll_w(int offset,int data)
+void irem_flipscreen_w(int offset,int data)
+{
+	/* screen flip is handled both by software and hardware */
+	data ^= ~readinputport(4) & 1;
+
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	coin_counter_w(0,data & 2);
+	coin_counter_w(1,data & 4);
+}
+
+
+
+void ldrun3_vscroll_w(int offset,int data)
+{
+	scroll[offset] = data;
+}
+
+
+
+void ldrun4_hscroll_w(int offset,int data)
 {
 	scroll[offset] = data;
 }
@@ -232,7 +254,7 @@ static void irem_draw_sprites(struct osd_bitmap *bitmap)
 
 		if (flipscreen)
 		{
-			sx = 240 - sx;
+			sx = 496 - sx;
 			sy = 242 - i*16 - sy;	/* sprites are slightly misplaced by the hardware */
 			flipx = !flipx;
 			flipy = !flipy;
@@ -251,7 +273,7 @@ static void irem_draw_sprites(struct osd_bitmap *bitmap)
 					code + i * incr,col,
 					flipx,flipy,
 					sx,sy + 16 * i,
-					flipscreen ? &flipspritevisiblearea : &spritevisiblearea,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 			i--;
 		} while (i >= 0);
@@ -281,17 +303,33 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/2) / 64;
 			flipx = videoram[offs+1] & 0x20;
 
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((videoram[offs+1] & 0xc0) << 2),
 					videoram[offs+1] & 0x1f,
-					flipx,0,
+					flipx,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	{
+		int scrolly;	/* ldrun3 only */
+
+		if (flipscreen)
+			scrolly = scroll[0];
+		else
+			scrolly = -scroll[0];
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 
 	irem_draw_sprites(bitmap);
@@ -299,7 +337,7 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /* almost identical but scrolling background, more characters, */
 /* no char x flip, and more sprites */
-void ldrun2p_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -319,10 +357,16 @@ void ldrun2p_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((videoram[offs+1] & 0xc0) << 2) + ((videoram[offs+1] & 0x20) << 5),
 					videoram[offs+1] & 0x1f,
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -332,9 +376,81 @@ void ldrun2p_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scrollx;
 
-		scrollx = -(scroll[1] + 256 * scroll[0] - 2);
+		if (flipscreen)
+			scrollx = (scroll[1] + 256 * scroll[0]) + 2;
+		else
+			scrollx = -(scroll[1] + 256 * scroll[0]) + 2;
 
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	irem_draw_sprites(bitmap);
+}
+
+
+
+void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size-2;offs >= 0;offs -= 2)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
+			int sx,sy,flipx;
+
+
+			dirtybuffer[offs] = 0;
+			dirtybuffer[offs+1] = 0;
+
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+			flipx = videoram[offs+1] & 0x20;
+
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((videoram[offs+1] & 0xc0) << 2),
+					videoram[offs+1] & 0x1f,
+					flipx,flipscreen,
+					12*sx + 64,10*sy - 32,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+	for (offs = irem_textram_size - 2;offs >= 0;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = (offs/2) % 32;
+		sy = (offs/2) / 32;
+
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[2],
+				irem_textram[offs] + ((irem_textram[offs + 1] & 0xc0) << 2),
+				(irem_textram[offs + 1] & 0x1f),
+				flipscreen,flipscreen,
+				12*sx + 64,10*sy - 32,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
 	}
 
 
@@ -370,13 +486,14 @@ void irem_background_vscroll_w( int offset, int data ){
 
 void kidniki_text_vscroll_w( int offset, int data )
 {
-	switch( offset ){
+	switch (offset)
+	{
 		case 0:
-		kidniki_text_vscroll = (kidniki_text_vscroll&0xff00)|data;
+		kidniki_text_vscroll = (kidniki_text_vscroll & 0xff00) | data;
 		break;
 
 		case 1:
-		kidniki_text_vscroll = (kidniki_text_vscroll&0xff)|(data<<8);
+		kidniki_text_vscroll = (kidniki_text_vscroll & 0xff) | (data << 8);
 		break;
 	}
 }
@@ -395,7 +512,13 @@ void kidniki_background_bank_w( int offset, int data )
 static void kidniki_draw_text(struct osd_bitmap *bitmap)
 {
 	int offs;
-	int scrolly = kidniki_text_vscroll-0x180;
+	int scrolly;
+
+
+	if (flipscreen)
+		scrolly = kidniki_text_vscroll-0x180;
+	else
+		scrolly = -kidniki_text_vscroll+0x180;
 
 
 	for (offs = irem_textram_size - 2;offs >= 0;offs -= 2)
@@ -406,11 +529,17 @@ static void kidniki_draw_text(struct osd_bitmap *bitmap)
 		sx = (offs/2) % 32;
 		sy = (offs/2) / 32;
 
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[2],
 				irem_textram[offs] + ((irem_textram[offs + 1] & 0xc0) << 2),
 				(irem_textram[offs + 1] & 0x1f),
-				0, 0,
-				12*sx + 64,8*sy - scrolly,
+				flipscreen,flipscreen,
+				12*sx + 64,8*sy + scrolly,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
 	}
 }
@@ -433,10 +562,16 @@ static void kidniki_draw_background(struct osd_bitmap *bitmap)
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((videoram[offs+1] & 0xe0) << 3) + (kidniki_background_bank << 11),
 					videoram[offs+1] & 0x1f,
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -444,13 +579,14 @@ static void kidniki_draw_background(struct osd_bitmap *bitmap)
 
 
 	{
-		int scrollx = -irem_background_hscroll;
-		int scrolly = -irem_background_vscroll - 128;
+		int scrollx;
 
-		copyscrollbitmap(bitmap,tmpbitmap,
-				1,&scrollx,
-				1,&scrolly,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (flipscreen)
+			scrollx = irem_background_hscroll + 2;
+		else
+			scrollx = -irem_background_hscroll + 2;
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -501,10 +637,16 @@ static void spelunk2_draw_text(struct osd_bitmap *bitmap)
 		sx = (offs/2) % 32;
 		sy = (offs/2) / 32;
 
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[(irem_textram[offs + 1] & 0x10) ? 3 : 2],
 				irem_textram[offs],
 				(irem_textram[offs + 1] & 0x0f),
-				0, 0,
+				flipscreen,flipscreen,
 				12*sx + 64,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
 	}
@@ -528,10 +670,16 @@ static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 63 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((videoram[offs+1] & 0xf0) << 4),
 					(videoram[offs+1] & 0x0f) + (spelunk2_palbank << 4),
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -539,17 +687,25 @@ static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 
 
 	{
-		int scrollx = -irem_background_hscroll;
-		int scrolly = -irem_background_vscroll - 128;
+		int scrollx,scrolly;
 
-		copyscrollbitmap(bitmap,tmpbitmap,
-				1,&scrollx,
-				1,&scrolly,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (flipscreen)
+		{
+			scrollx = irem_background_hscroll;
+			scrolly = irem_background_vscroll - 128;
+		}
+		else
+		{
+			scrollx = -irem_background_hscroll;
+			scrolly = -irem_background_vscroll - 128;
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
-void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
+void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+{
 	spelunk2_draw_background( bitmap );
 	irem_draw_sprites( bitmap );
 	spelunk2_draw_text( bitmap );

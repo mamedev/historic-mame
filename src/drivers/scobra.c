@@ -66,6 +66,13 @@ TODO:
 		Super Bond
 		Anteater
 
+Notes:
+
+- Calipso was apperantly redesigned for two player simultanious play.
+  There is code at $298a to flip the screen, but location $8669 has to be
+  set to 2. It's set to 1 no matter how many players are playing.
+  It's possible that there is a cocktail version of the game.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -77,6 +84,8 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
@@ -92,7 +101,7 @@ int frogger_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
 
 int rescue_vh_start(void);							/* MJC */
-int minefield_vh_start(void);
+int minefld_vh_start(void);
 int calipso_vh_start(void);
 
 static void scobra_init_machine(void)
@@ -176,7 +185,7 @@ static struct MemoryWriteAddress stratgyx_writemem[] =
 	{ 0xa800, 0xa800, soundlatch_w },
 	{ 0xa804, 0xa804, scramble_sh_irqtrigger_w },
 	{ 0xa80c, 0xa80c, scramble_background_w }, /* may be wrong! */
-//	{ 0xb002, 0xb002, galaxian_stars_w },
+/*	{ 0xb002, 0xb002, galaxian_stars_w },	*/
 	{ 0xb004, 0xb004, interrupt_enable_w },
 	{ 0xb006, 0xb008, stratgyx_coin_counter_w },
 	{ 0xb00c, 0xb00c, galaxian_flipy_w },
@@ -481,8 +490,8 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* the spinner */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) //
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) //
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
 	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
@@ -490,12 +499,12 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "Free Play" )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 ) //
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) //
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) //
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) //
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) //
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN2 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
@@ -606,53 +615,53 @@ INPUT_PORTS_START( tazmania_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+/* Cocktail mode is N/A */
 INPUT_PORTS_START( calipso_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) //
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY ) //
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY ) //
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) //
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY ) //
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) //
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) //
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Lives", IP_KEY_NONE ) //
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 ) //
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 ) //
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) //
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 ) //
+	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) //
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY ) //
+	PORT_DIPNAME( 0x08, 0x08, "Cabinet (Not Supported)", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY ) //
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/* Cocktail mode not working due to bug */
 INPUT_PORTS_START( anteater_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -672,9 +681,7 @@ INPUT_PORTS_START( anteater_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -804,6 +811,7 @@ INPUT_PORTS_START( minefld_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+/* Cocktail mode is N/A */
 INPUT_PORTS_START( losttomb_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
@@ -856,6 +864,7 @@ INPUT_PORTS_START( losttomb_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+/* Cocktail mode is N/A */
 INPUT_PORTS_START( superbon_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
@@ -1024,6 +1033,18 @@ static struct GfxLayout calipso_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+static struct GfxLayout backgroundlayout =
+{
+	/* there is no gfx ROM for this one, it is generated by the hardware */
+	8,8,
+	32,	/* one for each column */
+	7,	/* 128 colors max */
+	{ 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56 },
+	8*8*8	/* each character takes 64 bytes */
+};
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -1031,6 +1052,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
 											/* shots will be yellow */
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -1039,6 +1061,7 @@ static struct GfxDecodeInfo armorcar_gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ 1, 0x0000, &armorcar_bulletlayout, 8*4, 2 },
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -1048,6 +1071,7 @@ static struct GfxDecodeInfo calipso_gfxdecodeinfo[] =
 	{ 1, 0x0000, &calipso_spritelayout,   0, 8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
 											/* shots will be yellow */
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -1112,7 +1136,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1158,7 +1182,7 @@ static struct MachineDriver armorcar_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	armorcar_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1206,8 +1230,8 @@ static struct MachineDriver rescue_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64+128,8*4+2*2,	/* 32 for the characters, 64 for the stars, 128 for background */
-	galaxian_vh_convert_color_prom,
+	32+64+64,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 64 for background */
+	rescue_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1225,7 +1249,7 @@ static struct MachineDriver rescue_machine_driver =
 	}
 };
 
-static struct MachineDriver minefield_machine_driver =
+static struct MachineDriver minefld_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1251,12 +1275,12 @@ static struct MachineDriver minefield_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64+128,8*4+2*2,	/* 32 for the characters, 64 for the stars, 128 for background */
-	galaxian_vh_convert_color_prom,
+	32+64+128,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 128 for background */
+	minefld_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	minefield_vh_start,
+	minefld_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -1299,7 +1323,7 @@ static struct MachineDriver stratgyx_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1345,7 +1369,7 @@ static struct MachineDriver hustler_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1390,7 +1414,7 @@ static struct MachineDriver calipso_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	calipso_gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1436,7 +1460,7 @@ static struct MachineDriver moonwar2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -2622,7 +2646,7 @@ struct GameDriver minefld_driver =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
 	0,
-	&minefield_machine_driver,
+	&minefld_machine_driver,
 	0,
 
 	minefld_rom,

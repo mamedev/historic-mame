@@ -70,6 +70,114 @@ void msdos_shutdown_input(void)
 }
 
 
+
+/* translate a pseudo key code to to a key code */
+static int pseudo_to_key_code(int keycode)
+{
+    switch (keycode)
+    {
+		case OSD_KEY_CANCEL:
+			return OSD_KEY_ESC;
+
+		case OSD_KEY_RESET_MACHINE:
+			return OSD_KEY_F3;
+
+		case OSD_KEY_SHOW_GFX:
+			return OSD_KEY_F4;
+
+		case OSD_KEY_CHEAT_TOGGLE:
+			return OSD_KEY_F5;
+
+		case OSD_KEY_FRAMESKIP:
+			return OSD_KEY_F9;
+
+		case OSD_KEY_THROTTLE:
+			return OSD_KEY_F10;
+
+		case OSD_KEY_SHOW_FPS:
+            if (!key[OSD_KEY_LSHIFT] && !key[OSD_KEY_RSHIFT])
+				return OSD_KEY_F11;
+			else return OSD_KEY_NONE;
+
+		case OSD_KEY_SHOW_PROFILE:
+            if (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT])
+				return OSD_KEY_F11;
+			else return OSD_KEY_NONE;
+
+		case OSD_KEY_CONFIGURE:
+			return OSD_KEY_TAB;
+
+		case OSD_KEY_ON_SCREEN_DISPLAY:
+		{
+			extern int mame_debug;
+			if (!mame_debug)
+				return OSD_KEY_TILDE;
+			else return OSD_KEY_NONE;
+		}
+
+		case OSD_KEY_DEBUGGER:
+		{
+			extern int mame_debug;
+			if (mame_debug)
+				return OSD_KEY_TILDE;
+			else return OSD_KEY_NONE;
+		}
+
+		case OSD_KEY_PAUSE:
+		case OSD_KEY_UNPAUSE:
+			return OSD_KEY_P;
+
+		case OSD_KEY_SNAPSHOT:
+			return OSD_KEY_F12;
+
+		case OSD_KEY_UI_SELECT:
+			return OSD_KEY_ENTER;
+			break;
+
+		case OSD_KEY_UI_LEFT:
+			return OSD_KEY_LEFT;
+			break;
+
+		case OSD_KEY_UI_RIGHT:
+			return OSD_KEY_RIGHT;
+			break;
+
+		case OSD_KEY_UI_UP:
+			return OSD_KEY_UP;
+			break;
+
+		case OSD_KEY_UI_DOWN:
+			return OSD_KEY_DOWN;
+			break;
+	}
+
+    return keycode;
+}
+
+
+int osd_key_invalid(int keycode)
+{
+    switch (keycode)
+    {
+        case OSD_KEY_ESC:
+        case OSD_KEY_F3:
+        case OSD_KEY_F4:
+		case OSD_KEY_F5:
+        case OSD_KEY_F9:
+        case OSD_KEY_F10:
+        case OSD_KEY_F11:
+        case OSD_KEY_TAB:
+        case OSD_KEY_TILDE:
+        case OSD_KEY_P:
+			return 1;
+
+		default:
+			return 0;
+	}
+}
+
+
+
 /*
  * Check if a key is pressed. The keycode is the standard PC keyboard
  * code, as defined in osdepend.h. Return 0 if the key is not pressed,
@@ -77,119 +185,17 @@ void msdos_shutdown_input(void)
  */
 int osd_key_pressed(int keycode)
 {
-	if (keycode > OSD_MAX_KEY)
-	{
-#ifdef MESS
-        switch (keycode)
-        {
-			case OSD_KEY_CANCEL:
-                return (key[OSD_KEY_NUMLOCK] & key[KEY_LCONTROL]);
+	if (keycode == OSD_KEY_ANY)
+		return osd_read_key_immediate();
 
-            case OSD_KEY_SHOW_GFX:
-                return key[OSD_KEY_F5];
+	keycode = pseudo_to_key_code(keycode);
 
-			case OSD_KEY_JOY_CALIBRATE:
-				return key[OSD_KEY_F7];
-
-            case OSD_KEY_FRAMESKIP:
-                return key[OSD_KEY_F8];
-
-            case OSD_KEY_RESET_MACHINE:
-				return key[OSD_KEY_F9];
-
-			case OSD_KEY_THROTTLE:
-                return key[OSD_KEY_F10];
-
-            case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11] && !(key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
-
-            case OSD_KEY_SHOW_PROFILE:
-                return key[OSD_KEY_F11] && (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
-
-            case OSD_KEY_CONFIGURE:
-                return key[OSD_KEY_F12];
-
-            case OSD_KEY_VOLUME_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_VOLUME_UP:
-				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_GAMMA_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && key[OSD_KEY_LSHIFT]);
-
-            case OSD_KEY_GAMMA_UP:
-                return (key[OSD_KEY_PLUS_PAD] && key[OSD_KEY_LSHIFT]);
-
-            case OSD_KEY_PAUSE:
-            case OSD_KEY_UNPAUSE:
-				return key[OSD_KEY_SCRLOCK];
-
-			case OSD_KEY_SNAPSHOT:
-				return key[KEY_PRTSCR];
-			default:
-				return 0;
-		}
-#else
-		switch (keycode)
-        {
-            case OSD_KEY_CANCEL:
-				return key[OSD_KEY_ESC];
-
-            case OSD_KEY_SHOW_GFX:
-				return key[OSD_KEY_F4];
-
-			case OSD_KEY_RESET_MACHINE:
-                return key[OSD_KEY_F3];
-
-            case OSD_KEY_CHEAT_TOGGLE:
-				return key[OSD_KEY_F5];
-
-            case OSD_KEY_JOY_CALIBRATE:
-				return key[OSD_KEY_F7];
-
-            case OSD_KEY_FRAMESKIP:
-                return key[OSD_KEY_F8];
-
-            case OSD_KEY_THROTTLE:
-                return key[OSD_KEY_F10];
-
-            case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11] && !(key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
-
-            case OSD_KEY_SHOW_PROFILE:
-                return key[OSD_KEY_F11] && (key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]);
-
-            case OSD_KEY_CONFIGURE:
-				return key[OSD_KEY_TAB];
-
-            case OSD_KEY_ON_SCREEN_DISPLAY:
-			{
-				extern int mame_debug;
-				return (key[OSD_KEY_TILDE] && !mame_debug);
-			}
-
-            case OSD_KEY_DEBUGGER:
-			{
-				extern int mame_debug;
-				return (key[OSD_KEY_TILDE] && mame_debug);
-			}
-
-            case OSD_KEY_PAUSE:
-            case OSD_KEY_UNPAUSE:
-				return key[OSD_KEY_P];
-
-			case OSD_KEY_SNAPSHOT:
-				return key[KEY_F12];
-			default:
-				return 0;
-        }
-#endif
-    }
 	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
 	return key[keycode];
 }
+
+
 
 static char memory[256];
 
@@ -199,10 +205,12 @@ int osd_key_pressed_memory(int keycode)
 {
 	int res = 0;
 
-	if (keycode == OSD_KEY_UNPAUSE) keycode = OSD_KEY_PAUSE;	/* we use the same key */
+	keycode = pseudo_to_key_code(keycode);
 
 	if (osd_key_pressed(keycode))
 	{
+		if (keycode == OSD_KEY_ANY) return 1;
+
 		if (memory[keycode] == 0) res = 1;
 		memory[keycode] = 1;
 	}
@@ -217,6 +225,8 @@ int osd_key_pressed_memory_repeat(int keycode,int speed)
 {
 	static int counter;
 	int res = 0;
+
+	keycode = pseudo_to_key_code(keycode);
 
 	if (osd_key_pressed(keycode))
 	{
@@ -247,7 +257,6 @@ int osd_read_key_immediate(void)
 		if (!osd_key_pressed(res))
 		{
 			memory[res] = 0;
-			memory[key_to_pseudo_code(res)] = 0;
 		}
 	}
 
@@ -258,7 +267,6 @@ int osd_read_key_immediate(void)
 			if (memory[res] == 0)
 			{
 				memory[res] = 1;
-				memory[key_to_pseudo_code(res)] = 1;
 			}
 			else res = OSD_KEY_NONE;
 			break;
@@ -270,153 +278,8 @@ int osd_read_key_immediate(void)
 
 
 
-/*
- * Wait for a key press and return the keycode.
- * Translate certain keys (or key combinations) back to
- * the pseudo key values defined in osdepend.h.
- */
-int osd_read_key(int translate)
-{
-	int res;
-
-	if (translate)
-	{
-		/* wait for all keys to be released (including pseudo keys) */
-		do
-		{
-			for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-				if (osd_key_pressed(res))
-					break;
-		} while (res >= 0);
-
-		/* wait for a key press (including pseudo keys) */
-		do
-		{
-			for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-				if (osd_key_pressed(res))
-					break;
-		} while (res < 0);
-	}
-	else
-	{
-		/* wait for all keys to be released (standard keys) */
-		do
-		{
-			for (res = OSD_MAX_KEY; res >= 0; res--)
-				if (osd_key_pressed(res))
-					break;
-		} while (res >= 0);
-
-		/* wait for a key press (standard keys) */
-		do
-		{
-			for (res = OSD_MAX_KEY; res >= 0; res--)
-				if (osd_key_pressed(res))
-					break;
-        } while (res < 0);
-    }
-
-    if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
-	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
-	return res;
-}
-
-/* translate a scancode to a pseudo key code */
-int key_to_pseudo_code(int k)
-{
-#ifdef MESS
-    switch (k)
-    {
-        case OSD_KEY_NUMLOCK:
-            if (key[OSD_KEY_LCONTROL])
-                return OSD_KEY_CANCEL;
-            break;
-
-        case OSD_KEY_F5:
-            return OSD_KEY_SHOW_GFX;
-
-		case OSD_KEY_F7:
-			return OSD_KEY_JOY_CALIBRATE;
-
-        case OSD_KEY_F8:
-            return OSD_KEY_FRAMESKIP;
-
-        case OSD_KEY_F9:
-            return OSD_KEY_RESET_MACHINE;
-
-        case OSD_KEY_F10:
-            return OSD_KEY_THROTTLE;
-
-        case OSD_KEY_F11:
-            if ((key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]))
-                return OSD_KEY_SHOW_PROFILE;
-            return OSD_KEY_SHOW_FPS;
-
-        case OSD_KEY_F12:
-            return OSD_KEY_CONFIGURE;
-
-        case OSD_KEY_MINUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_DOWN;
-            return OSD_KEY_VOLUME_DOWN;
-
-        case OSD_KEY_PLUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_UP;
-            return OSD_KEY_VOLUME_UP;
-
-        case OSD_KEY_SCRLOCK:
-            return OSD_KEY_PAUSE;
-    }
-#else
-    switch (k)
-    {
-        case OSD_KEY_ESC:
-            return OSD_KEY_CANCEL;
-
-        case OSD_KEY_F4:
-            return OSD_KEY_SHOW_GFX;
-
-		case OSD_KEY_F5:
-			return OSD_KEY_CHEAT_TOGGLE;
-
-		case OSD_KEY_F7:
-			return OSD_KEY_JOY_CALIBRATE;
-
-        case OSD_KEY_F8:
-            return OSD_KEY_FRAMESKIP;
-
-        case OSD_KEY_F3:
-            return OSD_KEY_RESET_MACHINE;
-
-        case OSD_KEY_F10:
-            return OSD_KEY_THROTTLE;
-
-        case OSD_KEY_F11:
-            if ((key[OSD_KEY_LSHIFT] || key[OSD_KEY_RSHIFT]))
-                return OSD_KEY_SHOW_PROFILE;
-            return OSD_KEY_SHOW_FPS;
-
-        case OSD_KEY_TAB:
-            return OSD_KEY_CONFIGURE;
-
-        case OSD_KEY_TILDE:
-		{
-			extern int mame_debug;
-
-			if (mame_debug) return OSD_KEY_DEBUGGER;
-			else return OSD_KEY_ON_SCREEN_DISPLAY;
-		}
-
-        case OSD_KEY_P:
-            return OSD_KEY_PAUSE;
-    }
-#endif
-    return k;
-}
-
 /* Wait for a key press and return keycode.  Support repeat */
-int osd_read_keyrepeat(int translate)
+int osd_read_keyrepeat(void)
 {
 	int res;
 
@@ -426,8 +289,6 @@ int osd_read_keyrepeat(int translate)
 	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
 	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
 
-	if (translate)
-		res = key_to_pseudo_code(res);
 	return res;
 }
 

@@ -543,7 +543,7 @@ struct GameDriver gatedoma_driver =
 	__FILE__,
 	&darkseal_driver,
 	"gatedoma",
-	"Gate Of Doom (set 2)",
+	"Gate Of Doom (revision 4)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",

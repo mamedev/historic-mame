@@ -6,7 +6,7 @@
 
 **************************************************************************/
 #include "driver.h"
-#include "TMS34010/tms34010.h"
+#include "cpu/tms34010/tms34010.h"
 #include "vidhrdw/generic.h"
 
 void wms_stateload(void);
@@ -104,12 +104,12 @@ int wms_vh_start(void)
 }
 int wms_t_vh_start(void)
 {
-	if ((wms_cmos_ram = malloc(0x8000)) == 0)
+	if ((wms_cmos_ram = malloc(0x10000)) == 0)
 	{
 		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc CMOS RAM\n");
 		return 1;
 	}
-	if ((paletteram = malloc(0x4000)) == 0)
+	if ((paletteram = malloc(0x20000)) == 0)
 	{
 		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc color RAM\n");
 		free(wms_cmos_ram);
@@ -141,7 +141,7 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	//if (osd_key_pressed(OSD_KEY_Q)) wms_statesave();
 	//if (osd_key_pressed(OSD_KEY_W)) wms_stateload();
 
-	//if (osd_key_pressed(OSD_KEY_E)&&errorlog) fprintf(errorlog, "adpcm: error\n");
+	if (osd_key_pressed(OSD_KEY_E)&&errorlog) fprintf(errorlog, "log spot\n");
 	//if (osd_key_pressed(OSD_KEY_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
 
 	rv = &wms_videoram[(~TMS34010_get_DPYSTRT(0) & 0x1ff0)<<5];
@@ -152,51 +152,51 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		unsigned int min = Machine->drv->visible_area.min_y;
 		unsigned int max = Machine->drv->visible_area.max_y;
-		unsigned short *pens = Machine->pens;										
-																							
-		for (v = min; v <= max; v++)									
-		{																			
-			unsigned short *rows = &((unsigned short *)bitmap->line[v])[0];			
-			unsigned int diff = rows - rv;						
+		unsigned short *pens = Machine->pens;
+
+		for (v = min; v <= max; v++)
+		{
+			unsigned short *rows = &((unsigned short *)bitmap->line[v])[0];
+			unsigned int diff = rows - rv;
 			h = col;
-			do	
-			{	
-				*(rv+diff) = pens[*rv];											
-				rv++;				
+			do
+			{
+				*(rv+diff) = pens[*rv];
+				rv++;
 			}
 			while (h--);
-																					
-			if (wms_autoerase_enable||(v>=wms_autoerase_start))						
-			{																		
-				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));	
-			}																		
-																					
-			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;			
-		}																			
+
+			if (wms_autoerase_enable||(v>=wms_autoerase_start))
+			{
+				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));
+			}
+
+			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;
+		}
 	}
 	else
 	{
 		unsigned int min = Machine->drv->visible_area.min_y;
 		unsigned int max = Machine->drv->visible_area.max_y;
-		unsigned short *pens = Machine->pens;										
-																							
-		for (v = min; v <= max; v++)									
-		{																			
-			unsigned char *rows = &(bitmap->line[v])[0];			
+		unsigned short *pens = Machine->pens;
+
+		for (v = min; v <= max; v++)
+		{
+			unsigned char *rows = &(bitmap->line[v])[0];
 			h = col;
-			do	
-			{	
-				*(rows++) = pens[*(rv++)];											
+			do
+			{
+				*(rows++) = pens[*(rv++)];
 			}
 			while (h--);
-																					
-			if (wms_autoerase_enable||(v>=wms_autoerase_start))						
-			{																		
-				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));	
-			}																		
-																					
-			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;			
-		}																			
+
+			if (wms_autoerase_enable||(v>=wms_autoerase_start))
+			{
+				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));
+			}
+
+			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;
+		}
 	}
 	wms_autoerase_start=1000;
 }

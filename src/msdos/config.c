@@ -27,7 +27,7 @@ extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
 /* from sound.c */
-extern int usefm, soundcard, usestereo;
+extern int soundcard, usestereo;
 extern int use_emulated_ym3812;
 
 /* from input.c */
@@ -298,7 +298,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
 	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
-	if (!strcmp(tmpstr,"auto"))
+	if (!stricmp(tmpstr,"auto"))
 	{
 		frameskip = 0;
 		autoframeskip = 1;
@@ -316,7 +316,6 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
-	usefm               = get_bool ("config", "ym2203opl",  NULL,  0);
 	use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
@@ -384,7 +383,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	{
 		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
 	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
-				(i == 1 || (strcmp(argv[i-1],"-skiplines") && strcmp(argv[i-1],"-skipcolumns"))))
+				(i == 1 || (stricmp(argv[i-1],"-skiplines") && stricmp(argv[i-1],"-skipcolumns"))))
 			resolution = &argv[i][1];
 	}
 

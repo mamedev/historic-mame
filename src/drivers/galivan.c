@@ -311,9 +311,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   16*16*0, 16 },
-	{ 1, 0x04000, &tilelayout,   16*16*1, 16 },
-	{ 1, 0x24000, &spritelayout, 16*16*2, 16 },
+	{ 1, 0x00000, &charlayout,            0,  8 },
+	{ 1, 0x04000, &tilelayout,         8*16, 16 },
+	{ 1, 0x24000, &spritelayout, 8*16+16*16, 64 },
 	{ -1 }
 };
 
@@ -351,7 +351,7 @@ static struct MachineDriver galivan_machine_driver =
 			4,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0,
-			interrupt,7600  /* timed interrupt, ?? Hz */
+			interrupt,7250  /* timed interrupt, ?? Hz */
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
@@ -361,7 +361,7 @@ static struct MachineDriver galivan_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16*3, /* 16 palettes * 16 colors * 3 "layers" */
+	256, 8*16+16*16+64*16,
 	galivan_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -396,29 +396,33 @@ static struct MachineDriver galivan_machine_driver =
 
 ROM_START( galivan_rom )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
-	ROM_LOAD( "gal_10.rom", 0x00000, 0x08000, 0x5e480bfc )
-	ROM_LOAD( "gal_09.rom", 0x08000, 0x04000, 0x0d1b3538 )
-	ROM_LOAD( "gal_08.rom", 0x10000, 0x04000, 0x82f0c5e6 ) /* 2 banks at c000 */
+	ROM_LOAD( "gv1.1b",      0x00000, 0x08000, 0x5e480bfc )
+	ROM_LOAD( "gv2.3b",      0x08000, 0x04000, 0x0d1b3538 )
+	ROM_LOAD( "gv3.4b",      0x10000, 0x04000, 0x82f0c5e6 ) /* 2 banks at c000 */
 
 	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "gal_07.rom", 0x00000, 0x04000, 0x162490b4 ) /* chars */
-	ROM_LOAD( "gal_04.rom", 0x04000, 0x08000, 0xeaa1a0db ) /* tiles */
-	ROM_LOAD( "gal_03.rom", 0x0c000, 0x08000, 0xf174a41e )
-	ROM_LOAD( "gal_02.rom", 0x14000, 0x08000, 0xedc60f5d )
-	ROM_LOAD( "gal_01.rom", 0x1c000, 0x08000, 0x41f27fca )
-	ROM_LOAD( "gal_11.rom", 0x24000, 0x08000, 0x03e2229f ) /* sprites */
-	ROM_LOAD( "gal_12.rom", 0x2c000, 0x08000, 0xbca9e66b )
+	ROM_LOAD( "gv4.13d",     0x00000, 0x04000, 0x162490b4 ) /* chars */
+	ROM_LOAD( "gv7.14f",     0x04000, 0x08000, 0xeaa1a0db ) /* tiles */
+	ROM_LOAD( "gv8.15f",     0x0c000, 0x08000, 0xf174a41e )
+	ROM_LOAD( "gv9.17f",     0x14000, 0x08000, 0xedc60f5d )
+	ROM_LOAD( "gv10.19f",    0x1c000, 0x08000, 0x41f27fca )
+	ROM_LOAD( "gv14.4f",     0x24000, 0x08000, 0x03e2229f ) /* sprites */
+	ROM_LOAD( "gv13.1f",     0x2c000, 0x08000, 0xbca9e66b )
 
 	ROM_REGION(0x8000)		/* Region 2 - background */
-	ROM_LOAD( "gal_05.rom", 0x00000, 0x04000, 0xda38168b )
-	ROM_LOAD( "gal_06.rom", 0x04000, 0x04000, 0x22492d2a )
+	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
+	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
 
-	ROM_REGION(0x4000)		/* Region 3 - color proms */
-	ROM_LOAD( "gal_08.rom", 0x0000, 0x4000, 0x82f0c5e6 )	/* WRONG */
+	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_LOAD( "mb7114e.9f",  0x0000, 0x0100, 0xde782b3e )	/* red */
+	ROM_LOAD( "mb7114e.10f", 0x0100, 0x0100, 0x0ae2a857 )	/* green */
+	ROM_LOAD( "mb7114e.11f", 0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
+	ROM_LOAD( "mb7114e.2d",  0x0300, 0x0100, 0x75466109 )	/* sprite lookup table */
+	ROM_LOAD( "mb7114e.7f",  0x0400, 0x0100, 0x06538736 )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
-	ROM_LOAD( "gal_14.rom", 0x00000, 0x04000, 0x05f1a0e3 )
-	ROM_LOAD( "gal_13.rom", 0x04000, 0x08000, 0x5b7a0d6d )
+	ROM_LOAD( "gv11.14b",    0x00000, 0x04000, 0x05f1a0e3 )
+	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
 
@@ -469,7 +473,7 @@ struct GameDriver galivan_driver =
 	"1985",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
-	GAME_WRONG_COLORS,
+	GAME_IMPERFECT_COLORS,
 	&galivan_machine_driver,
 	0,
 

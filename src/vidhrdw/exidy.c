@@ -285,6 +285,8 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 236-*exidy_sprite1_xpos-4;
 			sy = 244-*exidy_sprite1_ypos-4;
 
+            if (sy < 0) sy = 0;
+
             if ((*exidy_sprite_enable&0x20)==0x20)
                 enable_set=1;
 

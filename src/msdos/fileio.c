@@ -749,11 +749,14 @@ unsigned int osd_fcrc (void *file)
 
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
-void osd_display_loading_rom_message(const char *name,int current,int total)
+/* return non-zero to abort loading */
+int osd_display_loading_rom_message(const char *name,int current,int total)
 {
 	if (name)
-		printf("loading %-12s\r",name);
+		fprintf(stdout,"loading %-12s\r",name);
 	else
-		printf("                    \r");
+		fprintf(stdout,"                    \r");
 	fflush(stdout);
+
+	return 0;
 }

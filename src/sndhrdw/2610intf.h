@@ -19,7 +19,7 @@ struct YM2610interface{
 	void ( *portAwrite[MAX_2610] )( int offset, int data );
 	void ( *portBwrite[MAX_2610] )( int offset, int data );
 	void ( *handler[MAX_2610] )( void );	/* IRQ handler for the YM2610 */
-	int pcmroma[MAX_2610];		/* ADPCM rom top buffer */
+	int pcmroma[MAX_2610];		/* Delta-T rom top buffer */
 	int pcmromb[MAX_2610];		/* ADPCM rom top buffer */
 };
 

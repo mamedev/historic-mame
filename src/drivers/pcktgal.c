@@ -1,25 +1,15 @@
 /***************************************************************************
 
-	Sexy Billiards(?)				(c) 1987 Data East Corporation
-	Sexy Billiards(?) (Bootleg)		(c) 1989(?) Yada East Corporation(!)
+	Pocket Gal						(c) 1987 Data East Corporation
+	Pocket Gal (Bootleg)			(c) 1989 Yada East Corporation(!!!)
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
-
-	I'm not sure if this game is called 'Sexy Billiards' as I cannot read
-the Japanese lettering.  Can someone check it out please?
-
-	Most dipswitches are unknown.
-
-	There is a weird problem - sometimes the sprites don't appear and the
-game freezes on the attract mode.  BUT, sometimes it works fine!  I can't
-work out why sometimes it works and sometimes it doesn't.  Random resets
-also.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 /* From dec8.c - rename it to dec8_color prom later.. used by many games.. */
 void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -32,12 +22,19 @@ static void pcktgal_bank_w(int offset,int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
 	if (data & 1) { cpu_setbank(1,&RAM[0x4000]); }
 	else { cpu_setbank(1,&RAM[0x10000]); }
 
 	if (data & 2) { cpu_setbank(2,&RAM[0x6000]); }
 	else { cpu_setbank(2,&RAM[0x12000]); }
+}
+
+static void pcktgal_sound_bank_w(int offset,int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	if (data & 4) { cpu_setbank(3,&RAM[0x14000]); }
+	else { cpu_setbank(3,&RAM[0x10000]); }
 }
 
 static void pcktgal_sound_w(int offset,int data)
@@ -46,22 +43,22 @@ static void pcktgal_sound_w(int offset,int data)
 	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
-void pcktgal_adpcm_int(int data)
+static void pcktgal_adpcm_int(int data)
 {
 	static int toggle;
 
 	toggle = 1 - toggle;
-	if (/*firetrap_irq_enable &&*/ toggle)
+	if (toggle)
 		cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
-void pcktgal_adpcm_data_w(int offset,int data)
+static void pcktgal_adpcm_data_w(int offset,int data)
 {
 	MSM5205_data_w(offset,data >> 4);
 	MSM5205_data_w(offset,data);
 }
 
-int pcktgal_adpcm_reset_r(int offset)
+static int pcktgal_adpcm_reset_r(int offset)
 {
 	MSM5205_reset_w(0,0);
 	return 0;
@@ -100,7 +97,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x3400, 0x3400, pcktgal_adpcm_reset_r },	/* ? not sure */
-	{ 0x4000, 0x7fff, MRA_ROM },	/* probably banked, controlled by 2000, but I don't know how */
+	{ 0x4000, 0x7fff, MRA_BANK3 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -113,7 +110,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x1000, 0x1000, YM3812_control_port_0_w },
 	{ 0x1001, 0x1001, YM3812_write_port_0_w },
 	{ 0x1800, 0x1800, pcktgal_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
-//	{ 0x2000, 0x2000, firetrap_sound_bankselect_w },
+	{ 0x2000, 0x2000, pcktgal_sound_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -233,7 +230,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,      /* 1 chip */
 	1500000,        /* 1.5 MHz ??? */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(80,80) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -242,9 +239,9 @@ static struct YM2203interface ym2203_interface =
 
 static struct YM3812interface ym3812_interface =
 {
-	1,		/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ??? */
-	{ 255 }         /* (not supported) */
+	1,			/* 1 chip (no more supported) */
+	3000000,        /* 3 MHz? (hand tuned) */
+	{ 80 }
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -252,7 +249,7 @@ static struct MSM5205interface msm5205_interface =
 	1,		/* 1 chip */
 	8000,	/* 8000Hz playback ? */
 	pcktgal_adpcm_int,		/* interrupt function */
-	{ 255 }
+	{ 90 }
 };
 
 /***************************************************************************/
@@ -381,15 +378,16 @@ ROM_START( pcktgal_rom )
     ROM_LOAD( "eb02.bin",     0x10000, 0x10000, 0xa9dcd339 )
     ROM_LOAD( "ebb0.bin",     0x20000, 0x10000, 0x6c1a14a8 )
 
-    ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "eb03.bin",     0x0000, 0x10000, 0xcb029b02 )
+    ROM_REGION(0x18000)     /* audio cpu */
+	ROM_LOAD( "eb03.bin",     0x10000, 0x8000, 0xcb029b02 )
+	ROM_CONTINUE(             0x08000, 0x8000)
 
 	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
 	ROM_LOAD( "82s147.084",   0x0000, 0x0200, 0x3b6198cb )
 	ROM_LOAD( "82s131.101",   0x0200, 0x0200, 0x1fbd4b59 )
 ROM_END
 
-ROM_START( sexybilb_rom )
+ROM_START( pcktgalb_rom )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "pcktgal.001", 0x10000, 0x4000, 0x4acb3e84 )
 	ROM_CONTINUE(             0x04000, 0xc000)
@@ -402,8 +400,9 @@ ROM_START( sexybilb_rom )
     ROM_LOAD( "pcktgal.003", 0x20000, 0x08000, 0x58182daa )
     ROM_LOAD( "pcktgal.004", 0x28000, 0x08000, 0x33a67af6 )
 
-    ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "eb03.bin",     0x0000, 0x10000, 0xcb029b02 )
+    ROM_REGION(0x18000)     /* audio cpu */
+	ROM_LOAD( "eb03.bin",     0x10000, 0x8000, 0xcb029b02 )
+	ROM_CONTINUE(             0x08000, 0x8000)
 
 	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
 	ROM_LOAD( "82s147.084",   0x0000, 0x0200, 0x3b6198cb )
@@ -418,7 +417,6 @@ static void deco222_decode(void)
 	unsigned char *RAM;
 	extern int encrypted_cpu;
 
-
 	/* bits 5 and 6 of the opcodes are swapped */
 	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	encrypted_cpu = 1;
@@ -429,9 +427,7 @@ static void deco222_decode(void)
 static void pcktgal_decode(void)
 {
 	unsigned char *RAM = Machine->memory_region[1];
-	int i,j;
-	int temp[16];
-
+	int i,j,temp[16];
 
 	deco222_decode();
 
@@ -488,7 +484,7 @@ struct GameDriver pcktgalb_driver =
 	&bootleg_machine_driver,
 	0,
 
-	sexybilb_rom,
+	pcktgalb_rom,
 	0, deco222_decode,
 	0,
 	0,

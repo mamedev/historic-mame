@@ -101,7 +101,7 @@
 
 #define CLIP			/* required to force clipping */
 
-#define USE_SAMP_N_MAX	0	/* limit max. frequency to playback rate */
+#define USE_SAMP_N_MAX	1	/* limit max. frequency to playback rate */
 
 
 #define NO_CLIP   0

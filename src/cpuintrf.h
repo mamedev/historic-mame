@@ -156,8 +156,14 @@ int m68_level7_irq(void);
 int ignore_interrupt(void);
 
 #if NEW_INTERRUPT_SYSTEM
-void cpu_set_nmi_line(int cpu, int state);
-void cpu_set_irq_line(int cpu, int _line, int state);
+void cpu_set_nmi_line(int cpunum, int state);
+void cpu_set_irq_line(int cpunum, int irqline, int state);
+void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
+/* use these in your write memory/port handles to set an IRQ vector */
+void cpu_0_irq_line_vector_w(int offset, int data);
+void cpu_1_irq_line_vector_w(int offset, int data);
+void cpu_2_irq_line_vector_w(int offset, int data);
+void cpu_3_irq_line_vector_w(int offset, int data);
 #endif
 
 void* cpu_getcontext (int _activecpu);

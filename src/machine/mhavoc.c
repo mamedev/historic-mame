@@ -8,7 +8,7 @@
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/avgdvg.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 int gamma_data;
 int alpha_data;

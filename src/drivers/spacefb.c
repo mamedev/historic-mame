@@ -17,7 +17,7 @@ TODO
 	-
 
 0000-3FFF ROM		Code
-8000-83FF RAM		Char/Sprite RAM
+8000-83FF RAM		Sprite RAM
 C000-C7FF RAM		Game ram
 
 IO Ports
@@ -99,7 +99,7 @@ Port 0 - Video
    bit 3 = unused
    bit 4 = unused
    bit 5 = Char/Sprite Bank switch (VREF)
-   bit 6 = CREF
+   bit 6 = Turns on Bit 2 of the color PROM. Used to change the bird colors. (CREF)
    bit 7 = unused
 
 Port 1
@@ -124,9 +124,8 @@ red flash effect when you die.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
-void spacefb_sh_putp1(int offset, int data);
 int  spacefb_sh_gett0(int offset);
 int  spacefb_sh_gett1(int offset);
 int  spacefb_sh_getp2(int offset);
@@ -134,26 +133,31 @@ int  spacefb_sh_getp2(int offset);
 void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-void spacefb_port_0_w(int offset,int data);
+void spacefb_video_control_w(int offset,int data);
 void spacefb_port_1_w(int offset,int data);
 void spacefb_port_2_w(int offset,int data);
-void spacefb_port_3_w(int offset,int data);
 
-int spacefb_interrupt(void);
+
+static int spacefb_interrupt(void)
+{
+	if (cpu_getiloops() != 0) return (0x00cf);		/* RST 08h */
+	else return (0x00d7);		/* RST 10h */
+}
+
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0xC000, 0xC7FF, MRA_RAM },
-	{ 0x8000, 0x83FF, MRA_RAM },
-	{ 0x0000, 0x3FFF, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xC000, 0xC7FF, MWA_RAM },
-	{ 0x8000, 0x83FF, videoram_w, &videoram, &videoram_size },
-	{ 0x0000, 0x3FFF, MWA_ROM },
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -168,36 +172,35 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, spacefb_port_0_w },
+	{ 0x00, 0x00, spacefb_video_control_w },
 	{ 0x01, 0x01, spacefb_port_1_w },
 	{ 0x02, 0x02, spacefb_port_2_w },
-	{ 0x03, 0x03, spacefb_port_3_w },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_sound[] =
 {
-    { 0x0000, 0x03ff, MRA_ROM },
+	{ 0x0000, 0x03ff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_sound[] =
 {
-    { 0x0000, 0x03ff, MWA_ROM },
+	{ 0x0000, 0x03ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_sound[] =
 {
-    { I8039_p2, I8039_p2, spacefb_sh_getp2 },
-    { I8039_t0, I8039_t0, spacefb_sh_gett0 },
-    { I8039_t1, I8039_t1, spacefb_sh_gett1 },
+	{ I8039_p2, I8039_p2, spacefb_sh_getp2 },
+	{ I8039_t0, I8039_t0, spacefb_sh_gett0 },
+	{ I8039_t1, I8039_t1, spacefb_sh_gett1 },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport_sound[] =
 {
-    { I8039_p1, I8039_p1, spacefb_sh_putp1 },
+	{ I8039_p1, I8039_p1, DAC_data_w },
 	{ -1 }	/* end of table */
 };
 
@@ -254,15 +257,69 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
+/* Same as Space Firebird, except for the difficulty switch */
+INPUT_PORTS_START( spacedem_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 
-static struct GfxLayout charlayout =
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START      /* Coin - Start */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Test ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x10, "8000" )
+	PORT_DIPNAME( 0x20, 0x20, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+
+static struct GfxLayout spritelayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 /*
@@ -272,18 +329,18 @@ static struct GfxLayout charlayout =
 
 static struct GfxLayout bulletlayout =
 {
-	4,8,	/* 4*4 characters */
-	256/4,	/* 64 characters */
-	1,	/* 1 bits per pixel */
-	{ 0 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	4,4,	/* 4*4 characters */
+	64,		/* 64 characters */
+	1,		/* 1 bits per pixel */
+	{ 0 },
+	{ 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8 },
 	4*8	/* every char takes 4 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 8 },
+	{ 1, 0x0000, &spritelayout, 0, 8 },
 	{ 1, 0x1000, &bulletlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
@@ -319,7 +376,8 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-  	32*8, 32*8, { 2*8, 32*8-1, 0*8, 32*8-1 },
+	/* there is no real character graphics, only 8*8 and 4*4 sprites */
+  	264, 256, { 0, 263, 16, 247 },
 	gfxdecodeinfo,
 
 	32,32,
@@ -360,15 +418,83 @@ ROM_START( spacefb_rom )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
 	ROM_REGION(0x0020)	/* color proms */
-	ROM_LOAD( "spacefb.clr",  0x0000, 0x0020, 0x465d07af )
+	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
 	ROM_REGION(0x1000)	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+ROM_END
 
+ROM_START( spacefbg_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tst-c.5e",     0x0000, 0x0800, 0x07949110 )         /* Code */
+	ROM_LOAD( "tst-c.5f",     0x0800, 0x0800, 0xce591929 )
+	ROM_LOAD( "tst-c.5h",     0x1000, 0x0800, 0x55d34ea5 )
+	ROM_LOAD( "tst-c.5i",     0x1800, 0x0800, 0xa11e2881 )
+	ROM_LOAD( "tst-c.5j",     0x2000, 0x0800, 0xa6aff352 )
+	ROM_LOAD( "tst-c.5k",     0x2800, 0x0800, 0xf4213603 )
+	ROM_LOAD( "5m.cpu",       0x3000, 0x0800, 0x6286f534 )
+	ROM_LOAD( "5n.cpu",       0x3800, 0x0800, 0x1c9f91ee )
+
+	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tst-v.5k",     0x0000, 0x0800, 0xbacc780d )
+	ROM_LOAD( "tst-v.6k",     0x0800, 0x0800, 0x1645ff26 )
+	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
+
+	ROM_REGION(0x0020)	/* color proms */
+	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
+
+	ROM_REGION(0x1000)	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+ROM_END
+
+ROM_START( spcbird_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sb5e.cpu",     0x0000, 0x0800, 0x232d66b8 )         /* Code */
+	ROM_LOAD( "sb5f.cpu",     0x0800, 0x0800, 0x99504327 )
+	ROM_LOAD( "sb5h.cpu",     0x1000, 0x0800, 0x49a26fe5 )
+	ROM_LOAD( "sb5i.cpu",     0x1800, 0x0800, 0xc23025da )
+	ROM_LOAD( "sb5j.cpu",     0x2000, 0x0800, 0x5e97baf0 )
+	ROM_LOAD( "5k.cpu",       0x2800, 0x0800, 0x1713300c )
+	ROM_LOAD( "sb5m.cpu",     0x3000, 0x0800, 0x4cbe92fc )
+	ROM_LOAD( "sb5n.cpu",     0x3800, 0x0800, 0x1a798fbf )
+
+	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5k.vid",       0x0000, 0x0800, 0x236e1ff7 )
+	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
+	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
+
+	ROM_REGION(0x0020)	/* color proms */
+	ROM_LOAD( "spcbird.clr",  0x0000, 0x0020, 0x25c79518 )
+
+	ROM_REGION(0x1000)	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+ROM_END
+
+ROM_START( spacedem_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sd5e.cpu",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
+	ROM_LOAD( "sd5f.cpu",     0x0800, 0x0800, 0x0814f964 )
+	ROM_LOAD( "sd5h.cpu",     0x1000, 0x0800, 0xebfff682 )
+	ROM_LOAD( "sd5i.cpu",     0x1800, 0x0800, 0xdd7e1378 )
+	ROM_LOAD( "sd5j.cpu",     0x2000, 0x0800, 0x98334fda )
+	ROM_LOAD( "sd5k.cpu",     0x2800, 0x0800, 0xba4933b2 )
+	ROM_LOAD( "sd5m.cpu",     0x3000, 0x0800, 0x14d3c656 )
+	ROM_LOAD( "sd5n.cpu",     0x3800, 0x0800, 0x7e0e41b0 )
+
+	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sd5k.vid",     0x0000, 0x0800, 0x55758e4d )
+	ROM_LOAD( "sd6k.vid",     0x0800, 0x0800, 0x3fcbb20c )
+	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+
+	ROM_REGION(0x0020)	/* color proms */
+	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+
+	ROM_REGION(0x1000)	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 ROM_END
 
 
-
+/* This only works for the basic Space Firebird. The rest of the games allow names to be entered */
 static int hiload(void)
 {
 	unsigned char *from, *to;
@@ -404,31 +530,31 @@ static int hiload(void)
 			{
 				started = 0;
 
-				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(j++, digit + 5);
+				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
+				videoram[j++] = digit + 5;
 
-				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(j++, digit + 5);
+				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
+				videoram[j++] = digit + 5;
 
-				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(j++, digit + 5);
+				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
+				videoram[j++] = digit + 5;
 
-				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(j++, digit + 5);
+				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
+				videoram[j++] = digit + 5;
 
 				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(j++, digit + 5);
+				videoram[j++] = digit + 5;
 			}
 
 			from = &RAM[0xc0a0];
 			to = &RAM[0xc773];
 			j = 0x251;
 
-			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(j++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
+			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
+			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
+			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
+			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
+			videoram[j++] = *to++ = (((*from++ & 0xf0) >> 4) + 5);
 		}
 
 		return 1;
@@ -457,7 +583,7 @@ struct GameDriver spacefb_driver =
 	__FILE__,
 	0,
 	"spacefb",
-	"Space Firebird",
+	"Space Firebird (Nintendo)",
 	"1980",
 	"Nintendo",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
@@ -473,8 +599,86 @@ struct GameDriver spacefb_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
+};
+
+struct GameDriver spacefbg_driver =
+{
+	__FILE__,
+	&spacefb_driver,
+	"spacefbg",
+	"Space Firebird (Gremlin)",
+	"1980",
+	"Gremlin",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
+	GAME_IMPERFECT_COLORS,
+	&machine_driver,
+	0,
+
+	spacefbg_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver spacebrd_driver =
+{
+	__FILE__,
+	&spacefb_driver,
+	"spacebrd",
+	"Space Bird (bootleg)",
+	"1980",
+	"bootleg",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
+	GAME_IMPERFECT_COLORS,
+	&machine_driver,
+	0,
+
+	spcbird_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver spacedem_driver =
+{
+	__FILE__,
+	&spacefb_driver,
+	"spacedem",
+	"Space Demon",
+	"Nintendo / Fortrek",
+	"1980",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
+	GAME_IMPERFECT_COLORS,
+	&machine_driver,
+	0,
+
+	spacedem_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	spacedem_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };
 

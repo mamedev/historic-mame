@@ -185,6 +185,8 @@ struct MachineCPU
 #define CPU_I86       4
 #define CPU_I8039     5
 #define CPU_I8035    CPU_I8039
+#define CPU_I8048    CPU_I8039
+#define CPU_N7751    CPU_I8048
 #define CPU_M6803     6
 #define CPU_M6802    CPU_M6803
 #define CPU_M6808    CPU_M6803
@@ -197,7 +199,8 @@ struct MachineCPU
 #define CPU_T11      10
 #define CPU_S2650    11
 #define CPU_TMS34010 12
-#define CPU_TMS9900  13	/* ARJ 210798 */
+#define CPU_TMS9900  13
+#define CPU_Z8000    14
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -242,8 +245,9 @@ struct MachineSound
 #define SOUND_ADPCM     20
 #define SOUND_OKIM6295  21	/* ROM-based ADPCM system */
 #define SOUND_MSM5205   22	/* CPU-based ADPCM system */
-#define SOUND_HC55516   23	/* Harris family of CVSD CODECs */
-#define SOUND_K007232   24	/* Konami 007232 */
+#define SOUND_UPD7759	23	/* ROM-based ADPCM system */
+#define SOUND_HC55516   24	/* Harris family of CVSD CODECs */
+#define SOUND_K007232   25	/* Konami 007232 */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */

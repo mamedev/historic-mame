@@ -26,7 +26,7 @@ Credits:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 extern unsigned char *contra_fg_horizontal_scroll;
 extern unsigned char *contra_fg_vertical_scroll;

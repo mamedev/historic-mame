@@ -29,7 +29,7 @@ f000-ffff MCU internal ROM
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6808/m6808.h"
+#include "cpu/m6808/m6808.h"
 
 static unsigned char *sharedram1;
 static unsigned char *hd_regs;

@@ -30,7 +30,7 @@ fc00      interrupt vector? (not needed by Bobble Bobble)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 
 

@@ -431,6 +431,27 @@ static struct MachineDriver zzyzzyxx_machine_driver =
 
 ROM_START( jack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "j8",           0x0000, 0x1000, 0xc8e73998 )
+	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
+	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
+	ROM_LOAD( "jgk.j5",       0x3000, 0x1000, 0x4a63d242 )
+	ROM_LOAD( "jgk.j3",       0xc000, 0x1000, 0x605514a8 )
+	ROM_LOAD( "jgk.j4",       0xd000, 0x1000, 0xbce489b7 )
+	ROM_LOAD( "jgk.j2",       0xe000, 0x1000, 0xdb21bd55 )
+	ROM_LOAD( "jgk.j1",       0xf000, 0x1000, 0x49fffe31 )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "jgk.j12",      0x0000, 0x1000, 0xce726df0 )
+	ROM_LOAD( "jgk.j13",      0x1000, 0x1000, 0x6aec2c8d )
+	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
+	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+ROM_END
+
+ROM_START( jack2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jgk.j8",       0x0000, 0x1000, 0xfe229e20 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
 	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
@@ -450,7 +471,7 @@ ROM_START( jack_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( jacka_rom )
+ROM_START( jack3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jack8",        0x0000, 0x1000, 0x632151d2 )
 	ROM_LOAD( "jack6",        0x1000, 0x1000, 0xf94f80d9 )
@@ -473,6 +494,12 @@ ROM_END
 
 ROM_START( treahunt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+// 5, 6, 7, 8
+// 5, 7, 6, 8
+// 6, 5, 7, 8
+// 6, 7, 5, 8
+// 7, 5, 6, 8
+// 7, 6, 5, 8
 	ROM_LOAD( "thunt-1.f2",       0x0000, 0x1000, 0x0b35858c )
 	ROM_LOAD( "thunt-2.f3",       0x1000, 0x1000, 0x67305a51 )
 	ROM_LOAD( "thunt-3.4f",       0x2000, 0x1000, 0xd7a969c3 )
@@ -742,11 +769,11 @@ struct GameDriver jack_driver =
 	hiload, hisave
 };
 
-struct GameDriver jacka_driver =
+struct GameDriver jack2_driver =
 {
 	__FILE__,
 	&jack_driver,
-	"jacka",
+	"jack2",
 	"Jack the Giantkiller (set 2)",
 	"1982",
 	"Cinematronics",
@@ -755,7 +782,33 @@ struct GameDriver jacka_driver =
 	&machine_driver,
 	0,
 
-	jacka_rom,
+	jack2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver jack3_driver =
+{
+	__FILE__,
+	&jack_driver,
+	"jack3",
+	"Jack the Giantkiller (set 3)",
+	"1982",
+	"Cinematronics",
+	"Brad Oliver",
+	0,
+	&machine_driver,
+	0,
+
+	jack3_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

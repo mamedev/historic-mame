@@ -122,6 +122,11 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			{
 				/* if the game is a clone, try the parent */
 				err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->length, &aud->checksum);
+				if (err && gamedrv->clone_of->clone_of)
+				{
+					/* clone of a clone (for NeoGeo clones) */
+					err = osd_fchecksum (gamedrv->clone_of->clone_of->name, name, &aud->length, &aud->checksum);
+				}
 			}
 
 			/* spin through ROM_CONTINUEs and ROM_RELOADs, totaling length */

@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.35 BETA 1 ("__DATE__")";
+char mameversion[] = "0.35 BETA 2 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -385,7 +385,7 @@ int run_machine(void)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
 					/* so show the disclaimer and driver credits. */
-					showcopyright();
+					if (showcopyright()) goto userquit;
 					showcredits();
 				}
 
@@ -403,6 +403,7 @@ int run_machine(void)
 					save_input_port_settings();
 				}
 
+userquit:
 				/* the following MUST be done after hiscore_save() otherwise */
 				/* some 68000 games will not work */
 				sound_stop();

@@ -9,8 +9,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6808/M6808.h"
-#include "M6809/M6809.h"
+#include "cpu/m6808/m6808.h"
+#include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "machine/ticket.h"
 
@@ -179,8 +179,8 @@ static pia6821_interface sinistar_pia_intf =
 	{ 0, 0, 0 },                                    /* input bit CB2 */
 	{ 0, 0, DAC_data_w },                           /* output port A */
 	{ 0, sinistar_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, 0, CVSD_digit_w },                         /* output CA2 */
+	{ 0, 0, CVSD_clock_w },                         /* output CB2 */
 	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
 	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
 };
@@ -792,34 +792,6 @@ int sinistar_input_port_0_r(int offset)
 static void sinistar_snd_cmd_w (int offset, int cmd)
 {
 /*	if (errorlog) fprintf (errorlog, "snd command: %02x %d\n", cmd, cmd); */
-
-	switch (cmd)
-	{
-		case 0x31: /* beware i live */
-			sample_start (0,0,0);
-			break;
-		case 0x30: /* coin sound "I Hunger"*/
-			sample_start (0,1,0);
-			break;
-		case 0x3d: /* roar */
-			sample_start (0,2,0);
-			break;
-		case 0x32: /* i am sinistar */
-			sample_start (0,4,0);
-			break;
-		case 0x34: /* Run Run Run (may be wrong) */
-			sample_start (0,3,0);
-			break;
-		case 0x2c: /* Run coward (may be wrong) */
-			sample_start (0,5,0);
-			break;
-		case 0x39: /* Run coward (may be wrong) */
-			sample_start (0,7,0);
-			break;
-		case 0x22: /* I hunger coward (may be wrong) */
-			sample_start (0,6,0);
-			break;
-	}
 
 	timer_set (TIME_NOW, cmd | 0xc0, williams_snd_cmd_real_w);
 }

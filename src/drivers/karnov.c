@@ -37,7 +37,7 @@ Chelnov - level number at 0x60189 - enter a value at cartoon intro
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
+#include "cpu/m6502/m6502.h"
 
 void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

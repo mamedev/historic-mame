@@ -13,9 +13,9 @@
 
 #include "driver.h"
 #include "machine/z80fmly.h"
-#include "m6808/m6808.h"
-#include "m6809/m6809.h"
-#include "z80/z80.h"
+#include "cpu/m6808/m6808.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/z80/z80.h"
 #include "machine/6821pia.h"
 #include "timer.h"
 

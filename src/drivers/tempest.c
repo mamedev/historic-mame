@@ -170,23 +170,6 @@ High Scores:
 #include "machine/atari_vg.h"
 
 
-/*
- * Catch the following busy loop:
- * C7A7	LDA $53
- * C7A9 CMP #$09
- * C7AB BCC C7A7
- *
- */
-
-static int tempest_catch_busyloop (int offset)
-{
-	extern unsigned char *RAM;
-
-	if (cpu_getpreviouspc()==0xc7a7)
-		cpu_spinuntil_int();
-	return RAM[0x0053];
-}
-
 static int tempest_IN0_r(int offset)
 {
 	int res;
@@ -223,7 +206,6 @@ static void tempest_coin_w (int offset, int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0053, 0x0053, tempest_catch_busyloop }, /* small advantage. BW */
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },

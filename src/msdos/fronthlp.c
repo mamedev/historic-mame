@@ -274,8 +274,11 @@ int frontend_help (int argc, char **argv)
 	int ident = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 	extern struct GameDriver neogeo_bios;
-
+#endif
+#endif
 
 	/* covert '/' in '-' */
 	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';
@@ -354,8 +357,13 @@ int frontend_help (int argc, char **argv)
 			i = 0; j = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
-						!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+						|| drivers[i]->clone_of == &neogeo_bios
+#endif
+#endif
+						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					printf("%-8s",drivers[i]->name);
 					j++;
@@ -376,8 +384,13 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
-						!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+						|| drivers[i]->clone_of == &neogeo_bios
+#endif
+#endif
+						) && !strwildcmp(gamename, drivers[i]->name))
 					printf("%-10s\"%s\"\n",drivers[i]->name,drivers[i]->description);
 				i++;
 			}
@@ -389,8 +402,13 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
-						!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+						|| drivers[i]->clone_of == &neogeo_bios
+#endif
+#endif
+						) && !strwildcmp(gamename, drivers[i]->name))
 					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
 					{
 						printf("%-10s",drivers[i]->name);
@@ -507,8 +525,13 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
-						!strwildcmp(gamename, drivers[i]->description))
+				if ((listclones || drivers[i]->clone_of == 0
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+						|| drivers[i]->clone_of == &neogeo_bios
+#endif
+#endif
+						) && !strwildcmp(gamename, drivers[i]->description))
 					printf("%-5s%-36s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
 				i++;
 			}

@@ -79,9 +79,9 @@ Blitter source graphics
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6809/m6809.h"
-#include "i8039/i8039.h"
-#include "z80/z80.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/i8039/i8039.h"
+#include "cpu/z80/z80.h"
 
 
 extern unsigned char *tutankhm_scrollx;
@@ -143,7 +143,9 @@ static int junofrst_portA_r(int offset)
 
 	/* main xtal 14.318MHz, divided by 8 to get the CPU clock, further */
 	/* divided by 1024 to get this timer */
-	timer = (cpu_gettotalcycles() / 1024) & 0x0f;
+	/* (divide by (1024/2), and not 1024, because the CPU cycle counter is */
+	/* incremented every other state change of the clock) */
+	timer = (cpu_gettotalcycles() / (1024/2)) & 0x0f;
 
 	/* low three bits come from the 8039 */
 

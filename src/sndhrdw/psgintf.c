@@ -5,17 +5,12 @@
 #include "ay8910.h"
 #include "fm.h"
 
-extern unsigned char No_FM;
 
 static int stream[MAX_2203];
 
 static double syncTime[MAX_2203];
 
 static struct YM2203interface *intf;
-
-static int FMMode;
-#define CHIP_YM2203_DAC 2
-#define CHIP_YM2203_OPL 3   /* YM2203 with OPL chip */
 
 static void *Timer[MAX_2203][2];
 static void (*timer_callback)(int param);
@@ -111,10 +106,6 @@ int YM2203_sh_start(struct YM2203interface *interface)
 
 	if( AY8910_sh_start(interface,"YM2203") ) return 1;
 
-	/* FM init */
-	if( No_FM ) FMMode = CHIP_YM2203_DAC;
-	else        FMMode = CHIP_YM2203_OPL;
-
 	intf = interface;
 
 	/* Timer Handler set */
@@ -149,10 +140,7 @@ void YM2203_sh_stop(void)
 	int i;
 
 	AY8910_sh_stop();
-///////	if( FMMode == CHIP_YM2203_DAC )
-	{
-		YM2203Shutdown();
-	}
+	YM2203Shutdown();
 }
 
 
@@ -173,112 +161,47 @@ int YM2203_read_port_4_r(int offset) { return YM2203Read(4,1); }
 
 void YM2203_control_port_0_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(0,0,data);
-	else
-	{
-		AY8910Write(0,0,data);
-		lastreg0 = data;
-	}
+	YM2203Write(0,0,data);
 }
 void YM2203_control_port_1_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(1,0,data);
-	else
-	{
-		AY8910Write(1,0,data);
-		lastreg1 = data;
-	}
+	YM2203Write(1,0,data);
 }
 void YM2203_control_port_2_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(2,0,data);
-	else
-	{
-		AY8910Write(2,0,data);
-		lastreg2 = data;
-	}
+	YM2203Write(2,0,data);
 }
 void YM2203_control_port_3_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(3,0,data);
-	else
-	{
-		AY8910Write(3,0,data);
-		lastreg3 = data;
-	}
+	YM2203Write(3,0,data);
 }
 void YM2203_control_port_4_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(4,0,data);
-	else
-	{
-		AY8910Write(4,0,data);
-		lastreg4 = data;
-	}
+	YM2203Write(4,0,data);
 }
 
 void YM2203_write_port_0_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC )
-	{
-		YM2203Write(0,1,data);
-	}
-	else
-	{
-		if( lastreg0<16 ) AY8910Write(0,1,data);
-		else osd_ym2203_write(0,lastreg0,data);
-	}
+	YM2203Write(0,1,data);
 }
 void YM2203_write_port_1_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC )
-	{
-		YM2203Write(1,1,data);
-	}
-	else
-	{
-		if( lastreg1<16 ) AY8910Write(1,1,data);
-		else osd_ym2203_write(1,lastreg1,data);
-	}
+	YM2203Write(1,1,data);
 }
 void YM2203_write_port_2_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC ) YM2203Write(2,1,data);
-	else
-	{
-		if( lastreg2<16 ) AY8910Write(2,1,data);
-		else osd_ym2203_write(2,lastreg2,data);
-	}
+	YM2203Write(2,1,data);
 }
 void YM2203_write_port_3_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC )
-	{
-		YM2203Write(3,1,data);
-	}
-	else
-	{
-		if( lastreg3<16 ) AY8910Write(3,1,data);
-		else osd_ym2203_write(3,lastreg3,data);
-	}
+	YM2203Write(3,1,data);
 }
 void YM2203_write_port_4_w(int offset,int data)
 {
-	if( FMMode == CHIP_YM2203_DAC )
-	{
-		YM2203Write(4,1,data);
-	}
-	else
-	{
-		if( lastreg4<16 ) AY8910Write(4,1,data);
-		else              osd_ym2203_write(4,lastreg4,data);
-	}
+	YM2203Write(4,1,data);
 }
 
 void YM2203_sh_update(void)
 {
 	if (Machine->sample_rate == 0 ) return;
-
-	if( FMMode == CHIP_YM2203_OPL )
-		osd_ym2203_update();
 }

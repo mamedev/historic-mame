@@ -454,6 +454,40 @@ ROM_START( bionicc2_rom )
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
+ROM_START( topsecrt_rom )
+	ROM_REGION(0x40000)      /* 68000 code */
+	ROM_LOAD_EVEN( "ts_02.rom",  0x00000, 0x10000, 0xb2fe1ddb ) /* 68000 code */
+	ROM_LOAD_ODD ( "ts_04.rom",  0x00000, 0x10000, 0x427a003d ) /* 68000 code */
+	ROM_LOAD_EVEN( "ts_03.rom",  0x20000, 0x10000, 0x27f04bb6 ) /* 68000 code */
+	ROM_LOAD_ODD ( "ts_05.rom",  0x20000, 0x10000, 0xc01547b1 ) /* 68000 code */
+
+	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ts_10.rom",    0x000000, 0x08000, 0xc3587d05 )	/* Sprites */
+	ROM_LOAD( "ts_09.rom",    0x008000, 0x08000, 0x6b63eef2 )
+	ROM_LOAD( "ts_15.rom",    0x010000, 0x08000, 0xdb8cebb0 )
+	ROM_LOAD( "ts_14.rom",    0x018000, 0x08000, 0xe2e41abf )
+	ROM_LOAD( "ts_20.rom",    0x020000, 0x08000, 0xbfd1a695 )
+	ROM_LOAD( "ts_19.rom",    0x028000, 0x08000, 0x928b669e )
+	ROM_LOAD( "ts_22.rom",    0x030000, 0x08000, 0x3fe05d9a )
+	ROM_LOAD( "ts_21.rom",    0x038000, 0x08000, 0x27a9bb7c )
+	ROM_LOAD( "ts_08.rom",    0x040000, 0x08000, 0x96ad379e )	/* VIDEORAM (text layer) tiles */
+	ROM_LOAD( "ts_07.rom",    0x048000, 0x08000, 0x25cdf8b2 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "ts_06.rom",    0x050000, 0x08000, 0x314fb12d )
+	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
+
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "ts_01.rom",    0x00000, 0x8000, 0x8ea07917 )
+ROM_END
+
+
+
 /* hi load / save added 11/20/98 HSC */
 
 #ifdef LSB_FIRST
@@ -532,7 +566,7 @@ struct GameDriver bionicc_driver =
 	__FILE__,
 	0,
 	"bionicc",
-	"Bionic Commando (set 1)",
+	"Bionic Commando (US set 1)",
 	"1987",
 	"Capcom",
 	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
@@ -557,7 +591,7 @@ struct GameDriver bionicc2_driver =
 	__FILE__,
 	&bionicc_driver,
 	"bionicc2",
-	"Bionic Commando (set 2)",
+	"Bionic Commando (US set 2)",
 	"1987",
 	"Capcom",
 	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
@@ -566,6 +600,31 @@ struct GameDriver bionicc2_driver =
 	0,
 
 	bionicc2_rom,
+	0,
+	0,0,
+	0,
+
+	bionicc_input_ports,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver topsecrt_driver =
+{
+	__FILE__,
+	&bionicc_driver,
+	"topsecrt",
+	"Top Secret (Japan)",
+	"1987",
+	"Capcom",
+	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
+	0,
+	&machine_driver,
+	0,
+
+	topsecrt_rom,
 	0,
 	0,0,
 	0,

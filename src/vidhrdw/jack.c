@@ -78,22 +78,25 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int sx,sy;
 		int num, color;
+		int flipy;
 
 		sx    = spriteram[offs + 1];
 		sy    = spriteram[offs];
 		num   = spriteram[offs + 2] + ((spriteram[offs + 3] & 0x08) << 5);
 		color = spriteram[offs + 3] & 0x07;
+		flipy = (spriteram[offs + 3] & 0x40);
 
 		if (flipscreen)
 		{
 			sx = 248 - sx;
 			sy = 248 - sy;
+			flipy = !flipy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				num,
 				color,
-				flipscreen,flipscreen,
+				flipscreen,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

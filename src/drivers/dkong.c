@@ -149,7 +149,7 @@ Changes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039/I8039.h"
+#include "cpu/i8039/i8039.h"
 
 static int page = 0;
 static int p[8] = { 255,255,255,255,255,255,255,255 };

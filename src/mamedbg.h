@@ -32,31 +32,34 @@
 #include "osdepend.h"
 #include "osd_dbg.h"
 #include "cpuintrf.h"
-#include "z80/z80.h"
-#include "m6502/m6502.h"
-#include "i86/i86intrf.h"
-#include "i8039/i8039.h"
-#include "i8085/i8085.h"
-#include "m6808/m6808.h"
-#include "m6805/m6805.h"
-#include "m6809/m6809.h"
-#include "m68000/m68000.h"
-#include "tms34010/tms34010.h"
-#include "s2650/s2650.h"
-#include "t11/t11.h"    /* ASG 030598 */
-#include "tms9900/tms9900.h"
+#include "cpu/z80/z80.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/i86/i86intrf.h"
+#include "cpu/i8039/i8039.h"
+#include "cpu/i8085/i8085.h"
+#include "cpu/m6808/m6808.h"
+#include "cpu/m6805/m6805.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m68000/d68000.h"
+#include "cpu/m68000/m68000.h"
+#include "cpu/tms34010/tms34010.h"
+#include "cpu/s2650/s2650.h"
+#include "cpu/t11/t11.h"    /* ASG 030598 */
+#include "cpu/tms9900/tms9900.h"
+#include "cpu/z8000/z8000.h"
 
 
 int DasmZ80(char *dest,int PC);
 int Dasm6502 (char *buf, int pc);
-int Dasm6808 (unsigned char *base, char *buf, int pc);
+int Dasm6808 (char *buf, int pc);
 int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
 int Dasm6809 (char *buffer, int pc);
-int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
+int Dasm68000 (char *buffer, int pc);
 int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
 int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
 int DasmI86 (unsigned char *pBase, char *buffer, int pc); /* AM 980925 */
 int Dasm9900 (char *buffer, int pc);
+int DasmZ8000 (char *buffer, int pc);
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -75,6 +78,7 @@ void asg_T11Trace(unsigned char *RAM, int PC);	/* ASG 030598 */
 void asg_34010Trace(unsigned char *RAM, int PC); /* AJP 080298 */
 void asg_I86Trace(unsigned char *RAM, int PC); /* AM 980925 */
 void asg_9900Trace(unsigned char *RAM, int PC);
+void asg_Z8000Trace(unsigned char *RAM, int PC);
 
 
 extern int traceon;
@@ -116,10 +120,10 @@ int DummyCC = 0;
 void DummyTrace(int PC){;}	/* JB 980214 */
 
 /* Temporary wrappers around these functions at the moment */
-int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (&ROM[pc], buffer, pc)); }
+int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (buffer, pc)); }
 int TempDasm6805 (char *buffer, int pc) { return (Dasm6805 (&ROM[pc], buffer, pc)); }
 int TempDasm6809 (char *buffer, int pc) { return (Dasm6809 (buffer, pc)); }
-int TempDasm68000 (char *buffer, int pc){ change_pc24(pc); return (Dasm68000 (&OP_ROM[pc], buffer, pc));}
+int TempDasm68000 (char *buffer, int pc){ change_pc24(pc); return (Dasm68000 (buffer, pc));}
 int TempDasm8085 (char *buffer, int pc)  { return (Dasm8085 (buffer, pc)); }
 int TempDasm8039 (char *buffer, int pc)  { return (Dasm8039 (buffer, &ROM[pc])); }
 int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
@@ -128,6 +132,7 @@ int TempDasm2650 (char *buffer, int pc) { return (Dasm2650 (buffer, pc)); }
 int TempDasm34010 (char *buffer, int pc){ return (Dasm34010 (&OP_ROM[((unsigned int) pc)>>3], buffer, pc));}
 int TempDasmI86 (char *buffer, int pc) { return (DasmI86 (&OP_ROM[pc], buffer, pc));}	/* AM 980925 */
 int TempDasm9900 (char *buffer, int pc) { return (Dasm9900 (buffer, pc)); }
+int TempDasmZ8000 (char *buffer, int pc){ return (DasmZ8000 (buffer, pc));}
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -143,6 +148,7 @@ void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }  /* ASG 030598 */
 void Temp34010Trace (int PC) { asg_34010Trace (OP_ROM, PC); }  /* AJP 080298 */
 void TempI86Trace (int PC) { asg_I86Trace (ROM, PC); }  /* AM 980925 */
 void Temp9900Trace (int PC) { asg_9900Trace (ROM, PC); }
+void TempZ8000Trace (int PC) { asg_Z8000Trace (ROM, PC); }  /* HJB 981115 */
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -370,6 +376,7 @@ static tBackupReg BackupRegisters[] =
 			{ "USP", (int *)&((MC68000_Regs *)bckrgs)->regs.usp, 4, 40, 1 },
 			{ "SFC", (int *)&((MC68000_Regs *)bckrgs)->regs.sfc, 4, 53, 1 },
 			{ "DFC", (int *)&((MC68000_Regs *)bckrgs)->regs.dfc, 4, 66, 1 },
+#ifdef A68KEM
 			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.d[0], 4, 67, 3 },
 			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.d[1], 4, 67, 4 },
 			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.d[2], 4, 67, 5 },
@@ -386,6 +393,24 @@ static tBackupReg BackupRegisters[] =
 			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.a[5], 4, 67, 17 },
 			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.a[6], 4, 67, 18 },
 			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.a[7], 4, 67, 19 },
+#else
+			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)bckrgs)->regs.dr[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.ar[7], 4, 67, 19 },
+#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
@@ -467,6 +492,71 @@ static tBackupReg BackupRegisters[] =
 			{ "IR", (int *)&((TMS9900_Regs *)bckrgs)->IR, 2, 10, 1 },
 			{ "WP", (int *)&((TMS9900_Regs *)bckrgs)->WP, 2, 18, 1 },
 			{ "ST", (int *)&((TMS9900_Regs *)bckrgs)->STATUS, 2, 26, 1 },
+			{ "R0", (int *)&((TMS9900_Regs *)bckrgs)->FR0, 2, 69, 4 },
+			{ "R1", (int *)&((TMS9900_Regs *)bckrgs)->FR1, 2, 69, 5 },
+			{ "R2", (int *)&((TMS9900_Regs *)bckrgs)->FR2, 2, 69, 6 },
+			{ "R3", (int *)&((TMS9900_Regs *)bckrgs)->FR3, 2, 69, 7 },
+			{ "R4", (int *)&((TMS9900_Regs *)bckrgs)->FR4, 2, 69, 7 },
+			{ "R5", (int *)&((TMS9900_Regs *)bckrgs)->FR5, 2, 69, 8 },
+			{ "R6", (int *)&((TMS9900_Regs *)bckrgs)->FR6, 2, 69, 9 },
+			{ "R7", (int *)&((TMS9900_Regs *)bckrgs)->FR7, 2, 69, 10 },
+			{ "R8", (int *)&((TMS9900_Regs *)bckrgs)->FR8, 2, 69, 11 },
+			{ "R9", (int *)&((TMS9900_Regs *)bckrgs)->FR9, 2, 69, 12 },
+			{ "R10", (int *)&((TMS9900_Regs *)bckrgs)->FR10, 2, 68, 13 },
+			{ "R11", (int *)&((TMS9900_Regs *)bckrgs)->FR11, 2, 68, 14 },
+			{ "R12", (int *)&((TMS9900_Regs *)bckrgs)->FR12, 2, 68, 15 },
+			{ "R13", (int *)&((TMS9900_Regs *)bckrgs)->FR13, 2, 68, 16 },
+			{ "R14", (int *)&((TMS9900_Regs *)bckrgs)->FR14, 2, 68, 17 },
+			{ "R15", (int *)&((TMS9900_Regs *)bckrgs)->FR15, 2, 68, 18 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_Z8000 14 */
+	{
+		{
+			{ "PC", (int *)&((Z8000_Regs *)bckrgs)->pc, 2, 2, 1 },
+			{ "PSAP", (int *)&((Z8000_Regs *)bckrgs)->psap, 2, 10, 1 },
+			{ "REFRESH", (int *)&((Z8000_Regs *)bckrgs)->refresh, 2, 20, 1 },
+			{ "NSP", (int *)&((Z8000_Regs *)bckrgs)->nsp, 2, 33, 1 },
+			{ "IRQ", (int *)&((Z8000_Regs *)bckrgs)->irq_req, 2, 43, 1 },
+			{ "OP", (int *)&((Z8000_Regs *)bckrgs)->op[0], 2, 53, 1 },
+			{ " ", (int *)&((Z8000_Regs *)bckrgs)->op[1], 2, 60, 1 },
+			{ " ", (int *)&((Z8000_Regs *)bckrgs)->op[2], 2, 63, 1 },
+#ifdef	LSB_FIRST
+			{ "R 0", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 3], 2, 67, 3 },
+			{ "R 1", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 2], 2, 67, 4 },
+			{ "R 2", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 1], 2, 67, 5 },
+			{ "R 3", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 0], 2, 67, 6 },
+			{ "R 4", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 7], 2, 67, 7 },
+			{ "R 5", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 6], 2, 67, 8 },
+			{ "R 6", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 5], 2, 67, 9 },
+			{ "R 7", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 4], 2, 67, 10 },
+			{ "R 8", (int *)&((Z8000_Regs *)bckrgs)->regs.W[11], 2, 67, 12 },
+			{ "R 9", (int *)&((Z8000_Regs *)bckrgs)->regs.W[10], 2, 67, 13 },
+			{ "R10", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 9], 2, 67, 14 },
+			{ "R11", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 8], 2, 67, 15 },
+			{ "R12", (int *)&((Z8000_Regs *)bckrgs)->regs.W[15], 2, 67, 16 },
+			{ "R13", (int *)&((Z8000_Regs *)bckrgs)->regs.W[14], 2, 67, 17 },
+			{ "R14", (int *)&((Z8000_Regs *)bckrgs)->regs.W[13], 2, 67, 18 },
+			{ "R15", (int *)&((Z8000_Regs *)bckrgs)->regs.W[12], 2, 67, 19 },
+#else
+			{ "R 0", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 0], 2, 67, 3 },
+			{ "R 1", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 1], 2, 67, 4 },
+			{ "R 2", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 2], 2, 67, 5 },
+			{ "R 3", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 3], 2, 67, 6 },
+			{ "R 4", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 4], 2, 67, 7 },
+			{ "R 5", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 5], 2, 67, 8 },
+			{ "R 6", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 6], 2, 67, 9 },
+			{ "R 7", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 7], 2, 67, 10 },
+			{ "R 8", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 8], 2, 67, 12 },
+			{ "R 9", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 9], 2, 67, 13 },
+			{ "R10", (int *)&((Z8000_Regs *)bckrgs)->regs.W[10], 2, 67, 14 },
+			{ "R11", (int *)&((Z8000_Regs *)bckrgs)->regs.W[11], 2, 67, 15 },
+			{ "R12", (int *)&((Z8000_Regs *)bckrgs)->regs.W[12], 2, 67, 16 },
+			{ "R13", (int *)&((Z8000_Regs *)bckrgs)->regs.W[13], 2, 67, 17 },
+			{ "R14", (int *)&((Z8000_Regs *)bckrgs)->regs.W[14], 2, 67, 18 },
+			{ "R15", (int *)&((Z8000_Regs *)bckrgs)->regs.W[15], 2, 67, 19 },
+#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
@@ -524,13 +614,13 @@ static tDebugCpuInfo DebugInfo[] =
 		4, 1,					/* CM 980428 */
                 (int *)&((I8085_Regs *)rgs)->SP.W.l, 2,
 		{
-                        { "AF", (int *)&((I8085_Regs *)rgs)->AF.W.l, 2, 2, 1 },
-                        { "HL", (int *)&((I8085_Regs *)rgs)->HL.W.l, 2, 10, 1 },
-                        { "DE", (int *)&((I8085_Regs *)rgs)->DE.W.l, 2, 18, 1 },
-                        { "BC", (int *)&((I8085_Regs *)rgs)->BC.W.l, 2, 26, 1 },
-                        { "PC", (int *)&((I8085_Regs *)rgs)->PC.W.l, 2, 34, 1 },
-                        { "SP", (int *)&((I8085_Regs *)rgs)->SP.W.l, 2, 42, 1 },
-                        { "IM", (int *)&((I8085_Regs *)rgs)->IM, 1, 50, 1 },
+			{ "AF", (int *)&((I8085_Regs *)rgs)->AF.W.l, 2, 2, 1 },
+			{ "HL", (int *)&((I8085_Regs *)rgs)->HL.W.l, 2, 10, 1 },
+			{ "DE", (int *)&((I8085_Regs *)rgs)->DE.W.l, 2, 18, 1 },
+			{ "BC", (int *)&((I8085_Regs *)rgs)->BC.W.l, 2, 26, 1 },
+			{ "PC", (int *)&((I8085_Regs *)rgs)->PC.W.l, 2, 34, 1 },
+			{ "SP", (int *)&((I8085_Regs *)rgs)->SP.W.l, 2, 42, 1 },
+			{ "IM", (int *)&((I8085_Regs *)rgs)->IM, 1, 50, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
@@ -674,6 +764,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "USP", (int *)&((MC68000_Regs *)rgs)->regs.usp, 4, 40, 1 },
 			{ "SFC", (int *)&((MC68000_Regs *)rgs)->regs.sfc, 4, 53, 1 },
 			{ "DFC", (int *)&((MC68000_Regs *)rgs)->regs.dfc, 4, 66, 1 },
+#ifdef A68KEM
 			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.d[0], 4, 67, 3 },
 			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.d[1], 4, 67, 4 },
 			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.d[2], 4, 67, 5 },
@@ -690,6 +781,24 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.a[5], 4, 67, 17 },
 			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.a[6], 4, 67, 18 },
 			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.a[7], 4, 67, 19 },
+#else
+			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.dr[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.dr[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.dr[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)rgs)->regs.dr[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)rgs)->regs.dr[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)rgs)->regs.dr[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)rgs)->regs.dr[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)rgs)->regs.dr[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)rgs)->regs.ar[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)rgs)->regs.ar[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)rgs)->regs.ar[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)rgs)->regs.ar[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)rgs)->regs.ar[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.ar[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.ar[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.ar[7], 4, 67, 19 },
+#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
@@ -803,6 +912,80 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "IR", (int *)&((TMS9900_Regs *)rgs)->IR,     2, 10, 1 },
 			{ "WP", (int *)&((TMS9900_Regs *)rgs)->WP,     2, 18, 1 },
 			{ "ST", (int *)&((TMS9900_Regs *)rgs)->STATUS, 2, 26, 1 },
+			{ "R0", (int *)&((TMS9900_Regs *)rgs)->FR0, 2, 69, 3 },
+			{ "R1", (int *)&((TMS9900_Regs *)rgs)->FR1, 2, 69, 4 },
+			{ "R2", (int *)&((TMS9900_Regs *)rgs)->FR2, 2, 69, 5 },
+			{ "R3", (int *)&((TMS9900_Regs *)rgs)->FR3, 2, 69, 6 },
+			{ "R4", (int *)&((TMS9900_Regs *)rgs)->FR4, 2, 69, 7 },
+			{ "R5", (int *)&((TMS9900_Regs *)rgs)->FR5, 2, 69, 8 },
+			{ "R6", (int *)&((TMS9900_Regs *)rgs)->FR6, 2, 69, 9 },
+			{ "R7", (int *)&((TMS9900_Regs *)rgs)->FR7, 2, 69, 10 },
+			{ "R8", (int *)&((TMS9900_Regs *)rgs)->FR8, 2, 69, 11 },
+			{ "R9", (int *)&((TMS9900_Regs *)rgs)->FR9, 2, 69, 12 },
+			{ "R10", (int *)&((TMS9900_Regs *)rgs)->FR10, 2, 68, 13 },
+			{ "R11", (int *)&((TMS9900_Regs *)rgs)->FR11, 2, 68, 14 },
+			{ "R12", (int *)&((TMS9900_Regs *)rgs)->FR12, 2, 68, 15 },
+			{ "R13", (int *)&((TMS9900_Regs *)rgs)->FR13, 2, 68, 16 },
+			{ "R14", (int *)&((TMS9900_Regs *)rgs)->FR14, 2, 68, 17 },
+			{ "R15", (int *)&((TMS9900_Regs *)rgs)->FR15, 2, 68, 18 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_Z8000 14 */
+	{
+		"Z8000", 21,
+		DrawDebugScreen16,
+		TempDasmZ8000, TempZ8000Trace, 23, 8,
+		"sne21...CZSVDH..", (int *)&((Z8000_Regs *)rgs)->fcw, 16,
+		"%04X:", 0xffff,
+		33, 39, 61, 8,
+		6,			    /* max inst length */
+		1,			    /* instructions are evenly aligned */
+		(int *)&((Z8000_Regs *)rgs)->nsp, 2,
+		{
+			{ "PC", (int *)&((Z8000_Regs *)rgs)->pc, 2, 2, 1 },
+			{ "PSAP", (int *)&((Z8000_Regs *)rgs)->psap, 2, 10, 1 },
+			{ "REFRESH", (int *)&((Z8000_Regs *)rgs)->refresh, 2, 20, 1 },
+			{ "NSP", (int *)&((Z8000_Regs *)rgs)->nsp, 2, 33, 1 },
+			{ "IRQ", (int *)&((Z8000_Regs *)rgs)->irq_req, 2, 43, 1 },
+			{ "OP", (int *)&((Z8000_Regs *)rgs)->op[0], 2, 53, 1 },
+			{ " ", (int *)&((Z8000_Regs *)rgs)->op[1], 2, 60, 1 },
+			{ " ", (int *)&((Z8000_Regs *)rgs)->op[2], 2, 66, 1 },
+#ifdef	LSB_FIRST
+			{ "R 0", (int *)&((Z8000_Regs *)rgs)->regs.W[ 3], 2, 67, 3 },
+			{ "R 1", (int *)&((Z8000_Regs *)rgs)->regs.W[ 2], 2, 67, 4 },
+			{ "R 2", (int *)&((Z8000_Regs *)rgs)->regs.W[ 1], 2, 67, 5 },
+			{ "R 3", (int *)&((Z8000_Regs *)rgs)->regs.W[ 0], 2, 67, 6 },
+			{ "R 4", (int *)&((Z8000_Regs *)rgs)->regs.W[ 7], 2, 67, 7 },
+			{ "R 5", (int *)&((Z8000_Regs *)rgs)->regs.W[ 6], 2, 67, 8 },
+			{ "R 6", (int *)&((Z8000_Regs *)rgs)->regs.W[ 5], 2, 67, 9 },
+			{ "R 7", (int *)&((Z8000_Regs *)rgs)->regs.W[ 4], 2, 67, 10 },
+			{ "R 8", (int *)&((Z8000_Regs *)rgs)->regs.W[11], 2, 67, 12 },
+			{ "R 9", (int *)&((Z8000_Regs *)rgs)->regs.W[10], 2, 67, 13 },
+			{ "R10", (int *)&((Z8000_Regs *)rgs)->regs.W[ 9], 2, 67, 14 },
+			{ "R11", (int *)&((Z8000_Regs *)rgs)->regs.W[ 8], 2, 67, 15 },
+			{ "R12", (int *)&((Z8000_Regs *)rgs)->regs.W[15], 2, 67, 16 },
+			{ "R13", (int *)&((Z8000_Regs *)rgs)->regs.W[14], 2, 67, 17 },
+			{ "R14", (int *)&((Z8000_Regs *)rgs)->regs.W[13], 2, 67, 18 },
+			{ "R15", (int *)&((Z8000_Regs *)rgs)->regs.W[12], 2, 67, 19 },
+#else
+			{ "R 0", (int *)&((Z8000_Regs *)rgs)->regs.W[ 0], 2, 67, 3 },
+			{ "R 1", (int *)&((Z8000_Regs *)rgs)->regs.W[ 1], 2, 67, 4 },
+			{ "R 2", (int *)&((Z8000_Regs *)rgs)->regs.W[ 2], 2, 67, 5 },
+			{ "R 3", (int *)&((Z8000_Regs *)rgs)->regs.W[ 3], 2, 67, 6 },
+			{ "R 4", (int *)&((Z8000_Regs *)rgs)->regs.W[ 4], 2, 67, 7 },
+			{ "R 5", (int *)&((Z8000_Regs *)rgs)->regs.W[ 5], 2, 67, 8 },
+			{ "R 6", (int *)&((Z8000_Regs *)rgs)->regs.W[ 6], 2, 67, 9 },
+			{ "R 7", (int *)&((Z8000_Regs *)rgs)->regs.W[ 7], 2, 67, 10 },
+			{ "R 8", (int *)&((Z8000_Regs *)rgs)->regs.W[ 8], 2, 67, 12 },
+			{ "R 9", (int *)&((Z8000_Regs *)rgs)->regs.W[ 9], 2, 67, 13 },
+			{ "R10", (int *)&((Z8000_Regs *)rgs)->regs.W[10], 2, 67, 14 },
+			{ "R11", (int *)&((Z8000_Regs *)rgs)->regs.W[11], 2, 67, 15 },
+			{ "R12", (int *)&((Z8000_Regs *)rgs)->regs.W[12], 2, 67, 16 },
+			{ "R13", (int *)&((Z8000_Regs *)rgs)->regs.W[13], 2, 67, 17 },
+			{ "R14", (int *)&((Z8000_Regs *)rgs)->regs.W[14], 2, 67, 18 },
+			{ "R15", (int *)&((Z8000_Regs *)rgs)->regs.W[15], 2, 67, 19 },
+#endif
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

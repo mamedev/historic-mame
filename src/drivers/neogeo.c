@@ -95,7 +95,7 @@ Points to note, known and proven information deleted from this map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/pd4990a.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 extern unsigned char *vidram;
 extern unsigned char *neogeo_ram;
@@ -111,6 +111,8 @@ void neogeo_sram_save(void);
 
 /* from vidhrdw/neogeo.c */
 void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line);
+void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  neogeo_mvs_vh_start(void);
 int  neogeo_mgd2_vh_start(void);
 void neogeo_vh_stop(void);
@@ -175,6 +177,55 @@ static int neogeo_interrupt(void)
 
 	/* return a standard vblank interrupt */
 	return(1);      /* vertical blank */
+}
+
+static int irq2enable,irq2value,irq2start,irq2repeat=1000,irq2control;
+
+static int neogeo_raster_interrupt(void)
+{
+	static int fc=0;
+static int lastirq2line=1000;
+static int raster_enable=1;
+
+	if (cpu_getiloops() == 0)
+	{
+		if (osd_key_pressed_memory(OSD_KEY_F1)) raster_enable ^= 1;
+
+		lastirq2line = 1000;
+
+		/* Add a timer tick to the pd4990a */
+		addretrace();
+
+		/* Animation counter, 1 once per frame is too fast, every 4 seems good */
+		if  (fc >= neogeo_frame_counter_speed)
+		{
+			fc=0;
+			neogeo_frame_counter++;
+		}
+		fc++;
+
+		/* return a standard vblank interrupt */
+if (errorlog) fprintf(errorlog,"trigger IRQ1\n");
+		return 1;      /* vertical blank */
+	}
+
+	if (irq2enable)
+	{
+int line = 260 - cpu_getiloops();
+
+if (line == irq2start || line == lastirq2line + irq2repeat)
+{
+if (errorlog) fprintf(errorlog,"trigger IRQ2 at line %d (%d)\n",line,line-36);
+if (raster_enable && osd_skip_this_frame()==0)
+	neogeo_vh_raster_partial_refresh(Machine->scrbitmap,line-1-36);
+
+lastirq2line = line;
+
+		return 2;
+}
+	}
+
+	return 0;
 }
 
 /* Move to calendar file later */
@@ -257,6 +308,8 @@ extern int neogeo_game_fix;
 /* Temporary, Todo: Figure out how this really works! :) */
 static int neo_control_r(int offset)
 {
+if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_getpc());
+
 	switch(neogeo_game_fix)
 	{
 		case 0:
@@ -275,6 +328,8 @@ static int neo_control_r(int offset)
 			return 0x8000; /* Money Idol Exchanger */
 		case 8:
 			return 0xffff; /* Ninja Command */
+		case 9:
+			return 0x4000; /* KOF98 */
 	}
 	return(0x8000);              /* anything 0x8000 seems better than 0*/
 }
@@ -295,6 +350,31 @@ if (errorlog) fprintf(errorlog,"PC %06x: 3c0006 = %02x\n",cpu_getpc(),data);
 	else
 		irq2_enable = 0;
 
+irq2control = data & 0xff;
+switch (irq2control)
+{
+	case 0xd0:
+		irq2enable = 1;
+		irq2start = irq2value;
+irq2repeat = 1000;
+if (errorlog) fprintf(errorlog,"IRQ2 start = %d\n",irq2value);
+		break;
+
+	case 0x90:
+		irq2repeat = irq2value;
+if (errorlog) fprintf(errorlog,"IRQ2 repeat = %d\n",irq2value);
+		break;
+
+	case 0x00:
+if (errorlog) fprintf(errorlog,"IRQ2 disable\n");
+		irq2enable = 0;
+		break;
+
+	default:
+if (errorlog) fprintf(errorlog,"IRQ2 unknown command\n");
+		break;
+}
+
 	if((data & 0xf0ff) == 0)
 	{
 		/* Auto-Anim Speed Control ? */
@@ -314,8 +394,9 @@ if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_getpc(),0x3c0008+off
 	else
 		value = (value & 0xffff0000) | data;
 
-if (errorlog && offset == 2)
-	fprintf(errorlog,"should trigger IRQ2 at raster line %d, horiz offset %d?\n",(value / 0x180) - 0x24,value % 0x180);
+if (errorlog) fprintf(errorlog,"irq2value: raster line %d, horiz offset %d\n",(value / 0x180) - 0x24,value % 0x180);
+
+	irq2value = (value + 0x17f) / 0x180;
 }
 
 
@@ -454,7 +535,7 @@ static int z80_port_r(int offset)
 		case 0x08:
 			{
 				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-				bank[3] = 0x0800 * ((offset >> 8) & 0x3f);
+				bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
 				cpu_setbank(8,&RAM[bank[3]]);
 				return 0;
 				break;
@@ -463,7 +544,7 @@ static int z80_port_r(int offset)
 		case 0x09:
 			{
 				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-				bank[2] = 0x1000 * ((offset >> 8) & 0x1f);
+				bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
 				cpu_setbank(7,&RAM[bank[2]]);
 				return 0;
 				break;
@@ -472,7 +553,7 @@ static int z80_port_r(int offset)
 		case 0x0a:
 			{
 				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-				bank[1] = 0x2000 * ((offset >> 8) & 0x0f);
+				bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
 				cpu_setbank(6,&RAM[bank[1]]);
 				return 0;
 				break;
@@ -481,7 +562,7 @@ static int z80_port_r(int offset)
 		case 0x0b:
 			{
 				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-				bank[0] = 0x4000 * ((offset >> 8) & 0x07);
+				bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
 				cpu_setbank(5,&RAM[bank[0]]);
 				return 0;
 				break;
@@ -584,7 +665,7 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x38, 0x38, "COMM Setting", IP_KEY_NONE )
@@ -731,8 +812,7 @@ static struct MachineDriver neogeo_mgd2_machine_driver =
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	neogeo_init_machine,
-  	40*8, 28*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
-  //	40*8, 60*8, { 1*8, 39*8-1, 0*8, 59*8-1 },
+  	40*8, 32*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
 
 	neogeo_mgd2_gfxdecodeinfo,
 	4096,4096,
@@ -744,6 +824,7 @@ static struct MachineDriver neogeo_mgd2_machine_driver =
 	neogeo_vh_stop,
 	neogeo_vh_screenrefresh,
 
+	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
@@ -774,8 +855,7 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	neogeo_init_machine,
-	40*8, 28*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
-//40*8, 56*8, { 1*8, 39*8-1, 0*8, 56*8-1 },
+	40*8, 32*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
 	neogeo_mvs_gfxdecodeinfo,
 	4096,4096,
 	0,
@@ -786,6 +866,49 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 	neogeo_vh_stop,
 	neogeo_vh_screenrefresh,
 
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2610,
+			&neogeo_ym2610_interface,
+		},
+	}
+};
+
+static struct MachineDriver neogeo_mvs_raster_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			12000000,
+			0,
+			neogeo_readmem,neogeo_writemem,0,0,
+			neogeo_raster_interrupt,260
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
+			4000000,
+			5,
+			sound_readmem,sound_writemem,neo_readio,neo_writeio,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	neogeo_init_machine,
+	40*8, 32*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
+	neogeo_mvs_gfxdecodeinfo,
+	4096,4096,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	neogeo_mvs_vh_start,
+	neogeo_vh_stop,
+	neogeo_vh_raster_screenrefresh,
+
+	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
@@ -797,19 +920,26 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 
 /******************************************************************************/
 
+#define NEO_BIOS_SOUND_256K(name,sum) \
+	ROM_REGION(0x20000) \
+	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
+	ROM_REGION(0x40000) \
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name,         0x00000, 0x40000, sum ) /* so overwrite it with the real thing */
+
 #define NEO_BIOS_SOUND_128K(name,sum) \
 	ROM_REGION(0x20000) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
 	ROM_REGION(0x40000) \
-	ROM_LOAD( name,         0x00000, 0x20000, sum ) \
-	ROM_LOAD( "ng-sm1.rom", 0x20000, 0x20000, 0x97cf998b )
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name,         0x00000, 0x20000, sum ) /* so overwrite it with the real thing */
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
 	ROM_REGION(0x20000) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
 	ROM_REGION(0x40000) \
-	ROM_LOAD( name,         0x00000, 0x10000, sum ) \
-	ROM_LOAD( "ng-sm1.rom", 0x20000, 0x20000, 0x97cf998b )
+	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
+	ROM_LOAD( name,         0x00000, 0x10000, sum ) /* so overwrite it with the real thing */
 
 #define NEO_SFIX_128K(name,sum) \
 	ROM_REGION_DISPOSE(0x40000) \
@@ -823,27 +953,6 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 
 
 /* MGD2 roms */
-ROM_START( joyjoy_rom )
-	ROM_REGION(0x100000)
-    ROM_LOAD_ODD ( "n022001a.038", 0x000000, 0x040000, 0xea512c9f )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
-
-	NEO_SFIX_128K( "n022001a.378", 0x6956d778 )
-
-    ROM_REGION(0x80000)
-    ROM_LOAD( "n022001a.538", 0x000000, 0x80000, 0xcb27be65 ) /* Plane 0,1 */
-
-	ROM_REGION(0x80000)
-    ROM_LOAD( "n022001a.638", 0x000000, 0x80000, 0x7e134979 ) /* Plane 2,3 */
-
-	NEO_BIOS_SOUND_64K( "n022001a.478", 0x058683ec )
-
-	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
-	ROM_LOAD( "n022001a.178", 0x000000, 0x080000, 0x66c1e5c4 )
-
-	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
-	ROM_LOAD( "n022001a.278", 0x000000, 0x080000, 0x8ed20a86 )
-ROM_END
 
 ROM_START( ridhero_rom )
 	ROM_REGION(0x100000)
@@ -1827,13 +1936,155 @@ ROM_START( sengoku2_rom )
 	ROM_LOAD( "n138001c.1fc", 0x280000, 0x080000, 0xc6358d62 )
 ROM_END
 
+ROM_START( minasan_rom )
+    ROM_REGION(0x100000)
+    ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0x86805d5a )
+    ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+
+    NEO_SFIX_128K( "n054001a.378", 0xe5824baa )
+
+    ROM_REGION(0x200000)
+    ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x43f48265 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x100000, 0x40000 )
+    ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0xcbf9eef8 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x140000, 0x40000 )
+    ROM_LOAD( "n054001b.538", 0x080000, 0x40000, 0x3dae0a05 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x180000, 0x40000 )
+    ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, 0x6979368e ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x1c0000, 0x40000 )
+
+    ROM_REGION(0x200000)
+    ROM_LOAD( "n054001a.638", 0x000000, 0x40000, 0xf774d850 ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x100000, 0x40000 )
+    ROM_LOAD( "n054001a.63c", 0x040000, 0x40000, 0x14a81e58 ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x140000, 0x40000 )
+    ROM_LOAD( "n054001b.638", 0x080000, 0x40000, 0x0fb30b5b ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x180000, 0x40000 )
+    ROM_LOAD( "n054001b.63c", 0x0c0000, 0x40000, 0xcfa90d59 ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x1c0000, 0x40000 )
+
+    NEO_BIOS_SOUND_128K( "n054001a.478", 0xadd5a226 )
+
+    ROM_REGION_OPTIONAL(0x100000) /* sound samples */
+    ROM_LOAD( "n054001a.178", 0x000000, 0x080000, 0x79d65e8e )
+    ROM_LOAD( "n054001a.17c", 0x080000, 0x080000, 0x0b3854d5 )
+
+    ROM_REGION_OPTIONAL(0x100000) /* sound samples */
+    ROM_LOAD( "n054001a.278", 0x000000, 0x080000, 0x0100e548 )
+    ROM_LOAD( "n054001a.27c", 0x080000, 0x080000, 0x0c31c5b0 )
+ROM_END
+
+ROM_START( bakatono_rom )
+    ROM_REGION(0x100000)
+    ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, 0x083ca651 )
+    ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+    ROM_LOAD_ODD ( "n058001a.03c", 0x080000, 0x040000, 0xb3bc26ae )
+    ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+
+    NEO_SFIX_128K( "n058001a.378", 0xf3ef4485)
+
+    ROM_REGION(0x200000)
+    ROM_LOAD( "n058001a.538", 0x000000, 0x40000, 0xacb82025 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x100000, 0x40000 )
+    ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, 0xc6954f8e ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x140000, 0x40000 )
+    ROM_LOAD( "n058001b.538", 0x080000, 0x40000, 0xeb751be8 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x180000, 0x40000 )
+    ROM_LOAD( "n058001b.53c", 0x0c0000, 0x40000, 0x1d39bad6 ) /* Plane 0,1 */
+    ROM_CONTINUE(             0x1c0000, 0x40000 )
+
+    ROM_REGION(0x200000)
+    ROM_LOAD( "n058001a.638", 0x000000, 0x40000, 0x647ba28f ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x100000, 0x40000 )
+    ROM_LOAD( "n058001a.63c", 0x040000, 0x40000, 0xdffefa4f ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x140000, 0x40000 )
+    ROM_LOAD( "n058001b.638", 0x080000, 0x40000, 0x6135247a ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x180000, 0x40000 )
+    ROM_LOAD( "n058001b.63c", 0x0c0000, 0x40000, 0x0d40c953 ) /* Plane 2,3 */
+    ROM_CONTINUE(             0x1c0000, 0x40000 )
+
+    NEO_BIOS_SOUND_128K( "n058001a.4f8", 0xae221cc7 )
+
+    ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+    ROM_LOAD( "n058001a.1f8", 0x000000, 0x080000, 0xd3edbde6 )
+    ROM_LOAD( "n058001a.1fc", 0x080000, 0x080000, 0xcc487705 )
+    ROM_LOAD( "n058001b.1f8", 0x100000, 0x080000, 0xe28cf9b3 )
+    ROM_LOAD( "n058001b.1fc", 0x180000, 0x080000, 0x96c3ece9 )
+ROM_END
+
 /************************** MVS FORMAT ROMS ***********************************/
+
+ROM_START( nam_1975_rom )
+	ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "nam_p1.rom", 0x000000, 0x080000, 0xcc9fc951 )
+
+	NEO_SFIX_64K( "nam_s1.rom", 0x8ded55a5 )
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "nam_c1.rom", 0x000000, 0x80000, 0x32ea98e1 ) /* Plane 0,1 */
+    ROM_LOAD( "nam_c3.rom", 0x080000, 0x80000, 0x0151054c ) /* Plane 0,1 */
+    ROM_LOAD( "nam_c5.rom", 0x100000, 0x80000, 0x90b74cc2 ) /* Plane 0,1 */
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "nam_c2.rom", 0x000000, 0x80000, 0xcbc4064c ) /* Plane 2,3 */
+    ROM_LOAD( "nam_c4.rom", 0x080000, 0x80000, 0x0a32570d ) /* Plane 2,3 */
+    ROM_LOAD( "nam_c6.rom", 0x100000, 0x80000, 0xe62bed58 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_64K( "nam_m1.rom", 0xcd088502 )
+
+	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
+	ROM_LOAD( "nam_v11.rom", 0x000000, 0x080000, 0xa7c3d5e5 )
+
+	ROM_REGION_OPTIONAL(0x180000) /* sound samples */
+	ROM_LOAD( "nam_v21.rom", 0x000000, 0x080000, 0x55e670b3 )
+	ROM_LOAD( "nam_v22.rom", 0x080000, 0x080000, 0xab0d8368 )
+	ROM_LOAD( "nam_v23.rom", 0x100000, 0x080000, 0xdf468e28 )
+ROM_END
+
+ROM_START( joyjoy_rom )
+	ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "joy_p1.rom", 0x000000, 0x080000, 0x39c3478f )
+
+	NEO_SFIX_128K( "joy_s1.rom", 0x6956d778 )
+
+	ROM_REGION(0x080000)
+    ROM_LOAD( "joy_c1.rom", 0x000000, 0x080000, 0x509250ec )
+
+	ROM_REGION(0x080000)
+    ROM_LOAD( "joy_c2.rom", 0x000000, 0x080000, 0x09ed5258 )
+
+	NEO_BIOS_SOUND_64K( "joy_m1.rom", 0x058683ec )
+
+	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
+	ROM_LOAD( "joy_v1.rom", 0x000000, 0x080000, 0x66c1e5c4 )
+
+	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
+	ROM_LOAD( "joy_v2.rom", 0x000000, 0x080000, 0x8ed20a86 )
+ROM_END
 
 ROM_START( puzzledp_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "pdpon_p1.rom", 0x000000, 0x080000, 0x2b61415b )
 
 	NEO_SFIX_64K( "pdpon_s1.rom", 0x4a421612 )
+
+	ROM_REGION(0x100000)
+    ROM_LOAD( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
+
+	ROM_REGION(0x100000)
+    ROM_LOAD( "pdpon_c2.rom", 0x000000, 0x100000, 0x42371307 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "pdpon_m1.rom", 0x9c0291ea )
+
+	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
+	ROM_LOAD( "pdpon_v1.rom", 0x000000, 0x080000, 0xdebeb8fb )
+ROM_END
+
+ROM_START( puzzldpr_rom )
+    ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "pdpnr_p1.rom", 0x000000, 0x080000, 0xafed5de2 )
+
+    NEO_SFIX_64K( "pdpnr_s1.rom", 0x5a68d91e )
 
 	ROM_REGION(0x100000)
     ROM_LOAD( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
@@ -1896,33 +2147,6 @@ ROM_START( bjourney_rom )
 	ROM_LOAD( "bj-v22.rom", 0x000000, 0x100000, 0x65a54d13 )
 ROM_END
 
-ROM_START( nam_1975_rom )
-	ROM_REGION(0x100000)
-    ROM_LOAD_WIDE_SWAP( "nam_p1.rom", 0x000000, 0x080000, 0xcc9fc951 )
-
-	NEO_SFIX_64K( "nam_s1.rom", 0x8ded55a5 )
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "nam_c1.rom", 0x000000, 0x80000, 0x32ea98e1 ) /* Plane 0,1 */
-    ROM_LOAD( "nam_c3.rom", 0x080000, 0x80000, 0x0151054c ) /* Plane 0,1 */
-    ROM_LOAD( "nam_c5.rom", 0x100000, 0x80000, 0x90b74cc2 ) /* Plane 0,1 */
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "nam_c2.rom", 0x000000, 0x80000, 0xcbc4064c ) /* Plane 2,3 */
-    ROM_LOAD( "nam_c4.rom", 0x080000, 0x80000, 0x0a32570d ) /* Plane 2,3 */
-    ROM_LOAD( "nam_c6.rom", 0x100000, 0x80000, 0xe62bed58 ) /* Plane 2,3 */
-
-	NEO_BIOS_SOUND_64K( "nam_m1.rom", 0xcd088502 )
-
-	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
-	ROM_LOAD( "nam_v11.rom", 0x000000, 0x080000, 0xa7c3d5e5 )
-
-	ROM_REGION_OPTIONAL(0x180000) /* sound samples */
-	ROM_LOAD( "nam_v21.rom", 0x000000, 0x080000, 0x55e670b3 )
-	ROM_LOAD( "nam_v22.rom", 0x080000, 0x080000, 0xab0d8368 )
-	ROM_LOAD( "nam_v23.rom", 0x100000, 0x080000, 0xdf468e28 )
-ROM_END
-
 ROM_START( socbrawl_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "sbrl_p1.rom", 0x000000, 0x080000, 0xa2801c24 )
@@ -1947,6 +2171,32 @@ ROM_END
 ROM_START( maglord_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "magl_p1.rom", 0x000000, 0x080000, 0xbd0a492d )
+
+	NEO_SFIX_128K( "magl_s1.rom", 0x1c5369a2 )
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "magl_c1.rom", 0x000000, 0x80000, 0x806aee34 ) /* Plane 0,1 */
+    ROM_LOAD( "magl_c3.rom", 0x080000, 0x80000, 0xc4c2b926 ) /* Plane 0,1 */
+    ROM_LOAD( "magl_c5.rom", 0x100000, 0x80000, 0x69086dec ) /* Plane 0,1 */
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "magl_c2.rom", 0x000000, 0x80000, 0x34aa9a86 ) /* Plane 2,3 */
+    ROM_LOAD( "magl_c4.rom", 0x080000, 0x80000, 0x9c46dcf4 ) /* Plane 2,3 */
+    ROM_LOAD( "magl_c6.rom", 0x100000, 0x80000, 0xab7ac142 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_64K( "magl_m1.rom", 0x91ee1f73)
+
+	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
+	ROM_LOAD( "magl_v11.rom", 0x000000, 0x080000, 0xcc0455fd )
+
+	ROM_REGION_OPTIONAL(0x100000) /* sound samples */
+	ROM_LOAD( "magl_v21.rom", 0x000000, 0x080000, 0xf94ab5b7 )
+	ROM_LOAD( "magl_v22.rom", 0x080000, 0x080000, 0x232cfd04 )
+ROM_END
+
+ROM_START( maglordh_rom )
+	ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "maglh_p1.rom", 0x000000, 0x080000, 0x599043c5 )
 
 	NEO_SFIX_128K( "magl_s1.rom", 0x1c5369a2 )
 
@@ -2347,7 +2597,7 @@ ROM_START( neodrift_rom )
 	ROM_LOAD( "drift_c2.rom", 0x200000, 0x200000, 0x9dc9c72a ) /* Plane 2,3 */
 	ROM_CONTINUE(             0x000000, 0x200000 )
 
-	NEO_BIOS_SOUND_128K( "drift_m1.rom", 0x00000000 )
+	NEO_BIOS_SOUND_128K( "drift_m1.rom", 0x200045f1 )
 
 	ROM_REGION_OPTIONAL(0x400000) /* sound samples */
 	ROM_LOAD( "drift_v1.rom", 0x000000, 0x200000, 0xa421c076 )
@@ -2541,7 +2791,8 @@ ROM_START( neobombe_rom )
 	NEO_BIOS_SOUND_128K( "bombm_m1.rom", 0xe81e780b )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "bombm_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "bombm_v1.rom", 0x200000, 0x200000, 0x43057e99 )
+	ROM_CONTINUE(             0x000000, 0x200000 )
 	ROM_LOAD( "bombm_v2.rom", 0x400000, 0x200000, 0xa92b8b3d )
 ROM_END
 
@@ -2866,6 +3117,35 @@ ROM_START( sskick3_rom )
 	ROM_LOAD( "side3_v1.rom", 0x000000, 0x200000, 0x201fa1e1 )
 	ROM_LOAD( "side3_v2.rom", 0x200000, 0x200000, 0xacf29d96 )
 	ROM_LOAD( "side3_v3.rom", 0x400000, 0x200000, 0xe524e415 )
+ROM_END
+
+ROM_START( ssideki4_rom )
+	ROM_REGION(0x200000)
+	ROM_LOAD_WIDE_SWAP( "side4_p1.rom", 0x100000, 0x100000, 0x519b4ba3 )
+	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+
+	NEO_SFIX_128K( "side4_s1.rom", 0xf0fe5c36 )
+
+	ROM_REGION(0x1000000)
+	ROM_LOAD( "side4_c1.rom", 0x200000, 0x200000, 0x288a9225 ) /* Plane 0,1 */
+	ROM_CONTINUE(             0x000000, 0x200000 )
+	ROM_LOAD( "side4_c3.rom", 0x600000, 0x200000, 0xfedfaebe ) /* Plane 0,1 */
+	ROM_CONTINUE(             0x400000, 0x200000 )
+	ROM_LOAD( "side4_c5.rom", 0x800000, 0x200000, 0x0c6f97ec ) /* Plane 0,1 */
+
+	ROM_REGION(0x1000000)
+	ROM_LOAD( "side4_c2.rom", 0x200000, 0x200000, 0x3fc9d1c4 ) /* Plane 2,3 */
+	ROM_CONTINUE(             0x000000, 0x200000 )
+	ROM_LOAD( "side4_c4.rom", 0x600000, 0x200000, 0x877a5bb2 ) /* Plane 2,3 */
+	ROM_CONTINUE(             0x400000, 0x200000 )
+	ROM_LOAD( "side4_c6.rom", 0x800000, 0x200000, 0x329c5e1b ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "side4_m1.rom", 0xa932081d )
+
+	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
+	ROM_LOAD( "side4_v1.rom", 0x200000, 0x200000, 0xc4bfed62 )
+	ROM_CONTINUE(             0x000000, 0x200000 )
+	ROM_LOAD( "side4_v2.rom", 0x400000, 0x200000, 0x1bfa218b )
 ROM_END
 
 ROM_START( aof2_rom )
@@ -3649,6 +3929,34 @@ ROM_START( kof97_rom )
 	ROM_LOAD( "kof97_v3.rom", 0x800000, 0x400000, 0x759eb954 )
 ROM_END
 
+ROM_START( kof98_rom )
+	ROM_REGION(0x500000)
+	ROM_LOAD_WIDE_SWAP( "kof98_p1.rom", 0x000000, 0x100000, 0x61ac868a )
+	ROM_LOAD_WIDE_SWAP( "kof98_p2.rom", 0x100000, 0x400000, 0x980aba4c )
+
+	NEO_SFIX_128K( "kof98_s1.rom", 0x7f7b4805 )
+
+	ROM_REGION(0x2000000)
+	ROM_LOAD( "kof98_c1.rom", 0x0000000, 0x800000, 0xe564ecd6 ) /* Plane 0,1 */
+	ROM_LOAD( "kof98_c3.rom", 0x0800000, 0x800000, 0x22127b4f ) /* Plane 0,1 */
+	ROM_LOAD( "kof98_c5.rom", 0x1000000, 0x800000, 0x9d10bed3 ) /* Plane 0,1 */
+	ROM_LOAD( "kof98_c7.rom", 0x1800000, 0x800000, 0xf6d7a38a ) /* Plane 0,1 */
+
+	ROM_REGION(0x2000000)
+	ROM_LOAD( "kof98_c2.rom", 0x0000000, 0x800000, 0xbd959b60 ) /* Plane 2,3 */
+	ROM_LOAD( "kof98_c4.rom", 0x0800000, 0x800000, 0x0b4fa044 ) /* Plane 2,3 */
+	ROM_LOAD( "kof98_c6.rom", 0x1000000, 0x800000, 0xda07b6a2 ) /* Plane 2,3 */
+	ROM_LOAD( "kof98_c8.rom", 0x1800000, 0x800000, 0xc823e045 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_256K( "kof98_m1.rom", 0x4e7a6b1b )
+
+	ROM_REGION_OPTIONAL(0x1000000) /* sound samples */
+	ROM_LOAD( "kof98_v1.rom", 0x000000, 0x400000, 0xb9ea8051 )
+	ROM_LOAD( "kof98_v2.rom", 0x400000, 0x400000, 0xcc11106e )
+	ROM_LOAD( "kof98_v3.rom", 0x800000, 0x400000, 0x044ea4e1 )
+	ROM_LOAD( "kof98_v4.rom", 0xc00000, 0x400000, 0x7985ea30 )
+ROM_END
+
 ROM_START( realbou2_rom )
 	ROM_REGION(0x500000)
 	ROM_LOAD_WIDE_SWAP( "rb2_p1.rom", 0x000000, 0x100000, 0xb6969780 )
@@ -3666,7 +3974,7 @@ ROM_START( realbou2_rom )
 	ROM_LOAD( "rb2_c4.rom", 0x0800000, 0x800000, 0xc19a07eb ) /* Plane 2,3 */
 	ROM_LOAD( "rb2_c6.rom", 0x1000000, 0x800000, 0x4609e507 ) /* Plane 2,3 */
 
-	NEO_BIOS_SOUND_128K( "rb2_m1.rom", 0x00000000 )	/* second half is missing */
+	NEO_BIOS_SOUND_256K( "rb2_m1.rom", 0x00000000 )	/* most is missing */
 
     ROM_REGION_OPTIONAL(0x1000000) /* sound samples */
 	ROM_LOAD( "rb2_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
@@ -3797,6 +4105,29 @@ struct GameDriver NEO_NAME##_driver  = \
 	neogeo_sram_load,neogeo_sram_save  \
 };
 
+#define NEODRIVERCLONE(NEO_NAME,NEO_CLONE,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_CREDIT,NEO_MACHINE) \
+struct GameDriver NEO_NAME##_driver  = \
+{                               \
+	__FILE__,                   \
+	&NEO_CLONE##_driver,        \
+	#NEO_NAME,                  \
+	NEO_REALNAME,               \
+	NEO_YEAR,                   \
+	NEO_MANU,                   \
+	NGCRED,          \
+	0,                          \
+	NEO_MACHINE,                \
+    neogeo_onetime_init_machine,		\
+	NEO_NAME##_rom,             \
+	0, 0,           \
+	0,                          \
+	0, 	    	                \
+	neogeo_ports,               \
+	0, 0, 0,                    \
+	ORIENTATION_DEFAULT,        \
+	neogeo_sram_load,neogeo_sram_save  \
+};
+
 /* Use this macro when the romset name starts with a number */
 #define NEODRIVERX(NEO_NAME,NEO_ROMNAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_CREDIT,NEO_MACHINE) \
 struct GameDriver NEO_NAME##_driver  = \
@@ -3852,7 +4183,6 @@ struct GameDriver neogeo_bios =
 /* MGD2 format dumps */
 
 /* SNK */
-NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(ridhero, "Riding Hero","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(bstars,  "Baseball Stars Professional","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(lbowling,"League Bowling","1990","SNK","",&neogeo_mgd2_machine_driver)
@@ -3883,6 +4213,10 @@ NEODRIVER(wheroes, "World Heroes","1992","Alpha Denshi Co","",&neogeo_mgd2_machi
 /* Visco */
 NEODRIVER(androdun,"Andro Dunos","1992","Visco","",&neogeo_mgd2_machine_driver)
 
+/* Monolith Corp. */
+NEODRIVER(minasan, "Mina Sanno Okagesama Desu! Dai Sugoroku Taikai","1990","Monolith Corp.","",&neogeo_mgd2_machine_driver)
+NEODRIVER(bakatono,"Baka Tonosama Maajan Manyuuki","1991","Monolith Corp.","",&neogeo_mgd2_machine_driver)
+
 /******************************************************************************/
 
 /* MVS format dumps, I started to rearrange these to be in order - Manufacturer/Date, it makes
@@ -3892,6 +4226,7 @@ function of the editor to find stuff anyway :) */
 /* Alpha Denshi Co */
 NEODRIVER(bjourney,"Blues Journey / Raguy","1990","Alpha Denshi Co","TJ Grant",&neogeo_mvs_machine_driver)
 NEODRIVER(maglord, "Magician Lord","1990","Alpha Denshi Co","",&neogeo_mvs_machine_driver)
+NEODRIVERCLONE(maglordh,maglord, "Magician Lord (Home version)","1990","Alpha Denshi Co","",&neogeo_mvs_machine_driver)
 
 /* Aicom */
 NEODRIVER(janshin, "Janshin Densetsu - Quest of Jongmaster","1994","Aicom","",&neogeo_mvs_machine_driver)
@@ -3903,6 +4238,7 @@ NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo","",&neogeo_mvs_machine_drive
 /* Taito */
 NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito","",&neogeo_mvs_machine_driver)
 NEODRIVER(puzzledp,"Puzzle de Pon","1995","Taito (Visco license)","",&neogeo_mvs_machine_driver)
+NEODRIVERCLONE(puzzldpr,puzzledp,"Puzzle de Pon R","1997","Taito (Visco license)","",&neogeo_mvs_machine_driver)
 
 /* Visco */
 NEODRIVER(pspikes2,"Power Spikes 2","1994","Video System Co.","",&neogeo_mvs_machine_driver)
@@ -3966,6 +4302,7 @@ NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face","Santeri Saarimaa",&ne
 
 /* SNK */
 NEODRIVER(nam_1975,"NAM 1975","1990","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK","",&neogeo_mvs_machine_driver)
@@ -3980,9 +4317,9 @@ NEODRIVER(fatfursp,"Fatal Fury Special","1993","SNK","Santeri Saarimaa",&neogeo_
 NEODRIVER(tophuntr,"Top Hunter","1994","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(ssideki2,"Super Sidekicks 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(sskick3, "Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(sskick3, "Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(savagere,"Savage Reign","1995","SNK","Rodimus Prime",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK","",&neogeo_mvs_machine_driver)
@@ -3993,10 +4330,12 @@ NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK","",&neogeo_mvs_machin
 NEODRIVER(samsho4, "Samurai Shodown 4 / Samurai Spirits 4","1996","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(rbffspec,"Real Bout Fatal Fury Special","1996","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11","1996","SNK","Apollo69",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(realbou2,"Real Bout Fatal Fury 2 - The Newcomers","1998","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK","",&neogeo_mvs_machine_driver)
 
 /* Note:  The information above is pretty accurate now, but they may still be
    some mistakes, check it if you have time :)

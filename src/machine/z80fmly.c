@@ -19,7 +19,7 @@ pending:
 #include <stdio.h>
 #include "driver.h"
 #include "z80fmly.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
 
 typedef struct
 {

@@ -31,8 +31,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
-#include "M6809/M6809.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/m6809/m6809.h"
 
 extern unsigned char *matmania_videoram2,*matmania_colorram2;
 extern int matmania_videoram2_size;

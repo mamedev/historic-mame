@@ -510,6 +510,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"miexchng")) neogeo_game_fix=6;
 	if (!strcmp(Machine->gamedrv->name,"gururin")) neogeo_game_fix=7;
 	if (!strcmp(Machine->gamedrv->name,"ncommand")) neogeo_game_fix=8;
+	if (!strcmp(Machine->gamedrv->name,"kof98")) neogeo_game_fix=9;
 
 	/* hacks to make the games which do protection checks run in arcade mode */
 	/* we write protect a SRAM location so it cannot be set to 1 */
@@ -523,6 +524,7 @@ static void neogeo_custom_memory(void)
 			 !strcmp(Machine->gamedrv->name,"kof95") ||
 			 !strcmp(Machine->gamedrv->name,"kof96") ||
 			 !strcmp(Machine->gamedrv->name,"kof97") ||
+			 !strcmp(Machine->gamedrv->name,"kof98") ||
 			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
 			 !strcmp(Machine->gamedrv->name,"realbou2") ||
@@ -547,21 +549,23 @@ static void neogeo_custom_memory(void)
 	neogeo_green_bits = 5;
 	neogeo_blue_bits = 5;
 	if (!strcmp(Machine->gamedrv->name,"blazstar"))
-		neogeo_blue_bits = 3;
+		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
 	if (!strcmp(Machine->gamedrv->name,"karnov_r"))
-		neogeo_blue_bits = 3;
+		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
 	if (!strcmp(Machine->gamedrv->name,"kizuna"))
-		neogeo_blue_bits = 3;
+		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
 	if (!strcmp(Machine->gamedrv->name,"kof95"))
-		neogeo_blue_bits = neogeo_red_bits = 3;
-	if (!strcmp(Machine->gamedrv->name,"kof96"))
-		neogeo_blue_bits = neogeo_red_bits = 3;
-	if (!strcmp(Machine->gamedrv->name,"kof97"))
-		neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3;
-	if (!strcmp(Machine->gamedrv->name,"ragnagrd"))
-		neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3;
+		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
 	if (!strcmp(Machine->gamedrv->name,"whp"))
-		neogeo_blue_bits = neogeo_red_bits = 3;
+		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
+	if (!strcmp(Machine->gamedrv->name,"kof96"))
+		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
+	if (!strcmp(Machine->gamedrv->name,"kof97"))
+		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
+	if (!strcmp(Machine->gamedrv->name,"ragnagrd"))
+		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
+	if (!strcmp(Machine->gamedrv->name,"kof98"))
+		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
 }
 
 

@@ -869,14 +869,14 @@ ROM_END
 /* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x0 )
-	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x0 )
-	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0x0 )
-	ROM_LOAD( "036433.02",    0x7800, 0x0800, 0x0 )
+	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
+	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
+	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0xfdea913c )
+	ROM_LOAD( "036433.02",    0x7800, 0x0800, 0x00000000 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x0 )
-	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x0 )
+	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x3b597407 )
+	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
 
@@ -942,6 +942,7 @@ struct GameDriver astdelu1_driver =
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
+
 
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */

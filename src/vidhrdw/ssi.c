@@ -1,6 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M68000/M68000.h"
+#include "cpu/m68000/m68000.h"
 
 
 

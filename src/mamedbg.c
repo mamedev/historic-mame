@@ -999,7 +999,6 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 	while (Editing)
 	{
 		ScreenSetCursor(Y, X);
-		//Key = osd_read_keyrepeat(0);
 		Key = osd_debug_readkey();	/* JB 980103 */
 		switch(Key)
 		{
@@ -1348,7 +1347,6 @@ static void EditRegisters (int Which)
 	while (Editing)
 	{
 		ScreenSetCursor (Y, X);
-//		Key = osd_read_keyrepeat(0);
 		Key = osd_debug_readkey();	/* JB 980103 */
 		switch (Key)
 		{
@@ -1773,7 +1771,6 @@ void MAME_Debug (void)
 			unsigned int		TempAddress;
 			int		Line;
 
-			//Key = osd_read_keyrepeat (0);
 			Key = osd_debug_readkey ();	/* JB 980103 */
 			if ((strlen(osd_key_name(Key)) == 1) && (strlen(CommandLine) < 80))
 				strcat(CommandLine,osd_key_name(Key));
@@ -1879,7 +1876,7 @@ void MAME_Debug (void)
 										Machine->scrbitmap->height,
 										Machine->drv->video_attributes);
 						updatescreen();
-						while (!osd_read_key (0)) continue; 	 /* do nothing */
+						while (!osd_read_key_immediate()) continue; 	 /* do nothing */
 						set_gfx_mode (GFX_TEXT,80,25,0,0);
 						DebugInfo[cputype].DrawDebugScreen(HEADING_COLOUR, LINE_COLOUR);
 						Update = TRUE;

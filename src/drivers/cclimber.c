@@ -1952,7 +1952,7 @@ struct GameDriver guzzler_driver =
 	"Guzzler",
 	"1983",
 	"Tehkan",
-	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)\nAUC-L (SM) Valerio Verrando\n(high score save)",
+	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
 	0,
 	&swimmer_machine_driver,
 	0,

@@ -100,8 +100,8 @@ $8000 - $ffff	ROM
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/m6502.h"
-#include "m6809/m6809.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/m6809/m6809.h"
 
 static void Write68705( int data );
 static void Write68705( int data ){

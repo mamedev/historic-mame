@@ -154,16 +154,21 @@ struct osd_bitmap
 #define OSD_KEY_CONFIGURE			133
 #define OSD_KEY_ON_SCREEN_DISPLAY	134
 #define OSD_KEY_SHOW_GFX			135
-#define OSD_KEY_JOY_CALIBRATE		136
-#define OSD_KEY_FRAMESKIP			137
-#define OSD_KEY_THROTTLE			138
-#define OSD_KEY_SHOW_FPS			139
-#define OSD_KEY_SHOW_PROFILE		140
-#define OSD_KEY_SNAPSHOT			141
-#define OSD_KEY_CHEAT_TOGGLE		142
-#define OSD_KEY_DEBUGGER			143
+#define OSD_KEY_FRAMESKIP			136
+#define OSD_KEY_THROTTLE			137
+#define OSD_KEY_SHOW_FPS			138
+#define OSD_KEY_SHOW_PROFILE		139
+#define OSD_KEY_SNAPSHOT			140
+#define OSD_KEY_CHEAT_TOGGLE		141
+#define OSD_KEY_DEBUGGER			142
+#define OSD_KEY_UI_LEFT				143
+#define OSD_KEY_UI_RIGHT			144
+#define OSD_KEY_UI_UP				145
+#define OSD_KEY_UI_DOWN				146
+#define OSD_KEY_UI_SELECT			147
+#define OSD_KEY_ANY					148
 
-#define OSD_MAX_PSEUDO				143
+#define OSD_MAX_PSEUDO				148
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -275,8 +280,6 @@ void osd_adjust_sample(int channel,int freq,int volume);
 void osd_stop_sample(int channel);
 void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
-void osd_ym2203_write(int n, int r, int v);
-void osd_ym2203_update(void);
 void osd_ym3812_control(int reg);
 void osd_ym3812_write(int data);
 void osd_set_mastervolume(int attenuation);
@@ -288,9 +291,8 @@ int osd_key_pressed_memory(int keycode);
 int osd_key_pressed_memory_repeat(int keycode,int speed);
 int osd_read_key_immediate(void);
 /* the following two should return pseudo key codes if translate != 0 */
-int osd_read_key(int translate);
-int osd_read_keyrepeat(int translate);
-int key_to_pseudo_code(int k);
+int osd_read_keyrepeat(void);
+int osd_key_invalid(int keycode);
 const char *osd_joy_name(int joycode);
 const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
@@ -353,7 +355,8 @@ unsigned int osd_fcrc(void *file);
 
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
-void osd_display_loading_rom_message(const char *name,int current,int total);
+/* return non-zero to abort loading */
+int osd_display_loading_rom_message(const char *name,int current,int total);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);

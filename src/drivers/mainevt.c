@@ -8,7 +8,7 @@ Emulation by Bryan McPhail, mish@tendril.force9.net
 Notes:
 * Devastators not playable...  Protected?  Unimplemented opcodes?
 * Sprite priorities not yet fully correct
-* No sound
+* No sound in Devastators
 * Graphics rom test fails - It looks like graphics roms can be read through
   the sprite area - with bank switching at 0x3802/3 (little endian).
   Turned on by setting 0x20 in 0x3800.
@@ -18,12 +18,11 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 int mainevt_vh_start (void);
 void mainevt_vh_stop (void);
-void mainevt_control_w (int offset, int data);
 void mainevt_video_control (int offset, int data);
 
 void mainevt_bg_video_w (int offset, int data);
@@ -49,6 +48,8 @@ extern unsigned char *fg_scrollx_hi;
 extern unsigned char *fg_scrolly;
 
 static int mainevt_int_type;
+
+
 
 /* Unsure about this....  Main Event always uses IRQ, Devastators NMI */
 static void mainevt_int_w(int offset, int data)
@@ -82,6 +83,57 @@ static int zero_ret(int offset)
 	return 0xff;
 }
 
+
+void mainevt_bankswitch_w(int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int bankaddress;
+
+	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+void mainevt_sh_irqtrigger_w(int offset,int data)
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
+void mainevt_sh_irqcontrol_w(int offset,int data)
+{
+ 	/* I think bit 1 resets the UPD7795C sound chip */
+ 	if ((data & 0x02) == 0)
+ 	{
+ 		UPD7759_reset_w(0,(data & 0x02) >> 1);
+ 	}
+	else if ((data & 0x01))
+ 	{
+		UPD7759_start_w(0,0);
+ 	}
+
+	interrupt_enable_w(0,data & 4);
+}
+
+void mainevt_sh_bankswitch_w(int offset,int data)
+{
+	unsigned char *src,*dest;
+
+//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_getpc(),data);
+
+	/* bits 0-3 select the 007232 banks, but I don't know how yet */
+	/* the following is wrong! */
+	src = Machine->memory_region[5];
+	dest = Machine->memory_region[3];
+	memcpy(dest,&src[((data >> 0) & 0x03) * 0x20000],0x20000);
+	dest = Machine->memory_region[4];
+	memcpy(dest,&src[((data >> 2) & 0x03) * 0x20000],0x20000);
+
+	/* bits 4-5 select the UPD7759 bank */
+	src = &Machine->memory_region[6][0x20000];
+	dest = Machine->memory_region[6];
+	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
+}
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x1bff, MRA_RAM },
@@ -114,9 +166,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1a01, 0x1a01, MWA_RAM, &bg_scrollx_hi },
 //	{ 0x1800, 0x1bff, MWA_RAM },
 
-	{ 0x1d00, 0x1d00, MWA_NOP },  //??
+	{ 0x1d00, 0x1d00, MWA_NOP },	/* TODO: interrupt enable */
 	{ 0x1e80, 0x1e80, mainevt_int_w },
-	{ 0x1f80, 0x1f90, mainevt_control_w },
+	{ 0x1f80, 0x1f82, mainevt_bankswitch_w },
+	{ 0x1f84, 0x1f85, soundlatch_w },				/* probably */
+	{ 0x1f88, 0x1f89, mainevt_sh_irqtrigger_w },	/* probably */
+	{ 0x1f8c, 0x1f8d, MWA_NOP },	/* ??? */
 
 	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, mainevt_bg_video_w, &bg_videoram },
@@ -175,7 +230,7 @@ static struct MemoryWriteAddress dv_writemem[] =
 
 //  { 0x1d00, 0x1d00, MWA_NOP },  //??
 	{ 0x1e80, 0x1e80, mainevt_int_w },
-	{ 0x1f80, 0x1f90, mainevt_control_w },
+	{ 0x1f80, 0x1f82, mainevt_bankswitch_w },
 	{ 0x1fb2, 0x1fb2, MWA_NOP },
 
 	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
@@ -195,12 +250,15 @@ static struct MemoryWriteAddress dv_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-#if 0
+
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
+	{ 0xb000, 0xb00d, K007232_ReadReg },
+	{ 0xd000, 0xd000, UPD7759_busy_r },
 	{ -1 }	/* end of table */
 };
 
@@ -208,9 +266,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0xb000, 0xb00d, K007232_WriteReg },
+	{ 0x9000, 0x9000, UPD7759_message_w },
+	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
+	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
 	{ -1 }	/* end of table */
 };
-#endif
+
+
 
 /*****************************************************************************/
 
@@ -266,14 +329,14 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_DIPNAME( 0x0f, 0x0f, "Coins", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
 	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "4 Coins/5 Credits" )
 	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
 	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
@@ -283,33 +346,57 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
 	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
  	PORT_START
-	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x18, 0x18, "Bonus Energy", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "90" )
-	PORT_DIPSETTING(    0x10, "80" )
-	PORT_DIPSETTING(    0x08, "70" )
 	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPSETTING(    0x08, "70" )
+	PORT_DIPSETTING(    0x10, "80" )
+	PORT_DIPSETTING(    0x18, "90" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Video Flip", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0xF8, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dv_input_ports )
@@ -432,6 +519,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*****************************************************************************/
 
+static struct K007232_interface k007232_interface =
+{
+	3,4,  /* memory regions */
+	20 /* volume */
+};
+
+static struct UPD7759_interface upd7759_interface =
+{
+	1,		/* number of chips */
+	UPD7759_STANDARD_CLOCK,
+	{ 60 }, /* volume */
+	6,		/* memory region */
+	UPD7759_STANDALONE_MODE,		/* chip mode */
+	{0}
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -442,14 +545,14 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			mainevt_interrupt,1
-		}/*,
+		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,
+			4000000,	/* ??? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		} */
+			nmi_interrupt,8	/* ??? */
+		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
@@ -470,6 +573,16 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{
+			SOUND_K007232,
+			&k007232_interface,
+		},
+		{
+			SOUND_UPD7759,
+			&upd7759_interface
+		}
+	}
 };
 
 static struct MachineDriver dv_machine_driver =
@@ -540,9 +653,53 @@ ROM_START( mainevt_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION(0x80000) /* 2 sample roms? */
-//  ROM_LOAD( "799b03.d4", 0x00000, 0x80000, 0xbef2b882 )
-// ROM_LOAD( "799b06.c22",0x80000, 0x80000, 0xbef2b882 )
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	/* samples for 007232, filled in later */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	/* samples for 007232, filled in later */
+
+	ROM_REGION(0x80000)	/* 512k for the samples */
+	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 ) /* copied to the previous two */
+
+	ROM_REGION(0xa0000)	/* 128+512k for the samples */
+	/* 00000-1ffff space where the following ROM is bank switched */
+	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
+ROM_END
+
+ROM_START( mainevt2_rom )
+	ROM_REGION(0x40000)
+	ROM_LOAD( "02",           0x10000, 0x08000, 0xc143596b )
+	ROM_CONTINUE(0x8000,0x8000)
+
+	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_RELOAD(               0x08000, 0x08000 )
+	ROM_LOAD( "799c07.h22",   0x10000, 0x08000, 0x176df538 )
+	ROM_RELOAD(               0x18000, 0x08000 )
+	ROM_LOAD( "799c08.j22",   0x20000, 0x08000, 0xd01e0078 )
+	ROM_RELOAD(               0x28000, 0x08000 )
+	ROM_LOAD( "799c09.k22",   0x30000, 0x08000, 0x9baec75e )
+	ROM_RELOAD(               0x38000, 0x08000 )
+
+	ROM_LOAD( "799b04.h4",    0x40000, 0x80000, 0x323e0c2b )
+	ROM_LOAD( "799b05.k4",    0xc0000, 0x80000, 0x571c5831 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	/* samples for 007232, filled in later */
+
+	ROM_REGION(0x20000)	/* 128k for the samples */
+	/* samples for 007232, filled in later */
+
+	ROM_REGION(0x80000)	/* 512k for the samples */
+	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 ) /* copied to the previous two */
+
+	ROM_REGION(0xa0000)	/* 128+512k for the samples */
+	/* 00000-1ffff space where the following ROM is bank switched */
+	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( devstors_rom )
@@ -609,15 +766,41 @@ struct GameDriver mainevt_driver =
 	__FILE__,
 	0,
 	"mainevt",
-	"The Main Event",
+	"The Main Event (version Y)",
 	"1988",
 	"Konami",
-	"Bryan McPhail\n",
+	"Bryan McPhail",
 	0,
 	&machine_driver,
 	0,
 
 	mainevt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver mainevt2_driver =
+{
+	__FILE__,
+	&mainevt_driver,
+	"mainevt2",
+	"The Main Event (version F)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	0,
+	&machine_driver,
+	0,
+
+	mainevt2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -638,7 +821,7 @@ struct GameDriver devstors_driver =
 	"Devastators",
 	"1988",
 	"Konami",
-	"Bryan McPhail\n",
+	"Bryan McPhail",
 	GAME_NOT_WORKING,
 	&dv_machine_driver,
 	0,

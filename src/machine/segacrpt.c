@@ -148,6 +148,7 @@
   317-5014?DakkoChan Jansoh
   317-0029 Block Gal              NEC MC8123B 651 packaged like System16's 68000
   317-0030 Perfect Billiards
+  317-0054 Shinobi (sound CPU)    NEC MC8123B 651
   317-0064 Ufo Senshi Yohko Chan
 
 

@@ -51,89 +51,90 @@ int exidy_input_port_2_r(int offset)
 	return value;
 }
 
+void targ_driver_init(void) {
+	*exidy_sprite_enable = 0x10;
+	exidy_collision_mask = 0x00;
+	targ_spec_flag = 1;
+}
+
+void spectar_driver_init(void) {
+	/* Spectar does not have a sprite enable register so we have to fake it out */
+	*exidy_sprite_enable = 0x10;
+	exidy_collision_mask = 0x00;
+	targ_spec_flag = 0;
+}
+
+void mtrap_driver_init(void) {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	exidy_collision_mask = 0x14;
+
+	/* Disable ROM Check for quicker startup */
+	#if 0
+	RAM[0xF439]=0xEA;
+	RAM[0xF43A]=0xEA;
+	RAM[0xF43B]=0xEA;
+	#endif
+}
+
+void pepper2_driver_init(void) {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	exidy_collision_mask = 0x00;
+
+	/* Disable ROM Check for quicker startup */
+	#if 0
+	RAM[0xF52D]=0xEA;
+	RAM[0xF52E]=0xEA;
+	RAM[0xF52F]=0xEA;
+	#endif
+}
+
+void venture_driver_init(void) {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	exidy_collision_mask = 0x80;
+
+	/* Disable ROM Check for quicker startup (Venture)*/
+	#if 0
+	RAM[0x8AF4]=0xEA;
+	RAM[0x8AF5]=0xEA;
+	RAM[0x8AF6]=0xEA;
+	#endif
+
+	/* Disable ROM Check for quicker startup (Venture2)*/
+	#if 0
+	RAM[0x8B04]=0xEA;
+	RAM[0x8B05]=0xEA;
+	RAM[0x8B06]=0xEA;
+	#endif
+
+}
+
+void fax_driver_init(void) {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	exidy_collision_mask = 0x00;
+
+	/* Initialize our ROM question bank */
+	fax_bank_select_w(0,0);
+
+	/* Disable ROM Check for quicker startup */
+	#if 0
+	RAM[0xFBFC]=0xEA;
+	RAM[0xFBFD]=0xEA;
+	RAM[0xFBFE]=0xEA;
+
+	/* Disable Question ROM Check for quicker startup */
+	RAM[0xFC00]=0xEA;
+	RAM[0xFC01]=0xEA;
+	RAM[0xFC02]=0xEA;
+	#endif
+}
 
 void exidy_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (strcmp(Machine->gamedrv->name,"mtrap")==0)
-	{
-		exidy_collision_mask = 0x14;
-
-		/* Disable ROM Check for quicker startup */
-#if 0
-		RAM[0xF439]=0xEA;
-		RAM[0xF43A]=0xEA;
-		RAM[0xF43B]=0xEA;
-#endif
-	}
-	else if (strcmp(Machine->gamedrv->name,"pepper2")==0)
-	{
-		exidy_collision_mask = 0x00;
-
-		/* Disable ROM Check for quicker startup */
-#if 0
-		RAM[0xF52D]=0xEA;
-		RAM[0xF52E]=0xEA;
-		RAM[0xF52F]=0xEA;
-#endif
-	}
-	else if (strcmp(Machine->gamedrv->name,"venture")==0)
-	{
-		exidy_collision_mask = 0x80;
-
-		/* Disable ROM Check for quicker startup */
-#if 0
-		RAM[0x8AF4]=0xEA;
-		RAM[0x8AF5]=0xEA;
-		RAM[0x8AF6]=0xEA;
-#endif
-	}
-	else if (strcmp(Machine->gamedrv->name,"venture2")==0)
-	{
-		exidy_collision_mask = 0x80;
-
-		/* Disable ROM Check for quicker startup */
-#if 0
-		RAM[0x8B04]=0xEA;
-		RAM[0x8B05]=0xEA;
-		RAM[0x8B06]=0xEA;
-#endif
-	}
-	else if (strcmp(Machine->gamedrv->name,"targ")==0)
-	{
-		/* Targ does not have a sprite enable register so we have to fake it out */
-		*exidy_sprite_enable = 0x10;
-		exidy_collision_mask = 0x00;
-		targ_spec_flag = 1;
-	}
-	else if (strcmp(Machine->gamedrv->name,"spectar")==0)
-	{
-		/* Spectar does not have a sprite enable register so we have to fake it out */
-		*exidy_sprite_enable = 0x10;
-		exidy_collision_mask = 0x00;
-		targ_spec_flag = 0;
-	}
-	else if (strcmp(Machine->gamedrv->name,"fax")==0)
-	{
-		exidy_collision_mask = 0x00;
-
-		/* Initialize our ROM question bank */
-		fax_bank_select_w(0,0);
-
-		/* Disable ROM Check for quicker startup */
-#if 0
-		RAM[0xFBFC]=0xEA;
-		RAM[0xFBFD]=0xEA;
-		RAM[0xFBFE]=0xEA;
-
-		/* Disable Question ROM Check for quicker startup */
-		RAM[0xFC00]=0xEA;
-		RAM[0xFC01]=0xEA;
-		RAM[0xFC02]=0xEA;
-#endif
-	}
-
+	/* Nothing to do here now */
 }
 
 int venture_interrupt(void)

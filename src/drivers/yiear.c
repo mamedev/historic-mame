@@ -54,7 +54,7 @@ Memory map
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

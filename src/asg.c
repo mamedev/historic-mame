@@ -5,7 +5,10 @@
 #include <string.h>
 
 #include "osdepend.h"
-#include "z80/z80.h"
+#include "cpu/z80/z80.h"
+#include "cpu/m68000/d68000.h"
+#include "cpu/m68000/m68000.h"
+#include "cpu/z8000/z8000.h"
 
 int DasmZ80(char *dest,int PC);
 int Dasm6502(char *buf,int pc);
@@ -263,7 +266,7 @@ void asg_T11Trace(unsigned char *RAM, int PC)
 
 void asg_68000Trace(unsigned char *RAM, int PC)
 {
-	extern int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
+	extern int m68000_disassemble(char *buffer, int pc);
 
 	if (traceon && traceFile[current])
 	{
@@ -281,7 +284,7 @@ void asg_68000Trace(unsigned char *RAM, int PC)
 			if (loops[current])
 				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
 			loops[current]=0;
-			Dasm68000 (&RAM[PC],temp,PC);
+			m68000_disassemble(temp,PC);
 			fprintf(traceFile[current],"%06X: %s\n",PC,temp);
 			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
 			lastPC[current][LOOP_CHECK-1]=PC;
@@ -452,6 +455,51 @@ extern int Dasm9900 (char *buffer, int pc);
 			loops[current]=0;
 			Dasm9900(temp,PC);
 			fprintf(traceFile[current],"%04X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
+void asg_Z8000Trace(unsigned char *RAM, int PC)
+{
+	extern int DasmZ8000 (char *buffer, int pc);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			int n;
+			Z8000_Regs r;
+			if (loops[current])
+				fprintf(traceFile[current],"   (loops for %d instructions)\n",loops[current]);
+			loops[current]=0;
+			n = DasmZ8000 (temp,PC);
+			fprintf(traceFile[current],"%04X:",PC);
+			for (i = 0; i < 6; i += 2) {
+				if (i < n)
+					fprintf(traceFile[current]," %02X%02X",RAM[PC+i+1],RAM[PC+i]);
+				else
+					fprintf(traceFile[current],"     ");
+			}
+			Z8000_GetRegs(&r);
+			fprintf(traceFile[current]," %c%c%c%c%c%c",
+				(r.fcw & 0x80) ? 'C':'.',
+				(r.fcw & 0x40) ? 'Z':'.',
+				(r.fcw & 0x20) ? 'S':'.',
+				(r.fcw & 0x10) ? 'V':'.',
+				(r.fcw & 0x08) ? 'D':'.',
+				(r.fcw & 0x04) ? 'H':'.');
+			fprintf(traceFile[current]," %s\n",temp);
 			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
 			lastPC[current][LOOP_CHECK-1]=PC;
 		}

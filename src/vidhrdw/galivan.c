@@ -37,6 +37,7 @@ static int flipscreen;
 
 static struct osd_bitmap *background;
 
+static const unsigned char *spritepalettebank;
 
 /***************************************************************************
 
@@ -67,31 +68,71 @@ void galivan_init_machine(void)
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-static unsigned char wrong_color_prom[] =
-{
-  0, 0, 0, 255, 0, 0, 0, 255, 0, 255, 255, 0,
-  0, 0, 255, 255, 0, 255, 0, 255, 255, 255, 255, 255,
-  64, 64, 64, 128, 0, 0, 0, 128, 0, 128, 128, 0,
-  0, 0, 128, 128, 0, 128, 0, 128, 128, 128, 128, 128
-};
+
 void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-	for (i = 0;i < 16;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		*(palette++) =  wrong_color_prom[i*3+0];	/* R */
-		*(palette++) =  wrong_color_prom[i*3+1];	/* G */
-		*(palette++) =  wrong_color_prom[i*3+2];	/* B */
+		int bit0,bit1,bit2,bit3;
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < (Machine->drv->total_colors-16) ;i++)
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup tables */
+
+
+	/* characters use colors 0-127 */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = i;
+
+	/* I think that */
+	/* background tiles use colors 192-255 in four banks */
+	/* the bottom two bits of the color code select the palette bank for */
+	/* pens 0-7; the top two bits for pens 8-15. */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
-		*(palette++) =  color_prom[i+  0]*0x11;	/* R */
-		*(palette++) =  color_prom[i+256]*0x11;	/* G */
-		*(palette++) =  color_prom[i+512]*0x11;	/* B */
+		if (i & 8) COLOR(1,i) = 192 + (i & 0x0f) + ((i & 0xc0) >> 2);
+		else COLOR(1,i) = 192 + (i & 0x0f) + ((i & 0x30) >> 0);
 	}
 
+
+	/* I think that */
+	/* sprites use colors 128-191 in four banks */
+	/* The lookup table tells which colors to pick from the selected bank */
+	/* the bank is selected by another PROM and depends on the top 7 bits of */
+	/* the sprite code. */
+	for (i = 0;i < TOTAL_COLORS(2)/4;i++)
+	{
+		int j;
+
+		for (j = 0;j < 4;j++)
+			COLOR(2,i + j * (TOTAL_COLORS(2)/4)) = 128 + j*16 + (*color_prom & 0x0f);
+		color_prom++;
+	}
+
+	/* color_prom now points to the beginning of the sprite palette bank table */
+	spritepalettebank = color_prom;	/* we'll need it at run time */
 }
 
 
@@ -130,7 +171,7 @@ void galivan_draw_background(int flip)
 
 			drawgfx(background, Machine->gfx[1],
 				code,
-				(attr>>3)&0x0F,
+				(attr & 0x78) >> 3,	/* not sure */
 				flip, flip,
 				sx, sy,
 				0, TRANSPARENCY_NONE, 0);
@@ -180,8 +221,6 @@ void galivan_vh_stop(void)
 /* Written through port 40 */
 void galivan_gfxbank_w(int offset,int data)
 {
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
 	/* bits 0 and 1 coin counters */
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);
@@ -228,8 +267,6 @@ void galivan_scrolly_w(int offset,int data)
 void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
 
 
 	/* copy the static background graphics */
@@ -245,8 +282,6 @@ unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 			scrolly = -(scrolly-256);
 		}
 
-
-
 		copyscrollbitmap(bitmap, background,
 					1, &scrollx, 1, &scrolly,
 					&Machine->drv->visible_area,
@@ -257,16 +292,44 @@ unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 
+	/* draw the characters which don't have priority over sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+		int attr = colorram[offs];
+
+		if (attr & 0x08)	/* not sure */
+		{
+			sy = offs % 32;
+			sx = offs / 32;
+
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + 256 * (attr & 0x01),
+					(attr & 0xe0) >> 5,	/* not sure */
+					flipscreen,flipscreen,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		}
+	}
+
+
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
+		int code,color;
 		int attr = spriteram[offs+2];
 		int flipx = attr & 0x40;
 		int flipy = attr & 0x80;
 		int sx,sy;
 
 		sy = 240 - spriteram[offs];
-		sx = (spriteram[offs+3] - 0x80) + 256 * (attr & 1);
+		sx = (spriteram[offs+3] - 0x80) + 256 * (attr & 0x01);
 		if (flipscreen)
 		{
 			sx = 240 - sx;
@@ -275,9 +338,12 @@ unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 			flipy = !flipy;
 		}
 
+		code = spriteram[offs+1] + ((attr & 0x02) << 7);
+		color = (attr & 0x3c) >> 2;
+
 		drawgfx(bitmap,Machine->gfx[2],
-				spriteram[offs+1]+((attr&2)<<7),
-				(attr >> 2) & 0xF,
+				code,
+				color + 16 * (spritepalettebank[code >> 2] & 0x03),	/* wrong */
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
@@ -285,29 +351,29 @@ unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 
-	/* draw the characters */
+	/* draw the characters which have priority over sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
 		int attr = colorram[offs];
 
-/* swapped, strange isn't it? */
-		sy = offs % 32;
-		sx = offs / 32;
-
-		if (flipscreen)
+		if (!(attr & 0x08))	/* not sure */
 		{
-			sx = 31 - sx;
-			sy = 31 - sy;
+			sy = offs % 32;
+			sx = offs / 32;
+
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + 256 * (attr & 0x01),
+					(attr & 0xe0) >> 5,	/* not sure */
+					flipscreen,flipscreen,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs]+256*(attr&1),
-				(attr>>3)&0x0F,
-				flipscreen,flipscreen,
-				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 	}
-
-
 }

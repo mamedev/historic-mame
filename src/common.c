@@ -42,15 +42,15 @@ INLINE int read_dword(int *address)
 	if ((int)address & 3)
 	{
 #ifdef LSB_FIRST  /* little endian version */
-  		return (    *((unsigned char *)address) +
-  			   (*((unsigned char *)address+1) << 8)  +
-  		   	   (*((unsigned char *)address+2) << 16) +
-  		           (*((unsigned char *)address+3) << 24) );
+  		return ( *((unsigned char *)address) +
+				(*((unsigned char *)address+1) << 8)  +
+				(*((unsigned char *)address+2) << 16) +
+				(*((unsigned char *)address+3) << 24) );
 #else             /* big endian version */
-  		return (    *((unsigned char *)address+3) +
-  			   (*((unsigned char *)address+2) << 8)  +
-  		   	   (*((unsigned char *)address+1) << 16) +
-  		           (*((unsigned char *)address)   << 24) );
+  		return ( *((unsigned char *)address+3) +
+				(*((unsigned char *)address+2) << 8)  +
+				(*((unsigned char *)address+1) << 16) +
+				(*((unsigned char *)address)   << 24) );
 #endif
 	}
 	else
@@ -192,13 +192,20 @@ int readroms(void)
 			name = romp->name;
 
 			/* update status display */
-			osd_display_loading_rom_message(name,++current_rom,total_roms);
+			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
+               goto getout;
 
 			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
 				/* if the game is a clone, try loading the ROM from the main version */
 				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+
+				if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+				{
+					/* clone of a clone (for NeoGeo clones) */
+					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,OSD_FILETYPE_ROM,0);
+				}
 			}
 			if (f == 0)
 			{
@@ -211,6 +218,12 @@ int readroms(void)
 				{
 					/* if the game is a clone, try loading the ROM from the main version */
 					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+
+					if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+					{
+						/* clone of a clone (for NeoGeo clones) */
+						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+					}
 				}
 			}
 
@@ -243,9 +256,8 @@ int readroms(void)
 					goto getout;
 				}
 
-				if (romp->length & ROMFLAG_ALTERNATE)
+				if (romp->length & (ROMFLAG_ALTERNATE | ROMFLAG_NIBBLE))
 				{
-					/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
 					unsigned char *temp;
 
 
@@ -266,20 +278,47 @@ int readroms(void)
 						goto printromlist;
 					}
 
-					/* copy the ROM data */
-				#ifdef LSB_FIRST
-					c = Machine->memory_region[region] + (romp->offset ^ 1);
-				#else
-					c = Machine->memory_region[region] + romp->offset;
-				#endif
-
-					for (i = 0;i < length;i+=2)
+					if (romp->length & ROMFLAG_NIBBLE)
 					{
-						c[i*2] = temp[i];
-						c[i*2+2] = temp[i+1];
-					}
+						/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
+						c = Machine->memory_region[region] + romp->offset;
+						if (romp->length & ROMFLAG_ALTERNATE)
+						{
+							/* Load into the high nibble */
+							for (i = 0;i < length;i ++)
+							{
+								c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
+							}
+						}
+						else
+						{
+							/* Load into the low nibble */
+							for (i = 0;i < length;i ++)
+							{
+								c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
+							}
+						}
 
-					free(temp);
+						free (temp);
+					}
+					else
+					{
+						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
+						/* copy the ROM data */
+					#ifdef LSB_FIRST
+						c = Machine->memory_region[region] + (romp->offset ^ 1);
+					#else
+						c = Machine->memory_region[region] + romp->offset;
+					#endif
+
+						for (i = 0;i < length;i+=2)
+						{
+							c[i*2] = temp[i];
+							c[i*2+2] = temp[i+1];
+						}
+
+						free(temp);
+					}
 				}
 				else
 				{
@@ -343,8 +382,7 @@ int readroms(void)
 #ifndef macintosh
 	if ((checksumwarning > 0) || (lengthwarning > 0))
 	{
-		printf ("This ROM set is not the same MAME was tested with.\n"
-				"WARNING: the game might not run correctly.\nPress return to continue\n");
+		printf ("WARNING: the game might not run correctly.\nPress return to continue\n");
 		getchar();
 	}
 #endif
@@ -367,6 +405,9 @@ printromlist:
 #endif
 
 getout:
+	/* final status display */
+	osd_display_loading_rom_message(0,current_rom,total_roms);
+
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 	{
 		free(Machine->memory_region[region]);

@@ -10,7 +10,6 @@
 #include "fm.h"
 #include "ym2151.h"
 
-extern unsigned char No_FM;
 
 /* for stream system */
 static int stream[MAX_2151];
@@ -20,7 +19,6 @@ static struct YM2151interface *intf;
 static int FMMode;
 #define CHIP_YM2151_DAC 4	/* use Tatsuyuki's FM.C */
 #define CHIP_YM2151_ALT 5	/* use Jarek's YM2151.C */
-#define CHIP_YM2151_OPL 6	/* use OPL (does not supported) */
 
 #define YM2151_NUMBUF 2
 
@@ -81,7 +79,6 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 
 	if( mode ) FMMode = CHIP_YM2151_ALT;
 	else       FMMode = CHIP_YM2151_DAC;
-/*	if( !No_FM ) FMMode = CHIP_YM2151_OPL;*/
 
 	switch(FMMode)
 	{
@@ -175,8 +172,6 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 			return 0;
 		}
 		return 1;
-	case CHIP_YM2151_OPL:
-		break;
 	}
 	return 1;
 }
@@ -193,8 +188,6 @@ void YM2151_sh_stop(void)
 	case CHIP_YM2151_ALT:
 		YM2151Shutdown();
 		break;
-	case CHIP_YM2151_OPL:
-		return;
 	}
 }
 
@@ -249,12 +242,6 @@ void YM2151_register_port_2_w(int offset,int data)
 	lastreg2 = data;
 }
 
-static void opm_to_opn(int n,int r,int v)
-{
-	/* */
-	return;
-}
-
 void YM2151_data_port_0_w(int offset,int data)
 {
 	switch(FMMode)
@@ -266,9 +253,6 @@ void YM2151_data_port_0_w(int offset,int data)
 	case CHIP_YM2151_ALT:
 		YM2151UpdateRequest(0);
 		YM2151WriteReg(0,lastreg0,data);
-		break;
-	case CHIP_YM2151_OPL:
-		opm_to_opn(0,lastreg0,data);
 		break;
 	}
 }
@@ -285,9 +269,6 @@ void YM2151_data_port_1_w(int offset,int data)
 		YM2151UpdateRequest(1);
 		YM2151WriteReg(1,lastreg1,data);
 		break;
-	case CHIP_YM2151_OPL:
-		opm_to_opn(1,lastreg1,data);
-		break;
 	}
 }
 
@@ -303,9 +284,6 @@ void YM2151_data_port_2_w(int offset,int data)
 		YM2151UpdateRequest(2);
 		YM2151WriteReg(2,lastreg2,data);
 		break;
-	case CHIP_YM2151_OPL:
-		opm_to_opn(2,lastreg2,data);
-		break;
 	}
 }
 
@@ -317,9 +295,6 @@ void YM2151_sh_update(void)
 
 	switch(FMMode)
 	{
-	case CHIP_YM2151_OPL:
-		osd_ym2203_update();
-		return;
 	case CHIP_YM2151_DAC:
 		break;
 	case CHIP_YM2151_ALT:
