@@ -1652,6 +1652,40 @@ ROM_START( metamrpj )
 	ROM_LOAD( "224a07", 0x200000, 1*1024*1024, CRC(61b2f97a) SHA1(34bf835d6361c7809d40fa20fd238c9e2a84b101) )
 ROM_END
 
+ROM_START( mtlchamp )
+	/* main program */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+        ROM_LOAD16_BYTE( "234eaa01.20f", 0x000000, 0x040000, CRC(8fa731db) SHA1(e2ed81762070a764f51aae36ce03859b5d86520d) )
+        ROM_LOAD16_BYTE( "234eaa02.20g", 0x000001, 0x040000, CRC(e7b50b54) SHA1(594391a37479e6973aadd1fc866671c306a75497) )
+	ROM_LOAD16_BYTE( "234_d03.19f", 0x300000, 0x80000, CRC(abb577c6) SHA1(493f11a10a4d5b62d755ff8274e77d898544944f) )
+	ROM_LOAD16_BYTE( "234_d04.19g", 0x300001, 0x80000, CRC(030a1925) SHA1(03783488950c9f27af5948e7b9f6a609c2df6e0b) )
+
+	/* sound program */
+	ROM_REGION( 0x040000, REGION_CPU2, 0 )
+	ROM_LOAD("234_d05.6b", 0x000000, 0x020000, CRC(efb6bcaa) SHA1(4fb24b89a50b341871945547859278a6e2f5e002) )
+	ROM_RELOAD(           0x010000, 0x020000 )
+
+	/* tiles */
+	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOADTILE_WORD( "234a08.1h", 0x000000, 1*1024*1024, CRC(27e94288) SHA1(a92b03adf7beea6a1ceb74f659c87c628a7ab8e4) )
+	ROM_LOADTILE_WORD( "234a09.1k", 0x000002, 1*1024*1024, CRC(03aad28f) SHA1(e7d9d788822ac9666e089b58288e3fcdba1b89da) )
+	ROM_LOADTILE_BYTE( "234a10.3h", 0x000004, 512*1024, CRC(51f50fe2) SHA1(164fc975feff442d93f1917727c159051dcd3a55) )
+
+	/* sprites */
+	ROM_REGION( 0xa00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD64_WORD( "234a16.22k", 0x000000, 2*1024*1024, CRC(14d909a5) SHA1(15da356852fc0c63ecd924ac37ebe24bf3ba0760) )
+	ROM_LOAD64_WORD( "234a15.20k", 0x000002, 2*1024*1024, CRC(a5028418) SHA1(ec6fc7b38fb1d27490a5a9310ecac2d1049e197c) )
+	ROM_LOAD64_WORD( "234a14.19k", 0x000004, 2*1024*1024, CRC(d7921f47) SHA1(3fc97b308ad2ca25a376373ddfe08c8a375c424e) )
+	ROM_LOAD64_WORD( "234a13.17k", 0x000006, 2*1024*1024, CRC(5974392e) SHA1(7c380419244439804797a9510846d273ebe99d02) )
+	ROM_LOAD16_BYTE( "234a12.12k", 0x800000, 1024*1024, CRC(c7f2b099) SHA1(b72b80feb52560a5a42a1db39b059ac8bca27c10) )
+	ROM_LOAD16_BYTE( "234a11.10k", 0x800001, 1024*1024, CRC(82923713) SHA1(a36cd3b2c9d36e93a3c25ba1d4e162f3d92e06ae) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "234a06.2d", 0x000000, 2*1024*1024, CRC(12d32384) SHA1(ecd6cd752b0e20339e17a7652ed843fbb43f7595) )
+	ROM_LOAD( "234a07.1d", 0x200000, 2*1024*1024, CRC(05ee239f) SHA1(f4e6e7568dc73666a2b5e0c3fe743432e0436464) )
+ROM_END
+
 ROM_START( mtlchmpj )
 	/* main program */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
@@ -1890,10 +1924,6 @@ static DRIVER_INIT(martchmp)
 
 	init_common();
 
-	#if MW_SKIPIDLE
-		ADD_SKIPPER16(0x1190, 0x100000, 0x30, 0xaf, -1, 0xffff)
-	#endif
-
 	K054539_init_flags(K054539_REVERSE_STEREO);
 
 	// boost voice(chip 0 channel 4-7)
@@ -1916,7 +1946,7 @@ static DRIVER_INIT(gaiapols)
 
 
 /*           ROM       parent    machine   inp       init */
-GAMEX( 1993, mystwarr, 0,        mystwarr, mystwarr, mystwarr, ROT0,  "Konami", "Mystic Warriors (World ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, mystwarr, 0,        mystwarr, mystwarr, mystwarr, ROT0,  "Konami", "Mystic Warriors (Europe ver EAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, mystwaru, mystwarr, mystwarr, mystwarr, mystwarr, ROT0,  "Konami", "Mystic Warriors (US ver UAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, dadandrn, 0,        dadandrn, dadandrn, dadandrn, ROT0,  "Konami", "Kyukyoku Sentai Dadandarn (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, viostorm, 0,        viostorm, viostorm, viostorm, ROT0,  "Konami", "Violent Storm (Europe ver EAB)", GAME_IMPERFECT_GRAPHICS )
@@ -1925,5 +1955,6 @@ GAMEX( 1993, viostrmj, viostorm, viostorm, viostorm, viostorm, ROT0,  "Konami", 
 GAMEX( 1993, viostrma, viostorm, viostorm, viostorm, viostorm, ROT0,  "Konami", "Violent Storm (Asia ver AAC)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, metamrph, 0,        metamrph, metamrph, metamrph, ROT0,  "Konami", "Metamorphic Force (US ver UAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, metamrpj, metamrph, metamrph, metamrph, metamrph, ROT0,  "Konami", "Metamorphic Force (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, mtlchmpj, 0,        martchmp, martchmp, martchmp, ROT0,  "Konami", "Martial Champion (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, mtlchamp, 0,        martchmp, martchmp, martchmp, ROT0,  "Konami", "Martial Champion (Europe ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, mtlchmpj, mtlchamp, martchmp, martchmp, martchmp, ROT0,  "Konami", "Martial Champion (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, gaiapols, 0,        gaiapols, dadandrn, gaiapols, ROT90, "Konami", "Gaiapolis (Japan ver JAF)", GAME_IMPERFECT_GRAPHICS )

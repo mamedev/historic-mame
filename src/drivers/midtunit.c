@@ -106,7 +106,7 @@ INPUT_PORTS_START( mk )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -219,7 +219,7 @@ INPUT_PORTS_START( mk2 )
           Medium punch/kick buttons as block buttons for MK2. The secondary block button registers in test mode,
           but does not have an indicator light show up. During gameplay, the second block only functions temporarily.
 	  You can hold the button, but the character will only take a block position for 1 second. This is correct behavior.*/
-	
+
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, "Test Switch" )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))

@@ -6,6 +6,7 @@
 
 #define ASIC65_STANDARD		0
 #define ASIC65_STEELTAL		1
+#define ASIC65_GUARDIANS	2
 
 void asic65_config(int asictype);
 void asic65_reset(int state);

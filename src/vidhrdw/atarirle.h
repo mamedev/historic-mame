@@ -27,6 +27,10 @@
 #define ATARIRLE_CONTROL_ERASE		2
 #define ATARIRLE_CONTROL_FRAME		4
 
+#define ATARIRLE_COMMAND_NOP		0
+#define ATARIRLE_COMMAND_DRAW		1
+#define ATARIRLE_COMMAND_CHECKSUM	2
+
 
 /*##########################################################################
 	TYPES & STRUCTURES
@@ -71,6 +75,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc);
 
 /* control handlers */
 void atarirle_control_w(int map, UINT8 bits);
+void atarirle_command_w(int map, UINT8 command);
 VIDEO_EOF( atarirle );
 
 /* write handlers */
@@ -88,6 +93,5 @@ struct mame_bitmap *atarirle_get_vram(int map, int idx);
 
 extern data16_t *atarirle_0_spriteram;
 extern data32_t *atarirle_0_spriteram32;
-
 
 #endif

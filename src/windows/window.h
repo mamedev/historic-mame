@@ -121,7 +121,7 @@ int win_init_window(void);
 int win_create_window(int width, int height, int depth, int attributes, double aspect);
 void win_destroy_window(void);
 void win_update_cursor_state(void);
-void win_toggle_maximize(void);
+void win_toggle_maximize(int force_maximize);
 void win_toggle_full_screen(void);
 void win_adjust_window(void);
 

@@ -774,27 +774,6 @@ ROM_START( cookbib2 )
 	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) )
 ROM_END
 
-/* this one could be more different hw, gfx don't decode the same */
-ROM_START( htchctch )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, CRC(eff14c40) )
-	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, CRC(6991483a) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "p02.b5", 0x00000, 0x10000 , CRC(c5a03186) )
-
-	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "p01.c1", 0x00000, 0x20000, CRC(18c06829) )
-
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "p06srom5.bin", 0x00000, 0x40000, CRC(3d2cbb0d) )
-	ROM_LOAD( "p07srom6.bin", 0x40000, 0x40000, CRC(0207949c) )
-	ROM_LOAD( "p08uor1.bin",  0x80000, 0x20000, CRC(6811e7b6) )
-	ROM_LOAD( "p09uor2.bin",  0xa0000, 0x20000, CRC(1c6549cf) )
-	ROM_LOAD( "p10uor3.bin",  0xc0000, 0x20000, CRC(6462e6e0) )
-	ROM_LOAD( "p11uor4.bin",  0xe0000, 0x20000, CRC(9c511d98) )
-ROM_END
-
 static DRIVER_INIT( hyperpac )
 {
 	/* simulate RAM initialization done by the protection MCU */
@@ -868,6 +847,5 @@ GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "
 GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1996, cookbib2, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Cookie and Bibi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1995, htchctch, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Hatch Catch", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 /* bad dump? */
 GAMEX(199?, 4in1boot, 0,        hyperpac, hyperpac, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING )

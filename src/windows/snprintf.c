@@ -533,14 +533,14 @@ static LDOUBLE abs_val (LDOUBLE value)
   return result;
 }
 
-static LDOUBLE pow10 (int exp)
+static LDOUBLE pow10 (int exponent)
 {
   LDOUBLE result = 1;
 
-  while (exp)
+  while (exponent)
   {
     result *= 10;
-    exp--;
+    exponent--;
   }
 
   return result;

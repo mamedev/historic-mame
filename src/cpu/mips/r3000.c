@@ -832,11 +832,13 @@ int r3000_execute(int cycles)
 						temp64 = (INT64)(INT32)RSVAL * (INT64)(INT32)RTVAL;
 						LOVAL = (UINT32)temp64;
 						HIVAL = (UINT32)(temp64 >> 32);
+						r3000_icount -= 11;
 						break;
 					case 0x19:	/* MULTU */
 						temp64 = (UINT64)RSVAL * (UINT64)RTVAL;
 						LOVAL = (UINT32)temp64;
 						HIVAL = (UINT32)(temp64 >> 32);
+						r3000_icount -= 11;
 						break;
 					case 0x1a:	/* DIV */
 						if (RTVAL)
@@ -844,6 +846,7 @@ int r3000_execute(int cycles)
 							LOVAL = (INT32)RSVAL / (INT32)RTVAL;
 							HIVAL = (INT32)RSVAL % (INT32)RTVAL;
 						}
+						r3000_icount -= 34;
 						break;
 					case 0x1b:	/* DIVU */
 						if (RTVAL)
@@ -851,6 +854,7 @@ int r3000_execute(int cycles)
 							LOVAL = RSVAL / RTVAL;
 							HIVAL = RSVAL % RTVAL;
 						}
+						r3000_icount -= 34;
 						break;
 					case 0x20:	/* ADD */
 						if (ENABLE_OVERFLOWS && RSVAL > ~RTVAL) generate_exception(EXCEPTION_OVERFLOW);

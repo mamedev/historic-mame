@@ -402,6 +402,33 @@ ROM_START( simpsn2p )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, CRC(78778013) SHA1(edbd6d83b0d1a20df39bb160b92395586fa3c32d) )
 ROM_END
 
+ROM_START( simps2pa )
+	ROM_REGION( 0x8b000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
+        ROM_LOAD( "simp2.16c",    0x010000, 0x020000, CRC(580ce1d6) SHA1(5b07fb8e8041e1663980aa35d853fdc13b22dac5) )
+        ROM_LOAD( "simp1.17c",    0x030000, 0x020000, CRC(07ceeaea) SHA1(c18255ae1d578c2d53de80d6323cdf41cbe47b57) )
+        ROM_LOAD( "simp4.13c",    0x050000, 0x020000, CRC(54e6df66) SHA1(1b83ae56cf1deb51b04880fa421f06568c938a99) )
+        ROM_LOAD( "simp3.15c",    0x070000, 0x018000, CRC(96636225) SHA1(5de95606e5c9337f18bc42f4df791cacafa20399) )
+	ROM_CONTINUE(		      0x08000, 0x08000 )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 ) /* Z80 code + banks */
+	ROM_LOAD( "simp5.6g",       0x00000, 0x08000, CRC(76c1850c) SHA1(9047c6b26c4e33c74eb7400a807d3d9f206f7bbe) )
+	ROM_CONTINUE(			  0x10000, 0x18000 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
+	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, CRC(ba1ec910) SHA1(0805ccb641271dea43185dc0365732260db1763d) )	/* tiles */
+	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, CRC(cf2bbcab) SHA1(47afea47f9bc8cb5eb1c7b7fbafe954b3e749aeb) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
+	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, CRC(7de500ad) SHA1(61b76b8f402e3bde1509679aaaa28ef08cafb0ab) )	/* sprites */
+	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, CRC(aa085093) SHA1(925239d79bf607021d371263352618876f59c1f8) )
+	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, CRC(577dbd53) SHA1(e603e03e3dcba766074561faa92afafa5761953d) )
+	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, CRC(55fab05d) SHA1(54db8559d71ed257de9a29c8808654eaea0df9e2) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* samples for the 053260 */
+	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, CRC(1397a73b) SHA1(369422c84cca5472967af54b8351e29fcd69f621) )
+	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, CRC(78778013) SHA1(edbd6d83b0d1a20df39bb160b92395586fa3c32d) )
+ROM_END
+
 ROM_START( simps2pj )
 	ROM_REGION( 0x8b000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "072-s02.16c",  0x10000, 0x20000, CRC(265f7a47) SHA1(d39c19a5e303f822313409343b209947f4c47ae4) )
@@ -445,4 +472,5 @@ static DRIVER_INIT( simpsons )
 
 GAME( 1991, simpsons, 0,        simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players)" )
 GAME( 1991, simpsn2p, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players)" )
+GAME( 1991, simps2pa, simpsons, simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (2 Players alt)" )
 GAME( 1991, simps2pj, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players Japan)" )

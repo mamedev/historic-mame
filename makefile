@@ -100,7 +100,7 @@ DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
-CFLAGS += -O0 -Wall -Werror -Wno-unused -g
+CFLAGS += -O0 -Werror -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
@@ -121,6 +121,10 @@ CFLAGS += -DNDEBUG \
 #	-Wmissing-declarations
 endif
 
+# extra options needed *only* for the osd files
+CFLAGSOSDEPEND = $(CFLAGS)
+
+# the windows osd code at least cannot be compiled with -pedantic
 CFLAGSPEDANTIC = $(CFLAGS) -pedantic
 
 ifdef SYMBOLS
@@ -178,7 +182,7 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 # primary target
 $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS)
 # always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
+	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
 
@@ -201,14 +205,13 @@ $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 endif
 
-# for Windows at least, we can't compile OS-specific code with -pedantic
 $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)

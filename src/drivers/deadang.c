@@ -5,7 +5,6 @@
 
 TODO:
 - verify dips
-- hook up samples
 
 ***************************************************************************/
 
@@ -25,6 +24,10 @@ WRITE_HANDLER( deadang_bank_w );
 VIDEO_START( deadang );
 VIDEO_UPDATE( deadang );
 
+READ_HANDLER( ghunter_trackread_low );
+READ_HANDLER( ghunter_trackread_high );
+
+
 /******************************************************************************/
 
 static MEMORY_READ_START( readmem )
@@ -35,6 +38,11 @@ static MEMORY_READ_START( readmem )
 	{ 0x0a001, 0x0a001, input_port_2_r },
 	{ 0x0a002, 0x0a002, input_port_3_r },
 	{ 0x0a003, 0x0a003, input_port_4_r },
+
+	{ 0x80000, 0x80001, ghunter_trackread_low },
+	{ 0xb0000, 0xb0001, ghunter_trackread_high },
+
+
 	{ 0xc0000, 0xfffff, MRA_ROM },
 MEMORY_END
 
@@ -137,7 +145,107 @@ INPUT_PORTS_START( deadang )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
 INPUT_PORTS_END
+
+INPUT_PORTS_START( ghunter )
+	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Dip switch A */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
+//	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START	/* Dip switch B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Controller" ) // ghunter only?
+	PORT_DIPSETTING(    0x08, "Trackball" )
+	PORT_DIPSETTING(    0x00, "Joystick" )
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty?" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x40, 0x40, "Continue?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 30, 0, 0 )
+
+	PORT_START
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 30, 0, 0 )
+INPUT_PORTS_END
+
+READ_HANDLER( ghunter_trackread_low )
+{
+	switch (offset)
+	{
+		case 0:	return (readinputport(5) & 0xff);
+		case 1: return (readinputport(6) & 0xff);
+	}
+	return 0;
+
+}
+READ_HANDLER( ghunter_trackread_high )
+{
+	switch (offset)
+	{
+		case 0:	return (readinputport(5) & 0xf00)>>4;
+		case 1: return (readinputport(6) & 0xf00)>>4;
+	}
+	return 0;
+}
+
 
 /******************************************************************************/
 
@@ -179,6 +287,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(14318180/4)
 
+SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
+
 static INTERRUPT_GEN( deadang_interrupt )
 {
 	if (cpu_getiloops())
@@ -198,7 +308,7 @@ static MACHINE_DRIVER_START( deadang )
 	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(deadang_interrupt,2)
 
-	SEIBU3_SOUND_SYSTEM_CPU(14318180/4)
+	SEIBU3A_SOUND_SYSTEM_CPU(14318180/4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -218,6 +328,7 @@ static MACHINE_DRIVER_START( deadang )
 
 	/* sound hardware */
 	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE
+	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
 MACHINE_DRIVER_END
 
 /******************************************************************************/
@@ -317,7 +428,8 @@ ROM_END
 static DRIVER_INIT( deadang )
 {
 	seibu_sound_decrypt(REGION_CPU3,0x2000);
+	seibu_adpcm_decrypt(REGION_SOUND1);
 }
 
-GAMEX( 1988, deadang, 0,       deadang, deadang, deadang, ROT0, "Seibu Kaihatsu", "Dead Angle", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, ghunter, deadang, deadang, deadang, deadang, ROT0, "Seibu Kaihatsu (Segasa/Sonic license)", "Gang Hunter (Spain)", GAME_IMPERFECT_SOUND )
+GAME( 1988, deadang, 0,       deadang, deadang, deadang, ROT0, "Seibu Kaihatsu", "Dead Angle" )
+GAME( 1988, ghunter, deadang, deadang, ghunter, deadang, ROT0, "Seibu Kaihatsu (Segasa/Sonic license)", "Gang Hunter (Spain)" )

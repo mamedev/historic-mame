@@ -1153,6 +1153,23 @@ int activecpu_geticount(void)
 
 /*************************************
  *
+ *	Safely eats cycles so we don't 
+ *	cross a timeslice boundary
+ *
+ *************************************/
+
+void activecpu_eat_cycles(int cycles)
+{
+	int cyclesleft = activecpu_get_icount();
+	if (cycles > cyclesleft)
+		cycles = cyclesleft;
+	activecpu_adjust_icount(-cycles);
+}
+
+
+
+/*************************************
+ *
  *	Scales a given value by the fraction
  *	of time elapsed between refreshes
  *

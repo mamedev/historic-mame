@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "mips.h"
+#include "psx.h"
 
 #ifndef STANDALONE
 #include "memory.h"

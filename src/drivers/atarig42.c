@@ -9,8 +9,7 @@
 		* Guardians of the 'Hood (1992)
 
 	Known bugs:
-		* ASIC65 behavior needs to be determined still
-		* SLOOP banking for Guardians not yet worked out
+		* ASIC65 for Road Riot not quite perfect
 
 ****************************************************************************
 
@@ -33,8 +32,14 @@
  *
  *************************************/
 
-static UINT8 which_input;
-static UINT8 pedal_value;
+static UINT8 analog_data;
+static data16_t *mo_command;
+
+static int sloop_bank;
+static int sloop_next_bank;
+static int sloop_offset;
+static int sloop_state;
+static data16_t *sloop_base;
 
 
 
@@ -72,30 +77,6 @@ static MACHINE_INIT( atarig42 )
 
 /*************************************
  *
- *	Interrupt handling
- *
- *************************************/
-
-static INTERRUPT_GEN( vblank_int )
-{
-	/* update the pedals once per frame */
-	if (readinputport(5) & 1)
-	{
-		if (pedal_value >= 4)
-			pedal_value -= 4;
-	}
-	else
-	{
-		if (pedal_value < 0x40 - 4)
-			pedal_value += 4;
-	}
-	atarigen_video_int_gen();
-}
-
-
-
-/*************************************
- *
  *	I/O read dispatch.
  *
  *************************************/
@@ -112,29 +93,18 @@ static READ16_HANDLER( special_port2_r )
 
 static WRITE16_HANDLER( a2d_select_w )
 {
-	which_input = offset;
+	analog_data = readinputport(4 + (offset != 0));
 }
 
 
 static READ16_HANDLER( a2d_data_r )
 {
-	/* otherwise, assume it's hydra */
-	switch (which_input)
-	{
-		case 0:
-			return readinputport(4) << 8;
-
-		case 1:
-			return ~pedal_value << 8;
-	}
-	return 0;
+	return analog_data << 8;
 }
 
 
 static WRITE16_HANDLER( io_latch_w )
 {
-	logerror("io_latch = %04X (scan %d)\n", data, cpu_getscanline());
-
 	/* upper byte */
 	if (ACCESSING_MSB)
 	{
@@ -156,22 +126,22 @@ static WRITE16_HANDLER( io_latch_w )
 
 		/* bits 3 and 0 are coin counters */
 	}
-	logerror("sound control = %04X\n", data);
+}
+
+
+static WRITE16_HANDLER( mo_command_w )
+{
+	COMBINE_DATA(mo_command);
+	atarirle_command_w(0, (data == 0) ? ATARIRLE_COMMAND_CHECKSUM : ATARIRLE_COMMAND_DRAW);
 }
 
 
 
 /*************************************
  *
- *	SLOOP banking
+ *	SLOOP banking -- Road Riot
  *
  *************************************/
-
-static int sloop_bank;
-static int sloop_next_bank;
-static int sloop_offset;
-static int sloop_state;
-static data16_t *sloop_base;
 
 static void roadriot_sloop_tweak(int offset)
 {
@@ -194,7 +164,7 @@ static void roadriot_sloop_tweak(int offset)
 
 	switch (offset)
 	{
-		// standard 68000 -> 68eee -> (bank) addressing
+		/* standard 68000 -> 68eee -> (bank) addressing */
 		case 0x68000/2:
 			sloop_state = 1;
 			break;
@@ -231,23 +201,22 @@ static void roadriot_sloop_tweak(int offset)
 			}
 			break;
 
-		// lock in the change?
+		/* lock in the change? */
 		case 0x69158/2:
-			// written if $ff8007 == 0
+			/* written if $ff8007 == 0 */
 		case 0x6a690/2:
-			// written if $ff8007 == 1
+			/* written if $ff8007 == 1 */
 		case 0x6e708/2:
-			// written if $ff8007 == 2
+			/* written if $ff8007 == 2 */
 		case 0x71166/2:
-			// written if $ff8007 == 3
+			/* written if $ff8007 == 3 */
 			if (sloop_state == 3)
 				sloop_bank = sloop_next_bank;
 			sloop_state = 0;
 			break;
 
-		// bank offsets
+		/* bank offsets */
 		case 0x5edb4/2:
-//fprintf(stderr, "@ %06X, state=%d\n", offset*2, sloop_state);
 			if (sloop_state == 0)
 			{
 				sloop_state = 10;
@@ -256,7 +225,6 @@ static void roadriot_sloop_tweak(int offset)
 			sloop_offset += 2;
 			break;
 		case 0x5db0a/2:
-//fprintf(stderr, "@ %06X, state=%d\n", offset*2, sloop_state);
 			if (sloop_state == 0)
 			{
 				sloop_state = 10;
@@ -265,19 +233,17 @@ static void roadriot_sloop_tweak(int offset)
 			sloop_offset += 1;
 			break;
 
-		// apply the offset
+		/* apply the offset */
 		case 0x5f042/2:
-//fprintf(stderr, "@ %06X, state=%d\n", offset*2, sloop_state);
 			if (sloop_state == 10)
 			{
 				sloop_bank = (sloop_bank + sloop_offset) & 3;
-//fprintf(stderr, "bank = %d\n", sloop_bank);
 				sloop_offset = 0;
 				sloop_state = 0;
 			}
 			break;
 
-		// unknown
+		/* unknown */
 		case 0x5d532/2:
 			break;
 		case 0x5d534/2:
@@ -305,102 +271,68 @@ static WRITE16_HANDLER( roadriot_sloop_data_w )
 }
 
 
+
+/*************************************
+ *
+ *	SLOOP banking -- Guardians
+ *
+ *************************************/
+
+static void guardians_sloop_tweak(int offset)
+{
+	static UINT32 last_accesses[8];
+	
+	if (offset >= 0x7f7c0/2)
+	{
+		last_accesses[0] = last_accesses[1];
+		last_accesses[1] = last_accesses[2];
+		last_accesses[2] = last_accesses[3];
+		last_accesses[3] = last_accesses[4];
+		last_accesses[4] = last_accesses[5];
+		last_accesses[5] = last_accesses[6];
+		last_accesses[6] = last_accesses[7];
+		last_accesses[7] = offset;
+		
+		if (last_accesses[0] == 0x7f7c0/2 && last_accesses[1] == 0x7f7ce/2 && last_accesses[2] == 0x7f7c2/2 && last_accesses[3] == 0x7f7cc/2 && 
+			last_accesses[4] == 0x7f7c4/2 && last_accesses[5] == 0x7f7ca/2 && last_accesses[6] == 0x7f7c6/2 && last_accesses[7] == 0x7f7c8/2)
+			sloop_bank = 0;
+	
+		if (last_accesses[0] == 0x7f7d0/2 && last_accesses[1] == 0x7f7de/2 && last_accesses[2] == 0x7f7d2/2 && last_accesses[3] == 0x7f7dc/2 && 
+			last_accesses[4] == 0x7f7d4/2 && last_accesses[5] == 0x7f7da/2 && last_accesses[6] == 0x7f7d6/2 && last_accesses[7] == 0x7f7d8/2)
+			sloop_bank = 1;
+	
+		if (last_accesses[0] == 0x7f7e0/2 && last_accesses[1] == 0x7f7ee/2 && last_accesses[2] == 0x7f7e2/2 && last_accesses[3] == 0x7f7ec/2 && 
+			last_accesses[4] == 0x7f7e4/2 && last_accesses[5] == 0x7f7ea/2 && last_accesses[6] == 0x7f7e6/2 && last_accesses[7] == 0x7f7e8/2)
+			sloop_bank = 2;
+	
+		if (last_accesses[0] == 0x7f7f0/2 && last_accesses[1] == 0x7f7fe/2 && last_accesses[2] == 0x7f7f2/2 && last_accesses[3] == 0x7f7fc/2 && 
+			last_accesses[4] == 0x7f7f4/2 && last_accesses[5] == 0x7f7fa/2 && last_accesses[6] == 0x7f7f6/2 && last_accesses[7] == 0x7f7f8/2)
+			sloop_bank = 3;
+	}
+}
+
+
+static READ16_HANDLER( guardians_sloop_data_r )
+{
+	guardians_sloop_tweak(offset);
+	if (offset < 0x78000/2)
+		return sloop_base[offset];
+	else
+		return sloop_base[0x78000/2 + sloop_bank * 0x1000 + (offset & 0xfff)];
+}
+
+
+static WRITE16_HANDLER( guardians_sloop_data_w )
+{
+	guardians_sloop_tweak(offset);
+}
+
+
+
 /*************************************
  *
  *	Main CPU memory handlers
  *
- *
-
- 	FExxxx = 68.RAM
- 	FCxxxx = 68.CRAM
- 	FAxxxx = 68.EEROM
- 	F8xxxx = 68.TDSPWR
- 	F6xxxx = 68.TDSPRD
- 	F4xxxx = 68.RDSTAT
- 	  8000 = TFULL (clocked when 68.TDSPWR, clear when T.RD68)
- 	  4000 = 68FULL (clocked when T.WR68, clear when 68.TDSPRD)
- 	  2000 = XFLG (= TD0 when T.WRSTAT)
- 	  1000 = 1
-
- 	E038xx = 68.WDOG
- 	E030xx = 68.IRQACK
- 	E008xx = 68.MTRSOL
- 	E000xx = 68.CIO
-
- 	E0006x = 68.UNLOCK
- 	E0005x = 68.LATCH
- 	  4000 = /TRESET
- 	  2000 = FRAME
- 	  1000 = ERASE
- 	  0800 = /MOGO
- 	  0100 = VCR
- 	  0020 = /XRESET
- 	  0010 = /SNDRES
- 	  0008 = CC.L
- 	  0001 = CC.R
- 	E0004x = 68.AUDWR
- 	E0003x = 68.AUDRD
- 	E0002x = 68.A2D (upper 8 bits)
- 	E0001x = 68.STATUS
- 	E0000x = 68.SW
-
-	E00012 = 68.STATUS1
-	  0080 = 0
-	  0040 = 0
-	  0020 = /SER.L
-	  0010 = /SER.R
-	  0008 = /XFULL
-	  0004 = /X.IRQ
-	  0002 = n/c
-	  0001 = n/c
-	E00010 = 68.STATUS0
-	  0080 = VBLANK
-	  0040 = S-TEST
-	  0020 = /AUDFULL
-	  0010 = /AUDIRQ
-	  0008 = A2D.EOC
-	  0004 = 0
-	  0002 = 0
-	  0001 = 0
-
- 	E00002 = 68.SW1
- 	  8000 = UP2
- 	  4000 = DN2
- 	  2000 = LF2
- 	  1000 = RT2
- 	  0800 = ACTC2
- 	  0400 = ACTB2
- 	  0200 = ACTA2
- 	  0100 = STRT2
- 	  0080 = SERVICE3
- 	  0040 = COIN3
- 	  0020 = ACTTL3
- 	  0010 = ACTTR3
- 	  0008 = ACTTL2
- 	  0004 = ACTTR2
- 	  0002 = ACTTL1
- 	  0001 = ACTTR1
- 	E00000 = 68.SW0
- 	  8000 = UP1
- 	  4000 = DN1
- 	  2000 = LF1
- 	  1000 = RT1
- 	  0800 = ACTC1
- 	  0400 = ACTB1
- 	  0200 = ACTA1
- 	  0100 = STRT1
- 	  0080 = UP3
- 	  0040 = DN3
- 	  0020 = LF3
- 	  0010 = RT3
- 	  0008 = ACTC3
- 	  0004 = ACTB3
- 	  0002 = ACTA3
- 	  0001 = STRT3
-
- 	68.RDSTAT
-
-
  *************************************/
 
 static MEMORY_READ16_START( main_readmem )
@@ -436,7 +368,8 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xff1000, 0xff1fff, MWA16_RAM },
 	{ 0xff2000, 0xff5fff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0xff6000, 0xff6fff, atarigen_alpha_w, &atarigen_alpha },
-	{ 0xff7000, 0xffffff, MWA16_RAM },
+	{ 0xff7000, 0xff7001, mo_command_w, &mo_command },
+	{ 0xff7002, 0xffffff, MWA16_RAM },
 MEMORY_END
 
 
@@ -451,8 +384,8 @@ INPUT_PORTS_START( roadriot )
 	PORT_START		/* e00000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0xf800, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* e00002 */
@@ -466,13 +399,11 @@ INPUT_PORTS_START( roadriot )
 
 	JSA_III_PORT	/* audio board port */
 
-	PORT_START		/* e00012 */
-	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X, 50, 10, 0, 255 )
-	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START		/* analog 0 */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
 
-	PORT_START      /* fake for pedals */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START      /* analog 1 */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 100, 16, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -509,11 +440,11 @@ INPUT_PORTS_START( guardian )
 
 	JSA_III_PORT	/* audio board port */
 
-	PORT_START      /* e00012 */
-	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START		/* analog 0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* not used */
-	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START      /* analog 1 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -578,7 +509,7 @@ static MACHINE_DRIVER_START( atarig42 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz)
 	MDRV_CPU_MEMORY(main_readmem,main_writemem)
-	MDRV_CPU_VBLANK_INT(vblank_int,1)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -611,97 +542,97 @@ MACHINE_DRIVER_END
 
 ROM_START( roadriot )
 	ROM_REGION( 0x80004, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "rriot.8d", 0x00000, 0x20000, CRC(bf8aaafc) )
-	ROM_LOAD16_BYTE( "rriot.8c", 0x00001, 0x20000, CRC(5dd2dd70) )
-	ROM_LOAD16_BYTE( "rriot.9d", 0x40000, 0x20000, CRC(6191653c) )
-	ROM_LOAD16_BYTE( "rriot.9c", 0x40001, 0x20000, CRC(0d34419a) )
+	ROM_LOAD16_BYTE( "rriot.8d", 0x00000, 0x20000, CRC(bf8aaafc) SHA1(1594d91b56609d49921c866d8f5796619e79217b) )
+	ROM_LOAD16_BYTE( "rriot.8c", 0x00001, 0x20000, CRC(5dd2dd70) SHA1(8f6a0e809ec1f6feea8a18197a789086a7b9dd6a) )
+	ROM_LOAD16_BYTE( "rriot.9d", 0x40000, 0x20000, CRC(6191653c) SHA1(97d1a84a585149e8f2c49cab7af22dc755dff350) )
+	ROM_LOAD16_BYTE( "rriot.9c", 0x40001, 0x20000, CRC(0d34419a) SHA1(f16e9fb4cd537d727611cb7dd5537c030671fe1e) )
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
-	ROM_LOAD( "rriots.12c", 0x10000, 0x4000, CRC(849dd26c) )
+	ROM_LOAD( "rriots.12c", 0x10000, 0x4000, CRC(849dd26c) SHA1(05a0b2a5f7ee4437448b5f076d3066d96dec2320) )
 	ROM_CONTINUE(           0x04000, 0xc000 )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rriot.22d",    0x000000, 0x20000, CRC(b7451f92) ) /* playfield, planes 0-1 */
-	ROM_LOAD( "rriot.22c",    0x020000, 0x20000, CRC(90f3c6ee) )
-	ROM_LOAD( "rriot20.21d",  0x040000, 0x20000, CRC(d40de62b) ) /* playfield, planes 2-3 */
-	ROM_LOAD( "rriot20.21c",  0x060000, 0x20000, CRC(a7e836b1) )
-	ROM_LOAD( "rriot.20d",    0x080000, 0x20000, CRC(a81ae93f) ) /* playfield, planes 4-5 */
-	ROM_LOAD( "rriot.20c",    0x0a0000, 0x20000, CRC(b8a6d15a) )
+	ROM_LOAD( "rriot.22d",    0x000000, 0x20000, CRC(b7451f92) SHA1(9fd17913630e457e406e596f2d86afff98787750) ) /* playfield, planes 0-1 */
+	ROM_LOAD( "rriot.22c",    0x020000, 0x20000, CRC(90f3c6ee) SHA1(7607509e2d3b2080a918cfaf2879dbed6b79d029) )
+	ROM_LOAD( "rriot20.21d",  0x040000, 0x20000, CRC(d40de62b) SHA1(fa6dfd20bdad7874ae33a1027a9bb0ea200f86ca) ) /* playfield, planes 2-3 */
+	ROM_LOAD( "rriot20.21c",  0x060000, 0x20000, CRC(a7e836b1) SHA1(d41f1e4166ca757176c6976be2a953db5db05e48) )
+	ROM_LOAD( "rriot.20d",    0x080000, 0x20000, CRC(a81ae93f) SHA1(b694ba5fab35f8fa505a02039ae62f7af3c7ae1d) ) /* playfield, planes 4-5 */
+	ROM_LOAD( "rriot.20c",    0x0a0000, 0x20000, CRC(b8a6d15a) SHA1(43d2be9d40a84b2c01d80bbcac737eda04d55999) )
 
 	ROM_REGION( 0x020000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "rriot.22j",    0x000000, 0x20000, CRC(0005bab0) ) /* alphanumerics */
+	ROM_LOAD( "rriot.22j",    0x000000, 0x20000, CRC(0005bab0) SHA1(257e1b23eea117fe6701a67134b96d9d9fe10caf) ) /* alphanumerics */
 
 	ROM_REGION16_BE( 0x200000, REGION_GFX3, 0 )
-	ROM_LOAD16_BYTE( "rriot.2s", 0x000000, 0x20000, CRC(19590a94) )
-	ROM_LOAD16_BYTE( "rriot.2p", 0x000001, 0x20000, CRC(c2bf3f69) )
-	ROM_LOAD16_BYTE( "rriot.3s", 0x040000, 0x20000, CRC(bab110e4) )
-	ROM_LOAD16_BYTE( "rriot.3p", 0x040001, 0x20000, CRC(791ad2c5) )
-	ROM_LOAD16_BYTE( "rriot.4s", 0x080000, 0x20000, CRC(79cba484) )
-	ROM_LOAD16_BYTE( "rriot.4p", 0x080001, 0x20000, CRC(86a2e257) )
-	ROM_LOAD16_BYTE( "rriot.5s", 0x0c0000, 0x20000, CRC(67d28478) )
-	ROM_LOAD16_BYTE( "rriot.5p", 0x0c0001, 0x20000, CRC(74638838) )
-	ROM_LOAD16_BYTE( "rriot.6s", 0x100000, 0x20000, CRC(24933c37) )
-	ROM_LOAD16_BYTE( "rriot.6p", 0x100001, 0x20000, CRC(054a163b) )
-	ROM_LOAD16_BYTE( "rriot.7s", 0x140000, 0x20000, CRC(31ff090a) )
-	ROM_LOAD16_BYTE( "rriot.7p", 0x140001, 0x20000, CRC(bbe5b69b) )
-	ROM_LOAD16_BYTE( "rriot.8s", 0x180000, 0x20000, CRC(6c89d2c5) )
-	ROM_LOAD16_BYTE( "rriot.8p", 0x180001, 0x20000, CRC(40d9bde5) )
-	ROM_LOAD16_BYTE( "rriot.9s", 0x1c0000, 0x20000, CRC(eca3c595) )
-	ROM_LOAD16_BYTE( "rriot.9p", 0x1c0001, 0x20000, CRC(88acdb53) )
+	ROM_LOAD16_BYTE( "rriot.2s", 0x000000, 0x20000, CRC(19590a94) SHA1(e375b7e01a8b1f366bb4e7750e33f0b6d9ae2042) )
+	ROM_LOAD16_BYTE( "rriot.2p", 0x000001, 0x20000, CRC(c2bf3f69) SHA1(f822359070b1907973ee7ee35469f4a59f720830) )
+	ROM_LOAD16_BYTE( "rriot.3s", 0x040000, 0x20000, CRC(bab110e4) SHA1(0c4e3521474249517e7832df1bc63aca6d6a6c91) )
+	ROM_LOAD16_BYTE( "rriot.3p", 0x040001, 0x20000, CRC(791ad2c5) SHA1(4ef218fbf38a9c6b58c86f203843988df1c935f6) )
+	ROM_LOAD16_BYTE( "rriot.4s", 0x080000, 0x20000, CRC(79cba484) SHA1(ce361a432f1fe627086bab3c1131118fd15056f1) )
+	ROM_LOAD16_BYTE( "rriot.4p", 0x080001, 0x20000, CRC(86a2e257) SHA1(98d95d2e67fecc332f6c66358a1f8d58b168c74b) )
+	ROM_LOAD16_BYTE( "rriot.5s", 0x0c0000, 0x20000, CRC(67d28478) SHA1(cfc9da6d20c65d11c2a59a38660a8da4d1cc219d) )
+	ROM_LOAD16_BYTE( "rriot.5p", 0x0c0001, 0x20000, CRC(74638838) SHA1(bea0fb21ccb946e023c88791ce5a8dd92b44baec) )
+	ROM_LOAD16_BYTE( "rriot.6s", 0x100000, 0x20000, CRC(24933c37) SHA1(516393aae51fc9634a5c6d5134be058d6067e114) )
+	ROM_LOAD16_BYTE( "rriot.6p", 0x100001, 0x20000, CRC(054a163b) SHA1(1b0b129c093398bc5c14b3fdd87dfe149f555fac) )
+	ROM_LOAD16_BYTE( "rriot.7s", 0x140000, 0x20000, CRC(31ff090a) SHA1(7b43ed37901c3f94cae90c84b3c8c689d7b64dd6) )
+	ROM_LOAD16_BYTE( "rriot.7p", 0x140001, 0x20000, CRC(bbe5b69b) SHA1(9eaa551fba763824d36fc41bfe0e6d735a9e68c5) )
+	ROM_LOAD16_BYTE( "rriot.8s", 0x180000, 0x20000, CRC(6c89d2c5) SHA1(0bf2990ce1cd5ec5b84f7e3171725540e6238408) )
+	ROM_LOAD16_BYTE( "rriot.8p", 0x180001, 0x20000, CRC(40d9bde5) SHA1(aca6e07ea96e4618412d32fe4d4cd293ae82d940) )
+	ROM_LOAD16_BYTE( "rriot.9s", 0x1c0000, 0x20000, CRC(eca3c595) SHA1(5d067b7c02675b1e6dd3c4046697a16f873f80af) )
+	ROM_LOAD16_BYTE( "rriot.9p", 0x1c0001, 0x20000, CRC(88acdb53) SHA1(5bf2424ee75a25248a8ce38c8605b6780da4e323) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* 1MB for ADPCM samples */
-	ROM_LOAD( "rriots.19e",  0x80000, 0x20000, CRC(2db638a7) )
-	ROM_LOAD( "rriots.17e",  0xa0000, 0x20000, CRC(e1dd7f9e) )
-	ROM_LOAD( "rriots.15e",  0xc0000, 0x20000, CRC(64d410bb) )
-	ROM_LOAD( "rriots.12e",  0xe0000, 0x20000, CRC(bffd01c8) )
+	ROM_LOAD( "rriots.19e",  0x80000, 0x20000, CRC(2db638a7) SHA1(45da8088f7439beacc3056952a4d631d9633efa7) )
+	ROM_LOAD( "rriots.17e",  0xa0000, 0x20000, CRC(e1dd7f9e) SHA1(6b9a240aa84d210d3052daab6ea26f9cd0e62dc1) )
+	ROM_LOAD( "rriots.15e",  0xc0000, 0x20000, CRC(64d410bb) SHA1(877bccca7ff37a9dd8294bc1453487a2f516ca7d) )
+	ROM_LOAD( "rriots.12e",  0xe0000, 0x20000, CRC(bffd01c8) SHA1(f6de000f61ea0c1ddb31ee5301506e5e966638c2) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )	/* microcode for growth renderer */
-	ROM_LOAD( "089-1001.bin",  0x0000, 0x0200, CRC(5836cb5a) )
-	ROM_LOAD( "089-1002.bin",  0x0200, 0x0200, CRC(44288753) )
-	ROM_LOAD( "089-1003.bin",  0x0400, 0x0200, CRC(1f571706) )
+	ROM_LOAD( "089-1001.bin",  0x0000, 0x0200, CRC(5836cb5a) SHA1(2c797f6a1227d6e1fd7a12f99f0254072c8c266e) )
+	ROM_LOAD( "089-1002.bin",  0x0200, 0x0200, CRC(44288753) SHA1(811582015264f85a32643196cdb331a41430318f) )
+	ROM_LOAD( "089-1003.bin",  0x0400, 0x0200, CRC(1f571706) SHA1(26d5ea59163b3482ab1f8a26178d0849c5fd9692) )
 ROM_END
 
 
 ROM_START( guardian )
 	ROM_REGION( 0x80004, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "2021.8e",  0x00000, 0x20000, CRC(efea1e02) )
-	ROM_LOAD16_BYTE( "2020.8cd", 0x00001, 0x20000, CRC(a8f655ba) )
-	ROM_LOAD16_BYTE( "2023.9e",  0x40000, 0x20000, CRC(cfa29316) )
-	ROM_LOAD16_BYTE( "2022.9cd", 0x40001, 0x20000, CRC(ed2abc91) )
+	ROM_LOAD16_BYTE( "2021.8e",  0x00000, 0x20000, CRC(efea1e02) SHA1(f0f1ef300f36953aff73b68ffe6d9950ac575f7d) )
+	ROM_LOAD16_BYTE( "2020.8cd", 0x00001, 0x20000, CRC(a8f655ba) SHA1(2defe4d138613e248718a617d103794e051746f7) )
+	ROM_LOAD16_BYTE( "2023.9e",  0x40000, 0x20000, CRC(cfa29316) SHA1(4e0e76304e29ee59bc2ce9a704e3f651dc9d473c) )
+	ROM_LOAD16_BYTE( "2022.9cd", 0x40001, 0x20000, CRC(ed2abc91) SHA1(81531040d5663f6ab82e924210056e3737e17a8d) )
 
 	ROM_REGION( 0x14000, REGION_CPU2, 0 )	/* 64k for 6502 code */
-	ROM_LOAD( "0080-snd.12c", 0x10000, 0x4000, CRC(0388f805) )
+	ROM_LOAD( "0080-snd.12c", 0x10000, 0x4000, CRC(0388f805) SHA1(49c11313bc4192dbe294cf68b652cb19047889fd) )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "0037a.23e",  0x000000, 0x80000, CRC(ca10b63e) ) /* playfield, planes 0-1 */
-	ROM_LOAD( "0038a.22e",  0x080000, 0x80000, CRC(cb1431a1) ) /* playfield, planes 2-3 */
-	ROM_LOAD( "0039a.20e",  0x100000, 0x80000, CRC(2eee7188) ) /* playfield, planes 4-5 */
+	ROM_LOAD( "0037a.23e",  0x000000, 0x80000, CRC(ca10b63e) SHA1(243a2a440e1bc9135d3dbe6553d39c54b9bdcd13) ) /* playfield, planes 0-1 */
+	ROM_LOAD( "0038a.22e",  0x080000, 0x80000, CRC(cb1431a1) SHA1(d7b8f49a1e794ca2083e4bf0fa3870ce08caa53a) ) /* playfield, planes 2-3 */
+	ROM_LOAD( "0039a.20e",  0x100000, 0x80000, CRC(2eee7188) SHA1(d3adbd7b20bc898fee35b6ba781e7775f82acd19) ) /* playfield, planes 4-5 */
 
 	ROM_REGION( 0x020000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "0030.23k",   0x000000, 0x20000, CRC(0fd7baa1) ) /* alphanumerics */
+	ROM_LOAD( "0030.23k",   0x000000, 0x20000, CRC(0fd7baa1) SHA1(7802d732e5173291628ed498ad0fab71aeef4688) ) /* alphanumerics */
 
 	ROM_REGION16_BE( 0x600000, REGION_GFX3, 0 )
-	ROM_LOAD16_BYTE( "0041.2s",  0x000000, 0x80000, CRC(a2a5ae08) )
-	ROM_LOAD16_BYTE( "0040.2p",  0x000001, 0x80000, CRC(ef95132e) )
-	ROM_LOAD16_BYTE( "0043.3s",  0x100000, 0x80000, CRC(6438b8e4) )
-	ROM_LOAD16_BYTE( "0042.3p",  0x100001, 0x80000, CRC(46bf7c0d) )
-	ROM_LOAD16_BYTE( "0045.4s",  0x200000, 0x80000, CRC(4f4f2bee) )
-	ROM_LOAD16_BYTE( "0044.4p",  0x200001, 0x80000, CRC(20a4250b) )
-	ROM_LOAD16_BYTE( "0063a.6s", 0x300000, 0x80000, CRC(93933bcf) )
-	ROM_LOAD16_BYTE( "0062a.6p", 0x300001, 0x80000, CRC(613e6f1d) )
-	ROM_LOAD16_BYTE( "0065a.7s", 0x400000, 0x80000, CRC(6bcd1205) )
-	ROM_LOAD16_BYTE( "0064a.7p", 0x400001, 0x80000, CRC(7b4dce05) )
-	ROM_LOAD16_BYTE( "0067a.9s", 0x500000, 0x80000, CRC(15845fba) )
-	ROM_LOAD16_BYTE( "0066a.9p", 0x500001, 0x80000, CRC(7130c575) )
+	ROM_LOAD16_BYTE( "0041.2s",  0x000000, 0x80000, CRC(a2a5ae08) SHA1(d99f925bbc9a72432e13328ee8422fde615db90f) )
+	ROM_LOAD16_BYTE( "0040.2p",  0x000001, 0x80000, CRC(ef95132e) SHA1(288de1d15956a612b7d19ceb2cf853490bf42b05) )
+	ROM_LOAD16_BYTE( "0043.3s",  0x100000, 0x80000, CRC(6438b8e4) SHA1(ee1446209fbcab8b17c88c53b65e754a85f279d1) )
+	ROM_LOAD16_BYTE( "0042.3p",  0x100001, 0x80000, CRC(46bf7c0d) SHA1(12414de2698178b158ec4ca0fbb176943c944cec) )
+	ROM_LOAD16_BYTE( "0045.4s",  0x200000, 0x80000, CRC(4f4f2bee) SHA1(8276cdcd252d2d8fa41ab28e76a6bd72613c14ec) )
+	ROM_LOAD16_BYTE( "0044.4p",  0x200001, 0x80000, CRC(20a4250b) SHA1(6a2e2596a9eef2792f7cdab648dd455b8e420a74) )
+	ROM_LOAD16_BYTE( "0063a.6s", 0x300000, 0x80000, CRC(93933bcf) SHA1(a67d4839ffdb0eafbc2d68a60fb3bf1507c793cf) )
+	ROM_LOAD16_BYTE( "0062a.6p", 0x300001, 0x80000, CRC(613e6f1d) SHA1(fd2ea18d245d0895e0bac6c5caa6d35fdd6a199f) )
+	ROM_LOAD16_BYTE( "0065a.7s", 0x400000, 0x80000, CRC(6bcd1205) SHA1(c883c55f88d274ba8aa48c962406b253e1f8001e) )
+	ROM_LOAD16_BYTE( "0064a.7p", 0x400001, 0x80000, CRC(7b4dce05) SHA1(36545917388e704f73a9b4d85189ec978d655b63) )
+	ROM_LOAD16_BYTE( "0067a.9s", 0x500000, 0x80000, CRC(15845fba) SHA1(f7b670a8d48a5e9c261150914a06ef9a938a84e7) )
+	ROM_LOAD16_BYTE( "0066a.9p", 0x500001, 0x80000, CRC(7130c575) SHA1(b3ea109981a1e5c631705b23dfad4a3a3daf7734) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* 1MB for ADPCM samples */
-	ROM_LOAD( "0010-snd",  0x80000, 0x80000, CRC(bca27f40) )
+	ROM_LOAD( "0010-snd",  0x80000, 0x80000, CRC(bca27f40) SHA1(91a41eac116eb7d9a790abc590eb06328726d1c2) )
 
 	ROM_REGION( 0x0600, REGION_PROMS, ROMREGION_DISPOSE )	/* microcode for growth renderer */
-	ROM_LOAD( "092-1001.bin",  0x0000, 0x0200, CRC(b3251eeb) )
-	ROM_LOAD( "092-1002.bin",  0x0200, 0x0200, CRC(0c5314da) )
-	ROM_LOAD( "092-1003.bin",  0x0400, 0x0200, CRC(344b406a) )
+	ROM_LOAD( "092-1001.bin",  0x0000, 0x0200, CRC(b3251eeb) SHA1(5e83baa70aaa28f07f32657bf974fd87719972d3) )
+	ROM_LOAD( "092-1002.bin",  0x0200, 0x0200, CRC(0c5314da) SHA1(a9c7ee3ab015c7f3ada4200acd2854eb9a5c74b0) )
+	ROM_LOAD( "092-1003.bin",  0x0400, 0x0200, CRC(344b406a) SHA1(f4422f8c0d7004d0277a4fc77718d555f80fcf69) )
 ROM_END
 
 
@@ -729,7 +660,6 @@ static DRIVER_INIT( roadriot )
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 3, 2, 0x0040);
 	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
 
 	atarig42_playfield_base = 0x400;
 	atarig42_motion_object_base = 0x200;
@@ -739,6 +669,26 @@ static DRIVER_INIT( roadriot )
 	sloop_base = install_mem_write16_handler(0, 0x000000, 0x07ffff, roadriot_sloop_data_w);
 
 	asic65_config(ASIC65_STANDARD);
+/*
+	Road Riot color MUX
+
+	CRA10=!MGEP*!AN.VID7*AN.0				-- if (mopri < pfpri) && (!alpha)
+	   +!AN.VID7*AN.0*MO.0					or if (mopix == 0) && (!alpha)
+
+	CRA9=MGEP*!AN.VID7*AN.0*!MO.0			-- if (mopri >= pfpri) && (mopix != 0) && (!alpha)
+	   +!AN.VID7*AN.0*PF.VID9				or if (pfpix & 0x200) && (!alpha)
+
+	CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8		-- if (mopri >= pfpri) && (mopix != 0) && (mopix & 0x100) && (!alpha)
+	   +!MGEP*!AN.VID7*AN.0*PF.VID8			or if (mopri < pfpri) && (pfpix & 0x100) && (!alpha)
+	   +!AN.VID7*AN.0*MO.0*PF.VID8			or if (pfpix & 0x100) && (!alpha)
+
+	CRMUXB=!AN.VID7*AN.0					-- if (!alpha)
+
+	CRMUXA=!MGEP							-- if (mopri < pfpri)
+	   +MO.0								or (mopix == 0)
+	   +AN.VID7								or (alpha)
+	   +!AN.0
+*/
 }
 
 
@@ -760,7 +710,6 @@ static DRIVER_INIT( guardian )
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 3, 2, 0x0040);
 	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x3168, 0x3180);
 
 	atarig42_playfield_base = 0x000;
 	atarig42_motion_object_base = 0x400;
@@ -770,7 +719,30 @@ static DRIVER_INIT( guardian )
 	/* put an RTS there so we don't die */
 	*(data16_t *)&memory_region(REGION_CPU1)[0x80000] = 0x4E75;
 
-	asic65_config(ASIC65_STANDARD);
+	sloop_base = install_mem_read16_handler(0, 0x000000, 0x07ffff, guardians_sloop_data_r);
+	sloop_base = install_mem_write16_handler(0, 0x000000, 0x07ffff, guardians_sloop_data_w);
+
+	asic65_config(ASIC65_GUARDIANS);
+/*
+	Guardians color MUX
+
+	CRA10=MGEP*!AN.VID7*AN.0*!MO.0			-- if (mopri >= pfpri) && (!alpha) && (mopix != 0)
+
+	CRA9=MGEP*!AN.VID7*AN.0*!MO.0*MVID9		-- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x200)
+	   +!MGEP*!AN.VID7*AN.0*PF.VID9			or if (mopri < pfpri) && (!alpha) && (pfpix & 0x200)
+	   +!AN.VID7*AN.0*MO.0*PF.VID9			or if (mopix == 0) && (!alpha) && (pfpix & 0x200)
+
+	CRA8=MGEP*!AN.VID7*AN.0*!MO.0*MVID8		-- if (mopri >= pfpri) && (!alpha) && (mopix != 0) && (mopix & 0x100)
+	   +!MGEP*!AN.VID7*AN.0*PF.VID8			or if (mopri < pfpri) && (!alpha) && (pfpix & 0x100)
+	   +!AN.VID7*AN.0*MO.0*PF.VID8			or if (mopix == 0) && (!alpha) && (pfpix & 0x100)
+
+	CRMUXB=!AN.VID7*AN.0					-- if (!alpha)
+
+	CRMUXA=!MGEP							-- if (mopri < pfpri)
+	   +MO.0								or (mopix == 0)
+	   +AN.VID7								or (alpha)
+	   +!AN.0
+*/
 }
 
 
@@ -781,5 +753,5 @@ static DRIVER_INIT( guardian )
  *
  *************************************/
 
-GAMEX( 1991, roadriot, 0,        atarig42, roadriot, roadriot, ROT0, "Atari Games", "Road Riot 4WD", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, guardian, 0,        atarig42, guardian, guardian, ROT0, "Atari Games", "Guardians of the Hood", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )
+GAMEX( 1991, roadriot, 0,        atarig42, roadriot, roadriot, ROT0, "Atari Games", "Road Riot 4WD", GAME_UNEMULATED_PROTECTION )
+GAME ( 1992, guardian, 0,        atarig42, guardian, guardian, ROT0, "Atari Games", "Guardians of the Hood" )

@@ -12,7 +12,16 @@
 #include "midvunit.h"
 
 
-#define WATCH_RENDER		0
+#define WATCH_RENDER		(0)
+#define KEEP_STATISTICS		(0)
+
+
+#if KEEP_STATISTICS
+#define ADD_TO_PIXEL_COUNT(a)	do { if ((a) > 0) pixelcount += (a); } while (0)
+#else
+#define ADD_TO_PIXEL_COUNT(a)
+#endif
+
 
 /* for when we implement DMA timing */
 #define DMA_QUEUE_SIZE		273
@@ -32,6 +41,9 @@ static void *scanline_timer;
 static struct poly_vertex vert[4];
 static UINT8 topleft, topright, botleft, botright;
 
+#if KEEP_STATISTICS
+static int polycount, pixelcount, lastfps, framecount, totalframes;
+#endif
 
 
 /*************************************
@@ -178,6 +190,8 @@ static void render_straight_flat_quad(void)
 	if (ey > Machine->visible_area.max_y)
 		ey = Machine->visible_area.max_y;
 
+	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
+
 	/* loop over rows */
 	for (y = sy; y <= ey; y++)
 	{
@@ -212,6 +226,8 @@ static void render_straight_flat_dither_quad(void)
 		sy = Machine->visible_area.min_y;
 	if (ey > Machine->visible_area.max_y)
 		ey = Machine->visible_area.max_y;
+
+	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
 	/* loop over rows */
 	for (y = sy; y <= ey; y++)
@@ -279,6 +295,8 @@ static void render_straight_tex_quad(void)
 	}
 	if (ey > Machine->visible_area.max_y)
 		ey = Machine->visible_area.max_y;
+
+	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
 	/* loop over rows */
 	for (y = sy; y <= ey; y++)
@@ -348,6 +366,8 @@ static void render_straight_textrans_quad(void)
 	}
 	if (ey > Machine->visible_area.max_y)
 		ey = Machine->visible_area.max_y;
+
+	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
 	/* loop over rows */
 	for (y = sy; y <= ey; y++)
@@ -419,6 +439,8 @@ static void render_straight_textransmask_quad(void)
 	if (ey > Machine->visible_area.max_y)
 		ey = Machine->visible_area.max_y;
 
+	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
+
 	/* loop over rows */
 	for (y = sy; y <= ey; y++)
 	{
@@ -474,6 +496,7 @@ static void render_flat_quad(void)
 		{
 			UINT16 *d = dest + y * 512 + curscan->sx;
 			int width = curscan->ex - curscan->sx + 1;
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			for (x = 0; x < width; x++)
 				d[x] = pixdata;
 		}
@@ -508,6 +531,7 @@ static void render_flat_dither_quad(void)
 		{
 			int tsx = curscan->sx + ((curscan->sx ^ y) & 1);
 			UINT16 *d = dest + y * 512;
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			for (x = tsx; x <= curscan->ex; x += 2)
 				d[x] = pixdata;
 		}
@@ -562,6 +586,7 @@ static void render_tex_quad(void)
 			int width = curscan->ex - curscan->sx + 1;
 			int u = curscan->p[0], dudx = scans->dp[0];
 			int v = curscan->p[1], dvdx = scans->dp[1];
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			for (x = 0; x < width; x++)
 			{
 				d[x] = pixdata | texbase[((v >> 8) & 0xff00) + (u >> 16)];
@@ -613,6 +638,7 @@ static void render_textrans_quad(void)
 			int width = curscan->ex - curscan->sx + 1;
 			int u = curscan->p[0], dudx = scans->dp[0];
 			int v = curscan->p[1], dvdx = scans->dp[1];
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			for (x = 0; x < width; x++)
 			{
 				int pix = texbase[((v >> 8) & 0xff00) + (u >> 16)];
@@ -665,6 +691,7 @@ static void render_textransmask_quad(void)
 			int width = curscan->ex - curscan->sx + 1;
 			int u = curscan->p[0], dudx = scans->dp[0];
 			int v = curscan->p[1], dvdx = scans->dp[1];
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			for (x = 0; x < width; x++)
 			{
 				int pix = texbase[((v >> 8) & 0xff00) + (u >> 16)];
@@ -725,6 +752,7 @@ static void render_tex_dither_quad(void)
 			UINT16 *d = dest + y * 512;
 			int tsx = curscan->sx;
 
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			if ((tsx ^ y) & 1)
 			{
 				tsx++;
@@ -787,6 +815,7 @@ static void render_textrans_dither_quad(void)
 			UINT16 *d = dest + y * 512;
 			int tsx = curscan->sx;
 
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			if ((tsx ^ y) & 1)
 			{
 				tsx++;
@@ -850,6 +879,7 @@ static void render_textransmask_dither_quad(void)
 			UINT16 *d = dest + y * 512;
 			int tsx = curscan->sx;
 
+			ADD_TO_PIXEL_COUNT(curscan->ex - curscan->sx + 1);
 			if ((tsx ^ y) & 1)
 			{
 				tsx++;
@@ -884,6 +914,10 @@ static void process_dma_queue(void)
 	int textured = ((dma_data[0] & 0x300) == 0x100);
 	int dithered = dma_data[0] & 0x2000;
 	int straight;
+
+#if KEEP_STATISTICS
+	polycount++;
+#endif
 
 	/* fill in the vertex data */
 	vert[0].x = (INT16)dma_data[2];
@@ -990,8 +1024,7 @@ static void process_dma_queue(void)
 WRITE32_HANDLER( midvunit_dma_queue_w )
 {
 if (keyboard_pressed(KEYCODE_L))
-	logerror("%06X:FIFOW = %08X\n", activecpu_get_pc(), data);
-
+	logerror("%06X:queue(%X) = %08X\n", activecpu_get_pc(), dma_data_index, data);
 	if (dma_data_index < 16)
 		dma_data[dma_data_index++] = data;
 }
@@ -1028,7 +1061,17 @@ WRITE32_HANDLER( midvunit_page_control_w )
 {
 	/* watch for the display page to change */
 	if ((page_control ^ data) & 1)
+	{
+if (keyboard_pressed(KEYCODE_L))
+	logerror("##########################################################\n");
+#if KEEP_STATISTICS
+		usrintf_showmessage("Polys:%d  Render:%d%%  FPS:%d",
+				polycount, pixelcount / (512*4), lastfps);
+		polycount = pixelcount = 0;
+		framecount++;
+#endif
 		force_partial_update(cpu_getscanline() - 1);
+	}
 	page_control = data;
 }
 
@@ -1139,6 +1182,15 @@ VIDEO_UPDATE( midvunit )
 {
 	int x, y, width, xoffs;
 	UINT32 offset;
+
+#if KEEP_STATISTICS
+	totalframes++;
+	if (totalframes == 57)
+	{
+		lastfps = framecount;
+		framecount = totalframes = 0;
+	}
+#endif
 
 	/* determine the base of the videoram */
 #if WATCH_RENDER

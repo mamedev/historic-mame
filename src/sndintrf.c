@@ -1118,6 +1118,20 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_SCSP)
+	{
+		SOUND_SCSP,
+		"YMF292-F SCSP",
+		0,
+		0,
+		SCSP_sh_start,
+		SCSP_sh_stop,
+		0,
+		0
+},
+
+#endif
+
 
 
 #ifdef MESS
@@ -1152,8 +1166,8 @@ struct snd_interface sndintf[] =
 		wave_num,
 		0,
 		wave_sh_start,
-		wave_sh_stop,
-		wave_sh_update,
+		0,
+		0,
 		0
 	},
 #endif

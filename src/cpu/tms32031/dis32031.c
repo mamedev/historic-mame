@@ -55,7 +55,7 @@ static const char *regname[32] =
 
 static const char *condition[32] =
 {
-	"", "LO", "LS", "HI", "HS", "EQ", "NE", "LT",
+	"U", "LO", "LS", "HI", "HS", "EQ", "NE", "LT",
 	"LE", "GT", "GE", "??", "NV", "V", "NUF", "UF",
 	"NLV", "LV", "NLUF", "LUF", "ZUF", "??", "??", "??",
 	"??", "??", "??", "??", "??", "??", "??", "??"

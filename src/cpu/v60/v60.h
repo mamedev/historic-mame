@@ -70,6 +70,7 @@ enum {
 	V60_Res6,
 	V60_Res7,
 	V60_Res8,
+	V60_TCB,
 	V60_REGMAX
 };
 

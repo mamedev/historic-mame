@@ -5,8 +5,8 @@
 	driver by Aaron Giles
 
 	Games supported:
-		* Cruis'n USA (1994)
-		* Cruis'n World (1996)
+		* Cruis'n USA (1994) [3 sets]
+		* Cruis'n World (1996) [3 sets]
 		* War Gods (1996)
 		* Off Road Challenge (1997)
 
@@ -14,8 +14,6 @@
 		* textures for automatic/manual selection get overwritten in Cruis'n World
 		* rendering needs to be looked at a little more closely to fix some holes
 		* in Cruis'n World attract mode, right side of sky looks like it has wrapped
-		* War Gods sound handling is seriously wonky
-		* War Gods won't go into service mode unless you reset mid-game first
 		* Off Road Challenge has polygon sorting issues, among other problems
 
 **************************************************************************/
@@ -46,6 +44,7 @@ static double timer_rate;
 
 static data32_t *tms32031_control;
 
+static data32_t *midvplus_misc;
 
 
 
@@ -398,8 +397,6 @@ static WRITE32_HANDLER( offroadc_serial_data_w )
  *
  *************************************/
 
-static data32_t *midvplus_misc;
-
 static READ32_HANDLER( midvplus_misc_r )
 {
 	data32_t result = midvplus_misc[offset];
@@ -436,10 +433,11 @@ static WRITE32_HANDLER( midvplus_misc_w )
 	{
 		case 0:
 			/* bit 0x10 resets watchdog */
-			if ((olddata ^ midvplus_misc[offset]) == 0x0010)
+			if ((olddata ^ midvplus_misc[offset]) & 0x0010)
+			{
+				watchdog_reset_w(0, 0);
 				logit = 0;
-//			if ((olddata ^ midvplus_misc[offset]) & 0x0010)
-//				watchdog_reset_w(0, 0);
+			}
 			break;
 
 		case 3:
@@ -541,7 +539,7 @@ static MEMORY_READ32_START( midvplus_readmem )
 	{ ADDR_RANGE(0x980040, 0x980040), midvunit_page_control_r },
 	{ ADDR_RANGE(0x980080, 0x980080), MRA32_NOP },
 	{ ADDR_RANGE(0x980082, 0x980083), midvunit_dma_trigger_r },
-	{ ADDR_RANGE(0x990000, 0x99000f), midway_io_asic_r },
+	{ ADDR_RANGE(0x990000, 0x99000f), midway_ioasic_r },
 	{ ADDR_RANGE(0x9a0000, 0x9a0007), midway_ide_asic_r },
 	{ ADDR_RANGE(0x9c0000, 0x9c7fff), MRA32_RAM },
 	{ ADDR_RANGE(0x9d0000, 0x9d000f), midvplus_misc_r },
@@ -560,7 +558,7 @@ static MEMORY_WRITE32_START( midvplus_writemem )
 	{ ADDR_RANGE(0x980020, 0x98002b), midvunit_video_control_w },
 	{ ADDR_RANGE(0x980040, 0x980040), midvunit_page_control_w },
 	{ ADDR_RANGE(0x980080, 0x980080), MWA32_NOP },
-	{ ADDR_RANGE(0x990000, 0x99000f), midway_io_asic_w },
+	{ ADDR_RANGE(0x990000, 0x99000f), midway_ioasic_w },
 	{ ADDR_RANGE(0x994000, 0x994000), midvunit_control_w },
 	{ ADDR_RANGE(0x995020, 0x995020), midvunit_cmos_protect_w },
 	{ ADDR_RANGE(0x9a0000, 0x9a0007), midway_ide_asic_w },
@@ -697,8 +695,8 @@ INPUT_PORTS_START( crusnusa )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal hack removed*/
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -818,8 +816,8 @@ INPUT_PORTS_START( crusnwld )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal hack removed*/
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -913,8 +911,8 @@ INPUT_PORTS_START( offroadc )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal hack removed*/
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal */
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -990,7 +988,8 @@ INPUT_PORTS_START( wargods )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BITX(0x0800, IP_ACTIVE_LOW, 0, "Volume Down", KEYCODE_MINUS, IP_JOY_NONE )
 	PORT_BITX(0x1000, IP_ACTIVE_LOW, 0, "Volume Up", KEYCODE_EQUALS, IP_JOY_NONE )
-	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
@@ -1069,9 +1068,10 @@ MACHINE_DRIVER_START( midvplus )
 	MDRV_CPU_MEMORY(midvplus_readmem,midvplus_writemem)
 
 	MDRV_MACHINE_INIT(midvplus)
-
+	MDRV_NVRAM_HANDLER(midway_serial_pic2)
+	
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs_audio_ram)
+	MDRV_IMPORT_FROM(dcs2_audio)
 MACHINE_DRIVER_END
 
 
@@ -1346,14 +1346,28 @@ ROM_END
  *
  *************************************/
 
-static DRIVER_INIT( crusnusa )
+static data32_t *generic_speedup;
+static READ32_HANDLER( generic_speedup_r )
 {
-	dcs_init();
-	adc_shift = 24;
+	activecpu_eat_cycles(100);
+	return generic_speedup[offset];
 }
 
 
-static DRIVER_INIT( crusnwld )
+static void init_crusnusa_common(offs_t speedup)
+{
+	dcs_init();
+	adc_shift = 24;
+
+	/* speedups */
+	generic_speedup = install_mem_read32_handler(0, ADDR_RANGE(speedup, speedup + 1), generic_speedup_r);
+}
+static DRIVER_INIT( crusnusa ) { init_crusnusa_common(0xc93e); }
+static DRIVER_INIT( crusnu40 ) { init_crusnusa_common(0xc957); }
+static DRIVER_INIT( crusnu21 ) { init_crusnusa_common(0xc051); }
+
+
+static void init_crusnwld_common(offs_t speedup)
 {
 	dcs_init();
 	adc_shift = 16;
@@ -1370,7 +1384,14 @@ static DRIVER_INIT( crusnwld )
 	/* install strange protection device */
 	install_mem_read32_handler(0, ADDR_RANGE(0x9d0000, 0x9d1fff), bit_data_r);
 	install_mem_write32_handler(0, ADDR_RANGE(0x9d0000, 0x9d0000), bit_reset_w);
+
+	/* speedups */
+	if (speedup)
+		generic_speedup = install_mem_read32_handler(0, ADDR_RANGE(speedup, speedup + 1), generic_speedup_r);
 }
+static DRIVER_INIT( crusnwld ) { init_crusnwld_common(0xd4c0); }
+static DRIVER_INIT( crusnw20 ) { init_crusnwld_common(0xd49c); }
+static DRIVER_INIT( crusnw13 ) { init_crusnwld_common(0); }
 
 
 static DRIVER_INIT( offroadc )
@@ -1382,10 +1403,13 @@ static DRIVER_INIT( offroadc )
 	install_mem_write32_handler(0, ADDR_RANGE(0x994000, 0x994000), crusnwld_control_w);
 
 	/* valid values are 230 or 234 */
-	midway_serial_pic2_init(230);
+	midway_serial_pic2_init(230, 94);
 	install_mem_read32_handler(0, ADDR_RANGE(0x991030, 0x991030), offroadc_serial_status_r);
 	install_mem_read32_handler(0, ADDR_RANGE(0x996000, 0x996000), offroadc_serial_data_r);
 	install_mem_write32_handler(0, ADDR_RANGE(0x996000, 0x996000), offroadc_serial_data_w);
+
+	/* speedups */
+	generic_speedup = install_mem_read32_handler(0, ADDR_RANGE(0x195aa, 0x195aa), generic_speedup_r);
 }
 
 
@@ -1396,14 +1420,27 @@ static struct ide_interface ide_intf =
 
 static DRIVER_INIT( wargods )
 {
-	dcs_ram_init();
-	adc_shift = 16;
+	UINT8 default_nvram[256];
 
-	/* valid values are 452 */
-	midway_io_asic_init(452);
-
-	/* prepare the IDE */
+	/* initialize the subsystems */
+	dcs2_init(0x3839);
 	ide_controller_init(0, &ide_intf);
+	midway_ioasic_init(0, 452/* no alternates */, 94, NULL);
+	adc_shift = 16;
+	
+	/* we need proper VRAM */
+	memset(default_nvram, 0xff, sizeof(default_nvram));
+	default_nvram[0x0e] = default_nvram[0x2e] = 0x67;
+	default_nvram[0x0f] = default_nvram[0x2f] = 0x32;
+	default_nvram[0x10] = default_nvram[0x30] = 0x0a;
+	default_nvram[0x11] = default_nvram[0x31] = 0x00;
+	default_nvram[0x12] = default_nvram[0x32] = 0xaf;
+	default_nvram[0x17] = default_nvram[0x37] = 0xd8;
+	default_nvram[0x18] = default_nvram[0x38] = 0xe7;
+	midway_serial_pic2_set_default_nvram(default_nvram);
+
+	/* speedups */
+	generic_speedup = install_mem_read32_handler(0, ADDR_RANGE(0x2f4c, 0x2f4c), generic_speedup_r);
 }
 
 
@@ -1415,11 +1452,11 @@ static DRIVER_INIT( wargods )
  *************************************/
 
 GAME( 1994, crusnusa, 0,        midvunit, crusnusa, crusnusa, ROT0, "Midway", "Cruis'n USA (rev L4.1)" )
-GAME( 1994, crusnu40, crusnusa, midvunit, crusnusa, crusnusa, ROT0, "Midway", "Cruis'n USA (rev L4.0)" )
-GAME( 1994, crusnu21, crusnusa, midvunit, crusnusa, crusnusa, ROT0, "Midway", "Cruis'n USA (rev L2.1)" )
+GAME( 1994, crusnu40, crusnusa, midvunit, crusnusa, crusnu40, ROT0, "Midway", "Cruis'n USA (rev L4.0)" )
+GAME( 1994, crusnu21, crusnusa, midvunit, crusnusa, crusnu21, ROT0, "Midway", "Cruis'n USA (rev L2.1)" )
 GAME( 1996, crusnwld, 0,        midvunit, crusnwld, crusnwld, ROT0, "Midway", "Cruis'n World (rev L2.3)" )
 GAME( 1996, crusnw20, crusnwld, midvunit, crusnwld, crusnwld, ROT0, "Midway", "Cruis'n World (rev L2.0)" )
 GAME( 1996, crusnw13, crusnwld, midvunit, crusnwld, crusnwld, ROT0, "Midway", "Cruis'n World (rev L1.3)" )
-GAMEX(1997, offroadc, 0,        midvunit, offroadc, offroadc, ROT0, "Midway", "Off Road Challenge", GAME_NOT_WORKING )
+GAMEX( 1997, offroadc, 0,        midvunit, offroadc, offroadc, ROT0, "Midway", "Off Road Challenge", GAME_NOT_WORKING )
 
-GAMEX(1996, wargods,  0,        midvplus, wargods,  wargods,  ROT0, "Midway", "War Gods", GAME_IMPERFECT_SOUND )
+GAME( 1995, wargods,  0,        midvplus, wargods,  wargods,  ROT0, "Midway", "War Gods" )

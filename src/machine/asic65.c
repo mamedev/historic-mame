@@ -24,6 +24,7 @@ static UINT16 asic65_yorigin = 0x1800;
 static UINT8  asic65_param_index;
 static UINT8  asic65_result_index;
 static UINT8  asic65_reset_state;
+static UINT8  asic65_last_bank;
 
 static FILE * asic65_log;
 
@@ -51,10 +52,13 @@ READ16_HANDLER( asic65_io_r );
 #define OP_MATRIXMULT	10
 #define OP_TRANSFORM	11
 #define OP_YORIGIN		12
+#define OP_INITBANKS	13
+#define OP_SETBANK		14
+#define OP_VERIFYBANK	15
 
 #define MAX_COMMANDS	0x2b
 
-static const UINT8 command_map[2][MAX_COMMANDS] =
+static const UINT8 command_map[3][MAX_COMMANDS] =
 {
 	{
 		/* standard version */
@@ -81,6 +85,20 @@ static const UINT8 command_map[2][MAX_COMMANDS] =
 		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 18-1b */
 		OP_UNKNOWN,		OP_UNKNOWN,		OP_SIN,			OP_COS,			/* 1c-1f */
 		OP_ATAN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 20-23 */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 24-27 */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN						/* 28-2a */
+	},
+	{
+		/* Guardians version */
+		OP_UNKNOWN,		OP_REFLECT,		OP_CHECKSUM, 	OP_VERSION,		/* 00-03 */
+		OP_RAMTEST,		OP_UNKNOWN,		OP_UNKNOWN,		OP_RESET,		/* 04-07 */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 08-0b */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_INITBANKS,	OP_SETBANK,		/* 0c-0f */
+		OP_VERIFYBANK,	OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 10-13 */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 14-17 */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 18-1b */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 1c-1f */
+		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 20-23 */
 		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN,		/* 24-27 */
 		OP_UNKNOWN,		OP_UNKNOWN,		OP_UNKNOWN						/* 28-2a */
 	}
@@ -308,21 +326,64 @@ READ16_HANDLER( asic65_r )
 				/* return 2 == transformed Y, taking height into account */
 				element = (INT16)asic65_param[0];
 				if (asic65_param_index == 2)
+				{
 					result64 = (element * (INT16)asic65_param[1]) >> 8;
+					result64 -= 1;
+					if (result64 > 0x3fff) result64 = 0;
+				}
 				else if (asic65_param_index == 3)
 				{
-					result64 = element * (INT16)asic65_param[2];
-					result64 = (result64 >> 14) + 336/2;
+					result64 = (element * (INT16)asic65_param[2]) >> 15;
+					result64 += 0xa8;
 				}
 				else if (asic65_param_index == 4)
 				{
-//					result64 = (element * 0x60) >> 8;
-//					result64 = (result64 * (INT16)asic65_param[1]) >> 8;
-					result64 = asic65_yorigin - ((element * (INT16)asic65_param[3]) >> 9);// - result64;
+					result64 = (INT16)((element * (INT16)asic65_param[3]) >> 10);
+					result64 = (INT16)asic65_yorigin - result64 - (result64 << 1);
 				}
 				result = result64 & 0xffff;
 			}
 			break;
+		
+		case OP_INITBANKS:	/* initialize banking */
+			asic65_last_bank = 0;
+			break;
+		
+		case OP_SETBANK:	/* set a bank */
+		{
+			static const UINT8 banklist[] =
+			{
+				1,4,0,4,4,3,4,2, 4,4,4,4,4,4,4,4,
+				3,3,4,4,1,1,0,0, 4,4,4,4,2,2,4,4,
+				4,4
+			};
+			static const UINT16 bankaddr[][8] =
+			{
+				{ 0x77c0,0x77ce,0x77c2,0x77cc,0x77c4,0x77ca,0x77c6,0x77c8 },
+				{ 0x77d0,0x77de,0x77d2,0x77dc,0x77d4,0x77da,0x77d6,0x77d8 },
+				{ 0x77e0,0x77ee,0x77e2,0x77ec,0x77e4,0x77ea,0x77e6,0x77e8 },
+				{ 0x77f0,0x77fe,0x77f2,0x77fc,0x77f4,0x77fa,0x77f6,0x77f8 },
+				{ 0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000 },
+			};
+			if (asic65_param_index >= 1)
+			{
+				if (asic65_param_index < sizeof(banklist) && banklist[asic65_param[0]] < 4)
+					asic65_last_bank = banklist[asic65_param[0]];
+				result = bankaddr[asic65_last_bank][(asic65_result_index < 8) ? asic65_result_index : 7];
+				asic65_result_index++;
+			}
+			break;
+		}
+		
+		case OP_VERIFYBANK:	/* verify a bank */
+		{
+			static const UINT16 bankverify[] =
+			{
+				0x0eb2,0x1000,0x171b,0x3d28
+			};
+			result = bankverify[asic65_last_bank];
+			break;
+		}
 	}
 
 #if LOG_ASIC

@@ -62,6 +62,7 @@ DRIVER_INIT( mkla4 );
 
 DRIVER_INIT( term2 );
 DRIVER_INIT( term2la2 );
+DRIVER_INIT( term2la1 );
 
 DRIVER_INIT( totcarn );
 DRIVER_INIT( totcarnp );

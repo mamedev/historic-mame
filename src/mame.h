@@ -35,9 +35,13 @@ extern int gbPriorityBitmapIsDirty;
 #ifndef MESS
 #define APPNAME					"MAME"
 #define APPLONGNAME				"M.A.M.E."
+#define GAMENOUN				"game"
+#define GAMESNOUN				"games"
 #else
 #define APPNAME					"MESS"
 #define APPLONGNAME				"M.E.S.S."
+#define GAMENOUN				"system"
+#define GAMESNOUN				"systems"
 #endif
 
 

@@ -352,25 +352,33 @@ WRITE16_HANDLER( atarisy1_yscroll_w )
 
 WRITE16_HANDLER( atarisy1_spriteram_w )
 {
+	int active_bank = atarimo_get_bank(0);
 	int oldword = atarimo_0_spriteram[offset];
 	int newword = oldword;
 	COMBINE_DATA(&newword);
 
-	/* let the MO handler do the basic work */
-	atarimo_0_spriteram_w(offset, data, 0);
-
-	/* if the data changed, see if it affected a timer */
-	if (oldword != newword)
+	/* if the data changed, and it modified the live sprite bank, do some extra work */
+	if (oldword != newword && (offset >> 8) == active_bank)
 	{
 		/* if modifying a timer, beware */
 		if (((offset & 0xc0) == 0x00 && atarimo_0_spriteram[offset | 0x40] == 0xffff) ||
 		    ((offset & 0xc0) == 0x40 && (newword == 0xffff || oldword == 0xffff)))
 		{
 			/* if the timer is in the active bank, update the display list */
-			if ((offset >> 8) == atarimo_get_bank(0))
-				update_timers(cpu_getscanline());
+			atarimo_0_spriteram_w(offset, data, 0);
+			update_timers(cpu_getscanline());
 		}
+		
+		/* if we're about to modify data in the active sprite bank, make sure the video is up-to-date */
+		/* Road Runner needs this to work; note the +2 kludge -- +1 would be correct since the video */
+		/* renders the next scanline's sprites to the line buffers, but Road Runner still glitches */
+		/* without the extra +1 */
+		else
+			force_partial_update(cpu_getscanline() + 2);
 	}
+
+	/* let the MO handler do the basic work */
+	atarimo_0_spriteram_w(offset, data, 0);
 }
 
 
@@ -518,7 +526,7 @@ VIDEO_UPDATE( atarisy1 )
 					else
 					{
 						/* priority pens for playfield color 0 */
-						if ((pf[x] & 0xf0) != 0 || !(playfield_priority_pens & (1 << (pf[x] & 0x0f))))
+						if ((pf[x] & 0xf8) != 0 || !(playfield_priority_pens & (1 << (pf[x] & 0x07))))
 							pf[x] = mo[x];
 					}
 

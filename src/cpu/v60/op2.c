@@ -115,6 +115,27 @@ int opNEGFS(void)
 	F2END()
 }
 
+int opABSFS(void)
+{
+	float appf;
+
+	F2DecodeFirstOperand(ReadAM, 2);
+	F2DecodeSecondOperand(ReadAMAddress, 2);
+
+	F2LOADOPFLOAT(2);
+
+	if(appf < 0)
+		appf = -appf;
+
+	_OV=0;
+	_CY=0;
+	_S=((f2u(appf) & 0x80000000)!=0);
+	_Z=(appf == 0.0f);
+
+	F2STOREOPFLOAT(2);
+	F2END()
+}
+
 int opADDFS(void)
 {
 	UINT32 appw;
@@ -300,7 +321,7 @@ int (*Op5CTable[32])(void) =
 	op5CUNHANDLED,
 	opMOVFS,
 	opNEGFS,
-	op5CUNHANDLED,
+	opABSFS,
 	op5CUNHANDLED,
 	op5CUNHANDLED,
 	op5CUNHANDLED,

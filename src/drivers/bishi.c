@@ -5,8 +5,8 @@
 
  Driver by R. Belmont
 
- WORKING: ram/rom test passes, IRQs, sound/music, inputs.
- TODO: Some colors wrong, some minor visrgn/layer alignment problems
+ WORKING: ram/rom test passes, IRQs, sound/music, inputs ,colors.
+ TODO: some minor visrgn/layer alignment problems
 
 ***************************************************************************/
 
@@ -104,7 +104,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x870000, 0x8700ff, K055555_word_w },		// PCU2
 	{ 0x880000, 0x880003, bishi_sound_w },
 	{ 0xa00000, 0xa01fff, K056832_ram_word_w },	/* Graphic planes */
-	{ 0xb00000, 0xb03fff, paletteram16_xrgb_word_w, &paletteram16 },
+	{ 0xb00000, 0xb03fff, paletteram16_xbgr_word_w, &paletteram16 },
 MEMORY_END
 
 INPUT_PORTS_START( bishi )

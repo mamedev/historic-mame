@@ -8,7 +8,7 @@ struct segapcm
 {
 	UINT8  *ram;
 	UINT16 low[16];
-	const UINT8 *rom;
+	const UINT8 *rom, *rom_end;
 	UINT32 *step;
 	int rate;
 	int bankshift;
@@ -37,6 +37,7 @@ static void SEGAPCM_update(int num, INT16 **buffer, int length)
 
 			for(i=0; i<length; i++) {
 				INT8 v;
+				const UINT8 *ptr;
 				if((addr >> 24) == end) {
 					if(!(flags & 2))
 						addr = loop << 16;
@@ -45,7 +46,11 @@ static void SEGAPCM_update(int num, INT16 **buffer, int length)
 						break;
 					}
 				}
-				v = rom[addr>>16] - 0x80;
+				ptr = rom + (addr >> 16);
+				if(ptr < spcm.rom_end)
+					v = rom[addr>>16] - 0x80;
+				else
+					v = 0;
 				buffer[0][i] += (v*voll);
 				buffer[1][i] += (v*volr);
 				addr += step;
@@ -62,12 +67,13 @@ int SEGAPCM_sh_start( const struct MachineSound *msound )
 	struct SEGAPCMinterface *intf = msound->sound_interface;
 	const char *name[2];
 	int vol[2];
-	int mask;
+	int mask, rom_mask;
 	int i;
 
-	spcm.rate = intf->mode == SEGAPCM_SAMPLE15K ? 15800 : 15800*2;
+	spcm.rate = intf->mode == SEGAPCM_SAMPLE15K ? 4000000/256 : 4000000/128;
 
 	spcm.rom = (const UINT8 *)memory_region(intf->region);
+	spcm.rom_end = spcm.rom + memory_region_length(intf->region);
 	spcm.ram = auto_malloc(0x800);
 	spcm.step = auto_malloc(sizeof(UINT32)*256);
 
@@ -83,7 +89,11 @@ int SEGAPCM_sh_start( const struct MachineSound *msound )
 	mask = intf->bank >> 16;
 	if(!mask)
 		mask = BANK_MASK7>>16;
-	spcm.bankmask = mask;
+
+	for(rom_mask = 1; rom_mask < memory_region_length(intf->region); rom_mask *= 2);
+	rom_mask--;
+
+	spcm.bankmask = mask & (rom_mask >> spcm.bankshift);
 
 	name[0] = "SEGAPCM L";
 	name[1] = "SEGAPCM R";

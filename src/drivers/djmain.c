@@ -9,8 +9,8 @@
  *	Gx847 beatmania 4th MIX
  *	Gx981 beatmania 5th MIX
  *	Gx993 beatmania Club MIX (2000)
- *	????? beatmania featuring DCT
  *	Gx988 beatmania complete MIX 2
+ *	Gx995 beatmania featuring Dreams Come True
  *	GxA05 beatmania CORE REMIX
  *	GxA21 beatmania 6th MIX (2001)
  *	GxB07 beatmania 7th MIX
@@ -713,6 +713,35 @@ MEMORY_END
 	PORT_DIPSETTING(    0x01, "Level 2" ) \
 	PORT_DIPSETTING(    0x00, "Level 3" )
 
+#define BEATMANIA_DSW2_OLD_LEVEL \
+	PORT_START      /* IN 4 */ \
+	PORT_DIPNAME( 0x80, 0x80, "Score Display" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Demo_Sounds ) ) \
+	PORT_DIPSETTING(    0x60, "Loud" ) \
+	PORT_DIPSETTING(    0x20, "Medium" ) \
+	PORT_DIPSETTING(    0x40, "Low" ) \
+	PORT_DIPSETTING(    0x00, "Silent" ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 2-4 */ \
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x0a, "Level 0" ) \
+	PORT_DIPSETTING(    0x0e, "Level 1" ) \
+	PORT_DIPSETTING(    0x0d, "Level 2" ) \
+	PORT_DIPSETTING(    0x0c, "Level 3" ) \
+	PORT_DIPSETTING(    0x0b, "Level 4" ) \
+	PORT_DIPSETTING(    0x0f, "Level 5" ) \
+	PORT_DIPSETTING(    0x09, "Level 6" ) \
+	PORT_DIPSETTING(    0x08, "Level 7" ) \
+	PORT_DIPSETTING(    0x07, "Level 8" ) \
+	PORT_DIPSETTING(    0x06, "Level 9" ) \
+	PORT_DIPSETTING(    0x05, "Level 10" ) \
+	PORT_DIPSETTING(    0x04, "Level 11" ) \
+	PORT_DIPSETTING(    0x03, "Level 12" ) \
+	PORT_DIPSETTING(    0x02, "Level 13" ) \
+	PORT_DIPSETTING(    0x01, "Level 14" ) \
+	PORT_DIPSETTING(    0x00, "Level 15" )
+
 #define BMCOMPMX_DSW2 \
 	PORT_START      /* IN 4 */ \
 	PORT_DIPNAME( 0x80, 0x80, "Score Display" ) \
@@ -754,6 +783,21 @@ MEMORY_END
 	PORT_DIPSETTING(    0x08, "5" ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-5 */ \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-6 */
+
+#define BM1STMIX_DSW3 \
+	PORT_START      /* IN 5 */ \
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_DIPNAME( 0x20, 0x20, "Event Mode" ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x1c, 0x14, "Normal Mode Stages" ) \
+	PORT_DIPSETTING(    0x10, "3" ) \
+	PORT_DIPSETTING(    0x14, "4" ) \
+	PORT_DIPSETTING(    0x00, "5" ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )		/* DSW 3-5 */ \
+	PORT_DIPNAME( 0x01, 0x01, "Free Hidden Songs" )		/* DSW 3-6 */ \
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 #define BMCOMPMX_DSW3 \
 	PORT_START      /* IN 5 */ \
@@ -806,6 +850,14 @@ INPUT_PORTS_START( beatmania )
 	BEATMANIA_DSW1(0x00, 0xff)	/* IN 3 */
 	BEATMANIA_DSW2			/* IN 4 */
 	BEATMANIA_DSW3			/* IN 5 */
+	BEATMANIA_SCRATCH		/* IN 6 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bm1stmix )
+	BEATMANIA_INPUT			/* IN 0-2 */
+	BEATMANIA_DSW1(0x00, 0xff)	/* IN 3 */
+	BEATMANIA_DSW2_OLD_LEVEL	/* IN 4 */
+	BM1STMIX_DSW3			/* IN 5 */
 	BEATMANIA_SCRATCH		/* IN 6 */
 INPUT_PORTS_END
 
@@ -956,6 +1008,28 @@ MACHINE_DRIVER_END
  *	ROM definitions
  *
  *************************************/
+
+ROM_START( bm1stmix )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
+	ROM_LOAD16_BYTE( "753jab01.6a", 0x000000, 0x80000, CRC(25BF8629) SHA1(2be73f9dd25cae415c6443f221cc7d38d5555ae5) )
+	ROM_LOAD16_BYTE( "753jab02.8a", 0x000001, 0x80000, CRC(6AB951DE) SHA1(a724ede03b74e9422c120fcc263e2ebcc3a3e110) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0)		/* SPRITE */
+	ROM_LOAD16_BYTE( "753jaa03.19a", 0x000000, 0x80000, CRC(F2B2BCE8) SHA1(61d31b111f35e7dde89965fa43ba627c12aff11c) )
+	ROM_LOAD16_BYTE( "753jaa04.20a", 0x000001, 0x80000, CRC(85A18F9D) SHA1(ecd0ab4f53e882b00176dacad5fac35345fbea66) )
+	ROM_LOAD16_BYTE( "753jaa05.22a", 0x100000, 0x80000, CRC(749B1E87) SHA1(1c771c19f152ae95171e4fd51da561ba4ec5ea87) )
+	ROM_LOAD16_BYTE( "753jaa06.24a", 0x100001, 0x80000, CRC(6D86B0FD) SHA1(74a255dbb1c83131717ea1fe335f12aef81d9fcc) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )		/* TILEMAP */
+	ROM_LOAD16_BYTE( "753jaa07.22d", 0x000000, 0x80000, CRC(F03AB5D8) SHA1(2ad902547908208714855aa0f2b7ed493452ee5f) )
+	ROM_LOAD16_BYTE( "753jaa08.23d", 0x000001, 0x80000, CRC(6559F0C8) SHA1(0d6ec4bdc22c02cb9fb8de36b0a8f7a6c983440e) )
+	ROM_LOAD16_BYTE( "753jaa09.25d", 0x100000, 0x80000, CRC(B50C3DBB) SHA1(6022ea249aad0793b2279699e68087b4bc9b4ef1) )
+	ROM_LOAD16_BYTE( "753jaa10.27d", 0x100001, 0x80000, CRC(391F4BFD) SHA1(791c9889ea3ce639bbfb87934a1cad9aa3c9ccde) )
+
+	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
+	// There is an alternate image: MD5(260c9b72f4a03055e3abad61c6225324)
+	DISK_IMAGE( "753jaa11.chd", 0, MD5(d56ec7b9877d1f26d7fc1cabed404947) )	/* ver 1.00 JA */
+ROM_END
 
 ROM_START( bmcompmx )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
@@ -1178,6 +1252,7 @@ static DRIVER_INIT( bmcorerm )
  *
  *************************************/
 
+GAME( 1997, bm1stmix, 0,        djmain,   bm1stmix,  beatmania, ROT0, "Konami", "beatmania (ver JA-B)" )
 GAME( 1999, bmcompmx, 0,        djmain,   bmcompmx,  beatmania, ROT0, "Konami", "beatmania complete MIX (ver JA-B)" )
 GAME( 1999, hmcompmx, bmcompmx, djmain,   bmcompmx,  hmcompmx,  ROT0, "Konami", "hiphopmania complete MIX (ver UA-B)" )
 GAME( 1999, bm4thmix, 0,        djmain,   bm4thmix,  bm4thmix,  ROT0, "Konami", "beatmania 4th MIX (ver JA-A)" )

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V3.3
+ *	 Portable Z80 emulator V3.4
  *
  *	 Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
@@ -17,7 +17,10 @@
  *	   terms of its usage and license at any time, including retroactively
  *	 - This entire notice must remain in the source code.
  *
- *	 Changes in 3,3
+ *   Changes in 3.4
+ *   - Removed Z80-MSX specific code as it's not needed any more.
+ *   - Implemented DAA without look-up table [Sean Young]
+ *	 Changes in 3.3
  *	 - Fixed undocumented flags XF & YF in the non-asm versions of CP,
  *	   and all the 16 bit arithmetic instructions. [Sean Young]
  *	 Changes in 3.2
@@ -77,10 +80,6 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "z80.h"
-
-#ifdef Z80_MSX
-#include "z80_msx.h"
-#endif
 
 #define VERBOSE 0
 
@@ -205,13 +204,9 @@ typedef struct {
 #define _IFF2	Z80.IFF2
 #define _HALT	Z80.HALT
 
-#ifdef Z80_MSX
-	#define Z80_ICOUNT	z80_msx_ICount
-#else
-	#define	Z80_ICOUNT	z80_ICount
-#endif
+#define	z80_ICount	z80_ICount
 
-int Z80_ICOUNT;
+int z80_ICount;
 static Z80_Regs Z80;
 static UINT32 EA;
 static int after_EI = 0;
@@ -221,8 +216,6 @@ static UINT8 SZ_BIT[256];	/* zero, sign and parity/overflow (=zero) flags for BI
 static UINT8 SZP[256];		/* zero, sign and parity flags */
 static UINT8 SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
 static UINT8 SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
-
-#include "z80daa.h"
 
 #if BIG_FLAGS_ARRAY
 #include <signal.h>
@@ -495,7 +488,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 	if( cycles > 0 )
 	{
 		_R += (cycles / cyclesum) * opcodes;
-		Z80_ICOUNT -= (cycles / cyclesum) * cyclesum;
+		z80_ICount -= (cycles / cyclesum) * cyclesum;
 	}
 }
 
@@ -507,7 +500,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * adjust cycle count by n T-states
  ***************************************************************/
-#define CC(prefix,opcode) Z80_ICOUNT -= cc[Z80_TABLE_##prefix][opcode]
+#define CC(prefix,opcode) z80_ICount -= cc[Z80_TABLE_##prefix][opcode]
 
 /***************************************************************
  * execute an opcode
@@ -600,21 +593,12 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * Enter HALT state; write 1 to fake port on first execution
  ***************************************************************/
-#ifdef Z80_MSX
 #define ENTER_HALT {											\
 	_PC--;														\
 	_HALT = 1;													\
 	if( !after_EI ) 											\
-		z80_msx_burn( Z80_ICOUNT ); 							\
+		z80_burn( z80_ICount ); 								\
 }
-#else
-#define ENTER_HALT {											\
-	_PC--;														\
-	_HALT = 1;													\
-	if( !after_EI ) 											\
-		z80_burn( Z80_ICOUNT ); 								\
-}
-#endif
 
 /***************************************************************
  * Leave HALT state; write 0 to fake port
@@ -673,9 +657,6 @@ INLINE void WM16( UINT32 addr, PAIR *r )
 INLINE UINT8 ROP(void)
 {
 	unsigned pc = _PCD;
-#ifdef Z80_MSX
-	if ( !(pc & 0x1fff) ) change_pc16 (pc);
-#endif
 	_PC++;
 	return cpu_readop(pc);
 }
@@ -689,23 +670,15 @@ INLINE UINT8 ROP(void)
 INLINE UINT8 ARG(void)
 {
 	unsigned pc = _PCD;
-#ifdef Z80_MSX
-	if ( !(pc & 0x1fff) ) change_pc16 (pc);
-#endif
 	_PC++;
 	return cpu_readop_arg(pc);
 }
 
 INLINE UINT32 ARG16(void)
 {
-#ifdef Z80_MSX
-	unsigned ret = ARG();
-	return ret | ((ARG()&0xffff) << 8);
-#else
 	unsigned pc = _PCD;
 	_PC += 2;
 	return cpu_readop_arg(pc) | (cpu_readop_arg((pc+1)&0xffff) << 8);
-#endif
 }
 
 /***************************************************************
@@ -737,7 +710,7 @@ INLINE UINT32 ARG16(void)
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
-			BURNODD( Z80_ICOUNT, 1, cc[Z80_TABLE_op][0xc3] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
 	}															\
 	else														\
 	{															\
@@ -748,7 +721,7 @@ INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-					BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x00], \
+					BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
 						2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
 			}													\
 		}														\
@@ -757,7 +730,7 @@ INLINE UINT32 ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-				BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x31], 	\
+				BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31], 	\
 					2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
 		}														\
 	}															\
@@ -797,7 +770,7 @@ INLINE UINT32 ARG16(void)
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
-			BURNODD( Z80_ICOUNT, 1, cc[Z80_TABLE_op][0x18] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0x18] );	\
 	}															\
 	else														\
 	{															\
@@ -808,7 +781,7 @@ INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-				   BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x00],	\
+				   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],	\
 					   2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
 			}													\
 		}														\
@@ -817,7 +790,7 @@ INLINE UINT32 ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-			   BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x31],		\
+			   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 				   2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
 		}														\
 	}															\
@@ -1300,11 +1273,41 @@ INLINE UINT8 DEC(UINT8 value)
  * DAA
  ***************************************************************/
 #define DAA {													\
-	int idx = _A;												\
-	if( _F & CF ) idx |= 0x100; 								\
-	if( _F & HF ) idx |= 0x200; 								\
-	if( _F & NF ) idx |= 0x400; 								\
-	_AF = DAATable[idx];										\
+	UINT8 cf, nf, hf, lo, hi, diff;								\
+	cf = _F & CF;												\
+	nf = _F & NF;												\
+	hf = _F & HF;												\
+	lo = _A & 15;												\
+	hi = _A / 16;												\
+																\
+	if (cf)														\
+	{															\
+		diff = (lo <= 9 && !hf) ? 0x60 : 0x66;					\
+	} 															\
+	else 														\
+	{															\
+		if (lo >= 10)											\
+		{														\
+			diff = hi <= 8 ? 0x06 : 0x66;						\
+		}														\
+		else 													\
+		{														\
+			if (hi >= 10)										\
+			{													\
+				diff = hf ? 0x66 : 0x60;						\
+			}													\
+			else												\
+			{													\
+				diff = hf ? 0x06 : 0x00;						\
+			}													\
+		}														\
+	}															\
+	if (nf) _A -= diff;											\
+	else _A += diff;											\
+																\
+	_F = SZP[_A] | (_F & NF);									\
+	if (cf || (lo <= 9 ? hi >= 10 : hi >= 9)) _F |= CF;			\
+	if (nf ? hf && lo <= 5 : lo >= 10)  _F |= HF;				\
 }
 
 /***************************************************************
@@ -3527,7 +3530,7 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb1] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _BC > 0 && Z80_ICOUNT > cnt )					\
+			while( _BC > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_BC--;												\
@@ -3545,7 +3548,7 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb1] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _BC > 0 && Z80_ICOUNT > cnt )				\
+				while( _BC > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_BC--;											\
@@ -3570,7 +3573,7 @@ if( _DE > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb3] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _DE > 0 && Z80_ICOUNT > cnt )					\
+			while( _DE > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_DE--;												\
@@ -3588,7 +3591,7 @@ if( _DE > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb3] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _DE > 0 && Z80_ICOUNT > cnt )				\
+				while( _DE > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_DE--;											\
@@ -3613,7 +3616,7 @@ if( _HL > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb5] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _HL > 0 && Z80_ICOUNT > cnt )					\
+			while( _HL > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_HL--;												\
@@ -3631,7 +3634,7 @@ if( _HL > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb5] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _HL > 0 && Z80_ICOUNT > cnt )				\
+				while( _HL > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_HL--;											\
@@ -3723,7 +3726,7 @@ OP(op,3c) { _A = INC(_A);											} /* INC  A 		  */
 OP(op,3d) { _A = DEC(_A);											} /* DEC  A 		  */
 OP(op,3e) { _A = ARG(); 											} /* LD   A,n		  */
 OP(op,3f) { _F = ((_F&(SF|ZF|PF|CF))|((_F&CF)<<4)|(_A&(YF|XF)))^CF; } /* CCF			  */
-//OP(op,3f) { _F = ((_F & ~(HF|NF)) | ((_F & CF)<<4)) ^ CF; 		  } /* CCF				*/
+/*OP(op,3f) { _F = ((_F & ~(HF|NF)) | ((_F & CF)<<4)) ^ CF; 		  }    CCF				   */
 
 OP(op,40) { 														} /* LD   B,B		  */
 OP(op,41) { _B = _C;												} /* LD   B,C		  */
@@ -4028,11 +4031,7 @@ static void take_interrupt(void)
 /****************************************************************************
  * Processor initialization
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_init(void)
-#else
 void z80_init(void)
-#endif
 {
 	int cpu = cpu_getactivecpu();
 	int i, p;
@@ -4163,11 +4162,7 @@ void z80_init(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_reset(void *param)
-#else
 void z80_reset(void *param)
-#endif
 {
 	Z80_DaisyChain *daisy_chain = (Z80_DaisyChain *)param;
 	memset(&Z80, 0, sizeof(Z80));
@@ -4195,11 +4190,7 @@ void z80_reset(void *param)
 	change_pc16(_PCD);
 }
 
-#ifdef Z80_MSX
-void z80_msx_exit(void)
-#else
 void z80_exit(void)
-#endif
 {
 #if BIG_FLAGS_ARRAY
 	if (SZHVC_add) free(SZHVC_add);
@@ -4212,13 +4203,9 @@ void z80_exit(void)
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
-#ifdef Z80_MSX
-int z80_msx_execute(int cycles)
-#else
 int z80_execute(int cycles)
-#endif
 {
-	Z80_ICOUNT = cycles - Z80.extra_cycles;
+	z80_ICount = cycles - Z80.extra_cycles;
 	Z80.extra_cycles = 0;
 
 	do
@@ -4227,40 +4214,32 @@ int z80_execute(int cycles)
 		CALL_MAME_DEBUG;
 		_R++;
 		EXEC_INLINE(op,ROP());
-	} while( Z80_ICOUNT > 0 );
+	} while( z80_ICount > 0 );
 
-	Z80_ICOUNT -= Z80.extra_cycles;
+	z80_ICount -= Z80.extra_cycles;
 	Z80.extra_cycles = 0;
 
-	return cycles - Z80_ICOUNT;
+	return cycles - z80_ICount;
 }
 
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_burn(int cycles)
-#else
 void z80_burn(int cycles)
-#endif
 {
 	if( cycles > 0 )
 	{
 		/* NOP takes 4 cycles per instruction */
 		int n = (cycles + 3) / 4;
 		_R += n;
-		Z80_ICOUNT -= 4 * n;
+		z80_ICount -= 4 * n;
 	}
 }
 
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
-#ifdef Z80_MSX
-unsigned z80_msx_get_context (void *dst)
-#else
 unsigned z80_get_context (void *dst)
-#endif
 {
 	if( dst )
 		*(Z80_Regs*)dst = Z80;
@@ -4270,11 +4249,7 @@ unsigned z80_get_context (void *dst)
 /****************************************************************************
  * Set all registers to given values
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_context (void *src)
-#else
 void z80_set_context (void *src)
-#endif
 {
 	if( src )
 		Z80 = *(Z80_Regs*)src;
@@ -4284,11 +4259,7 @@ void z80_set_context (void *src)
 /****************************************************************************
  * Get a pointer to a cycle count table
  ****************************************************************************/
-#ifdef Z80_MSX
-const void *z80_msx_get_cycle_table (int which)
-#else
 const void *z80_get_cycle_table (int which)
-#endif
 {
 	if (which >= 0 && which <= Z80_TABLE_xycb)
 		return cc[which];
@@ -4298,11 +4269,7 @@ const void *z80_get_cycle_table (int which)
 /****************************************************************************
  * Set a new cycle count table
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_cycle_table (int which, void *new_table)
-#else
 void z80_set_cycle_table (int which, void *new_table)
-#endif
 {
 	if (which >= 0 && which <= Z80_TABLE_ex)
 		cc[which] = new_table;
@@ -4311,11 +4278,7 @@ void z80_set_cycle_table (int which, void *new_table)
 /****************************************************************************
  * Return a specific register
  ****************************************************************************/
-#ifdef Z80_MSX
-unsigned z80_msx_get_reg (int regnum)
-#else
 unsigned z80_get_reg (int regnum)
-#endif
 {
 	switch( regnum )
 	{
@@ -4360,11 +4323,7 @@ unsigned z80_get_reg (int regnum)
 /****************************************************************************
  * Set a specific register
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_reg (int regnum, unsigned val)
-#else
 void z80_set_reg (int regnum, unsigned val)
-#endif
 {
 	switch( regnum )
 	{
@@ -4388,13 +4347,8 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_IFF1: Z80.IFF1 = val; break;
 		case Z80_IFF2: Z80.IFF2 = val; break;
 		case Z80_HALT: Z80.HALT = val; break;
-#ifdef Z80_MSX
-		case Z80_NMI_STATE: z80_msx_set_irq_line(IRQ_LINE_NMI,val); break;
-		case Z80_IRQ_STATE: z80_msx_set_irq_line(0,val); break;
-#else
 		case Z80_NMI_STATE: z80_set_irq_line(IRQ_LINE_NMI,val); break;
 		case Z80_IRQ_STATE: z80_set_irq_line(0,val); break;
-#endif
 		case Z80_DC0: Z80.int_state[0] = val; break;
 		case Z80_DC1: Z80.int_state[1] = val; break;
 		case Z80_DC2: Z80.int_state[2] = val; break;
@@ -4415,11 +4369,7 @@ void z80_set_reg (int regnum, unsigned val)
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_irq_line(int irqline, int state)
-#else
 void z80_set_irq_line(int irqline, int state)
-#endif
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -4489,11 +4439,7 @@ void z80_set_irq_line(int irqline, int state)
 /****************************************************************************
  * Set IRQ vector callback
  ****************************************************************************/
-#ifdef Z80_MSX
-void z80_msx_set_irq_callback(int (*callback)(int))
-#else
 void z80_set_irq_callback(int (*callback)(int))
-#endif
 {
 	LOG(("Z80 #%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
 	Z80.irq_callback = callback;
@@ -4502,11 +4448,7 @@ void z80_set_irq_callback(int (*callback)(int))
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-#ifdef Z80_MSX
-const char *z80_msx_info(void *context, int regnum)
-#else
 const char *z80_info(void *context, int regnum)
-#endif
 {
 	static char buffer[32][47+1];
 	static int which = 0;
@@ -4554,13 +4496,9 @@ const char *z80_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
-#ifdef Z80_MSX
-		case CPU_INFO_NAME: return "Z80-MSX";
-#else
 		case CPU_INFO_NAME: return "Z80";
-#endif
 		case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "3.3";
+		case CPU_INFO_VERSION: return "3.4";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
@@ -4569,11 +4507,7 @@ const char *z80_info(void *context, int regnum)
 	return buffer[which];
 }
 
-#ifdef Z80_MSX
-unsigned z80_msx_dasm( char *buffer, unsigned pc )
-#else
 unsigned z80_dasm( char *buffer, unsigned pc )
-#endif
 {
 #ifdef MAME_DEBUG
 	return DasmZ80( buffer, pc );

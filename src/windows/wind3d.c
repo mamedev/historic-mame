@@ -169,6 +169,7 @@ static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC2 *desc);
 static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock);
+static HRESULT blit_rgb_pattern(LPRECT dst, LPDIRECTDRAWSURFACE7 surface);
 static void init_vertices_preprocess(LPRECT src);
 static void init_vertices_screen(LPRECT src, LPRECT dst);
 
@@ -373,6 +374,14 @@ static int win_d3d_test_hardware_caps(void)
 
 static void adjust_prescale(int width, int height)
 {
+	int image_width = win_visible_width;
+	int image_height = win_visible_height;
+
+	if (!image_width)
+		image_width = max_width;
+	if (!image_height)
+		image_height = max_height;
+
 	// if prescale is disbled just set the levels to 1
 	if (!win_d3d_use_prescale)
 	{
@@ -391,25 +400,25 @@ static void adjust_prescale(int width, int height)
 		if (win_d3d_effects_swapxy)
 		{
 			if (win_d3d_use_scanlines)
-				current_prescalex = (int)((double)height / max_height * 0.50);
+				current_prescalex = (int)((double)height / image_height * 0.50);
 			else
-				current_prescalex = (int)((double)height / max_height * 0.67);
+				current_prescalex = (int)((double)height / image_height * 0.67);
 		}
 		else
 		{
 			if (win_d3d_use_scanlines)
-				current_prescalex = (int)((double)width / max_width * 0.50);
+				current_prescalex = (int)((double)width / image_width * 0.50);
 			else
-				current_prescalex = (int)((double)width / max_width * 0.67);
+				current_prescalex = (int)((double)width / image_width * 0.67);
 		}
 	}
 	// full
 	else if (win_d3d_use_prescale == 3)
 	{
 		if (win_d3d_effects_swapxy)
-			current_prescalex = (int)((double)height / max_height);
+			current_prescalex = (int)((double)height / image_height);
 		else
-			current_prescalex = (int)((double)width / max_width);
+			current_prescalex = (int)((double)width / image_width);
 	}
 
 	// adjust if software scaling is used
@@ -428,25 +437,25 @@ static void adjust_prescale(int width, int height)
 		if (win_d3d_effects_swapxy)
 		{
 			if (win_d3d_use_scanlines)
-				current_prescaley = (int)((double)width / max_width * 0.75);
+				current_prescaley = (int)((double)width / image_width * 0.75);
 			else
-				current_prescaley = (int)((double)width / max_width * 0.67);
+				current_prescaley = (int)((double)width / image_width * 0.67);
 		}
 		else
 		{
 			if (win_d3d_use_scanlines)
-				current_prescaley = (int)((double)height / max_height * 0.75);
+				current_prescaley = (int)((double)height / image_height * 0.75);
 			else
-				current_prescaley = (int)((double)height / max_height * 0.67);
+				current_prescaley = (int)((double)height / image_height * 0.67);
 		}
 	}
 	// full
 	else if (win_d3d_use_prescale == 3)
 	{
 		if (win_d3d_effects_swapxy)
-			current_prescaley = (int)((double)width / max_width);
+			current_prescaley = (int)((double)width / image_width);
 		else
-			current_prescaley = (int)((double)height / max_height);
+			current_prescaley = (int)((double)height / image_height);
 	}
 
 	// adjust if software scaling is used
@@ -462,29 +471,33 @@ static void adjust_prescale(int width, int height)
 	{
 		if (blit_swapxy)
 		{
-			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * win_visible_height))
+			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * image_height))
 				current_prescalex--;
-			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * win_visible_width))
+			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * image_width))
 				current_prescaley--;
 		}
 		else
 		{
-			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * win_visible_width))
+			while (current_prescalex >= 1 && preprocess_desc.dwWidth < (current_prescalex * image_width))
 				current_prescalex--;
-			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * win_visible_height))
+			while (current_prescaley >= 1 && preprocess_desc.dwHeight < (current_prescaley * image_height))
 				current_prescaley--;
 		}
 	}
 
+#if 0
 	// if the prescale levels are 1, just disable prescale
 	if (current_prescalex == 1 && current_prescaley == 1)
 		win_d3d_use_prescale = 0;
+#endif
 
 #if SHOW_PRESCALE
-	if (win_d3d_use_prescale)
-		fprintf(stderr, "prescale set to %ix%i (image size %ix%i, window size %ix%i)\n", current_prescalex, current_prescaley, max_width, max_height, width, height);
+	if (win_d3d_use_prescale && (current_prescalex > 1 || current_prescaley > 1))
+		fprintf(stderr, "prescale set to %ix%i", current_prescalex, current_prescaley);
 	else
-		fprintf(stderr, "prescale disabled\n");
+		fprintf(stderr, "prescale disabled");
+
+	fprintf(stderr, " (image size %ix%i, window size %ix%i)\n", image_width, image_height, width, height);
 #endif
 }
 
@@ -781,11 +794,21 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	target_width = max_width * effect_min_xscale;
 	target_height = max_height * effect_min_yscale;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		target_height *= 2;
+	{
+		if (!blit_swapxy)
+			target_height *= 2;
+		else
+			target_width *= 2;
+	}
 	else if (win_old_scanlines)
 		target_width *= 2, target_height *= 2;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-		target_width *= 2;
+	{
+		if (!blit_swapxy)
+			target_width *= 2;
+		else
+			target_height *= 2;
+	}
 
 	// determine the zoom level based on the number of scanlines of the game
 	if (win_keep_aspect && win_force_int_stretch != FORCE_INT_STRECT_FULL)
@@ -1391,6 +1414,10 @@ static int create_blit_surface(void)
 #endif
 	adjust_prescale(primary_desc.dwWidth, primary_desc.dwHeight);
 
+	// quick hack to give games that start out at high resolutions some extra room
+	if ((blit_swapxy ? max_width : max_height) > 256)
+		current_prescaley++;
+
 	// now create texture used for prescale and feedback (always the same format as the primary surface)
 	if (win_d3d_use_prescale || win_d3d_use_feedback)
 	{
@@ -1644,7 +1671,7 @@ static void erase_surfaces(void)
 	}
 	else
 	{
-		// do a color fill blit on both primary adn back buffer
+		// do a color fill blit on both primary and back buffer
 		result = IDirectDrawSurface7_Blt(primary_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
 		result = IDirectDrawSurface7_Blt(back_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
 	}
@@ -1880,11 +1907,13 @@ static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bo
 {
 	int dstdepth = blit_desc.DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
-	int blit_width, blit_height;
 	struct win_blit_params params;
-	HRESULT result;
+	struct rectangle temprect;
 	RECT src, dst, margins;
+	int blit_width, blit_height;
 	int dstxoffs;
+	HRESULT result;
+	int render_and_flip_result;
 
 	if (blit_swapxy)
 	{
@@ -1896,6 +1925,13 @@ static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bo
 		blit_width = win_visible_width;
 		blit_height = win_visible_height;
 	}
+
+	temprect.min_x = win_visible_rect.left;
+	temprect.max_x = win_visible_rect.right - 1;
+	temprect.min_y = win_visible_rect.top;
+	temprect.max_y = win_visible_rect.bottom - 1;
+
+	win_disorient_rect(&temprect);
 
 tryagain:
 	if (win_d3d_tex_manage)
@@ -1931,11 +1967,11 @@ tryagain:
 	dstxoffs = (((UINT32)blit_desc.lpSurface + 16) & ~15) - (UINT32)blit_desc.lpSurface;
 	dstxoffs /= (dstdepth / 8);
 
-	// perform the low-level blit
+	// set up the low-level blit
 	params.dstdata		= blit_desc.lpSurface;
 	params.dstpitch		= blit_desc.DUMMYUNIONNAMEN(1).lPitch;
 	params.dstdepth		= dstdepth;
-	params.dstxoffs		= dstxoffs;
+	params.dstxoffs		= 0;;
 	params.dstyoffs		= 0;
 	params.dstxscale	= effect_min_xscale;
 	params.dstyscale	= effect_min_yscale;
@@ -1946,10 +1982,32 @@ tryagain:
 	params.srcpitch		= bitmap->rowbytes;
 	params.srcdepth		= bitmap->depth;
 	params.srclookup	= win_prepare_palette(&params);
-	params.srcxoffs		= win_visible_rect.left;
-	params.srcyoffs		= win_visible_rect.top;
-	params.srcwidth		= win_visible_width;
-	params.srcheight	= win_visible_height;
+
+	// adjust for more optimal bounds
+	if (bounds && !update && !vector_dirty_pixels)
+	{
+		params.dstxoffs -= temprect.min_x;
+		params.dstyoffs -= temprect.min_y;
+
+		temprect.min_x	= bounds->min_x;
+		temprect.max_x	= bounds->max_x;
+		temprect.min_y	= bounds->min_y;
+		temprect.max_y	= bounds->max_y;
+
+		win_disorient_rect(&temprect);
+
+		params.dstxoffs	+= temprect.min_x;
+		params.dstxoffs	*= effect_min_xscale;
+		params.dstyoffs	+= temprect.min_y;
+		params.dstyoffs	*= effect_min_yscale;
+	}
+
+	params.dstxoffs		+= dstxoffs;
+
+	params.srcxoffs		= temprect.min_x;
+	params.srcyoffs		= temprect.min_y;
+	params.srcwidth		= temprect.max_x - temprect.min_x + 1;
+	params.srcheight	= temprect.max_y - temprect.min_y + 1;
 
 	params.vecdirty		= vector_dirty_pixels;
 
@@ -1957,29 +2015,7 @@ tryagain:
 	params.flipy		= 0;
 	params.swapxy		= 0;
 
-	// adjust for more optimal bounds
-	if (bounds && !update && !vector_dirty_pixels)
-	{
-		struct rectangle bounds_disoriented = { bounds->min_x, bounds->max_x, bounds->min_y, bounds->max_y };
-
-		win_disorient_rect(&bounds_disoriented);
-
-		if (blit_swapxy)
-		{
-			params.dstxoffs += (bounds_disoriented.min_x + (blit_flipy ? win_visible_rect.top : -win_visible_rect.top)) * effect_min_xscale;
-			params.dstyoffs += (bounds_disoriented.min_y + (blit_flipx ? win_visible_rect.left : -win_visible_rect.left)) * effect_min_yscale;
-		}
-		else
-		{
-			params.dstxoffs += (bounds_disoriented.min_x + (blit_flipx ? win_visible_rect.left : -win_visible_rect.left)) * effect_min_xscale;
-			params.dstyoffs += (bounds_disoriented.min_y + (blit_flipy ? win_visible_rect.top : -win_visible_rect.top)) * effect_min_yscale;
-		}
-		params.srcxoffs += bounds->min_x - win_visible_rect.left;
-		params.srcyoffs += bounds->min_y - win_visible_rect.top;
-		params.srcwidth = bounds->max_x - bounds->min_x + 1;
-		params.srcheight = bounds->max_y - bounds->min_y + 1;
-	}
-
+	// perform the low-level blit
 	win_perform_blit(&params, 0);
 
 	// unlock the surface
@@ -1990,16 +2026,8 @@ tryagain:
 	{
 		RECT blt_src = { params.dstxoffs, params.dstyoffs, params.dstxoffs, params.dstyoffs };
 
-		if (blit_swapxy)
-		{
-			blt_src.right += params.srcheight * effect_min_yscale;
-			blt_src.bottom += params.srcwidth * effect_min_xscale;
-		}
-		else
-		{
-			blt_src.right += params.srcwidth * effect_min_xscale;
-			blt_src.bottom += params.srcheight * effect_min_yscale;
-		}
+		blt_src.right += params.srcwidth * effect_min_xscale;
+		blt_src.bottom += params.srcheight * effect_min_yscale;
 
 		result = IDirectDrawSurface7_BltFast(texture_surface, params.dstxoffs - dstxoffs, params.dstyoffs, blit_surface, &blt_src, DDBLTFAST_WAIT);
 		if (result == DDERR_SURFACELOST)
@@ -2019,44 +2047,46 @@ tryagain:
 	src.right = dstxoffs + (blit_width * effect_min_xscale);
 	src.bottom = blit_height * effect_min_yscale;
 
-	// window mode
-	if (win_window_mode)
-	{
-		// just convert the client area to screen coords
-		GetClientRect(win_video_window, &dst);
-		ClientToScreen(win_video_window, &((LPPOINT)&dst)[0]);
-		ClientToScreen(win_video_window, &((LPPOINT)&dst)[1]);
-	}
+	do {
 
-	// full screen mode
-	else
-	{
-		// constrain to the screen/window size
-		dst.left = dst.top = 0;
-		dst.right = primary_desc.dwWidth;
-		dst.bottom = primary_desc.dwHeight;
+		// window mode
+		if (win_window_mode)
+		{
+			// just convert the client area to screen coords
+			GetClientRect(win_video_window, &dst);
+			ClientToScreen(win_video_window, &((LPPOINT)&dst)[0]);
+			ClientToScreen(win_video_window, &((LPPOINT)&dst)[1]);
+		}
 
-		win_constrain_to_aspect_ratio(&dst, WMSZ_BOTTOMRIGHT, win_default_constraints);
+		// full screen mode
+		else
+		{
+			// constrain to the screen/window size
+			dst.left = dst.top = 0;
+			dst.right = primary_desc.dwWidth;
+			dst.bottom = primary_desc.dwHeight;
 
-		// center
-		dst.left += (primary_desc.dwWidth - (dst.right - dst.left)) / 2;
-		dst.top += (primary_desc.dwHeight - (dst.bottom - dst.top)) / 2;
-		dst.right += dst.left;
-		dst.bottom += dst.top;
+			win_constrain_to_aspect_ratio(&dst, WMSZ_BOTTOMRIGHT, win_default_constraints);
 
-		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &margins);
-		if (dst.left < margins.left)
-			dst.left = margins.left;
-		if (dst.top < margins.top)
-			dst.top = margins.top;
-		if (dst.right > margins.right)
-			dst.right = margins.right;
-		if (dst.bottom > margins.bottom)
-			dst.bottom = margins.bottom;
-   }
+			// center
+			dst.left += (primary_desc.dwWidth - (dst.right - dst.left)) / 2;
+			dst.top += (primary_desc.dwHeight - (dst.bottom - dst.top)) / 2;
+			dst.right += dst.left;
+			dst.bottom += dst.top;
 
-	// render and flip
-	if (!render_and_flip(&src, &dst, update, wait_for_lock))
+			win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &margins);
+			if (dst.left < margins.left)
+				dst.left = margins.left;
+			if (dst.top < margins.top)
+				dst.top = margins.top;
+			if (dst.right > margins.right)
+				dst.right = margins.right;
+			if (dst.bottom > margins.bottom)
+				dst.bottom = margins.bottom;
+		}
+	} while ((render_and_flip_result = render_and_flip(&src, &dst, update, wait_for_lock)) == 2);
+
+	if (!render_and_flip_result)
 		return 0;
 
 	return 1;
@@ -2105,20 +2135,40 @@ static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock
 		dst->bottom != prev_dst.bottom)
 	{
 		position_changed = 1;
+	}
+
+	if (position_changed)
+	{
+		char src_size_changed = 0;
+
+		if ((src->right - src->left != prev_src.right - prev_src.left ||
+			 src->bottom - src->top != prev_src.bottom - prev_src.top))
+		{
+			src_size_changed = 1;
+		}
 
 		prev_src.left = src->left;
 		prev_src.right = src->right;
 		prev_src.top = src->top;
 		prev_src.bottom = src->bottom;
 
-		prev_dst.left = dst->left;
-		prev_dst.right = dst->right;
-		prev_dst.top = dst->top;
-		prev_dst.bottom = dst->bottom;
-	}
+		if (win_default_constraints && src_size_changed)
+		{
+			if (win_window_mode)
+			{
+				if (win_start_maximized)
+					win_toggle_maximize(1);
 
-	if (position_changed)
-	{
+				// force dst to be re-computed
+				return 2;
+			}
+			else
+			{
+				// force edges to be erased
+				update = 1;
+			}
+		}
+
 		win_d3d_effects_init(video_attributes);
 		if (win_d3d_use_auto_effect)
 		{
@@ -2130,8 +2180,13 @@ static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock
 
 		init_vertices_screen(src, dst);
 
-		if (win_d3d_use_prescale || win_d3d_use_feedback)
+		if ((win_d3d_use_prescale && (current_prescalex > 1 || current_prescaley > 1)) || win_d3d_use_feedback)
 			init_vertices_preprocess(src);
+
+		prev_dst.left = dst->left;
+		prev_dst.right = dst->right;
+		prev_dst.top = dst->top;
+		prev_dst.bottom = dst->bottom;
 
 		position_changed = 0;
 	}
@@ -2142,10 +2197,16 @@ tryagain:
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
 
+#if 0
+	// blit the rgb effects pattern first if updating
+	if (update && win_d3d_use_rgbeffect)
+		blit_rgb_pattern(dst, back_surface);
+#endif
+
 	texture = texture_surface;
 
 	// determine if we need to render to the pre-process texture first
-	if (win_d3d_use_prescale || win_d3d_use_feedback)
+	if ((win_d3d_use_prescale && (current_prescalex > 1 || current_prescaley > 1)) || win_d3d_use_feedback)
 	{
 		result = IDirect3DDevice7_SetRenderTarget(d3d_device7, preprocess_surface, 0);
 
@@ -2345,6 +2406,7 @@ tryagain:
 	if (update)
 	{
 		RECT outer;
+
 		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &outer);
 		erase_outer_rect(&outer, dst, win_window_mode ? primary_surface : back_surface);
 	}
@@ -2387,37 +2449,10 @@ tryagain:
 #endif
 	}
 
-	// blit the pattern for the RGB effects
+	// blit the pattern for the RGB effects (for the next frame)
 	if (win_d3d_use_rgbeffect)
 	{
-		int zoom = (win_d3d_current_zoom > MAX_AUTOEFFECT_ZOOM) ? MAX_AUTOEFFECT_ZOOM : win_d3d_current_zoom;
-
-		if (win_d3d_use_auto_effect && (win_window_mode ||
-										!win_keep_aspect ||
-										win_force_int_stretch == FORCE_INT_STRECT_NONE ||
-										win_force_int_stretch == FORCE_INT_STRECT_HOR ||
-										zoom != win_d3d_current_zoom))
-		{
-			RECT rgb_dst;
-			RECT rgb_src = { 0, 0,
-							 win_d3d_effects_swapxy ? zoom * win_visible_width : dst->right - dst->left,
-							 win_d3d_effects_swapxy ? dst->bottom - dst->top : zoom * win_visible_height};
-
-			if (win_window_mode)
-			{
-				rgb_dst.left = 0; rgb_dst.top = 0;
-				rgb_dst.right = dst->right - dst->left;
-				rgb_dst.bottom = dst->bottom - dst->top;
-			}
-
-			result = IDirectDrawSurface7_Blt(back_surface, win_window_mode ? &rgb_dst : dst, win_d3d_background_surface, &rgb_src, DDBLT_ASYNC, NULL);
-		}
-		else
-		{
-			RECT rect = { 0, 0, dst->right - dst->left, dst->bottom - dst->top };
-
-			result = IDirectDrawSurface7_BltFast(back_surface, win_window_mode ? 0 : dst->left, win_window_mode ? 0 : dst->top, win_d3d_background_surface, &rect, DDBLTFAST_WAIT);
-		}
+		result = blit_rgb_pattern(dst, back_surface);
 		if (result != DD_OK)
 		{
 			// error, print the error and fall back
@@ -2442,6 +2477,44 @@ surface_lost:
 
 	// otherwise, return failure
 	return 0;
+}
+
+
+
+//============================================================
+//	blit_rgb_pattern
+//============================================================
+
+static HRESULT blit_rgb_pattern(LPRECT dst, LPDIRECTDRAWSURFACE7 surface)
+{
+	int zoom = (win_d3d_current_zoom > MAX_AUTOEFFECT_ZOOM) ? MAX_AUTOEFFECT_ZOOM : win_d3d_current_zoom;
+
+	if (win_d3d_use_auto_effect && (win_window_mode ||
+									!win_keep_aspect ||
+									win_force_int_stretch == FORCE_INT_STRECT_NONE ||
+									win_force_int_stretch == FORCE_INT_STRECT_HOR ||
+									zoom != win_d3d_current_zoom))
+	{
+		RECT rgb_dst;
+		RECT rgb_src = { 0, 0,
+						 win_d3d_effects_swapxy ? zoom * win_visible_width : dst->right - dst->left,
+						 win_d3d_effects_swapxy ? dst->bottom - dst->top : zoom * win_visible_height};
+
+		if (win_window_mode)
+		{
+			rgb_dst.left = 0; rgb_dst.top = 0;
+			rgb_dst.right = dst->right - dst->left;
+			rgb_dst.bottom = dst->bottom - dst->top;
+		}
+
+		return IDirectDrawSurface7_Blt(surface, win_window_mode ? &rgb_dst : dst, win_d3d_background_surface, &rgb_src, DDBLT_ASYNC, NULL);
+	}
+	else
+	{
+		RECT rect = { 0, 0, dst->right - dst->left, dst->bottom - dst->top };
+
+		return IDirectDrawSurface7_BltFast(surface, win_window_mode ? 0 : dst->left, win_window_mode ? 0 : dst->top, win_d3d_background_surface, &rect, DDBLTFAST_WAIT);
+	}
 }
 
 

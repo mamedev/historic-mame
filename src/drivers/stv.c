@@ -50,47 +50,72 @@ Preliminary Memory map:
 
 \-ToDo / Notes:
 
-\-Main issues:
--Implement the Master/Slave communication.
--Fix the IC13 issue.
+(Main issues)
+-complete the Master/Slave communication.
+-fix properly the IC13 issue,some games still fails their booting.
 -NVRAM needs emulating.
--Clock utility in main menu of the bios is (again) broken :(.
--Sound.
+-clock utility in main menu of the bios is (again) broken :(.
 -SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
  are really for.I suppose that they disable/enable the reset for the Slave and the
- sound CPU,but I'm not sure.
--Find a better fix to avoid the hanagumi hang skip kludge.
--Clean-ups and split up the various chips(SCU,SMPC,SCSP...)into their respective files.
+ sound CPU,but I'm not sure. -AS
+-Clean-ups and split the various chips(SCU,SMPC)into their respective files.
+-CD block:complete it & add proper CD support into MAME.
 
--prikura:Fix the compile bug which makes DMA to not work at all(now fixed?).
--groovef:Hangs soon after loaded.
--groovef,shanhigw:Find idle skip if possible.
--groovef,shanhigw:these increments *intentionally* the credit counter by two
-                  at every start-up.Missing/wrong irq I guess.
--vmahjong:locks up the emulation due to various DMA/irq issues.
-
-
------------------------ 14 Oct 2003, notes -----------
-
-most (all) of the remaining non ic-13 games which don't boot appear to use a fairly
-common sega boot sequence.
-
-the master cpu is sending 2 commands to the slave (with MINIT) and then no more.
-
-prikura sprites are controlled by the second cpu, it we patch out the frt wait loop
-then we get sprites, the main cpu never does an MINIT, i guess it should somewhere?
+(per-game issues)
+-groovef: hangs soon after loaded.
+-various: find idle skip if possible.
+-some games increments *intentionally* the credit counter by two at every start-up.
+ missing/wrong irq I guess,possibly HBLANK.
+-vmahjong:locks up the emulation due to wrong DMA/irq issues.
+-hanagumi: why do we get 2 credits on startup with sound enabled (game doesn't work
+ with sound disabled but thats known, we removed the hacks)
+-colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
+ on SMPC or controls fail
+-prikura: slave cpu wants MINIT to draw sprites, master CPU never gives it.
+-shanhigw/shienryu: need to understand way vdp1 sprite colours work (vdp2 register related?)
+-mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
+-colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
+-bakubaku/colmns97/vfkids: no sound?
+-vfremix: game seems to start then waits for an address to change, another interrupt /
+ stv timers issue?
+-most: static for sounds
+-some games (rsgun,myfairld) are currently broken,they don't pass the master/slave
+ communication test again...
+-grdforce: missing backgrounds.
+-ejihon: we need somebody who can read japanese & can play this game,I (AS)
+ believe that the game works fine but I don't know how to play...
+ * according to Yasu it is playable, just missing an alpha effect on the magifying glass
+-kiwames: locks up after one match.
+-suikoenb: why the color RAM format doesn't change when you exit the test menu?
 
 */
 
 #include "driver.h"
 #include "machine/eeprom.h"
 #include "cpu/sh2/sh2.h"
+#include "machine/stvcd.h"
+#include <time.h>
 
 extern data32_t* stv_vdp2_regs;
 extern data32_t* stv_vdp2_vram;
 extern data32_t* stv_vdp2_cram;
 
 #define USE_SLAVE 1
+
+/* stvhacks.c */
+DRIVER_INIT( ic13 );
+void install_stvbios_speedups(void);
+DRIVER_INIT(bakubaku);
+DRIVER_INIT(mausuke);
+DRIVER_INIT(puyosun);
+DRIVER_INIT(shienryu);
+DRIVER_INIT(prikura);
+DRIVER_INIT(hanagumi);
+DRIVER_INIT(cottonbm);
+DRIVER_INIT(cotton2);
+DRIVER_INIT(fhboxers);
+DRIVER_INIT(dnmtdeka);
+
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -99,7 +124,7 @@ static data8_t *smpc_ram;
 //static void stv_dump_ram(void);
 
 static data32_t* stv_workram_l;
-static data32_t* stv_workram_h;
+data32_t* stv_workram_h;
 static data32_t* stv_backupram;
 data32_t* stv_scu;
 static data32_t* ioga;
@@ -109,6 +134,7 @@ int stv_vblank;
 /*SMPC stuff*/
 static UINT8 SCSP_reset;
 static void system_reset(void);
+static data8_t en_68k;
 /*SCU stuff*/
 static int 	  timer_0;				/* Counter for Timer 0 irq*/
 /*Maybe add these in a struct...*/
@@ -135,26 +161,1571 @@ static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
 static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
 static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
-/* SCSP stuff*/
-static UINT32 scsp_dmea;
-static UINT16 scsp_drga;
-#define		  scsp_dgate			scsp_regs[0x416/2] & 0x4000
-#define		  scsp_ddir				scsp_regs[0x416/2] & 0x2000
-#define       scsp_dexe 			scsp_regs[0x416/2] & 0x1000
-static UINT16 scsp_dtlg;
-static void dma_scsp(void); 		/*SCSP DMA transfer function*/
 
-/*Auto level irq calculation macros*/
-#define e_irq_0				((scsp_regs[0x424/2] & 0x01)>>0)|(((scsp_regs[0x426/2] & 0x01)>>0)<<1)|(((scsp_regs[0x428/2] & 0x01)>>0)<<2)
-#define e_irq_1				((scsp_regs[0x424/2] & 0x02)>>1)|(((scsp_regs[0x426/2] & 0x02)>>1)<<1)|(((scsp_regs[0x428/2] & 0x02)>>1)<<2)
-#define e_irq_2				((scsp_regs[0x424/2] & 0x04)>>2)|(((scsp_regs[0x426/2] & 0x04)>>2)<<1)|(((scsp_regs[0x428/2] & 0x04)>>2)<<2)
-#define midi_in_irq			((scsp_regs[0x424/2] & 0x08)>>3)|(((scsp_regs[0x426/2] & 0x08)>>3)<<1)|(((scsp_regs[0x428/2] & 0x08)>>3)<<2)
-#define dma_transfer_end	((scsp_regs[0x424/2] & 0x10)>>4)|(((scsp_regs[0x426/2] & 0x10)>>4)<<1)|(((scsp_regs[0x428/2] & 0x10)>>4)<<2)
-#define scsp_software_irq	((scsp_regs[0x424/2] & 0x20)>>5)|(((scsp_regs[0x426/2] & 0x20)>>5)<<1)|(((scsp_regs[0x428/2] & 0x20)>>5)<<2)
-#define timera_irq			((scsp_regs[0x424/2] & 0x40)>>6)|(((scsp_regs[0x426/2] & 0x40)>>6)<<1)|(((scsp_regs[0x428/2] & 0x40)>>6)<<2)
-#define midi_out_irq		((scsp_regs[0x424/2] & 0x80)>>7)|(((scsp_regs[0x426/2] & 0x80)>>7)<<1)|(((scsp_regs[0x428/2] & 0x80)>>7)<<2)
+/*SCU DSP stuff*/
+static struct stv_scu_dsp_internal_registers {
+	   UINT8 pc; 							           /*Program Counter*/
+	   UINT8 top;							   		   /*Jump Command memory*/
+	   UINT16 lop;								       /*Counter Register*/	  /*12-bits*/
+	   UINT8  ct0,ct1,ct2,ct3;					       /*Index for RAM*/	  /*6-bits */
+	   UINT32 md0[0x40],md1[0x40],md2[0x40],md3[0x40]; /*RAM memory*/
+	   UINT8  ra;									   /*RAM selector*/
+	   UINT32 rx;									   /*X-Bus register*/
+	   UINT64 mul;                                     /*Multiplier register*//*48-bits*/
+	   UINT32 ry;									   /*Y-Bus register*/
+	   UINT64 alu;                                     /*ALU register*/       /*48-bits*/
+	   UINT16 ph;									   /*ALU high register*/
+	   UINT32 pl;									   /*ALU low register*/
+	   UINT16 ach;									   /*ALU external high register*/
+	   UINT32 acl;									   /*ALU external low register*/
+	   UINT32 ra0,wa0;								   /*DSP DMA registers*/
+	   UINT32 internal_prg[0x100];
+} dsp_reg;
+static void dsp_prg_ctrl(UINT32 data);
+static void	dsp_prg_data(UINT32 data);
+static void	dsp_ram_addr_ctrl(UINT32 data);
+static void dsp_ram_addr_w(UINT32 data);
+static void dsp_execute_program(void);
+
+/*DSP macros*/
+#define PRF ((stv_scu[32] & 0x04000000) >> 26)
+#define EPF ((stv_scu[32] & 0x02000000) >> 25)
+#define T0F ((stv_scu[32] & 0x00800000) >> 23)
+#define SF  ((stv_scu[32] & 0x00400000) >> 22)
+#define ZF  ((stv_scu[32] & 0x00200000) >> 21)
+#define CF  ((stv_scu[32] & 0x00100000) >> 20)
+#define VF  ((stv_scu[32] & 0x00080000) >> 19)
+#define EF  ((stv_scu[32] & 0x00040000) >> 18)
+#define ESF ((stv_scu[32] & 0x00020000) >> 17)
+#define EXF ((stv_scu[32] & 0x00010000) >> 16)
+#define LEF ((stv_scu[32] & 0x00008000) >> 15)
+#define SF_1 if(!(stv_scu[32] & 0x00400000)) stv_scu[32]^=0x00400000
+#define ZF_1 if(!(stv_scu[32] & 0x00200000)) stv_scu[32]^=0x00200000
+#define CF_1 if(!(stv_scu[32] & 0x00100000)) stv_scu[32]^=0x00100000
+#define VF_1 if(!(stv_scu[32] & 0x00080000)) stv_scu[32]^=0x00080000
+#define SF_0 if(stv_scu[32] & 0x00400000) stv_scu[32]^=0x00400000
+#define ZF_0 if(stv_scu[32] & 0x00200000) stv_scu[32]^=0x00200000
+#define CF_0 if(stv_scu[32] & 0x00100000) stv_scu[32]^=0x00100000
+#define VF_0 if(stv_scu[32] & 0x00080000) stv_scu[32]^=0x00080000
+
+static int scanline;
+
 
 /**************************************************************************************/
+
+/*
+
+CD Block / SH-1 Handling
+
+*/
+
+int io=0;
+
+static void CD_refresh_timer(int param)
+{
+	//CD_period at every call
+	CD_com_update(1);
+
+	//logerror("CD refresh timer adj\n");
+	//timer_adjust(CD_refresh, CD_period, 0, CD_period);
+}
+
+data32_t cdregister[0x9ffff];
+
+int DectoBCD(int num)
+{
+	int i, cnt = 0, tmp, res = 0;
+
+	while (num > 0) {
+		tmp = num;
+		while (tmp >= 10) tmp %= 10;
+		for (i=0; i<cnt; i++)
+			tmp *= 16;
+		res += tmp;
+		cnt++;
+		num /= 10;
+	}
+
+	return res;
+}
+
+void cdb_reset(void){
+
+	int i, j;
+
+	iso_reset();
+
+	logerror("ISO_RESET() just executed\n");
+
+	cdb_build_toc();
+
+	logerror("BUILD_TOC() just executed\n");
+
+	cdb_build_ftree();
+
+	logerror("BUILD_FTREE() just executed\n");
+	CD_com		= -1; // no command being processed
+
+	//CD_hirq		= 0x07d3;
+	CD_hirq		= 0xffff;
+	CD_mask		= 0xffff;
+	CR1		=  'C';
+	CR2		= ('D' << 8) | 'B';
+	CR3		= ('L' << 8) | 'O';
+	CR4		= ('C' << 8) | 'K';
+	CD_cr_first	= 1;
+
+	CD_status	= CDB_STAT_STDBY;//NODISC;////
+	CD_flag		= 0x80;
+	CD_cur_fad	= 0x96;
+	CD_cur_track	= 1;
+	CD_cur_ctrl	= 0x04;//CD_toc.first.ctrl;
+	CD_cur_idx	= 0x01;//CD_toc.first.idx;
+	CD_cur_fid	= 2;
+
+	CD_standby		= 180;
+	CD_repeat		= 0;
+	CD_repeat_max	= 15;
+	CD_drive_speed	= 2;
+//	cdb_get_sect_size	= 2048;
+//	cdb_put_sect_size	= 2048;
+
+	CD_play_fad	= 0;
+	CD_play_range	= 0;
+	CD_seek_target	= 0;
+	CD_scan_dir	= 0;
+	CD_search_pn	= 0;
+	CD_search_sp	= 0;
+	CD_search_fad	= 0;
+
+	CD_file_scope_first	= 0;
+	CD_file_scope_last	= 0;
+
+	CD_data_pn		= 0;
+	CD_data_sp		= 0;
+	CD_data_sn		= 0;
+	CD_data_count	= 0;
+
+	CD_info_ptr	= NULL;
+	CD_info_count	= 0;
+	CD_info_size	= 0;
+
+	CD_trans_type	= -1; // no transfer done
+
+	for(i = 0; i < CDB_SECT_NUM; i++){
+
+		CD_sect[i].size		= 0;
+		CD_sect[i].fad		= 0x00ffffff;
+		CD_sect[i].fid		= 0;
+		CD_sect[i].chan		= 0;
+		CD_sect[i].sub		= 0;
+		CD_sect[i].cod		= 0;
+
+		memset(&CD_sect[i].data, 0xff, 2352);
+	}
+
+	for(i = 0; i < CDB_SEL_NUM; i++){
+
+		// reset partition
+		CD_part[i].size		= 0;
+		for(j = 0; j < 200; j++)
+			CD_part[i].sect[j] = NULL;
+
+		// reset filter conditions
+		CD_filt[i].true		= i;
+		CD_filt[i].false		= 0xff;
+		CD_filt[i].mode		= 0;
+		CD_filt[i].fad		= 0;
+		CD_filt[i].range		= 0;
+		CD_filt[i].chan		= 0;
+		CD_filt[i].fid		= 0;
+		CD_filt[i].sub_val	= 0;
+		CD_filt[i].sub_mask	= 0;
+		CD_filt[i].cod_val	= 0;
+		CD_filt[i].cod_mask	= 0;
+	}
+
+	CD_free_space = 200;
+
+	CD_filt_num	= 0xff;
+	CD_mpeg_filt_num		= 0xff;
+}
+
+
+void do_cd_command(void){
+
+	UINT32 fid,pn, sp, sn;
+	//based on sthief SSE source code
+	switch (CR1 >> 8){
+
+		case 0x00:
+				//get status
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK;
+
+//				CDB_SEND_REPORT();
+				CR1	= (CD_status << 8) | 0x80;
+				CR2	= (CD_cur_ctrl << 8) | (CD_cur_track);
+				CR3	= (CD_cur_idx << 8) | ((CD_cur_fad >> 16) & 0xff);
+				CR4	= (CD_cur_fad & 0xffff);
+
+				break;
+
+		case 0x01:
+				//get hardware info
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CR1 = (CD_status << 8);
+				CR2 = 0x0201;			// hardware flag (0x80=hw error 0x02=mpeg present) | version
+				CR3 = 0x0001;			// mpeg version if mpeg version != 0, mpeg is assumed to be enabled
+				CR4 = 0x0400;			// driver version | revision
+//				CR2 = 0x0001;			// hardware flag (0x80=hw error 0x02=mpeg present) | version
+//				CR3 = 0x0000;			// mpeg version if mpeg version != 0, mpeg is assumed to be enabled
+//				CR4 = 0x0102;			// driver version | revision
+
+				CD_hirq |= HIRQ_CMOK;
+				break;
+
+		case 0x02:
+				//get toc
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CR1 = (CD_status << 8);
+				CR2 = 0xcc;
+				CR3 = 0;
+				CR4 = 0;
+
+				CD_info_ptr	= CD_sat_toc;
+				CD_info_size	= 0xcc * 2;
+				CD_info_count	= 0;
+
+				CD_trans_type	= 1; // INFO
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY; // PEND ?
+				//CD_stat = STAT_LO_PAUSE;
+
+				break;
+		case 0x03:
+				//get session info
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK; // PEND ?
+				//	cdb_stat = CDB_STAT_PAUSE;
+
+				switch(CR1 & 0xff){
+
+				case 0: // total session information
+
+					logerror("get session info (all)\n");
+
+					CR1 = (CD_status << 8);
+					CR2 = 0;
+					CR3 = (1 << 8) | (CD_toc.leadout.fad >> 16);	// 1 session present, readout fad
+					CR4 = (CD_toc.leadout.fad & 0xffff);			// readout fad
+					break;
+
+				case 1: // local session information (exists)
+
+					logerror("get session info (first)\n");
+
+					//	cdb_cr3 = (1 << 8) | (cdb_toc.track[0].fad >> 16);	// starts with track #1, starting fad
+					//	cdb_cr4 = (cdb_toc.track[0].fad & 0xffff);		// starting fad
+
+					CR1 = (CD_status << 8);
+					CR2 = 0;
+					CR3 = (1 << 8) | (CD_toc.track[0].fad >> 16);
+					CR4 = (CD_toc.track[0].fad & 0xffff);
+
+					break;
+
+				default: // local session information (doesn't exist)
+					logerror("get session info (other)\n");
+
+					CR1 = (CD_status << 8);
+					CR2 = 0;
+					CR3 = 0xffff;
+					CR4 = 0xffff;
+					break;
+				}
+
+				break;
+		case 0x04:
+				//init system  //Based on old source
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				// note: this is called by the Satun BIOS if DCHG is
+				// not set at reset. probabily manages DCHG flag as well.
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				if((CR1 & 0x80) == 0){
+
+					switch(CR1 & 0x30){
+						case 0:
+					//	case 2: CD_drive_speed = 2; CD_update_timings(2); break;
+					//	case 1: CD_drive_speed = 1; CD_update_timings(1); break;
+						default: logerror("ERROR: invalid drive speed\n");
+					}
+
+					if(CR1 & 0x01){ 				// software reset
+
+						// not enough info
+					}
+
+					CD_init_flag = CR1;
+				}
+
+				switch(CR2){
+
+					case 0xffff: break;				// standby no change
+					case 0x0000: CD_standby = 180; break;		// standby default
+					default:
+						CD_standby = CR2;
+						if(CD_standby <  60) CD_standby = 60;
+						else
+						if(CD_standby > 900) CD_standby = 900;
+						break;
+				}
+
+				switch(CR4 >> 8){
+
+					case 0xff: break;				// ECC no change
+					case 0x80: CD_ecc = 0; break;			// ECC disable
+					case 0x00: CD_ecc = 1; break;			// ECC default
+					default:
+						CD_ecc = (CR4 >> 8) + 1;
+						if(CD_ecc < 2) CD_ecc = 2;
+						if(CD_ecc > 6) CD_ecc = 6;
+				}
+
+				if(CR4 & 0x80){ CD_repeat_max = 0xfe; }else		// infinite retry
+				if(CR4 & 0x40){ CD_repeat_max = 0xff; }else		// ignore errors
+				{
+					switch(CR4 & 15){
+						case 0x0f: break;									// retry no change
+						case 0x00: CD_repeat = 0;
+							   CD_repeat_max = 15;
+							   break;			// retry default
+						default:   CD_repeat = 0;
+							   CD_repeat_max = CR4 & 15; break;
+					}
+				}
+
+				CDB_SEND_REPORT();
+
+
+				break;
+		case 0x05:
+				//open tray
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOT USED
+				break;
+		case 0x06:
+				//end data transfer
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				UINT32 count;
+
+				switch(CD_trans_type){
+				case -1:	count = 0xffffff; break;			// no transfer
+				case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
+				default:	count = (CD_info_count + 1) >> 1; break;	// info transfer
+				}
+
+				CD_hirq |= HIRQ_CMOK;
+
+				if(count && count != 0xffffff) // not sure ...
+					CD_hirq |= HIRQ_DRDY;
+
+				CR1 = (CD_status << 8) | (count >> 16);
+				CR2 = count;
+				CR3 = 0;
+				CR4 = 0;
+
+				break;
+		case 0x10:
+				//play
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				// sthief: must be rewritten!
+
+				UINT8 pm; // play mode
+
+				pm = (CR3 >> 8);
+
+				if((CR1 & 0x80) != (CR3 & 0x80)){
+
+				}
+
+				if((CR1 & 0xff) == 0xff){
+
+					// resume
+					// bad!
+
+					logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
+
+					CD_status = CDB_STAT_PLAY;
+					CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
+
+					CD_hirq |= HIRQ_CMOK;
+
+					CD_hirq &= ~HIRQ_SCDQ;
+					CD_hirq &= ~HIRQ_CSCT;
+					CD_hirq &= ~HIRQ_PEND;
+					CD_hirq &= ~HIRQ_DRDY;
+
+					if((CD_cur_fad < CD_play_fad) &&
+					   (CD_cur_fad >= (CD_play_fad + CD_play_range))){
+
+						// already out of range
+						// lacks repeat
+
+						CD_status = CDB_STAT_PAUSE;
+						CD_flag = 0;
+
+						CD_hirq |= HIRQ_PEND;
+
+					}else{
+
+						CD_play_range = (CD_toc.track[CD_cur_track].fad - CD_toc.track[CD_cur_track-1].fad);
+						CD_play_range -= 150; // 2 sec gap
+					}
+
+				}else
+				if((CR1 & 0xff) == 0x00){
+
+					if(CR2 == 0){
+
+						// play default
+
+						logerror("play default\n");
+						exit(1);
+
+					}else{
+
+						// play track
+
+						UINT32 tn0, idx0;
+						UINT32 tn1, idx1;
+
+						tn0 = CR2 >> 8;
+						tn1 = CR4 >> 8;
+						idx0 = CR2 & 0xff;
+						idx1 = CR4 & 0xff;
+
+						logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
+
+						if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
+							logerror("ERROR: play track negative range\n");
+							exit(1);
+						}
+
+						if((pm & 0x80) == 0){
+
+							// rewind track
+
+							CD_cur_track	= tn0;
+							CD_cur_ctrl	= CD_toc.track[tn0-1].ctrl;
+							CD_cur_idx		= idx0;
+							CD_cur_fad		= CD_toc.track[tn0-1].fad;
+							CD_cur_fid		= 0;
+						}
+
+						if(CD_cur_ctrl & 0x40){
+							logerror("ERROR: play data track\n");
+							exit(1);
+						}
+
+						CD_play_fad	= CD_toc.track[CD_cur_track-1].fad;
+						CD_play_range	= CD_toc.track[tn1-1].fad - CD_toc.track[CD_cur_track-1].fad;
+
+						CD_status = CDB_STAT_PLAY;
+						CD_flag = 0;
+
+						CD_hirq &= ~HIRQ_SCDQ;
+						CD_hirq &= ~HIRQ_CSCT;
+						CD_hirq &= ~HIRQ_PEND;
+						CD_hirq &= ~HIRQ_DRDY;
+						CD_hirq |= HIRQ_CMOK;
+					}
+
+				}else
+				if(CR1 & 0x80){
+
+					// play fad
+
+					CD_play_fad	= ((CR1 & 0x7f) << 16) | CR2; // position
+					CD_play_range	= ((CR3 & 0x7f) << 16) | CR4; // length
+
+					if(CD_play_range == 0){
+
+						// <PAUSE>
+
+						CD_status = CDB_STAT_PAUSE;
+						CD_flag = 0;
+
+						CD_hirq &= ~HIRQ_SCDQ;
+						CD_hirq &= ~HIRQ_CSCT;
+						CD_hirq |= HIRQ_PEND;
+						CD_hirq |= HIRQ_CMOK;
+
+					}else{
+
+						// <PLAY>
+
+						CD_stat = CDB_STAT_PLAY;
+						CD_flag = CDB_FLAG_CDROM;
+
+						CD_hirq &= ~HIRQ_SCDQ;
+						CD_hirq &= ~HIRQ_CSCT;
+						CD_hirq &= ~HIRQ_PEND;
+						CD_hirq &= ~HIRQ_DRDY; // this must be set on PEND
+						CD_hirq |= HIRQ_CMOK;
+
+						CD_cur_fad		= CD_play_fad;
+						CD_cur_track	= cdb_find_track(CD_cur_fad);
+						CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+						CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+						CD_cur_fid		= cdb_find_file(CD_cur_fad);
+
+						CD_repeat = 0;
+					}
+
+				}else{
+
+					logerror("ERROR: invalid play command\n");
+					exit(1);
+				}
+
+				CD_com_play = CD_com;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x11:
+				//seek
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				if((CR1 & 0xff) == 0xff){
+
+					// pause
+
+					logerror("seek : pause\n");
+
+					CD_hirq |= HIRQ_CMOK;
+
+					CD_status = CDB_STAT_PAUSE;
+					CD_flag = 0;
+
+				}else
+				if((CR1 & 0xff) == 0x00){
+
+					if(CR2 == 0){
+
+						// stop
+
+						logerror("seek : stop\n");
+
+						CD_hirq |= HIRQ_CMOK;
+
+						CD_status = CDB_STAT_PAUSE; // STDBY
+						CD_flag = 0;
+
+					}else{
+
+						CD_cur_track	= (CR2 >> 8);
+						CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+						CD_cur_idx		= (CR2 & 0xff);
+						CD_cur_fad		= CD_toc.track[CD_cur_track-1].fad;
+						CD_cur_fid		= 0;
+
+						CD_hirq |= HIRQ_CMOK;
+
+						CD_status = CDB_STAT_PAUSE;
+						CD_flag = 0;
+
+						if(CD_cur_ctrl & 0x40){
+							logerror("ERROR: seek data track\n");
+							exit(1);
+						}
+
+						logerror("seek : track %i (ctrl=%x idx=%i fad=%06x fid=%i)\n",
+						CD_cur_track, CD_cur_ctrl, CD_cur_idx, CD_cur_fad, CD_cur_fid);
+					}
+
+				}else
+				if(CR1 & 0x80){
+
+					// seek fad
+
+					logerror("seek / fad\n");
+
+					CD_cur_track	= 0;
+					CD_cur_ctrl	= 0;
+					CD_cur_idx		= 0;
+					CD_cur_fad		= 0;
+					CD_cur_fid		= 0;
+
+					CD_hirq |= HIRQ_CMOK;
+
+					CD_status = CDB_STAT_PAUSE;
+					CD_flag = 0;
+
+					logerror("ERROR: seek / fad\n");
+					exit(1);
+
+				}else{
+
+					logerror("ERROR: invalid seek command\n");
+					exit(1);
+				}
+
+				CDB_SEND_REPORT();
+				break;
+		case 0x12:
+				//scan
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOT USED???
+				break;
+		case 0x20:
+				//get current subcode
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
+
+				switch(CR2){
+
+					case 0: // subcode q
+
+						logerror("get current subcode q\n");
+
+						CR1 = ( CD_status << 8);
+						CR2 = 5;
+						CR3 = 0;
+						CR4 = 0;
+
+						CD_info_ptr	= CD_sat_subq;
+						CD_info_size	= 5 * 2;
+						CD_info_count	= 0;
+
+						CD_trans_type	= 1; // INFO
+
+						return;
+
+					case 1: // subcode rw
+
+						logerror("get current subcode rw\n");
+						//Used???
+						//error("ERROR: get current subcode rw\n");
+						//exit(1);
+
+						CR1 = (CD_status << 8);
+						CR2 = 12;
+						CR3 = 0;
+						CR4 = 0;
+
+						CD_info_ptr	= CD_sat_subrw;
+						CD_info_size	= 12 * 2;
+						CD_info_count	= 0;
+
+						CD_trans_type	= 1; // INFO
+
+						return;
+
+					default:
+						logerror("invalid getcurrentsubcode\n");
+						exit(1);
+				}
+
+				break;
+		case 0x30:
+				//set connection
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				CD_filt_num = CR3 >> 8;
+
+				CDB_SEND_REPORT();
+				break;
+		case 0x31:
+				//get connection
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CR1 = (CD_status << 8);
+				CR2 = 0;
+				CR3 = (CD_filt_num << 8);
+				CR4 = 0;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+				break;
+		case 0x32:
+				//get last buff dest
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CR1 = (CD_status << 8);
+				CR2 = 0;
+				CR3 = (CD_last_part << 8);
+				CR4 = 0;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+				break;
+		case 0x40:
+				//set filter range
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CD_filt[fn].fad	 = ((CR1 & 0xff) << 16) | CR2;
+				CD_filt[fn].range = ((CR3 & 0xff) << 16) | CR4;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x41:
+				//get filter range
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CR1 = (CD_status << 8) | (CD_filt[fn].fad >> 16);
+				CR2 = CD_filt[fn].fad;
+				CR3 = (CD_filt[fn].range >> 16);
+				CR4 = CD_filt[fn].range;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				break;
+		case 0x42:
+				//set filter sh cond
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CD_filt[fn].chan	= CR1 & 0xff;
+				CD_filt[fn].sub_mask	= CR2 >> 8;
+				CD_filt[fn].cod_mask	= CR2 & 0xff;
+				CD_filt[fn].fid		= CR3 & 0xff;
+				CD_filt[fn].sub_val	= CR4 >> 8;
+				CD_filt[fn].cod_val	= CR4 & 0xff;
+
+				CDB_SEND_REPORT();
+				break;
+		case 0x43:
+				//get filter sh cond
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CR1 = (CD_status << 8) | CD_filt[fn].chan;
+				CR2 = (CD_filt[fn].sub_mask << 8) | CD_filt[fn].cod_mask;
+				CR3 = CD_filt[fn].fid;
+				CR4 = (CD_filt[fn].sub_val << 8) | CD_filt[fn].cod_val;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				break;
+		case 0x44:
+				//set filter mode
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				if(CR1 & 0x80){
+
+					// init filter
+
+					CD_filt[fn].mode = 0x00;
+					CD_filt[fn].fad = 0;
+					CD_filt[fn].range = 0;
+					CD_filt[fn].chan = 0;
+					CD_filt[fn].fid = 0;
+					CD_filt[fn].sub_val = 0;
+					CD_filt[fn].sub_mask = 0;
+					CD_filt[fn].cod_val = 0;
+					CD_filt[fn].cod_mask = 0;
+				}else
+					CD_filt[fn].mode = CR1 & 0xff;
+
+
+				break;
+		case 0x45:
+				//get filter mode
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CR1 = (CD_status << 8) | CD_filt[fn].mode;
+				CR2 = 0;
+				CR3 = 0;
+				CR4 = 0;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+				break;
+		case 0x46:
+				//set filter con
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				if(CR1 & 0x01){ CD_filt[fn].true = CR2 >> 8; }
+				if(CR1 & 0x02){ CD_filt[fn].false = CR2 & 0xff; }
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x47:
+				//get filter conn
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				fn = CR3 >> 8;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+				}
+
+				CR1 = (CD_status << 8);
+				CR2 = (CD_filt[fn].true << 8) | CD_filt[fn].false;
+				CR3 = 0;
+				CR4 = 0;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				break;
+		case 0x48:
+				//reset selector
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				// reset flag:
+				//
+				// b7		init false output connectors
+				// b6		init true output connectors
+				// b5		init input connectors			used for host -> cdb ?
+				// b4		init filter conditions
+				// b3		init partition output connectors	?
+				// b2		init partition data
+				// b1,0	unused
+				//
+				// if reset flag is zero, all selectors are completely reset
+				UINT32 rf;
+
+				rf = CR1 & 0xff;
+
+				if(rf == 0){
+
+				// all partitions are reset
+
+				int i;
+
+				for(i = 0; i < CDB_SEL_NUM; i++){
+					if(rf & 0x80){ CD_filt[i].false = 0xff; }
+					if(rf & 0x40){ CD_filt[i].true = i; }
+					if(rf & 0x20){
+						CD_filt_num = 0xff;
+						CD_mpeg_filt_num = 0xff;
+					}
+					if(rf & 0x10){
+						CD_filt[i].mode = 0x00;
+						CD_filt[i].fad = 0;
+						CD_filt[i].range = 0;
+						CD_filt[i].chan = 0;
+						CD_filt[i].fid = 0;
+						CD_filt[i].sub_val = 0;
+						CD_filt[i].sub_mask = 0;
+						CD_filt[i].cod_val = 0;
+						CD_filt[i].cod_mask = 0;
+					}
+					if(rf & 0x08){ } // ?
+						if(rf & 0x04){
+							/*
+							int j;
+							for(j = 0; j < 200; j++){
+								if(CD_part[pn].sect[j] != NULL){ size?
+									memset(CD_part[pn].sect[j].data, 0xff, 2352);
+									CD_part[pn].sect[j].size = 0;
+								}
+								CD_part[pn].sect[j] = NULL;
+							}
+							*/
+						}
+					}
+
+				}else{
+
+					pn = CR3 >> 8;
+
+					if(pn != 0xff){
+
+						if(pn >= CDB_SEL_NUM){
+							logerror("ERROR: invalid selector\n");
+							//exit(1);
+						}
+
+						if(rf & 0x80){ CD_filt[pn].false = 0xff; }
+						if(rf & 0x40){ CD_filt[pn].true = pn; }
+						if(rf & 0x20){ }
+						if(rf & 0x10){
+							CD_filt[pn].mode = 0x00;
+							CD_filt[pn].fad = 0;
+							CD_filt[pn].range = 0;
+							CD_filt[pn].chan = 0;
+							CD_filt[pn].fid = 0;
+							CD_filt[pn].sub_val = 0;
+							CD_filt[pn].sub_mask = 0;
+							CD_filt[pn].cod_val = 0;
+							CD_filt[pn].cod_mask = 0;
+						}
+						if(rf & 0x08){ }
+						if(rf & 0x04){
+							/*
+							*/
+						}
+
+					}else{
+
+						// NUL_SEL, dunno what should happen here ...
+					}
+				}
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				CDB_SEND_REPORT();
+				break;
+		case 0x50:
+				//get block size
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				CR1 = (CD_status << 8);
+				CR2 = CD_free_space;
+				CR3 = 0x18 <<8;		// fixme
+				CR4 = 200;
+
+				logerror("get cd block size : free=%i total=200 partitions=24\n", CD_free_space);
+
+				break;
+		case 0x51:
+				//get buffer size
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				pn= CR3 >> 8;;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				CR1 = (CD_status << 8);
+				CR2 = 0;
+				CR3 = 0;
+				CR4 = 0x0001;//CD_part[pn].size; // sectors
+//HACK
+				logerror("get buffer %02i size = %03i sectors\n", pn, CD_part[pn].size);
+
+				break;
+		case 0x52:
+				//calc actual size
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				int ii;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				pn = (CR3 >> 8);
+				sp = CR2;
+				sn = CR4;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
+				if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
+
+				CD_actual_size = 0;
+
+				for(ii = sp; ii < (sp+sn); ii++)
+					CD_actual_size += CD_sect[ii].size;
+
+				CD_actual_size = (CD_actual_size + 1) >> 1;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x53:
+				//get actual block size
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+//				CR1 = (CD_status << 8) | (CD_actual_size >> 16);
+//HACK				CR2 = CD_actual_size;
+				CR1 = (CD_status <<8) | (2048+1);
+				CR2 =  (2048 + 1) >> 1;
+
+				CR3 = 0;
+				CR4 = 0;
+
+				logerror("get actual block size : %i words\n", CD_actual_size);
+				break;
+		case 0x54:
+				//get sector info
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				sect_t * s;
+
+				pn = CR3 >> 8;
+				sn = CR2 & 0xff;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				s = CD_part[pn].sect[sn];
+
+				CR1 = (CD_status << 8) | (s->fad >> 16);
+				CR2 = s->fad;
+				CR3 = (s->fid << 8) | s->chan;
+				CR4 = (s->sub << 8) | s->cod;
+
+				break;
+		case 0x55:
+				//execute fad search
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				UINT32  fad;
+				UINT32 i, j, nearest = 0, fad2 = 0;
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				pn = CR3 >> 8;
+				sp = CR2;
+				fad = ((CR3 & 0xff) << 8) | CR4;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				if(sp >= CD_part[pn].size){
+					// SECT_SPOS_END or something ...
+					logerror("ERROR: invalid sector\n");
+					exit(1);
+				}
+
+				CDB_SEND_REPORT();
+
+				i = sp;
+				j = (sp - 1) % CD_part[pn].size;
+				while(i != j){
+
+					if(CD_part[pn].sect[i]->fad == fad){
+
+						// matching sector fad found!
+
+						nearest = i;
+						fad2 = fad;
+
+						break;
+
+					}else
+					if((CD_part[pn].sect[i]->fad < fad) &&
+					   (CD_part[pn].sect[i]->fad > nearest)){
+
+						// adjusting to nearest sector
+
+						nearest = i;
+						fad2 = CD_part[pn].sect[i]->fad;
+					}
+
+					i = (i + 1) % CD_part[pn].size;
+				}
+
+				CD_search_pn = pn;
+				CD_search_sp = nearest;
+				CD_search_fad = fad2;
+
+
+				break;
+		case 0x56:
+				//get fad search res
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				CR1 = (CD_status << 8);
+				CR2 = CD_search_sp;
+				CR3 = (CD_search_pn << 8) | (CD_search_fad >> 16);
+				CR4 = CD_search_fad;
+
+				break;
+		case 0x60:
+				//set sector length
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+/*
+				switch(CR1 & 0xff){
+				case 0: cdb_get_sect_size = 2048; break;
+				case 1: cdb_get_sect_size = 2336; logerror("ERROR: get len = 2336\n"); exit(1); break;
+				case 2: cdb_get_sect_size = 2340; logerror("ERROR: get len = 2340\n"); exit(1); break;
+				case 3: cdb_get_sect_size = 2352; logerror("ERROR: get len = 2352\n"); exit(1); break;
+				case 0xff: break;
+				}
+
+				switch(CR2 >> 8){
+				case 0: cdb_put_sect_size = 2048; break;
+				case 1: cdb_put_sect_size = 2336; logerror("ERROR: put len = 2336\n"); exit(1); break;
+				case 2: cdb_put_sect_size = 2340; logerror("ERROR: put len = 2340\n"); exit(1); break;
+				case 3: cdb_put_sect_size = 2352; logerror("ERROR: put len = 2352\n"); exit(1); break;
+				case 0xff: break;
+				}
+*/
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+
+				CDB_SEND_REPORT();
+
+//				logerror("set sector length : get=%i put=%i\n", cdb_get_sect_size, cdb_put_sect_size);
+
+				break;
+		case 0x61:
+				//get sector data
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				pn = (CR3 >> 8);
+				sp = CR2;
+				sn = CR4;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				CD_data_pn = pn;
+				CD_data_sp = sp;
+				CD_data_sn = sn;
+				CD_data_count = 0;
+				CD_data_size = CD_data_sn * 2048;
+				CD_data_delete = 0;
+
+				CD_trans_type = 0; // DATA
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_EHST;
+				CD_hirq |= HIRQ_DRDY;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x62:
+				//delete sector data
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				pn = (CR3 >> 8);
+				sp = CR2;
+				sn = CR4;
+
+/*				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+*/
+				if(sp == 0xffff){ logerror("ERROR: delete sector data : sp = SPOS_END\n"); exit(1); }
+				if(sn == 0xffff){ logerror("ERROR: delete sector data : sn = SNUM_END\n"); exit(1); }
+
+				if((sp > CD_part[pn].size) ||
+				   (sp+sn > CD_part[pn].size)){
+					logerror("ERROR: invalid delete sector data\n");
+//					exit(1);
+				}
+
+				if(sn != 1 && sp != 0){
+					logerror("ERROR: complex delete sector data\n");
+//					exit(1);
+				}
+
+/*				CD_part[pn].sect[sp]->size = 0;
+				CD_part[pn].sect[sp] = (sect_t *)NULL;
+				CD_part[pn].size--;
+				CD_free_space++;
+*/
+				CD_hirq |= HIRQ_CMOK | HIRQ_EHST;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x63:
+				//get then delete sd
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				pn = (CR3 >> 8);
+				sp = CR2;
+				sn = CR4;
+
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				CD_data_pn = pn;
+				CD_data_sp = sp;
+				CD_data_sn = sn;
+				CD_data_count = 0;
+				CD_data_size = CD_data_sn * 2048;
+				CD_data_delete = 1;
+
+				CD_trans_type = 0; // DATA
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_EHST;
+				CD_hirq |= HIRQ_DRDY;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x65:
+				//copy sector data
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOTUSED???
+				break;
+		case 0x66:
+				//move sector data
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOUSE???
+				break;
+		case 0x67:
+				//get copy error
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				// return copy/mode sector error code:
+				// - 0x00 = okay
+				// - 0x01 = selector disconnected / no more space
+				// - 0xff = still operating
+
+				CR1	= (CD_status << 8) | 0x00;
+				CR2	= 0;
+				CR3	= 0;
+				CR4	= 0;
+
+				CD_hirq 	|= HIRQ_CMOK;
+				CD_hirq_i	|= HIRQ_CMOK;
+
+				break;
+		case 0x70:
+				//change dir
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOUSE???
+				break;
+		case 0x71:
+				//read dir
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				//NOUSE
+				break;
+		case 0x72:
+				//get file sys scope
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS;
+
+				// ...
+
+				CR1 = (CD_status << 8);
+				CR2 = 0x0063;
+				CR3 = 0x0100;
+				CR4 = 0x0002;
+
+				break;
+		case 0x73:
+				//get file info
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				UINT32 size;
+				// check if out of scope
+
+				fid = (CR3 << 16) | CR4;
+
+				if(fid >= 254){
+
+					size = 254 * 12;
+
+					// obtain "all-files-in-scope" 's info (queued)
+					// needs file-scope emulation though
+
+					logerror("ERROR: getfileinfo all-files-in-scope\n");
+					exit(1);
+
+				}else{
+
+					cdb_inject_file_info(fid, cdb_sat_file_info);
+
+					size = 12;
+				}
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
+
+				CR1 = (CD_status << 8);
+				CR2 = (size + 1) >> 1;
+				CR3 = 0;
+				CR4 = 0;
+
+				CD_info_ptr	= cdb_sat_file_info;
+				CD_info_size	= size;
+				CD_info_count	= 0;
+
+				CD_trans_type	= 1; // INFO
+
+				break;
+		case 0x74:
+				//read file
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				UINT32 off;
+
+				CD_com_play = CD_com;
+
+				fn = (CR3 >> 8);
+				fid = ((CR3 & 0xff) << 16) | CR4;
+				off = ((CR1 & 0xff) << 16) | CR2;
+
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
+				}
+
+				if(fid >= CD_file_num+1){
+					logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
+					exit(1);
+				}
+
+				if(CD_file[fid].attr & 0x02){
+					logerror("ERROR: file id %i is a directory\n", fid);
+					exit(1);
+				}
+
+				CD_play_fad	= CD_file[fid].fad + off;
+				CD_play_range	= ((CD_file[fid].size + 2047) / 2048) - off;
+
+				CD_stat = CDB_STAT_PLAY;
+				CD_flag = CD_FLAG_CDROM;
+
+				CD_hirq &= ~HIRQ_SCDQ;
+				CD_hirq &= ~HIRQ_CSCT;
+				CD_hirq &= ~HIRQ_PEND;
+				CD_hirq |= HIRQ_EFLS;
+				CD_hirq |= HIRQ_CMOK;
+
+				CD_cur_fad		= CD_play_fad;
+				CD_cur_track	= cdb_find_track(CD_play_fad);
+				CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+				CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+				CD_cur_fid		= fid;
+
+				CD_repeat = 0;
+
+				CDB_SEND_REPORT();
+
+				break;
+		case 0x75:
+				//abort file
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+
+				// stop file info hold
+				// stop file read , destroy file info hold
+				// stop directory move , destroy file info hold
+
+				CD_status = CDB_STAT_PAUSE;
+				CD_flag = 0;
+
+				//cdb_trans_type = -1; // deletes trans info (sthief: not sure)
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS;
+				CD_hirq |= HIRQ_DRDY;
+
+			//	CD_hirq &= ~CDB_HIRQ_ESEL; // ???
+
+				CDB_SEND_REPORT();
+				break;
+		case 0x93:
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				CD_hirq |= HIRQ_CMOK | HIRQ_MPED;
+
+				CR1 = (CD_status << 8) | 0x01;
+				CR2 = 0x0101;
+				CR3 = 0x0001;
+				CR4 = 0x0001;
+				break;
+		case 0xe0:
+				usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND 0xe0",  cpu_getactivecpu(),activecpu_get_pc());
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS | HIRQ_CSCT;
+				//CDB_SEND_REPORT();
+				CR1 = (CD_status <<8);
+				CR2 = 0x0000;
+				CR3 = 0x0000;
+				CR4 = 0x0000;
+				break;
+		case 0xe1:
+				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
+				CD_hirq |= HIRQ_CMOK;
+
+				CR1 = (CD_status << 8);
+				CR2 = 0x0004;
+				CR3 = 0;
+				CR4 = 0;
+				break;
+	}
+
+	logerror("Command executed,register status: CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x\n", CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
+}
+
+
+
+
+static READ32_HANDLER ( cdregister_r ){
+
+	offset=offset*4;
+	UINT16 d;
+
+	//logerror("read from cd block offset=%08x\n", offset);
+	switch(offset){
+
+		case 0x90008:
+			return CD_hirq <<16 | CD_hirq;
+
+		case 0x9000c:
+			return CD_mask <<16 | CD_mask;
+
+		case 0x90018:
+			//logerror("SH-1: PC(%08x) CR1 = %08x\n", activecpu_get_pc(), CR1<<16 | CR1);
+			//return 0xffff0000 | CR1;
+			return CR1 <<16 | CR1;
+		case 0x9001c:
+			//logerror("SH-1: PC(%08x) CR2 = %08x\n", activecpu_get_pc(), CR2<<16 | CR2);
+			//return 0xffff0000 | CR2;
+			return CR2 <<16 | CR2;
+		case 0x90020:
+			//logerror("SH-1: PC(%08x) CR3 = %08x\n", activecpu_get_pc(), CR3<<16 | CR3);
+			//return 0xffff0000 | CR3;
+			return CR3 <<16 | CR3;
+		case 0x90024:
+			//logerror("SH-1: PC(%08x) CR4 = %08x\n", activecpu_get_pc(), CR4<<16 | CR4);
+			CD_cr_first = 0;
+			//return 0xffff0000 | CR4;
+			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_READ",  cpu_getactivecpu(),activecpu_get_pc());
+			return CR4 <<16 | CR4;
+
+		case 0x98000:
+		case 0x18000:
+
+			//return data...
+/*
+			if(CD_info_count >= CD_info_size){
+				logerror("ERROR: dataout overbound\n");
+				exit(1);
+			}
+*/
+			d = ((UINT16)((UINT8)CD_info_ptr[CD_info_count+0]) << 8) |
+	     		     (UINT16)((UINT8)CD_info_ptr[CD_info_count+1]);
+
+			//clog("read info : %06i/%06i = %04x\n", cdb_info_count, cdb_info_size, d);
+
+			CD_info_count += 2;
+
+			return(d<<16|d);
+
+		default:
+			logerror("CD Block Unknown read %08x\n", offset);
+			return 0xffff0000 | 0xffff;
+	}
+
+	return cdregister[offset];
+
+	//return 0xffff0000;
+}
+
+
+static WRITE32_HANDLER ( cdregister_w ){
+
+	offset=offset*4;
+	logerror("write to cd block data=%08x offset=%08x\n",data, offset);
+	switch(offset){
+
+		case 0x90008:
+			CD_hirq &= data>>16;
+			break;
+		case 0x9000c:
+			CD_mask = data>>16;
+			break;
+		case 0x90018:
+			CR1=data>>16;
+			if (CR1==0xe000){usrintf_showmessage("Cmd 0x93...pc= %08X",activecpu_get_pc());}
+			CD_cr_writing = 1;
+			break;
+		case 0x9001c:
+			CR2=data>>16;
+			CD_cr_writing = 1;
+			break;
+		case 0x90020:
+			CR3=data>>16;
+			CD_cr_writing = 1;
+			break;
+		case 0x90024:
+			CR4=data>>16;
+			CD_cr_writing = 0;
+			logerror("CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x ------ command execution\n",CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
+			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND",  cpu_getactivecpu(),activecpu_get_pc());
+			do_cd_command();
+			break;
+		default:
+			logerror("CD Block Unknown write to %08x data %08x\n", offset,data);
+
+	}
+
+	cdregister[offset]=data;
+}
+
 
 /* SMPC
  System Manager and Peripheral Control
@@ -323,15 +1894,21 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 	return_data = smpc_ram[offset];
 
+	if ((offset == 0x61)) // ?? many games need this or the controls don't work
+		return_data = 0x20 ^ 0xff;
+
 	if (offset == 0x75)//PDR1 read
 		return_data = readinputport(0);
 
 	if (offset == 0x77)//PDR2 read
-		return_data = readinputport(1);
+		return_data=  (0xfe | EEPROM_read_bit());
 
-//	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
+//	if (offset == 0x33) //country code
+//		return_data = readinputport(7);
 
-	logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
+	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
+
+	//logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
 
 
 	return return_data;
@@ -341,15 +1918,23 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 {
 //	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
 	smpc_ram[offset] = data;
-
+	time_t ltime;
+	struct tm *today;
+	time(&ltime);
+	today = localtime(&ltime);
 	if(offset == 0x75)
 	{
-		/*
-			ACTIVE LOW
-			bit 2(0x04) - EEPROM Chip enable
-			bit 3(0x08) - EEPROM clock
-			bit 4(0x10) - EEPROM data
-		*/
+		EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
+		EEPROM_write_bit(data & 0x10);
+		EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
+
+
+//		if (data & 0x01)
+//			logerror("bit 0 active\n");
+//		if (data & 0x02)
+//			logerror("bit 1 active\n");
+//		if (data & 0x10)
+			//logerror("bit 4 active\n");//LOT
 		PDR1 = (data & 0x60);
 	}
 
@@ -365,11 +1950,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			logerror("SMPC: M68k on\n");
 			cpu_set_reset_line(2, PULSE_LINE);
 			cpu_set_halt_line(2, CLEAR_LINE);
+			en_68k = 1;
 		}
 		else
 		{
 			logerror("SMPC: M68k off\n");
 			cpu_set_halt_line(2, ASSERT_LINE);
+			en_68k = 0;
 		}
 		PDR2 = (data & 0x60);
 	}
@@ -449,9 +2036,48 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x10:
 				logerror ("SMPC: Status Acquire\n");
 				smpc_ram[0x5f]=0x10;
-				/*This is for RTC,cartridge code and similar stuff...*/
-				if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/
+				smpc_ram[0x21]=0x80;
+			  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
+		    	smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
+	    		smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
+		    	smpc_ram[0x29] = DectoBCD(today->tm_mday);
+		    	smpc_ram[0x2b] = DectoBCD(today->tm_hour);
+		    	smpc_ram[0x2d] = DectoBCD(today->tm_min);
+		    	smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+
+				smpc_ram[0x31]=0x00;  //BHOOOOO
+
+				//smpc_ram[0x33]=readinputport(7);
+
+				smpc_ram[0x35]=0x00;
+				smpc_ram[0x37]=0x00;
+
+				smpc_ram[0x39]=0xff;
+				smpc_ram[0x3b]=0xff;
+				smpc_ram[0x3d]=0xff;
+				smpc_ram[0x3f]=0xff;
+				smpc_ram[0x41]=0xff;
+				smpc_ram[0x43]=0xff;
+				smpc_ram[0x45]=0xff;
+				smpc_ram[0x47]=0xff;
+				smpc_ram[0x49]=0xff;
+				smpc_ram[0x4b]=0xff;
+				smpc_ram[0x4d]=0xff;
+				smpc_ram[0x4f]=0xff;
+				smpc_ram[0x51]=0xff;
+				smpc_ram[0x53]=0xff;
+				smpc_ram[0x55]=0xff;
+				smpc_ram[0x57]=0xff;
+				smpc_ram[0x59]=0xff;
+				smpc_ram[0x5b]=0xff;
+				smpc_ram[0x5d]=0xff;
+
+			//	/*This is for RTC,cartridge code and similar stuff...*/
+			//	if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/ /* we can't check this .. breaks controls .. probably issues elsewhere? */
+				{
+					logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
 					cpu_set_irq_line_and_vector(0, 8, HOLD_LINE , 0x47);
+				}
 			break;
 			/* RTC write*/
 			case 0x16:
@@ -487,7 +2113,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				SCSP_reset = 0;
 				break;
 			default:
-				logerror ("cpu #%d (PC=%08X) SMPC: Unhandled Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
+				logerror ("cpu #%d (PC=%08X) SMPC: undocumented Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
 		}
 
 		// we've processed the command, clear status flag
@@ -554,35 +2180,30 @@ SCU register[40] is for IRQ masking.
 
 /* to do, update bios idle skips so they work better with this arrangement.. */
 
+
 static INTERRUPT_GEN( stv_interrupt )
 {
-	if(cpu_getiloops() == 224)
+	scanline = 261-cpu_getiloops();
+
+
+	if(scanline == 0)
 	{
-		timer_0 = 0;
-		if(timer_0 == (stv_scu[36] & 0x1ff))
-		{
-			if(!(stv_scu[40] & 8))/*Timer 0*/
-			{
-				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
-				return;
-			}
-		}
-
-
 		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
 		{
+			logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
 			cpu_set_irq_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
 			stv_vblank = 0;
+			return;
 		}
-
 	}
-	else if(cpu_getiloops() <= 223 && cpu_getiloops() >= 1)/*Correct?*/
+	else if(scanline <= 223 && scanline >= 1)/*Correct?*/
 	{
 		timer_0++;
 		if(timer_0 == (stv_scu[36] & 0x1ff))
 		{
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
+				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
 				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
@@ -590,16 +2211,36 @@ static INTERRUPT_GEN( stv_interrupt )
 
 		/*TODO:use this *at the end* of the draw line.*/
 		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
-			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
-	}
-	else if(cpu_getiloops() == 0)
-	{
-		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
 		{
-			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
-			stv_vblank = 1;
+			logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
+			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
 		}
 	}
+	else if(scanline == 224)
+	{
+		timer_0 = 0;
+
+		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
+		{
+			logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
+			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
+			stv_vblank = 1;
+			return;
+		}
+
+		if(timer_0 == (stv_scu[36] & 0x1ff))
+		{
+			if(!(stv_scu[40] & 8))/*Timer 0*/
+			{
+				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+				return;
+			}
+		}
+
+
+	}
+
 }
 
 /*
@@ -637,7 +2278,7 @@ static UINT8 port_ad[] =
 	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
 };
 
-UINT8 port_sel;
+UINT8 port_sel,mux_data;
 
 #define HI_WORD_ACCESS (mem_mask & 0x00ff0000) == 0
 #define LO_WORD_ACCESS (mem_mask & 0x000000ff) == 0
@@ -650,12 +2291,31 @@ READ32_HANDLER ( stv_io_r32 )
 	switch(offset)
 	{
 		case 0:
-		return (readinputport(2) << 16) | (readinputport(3));
+		switch(port_sel)
+		{
+			case 0x77: return 0xff000000|(readinputport(2) << 16) |0x0000ff00|(readinputport(3));
+			case 0x67:
+			{
+				switch(mux_data)
+				{
+					/*Mahjong panel interface,bit wise(ACTIVE LOW)*/
+					case 0xfe:	return 0xff000000 | (readinputport(7)  << 16) | 0x0000ff00 | (readinputport(12));
+					case 0xfd:  return 0xff000000 | (readinputport(8)  << 16) | 0x0000ff00 | (readinputport(13));
+					case 0xfb:	return 0xff000000 | (readinputport(9)  << 16) | 0x0000ff00 | (readinputport(14));
+					case 0xf7:	return 0xff000000 | (readinputport(10) << 16) | 0x0000ff00 | (readinputport(15));
+					case 0xef:  return 0xff000000 | (readinputport(11) << 16) | 0x0000ff00 | (readinputport(16));
+					/*Joystick panel*/
+					default:
+				    return (readinputport(2) << 16) | (readinputport(3));
+					//usrintf_showmessage("%02x MUX DATA",mux_data);
+				}
+			}
+			//default: 	usrintf_showmessage("%02x PORT SEL",port_sel);
+			default: return (readinputport(2) << 16) | (readinputport(3));
+		}
 		case 1:
 		return (readinputport(4) << 16) | (ioga[1]);
 		case 2:
-		/*Needs more work once that groovef works and it could be that this is bit wise
-		  rather than value wise...*/
 		switch(port_sel)
 		{
 			case 0x77:	return (readinputport(5) << 16) | (readinputport(6));
@@ -704,6 +2364,7 @@ WRITE32_HANDLER ( stv_io_w32 )
 		case 1:
 			if(LO_WORD_ACCESS)
 			{
+				/*Why does the BIOS tests these as ACTIVE HIGH?A program bug?*/
 				ioga[1] = (data) & 0xff;
 				coin_counter_w(0,~data & 0x01);
 				coin_counter_w(1,~data & 0x02);
@@ -716,7 +2377,10 @@ WRITE32_HANDLER ( stv_io_w32 )
 		break;
 		case 2:
 			if(HI_WORD_ACCESS)
+			{
 				ioga[2] = data >> 16;
+				mux_data = ioga[2];
+			}
 			else if(LO_WORD_ACCESS)
 				ioga[2] = data;
 		break;
@@ -799,22 +2463,7 @@ Registers are in long words.
 50    00c8	SCU Version Register
 51    00cc	<Free>
 52    00cf
-**********************************************************************************/
-/*
-DMA TODO:
--Verify if there are any kind of bugs,do clean-ups,use better comments
- and macroize for better reading...
--Add timings(but how fast are each DMA?).
--Add level priority & DMA status register.
--Add DMA start factor conditions that are different than 7.
--Add byte data type transfer.
-*/
-
-#define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
-#define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
-#define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
-#define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
-/*
+===================================================================================
 DMA Status Register:
 31
 30
@@ -851,7 +2500,23 @@ DMA Status Register:
 02
 01 - DSP side DMA in stand-by
 00 - DSP side DMA in operation
+
+**********************************************************************************/
+/*
+DMA TODO:
+-Verify if there are any kind of bugs,do clean-ups,use better comments
+ and macroize for better reading...
+-Add timings(but how fast are each DMA?).
+-Add level priority & DMA status register.
+-Add DMA start factor conditions that are different than 7.
+-Add byte data type transfer.
 */
+
+#define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
+#define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
+#define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
+#define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
+
 #define DMA_STATUS				(stv_scu[31])
 /*These macros sets the various DMA status flags.*/
 #define SET_D0MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x10))    DMA_STATUS^=0x10
@@ -870,7 +2535,6 @@ READ32_HANDLER( stv_scu_r32 )
 
 WRITE32_HANDLER( stv_scu_w32 )
 {
-	/*Here we are removing out the read-only registers.*/
 	COMBINE_DATA(&stv_scu[offset]);
 
 	switch(offset)
@@ -1009,9 +2673,26 @@ WRITE32_HANDLER( stv_scu_w32 )
 			logerror("Indirect Mode DMA lv 2 set\n");
 
 		if((stv_scu[21] & 7) != 7)
-			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[21] & 7);
+			logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
 		break;
 		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
+		/*Use functions so it is easier to work out*/
+		case 32:
+		dsp_prg_ctrl(data);
+		logerror("SCU DSP: Program Control Port Access %08x\n",data);
+		break;
+		case 33:
+		dsp_prg_data(data);
+		logerror("SCU DSP: Program RAM Data Port Access %08x\n",data);
+		break;
+		case 34:
+		dsp_ram_addr_ctrl(data);
+		logerror("SCU DSP: Data RAM Address Port Access %08x\n",data);
+		break;
+		case 35:
+		dsp_ram_addr_w(data);
+		logerror("SCU DSP: Data RAM Data Port Access %08x\n",data);
+		break;
 		case 36: logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
 		case 40:
 		/*An interrupt is masked when his specific bit is 1.*/
@@ -1191,10 +2872,17 @@ static void dma_indirect_lv0()
 		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 		{
 			if(scu_dst_add_0 == 2)
-				cpu_writemem16bew_word(scu_dst_0,cpu_readmem16bew_word(scu_src_0));
+				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
 			else
-				cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
-
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
+				cpu_writemem32bedw_word(scu_dst_0+2,cpu_readmem32bedw_word(scu_src_0+2));
+			}
 			scu_dst_0+=scu_dst_add_0;
 			scu_src_0+=scu_src_add_0;
 		}
@@ -1241,13 +2929,22 @@ static void dma_indirect_lv1()
 		scu_dst_1 &=0x07ffffff;
 		scu_size_1 &=0xffff;
 
+
 		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 		{
-			if(scu_dst_add_1 == 2)
-				cpu_writemem16bew_word(scu_dst_1,cpu_readmem16bew_word(scu_src_1));
-			else
-				cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
 
+			if(scu_dst_add_1 == 2)
+				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
+			else
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
+				cpu_writemem32bedw_word(scu_dst_1+2,cpu_readmem32bedw_word(scu_src_1+2));
+			}
 			scu_dst_1+=scu_dst_add_1;
 			scu_src_1+=scu_src_add_1;
 		}
@@ -1297,9 +2994,17 @@ static void dma_indirect_lv2()
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
 			if(scu_dst_add_2 == 2)
-				cpu_writemem16bew_word(scu_dst_2,cpu_readmem16bew_word(scu_src_2));
+				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
 			else
-				cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
+				cpu_writemem32bedw_word(scu_dst_2+2,cpu_readmem32bedw_word(scu_src_2+2));
+			}
 
 			scu_dst_2+=scu_dst_add_2;
 			scu_src_2+=scu_src_add_2;
@@ -1318,7 +3023,630 @@ static void dma_indirect_lv2()
 	SET_D2MV_FROM_1_TO_0;
 }
 
+/*SCU DSP functions*/
+/*V0.01*/
+/*
+DSP TODO:
+\-Jump commands:
+ -How the jumps really works?7 or 8-bits?Are the jumps relative or absolute?
+ -Add proper JMP T0/JMP NT0/LOP/BTM support.
 
+\-ALU commands:
+ -Fix the flags.
+
+Notes:
+-The DSP uses rvalue.
+-The "DASM" code is preliminary and far from perfect,needs extra work.
+*/
+
+static void dsp_prg_ctrl(UINT32 data)
+{
+	if(LEF) dsp_reg.pc = (data & 0xff);
+	if(EXF) dsp_execute_program();
+	if(EF && (!(stv_scu[40] & 0x0020)))
+		cpu_set_irq_line_and_vector(0, 0xa, HOLD_LINE , 0x45);
+}
+
+static void dsp_prg_data(UINT32 data)
+{
+	dsp_reg.internal_prg[dsp_reg.pc] = data;
+	dsp_reg.pc++;
+}
+
+static void dsp_ram_addr_ctrl(UINT32 data)
+{
+	dsp_reg.ra = data & 0xff;
+
+	switch((dsp_reg.ra & 0xc0) >> 6)
+	{
+		case 0: dsp_reg.ct0 = (dsp_reg.ra & 0x3f); break;
+		case 1: dsp_reg.ct1 = (dsp_reg.ra & 0x3f); break;
+		case 2: dsp_reg.ct2 = (dsp_reg.ra & 0x3f); break;
+		case 3: dsp_reg.ct3 = (dsp_reg.ra & 0x3f); break;
+	}
+}
+
+static void dsp_ram_addr_w(UINT32 data)
+{
+	switch(((dsp_reg.ra & 0xc0) >> 6))
+	{
+		case 0:
+			dsp_reg.md0[dsp_reg.ct0] = data;
+			dsp_reg.ct0++;
+			/*guess*/
+			if(dsp_reg.ct0 >= 0x40) dsp_reg.ct0 = 0x00;
+			break;
+		case 1:
+			dsp_reg.md1[dsp_reg.ct1] = data;
+			dsp_reg.ct1++;
+			/*guess*/
+			if(dsp_reg.ct1 >= 0x40) dsp_reg.ct1 = 0x00;
+			break;
+		case 2:
+			dsp_reg.md2[dsp_reg.ct2] = data;
+			dsp_reg.ct2++;
+			/*guess*/
+			if(dsp_reg.ct2 >= 0x40) dsp_reg.ct2 = 0x00;
+			break;
+		case 3:
+			dsp_reg.md3[dsp_reg.ct3] = data;
+			dsp_reg.ct3++;
+			/*guess*/
+			if(dsp_reg.ct3 >= 0x40) dsp_reg.ct3 = 0x00;
+	}
+}
+
+#define JMP_CTRL   ((dsp_reg.internal_prg[dsp_reg.pc] & 0xf0000000) >> 28)
+#define JMP_OP     ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f80000) >> 19)
+
+#define OP_CTRL    ((dsp_reg.internal_prg[dsp_reg.pc] & 0xc0000000) >> 30)
+
+#define ALU_OP   ((dsp_reg.internal_prg[dsp_reg.pc] & 0x3c000000) >> 26)
+#define XBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f00000) >> 20)
+#define YBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x000fc000) >> 14)
+#define D1BUS_OP ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00003fff) >> 0)
+UINT8 dsp_debug = 1;
+static FILE *f;
+static UINT32 dsp_tmp;
+
+static void dsp_execute_program()
+{
+	int i = 0;
+
+	if(dsp_debug)
+	{
+		f = fopen("dsp_log.txt", "w");
+		fprintf(f, "DSP program start\n");
+	}
+	do{
+		dsp_reg.top = dsp_reg.pc + 1;
+		/*I guess that this mustn't happen...*/
+		if(dsp_reg.top >= 0x100) dsp_reg.top = 0;
+
+		if(1)
+		{
+			i++;
+			if(i >= 0x1000)
+			{
+				printf("DSP core got stuck at some point,emulation crashed due of that\n");
+				exit(1);/*Current DSP core can't do much,exit after some time with an errorcode...*/
+			}
+		}
+
+		switch(OP_CTRL)
+		{
+			/*Operation Commands*/
+			case 0: {
+			/*Jump commands*/
+			switch(JMP_CTRL)
+			{
+				case 0xd:
+				{
+					switch(JMP_OP)
+					{
+						/*JMP*/
+						case 0x00:
+							dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP %02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP Z*/
+						case 0x61:
+							if(ZF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP Z,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP NZ*/
+						case 0x41:
+							if(!ZF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP NZ,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP S*/
+						case 0x62:
+							if(SF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP S,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP NS*/
+						case 0x42:
+							if(!SF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP NS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP C*/
+						case 0x64:
+							if(CF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP C,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP NC*/
+						case 0x44:
+							if(!CF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP NC,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP T0*/
+						case 0x68:
+
+							//...
+
+							if(dsp_debug) fprintf(f,"%02x: JMP T0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP NT0*/
+						case 0x48:
+
+							//...
+
+							if(dsp_debug) fprintf(f,"%02x: JMP NT0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP ZS*/
+						case 0x63:
+							if(ZF || SF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP ZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+						/*JMP NZS*/
+						case 0x43:
+							if(!ZF && !SF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+							if(dsp_debug) fprintf(f,"%02x: JMP NZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+							break;
+					}
+				}
+				break;
+				case 0xe:
+				{
+					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
+					{
+						/*LOP*/
+						if(dsp_debug) fprintf(f,"%02x: LOP\n",dsp_reg.pc);
+					}
+					else
+					{
+						/*BTM*/
+						if(dsp_debug) fprintf(f,"%02x: BTM\n",dsp_reg.pc);
+					}
+				}
+				break;
+				case 0xf:
+				{
+					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
+					{
+						/*ENDI*/
+						if(!EF) stv_scu[32]^=0x00040000;
+						if(EXF) stv_scu[32]^=0x00100000;
+						if(dsp_debug) fprintf(f,"%02x: ENDI\n",dsp_reg.pc);
+					}
+					else
+					{
+						/*END*/
+					  	if(EXF) stv_scu[32]^=0x00100000;
+						if(dsp_debug) fprintf(f,"%02x: END\n",dsp_reg.pc);
+					}
+				}
+				break;
+			}
+
+			/*ALU commands*/
+			switch(ALU_OP)
+			{
+				/*NOP*/
+				case 0x00:
+					if(dsp_debug) fprintf(f,"%02x: ALU NOP\n",dsp_reg.pc);
+					break;
+				/*AND*/
+				case 0x01:
+					dsp_reg.acl &= dsp_reg.pl;
+					if(dsp_debug) fprintf(f,"%02x: AND PL,ACL\n",dsp_reg.pc);
+					break;
+				/*OR*/
+				case 0x02:
+					dsp_reg.acl |= dsp_reg.pl;
+					if(dsp_debug) fprintf(f,"%02x: OR PL,ACL\n",dsp_reg.pc);
+					break;
+				/*XOR*/
+				case 0x03:
+					dsp_reg.acl ^= dsp_reg.pl;
+					if(dsp_debug) fprintf(f,"%02x: XOR PL,ACL\n",dsp_reg.pc);
+					break;
+				/*ADD*/
+				case 0x04:
+					dsp_reg.acl += dsp_reg.pl;
+					if(dsp_debug) fprintf(f,"%02x: ADD PL,ACL\n",dsp_reg.pc);
+					break;
+				/*SUB*/
+				case 0x05:
+					dsp_reg.acl -= dsp_reg.pl;
+					if(dsp_debug) fprintf(f,"%02x: SUB PL,ACL\n",dsp_reg.pc);
+					break;
+				/*AD2*/
+				case 0x06:
+					dsp_reg.acl += dsp_reg.pl;
+					dsp_reg.ach += dsp_reg.ph;
+					if(dsp_reg.acl < dsp_reg.pl) dsp_reg.ach++;//carry
+
+					if(dsp_debug) fprintf(f,"%02x: AD2 P,AC\n",dsp_reg.pc);
+					break;
+				/*0x07 "SB2"?*/
+				/*SR*/
+				case 0x08:
+					if(dsp_reg.acl & 0x00000001) CF_1;
+					/*TODO:Is there a better way for doing this?*/
+					if(dsp_reg.acl & 0x80000000)
+					{
+						dsp_reg.acl>>=1;
+						dsp_reg.acl|=0x80000000;
+					}
+					else
+						dsp_reg.acl>>=1;
+
+					if(dsp_reg.acl & 0x80000000) SF_1;
+					//if(SF) dsp_reg.acl|=0x80000000;//unneeded
+					if(dsp_debug) fprintf(f,"%02x: SR \n",dsp_reg.pc);
+					break;
+				/*RR*/
+				case 0x09:
+					if(dsp_reg.acl & 0x00000001) { CF_1; } else { CF_0; }
+					dsp_reg.acl>>=1;
+					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+					if(CF) dsp_reg.acl|=0x80000000;
+					if(dsp_debug) fprintf(f,"%02x: RR \n",dsp_reg.pc);
+					break;
+				/*SL*/
+				case 0x0a:
+					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
+					dsp_reg.acl<<=1;
+					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+					if(dsp_debug) fprintf(f,"%02x: SL \n",dsp_reg.pc);
+					break;
+				/*RL*/
+				case 0x0b:
+					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
+					dsp_reg.acl<<=1;
+					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+					if(CF) dsp_reg.acl|=1;
+					if(dsp_debug) fprintf(f,"%02x: RL \n",dsp_reg.pc);
+					break;
+				/*RL8*/
+				case 0x0f:
+					if(dsp_reg.acl & 0x01000000) { CF_1; } else { CF_0; }
+					dsp_reg.acl>>=8;
+					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+					if(dsp_debug) fprintf(f,"%02x: RL8 \n",dsp_reg.pc);
+					break;
+				default:
+					if(dsp_debug) fprintf(f,"%02x: ALU invalid %02x \n",dsp_reg.pc,ALU_OP);
+			}
+
+			/*X-Bus commands*/
+			switch((XBUS_OP & 0x38) >> 3)
+			{
+				/*NOP*/
+				case 0x00:
+					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
+					break;
+				/*MOV [s],RX */
+				case 0x04:
+					switch(XBUS_OP & 7)
+					{
+						case 0:
+							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
+							break;
+						case 1:
+							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
+							break;
+						case 2:
+							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
+							break;
+						case 3:
+							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
+							break;
+						case 4:
+							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct0++;
+							break;
+						case 5:
+							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
+							dsp_reg.ct1++;
+							break;
+						case 6:
+							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
+							dsp_reg.ct2++;
+							break;
+						case 7:
+							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
+							dsp_reg.ct3++;
+							break;
+					}
+					if(dsp_debug) fprintf(f,"%02x: MOV [s],X (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
+					break;
+				/*MOV MUL,P */
+				case 0x02:
+					dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000) >> 32);
+					dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
+					if(dsp_debug) fprintf(f,"%02x: MOV MUL,P\n",dsp_reg.pc);
+					break;
+				/*MOV [s],P*/
+				case 0x03:
+					/*TODO:
+					From the docs:
+					"PH: changed by sign extension"
+					but exactly WHAT is changed?*/
+					switch(XBUS_OP & 7)
+					{
+						case 0:
+							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
+							break;
+						case 1:
+							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
+							break;
+						case 2:
+							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
+							break;
+						case 3:
+							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
+							break;
+						case 4:
+							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct0++;
+							break;
+						case 5:
+							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
+							dsp_reg.ct1++;
+							break;
+						case 6:
+							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
+							dsp_reg.ct2++;
+							break;
+						case 7:
+							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
+							dsp_reg.ct3++;
+							break;
+					}
+					if(dsp_debug) fprintf(f,"%02x: MOV [s],P (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
+					break;
+				default:
+					if(dsp_debug) fprintf(f,"%02x: X-BUS invalid %02x \n",dsp_reg.pc,XBUS_OP);
+			}
+
+			/*Y-Bus commands*/
+			switch((YBUS_OP & 0x38) >> 3)
+			{
+				/*NOP*/
+				case 0x00:
+					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
+					break;
+				/*MOV [s],RY */
+				case 0x04:
+					switch(YBUS_OP & 7)
+					{
+						case 0:
+							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
+							break;
+						case 1:
+							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
+							break;
+						case 2:
+							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
+							break;
+						case 3:
+							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
+							break;
+						case 4:
+							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct0++;
+							break;
+						case 5:
+							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
+							dsp_reg.ct1++;
+							break;
+						case 6:
+							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
+							dsp_reg.ct2++;
+							break;
+						case 7:
+							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
+							dsp_reg.ct3++;
+							break;
+					}
+					if(dsp_debug) fprintf(f,"%02x: MOV [s],Y (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
+					break;
+				/*CLR A*/
+				case 0x01:
+					dsp_reg.ach = 0;
+					dsp_reg.acl = 0;
+					if(dsp_debug) fprintf(f,"%02x: CLR A\n",dsp_reg.pc);
+				/*MOV ALU,A*/
+				case 0x02:
+					dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000) >> 32);
+					dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
+					if(dsp_debug) fprintf(f,"%02x: MOV ALU,A\n",dsp_reg.pc);
+					break;
+				/*MOV [s],A*/
+				case 0x03:
+					/*TODO:
+					From the docs:
+					"ACH: changed by sign extension"
+					but exactly WHAT is changed?*/
+					switch(YBUS_OP & 7)
+					{
+						case 0:
+							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
+							break;
+						case 1:
+							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
+							break;
+						case 2:
+							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
+							break;
+						case 3:
+							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
+							break;
+						case 4:
+							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct0++;
+							break;
+						case 5:
+							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
+							dsp_reg.ct1++;
+							break;
+						case 6:
+							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
+							dsp_reg.ct2++;
+							break;
+						case 7:
+							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
+							dsp_reg.ct3++;
+							break;
+					}
+					if(dsp_debug) fprintf(f,"%02x: MOV [s],A (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
+					break;
+				default:
+					if(dsp_debug) fprintf(f,"%02x: Y-BUS invalid %02x \n",dsp_reg.pc,YBUS_OP);
+			}
+
+			/*D1-Bus commands*/
+			switch((D1BUS_OP & 0x3000) >> 12)
+			{
+				/*NOP*/
+				case 0x00:
+					if(dsp_debug) fprintf(f,"%02x: D1-BUS NOP \n",dsp_reg.pc);
+					break;
+				/*MOV SImm,[d]*/
+				/*TODO: implement 8 to 16/8 to 32 bit sign extensions.*/
+				case 0x01:
+					switch((D1BUS_OP & 0xf00) >> 8)
+					{
+						case 0x0:
+							dsp_reg.md0[dsp_reg.ct0] = D1BUS_OP & 0xff;
+							dsp_reg.ct0++;
+							break;
+						case 0x1:
+							dsp_reg.md1[dsp_reg.ct1] = D1BUS_OP & 0xff;
+							dsp_reg.ct1++;
+							break;
+						case 0x2:
+							dsp_reg.md2[dsp_reg.ct2] = D1BUS_OP & 0xff;
+							dsp_reg.ct2++;
+							break;
+						case 0x3:
+							dsp_reg.md3[dsp_reg.ct3] = D1BUS_OP & 0xff;
+							dsp_reg.ct3++;
+							break;
+						case 0x4: dsp_reg.rx = D1BUS_OP & 0xff; break;
+						case 0x5: dsp_reg.pl = D1BUS_OP & 0xff; break;
+						case 0x6: dsp_reg.ra0 = D1BUS_OP & 0xff; break;
+						case 0x7: dsp_reg.wa0 = D1BUS_OP & 0xff; break;
+						case 0x8: break;
+						case 0x9: break;
+						case 0xa: dsp_reg.lop = D1BUS_OP & 0xff; break;
+						/*TODO:like this it causes an unconditional jump,is it right?*/
+						case 0xb: dsp_reg.top = D1BUS_OP & 0xff; break;
+						case 0xc: dsp_reg.ct0 = D1BUS_OP & 0x3f; break;
+						case 0xd: dsp_reg.ct1 = D1BUS_OP & 0x3f; break;
+						case 0xe: dsp_reg.ct2 = D1BUS_OP & 0x3f; break;
+						case 0xf: dsp_reg.ct3 = D1BUS_OP & 0x3f; break;
+					}
+					if(dsp_debug) fprintf(f,"%02x: MOV SImm,[d] (data %02x type %01x)\n",dsp_reg.pc,D1BUS_OP & 0xff,(D1BUS_OP & 0xf00) >> 8);
+					break;
+				/*MOV [s],[d]*/
+				case 0x3:
+					switch((D1BUS_OP & 0xf00) >> 8)
+					{
+						case 0x0:
+							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct0++;// <- I suspect that this might be a doc typo...
+							break;
+						case 0x1:
+							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
+							dsp_reg.ct1++;
+							break;
+						case 0x2:
+							dsp_tmp = dsp_reg.md2[dsp_reg.ct2];
+							dsp_reg.ct2++;
+							break;
+						case 0x3:
+							dsp_tmp = dsp_reg.md3[dsp_reg.ct3];
+							dsp_reg.ct3++;
+							break;
+						case 0x4: dsp_tmp = dsp_reg.rx; break;
+						case 0x5: dsp_tmp = dsp_reg.pl; break;
+						case 0x6: dsp_tmp = dsp_reg.ra0; break;
+						case 0x7: dsp_tmp = dsp_reg.wa0; break;
+						case 0x8: break;
+						case 0x9: break;
+						case 0xa: dsp_tmp = dsp_reg.lop; break;
+						case 0xb: dsp_tmp = dsp_reg.top; break;
+						case 0xc: dsp_tmp = dsp_reg.ct0; break;
+						case 0xd: dsp_tmp = dsp_reg.ct1; break;
+						case 0xe: dsp_tmp = dsp_reg.ct2; break;
+						case 0xf: dsp_tmp = dsp_reg.ct3; break;
+					}
+					switch(D1BUS_OP & 0xf)
+					{
+						case 0x0: dsp_reg.md0[dsp_reg.ct0] = dsp_tmp; break;
+						case 0x1: dsp_reg.md1[dsp_reg.ct1] = dsp_tmp; break;
+						case 0x2: dsp_reg.md2[dsp_reg.ct2] = dsp_tmp; break;
+						case 0x3: dsp_reg.md3[dsp_reg.ct3] = dsp_tmp; break;
+						case 0x4:
+							dsp_reg.md0[dsp_reg.ct0] = dsp_tmp;
+							dsp_reg.ct0++;
+							break;
+						case 0x5:
+							dsp_reg.md1[dsp_reg.ct1] = dsp_tmp;
+							dsp_reg.ct1++;
+							break;
+						case 0x6:
+							dsp_reg.md2[dsp_reg.ct2] = dsp_tmp;
+							dsp_reg.ct2++;
+							break;
+						case 0x7:
+							dsp_reg.md3[dsp_reg.ct3] = dsp_tmp;
+							dsp_reg.ct3++;
+							break;
+						case 0x8: break;
+						case 0x9: dsp_reg.alu = dsp_tmp; break;
+						case 0xa: dsp_reg.alu = dsp_tmp * 0x100000000; break;
+					}
+					dsp_tmp = 0; //free the temporary storage
+					if(dsp_debug) fprintf(f,"%02x: MOV [s],[d] (s = %01x  d =%01x)\n",dsp_reg.pc,(D1BUS_OP & 0xf00) >> 8,D1BUS_OP & 0xf);
+					break;
+			}
+
+			}break;
+		}
+		dsp_reg.pc = dsp_reg.top;//I don't think that this is right though...
+	}while(EXF);
+	if(dsp_debug)
+	{
+		fprintf(f, "DSP program end\n");
+		fclose(f);
+	}
+}
+
+
+/**************************************************************************************/
 
 WRITE32_HANDLER( stv_sh2_soundram_w )
 {
@@ -1334,195 +3662,21 @@ READ32_HANDLER( stv_sh2_soundram_r )
 {
 	data8_t *SNDRAM = memory_region(REGION_CPU3);
 
-	if ((activecpu_get_pc()==0x6014298) && (offset*4 == 0x07ac))
-	{
-		logerror("hanagumi hang skip! 6014298\n");
-		return 0x01010101;
-	}
-
-	if ((activecpu_get_pc()==0x60142fe) && (offset*4 == 0x07ac))
-	{
-		logerror("hanagumi hang skip! 60142fe\n");
-		return 0x01010101;
-	}
-
 	return  (SNDRAM[offset*4+1]<<24) | (SNDRAM[offset*4+0]<<16) | (SNDRAM[offset*4+3]<<8) | (SNDRAM[offset*4+2]<<0);
 
 }
 
 static READ32_HANDLER( stv_scsp_regs_r32 )
 {
-	return scsp_regs[offset*2+1]<<16 | scsp_regs[offset*2+0]<<0;
+	offset <<= 1;
+	return (SCSP_0_r(offset+1, 0xffff) | (SCSP_0_r(offset, 0xffff)<<16));
 }
 
 static WRITE32_HANDLER( stv_scsp_regs_w32 )
 {
-	if (!(mem_mask & 0xffff0000)) scsp_regs[offset*2+1] = (data & 0xffff0000)>>16;
-	if (!(mem_mask & 0x0000ffff)) scsp_regs[offset*2+0] = (data & 0x0000ffff)>>0;
-}
-
-static READ16_HANDLER( stv_scsp_regs_r16 )
-{
-	return scsp_regs[offset];
-}
-
-static WRITE16_HANDLER( stv_scsp_regs_w16 )
-{
-	COMBINE_DATA(&scsp_regs[offset]);
-
-	/*SCSP Common Control Register*/
-	if(offset*2 >= 0x400 && offset*2 <= 0x42f)
-		switch(offset*2)
-		{
-			case 0x412:
-			/*DMEA [15:1]*/
-			/*Sound memory address*/
-			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
-			break;
-			case 0x414:
-			/*DMEA [19:16]*/
-			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
-			/*DRGA [11:1]*/
-			/*Register memory address*/
-			scsp_drga = scsp_regs[0x414/2] & 0x0ffe;
-			break;
-			case 0x416:
-			/*DGATE[14]*/
-			/*DDIR[13]*/
-			/*if 0 sound_mem -> reg*/
-			/*if 1 sound_mem <- reg*/
-			/*DEXE[12]*/
-			/*starting bit*/
-			/*DTLG[11:1]*/
-			/*size of transfer*/
-			scsp_dtlg = scsp_regs[0x416/2] & 0x0ffe;
-			if(scsp_dexe)
-			{
-				dma_scsp();
-				scsp_regs[0x416/2]^=0x1000;//disable starting bit
-			}
-			break;
-			case 0x418: /*Timer A*/	break;
-			case 0x41a: /*Timer B*/ break;
-			case 0x41c: /*Timer C*/ break;
-			case 0x41e:
-			/*Allow Sound CPU irq*/
-/*
-offsets
-0x8000
-0x4000
-0x2000
-0x1000
-0x0800
-0x0400 - Sample irq
-0x0200 - MIDI-OUT
-0x0100 - Timer C
-0x0080 - Timer B
-0x0040 - Timer A
-0x0020 - CPU Software Irq
-0x0010 - DMA Transfer End
-0x0008 - MIDI-IN
-0x0004 - External irq 2
-0x0002 - External irq 1
-0x0001 - External irq 0
-*/
-			break;
-			case 0x420:
-			/*Request Sound CPU irq*/
-			if(scsp_regs[0x420/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,ASSERT_LINE); }
-			break;
-			case 0x422:
-			/*Reset Sound CPU irq*/
-			if(scsp_regs[0x422/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,CLEAR_LINE); }
-
-			/*Refresh irq mask register*/
-			scsp_regs[0x41e/2] = scsp_regs[0x422/2];
-			break;
-/*
-----------------------
-|SCILV2|SCILV1|SCILV0|
-| bit2 | bit1 | bit0 |
-----------------------
-15
-14
-13
-12
-11
-10
-09
-08
-07 - Timer B & C,MIDI-OUT
-06 - Timer A
-05 - CPU Software Irq
-04 - DMA Transfer End
-03 - MIDI-IN
-02 - External irq 2
-01 - External irq 1
-00 - External irq 0
-*/
-			case 0x424:
-			/*Sound CPU interrupt level bit0*/
-			break;
-			case 0x426:
-			/*Sound CPU interrupt level bit1*/
-			break;
-			case 0x428:
-			/*Sound CPU interrupt level bit2*/
-			break;
-			case 0x42a: /*Allow Main CPU irq*/   break;
-			case 0x42c: /*Request Main CPU irq*/ break;
-			case 0x42e: /*Reset Main CPU irq*/   break;
-			default: logerror("SCSP Common Control Register set %04x at %04x\n",data,offset*2);
-		}
-}
-
-static void dma_scsp()
-{
-	static UINT16 tmp_dma[2];
-
-	logerror("SCSP: DMA transfer START\n"
-			 "DMEA: %04x DRGA: %04x DTLG: %04x\n"
-			 "DGATE: %d  DDIR: %d\n",scsp_dmea,scsp_drga,scsp_dtlg,scsp_dgate ? 1 : 0,scsp_ddir ? 1 : 0);
-
-	/* Copy the dma values in a temp storage for resuming later *
-	 * (DMA *can't* overwrite his parameters).                  */
-	if(!(scsp_ddir))
-	{
-		tmp_dma[0] = scsp_regs[0x412/2];
-		tmp_dma[1] = scsp_regs[0x414/2];
-		tmp_dma[2] = scsp_regs[0x416/2];
-	}
-
-	if(scsp_ddir)
-	{
-		for(;scsp_dtlg > 0;scsp_dtlg-=2)
-		{
-			cpu_writemem24bedw_word(scsp_dmea, cpu_readmem24bedw_word(0x100000|scsp_drga));
-			scsp_dmea+=2;
-			scsp_drga+=2;
-		}
-	}
-	else
-	{
-		for(;scsp_dtlg > 0;scsp_dtlg-=2)
-		{
-			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
-			scsp_dmea+=2;
-			scsp_drga+=2;
-		}
-	}
-
-	/*Resume the values*/
-	if(!(scsp_ddir))
-	{
-	 	scsp_regs[0x412/2] = tmp_dma[0];
-		scsp_regs[0x414/2] = tmp_dma[1];
-		scsp_regs[0x416/2] = tmp_dma[2];
-	}
-
-	/*Job done,request a dma end irq*/
-	if(scsp_regs[0x41e/2] & 0x10)
-	cpu_set_irq_line(2,dma_transfer_end,HOLD_LINE);
+	offset <<= 1;
+	SCSP_0_w(offset, data>>16, mem_mask >> 16);
+	SCSP_0_w(offset+1, data, mem_mask);
 }
 
 /* communication,SLAVE CPU acquires data from the MASTER CPU and triggers an irq.  *
@@ -1569,18 +3723,15 @@ static MEMORY_READ32_START( stv_master_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
 	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
 	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
-
 	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
 	{ 0x00400000, 0x0040001f, stv_io_r32 },
-
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
 //	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
 //	{ 0x05000000, 0x058fffff, MRA32_RAM },
-
+	{ 0x05800000, 0x0589ffff, cdregister_r },
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
 	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
-
 	/* VDP1 */
 	/*0x05c00000-0x05c7ffff VRAM*/
 	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
@@ -1588,28 +3739,13 @@ static MEMORY_READ32_START( stv_master_readmem )
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
 	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
 	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
-
-	/* VDP2 when VRAMSZ is 0*/
-//	{ 0x5e00000 , 0x5e1ffff, a0_vdp2_r },
-//	{ 0x5e20000 , 0x5e3ffff, a1_vdp2_r },
-//	{ 0x5e40000 , 0x5e5ffff, b0_vdp2_r },
-//	{ 0x5e60000 , 0x5e7ffff, b1_vdp2_r },
-
-
 	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_r },
 	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_r },
 	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_r },
-
-	/* VDP2 when VRAMSZ is 1*/
-	/*0x5e00000-0x5e3ffff A0*/
-	/*0x5e40000-0x5e7ffff A1*/
-	/*0x5e80000-0x5ecffff B0*/
-	/*0x5ed0000-0x5efffff B1*/
 //	{ 0x05e00000, 0x05e7ffff, MRA32_RAM },
 //	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
 //	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
-
 	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
 	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
@@ -1617,29 +3753,23 @@ MEMORY_END
 static MEMORY_WRITE32_START( stv_master_writemem )
 	{ 0x00000000, 0x0007ffff, MWA32_ROM },
 	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
-
 	{ 0x00180000, 0x0018ffff, MWA32_BANK5 }, // backup ram
-
 	{ 0x00200000, 0x002fffff, MWA32_BANK4 }, // workram low
 	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
 	{ 0x01000000, 0x01000003, minit_w },
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
 //	{ 0x05000000, 0x058fffff, MWA32_RAM },
-
+	{ 0x05800000, 0x0589ffff, cdregister_w },
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
 	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
-
 	/* VDP1 */
 	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
 	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
-
 	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_w },
 	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_w },
 	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_w },
-
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
-
 	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
 //	{ 0x06100000, 0x07ffffff, MWA32_NOP },
 MEMORY_END
@@ -1689,12 +3819,12 @@ MEMORY_END
 
 static MEMORY_READ16_START( sound_readmem )
 	{ 0x000000, 0x0fffff, MRA16_BANK2 },
-	{ 0x100000, 0x100fff, stv_scsp_regs_r16 },
+	{ 0x100000, 0x100fff, SCSP_0_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sound_writemem )
 	{ 0x000000, 0x0fffff, MWA16_BANK2 },	/*actually SDRAM*/
-	{ 0x100000, 0x100fff, stv_scsp_regs_w16 },
+	{ 0x100000, 0x100fff, SCSP_0_w },
 MEMORY_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -1783,9 +3913,57 @@ INPUT_PORTS_START( stv )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "1P Push Switch", KEYCODE_7, IP_JOY_NONE )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "2P Push Switch", KEYCODE_8, IP_JOY_NONE )
 
-	/*This might be unused but we never know...*/
+	/*This *might* be unused...*/
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "3" )
+	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*Extra button layout,used by Power Instinct 3 & Suikoenbu*/
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*We don't need these,AFAIK the country code doesn't work either...*/
+	#if 0
+	PORT_START							//7
+	PORT_DIPNAME( 0x0f, 0x01, "Country" )
+	PORT_DIPSETTING(    0x01, "Japan" )
+	PORT_DIPSETTING(    0x02, "Asia Ntsc" )
+	PORT_DIPSETTING(    0x04, "Usa" )
+	PORT_DIPSETTING(    0x08, "Sud America Ntsc" )
+	PORT_DIPSETTING(    0x06, "Korea" )
+	PORT_DIPSETTING(    0x0a, "Asia Pal" )
+	PORT_DIPSETTING(    0x0c, "Europe/Other Pal" )
+	PORT_DIPSETTING(    0x0d, "Sud America Pal" )
+
+	PORT_START	/* Pad data 1a */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "B",   KEYCODE_U, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "C",   KEYCODE_Y, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "A", KEYCODE_T, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "Start", KEYCODE_O, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "Up", KEYCODE_I, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "Down",   KEYCODE_K, IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, 0, "Left", KEYCODE_J, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Right", KEYCODE_L, IP_JOY_NONE )
+
+	PORT_START	/* Pad data 1b */
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "L trig", KEYCODE_A, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "Z", KEYCODE_Q, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "Y",   KEYCODE_W, IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, 0, "X", KEYCODE_E, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "R trig", KEYCODE_S, IP_JOY_NONE )
+	#endif
+INPUT_PORTS_END
+
+/*Same as the regular one,but with an additional & optional mahjong panel*/
+INPUT_PORTS_START( stvmp )
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "PDR1" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -1810,57 +3988,176 @@ INPUT_PORTS_START( stv )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "PDR2" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+/*
+	PORT_START
+	STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+*/
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "1P Push Switch", KEYCODE_7, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "2P Push Switch", KEYCODE_8, IP_JOY_NONE )
+
+	/*This *might* be unused...*/
+	PORT_START
+	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
 	/*Extra button layout,used by Power Instinct 3*/
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER1 )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER2 )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	/*Mahjong panel/player 1 side*/
+	PORT_START/*7*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 KAN",   	KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 START",  KEYCODE_1,        IP_JOY_NONE )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 E",   	KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 A",   	KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P1 M",   	KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 I",   	KEYCODE_I,        IP_JOY_NONE )
+
+	PORT_START/*8*/
+	/*This one *might* be reach,damn cheap programmers ;-)*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 RON",    KEYCODE_Z,        IP_JOY_NONE )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 F",   	KEYCODE_F,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 B",   	KEYCODE_B,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P1 N",   	KEYCODE_N,        IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 J",   	KEYCODE_J,        IP_JOY_NONE )
+
+	PORT_START/*9*/
+	/*Ditto from above(might be ron)*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P1 REACH",  KEYCODE_LSHIFT,   IP_JOY_NONE )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 G",   	KEYCODE_G,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 C",   	KEYCODE_C,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P1 CHI",    KEYCODE_SPACE,    IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 K",   	KEYCODE_K,        IP_JOY_NONE )
+
+	PORT_START/*10*/
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 H",   	KEYCODE_H,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 D",   	KEYCODE_D,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P1 PON",    KEYCODE_LALT, 	  IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P1 L",   	KEYCODE_L,        IP_JOY_NONE )
+
+	PORT_START/*11*/
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0,  "P1 FLIP",   KEYCODE_X,       IP_JOY_NONE )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/*Mahjong panel/player 2 side*/
+	PORT_START/*12*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 KAN",   	KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P2 START",  KEYCODE_2,        IP_JOY_NONE )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 E",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P2 A",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P2 M",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 I",   	KEYCODE_NONE,        IP_JOY_NONE )
+
+	PORT_START/*13*/
+	/*This one *might* be reach,damn cheap programmers ;-)*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 RON",    KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 F",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P2 B",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P2 N",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 J",   	KEYCODE_NONE,        IP_JOY_NONE )
+
+	PORT_START/*14*/
+	/*Ditto from above(might be ron)*/
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, 0, "P2 REACH",  KEYCODE_NONE,   IP_JOY_NONE )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 G",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P2 C",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P2 CHI",    KEYCODE_NONE,    IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 K",   	KEYCODE_NONE,        IP_JOY_NONE )
+
+	PORT_START/*15*/
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P2 H",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P2 D",   	KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0, "P2 PON",    KEYCODE_NONE,     IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "P2 L",   	KEYCODE_NONE,        IP_JOY_NONE )
+
+	PORT_START/*16*/
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, 0,  "P2 FLIP",  KEYCODE_NONE,        IP_JOY_NONE )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
-
-/*
-
-06013AE8: MOV.L   @($D4,PC),R5
-06013AEA: MOV.L   @($D8,PC),R0
-06013AEC: MOV.W   @R5,R5
-06013AEE: MOV.L   @R0,R0
-06013AF0: AND     R10,R5
-06013AF2: TST     R0,R0
-06013AF4: BTS     $06013B00
-06013AF6: EXTS.W  R5,R5
-06013B00: EXTS.W  R5,R5
-06013B02: TST     R5,R5
-06013B04: BF      $06013B0A
-06013B06: TST     R4,R4
-06013B08: BT      $06013AE8
-
-   (loops for 375868 instructions)
-
-*/
-
-
-static READ32_HANDLER( stv_speedup_r )
-{
-	if (activecpu_get_pc()==0x60154b4) cpu_spinuntil_int(); // bios menus..
-
-	return stv_workram_h[0x0335d0/4];
-}
-
-static READ32_HANDLER( stv_speedup2_r )
-{
-	if (activecpu_get_pc()==0x6013af0) cpu_spinuntil_int(); // for use in japan
-
-	return stv_workram_h[0x0335bc/4];
-}
 
 
 WRITE32_HANDLER ( w60ffc44_write )
@@ -1882,6 +4179,11 @@ WRITE32_HANDLER ( w60ffc48_write )
 
 DRIVER_INIT ( stv )
 {
+	time_t ltime;
+	struct tm *today;
+	time(&ltime);
+	today = localtime(&ltime);
+
 	unsigned char *ROM = memory_region(REGION_USER1);
 	cpu_setbank(1,&ROM[0x000000]);
 
@@ -1899,9 +4201,7 @@ DRIVER_INIT ( stv )
 	cpu_setbank(4,&stv_workram_l[0x000000]);
 	cpu_setbank(5,&stv_backupram[0x000000]);
 
-/* idle skip bios? .. not 100% sure this is safe .. we'll see */
-	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
-	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
+	install_stvbios_speedups();
 
 	/* debug .. watch the command buffer rsgun, cottonbm etc. appear to use to communicate between cpus */
 	install_mem_write32_handler(0, 0x60ffc44, 0x60ffc47, w60ffc44_write );
@@ -1909,95 +4209,19 @@ DRIVER_INIT ( stv )
 	install_mem_write32_handler(1, 0x60ffc44, 0x60ffc47, w60ffc44_write );
 	install_mem_write32_handler(1, 0x60ffc48, 0x60ffc4b, w60ffc48_write );
 
+  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
+    smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
+    smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
+    smpc_ram[0x29] = DectoBCD(today->tm_mday);
+    smpc_ram[0x2b] = DectoBCD(today->tm_hour);
+    smpc_ram[0x2d] = DectoBCD(today->tm_min);
+    smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+    smpc_ram[0x31] = 0x00; //CTG1=0 CTG0=0 (correct??)
+//  smpc_ram[0x33] = readinputport(7);
+ 	smpc_ram[0x5f] = 0x10;
 }
 
-static READ32_HANDLER( shienryu_slave_speedup_r )
-{
- if (activecpu_get_pc()==0x06004410)
-  cpu_spinuntil_time(TIME_IN_USEC(20)); // is this safe... we can't skip till vbl because its not a vbl wait loop
-
- return stv_workram_h[0x0ae8e4/4];
-}
-
-
-static READ32_HANDLER( shienryu_speedup_r )
-{
-	if (activecpu_get_pc()==0x060041C8) cpu_spinuntil_int(); // after you enable the sound cpu ...
-	return stv_workram_h[0x0ae8e0/4];
-}
-
-
-DRIVER_INIT(shienryu)
-{
-	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
-	install_mem_read32_handler(1, 0x60ae8e4, 0x60ae8e7, shienryu_slave_speedup_r ); // after you enable sound cpu
-
-	init_stv();
-}
-
-static READ32_HANDLER( prikura_speedup_r )
-{
-	if (activecpu_get_pc()==0x6018642) cpu_spinuntil_int(); // after you enable the sound cpu ...
-	return stv_workram_h[0x0b9228/4];
-}
-
-
-DRIVER_INIT(prikura)
-{
-/*
- 06018640: MOV.B   @R14,R0  // 60b9228
- 06018642: TST     R0,R0
- 06018644: BF      $06018640
-
-    (loops for 263473 instructions)
-*/
-	install_mem_read32_handler(0, 0x60b9228, 0x60b922b, prikura_speedup_r );
-
-	init_stv();
-}
-
-
-static READ32_HANDLER( hanagumi_speedup_r )
-{
-	if (activecpu_get_pc()==0x06010162) cpu_spinuntil_int(); // title logos
-
-	return stv_workram_h[0x94188/4];
-}
-
-static READ32_HANDLER( hanagumi_slave_off )
-{
-	/* just turn the slave off, i don't think the game needs it */
-	cpu_set_halt_line(1,ASSERT_LINE);
-
-	return stv_workram_h[0x015438/4];
-}
-
-DRIVER_INIT(hanagumi)
-{
-/*
-	06013E1E: NOP
-	0601015E: MOV.L   @($6C,PC),R3
-	06010160: MOV.L   @R3,R0  (6094188)
-	06010162: TST     R0,R0
-	06010164: BT      $0601015A
-	0601015A: JSR     R14
-	0601015C: NOP
-	06013E20: MOV.L   @($34,PC),R3
-	06013E22: MOV.B   @($00,R3),R0
-	06013E24: TST     R0,R0
-	06013E26: BT      $06013E1C
-	06013E1C: RTS
-	06013E1E: NOP
-
-   (loops for 288688 instructions)
-*/
-   	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
-   	install_mem_read32_handler(1, 0x6015438, 0x601543b, hanagumi_slave_off );
-
-  	init_stv();
-}
-
-static MACHINE_INIT( stv )
+MACHINE_INIT( stv )
 {
 
 	unsigned char *SH2ROM = memory_region(REGION_USER1);
@@ -2010,6 +4234,9 @@ static MACHINE_INIT( stv )
 	cpu_set_halt_line(2, ASSERT_LINE);
 
 	timer_0 = 0;
+	en_68k = 0;
+	smpc_ram[0x21] = 0x80;
+
 }
 
 static struct GfxLayout tiles8x8x4_layout =
@@ -2089,6 +4316,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 struct sh2_config sh2_conf_master = { 0 };
 struct sh2_config sh2_conf_slave  = { 1 };
 
+static int scsp_last_line = 0;
+
+static void scsp_irq(int irq)
+{
+	// don't bother the 68k if it's off
+	if (!en_68k)
+	{
+		return;
+	}
+
+	if (irq)
+	{
+		scsp_last_line = irq;
+		cpu_set_irq_line(2, irq, ASSERT_LINE);
+	}
+	else
+	{
+		cpu_set_irq_line(2, scsp_last_line, CLEAR_LINE);
+	}
+}
+
+static struct SCSPinterface scsp_interface =
+{
+	1,
+	{ REGION_CPU3, },
+	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) },
+	{ scsp_irq, },
+};
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
@@ -2110,10 +4366,11 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(stv)
+	MDRV_NVRAM_HANDLER(93C46) /* Actually 93c45 */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
-	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_SCREEN_SIZE(1024, 1024)
 	MDRV_VISIBLE_AREA(0*8, 703, 0*8, 479) // we need to use a resolution as high as the max size it can change to
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -2121,6 +4378,8 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_VIDEO_START(stv_vdp2)
 	MDRV_VIDEO_UPDATE(stv_vdp2)
 
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(SCSP, scsp_interface)
 MACHINE_DRIVER_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
@@ -2134,6 +4393,7 @@ MACHINE_DRIVER_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* jp alt 2 */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* taiwan */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 5, "mp17954a.s",     0x000000, 0x080000, CRC(f7722da3) SHA1(af79cff317e5b57d49e463af16a9f616ed1eee08) ) /* Europe */ \
+	/*ROM_LOAD16_WORD_SWAP_BIOS( 6, "saturn.bin",   	0x000000, 0x080000, CRC(653ff2d8) SHA1(20994ae7ee177ddaf3a430b010c7620dca000fb4) )*/ /* Saturn Eu Bios */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
@@ -2151,6 +4411,7 @@ SYSTEM_BIOS_START( stvbios )
 	SYSTEM_BIOS_ADD( 3, "japanb",      "Japan (bios 20091)" )
 	SYSTEM_BIOS_ADD( 4, "taiwan",      "Taiwan (bios mp17953a)" )
 	SYSTEM_BIOS_ADD( 5, "europe",      "Europe (bios mp17954a)" )
+//	SYSTEM_BIOS_ADD( 7, "saturn",      "Saturn bios :)" )
 	/*Korea*/
 	/*Asia (Pal Area)*/
 	/*Brazil*/
@@ -2333,9 +4594,12 @@ ROM_END
 ROM_START( fhboxers )
 	STV_BIOS
 
-	/* maybe there is some banking on this one, or the roms are in the wrong places */
 	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fr18541a.13",               0x0000000, 0x0100000, CRC(8c61a17c) SHA1(a8aef27b53482923a506f7daa4b7a38653b4d8a4) ) // ic13 bad?! (header is read from here, not ic7 even if both are populated on this board)
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
 	ROM_LOAD16_WORD_SWAP( "mpr18538.7",    0x0200000, 0x0200000, CRC(7b5230c5) SHA1(70cebc3281580b43adf42c37318e12159c28a13d) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18533.2",    0x0400000, 0x0400000, CRC(7181fe51) SHA1(646f95e1a5b64d721e961352cee6fd5adfd031ec) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18534.3",    0x0800000, 0x0400000, CRC(c87ef125) SHA1(c9ced130faf6dd9e626074b6519615654d8beb19) ) // good
@@ -2353,6 +4617,10 @@ ROM_START( findlove )
 
 	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20424.13",               0x0000000, 0x0100000, CRC(4e61fa46) SHA1(e34624d98cbdf2dd04d997167d3c4decd2f208f7) ) // ic13 bad?! (header is read from here, not ic7 even if both are populated on this board)
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
 	ROM_LOAD16_WORD_SWAP( "mpr20431.7",    0x0200000, 0x0200000, CRC(ea656ced) SHA1(b2d6286081bd46a89d1284a2757b87d0bca1bbde) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20426.2",    0x0400000, 0x0400000, CRC(897d1747) SHA1(f3fb2c4ef8bc2c1658907e822f2ee2b88582afdd) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20427.3",    0x0800000, 0x0400000, CRC(a488a694) SHA1(80ec81f32e4b5712a607208b2a45cfdf6d5e1849) ) // good
@@ -2562,6 +4830,21 @@ ROM_START( sandor )
 	ROM_LOAD16_WORD_SWAP( "mpr18638.11",  0x2800000, 0x0400000, CRC(caab531b) SHA1(a77bdcc27d183896c0ed576eeebcc1785d93669e) ) // good
 ROM_END
 
+ROM_START( thunt )
+	STV_BIOS
+
+	ROM_REGION32_BE( 0x2c00000, REGION_USER1, 0 ) /* SH2 code */
+	/* I suspect this should be one rom */
+	ROM_LOAD16_BYTE( "th-ic7_2.stv",    0x0200000, 0x0080000, CRC(c4e993de) SHA1(7aa433bc2623cb19a09d4ef4c8233a2d29901020) )
+	ROM_LOAD16_BYTE( "th-ic7_1.stv",    0x0200001, 0x0080000, CRC(1355cc18) SHA1(a9b731228a807b2b01f933fe0f7dcdbadaf89b7e) )
+
+	// missing, putting sando-r roms here gives some good gfx but a lot wrong
+	ROM_LOAD16_WORD_SWAP( "thunt.2",   0x0400000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.3",   0x0800000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.4",   0x0c00000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.5",   0x1000000, 0x0400000, NO_DUMP )
+ROM_END
+
 ROM_START( sassisu )
 	STV_BIOS
 
@@ -2648,6 +4931,9 @@ ROM_START( suikoenb )
 
 	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr17834.13",               0x0000000, 0x0100000, CRC(746ef686) SHA1(e31c317991a687662a8a2a45aed411001e5f1941) ) // ic13 bad
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
 	ROM_LOAD16_WORD_SWAP( "mpr17836.2",    0x0400000, 0x0400000, CRC(55e9642d) SHA1(5198291cd1dce0398eb47760db2c19eae99273b0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17837.3",    0x0800000, 0x0400000, CRC(13d1e667) SHA1(cd513ceb33cc20032090113b61227638cf3b3998) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17838.4",    0x0c00000, 0x0400000, CRC(f9e70032) SHA1(8efdbcce01bdf77acfdb293545c59bf224a9c7d2) ) // good
@@ -2758,15 +5044,19 @@ ROM_START( mausuke )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
-	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) )
+	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) SHA1(91cbe703ec7c1dd45eb3b05bdfeb06e3570599d1) )
+	/* mirroring is essential on this one */
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
-	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-03.5",      0x1000000, 0x0200000, CRC(9015a0e7) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-04.6",      0x1400000, 0x0200000, CRC(9d1beaee) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-05.1",      0x1800000, 0x0200000, CRC(a7626a82) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-06.8",      0x1c00000, 0x0200000, CRC(1ab8e90e) )// good
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
+	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) SHA1(104ca230f22cd11cc536b34abd482e54791b4d0f) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) SHA1(29713dfc83a9ade63ebcc7994d14cd785c4500b9) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) SHA1(0c94e2ccb72902d7786d1101a3958504f7151077) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-03.5",      0x1000000, 0x0200000, CRC(9015a0e7) SHA1(8ba8a3723267e631169dc1e06620260fbccce4bd) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-04.6",      0x1400000, 0x0200000, CRC(9d1beaee) SHA1(c63b61378860319fff2e605c7b9afaa5f1bc4cd2) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-05.1",      0x1800000, 0x0200000, CRC(a7626a82) SHA1(c12a099132c5b9234a2de5674f3b8ba5fdd35289) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-06.8",      0x1c00000, 0x0200000, CRC(1ab8e90e) SHA1(8e22f03c1791a983eb330b2a9199e5349a0b1baa) )// good
 ROM_END
 
 /* acclaim game, not a standard cart ... */
@@ -2808,109 +5098,172 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
 ROM_END
 
-/* Hack the boot vectors .. not right but allows several IC13 games (which fail the checksums before hacking) to boot */
+ROM_START( sfish2 )
+//	STV_BIOS  - sports fishing 2 uses its own bios
 
-DRIVER_INIT(col97)
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_LOAD16_WORD_SWAP( "epr18343.bin",   0x000000, 0x080000, CRC(48e2eecf) SHA1(a38bfbd5f279525e413b18b5ed3f37f6e9e31cdc) ) /* sport fishing 2 bios */
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
+	ROM_COPY( REGION_CPU1,0,0,0x080000)
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
+
+	ROM_REGION32_BE( 0x0f00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_LOAD(             "epr18427.bin",      0x0000000, 0x0100000, CRC(3f25bec8) SHA1(43a5342b882d5aec0f35a8777cb475659f43b1c4) )
+	ROM_LOAD16_WORD_SWAP( "mpr18273.ic2",	   0x0400000, 0x0200000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "mpr18274.ic3",      0x0800000, 0x0200000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "mpr18275.ic4",      0x0c00000, 0x0200000, NO_DUMP )
+
+/*  I have nothing better to do with this ...
+
+FILE "SFISH2.BIN" BINARY
+  TRACK 01 MODE1/2352
+    INDEX 01 00:00:00
+  TRACK 02 MODE2/2352
+    PREGAP 00:03:00
+    INDEX 01 00:07:16
+  TRACK 03 AUDIO
+    PREGAP 00:02:00
+    INDEX 01 60:42:38
+
+*/
+
+	ROM_REGION(643765920, REGION_USER2,0 )
+	ROM_LOAD(             "sfish2.bin",      0, 643765920, CRC(339aa970) SHA1(bdc8dc7815d85305ddf836b1f56565a4cd779b71) )
+
+ROM_END
+
+ROM_START( sfish2j )
+//	STV_BIOS  - sports fishing 2 uses its own bios
+
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */
+	ROM_LOAD16_WORD_SWAP( "epr18343.bin",   0x000000, 0x080000, CRC(48e2eecf) SHA1(a38bfbd5f279525e413b18b5ed3f37f6e9e31cdc) ) /* sport fishing 2 bios */
+	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
+	ROM_COPY( REGION_CPU1,0,0,0x080000)
+	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
+
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_LOAD(             "epr18344.a",      0x0000000, 0x0100000,  CRC(5a7de018) SHA1(88e0c2a9a9d4ebf699878c0aa9737af85f95ccf8) )
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+	ROM_LOAD16_WORD_SWAP( "mpr18273.ic2",	   0x0400000, 0x0200000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "mpr18274.ic3",      0x0800000, 0x0200000, NO_DUMP )
+
+/*  I have nothing better to do with this ...
+
+FILE "SFISH2.BIN" BINARY
+  TRACK 01 MODE1/2352
+    INDEX 01 00:00:00
+  TRACK 02 MODE2/2352
+    PREGAP 00:03:00
+    INDEX 01 00:07:16
+  TRACK 03 AUDIO
+    PREGAP 00:02:00
+    INDEX 01 60:42:38
+
+*/
+
+	ROM_REGION(643765920, REGION_USER2,0 )
+	ROM_LOAD(             "sfish2.bin",      0, 643765920, CRC(339aa970) SHA1(bdc8dc7815d85305ddf836b1f56565a4cd779b71) )
+
+ROM_END
+
+
+DRIVER_INIT( sfish2 )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22001000;
-		rom[0xf20/4] = 0x22001000;
-//		rom[0xf30/4] = 0x22001000;
-		init_stv();
+	/* this is WRONG but works for some games */
+	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
+	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
+	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
+	cdb_reset();
+	timer_pulse(TIME_IN_USEC(7000), 0, CD_refresh_timer);
+	init_stv();
 }
 
-DRIVER_INIT(puyosun)
+DRIVER_INIT( sfish2j )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-	//	rom[0xf10/4] = 0x22002000;
-		rom[0xf20/4] = 0x22002000;
-	//.	rom[0xf30/4] = 0x22002000;
-		init_stv();
+	/* this is WRONG but works for some games */
+	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
+	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
+	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
+	cdb_reset();
+	init_stv();
 }
 
-DRIVER_INIT(winterht)
-{
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22004000;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
-}
 
-DRIVER_INIT( suikoenb )
-{
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22010000;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
-}
+/* TODO: add country codes */
 
-DRIVER_INIT( zpw )
-{
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22001020;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
-}
-
+//GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
 /* Playable */
-GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     "Hanagumi Taisen Columns - Sakura Wars", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     "Baku Baku Animal", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East","Mausuke no Ojama the World", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  "Puyo Puyo Sun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  "Cotton 2", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  "Cotton Boomerang", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Virtua Fighter Kids", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Ejihon Tantei Jimusyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Columns 97", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 
 /* Almost */
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS ) /* black sprites, missing bomb effects, missing bitmap mode */
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
 
-/* Doing Something.. but not much enough yet */
-GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",    "Prikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
+/* Doing Something.. but not enough yet */
+GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",      "Princess Clara Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Taisen Tanto-R Sashissu!!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+// crashes
+GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East",  "Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+// this needs the dsp
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* not working */
 
-//GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,MONITOR
-GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",    "ST-V Bios", NOT_A_DRIVER )
+GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",       "ST-V Bios", NOT_A_DRIVER )
 
-GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  stv,       ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  stv,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  zpw,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft",    "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Acclaim",    "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",     "Final Fight Revenge", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Daiki",	     "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "T&E Soft",   "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
+GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Raizing",    "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,      ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Tecmo",      "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING ) // protected?
+GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */
 
+/* CD games */
+
+GAMEBX( 1995, sfish2,    0,       stvbios, stv, stv,  sfish2,    ROT0, "Sega",	     "Sport Fishing 2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  sfish2j,   ROT0, "Sega",	     "Sport Fishing 2 (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )

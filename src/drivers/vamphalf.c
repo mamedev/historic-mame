@@ -1,30 +1,41 @@
-/*
+/********************************************************************
 
-Vamp Half + other hyperstone based games
-wip, to be used for testing Hyperstone CPU core
-these will be split up later
+ Vampire 1/2 and other Hyperstone-based games
 
-*/
+ ***VERY WIP***
 
+ To be used only for testing Hyperstone CPU core, probably the only correct
+ thing in the driver so far is the ROM loading and graphics decoding.
+
+ These will be split into separate drivers later.
+
+ CHANGELOG:
+
+ MooglyGuy - 10/25/03
+    - Changed prelim driver to only load the ROM in the upper part of mem,
+      loading the ROM at 0x00000000 and setting the bank to point there was
+      completely wrong since apparently there's RAM at 0x00000000.
+
+*********************************************************************/
 #include "driver.h"
 
 static MEMORY_READ32_START( readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM },
+	{ 0x00000000, 0x0007ffff, MRA32_RAM },
 	{ 0xfff80000, 0xffffffff, MRA32_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE32_START( writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_ROM },
+	{ 0x00000000, 0x0007ffff, MWA32_RAM },
 	{ 0xfff80000, 0xffffffff, MWA32_ROM },
 MEMORY_END
 
 static MEMORY_READ32_START( xfiles_readmem )
-	{ 0x00000000, 0x0007ffff, MRA32_ROM },
+	{ 0x00000000, 0x0007ffff, MRA32_RAM },
 	{ 0xffc00000, 0xffffffff, MRA32_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE32_START( xfiles_writemem )
-	{ 0x00000000, 0x0007ffff, MWA32_ROM },
+	{ 0x00000000, 0x0007ffff, MWA32_RAM },
 	{ 0xffc00000, 0xffffffff, MWA32_ROM },
 MEMORY_END
 
@@ -103,8 +114,10 @@ MACHINE_DRIVER_END
 /* f2 systems hardware */
 
 ROM_START( vamphalf )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD("prom1", 0x00000000,    0x080000,   CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d))
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD("prom1", 0x00000000,    0x00080000,   CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d))
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 ) /* 16x16x8 Sprites? */
 	ROM_LOAD32_WORD( "roml00",       0x000000, 0x200000, CRC(cc075484) SHA1(6496d94740457cbfdac3d918dce2e52957341616) )
@@ -138,7 +151,9 @@ hc_u111.bin    32768  0x79012474  AMIC 275308 dumped as 27256
 */
 
 ROM_START( hidnctch )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("hc_u43.bin", 0x00000000,    0x080000,  CRC(635b4478) SHA1(31ea4a9725e0c329447c7d221c22494c905f6940) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* GFX (not tile based) */
@@ -186,7 +201,9 @@ lb_3.u97      524288  0x5b34dff0  27C040
 */
 
 ROM_START( landbrk )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("lb_1.u43", 0x00000000,    0x080000,   CRC(f8bbcf44) SHA1(ad85a890ae2f921cd08c1897b4d9a230ccf9e072) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* GFX (not tile based) */
@@ -239,7 +256,9 @@ U107 and U97 are mostlikely sound roms but not sure
 */
 
 ROM_START( racoon )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("racoon-u.43", 0x00000000,    0x080000,  CRC(711ee026) SHA1(c55dfaa24cbaa7a613657cfb25e7f0085f1e4cbf) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* GFX (not tile based) */
@@ -320,7 +339,9 @@ SEC KM6161002    : Graphics RAM (SOJ44)
 */
 
 ROM_START( xfiles )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD16_WORD_SWAP("u9.bin", 0x00000000,    0x400000,   CRC(ebdb75c0) SHA1(9aa5736bbf3215c35d62b424c2e5e40223227baf) )
 
 	/* the following probably aren't in the right regions etc. */
@@ -334,11 +355,12 @@ ROM_END
 
 DRIVER_INIT( vamphalf )
 {
-	cpu_setbank(1, memory_region(REGION_CPU1));
+	cpu_setbank(1, memory_region(REGION_USER1));
 }
 
-GAMEX( 19??, vamphalf, 0, vamphalf, vamphalf, vamphalf, ROT0, "Danbi", "Vamp 1/2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, hidnctch, 0, vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Hidden Catch", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, landbrk, 0, vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Land Breaker", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, racoon, 0, vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Racoon World", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, xfiles, 0, xfiles, vamphalf, vamphalf, ROT0, "dfPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
+/*           rom       parent    machine   inp       init */
+GAMEX( 19??, vamphalf, 0,        vamphalf, vamphalf, vamphalf, ROT0, "Danbi", "Vamp 1/2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, hidnctch, 0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Hidden Catch", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, landbrk,  0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Land Breaker", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, racoon,   0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Racoon World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, xfiles,   0,        xfiles,   vamphalf, vamphalf, ROT0, "dfPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )

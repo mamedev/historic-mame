@@ -305,7 +305,7 @@ INPUT_PORTS_START( asteroid )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* Bit 2 and 3 are handled in the machine dependent part. */
-		/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit	  */
+	/* Bit 2 is the 3 KHz source and Bit 3 the VG_HALT bit	  */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -399,6 +399,60 @@ INPUT_PORTS_START( asteroib )
 	PORT_START /* hyperspace */
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( asterock )
+	PORT_START /* IN0 */
+	/* Bit 0 is VG_HALT, handled in the machine dependant part */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Bit 2 is the 3 KHz source */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Italian" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x00, "Records Table" )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x10, "Special" )
+	PORT_DIPNAME( 0x20, 0x00, "Coin Mode" )
+	PORT_DIPSETTING (	0x00, "Normal" )
+	PORT_DIPSETTING (	0x20, "Special" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (	0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (	0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (	0x40, DEF_STR( 1C_2C ) )
+//	PORT_DIPSETTING (	0x00, DEF_STR( 1C_1C ) )
+/*	Settings for Special Coin Mode
+	PORT_DIPSETTING (	0xc0, "Coin A 2/1 Coin B 2/1 Coin C 1/1" )
+	PORT_DIPSETTING (	0x80, "Coin A 1/1 Coin B 1/1 Coin C 1/2" )
+	PORT_DIPSETTING (	0x40, "Coin A 1/2 Coin B 1/2 Coin C 1/4" )
+	PORT_DIPSETTING (	0x00, DEF_STR( 1C_1C ) )
+*/
 INPUT_PORTS_END
 
 
@@ -624,6 +678,14 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_sound_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( asterock )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(asteroid)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(asterock_interrupt,4)	/* 250 Hz */	
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( astdelux )
 
@@ -703,6 +765,21 @@ ROM_START( asteroib )
 ROM_END
 
 
+ROM_START( asterock )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sidamas.2",    0x6800, 0x0400, CRC(cdf720c6) SHA1(85fe748096478e28a06bd98ff3aad73ab21b22a4) )
+	ROM_LOAD( "sidamas.3",    0x6c00, 0x0400, CRC(ee58bdf0) SHA1(80094cb5dafd327aff6658ede33106f0493a809d) )
+	ROM_LOAD( "sidamas.4",    0x7000, 0x0400, CRC(8d3e421e) SHA1(5f5719ab84d4755e69bef205d313b455bc59c413) )
+	ROM_LOAD( "sidamas.5",    0x7400, 0x0400, CRC(d2ce7672) SHA1(b6012e09b2439a614a55bcf23be0692c42830e21) )
+	ROM_LOAD( "sidamas.6",    0x7800, 0x0400, CRC(74103c87) SHA1(e568b5ac573a6d0474cf672b3c62abfbd3320799) )
+	ROM_LOAD( "sidamas.7",    0x7c00, 0x0400, CRC(75a39768) SHA1(bf22998fd692fb01964d8894e421435c55d746a0) )
+	ROM_RELOAD( 			  0xfc00, 0x0400 ) /* for reset/interrupt vectors */
+	/* Vector ROM */
+	ROM_LOAD( "sidamas.0",    0x5000, 0x0400, CRC(6bd2053f) SHA1(790f2858f44bbb1854e2d9d549e29f4815c4665b) )
+	ROM_LOAD( "sidamas.1",    0x5400, 0x0400, CRC(231ce201) SHA1(710f4c19864d725ba1c9ea447a97e84001a679f7) )
+ROM_END
+
+
 ROM_START( astdelux )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "036430.02",    0x6000, 0x0800, CRC(a4d7a525) SHA1(abe262193ec8e1981be36928e9a89a8ac95cd0ad) )
@@ -775,6 +852,13 @@ static DRIVER_INIT( asteroib )
 }
 
 
+static DRIVER_INIT( asterock )
+{
+
+	install_mem_read_handler(0, 0x2000, 0x2007, asterock_IN0_r);
+}
+
+
 static DRIVER_INIT( astdelux )
 {
 	OVERLAY_START( astdelux_overlay )
@@ -795,6 +879,7 @@ static DRIVER_INIT( astdelux )
 GAME( 1979, asteroid, 0,        asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 2)" )
 GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 1)" )
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
+GAME( 1979, asterock, asteroid, asterock, asterock, asterock, ROT0, "Sidam", "Asterock" )
 GAME( 1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
 GAME( 1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
 GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)" )

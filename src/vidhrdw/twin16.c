@@ -1,26 +1,34 @@
-/* vidhrdw/twin16.c
+/*
 
-	Known Issues:
-		some rogue sprites in Devil's World
-		Corrupt sprites in end sequence of Vulcan Venture
-		Sprite lag bad in Devil's World, sprite lag in Y axis only in Vulcan Venture
-		'Shadow' sprites (alpha blending) on at least Devil's World.
+	Konami Twin16 Hardware - Video
+
+	TODO:
+
+	- convert background to tilemap
+	- clean up sprite drawing
+	- sprite-background priorities
+	- rogue sprites in devilw
+	- corrupt sprites in vulcan end sequence
+	- sprite lag in devilw
+	- sprite Y axis lag in vulcan
+	- add shadow sprites (alpha blending) to sprites in at least devilw
+
 */
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t twin16_custom_vidhrdw;
-extern data16_t *twin16_gfx_rom;
-extern data16_t *twin16_fixram;
-extern data16_t *twin16_sprite_gfx_ram;
-extern data16_t *twin16_tile_gfx_ram;
-extern void twin16_gfx_decode( void );
+extern UINT16 twin16_custom_vidhrdw;
+extern UINT16 *twin16_gfx_rom;
+extern UINT16 *twin16_videoram2;
+extern UINT16 *twin16_sprite_gfx_ram;
+extern UINT16 *twin16_tile_gfx_ram;
 extern int twin16_spriteram_process_enable( void );
 
 static int need_process_spriteram;
-static data16_t gfx_bank;
-static data16_t scrollx[3], scrolly[3];
-static data16_t video_register;
+static UINT16 gfx_bank;
+static UINT16 scrollx[3], scrolly[3];
+static UINT16 video_register;
 
 enum {
 	TWIN16_SCREEN_FLIPY		= 0x01,	/* ? breaks devils world text layer */
@@ -30,59 +38,72 @@ enum {
 	TWIN16_TILE_FLIPY		= 0x20	/* confirmed? Vulcan Venture */
 };
 
-/******************************************************************************************/
+static struct tilemap *fg_tilemap;
 
-WRITE16_HANDLER( fround_gfx_bank_w ){
+WRITE16_HANDLER( twin16_videoram2_w )
+{
+	int oldword = twin16_videoram2[offset];
+
+	COMBINE_DATA(&twin16_videoram2[offset]);
+
+	if (oldword != twin16_videoram2[offset])
+	{
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE16_HANDLER( twin16_paletteram_word_w )
+{ // identical to tmnt_paletteram_w
+	int r, g, b;
+
+	COMBINE_DATA(paletteram16 + offset);
+	offset &= ~1;
+
+	data = ((paletteram16[offset] & 0xff) << 8) | (paletteram16[offset + 1] & 0xff);
+
+	r = (data >>  0) & 0x1f;
+	g = (data >>  5) & 0x1f;
+	b = (data >> 10) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_set_color(offset / 2, r, g, b);
+}
+
+WRITE16_HANDLER( fround_gfx_bank_w )
+{
 	COMBINE_DATA(&gfx_bank);
 }
 
-WRITE16_HANDLER( twin16_video_register_w ){
-	switch( offset ){
-		case 0x0: COMBINE_DATA( &video_register ); break;
-		case 0x1: COMBINE_DATA( &scrollx[0] ); break;
-		case 0x2: COMBINE_DATA( &scrolly[0] ); break;
-		case 0x3: COMBINE_DATA( &scrollx[1] ); break;
-		case 0x4: COMBINE_DATA( &scrolly[1] ); break;
-		case 0x5: COMBINE_DATA( &scrollx[2] ); break;
-		case 0x6: COMBINE_DATA( &scrolly[2] ); break;
+WRITE16_HANDLER( twin16_video_register_w )
+{
+	switch (offset) {
+	case 0: 
+		COMBINE_DATA( &video_register );
 
-		case 0x7:
-			logerror("unknown video_register write:%d", data );
+		flip_screen_x_set(video_register & TWIN16_SCREEN_FLIPX);
+
+		if (twin16_custom_vidhrdw)
+			flip_screen_y_set(video_register & TWIN16_SCREEN_FLIPY);
+		else
+			flip_screen_y_set(~video_register & TWIN16_SCREEN_FLIPY);
+
+		break;
+
+	case 1: COMBINE_DATA( &scrollx[0] ); break;
+	case 2: COMBINE_DATA( &scrolly[0] ); break;
+	case 3: COMBINE_DATA( &scrollx[1] ); break;
+	case 4: COMBINE_DATA( &scrolly[1] ); break;
+	case 5: COMBINE_DATA( &scrollx[2] ); break;
+	case 6: COMBINE_DATA( &scrolly[2] ); break;
+
+	default:
+		logerror("unknown video_register write:%d", data );
 		break;
 	}
 }
-
-/******************************************************************************************/
-
-static void draw_text( struct mame_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->visible_area;
-	const data16_t *source = twin16_fixram;
-	int i;
-
-	int tile_flipx = 0;
-	int tile_flipy = 0;
-	//if( video_register&TWIN16_SCREEN_FLIPY ) tile_flipy = !tile_flipy;
-	if( video_register&TWIN16_SCREEN_FLIPX ) tile_flipx = !tile_flipx;
-
-	for( i=0; i<64*64; i++ ){
-		int code = source[i];
-
-		int sx = (i%64)*8;
-		int sy = (i/64)*8;
-
-		if( video_register&TWIN16_SCREEN_FLIPY ) sy = 256-8 - sy;
-		if( video_register&TWIN16_SCREEN_FLIPX ) sx = 320-8 - sx;
-
-		drawgfx( bitmap, Machine->gfx[0],
-			code&0x1ff, /* tile number */
-			(code>>9)&0xf, /* color */
-			tile_flipx,tile_flipy,
-			sx,sy,
-			clip,TRANSPARENCY_PEN,0);
-	}
-}
-
-/******************************************************************************************/
 
 static void draw_sprite( /* slow slow slow, but it's ok for now */
 	struct mame_bitmap *bitmap,
@@ -134,22 +155,22 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 
 void twin16_spriteram_process( void )
 {
-	data16_t dx = scrollx[0];
-	data16_t dy = scrolly[0];
+	UINT16 dx = scrollx[0];
+	UINT16 dy = scrolly[0];
 
-	const data16_t *source = &spriteram16[0x0000];
-	const data16_t *finish = &spriteram16[0x1800];
+	const UINT16 *source = &spriteram16[0x0000];
+	const UINT16 *finish = &spriteram16[0x1800];
 
 	memset( &spriteram16[0x1800], 0, 0x800 );
 	while( source<finish ){
-		data16_t priority = source[0];
+		UINT16 priority = source[0];
 		if( priority & 0x8000 ){
-			data16_t *dest = &spriteram16[0x1800 + 4*(priority&0xff)];
+			UINT16 *dest = &spriteram16[0x1800 + 4*(priority&0xff)];
 
 			INT32 xpos = (0x10000*source[4])|source[5];
 			INT32 ypos = (0x10000*source[6])|source[7];
 
-			data16_t attributes = source[2]&0x03ff; /* scale,size,color */
+			UINT16 attributes = source[2]&0x03ff; /* scale,size,color */
 			if( priority & 0x0200 ) attributes |= 0x4000;
 			/* Todo:  priority & 0x0100 is also used */
 			attributes |= 0x8000;
@@ -192,12 +213,12 @@ static void draw_sprites( struct mame_bitmap *bitmap)
 {
 	int count = 0;
 
-	const data16_t *source = 0x1800+buffered_spriteram16 + 0x800 -4;
-	const data16_t *finish = 0x1800+buffered_spriteram16;
+	const UINT16 *source = 0x1800+buffered_spriteram16 + 0x800 -4;
+	const UINT16 *finish = 0x1800+buffered_spriteram16;
 
 	while( source>=finish ){
-		data16_t attributes = source[3];
-		data16_t code = source[0];
+		UINT16 attributes = source[3];
+		UINT16 code = source[0];
 
 		if( code!=0xffff && (attributes&0x8000)){
 			int xpos = source[1];
@@ -210,7 +231,7 @@ static void draw_sprites( struct mame_bitmap *bitmap)
 			int flipy = attributes&0x0200;
 			int flipx = attributes&0x0100;
 
-			if( twin16_custom_vidhrdw ){
+			if( twin16_custom_vidhrdw == 1 ){
 				pen_data = twin16_gfx_rom + 0x80000;
 			}
 			else {
@@ -257,8 +278,8 @@ static void draw_sprites( struct mame_bitmap *bitmap)
 }
 
 static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
-	const data16_t *gfx_base;
-	const data16_t *source = videoram16;
+	const UINT16 *gfx_base;
+	const UINT16 *source = videoram16;
 	int i, y1, y2, yd;
 	int bank_table[4];
 	int dx, dy, palette;
@@ -278,7 +299,7 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 		palette = 0;
 	}
 
-	if( twin16_custom_vidhrdw ){
+	if( twin16_custom_vidhrdw == 1 ){
 		gfx_base = twin16_gfx_rom;
 		bank_table[3] = (gfx_bank>>(4*3))&0xf;
 		bank_table[2] = (gfx_bank>>(4*2))&0xf;
@@ -330,13 +351,13 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 				---xx-----------	tile bank
 				-----xxxxxxxxxxx	tile number
 			*/
-			const data16_t *gfx_data = gfx_base + (code&0x7ff)*16 + bank_table[(code>>11)&0x3]*0x8000;
+			const UINT16 *gfx_data = gfx_base + (code&0x7ff)*16 + bank_table[(code>>11)&0x3]*0x8000;
 			int color = (code>>13);
 			pen_t *pal_data = Machine->pens + 16*(0x20+color+8*palette);
 
 			{
 				int y;
-				data16_t data;
+				UINT16 data;
 				int pen;
 
 				if( tile_flipx )
@@ -376,7 +397,7 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
 								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
 
 								data = *gfx_data++;
@@ -406,7 +427,7 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
 								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
 
 								data = *gfx_data++;
@@ -437,7 +458,7 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
 								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
 
 								data = *gfx_data++;
@@ -465,14 +486,47 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 	}
 }
 
+static void get_fg_tile_info(int tile_index)
+{
+	const UINT16 *source = twin16_videoram2;
+	int attr = source[tile_index];
+	int code = attr & 0x1ff;
+	int color = (attr >> 9) & 0x0f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
 VIDEO_START( twin16 )
 {
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows_flip_y,
+		TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+VIDEO_START( fround )
+{
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT, 8, 8, 64, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
 	return 0;
 }
 
 VIDEO_EOF( twin16 )
 {
-	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
+	if( twin16_spriteram_process_enable() && need_process_spriteram )
+		twin16_spriteram_process();
+
 	need_process_spriteram = 1;
 
 	buffer_spriteram16_w(0,0,0);
@@ -484,7 +538,5 @@ VIDEO_UPDATE( twin16 )
 	draw_layer( bitmap,1 );
 	draw_layer( bitmap,0 );
 	draw_sprites( bitmap );
-	draw_text( bitmap );
-
-//	usrintf_showmessage("%08x",video_register);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 }

@@ -1845,6 +1845,29 @@ WRITE16_HANDLER( paletteram16_xrgb_word_w )
 }
 
 
+WRITE16_HANDLER( paletteram16_xbgr_word_w )
+{
+	int r, g, b;
+	data16_t data0, data1;
+
+	COMBINE_DATA(paletteram16 + offset);
+
+	offset &= ~1;
+
+	data0 = paletteram16[offset];
+	data1 = paletteram16[offset + 1];
+
+	b = data0 & 0xff;
+	g = data1 >> 8;
+	r = data1 & 0xff;
+
+	palette_set_color(offset>>1, r, g, b);
+
+	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
+		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+}
+
+
 INLINE void changecolor_RRRRGGGGBBBBRGBx(pen_t color,int data)
 {
 	int r,g,b;

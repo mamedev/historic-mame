@@ -401,11 +401,21 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	target_width = max_width * effect_min_xscale;
 	target_height = max_height * effect_min_yscale;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		target_height *= 2;
+	{
+		if (!blit_swapxy)
+			target_height *= 2;
+		else
+			target_width *= 2;
+	}
 	else if (win_old_scanlines)
 		target_width *= 2, target_height *= 2;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-		target_width *= 2;
+	{
+		if (!blit_swapxy)
+			target_width *= 2;
+		else
+			target_height *= 2;
+	}
 
 	// hardware stretch modes prefer at least win_gfx_zoom times expansion (default is 2)
 	if (win_dd_hw_stretch)

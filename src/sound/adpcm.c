@@ -14,6 +14,10 @@
  *   Mish 21/7/99
  *   Updated to allow multiple OKI chips with different sample rates
  *
+ *   R. Belmont 31/10/2003
+ *   Updated to allow a driver to use both MSM6295s and "raw" ADPCM voices (gcpinbal)
+ *   Also added some error trapping for MAME_DEBUG builds
+ *
  **********************************************************************************************/
 
 
@@ -24,7 +28,6 @@
 #include "driver.h"
 #include "state.h"
 #include "adpcm.h"
-
 
 #define MAX_SAMPLE_CHUNK	10000
 
@@ -53,9 +56,13 @@ struct ADPCMVoice
 	UINT32 source_step;		/* step value for frequency conversion */
 	UINT32 source_pos;		/* current fractional position */
 };
+/* total ADPCM voices */
+static UINT8 num_voices = 0;
+
+/* number of MSM6295 voices */
+static UINT8 msm_voices = 0;
 
 /* array of ADPCM voices */
-static UINT8 num_voices;
 static struct ADPCMVoice adpcm[MAX_ADPCM];
 
 /* step size index shift table */
@@ -293,7 +300,7 @@ static void adpcm_state_save_register( void )
 
 	sprintf(buf,"ADPCM");
 
-	for (i=0; i<num_voices; i++)
+	for (i=msm_voices; i<num_voices; i++)
 	{
 		voice = &adpcm[i];
 
@@ -310,8 +317,12 @@ static void adpcm_state_save_register( void )
 		state_save_register_UINT32 (buf, i, "source_step", &voice->source_step, 1);
 		state_save_register_UINT32 (buf, i, "source_pos" , &voice->source_pos,  1);
 	}
-	state_save_register_func_presave(adpcm_state_save_base_store);
-	state_save_register_func_postload(adpcm_state_save_base_refresh);
+
+	if (msm_voices == 0)
+	{
+		state_save_register_func_presave(adpcm_state_save_base_store);
+		state_save_register_func_postload(adpcm_state_save_base_refresh);
+	}
 }
 
 /**********************************************************************************************
@@ -327,25 +338,64 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 	int i;
 
 	/* reset the ADPCM system */
-	num_voices = intf->num;
-	compute_tables();
-
-	/* initialize the voices */
-	memset(adpcm, 0, sizeof(adpcm));
-	for (i = 0; i < num_voices; i++)
+	if (msm_voices > 0)
 	{
-		/* generate the name and create the stream */
-		sprintf(stream_name, "%s #%d", sound_name(msound), i);
-		adpcm[i].stream = stream_init(stream_name, intf->mixing_level[i], Machine->sample_rate, i, adpcm_update);
-		if (adpcm[i].stream == -1)
-			return 1;
+		/* system has already been initalized by the MSM6295, do a smaller portion */
+		num_voices += intf->num;
 
-		/* initialize the rest of the structure */
-		adpcm[i].region_base = memory_region(intf->region);
-		adpcm[i].volume = 255;
-		adpcm[i].signal = -2;
-		if (Machine->sample_rate)
-			adpcm[i].source_step = (UINT32)((double)intf->frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+		#ifdef MAME_DEBUG
+		if (num_voices > MAX_ADPCM)
+		{
+			logerror("ERROR: too many ADPCM voices: %d vs. MAX_ADPCM %d\n", num_voices, MAX_ADPCM);
+			exit(-1);
+		}
+		#endif
+
+		for (i = msm_voices; i < num_voices; i++)
+		{
+			/* generate the name and create the stream */
+			sprintf(stream_name, "%s #%d", sound_name(msound), i-msm_voices);
+			adpcm[i].stream = stream_init(stream_name, intf->mixing_level[i-msm_voices], Machine->sample_rate, i, adpcm_update);
+			if (adpcm[i].stream == -1)
+				return 1;
+
+			/* initialize the rest of the structure */
+			adpcm[i].region_base = memory_region(intf->region);
+			adpcm[i].volume = 255;
+			adpcm[i].signal = -2;
+			if (Machine->sample_rate)
+				adpcm[i].source_step = (UINT32)((double)intf->frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+		}
+	}
+	else
+	{
+		num_voices = intf->num;
+		#ifdef MAME_DEBUG
+		if (num_voices > MAX_ADPCM)
+		{
+			logerror("ERROR: too many ADPCM voices: %d vs. MAX_ADPCM %d\n", num_voices, MAX_ADPCM);
+			exit(-1);
+		}
+		#endif
+		compute_tables();
+
+		/* initialize the voices */
+		memset(adpcm, 0, sizeof(adpcm));
+		for (i = 0; i < num_voices; i++)
+		{
+			/* generate the name and create the stream */
+			sprintf(stream_name, "%s #%d", sound_name(msound), i);
+			adpcm[i].stream = stream_init(stream_name, intf->mixing_level[i], Machine->sample_rate, i, adpcm_update);
+			if (adpcm[i].stream == -1)
+				return 1;
+
+			/* initialize the rest of the structure */
+			adpcm[i].region_base = memory_region(intf->region);
+			adpcm[i].volume = 255;
+			adpcm[i].signal = -2;
+			if (Machine->sample_rate)
+				adpcm[i].source_step = (UINT32)((double)intf->frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+		}
 	}
 
 	adpcm_state_save_register();
@@ -364,6 +414,8 @@ int ADPCM_sh_start(const struct MachineSound *msound)
 
 void ADPCM_sh_stop(void)
 {
+	num_voices = 0;
+	msm_voices = 0;
 }
 
 
@@ -388,14 +440,14 @@ void ADPCM_sh_update(void)
 
 void ADPCM_play(int num, int offset, int length)
 {
-	struct ADPCMVoice *voice = &adpcm[num];
+	struct ADPCMVoice *voice = &adpcm[num+msm_voices];
 
 	/* bail if we're not playing anything */
 	if (Machine->sample_rate == 0)
 		return;
 
 	/* range check the numbers */
-	if (num >= num_voices)
+	if ((num+msm_voices) >= num_voices)
 	{
 		logerror("error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
@@ -425,14 +477,14 @@ void ADPCM_play(int num, int offset, int length)
 
 void ADPCM_stop(int num)
 {
-	struct ADPCMVoice *voice = &adpcm[num];
+	struct ADPCMVoice *voice = &adpcm[num+msm_voices];
 
 	/* bail if we're not playing anything */
 	if (Machine->sample_rate == 0)
 		return;
 
 	/* range check the numbers */
-	if (num >= num_voices)
+	if ((num+msm_voices) >= num_voices)
 	{
 		logerror("error: ADPCM_stop() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
@@ -455,14 +507,14 @@ void ADPCM_stop(int num)
 
 void ADPCM_setvol(int num, int vol)
 {
-	struct ADPCMVoice *voice = &adpcm[num];
+	struct ADPCMVoice *voice = &adpcm[num+msm_voices];
 
 	/* bail if we're not playing anything */
 	if (Machine->sample_rate == 0)
 		return;
 
 	/* range check the numbers */
-	if (num >= num_voices)
+	if ((num+msm_voices) >= num_voices)
 	{
 		logerror("error: ADPCM_setvol() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
@@ -483,14 +535,14 @@ void ADPCM_setvol(int num, int vol)
 
 int ADPCM_playing(int num)
 {
-	struct ADPCMVoice *voice = &adpcm[num];
+	struct ADPCMVoice *voice = &adpcm[num+msm_voices];
 
 	/* bail if we're not playing anything */
 	if (Machine->sample_rate == 0)
 		return 0;
 
 	/* range check the numbers */
-	if (num >= num_voices)
+	if ((num+msm_voices) >= num_voices)
 	{
 		logerror("error: ADPCM_playing() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return 0;
@@ -569,8 +621,25 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 	char stream_name[40];
 	int i;
 
+	/* to share with "raw" ADPCM voices, we must be initialized first */
+	#ifdef MAME_DEBUG
+	if (num_voices > 0)
+	{
+		logerror("ERROR: MSM6295s must appear in MDRV_ADD_SOUND list before ADPCMs\n");
+		exit(-1);
+	}
+	#endif
+
 	/* reset the ADPCM system */
 	num_voices = intf->num * OKIM6295_VOICES;
+	msm_voices = 0;
+	#ifdef MAME_DEBUG
+	if (num_voices > MAX_ADPCM)
+	{
+		logerror("ERROR: too many ADPCM voices: %d vs. MAX_ADPCM %d\n", num_voices, MAX_ADPCM);
+		exit(-1);
+	}
+	#endif
 	compute_tables();
 
 	/* initialize the voices */
@@ -599,6 +668,7 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 	}
 
 	okim6295_state_save_register();
+	msm_voices = num_voices;
 
 	/* success */
 	return 0;
@@ -614,6 +684,8 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 
 void OKIM6295_sh_stop(void)
 {
+	num_voices = 0;
+	msm_voices = 0;
 }
 
 

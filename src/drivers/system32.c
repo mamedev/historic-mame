@@ -1842,7 +1842,7 @@ static void irq_handler(int irq)
 
 struct RF5C68interface sys32_rf5c68_interface =
 {
-  9000000,	/* pitch matches real PCB, but this is a weird frequency */
+  8000000,
   55
 };
 

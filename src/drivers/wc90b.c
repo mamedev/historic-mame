@@ -356,7 +356,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	2000000,	/* 2 MHz ????? */
+	2510000/2,	/* 2.51 MHz */
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
 	{ 0 },
 	{ 0 },
@@ -376,8 +376,8 @@ static MACHINE_DRIVER_START( wc90b )
 	MDRV_CPU_MEMORY(wc90b_readmem2,wc90b_writemem2)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ???? */
+	MDRV_CPU_ADD(Z80, 2510000) // based on goal92 speed measured by guru (although maybe it should be 10mhz / 4 which is close)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.51 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

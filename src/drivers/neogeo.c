@@ -1357,10 +1357,10 @@ INPUT_PORTS_START( popbounc )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START		/* IN0 multiplexed */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 20, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_DIAL, 10, 20, 0, 0 )
 
 	PORT_START		/* IN1 multiplexed */
-	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_PLAYER2 , 10, 20, 0, 0 )
+	PORT_ANALOG( 0xff, 0x7f, IPT_DIAL | IPF_PLAYER2 , 10, 20, 0, 0 )
 INPUT_PORTS_END
 
 /******************************************************************************/

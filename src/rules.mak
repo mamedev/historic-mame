@@ -6,7 +6,7 @@ OBJDIRS += $(OBJ)/cpu/z80
 CPUDEFS += -DHAS_Z80=1
 CPUOBJS += $(OBJ)/cpu/z80/z80.o
 DBGOBJS += $(OBJ)/cpu/z80/z80dasm.o
-$(OBJ)/cpu/z80/z80.o: z80.c z80.h z80daa.h
+$(OBJ)/cpu/z80/z80.o: z80.c z80.h
 else
 CPUDEFS += -DHAS_Z80=0
 endif
@@ -818,9 +818,9 @@ CPU=$(strip $(findstring PSXCPU@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/mips
 CPUDEFS += -DHAS_PSXCPU=1
-CPUOBJS += $(OBJ)/cpu/mips/mips.o
+CPUOBJS += $(OBJ)/cpu/mips/psx.o
 DBGOBJS += $(OBJ)/cpu/mips/mipsdasm.o
-$(OBJ)/cpu/mips/mips.o: mips.c mips.h
+$(OBJ)/cpu/mips/psx.o: psx.c psx.h
 else
 CPUDEFS += -DHAS_PSXCPU=0
 endif
@@ -1521,4 +1521,12 @@ SOUNDDEFS += -DHAS_SP0250=1
 SOUNDOBJS += $(OBJ)/sound/sp0250.o
 else
 SOUNDDEFS += -DHAS_SP0250=0
+endif
+
+SOUND=$(strip $(findstring SCSP@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SCSP=1
+SOUNDOBJS += $(OBJ)/sound/scsp.o
+else
+SOUNDDEFS += -DHAS_SCSP=0
 endif

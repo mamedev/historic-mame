@@ -237,6 +237,7 @@ WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
 WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
+WRITE16_HANDLER( paletteram16_xbgr_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 
 

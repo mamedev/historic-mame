@@ -2879,7 +2879,7 @@ PORT_END
 
 
 #define JOY_ROTATION(_n_, _left_, _right_ ) \
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER##_n_, 15, 15, 0, 0, KEYCODE_##_left_, KEYCODE_##_right_, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER##_n_, 15, 15, 0, 0, KEYCODE_##_left_, KEYCODE_##_right_, IP_JOY_NONE, IP_JOY_NONE )
 
 
 
@@ -3363,11 +3363,11 @@ INPUT_PORTS_START( drgnunit )
 	PORT_DIPSETTING(      0x0000, "Seta USA / Romstar" )
 
 	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
-	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 1-0&1" )
-	PORT_DIPSETTING(      0x0002, "00" )
-	PORT_DIPSETTING(      0x0003, "08" )
-	PORT_DIPSETTING(      0x0001, "10" )
-	PORT_DIPSETTING(      0x0000, "18" )
+	PORT_DIPNAME( 0x0003, 0x0002, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0003, "Easy" )
+	PORT_DIPSETTING(      0x0002, "Normal" )
+	PORT_DIPSETTING(      0x0001, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0008, "150K, Every 300K" )
 	PORT_DIPSETTING(      0x000c, "200K, Every 400K" )
@@ -3391,9 +3391,9 @@ INPUT_PORTS_START( drgnunit )
 	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 2-2*" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0400, "1 of 4 Scenes" )
+	PORT_DIPSETTING(      0x0000, "1 of 8 Scenes" )
 	PORT_SERVICE( 0x0800, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_1C ) )

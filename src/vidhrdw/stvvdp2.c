@@ -30,15 +30,17 @@ Notes of Interest:
 
 -the test mode / bios is drawn with layer NBG3
 
--Hanagumi Puts a 'RED' dragon logo in tileram (base 0x64000, 4bpp, 8x8 tiles) but
-its not displayed in gurus video.Update:It's actually not drawn because his
+-hanagumi Puts a 'RED' dragon logo in tileram (base 0x64000, 4bpp, 8x8 tiles) but
+its not displayed in gurus video.Update:It's actually not drawn because its
 priority value is 0.
 
--Scrolling is screen display wise,meaning that a scrolling value is masked with the
+-scrolling is screen display wise,meaning that a scrolling value is masked with the
 screen resolution size values.
 
 -VDP1 "general purpose" priority isn't taken into account yet,for now we fix the priority
 value to six...
+
+-AFAIK Suikoenbu is the only ST-V game that uses Mode 2 as the Color RAM format.
 
 */
 
@@ -161,7 +163,7 @@ static void stv_vdp2_dynamic_res_change(void);
 
 	#define STV_VDP2_RAMCTL ((stv_vdp2_regs[0x00c/4] >> 0)&0x0000ffff)
 
-	#define STV_VDP2_CRMD ((STV_VDP2_RAMCTL & 0x0300) >> 8)
+	#define STV_VDP2_CRMD ((STV_VDP2_RAMCTL & 0x3000) >> 12)
 
 /* 180010 - r/w - -CYCA0L - VRAM CYCLE PATTERN (BANK A0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -373,6 +375,11 @@ static void stv_vdp2_dynamic_res_change(void);
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_BMPNA ((stv_vdp2_regs[0x02c/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N1BMP ((STV_VDP2_BMPNA & 0x0700) >> 8)
+	#define STV_VDP2_N0BMP ((STV_VDP2_BMPNA & 0x0007) >> 0)
+
 /* 18002E - Bitmap Palette Number (RBG0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
@@ -531,6 +538,7 @@ static void stv_vdp2_dynamic_res_change(void);
 	11 2H Pages x 2V Pages  */
 	#define STV_VDP2_N0PLSZ ((STV_VDP2_PLSZ & 0x0003) >> 0)
 	#define STV_VDP2_N1PLSZ ((STV_VDP2_PLSZ & 0x000c) >> 2)
+	#define STV_VDP2_N2PLSZ ((STV_VDP2_PLSZ & 0x0030) >> 4)
 	#define STV_VDP2_N3PLSZ ((STV_VDP2_PLSZ & 0x00c0) >> 6)
 
 /* 18003C - MPOFN - Map Offset (NBG0, NBG1, NBG2, NBG3)
@@ -1458,6 +1466,7 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  tile_size;
 	UINT8  bitmap_enable;
 	UINT8  bitmap_size;
+	UINT8  bitmap_palette_number;
 	UINT16 map_offset[16];
 
 	UINT8  pattern_data_size;
@@ -1479,16 +1488,17 @@ static struct stv_vdp2_tilemap_capabilities
 } stv2_current_tilemap;
 
 
+
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 //	logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
+//	usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
 
-	/* really just for shienryu at the moment .. needs _lots_ of work */
 	int xsize = 0;
 	int ysize = 0;
 	int xcnt,ycnt;
 	data8_t* gfxdata = memory_region(REGION_GFX1);
-	UINT16 *destline;
+	static UINT16 *destline;
 
 	/* size for n0 / n1 */
 	switch (stv2_current_tilemap.bitmap_size)
@@ -1499,30 +1509,109 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 3: xsize=1024; ysize=512; break;
 	}
 
-	for (ycnt = 0; ycnt <ysize;ycnt++)
+	switch(stv2_current_tilemap.colour_depth)
 	{
-		destline = (UINT16 *)(bitmap->line[ycnt]);
-
-		for (xcnt = 0; xcnt <xsize;xcnt++)
+		/*Palette Format*/
+		case 0://elandore uses this on the fight,size is wrong.
 		{
-			int r,g,b;
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt+=2)
+				{
+					plot_pixel(bitmap,xcnt  ,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+					plot_pixel(bitmap,xcnt+1,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
 
-			b = ((gfxdata[0] & 0x7c)>>2);
-			g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
-			r = ((gfxdata[1] & 0x1f));
-
-			destline[xcnt] = b | g << 5 | r << 10;
-
-			gfxdata+=2;
+					gfxdata++;
+				}
+			}
 		}
+		break;
+		case 1:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					/*elandore/shanhigw requires something else as banking,but what?*/
+					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+
+					gfxdata++;
+				}
+			}
+		}
+		break;
+		case 2:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)]);
+
+					gfxdata+=2;
+				}
+			}
+		}
+		break;
+		/*RGB format*/
+		/*
+		M                     L
+		S                     S
+		B                     B
+		--------BBBBBGGGGGRRRRR
+		*/
+		case 3:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				destline = (UINT16 *)(bitmap->line[ycnt]);
+
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					int r,g,b;
+
+					b = ((gfxdata[0] & 0x7c)>>2);
+					g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
+					r = ((gfxdata[1] & 0x1f));
+
+					destline[xcnt] = b | g << 5 | r << 10;
+
+					gfxdata+=2;
+				}
+			}
+		}
+		break;
+		/*
+		M                              L
+		S                              S
+		B                              B
+		--------BBBBBBBBGGGGGGGGRRRRRRRR
+		*/
+		case 4:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				destline = (UINT16 *)(bitmap->line[ycnt]);
+
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					int r,g,b;
+
+					b = ((gfxdata[1] & 0xff));
+					g = ((gfxdata[2] & 0xff));
+					r = ((gfxdata[3] & 0xff));
+
+					destline[xcnt] = b | g << 5 | r << 10;
+
+					gfxdata+=4;
+				}
+			}
+		}
+		break;
 	}
-
-
-
-	/* not done */
 }
 
-   /*---------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------
    | Plane Size | Pattern Name Data Size | Character Size | Map Bits / Address |
    ----------------------------------------------------------------------------|
    |            |                        | 1 H x 1 V      | bits 6-0 * 0x02000 |
@@ -1548,88 +1637,306 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
    |            |                        | 1 H x 1 V      | bits 5-2 * 0x10000 |
    |            | 2 words                |-------------------------------------|
    |            |                        | 2 H x 2 V      | bits 7-2 * 0x04000 |
-   --the-highest-bit-is-ignore-if-vram-is-only-4mbits-------------------------*/
+   --the-highest-bit-is-ignored-if-vram-is-only-4mbits------------------------*/
 
-/* this is only capable of drawing 1 plane for now .. */
+
+/*
+4.2 Sega's Cell / Character Pattern / Page / Plane / Map system, aka a rather annoying thing that makes optimizations hard
+ (this is only for the normal tilemaps at the moment, i haven't even thought about the ROZ ones)
+
+Tiles:
+
+Cells are 8x8 gfx stored in video ram, they can be of various colour depths
+
+Character Patterns can be 8x8 or 16x16 (1 hcell x 1 vcell or 2 hcell x 2 vcell)
+  (a 16x16 character pattern is 4 8x8 cells put together)
+
+A page is made up of 64x64 cells, thats 64x64 character patterns in 8x8 mode or 32x32 character patterns in 16x16 mode.
+  64 * 8  = 512 (0x200)
+  32 * 16 = 512 (0x200)
+A page is _always_ 512 (0x200) pixels in each direction
+
+in 1 word mode a 32*16 x 32*16 page is 0x0800 bytes
+in 1 word mode a 64*8  x 64*8  page is 0x2000 bytes
+in 2 word mode a 32*16 x 32*16 page is 0x1000 bytes
+in 2 word mode a 64*8  x 64*8  page is 0x4000 bytes
+
+either 1, 2 or 4 pages make each plane depending on the plane size register (per tilemap)
+  therefore each plane is either
+  64 * 8 * 1 x 64 * 8 * 1 (512 x 512)
+  64 * 8 * 2 x 64 * 8 * 1 (1024 x 512)
+  64 * 8 * 2 x 64 * 8 * 2 (1024 x 1024)
+
+  32 * 16 * 1 x 32 * 16 * 1 (512 x 512)
+  32 * 16 * 2 x 32 * 16 * 1 (1024 x 512)
+  32 * 16 * 2 x 32 * 16 * 2 (1024 x 1024)
+
+map is always enabled?
+  map is a 2x2 arrangement of planes, all 4 of the planes can be the same.
+
+*/
 
 static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	int x,y;
-	int base;
-	int offs;
-	int gfx;
+	/* hopefully this is easier to follow than it is efficient .. */
 
-	int temp;
+	/* I call character patterns tiles .. even if they represent up to 4 tiles */
 
-	gfx = 0;
+	/* Page variables */
+	int pgtiles_x, pgpixels_x;
+	int pgtiles_y, pgpixels_y;
+	int pgsize_bytes, pgsize_dwords;
 
-	/* this should be more complex .. plane size also changes it ..bleah... */
-	temp = (((1-stv2_current_tilemap.pattern_data_size))| ( (1-stv2_current_tilemap.tile_size)<<1 ) );
+	/* Plane Variables */
+	int pltiles_x, plpixels_x;
+	int pltiles_y, plpixels_y;
+	int plsize_bytes, plsize_dwords;
 
-	//	usrintf_showmessage ("size %02x tile_size %02x plane_size %02x map %08x", stv2_current_tilemap.pattern_data_size, stv2_current_tilemap.tile_size, STV_VDP2_N3PLSZ, stv2_current_tilemap.map_offset[0]);
+	/* Map Variables */
+	int mptiles_x, mppixels_x;
+	int mptiles_y, mppixels_y;
+	int mpsize_bytes, mpsize_dwords;
 
-//usrintf_showmessage ("suprt %04x crmd %04x ss %04x  ceacec %04x offset %04x",  STV_VDP2_N3SPLT, STV_VDP2_CRMD, STV_VDP2_N3SCC, STV_VDP2_PNCN3, STV_VDP2_CRAOFA);
+	/* work Variables */
+	int i, x, y;
+	int base[4];
 
-//	#define STV_VDP2_N3SCC ((STV_VDP2_PNCN3 & 0x0100) >> 8)
+	/* Calculate the Number of tiles for x / y directions of each page (actually these will be the same */
+	/* (2-stv2_current_tilemap.tile_size) << 5) */
+	pgtiles_x = ((2-stv2_current_tilemap.tile_size) << 5); // 64 (8x8 mode) or 32 (16x16 mode)
+	pgtiles_y = ((2-stv2_current_tilemap.tile_size) << 5); // 64 (8x8 mode) or 32 (16x16 mode)
 
-		base = ((stv2_current_tilemap.map_offset[0]&
-			(0x1ff >> (temp)))*
-			(0x800 << (temp))
-			);//&0x7ffff;
+	/* Calculate the Page Size in BYTES */
+	/* 64 * 64 * (1 * 2) = 0x2000 bytes
+	   32 * 32 * (1 * 2) = 0x0800 bytes
+	   64 * 64 * (2 * 2) = 0x4000 bytes
+	   32 * 32 * (2 * 2) = 0x1000 bytes */
 
-	base &= 0x7ffff; /* shienryu needs this for the text layer, is there a problem elsewhere or is it just right without the ram cart */
+	pgsize_bytes = (pgtiles_x * pgtiles_y) * ((2-stv2_current_tilemap.pattern_data_size)*2);
 
-//	usrintf_showmessage("E %02x t%01x dp%01x ts%01x mp%08x ds%02x ps%02x", STV_VDP2_xxON, STV_VDP2_N3TPON, STV_VDP2_N3CHCN, STV_VDP2_N3CHSZ, base,STV_VDP2_N3PNB,STV_VDP2_N3PLSZ   );
+   /*---------------------------------------------------------------------------
+   | Plane Size | Pattern Name Data Size | Character Size | Map Bits / Address |
+   ----------------------------------------------------------------------------|
+   |            |                        | 1 H x 1 V      | bits 6-0 * 0x02000 |
+   |            | 1 word                 |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 8-0 * 0x00800 |
+   | 1 H x 1 V  ---------------------------------------------------------------|
+   |            |                        | 1 H x 1 V      | bits 5-0 * 0x04000 |
+   |            | 2 words                |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 7-0 * 0x01000 |
+   ---------------------------------------------------------------------------*/
 
-//		base = 0x60000;
 
-	base = base / 4;
+	/* Page Dimensions are always 0x200 pixles (512x512) */
+	pgpixels_x = 0x200;
+	pgpixels_y = 0x200;
 
+	/* Work out the Plane Size in tiles and Plane Dimensions (pixels) */
+	switch (stv2_current_tilemap.plane_size & 3)
+	{
+		case 0: // 1 page * 1 page
+			pltiles_x  = pgtiles_x;
+			plpixels_x = pgpixels_x;
+			pltiles_y  = pgtiles_y;
+			plpixels_y = pgpixels_y;
+			break;
+
+		case 1: // 2 pages * 1 page
+			pltiles_x  = pgtiles_x * 2;
+			plpixels_x = pgpixels_x * 2;
+			pltiles_y  = pgtiles_y;
+			plpixels_y = pgpixels_y;
+			break;
+
+		case 3: // 2 pages * 2 pages
+			pltiles_x  = pgtiles_x * 2;
+			plpixels_x = pgpixels_x * 2;
+			pltiles_y  = pgtiles_y * 2;
+			plpixels_y = pgpixels_y * 2;
+			break;
+
+		default:
+			// illegal
+			pltiles_x  = pgtiles_x;
+			plpixels_x = pgpixels_x;
+			pltiles_y  = pgtiles_y * 2;
+			plpixels_y = pgpixels_y * 2;
+		break;
+	}
+
+	/* Plane Size in BYTES */
+	/* still the same as before
+	   (64 * 1) * (64 * 1) * (1 * 2) = 0x02000 bytes
+	   (32 * 1) * (32 * 1) * (1 * 2) = 0x00800 bytes
+	   (64 * 1) * (64 * 1) * (2 * 2) = 0x04000 bytes
+	   (32 * 1) * (32 * 1) * (2 * 2) = 0x01000 bytes
+	   changed
+	   (64 * 2) * (64 * 1) * (1 * 2) = 0x04000 bytes
+	   (32 * 2) * (32 * 1) * (1 * 2) = 0x01000 bytes
+	   (64 * 2) * (64 * 1) * (2 * 2) = 0x08000 bytes
+	   (32 * 2) * (32 * 1) * (2 * 2) = 0x02000 bytes
+	   changed
+	   (64 * 2) * (64 * 1) * (1 * 2) = 0x08000 bytes
+	   (32 * 2) * (32 * 1) * (1 * 2) = 0x02000 bytes
+	   (64 * 2) * (64 * 1) * (2 * 2) = 0x10000 bytes
+	   (32 * 2) * (32 * 1) * (2 * 2) = 0x04000 bytes
+	*/
+
+	plsize_bytes = (pltiles_x * pltiles_y) * ((2-stv2_current_tilemap.pattern_data_size)*2);
+
+   /*---------------------------------------------------------------------------
+   | Plane Size | Pattern Name Data Size | Character Size | Map Bits / Address |
+   -----------------------------------------------------------------------------
+   | 1 H x 1 V   see above, nothing has changed                                |
+   -----------------------------------------------------------------------------
+   |            |                        | 1 H x 1 V      | bits 6-1 * 0x04000 |
+   |            | 1 word                 |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 8-1 * 0x01000 |
+   | 2 H x 1 V  ---------------------------------------------------------------|
+   |            |                        | 1 H x 1 V      | bits 5-1 * 0x08000 |
+   |            | 2 words                |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 7-1 * 0x02000 |
+   -----------------------------------------------------------------------------
+   |            |                        | 1 H x 1 V      | bits 6-2 * 0x08000 |
+   |            | 1 word                 |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 8-2 * 0x02000 |
+   | 2 H x 2 V  ---------------------------------------------------------------|
+   |            |                        | 1 H x 1 V      | bits 5-2 * 0x10000 |
+   |            | 2 words                |-------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 7-2 * 0x04000 |
+   --the-highest-bit-is-ignored-if-vram-is-only-4mbits------------------------*/
+
+
+	/* Work out the Map Sizes in tiles, Map Dimensions */
+	/* maps are always enabled? */
+	mptiles_x = pltiles_x * 2;
+	mptiles_y = pltiles_y * 2;
+	mppixels_x = plpixels_x * 2;
+	mppixels_y = plpixels_y * 2;
+
+	/* Map Size in BYTES */
+	mpsize_bytes = (mptiles_x * mptiles_y) * ((2-stv2_current_tilemap.pattern_data_size)*2);
+
+
+   /*-----------------------------------------------------------------------------------------------------------
+   |            |                        | 1 H x 1 V      | bits 6-1 (upper mask 0x07f) (0x1ff >> 2) * 0x04000 |
+   |            | 1 word                 |---------------------------------------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 8-1 (upper mask 0x1ff) (0x1ff >> 0) * 0x01000 |
+   | 2 H x 1 V  -----------------------------------------------------------------------------------------------|
+   |            |                        | 1 H x 1 V      | bits 5-1 (upper mask 0x03f) (0x1ff >> 3) * 0x08000 |
+   |            | 2 words                |---------------------------------------------------------------------|
+   |            |                        | 2 H x 2 V      | bits 7-1 (upper mask 0x0ff) (0x1ff >> 1) * 0x02000 |
+   -------------------------------------------------------------------------------------------------------------
+    lower mask = ~stv2_current_tilemap.plane_size
+   -----------------------------------------------------------------------------------------------------------*/
+
+	/* Precalculate bases from MAP registers */
+	for (i = 0; i < 4; i++)
+	{
+		int shifttable[4] = {0,1,2,2};
+
+		int uppermask, uppermaskshift;
+
+		uppermaskshift = (1-stv2_current_tilemap.pattern_data_size) | ((1-stv2_current_tilemap.tile_size)<<1);
+		uppermask = 0x1ff >> uppermaskshift;
+
+		base[i] = ((stv2_current_tilemap.map_offset[i] & uppermask) >> shifttable[stv2_current_tilemap.plane_size]) * plsize_bytes;
+
+		base[i] &= 0x7ffff; /* shienryu needs this for the text layer, is there a problem elsewhere or is it just right without the ram cart */
+
+		base[i] = base[i] / 4; // convert bytes to DWORDS
+	}
+
+	/* other bits */
 	stv2_current_tilemap.trans_enabled = stv2_current_tilemap.trans_enabled ? TRANSPARENCY_NONE : TRANSPARENCY_PEN;
+	stv2_current_tilemap.scrollx &= mppixels_x-1;
+	stv2_current_tilemap.scrolly &= mppixels_y-1;
 
-	stv2_current_tilemap.scrollx &= 0x1ff;
-	stv2_current_tilemap.scrolly &= 0x1ff;
+	pgsize_dwords = pgsize_bytes /4;
+	plsize_dwords = plsize_bytes /4;
+	mpsize_dwords = mpsize_bytes /4;
 
-	for (y = 0; y<32*(2-stv2_current_tilemap.tile_size+1); y++) {
-		for (x = 0; x<32*(2-(stv2_current_tilemap.tile_size)); x++) {
+//	if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x", stv2_current_tilemap.map_offset[0]);
+//	if (stv2_current_tilemap.layer_name==3) usrintf_showmessage ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
 
-		int tilecode, data, flipyx, pal, specialc;
-		offs = y*(32*(2-stv2_current_tilemap.tile_size))+x;
+	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
-			if (stv2_current_tilemap.pattern_data_size ==1) // 1 word per tile mode
+	/* most things we need (or don't need) to work out are now worked out */
+
+	for (y = 0; y<mptiles_y; y++) {
+		int drawypos, ypageoffs, yplaneoffs;
+		int page, map, newbase, offs, data;
+		int tilecode, flipyx, pal, gfx;
+
+		map = 0 ; page = 0 ;
+
+		drawypos = (stv2_current_tilemap.tile_size ? 16 : 8) * y;
+		drawypos -= stv2_current_tilemap.scrolly;
+
+		if (drawypos > Machine->visible_area.max_y) continue;
+
+		ypageoffs = y & (pgtiles_y-1);
+		yplaneoffs = y & (pltiles_y-1);
+
+		if (yplaneoffs > ypageoffs) page |= 2;
+		if (y > yplaneoffs) map |= 2;
+
+		for (x = 0; x<mptiles_x; x++) {
+			int drawxpos, xpageoffs, xplaneoffs;
+			drawxpos = (stv2_current_tilemap.tile_size ? 16 : 8) * x;
+			drawxpos -= stv2_current_tilemap.scrollx;
+
+			if (drawxpos > Machine->visible_area.max_x) continue;
+
+			xpageoffs = x & (pgtiles_x-1);
+			xplaneoffs = x & (pltiles_x-1);
+
+			if (xplaneoffs > xpageoffs) page |= 1;
+			if (x > xplaneoffs) map |= 1;
+
+			newbase = base[map] + page * pgsize_dwords;
+			offs = (ypageoffs * pgtiles_x) + xpageoffs;
+
+/* GET THE TILE INFO ... */
+			/* 1 word per tile mode with supplement bits */
+			if (stv2_current_tilemap.pattern_data_size ==1)
 			{
 
-				data = stv_vdp2_vram[base + offs/2];
+				data = stv_vdp2_vram[newbase + offs/2];
 				data = (offs&1) ? (data & 0x0000ffff) : ((data & 0xffff0000) >> 16);
 
-				/* this is more complex, it changes for 2x2 cell mode etc... */
+				/* Supplement Mode 12 bits, no flip */
+				if (stv2_current_tilemap.character_number_supplement == 1)
+				{
+/* no flip */		flipyx   = 0;
+/* 8x8 */			if (stv2_current_tilemap.tile_size==0) tilecode = (data & 0x0fff) + ( (stv2_current_tilemap.supplementary_character_bits&0x1c) << 10);
+/* 16x16 */ 		else tilecode = ((data & 0x0fff) << 2) + (stv2_current_tilemap.supplementary_character_bits&0x03) + ((stv2_current_tilemap.supplementary_character_bits&0x10) << 10);
+				}
+				/* Supplement Mode 10 bits, with flip */
+				else
+				{
+/* flip bits */ 	flipyx   = (data & 0x0c00) >> 10;
+/* 8x8 */			if (stv2_current_tilemap.tile_size==0) tilecode = (data & 0x03ff) +  ( (stv2_current_tilemap.supplementary_character_bits) << 10);
+/* 16x16 */			else tilecode = ((data & 0x03ff) <<2) +  (stv2_current_tilemap.supplementary_character_bits&0x03) + ((stv2_current_tilemap.supplementary_character_bits&0x1c) << 10);
+				}
 
-				if (stv2_current_tilemap.character_number_supplement == 1) /* 12 bits, no flip */
-				{
-					tilecode = (data & 0x0fff) + ( (stv2_current_tilemap.supplementary_character_bits&0x1c) << 10);
-					flipyx   = 0;
-					pal = ((data & 0xf000)>>12) +( (stv2_current_tilemap.supplementary_palette_bits) << 4);
-				}
-				else /* 10 bits , with flip */
-				{
-					tilecode = (data & 0x03ff) +  ( (stv2_current_tilemap.supplementary_character_bits) << 10);;
-					flipyx   = (data & 0x0c00) >> 10;
-					pal = 0;
-				}
+/*>16cols*/		if (stv2_current_tilemap.colour_depth != 0) pal = ((data & 0x7000)>>8);
+/*16 cols*/		else pal = ((data & 0xf000)>>12) +( (stv2_current_tilemap.supplementary_palette_bits) << 4);
 
 			}
+			/* 2 words per tile, no supplement bits */
 			else
 			{
 
-
-				data = stv_vdp2_vram[base + offs];
+				data = stv_vdp2_vram[newbase + offs];
 				tilecode = (data & 0x00007fff);
 				pal   = (data &    0x007f0000)>>16;
-				specialc = (data & 0x10000000)>>28;;
+	//			specialc = (data & 0x10000000)>>28;;
 				flipyx   = (data & 0xc0000000)>>30;
-
-
 			}
+/* WE'VE GOT THE TILE INFO ... */
+
+/* DECODE ANY TILES WE NEED TO DECODE */
 
 			pal += stv2_current_tilemap.colour_ram_address_offset<< 4; // bios uses this ..
 
@@ -1672,54 +1979,61 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 					if (stv_vdp2_vram_dirty_8x8x4[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode] = 0; decodechar(Machine->gfx[0], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
 				}
 			}
+/* TILES ARE NOW DECODED */
 
+/* DRAW! */
 
 			if (stv2_current_tilemap.tile_size==1)
 			{
 				/* normal */
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
 
+				/* this isn't very efficient .. we could probably improve it */
 				if (stv2_current_tilemap.scrollx) /* wraparound x */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
 				if (stv2_current_tilemap.scrolly) /* wraparound y */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
 				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
+
 
 			}
 			else
 			{
-				drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx,(y*8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
+
+				/* this isn't very efficient .. we could probably improve it */
 				if (stv2_current_tilemap.scrollx) /* wraparound x */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx+0x200,(y*8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.trans_enabled,0);
 				if (stv2_current_tilemap.scrolly) /* wraparound y */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx,(y*8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
 				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx+0x200,(y*8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.trans_enabled,0);
 			}
+
+/* DRAWN?! */
 
 		}
 	}
 }
-
 
 static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
@@ -1755,13 +2069,14 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 	*/
 	stv2_current_tilemap.enabled = STV_VDP2_N0ON;
 
-	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N0TPON;
 	stv2_current_tilemap.colour_depth = STV_VDP2_N0CHCN;
 	stv2_current_tilemap.tile_size = STV_VDP2_N0CHSZ;
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N0BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N0BMSZ;
+	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N0BMP;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N0MPA | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N0MPB | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N0MPC | (STV_VDP2_N0MP_ << 6);
@@ -1803,13 +2118,14 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 	*/
 	stv2_current_tilemap.enabled = STV_VDP2_N1ON;
 
-	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N1TPON;
 	stv2_current_tilemap.colour_depth = STV_VDP2_N1CHCN;
 	stv2_current_tilemap.tile_size = STV_VDP2_N1CHSZ;
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N1BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N1BMSZ;
+	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N1BMP;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N1MPA | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N1MPB | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N1MPC | (STV_VDP2_N1MP_ << 6);
@@ -1858,7 +2174,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	if (STV_VDP2_N0CHCN == 0x03) stv2_current_tilemap.enabled = 0;
 	if (STV_VDP2_N0CHCN == 0x04) stv2_current_tilemap.enabled = 0;
 
-	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N2TPON;
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N2TPON;
@@ -1866,6 +2182,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N2CHSZ;
 	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
 	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
+	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N2MPA | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N2MPB | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N2MPC | (STV_VDP2_N2MP_ << 6);
@@ -1881,12 +2198,11 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN2;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN2;
 
-	stv2_current_tilemap.plane_size = 0;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
 
 	stv2_current_tilemap.layer_name=2;
 
-//	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
+	stv2_current_tilemap.plane_size = STV_VDP2_N2PLSZ;
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -1911,7 +2227,7 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.enabled = STV_VDP2_N3ON;
 
-	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+//	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N3TPON;
 	stv2_current_tilemap.trans_enabled = STV_VDP2_N3TPON;
@@ -1919,6 +2235,7 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N3CHSZ;
 	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
 	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
+	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N3MPA | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N3MPB | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N3MPC | (STV_VDP2_N3MP_ << 6);
@@ -1934,12 +2251,11 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN3;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN3;
 
-	stv2_current_tilemap.plane_size = 0;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
 
 	stv2_current_tilemap.layer_name=3;
 
-//	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
+	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -1974,7 +2290,24 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 	int r,g,b;
 	COMBINE_DATA(&stv_vdp2_cram[offset]);
 
-	offset &= 0x7ff;
+//	usrintf_showmessage("%01x",STV_VDP2_CRMD);
+
+	switch( STV_VDP2_CRMD )
+	{
+		/*Mode 2/3*/
+		case 2:
+		case 3:
+		{
+			b = ((stv_vdp2_cram[offset] & 0x00ff0000) >> 16);
+			g = ((stv_vdp2_cram[offset] & 0x0000ff00) >> 8);
+			r = ((stv_vdp2_cram[offset] & 0x000000ff) >> 0);
+			palette_set_color(offset,r,g,b);
+		}
+		break;
+		/*Mode 0*/
+		case 0:
+		{
+			offset &= 0x3ff;
 
 			b = ((stv_vdp2_cram[offset] & 0x00007c00) >> 10);
 			g = ((stv_vdp2_cram[offset] & 0x000003e0) >> 5);
@@ -1983,7 +2316,6 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 			g*=0x8;
 			r*=0x8;
 			palette_set_color((offset*2)+1,r,g,b);
-
 			b = ((stv_vdp2_cram[offset] & 0x7c000000) >> 26);
 			g = ((stv_vdp2_cram[offset] & 0x03e00000) >> 21);
 			r = ((stv_vdp2_cram[offset] & 0x001f0000) >> 16);
@@ -1991,13 +2323,30 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 			g*=0x8;
 			r*=0x8;
 			palette_set_color(offset*2,r,g,b);
+		}
+		break;
+		/*Mode 1*/
+		case 1:
+		{
+			offset &= 0x7ff;
 
-//			b = ((stv_vdp2_cram[offset] & 0x00ff0000) >> 16);
-//			g = ((stv_vdp2_cram[offset] & 0x0000ff00) >> 8);
-//			r = ((stv_vdp2_cram[offset] & 0x000000ff) >> 0);
-//			palette_set_color(offset,r,g,b);
-
-
+			b = ((stv_vdp2_cram[offset] & 0x00007c00) >> 10);
+			g = ((stv_vdp2_cram[offset] & 0x000003e0) >> 5);
+			r = ((stv_vdp2_cram[offset] & 0x0000001f) >> 0);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color((offset*2)+1,r,g,b);
+			b = ((stv_vdp2_cram[offset] & 0x7c000000) >> 26);
+			g = ((stv_vdp2_cram[offset] & 0x03e00000) >> 21);
+			r = ((stv_vdp2_cram[offset] & 0x001f0000) >> 16);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color(offset*2,r,g,b);
+		}
+		break;
+	}
 }
 
 READ32_HANDLER ( stv_vdp2_cram_r )
@@ -2101,6 +2450,7 @@ static void stv_vdp2_dynamic_res_change()
 
 	set_visible_area(0*8, horz-1,0*8, vert-1);
 }
+extern data32_t *stv_vdp1_vram;
 
 VIDEO_UPDATE( stv_vdp2 )
 {
@@ -2111,16 +2461,16 @@ VIDEO_UPDATE( stv_vdp2 )
 	/*If a plane has a priority value of zero it isn't shown at all.*/
 	for(pri=1;pri<8;pri++)
 	{
-		if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);
-		if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);
-		if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);
-		if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);
-		if(pri==6)               video_update_vdp1(bitmap,cliprect);
+		if (!(keyboard_pressed(KEYCODE_T))) {if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);}
+		if (!(keyboard_pressed(KEYCODE_Y))) {if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);}
+		if (!(keyboard_pressed(KEYCODE_U))) {if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);}
+		if (!(keyboard_pressed(KEYCODE_I))) {if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);}
+		if (!(keyboard_pressed(KEYCODE_O))) {if(pri==6)               video_update_vdp1(bitmap,cliprect);}
 	}
 
-#ifndef MAME_DEBUG
+//#ifndef MAME_DEBUG
 	stv_vdp2_dynamic_res_change();
-#endif
+//#endif
 
 #ifdef MAME_DEBUG
 	if ( keyboard_pressed_memory(KEYCODE_W) )
@@ -2167,19 +2517,34 @@ VIDEO_UPDATE( stv_vdp2 )
 		}
 	}
 #endif
-/*
-	if ( keyboard_pressed_memory(KEYCODE_W) )
+
+#ifdef MAME_DEBUG
+
+	if ( keyboard_pressed_memory(KEYCODE_K) )
 	{
 		FILE *fp;
 
-		fp=fopen("stv_vdp2.dmp", "w+b");
+		fp=fopen("mamevdp1", "w+b");
 		if (fp)
 		{
-			fwrite(stv_vdp2_vram, 0x100000, 1, fp);
+			fwrite(stv_vdp1_vram, 0x80000, 1, fp);
 			fclose(fp);
 		}
 	}
-*/
+
+	if ( keyboard_pressed_memory(KEYCODE_L) )
+	{
+		FILE *fp;
+
+		fp=fopen("vdp1_vram.bin", "r+b");
+		if (fp)
+		{
+			fread(stv_vdp1_vram, 0x80000, 1, fp);
+			fclose(fp);
+		}
+	}
+
+#endif
 
 
 
@@ -2200,75 +2565,6 @@ The MSB in any mode is known to be used as "Color Calculation"(transparency).
 
 TODO: we have to refresh the entire palette when it change color mode.
 */
-
-WRITE32_HANDLER( stv_palette_w )
-{
-	int r,g,b;
-	COMBINE_DATA(&stv_cram[offset]);
-
-	switch( CRMD & 3 )
-	{
-		/*Mode 2/3*/
-		case 2:
-		case 3:
-			b = ((stv_cram[offset] & 0x00ff0000) >> 16);
-			g = ((stv_cram[offset] & 0x0000ff00) >> 8);
-			r = ((stv_cram[offset] & 0x000000ff) >> 0);
-			palette_set_color(offset,r,g,b);
-		break;
-		/*Mode 0*/
-		case 0:
-			b = ((stv_cram[offset] & 0x00007c00) >> 10);
-			g = ((stv_cram[offset] & 0x000003e0) >> 5);
-			r = ((stv_cram[offset] & 0x0000001f) >> 0);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-	//		dma_set_color((offset*2)+1,r,g,b);
-			/*Palette banking*/
-			if(((offset*2)+1) >= 0x400)
-				palette_set_color((((offset*2)+1)-0x400),r,g,b);
-			else
-				palette_set_color((((offset*2)+1)+0x400),r,g,b);
-
-			b = ((stv_cram[offset] & 0x7c000000) >> 26);
-			g = ((stv_cram[offset] & 0x03e00000) >> 21);
-			r = ((stv_cram[offset] & 0x001f0000) >> 16);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color(offset*2,r,g,b);
-
-			/*Palette banking*/
-			if((offset*2) >= 0x400)
-				palette_set_color(((offset*2)-0x400),r,g,b);
-			else
-				palette_set_color(((offset*2)+0x400),r,g,b);
-		break;
-		/*Mode 1*/
-		case 1:
-			b = ((stv_cram[offset] & 0x00007c00) >> 10);
-			g = ((stv_cram[offset] & 0x000003e0) >> 5);
-			r = ((stv_cram[offset] & 0x0000001f) >> 0);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color((offset*2)+1,r,g,b);
-			b = ((stv_cram[offset] & 0x7c000000) >> 26);
-			g = ((stv_cram[offset] & 0x03e00000) >> 21);
-			r = ((stv_cram[offset] & 0x001f0000) >> 16);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color(offset*2,r,g,b);
-		break;
-	}
-}
-
-READ32_HANDLER( stv_palette_r )
-{
-	return stv_cram[offset];
-}
 
 /**********************************************************************************
 VDP2 Registers Table

@@ -66,39 +66,97 @@ static void scanline_callback(int scanline)
 	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
 }
 
-MACHINE_INIT( magmax )
+static MACHINE_INIT( magmax )
 {
 	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
+#if 0
+	{
+		int i;
+		for (i=0; i<9; i++)
+			logerror("SOUND Chan#%i name=%s\n", i, mixer_get_name(i) );
+	}
+#endif
 }
 
 
+static int gain_control = 0;
 
 WRITE_HANDLER( ay8910_portA_0_w )
 {
+int percent;
+
 /*There are three AY8910 chips and four(!) separate amplifiers on the board
-* Each of AY channels is hardware mapped in following order:
-* amplifier 0 <- AY0 CHA
-* amplifier 1 <- AY0 CHB + AY0 CHC + AY1 CHA + AY1 CHB
-* amplifier 2 <- AY1 CHC + AY2 CHA
-* amplifier 3 <- AY2 CHB + AY2 CHC
+* Each of AY channels is hardware mapped in following way:
+* amplifier 0 gain x 1.00 <- AY0 CHA
+* amplifier 1 gain x 1.00 <- AY0 CHB + AY0 CHC + AY1 CHA + AY1 CHB
+* amplifier 2 gain x 4.54 (150K/33K) <- AY1 CHC + AY2 CHA
+* amplifier 3 gain x 4.54 (150K/33K) <- AY2 CHB + AY2 CHC
 *
 * Each of the amps has its own analog cuircit:
 * amp0, amp1 and amp2 are different from each other; amp3 is the same as amp2
 *
 * Outputs of those amps are inputs to post amps, each having own cuircit
 * that is partially controlled by AY #0 port A.
-* PORT A BIT 0 - control postamp 0
-* PORT A BIT 1 - control postamp 1
-* PORT A BIT 2 - control postamp 2
-* PORT A BIT 3 - control postamp 3
+* PORT A BIT 0 - control postamp 0 (gain x10.0 | gain x 5.00)
+* PORT A BIT 1 - control postamp 1 (gain x4.54 | gain x 2.27)
+* PORT A BIT 2 - control postamp 2 (gain x1.00 | gain x 0.50)
+* PORT A BIT 3 - control postamp 3 (gain x1.00 | gain x 0.50)
 *
 * The "control" means assert/clear input pins on chip called 4066 (it is analog switch)
-* This is not implemented here.
+* which results in volume gain (exactly 2 times).
+* I use mixer_set_volume() to emulate the effect.
+
+gain summary:
+port A control ON         OFF
+amp0 = *1*10.0=10.0  *1*5.0   = 5.0
+amp1 = *1*4.54=4.54  *1*2.27  = 2.27
+amp2 = *4.54*1=4.54  *4.54*0.5= 2.27
+amp3 = *4.54*1=4.54  *4.54*0.5= 2.27
 */
 
+/*
+bit0 - SOUND Chan#0 name=AY-3-8910 #0 Ch A
 
-		//missing implementation
+bit1 - SOUND Chan#1 name=AY-3-8910 #0 Ch B
+bit1 - SOUND Chan#2 name=AY-3-8910 #0 Ch C
+bit1 - SOUND Chan#3 name=AY-3-8910 #1 Ch A
+bit1 - SOUND Chan#4 name=AY-3-8910 #1 Ch B
 
+bit2 - SOUND Chan#5 name=AY-3-8910 #1 Ch C
+bit2 - SOUND Chan#6 name=AY-3-8910 #2 Ch A
+
+bit3 - SOUND Chan#7 name=AY-3-8910 #2 Ch B
+bit3 - SOUND Chan#8 name=AY-3-8910 #2 Ch C
+*/
+
+	if (gain_control == (data & 0x0f))
+		return;
+
+	gain_control = data & 0x0f;
+
+	/*usrintf_showmessage("gain_ctrl = %2x",data&0x0f);*/
+
+	percent = (gain_control & 1) ? 100 : 50;
+	mixer_set_volume(0,percent);
+	set_RC_filter(0,10000,100000000,0,10000);	/* 10K, 10000pF = 0.010uF */
+
+	percent = (gain_control & 2) ? 45 : 23;
+	mixer_set_volume(1,percent);
+	mixer_set_volume(2,percent);
+	mixer_set_volume(3,percent);
+	mixer_set_volume(4,percent);
+	set_RC_filter(1,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+	set_RC_filter(2,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+	set_RC_filter(3,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+	set_RC_filter(4,4700,100000000,0,4700);	/*  4.7K, 4700pF = 0.0047uF */
+
+	percent = (gain_control & 4) ? 45 : 23;
+	mixer_set_volume(5,percent);
+	mixer_set_volume(6,percent);
+
+	percent = (gain_control & 8) ? 45 : 23;
+	mixer_set_volume(7,percent);
+	mixer_set_volume(8,percent);
 }
 
 static WRITE16_HANDLER( magmax_vreg_w )
@@ -279,7 +337,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,			/* 3 chips */
 	10000000/8,		/* 1.25 MHz */
-	{ 35, 35, 35 },
+	{ 40, 40, 40 },
 	{ 0, 0, 0 }, /*read port A*/
 	{ 0, 0, 0 }, /*read port B*/
 	{ ay8910_portA_0_w, 0, 0 }, /*write port A*/
@@ -301,7 +359,8 @@ static MACHINE_DRIVER_START( magmax )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
+	MDRV_INTERLEAVE(10)
+ 
 	MDRV_MACHINE_INIT(magmax)
 
 	/* video hardware */

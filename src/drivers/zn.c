@@ -80,7 +80,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/mips/mips.h"
+#include "cpu/mips/psx.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
 #include "includes/psx.h"
@@ -110,7 +110,7 @@ static unsigned char kn_protection_hack[] =
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
+	
 	/* second test, this byte is ignored */
 	0x00,
 
@@ -210,7 +210,7 @@ static unsigned char tt_protection_hack[] =
 /* decodecapcon.c */
 static unsigned char cpzn1_protection_hack [] =
 {
-
+	
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -251,7 +251,7 @@ static unsigned char cpzn1_protection_hack [] =
 /* decodecapcon.c */
 static unsigned char cpzn2_protection_hack [] =
 {
-
+	
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -535,12 +535,13 @@ static DRIVER_INIT( zn )
 		n_sio0_ret_size = 0;
 	}
 #endif
+	psx_driver_init();
 }
 
 static DRIVER_INIT( fx1b )
 {
-	init_zn();
 	cpu_setbank( 10, memory_region( REGION_CPU2 ) );
+	init_zn();
 }
 
 /* sound player */
@@ -681,9 +682,9 @@ static VIDEO_UPDATE( player )
 
 static MACHINE_INIT( zn )
 {
-	machine_init_psx();
 	n_playermode = 0;
 	player_reset();
+	psx_machine_init();
 }
 
 static INTERRUPT_GEN( qsound_interrupt )
@@ -771,7 +772,7 @@ static MACHINE_DRIVER_START( zn )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(psx)
+	MDRV_MACHINE_INIT(zn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -780,7 +781,7 @@ static MACHINE_DRIVER_START( zn )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_START(psx_type2_1024x1024)
 	MDRV_VIDEO_UPDATE(psx)
 	MDRV_VIDEO_STOP(psx)
 
@@ -812,7 +813,7 @@ static MACHINE_DRIVER_START( znqsound )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_START(psx_type2_1024x1024)
 	MDRV_VIDEO_UPDATE(player)
 	MDRV_VIDEO_STOP(psx)
 
@@ -833,7 +834,7 @@ static MACHINE_DRIVER_START( znlink )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(psx)
+	MDRV_MACHINE_INIT(zn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -842,7 +843,7 @@ static MACHINE_DRIVER_START( znlink )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_START(psx_type2_1024x1024)
 	MDRV_VIDEO_UPDATE(psx)
 	MDRV_VIDEO_STOP(psx)
 
@@ -873,7 +874,7 @@ static MACHINE_DRIVER_START( fx1a )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_START(psx_type2_1024x1024)
 	MDRV_VIDEO_UPDATE(player)
 	MDRV_VIDEO_STOP(psx)
 
@@ -891,7 +892,7 @@ static MACHINE_DRIVER_START( fx1b )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(psx)
+	MDRV_MACHINE_INIT(zn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -900,7 +901,7 @@ static MACHINE_DRIVER_START( fx1b )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_START(psx_type2_1024x1024)
 	MDRV_VIDEO_UPDATE(psx)
 	MDRV_VIDEO_STOP(psx)
 
@@ -1637,7 +1638,7 @@ GAMEX( 1997, tps,      0,        zn,       zn, zn,   ROT0, "Sony/Tecmo", "TPS", 
 GAMEX( 1997, glpracr2, tps,      zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1997, glprac2l, glpracr2, znlink,   zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1998, doapp,    tps,      zn,       zn, zn,   ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1999, tondemo,  tps,      zn,       zn, zn,   ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX( 1999, tondemo,  tps,      zn,       zn, zn,   ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 2000, brvblade, tps,      zn,       zn, zn,   ROT0, "Raizing", "Brave Blade (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Video System */
@@ -1659,5 +1660,5 @@ GAMEX( 1996, mgcldtea, mgcldate, fx1a,     zn, fx1b, ROT0, "Taito", "Magical Dat
 GAMEX( 1997, gdarius,  taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1997, gdarius2, gdarius,  fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
-/* Eighteen Raizing */
+/* Eighting Raizing */
 GAMEX( 1997, beastrzb, taitofx1, zn,       zn, zn,   ROT0, "Eighting Raizing", "Beastorizer (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )

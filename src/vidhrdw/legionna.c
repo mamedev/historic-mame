@@ -99,6 +99,18 @@ static void get_mid_tile_info(int tile_index)
 	SET_TILE_INFO(5,tile,color,0)
 }
 
+static void get_mid_tile_info_cupsoc(int tile_index)
+{
+	int tile=legionna_mid_data[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile &= 0xfff;
+
+	tile |= 0x1000;
+
+	SET_TILE_INFO(1,tile,color,0)
+}
+
 static void get_fore_tile_info(int tile_index)	/* this is giving bad tiles... */
 {
 	int tile=legionna_fore_data[tile_index];
@@ -115,7 +127,7 @@ static void get_text_tile_info(int tile_index)
 	int tile = legionna_textram[tile_index];
 	int color=(tile>>12)&0xf;
 
-	tile&=0x7ff;
+	tile &= 0xfff;
 
 	SET_TILE_INFO(0,tile,color,0)
 }
@@ -142,6 +154,28 @@ VIDEO_START( legionna )
 	return 0;
 }
 
+VIDEO_START( cupsoc )
+{
+	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	midground_layer =  tilemap_create(get_mid_tile_info_cupsoc, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
+
+	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
+		return 1;
+
+	legionna_scrollram16 = auto_malloc(0x60);
+
+	if (!legionna_scrollram16)	return 1;
+
+	tilemap_set_transparent_pen(background_layer,15);
+	tilemap_set_transparent_pen(midground_layer,15);
+	tilemap_set_transparent_pen(foreground_layer,15);
+	tilemap_set_transparent_pen(text_layer,15);
+
+	return 0;
+}
+
 
 /*************************************************************************
 
@@ -151,7 +185,7 @@ VIDEO_START( legionna )
 	It has "big sprites" created by setting width or height >0. Tile
 	numbers are read consecutively.
 
-      +0   x....... ........  Sprite enable
+    +0   x....... ........  Sprite enable
 	+0   .x...... ........  Flip x
 	+0   ..x..... ........  Flip y ???
 	+0   ...xxx.. ........  Width: do this many tiles horizontally
@@ -269,7 +303,7 @@ VIDEO_UPDATE( legionna )
 
 //	if ((legionna_enable&1)!=1)
 
-	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
+	fillbitmap(bitmap,get_black_pen(),cliprect);	/* wrong color? */
 
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
@@ -296,3 +330,45 @@ VIDEO_UPDATE( legionna )
 #endif
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }
+
+VIDEO_UPDATE( godzilla )
+{
+	tilemap_set_scrollx( text_layer, 0, 0 );
+	tilemap_set_scrolly( text_layer, 0, 112 );
+
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	tilemap_draw(bitmap,cliprect,background_layer,0,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+}
+
+VIDEO_UPDATE( sdgndmrb )
+{
+	/* Setup the tilemaps */
+	tilemap_set_scrollx( background_layer, 0, legionna_scrollram16[0] );
+	tilemap_set_scrolly( background_layer, 0, legionna_scrollram16[1] );
+	tilemap_set_scrollx( midground_layer,  0, legionna_scrollram16[2] );
+	tilemap_set_scrolly( midground_layer,  0, legionna_scrollram16[3] );
+	tilemap_set_scrollx( foreground_layer, 0, legionna_scrollram16[4] );
+	tilemap_set_scrolly( foreground_layer, 0, legionna_scrollram16[5] );
+//	tilemap_set_scrollx( text_layer, 0, 128 /* legionna_scrollram16[6] */);
+//	tilemap_set_scrolly( text_layer, 0, 0 /* legionna_scrollram16[7] */ );
+
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	tilemap_draw(bitmap,cliprect,background_layer,0,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+}
+

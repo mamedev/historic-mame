@@ -65,7 +65,6 @@ static void mooncrst_modify_spritecode(data8_t *spriteram,int *code,int *flipx,i
 static void mooncrgx_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void  moonqsr_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void mshuttle_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
-static void   ckongs_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void  calipso_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void   pisces_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void mimonkey_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs);
@@ -680,7 +679,7 @@ VIDEO_START( ckongs )
 {
 	int ret = video_start_scramble();
 
-	modify_spritecode = ckongs_modify_spritecode;
+	modify_spritecode = mshuttle_modify_spritecode;
 
 	return ret;
 }
@@ -1131,11 +1130,6 @@ static void moonqsr_modify_spritecode(data8_t *spriteram,int *code,int *flipx,in
 static void mshuttle_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
 {
 	*code |= ((spriteram[offs + 2] & 0x30) << 2);
-}
-
-static void ckongs_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)
-{
-	*code |= ((spriteram[offs + 2] & 0x10) << 3);
 }
 
 static void calipso_modify_spritecode(data8_t *spriteram,int *code,int *flipx,int *flipy,int offs)

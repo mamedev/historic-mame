@@ -405,7 +405,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 	op = READ_OP(pc);
 
-	logerror( "Disassembling opcode %04x at PC %08x", op, pc );
+	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
 
 	op_num = (op & 0xff00) >> 8;
 
@@ -1571,7 +1571,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 			default:
 				buffer += sprintf(buffer, "Ext. OP %x", extended_op);
-				logerror(buffer, "Illegal Extended Opcode: %x", extended_op);
+				logerror(buffer, "Illegal Extended Opcode: %x\n", extended_op);
 				break;
 			}
 

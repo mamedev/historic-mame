@@ -14,17 +14,31 @@ void midway_serial_pic_w(UINT8 data);
 
 
 /* 2nd generation Midway serial/NVRAM/RTC PIC */
-void midway_serial_pic2_init(int upper);
+void midway_serial_pic2_init(int upper, int yearoffs);
+void midway_serial_pic2_set_default_nvram(const UINT8 *nvram);
 void midway_serial_pic2_reset_w(int state);
 UINT8 midway_serial_pic2_status_r(void);
 UINT8 midway_serial_pic2_r(void);
 void midway_serial_pic2_w(UINT8 data);
+NVRAM_HANDLER( midway_serial_pic2 );
 
 
 /* I/O ASIC connected to 2nd generation PIC */
-void midway_io_asic_init(int upper);
-READ32_HANDLER( midway_io_asic_r );
-WRITE32_HANDLER( midway_io_asic_w );
+void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callback)(int));
+void midway_ioasic_reset(void);
+void midway_ioasic_fifo_w(data16_t data);
+READ32_HANDLER( midway_ioasic_r );
+WRITE32_HANDLER( midway_ioasic_w );
+
+enum
+{
+	MIDWAY_IOASIC_STANDARD = 0,
+	MIDWAY_IOASIC_BLITZ99,
+	MIDWAY_IOASIC_CARNEVIL,
+	MIDWAY_IOASIC_CALSPEED,
+	MIDWAY_IOASIC_MACE
+};
+
 
 
 /* IDE ASIC maps the IDE registers */

@@ -6,10 +6,19 @@
 ** Copyright (C) 2002,2003 Jarek Burczynski (bujar at mame dot net)
 ** Copyright (C) 1999,2000 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 0.70
+** Version 0.72
 **
 
 Revision History:
+
+04-08-2003 Jarek Burczynski:
+ - removed BFRDY hack. BFRDY is busy flag, and it should be 0 only when the chip
+   handles memory read/write or during the adpcm synthesis when the chip
+   requests another byte of ADPCM data.
+
+24-07-2003 Jarek Burczynski:
+ - added a small hack for Y8950 status BFRDY flag (bit 3 should be set after
+   some (unknown) delay). Right now it's always set.
 
 14-06-2003 Jarek Burczynski:
  - implemented all of the status register flags in Y8950 emulation
@@ -63,6 +72,9 @@ Revision History:
 #include <math.h>
 
 #include "driver.h"		/* use M.A.M.E. */
+
+#include "ymdeltat.h"
+
 #include "fmopl.h"
 
 #ifndef PI
@@ -1481,7 +1493,7 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 		case 0x04:	/* IRQ clear / mask and Timer enable */
 			if(v&0x80)
 			{	/* IRQ flag clear */
-				OPL_STATUS_RESET(OPL,0x7f);
+				OPL_STATUS_RESET(OPL,0x7f-0x08); /* don't reset BFRDY flag or we will have to call deltat module to set the flag */
 			}
 			else
 			{	/* set IRQ mask ,timer enable*/
@@ -1489,7 +1501,7 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				UINT8 st2 = (v>>1)&1;
 
 				/* IRQRST,T1MSK,t2MSK,EOSMSK,BRMSK,x,ST2,ST1 */
-				OPL_STATUS_RESET(OPL, v & 0x78 );
+				OPL_STATUS_RESET(OPL, v & (0x78-0x08) );
 				OPL_STATUSMASK_SET(OPL, (~v) & 0x78 );
 
 				/* timer 2 */
@@ -1913,9 +1925,9 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 		{
 			return (OPL->status & (OPL->statusmask|0x80)) | (OPL->deltat->PCM_BSY&1);
 		}
-
+		
 		#endif
-
+		
 		/* OPL and OPL2 */
 		return OPL->status & (OPL->statusmask|0x80);
 	}
@@ -1939,7 +1951,7 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 		{
 			UINT8 val;
 
-            val = YM_DELTAT_ADPCM_Read(OPL->deltat);
+			val = YM_DELTAT_ADPCM_Read(OPL->deltat);
 			/*logerror("Y8950: read ADPCM value read=%02x\n",val);*/
 			return val;
 		}
@@ -2348,6 +2360,9 @@ int Y8950Init(int num, int clock, int rate)
 		OPL_Y8950[i]->deltat->status_change_which_chip = i;
 		OPL_Y8950[i]->deltat->status_change_EOS_bit = 0x10;		/* status flag: set bit4 on End Of Sample */
 		OPL_Y8950[i]->deltat->status_change_BRDY_bit = 0x08;	/* status flag: set bit3 on BRDY (End Of: ADPCM analysis/synthesis, memory reading/writing) */
+
+		/*OPL_Y8950[i]->deltat->write_time = 10.0 / clock;*/		/* a single byte write takes 10 cycles of main clock */
+		/*OPL_Y8950[i]->deltat->read_time  = 8.0 / clock;*/		/* a single byte read takes 8 cycles of main clock */
 		/* reset */
 		Y8950ResetChip(i);
 	}

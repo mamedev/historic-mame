@@ -23,8 +23,6 @@
 #include "machine/atarigen.h"
 #include "atarigt.h"
 
-#define DEBUG_ATARIGT		0
-
 
 
 /*************************************
@@ -47,8 +45,6 @@
 
 data16_t *atarigt_colorram;
 
-UINT16 atarigt_motion_object_mask;
-
 
 
 /*************************************
@@ -58,6 +54,7 @@ UINT16 atarigt_motion_object_mask;
  *************************************/
 
 static struct mame_bitmap *pf_bitmap;
+static struct mame_bitmap *an_bitmap;
 
 static UINT8 playfield_tile_bank;
 static UINT8 playfield_color_bank;
@@ -72,10 +69,6 @@ static UINT32 *expanded_mram;
 
 static UINT8 rshift, gshift, bshift;
 
-#if DEBUG_ATARIGT
-static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap *tm_bitmap);
-#endif
-
 
 
 /*************************************
@@ -89,8 +82,7 @@ static void get_alpha_tile_info(int tile_index)
 	UINT16 data = atarigen_alpha32[tile_index / 2] >> (16 * (~tile_index & 1));
 	int code = data & 0xfff;
 	int color = (data >> 12) & 0x0f;
-	int opaque = data & 0x8000;
-	SET_TILE_INFO(1, code, color, opaque ? TILE_IGNORE_TRANSPARENCY : 0);
+	SET_TILE_INFO(1, code, color, 0);
 }
 
 
@@ -153,20 +145,18 @@ VIDEO_START( atarigt )
 		return 1;
 
 	/* initialize the motion objects */
-	adjusted_modesc.colormask.data[1] &= atarigt_motion_object_mask;
 	if (!atarirle_init(0, &adjusted_modesc))
 		return 1;
 
 	/* initialize the alphanumerics */
-	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
 	if (!atarigen_alpha_tilemap)
 		return 1;
-	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
-	tilemap_set_palette_offset(atarigen_alpha_tilemap, 0x8000);
 
 	/* allocate temp bitmaps */
 	pf_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	if (!pf_bitmap)
+	an_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	if (!pf_bitmap || !an_bitmap)
 		return 1;
 
 	/* allocate memory */
@@ -243,8 +233,6 @@ void atarigt_scanline_update(int scanline)
 	data32_t *base = &atarigen_alpha32[(scanline / 8) * 32 + 24];
 	int i;
 
-	if (scanline == 0) logerror("-------\n");
-
 	/* keep in range */
 	if (base >= &atarigen_alpha32[0x400])
 		return;
@@ -300,60 +288,280 @@ void atarigt_scanline_update(int scanline)
  *
  *************************************/
 
-INLINE UINT32 blend_pixels(UINT32 craw, UINT32 traw)
-{
-	UINT32 rgb1, rgb2;
-	int r, g, b;
+/*
 
-	/* do the first-level lookups */
-	rgb1 = cram[craw];
-	rgb2 = tram[traw];
+	How it works:
+	
+		Incoming data from AN = AN.VID0-7
+		Incoming data from PF = PF.VID0-12
+		Incoming data from MO = MVID0-11
+		Incoming data from TMO = TVID0-11
+	
+	!MGEP = 1 if:
+		MVID9-11 < PF.VID10-12
+		or (PF.VID12 and R188 is installed [yes on T-Mek & Rage])
+	!MGEP = 0 if:
+		R177 is installed [no on T-Mek & Rage]
+	
+	First, the CRAM:
+	
+		GAL @ 13M, takes as input:
+			ANZ (AN.VID0-3 == 0)
+			MOZ (MVID0-5 == 0)
+			PFZ (PF.VID0-5 == 0)
+			MVID10
+			MVID11
+			PF.VID10
+			PF.VID11
+			AN.VID7
+			!MGEP
+		And outputs:
+			CRA10-12
+			CRMUXA-B
+		
+		Index to the CRAM:
+			CRA13  = LATCH & 0x08
+			CRA12 \
+			CRA11  = output from GAL
+			CRA10 /
+			CRA9 \
+			CRA8  |
+			CRA7  |
+			CRA6  |
+			CRA5   = output from MUX, as selected by GAL, either PF.VID0-9, MVID0-9, or AN.VID0-7
+			CRA4  |
+			CRA3  |
+			CRA2  |
+			CRA1  |
+			CRA0 /
+		Output from CRAM (16 bits):
+			/TLEN
+			CRR0-4
+			CRG0-4
+			CRB0-4
+	
+	Next, the TRAM:
+	
+		GAL @ 14K, takes as input:
+			ANZ (AN.VID0-3 == 0)
+			MOZ (MVID0-5 == 0)
+			PFZ (PF.VID0-5 == 0)
+			TVID8
+			TVID9
+			TVID10
+			PF.VID10
+			PF.VID11
+			AN.VID7
+			!MGEP
+			!68.TRAN
+		And outputs:
+			TRA8-11
+			TRMUXA-B
 
-	/* build the final lookups */
-	if (rgb1 & 0x8000)
-	{
-		r = (rgb1 >> 10) & 0x1f;
-		g = (rgb1 >> 5) & 0x1f;
-		b = rgb1 & 0x1f;
-	}
-	else if (rgb2 & 0x8000)
-	{
-		r = (rgb2 >> 5) & 0x3e0;
-		g = rgb2 & 0x3e0;
-		b = (rgb2 << 5) & 0x3e0;
-	}
-	else
-	{
-		r = ((rgb1 >> 10) & 0x1f) | ((rgb2 >> 5) & 0x3e0);
-		g = ((rgb1 >> 5) & 0x1f) | (rgb2 & 0x3e0);
-		b = (rgb1 & 0x1f) | ((rgb2 << 5) & 0x3e0);
-	}
+		Index to the TRAM:
+			TRA13  = LATCH & 0x20
+			TRA12  = LATCH & 0x10
+			TRA11 \ 
+			TRA10  = output from GAL
+			TRA9   |
+			TRA8  /
+			TRA7  \
+			TRA6  |
+			TRA5  |
+			TRA4   = output from MUX, as selected by GAL, either PF.VID0-7, MVID0-7, or AN.VID0-7
+			TRA3  |
+			TRA2  |
+			TRA1  |
+			TRA0 /
+		Output from TRAM (16 bits):
+			TLPRI
+			TRR0-4
+			TRG0-4
+			TRB0-4
+	
+	Finally, the MRAM:
+	
+		GAL @ 5F, takes as input:
+			TLPRI
+			!TLEN
+			PFZ
+			PF.VID12
+			TVID9-11
+		And outputs:
+			TLDIS
+			(PFPRI)
+			(TLPRID)
+			enable for CRAM latches
+			MRA10-12
+		
+		The CRAM outputs are gated by the enable signal from 5F; it outputs
+			BMRA0-4
+			GMRA0-4
+			RMRA0-4
+		
+		The TRAM outputs are gated by the TLDIS signal from 5F
+			BMRA5-9
+			GMRA5-9
+			RMRA5-9
 
-	/* do the final lookups */
-	return mram[0 * MRAM_ENTRIES + r] |
-	       mram[1 * MRAM_ENTRIES + g] |
-	       mram[2 * MRAM_ENTRIES + b];
-}
+		Index to MRAM:
+			MRA14  = LATCH & 0x80
+			MRA13  = LATCH & 0x40
+			MRA12 \
+			MRA11  = output from GAL
+			MRA10 /
+			MRA9 \
+			MRA8  | 
+			MRA7   = TRAM output
+			MRA6  |
+			MRA5 /
+			MRA4 \
+			MRA3  | 
+			MRA2   = CRAM output
+			MRA1  |
+			MRA0 /
+		
+	And even beyond that:
+		
+		LATCH & 0x04 -> LCRD2
+		LATCH & 0x02 -> LCRD1
+		LATCH & 0x01 -> LCRD0
+
+		GAL @ 22E, takes as input:
+			LCRD0-2
+			PF.VID12
+			PFZ
+			ANZ
+			MVZ
+		
+		And outputs SUMRED, SUMGRN, SUMBLU,
+		which bypass everything!
+
+-------------------------------------------------	
+
+TMEK GALs:
+
+	13M:
+		CRA12=68.A13*!7M3							-- when writing with 68020's A13 == 1
+		   +MGEP*!AN.VID7*ANZ*!MVZ*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
+		   +PFZ*!AN.VID7*ANZ*!MVZ*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
+
+		CRA11=68.A12*!7M3							-- when writing with 68020's A12 == 1
+		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID11*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix11!=0
+		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID11*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix11!=0
+		   +!AN.VID7*ANZ*MVZ*PF.VID11*7M3			-- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
+		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0
+
+		CRA10=68.A11*!7M3							-- when writing with 68020's A11 == 1
+		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
+		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3		-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
+		   +!AN.VID7*ANZ*MVZ*PF.VID10*7M3			-- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
+		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix10!=0
+
+		CRMUXB=!AN.VID7*ANZ*7M3						-- !opaque_alpha && apix==0
+
+		!CRMUXA=!7M3
+		    +MGEP*!AN.VID7*ANZ*!MVZ
+		    +PFZ*!AN.VID7*ANZ*!MVZ
 
 
-INLINE UINT32 blend_pixels_no_tram(UINT32 craw)
-{
-	UINT32 rgb1;
-	int r, g, b;
+	14K:
+		TRA11=68.A12*!7M1					-- when writing with 68020's A12 == 1
 
-	/* do the first-level lookups */
-	rgb1 = cram[craw];
+		TRA10=68.A11*!7M1					-- when writing with 68020's A11 == 1
+		   +!AN.VID7*ANZ*PFZ*7M1*!MVZ		-- !opaque_alpha && apix==0 && pfpix==0 && mopix!=0
+		   +MGEP*!AN.VID7*ANZ*7M1*!MVZ		-- !opaque_alpha && apix==0 && mopri>=pfpri && mopix!=0
 
-	/* build the final lookups */
-	r = (rgb1 >> 10) & 0x1f;
-	g = (rgb1 >> 5) & 0x1f;
-	b = rgb1 & 0x1f;
+		TRA9=68.A10*!7M1					-- when writing with 68020's A10 == 1
+		   +!AN.VID7*ANZ*TVID9*7M1			-- !opaque_alpha && apix==0 && tvid9==1
 
-	/* do the final lookups */
-	return mram[0 * MRAM_ENTRIES + r] |
-	       mram[1 * MRAM_ENTRIES + g] |
-	       mram[2 * MRAM_ENTRIES + b];
-}
+		TRA8=68.A9*!7M1						-- when writing with 68020's A9 == 1
+		   +!AN.VID7*ANZ*TVID8*7M1			-- !opaque_alpha && apix==0 && tvid8==1
+
+		TRMUXB=7M1							-- 1
+		TRMUXA=GND							-- 0
+
+	5F:
+		MRA12:=TVID11
+		MRA11:=TVID10
+		MRA10:=TVID9
+		(PFPRI):=PF.VID12
+
+		!TLDIS=PFZ*TLEN						-- enabled if pfpix==0 && tlen
+		    +!(PFPRI)*TLEN					-- or if pf.vid12==0 && tlen
+
+		!(CRADIS)=!(PFPRI)*TLPRI			-- enabled if pfvid.12==0 && tlpri 
+		(TLPRID):=TLPRI
+	
+	22E:
+		LCRD0 LCRD1 LCRD2 MVZ ANZ PFZ PF.VID12 LLD3 LLA3 GND J SUMBLU1K SUMGRN1K SUMRED1K (OE2) (OE1) SUMBLU SUMGRN SUMRED VCC
+		SUMRED.OE=(OE1)
+		!SUMRED=!SUMGRN
+		SUMGRN.OE=(OE1)
+		SUMGRN=!LCRD1*LCRD2*LLA3
+		   +LCRD1*LCRD0*LCRD2*J
+		   +LCRD1*LCRD0*!LCRD2*!LLD3
+		   +!LCRD1*LCRD0*!LCRD2*LLD3
+		   +!LCRD0*LCRD2*LLA3
+		   +LCRD1*!LCRD0*!LCRD2*LLD3
+		SUMBLU.OE=(OE1)
+		!SUMBLU=!SUMGRN
+
+		(OE1)=!LCRD1*LCRD2*!PF.VID12*LLD3*J				-- (LCR & 6)==4 && LLD3 && !PF.VID12	[LCR==4 || LCR==5]
+		   +!LCRD1*LCRD2*PFZ*LLD3*J						-- (LCR & 6)==4 && LLD3 && PFZ			[LCR==4 || LCR==5]
+		   +!LCRD0*LCRD2*!PF.VID12*LLD3					-- (LCR & 5)==4 && LLD3 && !PF.VID12	[LCR==4 || LCR==6]
+		   +!LCRD0*LCRD2*PFZ*LLD3						-- (LCR & 5)==4 && LLD3 && PFZ			[LCR==4 || LCR==6]
+		   +!LCRD1*!LCRD0*LCRD2*!PF.VID12*J				-- LCR==4 && !PF.VID12					[LCR==4]
+		   +!LCRD1*!LCRD0*LCRD2*PFZ*J					-- LCR==4 && PFZ						[LCR==4]
+
+		(OE2)=LCRD1*LCRD0*!LCRD2*!PF.VID12*LLA3*J		-- LCR==3 && LLA3 && !PF.VID12			[LCR==3]
+		   +LCRD1*LCRD0*!LCRD2*PFZ*LLA3*J				-- LCR==3 && LLA3 && PFZ				[LCR==3]
+		   +!LCRD1*LCRD0*!LCRD2*!MVZ*!PF.VID12*J		-- LCR==1 && !MVZ && !PF.VID12			[LCR==1]
+		   +!LCRD1*LCRD0*!LCRD2*!MVZ*PFZ*J				-- LCR==1 && !MVZ && PFZ				[LCR==1]
+		   +LCRD1*!LCRD0*LCRD2*!PF.VID12*LLD3			-- LCR==6 && LLD3 && !PF.VID12			[LCR==6]
+		   +LCRD1*!LCRD0*LCRD2*PFZ*LLD3					-- LCR==6 && LLD3 && PFZ				[LCR==6]
+
+		SUMRED1K.OE=(OE2)
+		!SUMRED1K=!LCRD1*!LCRD2*!LLD3					-- (LCR & 6)==0 && !LLD3
+		    +LCRD0*LCRD2*!LLA3							-- (LCR & 5)==5 && !LLA3
+		    +LCRD1*LCRD0*!LCRD2*LLD3					-- LCR==3 && LLD3
+		    +!LCRD0*!LCRD2*!LLD3						-- (LCR & 5)==0 && !LLD3
+		    +LCRD1*!LCRD0*LCRD2*!J						-- LCR==6 && !J
+		    +!LCRD1*!LCRD0*LLD3							-- (LCR & 3)==0 && LLD3
+		SUMGRN1K.OE=(OE2)
+		!SUMGRN1K=!SUMRED1K
+		SUMBLU1K.OE=(OE2)
+		!SUMBLU1K=!SUMRED1K
+
+-------------------------------------------------	
+
+PrimRage GALs:
+
+	13M:
+		CRA12=68.A13*!7M3									-- when writing with 68020's A13 == 1
+		   +!AN.VID7*ANZ*!MVZ*MVID11*7M3					-- !opaque_alpha && apix==0 && mopix!=0 && mvid11!=0
+		   +MGEP*!AN.VID7*ANZ*!MVZ*7M3						-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0
+		   +PFZ*!AN.VID7*ANZ*!MVZ*7M3						-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri
+
+		CRA11=68.A12*!7M3									-- when writing with 68020's A12 == 1
+		   +!AN.VID7*ANZ*MVZ*PF.VID11*7M3					-- !opaque_alpha && apix==0 && mopix==0 && pfpix11!=0
+		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID11*!MVID11*7M3	-- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && pfpix11!=0 && mvid11==0
+
+		CRA10=68.A11*!7M3									-- when writing with 68020's A11 == 1
+		   +!AN.VID7*ANZ*MVZ*PF.VID10*7M3					-- !opaque_alpha && apix==0 && mopix==0 && pfpix10!=0
+		   +!AN.VID7*ANZ*!MVZ*MVID11*MVID10*7M3				*- !opaque_alpha && apix==0 && mopix!=0 && mvid11 && mvid10
+		   +MGEP*!AN.VID7*ANZ*!MVZ*MVID10*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && mopri>=pfpri && mopix10!=0
+		   +PFZ*!AN.VID7*ANZ*!MVZ*MVID10*7M3				-- !opaque_alpha && apix==0 && mopix!=0 && pfpix==0 && mopix10!=0
+		   +!MGEP*!PFZ*!AN.VID7*ANZ*PF.VID10*!MVID11*7M3	*- !opaque_alpha && apix==0 && pfpix!=0 && mopri<pfpri && mopix11==0
+
+		CRMUXB=!AN.VID7*ANZ*7M3
+
+		!CRMUXA=!7M3
+		    +!AN.VID7*ANZ*!MVZ*MVID11
+		    +MGEP*!AN.VID7*ANZ*!MVZ
+		    +PFZ*!AN.VID7*ANZ*!MVZ
+
+*/
 
 
 VIDEO_UPDATE( atarigt )
@@ -363,9 +571,11 @@ VIDEO_UPDATE( atarigt )
 	int color_latch;
 	int x, y;
 
-	/* draw the playfield and alpha layers */
+	/* draw the playfield */
 	tilemap_draw(pf_bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	tilemap_draw(pf_bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
+
+	/* draw the alpha layer */
+	tilemap_draw(an_bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 
 	/* cache pointers */
 	color_latch = atarigt_colorram[0x30000/2];
@@ -373,243 +583,105 @@ VIDEO_UPDATE( atarigt )
 	tram = (UINT16 *)&atarigt_colorram[0x20000/2] + 0x1000 * ((color_latch >> 4) & 3);
 	mram = expanded_mram + 0x2000 * ((color_latch >> 6) & 3);
 
-	/* debugging */
-#if DEBUG_ATARIGT
-{
-	extern int atarirle_hilite_index;
-
-	if (keyboard_pressed(KEYCODE_Q))
-	{
-		while (keyboard_pressed(KEYCODE_Q)) ;
-		dump_video_memory(mo_bitmap, tm_bitmap);
-	}
-
-	atarirle_hilite_index = -1;
-	if (keyboard_pressed(KEYCODE_N))
-	{
-		atarirle_hilite_index--;
-		while (keyboard_pressed(KEYCODE_N)) ;
-	}
-	if (keyboard_pressed(KEYCODE_M))
-	{
-		atarirle_hilite_index++;
-		while (keyboard_pressed(KEYCODE_M)) ;
-	}
-}
-#endif
-
 	/* now do the nasty blend */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
+		UINT16 *an = (UINT16 *)an_bitmap->base + y * an_bitmap->rowpixels;
 		UINT16 *pf = (UINT16 *)pf_bitmap->base + y * pf_bitmap->rowpixels;
 		UINT16 *mo = (UINT16 *)mo_bitmap->base + y * mo_bitmap->rowpixels;
+		UINT16 *tm = (UINT16 *)tm_bitmap->base + y * tm_bitmap->rowpixels;
 		UINT32 *dst = (UINT32 *)bitmap->base + y * bitmap->rowpixels;
 
-		/* fast case: no TRAM, no effects */
-		if (tram_checksum == 0 && (color_latch & 7) == 0)
+		/* Primal Rage: no TRAM, slightly different priorities */
+		if (atarigt_is_primrage)
 		{
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
-				/* start with the playfield/alpha value */
-				UINT16 cra = pf[x] & 0xfff;
+				UINT8 pfpri = (pf[x] >> 10) & 7;
+				UINT8 mopri = mo[x] >> ATARIRLE_PRIORITY_SHIFT;
+				UINT8 mgep = (mopri >= pfpri) && !(pfpri & 4);
+				UINT16 cra;
+				UINT32 rgb;
+				
+				/* compute CRA -- unlike T-Mek, MVID11 enforces MO priority and is ignored */
+				if (an[x] & 0x8f)
+					cra = an[x] & 0xff;
+				else if ((mo[x] & 0x3f) && ((mo[x] & 0x800) || mgep || !(pf[x] & 0x3f)))
+					cra = 0x1000 | (mo[x] & 0x7ff);
+				else
+					cra = pf[x] & 0xfff;
+				cra = cram[cra];
+				
+				/* compute the result */
+				rgb  = mram[0 * MRAM_ENTRIES + ((cra >> 10) & 0x01f)];
+				rgb |= mram[1 * MRAM_ENTRIES + ((cra >>  5) & 0x01f)];
+				rgb |= mram[2 * MRAM_ENTRIES + ((cra >>  0) & 0x01f)];
 
-				/* alpha always gets priority, but MO's override playfield */
-				if (!(pf[x] & 0x8000))
-					if (mo[x])
-						cra = 0x1000 | (mo[x] & ATARIRLE_DATA_MASK);
-
-				/* do the lookups and store the result */
-				dst[x] = blend_pixels_no_tram(cra);
+				/* final override */
+				if (color_latch & 7)
+					if (!(pf[x] & 0x3f) || !(pf[x] & 0x2000))
+						rgb = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
+						
+				dst[x] = rgb;
 			}
 		}
-
-		/* slow case: TRAM blending, no effects */
-		else if ((color_latch & 7) == 0)
-		{
-			UINT16 *tm = (UINT16 *)tm_bitmap->base + y * tm_bitmap->rowpixels;
-			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
-			{
-				/* start with the playfield/alpha value */
-				UINT16 cra = pf[x] & 0xfff;
-				UINT16 tra = cra;
-
-				/* alpha always gets priority, but MO's override playfield */
-				if (!(pf[x] & 0x8000))
-				{
-					if (mo[x])
-						cra = 0x1000 | (mo[x] & ATARIRLE_DATA_MASK);
-					if (tm[x])
-						tra = tm[x] & ATARIRLE_DATA_MASK;
-				}
-
-				/* do the lookups and store the result */
-				dst[x] = blend_pixels(cra, tra);
-			}
-		}
-
-		/* slowest case: TRAM blending, with effects */
+		
+		/* T-Mek: full TRAM and all effects */
 		else
 		{
-			UINT16 *tm = (UINT16 *)tm_bitmap->base + y * tm_bitmap->rowpixels;
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
-				/* start with the playfield/alpha value */
-				UINT16 cra = pf[x] & 0xfff;
-				UINT16 tra = cra;
-
-				/* alpha always gets priority, but MO's override playfield */
-				if ((cra & 0x3f) == 0 || !(pf[x] & 0x1000))
-					dst[x] = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
+				UINT8 pfpri = (pf[x] >> 10) & 7;
+				UINT8 mopri = mo[x] >> ATARIRLE_PRIORITY_SHIFT;
+				UINT8 mgep = (mopri >= pfpri) && !(pfpri & 4);
+				int no_tra = 0, no_cra = 0;
+				UINT16 cra, tra, mra;
+				UINT32 rgb;
+				
+				/* compute CRA/TRA */
+				if (an[x] & 0x8f)
+				{
+					cra = an[x] & 0xff;
+					tra = tm[x] & 0xff;
+				}
+				else if ((mo[x] & 0x3f) && (mgep || !(pf[x] & 0x3f)))
+				{
+					cra = 0x1000 | (mo[x] & 0xfff);
+					tra = 0x400 | (tm[x] & 0x3ff);
+				}
 				else
 				{
-					if (!(pf[x] & 0x8000))
-					{
-						if (mo[x])
-							cra = 0x1000 | (mo[x] & ATARIRLE_DATA_MASK);
-						if (tm[x])
-							tra = tm[x] & ATARIRLE_DATA_MASK;
-					}
-
-					/* do the lookups and store the result */
-					dst[x] = blend_pixels(cra, tra);
+					cra = pf[x] & 0xfff;
+					tra = tm[x] & 0x3ff;
 				}
+				cra = cram[cra];
+				tra = tram[tra];
+				
+				/* compute MRA */
+				mra = (tm[x] & 0xe00) << 1;
+			
+				/* turn off CRA/TRA as appropriate */
+				if (!(pf[x] & 0x1000) && (tra & 0x8000))
+					no_cra = 1;
+				if (!(!(cra & 0x8000) && (!(pf[x] & 0x1000) || !(pf[x] & 0x3f))))
+					no_tra = 1;
+				if (no_cra)
+					cra = 0;
+				if (no_tra)
+					tra = 0;
+				
+				/* compute the result */
+				rgb  = mram[0 * MRAM_ENTRIES + mra + ((cra >> 10) & 0x01f) + ((tra >> 5) & 0x3e0)];
+				rgb |= mram[1 * MRAM_ENTRIES + mra + ((cra >>  5) & 0x01f) + ((tra >> 0) & 0x3e0)];
+				rgb |= mram[2 * MRAM_ENTRIES + mra + ((cra >>  0) & 0x01f) + ((tra << 5) & 0x3e0)];
+
+				/* final override */
+				if (color_latch & 7)
+					if (!(pf[x] & 0x3f) || !(pf[x] & 0x2000))
+						rgb = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
+						
+				dst[x] = rgb;
 			}
 		}
 	}
 }
-
-
-
-/*************************************
- *
- *	Debugging
- *
- *************************************/
-
-#if DEBUG_ATARIGT
-static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap *tm_bitmap)
-{
-	int i, x, y;
-	FILE *f;
-
-	f = fopen("gt.log", "w");
-	fprintf(f, "\n\nCRAM:\n");
-	for (i = 0; i < 0x4000 / 2; i += 16)
-	{
-		fprintf(f, "%04X: %04X %04X %04X %04X %04X %04X %04X %04X - %04X %04X %04X %04X %04X %04X %04X %04X\n", i,
-				cram[i+0], cram[i+1], cram[i+2], cram[i+3],
-				cram[i+4], cram[i+5], cram[i+6], cram[i+7],
-				cram[i+8], cram[i+9], cram[i+10], cram[i+11],
-				cram[i+12], cram[i+13], cram[i+14], cram[i+15]);
-	}
-
-	fprintf(f, "\n\nTRAM:\n");
-	for (i = 0; i < 0x4000 / 2; i += 16)
-	{
-		fprintf(f, "%04X: %04X %04X %04X %04X %04X %04X %04X %04X - %04X %04X %04X %04X %04X %04X %04X %04X\n", i,
-				tram[i+0], tram[i+1], tram[i+2], tram[i+3],
-				tram[i+4], tram[i+5], tram[i+6], tram[i+7],
-				tram[i+8], tram[i+9], tram[i+10], tram[i+11],
-				tram[i+12], tram[i+13], tram[i+14], tram[i+15]);
-	}
-
-	fprintf(f, "\n\nRED:\n");
-	for (i = 0; i < 0x10000 / 2; i += 32)
-	{
-		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[0 * MRAM_ENTRIES + i+0] >> rshift, mram[0 * MRAM_ENTRIES + i+1] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+2] >> rshift, mram[0 * MRAM_ENTRIES + i+3] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+4] >> rshift, mram[0 * MRAM_ENTRIES + i+5] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+6] >> rshift, mram[0 * MRAM_ENTRIES + i+7] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+8] >> rshift, mram[0 * MRAM_ENTRIES + i+9] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+10] >> rshift, mram[0 * MRAM_ENTRIES + i+11] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+12] >> rshift, mram[0 * MRAM_ENTRIES + i+13] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+14] >> rshift, mram[0 * MRAM_ENTRIES + i+15] >> rshift);
-		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[0 * MRAM_ENTRIES + i+16] >> rshift, mram[0 * MRAM_ENTRIES + i+17] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+18] >> rshift, mram[0 * MRAM_ENTRIES + i+19] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+20] >> rshift, mram[0 * MRAM_ENTRIES + i+21] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+22] >> rshift, mram[0 * MRAM_ENTRIES + i+23] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+24] >> rshift, mram[0 * MRAM_ENTRIES + i+25] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+26] >> rshift, mram[0 * MRAM_ENTRIES + i+27] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+28] >> rshift, mram[0 * MRAM_ENTRIES + i+29] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+30] >> rshift, mram[0 * MRAM_ENTRIES + i+31] >> rshift);
-	}
-
-	fprintf(f, "\n\nGREEN:\n");
-	for (i = 0; i < 0x10000 / 2; i += 32)
-	{
-		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[1 * MRAM_ENTRIES + i+0] >> gshift, mram[1 * MRAM_ENTRIES + i+1] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+2] >> gshift, mram[1 * MRAM_ENTRIES + i+3] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+4] >> gshift, mram[1 * MRAM_ENTRIES + i+5] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+6] >> gshift, mram[1 * MRAM_ENTRIES + i+7] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+8] >> gshift, mram[1 * MRAM_ENTRIES + i+9] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+10] >> gshift, mram[1 * MRAM_ENTRIES + i+11] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+12] >> gshift, mram[1 * MRAM_ENTRIES + i+13] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+14] >> gshift, mram[1 * MRAM_ENTRIES + i+15] >> gshift);
-		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[1 * MRAM_ENTRIES + i+16] >> gshift, mram[1 * MRAM_ENTRIES + i+17] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+18] >> gshift, mram[1 * MRAM_ENTRIES + i+19] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+20] >> gshift, mram[1 * MRAM_ENTRIES + i+21] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+22] >> gshift, mram[1 * MRAM_ENTRIES + i+23] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+24] >> gshift, mram[1 * MRAM_ENTRIES + i+25] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+26] >> gshift, mram[1 * MRAM_ENTRIES + i+27] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+28] >> gshift, mram[1 * MRAM_ENTRIES + i+29] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+30] >> gshift, mram[1 * MRAM_ENTRIES + i+31] >> gshift);
-	}
-
-	fprintf(f, "\n\nBLUE:\n");
-	for (i = 0; i < 0x10000 / 2; i += 32)
-	{
-		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[2 * MRAM_ENTRIES + i+0] >> bshift, mram[2 * MRAM_ENTRIES + i+1] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+2] >> bshift, mram[2 * MRAM_ENTRIES + i+3] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+4] >> bshift, mram[2 * MRAM_ENTRIES + i+5] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+6] >> bshift, mram[2 * MRAM_ENTRIES + i+7] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+8] >> bshift, mram[2 * MRAM_ENTRIES + i+9] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+10] >> bshift, mram[2 * MRAM_ENTRIES + i+11] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+12] >> bshift, mram[2 * MRAM_ENTRIES + i+13] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+14] >> bshift, mram[2 * MRAM_ENTRIES + i+15] >> bshift);
-		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[2 * MRAM_ENTRIES + i+16] >> bshift, mram[2 * MRAM_ENTRIES + i+17] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+18] >> bshift, mram[2 * MRAM_ENTRIES + i+19] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+20] >> bshift, mram[2 * MRAM_ENTRIES + i+21] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+22] >> bshift, mram[2 * MRAM_ENTRIES + i+23] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+24] >> bshift, mram[2 * MRAM_ENTRIES + i+25] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+26] >> bshift, mram[2 * MRAM_ENTRIES + i+27] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+28] >> bshift, mram[2 * MRAM_ENTRIES + i+29] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+30] >> bshift, mram[2 * MRAM_ENTRIES + i+31] >> bshift);
-	}
-
-	fprintf(f, "\n\nPF:\n");
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-	{
-		UINT16 *pf = (UINT16 *)pf_bitmap->base + y * pf_bitmap->rowpixels;
-		for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
-			fprintf(f, "%04X ", pf[x]);
-		fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nMO:\n");
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-	{
-		UINT16 *mo = (UINT16 *)mo_bitmap->base + y * mo_bitmap->rowpixels;
-		for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
-			fprintf(f, "%04X ", mo[x]);
-		fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nTM:\n");
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-	{
-		UINT16 *tm = (UINT16 *)tm_bitmap->base + y * tm_bitmap->rowpixels;
-		for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
-			fprintf(f, "%04X ", tm[x]);
-		fprintf(f, "\n");
-	}
-
-	fclose(f);
-}
-
-#endif

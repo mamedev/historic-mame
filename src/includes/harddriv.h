@@ -128,6 +128,7 @@ READ16_HANDLER( hd68k_dsk_ram_r );
 WRITE16_HANDLER( hd68k_dsk_ram_w );
 READ16_HANDLER( hd68k_dsk_zram_r );
 WRITE16_HANDLER( hd68k_dsk_zram_w );
+READ16_HANDLER( hd68k_dsk_small_rom_r );
 READ16_HANDLER( hd68k_dsk_rom_r );
 WRITE16_HANDLER( hd68k_dsk_dsp32_w );
 READ16_HANDLER( hd68k_dsk_dsp32_r );
@@ -144,6 +145,8 @@ READ16_HANDLER( rd68k_slapstic_r );
 WRITE16_HANDLER( st68k_sloop_w );
 READ16_HANDLER( st68k_sloop_r );
 READ16_HANDLER( st68k_sloop_alt_r );
+WRITE16_HANDLER( st68k_protosloop_w );
+READ16_HANDLER( st68k_protosloop_r );
 
 /* GSP optimizations */
 READ16_HANDLER( hdgsp_speedup_r );

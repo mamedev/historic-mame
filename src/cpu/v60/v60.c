@@ -85,6 +85,7 @@ typedef struct
 struct v60info {
 	struct cpu_info info;
 	UINT32 reg[68];
+	UINT32 tcb;
 	Flags flags;
 	int irq_line;
 	int nmi_line;
@@ -166,9 +167,10 @@ int v60_ICount;
 #define ADTMR0	v60.reg[63]
 #define ADTMR1	v60.reg[64]
 //29-31 reserved
+#define TCB		v60.tcb
 
 // Register names
-const char *v60_reg_names[68] = {
+const char *v60_reg_names[69] = {
 	"R0", "R1", "R2", "R3",
 	"R4", "R5", "R6", "R7",
 	"R8", "R9", "R10", "R11",
@@ -185,7 +187,8 @@ const char *v60_reg_names[68] = {
 	"ATBR0", "ATLR0", "ATBR1", "ATLR1",
 	"ATBR2", "ATLR2", "ATBR3", "ATLR3",
 	"TRMODE", "ADTR0", "ADTR1","ADTMR0",
-	"ADTMR1","Reserved","Reserved","Reserved"
+	"ADTMR1","Reserved","Reserved","Reserved",
+	"TCB"
 };
 
 // Defines...
@@ -224,6 +227,10 @@ static UINT32 v60ReadPSW(void)
 	return PSW;
 }
 
+static void v60ReloadStack(void)
+{
+	SP = v60.reg[STACK_REG((v60.reg[33]>>28)&1, (v60.reg[33]>>24)&3)];
+}
 
 static void v60WritePSW(UINT32 newval)
 {
@@ -308,13 +315,12 @@ static void base_init(const char *type)
 		opt_init = 1;
 	}
 
-	// Set PIR (Processor ID) for NEC v60. LSB is reserved to NEC,
-	// so I don't know what it contains.
 	v60.irq_cb = v60_default_irq_cb;
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
 
 	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 68);
+	state_save_register_UINT32(type, cpu, "tcb",      &v60.tcb, 1);
 	state_save_register_int   (type, cpu, "irq_line", &v60.irq_line);
 	state_save_register_int   (type, cpu, "nmi_line", &v60.nmi_line);
 	state_save_register_UINT32(type, cpu, "ppc",      &PPC, 1);
@@ -327,6 +333,8 @@ static void base_init(const char *type)
 void v60_init(void)
 {
 	base_init("v60");
+	// Set PIR (Processor ID) for NEC v60. LSB is reserved to NEC,
+	// so I don't know what it contains.
 	PIR = 0x00006000;
 	v60.info = v60_i;
 }
@@ -334,6 +342,8 @@ void v60_init(void)
 void v70_init(void)
 {
 	base_init("v70");
+	// Set PIR (Processor ID) for NEC v70. LSB is reserved to NEC,
+	// so I don't know what it contains.
 	PIR = 0x00007000;
 	v60.info = v70_i;
 }
@@ -346,6 +356,7 @@ void v60_reset(void *param)
 	SYCW	= 0x00000070;
 	TKCW	= 0x0000e000;
 	PSW2	= 0x0000f002;
+	TCB     = 0x00000000;
 	ChangePC(PC);
 
 	_CY	= 0;
@@ -486,7 +497,8 @@ static UINT8 v60_reg_layout[] = {
 	-1,
 	V60_SBR, V60_ISP, -1,
 	V60_L0SP, V60_L1SP, -1,
-	V60_L2SP, V60_L3SP, 0
+	V60_L2SP, V60_L3SP, -1,
+	V60_TCB, V60_PSW, 0
 };
 
 static UINT8 v60_win_layout[] = {
@@ -507,6 +519,8 @@ unsigned v60_get_reg(int regnum)
 		return PPC;
 	case REG_SP:
 		return SP;
+	case V60_TCB:
+		return TCB;
 	}
 	if(regnum >= 1 && regnum < V60_REGMAX)
 		return v60.reg[regnum - 1];
@@ -522,6 +536,9 @@ void v60_set_reg(int regnum, unsigned val)
 		return;
 	case REG_SP:
 		SP = val;
+		return;
+	case V60_TCB:
+		TCB = val;
 		return;
 	}
 	if(regnum >= 1 && regnum < V60_REGMAX)
@@ -554,7 +571,7 @@ const char *v60_info(void *context, int regnum)
 
 	if(regnum > CPU_INFO_REG && regnum < CPU_INFO_REG + V60_REGMAX) {
 		int reg = regnum - CPU_INFO_REG - 1;
-		sprintf(buffer[which], "%s:%08X", v60_reg_names[reg], r->reg[reg]);
+		sprintf(buffer[which], "%s:%08X", v60_reg_names[reg], reg == V60_TCB ? r->tcb : r->reg[reg]);
 	}
 
 	return buffer[which];

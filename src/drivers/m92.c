@@ -1900,6 +1900,37 @@ ROM_START( leaguemn )
 	ROM_LOAD( "lh534k0k.8" ,0x000000, 0x080000, CRC(735e6380) SHA1(bf019815e579ef2393c00869f101a01f746e04d6) )
 ROM_END
 
+ROM_START( ssoldier )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "f3-h0-h.bin",  0x000001, 0x040000, CRC(b63fb9da) SHA1(429beb7ebc98815809fdd0ff69fcb4a14e1d8a14) )
+	ROM_LOAD16_BYTE( "f3-l0-h.bin",  0x000000, 0x040000, CRC(419361a2) SHA1(42284a7afedefdb58a9b505e87effeee8bb5a9d8) )
+	ROM_LOAD16_BYTE( "f3-h1-a.bin",  0x080001, 0x020000, CRC(e3d9f619) SHA1(7f450413d1fae7250d2fcbe0ff4ee13d52fa15e8) )
+	ROM_LOAD16_BYTE( "f3-l1-a.bin",  0x080000, 0x020000, CRC(8cb5c396) SHA1(af130632b4ffb846cf355064391130d8c7ba73ad) )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 ) /* 1MB for the audio CPU */
+	ROM_LOAD16_BYTE( "f3_sh0.sh0",0x000001, 0x010000, CRC(90b55e5e) SHA1(cf77ccb68a10a29289bc42db348f480e21c3a558) )
+	ROM_LOAD16_BYTE( "f3_sl0.sl0",0x000000, 0x010000, CRC(77c16d57) SHA1(68c7f026b718b700f1f9162f53cdc859b65944b9) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "f3_w50.c0",  0x000000, 0x040000, CRC(47e788ee) SHA1(79a6624c9a36f380057c4fbda511128d62f9161e) )
+	ROM_LOAD( "f3_w51.c1",  0x080000, 0x040000, CRC(8e535e3f) SHA1(a51a5a660d13e95da559e7c1eaf23479eddd196f) )
+	ROM_LOAD( "f3_w52.c2",  0x100000, 0x040000, CRC(a6eb2e56) SHA1(db45fd5ffefbe407247069c611a1d40849770297) )
+	ROM_LOAD( "f3_w53.c3",  0x180000, 0x040000, CRC(2f992807) SHA1(bc0fe02b7ad31cb06ab0bf3f91de4ca5130893f1) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "f3_w37.000", 0x000001, 0x100000, CRC(fd4cda03) SHA1(34bfabb5a0fdc96507d3c3c028a0b087c406a0d1) )
+	ROM_LOAD16_BYTE( "f3_w38.001", 0x000000, 0x100000, CRC(755bab10) SHA1(8d3a584f5e34da24a162c1812ec5a3fea49778d7) )
+	ROM_LOAD16_BYTE( "f3_w39.010", 0x200001, 0x100000, CRC(b21ced92) SHA1(0af44bddaef77f9427f7073dfc96e8a59d7a9ba5) )
+	ROM_LOAD16_BYTE( "f3_w40.011", 0x200000, 0x100000, CRC(2e906889) SHA1(2aee05ce8f0074302090f1b1c58054c4a861ae68) )
+	ROM_LOAD16_BYTE( "f3_w41.020", 0x400001, 0x100000, CRC(02455d10) SHA1(4f83d8349d39b220a2150a52d0202c7f8d2b588f) )
+	ROM_LOAD16_BYTE( "f3_w42.021", 0x400000, 0x100000, CRC(124589b9) SHA1(dc8f95a0ff205fd24136738941a8931c16c380a4) )
+	ROM_LOAD16_BYTE( "f3_w43.030", 0x600001, 0x100000, CRC(dae7327a) SHA1(3c742b57f30df3ee8d5f5b36dc890af1ec396df5) )
+	ROM_LOAD16_BYTE( "f3_w44.031", 0x600000, 0x100000, CRC(d0fc84ac) SHA1(19154f81c4182be1fe835b5647fa30360c3507aa) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "f3_w95.da" ,0x000000, 0x080000, CRC(f7ca432b) SHA1(274458b68f906e6043bc36110a4903280647ac2d) )
+ROM_END
+
 ROM_START( psoldier )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "f3_h0d.h0",  0x000001, 0x040000, CRC(38f131fd) SHA1(0e513a5edfd8ab14440c360000a40b9d750cb54a) )
@@ -2061,6 +2092,18 @@ static READ_HANDLER( psoldier_cycle_r )
 	int c=m92_ram[0x1aea]+(m92_ram[0x1aeb]<<8);
 
 	if (activecpu_get_pc()==0x2dae && b!=a && c!=a && offset==0)
+		cpu_spinuntil_int();
+
+	return m92_ram[0x1aec + offset];
+}
+
+static READ_HANDLER( ssoldier_cycle_r )
+{
+	int a=m92_ram[0]+(m92_ram[1]<<8);
+	int b=m92_ram[0x1aec]+(m92_ram[0x1aed]<<8);
+	int c=m92_ram[0x1aea]+(m92_ram[0x1aeb]<<8);
+
+	if (activecpu_get_pc()==0x2e36 && b!=a && c!=a && offset==0)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x1aec + offset];
@@ -2324,6 +2367,17 @@ static DRIVER_INIT( nbbatman )
 	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
 }
 
+static DRIVER_INIT( ssoldier )
+{
+ install_mem_read_handler(0, 0xe1aec, 0xe1aed, ssoldier_cycle_r);
+ install_mem_read_handler(1, 0xa0c34, 0xa0c35, psoldier_snd_cycle_r);
+
+ init_m92(psoldier_decryption_table);
+ m92_irq_vectorbase=0x20;
+ /* main CPU expects an answer even before writing the first command */
+ sound_status = 0x80;
+}
+
 static DRIVER_INIT( psoldier )
 {
 	install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
@@ -2376,7 +2430,8 @@ GAME( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem Ame
 GAME( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0,   "Irem",         "Kaitei Daisensou (Japan)" )
 GAMEX(1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem America", "Ninja Baseball Batman (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, ssoldier, 0,  psoldier,  psoldier, ssoldier, ROT0,   "Irem America", "Superior Soldiers (US)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, psoldier, ssoldier, psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1994, dsccr94j, dsoccr94, psoldier,  dsccr94j, dsccr94j, ROT0,   "Irem",         "Dream Soccer '94 (Japan)" )
 GAME( 1994, gunforc2, 0,        raster,    gunforc2, gunforc2, ROT0,   "Irem",         "Gunforce 2 (US)" )
 GAME( 1994, geostorm, gunforc2, raster,    gunforc2, gunforc2, ROT0,   "Irem",         "Geostorm (Japan)" )

@@ -344,7 +344,7 @@ WRITE_HANDLER (TMS9928A_register_w) {
         if (data & 0x80) {
             /* register write */
 			reg = data & 7;
-			if (tms.FirstByte != tms.Regs[reg])
+			/*if (tms.FirstByte != tms.Regs[reg])*/ /* Removed to fix ColecoVision MESS Driver*/
 	            _TMS9928A_change_register (reg, tms.FirstByte);
         } else {
             /* set read/write address */

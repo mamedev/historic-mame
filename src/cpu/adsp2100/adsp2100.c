@@ -490,7 +490,7 @@ void adsp2100_reset(void *param)
 	/* reset status registers */
 	adsp2100.astat_clear = ~(CFLAG | VFLAG | NFLAG | ZFLAG);
 	adsp2100.mstat = 0;
-	adsp2100.sstat = 0;
+	adsp2100.sstat = 0x55;
 	adsp2100.idle = 0;
 
 	/* reset stacks */

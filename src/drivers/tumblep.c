@@ -121,6 +121,7 @@ WRITE16_HANDLER( fncywld_pf2_data_w );
 WRITE16_HANDLER( tumblep_control_0_w );
 
 extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
+data16_t* tumblep_mainram;
 
 /******************************************************************************/
 
@@ -210,7 +211,7 @@ static MEMORY_WRITE16_START( tumblepopb_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 #endif
 	{ 0x100000, 0x100001, tumblep_oki_w },
-	{ 0x120000, 0x123fff, MWA16_RAM },
+	{ 0x120000, 0x123fff, MWA16_RAM, &tumblep_mainram },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 }, /* Bootleg sprite buffer */
 	{ 0x18000c, 0x18000d, MWA16_NOP },
@@ -797,6 +798,41 @@ ROM_START( fncywld )
 	ROM_LOAD( "00_fw01.bin", 0x000000, 0x040000, CRC(b395fe01) SHA1(ac7f2e21413658f8d2a1abf3a76b7817a4e050c9) )
 ROM_END
 
+/* Hatch Catch
+Interrupts
+
+Lev 1 0x64 0000 00c0 <- just reset .. not used
+Lev 2 0x68 0000 00c0  ""
+Lev 3 0x6c 0000 00c0  ""
+Lev 4 0x70 0000 00c0  ""
+Lev 5 0x74 0000 00c0  ""
+Lev 6 0x78 0012 0000 <- RAM shared with protection device (first 0x200 bytes?)
+
+*/
+
+ROM_START( htchctch )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, CRC(eff14c40) )
+	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, CRC(6991483a) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "p02.b5", 0x00000, 0x10000 , CRC(c5a03186) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "p01.c1", 0x00000, 0x20000, CRC(18c06829) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD16_BYTE( "p06srom5.bin", 0x00001, 0x40000, CRC(3d2cbb0d) )
+	ROM_LOAD16_BYTE( "p07srom6.bin", 0x00000, 0x40000, CRC(0207949c) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD16_BYTE( "p08uor1.bin",  0x00000, 0x20000, CRC(6811e7b6) )
+	ROM_LOAD16_BYTE( "p09uor2.bin",  0x00001, 0x20000, CRC(1c6549cf) )
+	ROM_LOAD16_BYTE( "p10uor3.bin",  0x40000, 0x20000, CRC(6462e6e0) )
+	ROM_LOAD16_BYTE( "p11uor4.bin",  0x40001, 0x20000, CRC(9c511d98) )
+
+ROM_END
+
 /******************************************************************************/
 
 void tumblep_patch_code(UINT16 offset)
@@ -869,6 +905,242 @@ static DRIVER_INIT( fncywld )
 	tumblepb_gfx1_decrypt();
 }
 
+static DRIVER_INIT( htchctch )
+{
+
+	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
+
+	/* simulate RAM initialization done by the protection MCU */
+	/* not verified on real hardware */
+	tumblep_mainram[0x000/2] = 0x4e73;
+	tumblep_mainram[0x1fe/2] = 0x4e73;
+	tumblepb_gfx1_decrypt();
+
+	/* patch the irq 6 vector */
+	HCROM[0x00078/2] = 0x0001;
+	HCROM[0x0007a/2] = 0xe000;
+
+	/* our new interrupt code */
+
+	/* put registers on stack */
+	HCROM[0x1e000/2] = 0x48e7;
+	HCROM[0x1e002/2] = 0xfffe;
+
+	/* put the address we want to copy FROM in A0 */
+	HCROM[0x1e004/2] = 0x41f9;
+	HCROM[0x1e006/2] = 0x0012;
+	HCROM[0x1e008/2] = 0x0000;
+
+	/* put the address we want to copy TO in A1 */
+	HCROM[0x1e00a/2] = 0x43f9;
+	HCROM[0x1e00c/2] = 0x0012;
+	HCROM[0x1e00e/2] = 0x2000;
+
+	/* put the number of words we want to copy into D0 */
+	HCROM[0x1e010/2] = 0x203c;
+	HCROM[0x1e012/2] = 0x0000;
+	HCROM[0x1e014/2] = 0x0100;
+
+	/* copy a word */
+	HCROM[0x1e016/2] = 0x32d8;
+
+	/* decrease counter d0 */
+	HCROM[0x1e018/2] = 0x5380;
+
+	/* compare d0 to 0 */
+	HCROM[0x1e01a/2] = 0x0c80;
+	HCROM[0x1e01c/2] = 0x0000;
+	HCROM[0x1e01e/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x1e020/2] = 0x66f4;
+
+
+
+
+	/* jump to drawing subroutine */
+	HCROM[0x1e022/2] = 0x4eb9;
+	HCROM[0x1e024/2] = 0x0001;
+	HCROM[0x1e026/2] = 0xe100;
+
+	/* get back registers from stack*/
+	HCROM[0x1e028/2] = 0x4cdf;
+	HCROM[0x1e02a/2] = 0x7fff;
+
+	/* jump to where the interrupt vector was copied to */
+	HCROM[0x1e02c/2] = 0x4ef9;
+	HCROM[0x1e02e/2] = 0x0012;
+	HCROM[0x1e030/2] = 0x2000;
+	/* we're back in the game code */
+
+
+	/* these subroutines are called from the new interrupt code above, i use them to draw */
+
+	/* DRAWING SUBROUTINE */
+
+	/* put the address we want to write to in A0 */
+	HCROM[0x1e100/2] = 0x41f9;
+	HCROM[0x1e102/2] = 0x0032;
+	HCROM[0x1e104/2] = 0x0104;
+
+	/* put the character we want to draw into D0 */
+	/* this bit isn't needed .. we end up using d4 then copying it over */
+	HCROM[0x1e106/2] = 0x203c;
+	HCROM[0x1e108/2] = 0x0000;
+	HCROM[0x1e10a/2] = 0x0007;
+
+	/* put the address we to read to in A2 */
+	HCROM[0x1e10c/2] = 0x45f9;
+	HCROM[0x1e10e/2] = 0x0012;
+	HCROM[0x1e110/2] = 0x2000;
+
+	/* put the number of rows into D3 */
+	HCROM[0x1e112/2] = 0x263c;
+	HCROM[0x1e114/2] = 0x0000;
+	HCROM[0x1e116/2] = 0x000c;
+
+	/* put the number of bytes per row into D2 */
+	HCROM[0x1e118/2] = 0x243c;
+	HCROM[0x1e11a/2] = 0x0000;
+	HCROM[0x1e11c/2] = 0x0008;
+
+
+	// move content of a2 to d4 (byte)
+	HCROM[0x1e11e/2] = 0x1812;
+
+	HCROM[0x1e120/2] = 0xe84c; // shift d4 right by 4
+
+	HCROM[0x1e122/2] = 0x0244; // mask with 0x000f
+	HCROM[0x1e124/2] = 0x000f; //
+
+	HCROM[0x1e126/2] = 0x3004; // d4 -> d0
+
+	/* jump to character draw to draw first bit */
+	HCROM[0x1e128/2] = 0x4eb9;
+	HCROM[0x1e12a/2] = 0x0001;
+	HCROM[0x1e12c/2] = 0xe200;
+
+	/* add 2 to draw address a0 */
+	HCROM[0x1e12e/2] = 0xd1fc;
+	HCROM[0x1e130/2] = 0x0000;
+	HCROM[0x1e132/2] = 0x0002;
+
+
+	// move content of a2 to d4 (byte)
+	HCROM[0x1e134/2] = 0x1812;
+
+	HCROM[0x1e136/2] = 0x0244; // mask with 0x000f
+	HCROM[0x1e138/2] = 0x000f; //
+
+	HCROM[0x1e13a/2] = 0x3004; // d4 -> d0
+
+	/* jump to character draw to draw second bit */
+	HCROM[0x1e13c/2] = 0x4eb9;
+	HCROM[0x1e13e/2] = 0x0001;
+	HCROM[0x1e140/2] = 0xe200;
+
+	/* add 2 to draw address a0 */
+	HCROM[0x1e142/2] = 0xd1fc;
+	HCROM[0x1e144/2] = 0x0000;
+	HCROM[0x1e146/2] = 0x0002;
+
+	/* add 1 to read address a2 */
+	HCROM[0x1e148/2] = 0xd5fc;
+	HCROM[0x1e14a/2] = 0x0000;
+	HCROM[0x1e14c/2] = 0x0001;
+
+// brr
+	/* decrease counter d2 */
+	HCROM[0x1e14e/2] = 0x5382;
+
+	/* compare d2 to 0 */
+	HCROM[0x1e150/2] = 0x0c82;
+	HCROM[0x1e152/2] = 0x0000;
+	HCROM[0x1e154/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x1e156/2] = 0x66c6;
+
+	/* add 0xe0 to draw address a0 (0x100-0x20) */
+	HCROM[0x1e158/2] = 0xd1fc;
+	HCROM[0x1e15a/2] = 0x0000;
+	HCROM[0x1e15c/2] = 0x00e0;
+
+	/* decrease counter d2 */
+	HCROM[0x1e15e/2] = 0x5383;
+
+	/* compare d2 to 0 */
+	HCROM[0x1e160/2] = 0x0c83;
+	HCROM[0x1e162/2] = 0x0000;
+	HCROM[0x1e164/2] = 0x0000;
+
+	/* if its not 0 then branch back */
+	HCROM[0x1e166/2] = 0x66b0;
+
+	HCROM[0x1e168/2] = 0x4e75; // rts
+
+	/* DRAW CHARACTER SUBROUTINE, note, this won't restore a1,d1, don't other places! */
+
+	/* move address into A0->A1 for use by this subroutine */
+	HCROM[0x1e200/2] = 0x2248;
+
+	/* move address into D0->D1 for top half of character */
+	HCROM[0x1e202/2] = 0x2200;
+
+	/* add 0x30 to d1 to get the REAL tile code */
+	HCROM[0x1e204/2] = 0x0681;
+	HCROM[0x1e206/2] = 0x0000;
+	HCROM[0x1e208/2] = 0x0030;
+
+	/* or with 0xf000 to add the tile attribute */
+	HCROM[0x1e20a/2] = 0x0081;
+	HCROM[0x1e20c/2] = 0x0000;
+	HCROM[0x1e20e/2] = 0xf000;
+
+	/* write d1 -> a1 for TOP half */
+	HCROM[0x1e210/2] = 0x32c1; // not ideal .. we don't need to increase a1
+
+	/* move address into A0->A1 for use by this subroutine */
+	HCROM[0x1e212/2] = 0x2248;
+
+	/* add 0x80 to the address so we have the bottom location */
+	HCROM[0x1e214/2] = 0xd2fc;
+	HCROM[0x1e216/2] = 0x0080;
+
+	/* move address into D0->D1 for bottom  half of character */
+	HCROM[0x1e218/2] = 0x2200;
+
+	/* add 0x54 to d1 to get the REAL tile code for bottom half */
+	HCROM[0x1e21a/2] = 0x0681;
+	HCROM[0x1e21c/2] = 0x0000;
+	HCROM[0x1e21e/2] = 0x0054;
+
+	/* or with 0xf000 to add the tile attribute */
+	HCROM[0x1e220/2] = 0x0081;
+	HCROM[0x1e222/2] = 0x0000;
+	HCROM[0x1e224/2] = 0xf000;
+
+	/* write d1 -> a1 for BOTTOM half */
+	HCROM[0x1e226/2] = 0x32c1; // not ideal .. we don't need to increase a1
+
+
+	HCROM[0x1e228/2] = 0x4e75;
+
+	install_mem_write16_handler (0, 0x140000, 0x1407ff, MWA16_NOP ); // kill palette writes as the interrupt code we don't have controls them
+
+
+	{
+		FILE *fp;
+
+		fp=fopen("hcatch", "w+b");
+		if (fp)
+		{
+			fwrite(HCROM, 0x40000, 1, fp);
+			fclose(fp);
+		}
+	}
+
+}
 
 /******************************************************************************/
 
@@ -878,3 +1150,4 @@ GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "
 GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
 GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
 GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
+GAMEX(1995, htchctch, 0,       tumblepb,  tumblep,  htchctch, ROT0, "SemiCom", "Hatch Catch", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

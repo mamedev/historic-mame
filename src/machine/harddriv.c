@@ -882,6 +882,8 @@ WRITE16_HANDLER( hd68k_adsp_data_w )
 		timer_set(TIME_NOW, 0, 0);
 		cpu_triggerint(hdcpu_adsp);
 	}
+	else
+		logerror("%06X:ADSP W@%04X (%04X)\n", activecpu_get_previouspc(), offset, data);
 }
 
 
@@ -1324,6 +1326,7 @@ READ16_HANDLER( hdds3_special_r )
 			return result;
 
 		case 6:
+			logerror("ADSP r @ %04x\n", ds3_sim_address);
 			if (ds3_sim_address < sim_memory_size)
 				return sim_memory[ds3_sim_address];
 			else
@@ -1515,6 +1518,12 @@ READ16_HANDLER( hd68k_dsk_zram_r )
 WRITE16_HANDLER( hd68k_dsk_zram_w )
 {
 	COMBINE_DATA(&hddsk_zram[offset]);
+}
+
+
+READ16_HANDLER( hd68k_dsk_small_rom_r )
+{
+	return hddsk_rom[offset & 0x1ffff];
 }
 
 
@@ -1715,6 +1724,46 @@ READ16_HANDLER( st68k_sloop_alt_r )
 	}
 	st68k_last_alt_sloop_offset = offset*2;
 	return st68k_sloop_alt_base[offset];
+}
+
+
+static int st68k_protosloop_tweak(offs_t offset)
+{
+	static int last_offset;
+
+	if (last_offset == 0)
+	{
+		switch (offset)
+		{
+			case 0x0001:
+				st68k_sloop_bank = 0;
+				break;
+			case 0x0002:
+				st68k_sloop_bank = 1;
+				break;
+			case 0x0003:
+				st68k_sloop_bank = 2;
+				break;
+			case 0x0004:
+				st68k_sloop_bank = 3;
+				break;
+		}
+	}
+	last_offset = offset;
+	return st68k_sloop_bank;
+}
+
+
+WRITE16_HANDLER( st68k_protosloop_w )
+{
+	st68k_protosloop_tweak(offset & 0x3fff);
+}
+
+
+READ16_HANDLER( st68k_protosloop_r )
+{
+	int bank = st68k_protosloop_tweak(offset) * 0x4000;
+	return hd68k_slapstic_base[bank + (offset & 0x3fff)];
 }
 
 

@@ -1,28 +1,35 @@
-/***************************************************************************
+/*
 
-  vidhrdw.c
+	SEGA Zaxxon Hardware - Video
 
-  Functions to emulate the video hardware of the machine.
+	TODO:
 
-***************************************************************************/
+	- get rid of zaxxon_vid_type
+	- draw backgrounds as tilemaps
+	- convert skewing to use tilemap scrolling?
+	- zaxxon fg tilemap color calculation
+	- fix background size bug
+	- clean up background functions
+
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *zaxxon_char_color_bank;
-unsigned char *zaxxon_background_position;
-unsigned char *zaxxon_background_color_bank;
-unsigned char *zaxxon_background_enable;
+UINT8 *zaxxon_char_color_bank;
+UINT8 *zaxxon_background_position;
+UINT8 *zaxxon_background_color_bank;
+UINT8 *zaxxon_background_enable;
 static struct mame_bitmap *backgroundbitmap1,*backgroundbitmap2;
-static const unsigned char *color_codes;
+static const UINT8 *color_codes;
 
 int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 
 #define ZAXXON_VID	0
-#define CONGO_VID		1
+#define CONGO_VID	1
 #define FUTSPY_VID	2
 
+static struct tilemap *fg_tilemap;
 
 /***************************************************************************
 
@@ -52,11 +59,9 @@ PALETTE_INIT( zaxxon )
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
@@ -78,21 +83,31 @@ PALETTE_INIT( zaxxon )
 		color_prom++;
 	}
 
-
 	/* color_prom now points to the beginning of the character color codes */
 	color_codes = color_prom;	/* we'll need it later */
-
 
 	/* all gfx elements use the same palette */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = i;
 }
 
-/***************************************************************************
+WRITE_HANDLER( zaxxon_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
-  Start the video hardware emulation.
-
-***************************************************************************/
+WRITE_HANDLER( congo_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 static void copy_pixel(struct mame_bitmap *dst_bm, int dx, int dy,
 					   struct mame_bitmap *src_bm, int sx, int sy)
@@ -100,12 +115,10 @@ static void copy_pixel(struct mame_bitmap *dst_bm, int dx, int dy,
 	plot_pixel(dst_bm, dx, dy, read_pixel(src_bm, sx, sy));
 }
 
-
-static void create_background(struct mame_bitmap *dst_bm, struct mame_bitmap *src_bm, int col)
+static void create_background( struct mame_bitmap *dst_bm, struct mame_bitmap *src_bm, int col )
 {
 	int offs;
 	int sx,sy;
-
 
 	for (offs = 0;offs < 0x4000;offs++)
 	{
@@ -147,15 +160,10 @@ static void create_background(struct mame_bitmap *dst_bm, struct mame_bitmap *sr
 	}
 }
 
-
-VIDEO_START( zaxxon )
+static int zaxxon_create_background(void)
 {
 	struct mame_bitmap *prebitmap;
 	int width, height;
-
-
-	if (video_start_generic() != 0)
-		return 1;
 
 	/* for speed, backgrounds are arranged differently if axis is swapped */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -201,176 +209,35 @@ VIDEO_START( zaxxon )
 	return 0;
 }
 
-VIDEO_START( razmataz )
+static void zaxxon_get_fg_tile_info(int tile_index)
 {
-	int offs;
+	int sy = tile_index / 32;
+	int sx = tile_index % 32;
+	int code = videoram[tile_index];
+	int color = (color_codes[sx + 32 * (sy / 4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
+	// not sure about the color code calculation - char_color_bank is used only in test mode
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-	if (video_start_generic() != 0)
+VIDEO_START( zaxxon )
+{
+	if ( zaxxon_create_background() )
 		return 1;
 
-	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = auto_bitmap_alloc(256,4096)) == 0)
+	fg_tilemap = tilemap_create(zaxxon_get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
 		return 1;
 
-	if ((backgroundbitmap2 = auto_bitmap_alloc(256,4096)) == 0)
-		return 1;
-
-
-	/* prepare the background */
-	for (offs = 0;offs < 0x4000;offs++)
-	{
-		int sx,sy;
-
-
-		sy = 8 * (offs / 32);
-		sx = 8 * (offs % 32);
-
-		drawgfx(backgroundbitmap1,Machine->gfx[1],
-				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
-				memory_region(REGION_GFX4)[0x4000 + offs] >> 4,
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-
-		drawgfx(backgroundbitmap2,Machine->gfx[1],
-				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
-				16 + (memory_region(REGION_GFX4)[0x4000 + offs] >> 4),
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-	}
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void zaxxon_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int offs;
-
-	if (zaxxon_vid_type == CONGO_VID)
-	{
-		int i;
-		static unsigned int sprpri[0x100]; /* this really should not be more
-		                             * than 0x1e, but I did not want to check
-		                             * for 0xff which is set when sprite is off
-		                             * -V-
-		                             */
-
-		/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
-		/* The number of active sprites is stored at 0xc032 */
-
-		for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
-			sprpri[ spriteram[offs+1] ] = offs;
-
-		for (i=0x1e ; i>=0; i--)
-		{
-			offs = sprpri[i];
-
-			if (spriteram[offs+2] != 0xff)
-			{
-				int sx,sy,flipx,flipy;
-
-				sx = ((spriteram[offs+2+3] + 16) & 0xff) - 31;
-				sy = 255 - spriteram[offs+2] - 15;
-				flipx = spriteram[offs+2+2] & 0x80;
-				flipy = spriteram[offs+2+1] & 0x80;
-
-				if (flip_screen)
-				{
-					flipx = !flipx;
-					flipy = !flipy;
-					sx = 223 - sx;
-					sy = 224 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+2+1]& 0x7f,
-						spriteram[offs+2+2],
-						flipx,flipy,
-						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-	else if (zaxxon_vid_type == FUTSPY_VID)
-	{
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-		{
-			if (spriteram[offs] != 0xff)
-			{
-				int sx,sy,flipx,flipy;
-
-				sx = ((spriteram[offs+3] + 16) & 0xff) - 32;
-				sy = 255 - spriteram[offs] - 16;
-				flipx = spriteram[offs+1] & 0x80;
-				flipy = spriteram[offs+1] & 0x80;
-
-				if (flip_screen)
-				{
-					flipx = !flipx;
-					flipy = !flipy;
-					sx = 223 - sx;
-					sy = 224 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+1] & 0x7f,
-						spriteram[offs+2] & 0x3f,
-						flipx,flipy,
-						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-	else
-	{
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-		{
-			if (spriteram[offs] != 0xff)
-			{
-				int sx,sy,flipx,flipy;
-
-
-				sx = ((spriteram[offs+3] + 16) & 0xff) - 32;
-				sy = 255 - spriteram[offs] - 16;
-				flipx = spriteram[offs+1] & 0x40;
-				flipy = spriteram[offs+1] & 0x80;
-
-				if (flip_screen)
-				{
-					flipx = !flipx;
-					flipy = !flipy;
-					sx = 223 - sx;
-					sy = 224 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+1] & 0x3f,
-						spriteram[offs+2] & 0x3f,
-						flipx,flipy,
-						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-}
-
-VIDEO_UPDATE( zaxxon )
-{
-	int offs;
-
-
 	/* copy the background */
 	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
 	/* cover the whole screen, so the image is not fully overwritten and part of the */
@@ -380,7 +247,6 @@ VIDEO_UPDATE( zaxxon )
 	{
 		int i,skew,scroll;
 		struct rectangle clip;
-
 
 		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
@@ -459,141 +325,237 @@ VIDEO_UPDATE( zaxxon )
 			}
 		}
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+	}
+}
 
+static void zaxxon_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int offs;
 
-	draw_sprites(bitmap);
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
+	{
+		if (spriteram[offs] != 0xff)
+		{
+			int code = spriteram[offs + 1] & 0x3f;
+			int color = spriteram[offs + 2] & 0x3f;
+			int flipx = spriteram[offs + 1] & 0x40;
+			int flipy = spriteram[offs + 1] & 0x80;
+			int sx = ((spriteram[offs + 3] + 16) & 0xff) - 32;
+			int sy = 255 - spriteram[offs] - 16;
 
+			if (flip_screen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+				sx = 223 - sx;
+				sy = 224 - sy;
+			}
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
+				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+		}
+	}
+}
+
+VIDEO_UPDATE( zaxxon )
+{
+	zaxxon_draw_background(bitmap, cliprect);
+	zaxxon_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+}
+
+/* Razzmatazz */
+
+static void razmataz_get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = (color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 0x01);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( razmataz )
+{
+	int offs;
+
+	/* large bitmap for the precalculated background */
+	if ((backgroundbitmap1 = auto_bitmap_alloc(256,4096)) == 0)
+		return 1;
+
+	if ((backgroundbitmap2 = auto_bitmap_alloc(256,4096)) == 0)
+		return 1;
+
+	/* prepare the background */
+	for (offs = 0;offs < 0x4000;offs++)
 	{
 		int sx,sy;
-		int color;
 
+		sy = 8 * (offs / 32);
+		sx = 8 * (offs % 32);
 
-		sy = offs / 32;
-		sx = offs % 32;
+		drawgfx(backgroundbitmap1,Machine->gfx[1],
+				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
+				memory_region(REGION_GFX4)[0x4000 + offs] >> 4,
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
 
-		if (zaxxon_vid_type == CONGO_VID)
-			color = colorram[offs];
+		drawgfx(backgroundbitmap2,Machine->gfx[1],
+				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
+				16 + (memory_region(REGION_GFX4)[0x4000 + offs] >> 4),
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+	fg_tilemap = tilemap_create(razmataz_get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void razmataz_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	if (*zaxxon_background_enable)
+	{
+		int scroll = 2 * (zaxxon_background_position[0] + 256 * (zaxxon_background_position[1] & 0x07));
+
+		if (*zaxxon_background_color_bank & 0x01)
+			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,cliprect,TRANSPARENCY_NONE,0);
 		else
-			/* not sure about the color code calculation - char_color_bank is used only in test mode */
-			color =	(color_codes[sx + 32 * (sy/4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
-
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs],
-				color,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,cliprect,TRANSPARENCY_NONE,0);
+	}
+	else
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 	}
 }
 
 VIDEO_UPDATE( razmataz )
 {
+	razmataz_draw_background(bitmap, cliprect);
+	zaxxon_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+}
+
+/* Congo Bongo */
+
+static void congo_get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = colorram[tile_index];
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( congo )
+{
+	if ( zaxxon_create_background() )
+		return 1;
+
+	fg_tilemap = tilemap_create(congo_get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
+static void congo_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
 	int offs;
+	int i;
+	static unsigned int sprpri[0x100]; /* this really should not be more
+		                            * than 0x1e, but I did not want to check
+		                            * for 0xff which is set when sprite is off
+		                            * -V-
+		                            */
 
+	/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
+	/* The number of active sprites is stored at 0xc032 */
 
-	/* copy the background */
-	if (*zaxxon_background_enable)
+	for (offs = 0x1e * 0x20; offs >= 0x00; offs -= 0x20)
+		sprpri[spriteram[offs + 1]] = offs;
+
+	for (i = 0x1e; i >= 0; i--)
 	{
-		int scroll;
+		offs = sprpri[i];
 
-		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
-
-		if (*zaxxon_background_color_bank & 1)
-			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		else
-			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-
-	draw_sprites(bitmap);
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int code,color;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		code = videoram[offs];
-		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
-
-		if (flip_screen)
+		if (spriteram[offs + 2] != 0xff)
 		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
+			int code = spriteram[offs + 2 + 1] & 0x7f;
+			int color = spriteram[offs + 2 + 2];
+			int flipx = spriteram[offs + 2 + 2] & 0x80;
+			int flipy = spriteram[offs + 2 + 1] & 0x80;
+			int sx = ((spriteram[offs + 2 + 3] + 16) & 0xff) - 31;
+			int sy = 255 - spriteram[offs + 2] - 15;
 
-		drawgfx(bitmap,Machine->gfx[0],
-				code,
-				color,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+			if (flip_screen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+				sx = 223 - sx;
+				sy = 224 - sy;
+			}
+
+			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
+				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+		}
 	}
 }
 
-VIDEO_UPDATE( ixion )
+VIDEO_UPDATE( congo )
+{
+	zaxxon_draw_background(bitmap, cliprect);
+	congo_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+}
+
+/* Future Spy */
+
+static void futspy_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
-
-	/* copy the background */
-	if (*zaxxon_background_enable)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		int scroll;
-
-		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
-
-		if (*zaxxon_background_color_bank & 1)
-			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		else
-			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int code,color;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		code = videoram[offs];
-		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
-
-		if (flip_screen)
+		if (spriteram[offs] != 0xff)
 		{
-			sx = 31 - sx;
-			sy = 31 - sy;
+			int code = spriteram[offs + 1] & 0x7f;
+			int color = spriteram[offs + 2] & 0x3f;
+			int flipx = spriteram[offs + 1] & 0x80;
+			int flipy = spriteram[offs + 1] & 0x80;
+			int sx = ((spriteram[offs + 3] + 16) & 0xff) - 32;
+			int sy = 255 - spriteram[offs] - 16;
+
+			if (flip_screen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+				sx = 223 - sx;
+				sy = 224 - sy;
+			}
+
+			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
+				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				code,
-				color,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-	draw_sprites(bitmap);
-
 }
 
+VIDEO_UPDATE( futspy )
+{
+	zaxxon_draw_background(bitmap, cliprect);
+	futspy_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+}

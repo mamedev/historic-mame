@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#define CYBERBALL_DUAL_MODE		1
+
 /*----------- defined in sndhrdw/cyberbal.c -----------*/
 
 void cyberbal_sound_reset(void);

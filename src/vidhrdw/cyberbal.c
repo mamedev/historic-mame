@@ -10,6 +10,15 @@
 #include "cyberbal.h"
 
 
+#define SCREEN_WIDTH		(42*16)
+
+#if (CYBERBALL_DUAL_MODE)
+	#define SCREEN2_SCROLL_OFFSET	(SCREEN_WIDTH)
+#else
+	#define SCREEN2_SCROLL_OFFSET	(0)
+#endif
+
+
 
 /*************************************
  *
@@ -188,6 +197,7 @@ static int video_start_cyberbal_common(int screens)
 		atarigen_playfield2_tilemap = tilemap_create(get_playfield2_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,8, 64,64);
 		if (!atarigen_playfield2_tilemap)
 			return 1;
+		tilemap_set_scrollx(atarigen_playfield2_tilemap, 0, -SCREEN2_SCROLL_OFFSET);
 
 		/* initialize the motion objects */
 		if (!atarimo_init(1, &mo1desc))
@@ -197,6 +207,7 @@ static int video_start_cyberbal_common(int screens)
 		atarigen_alpha2_tilemap = tilemap_create(get_alpha2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,8, 64,32);
 		if (!atarigen_alpha2_tilemap)
 			return 1;
+		tilemap_set_scrollx(atarigen_alpha2_tilemap, 0, -SCREEN2_SCROLL_OFFSET);
 		tilemap_set_transparent_pen(atarigen_alpha2_tilemap, 0);
 	}
 
@@ -341,7 +352,7 @@ void cyberbal_scanline_update(int scanline)
 			if (newscroll != playfield_xscroll[i])
 			{
 				force_partial_update(scanline - 1);
-				tilemap_set_scrollx(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, newscroll);
+				tilemap_set_scrollx(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, i ? (-SCREEN2_SCROLL_OFFSET + newscroll) : newscroll);
 				playfield_xscroll[i] = newscroll;
 			}
 		}
@@ -375,22 +386,33 @@ void cyberbal_scanline_update(int scanline)
  *
  *************************************/
 
-VIDEO_UPDATE( cyberbal )
+static void update_one_screen(int screen, struct mame_bitmap *bitmap, struct rectangle *cliprect)
 {
 	struct atarimo_rect_list rectlist;
 	struct mame_bitmap *mobitmap;
-	int x, y, r;
+	int x, y, r, mooffset, temp;
 
 	/* draw the playfield */
-	tilemap_draw(bitmap, cliprect, current_screen ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, screen ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, 0);
+
+	/* draw the MOs -- note some kludging to get this to work correctly for 2 screens */
+	mooffset = screen ? SCREEN2_SCROLL_OFFSET : 0;
+	cliprect->min_x -= mooffset;
+	cliprect->max_x -= mooffset;
+	temp = Machine->visible_area.max_x;
+	if (temp > SCREEN_WIDTH)
+		Machine->visible_area.max_x /= 2;
+	mobitmap = atarimo_render(screen, cliprect, &rectlist);
+	cliprect->min_x += mooffset;
+	cliprect->max_x += mooffset;
+	Machine->visible_area.max_x = temp;
 
 	/* draw and merge the MO */
-	mobitmap = atarimo_render(current_screen, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
 		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
 		{
 			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
-			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y + mooffset;
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
@@ -404,5 +426,30 @@ VIDEO_UPDATE( cyberbal )
 		}
 
 	/* add the alpha on top */
-	tilemap_draw(bitmap, cliprect, current_screen ? atarigen_alpha2_tilemap : atarigen_alpha_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, screen ? atarigen_alpha2_tilemap : atarigen_alpha_tilemap, 0, 0);
+}
+
+
+VIDEO_UPDATE( cyberbal )
+{
+#if (CYBERBALL_DUAL_MODE)
+	struct rectangle rect;
+	
+	if (cliprect->min_x < SCREEN_WIDTH)
+	{
+		rect = *cliprect;
+		if (rect.max_x >= SCREEN_WIDTH)
+			rect.max_x = SCREEN_WIDTH;
+		update_one_screen(0, bitmap, &rect);
+	}
+	if (cliprect->max_x >= SCREEN_WIDTH)
+	{
+		rect = *cliprect;
+		if (rect.min_x < SCREEN_WIDTH)
+			rect.min_x = SCREEN_WIDTH;
+		update_one_screen(1, bitmap, &rect);
+	}
+#else
+	update_one_screen(current_screen, bitmap, cliprect);
+#endif
 }

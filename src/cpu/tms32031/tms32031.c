@@ -19,6 +19,9 @@
 #include "tms32031.h"
 
 
+#define LOG_OPCODE_USAGE	(0)
+
+
 /*###################################################################################################
 **	CONSTANTS
 **#################################################################################################*/
@@ -53,6 +56,10 @@ enum
 	TMR_RS,
 	TMR_RE,
 	TMR_RC,
+	TMR_R8,		/* 3204x only */
+	TMR_R9,		/* 3204x only */
+	TMR_R10,	/* 3204x only */
+	TMR_R11,	/* 3204x only */
 	TMR_TEMP1,	/* used by the interpreter */
 	TMR_TEMP2,	/* used by the interpreter */
 	TMR_TEMP3	/* used by the interpreter */
@@ -92,7 +99,7 @@ typedef struct
 {
 	/* core registers */
 	UINT32			pc;
-	union genreg	r[32];
+	union genreg	r[36];
 	UINT32			bkmask;
 
 	/* internal stuff */
@@ -271,8 +278,8 @@ INLINE void invalid_instruction(UINT32 op)
 
 static void check_irqs(void)
 {
-	int validints = tms32031.r[TMR_IF].i32[0] & tms32031.r[TMR_IE].i32[0] & 0x07ff;
-	if (validints && (tms32031.r[TMR_ST].i32[0] & GIEFLAG))
+	int validints = IREG(TMR_IF) & IREG(TMR_IE) & 0x07ff;
+	if (validints && (IREG(TMR_ST) & GIEFLAG))
 	{
 		int whichtrap = 0;
 		int i;
@@ -292,7 +299,7 @@ static void check_irqs(void)
 
 				/* for internal sources, clear the interrupt when taken */
 				if (whichtrap > 4)
-					tms32031.r[TMR_IF].i32[0] &= ~(1 << (whichtrap - 1));
+					IREG(TMR_IF) &= ~(1 << (whichtrap - 1));
 			}
 			else
 				tms32031.irq_pending = 1;
@@ -307,9 +314,9 @@ void tms32031_set_irq_line(int irqline, int state)
 	{
 	    /* update the state */
 	    if (state == ASSERT_LINE)
-			tms32031.r[TMR_IF].i32[0] |= 1 << irqline;
+			IREG(TMR_IF) |= 1 << irqline;
 		else
-			tms32031.r[TMR_IF].i32[0] &= ~(1 << irqline);
+			IREG(TMR_IF) &= ~(1 << irqline);
 
 		/* check for IRQs */
 	    if (state != CLEAR_LINE)
@@ -385,18 +392,28 @@ void tms32031_reset(void *param)
 	}
 
 	/* reset some registers */
-	tms32031.r[TMR_IE].i32[0] = 0;
-	tms32031.r[TMR_IF].i32[0] = 0;
-	tms32031.r[TMR_ST].i32[0] = 0;
-	tms32031.r[TMR_IOF].i32[0] = 0;
+	IREG(TMR_IE) = 0;
+	IREG(TMR_IF) = 0;
+	IREG(TMR_ST) = 0;
+	IREG(TMR_IOF) = 0;
 
 	/* reset internal stuff */
 	tms32031.delayed = tms32031.irq_pending = 0;
 }
 
 
+#if (LOG_OPCODE_USAGE)
+static UINT32 hits[0x200*4];
+#endif
+
 void tms32031_exit(void)
 {
+#if (LOG_OPCODE_USAGE)
+	int i;
+	for (i = 0; i < 0x200*4; i++)
+		if (hits[i])
+			printf("%10d - %03X.%X\n", hits[i], i / 4, i % 4);
+#endif
 }
 
 
@@ -470,14 +487,14 @@ unsigned tms32031_get_reg(int regnum)
 	{
 		case REG_PC:		return tms32031.pc;
 
-		case TMS32031_R0:	return tms32031.r[TMR_R0].i32[0];
-		case TMS32031_R1:	return tms32031.r[TMR_R1].i32[0];
-		case TMS32031_R2:	return tms32031.r[TMR_R2].i32[0];
-		case TMS32031_R3:	return tms32031.r[TMR_R3].i32[0];
-		case TMS32031_R4:	return tms32031.r[TMR_R4].i32[0];
-		case TMS32031_R5:	return tms32031.r[TMR_R5].i32[0];
-		case TMS32031_R6:	return tms32031.r[TMR_R6].i32[0];
-		case TMS32031_R7:	return tms32031.r[TMR_R7].i32[0];
+		case TMS32031_R0:	return IREG(TMR_R0);
+		case TMS32031_R1:	return IREG(TMR_R1);
+		case TMS32031_R2:	return IREG(TMR_R2);
+		case TMS32031_R3:	return IREG(TMR_R3);
+		case TMS32031_R4:	return IREG(TMR_R4);
+		case TMS32031_R5:	return IREG(TMR_R5);
+		case TMS32031_R6:	return IREG(TMR_R6);
+		case TMS32031_R7:	return IREG(TMR_R7);
 		case TMS32031_R0F:	temp = dsp_to_double(&tms32031.r[TMR_R0]); return *(UINT32 *)&temp;
 		case TMS32031_R1F:	temp = dsp_to_double(&tms32031.r[TMR_R1]); return *(UINT32 *)&temp;
 		case TMS32031_R2F:	temp = dsp_to_double(&tms32031.r[TMR_R2]); return *(UINT32 *)&temp;
@@ -486,27 +503,27 @@ unsigned tms32031_get_reg(int regnum)
 		case TMS32031_R5F:	temp = dsp_to_double(&tms32031.r[TMR_R5]); return *(UINT32 *)&temp;
 		case TMS32031_R6F:	temp = dsp_to_double(&tms32031.r[TMR_R6]); return *(UINT32 *)&temp;
 		case TMS32031_R7F:	temp = dsp_to_double(&tms32031.r[TMR_R7]); return *(UINT32 *)&temp;
-		case TMS32031_AR0:	return tms32031.r[TMR_AR0].i32[0];
-		case TMS32031_AR1:	return tms32031.r[TMR_AR1].i32[0];
-		case TMS32031_AR2:	return tms32031.r[TMR_AR2].i32[0];
-		case TMS32031_AR3:	return tms32031.r[TMR_AR3].i32[0];
-		case TMS32031_AR4:	return tms32031.r[TMR_AR4].i32[0];
-		case TMS32031_AR5:	return tms32031.r[TMR_AR5].i32[0];
-		case TMS32031_AR6:	return tms32031.r[TMR_AR6].i32[0];
-		case TMS32031_AR7:	return tms32031.r[TMR_AR7].i32[0];
-		case TMS32031_DP:	return tms32031.r[TMR_DP].i32[0];
-		case TMS32031_IR0:	return tms32031.r[TMR_IR0].i32[0];
-		case TMS32031_IR1:	return tms32031.r[TMR_IR1].i32[0];
-		case TMS32031_BK:	return tms32031.r[TMR_BK].i32[0];
+		case TMS32031_AR0:	return IREG(TMR_AR0);
+		case TMS32031_AR1:	return IREG(TMR_AR1);
+		case TMS32031_AR2:	return IREG(TMR_AR2);
+		case TMS32031_AR3:	return IREG(TMR_AR3);
+		case TMS32031_AR4:	return IREG(TMR_AR4);
+		case TMS32031_AR5:	return IREG(TMR_AR5);
+		case TMS32031_AR6:	return IREG(TMR_AR6);
+		case TMS32031_AR7:	return IREG(TMR_AR7);
+		case TMS32031_DP:	return IREG(TMR_DP);
+		case TMS32031_IR0:	return IREG(TMR_IR0);
+		case TMS32031_IR1:	return IREG(TMR_IR1);
+		case TMS32031_BK:	return IREG(TMR_BK);
 		case REG_SP:
-		case TMS32031_SP:	return tms32031.r[TMR_SP].i32[0];
-		case TMS32031_ST:	return tms32031.r[TMR_ST].i32[0];
-		case TMS32031_IE:	return tms32031.r[TMR_IE].i32[0];
-		case TMS32031_IF:	return tms32031.r[TMR_IF].i32[0];
-		case TMS32031_IOF:	return tms32031.r[TMR_IOF].i32[0];
-		case TMS32031_RS:	return tms32031.r[TMR_RS].i32[0];
-		case TMS32031_RE:	return tms32031.r[TMR_RE].i32[0];
-		case TMS32031_RC:	return tms32031.r[TMR_RC].i32[0];
+		case TMS32031_SP:	return IREG(TMR_SP);
+		case TMS32031_ST:	return IREG(TMR_ST);
+		case TMS32031_IE:	return IREG(TMR_IE);
+		case TMS32031_IF:	return IREG(TMR_IF);
+		case TMS32031_IOF:	return IREG(TMR_IOF);
+		case TMS32031_RS:	return IREG(TMR_RS);
+		case TMS32031_RE:	return IREG(TMR_RE);
+		case TMS32031_RC:	return IREG(TMR_RC);
 
 		default:
 			if (regnum <= REG_SP_CONTENTS)
@@ -531,14 +548,14 @@ void tms32031_set_reg(int regnum, unsigned val)
 	{
 		case REG_PC:		tms32031.pc = val; 				break;
 
-		case TMS32031_R0:	tms32031.r[TMR_R0].i32[0] = val; 		break;
-		case TMS32031_R1:	tms32031.r[TMR_R1].i32[0] = val; 		break;
-		case TMS32031_R2:	tms32031.r[TMR_R2].i32[0] = val; 		break;
-		case TMS32031_R3:	tms32031.r[TMR_R3].i32[0] = val; 		break;
-		case TMS32031_R4:	tms32031.r[TMR_R4].i32[0] = val; 		break;
-		case TMS32031_R5:	tms32031.r[TMR_R5].i32[0] = val; 		break;
-		case TMS32031_R6:	tms32031.r[TMR_R6].i32[0] = val; 		break;
-		case TMS32031_R7:	tms32031.r[TMR_R7].i32[0] = val; 		break;
+		case TMS32031_R0:	IREG(TMR_R0) = val; 		break;
+		case TMS32031_R1:	IREG(TMR_R1) = val; 		break;
+		case TMS32031_R2:	IREG(TMR_R2) = val; 		break;
+		case TMS32031_R3:	IREG(TMR_R3) = val; 		break;
+		case TMS32031_R4:	IREG(TMR_R4) = val; 		break;
+		case TMS32031_R5:	IREG(TMR_R5) = val; 		break;
+		case TMS32031_R6:	IREG(TMR_R6) = val; 		break;
+		case TMS32031_R7:	IREG(TMR_R7) = val; 		break;
 		case TMS32031_R0F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R0]);	break;
 		case TMS32031_R1F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R1]);	break;
 		case TMS32031_R2F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R2]);	break;
@@ -547,27 +564,27 @@ void tms32031_set_reg(int regnum, unsigned val)
 		case TMS32031_R5F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R5]);	break;
 		case TMS32031_R6F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R6]);	break;
 		case TMS32031_R7F:	double_to_dsp(*(float *)&val, &tms32031.r[TMR_R7]);	break;
-		case TMS32031_AR0:	tms32031.r[TMR_AR0].i32[0] = val; 		break;
-		case TMS32031_AR1:	tms32031.r[TMR_AR1].i32[0] = val; 		break;
-		case TMS32031_AR2:	tms32031.r[TMR_AR2].i32[0] = val; 		break;
-		case TMS32031_AR3:	tms32031.r[TMR_AR3].i32[0] = val; 		break;
-		case TMS32031_AR4:	tms32031.r[TMR_AR4].i32[0] = val; 		break;
-		case TMS32031_AR5:	tms32031.r[TMR_AR5].i32[0] = val; 		break;
-		case TMS32031_AR6:	tms32031.r[TMR_AR6].i32[0] = val; 		break;
-		case TMS32031_AR7:	tms32031.r[TMR_AR7].i32[0] = val; 		break;
-		case TMS32031_DP:	tms32031.r[TMR_DP].i32[0] = val; 		break;
-		case TMS32031_IR0:	tms32031.r[TMR_IR0].i32[0] = val; 		break;
-		case TMS32031_IR1:	tms32031.r[TMR_IR1].i32[0] = val; 		break;
-		case TMS32031_BK:	tms32031.r[TMR_BK].i32[0] = val; 		break;
+		case TMS32031_AR0:	IREG(TMR_AR0) = val; 		break;
+		case TMS32031_AR1:	IREG(TMR_AR1) = val; 		break;
+		case TMS32031_AR2:	IREG(TMR_AR2) = val; 		break;
+		case TMS32031_AR3:	IREG(TMR_AR3) = val; 		break;
+		case TMS32031_AR4:	IREG(TMR_AR4) = val; 		break;
+		case TMS32031_AR5:	IREG(TMR_AR5) = val; 		break;
+		case TMS32031_AR6:	IREG(TMR_AR6) = val; 		break;
+		case TMS32031_AR7:	IREG(TMR_AR7) = val; 		break;
+		case TMS32031_DP:	IREG(TMR_DP) = val; 		break;
+		case TMS32031_IR0:	IREG(TMR_IR0) = val; 		break;
+		case TMS32031_IR1:	IREG(TMR_IR1) = val; 		break;
+		case TMS32031_BK:	IREG(TMR_BK) = val; 		break;
 		case REG_SP:
-		case TMS32031_SP:	tms32031.r[TMR_SP].i32[0] = val; 		break;
-		case TMS32031_ST:	tms32031.r[TMR_ST].i32[0] = val; 		break;
-		case TMS32031_IE:	tms32031.r[TMR_IE].i32[0] = val; 		break;
-		case TMS32031_IF:	tms32031.r[TMR_IF].i32[0] = val; 		break;
-		case TMS32031_IOF:	tms32031.r[TMR_IOF].i32[0] = val; 		break;
-		case TMS32031_RS:	tms32031.r[TMR_RS].i32[0] = val; 		break;
-		case TMS32031_RE:	tms32031.r[TMR_RE].i32[0] = val; 		break;
-		case TMS32031_RC:	tms32031.r[TMR_RC].i32[0] = val; 		break;
+		case TMS32031_SP:	IREG(TMR_SP) = val; 		break;
+		case TMS32031_ST:	IREG(TMR_ST) = val; 		break;
+		case TMS32031_IE:	IREG(TMR_IE) = val; 		break;
+		case TMS32031_IF:	IREG(TMR_IF) = val; 		break;
+		case TMS32031_IOF:	IREG(TMR_IOF) = val; 		break;
+		case TMS32031_RS:	IREG(TMR_RS) = val; 		break;
+		case TMS32031_RE:	IREG(TMR_RE) = val; 		break;
+		case TMS32031_RC:	IREG(TMR_RC) = val; 		break;
 
 		default:
 			if (regnum <= REG_SP_CONTENTS)

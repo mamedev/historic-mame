@@ -404,7 +404,7 @@ INPUT_PORTS_START( mkla1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1667,7 +1667,7 @@ GAMEX(1991, shimpacp, shimpact,hiimpact, trog,    shimpacp, ROT0, "Midway",   "S
 
 GAME( 1991, term2,    0,       term2,    term2,   term2,    ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
 GAME( 1991, term2la2, term2,   term2,    term2,   term2la2, ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA2 12/09/91)" )
-GAME( 1991, term2la1, term2,   term2,    term2,   term2,    ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA1 11/01/91)" ) /* prob needs a new init */
+GAME( 1991, term2la1, term2,   term2,    term2,   term2la1, ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA1 11/01/91)" )
 GAME( 1992, mkprot9,  mk,      mk,       mkla1,   mkprot9,  ROT0, "Midway",   "Mortal Kombat (prototype, rev 9.0 07/28/92)" )
 GAME( 1992, mkla1,    mk,      mk,       mkla1,   mkla1,    ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
 GAME( 1992, mkla2,    mk,      mk,       mkla1,   mkla2,    ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )

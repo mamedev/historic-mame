@@ -103,22 +103,6 @@ static PORT_WRITE_START( writeport_0_3 )
 PORT_END
 
 static PORT_WRITE_START( writeport_1_2 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	{ 0x01, 0x01, c8080bw_shift_amount_w },
 	{ 0x02, 0x02, c8080bw_shift_data_w },
 PORT_END
@@ -345,6 +329,92 @@ static MACHINE_DRIVER_START( invadpt2 )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+MACHINE_DRIVER_END
+
+/*******************************************************/
+/*                                                     */
+/* Cosmo                                               */
+/*                                                     */
+/*******************************************************/
+
+INPUT_PORTS_START( cosmo )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN ) /* must be HIGH normally or the joystick won't work */
+
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+static MEMORY_READ_START( cosmo_readmem )
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x57ff, MRA_ROM },
+	{ 0x5c00, 0x5fff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( cosmo_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ 0x5c00, 0x5fff, cosmo_colorram_w, &colorram },
+MEMORY_END
+
+static PORT_READ_START( cosmo_readport )
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+PORT_END
+
+/* at least one of these IOWP_NOPs must be sound related */
+static PORT_WRITE_START( cosmo_writeport )
+	{ 0x00, 0x00, IOWP_NOP },
+	{ 0x01, 0x01, IOWP_NOP },
+	{ 0x02, 0x02, IOWP_NOP },
+	{ 0x06, 0x06, watchdog_reset_w },
+	{ 0x07, 0x07, IOWP_NOP },
+PORT_END
+	
+static MACHINE_DRIVER_START( cosmo )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(invaders)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(cosmo_readmem, cosmo_writemem)
+	MDRV_CPU_PORTS(cosmo_readport, cosmo_writeport)
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_INIT(cosmo)
 MACHINE_DRIVER_END
 
 
@@ -2061,21 +2131,19 @@ MEMORY_END
 static MEMORY_READ_START( helifire_sound_readmem )
 	{ 0x0000, 0x03ff, MRA_ROM },
 MEMORY_END
+
 static MEMORY_WRITE_START( helifire_sound_writemem )
 	{ 0x0000, 0x03ff, MWA_ROM },
 MEMORY_END
 
 static PORT_READ_START( helifire_sound_readport )
-	//{ I8039_p1, I8039_p1, sheriff_sh_p1_r },
-	//{ I8039_p2, I8039_p2, sheriff_sh_p2_r },
-	//{ I8039_t0, I8039_t0, sheriff_sh_t0_r },
-	//{ I8039_t1, I8039_t1, sheriff_sh_t1_r },
+	{ I8039_p1, I8039_p1, helifire_sh_p1_r },
 PORT_END
 
 static PORT_WRITE_START( helifire_sound_writeport )
-	//{ I8039_p2, I8039_p2, sheriff_sh_p2_w },
+	{ I8039_p1, I8039_p1, helifire_sh_p1_w }, /* DAC data */
+	{ I8039_p2, I8039_p2, helifire_sh_p2_w }, /* bit7: DAC vref control, other bits: analog sounds */
 PORT_END
-
 
 INPUT_PORTS_START( helifire )
 	PORT_START      /* 00 Main Controls */
@@ -2126,6 +2194,61 @@ INPUT_PORTS_START( helifire )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	/* potentiometers */
+	PORT_START	/* 04 */ /* VR1 sun glow brightness */
+	PORT_DIPNAME( 0x7f, 0x50, "VR1 sun glow brightness" )
+	PORT_DIPSETTING(    0x00, "00" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x20, "20" )
+	PORT_DIPSETTING(    0x30, "30" )
+	PORT_DIPSETTING(    0x40, "40" )
+	PORT_DIPSETTING(    0x50, "50" )
+	PORT_DIPSETTING(    0x60, "60" )
+	PORT_DIPSETTING(    0x70, "70" )
+	PORT_DIPSETTING(    0x7f, "7f" )
+
+	PORT_START	/* 05 */ /* VR2 sea brightness */
+	PORT_DIPNAME( 0x7f, 0x00, "VR2 sea brightness" )
+	PORT_DIPSETTING(    0x00, "00" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x20, "20" )
+	PORT_DIPSETTING(    0x30, "30" )
+	PORT_DIPSETTING(    0x40, "40" )
+	PORT_DIPSETTING(    0x50, "50" )
+	PORT_DIPSETTING(    0x60, "60" )
+	PORT_DIPSETTING(    0x70, "70" )
+	PORT_DIPSETTING(    0x7f, "7f" )
+
+	PORT_START	/* 06 */ /* VR3 height of the sea (surface level) */
+	PORT_DIPNAME( 0x0f, 0x04, "VR3 height of the sea" )
+	PORT_DIPSETTING(    0x00, "00" )
+	PORT_DIPSETTING(    0x01, "01" )
+	PORT_DIPSETTING(    0x02, "02" )
+	PORT_DIPSETTING(    0x03, "03" )
+	PORT_DIPSETTING(    0x04, "04" )
+	PORT_DIPSETTING(    0x05, "05" )
+	PORT_DIPSETTING(    0x06, "06" )
+	PORT_DIPSETTING(    0x07, "07" )
+	PORT_DIPSETTING(    0x08, "08" )
+	PORT_DIPSETTING(    0x09, "09" )
+	PORT_DIPSETTING(    0x0a, "10" )
+	PORT_DIPSETTING(    0x0b, "11" )
+	PORT_DIPSETTING(    0x0c, "12" )
+	PORT_DIPSETTING(    0x0d, "13" )
+	PORT_DIPSETTING(    0x0e, "14" )
+	PORT_DIPSETTING(    0x0f, "15" )
+
+	PORT_START	/* VR4 height of the waves */
+	PORT_DIPNAME( 0x07, 0x04, "VR4 height of the waves" )
+	PORT_DIPSETTING(    0x00, "00" )
+	PORT_DIPSETTING(    0x01, "01" )
+	PORT_DIPSETTING(    0x02, "02" )
+	PORT_DIPSETTING(    0x03, "03" )
+	PORT_DIPSETTING(    0x04, "04" )
+	PORT_DIPSETTING(    0x05, "05" )
+	PORT_DIPSETTING(    0x06, "06" )
+	PORT_DIPSETTING(    0x07, "07" )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( helifire )
@@ -2143,11 +2266,13 @@ static MACHINE_DRIVER_START( helifire )
 	MDRV_CPU_PORTS(helifire_sound_readport,helifire_sound_writeport)
 
 	/* video hardware */
-	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_LENGTH(8+4*256) /* 8 standard, 2*256 for shades of blue and red without the green star, 2*256 for the shades of blue and red with the green star - used for analog background emulation */
 	MDRV_PALETTE_INIT(helifire)
-	MDRV_VISIBLE_AREA(1*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(1*8, 32*8-1, 2*8, 30*8-1)	/* VB lasts for 32 lines: from line 0xf0 to 0xff,0x00 to 0x0f */
+	MDRV_VIDEO_EOF (helifire)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, sheriff_dac_interface)
 MACHINE_DRIVER_END
 
 
@@ -2677,7 +2802,7 @@ INPUT_PORTS_START( desertgu )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x04, "German" )
 	PORT_DIPSETTING(    0x08, "French" )
-    PORT_DIPSETTING(    0x0c, "Norwegian?" )
+	PORT_DIPSETTING(    0x0c, "Norwegian?" )
 	PORT_DIPNAME( 0x30, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0x00, "5000" )
 	PORT_DIPSETTING(    0x10, "7000" )
@@ -2895,7 +3020,7 @@ INPUT_PORTS_START( checkmat )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Playera" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Players" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 to 4 Players" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
@@ -3610,6 +3735,22 @@ ROM_START( desterth )
 	ROM_RELOAD(  			  0x0400, 0x0400 )
 ROM_END
 
+ROM_START( cosmo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "1.36",         0x0000, 0x0800, CRC(445c9a98) SHA1(89bce80a061e9c12544231f970d9dec801eb1b94) ) 
+	ROM_LOAD( "2.35",         0x0800, 0x0800, CRC(df3eb731) SHA1(fb90c1d0f2518195dd49062c9f0fd890536d89f4) ) 
+	ROM_LOAD( "3.34",         0x1000, 0x0800, CRC(772c813f) SHA1(a1c0d857c660fb0b838dd0466af7bf5d73bcd55d) ) 
+	ROM_LOAD( "4.33",         0x1800, 0x0800, CRC(279f66e6) SHA1(8ce71c08cca0bdde2f2e0ef21622731c4610c030) ) 
+
+	ROM_LOAD( "5.32",         0x4000, 0x0800, CRC(cefb18df) SHA1(bb500cf3f7d1a54045a165d3613a92ab3f11d3e8) ) 
+	ROM_LOAD( "6.31",         0x4800, 0x0800, CRC(b037f6c4) SHA1(b9a42948052b8cda8d2e4575e59909589f4e7a8d) ) 
+	ROM_LOAD( "7.42",         0x5000, 0x0800, CRC(c3831ea2) SHA1(8c67ef0312656ef0eeff34b8463376c736bd8ea1) ) 
+	
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )		/* color map */
+	ROM_LOAD( "n-1.7d",       0x0800, 0x0800, CRC(bd8576f1) SHA1(aa5fe0a4d024f21a3bca7a6b3f5022779af6f3f4) ) 
+	ROM_LOAD( "n-2.6e",       0x0000, 0x0800, CRC(48f1ade5) SHA1(a1b45f82f3649cde8ae6a2ef494a3a6cdb5e65d0) ) 
+ROM_END
+
 ROM_START( cosmicmo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "cosmicmo.1",   0x0000, 0x0400, CRC(d6e4e5da) SHA1(8b4275a3c71ac3fa80d17237dc04de5f586645f4) )
@@ -4158,6 +4299,7 @@ ROM_END
 	  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue" )
 	  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth" )
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)" )
+	  GAMEX(1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "bootleg", "Cosmo", GAME_NO_SOUND )
 	  GAMEX(1979, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 	  GAMEX(1979, schasrcv, schaser,  lupin3,   schasrcv, schaser,  ROT270, "Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
 	  GAMEX(1979, sflush,   0,        sflush,   sflush,   rollingc,	ROT270, "Taito", "Straight Flush",GAME_NO_SOUND| GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL)
@@ -4172,8 +4314,8 @@ ROM_END
 	  GAMEX(1979, spacefev, 0,        sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (color)", GAME_IMPERFECT_SOUND )
 	  GAMEX(1979, sfeverbw, spacefev, sheriff,  spacefev, 8080bw,	ROT270, "Nintendo", "Space Fever (black and white)", GAME_IMPERFECT_SOUND )
 	  GAMEX(1980, bandido,  sheriff,  sheriff,  bandido,  bandido,	ROT270, "Exidy", "Bandido", GAME_IMPERFECT_SOUND )
-	  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_NO_SOUND )
-	  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_NO_SOUND )
+	  GAMEX(1980, helifire, 0,        helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision B)", GAME_IMPERFECT_SOUND )
+	  GAMEX(1980, helifira, helifire, helifire, helifire, helifire,	ROT270, "Nintendo", "HeliFire (revision A)", GAME_IMPERFECT_SOUND )
 
 /* Misc. manufacturers */
 

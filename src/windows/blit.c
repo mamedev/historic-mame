@@ -181,8 +181,6 @@ static UINT8				active_update_blitter[MAX_BLITTER_SIZE];
 static struct win_blit_params	active_blitter_params;
 static struct win_blit_params	active_vector_params;
 
-static int blit_srcwidth, blit_srcheight;
-
 // coordinate transforms
 static int					xtrans[MAX_SCREEN_DIM];
 static int					ytrans[MAX_SCREEN_DIM];
@@ -479,18 +477,9 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 	temprect.min_y = blit->srcyoffs;
 	temprect.max_x = blit->srcxoffs + blit->srcwidth - 1;
 	temprect.max_y = blit->srcyoffs + blit->srcheight - 1;
-	win_disorient_rect(&temprect);
 
-	if (blit->swapxy != blit_swapxy)
-	{
-		blit_srcwidth = blit->srcheight;
-		blit_srcheight = blit->srcwidth;
-	}
-	else
-	{
-		blit_srcwidth = blit->srcwidth;
-		blit_srcheight = blit->srcheight;
-	}
+	if (blit->swapxy || blit->flipx || blit->flipy)
+		win_disorient_rect(&temprect);
 
 	if (!blit->swapxy)
 	{
@@ -523,7 +512,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 
 	// copy data to the globals
 	asmblit_srcdata = (UINT8 *)blit->srcdata + blit->srcpitch * srcy + srcdepth * srcx;
-	asmblit_srcheight = blit_srcheight;
+	asmblit_srcheight = blit->srcheight;
 	asmblit_srclookup = blit->srclookup;
 
 	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
@@ -1506,8 +1495,8 @@ static void generate_blitter(const struct win_blit_params *blit)
 #endif
 
 	// determine how many pixels to do at the middle, and end
-	middle = blit_srcwidth / 16;
-	last = blit_srcwidth % 16;
+	middle = blit->srcwidth / 16;
+	last = blit->srcwidth % 16;
 
 	// generate blitter loop
 

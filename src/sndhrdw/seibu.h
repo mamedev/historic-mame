@@ -29,6 +29,7 @@ extern const struct Memory_ReadAddress seibu2_sound_readmem[];
 extern const struct Memory_WriteAddress seibu2_sound_writemem[];
 extern const struct Memory_ReadAddress seibu3_sound_readmem[];
 extern const struct Memory_WriteAddress seibu3_sound_writemem[];
+extern const struct Memory_WriteAddress seibu3_adpcm_sound_writemem[];
 
 READ16_HANDLER( seibu_main_word_r );
 READ_HANDLER( seibu_main_v30_r );
@@ -51,6 +52,12 @@ WRITE_HANDLER( seibu_main_data_w );
 MACHINE_INIT( seibu_sound_1 );
 MACHINE_INIT( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
+
+void seibu_adpcm_decrypt(int region);
+WRITE_HANDLER( seibu_adpcm_adr_1_w );
+WRITE_HANDLER( seibu_adpcm_ctl_1_w );
+WRITE_HANDLER( seibu_adpcm_adr_2_w );
+WRITE_HANDLER( seibu_adpcm_ctl_2_w );
 
 /**************************************************************************/
 
@@ -76,6 +83,17 @@ static struct OKIM6295interface okim6295_interface =				\
 	{ region },														\
 	{ 40 }															\
 }
+
+#define SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE	\
+	\
+static struct ADPCMinterface adpcm_interface =			\
+{								\
+	2,							\
+	8000,							\
+	REGION_SOUND1, 						\
+	{40,40}							\
+};
+
 
 #define SEIBU_SOUND_SYSTEM_YM2151_HARDWARE(freq1,freq2,region)		\
 																	\
@@ -124,6 +142,11 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
 	MDRV_CPU_MEMORY(seibu3_sound_readmem,seibu3_sound_writemem)		\
 
+#define SEIBU3A_SOUND_SYSTEM_CPU(freq)								\
+	MDRV_CPU_ADD(Z80, freq)											\
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	MDRV_CPU_MEMORY(seibu3_sound_readmem,seibu3_adpcm_sound_writemem)		\
+
 #define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE							\
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)						\
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)					\
@@ -134,6 +157,10 @@ static struct YM2203interface ym2203_interface =					\
 
 #define SEIBU_SOUND_SYSTEM_YM2203_INTERFACE							\
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)						\
+
+
+#define SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE	\
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)	\
 
 
 /**************************************************************************/

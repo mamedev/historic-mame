@@ -87,6 +87,70 @@ static void cinemat_shift(UINT8 sound_val, UINT8 bits_changed, UINT8 A1, UINT8 C
 }
 
 
+/*************************************
+ *
+ *	Sundance
+ *
+ *************************************/
+
+static const char *sundance_sample_names[] =
+{
+	"*sundance",
+	"bong.wav",
+	"whoosh.wav",
+	"explsion.wav",
+	"ping1.wav",
+	"ping2.wav",
+	"hatch.wav",
+	
+    0	/* end of array */
+};
+
+struct Samplesinterface sundance_samples_interface =
+{
+	6,	/* 8 channels */
+	25,	/* volume */
+	sundance_sample_names
+};
+
+void sundance_sound_w(UINT8 sound_val, UINT8 bits_changed)
+{
+	
+if (bits_changed & 0x01) //Bong
+	{
+		if (sound_val & 0x01)
+		{
+            
+                sample_start(0, 0, 0);
+                
+		}
+	}
+
+
+if ((bits_changed & 0x02) && (0 == (sound_val & 0x02)))  
+		sample_start(1, 1, 0);				
+
+
+if ((bits_changed & 0x04) && (0 == (sound_val & 0x04)))  
+		sample_start(2, 2, 0);			
+
+
+if ((bits_changed & 0x08) && (0 == (sound_val & 0x08)))
+	        sample_start(3, 3, 0);			
+
+
+if ((bits_changed & 0x10) && (0 == (sound_val & 0x10)))
+	{
+		sample_start(4, 4, 0);			
+	}
+
+
+if ((bits_changed & 0x80) && (0 == (sound_val & 0x80)))
+		sample_start(5, 5, 0);			
+	
+}
+
+
 
 /*************************************
  *
@@ -261,6 +325,27 @@ void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed)
  *
  *************************************/
 
+static const char *armora_sample_names[] =   //Added retrocade samples 10-27-03 Tim C.
+{
+	"*armora",
+	"tankfire.wav",
+	"hiexp.wav",
+                  "jeepfire.wav", 
+                  "loexp.wav",
+	"tankeng.wav",
+	"beep.wav",
+	"jeepfire.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface armora_samples_interface =
+{
+	7,	/* 8 channels */
+	25,	/* volume */
+	armora_sample_names
+};
+
+
 void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
 	UINT8 shift_diff;
@@ -291,26 +376,27 @@ void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		last_shift = current_shift;
 	}
 
-    if (bits_changed & 0x2)
-    {
+    if (bits_changed & 0x2)   // Fixed incorrect inverted triggering 10-27-03 Tim C.
+    {                         //Still not totally correct. Should be 2 speeds
         if (sound_val & 0x2)
-            sample_start(4, 4, 1);	// Tank +
+           sample_stop(4); 
         else
-            sample_stop(4);
+           sample_start(4, 4, 1);	// Tank +            
+
     }
-    if (bits_changed & 0x4)
+    if (bits_changed & 0x4)  // Fixed incorrect inverted triggering 10-27-03 Tim C.
     {
         if (sound_val & 0x4)
-            sample_start(5, 5, 1);	// Beep +
+          sample_stop(5);            
         else
-            sample_stop(5);
+          sample_start(5, 5, 1);	       // Beep +   
     }
-    if (bits_changed & 0x8)
+    if (bits_changed & 0x8)  // Fixed incorrect inverted triggering 10-27-03 Tim C.
     {
         if (sound_val & 0x8)
-            sample_start(6, 6, 1);	// Chopper +
+           sample_stop(6);
         else
-            sample_stop(6);
+           sample_start(6, 6, 1);	// Chopper +  
     }
 }
 

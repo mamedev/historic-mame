@@ -86,8 +86,6 @@ void YM3526SetUpdateHandler(int which, OPL_UPDATEHANDLER UpdateHandler, int para
 
 #if BUILD_Y8950
 
-#include "ymdeltat.h"
-
 /* Y8950 port handlers */
 void Y8950SetPortHandler(int which, OPL_PORTHANDLER_W PortHandler_w, OPL_PORTHANDLER_R PortHandler_r, int param);
 void Y8950SetKeyboardHandler(int which, OPL_PORTHANDLER_W KeyboardHandler_w, OPL_PORTHANDLER_R KeyboardHandler_r, int param);
@@ -108,4 +106,4 @@ void Y8950SetUpdateHandler (int which, OPL_UPDATEHANDLER UpdateHandler, int para
 #endif
 
 
-#endif
+#endif /* __FMOPL_H_ */

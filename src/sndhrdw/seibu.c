@@ -23,9 +23,12 @@
 	to prevent this.  It is emulated by user timers to control the z80
 	interrupt vector.
 
-	(*What on earth _is_ the YM3931??  There are no unknown memory writes)
+	* The YM3931 is the main/sub cpu interface, similar to Konami's K054986A
+	  or Taito's TC0140SYT.  It also provides the Z80 memory map and
+	  interrupt control.  It's not a Yamaha chip :-)
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk
+	ADPCM by R. Belmont and Jarek Burczynski
 
 ***************************************************************************/
 
@@ -115,6 +118,88 @@ void seibu_sound_decrypt(int cpu_region,int length)
 
 /***************************************************************************/
 
+/*
+	Handlers for early Seibu/Tad games with dual channel ADPCM
+*/
+
+static int start, end, start1, end1;
+
+// "decrypt" is a bit flowery here, as it's probably just line-swapping to
+// simplify PCB layout/routing rather than intentional protection, but it
+// still fits, especially since the Z80s for all these games are truly encrypted.
+
+void seibu_adpcm_decrypt(int region)
+{
+	data8_t *ROM = memory_region(region);
+	int i;
+
+	for (i = 0; i < memory_region_length(region); i++)
+	{
+		ROM[i] = BITSWAP8(ROM[i], 7, 5, 3, 1, 6, 4, 2, 0);
+	}
+}
+
+WRITE_HANDLER( seibu_adpcm_adr_1_w )
+{
+	if (offset)
+	{
+		end = data<<8;
+	}
+	else
+	{
+		start = data<<8;
+	}
+}
+
+WRITE_HANDLER( seibu_adpcm_ctl_1_w )
+{
+	// sequence is 00 02 01 each time.
+	switch (data)
+	{
+		case 0:
+  			ADPCM_stop(0);
+			break;
+		case 2:
+			break;
+		case 1:
+			ADPCM_play(0, start, end-start);
+			break;
+
+	}
+}
+
+WRITE_HANDLER( seibu_adpcm_adr_2_w )
+{
+	if (offset)
+	{
+		end1 = data<<8;
+	}
+	else
+	{
+		start1 = data<<8;
+	}
+}
+
+WRITE_HANDLER( seibu_adpcm_ctl_2_w )
+{
+	// sequence is 00 02 01 each time.
+	switch (data)
+	{
+		case 0:
+  			ADPCM_stop(1);
+			break;
+		case 2:
+			break;
+		case 1:
+			start1 += 0x10000;
+			end1 += 0x10000;
+			ADPCM_play(1, start1, end1-start1);
+			break;
+
+	}
+}
+
+/***************************************************************************/
 
 static int sound_cpu;
 
@@ -393,3 +478,25 @@ MEMORY_WRITE_START( seibu3_sound_writemem )
 	{ 0x6009, 0x6009, YM2203_write_port_1_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
+
+MEMORY_WRITE_START( seibu3_adpcm_sound_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x4000, 0x4000, seibu_pending_w },
+	{ 0x4001, 0x4001, seibu_irq_clear_w },
+	{ 0x4002, 0x4002, seibu_rst10_ack_w },
+	{ 0x4003, 0x4003, seibu_rst18_ack_w },
+	{ 0x4005, 0x4006, seibu_adpcm_adr_1_w },
+	{ 0x4007, 0x4007, seibu_bank_w },
+	{ 0x4008, 0x4008, YM2203_control_port_0_w },
+	{ 0x4009, 0x4009, YM2203_write_port_0_w },
+	{ 0x4018, 0x4019, seibu_main_data_w },
+	{ 0x401a, 0x401a, seibu_adpcm_ctl_1_w },
+	{ 0x401b, 0x401b, seibu_coin_w },
+	{ 0x6005, 0x6006, seibu_adpcm_adr_2_w },
+	{ 0x6008, 0x6008, YM2203_control_port_1_w },
+	{ 0x6009, 0x6009, YM2203_write_port_1_w },
+	{ 0x601a, 0x601a, seibu_adpcm_ctl_2_w },
+	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END
+

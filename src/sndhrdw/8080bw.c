@@ -43,6 +43,8 @@ static WRITE_HANDLER( sheriff_sh_port4_w );
 static WRITE_HANDLER( sheriff_sh_port5_w );
 static WRITE_HANDLER( sheriff_sh_port6_w );
 
+static WRITE_HANDLER( helifire_sh_port4_w );
+static WRITE_HANDLER( helifire_sh_port5_w );
 static WRITE_HANDLER( helifire_sh_port6_w );
 
 static WRITE_HANDLER( ballbomb_sh_port3_w );
@@ -934,9 +936,130 @@ WRITE_HANDLER( sheriff_sh_p2_w )
 /*                                                     */
 /*******************************************************/
 
+/* Note: the game uses 8-bit DAC and a RC circuit to control the DAC's volume */
+
+/* I used 16 bits for the DAC data for better quality of the volume control */
+
+/* the following resistances are a guesswork */
+#define R1		500		/* DAC Vref charge resistance */
+#define R2		16000	/* DAC Vref discharge resistance */
+#define C43		10.0e-6	/* C43 is 10 uF in the schematics */
+
+#define VMIN	0		/* I'm not sure whether the circuit can discharge to zero level? */
+#define VMAX	32768
+
+static int Vref;		/* reference voltage for the 8-bit DAC */
+static int counter;
+
+static double ar_rate;
+static double dr_rate;
+
+static int Vref_control;		/* 1 - charge capacitor, 0 - discharge it */
+static int samplerate = 400;	/* 400 changes per second - arbitrary resolution */
+static void	*capacitor_timer;	/* samplerate timer for capacitor calculations */
+
+static int current_dac_data;
+
+void cap_timer_callback (int param_not_used)
+{
+	switch( Vref_control)
+	{
+		case 1:		/* capacitor charge */
+			if (Vref < VMAX)
+			{
+				counter -= (int)((VMAX - Vref) / ar_rate);
+				if ( counter <= 0 )
+				{
+					int n = -counter / samplerate + 1;
+					counter += n * samplerate;
+					if ( (Vref += n) > VMAX )
+						Vref = VMAX;
+				}
+				/*logerror("vref charge=%4x\n",Vref);*/
+			}
+			break;
+
+		default:	/* capacitor discharge */
+			if (Vref > VMIN)
+			{
+				counter -= (int)((Vref - VMIN) / dr_rate);
+				if ( counter <= 0 )
+				{
+					int n = -counter / samplerate + 1;
+					counter += n * samplerate;
+					if ( (Vref -= n) < VMIN )
+						Vref = VMIN;
+				}
+				/*logerror("vref discharge=%4x\n",Vref);*/
+			}
+			break;
+	}
+
+	DAC_data_16_w(0, (current_dac_data * Vref) >> 8 );
+}
+
 MACHINE_INIT( helifire )
 {
+	install_port_write_handler(0, 0x04, 0x04, helifire_sh_port4_w);
+	install_port_write_handler(0, 0x05, 0x05, helifire_sh_port5_w);
 	install_port_write_handler(0, 0x06, 0x06, helifire_sh_port6_w);
+
+	Vref = 0;
+	Vref_control = 0;
+
+	counter = 0;
+	ar_rate= (double)R1 * (double)C43;
+	dr_rate= (double)R2 * (double)C43;
+
+	capacitor_timer = timer_alloc(cap_timer_callback);
+	timer_adjust(capacitor_timer, TIME_IN_HZ(samplerate), 0, TIME_IN_HZ(samplerate));
+}
+
+static int helifire_t0, helifire_t1;//, helifire_p1, helifire_p2;
+static int helifire_snd_latch;
+
+static WRITE_HANDLER( helifire_sh_port4_w )
+{
+	// 0 - P2.7 -      ->D0
+	// 1 - NC
+	// 2 - P2.6 -      ->INT
+	// 3 - P2.3 -      ->T0
+	// 4 - P2.4 -      ->T1
+	// 5 - P2.1 - GAME ->D3
+
+	data ^= 0xff; /* negated on page 2 just before going to P2 */
+
+	helifire_t1 = (data&0x10) >> 4;
+	helifire_t0 = (data&0x08) >> 3;
+
+	helifire_snd_latch = (helifire_snd_latch & 0x06) |
+				 ((data & 0x01) << 0) |
+				 ((data & 0x20) >> 2);
+
+	cpu_set_irq_line(1, 0, (data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+
+logerror("port04 write: %02x &4=%1x\n", data, data&4);
+}
+
+static WRITE_HANDLER( helifire_sh_port5_w )
+{
+	// 0 - P2.8  -     ->D1 (or D2 ?)
+	// 1 - P2.9  -     ->D2 (or D1 ?)
+	// 2 - P2.10 - 
+	// 3 - P2.11 - 
+	// 4 - P2.2  - 
+	// 5 - P2.12 -     ->PB4
+
+	data ^= 0xff; /* negated on page 2 just before going to P2 */
+
+	helifire_snd_latch = (helifire_snd_latch & 0x09) |
+				 ((data & 0x01) << 1) |
+				 ((data & 0x02) << 1);
+
+	c8080bw_helifire_colors_change_w(data & 0x20); /* 1 - don't change colors, 0 - change font and object colors */
+
+logerror("port05 write: %02x\n",data);
+
 }
 
 static WRITE_HANDLER( helifire_sh_port6_w )
@@ -944,6 +1067,24 @@ static WRITE_HANDLER( helifire_sh_port6_w )
 	flip_screen_set(data & 0x20);
 }
 
+WRITE_HANDLER( helifire_sh_p1_w )
+{
+	current_dac_data = data;
+
+	DAC_data_16_w(0, (current_dac_data * Vref) >> 8);
+}
+
+
+WRITE_HANDLER( helifire_sh_p2_w )
+{
+	Vref_control = (data&0x80) >> 7;
+	/*logerror("dac_vref_charge=%1x\n", Vref_control);*/
+}
+
+READ_HANDLER( helifire_sh_p1_r )
+{
+	return helifire_snd_latch;
+}
 
 /*******************************************************/
 /*                                                     */

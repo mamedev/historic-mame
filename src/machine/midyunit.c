@@ -250,6 +250,16 @@ static WRITE16_HANDLER( term2la2_hack_w )
 	COMBINE_DATA(&t2_hack_mem[offset]);
 }
 
+static WRITE16_HANDLER( term2la1_hack_w )
+{
+    if (offset == 0 && activecpu_get_pc() == 0xffce33f0)
+    {
+        t2_hack_mem[offset] = 0;
+        return;
+    }
+	COMBINE_DATA(&t2_hack_mem[offset]);
+}
+
 
 
 /*************************************
@@ -1046,6 +1056,16 @@ DRIVER_INIT( term2la2 )
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
 	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2la2_hack_w);
+}
+
+DRIVER_INIT( term2la1 )
+{
+	init_term2_common();
+	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
+
+	/* HACK: this prevents the freeze on the movies */
+	/* until we figure whats causing it, this is better than nothing */
+	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2la1_hack_w);
 }
 
 

@@ -14,7 +14,7 @@
 	were read from 3 512-byte PROMs and fed into the instruction input.
 
 	See the bottom of the source for more details on the operation of these
-	componenets.
+	components.
 
 ##########################################################################*/
 
@@ -89,6 +89,9 @@ struct atarirle_data
 	int					partial_scanline;	/* partial update scanline */
 
 	UINT8				control_bits;		/* current control bits */
+	UINT8				command;			/* current command */
+	UINT8				is32bit;			/* 32-bit or 16-bit? */
+	UINT16				checksums[256];		/* checksums for each 0x40000 bytes */
 };
 
 
@@ -108,6 +111,12 @@ struct atarirle_data
 
 data16_t *atarirle_0_spriteram;
 data32_t *atarirle_0_spriteram32;
+
+data16_t *atarirle_0_command;
+data32_t *atarirle_0_command32;
+
+data16_t *atarirle_0_table;
+data32_t *atarirle_0_table32;
 
 int atarirle_hilite_index = -1;
 
@@ -132,6 +141,7 @@ static int build_rle_tables(void);
 static int count_objects(const data16_t *base, int length);
 static void prescan_rle(const struct atarirle_data *mo, int which);
 static void sort_and_render(struct atarirle_data *mo);
+static void compute_checksum(struct atarirle_data *mo);
 static void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
 		int x, int y, int xscale, int yscale, const struct rectangle *clip);
 static void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
@@ -305,6 +315,17 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 		mo->cliprect.min_x = desc->leftclip;
 		mo->cliprect.max_x = desc->rightclip;
 	}
+	
+	/* compute the checksums */
+	memset(mo->checksums, 0, sizeof(mo->checksums));
+	for (i = 0; i < mo->romlength / 0x20000; i++)
+	{
+		const data16_t *csbase = &mo->rombase[0x10000 * i];
+		int cursum = 0, j;
+		for (j = 0; j < 0x10000; j++)
+			cursum += *csbase++;
+		mo->checksums[i] = cursum;
+	}
 
 	/* allocate the object info */
 	mo->info = auto_malloc(sizeof(mo->info[0]) * mo->objectcount);
@@ -390,15 +411,29 @@ void atarirle_control_w(int map, UINT8 bits)
 	/* update the bits */
 	mo->control_bits = bits;
 
-	/* if mogo is set, do a render on the falling edge */
+	/* if mogo is set, do a render on the rising edge */
 	if (!(oldbits & ATARIRLE_CONTROL_MOGO) && (bits & ATARIRLE_CONTROL_MOGO))
 	{
-//logerror("  render to frame %d\n", (~bits & ATARIRLE_CONTROL_FRAME) >> 2);
-		sort_and_render(mo);
+		if (mo->command == ATARIRLE_COMMAND_DRAW)
+			sort_and_render(mo);
+		else if (mo->command == ATARIRLE_COMMAND_CHECKSUM)
+			compute_checksum(mo);
 	}
 
 	/* remember where we left off */
 	mo->partial_scanline = scanline;
+}
+
+
+
+/*---------------------------------------------------------------
+	atarirle_control_w: Write handler for MO command bits.
+---------------------------------------------------------------*/
+
+void atarirle_command_w(int map, UINT8 command)
+{
+	struct atarirle_data *mo = &atarirle[map];
+	mo->command = command;
 }
 
 
@@ -456,6 +491,7 @@ WRITE16_HANDLER( atarirle_0_spriteram_w )
 
 	/* store a copy in our local spriteram */
 	atarirle[0].spriteram[entry].data[idx] = atarirle_0_spriteram[offset];
+	atarirle[0].is32bit = 0;
 }
 
 
@@ -475,6 +511,7 @@ WRITE32_HANDLER( atarirle_0_spriteram32_w )
 	/* store a copy in our local spriteram */
 	atarirle[0].spriteram[entry].data[idx+0] = atarirle_0_spriteram32[offset] >> 16;
 	atarirle[0].spriteram[entry].data[idx+1] = atarirle_0_spriteram32[offset];
+	atarirle[0].is32bit = 1;
 }
 
 
@@ -664,6 +701,36 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 
 
 /*---------------------------------------------------------------
+	compute_checksum: Compute the checksum values on the ROMs.
+---------------------------------------------------------------*/
+
+static void compute_checksum(struct atarirle_data *mo)
+{
+	int reqsums = mo->spriteram[0].data[0] + 1;
+	int i;
+
+	/* number of checksums is in the first word */
+	if (reqsums > 256)
+		reqsums = 256;
+	
+	/* stuff them back */
+	if (!mo->is32bit)
+	{
+		for (i = 0; i < reqsums; i++)
+			atarirle_0_spriteram[i] = mo->checksums[i];
+	}
+	else
+	{
+		for (i = 0; i < reqsums; i++)
+			if (i & 1)
+				atarirle_0_spriteram32[i/2] = (atarirle_0_spriteram32[i/2] & 0xffff0000) | mo->checksums[i];
+			else
+				atarirle_0_spriteram32[i/2] = (atarirle_0_spriteram32[i/2] & 0x0000ffff) | (mo->checksums[i] << 16);
+	}
+}
+
+
+/*---------------------------------------------------------------
 	sort_and_render: Render all motion objects in order.
 ---------------------------------------------------------------*/
 
@@ -679,55 +746,6 @@ static void sort_and_render(struct atarirle_data *mo)
 
 struct atarirle_entry *hilite = NULL;
 int count = 0;
-
-// expected pit fighter checksums
-//		0xc289, 0x3103, 0x2b8d, 0xe048, 0xc12e, 0x0ede, 0x2cd7, 0x7dc8,
-//		0x58fc, 0xb877, 0x9449, 0x59d4, 0x8b63, 0x241b, 0xa3de, 0x4724
-	/* special case: checksum the sprite ROMs */
-	if ((obj->data[0] & 0x000f) == 0x000f)
-	{
-/*
-		int sum1, sum2, sum3, sum4, sum5;
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-		{
-			sum1 += mo->rombase[i + 0x000000];
-			sum2 += mo->rombase[i + 0x080000];
-			sum3 += mo->rombase[i + 0x100000];
-			sum4 += mo->rombase[i + 0x180000];
-			sum5 += mo->rombase[i + 0x200000];
-		}
-		fprintf(stderr, "sum.word   = %08x %08x %08x %08x %08x\n", sum1, sum2, sum3, sum4, sum5);
-
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-			sum1 += mo->rombase[i] >> 8;
-		fprintf(stderr, "sum.bytehi = %04x\n", sum1 & 0xffff);
-
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-			sum1 += mo->rombase[i] & 0xff;
-		fprintf(stderr, "sum.bytelo = %04x\n", sum1 & 0xffff);
-
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-			sum1 ^= mo->rombase[i];
-		fprintf(stderr, "xor.word = %04x\n", sum1 & 0xffff);
-
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-			sum1 ^= mo->rombase[i] >> 8;
-		fprintf(stderr, "xor.bytehi = %04x\n", sum1 & 0xffff);
-
-		for (i = sum1 = sum2 = sum3 = sum4 = sum5 = 0; i < 0x80000; i++)
-			sum1 ^= mo->rombase[i] & 0xff;
-		fprintf(stderr, "xor.bytelo = %04x\n", sum1 & 0xffff);
-
-		for (i = 1; i < 5; i++)
-			if (obj->data[i] != 0)
-				break;
-		if (i == 5)
-		{
-			logerror("Wrote checksums\n");
-//			for (x = 0; x < 16; x++)
-//				WRITE_WORD(&atarigen_spriteram[x * 2], mo_checksum[x]);
-		}*/
-	}
 
 	/* sort the motion objects into their proper priorities */
 	memset(list_head, 0, sizeof(list_head));

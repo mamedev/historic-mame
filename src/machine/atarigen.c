@@ -329,7 +329,10 @@ WRITE32_HANDLER( atarigen_eeprom32_w )
 	if (!eeprom_unlocked)
 		return;
 
-	COMBINE_DATA(&((data32_t *)atarigen_eeprom)[offset]);
+	COMBINE_DATA(&atarigen_eeprom[offset * 2 + 1]);
+	data >>= 16;
+	mem_mask >>= 16;
+	COMBINE_DATA(&atarigen_eeprom[offset * 2]);
 	eeprom_unlocked = 0;
 }
 

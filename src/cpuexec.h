@@ -224,6 +224,9 @@ UINT64 cpunum_gettotalcycles64(int cpunum);
 /* Returns the number of CPU cycles before the next interrupt handler call */
 int activecpu_geticount(void);
 
+/* Safely eats cycles so we don't cross a timeslice boundary */
+void activecpu_eat_cycles(int cycles);
+
 /* Scales a given value by the ratio of fcount / fperiod */
 int cpu_scalebyfcount(int value);
 

@@ -8,6 +8,7 @@ void InitTables(void)
 	}
 
 	OpCodeTable[0x00] = opHALT;
+	OpCodeTable[0x01] = opLDTASK;
 	OpCodeTable[0x02] = opSTPR;
 	OpCodeTable[0x08] = opRVBIT;
 	OpCodeTable[0x09] = opMOVB;
@@ -204,5 +205,7 @@ void InitTables(void)
 	OpCodeTable[0xf9] = opTRAP_1;
 	OpCodeTable[0xfa] = opRETIS_0;
 	OpCodeTable[0xfb] = opRETIS_1;
+	OpCodeTable[0xfc] = opSTTASK_0;
+	OpCodeTable[0xfd] = opSTTASK_1;
 }
 

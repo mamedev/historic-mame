@@ -1,4 +1,10 @@
 /*
+
+	SEGA Zaxxon Hardware - Sound
+
+*/
+
+/*
  * Zaxxon Soundhardware Driver
  * Copyright Alex Judd 1997/98
  */
@@ -62,7 +68,6 @@ FF3F Should be written an 0x80 for Mode 0
 
 #include "driver.h"
 
-
 #define TOTAL_SOUNDS 22
 int soundplaying[TOTAL_SOUNDS];
 
@@ -101,16 +106,14 @@ struct sa sa[TOTAL_SOUNDS] =
 	{ 11, 11, 1, 1, 1 },	/* background */
 };
 
-
-
 WRITE_HANDLER( zaxxon_sound_w )
 {
 	int line;
 	int noise;
 
-
-	if (offset == 0)
+	switch (offset)
 	{
+	case 0:
 		/* handle background rumble */
 		switch (data & 0x0c)
 		{
@@ -142,37 +145,42 @@ WRITE_HANDLER( zaxxon_sound_w )
 				sample_stop(sa[21].channel);
 				break;
 		}
-	}
-
-	for (line = 0;line < 8;line++)
-	{
-		noise = 8 * offset + line - 4;
-
-		/* the first four sound lines are handled separately */
-		if (noise >= 0)
+		break;
+	case 1:
+	case 2:
+		for (line = 0;line < 8;line++)
 		{
-			if ((data & (1 << line)) == 0)
+			noise = 8 * offset + line - 4;
+
+			/* the first four sound lines are handled separately */
+			if (noise >= 0)
 			{
-				/* trigger sound */
-				if (soundplaying[noise] == 0)
+				if ((data & (1 << line)) == 0)
 				{
-					soundplaying[noise] = 1;
-					if (sa[noise].channel != -1)
+					/* trigger sound */
+					if (soundplaying[noise] == 0)
 					{
-						if (sa[noise].restartable || !sample_playing(sa[noise].channel))
-							sample_start(sa[noise].channel,sa[noise].num,sa[noise].looped);
+						soundplaying[noise] = 1;
+						if (sa[noise].channel != -1)
+						{
+							if (sa[noise].restartable || !sample_playing(sa[noise].channel))
+								sample_start(sa[noise].channel,sa[noise].num,sa[noise].looped);
+						}
+					}
+				}
+				else
+				{
+					if (soundplaying[noise])
+					{
+						soundplaying[noise] = 0;
+						if (sa[noise].channel != -1 && sa[noise].stoppable)
+							sample_stop(sa[noise].channel);
 					}
 				}
 			}
-			else
-			{
-				if (soundplaying[noise])
-				{
-					soundplaying[noise] = 0;
-					if (sa[noise].channel != -1 && sa[noise].stoppable)
-						sample_stop(sa[noise].channel);
-				}
-			}
 		}
+	case 3:
+		// control byte
+		break;
 	}
 }

@@ -1090,67 +1090,67 @@ UINT32 am1ImmediateQuick(void)
 
 UINT32 am1Error1(void)
 {
-	logerror("CPU - AM1 - 1 (PC=%06x)", PC);
+	logerror("CPU - AM1 - 1 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error1(void)
 {
-	logerror("CPU - BAM1 - 1 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 1 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 am1Error2(void)
 {
-	logerror("CPU - AM1 - 2 (PC=%06x)", PC);
+	logerror("CPU - AM1 - 2 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error2(void)
 {
-	logerror("CPU - BAM1 - 2 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 2 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 am1Error3(void)
 {
-	logerror("CPU - AM1 - 3 (PC=%06x)", PC);
+	logerror("CPU - AM1 - 3 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error3(void)
 {
-	logerror("CPU - BAM1 - 3 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 3 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 am1Error4(void)
 {
-	logerror("CPU - AM1 - 4 (PC=%06x)", PC);
+	logerror("CPU - AM1 - 4 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error4(void)
 {
-	logerror("CPU - BAM1 - 4 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 4 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 am1Error5(void)
 {
-	logerror("CPU - AM1 - 5 (PC=%06x)", PC);
+	logerror("CPU - AM1 - 5 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error5(void)
 {
-	logerror("CPU - BAM1 - 5 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 5 (PC=%06x)\n", PC);
 	abort();
 }
 
 UINT32 bam1Error6(void)
 {
-	logerror("CPU - BAM1 - 6 (PC=%06x)", PC);
+	logerror("CPU - BAM1 - 6 (PC=%06x)\n", PC);
 	abort();
 }
 

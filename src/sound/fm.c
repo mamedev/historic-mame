@@ -7,12 +7,17 @@
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 1.3 (final beta)
+** Version 1.4 (final beta)
 **
 */
 
 /*
 ** History:
+**
+** 03-08-2003 Jarek Burczynski:
+**  - fixed YM2608 initial values (after the reset)
+**  - fixed flag and irqmask handling (YM2608)
+**  - fixed BUFRDY flag handling (YM2608)
 **
 ** 14-06-2003 Jarek Burczynski:
 **  - implemented all of the YM2608 status register flags
@@ -87,10 +92,6 @@
 
 
 
-/*
-	no support:
-		DELTA-T with PCM port
-*/
 
 /************************************************************************/
 /*    comment of hiro-shi(Hiromitsu Shioya)                             */
@@ -593,27 +594,27 @@ typedef struct
 
 typedef struct
 {
-	UINT8 index;		/* this chip index (number of chip)	*/
-	int clock;			/* master clock  (Hz)	*/
-	int rate;			/* sampling rate (Hz)	*/
-	double freqbase;	/* frequency base		*/
-	double TimerBase;	/* Timer base time		*/
+	UINT8	index;		/* this chip index (number of chip)	*/
+	int		clock;		/* master clock  (Hz)	*/
+	int		rate;		/* sampling rate (Hz)	*/
+	double	freqbase;	/* frequency base		*/
+	double	TimerBase;	/* Timer base time		*/
 #if FM_BUSY_FLAG_SUPPORT
-	double BusyExpire;	/* ExpireTime of Busy clear */
+	double	BusyExpire;	/* ExpireTime of Busy clear */
 #endif
-	UINT8 address;		/* address register		*/
-	UINT8 irq;			/* interrupt level		*/
-	UINT8 irqmask;		/* irq mask				*/
-	UINT8 status;		/* status flag			*/
-	UINT32 mode;		/* mode  CSM / 3SLOT	*/
-	UINT8 prescaler_sel;/* prescaler selector	*/
-	UINT8 fn_h;			/* freq latch			*/
-	int TA;				/* timer a				*/
-	int TAC;			/* timer a counter		*/
-	UINT8 TB;			/* timer b				*/
-	int TBC;			/* timer b counter		*/
+	UINT8	address;	/* address register		*/
+	UINT8	irq;		/* interrupt level		*/
+	UINT8	irqmask;	/* irq mask				*/
+	UINT8	status;		/* status flag			*/
+	UINT32	mode;		/* mode  CSM / 3SLOT	*/
+	UINT8	prescaler_sel;/* prescaler selector	*/
+	UINT8	fn_h;		/* freq latch			*/
+	int		TA;			/* timer a				*/
+	int		TAC;		/* timer a counter		*/
+	UINT8	TB;			/* timer b				*/
+	int		TBC;		/* timer b counter		*/
 	/* local time tables */
-	INT32 dt_tab[8][32];/* DeTune table		*/
+	INT32	dt_tab[8][32];/* DeTune table		*/
 	/* Extention Timer and IRQ handler */
 	FM_TIMERHANDLER	Timer_Handler;
 	FM_IRQHANDLER	IRQ_Handler;
@@ -701,35 +702,6 @@ static INT32	LFO_PM;			/* runtime LFO calculations helper */
 }
 
 
-#if FM_INTERNAL_TIMER
-/* ----- internal timer mode , update timer */
-
-/* ---------- calculate timer A ---------- */
-	#define INTERNAL_TIMER_A(ST,CSM_CH)					\
-	{													\
-		if( ST->TAC &&  (ST->Timer_Handler==0) )		\
-			if( (ST->TAC -= (int)(ST->freqbase*4096)) <= 0 )	\
-			{											\
-				TimerAOver( ST );						\
-				/* CSM mode total level latch and auto key on */	\
-				if( ST->mode & 0x80 )					\
-					CSMKeyControll( CSM_CH );			\
-			}											\
-	}
-/* ---------- calculate timer B ---------- */
-	#define INTERNAL_TIMER_B(ST,step)						\
-	{														\
-		if( ST->TBC && (ST->Timer_Handler==0) )				\
-			if( (ST->TBC -= (int)(ST->freqbase*4096*step)) <= 0 )	\
-				TimerBOver( ST );							\
-	}
-#else /* FM_INTERNAL_TIMER */
-/* external timer mode */
-#define INTERNAL_TIMER_A(ST,CSM_CH)
-#define INTERNAL_TIMER_B(ST,step)
-#endif /* FM_INTERNAL_TIMER */
-
-
 /* status set and IRQ handling */
 INLINE void FM_STATUS_SET(FM_ST *ST,int flag)
 {
@@ -764,6 +736,114 @@ INLINE void FM_IRQMASK_SET(FM_ST *ST,int flag)
 	FM_STATUS_SET(ST,0);
 	FM_STATUS_RESET(ST,0);
 }
+
+/* OPN Mode Register Write */
+INLINE void set_timers( FM_ST *ST, int n, int v )
+{
+	/* b7 = CSM MODE */
+	/* b6 = 3 slot mode */
+	/* b5 = reset b */
+	/* b4 = reset a */
+	/* b3 = timer enable b */
+	/* b2 = timer enable a */
+	/* b1 = load b */
+	/* b0 = load a */
+	ST->mode = v;
+
+	/* reset Timer b flag */
+	if( v & 0x20 )
+		FM_STATUS_RESET(ST,0x02);
+	/* reset Timer a flag */
+	if( v & 0x10 )
+		FM_STATUS_RESET(ST,0x01);
+	/* load b */
+	if( v & 0x02 )
+	{
+		if( ST->TBC == 0 )
+		{
+			ST->TBC = ( 256-ST->TB)<<4;
+			/* External timer handler */
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,ST->TBC,ST->TimerBase);
+		}
+	}
+	else
+	{	/* stop timer b */
+		if( ST->TBC != 0 )
+		{
+			ST->TBC = 0;
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,0,ST->TimerBase);
+		}
+	}
+	/* load a */
+	if( v & 0x01 )
+	{
+		if( ST->TAC == 0 )
+		{
+			ST->TAC = (1024-ST->TA);
+			/* External timer handler */
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,ST->TAC,ST->TimerBase);
+		}
+	}
+	else
+	{	/* stop timer a */
+		if( ST->TAC != 0 )
+		{
+			ST->TAC = 0;
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,0,ST->TimerBase);
+		}
+	}
+}
+
+
+/* Timer A Overflow */
+INLINE void TimerAOver(FM_ST *ST)
+{
+	/* set status (if enabled) */
+	if(ST->mode & 0x04) FM_STATUS_SET(ST,0x01);
+	/* clear or reload the counter */
+	ST->TAC = (1024-ST->TA);
+	if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,0,ST->TAC,ST->TimerBase);
+}
+/* Timer B Overflow */
+INLINE void TimerBOver(FM_ST *ST)
+{
+	/* set status (if enabled) */
+	if(ST->mode & 0x08) FM_STATUS_SET(ST,0x02);
+	/* clear or reload the counter */
+	ST->TBC = ( 256-ST->TB)<<4;
+	if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,1,ST->TBC,ST->TimerBase);
+}
+
+
+#if FM_INTERNAL_TIMER
+/* ----- internal timer mode , update timer */
+
+/* ---------- calculate timer A ---------- */
+	#define INTERNAL_TIMER_A(ST,CSM_CH)					\
+	{													\
+		if( ST->TAC &&  (ST->Timer_Handler==0) )		\
+			if( (ST->TAC -= (int)(ST->freqbase*4096)) <= 0 )	\
+			{											\
+				TimerAOver( ST );						\
+				/* CSM mode total level latch and auto key on */	\
+				if( ST->mode & 0x80 )					\
+					CSMKeyControll( CSM_CH );			\
+			}											\
+	}
+/* ---------- calculate timer B ---------- */
+	#define INTERNAL_TIMER_B(ST,step)						\
+	{														\
+		if( ST->TBC && (ST->Timer_Handler==0) )				\
+			if( (ST->TBC -= (int)(ST->freqbase*4096*step)) <= 0 )	\
+				TimerBOver( ST );							\
+	}
+#else /* FM_INTERNAL_TIMER */
+/* external timer mode */
+#define INTERNAL_TIMER_A(ST,CSM_CH)
+#define INTERNAL_TIMER_B(ST,step)
+#endif /* FM_INTERNAL_TIMER */
+
+
 
 #if FM_BUSY_FLAG_SUPPORT
 INLINE UINT8 FM_STATUS_FLAG(FM_ST *ST)
@@ -1363,7 +1443,6 @@ static void reset_channels( FM_ST *ST , FM_CH *CH , int num )
 	int c,s;
 
 	ST->mode   = 0;	/* normal mode */
-	FM_STATUS_RESET(ST,0xff);
 	ST->TA     = 0;
 	ST->TAC    = 0;
 	ST->TB     = 0;
@@ -1510,81 +1589,7 @@ static void FMCloseTable( void )
 	return;
 }
 
-/* OPN Mode Register Write */
-INLINE void set_timers( FM_ST *ST, int n, int v )
-{
-	/* b7 = CSM MODE */
-	/* b6 = 3 slot mode */
-	/* b5 = reset b */
-	/* b4 = reset a */
-	/* b3 = timer enable b */
-	/* b2 = timer enable a */
-	/* b1 = load b */
-	/* b0 = load a */
-	ST->mode = v;
 
-	/* reset Timer b flag */
-	if( v & 0x20 )
-		FM_STATUS_RESET(ST,0x02);
-	/* reset Timer a flag */
-	if( v & 0x10 )
-		FM_STATUS_RESET(ST,0x01);
-	/* load b */
-	if( v & 0x02 )
-	{
-		if( ST->TBC == 0 )
-		{
-			ST->TBC = ( 256-ST->TB)<<4;
-			/* External timer handler */
-			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,ST->TBC,ST->TimerBase);
-		}
-	}
-	else
-	{	/* stop timer b */
-		if( ST->TBC != 0 )
-		{
-			ST->TBC = 0;
-			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,0,ST->TimerBase);
-		}
-	}
-	/* load a */
-	if( v & 0x01 )
-	{
-		if( ST->TAC == 0 )
-		{
-			ST->TAC = (1024-ST->TA);
-			/* External timer handler */
-			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,ST->TAC,ST->TimerBase);
-		}
-	}
-	else
-	{	/* stop timer a */
-		if( ST->TAC != 0 )
-		{
-			ST->TAC = 0;
-			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,0,ST->TimerBase);
-		}
-	}
-}
-
-/* Timer A Overflow */
-INLINE void TimerAOver(FM_ST *ST)
-{
-	/* set status (if enabled) */
-	if(ST->mode & 0x04) FM_STATUS_SET(ST,0x01);
-	/* clear or reload the counter */
-	ST->TAC = (1024-ST->TA);
-	if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,0,ST->TAC,ST->TimerBase);
-}
-/* Timer B Overflow */
-INLINE void TimerBOver(FM_ST *ST)
-{
-	/* set status (if enabled) */
-	if(ST->mode & 0x08) FM_STATUS_SET(ST,0x02);
-	/* clear or reload the counter */
-	ST->TBC = ( 256-ST->TB)<<4;
-	if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,1,ST->TBC,ST->TimerBase);
-}
 /* CSM Key Controll */
 INLINE void CSMKeyControll(FM_CH *CH)
 {
@@ -2051,7 +2056,7 @@ void YM2203UpdateOne(int num, INT16 *buffer, int length)
 
 	/* YM2203 doesn't have LFO so we must keep these globals at 0 level */
 	LFO_AM = 0;
-    LFO_PM = 0;
+	LFO_PM = 0;
 
 	/* buffering */
 	for (i=0; i < length ; i++)
@@ -2117,10 +2122,10 @@ void YM2203ResetChip(int num)
 	FM_BUSY_CLEAR(&OPN->ST);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
-
 	OPN->eg_timer = 0;
 	OPN->eg_cnt   = 0;
 
+	FM_STATUS_RESET(&OPN->ST, 0xff);
 
 	reset_channels( &OPN->ST , FM2203[num].CH , 3 );
 	/* reset OPerator paramater */
@@ -2280,7 +2285,7 @@ UINT8 YM2203Read(int n,int a)
 {
 	YM2203 *F2203 = &(FM2203[n]);
 	int addr = F2203->OPN.ST.address;
-	int ret = 0;
+	UINT8 ret = 0;
 
 	if( !(a&1) )
 	{	/* status port */
@@ -2360,6 +2365,7 @@ typedef struct
 	YM_DELTAT 	deltaT;				/* Delta-T ADPCM unit	*/
 
     UINT8		flagmask;			/* YM2608 only */
+    UINT8		irqmask;			/* YM2608 only */
 } YM2610;
 
 /* here is the virtual YM2608 */
@@ -3176,24 +3182,26 @@ static unsigned char YM2608_ADPCM_ROM[0x2000] = {
 
 
 
-/* IRQ flag control 0x110 */
-INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
+/* flag enable control 0x110 */
+INLINE void YM2608IRQFlagWrite(FM_OPN *OPN, int n, int v)
 {
 	YM2608 *F2608 = &(FM2608[n]);
 
 	if( v & 0x80 )
 	{	/* Reset IRQ flag */
-		FM_STATUS_RESET(ST,0xff);
+		FM_STATUS_RESET(&OPN->ST, 0xf7); /* don't touch BUFRDY flag otherwise we'd have to call ymdeltat module to set the flag back */
 	}
 	else
-	{	/* Set IRQ flag mask */
+	{	/* Set status flag mask */
 		F2608->flagmask = (~(v&0x1f));
+		FM_IRQMASK_SET(&OPN->ST, (F2608->irqmask & F2608->flagmask) );
 	}
 }
 
-/* compatible mode & IRQ flag Controll Write 0x29 */
-void YM2608IRQMaskWrite(FM_OPN *OPN,int v)
+/* compatible mode & IRQ enable control 0x29 */
+INLINE void YM2608IRQMaskWrite(FM_OPN *OPN, int n, int v)
 {
+	YM2608 *F2608 = &(FM2608[n]);
 	/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
 
 	/* extend 3ch. enable/disable */
@@ -3202,8 +3210,9 @@ void YM2608IRQMaskWrite(FM_OPN *OPN,int v)
 	else
 		OPN->type &= ~TYPE_6CH;	/* OPN mode - 3 FM channels */
 
-	/* IRQ MASK */
-	FM_IRQMASK_SET(&OPN->ST,v&0x1f);
+	/* IRQ MASK store and set */
+	F2608->irqmask = v&0x1f;
+	FM_IRQMASK_SET(&OPN->ST, (F2608->irqmask & F2608->flagmask) );
 }
 
 /* Generate samples for one of the YM2608s */
@@ -3341,7 +3350,7 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 
 		}
 
-		/* timer A controll */
+		/* timer A control */
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
 	INTERNAL_TIMER_B(State,length)
@@ -3363,7 +3372,7 @@ static void YM2608_postload(void)
 		OPNPrescaler_w(&F2608->OPN,1,2);
 		F2608->deltaT.freqbase = F2608->OPN.ST.freqbase;
 		/* IRQ mask / mode */
-		YM2608IRQMaskWrite(&F2608->OPN,F2608->REGS[0x29]);
+		YM2608IRQMaskWrite(&F2608->OPN, num, F2608->REGS[0x29]);
 		/* SSG registers */
 		for(r=0;r<16;r++)
 		{
@@ -3471,6 +3480,9 @@ int YM2608Init(int num, int clock, int rate,
 		/* DELTA-T */
 		FM2608[i].deltaT.memory = (UINT8 *)(pcmrom[i]);
 		FM2608[i].deltaT.memory_size = pcmsize[i];
+
+		/*FM2608[i].deltaT.write_time = 20.0 / clock;*/	/* a single byte write takes 20 cycles of main clock */
+		/*FM2608[i].deltaT.read_time  = 18.0 / clock;*/	/* a single byte read takes 18 cycles of main clock */
 		
 		FM2608[i].deltaT.status_set_handler = YM2608_deltat_status_set;
 		FM2608[i].deltaT.status_reset_handler = YM2608_deltat_status_reset;
@@ -3520,15 +3532,20 @@ void YM2608ResetChip(int num)
 
 	/* status clear */
 	FM_BUSY_CLEAR(&OPN->ST);
-	FM_IRQMASK_SET(&OPN->ST,0x1f);	/* default value for D4-D0 is 1 */
-	OPNWriteMode(OPN,0x27,0x30);	/* mode 0 , timer reset */
 
-	/* default value after reset is:
-		enable only 3 FM channels and enable all the status flags */
-	YM2608IRQMaskWrite(OPN, 0x1f ); /* OPN mode, all flags enabled */
+	/* register 0x29 - default value after reset is:
+		enable only 3 FM channels and enable all the status flags */  
+	YM2608IRQMaskWrite(OPN, num, 0x1f );	/* default value for D4-D0 is 1 */
+
+	/* register 0x10, A1=1 - default value is 1 for D4, D3, D2, 0 for the rest */
+	YM2608IRQFlagWrite(OPN, num, 0x1c );	/* default: enable timer A and B, disable EOS, BRDY and ZERO */
+
+	OPNWriteMode(OPN,0x27,0x30);	/* mode 0 , timer reset */
 
 	OPN->eg_timer = 0;
 	OPN->eg_cnt   = 0;
+
+	FM_STATUS_RESET(&OPN->ST, 0xff);
 
 	reset_channels( &OPN->ST , F2608->CH , 6 );
 	/* reset OPerator paramater */
@@ -3629,7 +3646,7 @@ int YM2608Write(int n, int a,UINT8 v)
 			switch(addr)
 			{
 			case 0x29: 	/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
-				YM2608IRQMaskWrite(OPN,v);
+				YM2608IRQMaskWrite(OPN, n, v);
 				break;
 			default:
 				YM2608UpdateReq(n);
@@ -3672,7 +3689,7 @@ int YM2608Write(int n, int a,UINT8 v)
 		case 0x10:	/* IRQ Flag control */
 			if( addr == 0x10 )
 			{
-				YM2608IRQFlagWrite(&(OPN->ST),n,v);
+				YM2608IRQFlagWrite(OPN, n, v);
 			}
 			break;
 		default:
@@ -3681,11 +3698,12 @@ int YM2608Write(int n, int a,UINT8 v)
 	}
 	return OPN->ST.irq;
 }
+
 UINT8 YM2608Read(int n,int a)
 {
 	YM2608 *F2608 = &(FM2608[n]);
 	int addr = F2608->OPN.ST.address;
-	int ret = 0;
+	UINT8 ret = 0;
 
 	switch( a&3 ){
 	case 0:	/* status 0 : YM2203 compatible */
@@ -3695,12 +3713,12 @@ UINT8 YM2608Read(int n,int a)
 
 	case 1:	/* status 0, ID  */
 		if( addr < 16 ) ret = SSGRead(n);
-		else if(addr == 0xff) ret = 0x00; /* ID code */
+		else if(addr == 0xff) ret = 0x01; /* ID code */
 		break;
 
 	case 2:	/* status 1 : status 0 + ADPCM status */
-		/* BUSY:x:PCMBUSY:ZERO:BRDY:EOS:FLAGB:FLAGA */
-		ret = (FM_STATUS_FLAG(&F2608->OPN.ST) & (F2608->flagmask|0x80) ) | ((F2608->deltaT.PCM_BSY & 1)<<5) ;
+		/* BUSY : x : PCMBUSY : ZERO : BRDY : EOS : FLAGB : FLAGA */
+		ret = (FM_STATUS_FLAG(&F2608->OPN.ST) & (F2608->flagmask|0x80)) | ((F2608->deltaT.PCM_BSY & 1)<<5) ;
 		break;
 
 	case 3:
@@ -3709,7 +3727,7 @@ UINT8 YM2608Read(int n,int a)
 			ret = YM_DELTAT_ADPCM_Read(&F2608->deltaT);
 		}
 		else
-        {
+		{
 			if(addr == 0x0f)
 			{
 				logerror("YM2608 A/D convertion is accessed but not implemented !\n");
@@ -3725,21 +3743,36 @@ int YM2608TimerOver(int n,int c)
 {
 	YM2608 *F2608 = &(FM2608[n]);
 
-	if( c )
-	{	/* Timer B */
-		TimerBOver( &(F2608->OPN.ST) );
-	}
-	else
-	{	/* Timer A */
-		YM2608UpdateReq(n);
-		/* timer update */
-		TimerAOver( &(F2608->OPN.ST) );
-		/* CSM mode key,TL controll */
-		if( F2608->OPN.ST.mode & 0x80 )
-		{	/* CSM mode total level latch and auto key on */
-			CSMKeyControll( &(F2608->CH[2]) );
+    switch(c)
+	{
+#if 0
+	case 2:
+		{	/* BUFRDY flag */
+			YM_DELTAT_BRDY_callback( &F2608->deltaT );
 		}
-	}
+		break;
+#endif
+	case 1:
+		{	/* Timer B */
+			TimerBOver( &(F2608->OPN.ST) );
+		}
+		break;
+	case 0:
+		{	/* Timer A */
+			YM2608UpdateReq(n);
+			/* timer update */
+			TimerAOver( &(F2608->OPN.ST) );
+			/* CSM mode key,TL controll */
+			if( F2608->OPN.ST.mode & 0x80 )
+			{	/* CSM mode total level latch and auto key on */
+				CSMKeyControll( &(F2608->CH[2]) );
+			}
+		}
+		break;
+	default:
+		break;
+    }
+
 	return FM2608->OPN.ST.irq;
 }
 
@@ -4202,6 +4235,8 @@ void YM2610ResetChip(int num)
 	OPN->eg_timer = 0;
 	OPN->eg_cnt   = 0;
 
+	FM_STATUS_RESET(&OPN->ST, 0xff);
+
 	reset_channels( &OPN->ST , F2610->CH , 6 );
 	/* reset OPerator paramater */
 	for(i = 0xb6 ; i >= 0xb4 ; i-- )
@@ -4319,7 +4354,7 @@ int YM2610Write(int n, int a, UINT8 v)
 
 					YM_DELTAT_ADPCM_Write(&F2610->deltaT,addr-0x10,val);
 				}
-            	break;
+				break;
 
 			case 0x1c: /*  FLAG CONTROL : Extend Status Clear/Mask */
 				{
@@ -4374,6 +4409,7 @@ int YM2610Write(int n, int a, UINT8 v)
 	}
 	return OPN->ST.irq;
 }
+
 UINT8 YM2610Read(int n,int a)
 {
 	YM2610 *F2610 = &(FM2610[n]);
@@ -4696,6 +4732,7 @@ void YM2612ResetChip(int num)
 	OPN->eg_timer = 0;
 	OPN->eg_cnt   = 0;
 
+	FM_STATUS_RESET(&OPN->ST, 0xff);
 
 	reset_channels( &OPN->ST , &F2612->CH[0] , 6 );
 	for(i = 0xb6 ; i >= 0xb4 ; i-- )
@@ -4717,7 +4754,7 @@ void YM2612ResetChip(int num)
 /* n = number  */
 /* a = address */
 /* v = value   */
-int YM2612Write(int n, int a,UINT8 v)
+int YM2612Write(int n, int a, UINT8 v)
 {
 	YM2612 *F2612 = &(FM2612[n]);
 	int addr;
@@ -4784,6 +4821,7 @@ int YM2612Write(int n, int a,UINT8 v)
 	}
 	return F2612->OPN.ST.irq;
 }
+
 UINT8 YM2612Read(int n,int a)
 {
 	YM2612 *F2612 = &(FM2612[n]);

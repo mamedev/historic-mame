@@ -1027,6 +1027,8 @@ static MACHINE_DRIVER_START( armora )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 1024, 0, 772)
+        /* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, armora_samples_interface)
 MACHINE_DRIVER_END
 
 
@@ -1050,6 +1052,14 @@ static MACHINE_DRIVER_START( demon )
 	MDRV_VISIBLE_AREA(0, 1024, 0, 800)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( sundance )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, sundance_samples_interface)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cincolor )
 
@@ -1308,7 +1318,7 @@ static DRIVER_INIT( speedfrk )
 static DRIVER_INIT( sundance )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
-	cinemat_sound_handler = 0;
+	cinemat_sound_handler = sundance_sound_w;
 	artwork_set_overlay(sundance_overlay);
 
 	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, sundance_input_port_1_r);
@@ -1325,13 +1335,14 @@ static DRIVER_INIT( warrior )
 static DRIVER_INIT( armora )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
-	cinemat_sound_handler = 0;
+	cinemat_sound_handler = armora_sound_w;
 }
+
 
 static DRIVER_INIT( armorar )
 {
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_sound_handler = 0;
+	cinemat_sound_handler = armora_sound_w;
 }
 
 
@@ -1395,11 +1406,11 @@ GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ROT0,   "bootleg", 
 GAMEX(1979, tailg,    0,       cinemat,  tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
 GAMEX(1979, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
-GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NO_SOUND )
+GAME(1979, sundance, 0,       sundance,  sundance, sundance, ROT270, "Cinematronics", "Sundance" )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
-GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
-GAMEX(1980, armorap,  armora,  armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )
-GAMEX(1980, armorar,  armora,  armora,   armora,   armorar,  ROT0,  "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_NO_SOUND )
+GAME(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack")
+GAME(1980, armorap,  armora,  armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)")
+GAME(1980, armorar,  armora,  armora,   armora,   armorar,  ROT0,  "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)" )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1982, demon,    0,       demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
 GAMEX(1981, wotw,     0,       cincolor, wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )

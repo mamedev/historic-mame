@@ -19,13 +19,17 @@
 #include "image.h"
 #endif
 
+/* Quick fix to allow compilation with win32api 2.4 */
+#undef INVALID_FILE_ATTRIBUTES
+#undef INVALID_SET_FILE_POINTER
+
 /* Older versions of Platform SDK don't define these */
 #ifndef INVALID_FILE_ATTRIBUTES
-#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
 
 #ifndef INVALID_SET_FILE_POINTER
-#define INVALID_SET_FILE_POINTER 0xffffffff
+#define INVALID_SET_FILE_POINTER ((DWORD)-1)
 #endif
 
 #define VERBOSE				0

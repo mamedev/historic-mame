@@ -241,6 +241,8 @@ static UINT32 recompile_cop0(struct drccore *drc, UINT32 pc, UINT32 op);
 static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op);
 static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op);
 
+static void update_cycle_counting(void);
+
 
 
 /*###################################################################################################
@@ -451,7 +453,8 @@ void mips3drc_set_options(UINT8 cpunum, UINT32 opts)
 
 int mips3_execute(int cycles)
 {
-//printf("mips3_execute (PC=%08X)\n", mips3.pc);
+	/* update the cycle timing */
+	update_cycle_counting();
 
 	/* count cycles and interrupt cycles */
 	mips3_icount = cycles;
@@ -517,22 +520,22 @@ static void mips3drc_reset(struct drccore *drc)
 	update_cycle_counting
 ------------------------------------------------------------------*/
 
-static UINT32 update_cycle_counting(void)
+static void update_cycle_counting(void)
 {
-	UINT32 count = (activecpu_gettotalcycles64() - mips3.count_zero_time) / 2;
-	UINT32 compare = mips3.cpr[0][COP0_Compare];
-	UINT32 cyclesleft = compare - count;
-	double newtime;
-
-//printf("Update: count=%08X  compare=%08X  delta=%08X  SR=%08X  time=%f\n", count, compare, cyclesleft, (UINT32)SR, TIME_IN_CYCLES(((UINT64)cyclesleft * 2), cpu_getactivecpu()));
-
 	/* modify the timer to go off */
-	newtime = TIME_IN_CYCLES(((UINT64)cyclesleft * 2), cpu_getactivecpu());
-	if (mips3.cpr[0][COP0_Status] & 0x8000)
-		timer_adjust(mips3.compare_int_timer, newtime, cpu_getactivecpu(), 0);
+	if ((mips3.cpr[0][COP0_Status] & 0x8000) && mips3.cpr[0][COP0_Compare] != 0xffffffff)
+	{
+		UINT32 count = (activecpu_gettotalcycles64() - mips3.count_zero_time) / 2;
+		UINT32 compare = mips3.cpr[0][COP0_Compare];
+		UINT32 cyclesleft = compare - count;
+		double newtime = TIME_IN_CYCLES(((UINT64)cyclesleft * 2), cpu_getactivecpu());
+		
+		/* due to accuracy issues, don't bother setting timers unless they're for less than 100msec */
+		if (newtime < TIME_IN_MSEC(100))
+			timer_adjust(mips3.compare_int_timer, newtime, cpu_getactivecpu(), 0);
+	}
 	else
 		timer_adjust(mips3.compare_int_timer, TIME_NEVER, cpu_getactivecpu(), 0);
-	return count;
 }
 
 
@@ -3041,7 +3044,7 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 			_pop_r32(REG_EAX);														// pop	eax
 			_cdq();																	// cdq
 			_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);							// mov	[hi],edx:eax
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(4,4);
 
 		case 0x19:	/* MULTU */
 			_mov_r32_m32abs(REG_ECX, &mips3.r[RTREG]);								// mov	ecx,[rtreg].lo
@@ -3053,7 +3056,7 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 			_pop_r32(REG_EAX);														// pop	eax
 			_cdq();																	// cdq
 			_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);							// mov	[hi],edx:eax
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(4,4);
 
 		case 0x1a:	/* DIV */
 			if (RTREG != 0)
@@ -3072,7 +3075,7 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 				_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);						// mov	[hi],edx:eax
 				_resolve_link(&link1);												// skip:
 			}
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(36,4);
 			
 		case 0x1b:	/* DIVU */
 			if (RTREG != 0)
@@ -3091,7 +3094,7 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 				_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);						// mov	[hi],edx:eax
 				_resolve_link(&link1);												// skip:
 			}
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(36,4);
 
 		case 0x1c:	/* DMULT */
 			_mov_r64_m64abs(REG_EDX, REG_EAX, &mips3.r[RSREG]);						// mov	edx:eax,[rsreg]
@@ -3152,7 +3155,7 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 			_mov_m64abs_r64(&mips3.lo, REG_EBX, REG_EAX);							// mov	[lo],ebx:eax
 			_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_ECX);							// mov	[lo],edx:ecx
 			_resolve_link(&link3);													// noflip:
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(8,4);
 
 		case 0x1d:	/* DMULTU */
 			_mov_r32_m32abs(REG_EAX, LO(&mips3.r[RSREG]));							// mov	eax,[rsreg].lo
@@ -3178,21 +3181,21 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 			_adc_r32_imm(REG_EDX, 0);												// adc	edx,0
 			_mov_m32abs_r32(LO(&mips3.hi), REG_EBX);								// mov	[hi].lo,ebx
 			_mov_m32abs_r32(HI(&mips3.hi), REG_EDX);								// mov	[hi].hi,edx
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(8,4);
 					
 		case 0x1e:	/* DDIV */
 			_push_imm(&mips3.r[RTREG]);												// push	[rtreg]
 			_push_imm(&mips3.r[RSREG]);												// push	[rsreg]
 			_call((void *)ddiv);													// call ddiv
 			_add_r32_imm(REG_ESP, 8);												// add	esp,8
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(68,4);
 
 		case 0x1f:	/* DDIVU */
 			_push_imm(&mips3.r[RTREG]);												// push	[rtreg]
 			_push_imm(&mips3.r[RSREG]);												// push	[rsreg]
 			_call((void *)ddivu);													// call ddivu
 			_add_r32_imm(REG_ESP, 8);												// add	esp,8
-			return RECOMPILE_SUCCESSFUL_CP(1,4);
+			return RECOMPILE_SUCCESSFUL_CP(68,4);
 
 		case 0x20:	/* ADD */
 			if (RSREG != 0 && RTREG != 0)
@@ -4143,19 +4146,29 @@ static UINT32 recompile_set_cop0_reg(struct drccore *drc, UINT8 reg)
 
 static UINT32 recompile_get_cop0_reg(struct drccore *drc, UINT8 reg)
 {
+	struct linkdata link1;
+
 	switch (reg)
 	{
 		case COP0_Count:
+			_sub_r32_imm(REG_EBP, 24);												// sub  ebp,24
+			_jcc_short_link(COND_NS, &link1);										// jns	notneg
+			_xor_r32_r32(REG_EBP, REG_EBP);											// xor	ebp,ebp
+			_resolve_link(&link1);													// notneg:
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov	[mips3_icount],ebp
 			_call((void *)activecpu_gettotalcycles64);								// call	activecpu_gettotalcycles64
 			_sub_r32_m32abs(REG_EAX, LO(&mips3.count_zero_time));					// sub	eax,[mips3.count_zero_time+0]
 			_sbb_r32_m32abs(REG_EDX, HI(&mips3.count_zero_time));					// sbb	edx,[mips3.count_zero_time+4]
 			_shrd_r32_r32_imm(REG_EAX, REG_EDX, 1);									// shrd	eax,edx,1
-			return RECOMPILE_SUCCESSFUL_CP(100,4);
+			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		case COP0_Cause:
+			_sub_r32_imm(REG_EBP, 25);												// sub  ebp,24
+			_jcc_short_link(COND_NS, &link1);										// jns	notneg
+			_xor_r32_r32(REG_EBP, REG_EBP);											// xor	ebp,ebp
+			_resolve_link(&link1);													// notneg:
 			_mov_r32_m32abs(REG_EAX, &mips3.cpr[0][reg]);							// mov	eax,[mips3.cpr[0][reg]]
-			return RECOMPILE_SUCCESSFUL_CP(100,4);
+			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		default:
 			_mov_r32_m32abs(REG_EAX, &mips3.cpr[0][reg]);							// mov	eax,[mips3.cpr[0][reg]]
@@ -4358,6 +4371,16 @@ static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op)
 			}
 			else
 				_mov_m64abs_imm32(&mips3.cpr[1][RDREG], 0);							// mov	[mips3.cpr[1][RDREG]],0
+			if (RDREG == 31)
+			{
+				_mov_r32_m32abs(REG_EAX, LO(&mips3.cpr[1][RDREG]));					// mov	eax,[mips3.cpr[1][RDREG]]
+				_and_r32_imm(REG_EAX, 3);											// and	eax,3
+				_test_r32_imm(REG_EAX, 1);											// test eax,1
+				_jcc_near_link(COND_Z, &link1);										// jz	skip
+				_xor_r32_imm(REG_EAX, 2);											// xor  eax,2
+				_resolve_link(&link1);												// skip:
+				drc_append_set_fp_rounding(drc, REG_EAX);							// set_rounding(EAX)
+			}
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		case 0x05:	/* DMTCz */
@@ -4649,75 +4672,83 @@ static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op)
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x08:
-					drc_append_set_fp_rounding(drc, FPRND_NEAR);
+					drc_append_set_temp_fp_rounding(drc, FPRND_NEAR);
 					if (IS_SINGLE(op))	/* ROUND.L.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* ROUND.L.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m64abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x09:
-					drc_append_set_fp_rounding(drc, FPRND_CHOP);
+					drc_append_set_temp_fp_rounding(drc, FPRND_CHOP);
 					if (IS_SINGLE(op))	/* TRUNC.L.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* TRUNC.L.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m64abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0a:
-					drc_append_set_fp_rounding(drc, FPRND_UP);
+					drc_append_set_temp_fp_rounding(drc, FPRND_UP);
 					if (IS_SINGLE(op))	/* CEIL.L.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* CEIL.L.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m64abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0b:
-					drc_append_set_fp_rounding(drc, FPRND_DOWN);
+					drc_append_set_temp_fp_rounding(drc, FPRND_DOWN);
 					if (IS_SINGLE(op))	/* FLOOR.L.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* FLOOR.L.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m64abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0c:
-					drc_append_set_fp_rounding(drc, FPRND_NEAR);
+					drc_append_set_temp_fp_rounding(drc, FPRND_NEAR);
 					if (IS_SINGLE(op))	/* ROUND.W.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* ROUND.W.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m32abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0d:
-					drc_append_set_fp_rounding(drc, FPRND_CHOP);
+					drc_append_set_temp_fp_rounding(drc, FPRND_CHOP);
 					if (IS_SINGLE(op))	/* TRUNC.W.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* TRUNC.W.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m32abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0e:
-					drc_append_set_fp_rounding(drc, FPRND_UP);
+					drc_append_set_temp_fp_rounding(drc, FPRND_UP);
 					if (IS_SINGLE(op))	/* CEIL.W.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* CEIL.W.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m32abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x0f:
-					drc_append_set_fp_rounding(drc, FPRND_DOWN);
+					drc_append_set_temp_fp_rounding(drc, FPRND_DOWN);
 					if (IS_SINGLE(op))	/* FLOOR.W.S */
 						_fld_m32abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					else				/* FLOOR.W.D */
 						_fld_m64abs(&mips3.cpr[1][FSREG]);							// fld	[fsreg]
 					_fistp_m32abs(&mips3.cpr[1][FDREG]);							// fistp [fdreg]
+					drc_append_restore_fp_rounding(drc);
 					return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 				case 0x11:	/* R5000 */
@@ -5354,7 +5385,7 @@ unsigned mips3_get_reg(int regnum)
 		case MIPS3_SR:		return mips3.cpr[0][COP0_Status];
 		case MIPS3_EPC:		return mips3.cpr[0][COP0_EPC];
 		case MIPS3_CAUSE:	return mips3.cpr[0][COP0_Cause];
-		case MIPS3_COUNT:	return mips3.cpr[0][COP0_Count];
+		case MIPS3_COUNT:	return ((activecpu_gettotalcycles64() - mips3.count_zero_time) / 2);
 		case MIPS3_COMPARE:	return mips3.cpr[0][COP0_Compare];
 
 		case MIPS3_R0:		return (UINT32)mips3.r[0];

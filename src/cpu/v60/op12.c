@@ -8,7 +8,7 @@
  *   when an overflow occurs
  *
  * Unimplemented opcodes:
- * LDTASK, ROTC, STTASK, UPDATE, UPDPTE
+ * ROTC, UPDATE, UPDPTE
  */
 
 UINT32 f12Op1, f12Op2;
@@ -751,6 +751,49 @@ UINT32 opLDPR(void)
 		logerror("Invalid operand on LDPR PC=%x\n", PC);
 		abort();
 	}
+	F12END();
+}
+
+UINT32 opLDTASK(void)
+{
+	int i;
+	F12DecodeOperands(ReadAMAddress,2,ReadAM,2);
+
+	TCB = f12Op2;
+
+	UPDATEPSW();
+	v60WritePSW(PSW & 0xefffffff);
+
+	TKCW = MemRead32(f12Op2);
+	f12Op2 += 4;
+	if(SYCW & 0x100) {
+		L0SP = MemRead32(f12Op2);
+		f12Op2 += 4;
+	}
+	if(SYCW & 0x200) {
+		L1SP = MemRead32(f12Op2);
+		f12Op2 += 4;
+	}
+	if(SYCW & 0x400) {
+		L2SP = MemRead32(f12Op2);
+		f12Op2 += 4;
+	}
+	if(SYCW & 0x800) {
+		L3SP = MemRead32(f12Op2);
+		f12Op2 += 4;
+	}
+
+	v60ReloadStack();
+
+	// 31 registers supported, _not_ 32
+	for(i=0; i<31; i++)
+		if(f12Op1 & (1<<i)) {
+			v60.reg[i] = MemRead32(f12Op2);
+			f12Op2 += 4;
+		}
+
+	// #### Ignore the virtual addressing crap.
+
 	F12END();
 }
 

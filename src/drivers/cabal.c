@@ -231,12 +231,14 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0x4001, 0x4001, seibu_irq_clear_w },
 	{ 0x4002, 0x4002, seibu_rst10_ack_w },
 	{ 0x4003, 0x4003, seibu_rst18_ack_w },
-//	{ 0x4005, 0x4006, 0x401a  adpcm 1
+	{ 0x4005, 0x4006, seibu_adpcm_adr_1_w },
+	{ 0x401a, 0x401a, seibu_adpcm_ctl_1_w },
 	{ 0x4008, 0x4008, YM2151_register_port_0_w },
 	{ 0x4009, 0x4009, YM2151_data_port_0_w },
 	{ 0x4018, 0x4019, seibu_main_data_w },
 	{ 0x401b, 0x401b, seibu_coin_w },
-//	{ 0x6005, 0x6006, 0x601a  adpcm 2
+	{ 0x6005, 0x6006, seibu_adpcm_adr_2_w },
+	{ 0x601a, 0x601a, seibu_adpcm_ctl_2_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -327,7 +329,7 @@ INPUT_PORTS_START( cabal )
 	PORT_DIPSETTING(      0x0800, "30k 100k" )
 	PORT_DIPSETTING(      0x0400, "50k 150k" )
 	PORT_DIPSETTING(      0x0000, "70K" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x3000, 0x2000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x3000, "Easy" )
 	PORT_DIPSETTING(      0x2000, "Normal" )
 	PORT_DIPSETTING(      0x1000, "Hard" )
@@ -421,7 +423,7 @@ INPUT_PORTS_START( cabalbl )
 	PORT_DIPSETTING(      0x0800, "30k 100k" )
 	PORT_DIPSETTING(      0x0400, "50k 150k" )
 	PORT_DIPSETTING(      0x0000, "70K" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x3000, 0x2000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x3000, "Easy" )
 	PORT_DIPSETTING(      0x2000, "Normal" )
 	PORT_DIPSETTING(      0x1000, "Hard" )
@@ -531,15 +533,7 @@ static struct YM2151interface cabalbl_ym2151_interface =
 	{ irqhandler },
 };
 
-static struct ADPCMinterface adpcm_interface =
-{
-	2,			/* total number of ADPCM decoders in the machine */
-	8000,		/* playback frequency */
-	REGION_SOUND1, /* memory region where the samples come from */
-	{40,40}
-};
-
-
+SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
 
 static MACHINE_DRIVER_START( cabal )
 
@@ -570,6 +564,7 @@ static MACHINE_DRIVER_START( cabal )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cabalbl )
@@ -714,9 +709,10 @@ ROM_END
 static DRIVER_INIT( cabal )
 {
 	seibu_sound_decrypt(REGION_CPU2,0x2000);
+	seibu_adpcm_decrypt(REGION_SOUND1);
 }
 
 
-GAMEX( 1988, cabal,   0,     cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, cabal2,  cabal, cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1988, cabal,   0,     cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)" )
+GAME( 1988, cabal2,  cabal, cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)" )
 GAMEX( 1988, cabalbl, cabal, cabalbl, cabalbl, 0,     ROT0, "bootleg", "Cabal (bootleg)", GAME_IMPERFECT_SOUND )

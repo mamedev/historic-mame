@@ -765,6 +765,15 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 		scalex = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_2_1) ? 2 : 1;
 		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
 
+		if(Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
+		{
+			int temp;
+
+			temp = scalex;
+			scalex = scaley;
+			scaley = temp;
+		}
+
 		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
 		if (copy)
 		{

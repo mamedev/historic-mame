@@ -20,6 +20,13 @@ INTERRUPT_GEN( asteroid_interrupt )
 		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
+INTERRUPT_GEN( asterock_interrupt )
+{
+	/* Turn off interrupts if self-test is enabled */
+	if ((readinputport(0) & 0x80))
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+}
+
 INTERRUPT_GEN( llander_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
@@ -62,6 +69,28 @@ READ_HANDLER( asteroib_IN0_r )
 //		res |= 0x02;
 	if (!avgdvg_done())
 		res |= 0x80;
+
+	return res;
+}
+
+READ_HANDLER( asterock_IN0_r )
+{
+	int res;
+	int bitmask;
+
+	res=readinputport(0);
+
+	bitmask = (1 << offset);
+
+	if (activecpu_gettotalcycles() & 0x100)
+		res |= 0x04;
+	if (!avgdvg_done())
+		res |= 0x01;
+
+	if (res & bitmask)
+		res = ~0x80;
+	else
+		res = 0x80;
 
 	return res;
 }
