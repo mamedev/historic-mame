@@ -42,20 +42,22 @@ int ADPCM_playing (int num);
 
 /* an interface for the OKIM6295 and similar chips */
 
-#define MAX_OKIM6295 2
+#define MAX_OKIM6295 			2
+#define MAX_OKIM6295_VOICES		4
+#define ALL_VOICES				-1
 
 struct OKIM6295interface
 {
-	int num;                  /* total number of chips */
-	int frequency;            /* playback frequency */
-	int region[MAX_OKIM6295]; /* memory region where the sample ROM lives */
-	int mixing_level[MAX_OKIM6295]; /* master volume */
+	int num;                  		/* total number of chips */
+	int frequency[MAX_OKIM6295];	/* playback frequency */
+	int region[MAX_OKIM6295];		/* memory region where the sample ROM lives */
+	int mixing_level[MAX_OKIM6295];	/* master volume */
 };
 
 int OKIM6295_sh_start (const struct MachineSound *msound);
 void OKIM6295_sh_stop (void);
 void OKIM6295_sh_update (void);
-void OKIM6295_set_bank_base (int which, int base);
+void OKIM6295_set_bank_base (int which, int voice, int base);	/* set voice to ALL_VOICES to set all banks at once */
 
 int OKIM6295_status_0_r (int offset);
 int OKIM6295_status_1_r (int offset);

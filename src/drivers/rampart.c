@@ -428,7 +428,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
-	7159160 / 1024,		/* ~7000 Hz */
+	{ 7159160 / 1024} ,	/* ~7000 Hz */
 	{ 2 },       		/* memory region 2 */
 	{ 100 }
 };
@@ -436,10 +436,10 @@ static struct OKIM6295interface okim6295_interface =
 
 static struct YM2413interface ym2413_interface =
 {
-    1,					/* 1 chip */
-    7159160 / 2,		/* ~7MHz */
-    { 100 },			/* Volume */
-    NULL				/* IRQ handler */
+	1,					/* 1 chip */
+	7159160 / 2,		/* ~7MHz */
+	{ 75 },				/* Volume */
+	{ 0 }				/* IRQ handler */
 };
 
 

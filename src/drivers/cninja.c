@@ -58,6 +58,7 @@ void cninja_pf4_rowscroll_w(int offset,int data);
 int cninja_pf3_rowscroll_r(int offset);
 
 void cninja_palette_24bit_w(int offset,int data);
+void cninja_update_sprites(int offset, int data);
 
 static int loopback[0x100];
 static unsigned char *cninja_ram;
@@ -162,7 +163,7 @@ static struct MemoryWriteAddress cninja_writemem[] =
 	{ 0x190000, 0x190007, MWA_NOP }, /* IRQ Ack + DMA flags? */
 	{ 0x19c000, 0x19dfff, cninja_palette_24bit_w, &paletteram },
 	{ 0x1a4000, 0x1a47ff, MWA_BANK2, &spriteram },
-	{ 0x1b4000, 0x1b4001, MWA_NOP }, /* DMA flag to graphics chips? */
+	{ 0x1b4000, 0x1b4001, cninja_update_sprites }, /* DMA flag */
 	{ 0x1bc000, 0x1bc0ff, cninja_loopback_w }, /* Protection writes */
 
 	{ 0x308000, 0x308fff, MWA_NOP }, /* Bootleg only */
@@ -449,7 +450,7 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state);
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static void sound_irq2(int state)
@@ -460,14 +461,14 @@ static void sound_irq2(int state)
 static void sound_bankswitch_w(int offset,int data)
 {
 	/* the second OKIM6295 ROM is bank switched */
-	OKIM6295_set_bank_base(1,(data & 1) * 0x40000);
+	OKIM6295_set_bank_base(1, ALL_VOICES, (data & 1) * 0x40000);
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Accurate */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
+	{ YM3012_VOL(45,MIXER_PAN_CENTER,45,MIXER_PAN_CENTER) },
 	{ sound_irq },
 	{ sound_bankswitch_w }
 };
@@ -483,9 +484,9 @@ static struct YM2151interface ym2151_interface2 =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	8000,           /* 8000Hz frequency */
+	{ 8055, 16110 },/* Chips are different frequencies */
 	{ 3,4 },        /* memory regions 3 & 4 */
-	{ 40,20 }
+	{ 40,25 }
 };
 
 /**********************************************************************************/
@@ -520,7 +521,7 @@ static struct MachineDriver cninja_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	cninja_vh_start,
 	cninja_vh_stop,
@@ -574,7 +575,7 @@ static struct MachineDriver stoneage_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	cninja_vh_start,
 	cninja_vh_stop,
@@ -783,10 +784,6 @@ static void cninja_patch(void)
 			}
 		}
 	}
-
-	/* Remove this bit later.. */
-	RAM = Machine->memory_region[2];
-	RAM[0x1d6]=0xea; /* NOP out CLI */
 }
 
 /**********************************************************************************/

@@ -237,7 +237,6 @@ static void MSM5205_set_timer(int num,int select)
 void MSM5205_sh_reset(void)
 {
 	int i;
-	static int priscaler[4] = {96,48,64,0};
 
 	/* bail if we're not emulating sound */
 	if (Machine->sample_rate == 0)

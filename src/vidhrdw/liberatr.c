@@ -342,7 +342,7 @@ void liberator_vh_stop(void)
 static void
 lib_init_planet()
 {
-	unsigned long	i, addr, cc, lg, misc, fsg, lgs, lts, x, nsegs, maxnsegs=0, totalnsegs=0, strt_scg ;
+	unsigned long	i, addr, cc, lg, misc, fsg, lgs, lts, x=0, nsegs, maxnsegs=0, totalnsegs=0, strt_scg ;
 	unsigned long	x_a[32],cc_a[32],fsg_a[32] ;
 	unsigned long	startlg, vdl, scg;
 	unsigned char	*buf ;

@@ -209,9 +209,6 @@ static void lazercmd_hardware_w(int offset, int data)
 
 static int lazercmd_hardware_r(int offset)
 {
-	static int last_offset = 0;
-	static int last_data = 0;
-	static int last_1f02 = 0;
 	static int old_port_3 = 0;
 	int data = 0;
 

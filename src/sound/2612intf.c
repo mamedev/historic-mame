@@ -24,8 +24,6 @@ extern unsigned char No_FM;
 
 static int stream[MAX_2612];
 
-static FMSAMPLE *Buf[YM2612_NUMBUF];
-
 /* Global Interface holder */
 static const struct YM2612interface *intf;
 

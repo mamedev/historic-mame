@@ -186,14 +186,14 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES+bank];
 
 
-	int debug_sprites = keyboard_key_pressed( KEYCODE_X );
+	int debug_sprites = keyboard_pressed( KEYCODE_X );
 	int i;
 
 	for( i=0; i<0x200; i++ ){
 		int tile_number = mnchmobl_sprite_tile[i];
 		int sx = mnchmobl_sprite_xpos[i];
 		int attributes = mnchmobl_sprite_attr[i];
-		int flag = sx&0x01;
+//		int flag = sx&0x01;
 		int sy = (i/64)*32;
 
 		sy += (attributes>>2)&0x1f;
@@ -239,16 +239,16 @@ void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap );
 	draw_status( bitmap );
 
-//	if( keyboard_key_pressed( KEYCODE_Q ) ){
+//	if( keyboard_pressed( KEYCODE_Q ) ){
 //		FILE *f = fopen( "munch.ram", "wb" );
 //		if( f ){
 //			fwrite( &Machine->memory_region[0][0], 0x10000, 1, f );
 //			fclose( f );
 //		}
-//		while( keyboard_key_pressed( KEYCODE_Q ) ){};
+//		while( keyboard_pressed( KEYCODE_Q ) ){};
 //	}
 
-	if( keyboard_key_pressed( KEYCODE_V ) ){ /* debug code: display video registers */
+	if( keyboard_pressed( KEYCODE_V ) ){ /* debug code: display video registers */
 		char digit[16] = "0123456789abcdef";
 		int i;
 		for( i=0; i<12; i++ ){

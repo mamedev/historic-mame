@@ -286,12 +286,10 @@ static void nemesis_drawgfx_zoomup(struct osd_bitmap *dest,const struct GfxEleme
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scale)
 {
-	int ox,oy,ex,ey,y,start,dy;
+	int ex,ey,y,start,dy;
 	const unsigned char *sd;
-	unsigned char *bm,*bme;
+	unsigned char *bm;
 	int col;
-	int *sd4;
-	int trans4,col4;
 	struct rectangle myclip;
 
 	int dda_x=0;
@@ -493,12 +491,10 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scale)
 {
-	int ox,oy,ex,ey,y,start,dy;
+	int ex,ey,y,start,dy;
 	const unsigned char *sd;
-	unsigned char *bm,*bme;
+	unsigned char *bm;
 	int col;
-	int *sd4;
-	int trans4,col4;
 	struct rectangle myclip;
 
 	int dda_x=0;
@@ -714,7 +710,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	int sy;	/* sprite Y-pos */
 	int code;	/* start of sprite in obj RAM */
 	int color;	/* color of the sprite */
-	int active;	/* sprite on */
 	int flipx,flipy;
 	int zoom;
 	int char_type;

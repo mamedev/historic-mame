@@ -420,7 +420,6 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 	const char *symbol, *src;
 	char *ixy, *dst;
 	unsigned PC = pc;
-	int size;
 	INT8 offset = 0;
 	UINT8 op, op1;
 	UINT16 ea = 0, xy = 0;

@@ -48,7 +48,6 @@ int galpanic_interrupt(void)
 void galpanic_6295_bankswitch_w(int offset,int data)
 {
 	static unsigned char bank[2];
-	int bankaddress;
 	unsigned char *RAM = Machine->memory_region[2];
 
 
@@ -192,8 +191,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
-	12000,          /* 12000Hz frequency */
+	1,                  /* 1 chip */
+	{ 12000 },          /* 12000Hz frequency */
 	{ 2 },              /* memory region 2 */
 	{ 100 }
 };

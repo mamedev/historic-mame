@@ -116,9 +116,6 @@ static void sharedram_w(int offset,int data)
 
 int tp84_sh_timer_r(int offset)
 {
-	int timer;
-
-
 	/* main xtal 14.318MHz, divided by 4 to get the CPU clock, further */
 	/* divided by 2048 to get this timer */
 	/* (divide by (2048/2), and not 1024, because the CPU cycle counter is */

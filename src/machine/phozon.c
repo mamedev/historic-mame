@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 unsigned char *phozon_snd_sharedram;
 unsigned char *phozon_spriteram;

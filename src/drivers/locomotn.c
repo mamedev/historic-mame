@@ -456,11 +456,13 @@ ROM_START( locomotn_rom )
 	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-	ROM_LOAD( "10g",          0x2000, 0x0100, 0x00000000 ) /* dots */
+	ROM_LOAD( "5.bpr",        0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots */
 
-	ROM_REGION(0x0120)	/* PROMs */
+	ROM_REGION(0x0160)	/* PROMs */
 	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
@@ -476,12 +478,13 @@ ROM_START( cottong_rom )
 	ROM_REGION_DISPOSE(0x2100) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c5",           0x0000, 0x1000, 0x992d079c )
 	ROM_LOAD( "c6",           0x1000, 0x1000, 0x0149ef46 )
-	ROM_LOAD( "10g",          0x2000, 0x0100, 0x00000000 ) /* dots */
+	ROM_LOAD( "5.bpr",        0x2000, 0x0100, 0x21fb583f ) /* dots */
 
-	ROM_REGION(0x0140)	/* PROMs */
+	ROM_REGION(0x0160)	/* PROMs */
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
 	ROM_LOAD( "1.bpr",        0x0120, 0x0020, 0x48c8f094 ) /* ?? */
+	ROM_LOAD( "4.bpr",        0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )

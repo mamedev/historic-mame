@@ -2,12 +2,26 @@
 /*    Konami PCM controller                              */
 /*********************************************************/
 
+/*
+
+	Changelog, Mish, August 1999:
+		Removed interface support for different memory regions per channel.
+		Removed interface support for differing channel volume.
+
+		Added bankswitching.
+		Added support for multiple chips.
+
+		(Nb:  Should different memory regions per channel be needed
+		the bankswitching function can set this up).
+
+*/
+
 
 #include "driver.h"
 #include <math.h>
 
 
-#define  KDAC_A_PCM_MAX    (2)
+#define  KDAC_A_PCM_MAX    (2)		/* Channels per chip */
 
 
 typedef struct kdacApcm
@@ -19,22 +33,23 @@ typedef struct kdacApcm
 	int play[KDAC_A_PCM_MAX];
 	int loop[KDAC_A_PCM_MAX];
 
-	unsigned char wreg[0x10]; /* write data */
+	unsigned char wreg[0x10];	/* write data */
+	unsigned char *pcmbuf[2];	/* Channel A & B pointers */
+
 } KDAC_A_PCM;
 
-static KDAC_A_PCM    kpcm;
+static KDAC_A_PCM    kpcm[MAX_K007232];
 
-static int pcm_chan;
-
-static unsigned char *pcmbuf[2];
-static unsigned int  pcm_limit;
+static int pcm_chan[MAX_K007232];
+static unsigned int pcm_limit;	/* Mish - I don't think we need this.. */
 
 
 #define   BASE_SHIFT    (12)
 
 
 
-int kdac_note[] = {
+#if 0
+static int kdac_note[] = {
   261.63/8, 277.18/8,
   293.67/8, 311.13/8,
   329.63/8,
@@ -142,12 +157,15 @@ static float kdaca_fn[][2] = {
 
   { -1, -1 },
 };
+#endif
+
 static float fncode[0x200];
 /*************************************************************/
-void KDAC_A_make_fncode( void ){
+static void KDAC_A_make_fncode( void ){
+  int i;
+#if 0
   int i, j, k;
   float fn;
-#if 0
   for( i = 0; i < 0x200; i++ )  fncode[i] = 0;
 
   i = 0;
@@ -187,7 +205,7 @@ void KDAC_A_make_fncode( void ){
 /*    Konami PCM update                         */
 /************************************************/
 
-void KDAC_A_update(int arg, void **buffer, int buffer_len)
+static void KDAC_A_update(int arg, void **buffer, int buffer_len, int chip)
 {
 	int i;
 	int sample_bits;
@@ -203,34 +221,34 @@ void KDAC_A_update(int arg, void **buffer, int buffer_len)
 
 	for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 	{
-		if (kpcm.play[i])
+		if (kpcm[chip].play[i])
 		{
 			int vol,j;
 			unsigned int addr, old_addr;
 
 			/**** PCM setup ****/
-			addr = kpcm.start[i] + ((kpcm.addr[i]>>BASE_SHIFT)&0x000fffff);
-			vol = kpcm.vol[i] * 0x22;
+			addr = kpcm[chip].start[i] + ((kpcm[chip].addr[i]>>BASE_SHIFT)&0x000fffff);
+			vol = kpcm[chip].vol[i] * 0x22;
 			for( j = 0; j < buffer_len; j++ )
 			{
 				old_addr = addr;
-				addr = kpcm.start[i] + ((kpcm.addr[i]>>BASE_SHIFT)&0x000fffff);
+				addr = kpcm[chip].start[i] + ((kpcm[chip].addr[i]>>BASE_SHIFT)&0x000fffff);
 				while (old_addr <= addr)
 				{
-					if (pcmbuf[i][old_addr] & 0x80)
+					if (kpcm[chip].pcmbuf[i][old_addr] & 0x80)
 					{
 						/* end of sample */
 
-						if (kpcm.loop[i])
+						if (kpcm[chip].loop[i])
 						{
 							/* loop to the beginning */
-							addr = kpcm.start[i];
-							kpcm.addr[i] = 0;
+							addr = kpcm[chip].start[i];
+							kpcm[chip].addr[i] = 0;
 						}
 						else
 						{
 							/* stop sample */
-							kpcm.play[i] = 0;
+							kpcm[chip].play[i] = 0;
 						}
 						break;
 					}
@@ -238,7 +256,7 @@ void KDAC_A_update(int arg, void **buffer, int buffer_len)
 					old_addr++;
 				}
 
-				if (kpcm.play[i] == 0)
+				if (kpcm[chip].play[i] == 0)
 				{
 					if (sample_bits == 8)
 						memset(buf8[i],0,(buffer_len - j) * sizeof(signed char));
@@ -247,12 +265,12 @@ void KDAC_A_update(int arg, void **buffer, int buffer_len)
 					break;
 				}
 
-				kpcm.addr[i] += kpcm.step[i];
+				kpcm[chip].addr[i] += kpcm[chip].step[i];
 
 				if (sample_bits == 8)
-					buf8[i][j] = (((pcmbuf[i][addr] & 0x7f) - 0x40) * vol) >> 8;
+					buf8[i][j] = (((kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40) * vol) >> 8;
 				else
-					buf16[i][j] = (((pcmbuf[i][addr] & 0x7f) - 0x40) * vol);
+					buf16[i][j] = (((kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40) * vol);
 			}
 		}
 		else
@@ -265,39 +283,62 @@ void KDAC_A_update(int arg, void **buffer, int buffer_len)
 	}
 }
 
+static void K007232_0_update(int arg, void **buffer, int buffer_len)
+{
+	KDAC_A_update(arg, buffer, buffer_len, 0);
+}
+
+static void K007232_1_update(int arg, void **buffer, int buffer_len)
+{
+	KDAC_A_update(arg, buffer, buffer_len, 1);
+}
+
 /************************************************/
 /*    Konami PCM start                          */
 /************************************************/
 int K007232_sh_start(const struct MachineSound *msound)
 {
-	int i;
+	int i,j;
 	char buf[2][40];
-	const char *name[2];
+	const char *name[2][2];
 	const struct K007232_interface *intf = msound->sound_interface;
+	int vol[2][2];
 
-
-	pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bank[0]];
-	pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bank[1]];
+	/* Mish - I think limit can be hardwired to 0x20000... */
 	if( !intf->limit )    pcm_limit = 0x00020000;	/* default limit */
 	else                  pcm_limit = intf->limit;
 
-	for( i = 0; i < KDAC_A_PCM_MAX; i++ )
-	{
-		kpcm.vol[i] = 0;
-		kpcm.start[i] = 0;
-		kpcm.step[i] = 0;
-		kpcm.play[i] = 0;
-		kpcm.loop[i] = 0;
-	}
-	for( i = 0; i < 0x10; i++ )  kpcm.wreg[i] = 0;
+	/* Set up the chips */
+	for (j=0; j<intf->num_chips; j++) {
+		kpcm[j].pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bank[j]];
+		kpcm[j].pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bank[j]];
 
-	for (i = 0;i < 2;i++)
-	{
-		name[i] = buf[i];
-		sprintf(buf[i],"Konami 007232 Ch %c",'A'+i);
+		for( i = 0; i < KDAC_A_PCM_MAX; i++ )
+		{
+			kpcm[j].vol[i] = 0;
+			kpcm[j].start[i] = 0;
+			kpcm[j].step[i] = 0;
+			kpcm[j].play[i] = 0;
+			kpcm[j].loop[i] = 0;
+		}
+		for( i = 0; i < 0x10; i++ )  kpcm[j].wreg[i] = 0;
+
+		for (i = 0;i < 2;i++)
+		{
+			name[j][i] = buf[i];
+			sprintf(buf[i],"Konami 007232 %d Ch %c",j,'A'+i);
+		}
+
+		vol[j][0]=intf->volume[j];
+		vol[j][1]=intf->volume[j];
 	}
-	pcm_chan = stream_init_multi(2,name,intf->volume,Machine->sample_rate,
-			Machine->sample_bits,Machine->sample_bits << 8,KDAC_A_update);
+
+	pcm_chan[0] = stream_init_multi(2,name[0],vol[0],Machine->sample_rate,
+			Machine->sample_bits,Machine->sample_bits << 8,K007232_0_update);
+	if (intf->num_chips>1)
+		pcm_chan[1] = stream_init_multi(2,name[1],vol[1],Machine->sample_rate,
+			Machine->sample_bits,Machine->sample_bits << 8,K007232_1_update);
+
 	KDAC_A_make_fncode();
 
 	return 0;
@@ -306,22 +347,21 @@ int K007232_sh_start(const struct MachineSound *msound)
 /************************************************/
 /*    Konami PCM write register                 */
 /************************************************/
-void K007232_WriteReg( int r, int v )
+static void K007232_WriteReg( int r, int v, int chip )
 {
-	int  i;
 	int  data;
 
 	if (Machine->sample_rate == 0) return;
 
-	stream_update(pcm_chan,0);
+	stream_update(pcm_chan[chip],0);
 
-	kpcm.wreg[r] = v;			/* stock write data */
+	kpcm[chip].wreg[r] = v;			/* stock write data */
 
 	if (r == 0x0d)
 	{
 		/* select if sample plays once or looped */
-		kpcm.loop[0] = v & 0x01;
-		kpcm.loop[1] = v & 0x02;
+		kpcm[chip].loop[0] = v & 0x01;
+		kpcm[chip].loop[1] = v & 0x02;
 		return;
 	}
 	else if (r == 0x0c)
@@ -331,8 +371,8 @@ void K007232_WriteReg( int r, int v )
 		/* this is a standard setup. It's the one used in TMNT. */
 		/* the pin is marked BLEV so it could be intended to control only channel B */
 
-		kpcm.vol[0] = (v >> 4) & 0x0f;
-		kpcm.vol[1] = (v >> 0) & 0x0f;
+		kpcm[chip].vol[0] = (v >> 4) & 0x0f;
+		kpcm[chip].vol[1] = (v >> 0) & 0x0f;
 		return;
 	}
 	else
@@ -351,13 +391,13 @@ void K007232_WriteReg( int r, int v )
 			case 0x00:
 			case 0x01:
 				/**** address step ****/
-				data = (((((unsigned int)kpcm.wreg[reg_port*0x06 + 0x01])<<8)&0x0100) | (((unsigned int)kpcm.wreg[reg_port*0x06 + 0x00])&0x00ff));
+				data = (((((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x01])<<8)&0x0100) | (((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x00])&0x00ff));
 				#if 0
 				if( !reg_port && r == 1 )
 				if (errorlog) fprintf( errorlog, "%04x\n" ,data );
 				#endif
 
-				kpcm.step[reg_port] =
+				kpcm[chip].step[reg_port] =
 					( (7850.0 / (float)Machine->sample_rate) ) *
 					( fncode[data] / (440.00/2) ) *
 					( (float)3580000 / (float)4000000 ) *
@@ -368,10 +408,10 @@ void K007232_WriteReg( int r, int v )
 			case 0x03:
 			case 0x04:
 				/**** start address ****/
-				kpcm.start[reg_port] =
-					((((unsigned int)kpcm.wreg[reg_port*0x06 + 0x04]<<16)&0x00010000) |
-					(((unsigned int)kpcm.wreg[reg_port*0x06 + 0x03]<< 8)&0x0000ff00) |
-					(((unsigned int)kpcm.wreg[reg_port*0x06 + 0x02]    )&0x000000ff));
+				kpcm[chip].start[reg_port] =
+					((((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x04]<<16)&0x00010000) |
+					(((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x03]<< 8)&0x0000ff00) |
+					(((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x02]    )&0x000000ff));
 			break;
 		}
 	}
@@ -380,7 +420,7 @@ void K007232_WriteReg( int r, int v )
 /************************************************/
 /*    Konami PCM read register                  */
 /************************************************/
-void check_err_fncode( int data ){
+static void check_err_fncode( int data ){
   /**** not make keycode ****/
   if( data < 0x054 )
   {
@@ -404,27 +444,61 @@ void check_err_fncode( int data ){
   }
 }
 
-int  K007232_ReadReg( int r )
+static int  K007232_ReadReg( int r, int chip )
 {
-	int  ch = 0;
-
 	if (r == 0x0005)
 	{
-		if (kpcm.start[0] < pcm_limit)
+		if (kpcm[chip].start[0] < pcm_limit)
 		{
-			kpcm.play[0] = 1;
-			kpcm.addr[0] = 0;
+			kpcm[chip].play[0] = 1;
+			kpcm[chip].addr[0] = 0;
 			//check_err_fncode( (((((unsigned int)kpcm.wreg[0x01])<<8)&0x0100) | (((unsigned int)kpcm.wreg[0x00])&0x00ff)) );
 		}
 	}
 	else if (r == 0x000b)
 	{
-		if (kpcm.start[1] < pcm_limit)
+		if (kpcm[chip].start[1] < pcm_limit)
 		{
-			kpcm.play[1] = 1;
-			kpcm.addr[1] = 0;
+			kpcm[chip].play[1] = 1;
+			kpcm[chip].addr[1] = 0;
 			//check_err_fncode( (((((unsigned int)kpcm.wreg[0x07])<<8)&0x0100) | (((unsigned int)kpcm.wreg[0x06])&0x00ff)) );
 		}
 	}
 	return 0;
 }
+
+/*****************************************************************************/
+
+void K007232_write_port_0_w(int r,int v)
+{
+	K007232_WriteReg(r,v,0);
+}
+
+int K007232_read_port_0_r(int r)
+{
+	return K007232_ReadReg(r,0);
+}
+
+void K007232_bankswitch_0_w(unsigned char *ptr_A,unsigned char *ptr_B)
+{
+	kpcm[0].pcmbuf[0]=ptr_A;
+	kpcm[0].pcmbuf[1]=ptr_B;
+}
+
+void K007232_write_port_1_w(int r,int v)
+{
+	K007232_WriteReg(r,v,1);
+}
+
+int K007232_read_port_1_r(int r)
+{
+	return K007232_ReadReg(r,1);
+}
+
+void K007232_bankswitch_1_w(unsigned char *ptr_A,unsigned char *ptr_B)
+{
+	kpcm[1].pcmbuf[0]=ptr_A;
+	kpcm[1].pcmbuf[1]=ptr_B;
+}
+
+/*****************************************************************************/

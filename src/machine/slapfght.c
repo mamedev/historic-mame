@@ -24,9 +24,6 @@ extern unsigned char *getstar_e803;
 
 void slapfight_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
 	/* MAIN CPU */
 
 	slapfight_status_state=0;

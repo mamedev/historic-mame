@@ -113,7 +113,14 @@ static unsigned char cninja_control_1[16];
 static int cninja_pf2_bank,cninja_pf3_bank;
 static int bootleg;
 
+static unsigned char *cninja_spriteram;
+
 /******************************************************************************/
+
+void cninja_update_sprites(int offset, int data)
+{
+	memcpy(cninja_spriteram,spriteram,0x800);
+}
 
 static void update_24bitcol(int offset)
 {
@@ -138,7 +145,7 @@ void cninja_palette_24bit_w(int offset,int data)
 
 static void mark_sprites_colors(void)
 {
-	int offs,color,code,i,pal_base;
+	int offs,color,i,pal_base;
 	int colmask[16];
     unsigned int *pen_usage; /* Save some struct derefs */
 
@@ -151,11 +158,11 @@ static void mark_sprites_colors(void)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x3fff;
+		sprite = READ_WORD (&cninja_spriteram[offs+2]) & 0x3fff;
 		if (!sprite) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
-		y = READ_WORD(&spriteram[offs]);
+		x = READ_WORD(&cninja_spriteram[offs+4]);
+		y = READ_WORD(&cninja_spriteram[offs]);
 
 		color = (x >> 9) &0xf;
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;
@@ -192,16 +199,16 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash;
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x3fff;
+		sprite = READ_WORD (&cninja_spriteram[offs+2]) & 0x3fff;
 		if (!sprite) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = READ_WORD(&cninja_spriteram[offs+4]);
 
 		/* Sprite/playfield priority */
 		if ((x&0x4000) && pri==1) continue;
 		if (!(x&0x4000) && pri==0) continue;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = READ_WORD(&cninja_spriteram[offs]);
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 		colour = (x >> 9) &0xf;
@@ -539,7 +546,7 @@ void cninja_pf4_rowscroll_w(int offset,int data)
 
 void cninja_vh_stop (void)
 {
-	/* Nothing, remove later */
+	free(cninja_spriteram);
 }
 
 int cninja_vh_start(void)
@@ -586,6 +593,8 @@ int cninja_vh_start(void)
 	cninja_pf4_tilemap->transparent_pen = 0;
 	cninja_pf4_tilemap->transmask[0] = 0x00ff;
 	cninja_pf4_tilemap->transmask[1] = 0xff00;
+
+	cninja_spriteram = malloc(0x800);
 
 	return 0;
 }

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "machine/Z80fmly.h"
+#include "machine/z80fmly.h"
 #include <math.h>
 
 

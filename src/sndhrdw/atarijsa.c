@@ -46,16 +46,14 @@ static int test_mask;
 
 static int has_pokey;
 static int has_ym2151;
-static int has_ym2413;
 static int has_tms5220;
 static int has_oki6295;
 
-static int oki6295_bank;
+static int oki6295_bank_base;
 
 static int overall_volume;
 static int pokey_volume;
 static int ym2151_volume;
-static int ym2413_volume;
 static int tms5220_volume;
 static int oki6295_volume;
 
@@ -89,7 +87,7 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 	bank_base = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x10000];
 
 	/* determine which sound hardware is installed */
-	has_tms5220 = has_oki6295 = has_pokey = has_ym2413 = has_ym2151 = 0;
+	has_tms5220 = has_oki6295 = has_pokey = has_ym2151 = 0;
 	for (i = 0; i < MAX_SOUND; i++)
 	{
 		switch (Machine->drv->sound[i].sound_type)
@@ -103,30 +101,10 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 			case SOUND_POKEY:
 				has_pokey = 1;
 				break;
-			case SOUND_YM2413:
-				has_ym2413 = 1;
-				break;
 			case SOUND_YM2151:
 				has_ym2151 = 1;
 				break;
 		}
-	}
-	
-	/* install the I/O handler based on which board we're using */
-	if (has_ym2413)
-	{
-		install_mem_read_handler(cpunum, 0x2800, 0x2bff, jsa3_io_r);
-		install_mem_write_handler(cpunum, 0x2800, 0x2bff, jsa3_io_w);
-	}
-	else if (has_oki6295)
-	{
-		install_mem_read_handler(cpunum, 0x2800, 0x2bff, jsa2_io_r);
-		install_mem_write_handler(cpunum, 0x2800, 0x2bff, jsa2_io_w);
-	}
-	else
-	{
-		install_mem_read_handler(cpunum, 0x2800, 0x2bff, jsa1_io_r);
-		install_mem_write_handler(cpunum, 0x2800, 0x2bff, jsa1_io_w);
 	}
 
 	/* install POKEY memory handlers */
@@ -136,25 +114,6 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 		install_mem_write_handler(cpunum, 0x2c00, 0x2c0f, pokey1_w);
 	}
 
-	/* install YM2151 memory handlers */
-	if (has_ym2151)
-	{
-		install_mem_read_handler(cpunum, 0x2000, 0x2001, YM2151_status_port_0_r);
-		install_mem_write_handler(cpunum, 0x2000, 0x2000, YM2151_register_port_0_w);
-		install_mem_write_handler(cpunum, 0x2001, 0x2001, YM2151_data_port_0_w);
-	}
-	
-	/* install YM2413 memory handlers */
-/*	if (has_ym2413)
-	{
-		install_mem_read_handler(cpunum, 0x2000, 0x2001, YM2413_status_port_0_r);
-		install_mem_write_handler(cpunum, 0x2000, 0x2000, YM2413_register_port_0_w);
-		install_mem_write_handler(cpunum, 0x2001, 0x2001, YM2413_data_port_0_w);
-		install_mem_read_handler(cpunum, 0x2600, 0x2601, YM2413_status_port_0_r);
-		install_mem_write_handler(cpunum, 0x2600, 0x2600, YM2413_register_port_0_w);
-		install_mem_write_handler(cpunum, 0x2601, 0x2601, YM2413_data_port_0_w);
-	}*/
-	
 	atarijsa_reset();
 }
 
@@ -162,16 +121,15 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 void atarijsa_reset(void)
 {
 	/* reset the sound I/O system */
-	atarigen_sound_io_reset(1);
+	atarigen_sound_io_reset(cpu_num);
 
 	/* reset the static states */
 	speech_data = 0;
 	last_ctl = 0;
-	oki6295_bank = 0;
+	oki6295_bank_base = 0x00000;
 	overall_volume = 100;
 	pokey_volume = 100;
 	ym2151_volume = 100;
-	ym2413_volume = 100;
 	tms5220_volume = 100;
 	oki6295_volume = 100;
 
@@ -237,8 +195,6 @@ static int jsa1_io_r(int offset)
 
 static void jsa1_io_w(int offset, int data)
 {
-	int result = 0xff;
-
 	switch (offset & 0x206)
 	{
 		case 0x000:		/* n/c */
@@ -269,14 +225,14 @@ static void jsa1_io_w(int offset, int data)
 				0x02 = TMS5220 write strobe (active low)
 				0x01 = YM2151 reset (active low)
 			*/
-			
+
 			/* handle TMS5220 I/O */
 			if (has_tms5220)
 			{
 				if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 					tms5220_data_w(0, speech_data);
 			}
-			
+
 			/* update the bank */
 			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
 			last_ctl = data;
@@ -357,8 +313,6 @@ static int jsa2_io_r(int offset)
 
 static void jsa2_io_w(int offset, int data)
 {
-	int result = 0xff;
-
 	switch (offset & 0x206)
 	{
 		case 0x000:		/* /RDV */
@@ -392,7 +346,7 @@ static void jsa2_io_w(int offset, int data)
 				0x02 = n/c
 				0x01 = YM2151 reset (active low)
 			*/
-			
+
 			/* update the bank */
 			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
 			last_ctl = data;
@@ -438,14 +392,14 @@ static int jsa3_io_r(int offset)
 
 		case 0x004:		/* /RDIO */
 			/*
-				0x80 = self test (active low)
-				0x40 = NMI line state (active low)
-				0x20 = sound output full (active low)
-				0x10 = self test (active low)
-				0x08 = service (active low)
-				0x04 = tilt (active low)
-				0x02 = coin L (active low)
-				0x01 = coin R (active low)
+				0x80 = self test (active high)
+				0x40 = NMI line state (active high)
+				0x20 = sound output full (active high)
+				0x10 = self test (active high)
+				0x08 = service (active high)
+				0x04 = tilt (active high)
+				0x02 = coin L (active high)
+				0x01 = coin R (active high)
 			*/
 			result = readinputport(input_port);
 			if (!(readinputport(test_port) & test_mask)) result ^= 0x90;
@@ -471,15 +425,13 @@ static int jsa3_io_r(int offset)
 
 static void jsa3_io_w(int offset, int data)
 {
-	int result = 0xff;
-
 	switch (offset & 0x206)
 	{
-		case 0x000:		/* /RDV -- used for volume by Off the Wall */
+		case 0x000:		/* /RDV */
 			overall_volume = data * 100 / 127;
 			update_all_volumes();
 			break;
-			
+
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
 			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
@@ -508,10 +460,11 @@ static void jsa3_io_w(int offset, int data)
 				0x02 = OKI6295 bank bit 0
 				0x01 = YM2151 reset (active low)
 			*/
-			
+
 			/* update the OKI bank */
-			OKIM6295_set_bank_base(0, oki6295_bank * 0x40000);
-			
+			oki6295_bank_base = (0x40000 * ((data >> 1) & 1)) | (oki6295_bank_base & 0x80000);
+			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
+
 			/* update the bank */
 			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
 			last_ctl = data;
@@ -522,15 +475,16 @@ static void jsa3_io_w(int offset, int data)
 				0xc0 = n/c
 				0x20 = low-pass filter enable
 				0x10 = OKI6295 bank bit 1
-				0x0e = YM2151/YM2413 volume (0-7)
+				0x0e = YM2151 volume (0-7)
 				0x01 = OKI6295 volume (0-1)
 			*/
 
 			/* update the OKI bank */
-			OKIM6295_set_bank_base(0, oki6295_bank * 0x40000);
+			oki6295_bank_base = (0x80000 * ((data >> 4) & 1)) | (oki6295_bank_base & 0x40000);
+			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
 
 			/* update the volumes */
-			ym2413_volume = ym2151_volume = ((data >> 1) & 7) * 100 / 7;
+			ym2151_volume = ((data >> 1) & 7) * 100 / 7;
 			oki6295_volume = (data & 1) * 100;
 			update_all_volumes();
 			break;
@@ -549,7 +503,6 @@ static void update_all_volumes(void)
 {
 	if (has_pokey) atarigen_set_pokey_vol(overall_volume * pokey_volume / 100);
 	if (has_ym2151) atarigen_set_ym2151_vol(overall_volume * ym2151_volume / 100);
-	if (has_ym2413) atarigen_set_ym2413_vol(overall_volume * ym2413_volume / 100);
 	if (has_tms5220) atarigen_set_tms5220_vol(overall_volume * tms5220_volume / 100);
 	if (has_oki6295) atarigen_set_oki6295_vol(overall_volume * oki6295_volume / 100);
 }
@@ -562,18 +515,67 @@ static void update_all_volumes(void)
  *
  *************************************/
 
-struct MemoryReadAddress atarijsa_readmem[] =
+struct MemoryReadAddress atarijsa1_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2800, 0x2bff, jsa1_io_r },
 	{ 0x3000, 0x3fff, MRA_BANK8 },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
-struct MemoryWriteAddress atarijsa_writemem[] =
+struct MemoryWriteAddress atarijsa1_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2bff, jsa1_io_w },
+	{ 0x3000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryReadAddress atarijsa2_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2800, 0x2bff, jsa2_io_r },
+	{ 0x3000, 0x3fff, MRA_BANK8 },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryWriteAddress atarijsa2_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2bff, jsa2_io_w },
+	{ 0x3000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryReadAddress atarijsa3_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2800, 0x2bff, jsa3_io_r },
+	{ 0x3000, 0x3fff, MRA_BANK8 },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryWriteAddress atarijsa3_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2bff, jsa3_io_w },
 	{ 0x3000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -604,15 +606,6 @@ struct POKEYinterface atarijsa_pokey_interface =
 };
 
 
-struct YM2413interface atarijsa_ym2413_interface_mono =
-{
-    1,					/* 1 chip */
-    3579580,			/* ~7MHz */
-    { 100 },			/* Volume */
-    NULL				/* IRQ handler */
-};
-
-
 struct YM2151interface atarijsa_ym2151_interface_mono =
 {
 	1,			/* 1 chip */
@@ -634,7 +627,7 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 struct OKIM6295interface atarijsa_okim6295_interface_2 =
 {
 	1,              /* 1 chip */
-	8000,           /* 8000Hz ??? TODO: find out the real frequency */
+	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
 	{ 2 },          /* memory region 2 */
 	{ 75 }
 };
@@ -643,7 +636,7 @@ struct OKIM6295interface atarijsa_okim6295_interface_2 =
 struct OKIM6295interface atarijsa_okim6295_interface_3 =
 {
 	1,              /* 1 chip */
-	8000,           /* 8000Hz ??? TODO: find out the real frequency */
+	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
 	{ 3 },          /* memory region 3 */
 	{ 75 }
 };

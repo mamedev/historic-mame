@@ -57,9 +57,6 @@ void foodf_nvram_w(int offset,int data);
 int foodf_nvram_load(void);
 void foodf_nvram_save(void);
 
-static unsigned char *quantum_nvram;
-static int quantum_nvram_size;
-
 
 
 struct MemoryReadAddress quantum_read[] =

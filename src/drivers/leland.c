@@ -32,7 +32,7 @@
 #define LELAND  "The Leland Corp."
 #define CINEMAT "Cinematronics"
 
-#include "cpu\z80\z80.h"
+#include "cpu/z80/z80.h"
 
 
 /***********************************************************************
@@ -235,7 +235,6 @@ void leland_battery_w(int offset, int data)
 static void leland_hisave (void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 	if (f)
@@ -278,10 +277,10 @@ static int leland_hiload (void)
 #ifdef MAME_DEBUG
 void leland_debug_dump_driver(void)
 {
-	if (keyboard_key_pressed(KEYCODE_M))
+	if (keyboard_pressed(KEYCODE_M))
 	{
 		static int marker=1;
-		while (keyboard_key_pressed(KEYCODE_M))       ;
+		while (keyboard_pressed(KEYCODE_M))       ;
 
 		if (errorlog)
 		{
@@ -289,7 +288,7 @@ void leland_debug_dump_driver(void)
 			marker++;
 		}
 	}
-	if (keyboard_key_pressed(KEYCODE_F))
+	if (keyboard_pressed(KEYCODE_F))
 	{
 		FILE *fp=fopen("MASTER.DMP", "w+b");
 		if (fp)
@@ -471,8 +470,6 @@ static struct CustomSound_interface custom_interface =
 
 static int leland_sound_comm;       /* Port 0xf2 */
 static int leland_sound_cmd;        /* Port 0xf4 */
-
-static int leland_i86_sound_comm;       /* Port 0xf2 */
 
 
 void leland_sound_comm_w(int offset, int data)
@@ -1052,7 +1049,7 @@ static int leland_bank;
 
 void strkzone_update_bank(void)
 {
-	int bankaddress, batteryaddress;
+	int bankaddress;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	if (leland_bank & 0x80 )
 	{
@@ -1820,7 +1817,7 @@ struct GameDriver mayhem_driver =
 	CINEMAT,
 	"Paul Leaman",
 	GAME_NOT_WORKING,
-	&basebal2_machine,
+	&mayhem_machine,
 	0,
 
 	mayhem_rom,
@@ -2538,9 +2535,10 @@ void redlin2p_banksw_w(int offset, int data)
 	int bank;
 	int bankaddress;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *battery_bank=&RAM[0xa000];
 
-/*    char baf[40];
+/*
+	unsigned char *battery_bank=&RAM[0xa000];
+	char baf[40];
 	sprintf(baf,"Bank=%d",data&0x03);
 	usrintf_showmessage(baf);*/
 
@@ -2609,8 +2607,6 @@ static struct IOWritePort redlin2p_writeport[] =
 
 void redlin2p_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
 	leland_init_machine();
 	leland_rearrange_bank_swap(0, 0x10000);
 	leland_rearrange_bank(1, 0x10000);

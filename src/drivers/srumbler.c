@@ -163,7 +163,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -473,7 +473,6 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
-
 ROM_START( srumblr2_rom )
 	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
@@ -515,6 +514,50 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
+
+ROM_START( rushcrsh_rom )
+	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	/* empty, will be filled later */
+
+	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "rc10.bin",     0x00000, 0x4000, 0x0a3c0b0d ) /* characters */
+	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
+	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
+	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
+	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
+	ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0xca3a3af3 )
+	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
+	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
+	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
+	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
+	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
+	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
+	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
+	ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0xc972af3e )
+	ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0x8c9abf57 )
+	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
+	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
+
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
+
+	ROM_REGION(0x40000) /* Paged ROMs */
+	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
+	ROM_LOAD( "rc03.bin",     0x08000, 0x08000, 0xa49c9be0 )  /* RC3 (different) */
+	ROM_LOAD( "rc02.12e",     0x10000, 0x08000, 0x009a62d8 )  /* RC2 (different) */
+	ROM_LOAD( "rc01.11e",     0x18000, 0x08000, 0x2ac48d1d )  /* RC1 (different) */
+	ROM_LOAD( "rc09.14f",     0x20000, 0x08000, 0x64f23e72 )  /* RC9 (different) */
+	ROM_LOAD( "rc08.bin",     0x28000, 0x08000, 0x2c25874b )  /* RC8 (different) */
+	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
+	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
+ROM_END
+
+
 
 static int hiload(void)
 {
@@ -601,6 +644,32 @@ struct GameDriver srumblr2_driver =
 	0,
 
 	srumblr2_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
+};
+
+struct GameDriver rushcrsh_driver =
+{
+	__FILE__,
+	&srumbler_driver,
+	"rushcrsh",
+	"Rush & Crash (Japan)",
+	"1986",
+	"Capcom",
+	"Paul Leaman",
+	0,
+	&machine_driver,
+	0,
+
+	rushcrsh_rom,
 	0,
 	0,0,
 	0,      /* sound_prom */

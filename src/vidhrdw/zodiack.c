@@ -10,12 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-static struct rectangle spritevisiblearea =
-{
-	2*8+1, 30*8-1,
-	2*8, 30*8-1
-};
-
 unsigned char *zodiack_videoram2;
 
 extern unsigned char *galaxian_attributesram;
@@ -34,7 +28,7 @@ void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* first, the character/sprite palette */
 	for (i = 0;i < 32;i++)
 	{
-		int col,bit0,bit1,bit2;
+		int bit0,bit1,bit2;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
@@ -180,7 +174,6 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = 0;offs < galaxian_bulletsram_size;offs += 4)
 	{
 		int x,y;
-		int color;
 
 
 		x =       galaxian_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;

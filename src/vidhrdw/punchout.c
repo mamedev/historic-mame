@@ -67,7 +67,7 @@ static struct rectangle backgroundvisiblearea =
 ***************************************************************************/
 static void convert_palette(unsigned char *palette,const unsigned char *color_prom)
 {
-	int i,j;
+	int i;
 
 
 	for (i = 0;i < 1024;i++)

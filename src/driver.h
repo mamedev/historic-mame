@@ -16,6 +16,7 @@
 #include "cheat.h"
 #include "tilemap.h"
 #include "sprite.h"
+#include "profiler.h"
 
 #ifdef MAME_NET
 #include "network.h"
@@ -154,6 +155,9 @@ enum
 #endif
 #if (HAS_PDP1)
 	CPU_PDP1,
+#endif
+#if (HAS_KONAMI)
+	CPU_KONAMI,
 #endif
 	CPU_COUNT
 };

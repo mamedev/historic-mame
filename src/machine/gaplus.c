@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 unsigned char *gaplus_snd_sharedram;
 unsigned char *gaplus_sharedram;
@@ -21,7 +21,6 @@ extern void gaplus_starfield_update( void );
 
 void gaplus_init_machine( void )
 {
-    int i;
     /* Set optimization flags for M6809 */
     m6809_Flags = M6809_FAST_S | M6809_FAST_U;
     int_enable_2 = int_enable_3 = 1;
@@ -557,7 +556,7 @@ int gaplusa_customio_r_3( int offset )
 
 int galaga3_customio_r_1( int offset )
 {
-    int mode, val, temp1, temp2;
+    int mode;
 
     mode = gaplus_customio_1[8];
     if (mode == 1)  /* normal mode & test mode */

@@ -20,7 +20,7 @@ void mario_sh1_w(int offset,int data)
 	if (last!= data)
 	{
 		last = data;
-		if (data) sample_start (0, 3, 0);
+                if (data && sample_playing(0) == 0) sample_start (0, 3, 0);
 	}
 }
 
@@ -32,7 +32,7 @@ void mario_sh2_w(int offset,int data)
 	if (last!= data)
 	{
 		last = data;
-		if (data) sample_start (1, 4, 0);
+                if (data && sample_playing(1) == 0) sample_start (1, 4, 0);
 	}
 }
 

@@ -1564,7 +1564,7 @@ ROM_START( devilfsg_rom )
 	ROM_CONTINUE(             0x0800, 0x0800 )
 
 	ROM_REGION(0x0020)  /* color prom */
-	ROM_LOAD( "u59.clr",      0x0000, 0x0020, 0x4e3caeab )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
 ROM_START( zigzag_rom )

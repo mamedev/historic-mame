@@ -45,7 +45,7 @@ Sprite layer
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/namcos2.h"
-#include "cpu/M6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 /*************************************************************/
 

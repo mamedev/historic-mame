@@ -416,19 +416,11 @@ static int snd_interrupt(void) {
    	   return 0xdf;		/* RST 18h */
 }
 
-static struct YM2151interface ym2151_interface =
-{
- 	1,			/* 1 chip */
- 	3579580,	/* 3.58 MHZ ? */ /* 4 MHZ in raine */
- 	{ 40 },
- 	{ 0 }
-};
-
 static struct YM3812interface ym3812_interface = {
 	1,			/* 1 chip (no more supported) */
 	3250000,	/* 3.25 MHz ? (hand tuned) */
 	{ 255 },	/* (not supported) */
-	0,
+	{0}
 };
 
 static struct ADPCMinterface adpcm_interface = {

@@ -61,6 +61,7 @@ int numops[3] =
    NUMPG1OPS,NUMPG2OPS,NUMPG3OPS,
 };
 
+#if 0
 static char modenames[9][14] = {
    "inherent",
    "direct",
@@ -72,6 +73,7 @@ static char modenames[9][14] = {
    "page 2",
    "page 3",
 };
+#endif
 
 /* page 1 ops */
 static opcodeinfo pg1opcodes[NUMPG1OPS] =

@@ -101,7 +101,8 @@ static void tecmo_adpcm_trigger_w(int offset,int data)
 {
 	ADPCM_setvol(0,(data & 0x0f) * 0x11);
 	if (data & 0x0f)	/* maybe this selects the volume? */
-		ADPCM_play(0,adpcm_start,(adpcm_end - adpcm_start)*2);
+		if (adpcm_start < 0x8000)
+			ADPCM_play(0,adpcm_start,(adpcm_end - adpcm_start)*2);
 }
 
 

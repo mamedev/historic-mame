@@ -6,34 +6,61 @@
 
 void gottlieb_sh_w(int offset,int data)
 {
-	data &= 0xff;
+	static int score_sample=7;
+	static int random_offset=0;
+	data &= 0x3f;
 
-	if (data != 0xff)
+	if ((data&0x0f) != 0xf) /* interrupt trigered by four low bits (not all 1's) */
 	{
 		if (Machine->gamedrv->samplenames)
 		{
-			/* if we have loaded samples, we must be Q*Bert */
-			switch(data ^ 0xff)
+			if (Machine->gamedrv->samplenames[0][1]=='q')  /* qbert */
 			{
-				case 0x12:
-					/* play a sample here (until Votrax speech is emulated) */
-					sample_start (0, 0, 0);
-					break;
-
-				case 0x14:
-					/* play a sample here (until Votrax speech is emulated) */
-					sample_start (0, 1, 0);
-					break;
-
-				case 0x16:
-					/* play a sample here (until Votrax speech is emulated) */
-					sample_start (0, 2, 0);
-					break;
-
-				case 0x11:
-					/* play a sample here (until Votrax speech is emulated) */
-					sample_start (0, 3, 0);
-					break;
+				switch (data ^ 0x3f)
+				{
+					case 17:
+					case 18:
+					case 19:
+					case 20:
+					case 21:
+						sample_start(0,((data^0x3f)-17)*8+random_offset,0);
+						random_offset= (random_offset+1)&7;
+						break;
+					case 22:
+						sample_start(0,40,0);
+						break;
+					case 23:
+						sample_start(0,41,0);
+						break;
+					case 28:
+						sample_start(0,42,0);
+						break;
+					case 36:
+						sample_start(0,43,0);
+						break;
+				}
+			} else if (Machine->gamedrv->samplenames[0][1]=='r') /* reactor */
+			{
+				switch (data ^ 0x3f)
+				{
+					case 53:
+					case 54:
+					case 55:
+					case 56:
+					case 57:
+					case 58:
+					case 59:
+						sample_start(0,(data^0x3f)-53,0);
+						break;
+					case 31:
+						sample_start(0,7,0);
+						score_sample=7;
+						break;
+					case 39:
+						score_sample++;
+						if (score_sample<20) sample_start(0,score_sample,0);
+						break;
+				}
 			}
 		}
 
@@ -56,6 +83,11 @@ void gottlieb_sh_w(int offset,int data)
 }
 
 
+void gottlieb_knocker(void)
+{
+	if (Machine->gamedrv->samplenames && Machine->gamedrv->samplenames[0][1]=='q')  /* qbert */
+		sample_start(0,44,0);
+}
 
 /* callback for the timer */
 void gottlieb_nmi_generate(int param)
@@ -89,7 +121,7 @@ if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >
 
 	if ((data & 0x3f) == 0x3f)
 	{
-#ifdef MAME_DEBUG
+#if 0
 		if (pos > 1)
 		{
 			int i;
@@ -171,7 +203,7 @@ void gottlieb_riot_w(int offset, int data)
 
 static int psg_latch;
 static void *nmi_timer;
-static int nmi_rate, nmi_enabled;
+static int nmi_rate;
 static int ym2151_port;
 
 int gottlieb_sh_start(void)

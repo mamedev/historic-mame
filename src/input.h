@@ -2,16 +2,16 @@
 #define KEYBOARD_H
 
 
-struct KeyboardKey
+struct KeyboardInfo
 {
-	char *name;			/* OS dependant name; 0 terminates the list */
-	int code;			/* OS dependant code (must be < KEYCODE_START) */
-	int standardcode;	/* KEYCODE_xxx equivalent from list below, or KEYCODE_OTHER if n/a */
+	char *name;				/* OS dependant name; 0 terminates the list */
+	UINT16 code;			/* OS dependant code (must be < KEYCODE_START) */
+	UINT16 standardcode;	/* KEYCODE_xxx equivalent from list below, or KEYCODE_OTHER if n/a */
 };
 
 enum
 {
-	KEYCODE_START = 256,	/* marker - not a real key */
+	KEYCODE_START = 0xff00,	/* marker - not a real key */
 
 	KEYCODE_1,KEYCODE_2,KEYCODE_3,KEYCODE_4,KEYCODE_5,
 	KEYCODE_6,KEYCODE_7,KEYCODE_8,KEYCODE_9,KEYCODE_0,
@@ -31,18 +31,57 @@ enum
 
 	KEYCODE_OTHER,	/* anything else */
 
-	KEYCODE_ANY,	/* special value for keyboard_key_pressed() */
 	KEYCODE_NONE	/* no key pressed */
 };
 
 
-const char *keyboard_key_name(int keycode);
-int keyboard_key_pressed(int keycode);
-int keyboard_key_pressed_memory(int keycode);
-int keyboard_key_pressed_memory_repeat(int keycode,int speed);
-int keyboard_read_key_immediate(void);
-int keyboard_debug_readkey(void);
-int keyboard_ui_key_pressed(int code);
-int keyboard_ui_key_pressed_repeat(int code,int speed);
+const char *keyboard_name(int keycode);
+int keyboard_pressed(int keycode);
+int keyboard_pressed_memory(int keycode);
+int keyboard_pressed_memory_repeat(int keycode,int speed);
+int keyboard_read_async(void);
+int keyboard_read_sync(void);
+
+
+struct JoystickInfo
+{
+	char *name;				/* OS dependant name; 0 terminates the list */
+	UINT16 code;			/* OS dependant code (must be < JOYCODE_START) */
+	UINT16 standardcode;	/* JOYCODE_xxx equivalent from list below, or JOYCODE_OTHER if n/a */
+};
+
+
+enum
+{
+	JOYCODE_START = 0xff00,	/* marker - not a real joy */
+
+	JOYCODE_1_LEFT,JOYCODE_1_RIGHT,JOYCODE_1_UP,JOYCODE_1_DOWN,
+	JOYCODE_1_BUTTON1,JOYCODE_1_BUTTON2,JOYCODE_1_BUTTON3,
+	JOYCODE_1_BUTTON4,JOYCODE_1_BUTTON5,JOYCODE_1_BUTTON6,
+	JOYCODE_2_LEFT,JOYCODE_2_RIGHT,JOYCODE_2_UP,JOYCODE_2_DOWN,
+	JOYCODE_2_BUTTON1,JOYCODE_2_BUTTON2,JOYCODE_2_BUTTON3,
+	JOYCODE_2_BUTTON4,JOYCODE_2_BUTTON5,JOYCODE_2_BUTTON6,
+	JOYCODE_3_LEFT,JOYCODE_3_RIGHT,JOYCODE_3_UP,JOYCODE_3_DOWN,
+	JOYCODE_3_BUTTON1,JOYCODE_3_BUTTON2,JOYCODE_3_BUTTON3,
+	JOYCODE_3_BUTTON4,JOYCODE_3_BUTTON5,JOYCODE_3_BUTTON6,
+	JOYCODE_4_LEFT,JOYCODE_4_RIGHT,JOYCODE_4_UP,JOYCODE_4_DOWN,
+	JOYCODE_4_BUTTON1,JOYCODE_4_BUTTON2,JOYCODE_4_BUTTON3,
+	JOYCODE_4_BUTTON4,JOYCODE_4_BUTTON5,JOYCODE_4_BUTTON6,
+
+	JOYCODE_OTHER,	/* anything else */
+
+	JOYCODE_NONE	/* no key pressed */
+};
+
+
+const char *joystick_name(int joycode);
+int joystick_pressed(int joycode);
+int joystick_pressed_memory(int joycode);
+int joystick_pressed_memory_repeat(int joycode,int speed);
+int joystick_read_async(void);
+
+/* the following read both key and joy */
+int input_ui_pressed(int code);
+int input_ui_pressed_repeat(int code,int speed);
 
 #endif

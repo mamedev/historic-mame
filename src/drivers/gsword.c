@@ -171,8 +171,6 @@ static int gsword_coins_in(void)
 
 static int gsword_8741_2_r(int num)
 {
-	int data = 0;
-
 	switch(num)
 	{
 	case 0x01: /* start button , coins */

@@ -173,8 +173,6 @@ int namcos1_vh_start( void ) {
 }
 
 void namcos1_vh_stop( void ) {
-	int i;
-
 	videoram = 0;
 
 #ifdef NAMCOS1_DIRECT_DRAW

@@ -105,9 +105,7 @@ static int draworder[32][4];
 void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 
 	/* all gfx elements use the same palette */
 	for (i = 0;i < 64;i++)
@@ -583,7 +581,7 @@ static int check_sprite_plane_bitpattern(int num)
 {
 	int i,j,flipx,flipy,minx,miny,maxx,maxy,temp;
 	int offs = num * 4;
-	int result = 0;
+	int result = 0;  /* no collisions */
 
 	int	check_playfield1 = taitosj_video_enable & playfield_enable_mask[0];
 	int	check_playfield2 = taitosj_video_enable & playfield_enable_mask[1];
@@ -680,7 +678,8 @@ done:
 
 static void check_sprite_plane_collision(void)
 {
-	UINT8 i,j;
+	UINT8 i;
+
 
 	/* check each sprite */
 	for (i = 0x00; i < 0x20; i++)
@@ -689,17 +688,7 @@ static void check_sprite_plane_collision(void)
 
 		if (spriteon[i])
 		{
-			if ((j = check_sprite_plane_bitpattern(i)))
-			{
-				int reg;
-
-				taitosj_collision_reg[3] |= j ; /* mark sprite/playfield collision */
-
-				reg = i >> 3;
-				if (reg == 3)  reg = 2;
-
-				taitosj_collision_reg[reg] |= (1 << (i & 0x07)); /* mark sprite itself as collided */
-			}
+			taitosj_collision_reg[3] |= check_sprite_plane_bitpattern(i);
 		}
 	}
 }
@@ -743,6 +732,14 @@ static void drawsprites(struct osd_bitmap *bitmap)
 						flipx,flipy,
 						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+				/* draw with wrap around. The horizontal games (eg. sfposeid) need this */
+				drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
+						spriteram[offs + 3] & 0x3f,
+						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
+						flipx,flipy,
+						sx - 0x100,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -751,7 +748,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 
 static void drawplayfield(int n, struct osd_bitmap *bitmap)
 {
-	static int fudge1[3] = { 3,  1, -1  };
+	static int fudge1[3] = { 3,  1, -1 };
 	static int fudge2[3] = { 8, 10, 12 };
 
 	if (taitosj_video_enable & playfield_enable_mask[n])
@@ -919,15 +916,8 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	check_sprite_sprite_collision();
 
-	/* only do other checks if there were no sprite-sprite collisions */
-	/* this seems to be required for Bio Attack */
-	if ((taitosj_collision_reg[0] == 0) &&
-	    (taitosj_collision_reg[1] == 0) &&
-	    (taitosj_collision_reg[2] == 0))
-	{
-		/*check_sprite_plane_collision() uses drawn bitmaps, so it must me called _AFTER_ drawplane() */
-		check_sprite_plane_collision();
+	/*check_sprite_plane_collision() uses drawn bitmaps, so it must me called _AFTER_ drawplane() */
+	check_sprite_plane_collision();
 
-		/*check_plane_plane_collision();*/	/*not implemented !!!*/
-	}
+	/*check_plane_plane_collision();*/	/*not implemented !!!*/
 }

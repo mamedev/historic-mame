@@ -210,7 +210,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", KEYCODE_LCONTROL, OSD_JOY_FIRE1 )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Speedup Cheat", KEYCODE_LCONTROL, JOYCODE_1_BUTTON1 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END

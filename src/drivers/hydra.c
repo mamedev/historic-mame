@@ -332,7 +332,7 @@ static struct MachineDriver machine_driver =
 			vblank_gen,1
 		},
 		{
-			JSA_CPU(1)
+			JSA_II_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -386,6 +386,27 @@ static void hydra_init(void)
 
 	/* display messages */
 	atarigen_show_slapstic_message();
+	atarigen_show_sound_message();
+}
+
+
+static void hydrap_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	hydra_mo_area.min_x = 0 << HIGH_RES;
+	hydra_mo_area.max_x = 255 << HIGH_RES;
+	hydra_mo_area.min_y = 0;
+	hydra_mo_area.max_y = 239;
+	hydra_mo_priority_offset = 10;
+	hydra_pf_xoffset = 0;
+
+	atarijsa_init(1, 3, 0, 0x8000);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	/* display messages */
 	atarigen_show_sound_message();
 }
 
@@ -471,6 +492,60 @@ ROM_START( hydra_rom )
 	ROM_LOAD( "hydr1026.bin",  0x090000, 0x10000, 0xd68d44aa )
 
 	ROM_LOAD( "hydr1027.bin",  0x0a0000, 0x20000, 0xf9135b9b ) /* alphanumerics */
+ROM_END
+
+
+ROM_START( hydrap_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "hydhi0.bin", 0x00000, 0x10000, 0xdab2e8a2 )
+	ROM_LOAD_ODD ( "hydlo0.bin", 0x00000, 0x10000, 0xc18d4f16 )
+	ROM_LOAD_EVEN( "hydhi1.bin", 0x20000, 0x10000, 0x50c12bb9 )
+	ROM_LOAD_ODD ( "hydlo1.bin", 0x20000, 0x10000, 0x5ee0a846 )
+	ROM_LOAD_EVEN( "hydhi2.bin", 0x40000, 0x10000, 0x436a6d81 )
+	ROM_LOAD_ODD ( "hydlo2.bin", 0x40000, 0x10000, 0x182bfd6a )
+	ROM_LOAD_EVEN( "hydhi3.bin", 0x60000, 0x10000, 0x29e9e03e )
+	ROM_LOAD_ODD ( "hydlo3.bin", 0x60000, 0x10000, 0x7b5047f0 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, BADCRC(0x619d7319) )
+	ROM_CONTINUE(            0x04000, 0xc000 )
+
+	ROM_REGION(0x30000)	/* 192k for ADPCM samples */
+	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, BADCRC(0xb974d3d0) )
+	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, BADCRC(0xa2eda15b) )
+	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
+
+	ROM_REGION(0x100000)
+	ROM_LOAD_ODD ( "hydmhi0.bin", 0x00000, 0x10000, 0x3c83b42d )
+	ROM_LOAD_EVEN( "hydmlo0.bin", 0x00000, 0x10000, 0x6d49650c )
+	ROM_LOAD_ODD ( "hydmhi1.bin", 0x20000, 0x10000, 0x689b3376 )
+	ROM_LOAD_EVEN( "hydmlo1.bin", 0x20000, 0x10000, 0xc81a4e88 )
+	ROM_LOAD_ODD ( "hydmhi2.bin", 0x40000, 0x10000, 0x77098e14 )
+	ROM_LOAD_EVEN( "hydmlo2.bin", 0x40000, 0x10000, 0x40015d9d )
+	ROM_LOAD_ODD ( "hydmhi3.bin", 0x60000, 0x10000, 0xdfebdcbd )
+	ROM_LOAD_EVEN( "hydmlo3.bin", 0x60000, 0x10000, 0x213c407c )
+	ROM_LOAD_ODD ( "hydmhi4.bin", 0x80000, 0x10000, 0x2897765f )
+	ROM_LOAD_EVEN( "hydmlo4.bin", 0x80000, 0x10000, 0x730157f3 )
+	ROM_LOAD_ODD ( "hydmhi5.bin", 0xa0000, 0x10000, 0xecd061ae )
+	ROM_LOAD_EVEN( "hydmlo5.bin", 0xa0000, 0x10000, 0xa5a08c53 )
+	ROM_LOAD_ODD ( "hydmhi6.bin", 0xc0000, 0x10000, 0xaa3f2903 )
+	ROM_LOAD_EVEN( "hydmlo6.bin", 0xc0000, 0x10000, 0xdb8ea56f )
+	ROM_LOAD_ODD ( "hydmhi7.bin", 0xe0000, 0x10000, 0x71fc3e43 )
+	ROM_LOAD_EVEN( "hydmlo7.bin", 0xe0000, 0x10000, 0x7960b0c2 )
+
+	ROM_REGION_DISPOSE(0x0c0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hydr1017.bin",  0x000000, 0x10000, 0xbd77b747 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "hydr1018.bin",  0x010000, 0x10000, 0x7c24e637 )
+	ROM_LOAD( "hydr1019.bin",  0x020000, 0x10000, 0xaa2fb07b )
+	ROM_LOAD( "hydpl03.bin",   0x030000, 0x10000, 0x1f0dfe60 )
+	ROM_LOAD( "hydr1021.bin",  0x040000, 0x10000, 0xf88cdac2 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "hydr1022.bin",  0x050000, 0x10000, 0xa9c612ff )
+	ROM_LOAD( "hydr1023.bin",  0x060000, 0x10000, 0xb706aa6e )
+	ROM_LOAD( "hydphi3.bin",   0x070000, 0x10000, 0x917e250c )
+	ROM_LOAD( "hydr1025.bin",  0x080000, 0x10000, 0x98b5b1a1 ) /* playfield plane 4 */
+	ROM_LOAD( "hydpl41.bin",   0x090000, 0x10000, 0x85f9afa6 )
+
+	ROM_LOAD( "hydalph.bin",   0x0a0000, 0x20000, 0x7dd2b062 ) /* alphanumerics */
 ROM_END
 
 
@@ -587,6 +662,33 @@ struct GameDriver hydra_driver =
 	hydra_init,
 
 	hydra_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	hydra_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver hydrap_driver =
+{
+	__FILE__,
+	&hydra_driver,
+	"hydrap",
+	"Hydra (prototype)",
+	"1990",
+	"Atari Games",
+	"Aaron Giles (MAME driver)",
+	0,
+	&machine_driver,
+	hydrap_init,
+
+	hydrap_rom,
 	0,
 	0,
 	0,

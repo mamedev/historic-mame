@@ -144,9 +144,9 @@ static void update_interrupts(void)
 		cpu_set_irq_line(0, 7, CLEAR_LINE);
 
 	if (newstate2)
-		cpu_set_irq_line(2, newstate2, ASSERT_LINE);
+		cpu_set_irq_line(1, newstate2, ASSERT_LINE);
 	else
-		cpu_set_irq_line(2, 7, CLEAR_LINE);
+		cpu_set_irq_line(1, 7, CLEAR_LINE);
 }
 
 
@@ -203,11 +203,11 @@ void eprom_latch_w(int offset, int data)
 	{
 		if (!(data & 1))
 		{
-			cpu_halt(2, 0);
-			cpu_reset(2);
+			cpu_halt(1, 0);
+			cpu_reset(1);
 		}
 		else
-			cpu_halt(2, 1);
+			cpu_halt(1, 1);
 	}
 }
 
@@ -427,14 +427,14 @@ static struct MachineDriver machine_driver =
 			atarigen_video_int_gen,1
 		},
 		{
-			JSA_CPU(1)
-		},
-		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			2,
+			1,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
+		},
+		{
+			JSA_I_CPU(2)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -493,15 +493,15 @@ ROM_START( eprom_rom )
 	ROM_LOAD_EVEN( "136069.40k",   0x60000, 0x10000, 0x130650f6 )
 	ROM_LOAD_ODD ( "136069.50k",   0x60000, 0x10000, 0x1da21ed8 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
-	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
-	ROM_CONTINUE(             0x04000, 0xc000 )
-
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.10s",   0x00000, 0x10000, 0xdeff6469 )
 	ROM_LOAD_ODD ( "136069.10u",   0x00000, 0x10000, 0x5d7afca2 )
 	ROM_LOAD_EVEN( "136069.40k",   0x60000, 0x10000, 0x130650f6 )
 	ROM_LOAD_ODD ( "136069.50k",   0x60000, 0x10000, 0x1da21ed8 )
+
+	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
+	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "136069.47s",   0x00000, 0x10000, 0x0de9d98d )
@@ -537,15 +537,15 @@ ROM_START( eprom2_rom )
 	ROM_LOAD_EVEN( "1037.50e",   0x80000, 0x10000, 0xad39a3dd )
 	ROM_LOAD_ODD ( "1036.40e",   0x80000, 0x10000, 0x34fc8895 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
-	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
-	ROM_CONTINUE(             0x04000, 0xc000 )
-
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1035.10s",   0x00000, 0x10000, 0xffeb5647 )
 	ROM_LOAD_ODD ( "1034.10u",   0x00000, 0x10000, 0xc68f58dd )
 	ROM_LOAD_EVEN( "1033.40k",   0x60000, 0x10000, 0x395fc203 )
 	ROM_LOAD_ODD ( "1032.50k",   0x60000, 0x10000, 0xa19c8acb )
+
+	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
+	ROM_CONTINUE(             0x04000, 0xc000 )
 
 	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "136069.47s",   0x00000, 0x10000, 0x0de9d98d )
@@ -578,10 +578,10 @@ ROM_END
 static void eprom_init(void)
 {
 	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 6, 1, 0x0002);
+	atarijsa_init(2, 6, 1, 0x0002);
 
 	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4158, 0x4170);
+	atarigen_init_6502_speedup(2, 0x4158, 0x4170);
 
 	/* display messages */
 	atarigen_show_sound_message();

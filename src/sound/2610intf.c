@@ -23,8 +23,6 @@ extern unsigned char No_FM;
 
 static int stream[MAX_2610];
 
-static FMSAMPLE *Buf[YM2610_NUMBUF];
-
 /* Global Interface holder */
 static const struct YM2610interface *intf;
 

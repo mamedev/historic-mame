@@ -165,7 +165,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs <0x800 ;offs += 8) {
-		int x,y,sprite,sprite2,colour,fx,fy,extra;
+		int x,y,sprite,colour,fx,fy;
 
 	    y=READ_WORD (&spriteram[offs+0]);
 		if (y>254) continue; /* Speedup */

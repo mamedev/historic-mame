@@ -16,7 +16,6 @@ int center_y;
 
 int	wait_interlace;      /* config flag - indicates if we're waiting for odd/even updates */
 static int display_interlaced=0;  /* interlaced display */
-static int sync_delay;          /* number of screen updates we're going to wait for */
 
 extern int video_sync;
 extern int wait_vsync;

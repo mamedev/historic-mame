@@ -202,15 +202,15 @@ void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh){
 	static int rshow[2] = {0,0};
 
 #if 0
-	if(keyboard_key_pressed_memory(KEYCODE_Z)) { show[0]=(show[0])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_X)) { show[1]=(show[1])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_C)) { show[2]=(show[2])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_V)) { show[3]=(show[3])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_B)) { show[4]=(show[4])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_N)) { show[5]=(show[5])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_Z)) { show[0]=(show[0])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_X)) { show[1]=(show[1])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_C)) { show[2]=(show[2])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_V)) { show[3]=(show[3])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_B)) { show[4]=(show[4])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_N)) { show[5]=(show[5])?0:1; }
 
-	if(keyboard_key_pressed_memory(KEYCODE_COMMA)) { show[6]=(show[6])?0:1; }
-	if(keyboard_key_pressed_memory(KEYCODE_STOP )) { show[7]=(show[7])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_COMMA)) { show[6]=(show[6])?0:1; }
+	if(keyboard_pressed_memory(KEYCODE_STOP )) { show[7]=(show[7])?0:1; }
 #endif
 
 	erase_bitmap(bitmap);
@@ -226,9 +226,9 @@ void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh){
 
 // Save video memory
 
-	if( keyboard_key_pressed(KEYCODE_S) ){
+	if( keyboard_pressed(KEYCODE_S) ){
 		FILE *f;
-		while( keyboard_key_pressed(KEYCODE_S) ); /* wait for key release */
+		while( keyboard_pressed(KEYCODE_S) ); /* wait for key release */
 
 		f = fopen("vidmem.dbg","wb");
 		if( f ){
@@ -262,8 +262,8 @@ void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh){
 		}
 	}
 
-	if(keyboard_key_pressed(KEYCODE_K)) { while( keyboard_key_pressed(KEYCODE_K)); rshow[0]=(rshow[0])?0:1; }
-	if(keyboard_key_pressed(KEYCODE_L)) { while( keyboard_key_pressed(KEYCODE_L)); rshow[1]=(rshow[1])?0:1; }
+	if(keyboard_pressed(KEYCODE_K)) { while( keyboard_pressed(KEYCODE_K)); rshow[0]=(rshow[0])?0:1; }
+	if(keyboard_pressed(KEYCODE_L)) { while( keyboard_pressed(KEYCODE_L)); rshow[1]=(rshow[1])?0:1; }
 	if(rshow[0]) show_reg(bitmap);
 	if(rshow[1]) show_sprites(bitmap);
 }

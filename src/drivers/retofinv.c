@@ -21,7 +21,7 @@ extern unsigned char *retofinv_bg_colorram;
 extern unsigned char *retofinv_fg_char_bank;
 extern unsigned char *retofinv_bg_char_bank;
 
-static unsigned char cpu0_me000=0,cpu0_me800=0,cpu0_me800_last=0,cpu2_m6000=0;
+static unsigned char cpu0_me000=0,cpu0_me800_last=0,cpu2_m6000=0;
 
 static void retofinv_init_machine(void)
 {

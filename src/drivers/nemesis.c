@@ -612,7 +612,7 @@ static struct MemoryReadAddress sal_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xb000, 0xb00d, K007232_ReadReg },
+	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xc001, 0xc001, YM2151_status_port_0_r },
 	{ 0xe000, 0xe000, wd_read }, /* watchdog?? */
 	{ -1 }  /* end of table */
@@ -622,7 +622,7 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xb000, 0xb00d, K007232_WriteReg },
+	{ 0xb000, 0xb00d, K007232_write_port_0_w },
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, VLM5030_data_w },
@@ -1584,8 +1584,9 @@ static struct VLM5030interface gx400_vlm5030_interface =
 
 static struct K007232_interface k007232_interface =
 {
-        {4,4},  /* memory regions */
-	{12,12} /* volume */
+	1,		/* number of chips */
+	{ 4 },	/* memory regions */
+	{ 12 }	/* volume */
 };
 
 /******************************************************************************/

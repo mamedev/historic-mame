@@ -137,8 +137,6 @@ int suprloco_scrollram_r(int offset)
 
 void suprloco_control_w(int offset,int data)
 {
-	int attributes;
-
 	/* There is probably a palette select in here */
 
    	/* Bit 0   - coin counter A */
@@ -220,7 +218,7 @@ INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 
 static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 {
-	int sx,sy,col,row,height,src,offs,adjy,dy;
+	int sx,sy,col,row,height,src,adjy,dy;
 	unsigned char *spr_reg;
 	unsigned short *spr_palette;
 	short skip;	/* bytes to skip before drawing each row (can be negative) */
@@ -291,7 +289,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 
 void draw_sprites(struct osd_bitmap *bitmap)
 {
-	int spr_number,bottom,top;
+	int spr_number;
 	unsigned char *spr_reg;
 
 

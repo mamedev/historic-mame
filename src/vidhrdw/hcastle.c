@@ -1,0 +1,432 @@
+/***************************************************************************
+
+	Haunted Castle video emulation
+
+	Nb:  Still a lot of test code in this file that can be removed later,
+	graphics banking is only testing up to the end of level 2.
+
+***************************************************************************/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+
+static struct osd_bitmap *pf1_bitmap;
+static struct osd_bitmap *pf2_bitmap;
+static char *dirty_pf1,*dirty_pf2;
+unsigned char *hcastle_pf1_control,*hcastle_pf2_control;
+unsigned char *hcastle_pf1_videoram,*hcastle_pf2_videoram;
+static int gfx_bank;
+
+void hcastle_pf1_video_w(int offset, int data)
+{
+	hcastle_pf1_videoram[offset]=data;
+	dirty_pf1[offset]=1;
+}
+
+void hcastle_pf2_video_w(int offset, int data)
+{
+	hcastle_pf2_videoram[offset]=data;
+	dirty_pf2[offset]=1;
+}
+
+void hcastle_gfxbank_w(int offset, int data)
+{
+	gfx_bank=data;
+}
+
+/*****************************************************************************/
+
+static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int bank )
+{
+	const struct rectangle *clip = &Machine->drv->visible_area;
+	struct GfxElement *gfx = Machine->gfx[0];
+	const unsigned char *source,*finish;
+
+	if ((hcastle_pf2_control[3]&0x8)==0x8) source = sbank + 0x800;
+	else source = sbank;
+	finish = source + 0x800;
+
+/*
+
+	Sprites, 5 bytes per sprite.  See also Contra, Combat School
+
+	0:	0xff	- Sprite number
+	1:	0x80	- ?  (Seems unused)
+		0x40	- ?  (Seems unused)
+		0x20	- ?  (Seems unused)
+		0x10	- Colour
+		0x08	- Fine control for 16x8/8x8 sprites (*may* have other use for 16x16 sprites)
+		0x04	- Fine control for 16x8/8x8 sprites
+		0x02	- Tile bank bit 1
+		0x01	- Tile bank bit 0
+	2:	0xff	- Y position
+	3:	0xff	- X position
+	4:	0x80	- Tile bank bit 3
+		0x40	- Tile bank bit 2
+		0x20	- Y flip
+		0x10	- X flip
+		0x08	- Size
+		0x04	- Size
+		0x02 	- Size
+		0x01	- X position high bit
+
+	Known sizes:
+		0x08	- 32 x 32 sprite (Combination of 4 16x16's)
+		0x06	- 8 x 8 sprite
+		0x02 	- 16 x 8 sprite
+		0x00 	- 16 x 16 sprite
+
+If using 16x8 sprites then the tile number given needs to be multipled by 2!
+If using 8x8 sprites then the tile number given needs to be multipled by 4!
+
+The 'fine control' bits are then added to get the correct sprite within the group
+of two/four.
+
+*/
+	while( (source+5)<finish ){
+		int attributes = source[4];
+		int sx = source[3];
+		int sy = source[2];
+		int tile_number = source[0];
+		int color =  source[1];
+
+		int yflip		= 0x20 & attributes;
+		int xflip		= 0x10 & attributes;
+		int width = 0, height = 0;
+
+		if( attributes&0x01 ) sx -= 256;
+		if( sy > 239 ) sy = 0 - (256 - sy);
+
+		tile_number += ((color&0x3)<<8) + ((attributes&0xc0)<<4);
+		tile_number = tile_number<<2;
+		tile_number += (color>>2)&3;
+
+//tile_number + =
+
+if (source[1]&0x20) if (errorlog) fprintf(errorlog,"Used color 0x20\n");
+if (source[1]&0x40) if (errorlog) fprintf(errorlog,"Used color 0x40\n");
+if (source[1]&0x80) if (errorlog) fprintf(errorlog,"Used color 0x80\n");
+
+
+
+if (bank) {
+	if (hcastle_pf2_control[3]&0x1)
+		tile_number += 0x8000;
+	else
+		tile_number += 0xc000;
+
+	color=0 + ((color&0x10)>>4);
+
+	}
+	else {
+//		if (hcastle_pf1_control[3]&0x1)
+//			tile_number += 0x0000;
+//		else
+//			tile_number += 0x4000;
+
+		color=2 + ((color&0x10)>>4);
+	}
+
+
+
+		switch( attributes&0xe ){
+			case 0x00: width = height = 2; tile_number &= (~3); break;
+			case 0x08: width = height = 4; tile_number &= (~3); break;
+			case 0x06: width = height = 1; break;
+			case 0x02: width = 2; height = 1; tile_number &= (~1); break;
+			default: width = 1; height = 1;
+					//if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",attributes&0xe);
+		}
+
+		{
+			static int x_offset[8] = {0x0,0x1,0x4,0x5,  0x0,0x1,0x4,0x5};
+			static int y_offset[8] = {0x0,0x2,0x8,0xa,  0x0,0x1,0x4,0x5};
+			int x,y, ex, ey;
+
+			for( y=0; y<height; y++ ){
+				for( x=0; x<width; x++ ){
+					ex = xflip?(width-1-x):x;
+					ey = yflip?(height-1-y):y;
+
+					drawgfx(bitmap,gfx,
+						tile_number+x_offset[ex]+y_offset[ey],
+						color,
+						xflip,yflip,
+						sx+x*8,sy+y*8,
+						clip,TRANSPARENCY_PEN,0);
+				}
+			}
+		}
+		source += 5;
+	}
+}
+
+/*****************************************************************************/
+
+void hcastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs,tile,color,mx,my,bank,scrollx,scrolly;
+	int pf1_bankbase,pf2_bankbase,tx;
+	static int old_bank,old_pf1,old_pf2;
+
+	unsigned char *RAM = Machine->memory_region[0];
+
+	palette_init_used_colors();
+	memset(palette_used_colors,PALETTE_COLOR_USED,128);
+	palette_used_colors[0*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[1*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[2*16] = PALETTE_COLOR_TRANSPARENT;
+	palette_used_colors[3*16] = PALETTE_COLOR_TRANSPARENT;
+
+	/* Graphics banking, not sure if this is correct */
+	switch (gfx_bank) {
+		case 0x3: pf1_bankbase=0x4000; pf2_bankbase=0xc000; break;
+		case 0x4: pf1_bankbase=0x0000; pf2_bankbase=0xc000; break;
+		case 0x6: pf1_bankbase=0x4000; pf2_bankbase=0xc000; break;
+		case 0x7: pf1_bankbase=0x4000; pf2_bankbase=0xc000; break;
+		default: pf1_bankbase=0; pf2_bankbase=0xc000;
+	}
+
+	if (hcastle_pf1_control[3]&0x1) pf1_bankbase += 0x2000;
+	if (hcastle_pf2_control[3]&0x1) pf2_bankbase += 0x2000;
+
+	if (palette_recalc() || gfx_bank!=old_bank
+		|| pf1_bankbase!=old_pf1 || pf2_bankbase!=old_pf2) {
+		memset(dirty_pf1,1,0x1000);
+		memset(dirty_pf2,1,0x1000);
+	}
+	old_bank=gfx_bank;
+	old_pf1=pf1_bankbase;
+	old_pf2=pf2_bankbase;
+
+	/* Draw foreground - left half */
+	mx=-1; my=0;
+	for (offs = 0x400; offs < 0x800; offs += 1)
+	{
+ 		mx++;
+  		if (mx==32) {mx=0; my++;}
+
+if (RAM[0x21]==0)		if (!dirty_pf2[offs] && !dirty_pf2[offs-0x400]) continue;
+		dirty_pf2[offs]=dirty_pf2[offs-0x400]=0;
+
+		tile=hcastle_pf2_videoram[offs];
+		tx = hcastle_pf2_videoram[offs-0x400];
+		color = tx&0x7;
+		bank = ((tx & 0x80) >> 7) | ((tx & 0x40) >> 2) | ((tx & 0x30) >> 3) | ((tx & 0x08) << 0);
+
+	if (RAM[0x21]!=0) pf2_bankbase=RAM[0x21]*0x1000;
+
+
+
+		drawgfx(pf2_bitmap,Machine->gfx[0],
+				tile+bank*0x100+pf2_bankbase,
+				1, //color,
+				0,0,//fx,0,
+				8*mx,8*my,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+	/* Draw foreground - right half */
+	mx=-1; my=0;
+	for (offs = 0xc00; offs < 0x1000; offs += 1)
+	{
+ 		mx++;
+  		if (mx==32) {mx=0; my++;}
+
+if (RAM[0x21]==0)		if (!dirty_pf2[offs] && !dirty_pf2[offs-0x400]) continue;
+		dirty_pf2[offs]=dirty_pf2[offs-0x400]=0;
+
+		tile=hcastle_pf2_videoram[offs];
+		tx = hcastle_pf2_videoram[offs-0x400];
+		color = tx&0x7;
+		bank = ((tx & 0x80) >> 7) | ((tx & 0x40) >> 2) | ((tx & 0x30) >> 3) | ((tx & 0x08) << 0);
+
+
+/*
+
+ac = text
+af = coloured text
+
+
+*/
+
+	if (RAM[0x21]!=0) pf2_bankbase=RAM[0x21]*0x1000;
+
+		drawgfx(pf2_bitmap,Machine->gfx[0],
+				tile+bank*0x100+pf2_bankbase,
+				1, //color,
+				0,0,//fx,0,
+				8*mx+256,8*my,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+	/* Draw background - left half */
+	mx=-1; my=0;
+	for (offs = 0x400; offs < 0x800; offs += 1)
+	{
+ 		mx++;
+  		if (mx==32) {mx=0; my++;}
+
+if (RAM[0x20]==0)		if (!dirty_pf1[offs] && !dirty_pf1[offs-0x400]) continue;
+		dirty_pf1[offs]=dirty_pf1[offs-0x400]=0;
+
+		tile=hcastle_pf1_videoram[offs];
+		tx = hcastle_pf1_videoram[offs-0x400];
+		color = tx&0x7;
+		bank = ((tx & 0x80) >> 7) | ((tx & 0x40) >> 2) | ((tx & 0x30) >> 3) | ((tx & 0x08) << 0);
+	if (RAM[0x20]!=0) pf1_bankbase=RAM[0x20]*0x1000;
+
+if (tx&0x2) color=4; else color=3;
+
+//color=tx&3;
+
+
+		drawgfx(pf1_bitmap,Machine->gfx[0],
+				tile+bank*0x100+pf1_bankbase,
+				color,
+				0,0, //fx,0,
+				8*mx,8*my,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+	/* Draw background - right half */
+	mx=-1; my=0;
+	for (offs = 0xc00; offs < 0x1000; offs += 1)
+	{
+ 		mx++;
+  		if (mx==32) {mx=0; my++;}
+
+if (RAM[0x20]==0)		if (!dirty_pf1[offs] && !dirty_pf1[offs-0x400]) continue;
+		dirty_pf1[offs]=dirty_pf1[offs-0x400]=0;
+
+		tile=hcastle_pf1_videoram[offs];
+		tx = hcastle_pf1_videoram[offs-0x400];
+		color = tx&0x7;
+		bank = ((tx & 0x80) >> 7) | ((tx & 0x40) >> 2) | ((tx & 0x30) >> 3) | ((tx & 0x08) << 0);
+	if (RAM[0x20]!=0) pf1_bankbase=RAM[0x20]*0x1000;
+
+if (tx&0x2) color=4; else color=3;
+
+/*
+
+MAP = 7 B
+
+0x40 is set..  (0x8 is set)
+
+
+Level 2:
+
+6 for most.. 7 for others..
+
+
+
+*/
+
+
+		drawgfx(pf1_bitmap,Machine->gfx[0],
+				tile+bank*0x100+pf1_bankbase,
+				color,
+				0,0,
+				8*mx+256,8*my,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+
+
+	/* Sprite priority */
+	if (hcastle_pf2_control[3]&0x20) {
+		scrolly = -hcastle_pf1_control[2];
+		scrollx = -((hcastle_pf1_control[1]<<8)+hcastle_pf1_control[0]);
+		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+		draw_sprites( bitmap, spriteram,   0 );
+		draw_sprites( bitmap, spriteram_2, 1 );
+
+		scrolly = -hcastle_pf2_control[2];
+		scrollx = -((hcastle_pf2_control[1]<<8)+hcastle_pf2_control[0]);
+		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	} else {
+		scrolly = -hcastle_pf1_control[2];
+		scrollx = -((hcastle_pf1_control[1]<<8)+hcastle_pf1_control[0]);
+		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+		scrolly = -hcastle_pf2_control[2];
+		scrollx = -((hcastle_pf2_control[1]<<8)+hcastle_pf2_control[0]);
+		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+
+		draw_sprites( bitmap, spriteram,   0 );
+		draw_sprites( bitmap, spriteram_2, 1 );
+	}
+
+#if 0
+{
+
+	int i,j;
+	char buf[20];
+	int trueorientation;
+	struct osd_bitmap *mybitmap = Machine->scrbitmap;
+
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",RAM[i]+(RAM[i+1]<<8));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*6,0,TRANSPARENCY_NONE,0);
+}
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",RAM[i+0x200]+(RAM[i+0x201]<<8));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*7,0,TRANSPARENCY_NONE,0);
+}
+for (i = 0;i < 2;i+=2)
+{
+	sprintf(buf,"%04X",gfx_bank);
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*8,0,TRANSPARENCY_NONE,0);
+}
+for (i = 2;i < 4;i+=2)
+{
+	sprintf(buf,"%04X",pf2_bankbase);
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*8,0,TRANSPARENCY_NONE,0);
+}
+for (i = 4;i < 6;i+=2)
+{
+	sprintf(buf,"%04X",pf1_bankbase);
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*8,0,TRANSPARENCY_NONE,0);
+}
+	Machine->orientation = trueorientation;
+
+
+}
+#endif
+}
+
+/*****************************************************************************/
+
+int hcastle_vh_start(void)
+{
+	if ((pf1_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
+		return 1;
+ 	if ((pf2_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
+		return 1;
+
+	dirty_pf1=(char *)malloc (0x1000);
+	dirty_pf2=(char *)malloc (0x1000);
+	memset(dirty_pf1,1,0x1000);
+	memset(dirty_pf2,1,0x1000);
+
+	return 0;
+}
+
+void hcastle_vh_stop(void)
+{
+	osd_free_bitmap(pf1_bitmap);
+	osd_free_bitmap(pf2_bitmap);
+	free(dirty_pf1);
+	free(dirty_pf2);
+}

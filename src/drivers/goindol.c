@@ -24,7 +24,6 @@ extern int 	 	goindol_fg_videoram_size;
 extern int 	 	goindol_bg_videoram_size;
 extern int 	 	goindol_char_bank;
 
-static int bankswitch;
 
 void goindol_bankswitch_w(int offset,int data)
 {

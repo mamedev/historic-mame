@@ -270,7 +270,6 @@ void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int spritenum;
 		int xflip,yflip,rblank,lblank;
 		int x, y;
-		int sx, sy;
 
 		spritenum = spriteram[offs + 0x20];
 

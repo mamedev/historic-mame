@@ -1490,5 +1490,5 @@ struct GameDriver getstar_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0,0
+	getstar_hiload, getstar_hisave
 };

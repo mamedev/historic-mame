@@ -1188,7 +1188,7 @@ static struct YM2151interface narc_ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
-	8000,       /* 8000 Hz frequency */
+	{ 8000 },       /* 8000 Hz frequency */
 	{ 4 },          /* memory region 4 */
 	{ 50 }
 };
@@ -1564,7 +1564,6 @@ void wms_stateload(void)
 {
 	int i;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_STATE,0)) != 0)
 	{
 		if (errorlog) fprintf(errorlog,"Loading State...\n");
@@ -1587,7 +1586,6 @@ void wms_stateload(void)
 void wms_statesave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_STATE,1))!= 0)
 	{
 		if (errorlog) fprintf(errorlog,"Saving State...\n");

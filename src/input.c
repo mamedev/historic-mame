@@ -8,106 +8,94 @@
 
 #include "driver.h"
 
+#define MAX_KEYS 256	/* allow up to 256 entries in the key list */
+#define MAX_JOYS 256	/* allow up to 256 entries in the joy list */
 
-/* return the name of a key */
-const char *keyboard_key_name(int keycode)
+
+const char *keyboard_name(int keycode)
 {
-	const struct KeyboardKey *kkey;
-	static char buffer[20];
+	const struct KeyboardInfo *keyinfo;
 
 
 	if (keycode == KEYCODE_NONE) return "None";
 
-	kkey = osd_get_key_list();
+	keyinfo = osd_get_key_list();
 
-	while (kkey->name)
+	while (keyinfo->name)
 	{
-		if (kkey->code == keycode || kkey->standardcode == keycode)
-			return kkey->name;
+		if (keyinfo->code == keycode || keyinfo->standardcode == keycode)
+			return keyinfo->name;
 
-		kkey++;
+		keyinfo++;
 	}
 
-	sprintf(buffer,"Error %02x",keycode);
-	return buffer;
+	return "n/a";
 }
 
-/* translate a pseudo key code to to a key code */
-static int pseudo_to_key_code(int keycode)
+
+static int pseudo_to_key_code(int *keycode,int *entry)
 {
-	if (keycode >= KEYCODE_START)
+	const struct KeyboardInfo *keyinfo;
+	int i;
+
+	keyinfo = osd_get_key_list();
+
+	for (i = 0;keyinfo[i].name;i++)
 	{
-		const struct KeyboardKey *kkey;
-
-		kkey = osd_get_key_list();
-
-		while (kkey->name)
+		if (keyinfo[i].standardcode == *keycode || keyinfo[i].code == *keycode)
 		{
-			if (kkey->standardcode == keycode)
-				return kkey->code;
-
-			kkey++;
+			*keycode = keyinfo[i].code;
+			*entry = i;
+			return 0;
 		}
 	}
 
-    return keycode;
+	return 1;
 }
 
 
-int keyboard_key_pressed(int keycode)
+int keyboard_pressed(int keycode)
 {
-	if (keycode == KEYCODE_ANY)
-		return (keyboard_read_key_immediate() != KEYCODE_NONE);
+	int entry;
 
-	keycode = pseudo_to_key_code(keycode);
+	if (pseudo_to_key_code(&keycode,&entry) != 0) return 0;
 
 	return osd_is_key_pressed(keycode);
 }
 
 
-static char memory[KEYCODE_START];
+static char keymemory[MAX_KEYS];
 
-/* Report a key as pressed only when the user hits it, not while it is */
-/* being kept pressed. */
-int keyboard_key_pressed_memory(int keycode)
+int keyboard_pressed_memory(int keycode)
 {
 	int res = 0;
+	int entry;
 
-	keycode = pseudo_to_key_code(keycode);
+	if (pseudo_to_key_code(&keycode,&entry) != 0) return 0;
 
-	if (keyboard_key_pressed(keycode))
+	if (osd_is_key_pressed(keycode))
 	{
-		if (keycode == KEYCODE_ANY) return 1;
-
-		if (keycode < KEYCODE_START)
-		{
-			if (memory[keycode] == 0) res = 1;
-			memory[keycode] = 1;
-		}
+		if (keymemory[entry] == 0) res = 1;
+		keymemory[entry] = 1;
 	}
 	else
-	{
-		if (keycode < KEYCODE_START)
-		{
-			memory[keycode] = 0;
-		}
-	}
+		keymemory[entry] = 0;
 
 	return res;
 }
 
-/* report key as pulsing while it is pressed */
-int keyboard_key_pressed_memory_repeat(int keycode,int speed)
+
+int keyboard_pressed_memory_repeat(int keycode,int speed)
 {
 	static int counter,keydelay;
 	int res = 0;
+	int entry;
 
-	keycode = pseudo_to_key_code(keycode);
-	if (keycode >= KEYCODE_START) return 0;
+	if (pseudo_to_key_code(&keycode,&entry) != 0) return 0;
 
-	if (keyboard_key_pressed(keycode))
+	if (osd_is_key_pressed(keycode))
 	{
-		if (memory[keycode] == 0)
+		if (keymemory[entry] == 0)
 		{
 			keydelay = 3;
 			counter = 0;
@@ -119,37 +107,40 @@ int keyboard_key_pressed_memory_repeat(int keycode,int speed)
 			counter = 0;
 			res = 1;
 		}
-		memory[keycode] = 1;
+		keymemory[entry] = 1;
 	}
 	else
-		memory[keycode] = 0;
+		keymemory[entry] = 0;
 
 	return res;
 }
 
-/* If the user presses a key return it, otherwise return KEYCODE_NONE. */
-/* DO NOT wait for the user to press a key */
-int keyboard_read_key_immediate(void)
+
+int keyboard_read_async(void)
 {
-	int res;
+	int i;
+	const struct KeyboardInfo *keyinfo;
+
 
 	/* first of all, record keys which are NOT pressed */
-	for (res = 0;res < KEYCODE_START;res++)
+	keyinfo = osd_get_key_list();
+
+	for (i = 0;keyinfo[i].name;i++)
 	{
-		if (!keyboard_key_pressed(res))
-		{
-			memory[res] = 0;
-		}
+		if (!osd_is_key_pressed(keyinfo[i].code))
+			keymemory[i] = 0;
 	}
 
-	for (res = 0;res < KEYCODE_START;res++)
+	for (i = 0;keyinfo[i].name;i++)
 	{
-		if (keyboard_key_pressed(res))
+		if (osd_is_key_pressed(keyinfo[i].code))
 		{
-			if (memory[res] == 0)
+			if (keymemory[i] == 0)
 			{
-				memory[res] = 1;
-				return res;
+				keymemory[i] = 1;
+
+				if (keyinfo[i].standardcode != KEYCODE_OTHER) return keyinfo[i].standardcode;
+				else return keyinfo[i].code;
 			}
 		}
 	}
@@ -158,37 +149,189 @@ int keyboard_read_key_immediate(void)
 }
 
 
-int keyboard_debug_readkey(void)
+int keyboard_read_sync(void)
 {
-	int i,res;
-	const struct KeyboardKey *kkey;
+	int res;
 
-	osd_wait_keypress();
-	while ((res = keyboard_read_key_immediate()) == KEYCODE_NONE) ;
 
-	kkey = osd_get_key_list();
-
-	while (kkey->name)
+	/* now let the OS process it */
+	res = osd_wait_keypress();
+	if (res != KEYCODE_NONE)
 	{
-		if (kkey->code == res)
-			return kkey->standardcode;
+		int i;
+		const struct KeyboardInfo *keyinfo;
 
-		kkey++;
+
+		keyinfo = osd_get_key_list();
+
+		for (i = 0;keyinfo[i].name;i++)
+		{
+			if (res == keyinfo[i].code || res == keyinfo[i].standardcode)
+			{
+				keymemory[i] = 1;
+
+				if (keyinfo[i].standardcode != KEYCODE_OTHER) return keyinfo[i].standardcode;
+				else return keyinfo[i].code;
+			}
+		}
+
+		res = KEYCODE_NONE;
 	}
+
+	while (res == KEYCODE_NONE)
+		res = keyboard_read_async();
 
 	return res;
 }
 
 
-int keyboard_ui_key_pressed(int code)
+
+const char *joystick_name(int joycode)
 {
-	return (keyboard_key_pressed_memory(input_port_type_key(code))
-			|| osd_joy_pressed(input_port_type_joy(code)));
+	const struct JoystickInfo *joyinfo;
+
+
+	if (joycode == JOYCODE_NONE) return "None";
+
+	joyinfo = osd_get_joy_list();
+
+	while (joyinfo->name)
+	{
+		if (joyinfo->code == joycode || joyinfo->standardcode == joycode)
+			return joyinfo->name;
+
+		joyinfo++;
+	}
+
+	return "n/a";
 }
 
 
-int keyboard_ui_key_pressed_repeat(int code,int speed)
+static int pseudo_to_joy_code(int *joycode,int *entry)
 {
-	return (keyboard_key_pressed_memory_repeat(input_port_type_key(code),speed)
-			|| osd_joy_pressed(input_port_type_joy(code)));
+	const struct JoystickInfo *joyinfo;
+	int i;
+
+	joyinfo = osd_get_joy_list();
+
+	for (i = 0;joyinfo[i].name;i++)
+	{
+		if (joyinfo[i].standardcode == *joycode || joyinfo[i].code == *joycode)
+		{
+			*joycode = joyinfo[i].code;
+			*entry = i;
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+
+int joystick_pressed(int joycode)
+{
+	int entry;
+
+	if (pseudo_to_joy_code(&joycode,&entry) != 0) return 0;
+
+	return osd_is_joy_pressed(joycode);
+}
+
+
+static char joymemory[MAX_JOYS];
+
+int joystick_pressed_memory(int joycode)
+{
+	int res = 0;
+	int entry;
+
+	if (pseudo_to_joy_code(&joycode,&entry) != 0) return 0;
+
+	if (osd_is_joy_pressed(joycode))
+	{
+		if (joymemory[entry] == 0) res = 1;
+		joymemory[entry] = 1;
+	}
+	else
+		joymemory[entry] = 0;
+
+	return res;
+}
+
+
+int joystick_pressed_memory_repeat(int joycode,int speed)
+{
+	static int counter,joydelay;
+	int res = 0;
+	int entry;
+
+	if (pseudo_to_joy_code(&joycode,&entry) != 0) return 0;
+
+	if (osd_is_joy_pressed(joycode))
+	{
+		if (joymemory[entry] == 0)
+		{
+			joydelay = 3;
+			counter = 0;
+			res = 1;
+		}
+		else if (++counter > joydelay * speed * Machine->drv->frames_per_second / 60)
+		{
+			joydelay = 1;
+			counter = 0;
+			res = 1;
+		}
+		joymemory[entry] = 1;
+	}
+	else
+		joymemory[entry] = 0;
+
+	return res;
+}
+
+
+int joystick_read_async(void)
+{
+	int i;
+	const struct JoystickInfo *joyinfo;
+
+
+	/* first of all, record joys which are NOT pressed */
+	joyinfo = osd_get_joy_list();
+
+	for (i = 0;joyinfo[i].name;i++)
+	{
+		if (!osd_is_joy_pressed(joyinfo[i].code))
+			joymemory[i] = 0;
+	}
+
+	for (i = 0;joyinfo[i].name;i++)
+	{
+		if (osd_is_joy_pressed(joyinfo[i].code))
+		{
+			if (joymemory[i] == 0)
+			{
+				joymemory[i] = 1;
+
+				if (joyinfo[i].standardcode != JOYCODE_OTHER) return joyinfo[i].standardcode;
+				else return joyinfo[i].code;
+			}
+		}
+	}
+
+	return JOYCODE_NONE;
+}
+
+
+int input_ui_pressed(int code)
+{
+	return (keyboard_pressed_memory(input_port_type_key(code))
+			|| joystick_pressed_memory(input_port_type_joy(code)));
+}
+
+
+int input_ui_pressed_repeat(int code,int speed)
+{
+	return (keyboard_pressed_memory_repeat(input_port_type_key(code),speed)
+			|| joystick_pressed_memory_repeat(input_port_type_joy(code),speed));
 }

@@ -440,11 +440,10 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
-	/* ASG 980209 -- separate 8-bit from 16-bit here */
 	if (dest->depth != 16)
-		drawgfx_core8(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
+		drawgfx_core8(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 	else
-		drawgfx_core16(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
+		drawgfx_core16(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 }
 
 
@@ -457,21 +456,10 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
-	static struct GfxElement mygfx =
-	{
-		0,0,0,	/* filled in later */
-		1,1,0,1
-	};
-
-	mygfx.width = src->width;
-	mygfx.height = src->height;
-	mygfx.gfxdata = src;
-
-	/* ASG 980209 -- separate 8-bit from 16-bit here */
 	if (dest->depth != 16)
-		drawgfx_core8(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,0);	/* ASG 971011 */
+		copybitmap_core8(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 	else
-		drawgfx_core16(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,0);	/* ASG 971011 */
+		copybitmap_core16(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 }
 
 
@@ -918,8 +906,8 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			struct osd_bitmap *source_bmp = gfx->gfxdata;
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
-			int sprite_screen_height = (scaley*gfx->height+0x7fff)>>16;
-			int sprite_screen_width = (scalex*gfx->width+0x7fff)>>16;
+			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
+			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
 
 			/* compute sprite increment per screen pixel */
 			int dx = (gfx->width<<16)/sprite_screen_width;
@@ -1035,8 +1023,8 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			struct osd_bitmap *source_bmp = gfx->gfxdata;
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
-			int sprite_screen_height = (scaley*gfx->height+0x7fff)>>16;
-			int sprite_screen_width = (scalex*gfx->width+0x7fff)>>16;
+			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
+			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
 
 			/* compute sprite increment per screen pixel */
 			int dx = (gfx->width<<16)/sprite_screen_width;

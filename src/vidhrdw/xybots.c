@@ -59,9 +59,6 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 
 /*************************************
  *
@@ -93,10 +90,6 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
 static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
 
-#if DEBUG_VIDEO
-static void debug(void);
-#endif
-
 
 
 /*************************************
@@ -122,18 +115,18 @@ int xybots_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -196,7 +189,7 @@ void xybots_scanline_update(int scanline)
 void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
-	
+
 	/* update the palette */
 	if (update_palette())
 		memset(atarigen_pf_dirty, 1, atarigen_playfieldram_size / 2);
@@ -215,18 +208,18 @@ void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	{
 		const struct GfxElement *gfx = Machine->gfx[2];
 		int sx, sy, offs;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 			{
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int code = data & 0x3ff;
 				int opaque = data & 0x8000;
-	
+
 				if (code || opaque)
 				{
 					int color = (data >> 12) & 7;
-	
+
 					drawgfx(bitmap, gfx, code, color, 0, 0, 8 * sx, 8 * sy, 0,
 							opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 				}
@@ -247,7 +240,7 @@ void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 static const unsigned char *update_palette(void)
 {
-	unsigned short mo_map[8], al_map[8], pf_map[16];
+	unsigned short mo_map[48], al_map[8], pf_map[16];
 	int i, j;
 
 	/* reset color tracking */
@@ -266,7 +259,7 @@ static const unsigned char *update_palette(void)
 	{
 		const unsigned int *usage = Machine->gfx[2]->pen_usage;
 		int sx, sy, offs;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 			{
@@ -288,7 +281,7 @@ static const unsigned char *update_palette(void)
 	}
 
 	/* rebuild the motion object palette */
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 48; i++)
 	{
 		unsigned short used = mo_map[i];
 		if (used)
@@ -326,7 +319,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
@@ -360,7 +353,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		{
 			int offs = y * 64 + x;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
@@ -368,7 +361,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				int color = (data >> 11) & 15;
 				int hflip = data & 0x8000;
 				int code = data & 0x1fff;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
 			}
@@ -389,11 +382,9 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	struct pf_overrender_data *overrender_data = param;
-	const struct GfxElement *gfx = Machine->gfx[0];
-	struct osd_bitmap *bitmap = overrender_data->bitmap;
 	int mo_priority = overrender_data->mo_priority;
 	int x, y;
-	
+
 	/* if we've already decided, bail */
 	if (mo_priority == -1)
 		return;
@@ -405,7 +396,7 @@ static void pf_check_overrender_callback(const struct rectangle *clip, const str
 			int offs = y * 64 + x;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = (data >> 11) & 15;
-			
+
 			/* this is the priority equation from the schematics */
 			if (mo_priority > color)
 			{
@@ -438,13 +429,13 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int offs = y * 64 + x;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = (data >> 11) & 15;
-			
+
 			/* this is the priority equation from the schematics */
 			if (mo_priority > color)
 			{
 				int hflip = data & 0x8000;
 				int code = data & 0x1fff;
-				
+
 				drawgfx(bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, clip, TRANSPARENCY_NONE, 0);
 			}
 		}
@@ -457,7 +448,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
@@ -467,6 +458,9 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 	int vsize = (data[2] & 7) + 1;
 	unsigned short temp = 0;
 	int i;
+
+	/* sneaky -- an extra color bank is hidden after the playfield palette */
+	if (data[3] & 8) color = 0x20 + (color ^ 7);
 
 	for (i = 0; i < vsize; i++)
 		temp |= usage[code++];
@@ -497,9 +491,12 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int color = data[3] & 7;
 	int xpos = data[3] >> 7;
 
+	/* sneaky -- an extra color bank is hidden after the playfield palette */
+	if (data[3] & 8) color = 0x20 + (color ^ 7);
+
 	/* adjust for the height */
 	ypos -= vsize * 8;
-	
+
 	/* adjust the final coordinates */
 	xpos &= 0x1ff;
 	ypos &= 0x1ff;
@@ -512,31 +509,31 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 	/* determine the bounding box */
 	atarigen_mo_compute_clip_8x8(pf_clip, xpos, ypos, 1, vsize, clip);
-	
+
 	/* see if we need to overrender */
 	overrender_data.mo_priority = priority;
 	atarigen_pf_process(pf_check_overrender_callback, &overrender_data, &pf_clip);
-	
+
 	/* if not, do it the easy way */
 	if (overrender_data.mo_priority == priority)
 	{
 		atarigen_mo_draw_8x8_strip(bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
 	}
-	
+
 	/* otherwise, make it tricky */
 	else
 	{
 		/* draw an instance of the object in all transparent pens */
 		atarigen_mo_draw_transparent_8x8_strip(bitmap, gfx, code, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
-		
+
 		/* and then draw it normally on the temp bitmap */
 		atarigen_mo_draw_8x8_strip(atarigen_pf_overrender_bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_NONE, 0);
-	
+
 		/* overrender the playfield on top of that that */
 		overrender_data.mo_priority = priority;
 		overrender_data.bitmap = atarigen_pf_overrender_bitmap;
 		atarigen_pf_process(pf_overrender_callback, &overrender_data, &pf_clip);
-	
+
 		/* finally, copy this chunk to the real bitmap */
 		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}

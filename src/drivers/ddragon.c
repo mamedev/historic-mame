@@ -453,7 +453,7 @@ static struct ADPCMinterface adpcm_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	8000,           /* frequency (Hz) */
+	{ 8000 },           /* frequency (Hz) */
 	{ 4 },              /* memory region */
 	{ 15 }
 };

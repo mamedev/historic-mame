@@ -156,8 +156,6 @@ void gaplus_starfield_update( void ) {
 
 	/* update the starfields */
 	for ( i = 0; i < total_stars; i++ ) {
-		int x, y;
-
 		switch( gaplus_starfield_control[stars[i].set + 1] ) {
 			case 0x87:
 				/* stand still */

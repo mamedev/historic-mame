@@ -252,7 +252,7 @@ void cska_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh )
 	}
 
 /*
-	if (keyboard_key_pressed(KEYCODE_9))
+	if (keyboard_pressed(KEYCODE_9))
 	{
 		FILE * f = fopen("dump.bin", "wb");
 		if (f)

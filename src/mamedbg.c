@@ -1348,7 +1348,7 @@ static unsigned get_register_id( char **parg, int *size )
  **************************************************************************/
 static const char *get_register_name( int id )
 {
-	int i, l;
+	int i;
 	for( i = 0; i < DBGREGS.count; i++ )
 	{
 		if( DBGREGS.id[i] == id )
@@ -1963,7 +1963,7 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
 	va_end( arg );
 
     win_show( win );
-    i = keyboard_debug_readkey();
+    i = keyboard_read_sync();
     win_close( win );
 
     return i;
@@ -2656,8 +2656,8 @@ static void edit_regs( void )
     win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y );
 	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = keyboard_debug_readkey();
-	k = keyboard_key_name(i);
+    i = keyboard_read_sync();
+	k = keyboard_name(i);
 
 	shift = (pedit->w - 1 - regs->nibble) * 4;
 	mask = ~(0x0000000f << shift);
@@ -2770,7 +2770,6 @@ static void edit_regs( void )
 static void edit_dasm(void)
 {
 	UINT32 win = WIN_DASM(activecpu);
-	int h = win_get_h( win );
     const char *k;
 	int i, update_window = 0;
 
@@ -2779,8 +2778,8 @@ static void edit_dasm(void)
 
 	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = keyboard_debug_readkey();
-	k = keyboard_key_name(i);
+    i = keyboard_read_sync();
+	k = keyboard_name(i);
 
     switch( i )
     {
@@ -2855,8 +2854,8 @@ static void edit_mem( int which )
 	}
 	win_set_title( win, name_memory( DBGMEM[which].address ) );
 
-    i = keyboard_debug_readkey();
-	k = keyboard_key_name(i);
+    i = keyboard_read_sync();
+	k = keyboard_name(i);
 
 	shift = (pedit[DBGMEM[which].offset].w - 1 - DBGMEM[which].nibble) * 4;
 	mask = ~(0x0f << shift);
@@ -3100,7 +3099,6 @@ static void edit_cmds(void)
 {
 	char *cmdline = DBG.cmdline;
 	UINT32 win = WIN_CMDS(activecpu);
-    int w = win_get_w(win);
 	const char *k;
 	int i, l, cmd;
 
@@ -3108,8 +3106,8 @@ static void edit_cmds(void)
 
 	cmd = edit_cmds_info();
 
-	i = keyboard_debug_readkey();
-	k = keyboard_key_name(i);
+	i = keyboard_read_sync();
+	k = keyboard_name(i);
 	l = strlen(k);
 
 	if( l == 1 )
@@ -3278,7 +3276,7 @@ static void cmd_help( void )
             }
             else
 			{
-				dst += sprintf( dst, "[%s]\t%s", keyboard_key_name(commands[i].key), commands[i].info ) + 1;
+				dst += sprintf( dst, "[%s]\t%s", keyboard_name(commands[i].key), commands[i].info ) + 1;
 			}
         }
     }
@@ -3317,7 +3315,7 @@ static void cmd_help( void )
             l++;
         } while( l < win_get_h(win) );
 
-        k = keyboard_debug_readkey();
+        k = keyboard_read_sync();
         switch( k )
         {
             case KEYCODE_UP:
@@ -3875,12 +3873,11 @@ static void cmd_dump_to_file( void )
  **************************************************************************/
 static void cmd_save_to_file( void )
 {
-	UINT8 buffer[16];
 	char *cmd = CMD;
 	const char *filename;
 	int length;
 	FILE *file;
-	unsigned x, offs, address = 0, start, end, width, data;
+	unsigned start, end;
 	unsigned save_what;
 
 	filename = get_file_name( &cmd, &length );
@@ -4002,8 +3999,8 @@ static void cmd_search_memory(void)
 		win_set_curpos( win, offset * 3 + nibble, 0 );
 		osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-        i = keyboard_debug_readkey();
-		k = keyboard_key_name(i);
+        i = keyboard_read_sync();
+		k = keyboard_name(i);
 
 		shift = (1 - nibble) * 4;
 		mask = ~(0xf << shift);
@@ -4734,7 +4731,7 @@ static void cmd_view_screen( void )
 	{
 		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
 		osd_update_video_and_audio();
-	} while( !keyboard_key_pressed_memory(KEYCODE_ANY) );
+	} while (keyboard_read_async() == KEYCODE_NONE);
 
 	osd_set_screen_size( w, h );
 	win_invalidate_video();
@@ -4812,7 +4809,7 @@ static void cmd_step_over( void )
  **************************************************************************/
 static void cmd_switch_window( void )
 {
-	if( keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT) )
+	if( keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT) )
 		DBG.window = --DBG.window % DBG_WINDOWS;
 	else
 		DBG.window = ++DBG.window % DBG_WINDOWS;
@@ -5058,7 +5055,7 @@ void MAME_Debug(void)
     if( ++debug_key_delay == 0x7fff )
     {
         debug_key_delay = 0;
-        debug_key_pressed = keyboard_key_pressed(input_port_type_key(IPT_UI_ON_SCREEN_DISPLAY));
+        debug_key_pressed = keyboard_pressed(input_port_type_key(IPT_UI_ON_SCREEN_DISPLAY));
     }
 
     if( dbg_fast )
@@ -5154,7 +5151,7 @@ void MAME_Debug(void)
 			{
 				trace_delay = 0;
 
-				if( keyboard_key_pressed(KEYCODE_SPACE) )
+				if( keyboard_pressed(KEYCODE_SPACE) )
 				{
 					dbg_trace = 0;
 					dbg_step = 0;

@@ -719,7 +719,7 @@ unsigned i8039_get_reg (int regnum)
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
+//				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
 				return 0;
 			}
 	}
@@ -743,7 +743,7 @@ void i8039_set_reg (int regnum, unsigned val)
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
+//				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
 			}
 	}
 }

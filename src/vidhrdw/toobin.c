@@ -476,7 +476,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 				int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 				int color = data1 & 0x000f;
-				int priority = (data1 >> 4) & 3;
+//				int priority = (data1 >> 4) & 3;
 				int vflip = data2 & 0x8000;
 				int hflip = data2 & 0x4000;
 				int code = data2 & 0x3fff;
@@ -597,7 +597,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int code = data[1] & 0x3fff;
 	int xpos = data[3] >> 6;
 	int color = data[3] & 0x000f;
-	int priority = (data[3] >> 4) & 3;
+//	int priority = (data[3] >> 4) & 3;
 
 	/* adjust for height */
 	ypos -= vsize * 16;

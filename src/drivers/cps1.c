@@ -3506,7 +3506,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,  /* 1 chip */
-	7600,   /* hand tuned to match the real SF2 */
+	{ 7600 },   /* hand tuned to match the real SF2 */
 	{ 3 },  /* memory region 3 */
 	{ 25 }
 };

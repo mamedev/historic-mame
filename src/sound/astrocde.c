@@ -339,7 +339,6 @@ FILE *ofp = 0;
 void astrocade_sh_update(void)
 {
 	int num;
-	int i;
 
 	if (Machine->sample_rate == 0 ) return;
 

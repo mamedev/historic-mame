@@ -28,6 +28,7 @@ Driver notes:
 int  darkseal_vh_start(void);
 void darkseal_vh_stop(void);
 void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void darkseal_update_sprites(int offset, int data);
 
 void darkseal_pf1_data_w(int offset,int data);
 void darkseal_pf2_data_w(int offset,int data);
@@ -39,7 +40,7 @@ void darkseal_palette_24bit_rg(int offset,int data);
 void darkseal_palette_24bit_b(int offset,int data);
 int darkseal_palette_24bit_rg_r(int offset);
 int darkseal_palette_24bit_b_r(int offset);
-extern unsigned char *darkseal_sprite, *darkseal_pf12_row, *darkseal_pf34_row;
+extern unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
 static unsigned char *darkseal_ram;
 
 /******************************************************************************/
@@ -47,7 +48,8 @@ static unsigned char *darkseal_ram;
 static void darkseal_control_w(int offset,int data)
 {
 	switch (offset) {
-    case 6: /* DMA flag?  Not sure */
+    case 6: /* DMA flag */
+		darkseal_update_sprites(0,0);
 		return;
     case 8: /* Sound CPU write */
 		soundlatch_w(0,data & 0xff);
@@ -96,7 +98,7 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1, &darkseal_ram },
-	{ 0x120000, 0x1207ff, MWA_BANK2, &darkseal_sprite },
+	{ 0x120000, 0x1207ff, MWA_BANK2, &spriteram },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg, &paletteram },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b, &paletteram_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
@@ -297,16 +299,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	8000,           /* 8000Hz frequency (Not quite correct) */
-	{ 3, 4 },       /* memory regions 3 & 5 */
-	{ 40, 10 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 8055, 16110 },/* Frequency */
+	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ 50, 22 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	32220000/8,	/* Audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(25,40) },
+	{ YM2203_VOL(24,40) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -316,15 +318,14 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state);
-	/*cpu_cause_interrupt(1,H6280_INT_IRQ2);*/
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(37,MIXER_PAN_LEFT,37,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -347,7 +348,7 @@ static struct MachineDriver darkseal_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -358,7 +359,7 @@ static struct MachineDriver darkseal_machine_driver =
 	1280, 1280, /* Space for 2048, but video hardware only uses 1280 */
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	darkseal_vh_start,
 	darkseal_vh_stop,
@@ -500,10 +501,6 @@ static void darkseal_decrypt(void)
 
 	for (i=0x00000; i<0x80000; i++)
 		RAM[i]=(RAM[i] & 0xbd) | ((RAM[i] & 0x02) << 5) | ((RAM[i] & 0x40) >> 5);
-
-	/* Remove this bit later.. */
-	RAM = Machine->memory_region[2];
-	RAM[0x1d6]=0xea; /* NOP out CLI */
 }
 
 /******************************************************************************/

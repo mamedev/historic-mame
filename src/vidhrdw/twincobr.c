@@ -71,9 +71,6 @@ static int fg_scrollx_lsb = 0;
 static int fg_scrollx_msb = 0;
 static int fg_scrolly_lsb = 0;
 static int fg_scrolly_msb = 0;
-static int tx_data_msb = 0;
-static int bg_data_msb = 0;
-static int fg_data_msb = 0;
 
 
 

@@ -19,7 +19,7 @@ struct SN76496interface konami_sn76496_interface =
 struct DACinterface konami_dac_interface =
 {
 	1,
-	{ 50 }
+	{ 80 }
 };
 
 struct ADPCMinterface hyprolyb_adpcm_interface =
@@ -32,7 +32,6 @@ struct ADPCMinterface hyprolyb_adpcm_interface =
 };
 
 
-unsigned char *konami_dac;
 static int SN76496_latch;
 
 /* The timer port on TnF and HyperSports sound hardware is derived from
@@ -111,17 +110,6 @@ void hyperspt_sound_w(int offset , int data)
 		VLM5030_RST( offset&0x20 );
 
 	last_addr = offset;
-}
-
-
-
-void konami_dac_w(int offset,int data)
-{
-
-	*konami_dac = data;
-
-	/* bit 7 doesn't seem to be used */
-	DAC_data_w(0,data<<1);
 }
 
 

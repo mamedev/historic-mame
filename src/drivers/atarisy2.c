@@ -145,18 +145,17 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 static unsigned char *interrupt_enable;
 static unsigned char *bankselect;
 
-static int pedal_count;
-static int pedal_value[3];
+static signed char pedal_count;
+static signed char pedal_value[3];
 
-static int has_tms5220;
-static int tms5220_data;
-static int tms5220_data_strobe;
+static unsigned char has_tms5220;
+static unsigned char tms5220_data;
+static unsigned char tms5220_data_strobe;
 
-static int last_sound_reset;
-static int which_adc;
+static unsigned char which_adc;
 
-static int p2portwr_state;
-static int p2portrd_state;
+static unsigned char p2portwr_state;
+static unsigned char p2portrd_state;
 
 
 
@@ -199,11 +198,12 @@ static void update_interrupts(void)
 
 static void scanline_update(int scanline)
 {
+	/* update the display list */
 	if (scanline < Machine->drv->screen_height)
-	{
-		/* update the display list */
 		atarisys2_scanline_update(scanline);
 
+	if (scanline <= Machine->drv->screen_height)
+	{
 		/* generate the 32V interrupt (IRQ 2) */
 		if ((scanline % 64) == 0)
 			if (READ_WORD(&interrupt_enable[0]) & 4)
@@ -227,14 +227,13 @@ static void init_machine(void)
 	atarigen_scanline_timer_reset(scanline_update, 8);
 	atarigen_sound_io_reset(1);
 
-	last_sound_reset = 0;
 	tms5220_data_strobe = 1;
 
 	p2portwr_state = 0;
 	p2portrd_state = 0;
 
 	which_adc = 0;
-	pedal_value[0] = pedal_value[1] = pedal_value[2] = 0;
+	pedal_value[0] = pedal_value[1] = pedal_value[2] = 0x00;
 }
 
 
@@ -252,15 +251,17 @@ static int vblank_interrupt(void)
 	/* update the pedals once per frame */
     for (i = 0; i < pedal_count; i++)
 	{
+    	/* note: APB explicitly checks to make sure the min/max range never
+    		exceeds 0x50; this seems to work just fine for the Sprint games as well */
 		if (readinputport(3 + i) & 0x80)
 		{
-			pedal_value[i] += 64;
-			if (pedal_value[i] > 0xff) pedal_value[i] = 0xff;
+			pedal_value[i] += 4;
+			if (pedal_value[i] > 0x40) pedal_value[i] = 0x40;
 		}
 		else
 		{
-			pedal_value[i] -= 64;
-			if (pedal_value[i] < 0) pedal_value[i] = 0;
+			pedal_value[i] -= 4;
+			if (pedal_value[i] < 0x00) pedal_value[i] = 0x00;
 		}
 	}
 
@@ -274,28 +275,38 @@ static int vblank_interrupt(void)
 
 static void interrupt_ack_w(int offset, int data)
 {
-	/* reset sound IRQ */
-	if (offset == 0x00)
+	switch (offset & 0x60)
 	{
-		p2portrd_state = 0;
-		atarigen_update_interrupts();
+		/* reset sound IRQ */
+		case 0x00:
+			if (offset == 0x00)
+			{
+				p2portrd_state = 0;
+				atarigen_update_interrupts();
+			}
+			break;
+
+		/* reset sound CPU */
+		case 0x20:
+			if (!(data & 0xff000000))
+			{
+				cpu_halt(1, 0);
+				cpu_reset(1);
+			}
+			if (!(data & 0x00ff0000))
+				cpu_halt(1, 1);
+			break;
+
+		/* reset 32V IRQ */
+		case 0x40:
+			atarigen_scanline_int_ack_w(0, 0);
+			break;
+
+		/* reset VBLANK IRQ */
+		case 0x60:
+			atarigen_video_int_ack_w(0, 0);
+			break;
 	}
-
-	/* reset sound CPU */
-	else if (offset == 0x20)
-	{
-		if (last_sound_reset == 0 && (data & 1))
-			atarigen_sound_reset_w(0, 0);
-		last_sound_reset = data & 1;
-	}
-
-	/* reset 32V IRQ */
-	else if (offset == 0x40)
-		atarigen_scanline_int_ack_w(0, 0);
-
-	/* reset VBLANK IRQ */
-	else if (offset == 0x60)
-		atarigen_video_int_ack_w(0, 0);
 }
 
 
@@ -403,11 +414,9 @@ static int adc_r(int offset)
 {
 	(void)offset;
 
-    if (which_adc == 1 && pedal_count == 1)   /* APB */
-        return ~pedal_value[0];
-
 	if (which_adc < pedal_count)
-		return (~pedal_value[which_adc]);
+		return ~pedal_value[which_adc];
+
 	return readinputport(3 + which_adc) | 0xff00;
 }
 
@@ -615,22 +624,22 @@ INPUT_PORTS_START( paperboy_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 */
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
@@ -717,22 +726,22 @@ INPUT_PORTS_START( a720_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -774,7 +783,7 @@ INPUT_PORTS_START( a720_input_ports )
 	PORT_DIPSETTING(    0x10, "*2" )
 	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING(    0x00, "None" )
-//	PORT_DIPSETTING(    0xc0, "None" )
+/*	PORT_DIPSETTING(    0xc0, "None" )*/
 	PORT_DIPSETTING(    0x80, "1 each 5" )
 	PORT_DIPSETTING(    0x40, "1 each 4" )
 	PORT_DIPSETTING(    0xa0, "1 each 3" )
@@ -818,32 +827,32 @@ INPUT_PORTS_START( ssprint_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* ADC2 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
 
 	PORT_START	/* ADC3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -922,28 +931,28 @@ INPUT_PORTS_START( csprint_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1015,37 +1024,37 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( apb_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_COIN1  )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN2  )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_COIN3  )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_COIN3  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN2  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_COIN1  )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START	/* IN2 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1286,7 +1295,7 @@ static struct MachineDriver a720_machine_driver =
 		},
 		{
 			CPU_M6502,
-			/*7159160/4*/ 2000000,	/* need to use a higher value to prevent 720 deadlock at startup */
+			2000000,	/* artifically high to prevent deadlock at startup 7159160/4,*/
 			1,
 			sound_readmem,sound_writemem,0,0,
 			atarigen_6502_irq_gen,4
@@ -1529,13 +1538,43 @@ static void ssprint_init(void)
 
 static void csprint_init(void)
 {
+	static const unsigned short compressed_default_eeprom[] =
+	{
+		0x0000,0x01FF,0x0E00,0x0128,0x01D0,0x0127,0x0100,0x0120,
+		0x0300,0x01F7,0x01D0,0x0107,0x0300,0x0120,0x010F,0x01F0,
+		0x0140,0x0100,0x0140,0x0110,0x0100,0x0110,0x01A0,0x01F0,
+		0x0110,0x0300,0x0140,0x01FF,0x0100,0x0160,0x0100,0x0160,
+		0x0300,0x0160,0x0500,0x0160,0x01FF,0x0100,0x0180,0x0100,
+		0x0180,0x0300,0x0180,0x0500,0x0180,0x01FF,0x0100,0x01A0,
+		0x0100,0x01A0,0x0300,0x01A0,0x0500,0x01A0,0x01FF,0x0100,
+		0x01C0,0x0100,0x01C0,0x0300,0x01C0,0x0500,0x01C0,0xFFFF,
+		0x0100,0x0127,0x0110,0x0146,0x01D6,0x0100,0x0126,0x01AC,
+		0x0128,0x01B3,0x0100,0x0126,0x0148,0x0144,0x0123,0x0100,
+		0x0125,0x01E4,0x011C,0x010B,0x0100,0x0125,0x0180,0x0159,
+		0x01BF,0x0100,0x0125,0x011C,0x0129,0x019F,0x0100,0x0124,
+		0x0168,0x014A,0x01C2,0x0100,0x0124,0x0154,0x010E,0x01DF,
+		0x0100,0x0123,0x01F0,0x0131,0x01BF,0x0100,0x0123,0x018C,
+		0x010D,0x0106,0x0100,0x0123,0x0128,0x010E,0x0186,0x0100,
+		0x0122,0x01C4,0x0124,0x010C,0x0100,0x0122,0x0160,0x014A,
+		0x0148,0x0100,0x0121,0x01FC,0x0151,0x01F2,0x0100,0x0121,
+		0x0198,0x013E,0x013F,0x0100,0x0121,0x0134,0x0111,0x0106,
+		0x0100,0x0120,0x01D0,0x0145,0x01B1,0x0100,0x0120,0x016C,
+		0x017E,0x0164,0x0100,0x0120,0x0108,0x017F,0x01E0,0x0100,
+		0x011F,0x01A4,0x017F,0x01F3,0x0100,0x011F,0x0140,0x017F,
+		0x01FF,0x0100,0x011E,0x01DC,0x012A,0x01D6,0x0100,0x011E,
+		0x0178,0x0125,0x0176,0x0100,0x011E,0x0114,0x014C,0x0161,
+		0x0100,0x011D,0x01B0,0x0128,0x0101,0x0100,0x011D,0x014C,
+		0x0101,0x0153,0x0100,0x011C,0x01E8,0x0109,0x0132,0x0100,
+		0x011C,0x0184,0x012C,0x0132,0x0100,0x011C,0x0120,0x0125,
+		0x0186,0x0100,0x011B,0x01BC,0x011D,0x011F,0x0000
+	};
 	int i;
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
 
-	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_default = compressed_default_eeprom;
 	slapstic_init(109);
 
 	atarisys2_mo_mask = 0x07ff;
@@ -1557,7 +1596,7 @@ static void apb_init(void)
 	slapstic_init(110);
 
 	atarisys2_mo_mask = 0x1fff;
-	pedal_count = 1;
+	pedal_count = 2;
 	has_tms5220 = 1;
 
 	/* speed up the 6502 */
@@ -2110,7 +2149,7 @@ struct GameDriver apb_driver =
 	"1987",
 	"Atari Games",
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	apb_init,
 
@@ -2137,7 +2176,7 @@ struct GameDriver apb2_driver =
 	"1987",
 	"Atari Games",
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	apb_init,
 

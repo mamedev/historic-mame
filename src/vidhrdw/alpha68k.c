@@ -75,9 +75,8 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
 
 void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,mx,my,color,tile,tile2,i;
+	int offs,mx,my,color,tile,i;
 	int colmask[0x80],code,pal_base;
-	unsigned int *pen_usage=Machine->gfx[0]->pen_usage;
 
 	/* Build the dynamic palette */
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,2048 * sizeof(unsigned char));
@@ -275,9 +274,8 @@ void alpha68k_V_video_bank_w(int offset, int data)
 
 void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,mx,my,color,tile,tile2,i;
+	int offs,mx,my,color,tile,i;
 	int colmask[256],code,pal_base;
-	unsigned int *pen_usage=Machine->gfx[0]->pen_usage;
 
 	/* Build the dynamic palette */
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096 * sizeof(unsigned char));
@@ -360,7 +358,6 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs,mx,my,color,tile,i;
 	int colmask[256],code,pal_base;
-	unsigned int *pen_usage=Machine->gfx[0]->pen_usage;
 
 	/* Build the dynamic palette */
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096 * sizeof(unsigned char));

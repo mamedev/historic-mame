@@ -77,12 +77,12 @@ INLINE int ROPCODE(void)
 /* shortcuts for reading/writing memory words */
 INLINE int RWORD(int addr)
 {
-	return T11_RDMEM_WORD(addr);
+	return T11_RDMEM_WORD(addr & 0xfffe);
 }
 
 INLINE void WWORD(int addr, int data)
 {
-	T11_WRMEM_WORD(addr, data);
+	T11_WRMEM_WORD(addr & 0xfffe, data);
 }
 
 /* pushes/pops a value from the stack */
@@ -132,7 +132,6 @@ static void t11_check_irqs(void)
 	int irq;
 
 	/* loop over IRQs from highest to lowest */
-//	for (irq = 3; irq >= 0; irq--)
 	for (irq = 0; irq < 4; irq++)
 	{
 	    if (t11.irq_state[irq] != CLEAR_LINE)
@@ -157,7 +156,6 @@ static void t11_check_irqs(void)
 				/* count 50 cycles (who knows what it really is) and clear the WAIT flag */
 				t11.interrupt_cycles += 50;
 				t11.wait_state = 0;
-//				return;
 			}
 	    }
 	}

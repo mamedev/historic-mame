@@ -14,8 +14,8 @@ Terra Force
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/M68000/M68000.h"
-#include "cpu/Z80/Z80.h"
+#include "cpu/m68000/m68000.h"
+#include "cpu/z80/z80.h"
 
 extern void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int terraf_vh_start(void);

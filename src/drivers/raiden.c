@@ -344,9 +344,11 @@ static struct GfxDecodeInfo raiden_gfxdecodeinfo[] =
 /******************************************************************************/
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void YM3812_irqhandler(void)
+static void YM3812_irqhandler(int linestate)
 {
-	cpu_cause_interrupt(2,0xd7); /* RST 10h */
+	cpu_irq_line_vector_w(2,0,0xd7); /* RST 10h */
+	cpu_set_irq_line(2,0,linestate);
+	//cpu_cause_interrupt(2,0xd7); /* RST 10h */
 }
 
 static struct YM3812interface ym3812_interface =
@@ -354,15 +356,15 @@ static struct YM3812interface ym3812_interface =
 	1,
 	4000000,
 	{ 50 },
-	YM3812_irqhandler,
+	{ YM3812_irqhandler },
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	8000,
+	{ 8000 },
 	{ 4 },
-	{ 41 }
+	{ 40 }
 };
 
 static int raiden_interrupt(void)

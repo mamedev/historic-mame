@@ -752,6 +752,9 @@ Six Flags (?)
 	DRIVER( gsword )	/* (c) 1984 Taito Corporation */
 	DRIVER( lkage )		/* (c) 1984 Taito Corporation */
 	DRIVER( lkageb )	/* bootleg */
+	DRIVER( gyrodine )	/* (c) 1984 Taito Corporation */
+	DRIVER( sonofphx )	/* (c) 1985 Associated Overseas MFR */
+	DRIVER( srdmissn )	/* (c) 1986 Taito Corporation */
 	DRIVER( retofinv )	/* (c) 1985 Taito Corporation */
 	DRIVER( retofin1 )	/* bootleg */
 	DRIVER( retofin2 )	/* bootleg */
@@ -908,9 +911,7 @@ V-V                           TP-027
 
 	/* Capcom games */
 	/* The following is a COMPLETE list of the Capcom games up to 1997, as shown on */
-	/* their web site. The list is sorted by production date. Some titles are in */
-	/* quotes, because I couldn't find the English name (might not have been exported). */
-	/* The name in quotes is the title Capcom used for the html page. */
+	/* their web site. The list is sorted by production date. */
 	DRIVER( vulgus )	/*  5/1984 (c) 1984 */
 	DRIVER( vulgus2 )	/*  5/1984 (c) 1984 */
 	DRIVER( vulgusj )	/*  5/1984 (c) 1984 */
@@ -940,8 +941,9 @@ V-V                           TP-027
 	DRIVER( sctionza )	/* 12/1985 (c) 1985 */
 	DRIVER( trojan )	/*  4/1986 (c) 1986 + Romstar */
 	DRIVER( trojanj )	/*  4/1986 (c) 1986 */
-	DRIVER( srumbler )	/*  9/1986 (c) 1986 */	/* aka Rush'n Crash */
+	DRIVER( srumbler )	/*  9/1986 (c) 1986 */
 	DRIVER( srumblr2 )	/*  9/1986 (c) 1986 */
+	DRIVER( rushcrsh )	/*  9/1986 (c) 1986 */
 	DRIVER( lwings )	/* 11/1986 (c) 1986 */
 	DRIVER( lwings2 )	/* 11/1986 (c) 1986 */
 	DRIVER( lwingsjp )	/* 11/1986 (c) 1986 */
@@ -1319,13 +1321,50 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( bankp )		/* (c) 1984 Sega */
 
 	/* Sega System 16 games */
-	DRIVER( alexkidd )	/* (c) 1986 (but bootleg) */
+	// Not working
+	DRIVER( alexkidd )	/* (c) 1986 (protected) */
+	DRIVER( aliensya )	/* (c) 1987 (protected) */
+	DRIVER( aliensyb )	/* (c) 1987 (protected) */
+	DRIVER( astorm )	/* (c) 1990 (protected) */
+	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
+	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
+	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
+	DRIVER( bayrouta )	/* (c) 1989 (protected) */
+	DRIVER( fpoint )	/* (c) 1989 (protected) */
+	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
+	DRIVER( goldnaxc )	/* (c) 1989 (protected) */
+	DRIVER( moonwalk )	/* (c) 1990 (protected) */
+	DRIVER( passsht )	/* (protected) */
+	DRIVER( shangon )	/* (c) 1992 (protected) */
+	DRIVER( shinobia )	/* (c) 1987 (protected) */
+	DRIVER( tetris )	/* (c) 1988 (protected) */
+	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
+
+//	DRIVER( aceattac )	/* (protected) */
+//	DRIVER( aburner )	/* */
+//	DRIVER( bloxeed )	/* (protected) */
+//	DRIVER( cltchitr )	/* (protected) */
+//	DRIVER( cotton )	/* (protected) */
+//	DRIVER( cottona )	/* (protected) */
+//	DRIVER( ddcrew )	/* (protected) */
+//	DRIVER( dunkshot )	/* (protected) */
+//	DRIVER( enduror )	/* (protected) */
+//	DRIVER( lghost )	/* (protected) */
+//	DRIVER( loffire )	/* (protected) */
+//	DRIVER( mvp )		/* (protected) */
+//	DRIVER( thndrbld )	/* (protected) */
+//	DRIVER( toutrun )	/* (protected) */
+//	DRIVER( toutruna )	/* (protected) */
+
+	// Working
+	DRIVER( alexkdbl )	/* (c) 1986 (but bootleg) */
 	DRIVER( aliensyn )	/* (c) 1987 */
 	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
 	DRIVER( astormbl )	/* bootleg */
 	DRIVER( atomicp )	/* (c) 1990 Philko */
-	DRIVER( aurail )	/* (c) 1990 Sega / Westone (but bootleg) */
+	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
+	DRIVER( bayroute )	/* (c) 1989 */
 	DRIVER( bodyslam )	/* (c) 1986 */
 	DRIVER( dduxbl )	/* (c) 1989 (Datsu bootleg) */
 	DRIVER( eswatbl )	/* (c) 1989 (but bootleg) */
@@ -1333,16 +1372,23 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
 	DRIVER( goldnaxe )	/* (c) 1989 */
 	DRIVER( goldnaxa )	/* (c) 1989 */
+	DRIVER( goldnabl )	/* (c) 1989 (bootleg) */
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( hwchamp )	/* (c) 1987 */
 	DRIVER( moonwlkb )	/* bootleg */
 	DRIVER( mjleague )	/* (c) 1985 */
+	DRIVER( outrun )	/* (c) 1986 (bootleg)*/
+	DRIVER( outruna )	/* (c) 1986 (bootleg) */
+	DRIVER( outrunb )	/* (c) 1986 (protected beta bootleg) */
 	DRIVER( passshtb )	/* bootleg */
 	DRIVER( quartet )	/* (c) 1986 */
 	DRIVER( quartet2 )	/* (c) 1986 */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( sdi )		/* (c) 1987 */
+	DRIVER( shangonb )	/* (c) 1992 (but bootleg) */
+	DRIVER( sharrier )	/* (c) 1985 */
 	DRIVER( shdancer )	/* (c) 1989 */
+	DRIVER( shdancbl )	/* (c) 1989 (but bootleg) */
 	DRIVER( shdancrj )	/* (c) 1989 */
 	DRIVER( shinobi )	/* (c) 1987 */
 	DRIVER( shinobl )	/* (c) 1987 (but bootleg) */
@@ -1412,9 +1458,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( srdarwin )	/* (c) 1987 Data East Corporation (Japan) */
 	DRIVER( gondo )		/* (c) 1987 Data East USA (US) */
 	DRIVER( makyosen )	/* (c) 1987 Data East Corporation (Japan) */
+	DRIVER( garyoret )	/* (c) 1987 Data East Corporation (Japan) */
 	DRIVER( cobracom )	/* (c) 1988 Data East Corporation (Japan) */
 	DRIVER( oscar )		/* (c) 1988 Data East USA (US) */
-	DRIVER( oscarj )		/* (c) 1987 Data East Corporation (Japan) */
+	DRIVER( oscarj )	/* (c) 1987 Data East Corporation (Japan) */
 
 	/* Data East 16-bit games */
 	DRIVER( karnov )	/* (c) 1987 Data East USA (US) */
@@ -1436,8 +1483,13 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( slyspy2 )	/* (c) 1989 Data East USA (US) */
 	DRIVER( bouldash )	/* (c) 1990 Data East Corporation */
 	/* evolution of the hardware */
+	DRIVER( stadhero )	/* (c) 1988 Data East Corporation (Japan) */
 	DRIVER( vaportra )	/* (c) 1989 Data East Corporation (US) */
 	DRIVER( kuhga )		/* (c) 1989 Data East Corporation (Japan) */
+	DRIVER( cbuster )	/* (c) 1990 Data East Corporation (World) */
+	DRIVER( cbusterw )	/* (c) 1990 Data East Corporation (World) */
+	DRIVER( cbusterj )	/* (c) 1990 Data East Corporation (Japan) */
+	DRIVER( twocrude )	/* (c) 1990 Data East USA (US) */
 	DRIVER( darkseal )	/* (c) 1990 Data East Corporation (World) */
 	DRIVER( darksea1 )	/* (c) 1990 Data East Corporation (World) */
 	DRIVER( gatedoom )	/* (c) 1990 Data East Corporation (US) */
@@ -1534,14 +1586,26 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( ddrible )	/* GX690 (c) 1986 */
 	DRIVER( contra )	/* GX633 (c) 1987 */
 	DRIVER( contrab )	/* bootleg */
-	DRIVER( gryzorb )	/* bootleg */
-	DRIVER( mainevt )	/* GX799 (c) 1988 */
-	DRIVER( mainevt2 )	/* GX799 (c) 1988 */
-	DRIVER( devstors )	/* GX890 (c) 1988 */
+	DRIVER( contrajb )	/* bootleg */
 	DRIVER( combasc )	/* GX611 (c) 1988 */
 	DRIVER( combasct )	/* GX611 (c) 1988 */
 	DRIVER( bootcamp )	/* GX611 (c) 1988 */
 	DRIVER( combascb )	/* bootleg */
+	DRIVER( hcastle )	/* GX768 (c) 1988 */
+	DRIVER( hcastlea )	/* GX768 (c) 1988 */
+	DRIVER( ajax )		/* GX770 (c) 1987 */
+	DRIVER( mainevt )	/* GX799 (c) 1988 */
+	DRIVER( mainevt2 )	/* GX799 (c) 1988 */
+	DRIVER( devstors )	/* GX890 (c) 1988 */
+	DRIVER( devstor2 )	/* GX890 (c) 1988 */
+	DRIVER( crimfght )	/* GX821 (c) 1989 */
+	DRIVER( aliens )	/* GX875 (c) 1990 */
+	DRIVER( aliens2 )	/* GX875 (c) 1990 */
+	DRIVER( simpsons )	/* GX072 (c) 1991 */
+	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
+//	DRIVER( vendetta )	/* GX081 (c) 1991 (Asia) */
+//	DRIVER( vendett2 )	/* GX081 (c) 1991 (Asia) */
+//	DRIVER( vendettj )	/* GX081 (c) 1991 (Japan) */
 
 	/* Konami "Nemesis hardware" games */
 	DRIVER( nemesis )	/* GX456 (c) 1985 */
@@ -1557,12 +1621,25 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( gwarrior )	/* GX578 (c) 1985 */
 
 	/* Konami "TMNT hardware" games */
-	DRIVER( tmnt )		/* GX963 (c) 1989 */
-	DRIVER( tmntj )		/* GX963 (c) 1989 */
-	DRIVER( tmht2p )	/* GX963 (c) 1989 */
-	DRIVER( tmnt2pj )	/* GX963 (c) 1990 */
-	DRIVER( punkshot )	/* GX907 (c) 1990 */
-	DRIVER( punksht2 )	/* GX907 (c) 1990 */
+	DRIVER( mia )		/* GX808 (c) 1989 */
+	DRIVER( mia2 )		/* GX808 (c) 1989 */
+	DRIVER( tmnt )		/* GX963 (c) 1989 (US) */
+	DRIVER( tmht )		/* GX963 (c) 1989 (UK) */
+	DRIVER( tmntj )		/* GX963 (c) 1989 (Japan) */
+	DRIVER( tmht2p )	/* GX963 (c) 1989 (UK) */
+	DRIVER( tmnt2pj )	/* GX963 (c) 1990 (Japan) */
+	DRIVER( punkshot )	/* GX907 (c) 1990 (US) */
+	DRIVER( punksht2 )	/* GX907 (c) 1990 (US) */
+	DRIVER( lgtnfght )	/* GX939 (c) 1990 (US) */
+	DRIVER( trigon )	/* GX939 (c) 1990 (Japan) */
+	DRIVER( tmnt2 )		/* GX063 (c) 1991 (US) */
+	DRIVER( tmnt22p )	/* GX063 (c) 1991 (US) */
+	DRIVER( tmnt2a )	/* GX063 (c) 1991 (Asia) */
+	DRIVER( ssriders )	/* GX064 (c) 1991 (World) */
+	DRIVER( ssrideru )	/* GX064 (c) 1991 (US) */
+	DRIVER( ssridera )	/* GX064 (c) 1991 (Asia) */
+	DRIVER( xmen )		/* GX065 (c) 1992 (US) */
+	DRIVER( xmen6p )	/* GX065 (c) 1992 */
 
 	/* Exidy games */
 	DRIVER( sidetrac )	/* (c) 1979 */
@@ -1731,8 +1808,13 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( shuuz )		/* (c) 1990 */
 	DRIVER( shuuz2 )	/* (c) 1990 */
 	DRIVER( hydra )		/* (c) 1990 */
+	DRIVER( hydrap )	/* (c) 1990 */
 	DRIVER( pitfight )	/* (c) 1990 */
 	DRIVER( pitfigh3 )	/* (c) 1990 */
+	DRIVER( thunderj )	/* (c) 1990 */
+	DRIVER( batman )	/* (c) 1991 */
+	DRIVER( relief )	/* (c) 1992 */
+	DRIVER( relief2 )	/* (c) 1992 */
 
 	/* SNK / Rock-ola games */
 	DRIVER( sasuke )	/* [1980] Shin Nihon Kikaku (SNK) */
@@ -1748,8 +1830,8 @@ DokiDoki Penguin Land *not confirmed
 	/* later SNK games */
 	DRIVER( mnchmobl )	/* (c) 1983 + Centuri license */
 	DRIVER( marvins )	/* (c) 1983 */
-//	DRIVER( madcrash )
-//	DRIVER( vangrd2 )
+	DRIVER( madcrash )	/* (c) 1984 */
+	DRIVER( vangrd2 )	/* (c) 1984 */
 //	DRIVER( hal21 )
 	DRIVER( tnk3 )		/* (c) 1985 */
 	DRIVER( tnk3j )		/* (c) 1985 */
@@ -1794,7 +1876,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( skyadvnt )	/* (c) 1989 SNK of America licensed from Alpha */
 	DRIVER( gangwars )	/* (c) 1989 Alpha */
 	DRIVER( gangwarb )	/* bootleg */
-	DRIVER( sbasebal )
+	DRIVER( sbasebal )	/* (c) 1989 SNK of America licensed from Alpha */
 
 	/* Technos games */
 	DRIVER( mystston )	/* TA-0010 (c) 1984 */
@@ -1963,6 +2045,7 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( scion )		/* (c) 1984 Seibu Denshi */
 	DRIVER( scionc )	/* (c) 1984 Seibu Denshi + Cinematronics license */
 	DRIVER( wiz )		/* (c) 1985 Seibu Kaihatsu */
+	DRIVER( stfight )	/* (c) 1986 Seibu Kaihatsu (Germany) */
 	DRIVER( raiden )	/* (c) 1990 Seibu Kaihatsu */
 //	DRIVER( raidena )	/* (c) 1990 Seibu Kaihatsu */
 
@@ -1976,6 +2059,7 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( citycona )	/* (c) 1985 Jaleco */
 	DRIVER( cruisin )	/* (c) 1985 Jaleco/Kitkorp */
 	DRIVER( psychic5 )	/* (c) 1987 Jaleco */
+	DRIVER( ginganin )	/* (c) 1987 Jaleco */
 
 	/* Jaleco Mega System 1 games */
 	DRIVER( lomakaj )	/* (c) 1988 */
@@ -2077,6 +2161,8 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( csk227it )	/* (c) [1993] IGS */
 	DRIVER( csk234it )	/* (c) [1993] IGS */
 	DRIVER( meteor )	/* (c) 1981 Venture Line */
+	DRIVER( bjtwin )	/* (c) 1993 NMK */
+	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */
 
 
 #endif /* NEOMAME */
@@ -2188,7 +2274,7 @@ Bio Ship Paladin    UPL-90062
 	DRIVER( turfmast )	/* 0200 (c) 1996 Nazca */
 	DRIVER( mslug )		/* 0201 (c) 1996 Nazca */
 	DRIVER( puzzledp )	/* 0202 (c) 1995 Taito (Visco license) */
-	/* 0203 Master of Syougi / Syougi No Tatsujin */
+	DRIVER( mosyougi )	/* 0203 (c) 1995 ADK / SNK */
 	/* 0204 ADK World (CD only) */
 	/* 0205 Neo-Geo CD Special (CD only) */
 	DRIVER( marukodq )	/* 0206 (c) 1995 Takara */
@@ -2236,6 +2322,7 @@ Bio Ship Paladin    UPL-90062
 //	DRIVER( pbobbl2n )	/* 0248 (c) 1999 Taito (SNK license) */
 //	DRIVER( ctomaday )	/* 0249 (c) 1999 Visco */
 //	DRIVER( mslugx )	/* 0250 (c) 1999 SNK */
+//	DRIVER( kof99 )		/* 0251 (c) 1999 SNK */
 
 #endif	/* NEOFREE */
 

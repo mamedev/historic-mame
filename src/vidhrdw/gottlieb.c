@@ -125,6 +125,7 @@ void gottlieb_vh_stop(void)
 
 void gottlieb_video_outputs(int offset,int data)
 {
+	extern void gottlieb_knocker(void);
 	static int last = 0;
 
 
@@ -137,6 +138,8 @@ void gottlieb_video_outputs(int offset,int data)
 
 	/* in Q*Bert Qubes only, bit 4 controls the sprite bank */
 	spritebank = (data & 0x10) >> 4;
+
+	if ((last&0x20) && !(data&0x20)) gottlieb_knocker();
 
 	last = data;
 }

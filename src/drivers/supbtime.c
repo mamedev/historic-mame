@@ -271,16 +271,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
-	8000,       /* 8000Hz frequency (Not quite correct) */
+	{ 8055 },	/* Frequency */
 	{ 3 },      /* memory region 3 */
 	{ 50 }
 };
 
 static void sound_irq(int state)
 {
-//	cpu_set_irq_line(1,2,state);
-if (state)	cpu_cause_interrupt(1,H6280_INT_IRQ2);
-//change this back once all core changes are complete
+	cpu_set_irq_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
@@ -362,12 +360,6 @@ ROM_END
 
 /******************************************************************************/
 
-static void supbtime_patch(void)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-	RAM[0x1d6]=0xea; /* NOP out CLI */
-}
-
 static int supbtime_cycle_r(int offset)
 {
 	if (cpu_get_pc()==0x7e2 && READ_WORD(&supbtime_ram[0])==0) {cpu_spinuntil_int(); return 1;}
@@ -396,7 +388,7 @@ struct GameDriver supbtime_driver =
 	custom_memory,
 
 	supbtime_rom,
-	supbtime_patch, 0,
+	0, 0,
 	0,
 	0,
 

@@ -479,8 +479,6 @@ if (flipscreen) sx += 32;
 	for (offs = 0; offs < rallyx_radarram_size;offs++)
 	{
 		int x,y;
-		int color;
-
 
 		/* it looks like the addresses used are
 		   a000-a003  a004-a00f

@@ -559,6 +559,12 @@ int initmemoryhandlers(void)
 		{
 			int (*handler)(int) = mra->handler;
 
+/* work around a compiler bug */
+#ifdef SGI_FIX_MWA_NOP
+			if ((FPTR)handler == (FPTR)MRA_NOP) {
+				hardware = HT_NOP;
+			} else {
+#endif
 			switch ((FPTR)handler)
 			{
 			case (FPTR)MRA_RAM:
@@ -624,6 +630,9 @@ int initmemoryhandlers(void)
 					memoryreadoffset[hardware] = mra->start;
 				}
 			}
+#ifdef SGI_FIX_MWA_NOP
+			}
+#endif
 			/* hardware element table make */
 			set_element( cpu , cur_mr_element[cpu] ,
 				(((unsigned int) mra->start) >> abitsmin) ,

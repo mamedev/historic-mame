@@ -262,7 +262,6 @@ void yard_scroll_panel_w(int offset,int data)
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	struct rectangle *visible_rect;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

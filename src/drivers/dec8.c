@@ -16,6 +16,7 @@ Various Data East 8 bit games:
 	Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
 	Breywood                    (c) 1986 Data East Corporation (2*6809 + I8751)
 	Captain Silver (Japan)      (c) 1987 Data East Corporation (2*6809 + I8751)
+	Garyo Retsuden (Japan)      (c) 1987 Data East Corporation (6809 + I8751)
 
 	All games use a 6502 for sound (some are encrypted), all games except Cobracom
 	use an Intel 8751 for protection & coinage.  For these games the coinage dip
@@ -32,6 +33,8 @@ To do:
 	Captain Silver/Cobra Command probably have some sprite/playfield priorities
 	Dips needed to be worked on several games
 	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
+	Strangely coloured butterfly on Garyo Retsuden water levels!
+
 
 Emulation Notes:
 
@@ -59,6 +62,7 @@ void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int dec8_vh_start(void);
@@ -333,6 +337,34 @@ static void csilver_i8751_w(int offset, int data)
 	if ((i8751_value>>8)==0x02) {i8751_return=snd | coin; snd=0; } /* Coin Return */
 	if (i8751_value==0x0003 && coin) {i8751_return=0; coin--;} /* Coin Clear */
 /* Todo:  Coin insert sound doesn't seem to work...*/
+}
+
+static void garyoret_i8751_w(int offset, int data)
+{
+	static int coin1,coin2,latch;
+	i8751_return=0;
+
+	switch (offset) {
+	case 0: /* High byte */
+if (errorlog && data!=5) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cpu_get_pc(),data,offset);
+		i8751_value=(i8751_value&0xff) | (data<<8);
+		break;
+	case 1: /* Low byte */
+		i8751_value=(i8751_value&0xff00) | data;
+		break;
+	}
+
+	/* Coins are controlled by the i8751 */
+ 	if ((readinputport(2)&3)==3) latch=1;
+ 	if ((readinputport(2)&1)!=1 && latch) {coin1++; latch=0;}
+ 	if ((readinputport(2)&2)!=2 && latch) {coin2++; latch=0;}
+
+	/* Work out return values */
+	if ((i8751_value>>8)==0x00) {i8751_return=0; coin1=coin2=0;}
+	if ((i8751_value>>8)==0x01)  i8751_return=0x59a; /* ID */
+	if ((i8751_value>>8)==0x04)  i8751_return=i8751_value; /* Coinage settings (Not supported) */
+	if ((i8751_value>>8)==0x05) {i8751_return=0x00 | ((coin1 / 10) << 4) | (coin1 % 10);  } /* Coin 1 */
+	if ((i8751_value>>8)==0x06 && coin1 && !offset) {i8751_return=0x600; coin1--; } /* Coin 1 clear */
 }
 
 /******************************************************************************/
@@ -902,6 +934,41 @@ static struct MemoryWriteAddress csilver_sub_writemem[] =
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x4000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress garyoret_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x27ff, dec8_video_r },
+	{ 0x2800, 0x2bff, paletteram_r },
+	{ 0x2c00, 0x2fff, paletteram_2_r },
+	{ 0x3000, 0x37ff, MRA_RAM },          /* Sprites */
+	{ 0x3800, 0x3800, input_port_3_r },   /* Dip 1 */
+	{ 0x3801, 0x3801, input_port_4_r },   /* Dip 2 */
+	{ 0x3808, 0x3808, MRA_NOP },          /* ? */
+	{ 0x380a, 0x380a, input_port_1_r },   /* Player 2 + VBL */
+	{ 0x380b, 0x380b, input_port_0_r },   /* Player 1 */
+	{ 0x383a, 0x383a, i8751_h_r },
+	{ 0x383b, 0x383b, i8751_l_r },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress garyoret_writemem[] =
+{
+	{ 0x0000, 0x17ff, MWA_RAM },
+	{ 0x1800, 0x1fff, MWA_RAM, &videoram, &videoram_size },
+  	{ 0x2000, 0x27ff, dec8_video_w },
+	{ 0x2800, 0x2bff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
+	{ 0x2c00, 0x2fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },
+	{ 0x3810, 0x3810, dec8_sound_w },
+	{ 0x3818, 0x382f, gondo_scroll_w },
+	{ 0x3830, 0x3830, ghostb_bank_w }, /* Bank + NMI enable */
+	{ 0x3838, 0x3839, garyoret_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -1548,6 +1615,66 @@ INPUT_PORTS_START( csilver_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( garyoret_input_ports )
+	PORT_START	/* Player 1 controls */
+	PLAYER1_JOYSTICK
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+ 	PORT_START	/* Player 2 controls */
+	PLAYER2_JOYSTICK
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START /* Fake port for i8751 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* Dip switch bank 1 */
+	/* Coinage not supported */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout charlayout_32k =
@@ -1688,7 +1815,7 @@ static struct GfxDecodeInfo srdarwin_gfxdecodeinfo[] =
 static struct GfxDecodeInfo gondo_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &chars_3bpp,  0, 16 }, /* Chars */
-	{ 1, 0x08000, &tiles,     256, 16 }, /* Sprites */
+	{ 1, 0x08000, &tiles,     256, 32 }, /* Sprites */
 	{ 1, 0x88000, &tiles,     768, 16 }, /* Tiles */
  	{ -1 } /* end of array */
 };
@@ -1732,14 +1859,16 @@ static struct YM2203interface ym2203_interface =
 };
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
-static void oscar_irqhandler(void)
+static void oscar_irqhandler(int linestate)
 {
-	cpu_cause_interrupt(2,M6502_INT_IRQ);
+	cpu_set_irq_line(2,0,linestate);
+	//cpu_cause_interrupt(2,M6502_INT_IRQ);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -1747,7 +1876,7 @@ static struct YM3526interface ym3526_interface =
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? */
 	{ 255 },	/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 static struct YM3526interface oscar_ym3526_interface =
@@ -1755,7 +1884,7 @@ static struct YM3526interface oscar_ym3526_interface =
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? */
 	{ 255 },		/* (not supported) */
-	oscar_irqhandler,
+	{ oscar_irqhandler },
 };
 
 static struct YM3812interface ym3812_interface =
@@ -1763,7 +1892,7 @@ static struct YM3812interface ym3812_interface =
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? */
 	{ 255 },		/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -1771,7 +1900,7 @@ static struct MSM5205interface msm5205_interface =
 	1,					/* 1 chip             */
 	384000,				/* 384KHz             */
 	{ csilver_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz               */
+	{ MSM5205_S48_4B },	/* 8KHz               */
 	{ 60 }
 };
 
@@ -2262,6 +2391,57 @@ static struct MachineDriver csilver_machine_driver =
 	}
 };
 
+static struct MachineDriver garyoret_machine_driver =
+{
+	/* basic machine hardware */
+	{
+ 		{
+			CPU_M6809, /* HD63C09EP */
+			4000000, /* 8 MHz clock on board */
+			0,
+			garyoret_readmem,garyoret_writemem,0,0,
+			gondo_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1250000,        /* 1.25 Mhz ? */
+			2,	/* memory region #2 */
+			dec8_s_readmem,dec8_s_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
+								/* NMIs are caused by the main CPU */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,	/* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	gondo_gfxdecodeinfo,
+	1024,1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	dec8_vh_start,
+	dec8_vh_stop,
+	garyoret_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		}
+	}
+};
+
 /******************************************************************************/
 
 ROM_START( cobracom_rom )
@@ -2683,6 +2863,51 @@ ROM_START( csilver_rom )
 
 	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "a5", 0x0000, 0x10000,  0x29432691 )
+ROM_END
+
+ROM_START( garyoret_rom )
+	ROM_REGION(0x58000)
+ 	ROM_LOAD( "dv00", 0x08000, 0x08000, 0xcceaaf05 )
+	ROM_LOAD( "dv01", 0x10000, 0x10000, 0xc33fc18a )
+	ROM_LOAD( "dv02", 0x20000, 0x10000, 0xf9e26ce7 )
+	ROM_LOAD( "dv03", 0x30000, 0x10000, 0x55d8d699 )
+	ROM_LOAD( "dv04", 0x40000, 0x10000, 0xed3d00ee )
+    ROM_LOAD( "dv05", 0x50000, 0x08000, 0xc97c347f )
+
+	ROM_REGION_DISPOSE(0x108000)	/* temporary space for graphics */
+	ROM_LOAD( "dv14", 0x00000, 0x08000, 0xfb2bc581 )	/* Characters */
+
+	ROM_LOAD( "dv16", 0x68000, 0x10000, 0x37e4971e )	/* Sprites */
+	ROM_LOAD( "dv15", 0x78000, 0x08000, 0xca41b6ac )
+	ROM_LOAD( "dv18", 0x48000, 0x10000, 0x7043bead )
+	ROM_LOAD( "dv17", 0x58000, 0x08000, 0x28f449d7 )
+	ROM_LOAD( "dv20", 0x28000, 0x10000, 0x451a2d8c )
+	ROM_LOAD( "dv19", 0x38000, 0x08000, 0x14e1475b )
+	ROM_LOAD( "dv22", 0x08000, 0x10000, 0xcef0367e )
+	ROM_LOAD( "dv21", 0x18000, 0x08000, 0x90042fb7 )
+
+	ROM_LOAD( "dv06", 0xa8000, 0x08000, 0x1eb52a20 )	/* Tiles */
+	ROM_CONTINUE(     0xb8000, 0x08000 )
+	ROM_LOAD( "dv07", 0xb0000, 0x08000, 0xe7346ef8 )
+	ROM_CONTINUE(     0xc0000, 0x08000 )
+
+	ROM_LOAD( "dv08", 0x88000, 0x08000, 0x89c13e15 )
+	ROM_CONTINUE(     0x98000, 0x08000 )
+	ROM_LOAD( "dv09", 0x90000, 0x08000, 0x6a345a23 )
+	ROM_CONTINUE(     0xa0000, 0x08000 )
+
+	ROM_LOAD( "dv10", 0xe8000, 0x08000, 0x68b6d75c )
+	ROM_CONTINUE(     0xf8000, 0x08000 )
+	ROM_LOAD( "dv11", 0xf0000, 0x08000, 0xb5948aee )
+	ROM_CONTINUE(     0x100000,0x08000 )
+
+	ROM_LOAD( "dv12", 0xc8000, 0x08000, 0x46ba5af4 )
+	ROM_CONTINUE(     0xd8000, 0x08000 )
+	ROM_LOAD( "dv13", 0xd0000, 0x08000, 0xa7af6dfd )
+	ROM_CONTINUE(     0xe0000, 0x08000 )
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "dv05", 0x08000, 0x08000, 0xc97c347f )
 ROM_END
 
 /******************************************************************************/
@@ -3387,4 +3612,30 @@ struct GameDriver csilver_driver =
 	ORIENTATION_DEFAULT,
 
 	csilver_hiload, csilver_hisave
+};
+
+struct GameDriver garyoret_driver =
+{
+	__FILE__,
+	0,
+	"garyoret",
+	"Garyo Retsuden (Japan)",
+	"1987",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&garyoret_machine_driver,
+	0,
+
+	garyoret_rom,
+	0, 0,
+	0,
+	0,
+
+	garyoret_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };

@@ -1101,7 +1101,7 @@ static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
 static struct DACinterface dac1_interface =
 {
 	1,
-	{ 25 }
+	{ 50 }
 };
 
 static struct DACinterface dac2_interface =
@@ -1113,7 +1113,7 @@ static struct DACinterface dac2_interface =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	25	/* volume */
+	100	/* volume */
 };
 
 static struct AY8910interface ay8910_interface =
@@ -1522,10 +1522,77 @@ ROM_END
 static const char *qbert_sample_names[] =
 {
 	"*qbert",
-	"FX_18.wav", /*curse*/
-	"FX_20.wav", /*little purple guy*/
-	"fx_22.wav", /*snake falling */
-	"fx_17.wav", /*green guy*/
+	"fx_17a.wav", /* random speech, voice clock 255 */
+	"fx_17b.wav", /* random speech, voice clock 255 */
+	"fx_17c.wav", /* random speech, voice clock 255 */
+	"fx_17d.wav", /* random speech, voice clock 255 */
+	"fx_17e.wav", /* random speech, voice clock 255 */
+	"fx_17f.wav", /* random speech, voice clock 255 */
+	"fx_17g.wav", /* random speech, voice clock 255 */
+	"fx_17h.wav", /* random speech, voice clock 255 */
+	"fx_18a.wav", /* random speech, voice clock 176 */
+	"fx_18b.wav", /* random speech, voice clock 176 */
+	"fx_18c.wav", /* random speech, voice clock 176 */
+	"fx_18d.wav", /* random speech, voice clock 176 */
+	"fx_18e.wav", /* random speech, voice clock 176 */
+	"fx_18f.wav", /* random speech, voice clock 176 */
+	"fx_18g.wav", /* random speech, voice clock 176 */
+	"fx_18h.wav", /* random speech, voice clock 176 */
+	"fx_19a.wav", /* random speech, voice clock 128 */
+	"fx_19b.wav", /* random speech, voice clock 128 */
+	"fx_19c.wav", /* random speech, voice clock 128 */
+	"fx_19d.wav", /* random speech, voice clock 128 */
+	"fx_19e.wav", /* random speech, voice clock 128 */
+	"fx_19f.wav", /* random speech, voice clock 128 */
+	"fx_19g.wav", /* random speech, voice clock 128 */
+	"fx_19h.wav", /* random speech, voice clock 128 */
+	"fx_20a.wav", /* random speech, voice clock 96 */
+	"fx_20b.wav", /* random speech, voice clock 96 */
+	"fx_20c.wav", /* random speech, voice clock 96 */
+	"fx_20d.wav", /* random speech, voice clock 96 */
+	"fx_20e.wav", /* random speech, voice clock 96 */
+	"fx_20f.wav", /* random speech, voice clock 96 */
+	"fx_20g.wav", /* random speech, voice clock 96 */
+	"fx_20h.wav", /* random speech, voice clock 96 */
+	"fx_21a.wav", /* random speech, voice clock 62 */
+	"fx_21b.wav", /* random speech, voice clock 62 */
+	"fx_21c.wav", /* random speech, voice clock 62 */
+	"fx_21d.wav", /* random speech, voice clock 62 */
+	"fx_21e.wav", /* random speech, voice clock 62 */
+	"fx_21f.wav", /* random speech, voice clock 62 */
+	"fx_21g.wav", /* random speech, voice clock 62 */
+	"fx_21h.wav", /* random speech, voice clock 62 */
+	"fx_22.wav", /* EH2 with decreasing voice clock */
+	"fx_23.wav", /* O1 with varying voice clock */
+	"fx_28.wav", /* "hello, I'm ready" */
+	"fx_36.wav", /* "byebye" */
+	"knocker.wav",
+	0	/* end of array */
+};
+
+static const char *reactor_sample_names[] =
+{
+	"*reactor",
+	"fx_53.wav", /* "8 left" */
+	"fx_54.wav", /* "16 left" */
+	"fx_55.wav", /* "24 left" */
+	"fx_56.wav", /* "32 left" */
+	"fx_57.wav", /* "40 left" */
+	"fx_58.wav", /* "warning, core unstable" */
+	"fx_59.wav", /* "bonus" */
+	"fx_31.wav", /* "chamber activated" */
+	"fx_39a.wav", /* "2000" */
+	"fx_39b.wav", /* "5000" */
+	"fx_39c.wav", /* "10000" */
+	"fx_39d.wav", /* "15000" */
+	"fx_39e.wav", /* "20000" */
+	"fx_39f.wav", /* "25000" */
+	"fx_39g.wav", /* "30000" */
+	"fx_39h.wav", /* "35000" */
+	"fx_39i.wav", /* "40000" */
+	"fx_39j.wav", /* "45000" */
+	"fx_39k.wav", /* "50000" */
+	"fx_39l.wav", /* "55000" */
      0	/* end of array */
 };
 
@@ -1622,7 +1689,7 @@ struct GameDriver reactor_driver =
 
 	reactor_rom,
 	0, 0,
-	0,
+	reactor_sample_names,
 	0,	/* sound_prom */
 
 	reactor_input_ports,

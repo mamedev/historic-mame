@@ -11,6 +11,9 @@
 #include "cpu/m6805/m6805.h"
 
 
+#define DEBUG_MCU	1
+
+
 static unsigned char fromz80,toz80;
 static int zaccept,zready;
 
@@ -54,25 +57,33 @@ void taitosj_bankswitch_w(int offset,int data)
 ***************************************************************************/
 int taitosj_fake_data_r(int offset)
 {
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection read\n",cpu_get_pc());
+#endif
 	return 0;
 }
 
 void taitosj_fake_data_w(int offset,int data)
 {
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_get_pc(),data);
+#endif
 }
 
 int taitosj_fake_status_r(int offset)
 {
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection status read\n",cpu_get_pc());
+#endif
 	return 0xff;
 }
 
 
 int taitosj_mcu_data_r(int offset)
 {
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_get_pc(),toz80);
+#endif
 
 	zaccept = 1;
 	return toz80;
@@ -80,7 +91,9 @@ if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_get_pc(),toz80
 
 void taitosj_mcu_data_w(int offset,int data)
 {
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_get_pc(),data);
+#endif
 
 	zready = 1;
 	cpu_set_irq_line(2,0,ASSERT_LINE);
@@ -99,13 +112,17 @@ static unsigned char portA_in,portA_out;
 
 int taitosj_68705_portA_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
+#if DEBUG_MCU
+if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
+#endif
 	return portA_in;
 }
 
 void taitosj_68705_portA_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
+#if DEBUG_MCU
+if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
+#endif
 	portA_out = data;
 }
 
@@ -140,28 +157,38 @@ static int address;
 
 void taitosj_68705_portB_w(int offset,int data)
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
+#if DEBUG_MCU
+if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
+#endif
 
 	if (~data & 0x01)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",cpu_get_pc());
+#endif
 	}
 	if (~data & 0x02)
 	{
 		zready = 0;	/* 68705 is going to read data from the Z80 */
 		cpu_set_irq_line(2,0,CLEAR_LINE);
 		portA_in = fromz80;
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 <- Z80 %02x\n",cpu_get_pc(),portA_in);
+#endif
 	}
 	if (~data & 0x04)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 -> Z80 %02x\n",cpu_get_pc(),portA_out);
+#endif
 		zaccept = 0;	/* 68705 is writing data for the Z80 */
 		toz80 = portA_out;
 	}
 	if (~data & 0x10)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
+#endif
         memorycontextswap(0);
 		cpu_writemem16(address, portA_out);
         memorycontextswap(2);
@@ -171,19 +198,25 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_ge
 	}
 	if (~data & 0x20)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),portA_in,address);
+#endif
         memorycontextswap(0);
 		portA_in = cpu_readmem16(address);
         memorycontextswap(2);
 	}
 	if (~data & 0x40)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 address low %02x\n",cpu_get_pc(),portA_out);
+#endif
 		address = (address & 0xff00) | portA_out;
 	}
 	if (~data & 0x80)
 	{
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 address high %02x\n",cpu_get_pc(),portA_out);
+#endif
 		address = (address & 0x00ff) | (portA_out << 8);
 	}
 }
@@ -203,7 +236,9 @@ int taitosj_68705_portC_r(int offset)
 	int res;
 
 	res = (zready << 0) | (zaccept << 1);
+#if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 port C read %02x\n",cpu_get_pc(),res);
+#endif
 	return res;
 }
 
@@ -246,50 +281,4 @@ void alpinea_bankswitch_w(int offset,int data)
 int alpine_port_2_r(int offset)
 {
 	return input_port_2_r(offset) | protection_value;
-}
-
-
-/* Sea Fighter Poseidon protection crack routines */
-
-int sfposeid_protection_r(int offset)
-{
-	return protection_value;
-}
-
-void sfposeid_protection_w(int offset,int data)
-{
-//if (errorlog) fprintf(errorlog,"%04x: sfposeid Z80 write (%02x) to 68705\n",cpu_get_pc(),data);
-
-	switch(data)
-	{
-	case 0x73: /* boot sequence */
-		protection_value = 0x66;
-		break;
-	default:
-		protection_value = 0x00;
-		break;
-	}
-}
-
-
-/* Kik Start protection crack routines */
-
-int kikstart_protection_r(int offset)
-{
-	return protection_value;
-}
-
-void kikstart_protection_w(int offset,int data)
-{
-//if (errorlog) fprintf(errorlog,"%04x: sfposeid Z80 write (%02x) to 68705\n",cpu_get_pc(),data);
-
-	switch(data)
-	{
-	case 0x73: /* boot sequence */
-		protection_value = 0x1a;
-		break;
-	default:
-		protection_value = 0x00;
-		break;
-	}
 }

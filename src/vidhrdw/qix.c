@@ -15,11 +15,11 @@ unsigned char *qix_palettebank;
 unsigned char *qix_videoaddress;
 static unsigned char *screen;
 
-//#define DEBUG_LEDS
+/*#define DEBUG_LEDS*/
 
 #ifdef DEBUG_LEDS
 #include <stdio.h>
-FILE	*led_log;
+static FILE *led_log;
 #endif
 
 
@@ -88,15 +88,9 @@ int qix_vh_start(void)
 	if ((screen = malloc(256*256)) == 0)
 		return 1;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(screen);
-		return 1;
-	}
-
-	#ifdef DEBUG_LEDS
+#ifdef DEBUG_LEDS
 	led_log = fopen ("led.log","w");
-	#endif
+#endif
 
 	return 0;
 }
@@ -110,11 +104,12 @@ int qix_vh_start(void)
 ***************************************************************************/
 void qix_vh_stop(void)
 {
-	osd_free_bitmap (tmpbitmap);
 	free (screen);
+	screen = 0;
 
 #ifdef DEBUG_LEDS
 	if (led_log) fclose (led_log);
+	led_log = 0;
 #endif
 }
 
@@ -156,7 +151,7 @@ void qix_videoram_w(int offset,int data)
 		y = ~y & 0xff;
 
 
-	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[data];
+	Machine->scrbitmap->line[y][x] = Machine->pens[data];
 
 	osd_mark_dirty(x,y,x,y,0);
 
@@ -193,7 +188,7 @@ void qix_addresslatch_w(int offset,int data)
 		y = ~y & 0xff;
 
 
-	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[data];
+	Machine->scrbitmap->line[y][x] = Machine->pens[data];
 
 	osd_mark_dirty(x,y,x,y,0);
 
@@ -236,18 +231,11 @@ void qix_palettebank_w(int offset,int data)
 
 #ifdef DEBUG_LEDS
 	data = ~(data) & 0xfc;
-	#if 0
-		if (led_log)
-		printf ("LEDS: %d %d %d %d %d %d", (data & 0x80)>>7, (data & 0x40)>>6, (data & 0x20)>>5,
-			(data & 0x10)>>4, (data & 0x08)>>3, (data & 0x04)>>2 );
-	#else
-		if (led_log)
-			fprintf (led_log, "LEDS: %d %d %d %d %d %d\n", (data & 0x80)>>7, (data & 0x40)>>6,
-				(data & 0x20)>>5, (data & 0x10)>>4, (data & 0x08)>>3, (data & 0x04)>>2 );
-//			fprintf (led_log, "PC: %04x LEDS: %d %d %d %d %d %d\n", cpu_get_pc(),
-//				(data & 0x04)>>2,(data & 0x08)>>3,
-//				(data & 0x10)>>4, (data & 0x20)>>5, (data & 0x40)>>6, (data & 0x80)>>7);
-	#endif
+	if (led_log)
+	{
+		fprintf (led_log, "LEDS: %d %d %d %d %d %d\n", (data & 0x80)>>7, (data & 0x40)>>6,
+			(data & 0x20)>>5, (data & 0x10)>>4, (data & 0x08)>>3, (data & 0x04)>>2 );
+	}
 #endif
 }
 
@@ -255,7 +243,7 @@ void qix_palettebank_w(int offset,int data)
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* recalc the palette if necessary */
-	if (palette_recalc ())
+	if (palette_recalc () || full_refresh)
 	{
 		int offs;
 
@@ -276,13 +264,9 @@ void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				y = ~y & 0xff;
 
 
-			Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = Machine->pens[screen[offs]];
+			bitmap->line[y][x] = Machine->pens[screen[offs]];
 		}
 
 		osd_mark_dirty (0,0,255,255,0);
 	}
-
-	if (full_refresh)
-		/* copy the screen */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

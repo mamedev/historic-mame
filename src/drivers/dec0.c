@@ -895,14 +895,16 @@ static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static void sound_irq(void)
+static void sound_irq(int linestate)
 {
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
-static void sound_irq2(void)
+static void sound_irq2(int linestate)
 {
-	cpu_cause_interrupt(1,H6280_INT_IRQ2);
+	cpu_set_irq_line(1,1,linestate);
+	//cpu_cause_interrupt(1,H6280_INT_IRQ2);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -922,7 +924,7 @@ static struct YM3812interface ym3812_interface =
 	1,			/* 1 chip (no more supported) */
 	3250000,	/* 3.25 MHz ? Might actually be 3?  (12MHz/4) */
 	{ 40 },
-	sound_irq,
+	{ sound_irq },
 };
 
 static struct YM3812interface ym3812b_interface =
@@ -930,13 +932,13 @@ static struct YM3812interface ym3812b_interface =
 	1,			/* 1 chip (no more supported) */
 	3000000,
 	{ 40 },
-	sound_irq2,
+	{ sound_irq2 },
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
-	8000,           /* 8000Hz frequency */
+	1,                  /* 1 chip */
+	{ 8000 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 80 }
 };

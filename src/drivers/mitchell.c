@@ -187,7 +187,7 @@ static void dial_init(void)
 
 ***************************************************************************/
 
-struct EEPROM_interface eeprom_interface =
+static struct EEPROM_interface eeprom_interface =
 {
 	6,		/* address bits */
 	16,		/* data bits */
@@ -1025,14 +1025,13 @@ static struct YM2413interface ym2413_interface=
 	1,	/* 1 chip */
 	8000000,	/* 8MHz ??? (hand tuned) */
 	{ 255 },	/* Volume */
-	NULL,	/* IRQ handler */
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,	/* 1 chip */
-	8000,	/* 8000Hz ??? */
-	{ 2 },	/* memory region 2 */
+	1,			/* 1 chip */
+	{ 8000 },	/* 8000Hz ??? */
+	{ 2 },		/* memory region 2 */
 	{ 60 }
 };
 

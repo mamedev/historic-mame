@@ -855,7 +855,6 @@ extern struct GameDriver neogeo_bios;
 static void showcharset(void)
 {
 	int i;
-	struct DisplayText dt[2];
 	char buf[80];
 	int bank,color,firstdrawn;
 	int palpage;
@@ -1056,17 +1055,17 @@ static void showcharset(void)
 //		osd_skip_this_frame();
 		osd_update_video_and_audio();
 
-		if (keyboard_key_pressed(KEYCODE_LCONTROL) || keyboard_key_pressed(KEYCODE_RCONTROL))
+		if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
 		{
 			skip_chars = cpx;
 		}
-		if (keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT))
+		if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
 		{
 			skip_chars = 1;
 		}
 
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{
 			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 			{
@@ -1076,7 +1075,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 		{
 			if (bank > -1)
 			{
@@ -1086,7 +1085,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_key_pressed_memory_repeat(KEYCODE_PGDN,4))
+		if (keyboard_pressed_memory_repeat(KEYCODE_PGDN,4))
 		{
 			if (bank >= 0)
 			{
@@ -1106,7 +1105,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_key_pressed_memory_repeat(KEYCODE_PGUP,4))
+		if (keyboard_pressed_memory_repeat(KEYCODE_PGUP,4))
 		{
 			if (bank >= 0)
 			{
@@ -1124,7 +1123,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,6))
+		if (input_ui_pressed_repeat(IPT_UI_UP,6))
 		{
 			if (bank >= 0)
 			{
@@ -1136,7 +1135,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,6))
+		if (input_ui_pressed_repeat(IPT_UI_DOWN,6))
 		{
 			if (color > 0)
 			{
@@ -1145,10 +1144,10 @@ static void showcharset(void)
 			}
 		}
 
-		if (keyboard_ui_key_pressed(IPT_UI_SNAPSHOT))
+		if (input_ui_pressed(IPT_UI_SNAPSHOT))
 			osd_save_snapshot();
-	} while (!keyboard_ui_key_pressed(IPT_UI_SHOW_GFX) &&
-			!keyboard_ui_key_pressed(IPT_UI_CANCEL));
+	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
+			!input_ui_pressed(IPT_UI_CANCEL));
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1319,19 +1318,19 @@ static int setdipswitches(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -1355,7 +1354,7 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -1379,15 +1378,15 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1445,7 +1444,7 @@ static int setdefkeysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
-			menu_subitem[i] = keyboard_key_name(entry[i]->keyboard);
+			menu_subitem[i] = keyboard_name(entry[i]->keyboard);
 		else menu_subitem[i] = 0;	/* no subitem */
 		flag[i] = 0;
 	}
@@ -1457,12 +1456,12 @@ static int setdefkeysettings(int selected)
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = keyboard_read_key_immediate();
+		newkey = keyboard_read_async();
 		if (newkey != KEYCODE_NONE)
 		{
 			sel &= 0xff;
 
-			if (!keyboard_key_pressed(input_port_type_key(IPT_UI_CANCEL)))
+			if (!keyboard_pressed(input_port_type_key(IPT_UI_CANCEL)))
 				entry[sel]->keyboard = newkey;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1475,19 +1474,19 @@ static int setdefkeysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1499,10 +1498,10 @@ static int setdefkeysettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1560,7 +1559,7 @@ static int setdefjoysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
-			menu_subitem[i] = osd_joy_name(entry[i]->joystick);
+			menu_subitem[i] = joystick_name(entry[i]->joystick);
 		else menu_subitem[i] = 0;	/* no subitem */
 		flag[i] = 0;
 	}
@@ -1568,14 +1567,13 @@ static int setdefjoysettings(int selected)
 	if (sel > 255)	/* are we waiting for a new key? */
 	{
 		int newjoy;
-		int joyindex;
 
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
 			sel &= 0xff;
 			/* don't change the setting */
@@ -1584,44 +1582,24 @@ static int setdefjoysettings(int selected)
 			need_to_clear_bitmap = 1;
 		}
 
-		/* Allows for "All buttons" */
-		if (keyboard_key_pressed_memory(KEYCODE_A))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = OSD_JOY_FIRE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-		if (keyboard_key_pressed_memory(KEYCODE_B))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = OSD_JOY2_FIRE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
 		/* Clears entry "None" */
-		if (keyboard_key_pressed_memory(KEYCODE_N))
+		if (keyboard_pressed_memory(KEYCODE_N))
 		{
 			sel &= 0xff;
-			entry[sel]->joystick = 0;
+			entry[sel]->joystick = JOYCODE_NONE;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
 		}
 
-		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+		newjoy = joystick_read_async();
+		if (newjoy != JOYCODE_NONE)
 		{
-			if (osd_joy_pressed(joyindex))
-			{
-				sel &= 0xff;
-				entry[sel]->joystick = joyindex;
+			sel &= 0xff;
+			entry[sel]->joystick = newjoy;
 
-				/* tell updatescreen() to clean after us (in case the window changes size) */
-				need_to_clear_bitmap = 1;
-				break;
-			}
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 
 		return sel + 1;
@@ -1630,19 +1608,19 @@ static int setdefjoysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1654,10 +1632,10 @@ static int setdefjoysettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1714,7 +1692,7 @@ static int setkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = keyboard_key_name(input_port_key(entry[i]));
+			menu_subitem[i] = keyboard_name(input_port_key(entry[i]));
 			/* If the key isn't the default, flag it */
 			if (entry[i]->keyboard != IP_KEY_DEFAULT)
 				flag[i] = 1;
@@ -1732,12 +1710,12 @@ static int setkeysettings(int selected)
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = keyboard_read_key_immediate();
+		newkey = keyboard_read_async();
 		if (newkey != KEYCODE_NONE)
 		{
 			sel &= 0xff;
 
-			if (keyboard_key_pressed(input_port_type_key(IPT_UI_CANCEL)))
+			if (keyboard_pressed(input_port_type_key(IPT_UI_CANCEL)))
 				newkey = IP_KEY_DEFAULT;
 
 			entry[sel]->keyboard = newkey;
@@ -1752,19 +1730,19 @@ static int setkeysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1776,10 +1754,10 @@ static int setkeysettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1836,7 +1814,7 @@ static int setjoysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = osd_joy_name(input_port_joy(entry[i]));
+			menu_subitem[i] = joystick_name(input_port_joy(entry[i]));
 			if (entry[i]->joystick != IP_JOY_DEFAULT)
 				flag[i] = 1;
 			else
@@ -1848,14 +1826,13 @@ static int setjoysettings(int selected)
 	if (sel > 255)	/* are we waiting for a new joy direction? */
 	{
 		int newjoy;
-		int joyindex;
 
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = IP_JOY_DEFAULT;
@@ -1864,44 +1841,24 @@ static int setjoysettings(int selected)
 			need_to_clear_bitmap = 1;
 		}
 
-		/* Allows for "All buttons" */
-		if (keyboard_key_pressed_memory(KEYCODE_A))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = OSD_JOY_FIRE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-		if (keyboard_key_pressed_memory(KEYCODE_B))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = OSD_JOY2_FIRE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
 		/* Clears entry "None" */
-		if (keyboard_key_pressed_memory(KEYCODE_N))
+		if (keyboard_pressed_memory(KEYCODE_N))
 		{
 			sel &= 0xff;
-			entry[sel]->joystick = 0;
+			entry[sel]->joystick = JOYCODE_NONE;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
 		}
 
-		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+		newjoy = joystick_read_async();
+		if (newjoy != JOYCODE_NONE)
 		{
-			if (osd_joy_pressed(joyindex))
-			{
-				sel &= 0xff;
-				entry[sel]->joystick = joyindex;
+			sel &= 0xff;
+			entry[sel]->joystick = newjoy;
 
-				/* tell updatescreen() to clean after us (in case the window changes size) */
-				need_to_clear_bitmap = 1;
-				break;
-			}
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
 		}
 
 		return sel + 1;
@@ -1910,19 +1867,19 @@ static int setjoysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1934,10 +1891,10 @@ static int setjoysettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1968,12 +1925,12 @@ static int calibratejoysticks(int selected)
 
 	if (sel > 255) /* Waiting for the user to acknowledge joystick movement */
 	{
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
 			calibration_started = 0;
 			sel = -1;
 		}
-		else if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		else if (input_ui_pressed(IPT_UI_SELECT))
 		{
 			osd_joystick_calibrate();
 			sel &= 0xff;
@@ -1999,7 +1956,7 @@ static int calibratejoysticks(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -2103,19 +2060,19 @@ static int settraksettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,0,sel,arrowize);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total2 - 1) sel++;
 		else sel = 0;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total2 - 1;
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 	{
 		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
@@ -2148,7 +2105,7 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 	{
 		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
@@ -2181,15 +2138,15 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total2 - 1) sel = -1;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -2252,13 +2209,13 @@ static int mame_stats(int selected)
 
 		displaymessagewindow(buf);
 
-		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		if (input_ui_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2290,13 +2247,13 @@ int showcopyright(void)
 	do
 	{
 		osd_update_video_and_audio();
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 			return 1;
-		if (keyboard_key_pressed_memory(KEYCODE_O) ||
-				keyboard_ui_key_pressed(IPT_UI_LEFT))
+		if (keyboard_pressed_memory(KEYCODE_O) ||
+				input_ui_pressed(IPT_UI_LEFT))
 			done = 1;
-		if (done == 1 && (keyboard_key_pressed_memory(KEYCODE_K) ||
-				keyboard_ui_key_pressed(IPT_UI_RIGHT)))
+		if (done == 1 && (keyboard_pressed_memory(KEYCODE_K) ||
+				input_ui_pressed(IPT_UI_RIGHT)))
 			done = 2;
 	} while (done < 2);
 
@@ -2412,8 +2369,8 @@ static int displaygameinfo(int selected)
 		displaymessagewindow(buf);
 
 		sel = 0;
-		if (keyboard_key_pressed_memory(KEYCODE_ANY) ||
-				keyboard_ui_key_pressed(IPT_UI_SELECT))	/* this catches joypress */
+		if (keyboard_read_async() != KEYCODE_NONE ||
+				input_ui_pressed(IPT_UI_SELECT))	/* this catches joypress */
 			sel = -1;
 	}
 	else
@@ -2423,13 +2380,13 @@ static int displaygameinfo(int selected)
 
 		displaymessagewindow(buf);
 
-		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		if (input_ui_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2476,18 +2433,18 @@ int showgamewarnings(void)
 
 		if (Machine->gamedrv->flags & GAME_NOT_WORKING)
 		{
-			const struct GameDriver *main;
+			const struct GameDriver *maindrv;
 			int foundworking;
 
 			strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
-			if (Machine->gamedrv->clone_of) main = Machine->gamedrv->clone_of;
-			else main = Machine->gamedrv;
+			if (Machine->gamedrv->clone_of) maindrv = Machine->gamedrv->clone_of;
+			else maindrv = Machine->gamedrv;
 
 			foundworking = 0;
 			i = 0;
 			while (drivers[i])
 			{
-				if (drivers[i] == main || drivers[i]->clone_of == main)
+				if (drivers[i] == maindrv || drivers[i]->clone_of == maindrv)
 				{
 					if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
 					{
@@ -2510,13 +2467,13 @@ int showgamewarnings(void)
 		do
 		{
 			osd_update_video_and_audio();
-			if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+			if (input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
-			if (keyboard_key_pressed_memory(KEYCODE_O) ||
-					keyboard_ui_key_pressed(IPT_UI_LEFT))
+			if (keyboard_pressed_memory(KEYCODE_O) ||
+					input_ui_pressed(IPT_UI_LEFT))
 				done = 1;
-			if (done == 1 && (keyboard_key_pressed_memory(KEYCODE_K) ||
-					keyboard_ui_key_pressed(IPT_UI_RIGHT)))
+			if (done == 1 && (keyboard_pressed_memory(KEYCODE_K) ||
+					input_ui_pressed(IPT_UI_RIGHT)))
 				done = 2;
 		} while (done < 2);
 	}
@@ -2701,7 +2658,6 @@ static int displayhistory (int selected)
 {
 	char *msg = "\tHistory not available\n\n\t\x1a Return to Main Menu \x1b";
 	static int scroll = 0;
-	static int lines = 0;
 	static char *buf = 0;
 	int	maxcols,maxrows;
 	int sel;
@@ -2742,25 +2698,25 @@ static int displayhistory (int selected)
 		else
 			displaymessagewindow (msg);
 
-		if ((scroll > 0) && keyboard_ui_key_pressed_repeat(IPT_UI_UP,4))
+		if ((scroll > 0) && input_ui_pressed_repeat(IPT_UI_UP,4))
 		{
 			if (scroll == 2) scroll = 0;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll--;
 		}
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,4))
+		if (input_ui_pressed_repeat(IPT_UI_DOWN,4))
 		{
 			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll++;
 		}
 
-		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		if (input_ui_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2791,7 +2747,6 @@ int	memcard_menu(int selection)
 	const char *menuitem[10];
 	char	buffer[300];
 	char	*msg;
-	void	*f;
 
 	sel = selection - 1 ;
 
@@ -2826,26 +2781,26 @@ int	memcard_menu(int selection)
 			msg = "\nDAMN!! Internal Error!\n\n";
 		}
 		displaymessagewindow(msg);
-		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		if (input_ui_pressed(IPT_UI_SELECT))
 			mcd_action = 0;
 	}
 	else
 	{
 		displaymenu(menuitem,0,0,sel,0);
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 			mcd_number = (mcd_number + 1) % 1000;
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 			mcd_number = (mcd_number + 999) % 1000;
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+		if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 			sel = (sel + 1) % menutotal;
 
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+		if (input_ui_pressed_repeat(IPT_UI_UP,8))
 			sel = (sel + menutotal - 1) % menutotal;
 
-		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+		if (input_ui_pressed(IPT_UI_SELECT))
 		{
 			switch(sel)
 			{
@@ -2881,10 +2836,10 @@ int	memcard_menu(int selection)
 			}
 		}
 
-		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
+		if (input_ui_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 
 		if (sel == -1 || sel == -2)
@@ -3100,7 +3055,7 @@ static int setup_menu(int selected)
 
 			case UI_CHEAT:
 osd_sound_enable(0);
-while (keyboard_key_pressed(input_port_type_key(IPT_UI_SELECT)))
+while (keyboard_pressed(input_port_type_key(IPT_UI_SELECT)))
 	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
@@ -3129,13 +3084,13 @@ sel = sel & 0xff;
 
 	displaymenu(menu_item,0,0,sel,0);
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % menu_total;
 
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 		sel = (sel + menu_total - 1) % menu_total;
 
-	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
+	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		switch (menu_action[sel])
 		{
@@ -3167,8 +3122,8 @@ sel = sel & 0xff;
 		}
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_CANCEL) ||
-			keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (input_ui_pressed(IPT_UI_CANCEL) ||
+			input_ui_pressed(IPT_UI_CONFIGURE))
 	{
 		menu_lastselected = sel;
 		sel = -1;
@@ -3250,11 +3205,11 @@ static void onscrd_mixervol(int increment,int arg)
 	int proportional = 0;
 
 
-	if (keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT))
+	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
 		doallchannels = 1;
-	if (!keyboard_key_pressed(KEYCODE_LCONTROL) && !keyboard_key_pressed(KEYCODE_RCONTROL))
+	if (!keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL))
 		increment *= 5;
-	if (keyboard_key_pressed(KEYCODE_LALT) || keyboard_key_pressed(KEYCODE_RALT))
+	if (keyboard_pressed(KEYCODE_LALT) || keyboard_pressed(KEYCODE_RALT))
 		proportional = 1;
 
 	if (increment)
@@ -3432,20 +3387,20 @@ static int on_screen_display(int selected)
 	else sel = selected - 1;
 
 	increment = 0;
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
         increment = -1;
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
         increment = 1;
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % onscrd_total_items;
-	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
 
 	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);
 
 	lastselected = sel;
 
-	if (keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
+	if (input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 	{
 		sel = -1;
 
@@ -3468,6 +3423,12 @@ static void displaymessage(const char *text)
 	struct DisplayText dt[2];
 	int avail;
 
+
+	if (Machine->uiwidth < Machine->uifontwidth * strlen(text))
+	{
+		displaymessagewindow(text);
+		return;
+	}
 
 	avail = strlen(text)+2;
 
@@ -3503,11 +3464,13 @@ static int jukebox_selected;
 
 int handle_user_interface(void)
 {
+	static int show_profiler;
+#ifdef MAME_DEBUG
 	static int show_total_colors;
-
+#endif
 
 	/* if the user pressed F12, save the screen to a file */
-	if (keyboard_ui_key_pressed(IPT_UI_SNAPSHOT))
+	if (input_ui_pressed(IPT_UI_SNAPSHOT))
 		osd_save_snapshot();
 
 	/* This call is for the cheat, it must be called at least each frames */
@@ -3515,10 +3478,10 @@ int handle_user_interface(void)
 
 	/* if the user pressed ESC, stop the emulation */
 	/* but don't quit if the setup menu is on screen */
-	if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CANCEL))
+	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
 		return 1;
 
-	if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CONFIGURE))
 	{
 		setup_selected = -1;
 		if (osd_selected != 0)
@@ -3530,7 +3493,7 @@ int handle_user_interface(void)
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
 
-	if (!mame_debug && osd_selected == 0 && keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
+	if (!mame_debug && osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 	{
 		osd_selected = -1;
 		if (setup_selected != 0)
@@ -3544,7 +3507,7 @@ int handle_user_interface(void)
 
 
 #if 0
-	if (keyboard_key_pressed_memory(KEYCODE_BACKSPACE))
+	if (keyboard_pressed_memory(KEYCODE_BACKSPACE))
 	{
 		if (jukebox_selected != -1)
 		{
@@ -3562,25 +3525,25 @@ int handle_user_interface(void)
 	{
 		char buf[40];
 		watchdog_reset_w(0,0);
-		if (keyboard_key_pressed_memory(KEYCODE_LCONTROL))
+		if (keyboard_pressed_memory(KEYCODE_LCONTROL))
 		{
 #include "cpu/z80/z80.h"
 			soundlatch_w(0,jukebox_selected);
 			cpu_cause_interrupt(1,Z80_NMI_INT);
 		}
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
+		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{
 			jukebox_selected = (jukebox_selected + 1) & 0xff;
 		}
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
+		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
 		{
 			jukebox_selected = (jukebox_selected - 1) & 0xff;
 		}
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
+		if (input_ui_pressed_repeat(IPT_UI_UP,8))
 		{
 			jukebox_selected = (jukebox_selected + 16) & 0xff;
 		}
-		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
+		if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		{
 			jukebox_selected = (jukebox_selected - 16) & 0xff;
 		}
@@ -3591,11 +3554,11 @@ int handle_user_interface(void)
 
 
 	/* if the user pressed F3, reset the emulation */
-	if (keyboard_ui_key_pressed(IPT_UI_RESET_MACHINE))
+	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
 		machine_reset();
 
 
-	if (keyboard_ui_key_pressed(IPT_UI_PAUSE)) /* pause the game */
+	if (input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
@@ -3603,12 +3566,12 @@ int handle_user_interface(void)
 		osd_sound_enable(0);
 		osd_pause(1);
 
-		while (!keyboard_ui_key_pressed(IPT_UI_PAUSE))
+		while (!input_ui_pressed(IPT_UI_PAUSE))
 		{
 #ifdef MAME_NET
 			osd_net_sync();
 #endif /* MAME_NET */
-			osd_profiler(OSD_PROFILE_VIDEO);
+			profiler_mark(PROFILER_VIDEO);
 			if (need_to_clear_bitmap || bitmap_dirty)
 			{
 				osd_clearbitmap(Machine->scrbitmap);
@@ -3622,12 +3585,12 @@ int handle_user_interface(void)
 (*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
 bitmap_dirty = 0;
 #endif
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 
-			if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CANCEL))
+			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
 
-			if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
+			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CONFIGURE))
 			{
 				setup_selected = -1;
 				if (osd_selected != 0)
@@ -3639,7 +3602,7 @@ bitmap_dirty = 0;
 			}
 			if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
 
-			if (!mame_debug && osd_selected == 0 && keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
+			if (!mame_debug && osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 			{
 				osd_selected = -1;
 				if (setup_selected != 0)
@@ -3673,10 +3636,25 @@ bitmap_dirty = 0;
 	}
 
 
-#ifdef MAME_DEBUG
-	if (keyboard_key_pressed(KEYCODE_LCONTROL) || keyboard_key_pressed(KEYCODE_RCONTROL))
+	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
 	{
-		if (keyboard_ui_key_pressed(IPT_UI_SHOW_FPS))
+		if (input_ui_pressed(IPT_UI_SHOW_FPS))
+		{
+			show_profiler ^= 1;
+			if (show_profiler)
+				profiler_start();
+			else
+			{
+				profiler_stop();
+				/* tell updatescreen() to clean after us */
+				need_to_clear_bitmap = 1;
+			}
+		}
+	}
+#ifdef MAME_DEBUG
+	else if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
+	{
+		if (input_ui_pressed(IPT_UI_SHOW_FPS))
 		{
 			show_total_colors ^= 1;
 			if (show_total_colors == 0)
@@ -3684,16 +3662,14 @@ bitmap_dirty = 0;
 				need_to_clear_bitmap = 1;
 		}
 	}
-
-	if (show_total_colors)
-	{
-		showtotalcolors();
-	}
+	if (show_total_colors) showtotalcolors();
 #endif
+
+	if (show_profiler) profiler_show();
 
 
 	/* if the user pressed F4, show the character set */
-	if (keyboard_ui_key_pressed(IPT_UI_SHOW_GFX))
+	if (input_ui_pressed(IPT_UI_SHOW_GFX))
 	{
 		osd_sound_enable(0);
 

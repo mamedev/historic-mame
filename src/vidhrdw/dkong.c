@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-
+static int flipscreen;
 static int gfx_bank,palette_bank;
 static const unsigned char *color_codes;
 
@@ -198,7 +198,14 @@ void dkong_palettebank_w(int offset,int data)
 	}
 }
 
-
+void dkong_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (~data & 1))
+	{
+		flipscreen = ~data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 /***************************************************************************
 
@@ -210,7 +217,6 @@ void dkong_palettebank_w(int offset,int data)
 void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -231,9 +237,15 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* retrieve the character color from the PROM */
 			color = (color_codes[offs % 32 + 32 * (offs / 32 / 4)] & 0x0f) + 0x10 * palette_bank;
 
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,color,
-					0,0,
+					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -254,12 +266,33 @@ void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* probably not part of the color code, since Mario Bros, which */
 			/* has similar hardware, uses a memory mapped port to change */
 			/* palette bank, so it's limited to 16 color codes) */
-			drawgfx(bitmap,Machine->gfx[1],
-					(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
-					(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
-					spriteram[offs + 2] & 0x80,spriteram[offs + 1] & 0x80,
-					spriteram[offs + 3] - 8,240 - spriteram[offs] + 7,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+			int x,y;
+
+			x = spriteram[offs + 3] - 8;
+			y = 240 - spriteram[offs] + 7;
+
+			if (flipscreen)
+			{
+				x = 240 - x;
+				y = 240 - y;
+
+				drawgfx(bitmap,Machine->gfx[1],
+						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
+						!(spriteram[offs + 2] & 0x80),!(spriteram[offs + 1] & 0x80),
+						x,y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+			else
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
+						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
+						x,y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }

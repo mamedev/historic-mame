@@ -210,7 +210,7 @@ int Dasm8039(char *buffer, unsigned pc)
 		{
 			if (op != -1)
 			{
-				fprintf(stderr, "Error: opcode %02.2X matches %d (%s) and %d (%s)\n",
+				fprintf(stderr, "Error: opcode %02X matches %d (%s) and %d (%s)\n",
 					code,i,Op[i].fmt,op,Op[op].fmt);
 			}
 			op = i;
@@ -264,8 +264,8 @@ int Dasm8039(char *buffer, unsigned pc)
 			cp++;
 			switch (*cp++)
 			{
-				case 'A': sprintf(num,"$%04.4X",a); break;
-				case 'J': sprintf(num,"$%04.4X",(pc & 0xf00) | a); break;
+				case 'A': sprintf(num,"$%04X",a); break;
+				case 'J': sprintf(num,"$%04X",(pc & 0xf00) | a); break;
 				case 'B': sprintf(num,"%d",b); break;
 				case 'D': sprintf(num,"%d",d); break;
 				case 'X': sprintf(num,"%X",d); break;

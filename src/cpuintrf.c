@@ -44,6 +44,9 @@
 #if (HAS_M6309 || HAS_M6809)
 #include "cpu/m6809/m6809.h"
 #endif
+#if (HAS_KONAMI)
+#include "cpu/konami/konami.h"
+#endif
 #if (HAS_M68000 || defined HAS_M68010 || HAS_M68020)
 #include "cpu/m68000/m68000.h"
 #endif
@@ -1498,6 +1501,40 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
     },
 #endif
+#if (HAS_KONAMI)
+    {
+		CPU_KONAMI,							/* CPU number and family cores sharing resources */
+        konami_reset,                       /* Reset CPU */
+		konami_exit, 						/* Shut down the CPU */
+        konami_execute,                     /* Execute a number of cycles */
+		konami_get_context,					/* Get the contents of the registers */
+		konami_set_context,					/* Set the contents of the registers */
+		konami_get_pc,						/* Return the current program counter */
+		konami_set_pc,						/* Set the current program counter */
+		konami_get_sp,						/* Return the current stack pointer */
+		konami_set_sp,						/* Set the current stack pointer */
+		konami_get_reg,						/* Get a specific register value */
+		konami_set_reg,						/* Set a specific register value */
+        konami_set_nmi_line,                /* Set state of the NMI line */
+		konami_set_irq_line, 				/* Set state of the IRQ line */
+		konami_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		konami_state_save,					/* Save CPU state */
+		konami_state_load,					/* Load CPU state */
+        konami_info,                        /* Get formatted string for a specific register */
+		konami_dasm, 						/* Disassemble one instruction */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
+		&konami_ICount,						/* Pointer to the instruction count */
+		KONAMI_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		KONAMI_INT_IRQ,
+		KONAMI_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+#endif
 };
 
 void cpu_init(void)
@@ -1542,7 +1579,6 @@ void cpu_run(void)
     /* determine which CPUs need a context switch */
 	for (i = 0; i < totalcpu; i++)
 	{
-		const char *f1, *f2;
 		int j, size;
 
         /* allocate a context buffer for the CPU */
@@ -1674,11 +1710,11 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 #endif
             goto reset;
 		}
-		osd_profiler(OSD_PROFILE_EXTRA);
+		profiler_mark(PROFILER_EXTRA);
 
 #if SAVE_STATE_TEST
         {
-            if( keyboard_key_pressed_memory(KEYCODE_S) )
+            if( keyboard_pressed_memory(KEYCODE_S) )
             {
                 void *s = state_create(Machine->gamedrv->name);
                 if( s )
@@ -1697,7 +1733,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
                 }
             }
 
-            if( keyboard_key_pressed_memory(KEYCODE_L) )
+            if( keyboard_pressed_memory(KEYCODE_L) )
             {
                 void *s = state_open(Machine->gamedrv->name);
                 if( s )
@@ -1735,9 +1771,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			SET_OP_BASE (activecpu, GETPC (activecpu));
 
             /* run for the requested number of cycles */
-			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
+			profiler_mark(PROFILER_CPU1 + cpunum);
 			ran = EXECUTE (activecpu, cycles_running);
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 
 			/* update based on how many cycles we really ran */
 			cpu[activecpu].totalcycles += ran;
@@ -1751,7 +1787,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			timer_update_cpu (cpunum, ran);
 		}
 
-		osd_profiler(OSD_PROFILE_END);
+		profiler_mark(PROFILER_END);
 	}
 
 	/* write hi scores to disk - No scores saving if cheat */
@@ -2709,6 +2745,16 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
+#if (HAS_KONAMI)
+				case CPU_KONAMI:
+				switch (num)
+				{
+				case KONAMI_INT_IRQ:	irq_line = 0; LOG((errorlog,"KONAMI IRQ\n")); break;
+				case KONAMI_INT_FIRQ:	irq_line = 1; LOG((errorlog,"KONAMI FIRQ\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"KONAMI unknown\n"));
+				}
+				break;
+#endif
 #if (HAS_M68000)
             case CPU_M68000:
 				switch (num)
@@ -2958,6 +3004,16 @@ static void cpu_vblankreset (void)
   service VBLANK-synced interrupts and to begin the screen update process.
 
 ***************************************************************************/
+static void cpu_firstvblankcallback (int param)
+{
+	/* now that we're synced up, pulse from here on out */
+	vblank_timer = timer_pulse (vblank_period, param, cpu_vblankcallback);
+
+	/* but we need to call the standard routine as well */
+	cpu_vblankcallback (param);
+}
+
+/* note that calling this with param == -1 means count everything, but call no subroutines */
 static void cpu_vblankcallback (int param)
 {
 	int i;
@@ -2971,7 +3027,8 @@ static void cpu_vblankcallback (int param)
 			/* decrement; if we hit zero, generate the interrupt and reset the countdown */
 			if (!--cpu[i].vblankint_countdown)
 			{
-				cpu_vblankintcallback (i);
+				if (param != -1)
+					cpu_vblankintcallback (i);
 				cpu[i].vblankint_countdown = cpu[i].vblankint_multiplier;
 				timer_reset (cpu[i].vblankint_timer, TIME_NEVER);
 			}
@@ -3075,6 +3132,7 @@ static void cpu_timeslicecallback (int param)
 ***************************************************************************/
 static void cpu_inittimers (void)
 {
+	double first_time;
 	int i, max, ipf;
 
 	/* remove old timers */
@@ -3180,6 +3238,19 @@ static void cpu_inittimers (void)
 			cpu[i].timedint_timer = timer_pulse (cpu[i].timedint_period, i, cpu_timedintcallback);
 		}
 	}
+
+	/* note that since we start the first frame on the refresh, we can't pulse starting
+	   immediately; instead, we back up one VBLANK period, and inch forward until we hit
+	   positive time. That time will be the time of the first VBLANK timer callback */
+	timer_remove (vblank_timer);
+
+	first_time = -TIME_IN_USEC (Machine->drv->vblank_duration) + vblank_period;
+	while (first_time < 0)
+	{
+		cpu_vblankcallback (-1);
+		first_time += vblank_period;
+	}
+	vblank_timer = timer_set (first_time, 0, cpu_firstvblankcallback);
 }
 
 
@@ -3398,7 +3469,7 @@ const char *cpu_dump_state(void)
 	unsigned addr_width = (cpu_address_bits() + 3) / 4;
 	char *dst = buffer;
 	const char *src, *regs;
-	int regnum, width;
+	int width;
 
 	dst += sprintf(dst, "CPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
 	width = 0;

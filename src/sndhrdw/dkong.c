@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 
+static int walk = 0; /* used to determine if dkongjr is walking or climbing? */
 
 void dkong_sh_w(int offset,int data)
 {
@@ -23,6 +24,8 @@ void dkong_sh1_w(int offset,int data)
 }
 
 
+
+
 void dkongjr_sh_death_w(int offset,int data)
 {
 	static int death = 0;
@@ -30,7 +33,9 @@ void dkongjr_sh_death_w(int offset,int data)
 	if (death != data)
 	{
 		if (data)
-			sample_start (7, 0, 0);
+			sample_stop (7);
+			sample_start (6, 4, 0);
+
 
 		death = data;
 	}
@@ -42,8 +47,10 @@ void dkongjr_sh_drop_w(int offset,int data)
 
 	if (drop != data)
 	{
+
+
 		if (data)
-			sample_start (7, 1, 0);
+			sample_start (7, 5, 0);
 
 		drop = data;
 	}
@@ -52,12 +59,10 @@ void dkongjr_sh_drop_w(int offset,int data)
 void dkongjr_sh_roar_w(int offset,int data)
 {
 	static int roar = 0;
-
 	if (roar != data)
 	{
 		if (data)
 			sample_start (7,2,0);
-
 		roar = data;
 	}
 }
@@ -69,24 +74,14 @@ void dkongjr_sh_jump_w(int offset,int data)
 	if (jump != data)
 	{
 		if (data)
-			sample_start (6,3,0);
+			sample_start (6,0,0);
 
-		jump = data;
+
+			jump = data;
 	}
 }
 
-void dkongjr_sh_walk_w(int offset,int data)
-{
-	static int walk = 0;
 
-	if (walk != data)
-	{
-		if (data)
-			sample_start (5,4,0);
-
-		walk = data;
-	}
-}
 
 void dkongjr_sh_land_w(int offset,int data)
 {
@@ -95,9 +90,10 @@ void dkongjr_sh_land_w(int offset,int data)
 	if (land != data)
 	{
 		if (data)
-			sample_start (4,5,0);
+			sample_stop (7) ;
+			sample_start (4,1,0);
 
-		land = data;
+			land = data;
 	}
 }
 
@@ -109,10 +105,40 @@ void dkongjr_sh_climb_w(int offset,int data)
 
 	if (climb != data)
 	{
-		if (data)
+		if (data && walk == 0)
+		{
+			sample_start (3,3,0);
+		}
+		else if (data && walk == 1)
+		{
 			sample_start (3,6,0);
-
-		climb = data;
+		}
+			climb = data;
 	}
 }
 
+
+void dkongjr_sh_snapjaw_w(int offset,int data)
+{
+	static int snapjaw = 0;
+
+	if (snapjaw != data)
+	{
+		if (data)
+			sample_stop (7) ;
+			sample_start (4,7,0);
+
+		snapjaw = data;
+	}
+}
+
+
+void dkongjr_sh_walk_w(int offset,int data)
+{
+
+
+	if (walk != data )
+	{
+			walk = data;
+	}
+}

@@ -417,6 +417,7 @@ static struct GfxLayout tile2layout =
 	128*8	/* offset to next tile */
 };
 
+#if 0
 static struct GfxLayout old_spritelayout =
 {
 	8,8,	/* sprites size */
@@ -430,6 +431,7 @@ static struct GfxLayout old_spritelayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* offset to next sprite */
 };
+#endif
 
 #define OFFS (8*16)
 static struct GfxLayout spritelayout =
@@ -495,8 +497,8 @@ static struct YM2203interface ym2203_interface =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
-	8000,           /* 8000Hz frequency */
+	1,                  /* 1 chip */
+	{ 8000 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 20 }
 };

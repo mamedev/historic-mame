@@ -203,7 +203,7 @@ static void RobotBox (struct osd_bitmap *bitmap, int top, int left)
 
 void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs, x, y, col;
+	int offs;
 	int sx,sy;
 
 	if (full_refresh)
@@ -392,8 +392,6 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-            int col=4;
-
 			dirtybuffer[offs] = 0;
 
 			sx = offs % 32;

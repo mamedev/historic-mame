@@ -10,7 +10,7 @@
 
 
 	NOTICE:
-
+ 
 	This code is not currently complete!  Several things are unimplemented,
 	some due to lack of time, some due to lack of documentation, mainly
 	due to lack of programs using these features.
@@ -33,6 +33,9 @@
 		change_pc function calls removed.
 		TSB & TRB now set flags properly.
 		BIT opcode altered.
+
+	Changelog, version 1.03:
+		Swapped IRQ mask for IRQ1 & IRQ2 (thanks Yasuhiro)
 
 ******************************************************************************/
 
@@ -407,7 +410,7 @@ const char *h6280_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "H6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.02";
+		case CPU_INFO_VERSION: return "1.03";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
@@ -441,8 +444,8 @@ int H6280_irq_status_r(int offset)
 //			if (errorlog) fprintf(errorlog,"Hu6280: %04x: Read irq status\n",cpu_get_pc());
 			status=0;
 			/* Almost certainly wrong... */
-//			if (h6280.pending_irq1) status^=1;
-//			if (h6280.pending_irq2) status^=2;
+//			if (h6280.pending_irq1) status^=2;
+//			if (h6280.pending_irq2) status^=1;
 //			if (h6280.pending_timer) status^=4;
 			return status;
 	}
@@ -493,7 +496,7 @@ void H6280_timer_w(int offset, int data)
 			//if (errorlog) fprintf(errorlog,"Hu6280: %04x: Wrote counter preload %02x\n",cpu_get_pc(),data);
 
 //H6280_Cause_Interrupt(H6280_INT_TIMER);
-
+//			h6280.irq_state[2]=
 			h6280.timer_load=h6280.timer_value=data;
 			return;
 

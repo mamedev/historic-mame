@@ -4,7 +4,7 @@
 static int bg_tilemap_baseaddr;
 #define MAX_VRAM_SIZE (64*64*2)
 static int gwar_sprite_placement;
-static int k = 0; /*for debugging use */
+//static int k = 0; /*for debugging use */
 
 static int shadows_visible = 0; /* toggles rapidly to fake translucency in ikari warriors */
 
@@ -173,7 +173,6 @@ static void tnk3_draw_background( struct osd_bitmap *bitmap, int scrollx, int sc
 }
 
 static void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 	int color = 0; /* probably an unmapped video register */
 	int offs;
@@ -294,8 +293,8 @@ static void aso_draw_background( struct osd_bitmap *bitmap, int scrollx, int scr
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 
-//	if( keyboard_key_pressed( KEYCODE_B ) ){
-//		while( keyboard_key_pressed( KEYCODE_B ) ){};
+//	if( keyboard_pressed( KEYCODE_B ) ){
+//		while( keyboard_pressed( KEYCODE_B ) ){};
 //		bank = (bank+1)&3;
 //	}
 
@@ -322,13 +321,13 @@ static void aso_draw_background( struct osd_bitmap *bitmap, int scrollx, int scr
 			TRANSPARENCY_NONE,0);
 	}
 
-//	if( keyboard_key_pressed( KEYCODE_S ) ){
+//	if( keyboard_pressed( KEYCODE_S ) ){
 //		FILE *f = fopen("dump","wb");
 //		if( f ){
 //			fwrite( Machine->memory_region[1], 0x10000, 1, f );
 //			fclose( f );
 //		}
-//		while( keyboard_key_pressed( KEYCODE_S ) ){};
+//		while( keyboard_pressed( KEYCODE_S ) ){};
 //	}
 }
 
@@ -378,13 +377,13 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 
 	/* to be moved to memmap */
 	spriteram = &ram[0xe000];
-	videoram = keyboard_key_pressed( KEYCODE_F )?&ram2[0xe800]:&ram[0xe800];
+	videoram = keyboard_pressed( KEYCODE_F )?&ram2[0xe800]:&ram[0xe800];
 
 	{
 		unsigned char bg_attrs = ram[0xcf00];
 		int scrolly = -8+ram[0xcb00]+((attributes&0x10)?256:0);
 		int scrollx = 0x1e*8 + ram[0xcc00]+((attributes&0x02)?256:0);
-		if( keyboard_key_pressed( KEYCODE_M ) ) scrolly+=256;
+		if( keyboard_pressed( KEYCODE_M ) ) scrolly+=256;
 		aso_draw_background( bitmap, -scrollx, -scrolly,
 			bg_attrs>>4, /* tile bank */
 			bg_attrs&0xf /* color bank */
@@ -407,12 +406,12 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	{
 		static int kd = 0;
 		int i;
-		if( keyboard_key_pressed( KEYCODE_J ) ){
-			while( keyboard_key_pressed( KEYCODE_J ) ){}
+		if( keyboard_pressed( KEYCODE_J ) ){
+			while( keyboard_pressed( KEYCODE_J ) ){}
 			kd--;
 		}
-		if( keyboard_key_pressed( KEYCODE_K ) ){
-			while( keyboard_key_pressed( KEYCODE_K ) ){}
+		if( keyboard_pressed( KEYCODE_K ) ){
+			while( keyboard_pressed( KEYCODE_K ) ){}
 			kd++;
 		}
 		print( bitmap, kd, 2 );

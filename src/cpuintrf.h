@@ -126,6 +126,9 @@ enum {
 #ifndef HAS_M6809
 #define HAS_M6809		0
 #endif
+#ifndef HAS_KONAMI
+#define HAS_KONAMI		0
+#endif
 #ifndef HAS_M68000
 #define HAS_M68000		0
 #endif

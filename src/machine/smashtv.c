@@ -1134,7 +1134,7 @@ void wms_sysreg2_w(int offset, int data)
 
 void wms_unk1_w(int offset, int data)
 {
-	char buf[80];
+//	char buf[80];
 	wms_unk1 = data;
 	if (data == 0x4472)
 	{
@@ -1184,7 +1184,7 @@ void wms_unk1_w(int offset, int data)
 extern int debug_key_pressed;
 void wms_unk2_w(int offset, int data)
 {
-	char buf[80];
+//	char buf[80];
 	if (offset==2)
 	{
 		wms_unk2 = data;
@@ -2452,7 +2452,6 @@ void trog_init_machine(void)
 }
 void mk2_init_machine(void)
 {
-	unsigned int i,j;
 	if (!wms_rom_loaded)
 	{
 		wms_load_code_roms();
@@ -2477,7 +2476,6 @@ void mk2_init_machine(void)
 }
 void nbajam_init_machine(void)
 {
-	unsigned int i,j;
 	if (!wms_rom_loaded)
 	{
 		wms_load_code_roms();

@@ -344,8 +344,6 @@ if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x
 
 void cps1_output_w(int offset, int data)
 {
-	int value;
-
 #if VERBOSE
 if (errorlog && offset >= 0x18 && //offset != 0x22 &&
 		offset != cps1_game_config->layer_control &&
@@ -903,13 +901,13 @@ INLINE void cps1_get_video_base(void )
 	char baf[40];
 	int enablemask;
 
-if (keyboard_key_pressed(KEYCODE_Z))
+if (keyboard_pressed(KEYCODE_Z))
 {
-	if (keyboard_key_pressed(KEYCODE_Q)) cps1_layer_enabled[3]=0;
-	if (keyboard_key_pressed(KEYCODE_W)) cps1_layer_enabled[2]=0;
-	if (keyboard_key_pressed(KEYCODE_E)) cps1_layer_enabled[1]=0;
-	if (keyboard_key_pressed(KEYCODE_R)) cps1_layer_enabled[0]=0;
-	if (keyboard_key_pressed(KEYCODE_T))
+	if (keyboard_pressed(KEYCODE_Q)) cps1_layer_enabled[3]=0;
+	if (keyboard_pressed(KEYCODE_W)) cps1_layer_enabled[2]=0;
+	if (keyboard_pressed(KEYCODE_E)) cps1_layer_enabled[1]=0;
+	if (keyboard_pressed(KEYCODE_R)) cps1_layer_enabled[0]=0;
+	if (keyboard_pressed(KEYCODE_T))
 	{
 		sprintf(baf,"%d %d %d %d layer %02x",
 			(layercontrol>>0x06)&03,
@@ -1106,7 +1104,6 @@ INLINE void cps1_palette_scroll1(unsigned short *base)
 	int scrlxrough=(scroll1x>>3)+8;
 	int scrlyrough=(scroll1y>>3);
 	int basecode=cps1_game_config->bank_scroll1*0x08000;
-	int elements = Machine->gfx[0]->total_elements;
 
 	for (x=0; x<0x36; x++)
 	{
@@ -1340,7 +1337,6 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
     const int mask=0x7fff;
 	int i;
-	int base_obj=0;
 
 	/* Draw the sprites */
 	for (i=cps1_last_sprite_offset; i>=0; i-=8)
@@ -1509,7 +1505,6 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 
 INLINE void cps1_palette_scroll2(unsigned short *base)
 {
-	const int elements = Machine->gfx[2]->total_elements;
 	int offs, code, colour;
     int basecode=cps1_game_config->bank_scroll2*0x04000;
 
@@ -1526,7 +1521,7 @@ INLINE void cps1_palette_scroll2(unsigned short *base)
 
 void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap)
 {
-	int sx, sy, scrly;
+	int sx, sy;
 	int ny=(scroll2y>>4);	  /* Rough Y */
     int base=cps1_game_config->bank_scroll2*0x04000;
 	const int startcode=cps1_game_config->start_scroll2;
@@ -1591,9 +1586,6 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap)
 	int nx=(scroll2x>>4);	  /* Rough X */
 	int ny=(scroll2y>>4)-4;	/* Rough Y */
     int base=cps1_game_config->bank_scroll2*0x04000;
-	const int startcode=cps1_game_config->start_scroll2;
-	const int endcode=cps1_game_config->end_scroll2;
-	const int kludge=cps1_game_config->kludge;
 
 	for (sx=0; sx<0x32/2+4; sx++)
 	{
@@ -1642,7 +1634,6 @@ void cps1_render_scroll2_low(struct osd_bitmap *bitmap)
 
 void cps1_render_scroll2_distort(struct osd_bitmap *bitmap)
 {
-	int other=0;
 	int scrly=-scroll2y;
 	int i,scrollx[1024];
 	int otheroffs;
@@ -1703,7 +1694,6 @@ void cps1_palette_scroll3(unsigned short *base)
 	int nx=(scroll3x>>5)+1;
 	int ny=(scroll3y>>5)-1;
     int basecode=cps1_game_config->bank_scroll3*0x01000;
-	int elements = Machine->gfx[3]->total_elements;
 
 	for (sx=0; sx<0x32/4+2; sx++)
 	{
@@ -1841,7 +1831,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int layercontrol,l0,l1,l2,l3;
 	int i,offset;
 	int distort_scroll2=0;
-	int layer;
 	int videocontrol=cps1_port(0x22);
 	int old_flip;
 

@@ -451,6 +451,51 @@ ROM_START( megazone_rom )
 	ROM_LOAD( "ic02_cpu.bin", 0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
+/****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x244a],"\x4b\x4f\x5a",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x2446], 9);   /* 1st value & name */
+                        osd_fread(f,&RAM[0x2466], 9);   /* 2nd value & name */
+                        osd_fread(f,&RAM[0x2486], 9);   /* 3rd value & name */
+                        osd_fread(f,&RAM[0x24a6], 9);   /* 4th value & name */
+                        osd_fread(f,&RAM[0x24c6], 9);   /* 5th value & name */
+
+                        RAM[0x3b08] = RAM[0x2446];      /* update high score */
+                        RAM[0x3b09] = RAM[0x2447];      /* on top of screen */
+                        RAM[0x3b0a] = RAM[0x2448];
+                        RAM[0x3b0b] = RAM[0x2449];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x2446], 9);   /* 1st value & name */
+                osd_fwrite(f,&RAM[0x2466], 9);   /* 2nd value & name */
+                osd_fwrite(f,&RAM[0x2486], 9);   /* 3rd value & name */
+                osd_fwrite(f,&RAM[0x24a6], 9);   /* 4th value & name */
+                osd_fwrite(f,&RAM[0x24c6], 9);   /* 5th value & name */
+		osd_fclose(f);
+	}
+}
 
 static void megazone_decode(void)
 {
@@ -487,5 +532,5 @@ struct GameDriver megazone_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0,0 /* hiload, hisave */
+        hiload, hisave
 };

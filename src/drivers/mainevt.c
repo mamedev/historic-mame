@@ -6,77 +6,50 @@
 Emulation by Bryan McPhail, mish@tendril.force9.net
 
 Notes:
+* Schematics show a palette/work RAM bank selector, but this doesn't seem
+  to be used?
 * Devastators not playable...  Protected?  Unimplemented opcodes?
-* Sprite priorities not yet fully correct
+* Sprite priorities are not correct (ropes appear behind fighters).
+  Sprite/sprite priorities have to be orthogonal to sprite/tile priorities
+  for this to work correctly.
+  This is fixed with a kludge in mainevt_sprite_callback().
 * No sound in Devastators
-* Graphics rom test fails - It looks like graphics roms can be read through
-  the sprite area - with bank switching at 0x3802/3 (little endian).
-  Turned on by setting 0x20 in 0x3800.
-  Setting 0x08 in 0x3800 is monitor flip.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/konamiic.h"
 #include "cpu/m6809/m6809.h"
+
 
 void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 int mainevt_vh_start (void);
+int dv_vh_start (void);
 void mainevt_vh_stop (void);
-void mainevt_video_control (int offset, int data);
-
-void mainevt_bg_video_w (int offset, int data);
-void mainevt_fg_video_w (int offset, int data);
-void mainevt_video_w (int offset, int data);
-
-void mainevt_bg_attr_w (int offset, int data);
-void mainevt_fg_attr_w (int offset, int data);
-void mainevt_attr_w (int offset, int data);
-
-extern unsigned char *mainevt_bg_attr_ram;
-extern unsigned char *mainevt_fg_attr_ram;
-extern unsigned char *mainevt_attr_ram;
-
-extern unsigned char *bg_videoram;
-extern unsigned char *fg_videoram;
-
-extern unsigned char *bg_scrollx_lo;
-extern unsigned char *bg_scrollx_hi;
-extern unsigned char *bg_scrolly;
-extern unsigned char *fg_scrollx_lo;
-extern unsigned char *fg_scrollx_hi;
-extern unsigned char *fg_scrolly;
-
-static int mainevt_int_type;
 
 
-
-/* Unsure about this....  Main Event always uses IRQ, Devastators NMI */
-static void mainevt_int_w(int offset, int data)
-{
-	/* Main Event works with int's enabled from start but Devastors crashes
-  	if you try this...  So this turns them on just after self test */
-	switch (data) {
-		case 0:
-			mainevt_int_type=0;
-			break;
-		case 2:
-			mainevt_int_type=M6809_INT_IRQ;
-			break;
-		case 3: /* Main Event Test mode sets 3.. */
-			mainevt_int_type=M6809_INT_IRQ;
-			break;
-		case 255:
-			mainevt_int_type=M6809_INT_NMI;
-			break;
-	}
-	if (errorlog) fprintf(errorlog,"Int Control %02x\n",data);
-}
 
 static int mainevt_interrupt(void)
 {
-	return mainevt_int_type;
+	if (K052109_is_IRQ_enabled()) return M6809_INT_IRQ;
+	else return ignore_interrupt();
 }
+
+
+static int nmi_enable;
+
+static void dv_nmienable_w(int offset,int data)
+{
+	nmi_enable = data;
+}
+
+static int dv_interrupt(void)
+{
+	if (nmi_enable) return M6809_INT_NMI;
+	else return ignore_interrupt();
+}
+
 
 static int zero_ret(int offset)
 {
@@ -89,8 +62,29 @@ void mainevt_bankswitch_w(int offset, int data)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	int bankaddress;
 
+	/* bit 0-1 ROM bank select */
 	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
 	cpu_setbank(1,&RAM[bankaddress]);
+
+	/* TODO: bit 5 = select work RAM or palette? */
+//	palette_selected = data & 0x20;
+
+	/* bit 6 = enable char ROM reading through the video RAM */
+	K052109_set_RMRD_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 7 = NINITSET (unknown) */
+
+	/* other bits unused */
+}
+
+void mainevt_coin_w(int offset,int data)
+{
+	coin_counter_w(0,data & 0x10);
+	coin_counter_w(1,data & 0x20);
+	osd_led_w(0,data >> 0);
+	osd_led_w(1,data >> 1);
+	osd_led_w(2,data >> 2);
+	osd_led_w(3,data >> 3);
 }
 
 void mainevt_sh_irqtrigger_w(int offset,int data)
@@ -116,28 +110,25 @@ void mainevt_sh_irqcontrol_w(int offset,int data)
 void mainevt_sh_bankswitch_w(int offset,int data)
 {
 	unsigned char *src,*dest;
+	unsigned char *RAM = Machine->memory_region[4];
+	int bank_A,bank_B;
 
 //if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
 
-	/* bits 0-3 select the 007232 banks, but I don't know how yet */
-	/* the following is wrong! */
-	src = Machine->memory_region[5];
-	dest = Machine->memory_region[3];
-	memcpy(dest,&src[((data >> 0) & 0x03) * 0x20000],0x20000);
-	dest = Machine->memory_region[4];
-	memcpy(dest,&src[((data >> 2) & 0x03) * 0x20000],0x20000);
+	/* bits 0-3 select the 007232 banks */
+	bank_A=0x20000 * (data&0x3);
+	bank_B=0x20000 * ((data>>2)&0x3);
+	K007232_bankswitch_0_w(RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
-	src = &Machine->memory_region[6][0x20000];
-	dest = Machine->memory_region[6];
+	src = &Machine->memory_region[5][0x20000];
+	dest = Machine->memory_region[5];
 	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
 }
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x1bff, MRA_RAM },
-	{ 0x1e00, 0x1e00, zero_ret }, /* ? */
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
 	{ 0x1f95, 0x1f95, input_port_1_r }, /* Player 1 */
 	{ 0x1f96, 0x1f96, input_port_2_r }, /* Player 2 */
@@ -146,8 +137,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1f99, 0x1f99, input_port_3_r }, /* Player 3 */
 	{ 0x1f9a, 0x1f9a, input_port_4_r }, /* Player 4 */
 	{ 0x1f9b, 0x1f9b, input_port_6_r }, /* Dip 2 */
-	{ 0x2000, 0x3bff, MRA_RAM },
-	{ 0x3c00, 0x3fff, MRA_RAM },
+
+	{ 0x0000, 0x3fff, K052109_051960_r },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -156,34 +147,13 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x07ff, mainevt_attr_w, &mainevt_attr_ram },
-	{ 0x0800, 0x0fff, mainevt_bg_attr_w, &mainevt_bg_attr_ram },
-	{ 0x1000, 0x17ff, mainevt_fg_attr_w, &mainevt_fg_attr_ram },
-//	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
-
-	{ 0x180c, 0x180c, MWA_RAM, &bg_scrolly },
-	{ 0x1a00, 0x1a00, MWA_RAM, &bg_scrollx_lo },
-	{ 0x1a01, 0x1a01, MWA_RAM, &bg_scrollx_hi },
-//	{ 0x1800, 0x1bff, MWA_RAM },
-
-	{ 0x1d00, 0x1d00, MWA_NOP },	/* TODO: interrupt enable */
-	{ 0x1e80, 0x1e80, mainevt_int_w },
-	{ 0x1f80, 0x1f82, mainevt_bankswitch_w },
-	{ 0x1f84, 0x1f85, soundlatch_w },				/* probably */
-	{ 0x1f88, 0x1f89, mainevt_sh_irqtrigger_w },	/* probably */
+	{ 0x1f80, 0x1f80, mainevt_bankswitch_w },
+	{ 0x1f84, 0x1f84, soundlatch_w },				/* probably */
+	{ 0x1f88, 0x1f88, mainevt_sh_irqtrigger_w },	/* probably */
 	{ 0x1f8c, 0x1f8d, MWA_NOP },	/* ??? */
+	{ 0x1f90, 0x1f90, mainevt_coin_w },	/* coin counters + lamps */
 
-	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, mainevt_bg_video_w, &bg_videoram },
-	{ 0x3000, 0x37ff, mainevt_fg_video_w, &fg_videoram },
-//	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
-
-	{ 0x380c, 0x380c, MWA_RAM, &fg_scrolly },
-	{ 0x3a00, 0x3a00, MWA_RAM, &fg_scrollx_lo },
-	{ 0x3a01, 0x3a01, MWA_RAM, &fg_scrollx_hi },
-//	{ 0x3800, 0x3bff, MWA_RAM },
-
-	{ 0x3c00, 0x3fff, MWA_RAM, &spriteram },
+	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
  	{ 0x6000, 0xffff, MWA_ROM },
@@ -192,9 +162,6 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress dv_readmem[] =
 {
-	{ 0x0000, 0x1bff, MRA_RAM },
-
-	{ 0x1e00, 0x1e00, zero_ret },
 	{ 0x1f94, 0x1f94, input_port_0_r }, /* Coins */
 	{ 0x1f95, 0x1f95, input_port_1_r }, /* Player 1 */
 	{ 0x1f96, 0x1f96, input_port_2_r }, /* Player 2 */
@@ -202,15 +169,7 @@ static struct MemoryReadAddress dv_readmem[] =
 	{ 0x1f98, 0x1f98, input_port_7_r }, /* Dip 3 */
 	{ 0x1f9b, 0x1f9b, input_port_6_r }, /* Dip 2 */
 
-	{ 0x1fa6, 0x1fa6, zero_ret },
-//	{ 0x1fa1, 0x1fa1, zero_ret },
-//	{ 0x1fa3, 0x1fa3, zero_ret },
- //	{ 0x1fa7, 0x1fa7, zero_ret },
-
-	{ 0x1e80, 0x1e80, zero_ret },  /* Needs to return 0xff */
-
-	{ 0x2000, 0x3bff, MRA_RAM },
-	{ 0x3c00, 0x3fff, MRA_RAM },
+	{ 0x0000, 0x3fff, K052109_051960_r },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -219,31 +178,11 @@ static struct MemoryReadAddress dv_readmem[] =
 
 static struct MemoryWriteAddress dv_writemem[] =
 {
-	{ 0x0000, 0x07ff, mainevt_attr_w, &mainevt_attr_ram },
-	{ 0x0800, 0x0fff, mainevt_bg_attr_w, &mainevt_bg_attr_ram },
-	{ 0x1000, 0x17ff, mainevt_fg_attr_w, &mainevt_fg_attr_ram },
-//	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
-	{ 0x180c, 0x180c, MWA_RAM, &bg_scrolly },
-	{ 0x1a00, 0x1a00, MWA_RAM, &bg_scrollx_lo },
-	{ 0x1a01, 0x1a01, MWA_RAM, &bg_scrollx_hi },
-//	{ 0x1800, 0x1bff, MWA_RAM },
+	{ 0x1f80, 0x1f80, mainevt_bankswitch_w },
+	{ 0x1f90, 0x1f90, mainevt_coin_w },	/* coin counters + lamps */
+	{ 0x1fb2, 0x1fb2, dv_nmienable_w },
 
-//  { 0x1d00, 0x1d00, MWA_NOP },  //??
-	{ 0x1e80, 0x1e80, mainevt_int_w },
-	{ 0x1f80, 0x1f82, mainevt_bankswitch_w },
-	{ 0x1fb2, 0x1fb2, MWA_NOP },
-
-	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, mainevt_bg_video_w, &bg_videoram },
-	{ 0x3000, 0x37ff, mainevt_fg_video_w, &fg_videoram },
-//	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
-
-	{ 0x380c, 0x380c, MWA_RAM, &fg_scrolly },
-	{ 0x3a00, 0x3a00, MWA_RAM, &fg_scrollx_lo },
-	{ 0x3a01, 0x3a01, MWA_RAM, &fg_scrollx_hi },
-//	{ 0x3800, 0x3bff, MWA_RAM },
-
-	{ 0x3c00, 0x3fff, MWA_RAM, &spriteram },
+	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
 	{ 0x6000, 0xffff, MWA_ROM },
@@ -257,7 +196,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0xa000, 0xa000, soundlatch_r },
-	{ 0xb000, 0xb00d, K007232_ReadReg },
+	{ 0xb000, 0xb00d, K007232_read_port_0_r },
 	{ 0xd000, 0xd000, UPD7759_busy_r },
 	{ -1 }	/* end of table */
 };
@@ -266,7 +205,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0xb000, 0xb00d, K007232_WriteReg },
+	{ 0xb000, 0xb00d, K007232_write_port_0_w },
 	{ 0x9000, 0x9000, UPD7759_message_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
@@ -283,46 +222,46 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 1 */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 2 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 3 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 4 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )	/* actually service 1 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )	/* actually service 2 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )	/* actually service 3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )	/* actually service 4 */
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -403,31 +342,31 @@ INPUT_PORTS_START( dv_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 1 */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 2 */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 3 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service 4 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START
@@ -437,8 +376,7 @@ INPUT_PORTS_START( dv_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_DIPNAME( 0x0f, 0x0f, "Coins" )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
@@ -454,75 +392,71 @@ INPUT_PORTS_START( dv_input_ports )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+//	PORT_DIPSETTING(    0x00, "Invalid" )
 
  	PORT_START
-	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Energy" )
-	PORT_DIPSETTING(    0x18, "90" )
-	PORT_DIPSETTING(    0x10, "80" )
-	PORT_DIPSETTING(    0x08, "70" )
-	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "150000 and every 200000" )
+	PORT_DIPSETTING(    0x10, "150000 and every 250000" )
+	PORT_DIPSETTING(    0x08, "150000" )
+	PORT_DIPSETTING(    0x00, "200000" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sound" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Video Flip" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xF8, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
-
-/*****************************************************************************/
-
-static struct GfxLayout charlayout =
-{
-	8,8,
-	8192,
-	4,
-	{ 3*8192*8*8,2*8192*8*8,8192*8*8,0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every sprite takes 8 consecutive bytes */
-};
-
-static struct GfxLayout spritelayout =
-{
-	16,16, /* 16*16 sprites */
-	8192,
-	4,
-	{ 0,8,0x80000*8,(0x80000*8)+8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-			8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	8*64	/* every sprite takes 64 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 1, 0x00000, &charlayout,   0,    12 },
-	{ 1, 0x40000, &spritelayout, 16*12, 4 },
-	{ -1 } /* end of array */
-};
-
 
 /*****************************************************************************/
 
 static struct K007232_interface k007232_interface =
 {
-	{3,4},  /* memory regions */
-	{20,20} /* volume */
+	1,		/* 1 chip */
+	{ 4 },	/* memory region */
+	{ 20 }	/* volume */
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -530,7 +464,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 60 }, /* volume */
-	6,		/* memory region */
+	5,		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
@@ -540,8 +474,8 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
  		{
-			CPU_M6809,
-			1500000,
+			CPU_M6309,
+			2000000,
 			0,
 			readmem,writemem,0,0,
 			mainevt_interrupt,1
@@ -549,7 +483,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* ??? */
-			2,
+			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,8	/* ??? */
 		}
@@ -559,9 +493,8 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, 50*8-1, 2*8, 30*8-1 },
-
-	gfxdecodeinfo,
+	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
+	0,	/* gfx decoded by konamiic.c */
 	256, 256,
 	0,
 
@@ -594,12 +527,12 @@ static struct MachineDriver dv_machine_driver =
 			1000000,
 			0,
 			dv_readmem,dv_writemem,0,0,
-			mainevt_interrupt,1
+			dv_interrupt,1
 		}/*,
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,
-			2,
+			3,
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}  */
@@ -609,14 +542,14 @@ static struct MachineDriver dv_machine_driver =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, 50*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
+	0,	/* gfx decoded by konamiic.c */
 	256, 256,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	mainevt_vh_start,
+	dv_vh_start,
 	mainevt_vh_stop,
 	mainevt_vh_screenrefresh,
 
@@ -635,86 +568,97 @@ static struct MachineDriver dv_machine_driver =
 ROM_START( mainevt_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD( "799c02.k11",   0x10000, 0x08000, 0xe2e7dbd5 )
-	ROM_CONTINUE(0x8000,0x8000)
+	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
-	ROM_RELOAD(               0x08000, 0x08000 )
-	ROM_LOAD( "799c07.h22",   0x10000, 0x08000, 0x176df538 )
-	ROM_RELOAD(               0x18000, 0x08000 )
-	ROM_LOAD( "799c08.j22",   0x20000, 0x08000, 0xd01e0078 )
-	ROM_RELOAD(               0x28000, 0x08000 )
-	ROM_LOAD( "799c09.k22",   0x30000, 0x08000, 0x9baec75e )
-	ROM_RELOAD(               0x38000, 0x08000 )
+    ROM_REGION(0x20000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
+	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
 
-	ROM_LOAD( "799b04.h4",    0x40000, 0x80000, 0x323e0c2b )
-	ROM_LOAD( "799b05.k4",    0xc0000, 0x80000, 0x571c5831 )
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
+	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION(0x20000)	/* 128k for the samples */
-	/* samples for 007232, filled in later */
-
-	ROM_REGION(0x20000)	/* 128k for the samples */
-	/* samples for 007232, filled in later */
-
-	ROM_REGION(0x80000)	/* 512k for the samples */
-	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 ) /* copied to the previous two */
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
 	ROM_REGION(0xa0000)	/* 128+512k for the samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( mainevt2_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD( "02",           0x10000, 0x08000, 0xc143596b )
-	ROM_CONTINUE(0x8000,0x8000)
+	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
-	ROM_RELOAD(               0x08000, 0x08000 )
-	ROM_LOAD( "799c07.h22",   0x10000, 0x08000, 0x176df538 )
-	ROM_RELOAD(               0x18000, 0x08000 )
-	ROM_LOAD( "799c08.j22",   0x20000, 0x08000, 0xd01e0078 )
-	ROM_RELOAD(               0x28000, 0x08000 )
-	ROM_LOAD( "799c09.k22",   0x30000, 0x08000, 0x9baec75e )
-	ROM_RELOAD(               0x38000, 0x08000 )
+    ROM_REGION(0x20000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
+	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
 
-	ROM_LOAD( "799b04.h4",    0x40000, 0x80000, 0x323e0c2b )
-	ROM_LOAD( "799b05.k4",    0xc0000, 0x80000, 0x571c5831 )
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
+	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION(0x20000)	/* 128k for the samples */
-	/* samples for 007232, filled in later */
-
-	ROM_REGION(0x20000)	/* 128k for the samples */
-	/* samples for 007232, filled in later */
-
-	ROM_REGION(0x80000)	/* 512k for the samples */
-	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 ) /* copied to the previous two */
+	ROM_REGION(0x80000)	/* 512k for 007232 samples */
+	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
 	ROM_REGION(0xa0000)	/* 128+512k for the samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 ) /* samples for UPD7759C */
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( devstors_rom )
 	ROM_REGION(0x40000)
+	ROM_LOAD( "890-z02.k11",  0x10000, 0x08000, 0xebeb306f )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+
+    ROM_REGION(0x40000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
+	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
+
+	ROM_REGION(0x80000)
+ 	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
+ROM_END
+
+ROM_START( devstor2_rom )
+	ROM_REGION(0x40000)
 	ROM_LOAD( "dev-x02.rom",  0x10000, 0x08000, 0xe58ebb35 )
-	ROM_CONTINUE(0x8000,0x8000)
+	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
-	ROM_LOAD( "dev-f07.rom",  0x10000, 0x10000, 0x6c74fa2e )
-	ROM_LOAD( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
-	ROM_LOAD( "dev-f09.rom",  0x30000, 0x10000, 0x67ca40d5 )
+    ROM_REGION(0x40000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
+	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
 
-	ROM_LOAD( "dev-f04.rom",  0x40000, 0x80000, 0xf16cd1fa )
-	ROM_LOAD( "dev-f05.rom",  0xc0000, 0x80000, 0xda37db05 )
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
+	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
@@ -761,6 +705,14 @@ static void hisave(void)
 
 
 
+static void gfx_untangle(void)
+{
+	konami_rom_deinterleave(1);
+	konami_rom_deinterleave(2);
+}
+
+
+
 struct GameDriver mainevt_driver =
 {
 	__FILE__,
@@ -775,7 +727,7 @@ struct GameDriver mainevt_driver =
 	0,
 
 	mainevt_rom,
-	0, 0,
+	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -801,7 +753,7 @@ struct GameDriver mainevt2_driver =
 	0,
 
 	mainevt2_rom,
-	0, 0,
+	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -818,7 +770,7 @@ struct GameDriver devstors_driver =
 	__FILE__,
 	0,
  	"devstors",
-	"Devastators",
+	"Devastators (version Z)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
@@ -827,7 +779,33 @@ struct GameDriver devstors_driver =
 	0,
 
 	devstors_rom,
-	0, 0,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	dv_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};
+
+struct GameDriver devstor2_driver =
+{
+	__FILE__,
+	&devstors_driver,
+ 	"devstor2",
+	"Devastators (version X)",
+	"1988",
+	"Konami",
+	"Bryan McPhail",
+	GAME_NOT_WORKING,
+	&dv_machine_driver,
+	0,
+
+	devstor2_rom,
+	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 

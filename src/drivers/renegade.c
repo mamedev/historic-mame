@@ -315,16 +315,6 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout1 =
-{
-	8,8, /* 8x8 characters */
-	1024, /* 1024 characters */
-	3, /* bits per pixel */
-	{ 2, 4, 6 },	/* plane offsets; bit 0 is always clear */
-	{ 1, 0, 65, 64, 129, 128, 193, 192 }, /* x offsets */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 }, /* y offsets */
-	32*8 /* offset to next character */
-};
 static struct GfxLayout charlayout =
 {
 	8,8, /* 8x8 characters */
@@ -458,9 +448,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 3526 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+	cpu_set_irq_line(1,1,linestate);
+	//cpu_cause_interrupt(1,M6809_INT_FIRQ);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -468,7 +459,7 @@ static struct YM3526interface ym3526_interface =
 	1,			/* 1 chip (no more supported) */
 	3250000,	/* 3.25 MHz ? (hand tuned) */
 	{ 255 },	/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 
@@ -662,7 +653,7 @@ ROM_END
 
 /*
 static int hiload(void){
-	if( keyboard_key_pressed( KEYCODE_L ) ){
+	if( keyboard_pressed( KEYCODE_L ) ){
 		void *f;
 		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 

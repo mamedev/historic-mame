@@ -57,7 +57,6 @@ static char *ints[4] = {
 
 int DasmZ8000(char *buff, int pc)
 {
-	extern UINT8 *OP_ROM;
 	int new_pc = pc, i, tmp;
 	char *dst = buff, *src;
 	Z8000_exec *o;
@@ -81,9 +80,9 @@ int DasmZ8000(char *buff, int pc)
 			if (o->size > 2) { GET_OP(2, new_pc); new_pc += 2; }
 			src = o->dasm;
 
-			while (*src) 
+			while (*src)
 			{
-				if (*src == '%') 
+				if (*src == '%')
 				{
 					src++;
 					switch (*src) {
@@ -137,7 +136,7 @@ int DasmZ8000(char *buff, int pc)
 					case 'R':
 						src++;
 						tmp = ((n[1] & 0x01) << 16) + (n[3] << 8) + (n[7] & 0x08);
-						switch (tmp) 
+						switch (tmp)
 						{
 							case 0x000: dst += sprintf(dst, "inirb "); break;
 							case 0x008: dst += sprintf(dst, "inib  "); break;

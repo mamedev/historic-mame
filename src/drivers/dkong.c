@@ -94,7 +94,7 @@ write:
 7d06      ?
 7d07      ?
 7d80      digital sound trigger - dead
-7d82      ?
+7d82      flip screen
 7d83      ?
 7d84      interrupt enable
 7d85      0/1 toggle
@@ -130,7 +130,8 @@ write:
 7e00      ?
 7e80
 7e81      char bank selector
-7e82-7e83 ?
+7e82      flipscreen
+7e83      ?
 7e84      interrupt enable
 7e85      ?
 7e86-7e87 palette bank selector (only bit 0 is significant: 7e86 = bit 0 7e87 = bit 1)
@@ -145,6 +146,9 @@ Changes:
 	Apr 7 98 Howie Cohen
 	* Added samples for the climb, jump, land and walking sounds
 
+	Jul 27 99 Chad Hendrickson
+	* Added cocktail mode flipscreen
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -156,6 +160,7 @@ static int p[8] = { 255,255,255,255,255,255,255,255 };
 static int t[2] = { 1,1 };
 
 
+void dkong_flipscreen_w(int offset,int data);
 void dkongjr_gfxbank_w(int offset,int data);
 void dkong3_gfxbank_w(int offset,int data);
 void dkong_palettebank_w(int offset,int data);
@@ -173,6 +178,7 @@ void dkongjr_sh_jump_w(int offset, int data);
 void dkongjr_sh_walk_w(int offset, int data);
 void dkongjr_sh_climb_w(int offset, int data);
 void dkongjr_sh_land_w(int offset, int data);
+void dkongjr_sh_snapjaw_w(int offset, int data);
 
 void dkong_sh1_w(int offset,int data);
 
@@ -265,7 +271,9 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x7d04, 0x7d04, dkong_sh_gorilla },
 	{ 0x7d05, 0x7d05, dkong_sh_barrell },
 	{ 0x7d80, 0x7d80, dkong_sh_w },
-	{ 0x7d81, 0x7d83, MWA_RAM },	/* ???? */
+	{ 0x7d81, 0x7d81, MWA_RAM },	/* ???? */
+	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
+	{ 0x7d83, 0x7d83, MWA_RAM },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
@@ -328,7 +336,7 @@ static struct MemoryWriteAddress hunchy_writemem[] =
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x1000, 0x13ff, MWA_RAM },
 	{ 0x1400, 0x17ff, videoram_w, &videoram, &videoram_size },
-    { 0x1840, 0x1840, hunchy_hw1_w, &hunchy_hw1 },    /* ???? */
+	{ 0x1840, 0x1840, hunchy_hw1_w, &hunchy_hw1 },    /* ???? */
 	{ 0x1880, 0x1887, hunchy_hw2_w, &hunchy_hw2 },	  /* ???? */
 	{ 0x1900, 0x1a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1a80, 0x1bff, MWA_RAM },
@@ -340,6 +348,7 @@ static struct MemoryWriteAddress hunchy_writemem[] =
 	{ 0x1d05, 0x1d05, dkong_sh_barrell },
 	{ 0x1d80, 0x1d80, dkong_sh_w },
 	{ 0x1d81, 0x1d83, MWA_RAM },	/* ???? */
+	{ 0x1d82, 0x1d82, dkong_flipscreen_w },
 	{ 0x1d84, 0x1d84, interrupt_enable_w },
 	{ 0x1d85, 0x1d85, MWA_RAM },
 	{ 0x1d86, 0x1d87, dkong_palettebank_w },
@@ -390,15 +399,12 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7d01, 0x7d01, dkongjr_sh_jump_w }, /* HC - jump */
 	{ 0x7d02, 0x7d02, dkongjr_sh_land_w }, /* HC - climb sound */
 	{ 0x7d03, 0x7d03, dkongjr_sh_roar_w },
-//	{ 0x7d03, 0x7d03, dkongjr_sh_test5 },
 	{ 0x7d04, 0x7d04, dkong_sh_gorilla },
 	{ 0x7d05, 0x7d05, dkong_sh_barrell },
-	{ 0x7d06, 0x7d06, dkongjr_sh_walk_w },  /* HC - walk sound */
-	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },
-//	{ 0x7d06, 0x7d06, dkongjr_sh_test4 },
+	{ 0x7d06, 0x7d06, dkongjr_sh_snapjaw_w },
+	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },	/* controls pitch of the walk/climb? */
 	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
-	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */
-	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
 	{ -1 }	/* end of table */
@@ -446,6 +452,7 @@ static struct MemoryWriteAddress dkong3_writemem[] =
 	{ 0x7d00, 0x7d00, soundlatch3_w },
 	{ 0x7d80, 0x7d80, dkong3_2a03_reset_w },
 	{ 0x7e81, 0x7e81, dkong3_gfxbank_w },
+	{ 0x7e82, 0x7e82, dkong_flipscreen_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x7e85, 0x7e85, MWA_NOP },	/* ??? */
 	{ 0x7e86, 0x7e87, dkong_palettebank_w },
@@ -758,13 +765,7 @@ static struct DACinterface dkong_dac_interface =
 	{ 55 }
 };
 
-static struct Samplesinterface dkong_samples_interface =
-{
-	8,	/* 8 channels */
-	25	/* volume */
-};
-
-static struct Samplesinterface dkongjr_samples_interface =
+static struct Samplesinterface samples_interface =
 {
 	8,	/* 8 channels */
 	25	/* volume */
@@ -814,7 +815,7 @@ static struct MachineDriver dkong_machine_driver =
 		},
 		{
 			SOUND_SAMPLES,
-			&dkong_samples_interface
+			&samples_interface
 		}
 	}
 };
@@ -870,7 +871,7 @@ static struct MachineDriver hunchy_machine_driver =
 		},
 		{
 			SOUND_SAMPLES,
-			&dkong_samples_interface
+			&samples_interface
 		}
 	}
 };
@@ -919,7 +920,7 @@ static struct MachineDriver dkongjr_machine_driver =
 		},
 		{
 			SOUND_SAMPLES,
-			&dkongjr_samples_interface
+			&samples_interface
 		}
 	}
 };
@@ -1328,13 +1329,14 @@ static const char *sample_names[] =
 static const char *dkongjr_sample_names[] =
 {
 	"*dkongjr",
-	"death.wav",
-	"drop.wav",
+	"jump.wav",
+	"land.wav",
 	"roar.wav",
-	"jump.wav",  /* HC */
-	"walk.wav",  /* HC */
-	"land.wav",  /* HC */
-	"climb.wav", /* HC */
+	"climb.wav",   /* HC */
+	"death.wav",  /* HC */
+	"drop.wav",  /* HC */
+	"walk.wav", /* HC */
+	"snapjaw.wav",  /* HC */
 	0	/* end of array */
 };
 

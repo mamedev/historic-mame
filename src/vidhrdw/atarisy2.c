@@ -138,7 +138,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
 
-#if VIDEO_DEBUG
+#if DEBUG_VIDEO
 static void debug(void);
 #endif
 
@@ -250,6 +250,11 @@ void atarisys2_hscroll_w(int offset, int data)
 	pf_state.hscroll = (newword >> 6) & 0x03ff;
 	pf_state.param[0] = newword & 0x000f;
 	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
+
+	/* mark the playfield dirty for those games that handle it */
+	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
+		osd_mark_dirty(Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
+		                Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
 }
 
 
@@ -266,6 +271,11 @@ void atarisys2_vscroll_w(int offset, int data)
 	/* update the playfield parameters */
 	pf_state.param[1] = newword & 0x000f;
 	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
+
+	/* mark the playfield dirty for those games that handle it */
+	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
+		osd_mark_dirty(Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
+		                Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
 }
 
 
@@ -339,20 +349,6 @@ void atarisys2_slapstic_w(int offset, int data)
 
 /*************************************
  *
- *		Video RAM bank selection
- *
- *************************************/
-
-void atarisys2_vmmu_w(int offset, int data)
-{
-	videobank = (data >> 12) & 3;
-	videoram = alpharam + videobank * 0x2000;
-}
-
-
-
-/*************************************
- *
  *		Video RAM read/write handlers
  *
  *************************************/
@@ -376,6 +372,10 @@ void atarisys2_videoram_w(int offset, int data)
 			int offs = (&videoram[offset] - playfieldram) / 2;
 			atarigen_pf_dirty[offs] = 0xff;
 		}
+
+	/* force an update if the link of object 0 changes */
+	if (videobank == 0 && offset == 0x1806)
+		atarigen_mo_update(spriteram, 0, cpu_getscanline() + 1);
 }
 
 
@@ -413,7 +413,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	struct mo_data modata;
 	int i;
 
-#if VIDEO_DEBUG
+#if DEBUG_VIDEO
 	if (keyboard_key_pressed(KEYCODE_9)) debug();
 #endif
 
@@ -510,7 +510,6 @@ static void pf_check_overrender_callback(const struct rectangle *clip, const str
 {
 	struct pf_overrender_data *overrender_data = param;
 	const struct GfxElement *gfx = Machine->gfx[0];
-	struct osd_bitmap *bitmap = overrender_data->bitmap;
 	int mo_priority = overrender_data->mo_priority;
 	int x, y;
 
@@ -665,7 +664,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
  *
  *************************************/
 
-#if 0
+#if DEBUG_VIDEO
 static void debug(void)
 {
 	static int count;

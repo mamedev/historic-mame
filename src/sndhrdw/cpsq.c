@@ -3,40 +3,57 @@
   Capcom System Q Sound
   =====================
 
-  A big sample player. I don't know how this works yet.
+  A sample player.
 
+  Register
+  0     xxbb    xx = unknown bb = start high address
+  1     ssss    ssss = sample start address
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
 
 ***************************************************************************/
 
 
-
-
 #include "driver.h"
 
-#define CLICKY_NOISES 0
 
-#if CLICKY_NOISES
-static signed char *buffer1;
+#define USE_QSOUND 0
+
+struct QSOUND_CHANNEL
+{
+    int playing;
+	int reg0;
+	int reg1;
+	int reg2;
+	int reg3;
+	int reg4;
+	int reg5;
+	int reg6;
+	int reg7;
+	int reg8;
+	int reg9;
+};
+
+#define qsound_channels 16
+static struct QSOUND_CHANNEL qsound_channel[qsound_channels];
+#if USE_QSOUND
 static int channel;
-const int cpsq_buffer_len = 4096;
 #endif
-
 
 void cpsq_set_command(int data, int value)
 {
-#if CLICKY_NOISES
-	/* Dummy routine, copy first part of Q sample ROMS */
-	unsigned char *Samples = Machine->memory_region[3];
-	memcpy(buffer1, Samples, cpsq_buffer_len);
-#endif
-	if (errorlog)
+    if (errorlog)
 	{
-		int ch,reg;
-		ch=0;
-		reg=0;
+        int ch=0,reg=0;
 		if (data < 0x80)
 		{
-			ch=data/8;
+			ch=data>>3;
 			reg=data & 0x07;
 		}
 		else
@@ -55,57 +72,117 @@ void cpsq_set_command(int data, int value)
 					}
 					else
 					{
-
+                        /* Unknown registers */
 						ch=99;
 						reg=99;
 					}
 			}
 		}
-		fprintf(errorlog, "QSOUND WRITE %02x CH%02d-R%02d =%04x\n", data, ch, reg, value);
-	}
 
+
+		switch (reg)
+		{
+			case 0:
+				/* strange ... */
+				ch=(ch+1)&0x0f;
+				qsound_channel[ch].reg0=value;
+				break;
+			case 1:
+                qsound_channel[ch].playing=0;
+				qsound_channel[ch].reg1=value;
+				break;
+			case 2:
+				qsound_channel[ch].reg2=value;
+				break;
+			case 3:
+				qsound_channel[ch].reg3=value;
+				break;
+			case 4:
+				qsound_channel[ch].reg4=value;
+				break;
+			case 5:
+				qsound_channel[ch].reg5=value;
+				break;
+			case 6:
+				qsound_channel[ch].reg6=value;
+				break;
+			case 7:
+				qsound_channel[ch].reg7=value;
+				break;
+			case 8:
+				qsound_channel[ch].reg8=value;
+				break;
+			case 9:
+				qsound_channel[ch].reg9=value;
+				break;
+
+		}
+        fprintf(errorlog, "QSOUND WRITE %02x CH%02d-R%02d =%04x\n", data, ch, reg, value);
+	}
 }
 
 
 int cpsq_sh_start(const struct MachineSound *msound)
 {
-#if CLICKY_NOISES
-	int vol[1];
+#if USE_QSOUND
+    int vol[qsound_channels];
+    int i;
 
-	/* allocate the buffers */
-	buffer1 = malloc(cpsq_buffer_len);
-	if (buffer1 == 0 )
+	if (Machine->sample_rate == 0) return 0;
+
+	for (i=0; i<qsound_channels; i++)
 	{
-		free(buffer1);
-		return 1;
+		vol[i]=0xff;
 	}
-	memset(buffer1,0,cpsq_buffer_len);
 
-	/* request a sound channel */
-	vol[0] = 25;
-	channel = mixer_allocate_channels(1,vol);
-	mixer_set_name(channel+0,"streamed DAC #0");
+	/* Allocate sound channels */
+    channel = mixer_allocate_channels(qsound_channels, vol);
+
+    for (i=0; i<qsound_channels; i++)
+    {
+        mixer_set_name(channel+i,"QSound channel");
+    }
 #endif
 	return 0;
 }
 
 void cpsq_sh_stop (void)
 {
-#if CLICKY_NOISES
-	free(buffer1);
-	buffer1 = 0;
-#endif
+	if (Machine->sample_rate == 0) return;
 }
 
 void cpsq_sh_update(void)
 {
-#if CLICKY_NOISES
-    int data, dacpos;
-    signed char *buf;
+#if USE_QSOUND
+    int i;
+    signed char *Samples = (signed char *)Machine->memory_region[3];
+	unsigned int SamplesLength=Machine->memory_region_length[3];
+	static int old_start;
 
     if (Machine->sample_rate == 0) return;
 
-	mixer_play_streamed_sample(channel+0,buffer1,cpsq_buffer_len,cpsq_buffer_len * Machine->drv->frames_per_second);
-	memset(buffer1,0,cpsq_buffer_len);
+
+    for (i=0; i<qsound_channels; i++)
+    {
+        unsigned int start = ((qsound_channel[i].reg0 & 0xff)<<16)+(qsound_channel[i].reg1);
+        unsigned int length=0x2000;
+
+        if (start && !qsound_channel[i].playing)
+        {
+			old_start=start;
+			if (start + length < SamplesLength)
+			{
+                mixer_play_sample(channel+i,Samples+start, length,16000, 0);
+
+                /*
+                if (errorlog)
+				{
+					fprintf(errorlog, "QSOUND SAMPLE= %08x \n", start);
+				}
+                */
+			}
+            qsound_channel[i].playing=1;
+        }
+    }
 #endif
 }

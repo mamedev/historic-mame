@@ -22,7 +22,14 @@ static struct tilemap *vaportra_pf1_tilemap,*vaportra_pf2_tilemap,*vaportra_pf3_
 static unsigned char *gfx_base;
 static int gfx_bank,flipscreen;
 
+static unsigned char *vaportra_spriteram;
+
 /******************************************************************************/
+
+void vaportra_update_sprites(int offset, int data)
+{
+	memcpy(vaportra_spriteram,spriteram,0x800);
+}
 
 static void update_24bitcol(int offset)
 {
@@ -51,7 +58,7 @@ void vaportra_palette_24bit_b(int offset,int data)
 
 static void vaportra_update_palette(void)
 {
-	int offs,color,code,i,pal_base;
+	int offs,color,i,pal_base;
 	int colmask[16];
 
 	palette_init_used_colors();
@@ -63,12 +70,12 @@ static void vaportra_update_palette(void)
 	{
 		int x,y,sprite,multi;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = READ_WORD(&vaportra_spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x1fff;
+		sprite = READ_WORD (&vaportra_spriteram[offs+2]) & 0x1fff;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = READ_WORD(&vaportra_spriteram[offs+4]);
 		color = (x >> 12) &0xf;
 
 		x = x & 0x01ff;
@@ -109,11 +116,11 @@ static void vaportra_drawsprites(struct osd_bitmap *bitmap, int pri)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = READ_WORD(&vaportra_spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x1fff;
-		x = READ_WORD(&spriteram[offs+4]);
+		sprite = READ_WORD (&vaportra_spriteram[offs+2]) & 0x1fff;
+		x = READ_WORD(&vaportra_spriteram[offs+4]);
 		colour = (x >> 12) &0xf;
 		if (pri && (colour>=priority_value)) continue;
 		if (!pri && !(colour>=priority_value)) continue;
@@ -363,6 +370,11 @@ void vaportra_control_2_w(int offset,int data)
 
 /******************************************************************************/
 
+void vaportra_vh_stop (void)
+{
+	free(vaportra_spriteram);
+}
+
 int vaportra_vh_start(void)
 {
 	vaportra_pf2_tilemap = tilemap_create(
@@ -397,6 +409,8 @@ int vaportra_vh_start(void)
 	vaportra_pf2_tilemap->transparent_pen = 0;
 	vaportra_pf3_tilemap->transparent_pen = 0;
 	vaportra_pf4_tilemap->transparent_pen = 0;
+
+	vaportra_spriteram = malloc(0x800);
 
 	return 0;
 }

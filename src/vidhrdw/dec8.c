@@ -231,9 +231,17 @@ void lastmiss_scrolly_w(int offset, int data)
 void gondo_scroll_w(int offset, int data)
 {
 	switch (offset) {
-		case 0x0: scroll2[1]=data; break;
-		case 0x8: scroll2[3]=data; break;
-		case 0x10:  scroll2[0]=data;break;
+		case 0x0:
+			scroll2[1]=data; /* X LSB */
+			break;
+		case 0x8:
+			scroll2[3]=data; /* Y LSB */
+			break;
+		case 0x10:
+			scroll2[0]=(data>>0)&1; /* Bit 0: X MSB */
+			scroll2[2]=(data>>1)&1; /* Bit 1: Y MSB */
+			/* Bit 2 is also used in Gondo & Garyoret */
+			break;
 	}
 }
 
@@ -605,6 +613,7 @@ void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /******************************************************************************/
 
+
 void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int my,mx,offs,color,tile;
@@ -701,6 +710,111 @@ void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Sprites with priority over all tiles */
 	draw_sprites1(bitmap,1);
+
+	/* Top layer */
+	draw_characters(bitmap,0x70,4);
+}
+
+/******************************************************************************/
+
+void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int my,mx,offs,color,tile;
+	int scrollx,scrolly;
+
+	/* Palette stuff */
+	int code,i;
+	int colmask[16];
+	int pal_base;
+
+	palette_init_used_colors();
+
+	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+	for (color = 0;color < 8;color++) colmask[color] = 0;
+	for (offs = 0; offs < 0x800; offs += 2)
+	{
+		code = videoram[offs+1]+((videoram[offs]&0xF)<<8);
+		color = (videoram[offs]&0x70)>>4;
+		code &= 0x0fff;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (color = 0;color < 8;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 8 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 8;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 8 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+	for (offs = 0; offs < 0x800; offs += 2)
+	{
+		code = pf_video[offs+1]+((pf_video[offs]&0xF)<<8);
+		color = pf_video[offs] >> 4;
+		code &= 0x0fff;
+		colmask[color] |= Machine->gfx[2]->pen_usage[code];
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		for (i = 0;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
+	palette_used_colors[256]=PALETTE_COLOR_TRANSPARENT;
+
+	if (palette_recalc())
+    	memset(pf_dirty,1,0x800);
+
+
+	/* Playfield 2 - Foreground */
+	mx=-1; my=0;
+	for (offs = 0x000;offs < 0x800; offs += 2) {
+		mx++;
+		if (mx==32) {mx=0; my++;}
+		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
+		tile=pf_video[offs+1]+(pf_video[offs]<<8);
+		color = ((tile & 0xf000) >> 12);
+        tile=tile&0xfff;
+		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
+			color, 0,0, 16*mx,16*my,
+		 	0,TRANSPARENCY_NONE,0);
+
+		/* Render masked playfield
+		drawgfx(pf1_bitmap,Machine->gfx[1],0,
+				0,0,0, 16*mx,16*my,
+			 	0,TRANSPARENCY_NONE,0);
+		drawgfx(pf1_bitmap,Machine->gfx[2],tile,
+				color, 0,0, 16*mx,16*my,
+				0,TRANSPARENCY_PENS,0xff);*/
+	}
+
+	/* Bottom tiles */
+	scrolly=-((scroll2[2]<<8)+scroll2[3]);
+	scrollx=-((scroll2[0]<<8)+scroll2[1]);
+	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
+
+	/* Sprites underneath tiles */
+//	draw_sprites1(bitmap,2);
+
+	/* Priority isn't confirmed yet - different from Gondomania anyway */
+
+	/* Top tiles */
+	scrolly=-((scroll2[2]<<8)+scroll2[3]);
+	scrollx=-((scroll2[0]<<8)+scroll2[1]);
+//	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
+
+	/* Sprites with priority over all tiles */
+	draw_sprites1(bitmap,0);
 
 	/* Top layer */
 	draw_characters(bitmap,0x70,4);

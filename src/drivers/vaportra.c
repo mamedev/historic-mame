@@ -12,6 +12,7 @@
 #include "cpu/h6280/h6280.h"
 
 int  vaportra_vh_start(void);
+void vaportra_vh_stop (void);
 void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void vaportra_pf1_data_w(int offset,int data);
@@ -31,6 +32,8 @@ void vaportra_palette_24bit_b(int offset,int data);
 
 extern unsigned char *vaportra_pf1_data,*vaportra_pf2_data,*vaportra_pf3_data,*vaportra_pf4_data;
 static unsigned char *vaportra_ram;
+
+void vaportra_update_sprites(int offset, int data);
 
 /******************************************************************************/
 
@@ -92,8 +95,8 @@ static struct MemoryWriteAddress vaportra_writemem[] =
 
 	{ 0x300000, 0x3009ff, vaportra_palette_24bit_rg, &paletteram },
 	{ 0x304000, 0x3049ff, vaportra_palette_24bit_b, &paletteram_2 },
-	{ 0x308000, 0x308001, MRA_NOP },
-	{ 0x30c000, 0x30c001, MRA_NOP },
+	{ 0x308000, 0x308001, MWA_NOP },
+	{ 0x30c000, 0x30c001, vaportra_update_sprites },
 	{ 0xff8000, 0xff87ff, MWA_BANK2, &spriteram },
 	{ 0xffc000, 0xffffff, MWA_BANK1, &vaportra_ram },
 	{ -1 }  /* end of table */
@@ -302,9 +305,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	8000,           /* 8000Hz frequency (Not quite correct) */
-	{ 4, 3 },       /* 2nd chip is 16Khz? */
-	{ 50, 20 }
+	{ 8055, 16110 },/* Chips are different frequencies */
+	{ 4, 3 },
+	{ 48, 24 }
 };
 
 static struct YM2203interface ym2203_interface =
@@ -328,7 +331,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -351,7 +354,7 @@ static struct MachineDriver vaportra_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -362,10 +365,10 @@ static struct MachineDriver vaportra_machine_driver =
 	1280, 1280,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	vaportra_vh_start,
-	0,
+	vaportra_vh_stop,
 	vaportra_vh_screenrefresh,
 
 	/* sound hardware */
@@ -445,10 +448,6 @@ static void vaportra_decrypt(void)
 
 	for (i=0x00000; i<0x80000; i++)
 		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x01) << 7) | ((RAM[i] & 0x80) >> 7);
-
-	/* Remove this bit later.. */
-	RAM = Machine->memory_region[2];
-	RAM[0x1d2]=0xea; /* NOP out CLI */
 }
 
 static int cycle_r(int offset)
@@ -500,7 +499,7 @@ struct GameDriver kuhga_driver =
 	__FILE__,
 	&vaportra_driver,
 	"kuhga",
-	"Kuhga - Operation Code \"Vapor Trail\" (Japan revision 3)",
+	"Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail",

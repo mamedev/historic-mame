@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 extern void combatsc_io_w( int offset, int data );
 extern int combatsc_io_r( int offset );

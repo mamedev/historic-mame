@@ -192,7 +192,7 @@ void YM2413_register_port_0_w(int chip,int data)
 
 void YM2413_data_port_0_w(int chip,int data)
 {
-	int value, channel, instrument, i, block, volume, octave;
+	int value, channel, instrument, i, block, volume;
 	int pending=ym2413_state[chip].pending_register;
 
 	switch(pending)

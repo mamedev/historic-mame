@@ -183,8 +183,8 @@ void shuuz_playfieldram_w(int offset, int data)
 	}
 
 	/* handle the latch, but only write the upper byte */
-	if (offset < 0x2000 && atarigen_video_control_latch1 != -1)
-		shuuz_playfieldram_w(offset + 0x2000, atarigen_video_control_latch1 | 0x00ff0000);
+	if (offset < 0x2000 && atarigen_video_control_state.latch1 != -1)
+		shuuz_playfieldram_w(offset + 0x2000, atarigen_video_control_state.latch1 | 0x00ff0000);
 }
 
 
@@ -197,28 +197,12 @@ void shuuz_playfieldram_w(int offset, int data)
 
 void shuuz_scanline_update(int scanline)
 {
-	/* look up the SLIP link */
-	if (scanline < YDIM)
-	{
-		int link = READ_WORD(&atarigen_playfieldram[0x1f80 + 2 * (scanline / 8)]) & 0xff;
-		atarigen_mo_update(atarigen_spriteram, link, scanline);
-	}
-
-#if DEBUG_VIDEO
+	/* update the playfield */
 	if (scanline == 0)
-		if (keyboard_key_pressed(KEYCODE_8))
-		{
-			static FILE *out;
-			if (!out) out = fopen("scroll.log", "w");
-			if (out)
-			{
-				int i;
-				for (i = 0; i < 64; i++)
-					fprintf(out, "%04X ", READ_WORD(&atarigen_playfieldram[0x1f00 + 2 * i]));
-				fprintf(out, "\n");
-			}
-		}
-#endif
+		atarigen_video_control_update(&atarigen_playfieldram[0x1f00]);
+
+	/* update the MOs from the SLIP table */
+	atarigen_mo_update_slip_512(atarigen_spriteram, atarigen_video_control_state.sprite_yscroll, scanline, &atarigen_playfieldram[0x1f80]);
 }
 
 
@@ -465,9 +449,9 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	/* extract data from the various words */
 	int hflip = data[1] & 0x8000;
 	int code = data[1] & 0x7fff;
-	int xpos = (data[2] >> 7) - 5;
+	int xpos = (data[2] >> 7) - atarigen_video_control_state.sprite_xscroll;
 	int color = data[2] & 0x000f;
-	int ypos = YDIM - (data[3] >> 7);
+	int ypos = -(data[3] >> 7) - atarigen_video_control_state.sprite_yscroll;
 	int hsize = ((data[3] >> 4) & 7) + 1;
 	int vsize = (data[3] & 7) + 1;
 

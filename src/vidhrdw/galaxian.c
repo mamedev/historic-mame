@@ -122,7 +122,7 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* first, the character/sprite palette */
 	for (i = 0;i < 32;i++)
 	{
-		int col,bit0,bit1,bit2;
+		int bit0,bit1,bit2;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
@@ -232,9 +232,6 @@ void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i;
-
-
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
 
 	/* set up background colors */

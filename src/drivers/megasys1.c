@@ -1110,8 +1110,8 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,
-	30000,	/* ?? */
-	{3,4},
+	{ 30000, 30000 },	/* ?? */
+	{ 3, 4 },
 	{ 50, 50 }
 };
 
@@ -1233,7 +1233,7 @@ void driver_init_A(void) {hardware_type = 'A' ; spriteram = &ram[0x8000];}
 void driver_init_B(void)
 {
 unsigned char *RAM;
-int i,j;
+int i;
 
 	hardware_type = 'B' ;
 

@@ -497,7 +497,7 @@ void psychic5_draw_sprites(struct osd_bitmap *bitmap)
 void psychic5_draw_sprites2(struct osd_bitmap *bitmap)
 {
 	int offs,sx,sy,tile,palette,flipx,flipy;
-	int size32,tileofs0,tileofs1,tileofs2,tileofs3,temp1,temp2;
+	int size32,tileofs0,tileofs1,tileofs2,tileofs3;
 
 	for (offs = 11 ;offs < spriteram_size; offs+=16)
 	{

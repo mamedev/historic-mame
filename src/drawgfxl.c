@@ -530,7 +530,7 @@ DECLARE(blockmove_transthrough_noremap_flipx,(
 DECLARE(drawgfx_core,(
 		struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int dirty),
+		const struct rectangle *clip,int transparency,int transparent_color),
 {
 	int ox;
 	int oy;
@@ -663,8 +663,7 @@ DECLARE(drawgfx_core,(
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	if (dirty)
-		osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
+	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	if (gfx->colortable)	/* remap colors */
 	{
@@ -723,7 +722,6 @@ DECLARE(drawgfx_core,(
 		int sm = ((DATA_TYPE *)gfx->gfxdata->line[1])-((DATA_TYPE *)gfx->gfxdata->line[0]);	/* source modulo */
 		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;						/* dest data */
 		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);		/* dest modulo */
-		const unsigned short *paldata = &gfx->colortable[gfx->color_granularity * color];
 
 		if (flipx)
 		{
@@ -735,6 +733,144 @@ DECLARE(drawgfx_core,(
 		if (flipy)
 		{
 			if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
+			dd += dm * (sh - 1);
+			dm = -dm;
+		}
+		else
+			sd += sm * (sy-oy);
+
+		switch (transparency)
+		{
+			case TRANSPARENCY_NONE:
+				BLOCKMOVE(opaque_noremap,(sd,sw,sh,sm,dd,dm));
+				break;
+
+			case TRANSPARENCY_PEN:
+			case TRANSPARENCY_COLOR:
+				BLOCKMOVE(transpen_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
+				break;
+
+			case TRANSPARENCY_THROUGH:
+				BLOCKMOVE(transthrough_noremap,(sd,sw,sh,sm,dd,dm,transparent_color));
+				break;
+		}
+	}
+})
+
+
+
+DECLARE(copybitmap_core,(
+		struct osd_bitmap *dest,struct osd_bitmap *src,
+		int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color),
+{
+	int ox;
+	int oy;
+	int ex;
+	int ey;
+	struct rectangle myclip;
+
+
+	/* if necessary, remap the transparent color */
+	if (transparency == TRANSPARENCY_COLOR)
+		transparent_color = Machine->pens[transparent_color];
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = sx;
+		sx = sy;
+		sy = temp;
+
+		temp = flipx;
+		flipx = flipy;
+		flipy = temp;
+
+		if (clip)
+		{
+			/* clip and myclip might be the same, so we need a temporary storage */
+			temp = clip->min_x;
+			myclip.min_x = clip->min_y;
+			myclip.min_y = temp;
+			temp = clip->max_x;
+			myclip.max_x = clip->max_y;
+			myclip.max_y = temp;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		sx = dest->width - src->width - sx;
+		if (clip)
+		{
+			int temp;
+
+
+			/* clip and myclip might be the same, so we need a temporary storage */
+			temp = clip->min_x;
+			myclip.min_x = dest->width-1 - clip->max_x;
+			myclip.max_x = dest->width-1 - temp;
+			myclip.min_y = clip->min_y;
+			myclip.max_y = clip->max_y;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		sy = dest->height - src->height - sy;
+		if (clip)
+		{
+			int temp;
+
+
+			myclip.min_x = clip->min_x;
+			myclip.max_x = clip->max_x;
+			/* clip and myclip might be the same, so we need a temporary storage */
+			temp = clip->min_y;
+			myclip.min_y = dest->height-1 - clip->max_y;
+			myclip.max_y = dest->height-1 - temp;
+			clip = &myclip;
+		}
+	}
+
+
+	/* check bounds */
+	ox = sx;
+	oy = sy;
+
+	ex = sx + src->width-1;
+	if (sx < 0) sx = 0;
+	if (clip && sx < clip->min_x) sx = clip->min_x;
+	if (ex >= dest->width) ex = dest->width-1;
+	if (clip && ex > clip->max_x) ex = clip->max_x;
+	if (sx > ex) return;
+
+	ey = sy + src->height-1;
+	if (sy < 0) sy = 0;
+	if (clip && sy < clip->min_y) sy = clip->min_y;
+	if (ey >= dest->height) ey = dest->height-1;
+	if (clip && ey > clip->max_y) ey = clip->max_y;
+	if (sy > ey) return;
+
+	{
+		DATA_TYPE *sd = ((DATA_TYPE *)src->line[0]);							/* source data */
+		int sw = ex-sx+1;														/* source width */
+		int sh = ey-sy+1;														/* source height */
+		int sm = ((DATA_TYPE *)src->line[1])-((DATA_TYPE *)src->line[0]);		/* source modulo */
+		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;						/* dest data */
+		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);		/* dest modulo */
+
+		if (flipx)
+		{
+			if ((sx-ox) == 0) sd += src->width - sw;
+		}
+		else
+			sd += (sx-ox);
+
+		if (flipy)
+		{
+			if ((sy-oy) == 0) sd += sm * (src->height - sh);
 			dd += dm * (sh - 1);
 			dm = -dm;
 		}

@@ -51,9 +51,6 @@ void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 int msdos_update_audio(void);
 
 
-extern int use_profiler;
-void osd_profiler_display(void);
-
 
 /* specialized update_screen functions defined in blit.c */
 
@@ -962,8 +959,6 @@ int game_attributes;
 /* Return a osd_bitmap pointer or 0 in case of error. */
 struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 {
-	int	vga_reg_val;
-
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
@@ -1978,9 +1973,9 @@ void update_screen_dummy(void)
 INLINE void pan_display(void)
 {
 	/* horizontal panning */
-	if (keyboard_key_pressed(KEYCODE_LSHIFT))
+	if (keyboard_pressed(KEYCODE_LSHIFT))
 	{
-		if (keyboard_key_pressed(KEYCODE_PGUP))
+		if (keyboard_pressed(KEYCODE_PGUP))
 		{
 			if (skipcolumns < skipcolumnsmax)
 			{
@@ -1988,7 +1983,7 @@ INLINE void pan_display(void)
 				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 			}
 		}
-		if (keyboard_key_pressed(KEYCODE_PGDN))
+		if (keyboard_pressed(KEYCODE_PGDN))
 		{
 			if (skipcolumns > skipcolumnsmin)
 			{
@@ -1999,7 +1994,7 @@ INLINE void pan_display(void)
 	}
 	else /*  vertical panning */
 	{
-		if (keyboard_key_pressed(KEYCODE_PGDN))
+		if (keyboard_pressed(KEYCODE_PGDN))
 		{
 			if (skiplines < skiplinesmax)
 			{
@@ -2007,7 +2002,7 @@ INLINE void pan_display(void)
 				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 			}
 		}
-		if (keyboard_key_pressed(KEYCODE_PGUP))
+		if (keyboard_pressed(KEYCODE_PGUP))
 		{
 			if (skiplines > skiplinesmin)
 			{
@@ -2064,7 +2059,7 @@ void osd_update_video_and_audio(void)
 		{12,0,0,0,0,0,0,0,0,0,0,0 }
 	};
 	int i;
-	static int showfps,showfpstemp,showprofile;
+	static int showfps,showfpstemp;
 	uclock_t curr;
 	static uclock_t prev_frames[FRAMESKIP_LEVELS],prev;
 	static int speed=0;
@@ -2103,29 +2098,21 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-		if (keyboard_ui_key_pressed(IPT_UI_SHOW_FPS))
+		if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
+				&& !keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL)
+				&& input_ui_pressed(IPT_UI_SHOW_FPS))
 		{
-			if (use_profiler &&
-					(keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT)))
+			if (showfpstemp)
 			{
-				showprofile ^= 1;
-				if (showprofile == 0)
-					need_to_clear_bitmap = 1;
+				showfpstemp = 0;
+				need_to_clear_bitmap = 1;
 			}
 			else
 			{
-				if (showfpstemp)
+				showfps ^= 1;
+				if (showfps == 0)
 				{
-					showfpstemp = 0;
 					need_to_clear_bitmap = 1;
-				}
-				else
-				{
-					showfps ^= 1;
-					if (showfps == 0)
-					{
-						need_to_clear_bitmap = 1;
-					}
 				}
 			}
 		}
@@ -2134,7 +2121,7 @@ void osd_update_video_and_audio(void)
 		/* now wait until it's time to update the screen */
 		if (throttle)
 		{
-			osd_profiler(OSD_PROFILE_IDLE);
+			profiler_mark(PROFILER_IDLE);
 			if (video_sync)
 			{
 				static uclock_t last;
@@ -2184,7 +2171,7 @@ void osd_update_video_and_audio(void)
 				}
 
 			}
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 		}
 		else curr = uclock();
 
@@ -2239,9 +2226,6 @@ void osd_update_video_and_audio(void)
 		}
 
 
-		if (showprofile) osd_profiler_display();
-
-
 		if (scrbitmap->depth == 8)
 		{
 			if (dirtypalette)
@@ -2273,9 +2257,9 @@ void osd_update_video_and_audio(void)
 
 
 		/* copy the bitmap to screen memory */
-		osd_profiler(OSD_PROFILE_BLIT);
+		profiler_mark(PROFILER_BLIT);
 		update_screen();
-		osd_profiler(OSD_PROFILE_END);
+		profiler_mark(PROFILER_END);
 
 		/* see if we need to give the card enough time to draw both odd/even fields of the interlaced display
 			(req. for 15.75KHz Arcade Monitor Modes */
@@ -2336,10 +2320,10 @@ void osd_update_video_and_audio(void)
 	}
 
 	/* Check for PGUP, PGDN and pan screen */
-	if (keyboard_key_pressed(KEYCODE_PGDN) || keyboard_key_pressed(KEYCODE_PGUP))
+	if (keyboard_pressed(KEYCODE_PGDN) || keyboard_pressed(KEYCODE_PGUP))
 		pan_display();
 
-	if (keyboard_ui_key_pressed(IPT_UI_FRAMESKIP_INC))
+	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
 		if (autoframeskip)
 		{
@@ -2365,7 +2349,7 @@ void osd_update_video_and_audio(void)
 		frames_displayed = 0;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_FRAMESKIP_DEC))
+	if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
 	{
 		if (autoframeskip)
 		{
@@ -2388,7 +2372,7 @@ void osd_update_video_and_audio(void)
 		frames_displayed = 0;
 	}
 
-	if (keyboard_ui_key_pressed(IPT_UI_THROTTLE))
+	if (input_ui_pressed(IPT_UI_THROTTLE))
 	{
 		throttle ^= 1;
 

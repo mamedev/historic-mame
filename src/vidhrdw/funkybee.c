@@ -23,7 +23,7 @@ void funkybee_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* first, the character/sprite palette */
 	for (i = 0;i < 32;i++)
 	{
-		int col,bit0,bit1,bit2;
+		int bit0,bit1,bit2;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
@@ -120,7 +120,7 @@ void funkybee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* draw the sprites */
 	for (offs = 0x0f; offs >= 0; offs--)
 	{
-		int gfx,sx,sy,code,col,flipy,offs2;
+		int sx,sy,code,col,flipy,offs2;
 
 
 		offs2 = 0x1e00 + offs;

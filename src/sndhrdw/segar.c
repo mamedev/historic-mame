@@ -132,7 +132,6 @@ int astrob_speech_sh_start(const struct MachineSound *msound)
 void astrob_speech_sh_update (void)
 {
 	int sound;
-	int track;
 
 	if( Machine->samples == 0 )
 		return;

@@ -138,12 +138,6 @@ void alpine_protection_w(int offset,int data);
 void alpinea_bankswitch_w(int offset,int data);
 int alpine_port_2_r(int offset);
 
-int sfposeid_protection_r(int offset);
-void sfposeid_protection_w(int offset,int data);
-
-int kikstart_protection_r(int offset);
-void kikstart_protection_w(int offset,int data);
-
 extern unsigned char *taitosj_videoram2,*taitosj_videoram3;
 extern unsigned char *taitosj_characterram;
 extern unsigned char *taitosj_scroll;
@@ -187,7 +181,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, taitosj_fake_data_r },
 	{ 0x8801, 0x8801, taitosj_fake_status_r },
-	{ 0xc400, 0xcfff, MRA_RAM },
+	{ 0xc400, 0xd015, MRA_RAM },
 	{ 0xd100, 0xd17f, MRA_RAM },
 	{ 0xd400, 0xd403, taitosj_collision_reg_r, &taitosj_collision_reg },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
@@ -224,6 +218,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd50b, 0xd50b, taitosj_soundcommand_w },
 	{ 0xd50d, 0xd50d, MWA_RAM, /*watchdog_reset_w*/ },  /* Bio Attack reset sometimes after you die */
 	{ 0xd50e, 0xd50e, taitosj_bankswitch_w },
+	{ 0xd50f, 0xd50f, MWA_NOP },
 	{ 0xd600, 0xd600, taitosj_videoenable_w },
 	{ 0xe000, 0xefff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -237,9 +232,9 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, taitosj_mcu_data_r },
 	{ 0x8801, 0x8801, taitosj_mcu_status_r },
-	{ 0xc400, 0xcfff, MRA_RAM },
+	{ 0xc400, 0xd05f, MRA_RAM },
 	{ 0xd100, 0xd17f, MRA_RAM },
-	{ 0xd400, 0xd403, taitosj_collision_reg_r },
+	{ 0xd400, 0xd403, taitosj_collision_reg_r, &taitosj_collision_reg },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
 	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
@@ -851,7 +846,7 @@ INPUT_PORTS_START( wwestern_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -861,16 +856,14 @@ INPUT_PORTS_START( wwestern_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1c, 0x18, IPT_UNUSED )				/* protection read, the game resets after a while without it */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
@@ -1191,7 +1184,8 @@ INPUT_PORTS_START( tinstar_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x30, 0x00, IPT_UNUSED )				/* protection read, the game hangs without it */
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Bonus Life?" )
@@ -1721,7 +1715,7 @@ static struct MachineDriver machine_driver =
 			interrupt,27306667
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	taitosj_init_machine,
 
@@ -1784,7 +1778,7 @@ static struct MachineDriver mcu_machine_driver =
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	taitosj_init_machine,
@@ -2255,8 +2249,8 @@ ROM_START( sfposeid_rom )
 	ROM_REGION(0x0100)	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller - missing */
-	ROM_LOAD( "sf.mcu",       0x0000, 0x0800, 0x00000000 )
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_LOAD( "a14-12",       0x0000, 0x0800, 0x091beed8 )
 ROM_END
 
 ROM_START( hwrace_rom )
@@ -2291,28 +2285,28 @@ ROM_END
 
 ROM_START( kikstart_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "01",           0x00000, 0x2000, 0x5810be97 )
-	ROM_LOAD( "02",           0x02000, 0x2000, 0x13e9565d )
-	ROM_LOAD( "03",           0x04000, 0x2000, 0x93d7a9e1 )
-	ROM_LOAD( "04",           0x06000, 0x2000, 0x1f23c5d6 )
-	ROM_LOAD( "05",           0x10000, 0x2000, 0x66e100aa )	/* banked at 6000 */
+	ROM_LOAD( "a20-01",       0x00000, 0x2000, 0x5810be97 )
+	ROM_LOAD( "a20-02",       0x02000, 0x2000, 0x13e9565d )
+	ROM_LOAD( "a20-03",       0x04000, 0x2000, 0x93d7a9e1 )
+	ROM_LOAD( "a20-04",       0x06000, 0x2000, 0x1f23c5d6 )
+	ROM_LOAD( "a20-05",       0x10000, 0x2000, 0x66e100aa )	/* banked at 6000 */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "06",           0x0000, 0x2000, 0x6582fc89 )
-	ROM_LOAD( "07",           0x2000, 0x2000, 0x8c0b76d2 )
-	ROM_LOAD( "08",           0x4000, 0x2000, 0x0cca7a9d )
-	ROM_LOAD( "09",           0x6000, 0x2000, 0xda625ccf )
+	ROM_LOAD( "a20-06",       0x0000, 0x2000, 0x6582fc89 )
+	ROM_LOAD( "a20-07",       0x2000, 0x2000, 0x8c0b76d2 )
+	ROM_LOAD( "a20-08",       0x4000, 0x2000, 0x0cca7a9d )
+	ROM_LOAD( "a20-09",       0x6000, 0x2000, 0xda625ccf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "10",           0x0000, 0x1000, 0xde4352a4 )
-	ROM_LOAD( "11",           0x1000, 0x1000, 0x8db12dd9 )
-	ROM_LOAD( "12",           0x2000, 0x1000, 0xe7eeb933 )
+	ROM_LOAD( "a20-10",       0x0000, 0x1000, 0xde4352a4 )
+	ROM_LOAD( "a20-11",       0x1000, 0x1000, 0x8db12dd9 )
+	ROM_LOAD( "a20-12",       0x2000, 0x1000, 0xe7eeb933 )
 
 	ROM_REGION(0x0100)	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller - missing */
-	ROM_LOAD( "ks.mcu",       0x0000, 0x0800, 0x00000000 )
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_LOAD( "a20-13",       0x0000, 0x0800, 0x11e23c5c )
 ROM_END
 
 
@@ -2486,20 +2480,6 @@ static void alpinea_init_driver(void)
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50e, 0xd50e, alpinea_bankswitch_w);
-}
-
-static void sfposeid_init_driver(void)
-{
-	/* install protection handlers */
-	install_mem_read_handler (0, 0x8800, 0x8800, sfposeid_protection_r);
-	install_mem_write_handler(0, 0x8800, 0x8800, sfposeid_protection_w);
-}
-
-static void kikstart_init_driver(void)
-{
-	/* install protection handlers */
-	install_mem_read_handler (0, 0x8800, 0x8800, kikstart_protection_r);
-	install_mem_write_handler(0, 0x8800, 0x8800, kikstart_protection_w);
 }
 
 
@@ -2878,9 +2858,9 @@ struct GameDriver sfposeid_driver =
 	"1984",
 	"Taito Corporation",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
-	&machine_driver,
-	sfposeid_init_driver,
+	0,
+	&mcu_machine_driver,
+	0,
 
 	sfposeid_rom,
 	0, 0,
@@ -2926,20 +2906,20 @@ struct GameDriver kikstart_driver =
 	__FILE__,
 	0,
 	"kikstart",
-	"Kick Start",
-	"????",
+	"Kick Start Wheelie King",
+	"1984",
 	"Taito Corporation",
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
-	&machine_driver,
-	kikstart_init_driver,
+	&mcu_machine_driver,
+	0,
 
 	kikstart_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bioatack_input_ports,
+	junglek_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

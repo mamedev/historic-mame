@@ -87,9 +87,6 @@ void megazone_flipscreen_w(int offset,int data)
 
 int megazone_vh_start(void)
 {
-	int i;
-
-
 	dirtybuffer = 0;
 	tmpbitmap = 0;
 

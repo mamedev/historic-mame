@@ -41,8 +41,8 @@ extern struct GameDriver shadowld_driver;
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/M6809/M6809.h"
-#include "cpu/M6800/M6800.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/m6800/m6800.h"
 
 /* from vidhrdw */
 extern void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

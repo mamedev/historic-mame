@@ -344,9 +344,9 @@ void stream_update(int channel,int min_interval)
 					buf[i] = &((char *)stream_buffer[channel+i])[stream_buffer_pos[channel+i]];
 			}
 
-			osd_profiler(OSD_PROFILE_SOUND);
+			profiler_mark(PROFILER_SOUND);
 			(*stream_callback_multi[channel])(stream_param[channel],buf,buflen);
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 
 			for (i = 0;i < stream_joined_channels[channel];i++)
 				stream_buffer_pos[channel+i] += buflen;
@@ -361,9 +361,9 @@ void stream_update(int channel,int min_interval)
 			else
 				buf = &((char *)stream_buffer[channel])[stream_buffer_pos[channel]];
 
-			osd_profiler(OSD_PROFILE_SOUND);
+			profiler_mark(PROFILER_SOUND);
 			(*stream_callback[channel])(stream_param[channel],buf,buflen);
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 
 			stream_buffer_pos[channel] += buflen;
 		}

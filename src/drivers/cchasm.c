@@ -175,12 +175,6 @@ static Z80_DaisyChain daisy_chain[] =
 	{ 0,0,0,-1} 		/* end mark */
 };
 
-static struct DACinterface cchasm_dac_interface =
-{
-	1,
-	{ 100 }
-};
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */

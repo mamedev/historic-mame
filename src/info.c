@@ -298,9 +298,6 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
-	const struct MachineDriver* driver = game->drv;
-	const struct MachineSound* sound = driver->sound;
-	int j;
 	if (game->samplenames != 0 && game->samplenames[0] != 0) {
 		int k = 0;
 		if (game->samplenames[k][0]=='*') {
@@ -324,25 +321,6 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 			++k;
 		}
 	}
-
-#if (HAS_YM3812 || HAS_YM3526 || HAS_YM2413)
-	/* YM3812 Samples */
-	for(j=0;j<MAX_SOUND;++j)
-	{
-		if (sound[j].sound_type==SOUND_YM3812 ||
-			sound[j].sound_type==SOUND_YM3526 ||
-			sound[j].sound_type==SOUND_YM2413)
-			break;
-	}
-	if (j<MAX_SOUND) {
-		fprintf(out, L1P "sampleof ym3812" L1N);
-		fprintf(out, L1P "sample bassdrum.wav" L1N);
-		fprintf(out, L1P "sample snardrum.wav" L1N);
-		fprintf(out, L1P "sample tomtom.wav" L1N);
-		fprintf(out, L1P "sample topcmbal.wav" L1N);
-		fprintf(out, L1P "sample hihat.wav" L1N);
-	}
-#endif
 }
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
@@ -592,15 +570,5 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "size 131072" L2N);
 	fprintf(out, L2P "crc 354029fc" L2N);
 	fprintf(out, L2E L1N);
-	fprintf(out, L1E);
-
-	fprintf(out, "resource" L1B);
-	fprintf(out, L1P "name ym3812" L1N);
-	fprintf(out, L1P "description \"YM-3812 samples\"" L1N);
-	fprintf(out, L1P "sample bassdrum.wav" L1N);
-	fprintf(out, L1P "sample snardrum.wav" L1N);
-	fprintf(out, L1P "sample tomtom.wav" L1N);
-	fprintf(out, L1P "sample topcmbal.wav" L1N);
-	fprintf(out, L1P "sample hihat.wav" L1N);
 	fprintf(out, L1E);
 }

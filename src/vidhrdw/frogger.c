@@ -10,12 +10,11 @@
 #include "vidhrdw/generic.h"
 
 
+static int flipscreen;
 
 unsigned char *frogger_attributesram;
 
-/* To whomever will implement cocktail mode: sprites are offset by two pixels */
-/* by the program when the screen is flipped */
-
+/* Cocktail mode implemented by Chad Hendrickson, July 26, 1999           */
 
 /***************************************************************************
 
@@ -98,6 +97,14 @@ void frogger_attributes_w(int offset,int data)
 	frogger_attributesram[offset] = data;
 }
 
+void frogger_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 
 /***************************************************************************
@@ -127,11 +134,24 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			col = frogger_attributesram[2 * sx + 1] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
-					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs],
+						col + (sx >= 16 ? 8 : 0),	/* blue background in the lower 128 lines */
+						flipscreen,flipscreen,8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
+			else
+			{
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs],
+						col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
+						flipscreen,flipscreen,8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
 	}
 
@@ -143,7 +163,14 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (i = 0;i < 32;i++)
 		{
 			s = frogger_attributesram[2 * i];
-			scroll[i] = -(((s << 4) & 0xf0) | ((s >> 4) & 0x0f));
+			if (flipscreen)
+			{
+				scroll[31-i] = (((s << 4) & 0xf0) | ((s >> 4) & 0x0f));
+			}
+			else
+			{
+				scroll[i] = -(((s << 4) & 0xf0) | ((s >> 4) & 0x0f));
+			}
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -156,19 +183,34 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (spriteram[offs + 3] != 0)
 		{
-			int y,col;
+			int x,y,col;
 
+			x = spriteram[offs + 3];
 			y = spriteram[offs];
 			y = ((y << 4) & 0xf0) | ((y >> 4) & 0x0f);
 			col = spriteram[offs + 2] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
-			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 1] & 0x3f,
-					col,
-					spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
-					spriteram[offs + 3],30*8 - y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			if (flipscreen)
+			{
+				x = 242 - x;
+				y = 240 - y;
+				drawgfx(bitmap,Machine->gfx[1],
+						spriteram[offs + 1] & 0x3f,
+						col,
+						!(spriteram[offs + 1] & 0x40),!(spriteram[offs + 1] & 0x80),
+						x,30*8 - y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+			else
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						spriteram[offs + 1] & 0x3f,
+						col,
+						spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+						x,30*8 - y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }
@@ -195,11 +237,24 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			col = frogger_attributesram[2 * sx + 1] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
-					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs],
+						col + (sx >= 16 ? 8 : 0),	/* blue background in the lower 128 lines */
+						flipscreen,flipscreen,8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
+			else
+			{
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						videoram[offs],
+						col + (sx <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
+						flipscreen,flipscreen,8*sx,8*sy,
+						0,TRANSPARENCY_NONE,0);
+			}
 		}
 	}
 
@@ -209,7 +264,14 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scroll[32];
 
 		for (i = 0;i < 32;i++)
+		if (flipscreen)
+		{
+			scroll[31-i] = frogger_attributesram[2 * i];
+		}
+		else
+		{
 			scroll[i] = -frogger_attributesram[2 * i];
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -221,17 +283,33 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (spriteram[offs + 3] != 0)
 		{
-			int col;
+			int x,y,col;
 
+			x = spriteram[offs + 3];
+			y = spriteram[offs];
 			col = spriteram[offs + 2] & 7;
 			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
-			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 1] & 0x3f,
-					col,
-					spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
-					spriteram[offs + 3],30*8 - spriteram[offs],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			if (flipscreen)
+			{
+				x = 242 - x;
+				y = 240 - y;
+				drawgfx(bitmap,Machine->gfx[1],
+						spriteram[offs + 1] & 0x3f,
+						col,
+						!(spriteram[offs + 1] & 0x40),!(spriteram[offs + 1] & 0x80),
+						x,30*8 - y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+			else
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						spriteram[offs + 1] & 0x3f,
+						col,
+						spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
+						x,30*8 - y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }

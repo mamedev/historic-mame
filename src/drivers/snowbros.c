@@ -239,9 +239,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,linestate);
 }
 
 static struct YM3812interface ym3812_interface =
@@ -249,7 +249,7 @@ static struct YM3812interface ym3812_interface =
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.6 MHz ? (hand tuned) */
 	{ 255 },		/* (not supported) */
-	irqhandler,
+	{ irqhandler},
 };
 
 

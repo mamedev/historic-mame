@@ -87,6 +87,8 @@ int screen_line_offset;
 static struct sprite_list *first_sprite_list = NULL; /* used for resource tracking */
 static int FlickeringInvisible;
 
+static unsigned char *shade_table;
+
 static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int *last, int *delta ){
 	if( sprite_list->flags&SPRITE_LIST_FRONT_TO_BACK ){
 		*delta = -1;
@@ -349,6 +351,8 @@ static void do_blit_stack( const struct sprite *sprite ){
 	} /* next xoffset */
 }
 
+
+
 static void do_blit_zoom( const struct sprite *sprite ){
 	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
 
@@ -402,6 +406,7 @@ static void do_blit_zoom( const struct sprite *sprite ){
 		if( y1>=y2 ) return;
 	}
 
+	if(!(sprite->flags & SPRITE_SHADOW))
 	{
 		const unsigned char *pen_data = sprite->pen_data;
 		const unsigned short *pal_data = sprite->pal_data;
@@ -412,25 +417,31 @@ static void do_blit_zoom( const struct sprite *sprite ){
 		int ycount = ycount0;
 
 		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
-			for( y=y1; y!=y2; y+=dy ){
-				int xcount = xcount0;
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
 				const unsigned char *source;
-				while( ycount>=sprite->total_height ){
-					ycount -= sprite->total_height;
-					pen_data ++;
+				unsigned char *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
 				}
 				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					while( xcount>=sprite->total_width ){
-						xcount -= sprite->total_width;
-						source+=sprite->line_offset;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
 					}
 					pen = *source;
-					if( pen ) dest[x] = pal_data[pen];
-					xcount += sprite->tile_width;
+					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
 				}
-				ycount += sprite->tile_height;
-				dest += pitch;
+skip1:
+				xcount += sprite->tile_width;
 			}
 		}
 		else {
@@ -448,16 +459,80 @@ static void do_blit_zoom( const struct sprite *sprite ){
 						source++;
 					}
 					pen = *source;
-					//if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
 					if( pen ) dest[x] = pal_data[pen];
 					xcount += sprite->tile_width;
 				}
-				//skip:
+skip:
 				ycount += sprite->tile_height;
 				dest += pitch;
 			}
 		}
 	}
+	else
+	{	// Shadow Sprite
+		const unsigned char *pen_data = sprite->pen_data;
+//		const unsigned short *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy;
+		unsigned char *dest = blit.baseaddr + blit.line_offset*y1;
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				unsigned char *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip4; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) *dest1 = shade_table[*dest1];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip4:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip3; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) dest[x] = shade_table[dest[x]];
+					xcount += sprite->tile_width;
+				}
+skip3:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+
 }
 
 /*********************************************************************/
@@ -743,4 +818,10 @@ void sprite_draw( struct sprite_list *sprite_list, int priority ){
 			i+=dir;
 		}
 	}
+}
+
+
+void sprite_set_shade_table(unsigned char *table)
+{
+	shade_table=table;
 }

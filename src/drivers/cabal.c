@@ -233,6 +233,7 @@ static struct MemoryWriteAddress cabalbl_writemem_sound[] =
 
 /* ADPCM CPU (common) */
 
+#if 0
 static struct MemoryReadAddress cabalbl_readmem_adpcm[] = {
 	{ 0x0000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -241,6 +242,7 @@ static struct MemoryWriteAddress cabalbl_writemem_adpcm[] = {
 	{ 0x0000, 0xffff, MWA_NOP },
 	{ -1 }
 };
+#endif
 
 
 /***************************************************************************/

@@ -346,11 +346,13 @@ options:
 -volume n     (default: 0) set the startup volume. It can later be changed
               using the On Screen Display. The volume is an attenuation in dB,
               e.g. "-volume -12" will start with a -12dB attenuation.
--ym3812opl/-noym3812opl (default: -ym3812opl) use the SoundBlaster OPL chip for
+-ym3812opl/-noym3812opl (default: -noym3812opl) use the SoundBlaster OPL chip for
               music emulation of the YM3812 chip. This is faster, and is
-              reasonably accurate since the chips are 100% compatible. However,
-              the pitch might be wrong. Also note that with -no3812opl you need
-              some external drum samples.
+			  reasonably accurate since the chips are 100% compatible. However,
+              there is no control on the volume, and you need a real OPL chip
+			  for it to work (if you are using a SB compatible card that
+			  emulates the OPL in software, the built in digirtal emulation
+			  will probably sound better).
 
 -joy n (default: none) allows joystick input, n can be:
               none         - no joystick
@@ -409,7 +411,6 @@ options:
 -debug        Activate the integrated debugger. During the emulation, press
               tilde to enter the debugger. This is only available if the
               program is compiled with MAME_DEBUG defined.
--profiler     Enable the profiler. Press Shift+F11 to show it on screen.
 -record name   Record joystick input on file INP/name.inp.
 -playback name Playback joystick input from file INP/name.inp.
 -savecfg      no longer supported at the moment
@@ -427,6 +428,7 @@ F4           Show the game graphics. Use cursor keys to change set/color,
 F9           Change frame skip on the fly
 F10          Toggle speed throttling
 F11          Toggle speed display
+Shift+F11    Toggle profiler display
 F12          Save a screen snapshot. The default target directory is SNAP, you
              have to create it yourself, it will not be created by the program
              if it isn't there.

@@ -211,8 +211,8 @@ static struct YM2151interface ym2151_interface =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
-	8000,           /* 8000Hz frequency */
+	1,                  /* 1 chip */
+	{ 8000 },           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
 	{ 50 }
 };

@@ -234,7 +234,7 @@ int i, offs;
 	bankswitch reg cpu 0, 1, 2 [& 0xf8!] and sub cpu port 28
 */
 
-	if (keyboard_key_pressed(KEYCODE_Z))
+	if (keyboard_pressed(KEYCODE_Z))
 	{
 	char buf[80];
 		sprintf(buf,"%02X %02X %02X %02X", u1,u2,u3,u4);

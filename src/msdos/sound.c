@@ -17,7 +17,7 @@ END_MIDI_DRIVER_LIST
 /* audio related stuff */
 HAC hVoice[MIXER_MAX_CHANNELS];
 LPAUDIOWAVE lpWave[MIXER_MAX_CHANNELS];
-static int used_3812;
+static int num_used_opl;
 int nominal_sample_rate;
 int soundcard,usestereo;
 int attenuation = 0;
@@ -218,7 +218,7 @@ int msdos_init_sound(void)
 		}
 	}
 #endif
-	used_3812 = 0;
+	num_used_opl = 0;
 
 	osd_set_mastervolume(attenuation);	/* set the startup volume */
 
@@ -229,20 +229,25 @@ void msdos_shutdown_sound(void)
 {
 	if (Machine->sample_rate != 0)
 	{
-		int n;
+		int chip,n;
 
-		if (used_3812)
+		for(chip=0;chip<num_used_opl;chip++)
 		{
 			/* silence the OPL */
 			for (n = 0x40;n <= 0x55;n++)
 			{
-				osd_ym3812_control(n);
-				osd_ym3812_write(0x3f);
+				osd_opl_control(chip,n);
+				osd_opl_write(chip,0x3f);
 			}
 			for (n = 0x60;n <= 0x95;n++)
 			{
-				osd_ym3812_control(n);
-				osd_ym3812_write(0xff);
+				osd_opl_control(chip,n);
+				osd_opl_write(chip,0xff);
+			}
+			for (n = 0xa0;n <= 0xb0;n++)
+			{
+				osd_opl_control(chip,n);
+				osd_opl_write(chip,0);
 			}
 		}
 
@@ -521,14 +526,14 @@ int msdos_update_audio(void)
 {
 	if (Machine->sample_rate == 0) return 0;
 
-	osd_profiler(OSD_PROFILE_SOUND);
+	profiler_mark(PROFILER_SOUND);
 	AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
-	osd_profiler(OSD_PROFILE_END);
+	profiler_mark(PROFILER_END);
 
-	osd_profiler(OSD_PROFILE_IDLE);
+	profiler_mark(PROFILER_IDLE);
 	while (update_streams() == 0)
 		AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
-	osd_profiler(OSD_PROFILE_END);
+	profiler_mark(PROFILER_END);
 
 	return streams_are_playing;
 }
@@ -586,20 +591,25 @@ static void tenmicrosec(void)
         inportb(0x80);
 }
 
-void osd_ym3812_control(int reg)
+//#define MAX_OPLCHIP 2  /* SOUND BLASTER 16 or compatible ?? */
+#define MAX_OPLCHIP 1  /* SOUND BLASTER pro compatible ??  */
+
+void osd_opl_control(int chip,int reg)
 {
     if (Machine->sample_rate == 0) return;
 
+    if (chip >= MAX_OPLCHIP ) return;
     tenmicrosec();
-    outportb(0x388,reg);
+    outportb(0x388+chip*2,reg);
 }
 
-void osd_ym3812_write(int data)
+void osd_opl_write(int chip,int data)
 {
     if (Machine->sample_rate == 0) return;
 
+    if (chip >=MAX_OPLCHIP ) return;
     tenmicrosec();
-    outportb(0x389,data);
+    outportb(0x389+chip*2,data);
 
-	used_3812 = 1;
+	if(chip >= num_used_opl) num_used_opl = chip+1;
 }

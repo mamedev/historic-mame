@@ -220,8 +220,6 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 void exctsccr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 	int offs;
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
 	/* background chars */
 	for (offs = 0;offs < ( videoram_size - 0x10 );offs++) {
 

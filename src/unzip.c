@@ -242,7 +242,7 @@ ZIP* openzip(const char* zipfile) {
 	if ((zip->number_of_this_disk != zip->number_of_disk_start_cent_dir) ||
 		(zip->total_entries_cent_dir_this_disk != zip->total_entries_cent_dir) ||
 		(zip->total_entries_cent_dir < 1)) {
-		errormsg("Cannot span disks", ERROR_UNSUPPORTED, zip->zip);
+		errormsg("Cannot span disks", ERROR_UNSUPPORTED, zipfile);
 		free(zip->ecd);
 		fclose(zip->fp);
 		free(zip);

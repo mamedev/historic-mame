@@ -310,18 +310,44 @@ static int create_tile_info( struct tilemap *tilemap ){
 	return 0; /* error */
 }
 
-void tilemap_set_scroll_cols( struct tilemap *tilemap, int n ){
+void tilemap_set_scroll_cols( struct tilemap *tilemap, int n )
+{
 	if( orientation & ORIENTATION_SWAP_XY )
-		tilemap->scroll_rows = n;
+	{
+		if (tilemap->scroll_rows != n)
+		{
+			tilemap->scroll_rows = n;
+			tilemap->scrolled = 1;
+		}
+	}
 	else
-		tilemap->scroll_cols = n;
+	{
+		if (tilemap->scroll_cols != n)
+		{
+			tilemap->scroll_cols = n;
+			tilemap->scrolled = 1;
+		}
+	}
 }
 
-void tilemap_set_scroll_rows( struct tilemap *tilemap, int n ){
+void tilemap_set_scroll_rows( struct tilemap *tilemap, int n )
+{
 	if( orientation & ORIENTATION_SWAP_XY )
-		tilemap->scroll_cols = n;
+	{
+		if (tilemap->scroll_cols != n)
+		{
+			tilemap->scroll_cols = n;
+			tilemap->scrolled = 1;
+		}
+	}
 	else
-		tilemap->scroll_rows = n;
+	{
+		if (tilemap->scroll_rows != n)
+		{
+			tilemap->scroll_rows = n;
+			tilemap->scrolled = 1;
+		}
+	}
 }
 
 static int create_pixmap( struct tilemap *tilemap ){
@@ -526,7 +552,16 @@ void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
 }
 
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap ){
-	memset( tilemap->dirty_vram, 1, tilemap->num_tiles );
+	if( tilemap==ALL_TILEMAPS ){
+		tilemap = first_tilemap;
+		while( tilemap ){
+			tilemap_mark_all_tiles_dirty( tilemap );
+			tilemap = tilemap->next;
+		}
+	}
+	else {
+		memset( tilemap->dirty_vram, 1, tilemap->num_tiles );
+	}
 }
 
 void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
@@ -538,6 +573,25 @@ void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
 		}
 	}
 	else {
+		/* let's invalidate all offscreen tiles, decreasing the refcounts */
+		int tile_index;
+		int num_pens = tilemap->tile_width*tilemap->tile_height; /* precalc - needed for >4bpp pen management handling */
+		for( tile_index=0; tile_index<tilemap->num_tiles; tile_index++ ){
+			if( !tilemap->visible[tile_index] ){
+				unsigned short *the_color = tilemap->paldata[tile_index];
+				if( the_color ){
+					unsigned int old_pen_usage = tilemap->pen_usage[tile_index];
+					if( old_pen_usage ){
+						palette_decrease_usage_count( the_color-Machine->colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+					}
+					else {
+						palette_decrease_usage_countx( the_color-Machine->colortable, num_pens, tilemap->pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+					}
+					tilemap->paldata[tile_index] = NULL;
+				}
+				tilemap->dirty_vram[tile_index] = 1;
+			}
+		}
 		memset( tilemap->dirty_pixels, 1, tilemap->num_tiles );
 	}
 }

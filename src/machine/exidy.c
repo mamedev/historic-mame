@@ -65,71 +65,65 @@ void spectar_driver_init(void) {
 }
 
 void mtrap_driver_init(void) {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	exidy_collision_mask = 0x14;
-
 	/* Disable ROM Check for quicker startup */
 	#if 0
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0xF439]=0xEA;
 	RAM[0xF43A]=0xEA;
 	RAM[0xF43B]=0xEA;
 	#endif
+
+	exidy_collision_mask = 0x14;
 }
 
 void pepper2_driver_init(void) {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	exidy_collision_mask = 0x00;
-
 	/* Disable ROM Check for quicker startup */
 	#if 0
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0xF52D]=0xEA;
 	RAM[0xF52E]=0xEA;
 	RAM[0xF52F]=0xEA;
 	#endif
+
+	exidy_collision_mask = 0x00;
 }
 
 void venture_driver_init(void) {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	exidy_collision_mask = 0x80;
-
 	/* Disable ROM Check for quicker startup (Venture)*/
 	#if 0
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0x8AF4]=0xEA;
 	RAM[0x8AF5]=0xEA;
 	RAM[0x8AF6]=0xEA;
 	#endif
-
 	/* Disable ROM Check for quicker startup (Venture2)*/
 	#if 0
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0x8B04]=0xEA;
 	RAM[0x8B05]=0xEA;
 	RAM[0x8B06]=0xEA;
 	#endif
 
+	exidy_collision_mask = 0x80;
 }
 
 void fax_driver_init(void) {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	exidy_collision_mask = 0x00;
-
-	/* Initialize our ROM question bank */
-	fax_bank_select_w(0,0);
-
 	/* Disable ROM Check for quicker startup */
 	#if 0
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0xFBFC]=0xEA;
 	RAM[0xFBFD]=0xEA;
 	RAM[0xFBFE]=0xEA;
-
 	/* Disable Question ROM Check for quicker startup */
 	RAM[0xFC00]=0xEA;
 	RAM[0xFC01]=0xEA;
 	RAM[0xFC02]=0xEA;
 	#endif
+
+	exidy_collision_mask = 0x00;
+
+	/* Initialize our ROM question bank */
+	fax_bank_select_w(0,0);
 }
 
 void exidy_init_machine(void)

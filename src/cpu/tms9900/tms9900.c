@@ -661,7 +661,6 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 ============================================================================*/
 static void h0000(UINT16 opcode)
 {
-  #pragma unused (opcode)
 }
 
 

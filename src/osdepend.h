@@ -86,8 +86,8 @@ void osd_set_sample_volume(int channel,int volume);
 void osd_stop_sample(int channel);
 void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
-void osd_ym3812_control(int reg);
-void osd_ym3812_write(int data);
+void osd_opl_control(int chip,int reg);
+void osd_opl_write(int chip,int data);
 void osd_set_mastervolume(int attenuation);
 int osd_get_mastervolume(void);
 void osd_sound_enable(int enable);
@@ -102,32 +102,21 @@ void osd_sound_enable(int enable);
 /*
   return a list of all available keys (see input.h)
 */
-const struct KeyboardKey *osd_get_key_list(void);
-
-/*
-  inptport.c defines some general purpose defaults for key bindings. They may be
-  further adjusted by the OS dependant code to better match the available keyboard,
-  e.g. one could map pause to the Pause key instead of P, or snapshot to PrtScr
-  instead of F12. Of course the user can further change the settings to anything
-  he/she likes.
-  This function is called on startup, before reading the configuration from disk.
-  Scan the list, and change the keys you want.
-*/
-void osd_customize_inputport_defaults(struct ipd *defaults);
+const struct KeyboardInfo *osd_get_key_list(void);
 
 /*
   tell whether the specified key is pressed or not. keycode is the OS dependant
-  code specified in the list returned by osd_customize_inputport_defaults().
+  code specified in the list returned by osd_get_key_list().
 */
 int osd_is_key_pressed(int keycode);
 
 /*
-  wait for the user to press a key. This function is not required to do anything,
-  it is only here so we can avoid bogging down multitasking systems while using
-  the debugger. If you don't want to or can't support this function you can just
-  return immediately.
+  wait for the user to press a key and return its code. This function is not
+  required to do anything, it is here so we can avoid bogging down multitasking
+  systems while using the debugger. If you don't want to or can't support this
+  function you can just return KEYCODE_NONE.
 */
-void osd_wait_keypress(void);
+int osd_wait_keypress(void);
 
 
 /******************************************************************************
@@ -136,76 +125,25 @@ void osd_wait_keypress(void);
 
 ******************************************************************************/
 
-#define OSD_JOY_LEFT    1
-#define OSD_JOY_RIGHT   2
-#define OSD_JOY_UP      3
-#define OSD_JOY_DOWN    4
-#define OSD_JOY_FIRE1   5
-#define OSD_JOY_FIRE2   6
-#define OSD_JOY_FIRE3   7
-#define OSD_JOY_FIRE4   8
-#define OSD_JOY_FIRE5   9
-#define OSD_JOY_FIRE6   10
-#define OSD_JOY_FIRE7   11
-#define OSD_JOY_FIRE8   12
-#define OSD_JOY_FIRE9   13
-#define OSD_JOY_FIRE10  14
-#define OSD_JOY_FIRE    15      /* any of the first joystick fire buttons */
-#define OSD_JOY2_LEFT   16
-#define OSD_JOY2_RIGHT  17
-#define OSD_JOY2_UP     18
-#define OSD_JOY2_DOWN   19
-#define OSD_JOY2_FIRE1  20
-#define OSD_JOY2_FIRE2  21
-#define OSD_JOY2_FIRE3  22
-#define OSD_JOY2_FIRE4  23
-#define OSD_JOY2_FIRE5  24
-#define OSD_JOY2_FIRE6  25
-#define OSD_JOY2_FIRE7  26
-#define OSD_JOY2_FIRE8  27
-#define OSD_JOY2_FIRE9  28
-#define OSD_JOY2_FIRE10 29
-#define OSD_JOY2_FIRE   30      /* any of the second joystick fire buttons */
-#define OSD_JOY3_LEFT   31
-#define OSD_JOY3_RIGHT  32
-#define OSD_JOY3_UP     33
-#define OSD_JOY3_DOWN   34
-#define OSD_JOY3_FIRE1  35
-#define OSD_JOY3_FIRE2  36
-#define OSD_JOY3_FIRE3  37
-#define OSD_JOY3_FIRE4  38
-#define OSD_JOY3_FIRE5  39
-#define OSD_JOY3_FIRE6  40
-#define OSD_JOY3_FIRE7  41
-#define OSD_JOY3_FIRE8  42
-#define OSD_JOY3_FIRE9  43
-#define OSD_JOY3_FIRE10 44
-#define OSD_JOY3_FIRE   45      /* any of the third joystick fire buttons */
-#define OSD_JOY4_LEFT   46
-#define OSD_JOY4_RIGHT  47
-#define OSD_JOY4_UP     48
-#define OSD_JOY4_DOWN   49
-#define OSD_JOY4_FIRE1  50
-#define OSD_JOY4_FIRE2  51
-#define OSD_JOY4_FIRE3  52
-#define OSD_JOY4_FIRE4  53
-#define OSD_JOY4_FIRE5  54
-#define OSD_JOY4_FIRE6  55
-#define OSD_JOY4_FIRE7  56
-#define OSD_JOY4_FIRE8  57
-#define OSD_JOY4_FIRE9  58
-#define OSD_JOY4_FIRE10 59
-#define OSD_JOY4_FIRE   60      /* any of the fourth joystick fire buttons */
-#define OSD_MAX_JOY     60
+/*
+  return a list of all available joystick inputs (see input.h)
+*/
+const struct JoystickInfo *osd_get_joy_list(void);
+
+/*
+  tell whether the specified joystick direction/button is pressed or not.
+  joycode is the OS dependant code specified in the list returned by
+  osd_get_joy_list().
+*/
+int osd_is_joy_pressed(int joycode);
+
 
 /* We support 4 players for each analog control */
 #define OSD_MAX_JOY_ANALOG	4
 #define X_AXIS          1
 #define Y_AXIS          2
 
-const char *osd_joy_name(int joycode);
 void osd_poll_joysticks(void);
-int osd_joy_pressed(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
 /* Do we need to calibrate the joystick at all? */
@@ -224,6 +162,18 @@ void osd_trak_read(int player,int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
 void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
+
+
+/*
+  inptport.c defines some general purpose defaults for key and joystick bindings.
+  They may be further adjusted by the OS dependant code to better match the
+  available keyboard, e.g. one could map pause to the Pause key instead of P, or
+  snapshot to PrtScr instead of F12. Of course the user can further change the
+  settings to anything he/she likes.
+  This function is called on startup, before reading the configuration from disk.
+  Scan the list, and change the keys/joysticks you want.
+*/
+void osd_customize_inputport_defaults(struct ipd *defaults);
 
 
 /******************************************************************************
@@ -307,37 +257,6 @@ int osd_get_config_samplerate(int def_samplerate);
 int osd_get_config_samplebits(int def_samplebits);
 int osd_get_config_frameskip(int def_frameskip);
 
-/* profiling */
-enum {
-	OSD_PROFILE_END = -1,
-	OSD_PROFILE_CPU1 = 0,
-	OSD_PROFILE_CPU2,
-	OSD_PROFILE_CPU3,
-	OSD_PROFILE_CPU4,
-	OSD_PROFILE_VIDEO,
-	OSD_PROFILE_BLIT,
-	OSD_PROFILE_SOUND,
-	OSD_PROFILE_TIMER_CALLBACK,
-	OSD_PROFILE_EXTRA,
-	/* the USER types are available to driver writes to profile */
-	/* custom sections of the code */
-	OSD_PROFILE_USER1,
-	OSD_PROFILE_USER2,
-	OSD_PROFILE_USER3,
-	OSD_PROFILE_USER4,
-	OSD_PROFILE_PROFILER,
-	OSD_PROFILE_IDLE,
-	OSD_TOTAL_PROFILES
-};
-
-/*
-To start profiling a certain section, e.g. video:
-osd_profiler(OSD_PROFILE_VIDEO);
-to end profiling of the current section:
-osd_profiler(OSD_PROFILE_END);
-*/
-
-void osd_profiler(int type);
 
 #ifdef MAME_NET
 /* network */

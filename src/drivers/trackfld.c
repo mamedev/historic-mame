@@ -33,7 +33,6 @@ void trackfld_vh_stop(void);
 
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
 int trackfld_sh_timer_r(int offset);
 int trackfld_speech_r(int offset);
@@ -45,7 +44,6 @@ extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
 extern struct ADPCMinterface hyprolyb_adpcm_interface;
-void konami_dac_w(int offset,int data);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
@@ -129,7 +127,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
 	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
+	{ 0xe000, 0xe000, DAC_data_w },
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 
@@ -157,7 +155,7 @@ static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
 	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
 	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
-	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
+	{ 0xe000, 0xe000, DAC_data_w },
 /* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 

@@ -159,7 +159,7 @@ void turbo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	static struct rectangle clip = { 0, 32*8-1, 0, 29*8-1 };
 	int offs, h, v, sum0, sum1, sel, coch, cont;
 	int offset0, offset1, area1, area2, area3, area4, area5, area;
-	int bacol, bar, bag, bab, color, col;
+	int bacol, bar, bag, bab, color;
 	int babits, slipar, road;
 	int pat1, mx;
 	int plb = 0; /* don't know it yet plb = sprites present */
@@ -298,8 +298,7 @@ static int GetSpriteBottomY(int spr_number)
 
 static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color)
 {
-	int xr,yr,spr_y1,spr_y2;
-	int SprOnScreen,coll_dat;
+	int coll_dat;
 	{
 //		SprOnScreen=turbo_SpritesCollisionTable[256*y+x];
 //		spr_y1 = GetSpriteBottomY(spr_number);

@@ -896,7 +896,7 @@ void atarigen_set_ym2413_vol(int volume)
 	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
 	{
 		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "2413"))
+		if (name && strstr(name, "3812"))/*"2413")) -- need this change until 2413 stands alone */
 			mixer_set_volume(ch, volume);
 	}
 }
@@ -1112,8 +1112,7 @@ static void scanline_timer(int scanline)
 
 /* globals */
 unsigned char *atarigen_video_control_data;
-int atarigen_video_control_latch1;
-int atarigen_video_control_latch2;
+struct atarigen_video_control_state_desc atarigen_video_control_state;
 
 /* statics */
 static int actual_video_control_latch1;
@@ -1131,10 +1130,44 @@ void atarigen_video_control_reset(void)
 {
 	/* clear the RAM we use */
 	memset(atarigen_video_control_data, 0, 0x40);
+	memset(&atarigen_video_control_state, 0, sizeof(atarigen_video_control_state));
 
 	/* reset the latches */
-	atarigen_video_control_latch1 = atarigen_video_control_latch2 = -1;
+	atarigen_video_control_state.latch1 = atarigen_video_control_state.latch2 = -1;
 	actual_video_control_latch1 = actual_video_control_latch2 = -1;
+}
+
+
+/*
+ *	Video controller update
+ *
+ *	Copies the data from the specified location once/frame into the video controller registers
+ *
+ */
+
+void atarigen_video_control_update(const unsigned char *data)
+{
+	int i;
+
+	/* echo all the commands to the video controller */
+	for (i = 0; i < 0x38; i += 2)
+		if (READ_WORD(&data[i]))
+			atarigen_video_control_w(i, READ_WORD(&data[i]));
+
+	/* use this for debugging the video controller values */
+#if 0
+	if (keyboard_pressed(KEYCODE_8))
+	{
+		static FILE *out;
+		if (!out) out = fopen("scroll.log", "w");
+		if (out)
+		{
+			for (i = 0; i < 64; i++)
+				fprintf(out, "%04X ", READ_WORD(&data[2 * i]));
+			fprintf(out, "\n");
+		}
+	}
+#endif
 }
 
 
@@ -1156,8 +1189,6 @@ void atarigen_video_control_w(int offset, int data)
 	{
 		/* set the scanline interrupt here */
 		case 0x06:
-			/* this is the scanline where we should interrupt */
-			/* remove any previous timer and set a new one */
 			if (oldword != newword)
 				atarigen_scanline_int_set(newword & 0x1ff);
 			break;
@@ -1166,11 +1197,49 @@ void atarigen_video_control_w(int offset, int data)
 		case 0x14:
 
 			/* reset the latches when disabled */
-			if (!(newword & 0x80))
-				atarigen_video_control_latch1 = atarigen_video_control_latch2 = -1;
+			if (!(newword & 0x0080))
+				atarigen_video_control_state.latch1 = atarigen_video_control_state.latch2 = -1;
 			else
-				atarigen_video_control_latch1 = actual_video_control_latch1,
-				atarigen_video_control_latch2 = actual_video_control_latch2;
+				atarigen_video_control_state.latch1 = actual_video_control_latch1,
+				atarigen_video_control_state.latch2 = actual_video_control_latch2;
+
+			/* check for rowscroll enable */
+			atarigen_video_control_state.rowscroll_enable = (newword & 0x2000) >> 13;
+
+			/* check for palette banking */
+			atarigen_video_control_state.palette_bank = ((newword & 0x0400) >> 10) ^ 1;
+			break;
+
+		/* indexed parameters */
+		case 0x20: case 0x22: case 0x24: case 0x26:
+		case 0x28: case 0x2a: case 0x2c: case 0x2e:
+		case 0x30: case 0x32: case 0x34: case 0x36:
+			switch (newword & 15)
+			{
+				case 9:
+					atarigen_video_control_state.sprite_xscroll = (newword >> 7) & 0x1ff;
+					break;
+
+				case 10:
+					atarigen_video_control_state.pf2_xscroll = (newword >> 7) & 0x1ff;
+					break;
+
+				case 11:
+					atarigen_video_control_state.pf1_xscroll = (newword >> 7) & 0x1ff;
+					break;
+
+				case 13:
+					atarigen_video_control_state.sprite_yscroll = (newword >> 7) & 0x1ff;
+					break;
+
+				case 14:
+					atarigen_video_control_state.pf2_yscroll = (newword >> 7) & 0x1ff;
+					break;
+
+				case 15:
+					atarigen_video_control_state.pf1_yscroll = (newword >> 7) & 0x1ff;
+					break;
+			}
 			break;
 
 		/* latch 1 value */
@@ -1178,7 +1247,7 @@ void atarigen_video_control_w(int offset, int data)
 			actual_video_control_latch1 = newword;
 			actual_video_control_latch2 = -1;
 			if (READ_WORD(&atarigen_video_control_data[0x14]) & 0x80)
-				atarigen_video_control_latch1 = actual_video_control_latch1;
+				atarigen_video_control_state.latch1 = actual_video_control_latch1;
 			break;
 
 		/* latch 2 value */
@@ -1186,10 +1255,10 @@ void atarigen_video_control_w(int offset, int data)
 			actual_video_control_latch1 = -1;
 			actual_video_control_latch2 = newword;
 			if (READ_WORD(&atarigen_video_control_data[0x14]) & 0x80)
-				atarigen_video_control_latch2 = actual_video_control_latch2;
+				atarigen_video_control_state.latch2 = actual_video_control_latch2;
 			break;
 
-		/* IRQ ack here */
+		/* scanline IRQ ack here */
 		case 0x3c:
 			atarigen_scanline_int_ack_w(0, 0);
 			break;
@@ -1197,11 +1266,9 @@ void atarigen_video_control_w(int offset, int data)
 		/* log anything else */
 		case 0x00:
 		default:
-			if (errorlog)
-			{
-				if (oldword == newword) ;//fprintf(errorlog, "video_control_w(%02X, %04X)\n", offset, data);
-				else fprintf(errorlog, "video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, data, oldword);
-			}
+			if (oldword != newword)
+				if (errorlog)
+					fprintf(errorlog, "video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, newword, oldword);
 			break;
 	}
 }
@@ -1218,10 +1285,18 @@ int atarigen_video_control_r(int offset)
 {
 	if (errorlog) fprintf(errorlog, "video_control_r(%02X)\n", offset);
 
+	/* a read from offset 0 returns the current scanline */
+	/* also sets bit 0x4000 if we're in VBLANK */
 	if (offset == 0)
 	{
 		int result = cpu_getscanline();
-		return (result < 255) ? result : 255;
+
+		if (result > 255)
+			result = 255;
+		if (result > Machine->drv->visible_area.max_y)
+			result |= 0x4000;
+
+		return result;
 	}
 	else
 		return READ_WORD(&atarigen_video_control_data[offset]);
@@ -1391,6 +1466,33 @@ void atarigen_mo_update(const unsigned char *base, int link, int scanline)
 	{
 		molist_end = data;
 		molist_last = data_start;
+	}
+}
+
+
+/*
+ *	Motion object updater using SLIPs
+ *
+ *	Updates motion objects using a SLIP read from a table, assuming a 512-pixel high playfield.
+ *
+ */
+
+void atarigen_mo_update_slip_512(const unsigned char *base, int scroll, int scanline, const unsigned char *slips)
+{
+	/* catch a fractional character off the top of the screen */
+	if (scanline == 0 && (scroll & 7) != 0)
+	{
+		int pfscanline = scroll & 0x1f8;
+		int link = (READ_WORD(&slips[2 * (pfscanline / 8)]) >> modesc.linkshift) & modesc.linkmask;
+		atarigen_mo_update(base, link, 0);
+	}
+
+	/* if we're within screen bounds, grab the next batch of MO's and process */
+	if (scanline < Machine->drv->screen_height)
+	{
+		int pfscanline = (scanline + scroll + 7) & 0x1f8;
+		int link = (READ_WORD(&slips[2 * (pfscanline / 8)]) >> modesc.linkshift) & modesc.linkmask;
+		atarigen_mo_update(base, link, (pfscanline - scroll) & 0x1ff);
 	}
 }
 
@@ -3187,7 +3289,7 @@ void atarigen_update_messages(void)
 		message_countdown--;
 
 		/* if a coin is inserted, make the message go away */
-		if (keyboard_key_pressed(KEYCODE_3) || keyboard_key_pressed(KEYCODE_4))
+		if (keyboard_pressed(KEYCODE_3) || keyboard_pressed(KEYCODE_4))
 			message_countdown = 0;
 	}
 	else

@@ -121,7 +121,6 @@ void glad_cpu_sound_command_w(int offset,int data);
 
 /*Rom bankswitching*/
 static int banka;
-static int port9f;
 void gladiatr_bankswitch_w(int offset,int data);
 int gladiatr_bankswitch_r(int offset);
 

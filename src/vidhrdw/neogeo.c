@@ -206,7 +206,7 @@ int neogeo_mvs_vh_start(void)
 
 static void swap_palettes(void)
 {
-	int i,newword,red,green,blue;
+	int i,newword;
 
 	for (i=0; i<0x2000; i+=2)
 	{
@@ -276,7 +276,7 @@ void neogeo_paletteram_w(int offset,int data)
 
 static const unsigned char *neogeo_palette(const struct rectangle *clip)
 {
-	int color,code,pal_base,y,my=0,x,count,offs,i;
+	int color,code,pal_base,y,my=0,count,offs,i;
  	int colmask[256];
 	unsigned int *pen_usage; /* Save some struct derefs */
 
@@ -512,7 +512,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
-	int /*ox,*/oy,ex,ey,y,start,dy;
+	int /*ox,*/oy,ey,y,dy;
 	unsigned char *bm;
 	int col;
 	int l; /* Line skipping counter */
@@ -697,7 +697,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip)
 {
-	int /*ox,*/oy,ex,ey,y,start,dy;
+	int /*ox,*/oy,ey,y,dy;
 	unsigned short *bm;
 	int col;
 	int l; /* Line skipping counter */
@@ -898,31 +898,31 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	struct DisplayText dt[2];
 
 	/* debug setting, tile view mode connected to '8' */
-	if (keyboard_key_pressed(KEYCODE_8))
+	if (keyboard_pressed(KEYCODE_8))
 	{
-		while (keyboard_key_pressed(KEYCODE_8)) ;
+		while (keyboard_pressed(KEYCODE_8)) ;
 		dotiles ^= 1;
 	}
 
 	/* tile view - 0x80, connected to '9' */
-	if (keyboard_key_pressed(KEYCODE_9) && !keyboard_key_pressed(KEYCODE_LSHIFT))
+	if (keyboard_pressed(KEYCODE_9) && !keyboard_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_offs > 0)
 			screen_offs -= 0x80;
 	}
-	if (keyboard_key_pressed(KEYCODE_9) && keyboard_key_pressed(KEYCODE_LSHIFT))
+	if (keyboard_pressed(KEYCODE_9) && keyboard_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_yoffs > 0)
 			screen_yoffs--;
 	}
 
 	/* tile view + 0x80, connected to '0' */
-	if (keyboard_key_pressed(KEYCODE_0) && !keyboard_key_pressed(KEYCODE_LSHIFT))
+	if (keyboard_pressed(KEYCODE_0) && !keyboard_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_offs < 0x10000)
 			screen_offs += 0x80;
 	}
-	if (keyboard_key_pressed(KEYCODE_0) && keyboard_key_pressed(KEYCODE_LSHIFT))
+	if (keyboard_pressed(KEYCODE_0) && keyboard_pressed(KEYCODE_LSHIFT))
 	{
 		screen_yoffs++;
 	}
@@ -1148,7 +1148,7 @@ if (!dotiles) { 					/* debug */
 	for (j = 0;j < 4;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8+8*j,8*2,0,TRANSPARENCY_NONE,0);
 }
-if (keyboard_key_pressed(KEYCODE_D))
+if (keyboard_pressed(KEYCODE_D))
 {
 	FILE *fp;
 

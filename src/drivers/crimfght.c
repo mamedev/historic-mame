@@ -1,0 +1,529 @@
+/***************************************************************************
+
+Crime Fighters (Konami GX821) (c) 1989 Konami
+
+Preliminary driver by:
+	Manuel Abadia <manu@teleline.es>
+
+***************************************************************************/
+
+#include "driver.h"
+#include "vidhrdw/generic.h"
+#include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
+
+/* prototypes */
+static void crimfght_init_machine( void );
+static void crimfght_banking( int lines );
+
+static int paletteram_selected;
+static unsigned char *ram;
+
+static int bankedram_r(int offset)
+{
+	if (paletteram_selected)
+		return paletteram_r(offset);
+	else
+		return ram[offset];
+}
+
+static void bankedram_w(int offset,int data)
+{
+	if (paletteram_selected)
+		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+	else
+		ram[offset] = data;
+}
+
+void crimfght_sh_irqtrigger_w(int offset, int data){
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,0xff);
+}
+
+static void crimfght_snd_bankswitch_w(int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[4];
+	/* b1: bank for chanel A */
+	/* b0: bank for chanel B */
+
+	int bank_A = 0x20000*((data >> 1) & 0x01);
+	int bank_B = 0x20000*((data) & 0x01);
+
+	K007232_bankswitch_0_w(RAM + bank_A,RAM + bank_B);
+}
+
+
+/* to vidhrdw */
+#include "tilemap.h"
+#include "vidhrdw/konamiic.h"
+
+static int layer_colorbase[3],sprite_colorbase;
+
+/***************************************************************************
+
+  Callbacks for the K052109
+
+***************************************************************************/
+
+static void tile_callback(int layer,int bank,int *code,int *color,unsigned char *flags)
+{
+	*flags = (*color & 0x20) ? TILE_FLIPX : 0;
+	*code |= ((*color & 0x1f) << 8) | (bank << 13);
+	*color = ((*color & 0xc0) >> 6);
+	*color += layer_colorbase[layer];
+}
+
+/***************************************************************************
+
+  Callbacks for the K051960
+
+***************************************************************************/
+
+static void sprite_callback(int *code,int *color,int *priority)
+{
+	/* Weird priority scheme. Why use three bits when two would suffice? */
+	switch (*color & 0x70)
+	{
+		case 0x10: *priority = 0; break;
+		case 0x00: *priority = 1; break;
+		case 0x40: *priority = 2; break;
+		default:
+		{
+			char buf[40];
+			sprintf(buf,"sprite priority %02x",(*color&0x70)>>4);
+			usrintf_showmessage(buf);
+			*color = rand();
+			*priority = 0;
+			break;
+		}
+	}
+	/* bit 7 is on in the "Game Over" sprites, meaning unknown */
+	/* in Aliens it is the top bit of the code, but that's not needed here */
+	*color = sprite_colorbase + (*color & 0x0f);
+}
+
+
+/***************************************************************************
+
+	Start the video hardware emulation.
+
+***************************************************************************/
+
+void crimfght_vh_stop( void )
+{
+	free(paletteram);
+	K052109_vh_stop();
+	K051960_vh_stop();
+}
+
+#define TILEROM_MEM_REGION 1
+#define SPRITEROM_MEM_REGION 2
+
+int crimfght_vh_start( void )
+{
+	paletteram = malloc(0x400);
+	if (!paletteram) return 1;
+
+	layer_colorbase[0] = 0;
+	layer_colorbase[1] = 4;
+	layer_colorbase[2] = 8;
+	sprite_colorbase = 16;
+	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	{
+		free(paletteram);
+		return 1;
+	}
+	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	{
+		free(paletteram);
+		K052109_vh_stop();
+		return 1;
+	}
+
+	return 0;
+}
+
+void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	K052109_tilemap_update();
+
+	palette_init_used_colors();
+	K051960_mark_sprites_colors();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY);
+	K051960_draw_sprites(bitmap,2,2);
+	K052109_tilemap_draw(bitmap,2,0);
+	K051960_draw_sprites(bitmap,1,1);
+	K052109_tilemap_draw(bitmap,0,0);
+	K051960_draw_sprites(bitmap,0,0);
+}
+
+/********************************************/
+
+static int speedup_r( int offs )
+{
+	unsigned char *RAM = Machine->memory_region[0];
+
+	int data = ( RAM[0x0414] << 8 ) | RAM[0x0415];
+
+	if ( data < Machine->memory_region_length[0] )
+	{
+		data = ( RAM[data] << 8 ) | RAM[data + 1];
+
+		if ( data == 0xffff )
+			cpu_spinuntil_int();
+	}
+
+	return RAM[0x0414];
+}
+
+static struct MemoryReadAddress crimfght_readmem[] =
+{
+	{ 0x0000, 0x03ff, bankedram_r },		/* banked RAM */
+	{ 0x0414, 0x0414, speedup_r },
+	{ 0x0400, 0x1fff, MRA_RAM },			/* RAM */
+	{ 0x3f80, 0x3f80, input_port_7_r },		/* Coinsw */
+	{ 0x3f81, 0x3f81, input_port_3_r },		/* 1P controls */
+	{ 0x3f82, 0x3f82, input_port_4_r },		/* 2P controls */
+	{ 0x3f83, 0x3f83, input_port_1_r },		/* DSW #2 */
+	{ 0x3f84, 0x3f84, input_port_2_r },		/* DSW #3 */
+	{ 0x3f85, 0x3f85, input_port_5_r },		/* 3P controls */
+	{ 0x3f86, 0x3f86, input_port_6_r },		/* 4P controls */
+	{ 0x3f87, 0x3f87, input_port_0_r },		/* DSW #1 */
+	{ 0x3f88, 0x3f88, watchdog_reset_r },	/* watchdog reset */
+	{ 0x2000, 0x5fff, K052109_051960_r },	/* video RAM + sprite RAM */
+	{ 0x6000, 0x7fff, MRA_BANK1 },			/* banked ROM */
+	{ 0x8000, 0xffff, MRA_ROM },			/* ROM */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress crimfght_writemem[] =
+{
+	{ 0x0000, 0x03ff, bankedram_w, &ram },			/* banked RAM */
+	{ 0x0400, 0x1fff, MWA_RAM },					/* RAM */
+	{ 0x3f8c, 0x3f8c, crimfght_sh_irqtrigger_w },	/* cause interrupt on audio CPU? */
+	{ 0x2000, 0x5fff, K052109_051960_w },			/* video RAM + sprite RAM */
+	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
+	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress crimfght_readmem_sound[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },				/* ROM 821l01.h4 */
+	{ 0x8000, 0x87ff, MRA_RAM },				/* RAM */
+	{ 0xa001, 0xa001, YM2151_status_port_0_r },	/* YM2151 */
+	{ 0xc000, 0xc000, soundlatch_r },			/* soundlatch_r */
+	{ 0xe000, 0xe00d, K007232_read_port_0_r },	/* 007232 registers */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress crimfght_writemem_sound[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },					/* ROM 821l01.h4 */
+	{ 0x8000, 0x87ff, MWA_RAM },					/* RAM */
+	{ 0xa000, 0xa000, YM2151_register_port_0_w },	/* YM2151 */
+	{ 0xa001, 0xa001, YM2151_data_port_0_w },		/* YM2151 */
+	{ 0xe000, 0xe00d, K007232_write_port_0_w },		/* 007232 registers */
+	{ -1 }	/* end of table */
+};
+
+/***************************************************************************
+
+	Input Ports
+
+***************************************************************************/
+
+INPUT_PORTS_START( crimfght_input_ports )
+	PORT_START	/* DSW #1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/99 Credits" )
+/*	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "Invalid" ) */
+
+	PORT_START	/* DSW #2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW #3 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* PLAYER 1 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* PLAYER 2 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* PLAYER 3 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* PLAYER 4 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* COINSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )	/* actually service 1 */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )	/* actually service 2 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )	/* actually service 3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )	/* actually service 4 */
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
+
+	Machine Driver
+
+***************************************************************************/
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	3579545,	/* 3.579545 MHz */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ 0 },
+	{ crimfght_snd_bankswitch_w }
+};
+
+static struct K007232_interface k007232_interface =
+{
+	1,			/* number of chips */
+	{ 4 },		/* memory regions */
+	{ 15 }		/* volume */
+};
+
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_KONAMI,
+			5000000,		/* ? */
+			0,
+			crimfght_readmem,crimfght_writemem,0,0,
+            interrupt,1
+        },
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1500000,		/* ? */
+			3,
+			crimfght_readmem_sound, crimfght_writemem_sound,0,0,
+			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	crimfght_init_machine,
+
+	/* video hardware */
+	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
+	0,	/* gfx decoded by konamiic.c */
+	512, 512,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	crimfght_vh_start,
+	crimfght_vh_stop,
+	crimfght_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_K007232,
+			&k007232_interface,
+		}
+
+	}
+};
+
+/***************************************************************************
+
+  Game ROMs
+
+***************************************************************************/
+
+ROM_START( crimfght_rom )
+	ROM_REGION( 0x28000 ) /* code + banked roms */
+	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, 0x588e7da6 )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 ) /* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa ) /* characters */
+
+	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k04.k2", 0x000000, 0x080000, 0x00e0291b )	/* sprites */
+	ROM_LOAD( "821k05.k8", 0x080000, 0x080000, 0xe09ea05d )	/* sprites */
+
+	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_LOAD( "821l01.h4", 0x0000, 0x8000, 0x0faca89e )
+
+	ROM_REGION( 0x40000 )	/* data for the 007232 */
+	ROM_LOAD( "821k03.e5", 0x00000, 0x40000, 0xfef8505a )
+ROM_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+static void crimfght_banking( int lines )
+{
+	unsigned char *RAM = Machine->memory_region[0];
+	int offs = 0;
+
+	/* bit 5 = select work RAM or palette */
+	paletteram_selected = lines & 0x20;
+
+	/* bit 6 = enable char ROM reading through the video RAM */
+	K052109_set_RMRD_line((lines & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+
+	offs = 0x10000 + ( ( lines & 0x0f ) * 0x2000 );
+	cpu_setbank( 1, &RAM[offs] );
+}
+
+static void crimfght_init_machine( void )
+{
+	unsigned char *RAM = Machine->memory_region[0];
+
+	konami_cpu_setlines_callback = crimfght_banking;
+	paletteram_selected = 0;
+
+	/* init the default bank */
+	cpu_setbank( 1, &RAM[0x10000] );
+}
+
+static void gfx_untangle(void)
+{
+	konami_rom_deinterleave(1);
+	konami_rom_deinterleave(2);
+}
+
+struct GameDriver crimfght_driver =
+{
+	__FILE__,
+	0,
+	"crimfght",
+	"Crime Fighters",
+	"1989",
+	"Konami",
+	"Manuel Abadia",
+	0,
+	&machine_driver,
+	0,
+
+	crimfght_rom,
+	gfx_untangle, 0,
+	0,
+	0,	/* sound_prom */
+
+	crimfght_input_ports,
+
+	0, 0, 0,
+    ORIENTATION_DEFAULT,
+	0, 0
+};

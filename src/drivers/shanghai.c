@@ -405,7 +405,6 @@ rwp /= 2;
 		else if ((fifo[0] & 0xf0f8) == 0xe000)	/* AGCPY */
 		{
 			INT16 pcx,pcy;
-			INT16 ax,ay;
 			int src,dst;
 
 			pcx = fifo[1];
@@ -532,10 +531,10 @@ void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x,y,b;
 	static int base,bose=256;
-if (keyboard_key_pressed_memory(KEYCODE_Z)) base -= 384/2*280;
-if (keyboard_key_pressed_memory(KEYCODE_X)) base += 384/2*280;
-if (keyboard_key_pressed_memory(KEYCODE_C)) bose--;
-if (keyboard_key_pressed_memory(KEYCODE_V)) bose++;
+if (keyboard_pressed_memory(KEYCODE_Z)) base -= 384/2*280;
+if (keyboard_pressed_memory(KEYCODE_X)) base += 384/2*280;
+if (keyboard_pressed_memory(KEYCODE_C)) bose--;
+if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 
 	b = 2 * (base + ((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
 	for (y = 0;y < 280;y++)

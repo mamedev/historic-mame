@@ -215,7 +215,7 @@ static struct GfxLayout molayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 2, 0x00000, &pflayout,      512, 16 },		/* playfield */
-	{ 2, 0x40000, &molayout,      256, 16 },		/* sprites */
+	{ 2, 0x40000, &molayout,      256, 48 },		/* sprites */
 	{ 2, 0xc0000, &anlayout,        0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
@@ -240,7 +240,7 @@ static struct MachineDriver machine_driver =
 			atarigen_video_int_gen,1
 		},
 		{
-			JSA_CPU(1)
+			JSA_I_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

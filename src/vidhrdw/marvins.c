@@ -2,118 +2,222 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+static int flipscreen, sprite_flip_adjust;
+static struct tilemap *fg_tilemap, *bg_tilemap, *text_tilemap;
+static unsigned char bg_color, fg_color, old_bg_color, old_fg_color;
 
-static unsigned char videoreg[7];
-static unsigned char sprite_layer, bg_color, text_color = 0x04;
+/***************************************************************************
+**
+**	Palette Handling:
+**
+**	Each color entry is encoded by 12 bits in color proms
+**
+**	There are sixteen 8-color sprite palettes
+**	sprite palette is selected by a nibble of spriteram
+**
+**	There are eight 16-color text layer character palettes
+**	character palette is determined by character_number
+**
+**	Background and Foreground tilemap layers each have eight 16-color
+**	palettes.  A palette bank select register is associated with the whole
+**	layer.
+**
+***************************************************************************/
 
-
-unsigned char *marvins_videoram1;
-unsigned char *marvins_videoram2;
-unsigned char *marvins_videoram3;
-
-struct tilemap *tilemap1, *tilemap2, *tilemap3;
-
-void marvins_videoram1_w( int offset, int data ){
-	tilemap_mark_tile_dirty( tilemap1, offset/32, offset%32 );
-	marvins_videoram1[offset] = data;
+void marvins_palette_bank_w( int offset, int data ){
+	bg_color = data>>4;
+	fg_color = data&0xf;
 }
 
-void marvins_videoram2_w( int offset, int data ){
-	tilemap_mark_tile_dirty( tilemap2, offset/32, offset%32 );
-	marvins_videoram2[offset] = data;
-}
+static void stuff_palette( int source_index, int dest_index, int num_colors ){
+	unsigned char *color_prom = Machine->memory_region[7] + source_index;
+	int i;
+	for( i=0; i<num_colors; i++ ){
+		int bit0=0,bit1,bit2,bit3;
+		int red, green, blue;
 
-void marvins_videoram3_w( int offset, int data ){
-	tilemap_mark_tile_dirty( tilemap3, offset/32, offset%32 );
-	marvins_videoram3[offset] = data;
-}
+		bit0 = (color_prom[0x800] >> 2) & 0x01; // ?
+		bit1 = (color_prom[0x000] >> 1) & 0x01;
+		bit2 = (color_prom[0x000] >> 2) & 0x01;
+		bit3 = (color_prom[0x000] >> 3) & 0x01;
+		red = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-void marvins_sprite_layer_w( int offset, int data ){ sprite_layer = data; }
+		bit0 = (color_prom[0x800] >> 1) & 0x01; // ?
+		bit1 = (color_prom[0x400] >> 2) & 0x01;
+		bit2 = (color_prom[0x400] >> 3) & 0x01;
+		bit3 = (color_prom[0x000] >> 0) & 0x01;
+		green = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-void marvins_bg_color_w( int offset, int data ){
-	if( bg_color!=data ){
-		bg_color = data;
-		tilemap_mark_all_tiles_dirty( tilemap1 );
-		tilemap_mark_all_tiles_dirty( tilemap2 );
+		bit0 = (color_prom[0x800] >> 0) & 0x01; // ?
+		bit1 = (color_prom[0x800] >> 3) & 0x01; // ?
+		bit2 = (color_prom[0x400] >> 0) & 0x01;
+		bit3 = (color_prom[0x400] >> 1) & 0x01;
+		blue = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_change_color( dest_index++, red, green, blue );
+		color_prom++;
 	}
 }
 
-void marvins_videoreg0_w( int offset, int data ){ videoreg[0] = data; }
-void marvins_videoreg1_w( int offset, int data ){ videoreg[1] = data; }
-void marvins_videoreg2_w( int offset, int data ){ videoreg[2] = data; }
-void marvins_videoreg3_w( int offset, int data ){ videoreg[3] = data; }
-void marvins_videoreg4_w( int offset, int data ){ videoreg[4] = data; }
-void marvins_videoreg5_w( int offset, int data ){ videoreg[5] = data; }
-void marvins_videoreg6_w( int offset, int data ){ videoreg[6] = data; }
+static void update_palette( int type ){
+	if( bg_color!=old_bg_color ){
+		stuff_palette( 256+16*(bg_color&0x7), (0x11-type)*16, 16 );
+		old_bg_color = bg_color;
+	}
 
-extern void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+	if( fg_color!=old_fg_color ){
+		stuff_palette( 128+16*(fg_color&0x7), (0x10+type)*16, 16 );
+		old_fg_color = fg_color;
+	}
+}
 
-static void get_tilemap1_info( int col, int row ){
+/***************************************************************************
+**
+**	Memory Handlers
+**
+***************************************************************************/
+
+void marvins_spriteram_w( int offset, int data ){
+	spriteram[offset] = data;
+}
+int marvins_spriteram_r( int offset ){
+	return spriteram[offset];
+}
+
+int marvins_foreground_ram_r( int offset ){
+	return videoram[offset+0x1000];
+}
+void marvins_foreground_ram_w( int offset, int data ){
+	if( offset<0x800 ){
+		if( videoram[offset+0x1000]==data ) return;
+		tilemap_mark_tile_dirty( fg_tilemap, offset/32, offset%32 );
+	}
+	videoram[offset+0x1000] = data;
+}
+
+int marvins_background_ram_r( int offset ){
+	return videoram[offset];
+}
+void marvins_background_ram_w( int offset, int data ){
+	if( offset<0x800 ){
+		if( videoram[offset]==data ) return;
+		tilemap_mark_tile_dirty( bg_tilemap, offset/32, offset%32 );
+	}
+	videoram[offset] = data;
+}
+
+int marvins_text_ram_r( int offset ){
+	return videoram[offset+0x2000];
+}
+void marvins_text_ram_w( int offset, int data ){
+	if( offset<0x400 ){
+		if( videoram[offset+0x2000]==data ) return;
+		tilemap_mark_tile_dirty( text_tilemap, offset/32, offset%32 );
+	}
+	videoram[offset+0x2000] = data;
+}
+
+/***************************************************************************
+**
+**	Callbacks for Tilemap Manager
+**
+***************************************************************************/
+
+static void get_bg_tilemap_info( int col, int row ){
 	SET_TILE_INFO(
 		2,
-		marvins_videoram1[col*32+row],
-		bg_color&0xf
+		videoram[col*32+row],
+		0
 	);
 }
-static void get_tilemap2_info( int col, int row ){
+static void get_fg_tilemap_info( int col, int row ){
 	SET_TILE_INFO(
 		1,
-		marvins_videoram2[col*32+row],
-		bg_color>>4
+		videoram[col*32+row+0x1000],
+		0
 	);
 }
-static void get_tilemap3_info( int col, int row ){
+static void get_text_tilemap_info( int col, int row ){
+	int tile_number = videoram[col*32+row+0x2000];
 	SET_TILE_INFO(
 		0,
-		marvins_videoram3[col*32+row],
-		text_color&0xf
+		tile_number,
+		(tile_number>>5) /* color */
 	);
 }
 
+/***************************************************************************
+**
+**	Video Initialization
+**
+***************************************************************************/
+
 int marvins_vh_start( void ){
-	tilemap1 = tilemap_create(
-		get_tilemap1_info,
+	flipscreen = -1; old_bg_color = old_fg_color = -1;
+
+	stuff_palette( 0, 0, 16*8 ); /* load sprite colors */
+	stuff_palette( 16*8*3, 16*8, 16*8 ); /* load text colors */
+	fg_tilemap = tilemap_create(
+		get_fg_tilemap_info,
+		TILEMAP_TRANSPARENT,
+		8,8,	/* tile width, tile height */
+		64,32	/* number of columns, number of rows */
+	);
+	bg_tilemap = tilemap_create(
+		get_bg_tilemap_info,
+		TILEMAP_TRANSPARENT,
+		8,8,	/* tile width, tile height */
+		64,32	/* number of columns, number of rows */
+	);
+	text_tilemap = tilemap_create(
+		get_text_tilemap_info,
 		TILEMAP_TRANSPARENT,
 		8,8,	/* tile width, tile height */
 		32,32	/* number of columns, number of rows */
 	);
-	tilemap2 = tilemap_create(
-		get_tilemap2_info,
-		TILEMAP_OPAQUE,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	tilemap3 = tilemap_create(
-		get_tilemap3_info,
-		TILEMAP_TRANSPARENT,
-		8,8,	/* tile width, tile height */
-		32,32	/* number of columns, number of rows */
-	);
-	if( tilemap1 && tilemap2 && tilemap3 ){
+	if( fg_tilemap && bg_tilemap && text_tilemap ){
 		struct rectangle clip = Machine->drv->visible_area;
 		clip.max_x-=16;
 		clip.min_x+=16;
-		tilemap_set_clip( tilemap1, &clip );
-		tilemap_set_clip( tilemap2, &clip );
-		tilemap_set_clip( tilemap3, &clip );
+		tilemap_set_clip( fg_tilemap, &clip );
+		tilemap_set_clip( bg_tilemap, &clip );
+		tilemap_set_clip( text_tilemap, &clip );
 
-		tilemap1->transparent_pen = tilemap3->transparent_pen = 0xf;
+		fg_tilemap->transparent_pen = 0xf;
+		bg_tilemap->transparent_pen = 0xf;
+		text_tilemap->transparent_pen = 0xf;
 
-		tilemap_set_scrollx( tilemap1, 0, -16 );
-		tilemap_set_scrollx( tilemap2, 0, -16 );
-		tilemap_set_scrollx( tilemap3, 0, -16 );
+		if( strcmp(Machine->gamedrv->name,"marvins")==0 ){
+			tilemap_set_scrolldx( bg_tilemap,	271, 287 );
+			tilemap_set_scrolldx( fg_tilemap,	15, 13+18 );
+			sprite_flip_adjust = 256+182+1;
+		}
+		else {
+			tilemap_set_scrolldx( bg_tilemap,	-16, -10 );
+			tilemap_set_scrolldx( fg_tilemap,	16, 22 );
+			sprite_flip_adjust = 256+182;
+		}
+
+		tilemap_set_scrolldx( text_tilemap,	16, 16 );
+		tilemap_set_scrolldy( bg_tilemap,	0, -40 );
+		tilemap_set_scrolldy( fg_tilemap,	0, -40 );
+		tilemap_set_scrolldy( text_tilemap,	0, 0 );
 
 		return 0;
 	}
 	return 1;
 }
 
-void marvins_vh_stop( void ){
-}
+/***************************************************************************
+**
+**	Screen Refresh
+**
+***************************************************************************/
 
-static void draw_status( struct osd_bitmap *bitmap, unsigned char *base, int color, int bank ){
+static void draw_status( struct osd_bitmap *bitmap ){
+	const unsigned char *base = videoram+0x2400;
 	struct rectangle clip = Machine->drv->visible_area;
-	const struct GfxElement *gfx = Machine->gfx[bank];
+	const struct GfxElement *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ ){
 		int sy,sx = (row&1)*8;
@@ -126,8 +230,9 @@ static void draw_status( struct osd_bitmap *bitmap, unsigned char *base, int col
 		}
 
 		for( sy=0; sy<256; sy+=8 ){
+			int tile_number = *source++;
 			drawgfx( bitmap, gfx,
-				*source++, color,
+				tile_number, tile_number>>5,
 				0,0, /* no flip */
 				sx,sy,
 				&clip,
@@ -135,37 +240,51 @@ static void draw_status( struct osd_bitmap *bitmap, unsigned char *base, int col
 		}
 	}
 }
-static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
+
+static void draw_sprites( struct osd_bitmap *bitmap, int scrollx, int scrolly,
+		int priority, unsigned char sprite_partition ){
 	const struct GfxElement *gfx = Machine->gfx[3];
 	struct rectangle clip = Machine->drv->visible_area;
 	const unsigned char *source, *finish;
 
-	static int yscroll = 0, xscroll = 255+20;
+	if( sprite_partition>0x64 ) sprite_partition = 0x64;
 
 	if( priority ){
-		source = spriteram + (sprite_layer&0x7c);
-		finish = spriteram + 0x80;
+		source = spriteram + sprite_partition;
+		finish = spriteram + 0x64;
 	}
 	else {
 		source = spriteram;
-		finish = spriteram + (sprite_layer&0x7c);
+		finish = spriteram + sprite_partition;
 	}
 
 	while( source<finish ){
-		int attributes = source[3]; /* YBBX.CCCC */
+		int attributes = source[3]; /* Y?F? CCCC */
 		int tile_number = source[1];
-		int sy = source[0] + ((attributes&0x10)?256:0) - yscroll;
-		int sx = source[2] + ((attributes&0x80)?256:0) - xscroll;
+		int sy = (-16+source[0] - scrolly)&0xff;
+		int sx = source[2] - scrollx + ((attributes&0x80)?256:0);
 		int color = attributes&0xf;
+		int flipy = (attributes&0x20);
+		int flipx = 0;
 
-		if( attributes&0x40 ) tile_number += 256;
-		if( attributes&0x20 ) tile_number += 512;
+		if( flipscreen ){
+			if( flipy ){
+				flipx = 1; flipy = 0;
+			}
+			else {
+				flipx = flipy = 1;
+			}
+			sx = sprite_flip_adjust-sx;
+			sy = 246-sy;
+		}
+
+		if( sy>240 ) sy -= 256;
 
 		drawgfx( bitmap,gfx,
 			tile_number,
 			color,
-			0,0,
-			(256-sx)&0x1ff,sy&0x1ff,
+			flipx, flipy,
+			(256-sx)&0x1ff,sy,
 			&clip,TRANSPARENCY_PEN,7);
 
 		source+=4;
@@ -173,37 +292,90 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 }
 
 void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
+	unsigned char *mem = Machine->memory_region[0];
+
+	unsigned char sprite_partition = mem[0xfe00];
+
+	int attributes = mem[0x8600]; /* 0x20: normal, 0xa0: video flipped */
+	int scroll_attributes = mem[0xff00];
+	int sprite_scrolly = mem[0xf800];
+	int sprite_scrollx = mem[0xf900];
+
+	int bg_scrolly = mem[0xfa00];
+	int bg_scrollx = mem[0xfb00];
+	int fg_scrolly = mem[0xfc00];
+	int fg_scrollx = mem[0xfd00];
+
+	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;
+	if( scroll_attributes & 1 ) sprite_scrollx += 256;
+	if( scroll_attributes & 2 ) fg_scrollx += 256;
+
+	/* palette bank for background/foreground is set by a memory-write handler */
+	update_palette(0);
+
+	if( flipscreen != (attributes&0x80) ){
+		flipscreen = attributes&0x80;
+		tilemap_set_flip( ALL_TILEMAPS, flipscreen?TILEMAP_FLIPY|TILEMAP_FLIPX:0);
+	}
+
+	tilemap_set_scrollx( bg_tilemap,	0, bg_scrollx );
+	tilemap_set_scrolly( bg_tilemap,	0, bg_scrolly );
+	tilemap_set_scrollx( fg_tilemap,	0, fg_scrollx );
+	tilemap_set_scrolly( fg_tilemap,	0, fg_scrolly );
+	tilemap_set_scrollx( text_tilemap,	0, 0 );
+	tilemap_set_scrolly( text_tilemap,	0, 0 );
+
 	tilemap_update( ALL_TILEMAPS );
-	//palette_recalc();
+	palette_recalc();
 	tilemap_render( ALL_TILEMAPS );
 
-	tilemap_draw( bitmap,tilemap2,0 );
-	draw_sprites( bitmap, 0 );
-	tilemap_draw( bitmap,tilemap1,0 );
-	draw_sprites( bitmap, 1 );
-	tilemap_draw( bitmap,tilemap3,0 );
-	draw_status( bitmap, spriteram+0x3400, text_color>>4, 0 );
+	tilemap_draw( bitmap,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
+	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 0, sprite_partition );
+	tilemap_draw( bitmap,bg_tilemap,0 );
+	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 1, sprite_partition );
+	tilemap_draw( bitmap,text_tilemap,0 );
+	draw_status( bitmap );
+}
 
-	if( keyboard_key_pressed( KEYCODE_D ) ){ /* debug code: display video registers */
-		char digit[16] = "0123456789abcdef";
-		int i;
-		for( i=0; i<=6; i++ ){
-			int sy = 32+i*8;
-			int data = videoreg[i];
+void madcrash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
+	extern int madcrash_vreg;
+	unsigned char *mem = Machine->memory_region[0]+madcrash_vreg;
 
-			drawgfx( bitmap, Machine->uifont,
-				digit[(data>>4)], 0,
-				0, 0,
-				32+0,sy,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_NONE,0);
+	int attributes = mem[0x8600]; /* 0x20: normal, 0xa0: video flipped */
+	int bg_scrolly = mem[0xf800];
+	int bg_scrollx = mem[0xf900];
+	int scroll_attributes = mem[0xfb00];
+	int sprite_scrolly = mem[0xfc00];
+	int sprite_scrollx = mem[0xfd00];
+	int fg_scrolly = mem[0xfe00];
+	int fg_scrollx = mem[0xff00];
+	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;
+	if( scroll_attributes & 1 ) sprite_scrollx += 256;
+	if( scroll_attributes & 2 ) fg_scrollx += 256;
 
-			drawgfx( bitmap, Machine->uifont,
-				digit[(data&0xf)], 0,
-				0, 0,
-				32+8,sy,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_NONE,0);
-		}
+	marvins_palette_bank_w( 0, mem[0xc800] );
+	update_palette(1);
+
+	if( flipscreen != (attributes&0x80) ){
+		flipscreen = attributes&0x80;
+		tilemap_set_flip( ALL_TILEMAPS, flipscreen?TILEMAP_FLIPY|TILEMAP_FLIPX:0);
 	}
+
+	tilemap_set_scrollx( bg_tilemap, 0, bg_scrollx );
+	tilemap_set_scrolly( bg_tilemap, 0, bg_scrolly );
+	tilemap_set_scrollx( fg_tilemap, 0, fg_scrollx );
+	tilemap_set_scrolly( fg_tilemap, 0, fg_scrolly );
+	tilemap_set_scrollx( text_tilemap,	0, 0 );
+	tilemap_set_scrolly( text_tilemap,	0, 0 );
+
+	tilemap_update( ALL_TILEMAPS );
+	if( palette_recalc() ) tilemap_mark_all_pixels_dirty( ALL_TILEMAPS );
+	tilemap_render( ALL_TILEMAPS );
+
+	tilemap_draw( bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
+	tilemap_draw( bitmap,fg_tilemap,0 );
+	draw_sprites( bitmap, sprite_scrollx+29, sprite_scrolly+1, 1, 0 );
+
+	tilemap_draw( bitmap,text_tilemap,0 );
+	draw_status( bitmap );
 }

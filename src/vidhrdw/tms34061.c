@@ -10,7 +10,7 @@
  ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/TMS34061.h"
+#include "vidhrdw/tms34061.h"
 
 static void TMS34061_intcallback(int param);
 

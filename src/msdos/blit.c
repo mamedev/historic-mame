@@ -38,10 +38,7 @@ int no_xpages = 2;
 /* this function lifted from Allegro */
 static int vesa_scroll_async(int x, int y)
 {
-   int ret, seg;
-   long a;
-	extern void (*_pm_vesa_scroller)(void);	/* in Allegro */
-	extern int _mmio_segment;	/* in Allegro */
+   int ret;
 	#define BYTES_PER_PIXEL(bpp)     (((int)(bpp) + 7) / 8)	/* in Allegro */
 	extern __dpmi_regs _dpmi_reg;	/* in Allegro... I think */
 
@@ -49,6 +46,10 @@ static int vesa_scroll_async(int x, int y)
 //   vesa_yscroll = y;
 
 #if 0
+   int seg;
+   long a;
+	extern void (*_pm_vesa_scroller)(void);	/* in Allegro */
+	extern int _mmio_segment;	/* in Allegro */
    if (_pm_vesa_scroller) {            /* use protected mode interface? */
       seg = _mmio_segment ? _mmio_segment : _my_ds();
 
@@ -185,13 +186,14 @@ INLINE void unchained_flip(void)
 
 
 /* outputs  (none)*/
-	:
+	:"=c" (flip_value1),
+	"=b" (flip_value2)
 /* inputs -
  ecx = flip_value1 , ebx = flip_value2 */
-	:"c" (flip_value1),
-	"b" (flip_value2)
+	:"0" (flip_value1),
+	"1" (flip_value2)
 /* registers modified */
-	:"ax", "bx", "cx", "dx", "cc", "memory"
+	:"ax", "dx", "cc", "memory"
 	);
 }
 
@@ -340,8 +342,14 @@ void blitscreen_dirty1_unchained_vga(void)
 	}
 }
 
+void init_unchained_blit(void)
+{
+    xpage=-1;
+}
+
 /* Macros for non dirty unchained blits */
 #define UNCHAIN_BLIT_START \
+        int dummy1,dummy2,dummy3; \
 		__asm__ __volatile__ ( \
 /* save es and set it to our video selector */ \
         "pushw  %%es \n" \
@@ -360,7 +368,7 @@ void blitscreen_dirty1_unchained_vga(void)
         "movw   $0x3c4,%%dx \n" \
         "outw   %%ax,%%dx \n" \
 /* edx now free, so use it for the memwidth */ \
-        "movl   %1,%%edx \n" \
+        "movl   %4,%%edx \n" \
 /* --height loop-- */ \
         "1:\n" \
 /* save counter , source + dest address */ \
@@ -368,7 +376,7 @@ void blitscreen_dirty1_unchained_vga(void)
 		"pushl	%%ebx \n" \
 		"pushl	%%edi \n" \
 /* --width loop-- */ \
-        "movl   %0,%%ecx \n" \
+        "movl   %3,%%ecx \n" \
         "2:\n"
 
 #define UNCHAIN_BLIT_END \
@@ -396,8 +404,10 @@ void blitscreen_dirty1_unchained_vga(void)
 /* --end of bit plane loop-- */ \
 /* restore es */ \
         "popw   %%es \n" \
-/* outputs  (none)*/ \
-        : \
+/* outputs (aka clobbered input) */ \
+        :"=S" (dummy1), \
+        "=b" (dummy2), \
+        "=d" (dummy3) \
 /* inputs */ \
 /* %0=width, %1=memwidth, */ \
 /* esi = scrwidth */ \
@@ -405,13 +415,13 @@ void blitscreen_dirty1_unchained_vga(void)
 /* edx = seg, edi = address */ \
         :"g" (width), \
         "g" (memwidth), \
-        "S" (scrwidth), \
-        "b" (src), \
         "c" (height), \
-        "d" (seg), \
-        "D" (address) \
+        "D" (address), \
+        "0" (scrwidth), \
+        "1" (src), \
+        "2" (seg) \
 /* registers modified */ \
-        :"ax", "bx", "cx", "dx", "si", "di", "cc", "memory" \
+        :"ax", "cc", "memory" \
         );
 
 #define UNCHAIN_BLIT_LOOP \
@@ -475,11 +485,9 @@ INLINE void unchain_byte_blit(unsigned long *src,short seg,unsigned long address
 /* unchained 'non-dirty' modes */
 void blitscreen_dirty0_unchained_vga(void)
 {
-	int y;
 	unsigned long *lb, address;
 
 	static int width4,columns4,column_chained,memwidth,scrwidth,disp_height,word_blit,byte_blit;
-	int	outval;
 
    /* only calculate our statics the first time around */
 	if(xpage==-1)
@@ -569,12 +577,17 @@ INLINE void copyline_2x_8bpp(unsigned char *src,short seg,unsigned long address,
 	"loop 0b                 \n"
 	"popw %%ax               \n"
 	"movw %%ax, %%es         \n"
-	::
-	"d" (seg),
-	"c" (width4),
-	"S" (src),
-	"D" (address):
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
+	:
+	"=c" (width4),
+	"=d" (seg),
+	"=S" (src),
+	"=D" (address)
+	:
+	"0" (width4),
+	"1" (seg),
+	"2" (src),
+	"3" (address):
+	"ax", "bx", "cc", "memory");
 }
 #else
 INLINE void copyline_2x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
@@ -612,12 +625,17 @@ INLINE void copyline_2x_16bpp(unsigned char *src,short seg,unsigned long address
 	"loop 0b                 \n"
 	"popw %%ax               \n"
 	"movw %%ax, %%es         \n"
-	::
-	"d" (seg),
-	"c" (width2),
-	"S" (src),
-	"D" (address):
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
+	:
+	"=c" (width2),
+	"=d" (seg),
+	"=S" (src),
+	"=D" (address)
+	:
+	"0" (width2),
+	"1" (seg),
+	"2" (src),
+	"3" (address):
+	"ax", "bx", "cc", "memory");
 }
 
 INLINE void copyline_3x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)

@@ -290,7 +290,7 @@ int i;
 */
 static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
-int color,code,sx,sy,attr,xdisp,ydisp,ndisp,sprite,offs;
+int color,code,sx,sy,attr,sprite,offs;
 unsigned char *spritedata, *objectdata;
 
 /* objram: 0x100*4 entries		spritedata: 0x80? entries */
@@ -643,17 +643,17 @@ int active_layers1;
 
 #ifdef MAME_DEBUG
 debugsprites = 0;
-if (keyboard_key_pressed(KEYCODE_Z))
+if (keyboard_pressed(KEYCODE_Z))
 {
 int msk = 0;
 
-	if (keyboard_key_pressed(KEYCODE_Q)) { msk |= 0xfff1;}
-	if (keyboard_key_pressed(KEYCODE_W)) { msk |= 0xfff2;}
-	if (keyboard_key_pressed(KEYCODE_E)) { msk |= 0xfff4;}
-	if (keyboard_key_pressed(KEYCODE_A))	{ msk |= 0xfff8; debugsprites = 1;}
-	if (keyboard_key_pressed(KEYCODE_S))	{ msk |= 0xfff8; debugsprites = 2;}
-	if (keyboard_key_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 3;}
-	if (keyboard_key_pressed(KEYCODE_F))	{ msk |= 0xfff8; debugsprites = 4;}
+	if (keyboard_pressed(KEYCODE_Q)) { msk |= 0xfff1;}
+	if (keyboard_pressed(KEYCODE_W)) { msk |= 0xfff2;}
+	if (keyboard_pressed(KEYCODE_E)) { msk |= 0xfff4;}
+	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0xfff8; debugsprites = 1;}
+	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0xfff8; debugsprites = 2;}
+	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 3;}
+	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0xfff8; debugsprites = 4;}
 
 	if (msk != 0) active_layers &= msk;
 }

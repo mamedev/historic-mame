@@ -9,12 +9,14 @@
 #ifndef DRAWGFX_H
 #define DRAWGFX_H
 
+#define MAX_GFX_PLANES 8
+
 struct GfxLayout
 {
 	unsigned short width,height; /* width and height (in pixels) of chars/sprites */
 	unsigned int total; /* total numer of chars/sprites in the rom */
 	unsigned short planes; /* number of bitplanes */
-	int planeoffset[8]; /* start of every bitplane (in bits) */
+	int planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
 	int xoffset[64]; /* position of the bit corresponding to the pixel */
 	int yoffset[64]; /* of the given coordinates */
 	short charincrement; /* distance between two consecutive characters/sprites (in bits) */

@@ -144,8 +144,6 @@ static void exidy_irq (void)
 
 void exidy_shriot_w(int offset,int data)
 {
-   long i=0;
-
 //   if (errorlog) fprintf(errorlog,"RIOT: %x=%x\n",offset,data);
    offset &= 0x7F;
    switch (offset)

@@ -486,7 +486,6 @@ void ballbomb_videoram_w (int offset,int data)
 	{
 		int i,x,y;
 		int col;
-        int cy;
 
 		invaders_videoram[offset] = data;
 

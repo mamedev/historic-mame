@@ -566,8 +566,7 @@ static struct YM3526interface YM3526_interface =
 {
 	1,
 	4000000,
-	{ 0xff },
-	0
+	{ 0xff }
 };
 
 

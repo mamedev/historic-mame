@@ -257,6 +257,9 @@ int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_i
 int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
 int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_K053260)
+int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
+#endif
 
 struct snd_interface sndintf[] =
 {
@@ -618,6 +621,42 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_K053260)
+    {
+		SOUND_K053260,
+		"053260",
+		0,
+		K053260_clock,
+		K053260_sh_start,
+		K053260_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_SEGAPCM)
+	{
+		SOUND_SEGAPCM,
+		"Sega PCM",
+		0,
+		0,
+		SEGAPCM_sh_start,
+		SEGAPCM_sh_stop,
+		SEGAPCM_sh_update,
+		0
+	},
+#endif
+#if (HAS_RF5C68)
+	{
+		SOUND_RF5C68,
+		"RF5C68",
+		0,
+		0,
+		RF5C68_sh_start,
+		RF5C68_sh_stop,
+		0,
+		0
+	},
+#endif
 };
 
 
@@ -632,7 +671,7 @@ int sound_start(void)
 	{
 		if (sndintf[i].sound_num != i)
 		{
-if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in src/driver.h!\n",i,sndintf[i].sound_num);
+if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sndintf[i].sound_num);
 			return 1;
 		}
 	}
@@ -703,7 +742,7 @@ void sound_update(void)
 	int totalsound = 0;
 
 
-	osd_profiler(OSD_PROFILE_SOUND);
+	profiler_mark(PROFILER_SOUND);
 
 	if (Machine->drv->sh_update) (*Machine->drv->sh_update)();
 
@@ -719,7 +758,7 @@ void sound_update(void)
 
 	timer_reset(sound_update_timer,TIME_NEVER);
 
-	osd_profiler(OSD_PROFILE_END);
+	profiler_mark(PROFILER_END);
 }
 
 

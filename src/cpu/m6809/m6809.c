@@ -63,7 +63,7 @@
 #include "cpuintrf.h"
 #include "state.h"
 #include "mamedbg.h"
-#include "M6809.h"
+#include "m6809.h"
 
 #define VERBOSE 0
 

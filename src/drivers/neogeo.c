@@ -179,7 +179,7 @@ static int neogeo_interrupt(void)
         fc++;
 
 #ifdef MAME_DEBUG
-	if (irq2_enable || keyboard_key_pressed(KEYCODE_F1)) cpu_cause_interrupt(0,2);
+	if (irq2_enable || keyboard_pressed(KEYCODE_F1)) cpu_cause_interrupt(0,2);
 #else
 	if (irq2_enable) cpu_cause_interrupt(0,2);
 #endif
@@ -199,7 +199,7 @@ static int raster_enable=1;
 
 	if (line == RASTER_LINES)	/* vblank */
 	{
-		if (keyboard_key_pressed_memory(KEYCODE_F1)) raster_enable ^= 1;
+		if (keyboard_pressed_memory(KEYCODE_F1)) raster_enable ^= 1;
 
 		lastirq2line = 1000;
 
@@ -820,7 +820,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( irrmaze_ports )
 	PORT_START      /* IN0 multiplexed */
-	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_REVERSE, 10, 20, 0, 0, 0, KEYCODE_LEFT, KEYCODE_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_REVERSE, 10, 20, 0, 0, 0 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -890,7 +890,7 @@ INPUT_PORTS_START( irrmaze_ports )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* IN0 multiplexed */
-	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0, 0, KEYCODE_UP, KEYCODE_DOWN, OSD_JOY_UP, OSD_JOY_DOWN )
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -906,20 +906,6 @@ static struct GfxLayout charlayout =	/* All games */
 	{ 33*4, 32*4, 49*4, 48*4, 1*4, 0*4, 17*4, 16*4 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	32*8    /* 32 bytes per char */
-};
-
-/* Placeholder and also reminder of how this graphic format is put together */
-static struct GfxLayout dummy_mgd2_tilelayout =
-{
-	16,16,  /* 16*16 sprites */
-	20,  /* sprites */
-	4,      /* 4 bits per pixel */
-	{ /*0x10000*32*8*3*/3, /*0x10000*32*8*2*/2, /*0x10000*32*8*/1, 0 },
-	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-	  7, 6, 5, 4, 3, 2, 1, 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
 /* Placeholder and also reminder of how this graphic format is put together */
@@ -2331,38 +2317,24 @@ ROM_END
 
 ROM_START( androdun_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_ODD ( "n138001a.038", 0x000000, 0x040000, 0x4639b419 )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "n138001a.03c", 0x080000, 0x040000, 0x11beb098 )
-	ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_WIDE_SWAP( "adun_p1.rom", 0x000000, 0x080000, 0x3b857da2 )
+	ROM_LOAD_WIDE_SWAP( "adun_p2.rom", 0x080000, 0x080000, 0x2f062209 )
 
-	NEO_SFIX_128K( "n138001a.378", 0x6349de5d )
+	NEO_SFIX_128K( "adun_s1.rom", 0x6349de5d )
 
-	NEO_BIOS_SOUND_128K( "n138001a.4f8", 0x1a009f8c )
+	NEO_BIOS_SOUND_128K( "adun_m1.rom", 0x1a009f8c )
 
 	ROM_REGION_OPTIONAL(0x100000) /* sound samples */
-	ROM_LOAD( "n138001a.1f8", 0x000000, 0x080000, 0x577c85b3 )
-	ROM_LOAD( "n138001a.1fc", 0x080000, 0x080000, 0xe14551c4 )
+	ROM_LOAD( "adun_v1.rom", 0x000000, 0x080000, 0x577c85b3 )
+	ROM_LOAD( "adun_v2.rom", 0x080000, 0x080000, 0xe14551c4 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION(0x400000)
-	ROM_LOAD( "n138001a.538", 0x000000, 0x40000, 0xca08e432 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
-	ROM_LOAD( "n138001a.53c", 0x040000, 0x40000, 0xfcbcb305 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
-	ROM_LOAD( "n138001b.538", 0x080000, 0x40000, 0x806ab937 ) /* Plane 0,1 - needed? */
-	ROM_CONTINUE(             0x280000, 0x40000 )
-	ROM_LOAD( "n138001b.53c", 0x0c0000, 0x40000, 0xe7e1a2be ) /* Plane 0,1 - needed? */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
-	ROM_LOAD( "n138001a.638", 0x100000, 0x40000, 0x7a0deb9e ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
-	ROM_LOAD( "n138001a.63c", 0x140000, 0x40000, 0xb1c640f5 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
-	ROM_LOAD( "n138001b.638", 0x180000, 0x40000, 0x33bee10f ) /* Plane 2,3 - needed? */
-	ROM_CONTINUE(             0x380000, 0x40000 )
-	ROM_LOAD( "n138001b.63c", 0x1c0000, 0x40000, 0x70f0d263 ) /* Plane 2,3 - needed? */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_LOAD_GFX_EVEN( "adun_c1.rom", 0x000000, 0x100000, 0x7ace6db3 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "adun_c2.rom", 0x000000, 0x100000, 0xb17024f7 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "adun_c3.rom", 0x200000, 0x100000, 0x2e0f3f9a ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "adun_c4.rom", 0x200000, 0x100000, 0x4a19fb92 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( ncommand_rom )
@@ -3472,6 +3444,24 @@ ROM_START( puzzledp_rom )
 	ROM_REGION(0x200000)
 	ROM_LOAD_GFX_EVEN( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pdpon_c2.rom", 0x000000, 0x100000, 0x42371307 ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( mosyougi_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_WIDE_SWAP( "syoug_p1.rom", 0x000000, 0x100000, 0x7ba70e2d )
+
+	NEO_SFIX_128K( "syoug_s1.rom", 0x4e132fac )
+
+	NEO_BIOS_SOUND_128K( "syoug_m1.rom", 0xa602c2c2 )
+
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "syoug_v1.rom", 0x000000, 0x200000, 0xbaa2b9a5 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION(0x400000)
+	ROM_LOAD_GFX_EVEN( "syoug_c1.rom",  0x000000, 0x200000, 0xbba9e8c0 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "syoug_c2.rom",  0x000000, 0x200000, 0x2574be03 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( marukodq_rom )
@@ -4718,6 +4708,7 @@ NEODRIVER(wh2,     "World Heroes 2","1993","ADK",&neogeo_machine_driver)
 NEODRIVER(wh2j,    "World Heroes 2 Jet","1994","ADK / SNK",&neogeo_machine_driver)
 NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku","1994","ADK / SNK",&neogeo_machine_driver)
 NEODRIVER(whp,     "World Heroes Perfect","1995","ADK / SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(mosyougi,"Syougi No Tatsujin - Master of Syougi","1995","ADK / SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(overtop, "Over Top","1996","ADK",&neogeo_16bit_machine_driver)
 NEODRIVER(ninjamas,"Ninja Master's - haoh-ninpo-cho","1996","ADK / SNK",&neogeo_machine_driver)
 NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK",&neogeo_16bit_machine_driver)
@@ -4797,7 +4788,7 @@ NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.",&
 NEODRIVER(popbounc,"Pop 'n Bounce / Gapporin","1997","Video System Co.",&neogeo_16bit_machine_driver)
 
 /* Visco */
-NEODRIVERMGD2(androdun,"Andro Dunos","1992","Visco",&neogeo_machine_driver)
+NEODRIVER(androdun,"Andro Dunos","1992","Visco",&neogeo_machine_driver)
 NEODRIVER(puzzledp,"Puzzle De Pon","1995","Taito (Visco license)",&neogeo_machine_driver)
 NEODRIVER(neomrdo, "Neo Mr. Do!","1996","Visco",&neogeo_machine_driver)
 NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_machine_driver)

@@ -180,7 +180,7 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 {
 	int invalid_mask;
 	int code = cpu_readop(pc);
-	const char *opstr, *symbol, *symbol2;
+	const char *symbol, *symbol2;
 	UINT8 opcode, args, access, size, invalid;
 
 	switch( subtype )

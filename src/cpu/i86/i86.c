@@ -9,8 +9,8 @@
 #include "cpuintrf.h"
 #include "memory.h"
 #include "mamedbg.h"
-#include "I86.h"
-#include "I86intrf.h"
+#include "i86.h"
+#include "i86intrf.h"
 
 static UINT8 i86_reg_layout[] = {
 	I86_IP,I86_SP,I86_FLAGS,I86_AX,I86_CX,I86_DX,I86_BX,I86_BP,I86_SI,I86_DI, -1,

@@ -24,8 +24,6 @@ static int bg2_chardisplacement;
 ***************************************************************************/
 static int common_vh_start(int width,int height)
 {
-	int i;
-
 	if ((dirtybuffer = malloc(aerofgt_bg1videoram_size / 2)) == 0)
 	{
 		return 1;
@@ -291,7 +289,7 @@ static void bg_dopalette(void)
 static void aerofgt_spr_dopalette(void)
 {
 	int offs;
-	int color,code,i;
+	int color,i;
 	int colmask[32];
 	int pal_base;
 
@@ -336,8 +334,7 @@ static void aerofgt_spr_dopalette(void)
 
 static void turbofrc_spr_dopalette(void)
 {
-	int offs;
-	int color,code,i;
+	int color,i;
 	int colmask[16];
 	int pal_base;
 	int attr_start,base,first;
@@ -638,7 +635,7 @@ void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 static int drawbg2 = 1;
 
-if (keyboard_key_pressed_memory(KEYCODE_SPACE))
+if (keyboard_pressed_memory(KEYCODE_SPACE))
 	drawbg2 = !drawbg2;
 
 	palette_init_used_colors();

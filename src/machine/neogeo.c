@@ -2,7 +2,6 @@
 #include "machine/neogeo.h"
 #include <time.h>
 
-static unsigned char *biosbank;
 //static unsigned char *memcard;
 unsigned char *neogeo_ram;
 unsigned char *neogeo_sram;
@@ -91,7 +90,6 @@ void neogeo_init_machine(void)
 void neogeo_onetime_init_machine(void)
 {
 	unsigned char *RAM = Machine->memory_region[MEM_CPU0];
-    void *f;
 	extern struct YM2610interface neogeo_ym2610_interface;
 
 	if (Machine->memory_region_length[MEM_SAMPLE1] > 1)

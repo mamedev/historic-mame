@@ -92,7 +92,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 
 void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,mx,my,color,tile,i;
+	int offs,color,i;
 	int colmask[0x80],code,pal_base;
 
 	/* Update fix chars */
@@ -222,8 +222,8 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 
 void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int offs,mx,my,color,tile,i;
-	int colmask[0x80],code,pal_base,tile_base;
+	int offs,color,i;
+	int colmask[0x80],code,pal_base;
 
 	/* Update fix chars */
 	tilemap_update(fix_tilemap);

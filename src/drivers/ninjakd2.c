@@ -244,7 +244,6 @@ extern int	ninjakd2_backgroundram_size;
 extern int 	ninjakd2_foregroundram_size;
 
 static int ninjakd2_bank_latch = 255;
-static void *ninjakd2_fm_timer = NULL;
 
 
 

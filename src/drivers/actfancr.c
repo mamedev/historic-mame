@@ -237,9 +237,10 @@ static struct GfxDecodeInfo actfan_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static void sound_irq(void)
+static void sound_irq(int linestate)
 {
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -258,13 +259,13 @@ static struct YM3812interface ym3812_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3.000000 MHz (Should be accurate) */
 	{ 45 },
-	sound_irq,
+	{ sound_irq },
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	8000,           /* 8000Hz frequency */
+	{ 8000 },       /* 8000Hz frequency */
 	{ 3 },          /* memory region 3 */
 	{ 85 }
 };

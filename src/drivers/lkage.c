@@ -128,10 +128,7 @@ static struct IOReadPort readport[] = {
 	{ -1 }
 };
 
-static struct IOWritePort writeport[] = {
-	{ -1 }
-};
-
+#if 0
 static struct MemoryReadAddress m68705_readmem[] = {
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
@@ -143,6 +140,7 @@ static struct MemoryWriteAddress m68705_writemem[] = {
 	{ 0x0080, 0x07ff, MWA_ROM },
 	{ -1 }
 };
+#endif
 
 /***************************************************************************/
 
@@ -423,6 +421,75 @@ ROM_START( lkageb_rom )
 	ROM_REGION( 0x100 ) /* fake */
 ROM_END
 
+/****  Legend of Kage high score save routine - RJF (July 29, 1999)  ****/
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
+                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
+
+                        RAM[0xe188] = RAM[0xe260];      /* update high score */
+                        RAM[0xe189] = RAM[0xe261];      /* on top of screen */
+                        RAM[0xe18a] = RAM[0xe262];
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe25f], 10*14);       /* HS whole table */
+		osd_fclose(f);
+	}
+}
+
+/** Legend of Kage (bootleg) high score save routine - RJF (July 30, 1999) **/
+static int lkageb_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
+                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
+
+                        /* update high score on top of screen */
+
+                        RAM[0xe188] = RAM[0xe260] << 4;
+                        RAM[0xe189] = (RAM[0xe261] << 4) + (RAM[0xe260] >> 4);
+                        RAM[0xe18a] = (RAM[0xe262] << 4) + (RAM[0xe261] >> 4);
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
 struct GameDriver lkage_driver = {
 	__FILE__,
 	0,
@@ -446,7 +513,7 @@ struct GameDriver lkage_driver = {
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver lkageb_driver = {
@@ -472,5 +539,5 @@ struct GameDriver lkageb_driver = {
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	lkageb_hiload, hisave
 };

@@ -31,6 +31,7 @@ void shutdown_machine(void);
 int run_machine(void);
 
 
+#ifdef MAME_DEBUG
 static int validitychecks(void)
 {
 	int i,j;
@@ -106,6 +107,7 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 
 	return 0;
 }
+#endif
 
 
 int run_game(int game)
@@ -186,9 +188,9 @@ int run_game(int game)
 	err = 1;
 	bailing = 0;
 
-	if (init_machine() == 0)
+	if (osd_init() == 0)
 	{
-		if (osd_init() == 0)
+		if (init_machine() == 0)
 		{
 			if (run_machine() == 0)
 				err = 0;
@@ -203,16 +205,16 @@ int run_game(int game)
 		else if (!bailing)
 		{
 			bailing = 1;
-			printf ("Unable to initialize system\n");
+			printf("Unable to initialize machine emulation\n");
 		}
-
-		shutdown_machine();
 	}
 	else if (!bailing)
 	{
 		bailing = 1;
-		printf("Unable to initialize machine emulation\n");
+		printf ("Unable to initialize system\n");
 	}
+
+	shutdown_machine();
 
 	return err;
 }
@@ -389,6 +391,27 @@ static int vh_open(void)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
+			int len,avail,j,start;
+
+			start = 0;
+			for (j = 0;j < MAX_GFX_PLANES;j++)
+			{
+				if (drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j] > start)
+					start = drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j];
+			}
+			start &= ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement-1);
+			len = drv->gfxdecodeinfo[i].gfxlayout->total *
+					drv->gfxdecodeinfo[i].gfxlayout->charincrement;
+			avail = Machine->memory_region_length[drv->gfxdecodeinfo[i].memory_region]
+					- (drv->gfxdecodeinfo[i].start & ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement/8-1));
+			if ((start + len) / 8 > avail)
+			{
+				bailing = 1;
+				printf ("Error: gfx[%d] extends past allocated memory\n",i);
+				vh_close();
+				return 1;
+			}
+
 			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
@@ -447,7 +470,7 @@ int updatescreen(void)
 
 	if (osd_skip_this_frame() == 0)
 	{
-		osd_profiler(OSD_PROFILE_VIDEO);
+		profiler_mark(PROFILER_VIDEO);
 		if (need_to_clear_bitmap)
 		{
 			osd_clearbitmap(Machine->scrbitmap);
@@ -455,7 +478,7 @@ int updatescreen(void)
 		}
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 		bitmap_dirty = 0;
-		osd_profiler(OSD_PROFILE_END);
+		profiler_mark(PROFILER_END);
 	}
 
 	/* the user interface must be called between vh_update() and update_display(), */
@@ -523,6 +546,16 @@ int run_machine(void)
 
 				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
 				{
+					/* shut down the leds (work around Allegro hanging bug in the DOS port) */
+					osd_led_w(0,1);
+					osd_led_w(1,1);
+					osd_led_w(2,1);
+					osd_led_w(3,1);
+					osd_led_w(0,0);
+					osd_led_w(1,0);
+					osd_led_w(2,0);
+					osd_led_w(3,0);
+
 					init_user_interface();
 
 					if (options.cheat) InitCheat();

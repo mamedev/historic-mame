@@ -111,8 +111,6 @@ void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int color = colorram[offs];
-			int video = videoram[offs];
 			int sx,sy,mx,my;
 
 
@@ -224,8 +222,6 @@ usrintf_showmessage(buf);
 	{
 		if (colorram[offs] & 0x40)
 		{
-			int color = colorram[offs];
-			int video = videoram[offs];
 			int sx,sy,mx,my;
 
 

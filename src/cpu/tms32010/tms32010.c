@@ -76,7 +76,7 @@ static UINT8 tms320c10_win_layout[] = {
 static UINT16   opcode=0;
 static UINT8	opcode_major=0, opcode_minor, opcode_minr;	/* opcode split into MSB and LSB */
 static tms320c10_Regs R;
-INT32 tms320c10_ICount;
+int tms320c10_ICount;
 static INT32 tmpacc;
 typedef void (*opcode_fn) (void);
 

@@ -279,9 +279,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,0xff);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -301,7 +302,7 @@ static struct YM3526interface ym3526_interface =
     1,                      /* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
     { 255 },         /* (not supported) */
-	irqhandler
+	{ irqhandler }
 };
 
 static int exprraid_interrupt(void)
@@ -515,7 +516,6 @@ static void wexpress_decode_rom( void )
 static void exprraid_decode_rom( void )
 {
 	unsigned char *RAM = Machine->memory_region[0];
-	int i;
 
 
 	/* decode vectors */

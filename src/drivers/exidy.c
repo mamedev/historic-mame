@@ -981,57 +981,6 @@ static struct CustomSound_interface exidy_custom_interface =
 	0
 };
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			0,
-			readmem,writemem,0,0,
-			exidy_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			2,      /* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-	    ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-    32, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&venture_samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&exidy_custom_interface
-		}
-	}
-
-
-};
-
 static struct MachineDriver mtrap_machine_driver =
 {
 	/* basic machine hardware */

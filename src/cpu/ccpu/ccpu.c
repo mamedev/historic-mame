@@ -443,9 +443,6 @@ void ccpu_SetInputs(int inputs, int switches)
 
 #include <stdio.h>
 #include <string.h>
-#ifdef UNIX
-#include <strings.h>
-#endif
 
 #include "ccpu.h"
 

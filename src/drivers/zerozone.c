@@ -200,7 +200,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	8000,           /* 8000Hz ??? TODO: find out the real frequency */
+	{ 8000 },           /* 8000Hz ??? TODO: find out the real frequency */
 	{ 3 },              /* memory region 3 */
 	{ 100 }
 };

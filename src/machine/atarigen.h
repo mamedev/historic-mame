@@ -234,8 +234,7 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 	Video Controller I/O: used in Shuuz, Thunderjaws, Relief Pitcher, Off the Wall
 	
 		atarigen_video_control_data - pointer to base of control memory
-		atarigen_video_control_latch1 - latch #1 value (-1 means disabled)
-		atarigen_video_control_latch2 - latch #2 value (-1 means disabled)
+		atarigen_video_control_state - current state of the video controller
 		
 		atarigen_video_control_reset - initializes the video controller
 
@@ -243,11 +242,25 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 		atarigen_video_control_r - read handler for the video controller
 
 --------------------------------------------------------------------------*/
+struct atarigen_video_control_state_desc
+{
+	int latch1;								/* latch #1 value (-1 means disabled) */
+	int latch2;								/* latch #2 value (-1 means disabled) */
+	int rowscroll_enable;					/* true if row-scrolling is enabled */
+	int palette_bank;						/* which palette bank is enabled */
+	int pf1_xscroll;						/* playfield 1 xscroll */
+	int pf1_yscroll;						/* playfield 1 yscroll */
+	int pf2_xscroll;						/* playfield 2 xscroll */
+	int pf2_yscroll;						/* playfield 2 yscroll */
+	int sprite_xscroll;						/* sprite xscroll */
+	int sprite_yscroll;						/* sprite xscroll */
+};
+
 extern unsigned char *atarigen_video_control_data;
-extern int atarigen_video_control_latch1;
-extern int atarigen_video_control_latch2;
+extern struct atarigen_video_control_state_desc atarigen_video_control_state;
 
 void atarigen_video_control_reset(void);
+void atarigen_video_control_update(const unsigned char *data);
 
 void atarigen_video_control_w(int offset, int data);
 int atarigen_video_control_r(int offset);
@@ -288,6 +301,7 @@ int atarigen_mo_init(const struct atarigen_mo_desc *source_desc);
 void atarigen_mo_free(void);
 void atarigen_mo_reset(void);
 void atarigen_mo_update(const unsigned char *base, int start, int scanline);
+void atarigen_mo_update_slip_512(const unsigned char *base, int scroll, int scanline, const unsigned char *slips);
 void atarigen_mo_process(atarigen_mo_callback callback, void *param);
 
 

@@ -307,7 +307,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
 			int offs = y * 64 + x;
-			int priority_offs = y * 64 + XCHARS + x / 2;
+//			int priority_offs = y * 64 + XCHARS + x / 2;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = data >> 13;
 			int code = data & 0x1fff;

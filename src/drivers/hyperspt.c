@@ -19,7 +19,6 @@ void hyperspt_vh_stop(void);
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
 int hyperspt_sh_timer_r(int offset);
 void hyperspt_sound_w(int offset , int data);
@@ -28,7 +27,6 @@ void hyperspt_sound_w(int offset , int data);
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-void konami_dac_w(int offset,int data);
 void konami_SN76496_latch_w(int offset,int data);
 void konami_SN76496_0_w(int offset,int data);
 
@@ -120,7 +118,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x4fff, MWA_RAM },
 	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
 	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
-	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
+	{ 0xe000, 0xe000, DAC_data_w },
 	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
 	{ 0xe002, 0xe002, konami_SN76496_0_w },      /* This address triggers the SN chip to read the data port. */
 	{ -1 }	/* end of table */

@@ -1314,7 +1314,7 @@ struct GameDriver spacfura_driver =
 static const char *zektor_sample_names[] =
 {
 	"*zektor",
-        "zk01.wav",  /* 1 */
+	"zk01.wav",  /* 1 */
 	"zk02.wav",
 	"zk03.wav",
 	"zk04.wav",
@@ -1333,20 +1333,20 @@ static const char *zektor_sample_names[] =
 	"zk11.wav",
 	"zk12.wav",
 	"zk13.wav",
-        "elim1.wav",  /* 19 fireball */
-        "elim2.wav",  /* 20 bounce */
-        "elim3.wav",  /* 21 Skitter */
-        "elim4.wav",  /* 22 Eliminator */
-        "elim5.wav",  /* 23 Electron */
-        "elim6.wav",  /* 24 fire */
-        "elim7.wav",  /* 25 thrust */
-        "elim8.wav",  /* 26 Electron */
-        "elim9.wav",  /* 27 small explosion */
-        "elim10.wav", /* 28 med explosion */
-        "elim11.wav", /* 29 big explosion */
-                      /* Missing Zizzer */
-                      /* Missing City fly by */
-                      /* Missing Rotation Rings */
+	"elim1.wav",  /* 19 fireball */
+	"elim2.wav",  /* 20 bounce */
+	"elim3.wav",  /* 21 Skitter */
+	"elim4.wav",  /* 22 Eliminator */
+	"elim5.wav",  /* 23 Electron */
+	"elim6.wav",  /* 24 fire */
+	"elim7.wav",  /* 25 thrust */
+	"elim8.wav",  /* 26 Electron */
+	"elim9.wav",  /* 27 small explosion */
+	"elim10.wav", /* 28 med explosion */
+	"elim11.wav", /* 29 big explosion */
+				  /* Missing Zizzer */
+				  /* Missing City fly by */
+				  /* Missing Rotation Rings */
 
 
     0	/* end of array */
@@ -1396,7 +1396,7 @@ static struct MachineDriver zektor_machine_driver =
 	{
 		{
 			SOUND_SAMPLES,
-                        &spacfury_samples_interface
+			&zektor_samples_interface
 		}
 	}
 };

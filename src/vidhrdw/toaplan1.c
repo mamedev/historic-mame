@@ -357,7 +357,6 @@ static void toaplan1_find_tiles(int xoffs,int yoffs)
 {
 	int priority;
 	int layer;
-	int width;
 	tile_struct *tinfo;
 	unsigned char *t_info;
 
@@ -420,7 +419,6 @@ static void rallybik_find_tiles(void)
 {
 	int priority;
 	int layer;
-	int width;
 	tile_struct *tinfo;
 	unsigned char *t_info;
 
@@ -547,10 +545,9 @@ static void toaplan1_find_sprites (void)
 static void rallybik_find_sprites (void)
 {
 	int sprite;
-	unsigned char *s_info,*s_size;
+	unsigned char *s_info;
 	int tattr;
-	int sx,sy,s_sizex,s_sizey,tchar;
-	int sprite_size_ptr;
+	int sx,sy,tchar;
 	int priority;
 	tile_struct *tinfo;
 
@@ -599,10 +596,9 @@ static void rallybik_find_sprites (void)
 
 static void toaplan1_render (struct osd_bitmap *bitmap)
 {
-	int i,sx,sy,tx,ty,c,b;
+	int i;
 	int priority;
 	tile_struct *tinfo;
-	struct GfxElement *gfx ;
 
 	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
 

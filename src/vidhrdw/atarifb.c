@@ -244,7 +244,6 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x;
 	char buf1[25], buf2[25];
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
 extern int atarifb_lamp1, atarifb_lamp2;
 
 	switch (atarifb_game)

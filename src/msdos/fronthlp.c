@@ -263,7 +263,7 @@ void romident(const char* name,int enter_dirs) {
 
 enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
-		LIST_WRONGORIENTATION, LIST_LISTCRC, LIST_LISTDUPCRC };
+		LIST_WRONGORIENTATION, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE };
 
 int frontend_help (int argc, char **argv)
 {
@@ -310,6 +310,7 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-listsamdir")) list = LIST_LISTSAMDIR;
 		if (!stricmp(argv[i],"-listcrc")) list = LIST_LISTCRC;
 		if (!stricmp(argv[i],"-listdupcrc")) list = LIST_LISTDUPCRC;
+		if (!stricmp(argv[i],"-listwrongmerge")) list = LIST_WRONGMERGE;
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
@@ -732,6 +733,82 @@ int frontend_help (int argc, char **argv)
 								romp1++;
 							}
 
+							j++;
+						}
+					}
+
+					romp++;
+				}
+
+				i++;
+			}
+			return 0;
+			break;
+
+
+		case LIST_WRONGMERGE: /* list duplicate crc-32 with different ROM name in clone sets */
+			i = 0;
+			while (drivers[i])
+			{
+				const struct RomModule *romp;
+
+				romp = drivers[i]->rom;
+
+				while (romp->name || romp->offset || romp->length)
+				{
+					if (romp->name && romp->name != (char *)-1 && romp->crc)
+					{
+						j = 0;
+						while (drivers[j])
+						{
+							if (j != i &&
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+								drivers[j]->clone_of != &neogeo_bios &&
+#endif
+#endif
+								drivers[j]->clone_of &&
+								(drivers[j]->clone_of == drivers[i] ||
+								(i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
+							{
+								const struct RomModule *romp1;
+								int match;
+
+
+								romp1 = drivers[j]->rom;
+								match = 0;
+
+								while (romp1->name || romp1->offset || romp1->length)
+								{
+									if (romp1->name && romp1->name != (char *)-1 &&
+											!strcmp(romp->name,romp1->name))
+									{
+										match = 1;
+										break;
+									}
+
+									romp1++;
+								}
+
+								if (match == 0)
+								{
+									romp1 = drivers[j]->rom;
+
+									while (romp1->name || romp1->offset || romp1->length)
+									{
+										if (romp1->name && romp1->name != (char *)-1 &&
+												strcmp(romp->name,romp1->name) &&
+												romp1->crc == romp->crc)
+										{
+											printf("%08x %-12s %-8s <-> %-12s %-8s\n",romp->crc,
+													romp->name,drivers[i]->name,
+													romp1->name,drivers[j]->name);
+										}
+
+										romp1++;
+									}
+								}
+							}
 							j++;
 						}
 					}

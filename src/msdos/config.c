@@ -67,9 +67,6 @@ void decompose_rom_sample_path (char *rompath, char *samplepath);
 extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
-/* from profiler.c */
-extern int use_profiler;
-
 /*from svga15kh.c centering for 15.75KHz modes (req. for 15.75KHz Modes)*/
 extern int center_x;
 extern int center_y;
@@ -369,7 +366,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
 	if (f_flicker < 0.0) f_flicker = 0.0;
 	if (f_flicker > 100.0) f_flicker = 100.0;
-	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
+	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
 	if (osd_gamma_correction < 0.5) osd_gamma_correction = 0.5;
 	if (osd_gamma_correction > 2.0) osd_gamma_correction = 2.0;
 
@@ -392,7 +389,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
-	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
+	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	if (options.samplerate < 5000) options.samplerate = 5000;
 	if (options.samplerate > 50000) options.samplerate = 50000;
@@ -414,7 +411,6 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
 	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
 	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
-	use_profiler        = get_bool ("config", "profiler", NULL,  0);
 
 	/* get resolution */
 	resolution  = get_string ("config", "resolution", NULL, "auto");
@@ -578,12 +574,12 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	for (i = 0; joy_table[i].name != NULL; i++)
 	{
-		char tmpnum[33];
-		(void) itoa (i, tmpnum, 10); /* old Allegro joystick index */
-		if ((stricmp (joy_table[i].name, joyname) == 0) ||
-			(stricmp (tmpnum, joyname) == 0))
+		if (stricmp (joy_table[i].name, joyname) == 0)
 		{
 			joystick = joy_table[i].id;
+			if (errorlog)
+				fprintf (errorlog, "using joystick %s = %08x\n",
+						joyname,joy_table[i].id);
 			break;
 		}
 	}

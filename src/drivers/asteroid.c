@@ -439,7 +439,7 @@ INPUT_PORTS_START ( llander_input_ports )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, OSD_JOY_UP, OSD_JOY_DOWN )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( llander1_input_ports )
@@ -486,7 +486,7 @@ INPUT_PORTS_START ( llander1_input_ports )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, OSD_JOY_UP, OSD_JOY_DOWN )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -947,7 +947,7 @@ ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "034572.02",    0x6000, 0x0800, 0xb8763eea )
 	ROM_LOAD( "034571.02",    0x6800, 0x0800, 0x77da4b2f )
-	ROM_LOAD( "034570.02",    0x7000, 0x0800, 0x2724e591 )
+	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )
 	ROM_LOAD( "034569.02",    0x7800, 0x0800, 0x72837a4e )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */

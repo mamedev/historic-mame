@@ -84,6 +84,15 @@ struct MachineSound
 #if (HAS_K007232)
 #include "sound/k007232.h"
 #endif
+#if (HAS_K053260)
+#include "sound/k053260.h"
+#endif
+#if (HAS_SEGAPCM)
+#include "sound/segapcm.h"
+#endif
+#if (HAS_RF5C68)
+#include "sound/rf5c68.h"
+#endif
 
 
 enum
@@ -175,6 +184,15 @@ enum
 #endif
 #if (HAS_K007232)
 	SOUND_K007232,	/* Konami 007232 */
+#endif
+#if (HAS_K053260)
+	SOUND_K053260,	/* Konami 053260 */
+#endif
+#if (HAS_SEGAPCM)
+	SOUND_SEGAPCM,
+#endif
+#if (HAS_RF5C68)
+	SOUND_RF5C68,
 #endif
 	SOUND_COUNT
 };

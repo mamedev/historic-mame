@@ -1158,7 +1158,6 @@ static void Update_pokey_sound (int addr, int val, int chip, int gain)
 
 static void Pokey_process (int chip, void *buffer, int n)
 {
-	REGISTER UINT32 *div_n_ptr;
 	REGISTER UINT32 event_min;
 	REGISTER UINT8 next_event;
 	REGISTER UINT16 chip_offs;

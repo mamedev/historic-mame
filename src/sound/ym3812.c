@@ -329,7 +329,6 @@ ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 	int 				l;
 	ym3812				*pOPL;
 	float				vValue,vMinVal;
-	signed char 		*pSamp;
 	signed char 		*pDrum,*pDrum8;
 	signed short		*pDrum16;
 #ifdef MAMEVER
@@ -685,7 +684,6 @@ void ym3812_SetReg( ym3812 *pOPL, unsigned char nReg )
 void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 {
 	int 	nReg, nCh, nSlot, nTemp;
-	char   	zsString[128];
 
 	nReg = pOPL->nReg;
 

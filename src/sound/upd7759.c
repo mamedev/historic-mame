@@ -291,7 +291,7 @@ if (errorlog)
 
 int UPD7759_sh_start (const struct MachineSound *msound)
 {
-	int i, j;
+	int i;
 	const struct UPD7759_interface *intf = msound->sound_interface;
 
 	if( Machine->sample_rate == 0 )
@@ -781,7 +781,6 @@ int UPD7759_busy_r (int num)
 
 void UPD7759_reset_w (int num, int data)
 {
-	int i;
 	struct UPD7759voice *voice = updadpcm + num;
 
 	/* If there's no sample rate, do nothing */

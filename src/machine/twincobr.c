@@ -29,8 +29,6 @@ static int coin_count;	/* coin count increments on startup ? , so stop it */
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
 int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
-static char *toaplan_cpu_type[2] = { "68K"   , "Z80" } ;
-static int  toaplan_port_type[2] = { 0x7800c , 0x5c  } ;
 
 int intenable;
 int fsharkbt_8741;

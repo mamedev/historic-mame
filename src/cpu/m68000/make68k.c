@@ -2886,7 +2886,6 @@ void opcode5(void)
 	int allowtoScc[]   = {1,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
 	int allowtoADDQ[]  = {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
 	int Opcode,BaseCode;
-    int Counter;
     char Label[32];
     char Label2[32];
     char Size=' ';
@@ -2955,7 +2954,6 @@ void opcode5(void)
                 	/* Scc */
 
                 	int  Dest = EAtoAMN(Opcode, FALSE);
-                    char TrueLabel[16];
 
 	                if (allowtoScc[(Dest & 15)])
     	            {
@@ -3536,7 +3534,6 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 	char Size=' ' ;
 	char * RegnameECX="" ;
 	char * Regname="" ;
-    char *Operation="";
     int Dest ;
     int SaveEDX ;
     int SaveDir;
@@ -3728,7 +3725,7 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 
 void typelogicalmath(void)
 {
-	int type, dir, leng, mode, sreg ,reg ;
+	int dir, leng, mode, sreg ,reg ;
 
 	for ( reg = 0 ; reg < 8 ; reg++ )
 	{
@@ -4043,7 +4040,6 @@ void chk(void)
 	int	dreg,mode,sreg ;
 	int	Opcode, BaseCode ;
 	int	Dest ;
-	char  Size ;
 	char * Label ;
 
 	char  *allow = "0-23456789ab----" ;
@@ -4290,7 +4286,7 @@ void tas(void)
 void PushEffectiveAddress(void)
 {
 	int	Opcode, BaseCode ;
-	int	sreg,mode,dreg ;
+	int	mode,dreg ;
 	int	Dest ;
 	char allow[] = "--2--56789a-----" ;
 
@@ -4793,7 +4789,6 @@ void trap(void)
 
 void reset(void)
 {
-	int Count;
    	int BaseCode = 0x4E70;
 	char * Label;
 
@@ -4835,7 +4830,6 @@ void nop(void)
 
 void stop(void)
 {
-	char *Label;
 	char TrueLabel[16];
 	int	 BaseCode = 0x4e72 ;
 
@@ -4940,7 +4934,6 @@ void ReturnFromException(void)
 
 void trapv(void)
 {
-	int Count;
    	int BaseCode = 0x4E76;
 	char * Label;
 
@@ -4978,8 +4971,6 @@ void illegal_opcode(void)
 
 void ReturnandRestore(void)
 {
-	char TrueLabel[16];
-
     int BaseCode = 0x4e77;
 
   	Align();
@@ -5359,7 +5350,6 @@ void movesr(void)
 	int Dest ;
 	char allow[] = "0-2345678-------" ;
     char Size;
-	char *Label;
 
 	for ( type = 0 ; type < 4 ; type++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -5466,8 +5456,6 @@ void abcd_sbcd(void)
 {
 	int	Opcode, BaseCode ;
 	int	regx,type,rm,regy,mode ;
-	char * Regname ;
-	char * RegnameECX ;
 	char *Label;
 
 	for ( type = 0 ; type < 2 ; type ++ ) /* 0=sbcd, 1=abcd */
@@ -5553,8 +5541,7 @@ void abcd_sbcd(void)
 void rol_ror(void)
 {
 	int Opcode, BaseCode ;
-	int dreg, dr, leng, mode, ir, sreg ;
-	int Dest ;
+	int dreg, dr, leng, ir, sreg ;
 	char Size=' ';
 	char * Label ;
 	char * Regname="" ;
@@ -5654,9 +5641,6 @@ void rol_ror_ea(void)
 	int Opcode, BaseCode ;
 	int dr, mode, sreg ;
 	int Dest ;
-	char * Label ;
-	char * Regname ;
-	char * RegnameECX ;
 	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
@@ -5716,8 +5700,7 @@ void rol_ror_ea(void)
 void lsl_lsr(void)
 {
 	int Opcode, BaseCode ;
-	int dreg, dr, leng, mode, ir, sreg ;
-	int Dest ;
+	int dreg, dr, leng, ir, sreg ;
 	char Size=' ';
 	char * Regname="" ;
 	char * RegnameECX="" ;
@@ -5820,9 +5803,6 @@ void lsl_lsr_ea(void)
 	int Opcode, BaseCode ;
 	int dr, mode, sreg ;
 	int Dest ;
-	char * Label ;
-	char * Regname ;
-	char * RegnameECX ;
 	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
@@ -5879,8 +5859,7 @@ void lsl_lsr_ea(void)
 void roxl_roxr(void)
 {
 	int Opcode, BaseCode ;
-	int dreg, dr, leng, mode, ir, sreg ;
-	int Dest ;
+	int dreg, dr, leng, ir, sreg ;
 	char Size=' ' ;
 	char * Regname="" ;
 	char * RegnameECX="" ;
@@ -5992,9 +5971,6 @@ void roxl_roxr_ea(void)
 	int Opcode, BaseCode ;
 	int dr, mode, sreg ;
 	int Dest ;
-	char * Label ;
-	char * Regname ;
-	char * RegnameECX ;
 	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
@@ -6060,8 +6036,7 @@ void roxl_roxr_ea(void)
 void asl_asr(void)
 {
 	int Opcode, BaseCode ;
-	int dreg, dr, leng, mode, ir, sreg ;
-	int Dest ;
+	int dreg, dr, leng, ir, sreg ;
 	char Size=' ';
     char * Sizename="" ;
 	char * Regname="" ;
@@ -6274,9 +6249,6 @@ void asl_asr_ea(void)
 	int Opcode, BaseCode ;
 	int dr, mode, sreg ;
 	int Dest ;
-	char * Label ;
-	char * Regname ;
-	char * RegnameECX ;
 	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
@@ -6335,7 +6307,6 @@ void divides(void)
 	int Opcode, BaseCode ;
 	int Dest ;
 	char allow[] = "0-23456789ab-----" ;
-	char * Label ;
 	char TrapLabel[16];
 	int Cycles;
 

@@ -671,7 +671,7 @@ static int debug(void)
 		}
 
 		fprintf(f, "\n\nMotion Objects (drawn)\n");
-//		atarigen_mo_process(mo_print_callback, f);
+/*		atarigen_mo_process(mo_print_callback, f);*/
 
 		fprintf(f, "\n\nMotion Objects (control = %d)\n", current_control);
 		for (i = 0; i < 0x100; i++)

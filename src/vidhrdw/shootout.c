@@ -83,7 +83,6 @@ static void get_sprite_info( void ){
 }
 
 static void draw_background( struct osd_bitmap *bitmap ){
-	const struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	int offs;
 	for( offs=0; offs<videoram_size; offs++ ){

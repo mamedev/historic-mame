@@ -45,7 +45,6 @@ void toaplan1_vh_stop(void);
 void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static unsigned char *ram;
 int unk;
 int int_enable;
 int credits;
@@ -1339,9 +1338,10 @@ static struct GfxDecodeInfo outzone_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,0xff);
 }
 
 static struct YM3812interface ym3812_interface =
@@ -1349,7 +1349,7 @@ static struct YM3812interface ym3812_interface =
 	1,
 	3500000,
 	{ 255 },
-	irqhandler,
+	{ irqhandler },
 };
 
 static struct MachineDriver zw_machine_driver =

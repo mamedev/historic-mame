@@ -359,7 +359,7 @@ static struct MachineDriver machine_driver =
 			atarigen_video_int_gen,1
 		},
 		{
-			JSA_CPU(1)
+			JSA_I_CPU(1)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

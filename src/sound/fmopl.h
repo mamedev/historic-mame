@@ -40,8 +40,8 @@ typedef struct fm_opl_slot {
 	signed int evsd;		/* envelope step for DR :DR[ksr]       */
 	signed int evsr;		/* envelope step for RR :RR[ksr]       */
 	/* LFO */
-	unsigned char ams;		/* ams switch                          */
-	unsigned char vib;		/* vib switch                          */
+	int ams;				/* ams flag                            */
+	int vib;				/* vibrate flag                        */
 	/* wave selector */
 	signed int **wavetable;
 }OPL_SLOT;
@@ -53,7 +53,7 @@ typedef struct fm_opl_channel {
 	unsigned char FB;			/* feed back       :(shift down bit)   */
 	signed int *connect1;		/* slot1 output pointer                */
 	signed int *connect2;		/* slot2 output pointer                */
-	signed int op1_out;			/* slot1 output for selfeedback        */
+	signed int op1_out[2];		/* slot1 output for selfeedback        */
 	/* phase generator state */
 	unsigned int  block_fnum;	/* block+fnum      :                   */
 	unsigned char kcode;		/* key code        : KeyScaleCode      */
@@ -80,7 +80,7 @@ typedef struct fm_opl_f {
 	OPL_CH *P_CH;				/* pointer of CH       */
 	int	max_ch;					/* maximum channel     */
 	/* Rythm sention */
-	unsigned int rythm;			/* Rythm mode flag     */
+	unsigned int rythm;			/* Rythm mode , key flag */
 	/* Delta-T ADPCM unit (Y8950) */
 	void *adpcm;				/* DELTA-T ADPCM       */
 	/* Keyboard / I/O interface unit (Y8950) */
@@ -91,12 +91,12 @@ typedef struct fm_opl_f {
 	signed int DR_TABLE[75];	/* decay rate tables   */
 	unsigned int FN_TABLE[1024]; /* fnumber -> increment counter */
 	/* LFO */
-	char amdep;
-	char vibdep;
-	unsigned int amsCnt;
-	unsigned int amsIncr;
-	unsigned int vibCnt;
-	unsigned int vibIncr;
+	unsigned int  *ams_table;
+	unsigned int  *vib_table;
+	unsigned long amsCnt;
+	unsigned long amsIncr;
+	unsigned long vibCnt;
+	unsigned long vibIncr;
 	/* wave selector enable flag */
 	unsigned char wavesel;
 	/* event callback handler */

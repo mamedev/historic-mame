@@ -108,8 +108,8 @@ void coin_lockout_w (int offset, int data);
 void coin_lockout_global_w (int offset, int data);  /* Locks out all coin inputs */
 
 int readroms(void);
-void printromlist(const struct RomModule *romp,const char *basename);
-struct GameSamples *readsamples(const char **samplenames,const char *basename);
+void printromlist(const struct RomModule *romp,const char *name);
+struct GameSamples *readsamples(const char **samplenames,const char *name);
 void freesamples(struct GameSamples *samples);
 
 void save_screen_snapshot(void);

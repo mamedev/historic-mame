@@ -401,7 +401,6 @@ byte #4:
 static void draw_sprites_2(struct osd_bitmap *bitmap, const unsigned char *source, int circuit, int priority, int desp){
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
 	const unsigned char *finish;
-	unsigned char *ram = Machine->memory_region[0];
 
 	source = source + desp;
 	finish = source + 0x400;

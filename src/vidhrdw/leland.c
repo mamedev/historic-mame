@@ -347,8 +347,6 @@ int leland_vram_port_r(int offset, int num)
 
 void leland_vram_port_w(int offset, int data, int num)
 {
-    int ret, i;
-
     switch (offset)
     {
         case 0x01:
@@ -577,7 +575,7 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
     copybitmap(bitmap,screen_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 #ifdef MAME_DEBUG
-	if (keyboard_key_pressed(KEYCODE_F))
+	if (keyboard_pressed(KEYCODE_F))
 	{
 		FILE *fp=fopen("VIDEOR.DMP", "w+b");
 		if (fp)
@@ -599,13 +597,11 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
 void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkcharbank)
 {
 #define Z 1
-	int j,k,x,y,value, offs, colour;
-	unsigned long data;
-	long l;
+	int x,y, offs, colour;
     int scrollx, scrolly, xfine, yfine;
     int bkprombank;
     int ypos;
-    int sx, sy;
+    int sx;
     unsigned char *BKGND = Machine->memory_region[4];
 
     /* PROM high bank */
@@ -740,7 +736,6 @@ int ataxx_vram_port_r(int offset, int num)
 
 void ataxx_vram_port_w(int offset, int data, int num)
 {
-    int ret, i;
     switch (offset)
     {
         case 0x03:
@@ -904,7 +899,7 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     leland_draw_bitmap(bitmap, background_bitmap);
 
 #if 0
-    if (keyboard_key_pressed(KEYCODE_B))
+    if (keyboard_pressed(KEYCODE_B))
     {
         FILE *fp;
         fp=fopen("TRAM.DMP", "w+b");
@@ -969,7 +964,7 @@ void leland_sh_stop (void)
 void leland_sh_update(void)
 {
     /* 8MHZ 8 bit DAC sound stored in program ROMS */
-    int data, dacpos;
+    int dacpos;
     int dac1on, dac2on;
 	signed char *buf;
 

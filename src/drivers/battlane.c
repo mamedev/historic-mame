@@ -27,8 +27,6 @@ extern int battlane_video_ctrl_r(int);
 
 void battlane_machine_init(void)
 {
-	unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
 }
 
 static int battlane_irq_enable;
@@ -91,6 +89,7 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+#if 0
 static struct MemoryReadAddress cpu2_readmem[] =
 {
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
@@ -110,6 +109,7 @@ static struct MemoryWriteAddress cpu2_writemem[] =
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+#endif
 
 static int nmipending=0;
 
@@ -119,9 +119,9 @@ int battlane_cpu1_interrupt(void)
 	s1++;
 
 #if 1
-	if (keyboard_key_pressed(KEYCODE_N))
+	if (keyboard_pressed(KEYCODE_N))
 	{
-		while (keyboard_key_pressed(KEYCODE_F)) ;
+		while (keyboard_pressed(KEYCODE_F)) ;
 		nmipending=1;
 	}
 #else
@@ -163,10 +163,10 @@ int battlane_cpu2_interrupt(void)
 	s1++;
 
 #ifdef MAME_DEBUG
-	if (keyboard_key_pressed(KEYCODE_F))
+	if (keyboard_pressed(KEYCODE_F))
 	{
 		FILE *fp;
-		while (keyboard_key_pressed(KEYCODE_F)) ;
+		while (keyboard_pressed(KEYCODE_F)) ;
 		fp=fopen("RAM.DMP", "w+b");
 		if (fp)
 		{

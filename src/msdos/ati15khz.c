@@ -390,9 +390,7 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 
 int setati15KHz(int vdouble,int width, int height)
 {
-	long int gen_cntl;
-	int m,n,extdiv,P;
-	int n2,P2,ext2;
+	int n,extdiv,P;
 	int nActualMHz;
 	int nHzTotal;
 	int nHzDisplay;
@@ -402,9 +400,7 @@ int setati15KHz(int vdouble,int width, int height)
 	int dispdouble;
 	long int temp;
 	long int gen;
-	int temp1,temp2,temp3,temp4;
-	int old_crtc_ext_disp;
-	int nFIFO;
+	int temp1,temp2,temp3;
 	int	lastvisline;
 	int	vTotal;
 
@@ -647,7 +643,7 @@ int calc_mach64_clock(int nTargetMHz,int *N,int *P,int *externaldiv)
 {
 
 	int postDiv;
-	int nActualMHz,nCalcMHz;
+	int nActualMHz;
 	float Q;
 
 /* assume the best */

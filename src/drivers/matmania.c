@@ -409,9 +409,10 @@ static struct MachineDriver matmania_machine_driver =
 
 
 /* handler called by the 3526 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,M6809_INT_FIRQ);
+	cpu_set_irq_line(1,1,linestate);
+	//cpu_cause_interrupt(1,M6809_INT_FIRQ);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -419,7 +420,7 @@ static struct YM3526interface ym3526_interface =
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.6 MHz ? */
 	{ 255 },		/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 

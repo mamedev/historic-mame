@@ -341,8 +341,6 @@ static int cpuB_io_r( int offset )
 
 static void cpuB_io_w( int offset, int data )
 {
-	unsigned char *RAM = Machine->memory_region[0];
-
 	if( offset==0 || offset==0x700 )
 	{
 		if( cpuB_latch&SNK_NMI_PENDING )
@@ -2434,6 +2432,7 @@ ROM_END
 
 /***********************************************************************/
 
+#if 0
 ROM_START( alphmiss_rom ) /* BAD DUMP! */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "p1.8d",     0x0000, 0x4000, 0x00000000 )
@@ -2467,6 +2466,7 @@ ROM_START( alphmiss_rom ) /* BAD DUMP! */
 	ROM_LOAD( "p12.9h",   0x08000, 0x8000, 0x00000000 )
 	ROM_LOAD( "p13.8h",   0x10000, 0x8000, 0x00000000 )
 ROM_END
+#endif
 
 /***********************************************************************/
 
@@ -3495,7 +3495,7 @@ static void dogosoke_decode(void)
 
 static void gwar_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+//	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Hack ROM Test */
 //	RAM[0x0ce1] = 0x00;
@@ -3515,7 +3515,7 @@ static void gwar_decode(void)
 
 static void chopper_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+//	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Hack ROM Test */
 //	RAM[0x0d43] = 0x00;

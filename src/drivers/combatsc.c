@@ -160,6 +160,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }
 };
 
+#if 0
 static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },					/* ROM */
@@ -186,6 +187,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xfffc, 0xffff, MWA_RAM },				/* ??? */
 	{ -1 }
 };
+#endif
 
 static struct MemoryReadAddress combatsc_readmem_sound[] =
 {

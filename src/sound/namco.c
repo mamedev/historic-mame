@@ -476,3 +476,30 @@ int namcos1_wavedata_r(int offset)
 {
 	return namco_wavedata[offset];
 }
+
+
+
+
+
+
+
+
+void snkwave_w(int offset,int data)
+{
+	static int freq0 = 0xff;
+	sound_channel *voice = channel_list;
+	if( offset==0 ) freq0 = data;
+	if( offset==1 )
+	{
+		stream_update(stream, 0);
+		if( data==0xff || freq0==0 )
+		{
+			voice->volume[0] = 0x0;
+		}
+		else
+		{
+			voice->volume[0] = 0x8;
+			voice->frequency = (data<<16)/freq0;
+		}
+	}
+}

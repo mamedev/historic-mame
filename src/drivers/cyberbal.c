@@ -554,7 +554,7 @@ static int samples_start(const struct MachineSound *msound)
 	{
 		double factor = pow(0.5, (double)j * 0.25);
 		for (i = 0; i < 16; i++)
-			volume_table[j * 16 + i] = (signed short)(factor * 0.5 * (double)((signed short)(i << 12)));
+			volume_table[j * 16 + i] = (signed short)(factor * (double)((signed short)(i << 12)));
 	}
 
 	/* get stream channels */
@@ -644,7 +644,7 @@ static void handle_68k_sound_command(int command)
 						actual_delta = 0;
 				}
 			}
-			else
+			else if (voice->playing)
 			{
 				temp = sound->voice_priority & 0xff;
 				if (voice->priority > temp ||
@@ -1035,11 +1035,13 @@ static struct YM2151interface ym2151_interface =
 	{ atarigen_ym2151_irq_gen }
 };
 
+#ifdef EMULATE_SOUND_68000
 static struct DACinterface dac_interface =
 {
 	2,
 	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
 };
+#endif
 
 static struct CustomSound_interface samples_interface =
 {
@@ -1087,7 +1089,8 @@ static struct MachineDriver machine_driver =
 			7159160,		/* 7.159 Mhz */
 			2,
 			sound_68k_readmem,sound_68k_writemem,0,0,
-			sound_68k_irq_gen,1000
+			0,0,
+			sound_68k_irq_gen,10000
 		}
 #endif
 	},
@@ -1142,7 +1145,7 @@ static struct MachineDriver cyberb2p_machine_driver =
 			atarigen_video_int_gen,1
 		},
 		{
-			JSA_CPU(1)
+			JSA_II_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1331,9 +1334,22 @@ ROM_END
  *
  *************************************/
 
+static const unsigned short default_eeprom[] =
+{
+	0x0001,0x01FF,0x0F00,0x011A,0x014A,0x0100,0x01A1,0x0200,
+	0x010E,0x01AF,0x0300,0x01FF,0x0114,0x0144,0x01FF,0x0F00,
+	0x011A,0x014A,0x0100,0x01A1,0x0200,0x010E,0x01AF,0x0300,
+	0x01FF,0x0114,0x0144,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,
+	0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,
+	0x0E00,0x01A8,0x0131,0x010B,0x0100,0x014C,0x0A00,0x01FF,
+	0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0xB5FF,0x0E00,0x01FF,
+	0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,
+	0x0E00,0x01FF,0x0E00,0x0000
+};
+
 static void cyberbal_init(void)
 {
-	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 0);
 
 	/* make sure the banks are pointing to the correct location */
@@ -1351,7 +1367,7 @@ static void cyberbal_init(void)
 
 static void cyberbt_init(void)
 {
-	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 116);
 
 	/* make sure the banks are pointing to the correct location */
@@ -1369,7 +1385,7 @@ static void cyberbt_init(void)
 
 static void cyberb2p_init(void)
 {
-	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_default = default_eeprom;
 
 	/* initialize the JSA audio board */
 	atarijsa_init(1, 3, 2, 0x8000);

@@ -5,6 +5,8 @@ Sega System 1 / System 2
 Up'n Down, Mister Viking, Flicky, SWAT, Water Match and Bull Fight are known
 to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 
+TODO: background is misplaced in wbmlju
+
 ******************************************************************************/
 
 #include "driver.h"
@@ -331,7 +333,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #define IN0_PORT \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE ) \
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \

@@ -77,7 +77,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
+#if 0
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
@@ -86,7 +86,7 @@ static struct YM2151interface ym2151_interface =
 {0},//	{ irq_handler },
 	{ 0 }
 };
-
+#endif
 
 
 /* V30 1 MB address mask */

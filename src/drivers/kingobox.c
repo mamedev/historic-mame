@@ -919,7 +919,6 @@ static int kingofb_hiload(void)
 static void kingofb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -965,8 +964,7 @@ static int ringking_hiload(void)
 static void ringking_hisave(void)
 {
 	void *f;
-		unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-		unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
 
 
@@ -1013,7 +1011,6 @@ static int ringkin2_hiload(void)
 static void ringkin2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

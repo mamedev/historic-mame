@@ -1091,7 +1091,6 @@ static struct YM2413interface ym2413_interface=
     1,
     8000000,	/* ??? */
     { 30 },
-    0,
 };
 
 static struct YM2203interface ym2203_interface =
@@ -1933,7 +1932,7 @@ static void gangwars_patch(void)
 
 static void btl_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+//	unsigned char *RAM = Machine->memory_region[0];
 //	WRITE_WORD(&RAM[0x9da8],0x4e73);
 //	WRITE_WORD(&RAM[0x9250],0x4240); /* Clear D0 */
 }
@@ -2304,7 +2303,7 @@ struct GameDriver sbasebal_driver =
 	"sbasebal",
 	"Super Champion Baseball",
 	"1989",
-	"SNK",
+	"SNK of America (licensed from Alpha)",
 	"Bryan McPhail",
 	GAME_NOT_WORKING,
 	&alpha68k_V_sb_machine_driver,

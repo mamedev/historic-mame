@@ -191,7 +191,6 @@ static void plot_pixel_8080 (int x, int y, int col)
 }
 void spaceint_videoram_w (int offset,int data) /* LT 23-12-1998 */ /*--WIP--*/
  {
-   unsigned char *RAM = Machine->memory_region[2];
 	if (astinvad_videoram[offset] != data)
 	{
 		int i,x,y;

@@ -187,7 +187,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 
 void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int tile,color,offs,sprite;
+	int color,offs,sprite;
 	int colmask[16],i,pal_base;
 
 	/* Setup the tilemaps, alternate version has different scroll positions */

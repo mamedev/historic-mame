@@ -28,8 +28,6 @@ static int stream[MAX_2608];
 
 static signed short *rhythm_buf;
 
-static FMSAMPLE *Buf[YM2608_NUMBUF];
-
 /* Global Interface holder */
 static const struct YM2608interface *intf;
 
@@ -110,9 +108,8 @@ int YM2608_sh_start(const struct MachineSound *msound)
 	char buf[YM2608_NUMBUF][40];
 	const char *name[YM2608_NUMBUF];
 	int mixed_vol,vol[YM2608_NUMBUF];
-	void *pcmbufa[YM2608_NUMBUF],*rhythmbufb;
-	int  pcmsizea[YM2608_NUMBUF],rhythmsize;
-	char *rythmbufb;
+	void *pcmbufa[YM2608_NUMBUF];
+	int  pcmsizea[YM2608_NUMBUF];
 	int rhythm_pos[6+1];
 	struct GameSamples	*psSamples;
 	int total_size,r_offset,s_size;

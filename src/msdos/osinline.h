@@ -14,7 +14,7 @@ extern char *dirty_new;
 INLINE int _vec_mult(int x, int y)
 {
 	int result;
-	asm (
+	__asm__ (
 			"movl  %1    , %0    ; "
 			"imull %2            ; "    /* do the multiply */
 			"movl  %%edx , %%eax ; "
@@ -23,6 +23,20 @@ INLINE int _vec_mult(int x, int y)
 			   "mr" (y)
 			:  "%edx", "%cc"            /* clobbers edx and flags */
 		);
+	return result;
+}
+
+INLINE unsigned int osd_cycles(void)
+{
+	int result;
+
+	__asm__ (
+		"rdtsc                 \n"	/* load clock cycle counter in eax and edx */
+		:  "=&a" (result)			/* the result has to go in eax */
+		:							/* no inputs */
+		:  "%edx"					/* clobbers edx */
+	);
+
 	return result;
 }
 

@@ -23,8 +23,6 @@ static int p2_sprite = 0;
 static int s1_sprite = 0;
 static int s2_sprite = 0;
 
-static int collision_reg = 0;
-
 static int engine1_on = 0;
 static int engine2_on = 0;
 static int explode1_on = 0;

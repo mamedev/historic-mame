@@ -31,7 +31,6 @@ static int rev1_key_r( int offset ) {
 }
 
 static void rev1_key_w( int offset, int data ) {
-	int i;
 	static unsigned short divider, divide_32 = 0;
 
 	key[offset] = data;
@@ -423,7 +422,6 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
                            handler_r key_r,handler_w key_w,
                            int cpu0_start_bank,int cpu1_start_bank)
 {
-	unsigned char *BROM = Machine->memory_region[4];
 	int i;
 
 	/* S1 RAM pointer set */

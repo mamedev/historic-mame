@@ -483,9 +483,9 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 		/* call the callback */
 		if (timer->callback)
 		{
-			osd_profiler(OSD_PROFILE_TIMER_CALLBACK);
+			profiler_mark(PROFILER_TIMER_CALLBACK);
 			(*timer->callback)(timer->callback_param);
-			osd_profiler(OSD_PROFILE_END);
+			profiler_mark(PROFILER_END);
 		}
 
 		/* clear the callback timer global */

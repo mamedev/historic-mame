@@ -155,8 +155,6 @@ int YM2151_ALT_sh_start(const struct MachineSound *msound)
 
 void YM2151_sh_stop(void)
 {
-	int i;
-
 	switch(FMMode)
 	{
 	case CHIP_YM2151_DAC:

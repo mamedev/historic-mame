@@ -880,7 +880,7 @@ ROM_END
 
 static void xevios_decode(void)
 {
-	int A,i,j;
+	int A,i;
 
 
 	/* convert one of the sprite ROMs to the format used by Xevious */

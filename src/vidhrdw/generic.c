@@ -35,9 +35,6 @@ struct osd_bitmap *tmpbitmap;
 ***************************************************************************/
 int generic_vh_start(void)
 {
-	int i;
-
-
 	dirtybuffer = 0;
 	tmpbitmap = 0;
 

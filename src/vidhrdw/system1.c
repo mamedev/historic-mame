@@ -756,7 +756,7 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 #ifdef MAME_DEBUG
-	if (keyboard_key_pressed(KEYCODE_SPACE))		// goto next level
+	if (keyboard_pressed(KEYCODE_SPACE))		// goto next level
 	{
 		Machine->memory_region[0][0xC085]=33;
 	}

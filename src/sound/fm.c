@@ -562,7 +562,6 @@ static int feedback4;		/* connect for operator 4 */
 #ifndef __RAINE__
 static void Log(int level,char *format,...)
 {
-	int i;
 	va_list argptr;
 
 	if( level < LOG_LEVEL ) return;
@@ -1655,8 +1654,6 @@ int YM2203TimerOver(int n,int c)
 static char         *pcmbufA, *pcmbufB;
 static unsigned int pcmsizeA, pcmsizeB;
 
-static unsigned char adpcm_arrivedEndAddress;
-static unsigned char adpcm_statusmask;
 
 /************************************************************/
 /************************************************************/
@@ -2114,7 +2111,6 @@ INLINE void YM2608_RYTHM( YM2610 *F2610, ADPCM_CH *ch )
 
 {
 	unsigned int step;
-	int data;
 
 	ch->now_step += ch->step;
 	if ( ch->now_step >= (1<<ADPCM_SHIFT) )
@@ -2146,7 +2142,7 @@ void YM2608UpdateOne(int num, void **buffer, int length)
 	YM2608 *F2608 = &(FM2608[num]);
 	FM_OPN *OPN   = &(FM2608[num].OPN);
 	int dataR,dataL;
-	int i,j,ch;
+	int i,j;
 
 	/* set bufer */
 	bufL = (FMSAMPLE *)buffer[0];
@@ -2547,7 +2543,6 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
-	static FMSAMPLE  *buf[YM2610_NUMBUF];
 	int dataR,dataL;
 	int i,j;
 
@@ -2652,7 +2647,6 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
-	static FMSAMPLE  *buf[YM2610_NUMBUF];
 	int dataR,dataL;
 	int i,j;
 
@@ -2748,7 +2742,7 @@ int YM2610Init(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 
 {
-	int i,j;
+	int i;
 
     if (FM2610) return (-1);	/* duplicate init. */
     cur_chip = NULL;	/* hiro-shi!! */
@@ -2935,7 +2929,6 @@ unsigned char YM2610Read(int n,int a)
 	YM2610 *F2610 = &(FM2610[n]);
 	int addr = F2610->OPN.ST.address;
 	unsigned char ret = 0;
-	int i = 0;
 
 	switch( a&3){
 	case 0:	/* status 0 : YM2203 compatible */
@@ -3102,7 +3095,7 @@ void YM2612UpdateOne(int num, void **buffer, int length)
 int YM2612Init(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
-	int i,j;
+	int i;
 
     if (FM2612) return (-1);	/* duplicate init. */
     cur_chip = NULL;	/* hiro-shi!! */
@@ -3230,7 +3223,6 @@ int YM2612Write(int n, int a,int v)
 unsigned char YM2612Read(int n,int a)
 {
 	YM2612 *F2612 = &(FM2612[n]);
-	int addr = F2612->OPN.ST.address;
 
 	switch( a&3){
 	case 0:	/* status 0 */
@@ -3339,7 +3331,7 @@ void OPMResetChip(int num)
 int OPMInit(int num, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
-    int i,j;
+    int i;
 
     if (FMOPM) return (-1);	/* duplicate init. */
     cur_chip = NULL;	/* hiro-shi!! */

@@ -336,8 +336,8 @@ int readroms(void)
 
 		if (!options.gui_host && !bailing)
 		{
-			printf ("Press return to continue\n");
-			getchar();
+			printf ("Press any key to continue\n");
+			keyboard_read_sync();
 		}
 	}
 
@@ -626,7 +626,7 @@ void save_screen_snapshot(void)
 {
 	void *fp;
 	char name[20];
-	int y;
+
 
 	/* avoid overwriting existing files */
 	/* first of all try with "gamename.png" */

@@ -5,22 +5,11 @@ Contra/Gryzor (c) 1987 Konami
 Notes:
     Press 1P and 2P together to advance through tests.
 
-Issues:
-    There appears to be at least one incorrectly mapped sprite late on the
-    final stage.
-
-	The weapon-carrying enemies in the "into the screen" stages are supposed
-	to be colored differently (orange).
-	A control bit in sprite RAM exists which seems to serve this purpose,
-	indicating an alternate palette.
-
-    sprite horizontal position is sometimes off by 8.
-
 Credits:
     Carlos A. Lozano: CPU emulation
     Phil Stroffolino: video driver
     Jose Tejada Gomez (of Grytra fame) for precious information on sprites
-    Eric Hustvedt: palette optimizations and cocktail support (in-progress)
+    Eric Hustvedt: palette optimizations and cocktail support
 
 ***************************************************************************/
 
@@ -32,27 +21,27 @@ extern unsigned char *contra_fg_horizontal_scroll;
 extern unsigned char *contra_fg_vertical_scroll;
 extern unsigned char *contra_bg_horizontal_scroll;
 extern unsigned char *contra_bg_vertical_scroll;
+
 extern unsigned char *contra_fg_vram,*contra_fg_cram;
-extern int contra_fg_vram_size;
-extern unsigned char *contra_text_vram,*contra_text_cram;
-extern int contra_text_vram_size;
 extern unsigned char *contra_bg_vram,*contra_bg_cram;
-extern int contra_bg_vram_size;
+extern unsigned char *contra_text_vram,*contra_text_cram;
 
-void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void contra_paletteram_w(int offset,int data);
-void contra_fg_vram_w(int offset,int data);
-void contra_fg_cram_w(int offset,int data);
-void contra_bg_vram_w(int offset,int data);
-void contra_bg_cram_w(int offset,int data);
-void contra_0007_w(int offset,int data);
-void contra_fg_palette_bank_w(int offset,int data);
-void contra_bg_palette_bank_w(int offset,int data);
-void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int contra_vh_start(void);
-void contra_vh_stop(void);
+extern void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void contra_paletteram_w(int offset,int data);
 
+extern void contra_fg_vram_w(int offset,int data);
+extern void contra_fg_cram_w(int offset,int data);
+extern void contra_bg_vram_w(int offset,int data);
+extern void contra_bg_cram_w(int offset,int data);
+extern void contra_text_vram_w(int offset,int data);
+extern void contra_text_cram_w(int offset,int data);
 
+extern void contra_sprite_buffer_select( int offset, int data );
+extern void contra_0007_w(int offset,int data);
+extern void contra_fg_palette_bank_w(int offset,int data);
+extern void contra_bg_palette_bank_w(int offset,int data);
+extern void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern int contra_vh_start(void);
 
 void contra_init_machine(void)
 {
@@ -111,25 +100,26 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0000, MWA_RAM, &contra_fg_vertical_scroll },
 	{ 0x0002, 0x0002, MWA_RAM, &contra_fg_horizontal_scroll },
+	{ 0x0003, 0x0003, contra_sprite_buffer_select },
 	{ 0x0006, 0x0006, contra_fg_palette_bank_w },
 	{ 0x0007, 0x0007, contra_0007_w },
 	{ 0x0018, 0x0018, contra_coin_counter_w },
 	{ 0x001a, 0x001a, contra_sh_irqtrigger_w },
 	{ 0x001c, 0x001c, cpu_sound_command_w },
-	{ 0x001e, 0x001e, MWA_NOP },	/* ??? */
+	{ 0x001e, 0x001e, MWA_NOP },	/* ? */
 	{ 0x0060, 0x0060, MWA_RAM, &contra_bg_vertical_scroll },
 	{ 0x0062, 0x0062, MWA_RAM, &contra_bg_horizontal_scroll },
 	{ 0x0066, 0x0066, contra_bg_palette_bank_w },
 	{ 0x0c00, 0x0cff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x1000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x23ff, contra_fg_cram_w, &contra_fg_cram },
-	{ 0x2400, 0x27ff, contra_fg_vram_w, &contra_fg_vram, &contra_fg_vram_size },
-	{ 0x2800, 0x2bff, MWA_RAM, &contra_text_cram },
-	{ 0x2c00, 0x2fff, MWA_RAM, &contra_text_vram, &contra_text_vram_size },
-	{ 0x3000, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x3fff, MWA_RAM, &spriteram }, /* more sprites at 0x5800 */
+	{ 0x2400, 0x27ff, contra_fg_vram_w, &contra_fg_vram },
+	{ 0x2800, 0x2bff, contra_text_cram_w, &contra_text_cram },
+	{ 0x2c00, 0x2fff, contra_text_vram_w, &contra_text_vram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },/* 2nd bank is at 0x5000 */
+	{ 0x3800, 0x3fff, MWA_RAM }, // second sprite buffer
 	{ 0x4000, 0x43ff, contra_bg_cram_w, &contra_bg_cram },
-	{ 0x4400, 0x47ff, contra_bg_vram_w, &contra_bg_vram, &contra_bg_vram_size },
+	{ 0x4400, 0x47ff, contra_bg_vram_w, &contra_bg_vram },
 	{ 0x4800, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x6fff, MWA_ROM },
  	{ 0x7000, 0x7000, contra_bankswitch_w },
@@ -222,7 +212,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )//marvins.c
 	/* 0x00 is invalid */
 
 	PORT_START	/* DSW1 */
@@ -231,9 +221,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "30000 70000" )
 	PORT_DIPSETTING(    0x10, "40000 80000" )
@@ -252,9 +242,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -263,12 +253,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, "Stereo" )
 INPUT_PORTS_END
 
-
-
-static struct GfxLayout tilelayout =
+static struct GfxLayout gfx_layout =
 {
 	8,8,
-	8192,
+	0x4000,
 	4,
 	{ 0,1,2,3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28},
@@ -276,34 +264,12 @@ static struct GfxLayout tilelayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
-{
-	16,16,
-	2048,
-	4,
-	{ 0,1,2,3 },
-	{
-		0, 4, 8, 12, 16, 20, 24, 28,
-		8*32+0, 8*32+4, 8*32+8, 8*32+12, 8*32+16, 8*32+20, 8*32+24, 8*32+28,
-	},
-	{
-		0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		32*16+0*32, 32*16+1*32, 32*16+2*32, 32*16+3*32,
-		32*16+4*32, 32*16+5*32, 32*16+6*32, 32*16+7*32
-	},
-	32*32
-};
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,          128, 8*4 },
-	{ 1, 0x40000, &tilelayout,   128+16*8*4, 8*4 },
-	{ 1, 0x80000, &spritelayout,          0, 8 },
-	{ 1, 0xC0000, &spritelayout,          0, 8 },
+	{ 1, 0x00000, &gfx_layout,          0, 	8*16 },
+	{ 1, 0x80000, &gfx_layout,   		0, 	8*16 },
 	{ -1 }
 };
-
-
 
 static struct YM2151interface ym2151_interface =
 {
@@ -312,8 +278,6 @@ static struct YM2151interface ym2151_interface =
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
-
-
 
 static struct MachineDriver contra_machine_driver =
 {
@@ -341,13 +305,13 @@ static struct MachineDriver contra_machine_driver =
 
 	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 128 + 16*8*4 + 16*8*4,
+	128, 128*16,
 	contra_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	contra_vh_start,
-	contra_vh_stop,
+	0, /* vh_stop */
 	contra_vh_screenrefresh,
 
 	/* sound hardware */
@@ -360,35 +324,36 @@ static struct MachineDriver contra_machine_driver =
 	}
 };
 
-
-
 ROM_START( contra_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "633e03.18a",   0x20000, 0x08000, 0x7fc0d8cf )
-	ROM_CONTINUE(           0x08000, 0x08000 )
+	ROM_CONTINUE(			  0x08000, 0x08000 )
 	ROM_LOAD( "633e02.17a",   0x10000, 0x10000, 0xb2f7bd9a )
 
 	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )	/* foreground tiles */
+	/* bank 0: player sprites, foreground tiles */
+	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
 	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
 	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
 	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-4.rom",      0x40000, 0x10000, 0x2cc7e52c )	/* background tiles */
-	ROM_LOAD( "g-5.rom",      0x50000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0x60000, 0x10000, 0xaeea6744 )
-	/* 0x70000 is unpopulated */
-	ROM_LOAD( "g-11.rom",     0x80000, 0x10000, 0xbd9ba92c )	/* enemy sprites */
-	ROM_LOAD( "g-12.rom",     0x90000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xA0000, 0x10000, 0x2b513d12 )
-	ROM_LOAD( "g-14.rom",     0xB0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-15.rom",     0xC0000, 0x10000, 0xdaa2324b )	/* player sprites */
-	ROM_LOAD( "g-16.rom",     0xD0000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0xE0000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0xF0000, 0x10000, 0x1571ce42 )
+	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
+	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
+	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
+	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
 
-	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )	/* fg lookup table */
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )	/* ? bg lookup table ? */
+	/* bank 1: enemy sprites, background tiles */
+	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
+	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
+	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
+	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
+	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
+	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+
+	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
+	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -401,58 +366,64 @@ ROM_START( contrab_rom )
 	ROM_LOAD( "633e02.17a",   0x10000, 0x10000, 0xb2f7bd9a )
 
 	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )	/* foreground tiles */
+	/* bank 0: player sprites, foreground tiles */
+	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
 	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
 	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
 	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-4.rom",      0x40000, 0x10000, 0x2cc7e52c )	/* background tiles */
-	ROM_LOAD( "g-5.rom",      0x50000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0x60000, 0x10000, 0xaeea6744 )
-	/* 0x70000 is unpopulated */
-	ROM_LOAD( "g-11.rom",     0x80000, 0x10000, 0xbd9ba92c )	/* enemy sprites */
-	ROM_LOAD( "g-12.rom",     0x90000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xA0000, 0x10000, 0x2b513d12 )
-	ROM_LOAD( "g-14.rom",     0xB0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-15.rom",     0xC0000, 0x10000, 0xdaa2324b )	/* player sprites */
-	ROM_LOAD( "g-16.rom",     0xD0000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0xE0000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0xF0000, 0x10000, 0x1571ce42 )
+	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
+	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
+	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
+	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
 
-	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )	/* fg lookup table */
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )	/* ? bg lookup table ? */
+	/* bank 1: enemy sprites, background tiles */
+	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
+	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
+	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
+	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
+	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
+	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+
+	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
+	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
 ROM_END
 
-ROM_START( gryzorb_rom )
+ROM_START( contrajb_rom )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "g-2.rom",      0x20000, 0x08000, 0xbdb9196d )
 	ROM_CONTINUE(        0x08000, 0x08000 )
 	ROM_LOAD( "g-3.rom",      0x10000, 0x10000, 0x5d5f7438 )
 
 	ROM_REGION_DISPOSE(0x10000*16) /* temporary space for graphics */
-	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )	/* foreground tiles */
+	/* bank 0: player sprites, foreground tiles */
+	ROM_LOAD( "g-7.rom",      0x00000, 0x10000, 0x57f467d2 )
 	ROM_LOAD( "g-10.rom",     0x10000, 0x10000, 0xe6db9685 )
 	ROM_LOAD( "g-9.rom",      0x20000, 0x10000, 0x875c61de )
 	ROM_LOAD( "g-8.rom",      0x30000, 0x10000, 0x642765d6 )
-	ROM_LOAD( "g-4.rom",      0x40000, 0x10000, 0x2cc7e52c )	/* background tiles */
-	ROM_LOAD( "g-5.rom",      0x50000, 0x10000, 0xe01a5b9c )
-	ROM_LOAD( "g-6.rom",      0x60000, 0x10000, 0xaeea6744 )
-	/* 0x70000 is unpopulated */
-	ROM_LOAD( "g-11.rom",     0x80000, 0x10000, 0xbd9ba92c )	/* enemy sprites */
-	ROM_LOAD( "g-12.rom",     0x90000, 0x10000, 0xd0be7ec2 )
-	ROM_LOAD( "g-13.rom",     0xA0000, 0x10000, 0x2b513d12 )
-	ROM_LOAD( "g-14.rom",     0xB0000, 0x10000, 0xfca77c5a )
-	ROM_LOAD( "g-15.rom",     0xC0000, 0x10000, 0xdaa2324b )	/* player sprites */
-	ROM_LOAD( "g-16.rom",     0xD0000, 0x10000, 0xe27cc835 )
-	ROM_LOAD( "g-17.rom",     0xE0000, 0x10000, 0xce4330b9 )
-	ROM_LOAD( "g-18.rom",     0xF0000, 0x10000, 0x1571ce42 )
+	ROM_LOAD( "g-15.rom",     0x40000, 0x10000, 0xdaa2324b )
+	ROM_LOAD( "g-16.rom",     0x50000, 0x10000, 0xe27cc835 )
+	ROM_LOAD( "g-17.rom",     0x60000, 0x10000, 0xce4330b9 )
+	ROM_LOAD( "g-18.rom",     0x70000, 0x10000, 0x1571ce42 )
 
-	ROM_REGION(0x0200)	/* lookup table PROMs */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )	/* fg lookup table */
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )	/* ? bg lookup table ? */
+	/* bank 1: enemy sprites, background tiles */
+	ROM_LOAD( "g-4.rom",      0x80000, 0x10000, 0x2cc7e52c )
+	ROM_LOAD( "g-5.rom",      0x90000, 0x10000, 0xe01a5b9c )
+	ROM_LOAD( "g-6.rom",      0xa0000, 0x10000, 0xaeea6744 )
+	ROM_LOAD( "g-14.rom",     0xb0000, 0x10000, 0xfca77c5a )
+	ROM_LOAD( "g-11.rom",     0xc0000, 0x10000, 0xbd9ba92c )
+	ROM_LOAD( "g-12.rom",     0xd0000, 0x10000, 0xd0be7ec2 )
+	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
+	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
+
+	ROM_REGION(0x0200)	/* color lookup tables */
+	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
+	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -549,11 +520,11 @@ struct GameDriver contrab_driver =
         contra_hiload, contra_hisave
 };
 
-struct GameDriver gryzorb_driver =
+struct GameDriver contrajb_driver =
 {
 	__FILE__,
 	&contra_driver,
-	"gryzorb",
+	"contrajb",
 	"Contra (Japan bootleg)",
 	"1987",
 	"bootleg",
@@ -562,7 +533,7 @@ struct GameDriver gryzorb_driver =
 	&contra_machine_driver,
 	0,
 
-	gryzorb_rom,
+	contrajb_rom,
 	0, 0,
 	0,
 	0,

@@ -252,7 +252,7 @@ int Dasm32010(char *str, unsigned pc)
 		{
 			if (op != -1)
 			{
-				printf("Error: opcode %04.4Xh matches %d (%s) and %d (%s)\n",
+				printf("Error: opcode %04Xh matches %d (%s) and %d (%s)\n",
 					code,i,Op[i].fmt,op,Op[op].fmt);
 			}
 			op = i;
@@ -260,7 +260,7 @@ int Dasm32010(char *str, unsigned pc)
 	}
 	if (op == -1)
 	{
-		sprintf(str,"???? dw %04.4Xh",code);
+		sprintf(str,"???? dw %04Xh",code);
 		return cnt;
 	}
 	strtmp = str;
@@ -312,16 +312,16 @@ int Dasm32010(char *str, unsigned pc)
 			cp++;
 			switch (*cp++)
 			{
-				case 'A': sprintf(num,"$%02.2X",a); break;
-				case 'B': sprintf(num,"$%04.4X",b); break;
-				case 'D': sprintf(num,"%02.2Xh",d); break;
+				case 'A': sprintf(num,"$%02X",a); break;
+				case 'B': sprintf(num,"$%04X",b); break;
+				case 'D': sprintf(num,"%02Xh",d); break;
 				case 'K': sprintf(num,"%d",k); break;
 				case 'N': sprintf(num,"%s",nextar[n]); break;
 				case 'M': sprintf(num,"%s",arith[m]); break;
 				case 'P': sprintf(num,"PA%d",p); break;
 				case 'R': sprintf(num,"AR%d",r); break;
 				case 'S': sprintf(num,",%d",s); break;
-				case 'W': sprintf(num,"%04.4Xh",w); break;
+				case 'W': sprintf(num,"%04Xh",w); break;
 				default:
 					printf("illegal escape character in format '%s'\n",Op[op].fmt);
 					exit(1);

@@ -236,21 +236,8 @@ void eprom_scanline_update(int scanline)
 		atarigen_pf_update(&pf_state, scanline);
 	}
 
-	/* catch a fractional character off the top of the screen */
-	if (scanline == 0 && (pf_state.vscroll & 7) != 0)
-	{
-		int pfscanline = pf_state.vscroll & 0x1f8;
-		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
-		atarigen_mo_update(atarigen_spriteram, link, 0);
-	}
-
-	/* if we're within screen bounds, grab the next batch of MO's and process */
-	if (scanline < YDIM)
-	{
-		int pfscanline = (scanline + pf_state.vscroll + 7) & 0x1f8;
-		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
-		atarigen_mo_update(atarigen_spriteram, link, (pfscanline - pf_state.vscroll) & 0x1ff);
-	}
+	/* update the MOs from the SLIP table */
+	atarigen_mo_update_slip_512(atarigen_spriteram, pf_state.vscroll, scanline, &atarigen_alpharam[0xf80]);
 }
 
 

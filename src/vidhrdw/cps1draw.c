@@ -2,7 +2,7 @@
 /* generate 8-bit and 16-bit versions                                */
 
 {
-	int i, j, ex, ey;
+	int i, j;
 	UINT32 dwval;
 	UINT32 *src;
 	const unsigned short *paldata;

@@ -158,10 +158,10 @@
 |*|			Possibility to reload the cheat database by pressing KEYCODE_F8
 |*|			Possibility to rename the cheat filename and reload the cheat database
 |*|			  by pressing KEYCODE_F5 (same as KEYCODE_F9 + KEYCODE_F8)
-|*|			Moved while (keyboard_key_pressed(key)) after each case when there was the possibility
+|*|			Moved while (keyboard_pressed(key)) after each case when there was the possibility
 |*|			  to use KEYCODE_F10 (this key wasn't removed from the buffer as well as the
 |*|			  other functions keys). The modified functions are EditCheat and SelectCheat
-|*|			Added while (keyboard_key_pressed(key)) in function ShowHelp
+|*|			Added while (keyboard_pressed(key)) in function ShowHelp
 |*|			Possibility to invoke help on StartCheat by pressing KEYCODE_F10
 |*|			New functions :
 |*|			  - int RenameCheatFile(void) : returns 1 if the cheat file has been renamed, else 0
@@ -187,7 +187,7 @@
 |*|			Possibility to reset all the watches by pressing KEYCODE_F7
 |*|			Possibility to invoke help on ChooseWatch by pressing KEYCODE_F10
 |*|			Corrected help text in function CheatListHelp (F6 and F7 keys were inverted)
-|*|			Added while (keyboard_key_pressed(key)) to remove the function keys from the buffer
+|*|			Added while (keyboard_pressed(key)) to remove the function keys from the buffer
 |*|			  in the edit part of functions RenameCheatFile and EditCheat
 |*|			Matches and Watches are added to the cheat list with a new format if many CPUs :
 |*|			  %04X (%01X) = %02X   (Address (CPU) = Data)
@@ -424,7 +424,7 @@
 |*|			  - void CheatListHelp (void)
 |*|			  - void CheatListHelpEmpty (void)
 |*|
-|*|	JCK 981217: Use of keyboard_key_pressed_memory() instead of keyboard_key_pressed() to test
+|*|	JCK 981217: Use of keyboard_pressed_memory() instead of keyboard_pressed() to test
 |*|			  KEYCODE_CHEAT_TOGGLE, KEYCODE_INSERT and KEYCODE_DEL in DoCheat function
 |*|			dt strcuture is correctly filled in SelectCheat function
 |*|
@@ -618,8 +618,8 @@
 |*|
 |*|  Modifications by MSH
 |*|
-|*|	MSH 990217:	New function int cheat_readkey(void) to fix the keyboard_debug_readkey under Windows
-|*|			Replaced calls to function keyboard_debug_readkey() by cheat_readkey() when it was necessary
+|*|	MSH 990217:	New function int cheat_readkey(void) to fix the keyboard_read_sync under Windows
+|*|			Replaced calls to function keyboard_read_sync() by cheat_readkey() when it was necessary
 |*|
 |*|	MSH 990310:	Use of the #ifdef WIN32 to fix the keyboard under Windows
 |*|
@@ -925,8 +925,6 @@ static char lefthilight[2]   = "\x1A";
 static char righthilight[2]  = "\x1B";
 static char uparrow[2]       = "\x18";
 static char downarrow[2]     = "\x19";
-static char leftarrow[2]     = "\x11";
-static char rightarrow[2]    = "\x10";
 
 static unsigned char osd_key_chars[] =
 {
@@ -992,13 +990,13 @@ void cheat_rest_frameskips(void)
 int cheat_readkey(void)
 {
 #ifdef WIN32    /* MSH 990310 */
-    int key = keyboard_debug_readkey();
-    while (keyboard_key_pressed(key));
+    int key = keyboard_read_sync();
+    while (keyboard_pressed(key));
     return key;
 #else
   int key = 0;
 
-  key = keyboard_debug_readkey();
+  key = keyboard_read_sync();
   #ifndef USENEWREADKEY
   return key;
   #else
@@ -1007,7 +1005,7 @@ int cheat_readkey(void)
 	oldkey = key;
 	return key;
   }
-  if (keyboard_key_pressed_memory_repeat(key,4))
+  if (keyboard_pressed_memory_repeat(key,4))
 	return key;
   return 0;
   #endif
@@ -1100,7 +1098,6 @@ void xprintf(int ForEdit,int x,int y,char *fmt,...)
 
 void DisplayVersion(void)
 {
-  int i,l;
   char buffer[30];
 
   int trueorientation;
@@ -1176,9 +1173,9 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 	}
 	DisplayVersion();    /* Hack to update the video */
 
-	key = keyboard_debug_readkey();
+	key = keyboard_read_sync();
 #ifdef WIN32    /* MSH 990310 */
-	if (!keyboard_key_pressed_memory_repeat(key,8))
+	if (!keyboard_pressed_memory_repeat(key,8))
 		key = 0;
 #endif
 	switch (key)
@@ -1219,13 +1216,13 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 			break;
 
 		case KEYCODE_ENTER:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			done = 1;
 			strcpy (inputs, buffer);
 			break;
 		case KEYCODE_ESC:
 		case KEYCODE_TAB:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			done = 2;
 			break;
 		default:
@@ -1261,8 +1258,8 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 				}
 				else
 				{
-					if (keyboard_key_pressed (KEYCODE_LSHIFT) ||
-						 keyboard_key_pressed (KEYCODE_RSHIFT))
+					if (keyboard_pressed (KEYCODE_LSHIFT) ||
+						 keyboard_pressed (KEYCODE_RSHIFT))
 						c = osd_key_caps[key];
 					else
 						c = osd_key_chars[key];
@@ -1274,7 +1271,7 @@ int xedit(int x,int y,char *inputs,int maxlen,int hexaonly)
 				}
 #ifndef WIN32    /* MSH 990310 - Windows reports modifier keys as separate presses */
 				else
-					while (keyboard_key_pressed(key)) ;
+					while (keyboard_pressed(key)) ;
 #endif
 			}
 			break;
@@ -1373,8 +1370,8 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
   if (Maxi<Mini)
   {
 	xprintf(0,0,0,"SM : Mini = %d - Maxi = %d",Mini,Maxi);
-	key = keyboard_debug_readkey();
-	while (keyboard_key_pressed(key)) ; /* wait for key release */
+	key = keyboard_read_sync();
+	while (keyboard_pressed(key)) ; /* wait for key release */
 	*done = 2;
 	*s = NOVALUE;
 	return (NOVALUE);
@@ -1387,7 +1384,7 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 		dt[i].color = (i == *s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 	displaytext(dt,0,1);
 
-	/* key = keyboard_debug_readkey(); */
+	/* key = keyboard_read_sync(); */
 	key = cheat_readkey();    /* MSH 990217 */
 	switch (key)
 	{
@@ -1422,12 +1419,12 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 				*done = 3;
 			break;
 		case KEYCODE_ENTER:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			*done = 1;
 			break;
 		case KEYCODE_ESC:
 		case KEYCODE_TAB:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			*done = 2;
 			break;
 		default:
@@ -1435,7 +1432,7 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 			break;
 	}
 	if ((*done != 0) && (WaitForKey))
-		while (keyboard_key_pressed(key)) ; /* wait for key release */
+		while (keyboard_pressed(key)) ; /* wait for key release */
   } while (*done == 0);
 
   return (key);
@@ -1453,8 +1450,8 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
   if (Maxi<Mini)
   {
 	xprintf(0,0,0,"SV : Mini = %d - Maxi = %d",Mini,Maxi);
-	key = keyboard_debug_readkey();
-	while (keyboard_key_pressed(key)) ; /* wait for key release */
+	key = keyboard_read_sync();
+	while (keyboard_pressed(key)) ; /* wait for key release */
 	return (NOVALUE);
   }
 
@@ -1520,8 +1517,8 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 	}
 
 #ifdef WIN32    /* MSH 990310 */
-	key = keyboard_debug_readkey();
-      if (!keyboard_key_pressed_memory_repeat(key,8))
+	key = keyboard_read_sync();
+      if (!keyboard_pressed_memory_repeat(key,8))
         key = 0;
 #else
 	key = cheat_readkey();    /* MSH 990217 */
@@ -1568,16 +1565,16 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 			break;
 
 		case KEYCODE_ENTER:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			done = 1;
 			break;
 		case KEYCODE_ESC:
 		case KEYCODE_TAB:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			done = 2;
 			break;
 		default:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			break;
 	}
   } while (done == 0);
@@ -2051,8 +2048,8 @@ static int build_tables (void)
 		xprintf(0, 0, yPos, "No search available for CPU %d", SearchCpuNo);
 		yPos += (4 * FontHeight);
 		xprintf(0, 0, yPos, "Press A Key To Continue...");
-		key = keyboard_debug_readkey();
-		while (keyboard_key_pressed(key)) ; /* wait for key release */
+		key = keyboard_read_sync();
+		while (keyboard_pressed(key)) ; /* wait for key release */
 		cheat_clearbitmap();
       }
 
@@ -2105,8 +2102,8 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
 		xprintf (0, 0, EditYPos, "%s", buffer);
 		EditYPos += 4*FontHeight;
 		xprintf(0, 0,EditYPos,"Press A Key To Continue...");
-		key = keyboard_debug_readkey();
-		while (keyboard_key_pressed(key)) ; /* wait for key release */
+		key = keyboard_read_sync();
+		while (keyboard_pressed(key)) ; /* wait for key release */
       }
   }
   cheat_clearbitmap();
@@ -2390,10 +2387,7 @@ void InitMemoryAreas(void)
 {
 	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[SearchCpuNo].memory_write;
 
-	int region = Machine->drv->cpu[SearchCpuNo].memory_region;
-
-	char str2[60][40];
-      char buffer[40];
+    char buffer[40];
 
 	MemoryAreasSelected = 0;
       MemoryAreasTotal = 0;
@@ -2787,7 +2781,7 @@ void EditCheat(int CheatNo)
 		dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 	displaytext(dt,0,1);
 
-	/* key = keyboard_debug_readkey(); */
+	/* key = keyboard_read_sync(); */
 	key = cheat_readkey();    /* MSH 990217 */
 	switch (key)
 	{
@@ -3044,7 +3038,7 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_F3:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 			switch (s)
 			{
@@ -3068,14 +3062,14 @@ void EditCheat(int CheatNo)
 			break;
 
 		case KEYCODE_F10:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 			EditCheatHelp();
 			y = EditCheatHeader();
 			break;
 
 		case KEYCODE_ENTER:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 			switch (s)
 			{
@@ -3108,13 +3102,13 @@ void EditCheat(int CheatNo)
 
 		case KEYCODE_ESC:
 		case KEYCODE_TAB:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
 			done = 1;
 			break;
 	}
   } while (done == 0);
 
-  while (keyboard_key_pressed(key));
+  while (keyboard_pressed(key));
 
   if (	(LoadedCheatTable[CheatNo].Special==62) || (LoadedCheatTable[CheatNo].Special==65)	||
       	(LoadedCheatTable[CheatNo].Special==72) || (LoadedCheatTable[CheatNo].Special==75)	)
@@ -3255,7 +3249,7 @@ void SelectCheat(void)
 
 		displaytext(dt, 0, 1);
 
-		/* key = keyboard_debug_readkey(); */
+		/* key = keyboard_read_sync(); */
 		key = cheat_readkey();    /* MSH 990217 */
 		ClearTextLine(1, YFOOT_SELECT);
 		switch (key)
@@ -3363,7 +3357,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_INSERT:    /* Add a new empty cheat */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
 				if (LoadedCheatTotal > MAX_LOADEDCHEATS -1)
@@ -3382,7 +3376,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_DEL:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
@@ -3436,20 +3430,20 @@ void SelectCheat(void)
 
 			case KEYCODE_BACKSPACE:
 				/* Display comment about a cheat */
-				while (keyboard_key_pressed(key)) ; /* wait for key release */
+				while (keyboard_pressed(key)) ; /* wait for key release */
 				if (LoadedCheatTable[highlighted + Index].More[0])
 					xprintf (0, 0, YFOOT_SELECT, "%s", LoadedCheatTable[highlighted + Index].More);
 				break;
 
 			case KEYCODE_F1:    /* Save cheat to file */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3460,14 +3454,14 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F2:     /* Add to watch list */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3501,14 +3495,14 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F3:    /* Edit current cheat */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3527,14 +3521,14 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F4:    /* Copy the current cheat */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3556,10 +3550,10 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F5:    /* Rename the cheatfile and reload the database */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					strcpy(buf, database);
 					if (RenameCheatFile(1, 0, buf) == 1)
@@ -3586,14 +3580,14 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F6:    /* Save all cheats to file */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3604,7 +3598,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F7:    /* Remove all active cheats from the list */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
@@ -3613,7 +3607,7 @@ void SelectCheat(void)
 
 				ActiveCheatTotal = 0;
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					for (i = 0;i < LoadedCheatTotal;i ++)
 					{
@@ -3640,10 +3634,10 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F8:    /* Reload the database */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3659,10 +3653,10 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F9:    /* Rename the cheatfile */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3674,7 +3668,7 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F10:    /* Invoke help */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
 				if (LoadedCheatTotal == 0)
@@ -3691,10 +3685,10 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F11:    /* Toggle sologame ON/OFF then reload the database */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3711,14 +3705,14 @@ void SelectCheat(void)
 				break;
 
 			case KEYCODE_F12:    /* Display info about a cheat */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (LoadedCheatTotal == 0)
 				{
 					break;
 				}
 
-				if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+				if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 				{
 					break;
 				}
@@ -3752,7 +3746,7 @@ void SelectCheat(void)
 
 			case KEYCODE_ENTER:
 			case KEYCODE_SPACE:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				if (total == 0)
 				{
@@ -3892,7 +3886,7 @@ void SelectCheat(void)
 
 			case KEYCODE_ESC:
 			case KEYCODE_TAB:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 
 				done = 1;
 				break;
@@ -3900,7 +3894,7 @@ void SelectCheat(void)
 	}
 	while (done == 0);
 
-	while (keyboard_key_pressed(key));
+	while (keyboard_pressed(key));
 
       SaveIndex = Index + highlighted;
 
@@ -4134,7 +4128,7 @@ void SelectMemoryAreas(void)
 
 		displaytext(dt, 0, 1);
 
-		/* key = keyboard_debug_readkey(); */
+		/* key = keyboard_read_sync(); */
 		key = cheat_readkey();    /* MSH 990217 */
 		ClearTextLine(1, YFOOT_MEMORY);
 		switch (key)
@@ -4234,7 +4228,7 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_F6:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				for (i = 0; i < MemoryAreasTotal; i++)
 	                        MemToScanTable[i].Enabled = 1;
@@ -4242,7 +4236,7 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_F7:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
 				for (i = 0; i < MemoryAreasTotal; i++)
 	                        MemToScanTable[i].Enabled = 0;
@@ -4250,7 +4244,7 @@ void SelectMemoryAreas(void)
 				break;
 
 			case KEYCODE_F12:    /* Display info about a cheat */
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
                         strcpy (buffer,str2[Index + highlighted]);
                         strcat (buffer," : ");
@@ -4301,7 +4295,7 @@ void SelectMemoryAreas(void)
 
 			case KEYCODE_ENTER:
 			case KEYCODE_SPACE:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 	                  oldkey = 0;
                         MemToScanTable[Index + highlighted].Enabled ^= 1;
 				total = build_mem_list(Index, dt, str2);
@@ -4309,14 +4303,14 @@ void SelectMemoryAreas(void)
 
 			case KEYCODE_ESC:
 			case KEYCODE_TAB:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 				done = 1;
 				break;
 		}
 	}
 	while (done == 0);
 
-	while (keyboard_key_pressed(key)) ; /* wait for key release */
+	while (keyboard_pressed(key)) ; /* wait for key release */
 
 	/* clear the screen before returning */
 	cheat_clearbitmap();
@@ -4342,8 +4336,8 @@ void SelectMemoryAreas(void)
 		xprintf(0, 0,y,"No Memory Area Selected !");
 		y += 4*FontHeight;
 		xprintf(0, 0,y,"Press A Key To Continue...");
-		key = keyboard_debug_readkey();
-		while (keyboard_key_pressed(key)) ; /* wait for key release */
+		key = keyboard_read_sync();
+		while (keyboard_pressed(key)) ; /* wait for key release */
 		cheat_clearbitmap();
 	}
 
@@ -4800,8 +4794,8 @@ void StartSearch(void)
 
   y += 4 * FontHeight;
   xprintf(0, 0,y,"Press A Key To Continue...");
-  key = keyboard_debug_readkey();
-  while (keyboard_key_pressed(key)) ; /* wait for key release */
+  key = keyboard_read_sync();
+  while (keyboard_pressed(key)) ; /* wait for key release */
   cheat_clearbitmap();
 }
 
@@ -5223,8 +5217,8 @@ void ContinueSearch(int selected, int ViewLast)
   {
 	y += 4*FontHeight;
 	xprintf(0, 0,y,"Press A Key To Continue...");
-	key = keyboard_debug_readkey();
-	while (keyboard_key_pressed(key)) ; /* wait for key release */
+	key = keyboard_read_sync();
+	while (keyboard_pressed(key)) ; /* wait for key release */
 	cheat_clearbitmap();
 	SaveMethod = CurrentMethod;
 	CurrentMethod = 0;
@@ -5401,13 +5395,13 @@ void ContinueSearch(int selected, int ViewLast)
 			break;
 
 		case KEYCODE_F1:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 
 			if (count == 0)
 				break;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5437,10 +5431,10 @@ void ContinueSearch(int selected, int ViewLast)
 			break;
 
 		case KEYCODE_F2:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5464,13 +5458,13 @@ void ContinueSearch(int selected, int ViewLast)
 			break;
 
 		case KEYCODE_F6:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 
 			if (count == 0)
 				break;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5509,10 +5503,10 @@ void ContinueSearch(int selected, int ViewLast)
 			break;
 
 		case KEYCODE_F8:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5603,8 +5597,8 @@ void RestoreSearch(void)
   xprintf(0, 0,y,"%s",msg2);
   y += 4 * FontHeight;
   xprintf(0, 0,y,"Press A Key To Continue...");
-  key = keyboard_debug_readkey();
-  while (keyboard_key_pressed(key)) ; /* wait for key release */
+  key = keyboard_read_sync();
+  while (keyboard_pressed(key)) ; /* wait for key release */
   cheat_clearbitmap();
 }
 
@@ -5901,7 +5895,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_DEL:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
 			OldCpuNo = WatchesCpuNo[ s ];
 			WatchesCpuNo[ s ] = 0;
 			Watches[ s ] = MAX_ADDRESS(WatchesCpuNo[ s ]);
@@ -5929,12 +5923,12 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_F1:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
                   oldkey = 0;
 			if (Watches[s] == MAX_ADDRESS(WatchesCpuNo[s]))
 				break;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5957,10 +5951,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_F3:
-			while (keyboard_key_pressed(key));
+			while (keyboard_pressed(key));
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -5977,10 +5971,10 @@ void ChooseWatch(void)
                   break;
 
 		case KEYCODE_F4:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -6020,10 +6014,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_F6:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -6053,10 +6047,10 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_F7:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
                   oldkey = 0;
 
-			if (keyboard_key_pressed (KEYCODE_LSHIFT) || keyboard_key_pressed (KEYCODE_RSHIFT))
+			if (keyboard_pressed (KEYCODE_LSHIFT) || keyboard_pressed (KEYCODE_RSHIFT))
 			{
 				break;
 			}
@@ -6070,7 +6064,7 @@ void ChooseWatch(void)
 			break;
 
 		case KEYCODE_F10:
-			while (keyboard_key_pressed(key)); /* wait for key release */
+			while (keyboard_pressed(key)); /* wait for key release */
                   oldkey = 0;
 			ChooseWatchHelp();								/* Show Help */
 			y = ChooseWatchHeader();
@@ -6117,7 +6111,7 @@ void ChooseWatch(void)
 
   } while (done != 2);
 
-  while (keyboard_key_pressed(key)) ; /* wait for key release */
+  while (keyboard_pressed(key)) ; /* wait for key release */
 
   cheat_clearbitmap();
 
@@ -6250,9 +6244,8 @@ void DoCheat(void)
 	int i,y;
 	char buf[80];
 
-	struct DisplayText dt[2];
 
-      DisplayWatches(0, &WatchX, &WatchY, buf, MAX_WATCHES, 0, 0);
+    DisplayWatches(0, &WatchX, &WatchY, buf, MAX_WATCHES, 0, 0);
 
 	/* Affect the memory */
 	for (i = 0; CheatEnabled == 1 && i < ActiveCheatTotal;i ++)
@@ -6599,7 +6592,7 @@ void DoCheat(void)
 
   /* KEYCODE_CHEAT_TOGGLE Enable/Disable the active cheats on the fly. Required for some cheat */
 #if 0
-  if ( keyboard_key_pressed_memory( KEYCODE_CHEAT_TOGGLE ) && ActiveCheatTotal )
+  if ( keyboard_pressed_memory( KEYCODE_CHEAT_TOGGLE ) && ActiveCheatTotal )
   {
       CheatEnabled ^= 1;
       cheat_framecounter = Machine->drv->frames_per_second / 2;
@@ -6623,17 +6616,17 @@ void DoCheat(void)
   }
 
   /* KEYCODE_INSERT toggles the Watch display ON */
-  if ( keyboard_key_pressed_memory( KEYCODE_INSERT ) && (WatchEnabled == 0) )
+  if ( keyboard_pressed_memory( KEYCODE_INSERT ) && (WatchEnabled == 0) )
   {
 	WatchEnabled = 1;
   }
   /* KEYCODE_DEL toggles the Watch display OFF */
-  if ( keyboard_key_pressed_memory( KEYCODE_DEL ) && (WatchEnabled != 0) ){
+  if ( keyboard_pressed_memory( KEYCODE_DEL ) && (WatchEnabled != 0) ){
 	WatchEnabled = 0;
   }
 
   /* KEYCODE_HOME loads the main menu of the cheat engine */
-  if ( keyboard_key_pressed_memory( KEYCODE_HOME ) )
+  if ( keyboard_pressed_memory( KEYCODE_HOME ) )
   {
 	osd_sound_enable(0);
 	cheat_menu();
@@ -6641,7 +6634,7 @@ void DoCheat(void)
   }
 
   /* KEYCODE_END loads the "Continue Search" sub-menu of the cheat engine */
-  if ( keyboard_key_pressed_memory( KEYCODE_END ) )
+  if ( keyboard_pressed_memory( KEYCODE_END ) )
   {
 	osd_sound_enable(0);
 	ContinueSearch(0, 0);
@@ -6679,8 +6672,8 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
 	xprintf(0, 0, yPos, "No Help Available !");
 	displaytext(dt,0,1);
-	key = keyboard_debug_readkey();
-	while (keyboard_key_pressed(key));
+	key = keyboard_read_sync();
+	while (keyboard_pressed(key));
   }
   else
   {
@@ -6769,7 +6762,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_PGDN:
-				while (keyboard_key_pressed(key)); /* wait for key release */
+				while (keyboard_pressed(key)); /* wait for key release */
 				if (LineNumber < LastHelpLine - LinePerPage)
 				{
 					LineNumber += LinePerPage;
@@ -6785,7 +6778,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 				break;
 
 			case KEYCODE_PGUP:
-				while (keyboard_key_pressed(key)); /* wait for key release */
+				while (keyboard_pressed(key)); /* wait for key release */
 				if (LineNumber > 0)
 				{
 					LineNumber -= LinePerPage;
@@ -6802,7 +6795,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 			case KEYCODE_ESC:
 			case KEYCODE_TAB:
 			case KEYCODE_ENTER:
-				while (keyboard_key_pressed(key));
+				while (keyboard_pressed(key));
 				oldkey = 0;
 				done = 1;
 				break;
@@ -6812,7 +6805,7 @@ void ShowHelp(int LastHelpLine, struct TextLine *table)
 		}
 	} while (done == 0);
 
-	while (keyboard_key_pressed(key));
+	while (keyboard_pressed(key));
   }
 
   cheat_clearbitmap();

@@ -464,7 +464,7 @@ int rastan_smus_interrupt(void)
 		delay--;
 		if (delay<0){
 			delay=0;
-			if (keyboard_key_pressed(KEYCODE_ENTER)){
+			if (keyboard_pressed(KEYCODE_ENTER)){
 				if (errorlog) fprintf(errorlog,"Start sound %02x\n",tabinit[tab_p]);
 				delay=10;
 				return Z80_NMI_INT;

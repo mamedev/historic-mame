@@ -281,21 +281,8 @@ void skullxbo_scanline_update(int scanline)
 	if ((unsigned char *)base >= &atarigen_alpharam[atarigen_alpharam_size])
 		return;
 
-	/* catch a fractional character off the top of the screen */
-	if (scanline == 0 && (pf_state.vscroll & 7) != 0)
-	{
-		int pfscanline = pf_state.vscroll & 0x1f8;
-		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
-		atarigen_mo_update(&atarigen_spriteram[mo_bank], link, 0);
-	}
-
-	/* if we're within screen bounds, grab the next batch of MO's and process */
-	if (scanline < YDIM)
-	{
-		int pfscanline = (scanline + pf_state.vscroll + 7) & 0x1f8;
-		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
-		atarigen_mo_update(&atarigen_spriteram[mo_bank], link, (pfscanline - pf_state.vscroll) & 0x1ff);
-	}
+	/* update the MOs from the SLIP table */
+	atarigen_mo_update_slip_512(&atarigen_spriteram[mo_bank], pf_state.vscroll, scanline, &atarigen_alpharam[0xf80]);
 
 	/* update the current parameters */
 	for (x = XCHARS; x < 64; x++)
@@ -808,7 +795,7 @@ static int debug(void)
 		}
 
 		fprintf(f, "\n\nMotion Objects (drawn)\n");
-//		atarigen_mo_process(mo_print, f);
+/*		atarigen_mo_process(mo_print, f);*/
 
 		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x200; i++)

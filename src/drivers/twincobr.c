@@ -171,7 +171,7 @@ Shark	Zame
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/M68000/M68000.h"
+#include "cpu/m68000/m68000.h"
 
 /**************** Video stuff ******************/
 int  twincobr_crtc_r(int offset);
@@ -912,9 +912,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,linestate);
 }
 
 static struct YM3812interface ym3812_interface =
@@ -922,7 +922,7 @@ static struct YM3812interface ym3812_interface =
 	1,				/* 1 chip  */
 	3500000,		/* 3.5 MHz */
 	{ 255 },		/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 

@@ -36,12 +36,12 @@ int battlane_video_ctrl_r(int offset)
 
 void battlane_bitmap_w(int offset, int data)
 {
-	int i,n, orval;
+	int i, orval;
 
+#if 0
 	unsigned char *RAM =
 		Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-#if 0
 	if (errorlog)
 	{
 		fprintf(errorlog, "%04x=%02x   (0x1c00=%02x)\n",
@@ -111,7 +111,7 @@ void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *col
 #ifdef MAME_DEBUG
 void battlane_dump_bitmap(void)
 {
-    int i,j;
+    int i;
     FILE *fp=fopen("SCREEN.DMP", "w+b");
     if (fp)
     {
@@ -188,7 +188,7 @@ INLINE void battlane_build_palette(void)
     for (offset = 0; offset < 0x40; offset++)
 	{
           int palette = PALETTE[offset];
-          int red, green, blue, bright;
+          int red, green, blue;
           red   = (palette&0x07) * 16*2;
           green = ((palette>>3)&0x07) * 16*2;
           blue  = ((palette>>6)&0x07) * 16*4;
@@ -211,15 +211,15 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char *RAM =
 		Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (keyboard_key_pressed(KEYCODE_PGDN))
+	if (keyboard_pressed(KEYCODE_PGDN))
 	{
-		while (keyboard_key_pressed(KEYCODE_PGDN)) ;
+		while (keyboard_pressed(KEYCODE_PGDN)) ;
 		s++;
 	}
 
-	if (keyboard_key_pressed(KEYCODE_PGUP))
+	if (keyboard_pressed(KEYCODE_PGUP))
 	{
-		while (keyboard_key_pressed(KEYCODE_PGUP)) ;
+		while (keyboard_pressed(KEYCODE_PGUP)) ;
 		s--;
 	}
 
@@ -285,7 +285,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 #ifdef MAME_DEBUG
-    if (keyboard_key_pressed(KEYCODE_SPACE))
+    if (keyboard_pressed(KEYCODE_SPACE))
     {
         /* Display current palette */
         const int numblocks=0x08;
@@ -310,7 +310,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             }
         }
     }
-    if (keyboard_key_pressed(KEYCODE_F))
+    if (keyboard_pressed(KEYCODE_F))
     {
          battlane_dump_bitmap();
     }

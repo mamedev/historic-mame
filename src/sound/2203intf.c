@@ -88,7 +88,6 @@ static void YM2203UpdateCallback(int chip,void *buffer,int length)
 int YM2203_sh_start(const struct MachineSound *msound)
 {
 	int i;
-	int rate = Machine->sample_rate;
 
 	if (AY8910_sh_start(msound)) return 1;
 
@@ -131,8 +130,6 @@ void YM2203_sh_reset(void)
 }
 
 
-
-static int lastreg0,lastreg1,lastreg2,lastreg3,lastreg4;
 
 int YM2203_status_port_0_r(int offset) { return YM2203Read(0,0); }
 int YM2203_status_port_1_r(int offset) { return YM2203Read(1,0); }

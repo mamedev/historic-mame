@@ -167,12 +167,8 @@ void klax_latch_w(int offset, int data)
 
 void klax_scanline_update(int scanline)
 {
-	/* look up the SLIP link */
-	if (scanline < YDIM)
-	{
-		int link = READ_WORD(&atarigen_playfieldram[0xf80 + 2 * (scanline / 8)]) & 0xff;
-		atarigen_mo_update(atarigen_spriteram, link, scanline);
-	}
+	/* update the MOs from the SLIP table */
+	atarigen_mo_update_slip_512(atarigen_spriteram, 0, scanline, &atarigen_playfieldram[0xf80]);
 }
 
 

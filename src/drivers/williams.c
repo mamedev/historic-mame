@@ -1648,6 +1648,7 @@ static struct DACinterface dac_interface =
 	{ 50 }
 };
 
+#if defined(JOUST2_SND)
 static struct CVSDinterface cvsd_interface =
 {
 	1,			/* 1 chip */
@@ -1662,6 +1663,7 @@ static struct YM2151interface ym2151_interface =
 	{ joust2_ym2151_int },
 	{ 0 }
 };
+#endif
 
 
 /*

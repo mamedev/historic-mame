@@ -91,7 +91,7 @@ Sprites - Data East custom chip 52
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x2000	/* Size of background and foreground */
 
-unsigned char *darkseal_sprite, *darkseal_pf12_row, *darkseal_pf34_row;
+unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
 static unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 static unsigned char *darkseal_pf1_dirty,*darkseal_pf3_dirty,*darkseal_pf2_dirty;
 static struct osd_bitmap *darkseal_pf1_bitmap;
@@ -104,7 +104,14 @@ static unsigned char darkseal_control_1[16];
 static int darkseal_pf1_static,darkseal_pf2_static,darkseal_pf3_static;
 static int offsetx[4],offsety[4];
 
+static unsigned char *darkseal_spriteram;
+
 /******************************************************************************/
+
+void darkseal_update_sprites(int offset, int data)
+{
+	memcpy(darkseal_spriteram,spriteram,0x800);
+}
 
 static void update_24bitcol(int offset)
 {
@@ -227,11 +234,11 @@ static void darkseal_update_palette(void)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
+		sprite = READ_WORD (&darkseal_spriteram[offs+2]) & 0x1fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&darkseal_sprite[offs]);
-		x = READ_WORD(&darkseal_sprite[offs+4]);
+		y = READ_WORD(&darkseal_spriteram[offs]);
+		x = READ_WORD(&darkseal_spriteram[offs+4]);
 		color = (x >> 9) &0x1f;
 
 		x = x & 0x01ff;
@@ -278,11 +285,11 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash;
 
-		sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
+		sprite = READ_WORD (&darkseal_spriteram[offs+2]) & 0x1fff;
 		if (!sprite) continue;
 
-		y = READ_WORD(&darkseal_sprite[offs]);
-		x = READ_WORD(&darkseal_sprite[offs+4]);
+		y = READ_WORD(&darkseal_spriteram[offs]);
+		x = READ_WORD(&darkseal_spriteram[offs+4]);
 
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
@@ -553,6 +560,7 @@ void darkseal_vh_stop (void)
 	free(darkseal_pf3_dirty);
 	free(darkseal_pf2_dirty);
 	free(darkseal_pf1_dirty);
+	free(darkseal_spriteram);
 }
 
 int darkseal_vh_start(void)
@@ -587,6 +595,8 @@ int darkseal_vh_start(void)
 	memset(darkseal_pf1_dirty,1,TEXTRAM_SIZE);
 	memset(darkseal_pf2_dirty,1,TILERAM_SIZE);
 	memset(darkseal_pf3_dirty,1,TILERAM_SIZE);
+
+	darkseal_spriteram = malloc(0x800);
 
 	offsetx[0] = 0;
 	offsetx[1] = 512;
