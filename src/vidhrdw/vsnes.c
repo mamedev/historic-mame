@@ -16,7 +16,7 @@ PALETTE_INIT( vsdual )
 	ppu2c03b_init_palette( 64 );
 }
 
-static void ppu_irq( int num )
+static void ppu_irq( int num, int *ppu_regs )
 {
 	cpu_set_nmi_line( num, PULSE_LINE );
 }

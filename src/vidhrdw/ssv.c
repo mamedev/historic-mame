@@ -716,7 +716,7 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 				sy	=	(sy & 0x1ff) - (sy & 0x200);
 
 				/* Tweak it (game specific) */
-				if (ssv_special == 2) sy = 232 - sy; // vasara2, wheres the register for this?
+				if (ssv_special == 2) sy = 232 - sy; // vasara, wheres the register for this?
 
 				sx	=	ssv_sprites_offsx + sx;
 if (ssv_scroll[0x74/2] & 0x8000)	// srmp7, twineag2, ultrax

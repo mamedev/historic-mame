@@ -19,11 +19,27 @@
 #include "palette.h"
 
 extern char build_version[];
+extern int gbPriorityBitmapIsDirty;
+
+
+
+/***************************************************************************
+
+	Parameters
+
+***************************************************************************/
 
 #define MAX_GFX_ELEMENTS 32
 #define MAX_MEMORY_REGIONS 32
 
-extern int gbPriorityBitmapIsDirty;
+#ifndef MESS
+#define APPNAME					"MAME"
+#define APPLONGNAME				"M.A.M.E."
+#else
+#define APPNAME					"MESS"
+#define APPLONGNAME				"M.E.S.S."
+#endif
+
 
 
 /***************************************************************************

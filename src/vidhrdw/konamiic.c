@@ -5006,6 +5006,10 @@ READ_HANDLER( K051733_r )
 
 			return 0;
 		}
+		case 0x0e:
+			return ~K051733_ram[offset];
+		case 0x0f:
+			return ~K051733_ram[offset];
 		default:
 			return K051733_ram[offset];
 	}
@@ -6127,7 +6131,7 @@ READ32_HANDLER( K056832_ram_long_r )
 
 	// reading from tile RAM resets the ROM readback "half" offset
 	K056832_rom_half = 0;
-	
+
 	return(pMem[0]<<16 | pMem[1]);
 }
 

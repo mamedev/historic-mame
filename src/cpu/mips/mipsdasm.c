@@ -30,75 +30,75 @@ static char *make_signed_hex_str_16( UINT32 value )
 
 static const char *s_cpugenreg[] =
 {
-	"zero","at","v0","v1","a0","a1","a2","a3",
-	"t0","t1","t2","t3","t4","t5","t6","t7",
-	"s0","s1","s2","s3","s4","s5","s6","s7",
-	"t8","t9","k0","k1","gp","sp","fp","ra"
+	"zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+	"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+	"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+	"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 };
 
 static const char *s_cp0genreg[] =
 {
-	"Index","Random","EntryLo","cp0r3","Context","cp0r5","cp0r6","cp0r7",
-	"BadVAddr","cp0r9","EntryHi","cp0r11","SR","Cause","EPC","PRId",
-	"cp0r16","cp0r17","cp0r18","cp0r19","cp0r20","cp0r21","cp0r22","cp0r23",
-	"cp0r24","cp0r25","cp0r26","cp0r27","cp0r28","cp0r29","cp0r30","cp0r31"
+	"Index", "Random", "EntryLo", "cp0r3", "Context", "cp0r5", "cp0r6", "cp0r7",
+	"BadVAddr", "cp0r9", "EntryHi", "cp0r11", "SR", "Cause", "EPC", "PRId",
+	"cp0r16", "cp0r17", "cp0r18", "cp0r19", "cp0r20", "cp0r21", "cp0r22", "cp0r23",
+	"cp0r24", "cp0r25", "cp0r26", "cp0r27", "cp0r28", "cp0r29", "cp0r30", "cp0r31"
 };
 
 static const char *s_cp1genreg[] =
 {
-	"cp1r0","cp1r1","cp1r2","cp1r3","cp1r4","cp1r5","cp1r6","cp1r7",
-	"cp1r8","cp1r9","cp1r10","cp1r11","cp1r12","cp1r13","cp1r14","cp1r15",
-	"cp1r16","cp1r17","cp1r18","cp1r19","cp1r20","cp1r21","cp1r22","cp1r22",
-	"cp1r23","cp1r24","cp1r25","cp1r26","cp1r27","cp1r28","cp1r29","cp1r30"
+	"cp1r0", "cp1r1", "cp1r2", "cp1r3", "cp1r4", "cp1r5", "cp1r6", "cp1r7",
+	"cp1r8", "cp1r9", "cp1r10", "cp1r11", "cp1r12", "cp1r13", "cp1r14", "cp1r15",
+	"cp1r16", "cp1r17", "cp1r18", "cp1r19", "cp1r20", "cp1r21", "cp1r22", "cp1r22",
+	"cp1r23", "cp1r24", "cp1r25", "cp1r26", "cp1r27", "cp1r28", "cp1r29", "cp1r30"
 };
 
 static const char *s_cp1ctlreg[] =
 {
-	"cp1cr0","cp1cr1","cp1cr2","cp1cr3","cp1cr4","cp1cr5","cp1cr6","cp1cr7",
-	"cp1cr8","cp1cr9","cp1cr10","cp1cr11","cp1cr12","cp1cr13","cp1cr14","cp1cr15",
-	"cp1cr16","cp1cr17","cp1cr18","cp1cr19","cp1cr20","cp1cr21","cp1cr22","cp1cr23",
-	"cp1cr24","cp1cr25","cp1cr26","cp1cr27","cp1cr28","cp1cr29","cp1cr30","cp1cr31"
+	"cp1cr0", "cp1cr1", "cp1cr2", "cp1cr3", "cp1cr4", "cp1cr5", "cp1cr6", "cp1cr7",
+	"cp1cr8", "cp1cr9", "cp1cr10", "cp1cr11", "cp1cr12", "cp1cr13", "cp1cr14", "cp1cr15",
+	"cp1cr16", "cp1cr17", "cp1cr18", "cp1cr19", "cp1cr20", "cp1cr21", "cp1cr22", "cp1cr23",
+	"cp1cr24", "cp1cr25", "cp1cr26", "cp1cr27", "cp1cr28", "cp1cr29", "cp1cr30", "cp1cr31"
 };
 
 static const char *s_cp2genreg[] =
 {
-	"vxy0","vz0","vxy1","vz1","vxy2","vz2","rgb","otz",
-	"ir0","ir1","ir2","ir3","sxy0","sxy1","sxy2","sxyp",
-	"sz0","sz1","sz2","sz3","rgb0","rgb1","rgb2","cp2cr23",
-	"mac0","mac1","mac2","mac3","irgb","orgb","lzcs","lzcr"
+	"vxy0", "vz0", "vxy1", "vz1", "vxy2", "vz2", "rgb", "otz",
+	"ir0", "ir1", "ir2", "ir3", "sxy0", "sxy1", "sxy2", "sxyp",
+	"sz0", "sz1", "sz2", "sz3", "rgb0", "rgb1", "rgb2", "cp2cr23",
+	"mac0", "mac1", "mac2", "mac3", "irgb", "orgb", "lzcs", "lzcr"
 };
 
 static const char *s_cp2ctlreg[] =
 {
-	"r11r12","r13r21","r22r23","r31r32","r33","trx","try","trz",
-	"l11l12","l13l21","l22l23","l31l32","l33","rbk","gbk","bbk",
-	"lr1lr2","lr3lg1","lg2lg3","lb1lb2","lb3","rfc","gfc","bfc",
-	"ofx","ofy","h","dqa","dqb","zsf3","zsf4","flag"
+	"r11r12", "r13r21", "r22r23", "r31r32", "r33", "trx", "try", "trz",
+	"l11l12", "l13l21", "l22l23", "l31l32", "l33", "rbk", "gbk", "bbk",
+	"lr1lr2", "lr3lg1", "lg2lg3", "lb1lb2", "lb3", "rfc", "gfc", "bfc",
+	"ofx", "ofy", "h", "dqa", "dqb", "zsf3", "zsf4", "flag"
 };
 
 static const char *s_gtesf[] =
 {
-	"  ","12"
+	"0", "12"
 };
 
 static const char *s_gtemx[] =
 {
-	"multrm","multlm","multcm","nomult"
+	"rm", "lm", "cm", "0"
 };
 
 static const char *s_gtev[] =
 {
-	"v0","v1","v2","ir"
+	"v0", "v1", "v2", "ir"
 };
 
 static const char *s_gtecv[] =
 {
-	"addtr","addbk","addfc","noadd"
+	"tr", "bk", "fc", "0"
 };
 
 static const char *s_gtelm[] =
 {
-	"nolimit","limit"
+	"0", "1"
 };
 
 unsigned DasmMIPS( char *buffer, UINT32 oldpc )
@@ -422,130 +422,133 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 
 				switch( GTE_OP( op ) )
 				{
-				case 0x0100001:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x01:
+					if( INS_CO( op ) == 0x0180001 )
 					{
 						sprintf( buffer, "rtps" );
 					}
 					break;
-				case 0x0200030:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x02:
+					if( INS_CO( op ) == 0x0280030 )
 					{
 						sprintf( buffer, "rtpt" );
 					}
 					break;
-				case 0x0400012:
-					sprintf( buffer, "mvmva%s %s,%s,%s,%s", s_gtesf[ GTE_SF( op ) ], s_gtev[ GTE_V( op ) ], s_gtemx[ GTE_MX( op ) ], s_gtecv[ GTE_CV( op ) ], s_gtelm[ GTE_LM( op ) ] );
+				case 0x04:
+					if( GTE_CT( op ) == 0x012 )
+					{
+						sprintf( buffer, "mvmva%s %s + %s * %s (lm=%s)",
+							s_gtesf[ GTE_SF( op ) ], s_gtecv[ GTE_CV( op ) ], s_gtemx[ GTE_MX( op ) ],
+							s_gtev[ GTE_V( op ) ],  s_gtelm[ GTE_LM( op ) ] );
+					}
 					break;
-				case 0x0600029:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x06:
+					if( INS_CO( op ) == 0x0680029 )
 					{
 						sprintf( buffer, "dcpl" );
 					}
 					break;
-				case 0x0700010:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x07:
+					if( INS_CO( op ) == 0x0780010 )
 					{
 						sprintf( buffer, "dpcs" );
 					}
 					break;
-				case 0x0900011:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x09:
+					if( INS_CO( op ) == 0x0980011 )
 					{
 						sprintf( buffer, "intpl" );
 					}
 					break;
-				case 0x0a00028:
+				case 0x0a:
 					if( GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
 					{
 						sprintf( buffer, "sqr%s", s_gtesf[ GTE_SF( op ) ] );
 					}
 					break;
-				case 0x0c0001e:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x0c:
+					if( INS_CO( op ) == 0x0c8041e )
 					{
 						sprintf( buffer, "ncs" );
 					}
 					break;
-				case 0x0d00020:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x0d:
+					if( INS_CO( op ) == 0x0d80420 )
 					{
 						sprintf( buffer, "nct" );
 					}
 					break;
-				case 0x0e00013:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x0e:
+					if( INS_CO( op ) == 0x0e80413 )
 					{
 						sprintf( buffer, "ncds" );
 					}
 					break;
-				case 0x0f00016:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x0f:
+					if( INS_CO( op ) == 0x0f80416 )
 					{
 						sprintf( buffer, "ncdt" );
 					}
-					break;
-				case 0x0f0002a:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+					else if( INS_CO( op ) == 0x0f8002A )
 					{
 						sprintf( buffer, "dpct" );
 					}
 					break;
-				case 0x100001b:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x10:
+					if( INS_CO( op ) == 0x108041b )
 					{
 						sprintf( buffer, "nccs" );
 					}
 					break;
-				case 0x110003f:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x11:
+					if( INS_CO( op ) == 0x118043f )
 					{
 						sprintf( buffer, "ncct" );
 					}
 					break;
-				case 0x1200014:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x12:
+					if( INS_CO( op ) == 0x1280414 )
 					{
 						sprintf( buffer, "cdp" );
 					}
 					break;
-				case 0x130001c:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 1 )
+				case 0x13:
+					if( INS_CO( op ) == 0x138041c )
 					{
 						sprintf( buffer, "cc" );
 					}
 					break;
-				case 0x1400006:
-					if( GTE_SF( op ) == 0 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x14:
+					if( INS_CO( op ) == 0x1400006 )
 					{
 						sprintf( buffer, "nclip" );
 					}
 					break;
-				case 0x150002d:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x15:
+					if( INS_CO( op ) == 0x158002d )
 					{
 						sprintf( buffer, "avsz3" );
 					}
 					break;
-				case 0x160002e:
-					if( GTE_SF( op ) == 1 && GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
+				case 0x16:
+					if( INS_CO( op ) == 0x168002e )
 					{
 						sprintf( buffer, "avsz4" );
 					}
 					break;
-				case 0x170000c:
+				case 0x17:
 					if( GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
 					{
 						sprintf( buffer, "op%s", s_gtesf[ GTE_SF( op ) ] );
 					}
 					break;
-				case 0x190003d:
+				case 0x19:
 					if( GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
 					{
 						sprintf( buffer, "gpf%s", s_gtesf[ GTE_SF( op ) ] );
 					}
 					break;
-				case 0x1a0003e:
+				case 0x1a:
 					if( GTE_MX( op ) == 0 && GTE_V( op ) == 0 && GTE_CV( op ) == 0 && GTE_LM( op ) == 0 )
 					{
 						sprintf( buffer, "gpl%s", s_gtesf[ GTE_SF( op ) ] );

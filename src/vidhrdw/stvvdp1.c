@@ -15,6 +15,49 @@ the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 
 data32_t *stv_vdp1_vram;
 data32_t *stv_vdp1_regs;
+extern data32_t *stv_scu;
+
+/*
+Registers:
+00
+02
+04
+06
+08 EWLR
+0a EWRR
+0c
+0e
+10 EDSR
+12
+*/
+/*Erase/Write Upper-Left register*/
+/*
+15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+ 0|X1 register      |Y1 register               |
+*/
+#define STV_VDP1_EWLR ((stv_vdp1_regs[0x008/4] >> 16)&0x0000ffff)
+#define STV_VDP1_EWLR_X1 ((STV_VDP1_EWLR & 0x7e00) >> 9)
+#define STV_VDP1_EWLR_Y1 ((STV_VDP1_EWLR & 0x01ff) >> 0)
+/*Erase/Write Lower-Right register*/
+/*
+15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+X1 register         |Y1 register               |
+*/
+#define STV_VDP1_EWRR ((stv_vdp1_regs[0x008/4] >> 16)&0x0000ffff)
+#define STV_VDP1_EWRR_X3 ((STV_VDP1_EWLR & 0xfe00) >> 9)
+#define STV_VDP1_EWRR_Y3 ((STV_VDP1_EWLR & 0x01ff) >> 0)
+/*Transfer End Status Register*/
+/*
+15|14|13|12|11|10|09|08|07|06|05|04|03|02| 01| 00|
+0                                        |CEF|BEF|
+*/
+#define STV_VDP1_EDSR ((stv_vdp1_regs[0x010/4] >> 16)&0x0000ffff)
+#define STV_VDP1_CEF  (STV_VDP1_EDSR & 2)
+#define STV_VDP1_BEF  (STV_VDP1_EDSR & 1)
+#define SET_CEF_FROM_1_TO_0 	if(STV_VDP1_CEF)	 stv_vdp1_regs[0x010/4]^=0x00020000
+#define SET_CEF_FROM_0_TO_1     if(!(STV_VDP1_CEF))	 stv_vdp1_regs[0x010/4]^=0x00020000
+/**/
+
 
 READ32_HANDLER( stv_vdp1_regs_r )
 {
@@ -345,6 +388,9 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 	vdp1_nest = -1;
 
+	/*Set CEF bit to 0*/
+	SET_CEF_FROM_1_TO_0;
+
 	while (spritecount<10000) // if its drawn this many sprites something is probably wrong or sega were crazy ;-)
 	{
 		int draw_this_sprite;
@@ -520,6 +566,11 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 
 	end:
+	/*set CEF to 1*/
+	SET_CEF_FROM_0_TO_1;
+
+	if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
+		cpu_set_irq_line_and_vector(0, 2, HOLD_LINE , 0x4d);
 
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }

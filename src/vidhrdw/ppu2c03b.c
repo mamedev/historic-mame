@@ -13,44 +13,11 @@
 /* constant definitions */
 #define BOTTOM_VISIBLE_SCANLINE	239		/* The bottommost visible scanline */
 #define NMI_SCANLINE     		244		/* 244 times Bayou Billy perfectly */
-#define SCANLINES_PER_FRAME		262		/* Total scanlines to account for per frame */
 #define VISIBLE_SCREEN_WIDTH	(32*8)	/* Visible screen width */
 #define VISIBLE_SCREEN_HEIGHT	(30*8)	/* Visible screen height */
 #define VIDEORAM_SIZE			0x4000	/* videoram size */
 #define SPRITERAM_SIZE			0x100	/* spriteram size */
 #define CHARGEN_NUM_CHARS		512		/* max number of characters handled by the chargen */
-
-/* registers definition */
-enum {
-	PPU_CONTROL0 = 0,
-	PPU_CONTROL1,
-	PPU_STATUS,
-	PPU_SPRITE_ADDRESS,
-	PPU_SPRITE_DATA,
-	PPU_SCROLL,
-	PPU_ADDRESS,
-	PPU_DATA,
-	PPU_MAX_REG
-};
-
-/* bit definitions for (some of) the registers */
-enum {
-	PPU_CONTROL0_INC			= 0x04,
-	PPU_CONTROL0_SPR_SELECT		= 0x08,
-	PPU_CONTROL0_CHR_SELECT		= 0x10,
-	PPU_CONTROL0_SPRITE_SIZE	= 0x20,
-	PPU_CONTROL0_NMI			= 0x80,
-
-	PPU_CONTROL1_DISPLAY_MONO	= 0x01,
-	PPU_CONTROL1_BACKGROUND_L8	= 0x02,
-	PPU_CONTROL1_SPRITES_L8		= 0x04,
-	PPU_CONTROL1_BACKGROUND		= 0x08,
-	PPU_CONTROL1_SPRITES		= 0x10,
-
-	PPU_STATUS_8SPRITES			= 0x20,
-	PPU_STATUS_SPRITE0_HIT		= 0x40,
-	PPU_STATUS_VBLANK			= 0x80
-};
 
 /* default monochromatic colortable */
 pen_t default_colortable_mono[] =
@@ -94,6 +61,7 @@ typedef struct {
 	UINT8					*ppu_page[4];			/* ppu pages */
 	int						nes_vram[8];			/* keep track of 8 .5k vram pages to speed things up */
 	int						scan_scale;				/* scan scale */
+	int						scanlines_per_frame;	/* number of scanlines per frame */
 } ppu2c03b_chip;
 
 /* our local copy of the interface */
@@ -323,7 +291,8 @@ static void draw_background( const int num, UINT8 *line_priority )
 	UINT8 *gfx_data = Machine->gfx[gfx_bank]->gfxdata;
 	UINT8 **ppu_page = chips[num].ppu_page;
 	int	start_x = ( chips[num].x_fine ^ 0x07 ) - 7;
-	UINT32 back_pen;
+	UINT16 back_pen;
+	UINT16 *dest;
 
 	UINT8 scroll_x_coarse, scroll_y_coarse, scroll_y_fine, color_mask;
 	int x, tile_index, start, i;
@@ -358,6 +327,9 @@ static void draw_background( const int num, UINT8 *line_priority )
 	/* get the tile index */
 	tile_index = ( ( refresh_data & 0xc00 ) | 0x2000 ) + scroll_y_coarse * 32;
 
+	/* set up dest */
+	dest = ((UINT16 *) bitmap->base) + (bitmap->rowpixels * scanline) + start_x;
+
 	/* draw the 32 or 33 tiles that make up a line */
 	while ( start_x < VISIBLE_SCREEN_WIDTH )
 	{
@@ -367,6 +339,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 		int index1;
 		int page, page2, address;
 		int index2;
+		UINT16 pen;
 
 		index1 = tile_index + x;
 
@@ -400,15 +373,16 @@ static void draw_background( const int num, UINT8 *line_priority )
 			{
 				if ( sd[i] )
 				{
-					plot_pixel( bitmap, start_x+i, scanline, paldata[ sd[ i ] ] );
+					pen = paldata[sd[i]];
 					line_priority[ start_x+i ] |= 0x02;
 				}
 				else
 				{
-					plot_pixel( bitmap, start_x+i, scanline, back_pen );
+					pen = back_pen;
 				}
+				*dest = pen;
 			}
-
+			dest++;
 		}
 
 		start_x += 8;
@@ -425,8 +399,9 @@ static void draw_background( const int num, UINT8 *line_priority )
 	/* if the left 8 pixels for the background are off, blank 'em */
 	if ( !( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_BACKGROUND_L8 ) )
 	{
+		dest = ((UINT16 *) bitmap->base) + (bitmap->rowpixels * scanline);
 		for( i = 0; i < 8; i++ )
-			plot_pixel( bitmap, i, scanline, back_pen );
+			*(dest++) = back_pen;
 	}
 
 	/* done updating, whew */
@@ -740,8 +715,8 @@ static void update_scanline( int num )
 	/* If NMI's are set to be triggered, go for it */
 	if ( ( scanline == NMI_SCANLINE ) && ( ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI ) )
 	{
-		if ( intf->handler[num] )
-			(*intf->handler[num])( num );
+		if ( intf->nmi_handler[num] )
+			(*intf->nmi_handler[num])( num, ppu_regs );
 	}
 }
 
@@ -788,7 +763,7 @@ static void scanline_callback( int num )
 	}
 
 	/* see if we rolled */
-	if ( chips[num].scanline >= SCANLINES_PER_FRAME )
+	if ( chips[num].scanline >= chips[num].scanlines_per_frame )
 	{
 		/* clear the vblank & sprite hit flag */
 		ppu_regs[PPU_STATUS] &= ~( PPU_STATUS_VBLANK | PPU_STATUS_SPRITE0_HIT );
@@ -850,6 +825,7 @@ void ppu2c03b_reset( int num, int scan_scale )
 	chips[num].sprite_page = 0;
 	chips[num].back_color = 0;
 	chips[num].chars_are_dirty = 1;
+	chips[num].scanlines_per_frame = 262;	/* default */
 
 	/* initialize the color tables */
 	{
@@ -1300,16 +1276,16 @@ void ppu2c03b_set_mirroring( int num, int mirroring )
 	}
 }
 
-void ppu2c03b_set_irq_callback( int num, ppu2c03b_irq_cb cb )
+void ppu2c03b_set_nmi_callback( int num, ppu2c03b_nmi_cb cb )
 {
 	/* check bounds */
 	if ( num >= intf->num )
 	{
-		logerror( "PPU(set_irq_callback): Attempting to access an unmapped chip\n" );
+		logerror( "PPU(set_nmi_callback): Attempting to access an unmapped chip\n" );
 		return;
 	}
 
-	intf->handler[num] = cb;
+	intf->nmi_handler[num] = cb;
 }
 
 void ppu2c03b_set_scanline_callback( int num, ppu2c03b_scanline_cb cb )
@@ -1334,6 +1310,18 @@ void ppu2c03b_set_vidaccess_callback( int num, ppu2c03b_vidaccess_cb cb )
 	}
 
 	chips[num].vidaccess_callback_proc = cb;
+}
+
+void ppu2c03b_set_scanlines_per_frame( int num, int scanlines )
+{
+	/* check bounds */
+	if ( num >= intf->num )
+	{
+		logerror( "PPU(set_scanlines_per_frame): Attempting to access an unmapped chip\n" );
+		return;
+	}
+
+	chips[num].scanlines_per_frame = scanlines;
 }
 
 /*************************************

@@ -164,6 +164,7 @@ DRIVER_INIT( ladybugg );
 
 MACHINE_INIT( scramble );
 MACHINE_INIT( sfx );
+MACHINE_INIT( explorer );
 MACHINE_INIT( galaxian );
 MACHINE_INIT( devilfsg );
 
@@ -253,6 +254,7 @@ WRITE_HANDLER( sfx_sh_irqtrigger_w );
 WRITE_HANDLER( mrkougar_sh_irqtrigger_w );
 WRITE_HANDLER( froggrmc_sh_irqtrigger_w );
 WRITE_HANDLER( hotshock_sh_irqtrigger_w );
+WRITE_HANDLER( explorer_sh_irqtrigger_w  );
 
 WRITE_HANDLER( zigzag_8910_latch_w );
 WRITE_HANDLER( zigzag_8910_data_trigger_w );

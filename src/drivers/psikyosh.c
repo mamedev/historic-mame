@@ -135,7 +135,6 @@ static data8_t factory_eeprom[16]  = { 0x00,0x02,0x00,0x01,0x00,0x00,0x00,0x00,0
 static data8_t daraku_eeprom[16]   = { 0x03,0x02,0x00,0x48,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 static data8_t s1945iii_eeprom[16] = { 0x00,0x00,0x00,0x00,0x00,0x01,0x11,0x70,0x25,0x25,0x25,0x00,0x01,0x00,0x11,0xe0 };
 static data8_t dragnblz_eeprom[16] = { 0x00,0x01,0x11,0x70,0x25,0x25,0x25,0x00,0x01,0x00,0x11,0xe0,0x00,0x00,0x00,0x00 };
-static data8_t gnbarich_eeprom[16] = { 0x00,0x0f,0x42,0x40,0x08,0x0a,0x00,0x00,0x01,0x06,0x42,0x59,0x00,0x00,0x00,0x00 };
 
 int use_factory_eeprom, use_fake_pri;
 
@@ -221,9 +220,6 @@ static NVRAM_HANDLER(93C56)
 
  				if (use_factory_eeprom==EEPROM_DRAGNBLZ) /* Dragnblz too */
  					memcpy(eeprom_data+0xf0, dragnblz_eeprom, 0x10);
-
- 				if (use_factory_eeprom==EEPROM_GNBARICH) /* Might as well do Gnbarich as well, otherwise the highscore is incorrect */
- 					memcpy(eeprom_data+0xf0, gnbarich_eeprom, 0x10);
 
 				EEPROM_set_data(eeprom_data,0x100);
 			}
@@ -609,19 +605,6 @@ INPUT_PORTS_START( dragnblz ) /* Security requires bit high */
 	PORT_DIPSETTING(    0x01, "International Ver B." )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gnbarich ) /* Same as S1945iii except only one button */
-	PORT_PLAYER( IPF_PLAYER1, IPT_START1, 1 )
-	PORT_PLAYER( IPF_PLAYER2, IPT_START2, 1 )
-	UNUSED_PORT /* IN2 unused? */
-	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, but EEPROM resets? */
-
-	PORT_START /* IN4 jumper pads on the PCB */
-	PORT_DIPNAME( 0x03, 0x01, "Region" )
-	PORT_DIPSETTING(    0x00, "Japan" )
-	PORT_DIPSETTING(    0x02, "International Ver A." )
-	PORT_DIPSETTING(    0x01, "International Ver B." )
-INPUT_PORTS_END
-
 #if ROMTEST
 #define ROMTEST_GFX 0
 #else
@@ -794,41 +777,6 @@ ROM_START( dragnblz )
 	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, CRC(7fd1b225) SHA1(6aa61021ada51393bbb34fd1aea00b8feccc8197) )
 ROM_END
 
-ROM_START( gnbarich )
-	ROM_REGION( 0x100000, REGION_CPU1, 0)
-	ROM_LOAD32_WORD_SWAP( "2-prog_l.u21",   0x000000, 0x080000, CRC(c136cd9c) SHA1(ab66c4f5196a66a97dbb5832336a203421cf40fa) )
-	ROM_LOAD32_WORD_SWAP( "1-prog_h.u22",   0x000002, 0x080000, CRC(6588fc96) SHA1(3db29fcf17e8b2aee465319b557bd3e45bc966b2) )
-
-	ROM_REGION( 0x2c00000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
-	/* Gunbarich doesn't actually use 1-5 and 10, they're on the board, but all the gfx are in 6-9
-	   The game was an upgrade to Dragon Blaze, only some of the roms were replaced however it
-	   appears the board needs to be fully populated to work correctly so the Dragon Blaze roms
-	   were left on it.  After hooking up hidden rom test we can see only the 8 roms we load are
-	   tested */
-//	ROM_LOAD32_WORD( "1l.u4",  0x0400000, 0x200000, CRC(c2eb565c) SHA1(07e41b36cc03a87f28d091754fdb0d1a7316a532) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "1h.u12", 0x0400002, 0x200000, CRC(23cb46b7) SHA1(005b7cc40eea103688a64a72c219c7535970dbfb) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "2l.u5",  0x0800000, 0x200000, CRC(bc256aea) SHA1(1f1d678e8a63513a95f296b8a07d2ea485d1e53f) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "2h.u13", 0x0800002, 0x200000, CRC(b75f59ec) SHA1(a6cde94bc972e46e54c962fde49fc2174b312882) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "3l.u6",  0x0c00000, 0x200000, CRC(4284f008) SHA1(610b13304043411b3088fd4299b3cb0a4d8b0cc2) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "3h.u14", 0x0c00002, 0x200000, CRC(abe5cbbf) SHA1(c2fb1d8ea8772572c08b36496cf9fc5b91cf848b) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "4l.u7",  0x1000000, 0x200000, CRC(c9fcf2e5) SHA1(7cecdf3406da11289b54aaf58d12883ddfdc5e6b) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "4h.u15", 0x1000002, 0x200000, CRC(0ab0a12a) SHA1(1b29b6dc79e69edb56634517365d0ee8e6ea78ae) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "5l.u8",  0x1400000, 0x200000, CRC(68d03ccf) SHA1(d2bf6da5fa6e346b05872ed9616ffe51c3768f50) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "5h.u16", 0x1400002, 0x200000, CRC(5450fbca) SHA1(7a804263549cea951782a67855e69cb8cb417e98) ) /* From Dragon Blaze */
-	ROM_LOAD32_WORD( "6l.u1",  0x1800000, 0x200000, CRC(0432e1a8) SHA1(632cb6534a19a92aa16d1dc8bb98c0c1fa17e428) )
-	ROM_LOAD32_WORD( "6h.u2",  0x1800002, 0x200000, CRC(f90fa3ea) SHA1(773861c6c559f2df88e395669f27c43bd4dd6eb6) )
-	ROM_LOAD32_WORD( "7l.u19", 0x1c00000, 0x200000, CRC(36bf9a58) SHA1(b546425f17f4b0b1112f0a22f9f5c695f5d97fe9) )
-	ROM_LOAD32_WORD( "7h.u20", 0x1c00002, 0x200000, CRC(4b3eafd8) SHA1(8d0a4516bab2a188a66291e805c3c265774a6b72) )
-	ROM_LOAD32_WORD( "8l.u28", 0x2000000, 0x200000, CRC(026754da) SHA1(66072e7584dcfea614a1e37592bda65733c9ce11) )
-	ROM_LOAD32_WORD( "8h.u29", 0x2000002, 0x200000, CRC(8cd7aaa0) SHA1(83469c5407cba134ec1d22330623d8be8e0eabec) )
-	ROM_LOAD32_WORD( "9l.u41", 0x2400000, 0x200000, CRC(02c066fe) SHA1(ecd5f36d9e55a341aff956bab4e7b0ae9e6cc15f) )
-	ROM_LOAD32_WORD( "9h.u42", 0x2400002, 0x200000, CRC(5433385a) SHA1(138d62409cfb9e1a4eb3ca378ab8f6df45d478c0) )
-//	ROM_LOAD32_WORD( "10l.u58",0x2800000, 0x200000, CRC(a3f5c7f8) SHA1(d17478ca3e7ef46270f350ffa35d43acb05b1185) ) /* From Dragon Blaze */
-//	ROM_LOAD32_WORD( "10h.u59",0x2800002, 0x200000, CRC(30e304c4) SHA1(1d866276bfe7f7524306a880d225aaf11ac2e5dd) ) /* From Dragon Blaze */
-
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, CRC(7b10436b) SHA1(c731fcce024e286a677ca10a91761c1ee06094a5) )
-ROM_END
 
 /* are these right? should i fake the counter return?
    'speedups / idle skipping isn't needed for 'hotgmck, hgkairak'
@@ -945,26 +893,6 @@ static READ32_HANDLER( dragnblz_speedup_r )
 	return psh_ram[0x006000C/4];
 }
 
-static READ32_HANDLER( gnbarich_speedup_r )
-{
-/*
-PC  :0602CAE6: MOV.L   @R14,R3 // R14 = 0x606000C
-PC  :0602CAE8: MOV.L   @($F4,PC),R1
-PC  :0602CAEA: ADD     #$01,R3
-PC  :0602CAEC: MOV.L   R3,@R14 // R14 = 0x606000C
-PC  :0602CAEE: MOV.L   @R1,R2
-PC  :0602CAF0: TST     R2,R2
-PC  :0602CAF2: BT      $0602CAE6
-*/
-
-	if (activecpu_get_pc()==0x0602CAE8) cpu_spinuntil_int(); // title logos
-	if (activecpu_get_pc()==0x0602CD88) cpu_spinuntil_int(); // attract intro
-	if (activecpu_get_pc()==0x0602D2F0) cpu_spinuntil_int(); // game attract
-	if (activecpu_get_pc()==0x0602D042) cpu_spinuntil_int(); // game play
-
-	return psh_ram[0x006000C/4];
-}
-
 static DRIVER_INIT( soldivid )
 {
 	install_mem_read32_handler(0, 0x600000c, 0x600000f, soldivid_speedup_r );
@@ -1020,13 +948,6 @@ static DRIVER_INIT( dragnblz )
 	use_fake_pri=1;
 }
 
-static DRIVER_INIT( gnbarich )
-{
-	install_mem_read32_handler(0, 0x606000c, 0x606000f, gnbarich_speedup_r );
-	use_factory_eeprom=EEPROM_GNBARICH;
-	use_fake_pri=1; /* Fixes transitions and endings, time and lives are hidden though :( */
-}
-
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
@@ -1041,4 +962,3 @@ GAMEX( 1999, s1945iii, 0,        psikyo5,   s1945iii, s1945iii, ROT270, "Psikyo"
 
 /* ps5v2 */
 GAMEX( 2000, dragnblz, 0,        psikyo5,   dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 2001, gnbarich, 0,        psikyo5,   gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich", GAME_IMPERFECT_GRAPHICS )

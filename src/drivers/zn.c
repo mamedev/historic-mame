@@ -389,7 +389,7 @@ static MEMORY_READ32_START( zn_readmem )
 	{ 0x1f000000, 0x1f3fffff, MRA32_BANK1 },	/* game rom */
 	{ 0x1f800000, 0x1f8003ff, MRA32_BANK3 },	/* scratchpad */
 	{ 0x1f801040, 0x1f80104f, sio0_r },
-	{ 0x1f801810, 0x1f801817, psxgpu_r },
+	{ 0x1f801810, 0x1f801817, psx_gpu_r },
 	{ 0x1fb80000, 0x1fbbffff, MRA32_BANK6 },	/* country rom */
 	{ 0x80000000, 0x803fffff, MRA32_BANK4 },	/* ram mirror */
 	{ 0xa0000000, 0xa03fffff, MRA32_BANK5 },	/* ram mirror */
@@ -401,7 +401,7 @@ static MEMORY_WRITE32_START( zn_writemem )
 	{ 0x1f000000, 0x1f3fffff, MWA32_ROM },		/* game rom */
 	{ 0x1f800000, 0x1f8003ff, MWA32_BANK3 },	/* scratchpad */
 	{ 0x1f801040, 0x1f80104f, sio0_w },
-	{ 0x1f801810, 0x1f801817, psxgpu_w },
+	{ 0x1f801810, 0x1f801817, psx_gpu_w },
 	{ 0x1fb80000, 0x1fbbffff, MWA32_ROM },		/* country rom */
 	{ 0x80000000, 0x803fffff, MWA32_BANK4 },	/* ram mirror */
 	{ 0xa0000000, 0xa03fffff, MWA32_BANK5 },	/* ram mirror */
@@ -605,7 +605,7 @@ static VIDEO_UPDATE( player )
 
 	if( n_playermode == 0 )
 	{
-		video_update_psxgpu( bitmap, cliprect );
+		video_update_psx( bitmap, cliprect );
 	}
 	else
 	{
@@ -766,7 +766,7 @@ static MACHINE_DRIVER_START( zn )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33868800) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -779,10 +779,10 @@ static MACHINE_DRIVER_START( zn )
 	MDRV_VISIBLE_AREA(0, 479, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
-	MDRV_VIDEO_UPDATE(psxgpu)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_UPDATE(psx)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -792,7 +792,7 @@ static MACHINE_DRIVER_START( znqsound )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 8MHz ?? */
@@ -811,10 +811,10 @@ static MACHINE_DRIVER_START( znqsound )
 	MDRV_VISIBLE_AREA(0, 479, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
 	MDRV_VIDEO_UPDATE(player)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -825,7 +825,7 @@ static MACHINE_DRIVER_START( znlink )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
 	MDRV_CPU_MEMORY(link_readmem,link_writemem)
@@ -841,10 +841,10 @@ static MACHINE_DRIVER_START( znlink )
 	MDRV_VISIBLE_AREA(0, 479, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
-	MDRV_VIDEO_UPDATE(psxgpu)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_UPDATE(psx)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -854,7 +854,7 @@ static MACHINE_DRIVER_START( fx1a )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
@@ -872,10 +872,10 @@ static MACHINE_DRIVER_START( fx1a )
 	MDRV_VISIBLE_AREA(0, 479, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
 	MDRV_VIDEO_UPDATE(player)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -886,7 +886,7 @@ static MACHINE_DRIVER_START( fx1b )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -899,10 +899,10 @@ static MACHINE_DRIVER_START( fx1b )
 	MDRV_VISIBLE_AREA(0, 479, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
-	MDRV_VIDEO_UPDATE(psxgpu)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_UPDATE(psx)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)

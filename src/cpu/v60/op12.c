@@ -738,7 +738,7 @@ UINT32 opLDPR(void)
 	F12DecodeOperands(ReadAMAddress,2,ReadAM,2);
 	if (f12Op2 >= 0 && f12Op2 <= 28)
 	{
-		if (f12Flag1)
+	  if (f12Flag1 &&(!(OpRead8(PC + 1)&0x80 && OpRead8(PC + 2)==0xf4 ) ))
 			v60.reg[f12Op2 + 36] = v60.reg[f12Op1];
 		else
 			v60.reg[f12Op2 + 36] = f12Op1;

@@ -60,6 +60,42 @@ static MEMORY_WRITE_START( scramble_writemem )
 MEMORY_END
 
 
+static MEMORY_READ_START( explorer_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },
+	{ 0x4c00, 0x4fff, galaxian_videoram_r },	/* mirror */
+	{ 0x5000, 0x50ff, MRA_RAM },
+	{ 0x5100, 0x51ff, MRA_NOP },	/* test mode mirror? */
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8000, 0x8000, input_port_0_r },
+	{ 0x8001, 0x8001, input_port_1_r },
+	{ 0x8002, 0x8002, input_port_2_r },
+	{ 0x8003, 0x8003, input_port_3_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( explorer_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x4c00, 0x4fff, galaxian_videoram_w },	/* mirror address */
+	{ 0x5000, 0x503f, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5080, 0x50ff, MWA_RAM },
+	{ 0x5100, 0x51ff, MWA_NOP },	/* test mode mirror? */
+	{ 0x6800, 0x6800, MWA_NOP },
+	{ 0x6801, 0x6801, galaxian_nmi_enable_w },
+	{ 0x6802, 0x6802, galaxian_coin_counter_w },
+	{ 0x6803, 0x6803, MWA_NOP },
+	{ 0x6804, 0x6804, galaxian_stars_enable_w },
+	{ 0x6806, 0x6806, galaxian_flip_screen_x_w },
+	{ 0x6807, 0x6807, galaxian_flip_screen_y_w },
+	{ 0x7000, 0x7000, MWA_NOP },
+	{ 0x8000, 0x8000, soundlatch_w },
+	{ 0x9000, 0x9000, explorer_sh_irqtrigger_w },
+MEMORY_END
+
+
 static MEMORY_READ_START( ckongs_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6bff, MRA_RAM },
@@ -387,6 +423,97 @@ INPUT_PORTS_START( scramble )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	/* protection bit */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* protection bit */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( explorer )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* pressing this disables the coins */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 2C_8C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 2C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 2C_6C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 2C_8C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
+
+	PORT_START	/* IN3 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x0c, "15000" )
+	PORT_DIPSETTING(    0x14, "20000" )
+	PORT_DIPSETTING(    0x1c, "25000" )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x08, "50000" )
+	PORT_DIPSETTING(    0x10, "70000" )
+	PORT_DIPSETTING(    0x18, "90000" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atlantis )
@@ -1201,6 +1328,18 @@ static struct AY8910interface sfx_ay8910_interface =
 	{ sfx_sh_irqtrigger_w, 0 }
 };
 
+struct AY8910interface explorer_ay8910_interface =
+{
+	2,	/* 2 chips */
+	14318000/8,	/* 1.78975 MHz */
+	/* Ant Eater clips if the volume is set higher than this */
+	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
+	{ scramble_portB_r, soundlatch_r },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 }
+};
+
 static struct DACinterface sfx_dac_interface =
 {
 	1,	/* 1 channel */
@@ -1230,6 +1369,19 @@ static MACHINE_DRIVER_START( scramble )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("8910", AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( explorer )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(explorer_readmem,explorer_writemem)
+
+	MDRV_MACHINE_INIT(explorer)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("8910", AY8910, explorer_ay8910_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( theend )
@@ -1500,6 +1652,25 @@ ROM_START( scrambls )
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "5f",           0x0000, 0x0800, CRC(5f30311a) SHA1(d64134089bebd995b3a1a089411e180c8c29f32d) )
 	ROM_LOAD( "5h",           0x0800, 0x0800, CRC(516e029e) SHA1(81b44eb1ce43cebde87f0a41ade2e7eb291af78d) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
+ROM_START( explorer )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10l.bin",      0x0000, 0x1000, CRC(d5adf626) SHA1(f362322f780c13cee73697f9158a8ca8aa943a2e) ) 
+	ROM_LOAD( "9l.bin",       0x1000, 0x1000, CRC(48e32788) SHA1(7a98848d2ed8ba5b2da28c014226109af7cc9287) ) 
+	ROM_LOAD( "8l.bin",       0x2000, 0x1000, CRC(c0dbdbde) SHA1(eac7444246bdf80f97962031bf900ce09b28c8b5) ) 
+	ROM_LOAD( "7l.bin",       0x3000, 0x1000, CRC(9b30d227) SHA1(22764e0a2a5ce7abe862e42c84abaaf25949575f) ) 
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "3f.bin",		  0x0000, 0x1000, CRC(9faf18cf) SHA1(1b6c65472d639753cc39031750f85efe1d31ae5e) ) 
+	ROM_LOAD( "4b.bin",       0x1000, 0x0800, CRC(e910b5c3) SHA1(228e8d36dd1ac8a00a396df74b80aa6616997028) ) 
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5f.k",         0x0000, 0x0800, CRC(4708845b) SHA1(a8b1ad19a95a9d35050a2ab7194cc96fc5afcdc9) )
+	ROM_LOAD( "5h.k",         0x0800, 0x0800, CRC(11fd2887) SHA1(69844e48bb4d372cac7ae83c953df573c7ecbb7f) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
@@ -1977,6 +2148,7 @@ ROM_END
 
 GAME( 1981, scramble, 0,        scramble, scramble, scramble,     ROT90, "Konami", "Scramble" )
 GAME( 1981, scrambls, scramble, scramble, scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)" )
+GAME( 1981, explorer, scramble, explorer, explorer, 0,		      ROT90, "bootleg", "Explorer" )
 GAME( 1981, atlantis, 0,        scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 1)" )
 GAME( 1981, atlants2, atlantis, scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 2)" )
 GAME( 1980, theend,   0,        theend,   theend,   theend,       ROT90, "Konami", "The End" )

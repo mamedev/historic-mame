@@ -2,19 +2,23 @@
 
 	Game Driver for Video System Mahjong series.
 
-	Ojanko High School
+	Ojanko High School (Japan)
 	(c)1988 Video System Co.,Ltd.
 
-	Ojanko Yakata
+	Ojanko Yakata (Japan)
 	(c)1986 Video System Co.,Ltd.
 
-	Ojanko Yakata 2bankan
+	Ojanko Yakata 2bankan (Japan)
 	(c)1987 Video System Co.,Ltd.
 
 	Chinese Casino [BET] (Japan)
 	(c)1987 Video System Co.,Ltd.
 
+	Ojanko Club (Japan)
+	(c)1986 Video System Co.,Ltd.
+
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2000/06/10 -
+	Driver by Uki 2001/12/10 -
 
 ******************************************************************************/
 /******************************************************************************
@@ -37,12 +41,18 @@ VIDEO_START( ojankohs );
 VIDEO_START( ojankoy );
 READ_HANDLER( ojankohs_palette_r );
 WRITE_HANDLER( ojankohs_palette_w );
+WRITE_HANDLER( ccasino_palette_w );
 READ_HANDLER( ojankohs_videoram_r );
 WRITE_HANDLER( ojankohs_videoram_w );
 READ_HANDLER( ojankohs_colorram_r );
 WRITE_HANDLER( ojankohs_colorram_w );
 WRITE_HANDLER( ojankohs_gfxreg_w );
 WRITE_HANDLER( ojankohs_flipscreen_w );
+VIDEO_UPDATE( ojankoc );
+VIDEO_START( ojankoc );
+WRITE_HANDLER( ojankoc_palette_w );
+WRITE_HANDLER( ojankoc_videoram_w );
+void ojankoc_flipscreen(int data);
 
 
 static int ojankohs_portselect;
@@ -100,16 +110,119 @@ static void ojankohs_adpcm_int(int irq)
 		return;
 
 	/* clock the data through */
-	if (ojankohs_vclk_left)
-	{
+	if (ojankohs_vclk_left) {
 		MSM5205_data_w(0, (ojankohs_adpcm_data >> 4));
 		ojankohs_adpcm_data <<= 4;
 		ojankohs_vclk_left--;
 	}
 
 	/* generate an NMI if we're out of data */
-	if (!ojankohs_vclk_left)
+	if (!ojankohs_vclk_left) 
 		cpu_set_nmi_line(0, PULSE_LINE);
+}
+
+static WRITE_HANDLER( ojankoc_ctrl_w )
+{
+	data8_t *BANKROM = memory_region(REGION_USER1);
+	UINT32 bank_address = (data & 0x0f) * 0x8000;
+
+	cpu_setbank(1, &BANKROM[bank_address]);
+
+	ojankohs_adpcm_reset = ((data & 0x10) >> 4);
+	MSM5205_reset_w(0, (!(data & 0x10) >> 4));
+	ojankoc_flipscreen(data);
+}
+
+static WRITE_HANDLER( ojankohs_portselect_w )
+{
+	ojankohs_portselect = data;
+}
+
+static READ_HANDLER( ojankohs_keymatrix_r )
+{
+	int ret;
+
+	switch (ojankohs_portselect) {
+		case 0x01:	ret = readinputport(4);	break;
+		case 0x02:	ret = readinputport(5); break;
+		case 0x04:	ret = readinputport(6); break;
+		case 0x08:	ret = readinputport(7); break;
+		case 0x10:	ret = readinputport(8); break;
+		case 0x20:	ret = 0xff; break;
+		case 0x3f:	ret = 0xff;
+					ret &= readinputport(4);
+					ret &= readinputport(5);
+					ret &= readinputport(6);
+					ret &= readinputport(7);
+					ret &= readinputport(8);
+					break;
+		default:	ret = 0xff;
+					logerror("PC:%04X unknown %02X\n", activecpu_get_pc(), ojankohs_portselect);
+					break;
+	}
+
+	return ret;
+}
+
+static READ_HANDLER( ojankoc_keymatrix_r )
+{
+	int i;
+	int ret = 0;
+
+	for (i = 0; i < 5; i++) {
+		if (~ojankohs_portselect & (1 << i))
+			ret |= readinputport(i + offset * 5 + 2);
+	}
+
+	return (ret & 0x3f) | (readinputport(12 + offset) & 0xc0);
+}
+
+static READ_HANDLER( ojankohs_ay8910_0_r )
+{
+	// DIPSW 2
+	return (((readinputport(2) & 0x01) << 7) | ((readinputport(2) & 0x02) << 5) |
+	        ((readinputport(2) & 0x04) << 3) | ((readinputport(2) & 0x08) << 1) |
+	        ((readinputport(2) & 0x10) >> 1) | ((readinputport(2) & 0x20) >> 3) |
+	        ((readinputport(2) & 0x40) >> 5) | ((readinputport(2) & 0x80) >> 7));
+}
+
+static READ_HANDLER( ojankohs_ay8910_1_r )
+{
+	// DIPSW 1
+	return (((readinputport(3) & 0x01) << 7) | ((readinputport(3) & 0x02) << 5) |
+	        ((readinputport(3) & 0x04) << 3) | ((readinputport(3) & 0x08) << 1) |
+	        ((readinputport(3) & 0x10) >> 1) | ((readinputport(3) & 0x20) >> 3) |
+	        ((readinputport(3) & 0x40) >> 5) | ((readinputport(3) & 0x80) >> 7));
+}
+
+static READ_HANDLER( ojankoy_ay8910_0_r )
+{
+	return readinputport(2);				// DIPSW 2
+}
+
+static READ_HANDLER( ojankoy_ay8910_1_r )
+{
+	return readinputport(3);				// DIPSW 1
+}
+
+static READ_HANDLER( ccasino_dipsw3_r )
+{
+	return (readinputport(9) ^ 0xff);		// DIPSW 3
+}
+
+static READ_HANDLER( ccasino_dipsw4_r )
+{
+	return (readinputport(10) ^ 0xff);		// DIPSW 4
+}
+
+static WRITE_HANDLER( ojankoy_coinctr_w )
+{
+	coin_counter_w( 0, (data & 0x01));
+}
+
+static WRITE_HANDLER( ccasino_coinctr_w )
+{
+	coin_counter_w(0, (data & 0x02));
 }
 
 
@@ -147,78 +260,17 @@ static MEMORY_WRITE_START( writemem_ojankoy )
 	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
+static MEMORY_READ_START( readmem_ojankoc )
+	{ 0x0000, 0x77ff, MRA_ROM },
+	{ 0x7800, 0x7fff, MRA_RAM },
+	{ 0x8000, 0xffff, MRA_BANK1 },
+MEMORY_END
 
-static WRITE_HANDLER( ojankohs_portselect_w )
-{
-	ojankohs_portselect = data;
-}
-
-static READ_HANDLER( ojankohs_keymatrix_r )
-{
-	int ret;
-
-	switch (ojankohs_portselect)
-	{
-		case	0x01:	ret = readinputport(4);	break;
-		case	0x02:	ret = readinputport(5); break;
-		case	0x04:	ret = readinputport(6); break;
-		case	0x08:	ret = readinputport(7); break;
-		case	0x10:	ret = readinputport(8); break;
-		case	0x20:	ret = 0xff; break;
-		case	0x3f:	ret = 0xff;
-				ret &= readinputport(4);
-				ret &= readinputport(5);
-				ret &= readinputport(6);
-				ret &= readinputport(7);
-				ret &= readinputport(8);
-				break;
-		default:	ret = 0xff;
-				logerror("PC:%04X unknown %02X\n", activecpu_get_pc(), ojankohs_portselect);
-				break;
-	}
-
-	return ret;
-}
-
-static READ_HANDLER( ojankohs_ay8910_0_r )
-{
-	// DIPSW 2
-	return (((readinputport(2) & 0x01) << 7) | ((readinputport(2) & 0x02) << 5) |
-	        ((readinputport(2) & 0x04) << 3) | ((readinputport(2) & 0x08) << 1) |
-	        ((readinputport(2) & 0x10) >> 1) | ((readinputport(2) & 0x20) >> 3) |
-	        ((readinputport(2) & 0x40) >> 5) | ((readinputport(2) & 0x80) >> 7));
-}
-
-static READ_HANDLER( ojankohs_ay8910_1_r )
-{
-	// DIPSW 1
-	return (((readinputport(3) & 0x01) << 7) | ((readinputport(3) & 0x02) << 5) |
-	        ((readinputport(3) & 0x04) << 3) | ((readinputport(3) & 0x08) << 1) |
-	        ((readinputport(3) & 0x10) >> 1) | ((readinputport(3) & 0x20) >> 3) |
-	        ((readinputport(3) & 0x40) >> 5) | ((readinputport(3) & 0x80) >> 7));
-}
-
-static READ_HANDLER( ojankoy_ay8910_0_r )
-{
-	// DIPSW 2
-	return readinputport(2);
-}
-
-static READ_HANDLER( ojankoy_ay8910_1_r )
-{
-	// DIPSW 1
-	return readinputport(3);
-}
-
-static WRITE_HANDLER( ojankoy_coinctr_w )
-{
-	coin_counter_w( 0, (data & 0x01));
-}
-
-static WRITE_HANDLER( ccasino_coinctr_w )
-{
-	coin_counter_w(0, (data & 0x02));
-}
+static MEMORY_WRITE_START( writemem_ojankoc )
+	{ 0x0000, 0x77ff, MWA_ROM },
+	{ 0x7800, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+	{ 0x8000, 0xffff, ojankoc_videoram_w },
+MEMORY_END
 
 
 static PORT_READ_START( readport_ojankohs )
@@ -251,61 +303,41 @@ static PORT_WRITE_START( writeport_ojankoy )
 	{ 0x07, 0x07, AY8910_control_port_0_w },
 PORT_END
 
-static READ_HANDLER( io_ccasino_r )
-{
-	int ret;
-
-	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
-
-	switch (offset & 0xff00)
-	{
-		case	0x0000:	ret = input_port_0_r(0); break;
-		case	0x0100:	ret = ojankohs_keymatrix_r(0); break;
-		case	0x0200:	ret = input_port_1_r(0); break;
-		case	0x0300:	ret = (readinputport(9) ^ 0xff); break;		// DIPSW 3
-		case	0x0400:	ret = (readinputport(10) ^ 0xff); break;	// DIPSW 4
-		case	0x0600:	ret = AY8910_read_port_0_r(0); break;
-		default:	ret = 0xff;
-				logerror("PC:%04X unknown I/O Read %02X\n", activecpu_get_pc(), ((offset & 0xff00) >> 8));
-				break;
-	}
-
-	return ret;
-}
-
 static PORT_READ_START( readport_ccasino )
-	{ 0x0000, 0xffff, io_ccasino_r },
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, ojankohs_keymatrix_r },
+	{ 0x02, 0x02, input_port_1_r },
+	{ 0x03, 0x03, ccasino_dipsw3_r },
+	{ 0x04, 0x04, ccasino_dipsw4_r },
+	{ 0x06, 0x06, AY8910_read_port_0_r },
 PORT_END
 
-static WRITE_HANDLER( io_ccasino_w )
-{
-	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
-
-	if ((0x0800 <= offset) && (0x1000 > offset))
-	{
-		ojankohs_palette_w((offset & 0x07ff), data);
-		return;
-	}
-
-	switch (offset & 0xff00)
-	{
-		case	0x0000:	ojankohs_portselect_w(0, data); break;
-		case	0x0100:	ojankohs_rombank_w(0, data); break;
-		case	0x0200:	ccasino_coinctr_w(0, data); break;
-		case	0x0300:	ojankohs_adpcm_reset_w(0, data); break;
-		case	0x0400:	ojankohs_flipscreen_w(0, data); break;
-		case	0x0500:	ojankohs_msm5205_w(0, data); break;
-		case	0x0600:	AY8910_write_port_0_w(0, data); break;
-		case	0x0700:	AY8910_control_port_0_w(0, data); break;
-		case	0x1000:	break;				// unknown
-		case	0x1100:	break;				// unknown
-		default:	logerror("PC:%04X unknown I/O Write %02X, %02X\n", activecpu_get_pc(), ((offset & 0xff00) >> 8), data);
-				break;
-	}
-}
-
 static PORT_WRITE_START( writeport_ccasino )
-	{ 0x0000, 0xffff, io_ccasino_w },
+	{ 0x00, 0x00, ojankohs_portselect_w },
+	{ 0x01, 0x01, ojankohs_rombank_w },
+	{ 0x02, 0x02, ccasino_coinctr_w },
+	{ 0x03, 0x03, ojankohs_adpcm_reset_w },
+	{ 0x04, 0x04, ojankohs_flipscreen_w },
+	{ 0x05, 0x05, ojankohs_msm5205_w },
+	{ 0x06, 0x06, AY8910_write_port_0_w },
+	{ 0x07, 0x07, AY8910_control_port_0_w },
+	{ 0x08, 0x0f, ccasino_palette_w },		// 16bit address access
+	{ 0x10, 0x10, IOWP_NOP },
+	{ 0x11, 0x11, IOWP_NOP },
+PORT_END
+
+static PORT_READ_START( readport_ojankoc )
+	{ 0xfc, 0xfd, ojankoc_keymatrix_r },
+	{ 0xff, 0xff, AY8910_read_port_0_r },
+PORT_END
+
+static PORT_WRITE_START( writeport_ojankoc )
+	{ 0x00, 0x1f, ojankoc_palette_w },
+	{ 0xf9, 0xf9, ojankohs_msm5205_w },
+	{ 0xfb, 0xfb, ojankoc_ctrl_w },
+	{ 0xfd, 0xfd, ojankohs_portselect_w },
+	{ 0xfe, 0xfe, AY8910_write_port_0_w },
+	{ 0xff, 0xff, AY8910_control_port_0_w },
 PORT_END
 
 
@@ -327,7 +359,7 @@ INPUT_PORTS_START( ojankohs )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -436,7 +468,7 @@ INPUT_PORTS_START( ojankoy )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -555,7 +587,7 @@ INPUT_PORTS_START( ccasino )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -713,6 +745,159 @@ INPUT_PORTS_START( ccasino )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ojankoc )
+	PORT_START	/* DSW1 (0) */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "1-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "1-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* DSW2 (1) */
+	PORT_DIPNAME( 0x01, 0x01, "2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "2-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "2-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 1-0 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P1 A",   KEYCODE_A, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P1 E",   KEYCODE_E, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P1 I",   KEYCODE_I, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P1 M",   KEYCODE_M, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P1 Kan", KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (3) PORT 1-1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P1 B",     KEYCODE_B, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P1 F",     KEYCODE_F, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P1 J",     KEYCODE_J, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P1 N",     KEYCODE_N, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P1 Reach", KEYCODE_LSHIFT, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "P1 Bet",   KEYCODE_2, IP_JOY_NONE )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (4) PORT 1-2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P1 C",   KEYCODE_C, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P1 G",   KEYCODE_G, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P1 K",   KEYCODE_K, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P1 Chi", KEYCODE_SPACE, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P1 Ron", KEYCODE_Z, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (5) PORT 1-3 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P1 D",   KEYCODE_D, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P1 H",   KEYCODE_H, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P1 L",   KEYCODE_L, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P1 Pon", KEYCODE_LALT, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (6) PORT 1-4 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P1 Last Chance", KEYCODE_RALT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P1 Take Score",  KEYCODE_RCONTROL, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P1 Double Up",   KEYCODE_RSHIFT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P1 Flip",        KEYCODE_X, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P1 Big",         KEYCODE_ENTER, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "P1 Small",       KEYCODE_BACKSPACE, IP_JOY_NONE )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (7) PORT 2-0 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P2 A",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P2 E",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P2 I",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P2 M",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P2 Kan", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (8) PORT 2-1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P2 B",     IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P2 F",     IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P2 J",     IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P2 N",     IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P2 Reach", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "P2 Bet",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (9) PORT 2-2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P2 C",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P2 G",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P2 K",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P2 Chi", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P2 Ron", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (10) PORT 2-3 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P2 D",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P2 H",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P2 L",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P2 Pon", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* (11) PORT 2-4 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "P2 Last Chance", IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "P2 Take Score",  IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "P2 Double Up",   IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "P2 Flip",        IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, 0, "P2 Big",         IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, 0, "P2 Small",       IP_KEY_DEFAULT, IP_JOY_NONE )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 (12) */ 
+	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 (13) */ 
+	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
 
 static struct GfxLayout ojankohs_bglayout =
 {
@@ -728,39 +913,59 @@ static struct GfxLayout ojankohs_bglayout =
 static struct GfxDecodeInfo ojankohs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &ojankohs_bglayout,   0, 64 },
-	{ -1 } /* end of array */
+	{ -1 } 						/* end of array */
 };
 
 
 static struct AY8910interface ojankohs_ay8910_interface =
 {
-	1,				/* 1 chip */
-	12000000/6,			/* 2 MHz ? */
-	{ 15 },				/* volume */
+	1,							/* 1 chip */
+	12000000/6,					/* 2 MHz ? */
+	{ 15 },						/* volume */
 	{ ojankohs_ay8910_0_r },	/* read port #0 */
 	{ ojankohs_ay8910_1_r },	/* read port #1 */
-	{ 0 },				/* write port #0 */
-	{ 0 }				/* write port #1 */
+	{ 0 },						/* write port #0 */
+	{ 0 }						/* write port #1 */
 };
 
 static struct AY8910interface ojankoy_ay8910_interface =
 {
-	1,				/* 1 chip */
-	12000000/8,			/* 1.5 MHz ? */
-	{ 15 },				/* volume */
+	1,							/* 1 chip */
+	12000000/8,					/* 1.5 MHz ? */
+	{ 15 },						/* volume */
 	{ ojankoy_ay8910_0_r },		/* read port #0 */
 	{ ojankoy_ay8910_1_r },		/* read port #1 */
-	{ 0 },				/* write port #0 */
-	{ 0 }				/* write port #1 */
+	{ 0 },						/* write port #0 */
+	{ 0 }						/* write port #1 */
 };
 
-static struct MSM5205interface msm5205_interface =
+static struct AY8910interface ojankoc_ay8910_interface =
 {
-	1,				/* 1 chip */
-	384000,				/* 384 KHz */
+	1,							/* 1 chip */
+	8000000/4,					/* 2.000 MHz */
+	{ 15 },						/* volume */
+	{ input_port_0_r },			/* read port #0 */
+	{ input_port_1_r },			/* read port #1 */
+	{ 0 },						/* write port #0 */
+	{ 0 } 						/* write port #1 */
+};
+
+static struct MSM5205interface ojankohs_msm5205_interface =
+{
+	1,							/* 1 chip */
+	384000,						/* 384 KHz */
 	{ ojankohs_adpcm_int },		/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8 KHz */
-	{ 65 }				/* volume */
+	{ MSM5205_S48_4B },			/* 8 KHz */
+	{ 50 }						/* volume */
+};
+
+static struct MSM5205interface ojankoc_msm5205_interface =
+{
+	1,							/* 1 chip */
+	8000000/22,					/* 364 KHz */
+	{ ojankohs_adpcm_int },		/* IRQ handler */
+	{ MSM5205_S48_4B },			/* 7.6 KHz */
+	{ 50 }						/* volume */
 };
 
 
@@ -790,9 +995,8 @@ static MACHINE_DRIVER_START( ojankohs )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ojankohs_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( ojankoy )
 
@@ -821,15 +1025,13 @@ static MACHINE_DRIVER_START( ojankoy )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( ccasino )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)		/* 6.00 MHz ? */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 MHz ? */
 	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
 	MDRV_CPU_PORTS(readport_ccasino,writeport_ccasino)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -852,7 +1054,35 @@ static MACHINE_DRIVER_START( ccasino )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( ojankoc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000/2)			/* 4.00 MHz */
+	MDRV_CPU_MEMORY(readmem_ojankoc,writemem_ojankoc)
+	MDRV_CPU_PORTS(readport_ojankoc,writeport_ojankoc)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 256-1, 8, 248-1)
+	MDRV_PALETTE_LENGTH(16)
+
+	MDRV_VIDEO_START(ojankoc)
+	MDRV_VIDEO_UPDATE(ojankoc)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ojankoc_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, ojankoc_msm5205_interface)
 MACHINE_DRIVER_END
 
 
@@ -930,7 +1160,25 @@ ROM_START( ccasino )
 	ROM_LOAD( "h1.bin", 0x58000, 0x08000, CRC(f0af2d38) SHA1(14f29404a10633f5c4b574fc1f34139f9fb8a8bf) )
 ROM_END
 
+ROM_START( ojankoc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )   /* CPU */
+	ROM_LOAD( "c11.1p", 0x0000, 0x8000, CRC(cb3e900c) SHA1(95f0354f147e339a97368b5cc67200151cdfa0e9) )
 
+	ROM_REGION( 0x80000, REGION_USER1, 0 )  /* BANK */
+	ROM_LOAD( "1.1a", 0x00000, 0x8000, CRC(d40b17eb) SHA1(1e8c16e1562c112ca5150b3187a2d4aa22c1adf0) )
+	ROM_LOAD( "2.1b", 0x08000, 0x8000, CRC(d181172a) SHA1(65d6710464a1f505df705c553558bbf22704359d) )
+	ROM_LOAD( "3.1c", 0x10000, 0x8000, CRC(2e86d5bc) SHA1(0226eb81b31e43325f24b40ab51bce1729bf678c) )
+	ROM_LOAD( "4.1e", 0x18000, 0x8000, CRC(00a780cb) SHA1(f0b4f6f0c58e9d069e0f6794243925679f220f35) )
+	ROM_LOAD( "5.1f", 0x20000, 0x8000, CRC(f9885076) SHA1(ebf4c0769eab6545fd227eb9f4036af2472bcac3) )
+	ROM_LOAD( "6.1h", 0x28000, 0x8000, CRC(42575d0c) SHA1(1f9c187b0c05179798cbdb28eb212202ffdc9fde) )
+	ROM_LOAD( "7.1k", 0x30000, 0x8000, CRC(4d8d8928) SHA1(a5ccf4a1d84ef3a4966db01d66371de83e270701) )
+	ROM_LOAD( "8.1l", 0x38000, 0x8000, CRC(534573b7) SHA1(ec53cad7d652c88508edd29c2412834920fe8ef6) )
+	ROM_LOAD( "9.1m", 0x48000, 0x8000, CRC(2bf88eda) SHA1(55de96d057a0f35d9e74455444751f217aa4741e) )
+	ROM_LOAD( "0.1n", 0x50000, 0x8000, CRC(5665016e) SHA1(0f7f0a8e55e93bcb3060c91d9704905a6e827250) )
+ROM_END
+
+
+GAME( 1986, ojankoc,  0, ojankoc,  ojankoc,  0, ROT0, "V-System Co.", "Ojanko Club (Japan)" )
 GAME( 1986, ojankoy,  0, ojankoy,  ojankoy,  0, ROT0, "V-System Co.", "Ojanko Yakata (Japan)" )
 GAME( 1987, ojanko2,  0, ojankoy,  ojankoy,  0, ROT0, "V-System Co.", "Ojanko Yakata 2bankan (Japan)" )
 GAME( 1987, ccasino,  0, ccasino,  ccasino,  0, ROT0, "V-System Co.", "Chinese Casino [BET] (Japan)" )

@@ -43,7 +43,6 @@ To Do:
 
 
 extern UINT16 tetrisp2_systemregs[0x10];
-extern UINT16 rocknms_sub_systemregs[0x10];
 
 /* Variables needed by driver: */
 
@@ -52,14 +51,6 @@ data16_t *tetrisp2_vram_fg, *tetrisp2_scroll_fg;
 data16_t *tetrisp2_vram_rot, *tetrisp2_rotregs;
 
 data16_t *tetrisp2_priority;
-
-data16_t *rocknms_sub_vram_bg, *rocknms_sub_scroll_bg;
-data16_t *rocknms_sub_vram_fg, *rocknms_sub_scroll_fg;
-data16_t *rocknms_sub_vram_rot, *rocknms_sub_rotregs;
-
-data16_t *rocknms_sub_priority;
-
-static struct mame_bitmap *rocknms_main_tmpbitmap;
 
 
 /***************************************************************************
@@ -83,18 +74,6 @@ WRITE16_HANDLER( tetrisp2_palette_w )
 	}
 }
 
-WRITE16_HANDLER( rocknms_sub_palette_w )
-{
-	data = COMBINE_DATA(&paletteram16_2[offset]);
-	if ((offset & 1) == 0)
-	{
-		int r = (data >>  1) & 0x1f;
-		int g = (data >>  6) & 0x1f;
-		int b = (data >> 11) & 0x1f;
-		palette_set_color((0x8000 + (offset/2)),(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
-	}
-}
-
 
 /***************************************************************************
 
@@ -109,33 +88,12 @@ READ16_HANDLER( tetrisp2_priority_r )
 	return tetrisp2_priority[offset];
 }
 
-READ16_HANDLER( rocknms_sub_priority_r )
-{
-	return rocknms_sub_priority[offset];
-}
-
 WRITE16_HANDLER( tetrisp2_priority_w )
 {
 	if (ACCESSING_MSB)
 	{
 		data |= ((data & 0xff00) >> 8);
 		tetrisp2_priority[offset] = data;
-	}
-}
-
-WRITE16_HANDLER( rockn_priority_w )
-{
-	if (ACCESSING_MSB)
-	{
-		tetrisp2_priority[offset] = data;
-	}
-}
-
-WRITE16_HANDLER( rocknms_sub_priority_w )
-{
-	if (ACCESSING_MSB)
-	{
-		rocknms_sub_priority[offset] = data;
 	}
 }
 
@@ -157,7 +115,6 @@ WRITE16_HANDLER( rocknms_sub_priority_w )
 ***************************************************************************/
 
 static struct tilemap *tilemap_bg, *tilemap_fg, *tilemap_rot;
-static struct tilemap *tilemap_sub_bg, *tilemap_sub_fg, *tilemap_sub_rot;
 
 #define NX_0  (0x40)
 #define NY_0  (0x40)
@@ -223,65 +180,6 @@ WRITE16_HANDLER( tetrisp2_vram_rot_w )
 }
 
 
-
-static void get_tile_info_rocknms_sub_bg(int tile_index)
-{
-	data16_t code_hi = rocknms_sub_vram_bg[ 2 * tile_index + 0];
-	data16_t code_lo = rocknms_sub_vram_bg[ 2 * tile_index + 1];
-	SET_TILE_INFO(
-			5,
-			code_hi,
-			code_lo & 0xf,
-			0)
-}
-
-WRITE16_HANDLER( rocknms_sub_vram_bg_w )
-{
-	data16_t old_data	=	rocknms_sub_vram_bg[offset];
-	data16_t new_data	=	COMBINE_DATA(&rocknms_sub_vram_bg[offset]);
-	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_sub_bg,offset/2);
-}
-
-
-static void get_tile_info_rocknms_sub_fg(int tile_index)
-{
-	data16_t code_hi = rocknms_sub_vram_fg[ 2 * tile_index + 0];
-	data16_t code_lo = rocknms_sub_vram_fg[ 2 * tile_index + 1];
-	SET_TILE_INFO(
-			7,
-			code_hi,
-			code_lo & 0xf,
-			0)
-}
-
-WRITE16_HANDLER( rocknms_sub_vram_fg_w )
-{
-	data16_t old_data	=	rocknms_sub_vram_fg[offset];
-	data16_t new_data	=	COMBINE_DATA(&rocknms_sub_vram_fg[offset]);
-	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_sub_fg,offset/2);
-}
-
-
-static void get_tile_info_rocknms_sub_rot(int tile_index)
-{
-	data16_t code_hi = rocknms_sub_vram_rot[ 2 * tile_index + 0];
-	data16_t code_lo = rocknms_sub_vram_rot[ 2 * tile_index + 1];
-	SET_TILE_INFO(
-			6,
-			code_hi,
-			code_lo & 0xf,
-			0)
-}
-
-WRITE16_HANDLER( rocknms_sub_vram_rot_w )
-{
-	data16_t old_data	=	rocknms_sub_vram_rot[offset];
-	data16_t new_data	=	COMBINE_DATA(&rocknms_sub_vram_rot[offset]);
-	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_sub_rot,offset/2);
-}
-
-
-
 VIDEO_START( tetrisp2 )
 {
 	tilemap_bg = tilemap_create(	get_tile_info_bg,tilemap_scan_rows,
@@ -305,73 +203,6 @@ VIDEO_START( tetrisp2 )
 	return 0;
 }
 
-
-VIDEO_START( rockntread )
-{
-	tilemap_bg = tilemap_create(	get_tile_info_bg,tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16, 16, 256, 16);	// rockn ms(main),1,2,3,4
-
-	tilemap_fg = tilemap_create(	get_tile_info_fg,tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								8, 8, 64, 64);
-
-	tilemap_rot = tilemap_create(	get_tile_info_rot,tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,
-								16, 16, 128, 128);
-
-	if (!tilemap_bg || !tilemap_fg || !tilemap_rot)	return 1;
-
-	tilemap_set_transparent_pen(tilemap_bg, 0);
-	tilemap_set_transparent_pen(tilemap_fg, 0);
-	tilemap_set_transparent_pen(tilemap_rot, 0);
-
-	return 0;
-}
-
-
-VIDEO_START( rocknms )
-{
-	tilemap_bg = tilemap_create(get_tile_info_bg,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					16, 16, 256, 16);	// rockn ms(main),1,2,3,4
-
-	tilemap_fg = tilemap_create(get_tile_info_fg,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					8, 8, 64, 64);
-
-	tilemap_rot = tilemap_create(get_tile_info_rot,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					16, 16, 128, 128);
-
-	tilemap_sub_bg = tilemap_create(get_tile_info_rocknms_sub_bg,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					16, 16, 32, 256);	// rockn ms(sub)
-
-	tilemap_sub_fg = tilemap_create(get_tile_info_rocknms_sub_fg,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					8, 8, 64, 64);
-
-	tilemap_sub_rot = tilemap_create( get_tile_info_rocknms_sub_rot,tilemap_scan_rows,
-					TILEMAP_TRANSPARENT,
-					16, 16, 128, 128);
-
-	rocknms_main_tmpbitmap = auto_bitmap_alloc(Machine->scrbitmap->width, 224*1);
-
-	if (!tilemap_bg || !tilemap_fg || !tilemap_rot)	return 1;
-	if (!tilemap_sub_bg || !tilemap_sub_fg || !tilemap_sub_rot)	return 1;
-	if (!rocknms_main_tmpbitmap)	return 1;
-
-	tilemap_set_transparent_pen(tilemap_bg, 0);
-	tilemap_set_transparent_pen(tilemap_fg, 0);
-	tilemap_set_transparent_pen(tilemap_rot, 0);
-
-	tilemap_set_transparent_pen(tilemap_sub_bg, 0);
-	tilemap_set_transparent_pen(tilemap_sub_fg, 0);
-	tilemap_set_transparent_pen(tilemap_sub_rot, 0);
-
-	return 0;
-}
 
 /***************************************************************************
 
@@ -430,8 +261,7 @@ static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	data16_t		*source	=	sprram_top;
 	const data16_t	*finish	=	sprram_top + (sprram_size - 0x10) / 2;
 
-	if(gfxnum == 0)	priority_ram = tetrisp2_priority;
-	else			priority_ram = rocknms_sub_priority;
+	priority_ram = tetrisp2_priority;
 
 	flipscreen = (tetrisp2_systemregs[0x00] & 0x02);
 
@@ -541,7 +371,7 @@ static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 
 ***************************************************************************/
 
-VIDEO_UPDATE( rockntread )
+VIDEO_UPDATE( tetrisp2 )
 {
 	static int flipscreen_old = -1;
 	int flipscreen;
@@ -623,219 +453,4 @@ VIDEO_UPDATE( rockntread )
 		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
 
 	tetrisp2_draw_sprites(bitmap,cliprect, spriteram16, spriteram_size, 0);
-}
-
-static void video_update_rocknms_0(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int mainscr_x, int mainscr_y)
-{
-	struct rectangle rocknms_rect_main, rocknms_rect_sub, myclip;
-	int asc_pri;
-	int scr_pri;
-	int rot_pri;
-
-	myclip.min_x = cliprect->min_x;
-	myclip.min_y = cliprect->min_y;
-	myclip.max_x = cliprect->max_x;
-	myclip.max_y = cliprect->max_y;
-
-	tilemap_set_scrollx(tilemap_bg, 0, tetrisp2_scroll_bg[ 2 ] + 0x000);
-	tilemap_set_scrolly(tilemap_bg, 0, tetrisp2_scroll_bg[ 5 ] + 0x000);
-
-	tilemap_set_scrollx(tilemap_fg, 0, tetrisp2_scroll_fg[ 2 ] + 0x000);
-	tilemap_set_scrolly(tilemap_fg, 0, tetrisp2_scroll_fg[ 5 ] + 0x000);
-
-	tilemap_set_scrollx(tilemap_rot, 0, tetrisp2_rotregs[ 0 ] + 0x400);
-	tilemap_set_scrolly(tilemap_rot, 0, tetrisp2_rotregs[ 2 ] + 0x400);
-
-	tilemap_set_scrollx(tilemap_sub_bg, 0, rocknms_sub_scroll_bg[ 2 ] + 0x000);
-	tilemap_set_scrolly(tilemap_sub_bg, 0, rocknms_sub_scroll_bg[ 5 ] + 0x000);
-
-	tilemap_set_scrollx(tilemap_sub_fg, 0, rocknms_sub_scroll_fg[ 2 ] + 0x000);
-	tilemap_set_scrolly(tilemap_sub_fg, 0, rocknms_sub_scroll_fg[ 5 ] + 0x000);
-
-	tilemap_set_scrollx(tilemap_sub_rot, 0, rocknms_sub_rotregs[ 0 ] + 0x400);
-	tilemap_set_scrolly(tilemap_sub_rot, 0, rocknms_sub_rotregs[ 2 ] + 0x400);
-
-
-	/* sub screen */
-
-	rocknms_rect_sub.min_x = 0;
-	rocknms_rect_sub.min_y = 0;
-	rocknms_rect_sub.max_x = 320-1;
-	rocknms_rect_sub.max_y = 224-1;
-	sect_rect(&rocknms_rect_sub,&myclip);
-
-	/* Black background color */
-	fillbitmap(bitmap, Machine->pens[0x0000], &rocknms_rect_sub);
-	fillbitmap(priority_bitmap, 0, &rocknms_rect_sub);
-
-	asc_pri = scr_pri = rot_pri = 0;
-
-	if((rocknms_sub_priority[0x2b00 / 2] & 0x00ff) == 0x0034)
-		asc_pri++;
-	else
-		rot_pri++;
-
-	if((rocknms_sub_priority[0x2e00 / 2] & 0x00ff) == 0x0034)
-		asc_pri++;
-	else
-		scr_pri++;
-
-	if((rocknms_sub_priority[0x3a00 / 2] & 0x00ff) == 0x000c)
-		scr_pri++;
-	else
-		rot_pri++;
-
-	if (rot_pri == 0)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_rot, 0, 1 << 1);
-	else if (scr_pri == 0)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_bg,  0, 1 << 0);
-	else if (asc_pri == 0)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_fg,  0, 1 << 2);
-
-	if (rot_pri == 1)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_rot, 0, 1 << 1);
-	else if (scr_pri == 1)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_bg,  0, 1 << 0);
-	else if (asc_pri == 1)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_fg,  0, 1 << 2);
-
-	if (rot_pri == 2)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_rot, 0, 1 << 1);
-	else if (scr_pri == 2)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_bg,  0, 1 << 0);
-	else if (asc_pri == 2)
-		tilemap_draw(bitmap,&rocknms_rect_sub, tilemap_sub_fg,  0, 1 << 2);
-
-	tetrisp2_draw_sprites(bitmap,&rocknms_rect_sub, spriteram16_2, spriteram_2_size, 4);
-
-
-	/* main screen */
-
-	rocknms_rect_main.min_x = 0;
-	rocknms_rect_main.min_y = 0;
-	rocknms_rect_main.max_x = 320-1;
-	rocknms_rect_main.max_y = 224-1;
-	//	sect_rect  &rocknms_rect_sub  &myclip
-	if(rocknms_rect_main.min_x < (mainscr_y+320-1) - myclip.max_y) rocknms_rect_main.min_x = (mainscr_y+320-1) - myclip.max_y;
-	if(rocknms_rect_main.min_y < myclip.min_x      - mainscr_x   ) rocknms_rect_main.min_y = myclip.min_x - mainscr_x;
-	if(rocknms_rect_main.max_x > (mainscr_y+320-1) - myclip.min_y) rocknms_rect_main.max_x = (mainscr_y+320-1) - myclip.min_y;
-	if(rocknms_rect_main.max_y > myclip.max_x      - mainscr_x   ) rocknms_rect_main.max_y = myclip.max_x - mainscr_x;
-
-	/* Black background color */
-	fillbitmap(rocknms_main_tmpbitmap, Machine->pens[0x0000], &rocknms_rect_main);
-	fillbitmap(priority_bitmap, 0, &rocknms_rect_main);
-
-	asc_pri = scr_pri = rot_pri = 0;
-
-	if((tetrisp2_priority[0x2b00 / 2] & 0x00ff) == 0x0034)
-		asc_pri++;
-	else
-		rot_pri++;
-
-	if((tetrisp2_priority[0x2e00 / 2] & 0x00ff) == 0x0034)
-		asc_pri++;
-	else
-		scr_pri++;
-
-	if((tetrisp2_priority[0x3a00 / 2] & 0x00ff) == 0x000c)
-		scr_pri++;
-	else
-		rot_pri++;
-
-	if (rot_pri == 0)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_rot, 0, 1 << 1);
-	else if (scr_pri == 0)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_bg,  0, 1 << 0);
-	else if (asc_pri == 0)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_fg,  0, 1 << 2);
-
-	if (rot_pri == 1)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_rot, 0, 1 << 1);
-	else if (scr_pri == 1)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_bg,  0, 1 << 0);
-	else if (asc_pri == 1)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_fg,  0, 1 << 2);
-
-	if (rot_pri == 2)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_rot, 0, 1 << 1);
-	else if (scr_pri == 2)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_bg,  0, 1 << 0);
-	else if (asc_pri == 2)
-		tilemap_draw(rocknms_main_tmpbitmap,&rocknms_rect_main, tilemap_fg,  0, 1 << 2);
-
-	tetrisp2_draw_sprites(rocknms_main_tmpbitmap,&rocknms_rect_main, spriteram16, spriteram_size, 0);
-
-
-	/* copybitmap_ROT270 */
-	rocknms_rect_main.min_x = mainscr_x;
-	rocknms_rect_main.min_y = mainscr_y;
-	rocknms_rect_main.max_x = mainscr_x + 224 -1;
-	rocknms_rect_main.max_y = mainscr_y + 320 -1;
-	sect_rect(&rocknms_rect_main,&myclip);
-	if(Machine->color_depth != 32)
-	{	/* 16bit */
-		UINT16 *dest;
-		int x,cy;
-		int sx = rocknms_rect_main.min_x;
-		int ex = rocknms_rect_main.max_x;
-		int sy = rocknms_rect_main.min_y;
-		int ey = rocknms_rect_main.max_y;
-		int startx = 320-1 - (rocknms_rect_main.min_y - mainscr_y);
-		int starty = 0     + rocknms_rect_main.min_x - mainscr_x;
-		while (sy <= ey)
-		{
-			x = sx;
-			cy = starty;
-			dest = ((UINT16*)bitmap->line[sy]) + sx;
-			{
-				while (x <= ex)
-				{
-					*dest = ((UINT16*)rocknms_main_tmpbitmap->line[cy])[startx];
-					cy++;
-					x++;
-					dest++;
-				}
-			}
-			startx--;
-			sy++;
-		}
-	}
-	else
-	{	/* 32bit */
-		UINT32 *dest;
-		int x,cy;
-		int sx = rocknms_rect_main.min_x;
-		int ex = rocknms_rect_main.max_x;
-		int sy = rocknms_rect_main.min_y;
-		int ey = rocknms_rect_main.max_y;
-		int startx = 320-1 - (rocknms_rect_main.min_y - mainscr_y);
-		int starty = 0     + rocknms_rect_main.min_x - mainscr_x;
-		while (sy <= ey)
-		{
-			x = sx;
-			cy = starty;
-			dest = ((UINT32*)bitmap->line[sy]) + sx;
-			{
-				while (x <= ex)
-				{
-					*dest = ((UINT32*)rocknms_main_tmpbitmap->line[cy])[startx];
-					cy++;
-					x++;
-					dest++;
-				}
-			}
-			startx--;
-			sy++;
-		}
-	}
-}
-
-VIDEO_UPDATE( rocknms )
-{
-	video_update_rocknms_0(bitmap, cliprect, (320-224)/2, 224);
-}
-
-VIDEO_UPDATE( rocknmt2 )
-{
-	video_update_rocknms_0(bitmap, cliprect, 320, 0);
 }

@@ -3,8 +3,11 @@
 Chequered Flag / Checkered Flag (GX717) (c) Konami 1988
 
 Notes:
-- The enemies might not appear correctly because of the K051733 protection.
-- 007232 volume & panning control is almost certainly wrong
+- Position counter doesn't behave correctly because of the K051733 protection.
+- 007232 volume & panning control is almost certainly wrong.
+- I've modified the YM2151 clock with an xtal of 2,on what I recall the
+  music at the title screen should end when the words "Chequered Flag"
+  flashes.Needs a comparison with a real PCB however. -AS
 
 ***************************************************************************/
 
@@ -314,7 +317,7 @@ INPUT_PORTS_START( chqflag )
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 50, 5, 0, 0xff )
 
 	PORT_START	/* Driving wheel */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 80, 8, 0, 0xff)
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_CENTER, 80, 8, 0x10, 0xef)
 INPUT_PORTS_END
 
 
@@ -328,7 +331,7 @@ static void chqflag_ym2151_irq_w(int data)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3579545,	/* 3.579545 MHz? */
+	3579545/2,	/* 3.579545/2 MHz? */
 	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
 	{ chqflag_ym2151_irq_w },
 	{ 0 }

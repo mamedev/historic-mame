@@ -21,9 +21,41 @@
 #define PPU_MIRROR_HIGH		3
 #define PPU_MIRROR_LOW		4
 
+/* registers definition */
+enum {
+	PPU_CONTROL0 = 0,
+	PPU_CONTROL1,
+	PPU_STATUS,
+	PPU_SPRITE_ADDRESS,
+	PPU_SPRITE_DATA,
+	PPU_SCROLL,
+	PPU_ADDRESS,
+	PPU_DATA,
+	PPU_MAX_REG
+};
+
+/* bit definitions for (some of) the registers */
+enum {
+	PPU_CONTROL0_INC			= 0x04,
+	PPU_CONTROL0_SPR_SELECT		= 0x08,
+	PPU_CONTROL0_CHR_SELECT		= 0x10,
+	PPU_CONTROL0_SPRITE_SIZE	= 0x20,
+	PPU_CONTROL0_NMI			= 0x80,
+
+	PPU_CONTROL1_DISPLAY_MONO	= 0x01,
+	PPU_CONTROL1_BACKGROUND_L8	= 0x02,
+	PPU_CONTROL1_SPRITES_L8		= 0x04,
+	PPU_CONTROL1_BACKGROUND		= 0x08,
+	PPU_CONTROL1_SPRITES		= 0x10,
+
+	PPU_STATUS_8SPRITES			= 0x20,
+	PPU_STATUS_SPRITE0_HIT		= 0x40,
+	PPU_STATUS_VBLANK			= 0x80
+};
+
 /* callback datatypes */
 typedef void (*ppu2c03b_scanline_cb)( int num, int scanline, int vblank, int blanked );
-typedef void (*ppu2c03b_irq_cb)( int num );
+typedef void (*ppu2c03b_nmi_cb)( int num, int *ppu_regs );
 typedef int  (*ppu2c03b_vidaccess_cb)( int num, int address, int data );
 
 struct ppu2c03b_interface
@@ -33,7 +65,7 @@ struct ppu2c03b_interface
 	int				gfx_layout_number[MAX_PPU];		/* gfx layout number used by each chip */
 	int				color_base[MAX_PPU];			/* color base to use per ppu */
 	int				mirroring[MAX_PPU];				/* mirroring options (PPU_MIRROR_* flag) */
-	ppu2c03b_irq_cb	handler[MAX_PPU];				/* IRQ handler */
+	ppu2c03b_nmi_cb	nmi_handler[MAX_PPU];			/* NMI handler */
 };
 
 /* routines */
@@ -47,9 +79,10 @@ void ppu2c03b_render( int num, struct mame_bitmap *bitmap, int flipx, int flipy,
 int ppu2c03b_get_pixel( int num, int x, int y );
 int ppu2c03b_get_colorbase( int num );
 void ppu2c03b_set_mirroring( int num, int mirroring );
-void ppu2c03b_set_irq_callback( int num, ppu2c03b_irq_cb cb );
+void ppu2c03b_set_irq_callback( int num, ppu2c03b_nmi_cb cb );
 void ppu2c03b_set_scanline_callback( int num, ppu2c03b_scanline_cb cb );
 void ppu2c03b_set_vidaccess_callback( int num, ppu2c03b_vidaccess_cb cb );
+void ppu2c03b_set_scanlines_per_frame( int num, int scanlines );
 
 //27/12/2002
 extern void (*ppu_latch)( offs_t offset );

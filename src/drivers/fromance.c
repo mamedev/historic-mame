@@ -2,25 +2,28 @@
 
 	Game Driver for Video System Mahjong series.
 
-	Idol-Mahjong Final Romance
+	Idol-Mahjong Final Romance (Japan)
 	(c)1991 Video System Co.,Ltd.
 
-	Nekketsu Mahjong Sengen! AFTER 5
+	Nekketsu Mahjong Sengen! AFTER 5 (Japan)
 	(c)1991 Video System Co.,Ltd.
 
-	Mahjong Daiyogen
+	Mahjong Daiyogen (Japan)
 	(c)1990 Video System Co.,Ltd.
 
-	Mahjong Fun Club - Idol Saizensen
+	Mahjong Fun Club - Idol Saizensen (Japan)
 	(c)1989 Video System Co.,Ltd.
 
-	Mahjong Natsu Monogatari (Mahjong Summer Story)
+	Mahjong Natsu Monogatari (Mahjong Summer Story) (Japan)
 	(c)1989 Video System Co.,Ltd.
 
-	Idol-Mahjong Housoukyoku
+	Natsuiro Mahjong (Mahjong Summer Story) (Japan)
+	(c)1989 Video System Co.,Ltd.
+
+	Idol-Mahjong Housoukyoku (Japan)
 	(c)1988 System Service Co.,Ltd.
 
-	Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen
+	Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)
 	(c)1988 Video System Co.,Ltd.
 
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/04 -
@@ -454,7 +457,7 @@ INPUT_PORTS_START( nekkyoku )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -535,7 +538,7 @@ INPUT_PORTS_START( idolmj )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -616,7 +619,7 @@ INPUT_PORTS_START( fromance )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -695,7 +698,7 @@ INPUT_PORTS_START( nmsengen )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -774,7 +777,7 @@ INPUT_PORTS_START( daiyogen )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -855,7 +858,7 @@ INPUT_PORTS_START( mfunclub )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -936,7 +939,7 @@ INPUT_PORTS_START( mjnatsu )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )			// COIN1
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (2) DIPSW-1 */
@@ -1258,6 +1261,32 @@ ROM_START( mjnatsu )
 ROM_END
 
 
+ROM_START( natsuiro )
+	ROM_REGION( 0x010000, REGION_CPU1, 0 )
+	ROM_LOAD( "3-ic70.bin", 0x000000, 0x008000, CRC(543eb9e1) SHA1(cfe1d33bdf6541e2207465a941f342be21b69f7d) )
+
+	ROM_REGION( 0x410000, REGION_CPU2, 0 )
+	ROM_LOAD( "m4.bin",     0x000000, 0x008000, CRC(8d37cc3f) SHA1(90fee63b5864002bec95c61003532e743d351244) )
+	ROM_LOAD( "ic87.bin",   0x010000, 0x080000, CRC(caec9310) SHA1(a92be0116d7e682763e387230a51daedbe749c26) )
+	ROM_LOAD( "ic78.bin",   0x090000, 0x080000, CRC(2b291006) SHA1(5360158ee9e50bd956f149ce0e58920d4d294b42) )
+	ROM_LOAD( "ic72.bin",   0x110000, 0x020000, CRC(42464fba) SHA1(b16da303f3e16f47322d00f7a27d2004be63f611) )
+	ROM_LOAD( "m5.bin",     0x210000, 0x010000, CRC(cd1ea5f7) SHA1(26965663485c7311c7a421dba0921fdfb8392df9) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic58.bin",   0x000000, 0x080000, CRC(257a8075) SHA1(c741a4f10cbec8e6d641d4dc2b36749277bc9548) )
+	ROM_LOAD( "ic63.bin",   0x080000, 0x020000, CRC(b54c7d3a) SHA1(6be26b7d2cdf884fc140c8ed44865784d107583a) )
+	ROM_LOAD( "m1.bin",     0x0a0000, 0x008000, CRC(fbafa46b) SHA1(3867180f8a3cb3becf78023d3bbc2bb66580a13d) )
+	ROM_FILL(               0x0a8000, 0x008000, 0xff )
+	ROM_FILL(               0x0b0000, 0x150000, 0xff )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic59.bin",   0x000000, 0x080000, CRC(03983ac7) SHA1(1e14ec3c614b227a6362f2a3a7582ac7a4f58ee3) )
+	ROM_LOAD( "ic64.bin",   0x080000, 0x040000, CRC(9bd8e855) SHA1(a445dd7634958f69e58aed2581513e7a583ff66b) )
+	ROM_LOAD( "m2.bin",     0x0c0000, 0x008000, CRC(61129677) SHA1(a1789b4e23b46c61c822eb02fdfa65b7d0a34ce8) )
+	ROM_FILL(               0x0c8000, 0x138000, 0xff )
+ROM_END
+
+
 ROM_START( mfunclub )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 )
 	ROM_LOAD( "3.70",        0x000000, 0x008000, CRC(e6f76ca3) SHA1(2f4292e50770c3325c1573781cb21940d73e8fb1) )
@@ -1360,10 +1389,11 @@ ROM_END
  *
  *************************************/
 
-GAMEX(1988, nekkyoku, 0, nekkyoku, nekkyoku, 0, ROT0, "Video System Co.", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, idolmj,   0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)" )
-GAME( 1989, mjnatsu,  0, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Mahjong Natsu Monogatari (Japan)" )
-GAME( 1989, mfunclub, 0, fromance, mfunclub, 0, ROT0, "Video System Co.", "Mahjong Fun Club - Idol Saizensen (Japan)" )
-GAME( 1990, daiyogen, 0, fromance, daiyogen, 0, ROT0, "Video System Co.", "Mahjong Daiyogen (Japan)" )
-GAME( 1991, nmsengen, 0, fromance, nmsengen, 0, ROT0, "Video System Co.", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)" )
-GAME( 1991, fromance, 0, fromance, fromance, 0, ROT0, "Video System Co.", "Idol-Mahjong Final Romance (Japan)" )
+GAMEX(1988, nekkyoku,        0, nekkyoku, nekkyoku, 0, ROT0, "Video System Co.", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, idolmj,          0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)" )
+GAME( 1989, mjnatsu,         0, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Mahjong Natsu Monogatari (Japan)" )
+GAME( 1989, natsuiro,  mjnatsu, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Natsuiro Mahjong (Japan)" )
+GAME( 1989, mfunclub,        0, fromance, mfunclub, 0, ROT0, "Video System Co.", "Mahjong Fun Club - Idol Saizensen (Japan)" )
+GAME( 1990, daiyogen,        0, fromance, daiyogen, 0, ROT0, "Video System Co.", "Mahjong Daiyogen (Japan)" )
+GAME( 1991, nmsengen,        0, fromance, nmsengen, 0, ROT0, "Video System Co.", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)" )
+GAME( 1991, fromance,        0, fromance, fromance, 0, ROT0, "Video System Co.", "Idol-Mahjong Final Romance (Japan)" )

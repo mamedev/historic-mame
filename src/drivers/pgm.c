@@ -941,63 +941,6 @@ ROM_START( photoy2k )
 	ROM_LOAD( "m0700.rom",    0x200000, 0x080000, CRC(acc7afce) SHA1(ac2d344ebac336f0f363bb045dd8ea4e83d1fb50) )
 ROM_END
 
-ROM_START( ddp2 )
-	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
-	ROM_LOAD16_WORD_SWAP( "v100.u8",    0x100000, 0x200000, CRC(0c8aa8ea) )
-
-	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* ARM Data */
-	ROM_LOAD( "v100.u23", 0x000000, 0x20000, CRC(06c3dd29) )
-
-	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
-	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
-	ROM_LOAD( "t1300.u21",    0x400000, 0x800000, CRC(e748f0cb) )
-
-	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
-	/* 32x32 Tile Data is put here for easier Decoding */
-
-	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
-	ROM_LOAD( "a1300.u1",    0x0000000, 0x0800000, CRC(fc87a405) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
-	ROM_LOAD( "a1301.u2",    0x0800000, 0x0800000, CRC(0c8520da) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
-
-	ROM_REGION( 0x0800000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
-	ROM_LOAD( "b1300.u7",    0x0000000, 0x0800000, CRC(ef646604) )
-
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
-	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1300.u5",     0x200000, 0x400000, CRC(82d4015d) )
-ROM_END
-
-ROM_START( kov2plus )
-	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
-	ROM_LOAD16_WORD_SWAP( "v204-32m.rom", 0x100000, 0x400000, CRC(583e0650) )
-
-	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* ARM Data */
-	ROM_LOAD( "v200-16.rom", 0x000000, 0x200000, CRC(16a0c11f) )
-
-	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
-	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
-	ROM_LOAD( "t1200.rom",    0x400000, 0x800000, CRC(d7e26609) )
-
-	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
-	/* 32x32 Tile Data is put here for easier Decoding */
-
-	ROM_REGION( 0x2200000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
-	ROM_LOAD( "a1200.rom",    0x0000000, 0x0800000, CRC(ceeb81d8) )
-	ROM_LOAD( "a1201.rom",    0x0800000, 0x0800000, CRC(21063ca7) )
-	ROM_LOAD( "a1202.rom",    0x1000000, 0x0800000, CRC(4bb92fae) )
-	ROM_LOAD( "a1203.rom",    0x1800000, 0x0800000, CRC(e73cb627) )
-	ROM_LOAD( "a1204.rom",    0x2000000, 0x0200000, CRC(14b4b5bb) )
-
-	ROM_REGION( 0x0800000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
-	ROM_LOAD( "b1200.rom",    0x0000000, 0x0800000, CRC(bed7d994) )
-
-	ROM_REGION( 0xa00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
-	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) )
-ROM_END
-
 /*** GAME ********************************************************************/
 
 GAMEX( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
@@ -1014,5 +957,3 @@ GAMEX( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of
 
 GAMEX( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 2001, ddp2,     pgm,        pgm, sango, 0, 	       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 2001, kov2plus, pgm,        pgm, sango, 0, 	       ROT0, "IGS", "Knights of Valour 2 Plus / Sangoku Senki 2 Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

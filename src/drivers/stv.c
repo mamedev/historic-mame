@@ -48,43 +48,27 @@ Preliminary Memory map:
 
 *the unused locations aren't known if they are really unused or not,needs verification...
 
-*/
-/*
-Current games status:
-- Hanagumi Taisen Columns
-\-Boots and graphics are mostly OK.Playable.
+\-ToDo / Notes:
 
-- Prikura Daisakusen
-\-Boots OK and works OK,needs the Sound CPU kludge to bypass initial test.
-  Seems playable if the sprites,tiles positioning and priority will be fixed.
-  Update:there's currently a *strange* compile bug with this which causes the DMA
-  to behave strangely,I believe it's something to do with the I/O...
+\-Main issues:
+-Implement the Master/Slave communication.
+-Fix the IC13 issue.
+-NVRAM needs emulating.
+-Clock utility in main menu of the bios is (again) broken :(.
+-Sound.
+-SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
+ are really for.I suppose that they disable/enable the reset for the Slave and the
+ sound CPU,but I'm not sure.
+-Find a better fix to avoid the hanagumi hang skip kludge.
+-Clean-ups and split up the various chips(SCU,SMPC,SCSP...)into their respective files.
 
-- Shienryu
-\-Boots OK,needs Sound CPU kludge to bypass initial test.
-  Sprite list missing from VDP1 vram,dunno why.
+\-Games issues:
+-hanagumi:Service mode hangs.
+-prikura:Fix the compile bug which makes DMA to not work at all.
+-shienryu:Sprite list is missing from VDP1 vram...
+-groovef:Hangs soon after loaded.
+-shanhigw:Find idle skip if possible.
 
-- Power Instinct 3 - Groove on Fight
-\-Needs sound CPU kludge to be triggered,but breaks soon after that with a credit 2 msg
-  shown on screen and some random graphics at the top of the screen.Irq mask registers
-  clears A-bus and SCSP irqs...
-
-- Shanghai - The Great Wall
-\-Hangs when executing his specific code due to M68000 issues.It puts a bitmap format in
-VDP2 then it expect something on which we haven't investigated yet...
-0609FADA: MOV.L   @R5,R2
-0609FADC: MOV.W   @R2,R0 ;$25a00800,then $25a00810
-0609FADE: EXTU.W  R0,R0
-0609FAE0: TST     R0,R0
-0609FAE2: BF      $0609FADA
-
-- The others:
-\-Some of them shows a Sega logo in the Gfx decode,then they hangs,maybe because they're
-waiting a response from the slave cpu or an A-bus IRQ or both.Some of these games have an
-IC13 rom,which fails the rom test because it's likely that it's mapped in a
-non-straight way,the games that have one of them usually do their first load at $2061ffc
-and this means that in the current rom loading they points to a 0xffff opcode
-(only the first 0x40000 of rom seems valid code)...
 */
 
 #include "driver.h"
@@ -102,13 +86,13 @@ static data8_t *smpc_ram;
 
 static data32_t* stv_workram_l;
 static data32_t* stv_workram_h;
-static data32_t* stv_scu;
+data32_t* stv_scu;
 static data32_t* ioga;
 static data16_t* scsp_regs;
 
 int stv_vblank;
 /*SMPC stuff*/
-
+static UINT8 SCSP_reset;
 /*SCU stuff*/
 static int 	  timer_0;				/* Counter for Timer 0 irq*/
 /*Maybe add these in a struct...*/
@@ -134,9 +118,25 @@ static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
 static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
 /* SCSP stuff*/
-static UINT8 SCSP_reset;
+static UINT32 scsp_dmea;
+static UINT16 scsp_drga;
+#define		  scsp_dgate			scsp_regs[0x416/2] & 0x4000
+#define		  scsp_ddir				scsp_regs[0x416/2] & 0x2000
+#define       scsp_dexe 			scsp_regs[0x416/2] & 0x1000
+static UINT16 scsp_dtlg;
+static void dma_scsp(void); 		/*SCSP DMA transfer function*/
 
-/*VDP1 stuff*/
+/*Auto level irq calculation macros*/
+#define e_irq_0				((scsp_regs[0x424/2] & 0x01)>>0)|(((scsp_regs[0x426/2] & 0x01)>>0)<<1)|(((scsp_regs[0x428/2] & 0x01)>>0)<<2)
+#define e_irq_1				((scsp_regs[0x424/2] & 0x02)>>1)|(((scsp_regs[0x426/2] & 0x02)>>1)<<1)|(((scsp_regs[0x428/2] & 0x02)>>1)<<2)
+#define e_irq_2				((scsp_regs[0x424/2] & 0x04)>>2)|(((scsp_regs[0x426/2] & 0x04)>>2)<<1)|(((scsp_regs[0x428/2] & 0x04)>>2)<<2)
+#define midi_in_irq			((scsp_regs[0x424/2] & 0x08)>>3)|(((scsp_regs[0x426/2] & 0x08)>>3)<<1)|(((scsp_regs[0x428/2] & 0x08)>>3)<<2)
+#define dma_transfer_end	((scsp_regs[0x424/2] & 0x10)>>4)|(((scsp_regs[0x426/2] & 0x10)>>4)<<1)|(((scsp_regs[0x428/2] & 0x10)>>4)<<2)
+#define scsp_software_irq	((scsp_regs[0x424/2] & 0x20)>>5)|(((scsp_regs[0x426/2] & 0x20)>>5)<<1)|(((scsp_regs[0x428/2] & 0x20)>>5)<<2)
+#define timera_irq			((scsp_regs[0x424/2] & 0x40)>>6)|(((scsp_regs[0x426/2] & 0x40)>>6)<<1)|(((scsp_regs[0x428/2] & 0x40)>>6)<<2)
+#define midi_out_irq		((scsp_regs[0x424/2] & 0x80)>>7)|(((scsp_regs[0x426/2] & 0x80)>>7)<<1)|(((scsp_regs[0x428/2] & 0x80)>>7)<<2)
+
+/**************************************************************************************/
 
 /* SMPC
  System Manager and Peripheral Control
@@ -694,15 +694,6 @@ WRITE32_HANDLER ( stv_io_w32 )
 }
 
 /*
-READ32_HANDLER (read_cart)
-{
-	usrintf_showmessage("read cart address %08x",0x02200000+offset*4);
-	return 0xff;
-}
-*/
-
-
-/*
 
 SCU Handling
 
@@ -779,6 +770,8 @@ DMA TODO:
 
 #define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
 #define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
+#define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
+#define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
 
 READ32_HANDLER( stv_scu_r32 )
 {
@@ -818,7 +811,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		break;
 		case 4:
 /*
--stv_scu[4] bit 0 is DMA starting factor.
+-stv_scu[4] bit 0 is DMA starting bit.
 	Used when the start factor is 7.Toggle after execution.
 -stv_scu[4] bit 8 is DMA Enable bit.
 	This is an execution mask flag.
@@ -833,7 +826,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			else
 				dma_indirect_lv0();
 
-			stv_scu[4]^=1;//disable starting factor.
+			stv_scu[4]^=1;//disable starting bit.
 		}
 		break;
 		case 5:
@@ -932,22 +925,6 @@ WRITE32_HANDLER( stv_scu_w32 )
 		case 40:
 		/*An interrupt is masked when his specific bit is 1.*/
 		/*Are bit 16-bit 31 for External A-Bus irq mask like the status register?*/
-/*
-"uncommon" irq mask sets:
-  0xb17c (hanagumi) <reserved> is used?
-  0xd7fc (prikura & shienryu)
-  0xdffc (prikura)
-  0x57fc (prikura)
-  bit 31 (shanhigw)
-  0x53454741 (all games at startup)?
-  0xf17c (rsgun)
-  0xf1ff (rsgun)
-  0x717c (rsgun)
-  0x00000080 (rsgun)?
-  0xfff4 (dnmtdeka)
-  0x7ffe (vfremix,twcup98)
-  0x7ffc (twcup98)
-*/
 		/*Take out the common settings to keep logging quiet.*/
 		if(stv_scu[40] != 0xfffffffe &&
 		   stv_scu[40] != 0xfffffffc &&
@@ -986,9 +963,14 @@ WRITE32_HANDLER( stv_scu_w32 )
 
 static void dma_direct_lv0()
 {
+	static UINT32 tmp_src,tmp_dst,tmp_size;
 	logerror("DMA lv 0 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+
+	tmp_size = scu_size_0;
+	if(!(DRUP(0))) tmp_src = scu_src_0;
+	if(!(DWUP(0))) tmp_dst = scu_dst_0;
 
 	for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 	{
@@ -1000,6 +982,11 @@ static void dma_direct_lv0()
 		scu_dst_0+=scu_dst_add_0;
 		scu_src_0+=scu_src_add_0;
 	}
+
+	scu_size_0 = tmp_size;
+	if(!(DRUP(0))) scu_src_0 = tmp_src;
+	if(!(DWUP(0))) scu_dst_0 = tmp_dst;
+
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
@@ -1007,9 +994,14 @@ static void dma_direct_lv0()
 
 static void dma_direct_lv1()
 {
+	static UINT32 tmp_src,tmp_dst,tmp_size;
 	logerror("DMA lv 1 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+	tmp_size = scu_size_1;
+	if(!(DRUP(1))) tmp_src = scu_src_1;
+	if(!(DWUP(1))) tmp_dst = scu_dst_1;
 
 	for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 	{
@@ -1021,6 +1013,11 @@ static void dma_direct_lv1()
 		scu_dst_1+=scu_dst_add_1;
 		scu_src_1+=scu_src_add_1;
 	}
+
+	scu_size_1 = tmp_size;
+	if(!(DRUP(1))) scu_src_1 = tmp_src;
+	if(!(DWUP(1))) scu_dst_1 = tmp_dst;
+
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
@@ -1028,9 +1025,14 @@ static void dma_direct_lv1()
 
 static void dma_direct_lv2()
 {
+	static UINT32 tmp_src,tmp_dst,tmp_size;
 	logerror("DMA lv 2 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
+	tmp_size = scu_size_2;
+	if(!(DRUP(2))) tmp_src = scu_src_2;
+	if(!(DWUP(2))) tmp_dst = scu_dst_2;
 
 	for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 	{
@@ -1042,6 +1044,10 @@ static void dma_direct_lv2()
 		scu_dst_2+=scu_dst_add_2;
 		scu_src_2+=scu_src_add_2;
 	}
+
+	scu_size_2 = tmp_size;
+	if(!(DRUP(2))) scu_src_2 = tmp_src;
+	if(!(DWUP(2))) scu_dst_2 = tmp_dst;
 
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
@@ -1074,7 +1080,7 @@ static void dma_indirect_lv0()
 		//guess,but I believe it's right.
 		scu_src_0 &=0x07ffffff;
 		scu_dst_0 &=0x07ffffff;
-		scu_size_0 &=0xfff;
+		scu_size_0 &=0xfffff;
 
 		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 		{
@@ -1086,6 +1092,9 @@ static void dma_indirect_lv0()
 			scu_dst_0+=scu_dst_add_0;
 			scu_src_0+=scu_src_add_0;
 		}
+
+		if(DRUP(0))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_0|job_done ? 0x80000000 : 0);
+		if(DWUP(0)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_0);
 
 		scu_dst_0 = tmp_src+0xc;
 
@@ -1105,7 +1114,6 @@ static void dma_indirect_lv1()
 	do{
 		tmp_src = scu_dst_1;
 
-		/*Thanks for Runik of Saturnin for pointing this out...*/
 		scu_size_1 = cpu_readmem32bedw_dword(scu_dst_1);
 		scu_src_1 =  cpu_readmem32bedw_dword(scu_dst_1+8);
 		scu_dst_1 =  cpu_readmem32bedw_dword(scu_dst_1+4);
@@ -1134,6 +1142,9 @@ static void dma_indirect_lv1()
 			scu_src_1+=scu_src_add_1;
 		}
 
+		if(DRUP(1))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_1|job_done ? 0x80000000 : 0);
+		if(DWUP(1)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_1);
+
 		scu_dst_1 = tmp_src+0xc;
 
 	}while(job_done == 0);
@@ -1152,7 +1163,6 @@ static void dma_indirect_lv2()
 	do{
 		tmp_src = scu_dst_2;
 
-		/*Thanks for Runik of Saturnin for pointing this out...*/
 		scu_size_2 = cpu_readmem32bedw_dword(scu_dst_2);
 		scu_src_2 =  cpu_readmem32bedw_dword(scu_dst_2+8);
 		scu_dst_2 =  cpu_readmem32bedw_dword(scu_dst_2+4);
@@ -1168,7 +1178,7 @@ static void dma_indirect_lv2()
 		//guess,but I believe it's right.
 		scu_src_2 &=0x07ffffff;
 		scu_dst_2 &=0x07ffffff;
-		scu_size_2 &=0x1fff; // hanagumi needs at least this or sprites vanish during special moves
+		scu_size_2 &=0x1fff;
 
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
@@ -1180,6 +1190,9 @@ static void dma_indirect_lv2()
 			scu_dst_2+=scu_dst_add_2;
 			scu_src_2+=scu_src_add_2;
 		}
+
+		if(DRUP(2))	cpu_writemem32bedw_dword(tmp_src+8,scu_src_2|job_done ? 0x80000000 : 0);
+		if(DWUP(2)) cpu_writemem32bedw_dword(tmp_src+4,scu_dst_2);
 
 		scu_dst_2 = tmp_src+0xc;
 
@@ -1240,6 +1253,161 @@ static READ16_HANDLER( stv_scsp_regs_r16 )
 static WRITE16_HANDLER( stv_scsp_regs_w16 )
 {
 	COMBINE_DATA(&scsp_regs[offset]);
+
+	/*SCSP Common Control Register*/
+	if(offset*2 >= 0x400 && offset*2 <= 0x42f)
+		switch(offset*2)
+		{
+			case 0x412:
+			/*DMEA [15:1]*/
+			/*Sound memory address*/
+			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
+			break;
+			case 0x414:
+			/*DMEA [19:16]*/
+			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
+			/*DRGA [11:1]*/
+			/*Register memory address*/
+			scsp_drga = scsp_regs[0x414/2] & 0x0ffe;
+			break;
+			case 0x416:
+			/*DGATE[14]*/
+			/*DDIR[13]*/
+			/*if 0 sound_mem -> reg*/
+			/*if 1 sound_mem <- reg*/
+			/*DEXE[12]*/
+			/*starting bit*/
+			/*DTLG[11:1]*/
+			/*size of transfer*/
+			scsp_dtlg = scsp_regs[0x416/2] & 0x0ffe;
+			if(scsp_dexe)
+			{
+				dma_scsp();
+				scsp_regs[0x416/2]^=0x1000;//disable starting bit
+			}
+			break;
+			case 0x418: /*Timer A*/	break;
+			case 0x41a: /*Timer B*/ break;
+			case 0x41c: /*Timer C*/ break;
+			case 0x41e:
+			/*Allow Sound CPU irq*/
+/*
+offsets
+0x8000
+0x4000
+0x2000
+0x1000
+0x0800
+0x0400 - Sample irq
+0x0200 - MIDI-OUT
+0x0100 - Timer C
+0x0080 - Timer B
+0x0040 - Timer A
+0x0020 - CPU Software Irq
+0x0010 - DMA Transfer End
+0x0008 - MIDI-IN
+0x0004 - External irq 2
+0x0002 - External irq 1
+0x0001 - External irq 0
+*/
+			break;
+			case 0x420:
+			/*Request Sound CPU irq*/
+			if(scsp_regs[0x420/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,ASSERT_LINE); }
+			break;
+			case 0x422:
+			/*Reset Sound CPU irq*/
+			if(scsp_regs[0x422/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,CLEAR_LINE); }
+
+			/*Refresh irq mask register*/
+			scsp_regs[0x41e/2] = scsp_regs[0x422/2];
+			break;
+/*
+----------------------
+|SCILV2|SCILV1|SCILV0|
+| bit2 | bit1 | bit0 |
+----------------------
+"offsets"(in bits)
+15
+14
+13
+12
+11
+10
+09
+08
+07 - Timer B & C,MIDI-OUT
+06 - Timer A
+05 - CPU Software Irq
+04 - DMA Transfer End
+03 - MIDI-IN
+02 - External irq 2
+01 - External irq 1
+00 - External irq 0
+*/
+			case 0x424:
+			/*Sound CPU interrupt level bit0*/
+			break;
+			case 0x426:
+			/*Sound CPU interrupt level bit1*/
+			break;
+			case 0x428:
+			/*Sound CPU interrupt level bit2*/
+			break;
+			case 0x42a: /*Allow Main CPU irq*/   break;
+			case 0x42c: /*Request Main CPU irq*/ break;
+			case 0x42e: /*Reset Main CPU irq*/   break;
+			default: logerror("SCSP Common Control Register set %04x at %04x\n",data,offset*2);
+		}
+}
+
+static void dma_scsp()
+{
+	static UINT16 tmp_dma[2];
+
+	logerror("SCSP: DMA transfer START\n"
+			 "DMEA: %04x DRGA: %04x DTLG: %04x\n"
+			 "DGATE: %d  DDIR: %d\n",scsp_dmea,scsp_drga,scsp_dtlg,scsp_dgate ? 1 : 0,scsp_ddir ? 1 : 0);
+
+	/* Copy the dma values in a temp storage for resuming later *
+	 * (DMA *can't* overwrite his parameters).                  */
+	if(!(scsp_ddir))
+	{
+		tmp_dma[0] = scsp_regs[0x412/2];
+		tmp_dma[1] = scsp_regs[0x414/2];
+		tmp_dma[2] = scsp_regs[0x416/2];
+	}
+
+	if(scsp_ddir)
+	{
+		for(;scsp_dtlg > 0;scsp_dtlg-=2)
+		{
+			cpu_writemem24bedw_word(scsp_dmea, cpu_readmem24bedw_word(0x100000|scsp_drga));
+			scsp_dmea+=2;
+			scsp_drga+=2;
+		}
+	}
+	else
+	{
+		for(;scsp_dtlg > 0;scsp_dtlg-=2)
+		{
+			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
+			scsp_dmea+=2;
+			scsp_drga+=2;
+		}
+	}
+
+	/*Resume the values*/
+	if(!(scsp_ddir))
+	{
+	 	scsp_regs[0x412/2] = tmp_dma[0];
+		scsp_regs[0x414/2] = tmp_dma[1];
+		scsp_regs[0x416/2] = tmp_dma[2];
+	}
+
+	/*Job done,request a dma end irq*/
+	if(scsp_regs[0x41e/2] & 0x10)
+	cpu_set_irq_line(2,dma_transfer_end,HOLD_LINE);
 }
 
 /* communication,SLAVE CPU acquires data from the MASTER CPU and triggers an irq.  *
@@ -1458,7 +1626,7 @@ INPUT_PORTS_START( stv )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "1P Push Switch", KEYCODE_7, IP_JOY_NONE )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "2P Push Switch", KEYCODE_8, IP_JOY_NONE )
 
-	/*This might be unused,but we never know...*/
+	/*This might be unused but we never know...*/
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "3" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -1749,9 +1917,9 @@ MACHINE_DRIVER_END
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH2 code */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 0, "epr19730.ic8",   0x000000, 0x080000, CRC(d0e0889d) SHA1(fae53107c894e0c41c49e191dbe706c9cd6e50bd) ) /* jp */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 1, "mp17951a.s",     0x000000, 0x080000, CRC(2672f9d8) SHA1(63cf4a6432f6c87952f9cf3ab0f977aed2367303) ) /* jp alt */ \
-	ROM_LOAD16_WORD_SWAP_BIOS( 2, "mp17952a.s",     0x000000, 0x080000, CRC(d1be2adf) SHA1(eaf1c3e5d602e1139d2090a78d7e19f04f916794) ) /* us? */ \
-	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* newer? */ \
-	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* us? */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 2, "mp17952a.s",     0x000000, 0x080000, CRC(d1be2adf) SHA1(eaf1c3e5d602e1139d2090a78d7e19f04f916794) ) /* us */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* jp alt 2 */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* taiwan */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
@@ -1765,9 +1933,14 @@ ROM_END
 SYSTEM_BIOS_START( stvbios )
 	SYSTEM_BIOS_ADD( 0, "japan",       "Japan (bios epr19730)" )
 	SYSTEM_BIOS_ADD( 1, "japana",      "Japan (bios mp17951a)" )
-	SYSTEM_BIOS_ADD( 2, "us",          "USA (bios mp17952a) " )
+	SYSTEM_BIOS_ADD( 2, "us",          "USA (bios mp17952a)" )
 	SYSTEM_BIOS_ADD( 3, "japanb",      "Japan (bios 20091)" )
-	SYSTEM_BIOS_ADD( 4, "asia",      "Asia? (Ver 1.13)" )
+	SYSTEM_BIOS_ADD( 4, "taiwan",      "Taiwan (bios mp17953a)" )
+	/*Europe*/
+	/*Korea*/
+	/*Asia (Pal Area)*/
+	/*Brazil*/
+	/*Latin America*/
 SYSTEM_BIOS_END
 
 /* the roms marked as bad almost certainly aren't bad, theres some very weird
@@ -2476,3 +2649,4 @@ GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	
 GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */
+

@@ -181,6 +181,11 @@ WRITE_HANDLER( hotshock_sh_irqtrigger_w )
 	cpu_set_irq_line(1, 0, PULSE_LINE);
 }
 
+WRITE_HANDLER( explorer_sh_irqtrigger_w  )
+{
+	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpu_spinuntil_time(TIME_IN_USEC(100));
+}
 
 static void filter_w(int chip, int channel, int data)
 {

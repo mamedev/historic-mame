@@ -445,11 +445,7 @@ int win_init_window(void)
 	}
 
 	// make the window title
-#ifndef MESS
-	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
-#else
-	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
-#endif
+	sprintf(title, APPNAME ": %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 
 #if HAS_WINDOW_MENU
 	if (win_create_menu(&menu))

@@ -1,21 +1,22 @@
 /******************************************************************************
 
-	Game Driver for Video System Mahjong series. (Preliminary driver)
+	Game Driver for Video System Mahjong series.
 
-	Taisen Idol-Mahjong Final Romance 2
+	Taisen Idol-Mahjong Final Romance 2 (Japan)
 	(c)1995 Video System Co.,Ltd.
 
-	Taisen Mahjong FinalRomance R
+	Taisen Mahjong FinalRomance R (Japan)
 	(c)1995 Video System Co.,Ltd.
 
-	Taisen Mahjong FinalRomance 4
+	Taisen Mahjong FinalRomance 4 (Japan)
 	(c)1998 Video System Co.,Ltd.
 
 	Driver by Takahiro Nogi <nogi@kt.rim.or.jp> 2001/02/28 -
-	Special very thanks to Uki.
+	Special thanks to Uki.
 
 ******************************************************************************/
 /******************************************************************************
+
 Memo:
 
 ******************************************************************************/
@@ -134,28 +135,23 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 	static int fromanc2_playerside_old = -1;
 	static int key_F1_old = 0;
 
-	if (keyboard_pressed(KEYCODE_F1))
-	{
-		if (key_F1_old != 1)
-		{
+	if (keyboard_pressed(KEYCODE_F1)) {
+		if (key_F1_old != 1) {
 			key_F1_old = 1;
 			fromanc2_playerside ^= 1;
 		}
 	} else key_F1_old = 0;
 
-	if (fromanc2_playerside_old != fromanc2_playerside)
-	{
+	if (fromanc2_playerside_old != fromanc2_playerside) {
 		fromanc2_playerside_old = fromanc2_playerside;
 
-		usrintf_showmessage("PLAYER-%01X SIDE", (fromanc2_playerside + 1));
+		usrintf_showmessage("PLAYER-%01X SIDE", fromanc2_playerside + 1);
 
-		if (!fromanc2_playerside)
-		{
+		if (!fromanc2_playerside) {
 			mixer_set_stereo_volume(3, 75, 75);	// 1P (LEFT)
 			mixer_set_stereo_volume(4,  0,  0);	// 2P (RIGHT)
 		}
-		else
-		{
+		else {
 			mixer_set_stereo_volume(3,  0,  0);	// 1P (LEFT)
 			mixer_set_stereo_volume(4, 75, 75);	// 2P (RIGHT)
 		}
@@ -173,8 +169,8 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 
 static WRITE16_HANDLER( fromanc2_sndcmd_w )
 {
-	soundlatch_w(offset, ((data >> 8) & 0xff));	// 1P (LEFT)
-	soundlatch2_w(offset, (data & 0xff));		// 2P (RIGHT)
+	soundlatch_w(offset, (data >> 8) & 0xff);	// 1P (LEFT)
+	soundlatch2_w(offset, data & 0xff);			// 2P (RIGHT)
 
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	fromanc2_sndcpu_nmi_flag = 0;
@@ -193,18 +189,17 @@ static READ16_HANDLER( fromanc2_keymatrix_r )
 {
 	UINT16 ret;
 
-	switch (fromanc2_portselect)
-	{
-		case	0x01:	ret = readinputport(1);	break;
-		case	0x02:	ret = readinputport(2); break;
-		case	0x04:	ret = readinputport(3); break;
-		case	0x08:	ret = readinputport(4); break;
+	switch (fromanc2_portselect) {
+		case 0x01:	ret = readinputport(1);	break;
+		case 0x02:	ret = readinputport(2); break;
+		case 0x04:	ret = readinputport(3); break;
+		case 0x08:	ret = readinputport(4); break;
 		default:	ret = 0xffff;
-				logerror("PC:%08X unknown %02X\n", activecpu_get_pc(), fromanc2_portselect);
-				break;
+					logerror("PC:%08X unknown %02X\n", activecpu_get_pc(), fromanc2_portselect);
+					break;
 	}
 
-	if (fromanc2_playerside) ret = (((ret & 0xff00) >> 8) | ((ret & 0x00ff) << 8));
+	if (fromanc2_playerside) ret = ((ret & 0xff00) >> 8) | ((ret & 0x00ff) << 8);
 
 	return ret;
 }
@@ -214,10 +209,10 @@ static READ16_HANDLER( fromanc2_input_r )
 	UINT16 cflag, coinsw, eeprom;
 
 	cflag = (((fromanc2_subcpu_int_flag & 1) << 4) |
-		 ((fromanc2_subcpu_nmi_flag & 1) << 6) |
-		 ((fromanc2_sndcpu_nmi_flag & 1) << 5));
-	eeprom = ((EEPROM_read_bit() & 1) << 7);	// EEPROM DATA
-	coinsw = (readinputport(0) & 0x030f);		// COIN, TEST
+			 ((fromanc2_subcpu_nmi_flag & 1) << 6) |
+			 ((fromanc2_sndcpu_nmi_flag & 1) << 5));
+	eeprom = (EEPROM_read_bit() & 1) << 7;		// EEPROM DATA
+	coinsw = readinputport(0) & 0x030f;			// COIN, TEST
 
 	return (cflag | eeprom | coinsw);
 }
@@ -226,17 +221,16 @@ static READ16_HANDLER( fromanc4_input_r )
 {
 	UINT16 cflag, coinsw, eeprom;
 
-	cflag = ((fromanc2_sndcpu_nmi_flag & 1) << 5);
-	eeprom = ((EEPROM_read_bit() & 1) << 7);	// EEPROM DATA
-	coinsw = (readinputport(0) & 0x001f);		// COIN, TEST
+	cflag = (fromanc2_sndcpu_nmi_flag & 1) << 5;
+	eeprom = (EEPROM_read_bit() & 1) << 7;		// EEPROM DATA
+	coinsw = readinputport(0) & 0x001f;			// COIN, TEST
 
 	return (cflag | eeprom | coinsw);
 }
 
 static WRITE16_HANDLER( fromanc2_eeprom_w )
 {
-	if (ACCESSING_MSB)
-	{
+	if (ACCESSING_MSB) {
 		// latch the bit
 		EEPROM_write_bit(data & 0x0100);
 
@@ -250,8 +244,7 @@ static WRITE16_HANDLER( fromanc2_eeprom_w )
 
 static WRITE16_HANDLER( fromancr_eeprom_w )
 {
-	if (ACCESSING_LSB)
-	{
+	if (ACCESSING_LSB) {
 		fromancr_gfxbank_w(data & 0xfff8);
 
 		// latch the bit
@@ -267,8 +260,7 @@ static WRITE16_HANDLER( fromancr_eeprom_w )
 
 static WRITE16_HANDLER( fromanc4_eeprom_w )
 {
-	if (ACCESSING_LSB)
-	{
+	if (ACCESSING_LSB) {
 		// latch the bit
 		EEPROM_write_bit(data & 0x0004);
 
@@ -297,19 +289,19 @@ static READ16_HANDLER( fromanc2_subcpu_r )
 	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
 	fromanc2_subcpu_nmi_flag = 0;
 
-	return ((fromanc2_datalatch_2h << 8) | fromanc2_datalatch_2l);
+	return (fromanc2_datalatch_2h << 8) | fromanc2_datalatch_2l;
 }
 
 static READ_HANDLER( fromanc2_maincpu_r_l )
 {
-	return (fromanc2_datalatch1 & 0x00ff);
+	return fromanc2_datalatch1 & 0x00ff;
 }
 
 static READ_HANDLER( fromanc2_maincpu_r_h )
 {
 	fromanc2_subcpu_int_flag = 1;
 
-	return ((fromanc2_datalatch1 & 0xff00) >> 8);
+	return (fromanc2_datalatch1 & 0xff00) >> 8;
 }
 
 static WRITE_HANDLER( fromanc2_maincpu_w_l )
@@ -354,22 +346,22 @@ static WRITE_HANDLER( fromanc2_subcpu_rombank_w )
 // ----------------------------------------------------------------------------
 
 static MEMORY_READ16_START( fromanc2_readmem_main )
-	{ 0x000000, 0x07ffff, MRA16_ROM },		// MAIN ROM
+	{ 0x000000, 0x07ffff, MRA16_ROM },				// MAIN ROM
 
-	{ 0x802000, 0x802fff, MRA16_NOP },		// ???
+	{ 0x802000, 0x802fff, MRA16_NOP },				// ???
 
 	{ 0xa00000, 0xa00fff, fromanc2_paletteram_0_r },// PALETTE (1P)
 	{ 0xa80000, 0xa80fff, fromanc2_paletteram_1_r },// PALETTE (2P)
 
-	{ 0xd01100, 0xd01101, fromanc2_input_r },	// INPUT COMMON, EEPROM
-	{ 0xd01300, 0xd01301, fromanc2_subcpu_r },	// SUB CPU READ
+	{ 0xd01100, 0xd01101, fromanc2_input_r },		// INPUT COMMON, EEPROM
+	{ 0xd01300, 0xd01301, fromanc2_subcpu_r 	},	// SUB CPU READ
 	{ 0xd01800, 0xd01801, fromanc2_keymatrix_r },	// INPUT KEY MATRIX
 
-	{ 0xd80000, 0xd8ffff, MRA16_RAM },		// WORK RAM
+	{ 0xd80000, 0xd8ffff, MRA16_RAM },				// WORK RAM
 MEMORY_END
 
 static MEMORY_WRITE16_START( fromanc2_writemem_main )
-	{ 0x000000, 0x07ffff, MWA16_ROM },		// MAIN ROM
+	{ 0x000000, 0x07ffff, MWA16_ROM },				// MAIN ROM
 
 	{ 0x800000, 0x803fff, fromanc2_videoram_0_w },	// VRAM 0, 1 (1P)
 	{ 0x880000, 0x883fff, fromanc2_videoram_1_w },	// VRAM 2, 3 (1P)
@@ -384,39 +376,39 @@ static MEMORY_WRITE16_START( fromanc2_writemem_main )
 	{ 0xd00200, 0xd00223, fromanc2_gfxreg_1_w },	// SCROLL REG (1P/2P)
 	{ 0xd00300, 0xd00323, fromanc2_gfxreg_3_w },	// SCROLL REG (1P/2P)
 
-	{ 0xd00400, 0xd00413, MWA16_NOP },		// ???
-	{ 0xd00500, 0xd00513, MWA16_NOP },		// ???
+	{ 0xd00400, 0xd00413, MWA16_NOP },				// ???
+	{ 0xd00500, 0xd00513, MWA16_NOP },				// ???
 
-	{ 0xd01000, 0xd01001, fromanc2_sndcmd_w },	// SOUND REQ (1P/2P)
-	{ 0xd01200, 0xd01201, fromanc2_subcpu_w },	// SUB CPU WRITE
+	{ 0xd01000, 0xd01001, fromanc2_sndcmd_w },		// SOUND REQ (1P/2P)
+	{ 0xd01200, 0xd01201, fromanc2_subcpu_w },		// SUB CPU WRITE
 	{ 0xd01400, 0xd01401, fromanc2_gfxbank_0_w },	// GFXBANK (1P)
 	{ 0xd01500, 0xd01501, fromanc2_gfxbank_1_w },	// GFXBANK (2P)
-	{ 0xd01600, 0xd01601, fromanc2_eeprom_w },	// EEPROM DATA
+	{ 0xd01600, 0xd01601, fromanc2_eeprom_w },		// EEPROM DATA
 	{ 0xd01a00, 0xd01a01, fromanc2_portselect_w },	// PORT SELECT (1P/2P)
 
-	{ 0xd80000, 0xd8ffff, MWA16_RAM },		// WORK RAM
+	{ 0xd80000, 0xd8ffff, MWA16_RAM },				// WORK RAM
 MEMORY_END
 
 static MEMORY_READ16_START( fromancr_readmem_main )
-	{ 0x000000, 0x07ffff, MRA16_ROM },		// MAIN ROM
+	{ 0x000000, 0x07ffff, MRA16_ROM },				// MAIN ROM
 
 	{ 0xa00000, 0xa00fff, fromancr_paletteram_0_r },// PALETTE (1P)
 	{ 0xa80000, 0xa80fff, fromancr_paletteram_1_r },// PALETTE (2P)
 
-	{ 0xd01100, 0xd01101, fromanc2_input_r },	// INPUT COMMON, EEPROM
-	{ 0xd01300, 0xd01301, fromanc2_subcpu_r },	// SUB CPU READ
+	{ 0xd01100, 0xd01101, fromanc2_input_r },		// INPUT COMMON, EEPROM
+	{ 0xd01300, 0xd01301, fromanc2_subcpu_r },		// SUB CPU READ
 	{ 0xd01800, 0xd01801, fromanc2_keymatrix_r },	// INPUT KEY MATRIX
 
-	{ 0xd80000, 0xd8ffff, MRA16_RAM },		// WORK RAM
+	{ 0xd80000, 0xd8ffff, MRA16_RAM },				// WORK RAM
 MEMORY_END
 
 static MEMORY_WRITE16_START( fromancr_writemem_main )
-	{ 0x000000, 0x07ffff, MWA16_ROM },		// MAIN ROM
+	{ 0x000000, 0x07ffff, MWA16_ROM },				// MAIN ROM
 
 	{ 0x800000, 0x803fff, fromancr_videoram_0_w },	// VRAM BG (1P/2P)
 	{ 0x880000, 0x883fff, fromancr_videoram_1_w },	// VRAM FG (1P/2P)
 	{ 0x900000, 0x903fff, fromancr_videoram_2_w },	// VRAM TEXT (1P/2P)
-	{ 0x980000, 0x983fff, MWA16_NOP },		// VRAM Unused ?
+	{ 0x980000, 0x983fff, MWA16_NOP },				// VRAM Unused ?
 
 	{ 0xa00000, 0xa00fff, fromancr_paletteram_0_w },// PALETTE (1P)
 	{ 0xa80000, 0xa80fff, fromancr_paletteram_1_w },// PALETTE (2P)
@@ -424,48 +416,48 @@ static MEMORY_WRITE16_START( fromancr_writemem_main )
 	{ 0xd00000, 0xd00023, fromancr_gfxreg_1_w },	// SCROLL REG (1P/2P)
 	{ 0xd00100, 0xd00123, fromancr_gfxreg_0_w },	// SCROLL REG (1P/2P)
 
-	{ 0xd00200, 0xd002ff, MWA16_NOP },		// ?
+	{ 0xd00200, 0xd002ff, MWA16_NOP },				// ?
 
-	{ 0xd00400, 0xd00413, MWA16_NOP },		// ???
-	{ 0xd00500, 0xd00513, MWA16_NOP },		// ???
+	{ 0xd00400, 0xd00413, MWA16_NOP },				// ???
+	{ 0xd00500, 0xd00513, MWA16_NOP },				// ???
 
-	{ 0xd01000, 0xd01001, fromanc2_sndcmd_w },	// SOUND REQ (1P/2P)
-	{ 0xd01200, 0xd01201, fromanc2_subcpu_w },	// SUB CPU WRITE
-	{ 0xd01400, 0xd01401, MWA16_NOP },		// COIN COUNTER ?
-	{ 0xd01600, 0xd01601, fromancr_eeprom_w },	// EEPROM DATA, GFXBANK (1P/2P)
+	{ 0xd01000, 0xd01001, fromanc2_sndcmd_w },		// SOUND REQ (1P/2P)
+	{ 0xd01200, 0xd01201, fromanc2_subcpu_w },		// SUB CPU WRITE
+	{ 0xd01400, 0xd01401, MWA16_NOP },				// COIN COUNTER ?
+	{ 0xd01600, 0xd01601, fromancr_eeprom_w },		// EEPROM DATA, GFXBANK (1P/2P)
 	{ 0xd01a00, 0xd01a01, fromanc2_portselect_w },	// PORT SELECT (1P/2P)
 
-	{ 0xd80000, 0xd8ffff, MWA16_RAM },		// WORK RAM
+	{ 0xd80000, 0xd8ffff, MWA16_RAM },				// WORK RAM
 MEMORY_END
 
 static MEMORY_READ16_START( fromanc4_readmem_main )
-	{ 0x000000, 0x07ffff, MRA16_ROM },		// MAIN ROM
-	{ 0x400000, 0x7fffff, MRA16_ROM },		// DATA ROM
+	{ 0x000000, 0x07ffff, MRA16_ROM },				// MAIN ROM
+	{ 0x400000, 0x7fffff, MRA16_ROM },				// DATA ROM
 
-	{ 0x800000, 0x81ffff, MRA16_RAM },		// WORK RAM
+	{ 0x800000, 0x81ffff, MRA16_RAM },				// WORK RAM
 
 	{ 0xdb0000, 0xdb0fff, fromanc4_paletteram_0_r },// PALETTE (1P)
 	{ 0xdc0000, 0xdc0fff, fromanc4_paletteram_1_r },// PALETTE (2P)
 
 	{ 0xd10000, 0xd10001, fromanc2_keymatrix_r },	// INPUT KEY MATRIX
-	{ 0xd20000, 0xd20001, fromanc4_input_r },	// INPUT COMMON, EEPROM DATA
+	{ 0xd20000, 0xd20001, fromanc4_input_r },		// INPUT COMMON, EEPROM DATA
 
-	{ 0xe5000c, 0xe5000d, MRA16_NOP },		// EXT-COMM PORT ?
+	{ 0xe5000c, 0xe5000d, MRA16_NOP },				// EXT-COMM PORT ?
 MEMORY_END
 
 static MEMORY_WRITE16_START( fromanc4_writemem_main )
-	{ 0x000000, 0x07ffff, MWA16_ROM },		// MAIN ROM
-	{ 0x400000, 0x7fffff, MWA16_ROM },		// DATA ROM
+	{ 0x000000, 0x07ffff, MWA16_ROM },				// MAIN ROM
+	{ 0x400000, 0x7fffff, MWA16_ROM },				// DATA ROM
 
-	{ 0x800000, 0x81ffff, MWA16_RAM },		// WORK RAM
+	{ 0x800000, 0x81ffff, MWA16_RAM },				// WORK RAM
 
 	{ 0xd00000, 0xd00001, fromanc2_portselect_w },	// PORT SELECT (1P/2P)
 
-	{ 0xd10000, 0xd10001, MWA16_NOP },		// ?
-	{ 0xd30000, 0xd30001, MWA16_NOP },		// ?
-	{ 0xd50000, 0xd50001, fromanc4_eeprom_w },	// EEPROM DATA
+	{ 0xd10000, 0xd10001, MWA16_NOP },				// ?
+	{ 0xd30000, 0xd30001, MWA16_NOP },				// ?
+	{ 0xd50000, 0xd50001, fromanc4_eeprom_w },		// EEPROM DATA
 
-	{ 0xd70000, 0xd70001, fromanc2_sndcmd_w },	// SOUND REQ (1P/2P)
+	{ 0xd70000, 0xd70001, fromanc2_sndcmd_w },		// SOUND REQ (1P/2P)
 
 	{ 0xd80000, 0xd8ffff, fromanc4_videoram_0_w },	// VRAM FG (1P/2P)
 	{ 0xd90000, 0xd9ffff, fromanc4_videoram_1_w },	// VRAM BG (1P/2P)
@@ -478,10 +470,10 @@ static MEMORY_WRITE16_START( fromanc4_writemem_main )
 	{ 0xe10000, 0xe1001d, fromanc4_gfxreg_1_w },	// SCROLL, GFXBANK (1P/2P)
 	{ 0xe20000, 0xe2001d, fromanc4_gfxreg_2_w },	// SCROLL, GFXBANK (1P/2P)
 
-	{ 0xe30000, 0xe30013, MWA16_NOP },		// ???
-	{ 0xe40000, 0xe40013, MWA16_NOP },		// ???
+	{ 0xe30000, 0xe30013, MWA16_NOP },				// ???
+	{ 0xe40000, 0xe40013, MWA16_NOP },				// ???
 
-	{ 0xe50000, 0xe50009, MWA16_NOP },		// EXT-COMM PORT ?
+	{ 0xe50000, 0xe50009, MWA16_NOP },				// EXT-COMM PORT ?
 MEMORY_END
 
 
@@ -490,28 +482,28 @@ MEMORY_END
 // ----------------------------------------------------------------------------
 
 static MEMORY_READ_START( fromanc2_readmem_sub )
-	{ 0x0000, 0x3fff, MRA_ROM },			// ROM
-	{ 0x4000, 0x7fff, MRA_BANK1 },			// ROM(BANK)
-	{ 0x8000, 0xbfff, MRA_RAM },			// RAM(WORK)
-	{ 0xc000, 0xffff, MRA_BANK2 },			// RAM(BANK)
+	{ 0x0000, 0x3fff, MRA_ROM },					// ROM
+	{ 0x4000, 0x7fff, MRA_BANK1 },					// ROM(BANK)
+	{ 0x8000, 0xbfff, MRA_RAM },					// RAM(WORK)
+	{ 0xc000, 0xffff, MRA_BANK2 },					// RAM(BANK)
 MEMORY_END
 
 static MEMORY_WRITE_START( fromanc2_writemem_sub )
-	{ 0x0000, 0x3fff, MWA_ROM },			// ROM
-	{ 0x4000, 0x7fff, MWA_BANK1 },			// ROM(BANK)
-	{ 0x8000, 0xbfff, MWA_RAM },			// RAM(WORK)
-	{ 0xc000, 0xffff, MWA_BANK2 },			// RAM(BANK)
+	{ 0x0000, 0x3fff, MWA_ROM },					// ROM
+	{ 0x4000, 0x7fff, MWA_BANK1 },					// ROM(BANK)
+	{ 0x8000, 0xbfff, MWA_RAM },					// RAM(WORK)
+	{ 0xc000, 0xffff, MWA_BANK2 },					// RAM(BANK)
 MEMORY_END
 
 static PORT_READ_START( fromanc2_readport_sub )
-	{ 0x02, 0x02, fromanc2_maincpu_r_l },		// to MAIN CPU
-	{ 0x04, 0x04, fromanc2_maincpu_r_h },		// to MAIN CPU
+	{ 0x02, 0x02, fromanc2_maincpu_r_l },			// to MAIN CPU
+	{ 0x04, 0x04, fromanc2_maincpu_r_h },			// to MAIN CPU
 PORT_END
 
 static PORT_WRITE_START( fromanc2_writeport_sub )
 	{ 0x00, 0x00, fromanc2_subcpu_rombank_w },
-	{ 0x02, 0x02, fromanc2_maincpu_w_l },		// from MAIN CPU
-	{ 0x04, 0x04, fromanc2_maincpu_w_h },		// from MAIN CPU
+	{ 0x02, 0x02, fromanc2_maincpu_w_l },			// from MAIN CPU
+	{ 0x04, 0x04, fromanc2_maincpu_w_h },			// from MAIN CPU
 	{ 0x06, 0x06, fromanc2_subcpu_nmi_clr },
 PORT_END
 
@@ -531,16 +523,16 @@ static MEMORY_WRITE_START( fromanc2_writemem_sound )
 MEMORY_END
 
 static PORT_READ_START( fromanc2_readport_sound )
-	{ 0x00, 0x00, soundlatch_r },				// snd cmd (1P)
-	{ 0x04, 0x04, soundlatch2_r },				// snd cmd (2P)
-	{ 0x09, 0x09, IORP_NOP },				// ?
+	{ 0x00, 0x00, soundlatch_r },					// snd cmd (1P)
+	{ 0x04, 0x04, soundlatch2_r },					// snd cmd (2P)
+	{ 0x09, 0x09, IORP_NOP },						// ?
 	{ 0x08, 0x08, YM2610_status_port_0_A_r },
 	{ 0x0a, 0x0a, YM2610_status_port_0_B_r },
 	{ 0x0c, 0x0c, fromanc2_sndcpu_nmi_clr },
 PORT_END
 
 static PORT_WRITE_START( fromanc2_writeport_sound )
-	{ 0x00, 0x00, IOWP_NOP },				// ?
+	{ 0x00, 0x00, IOWP_NOP },						// ?
 	{ 0x08, 0x08, YM2610_control_port_0_A_w },
 	{ 0x09, 0x09, YM2610_data_port_0_A_w },
 	{ 0x0a, 0x0a, YM2610_control_port_0_B_w },
@@ -785,7 +777,6 @@ static MACHINE_DRIVER_START( fromanc2 )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
 MACHINE_DRIVER_END
 
@@ -822,7 +813,6 @@ static MACHINE_DRIVER_START( fromancr )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
 MACHINE_DRIVER_END
 
@@ -855,7 +845,6 @@ static MACHINE_DRIVER_START( fromanc4 )
 	MDRV_VIDEO_UPDATE(fromanc2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
 MACHINE_DRIVER_END
 
@@ -865,13 +854,13 @@ MACHINE_DRIVER_END
 // ----------------------------------------------------------------------------
 
 ROM_START( fromanc2 )
-	ROM_REGION( 0x0080000, REGION_CPU1, 0 )			// MAIN CPU
+	ROM_REGION( 0x0080000, REGION_CPU1, 0 )	// MAIN CPU
 	ROM_LOAD16_WORD_SWAP( "4-ic23.bin", 0x000000, 0x080000, CRC(96c90f9e) SHA1(c233e91d6967ef05cf14923273be84b17fce200f) )
 
-	ROM_REGION( 0x0010000, REGION_CPU2, 0 )			// SOUND CPU
+	ROM_REGION( 0x0010000, REGION_CPU2, 0 )	// SOUND CPU
 	ROM_LOAD( "5-ic85.bin",  0x00000, 0x10000, CRC(d8f19aa3) SHA1(f980c2a021fa1995bc18b6427b361506ca8d9bf2) )
 
-	ROM_REGION( 0x0020000, REGION_CPU3, 0 )			// SUB CPU + BANK RAM
+	ROM_REGION( 0x0020000, REGION_CPU3, 0 )	// SUB CPU + BANK RAM
 	ROM_LOAD( "3-ic1.bin",   0x00000, 0x10000, CRC(6d02090e) SHA1(08a538f3a578adbf83718e5e592c457b2ad841a6) )
 
 	ROM_REGION( 0x0480000, REGION_GFX1, ROMREGION_DISPOSE )	// LAYER4 DATA
@@ -890,19 +879,19 @@ ROM_START( fromanc2 )
 	ROM_REGION( 0x0100000, REGION_GFX4, ROMREGION_DISPOSE )	// LAYER1 DATA
 	ROM_LOAD( "40-52.bin",   0x000000, 0x100000, CRC(dbb5062d) SHA1(d1be4d675b36ea6ebd602d5c990adcf3c029485e) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 )		// SOUND DATA
+	ROM_REGION( 0x0400000, REGION_SOUND1, 0 )	// SOUND DATA
 	ROM_LOAD( "ic96.bin",    0x000000, 0x200000, CRC(2f1b394c) SHA1(d95dd8231d7873328f2253eaa27374c79d87e21b) )
 	ROM_LOAD( "ic97.bin",    0x200000, 0x200000, CRC(1d1377fc) SHA1(0dae5dfcbcf4ed6662522e9404fcac0236dce04d) )
 ROM_END
 
 ROM_START( fromancr )
-	ROM_REGION( 0x0080000, REGION_CPU1, 0 )			// MAIN CPU
+	ROM_REGION( 0x0080000, REGION_CPU1, 0 )	// MAIN CPU
 	ROM_LOAD16_WORD_SWAP( "2-ic20.bin", 0x000000, 0x080000, CRC(378eeb9c) SHA1(c1cfc7440590a229b3cdc1114428a473fea15b63) )
 
-	ROM_REGION( 0x0010000, REGION_CPU2, 0 )			// SOUND CPU
+	ROM_REGION( 0x0010000, REGION_CPU2, 0 )	// SOUND CPU
 	ROM_LOAD( "5-ic73.bin",  0x0000000, 0x010000, CRC(3e4727fe) SHA1(816c0c2cd2e349900fb9cd63cbced4c621017f37) )
 
-	ROM_REGION( 0x0020000, REGION_CPU3, 0 )			// SUB CPU + BANK RAM
+	ROM_REGION( 0x0020000, REGION_CPU3, 0 )	// SUB CPU + BANK RAM
 	ROM_LOAD( "4-ic1.bin",   0x0000000, 0x010000, CRC(6d02090e) SHA1(08a538f3a578adbf83718e5e592c457b2ad841a6) )
 
 	ROM_REGION( 0x0800000, REGION_GFX1, ROMREGION_DISPOSE )	// BG DATA
@@ -923,17 +912,17 @@ ROM_START( fromancr )
 	ROM_REGION( 0x0200000, REGION_GFX3, ROMREGION_DISPOSE )	// TEXT DATA
 	ROM_LOAD( "ic28-29.bin", 0x0000000, 0x200000, CRC(f5e262aa) SHA1(35464d059f4814832bf5cb3bede4b8a600bc8a84) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 )		// SOUND DATA
+	ROM_REGION( 0x0400000, REGION_SOUND1, 0 )	// SOUND DATA
 	ROM_LOAD( "ic81.bin",    0x0000000, 0x200000, CRC(8ab6e343) SHA1(5ae28e6944edb0a4b8d0071ce48e348b6e927ca9) )
 	ROM_LOAD( "ic82.bin",    0x0200000, 0x200000, CRC(f57daaf8) SHA1(720eadf771c89d8749317b632bbc5e8ff1f6f520) )
 ROM_END
 
 ROM_START( fromanc4 )
-	ROM_REGION( 0x0800000, REGION_CPU1, 0 )			// MAIN CPU + DATA
+	ROM_REGION( 0x0800000, REGION_CPU1, 0 )	// MAIN CPU + DATA
 	ROM_LOAD16_WORD_SWAP( "ic18.bin",    0x0000000, 0x080000, CRC(46a47839) SHA1(f1ba47b193e7e4b1c0fe8d67a76a9c452989885c) )
 	ROM_LOAD16_WORD_SWAP( "em33-m00.19", 0x0400000, 0x400000, CRC(6442534b) SHA1(a504d5cdd569ad4301f9917247531d4fdb807c76) )
 
-	ROM_REGION( 0x0020000, REGION_CPU2, 0 )			// SOUND CPU
+	ROM_REGION( 0x0020000, REGION_CPU2, 0 )	// SOUND CPU
 	ROM_LOAD( "ic79.bin", 0x0000000, 0x020000, CRC(c9587c09) SHA1(e04ee8c3f8519c2b2d3c2bdade1e142974b7fcb1) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	// BG DATA
@@ -959,7 +948,7 @@ ROM_START( fromanc4 )
 	ROM_REGION( 0x0400000, REGION_GFX3, ROMREGION_DISPOSE )	// TEXT DATA
 	ROM_LOAD16_WORD_SWAP( "em33-a00.37", 0x0000000, 0x400000, CRC(a3bd4a34) SHA1(78bd5298e83f89c738c18105c8bc809fa6a35206) )
 
-	ROM_REGION( 0x0800000, REGION_SOUND1, 0 )		// SOUND DATA
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 )	// SOUND DATA
 	ROM_LOAD16_WORD_SWAP( "em33-p00.88", 0x0000000, 0x400000, CRC(1c6418d2) SHA1(c66d6b35f342fcbeca5414dbb2ac038d8a2ec2c4) )
 	ROM_LOAD16_WORD_SWAP( "em33-p01.89", 0x0400000, 0x400000, CRC(615b4e6e) SHA1(a031773ed27de2263e32422a3d11118bdcb2c197) )
 ROM_END

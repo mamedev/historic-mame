@@ -1,5 +1,6 @@
 /*******************************************************************************
  Welltris (c)1991 Video System
+
 ********************************************************************************
  hardware is similar to aerofgt.c but with slightly different sprites, sound,
  and an additional 'pixel' layer used for the backdrops
@@ -262,6 +263,52 @@ This routine determines how many credits (1 or 2) are needed for a 2 players gam
 There are read/writes on bit 7 of 0xfff009 ($f009) ...
 
 */
+/*******************************************************************************
+
+	Miyasu Nonki no Quiz 18-Kin (Japan)
+	(c)1992 EIM
+
+	Added by Takahiro Nogi <nogi@kt.rim.or.jp> 2003/08/15 -
+
+
+Board:	OW-13 CPU
+CPU:	68000-10
+		Z80-B
+Sound:	YM2610
+OSC:	20.00000MHz
+		14.31818MHz
+		12.000MHz
+		8.000MHz
+Custom:	C7-01 GGA
+		VS8803
+		VS8904
+		VS8905
+
+
+1-IC8.BIN    main prg.
+2-IC7.BIN
+IC10.BIN
+IC9.BIN
+
+3-IC144.BIN  sound prg.
+
+IC123.BIN    samples
+IC124.BIN
+IC126.BIN
+
+IC77.BIN     BG chr.
+IC78.BIN
+IC79.BIN
+
+IC93.BIN     OBJ chr.
+IC94.BIN
+
+
+TODO:
+
+- Couldn't figure out sprite table initialize routine, so I initialize it manually.
+
+*******************************************************************************/
 
 #define WELLTRIS_4P_HACK 0
 
@@ -272,12 +319,14 @@ size_t welltris_spriteram_size;
 data16_t *welltris_pixelram;
 data16_t *welltris_charvideoram;
 
+READ16_HANDLER( welltris_spriteram_r );
+WRITE16_HANDLER( welltris_spriteram_w );
 WRITE16_HANDLER( welltris_palette_bank_w );
 WRITE16_HANDLER( welltris_gfxbank_w );
 WRITE16_HANDLER( welltris_charvideoram_w );
+WRITE16_HANDLER( welltris_scrollreg_w );
 VIDEO_START( welltris );
 VIDEO_UPDATE( welltris );
-
 
 
 
@@ -295,7 +344,8 @@ static WRITE16_HANDLER( sound_command_w )
 {
 	if (ACCESSING_LSB)
 	{
-		soundlatch_w(offset,data & 0xff);
+		pending_command = 1;
+		soundlatch_w(0, data & 0xff);
 		cpu_set_nmi_line(1, PULSE_LINE);
 	}
 }
@@ -315,7 +365,7 @@ static MEMORY_READ16_START( welltris_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x100000, 0x17ffff, MRA16_ROM },
 	{ 0x800000, 0x81ffff, MRA16_RAM }, /* Graph_1 & 2*/
-	{ 0xff8000, 0xffcfff, MRA16_RAM }, /* Work */
+	{ 0xff8000, 0xffbfff, MRA16_RAM }, /* Work */
 	{ 0xffc000, 0xffc3ff, MRA16_RAM }, /* Sprite */
 	{ 0xffd000, 0xffdfff, MRA16_RAM }, /* Char */
 	{ 0xffe000, 0xffefff, MRA16_RAM }, /* Palette */
@@ -335,18 +385,18 @@ static MEMORY_WRITE16_START( welltris_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x800000, 0x81ffff, MWA16_RAM, &welltris_pixelram },
-	{ 0xff8000, 0xffcfff, MWA16_RAM },
-	{ 0xffc000, 0xffc3ff, MWA16_RAM, &welltris_spriteram, &welltris_spriteram_size },
-	{ 0xffd000, 0xffdfff, welltris_charvideoram_w, &welltris_charvideoram},
+	{ 0xff8000, 0xffbfff, MWA16_RAM },
+
+	{ 0xffc000, 0xffc3ff, welltris_spriteram_w, &welltris_spriteram },
+	{ 0xffd000, 0xffdfff, welltris_charvideoram_w, &welltris_charvideoram },
 	{ 0xffe000, 0xffefff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 
 	{ 0xfff000, 0xfff001, welltris_palette_bank_w },
 	{ 0xfff002, 0xfff003, welltris_gfxbank_w },
-//	{ 0xfff004, 0xfff005, ?? },
-//	{ 0xfff006, 0xfff007, ?? },
+	{ 0xfff004, 0xfff007, welltris_scrollreg_w },
 	{ 0xfff008, 0xfff009, sound_command_w },
-//	{ 0xfff00c, 0xfff00d, ?? },
-//	{ 0xfff00e, 0xfff00f, ?? },
+	{ 0xfff00c, 0xfff00d, MWA16_NOP },		// ??
+	{ 0xfff00e, 0xfff00f, MWA16_NOP },		// ??
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -538,6 +588,97 @@ INPUT_PORTS_START( welltris )
   	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( quiz18k )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* pending sound command */
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT (0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT (0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT (0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 1-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 1-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 1-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ) /* Flip Screen Not Currently Supported */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Title Logo Type" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+  	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout welltris_charlayout =
@@ -566,8 +707,8 @@ static struct GfxLayout welltris_spritelayout =
 
 static struct GfxDecodeInfo welltris_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &welltris_charlayout,   0x000, 64 },
-	{ REGION_GFX2, 0, &welltris_spritelayout, 0x700, 64 },
+	{ REGION_GFX1, 0, &welltris_charlayout,   16* 0, 4*16 },
+	{ REGION_GFX2, 0, &welltris_spritelayout, 16*96, 2*16 },
 	{ -1 } /* end of array */
 };
 
@@ -575,7 +716,7 @@ static struct GfxDecodeInfo welltris_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =
@@ -590,11 +731,12 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND2 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(75, MIXER_PAN_LEFT, 75, MIXER_PAN_RIGHT) }
 };
 
 
-void init_welltris(void)
+
+static void init_welltris(void)
 {
 #if WELLTRIS_4P_HACK
 	/* A Hack which shows 4 player mode in code which is disabled */
@@ -604,6 +746,13 @@ void init_welltris(void)
 #endif
 }
 
+static void init_quiz18k(void)
+{
+	;
+}
+
+
+
 static MACHINE_DRIVER_START( welltris )
 
 	/* basic machine hardware */
@@ -611,8 +760,8 @@ static MACHINE_DRIVER_START( welltris )
 	MDRV_CPU_MEMORY(welltris_readmem,welltris_writemem)
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_ADD(Z80,8000000/2)		/* 4 MHz ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 								/* IRQs are triggered by the YM2610 */
@@ -622,7 +771,7 @@ static MACHINE_DRIVER_START( welltris )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(512, 256)
-	MDRV_VISIBLE_AREA(0, 351, 0, 239)
+	MDRV_VISIBLE_AREA(15, 367-1, 8, 248-1)
 	MDRV_GFXDECODE(welltris_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -630,39 +779,76 @@ static MACHINE_DRIVER_START( welltris )
 	MDRV_VIDEO_UPDATE(welltris)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( quiz18k )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( welltris )
+
+	MDRV_VISIBLE_AREA(15, 335-1, 0, 224-1)
 MACHINE_DRIVER_END
 
 
 
 ROM_START( welltris )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "j2.8",			0x000000, 0x20000, CRC(68ec5691) SHA1(8615415c5c98aa9caa0878a8251da7985f050f94) )
-	ROM_LOAD16_BYTE( "j1.7",			0x000001, 0x20000, CRC(1598ea2c) SHA1(e9150c3ab9b5c0eb9a5fee3e071358f92a005078) )
+	ROM_LOAD16_BYTE( "j2.8", 0x000000, 0x20000, CRC(68ec5691) SHA1(8615415c5c98aa9caa0878a8251da7985f050f94) )
+	ROM_LOAD16_BYTE( "j1.7", 0x000001, 0x20000, CRC(1598ea2c) SHA1(e9150c3ab9b5c0eb9a5fee3e071358f92a005078) )
 	/* Space */
-	ROM_LOAD16_BYTE( "lh532j10.10",		0x100000, 0x40000, CRC(1187c665) SHA1(c6c55016e46805694348b386e521a3ef1a443621) )
-	ROM_LOAD16_BYTE( "lh532j11.9",		0x100001, 0x40000, CRC(18eda9e5) SHA1(c01d1dc6bfde29797918490947c89440b58d5372) )
+	ROM_LOAD16_BYTE( "lh532j10.10", 0x100000, 0x40000, CRC(1187c665) SHA1(c6c55016e46805694348b386e521a3ef1a443621) )
+	ROM_LOAD16_BYTE( "lh532j11.9",  0x100001, 0x40000, CRC(18eda9e5) SHA1(c01d1dc6bfde29797918490947c89440b58d5372) )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
-	ROM_LOAD( "3.144",        0x00000, 0x20000, CRC(ae8f763e) SHA1(255419e02189c2e156c1fbcb0cd4aedd14ed8ffa) )
-	ROM_RELOAD(               0x10000, 0x20000 )
+	ROM_LOAD( "3.144", 0x00000, 0x20000, CRC(ae8f763e) SHA1(255419e02189c2e156c1fbcb0cd4aedd14ed8ffa) )
+	ROM_RELOAD(        0x10000, 0x20000 )
 
 	ROM_REGION( 0x0a0000, REGION_GFX1, ROMREGION_DISPOSE ) /* CHAR Tiles */
-	ROM_LOAD( "lh534j12.77",          0x000000, 0x80000, CRC(b61a8b74) SHA1(e17f7355375bdc166ef8131f7de9dbda5453f570) )
+	ROM_LOAD( "lh534j12.77", 0x000000, 0x80000, CRC(b61a8b74) SHA1(e17f7355375bdc166ef8131f7de9dbda5453f570) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPRITE Tiles */
-	ROM_LOAD( "046.93",          0x000000, 0x40000, CRC(31d96d77) SHA1(5613ef9e9e38406b4e64fc8983ea50b57613923e) )
-	ROM_LOAD( "048.94",          0x040000, 0x40000, CRC(bb4643da) SHA1(38d54f8c3dba09b528df05d748ab5bdf5d028453) )
+	ROM_LOAD( "046.93", 0x000000, 0x40000, CRC(31d96d77) SHA1(5613ef9e9e38406b4e64fc8983ea50b57613923e) )
+	ROM_LOAD( "048.94", 0x040000, 0x40000, CRC(bb4643da) SHA1(38d54f8c3dba09b528df05d748ab5bdf5d028453) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* sound samples */
-	ROM_LOAD( "lh534j11.126",          0x00000, 0x80000, CRC(bf85fb0d) SHA1(358f91bbff2d3260f83b5a0422c0d985d1735cef) )
+	ROM_LOAD( "lh534j11.126", 0x00000, 0x80000, CRC(bf85fb0d) SHA1(358f91bbff2d3260f83b5a0422c0d985d1735cef) )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
-	ROM_LOAD( "lh534j09.123",          0x00000, 0x80000, CRC(6c2ce9a5) SHA1(a4011ecfb505191c9934ba374933cd11b331d55a) )
-	ROM_LOAD( "lh534j10.124",          0x80000, 0x80000, CRC(e3682221) SHA1(3e1cda07cf451955dc473eabe007854e5148ae27) )
+	ROM_LOAD( "lh534j09.123", 0x00000, 0x80000, CRC(6c2ce9a5) SHA1(a4011ecfb505191c9934ba374933cd11b331d55a) )
+	ROM_LOAD( "lh534j10.124", 0x80000, 0x80000, CRC(e3682221) SHA1(3e1cda07cf451955dc473eabe007854e5148ae27) )
+ROM_END
+
+ROM_START( quiz18k )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "1-ic8.bin", 0x000000, 0x20000, CRC(10a64336) SHA1(d63c0752385e1d66b09a7197e267dcd0e5e93be8) )
+	ROM_LOAD16_BYTE( "2-ic7.bin", 0x000001, 0x20000, CRC(8b21b431) SHA1(278238ab4a5d11577c5ab3c7462b429f510a1d50) )
+	/* Space */
+	ROM_LOAD16_BYTE( "ic10.bin", 0x100000, 0x40000, CRC(501453a3) SHA1(d127f417f1c52333e478ac397fbe8a2f223b1ce7) )
+	ROM_LOAD16_BYTE( "ic9.bin",  0x100001, 0x40000, CRC(99b6840f) SHA1(8409a33c64729066bfed6e49dcd84f30906274cb) )
+
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "3-ic144.bin", 0x00000, 0x20000, CRC(72d372e3) SHA1(d077e34947de1050b68d76506cc8926b06a94a76) )
+	ROM_RELOAD(              0x10000, 0x20000 )
+
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE ) /* CHAR Tiles */
+	ROM_LOAD( "ic77.bin", 0x000000, 0x80000, CRC(af3b6fd1) SHA1(d22f7cf62a94ae3a2dcb0236630e9ac88d5e528b) )
+	ROM_LOAD( "ic78.bin", 0x080000, 0x80000, CRC(44bbdef3) SHA1(cd91eaf98602ef3448f49c8287591aa845afb874) )
+	ROM_LOAD( "ic79.bin", 0x100000, 0x80000, CRC(d721e169) SHA1(33ec819c4e7b4dbab41756af9eca857107d96c8b) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPRITE Tiles */
+	ROM_LOAD( "ic93.bin", 0x000000, 0x80000, CRC(4d387c5e) SHA1(e77aea06b9b2dc8ada5618aaf83bb80f63670363) )
+	ROM_LOAD( "ic94.bin", 0x080000, 0x80000, CRC(6be2f164) SHA1(6a3ca63d6238d587a50718d2a6c76f01932c76c3) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* sound samples */
+	ROM_LOAD( "ic126.bin", 0x00000, 0x40000, CRC(7a92fbc9) SHA1(c13be1e84fc8e74c85d25d3357e078bc9e264682) )
+
+	ROM_REGION( 0x140000, REGION_SOUND2, 0 ) /* sound samples */
+	ROM_LOAD( "ic123.bin", 0x00000, 0x80000, CRC(ee4995cf) SHA1(1b47938ddc87709f8d118b86fe62602972c77ced) )
+	ROM_LOAD( "ic124.bin", 0x80000, 0x40000, CRC(076f58c3) SHA1(bd78f39b85b2697e733896705355e21b8d2a141d) )
 ROM_END
 
 
 
 GAMEX( 1991, welltris, 0,        welltris, welltris, welltris, ROT0,   "Video System Co.", "Welltris (Japan, 2 players)", GAME_NO_COCKTAIL )
+GAMEX( 1992, quiz18k,  0,        quiz18k,  quiz18k,  quiz18k,  ROT0,   "EIM", "Miyasu Nonki no Quiz 18-Kin", GAME_NO_COCKTAIL )

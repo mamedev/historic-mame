@@ -112,6 +112,13 @@ MACHINE_INIT( sfx )
 	sfx_sh_init();
 }
 
+MACHINE_INIT( explorer )
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	RAM[0x47ff] = 0; /* If not set, it doesn't reset after the 1st time */
+
+	machine_init_scramble();
+}
 
 WRITE_HANDLER( galaxian_coin_lockout_w )
 {

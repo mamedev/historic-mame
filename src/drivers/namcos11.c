@@ -4,10 +4,18 @@
   =====================================
   Driver by smf & Ryan Holtz
   Board notes by The Guru
-  Thanks to R Belmont, Farfetch & The Zinc Team.
+  Thanks to R Belmont & The Zinc Team.
 
-  Star Sweep is the only game that runs, Unless the clock speed is reduced it runs way too fast.
+  Working games:
+    Star Sweep
+	Dancing Eyes
+	Kosodate Quiz My Angel 3
+
   There is no sound as the Namco C76 (Mitsubishi M37702) & Namco C352 are not emulated.
+
+  Timing issues which might be related to the missing sound cpu:
+    Neither game seems to have working frame limiting, so the clock speed is reduced.
+    Show Time count down in Dancing Eyes is too fast.
 
 Known Dumps
 -----------
@@ -20,11 +28,11 @@ tekkenb    Tekken (TE1/VER.B)                      "                        "   
 tekken2    Tekken 2 Ver.B (TES3/VER.B)             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C408     6
 tekken2a   Tekken 2 Ver.B (TES2/VER.B)             "                        "                       C406     "
 tekken2b   Tekken 2 (TES2/VER.A)                   "                        "                       "        "
-xevi3dg    Xevious 3D/G (XV31/VER.A)               SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
 souledge   Soul Edge Ver. II (SO4/VER.C)           SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C409     6
 souledga   Soul Edge (SO3/VER.A)                   "                        "                       "        "
 souledgb   Soul Edge (SO1/VER.A)                   "                        "                       "        "
 dunkmnia   Dunk Mania (DM1/VER.C)                  SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
+xevi3dg    Xevious 3D/G (XV31/VER.A)               SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
 danceyes   Dancing Eyes (DC1/VER.A)                SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C431     5
 primglex   Prime Goal EX (PG1/VER.A)               SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C441     6
 starswep   Star Sweep (STP1/VER.A)                 SYSTEM11 MOTHER(B) PCB                           C442     -
@@ -119,6 +127,7 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/mips/mips.h"
 #include "includes/psx.h"
 
@@ -137,93 +146,225 @@ static inline void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-static UINT32 m_n_key;
+static data32_t *namcos11_sharedram;
+static data32_t *namcos11_keycus;
+static size_t namcos11_keycus_size;
 
 static WRITE32_HANDLER( keycus_w )
 {
 	verboselog( 1, "keycus_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
-	m_n_key = data;
+	COMBINE_DATA( &namcos11_keycus[ offset ] );
 }
 
-static READ32_HANDLER( keycusc442_r )
+/* dancing eyes */
+static READ32_HANDLER( keycusc431_r )
 {
-	/* star sweep */
+	UINT32 data;
+	UINT16 n_value;
+
+	if( ( namcos11_keycus[ 0 ] & 0x0000ffff ) == 0x00009e61 )
+	{
+		n_value = namcos11_keycus[ 6 ] & 0x0000ffff;
+	}
+	else
+	{
+		n_value = 431;
+	}
+
+	data = namcos11_keycus[ offset ];
 	switch( offset )
 	{
 	case 0:
-		if( m_n_key == 0x00210000 )
-		{
-			verboselog( 1, "keycusc442_r( %08x, %08x ) %08x\n", offset, mem_mask, 0xc4420000 );
-			return 0xc4420000;
-		}
-		verboselog( 0, "keycusc442_r( %08x, %08x ) %08x\n", offset, mem_mask, m_n_key );
-		return 0;
-	default:
-		verboselog( 0, "keycusc442_r( %08x, %08x ) %08x\n", offset, mem_mask, 0 );
-		return 0;
+		data = ( data & 0xffff0000 ) | ( ( ( n_value / 10 ) % 10 ) << 8 ) | ( n_value ) % 10;
+		break;
+	case 2:
+		data = ( data & 0xffff0000 ) | ( ( ( n_value / 1000 ) % 10 ) << 8 ) | ( n_value / 100 ) % 10;
+		break;
+	case 4:
+		data = ( data & 0xffff0000 ) | ( n_value / 10000 ) % 10;
+		break;
 	}
+	verboselog( 1, "keycusc431_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	return data;
 }
 
-static READ32_HANDLER( mcu_r )
+/* star sweep */
+static READ32_HANDLER( keycusc442_r )
 {
-	static UINT16 n_coin1 = 0;
-	static UINT16 n_oldcoin1 = 0;
-	static UINT32 n_coincnt1 = 0;
-	static UINT16 n_coin2 = 0;
-	static UINT16 n_oldcoin2 = 0;
-	static UINT32 n_coincnt2 = 0;
+	UINT32 data;
+
+	data = namcos11_keycus[ offset ];
 
 	switch( offset )
 	{
-	case 0xbd00 / 4:
-		verboselog( 1, "dip / player 1 read\n" );
-		return ( readinputport( 1 ) << 16 ) | readinputport( 0 );
-	case 0xbd04 / 4:
-		verboselog( 1, "player 2 / player 3 read\n" );
-		return ( readinputport( 3 ) << 16 ) | readinputport( 2 );
-	case 0xbd08 / 4:
-		verboselog( 1, "player 4 read\n" );
-		return ( readinputport( 4 ) << 16 );
-	case 0xbd1c / 4:
-		verboselog( 1, "coin counter 1 read\n" );
-		n_coin1 = readinputport( 5 );
-		if( ( n_coin1 & n_oldcoin1 & 0x08 ) != 0 )
+	case 0:
+		if( ( data & 0xffff0000 ) == 0x00210000 )
 		{
-			n_coincnt1 = ( n_coincnt1 & 0xff00ffff ) | ( ( n_coincnt1 + 0x00010000 ) & 0x00ff0000 );
+			data = ( data & 0x0000ffff ) | 0xc4420000;
 		}
-		n_oldcoin1 = ~n_coin1;
-		return n_coincnt1;
-	case 0xbd20 / 4:
-		verboselog( 1, "coin counter 2 read\n" );
-		n_coin2 = readinputport( 5 );
-		if( ( n_coin2 & n_oldcoin2 & 0x04 ) != 0 )
+		break;
+	}
+	verboselog( 1, "keycusc442_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	return data;
+}
+
+/* kosodate quiz my angel 3 */
+static READ32_HANDLER( keycusc443_r )
+{
+	UINT32 data;
+
+	data = namcos11_keycus[ offset ];
+
+	switch( offset )
+	{
+	case 0:
+		/* todo: work out what this really does */
+		if( ( data & 0x0000ffff ) == 0x00000020 )
 		{
-			n_coincnt2 = ( n_coincnt2 & 0xffffff00 ) | ( ( n_coincnt2 + 0x00000001 ) & 0x000000ff );
+			data = ( data & 0xffff0000 ) | 0x00005678;
 		}
-		n_oldcoin2 = ~n_coin2;
-		return n_coincnt2;
-	case 0xbd24 / 4:
-		verboselog( 1, "unknown read 1\n" );
-		return 0xffffffff;
-	case 0xbd30 / 4:
-		verboselog( 1, "unknown read 2\n" );
-//		return 0x00800000; /* ?? */
-		return 0x00000000;
-	default:
-		verboselog( 0, "mcu_r( %08x, %08x )\n", offset, mem_mask );
-		return 0;
+		if( ( data & 0xffff0000 ) == 0xa9870000 )
+		{
+			data = ( data & 0x0000ffff ) | 0x56580000;
+		}
+		if( ( data & 0xffff0000 ) == 0xffff0000 )
+		{
+			data = ( data & 0x0000ffff ) | 0xc4430000;
+		}
+		break;
+	}
+	verboselog( 1, "keycusc443_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	return data;
+}
+
+static WRITE32_HANDLER( sharedram_w )
+{
+	verboselog( 1, "sharedram_w( %08x, %08x, %08x )\n", ( offset * 4 ) + 0x4000, data, mem_mask );
+	COMBINE_DATA( &namcos11_sharedram[ offset ] );
+}
+
+static READ32_HANDLER( sharedram_r )
+{
+	verboselog( 1, "sharedram_r( %08x, %08x ) %08x\n", ( offset * 4 ) + 0x4000, mem_mask, namcos11_sharedram[ offset ] );
+	return namcos11_sharedram[ offset ];
+}
+
+#define SHRAM( x ) namcos11_sharedram[ ( x - 0x4000 ) / 4 ]
+
+static INTERRUPT_GEN( namcos11_vblank )
+{
+	UINT16 n_coin;
+	static UINT16 n_oldcoin = 0;
+
+	n_coin = readinputport( 5 );
+
+	SHRAM( 0xbd00 ) = readinputport( 0 ) | ( readinputport( 1 ) << 16 );
+	SHRAM( 0xbd04 ) = readinputport( 2 ) | ( readinputport( 3 ) << 16 );
+	SHRAM( 0xbd08 ) = readinputport( 4 );
+	if( ( n_coin & n_oldcoin & 0x08 ) != 0 )
+	{
+		SHRAM( 0xbd1c ) = ( SHRAM( 0xbd1c ) & 0x0000ffff ) | ( ( SHRAM( 0xbd1c ) + 0x00010000 ) & 0xffff0000 );
+	}
+	if( ( n_coin & n_oldcoin & 0x04 ) != 0 )
+	{
+		SHRAM( 0xbd20 ) = ( SHRAM( 0xbd20 ) & 0xffff0000 ) | ( ( SHRAM( 0xbd20 ) + 0x00000001 ) & 0x0000ffff );
+	}
+	if( ( n_coin & n_oldcoin & 0x02 ) != 0 )
+	{
+		SHRAM( 0xbd20 ) = ( SHRAM( 0xbd20 ) & 0x0000ffff ) | ( ( SHRAM( 0xbd20 ) + 0x00010000 ) & 0xffff0000 );
+	}
+	if( ( n_coin & n_oldcoin & 0x01 ) != 0 )
+	{
+		SHRAM( 0xbd24 ) = ( SHRAM( 0xbd24 ) & 0xffff0000 ) | ( ( SHRAM( 0xbd24 ) + 0x00000001 ) & 0x0000ffff );
+	}
+	n_oldcoin = ~n_coin;
+
+	psx_vblank();
+}
+
+static UINT32 m_n_bankoffset;
+static UINT32 m_p_n_bankoffset[ 8 ];
+
+INLINE void bankswitch_update( int n_bank )
+{
+	verboselog( 1, "bankswitch_update( %d ) = %08x\n", n_bank, m_p_n_bankoffset[ n_bank ] );
+	cpu_setbank( 6 + n_bank, memory_region( REGION_USER3 ) + m_p_n_bankoffset[ n_bank ] );
+}
+
+static void bankswitch_update_all( void )
+{
+	int n_bank;
+
+	for( n_bank = 0; n_bank < 8; n_bank++ )
+	{
+		bankswitch_update( n_bank );
+	}
+}
+
+INLINE void bankswitch_rom8( int n_bank, int n_data )
+{
+	m_p_n_bankoffset[ n_bank ] = ( ( ( n_data & 0xc0 ) >> 4 ) + ( n_data & 0x03 ) ) * 1024 * 1024;
+	bankswitch_update( n_bank );
+}
+
+static WRITE32_HANDLER( bankswitch_rom8_w )
+{
+	verboselog( 2, "bankswitch_rom8_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+
+	if( ACCESSING_LSW32 )
+	{
+		bankswitch_rom8( ( offset * 2 ), data & 0xffff );
+	}
+	if( ACCESSING_MSW32 )
+	{
+		bankswitch_rom8( ( offset * 2 ) + 1, data >> 16 );
+	}
+}
+
+static WRITE32_HANDLER( bankswitch_rom64_upper_w )
+{
+	verboselog( 2, "bankswitch_rom64_upper_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+
+	if( ACCESSING_LSW32 )
+	{
+		m_n_bankoffset = 0;
+	}
+	if( ACCESSING_MSW32 )
+	{
+		m_n_bankoffset = 16;
+	}
+}
+
+INLINE void bankswitch_rom64( int n_bank, int n_data )
+{
+	/* todo: work out what this really does */
+	m_p_n_bankoffset[ n_bank ] = ( ( ( ( n_data & 0xc0 ) >> 3 ) + ( n_data & 0x07 ) ) ^ m_n_bankoffset ) * 1024 * 1024;
+	bankswitch_update( n_bank );
+}
+
+static WRITE32_HANDLER( bankswitch_rom64_w )
+{
+	verboselog( 2, "bankswitch_rom64_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+
+	if( ACCESSING_LSW32 )
+	{
+		bankswitch_rom64( ( offset * 2 ), data & 0xffff );
+	}
+	if( ACCESSING_MSW32 )
+	{
+		bankswitch_rom64( ( offset * 2 ) + 1, data >> 16 );
 	}
 }
 
 static MEMORY_WRITE32_START( namcos11_writemem )
 	{ 0x00000000, 0x003fffff, MWA32_RAM },		/* ram */
-	{ 0x1f000000, 0x1f7fffff, MWA32_ROM },
 	{ 0x1f800000, 0x1f8003ff, MWA32_BANK5 },	/* scratchpad */
-	{ 0x1f801070, 0x1f801077, psxirq_w },
-	{ 0x1f801080, 0x1f8010ff, psxdma_w },
-	{ 0x1f801114, 0x1f801117, psxcounter_w },
-	{ 0x1f801810, 0x1f801817, psxgpu_w },
+	{ 0x1f801070, 0x1f801077, psx_irq_w },
+	{ 0x1f801080, 0x1f8010ff, psx_dma_w },
+	{ 0x1f801810, 0x1f801817, psx_gpu_w },
 	{ 0x1f802020, 0x1f80202f, MWA32_RAM },
+	{ 0x1fa04000, 0x1fa0ffff, sharedram_w, &namcos11_sharedram },
+	{ 0x1fa20000, 0x1fa2ffff, keycus_w, &namcos11_keycus, &namcos11_keycus_size },
 	{ 0x1fa30000, 0x1fa3ffff, MWA32_RAM, (data32_t **)&generic_nvram, &generic_nvram_size },  /* flash */
 	{ 0x1fc00000, 0x1fffffff, MWA32_ROM },		/* bios */
 	{ 0x80000000, 0x803fffff, MWA32_BANK2 },	/* ram mirror */
@@ -233,7 +374,7 @@ MEMORY_END
 
 static MEMORY_READ32_START( namcos11_readmem )
 	{ 0x00000000, 0x003fffff, MRA32_RAM },	/* ram */
-	{ 0x1f000000, 0x1f0fffff, MRA32_BANK6 },
+	{ 0x1f000000, 0x1f0fffff, MRA32_BANK6 },	/* banked roms */
 	{ 0x1f100000, 0x1f1fffff, MRA32_BANK7 },
 	{ 0x1f200000, 0x1f2fffff, MRA32_BANK8 },
 	{ 0x1f300000, 0x1f3fffff, MRA32_BANK9 },
@@ -242,12 +383,12 @@ static MEMORY_READ32_START( namcos11_readmem )
 	{ 0x1f600000, 0x1f6fffff, MRA32_BANK12 },
 	{ 0x1f700000, 0x1f7fffff, MRA32_BANK13 },
 	{ 0x1f800000, 0x1f8003ff, MRA32_BANK5 },	/* scratchpad */
-	{ 0x1f801070, 0x1f801077, psxirq_r },
-	{ 0x1f801080, 0x1f8010ff, psxdma_r },
-	{ 0x1f801110, 0x1f801113, psxcounter_r },
-	{ 0x1f801810, 0x1f801817, psxgpu_r },
+	{ 0x1f801070, 0x1f801077, psx_irq_r },
+	{ 0x1f801080, 0x1f8010ff, psx_dma_r },
+	{ 0x1f801110, 0x1f801113, psx_counter_r },
+	{ 0x1f801810, 0x1f801817, psx_gpu_r },
 	{ 0x1f802020, 0x1f80202f, MRA32_RAM },
-	{ 0x1fa00000, 0x1fa0ffff, mcu_r },
+	{ 0x1fa04000, 0x1fa0ffff, sharedram_r },
 	{ 0x1fa30000, 0x1fa3ffff, MRA32_RAM },		/* flash */
 	{ 0x1fc00000, 0x1fffffff, MRA32_BANK1 },	/* bios */
 	{ 0x80000000, 0x803fffff, MRA32_BANK2 },	/* ram mirror */
@@ -255,47 +396,106 @@ static MEMORY_READ32_START( namcos11_readmem )
 	{ 0xbfc00000, 0xbfffffff, MRA32_BANK4 },	/* bios */
 MEMORY_END
 
+static struct
+{
+	const char *s_name;
+	mem_read32_handler keycus_r;
+	int n_daughterboard;
+} namcos11_config_table[] =
+{
+	{ "danceyes", keycusc431_r, 8 },
+	{ "starswep", keycusc442_r, 0 },
+	{ "myangel3", keycusc443_r, 64 },
+	{ NULL, NULL }
+};
+
 static DRIVER_INIT( namcos11 )
 {
+	int n_game;
+
 	cpu_setbank( 1, memory_region( REGION_USER2 ) );
 	cpu_setbank( 2, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 4, memory_region( REGION_USER2 ) );
 	cpu_setbank( 5, memory_region( REGION_USER1 ) );
-	cpu_setbank( 6, memory_region( REGION_USER3 ) );
 
-	/* patch out mcu check */
+	/* patch out sound cpu check */
 	*( (UINT32 *)( memory_region( REGION_USER2 ) + 0x20094 ) ) = 0x00000000;
 
-	if( strcmp( Machine->gamedrv->name, "starswep" ) == 0 )
+	n_game = 0;
+	while( namcos11_config_table[ n_game ].s_name != NULL )
 	{
-		install_mem_read32_handler( 0, 0x1fa20000, 0x1fa2ffff, keycusc442_r );
-		install_mem_write32_handler( 0, 0x1fa20000, 0x1fa2ffff, keycus_w );
+		if( strcmp( Machine->gamedrv->name, namcos11_config_table[ n_game ].s_name ) == 0 )
+		{
+			if( namcos11_config_table[ n_game ].keycus_r != NULL )
+			{
+				install_mem_read32_handler( 0, 0x1fa20000, 0x1fa2ffff, namcos11_config_table[ n_game ].keycus_r );
+			}
+			if( namcos11_config_table[ n_game ].n_daughterboard != 0 )
+			{
+				int n_bank;
+
+				m_n_bankoffset = 0;
+				for( n_bank = 0; n_bank < 8; n_bank++ )
+				{
+					m_p_n_bankoffset[ n_bank ] = 0;
+				}
+				bankswitch_update_all();
+
+				if( namcos11_config_table[ n_game ].n_daughterboard == 8 )
+				{
+					install_mem_write32_handler( 0, 0x1fa10020, 0x1fa1002f, bankswitch_rom8_w );
+				}
+				if( namcos11_config_table[ n_game ].n_daughterboard == 64 )
+				{
+					install_mem_write32_handler( 0, 0x1f080000, 0x1f080003, bankswitch_rom64_upper_w );
+					install_mem_write32_handler( 0, 0x1fa10020, 0x1fa1002f, bankswitch_rom64_w );
+				}
+				state_save_register_UINT32( "namcos11", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
+				state_save_register_UINT32( "namcos11", 0, "m_p_n_bankoffset", &m_p_n_bankoffset[ 0 ], 8 );
+				state_save_register_func_postload( bankswitch_update_all );
+			}
+			break;
+		}
+		n_game++;
 	}
+
+	init_psx();
+}
+
+MACHINE_INIT( namcos11 )
+{
+	memset( namcos11_keycus, 0, namcos11_keycus_size );
+	machine_init_psx();
 }
 
 static MACHINE_DRIVER_START( namcos11 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33868800/2) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(namcos11_readmem,namcos11_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(namcos11_vblank,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(psx)
+	MDRV_MACHINE_INIT(namcos11)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+#if defined( MAME_DEBUG )
+	MDRV_SCREEN_SIZE(1024, 1024)
+	MDRV_VISIBLE_AREA(0, 1023, 0, 1023)
+#else
 	MDRV_SCREEN_SIZE(640, 480)
 	MDRV_VISIBLE_AREA(0, 639, 0, 479)
+#endif
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x1024)
-	MDRV_VIDEO_UPDATE(psxgpu)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x1024)
+	MDRV_VIDEO_UPDATE(psx)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -304,14 +504,15 @@ MACHINE_DRIVER_END
 INPUT_PORTS_START( namcos11 )
 	/* IN 0 */
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
 	/* IN 1 */
 	PORT_START
@@ -364,6 +565,72 @@ INPUT_PORTS_START( namcos11 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN4 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( myangel3 )
+	/* IN 0 */
+	PORT_START
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+
+	/* IN 1 */
+	PORT_START
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+
+	/* IN 2 */
+	PORT_START
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER2 )
+
+	/* IN 3 */
+	PORT_START
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	/* IN 4 */
+	PORT_START
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	/* IN 5 */
+	PORT_START
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -567,7 +834,7 @@ ROM_START( tekken )
 	ROM_LOAD16_BYTE( "te1verb.2k",   0x0200000, 0x100000, CRC(b9860b29) SHA1(678889fc5c70bf66f0bd9864a20636ffb620ed0d) )
 	ROM_LOAD16_BYTE( "te1verb.2f",   0x0200001, 0x100000, CRC(3dc01aad) SHA1(266f346fa575c42b635bc469798f5aade9821e20) )
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "te1rm0l.5",    0x0000000, 0x200000, CRC(03786e09) SHA1(de2b9e19ace43c424d100dc5d3207217f66d6479) )
 	ROM_LOAD16_BYTE( "te1rm0u.6",    0x0000001, 0x200000, CRC(75d91051) SHA1(1c7958162315576c3881dcc684b85710f7f19cd6) )
 	ROM_LOAD16_BYTE( "te1rm1l.3",    0x0400000, 0x200000, CRC(81416f8e) SHA1(b42ff08ee84491c57a7c87bb767db7e2ec7a26c2) )
@@ -592,7 +859,7 @@ ROM_START( tekkena )
 	ROM_LOAD16_BYTE( "te1verb.2k",   0x0200000, 0x100000, CRC(b9860b29) SHA1(678889fc5c70bf66f0bd9864a20636ffb620ed0d) )
 	ROM_LOAD16_BYTE( "te1verb.2f",   0x0200001, 0x100000, CRC(3dc01aad) SHA1(266f346fa575c42b635bc469798f5aade9821e20) )
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "te1rm0l.5",    0x0000000, 0x200000, CRC(03786e09) SHA1(de2b9e19ace43c424d100dc5d3207217f66d6479) )
 	ROM_LOAD16_BYTE( "te1rm0u.6",    0x0000001, 0x200000, CRC(75d91051) SHA1(1c7958162315576c3881dcc684b85710f7f19cd6) )
 	ROM_LOAD16_BYTE( "te1rm1l.3",    0x0400000, 0x200000, CRC(81416f8e) SHA1(b42ff08ee84491c57a7c87bb767db7e2ec7a26c2) )
@@ -617,7 +884,7 @@ ROM_START( tekkenb )
 	ROM_LOAD16_BYTE( "te1verb.2k",   0x0200000, 0x100000, CRC(b9860b29) SHA1(678889fc5c70bf66f0bd9864a20636ffb620ed0d) )
 	ROM_LOAD16_BYTE( "te1verb.2f",   0x0200001, 0x100000, CRC(3dc01aad) SHA1(266f346fa575c42b635bc469798f5aade9821e20) )
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "te1rm0l.5",    0x0000000, 0x200000, CRC(03786e09) SHA1(de2b9e19ace43c424d100dc5d3207217f66d6479) )
 	ROM_LOAD16_BYTE( "te1rm0u.6",    0x0000001, 0x200000, CRC(75d91051) SHA1(1c7958162315576c3881dcc684b85710f7f19cd6) )
 	ROM_LOAD16_BYTE( "te1rm1l.3",    0x0400000, 0x200000, CRC(81416f8e) SHA1(b42ff08ee84491c57a7c87bb767db7e2ec7a26c2) )
@@ -723,7 +990,7 @@ ROM_START( xevi3dg )
 	ROM_LOAD16_BYTE( "xv31vera.2k",  0x0200000, 0x100000, CRC(3d58138e) SHA1(9203d6bdc2d968de818d5f465523cc030217dcf8) )
 	ROM_LOAD16_BYTE( "xv31vera.2f",  0x0200001, 0x100000, CRC(9e8780a2) SHA1(83148d55456b2b92969f7ac2bdb2d492bf969895) )
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER3, 0 ) /* main data */
+	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "xv31rm0l.5",   0x0000000, 0x200000, CRC(24e1e262) SHA1(84df49b22a8a36284da771944a8390672a0c32bf) )
 	ROM_LOAD16_BYTE( "xv31rm0u.6",   0x0000001, 0x200000, CRC(cae38ef3) SHA1(2dfe0b31969091975e8d8c8188ce7dd007e4a0f3) )
 	ROM_LOAD16_BYTE( "xv31rm1l.3",   0x0400000, 0x200000, CRC(46b4cb72) SHA1(c3360c4fdb71ffcbccec3f4ad8d7963b08822e26) )
@@ -744,12 +1011,12 @@ GAMEX( 1994, tekkenb,	tekken,   namcos11, namcos11, namcos11, ROT0, "Namco", "Te
 GAMEX( 1995, tekken2,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES3/VER.B)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, tekken2a,	tekken2,  namcos11, namcos11, namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, tekken2b,	tekken2,  namcos11, namcos11, namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, xevi3dg,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, souledge,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, souledga,	souledge, namcos11, namcos11, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, souledgb,	souledge, namcos11, namcos11, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, dunkmnia,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1996, danceyes,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, xevi3dg,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, danceyes,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
 GAMEX( 1996, primglex,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1997, starswep,	0,        namcos11, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, myangel3,	0,        namcos11, namcos11, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, myangel3,	0,        namcos11, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

@@ -10,6 +10,7 @@ Pollux         Z80     Z80 2xYM2203
 Blue Hawk      Z80     Z80 YM2151 OKI6295
 Sadari         Z80     Z80 YM2151 OKI6295
 Gun Dealer '94 Z80     Z80 YM2151 OKI6295
+Super-X        68000   Z80 YM2151 OKI6295
 R-Shark        68000   Z80 YM2151 OKI6295
 
 These games all run on different but similar hardware. A common thing that they
@@ -179,28 +180,58 @@ static MEMORY_WRITE_START( primella_writemem )
 MEMORY_END
 
 static MEMORY_READ16_START( rshark_readmem )
+	MEMORY_ADDRESS_BITS(20) /* super-x needs this and is similar */
 	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x340000, 0x34cfff, MRA16_RAM },
-	{ 0x34d000, 0x34dfff, MRA16_RAM },
-	{ 0x34e000, 0x34ffff, MRA16_RAM },
-	{ 0x3c0002, 0x3c0003, input_port_0_word_r },
-	{ 0x3c0004, 0x3c0005, input_port_1_word_r },
-	{ 0x3c0006, 0x3c0007, input_port_2_word_r },
+	{ 0x040000, 0x04cfff, MRA16_RAM },
+	{ 0x04d000, 0x04dfff, MRA16_RAM },
+	{ 0x04e000, 0x04ffff, MRA16_RAM },
+	{ 0x0c0002, 0x0c0003, input_port_0_word_r },
+	{ 0x0c0004, 0x0c0005, input_port_1_word_r },
+	{ 0x0c0006, 0x0c0007, input_port_2_word_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( rshark_writemem )
+	MEMORY_ADDRESS_BITS(20) /* super-x needs this and is similar */
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x340000, 0x34cfff, MWA16_RAM },
-	{ 0x34d000, 0x34dfff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x34e000, 0x34ffff, MWA16_RAM },
-	{ 0x3c4000, 0x3c4009, MWA16_RAM, &rshark_scroll4 },
-	{ 0x3c4010, 0x3c4019, MWA16_RAM, &rshark_scroll3 },
-	{ 0x3c8000, 0x3c8fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
-	{ 0x3c0012, 0x3c0013, soundlatch_word_w },
-	{ 0x3c0014, 0x3c0015, rshark_ctrl_w },	/* flip screen + unknown stuff */
-	{ 0x3cc000, 0x3cc009, MWA16_RAM, &rshark_scroll2 },
-	{ 0x3cc010, 0x3cc019, MWA16_RAM, &rshark_scroll1 },
+	{ 0x040000, 0x04cfff, MWA16_RAM },
+	{ 0x04d000, 0x04dfff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x04e000, 0x04ffff, MWA16_RAM },
+	{ 0x0c4000, 0x0c4009, MWA16_RAM, &rshark_scroll4 },
+	{ 0x0c4010, 0x0c4019, MWA16_RAM, &rshark_scroll3 },
+	{ 0x0c8000, 0x0c8fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x0c0012, 0x0c0013, soundlatch_word_w },
+	{ 0x0c0014, 0x0c0015, rshark_ctrl_w },	/* flip screen + unknown stuff */
+	{ 0x0cc000, 0x0cc009, MWA16_RAM, &rshark_scroll2 },
+	{ 0x0cc010, 0x0cc019, MWA16_RAM, &rshark_scroll1 },
 MEMORY_END
+
+static MEMORY_READ16_START( superx_readmem )
+	MEMORY_ADDRESS_BITS(20)
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x0d0000, 0x0dcfff, MRA16_RAM },
+	{ 0x0dd000, 0x0ddfff, MRA16_RAM },
+	{ 0x0de000, 0x0dffff, MRA16_RAM },
+	{ 0x080002, 0x080003, input_port_0_word_r },
+	{ 0x080004, 0x080005, input_port_1_word_r },
+	{ 0x080006, 0x080007, input_port_2_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( superx_writemem )
+	MEMORY_ADDRESS_BITS(20)
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x0d0000, 0x0dcfff, MWA16_RAM },
+	{ 0x0dd000, 0x0ddfff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0de000, 0x0dffff, MWA16_RAM },
+	{ 0x084000, 0x084009, MWA16_RAM, &rshark_scroll4 },
+	{ 0x084010, 0x084019, MWA16_RAM, &rshark_scroll3 },
+	{ 0x088000, 0x088fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x080012, 0x080013, soundlatch_word_w },
+	{ 0x080014, 0x080015, rshark_ctrl_w },	/* flip screen + unknown stuff */
+	{ 0x08c000, 0x08c009, MWA16_RAM, &rshark_scroll2 },
+	{ 0x08c010, 0x08c019, MWA16_RAM, &rshark_scroll1 },
+MEMORY_END
+
+
 
 static MEMORY_READ_START( lastday_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -878,7 +909,7 @@ static struct YM2151interface bluehawk_ym2151_interface =
 static struct YM2151interface primella_ym2151_interface =
 {
 	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
+	4000000,	/* measured on super-x */
 	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
 	{ irqhandler },
 	{ 0 }
@@ -887,7 +918,7 @@ static struct YM2151interface primella_ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency? */
+	{ 1000000/132 },           /* measured on super-x */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 60 }
 };
@@ -1047,12 +1078,12 @@ static INTERRUPT_GEN( rshark_interrupt )
 static MACHINE_DRIVER_START( rshark )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)	/* ??? */
+	MDRV_CPU_ADD(M68000, 8000000)	/* measured on super-x */
 	MDRV_CPU_MEMORY(rshark_readmem,rshark_writemem)
 	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
 	MDRV_CPU_MEMORY(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1073,7 +1104,34 @@ static MACHINE_DRIVER_START( rshark )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( superx ) // dif mem map
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* measured on super-x */
+	MDRV_CPU_MEMORY(superx_readmem,superx_writemem)
+	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
+	MDRV_CPU_MEMORY(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(rshark_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_EOF(rshark)
+	MDRV_VIDEO_UPDATE(rshark)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 ROM_START( lastday )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
@@ -1430,6 +1488,137 @@ ROM_START( primella )
 	ROM_LOAD( "gd94_008.r9",  0x00000, 0x20000, CRC(f92e5803) SHA1(69dd11469e9e6bdc7825a5a14994276b50c10a14) )	/* 6_r9 */
 ROM_END
 
+/*
+
+Super X
+NTC, 1994
+
+This game runs on Dooyong hardware.
+
+PCB Layout
+----------
+
+|-------------------------------------------------|
+|     YM3012  Z80            4.7V   62256  62256  |
+|     YM2151  1.5U  M6295    5.7U   62256  62256  |
+|             6116                                |
+|      PAL         -----------      62256  62256  |
+|                  |DY208    |      62256  62256  |
+|J   DSW1          |DY-OBJ-01|                    |
+|A                 -----------                    |
+|M       2.3M  62256                 SPXO-M05.10M |
+|M       3.3L  62256    6116                      |
+|A                      6116                      |
+|       68000  --------- SPXB-M03.8J SPXB-MS4.10J |
+|   DSW2       |DY160  |                          |
+|              |DY-PL-1| SPXB-M04.8F SPXB-MS3.10F |
+|              ---------                          |
+|    PAL  PAL                                     |
+|              --------- SPXB-M01.8C SPXB-MS1.10C |
+|     6116     |DY160  |                          |
+|8MHz 6116     |DY-PL-1| SPXB-M02.8A SPXB-MS2.10A |
+|-------------------------------------------------|
+
+Notes:
+      68000 clock: 8.000MHz
+        Z80 clock: 4.000MHz
+     YM2151 clock: 4.000MHz
+      M6295 clock: 1.000MHz, sample rate = /132
+            VSync: 60Hz
+            HSync: 15.68kHz
+
+ROMs:
+     Filename     Type              Use
+     --------------------------------------------
+           1.5U   27C512            Sound program
+
+           2.3M   27C1000         \ Main Program
+           3.3L   27C1000         /
+
+           4.7V   27C1000         \ M6295 samples
+           5.5U   27C1000         /
+
+     SPXO-M05.10M 16M MASK 42 pin \
+     SPXB-M01.8C   8M MASK 42 pin |
+     SPXB-M02.8A         "        | Gfx + Tilemaps
+     SPXB-M03.8J         "        |
+     SPXB-M04.8F         "        /
+     SPXB-MS1.10C  1M MASK 28 pin \
+     SPXB-MS2.10A        "        | Gfx (All have fixed bits, this is correct, they contain the upper 4 bits)
+     SPXB-MS3.10F        "        |     (of the tilemap data)
+     SPXB-MS4.10J        "        /
+
+*/
+
+ROM_START( superx )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD16_BYTE( "2.3m",   0x00000, 0x20000, CRC(be7aebe7) SHA1(81934d861a15a96cf23721ad38f821e1f94ec980) )
+	ROM_LOAD16_BYTE( "3.3l",   0x00001, 0x20000, CRC(dc4a25fc) SHA1(660bf33a9ae7534c37353f9690af180268ce7f30) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "1.5u",     0x0000, 0x10000, CRC(6894ce05) SHA1(9726fc3f1e9bebecf498c208ab03007f34936632) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprite */
+	ROM_LOAD16_WORD_SWAP( "spxo-m05.10m",    0x00000, 0x200000, CRC(9120dd84) SHA1(bcf1fdc860d51b9bcfec1e84940ef21dfc41b5dc) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m04.8f",    0x00000, 0x100000, CRC(91a7ac6e) SHA1(b7fb79c2e4f5eecb7128b86ee2b1070eed905d2a) ) // bomb
+
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m03.8j",    0x00000, 0x100000, CRC(8b42861b) SHA1(6eb1f6bfe0b8e987e624a6fe7e025c6918804cf9) ) // title logo
+
+	ROM_REGION( 0x100000, REGION_GFX4, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m02.8a",    0x00000, 0x100000, CRC(21b8db78) SHA1(e7c51c9566ebce5b5db5af48f33e2194b518715f)) // title screen upper background
+
+	ROM_REGION( 0x100000, REGION_GFX5, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m01.8c",    0x00000, 0x100000, CRC(60c69129) SHA1(6871b08e354c7cf5fb16b0ed4562c537e2ce9194) ) // title screen lower background
+
+	ROM_REGION( 0x80000, REGION_GFX6, 0 )	/* top 4 bits of tilemaps */
+	ROM_LOAD( "spxb-ms3.10f",    0x00000, 0x20000, CRC(8bf8c77d) SHA1(a89e50bd571e754cb56a17fe4ada6a804e74520b)) // bomb
+	ROM_LOAD( "spxb-ms4.10j",    0x20000, 0x20000, CRC(d418a900) SHA1(0d69afa48d3072c7fecfc5d6dd63717b9f61c0fc) ) // title logo
+	ROM_LOAD( "spxb-ms2.10a",    0x40000, 0x20000, CRC(5ec87adf) SHA1(cdd0864ea23b2c6d8ace519fc66e77f59813e206) ) // title screen upper background
+	ROM_LOAD( "spxb-ms1.10c",    0x60000, 0x20000, CRC(40b4fe6c) SHA1(5ab63ce83522c32039ee33c59e713d2fb37aac44) ) // title screen lower background
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "4.7v",     0x00000, 0x20000, CRC(434290b5) SHA1(3f2fb5aed1f109add17f00fe3a2364eedc7172ae) )
+	ROM_LOAD( "5.7u",     0x20000, 0x20000, CRC(ebe6abb4) SHA1(801b22845603f86c7bab77baa6946afc613aebdb) )
+ROM_END
+
+/* this set only had 68k roms, sound program, and samples */
+ROM_START( superxm )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD16_BYTE( "2_m.3m",   0x00000, 0x20000, CRC(41c50aac) SHA1(75f6470bde217e4b9139d8af97a17ca22c374944) )
+	ROM_LOAD16_BYTE( "3_m.3l",   0x00001, 0x20000, CRC(6738b703) SHA1(e37f5f76b1efbd2f5098014ca380d4340204e487) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "1_m.5u",     0x0000, 0x10000,  CRC(319fa632) SHA1(b621ad080e8cf6611fc88d8fc2af5aa4e31e9e01) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprite */
+	ROM_LOAD16_WORD_SWAP( "spxo-m05.10m",    0x00000, 0x200000, CRC(9120dd84) SHA1(bcf1fdc860d51b9bcfec1e84940ef21dfc41b5dc) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m04.8f",    0x00000, 0x100000, CRC(91a7ac6e) SHA1(b7fb79c2e4f5eecb7128b86ee2b1070eed905d2a) ) // bomb
+
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m03.8j",    0x00000, 0x100000, CRC(8b42861b) SHA1(6eb1f6bfe0b8e987e624a6fe7e025c6918804cf9) ) // title logo
+
+	ROM_REGION( 0x100000, REGION_GFX4, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m02.8a",    0x00000, 0x100000, CRC(21b8db78) SHA1(e7c51c9566ebce5b5db5af48f33e2194b518715f)) // title screen upper background
+
+	ROM_REGION( 0x100000, REGION_GFX5, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "spxb-m01.8c",    0x00000, 0x100000, CRC(60c69129) SHA1(6871b08e354c7cf5fb16b0ed4562c537e2ce9194) ) // title screen lower background
+
+	ROM_REGION( 0x80000, REGION_GFX6, 0 )	/* top 4 bits of tilemaps */
+	ROM_LOAD( "spxb-ms3.10f",    0x00000, 0x20000, CRC(8bf8c77d) SHA1(a89e50bd571e754cb56a17fe4ada6a804e74520b)) // bomb
+	ROM_LOAD( "spxb-ms4.10j",    0x20000, 0x20000, CRC(d418a900) SHA1(0d69afa48d3072c7fecfc5d6dd63717b9f61c0fc) ) // title logo
+	ROM_LOAD( "spxb-ms2.10a",    0x40000, 0x20000, CRC(5ec87adf) SHA1(cdd0864ea23b2c6d8ace519fc66e77f59813e206) ) // title screen upper background
+	ROM_LOAD( "spxb-ms1.10c",    0x60000, 0x20000, CRC(40b4fe6c) SHA1(5ab63ce83522c32039ee33c59e713d2fb37aac44) ) // title screen lower background
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "4.7v",     0x00000, 0x20000, CRC(434290b5) SHA1(3f2fb5aed1f109add17f00fe3a2364eedc7172ae) )
+	ROM_LOAD( "5.7u",     0x20000, 0x20000, CRC(ebe6abb4) SHA1(801b22845603f86c7bab77baa6946afc613aebdb) )
+ROM_END
+
 ROM_START( rshark )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD16_BYTE( "rspl00.bin",   0x00000, 0x20000, CRC(40356b9d) SHA1(28749a0d4c1ac8e094c551594033d47061071d8b) )
@@ -1486,4 +1675,6 @@ GAMEX(1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC l
 GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )
 GAME( 1994, gundl94,  0,        primella, primella, 0, ROT0,   "Dooyong", "Gun Dealer '94" )
 GAME( 1994, primella, gundl94,  primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella" )
+GAME (1994, superx,   0,        superx,   rshark,   0, ROT270, "NTC", "Super-X (NTC)" )
+GAME (1994, superxm,  superx,   superx,   rshark,   0, ROT270, "Mitchell", "Super-X (Mitchell)" )
 GAMEX(1995, rshark,   0,        rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark", GAME_IMPERFECT_GRAPHICS )

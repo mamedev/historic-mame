@@ -1632,34 +1632,6 @@ ROM_START( csclubh )
 	ROM_LOAD16_WORD_SWAP( "csc.12",   0x200000, 0x200000, CRC(cb7f6e55) SHA1(b64e6b663fd09e887d2dc0f4b545e88688c0af55) ) /* roms 55 to 58 joined in all eprom version */
 ROM_END
 
-ROM_START( choko )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "tkoj.03", 0x000000, 0x80000, CRC(11f5452f) )
-	ROM_LOAD16_WORD_SWAP( "tkoj.04", 0x080000, 0x80000, CRC(68655378) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "tkojx.03", 0x000000, 0x80000, NO_DUMP )
-//	ROM_LOAD16_WORD_SWAP( "tkojx.04", 0x080000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-//	ROMX_LOAD( "tko-sim.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "tko-sim.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-
-	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "tko.01",   0x00000, 0x08000, CRC(6eda50c2) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-//	ROM_LOAD16_WORD_SWAP( "tko-sim.05a",   0x000000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "tko-sim.05b",   0x200000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-ROM_END
-
 ROM_START( cybots )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "cybu.03", 0x000000, 0x80000, CRC(db4da8f4) SHA1(de9f3f261003f4f70ae32114a15e498387c23f6d) )
@@ -3648,66 +3620,6 @@ ROM_START( vhuntjr1 )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD16_WORD_SWAP( "vph.11",   0x000000, 0x200000, CRC(e1837d33) SHA1(e3cb69f64767bacbec7286d0b4cd0ce7a0ba13d8) )
 	ROM_LOAD16_WORD_SWAP( "vph.12",   0x200000, 0x200000, CRC(fbd3cd90) SHA1(4813c25802ad71b77ca04fd8f3a86344f99f0d6a) )
-ROM_END
-
-ROM_START( progearj )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "pgaj.03", 0x000000, 0x80000, CRC(06dbba54) )
-	ROM_LOAD16_WORD_SWAP( "pgaj.04", 0x080000, 0x80000, CRC(a1f1f1bc) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "pgajx.03", 0x000000, 0x80000, NO_DUMP )
-//	ROM_LOAD16_WORD_SWAP( "pgajx.04", 0x080000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-//	ROMX_LOAD( "pga-sim.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pga-sim.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-
-	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "pga.01",   0x00000, 0x08000, CRC(bdbfa992) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* QSound samples */
-//	ROM_LOAD16_WORD_SWAP( "pga-sim.05a",   0x000000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "pga-sim.05b",   0x200000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "pga-sim.06a",   0x400000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "pga-sim.06b",   0x600000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-ROM_END
-
-ROM_START( puzloop2 )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "pl2j.03a", 0x000000, 0x80000, CRC(0a751bd0) )
-	ROM_LOAD16_WORD_SWAP( "pl2j.04a", 0x080000, 0x80000, CRC(c3f72afe) )
-	ROM_LOAD16_WORD_SWAP( "pl2j.05a", 0x100000, 0x80000, CRC(6ea9dbfc) )
-	ROM_LOAD16_WORD_SWAP( "pl2j.06a", 0x180000, 0x80000, CRC(0f14848d) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "pl2jx.03a", 0x000000, 0x80000, NO_DUMP )
-//	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-//	ROMX_LOAD( "pl2-sim.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "pl2-sim.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-
-	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "pl2.01",   0x00000, 0x08000, CRC(35697569) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD16_WORD_SWAP( "pl2-sim.05a",   0x000000, 0x200000, CRC(85d8fbe8) ) // ROM on a simm
-	ROM_LOAD16_WORD_SWAP( "pl2-sim.05b",   0x200000, 0x200000, CRC(1ed62584) ) // ROM on a simm
 ROM_END
 
 ROM_START( qndream )
@@ -6340,8 +6252,6 @@ GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported b
 /* Games released on CPS-2 hardware by Mitchell */
 
 GAME( 2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Mighty! Pang (Japan 001011)" )
-GAMEX(2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_NOT_WORKING )
-GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Eighting/Raizing */
 
@@ -6349,7 +6259,3 @@ GAME( 2000, dimahoo,  0,       cps2, sgemf,   cps2, ROT270, "Eighting/Raizing, d
 GAME( 2000, gmahou,   dimahoo, cps2, sgemf,   cps2, ROT270, "Eighting/Raizing, distributed by Capcom", "Great Mahou Daisakusen (Japan 000121)" )
 GAME( 2000, 1944,     0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (US 000620)" )
 GAMEX(2000, 1944j,    1944,    cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (Japan 000620)", GAME_NOT_WORKING )
-
-/* Games released on CPS-2 hardware by Cave */
-
-GAMEX(2001, progearj, 0,       cps2, cps2,    cps2, ROT0,   "Cave, distributed by Capcom", "Progear no Arashi (Japan 010117)", GAME_NOT_WORKING )

@@ -15,6 +15,8 @@
 #include "memory.h"
 #include "mamedbg.h"
 #include "mips.h"
+#include "state.h"
+#include "usrintrf.h"
 
 #define EXC_INT ( 0 )
 #define EXC_ADEL ( 4 )
@@ -201,12 +203,17 @@ static UINT32 mips_mtc0_writemask[]=
 };
 
 #if 0
-#include "usrintrf.h"
-#define GTELOG( a ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ) ); /* usrintf_showmessage_secs( 1, "GTE" ); */
-#define GTELOGX( a, ... ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, INS_COFUN( mipscpu.op ), ## __VA_ARGS__ ); /* usrintf_showmessage_secs( 1, "GTE" ); */
+void GTELOG(const char *a,...)
+{
+	va_list va;
+	char s_text[ 1024 ];
+	va_start( va, a );
+	vsprintf( s_text, a, va );
+	va_end( va );
+	logerror( "%08x: GTE: %08x %s\n", mipscpu.pc, INS_COFUN( mipscpu.op ), s_text );
+}
 #else
-INLINE void GTELOG(const char *a) {}
-INLINE void GTELOGX(const char *a, ...) {}
+INLINE void GTELOG(const char *a, ...) {}
 #endif
 
 static UINT32 getcp2dr( int n_reg );
@@ -302,6 +309,18 @@ static void mips_exception( int exception )
 
 void mips_init( void )
 {
+	int cpu = cpu_getactivecpu();
+
+	state_save_register_UINT32( "psxcpu", cpu, "op", &mipscpu.op, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "pc", &mipscpu.pc, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "delaypc", &mipscpu.delaypc, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "delay", &mipscpu.delay, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "hi", &mipscpu.hi, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "lo", &mipscpu.lo, 1 );
+	state_save_register_UINT32( "psxcpu", cpu, "r", &mipscpu.r[ 0 ], 32 );
+	state_save_register_UINT32( "psxcpu", cpu, "cp0r", &mipscpu.cp0r[ 0 ], 32 );
+	state_save_register_UINT32( "psxcpu", cpu, "cp2cr", &mipscpu.cp2cr[ 0 ].d, 32 );
+	state_save_register_UINT32( "psxcpu", cpu, "cp2dr", &mipscpu.cp2dr[ 0 ].d, 32 );
 }
 
 void mips_reset( void *param )
@@ -952,7 +971,8 @@ int mips_execute( int cycles )
 						mips_advance_pc();
 						break;
 					default:
-						logerror( "%08x: unknown gpu op %08x\n", mipscpu.pc, mipscpu.op );
+						usrintf_showmessage_secs( 1, "unknown GTE op" );
+						logerror( "%08x: unknown GTE op %08x\n", mipscpu.pc, mipscpu.op );
 						mips_stop();
 						mips_advance_pc();
 						break;
@@ -966,7 +986,8 @@ int mips_execute( int cycles )
 						mips_advance_pc();
 						break;
 					default:
-						logerror( "%08x: unknown gte op %08x\n", mipscpu.pc, mipscpu.op );
+						usrintf_showmessage_secs( 1, "unknown GTE op" );
+						logerror( "%08x: unknown GTE op %08x\n", mipscpu.pc, mipscpu.op );
 						mips_stop();
 						mips_advance_pc();
 						break;
@@ -2283,7 +2304,7 @@ unsigned mips_dasm( char *buffer, UINT32 pc )
 	sprintf( buffer, "$%08x", cpu_readop32( pc ) );
 	ret = 4;
 #endif
-	change_pc32lew( mipscpu.pc );
+	change_pc32ledw( mipscpu.pc );
 	return ret;
 }
 
@@ -2292,7 +2313,7 @@ unsigned mips_dasm( char *buffer, UINT32 pc )
 #define VXY0 ( mipscpu.cp2dr[ 0 ].d )
 #define VX0  ( mipscpu.cp2dr[ 0 ].w.l )
 #define VY0  ( mipscpu.cp2dr[ 0 ].w.h )
-#define VZ0	 ( mipscpu.cp2dr[ 1 ].w.l )
+#define VZ0  ( mipscpu.cp2dr[ 1 ].w.l )
 #define VXY1 ( mipscpu.cp2dr[ 2 ].d )
 #define VX1  ( mipscpu.cp2dr[ 2 ].w.l )
 #define VY1  ( mipscpu.cp2dr[ 2 ].w.h )
@@ -2414,13 +2435,13 @@ static UINT32 getcp2dr( int n_reg )
 	{
 		ORGB = ( ( IR1 >> 7 ) & 0x1f ) | ( ( IR2 >> 2 ) & 0x3e0 ) | ( ( IR3 << 3 ) & 0x7c00 );
 	}
-	GTELOGX( "get CP2DR%u=%08x", n_reg, mipscpu.cp2dr[ n_reg ].d );
+	GTELOG( "get CP2DR%u=%08x", n_reg, mipscpu.cp2dr[ n_reg ].d );
 	return mipscpu.cp2dr[ n_reg ].d;
 }
 
 static void setcp2dr( int n_reg, UINT32 n_value )
 {
-	GTELOGX( "set CP2DR%u=%08x", n_reg, n_value );
+	GTELOG( "set CP2DR%u=%08x", n_reg, n_value );
 	mipscpu.cp2dr[ n_reg ].d = n_value;
 
 	if( n_reg == 15 )
@@ -2440,73 +2461,76 @@ static void setcp2dr( int n_reg, UINT32 n_value )
 		UINT32 n_lzcs = LZCS;
 		UINT32 n_lzcr = 0;
 
-		if( ( n_lzcs & 0x80000000 ) != 0 )
+		if( ( n_lzcs & 0x80000000 ) == 0 )
 		{
 			n_lzcs = ~n_lzcs;
 		}
-		while( ( n_lzcs & 0x80000000 ) == 0 )
+		while( ( n_lzcs & 0x80000000 ) != 0 )
 		{
 			n_lzcr++;
 			n_lzcs <<= 1;
 		}
- 		LZCR = n_lzcr;
+		LZCR = n_lzcr;
 	}
 }
 
 static UINT32 getcp2cr( int n_reg )
 {
-	GTELOGX( "get CP2CR%u=%08x", n_reg, mipscpu.cp2cr[ n_reg ].d );
+	GTELOG( "get CP2CR%u=%08x", n_reg, mipscpu.cp2cr[ n_reg ].d );
 	return mipscpu.cp2cr[ n_reg ].d;
 }
 
 static void setcp2cr( int n_reg, UINT32 n_value )
 {
-	GTELOGX( "set CP2CR%u=%08x", n_reg, n_value );
+	GTELOG( "set CP2CR%u=%08x", n_reg, n_value );
 	mipscpu.cp2cr[ n_reg ].d = n_value;
 }
 
-static inline INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, int n_bit )
+static inline INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, UINT32 n_flag )
 {
 	if( n_value > n_max )
 	{
-		FLAG |= 0x80000000 | ( 1 << n_bit );
+		FLAG |= n_flag;
 		return n_max;
 	}
 	else if( n_value < n_min )
 	{
-		FLAG |= 0x80000000 | ( 1 << n_bit );
+		FLAG |= n_flag;
 		return n_min;
 	}
 	return n_value;
 }
 
-static inline INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxbit, INT64 n_min, int n_minbit )
+static inline INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxflag, INT64 n_min, int n_minflag )
 {
 	if( n_value > n_max )
 	{
-		FLAG |= ( 1 << n_maxbit );
+		FLAG |= n_maxflag;
 	}
 	else if( n_value < n_min )
 	{
-		FLAG |= ( 1 << n_minbit );
+		FLAG |= n_minflag;
 	}
 	return n_value;
 }
 
-#define A1( a ) BOUNDS( ( a ), 0x1ffffffff, 30, -0x200000000, 27 )
-#define A2( a ) BOUNDS( ( a ), 0x1ffffffff, 29, -0x200000000, 26 )
-#define A3( a ) BOUNDS( ( a ), 0x1ffffffff, 28, -0x200000000, 25 )
-#define	Lm_B1( a ) LIM( ( a ), 0x7fff, -0x8000, 24 )
-#define	Lm_B2( a ) LIM( ( a ), 0x7fff, -0x8000, 23 )
-#define	Lm_B3( a ) LIM( ( a ), 0x7fff, -0x8000, 22 )
-#define Lm_D( a ) LIM( ( a ), 0xffff, 0x0000, 18 )
+#define A1( a ) BOUNDS( ( a ), 0x7fffffff, 30, -(INT64)0x80000000, ( 1 << 27 ) )
+#define A2( a ) BOUNDS( ( a ), 0x7fffffff, 29, -(INT64)0x80000000, ( 1 << 26 ) )
+#define A3( a ) BOUNDS( ( a ), 0x7fffffff, 28, -(INT64)0x80000000, ( 1 << 25 ) )
+#define Lm_B1( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 31 ) | ( 1 << 24 ) )
+#define Lm_B2( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 31 ) | ( 1 << 23 ) )
+#define Lm_B3( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 22 ) )
+#define Lm_C1( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 21 ) )
+#define Lm_C2( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 20 ) )
+#define Lm_C3( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 19 ) )
+#define Lm_D( a ) LIM( ( a ), 0xffff, 0x0000, ( 1 << 31 ) | ( 1 << 18 ) )
 
 static __inline UINT32 Lm_E( UINT32 n_z )
 {
-	if( n_z < H / 2 )
+	if( n_z <= H / 2 )
 	{
 		n_z = H / 2;
-		FLAG |= 0x80000000 | ( 1 << 17 );
+		FLAG |= ( 1 << 31 ) | ( 1 << 17 );
 	}
 	if( n_z == 0 )
 	{
@@ -2515,134 +2539,390 @@ static __inline UINT32 Lm_E( UINT32 n_z )
 	return n_z;
 }
 
-#define F( a ) BOUNDS( ( a ), 0x7fffffff, 16, -0x80000000, 15 )
-#define Lm_G1( a ) LIM( ( a ), 0x3ff, -0x400, 14 )
-#define Lm_H( a ) LIM( ( a ), 0xfff, 0x000, 12 )
+#define F( a ) BOUNDS( ( a ), 0x7fffffff, ( 1 << 31 ) | ( 1 << 16 ), -(INT64)0x80000000, ( 1 << 31 ) | ( 1 << 15 ) )
+#define Lm_G1( a ) LIM( ( a ), 0x3ff, -0x400, ( 1 << 31 ) | ( 1 << 14 ) )
+#define Lm_G2( a ) LIM( ( a ), 0x3ff, -0x400, ( 1 << 31 ) | ( 1 << 13 ) )
+#define Lm_H( a ) LIM( ( a ), 0xfff, 0x000, ( 1 << 12 ) )
 
 static void docop2( int gteop )
 {
+	int n_sf;
 	int n_v;
+	int n_lm;
+	int n_pass;
+	UINT32 n_v1;
+	UINT32 n_v2;
+	UINT32 n_v3;
+	const UINT16 **p_n_mx;
+	const UINT32 **p_n_cv;
+	static const UINT16 n_zm = 0;
+	static const UINT32 n_zc = 0;
 	static const UINT16 *p_n_vx[] = { &VX0, &VX1, &VX2 };
 	static const UINT16 *p_n_vy[] = { &VY0, &VY1, &VY2 };
 	static const UINT16 *p_n_vz[] = { &VZ0, &VZ1, &VZ2 };
+	static const UINT16 *p_n_rm[] = { &R11, &R12, &R13, &R21, &R22, &R23, &R31, &R32, &R33 };
+	static const UINT16 *p_n_lm[] = { &L11, &L12, &L13, &L21, &L22, &L23, &L31, &L32, &L33 };
+	static const UINT16 *p_n_cm[] = { &LR1, &LR2, &LR3, &LG1, &LG2, &LG3, &LB1, &LB2, &LB3 };
+	static const UINT16 *p_n_zm[] = { &n_zm, &n_zm, &n_zm, &n_zm, &n_zm, &n_zm, &n_zm, &n_zm, &n_zm };
+	static const UINT16 **p_p_n_mx[] = { p_n_rm, p_n_lm, p_n_cm, p_n_zm };
+	static const UINT32 *p_n_tr[] = { &TRX, &TRY, &TRZ };
+	static const UINT32 *p_n_bk[] = { &RBK, &GBK, &BBK };
+	static const UINT32 *p_n_fc[] = { &RFC, &GFC, &BFC };
+	static const UINT32 *p_n_zc[] = { &n_zc, &n_zc, &n_zc };
+	static const UINT32 **p_p_n_cv[] = { p_n_tr, p_n_bk, p_n_fc, p_n_zc };
 
-	switch( gteop )
+	switch( GTE_OP( gteop ) )
 	{
-	case 0x1400006:
-		GTELOG( "NCLIP" );
-		FLAG = 0;
-
-		MAC0 = F(
-			( (INT64)(INT16)SX0 * (INT16)SY1 ) + 
-			( (INT64)(INT16)SX1 * (INT16)SY2 ) +
-			( (INT64)(INT16)SX2 * (INT16)SY0 ) -
-			( (INT64)(INT16)SX0 * (INT16)SY2 ) -
-			( (INT64)(INT16)SX1 * (INT16)SY0 ) -
-			( (INT64)(INT16)SX2 * (INT16)SY1 ) );
-		break;
-	case 0x0486012:
-		GTELOG( "RTV0" );
-		FLAG = 0;
-
-		MAC1 = A1(
-			( (INT64)(INT16)R11 * (INT16)VX0 ) +
-			( (INT64)(INT16)R12 * (INT16)VY0 ) +
-			( (INT64)(INT16)R13 * (INT16)VZ0 ) ) >> 12;
-		MAC2 = A2(
-			( (INT64)(INT16)R21 * (INT16)VX0 ) +
-			( (INT64)(INT16)R22 * (INT16)VY0 ) +
-			( (INT64)(INT16)R23 * (INT16)VZ0 ) ) >> 12;
-		MAC3 = A3(
-			( (INT64)(INT16)R31 * (INT16)VX0 ) +
-			( (INT64)(INT16)R32 * (INT16)VY0 ) +
-			( (INT64)(INT16)R33 * (INT16)VZ0 ) ) >> 12;
-		IR1 = Lm_B1( (INT32)MAC1 );
-		IR2 = Lm_B2( (INT32)MAC2 );
-		IR3 = Lm_B3( (INT32)MAC3 );
-		break;
-	case 0x0280030:
-		GTELOG( "RTPT" );
-		FLAG = 0;
-
-		for( n_v = 0; n_v < 3; n_v++ )
+	case 0x01:
+		if( gteop == 0x0180001 )
 		{
-			MAC1 = A1(
+			GTELOG( "RTPS" );
+			FLAG = 0;
+
+			MAC1 = A1( (
 				( ( (INT64)(INT32)TRX ) << 12 ) +
-				( (INT64)(INT16)R11 * (INT16)*p_n_vx[ n_v ] ) +
-				( (INT64)(INT16)R12 * (INT16)*p_n_vy[ n_v ] ) +
-				( (INT64)(INT16)R13 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
-			MAC2 = A2(
+				( (INT64)(INT16)R11 * (INT16)VX0 ) +
+				( (INT64)(INT16)R12 * (INT16)VY0 ) +
+				( (INT64)(INT16)R13 * (INT16)VZ0 ) ) >> 12 );
+			MAC2 = A2( (
 				( ( (INT64)(INT32)TRY ) << 12 ) +
-				( (INT64)(INT16)R21 * (INT16)*p_n_vx[ n_v ] ) +
-				( (INT64)(INT16)R22 * (INT16)*p_n_vy[ n_v ] ) +
-				( (INT64)(INT16)R23 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
-			MAC3 = A3(
+				( (INT64)(INT16)R21 * (INT16)VX0 ) +
+				( (INT64)(INT16)R22 * (INT16)VY0 ) +
+				( (INT64)(INT16)R23 * (INT16)VZ0 ) ) >> 12 );
+			MAC3 = A3( (
 				( ( (INT64)(INT32)TRZ ) << 12 ) +
-				( (INT64)(INT16)R31 * (INT16)*p_n_vx[ n_v ] ) +
-				( (INT64)(INT16)R32 * (INT16)*p_n_vy[ n_v ] ) +
-				( (INT64)(INT16)R33 * (INT16)*p_n_vz[ n_v ] ) ) >> 12;
-			IR1 = Lm_B1( (INT32)MAC1 );
-			IR2 = Lm_B2( (INT32)MAC2 );
-			IR3 = Lm_B3( (INT32)MAC3 );
+				( (INT64)(INT16)R31 * (INT16)VX0 ) +
+				( (INT64)(INT16)R32 * (INT16)VY0 ) +
+				( (INT64)(INT16)R33 * (INT16)VZ0 ) ) >> 12 );
+			IR1 = Lm_B1( (INT32)MAC1, 0 );
+			IR2 = Lm_B2( (INT32)MAC2, 0 );
+			IR3 = Lm_B3( (INT32)MAC3, 0 );
 			SZ0 = SZ1;
 			SZ1 = SZ2;
 			SZ2 = SZ3;
 			SZ3 = Lm_D( (INT32)MAC3 );
 			SXY0 = SXY1;
 			SXY1 = SXY2;
-			SX2 = Lm_G1( F( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
-			SY2 = Lm_G1( F( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
-			MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) );
+			SX2 = Lm_G1( F( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+			SY2 = Lm_G2( F( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
+			MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) );
 			IR0 = Lm_H( (INT32)MAC0 >> 12 );
+			return;
 		}
 		break;
-	case 0x00180001:
-		GTELOG( "RTPS" );
-		FLAG = 0;
+	case 0x02:
+		if( gteop == 0x0280030 )
+		{
+			GTELOG( "RTPT" );
+			FLAG = 0;
 
-		MAC1 = A1(
-			( ( (INT64)(INT32)TRX ) << 12 ) +
-			( (INT64)(INT16)R11 * (INT16)VX0 ) +
-			( (INT64)(INT16)R12 * (INT16)VY0 ) +
-			( (INT64)(INT16)R13 * (INT16)VZ0 ) ) >> 12;
-		MAC2 = A2(
-			( ( (INT64)(INT32)TRY ) << 12 ) +
-			( (INT64)(INT16)R21 * (INT16)VX0 ) +
-			( (INT64)(INT16)R22 * (INT16)VY0 ) +
-			( (INT64)(INT16)R23 * (INT16)VZ0 ) ) >> 12;
-		MAC3 = A3(
-			( ( (INT64)(INT32)TRZ ) << 12 ) +
-			( (INT64)(INT16)R31 * (INT16)VX0 ) +
-			( (INT64)(INT16)R32 * (INT16)VY0 ) +
-			( (INT64)(INT16)R33 * (INT16)VZ0 ) ) >> 12;
-		IR1 = Lm_B1( (INT32)MAC1 );
-		IR2 = Lm_B2( (INT32)MAC2 );
-		IR3 = Lm_B3( (INT32)MAC3 );
-		SZ0 = SZ1;
-		SZ1 = SZ2;
-		SZ2 = SZ3;
-		SZ3 = Lm_D( (INT32)MAC3 );
-		SXY0 = SXY1;
-		SXY1 = SXY2;
-		SX2 = Lm_G1( F( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
-		SY2 = Lm_G1( F( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 );
-		MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( ( (UINT32)H ) << 16 ) / Lm_E( SZ3 ) ) ) );
-		IR0 = Lm_H( (INT32)MAC0 >> 12 );
+			for( n_v = 0; n_v < 3; n_v++ )
+			{
+				MAC1 = A1( (
+					( ( (INT64)(INT32)TRX ) << 12 ) +
+					( (INT64)(INT16)R11 * (INT16)*p_n_vx[ n_v ] ) +
+					( (INT64)(INT16)R12 * (INT16)*p_n_vy[ n_v ] ) +
+					( (INT64)(INT16)R13 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				MAC2 = A2( (
+					( ( (INT64)(INT32)TRY ) << 12 ) +
+					( (INT64)(INT16)R21 * (INT16)*p_n_vx[ n_v ] ) +
+					( (INT64)(INT16)R22 * (INT16)*p_n_vy[ n_v ] ) +
+					( (INT64)(INT16)R23 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				MAC3 = A3( (
+					( ( (INT64)(INT32)TRZ ) << 12 ) +
+					( (INT64)(INT16)R31 * (INT16)*p_n_vx[ n_v ] ) +
+					( (INT64)(INT16)R32 * (INT16)*p_n_vy[ n_v ] ) +
+					( (INT64)(INT16)R33 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				IR1 = Lm_B1( (INT32)MAC1, 0 );
+				IR2 = Lm_B2( (INT32)MAC2, 0 );
+				IR3 = Lm_B3( (INT32)MAC3, 0 );
+				SZ0 = SZ1;
+				SZ1 = SZ2;
+				SZ2 = SZ3;
+				SZ3 = Lm_D( (INT32)MAC3 );
+				SXY0 = SXY1;
+				SXY1 = SXY2;
+				SX2 = Lm_G1( F( ( (INT64)(INT32)OFX + ( (INT64)(INT16)IR1 * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 ) );
+				SY2 = Lm_G2( F( ( (INT64)(INT32)OFY + ( (INT64)(INT16)IR2 * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) ) >> 16 ) );
+				MAC0 = F( (INT64)(INT32)DQB + ( (INT64)(INT16)DQA * ( ( (UINT32)H << 16 ) / Lm_E( SZ3 ) ) ) );
+				IR0 = Lm_H( (INT32)MAC0 >> 12 );
+			}
+			return;
+		}
 		break;
-	case 0x0168002e:
-		GTELOG( "AVSZ4" );
-		FLAG = 0;
+	case 0x04:
+		if( GTE_CT( gteop ) == 0x012 )
+		{
+			GTELOG( "MVMVA" );
+			FLAG = 0;
 
-		MAC0 = F(
-			( (INT64)ZSF4 * SZ0 ) +
-			( (INT64)ZSF4 * SZ1 ) +
-			( (INT64)ZSF4 * SZ2 ) +
-			( (INT64)ZSF4 * SZ3 ) );
-		OTZ = Lm_D( (INT32)MAC0 >> 12 );
+			n_sf = 12 * GTE_SF( gteop );
+			p_n_mx = p_p_n_mx[ GTE_MX( gteop ) ];
+			n_v = GTE_V( gteop );
+			if( n_v < 3 )
+			{
+				n_v1 = (INT16)*p_n_vx[ n_v ];
+				n_v2 = (INT16)*p_n_vy[ n_v ];
+				n_v3 = (INT16)*p_n_vz[ n_v ];
+			}
+			else
+			{
+				n_v1 = IR1;
+				n_v2 = IR2;
+				n_v3 = IR3;
+			}
+			p_n_cv = p_p_n_cv[ GTE_CV( gteop ) ];
+			n_lm = GTE_LM( gteop );
+
+			MAC1 = A1( (
+				( ( (INT64)(INT32)*p_n_cv[ 0 ] ) << 12 ) +
+				( (INT64)(INT16)*p_n_mx[ 0 ] * (INT32)n_v1 ) +
+				( (INT64)(INT16)*p_n_mx[ 1 ] * (INT32)n_v2 ) +
+				( (INT64)(INT16)*p_n_mx[ 2 ] * (INT32)n_v3 ) ) >> n_sf );
+			MAC2 = A2( (
+				( ( (INT64)(INT32)*p_n_cv[ 1 ] ) << 12 ) +
+				( (INT64)(INT16)*p_n_mx[ 3 ] * (INT32)n_v1 ) +
+				( (INT64)(INT16)*p_n_mx[ 4 ] * (INT32)n_v2 ) +
+				( (INT64)(INT16)*p_n_mx[ 5 ] * (INT32)n_v3 ) ) >> n_sf );
+			MAC3 = A3( (
+				( ( (INT64)(INT32)*p_n_cv[ 2 ] ) << 12 ) +
+				( (INT64)(INT16)*p_n_mx[ 6 ] * (INT32)n_v1 ) +
+				( (INT64)(INT16)*p_n_mx[ 7 ] * (INT32)n_v2 ) +
+				( (INT64)(INT16)*p_n_mx[ 8 ] * (INT32)n_v3 ) ) >> n_sf );
+			IR1 = Lm_B1( (INT32)MAC1, n_lm );
+			IR2 = Lm_B2( (INT32)MAC2, n_lm );
+			IR3 = Lm_B3( (INT32)MAC3, n_lm );
+			return;
+		}
 		break;
-	default:
-		logerror( "%08x: GTE unknown op %08x\n", mipscpu.pc, INS_COFUN( mipscpu.op ) );
-		mips_stop();
+	case 0x07:
+		if( gteop == 0x0780010 )
+		{
+			GTELOG( "DPCS" );
+			FLAG = 0;
+
+			MAC1 = A1( ( ( ( (INT64)R ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( RFC - ( R << 4 ), 0 ) ) ) ) >> 12 );
+			MAC2 = A2( ( ( ( (INT64)G ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( GFC - ( G << 4 ), 0 ) ) ) ) >> 12 );
+			MAC3 = A3( ( ( ( (INT64)B ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( BFC - ( B << 4 ), 0 ) ) ) ) >> 12 );
+			IR1 = Lm_B1( (INT32)MAC1, 0 );
+			IR2 = Lm_B2( (INT32)MAC2, 0 );
+			IR3 = Lm_B3( (INT32)MAC3, 0 );
+			CD0 = CD1;
+			CD1 = CD2;
+			CD2 = CODE;
+			R0 = R1;
+			R1 = R2;
+			R2 = Lm_C1( (INT32)MAC1 >> 4 );
+			G0 = G1;
+			G1 = G2;
+			G2 = Lm_C2( (INT32)MAC2 >> 4 );
+			B0 = B1;
+			B1 = B2;
+			B2 = Lm_C3( (INT32)MAC3 >> 4 );
+			return;
+		}
+		break;
+	case 0x09:
+		if( gteop == 0x0980011 )
+		{
+			GTELOG( "INTPL" );
+			FLAG = 0;
+
+			MAC1 = A1( ( ( ( (INT64)(INT16)IR1 ) << 12 ) + ( (INT16)IR0 * ( Lm_B1( (INT32)RFC - (INT16)IR1, 0 ) ) ) ) >> 12 );
+			MAC2 = A2( ( ( ( (INT64)(INT16)IR2 ) << 12 ) + ( (INT16)IR0 * ( Lm_B1( (INT32)GFC - (INT16)IR2, 0 ) ) ) ) >> 12 );
+			MAC3 = A3( ( ( ( (INT64)(INT16)IR3 ) << 12 ) + ( (INT16)IR0 * ( Lm_B1( (INT32)BFC - (INT16)IR3, 0 ) ) ) ) >> 12 );
+			IR1 = Lm_B1( (INT32)MAC1, 0 );
+			IR2 = Lm_B2( (INT32)MAC2, 0 );
+			IR3 = Lm_B3( (INT32)MAC3, 0 );
+			CD0 = CD1;
+			CD1 = CD2;
+			CD2 = CODE;
+			R0 = R1;
+			R1 = R2;
+			R2 = Lm_C1( (INT32)MAC1 );
+			G0 = G1;
+			G1 = G2;
+			G2 = Lm_C2( (INT32)MAC2 );
+			B0 = B1;
+			B1 = B2;
+			B2 = Lm_C3( (INT32)MAC3 );
+			return;
+		}
+		break;
+	case 0x0f:
+		if( gteop == 0x0f8002a )
+		{
+			GTELOG( "DPCT" );
+			FLAG = 0;
+
+			for( n_pass = 0; n_pass < 3; n_pass++ )
+			{
+				MAC1 = A1( ( ( ( (INT64)R0 ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( RFC - ( R0 << 4 ), 0 ) ) ) ) >> 12 );
+				MAC2 = A2( ( ( ( (INT64)G0 ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( GFC - ( G0 << 4 ), 0 ) ) ) ) >> 12 );
+				MAC3 = A3( ( ( ( (INT64)B0 ) << 16 ) + ( (INT16)IR0 * ( Lm_B1( BFC - ( B0 << 4 ), 0 ) ) ) ) >> 12 );
+				IR1 = Lm_B1( (INT32)MAC1, 0 );
+				IR2 = Lm_B2( (INT32)MAC2, 0 );
+				IR3 = Lm_B3( (INT32)MAC3, 0 );
+				CD0 = CD1;
+				CD1 = CD2;
+				CD2 = CODE;
+				R0 = R1;
+				R1 = R2;
+				R2 = Lm_C1( (INT32)MAC1 >> 4 );
+				G0 = G1;
+				G1 = G2;
+				G2 = Lm_C2( (INT32)MAC2 >> 4 );
+				B0 = B1;
+				B1 = B2;
+				B2 = Lm_C3( (INT32)MAC3 >> 4 );
+			}
+			return;
+		}
+		break;
+	case 0x10:
+		if( gteop == 0x108041b )
+		{
+			GTELOG( "NCCS" );
+			FLAG = 0;
+
+			MAC1 = A1( ( ( (INT64)(INT16)L11 * (INT16)VX0 ) + ( (INT16)L12 * (INT16)VY0 ) + ( (INT16)L13 * (INT16)VZ0 ) ) >> 12 );
+			MAC2 = A2( ( ( (INT64)(INT16)L21 * (INT16)VX0 ) + ( (INT16)L22 * (INT16)VY0 ) + ( (INT16)L23 * (INT16)VZ0 ) ) >> 12 );
+			MAC3 = A3( ( ( (INT64)(INT16)L31 * (INT16)VX0 ) + ( (INT16)L32 * (INT16)VY0 ) + ( (INT16)L33 * (INT16)VZ0 ) ) >> 12 );
+			IR1 = Lm_B1( (INT32)MAC1, 1 );
+			IR2 = Lm_B2( (INT32)MAC2, 1 );
+			IR3 = Lm_B3( (INT32)MAC3, 1 );
+			MAC1 = A1( ( ( ( (INT64)RBK ) << 12 ) + ( (INT16)LR1 * (INT16)IR1 ) + ( (INT16)LR2 * (INT16)IR2 ) + ( (INT16)LR3 * (INT16)IR3 ) ) >> 12 );
+			MAC2 = A2( ( ( ( (INT64)GBK ) << 12 ) + ( (INT16)LG1 * (INT16)IR1 ) + ( (INT16)LG2 * (INT16)IR2 ) + ( (INT16)LG3 * (INT16)IR3 ) ) >> 12 );
+			MAC3 = A3( ( ( ( (INT64)BBK ) << 12 ) + ( (INT16)LB1 * (INT16)IR1 ) + ( (INT16)LB2 * (INT16)IR2 ) + ( (INT16)LB3 * (INT16)IR3 ) ) >> 12 );
+			IR1 = Lm_B1( (INT32)MAC1, 1 );
+			IR2 = Lm_B2( (INT32)MAC2, 1 );
+			IR3 = Lm_B3( (INT32)MAC3, 1 );
+			MAC1 = A1( ( (INT64)R * (INT16)IR1 ) >> 8 );
+			MAC2 = A2( ( (INT64)G * (INT16)IR2 ) >> 8 );
+			MAC3 = A3( ( (INT64)B * (INT16)IR3 ) >> 8 );
+			IR1 = Lm_B1( (INT32)MAC1, 1 );
+			IR2 = Lm_B2( (INT32)MAC2, 1 );
+			IR3 = Lm_B3( (INT32)MAC3, 1 );
+			CD0 = CD1;
+			CD1 = CD2;
+			CD2 = CODE;
+			R0 = R1;
+			R1 = R2;
+			R2 = Lm_C1( (INT32)MAC1 >> 4 );
+			G0 = G1;
+			G1 = G2;
+			G2 = Lm_C2( (INT32)MAC2 >> 4 );
+			B0 = B1;
+			B1 = B2;
+			B2 = Lm_C3( (INT32)MAC3 >> 4 );
+			return;
+		}
+		break;
+	case 0x11:
+		if( gteop == 0x118043f )
+		{
+			GTELOG( "NCCT" );
+			FLAG = 0;
+
+			for( n_v = 0; n_v < 3; n_v++ )
+			{
+				MAC1 = A1( ( ( (INT64)(INT16)L11 * (INT16)*p_n_vx[ n_v ] ) + ( (INT16)L12 * (INT16)*p_n_vy[ n_v ] ) + ( (INT16)L13 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				MAC2 = A2( ( ( (INT64)(INT16)L21 * (INT16)*p_n_vx[ n_v ] ) + ( (INT16)L22 * (INT16)*p_n_vy[ n_v ] ) + ( (INT16)L23 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				MAC3 = A3( ( ( (INT64)(INT16)L31 * (INT16)*p_n_vx[ n_v ] ) + ( (INT16)L32 * (INT16)*p_n_vy[ n_v ] ) + ( (INT16)L33 * (INT16)*p_n_vz[ n_v ] ) ) >> 12 );
+				IR1 = Lm_B1( (INT32)MAC1, 1 );
+				IR2 = Lm_B2( (INT32)MAC2, 1 );
+				IR3 = Lm_B3( (INT32)MAC3, 1 );
+				MAC1 = A1( ( ( ( (INT64)RBK ) << 12 ) + ( (INT16)LR1 * (INT16)IR1 ) + ( (INT16)LR2 * (INT16)IR2 ) + ( (INT16)LR3 * (INT16)IR3 ) ) >> 12 );
+				MAC2 = A2( ( ( ( (INT64)GBK ) << 12 ) + ( (INT16)LG1 * (INT16)IR1 ) + ( (INT16)LG2 * (INT16)IR2 ) + ( (INT16)LG3 * (INT16)IR3 ) ) >> 12 );
+				MAC3 = A3( ( ( ( (INT64)BBK ) << 12 ) + ( (INT16)LB1 * (INT16)IR1 ) + ( (INT16)LB2 * (INT16)IR2 ) + ( (INT16)LB3 * (INT16)IR3 ) ) >> 12 );
+				IR1 = Lm_B1( (INT32)MAC1, 1 );
+				IR2 = Lm_B2( (INT32)MAC2, 1 );
+				IR3 = Lm_B3( (INT32)MAC3, 1 );
+				MAC1 = A1( ( (INT64)R * (INT16)IR1 ) >> 8 );
+				MAC2 = A2( ( (INT64)G * (INT16)IR2 ) >> 8 );
+				MAC3 = A3( ( (INT64)B * (INT16)IR3 ) >> 8 );
+				IR1 = Lm_B1( (INT32)MAC1, 1 );
+				IR2 = Lm_B2( (INT32)MAC2, 1 );
+				IR3 = Lm_B3( (INT32)MAC3, 1 );
+				CD0 = CD1;
+				CD1 = CD2;
+				CD2 = CODE;
+				R0 = R1;
+				R1 = R2;
+				R2 = Lm_C1( (INT32)MAC1 >> 4 );
+				G0 = G1;
+				G1 = G2;
+				G2 = Lm_C2( (INT32)MAC2 >> 4 );
+				B0 = B1;
+				B1 = B2;
+				B2 = Lm_C3( (INT32)MAC3 >> 4 );
+			}
+			return;
+		}
+		break;
+	case 0x14:
+		if( gteop == 0x1400006 )
+		{
+			GTELOG( "NCLIP" );
+			FLAG = 0;
+
+			MAC0 = F(
+				( (INT64)(INT16)SX0 * (INT16)SY1 ) + 
+				( (INT64)(INT16)SX1 * (INT16)SY2 ) +
+				( (INT64)(INT16)SX2 * (INT16)SY0 ) -
+				( (INT64)(INT16)SX0 * (INT16)SY2 ) -
+				( (INT64)(INT16)SX1 * (INT16)SY0 ) -
+				( (INT64)(INT16)SX2 * (INT16)SY1 ) );
+			return;
+		}
+		break;
+	case 0x15:
+		if( gteop == 0x158002d )
+		{
+			GTELOG( "AVSZ3" );
+			FLAG = 0;
+
+			MAC0 = F(
+				( (INT64)(INT16)ZSF3 * SZ1 ) +
+				( (INT64)(INT16)ZSF3 * SZ2 ) +
+				( (INT64)(INT16)ZSF3 * SZ3 ) );
+			OTZ = Lm_D( (INT32)MAC0 >> 12 );
+			return;
+		}
+		break;
+	case 0x16:
+		if( gteop == 0x168002e )
+		{
+			GTELOG( "AVSZ4" );
+			FLAG = 0;
+
+			MAC0 = F(
+				( (INT64)(INT16)ZSF4 * SZ0 ) +
+				( (INT64)(INT16)ZSF4 * SZ1 ) +
+				( (INT64)(INT16)ZSF4 * SZ2 ) +
+				( (INT64)(INT16)ZSF4 * SZ3 ) );
+			OTZ = Lm_D( (INT32)MAC0 >> 12 );
+			return;
+		}
+		break;
+	case 0x17:
+		if( gteop == 0x170000c )
+		{
+			GTELOG( "OP" );
+			FLAG = 0;
+
+			n_sf = 12 * GTE_SF( gteop );
+			MAC1 = A1( ( ( (INT64)(INT32)D2 * (INT16)IR3 ) - ( (INT64)(INT32)D3 * (INT16)IR2 ) ) >> n_sf );
+			MAC2 = A2( ( ( (INT64)(INT32)D3 * (INT16)IR1 ) - ( (INT64)(INT32)D1 * (INT16)IR3 ) ) >> n_sf );
+			MAC3 = A3( ( ( (INT64)(INT32)D1 * (INT16)IR2 ) - ( (INT64)(INT32)D2 * (INT16)IR1 ) ) >> n_sf );
+			IR1 = Lm_B1( (INT32)MAC1, 0 );
+			IR2 = Lm_B2( (INT32)MAC2, 0 );
+			IR3 = Lm_B3( (INT32)MAC3, 0 );
+			return;
+		}
 		break;
 	}
+	usrintf_showmessage_secs( 1, "unknown GTE op %08x", gteop );
+	logerror( "%08x: unknown GTE op %08x\n", mipscpu.pc, gteop );
+	mips_stop();
 }

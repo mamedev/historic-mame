@@ -3913,10 +3913,9 @@ ROM_START( mt_gsocr ) /* Great Soccer. (Bad Dump) */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_parlg ) /* Parlour Games. (Bad Dump) */
+ROM_START( mt_parlg ) /* Parlour Games.  */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mp11404.ic1", 0x000000, 0x020000, BAD_DUMP CRC(dc5561e2) SHA1(dc090cae753f9c16d3bc9c6e87137e719c5279ce) ) // first 32kb is repeated 3 times, most bank data missing .. doesn't work in MEKA
-
+	ROM_LOAD16_WORD_SWAP( "mp11404.ic1", 0x000000, 0x020000, CRC(E030E66C) SHA1(06664DAF208F07CB00B603B12ECCFC3F01213A17) ) 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
@@ -3925,6 +3924,43 @@ ROM_START( mt_parlg ) /* Parlour Games. (Bad Dump) */
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
+
+ROM_START( mt_shnbi ) /* Shinobi. */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp11706.ic1", 0x000000, 0x040000, CRC(0C6FAC4E) SHA1(7C0778C055DC9C2B0AAE1D166DBDB4734E55B9D1) ) 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-08.ic2", 0x000000, 0x08000, CRC(103A0459) SHA1(D803DDF7926B83785E8503C985B8C78E7CCB5DAC) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_revsh ) /* The Revenge Of Shinobi. */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp12675.ic1", 0x000000, 0x080000, CRC(672A1D4D) SHA1(5FD0AF14C8F2CF8CEAB1AE61A5A19276D861289A) ) 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-28.ic2", 0x000000, 0x08000, CRC(0D30BEDE) SHA1(73A090D84B78A570E02FB54A33666DCADA52849B) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_aftrb ) /* Afterburner. */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp11271.ic1", 0x000000, 0x080000, CRC(1C951F8E) SHA1(51531DF038783C84640A0CAB93122E0B59E3B69A) ) 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "12368-10.ic2", 0x000000, 0x08000, CRC(2A7CB590) SHA1(2236963BDDC89CA9045B530259CC7B5CCF889EAF) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
 
 /* MegaPlay Games - Modified Genesis games */
 
@@ -4394,9 +4430,9 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 05 */ GAMEX( 1989, mt_gsocr, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Great Soccer", GAME_NOT_WORKING ) /* sms! also bad */
 /* 06 */ // unknown
 /* 07 */ // unknown
-/* 08 */ // unknown
+/* 08 */ GAMEX( 1989, mt_shnbi, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Shinobi", GAME_NOT_WORKING) /* sms */
 /* 09 */ // unknown
-/* 10 */ // unknown
+/* 10 */ GAMEX( 1989, mt_aftrb, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Afterburner", GAME_NOT_WORKING) /* sms */
 /* 11 */ GAMEX( 1989, mt_tfor2, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Thunder Force 2", GAME_NOT_WORKING )
 /* 12 */ // unknown
 /* 13 */ GAMEX( 1989, mt_astro, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Astro Warrior", GAME_NOT_WORKING ) /* sms! */
@@ -4414,8 +4450,8 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 25 */ GAMEX( 1989, mt_gaxe,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Golden Axe", GAME_NOT_WORKING )
 /* 26 */ // unknown
 /* 27 */ GAMEX( 1989, mt_mystd, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Mystic Defender", GAME_NOT_WORKING )
-/* 28 */ // unknown
-/* 29 */ GAMEX( 1989, mt_parlg, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Parlour Games", GAME_NOT_WORKING ) /* sms! bad! */
+/* 28 */ GAMEX( 1989, mt_revsh, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: The Revenge Of Shinobi", GAME_NOT_WORKING )
+/* 29 */ GAMEX( 1989, mt_parlg, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Parlour Games", GAME_NOT_WORKING ) /* sms! */
 /* 30 */ // unknown
 /* 31 */ // unknown
 /* 32 */ // unknown

@@ -36,7 +36,6 @@ example, the protection data for that game was extracted from the bootleg.
 WRITE16_HANDLER( snowbros_flipscreen_w );
 VIDEO_UPDATE( snowbros );
 VIDEO_UPDATE( wintbob );
-VIDEO_UPDATE( snowbro3 );
 
 static data16_t *hyperpac_ram;
 
@@ -491,29 +490,6 @@ static struct GfxDecodeInfo hyperpac_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/* snow bros 3 */
-
-static struct GfxLayout sb3_tilebglayout =
-{
- 	16,16,
- 	RGN_FRAC(1,1),
- 	8,
- 	{8, 9,10, 11, 0, 1, 2, 3  },
- 	{ 0, 4, 16, 20, 32, 36, 48, 52,
- 	512+0,512+4,512+16,512+20,512+32,512+36,512+48,512+52},
- 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
- 	1024+0*16,1024+1*64,1024+2*64,1024+3*64,1024+4*64,1024+5*64,1024+6*64,1024+7*64},
- 	32*64
-};
-
-
-static struct GfxDecodeInfo sb3_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
-	{ REGION_GFX2, 0, &sb3_tilebglayout,  0, 2 },
-	{ -1 } /* end of array */
-};
-
 /* handler called by the 3812/2151 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
@@ -605,30 +581,6 @@ static MACHINE_DRIVER_START( hyperpac )
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("3812",YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( snowbro3 )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000) /* 16mhz or 12mhz ? */
-	MDRV_CPU_MEMORY(readmem3,writemem3)
-	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(sb3_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
-
-	MDRV_VIDEO_UPDATE(snowbro3)
-
-	/* sound hardware */
-	/* oki for sound */
 MACHINE_DRIVER_END
 
 
@@ -849,27 +801,6 @@ ROM_START( htchctch )
 	ROM_LOAD( "p11uor4.bin",  0xe0000, 0x20000, CRC(9c511d98) )
 ROM_END
 
-/* cool mini, only 3 roms? */
-/* bc story, encrypted?, dif. hardware? */
-
-ROM_START( snowbro3 )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "ur4",  0x00000, 0x20000, CRC(19c13ffd) SHA1(4f9db70354bd410b7bcafa96be4591de8dc33d90) )
-	ROM_LOAD16_BYTE( "ur3",  0x00001, 0x20000, CRC(3f32fa15) SHA1(1402c173c1df142ff9dd7b859689c075813a50e5) )
-
-	/* is sound cpu code missing or is it driven by the main cpu? */
-
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ua5",		0x000000, 0x80000, CRC(0604e385) SHA1(96acbc65a8db89a7be100f852dc07ba9a0313167) )	/* 16x16 tiles */
-
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 BG Tiles */
-	ROM_LOAD( "un7",		0x000000, 0x200000, CRC(4a79da4c) SHA1(59207d116d39b9ee25c51affe520f5fdff34e536) )
-	ROM_LOAD( "un8",		0x200000, 0x200000, CRC(7a4561a4) SHA1(1dd823369c09368d1f0ec8e1cb85d700f10ff448) )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "us5",     0x00000, 0x80000, CRC(7c6368ef) SHA1(53393c570c605f7582b61c630980041e2ed32e2d) )
-ROM_END
-
 static DRIVER_INIT( hyperpac )
 {
 	/* simulate RAM initialization done by the protection MCU */
@@ -882,23 +813,6 @@ static DRIVER_INIT( hyperpac )
 	hyperpac_ram[0xe082/2] = 0xba98;
 	hyperpac_ram[0xe084/2] = 0x7654;
 	hyperpac_ram[0xe086/2] = 0x3210;
-}
-
-static DRIVER_INIT(snowbro3)
-{
-	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_CPU1);
-	int len = memory_region_length(REGION_CPU1);
-
-	/* strange order */
-	if ((buffer = malloc(len)))
-	{
-		int i;
-		for (i = 0;i < len; i++)
-			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,3,4,1,2,0)];
-		memcpy(src,buffer,len);
-		free(buffer);
-	}
 }
 
 static DRIVER_INIT(4in1boot)
@@ -955,7 +869,6 @@ GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Win
 /* SemiCom Games */
 GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
-GAMEX(2002, snowbro3, 0,        snowbro3, snowbroj, snowbro3, ROT0, "Syrmex / hack?", "Snow Brothers 3 - Magical Adventure", GAME_NO_SOUND ) // its basically snowbros code?...
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
 GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

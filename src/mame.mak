@@ -812,6 +812,7 @@ $(OBJ)/vsystem.a: \
 	$(OBJ)/vidhrdw/gstriker.o $(OBJ)/drivers/gstriker.o \
 	$(OBJ)/vidhrdw/suprslam.o $(OBJ)/drivers/suprslam.o \
 	$(OBJ)/vidhrdw/fromanc2.o $(OBJ)/drivers/fromanc2.o \
+	$(OBJ)/vidhrdw/inufuku.o $(OBJ)/drivers/inufuku.o \
 
 $(OBJ)/psikyo.a: \
 	$(OBJ)/vidhrdw/psikyo.o $(OBJ)/drivers/psikyo.o \

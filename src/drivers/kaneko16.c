@@ -2723,11 +2723,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bakubrkr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000)	/* ? */
+	MDRV_CPU_ADD(M68000, 12000000)	/* TMP68HC000-12 */
 	MDRV_CPU_MEMORY(bakubrkr_readmem,bakubrkr_writemem)
 	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(59)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(kaneko16)
@@ -3103,24 +3103,24 @@ Notes:
 
 ROM_START( bakubrkr )
  	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "ts100j.u18", 0x000000, 0x040000, CRC(8cc0a4fd) )
-	ROM_LOAD16_BYTE( "ts101j.u19", 0x000001, 0x040000, CRC(aea92195) )
+	ROM_LOAD16_BYTE( "ts100j.u18", 0x000000, 0x040000, CRC(8cc0a4fd) SHA1(e7e18b5ea236522a79ba9db8f573ac8f7ade504b) )
+	ROM_LOAD16_BYTE( "ts101j.u19", 0x000001, 0x040000, CRC(aea92195) SHA1(e89f964e7e936fd7774f21956eb4ff5c9104837b) )
 
 	ROM_REGION( 0x240000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "ts001j.u37",  0x000000, 0x080000, CRC(70b66e7e) )
+	ROM_LOAD( "ts001j.u37",  0x000000, 0x080000, CRC(70b66e7e) SHA1(307ba27b623f67ee4b4023179870c270bac8ea22) )
 	ROM_RELOAD(       0x100000, 0x080000             )
-	ROM_LOAD( "ts000j.u38",  0x080000, 0x080000, CRC(a7a94143) )
+	ROM_LOAD( "ts000j.u38",  0x080000, 0x080000, CRC(a7a94143) SHA1(d811a7597402c161850ddf98cdb00661ea506c7d) )
 	ROM_RELOAD(       0x180000, 0x080000             )
-	ROM_LOAD( "ts002j.u36",  0x200000, 0x040000, CRC(611271e6) )
+	ROM_LOAD( "ts002j.u36",  0x200000, 0x040000, CRC(611271e6) SHA1(811c21822b074fbb4bb809fed29d48bbd51d57a0) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles */
-	ROM_LOAD( "ts010.u4", 0x000000, 0x100000,  CRC(df935324) SHA1(73b7aff8800a4e88a47ad426190b73dabdfbf142) )
+	ROM_LOAD( "ts010.u4",  0x000000, 0x100000, CRC(df935324) SHA1(73b7aff8800a4e88a47ad426190b73dabdfbf142) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles */
-	ROM_LOAD( "ts020.u33", 0x000000, 0x100000, CRC(eb58c35d) SHA1(762c5219de6f729a0fc1df90fce09cdf711c2a1e) )
+	ROM_LOAD( "ts020.u33",  0x000000, 0x100000, CRC(eb58c35d) SHA1(762c5219de6f729a0fc1df90fce09cdf711c2a1e) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "ts030.u5", 0x000000, 0x100000, CRC(1d68e9d1) SHA1(aaa64a8e8d7cd7f91d2be346fafb9d1f29b40eda) )
+	ROM_REGION( 0x0100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "ts030.u5",  0x000000, 0x100000, CRC(1d68e9d1) SHA1(aaa64a8e8d7cd7f91d2be346fafb9d1f29b40eda) )
 ROM_END
 
 
@@ -4163,12 +4163,11 @@ GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
 GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
 GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )
-
-/* Non-working games (mainly due to incomplete dumps) */
-
 GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally" )
 
-GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, 0,        ROT90,      "Kaneko", "Bakuretsu Breaker",         GAME_NOT_WORKING  )
+/* Non-working games (mainly due to protection) */
+
+GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, kaneko16, ROT90,      "Kaneko", "Bakuretsu Breaker",         GAME_IMPERFECT_GRAPHICS  )
 GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors",           GAME_NOT_WORKING  )
 GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, fjbuster, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING  )
 GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,       "Kaneko", "B.Rap Boys",                GAME_NOT_WORKING  )
