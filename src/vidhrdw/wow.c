@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80.h"
 
 
 
@@ -71,7 +70,7 @@ void wow_videoram_w(int offset,int data)
 
 void wow_magic_expand_color_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",Z80_GetPC(),data);
+if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
 	magic_expand_color = data;
 }
 
@@ -79,7 +78,7 @@ if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",Z80_GetPC(),d
 
 void wow_magic_control_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",Z80_GetPC(),data);
+if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_getpc(),data);
 	magic_control = data;
 }
 
@@ -188,13 +187,11 @@ void wow_magicram_w(int offset,int data)
 	if (magic_control & 0x08)	/* expand mode */
 	{
 		int bits,bibits,k;
+		static int count;
 
-static int count;
-
-count ^= 1;
-if (!count) return;
 
 		bits = data;
+		if (count) bits <<= 4;
 		bibits = 0;
 		for (k = 0;k < 4;k++)
 		{
@@ -204,33 +201,11 @@ if (!count) return;
 			bits <<= 1;
 		}
 
-		if (magic_control & 0x40)	/* copy backwards */
-			copywithflip(offset+1,bibits);
-		else
-			copywithflip(offset,bibits);
+		copywithflip(offset,bibits);
 
-		bits = data;
-		bibits = 0;
-		for (k = 0;k < 4;k++)
-		{
-			bibits <<= 2;
-			if (bits & 0x08) bibits |= (magic_expand_color >> 2) & 0x03;
-			else bibits |= magic_expand_color & 0x03;
-			bits <<= 1;
-		}
-		if (magic_expand_color == 0) bibits = 0;
-		else if (magic_expand_color == 4) bibits &= 0x55;
-		else if (magic_expand_color == 8) bibits &= 0xaa;
-
-		if (magic_control & 0x40)	/* copy backwards */
-			copywithflip(offset,bibits);
-		else
-			copywithflip(offset+1,bibits);
+		count ^= 1;
 	}
-	else
-	{
-		copywithflip(offset,data);
-	}
+	else copywithflip(offset,data);
 }
 
 
@@ -276,10 +251,8 @@ void wow_pattern_board_w(int offset,int data)
 
 
 if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-		Z80_GetPC(),src,mode,skip,dest,length,loops);
+		cpu_getpc(),src,mode,skip,dest,length,loops);
 
-/*//		if ((mode & 0x09) == 0x00)	* copy from 1 bitplane */
-/*//		else if ((mode & 0x09) == 0x08)	* copy from 2 bitplanes */
 
 		for (i = 0; i <= loops;i++)
 		{

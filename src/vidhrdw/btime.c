@@ -76,6 +76,13 @@ void btime_background_w(int offset,int data)
 			dirtybuffer[i] = 1;
 
 		background_image = data;
+
+		/* kludge to make the sprites disappear when the screen is cleared */
+		if (data == 0)
+		{
+			for (i = 0;i < 8*4;i += 4)
+				spriteram[i] = 0;
+		}
 	}
 }
 
@@ -113,8 +120,8 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap)
 				struct rectangle clip;
 				int bx,by;
 				int base,bgoffs;
-/* temporary workaround to get the correct background */
-static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
+				/* kludge to get the correct background */
+				static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
 
 
 				clip.min_x = sx;
@@ -158,9 +165,9 @@ static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
 
 
 	/* Draw the sprites */
-	for (offs = 0;offs < 8*4; offs+=4)
+	for (offs = 0;offs < 8*4;offs += 4)
 	{
-		if (spriteram[offs+2])
+		if (spriteram[offs] & 0x01)
 		{
 			drawgfx(bitmap,Machine->gfx[3],
 					spriteram[offs+1],

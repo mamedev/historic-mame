@@ -230,6 +230,6 @@ default:
     printf
     (
       "[M6502 %lX] Unrecognized instruction: $%02X at PC=$%04X\n",
-      R->User,Op6502(R->PC.W-1),(word)(R->PC.W-1)
+      (long int)R->User,Op6502(R->PC.W-1),(word)(R->PC.W-1)
     );
   break;

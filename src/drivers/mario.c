@@ -51,7 +51,8 @@ write:
 7d00      ?
 7d80      ?
 7e00      ?
-7e80-7e83 ?
+7e80-7e82 ?
+7e83      sprite palette bank select
 7e84      interrupt enable
 7e85      ?
 7f00-7f06 ?
@@ -69,6 +70,7 @@ write:
 
 
 
+extern unsigned char *mario_sprite_palette;
 extern void mario_gfxbank_w(int offset,int data);
 extern int  mario_vh_start(void);
 extern void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -95,6 +97,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7400, 0x77ff, videoram_w, &videoram },
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
+	{ 0x7e83, 0x7e83, MWA_RAM, &mario_sprite_palette },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -162,8 +165,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 64 },
-	{ 1, 0x2000, &spritelayout, 64*4, 32 },
+	{ 1, 0x0000, &charlayout,      0, 32 },
+	{ 1, 0x2000, &spritelayout, 32*4, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -171,128 +174,99 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x92,0x49,	/* BROWN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x00,0xdb,0x00,	/* UNUSED */
-	0x00,0xdb,0xdb,	/* CYAN */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0x88,0x88,0x88,	/* UNUSED */
-	0xdb,0xdb,0x00,	/* YELLOW */
-	0xff,0x00,0xdb,	/* UNUSED */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xdb,0x00,	/* GREEN */
-	0x49,0xb6,0x92,	/* DKGREEN */
-	0xff,0xb6,0x92,	/* LTORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
+        0x00,0x00,0x00, /* BLACK */
+        0xff,0xff,0xff, /* WHITE */
+        0xff,0x00,0x00, /* RED */
+        0xff,0x00,0xff, /* PURPLE */
+        0,0,127,        /* INBLUE */
+        0,180,0,        /* GRUN */
+        255,131,3,      /* ORANGE */
+        0x00,0x00,0xff, /* BLUE */
+        0xff,0xff,0x00, /* YELLOW */
+        120,120,255,      /* GREY */
+        3,180,239,      /* LTBLUE */
+        0,80,0,         /* DKGRUN */
+        0x00,0xff,0x00, /* GREEN */
+        167,3,3,        /* DKBROWN */
+        255,183,115,    /* LTBROWN */
+        0x00,127,0x00,  /* DKGREEN */
 };
 
-enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
-		UNUSED2,YELLOW,UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,GREY};
+enum { BLACK,WHITE,RED,PURPLE,INBLUE,GRUN,ORANGE,BLUE,YELLOW,GREY,
+                LTBLUE,DKGRUN,GREEN,DKBROWN,LTBROWN,DKGREEN };
 
 static unsigned char colortable[] =
 {
-	/* chars */
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
+	/* chars (first bank) */
+	BLACK,BLUE,WHITE,BLACK,         /* 0-9 */
+	BLACK,BLUE,WHITE,BLACK,         /* A-Z */
+	BLACK,BLUE,WHITE,BLACK,         /* A-Z */
+	BLACK,BLUE,WHITE,BLACK,         /* A-Z */
+	BLACK,DKBROWN,BLUE,LTBROWN,     /* MARIO */
+	BLACK,DKBROWN,GREEN,BLACK,      /* A-Z */
+	BLACK,DKBROWN,GREEN,LTBROWN,    /* LUIGI */
+	BLACK,DKBROWN,GREEN,BLACK,        /* A-Z */
+	BLACK,DKBROWN,RED,WHITE,                /* A-Z */
+	BLACK,DKBROWN,RED,WHITE,                /* A-Z */
+	BLACK,DKBROWN,RED,WHITE,                /* A-Z */
+	BLACK,DKBROWN,RED,WHITE,                /* A-Z */
+	BLACK,BLUE,LTBLUE,WHITE,        /* Mattonella / Acqua */
+	BLACK,ORANGE,YELLOW,WHITE,      /* A-Z */
+	BLACK,ORANGE,YELLOW,WHITE,      /* Mattonelle A-Z */
+	BLACK,ORANGE,YELLOW,WHITE,
 
-	/* sprites */
-	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
-	0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,1,
-	0,3,4,5,6,7,8,9,10,11,12,13,14,15,1,2,
-	0,4,5,6,7,8,9,10,11,12,13,14,15,1,2,3,
-	0,5,6,7,8,9,10,11,12,13,14,15,1,2,3,4,
-	0,6,7,8,9,10,11,12,13,14,15,1,2,3,4,5,
-	0,7,8,9,10,11,12,13,14,15,1,2,3,4,5,6,
-	0,8,9,10,11,12,13,14,15,1,2,3,4,5,6,7,
-	0,9,10,11,12,13,14,15,1,2,3,4,5,6,7,8,
-	0,10,11,12,13,14,15,1,2,3,4,5,6,7,8,9,
-	0,11,12,13,14,15,1,2,3,4,5,6,7,8,9,10,
-	0,12,13,14,15,1,2,3,4,5,6,7,8,9,10,11,
-	0,13,14,15,1,2,3,4,5,6,7,8,9,10,11,12,
-	0,14,15,1,2,3,4,5,6,7,8,9,10,11,12,13,
-	0,15,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
-	0,15,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
-	0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
-	0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,1,
-	0,3,4,5,6,7,8,9,10,11,12,13,14,15,1,2,
-	0,4,5,6,7,8,9,10,11,12,13,14,15,1,2,3,
-	0,5,6,7,8,9,10,11,12,13,14,15,1,2,3,4,
-	0,6,7,8,9,10,11,12,13,14,15,1,2,3,4,5,
-	0,7,8,9,10,11,12,13,14,15,1,2,3,4,5,6,
-	0,8,9,10,11,12,13,14,15,1,2,3,4,5,6,7,
-	0,9,10,11,12,13,14,15,1,2,3,4,5,6,7,8,
-	0,10,11,12,13,14,15,1,2,3,4,5,6,7,8,9,
-	0,11,12,13,14,15,1,2,3,4,5,6,7,8,9,10,
-	0,12,13,14,15,1,2,3,4,5,6,7,8,9,10,11,
-	0,13,14,15,1,2,3,4,5,6,7,8,9,10,11,12,
-	0,14,15,1,2,3,4,5,6,7,8,9,10,11,12,13,
-	0,15,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
-	0,15,1,2,3,4,5,6,7,8,9,10,11,12,13,14
+	BLACK,BLUE,WHITE,BLACK,	/* char set #1 */
+	BLACK,BLUE,WHITE,BLACK,
+	BLACK,BLUE,WHITE,BLACK,
+	BLACK,BLUE,WHITE,BLACK,
+	BLACK,DKBROWN,GREEN,BLACK,	/* char set #2 */
+	BLACK,DKBROWN,GREEN,BLACK,
+	BLACK,DKBROWN,GREEN,BLACK,
+	BLACK,DKBROWN,GREEN,BLACK,
+	BLACK,DKBROWN,RED,WHITE,	/* char set #3 */
+	BLACK,DKBROWN,RED,WHITE,
+	BLACK,DKBROWN,RED,WHITE,
+	BLACK,DKBROWN,RED,WHITE,
+	BLACK,ORANGE,YELLOW,WHITE,	/* char set #4 */
+	BLACK,ORANGE,YELLOW,WHITE,
+	BLACK,ORANGE,YELLOW,WHITE,
+	BLACK,ORANGE,YELLOW,WHITE,
+
+	/* Sprites bank #1 */
+	BLACK,RED,GREEN,DKGRUN,DKGREEN,GRUN,WHITE,BLACK,  /* Tubatura */
+	BLACK,WHITE,WHITE,DKBROWN,GREEN,BLUE,LTBROWN,DKGRUN, /* Tartarughe */
+	BLACK,WHITE,WHITE,DKBROWN,LTBLUE,BLUE,LTBROWN,DKGRUN, /* Tartarughe Incazzose */
+	BLACK,WHITE,WHITE,DKBROWN,RED,DKBROWN,LTBROWN,DKGRUN, /* Tartarughe Violente */
+	BLACK,DKBROWN,YELLOW,GREY,WHITE,ORANGE,RED,BLUE, /* Granchio + Bonus */
+	BLACK,INBLUE,YELLOW,GREY,WHITE,LTBLUE,BLUE,RED, /* Granchio Incazzoso */
+	BLACK,INBLUE,YELLOW,GREY,WHITE,LTBROWN,PURPLE,BLUE, /* Granchio Violento */
+	BLACK,DKGRUN,GREEN,GREY,WHITE,GRUN,DKGREEN,BLUE, /* Fuoco Verde */
+	BLACK,DKBROWN,WHITE,ORANGE,BLUE,RED,RED,ORANGE, /* Moscone */
+	BLACK,DKBROWN,YELLOW,ORANGE,BLUE,RED,RED,ORANGE, /* Moscone Ribaltone */
+	BLACK,WHITE,DKBROWN,DKBROWN,BLUE,RED,LTBROWN,BLACK, /* Mario */
+	BLACK,WHITE,DKBROWN,BLUE,GREEN,BLUE,LTBROWN,BLACK, /* Luigi */
+	BLACK,WHITE, RED ,GRUN,WHITE,GREEN, ORANGE ,DKGRUN, /*  */
+	BLACK,BLACK,DKBROWN,RED,RED,DKBROWN,WHITE,DKBROWN,
+	BLACK,BLACK,BLUE,3,LTBLUE,GRUN,WHITE,3, /* Mattonelle Schiacciate + Pow */
+	BLACK,BLACK,ORANGE,3,YELLOW,3,WHITE,3, /* Pow */
+
+	/* Sprites bank #2 */
+	BLACK,WHITE,DKBROWN,DKBROWN,BLUE,RED,LTBROWN,BLACK,  /* Mario titolo */
+	BLACK,WHITE,DKBROWN,BLUE,GREEN,BLUE,LTBROWN,BLACK, /* Luigi titolo */
+	BLACK,WHITE,WHITE,DKBROWN,LTBLUE,BLUE,LTBROWN,DKGRUN,
+	BLACK,WHITE,WHITE,DKBROWN,RED,DKBROWN,LTBROWN,DKGRUN,
+	BLACK,DKBROWN,YELLOW,GREY,WHITE,ORANGE,RED,BLUE,
+	BLACK,INBLUE,YELLOW,GREY,WHITE,LTBLUE,BLUE,RED,
+	BLACK,INBLUE,YELLOW,GREY,WHITE,LTBROWN,PURPLE,BLUE,
+	BLACK,DKGRUN,GREEN,GREY,WHITE,GRUN,DKGREEN,BLUE,
+	BLACK,WHITE,0,BLUE,0,LTBLUE,0,INBLUE, /* TitoloSU #1 */
+	BLACK,DKGRUN,0,LTBLUE,0,WHITE,0,BLUE, /* Titolo #2 */
+	BLACK,GRUN,0,WHITE,0,DKGRUN,0,LTBLUE, /* Titolo #3 */
+	BLACK,GREEN,0,DKGRUN,0,GRUN,0,WHITE, /* Titolo #4 */
+	BLACK,WHITE,0,GRUN,0,GREEN,0,DKGRUN, /* TitoloGIU #5 */
+	BLACK,INBLUE,0,GREEN,0,WHITE,0,GRUN, /* Titolo #6 */
+	BLACK,BLUE,0,WHITE,0,INBLUE,0,GREEN, /* Titolo #7 */
+	BLACK,LTBLUE,0,INBLUE,0,BLUE,0,WHITE /* Titolo #8 */
 };
 
 
@@ -414,7 +388,9 @@ struct GameDriver mario_driver =
 	input_ports, dsw,
 
 	0, palette, colortable,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	1, 11,
 	8*13, 8*16, 0,
 

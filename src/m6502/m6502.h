@@ -38,9 +38,7 @@
 /** Simple Datatypes *****************************************/
 /** NOTICE: sizeof(byte)=1 and sizeof(word)=2               **/
 /*************************************************************/
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef signed char offset;
+#include "types.h"	/* -NS- */
 
 /** Structured Datatypes *************************************/
 /** NOTICE: #define LSB_FIRST for machines where least      **/
@@ -77,7 +75,7 @@ typedef struct
 /** starting execution with Run6502(). It sets registers to **/
 /** their initial values.                                   **/
 /*************************************************************/
-void Reset6502(register M6502 *R,int IPeriod);
+void Reset6502(register M6502 *R);
 
 /** Exec6502() ***********************************************/
 /** This function will execute a single 6502 opcode. It     **/

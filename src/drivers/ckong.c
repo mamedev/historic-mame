@@ -54,6 +54,7 @@ Notable differences are: (thanks to Ville Laitinen)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -66,15 +67,10 @@ extern int ckong_vh_start(void);
 extern void ckong_vh_stop(void);
 extern void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int cclimber_sh_read_port_r(int offset);
-extern void cclimber_sh_control_port_w(int offset,int data);
-extern void cclimber_sh_write_port_w(int offset,int data);
 extern void cclimber_sample_trigger_w(int offset,int data);
 extern void cclimber_sample_rate_w(int offset,int data);
 extern void cclimber_sample_volume_w(int offset,int data);
 extern int cclimber_sh_start(void);
-extern void cclimber_sh_stop(void);
-extern void cclimber_sh_update(void);
 
 
 
@@ -112,14 +108,14 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x0c, 0x0c, cclimber_sh_read_port_r },
+	{ 0x0c, 0x0c, AY8910_read_port_0_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x08, 0x08, cclimber_sh_control_port_w },
-	{ 0x09, 0x09, cclimber_sh_write_port_w },
+	{ 0x08, 0x08, AY8910_control_port_0_w },
+	{ 0x09, 0x09, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -256,8 +252,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	cclimber_sh_start,
-	cclimber_sh_stop,
-	cclimber_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -342,7 +338,9 @@ struct GameDriver ckong_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x00, 0x02,
 	8*13, 8*16, 0x0c,
 

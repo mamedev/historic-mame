@@ -61,6 +61,8 @@ NMI interrupts for music timing
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -70,20 +72,7 @@ extern void bombjack_background_w(int offset,int data);
 extern void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int bombjack_soundcommand_r(int offset);
-extern void bombjack_soundcommand_w(int offset,int data);
-extern void bombjack_sh_control_port1_w(int offset,int data);
-extern void bombjack_sh_control_port2_w(int offset,int data);
-extern void bombjack_sh_control_port3_w(int offset,int data);
-
-extern void bombjack_sh_write_port1_w(int offset,int data);
-extern void bombjack_sh_write_port2_w(int offset,int data);
-extern void bombjack_sh_write_port3_w(int offset,int data);
-
-extern int bombjack_sh_interrupt(void);
 extern int bombjack_sh_start(void);
-extern void bombjack_sh_stop(void);
-extern void bombjack_sh_update(void);
 
 
 
@@ -110,7 +99,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
-	{ 0xb800, 0xb800, bombjack_soundcommand_w },
+	{ 0xb800, 0xb800, sound_command_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -120,7 +109,7 @@ static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x6000, bombjack_soundcommand_r },
+	{ 0x6000, 0x6000, sound_command_r },
 	{ -1 }  /* end of table */
 };
 
@@ -134,12 +123,12 @@ static struct MemoryWriteAddress bombjack_sound_writemem[] =
 
 static struct IOWritePort bombjack_sound_writeport[] =
 {
-	{ 0x00, 0x00, bombjack_sh_control_port1_w },
-	{ 0x01, 0x01, bombjack_sh_write_port1_w },
-	{ 0x10, 0x10, bombjack_sh_control_port2_w },
-	{ 0x11, 0x11, bombjack_sh_write_port2_w },
-	{ 0x80, 0x80, bombjack_sh_control_port3_w },
-	{ 0x81, 0x81, bombjack_sh_write_port3_w },
+	{ 0x00, 0x00, AY8910_control_port_0_w },
+	{ 0x01, 0x01, AY8910_write_port_0_w },
+	{ 0x10, 0x10, AY8910_control_port_1_w },
+	{ 0x11, 0x11, AY8910_write_port_1_w },
+	{ 0x80, 0x80, AY8910_control_port_2_w },
+	{ 0x81, 0x81, AY8910_write_port_2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -286,10 +275,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			3000000,	/* 2 Mhz????? */
+			3000000,	/* 3 Mhz????? */
 			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
-			bombjack_sh_interrupt,1
+			nmi_interrupt,1
 		}
 	},
 	60,
@@ -310,8 +299,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	bombjack_sh_start,
-	bombjack_sh_stop,
-	bombjack_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -432,7 +421,9 @@ struct GameDriver bombjack_driver =
 	input_ports, dsw,
 
 	0, 0, 0,
-	48, 65,
+	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
+		0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,	/* letters */
+		0x4e,0x4f,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a },
 	5, 0,
 	8*13, 8*16,2,
 

@@ -182,10 +182,15 @@ struct GameDriver
 	const unsigned char *color_prom;
 	const unsigned char *palette;
 	const unsigned char *colortable;
-	int	numbers_start;	/* start of numbers and letters in the character roms */
-	int letters_start;	/* (used by displaytext() ) */
-	int white_text,yellow_text;	/* used by the dip switch menu */
+
+		/* provide here a conversion table containing the codes for the ten */
+		/* digits and the 26 letters in the game's character set. They will */
+		/* usually be consecutive, but in some cases (e.g. Time Pilot) they */
+		/* are scattered. */
+	const short int charset[10+26];
+	int white_text,yellow_text;	/* color codes - used by the dip switch menu */
 	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
+								/* paused_color is also used for the startup notice */
 
 	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
 											/* returns nonzero */

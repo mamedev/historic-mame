@@ -103,6 +103,8 @@ IRQ triggered by commands sent by the main CPU.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -113,17 +115,9 @@ extern void btime_background_w(int offset,int data);
 extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern int btime_soundcommand_r(int offset);
-extern void btime_soundcommand_w(int offset,int data);
-extern void btime_sh_control_port1_w(int offset,int data);
-extern void btime_sh_control_port2_w(int offset,int data);
-extern void btime_sh_write_port1_w(int offset,int data);
-extern void btime_sh_write_port2_w(int offset,int data);
 extern void btime_sh_interrupt_enable_w(int offset,int data);
 extern int btime_sh_interrupt(void);
 extern int btime_sh_start(void);
-extern void btime_sh_stop(void);
-extern void btime_sh_update(void);
 
 
 
@@ -147,7 +141,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
 	{ 0x1800, 0x181f, MWA_RAM, &spriteram },
 	{ 0x4000, 0x4000, MWA_NOP },
-	{ 0x4003, 0x4003, btime_soundcommand_w },
+	{ 0x4003, 0x4003, sound_command_w },
 	{ 0x4004, 0x4004, btime_background_w },
 	{ 0xb000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -159,17 +153,17 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0xa000, 0xa000, btime_soundcommand_r },
+	{ 0xa000, 0xa000, sound_command_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2000, 0x2000, btime_sh_write_port1_w },
-	{ 0x4000, 0x4000, btime_sh_control_port1_w },
-	{ 0x6000, 0x6000, btime_sh_write_port2_w },
-	{ 0x8000, 0x8000, btime_sh_control_port2_w },
+	{ 0x2000, 0x2000, AY8910_write_port_0_w },
+	{ 0x4000, 0x4000, AY8910_control_port_0_w },
+	{ 0x6000, 0x6000, AY8910_write_port_1_w },
+	{ 0x8000, 0x8000, AY8910_control_port_1_w },
 	{ 0xc000, 0xc000, btime_sh_interrupt_enable_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -289,7 +283,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			1500000,	/* 1.5 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
 			btime_interrupt,12	/* 12 interrupts per frame */
@@ -320,8 +314,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	btime_sh_start,
-	btime_sh_stop,
-	btime_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -1257,7 +1251,10 @@ static int hiload(const char *name)
 
 		if ((f = fopen(name,"rb")) != 0)
 		{
-			fread(&RAM[0x0033],1,6*6+3,f);
+			fread(&RAM[0x0036],1,6*6,f);
+			RAM[0x0033] = RAM[0x0036];
+			RAM[0x0034] = RAM[0x0037];
+			RAM[0x0035] = RAM[0x0038];
 			fclose(f);
 		}
 
@@ -1278,7 +1275,7 @@ static void hisave(const char *name)
 
 	if ((f = fopen(name,"wb")) != 0)
 	{
-		fwrite(&RAM[0x0033],1,6*6+3,f);
+		fwrite(&RAM[0x0036],1,6*6,f);
 		fclose(f);
 	}
 }
@@ -1296,7 +1293,9 @@ struct GameDriver btime_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	1, 11,
+	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,	/* numbers */
+		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
+		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
 	0x00, 0x01,
 	8*13, 8*16, 0x00,
 
@@ -1314,7 +1313,9 @@ struct GameDriver btimea_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	1, 11,
+	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,	/* numbers */
+		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
+		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
 	0x00, 0x01,
 	8*13, 8*16, 0x00,
 

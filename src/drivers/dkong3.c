@@ -200,94 +200,198 @@ static unsigned char palette[] =
 	0xdb,0xdb,0xdb	/* GREY */
 };
 
-enum { BLACK,WHITE,RED,PURPLE,CYAN,LTORANGE,DKRED,BLUE,YELLOW,PINK,
-		LTBLUE,ORANGE,GREEN,DKBROWN,LTBROWN,DKGREEN };
+enum { BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,UNUSED2,YELLOW,
+        UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,GREY };
+
+/* Used for common colors (much easier to change them here!) */
+#define DK_LEAVE_MIDDLE     11
+#define DK_VINES_EDGE       13
+#define LEAVE_EDGE          12
+#define LEAVE_MIDDLE_LEV2   6
+#define LEAVE_EDGE_LEV2     11
+#define TRUNK_LEV2          13
 
 static unsigned char colortable[] =
 {
-	/* chars */
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
+    /* chars */
+    /* (#0-3) NUMBERS, 1UP/2UP, TREE TRUNK on Level 2. */
+    BLACK,UNUSED1,UNUSED2,GREY, /* #0. ?,?,0123 */
+    BLACK,UNUSED1,UNUSED2,GREY, /* #1. ?,?,4567 */
+    BLACK,UNUSED1,RED,GREY,     /* #2. ?,color of part of "1UP",89 */
 
-	/* sprites */
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2
+    /* 2=color of tree trunk on level 2, 3=color of "UP 2UP",
+       4=tree trunk on level 2  */
+    BLACK,LEAVE_EDGE_LEV2,RED,TRUNK_LEV2,
+
+    /* (#4-12) A-Z, "TOP", & top vines on Level 1. */
+    BLACK,RED,RED,RED,           /* #4. ABC  */
+    BLACK,RED,RED,RED,           /* #5. DEFG */
+    BLACK,RED,RED,RED,           /* #6. HIJK */
+    BLACK,RED,RED,RED,           /* #7. LMNO */
+    BLACK,RED,RED,RED,           /* #8. PQRS */
+    BLACK,RED,RED,RED,           /* #9. TUVW */
+    BLACK,DK_VINES_EDGE,RED,RED, /* #10. "T" in TOP, XYZ */
+
+    /* 2="OP" & top vines in level 1, 3="OP" & top vines in level 1
+       4=top vines in level 1.  */
+    BLACK,DK_VINES_EDGE,DK_VINES_EDGE,DK_VINES_EDGE,
+
+    /* 2=top-vines, 3=???, 4=top-vines */
+    BLACK,DK_VINES_EDGE,UNUSED3,DK_VINES_EDGE,
+
+    /* (#13-15) TIME display and the 2-color box around it. */
+    BLACK,RED,BLUE,GREY,        /* #13. outerborder, innerborder, ??? */
+    BLACK,BLUE,BLUE,GREY,       /* #14. "TIME" display, line under time, ??? */
+    BLACK,RED,BLUE,GREY,        /* #15. outerborder, innerborder, ??? */
+
+    /* (#16-22) 2=shadow of "3", 3=outline of "3" & vines, 4=middle of "3" */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 3=vertical vines  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 3=horizontal vines */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,  /* 2=box on bottom, 3=vines in box. */
+
+    /* 2=shadow of "3" & middle of DK-logo & middle of box on bottom
+       3=outline of "3" & outline of DK-logo & vines in box on bottom
+       4=middle of "3"  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#23-47) DK-LOGO
+       2=middle of DK-logo & line on top of boxes on side of levels,
+       3=boxes on side of level & outline of DK-logo, 4=boxes on side of levels  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#28) 2=middle of DK-logo & leaves, 3=outline of DK-logo, 4=edge of leaves */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#32) 2=middle of leaves & shadow of "3", 3=outline of "3",
+       4=edge of leaves & middle of "3"  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#33) 2=middle of leaves & shadow of "3", 4=edge of leaves */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#34-36) 2=middle of DK-logo & middle of leaves, 3=outline of DK-logo,
+       4=edge of leaves */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#37-38) 2=middle of DK-logo, 3=outline of DK-logo */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#39) 2=middle of DK-logo & color of DK's hanging vines, 3=outline of
+       DK-logo, 4=color of DK's hanging vines (mixed w/color 2).  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#40-41) 2=middle of DK-logo & boxes near bottom, 3=outline of DK-logo &
+       lines in boxes near bottom. */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#42) 2=middle of DK-logo & boxes near bottom, 3=outline of DK-logo &
+       lines in boxes near bottom, 4=boxes on side of levels  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#43-46) DK-Logo, ANGLED pieces on side of levels.
+       2=middle of DK-logo, 3=outline of DK-logo, 4=boxes on side of levels */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#47) 2=leave middle, 4=leave edge & boxes on side of levels */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#48-53) LEAVES on Level 1, LETTERS on title screen.
+       2=leave middle, 4=leave edges & some letters  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#54-57) LEAVES on Level 1, (56-57) LETTERS on title screen
+       2=leave middle, 4=leave edges  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    /* 2=some letters on title screen  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#58) 2=tree trunk & some letters on title screen & angled pieces
+       on Level 2, 4=tree trunk & tops of angulars on Level 2.  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#59) 2=some letters on title screen */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#60) 2=some letters on title screen & vines on level 2, 3=side bar,
+       4=vines on level 2.  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#61) 2=some letters on title screen & angulars on level 2,
+     4=top of angled pieces on level 2.  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    /* (#62-63) LEAVES ON LEVEL 2.
+       2=middle of leaves on level 2, 4=edges of leaves on level 2.  */
+    BLACK,LEAVE_MIDDLE_LEV2,UNUSED3,LEAVE_EDGE_LEV2,
+    BLACK,LEAVE_MIDDLE_LEV2,UNUSED3,LEAVE_EDGE_LEV2,
+
+    /* sprites */
+    /* #0. Donkey Kong's head. */
+    BLACK,RED,BROWN,GREY,
+
+    BLACK,UNUSED1,UNUSED2,UNUSED3,       /* ???? */
+    BLACK,UNUSED2,UNUSED1,UNUSED3,       /* ???? */
+
+    /* #3. Middle-vertical-vines on level 2. */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,LEAVE_EDGE,
+
+    BLACK,UNUSED3,UNUSED2,UNUSED1,       /* ???? */
+
+    /* #5. Box on the bottom-middle of level #1, 2=box color, 3=lines in box, 4=???  */
+    BLACK,DK_LEAVE_MIDDLE,DK_VINES_EDGE,GREY,
+
+    BLACK,UNUSED1,UNUSED3,UNUSED2,       /* ???? */
+
+    /* #7. Mario's body? */
+    BLACK,DKGREEN,RED,BLUE,
+    /* #8. Mario's head */
+    BLACK,LTORANGE,BROWN,BLUE,
+
+    /* #9. Mario's BULLETS (weak gun) */
+    BLACK,RED,GREEN,BLUE,
+
+    /* #10. Bee hives & 2-hit bugs (level 3) (EYES,WINGS/FEET,BODY/ANTENNA)
+            also color of SHOTS & PLAYER when player gets spray bottle. */
+    BLACK,RED,BROWN,YELLOW,
+
+    /* #11. Bugs-common ones (EYES,WINGS/FEET,BODY/ANTENNA) */
+    BLACK,DKGREEN,GREEN,BLUE,
+
+    /* #12. Bugs */
+    BLACK,DKGREEN,BLUE,GREEN,
+
+    /* #13. Worm (BODY,EYES/STRIPES,STRIPES) */
+    BLACK,DKCYAN,RED,YELLOW,
+
+    /* #14. Spray Bottle & flowers? (near DK on level 1) */
+    BLACK,RED,GREEN,GREY,
+
+    /* #15. Donkey Kong's body. (BODY,CHEST,EDGES), also BALL on level 2. */
+    BLACK,RED,BROWN,RED
 };
 
 
@@ -410,9 +514,11 @@ struct GameDriver dkong3_driver =
 	input_ports, dsw,
 
 	0, palette, colortable,
-	0, 17,
-	1, 11,
-	8*13, 8*16, 0,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
+	0, 3,
+	8*13, 8*16, 4,
 
 	hiload, hisave
 };

@@ -33,7 +33,7 @@ void invaders_videoram_w(int offset,int data)
 
 
 			col = Machine->gfx[0]->colortable[1];	/* white */
-			if (y >= 188) col = Machine->gfx[0]->colortable[3];	/* green */
+			if (y >= 192) col = Machine->gfx[0]->colortable[3];	/* green */
 			if (y > 32 && y < 64) col = Machine->gfx[0]->colortable[5];	/* red */
 
 			if (data & 0x80) tmpbitmap->line[y][x] = col;

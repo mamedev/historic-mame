@@ -5,22 +5,29 @@
 
 
 
-static int pooyan_portB_r(int offset)
-{
-	int clockticks,clock;
+static int rates[8] = { 3000, 0, 0, 0, 0, 0, 0, 0 };
 
-#define TIMER_RATE (32)
+
+static int amidar_portB_r(int offset)
+{
+	int clockticks,clock,i;
+
 
 	clockticks = (Z80_IPeriod - cpu_geticount());
 
-	clock = clockticks / TIMER_RATE;
+	clock = 0;
+	for (i = 0;i < 8;i++)
+	{
+		clock <<= 1;
+		if (rates[i]) clock |= ((clockticks / rates[i]) & 1);
+	}
 
 	return clock;
 }
 
 
 
-int pooyan_sh_interrupt(void)
+int amidar_sh_interrupt(void)
 {
 	if (pending_commands) return 0xff;
 	else return Z80_IGNORE_INT;
@@ -34,14 +41,14 @@ static struct AY8910interface interface =
 	1789750000,	/* 1.78975 MHZ ?? */
 	{ 255, 255 },
 	{ sound_command_r },
-	{ pooyan_portB_r },
+	{ amidar_portB_r },
 	{ },
 	{ }
 };
 
 
 
-int pooyan_sh_start(void)
+int amidar_sh_start(void)
 {
 	pending_commands = 0;
 

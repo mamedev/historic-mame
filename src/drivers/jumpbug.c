@@ -13,9 +13,41 @@ Jump Bug memory map (preliminary)
 8000-afff ROM
 
 read:
-6000      IN0 ?
-6800      IN1 ?
+6000      IN0
+6800      IN1
 7000      IN2 ?
+*
+ * IN0 (all bits are inverted)
+ * bit 7 : DOWN player 1
+ * bit 6 : UP player 1
+ * bit 5 : ?
+ * bit 4 : SHOOT player 1
+ * bit 3 : LEFT player 1
+ * bit 2 : RIGHT player 1
+ * bit 1 : DOWN player 2
+ * bit 0 : COIN A
+*
+ * IN1 (bits 2-7 are inverted)
+ * bit 7 : UP player 2
+ * bit 6 : Difficulty: 1 Easy, 0 Hard (according to JBE v0.5)
+ * bit 5 : COIN B
+ * bit 4 : SHOOT player 2
+ * bit 3 : LEFT player 2
+ * bit 2 : RIGHT player 2
+ * bit 1 : START 2 player
+ * bit 0 : START 1 player
+*
+ * DSW (all bits are inverted)
+ * bit 7 : ?
+ * bit 6 : ?
+ * bit 5 : ?
+ * bit 4 : ?
+ * bit 3 : \ coins: 11; coin a 1 credit, coin b 6 credits
+ * bit 2 : /        10; coin a 1/2 credits, coin b 3 credits credits
+                    01; coin a 1/2 credits, coin b 1/2
+                    00; coin a 1 credit, coin b 1 credit
+ * bit 1 : \ lives: 11; 5 cars, 10; 4 cars,
+ * bit 0 : /        01; 3 cars, 00; Free Play
 
 
 write:
@@ -31,6 +63,11 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
+
+
+
+extern int cclimber_sh_start(void);
 
 
 
@@ -64,6 +101,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5040, 0x505f, MWA_RAM, &spriteram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7004, 0x7004, scramble_stars_w },
+	{ 0x5900, 0x5900, AY8910_control_port_0_w },
+	{ 0x5800, 0x5800, AY8910_write_port_0_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -74,17 +113,19 @@ static struct MemoryWriteAddress writemem[] =
 static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		0x00,
+		{ 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
+				OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_DOWN, OSD_KEY_UP },
+		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
+				OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_DOWN, OSD_JOY_UP }
 	},
 	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		0x40,
+		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, OSD_KEY_3, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{	/* IN2 */
-		0xff,
+	{	/* DSW */
+		0x01,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -95,11 +136,8 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
-	{ 1, 0x01, "SW1", { "OFF", "ON" } },
-	{ 1, 0x02, "SW2", { "OFF", "ON" } },
-	{ 2, 0x02, "SW3", { "OFF", "ON" } },
-	{ 2, 0x04, "SW4", { "OFF", "ON" } },
-	{ 2, 0x08, "SW5", { "OFF", "ON" } },
+	{ 2, 0x03, "LIVES", { "UNLIMITED", "3", "4", "5" } },
+	{ 1, 0x40, "DIFFICULTY", { "HARD", "EASY" }, 1 },
 	{ -1 }
 };
 
@@ -190,9 +228,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	cclimber_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -222,6 +260,15 @@ ROM_START( jumpbug_rom )
 	ROM_LOAD( "jbn", 0x2800, 0x0800 )
 ROM_END
 
+ROM_START( jbugsega_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "jb1.prg", 0x0000, 0x4000 )
+	ROM_LOAD( "jb2.prg", 0x8000, 0x2800 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "jb3.gfx", 0x0000, 0x3000 )
+ROM_END
+
 
 
 struct GameDriver jumpbug_driver =
@@ -235,7 +282,29 @@ struct GameDriver jumpbug_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 256,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x108,0x109,0x10a,0x10b,0x10c,	/* letters */
+		0x10d,0x10e,0x10f,0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,0x119 },
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver jbugsega_driver =
+{
+	"jbugsega",
+	&machine_driver,
+
+	jbugsega_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x108,0x109,0x10a,0x10b,0x10c,	/* letters */
+		0x10d,0x10e,0x10f,0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,0x119 },
 	0x00, 0x01,
 	8*13, 8*16, 0x04,
 

@@ -876,9 +876,6 @@ int setdipswitches(void)
 
 
 
-
-
-
 /***************************************************************************
 
   Display text on the screen. If erase is 0, it superimposes the text on
@@ -936,8 +933,9 @@ void displaytext(const struct DisplayText *dt,int erase)
 			else
 			{
 				if (*c >= '0' && *c <= '9')
-					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->gamedrv->numbers_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->gamedrv->letters_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+					drawgfx(Machine->scrbitmap,Machine->gfx[0],Machine->gamedrv->charset[*c - '0'],dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+				else if (*c >= 'A' && *c <= 'Z')
+					drawgfx(Machine->scrbitmap,Machine->gfx[0],Machine->gamedrv->charset[*c - 'A' + 10],dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
 
 				x += Machine->gfx[0]->width;
 			}

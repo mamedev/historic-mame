@@ -46,23 +46,16 @@ same as Pooyan
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
 extern void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void pooyan_soundcommand_w(int offset,int data);
-extern int pooyan_sh_read_port1_r(int offset);
-extern void pooyan_sh_control_port1_w(int offset,int data);
-extern void pooyan_sh_write_port1_w(int offset,int data);
-extern int pooyan_sh_read_port2_r(int offset);
-extern void pooyan_sh_control_port2_w(int offset,int data);
-extern void pooyan_sh_write_port2_w(int offset,int data);
 extern int pooyan_sh_interrupt(void);
 extern int pooyan_sh_start(void);
-extern void pooyan_sh_stop(void);
-extern void pooyan_sh_update(void);
 
 
 
@@ -88,7 +81,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb410, 0xb43f, MWA_RAM, &spriteram_2 },
 	{ 0xc300, 0xc300, interrupt_enable_w },
 	{ 0xc200, 0xc200, MWA_NOP },
-	{ 0xc000, 0xc000, pooyan_soundcommand_w },
+	{ 0xc000, 0xc000, sound_command_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -98,20 +91,20 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, pooyan_sh_read_port1_r },
-	{ 0x6000, 0x6000, pooyan_sh_read_port2_r },
-	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x4000, 0x4000, AY8910_read_port_0_r },
+	{ 0x6000, 0x6000, AY8910_read_port_1_r },
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x5000, 0x5000, pooyan_sh_control_port1_w },
-	{ 0x4000, 0x4000, pooyan_sh_write_port1_w },
-	{ 0x7000, 0x7000, pooyan_sh_control_port2_w },
-	{ 0x6000, 0x6000, pooyan_sh_write_port2_w },
-	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x5000, 0x5000, AY8910_control_port_0_w },
+	{ 0x4000, 0x4000, AY8910_write_port_0_w },
+	{ 0x7000, 0x7000, AY8910_control_port_1_w },
+	{ 0x6000, 0x6000, AY8910_write_port_1_w },
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -277,8 +270,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	pooyan_sh_start,
-	pooyan_sh_stop,
-	pooyan_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -364,9 +357,12 @@ struct GameDriver timeplt_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
-	0x00, 0x03,
-	8*13, 8*16, 0x07,
+
+	{ 0x13,0x49,0xa8,0xcd,0xf3,0xae,0x42,0xb0,0x17,0x5d,	/* numbers */
+		0x74,0x8c,0x77,0x87,0x34,0x00,0x39,0xc4,0x67,0x21,0x7a,0xc5,0x38,	/* letters */
+		0x3b,0x68,0x88,0x2f,0x5f,0x9f,0x6d,0x0d,0x0e,0x0f,0x1f,0x89,0xa9 },
+	19, 0,
+	8*13, 8*16, 20,
 
 	hiload, hisave
 };
@@ -382,9 +378,11 @@ struct GameDriver spaceplt_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
-	0x00, 0x03,
-	8*13, 8*16, 0x07,
+	{ 0x13,0x49,0xa8,0xcd,0xf3,0xae,0x42,0xb0,0x17,0x5d,	/* numbers */
+		0x74,0x8c,0x77,0x87,0x34,0x00,0x39,0xc4,0x67,0x21,0x7a,0xc5,0x38,	/* letters */
+		0x3b,0x68,0x88,0x2f,0x5f,0x9f,0x6d,0x0d,0x0e,0x0f,0x1f,0x89,0xa9 },
+	19, 0,
+	8*13, 8*16, 20,
 
 	hiload, hisave
 };

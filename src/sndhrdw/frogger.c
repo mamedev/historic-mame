@@ -1,16 +1,7 @@
 #include "driver.h"
 #include "Z80.h"
-#include "psg.h"
-
-
-#define AY8910_CLOCK 1789750000	/* 1.78975 MHZ ?? */
-
-#define UPDATES_PER_SECOND 60
-#define emulation_rate (400*UPDATES_PER_SECOND)
-#define buffer_len (emulation_rate/UPDATES_PER_SECOND)
-
-
-static int command_queue[10],pending_commands;
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -31,68 +22,46 @@ int frogger_sh_init(const char *gamename)
 
 
 
-void frogger_soundcommand_w(int offset,int data)
+static int rates[8] = { 256, 2048, 0, 128, 1024, 0, 0, 0 };
+
+
+static int frogger_portB_r(int offset)
 {
-	command_queue[pending_commands] = data;
-	pending_commands++;
-}
+	int clockticks,clock,i;
 
 
+	clockticks = (Z80_IPeriod - cpu_geticount());
 
-static unsigned char porthandler(AY8910 *chip, int port, int iswrite, unsigned char val)
-{
-	if (iswrite)
+	clock = 0;
+	for (i = 0;i < 8;i++)
 	{
-	}
-	else
-	{
-		if (port == 0x0e)
-		{
-			int i;
-
-
-			if (pending_commands > 0)	/* should always be true */
-			{
-				chip->Regs[port] = command_queue[0];
-
-				pending_commands--;
-
-				for (i = 0;i < pending_commands;i++)
-					command_queue[i] = command_queue[i+1];
-			}
-			else chip->Regs[port] = 0;
-		}
-		else if (port == 0x0f)
-		{
-			int clockticks,clock;
-
-#define TIMER_RATE (128)
-
-			clockticks = (Z80_IPeriod - Z80_ICount);
-
-			clock = clockticks / TIMER_RATE;
-
-			clock = ((clock & 0x01) << 4) | ((clock & 0x02) << 6) |
-					((clock & 0x10) << 2) |	((clock & 0x08) << 0);
-
-			chip->Regs[port] = clock;
-		}
+		clock <<= 1;
+		if (rates[i]) clock |= ((clockticks / rates[i]) & 1);
 	}
 
-	return 0;
+	return clock;
 }
 
 
 
 int frogger_sh_interrupt(void)
 {
-	if (pending_commands > 0)
-	{
-	/* actually I should trigger the interrupt when bit 3 of 8201 is set to 1 */
-		return 0xff;
-	}
+	if (pending_commands) return 0xff;
 	else return Z80_IGNORE_INT;
 }
+
+
+
+static struct AY8910interface interface =
+{
+	1,	/* 1 chip */
+	1789750000,	/* 1.78975 MHZ ?? */
+	{ 255 },
+	{ sound_command_r },
+	{ frogger_portB_r },
+	{ },
+	{ }
+};
 
 
 
@@ -100,63 +69,5 @@ int frogger_sh_start(void)
 {
 	pending_commands = 0;
 
-	if (AYInit(1,AY8910_CLOCK,emulation_rate,buffer_len,0) == 0)
-	{
-		AYSetPortHandler(0,AY_PORTA,porthandler);
-		AYSetPortHandler(0,AY_PORTB,porthandler);
-
-		return 0;
-	}
-	else return 1;
-}
-
-
-
-void frogger_sh_stop(void)
-{
-	AYShutdown();
-}
-
-
-
-int static lastreg;	/* AY-3-8910 register currently selected */
-
-int frogger_sh_read_port_r(int offset)
-{
-	return AYReadReg(0,lastreg);
-}
-
-
-
-void frogger_sh_control_port_w(int offset,int data)
-{
-	lastreg = data;
-}
-
-
-
-void frogger_sh_write_port_w(int offset,int data)
-{
-	AYWriteReg(0,lastreg,data);
-}
-
-
-
-void frogger_sh_update(void)
-{
-	unsigned char buffer[buffer_len];
-	static int playing;
-
-
-	if (play_sound == 0) return;
-
-	AYSetBuffer(0,buffer);
-	AYUpdate();
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-if (!playing)
-{
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	playing = 1;
-}
+	return AY8910_sh_start(&interface);
 }

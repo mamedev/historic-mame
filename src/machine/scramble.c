@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
 
 
 int scramble_IN2_r(int offset)
@@ -18,10 +17,10 @@ int scramble_IN2_r(int offset)
 
 	res = readinputport(2);
 
-/*if (errorlog) fprintf(errorlog,"%04x: read IN2\n",Z80_GetPC());*/
+/*if (errorlog) fprintf(errorlog,"%04x: read IN2\n",cpu_getpc());*/
 
 	/* avoid protection */
-	if (Z80_GetPC() == 0x00e4) res &= 0x7f;
+	if (cpu_getpc() == 0x00e4) res &= 0x7f;
 
 	return res;
 }
@@ -30,15 +29,15 @@ int scramble_IN2_r(int offset)
 
 int scramble_protection_r(int offset)
 {
-if (errorlog) fprintf(errorlog,"%04x: read protection\n",Z80_GetPC());
+if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_getpc());
 
 	return 0x6f;
 
 	/* codes for the Konami version (not working yet) */
-	if (Z80_GetPC() == 0x00a8) return 0xf0;
-	if (Z80_GetPC() == 0x00be) return 0xb0;
-	if (Z80_GetPC() == 0x0c1d) return 0xf0;
-	if (Z80_GetPC() == 0x0c6a) return 0xb0;
-	if (Z80_GetPC() == 0x0ceb) return 0x40;
-	if (Z80_GetPC() == 0x0d37) return 0x60;
+	if (cpu_getpc() == 0x00a8) return 0xf0;
+	if (cpu_getpc() == 0x00be) return 0xb0;
+	if (cpu_getpc() == 0x0c1d) return 0xf0;
+	if (cpu_getpc() == 0x0c6a) return 0xb0;
+	if (cpu_getpc() == 0x0ceb) return 0x40;
+	if (cpu_getpc() == 0x0d37) return 0x60;
 }

@@ -57,23 +57,16 @@ standard NMI at 0x66
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
 extern void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void pooyan_soundcommand_w(int offset,int data);
-extern int pooyan_sh_read_port1_r(int offset);
-extern void pooyan_sh_control_port1_w(int offset,int data);
-extern void pooyan_sh_write_port1_w(int offset,int data);
-extern int pooyan_sh_read_port2_r(int offset);
-extern void pooyan_sh_control_port2_w(int offset,int data);
-extern void pooyan_sh_write_port2_w(int offset,int data);
 extern int pooyan_sh_interrupt(void);
 extern int pooyan_sh_start(void);
-extern void pooyan_sh_stop(void);
-extern void pooyan_sh_update(void);
 
 
 
@@ -98,7 +91,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9410, 0x943f, MWA_RAM, &spriteram_2 },
 	{ 0xa180, 0xa180, interrupt_enable_w },
 	{ 0xa187, 0xa187, MWA_NOP },
-	{ 0xa100, 0xa100, pooyan_soundcommand_w },
+	{ 0xa100, 0xa100, sound_command_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -108,8 +101,8 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, pooyan_sh_read_port1_r },
-	{ 0x6000, 0x6000, pooyan_sh_read_port2_r },
+	{ 0x4000, 0x4000, AY8910_read_port_0_r },
+	{ 0x6000, 0x6000, AY8910_read_port_1_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -117,10 +110,10 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x5000, 0x5000, pooyan_sh_control_port1_w },
-	{ 0x4000, 0x4000, pooyan_sh_write_port1_w },
-	{ 0x7000, 0x7000, pooyan_sh_control_port2_w },
-	{ 0x6000, 0x6000, pooyan_sh_write_port2_w },
+	{ 0x5000, 0x5000, AY8910_control_port_0_w },
+	{ 0x4000, 0x4000, AY8910_write_port_0_w },
+	{ 0x7000, 0x7000, AY8910_control_port_1_w },
+	{ 0x6000, 0x6000, AY8910_write_port_1_w },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -282,8 +275,8 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	pooyan_sh_start,
-	pooyan_sh_stop,
-	pooyan_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -376,7 +369,9 @@ struct GameDriver pooyan_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x00, 0x03,
 	8*13, 8*16, 0x07,
 

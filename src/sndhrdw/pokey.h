@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Simulator Includes, V2.0                              */
+/* Module:  POKEY Chip Simulator Includes, V2.2                              */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /* Date:    January 1, 1997                                                  */
@@ -48,6 +48,10 @@
 #define uint8  unsigned int8
 #define uint16 unsigned int16
 #define uint32 unsigned int32
+
+#ifdef __MWERKS__
+#define BIG_ENDIAN
+#endif
 
 #endif
 

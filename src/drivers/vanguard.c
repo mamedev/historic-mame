@@ -73,13 +73,15 @@ static struct InputPort input_ports[] =
 		0x00,
 		{ OSD_KEY_D, OSD_KEY_E, OSD_KEY_F, OSD_KEY_S,
 			OSD_KEY_DOWN, OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_LEFT },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ OSD_JOY_FIRE3, OSD_JOY_FIRE2, OSD_JOY_FIRE4, OSD_JOY_FIRE1,
+			OSD_JOY_DOWN, OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_LEFT }
 	},
 	{	/* IN1 */
 		0x00,
-		{ OSD_KEY_S, OSD_KEY_W, OSD_KEY_D, OSD_KEY_A,
+		{ OSD_KEY_D, OSD_KEY_E, OSD_KEY_F, OSD_KEY_S,
 			OSD_KEY_DOWN, OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_LEFT },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ OSD_JOY_FIRE3, OSD_JOY_FIRE2, OSD_JOY_FIRE4, OSD_JOY_FIRE1,
+			OSD_JOY_DOWN, OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_LEFT }
 	},
 	{	/* DSW ?? */
 		0x00,
@@ -258,7 +260,9 @@ struct GameDriver vanguard_driver =
 	input_ports, dsw,
 
 	0, palette, colortable,
-	0, 10,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
+		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 

@@ -42,6 +42,7 @@ extern struct GameDriver uniwars_driver;
 extern struct GameDriver warofbug_driver;
 extern struct GameDriver mooncrst_driver;
 extern struct GameDriver mooncrsb_driver;
+extern struct GameDriver fantazia_driver;
 extern struct GameDriver moonqsr_driver;
 extern struct GameDriver scramble_driver;
 extern struct GameDriver atlantis_driver;
@@ -76,12 +77,16 @@ extern struct GameDriver bombjack_driver;
 extern struct GameDriver centiped_driver;
 extern struct GameDriver milliped_driver;
 extern struct GameDriver nibbler_driver;
+extern struct GameDriver fantasy_driver;
 extern struct GameDriver mpatrol_driver;
 extern struct GameDriver mranger_driver;
 extern struct GameDriver btime_driver;
 extern struct GameDriver btimea_driver;
 extern struct GameDriver jumpbug_driver;
+extern struct GameDriver jbugsega_driver;
 extern struct GameDriver vanguard_driver;
+extern struct GameDriver gberet_driver;
+extern struct GameDriver venture_driver;
 
 
 
@@ -127,6 +132,7 @@ const struct GameDriver *drivers[] =
 	&warofbug_driver,
 	&mooncrst_driver,
 	&mooncrsb_driver,
+	&fantazia_driver,
 	&moonqsr_driver,
 	&scramble_driver,
 	&atlantis_driver,
@@ -161,11 +167,15 @@ const struct GameDriver *drivers[] =
 	&centiped_driver,
 	&milliped_driver,
 	&nibbler_driver,
+	&fantasy_driver,
 	&mpatrol_driver,
 	&mranger_driver,
 	&btime_driver,
 	&btimea_driver,
 	&jumpbug_driver,
+	&jbugsega_driver,
 	&vanguard_driver,
+	&gberet_driver,
+	&venture_driver,
 	0	/* end of array */
 };

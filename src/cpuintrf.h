@@ -4,6 +4,10 @@
 
 void cpu_run(void);
 
+int cpu_getpc(void);
+int cpu_geticount(void);
+void cpu_seticount(int cycles);
+
 void cpu_writemem(register int A,register unsigned char V);
 int cpu_readmem(register int A);
 

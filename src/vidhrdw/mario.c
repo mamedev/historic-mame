@@ -14,6 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 static int gfx_bank;
+unsigned char *mario_sprite_palette;
 
 
 
@@ -63,7 +64,7 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 			charcode = videoram[offs] + 256 * gfx_bank;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,charcode >> 2,
+					charcode,charcode >> 4,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -81,7 +82,8 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (spriteram[i])
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[i+2],spriteram[i+1] & 0x3f,
+					spriteram[i+2],
+					(spriteram[i+1] & 0x0f) + 0x10 * *mario_sprite_palette,
 					spriteram[i+1] & 0x80,spriteram[i+1] & 0x40,
 					248 - spriteram[i+3],spriteram[i] - 8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

@@ -80,7 +80,7 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs + 1] & 0x3f,
 				spriteram[offs + 2],
 				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-				spriteram[offs],spriteram[offs + 3],
+				spriteram[offs],((spriteram[offs + 3] + 8) & 0xff) - 8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

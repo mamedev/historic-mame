@@ -254,11 +254,13 @@ int vh_open(void)
 	Machine->memory_region[1] = 0;
 
 
-	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE FILES OR THE EXECUTABLE WITH ROM IMAGES\n"
-		   "DOING SO WILL HARM FURTHER EMULATOR DEVELOPMENT AND WILL CONSIDERABLY ANNOY "
-		   "THE RIGHTFUL COPYRIGHT HOLDERS OF THOSE ROM IMAGES AND CAN RESULT IN LEGAL "
-		   "ACTION UNDERTAKEN BY EARLIER MENTIONED COPYRIGHT HOLDERS\n\n"
-		   "IF YOU DO NOT AGREE WITH THE ABOVE CONDITIONS PRESS ESC";
+	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND OR THE EXECUTABLE "
+			"APPLICATION WITH ANY ROM IMAGES\n"
+			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
+			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
+			"OF ANY ROM IMAGES\n\n"
+			"IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW";
+
 	dt[0].color = gamedrv->paused_color;
 	dt[0].x = 0;
 	dt[0].y = 0;
@@ -388,9 +390,9 @@ int updatescreen(void)
 
 		if (showfps)
 		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps/100 + gamedrv->numbers_start,gamedrv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],(fps%100)/10 + gamedrv->numbers_start,gamedrv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps%10 + gamedrv->numbers_start,gamedrv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%1000)/100],gamedrv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%100)/10],gamedrv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[fps%10],gamedrv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
 		}
 
 		osd_update_display();
@@ -449,7 +451,7 @@ int run_machine(const char *gamename)
 					if (fread(name,1,incount,f) == incount)
 					{
 						for (i = 0;i < incount;i++)
-							gamedrv->input_ports[i].default_value = name[i];
+							gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
 					}
 					fclose(f);
 				}

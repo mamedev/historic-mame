@@ -29,7 +29,7 @@ int carnival_IN1_r(int offset)
 	/* I'm not yet sure about how the vertical blanking should be handled. */
 	/* I think that IN1_VBLANK should be 0 during the whole vblank, which */
 	/* should last roughly 1/12th of the frame. */
-	if (vblank && Z80_ICount >
+	if (vblank && cpu_geticount() >
 			Z80_IPeriod - Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / 12)
 		res &= ~IN1_VBLANK;
 	else vblank = 0;

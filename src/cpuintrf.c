@@ -10,11 +10,8 @@
 
 #include "driver.h"
 #include "Z80.h"
-/* I can't include M6502.h because it redefines some types. Here are the things I need: */
-                               /* Interrupt6502() returns:   */
-#define INT_NONE  0            /* No interrupt required      */
-#define INT_IRQ	  1            /* Standard IRQ interrupt     */
-#define INT_NMI	  2            /* Non-maskable interrupt     */
+#include "M6502.h"
+
 
 
 static int activecpu;
@@ -22,6 +19,8 @@ static int activecpu;
 static const struct MemoryReadAddress *memoryread;
 static const struct MemoryWriteAddress *memorywrite;
 
+
+unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
 
 
 struct z80context
@@ -37,10 +36,7 @@ struct z80context
 void cpu_run(void)
 {
 	int totalcpu,usres;
-	unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
 	unsigned char *ROM0;	/* opcode decryption is currently supported only for the first memory region */
-extern void Reset6502(void *R,int IPeriod);
-extern word Run6502(void *R);
 
 
 	ROM0 = ROM;
@@ -74,10 +70,17 @@ reset:
 				}
 				break;
 			case CPU_M6502:
-				/* Reset6502() needs to read memory to get the PC start address */
-				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
-				memoryread = Machine->drv->cpu[activecpu].memory_read;
-				Reset6502(cpucontext[activecpu],cycles);
+				{
+					M6502 *ctxt;
+
+
+					ctxt = (M6502 *)cpucontext[activecpu];
+					/* Reset6502() needs to read memory to get the PC start address */
+					RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+					memoryread = Machine->drv->cpu[activecpu].memory_read;
+					ctxt->IPeriod = cycles;	/* must be done before Reset6502() */
+					Reset6502(ctxt);
+				}
 				break;
 		}
 	}
@@ -124,7 +127,7 @@ reset:
 
 				case CPU_M6502:
 					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
-						Run6502(cpucontext[activecpu]);
+						Run6502((M6502 *)cpucontext[activecpu]);
 					break;
 			}
 		}
@@ -137,8 +140,73 @@ reset:
 
 
 
-/* some functions commonly used by emulators */
+int cpu_getpc(void)
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type)
+	{
+		case CPU_Z80:
+			return Z80_GetPC();
+			break;
 
+		case CPU_M6502:
+			return ((M6502 *)cpucontext[activecpu])->PC.W;
+			break;
+
+		default:
+	if (errorlog) fprintf(errorlog,"cpu_getpc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			return -1;
+			break;
+	}
+}
+
+
+
+int cpu_geticount(void)
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type)
+	{
+		case CPU_Z80:
+			return Z80_ICount;
+			break;
+
+		case CPU_M6502:
+			return ((M6502 *)cpucontext[activecpu])->ICount;
+			break;
+
+		default:
+	if (errorlog) fprintf(errorlog,"cpu_geticycles: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			return -1;
+			break;
+	}
+}
+
+
+
+void cpu_seticount(int cycles)
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type)
+	{
+		case CPU_Z80:
+			Z80_ICount = cycles;
+			break;
+
+		case CPU_M6502:
+			((M6502 *)cpucontext[activecpu])->ICount = cycles;
+			break;
+
+		default:
+	if (errorlog) fprintf(errorlog,"cpu_seticycles: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			break;
+	}
+}
+
+
+
+/***************************************************************************
+
+  Some functions commonly used by drivers
+
+***************************************************************************/
 int readinputport(int port)
 {
 	int res,i;
@@ -264,6 +332,7 @@ int interrupt(void)
 			break;
 
 		default:
+	if (errorlog) fprintf(errorlog,"interrupt: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
 			return -1;
 			break;
 	}
@@ -286,6 +355,7 @@ int nmi_interrupt(void)
 			break;
 
 		default:
+	if (errorlog) fprintf(errorlog,"nmi_interrupt: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
 			return -1;
 			break;
 	}
@@ -319,7 +389,7 @@ int cpu_readmem(register int A)
 		mra++;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,Z80_GetPC(),A);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,cpu_getpc(),A);
 	return RAM[A];
 }
 
@@ -347,7 +417,7 @@ void cpu_writemem(register int A,register unsigned char V)
 			else if (handler == MWA_RAM) RAM[A] = V;
 			else if (handler == MWA_ROM)
 			{
-				if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",activecpu,Z80_GetPC(),V,A);
+				if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",activecpu,cpu_getpc(),V,A);
 			}
 			else (*handler)(A - mwa->start,V);
 
@@ -357,7 +427,7 @@ void cpu_writemem(register int A,register unsigned char V)
 		mwa++;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,Z80_GetPC(),V,A);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,cpu_getpc(),V,A);
 	RAM[A] = V;
 }
 
@@ -386,7 +456,7 @@ byte Z80_In(byte Port)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",activecpu,Z80_GetPC(),Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",activecpu,cpu_getpc(),Port);
 	return 0;
 }
 
@@ -417,7 +487,7 @@ void Z80_Out(byte Port,byte Value)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",activecpu,Z80_GetPC(),Value,Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",activecpu,cpu_getpc(),Value,Port);
 }
 
 

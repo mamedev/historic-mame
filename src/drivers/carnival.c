@@ -27,8 +27,9 @@ read:
           bit 5 = START 2
 
 write:
-01 ?
-02 ?
+01        sound?
+02        sound?
+08        ?
 
 ***************************************************************************/
 
@@ -141,8 +142,8 @@ struct GfxLayout carnival_charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x01e8, &charlayout1, 0, 1 },	/* letters */
-	{ 0, 0xe800, &carnival_charlayout, 0, 1 },	/* the game dynamically modifies this */
+	{ 0, 0x01e8, &charlayout1, 0, 8 },	/* letters */
+	{ 0, 0xe800, &carnival_charlayout, 0, 8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -151,14 +152,26 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
+    0xff,0x00,0x00, /* RED */
+    0x00,0xff,0x00, /* GREEN */
+    0xff,0xff,0x00, /* YELLOW */
+	0x00,0xff,0xff, /* CYAN */
+	0x00,0x00,0xff, /* BLUE */
 	0xff,0xff,0xff	/* WHITE */
 };
 
-enum { BLACK,WHITE };
+enum { BLACK,RED,GREEN,YELLOW,CYAN,BLUE,WHITE };
 
 static unsigned char colortable[] =
 {
-	BLACK,WHITE
+	BLACK,WHITE,
+	BLACK,YELLOW,
+	BLACK,RED,
+	BLACK,YELLOW,
+	BLACK,BLUE,
+	BLACK,YELLOW,
+	BLACK,GREEN,
+	BLACK,CYAN
 };
 
 
@@ -254,9 +267,11 @@ struct GameDriver carnival_driver =
 	input_ports, dsw,
 
 	0, palette, colortable,
-	3, 14,
-	0, 0,
-	8*13, 8*16, 0,
+	{ 0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* numbers */
+		0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,	/* letters */
+		0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27 },
+	0, 1,
+	8*13, 8*16, 2,
 
 	0, 0
 };

@@ -78,6 +78,8 @@ interrupt mode 1 triggered by the main CPU
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -86,15 +88,9 @@ extern void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char 
 extern void frogger_attributes_w(int offset,int data);
 extern void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void frogger_soundcommand_w(int offset,int data);
-extern int frogger_sh_read_port_r(int offset);
-extern void frogger_sh_control_port_w(int offset,int data);
-extern void frogger_sh_write_port_w(int offset,int data);
 extern int frogger_sh_interrupt(void);
 extern int frogger_sh_init(const char *gamename);
 extern int frogger_sh_start(void);
-extern void frogger_sh_stop(void);
-extern void frogger_sh_update(void);
 
 
 
@@ -118,7 +114,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram },
 	{ 0xb808, 0xb808, interrupt_enable_w },
-	{ 0xd000, 0xd000, frogger_soundcommand_w },
+	{ 0xd000, 0xd000, sound_command_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -143,14 +139,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x40, 0x40, frogger_sh_read_port_r },
+	{ 0x40, 0x40, AY8910_read_port_0_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x80, 0x80, frogger_sh_control_port_w },
-	{ 0x40, 0x40, frogger_sh_write_port_w },
+	{ 0x80, 0x80, AY8910_control_port_0_w },
+	{ 0x40, 0x40, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -287,8 +283,8 @@ static struct MachineDriver machine_driver =
 	0,
 	frogger_sh_init,
 	frogger_sh_start,
-	frogger_sh_stop,
-	frogger_sh_update
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -345,7 +341,9 @@ struct GameDriver frogger_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x00, 0x03,
 	8*13, 8*16, 0x06,
 
@@ -365,7 +363,9 @@ struct GameDriver frogsega_driver =
 	input_ports, dsw,
 
 	color_prom, 0, 0,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x00, 0x03,
 	8*13, 8*16, 0x06,
 

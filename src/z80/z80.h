@@ -32,10 +32,7 @@
 /****************************************************************************/
 /* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
 /****************************************************************************/
-typedef unsigned char  byte;
-typedef unsigned short word;
-typedef unsigned       dword;
-typedef signed char    offset;
+#include "types.h"	/* -NS- */
 
 /****************************************************************************/
 /* Define a Z80 word. Upper bytes are always zero                           */
@@ -75,7 +72,7 @@ typedef union
    dword D;
  #endif
 #endif
-} pair;
+} z80_pair;	/* -NS- */
 
 #endif /* EMU_TYPES */
 
@@ -93,8 +90,8 @@ typedef union
 /****************************************************************************/
 typedef struct
 {
-  pair AF,BC,DE,HL,IX,IY,PC,SP;
-  pair AF2,BC2,DE2,HL2;
+  z80_pair AF,BC,DE,HL,IX,IY,PC,SP;	/* -NS- */
+  z80_pair AF2,BC2,DE2,HL2;	/* -NS- */
   unsigned IFF1,IFF2,HALT,IM,I,R,R2;
 } Z80_Regs;
 

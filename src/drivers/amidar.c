@@ -90,6 +90,8 @@ interrupt mode 1 triggered by the main CPU
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -97,17 +99,8 @@ extern unsigned char *amidar_attributesram;
 extern void amidar_attributes_w(int offset,int data);
 extern void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern void scramble_soundcommand_w(int offset,int data);
-extern int scramble_sh_read_port1_r(int offset);
-extern void scramble_sh_control_port1_w(int offset,int data);
-extern void scramble_sh_write_port1_w(int offset,int data);
-extern int scramble_sh_read_port2_r(int offset);
-extern void scramble_sh_control_port2_w(int offset,int data);
-extern void scramble_sh_write_port2_w(int offset,int data);
-extern int scramble_sh_interrupt(void);
-extern int scramble_sh_start(void);
-extern void scramble_sh_stop(void);
-extern void scramble_sh_update(void);
+extern int amidar_sh_interrupt(void);
+extern int amidar_sh_start(void);
 
 
 
@@ -133,7 +126,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0xb800, 0xb800, scramble_soundcommand_w },
+	{ 0xb800, 0xb800, sound_command_w },
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -158,17 +151,17 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x80, 0x80, scramble_sh_read_port1_r },
-	{ 0x20, 0x20, scramble_sh_read_port2_r },
+	{ 0x80, 0x80, AY8910_read_port_0_r },
+	{ 0x20, 0x20, AY8910_read_port_1_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x40, 0x40, scramble_sh_control_port1_w },
-	{ 0x80, 0x80, scramble_sh_write_port1_w },
-	{ 0x10, 0x10, scramble_sh_control_port2_w },
-	{ 0x20, 0x20, scramble_sh_write_port2_w },
+	{ 0x40, 0x40, AY8910_control_port_0_w },
+	{ 0x80, 0x80, AY8910_write_port_0_w },
+	{ 0x10, 0x10, AY8910_control_port_1_w },
+	{ 0x20, 0x20, AY8910_write_port_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -311,7 +304,7 @@ static struct MachineDriver machine_driver =
 			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,1
+			amidar_sh_interrupt,1
 		}
 	},
 	60,
@@ -331,9 +324,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	scramble_sh_start,
-	scramble_sh_stop,
-	scramble_sh_update
+	amidar_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -407,7 +400,9 @@ struct GameDriver amidar_driver =
 	input_ports, amidar_dsw,
 
 	0, palette, colortable,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 
@@ -425,7 +420,9 @@ struct GameDriver amidarjp_driver =
 	input_ports, amidar_dsw,
 
 	0, palette, colortable,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 
@@ -443,7 +440,9 @@ struct GameDriver turtles_driver =
 	input_ports, turtles_dsw,
 
 	0, palette, colortable,
-	0, 17,
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
+		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
+		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 

@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Emulator, V2.1                                        */
+/* Module:  POKEY Chip Emulator, V2.2                                        */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /*                                                                           */
@@ -13,6 +13,9 @@
 /* 03/31/97 - Ron Fries - Made some minor mods for MAME (changed to signed   */
 /*                        8-bit sample, increased gain range, removed        */
 /*                        _disable() and _enable().)                         */
+/* 04/06/97 - Brad Oliver - Some cross-platform modifications. Added         */
+/*                          big/little endian #defines, removed <dos.h>,     */
+/*                          conditional defines for TRUE/FALSE               */
 /*                                                                           */
 /* V2.0 Detailed Changes                                                     */
 /* ---------------------                                                     */
@@ -78,7 +81,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <dos.h>
+/*#include <dos.h>	LBO - removed for cross-platform support*/
 
 #include "pokey.h"
 
@@ -128,10 +131,13 @@
 #define CHIP4      12
 #define SAMPLE    127
 
-
+/* LBO - changed for cross-platform support */
+#ifndef FALSE
 #define FALSE       0
+#endif
+#ifndef TRUE
 #define TRUE        1
-
+#endif
 
 /* GLOBAL VARIABLE DEFINITIONS */
 
@@ -193,11 +199,20 @@ static uint32 Base_mult[MAXPOKEYS]; /* selects either 64Khz or 15Khz clock mult 
 /* only number.  This is mainly used to keep the math simple for             */
 /* optimization. See below:                                                  */
 /*                                                                           */
-/* xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx.xxxxxxxx */
-/*  unused   unused   unused    whole      whole    whole    whole  fraction */
+/* Representation on little-endian machines:                                 */
+/* xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx */
+/* fraction   whole    whole    whole      whole   unused   unused   unused  */
 /*                                                                           */
 /* Samp_n_cnt[0] gives me a 32-bit int 24 whole bits with 8 fractional bits, */
 /* while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1) gives me the 32-bit whole   */
+/* number only.                                                              */
+/*                                                                           */
+/* Representation on big-endian machines:                                    */
+/* xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx | xxxxxxxx xxxxxxxx xxxxxxxx.xxxxxxxx */
+/*  unused   unused   unused    whole      whole    whole    whole  fraction */
+/*                                                                           */
+/* Samp_n_cnt[1] gives me a 32-bit int 24 whole bits with 8 fractional bits, */
+/* while (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3) gives me the 32-bit whole   */
 /* number only.                                                              */
 /*****************************************************************************/
 
@@ -537,7 +552,11 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
     register uint8 *vol_ptr;
 
     /* set a pointer to the whole portion of the samp_n_cnt */
+#ifdef BIG_ENDIAN
+    samp_cnt_w_ptr = (uint32 *)((uint8 *)(&Samp_n_cnt[0])+3);
+#else
     samp_cnt_w_ptr = (uint32 *)((uint8 *)(&Samp_n_cnt[0])+1);
+#endif
 
     /* set a pointer for optimization */
     out_ptr = Outvol;
@@ -740,7 +759,11 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
        {
           /* adjust the sample counter - note we're using the 24.8 integer
              which includes an 8 bit fraction for accuracy */
+#ifdef BIG_ENDIAN
+		  *(Samp_n_cnt + 1) += Samp_n_max;
+#else
           *Samp_n_cnt += Samp_n_max;
+#endif
 
 #ifdef CLIP                         /* if clipping is selected */
           if (cur_val > 127)        /* then check high limit */

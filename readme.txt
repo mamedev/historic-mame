@@ -27,7 +27,7 @@ Mr. Do!                        Yes         Yes        Yes       Yes
 Mr. Do's Castle                 No          No         No       n/a
 Crazy Climber                  Yes         Yes        Yes       Yes
 Crazy Kong                     Yes         Yes        Yes       Yes
-Donkey Kong                    Yes          No         No       Yes
+Donkey Kong                    Yes          No      Yes (1)     Yes
 Donkey Kong Jr.                Yes          No         No       Yes
 Donkey Kong 3                  Yes          No         No       Yes
 Mario Bros.                    Yes          No         No       Yes
@@ -52,20 +52,24 @@ Time Pilot                     Yes          No        Yes       Yes
 Pooyan                         Yes          No        Yes       Yes
 Phoenix                        Yes        Close     Limited      No
 Pleiads                        Yes          No      Limited      No
-Space Invaders                 Yes         Yes         No        No
-Carnival                       Yes          No         No        No
+Space Invaders                 Yes         Yes      Yes (1)      No
+Carnival                       Yes        Maybe        No        No
 Zaxxon                         Yes          No         No       Yes
 Congo Bongo                    Yes          No         No       Yes
 Bomb Jack                      Yes         Yes        Yes       Yes
 Centipede                      Yes          No        Yes       Yes
 Millipede                      Yes          No         No       Yes
 Nibbler                        Yes          No         No       Yes
+Fantasy                         No          No         No        No
+Vanguard                       Yes          No         No        No
 Moon Patrol                    Yes          No         No        No
 Burger Time                    Yes         Yes        Yes       Yes
 Lost Tomb                       No          No        Yes       n/a
-Jump Bug                        No          No         No       n/a
-Vanguard                       Yes          No         No        No
+Jump Bug                       Yes          No        Yes        No
+Green Beret                    Yes          No     Music only    No
+Venture                     Partially       No         No        No
 
+(1) Needs samples, provided in a separate archive
 
 
 Acknowledgements
@@ -110,6 +114,9 @@ Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
    Levine.
 Carnival driver completed by Mike Coates and Richard Davies.
+Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
+   (bradman@primenet.com).
+Venture driver by Marc Lafontaine (marclaf@sympatico.ca).
 
 
 Very special thanks to Sergio Munoz for the precious information about the
@@ -164,7 +171,10 @@ Many thanks to Steve Scavone (krunch@intac.com) for his invaluable help with
    Wizard of Wor and related games.
 -vesascan and -vesaskip implemented by Bernd Wiebelt
    (bernardo@studi.mathematik.hu-berlin.de)
-
+Thanks to Stefano Mozzi (piu1608@cdc8g5.cdc.polimi.it) for Mario Bros. colors.
+Thanks to Matthew Hillmer (mhillmer@pop.isd.net) for Donkey Kong 3 colors.
+Thanks to Tormod Tjaberg (tormod@sn.no) and Michael Strutts for Space Invaders
+   sound.
 
 
 Usage
@@ -432,7 +442,6 @@ partially or fully in a direction. Pushing it slightly would turn around the
 player without moking it move. The emulator assumes that you are always
 pushing the joystick fully, to simulate the "half press" you can press Alt.
 
-
 Known issues:
 - No background stars, no fade in/fade out.
 
@@ -537,6 +546,7 @@ CTRL    Fire
 
 Clones supported:
   Unencrypted version ("mooncrsb")
+  bootleg version called Fantazia ("fantazia")
 
 Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct.
@@ -802,6 +812,7 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
   I don't know if the game runs correctly.
 - The game awards you 18 credits on startup
+- Palette is not supported
 
 
 
@@ -817,6 +828,7 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
   I don't know if the game runs correctly.
 - High scores don't seem to work.
+- Palette is not supported
 
 
 
@@ -830,6 +842,25 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz
 - Some input bits seem to be used as debug controls - quite interesting, but
   I haven't investigated yet.
+
+
+
+Fantasy ("fantasy")
+--------------------
+
+Runs on the same hardware as Nibbler.
+
+Not playable yet!
+
+
+
+Vanguard ("vanguard")
+--------------------
+
+Runs on hardware similar to Nibbler.
+
+Arrows  Move around
+S,D,E,F Fire
 
 
 
@@ -865,7 +896,7 @@ Clones supported:
   different ROM set, without Midway copyright and different demo ("btimea")
 
 Known issues:
-- Sprites are not turned off appropriately
+- The way I turn sprites off is not correct.
 
 
 
@@ -883,17 +914,38 @@ Known issues:
 Jump Bug ("jumpbug")
 --------------------
 
-This seems to run on hardware similar to Super Cobra.
+Arrows  Move around
+CTRL    Fire
+ALT     Jump
+
+Clones supported:
+  "Sega" version ("jbugsega")
 
 Known issues:
-- Not playable. Crashes during demo.
+- "jumpbug" doesn't work - the protection is not emulated. "jbugsega" has the
+  protection checks removed, so it works.
+- Graphics are wrong - the game has multiple character banks, not emulated yet.
 
 
 
-Vanguard ("vanguard")
---------------------
-
-Runs on hardware similar to Nibbler.
+Green Beret ("gberet")
+----------------------
 
 Arrows  Move around
-S,D,E,F Fire
+CTRL    Knife
+ALT     Fire
+
+Known issues:
+- Is the speed right? Isn't it too fast?
+
+
+
+Venture ("venture")
+-------------------
+
+Arrows  Move around
+CTRL    Fire
+On startup, keep 1 or 2 pressed to proceed
+
+Known issues:
+- Sprites are not drawn correctly.

@@ -107,8 +107,8 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
   if(R->P&D_FLAG) \
   { \
     K.B.l=(R->A&0x0F)+(Rg&0x0F)+(R->P&C_FLAG); \
+    if(K.B.l>9) K.B.l+=6; \
     K.B.h=(R->A>>4)+(Rg>>4)+(K.B.l>15? 1:0); \
-    if(K.B.l>9) { K.B.l+=6;K.B.h++; } \
     if(K.B.h>9) K.B.h+=6; \
     R->A=(K.B.l&0x0F)|(K.B.h<<4); \
     R->P=(R->P&~C_FLAG)|(K.B.h>15? C_FLAG:0); \
@@ -128,10 +128,10 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
   { \
     K.B.l=(R->A&0x0F)-(Rg&0x0F)-(~R->P&C_FLAG); \
     if(K.B.l&0x10) K.B.l-=6; \
-    K.B.h=(R->A>>4)-(Rg>>4)-(K.B.l&0x10); \
+    K.B.h=(R->A>>4)-(Rg>>4)-((K.B.l&0x10)>>4); \
     if(K.B.h&0x10) K.B.h-=6; \
     R->A=(K.B.l&0x0F)|(K.B.h<<4); \
-    R->P=(R->P&~C_FLAG)|(K.B.h>15? 0:C_FLAG); \
+    R->P=(R->P&~C_FLAG)|((K.B.h&0x10)? 0:C_FLAG); \
   } \
   else \
   { \
@@ -170,14 +170,13 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 /** starting execution with Run6502(). It sets registers to **/
 /** their initial values.                                   **/
 /*************************************************************/
-void Reset6502(M6502 *R,int IPeriod)	/* -NS- */
+void Reset6502(M6502 *R)
 {
   R->A=R->X=R->Y=0x00;
   R->P=Z_FLAG|R_FLAG;
   R->S=0xFF;
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
-R->IPeriod = IPeriod;	/* -NS - */
   R->ICount=R->IPeriod;
   R->IRequest=INT_NONE;
   R->AfterCLI=0;
