@@ -2,13 +2,12 @@
 
 Wiz/Stinger/Scion memory map (preliminary)
 
+Driver by Zsolt Vasvari
+
+
 These boards are similar to a Galaxian board in the way it handles scrolling
 and sprites, but the similarities pretty much end there. The most notable
 difference is that there are 2 independently scrollable playfields.
-
-Strangely, one of the foreground character banks of Wiz have a Seibu logo, the
-other one a Taito logo. There are other differences as well, so you can't
-just switch one for the other.
 
 
 Main CPU:
@@ -56,7 +55,7 @@ I/O read:
 7000 Sound Command Read (Wiz)
 
 I/O write:
-7000 NMI enable	(Stinger/Scion)
+3000 NMI enable	(Stinger/Scion)
 4000 AY8910 Control Port #1	(Wiz)
 4001 AY8910 Write Port #1	(Wiz)
 5000 AY8910 Control Port #2
@@ -413,26 +412,26 @@ static struct GfxLayout spritelayout =
 // white/blue. What we need is screenshots.
 static struct GfxDecodeInfo wiz_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 32 },
-	{ 1, 0x0800, &charlayout,   0, 32 },
-	{ 1, 0xc000, &charlayout,   0, 32 },
-	{ 1, 0x6000, &charlayout,   0, 32 },
-	{ 1, 0x6800, &charlayout,   0, 32 },
-	{ 1, 0xc800, &charlayout,   0, 32 },
-	{ 1, 0x0000, &spritelayout, 0, 32 },
-	{ 1, 0x6000, &spritelayout, 0, 32 },
-	{ 1, 0xc000, &spritelayout, 0, 32 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 32 },
+	{ REGION_GFX1, 0x0800, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x6000, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x0000, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x0800, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x6800, &charlayout,   0, 32 },
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 32 },
+	{ REGION_GFX2, 0x0000, &spritelayout, 0, 32 },
+	{ REGION_GFX2, 0x6000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo stinger_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 32 },
-	{ 1, 0x0800, &charlayout,   0, 32 },
-	{ 1, 0x6000, &charlayout,   0, 32 },
-	{ 1, 0x6800, &charlayout,   0, 32 },
-	{ 1, 0x0000, &spritelayout, 0, 32 },
-	{ 1, 0x6000, &spritelayout, 0, 32 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 32 },
+	{ REGION_GFX1, 0x0800, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x0000, &charlayout,   0, 32 },
+	{ REGION_GFX2, 0x0800, &charlayout,   0, 32 },
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 32 },
+	{ REGION_GFX2, 0x0000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -442,7 +441,6 @@ static struct AY8910interface wiz_ay8910_interface =
 	3,      /* 3 chips */
 	14318000/8,	/* ? */
 	{ 10, 10, 10 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -454,7 +452,6 @@ static struct AY8910interface stinger_ay8910_interface =
 	2,      /* 2 chips */
 	14318000/8,	/* ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -521,24 +518,54 @@ ROM_START( wiz )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
 	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
 
-	ROM_REGION_DISPOSE(0x12000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic12_04.bin",  0x00000, 0x2000, 0x8969acdd )
-	ROM_LOAD( "ic13_05.bin",  0x02000, 0x2000, 0x2868e6a5 )
-	ROM_LOAD( "ic14_06.bin",  0x04000, 0x2000, 0xb398e142 )
-	ROM_LOAD( "ic03_07.bin",  0x06000, 0x2000, 0x297c02fc )
-	ROM_CONTINUE(		      0x0c000, 0x2000  )
-	ROM_LOAD( "ic02_08.bin",  0x08000, 0x2000, 0xede77d37 )
-	ROM_CONTINUE(		      0x0e000, 0x2000  )
-	ROM_LOAD( "ic01_09.bin",  0x0a000, 0x2000, 0x4d86b041 )
-	ROM_CONTINUE(		      0x10000, 0x2000  )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
+
+	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "ic12_04.bin",  0x0000, 0x2000, 0x8969acdd )
+	ROM_LOAD( "ic13_05.bin",  0x2000, 0x2000, 0x2868e6a5 )
+	ROM_LOAD( "ic14_06.bin",  0x4000, 0x2000, 0xb398e142 )
+
+	ROM_REGIONX( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "ic03_07.bin",  0x0000, 0x2000, 0x297c02fc )
+	ROM_CONTINUE(		      0x6000, 0x2000  )
+	ROM_LOAD( "ic02_08.bin",  0x2000, 0x2000, 0xede77d37 )
+	ROM_CONTINUE(		      0x8000, 0x2000  )
+	ROM_LOAD( "ic01_09.bin",  0x4000, 0x2000, 0x4d86b041 )
+	ROM_CONTINUE(		      0xa000, 0x2000  )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
 	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
 	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
+ROM_END
+
+ROM_START( wizt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "wiz1.bin",  	  0x0000, 0x4000, 0x5a6d3c60 )
+	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
+	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
+
+	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "wiz4.bin",     0x0000, 0x2000, 0xe6c636b3 )
+	ROM_LOAD( "wiz5.bin",     0x2000, 0x2000, 0x77986058 )
+	ROM_LOAD( "wiz6.bin",     0x4000, 0x2000, 0xf6970b23 )
+
+	ROM_REGIONX( 0xc000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "wiz7.bin",     0x0000, 0x2000, 0x601f2f3f )
+	ROM_CONTINUE(		      0x6000, 0x2000  )
+	ROM_LOAD( "wiz8.bin",     0x2000, 0x2000, 0xf5ab982d )
+	ROM_CONTINUE(		      0x8000, 0x2000  )
+	ROM_LOAD( "wiz9.bin",     0x4000, 0x2000, 0xf6c662e2 )
+	ROM_CONTINUE(		      0xa000, 0x2000  )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
+	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
+	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 ROM_END
 
 ROM_START( stinger )
@@ -549,21 +576,23 @@ ROM_START( stinger )
 	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )	/* encrypted */
 	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )	/* encrypted */
 
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
+
+	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
 	ROM_LOAD( "8.bin",        0x2000, 0x2000, 0x43c61b3f )
 	ROM_LOAD( "9.bin",        0x4000, 0x2000, 0xc9ed8fc7 )
-	ROM_LOAD( "10.bin",       0x6000, 0x2000, 0xf6721930 )
-	ROM_LOAD( "11.bin",       0x8000, 0x2000, 0xa4404e63 )
-	ROM_LOAD( "12.bin",       0xa000, 0x2000, 0xb60fa88c )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "10.bin",       0x0000, 0x2000, 0xf6721930 )
+	ROM_LOAD( "11.bin",       0x2000, 0x2000, 0xa4404e63 )
+	ROM_LOAD( "12.bin",       0x4000, 0x2000, 0xb60fa88c )
+
+	ROM_REGIONX( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x52c06fc2 )	/* red component */
 	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
 	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
 ROM_START( scion )
@@ -574,21 +603,23 @@ ROM_START( scion )
 	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
 	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
 
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
+
+	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
 	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
 	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
-	ROM_LOAD( "10.10h",       0x6000, 0x2000, 0x0d2a0d1e )
-	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
-	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "10.10h",       0x0000, 0x2000, 0x0d2a0d1e )
+	ROM_LOAD( "11.12h",       0x2000, 0x2000, 0xdc6ef8ab )
+	ROM_LOAD( "12.15h",       0x4000, 0x2000, 0xc82c28bf )
+
+	ROM_REGIONX( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
 ROM_END
 
 ROM_START( scionc )
@@ -599,25 +630,28 @@ ROM_START( scionc )
 	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
 	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
 
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
+
+	ROM_REGIONX( 0x6000,  REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites/chars */
 	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
 	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
 	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
-	ROM_LOAD( "10.10h",       0x6000, 0x2000, 0x0d2a0d1e )
-	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
-	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
-	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_REGIONX( 0x6000,  REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites/chars */
+	ROM_LOAD( "10.10h",       0x0000, 0x2000, 0x0d2a0d1e )
+	ROM_LOAD( "11.12h",       0x2000, 0x2000, 0xdc6ef8ab )
+	ROM_LOAD( "12.15h",       0x4000, 0x2000, 0xc82c28bf )
+
+	ROM_REGIONX( 0x0300,  REGION_PROMS )
 	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
 ROM_END
 
 
-static void stinger_decode(void)
+
+static void init_stinger(void)
 {
 	static const unsigned char xortable[4][4] =
 	{
@@ -664,103 +698,8 @@ static void stinger_decode(void)
 
 
 
-struct GameDriver driver_wiz =
-{
-	__FILE__,
-	0,
-	"wiz",
-	"Wiz",
-	"1985",
-	"Seibu Kaihatsu",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_wiz,
-	0,
-
-	rom_wiz,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wiz,
-
-	0, 0, 0,
-	ROT270 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_stinger =
-{
-	__FILE__,
-	0,
-	"stinger",
-	"Stinger",
-	"1983",
-	"Seibu Denshi",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_stinger,
-	stinger_decode,
-
-	rom_stinger,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stinger,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_scion =
-{
-	__FILE__,
-	0,
-	"scion",
-	"Scion",
-	"1984",
-	"Seibu Denshi",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_stinger,
-	0,
-
-	rom_scion,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scion,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_scionc =
-{
-	__FILE__,
-	&driver_scion,
-	"scionc",
-	"Scion (Cinematronics)",
-	"1984",
-	"Seibu Denshi [Cinematronics license]",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_stinger,
-	0,
-
-	rom_scionc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scion,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
+GAMEX( 1983, stinger, 0,     stinger, stinger, stinger, ROT90,  "Seibu Denshi", "Stinger",     GAME_IMPERFECT_COLORS )
+GAMEX( 1984, scion,   0,     stinger, scion,   0,       ROT0,   "Seibu Denshi", "Scion",       GAME_IMPERFECT_COLORS )
+GAMEX( 1984, scionc,  scion, stinger, scion,   0,       ROT0,   "Seibu Denshi [Cinematronics license]", "Scion (Cinematronics)", GAME_IMPERFECT_COLORS )
+GAMEX( 1985, wiz,     0,     wiz,     wiz,     0,       ROT270, "Seibu Kaihatsu Inc.", "Wiz",  GAME_IMPERFECT_COLORS )
+GAMEX( 1985, wizt,    wiz,   wiz,     wiz,     0,       ROT270, "Taito Corp.",  "Wiz (Taito)", GAME_IMPERFECT_COLORS )

@@ -1,3 +1,16 @@
+/***************************************************************************
+
+Shanghai
+
+driver by Nicola Salmoria
+
+this is mostly working, but the HD63484 emulation is incomplete. The continue
+yes/no display is wrong, I think this is caused by missing "window" emulation.
+
+Also, the game locks up after you win a round.
+
+***************************************************************************/
+
 #include "driver.h"
 
 /* the on-chip FIFO is 16 bytes long, but we use a larger one to simplify */
@@ -494,26 +507,24 @@ void shanghai_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r,g,b,h;
+		int bit0,bit1,bit2;
 
 
-		h = (i >> 0) & 0x03;
 		/* red component */
-		r = (i >> 0) & 0x0c;
-		if (r) r |= h;
-		r *= 0x11;
+		bit0 = (i >> 2) & 0x01;
+		bit1 = (i >> 3) & 0x01;
+		bit2 = (i >> 4) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		g = (i >> 4) & 0x0c;
-		if (g) g |= h;
-		g *= 0x11;
+		bit0 = (i >> 5) & 0x01;
+		bit1 = (i >> 6) & 0x01;
+		bit2 = (i >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		b = (i >> 2) & 0x0c;
-		if (b) b |= h;
-		b *= 0x11;
-
-		*(palette++) = r;
-		*(palette++) = g;
-		*(palette++) = b;
+		bit0 = 0;
+		bit1 = (i >> 0) & 0x01;
+		bit2 = (i >> 1) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 }
 
@@ -700,7 +711,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	1500000,	/* ??? */
 	{ YM2203_VOL(80,15) },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },
 	{ input_port_4_r },
 	{ 0 },
@@ -709,7 +719,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_shanghai =
 {
 	/* basic machine hardware */
 	{
@@ -767,28 +777,4 @@ ROM_END
 
 
 
-struct GameDriver driver_shanghai =
-{
-	__FILE__,
-	0,
-	"shanghai",
-	"Shanghai",
-	"1988",
-	"Sun Electronics (licensed from Activision)",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_shanghai,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shanghai,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAMEX( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sun Electronics (licensed from Activision)", "Shanghai", GAME_NOT_WORKING )

@@ -4,6 +4,8 @@ various early SNK games (1983-1985)
 - Vanguard II
 - Mad Crasher
 
+driver by Phil Stroffolino
+
 Known Issues:
 	Mad Crasher sound effects aren't being played
 	Vanguard II crashes under dos with sound enabled
@@ -160,27 +162,6 @@ static int marvins_port_0_r( int offset ){
 
 int madcrash_vreg;
 
-static void marvins_init(void){
-	init_sound( 0x40 );
-}
-
-static void madcrash_init( void ){
-/*
-	The following lines patch out the ROM test (which fails - probably
-	because of bit rot, so the rest of the test mode (what little there
-	is) can be explored.
-
-	unsigned char *mem = memory_region(REGION_CPU1);
-	mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
-*/
-	init_sound( 0x20 );
-	madcrash_vreg = 0x00;
-}
-
-static void vangrd2_init( void ){
-	init_sound( 0x20 );
-	madcrash_vreg = 0xf1;
-}
 
 /***************************************************************************
 **
@@ -196,43 +177,55 @@ static void vangrd2_init( void ){
 static int CPUA_latch = 0;
 static int CPUB_latch = 0;
 
-static void CPUA_int_enable( int offset, int data ){
-	if( CPUA_latch & SNK_NMI_PENDING ){
+static void CPUA_int_enable( int offset, int data )
+{
+	if( CPUA_latch & SNK_NMI_PENDING )
+	{
 		cpu_cause_interrupt( 0, Z80_NMI_INT );
 		CPUA_latch = 0;
 	}
-	else {
+	else
+	{
 		CPUA_latch |= SNK_NMI_ENABLE;
 	}
 }
 
-static int CPUA_int_trigger( int offset ){
-	if( CPUA_latch&SNK_NMI_ENABLE ){
+static int CPUA_int_trigger( int offset )
+{
+	if( CPUA_latch&SNK_NMI_ENABLE )
+	{
 		cpu_cause_interrupt( 0, Z80_NMI_INT );
 		CPUA_latch = 0;
 	}
-	else {
+	else
+	{
 		CPUA_latch |= SNK_NMI_PENDING;
 	}
 	return 0xff;
 }
 
-static void CPUB_int_enable( int offset, int data ){
-	if( CPUB_latch & SNK_NMI_PENDING ){
+static void CPUB_int_enable( int offset, int data )
+{
+	if( CPUB_latch & SNK_NMI_PENDING )
+	{
 		cpu_cause_interrupt( 1, Z80_NMI_INT );
 		CPUB_latch = 0;
 	}
-	else {
+	else
+	{
 		CPUB_latch |= SNK_NMI_ENABLE;
 	}
 }
 
-static int CPUB_int_trigger( int offset ){
-	if( CPUB_latch&SNK_NMI_ENABLE ){
+static int CPUB_int_trigger( int offset )
+{
+	if( CPUB_latch&SNK_NMI_ENABLE )
+	{
 		cpu_cause_interrupt( 1, Z80_NMI_INT );
 		CPUB_latch = 0;
 	}
-	else {
+	else
+	{
 		CPUB_latch |= SNK_NMI_PENDING;
 	}
 	return 0xff;
@@ -249,7 +242,8 @@ static int CPUB_int_trigger( int offset ){
 **
 ***************************************************************************/
 
-static struct MemoryReadAddress readmem_CPUA[] = {
+static struct MemoryReadAddress readmem_CPUA[] =
+{
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8000, marvins_port_0_r },	/* coin input, start, sound CPU status */
 	{ 0x8100, 0x8100, input_port_1_r },		/* player #1 controls */
@@ -262,7 +256,8 @@ static struct MemoryReadAddress readmem_CPUA[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem_CPUA[] = {
+static struct MemoryWriteAddress writemem_CPUA[] =
+{
 	{ 0x6000, 0x6000, marvins_palette_bank_w }, // Marvin's Maze only
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8300, 0x8300, sound_command_w },
@@ -279,7 +274,8 @@ static struct MemoryWriteAddress writemem_CPUA[] = {
 	{ -1 }
 };
 
-static struct MemoryReadAddress marvins_readmem_CPUB[] = {
+static struct MemoryReadAddress marvins_readmem_CPUB[] =
+{
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8700, 0x8700, CPUA_int_trigger },
 	{ 0xc000, 0xcfff, marvins_spriteram_r },
@@ -289,7 +285,8 @@ static struct MemoryReadAddress marvins_readmem_CPUB[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress marvins_writemem_CPUB[] = {
+static struct MemoryWriteAddress marvins_writemem_CPUB[] =
+{
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8700, 0x8700, CPUB_int_enable },
 	{ 0xc000, 0xcfff, marvins_spriteram_w },
@@ -299,7 +296,8 @@ static struct MemoryWriteAddress marvins_writemem_CPUB[] = {
 	{ -1 }
 };
 
-static struct MemoryReadAddress madcrash_readmem_CPUB[] = {
+static struct MemoryReadAddress madcrash_readmem_CPUB[] =
+{
 	{ 0x0000, 0x9fff, MRA_ROM },
 	{ 0xc000, 0xcfff, marvins_foreground_ram_r },
 	{ 0xd000, 0xdfff, marvins_text_ram_r },
@@ -308,7 +306,8 @@ static struct MemoryReadAddress madcrash_readmem_CPUB[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress madcrash_writemem_CPUB[] = {
+static struct MemoryWriteAddress madcrash_writemem_CPUB[] =
+{
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8700, 0x8700, CPUB_int_enable }, /* Vangaurd II */
 	{ 0x8000, 0x9fff, MWA_ROM }, /* extra ROM for Mad Crasher */
@@ -320,13 +319,261 @@ static struct MemoryWriteAddress madcrash_writemem_CPUB[] = {
 	{ -1 }
 };
 
+
+
+INPUT_PORTS_START( marvins )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START /* player#1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* player#2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_BITX(0x04,     0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW2 (unverified) */
+	PORT_DIPNAME( 0x07, 0x07, "1st Bonus Life" )
+	PORT_DIPSETTING(    0x07, "10000" )
+	PORT_DIPSETTING(    0x06, "20000" )
+	PORT_DIPSETTING(    0x05, "30000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x03, "50000" )
+	PORT_DIPSETTING(    0x02, "60000" )
+	PORT_DIPSETTING(    0x01, "70000" )
+	PORT_DIPSETTING(    0x00, "80000" )
+	PORT_DIPNAME( 0x18, 0x18, "2nd Bonus Life" )
+	PORT_DIPSETTING(    0x10, "1st bonus*2" )
+	PORT_DIPSETTING(    0x08, "1st bonus*3" )
+	PORT_DIPSETTING(    0x00, "1st bonus*4" )
+//	PORT_DIPSETTING(    0x18, "Unused" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( vangrd2 )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START /* player#1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* player#2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" ) // difficulty?
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Freeze" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, "Language" )
+	PORT_DIPSETTING(    0x08, "English" )
+	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(0x20,     0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( madcrash )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START /* player#1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* player#2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coinage ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Bonus?" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "4" )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x18, 0x10, "Game mode" )
+	PORT_DIPSETTING(    0x18, "Demo Sounds Off" )
+	PORT_DIPSETTING(    0x10, "Demo Sounds On" )
+	PORT_BITX(0,        0x08, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Freeze" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+
 /***************************************************************************
 **
 **	Graphics Layout
 **
 ***************************************************************************/
 
-static struct GfxLayout sprite_layout = {
+static struct GfxLayout sprite_layout =
+{
 	16,16,
 	0x100,
 	3,
@@ -342,7 +589,8 @@ static struct GfxLayout sprite_layout = {
 	256
 };
 
-static struct GfxLayout tile_layout = {
+static struct GfxLayout tile_layout =
+{
 	8,8,
 	0x100,
 	4,
@@ -352,11 +600,12 @@ static struct GfxLayout tile_layout = {
 	256
 };
 
-static struct GfxDecodeInfo marvins_gfxdecodeinfo[] = {
-	{ 3, 0, &tile_layout,	0x080, 8  }, /* text layer */
-	{ 4, 0, &tile_layout,	0x110, 1  }, /* background */
-	{ 5, 0, &tile_layout,	0x100, 1  }, /* foreground */
-	{ 6, 0, &sprite_layout,	0x000, 16 }, /* sprites */
+static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tile_layout,	0x080, 8  }, /* text layer */
+	{ REGION_GFX2, 0, &tile_layout,	0x110, 1  }, /* background */
+	{ REGION_GFX3, 0, &tile_layout,	0x100, 1  }, /* foreground */
+	{ REGION_GFX4, 0, &sprite_layout,	0x000, 16 }, /* sprites */
 	{ -1 }
 };
 
@@ -491,14 +740,17 @@ ROM_START( marvins )
 	ROM_LOAD( "m1",    0x0000, 0x2000, 0x2314c696 )
 	ROM_LOAD( "m2",    0x2000, 0x2000, 0x74ba5799 )
 
-	ROM_REGION_DISPOSE( 0x2000 ) /* text characters */
-	ROM_LOAD( "s1",    0x0000, 0x2000, 0x327f70f3 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* background tiles */
-	ROM_LOAD( "b1",    0x0000, 0x2000, 0xe528bc60 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* foreground tiles */
-	ROM_LOAD( "b2",    0x0000, 0x2000, 0xe528bc60 )
-	ROM_REGION_DISPOSE( 0x6000 ) /* sprites */
-	ROM_LOAD( "f3",    0x0000, 0x2000, 0xe55c9b83 )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s1",    0x0000, 0x2000, 0x327f70f3 )	/* characters */
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b1",    0x0000, 0x2000, 0xe528bc60 )	/* background tiles */
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b2",    0x0000, 0x2000, 0xe528bc60 )	/* foreground tiles */
+
+	ROM_REGIONX( 0x6000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f3",    0x0000, 0x2000, 0xe55c9b83 )	/* sprites */
 	ROM_LOAD( "f2",    0x2000, 0x2000, 0x8fc2b081 )
 	ROM_LOAD( "f1",    0x4000, 0x2000, 0x0bd6b4e5 )
 
@@ -525,14 +777,17 @@ ROM_START( madcrash )
 	ROM_LOAD( "p1",   0x0000, 0x2000, 0x2dcd036d )
 	ROM_LOAD( "p2",   0x2000, 0x2000, 0xcc30ae8b )
 
-	ROM_REGION_DISPOSE( 0x2000 ) /* characters */
-	ROM_LOAD( "p13",    0x0000, 0x2000, 0x48c4ade0 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* background tiles */
-	ROM_LOAD( "p11",    0x0000, 0x2000, 0x67174956 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* foreground tiles */
-	ROM_LOAD( "p12",    0x0000, 0x2000, 0x085094c1 )
-	ROM_REGION_DISPOSE( 0x6000 ) /* 16x16 sprites */
-	ROM_LOAD( "p14",    0x0000, 0x2000, 0x07e807bc )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p13",    0x0000, 0x2000, 0x48c4ade0 )	/* characters */
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p11",    0x0000, 0x2000, 0x67174956 )	/* background tiles */
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p12",    0x0000, 0x2000, 0x085094c1 )	/* foreground tiles */
+
+	ROM_REGIONX( 0x6000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p14",    0x0000, 0x2000, 0x07e807bc )	/* sprites */
 	ROM_LOAD( "p15",    0x2000, 0x2000, 0xa74149d4 )
 	ROM_LOAD( "p16",    0x4000, 0x2000, 0x6153611a )
 
@@ -558,15 +813,17 @@ ROM_START( vangrd2 )
 	ROM_LOAD( "p8.6a", 0x0000, 0x2000, 0xa3daa438 )
 	ROM_LOAD( "p9.8a", 0x2000, 0x2000, 0x9345101a )
 
-	ROM_REGION_DISPOSE( 0x2000 ) /* characters */
-	ROM_LOAD( "p15.1e", 0x0000, 0x2000, 0x85718a41 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* background tiles */
-	ROM_LOAD( "p13.1a", 0x0000, 0x2000, 0x912f22c6 )
-	ROM_REGION_DISPOSE( 0x2000 ) /* foreground tiles */
-	ROM_LOAD( "p9",     0x0000, 0x2000, 0x7aa0b684 )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p15.1e", 0x0000, 0x2000, 0x85718a41 )	/* characters */
 
-	ROM_REGION_DISPOSE( 0x6000 ) /* 16x16 sprites */
-	ROM_LOAD( "p12.1kl", 0x0000, 0x2000, 0x8658ea6c )
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p13.1a", 0x0000, 0x2000, 0x912f22c6 )	/* background tiles */
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p9",     0x0000, 0x2000, 0x7aa0b684 )	/* foreground tiles */
+
+	ROM_REGIONX( 0x6000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p12.1kl", 0x0000, 0x2000, 0x8658ea6c )	/* sprites */
 	ROM_LOAD( "p11.3kl", 0x2000, 0x2000, 0x620cd4ec )
 	ROM_LOAD( "p10.4kl", 0x4000, 0x2000, 0x5bfc04c0 )
 
@@ -578,307 +835,35 @@ ROM_END
 
 /*******************************************************************************************/
 
-INPUT_PORTS_START( marvins )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-
-	PORT_START /* player#1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START /* player#2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x01, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x03, "5" )
-	PORT_BITX(0x04,     0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW2 (unverified) */
-	PORT_DIPNAME( 0x07, 0x07, "1st Bonus Life" )
-	PORT_DIPSETTING(    0x07, "10000" )
-	PORT_DIPSETTING(    0x06, "20000" )
-	PORT_DIPSETTING(    0x05, "30000" )
-	PORT_DIPSETTING(    0x04, "40000" )
-	PORT_DIPSETTING(    0x03, "50000" )
-	PORT_DIPSETTING(    0x02, "60000" )
-	PORT_DIPSETTING(    0x01, "70000" )
-	PORT_DIPSETTING(    0x00, "80000" )
-	PORT_DIPNAME( 0x18, 0x18, "2nd Bonus Life" )
-	PORT_DIPSETTING(    0x10, "1st bonus*2" )
-	PORT_DIPSETTING(    0x08, "1st bonus*3" )
-	PORT_DIPSETTING(    0x00, "1st bonus*4" )
-	PORT_DIPSETTING(    0x18, "unused" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
 
 
-INPUT_PORTS_START( vangrd2 )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-
-	PORT_START /* player#1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START /* player#2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" ) // difficulty?
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x40, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0xc0, "5" )
-
-	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Freeze" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x08, 0x08, "Language" )
-	PORT_DIPSETTING(    0x08, "English" )
-	PORT_DIPSETTING(    0x00, "Japanese" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(0x20,     0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( madcrash )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START /* player#1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START /* player#2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coinage ) )
-//	PORT_DIPSETTING(    0x08, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0xc0, 0xc0, "Bonus?" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x40, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0xc0, "4" )
-
-	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x18, 0x10, "Game mode" )
-	PORT_DIPSETTING(    0x18, "Demo Sounds Off" )
-	PORT_DIPSETTING(    0x10, "Demo Sounds On" )
-	PORT_BITX(0,        0x08, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Freeze" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-struct GameDriver driver_marvins =
+static void init_marvins(void)
 {
-	__FILE__,
-	0,
-	"marvins",
-	"Marvin's Maze",
-	"1983",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_marvins,
-	marvins_init,
-	rom_marvins,
-	0,0,0,0,
-	input_ports_marvins,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+	init_sound( 0x40 );
+}
 
-
-struct GameDriver driver_madcrash =
+static void init_madcrash( void )
 {
-	__FILE__,
-	0,
-	"madcrash",
-	"Mad Crasher",
-	"1984",
-	"SNK",
-	CREDITS,
-	0, /* incomplete sound */
-	&machine_driver_madcrash,
-	madcrash_init,
-	rom_madcrash,
-	0,0,0,0,
-	input_ports_madcrash,
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+/*
+	The following lines patch out the ROM test (which fails - probably
+	because of bit rot, so the rest of the test mode (what little there
+	is) can be explored.
 
-struct GameDriver driver_vangrd2 =
+	unsigned char *mem = memory_region(REGION_CPU1);
+	mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
+*/
+	init_sound( 0x20 );
+	madcrash_vreg = 0x00;
+}
+
+static void init_vangrd2( void )
 {
-	__FILE__,
-	0,
-	"vangrd2",
-	"Vanguard II",
-	"1984",
-	"SNK",
-	CREDITS,
-	0, /* incomplete sound */
-	&machine_driver_madcrash,
-	vangrd2_init,
-	rom_vangrd2,
-	0,0,0,0,
-	input_ports_vangrd2,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+	init_sound( 0x20 );
+	madcrash_vreg = 0xf1;
+}
+
+
+
+GAME( 1983, marvins,  0, marvins,  marvins,  marvins,  ROT270, "SNK", "Marvin's Maze" )
+GAME( 1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher" )
+GAME( 1984, vangrd2,  0, madcrash, vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II" )

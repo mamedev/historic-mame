@@ -249,10 +249,10 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,              0, 64 },
-	{ 1, 0x2000, &tilelayout,           64*4, 64 }, /* 32x32 Tiles */
-	{ 1, 0x6000, &spritelayout,       2*64*4, 16 }, /* 16x16 Tiles */
-	{ 1, 0xe000, &spritelayout, 2*64*4+16*16, 16 }, /* Sprites */
+	{ REGION_GFX1, 0, &charlayout,              0, 64 },
+	{ REGION_GFX2, 0, &tilelayout,           64*4, 64 }, /* 32x32 Tiles */
+	{ REGION_GFX3, 0, &spritelayout,       2*64*4, 16 }, /* 16x16 Tiles */
+	{ REGION_GFX4, 0, &spritelayout, 2*64*4+16*16, 16 }, /* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -263,7 +263,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 15, 15 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -279,7 +278,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exedexes =
 {
 	/* basic machine hardware */
 	{
@@ -334,13 +333,26 @@ ROM_START( exedexes )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
 	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
 
-	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0xcadb75bd ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+
+	ROM_REGIONX( 0x6000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
@@ -351,13 +363,6 @@ ROM_START( exedexes )
 	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
-
-	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 ROM_START( savgbees )
@@ -366,13 +371,26 @@ ROM_START( savgbees )
 	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
 	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
 
-	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, 0x5972f95f ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
+
+	ROM_REGIONX( 0x6000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
@@ -383,63 +401,9 @@ ROM_START( savgbees )
 	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
-
-	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 
 
-struct GameDriver driver_exedexes =
-{
-	__FILE__,
-	0,
-	"exedexes",
-	"Exed Exes",
-	"1985",
-	"Capcom",
-	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_exedexes,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exedexes,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_savgbees =
-{
-	__FILE__,
-	&driver_exedexes,
-	"savgbees",
-	"Savage Bees",
-	"1985",
-	"Capcom (Memetron license)",
-	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_savgbees,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exedexes,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1985, exedexes, 0,        exedexes, exedexes, 0, ROT270, "Capcom", "Exed Exes" )
+GAME( 1985, savgbees, exedexes, exedexes, exedexes, 0, ROT270, "Capcom (Memetron license)", "Savage Bees" )

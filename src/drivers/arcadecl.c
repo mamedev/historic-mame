@@ -430,5 +430,5 @@ static void init_sparkz(void)
  *
  *************************************/
 
-GAME( 1992, arcadecl, , arcadecl, arcadecl, arcadecl, ROT0_16BIT, "Atari Games", "Arcade Classics (prototype)" )
-GAME( 1992, sparkz,   , arcadecl, sparkz,   sparkz,   ROT0,       "Atari Games", "Sparkz (prototype)" )
+GAME( 1992, arcadecl, 0, arcadecl, arcadecl, arcadecl, ROT0_16BIT, "Atari Games", "Arcade Classics (prototype)" )
+GAME( 1992, sparkz,   0, arcadecl, sparkz,   sparkz,   ROT0,       "Atari Games", "Sparkz (prototype)" )

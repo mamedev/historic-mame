@@ -239,7 +239,7 @@ static struct GfxLayout gfxlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &gfxlayout, 0, 64 },
+	{ REGION_GFX1, 0, &gfxlayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -264,13 +264,13 @@ static void volume_callback1(int v)
 static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
-	{ 2, 3 },	/* memory regions */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER),
 			K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* volume */
 	{ volume_callback0,  volume_callback1 }	/* external port callback */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_fastlane =
 {
 	/* basic machine hardware */
 	{
@@ -322,46 +322,19 @@ ROM_START( fastlane )
 	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fl_m02.rom",	0x000000, 0x80000, 0xa126e82d )	/* tiles + sprites */
 
-	ROM_REGION(0x020000)	/* 007232 data */
-	ROM_LOAD( "fl_m01.rom",	0x000000, 0x20000, 0x85d691ed ) /* chip 1 */
-
-	ROM_REGION(0x080000)	/* 007232 data */
-	ROM_LOAD( "fl_m03.rom",	0x000000, 0x80000, 0x119e9cbf ) /* chip 2 */
-
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "prom1",      0x0000, 0x0100, 0x00000000 )
 	ROM_LOAD( "prom2",      0x0100, 0x0100, 0x00000000 )
 	ROM_LOAD( "prom3",      0x0200, 0x0100, 0x00000000 )
 	ROM_LOAD( "prom4",      0x0300, 0x0100, 0x00000000 )
+
+	ROM_REGIONX( 0x020000, REGION_SOUND1 )	/* 007232 data */
+	ROM_LOAD( "fl_m01.rom",	0x000000, 0x20000, 0x85d691ed ) /* chip 1 */
+
+	ROM_REGIONX( 0x080000, REGION_SOUND2 )	/* 007232 data */
+	ROM_LOAD( "fl_m03.rom",	0x000000, 0x80000, 0x119e9cbf ) /* chip 2 */
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
-
-struct GameDriver driver_fastlane =
-{
-	__FILE__,
-	0,
-	"fastlane",
-	"Fast Lane",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_fastlane,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fastlane,
-
-	0, 0, 0,
-    ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
+GAMEX( 1987, fastlane, 0, fastlane, fastlane, 0, ROT90, "Konami", "Fast Lane", GAME_NOT_WORKING )

@@ -2,6 +2,8 @@
 
  Route 16/Stratovox memory map (preliminary)
 
+ driver by Zsolt Vasvari
+
  Notes: Route 16 and Stratovox use identical hardware with the following
         exceptions: Stratovox has a DAC for voice.
         Route 16 has the added ability to turn off each bitplane indiviaually.
@@ -52,9 +54,9 @@ extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
 extern int route16_videoram_size;
 
-void route16_init_driver(void);
-void route16b_init_driver(void);
-void stratvox_init_driver(void);
+void init_route16(void);
+void init_route16b(void);
+void init_stratvox(void);
 void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  route16_vh_start(void);
 void route16_vh_stop(void);
@@ -219,7 +221,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
 	{ 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ stratvox_samples_w },  /* SN76477 commands (not used in Route 16?) */
@@ -331,16 +332,16 @@ ROM_START( route16 )
 	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
 	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
-	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
 	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
 	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
 	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( route16b )
@@ -352,16 +353,16 @@ ROM_START( route16b )
 	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
 	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
-	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
 	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
 	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
 	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( stratvox )
@@ -373,14 +374,14 @@ ROM_START( stratvox )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
+	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
+
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
-	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
 ROM_START( stratvxb )
@@ -392,14 +393,14 @@ ROM_START( stratvxb )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
+	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
+
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
-	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
 ROM_START( speakres )
@@ -411,139 +412,20 @@ ROM_START( speakres )
 	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
 	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
 
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
+	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
+
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
-	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
 ROM_END
 
 
 
-struct GameDriver driver_route16 =
-{
-	__FILE__,
-	0,
-	"route16",
-	"Route 16",
-	"1981",
-	"Tehkan/Sun (Centuri license)",
-	"Zsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver_route16,
-	route16_init_driver,
-
-	rom_route16,
-	0, 0,
-	0,
-	0,
-
-	input_ports_route16,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_route16b =
-{
-	__FILE__,
-	&driver_route16,
-	"route16b",
-	"Route 16 (bootleg)",
-	"1981",
-	"bootleg",
-	"Zsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver_route16,
-	route16b_init_driver,
-
-	rom_route16b,
-	0, 0,
-	0,
-	0,
-
-	input_ports_route16,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_stratvox =
-{
-	__FILE__,
-	0,
-	"stratvox",
-	"Stratovox",
-	"1980",
-	"Taito",
-	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver_stratvox,
-	stratvox_init_driver,
-
-	rom_stratvox,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stratvox,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_stratvxb =
-{
-	__FILE__,
-	&driver_stratvox,
-	"stratvxb",
-	"Stratovox (bootleg)",
-	"1980",
-	"bootleg",
-	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver_stratvox,
-	stratvox_init_driver,
-
-	rom_stratvxb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stratvox,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_speakres =
-{
-	__FILE__,
-	&driver_stratvox,
-	"speakres",
-	"Speak & Rescue",
-	"????",
-	"<unknown>",
-	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver_stratvox,
-	stratvox_init_driver,
-
-	rom_speakres,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stratvox,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1981, route16,  0,        route16,  route16,  route16,  ROT270, "Tehkan/Sun (Centuri license)", "Route 16" )
+GAME( 1981, route16b, route16,  route16,  route16,  route16b, ROT270, "bootleg", "Route 16 (bootleg)" )
+GAME( 1980, stratvox, 0,        stratvox, stratvox, stratvox, ROT270, "Taito", "Stratovox" )
+GAME( 1980, stratvxb, stratvox, stratvox, stratvox, stratvox, ROT270, "bootleg", "Stratovox (bootleg)" )
+GAME( ????, speakres, stratvox, stratvox, stratvox, stratvox, ROT270, "<unknown>", "Speak & Rescue" )

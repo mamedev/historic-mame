@@ -751,8 +751,8 @@ INPUT_PORTS_START( hunchbdk )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -1634,7 +1634,9 @@ ROM_START( herocast )
 	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
 ROM_END
 
-static void herocast_decode(void)
+
+
+static void init_herocast(void)
 {
 	int A;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -1652,342 +1654,31 @@ static void herocast_decode(void)
 
 
 
-static void radarscp_patch(void)
+static void init_radarscp(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* TODO: Radarscope does a check on bit 6 of 7d00 which prevent it from working. */
-	/* It's a sound status flag, maybe signaling whan a tune is finished. */
+	/* It's a sound status flag, maybe signaling when a tune is finished. */
 	/* For now, we comment it out. */
 	RAM[0x1e9c] = 0xc3;
 	RAM[0x1e9d] = 0xbd;
 }
 
-struct GameDriver driver_radarscp =
-{
-	__FILE__,
-	0,
-	"radarscp",
-	"Radar Scope",
-	"1980",
-	"Nintendo",
-	"Andy White (protection workaround)\nGary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili\nAndy White (color info)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_radarscp,
-	radarscp_patch,
 
-	rom_radarscp,
-	0, 0,
-	0,
-	0,
 
-	input_ports_dkong,
+GAME( 1980, radarscp, 0,       radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope" )
+GAME( 1981, dkong,    0,       dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US)" )
+GAME( 1981, dkongjp,  dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)" )
+GAME( 1981, dkongjpo, dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)" )
+GAME( 1982, dkongjr,  0,       dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (US)" )
+GAME( 1982, dkngjrjp, dkongjr, dkongjr,  dkong,    0,        ROT90, "bootleg?", "Donkey Kong Jr. (Original Japanese)" )
+GAME( 1982, dkjrjp,   dkongjr, dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Junior (Japan)" )
+GAME( 1982, dkjrbl,   dkongjr, dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (bootleg?)" )
+GAME( 1983, dkong3,   0,       dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
+GAME( 1983, dkong3j,  dkong3,  dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
 
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkong =
-{
-	__FILE__,
-	0,
-	"dkong",
-	"Donkey Kong (US)",
-	"1981",
-	"Nintendo of America",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkong,
-	0,
-
-	rom_dkong,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkongjp =
-{
-	__FILE__,
-	&driver_dkong,
-	"dkongjp",
-	"Donkey Kong (Japan set 1)",
-	"1981",
-	"Nintendo",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkong,
-	0,
-
-	rom_dkongjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkongjpo =
-{
-	__FILE__,
-	&driver_dkong,
-	"dkongjpo",
-	"Donkey Kong (Japan set 2)",
-	"1981",
-	"Nintendo",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkong,
-	0,
-
-	rom_dkongjpo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkongjr =
-{
-	__FILE__,
-	0,
-	"dkongjr",
-	"Donkey Kong Junior (US)",
-	"1982",
-	"Nintendo of America",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkongjr,
-	0,
-
-	rom_dkongjr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkngjrjp =
-{
-	__FILE__,
-	&driver_dkongjr,
-	"dkngjrjp",
-	"Donkey Kong Jr. (Original Japanese)",
-	"1982",
-	"bootleg?",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkongjr,
-	0,
-
-	rom_dkngjrjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkjrjp =
-{
-	__FILE__,
-	&driver_dkongjr,
-	"dkjrjp",
-	"Donkey Kong Junior (Japan)",
-	"1982",
-	"Nintendo",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkongjr,
-	0,
-
-	rom_dkjrjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkjrbl =
-{
-	__FILE__,
-	&driver_dkongjr,
-	"dkjrbl",
-	"Donkey Kong Junior (bootleg?)",
-	"1982",
-	"Nintendo of America",
-	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkongjr,
-	0,
-
-	rom_dkjrbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkong3 =
-{
-	__FILE__,
-	0,
-	"dkong3",
-	"Donkey Kong 3 (US)",
-	"1983",
-	"Nintendo of America",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkong3,
-	0,
-
-	rom_dkong3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong3,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_dkong3j =
-{
-	__FILE__,
-	&driver_dkong3,
-	"dkong3j",
-	"Donkey Kong 3 (Japan)",
-	"1983",
-	"Nintendo",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_dkong3,
-	0,
-
-	rom_dkong3j,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong3,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_hunchbkd =
-{
-	__FILE__,
-	0,
-	"hunchbkd",
-	"Hunchback (Donkey Kong conversion)",
-	"1983",
-	"Century",
-	"Mike Coates",
-	0,
-	&machine_driver_hunchbkd,
-	0,
-
-	rom_hunchbkd,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hunchbdk,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_herbiedk =
-{
-	__FILE__,
-	0,
-	"herbiedk",
-	"Herbie at the Olympics (DK conversion)",
-	"1984",
-	"CVS",//"Seatongrove UK Ltd",
-	"Mike Coates",
-	0,
-	&machine_driver_herbiedk,
-	0,
-
-	rom_herbiedk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_herbiedk,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_herocast =
-{
-	__FILE__,
-	0,
-	"herocast",
-	"herocast",
-	"1984",
-	"Seatongrove (Crown license)",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_dkong,
-	herocast_decode,
-
-	rom_herocast,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dkong,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAMEX(1983, hunchbkd, 0,       hunchbkd, hunchbdk, 0,        ROT90, "Century", "Hunchback (Donkey Kong conversion)", GAME_WRONG_COLORS )
+GAMEX(1984, herbiedk, 0,       herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)", GAME_WRONG_COLORS )	/*"Seatongrove UK Ltd"*/
+GAMEX(1984, herocast, 0,       dkong,    dkong,    herocast, ROT90, "Seatongrove (Crown license)", "herocast", GAME_NOT_WORKING )

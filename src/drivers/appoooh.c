@@ -169,7 +169,7 @@ INPUT_PORTS_START( appoooh )
 	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x07, 0x00, "Coin A" )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -178,7 +178,7 @@ INPUT_PORTS_START( appoooh )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x18, 0x00, "Coin B" )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -335,4 +335,4 @@ ROM_END
 
 
 
-GAME( 1984, appoooh, , appoooh, appoooh, , ROT0, "Sega", "Appoooh" )
+GAME( 1984, appoooh, 0, appoooh, appoooh, 0, ROT0, "Sega", "Appoooh" )

@@ -2,6 +2,9 @@
 
 Mappy memory map (preliminary)
 
+driver by Aaron Giles
+
+
 CPU #1:
 0000-07ff video RAM
 0800-0fff color RAM
@@ -593,22 +596,22 @@ static struct GfxLayout digdug2_spritelayout =
 /* pointers to the appropriate memory locations and their associated decode structs */
 static struct GfxDecodeInfo mappy_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,            0, 64 },
-	{ 1, 0x1000, &mappy_spritelayout, 64*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,            0, 64 },
+	{ REGION_GFX2, 0, &mappy_spritelayout, 64*4, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo digdug2_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,              0, 64 },
-	{ 1, 0x1000, &digdug2_spritelayout, 64*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,              0, 64 },
+	{ REGION_GFX2, 0, &digdug2_spritelayout, 64*4, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo todruaga_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,            0, 64 },
-	{ 1, 0x1000, &mappy_spritelayout, 64*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,            0, 64 },
+	{ REGION_GFX2, 0, &mappy_spritelayout, 64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -617,7 +620,7 @@ static struct namco_interface namco_interface =
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
 	100,	/* playback volume */
-	4		/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 
@@ -801,27 +804,28 @@ static struct MachineDriver machine_driver_todruaga =
 
 
 
-/* ROM loader description */
 ROM_START( mappy )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy1d.64",   0xa000, 0x2000, 0x52e6c708 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1b.64",   0xe000, 0x2000, 0x203766d4 )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mappy3b.32",   0x0000, 0x1000, 0x16498b9f )
-	ROM_LOAD( "mappy3m.64",   0x1000, 0x2000, 0xf2d9647a )
-	ROM_LOAD( "mappy3n.64",   0x3000, 0x2000, 0x757cf2b6 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mappy3m.64",   0x0000, 0x2000, 0xf2d9647a )
+	ROM_LOAD( "mappy3n.64",   0x2000, 0x2000, 0x757cf2b6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
 	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
@@ -831,21 +835,22 @@ ROM_START( mappyjp )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1.bin",   0xe000, 0x2000, 0x77c0b492 )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mappy3b.32",   0x0000, 0x1000, 0x16498b9f )
-	ROM_LOAD( "mappy3m.64",   0x1000, 0x2000, 0xf2d9647a )
-	ROM_LOAD( "mappy3n.64",   0x3000, 0x2000, 0x757cf2b6 )
-
-	ROM_REGIONX( 0x0220, REGION_PROMS )
-	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
-
-ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
-	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
 
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mappy3b.32",   0x0000, 0x1000, 0x16498b9f )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mappy3m.64",   0x0000, 0x2000, 0xf2d9647a )
+	ROM_LOAD( "mappy3n.64",   0x2000, 0x2000, 0x757cf2b6 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
+	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
+	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
+
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
@@ -854,20 +859,22 @@ ROM_START( digdug2 )
 	ROM_LOAD( "ddug2-3.bin",  0x8000, 0x4000, 0xbe7ec80b )
 	ROM_LOAD( "ddug2-1.bin",  0xc000, 0x4000, 0x5c77c0d4 )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ddug2-3b.bin", 0x0000, 0x1000, 0xafcb4509 )
-	ROM_LOAD( "ddug2-3m.bin", 0x1000, 0x4000, 0xdf1f4ad8 )
-	ROM_LOAD( "ddug2-3n.bin", 0x5000, 0x4000, 0xccadb3ea )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ddug2-3m.bin", 0x0000, 0x4000, 0xdf1f4ad8 )
+	ROM_LOAD( "ddug2-3n.bin", 0x4000, 0x4000, 0xccadb3ea )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
 	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
 	ROM_LOAD( "ddclr-5k.bin", 0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
@@ -876,10 +883,15 @@ ROM_START( digdug2a )
 	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
 	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ddug2-3b.bin", 0x0000, 0x1000, 0xafcb4509 )
-	ROM_LOAD( "ddug2-3m.bin", 0x1000, 0x4000, 0xdf1f4ad8 )
-	ROM_LOAD( "ddug2-3n.bin", 0x5000, 0x4000, 0xccadb3ea )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ddug2-3m.bin", 0x0000, 0x4000, 0xdf1f4ad8 )
+	ROM_LOAD( "ddug2-3n.bin", 0x4000, 0x4000, 0xccadb3ea )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
@@ -887,10 +899,7 @@ ROM_START( digdug2a )
 	ROM_LOAD( "ddclr_5k.bin", 0x0120, 0x0100, 0x9c55feda ) /* sprites */
 	/* Can't see the difference on screen, but CRC differs. */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
@@ -899,20 +908,22 @@ ROM_START( motos )
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
 	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "mts_1k.bin",   0xe000, 0x2000, 0x55e45d21 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mts_3b.bin",   0x0000, 0x1000, 0x5d4a2a22 )
-	ROM_LOAD( "mts_3m.bin",   0x1000, 0x4000, 0x2f0e396e )
-	ROM_LOAD( "mts_3n.bin",   0x5000, 0x4000, 0xcf8a3b86 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mts_3m.bin",   0x0000, 0x4000, 0x2f0e396e )
+	ROM_LOAD( "mts_3n.bin",   0x4000, 0x4000, 0xcf8a3b86 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "motos.pr1",    0x0000, 0x0020, 0x71972383 ) /* palette */
 	ROM_LOAD( "motos.pr2",    0x0020, 0x0100, 0x730ba7fb ) /* characters */
 	ROM_LOAD( "motos.pr3",    0x0120, 0x0100, 0x7721275d ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "mts_1k.bin",   0xe000, 0x2000, 0x55e45d21 )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "motos.spr",    0x0000, 0x0100, 0x2accdfb4 )
 ROM_END
 
@@ -921,10 +932,15 @@ ROM_START( todruaga )
 	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
 	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
-	ROM_LOAD( "druaga3m.bin", 0x1000, 0x2000, 0xe827e787 )
-	ROM_LOAD( "druaga3n.bin", 0x3000, 0x2000, 0x962bd060 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "druaga3m.bin", 0x0000, 0x2000, 0xe827e787 )
+	ROM_LOAD( "druaga3n.bin", 0x2000, 0x2000, 0x962bd060 )
 
 	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
@@ -934,10 +950,7 @@ ROM_START( todruaga )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
@@ -946,10 +959,15 @@ ROM_START( todruagb )
 	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
 	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )
 
-	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
-	ROM_LOAD( "druaga3m.bin", 0x1000, 0x2000, 0xe827e787 )
-	ROM_LOAD( "druaga3n.bin", 0x3000, 0x2000, 0x962bd060 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "druaga3m.bin", 0x0000, 0x2000, 0xe827e787 )
+	ROM_LOAD( "druaga3n.bin", 0x2000, 0x2000, 0x962bd060 )
 
 	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
@@ -959,187 +977,16 @@ ROM_START( todruagb )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
-
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
 
 
-struct GameDriver driver_mappy =
-{
-	__FILE__,
-	0,
-	"mappy",
-	"Mappy (US)",
-	"1983",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
-	0,
-	&machine_driver_mappy,
-	0,
-
-	rom_mappy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mappy,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-
-struct GameDriver driver_mappyjp =
-{
-	__FILE__,
-	&driver_mappy,
-	"mappyjp",
-	"Mappy (Japan)",
-	"1983",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
-	0,
-	&machine_driver_mappy,
-	0,
-
-	rom_mappyjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mappy,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_digdug2 =
-{
-	__FILE__,
-	0,
-	"digdug2",
-	"Dig Dug II (set 1)",
-	"1985",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
-	0,
-	&machine_driver_digdug2,
-	0,
-
-	rom_digdug2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_digdug2,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_digdug2a =
-{
-	__FILE__,
-	&driver_digdug2,
-	"digdug2a",
-	"Dig Dug II (set 2)",
-	"1985",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
-	0,
-	&machine_driver_digdug2,
-	0,
-
-	rom_digdug2a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_digdug2,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_motos =
-{
-	__FILE__,
-	0,
-	"motos",
-	"Motos",
-	"1985",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
-	0,
-	&machine_driver_motos,
-	0,
-
-	rom_motos,
-	0, 0,
-	0,
-	0,
-
-	input_ports_motos,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_todruaga =
-{
-	__FILE__,
-	0,
-	"todruaga",
-	"Tower of Druaga (set 1)",
-	"1984",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
-	0,
-	&machine_driver_todruaga,
-	0,
-
-	rom_todruaga,
-	0, 0,
-	0,
-	0,
-
-	input_ports_todruaga,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_todruagb =
-{
-	__FILE__,
-	&driver_todruaga,
-	"todruagb",
-	"Tower of Druaga (set 2)",
-	"1984",
-	"Namco",
-	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
-	0,
-	&machine_driver_todruaga,
-	0,
-
-	rom_todruagb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_todruaga,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, mappy,    0,        mappy,    mappy,    0, ROT90, "Namco", "Mappy (US)" )
+GAME( 1983, mappyjp,  mappy,    mappy,    mappy,    0, ROT90, "Namco", "Mappy (Japan)" )
+GAME( 1985, digdug2,  0,        digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (set 1)" )
+GAME( 1985, digdug2a, digdug2,  digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (set 2)" )
+GAME( 1985, motos,    0,        motos,    motos,    0, ROT90, "Namco", "Motos" )
+GAME( 1984, todruaga, 0,        todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (set 1)" )
+GAME( 1984, todruagb, todruaga, todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (set 2)" )

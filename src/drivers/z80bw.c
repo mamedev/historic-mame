@@ -2,6 +2,7 @@
 
 Midway?? Z80 board memory map (preliminary)
 
+
 0000-1bff ROM
 2000-23ff RAM
 2400-3fff Video RAM  (also writes between 4000 and 4fff, but only to simplify
@@ -110,8 +111,8 @@ INPUT_PORTS_START( astinvad )
 	PORT_DIPNAME( 0x88, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x88, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
@@ -169,85 +170,6 @@ static struct MachineDriver machine_driver_astinvad = /* LT */
 
 ***************************************************************************/
 
-ROM_START( astinvad )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
-	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
-	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0xa0092553 )
-	ROM_LOAD( "ai_cpu_4.rom", 0x0c00, 0x0400, 0xbe14185c )
-	ROM_LOAD( "ai_cpu_5.rom", 0x1000, 0x0400, 0xfee681ec )
-	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0xeb338863 )
-	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0x16dcfea4 )
-
-	ROM_REGIONX(0x0400, REGION_PROMS)
-	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, 0xb45287ff )
-ROM_END
-
-ROM_START( kamikaze )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
-	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
-	ROM_LOAD( "km03",         0x1000, 0x0800, 0x3e8dedb6 )
-	ROM_LOAD( "km04",         0x1800, 0x0800, 0x494e1f6d )
-
-	ROM_REGIONX(0x0400, REGION_PROMS)
-	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, BADCRC(0xb45287ff) )
-ROM_END
-
-
-
-/* LT 20-3-1998 */
-struct GameDriver driver_astinvad =
-{
-	__FILE__,
-	0,
-	"astinvad",
-	"Astro Invader",
-	"1980",
-	"Stern",
-	"Lee Taylor",
-	0,
-	&machine_driver_astinvad,
-	0,
-
-	rom_astinvad,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astinvad,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-/* LT 20 - 3 19978 */
-struct GameDriver driver_kamikaze =
-{
-	__FILE__,
-	&driver_astinvad,
-	"kamikaze",
-	"Kamikaze",
-	"1979",
-	"Leijac Corporation",
-	"Lee Taylor",
-	0,
-	&machine_driver_astinvad,
-	0,
-
-	rom_kamikaze,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astinvad,
-
-	0, 0, 0,
-	ROT270,
-
-	0,0
-};
 
 /*------------------------------------------------------------------------------
  Shoei Space Intruder
@@ -386,6 +308,35 @@ static struct MachineDriver machine_driver_spaceint = /* 20-12-1998 LT */
 };
 
 
+
+
+
+
+ROM_START( astinvad )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
+	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
+	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0xa0092553 )
+	ROM_LOAD( "ai_cpu_4.rom", 0x0c00, 0x0400, 0xbe14185c )
+	ROM_LOAD( "ai_cpu_5.rom", 0x1000, 0x0400, 0xfee681ec )
+	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0xeb338863 )
+	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0x16dcfea4 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, 0xb45287ff )
+ROM_END
+
+ROM_START( kamikaze )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
+	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
+	ROM_LOAD( "km03",         0x1000, 0x0800, 0x3e8dedb6 )
+	ROM_LOAD( "km04",         0x1800, 0x0800, 0x494e1f6d )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, BADCRC(0xb45287ff) )
+ROM_END
+
 ROM_START( spaceint )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1",	 0x0000, 0x0400, 0x184314d2 )
@@ -395,34 +346,12 @@ ROM_START( spaceint )
 	ROM_LOAD( "5",	 0x1000, 0x0400, 0xc6cfa650 )
 	ROM_LOAD( "6",	 0x1400, 0x0400, 0xc7ccf40f )
 
-	ROM_REGIONX(0x0100, REGION_PROMS)
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "clr", 0x0000, 0x0100, 0x13c1803f )
 ROM_END
 
 
-/* LT 21-12-1998 */
-struct GameDriver driver_spaceint =
-{
-	__FILE__,
-	0,
-	"spaceint",
-	"Space Intruder",
-	"1980",
-	"Shoei",
-	"Lee Taylor",
-	0,
-	&machine_driver_spaceint,
-	0,
 
-	rom_spaceint,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spaceint,
-
-	0, 0, 0,
-	ROT0 | GAME_WRONG_COLORS | GAME_NO_SOUND,
-
-	0, 0
-};
+GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern", "Astro Invader" )
+GAME( 1979, kamikaze, astinvad, astinvad, astinvad, 0, ROT270, "Leijac Corporation", "Kamikaze" )
+GAMEX(1980, spaceint, 0,        spaceint, spaceint, 0, ROT0,   "Shoei", "Space Intruder", GAME_WRONG_COLORS | GAME_NO_SOUND )

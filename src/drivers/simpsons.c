@@ -79,7 +79,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static void z80_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	offset = 0x10000 + ( ( ( data & 7 ) - 2 ) * 0x4000 );
 
@@ -267,7 +267,7 @@ static struct YM2151interface ym2151_interface =
 static struct K053260_interface k053260_interface =
 {
 	3579545,
-	4, /* memory region */
+	REGION_SOUND1, /* memory region */
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
 //	nmi_callback
 };
@@ -288,7 +288,7 @@ static int simpsons_irq(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_simpsons =
 {
 	/* basic machine hardware */
 	{
@@ -353,21 +353,21 @@ ROM_START( simpsons )
     ROM_LOAD( "j12.15c",      0x70000, 0x18000, 0x479e12f2 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_LOAD( "e03.6g",       0x00000, 0x08000, 0x866b7a35 )
+	ROM_CONTINUE(			  0x10000, 0x18000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
-	ROM_LOAD( "e03.6g",       0x00000, 0x08000, 0x866b7a35 )
-	ROM_CONTINUE(			  0x10000, 0x18000 )
-
-	ROM_REGION( 0x140000 ) /* samples for the 053260 */
+	ROM_REGIONX( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
@@ -380,21 +380,21 @@ ROM_START( simpsn2p )
     ROM_LOAD( "simp_012.rom", 0x70000, 0x18000, 0x244f9289 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
+	ROM_CONTINUE(			  0x10000, 0x18000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
-	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
-	ROM_CONTINUE(			  0x10000, 0x18000 )
-
-	ROM_REGION( 0x140000 ) /* samples for the 053260 */
+	ROM_REGIONX( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
@@ -407,21 +407,21 @@ ROM_START( simps2pj )
     ROM_LOAD( "072-212.15c",  0x70000, 0x18000, 0x584d9d37 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
+	ROM_CONTINUE(			  0x10000, 0x18000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGIONX( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
-	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
-	ROM_CONTINUE(			  0x10000, 0x18000 )
-
-	ROM_REGION( 0x140000 ) /* samples for the 053260 */
+	ROM_REGIONX( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
@@ -434,83 +434,12 @@ ROM_END
 
 ***************************************************************************/
 
-static void gfx_untangle(void)
+static void init_simpsons(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_4(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_4(REGION_GFX2);
 }
 
-struct GameDriver driver_simpsons =
-{
-	__FILE__,
-	0,
-	"simpsons",
-	"The Simpsons (4 Players)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_simpsons,
-	0, 0,
-	0,
-	0,
-
-	input_ports_simpsons,
-
-	0, 0, 0,
-    ROT0,
-	0,0
-};
-
-struct GameDriver driver_simpsn2p =
-{
-	__FILE__,
-	&driver_simpsons,
-	"simpsn2p",
-	"The Simpsons (2 Players)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_simpsn2p,
-	0, 0,
-	0,
-	0,
-
-	input_ports_simpsn2p,
-
-	0, 0, 0,
-    ROT0,
-	0,0
-};
-
-struct GameDriver driver_simps2pj =
-{
-	__FILE__,
-	&driver_simpsons,
-	"simps2pj",
-	"The Simpsons (2 Players Japan)",
-	"1991",
-	"Konami",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_simps2pj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_simpsn2p,
-
-	0, 0, 0,
-    ROT0,
-	0,0
-};
+GAME( 1991, simpsons, 0,        simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players)" )
+GAME( 1991, simpsn2p, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players)" )
+GAME( 1991, simps2pj, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players Japan)" )

@@ -380,4 +380,4 @@ ROM_END
 
 
 
-GAME( 1983, cloak, , cloak, cloak, , ROT0, "Atari", "Cloak & Dagger" )
+GAME( 1983, cloak, 0, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger" )

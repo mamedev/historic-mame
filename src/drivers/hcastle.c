@@ -111,7 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static void sound_bank_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A=0x20000 * (data&0x3);
 	int bank_B=0x20000 * ((data>>2)&0x3);
 
@@ -186,7 +186,7 @@ INPUT_PORTS_START( hcastle )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x18, 0x18, "Difficulty" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x18, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
@@ -237,7 +237,7 @@ INPUT_PORTS_START( hcastle )
 //	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
@@ -265,8 +265,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout, 0, 8*4*16 },	/* 007121 #1 */
-	{ 1, 0x100000, &charlayout, 0, 8*4*16 },	/* 007121 #2 */
+	{ REGION_GFX1, 0, &charlayout, 0, 8*4*16 },	/* 007121 #1 */
+	{ REGION_GFX2, 0, &charlayout, 0, 8*4*16 },	/* 007121 #2 */
 	{ -1 } /* end of array */
 };
 
@@ -286,7 +286,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 3 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(44,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -305,7 +305,7 @@ static struct k051649_interface k051649_interface =
 	45,			/* Volume */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_hcastle =
 {
 	/* basic machine hardware */
 	{
@@ -365,17 +365,16 @@ ROM_START( hcastle )
 	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
 	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
 
-	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
-	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
-	ROM_REGION(0x80000)	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
@@ -383,6 +382,9 @@ ROM_START( hcastle )
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
 	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* 512k for the samples */
+	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
 ROM_START( hcastlea )
@@ -390,17 +392,16 @@ ROM_START( hcastlea )
 	ROM_LOAD( "m03.k12",      0x08000, 0x08000, 0xd85e743d )
 	ROM_LOAD( "b06.k8",       0x10000, 0x20000, 0xabd07866 )
 
-	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
-	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
-	ROM_REGION(0x80000)	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
@@ -408,6 +409,9 @@ ROM_START( hcastlea )
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
 	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* 512k for the samples */
+	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
 ROM_START( hcastlej )
@@ -415,17 +419,16 @@ ROM_START( hcastlej )
 	ROM_LOAD( "768p03.k12",0x08000, 0x08000, 0xd509e340 )
 	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )
 
-	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
-	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
 
-	ROM_REGION(0x80000)	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
@@ -433,84 +436,13 @@ ROM_START( hcastlej )
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
 	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #2 char lookup table (same) */
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* 512k for the samples */
+	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
-/***************************************************************************/
 
-struct GameDriver driver_hcastle =
-{
-	__FILE__,
-	0,
-	"hcastle",
-	"Haunted Castle (set 1)",
-	"1988",
-	"Konami",
-	"Bryan McPhail",
-	0,
-	&machine_driver,
-	0,
 
-	rom_hcastle,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hcastle,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_hcastlea =
-{
-	__FILE__,
-	&driver_hcastle,
-	"hcastlea",
-	"Haunted Castle (set 2)",
-	"1988",
-	"Konami",
-	"Bryan McPhail",
-	0,
-	&machine_driver,
-	0,
-
-	rom_hcastlea,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hcastle,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_hcastlej =
-{
-	__FILE__,
-	&driver_hcastle,
-	"hcastlej",
-	"Akuma-Jou Dracula (Japan)",
-	"1988",
-	"Konami",
-	"Bryan McPhail",
-	0,
-	&machine_driver,
-	0,
-
-	rom_hcastlej,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hcastle,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)" )
+GAME( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)" )
+GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)" )

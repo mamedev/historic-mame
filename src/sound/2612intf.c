@@ -123,7 +123,7 @@ int YM2612_sh_start(const struct MachineSound *msound)
 			sprintf(buf[j],"YM2612(%s) #%d",j < 2 ? "FM" : "ADPCM",i);
 		}
 		stream[i] = stream_init_multi(YM2612_NUMBUF,
-			name,vol,rate,FM_OUTPUT_BIT,
+			name,vol,rate,
 			i,YM2612UpdateOne);
 	}
 

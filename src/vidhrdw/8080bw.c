@@ -16,7 +16,9 @@ unsigned char *invaders_videoram;
 static int flipped = 0;
 
 /* palette colors (see drivers/8080bw.c) */
-enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE };
+enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE,
+	   ORANGE, YELLOW_GREEN, GREEN_CYAN };
+/* (3 extra colors for the invad2ct overlay transitions) */
 
 
 /***************************************************************************
@@ -160,6 +162,64 @@ void invdpt2m_videoram_w (int offset,int data)
 				plot_pixel_8080 (x, y, col);
 
 			x ++;
+			data >>= 1;
+		}
+	}
+}
+
+void invad2ct_videoram_w (int offset,int data)
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+		int col;
+		int band;
+
+		invaders_videoram[offset] = data;
+
+		y = offset / 32;
+		x = 8 * (offset % 32);
+
+		for (i = 0; i < 8; i++)
+		{
+			if (!(data & 0x01))
+				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+			else
+			{
+				/* Calculate overlay color for this bit */
+
+				/* (This overlay is dithered to create color transitions,
+				   this is a close approximation) */
+
+				col = Machine->pens[WHITE];
+				band = (x - 2)/23;
+
+				if (band < 1)
+					col = Machine->pens[YELLOW];
+				else if (band < 2)
+					col = Machine->pens[YELLOW_GREEN];
+				else if (band < 3)
+					col = Machine->pens[GREEN_CYAN];
+				else if (band < 4)
+					col = Machine->pens[CYAN];
+				else if (band < 5)
+					col = Machine->pens[CYAN];
+				else if (band < 6)
+					col = Machine->pens[GREEN_CYAN];
+				else if (band < 7)
+					col = Machine->pens[GREEN];
+				else if (band < 8)
+					col = Machine->pens[YELLOW_GREEN];
+				else if (band < 9)
+					col = Machine->pens[YELLOW];
+				else if (band < 10)
+					col = Machine->pens[ORANGE];
+				else
+					col = Machine->pens[RED];
+
+				plot_pixel_8080 (x, y, col);
+			}
+			x++;
 			data >>= 1;
 		}
 	}

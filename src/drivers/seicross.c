@@ -2,6 +2,9 @@
 
 Seicross memory map (preliminary)
 
+driver by Nicola Salmoria
+
+
 0000-77ff ROM
 7800-7fff RAM
 9000-93ff videoram
@@ -291,16 +294,16 @@ INPUT_PORTS_START( radrad )
 	PORT_START	/* DSW3 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x0b, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x0d, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 2C_6C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x0e, "2 Coins/7 Credits" )
-	PORT_DIPSETTING(    0x0f, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 2C_8C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
@@ -418,8 +421,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 16 },
-	{ 1, 0x0000, &spritelayout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX1, 0, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -430,7 +433,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1536000,	/* 1.536 MHz ?? */
 	{ 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ friskyt_portB_r },
 	{ 0 },
@@ -517,7 +519,10 @@ ROM_START( friskyt )
 	ROM_LOAD( "ftom.07",      0x6000, 0x1000, 0xb2ef303a )
 	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, 0x10461a24 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	/* filled in later */
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ftom.11",      0x0000, 0x1000, 0x1ec6ff65 )
 	ROM_LOAD( "ftom.12",      0x1000, 0x1000, 0x3b8f40b5 )
 	ROM_LOAD( "ftom.09",      0x2000, 0x1000, 0x60642f25 )
@@ -526,9 +531,6 @@ ROM_START( friskyt )
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
 	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
-	/* filled in later */
 ROM_END
 
 ROM_START( radrad )
@@ -542,7 +544,10 @@ ROM_START( radrad )
 	ROM_LOAD( "7.3g",         0x6000, 0x1000, 0x02b1f9c9 )
 	ROM_LOAD( "8.3h",         0x7000, 0x0800, 0x911c90e8 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	/* filled in later */
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "11.l7",        0x0000, 0x1000, 0x4ace7afb )
 	ROM_LOAD( "12.n7",        0x1000, 0x1000, 0xb19b8473 )
 	ROM_LOAD( "9.j7",         0x2000, 0x1000, 0x229939a3 )
@@ -551,9 +556,6 @@ ROM_START( radrad )
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
 	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
-	/* filled in later */
 ROM_END
 
 ROM_START( seicross )
@@ -567,7 +569,10 @@ ROM_START( seicross )
 	ROM_LOAD( "smc7",         0x6000, 0x1000, 0x13052b03 )
 	ROM_LOAD( "smc8",         0x7000, 0x0800, 0x2093461d )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	/* filled in later */
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
 	ROM_LOAD( "smcd",         0x1000, 0x1000, 0xc3c953c4 )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
@@ -576,9 +581,6 @@ ROM_START( seicross )
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
-	/* filled in later */
 ROM_END
 
 ROM_START( sectrzon )
@@ -592,7 +594,10 @@ ROM_START( sectrzon )
 	ROM_LOAD( "sz7.3i",       0x6000, 0x1000, 0x7b34dc1c )
 	ROM_LOAD( "sz8.3j",       0x7000, 0x0800, 0x9933526a )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	/* filled in later */
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
 	ROM_LOAD( "sz12.7m",      0x1000, 0x1000, 0x2bdef9ad )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
@@ -601,14 +606,11 @@ ROM_START( sectrzon )
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
-	/* filled in later */
 ROM_END
 
 
 
-static void friskyt_decode(void)
+static void init_friskyt(void)
 {
 	int A;
 	unsigned char *src,*dest;
@@ -624,103 +626,7 @@ static void friskyt_decode(void)
 
 
 
-struct GameDriver driver_friskyt =
-{
-	__FILE__,
-	0,
-	"friskyt",
-	"Frisky Tom",
-	"1981",
-	"Nichibutsu",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_nvram,
-	friskyt_decode,
-
-	rom_friskyt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_friskyt,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_radrad =
-{
-	__FILE__,
-	0,
-	"radrad",
-	"Radical Radial",
-	"1982",
-	"Nichibutsu USA",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_no_nvram,
-	friskyt_decode,
-
-	rom_radrad,
-	0, 0,
-	0,
-	0,
-
-	input_ports_radrad,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_seicross =
-{
-	__FILE__,
-	0,
-	"seicross",
-	"Seicross",
-	"1984",
-	"Nichibutsu + Alice",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_no_nvram,
-	friskyt_decode,
-
-	rom_seicross,
-	0, 0,
-	0,
-	0,
-
-	input_ports_seicross,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_sectrzon =
-{
-	__FILE__,
-	&driver_seicross,
-	"sectrzon",
-	"Sector Zone",
-	"1984",
-	"Nichibutsu + Alice",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_no_nvram,
-	friskyt_decode,
-
-	rom_sectrzon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_seicross,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom" )
+GAME( 1982, radrad,   0,        no_nvram, radrad,   friskyt, ROT0,  "Nichibutsu USA", "Radical Radial" )
+GAME( 1984, seicross, 0,        no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Seicross" )
+GAME( 1984, sectrzon, seicross, no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Sector Zone" )

@@ -478,4 +478,4 @@ void init_bjtwin(void)
 
 
 
-GAME( 1993, bjtwin, , bjtwin, bjtwin, bjtwin, ROT270, "NMK", "Bombjack Twin" )
+GAME( 1993, bjtwin, 0, bjtwin, bjtwin, bjtwin, ROT270, "NMK", "Bombjack Twin" )

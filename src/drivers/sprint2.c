@@ -281,8 +281,8 @@ static struct GfxLayout carlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x0000, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
-        { 1, 0x0400, &carlayout, 0x04, 0x04 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout, 0, 2 },
+	{ REGION_GFX2, 0, &carlayout,  4, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -309,7 +309,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sprint2 =
 {
 	/* basic machine hardware */
 	{
@@ -397,11 +397,13 @@ ROM_START( sprint1 )
 	ROM_LOAD( "6443-01.e1",   0x3800, 0x0800, 0xd6bb00d0 )
 	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x800)     /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6396-01.p4",   0x0000, 0x0200, 0x801b42dd )
 	ROM_LOAD( "6397-01.r4",   0x0200, 0x0200, 0x135ba1aa )
-	ROM_LOAD( "6398-01.k6",   0x0400, 0x0200, 0xc9e1017e )
-	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
+	ROM_LOAD( "6399-01.j6",   0x0200, 0x0200, 0x63d685b2 )
 ROM_END
 
 ROM_START( sprint2 )
@@ -413,62 +415,16 @@ ROM_START( sprint2 )
 	ROM_LOAD( "6405sp2.e1",   0x3800, 0x0800, 0x6c991c80 )
 	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x800)     /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6396-01.p4",   0x0000, 0x0200, 0x801b42dd )
 	ROM_LOAD( "6397-01.r4",   0x0200, 0x0200, 0x135ba1aa )
-	ROM_LOAD( "6398-01.k6",   0x0400, 0x0200, 0xc9e1017e )
-	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
+	ROM_LOAD( "6399-01.j6",   0x0200, 0x0200, 0x63d685b2 )
 ROM_END
 
 
 
-struct GameDriver driver_sprint1 =
-{
-	__FILE__,
-	0,
-	"sprint1",
-	"Sprint 1",
-	"1978",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver_sprint1,
-	0,
-
-	rom_sprint1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sprint1,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sprint2 =
-{
-	__FILE__,
-	&driver_sprint1,
-	"sprint2",
-	"Sprint 2",
-	"1976",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sprint2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sprint2,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1978, sprint1, 0,       sprint1, sprint1, 0, ROT0, "Atari", "Sprint 1" )
+GAME( 1976, sprint2, sprint1, sprint2, sprint2, 0, ROT0, "Atari", "Sprint 2" )

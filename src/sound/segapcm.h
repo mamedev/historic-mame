@@ -22,8 +22,6 @@ enum
 	LR_PAN = 2
 };
 
-typedef signed short  SEGAPCM_SMP;
-typedef unsigned char SEGAPCM_SAMPLE;
 
 typedef struct segapcm
 {
@@ -70,7 +68,6 @@ void SEGAPCM_sh_update( void );
 int SEGAPCMInit( const struct MachineSound *msound, int banksize, int mode, unsigned char *inpcm, int volume );
 void SEGAPCMShutdown( void );
 void SEGAPCMResetChip( void );
-void SEGAPCMUpdate( int num, void **buffer, int length );
 void SEGAPCMWriteReg( int r, int v );
 int SEGAPCMReadReg( int r );
 

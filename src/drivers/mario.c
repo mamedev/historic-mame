@@ -2,6 +2,9 @@
 
 Mario Bros memory map (preliminary):
 
+driver by Mirko Buffoni
+
+
 0000-5fff ROM
 6000-6fff RAM
 7000-73ff ?
@@ -346,8 +349,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 16 },
-	{ 1, 0x2000, &spritelayout, 16*4, 32 },
+	{ REGION_GFX1, 0, &charlayout,      0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*4, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -389,7 +392,6 @@ static struct AY8910interface ay8910_interface =
 	1,      /* 1 chip */
 	14318000/6,	/* ? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
@@ -414,7 +416,7 @@ static struct MemoryWriteAddress masao_sound_writemem[] =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mario =
 {
 	/* basic machine hardware */
 	{
@@ -520,21 +522,23 @@ ROM_START( mario )
 	ROM_LOAD( "mario.7d",     0x4000, 0x2000, 0xdcceb6c1 )
 	ROM_LOAD( "mario.7c",     0xf000, 0x1000, 0x4a63d96b )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mario.3f",     0x0000, 0x1000, 0x28b0c42c )
 	ROM_LOAD( "mario.3j",     0x1000, 0x1000, 0x0c8cc04d )
-	ROM_LOAD( "mario.7m",     0x2000, 0x1000, 0x22b7372e )
-	ROM_LOAD( "mario.7n",     0x3000, 0x1000, 0x4f3a1f47 )
-	ROM_LOAD( "mario.7p",     0x4000, 0x1000, 0x56be6ccd )
-	ROM_LOAD( "mario.7s",     0x5000, 0x1000, 0x56f1d613 )
-	ROM_LOAD( "mario.7t",     0x6000, 0x1000, 0x641f0008 )
-	ROM_LOAD( "mario.7u",     0x7000, 0x1000, 0x7baf5309 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mario.7m",     0x0000, 0x1000, 0x22b7372e )
+	ROM_LOAD( "mario.7n",     0x1000, 0x1000, 0x4f3a1f47 )
+	ROM_LOAD( "mario.7p",     0x2000, 0x1000, 0x56be6ccd )
+	ROM_LOAD( "mario.7s",     0x3000, 0x1000, 0x56f1d613 )
+	ROM_LOAD( "mario.7t",     0x4000, 0x1000, 0x641f0008 )
+	ROM_LOAD( "mario.7u",     0x5000, 0x1000, 0x7baf5309 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
 ROM_START( mariojp )
@@ -544,21 +548,23 @@ ROM_START( mariojp )
 	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, 0xf8575f31 )
 	ROM_LOAD( "tma1c-a2.7c",  0xf000, 0x1000, 0xa3c11e9e )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tma1v-a.3f",   0x0000, 0x1000, 0xadf49ee0 )
 	ROM_LOAD( "tma1v-a.3j",   0x1000, 0x1000, 0xa5318f2d )
-	ROM_LOAD( "tma1v-a.7m",   0x2000, 0x1000, 0x186762f8 )
-	ROM_LOAD( "tma1v-a.7n",   0x3000, 0x1000, 0xe0e08bba )
-	ROM_LOAD( "tma1v-a.7p",   0x4000, 0x1000, 0x7b27c8c1 )
-	ROM_LOAD( "tma1v-a.7s",   0x5000, 0x1000, 0x912ba80a )
-	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
-	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
+
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, 0x186762f8 )
+	ROM_LOAD( "tma1v-a.7n",   0x1000, 0x1000, 0xe0e08bba )
+	ROM_LOAD( "tma1v-a.7p",   0x2000, 0x1000, 0x7b27c8c1 )
+	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, 0x912ba80a )
+	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, 0x5cbb92a5 )
+	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, 0x13afb9ed )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
 ROM_START( masao )
@@ -568,96 +574,27 @@ ROM_START( masao )
 	ROM_LOAD( "masao-2.rom",  0x4000, 0x2000, 0x42e85240 )
 	ROM_LOAD( "masao-1.rom",  0xf000, 0x1000, 0xb2817af9 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound */
+	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "masao-6.rom",  0x0000, 0x1000, 0x1c9e0be2 )
 	ROM_LOAD( "masao-7.rom",  0x1000, 0x1000, 0x747c1349 )
-	ROM_LOAD( "tma1v-a.7m",   0x2000, 0x1000, 0x186762f8 )
-	ROM_LOAD( "masao-9.rom",  0x3000, 0x1000, 0x50be3918 )
-	ROM_LOAD( "mario.7p",     0x4000, 0x1000, 0x56be6ccd )
-	ROM_LOAD( "tma1v-a.7s",   0x5000, 0x1000, 0x912ba80a )
-	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
-	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
+
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tma1v-a.7m",   0x0000, 0x1000, 0x186762f8 )
+	ROM_LOAD( "masao-9.rom",  0x1000, 0x1000, 0x50be3918 )
+	ROM_LOAD( "mario.7p",     0x2000, 0x1000, 0x56be6ccd )
+	ROM_LOAD( "tma1v-a.7s",   0x3000, 0x1000, 0x912ba80a )
+	ROM_LOAD( "tma1v-a.7t",   0x4000, 0x1000, 0x5cbb92a5 )
+	ROM_LOAD( "tma1v-a.7u",   0x5000, 0x1000, 0x13afb9ed )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound */
-	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
 ROM_END
 
 
 
-struct GameDriver driver_mario =
-{
-	__FILE__,
-	0,
-	"mario",
-	"Mario Bros. (US)",
-	"1983",
-	"Nintendo of America",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mario,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mario,
-
-	0, 0, 0,
-	ROT180,
-	0,0
-};
-
-struct GameDriver driver_mariojp =
-{
-	__FILE__,
-	&driver_mario,
-	"mariojp",
-	"Mario Bros. (Japan)",
-	"1983",
-	"Nintendo",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mariojp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mariojp,
-
-	0, 0, 0,
-	ROT180,
-	0,0
-};
-
-struct GameDriver driver_masao =
-{
-	__FILE__,
-	&driver_mario,
-	"masao",
-	"Masao",
-	"1983",
-	"bootleg",
-	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
-	0,
-	&machine_driver_masao,
-	0,
-
-	rom_masao,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mario,
-
-	0, 0, 0,
-	ROT180,
-	0,0
-};
+GAME( 1983, mario,   0,     mario, mario,   0, ROT180, "Nintendo of America", "Mario Bros. (US)" )
+GAME( 1983, mariojp, mario, mario, mariojp, 0, ROT180, "Nintendo", "Mario Bros. (Japan)" )
+GAME( 1983, masao,   mario, masao, mario,   0, ROT180, "bootleg", "Masao" )

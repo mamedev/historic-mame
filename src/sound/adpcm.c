@@ -33,7 +33,7 @@ struct ADPCMVoice
 	int channel;            /* which channel are we playing on? */
 	unsigned char *base;    /* pointer to the base memory location */
 	unsigned char *stream;  /* input stream data (if any) */
-	void *buffer;           /* output buffer (could be 8 or 16 bits) */
+	INT16 *buffer;          /* output buffer */
 	int bufpos;             /* current position in the buffer */
 	int mask;               /* mask to keep us within the buffer */
 	int sample;             /* current sample number */
@@ -162,7 +162,7 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 		adpcm[i].volume = 255;
 
 		/* allocate an output buffer */
-		adpcm[i].buffer = malloc (adpcm[i].buffer_len * Machine->sample_bits / 8);
+		adpcm[i].buffer = malloc (adpcm[i].buffer_len * sizeof(INT16));
 		if (!adpcm[i].buffer)
 			return 1;
 	}
@@ -225,102 +225,49 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
             int oldsignal = signal;
 			int delta, i;
 #endif
+			INT16 *buffer = voice->buffer + voice->bufpos;
 
-			/* 16-bit case */
-			if (Machine->sample_bits == 16)
+			while (left)
 			{
-				short *buffer = (short *)voice->buffer + voice->bufpos;
-
-				while (left)
-				{
-					/* compute the new amplitude and update the current step */
-					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
-					signal += diff_lookup[step * 16 + (val & 15)];
-					if (signal > 2047) signal = 2047;
-					else if (signal < -2048) signal = -2048;
-					step += index_shift[val & 7];
-					if (step > 48) step = 48;
-					else if (step < 0) step = 0;
+				/* compute the new amplitude and update the current step */
+				val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
+				signal += diff_lookup[step * 16 + (val & 15)];
+				if (signal > 2047) signal = 2047;
+				else if (signal < -2048) signal = -2048;
+				step += index_shift[val & 7];
+				if (step > 48) step = 48;
+				else if (step < 0) step = 0;
 
 #if OVERSAMPLING
-                    /* antialiasing samples */
-                    delta = signal - oldsignal;
-					for (i = 1; left && i <= voice->oversampling; left--, i++)
-						*buffer++ = (oldsignal + delta * i / voice->oversampling) * voice->volume / 16;
-					oldsignal = signal;
+				/* antialiasing samples */
+				delta = signal - oldsignal;
+				for (i = 1; left && i <= voice->oversampling; left--, i++)
+					*buffer++ = (oldsignal + delta * i / voice->oversampling) * voice->volume / 16;
+				oldsignal = signal;
 #else
-					*buffer++ = signal * voice->volume / 16;
-					left--;
+				*buffer++ = signal * voice->volume / 16;
+				left--;
 #endif
 
-                    /* next! */
-					if (++sample > count)
-					{
-						/* if we're not streaming, fill with silence and stop */
-						if (voice->base != voice->stream)
-						{
-							while (left--)
-								*buffer++ = 0;
-							voice->playing = 0;
-						}
-
-						/* if we are streaming, pad with the last sample */
-						else
-						{
-							short last = buffer[-1];
-							while (left--)
-								*buffer++ = last;
-						}
-						break;
-					}
-				}
-			}
-
-			/* 8-bit case */
-			else
-			{
-				unsigned char *buffer = (unsigned char *)voice->buffer + voice->bufpos;
-
-				while (left)
+				/* next! */
+				if (++sample > count)
 				{
-					/* compute the new amplitude and update the current step */
-					val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
-					signal += diff_lookup[step * 16 + (val & 15)];
-					if (signal > 2047) signal = 2047;
-					else if (signal < -2048) signal = -2048;
-					step += index_shift[val & 7];
-					if (step > 48) step = 48;
-					else if (step < 0) step = 0;
-
-#if OVERSAMPLING
-                    delta = signal - oldsignal;
-					for (i = 1; left && i <= voice->oversampling; left--, i++)
-						*buffer++ = (oldsignal + delta * i / voice->oversampling) * voice->volume / (16 * 256);
-                    oldsignal = signal;
-#else
-					*buffer++ = signal * voice->volume / (16 * 256);
-					left--;
-#endif
-                    /* next! */
-					if (++sample > count)
+					/* if we're not streaming, fill with silence and stop */
+					if (voice->base != voice->stream)
 					{
-						/* if we're not streaming, fill with silence and stop */
-						if (voice->base != voice->stream)
-						{
-							while (left--)
-								*buffer++ = 0;
-							voice->playing = 0;
-						}
-
-						/* if we are streaming, pad with the last sample */
-						else
-						{
-							unsigned char last = buffer[-1];
-							while (left--)
-								*buffer++ = last;
-						}
-						break;
+						while (left--)
+							*buffer++ = 0;
+						voice->playing = 0;
 					}
+
+					/* if we are streaming, pad with the last sample */
+					else
+					{
+						short last = buffer[-1];
+						while (left--)
+							*buffer++ = last;
+					}
+					break;
 				}
 			}
 
@@ -333,10 +280,7 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 		/* voice is not playing */
 		else
 		{
-			if (Machine->sample_bits == 16)
-				memset ((short *)voice->buffer + voice->bufpos, 0, left * 2);
-			else
-				memset ((unsigned char *)voice->buffer + voice->bufpos, 0, left);
+			memset (voice->buffer + voice->bufpos, 0, left * sizeof(INT16));
 		}
 
 		/* update the final buffer position */
@@ -367,10 +311,7 @@ void ADPCM_sh_update (void)
 		ADPCM_update (voice, voice->buffer_len);
 
 		/* play the result */
-		if (Machine->sample_bits == 16)
-			mixer_play_streamed_sample_16(voice->channel,voice->buffer,2*(voice->buffer_len),voice->emulation_rate);
-		else
-			mixer_play_streamed_sample(voice->channel,voice->buffer,voice->buffer_len,voice->emulation_rate);
+		mixer_play_streamed_sample_16(voice->channel,voice->buffer,2*(voice->buffer_len),voice->emulation_rate);
 
 		/* reset the buffer position */
 		voice->bufpos = 0;
@@ -623,7 +564,7 @@ static int OKIM6295_sub_start (const struct MachineSound *msound)
 		adpcm[i].volume = 255;
 
 		/* allocate an output buffer */
-		adpcm[i].buffer = malloc (adpcm[i].buffer_len * Machine->sample_bits / 8);
+		adpcm[i].buffer = malloc (adpcm[i].buffer_len * sizeof(INT16));
 		if (!adpcm[i].buffer)
 			return 1;
 	}

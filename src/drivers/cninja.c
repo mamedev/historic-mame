@@ -684,7 +684,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1225,10 +1224,10 @@ static void init_stoneage(void)
 
 /**********************************************************************************/
 
-GAME( 1991, cninja,   ,        cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 3)" )
+GAME( 1991, cninja,   0,       cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 3)" )
 GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 0)" )
 GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0, "Data East Corporation", "Caveman Ninja (US)" )
 GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Joe & Mac (Japan)" )
 GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0, "bootleg", "Stoneage" )
-GAMEX(1990, edrandy,  ,        edrandy,  cninja,  ,         ROT0, "Data East Corporation", "Edward Randy (World)", GAME_NOT_WORKING )
-GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  ,         ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_NOT_WORKING )
+GAMEX(1990, edrandy,  0,       edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (World)", GAME_NOT_WORKING )
+GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  0,        ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_NOT_WORKING )

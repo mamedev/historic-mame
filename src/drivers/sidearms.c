@@ -241,20 +241,20 @@ INPUT_PORTS_START( sidearms )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
@@ -435,7 +435,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
-	2048,   /* 2048 characters */
+	1024,   /* 1024 characters */
 	2,      /* 2 bits per pixel */
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -479,10 +479,9 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,   768, 64 }, /* colors 768-1023 */
-	{ 1, 0x08000, &tilelayout,     0, 32 }, /* colors   0-511 */
-	{ 1, 0x48000, &spritelayout, 512, 16 }, /* colors 512-767 */
+	{ REGION_GFX1, 0, &charlayout,   768, 64 }, /* colors 768-1023 */
+	{ REGION_GFX2, 0, &tilelayout,     0, 32 }, /* colors   0-511 */
+	{ REGION_GFX3, 0, &spritelayout, 512, 16 }, /* colors 512-767 */
 	{ -1 } /* end of array */
 };
 
@@ -511,10 +510,9 @@ static struct GfxLayout turtship_tilelayout =
 
 static struct GfxDecodeInfo turtship_gfxdecodeinfo[] =
 {
-	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,            768, 64 },        /* colors 768-1023 */
-	{ 1, 0x08000, &turtship_tilelayout,     0, 32 },        /* colors   0-511 */
-	{ 1, 0x68000, &spritelayout,          512, 16 },        /* colors 512-767 */
+	{ REGION_GFX1, 0, &charlayout,          768, 64 },	/* colors 768-1023 */
+	{ REGION_GFX2, 0, &turtship_tilelayout,   0, 32 },	/* colors   0-511 */
+	{ REGION_GFX3, 0, &spritelayout,        512, 16 },	/* colors 512-767 */
 	{ -1 } /* end of array */
 };
 
@@ -529,7 +527,6 @@ static struct YM2203interface ym2203_interface =
 	2,                      /* 2 chips */
 	4000000,        /* 4 MHz ? (hand tuned) */
 	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -640,35 +637,37 @@ ROM_START( sidearms )
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
 
-	ROM_REGION_DISPOSE(0x88000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
-	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 ) /* tiles */
-	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
-	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
-	ROM_LOAD( "b_13g.rom",    0x20000, 0x8000, 0xc71a3053 )
-	ROM_LOAD( "b_14d.rom",    0x28000, 0x8000, 0x826e8a97 )
-	ROM_LOAD( "b_14e.rom",    0x30000, 0x8000, 0x6cfc02a4 )
-	ROM_LOAD( "b_14f.rom",    0x38000, 0x8000, 0x9b9f6730 )
-	ROM_LOAD( "b_14g.rom",    0x40000, 0x8000, 0xef6af630 )
-	ROM_LOAD( "b_11b.rom",    0x48000, 0x8000, 0xeb6f278c ) /* sprites */
-	ROM_LOAD( "b_13b.rom",    0x50000, 0x8000, 0xe91b4014 )
-	ROM_LOAD( "b_11a.rom",    0x58000, 0x8000, 0x2822c522 )
-	ROM_LOAD( "b_13a.rom",    0x60000, 0x8000, 0x3e8a9f75 )
-	ROM_LOAD( "b_12b.rom",    0x68000, 0x8000, 0x86e43eda )
-	ROM_LOAD( "b_14b.rom",    0x70000, 0x8000, 0x076e92d1 )
-	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
-	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION(0x08000)     /* 32k tile map */
-	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* unknown, looks like Z80 code */
+	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
-#ifdef THIRD_CPU
-	ROM_REGION(0x10000)     /* 64k for CPU */
-	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x0 )
-#endif
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_13d.rom",    0x00000, 0x8000, 0x3c59afe1 ) /* tiles */
+	ROM_LOAD( "b_13e.rom",    0x08000, 0x8000, 0x64bc3b77 )
+	ROM_LOAD( "b_13f.rom",    0x10000, 0x8000, 0xe6bcea6f )
+	ROM_LOAD( "b_13g.rom",    0x18000, 0x8000, 0xc71a3053 )
+	ROM_LOAD( "b_14d.rom",    0x20000, 0x8000, 0x826e8a97 )
+	ROM_LOAD( "b_14e.rom",    0x28000, 0x8000, 0x6cfc02a4 )
+	ROM_LOAD( "b_14f.rom",    0x30000, 0x8000, 0x9b9f6730 )
+	ROM_LOAD( "b_14g.rom",    0x38000, 0x8000, 0xef6af630 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_11b.rom",    0x00000, 0x8000, 0xeb6f278c ) /* sprites */
+	ROM_LOAD( "b_13b.rom",    0x08000, 0x8000, 0xe91b4014 )
+	ROM_LOAD( "b_11a.rom",    0x10000, 0x8000, 0x2822c522 )
+	ROM_LOAD( "b_13a.rom",    0x18000, 0x8000, 0x3e8a9f75 )
+	ROM_LOAD( "b_12b.rom",    0x20000, 0x8000, 0x86e43eda )
+	ROM_LOAD( "b_14b.rom",    0x28000, 0x8000, 0x076e92d1 )
+	ROM_LOAD( "b_12a.rom",    0x30000, 0x8000, 0xce107f3c )
+	ROM_LOAD( "b_14a.rom",    0x38000, 0x8000, 0xdba06076 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 ROM_END
 
 ROM_START( sidearmr )
@@ -677,35 +676,37 @@ ROM_START( sidearmr )
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
 
-	ROM_REGION_DISPOSE(0x88000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
-	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 ) /* tiles */
-	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
-	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
-	ROM_LOAD( "b_13g.rom",    0x20000, 0x8000, 0xc71a3053 )
-	ROM_LOAD( "b_14d.rom",    0x28000, 0x8000, 0x826e8a97 )
-	ROM_LOAD( "b_14e.rom",    0x30000, 0x8000, 0x6cfc02a4 )
-	ROM_LOAD( "b_14f.rom",    0x38000, 0x8000, 0x9b9f6730 )
-	ROM_LOAD( "b_14g.rom",    0x40000, 0x8000, 0xef6af630 )
-	ROM_LOAD( "b_11b.rom",    0x48000, 0x8000, 0xeb6f278c ) /* sprites */
-	ROM_LOAD( "b_13b.rom",    0x50000, 0x8000, 0xe91b4014 )
-	ROM_LOAD( "b_11a.rom",    0x58000, 0x8000, 0x2822c522 )
-	ROM_LOAD( "b_13a.rom",    0x60000, 0x8000, 0x3e8a9f75 )
-	ROM_LOAD( "b_12b.rom",    0x68000, 0x8000, 0x86e43eda )
-	ROM_LOAD( "b_14b.rom",    0x70000, 0x8000, 0x076e92d1 )
-	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
-	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION(0x08000)     /* 32k tile map */
-	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* unknown, looks like Z80 code */
+	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
-#ifdef THIRD_CPU
-	ROM_REGION(0x10000)     /* 64k for CPU */
-	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x0 )
-#endif
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_13d.rom",    0x00000, 0x8000, 0x3c59afe1 ) /* tiles */
+	ROM_LOAD( "b_13e.rom",    0x08000, 0x8000, 0x64bc3b77 )
+	ROM_LOAD( "b_13f.rom",    0x10000, 0x8000, 0xe6bcea6f )
+	ROM_LOAD( "b_13g.rom",    0x18000, 0x8000, 0xc71a3053 )
+	ROM_LOAD( "b_14d.rom",    0x20000, 0x8000, 0x826e8a97 )
+	ROM_LOAD( "b_14e.rom",    0x28000, 0x8000, 0x6cfc02a4 )
+	ROM_LOAD( "b_14f.rom",    0x30000, 0x8000, 0x9b9f6730 )
+	ROM_LOAD( "b_14g.rom",    0x38000, 0x8000, 0xef6af630 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_11b.rom",    0x00000, 0x8000, 0xeb6f278c ) /* sprites */
+	ROM_LOAD( "b_13b.rom",    0x08000, 0x8000, 0xe91b4014 )
+	ROM_LOAD( "b_11a.rom",    0x10000, 0x8000, 0x2822c522 )
+	ROM_LOAD( "b_13a.rom",    0x18000, 0x8000, 0x3e8a9f75 )
+	ROM_LOAD( "b_12b.rom",    0x20000, 0x8000, 0x86e43eda )
+	ROM_LOAD( "b_14b.rom",    0x28000, 0x8000, 0x076e92d1 )
+	ROM_LOAD( "b_12a.rom",    0x30000, 0x8000, 0xce107f3c )
+	ROM_LOAD( "b_14a.rom",    0x38000, 0x8000, 0xdba06076 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 ROM_END
 
 ROM_START( sidearjp )
@@ -714,35 +715,37 @@ ROM_START( sidearjp )
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
 
-	ROM_REGION_DISPOSE(0x88000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
-	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 ) /* tiles */
-	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
-	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
-	ROM_LOAD( "b_13g.rom",    0x20000, 0x8000, 0xc71a3053 )
-	ROM_LOAD( "b_14d.rom",    0x28000, 0x8000, 0x826e8a97 )
-	ROM_LOAD( "b_14e.rom",    0x30000, 0x8000, 0x6cfc02a4 )
-	ROM_LOAD( "b_14f.rom",    0x38000, 0x8000, 0x9b9f6730 )
-	ROM_LOAD( "b_14g.rom",    0x40000, 0x8000, 0xef6af630 )
-	ROM_LOAD( "b_11b.rom",    0x48000, 0x8000, 0xeb6f278c ) /* sprites */
-	ROM_LOAD( "b_13b.rom",    0x50000, 0x8000, 0xe91b4014 )
-	ROM_LOAD( "b_11a.rom",    0x58000, 0x8000, 0x2822c522 )
-	ROM_LOAD( "b_13a.rom",    0x60000, 0x8000, 0x3e8a9f75 )
-	ROM_LOAD( "b_12b.rom",    0x68000, 0x8000, 0x86e43eda )
-	ROM_LOAD( "b_14b.rom",    0x70000, 0x8000, 0x076e92d1 )
-	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
-	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
-	ROM_REGION(0x08000)     /* 32k tile map */
-	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* unknown, looks like Z80 code */
+	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x134dc35b )
 
-#ifdef THIRD_CPU
-	ROM_REGION(0x10000)     /* 64k for CPU */
-	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x0 )
-#endif
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_13d.rom",    0x00000, 0x8000, 0x3c59afe1 ) /* tiles */
+	ROM_LOAD( "b_13e.rom",    0x08000, 0x8000, 0x64bc3b77 )
+	ROM_LOAD( "b_13f.rom",    0x10000, 0x8000, 0xe6bcea6f )
+	ROM_LOAD( "b_13g.rom",    0x18000, 0x8000, 0xc71a3053 )
+	ROM_LOAD( "b_14d.rom",    0x20000, 0x8000, 0x826e8a97 )
+	ROM_LOAD( "b_14e.rom",    0x28000, 0x8000, 0x6cfc02a4 )
+	ROM_LOAD( "b_14f.rom",    0x30000, 0x8000, 0x9b9f6730 )
+	ROM_LOAD( "b_14g.rom",    0x38000, 0x8000, 0xef6af630 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b_11b.rom",    0x00000, 0x8000, 0xeb6f278c ) /* sprites */
+	ROM_LOAD( "b_13b.rom",    0x08000, 0x8000, 0xe91b4014 )
+	ROM_LOAD( "b_11a.rom",    0x10000, 0x8000, 0x2822c522 )
+	ROM_LOAD( "b_13a.rom",    0x18000, 0x8000, 0x3e8a9f75 )
+	ROM_LOAD( "b_12b.rom",    0x20000, 0x8000, 0x86e43eda )
+	ROM_LOAD( "b_14b.rom",    0x28000, 0x8000, 0x076e92d1 )
+	ROM_LOAD( "b_12a.rom",    0x30000, 0x8000, 0xce107f3c )
+	ROM_LOAD( "b_14a.rom",    0x38000, 0x8000, 0xdba06076 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
 ROM_END
 
 ROM_START( turtship )
@@ -751,23 +754,27 @@ ROM_START( turtship )
 	ROM_LOAD( "turtship.002",    0x10000, 0x08000, 0xe576f482 )
 	ROM_LOAD( "turtship.001",    0x18000, 0x08000, 0xa9b64240 )
 
-	ROM_REGION_DISPOSE(0x108000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turtship.005",    0x00000, 0x04000, 0x651fef75 )	/* characters */
-	ROM_LOAD( "turtship.008",    0x08000, 0x10000, 0xe0658469 )	/* tiles */
-	ROM_LOAD( "turtship.010",    0x18000, 0x10000, 0x76bb73bb )
-	ROM_LOAD( "turtship.011",    0x28000, 0x10000, 0x53da6cb1 )
-	ROM_LOAD( "turtship.006",    0x38000, 0x10000, 0xa7cce654 )
-	ROM_LOAD( "turtship.007",    0x48000, 0x10000, 0x3ccf11b9 )
-	ROM_LOAD( "turtship.009",    0x58000, 0x10000, 0x44762916 )
-	ROM_LOAD( "turtship.013",    0x68000, 0x10000, 0x599f5246 )	/* sprites */
-	ROM_LOAD( "turtship.015",    0x78000, 0x10000, 0x69fd202f )
-	ROM_LOAD( "turtship.012",    0x88000, 0x10000, 0xfb54cd33 )
-	ROM_LOAD( "turtship.014",    0x98000, 0x10000, 0xb3ea74a3 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "turtship.004",    0x0000, 0x8000, 0x1cbe48e8 )
 
-	ROM_REGION(0x08000)     /* 32k tile map */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "turtship.005",    0x00000, 0x04000, 0x651fef75 )	/* characters */
+
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "turtship.008",    0x00000, 0x10000, 0xe0658469 )	/* tiles */
+	ROM_LOAD( "turtship.010",    0x10000, 0x10000, 0x76bb73bb )
+	ROM_LOAD( "turtship.011",    0x20000, 0x10000, 0x53da6cb1 )
+	ROM_LOAD( "turtship.006",    0x30000, 0x10000, 0xa7cce654 )
+	ROM_LOAD( "turtship.007",    0x40000, 0x10000, 0x3ccf11b9 )
+	ROM_LOAD( "turtship.009",    0x50000, 0x10000, 0x44762916 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "turtship.013",    0x00000, 0x10000, 0x599f5246 )	/* sprites */
+	ROM_LOAD( "turtship.015",    0x10000, 0x10000, 0x69fd202f )
+	ROM_LOAD( "turtship.012",    0x20000, 0x10000, 0xfb54cd33 )
+	ROM_LOAD( "turtship.014",    0x30000, 0x10000, 0xb3ea74a3 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "turtship.016",    0x0000, 0x8000, 0xaffd51dd )
 ROM_END
 
@@ -777,150 +784,35 @@ ROM_START( dyger )
 	ROM_LOAD( "dyger.002",    0x10000, 0x08000, 0x059ac4dc )
 	ROM_LOAD( "dyger.001",    0x18000, 0x08000, 0xd8440f66 )
 
-	ROM_REGION_DISPOSE(0x108000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dyger.005",    0x04000, 0x04000, 0xc4bc72a5 )	/* characters */
-	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
-	ROM_LOAD( "dyger.010",    0x08000, 0x10000, 0x73ae2b2e )	/* tiles */
-	ROM_LOAD( "dyger.009",    0x18000, 0x10000, 0x628dae72 )
-	ROM_LOAD( "dyger.011",    0x28000, 0x10000, 0x23248db1 )
-	ROM_LOAD( "dyger.006",    0x38000, 0x10000, 0x4ba7a437 )
-	ROM_LOAD( "dyger.008",    0x48000, 0x10000, 0x6c0f0e0c )
-	ROM_LOAD( "dyger.007",    0x58000, 0x10000, 0x2c50a229 )
-	ROM_LOAD( "dyger.014",    0x68000, 0x10000, 0x99c60b26 )	/* sprites */
-	ROM_LOAD( "dyger.015",    0x78000, 0x10000, 0xd6475ecc )
-	ROM_LOAD( "dyger.012",    0x88000, 0x10000, 0xe345705f )
-	ROM_LOAD( "dyger.013",    0x98000, 0x10000, 0xfaf4be3a )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "dyger.004",    0x0000, 0x8000, 0x8a256c09 )
 
-	ROM_REGION(0x08000)     /* 32k tile map */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.005",    0x00000, 0x04000, 0xc4bc72a5 )	/* characters */
+	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
+
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.010",    0x00000, 0x10000, 0x73ae2b2e )	/* tiles */
+	ROM_LOAD( "dyger.009",    0x10000, 0x10000, 0x628dae72 )
+	ROM_LOAD( "dyger.011",    0x20000, 0x10000, 0x23248db1 )
+	ROM_LOAD( "dyger.006",    0x30000, 0x10000, 0x4ba7a437 )
+	ROM_LOAD( "dyger.008",    0x40000, 0x10000, 0x6c0f0e0c )
+	ROM_LOAD( "dyger.007",    0x50000, 0x10000, 0x2c50a229 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dyger.014",    0x00000, 0x10000, 0x99c60b26 )	/* sprites */
+	ROM_LOAD( "dyger.015",    0x10000, 0x10000, 0xd6475ecc )
+	ROM_LOAD( "dyger.012",    0x20000, 0x10000, 0xe345705f )
+	ROM_LOAD( "dyger.013",    0x30000, 0x10000, 0xfaf4be3a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "dyger.016",    0x0000, 0x8000, 0x0792e8f2 )
 ROM_END
 
 
 
-struct GameDriver driver_sidearms =
-{
-	__FILE__,
-	0,
-	"sidearms",
-	"Side Arms - Hyper Dyne (World)",
-	"1986",
-	"Capcom",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_sidearms,
-	0,
-
-	rom_sidearms,
-	0,0,
-	0,
-	0,
-
-	input_ports_sidearms,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sidearmr =
-{
-	__FILE__,
-	&driver_sidearms,
-	"sidearmr",
-	"Side Arms - Hyper Dyne (US)",
-	"1988",
-	"Capcom (Romstar license)",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_sidearms,
-	0,
-
-	rom_sidearmr,
-	0,0,
-	0,
-	0,
-
-	input_ports_sidearms,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sidearjp =
-{
-	__FILE__,
-	&driver_sidearms,
-	"sidearjp",
-	"Side Arms - Hyper Dyne (Japan)",
-	"1986",
-	"Capcom",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_sidearms,
-	0,
-
-	rom_sidearjp,
-	0,0,
-	0,
-	0,
-
-	input_ports_sidearms,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_turtship =
-{
-	__FILE__,
-	0,
-	"turtship",
-	"Turtle Ship",
-	"1988",
-	"Philko",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
-	0,
-	&machine_driver_turtship,
-	0,
-
-	rom_turtship,
-	0,0,
-	0,
-	0,
-
-	input_ports_turtship,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_dyger =
-{
-	__FILE__,
-	0,
-	"dyger",
-	"Dyger",
-	"1989",
-	"Philko",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
-	0,
-	&machine_driver_turtship,
-	0,
-
-	rom_dyger,
-	0,0,
-	0,
-	0,
-
-	input_ports_dyger,
-
-	0, 0, 0,
-	ROT270,
-	0, 0
-};
+GAME( 1986, sidearms, 0,        sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)" )
+GAME( 1988, sidearmr, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)" )
+GAME( 1986, sidearjp, sidearms, sidearms, sidearms, 0, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)" )
+GAME( 1988, turtship, 0,        turtship, turtship, 0, ROT0,   "Philko", "Turtle Ship" )
+GAME( 1989, dyger,    0,        turtship, dyger,    0, ROT270, "Philko", "Dyger" )

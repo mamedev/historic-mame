@@ -120,7 +120,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -143,7 +143,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_dominos =
 {
 	/* basic machine hardware */
 	{
@@ -187,50 +187,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( dominos )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-		ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, 0x738b4413 )
-		ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, 0xc84e54e2 )
-		ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, 0x738b4413 )
+	ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, 0xc84e54e2 )
+	ROM_RELOAD( 			  0xf800, 0x0800 )
 
-		ROM_REGION_DISPOSE(0x800)	  /* 2k for graphics */
-		ROM_LOAD( "7439-01.p4",   0x0000, 0x0200, 0x4f42fdd6 )
-		ROM_LOAD( "7440-01.r4",   0x0200, 0x0200, 0x957dd8df )
-
+	ROM_REGIONX( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7439-01.p4",   0x0000, 0x0200, 0x4f42fdd6 )
+	ROM_LOAD( "7440-01.r4",   0x0200, 0x0200, 0x957dd8df )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
 
-***************************************************************************/
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_dominos =
-{
-	__FILE__,
-	0,
-	"dominos",
-	"Dominos",
-	"1977",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_dominos,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dominos,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1977, dominos, 0, dominos, dominos, 0, ROT0, "Atari", "Dominos" )

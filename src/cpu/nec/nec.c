@@ -862,7 +862,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				di++;
 			}
 			I.OverVal = I.CarryVal;
-			nec_ICount-=7+19*(I.regs.b[CL]+1);	// 7+19n, n #operand bytes
+			nec_ICount-=7+19*count;	// 7+19n, n #operand bytes
 			} break;
 		case 0x28 : // 0F 28 C7 - ROL4 bh
 			ModRM = FETCH;

@@ -391,7 +391,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,	/* Unknown */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -631,6 +630,6 @@ ROM_END
 
 
 
-GAME( 1986, brkthru,  ,        brkthru, brkthru, , ROT0,   "Data East USA", "Break Thru (US)" )
-GAME( 1986, brkthruj, brkthru, brkthru, brkthru, , ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
-GAME( 1986, darwin,   ,        darwin,  darwin,  , ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )
+GAME( 1986, brkthru,  0,       brkthru, brkthru, 0, ROT0,   "Data East USA", "Break Thru (US)" )
+GAME( 1986, brkthruj, brkthru, brkthru, brkthru, 0, ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
+GAME( 1986, darwin,   0,       darwin,  darwin,  0, ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )

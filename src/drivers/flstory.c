@@ -154,17 +154,17 @@ INPUT_PORTS_START( flstory )
 	PORT_DIPSETTING(   0x01, "30000 150000" )
 	PORT_DIPSETTING(   0x02, "50000 150000" )
 	PORT_DIPSETTING(   0x03, "70000 150000" )
-	PORT_DIPNAME(0x04, 0x04, "Free Play" )
-	PORT_DIPSETTING(   0x04, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPNAME(0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x18, 0x08, "??? (046c)" )
 	PORT_DIPSETTING(   0x00, "ENDLESS?" )
 	PORT_DIPSETTING(   0x08, "3" )
 	PORT_DIPSETTING(   0x10, "4" )
 	PORT_DIPSETTING(   0x18, "5" )
 	PORT_DIPNAME(0x20, 0x20, "??? (0683)" )
-	PORT_DIPSETTING(   0x20, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x40, 0x40, DEF_STR( Unknown ) )	/* flip screen? */
 	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
@@ -293,8 +293,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 },
-	{ 1, 0x10000, &spritelayout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 16 },
 	{ -1 }	/* end of array */
 };
 
@@ -305,7 +305,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* ??? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -314,7 +313,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_flstory =
 {
     /* basic machine hardware */
     {
@@ -379,26 +378,28 @@ ROM_START( flstory )
     ROM_LOAD( "cpu-a45.16", 0x04000, 0x4000, 0x311aa82e )
     ROM_LOAD( "cpu-a45.17", 0x08000, 0x4000, 0xa2b5d17d )
 
-    ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "vid-a45.06", 0x00000, 0x4000, 0xdc856a75 )
-    ROM_LOAD( "vid-a45.20", 0x04000, 0x4000, 0x1b0edf34 )
-    ROM_LOAD( "vid-a45.07", 0x08000, 0x4000, 0xaa4b0762 )
-    ROM_LOAD( "vid-a45.21", 0x0c000, 0x4000, 0xfc382bd1 )
-    ROM_LOAD( "vid-a45.18", 0x10000, 0x4000, 0x6f08f69e )
-    ROM_LOAD( "vid-a45.08", 0x14000, 0x4000, 0xd0b028ca )
-    ROM_LOAD( "vid-a45.19", 0x18000, 0x4000, 0x2b572dc9 )
-    ROM_LOAD( "vid-a45.09", 0x1c000, 0x4000, 0x8336be58 )
-
     ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
     ROM_LOAD( "snd.22",     0x0000, 0x2000, 0xd58b201d )
     ROM_LOAD( "snd.23",     0x2000, 0x2000, 0x25e7fd9d )
 
 	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
 	ROM_LOAD( "p5sa54-.09", 0x0000, 0x0800, 0x0e8b8846 )
+
+    ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "vid-a45.06", 0x00000, 0x4000, 0xdc856a75 )
+    ROM_LOAD( "vid-a45.20", 0x04000, 0x4000, 0x1b0edf34 )
+    ROM_LOAD( "vid-a45.07", 0x08000, 0x4000, 0xaa4b0762 )
+    ROM_LOAD( "vid-a45.21", 0x0c000, 0x4000, 0xfc382bd1 )
+
+    ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "vid-a45.18", 0x00000, 0x4000, 0x6f08f69e )
+    ROM_LOAD( "vid-a45.08", 0x04000, 0x4000, 0xd0b028ca )
+    ROM_LOAD( "vid-a45.19", 0x08000, 0x4000, 0x2b572dc9 )
+    ROM_LOAD( "vid-a45.09", 0x0c000, 0x4000, 0x8336be58 )
 ROM_END
 
 
-static void patch(void)
+static void init_flstory(void)
 {
 	/* patch one 68705 unused ROM location to make it pass the startup */
 	/* checksum test. It is supposed to return 0xf9, without this patch */
@@ -406,28 +407,6 @@ static void patch(void)
 	memory_region(REGION_CPU3)[0x2c0] = 0x6f;
 }
 
-struct GameDriver driver_flstory =
-{
-	__FILE__,
-	0,
-	"flstory",
-	"The FairyLand Story",
-	"1985",
-	"Taito",
-	"Chris Moore",
-	0,
-	&machine_driver,
-	patch,
 
-	rom_flstory,
-	0, 0,
-	0,
-	0,
 
-	input_ports_flstory,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAMEX( 1985, flstory, 0, flstory, flstory, flstory, ROT0, "Taito", "The FairyLand Story", GAME_NOT_WORKING )

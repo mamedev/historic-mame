@@ -1,4 +1,8 @@
 /* Kangaroo driver
+
+driver by Ville Laitinen
+
+
 Kangaroo (c) Atari Games / Sun Electronics Corp 1982
 
    Changes:
@@ -272,7 +276,6 @@ static struct AY8910interface ay8910_interface =
     1,  /* 1 chip */
     10000000/8,     /* 1.25 MHz */
     { 50 },
-    AY8910_DEFAULT_GAIN,
     { 0 },
     { 0 },
     { 0 },
@@ -281,7 +284,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_kangaroo =
 {
     /* basic machine hardware */
     {
@@ -348,7 +351,7 @@ ROM_START( kangaroo )
     ROM_REGIONX( 0x10000, REGION_CPU2 ) /* sound */
     ROM_LOAD( "tvg81.bin",    0x0000, 0x1000, 0xfb449bfd )
 
-    ROM_REGION(0x0800)  /* 8k for the MB8841 custom microcontroller (currently not emulated) */
+    ROM_REGIONX( 0x0800, REGION_CPU3 )  /* 8k for the MB8841 custom microcontroller (currently not emulated) */
     ROM_LOAD( "tvg82.bin",    0x0000, 0x0800, 0x57766f69 )
 ROM_END
 
@@ -372,52 +375,5 @@ ROM_END
 
 
 
-struct GameDriver driver_kangaroo =
-{
-    __FILE__,
-    0,
-    "kangaroo",
-    "Kangaroo",
-    "1982",
-    "[Sun Electronics] (Atari license)",
-    "Ville Laitinen (MAME driver)\nMarco Cassili",
-    0,
-    &machine_driver,
-    0,
-
-    rom_kangaroo,
-    0, 0,
-    0,
-    0,
-
-    input_ports_kangaroo,
-
-    0, 0, 0,
-    ROT270,
-	0,0
-};
-
-struct GameDriver driver_kangarob =
-{
-    __FILE__,
-    &driver_kangaroo,
-    "kangarob",
-    "Kangaroo (bootleg)",
-    "1982",
-    "bootleg",
-    "Ville Laitinen (MAME driver)\nMarco Cassili",
-    0,
-    &machine_driver,
-    0,
-
-    rom_kangarob,
-    0, 0,
-    0,
-    0,
-
-    input_ports_kangaroo,
-
-    0, 0, 0,
-    ROT270,
-	0,0
-};
+GAME( 1982, kangaroo, 0,        kangaroo, kangaroo, 0, ROT270, "[Sun Electronics] (Atari license)", "Kangaroo" )
+GAME( 1982, kangarob, kangaroo, kangaroo, kangaroo, 0, ROT270, "bootleg", "Kangaroo (bootleg)" )

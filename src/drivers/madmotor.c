@@ -250,9 +250,22 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tilelayout =
 {
 	16,16,
+	2048,
+	4,
+	{ 0x30000*8, 0x10000*8, 0x20000*8, 0x00000*8 },
+	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	16*16
+};
+
+static struct GfxLayout tilelayout2 =
+{
+	16,16,
 	4096,
 	4,
-	{ 0x20000*8, 0x60000*8, 0x00000*8, 0x40000*8 },
+	{ 0x60000*8, 0x20000*8, 0x40000*8, 0x00000*8 },
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -275,10 +288,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tilelayout,   512, 16 },	/* Tiles 16x16 */
-	{ 1, 0x0a0000, &tilelayout,   768, 16 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &spritelayout, 256, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,   512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &tilelayout2,  768, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &spritelayout, 256, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -288,7 +301,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* ?? Frequency */
-	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
@@ -297,7 +310,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	21470000/6,	/* ?? Audio section crystal is 21.470 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -378,36 +390,37 @@ ROM_START( madmotor )
 	ROM_LOAD_EVEN( "03", 0x40000, 0x20000, 0x442a0a52 )
 	ROM_LOAD_ODD ( "01", 0x40000, 0x20000, 0xe246876e )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "04",    0x000000, 0x10000, 0x833ca3ab )	/* chars */
-	ROM_LOAD( "05",    0x010000, 0x10000, 0xa691fbfe )
-
-	ROM_LOAD( "10",    0x060000, 0x10000, 0x9dbf482b )	/* tiles */
-	ROM_CONTINUE(      0x080000, 0x10000 )
-	ROM_LOAD( "11",    0x020000, 0x10000, 0x593c48a9 )
-	ROM_CONTINUE(      0x040000, 0x10000 )
-
-	ROM_LOAD( "06",    0x0e0000, 0x20000, 0x448850e5 )	/* tiles */
-	ROM_LOAD( "07",    0x100000, 0x20000, 0xede4d141 )
-	ROM_LOAD( "08",    0x0a0000, 0x20000, 0xc380e5e5 )
-	ROM_LOAD( "09",    0x0c0000, 0x20000, 0x1ee3326a )
-
-	ROM_LOAD( "15",    0x120000, 0x20000, 0x90ae9f74 )	/* sprites */
-	ROM_LOAD( "16",    0x140000, 0x20000, 0xe96ac815 )
-	ROM_LOAD( "17",    0x160000, 0x20000, 0xabad9a1b )
-	ROM_LOAD( "18",    0x180000, 0x20000, 0x96d8d64b )
-	ROM_LOAD( "19",    0x1a0000, 0x20000, 0xcbd8c9b8 )
-	ROM_LOAD( "20",    0x1c0000, 0x20000, 0x47f706a8 )
-	ROM_LOAD( "21",    0x1e0000, 0x20000, 0x9c72d364 )
-	ROM_LOAD( "22",    0x200000, 0x20000, 0x1e78aa60 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "14",    0x00000, 0x10000, 0x1c28a7e5 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "04",    0x000000, 0x10000, 0x833ca3ab )	/* chars */
+	ROM_LOAD( "05",    0x010000, 0x10000, 0xa691fbfe )
+
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10",    0x000000, 0x20000, 0x9dbf482b )	/* tiles */
+	ROM_LOAD( "11",    0x020000, 0x20000, 0x593c48a9 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "06",    0x000000, 0x20000, 0x448850e5 )	/* tiles */
+	ROM_LOAD( "07",    0x020000, 0x20000, 0xede4d141 )
+	ROM_LOAD( "08",    0x040000, 0x20000, 0xc380e5e5 )
+	ROM_LOAD( "09",    0x060000, 0x20000, 0x1ee3326a )
+
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15",    0x000000, 0x20000, 0x90ae9f74 )	/* sprites */
+	ROM_LOAD( "16",    0x020000, 0x20000, 0xe96ac815 )
+	ROM_LOAD( "17",    0x040000, 0x20000, 0xabad9a1b )
+	ROM_LOAD( "18",    0x060000, 0x20000, 0x96d8d64b )
+	ROM_LOAD( "19",    0x080000, 0x20000, 0xcbd8c9b8 )
+	ROM_LOAD( "20",    0x0a0000, 0x20000, 0x47f706a8 )
+	ROM_LOAD( "21",    0x0c0000, 0x20000, 0x9c72d364 )
+	ROM_LOAD( "22",    0x0e0000, 0x20000, 0x1e78aa60 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "12",    0x00000, 0x20000, 0xc202d200 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "13",    0x00000, 0x20000, 0xcc4d65e9 )
 ROM_END
 
@@ -436,7 +449,7 @@ static int cycle_r(int offset)
 	return ret;
 }
 
-static void memory_handler(void)
+static void init_madmotor(void)
 {
 	install_mem_read_handler(0, 0x3e0000, 0x3e0001, cycle_r);
 	madmotor_decrypt();
@@ -444,27 +457,5 @@ static void memory_handler(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_madmotor =
-{
-	__FILE__,
-	0,
-	"madmotor",
-	"Mad Motor",
-	"1989", /* The title screen is undated, but it's (c) 1989 Data East at 0xefa0 */
-	"Mitchell",
-	"Bryan McPhail",
-	0,
-	&machine_driver_madmotor,
-	memory_handler,
-
-	rom_madmotor,
-	0, 0,
-	0,
-	0,
-
-	input_ports_madmotor,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
+ /* The title screen is undated, but it's (c) 1989 Data East at 0xefa0 */
+GAME( 1989, madmotor, 0, madmotor, madmotor, madmotor, ROT0, "Mitchell", "Mad Motor" )

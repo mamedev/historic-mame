@@ -335,7 +335,6 @@ static struct AY8910interface yamato_ay8910_interface =
 	2,      /* 2 chips */
 	1536000,	/* 1.536 MHz??? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -476,11 +476,11 @@ static struct GfxLayout spritelayout3 = {
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,		0, 64 },
-	{ 1, 0x0000, &charlayout2,		0, 64 },
-	{ 1, 0x2000, &spritelayout1, 64*4, 64 },
-	{ 1, 0x2000, &spritelayout2, 64*4, 64 },
-	{ 1, 0x8000, &spritelayout3, 64*4, 64 },
+	{ REGION_GFX1, 0x0000, &charlayout1,      0, 64 },
+	{ REGION_GFX1, 0x0000, &charlayout2,      0, 64 },
+	{ REGION_GFX2, 0x0000, &spritelayout1, 64*4, 64 },
+	{ REGION_GFX2, 0x0000, &spritelayout2, 64*4, 64 },
+	{ REGION_GFX2, 0x6000, &spritelayout3, 64*4, 64 },
 	{ -1 } /* end of table */
 };
 
@@ -489,7 +489,7 @@ static struct namco_interface namco_interface =
 	23920,	/* sample rate (approximate value) */
 	8,	  /* number of voices */
 	100,	/* playback volume */
-	5		/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static const char *gaplus_sample_names[] =
@@ -673,19 +673,13 @@ static struct MachineDriver machine_driver_galaga3 =
 	}
 };
 
+
+
 ROM_START( gaplus )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.64",   0xa000, 0x2000, 0x484f11e0 )
 	ROM_LOAD( "gp2-3.64",   0xc000, 0x2000, 0xa74b0266 )
 	ROM_LOAD( "gp2-2.64",   0xe000, 0x2000, 0x69fdfdb7 )
-
-	ROM_REGION_DISPOSE(0xc000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
-	ROM_LOAD( "gp2-9.64",   0x2000, 0x2000, 0xe6a9ae67 )	/* objects */
-	ROM_LOAD( "gp2-11.64",  0x4000, 0x2000, 0x57740ff9 )	/* objects */
-	ROM_LOAD( "gp2-10.64",  0x6000, 0x2000, 0x6cd8ce11 )	/* objects */
-	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
-	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.64",   0xa000, 0x2000, 0xbff601a6 )
@@ -695,6 +689,16 @@ ROM_START( gaplus )
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
+
+	ROM_REGIONX( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
+	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
+	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
+	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
+	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
+
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
@@ -703,7 +707,7 @@ ROM_START( gaplus )
 	ROM_LOAD( "gp2-6p.bin",   0x0400, 0x0200, 0x6f99c2da )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "gp2-6n.bin",   0x0600, 0x0200, 0xc7d31657 )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION(0x100) /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
@@ -713,14 +717,6 @@ ROM_START( gaplusa )
 	ROM_LOAD( "gp2-3b.8c",  0xc000, 0x2000, 0xd77840a4 )
 	ROM_LOAD( "gp2-2b.8b",  0xe000, 0x2000, 0xb3cb90db )
 
-	ROM_REGION_DISPOSE(0xc000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
-	ROM_LOAD( "gp2-9.64",   0x2000, 0x2000, 0xe6a9ae67 )	/* objects */
-	ROM_LOAD( "gp2-11.64",  0x4000, 0x2000, 0x57740ff9 )	/* objects */
-	ROM_LOAD( "gp2-10.64",  0x6000, 0x2000, 0x6cd8ce11 )	/* objects */
-	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
-	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.11d",  0xa000, 0x2000, 0x42b9fd7c )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
@@ -728,6 +724,16 @@ ROM_START( gaplusa )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
+
+	ROM_REGIONX( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
+	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
+	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
+	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
+	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
@@ -737,7 +743,7 @@ ROM_START( gaplusa )
 	ROM_LOAD( "gp2-6p.bin",   0x0400, 0x0200, 0x6f99c2da )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "gp2-6n.bin",   0x0600, 0x0200, 0xc7d31657 )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION(0x100) /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
@@ -747,14 +753,6 @@ ROM_START( galaga3 )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
 
-	ROM_REGION_DISPOSE(0xc000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
-	ROM_LOAD( "gp2-9.64",   0x2000, 0x2000, 0xe6a9ae67 )	/* objects */
-	ROM_LOAD( "gp2-11.64",  0x4000, 0x2000, 0x57740ff9 )	/* objects */
-	ROM_LOAD( "gp2-10.64",  0x6000, 0x2000, 0x6cd8ce11 )	/* objects */
-	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
-	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
@@ -762,6 +760,16 @@ ROM_START( galaga3 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
+
+	ROM_REGIONX( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
+	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
+	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
+	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
+	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
@@ -771,7 +779,7 @@ ROM_START( galaga3 )
 	ROM_LOAD( "g3_3f.bin",    0x0400, 0x0200, 0xd48c0eef )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "g3_3e.bin",    0x0600, 0x0200, 0x417ba0dc )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION(0x100) /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
@@ -781,14 +789,6 @@ ROM_START( galaga3a )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
 
-	ROM_REGION_DISPOSE(0xc000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
-	ROM_LOAD( "gp2-9.64",   0x2000, 0x2000, 0xe6a9ae67 )	/* objects */
-	ROM_LOAD( "gp2-11.64",  0x4000, 0x2000, 0x57740ff9 )	/* objects */
-	ROM_LOAD( "gp2-10.64",  0x6000, 0x2000, 0x6cd8ce11 )	/* objects */
-	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
-	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
@@ -796,6 +796,16 @@ ROM_START( galaga3a )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
+
+	ROM_REGIONX( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
+	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
+	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
+	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
+	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
@@ -805,108 +815,13 @@ ROM_START( galaga3a )
 	ROM_LOAD( "g3_3f.bin",    0x0400, 0x0200, 0xd48c0eef )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "g3_3e.bin",    0x0600, 0x0200, 0x417ba0dc )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION(0x100) /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
 
 
-struct GameDriver driver_gaplus =
-{
-	__FILE__,
-	0,
-	"gaplus",
-	"Gaplus (set 1)",
-	"1984",
-	"Namco",
-	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	0,
-	&machine_driver_gaplus,
-	0,
-
-	rom_gaplus,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gaplus,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_gaplusa =
-{
-	__FILE__,
-	&driver_gaplus,
-	"gaplusa",
-	"Gaplus (set 2)",
-	"1984",
-	"Namco",
-	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	0,
-	&machine_driver_gaplusa,
-	0,
-
-	rom_gaplusa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gaplus,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galaga3 =
-{
-	__FILE__,
-	&driver_gaplus,
-	"galaga3",
-	"Galaga 3 (set 1)",
-	"1984",
-	"Namco",
-	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	0,
-	&machine_driver_galaga3,
-	0,
-
-	rom_galaga3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaga3,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galaga3a =
-{
-	__FILE__,
-	&driver_gaplus,
-	"galaga3a",
-	"Galaga 3 (set 2)",
-	"1984",
-	"Namco",
-	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
-	0,
-	&machine_driver_galaga3,
-	0,
-
-	rom_galaga3a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaga3a,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set 1)" )
+GAME( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)" )
+GAME( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)" )
+GAME( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)" )

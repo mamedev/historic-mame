@@ -566,7 +566,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 25 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
@@ -587,7 +586,7 @@ static int kingobox_interrupt( void ) {
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_kingofb =
 {
 	/* basic machine hardware */
 	{
@@ -649,7 +648,7 @@ static struct MachineDriver machine_driver =
 
 
 /* Ring King */
-static struct MachineDriver machine_driver_rk =
+static struct MachineDriver machine_driver_ringking =
 {
 	/* basic machine hardware */
 	{
@@ -874,10 +873,11 @@ ROM_START( ringkin3 )
 	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, 0xd345cbb3 )	/* blue component */
 ROM_END
 
-static void ringkin3_expand_color_prom(void)
+
+static void init_ringkin3(void)
 {
 	int i;
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_PROMS);
 
 	/* expand the first color PROM to look like the kingobox ones... */
 	for (i = 0;i < 0x100;i++)
@@ -886,103 +886,7 @@ static void ringkin3_expand_color_prom(void)
 
 
 
-struct GameDriver driver_kingofb =
-{
-	__FILE__,
-	0,
-	"kingofb",
-	"King of Boxer (English)",
-	"1985",
-	"Woodplace Inc.",
-	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_kingofb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kingofb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-/* Ring King */
-struct GameDriver driver_ringking =
-{
-	__FILE__,
-	&driver_kingofb,
-	"ringking",
-	"Ring King (set 1)",
-	"1985",
-	"Data East USA",
-	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_rk,
-	0,
-
-	rom_ringking,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ringking,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_ringkin2 =
-{
-	__FILE__,
-	&driver_kingofb,
-	"ringkin2",
-	"Ring King (set 2)",
-	"1985",
-	"<unknown>",
-	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver_rk,
-	0,
-
-	rom_ringkin2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kingofb,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_ringkin3 =
-{
-	__FILE__,
-	&driver_kingofb,
-	"ringkin3",
-	"Ring King (set 3)",
-	"1985",
-	"Data East USA",
-	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver,
-	ringkin3_expand_color_prom,
-
-	rom_ringkin3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kingofb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace Inc.", "King of Boxer (English)" )
+GAME( 1985, ringking, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (set 1)" )
+GAMEX(1985, ringkin2, kingofb, ringking, kingofb,  0,        ROT90, "<unknown>", "Ring King (set 2)", GAME_NOT_WORKING )
+GAME( 1985, ringkin3, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Data East USA", "Ring King (set 3)" )

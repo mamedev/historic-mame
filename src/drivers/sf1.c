@@ -2,6 +2,8 @@
 
   Street Fighter 1
 
+  driver by Olivier Galibert
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -193,7 +195,7 @@ static int button2_r(int offset)
 
 static void sound2_bank_w(int offset, int data)
 {
-	cpu_setbank(4, memory_region(4)+0x8000*(data+1));
+	cpu_setbank(4, memory_region(REGION_CPU3)+0x8000*(data+1));
 }
 
 
@@ -330,42 +332,42 @@ static struct IOWritePort sound2_writeport[] =
 INPUT_PORTS_START( sf1jp )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, "Screen orientation" )
-	PORT_DIPSETTING(      0x0000, "Flip" )
-	PORT_DIPSETTING(      0x0100, "Normal" )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
 	PORT_DIPSETTING(      0x0000, "Slow" )
 	PORT_DIPSETTING(      0x1000, "Normal" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x0000, "On" )
-	PORT_DIPSETTING(      0x2000, "Off" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START
@@ -479,42 +481,42 @@ INPUT_PORTS_END
 INPUT_PORTS_START( sf1us )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, "Screen orientation" )
-	PORT_DIPSETTING(      0x0000, "Flip" )
-	PORT_DIPSETTING(      0x0100, "Normal" )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
 	PORT_DIPSETTING(      0x0000, "Slow" )
 	PORT_DIPSETTING(      0x1000, "Normal" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x0000, "On" )
-	PORT_DIPSETTING(      0x2000, "Off" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START
@@ -609,42 +611,42 @@ INPUT_PORTS_END
 INPUT_PORTS_START( sf1 )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0100, 0x0100, "Screen orientation" )
-	PORT_DIPSETTING(      0x0000, "Flip" )
-	PORT_DIPSETTING(      0x0100, "Normal" )
-	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Attract music" )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x1000, 0x1000, "Speed" )
 	PORT_DIPSETTING(      0x0000, "Slow" )
 	PORT_DIPSETTING(      0x1000, "Normal" )
 	PORT_DIPNAME( 0x2000, 0x2000, "Attract sound?" )
-	PORT_DIPSETTING(      0x0000, "On" )
-	PORT_DIPSETTING(      0x2000, "Off" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Freeze" )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START
@@ -832,11 +834,11 @@ static struct GfxLayout sprite_layouts =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-  { 1, 0x000000, &sprite_layoutb,   0, 16 },
-  { 1, 0x080000, &sprite_layoutm, 256, 16 },
-  { 1, 0x180000, &sprite_layouts, 512, 16 },
-  { 1, 0x340000, &char_layout,    768, 16 },
-  { -1 }
+	{ REGION_GFX1, 0, &sprite_layoutb,   0, 16 },
+	{ REGION_GFX2, 0, &sprite_layoutm, 256, 16 },
+	{ REGION_GFX3, 0, &sprite_layouts, 512, 16 },
+	{ REGION_GFX4, 0, &char_layout,    768, 16 },
+	{ -1 }
 };
 
 
@@ -863,7 +865,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 100, 100 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sf1 =
 {
 	{
 		{
@@ -918,7 +920,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver machine_driver_us =
+static struct MachineDriver machine_driver_sf1us =
 {
 	{
 		{
@@ -973,7 +975,7 @@ static struct MachineDriver machine_driver_us =
 	}
 };
 
-static struct MachineDriver machine_driver_jp =
+static struct MachineDriver machine_driver_sf1jp =
 {
 	{
 		{
@@ -1038,47 +1040,53 @@ ROM_START( sf1 )
 	ROM_LOAD_EVEN("sfe-21", 0x40000, 0x10000, 0x2547192b )
 	ROM_LOAD_ODD ("sfe-24", 0x40000, 0x10000, 0x79680f4e )
 
-	ROM_REGION_DISPOSE(0x344000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
-	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
-	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
-	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
-	ROM_LOAD( "sf-25.bin", 0x080000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
-	ROM_LOAD( "sf-28.bin", 0x0a0000, 0x020000, 0x92f8b91c )
-	ROM_LOAD( "sf-30.bin", 0x0c0000, 0x020000, 0xb1399856 )
-	ROM_LOAD( "sf-34.bin", 0x0e0000, 0x020000, 0x96b6ae2e )
-	ROM_LOAD( "sf-26.bin", 0x100000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
-	ROM_LOAD( "sf-29.bin", 0x120000, 0x020000, 0xf0649a67 )
-	ROM_LOAD( "sf-31.bin", 0x140000, 0x020000, 0x8f4dd71a )
-	ROM_LOAD( "sf-35.bin", 0x160000, 0x020000, 0x70c00fb4 )
-	ROM_LOAD( "sf-15.bin", 0x180000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
-	ROM_LOAD( "sf-16.bin", 0x1a0000, 0x020000, 0x82e4a6d3 )
-	ROM_LOAD( "sf-11.bin", 0x1c0000, 0x020000, 0xe112df1b )
-	ROM_LOAD( "sf-12.bin", 0x1e0000, 0x020000, 0x42d52299 )
-	ROM_LOAD( "sf-07.bin", 0x200000, 0x020000, 0x49f340d9 )
-	ROM_LOAD( "sf-08.bin", 0x220000, 0x020000, 0x95ece9b1 )
-	ROM_LOAD( "sf-03.bin", 0x240000, 0x020000, 0x5ca05781 )
-	ROM_LOAD( "sf-17.bin", 0x260000, 0x020000, 0x69fac48e ) /* planes 2-3 */
-	ROM_LOAD( "sf-18.bin", 0x280000, 0x020000, 0x71cfd18d )
-	ROM_LOAD( "sf-13.bin", 0x2a0000, 0x020000, 0xfa2eb24b )
-	ROM_LOAD( "sf-14.bin", 0x2c0000, 0x020000, 0xad955c95 )
-	ROM_LOAD( "sf-09.bin", 0x2e0000, 0x020000, 0x41b73a31 )
-	ROM_LOAD( "sf-10.bin", 0x300000, 0x020000, 0x91c41c50 )
-	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
-	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
-
-	ROM_REGION( 0x40000 ) /* Backgrounds */
-	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
-	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
-	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
-	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
 	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sfu-00",    0x00000, 0x20000, 0xa7cce903 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
+	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
+	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
+	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-25.bin", 0x000000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
+	ROM_LOAD( "sf-28.bin", 0x020000, 0x020000, 0x92f8b91c )
+	ROM_LOAD( "sf-30.bin", 0x040000, 0x020000, 0xb1399856 )
+	ROM_LOAD( "sf-34.bin", 0x060000, 0x020000, 0x96b6ae2e )
+	ROM_LOAD( "sf-26.bin", 0x080000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
+	ROM_LOAD( "sf-29.bin", 0x0a0000, 0x020000, 0xf0649a67 )
+	ROM_LOAD( "sf-31.bin", 0x0c0000, 0x020000, 0x8f4dd71a )
+	ROM_LOAD( "sf-35.bin", 0x0e0000, 0x020000, 0x70c00fb4 )
+
+	ROM_REGIONX( 0x1c0000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-15.bin", 0x000000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
+	ROM_LOAD( "sf-16.bin", 0x020000, 0x020000, 0x82e4a6d3 )
+	ROM_LOAD( "sf-11.bin", 0x040000, 0x020000, 0xe112df1b )
+	ROM_LOAD( "sf-12.bin", 0x060000, 0x020000, 0x42d52299 )
+	ROM_LOAD( "sf-07.bin", 0x080000, 0x020000, 0x49f340d9 )
+	ROM_LOAD( "sf-08.bin", 0x0a0000, 0x020000, 0x95ece9b1 )
+	ROM_LOAD( "sf-03.bin", 0x0c0000, 0x020000, 0x5ca05781 )
+	ROM_LOAD( "sf-17.bin", 0x0e0000, 0x020000, 0x69fac48e ) /* planes 2-3 */
+	ROM_LOAD( "sf-18.bin", 0x100000, 0x020000, 0x71cfd18d )
+	ROM_LOAD( "sf-13.bin", 0x120000, 0x020000, 0xfa2eb24b )
+	ROM_LOAD( "sf-14.bin", 0x140000, 0x020000, 0xad955c95 )
+	ROM_LOAD( "sf-09.bin", 0x160000, 0x020000, 0x41b73a31 )
+	ROM_LOAD( "sf-10.bin", 0x180000, 0x020000, 0x91c41c50 )
+	ROM_LOAD( "sf-05.bin", 0x1a0000, 0x020000, 0x538c7cbe )
+
+	ROM_REGIONX( 0x004000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-27.bin", 0x000000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
+
+	ROM_REGIONX( 0x40000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
+	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
+	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
+	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 ROM_END
 
 ROM_START( sf1us )
@@ -1090,47 +1098,53 @@ ROM_START( sf1us )
 	ROM_LOAD_EVEN("sfd-21", 0x40000, 0x10000, 0xe8db799b )
 	ROM_LOAD_ODD ("sfd-24", 0x40000, 0x10000, 0x466a3440 )
 
-	ROM_REGION_DISPOSE(0x344000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
-	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
-	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
-	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
-	ROM_LOAD( "sf-25.bin", 0x080000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
-	ROM_LOAD( "sf-28.bin", 0x0a0000, 0x020000, 0x92f8b91c )
-	ROM_LOAD( "sf-30.bin", 0x0c0000, 0x020000, 0xb1399856 )
-	ROM_LOAD( "sf-34.bin", 0x0e0000, 0x020000, 0x96b6ae2e )
-	ROM_LOAD( "sf-26.bin", 0x100000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
-	ROM_LOAD( "sf-29.bin", 0x120000, 0x020000, 0xf0649a67 )
-	ROM_LOAD( "sf-31.bin", 0x140000, 0x020000, 0x8f4dd71a )
-	ROM_LOAD( "sf-35.bin", 0x160000, 0x020000, 0x70c00fb4 )
-	ROM_LOAD( "sf-15.bin", 0x180000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
-	ROM_LOAD( "sf-16.bin", 0x1a0000, 0x020000, 0x82e4a6d3 )
-	ROM_LOAD( "sf-11.bin", 0x1c0000, 0x020000, 0xe112df1b )
-	ROM_LOAD( "sf-12.bin", 0x1e0000, 0x020000, 0x42d52299 )
-	ROM_LOAD( "sf-07.bin", 0x200000, 0x020000, 0x49f340d9 )
-	ROM_LOAD( "sf-08.bin", 0x220000, 0x020000, 0x95ece9b1 )
-	ROM_LOAD( "sf-03.bin", 0x240000, 0x020000, 0x5ca05781 )
-	ROM_LOAD( "sf-17.bin", 0x260000, 0x020000, 0x69fac48e ) /* planes 2-3 */
-	ROM_LOAD( "sf-18.bin", 0x280000, 0x020000, 0x71cfd18d )
-	ROM_LOAD( "sf-13.bin", 0x2a0000, 0x020000, 0xfa2eb24b )
-	ROM_LOAD( "sf-14.bin", 0x2c0000, 0x020000, 0xad955c95 )
-	ROM_LOAD( "sf-09.bin", 0x2e0000, 0x020000, 0x41b73a31 )
-	ROM_LOAD( "sf-10.bin", 0x300000, 0x020000, 0x91c41c50 )
-	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
-	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
-
-	ROM_REGION( 0x40000 ) /* Backgrounds */
-	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
-	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
-	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
-	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
 	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sfu-00",    0x00000, 0x20000, 0xa7cce903 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
+	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
+	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
+	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-25.bin", 0x000000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
+	ROM_LOAD( "sf-28.bin", 0x020000, 0x020000, 0x92f8b91c )
+	ROM_LOAD( "sf-30.bin", 0x040000, 0x020000, 0xb1399856 )
+	ROM_LOAD( "sf-34.bin", 0x060000, 0x020000, 0x96b6ae2e )
+	ROM_LOAD( "sf-26.bin", 0x080000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
+	ROM_LOAD( "sf-29.bin", 0x0a0000, 0x020000, 0xf0649a67 )
+	ROM_LOAD( "sf-31.bin", 0x0c0000, 0x020000, 0x8f4dd71a )
+	ROM_LOAD( "sf-35.bin", 0x0e0000, 0x020000, 0x70c00fb4 )
+
+	ROM_REGIONX( 0x1c0000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-15.bin", 0x000000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
+	ROM_LOAD( "sf-16.bin", 0x020000, 0x020000, 0x82e4a6d3 )
+	ROM_LOAD( "sf-11.bin", 0x040000, 0x020000, 0xe112df1b )
+	ROM_LOAD( "sf-12.bin", 0x060000, 0x020000, 0x42d52299 )
+	ROM_LOAD( "sf-07.bin", 0x080000, 0x020000, 0x49f340d9 )
+	ROM_LOAD( "sf-08.bin", 0x0a0000, 0x020000, 0x95ece9b1 )
+	ROM_LOAD( "sf-03.bin", 0x0c0000, 0x020000, 0x5ca05781 )
+	ROM_LOAD( "sf-17.bin", 0x0e0000, 0x020000, 0x69fac48e ) /* planes 2-3 */
+	ROM_LOAD( "sf-18.bin", 0x100000, 0x020000, 0x71cfd18d )
+	ROM_LOAD( "sf-13.bin", 0x120000, 0x020000, 0xfa2eb24b )
+	ROM_LOAD( "sf-14.bin", 0x140000, 0x020000, 0xad955c95 )
+	ROM_LOAD( "sf-09.bin", 0x160000, 0x020000, 0x41b73a31 )
+	ROM_LOAD( "sf-10.bin", 0x180000, 0x020000, 0x91c41c50 )
+	ROM_LOAD( "sf-05.bin", 0x1a0000, 0x020000, 0x538c7cbe )
+
+	ROM_REGIONX( 0x004000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-27.bin", 0x000000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
+
+	ROM_REGIONX( 0x40000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
+	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
+	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
+	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 ROM_END
 
 ROM_START( sf1jp )
@@ -1142,116 +1156,57 @@ ROM_START( sf1jp )
 	ROM_LOAD_EVEN("sf-21.bin", 0x40000, 0x10000, 0xe086bc4c )
 	ROM_LOAD_ODD ("sf-24.bin", 0x40000, 0x10000, 0x13a6696b )
 
-	ROM_REGION_DISPOSE(0x344000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
-	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
-	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
-	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
-	ROM_LOAD( "sf-25.bin", 0x080000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
-	ROM_LOAD( "sf-28.bin", 0x0a0000, 0x020000, 0x92f8b91c )
-	ROM_LOAD( "sf-30.bin", 0x0c0000, 0x020000, 0xb1399856 )
-	ROM_LOAD( "sf-34.bin", 0x0e0000, 0x020000, 0x96b6ae2e )
-	ROM_LOAD( "sf-26.bin", 0x100000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
-	ROM_LOAD( "sf-29.bin", 0x120000, 0x020000, 0xf0649a67 )
-	ROM_LOAD( "sf-31.bin", 0x140000, 0x020000, 0x8f4dd71a )
-	ROM_LOAD( "sf-35.bin", 0x160000, 0x020000, 0x70c00fb4 )
-	ROM_LOAD( "sf-15.bin", 0x180000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
-	ROM_LOAD( "sf-16.bin", 0x1a0000, 0x020000, 0x82e4a6d3 )
-	ROM_LOAD( "sf-11.bin", 0x1c0000, 0x020000, 0xe112df1b )
-	ROM_LOAD( "sf-12.bin", 0x1e0000, 0x020000, 0x42d52299 )
-	ROM_LOAD( "sf-07.bin", 0x200000, 0x020000, 0x49f340d9 )
-	ROM_LOAD( "sf-08.bin", 0x220000, 0x020000, 0x95ece9b1 )
-	ROM_LOAD( "sf-03.bin", 0x240000, 0x020000, 0x5ca05781 )
-	ROM_LOAD( "sf-17.bin", 0x260000, 0x020000, 0x69fac48e ) /* planes 2-3 */
-	ROM_LOAD( "sf-18.bin", 0x280000, 0x020000, 0x71cfd18d )
-	ROM_LOAD( "sf-13.bin", 0x2a0000, 0x020000, 0xfa2eb24b )
-	ROM_LOAD( "sf-14.bin", 0x2c0000, 0x020000, 0xad955c95 )
-	ROM_LOAD( "sf-09.bin", 0x2e0000, 0x020000, 0x41b73a31 )
-	ROM_LOAD( "sf-10.bin", 0x300000, 0x020000, 0x91c41c50 )
-	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
-	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
-
-	ROM_REGION( 0x40000 ) /* Backgrounds */
-	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
-	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
-	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
-	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
 	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sf-00.bin", 0x00000, 0x20000, 0x4b733845 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-39.bin", 0x000000, 0x020000, 0xcee3d292 ) /* Background b planes 0-1*/
+	ROM_LOAD( "sf-38.bin", 0x020000, 0x020000, 0x2ea99676 )
+	ROM_LOAD( "sf-41.bin", 0x040000, 0x020000, 0xe0280495 ) /* planes 2-3 */
+	ROM_LOAD( "sf-40.bin", 0x060000, 0x020000, 0xc70b30de )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-25.bin", 0x000000, 0x020000, 0x7f23042e )	/* Background m planes 0-1 */
+	ROM_LOAD( "sf-28.bin", 0x020000, 0x020000, 0x92f8b91c )
+	ROM_LOAD( "sf-30.bin", 0x040000, 0x020000, 0xb1399856 )
+	ROM_LOAD( "sf-34.bin", 0x060000, 0x020000, 0x96b6ae2e )
+	ROM_LOAD( "sf-26.bin", 0x080000, 0x020000, 0x54ede9f5 ) /* planes 2-3 */
+	ROM_LOAD( "sf-29.bin", 0x0a0000, 0x020000, 0xf0649a67 )
+	ROM_LOAD( "sf-31.bin", 0x0c0000, 0x020000, 0x8f4dd71a )
+	ROM_LOAD( "sf-35.bin", 0x0e0000, 0x020000, 0x70c00fb4 )
+
+	ROM_REGIONX( 0x1c0000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-15.bin", 0x000000, 0x020000, 0xfc0113db ) /* Sprites planes 1-2 */
+	ROM_LOAD( "sf-16.bin", 0x020000, 0x020000, 0x82e4a6d3 )
+	ROM_LOAD( "sf-11.bin", 0x040000, 0x020000, 0xe112df1b )
+	ROM_LOAD( "sf-12.bin", 0x060000, 0x020000, 0x42d52299 )
+	ROM_LOAD( "sf-07.bin", 0x080000, 0x020000, 0x49f340d9 )
+	ROM_LOAD( "sf-08.bin", 0x0a0000, 0x020000, 0x95ece9b1 )
+	ROM_LOAD( "sf-03.bin", 0x0c0000, 0x020000, 0x5ca05781 )
+	ROM_LOAD( "sf-17.bin", 0x0e0000, 0x020000, 0x69fac48e ) /* planes 2-3 */
+	ROM_LOAD( "sf-18.bin", 0x100000, 0x020000, 0x71cfd18d )
+	ROM_LOAD( "sf-13.bin", 0x120000, 0x020000, 0xfa2eb24b )
+	ROM_LOAD( "sf-14.bin", 0x140000, 0x020000, 0xad955c95 )
+	ROM_LOAD( "sf-09.bin", 0x160000, 0x020000, 0x41b73a31 )
+	ROM_LOAD( "sf-10.bin", 0x180000, 0x020000, 0x91c41c50 )
+	ROM_LOAD( "sf-05.bin", 0x1a0000, 0x020000, 0x538c7cbe )
+
+	ROM_REGIONX( 0x004000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sf-27.bin", 0x000000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
+
+	ROM_REGIONX( 0x40000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
+	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
+	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
+	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 ROM_END
 
 
 
-struct GameDriver driver_sf1 =
-{
-	__FILE__,
-	0,
-	"sf1",
-	"Street Fighter (World)",
-	"1987",
-	"Capcom",
-	"Olivier Galibert",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sf1,
-	0,0,0,0,
-
-	input_ports_sf1,
-
-	0,0,0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sf1us =
-{
-	__FILE__,
-	&driver_sf1,
-	"sf1us",
-	"Street Fighter (US)",
-	"1987",
-	"Capcom",
-	"Olivier Galibert",
-	0,
-	&machine_driver_us,
-	0,
-
-	rom_sf1us,
-	0,0,0,0,
-
-	input_ports_sf1us,
-
-	0,0,0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sf1jp =
-{
-	__FILE__,
-	&driver_sf1,
-	"sf1jp",
-	"Street Fighter (Japan)",
-	"1987",
-	"Capcom",
-	"Olivier Galibert",
-	0,
-	&machine_driver_jp,
-	0,
-
-	rom_sf1jp,
-	0,0,0,0,
-
-	input_ports_sf1jp,
-
-	0,0,0,
-	ROT0,
-	0,0
-};
+GAME( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)" )
+GAME( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)" )
+GAME( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )

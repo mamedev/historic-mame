@@ -86,16 +86,27 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"5 Coins/1 Credit",
 	"4 Coins/1 Credit",
 	"3 Coins/1 Credit",
+	"8 Coins/3 Credits",
+	"4 Coins/2 Credits",
 	"2 Coins/1 Credit",
+	"5 Coins/3 Credits",
 	"3 Coins/2 Credits",
 	"4 Coins/3 Credits",
+	"4 Coins/4 Credits",
+	"3 Coins/3 Credits",
+	"2 Coins/2 Credits",
 	"1 Coin/1 Credit",
 	"4 Coins/5 Credits",
 	"3 Coins/4 Credits",
 	"2 Coins/3 Credits",
+	"4 Coins/7 Credits",
+	"2 Coins/4 Credits",
 	"1 Coin/2 Credits",
 	"2 Coins/5 Credits",
+	"2 Coins/6 Credits",
 	"1 Coin/3 Credits",
+	"2 Coins/7 Credits",
+	"2 Coins/8 Credits",
 	"1 Coin/4 Credits",
 	"1 Coin/5 Credits",
 	"1 Coin/6 Credits",
@@ -109,7 +120,7 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"Flip Screen",
 	"Service Mode",
 	"Unused",
-	"Unknown"
+	"Unknown"	/* must be the last one, mame.c relies on that */
 };
 
 struct ipd inputport_defaults[] =
@@ -126,6 +137,9 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",     INPUT_KEY_SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT), INPUT_JOY_SEQ_DEF_0 },
 #ifdef MAME_DEBUG
 	{ IPT_UI_SHOW_COLORS,       "Show Colors",	 INPUT_KEY_SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL), INPUT_JOY_SEQ_DEF_0 },
+#endif
+#ifdef MESS
+	{ IPT_UI_TOGGLE_UI,         "UI Toggle",         INPUT_KEY_SEQ_DEF_1(KEYCODE_SCRLOCK),INPUT_JOY_SEQ_DEF_0 },
 #endif
 	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     INPUT_KEY_SEQ_DEF_1(KEYCODE_F12),   INPUT_JOY_SEQ_DEF_0 },
 	{ IPT_UI_TOGGLE_CHEAT,      "Toggle Cheat",      INPUT_KEY_SEQ_DEF_1(KEYCODE_F5),    INPUT_JOY_SEQ_DEF_0 },
@@ -356,33 +370,38 @@ static void writeword(void *f,UINT16 num)
 /***************************************************************************/
 /* Sequences */
 
-void input_key_seq_set_1(InputKeySeq* a, InputCode code) {
+void input_key_seq_set_1(InputKeySeq* a, InputCode code)
+{
 	int j;
 	(*a)[0] = code;
 	for(j=1;j<INPUT_KEY_SEQ_MAX;++j)
 		(*a)[j] = IP_KEY_NONE;
 }
 
-void input_joy_seq_set_1(InputJoySeq* a, InputCode code) {
+void input_joy_seq_set_1(InputJoySeq* a, InputCode code)
+{
 	int j;
 	(*a)[0] = code;
 	for(j=1;j<INPUT_JOY_SEQ_MAX;++j)
 		(*a)[j] = IP_JOY_NONE;
 }
 
-void input_key_seq_copy(InputKeySeq* a, InputKeySeq* b) {
+void input_key_seq_copy(InputKeySeq* a, InputKeySeq* b)
+{
 	int j;
 	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
 		(*a)[j] = (*b)[j];
 }
 
-void input_joy_seq_copy(InputJoySeq* a, InputJoySeq* b) {
+void input_joy_seq_copy(InputJoySeq* a, InputJoySeq* b)
+{
 	int j;
 	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
 		(*a)[j] = (*b)[j];
 }
 
-int input_key_seq_cmp(InputKeySeq* a, InputKeySeq* b) {
+int input_key_seq_cmp(InputKeySeq* a, InputKeySeq* b)
+{
 	int j;
 	for(j=0;j<INPUT_KEY_SEQ_MAX;++j)
 		if ((*a)[j] != (*b)[j])
@@ -390,7 +409,8 @@ int input_key_seq_cmp(InputKeySeq* a, InputKeySeq* b) {
 	return 0;
 }
 
-int input_joy_seq_cmp(InputJoySeq* a, InputJoySeq* b) {
+int input_joy_seq_cmp(InputJoySeq* a, InputJoySeq* b)
+{
 	int j;
 	for(j=0;j<INPUT_JOY_SEQ_MAX;++j)
 		if ((*a)[j] != (*b)[j])
@@ -1810,7 +1830,8 @@ void set_default_player_controls(int player)
 /***************************************************************************/
 /* InputPort conversion */
 
-static unsigned input_port_count(struct InputPortTiny* src) {
+static unsigned input_port_count(const struct InputPortTiny *src)
+{
 	unsigned total;
 
 	total = 0;
@@ -1829,7 +1850,8 @@ static unsigned input_port_count(struct InputPortTiny* src) {
 	return total;
 }
 
-struct InputPort* input_port_allocate(struct InputPortTiny* src) {
+struct InputPort* input_port_allocate(const struct InputPortTiny *src)
+{
 	struct InputPort* dst;
 	struct InputPort* base;
 	unsigned total;
@@ -1842,8 +1864,8 @@ struct InputPort* input_port_allocate(struct InputPortTiny* src) {
 	while (src->type != IPT_END)
 	{
 		int type = src->type & ~IPF_MASK;
-		struct InputPortTiny* ext;
-		struct InputPortTiny* src_end;
+		const struct InputPortTiny *ext;
+		const struct InputPortTiny *src_end;
 		InputCode key_default;
 		InputCode joy_default;
 
@@ -1852,7 +1874,8 @@ struct InputPort* input_port_allocate(struct InputPortTiny* src) {
 		else
 			src_end = src + 1;
 
-		switch (type) {
+		switch (type)
+		{
 			case IPT_END :
 			case IPT_PORT :
 			case IPT_DIPSWITCH_NAME :
@@ -1878,7 +1901,8 @@ struct InputPort* input_port_allocate(struct InputPortTiny* src) {
 				input_key_seq_set_1(&dst->keyboard,IP_GET_KEY(ext));
 				input_joy_seq_set_1(&dst->joystick,IP_GET_JOY(ext));
 				++ext;
-			} else {
+			} else
+			{
 				input_key_seq_set_1(&dst->keyboard,key_default);
 				input_joy_seq_set_1(&dst->joystick,joy_default);
 			}
@@ -1895,7 +1919,8 @@ struct InputPort* input_port_allocate(struct InputPortTiny* src) {
 	return base;
 }
 
-void input_port_free(struct InputPort* dst) {
+void input_port_free(struct InputPort* dst)
+{
 	free(dst);
 }
 

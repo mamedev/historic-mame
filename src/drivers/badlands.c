@@ -354,4 +354,4 @@ static void init_badlands(void)
  *
  *************************************/
 
-GAME( 1989, badlands, , badlands, badlands, badlands, ROT0, "Atari Games", "Bad Lands" )
+GAME( 1989, badlands, 0, badlands, badlands, badlands, ROT0, "Atari Games", "Bad Lands" )

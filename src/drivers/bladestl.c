@@ -439,7 +439,6 @@ static struct YM2203interface ym2203_interface =
 	1,						/* 1 chip */
 	3579545,				/* 3.579545 MHz? */
 	{ YM2203_VOL(45,45) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ bladestl_port_A_w },	/* uPD7759 (chip 0) */
@@ -555,5 +554,5 @@ ROM_END
 
 
 
-GAMEX( 1987, bladestl, ,         bladestl, bladestl, , ROT90, "Konami", "Blades of Steel (version T)", GAME_IMPERFECT_SOUND )
-GAMEX( 1987, bladstle, bladestl, bladestl, bladstle, , ROT90, "Konami", "Blades of Steel (version E)", GAME_IMPERFECT_SOUND )
+GAMEX( 1987, bladestl, 0,        bladestl, bladestl, 0, ROT90, "Konami", "Blades of Steel (version T)", GAME_IMPERFECT_SOUND )
+GAMEX( 1987, bladstle, bladestl, bladestl, bladstle, 0, ROT90, "Konami", "Blades of Steel (version E)", GAME_IMPERFECT_SOUND )

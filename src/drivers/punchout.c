@@ -3,6 +3,9 @@
 Punch Out memory map (preliminary)
 Arm Wrestling runs on about the same hardware, but the video board is different.
 
+driver by Nicola Salmoria
+
+
 main CPU:
 
 0000-bfff ROM
@@ -736,19 +739,19 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo punchout_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,                 0, 128 },
-	{ 1, 0x04000, &charlayout,             128*4, 128 },
-	{ 1, 0x08000, &charlayout1,      128*4+128*4,  64 },
-	{ 1, 0x38000, &charlayout2, 128*4+128*4+64*8, 128 },
+	{ REGION_GFX1, 0, &charlayout,                 0, 128 },
+	{ REGION_GFX2, 0, &charlayout,             128*4, 128 },
+	{ REGION_GFX3, 0, &charlayout1,      128*4+128*4,  64 },
+	{ REGION_GFX4, 0, &charlayout2, 128*4+128*4+64*8, 128 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &armwrest_charlayout,        0, 256 },
-	{ 1, 0x08000, &armwrest_charlayout2,   256*4,  64 },
-	{ 1, 0x14000, &charlayout1,       256*4+64*8,  64 },
-	{ 1, 0x44000, &charlayout2,  256*4+64*8+64*8, 128 },
+	{ REGION_GFX1, 0, &armwrest_charlayout,        0, 256 },
+	{ REGION_GFX2, 0, &armwrest_charlayout2,   256*4,  64 },
+	{ REGION_GFX3, 0, &charlayout1,       256*4+64*8,  64 },
+	{ REGION_GFX4, 0, &charlayout2,  256*4+64*8+64*8, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -777,7 +780,7 @@ static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock */
 	50,        /* volume       */
-	4,          /* memory region of speech rom */
+	REGION_SOUND1,	/* memory region of speech rom */
 	0,          /* memory size of speech rom */
 	0,           /* VCU pin level (default)     */
 	punchout_sample_names
@@ -856,34 +859,43 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-c.8h",    0x6000, 0x2000, 0x5d8123d7 )
 	ROM_LOAD( "chp1-c.8f",    0x8000, 0x4000, 0xc8a55ddb )
 
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chp1-b.4c",    0x00000, 0x2000, 0xe26dc8b3 )	/* chars #1 */
 	ROM_LOAD( "chp1-b.4d",    0x02000, 0x2000, 0xdd1310ca )
-	ROM_LOAD( "chp1-b.4a",    0x04000, 0x2000, 0x20fb4829 )	/* chars #2 */
-	ROM_LOAD( "chp1-b.4b",    0x06000, 0x2000, 0xedc34594 )
-	ROM_LOAD( "chp1-v.2r",    0x08000, 0x4000, 0xbd1d4b2e )	/* chars #3 */
-	ROM_LOAD( "chp1-v.2t",    0x0c000, 0x4000, 0xdd9a688a )
-	ROM_LOAD( "chp1-v.2u",    0x10000, 0x2000, 0xda6a3c4b )
-	/* 12000-13fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.2v",    0x14000, 0x2000, 0x8c734a67 )
-	/* 16000-17fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.3r",    0x18000, 0x4000, 0x2e74ad1d )
-	ROM_LOAD( "chp1-v.3t",    0x1c000, 0x4000, 0x630ba9fb )
-	ROM_LOAD( "chp1-v.3u",    0x20000, 0x2000, 0x6440321d )
-	/* 22000-23fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.3v",    0x24000, 0x2000, 0xbb7b7198 )
-	/* 26000-27fff empty (space for 16k ROM) */
-	ROM_LOAD( "chp1-v.4r",    0x28000, 0x4000, 0x4e5b0fe9 )
-	ROM_LOAD( "chp1-v.4t",    0x2c000, 0x4000, 0x37ffc940 )
-	ROM_LOAD( "chp1-v.4u",    0x30000, 0x2000, 0x1a7521d4 )
-	/* 32000-33fff empty (space for 16k ROM) */
-	/* 34000-37fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chp1-v.6p",    0x38000, 0x2000, 0x16588f7a )	/* chars #4 */
-	ROM_LOAD( "chp1-v.6n",    0x3a000, 0x2000, 0xdc743674 )
-	/* 3c000-3ffff empty (space for 6l and 6k) */
-	ROM_LOAD( "chp1-v.8p",    0x40000, 0x2000, 0xc2db5b4e )
-	ROM_LOAD( "chp1-v.8n",    0x42000, 0x2000, 0xe6af390e )
-	/* 44000-47fff empty (space for 8l and 8k) */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-b.4a",    0x00000, 0x2000, 0x20fb4829 )	/* chars #2 */
+	ROM_LOAD( "chp1-b.4b",    0x02000, 0x2000, 0xedc34594 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-v.2r",    0x00000, 0x4000, 0xbd1d4b2e )	/* chars #3 */
+	ROM_LOAD( "chp1-v.2t",    0x04000, 0x4000, 0xdd9a688a )
+	ROM_LOAD( "chp1-v.2u",    0x08000, 0x2000, 0xda6a3c4b )
+	/* 0a000-0bfff empty (space for 16k ROM) */
+	ROM_LOAD( "chp1-v.2v",    0x0c000, 0x2000, 0x8c734a67 )
+	/* 0e000-0ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chp1-v.3r",    0x10000, 0x4000, 0x2e74ad1d )
+	ROM_LOAD( "chp1-v.3t",    0x14000, 0x4000, 0x630ba9fb )
+	ROM_LOAD( "chp1-v.3u",    0x18000, 0x2000, 0x6440321d )
+	/* 1a000-1bfff empty (space for 16k ROM) */
+	ROM_LOAD( "chp1-v.3v",    0x1c000, 0x2000, 0xbb7b7198 )
+	/* 1e000-1ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chp1-v.4r",    0x20000, 0x4000, 0x4e5b0fe9 )
+	ROM_LOAD( "chp1-v.4t",    0x24000, 0x4000, 0x37ffc940 )
+	ROM_LOAD( "chp1-v.4u",    0x28000, 0x2000, 0x1a7521d4 )
+	/* 2a000-2bfff empty (space for 16k ROM) */
+	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
+
+	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-v.6p",    0x00000, 0x2000, 0x16588f7a )	/* chars #4 */
+	ROM_LOAD( "chp1-v.6n",    0x02000, 0x2000, 0xdc743674 )
+	/* 04000-07fff empty (space for 6l and 6k) */
+	ROM_LOAD( "chp1-v.8p",    0x08000, 0x2000, 0xc2db5b4e )
+	ROM_LOAD( "chp1-v.8n",    0x0a000, 0x2000, 0xe6af390e )
+	/* 0c000-0ffff empty (space for 8l and 8k) */
 
 	ROM_REGIONX( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chp1-b.6e",    0x0000, 0x0200, 0xe9ca3ac6 )	/* red component */
@@ -894,10 +906,7 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-b.8f",    0x0a00, 0x0200, 0x1ffd894a )	/* blue component */
 	ROM_LOAD( "chp1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
-	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
-
-	ROM_REGION(0x4000)	/* 16k for the VLM5030 data */
+	ROM_REGIONX( 0x4000, REGION_SOUND1 )	/* 16k for the VLM5030 data */
 	ROM_LOAD( "chp1-c.6p",    0x0000, 0x4000, 0xea0bbb31 )
 ROM_END
 
@@ -909,7 +918,10 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-c.8h",    0x6000, 0x2000, 0x15a6c068 )
 	ROM_LOAD( "chs1-c.8f",    0x8000, 0x4000, 0x4ff3cdd9 )
 
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chs1-b.4c",    0x00000, 0x0800, 0x9f2ede2d )	/* chars #1 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -918,46 +930,52 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x03000, 0x0800 )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
-	ROM_LOAD( "chp1-b.4a",    0x04000, 0x0800, 0xc075f831 )	/* chars #2 */
-	ROM_CONTINUE(             0x05000, 0x0800 )
-	ROM_CONTINUE(             0x04800, 0x0800 )
-	ROM_CONTINUE(             0x05800, 0x0800 )
-	ROM_LOAD( "chp1-b.4b",    0x06000, 0x0800, 0xc4cc2b5a )
-	ROM_CONTINUE(             0x07000, 0x0800 )
-	ROM_CONTINUE(             0x06800, 0x0800 )
-	ROM_CONTINUE(             0x07800, 0x0800 )
-	ROM_LOAD( "chs1-v.2r",    0x08000, 0x4000, 0xff33405d )	/* chars #3 */
-	ROM_LOAD( "chs1-v.2t",    0x0c000, 0x4000, 0xf507818b )
-	ROM_LOAD( "chs1-v.2u",    0x10000, 0x4000, 0x0995fc95 )
-	ROM_LOAD( "chs1-v.2v",    0x14000, 0x2000, 0xf44d9878 )
-	/* 16000-17fff empty (space for 16k ROM) */
-	ROM_LOAD( "chs1-v.3r",    0x18000, 0x4000, 0x09570945 )
-	ROM_LOAD( "chs1-v.3t",    0x1c000, 0x4000, 0x42c6861c )
-	ROM_LOAD( "chs1-v.3u",    0x20000, 0x4000, 0xbf5d02dd )
-	ROM_LOAD( "chs1-v.3v",    0x24000, 0x2000, 0x5673f4fc )
-	/* 26000-27fff empty (space for 16k ROM) */
-	ROM_LOAD( "chs1-v.4r",    0x28000, 0x4000, 0x8e155758 )
-	ROM_LOAD( "chs1-v.4t",    0x2c000, 0x4000, 0xb4e43448 )
-	ROM_LOAD( "chs1-v.4u",    0x30000, 0x4000, 0x74e0d956 )
-	/* 34000-37fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chp1-v.6p",    0x38000, 0x0800, 0x75be7aae )	/* chars #4 */
-	ROM_CONTINUE(             0x39000, 0x0800 )
-	ROM_CONTINUE(             0x38800, 0x0800 )
-	ROM_CONTINUE(             0x39800, 0x0800 )
-	ROM_LOAD( "chp1-v.6n",    0x3a000, 0x0800, 0xdaf74de0 )
-	ROM_CONTINUE(             0x3b000, 0x0800 )
-	ROM_CONTINUE(             0x3a800, 0x0800 )
-	ROM_CONTINUE(             0x3b800, 0x0800 )
-	/* 3c000-3ffff empty (space for 6l and 6k) */
-	ROM_LOAD( "chp1-v.8p",    0x40000, 0x0800, 0x4cb7ea82 )
-	ROM_CONTINUE(             0x41000, 0x0800 )
-	ROM_CONTINUE(             0x40800, 0x0800 )
-	ROM_CONTINUE(             0x41800, 0x0800 )
-	ROM_LOAD( "chp1-v.8n",    0x42000, 0x0800, 0x1c0d09aa )
-	ROM_CONTINUE(             0x43000, 0x0800 )
-	ROM_CONTINUE(             0x42800, 0x0800 )
-	ROM_CONTINUE(             0x43800, 0x0800 )
-	/* 44000-47fff empty (space for 8l and 8k) */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-b.4a",    0x00000, 0x0800, 0xc075f831 )	/* chars #2 */
+	ROM_CONTINUE(             0x01000, 0x0800 )
+	ROM_CONTINUE(             0x00800, 0x0800 )
+	ROM_CONTINUE(             0x01800, 0x0800 )
+	ROM_LOAD( "chp1-b.4b",    0x02000, 0x0800, 0xc4cc2b5a )
+	ROM_CONTINUE(             0x03000, 0x0800 )
+	ROM_CONTINUE(             0x02800, 0x0800 )
+	ROM_CONTINUE(             0x03800, 0x0800 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chs1-v.2r",    0x00000, 0x4000, 0xff33405d )	/* chars #3 */
+	ROM_LOAD( "chs1-v.2t",    0x04000, 0x4000, 0xf507818b )
+	ROM_LOAD( "chs1-v.2u",    0x08000, 0x4000, 0x0995fc95 )
+	ROM_LOAD( "chs1-v.2v",    0x0c000, 0x2000, 0xf44d9878 )
+	/* 0e000-0ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chs1-v.3r",    0x10000, 0x4000, 0x09570945 )
+	ROM_LOAD( "chs1-v.3t",    0x14000, 0x4000, 0x42c6861c )
+	ROM_LOAD( "chs1-v.3u",    0x18000, 0x4000, 0xbf5d02dd )
+	ROM_LOAD( "chs1-v.3v",    0x1c000, 0x2000, 0x5673f4fc )
+	/* 1e000-1ffff empty (space for 16k ROM) */
+	ROM_LOAD( "chs1-v.4r",    0x20000, 0x4000, 0x8e155758 )
+	ROM_LOAD( "chs1-v.4t",    0x24000, 0x4000, 0xb4e43448 )
+	ROM_LOAD( "chs1-v.4u",    0x28000, 0x4000, 0x74e0d956 )
+	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
+
+	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chp1-v.6p",    0x00000, 0x0800, 0x75be7aae )	/* chars #4 */
+	ROM_CONTINUE(             0x01000, 0x0800 )
+	ROM_CONTINUE(             0x00800, 0x0800 )
+	ROM_CONTINUE(             0x01800, 0x0800 )
+	ROM_LOAD( "chp1-v.6n",    0x02000, 0x0800, 0xdaf74de0 )
+	ROM_CONTINUE(             0x03000, 0x0800 )
+	ROM_CONTINUE(             0x02800, 0x0800 )
+	ROM_CONTINUE(             0x03800, 0x0800 )
+	/* 04000-07fff empty (space for 6l and 6k) */
+	ROM_LOAD( "chp1-v.8p",    0x08000, 0x0800, 0x4cb7ea82 )
+	ROM_CONTINUE(             0x09000, 0x0800 )
+	ROM_CONTINUE(             0x08800, 0x0800 )
+	ROM_CONTINUE(             0x09800, 0x0800 )
+	ROM_LOAD( "chp1-v.8n",    0x0a000, 0x0800, 0x1c0d09aa )
+	ROM_CONTINUE(             0x0b000, 0x0800 )
+	ROM_CONTINUE(             0x0a800, 0x0800 )
+	ROM_CONTINUE(             0x0b800, 0x0800 )
+	/* 0c000-0ffff empty (space for 8l and 8k) */
 
 	ROM_REGIONX( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chs1-b.6e",    0x0000, 0x0200, 0x0ad4d727 )	/* red component */
@@ -968,10 +986,7 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x1663eed7 )	/* blue component */
 	ROM_LOAD( "chs1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
-	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
-
-	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
 	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, 0xad8b64b8 )
 ROM_END
 
@@ -983,30 +998,39 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-c.8h",    0x6000, 0x2000, 0xa2118eec )
 	ROM_LOAD( "chpv-c.8f",    0x8000, 0x4000, 0x664a07c4 )
 
-	ROM_REGION_DISPOSE(0x54000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
+	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )	/* same as Punch Out */
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chpv-b.2e",    0x00000, 0x4000, 0x8b45f365 )	/* chars #1 */
 	ROM_LOAD( "chpv-b.2d",    0x04000, 0x4000, 0xb1a2850c )
-	ROM_LOAD( "chpv-b.2m",    0x08000, 0x4000, 0x19245b37 )	/* chars #2 */
-	ROM_LOAD( "chpv-b.2l",    0x0c000, 0x4000, 0x46797941 )
-	ROM_LOAD( "chpv-b.2k",    0x10000, 0x4000, 0x24c4c26d )
-	ROM_LOAD( "chv1-v.2r",    0x14000, 0x4000, 0xd86056d9 )	/* chars #3 */
-	ROM_LOAD( "chv1-v.2t",    0x18000, 0x4000, 0x5ad77059 )
-	/* 1c000-1ffff empty */
-	ROM_LOAD( "chv1-v.2v",    0x20000, 0x4000, 0xa0fd7338 )
-	ROM_LOAD( "chv1-v.3r",    0x24000, 0x4000, 0x690e26fb )
-	ROM_LOAD( "chv1-v.3t",    0x28000, 0x4000, 0xea5d7759 )
-	/* 2c000-2ffff empty */
-	ROM_LOAD( "chv1-v.3v",    0x30000, 0x4000, 0xceb37c05 )
-	ROM_LOAD( "chv1-v.4r",    0x34000, 0x4000, 0xe291cba0 )
-	ROM_LOAD( "chv1-v.4t",    0x38000, 0x4000, 0xe01f3b59 )
-	/* 3c000-3ffff empty */
-	/* 40000-43fff empty (4v doesn't exist, it is seen as a 0xff fill) */
-	ROM_LOAD( "chv1-v.6p",    0x44000, 0x2000, 0xd834e142 )	/* chars #4 */
-	/* 46000-47fff empty (space for 16k ROM) */
-	/* 48000-4bfff empty (space for 6l and 6k) */
-	ROM_LOAD( "chv1-v.8p",    0x4c000, 0x2000, 0xa2f531db )
-	/* 4e000-4ffff empty (space for 16k ROM) */
-	/* 50000-53fff empty (space for 8l and 8k) */
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chpv-b.2m",    0x00000, 0x4000, 0x19245b37 )	/* chars #2 */
+	ROM_LOAD( "chpv-b.2l",    0x04000, 0x4000, 0x46797941 )
+	ROM_LOAD( "chpv-b.2k",    0x08000, 0x4000, 0x24c4c26d )
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chv1-v.2r",    0x00000, 0x4000, 0xd86056d9 )	/* chars #3 */
+	ROM_LOAD( "chv1-v.2t",    0x04000, 0x4000, 0x5ad77059 )
+	/* 08000-0bfff empty */
+	ROM_LOAD( "chv1-v.2v",    0x0c000, 0x4000, 0xa0fd7338 )
+	ROM_LOAD( "chv1-v.3r",    0x10000, 0x4000, 0x690e26fb )
+	ROM_LOAD( "chv1-v.3t",    0x14000, 0x4000, 0xea5d7759 )
+	/* 18000-1bfff empty */
+	ROM_LOAD( "chv1-v.3v",    0x1c000, 0x4000, 0xceb37c05 )
+	ROM_LOAD( "chv1-v.4r",    0x20000, 0x4000, 0xe291cba0 )
+	ROM_LOAD( "chv1-v.4t",    0x24000, 0x4000, 0xe01f3b59 )
+	/* 28000-2bfff empty */
+	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
+
+	ROM_REGIONX( 0x10000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "chv1-v.6p",    0x00000, 0x2000, 0xd834e142 )	/* chars #4 */
+	/* 02000-03fff empty (space for 16k ROM) */
+	/* 04000-07fff empty (space for 6l and 6k) */
+	ROM_LOAD( "chv1-v.8p",    0x08000, 0x2000, 0xa2f531db )
+	/* 0a000-0bfff empty (space for 16k ROM) */
+	/* 0c000-0ffff empty (space for 8l and 8k) */
 
 	ROM_REGIONX( 0x0e00, REGION_PROMS )
 	ROM_LOAD( "chpv-b.7b",    0x0000, 0x0200, 0xdf6fdeb3 )	/* red component */
@@ -1018,117 +1042,32 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-b.3c",    0x0c00, 0x0100, 0xc3f92ea2 )	/* priority encoder - not used */
 	ROM_LOAD( "chpv-v.2d",    0x0d00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
-	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )	/* same as Punch Out */
-
-	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the VLM5030 data */
 	ROM_LOAD( "chv1-c.6p",    0x0000, 0x4000, 0x31b52896 )
 ROM_END
 
 
 
-static void punchout_decode(void)
+static void init_punchout(void)
 {
-	unsigned char *RAM;
-
-
-	/* there is no encryption in Punch Out, however one graphics ROM (4v) doesn't */
+	/* one graphics ROM (4v) doesn't */
 	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	RAM = memory_region(1);
-	memset(&RAM[0x34000],0xff,0x4000);
+	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
 }
 
-static void armwrest_decode(void)
+static void init_armwrest(void)
 {
-	unsigned char *RAM;
-
-
-	/* there is no encryption in Arm Wrestling, however one graphics ROM (4v) doesn't */
+	/* one graphics ROM (4v) doesn't */
 	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	RAM = memory_region(1);
-	memset(&RAM[0x40000],0xff,0x4000);
+	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
 
 	/* also, ROM 2k is enabled only when its top half is accessed. The other half must */
 	/* be seen as a 0xff fill for colors to come out properly */
-	memset(&RAM[0x10000],0xff,0x2000);
+	memset(memory_region(REGION_GFX2) + 0x08000,0xff,0x2000);
 }
 
 
 
-struct GameDriver driver_punchout =
-{
-	__FILE__,
-	0,
-	"punchout",
-	"Punch-Out!!",
-	"1984",
-	"Nintendo",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
-	0,
-	&machine_driver_punchout,
-	punchout_decode,
-
-	rom_punchout,
-	0, 0,
-	0,
-	0,
-
-	input_ports_punchout,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_spnchout =
-{
-	__FILE__,
-	0,
-	"spnchout",
-	"Super Punch-Out!!",
-	"1984",
-	"Nintendo",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh (protection)\nErnesto Corvi (protection)",
-	0,
-	&machine_driver_spnchout,
-	punchout_decode,
-
-	rom_spnchout,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spnchout,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_armwrest =
-{
-	__FILE__,
-	0,
-	"armwrest",
-	"Arm Wrestling",
-	"1985",
-	"Nintendo",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_armwrest,
-	armwrest_decode,
-
-	rom_armwrest,
-	0, 0,
-	0,
-	0,
-
-	input_ports_armwrest,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
+GAME( 1984, punchout, 0, punchout, punchout, punchout, ROT0, "Nintendo", "Punch-Out!!" )
+GAME( 1984, spnchout, 0, spnchout, spnchout, punchout, ROT0, "Nintendo", "Super Punch-Out!!" )
+GAME( 1985, armwrest, 0, armwrest, armwrest, armwrest, ROT0, "Nintendo", "Arm Wrestling" )

@@ -306,11 +306,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,      0, 32 }, /* chars */
-	{ 1, 0x2000, &charlayout2,      0, 32 }, /* chars */
-	{ 1, 0x1000, &spritelayout1,    16*8, 32 }, /* sprites */
-	{ 1, 0x3000, &spritelayout2,    16*8, 32 }, /* sprites */
-	{ 1, 0x6000, &spritelayout,    	16*8, 32 }, /* sprites */
+	{ REGION_GFX1, 0x0000, &charlayout1,      0, 32 }, /* chars */
+	{ REGION_GFX1, 0x2000, &charlayout2,      0, 32 }, /* chars */
+	{ REGION_GFX1, 0x1000, &spritelayout1, 16*8, 32 }, /* sprites */
+	{ REGION_GFX1, 0x3000, &spritelayout2, 16*8, 32 }, /* sprites */
+	{ REGION_GFX2, 0x0000, &spritelayout,  16*8, 32 }, /* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -325,7 +325,6 @@ static struct AY8910interface ay8910_interface =
 	4,	/* 4 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 15, 15, 15, 15 }, /* volume */
-	AY8910_DEFAULT_GAIN,
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, /* it writes 0s thru port A, no clue what for */
@@ -344,7 +343,6 @@ static struct AY8910interface bl_ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 50 }, /* volume */
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -363,7 +361,7 @@ static struct DACinterface bl_dac_interface =
 
 ***************************************************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exctsccr =
 {
 	/* basic machine hardware */
 	{
@@ -412,7 +410,7 @@ static struct MachineDriver machine_driver =
 };
 
 /* Bootleg */
-static struct MachineDriver machine_driver_bl =
+static struct MachineDriver machine_driver_exctsccb =
 {
 	/* basic machine hardware */
 	{
@@ -471,24 +469,26 @@ ROM_START( exctsccr )
 	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
 	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-	ROM_REGION_DISPOSE( 0x08000 )
-	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
-	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
-	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
-	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
-	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
-
-	ROM_REGIONX( 0x0220, REGION_PROMS )
-	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
-	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
-	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
 	ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2_k5.bin",     0x0000, 0x1000, 0x7f9cace2 )
+	ROM_LOAD( "3_l5.bin",     0x1000, 0x1000, 0xdb2d9e0d )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 ROM_END
 
 ROM_START( exctscca )
@@ -497,24 +497,26 @@ ROM_START( exctscca )
 	ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
 	ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-	ROM_REGION_DISPOSE( 0x08000 )
-	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
-	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
-	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
-	ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
-	ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
-
-	ROM_REGIONX( 0x0220, REGION_PROMS )
-	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
-	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
-	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
 	ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
+	ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
+	ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2_k5.bin",     0x0000, 0x1000, 0x7f9cace2 )
+	ROM_LOAD( "3_l5.bin",     0x1000, 0x1000, 0xdb2d9e0d )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 ROM_END
 
 /* Bootleg */
@@ -524,23 +526,25 @@ ROM_START( exctsccb )
 	ROM_LOAD( "es-2.g2",      0x2000, 0x2000, 0x5c66e792 )
 	ROM_LOAD( "es-3.h2",      0x4000, 0x2000, 0xe0d504c0 )
 
-	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound */
+	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
+	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
+	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* I'm using the ROMs from exctscc2, national flags would be wrong otherwise */
 	ROM_LOAD( "vr.5a",        0x0000, 0x2000, BADCRC( 0x4ff1783d ) )
 	ROM_LOAD( "vr.5b",        0x2000, 0x2000, BADCRC( 0x5605b60b ) )
 	ROM_LOAD( "vr.5c",        0x4000, 0x2000, BADCRC( 0x1fb84ee6 ) )
-	ROM_LOAD( "vr.5k",        0x6000, 0x1000, BADCRC( 0x1d37edfa ) )
-	ROM_LOAD( "vr.5l",        0x7000, 0x1000, BADCRC( 0xb97f396c ) )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vr.5k",        0x0000, 0x1000, BADCRC( 0x1d37edfa ) )
+	ROM_LOAD( "vr.5l",        0x1000, 0x1000, BADCRC( 0xb97f396c ) )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound */
-	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
-	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
-	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
 ROM_END
 
 ROM_START( exctscc2 )
@@ -549,122 +553,31 @@ ROM_START( exctscc2 )
 	ROM_LOAD( "vr.3k",        0x2000, 0x2000, 0xde36ba00 )
 	ROM_LOAD( "vr.3l",        0x4000, 0x2000, 0x1ddfdf65 )
 
-	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vr.5a",        0x0000, 0x2000, 0x4ff1783d )
-	ROM_LOAD( "vr.5b",        0x2000, 0x2000, 0x5605b60b )
-	ROM_LOAD( "vr.5c",        0x4000, 0x2000, 0x1fb84ee6 )
-	ROM_LOAD( "vr.5k",        0x6000, 0x1000, 0x1d37edfa )
-	ROM_LOAD( "vr.5l",        0x7000, 0x1000, 0xb97f396c )
-
-	ROM_REGIONX( 0x0220, REGION_PROMS )
-	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
-	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
-	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "vr.7d",        0x0000, 0x2000, 0x2c675a43 )
 	ROM_LOAD( "vr.7e",        0x2000, 0x2000, 0xe571873d )
 	ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )	/* vr.7f */
 	ROM_LOAD( "7_c6.bin",     0x6000, 0x2000, 0x6d51521e )	/* vr.7h */
 	ROM_LOAD( "1_a6.bin",     0x8000, 0x1000, 0x20f2207e )	/* vr.7k */
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vr.5a",        0x0000, 0x2000, 0x4ff1783d )
+	ROM_LOAD( "vr.5b",        0x2000, 0x2000, 0x5605b60b )
+	ROM_LOAD( "vr.5c",        0x4000, 0x2000, 0x1fb84ee6 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vr.5k",        0x0000, 0x1000, 0x1d37edfa )
+	ROM_LOAD( "vr.5l",        0x1000, 0x1000, 0xb97f396c )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
+	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
+	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 ROM_END
 
 
 
-struct GameDriver driver_exctsccr =
-{
-	__FILE__,
-	0,
-	"exctsccr",
-	"Exciting Soccer",
-	"1983",
-	"Alpha Denshi Co",
-	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
-	0,
-	&machine_driver,
-	0,
-	rom_exctsccr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exctsccr,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_exctscca =
-{
-	__FILE__,
-	&driver_exctsccr,
-	"exctscca",
-	"Exciting Soccer (alternate music)",
-	"1983",
-	"Alpha Denshi Co",
-	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
-	0,
-	&machine_driver,
-	0,
-	rom_exctscca,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exctsccr,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-/* Bootleg */
-struct GameDriver driver_exctsccb =
-{
-	__FILE__,
-	&driver_exctsccr,
-	"exctsccb",
-	"Exciting Soccer (bootleg)",
-	"1984",
-	"bootleg",
-	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
-	0,
-	&machine_driver_bl,
-	0,
-	rom_exctsccb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exctsccr,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_exctscc2 =
-{
-	__FILE__,
-	&driver_exctsccr,
-	"exctscc2",
-	"Exciting Soccer II",
-	"1983",
-	"Alpha Denshi Co",
-	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
-	0,
-	&machine_driver,
-	0,
-	rom_exctscc2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exctsccr,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0,0
-};
+GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer" )
+GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer (alternate music)" )
+GAME( 1984, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)" )
+GAMEX(1983, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer II", GAME_NOT_WORKING )

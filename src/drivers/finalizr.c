@@ -2,6 +2,8 @@
 
 Finalizer (GX523) (c) 1985 Konami
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -377,9 +379,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,        0, 16 },
-	{ 1, 0x00000, &spritelayout,  16*16, 16 },
-	{ 1, 0x00000, &charlayout,    16*16, 16 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0, &charlayout,        0, 16 },
+	{ REGION_GFX1, 0, &spritelayout,  16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,    16*16, 16 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -400,7 +402,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_finalizr =
 {
 	/* basic machine hardware */
 	{
@@ -461,7 +463,11 @@ ROM_START( finalizr )
 	ROM_LOAD( "523k02.12c",   0x8000, 0x4000, 0x1bccc696 )
 	ROM_LOAD( "523k03.13c",   0xc000, 0x4000, 0xc48927c6 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 8039 */
+	ROM_LOAD( "d8749hd.bin",  0x0000, 0x0800, 0x978dfc33 )	/* this comes from the bootleg, */
+															/* the original has a custom IC */
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
 	ROM_LOAD( "523h05.6e",    0x04000, 0x4000, 0xae0d0f76 )
 	ROM_LOAD( "523h06.7e",    0x08000, 0x4000, 0xd2db9689 )
@@ -476,10 +482,6 @@ ROM_START( finalizr )
 	ROM_LOAD( "523h11.3f",    0x0020, 0x0020, 0x54be2e83 ) /* palette */
 	ROM_LOAD( "523h12.10f",   0x0040, 0x0100, 0x53166a2a ) /* sprites */
 	ROM_LOAD( "523h13.11f",   0x0140, 0x0100, 0x4e0647a0 ) /* characters */
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 8039 */
-	ROM_LOAD( "d8749hd.bin",  0x0000, 0x0800, 0x978dfc33 )	/* this comes from the bootleg, */
-															/* the original has a custom IC */
 ROM_END
 
 ROM_START( finalizb )
@@ -487,7 +489,10 @@ ROM_START( finalizb )
 	ROM_LOAD( "finalizr.5",   0x4000, 0x8000, 0xa55e3f14 )
 	ROM_LOAD( "finalizr.6",   0xc000, 0x4000, 0xce177f6e )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 8039 */
+	ROM_LOAD( "d8749hd.bin",  0x0000, 0x0800, 0x978dfc33 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "523h04.5e",    0x00000, 0x4000, 0xc056d710 )
 	ROM_LOAD( "523h05.6e",    0x04000, 0x4000, 0xae0d0f76 )
 	ROM_LOAD( "523h06.7e",    0x08000, 0x4000, 0xd2db9689 )
@@ -502,61 +507,14 @@ ROM_START( finalizb )
 	ROM_LOAD( "523h11.3f",    0x0020, 0x0020, 0x54be2e83 ) /* palette */
 	ROM_LOAD( "523h12.10f",   0x0040, 0x0100, 0x53166a2a ) /* sprites */
 	ROM_LOAD( "523h13.11f",   0x0140, 0x0100, 0x4e0647a0 ) /* characters */
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* 8039 */
-	ROM_LOAD( "d8749hd.bin",  0x0000, 0x0800, 0x978dfc33 )
 ROM_END
 
 
-
-struct GameDriver driver_finalizr =
+static void init_finalizr(void)
 {
-	__FILE__,
-	0,
-	"finalizr",
-	"Finalizer - Super Transformation",
-	"1985",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	konami1_decode,
+	konami1_decode();
+}
 
-	rom_finalizr,
-	0, 0,
-	0,
-	0,
 
-	input_ports_finalizr,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_finalizb =
-{
-	__FILE__,
-	&driver_finalizr,
-	"finalizb",
-	"Finalizer - Super Transformation (bootleg)",
-	"1985",
-	"bootleg",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	konami1_decode,
-
-	rom_finalizb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_finalizb,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-
-	0, 0
-};
+GAMEX( 1985, finalizr, 0,        finalizr, finalizr, finalizr, ROT90, "Konami", "Finalizer - Super Transformation", GAME_IMPERFECT_SOUND )
+GAMEX( 1985, finalizb, finalizr, finalizr, finalizb, finalizr, ROT90, "bootleg", "Finalizer - Super Transformation (bootleg)", GAME_IMPERFECT_SOUND )

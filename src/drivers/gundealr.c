@@ -2,6 +2,8 @@
 
 Gun Dealer memory map
 
+driver by Nicola Salmoria
+
 Yam! Yam!? runs on the same hardware but has a protection device which can
            access RAM at e000. Program writes to e000 and expects a value back
 		   at e001, then jumps to subroutines at e010 and e020. Also, the
@@ -150,12 +152,12 @@ if (errorlog) fprintf(errorlog,"e000 = %02x\n",RAM[0xe000]);
 	}
 }
 
-static void gundealr_init(void)
+static void init_gundealr(void)
 {
 	input_ports_hack = 0;
 }
 
-static void yamyam_init(void)
+static void init_yamyam(void)
 {
 	input_ports_hack = 1;
 	install_mem_write_handler(0, 0xe000, 0xe000, yamyam_protection_w);
@@ -227,7 +229,7 @@ INPUT_PORTS_START( gundealr )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, "Flip Screen" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -308,7 +310,7 @@ INPUT_PORTS_START( yamyam )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, "Flip Screen" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -395,8 +397,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 16 },	/* colors 0-255 */
-	{ 1, 0x10000, &spritelayout, 256, 16 },	/* colors 256-511 */
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* colors 0-255 */
+	{ REGION_GFX2, 0, &spritelayout, 256, 16 },	/* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
@@ -407,7 +409,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	1500000,	/* 1.5 MHz ?????? */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -416,7 +417,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gundealr =
 {
 	/* basic machine hardware */
 	{
@@ -466,9 +467,11 @@ ROM_START( gundealr )
 	ROM_LOAD( "gundealr.1",   0x00000, 0x10000, 0x5797e830 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gundealr.3",   0x00000, 0x10000, 0x01f99de2 )
-	ROM_LOAD( "gundealr.2",   0x10000, 0x20000, 0x7874ec41 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gundealr.2",   0x00000, 0x20000, 0x7874ec41 )
 ROM_END
 
 ROM_START( gundeala )
@@ -476,9 +479,11 @@ ROM_START( gundeala )
 	ROM_LOAD( "gundeala.1",   0x00000, 0x10000, 0xd87e24f1 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gundeala.3",   0x00000, 0x10000, 0x836cf1a3 )
-	ROM_LOAD( "gundeala.2",   0x10000, 0x20000, 0x4b5fb53c )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gundeala.2",   0x00000, 0x20000, 0x4b5fb53c )
 ROM_END
 
 ROM_START( yamyam )
@@ -486,123 +491,28 @@ ROM_START( yamyam )
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b2.d16",       0x00000, 0x10000, 0xcb4f84ee )
-	ROM_LOAD( "b1.a16",       0x10000, 0x20000, 0xb122828d )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b1.a16",       0x00000, 0x20000, 0xb122828d )
 ROM_END
 
+/* only gfx are different, code is the same */
 ROM_START( wiseguy )
 	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "wguyb2.bin",   0x00000, 0x10000, 0x1c684c46 )
-	ROM_LOAD( "b1.a16",       0x10000, 0x20000, 0xb122828d )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b1.a16",       0x00000, 0x20000, 0xb122828d )
 ROM_END
 
 
-struct GameDriver driver_gundealr =
-{
-	__FILE__,
-	0,
-	"gundealr",
-	"Gun Dealer (set 1)",
-	"1990",
-	"Dooyong",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gundealr_init,
-
-	rom_gundealr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gundealr,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
-
-struct GameDriver driver_gundeala =
-{
-	__FILE__,
-	&driver_gundealr,
-	"gundeala",
-	"Gun Dealer (set 2)",
-	"????",
-	"Dooyong",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gundealr_init,
-
-	rom_gundeala,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gundealr,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
-
-struct GameDriver driver_yamyam =
-{
-	__FILE__,
-	0,
-	"yamyam",
-	"Yam! Yam!?",
-	"1990",
-	"Dooyong",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	yamyam_init,
-
-	rom_yamyam,
-	0, 0,
-	0,
-	0,
-
-	input_ports_yamyam,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-/* only gfx are different, code is the same */
-struct GameDriver driver_wiseguy =
-{
-	__FILE__,
-	&driver_yamyam,
-	"wiseguy",
-	"Wise Guy",
-	"1990",
-	"Dooyong",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	yamyam_init,
-
-	rom_wiseguy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_yamyam,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1990, gundealr, 0,        gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 1)" )
+GAME( ????, gundeala, gundealr, gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 2)" )
+GAME( 1990, yamyam,   0,        gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Yam! Yam!?" )
+GAME( 1990, wiseguy,  yamyam,   gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Wise Guy" )

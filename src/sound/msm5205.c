@@ -93,7 +93,7 @@ static const struct MSM5205interface *msm5205_intf;
 static struct MSM5205Voice msm5205[MAX_MSM5205];
 
 /* stream update callbacks */
-static void MSM5205_update16(int chip,void *buffer,int length)
+static void MSM5205_update(int chip,INT16 *buffer,int length)
 {
 	struct MSM5205Voice *voice = &msm5205[chip];
 
@@ -101,27 +101,14 @@ static void MSM5205_update16(int chip,void *buffer,int length)
 	if(voice->signal)
 	{
 		short val = voice->signal * 16;
-		short *buf = (short *)buffer;
-		/* 16-bit case */
 		while (length)
 		{
-			*buf++ = val;
+			*buffer++ = val;
 			length--;
 		}
 	}
 	else
-		memset (buffer,0,length*2);
-}
-
-static void MSM5205_update8(int chip,void *buffer,int length)
-{
-	struct MSM5205Voice *voice = &msm5205[chip];
-
-	/* if this voice is active */
-	if(voice->signal)
-		memset(buffer,voice->signal / 16,length);
-	else
-		memset (buffer, 0, length);
+		memset (buffer,0,length*sizeof(INT16));
 }
 
 /* timer callback at VCLK low eddge */
@@ -182,8 +169,8 @@ int MSM5205_sh_start (const struct MachineSound *msound)
 		char name[20];
 		sprintf(name,"MSM5205 #%d",i);
 		voice->stream = stream_init(name,msm5205_intf->mixing_level[i],
-                                Machine->sample_rate,Machine->sample_bits,i,
-		                        (Machine->sample_bits == 16) ? MSM5205_update16 :MSM5205_update8);
+                                Machine->sample_rate,i,
+		                        MSM5205_update);
 	}
 	/* initialize */
 	MSM5205_sh_reset();

@@ -1,9 +1,12 @@
 /***************************************************************************
+
+Phoenix memory map
+
+driver by Richard Davies
+
 Note:
    pleiads is using another sound driver, sndhrdw\pleiads.c
  Andrew Scott (ascott@utkux.utcc.utk.edu)
-
-Phoenix memory map
 
 0000-3fff 16Kb Program ROM
 4000-43ff 1Kb Video RAM Charset A (4340-43ff variables)
@@ -280,8 +283,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 16 },
-	{ 1, 0x1000, &charlayout, 16*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,    0, 16 },
+	{ REGION_GFX2, 0, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -363,11 +366,13 @@ ROM_START( phoenix )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
-	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
@@ -385,11 +390,13 @@ ROM_START( phoenixa )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
-	ROM_LOAD( "phoenixc.39",  0x1000, 0x0800, 0xbb0525ed )
-	ROM_LOAD( "phoenixc.40",  0x1800, 0x0800, 0x4178aa4f )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
+	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
@@ -407,11 +414,13 @@ ROM_START( phoenixt )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenix.52",   0x3800, 0x0800, 0xb9915263 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
-	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
@@ -429,11 +438,13 @@ ROM_START( phoenix3 )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenix3.52",  0x3800, 0x0800, 0xd2c5c984 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
-	ROM_LOAD( "ic39",         0x1000, 0x0800, 0x53413e8f )
-	ROM_LOAD( "ic40",         0x1800, 0x0800, 0x0be2ba91 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
+	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
@@ -451,11 +462,13 @@ ROM_START( phoenixc )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenixc.52",  0x3800, 0x0800, 0x8424d7c4 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
-	ROM_LOAD( "phoenixc.39",  0x1000, 0x0800, 0xbb0525ed )
-	ROM_LOAD( "phoenixc.40",  0x1800, 0x0800, 0x4178aa4f )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
+	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
@@ -473,11 +486,13 @@ ROM_START( pleiads )
 	ROM_LOAD( "ic53.r7",      0x3000, 0x0800, 0xb5f07fbc )
 	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 ) /* IC 54 on real board */
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 ) /* IC 45 on real board */
 	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 ) /* IC 44 on real board */
-	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 ) /* IC 27 on real board */
-	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 ) /* IC 27 on real board */
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
@@ -495,11 +510,13 @@ ROM_START( pleiadbl )
 	ROM_LOAD( "ic51.bin",     0x3000, 0x0800, 0x6f56f317 )
 	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 )
 	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 )
-	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 )
-	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
@@ -517,11 +534,13 @@ ROM_START( pleiadce )
 	ROM_LOAD( "pleiades.53",  0x3000, 0x0800, 0x037b319c )
 	ROM_LOAD( "pleiades.54",  0x3800, 0x0800, 0xca264c7c )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pleiades.45",  0x0000, 0x0800, 0x8dbd3785 )
 	ROM_LOAD( "pleiades.44",  0x0800, 0x0800, 0x0db3e436 )
-	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 )
-	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
+	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
@@ -530,205 +549,11 @@ ROM_END
 
 
 
-#define CREDITS   "Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili"
-
-struct GameDriver driver_phoenix =
-{
-	__FILE__,
-	0,
-	"phoenix",
-	"Phoenix (Amstar)",
-	"1980",
-	"Amstar",
-	CREDITS,
-	0,
-	&machine_driver_phoenix,
-	0,
-
-	rom_phoenix,
-	0, 0,
-	0,
-	0,
-
-	input_ports_phoenix,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_phoenixa =
-{
-	__FILE__,
-	&driver_phoenix,
-	"phoenixa",
-	"Phoenix (Centuri)",
-	"1980",
-	"Amstar (Centuri license)",
-	CREDITS,
-	0,
-	&machine_driver_phoenix,
-	0,
-
-	rom_phoenixa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_phoenixa,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_phoenixt =
-{
-	__FILE__,
-	&driver_phoenix,
-	"phoenixt",
-	"Phoenix (Taito)",
-	"1980",
-	"Taito",
-	CREDITS,
-	0,
-	&machine_driver_phoenix,
-	0,
-
-	rom_phoenixt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_phoenixt,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_phoenix3 =
-{
-	__FILE__,
-	&driver_phoenix,
-	"phoenix3",
-	"Phoenix (T.P.N.)",
-	"1980",
-	"bootleg",
-	CREDITS,
-	0,
-	&machine_driver_phoenix,
-	0,
-
-	rom_phoenix3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_phoenix3,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_phoenixc =
-{
-	__FILE__,
-	&driver_phoenix,
-	"phoenixc",
-	"Phoenix (IRECSA, G.G.I Corp)",
-	"1981",
-	"bootleg?",
-	CREDITS,
-	0,
-	&machine_driver_phoenix,
-	0,
-
-	rom_phoenixc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_phoenixt,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-
-struct GameDriver driver_pleiads =
-{
-	__FILE__,
-	0,
-	"pleiads",
-	"Pleiads (Tehkan)",
-	"1981",
-	"Tehkan",
-	CREDITS,
-	0,
-	&machine_driver_pleiads,
-	0,
-
-	rom_pleiads,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pleiads,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pleiadbl =
-{
-	__FILE__,
-	&driver_pleiads,
-	"pleiadbl",
-	"Pleiads (bootleg)",
-	"1981",
-	"bootleg",
-	CREDITS,
-	0,
-	&machine_driver_pleiads,
-	0,
-
-	rom_pleiadbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pleiads,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pleiadce =
-{
-	__FILE__,
-	&driver_pleiads,
-	"pleiadce",
-	"Pleiads (Centuri)",
-	"1981",
-	"Tehkan (Centuri license)",
-	CREDITS,
-	0,
-	&machine_driver_pleiads,
-	0,
-
-	rom_pleiadce,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pleiads,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1980, phoenix,  0,       phoenix, phoenix,  0, ROT90, "Amstar", "Phoenix (Amstar)" )
+GAME( 1980, phoenixa, phoenix, phoenix, phoenixa, 0, ROT90, "Amstar (Centuri license)", "Phoenix (Centuri)" )
+GAME( 1980, phoenixt, phoenix, phoenix, phoenixt, 0, ROT90, "Taito", "Phoenix (Taito)" )
+GAME( 1980, phoenix3, phoenix, phoenix, phoenix3, 0, ROT90, "bootleg", "Phoenix (T.P.N.)" )
+GAME( 1981, phoenixc, phoenix, phoenix, phoenixt, 0, ROT90, "bootleg?", "Phoenix (IRECSA, G.G.I Corp)" )
+GAME( 1981, pleiads,  0,       pleiads, pleiads,  0, ROT90, "Tehkan", "Pleiads (Tehkan)" )
+GAME( 1981, pleiadbl, pleiads, pleiads, pleiads,  0, ROT90, "bootleg", "Pleiads (bootleg)" )
+GAME( 1981, pleiadce, pleiads, pleiads, pleiads,  0, ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)" )

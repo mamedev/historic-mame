@@ -375,36 +375,36 @@ INPUT_PORTS_START( pspikes )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_2C ) )
+	/* the following two select country in the Chinese version (ROMs not available) */
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0000, "Demo Sound" )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0600, 0x0600, "Initial Score" )
+	PORT_DIPNAME( 0x0600, 0x0600, "1 Player Starting Score" )
 	PORT_DIPSETTING(      0x0600, "12-12" )
 	PORT_DIPSETTING(      0x0400, "11-11" )
 	PORT_DIPSETTING(      0x0200, "11-12" )
 	PORT_DIPSETTING(      0x0000, "10-12" )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1800, 0x1800, "2 Players Starting Score" )
+	PORT_DIPSETTING(      0x1800, "9-9" )
+	PORT_DIPSETTING(      0x1000, "7-7" )
+	PORT_DIPSETTING(      0x0800, "5-5" )
+	PORT_DIPSETTING(      0x0000, "0-0" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPNAME( 0x4000, 0x4000, "2 Players Time per Credit" )
+	PORT_DIPSETTING(      0x4000, "3 min" )
+	PORT_DIPSETTING(      0x0000, "2 min" )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -887,7 +887,6 @@ static struct YM2610interface ym2610_interface =
 	1,
 	8000000,	/* 8 MHz??? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1152,6 +1151,28 @@ ROM_START( pspikes )
 	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
 ROM_END
 
+ROM_START( svolly91 )
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "u11.jpn",      0x00000, 0x40000, 0xea2e4c82 )
+
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "19",           0x00000, 0x20000, 0x7e8ed6e5 )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g7h",          0x000000, 0x80000, 0x74c23c3d )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g7j",          0x000000, 0x80000, 0x0b9e4739 )
+	ROM_LOAD( "g7l",          0x080000, 0x80000, 0x943139ff )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* sound samples */
+	ROM_LOAD( "a47",          0x00000, 0x40000, 0xc6779dfa )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "o5b",          0x000000, 0x100000, 0x07d6cbac )
+ROM_END
+
 ROM_START( turbofrc )
 	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tfrc2.bin",    0x00000, 0x40000, 0x721300ee )
@@ -1299,11 +1320,12 @@ ROM_END
 
 
 
-GAME( 1991, pspikes,  ,        pspikes,  pspikes,  , ROT0,   "Video System Co.", "Power Spikes (Korea)" )
-GAME( 1991, turbofrc, ,        turbofrc, turbofrc, , ROT270, "Video System Co.", "Turbo Force" )
-GAME( 1992, aerofgt,  ,        aerofgt,  aerofgt,  , ROT270, "Video System Co.", "Aero Fighters" )
-GAME( 1992, aerofgtb, aerofgt, aerofgtb, aerofgtb, , ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)" )
-GAME( 1992, aerofgtc, aerofgt, aerofgtb, aerofgtb, , ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)" )
+GAME( 1991, pspikes,  0,       pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)" )
+GAME( 1991, svolly91, pspikes, pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)" )
+GAME( 1991, turbofrc, 0,       turbofrc, turbofrc, 0, ROT270, "Video System Co.", "Turbo Force" )
+GAME( 1992, aerofgt,  0,       aerofgt,  aerofgt,  0, ROT270, "Video System Co.", "Aero Fighters" )
+GAME( 1992, aerofgtb, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)" )
+GAME( 1992, aerofgtc, aerofgt, aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)" )
 
 /* note: this one has a 2608, not a 2610 */
-GAME( ????, unkvsys,  ,        unkvsys,  aerofgt,  , ROT90,  "Video System Co.", "unknown" )
+GAME( ????, unkvsys,  0,       unkvsys,  aerofgt,  0, ROT90,  "Video System Co.", "unknown" )

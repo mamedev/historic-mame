@@ -2,6 +2,8 @@
 
  Leprechaun memory map (preliminary)
 
+ driver by Zsolt Vasvari
+
  Hold down F2 while pressing F3 to enter test mode. Hit Advance (F1) to
  cycle through test and hit F2 to execute.
 
@@ -251,7 +253,6 @@ static struct AY8910interface ay8910_interface =
     1,      /* 1 chip */
     14318000/8,     /* ? */
     { 50 },
-    AY8910_DEFAULT_GAIN,
     { 0 },
     { 0 },
     { 0 },
@@ -314,85 +315,36 @@ static struct MachineDriver machine_driver_leprechn =
 ***************************************************************************/
 
 ROM_START( leprechn )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
-    ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
-    ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
-    ROM_LOAD( "lep3",         0xa000, 0x1000, 0xa2eaa016 )
-    ROM_LOAD( "lep4",         0xb000, 0x1000, 0x6c12a065 )
-    ROM_LOAD( "lep5",         0xc000, 0x1000, 0x21ddb539 )
-    ROM_LOAD( "lep6",         0xd000, 0x1000, 0x03c34dce )
-    ROM_LOAD( "lep7",         0xe000, 0x1000, 0x7e06d56d )
-    ROM_LOAD( "lep8",         0xf000, 0x1000, 0x097ede60 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
+	ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
+	ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
+	ROM_LOAD( "lep3",         0xa000, 0x1000, 0xa2eaa016 )
+	ROM_LOAD( "lep4",         0xb000, 0x1000, 0x6c12a065 )
+	ROM_LOAD( "lep5",         0xc000, 0x1000, 0x21ddb539 )
+	ROM_LOAD( "lep6",         0xd000, 0x1000, 0x03c34dce )
+	ROM_LOAD( "lep7",         0xe000, 0x1000, 0x7e06d56d )
+	ROM_LOAD( "lep8",         0xf000, 0x1000, 0x097ede60 )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
-    ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
+	ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
 ROM_END
 
 ROM_START( potogold )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
-    ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
-    ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
-    ROM_LOAD( "pog.pg3",      0xa000, 0x1000, 0x81cfb516 )
-    ROM_LOAD( "pog.pg4",      0xb000, 0x1000, 0xd61b1f33 )
-    ROM_LOAD( "pog.pg5",      0xc000, 0x1000, 0xeee7597e )
-    ROM_LOAD( "pog.pg6",      0xd000, 0x1000, 0x25e682bc )
-    ROM_LOAD( "pog.pg7",      0xe000, 0x1000, 0x84399f54 )
-    ROM_LOAD( "pog.pg8",      0xf000, 0x1000, 0x9e995a1a )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 64k for the main CPU */
+	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
+	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
+	ROM_LOAD( "pog.pg3",      0xa000, 0x1000, 0x81cfb516 )
+	ROM_LOAD( "pog.pg4",      0xb000, 0x1000, 0xd61b1f33 )
+	ROM_LOAD( "pog.pg5",      0xc000, 0x1000, 0xeee7597e )
+	ROM_LOAD( "pog.pg6",      0xd000, 0x1000, 0x25e682bc )
+	ROM_LOAD( "pog.pg7",      0xe000, 0x1000, 0x84399f54 )
+	ROM_LOAD( "pog.pg8",      0xf000, 0x1000, 0x9e995a1a )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
-    ROM_LOAD( "pog.snd",      0xf000, 0x1000, 0xec61f0a4 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the audio CPU */
+	ROM_LOAD( "pog.snd",      0xf000, 0x1000, 0xec61f0a4 )
 ROM_END
 
 
 
-struct GameDriver driver_leprechn =
-{
-    __FILE__,
-    0,
-    "leprechn",
-    "Leprechaun",
-    "1982",
-    "Tong Electronic",
-    "Zsolt Vasvari",
-    0,
-    &machine_driver_leprechn,
-    0,
-
-    rom_leprechn,
-    0, 0,
-    0,
-    0,
-
-    input_ports_leprechn,
-
-    0, 0, 0,
-
-    ROT0,  // Upright game
-	0,0
-};
-
-struct GameDriver driver_potogold =
-{
-    __FILE__,
-    &driver_leprechn,
-    "potogold",
-    "Pot of Gold",
-    "1982",
-    "GamePlan",
-    "Zsolt Vasvari",
-    0,
-    &machine_driver_leprechn,
-    0,
-
-    rom_potogold,
-    0, 0,
-    0,
-    0,
-
-    input_ports_leprechn,
-
-    0, 0, 0,
-
-    ROT0,  // Upright game
-	0,0
-};
+GAME( 1982, leprechn, 0,        leprechn, leprechn, 0, ROT0, "Tong Electronic", "Leprechaun" )
+GAME( 1982, potogold, leprechn, leprechn, leprechn, 0, ROT0, "GamePlan", "Pot of Gold" )

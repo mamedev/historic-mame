@@ -419,8 +419,8 @@ static struct GfxLayout hyperspt_spritelayout =
 
 static struct GfxDecodeInfo hyperspt_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &hyperspt_charlayout,       0, 16 },
-	{ 1, 0x8000, &hyperspt_spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &hyperspt_charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &hyperspt_spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -451,8 +451,8 @@ static struct GfxLayout roadf_spritelayout =
 
 static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &roadf_charlayout,       0, 16 },
-	{ 1, 0xc000, &roadf_spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &roadf_charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &roadf_spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -477,11 +477,11 @@ static const char *hyperspt_sample_names[] =
 
 struct VLM5030interface hyperspt_vlm5030_interface =
 {
-    3580000,    /* master clock  */
-    255,        /* volume        */
-    4,         /* memory region  */
-    0,         /* memory size    */
-    0,         /* VCU            */
+	3580000,    /* master clock  */
+	255,        /* volume        */
+	REGION_SOUND1,	/* memory region  */
+	0,         /* memory size    */
+	0,         /* VCU            */
 	hyperspt_sample_names
 };
 
@@ -606,30 +606,32 @@ ROM_START( hyperspt )
 	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
 	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
-	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
+	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
 	ROM_LOAD( "c24",          0x02000, 0x2000, 0x5fb230c0 )
 	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
 	ROM_LOAD( "c20",          0x06000, 0x2000, 0x183f4324 )
-	ROM_LOAD( "c14",          0x08000, 0x2000, 0xc72d63be )
-	ROM_LOAD( "c13",          0x0a000, 0x2000, 0x76565608 )
-	ROM_LOAD( "c12",          0x0c000, 0x2000, 0x74d2cc69 )
-	ROM_LOAD( "c11",          0x0e000, 0x2000, 0x66cbcb4d )
-	ROM_LOAD( "c18",          0x10000, 0x2000, 0xed25e669 )
-	ROM_LOAD( "c17",          0x12000, 0x2000, 0xb145b39f )
-	ROM_LOAD( "c16",          0x14000, 0x2000, 0xd7ff9f2b )
-	ROM_LOAD( "c15",          0x16000, 0x2000, 0xf3d454e6 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c14",          0x00000, 0x2000, 0xc72d63be )
+	ROM_LOAD( "c13",          0x02000, 0x2000, 0x76565608 )
+	ROM_LOAD( "c12",          0x04000, 0x2000, 0x74d2cc69 )
+	ROM_LOAD( "c11",          0x06000, 0x2000, 0x66cbcb4d )
+	ROM_LOAD( "c18",          0x08000, 0x2000, 0xed25e669 )
+	ROM_LOAD( "c17",          0x0a000, 0x2000, 0xb145b39f )
+	ROM_LOAD( "c16",          0x0c000, 0x2000, 0xd7ff9f2b )
+	ROM_LOAD( "c15",          0x0e000, 0x2000, 0xf3d454e6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
-	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
-
-	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
@@ -642,30 +644,32 @@ ROM_START( hpolym84 )
 	ROM_LOAD( "c05",          0xc000, 0x2000, 0xb105a8cd )
 	ROM_LOAD( "c06",          0xe000, 0x2000, 0x1a34a849 )
 
-	ROM_REGION_DISPOSE(0x18000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
+	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c26",          0x00000, 0x2000, 0xa6897eac )
 	ROM_LOAD( "330e24.bin",   0x02000, 0x2000, 0xf9bbfe1d )
 	ROM_LOAD( "c22",          0x04000, 0x2000, 0xed9271a0 )
 	ROM_LOAD( "330e20.bin",   0x06000, 0x2000, 0x29969b92 )
-	ROM_LOAD( "c14",          0x08000, 0x2000, 0xc72d63be )
-	ROM_LOAD( "c13",          0x0a000, 0x2000, 0x76565608 )
-	ROM_LOAD( "c12",          0x0c000, 0x2000, 0x74d2cc69 )
-	ROM_LOAD( "c11",          0x0e000, 0x2000, 0x66cbcb4d )
-	ROM_LOAD( "c18",          0x10000, 0x2000, 0xed25e669 )
-	ROM_LOAD( "c17",          0x12000, 0x2000, 0xb145b39f )
-	ROM_LOAD( "c16",          0x14000, 0x2000, 0xd7ff9f2b )
-	ROM_LOAD( "c15",          0x16000, 0x2000, 0xf3d454e6 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c14",          0x00000, 0x2000, 0xc72d63be )
+	ROM_LOAD( "c13",          0x02000, 0x2000, 0x76565608 )
+	ROM_LOAD( "c12",          0x04000, 0x2000, 0x74d2cc69 )
+	ROM_LOAD( "c11",          0x06000, 0x2000, 0x66cbcb4d )
+	ROM_LOAD( "c18",          0x08000, 0x2000, 0xed25e669 )
+	ROM_LOAD( "c17",          0x0a000, 0x2000, 0xb145b39f )
+	ROM_LOAD( "c16",          0x0c000, 0x2000, 0xd7ff9f2b )
+	ROM_LOAD( "c15",          0x0e000, 0x2000, 0xf3d454e6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0xbc8a5956 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
-	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
-
-	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/*  64k for speech rom    */
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
@@ -678,21 +682,23 @@ ROM_START( roadf )
 	ROM_LOAD( "g13_f05.bin",  0xC000, 0x2000, 0x0ad4d796 )
 	ROM_LOAD( "g15_f06.bin",  0xE000, 0x2000, 0xfa42e0ed )
 
-	ROM_REGION_DISPOSE(0x14000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a14_e26.bin",  0x00000, 0x4000, 0xf5c738e2 )
 	ROM_LOAD( "a12_d24.bin",  0x04000, 0x2000, 0x2d82c930 )
 	ROM_LOAD( "c14_e22.bin",  0x06000, 0x4000, 0xfbcfbeb9 )
 	ROM_LOAD( "c12_d20.bin",  0x0a000, 0x2000, 0x5e0cf994 )
-	ROM_LOAD( "j19_e14.bin",  0x0c000, 0x4000, 0x16d2bcff )
-	ROM_LOAD( "g19_e18.bin",  0x10000, 0x4000, 0x490685ff )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j19_e14.bin",  0x00000, 0x4000, 0x16d2bcff )
+	ROM_LOAD( "g19_e18.bin",  0x04000, 0x4000, 0x490685ff )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
 ROM_START( roadf2 )
@@ -704,121 +710,33 @@ ROM_START( roadf2 )
 	ROM_LOAD( "g13_f05.bin",  0xC000, 0x2000, 0x0ad4d796 )
 	ROM_LOAD( "g15_f06.bin",  0xE000, 0x2000, 0xfa42e0ed )
 
-	ROM_REGION_DISPOSE(0x14000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a14_e26.bin",  0x00000, 0x4000, 0xf5c738e2 )
 	ROM_LOAD( "a12_d24.bin",  0x04000, 0x2000, 0x2d82c930 )
 	ROM_LOAD( "c14_e22.bin",  0x06000, 0x4000, 0xfbcfbeb9 )
 	ROM_LOAD( "c12_d20.bin",  0x0a000, 0x2000, 0x5e0cf994 )
-	ROM_LOAD( "j19_e14.bin",  0x0c000, 0x4000, 0x16d2bcff )
-	ROM_LOAD( "g19_e18.bin",  0x10000, 0x4000, 0x490685ff )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j19_e14.bin",  0x00000, 0x4000, 0x16d2bcff )
+	ROM_LOAD( "g19_e18.bin",  0x04000, 0x4000, 0x490685ff )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
 
-
-struct GameDriver driver_hyperspt =
+static void init_hyperspt(void)
 {
-	__FILE__,
-	0,
-	"hyperspt",
-	"Hyper Sports",
-	"1984",
-	"Konami (Centuri license)",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
-	0,
-	&machine_driver_hyperspt,
-	konami1_decode,
+	konami1_decode();
+}
 
-	rom_hyperspt,
-	0, 0,
-	0,
-	0,
 
-	input_ports_hyperspt,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_hpolym84 =
-{
-	__FILE__,
-	&driver_hyperspt,
-	"hpolym84",
-	"Hyper Olympics '84",
-	"1984",
-	"Konami",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
-	0,
-	&machine_driver_hyperspt,
-	konami1_decode,
-
-	rom_hpolym84,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hyperspt,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_roadf =
-{
-	__FILE__,
-	0,
-	"roadf",
-	"Road Fighter (set 1)",
-	"1984",
-	"Konami",
-	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
-	0,
-	&machine_driver_roadf,
-	konami1_decode,
-
-	rom_roadf,
-	0, 0,
-	0,
-	0,
-
-	input_ports_roadf,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_roadf2 =
-{
-	__FILE__,
-	&driver_roadf,
-	"roadf2",
-	"Road Fighter (set 2)",
-	"1984",
-	"Konami",
-	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
-	0,
-	&machine_driver_roadf,
-	konami1_decode,
-
-	rom_roadf2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_roadf,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1984, hyperspt, 0,        hyperspt, hyperspt, hyperspt, ROT0,  "Konami (Centuri license)", "Hyper Sports" )
+GAME( 1984, hpolym84, hyperspt, hyperspt, hyperspt, hyperspt, ROT0,  "Konami", "Hyper Olympics '84" )
+GAME( 1984, roadf,    0,        roadf,    roadf,    hyperspt, ROT90, "Konami", "Road Fighter (set 1)" )
+GAME( 1984, roadf2,   roadf,    roadf,    roadf,    hyperspt, ROT90, "Konami", "Road Fighter (set 2)" )

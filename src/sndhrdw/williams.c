@@ -178,7 +178,7 @@ static void cvsd_state_w(int offset, int data);
 static void dac_state_bank_w(int offset, int data);
 
 static void update_counter(void);
-static void dac_cvsd_update(int num, void *buffer, int length);
+static void dac_cvsd_update(int num, INT16 *buffer, int length);
 
 static INT16 get_next_cvsd_sample(int bit);
 
@@ -699,7 +699,7 @@ static void init_audio_state(int first_time)
 
 	/* allocate a stream */
 	if (first_time)
-		sound_stream = stream_init("Combined DAC/CVSD", 50, Machine->sample_rate, 16, 0, dac_cvsd_update);
+		sound_stream = stream_init("Combined DAC/CVSD", 50, Machine->sample_rate, 0, dac_cvsd_update);
 }
 
 static void locate_audio_hotspot(UINT8 *base, UINT16 start)
@@ -1226,7 +1226,7 @@ static void dac_state_bank_w(int offset, int data)
 	SOUND GENERATION
 ****************************************************************************/
 
-static void dac_cvsd_update(int num, void *buffer, int length)
+static void dac_cvsd_update(int num, INT16 *buffer, int length)
 {
 	UINT8 *bank_base, *source, *end;
 	UINT32 current;
@@ -1234,7 +1234,7 @@ static void dac_cvsd_update(int num, void *buffer, int length)
 	int i;
 
 	/* clear the buffer */
-	memset(buffer, 0, length * 2);
+	memset(buffer, 0, length*sizeof(INT16));
 
 	/* DAC generation */
 	if (dac.state_bank && !(dac.state_bank[0] & 0x80))

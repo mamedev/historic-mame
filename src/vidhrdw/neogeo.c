@@ -55,7 +55,6 @@ Notes:
 #include "driver.h"
 #include "common.h"
 #include "usrintrf.h"
-#include "machine/neogeo.h"
 #include "vidhrdw/generic.h"
 
 //#define NEO_DEBUG
@@ -149,7 +148,7 @@ static void decodetile(int tileno)
 	unsigned int pen;
 
 
-	gfxdata = (UINT32 *)&memory_region(MEM_GFX)[128 * tileno];
+	gfxdata = (UINT32 *)&memory_region(REGION_GFX2)[128 * tileno];
 
 	memcpy(swap,gfxdata,128);
 
@@ -185,7 +184,7 @@ static void decodetile(int tileno)
 
 int neogeo_mvs_vh_start(void)
 {
-	no_of_tiles=memory_region_length(MEM_GFX)/128;
+	no_of_tiles=memory_region_length(REGION_GFX2)/128;
 	if (no_of_tiles>0x10000) high_tile=1; else high_tile=0;
 	if (no_of_tiles>0x20000) vhigh_tile=1; else vhigh_tile=0;
 	if (no_of_tiles>0x40000) vvhigh_tile=1; else vvhigh_tile=0;
@@ -521,7 +520,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)memory_region(MEM_GFX);
+	UINT32 *fspr = (UINT32 *)memory_region(REGION_GFX2);
 
 	char *l_y_skip;
 
@@ -706,7 +705,7 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP *
 
 	int mydword;
 
-	UINT32 *fspr = (UINT32 *)memory_region(MEM_GFX);
+	UINT32 *fspr = (UINT32 *)memory_region(REGION_GFX2);
 
 	char *l_y_skip;
 

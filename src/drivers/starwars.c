@@ -507,7 +507,7 @@ static struct TMS5220interface tms5220_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_starwars =
 {
 	/* basic machine hardware */
 	{
@@ -639,10 +639,6 @@ ROM_START( starwar1 )
 	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
 	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	/* Sound ROMS */
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
@@ -668,10 +664,6 @@ ROM_START( starwars )
 	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
 	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
 	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
-
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
@@ -705,10 +697,6 @@ ROM_START( esb )
 	ROM_LOAD( "136031.108",   0x0800, 0x0400, 0x6a76138f ) /* PROM 2 */
 	ROM_LOAD( "136031.107",   0x0c00, 0x0400, 0xafbf6e01 ) /* PROM 3 */
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	/* Sound ROMS */
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
@@ -719,78 +707,6 @@ ROM_END
 
 
 
-struct GameDriver driver_starwars =
-{
-	__FILE__,
-	0,
-	"starwars",
-	"Star Wars (rev 2)",
-	"1983",
-	"Atari",
-	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	translate_proms,
-
-	rom_starwars,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starwars,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_starwar1 =
-{
-	__FILE__,
-	&driver_starwars,
-	"starwar1",
-	"Star Wars (rev 1)",
-	"1983",
-	"Atari",
-	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	translate_proms,
-
-	rom_starwar1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starwars,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_esb =
-{
-	__FILE__,
-	0,
-	"esb",
-	"The Empire Strikes Back",
-	"1985",
-	"Atari Games",
-	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_esb,
-	translate_proms,
-
-	rom_esb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_esb,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1983, starwars, 0,        starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 2)" )
+GAME( 1983, starwar1, starwars, starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 1)" )
+GAME( 1985, esb,      0,        esb,      esb,      starwars, ROT0, "Atari Games", "The Empire Strikes Back" )

@@ -9,7 +9,7 @@ int tms5220_status_read (void);
 int tms5220_ready_read (void);
 int tms5220_int_read (void);
 
-void tms5220_process (signed char *buffer, unsigned int size);
+void tms5220_process (INT16 *buffer, unsigned int size);
 
 #endif
 

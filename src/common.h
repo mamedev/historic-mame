@@ -40,7 +40,7 @@ struct RomModule
 #define ROM_REGION_DISPOSE(length) { 0, length, 0, REGIONFLAG_DISPOSE },
 
 enum {
-	REGION_INVALID = 0xf0,
+	REGION_INVALID = 0x80,
 	REGION_CPU1,
 	REGION_CPU2,
 	REGION_CPU3,

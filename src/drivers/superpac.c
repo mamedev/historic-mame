@@ -1,6 +1,8 @@
 /***************************************************************************
 
-New Super Pac-Man memory map (preliminary)
+Super Pac-Man memory map (preliminary)
+
+driver by Aaron Giles
 
 CPU #1:
 0000-03ff video RAM
@@ -177,7 +179,7 @@ INPUT_PORTS_START( superpac )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
@@ -250,7 +252,7 @@ INPUT_PORTS_START( pacnpal )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
@@ -337,8 +339,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 64 },
-	{ 1, 0x1000, &spritelayout, 64*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,      0, 64 },
+	{ REGION_GFX2, 0, &spritelayout, 64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -348,7 +350,7 @@ static struct namco_interface namco_interface =
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
 	100,	/* playback volume */
-	4		/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 
@@ -469,19 +471,21 @@ ROM_START( superpac )
 	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
 	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sp1.6",        0x0000, 0x1000, 0x91c5935c )
-	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, 0x670a42f2 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
@@ -490,19 +494,21 @@ ROM_START( superpcm )
 	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
 	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, 0x78337e74 )
-	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "spv-2.3f",     0x0000, 0x2000, 0x670a42f2 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "superpac.4c",  0x0000, 0x0020, 0x9ce22c46 ) /* palette */
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
@@ -512,19 +518,21 @@ ROM_START( pacnpal )
 	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, 0x15308bcf )
 	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, 0xa36b96cb )
-	ROM_LOAD( "pap15.vid",    0x1000, 0x2000, 0xfb6f56e3 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, 0xfb6f56e3 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, 0x52634b41 ) /* palette */
 	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
 	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
 ROM_END
 
@@ -534,120 +542,27 @@ ROM_START( pacnchmp )
 	ROM_LOAD( "pap3.1c",      0xc000, 0x2000, 0x505bae56 )
 	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pap2.3c",      0x0000, 0x1000, 0x93d15c30 )
-	ROM_LOAD( "pap2.3f",      0x1000, 0x2000, 0x39f44aa4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pap2.3f",      0x0000, 0x2000, 0x39f44aa4 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, BADCRC( 0x52634b41 ) ) /* palette */
 	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, BADCRC( 0xac46203c ) ) /* chars */
 	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, BADCRC( 0x686bde84 ) ) /* sprites */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
 ROM_END
 
 
 
-struct GameDriver driver_superpac =
-{
-	__FILE__,
-	0,
-	"superpac",
-	"Super Pac-Man",
-	"1982",
-	"Namco",
-	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
-	0,
-	&machine_driver_superpac, /* MachineDriver */
-	0,
-
-	rom_superpac,             /* RomModule */
-	0, 0,                     /* ROM decrypt routines */
-	0,                        /* samplenames */
-	0,
-
-	input_ports_superpac,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_superpcm =
-{
-	__FILE__,
-	&driver_superpac,
-	"superpcm",
-	"Super Pac-Man (Midway)",
-	"1982",
-	"[Namco] (Bally Midway license)",
-	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
-	0,
-	&machine_driver_superpac, /* MachineDriver */
-	0,
-
-	rom_superpcm,             /* RomModule */
-	0, 0,                     /* ROM decrypt routines */
-	0,                        /* samplenames */
-	0,
-
-	input_ports_superpac,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pacnpal =
-{
-	__FILE__,
-	0,
-	"pacnpal",
-	"Pac & Pal",
-	"1983",
-	"Namco",
-	"Aaron Giles\nKevin Brisley\nLawnmower Man",
-	0,
-	&machine_driver_pacnpal,  /* MachineDriver */
-	0,
-
-	rom_pacnpal,              /* RomModule */
-	0, 0,                     /* ROM decrypt routines */
-	0,                        /* samplenames */
-	0,
-
-	input_ports_pacnpal,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pacnchmp =
-{
-	__FILE__,
-	&driver_pacnpal,
-	"pacnchmp",
-	"Pac-Man & Chomp Chomp",
-	"1983",
-	"Namco",
-	"Aaron Giles\nKevin Brisley\nLawnmower Man",
-	0,
-	&machine_driver_pacnpal,  /* MachineDriver */
-	0,
-
-	rom_pacnchmp,              /* RomModule */
-	0, 0,                     /* ROM decrypt routines */
-	0,                        /* samplenames */
-	0,
-
-	input_ports_pacnpal,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man" )
+GAME( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)" )
+GAME( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal" )
+GAME( 1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp" )

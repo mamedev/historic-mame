@@ -5,8 +5,6 @@
 
 static int bg_colorbase,sprite_colorbase,zoom_colorbase;
 
-#define SPRITEROM_MEM_REGION 1
-#define ZOOMROM_MEM_REGION 2
 
 
 /***************************************************************************
@@ -55,9 +53,9 @@ int rollerg_vh_start(void)
 	sprite_colorbase = 16;
 	zoom_colorbase = 0;
 
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K053245_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,sprite_callback))
 		return 1;
-	if (K051316_vh_start_0(ZOOMROM_MEM_REGION,4,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX2,4,zoom_callback))
 	{
 		K053245_vh_stop();
 		return 1;

@@ -1232,6 +1232,7 @@ ROM_END
 
 /******************************************************************************/
 
+#if 0
 static int pow_cycle_r(int offset)
 {
 	int c=READ_WORD(&pow_ram[0x3e7c]);
@@ -1268,229 +1269,38 @@ static void custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"searchar")) install_mem_read_handler(0, 0x40002, 0x40003, sar_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"streetsm")) install_mem_read_handler(0, 0x43e02, 0x43e03, streetsm_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"ikari3")) install_mem_read_handler(0, 0x40000, 0x40001, ikari3_cycle_r);
-
 }
+#endif
 
-static void searchar_memory(void)
+static void init_searchar(void)
 {
 	cpu_setbank(8, memory_region(4));
-	custom_memory();
+//	custom_memory();
 }
 
-static void streetsm_patch(void)
+static void init_streetsm(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	custom_memory();
+//	custom_memory();
 	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
-static void streetsj_patch(void)
+static void init_streetsj(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	custom_memory();
+//	custom_memory();
 	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
 /******************************************************************************/
 
-struct GameDriver driver_pow =
-{
-	__FILE__,
-	0,
-	"pow",
-	"P.O.W. - Prisoners of War (US)",
-	"1988",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_pow,
-	custom_memory,
-
-	rom_pow,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pow,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_powj =
-{
-	__FILE__,
-	&driver_pow,
-	"powj",
-	"Datsugoku - Prisoners of War (Japan)",
-	"1988",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_pow,
-	custom_memory,
-
-	rom_powj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_powj,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_searchar =
-{
-	__FILE__,
-	0,
-	"searchar",
-	"SAR - Search And Rescue (World)",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_searchar,
-	searchar_memory,
-
-	rom_searchar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_searchar,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0, 0
-};
-
-struct GameDriver driver_sercharu =
-{
-	__FILE__,
-	&driver_searchar,
-	"sercharu",
-	"SAR - Search And Rescue (US)",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_searchar,
-	searchar_memory,
-
-	rom_sercharu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_searchar,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0, 0
-};
-
-struct GameDriver driver_streetsm =
-{
-	__FILE__,
-	0,
-	"streetsm",
-	"Street Smart (US version 1)",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_searchar,
-	streetsm_patch,
-
-	rom_streetsm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_streetsm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_streets2 =
-{
-	__FILE__,
-	&driver_streetsm,
-	"streets2",
-	"Street Smart (US version 2)",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_streets2,
-	custom_memory,
-
-	rom_streets2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_streetsm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_streetsj =
-{
-	__FILE__,
-	&driver_streetsm,
-	"streetsj",
-	"Street Smart (Japan version 1)",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_searchar,
-	streetsj_patch,
-
-	rom_streetsj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_streetsj,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_ikari3 =
-{
-	__FILE__,
-	0,
-	"ikari3",
-	"Ikari III - The Rescue",
-	"1989",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_ikari3,
-	searchar_memory,
-
-	rom_ikari3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ikari3,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
+GAME( 1988, pow,      0,        pow,      pow,      0,        ROT0,  "SNK", "P.O.W. - Prisoners of War (US)" )
+GAME( 1988, powj,     pow,      pow,      powj,     0,        ROT0,  "SNK", "Datsugoku - Prisoners of War (Japan)" )
+GAME( 1989, searchar, 0,        searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (World)" )
+GAME( 1989, sercharu, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (US)" )
+GAME( 1989, streetsm, 0,        searchar, streetsm, streetsm, ROT0,  "SNK", "Street Smart (US version 1)" )
+GAME( 1989, streets2, streetsm, streets2, streetsm, 0,        ROT0,  "SNK", "Street Smart (US version 2)" )
+GAME( 1989, streetsj, streetsm, searchar, streetsj, streetsj, ROT0,  "SNK", "Street Smart (Japan version 1)" )
+GAME( 1989, ikari3,   0,        ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue" )

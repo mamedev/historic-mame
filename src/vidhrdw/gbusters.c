@@ -1,8 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
+
 
 int gbusters_priority;
 static int layer_colorbase[3],sprite_colorbase;
@@ -46,9 +45,9 @@ int gbusters_vh_start(void)
 	layer_colorbase[2] = 16;
 	sprite_colorbase = 32;
 
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;

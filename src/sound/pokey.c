@@ -402,7 +402,7 @@ static UINT32 Base_mult[MAXPOKEYS]; /* selects either 64kHz or 15kHz clock mult 
 
 static UINT8  clip; /* LBO 101297 */
 
-static void Pokey_process (int chip, void *buffer, int n);
+static void Pokey_process (int chip, INT16 *buffer, int n);
 
 /*****************************************************************************/
 /* In my routines, I treat the sample output as another divide by N counter  */
@@ -603,7 +603,7 @@ static int Pokey_sound_init (const struct MachineSound *msound,int freq17, int p
 		char name[40];
 
         sprintf(name, "Pokey #%d", chip);
-        channel[chip] = stream_init(name,mixing_levels[chip],playback_freq, 8, chip, Pokey_process);
+        channel[chip] = stream_init(name,mixing_levels[chip],playback_freq, chip, Pokey_process);
 
 		if( channel[chip] == -1 )
             return 1;
@@ -1361,12 +1361,12 @@ static void Update_pokey_sound (int addr, int val, int chip, int gain)
 /*                                                                           */
 /*****************************************************************************/
 
-static void Pokey_process (int chip, void *buffer, int n)
+static void Pokey_process (int chip, INT16 *buffer, int n)
 {
 	REGISTER UINT32 event_min;
 	REGISTER UINT8 next_event;
 	REGISTER UINT16 chip_offs;
-	REGISTER UINT8 *buf_ptr;
+	REGISTER INT16 *buf_ptr;
 #ifdef CLIP 					/* if clipping is selected */
     REGISTER INT16 cur_val;     /* then we have to count as 16-bit */
 #else
@@ -1584,17 +1584,17 @@ static void Pokey_process (int chip, void *buffer, int n)
 			if( clip )
             {
 				if( cur_val > 127 )
-					*buf_ptr++ = 127;
+					*buf_ptr++ = 127<<8;
 				else
 				if( cur_val < -128 )
-					*buf_ptr++ = -128;
+					*buf_ptr++ = -128<<8;
 				else
-					*buf_ptr++ = (INT8)cur_val;
+					*buf_ptr++ = cur_val<<8;
 			}
 			else
-				*buf_ptr++ = (INT8)cur_val;
+				*buf_ptr++ = cur_val<<8;
 #else
-			*buf_ptr++ = (INT8)cur_val;  /* clipping not selected, use value */
+			*buf_ptr++ = cur_val<<8;  /* clipping not selected, use value */
 #endif
 			/* and indicate one less byte in the buffer */
 			n--;

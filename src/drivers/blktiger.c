@@ -271,7 +271,6 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	3579545,	/* 3.579 MHz ? (hand tuned) */
 	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -465,7 +464,7 @@ ROM_END
 
 
 
-GAME( 1987, blktiger, ,         blktiger, blktiger, , ROT0, "Capcom", "Black Tiger" )
-GAME( 1987, bktigerb, blktiger, blktiger, blktiger, , ROT0, "bootleg", "Black Tiger (bootleg)" )
-GAME( 1987, blkdrgon, blktiger, blktiger, blktiger, , ROT0, "Capcom", "Black Dragon" )
-GAME( 1987, blkdrgnb, blktiger, blktiger, blktiger, , ROT0, "bootleg", "Black Dragon (bootleg)" )
+GAME( 1987, blktiger, 0,        blktiger, blktiger, 0, ROT0, "Capcom", "Black Tiger" )
+GAME( 1987, bktigerb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Tiger (bootleg)" )
+GAME( 1987, blkdrgon, blktiger, blktiger, blktiger, 0, ROT0, "Capcom", "Black Dragon" )
+GAME( 1987, blkdrgnb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Dragon (bootleg)" )

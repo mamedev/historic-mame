@@ -2217,6 +2217,12 @@ void osd_update_video_and_audio(void)
 							adjusted_palette.g = bright_lookup[adjusted_palette.g];
 							adjusted_palette.b = bright_lookup[adjusted_palette.b];
 						}
+						else
+						{
+							adjusted_palette.r >>= 2;
+							adjusted_palette.g >>= 2;
+							adjusted_palette.b >>= 2;
+						}
 						set_color(i,&adjusted_palette);
 					}
 				}

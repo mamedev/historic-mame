@@ -45,12 +45,12 @@ void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   Set hardware dependent flag.
 
 ***************************************************************************/
-void route16b_init_driver(void)
+void init_route16b(void)
 {
     route16_hardware = 1;
 }
 
-void route16_init_driver(void)
+void init_route16(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -62,10 +62,10 @@ void route16_init_driver(void)
 	rom[0x0755] = 0x63;
 	rom[0x0756] = 0x07;
 
-	route16b_init_driver();
+	init_route16b();
 }
 
-void stratvox_init_driver(void)
+void init_stratvox(void)
 {
     route16_hardware = 0;
 }

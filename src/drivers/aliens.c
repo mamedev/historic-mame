@@ -495,7 +495,7 @@ static void init_aliens(void)
 
 
 
-GAME( 1990, aliens,  ,       aliens, aliens, aliens, ROT0, "Konami", "Aliens (World set 1)" )
+GAME( 1990, aliens,  0,      aliens, aliens, aliens, ROT0, "Konami", "Aliens (World set 1)" )
 GAME( 1990, aliens2, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (World set 2)" )
 GAME( 1990, aliensu, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (US)" )
 GAME( 1990, aliensj, aliens, aliens, aliens, aliens, ROT0, "Konami", "Aliens (Japan)" )

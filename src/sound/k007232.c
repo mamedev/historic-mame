@@ -209,30 +209,13 @@ static void KDAC_A_make_fncode( void ){
 /*    Konami PCM update                         */
 /************************************************/
 
-static void KDAC_A_update(int chip, void **buffer, int buffer_len)
+static void KDAC_A_update(int chip, INT16 **buffer, int buffer_len)
 {
 	int i;
-	int sample_bits;
-	signed char *buf8[2];
-	signed short *buf16[2];
 
-	sample_bits = Machine->sample_bits;
 
-	buf8[0] = (signed char *)buffer[0];
-	buf8[1] = (signed char *)buffer[1];
-	buf16[0] = (signed short *)buffer[0];
-	buf16[1] = (signed short *)buffer[1];
-
-	if (sample_bits == 8)
-	{
-		memset(buf8[0],0,buffer_len * sizeof(signed char));
-		memset(buf8[1],0,buffer_len * sizeof(signed char));
-	}
-	else
-	{
-		memset(buf16[0],0,buffer_len * sizeof(signed short));
-		memset(buf16[1],0,buffer_len * sizeof(signed short));
-	}
+	memset(buffer[0],0,buffer_len * sizeof(INT16));
+	memset(buffer[1],0,buffer_len * sizeof(INT16));
 
 	for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 	{
@@ -279,16 +262,8 @@ static void KDAC_A_update(int chip, void **buffer, int buffer_len)
 
 				out = (kpcm[chip].pcmbuf[i][addr] & 0x7f) - 0x40;
 
-				if (sample_bits == 8)
-				{
-					buf8[0][j] += (out * volA) >> 8;
-					buf8[1][j] += (out * volB) >> 8;
-				}
-				else
-				{
-					buf16[0][j] += out * volA;
-					buf16[1][j] += out * volB;
-				}
+				buffer[0][j] += out * volA;
+				buffer[1][j] += out * volB;
 			}
 		}
 	}
@@ -338,7 +313,7 @@ int K007232_sh_start(const struct MachineSound *msound)
 		vol[1]=intf->volume[j] >> 16;
 
 		pcm_chan[j] = stream_init_multi(2,name,vol,Machine->sample_rate,
-				Machine->sample_bits,j,KDAC_A_update);
+				j,KDAC_A_update);
 	}
 
 	KDAC_A_make_fncode();

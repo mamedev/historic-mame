@@ -8,7 +8,7 @@ program is simply the 'generic' Data East sound program unmodified for this cut
 down hardware (it doesn't write any good sound data btw, mostly zeros).
 
   Some sprites clip at the edges of the screen..
-  Some burgers (from crushing an emeny) appear with wrong colour - 68k bug?!
+  Some burgers (from crushing an enemy) appear with wrong colour - 68k bug?!
 
   Same hardware as Tumblepop, the two drivers can be joined at a later date.
 
@@ -263,9 +263,9 @@ static struct GfxLayout sprite_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x100000, &charlayout,   256, 16 },	/* Characters 8x8 */
-	{ 1, 0x100000, &tile_layout,  512, 16 }, 	/* Tiles 16x16 */
-	{ 1, 0x000000, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,   256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tile_layout,  512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -275,7 +275,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
 	{ 7757 },	/* Frequency */
-	{ 3 },      /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region 3 */
 	{ 50 }
 };
 
@@ -347,15 +347,17 @@ ROM_START( supbtime )
 	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
 	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )
 
-	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
-  	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
-	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
-	ROM_LOAD( "mae02.bin", 0x100000, 0x80000, 0xa715cca0 ) /* chars */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, 0xa715cca0 ) /* chars */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
+	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, 0x2f2246ff )
 ROM_END
 
@@ -368,34 +370,11 @@ static int supbtime_cycle_r(int offset)
 	return READ_WORD(&supbtime_ram[0]);
 }
 
-static void custom_memory(void)
+static void init_supbtime(void)
 {
 	install_mem_read_handler(0, 0x100000, 0x100001, supbtime_cycle_r);
 }
 
 /******************************************************************************/
 
-struct GameDriver driver_supbtime =
-{
-	__FILE__,
-	0,
-	"supbtime",
-	"Super Burger Time (Japan)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_supbtime,
-	custom_memory,
-
-	rom_supbtime,
-	0, 0,
-	0,
-	0,
-
-	input_ports_supbtime,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
+GAME( 1990, supbtime, 0, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)" )

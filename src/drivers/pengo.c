@@ -2,6 +2,8 @@
 
 Pengo memory map (preliminary)
 
+driver by Nicola Salmoria
+
 0000-7fff ROM
 8000-83ff Video RAM
 8400-87ff Color RAM
@@ -215,10 +217,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &tilelayout,	   0, 32 },  /* first bank */
-    { 1, 0x1000, &spritelayout,    0, 32 },
-    { 1, 0x2000, &tilelayout,   4*32, 32 },  /* second bank */
-    { 1, 0x3000, &spritelayout, 4*32, 32 },
+	{ REGION_GFX1, 0x0000, &tilelayout,      0, 32 },  /* first bank */
+    { REGION_GFX1, 0x1000, &spritelayout,    0, 32 },
+    { REGION_GFX2, 0x0000, &tilelayout,   4*32, 32 },  /* second bank */
+    { REGION_GFX2, 0x1000, &spritelayout, 4*32, 32 },
     { -1 } /* end of array */
 };
 
@@ -228,12 +230,12 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	3			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pengo =
 {
 	/* basic machine hardware */
 	{
@@ -293,15 +295,17 @@ ROM_START( pengo )
 	ROM_LOAD( "ic32",         0x6000, 0x1000, 0xaf7b12c4 )
 	ROM_LOAD( "ic31",         0x7000, 0x1000, 0x933950fe )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
-	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
 
 	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -317,15 +321,17 @@ ROM_START( pengo2 )
 	ROM_LOAD( "ic32",         0x6000, 0x1000, 0xaf7b12c4 )
 	ROM_LOAD( "ic31.2",       0x7000, 0x1000, 0x669555c1 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
-	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
 
 	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -341,15 +347,17 @@ ROM_START( pengo2u )
 	ROM_LOAD( "pengo.u32",    0x6000, 0x1000, 0xe5920728 )
 	ROM_LOAD( "pengo.u31",    0x7000, 0x1000, 0x13de47ed )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
-	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
 
 	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -365,22 +373,29 @@ ROM_START( penta )
 	ROM_LOAD( "032_pn04.bin", 0x6000, 0x1000, 0xbfde44c1 )
 	ROM_LOAD( "031_pn08.bin", 0x7000, 0x1000, 0x64e8c30d )
 
-	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "092_pn09.bin", 0x0000, 0x2000, 0x6afeba9d )
-	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic105",        0x0000, 0x2000, 0x5bfd26e9 )
 
 	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
 
-static void penta_decode(void)
+static void init_pengo(void)
+{
+	pengo_decode();
+}
+
+static void init_penta(void)
 {
 /*
 	the values vary, but the translation mask is always laid out like this:
@@ -457,102 +472,7 @@ static void penta_decode(void)
 
 
 
-struct GameDriver driver_pengo =
-{
-	__FILE__,
-	0,
-	"pengo",
-	"Pengo (set 1)",
-	"1982",
-	"Sega",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
-	0,
-	&machine_driver,
-	pengo_decode,
-
-	rom_pengo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pengo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pengo2 =
-{
-	__FILE__,
-	&driver_pengo,
-	"pengo2",
-	"Pengo (set 2)",
-	"1982",
-	"Sega",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
-	0,
-	&machine_driver,
-	pengo_decode,
-
-	rom_pengo2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pengo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pengo2u =
-{
-	__FILE__,
-	&driver_pengo,
-	"pengo2u",
-	"Pengo (set 2 not encrypted)",
-	"1982",
-	"Sega",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pengo2u,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pengo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_penta =
-{
-	__FILE__,
-	&driver_pengo,
-	"penta",
-	"Penta",
-	"1982",
-	"bootleg",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
-	0,
-	&machine_driver,
-	penta_decode,
-
-	rom_penta,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pengo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1982, pengo,   0,     pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 1)" )
+GAME( 1982, pengo2,  pengo, pengo, pengo, pengo, ROT90, "Sega", "Pengo (set 2)" )
+GAME( 1982, pengo2u, pengo, pengo, pengo, 0,     ROT90, "Sega", "Pengo (set 2 not encrypted)" )
+GAME( 1982, penta,   pengo, pengo, pengo, penta, ROT90, "bootleg", "Penta" )

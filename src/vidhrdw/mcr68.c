@@ -349,7 +349,7 @@ void zwackery_spriteram_w(int offset, int data)
 
 void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
-	const UINT8 *colordatabase = (const UINT8 *)memory_region(3);
+	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
 	struct GfxElement *gfx0 = Machine->gfx[0];
 	struct GfxElement *gfx2 = Machine->gfx[2];
 	int code, y, x, ix;
@@ -404,7 +404,7 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 static void zwackery_mark_background(void)
 {
-	const UINT8 *colordatabase = (const UINT8 *)memory_region(3);
+	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
 	int offs;
 
 	/* for every character in the Video RAM, mark the colors */

@@ -175,7 +175,7 @@ static int index_shift[INDEX_SHIFT_MAX] = {
 /* lookup table for the precomputed difference */
 static int diff_lookup[(STEP_MAX+1)*16];
 
-static void UPD7759_update (int chip, void *buffer, int left);
+static void UPD7759_update (int chip, INT16 *buffer, int left);
 
 /*
  *   Compute the difference table
@@ -339,7 +339,7 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 
 		sprintf(name,"uPD7759 #%d",i);
 
-		channel[i] = stream_init(name,intf->volume[i],emulation_rate,16,i,UPD7759_update);
+		channel[i] = stream_init(name,intf->volume[i],emulation_rate,i,UPD7759_update);
 	}
 	return 0;
 }
@@ -357,10 +357,9 @@ void UPD7759_sh_stop (void)
 /*
  *   Update emulation of an uPD7759 output stream
  */
-static void UPD7759_update (int chip, void *buffer, int left)
+static void UPD7759_update (int chip, INT16 *buffer, int left)
 {
 	struct UPD7759voice *voice = &updadpcm[chip];
-	short *sample = buffer;
 	int i;
 
 	/* see if there's actually any need to generate samples */
@@ -376,7 +375,7 @@ static void UPD7759_update (int chip, void *buffer, int left)
 			{
 				while( left-- > 0 )
 				{
-					*sample++ = voice->data[voice->tail];
+					*buffer++ = voice->data[voice->tail];
 #if OVERSAMPLE
 					if( (voice->counter++ % OVERSAMPLE) == 0 )
 #endif
@@ -415,7 +414,7 @@ static void UPD7759_update (int chip, void *buffer, int left)
 #else
 					while (voice->counter > 0 && left > 0)
 					{
-						*sample++ = voice->signal;
+						*buffer++ = voice->signal;
 						voice->counter -= voice->freq;
 						left--;
 					}
@@ -427,7 +426,7 @@ static void UPD7759_update (int chip, void *buffer, int left)
 					{
 						while (left-- > 0)
 						{
-							*sample++ = voice->signal;
+							*buffer++ = voice->signal;
 							voice->signal = FALL_OFF(voice->signal);
 						}
 						voice->playing = 0;
@@ -440,7 +439,7 @@ static void UPD7759_update (int chip, void *buffer, int left)
 		{
 			/* voice is not playing */
 			for (i = 0; i < left; i++)
-				*sample++ = voice->signal;
+				*buffer++ = voice->signal;
 		}
 	}
 }

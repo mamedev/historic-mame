@@ -517,7 +517,7 @@ INPUT_PORTS_START( moonwar2 )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -558,7 +558,7 @@ INPUT_PORTS_START( monwar2a )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -932,7 +932,7 @@ INPUT_PORTS_START( losttomb )
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_8WAY )
@@ -985,7 +985,7 @@ INPUT_PORTS_START( superbon )
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
@@ -1153,30 +1153,30 @@ static struct GfxLayout backgroundlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
 											/* shots will be yellow */
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo armorcar_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0000, &armorcar_bulletlayout, 8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0, &armorcar_bulletlayout, 8*4, 2 },
+	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo calipso_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &calipso_charlayout,     0, 8 },
-	{ 1, 0x0000, &calipso_spritelayout,   0, 8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
+	{ REGION_GFX1, 0, &calipso_charlayout,     0, 8 },
+	{ REGION_GFX1, 0, &calipso_spritelayout,   0, 8 },
+	{ REGION_GFX1, 0, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
 											/* shots will be yellow */
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -1186,8 +1186,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 16, 16 },	/* Ant Eater clips if the volume is set higher */
-	{ 0x30, 0x30 },	/* gain */
+	/* Ant Eater clips if the volume is set higher than this */
+	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ 0, soundlatch_r },
 	{ 0, scramble_portB_r },
 	{ 0 },
@@ -1199,7 +1199,6 @@ static struct AY8910interface hustler_ay8910_interface =
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
 	{ 80 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -1606,28 +1605,6 @@ static struct MachineDriver machine_driver_calipso =
 
 ROM_START( scobra )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0xe15ade38 )
-	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
-	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0xbdd70346 )
-	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0xdca5ec31 )
-	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x0d8f6b6e )
-	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
-	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
-
-	ROM_REGIONX( 0x0020, REGION_PROMS )
-	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
-	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
-	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
-ROM_END
-
-ROM_START( scobrak )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xa0744b3f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0x8e7245cd )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x47a4e6fb )
@@ -1635,17 +1612,39 @@ ROM_START( scobrak )
 	ROM_LOAD( "2j",           0x4000, 0x1000, 0xe1f8a801 )
 	ROM_LOAD( "2l",           0x5000, 0x1000, 0xd52affde )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xd4346959 )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0xcc025d95 )
+	ROM_LOAD( "5e",           0x1000, 0x0800, 0x1628c53f )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
+ROM_END
+
+ROM_START( scobras )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0xe15ade38 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0xbdd70346 )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000, 0xdca5ec31 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x0d8f6b6e )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",           0x0000, 0x0800, 0xd4346959 )
-	ROM_LOAD( "5d",           0x0800, 0x0800, 0xcc025d95 )
-	ROM_LOAD( "5e",           0x1000, 0x0800, 0x1628c53f )
+	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
+	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
+	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
+	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 ROM_END
 
 ROM_START( scobrab )
@@ -1658,17 +1657,17 @@ ROM_START( scobrab )
 	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000, 0x0d8f6b6e )
 	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000, 0x6f80f3a9 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
+	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
+	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x64d113b4 )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xa96316d3 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
-	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
-	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
 ROM_START( stratgyx )
@@ -1680,16 +1679,16 @@ ROM_START( stratgyx )
 	ROM_LOAD( "2j_5.bin",     0x4000, 0x1000, 0x78b9b898 )
 	ROM_LOAD( "2l_6.bin",     0x5000, 0x1000, 0x20bae414 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
+	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
+	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f_c2.bin",    0x0000, 0x0800, 0x7121b679 )
 	ROM_LOAD( "5h_c1.bin",    0x0800, 0x0800, 0xd105ad91 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
-	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
-	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
 ROM_START( stratgys )
@@ -1701,16 +1700,16 @@ ROM_START( stratgys )
 	ROM_LOAD( "2j.cpu",       0x4000, 0x1000, 0x66e84cde )
 	ROM_LOAD( "2l.cpu",       0x5000, 0x1000, 0x62b032d0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
+	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
+	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0xf4aa5ddd )
 	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x548e4635 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
-	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
-	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
 ROM_START( armorcar )
@@ -1721,16 +1720,16 @@ ROM_START( armorcar )
 	ROM_LOAD( "cpu.2h",       0x3000, 0x1000, 0x61278dbb )
 	ROM_LOAD( "cpu.2j",       0x4000, 0x1000, 0xfb158d8c )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
+	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cpu.5f",       0x0000, 0x0800, 0x8a3da4d1 )
 	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
-	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
 ROM_START( armorca2 )
@@ -1741,16 +1740,16 @@ ROM_START( armorca2 )
 	ROM_LOAD( "2h",           0x3000, 0x1000, 0x72af7b37 )
 	ROM_LOAD( "2j",           0x4000, 0x1000, 0xe6b0dd7f )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
+	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cpu.5f",       0x0000, 0x0800, 0x8a3da4d1 )
 	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
-	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
 ROM_START( moonwar2 )
@@ -1760,16 +1759,16 @@ ROM_START( moonwar2 )
 	ROM_LOAD( "mw2.2f",       0x2000, 0x1000, 0x4fd8ba4b )
 	ROM_LOAD( "mw2.2h",       0x3000, 0x1000, 0x56879f0d )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
+	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
 	ROM_LOAD( "mw2.5h",       0x0800, 0x0800, 0xa6ccc652 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
-	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
 ROM_START( monwar2a )
@@ -1779,33 +1778,33 @@ ROM_START( monwar2a )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x378931b8 )
 	ROM_LOAD( "2h",           0x3000, 0x1000, 0x031dbc2c )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
+	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
 	ROM_LOAD( "mw2.5h",       0x0800, 0x0800, 0xa6ccc652 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
-	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
 ROM_START( spdcoin )
-    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-    ROM_LOAD( "spdcoin.2c",   0x0000, 0x1000, 0x65cf1e49 )
-    ROM_LOAD( "spdcoin.2e",   0x1000, 0x1000, 0x1ee59232 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "spdcoin.2c",   0x0000, 0x1000, 0x65cf1e49 )
+	ROM_LOAD( "spdcoin.2e",   0x1000, 0x1000, 0x1ee59232 )
 
-    ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "spdcoin.5f",   0x0000, 0x0800, 0xdd5f1dbc )
-    ROM_LOAD( "spdcoin.5h",   0x0800, 0x0800, 0xab1fe81b )
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "spdcoin.5c",   0x0000, 0x0800, 0xb4cf64b7 )
+	ROM_LOAD( "spdcoin.5d",   0x0800, 0x0800, 0x92304df0 )
 
-    ROM_REGIONX( 0x0020, REGION_PROMS )
-    ROM_LOAD( "spdcoin.clr",  0x0000, 0x0020, 0x1a2ccc56 )
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "spdcoin.5f",   0x0000, 0x0800, 0xdd5f1dbc )
+	ROM_LOAD( "spdcoin.5h",   0x0800, 0x0800, 0xab1fe81b )
 
-    ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-    ROM_LOAD( "spdcoin.5c",   0x0000, 0x0800, 0xb4cf64b7 )
-    ROM_LOAD( "spdcoin.5d",   0x0800, 0x0800, 0x92304df0 )
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "spdcoin.clr",  0x0000, 0x0020, 0x1a2ccc56 )
 ROM_END
 
 ROM_START( darkplnt )
@@ -1819,15 +1818,15 @@ ROM_START( darkplnt )
 	ROM_LOAD( "drkplt2m.dat", 0x6000, 0x1000, 0x8d2f0122 )
 	ROM_LOAD( "drkplt2p.dat", 0x7000, 0x1000, 0x2d66253b )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x672b9454 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "drkplt5f.dat", 0x0000, 0x0800, 0x2af0ee66 )
 	ROM_LOAD( "drkplt5h.dat", 0x0800, 0x0800, 0x66ef3225 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6e.cpu",       0x0000, 0x0020, 0x86b6e124 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x672b9454 )
 ROM_END
 
 ROM_START( tazmania )
@@ -1839,15 +1838,15 @@ ROM_START( tazmania )
 	ROM_LOAD( "2j.cpu",       0x4000, 0x1000, 0x6e197271 )
 	ROM_LOAD( "2k.cpu",       0x5000, 0x1000, 0xa1eb453b )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0x2c5b612b )
 	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x3f5ff3ac )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
 ROM_START( tazmani2 )
@@ -1859,15 +1858,15 @@ ROM_START( tazmani2 )
 	ROM_LOAD( "2jk.cpu",      0x4000, 0x1000, 0xa4095e35 )
 	ROM_LOAD( "2kk.cpu",      0x5000, 0x1000, 0xf308ca36 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0x2c5b612b )
 	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x3f5ff3ac )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
 ROM_START( calipso )
@@ -1879,16 +1878,16 @@ ROM_START( calipso )
 	ROM_LOAD( "calipso.2j",   0x4000, 0x1000, 0xfcbd7b9e )
 	ROM_LOAD( "calipso.2l",   0x5000, 0x1000, 0xf7630cab )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
+	ROM_LOAD( "calipso.5c",   0x0000, 0x0800, 0x9cbc65ab )
+	ROM_LOAD( "calipso.5d",   0x0800, 0x0800, 0xa225ee3b )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "calipso.5f",   0x0000, 0x2000, 0xfd4252e9 )
 	ROM_LOAD( "calipso.5h",   0x2000, 0x2000, 0x1663a73a )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "calipso.clr",  0x0000, 0x0020, 0x01165832 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
-	ROM_LOAD( "calipso.5c",   0x0000, 0x0800, 0x9cbc65ab )
-	ROM_LOAD( "calipso.5d",   0x0800, 0x0800, 0xa225ee3b )
 ROM_END
 
 ROM_START( anteater )
@@ -1898,16 +1897,16 @@ ROM_START( anteater )
 	ROM_LOAD( "ra1-2f",       0x2000, 0x1000, 0x2f7c1fe5 )
 	ROM_LOAD( "ra1-2h",       0x3000, 0x1000, 0xae8a5da3 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, 0x87300b4f )
+	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, 0xaf4e5ffe )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ra6-5f",       0x1000, 0x0800, 0x4c3f8a08 )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "ra6-5h",       0x1800, 0x0800, 0xb30c7c9f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, 0x87300b4f )
-	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, 0xaf4e5ffe )
 ROM_END
 
 ROM_START( rescue )
@@ -1918,16 +1917,16 @@ ROM_START( rescue )
 	ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000, 0xd6505742 )
 	ROM_LOAD( "rb15ecpu.bin", 0x4000, 0x1000, 0x604df3a4 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0x8b24bf17 )
+	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xd96e4fb3 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rb15fcpu.bin", 0x1000, 0x0800, 0x4489d20c )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "rb15hcpu.bin", 0x1800, 0x0800, 0x5512c547 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "rescue.clr",   0x0000, 0x0020, 0x40c6bcbd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0x8b24bf17 )
-	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xd96e4fb3 )
 ROM_END
 
 ROM_START( minefld )
@@ -1939,16 +1938,16 @@ ROM_START( minefld )
 	ROM_LOAD( "ma22j",        0x4000, 0x1000, 0x2ceceb54 )
 	ROM_LOAD( "ma22l",        0x5000, 0x1000, 0x85138fc9 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ma15c",        0x0000, 0x0800, 0x8bef736b )
+	ROM_LOAD( "ma15d",        0x0800, 0x0800, 0xf67b3f97 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ma15f",        0x1000, 0x0800, 0x9f703006 )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "ma15h",        0x1800, 0x0800, 0xed0dccb1 )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "minefld.clr",  0x0000, 0x0020, 0x1877368e )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ma15c",        0x0000, 0x0800, 0x8bef736b )
-	ROM_LOAD( "ma15d",        0x0800, 0x0800, 0xf67b3f97 )
 ROM_END
 
 ROM_START( losttomb )
@@ -1961,16 +1960,16 @@ ROM_START( losttomb )
 	ROM_LOAD( "2l",           0x5000, 0x1000, 0xc7d2e608 )
 	ROM_LOAD( "2m",           0x6000, 0x1000, 0xbc4bc5b1 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f",           0x1000, 0x0800, 0x61f137e7 )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "5h",           0x1800, 0x0800, 0x5581de5f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ltprom",       0x0000, 0x0020, 0x1108b816 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
-	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
 ROM_START( losttmbh )
@@ -1983,16 +1982,16 @@ ROM_START( losttmbh )
 	ROM_LOAD( "2l",           0x5000, 0x1000, 0xc7d2e608 )
 	ROM_LOAD( "2m",           0x6000, 0x1000, 0xbc4bc5b1 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f",           0x1000, 0x0800, 0x61f137e7 )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "5h",           0x1800, 0x0800, 0x5581de5f )	/* will be decrypted at 0x0000-0x0fff */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ltprom",       0x0000, 0x0020, 0x1108b816 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
-	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
 ROM_START( superbon )
@@ -2005,16 +2004,16 @@ ROM_START( superbon )
 	ROM_LOAD( "2l.cpu",       0x5000, 0x1000, 0xe9dcecbd )
 	ROM_LOAD( "2m.cpu",       0x6000, 0x1000, 0x3ed0337e )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",  	      0x0000, 0x0800, 0xb899be2a )
+	ROM_LOAD( "5d.snd",       0x0800, 0x0800, 0x80640a04 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0x5b9d4686 )
 	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x58c29927 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "superbon.clr", 0x0000, 0x0020, 0x00000000 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5c",  	      0x0000, 0x0800, 0xb899be2a )
-	ROM_LOAD( "5d.snd",       0x0800, 0x0800, 0x80640a04 )
 ROM_END
 
 ROM_START( hustler )
@@ -2024,16 +2023,16 @@ ROM_START( hustler )
 	ROM_LOAD( "hustler.3",    0x2000, 0x1000, 0x9422226a )
 	/* 3000-3fff space for diagnostics ROM */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
+	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
 	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
-	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
 ROM_START( billiard )
@@ -2043,16 +2042,16 @@ ROM_START( billiard )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0x7b8de793 )
 	/* 3000-3fff space for diagnostics ROM */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
+	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
 	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
-	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
 /* this is identical to billiard, but with a different memory map */
@@ -2063,21 +2062,21 @@ ROM_START( hustlerb )
 	ROM_LOAD( "hustler.2j",   0x2000, 0x1000, 0x27c1e0f8 )
 	/* 3000-3fff space for diagnostics ROM */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hustler.11d",  0x0000, 0x0800, 0xb559bfde )
+	ROM_LOAD( "hustler.10d",  0x0800, 0x0800, 0x6ef96cfb )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hustler.5f",   0x0000, 0x0800, 0x0bdfad0e )
 	ROM_LOAD( "hustler.5h",   0x0800, 0x0800, 0x8e062177 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hustler.11d",  0x0000, 0x0800, 0xb559bfde )
-	ROM_LOAD( "hustler.10d",  0x0800, 0x0800, 0x6ef96cfb )
 ROM_END
 
 
 
-static void moonwar2_driver_init(void)
+static void init_moonwar2(void)
 {
 	/* Install special handler for the spinner */
 	install_mem_read_handler(0, 0x9800, 0x9800, moonwar2_IN0_r);
@@ -2090,7 +2089,7 @@ static int bit(int i,int n)
 }
 
 
-static void anteater_decode(void)
+static void init_anteater(void)
 {
 	/*
 	*   Code To Decode Lost Tomb by Mirko Buffoni
@@ -2102,7 +2101,7 @@ static void anteater_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2114,7 +2113,7 @@ static void anteater_decode(void)
 	}
 }
 
-static void rescue_decode(void)
+static void init_rescue(void)
 {
 	/*
 	*   Code To Decode Lost Tomb by Mirko Buffoni
@@ -2126,7 +2125,7 @@ static void rescue_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2138,7 +2137,7 @@ static void rescue_decode(void)
 	}
 }
 
-static void minefld_decode(void)
+static void init_minefld(void)
 {
 	/*
 	*   Code To Decode Minefield by Mike Balfour and Nicola Salmoria
@@ -2149,7 +2148,7 @@ static void minefld_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2162,7 +2161,7 @@ static void minefld_decode(void)
 	}
 }
 
-static void losttomb_decode(void)
+static void init_losttomb(void)
 {
 	/*
 	*   Code To Decode Lost Tomb by Mirko Buffoni
@@ -2174,7 +2173,7 @@ static void losttomb_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2186,7 +2185,7 @@ static void losttomb_decode(void)
 	}
 }
 
-static void superbon_decode(void)
+static void init_superbon(void)
 {
 	/*
 	*   Code rom deryption worked out by hand by Chris Hardy.
@@ -2219,7 +2218,7 @@ static void superbon_decode(void)
 }
 
 
-static void hustler_decode(void)
+static void init_hustler(void)
 {
 	int A;
 
@@ -2258,7 +2257,7 @@ static void hustler_decode(void)
 	}
 }
 
-static void billiard_decode(void)
+static void init_billiard(void)
 {
 	int A;
 
@@ -2312,581 +2311,26 @@ static void billiard_decode(void)
 
 
 
-struct GameDriver driver_scobra =
-{
-	__FILE__,
-	0,
-	"scobra",
-	"Super Cobra",
-	"1981",
-	"Konami",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_type1,
-	0,
-
-	rom_scobrak,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scobrak,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_scobras =
-{
-	__FILE__,
-	&driver_scobra,
-	"scobras",
-	"Super Cobra (Stern)",
-	"1981",
-	"[Konami] (Stern license)",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_type1,
-	0,
-
-	rom_scobra,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scobra,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_scobrab =
-{
-	__FILE__,
-	&driver_scobra,
-	"scobrab",
-	"Super Cobra (bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_type1,
-	0,
-
-	rom_scobrab,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scobra,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_stratgyx =
-{
-	__FILE__,
-	0,
-	"stratgyx",
-	"Strategy X",
-	"1981",
-	"Konami",
-	"Lee Taylor",
-	0,
-	&machine_driver_stratgyx,
-	0,
-
-	rom_stratgyx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stratgyx,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_stratgys =
-{
-	__FILE__,
-	&driver_stratgyx,
-	"stratgys",
-	"Strategy X (Stern)",
-	"1981",
-	"[Konami] (Stern license)",
-	"Lee Taylor",
-	0,
-	&machine_driver_stratgyx,
-	0,
-
-	rom_stratgys,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stratgyx,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_armorcar =
-{
-	__FILE__,
-	0,
-	"armorcar",
-	"Armored Car (set 1)",
-	"1981",
-	"Stern",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_armorcar,
-	0,
-
-	rom_armorcar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_armorcar,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_armorca2 =
-{
-	__FILE__,
-	&driver_armorcar,
-	"armorca2",
-	"Armored Car (set 2)",
-	"1981",
-	"Stern",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_armorcar,
-	0,
-
-	rom_armorca2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_armorcar,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_moonwar2 =
-{
-	__FILE__,
-	0,
-	"moonwar2",
-	"Moon War II (set 1)",
-	"1981",
-	"Stern",
-	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&machine_driver_type1,
-	moonwar2_driver_init,
-
-	rom_moonwar2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_moonwar2,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_monwar2a =
-{
-	__FILE__,
-	&driver_moonwar2,
-	"monwar2a",
-	"Moon War II (set 2)",
-	"1981",
-	"Stern",
-	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&machine_driver_type1,
-	moonwar2_driver_init,
-
-	rom_monwar2a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_monwar2a,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_spdcoin =
-{
-    __FILE__,
-    0,
-    "spdcoin",
-    "Speed Coin (prototype)",
-    "1984",
-    "Stern",
-    "Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
-    0,
-    &machine_driver_type1,
-    0,
-
-    rom_spdcoin,
-    0, 0,
-    0,
-    0,
-
-    input_ports_spdcoin,
-
-    0, 0, 0,
-    ROT90,
-	0,0
-};
-
-
-struct GameDriver driver_darkplnt =
-{
-	__FILE__,
-	0,
-	"darkplnt",
-	"Dark Planet",
-	"1982",
-	"Stern",
-	"Mike Balfour",
-	0,
-	&machine_driver_type2,
-	0,
-
-	rom_darkplnt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkplnt,
-
-	0, 0, 0,
-	ROT180 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_tazmania =
-{
-	__FILE__,
-	0,
-	"tazmania",
-	"Tazz-Mania (Scramble hardware)",
-	"1982",
-	"Stern",
-	"Chris Hardy",
-	0,
-	&machine_driver_type1,
-	0,
-
-	rom_tazmania,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tazmania,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_tazmani2 =
-{
-	__FILE__,
-	&driver_tazmania,
-	"tazmani2",
-	"Tazz-Mania (Strategy X hardware)",
-	"1982",
-	"Stern",
-	"Chris Hardy",
-	0,
-	&machine_driver_type2,
-	0,
-
-	rom_tazmani2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tazmania,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_calipso =
-{
-	__FILE__,
-	0,
-	"calipso",
-	"Calipso",
-	"1982",
-	"[Stern] (Tago license)",
-	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&machine_driver_calipso,
-	0,
-
-	rom_calipso,
-	0, 0,
-	0,
-	0,
-
-	input_ports_calipso,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_anteater =
-{
-	__FILE__,
-	0,
-	"anteater",
-	"Anteater",
-	"1982",
-	"[Stern] (Tago license)",
-	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
-	0,
-	&machine_driver_type1,
-	anteater_decode,
-
-	rom_anteater,
-	0, 0,
-	0,
-	0,
-
-	input_ports_anteater,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_rescue =
-{
-	__FILE__,
-	0,
-	"rescue",
-	"Rescue",
-	"1982",
-	"Stern",
-	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni\nAlan J. McCormick\nMike Coates (Background)",
-	0,
-	&machine_driver_rescue,
-	rescue_decode,
-
-	rom_rescue,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rescue,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_minefld =
-{
-	__FILE__,
-	0,
-	"minefld",
-	"Minefield",
-	"1983",
-	"Stern",
-	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
-	0,
-	&machine_driver_minefld,
-	minefld_decode,
-
-	rom_minefld,
-	0, 0,
-	0,
-	0,
-
-	input_ports_minefld,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_losttomb =
-{
-	__FILE__,
-	0,
-	"losttomb",
-	"Lost Tomb (easy)",
-	"1982",
-	"Stern",
-	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
-	0,
-	&machine_driver_type1,
-	losttomb_decode,
-
-	rom_losttomb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_losttomb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_losttmbh =
-{
-	__FILE__,
-	&driver_losttomb,
-	"losttmbh",
-	"Lost Tomb (hard)",
-	"1982",
-	"Stern",
-	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
-	0,
-	&machine_driver_type1,
-	losttomb_decode,
-
-	rom_losttmbh,
-	0, 0,
-	0,
-	0,
-
-	input_ports_losttomb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_superbon =
-{
-	__FILE__,
-	0,
-	"superbon",
-	"Super Bond",
-	"1982?",
-	"bootleg",
-	"Chris Hardy",
-	0,
-	&machine_driver_type1,
-	superbon_decode,
-
-	rom_superbon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superbon,
-
-	0, 0, 0,
-	ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
-
-struct GameDriver driver_hustler =
-{
-	__FILE__,
-	0,
-	"hustler",
-	"Video Hustler",
-	"1981",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_hustler,
-	hustler_decode,
-
-	rom_hustler,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hustler,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_billiard =
-{
-	__FILE__,
-	&driver_hustler,
-	"billiard",
-	"The Billiards",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_hustler,
-	billiard_decode,
-
-	rom_billiard,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hustler,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_hustlerb =
-{
-	__FILE__,
-	&driver_hustler,
-	"hustlerb",
-	"Video Hustler (bootleg)",
-	"1981",
-	"bootleg",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_hustlerb,
-	0,
-
-	rom_hustlerb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hustler,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1981, scobra,   0,        type1,    scobrak,  0,        ROT90,  "Konami", "Super Cobra" )
+GAME( 1981, scobras,  scobra,   type1,    scobra,   0,        ROT90,  "[Konami] (Stern license)", "Super Cobra (Stern)" )
+GAME( 1981, scobrab,  scobra,   type1,    scobra,   0,        ROT90,  "bootleg", "Super Cobra (bootleg)" )
+GAME( 1981, stratgyx, 0,        stratgyx, stratgyx, 0,        ROT0,   "Konami", "Strategy X" )
+GAME( 1981, stratgys, stratgyx, stratgyx, stratgyx, 0,        ROT0,   "[Konami] (Stern license)", "Strategy X (Stern)" )
+GAME( 1981, armorcar, 0,        armorcar, armorcar, 0,        ROT90,  "Stern", "Armored Car (set 1)" )
+GAME( 1981, armorca2, armorcar, armorcar, armorcar, 0,        ROT90,  "Stern", "Armored Car (set 2)" )
+GAME( 1981, moonwar2, 0,        type1,    moonwar2, moonwar2, ROT90,  "Stern", "Moon War II (set 1)" )
+GAME( 1981, monwar2a, moonwar2, type1,    monwar2a, moonwar2, ROT90,  "Stern", "Moon War II (set 2)" )
+GAME( 1984, spdcoin,  0,        type1,    spdcoin,  0,        ROT90,  "Stern",    "Speed Coin (prototype)" )
+GAMEX(1982, darkplnt, 0,        type2,    darkplnt, 0,        ROT180, "Stern", "Dark Planet", GAME_NOT_WORKING )
+GAME( 1982, tazmania, 0,        type1,    tazmania, 0,        ROT90,  "Stern", "Tazz-Mania (Scramble hardware)" )
+GAME( 1982, tazmani2, tazmania, type2,    tazmania, 0,        ROT90,  "Stern", "Tazz-Mania (Strategy X hardware)" )
+GAME( 1982, calipso,  0,        calipso,  calipso,  0,        ROT90,  "[Stern] (Tago license)", "Calipso" )
+GAME( 1982, anteater, 0,        type1,    anteater, anteater, ROT90,  "[Stern] (Tago license)", "Anteater" )
+GAME( 1982, rescue,   0,        rescue,   rescue,   rescue,   ROT90,  "Stern", "Rescue" )
+GAME( 1983, minefld,  0,        minefld,  minefld,  minefld,  ROT90,  "Stern", "Minefield" )
+GAME( 1982, losttomb, 0,        type1,    losttomb, losttomb, ROT90,  "Stern", "Lost Tomb (easy)" )
+GAME( 1982, losttmbh, losttomb, type1,    losttomb, losttomb, ROT90,  "Stern", "Lost Tomb (hard)" )
+GAME( 1982?,superbon, 0,        type1,    superbon, superbon, ROT90,  "bootleg", "Super Bond" )
+GAME( 1981, hustler,  0,        hustler,  hustler,  hustler,  ROT90,  "Konami", "Video Hustler" )
+GAME( 1981, billiard, hustler,  hustler,  hustler,  billiard, ROT90,  "bootleg", "The Billiards" )
+GAME( 1981, hustlerb, hustler,  hustlerb, hustler,  0,        ROT90,  "bootleg", "Video Hustler (bootleg)" )

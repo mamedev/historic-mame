@@ -1,6 +1,10 @@
 /****************************************************************************
 
-HEXA Memory map (prelim)
+HEXA
+
+driver by Howie Cohen
+
+Memory map (prelim)
 0000 7fff ROM
 8000 bfff bank switch rom space??
 c000 c7ff RAM
@@ -115,7 +119,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0 , 32 },
+	{ REGION_GFX1, 0x0000, &charlayout,  0 , 32 },
 	{ -1 } /* end of array */
 };
 
@@ -126,7 +130,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ???? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -135,7 +138,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_hexa =
 {
 	/* basic machine hardware */
 	{
@@ -186,7 +189,7 @@ ROM_START( hexa )
 	ROM_LOAD( "hexa.20",      0x00000, 0x8000, 0x98b00586 )
 	ROM_LOAD( "hexa.21",      0x10000, 0x8000, 0x3d5d006c )
 
-	ROM_REGION_DISPOSE(0x18000)		/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hexa.17",      0x00000, 0x8000, 0xf6911dd6 )
 	ROM_LOAD( "hexa.18",      0x08000, 0x8000, 0x6e3d95d2 )
 	ROM_LOAD( "hexa.19",      0x10000, 0x8000, 0xffe97a31 )
@@ -199,7 +202,7 @@ ROM_END
 
 
 
-static void hexa_patch(void)
+static void init_hexa(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -214,28 +217,4 @@ static void hexa_patch(void)
 }
 
 
-struct GameDriver driver_hexa =
-{
-	__FILE__,
-	0,
-	"hexa",
-	"Hexa",
-	"????",
-	"D. R. Korea",
-	"Howie Cohen (driver)\nThierry Lescot (Technical Info) ",
-	0,
-	&machine_driver,
-	hexa_patch,
-
-	rom_hexa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hexa,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( ????, hexa, 0, hexa, hexa, hexa, ROT0, "D. R. Korea", "Hexa" )

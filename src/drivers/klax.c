@@ -226,7 +226,7 @@ static struct GfxLayout pflayout =
 	8192,	/* 8192 of them */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 0x30000*8+0, 0x30000*8+4, 8, 12, 0x30000*8+8, 0x30000*8+12 },
+	{ 0, 4, 0x20000*8+0, 0x20000*8+4, 8, 12, 0x20000*8+8, 0x20000*8+12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
@@ -238,7 +238,7 @@ static struct GfxLayout molayout =
 	4096,	/* 4096 of them */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 0x30000*8+0, 0x30000*8+4, 8, 12, 0x30000*8+8, 0x30000*8+12 },
+	{ 0, 4, 0x10000*8+0, 0x10000*8+4, 8, 12, 0x10000*8+8, 0x10000*8+12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
@@ -246,8 +246,8 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &pflayout,  256, 16 },		/* sprites & playfield */
-	{ 1, 0x20000, &molayout,    0, 16 },		/* sprites & playfield */
+	{ REGION_GFX1, 0, &pflayout,  256, 16 },		/* sprites & playfield */
+	{ REGION_GFX2, 0, &molayout,    0, 16 },		/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -263,7 +263,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
 	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ 2 },       		/* memory region 2 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
 
@@ -275,7 +275,7 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_klax =
 {
 	/* basic machine hardware */
 	{
@@ -329,15 +329,17 @@ ROM_START( klax )
 	ROM_LOAD_EVEN( "136075-6.008", 0x20000, 0x10000, 0xc7c91a9d )
 	ROM_LOAD_ODD ( "136075-6.007", 0x20000, 0x10000, 0xd2021a88 )
 
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
 	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
-	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x5c551e92 )
-	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0x6368dbaf )
-	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
-	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
+	ROM_LOAD( "136075-2.009", 0x20000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x30000, 0x10000, 0xe83cca91 )
 
-	ROM_REGION( 0x20000 )	/* ADPCM data */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136075-2.014", 0x00000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.013", 0x10000, 0x10000, 0x36764bbc )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
@@ -350,15 +352,17 @@ ROM_START( klax2 )
 	ROM_LOAD_EVEN( "136075.008",   0x20000, 0x10000, 0xf1b8e588 )
 	ROM_LOAD_ODD ( "136075.007",   0x20000, 0x10000, 0xadbe33a8 )
 
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
 	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
-	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x5c551e92 )
-	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0x6368dbaf )
-	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
-	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
+	ROM_LOAD( "136075-2.009", 0x20000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x30000, 0x10000, 0xe83cca91 )
 
-	ROM_REGION( 0x20000 )	/* ADPCM data */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136075-2.014", 0x00000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.013", 0x10000, 0x10000, 0x36764bbc )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
@@ -371,15 +375,17 @@ ROM_START( klax3 )
 	ROM_LOAD_EVEN( "4008",         0x20000, 0x10000, 0xf3c79106 )
 	ROM_LOAD_ODD ( "4007",         0x20000, 0x10000, 0xa23cde5d )
 
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
 	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
-	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x5c551e92 )
-	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0x6368dbaf )
-	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
-	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
+	ROM_LOAD( "136075-2.009", 0x20000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x30000, 0x10000, 0xe83cca91 )
 
-	ROM_REGION( 0x20000 )	/* ADPCM data */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136075-2.014", 0x00000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.013", 0x10000, 0x10000, 0x36764bbc )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
@@ -392,15 +398,17 @@ ROM_START( klaxj )
 	ROM_LOAD_EVEN( "136075-2.408", 0x20000, 0x10000, 0x89d515ce )
 	ROM_LOAD_ODD ( "136075-2.407", 0x20000, 0x10000, 0x48ce4edb )
 
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136075-2.010", 0x00000, 0x10000, 0x15290a0d )
 	ROM_LOAD( "136075-2.012", 0x10000, 0x10000, 0xc0d9eb0f )
-	ROM_LOAD( "136075-2.014", 0x20000, 0x10000, 0x5c551e92 )
-	ROM_LOAD( "136075-2.009", 0x30000, 0x10000, 0x6368dbaf )
-	ROM_LOAD( "136075-2.011", 0x40000, 0x10000, 0xe83cca91 )
-	ROM_LOAD( "136075-2.013", 0x50000, 0x10000, 0x36764bbc )
+	ROM_LOAD( "136075-2.009", 0x20000, 0x10000, 0x6368dbaf )
+	ROM_LOAD( "136075-2.011", 0x30000, 0x10000, 0xe83cca91 )
 
-	ROM_REGION( 0x20000 )	/* ADPCM data */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136075-2.014", 0x00000, 0x10000, 0x5c551e92 )
+	ROM_LOAD( "136075-2.013", 0x10000, 0x10000, 0x36764bbc )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
@@ -413,7 +421,7 @@ ROM_END
  *
  *************************************/
 
-static void klax_init(void)
+static void init_klax(void)
 {
 	atarigen_eeprom_default = NULL;
 }
@@ -426,109 +434,7 @@ static void klax_init(void)
  *
  *************************************/
 
-struct GameDriver driver_klax =
-{
-	__FILE__,
-	0,
-	"klax",
-	"Klax (set 1)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
-	0,
-	&machine_driver,
-	klax_init,
-
-	rom_klax,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_klax,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_klax2 =
-{
-	__FILE__,
-	&driver_klax,
-	"klax2",
-	"Klax (set 2)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
-	0,
-	&machine_driver,
-	klax_init,
-
-	rom_klax2,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_klax,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_klax3 =
-{
-	__FILE__,
-	&driver_klax,
-	"klax3",
-	"Klax (set 3)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
-	0,
-	&machine_driver,
-	klax_init,
-
-	rom_klax3,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_klax,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_klaxj =
-{
-	__FILE__,
-	&driver_klax,
-	"klaxj",
-	"Klax (Japan)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
-	0,
-	&machine_driver,
-	klax_init,
-
-	rom_klaxj,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_klax,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1989, klax,  0,    klax, klax, klax, ROT0, "Atari Games", "Klax (set 1)" )
+GAME( 1989, klax2, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 2)" )
+GAME( 1989, klax3, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 3)" )
+GAME( 1989, klaxj, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Japan)" )

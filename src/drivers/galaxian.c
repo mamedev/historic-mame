@@ -962,8 +962,8 @@ INPUT_PORTS_START( azurian )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )		/* used */
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x80, "5" )
@@ -973,11 +973,11 @@ INPUT_PORTS_START( azurian )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )		/* used */
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )		/* used */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )		/* used */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
@@ -1002,8 +1002,8 @@ INPUT_PORTS_START( orbitron )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 2C/1C  B 1C/3C" )
 	PORT_DIPSETTING(    0x40, "A 1C/1C  B 1C/6C" )
@@ -1011,11 +1011,11 @@ INPUT_PORTS_START( orbitron )
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -1295,44 +1295,44 @@ static struct GfxLayout backgroundlayout =
 
 static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
-	{ 1, 0x0000, &galaxian_spritelayout,  0, 8 },
-	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x0000, &galaxian_spritelayout,  0, 8 },
+	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
+	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &pisces_charlayout,      0, 8 },
-	{ 1, 0x0000, &pisces_spritelayout,    0, 8 },
-	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &pisces_charlayout,      0, 8 },
+	{ REGION_GFX1, 0x0000, &pisces_spritelayout,    0, 8 },
+	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
+	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 /* seperate character and sprite ROMs */
 static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
-	{ 1, 0x1000, &galaxian_spritelayout,  0, 8 },
-	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x1000, &galaxian_spritelayout,  0, 8 },
+	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
+	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &galaxian_charlayout,    0, 8 },
-	{ 1, 0x0000, &galaxian_spritelayout,  0, 8 },
-	{ 1, 0x0000, &scramble_bulletlayout,8*4, 1 },	/* 1 color code instead of 2, so all */
+	{ REGION_GFX1, 0x0000, &galaxian_charlayout,    0, 8 },
+	{ REGION_GFX1, 0x0000, &galaxian_spritelayout,  0, 8 },
+	{ REGION_GFX1, 0x0000, &scramble_bulletlayout,8*4, 1 },	/* 1 color code instead of 2, so all */
 													/* shots will be yellow */
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo jumpbug_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &jumpbug_charlayout,     0, 8 },
-	{ 1, 0x0000, &jumpbug_spritelayout,   0, 8 },
-	{ 1, 0x0000, &bulletlayout,         8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0x0000, &jumpbug_charlayout,     0, 8 },
+	{ REGION_GFX1, 0x0000, &jumpbug_spritelayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &bulletlayout,         8*4, 2 },
+	{ 0,           0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -1349,7 +1349,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1361,7 +1360,6 @@ static struct AY8910interface checkmaj_ay8910_interface =
 	1,	/* 1 chip */
 	1620000,	/* 1.62 MHz? (Used the same as Moon Cresta) */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
@@ -1588,7 +1586,7 @@ ROM_START( galaxian )
 	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, 0x6b3ca10b )
 	ROM_LOAD( "7l",           0x2000, 0x0800, 0x1b933207 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
 	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
@@ -1604,7 +1602,7 @@ ROM_START( galmidw )
 	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, 0x6b3ca10b )
 	ROM_LOAD( "galmidw.z",    0x2000, 0x0800, 0xcb24f797 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
@@ -1620,7 +1618,7 @@ ROM_START( superg )
 	ROM_LOAD( "superg.y",     0x1800, 0x0800, 0x9463f753 )
 	ROM_LOAD( "superg.z",     0x2000, 0x0800, 0xe6312e35 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
@@ -1636,7 +1634,7 @@ ROM_START( galaxb )
 	ROM_LOAD( "cp4",          0x1800, 0x0800, 0x097d92a2 )
 	ROM_LOAD( "cp5",          0x2000, 0x0800, 0x5341d75a )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cp7e",         0x0000, 0x0800, 0xd0ba22c9 )   /* logo was removed */
 	ROM_LOAD( "cp6e",         0x0800, 0x0800, 0x977e37cf )
 
@@ -1652,7 +1650,7 @@ ROM_START( galapx )
 	ROM_LOAD( "galx.y",       0x1800, 0x0800, 0xafe397f3 )
 	ROM_LOAD( "galx.z",       0x2000, 0x0800, 0x778c0d3c )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galx.1h",      0x0000, 0x0800, 0xe8810654 )
 	ROM_LOAD( "galx.1k",      0x0800, 0x0800, 0xcbe84a76 )
 
@@ -1668,7 +1666,7 @@ ROM_START( galap1 )
 	ROM_LOAD( "galx_1_4.rom", 0x1800, 0x0800, 0xe71e1d9e )
 	ROM_LOAD( "galx_1_5.rom", 0x2000, 0x0800, 0x6e65a3b2 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
@@ -1684,7 +1682,7 @@ ROM_START( galap4 )
 	ROM_LOAD( "galnamco.y",   0x1800, 0x0800, 0x56a5ddd1 )
 	ROM_LOAD( "galnamco.z",   0x2000, 0x0800, 0xf4bc7262 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xd5e88ab4 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0xa57b83e4 )
 
@@ -1700,7 +1698,7 @@ ROM_START( galturbo )
 	ROM_LOAD( "galturbo.y",   0x1800, 0x0800, 0xa44f450f )
 	ROM_LOAD( "galturbo.z",   0x2000, 0x0800, 0x3247f3d4 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "galturbo.1h",  0x0000, 0x0800, 0xa713fd1a )
 	ROM_LOAD( "galturbo.1k",  0x0800, 0x0800, 0x28511790 )
 
@@ -1716,7 +1714,7 @@ ROM_START( swarm )
 	ROM_LOAD( "swarm4.bin",    0x1800, 0x0800, 0x8bbbf486 )
 	ROM_LOAD( "swarm5.bin",    0x2000, 0x0800, 0xf1b1987e )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "swarma.bin",    0x0000, 0x0800, 0xef8657bb )
 	ROM_LOAD( "swarmb.bin",    0x0800, 0x0800, 0x60c4bd31 )
 
@@ -1733,7 +1731,7 @@ ROM_START( pisces )
 	ROM_LOAD( "pisces.d1",    0x2000, 0x0800, 0xfade512b )
 	ROM_LOAD( "pisces.e2",    0x2800, 0x0800, 0x5ab2822f )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pisces.1j",    0x0000, 0x1000, 0x2dba9e0e )
 	ROM_LOAD( "pisces.1k",    0x1000, 0x1000, 0xcdc5aa26 )
 
@@ -1752,7 +1750,7 @@ ROM_START( uniwars )
 	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
 	ROM_LOAD( "n08p_8a.bin",  0x3800, 0x0800, 0x797d45c7 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "egg10",        0x0000, 0x0800, 0x012941e0 )
 	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
 	ROM_LOAD( "egg9",         0x1000, 0x0800, 0xfc8b58fd )
@@ -1773,7 +1771,7 @@ ROM_START( gteikoku )
 	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
 	ROM_LOAD( "n08p_8a.bin",  0x3800, 0x0800, 0x797d45c7 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "h01_1.bin",    0x0000, 0x0800, 0x8313c959 )
 	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
@@ -1794,7 +1792,7 @@ ROM_START( spacbatt )
 	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
 	ROM_LOAD( "sb.8",         0x3800, 0x0800, 0xe59ff1ae )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "h01_1.bin",    0x0000, 0x0800, 0x8313c959 )
 	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
@@ -1812,7 +1810,7 @@ ROM_START( warofbug )
 	ROM_LOAD( "warofbug.y",   0x1800, 0x0800, 0xc14a541f )
 	ROM_LOAD( "warofbug.z",   0x2000, 0x0800, 0xc167fe55 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "warofbug.1k",  0x0000, 0x0800, 0x8100fa85 )
 	ROM_LOAD( "warofbug.1j",  0x0800, 0x0800, 0xd1220ae9 )
 
@@ -1829,7 +1827,7 @@ ROM_START( redufo )
 	ROM_LOAD( "ru5a",         0x2000, 0x0800, 0xcb648ff3 )
 	ROM_LOAD( "ru6a",         0x2800, 0x0800, 0xe1a9f58e )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ruhja",        0x0000, 0x0800, 0x8a422b0d )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 
@@ -1847,7 +1845,7 @@ ROM_START( pacmanbl )
 	ROM_LOAD( "blpac6b",      0x2800, 0x0800, 0xcbe863d3 )
 	ROM_LOAD( "blpac7b",      0x3000, 0x0800, 0x7daef758 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blpac12b",     0x0000, 0x0800, 0xb2ed320b )
 	ROM_LOAD( "blpac11b",     0x0800, 0x0800, 0xab88b2c4 )
 	ROM_LOAD( "blpac10b",     0x1000, 0x0800, 0x44a45b72 )
@@ -1868,7 +1866,7 @@ ROM_START( devilfsg )
 	ROM_LOAD( "dfish4.7m",    0x3800, 0x0800, 0x11fc7e59 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dfish5.1h",    0x1000, 0x0800, 0xace6e31f )
 	ROM_CONTINUE(             0x0000, 0x0800 )
 	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
@@ -1885,7 +1883,7 @@ ROM_START( zigzag )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
 	ROM_LOAD( "zz_d3.bin",    0x3000, 0x1000, 0xce5e7a00 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x0800, 0x780c162a )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
@@ -1902,7 +1900,7 @@ ROM_START( zigzag2 )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
 	ROM_LOAD( "zz_d3.bin",    0x3000, 0x1000, 0xce5e7a00 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zz_6_h1.bin",  0x0000, 0x0800, 0x780c162a )
 	ROM_CONTINUE(             0x1000, 0x0800 )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
@@ -1923,7 +1921,7 @@ ROM_START( mooncrgx )
 	ROM_LOAD( "7",            0x3000, 0x0800, 0x1e9c168c )
 	ROM_LOAD( "8",            0x3800, 0x0800, 0x5e09da94 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
 	ROM_LOAD( "12.chr",       0x0800, 0x0800, 0x5a4b17ea )
 	ROM_LOAD( "9.chr",        0x1000, 0x0800, 0x70df525c )
@@ -1944,7 +1942,7 @@ ROM_START( scramblb )
 	ROM_LOAD( "scramble.2j",  0x3000, 0x0800, 0x88ac07a0 )
 	ROM_LOAD( "scramble.3j",  0x3800, 0x0800, 0xc67d57ca )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
 	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
 
@@ -1962,7 +1960,7 @@ ROM_START( jumpbug )
 	ROM_LOAD( "jb6",          0x9000, 0x1000, 0x49e0bdfd )
 	ROM_LOAD( "jb7",          0xa000, 0x0800, 0x83d71302 )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jbl",          0x0000, 0x0800, 0x9a091b0a )
 	ROM_LOAD( "jbm",          0x0800, 0x0800, 0x8a0fc082 )
 	ROM_LOAD( "jbn",          0x1000, 0x0800, 0x155186e0 )
@@ -1984,7 +1982,7 @@ ROM_START( jumpbugb )
 	ROM_LOAD( "jb6b",         0x9000, 0x1000, 0x47be9843 )
 	ROM_LOAD( "jb7b",         0xa000, 0x0800, 0x460aed61 )
 
-	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jbl",          0x0000, 0x0800, 0x9a091b0a )
 	ROM_LOAD( "jbm",          0x0800, 0x0800, 0x8a0fc082 )
 	ROM_LOAD( "jbn",          0x1000, 0x0800, 0x155186e0 )
@@ -2005,7 +2003,7 @@ ROM_START( levers )
 	ROM_LOAD( "g96063.j8", 	  0x9000, 0x1000, 0xfa61e793 )
 	ROM_LOAD( "g96064.l8", 	  0xa000, 0x1000, 0xf797f389 )
 
-	ROM_REGION_DISPOSE(0x3000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g95948.n1", 	  0x0000, 0x0800, 0xd8a0c692 )
 							/*0x0800- 0x0fff empty */
 	ROM_LOAD( "g95949.s1", 	  0x1000, 0x0800, 0x3660a552 )
@@ -2023,7 +2021,7 @@ ROM_START( azurian )
 	ROM_LOAD( "pgm.2",        0x1000, 0x1000, 0x14659848 )
 	ROM_LOAD( "pgm.3",        0x2000, 0x1000, 0x8f60fb97 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gfx.1",        0x0000, 0x0800, 0xf5afb803 )
 	ROM_LOAD( "gfx.2",        0x0800, 0x0800, 0xae96e5d1 )
 
@@ -2051,7 +2049,7 @@ ROM_START( orbitron )
 	ROM_CONTINUE(			  0x1800, 0x0200)
 	ROM_LOAD( "orbitron.5",   0x2000, 0x0800, 0x20cd8bb8 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "orbitron.6",   0x0000, 0x0800, 0x2c91b83f )
 	ROM_LOAD( "orbitron.7",   0x0800, 0x0800, 0x46f4cca4 )
 
@@ -2065,7 +2063,7 @@ ROM_START( checkmaj )
 	ROM_LOAD( "cm_2.bin",     0x1000, 0x1000, 0x146b2c44 )
 	ROM_LOAD( "cm_3.bin",     0x2000, 0x0800, 0x73e1c945 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cm_6.bin",     0x0000, 0x0800, 0x476a7cc3 )
 	ROM_LOAD( "cm_5.bin",     0x0800, 0x0800, 0xb3df2b5f )
 
@@ -2083,7 +2081,7 @@ ROM_START( streakng )
 	ROM_LOAD( "sk3",          0x2000, 0x1000, 0x7b4bfa76 )
 	ROM_LOAD( "sk4",          0x3000, 0x1000, 0x056fc921 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sk5",          0x0000, 0x1000, 0xd27f1e0c )
 	ROM_LOAD( "sk6",          0x1000, 0x1000, 0xa7089588 )
 
@@ -2100,7 +2098,7 @@ ROM_START( blkhole )
 	ROM_LOAD( "bh5",          0x2000, 0x0800, 0x3f657be9 )
 	ROM_LOAD( "bh6",          0x2800, 0x0800, 0xa057ab35 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bh7",          0x0000, 0x0800, 0x975ba821 )
 	ROM_LOAD( "bh8",          0x0800, 0x0800, 0x03d11020 )
 
@@ -2109,746 +2107,44 @@ ROM_START( blkhole )
 ROM_END
 
 
-static void pisces_driver_init(void)
+static void init_pisces(void)
 {
 	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
 }
 
-static void checkmaj_driver_init(void)
+static void init_checkmaj(void)
 {
     /* for the title screen */
 	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
 }
 
 
-struct GameDriver driver_galaxian =
-{
-	__FILE__,
-	0,
-	"galaxian",
-	"Galaxian (Namco)",
-	"1979",
-	"Namco",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galaxian,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaxian,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galmidw =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galmidw",
-	"Galaxian (Midway)",
-	"1979",
-	"[Namco] (Midway license)",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galmidw,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaxian,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_superg =
-{
-	__FILE__,
-	&driver_galaxian,
-	"superg",
-	"Super Galaxians",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_superg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galaxb =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galaxb",
-	"Galaxian (bootleg)",
-	"1979",
-	"bootleg",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galaxb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galapx =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galapx",
-	"Galaxian Part X",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galapx,
-	0,
-
-	rom_galapx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galap1 =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galap1",
-	"Space Invaders Galactica",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galap1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galap4 =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galap4",
-	"Galaxian Part 4",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galap4,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galturbo =
-{
-	__FILE__,
-	&driver_galaxian,
-	"galturbo",
-	"Galaxian Turbo",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_galturbo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-struct GameDriver driver_swarm =
-{
-	__FILE__,
-	&driver_galaxian,
-	"swarm",
-	"Swarm",
-	"1979",
-	"hack",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_swarm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_swarm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pisces =
-{
-	__FILE__,
-	0,
-	"pisces",
-	"Pisces",
-	"????",
-	"<unknown>",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
-	0,
-	&machine_driver_pisces,
-	pisces_driver_init,
-
-	rom_pisces,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pisces,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_uniwars =
-{
-	__FILE__,
-	0,
-	"uniwars",
-	"UniWar S",
-	"1980",
-	"Irem",
-	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_pisces,
-	pisces_driver_init,
-
-	rom_uniwars,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_gteikoku =
-{
-	__FILE__,
-	&driver_uniwars,
-	"gteikoku",
-	"Gingateikoku No Gyakushu",
-	"1980",
-	"Irem",
-	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_pisces,
-	pisces_driver_init,
-
-	rom_gteikoku,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_spacbatt =
-{
-	__FILE__,
-	&driver_uniwars,
-	"spacbatt",
-	"Space Battle",
-	"1980",
-	"bootleg",
-	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_pisces,
-	pisces_driver_init,
-
-	rom_spacbatt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superg,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_warofbug =
-{
-	__FILE__,
-	0,
-	"warofbug",
-	"War of the Bugs",
-	"1981",
-	"Armenia",
-	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver_warofbug,
-	0,
-
-	rom_warofbug,
-	0, 0,
-	0,
-	0,
-
-	input_ports_warofbug,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_redufo =
-{
-	__FILE__,
-	0,
-	"redufo",
-	"Defend the Terra Attack on the Red UFO",
-	"????",
-	"Hara Industries??",
-	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_warofbug,
-	0,
-
-	rom_redufo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_redufo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-extern struct GameDriver driver_pacman;
-struct GameDriver driver_pacmanbl =
-{
-	__FILE__,
-	&driver_pacman,
-	"pacmanbl",
-	"Pac-Man (bootleg on Galaxian hardware)",
-	"1981",
-	"bootleg",
-	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_pacmanbl,
-	0,
-
-	rom_pacmanbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacmanbl,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-extern struct GameDriver driver_devilfsh;
-struct GameDriver driver_devilfsg =
-{
-	__FILE__,
-	&driver_devilfsh,
-	"devilfsg",
-	"Devil Fish (Galaxian hardware, bootleg?)",
-	"1984",
-	"Vision / Artic",
-	"Chris Hardy",
-	0,
-	&machine_driver_devilfsg,
-	0,
-
-	rom_devilfsg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_devilfsg,
-
-	0, 0, 0,
-	ROT270,
-
-        0, 0
-};
-
-struct GameDriver driver_zigzag =
-{
-	__FILE__,
-	0,
-	"zigzag",
-	"Zig Zag (Galaxian hardware, set 1)",
-	"1982",
-	"LAX",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_zigzag,
-	0,
-
-	rom_zigzag,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zigzag,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_zigzag2 =
-{
-	__FILE__,
-	&driver_zigzag,
-	"zigzag2",
-	"Zig Zag (Galaxian hardware, set 2)",
-	"1982",
-	"LAX",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_zigzag,
-	0,
-
-	rom_zigzag2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zigzag,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-extern struct GameDriver driver_mooncrst;
-struct GameDriver driver_mooncrgx =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"mooncrgx",
-	"Moon Cresta (bootleg on Galaxian hardware)",
-	"1980",
-	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrgx,
-	0,
-
-	rom_mooncrgx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrgx,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-extern struct GameDriver driver_scramble;
-struct GameDriver driver_scramblb =
-{
-	__FILE__,
-	&driver_scramble,
-	"scramblb",
-	"Scramble (bootleg on Galaxian hardware)",
-	"1981",
-	"bootleg",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_scramblb,
-	0,
-
-	rom_scramblb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scramblb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jumpbug =
-{
-	__FILE__,
-	0,
-	"jumpbug",
-	"Jump Bug",
-	"1981",
-	"Rock-ola",
-	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
-	0,
-	&machine_driver_jumpbug,
-	0,
-
-	rom_jumpbug,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jumpbug,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jumpbugb =
-{
-	__FILE__,
-	&driver_jumpbug,
-	"jumpbugb",
-	"Jump Bug (bootleg)",
-	"1981",
-	"bootleg",
-	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
-	0,
-	&machine_driver_jumpbug,
-	0,
-
-	rom_jumpbugb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jumpbug,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_levers =
-{
-	__FILE__,
-	0,
-	"levers",
-	"Levers",
-	"1983",
-	"Rock-ola",
-	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili\nZsolt Vasvari",
-	0,
-	&machine_driver_jumpbug,
-	0,
-
-	rom_levers,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_levers,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_azurian =
-{
-	__FILE__,
-	0,
-	"azurian",
-	"Azurian Attack",
-	"1982",
-	"Rait Electronics Ltd",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_azurian,
-	0,
-
-	rom_azurian,
-	0, 0,
-	0,
-	0,
-
-	input_ports_azurian,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_orbitron =
-{
-	__FILE__,
-	0,
-	"orbitron",
-	"Orbitron",
-	"????",
-	"Signatron USA",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
-	0,
-	&machine_driver_azurian,
-	0,
-
-	rom_orbitron,
-	0, 0,
-	0,
-	0,
-
-	input_ports_orbitron,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-extern struct GameDriver driver_checkman;
-struct GameDriver driver_checkmaj =
-{
-	__FILE__,
-	&driver_checkman,
-	"checkmaj",
-	"Checkman (Japan)",
-	"1982",
-	"Jaleco",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
-	0,
-	&machine_driver_checkmaj,
-	checkmaj_driver_init,
-
-	rom_checkmaj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_checkmaj,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_streakng =
-{
-	__FILE__,
-	0,
-	"streakng",
-	"Streaking",
-	"1980",
-	"Shoei",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
-	0,
-	&machine_driver_pacmanbl,
-	0,
-
-	rom_streakng,
-	0, 0,
-	0,
-	0,
-
-	input_ports_streakng,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_blkhole =
-{
-	__FILE__,
-	0,
-	"blkhole",
-	"Black Hole",
-	"????",
-	"<unknown>",
-	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_galaxian,
-	0,
-
-	rom_blkhole,
-	0, 0,
-	0,
-	0,
-
-	input_ports_blkhole,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco)" )
+GAME( 1979, galmidw,  galaxian, galaxian, galaxian, 0,        ROT90,  "[Namco] (Midway license)", "Galaxian (Midway)" )
+GAME( 1979, superg,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Super Galaxians" )
+GAME( 1979, galaxb,   galaxian, galaxian, superg,   0,        ROT90,  "bootleg", "Galaxian (bootleg)" )
+GAME( 1979, galapx,   galaxian, galapx,   superg,   0,        ROT90,  "hack", "Galaxian Part X" )
+GAME( 1979, galap1,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Space Invaders Galactica" )
+GAME( 1979, galap4,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Part 4" )
+GAME( 1979, galturbo, galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Turbo" )
+GAME( 1979, swarm,    galaxian, galaxian, swarm,    0,        ROT90,  "hack", "Swarm" )
+GAME( ????, pisces,   0,        pisces,   pisces,   pisces,   ROT90,  "<unknown>", "Pisces" )
+GAME( 1980, uniwars,  0,        pisces,   superg,   pisces,   ROT90,  "Irem", "UniWar S" )
+GAME( 1980, gteikoku, uniwars,  pisces,   superg,   pisces,   ROT90,  "Irem", "Gingateikoku No Gyakushu" )
+GAME( 1980, spacbatt, uniwars,  pisces,   superg,   pisces,   ROT90,  "bootleg", "Space Battle" )
+GAME( 1981, warofbug, 0,        warofbug, warofbug, 0,        ROT90,  "Armenia", "War of the Bugs" )
+GAME( ????, redufo,   0,        warofbug, redufo,   0,        ROT90,  "Hara Industries??", "Defend the Terra Attack on the Red UFO" )
+GAME( 1981, pacmanbl, pacman,   pacmanbl, pacmanbl, 0,        ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
+GAME( 1984, devilfsg, devilfsh, devilfsg, devilfsg, 0,        ROT270, "Vision / Artic", "Devil Fish (Galaxian hardware, bootleg?)" )
+GAME( 1982, zigzag,   0,        zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 1)" )
+GAME( 1982, zigzag2,  zigzag,   zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 2)" )
+GAME( 1980, mooncrgx, mooncrst, mooncrgx, mooncrgx, 0,        ROT270, "bootleg", "Moon Cresta (bootleg on Galaxian hardware)" )
+GAME( 1981, scramblb, scramble, scramblb, scramblb, 0,        ROT90,  "bootleg", "Scramble (bootleg on Galaxian hardware)" )
+GAME( 1981, jumpbug,  0,        jumpbug,  jumpbug,  0,        ROT90,  "Rock-ola", "Jump Bug" )
+GAME( 1981, jumpbugb, jumpbug,  jumpbug,  jumpbug,  0,        ROT90,  "bootleg", "Jump Bug (bootleg)" )
+GAME( 1983, levers,   0,        jumpbug,  levers,   0,        ROT90,  "Rock-ola", "Levers" )
+GAME( 1982, azurian,  0,        azurian,  azurian,  0,        ROT90,  "Rait Electronics Ltd", "Azurian Attack" )
+GAME( ????, orbitron, 0,        azurian,  orbitron, 0,        ROT270, "Signatron USA", "Orbitron" )
+GAME( 1982, checkmaj, checkman, checkmaj, checkmaj, checkmaj, ROT90,  "Jaleco", "Checkman (Japan)" )
+GAME( 1980, streakng, 0,        pacmanbl, streakng, 0,        ROT90,  "Shoei", "Streaking" )
+GAME( ????, blkhole,  0,        galaxian, blkhole,  0,        ROT90,  "<unknown>", "Black Hole" )

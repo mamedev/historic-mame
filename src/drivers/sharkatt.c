@@ -1,6 +1,8 @@
 /***************************************************************************
 
- Shark Attack driver
+ Shark Attack
+
+ driver by Victor Trucco, Mike Balfour
 
  TODO:
   - Finish 8255 emulation and separate into new source file.
@@ -154,7 +156,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	4000000/4,	/* Z80 Clock / 4 */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -170,7 +171,7 @@ static int sharkatt_interrupt(void)
 	return interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sharkatt =
 {
 	/* basic machine hardware */
 	{
@@ -234,27 +235,4 @@ ROM_END
 
 
 
-struct GameDriver driver_sharkatt =
-{
-	__FILE__,
-	0,
-	"sharkatt",
-	"Shark Attack",
-	"1980",
-	"Pacific Novelty",
-	"Victor Trucco\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sharkatt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sharkatt,
-
-	0, 0, 0,    /* colors, palette, colortable */
-	ORIENTATION_SWAP_XY,
-	0,0
-};
+GAME( 1980, sharkatt, 0, sharkatt, sharkatt, 0, ORIENTATION_SWAP_XY, "Pacific Novelty", "Shark Attack" )

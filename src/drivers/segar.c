@@ -146,11 +146,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xffff, segar_wr, &segar_mem },
-	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },	/* handled by */
-	{ 0xe800, 0xefff, MWA_RAM, &segar_characterram },		/* the above, */
+	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },    /* handled by */
+	{ 0xe800, 0xefff, MWA_RAM, &segar_characterram },    	/* the above, */
 	{ 0xf000, 0xf03f, MWA_RAM, &segar_mem_colortable },     /* here only */
 	{ 0xf040, 0xf07f, MWA_RAM, &segar_mem_bcolortable },    /* to initialize */
-	{ 0xf800, 0xffff, MWA_RAM, &segar_characterram2 },		/* the pointers */
+	{ 0xf800, 0xffff, MWA_RAM, &segar_characterram2 },    	/* the pointers */
 	{ -1 }
 };
 
@@ -175,7 +175,7 @@ static struct MemoryWriteAddress sindbadm_writemem[] =
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, segar_characterram_w, &segar_characterram },
-	{ 0xf000, 0xf03f, segar_bcolortable_w, &segar_mem_bcolortable },	/* NOTE, the two color tables are flipped! */
+	{ 0xf000, 0xf03f, segar_bcolortable_w, &segar_mem_bcolortable },    /* NOTE, the two color tables are flipped! */
 	{ 0xf040, 0xf07f, segar_colortable_w, &segar_mem_colortable },
 	{ 0xf080, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, segar_characterram2_w, &segar_characterram2 },
@@ -187,7 +187,7 @@ static struct IOReadPort readport[] =
 {
 //{0x3f, 0x3f, MRA_NOP }, /* Pig Newton - read from 1D87 */
 	{ 0x0e, 0x0e, monsterb_audio_8255_r },
-	{ 0x81, 0x81, input_port_8_r },	 /* only used by Sindbad Mystery */
+	{ 0x81, 0x81, input_port_8_r },     /* only used by Sindbad Mystery */
 	{ 0xf8, 0xfc, segar_read_ports },
 	{ -1 }  /* end of table */
 };
@@ -230,7 +230,7 @@ static struct IOWritePort pignewt_writeport[] =
 {
 	{ 0xb4, 0xb5, pignewt_back_color_w },   /* Just guessing */
 	{ 0xb8, 0xbc, pignewt_back_ports_w },   /* Just guessing */
-	{ 0xbe, 0xbe, MWA_NOP },			/* probably some type of music register */
+	{ 0xbe, 0xbe, MWA_NOP },    		/* probably some type of music register */
 	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
 	{ -1 }  /* end of table */
 };
@@ -322,8 +322,8 @@ static struct MemoryWriteAddress sindbadm_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa000, 0xa003, SN76496_0_w },	/* the four addresses are written */
-	{ 0xc000, 0xc003, SN76496_1_w },	/* in sequence */
+	{ 0xa000, 0xa003, SN76496_0_w },    /* the four addresses are written */
+	{ 0xc000, 0xc003, SN76496_1_w },    /* in sequence */
 	{ -1 }  /* end of table */
 };
 
@@ -466,22 +466,22 @@ INPUT_PORTS_START( astrob )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -489,8 +489,8 @@ INPUT_PORTS_START( astrob )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
@@ -538,34 +538,34 @@ INPUT_PORTS_START( astrob1 )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 6" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown 7" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	COINAGE
 
@@ -611,29 +611,29 @@ INPUT_PORTS_START( 005 )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0xc0, 0x00, "Lives" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0x80, "5" )
@@ -682,7 +682,7 @@ INPUT_PORTS_START( monsterb )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -750,19 +750,19 @@ INPUT_PORTS_START( spaceod )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPSETTING(    0x08, "40000" )
@@ -820,33 +820,33 @@ INPUT_PORTS_START( pignewt )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown 6" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	COINAGE
 
@@ -888,33 +888,33 @@ INPUT_PORTS_START( pignewta )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown 6" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	COINAGE
 
@@ -953,25 +953,25 @@ INPUT_PORTS_START( sindbadm )
 	PORT_START      /* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown 3" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown 4" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -1038,7 +1038,7 @@ static struct GfxLayout charlayout =
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters? */
 	2,      /* 2 bits per pixel */
-	{ 0x1000*8, 0 },	/* separated by 0x1000 bytes */
+	{ 0x1000*8, 0 },    /* separated by 0x1000 bytes */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
@@ -1049,7 +1049,7 @@ static struct GfxLayout backlayout =
 	8,8,    /* 8*8 characters */
 	256,  /* 256 characters per scene, 4 scenes */
 	2,      /* 2 bits per pixel */
-	{ 0x2000*8, 0 },	/* separated by 0x2000 bytes */
+	{ 0x2000*8, 0 },    /* separated by 0x2000 bytes */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
@@ -1060,7 +1060,7 @@ static struct GfxLayout spacelayout =
 	8,8,   /* 16*8 characters */
 	256,    /* 256 characters */
 	6,      /* 6 bits per pixel */
-	{ 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },	/* separated by 0x1000 bytes (1 EPROM per bit) */
+	{ 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },    /* separated by 0x1000 bytes (1 EPROM per bit) */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 16 consecutive bytes */
@@ -1092,75 +1092,379 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 };
 
 
-/***************************************************************************
-  Game ROMs
-***************************************************************************/
+
+static struct Samplesinterface astrob_samples_interface =
+{
+	12,    /* 12 channels */
+	25,    /* volume */
+	astrob_sample_names
+};
+
+/* TODO: someday this will become a speech synthesis interface */
+static struct CustomSound_interface astrob_custom_interface =
+{
+	astrob_speech_sh_start,
+	0,
+	astrob_speech_sh_update
+};
+
+static struct MachineDriver machine_driver_astrob =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,    /* 3.86712 Mhz ??? */
+			readmem,writemem,readport,astrob_writeport,
+			segar_interrupt,1
+		},
+		{
+			CPU_I8035 | CPU_AUDIO_CPU,
+			3120000/15,    /* 3.12Mhz crystal ??? */
+			speech_readmem,speech_writemem,speech_readport,speech_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16*4+1,16*4+1,      // 16 2-bit colors + 1 transparent black
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	segar_vh_start,
+	generic_vh_stop,
+	segar_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&astrob_custom_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&astrob_samples_interface
+		}
+	}
+};
+
+static struct Samplesinterface spaceod_samples_interface =
+{
+	12,    /* 12 channels */
+	25,    /* volume */
+	spaceod_sample_names
+};
+
+static struct MachineDriver machine_driver_spaceod =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,    /* 3.86712 Mhz ??? */
+			readmem,writemem,readport,spaceod_writeport,
+			segar_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	spaceod_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground, 1 6-bit color for background
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	spaceod_vh_start,
+	spaceod_vh_stop,
+	spaceod_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&spaceod_samples_interface
+		}
+	}
+};
+
+static struct Samplesinterface s005_samples_interface =
+{
+	12,    /* 12 channels */
+	25,    /* volume */
+	s005_sample_names
+};
+
+static struct MachineDriver machine_driver_s005 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,    /* 3.86712 Mhz ??? */
+			readmem,writemem,readport,s005_writeport,
+			segar_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16*4+1,16*4+1,      // 16 2-bit colors for foreground and background
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	segar_vh_start,
+	generic_vh_stop,
+	segar_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&s005_samples_interface
+		}
+	}
+};
+
+static struct Samplesinterface monsterb_samples_interface =
+{
+	2,    /* 2 channels */
+	25,    /* volume */
+	monsterb_sample_names
+};
+
+static struct DACinterface monsterb_dac_interface =
+{
+	1,
+	{ 100 }
+};
+
+static struct CustomSound_interface monsterb_custom_interface =
+{
+	TMS3617_sh_start,
+	TMS3617_sh_stop,
+	TMS3617_sh_update
+};
+
+static struct MachineDriver machine_driver_monsterb =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,    /* 3.86712 Mhz ??? */
+			readmem,writemem,readport,monsterb_writeport,
+			segar_interrupt,1
+		},
+		{
+			CPU_N7751 | CPU_AUDIO_CPU,
+			6000000/15,    /* 6Mhz crystal */
+			monsterb_7751_readmem,monsterb_7751_writemem,monsterb_7751_readport,monsterb_7751_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	monsterb_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	monsterb_vh_start,
+	generic_vh_stop,
+	monsterb_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&monsterb_custom_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&monsterb_samples_interface
+		},
+		{
+			SOUND_DAC,
+			&monsterb_dac_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_pignewt =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,    /* 3.86712 Mhz ??? */
+			readmem,writemem,readport,pignewt_writeport,
+			segar_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	monsterb_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	monsterb_vh_start,
+	generic_vh_stop,
+	sindbadm_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
+};
+
+
+static struct SN76496interface sn76496_interface =
+{
+	2,          /* 2 chips */
+	{ 2000000, 4000000 },    /* I'm assuming that the sound board is the same as System 1 */
+	{ 100, 100 }
+};
+
+static struct MachineDriver machine_driver_sindbadm =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,    /* 3.072 Mhz ? */
+			sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
+			segar_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,    /* 4 Mhz ? - see system1.c */
+			sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
+			interrupt,4		     /* NMIs are caused by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	monsterb_gfxdecodeinfo,
+	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
+	segar_init_colors,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	monsterb_vh_start,
+	generic_vh_stop,
+	sindbadm_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
+
+
+
 
 ROM_START( astrob )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "829b",	 0x0000, 0x0800, 0x14ae953c ) /* U25 */
-	ROM_LOAD( "888",	  0x0800, 0x0800, 0x42601744 ) /* U1 */
-	ROM_LOAD( "889",	  0x1000, 0x0800, 0xdd9ab173 ) /* U2 */
-	ROM_LOAD( "890",	  0x1800, 0x0800, 0x26f5b4cf ) /* U3 */
-	ROM_LOAD( "891",	  0x2000, 0x0800, 0x6437c95f ) /* U4 */
-	ROM_LOAD( "892",	  0x2800, 0x0800, 0x2d3c949b ) /* U5 */
-	ROM_LOAD( "893",	  0x3000, 0x0800, 0xccdb1a76 ) /* U6 */
-	ROM_LOAD( "894",	  0x3800, 0x0800, 0x66ae5ced ) /* U7 */
-	ROM_LOAD( "895",	  0x4000, 0x0800, 0x202cf3a3 ) /* U8 */
-	ROM_LOAD( "896",	  0x4800, 0x0800, 0xb603fe23 ) /* U9 */
-	ROM_LOAD( "897",	  0x5000, 0x0800, 0x989198c6 ) /* U10 */
-	ROM_LOAD( "898",	  0x5800, 0x0800, 0xef2bab04 ) /* U11 */
-	ROM_LOAD( "899",	  0x6000, 0x0800, 0xe0d189ee ) /* U12 */
-	ROM_LOAD( "900",	  0x6800, 0x0800, 0x682d4604 ) /* U13 */
-	ROM_LOAD( "901",	  0x7000, 0x0800, 0x9ed11c61 ) /* U14 */
-	ROM_LOAD( "902",	  0x7800, 0x0800, 0xb4d6c330 ) /* U15 */
-	ROM_LOAD( "903",	  0x8000, 0x0800, 0x84acc38c ) /* U16 */
-	ROM_LOAD( "904",	  0x8800, 0x0800, 0x5eba3097 ) /* U16 */
-	ROM_LOAD( "905",	  0x9000, 0x0800, 0x4f08f9f4 ) /* U16 */
-	ROM_LOAD( "906",	  0x9800, 0x0800, 0x58149df1 ) /* U16 */
+	ROM_LOAD( "829b",     0x0000, 0x0800, 0x14ae953c ) /* U25 */
+	ROM_LOAD( "888",      0x0800, 0x0800, 0x42601744 ) /* U1 */
+	ROM_LOAD( "889",      0x1000, 0x0800, 0xdd9ab173 ) /* U2 */
+	ROM_LOAD( "890",      0x1800, 0x0800, 0x26f5b4cf ) /* U3 */
+	ROM_LOAD( "891",      0x2000, 0x0800, 0x6437c95f ) /* U4 */
+	ROM_LOAD( "892",      0x2800, 0x0800, 0x2d3c949b ) /* U5 */
+	ROM_LOAD( "893",      0x3000, 0x0800, 0xccdb1a76 ) /* U6 */
+	ROM_LOAD( "894",      0x3800, 0x0800, 0x66ae5ced ) /* U7 */
+	ROM_LOAD( "895",      0x4000, 0x0800, 0x202cf3a3 ) /* U8 */
+	ROM_LOAD( "896",      0x4800, 0x0800, 0xb603fe23 ) /* U9 */
+	ROM_LOAD( "897",      0x5000, 0x0800, 0x989198c6 ) /* U10 */
+	ROM_LOAD( "898",      0x5800, 0x0800, 0xef2bab04 ) /* U11 */
+	ROM_LOAD( "899",      0x6000, 0x0800, 0xe0d189ee ) /* U12 */
+	ROM_LOAD( "900",      0x6800, 0x0800, 0x682d4604 ) /* U13 */
+	ROM_LOAD( "901",      0x7000, 0x0800, 0x9ed11c61 ) /* U14 */
+	ROM_LOAD( "902",      0x7800, 0x0800, 0xb4d6c330 ) /* U15 */
+	ROM_LOAD( "903",      0x8000, 0x0800, 0x84acc38c ) /* U16 */
+	ROM_LOAD( "904",      0x8800, 0x0800, 0x5eba3097 ) /* U16 */
+	ROM_LOAD( "905",      0x9000, 0x0800, 0x4f08f9f4 ) /* U16 */
+	ROM_LOAD( "906",      0x9800, 0x0800, 0x58149df1 ) /* U16 */
 
 	ROM_REGION(0x10)      /* background graphics (unused) */
 
 	ROM_REGION(0x10)      /* background charmap (unused) */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for speech code */
-	ROM_LOAD( "808b",	 0x0000, 0x0800, 0x5988c767 ) /* U7 */
-	ROM_LOAD( "809a",	 0x0800, 0x0800, 0x893f228d ) /* U6 */
-	ROM_LOAD( "810",	  0x1000, 0x0800, 0xff0163c5 ) /* U5 */
-	ROM_LOAD( "811",	  0x1800, 0x0800, 0x219f3978 ) /* U4 */
-	ROM_LOAD( "812a",	 0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
+	ROM_LOAD( "808b",     0x0000, 0x0800, 0x5988c767 ) /* U7 */
+	ROM_LOAD( "809a",     0x0800, 0x0800, 0x893f228d ) /* U6 */
+	ROM_LOAD( "810",      0x1000, 0x0800, 0xff0163c5 ) /* U5 */
+	ROM_LOAD( "811",      0x1800, 0x0800, 0x219f3978 ) /* U4 */
+	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
 ROM_START( astrob1 )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "829",	  0x0000, 0x0800, 0x5f66046e ) /* U25 */
-	ROM_LOAD( "837",	  0x0800, 0x0800, 0xce9c3763 ) /* U1 */
-	ROM_LOAD( "838",	  0x1000, 0x0800, 0x3557289e ) /* U2 */
-	ROM_LOAD( "839",	  0x1800, 0x0800, 0xc88bda24 ) /* U3 */
-	ROM_LOAD( "840",	  0x2000, 0x0800, 0x24c9fe23 ) /* U4 */
-	ROM_LOAD( "841",	  0x2800, 0x0800, 0xf153c683 ) /* U5 */
-	ROM_LOAD( "842",	  0x3000, 0x0800, 0x4c5452b2 ) /* U6 */
-	ROM_LOAD( "843",	  0x3800, 0x0800, 0x673161a6 ) /* U7 */
-	ROM_LOAD( "844",	  0x4000, 0x0800, 0x6bfc59fd ) /* U8 */
-	ROM_LOAD( "845",	  0x4800, 0x0800, 0x018623f3 ) /* U9 */
-	ROM_LOAD( "846",	  0x5000, 0x0800, 0x4d7c5fb3 ) /* U10 */
-	ROM_LOAD( "847",	  0x5800, 0x0800, 0x24d1d50a ) /* U11 */
-	ROM_LOAD( "848",	  0x6000, 0x0800, 0x1c145541 ) /* U12 */
-	ROM_LOAD( "849",	  0x6800, 0x0800, 0xd378c169 ) /* U13 */
-	ROM_LOAD( "850",	  0x7000, 0x0800, 0x9da673ae ) /* U14 */
-	ROM_LOAD( "851",	  0x7800, 0x0800, 0x3d4cf9f0 ) /* U15 */
-	ROM_LOAD( "852",	  0x8000, 0x0800, 0xaf88a97e ) /* U16 */
+	ROM_LOAD( "829",      0x0000, 0x0800, 0x5f66046e ) /* U25 */
+	ROM_LOAD( "837",      0x0800, 0x0800, 0xce9c3763 ) /* U1 */
+	ROM_LOAD( "838",      0x1000, 0x0800, 0x3557289e ) /* U2 */
+	ROM_LOAD( "839",      0x1800, 0x0800, 0xc88bda24 ) /* U3 */
+	ROM_LOAD( "840",      0x2000, 0x0800, 0x24c9fe23 ) /* U4 */
+	ROM_LOAD( "841",      0x2800, 0x0800, 0xf153c683 ) /* U5 */
+	ROM_LOAD( "842",      0x3000, 0x0800, 0x4c5452b2 ) /* U6 */
+	ROM_LOAD( "843",      0x3800, 0x0800, 0x673161a6 ) /* U7 */
+	ROM_LOAD( "844",      0x4000, 0x0800, 0x6bfc59fd ) /* U8 */
+	ROM_LOAD( "845",      0x4800, 0x0800, 0x018623f3 ) /* U9 */
+	ROM_LOAD( "846",      0x5000, 0x0800, 0x4d7c5fb3 ) /* U10 */
+	ROM_LOAD( "847",      0x5800, 0x0800, 0x24d1d50a ) /* U11 */
+	ROM_LOAD( "848",      0x6000, 0x0800, 0x1c145541 ) /* U12 */
+	ROM_LOAD( "849",      0x6800, 0x0800, 0xd378c169 ) /* U13 */
+	ROM_LOAD( "850",      0x7000, 0x0800, 0x9da673ae ) /* U14 */
+	ROM_LOAD( "851",      0x7800, 0x0800, 0x3d4cf9f0 ) /* U15 */
+	ROM_LOAD( "852",      0x8000, 0x0800, 0xaf88a97e ) /* U16 */
 
 	ROM_REGION(0x10)      /* background graphics (unused) */
 
 	ROM_REGION(0x10)      /* background charmap (unused) */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for speech code */
-	ROM_LOAD( "808b",	 0x0000, 0x0800, 0x5988c767 ) /* U7 */
-	ROM_LOAD( "809a",	 0x0800, 0x0800, 0x893f228d ) /* U6 */
-	ROM_LOAD( "810",	  0x1000, 0x0800, 0xff0163c5 ) /* U5 */
-	ROM_LOAD( "811",	  0x1800, 0x0800, 0x219f3978 ) /* U4 */
-	ROM_LOAD( "812a",	 0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
+	ROM_LOAD( "808b",     0x0000, 0x0800, 0x5988c767 ) /* U7 */
+	ROM_LOAD( "809a",     0x0800, 0x0800, 0x893f228d ) /* U6 */
+	ROM_LOAD( "810",      0x1000, 0x0800, 0xff0163c5 ) /* U5 */
+	ROM_LOAD( "811",      0x1800, 0x0800, 0x219f3978 ) /* U4 */
+	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
 ROM_START( 005 )
@@ -1382,541 +1686,49 @@ ROM_END
   Security Decode "chips"
 ***************************************************************************/
 
-static void astrob_decode(void)
+static void init_astrob(void)
 {
 	/* This game uses the 315-0062 security chip */
 	sega_security(62);
 }
 
-static void s005_decode(void)
+static void init_s005(void)
 {
 	/* This game uses the 315-0070 security chip */
 	sega_security(70);
 }
 
-static void monsterb_decode(void)
+static void init_monsterb(void)
 {
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
 }
 
-static void spaceod_decode(void)
+static void init_spaceod(void)
 {
 	/* This game uses the 315-0063 security chip */
 	sega_security(63);
 }
 
-static void pignewt_decode(void)
+static void init_pignewt(void)
 {
 	/* This game uses the 315-0063? security chip */
 	sega_security(63);
 }
 
-
-
-static struct Samplesinterface astrob_samples_interface =
+static void init_sindbadm(void)
 {
-	12,	/* 12 channels */
-	25,	/* volume */
-	astrob_sample_names
-};
-
-/* TODO: someday this will become a speech synthesis interface */
-static struct CustomSound_interface astrob_custom_interface =
-{
-	astrob_speech_sh_start,
-	0,
-	astrob_speech_sh_update
-};
-
-static struct MachineDriver machine_driver_astrob =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz ??? */
-			readmem,writemem,readport,astrob_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_I8035 | CPU_AUDIO_CPU,
-			3120000/15,	/* 3.12Mhz crystal ??? */
-			speech_readmem,speech_writemem,speech_readport,speech_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16*4+1,16*4+1,	  // 16 2-bit colors + 1 transparent black
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	segar_vh_start,
-	generic_vh_stop,
-	segar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&astrob_custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&astrob_samples_interface
-		}
-	}
-};
-
-static struct Samplesinterface spaceod_samples_interface =
-{
-	12,	/* 12 channels */
-	25,	/* volume */
-	spaceod_sample_names
-};
-
-static struct MachineDriver machine_driver_spaceod =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz ??? */
-			readmem,writemem,readport,spaceod_writeport,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	spaceod_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,	      // 16 2-bit colors for foreground, 1 6-bit color for background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	spaceod_vh_start,
-	spaceod_vh_stop,
-	spaceod_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&spaceod_samples_interface
-		}
-	}
-};
-
-static struct Samplesinterface s005_samples_interface =
-{
-	12,	/* 12 channels */
-	25,	/* volume */
-	s005_sample_names
-};
-
-static struct MachineDriver machine_driver_s005 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz ??? */
-			readmem,writemem,readport,s005_writeport,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16*4+1,16*4+1,	  // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	segar_vh_start,
-	generic_vh_stop,
-	segar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&s005_samples_interface
-		}
-	}
-};
-
-static struct Samplesinterface monsterb_samples_interface =
-{
-	2,	/* 2 channels */
-	25,	/* volume */
-	monsterb_sample_names
-};
-
-static struct DACinterface monsterb_dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-static struct CustomSound_interface monsterb_custom_interface =
-{
-	TMS3617_sh_start,
-	TMS3617_sh_stop,
-	TMS3617_sh_update
-};
-
-static struct MachineDriver machine_driver_monsterb =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz ??? */
-			readmem,writemem,readport,monsterb_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_N7751 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6Mhz crystal */
-			monsterb_7751_readmem,monsterb_7751_writemem,monsterb_7751_readport,monsterb_7751_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,	      // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	monsterb_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&monsterb_custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&monsterb_samples_interface
-		},
-		{
-			SOUND_DAC,
-			&monsterb_dac_interface
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_pignewt =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz ??? */
-			readmem,writemem,readport,pignewt_writeport,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,	      // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	sindbadm_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0
-};
-
-
-static struct SN76496interface sn76496_interface =
-{
-	2,	      /* 2 chips */
-	{ 2000000, 4000000 },	/* I'm assuming that the sound board is the same as System 1 */
-	{ 100, 100 }
-};
-
-static struct MachineDriver machine_driver_sindbadm =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz ? - see system1.c */
-			sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
-			interrupt,4		     /* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,	      // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	sindbadm_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
-
-
-
-
-
-struct GameDriver driver_astrob =
-{
-	__FILE__,
-	0,
-	"astrob",
-	"Astro Blaster (version 2)",
-	"1981",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_astrob,
-	astrob_decode,
-
-	rom_astrob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astrob,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_astrob1 =
-{
-	__FILE__,
-	&driver_astrob,
-	"astrob1",
-	"Astro Blaster (version 1)",
-	"1981",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_astrob,
-	astrob_decode,
-
-	rom_astrob1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astrob1,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_005 =
-{
-	__FILE__,
-	0,
-	"005",
-	"005",
-	"1981",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_s005,
-	s005_decode,
-
-	rom_005,
-	0, 0,
-	0,
-	0,
-
-	input_ports_005,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_monsterb =
-{
-	__FILE__,
-	0,
-	"monsterb",
-	"Monster Bash",
-	"1982",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_monsterb,
-	monsterb_decode,
-
-	rom_monsterb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_monsterb,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_spaceod =
-{
-	__FILE__,
-	0,
-	"spaceod",
-	"Space Odyssey",
-	"1981",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_spaceod,
-	spaceod_decode,
-
-	rom_spaceod,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spaceod,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_pignewt =
-{
-	__FILE__,
-	0,
-	"pignewt",
-	"Pig Newton (Revision C)",
-	"1983",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_pignewt,
-	pignewt_decode,
-
-	rom_pignewt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pignewt,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_pignewta =
-{
-	__FILE__,
-	&driver_pignewt,
-	"pignewta",
-	"Pig Newton (Revision A)",
-	"1983",
-	"Sega",
-	"Dave Fish (security consultant)\nMike Balfour (game driver)",
-	0,
-	&machine_driver_pignewt,
-	pignewt_decode,
-
-	rom_pignewta,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pignewta,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_sindbadm =
-{
-	__FILE__,
-	0,
-	"sindbadm",
-	"Sindbad Mystery",
-	"1983",
-	"Sega",
-	"Mike Balfour\nNicola Salmoria",
-	0,
-	&machine_driver_sindbadm,
-	sindbadm_decode,
-
-	rom_sindbadm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sindbadm,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+	/* This game uses an encrypted CPU */
+	sindbadm_decode();
+}
+
+
+
+GAME( 1981, astrob,   0,       astrob,   astrob,   astrob,   ROT270, "Sega", "Astro Blaster (version 2)" )
+GAME( 1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "Astro Blaster (version 1)" )
+GAME( 1981, 005,      0,       s005,     005,      s005,     ROT270, "Sega", "005" )
+GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash" )
+GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey" )
+GAME( 1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (Revision C)" )
+GAME( 1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (Revision A)" )
+GAME( 1983, sindbadm, 0,       sindbadm, sindbadm, sindbadm, ROT270, "Sega", "Sindbad Mystery" )

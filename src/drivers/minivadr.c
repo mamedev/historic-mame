@@ -50,7 +50,7 @@ INPUT_PORTS_START( minivadr )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_minivadr =
 {
 	/* basic machine hardware */
 	{
@@ -94,29 +94,4 @@ ROM_START( minivadr )
 ROM_END
 
 
-struct GameDriver driver_minivadr =
-{
-	__FILE__,
-	0,
-	"minivadr",
-	"Minivader",
-	"1990",
-	"Taito Corporation",
-	"Takahiro Nogi",
-	0,
-	&machine_driver,
-	0,
-
-	rom_minivadr,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_minivadr,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1990, minivadr, 0, minivadr, minivadr, 0, ROT0, "Taito Corporation", "Minivader" )

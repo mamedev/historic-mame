@@ -173,7 +173,7 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		pfindex = playfield;
 		pfcolor = playcolor;
-		pf = memory_region(5) + (pfindex << 10);
+		pf = memory_region(REGION_GFX4) + (pfindex << 10);
 	}
 
 	/* force a full update if the playfield has changed */

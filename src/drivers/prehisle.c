@@ -217,10 +217,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,   0, 16 },
-	{ 1, 0x008000, &tilelayout, 768, 16 },
-	{ 1, 0x048000, &tilelayout, 512, 16 },
-	{ 1, 0x088000, &spritelayout, 256, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &tilelayout, 768, 16 },
+	{ REGION_GFX3, 0, &tilelayout, 512, 16 },
+	{ REGION_GFX4, 0, &spritelayout, 256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -244,7 +244,7 @@ static struct UPD7759_interface upd7759_interface =
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
-	{ 3 },		/* memory region */
+	{ REGION_SOUND1 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
@@ -307,21 +307,27 @@ ROM_START( prehisle )
 	ROM_LOAD_EVEN( "gt.2", 0x00000, 0x20000, 0x7083245a )
 	ROM_LOAD_ODD ( "gt.3", 0x00000, 0x20000, 0x6d8cdf58 )
 
-	ROM_REGION_DISPOSE(0x128000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
-	ROM_LOAD( "pi8914.b14", 0x008000, 0x40000, 0x207d6187 )
-	ROM_LOAD( "pi8916.h16", 0x048000, 0x40000, 0x7cffe0f6 )
-	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
-	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
 
-	ROM_REGION(0x10000) /* Tile map */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8914.b14", 0x000000, 0x40000, 0x207d6187 )
+
+	ROM_REGIONX( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8916.h16", 0x000000, 0x40000, 0x7cffe0f6 )
+
+	ROM_REGIONX( 0x0a0000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8910.k14", 0x000000, 0x80000, 0x5a101b0b )
+	ROM_LOAD( "gt.5",       0x080000, 0x20000, 0x3d3ab273 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* background tilemaps */
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
 ROM_END
 
 ROM_START( prehislu )
@@ -329,43 +335,55 @@ ROM_START( prehislu )
 	ROM_LOAD_EVEN( "gt-u2.2h", 0x00000, 0x20000, 0xa14f49bb )
 	ROM_LOAD_ODD ( "gt-u3.3h", 0x00000, 0x20000, 0xf165757e )
 
-	ROM_REGION_DISPOSE(0x128000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
-	ROM_LOAD( "pi8914.b14", 0x008000, 0x40000, 0x207d6187 )
-	ROM_LOAD( "pi8916.h16", 0x048000, 0x40000, 0x7cffe0f6 )
-	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
-	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
 
-	ROM_REGION(0x10000) /* Tile map */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8914.b14", 0x000000, 0x40000, 0x207d6187 )
+
+	ROM_REGIONX( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8916.h16", 0x000000, 0x40000, 0x7cffe0f6 )
+
+	ROM_REGIONX( 0x0a0000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8910.k14", 0x000000, 0x80000, 0x5a101b0b )
+	ROM_LOAD( "gt.5",       0x080000, 0x20000, 0x3d3ab273 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* background tilemaps */
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
 ROM_END
 
-ROM_START( prehislj )
+ROM_START( gensitou )
 	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt2j.bin", 0x00000, 0x20000, 0xa2da0b6b )
 	ROM_LOAD_ODD ( "gt3j.bin", 0x00000, 0x20000, 0xc1a0ae8e )
 
-	ROM_REGION_DISPOSE(0x128000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
-	ROM_LOAD( "pi8914.b14", 0x008000, 0x40000, 0x207d6187 )
-	ROM_LOAD( "pi8916.h16", 0x048000, 0x40000, 0x7cffe0f6 )
-	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
-	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gt15.b15",   0x000000, 0x08000, 0xac652412 )
 
-	ROM_REGION(0x10000) /* Tile map */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8914.b14", 0x000000, 0x40000, 0x207d6187 )
+
+	ROM_REGIONX( 0x040000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8916.h16", 0x000000, 0x40000, 0x7cffe0f6 )
+
+	ROM_REGIONX( 0x0a0000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pi8910.k14", 0x000000, 0x80000, 0x5a101b0b )
+	ROM_LOAD( "gt.5",       0x080000, 0x20000, 0x3d3ab273 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX5 )	/* background tilemaps */
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "gt.4",  0x000000, 0x20000, 0x85dfb9ec )
 ROM_END
 
 /******************************************************************************/
@@ -382,7 +400,7 @@ static int world_cycle_r(int offset)
 	return ret;
 }
 
-static void world_memory(void)
+static void init_prehisle(void)
 {
 	install_mem_read_handler(0, 0x70024, 0x70025, world_cycle_r);
 }
@@ -399,7 +417,7 @@ static int usa_cycle_r(int offset)
 	return ret;
 }
 
-static void usa_memory(void)
+static void init_prehislu(void)
 {
 	install_mem_read_handler(0, 0x70024, 0x70025, usa_cycle_r);
 }
@@ -416,85 +434,13 @@ static int jap_cycle_r(int offset)
 	return ret;
 }
 
-static void jap_memory(void)
+static void init_gensitou(void)
 {
 	install_mem_read_handler(0, 0x70024, 0x70025, jap_cycle_r);
 }
 
 /******************************************************************************/
 
-struct GameDriver driver_prehisle =
-{
-	__FILE__,
-	0,
-	"prehisle",
-	"Prehistoric Isle in 1930 (World)",
-	"1989",
-	"SNK",
-	"Bryan McPhail\nCarlos Alberto Lozano Baides",
-	0,
-	&machine_driver_prehisle,
-	world_memory,
-
-	rom_prehisle,
-	0, 0,
-	0,
-	0,
-
-	input_ports_prehisle,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_prehislu =
-{
-	__FILE__,
-	&driver_prehisle,
-	"prehislu",
-	"Prehistoric Isle in 1930 (US)",
-	"1989",
-	"SNK of America",
-	"Bryan McPhail\nCarlos Alberto Lozano Baides",
-	0,
-	&machine_driver_prehisle,
-	usa_memory,
-
-	rom_prehislu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_prehisle,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_prehislj =
-{
-	__FILE__,
-	&driver_prehisle,
-	"gensitou",
-	"Genshi-Tou 1930's",
-	"1989",
-	"SNK",
-	"Bryan McPhail\nCarlos Alberto Lozano Baides",
-	0,
-	&machine_driver_prehisle,
-	jap_memory,
-
-	rom_prehislj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_prehisle,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
+GAME( 1989, prehisle, 0,        prehisle, prehisle, prehisle, ROT0, "SNK", "Prehistoric Isle in 1930 (World)" )
+GAME( 1989, prehislu, prehisle, prehisle, prehisle, prehislu, ROT0, "SNK of America", "Prehistoric Isle in 1930 (US)" )
+GAME( 1989, gensitou, prehisle, prehisle, prehisle, gensitou, ROT0, "SNK", "Genshi-Tou 1930's" )

@@ -34,7 +34,7 @@
 /* 730 - 4 Player Bowling                (midwbowl)                         */
 /* 739 - Space Invaders                  (invaders)                         */
 /* 742 - Blue Shark                      (blueshrk)                         */
-/* 851 - Space Invaders II cocktail      NO DRIVER                          */
+/* 851 - Space Invaders II cocktail      (invad2ct)                         */
 /* 852 - Space Invaders Deluxe           (invdpt2m)                         */
 /* 870 - Space Invaders Deluxe cocktail  NO DRIVER                          */
 /*                                                                          */
@@ -123,6 +123,7 @@ extern unsigned char *invaders_videoram;
 void boothill_videoram_w(int offset,int data);   /* MAB */
 void invaders_videoram_w(int offset,int data);
 void invdpt2m_videoram_w(int offset,int data);   /* V.V */
+void invad2ct_videoram_w(int offset,int data);   /* F.P.*/
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
@@ -130,10 +131,12 @@ void rollingc_videoram_w(int offset,int data);   /* L.T */
 int  invaders_vh_start(void);
 void invaders_vh_stop(void);
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void invad2ct_sh_port1_w(int offset,int data);
 void invaders_sh_port3_w(int offset,int data);
 void invaders_sh_port4_w(int offset,int data);
 void invadpt2_sh_port3_w(int offset,int data);
 void invaders_sh_port5_w(int offset,int data);
+void invad2ct_sh_port7_w(int offset,int data);
 void invaders_sh_update(void);
 void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -309,15 +312,29 @@ INPUT_PORTS_END
 static const char *invaders_sample_names[] =
 {
 	"*invaders",
-	"0.wav",
-	"1.wav",
-	"2.wav",
-	"3.wav",
-	"4.wav",
-	"5.wav",
-	"6.wav",
-	"7.wav",
-	"8.wav",
+
+/* these are used in invaders, invadpt2, invdpt2m, and others */
+	"0.wav",	/* UFO/Saucer */
+	"1.wav",	/* Shot/Missle */
+	"2.wav",	/* Base Hit/Explosion */
+	"3.wav",	/* Invader Hit */
+	"4.wav",	/* Fleet move 1 */
+	"5.wav",	/* Fleet move 2 */
+	"6.wav",	/* Fleet move 3 */
+	"7.wav",	/* Fleet move 4 */
+	"8.wav",	/* UFO/Saucer Hit */
+	"9.wav",	/* Bonus Base */
+
+/* these are only use by invad2ct */
+	"10.wav",	/* UFO/Saucer - Player 2 */
+	"11.wav",	/* Shot/Missle - Player 2 */
+	"12.wav",	/* Base Hit/Explosion - Player 2 */
+	"13.wav",	/* Invader Hit - Player 2 */
+	"14.wav",	/* Fleet move 1 - Player 2 */
+	"15.wav",	/* Fleet move 2 - Player 2 */
+	"16.wav",	/* Fleet move 3 - Player 2 */
+	"17.wav",	/* Fleet move 4 - Player 2 */
+	"18.wav",	/* UFO/Saucer Hit - Player 2 */
 	0       /* end of array */
 };
 
@@ -333,7 +350,7 @@ static const char *boothill_sample_names[] =
 
 static struct Samplesinterface samples_interface =
 {
-	9,	/* 9 channels */
+	13,	/* 13 channels */
 	25,	/* volume */
 	invaders_sample_names
 };
@@ -616,8 +633,8 @@ INPUT_PORTS_START( invrvnge )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_invrvnge =
@@ -762,6 +779,127 @@ static struct MachineDriver machine_driver_invdpt2m =
 	}
 };
 
+/*******************************************************/
+/*                                                     */
+/* Midway "Space Invaders II Cocktail"                 */
+/*                                                     */
+/*******************************************************/
+
+static struct MemoryWriteAddress invad2ct_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, invad2ct_videoram_w, &invaders_videoram },
+	{ 0x4000, 0x5fff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort invad2ct_writeport[] =
+{
+	{ 0x01, 0x01, invad2ct_sh_port1_w },
+	{ 0x02, 0x02, invaders_shift_amount_w },
+	{ 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
+	{ 0x07, 0x07, invad2ct_sh_port7_w },
+	{ -1 }  /* end of table */
+};
+
+INPUT_PORTS_START( invad2ct )
+	PORT_START
+	PORT_SERVICE(0x01, IP_ACTIVE_LOW) 			  /* dip 8 */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* labelled reset but tied to pull-up */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) ) /* dips 4 & 3 */
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )   /* tied to pull-up */
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* dip 2 */
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Bonus_Life ) ) /* dip 1 */
+	PORT_DIPSETTING(    0x80, "1500" )
+	PORT_DIPSETTING(    0x00, "2000" )
+INPUT_PORTS_END
+
+static unsigned char invad2ct_palette[] =
+{
+	0x00,0x00,0x00, /* BLACK */
+	0xff,0x20,0x20, /* RED */
+	0x20,0xff,0x20, /* GREEN */
+	0xff,0xff,0x20, /* YELLOW */
+	0xff,0xff,0xff, /* WHITE */
+	0x20,0xff,0xff, /* CYAN */
+	0xff,0x20,0xff, /* PURPLE */
+
+	/* I need some extra colors for the transition regions in the overlay */
+
+	0xff,0x90,0x20, /* ORANGE */
+	0x90,0xff,0x20, /* YELLOW_GREEN */
+	0x20,0xff,0x90, /* GREEN_CYAN */
+};
+static void invad2ct_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,invad2ct_palette,sizeof(invad2ct_palette));
+}
+
+static struct MachineDriver machine_driver_invad2ct =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			1996800,        /* 19.968Mhz / 10 */
+			readmem, invad2ct_writemem, invdpt2m_readport, invad2ct_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(invad2ct_palette) / sizeof(invad2ct_palette[0]) / 3, 0,
+	invad2ct_init_palette,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
 
 /*******************************************************/
 /*                                                     */
@@ -892,8 +1030,8 @@ INPUT_PORTS_START( galxwars )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 
@@ -1281,17 +1419,17 @@ INPUT_PORTS_START( bandido )                        /* MJC */
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, "Cocktail (SEE NOTES)" )
@@ -1644,9 +1782,9 @@ INPUT_PORTS_START( clowns )
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 or 2 Players Game" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 or 2 Players Game" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -1750,8 +1888,8 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x30, "None" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /*******************************************************/
@@ -1796,8 +1934,8 @@ INPUT_PORTS_START( seawolf )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_TILT ) // Reset High Scores
 	PORT_DIPNAME( 0xe0, 0x00, "Extended Play" )
@@ -2235,8 +2373,8 @@ INPUT_PORTS_START( spacefev )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 //	PORT_DIPNAME( 0xfc, 0x00, "Unknown" )
-//	PORT_DIPSETTING(    0x00, "On" )
-//	PORT_DIPSETTING(    0xfc, "Off" )
+//	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+//	PORT_DIPSETTING(    0xfc, DEF_STR( Off ) )
 INPUT_PORTS_END
 
 
@@ -2317,8 +2455,8 @@ INPUT_PORTS_START( polaris )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, "Preset Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -2440,9 +2578,9 @@ INPUT_PORTS_START( m4 )
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit (or 2 Players)" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit (or 2 Players)" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x04, "70" )
@@ -2629,15 +2767,15 @@ INPUT_PORTS_START( dogpatch )
 	PORT_DIPSETTING(    0x00, "25" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, "2 Coins/1 Credit (1 or 2 Players)" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit (1 or 2 Players)" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0x10, "3 extra cans" )
 	PORT_DIPSETTING(    0x00, "5 extra cans" )
 	PORT_DIPNAME( 0x20, 0x20, "Test Mode" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0xc0, "150 Pts" )
 	PORT_DIPSETTING(    0x80, "175 Pts" )
@@ -2722,8 +2860,8 @@ INPUT_PORTS_START( midwbowl )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* effects button 1 */
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -2813,8 +2951,8 @@ INPUT_PORTS_START( blueshrk )
 	PORT_DIPSETTING(    0x60, "22000" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN1 */
 	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 10, 0, 0xf, 0x7f)
@@ -2898,8 +3036,8 @@ INPUT_PORTS_START( einnings )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x40, 0x40, "Test Mode")
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
@@ -2931,29 +3069,29 @@ INPUT_PORTS_START( maze )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_maze =
@@ -3034,8 +3172,8 @@ INPUT_PORTS_START( tornbase )
 	PORT_DIPSETTING(    0x68, "2 Coins/9 Innings" )
 	PORT_DIPSETTING(    0x60, "1 Coin/9 Innings" )
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_tornbase =
@@ -3115,24 +3253,24 @@ INPUT_PORTS_START( checkmat )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Playera" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 to 4 Players" )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x00, "Rounds" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x00, "Language?" )
 	PORT_DIPSETTING(    0x00, "English?" )
 	PORT_DIPSETTING(    0x20, "German?" )
 	PORT_DIPSETTING(    0x40, "French?" )
 	PORT_DIPSETTING(    0x60, "Spanish?" )
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode")
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
     PORT_START       /* IN3  */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -3216,8 +3354,8 @@ INPUT_PORTS_START( ozmawars )
 	PORT_DIPSETTING(    0x03, "35000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode?" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
@@ -3266,8 +3404,8 @@ INPUT_PORTS_START( solfight )
 	PORT_DIPSETTING(    0x03, "35000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode?" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
@@ -3350,8 +3488,8 @@ INPUT_PORTS_START( sinvemag )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -3390,12 +3528,12 @@ INPUT_PORTS_START( alieninv )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPNAME( 0x02, 0x02, "Pence Coinage" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) /* Pence Coin */
 	PORT_DIPNAME( 0x08, 0x08, "Unknown" ) /* Not bonus */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
@@ -3653,6 +3791,57 @@ static struct MachineDriver machine_driver_sicv =
 
 /*******************************************************/
 /*                                                     */
+/* Jatre Specter (Taito?)                              */
+/*                                                     */
+/*******************************************************/
+
+INPUT_PORTS_START( jspecter )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	/* Note: There must have been a toggle switch on the outside of the unit.
+	   The difficulty can be set by the player */
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "A (Hard)" )
+    PORT_DIPSETTING(    0x80, "B (Easy)" )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+/*******************************************************/
+/*                                                     */
 /* Taito "Balloon Bomber"                              */
 /*                                                     */
 /*******************************************************/
@@ -3781,8 +3970,8 @@ INPUT_PORTS_START( spacewr3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -3902,6 +4091,12 @@ ROM_START( sisv2 )
 	ROM_LOAD( "sv14",        0x1c00, 0x0400, 0x58730370 )
 ROM_END
 
+ROM_START( jspecter )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "3305.u6",      0x0000, 0x1000, 0xab211a4f )
+	ROM_LOAD( "3306.u7",      0x1400, 0x1000, 0x0df142a7 )
+ROM_END
+
 ROM_START( invadpt2 )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
@@ -3918,6 +4113,16 @@ ROM_START( invdpt2m )
 	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, 0xf4aa1880 )
 	ROM_LOAD( "invdelux.e",   0x1800, 0x0800, 0x408849c1 )
 	ROM_LOAD( "invdelux.d",   0x4000, 0x0800, 0xe8d5afcd )
+ROM_END
+
+ROM_START( invad2ct )
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_LOAD( "invad2ct.h",   0x0000, 0x0800, 0x51d02a71 )
+    ROM_LOAD( "invad2ct.g",   0x0800, 0x0800, 0x533ac770 )
+    ROM_LOAD( "invad2ct.f",   0x1000, 0x0800, 0xd1799f39 )
+    ROM_LOAD( "invad2ct.e",   0x1800, 0x0800, 0x291c1418 )
+    ROM_LOAD( "invad2ct.b",   0x5000, 0x0800, 0x8d9a07c4 )
+    ROM_LOAD( "invad2ct.a",   0x5800, 0x0800, 0xefdabb03 )
 ROM_END
 
 ROM_START( invrvnge )
@@ -4365,61 +4570,63 @@ ROM_END
 
 
 
-GAME( 1978, invaders, ,         invaders, invaders, , ROT270, "Midway", "Space Invaders" )
-GAME( 1980, earthinv, invaders, invaders, earthinv, , ROT270, "bootleg", "Super Earth Invasion" )
-GAME( 1980, spaceatt, invaders, invaders, spaceatt, , ROT270, "Zenitone Microsec", "Space Attack II" )
-GAME( ????, sinvemag, invaders, invaders, sinvemag, , ROT270, "bootleg", "Super Invaders" )
-GAME( ????, alieninv, invaders, invaders, alieninv, , ROT270, "bootleg", "Alien Invasion Part II" )
-GAME( 1978, si_tv,    invaders, sitv,     sitv,     , ROT270, "Taito", "Space Invaders (TV Version)" )
-GAME( 1979, si_cv,    invaders, sicv,     sicv,     , ROT270, "Taito", "Space Invaders Colour (CV Version)" )
-GAME( 1978, si_sv,    invaders, invaders, sicv,	    , ROT270, "Taito", "Space Invaders (SV Version)" )
-GAME( 1978, spacewr3, invaders, invaders, spacewr3, , ROT270, "bootleg", "Space War Part 3" )
-GAME( 1978, logitec,  invaders, invaders, invaders, , ROT270, "bootleg", "Space Invaders (Logitec)" )
-GAME( 1978, sisv2,    invaders, invaders, invaders, , ROT270, "Taito", "Space Invaders (SV Version 2)" )
-GAME( 1980, invadpt2, ,         invadpt2, invadpt2, , ROT270, "Taito", "Space Invaders Part II (Taito)" )
-GAME( 1980, invdpt2m, invadpt2, invdpt2m, invdpt2m, , ROT270, "Midway", "Space Invaders Part II (Midway)" )
-GAME( ????, invrvnge, ,         invrvnge, invrvnge, , ROT270, "Zenitone Microsec", "Invader's Revenge" )
-GAME( ????, invrvnga, invrvnge, invrvnge, invrvnge, , ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)" )
-GAME( 1980, astlaser, ,         invdpt2m, astlaser, , ROT270, "<unknown>", "Astro Laser" )
-GAME( 1980, intruder, astlaser, invdpt2m, intruder, , ROT270, "Game Plan, Inc. (Taito)", "Intruder" )
-GAME( 1979, galxwars, ,         invaders, galxwars, , ROT270, "Taito", "Galaxy Wars" )
-GAME( 1979, starw,    galxwars, invaders, galxwars, , ROT270, "bootleg", "Star Wars" )
-GAME( 1979, lrescue,  ,         lrescue,  lrescue,  , ROT270, "Taito", "Lunar Rescue" )
-GAME( 1979, grescue,  lrescue,  lrescue,  lrescue,  , ROT270, "Taito (Universal license?)", "Galaxy Rescue" )
-GAME( 1979, desterth, lrescue,  invaders, desterth, , ROT270, "bootleg", "Destination Earth" )
-GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, , ROT270, "Universal", "Cosmic Monsters" )
-GAME( 1979, rollingc, ,         rollingc, rollingc, , ROT270, "Nichibutsu", "Rolling Crash / Moon Base" )
-GAME( 1977, boothill, ,         boothill, boothill, , ROT0,   "Midway", "Boot Hill" )
-GAME( 1980, schaser,  ,         lrescue,  schaser,  , ROT270, "Taito", "Space Chaser" )
-GAME( 1980, spcenctr, ,         spcenctr, spcenctr, , ROT0,   "Midway", "Space Encounters" )
-GAME( 1978, clowns,   ,         clowns,   clowns,   , ROT0,   "Midway", "Clowns" )
-GAME( 1977, gmissile, ,         gmissile, gmissile, , ROT0,   "Midway", "Guided Missile" )
-GAME( 1976, seawolf,  ,         seawolf,  seawolf,  , ROT0,   "Midway", "Sea Wolf" )
-GAME( 1975, gunfight, ,         gunfight, gunfight, , ROT0,   "Midway", "Gun Fight" )
-GAME( 1976, 280zzzap, ,         zzzap,    zzzap,    , ROT0,   "Midway", "Datsun 280 Zzzap" )
-GAME( 1980, lupin3,   ,         lupin3,   lupin3,   , ROT270, "Taito", "Lupin III" )
-GAME( 1980, polaris,  ,         polaris,  polaris,  , ROT270, "Taito", "Polaris (set 1)" )
-GAME( 1980, polarisa, polaris,  polaris,  polaris,  , ROT270, "Taito", "Polaris (set 2)" )
-GAME( 1977, lagunar,  ,         zzzap,    lagunar,  , ROT90,  "Midway", "Laguna Racer" )
-GAME( 1977, m4,       ,         m4,       m4,       , ROT0,   "Midway", "M-4" )
-GAME( 1979, phantom2, ,         phantom2, phantom2, , ROT0,   "Midway", "Phantom II" )
-GAME( 1977, dogpatch, ,         dogpatch, dogpatch, , ROT0,   "Midway", "Dog Patch" )
-GAME( 1978, bowler,   ,         midwbowl, midwbowl, , ROT90,  "Midway", "4 Player Bowling" )
-GAME( 1978, blueshrk, ,         blueshrk, blueshrk, , ROT0,   "Midway", "Blue Shark" )
-GAME( 1978, einnings, ,         gmissile, einnings, , ROT0,   "Midway", "Extra Innings" )
-GAME( 1977, dplay,    ,         gmissile, einnings, , ROT0,   "Midway", "Double Play" )
+GAME( 1978, invaders, 0,        invaders, invaders, 0, ROT270, "Midway", "Space Invaders" )
+GAME( 1980, earthinv, invaders, invaders, earthinv, 0, ROT270, "bootleg", "Super Earth Invasion" )
+GAME( 1980, spaceatt, invaders, invaders, spaceatt, 0, ROT270, "Zenitone Microsec", "Space Attack II" )
+GAME( ????, sinvemag, invaders, invaders, sinvemag, 0, ROT270, "bootleg", "Super Invaders" )
+GAME( ????, alieninv, invaders, invaders, alieninv, 0, ROT270, "bootleg", "Alien Invasion Part II" )
+GAME( 1978, si_tv,    invaders, sitv,     sitv,     0, ROT270, "Taito", "Space Invaders (TV Version)" )
+GAME( 1979, si_cv,    invaders, sicv,     sicv,     0, ROT270, "Taito", "Space Invaders Colour (CV Version)" )
+GAME( 1978, si_sv,    invaders, invaders, sicv,     0, ROT270, "Taito", "Space Invaders (SV Version)" )
+GAME( 1978, spacewr3, invaders, invaders, spacewr3, 0, ROT270, "bootleg", "Space War Part 3" )
+GAME( 1978, logitec,  invaders, invaders, invaders, 0, ROT270, "bootleg", "Space Invaders (Logitec)" )
+GAME( 1978, sisv2,    invaders, invaders, invaders, 0, ROT270, "Taito", "Space Invaders (SV Version 2)" )
+GAME( ????, jspecter, invaders, invaders, jspecter, 0, ROT270, "Taito?", "Jatre Specter" )
+GAME( 1980, invadpt2, 0,        invadpt2, invadpt2, 0, ROT270, "Taito", "Space Invaders Part II (Taito)" )
+GAME( 1980, invdpt2m, invadpt2, invdpt2m, invdpt2m, 0, ROT270, "Midway", "Space Invaders Part II (Midway)" )
+GAME( 1980, invad2ct, 0,        invad2ct, invad2ct, 0, ROT90,  "Midway", "Space Invaders II Cocktail (Midway)" )
+GAME( ????, invrvnge, 0,        invrvnge, invrvnge, 0, ROT270, "Zenitone Microsec", "Invader's Revenge" )
+GAME( ????, invrvnga, invrvnge, invrvnge, invrvnge, 0, ROT270, "Zenitone Microsec (Dutchford license)", "Invader's Revenge (Dutchford)" )
+GAME( 1980, astlaser, 0,        invdpt2m, astlaser, 0, ROT270, "<unknown>", "Astro Laser" )
+GAME( 1980, intruder, astlaser, invdpt2m, intruder, 0, ROT270, "Game Plan, Inc. (Taito)", "Intruder" )
+GAME( 1979, galxwars, 0,        invaders, galxwars, 0, ROT270, "Taito", "Galaxy Wars" )
+GAME( 1979, starw,    galxwars, invaders, galxwars, 0, ROT270, "bootleg", "Star Wars" )
+GAME( 1979, lrescue,  0,        lrescue,  lrescue,  0, ROT270, "Taito", "Lunar Rescue" )
+GAME( 1979, grescue,  lrescue,  lrescue,  lrescue,  0, ROT270, "Taito (Universal license?)", "Galaxy Rescue" )
+GAME( 1979, desterth, lrescue,  invaders, desterth, 0, ROT270, "bootleg", "Destination Earth" )
+GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, 0, ROT270, "Universal", "Cosmic Monsters" )
+GAME( 1979, rollingc, 0,        rollingc, rollingc, 0, ROT270, "Nichibutsu", "Rolling Crash / Moon Base" )
+GAME( 1977, boothill, 0,        boothill, boothill, 0, ROT0,   "Midway", "Boot Hill" )
+GAME( 1980, schaser,  0,        lrescue,  schaser,  0, ROT270, "Taito", "Space Chaser" )
+GAME( 1980, spcenctr, 0,        spcenctr, spcenctr, 0, ROT0,   "Midway", "Space Encounters" )
+GAME( 1978, clowns,   0,        clowns,   clowns,   0, ROT0,   "Midway", "Clowns" )
+GAME( 1977, gmissile, 0,        gmissile, gmissile, 0, ROT0,   "Midway", "Guided Missile" )
+GAME( 1976, seawolf,  0,        seawolf,  seawolf,  0, ROT0,   "Midway", "Sea Wolf" )
+GAME( 1975, gunfight, 0,        gunfight, gunfight, 0, ROT0,   "Midway", "Gun Fight" )
+GAME( 1976, 280zzzap, 0,        zzzap,    zzzap,    0, ROT0,   "Midway", "Datsun 280 Zzzap" )
+GAME( 1980, lupin3,   0,        lupin3,   lupin3,   0, ROT270, "Taito", "Lupin III" )
+GAME( 1980, polaris,  0,        polaris,  polaris,  0, ROT270, "Taito", "Polaris (set 1)" )
+GAME( 1980, polarisa, polaris,  polaris,  polaris,  0, ROT270, "Taito", "Polaris (set 2)" )
+GAME( 1977, lagunar,  0,        zzzap,    lagunar,  0, ROT90,  "Midway", "Laguna Racer" )
+GAME( 1977, m4,       0,        m4,       m4,       0, ROT0,   "Midway", "M-4" )
+GAME( 1979, phantom2, 0,        phantom2, phantom2, 0, ROT0,   "Midway", "Phantom II" )
+GAME( 1977, dogpatch, 0,        dogpatch, dogpatch, 0, ROT0,   "Midway", "Dog Patch" )
+GAME( 1978, bowler,   0,        midwbowl, midwbowl, 0, ROT90,  "Midway", "4 Player Bowling" )
+GAME( 1978, blueshrk, 0,        blueshrk, blueshrk, 0, ROT0,   "Midway", "Blue Shark" )
+GAME( 1978, einnings, 0,        gmissile, einnings, 0, ROT0,   "Midway", "Extra Innings" )
+GAME( 1977, dplay,    0,        gmissile, einnings, 0, ROT0,   "Midway", "Double Play" )
 /* "The Amazing Maze Game" on title screen, but manual, flyer, */
 /* cabinet side art all call it just "Amazing Maze" */
-GAME( 1976, maze,     ,         maze,     maze,     , ROT0,   "Midway", "Amazing Maze" )
-GAME( 1976, tornbase, ,         tornbase, tornbase, , ROT0,   "Midway", "Tornado Baseball" )
-GAME( 1977, checkmat, ,         checkmat, checkmat, , ROT0,   "Midway", "Checkmate" )
-GAME( 1979, ozmawars, ,         invadpt2, ozmawars, , ROT270, "SNK", "Ozma Wars" )
-GAME( 1979, solfight, ozmawars, invadpt2, solfight, , ROT270, "bootleg", "Solar Fight" )
-GAME( 1979, spaceph,  ozmawars, lrescue,  spaceph,  , ROT270, "Zilec Games", "Space Phantoms" )
-GAME( 1980, ballbomb, ,         ballbomb, ballbomb, , ROT270, "Taito", "Balloon Bomber" )
+GAME( 1976, maze,     0,        maze,     maze,     0, ROT0,   "Midway", "Amazing Maze" )
+GAME( 1976, tornbase, 0,        tornbase, tornbase, 0, ROT0,   "Midway", "Tornado Baseball" )
+GAME( 1977, checkmat, 0,        checkmat, checkmat, 0, ROT0,   "Midway", "Checkmate" )
+GAME( 1979, ozmawars, 0,        invadpt2, ozmawars, 0, ROT270, "SNK", "Ozma Wars" )
+GAME( 1979, solfight, ozmawars, invadpt2, solfight, 0, ROT270, "bootleg", "Solar Fight" )
+GAME( 1979, spaceph,  ozmawars, lrescue,  spaceph,  0, ROT270, "Zilec Games", "Space Phantoms" )
+GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, 0, ROT270, "Taito", "Balloon Bomber" )
 
-GAME( 1980, bandido,  ,         bandido,  bandido,  , ROT270, "Exidy", "Bandido" )
-GAME( 1980, helifire, ,         bandido,  helifire, , ROT270, "Nintendo", "HeliFire (revision B)" )
-GAME( 1980, helifira, helifire, bandido,  helifire, , ROT270, "Nintendo", "HeliFire (revision A)" )
-GAME( 1980, spacefev, ,         bandido,  spacefev, , ROT270, "Nintendo", "Color Space Fever" )
-GAME( 1980, sfeverbw, ,         bandido,  spacefev, , ROT270, "Nintendo", "Space Fever" )
+GAME( 1980, bandido,  0,        bandido,  bandido,  0, ROT270, "Exidy", "Bandido" )
+GAME( 1980, helifire, 0,        bandido,  helifire, 0, ROT270, "Nintendo", "HeliFire (revision B)" )
+GAME( 1980, helifira, helifire, bandido,  helifire, 0, ROT270, "Nintendo", "HeliFire (revision A)" )
+GAME( 1980, spacefev, 0,        bandido,  spacefev, 0, ROT270, "Nintendo", "Color Space Fever" )
+GAME( 1980, sfeverbw, 0,        bandido,  spacefev, 0, ROT270, "Nintendo", "Space Fever" )

@@ -1,3 +1,11 @@
+/***************************************************************************
+
+Return of the Invaders
+
+driver by Jarek Parchanski, Andrea Mazzoleni
+
+***************************************************************************/
+
 #include "driver.h"
 
 int  retofinv_vh_start(void);
@@ -393,11 +401,13 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,             0, 256 },
-	{ 1, 0x2000, &bglayout,           256*2,  64 },
-	{ 1, 0x6000, &spritelayout, 64*16+256*2,  64 },
+	{ REGION_GFX1, 0, &charlayout,             0, 256 },
+	{ REGION_GFX2, 0, &bglayout,           256*2,  64 },
+	{ REGION_GFX3, 0, &spritelayout, 64*16+256*2,  64 },
 	{ -1 } /* end of array */
 };
+
+
 
 static struct SN76496interface sn76496_interface =
 {
@@ -406,7 +416,9 @@ static struct SN76496interface sn76496_interface =
 	{ 80, 80 }
 };
 
-static struct MachineDriver machine_driver =
+
+
+static struct MachineDriver machine_driver_retofinv =
 {
 	/* basic machine hardware */
 	{
@@ -467,21 +479,24 @@ ROM_START( retofinv )
 	ROM_LOAD( "ic71.rom", 0x2000, 0x2000, 0x72895e37 )
 	ROM_LOAD( "ic72.rom", 0x4000, 0x2000, 0x505dd20b )
 
-	ROM_REGION_DISPOSE( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
-
-	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic55.rom", 0x0000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x2000, 0x2000, 0x03b40905 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic8.rom",  0x0000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x2000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0x4000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0x6000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
@@ -496,21 +511,24 @@ ROM_START( retofin1 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "roi.01",  0x4000, 0x2000, 0x57679062 )
 
-	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
-
-	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic55.rom", 0x0000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x2000, 0x2000, 0x03b40905 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic8.rom",  0x0000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x2000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0x4000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0x6000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
@@ -525,21 +543,24 @@ ROM_START( retofin2 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "ri-a.1c", 0x4000, 0x2000, 0x3ae7c530 )
 
-	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
-
-	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic55.rom", 0x0000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x2000, 0x2000, 0x03b40905 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic8.rom",  0x0000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x2000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0x4000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0x6000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
@@ -550,68 +571,6 @@ ROM_END
 
 
 
-struct GameDriver driver_retofinv =
-{
-	__FILE__,
-	0,
-	"retofinv",
-	"Return of the Invaders",
-	"1985",
-	"Taito Corporation",
-	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	0,
-	&machine_driver,
-	0,
-	rom_retofinv,
-	0, 0,
-	0,
-	0,
-	input_ports_retofinv,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_retofin1 =
-{
-	__FILE__,
-	&driver_retofinv,
-	"retofin1",
-	"Return of the Invaders (bootleg set 1)",
-	"1985",
-	"bootleg",
-	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	0,
-	&machine_driver,
-	0,
-	rom_retofin1,
-	0, 0,
-	0,
-	0,
-	input_ports_retofinv,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_retofin2 =
-{
-	__FILE__,
-	&driver_retofinv,
-	"retofin2",
-	"Return of the Invaders (bootleg set 2)",
-	"1985",
-	"bootleg",
-	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	0,
-	&machine_driver,
-	0,
-	rom_retofin2,
-	0, 0,
-	0,
-	0,
-	input_ports_retofinv,
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1985, retofinv, 0,        retofinv, retofinv, 0, ROT270, "Taito Corporation", "Return of the Invaders" )
+GAME( 1985, retofin1, retofinv, retofinv, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 1)" )
+GAME( 1985, retofin2, retofinv, retofinv, retofinv, 0, ROT270, "bootleg", "Return of the Invaders (bootleg set 2)" )

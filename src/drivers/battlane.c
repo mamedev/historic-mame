@@ -452,6 +452,6 @@ static void init_battlane(void)
 
 
 
-GAMEX( 1986, battlane, ,         battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 1)", GAME_WRONG_COLORS )
+GAMEX( 1986, battlane, 0,        battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 1)", GAME_WRONG_COLORS )
 GAMEX( 1986, battlan2, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 2)", GAME_WRONG_COLORS )
 GAMEX( 1986, battlan3, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 3)", GAME_WRONG_COLORS )

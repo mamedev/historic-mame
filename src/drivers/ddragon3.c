@@ -277,10 +277,10 @@ INPUT_PORTS_START( ddrago3b )
 
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -369,7 +369,7 @@ INPUT_PORTS_START( ddragon3 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
 
 	/* DSWA */
-	PORT_DIPNAME( 0x0300, 0x0300, "Coinage" )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0000, "A" )
 	PORT_DIPSETTING(      0x0100, "B" )
 	PORT_DIPSETTING(      0x0200, "C" )
@@ -458,10 +458,10 @@ INPUT_PORTS_START( ctribe )
 
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -535,8 +535,8 @@ static struct GfxLayout sprite_layout = {
 
 static struct GfxDecodeInfo ddragon3_gfxdecodeinfo[] =
 {
-	{ 2, 0x000000, &tile_layout,	  256, 32 },
-	{ 2, 0x200000, &sprite_layout,		0, 16 },
+	{ REGION_GFX1, 0, &tile_layout,	  256, 32 },
+	{ REGION_GFX2, 0, &sprite_layout,		0, 16 },
 	{ -1 }
 };
 
@@ -559,7 +559,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	{ 8500 },       /* frequency (Hz) */
-	{ 3 },          /* memory region */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 47 }
 };
 
@@ -716,38 +716,39 @@ ROM_START( ddragon3 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
 
-	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dd3.f" ,  0x000000, 0x40000, 0x89d58d32 ) /* Background */
 	ROM_LOAD( "dd3.e" ,  0x040000, 0x40000, 0x9bf1538e )
 	ROM_LOAD( "dd3.b" ,  0x080000, 0x40000, 0x8f671a62 )
 	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
 
+	ROM_REGIONX( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* sprites  */
-	ROM_LOAD( "dd3.3e" ,  0x200000, 0x20000, 0x726c49b7 ) //4a
-	ROM_LOAD( "dd3.3d" ,  0x220000, 0x20000, 0x37a1c335 ) //3a
-	ROM_LOAD( "dd3.3c" ,  0x240000, 0x20000, 0x2bcfe63c ) //2a
-	ROM_LOAD( "dd3.3b" ,  0x260000, 0x20000, 0xb864cf17 ) //1a
-	ROM_LOAD( "dd3.3a" ,  0x280000, 0x10000, 0x20d64bea ) //5a
+	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
+	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
+	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
+	ROM_LOAD( "dd3.3b" ,  0x060000, 0x20000, 0xb864cf17 ) //1a
+	ROM_LOAD( "dd3.3a" ,  0x080000, 0x10000, 0x20d64bea ) //5a
 
-	ROM_LOAD( "dd3.2e" ,  0x300000, 0x20000, 0x8c71eb06 ) //4b
-	ROM_LOAD( "dd3.2d" ,  0x320000, 0x20000, 0x3e134be9 ) //3b
-	ROM_LOAD( "dd3.2c" ,  0x340000, 0x20000, 0xb4115ef0 ) //2b
-	ROM_LOAD( "dd3.2b" ,  0x360000, 0x20000, 0x4639333d ) //1b
-	ROM_LOAD( "dd3.2a" ,  0x380000, 0x10000, 0x785d71b0 ) //5b
+	ROM_LOAD( "dd3.2e" ,  0x100000, 0x20000, 0x8c71eb06 ) //4b
+	ROM_LOAD( "dd3.2d" ,  0x120000, 0x20000, 0x3e134be9 ) //3b
+	ROM_LOAD( "dd3.2c" ,  0x140000, 0x20000, 0xb4115ef0 ) //2b
+	ROM_LOAD( "dd3.2b" ,  0x160000, 0x20000, 0x4639333d ) //1b
+	ROM_LOAD( "dd3.2a" ,  0x180000, 0x10000, 0x785d71b0 ) //5b
 
-	ROM_LOAD( "dd3.1e" ,  0x400000, 0x20000, 0x04420cc8 ) //4c
-	ROM_LOAD( "dd3.1d" ,  0x420000, 0x20000, 0x33f97b2f ) //3c
-	ROM_LOAD( "dd3.1c" ,  0x440000, 0x20000, 0x0f9a8f2a ) //2c
-	ROM_LOAD( "dd3.1b" ,  0x460000, 0x20000, 0x15c91772 ) //1c
-	ROM_LOAD( "dd3.1a" ,  0x480000, 0x10000, 0x15e43d12 ) //5c
+	ROM_LOAD( "dd3.1e" ,  0x200000, 0x20000, 0x04420cc8 ) //4c
+	ROM_LOAD( "dd3.1d" ,  0x220000, 0x20000, 0x33f97b2f ) //3c
+	ROM_LOAD( "dd3.1c" ,  0x240000, 0x20000, 0x0f9a8f2a ) //2c
+	ROM_LOAD( "dd3.1b" ,  0x260000, 0x20000, 0x15c91772 ) //1c
+	ROM_LOAD( "dd3.1a" ,  0x280000, 0x10000, 0x15e43d12 ) //5c
 
-	ROM_LOAD( "dd3.0e" ,  0x500000, 0x20000, 0x894734b3 ) //4d
-	ROM_LOAD( "dd3.0d" ,  0x520000, 0x20000, 0xcd504584 ) //3d
-	ROM_LOAD( "dd3.0c" ,  0x540000, 0x20000, 0x38e8a9ad ) //2d
-	ROM_LOAD( "dd3.0b" ,  0x560000, 0x20000, 0x80c1cb74 ) //1d
-	ROM_LOAD( "dd3.0a" ,  0x580000, 0x10000, 0x5a47e7a4 ) //5d
+	ROM_LOAD( "dd3.0e" ,  0x300000, 0x20000, 0x894734b3 ) //4d
+	ROM_LOAD( "dd3.0d" ,  0x320000, 0x20000, 0xcd504584 ) //3d
+	ROM_LOAD( "dd3.0c" ,  0x340000, 0x20000, 0x38e8a9ad ) //2d
+	ROM_LOAD( "dd3.0b" ,  0x360000, 0x20000, 0x80c1cb74 ) //1d
+	ROM_LOAD( "dd3.0a" ,  0x380000, 0x10000, 0x5a47e7a4 ) //5d
 
-	ROM_REGION(0x080000)	/* ADPCM Samples */
+	ROM_REGIONX( 0x080000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "dd3.j7" ,  0x000000, 0x40000, 0x3af21dbe )
 	ROM_LOAD( "dd3.j8" ,  0x040000, 0x40000, 0xc28b53cd )
 ROM_END
@@ -762,39 +763,40 @@ ROM_START( ddrago3b )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
 
-	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* Background */
 	ROM_LOAD( "dd3.f" ,  0x000000, 0x40000, 0x89d58d32 )
 	ROM_LOAD( "dd3.e" ,  0x040000, 0x40000, 0x9bf1538e )
 	ROM_LOAD( "dd3.b" ,  0x080000, 0x40000, 0x8f671a62 )
 	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
 
+	ROM_REGIONX( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* sprites  */
-	ROM_LOAD( "dd3.3e" ,  0x200000, 0x20000, 0x726c49b7 ) //4a
-	ROM_LOAD( "dd3.3d" ,  0x220000, 0x20000, 0x37a1c335 ) //3a
-	ROM_LOAD( "dd3.3c" ,  0x240000, 0x20000, 0x2bcfe63c ) //2a
-	ROM_LOAD( "dd3.3b" ,  0x260000, 0x20000, 0xb864cf17 ) //1a
-	ROM_LOAD( "dd3.3a" ,  0x280000, 0x10000, 0x20d64bea ) //5a
+	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
+	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
+	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
+	ROM_LOAD( "dd3.3b" ,  0x060000, 0x20000, 0xb864cf17 ) //1a
+	ROM_LOAD( "dd3.3a" ,  0x080000, 0x10000, 0x20d64bea ) //5a
 
-	ROM_LOAD( "dd3.2e" ,  0x300000, 0x20000, 0x8c71eb06 ) //4b
-	ROM_LOAD( "dd3.2d" ,  0x320000, 0x20000, 0x3e134be9 ) //3b
-	ROM_LOAD( "dd3.2c" ,  0x340000, 0x20000, 0xb4115ef0 ) //2b
-	ROM_LOAD( "dd3.2b" ,  0x360000, 0x20000, 0x4639333d ) //1b
-	ROM_LOAD( "dd3.2a" ,  0x380000, 0x10000, 0x785d71b0 ) //5b
+	ROM_LOAD( "dd3.2e" ,  0x100000, 0x20000, 0x8c71eb06 ) //4b
+	ROM_LOAD( "dd3.2d" ,  0x120000, 0x20000, 0x3e134be9 ) //3b
+	ROM_LOAD( "dd3.2c" ,  0x140000, 0x20000, 0xb4115ef0 ) //2b
+	ROM_LOAD( "dd3.2b" ,  0x160000, 0x20000, 0x4639333d ) //1b
+	ROM_LOAD( "dd3.2a" ,  0x180000, 0x10000, 0x785d71b0 ) //5b
 
-	ROM_LOAD( "dd3.1e" ,  0x400000, 0x20000, 0x04420cc8 ) //4c
-	ROM_LOAD( "dd3.1d" ,  0x420000, 0x20000, 0x33f97b2f ) //3c
-	ROM_LOAD( "dd3.1c" ,  0x440000, 0x20000, 0x0f9a8f2a ) //2c
-	ROM_LOAD( "dd3.1b" ,  0x460000, 0x20000, 0x15c91772 ) //1c
-	ROM_LOAD( "dd3.1a" ,  0x480000, 0x10000, 0x15e43d12 ) //5c
+	ROM_LOAD( "dd3.1e" ,  0x200000, 0x20000, 0x04420cc8 ) //4c
+	ROM_LOAD( "dd3.1d" ,  0x220000, 0x20000, 0x33f97b2f ) //3c
+	ROM_LOAD( "dd3.1c" ,  0x240000, 0x20000, 0x0f9a8f2a ) //2c
+	ROM_LOAD( "dd3.1b" ,  0x260000, 0x20000, 0x15c91772 ) //1c
+	ROM_LOAD( "dd3.1a" ,  0x280000, 0x10000, 0x15e43d12 ) //5c
 
-	ROM_LOAD( "dd3.0e" ,  0x500000, 0x20000, 0x894734b3 ) //4d
-	ROM_LOAD( "dd3.0d" ,  0x520000, 0x20000, 0xcd504584 ) //3d
-	ROM_LOAD( "dd3.0c" ,  0x540000, 0x20000, 0x38e8a9ad ) //2d
-	ROM_LOAD( "dd3.0b" ,  0x560000, 0x20000, 0x80c1cb74 ) //1d
-	ROM_LOAD( "dd3.0a" ,  0x580000, 0x10000, 0x5a47e7a4 ) //5d
+	ROM_LOAD( "dd3.0e" ,  0x300000, 0x20000, 0x894734b3 ) //4d
+	ROM_LOAD( "dd3.0d" ,  0x320000, 0x20000, 0xcd504584 ) //3d
+	ROM_LOAD( "dd3.0c" ,  0x340000, 0x20000, 0x38e8a9ad ) //2d
+	ROM_LOAD( "dd3.0b" ,  0x360000, 0x20000, 0x80c1cb74 ) //1d
+	ROM_LOAD( "dd3.0a" ,  0x380000, 0x10000, 0x5a47e7a4 ) //5d
 
-	ROM_REGION(0x080000)	/* ADPCM Samples */
+	ROM_REGIONX( 0x080000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "dd3.j7" ,  0x000000, 0x40000, 0x3af21dbe )
 	ROM_LOAD( "dd3.j8" ,  0x040000, 0x40000, 0xc28b53cd )
 ROM_END
@@ -809,22 +811,23 @@ ROM_START( ctribe )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
-	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 ) 	/* Background */
 	ROM_LOAD( "ct_mr6.rom",  0x040000, 0x40000, 0x617530fc )
 	ROM_LOAD( "ct_mr5.rom",  0x080000, 0x40000, 0xcef0a821 )
 	ROM_LOAD( "ct_mr4.rom",  0x0c0000, 0x40000, 0xb84fda09 )
 
-	ROM_LOAD( "ct_mr3.rom",  0x200000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
-	ROM_LOAD( "ct_ep5.rom",  0x280000, 0x10000, 0x972faddb )
-	ROM_LOAD( "ct_mr2.rom",  0x300000, 0x80000, 0x8c796707 )
-	ROM_LOAD( "ct_ep6.rom",  0x380000, 0x10000, 0xeb3ab374 )
-	ROM_LOAD( "ct_mr1.rom",  0x400000, 0x80000, 0x1c9badbd )
-	ROM_LOAD( "ct_ep7.rom",  0x480000, 0x10000, 0xc602ac97 )
-	ROM_LOAD( "ct_mr0.rom",  0x500000, 0x80000, 0xba73c49e )
-	ROM_LOAD( "ct_ep8.rom",  0x580000, 0x10000, 0x4da1d8e5 )
+	ROM_REGIONX( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
+	ROM_LOAD( "ct_ep5.rom",  0x080000, 0x10000, 0x972faddb )
+	ROM_LOAD( "ct_mr2.rom",  0x100000, 0x80000, 0x8c796707 )
+	ROM_LOAD( "ct_ep6.rom",  0x180000, 0x10000, 0xeb3ab374 )
+	ROM_LOAD( "ct_mr1.rom",  0x200000, 0x80000, 0x1c9badbd )
+	ROM_LOAD( "ct_ep7.rom",  0x280000, 0x10000, 0xc602ac97 )
+	ROM_LOAD( "ct_mr0.rom",  0x300000, 0x80000, 0xba73c49e )
+	ROM_LOAD( "ct_ep8.rom",  0x380000, 0x10000, 0x4da1d8e5 )
 
-	ROM_REGION(0x040000)	/* ADPCM Samples */
+	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
 	ROM_CONTINUE(             0x000000, 0x20000 )
 ROM_END
@@ -839,132 +842,30 @@ ROM_START( ctribeb )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
-	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ct_mr7.rom",  0x000000, 0x40000, 0xa8b773f1 ) 	/* Background */
 	ROM_LOAD( "ct_mr6.rom",  0x040000, 0x40000, 0x617530fc )
 	ROM_LOAD( "ct_mr5.rom",  0x080000, 0x40000, 0xcef0a821 )
 	ROM_LOAD( "ct_mr4.rom",  0x0c0000, 0x40000, 0xb84fda09 )
 
-	ROM_LOAD( "ct_mr3.rom",  0x200000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
-	ROM_LOAD( "ct_ep5.rom",  0x280000, 0x10000, 0x972faddb )
-	ROM_LOAD( "ct_mr2.rom",  0x300000, 0x80000, 0x8c796707 )
-	ROM_LOAD( "ct_ep6.rom",  0x380000, 0x10000, 0xeb3ab374 )
-	ROM_LOAD( "ct_mr1.rom",  0x400000, 0x80000, 0x1c9badbd )
-	ROM_LOAD( "ct_ep7.rom",  0x480000, 0x10000, 0xc602ac97 )
-	ROM_LOAD( "ct_mr0.rom",  0x500000, 0x80000, 0xba73c49e )
-	ROM_LOAD( "ct_ep8.rom",  0x580000, 0x10000, 0x4da1d8e5 )
+	ROM_REGIONX( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ct_mr3.rom",  0x000000, 0x80000, 0x1ac2a461 ) 	/* Sprites */
+	ROM_LOAD( "ct_ep5.rom",  0x080000, 0x10000, 0x972faddb )
+	ROM_LOAD( "ct_mr2.rom",  0x100000, 0x80000, 0x8c796707 )
+	ROM_LOAD( "ct_ep6.rom",  0x180000, 0x10000, 0xeb3ab374 )
+	ROM_LOAD( "ct_mr1.rom",  0x200000, 0x80000, 0x1c9badbd )
+	ROM_LOAD( "ct_ep7.rom",  0x280000, 0x10000, 0xc602ac97 )
+	ROM_LOAD( "ct_mr0.rom",  0x300000, 0x80000, 0xba73c49e )
+	ROM_LOAD( "ct_ep8.rom",  0x380000, 0x10000, 0x4da1d8e5 )
 
-	ROM_REGION(0x040000)	/* ADPCM Samples */
+	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* ADPCM Samples */
 	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
 	ROM_CONTINUE(             0x000000, 0x20000 )
 ROM_END
 
 /**************************************************************************/
 
-struct GameDriver driver_ddragon3 =
-{
-	__FILE__,
-	0,
-	"ddragon3",
-	"Double Dragon 3 - The Rosetta Stone",
-	"1990",
-	"Technos",
-	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
-	0,
-	&machine_driver_ddragon3,
-	0,
-
-	rom_ddragon3,
-	0,0,
-	0,
-	0,
-
-	input_ports_ddragon3,
-
-	0,0,0,
-
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_ddrago3b =
-{
-	__FILE__,
-	&driver_ddragon3,
-	"ddrago3b",
-	"Double Dragon 3 - The Rosetta Stone (bootleg)",
-	"1990",
-	"bootleg",
-	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
-	0,
-	&machine_driver_ddrago3b,
-	0,
-
-	rom_ddrago3b,
-	0,0,
-	0,
-	0,
-
-	input_ports_ddrago3b,
-
-	0,0,0,
-
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_ctribe =
-{
-	__FILE__,
-	0,
-	"ctribe",
-	"The Combatribes (US)",
-	"1990",
-	"Technos",
-	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
-	0,
-	&machine_driver_ctribe,
-	0,
-
-	rom_ctribe,
-	0,0,
-	0,
-	0,
-
-	input_ports_ctribe,
-
-	0,0,0,
-
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_ctribeb =
-{
-	__FILE__,
-	&driver_ctribe,
-	"ctribeb",
-	"The Combatribes (bootleg)",
-	"1990",
-	"bootleg",
-	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
-	0,
-	&machine_driver_ctribe,
-	0,
-
-	rom_ctribeb,
-	0,0,
-	0,
-	0,
-
-	input_ports_ctribe,
-
-	0,0,0,
-
-	ROT0,
-
-	0,0
-};
+GAME( 1990, ddragon3, 0,        ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone" )
+GAME( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)" )
+GAME( 1990, ctribe,   0,        ctribe,   ctribe,   0, ROT0, "Technos", "The Combatribes (US)" )
+GAME( 1990, ctribeb,  ctribe,   ctribe,   ctribe,   0, ROT0, "bootleg", "The Combatribes (bootleg)" )

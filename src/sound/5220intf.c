@@ -21,7 +21,7 @@
 static int sample_pos;
 static int buffer_len;
 static int emulation_rate;
-static signed char *buffer;
+static INT16 *buffer;
 
 static const struct TMS5220interface *intf;
 static int channel;
@@ -48,9 +48,9 @@ int tms5220_sh_start (const struct MachineSound *msound)
     sample_pos = 0;
 
     /* allocate the buffer */
-    if ((buffer = malloc (buffer_len)) == 0)
+    if ((buffer = malloc (sizeof(INT16) * buffer_len)) == 0)
         return 1;
-    memset (buffer, 0x80, buffer_len);
+    memset (buffer, 0, sizeof(INT16) * buffer_len);
 
     /* reset the 5220 */
     tms5220_reset ();
@@ -95,7 +95,7 @@ void tms5220_sh_update (void)
     sample_pos = 0;
 
     /* play this sample */
-	mixer_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate);
+	mixer_play_streamed_sample_16(channel,buffer,sizeof(INT16) * buffer_len,emulation_rate);
 }
 
 

@@ -248,7 +248,6 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
 	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -484,7 +483,7 @@ static void init_spaceinv(void)
 
 
 
-GAME( 1985, commando, ,         commando, commando, commando, ROT90, "Capcom", "Commando (World)" )
+GAME( 1985, commando, 0,        commando, commando, commando, ROT90, "Capcom", "Commando (World)" )
 GAME( 1985, commandu, commando, commando, commando, commando, ROT90, "Capcom (Data East USA license)", "Commando (US)" )
 GAME( 1985, commandj, commando, commando, commando, commando, ROT90, "Capcom", "Senjo no Ookami" )
 GAME( 1985, spaceinv, commando, commando, commando, spaceinv, ROT90, "bootleg", "Space Invasion" )

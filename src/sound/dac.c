@@ -9,12 +9,11 @@ static int SignedVolTable[256];
 
 
 
-static void DAC_update(int num,void *buffer,int length)
+static void DAC_update(int num,INT16 *buffer,int length)
 {
-	short *buf = buffer;
 	int out = output[num];
 
-	while (length--) *(buf++) = out;
+	while (length--) *(buffer++) = out;
 }
 
 
@@ -98,7 +97,7 @@ int DAC_sh_start(const struct MachineSound *msound)
 
 
 		sprintf(name,"DAC #%d",i);
-		channel[i] = stream_init(name,intf->mixing_level[i],Machine->sample_rate,16,
+		channel[i] = stream_init(name,intf->mixing_level[i],Machine->sample_rate,
 				i,DAC_update);
 
 		if (channel[i] == -1)

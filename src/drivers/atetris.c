@@ -248,7 +248,7 @@ ROM_START( atetrisb )
 
 	/* there's an extra EEPROM, maybe used for protection crack, which */
 	/* however doesn't seem to be required to run the game in this driver. */
-	ROM_REGION(0x0800)
+	ROM_REGIONX( 0x0800, REGION_USER1 )
 	ROM_LOAD( "tetris.03",    0x0000, 0x0800, 0x26618c0b )
 ROM_END
 
@@ -282,7 +282,7 @@ static void init_atetris(void)
 
 
 
-GAME( 1988, atetris,  ,        atetris, atetris,  atetris, ROT0,   "Atari Games", "Tetris (set 1)" )
+GAME( 1988, atetris,  0,       atetris, atetris,  atetris, ROT0,   "Atari Games", "Tetris (set 1)" )
 GAME( 1988, atetrisa, atetris, atetris, atetris,  atetris, ROT0,   "Atari Games", "Tetris (set 2)" )
 GAME( 1988, atetrisb, atetris, atetris, atetris,  atetris, ROT0,   "bootleg",     "Tetris (bootleg)" )
 GAME( 1989, atetcktl, atetris, atetris, atetcktl, atetris, ROT270, "Atari Games", "Tetris (Cocktail set 1)" )

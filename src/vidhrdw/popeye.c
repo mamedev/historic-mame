@@ -437,6 +437,8 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* order, to have the correct priorities. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
+		int code,color;
+
 		/*
 		 * offs+3:
 		 * bit 7 ?
@@ -448,10 +450,15 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		 * bit 1 \ color (with bit 2 as well)
 		 * bit 0 /
 		 */
+
+		code = (spriteram[offs + 2] & 0x7f) + ((spriteram[offs + 3] & 0x10) << 3)
+							+ ((spriteram[offs + 3] & 0x04) << 6);
+		color = (spriteram[offs + 3] & 0x07) + 8*(*popeye_palette_bank & 0x07);
+
 		if (spriteram[offs] != 0)
-			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x04) ? 1 : 2],
-					0xff - (spriteram[offs + 2] & 0x7f) - 8*(spriteram[offs + 3] & 0x10),
-					(spriteram[offs + 3] & 0x07) + 8*(*popeye_palette_bank & 0x07),
+			drawgfx(bitmap,Machine->gfx[1],
+					code ^ 0x1ff,
+					color,
 					spriteram[offs + 2] & 0x80,spriteram[offs + 3] & 0x08,
 		/* sprite placement IS correct - the squares on level 1 leave one pixel */
 		/* of the house background uncovered */

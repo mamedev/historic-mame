@@ -384,4 +384,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1991, batman, , batman, batman, batman, ROT0, "Atari Games", "Batman" )
+GAME( 1991, batman, 0, batman, batman, batman, ROT0, "Atari Games", "Batman" )

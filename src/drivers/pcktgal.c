@@ -241,7 +241,6 @@ static struct YM2203interface ym2203_interface =
 	1,	  /* 1 chip */
 	4000000,		/* 4.0 MHz ??? */
 	{ YM2203_VOL(60,60) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -266,7 +265,7 @@ static struct MSM5205interface msm5205_interface =
 
 /***************************************************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pcktgal =
 {
 	/* basic machine hardware */
 	{
@@ -492,7 +491,7 @@ ROM_END
 
 /***************************************************************************/
 
-static void deco222_decode(void)
+static void init_deco222(void)
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU2);
@@ -506,7 +505,7 @@ static void deco222_decode(void)
 		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
-static void graphics_decode(void)
+static void init_graphics(void)
 {
 	unsigned char *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
@@ -524,140 +523,16 @@ static void graphics_decode(void)
 	}
 }
 
-static void pcktgal_decode(void)
+static void init_pcktgal(void)
 {
-	deco222_decode();
-	graphics_decode();
+	init_deco222();
+	init_graphics();
 }
 
 /***************************************************************************/
 
-struct GameDriver driver_pcktgal =
-{
-	__FILE__,
-	0,
-	"pcktgal",
-	"Pocket Gal (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail\nNicola Salmoria",
-	0,
-	&machine_driver,
-	pcktgal_decode,
-
-	rom_pcktgal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pcktgal,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_pcktgalb =
-{
-	__FILE__,
-	&driver_pcktgal,
-	"pcktgalb",
-	"Pocket Gal (bootleg)",
-	"1989",
-	"bootleg",
-	"Bryan McPhail\nNicola Salmoria",
-	0,
-	&machine_driver_bootleg,
-	deco222_decode,
-
-	rom_pcktgalb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pcktgal,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_pcktgal2 =
-{
-	__FILE__,
-	&driver_pcktgal,
-	"pcktgal2",
-	"Pocket Gal 2 (World?)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail\nNicola Salmoria",
-	0,
-	&machine_driver,
-	graphics_decode,
-
-	rom_pcktgal2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pcktgal,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_spool3 =
-{
-	__FILE__,
-	&driver_pcktgal,
-	"spool3",
-	"Super Pool III (World?)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail\nNicola Salmoria",
-	0,
-	&machine_driver,
-	graphics_decode,
-
-	rom_spool3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pcktgal,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_spool3i =
-{
-	__FILE__,
-	&driver_pcktgal,
-	"spool3i",
-	"Super Pool III (I-Vics)",
-	"1990",
-	"Data East Corporation (I-Vics license)",
-	"Bryan McPhail\nNicola Salmoria",
-	0,
-	&machine_driver,
-	graphics_decode,
-
-	rom_spool3i,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pcktgal,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1987, pcktgal,  0,       pcktgal, pcktgal, pcktgal,  ROT0, "Data East Corporation", "Pocket Gal (Japan)" )
+GAME( 1989, pcktgalb, pcktgal, bootleg, pcktgal, deco222,  ROT0, "bootleg", "Pocket Gal (bootleg)" )
+GAME( 1989, pcktgal2, pcktgal, pcktgal, pcktgal, graphics, ROT0, "Data East Corporation", "Pocket Gal 2 (World?)" )
+GAME( 1989, spool3,   pcktgal, pcktgal, pcktgal, graphics, ROT0, "Data East Corporation", "Super Pool III (World?)" )
+GAME( 1990, spool3i,  pcktgal, pcktgal, pcktgal, graphics, ROT0, "Data East Corporation (I-Vics license)", "Super Pool III (I-Vics)" )

@@ -635,7 +635,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? (hand tuned) */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -657,7 +656,6 @@ static struct YM2203interface tokio_ym2203_interface =
 	1,		/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(100,20) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1056,9 +1054,9 @@ void init_boblbobl(void)
 
 
 
-GAME( 1986, bublbobl, ,         bublbobl, bublbobl, ,         ROT0,  "Taito Corporation", "Bubble Bobble" )
-GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, ,         ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
+GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, 0,        ROT0,  "Taito Corporation", "Bubble Bobble" )
+GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
 GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
-GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, ,         ROT0,  "bootleg", "Super Bobble Bobble" )
-GAMEX(1986, tokio,    ,         tokio,    tokio,    ,         ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
-GAME( 1986, tokiob,   tokio,    tokio,    tokio,    ,         ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )
+GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, 0,        ROT0,  "bootleg", "Super Bobble Bobble" )
+GAMEX(1986, tokio,    0,        tokio,    tokio,    0,        ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
+GAME( 1986, tokiob,   tokio,    tokio,    tokio,    0,        ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )

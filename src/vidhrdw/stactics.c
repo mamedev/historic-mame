@@ -298,7 +298,7 @@ int stactics_vh_start(void)
 
 	if ((beamdata = (unsigned char *)malloc(BEAMDATA_SIZE)) == 0) return 1;
 
-    firebeam_data = memory_region(1);
+    firebeam_data = memory_region(REGION_GFX1);
 
     for(i=0;i<256;i++)
     {

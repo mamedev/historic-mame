@@ -201,7 +201,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -318,8 +317,8 @@ ROM_END
 
 
 
-GAME( 1983, champbas, , champbas, champbas, , ROT0, "Sega", "Champion Baseball" )
+GAME( 1983, champbas, 0, champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
 
 /* Champion Baseball 2 doesn't work - don't know why */
-GAMEX(1983, champbb2, , champbas, champbas, , ROT0, "Sega / Alpha Denshi", "Champion Baseball II", GAME_NOT_WORKING )
+GAMEX(1983, champbb2, 0, champbas, champbas, 0, ROT0, "Sega / Alpha Denshi", "Champion Baseball II", GAME_NOT_WORKING )
 

@@ -76,7 +76,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( m79 )
+INPUT_PORTS_START( m79amb )
 	PORT_START      /* 8000 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* dip switch */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -133,7 +133,7 @@ static int M79_interrupt(void)
 	return 0x00cf;  /* RST 08h */
 }
 
-static void m79_decode(void)
+static void init_m79amb(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -143,7 +143,7 @@ static void m79_decode(void)
 		rom[i] = ~rom[i];
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_m79amb =
 {
 	/* basic machine hardware */
 	{
@@ -176,7 +176,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( m79 )
+ROM_START( m79amb )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "m79.10t",      0x0000, 0x0200, 0xccf30b1e )
 	ROM_LOAD( "m79.9t",       0x0200, 0x0200, 0xdaf807dd )
@@ -198,27 +198,4 @@ ROM_END
 
 
 
-struct GameDriver driver_m79amb =
-{
-	__FILE__,
-	0,
-	"m79amb",
-	"M79 Ambush",
-	"1977",
-	"Ramtek",
-	"Space Invaders Team\n",
-	0,
-	&machine_driver,
-	m79_decode,
-
-	rom_m79,
-	0, 0,
-	0,
-	0,
-
-	input_ports_m79,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1977, m79amb, 0, m79amb, m79amb, m79amb, ROT0, "Ramtek", "M79 Ambush" )

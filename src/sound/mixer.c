@@ -14,6 +14,7 @@ static char channel_name[MIXER_MAX_CHANNELS][40];
 static int channel_volume[MIXER_MAX_CHANNELS];
 static unsigned char channel_default_mixing_level[MIXER_MAX_CHANNELS];
 static unsigned char channel_mixing_level[MIXER_MAX_CHANNELS];
+static int channel_gain[MIXER_MAX_CHANNELS];
 static int channel_pan[MIXER_MAX_CHANNELS];
 static int channel_is_stream[MIXER_MAX_CHANNELS];
 
@@ -54,7 +55,7 @@ if (errorlog) fprintf(errorlog,"Too many mixer channels (requested %d, available
 	}
 
 	channel_volume[ch] = 100;
-	channel_default_mixing_level[ch] = default_mixing_level & 0xff;
+	channel_default_mixing_level[ch] = MIXER_GET_LEVEL(default_mixing_level);
 	/* backwards compatibility with old 0-255 volume range */
 	if (channel_default_mixing_level[ch] > 100) channel_default_mixing_level[ch] = channel_default_mixing_level[ch] * 25 / 255;
 
@@ -76,7 +77,8 @@ if (errorlog) fprintf(errorlog,"Too many mixer channels (requested %d, available
 
 	if (config_invalid)
 		channel_mixing_level[ch] = channel_default_mixing_level[ch];
-	channel_pan[ch] = (default_mixing_level >> 8) & 0xff;
+	channel_pan[ch] = MIXER_GET_PAN(default_mixing_level);
+	channel_gain[ch] = MIXER_GET_GAIN(default_mixing_level);
 	mixer_set_name(ch,0);
 
 	first_free_channel++;
@@ -99,7 +101,7 @@ if (errorlog) fprintf(errorlog,"Too many mixer channels (requested %d, available
 	for (i = 0;i < channels;i++)
 	{
 		channel_volume[ch + i] = 100;
-		channel_mixing_level[ch + i] = channel_default_mixing_level[ch + i] = default_mixing_levels[i] & 0xff;
+		channel_mixing_level[ch + i] = channel_default_mixing_level[ch + i] = MIXER_GET_LEVEL(default_mixing_levels[i]);
 		/* backwards compatibility with old 0-255 volume range */
 		if (channel_default_mixing_level[ch + i] > 100) channel_default_mixing_level[ch + i] = channel_default_mixing_level[ch + i] * 25 / 255;
 
@@ -121,7 +123,8 @@ if (errorlog) fprintf(errorlog,"Too many mixer channels (requested %d, available
 
 		if (config_invalid)
 			channel_mixing_level[ch + i] = channel_default_mixing_level[ch + i];
-		channel_pan[ch + i] = (default_mixing_levels[i] >> 8) & 0xff;
+		channel_pan[ch + i] = MIXER_GET_PAN(default_mixing_levels[i]);
+		channel_gain[ch + i] = MIXER_GET_GAIN(default_mixing_levels[i]);
 		mixer_set_name(ch+i,0);
 	}
 
@@ -178,20 +181,30 @@ void mixer_play_sample(int channel,signed char *data,int len,int freq,int loop)
 	osd_play_sample(channel,data,len,freq,channel_volume[channel] * channel_mixing_level[channel] / 100,loop);
 }
 
-void mixer_play_sample_16(int channel,signed short *data,int len,int freq,int loop)
+void mixer_play_sample_16(int channel,INT16 *data,int len,int freq,int loop)
 {
 	osd_play_sample_16(channel,data,len,freq,channel_volume[channel] * channel_mixing_level[channel] / 100,loop);
 }
 
-void mixer_play_streamed_sample(int channel,signed char *data,int len,int freq)
+void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq)
 {
 	channel_is_stream[channel] = 1;
-	osd_play_streamed_sample(channel,data,len,freq,channel_volume[channel] * channel_mixing_level[channel] / 100,channel_pan[channel]);
-}
 
-void mixer_play_streamed_sample_16(int channel,signed short *data,int len,int freq)
-{
-	channel_is_stream[channel] = 1;
+	if (channel_gain[channel])
+	{
+		int i;
+		int mul = 1 << channel_gain[channel];
+		int min = -0x8000 / mul;
+		int max =  0x7fff / mul;
+
+		for (i = len/2;i >= 0;i--)
+		{
+			if (data[i] <= min) data[i] = -0x8000;
+			else if (data[i] >= max) data[i] = 0x7fff;
+			else data[i] *= mul;
+		}
+	}
+
 	osd_play_streamed_sample_16(channel,data,len,freq,channel_volume[channel] * channel_mixing_level[channel] / 100,channel_pan[channel]);
 }
 

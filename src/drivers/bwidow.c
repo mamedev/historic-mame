@@ -816,7 +816,7 @@ ROM_END
 
 
 
-GAME( 1982, bwidow,   ,         bwidow,   bwidow,   , ROT0, "Atari", "Black Widow" )
-GAME( 1982, gravitar, ,         gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 3)" )
-GAME( 1982, gravitr2, gravitar, gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 2)" )
-GAME( 1980, spacduel, ,         spacduel, spacduel, , ROT0, "Atari", "Space Duel" )
+GAME( 1982, bwidow,   0,        bwidow,   bwidow,   0, ROT0, "Atari", "Black Widow" )
+GAME( 1982, gravitar, 0,        gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 3)" )
+GAME( 1982, gravitr2, gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 2)" )
+GAME( 1980, spacduel, 0,        spacduel, spacduel, 0, ROT0, "Atari", "Space Duel" )

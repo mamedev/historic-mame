@@ -117,12 +117,12 @@ int gberet_vh_start(void)
 	return 0;
 }
 
-void gberet_init(void)
+void init_gberet(void)
 {
 	sprites_type = 0;
 }
 
-void gberetb_init(void)
+void init_gberetb(void)
 {
 	sprites_type = 1;
 }

@@ -217,8 +217,8 @@ MCR_SPRITE_LAYOUT(spritelayout, 64);
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 1 },	/* colors 0-15 */
-	{ 1, 0x2000, &spritelayout, 16, 1 },	/* colors 16-31 */
+	{ REGION_GFX1, 0, &charlayout,    0, 1 },	/* colors 0-15 */
+	{ REGION_GFX2, 0, &spritelayout, 16, 1 },	/* colors 16-31 */
 	{ -1 } /* end of array */
 };
 
@@ -230,7 +230,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mcr1 =
 {
 	/* basic machine hardware */
 	{
@@ -276,7 +276,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-static void solarfox_init(void)
+static void init_solarfox(void)
 {
 	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7,0,0,0,0,0 };
 
@@ -288,7 +288,7 @@ static void solarfox_init(void)
 }
 
 
-static void kick_init(void)
+static void init_kick(void)
 {
 	MCR_CONFIGURE_HISCORE(0x7000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -315,18 +315,20 @@ ROM_START( solarfox )
 	ROM_LOAD( "sfcpu.6d",     0x5000, 0x1000, 0xbd993cd9 )
 	ROM_LOAD( "sfcpu.7d",     0x6000, 0x1000, 0x8ad8731d )
 
-	ROM_REGION_DISPOSE(0x0a000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sfcpu.4g",     0x0000, 0x1000, 0xba019a60 )
-	ROM_LOAD( "sfcpu.5g",     0x1000, 0x1000, 0x7ff0364e )
-	ROM_LOAD( "sfvid.1a",     0x2000, 0x2000, 0x9d9b5d7e )
-	ROM_LOAD( "sfvid.1b",     0x4000, 0x2000, 0x78801e83 )
-	ROM_LOAD( "sfvid.1d",     0x6000, 0x2000, 0x4d8445cf )
-	ROM_LOAD( "sfvid.1e",     0x8000, 0x2000, 0x3da25495 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sfsnd.7a",     0x0000, 0x1000, 0xcdecf83a )
 	ROM_LOAD( "sfsnd.8a",     0x1000, 0x1000, 0xcb7788cb )
 	ROM_LOAD( "sfsnd.9a",     0x2000, 0x1000, 0x304896ce )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sfcpu.4g",     0x0000, 0x1000, 0xba019a60 )
+	ROM_LOAD( "sfcpu.5g",     0x1000, 0x1000, 0x7ff0364e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sfvid.1a",     0x0000, 0x2000, 0x9d9b5d7e )
+	ROM_LOAD( "sfvid.1b",     0x2000, 0x2000, 0x78801e83 )
+	ROM_LOAD( "sfvid.1d",     0x4000, 0x2000, 0x4d8445cf )
+	ROM_LOAD( "sfvid.1e",     0x6000, 0x2000, 0x3da25495 )
 ROM_END
 
 
@@ -339,19 +341,21 @@ ROM_START( kick )
 	ROM_LOAD( "1600e-v2.d5",  0x4000, 0x1000, 0x1d2834c0 )
 	ROM_LOAD( "1700f-v2.d6",  0x5000, 0x1000, 0xddf84ce1 )
 
-	ROM_REGION_DISPOSE(0x0a000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1800g-v2.g4",  0x0000, 0x1000, 0xb4d120f3 )
-	ROM_LOAD( "1900h-v2.g5",  0x1000, 0x1000, 0xc3ba4893 )
-	ROM_LOAD( "2600a-v2.1e",  0x2000, 0x2000, 0x2c5d6b55 )
-	ROM_LOAD( "2700b-v2.1d",  0x4000, 0x2000, 0x565ea97d )
-	ROM_LOAD( "2800c-v2.1b",  0x6000, 0x2000, 0xf3be56a1 )
-	ROM_LOAD( "2900d-v2.1a",  0x8000, 0x2000, 0x77da795e )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )
 	ROM_LOAD( "4500-d.a10",   0x3000, 0x1000, 0xd36ddcdc )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1800g-v2.g4",  0x0000, 0x1000, 0xb4d120f3 )
+	ROM_LOAD( "1900h-v2.g5",  0x1000, 0x1000, 0xc3ba4893 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2600a-v2.1e",  0x0000, 0x2000, 0x2c5d6b55 )
+	ROM_LOAD( "2700b-v2.1d",  0x2000, 0x2000, 0x565ea97d )
+	ROM_LOAD( "2800c-v2.1b",  0x4000, 0x2000, 0xf3be56a1 )
+	ROM_LOAD( "2900d-v2.1a",  0x6000, 0x2000, 0x77da795e )
 ROM_END
 
 
@@ -364,19 +368,21 @@ ROM_START( kicka )
 	ROM_LOAD( "1600-e.d5",    0x4000, 0x1000, 0xeaaa78a7 )
 	ROM_LOAD( "1700-f.d6",    0x5000, 0x1000, 0xc06c880f )
 
-	ROM_REGION_DISPOSE(0x0a000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1000-g.g4",    0x0000, 0x1000, 0xacdae4f6 )
-	ROM_LOAD( "1100-h.g5",    0x1000, 0x1000, 0xdbb18c96 )
-	ROM_LOAD( "2600-a.1e",    0x2000, 0x2000, 0x74b409d7 )
-	ROM_LOAD( "2700-b.1d",    0x4000, 0x2000, 0x78eda36c )
-	ROM_LOAD( "2800-c.1b",    0x6000, 0x2000, 0xc93e0170 )
-	ROM_LOAD( "2900-d.1a",    0x8000, 0x2000, 0x91e59383 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )
 	ROM_LOAD( "4500-d.a10",   0x3000, 0x1000, 0xd36ddcdc )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1000-g.g4",    0x0000, 0x1000, 0xacdae4f6 )
+	ROM_LOAD( "1100-h.g5",    0x1000, 0x1000, 0xdbb18c96 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2600-a.1e",    0x0000, 0x2000, 0x74b409d7 )
+	ROM_LOAD( "2700-b.1d",    0x2000, 0x2000, 0x78eda36c )
+	ROM_LOAD( "2800-c.1b",    0x4000, 0x2000, 0xc93e0170 )
+	ROM_LOAD( "2900-d.1a",    0x6000, 0x2000, 0x91e59383 )
 ROM_END
 
 
@@ -387,79 +393,6 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver driver_solarfox =
-{
-	__FILE__,
-	0,
-	"solarfox",
-	"Solar Fox",
-	"1981",
-	"Bally Midway",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
-	0,
-	&machine_driver,
-	solarfox_init,
-
-	rom_solarfox,
-	0, 0,
-	0,
-	0,
-
-	input_ports_solarfox,
-
-	0, 0, 0,
-	ORIENTATION_SWAP_XY,
-	0,0
-};
-
-
-struct GameDriver driver_kick =
-{
-	__FILE__,
-	0,
-	"kick",
-	"Kick (mirror version)",
-	"1981",
-	"Midway",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
-	0,
-	&machine_driver,
-	kick_init,
-
-	rom_kick,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kick,
-
-	0, 0, 0,
-	ORIENTATION_SWAP_XY,
-	0,0
-};
-
-
-struct GameDriver driver_kicka =
-{
-	__FILE__,
-	&driver_kick,
-	"kicka",
-	"Kick (upright version)",
-	"1981",
-	"bootleg?",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
-	0,
-	&machine_driver,
-	kick_init,
-
-	rom_kicka,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kick,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1981, solarfox, 0,    mcr1, solarfox, solarfox, ORIENTATION_SWAP_XY, "Bally Midway", "Solar Fox" )
+GAME( 1981, kick,     0,    mcr1, kick,     kick,     ORIENTATION_SWAP_XY, "Midway", "Kick (mirror version)" )
+GAME( 1981, kicka,    kick, mcr1, kick,     kick,     ROT90,               "bootleg?", "Kick (upright version)" )

@@ -2,6 +2,8 @@
 
 	Rampart
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -415,7 +417,7 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &molayout,  256, 16 },		/* motion objects */
+	{ REGION_GFX1, 0, &molayout,  256, 16 },		/* motion objects */
 	{ -1 } /* end of array */
 };
 
@@ -431,7 +433,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
 	{ 7159160 / 1024} ,	/* ~7000 Hz */
-	{ 2 },       		/* memory region 2 */
+	{ REGION_SOUND1 },       		/* memory region 2 */
 	{ 100 }
 };
 
@@ -452,7 +454,7 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rampart =
 {
 	/* basic machine hardware */
 	{
@@ -509,8 +511,8 @@ static void rom_decode(void)
 
 	memcpy(&memory_region(REGION_CPU1)[0x140000], &memory_region(REGION_CPU1)[0x40000], 0x8000);
 
-	for (i = 0; i < memory_region_length(1); i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 
@@ -528,10 +530,10 @@ ROM_START( rampart )
 	ROM_LOAD_EVEN( "082-2031.13l", 0x00000, 0x10000, 0x07650c7e )
 	ROM_LOAD_ODD ( "082-2030.13h", 0x00000, 0x10000, 0xe2bf2a26 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "082-1009.2n",   0x000000, 0x20000, 0x23b95f59 )
 
-	ROM_REGION( 0x40000 )	/* ADPCM data */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
@@ -544,10 +546,10 @@ ROM_START( ramprt2p )
 	ROM_LOAD_EVEN( "205113kl.rom", 0x00000, 0x20000, 0xd4e26d0f )
 	ROM_LOAD_ODD ( "205013h.rom",  0x00000, 0x20000, 0xed2a49bd )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "10192n.rom",   0x000000, 0x20000, 0xefa38bef )
 
-	ROM_REGION( 0x40000 )	/* ADPCM data */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
@@ -560,7 +562,7 @@ ROM_END
  *
  *************************************/
 
-static void rampart_init(void)
+static void init_rampart(void)
 {
 	static const UINT16 compressed_default_eeprom[] =
 	{
@@ -607,53 +609,5 @@ static void rampart_init(void)
  *
  *************************************/
 
-struct GameDriver driver_rampart =
-{
-	__FILE__,
-	0,
-	"rampart",
-	"Rampart (3-player Trackball)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	rampart_init,
-
-	rom_rampart,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rampart,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_ramprt2p =
-{
-	__FILE__,
-	&driver_rampart,
-	"ramprt2p",
-	"Rampart (2-player Joystick)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	rampart_init,
-
-	rom_ramprt2p,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ramprt2p,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (3-player Trackball)" )
+GAME( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (2-player Joystick)" )

@@ -55,22 +55,14 @@ f5d6	print 7 digit BCD number: d0.l to (a1)+ color $3000
 /* Variables only used here */
 
 /* Variables defined in vidhrdw */
-extern unsigned char *ginganin_bgram, *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
+extern unsigned char *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
 
 /* Functions defined in vidhrdw */
-void ginganin_bgram_w(int offset,int data);
 void ginganin_fgram_w(int offset,int data);
 void ginganin_txtram_w(int offset,int data);
 void ginganin_vregs_w(int offset,int data);
 int  ginganin_vh_start(void);
 void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-
-static void ginganin_init_machine (void)
-{
-	/* The background tilemap resides in ROM */
-	ginganin_bgram = memory_region(2);
-}
 
 
 /*
@@ -223,8 +215,8 @@ INPUT_PORTS_START( ginganin )
 	PORT_START	// IN1 - DSWs - Read from 70002.w
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_2C ) )
@@ -232,8 +224,8 @@ INPUT_PORTS_START( ginganin )
 	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
@@ -252,11 +244,11 @@ INPUT_PORTS_START( ginganin )
 	PORT_DIPSETTING(      0x0100, "4")
 	PORT_DIPSETTING(      0x0200, "5")
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0000, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )	// probably unused
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -313,15 +305,12 @@ layout16x16(spritelayout,0x50000)
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tilelayout,   256*3, 16 }, // [0] bg
-	{ 1, 0x020000, &tilelayout,   256*2, 16 }, // [1] fg
-	{ 1, 0x040000, &txtlayout,    256*0, 16 }, // [2] txt
-	{ 1, 0x044000, &spritelayout, 256*1, 16 }, // [3] sprites
+	{ REGION_GFX1, 0, &tilelayout,   256*3, 16 }, // [0] bg
+	{ REGION_GFX2, 0, &tilelayout,   256*2, 16 }, // [1] fg
+	{ REGION_GFX3, 0, &txtlayout,    256*0, 16 }, // [2] txt
+	{ REGION_GFX4, 0, &spritelayout, 256*1, 16 }, // [3] sprites
 	{ -1 }
 };
-
-
-
 
 
 
@@ -356,7 +345,6 @@ int ginganin_sound_interrupt(void)
 
 
 
-/* The YM2149 is nearly equivalent to an AY8910 */
 static struct AY8910interface AY8910_interface =
 {
 	1,
@@ -376,7 +364,7 @@ static struct Y8950interface y8950_interface =
 	3579545,	/* ? */
 	{ 63 },
 	{ 0 },
-	{ 4 },  // ROM region
+	{ REGION_SOUND1 },  // ROM region
 	{ 0 },  /* keyboarc read  */
 	{ 0 },  /* keyboard write */
 	{ 0 },  /* I/O read  */
@@ -401,7 +389,7 @@ static struct MachineDriver machine_driver_ginganin =
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
-	ginganin_init_machine,
+	0,
 
 	/* video hardware */
 	256, 256, { 0, 255, 0 + 16 , 255 - 16 },
@@ -437,30 +425,35 @@ static struct MachineDriver machine_driver_ginganin =
 ***************************************************************************/
 
 ROM_START( ginganin )
-
-	ROM_REGIONX( 0x20000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* main cpu */
 	ROM_LOAD_EVEN( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )
 	ROM_LOAD_ODD(  "gn_01.bin", 0x00000, 0x10000, 0x30256fcb )
 
-	ROM_REGION_DISPOSE(0x94000)		/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "gn_15.bin", 0x000000, 0x10000, 0x1b8ac9fb )	// bg
-	ROM_LOAD( "gn_14.bin", 0x010000, 0x10000, 0xe73fe668 )
-	ROM_LOAD( "gn_12.bin", 0x020000, 0x10000, 0xc134a1e9 )	// fg
-	ROM_LOAD( "gn_13.bin", 0x030000, 0x10000, 0x1d3bec21 )
-	ROM_LOAD( "gn_10.bin", 0x040000, 0x04000, 0xae371b2d )	// txt
-	ROM_LOAD( "gn_06.bin", 0x044000, 0x10000, 0xbdc65835 )	// sprites
-	ROM_CONTINUE(          0x084000, 0x10000 )
-	ROM_LOAD( "gn_07.bin", 0x054000, 0x10000, 0xc2b8eafe )
-	ROM_LOAD( "gn_08.bin", 0x064000, 0x10000, 0xf7c73c18 )
-	ROM_LOAD( "gn_09.bin", 0x074000, 0x10000, 0xa5e07c3b )
-
-	ROM_REGION( 0x08000 )				/* Region 2 - bg tilemap */
-	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, 0xf0d0e605 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )				/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound cpu */
 	ROM_LOAD( "gn_05.bin", 0x00000, 0x10000, 0xe76e10e7 )
 
-	ROM_REGION(0x20000)				/* Region 4 - samples */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gn_15.bin", 0x000000, 0x10000, 0x1b8ac9fb )	// bg
+	ROM_LOAD( "gn_14.bin", 0x010000, 0x10000, 0xe73fe668 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gn_12.bin", 0x000000, 0x10000, 0xc134a1e9 )	// fg
+	ROM_LOAD( "gn_13.bin", 0x010000, 0x10000, 0x1d3bec21 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gn_10.bin", 0x000000, 0x04000, 0xae371b2d )	// txt
+
+	ROM_REGIONX( 0x50000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gn_06.bin", 0x000000, 0x10000, 0xbdc65835 )	// sprites
+	ROM_CONTINUE(          0x040000, 0x10000 )
+	ROM_LOAD( "gn_07.bin", 0x010000, 0x10000, 0xc2b8eafe )
+	ROM_LOAD( "gn_08.bin", 0x020000, 0x10000, 0xf7c73c18 )
+	ROM_LOAD( "gn_09.bin", 0x030000, 0x10000, 0xa5e07c3b )
+
+	ROM_REGIONX( 0x08000, REGION_GFX5 )	/* background tilemaps */
+	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, 0xf0d0e605 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "gn_04.bin", 0x00000, 0x10000, 0x0ed9133b )
 	ROM_LOAD( "gn_03.bin", 0x10000, 0x10000, 0xf1ba222c )
 
@@ -468,9 +461,9 @@ ROM_END
 
 
 
-void ginganin_rom_decode(void)
+void init_ginganin(void)
 {
-unsigned char *RAM;
+	unsigned char *RAM;
 
 /* main cpu patches */
 	RAM = memory_region(REGION_CPU1);
@@ -486,28 +479,4 @@ unsigned char *RAM;
 }
 
 
-struct GameDriver driver_ginganin =
-{
-	__FILE__,
-	0,
-	"ginganin",
-	"Ginga NinkyouDen",
-	"1987",
-	"Jaleco",
-	"Luca Elia\n",
-	0,
-	&machine_driver_ginganin,
-	ginganin_rom_decode,
-
-	rom_ginganin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ginganin,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_SOUND,
-
-	0,0
-};
+GAMEX( 1987, ginganin, 0, ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen", GAME_IMPERFECT_SOUND )

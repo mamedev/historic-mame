@@ -2,6 +2,8 @@
 
 Mr Do! memory map (preliminary)
 
+driver by Nicola Salmoria
+
 0000-7fff ROM
 8000-83ff color RAM 1
 8400-87ff video RAM 1
@@ -131,7 +133,7 @@ INPUT_PORTS_START( mrdo )
 	PORT_DIPSETTING(    0x40, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
@@ -142,9 +144,9 @@ INPUT_PORTS_START( mrdo )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x00, "Free play" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* settings 0x01 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
@@ -155,7 +157,7 @@ INPUT_PORTS_START( mrdo )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x00, "Free play" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* settings 0x10 thru 0x50 all give 1 Coin/1 Credit */
 INPUT_PORTS_END
 
@@ -188,9 +190,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 64 },	/* colors 0-255 directly mapped */
-	{ 1, 0x2000, &charlayout,      0, 64 },
-	{ 1, 0x4000, &spritelayout, 4*64, 16 },
+	{ REGION_GFX1, 0, &charlayout,      0, 64 },	/* colors 0-255 directly mapped */
+	{ REGION_GFX2, 0, &charlayout,      0, 64 },
+	{ REGION_GFX3, 0, &spritelayout, 4*64, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -205,7 +207,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mrdo =
 {
 	/* basic machine hardware */
 	{
@@ -257,13 +259,17 @@ ROM_START( mrdo )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
 	ROM_LOAD( "f4-04.bin",    0x6000, 0x2000, 0xf4190cfc )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "s8-09.bin",    0x0000, 0x1000, 0xaa80c5b6 )
 	ROM_LOAD( "u8-10.bin",    0x1000, 0x1000, 0xd20ec85b )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h5-05.bin",    0x0000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x1000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -278,13 +284,17 @@ ROM_START( mrdot )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
 	ROM_LOAD( "d4",           0x6000, 0x2000, 0xfce9afeb )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
 	ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h5-05.bin",    0x0000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x1000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -299,13 +309,17 @@ ROM_START( mrdofix )
 	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
 	ROM_LOAD( "dofix.d4",     0x6000, 0x2000, 0x32db845f )
 
-	ROM_REGION_DISPOSE(0x6000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
 	ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h5-05.bin",    0x0000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x1000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )  /* palette (high bits) */
@@ -320,13 +334,17 @@ ROM_START( mrlo )
 	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
 	ROM_LOAD( "mrlo04.bin",   0x6000, 0x2000, 0x49c10274 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mrlo09.bin",   0x0000, 0x1000, 0xfdb60d0d )
 	ROM_LOAD( "mrlo10.bin",   0x1000, 0x1000, 0x0492c10e )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h5-05.bin",    0x0000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x1000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -341,13 +359,17 @@ ROM_START( mrdu )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
 	ROM_LOAD( "du4.bin",      0x6000, 0x2000, 0x893bc218 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "du9.bin",      0x0000, 0x1000, 0x4090dcdc )
 	ROM_LOAD( "du10.bin",     0x1000, 0x1000, 0x1e63ab69 )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
-	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h5-05.bin",    0x0000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x1000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -362,13 +384,17 @@ ROM_START( mrdoy )
 	ROM_LOAD( "dosnow.3",     0x4000, 0x2000, 0x96416dbe )
 	ROM_LOAD( "dosnow.4",     0x6000, 0x2000, 0xc05051b6 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dosnow.9",     0x0000, 0x1000, 0x85d16217 )
 	ROM_LOAD( "dosnow.10",    0x1000, 0x1000, 0x61a7f54b )
-	ROM_LOAD( "dosnow.8",     0x2000, 0x1000, 0x2bd1239a )
-	ROM_LOAD( "dosnow.7",     0x3000, 0x1000, 0xac8ffddf )
-	ROM_LOAD( "dosnow.5",     0x4000, 0x1000, 0x7662d828 )
-	ROM_LOAD( "dosnow.6",     0x5000, 0x1000, 0x413f88d1 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dosnow.8",     0x0000, 0x1000, 0x2bd1239a )
+	ROM_LOAD( "dosnow.7",     0x1000, 0x1000, 0xac8ffddf )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dosnow.5",     0x0000, 0x1000, 0x7662d828 )
+	ROM_LOAD( "dosnow.6",     0x1000, 0x1000, 0x413f88d1 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -383,13 +409,17 @@ ROM_START( yankeedo )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
 	ROM_LOAD( "f4-04.bin",    0x6000, 0x2000, 0xf4190cfc )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "s8-09.bin",    0x0000, 0x1000, 0xaa80c5b6 )
 	ROM_LOAD( "u8-10.bin",    0x1000, 0x1000, 0xd20ec85b )
-	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
-	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
-	ROM_LOAD( "yd_d5.h5",     0x4000, 0x1000, 0xf530b79b )
-	ROM_LOAD( "yd_d6.k5",     0x5000, 0x1000, 0x790579aa )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r8-08.bin",    0x0000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x1000, 0x1000, 0x4b9973db )
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "yd_d5.h5",     0x0000, 0x1000, 0xf530b79b )
+	ROM_LOAD( "yd_d6.k5",     0x1000, 0x1000, 0x790579aa )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -399,178 +429,10 @@ ROM_END
 
 
 
-struct GameDriver driver_mrdo =
-{
-	__FILE__,
-	0,
-	"mrdo",
-	"Mr. Do! (Universal)",
-	"1982",
-	"Universal",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrdo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mrdot =
-{
-	__FILE__,
-	&driver_mrdo,
-	"mrdot",
-	"Mr. Do! (Taito)",
-	"1982",
-	"Universal (Taito license)",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrdot,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mrdofix =
-{
-    __FILE__,
-    &driver_mrdo,
-    "mrdofix",
-    "Mr. Do! (bugfixed)",
-    "1982",
-    "Universal (Taito license)",
-    "Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-    0,
-    &machine_driver,
-    0,
-
-    rom_mrdofix,
-    0, 0,
-    0,
-    0,
-
-    input_ports_mrdo,
-
-    0, 0, 0,
-    ROT270,
-	0,0
-};
-
-struct GameDriver driver_mrlo =
-{
-	__FILE__,
-	&driver_mrdo,
-	"mrlo",
-	"Mr. Lo!",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrlo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mrdu =
-{
-	__FILE__,
-	&driver_mrdo,
-	"mrdu",
-	"Mr. Du!",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrdu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-
-struct GameDriver driver_mrdoy =
-{
-	__FILE__,
-	&driver_mrdo,
-	"mrdoy",
-	"Mr. Do! (Yukidaruma)",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrdoy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_yankeedo =
-{
-	__FILE__,
-	&driver_mrdo,
-	"yankeedo",
-	"Yankee DO!",
-	"1982",
-	"hack",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_yankeedo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrdo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1982, mrdo,     0,    mrdo, mrdo, 0, ROT270, "Universal", "Mr. Do! (Universal)" )
+GAME( 1982, mrdot,    mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (Taito)" )
+GAME( 1982, mrdofix,  mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (bugfixed)" )
+GAME( 1982, mrlo,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Lo!" )
+GAME( 1982, mrdu,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Du!" )
+GAME( 1982, mrdoy,    mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Do! (Yukidaruma)" )
+GAME( 1982, yankeedo, mrdo, mrdo, mrdo, 0, ROT270, "hack", "Yankee DO!" )

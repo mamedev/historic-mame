@@ -1,3 +1,10 @@
+/***************************************************************************
+
+Super Space invaders
+
+driver by Howie Cohen, Alex Pasadyn
+
+***************************************************************************/
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
@@ -21,7 +28,7 @@ int  r_rd_a001(int offset);
 
 static void bankswitch_w ( int offset, int data ) {
 
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	int banknum = ( data - 1 ) & 3;
 
@@ -297,7 +304,7 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo ssi_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tilelayout, 0, 256 },         /* sprites & playfield */
+	{ REGION_GFX1, 0x000000, &tilelayout, 0, 256 },         /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -306,21 +313,20 @@ static struct YM2610interface ym2610_interface =
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ rastan_irq_handler },
-	{ 3 },
-	{ 3 },
+	{ REGION_SOUND1 },
+	{ REGION_SOUND1 },
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_ssi =
 {
 	/* basic machine hardware */
 	{
@@ -377,14 +383,14 @@ ROM_START( ssi )
 	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
 	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
 
-	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION(0x20000)      /* ADPCM samples */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 2610 samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
@@ -395,65 +401,18 @@ ROM_START( majest12 )
 	ROM_LOAD_ODD ( "c64-08.bin", 0x00000, 0x20000, 0xddfd33d5 )
 	ROM_LOAD_ODD ( "c64-05.bin", 0x40000, 0x20000, 0xb61866c0 )
 
-	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
-	ROM_REGION(0x20000)      /* ADPCM samples */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 2610 samples */
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
 
 
-struct GameDriver driver_ssi =
-{
-	__FILE__,
-	0,
-	"ssi",
-	"Super Space Invaders '91 (World)",
-	"1990",
-	"Taito Corporation Japan",
-	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ssi,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ssi,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0, 0
-};
-
-struct GameDriver driver_majest12 =
-{
-	__FILE__,
-	&driver_ssi,
-	"majest12",
-	"Majestic Twelve - The Space Invaders Part IV (Japan)",
-	"1990",
-	"Taito Corporation",
-	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_majest12,
-	0, 0,
-	0,
-	0,
-
-	input_ports_majest12,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0, 0
-};
+GAME( 1990, ssi,      0,   ssi, ssi,      0, ROT270, "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
+GAME( 1990, majest12, ssi, ssi, majest12, 0, ROT270, "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )

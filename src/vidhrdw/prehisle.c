@@ -20,7 +20,7 @@ void prehisle_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int offs,mx,my,color,tile,i;
 	int colmask[0x80],code,pal_base,tile_base;
 	int scrollx,scrolly;
-	unsigned char *tilemap = memory_region(4);
+	unsigned char *tilemap = memory_region(REGION_GFX5);
 	static int old_base=0xfffff,old_front=0xfffff;
 
 	/* Build the dynamic palette */

@@ -2,9 +2,15 @@
 
 Super QIX memory map (preliminary)
 
+driver by Mirko Buffoni
+
 CPU:
 0000-7fff ROM
 8000-bfff BANK 0-1-2-3	(All banks except 2 contain code)
+
+Notes:
+- the original doesn't work due to protection. There is an unknown ROM: code
+  for a mcu?
 
 ***************************************************************************/
 
@@ -177,12 +183,12 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 },	/* Chars */
-	{ 1, 0x08000, &charlayout,   0, 16 },	/* Background tiles */
-	{ 1, 0x10000, &charlayout,   0, 16 },
-	{ 1, 0x18000, &charlayout,   0, 16 },
-	{ 1, 0x20000, &charlayout,   0, 16 },
-	{ 1, 0x28000, &spritelayout, 0, 16 },	/* Sprites */
+	{ REGION_GFX1, 0x00000, &charlayout,   0, 16 },	/* Chars */
+	{ REGION_GFX2, 0x00000, &charlayout,   0, 16 },	/* Background tiles */
+	{ REGION_GFX2, 0x08000, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0x10000, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0x18000, &charlayout,   0, 16 },
+	{ REGION_GFX3, 0x00000, &spritelayout, 0, 16 },	/* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -193,7 +199,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r, input_port_3_r },		/* port Aread */
 	{ input_port_1_r, input_port_2_r },		/* port Bread */
 	{ 0 },	/* port Awrite */
@@ -214,7 +219,7 @@ int sqix_interrupt(void)
 		return 0;
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_superqix =
 {
 	/* basic machine hardware */
 	{
@@ -266,13 +271,17 @@ ROM_START( superqix )
 	ROM_LOAD( "sq01.97",      0x00000, 0x08000, 0x0888b7de )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
-	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sq04.2",       0x00000, 0x08000, 0xf815ef45 )
-	ROM_LOAD( "sq03.3",       0x08000, 0x10000, 0x6e8b6a67 )
-	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
-	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 
-	ROM_REGION( 0x1000 )	/* Unknown (protection related?) */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sq03.3",       0x00000, 0x10000, 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14",      0x10000, 0x10000, 0x38154517 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sq05.1",       0x00000, 0x10000, 0xdf326540 )
+
+	ROM_REGIONX( 0x1000, REGION_USER1 )	/* Unknown (protection related?) */
 	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
 ROM_END
 
@@ -281,62 +290,18 @@ ROM_START( sqixbl )
 	ROM_LOAD( "cpu.2",        0x00000, 0x08000, 0x682e28e3 )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
-	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sq04.2",       0x00000, 0x08000, 0xf815ef45 )
-	ROM_LOAD( "sq03.3",       0x08000, 0x10000, 0x6e8b6a67 )
-	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
-	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sq03.3",       0x00000, 0x10000, 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14",      0x10000, 0x10000, 0x38154517 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sq05.1",       0x00000, 0x10000, 0xdf326540 )
 ROM_END
 
 
 
-struct GameDriver driver_superqix =
-{
-	__FILE__,
-	0,
-	"superqix",
-	"Super Qix",
-	"1987",
-	"Taito",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_superqix,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superqix,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-
-	0, 0
-};
-
-struct GameDriver driver_sqixbl =
-{
-	__FILE__,
-	&driver_superqix,
-	"sqixbl",
-	"Super Qix (bootleg)",
-	"1987",
-	"bootleg",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sqixbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_superqix,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAMEX(1987, superqix, 0,        superqix, superqix, 0, ROT90, "Taito", "Super Qix", GAME_NOT_WORKING )
+GAME( 1987, sqixbl,   superqix, superqix, superqix, 0, ROT90, "bootleg", "Super Qix (bootleg)" )

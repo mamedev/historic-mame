@@ -314,7 +314,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

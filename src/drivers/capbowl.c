@@ -240,7 +240,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },
@@ -325,10 +324,6 @@ ROM_START( capbowl )
 	ROM_LOAD( "gr1",          0x18000, 0x8000, 0x27ede6ce )
 	ROM_LOAD( "gr2",          0x20000, 0x8000, 0xe49238f4 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )   /* 64k for sound */
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
@@ -368,7 +363,7 @@ ROM_END
 
 
 
-GAME( 1988, capbowl,  ,        capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 1)" )
-GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 2)" )
-GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Coors Light Bowling" )
-GAME( 1991, bowlrama, ,        bowlrama, capbowl, , ROT270_16BIT, "P & P Marketing", "Bowl-O-Rama" )
+GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 1)" )
+GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 2)" )
+GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Coors Light Bowling" )
+GAME( 1991, bowlrama, 0,       bowlrama, capbowl, 0, ROT270_16BIT, "P & P Marketing", "Bowl-O-Rama" )

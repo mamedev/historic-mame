@@ -47,7 +47,7 @@ int galpanic_interrupt(void)
 void galpanic_6295_bankswitch_w(int offset,int data)
 {
 	static unsigned char bank[2];
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 
 
 	COMBINE_WORD_MEM(bank,data);
@@ -93,12 +93,12 @@ INPUT_PORTS_START( galpanic )
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )	/* flip screen? */
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )	/* might affect coinage according to manual, */
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )		/* but settings below don't match */
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
@@ -136,7 +136,7 @@ INPUT_PORTS_START( galpanic )
 	PORT_DIPSETTING(      0x0030, "3" )
 	PORT_DIPSETTING(      0x0020, "4" )
 	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )	/* manual says demo sounds but has no effect */
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0080, "Test Mode" )
@@ -180,7 +180,7 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &spritelayout,  256, 16 },
+	{ REGION_GFX1, 0, &spritelayout,  256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -190,13 +190,13 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
 	{ 12000 },          /* 12000Hz frequency */
-	{ 2 },              /* memory region 2 */
+	{ REGION_SOUND1 },  /* memory region */
 	{ 100 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_galpanic =
 {
 	/* basic machine hardware */
 	{
@@ -257,10 +257,10 @@ ROM_START( galpanic )
 	ROM_LOAD_ODD ( "pm002e.17",    0x300000, 0x080000, 0x713ee898 )
 	ROM_LOAD_EVEN( "pm003e.16",    0x300000, 0x080000, 0x6bb060fd )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pm006e.67",    0x000000, 0x100000, 0x57aec037 )
 
-	ROM_REGION( 0x140000 )	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x140000, REGION_SOUND1 )	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "pm008e.l",     0x00000, 0x80000, 0xd9379ba8 )
 	ROM_RELOAD(               0x40000, 0x80000 )
@@ -269,27 +269,4 @@ ROM_END
 
 
 
-struct GameDriver driver_galpanic =
-{
-	__FILE__,
-	0,
-	"galpanic",
-	"Gals Panic",
-	"1990",
-	"Kaneko",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galpanic,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galpanic,
-
-	0, 0, 0,
-	ROT90 | GAME_REQUIRES_16BIT,
-	0, 0
-};
+GAME( 1990, galpanic, 0, galpanic, galpanic, 0, ROT90_16BIT, "Kaneko", "Gals Panic" )

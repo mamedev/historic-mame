@@ -2,6 +2,8 @@
 
 Loco-Motion memory map (preliminary)
 
+driver by Nicola Salmoria
+
 CPU #1
 0000-4fff ROM (empty space at 5000-5fff for diagnostic ROM)
 8040-83ff video RAM (top 8 rows of screen)
@@ -56,7 +58,6 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void jungler_init(void);
 void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -376,9 +377,9 @@ static struct GfxLayout dotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 64 },
-	{ 1, 0x0000, &spritelayout,      0, 64 },
-	{ 1, 0x2000, &dotlayout,      64*4,  1 },
+	{ REGION_GFX1, 0, &charlayout,      0, 64 },
+	{ REGION_GFX1, 0, &spritelayout,    0, 64 },
+	{ REGION_GFX2, 0, &dotlayout,    64*4,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -450,19 +451,21 @@ ROM_START( locomotn )
 	ROM_LOAD( "4.cpu",        0x3000, 0x1000, 0xcaf6431c )
 	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10g.bpr",      0x0000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( gutangtn )
@@ -473,19 +476,21 @@ ROM_START( gutangtn )
 	ROM_LOAD( "3h_4.bin",     0x3000, 0x1000, 0xaa258ddf )
 	ROM_LOAD( "3j_5.bin",     0x4000, 0x1000, 0x52aec87e )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5l_c1.bin",    0x0000, 0x1000, 0x5732eda9 )
 	ROM_LOAD( "5m_c2.bin",    0x1000, 0x1000, 0x51c542fd )
-	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, 0x2ef89356 ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10g.bpr",      0x0000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( cottong )
@@ -495,20 +500,22 @@ ROM_START( cottong )
 	ROM_LOAD( "c3",           0x2000, 0x1000, 0x01f909fe )
 	ROM_LOAD( "c4",           0x3000, 0x1000, 0xa89eb3e3 )
 
-	ROM_REGION_DISPOSE(0x2100) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )
+	ROM_LOAD( "c8",           0x1000, 0x1000, 0x323e1937 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c5",           0x0000, 0x1000, 0x992d079c )
 	ROM_LOAD( "c6",           0x1000, 0x1000, 0x0149ef46 )
-	ROM_LOAD( "5.bpr",        0x2000, 0x0100, 0x21fb583f ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5.bpr",        0x0000, 0x0100, 0x21fb583f ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )
-	ROM_LOAD( "c8",           0x1000, 0x1000, 0x323e1937 )
 ROM_END
 
 ROM_START( jungler )
@@ -518,20 +525,22 @@ ROM_START( jungler )
 	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
 	ROM_LOAD( "jungr4",       0x3000, 0x1000, 0xf92e9940 )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5k",           0x0000, 0x0800, 0x924262bf )
 	ROM_LOAD( "5m",           0x0800, 0x0800, 0x131a08ac )
 	/* 1000-1fff empty for my convenience */
-	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( junglers )
@@ -541,20 +550,22 @@ ROM_START( junglers )
 	ROM_LOAD( "4d",           0x2000, 0x1000, 0x557c7925 )
 	ROM_LOAD( "4c",           0x3000, 0x1000, 0x51aac9a5 )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5k",           0x0000, 0x0800, 0x924262bf )
 	ROM_LOAD( "5m",           0x0800, 0x0800, 0x131a08ac )
 	/* 1000-1fff empty for my convenience */
-	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0x2ef89356 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( commsega )
@@ -565,169 +576,28 @@ ROM_START( commsega )
 	ROM_LOAD( "csega4",       0x3000, 0x1000, 0xe0ac69b4 )
 	ROM_LOAD( "csega5",       0x4000, 0x1000, 0xbc56ebd0 )
 
-	ROM_REGION_DISPOSE(0x2100) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "csega7",       0x0000, 0x1000, 0xe8e374f9 )
 	ROM_LOAD( "csega6",       0x1000, 0x1000, 0xcf07fd5e )
-	ROM_LOAD( "gg3.bpr",      0x2000, 0x0100, 0xae7fd962 ) /* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gg3.bpr",      0x0000, 0x0100, 0xae7fd962 ) /* dots */
 
 	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "gg1.bpr",      0x0000, 0x0020, 0xf69e585a ) /* palette */
 	ROM_LOAD( "gg2.bpr",      0x0020, 0x0100, 0x0b756e30 ) /* loookup table */
 	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "tt3.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
 ROM_END
 
 
 
-struct GameDriver driver_locomotn =
-{
-	__FILE__,
-	0,
-	"locomotn",
-	"Loco-Motion",
-	"1982",
-	"Konami (Centuri license)",
-	"Nicola Salmoria\nKevin Klopp (color info)",
-	0,
-	&machine_driver_locomotn,
-	0,
-
-	rom_locomotn,
-	0, 0,
-	0,
-	0,
-
-	input_ports_locomotn,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_gutangtn =
-{
-	__FILE__,
-	&driver_locomotn,
-	"gutangtn",
-	"Guttong Gottong",
-	"1982",
-	"Konami (Sega license)",
-	"Nicola Salmoria\nKevin Klopp (color info)",
-	0,
-	&machine_driver_locomotn,
-	0,
-
-	rom_gutangtn,
-	0, 0,
-	0,
-	0,
-
-	input_ports_locomotn,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_cottong =
-{
-	__FILE__,
-	&driver_locomotn,
-	"cottong",
-	"Cotocoto Cottong",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria\nKevin Klopp (color info)",
-	0,
-	&machine_driver_locomotn,
-	0,
-
-	rom_cottong,
-	0, 0,
-	0,
-	0,
-
-	input_ports_locomotn,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jungler =
-{
-	__FILE__,
-	0,
-	"jungler",
-	"Jungler",
-	"1981",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_jungler,
-	jungler_init,
-
-	rom_jungler,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jungler,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_junglers =
-{
-	__FILE__,
-	&driver_jungler,
-	"junglers",
-	"Jungler (Stern)",
-	"1981",
-	"[Konami] (Stern license)",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_jungler,
-	jungler_init,
-
-	rom_junglers,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jungler,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_commsega =
-{
-	__FILE__,
-	0,
-	"commsega",
-	"Commando (Sega)",
-	"1983",
-	"Sega",
-	"Nicola Salmoria\nBrad Oliver",
-	0,
-	&machine_driver_commsega,
-	0,
-
-	rom_commsega,
-	0, 0,
-	0,
-	0,
-
-	input_ports_commsega,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1982, locomotn, 0,        locomotn, locomotn, 0, ROT90, "Konami (Centuri license)", "Loco-Motion" )
+GAME( 1982, gutangtn, locomotn, locomotn, locomotn, 0, ROT90, "Konami (Sega license)", "Guttang Gottong" )
+GAME( 1982, cottong,  locomotn, locomotn, locomotn, 0, ROT90, "bootleg", "Cotocoto Cottong" )
+GAME( 1981, jungler,  0,        jungler,  jungler,  0, ROT90, "Konami", "Jungler" )
+GAME( 1981, junglers, jungler,  jungler,  jungler,  0, ROT90, "[Konami] (Stern license)", "Jungler (Stern)" )
+GAME( 1983, commsega, 0,        commsega, commsega, 0, ROT90, "Sega", "Commando (Sega)" )

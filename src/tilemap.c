@@ -975,19 +975,21 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 	 			/* count consecutive columns scrolled by the same amount */
 				scroll = colscroll[col];
 				cons = 1;
-				while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+				if(scroll != TILE_LINE_DISABLED)
+				{
+					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
 
-				if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-				else scroll %= blit.source_height;
+					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+					else scroll %= blit.source_height;
 
-				blit.clip_left = col * colwidth;
-				if (blit.clip_left < left) blit.clip_left = left;
-				blit.clip_right = (col + cons) * colwidth;
-				if (blit.clip_right > right) blit.clip_right = right;
+					blit.clip_left = col * colwidth;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth;
+					if (blit.clip_right > right) blit.clip_right = right;
 
-				draw( 0,scroll );
-				draw( 0,scroll - blit.source_height );
-
+					draw( 0,scroll );
+					draw( 0,scroll - blit.source_height );
+				}
 				col += cons;
 			}
 		}
@@ -1006,19 +1008,21 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 				/* count consecutive rows scrolled by the same amount */
 				scroll = rowscroll[row];
 				cons = 1;
-				while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
+				if(scroll != TILE_LINE_DISABLED)
+				{
+					while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
 
-				if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-				else scroll %= blit.source_width;
+					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+					else scroll %= blit.source_width;
 
-				blit.clip_top = row * rowheight;
-				if (blit.clip_top < top) blit.clip_top = top;
-				blit.clip_bottom = (row + cons) * rowheight;
-				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+					blit.clip_top = row * rowheight;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				draw( scroll,0 );
-				draw( scroll - blit.source_width,0 );
-
+					draw( scroll,0 );
+					draw( scroll - blit.source_width,0 );
+				}
 				row += cons;
 			}
 		}
@@ -1060,27 +1064,29 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 	 			/* count consecutive columns scrolled by the same amount */
 				scroll = colscroll[col];
 				cons = 1;
-				while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+				if(scroll != TILE_LINE_DISABLED)
+				{
+					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
 
-				if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-				else scroll %= blit.source_height;
+					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+					else scroll %= blit.source_height;
 
-				blit.clip_left = col * colwidth + scrollx;
-				if (blit.clip_left < left) blit.clip_left = left;
-				blit.clip_right = (col + cons) * colwidth + scrollx;
-				if (blit.clip_right > right) blit.clip_right = right;
+					blit.clip_left = col * colwidth + scrollx;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth + scrollx;
+					if (blit.clip_right > right) blit.clip_right = right;
 
-				draw( scrollx,scroll );
-				draw( scrollx,scroll - blit.source_height );
+					draw( scrollx,scroll );
+					draw( scrollx,scroll - blit.source_height );
 
-				blit.clip_left = col * colwidth + scrollx - blit.source_width;
-				if (blit.clip_left < left) blit.clip_left = left;
-				blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
-				if (blit.clip_right > right) blit.clip_right = right;
+					blit.clip_left = col * colwidth + scrollx - blit.source_width;
+					if (blit.clip_left < left) blit.clip_left = left;
+					blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
+					if (blit.clip_right > right) blit.clip_right = right;
 
-				draw( scrollx - blit.source_width,scroll );
-				draw( scrollx - blit.source_width,scroll - blit.source_height );
-
+					draw( scrollx - blit.source_width,scroll );
+					draw( scrollx - blit.source_width,scroll - blit.source_height );
+				}
 				col += cons;
 			}
 		}
@@ -1103,27 +1109,29 @@ void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priorit
 				/* count consecutive rows scrolled by the same amount */
 				scroll = rowscroll[row];
 				cons = 1;
-				while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
+				if(scroll != TILE_LINE_DISABLED)
+				{
+					while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
 
-				if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-				else scroll %= blit.source_width;
+					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+					else scroll %= blit.source_width;
 
-				blit.clip_top = row * rowheight + scrolly;
-				if (blit.clip_top < top) blit.clip_top = top;
-				blit.clip_bottom = (row + cons) * rowheight + scrolly;
-				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+					blit.clip_top = row * rowheight + scrolly;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight + scrolly;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				draw( scroll,scrolly );
-				draw( scroll - blit.source_width,scrolly );
+					draw( scroll,scrolly );
+					draw( scroll - blit.source_width,scrolly );
 
-				blit.clip_top = row * rowheight + scrolly - blit.source_height;
-				if (blit.clip_top < top) blit.clip_top = top;
-				blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
-				if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+					blit.clip_top = row * rowheight + scrolly - blit.source_height;
+					if (blit.clip_top < top) blit.clip_top = top;
+					blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
+					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-				draw( scroll,scrolly - blit.source_height );
-				draw( scroll - blit.source_width,scrolly - blit.source_height );
-
+					draw( scroll,scrolly - blit.source_height );
+					draw( scroll - blit.source_width,scrolly - blit.source_height );
+				}
 				row += cons;
 			}
 		}
@@ -1181,19 +1189,21 @@ void tilemap_update( struct tilemap *tilemap ){
 		 			/* count consecutive columns scrolled by the same amount */
 					scroll = colscroll[col];
 					cons = 1;
-					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+					if(scroll != TILE_LINE_DISABLED)
+					{
+						while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
 
-					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-					else scroll %= blit.source_height;
+						if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+						else scroll %= blit.source_height;
 
-					blit.clip_left = col * colwidth;
-					if (blit.clip_left < left) blit.clip_left = left;
-					blit.clip_right = (col + cons) * colwidth;
-					if (blit.clip_right > right) blit.clip_right = right;
+						blit.clip_left = col * colwidth;
+						if (blit.clip_left < left) blit.clip_left = left;
+						blit.clip_right = (col + cons) * colwidth;
+						if (blit.clip_right > right) blit.clip_right = right;
 
-					mark_visible( 0,scroll );
-					mark_visible( 0,scroll - blit.source_height );
-
+						mark_visible( 0,scroll );
+						mark_visible( 0,scroll - blit.source_height );
+					}
 					col += cons;
 				}
 			}
@@ -1212,19 +1222,21 @@ void tilemap_update( struct tilemap *tilemap ){
 					/* count consecutive rows scrolled by the same amount */
 					scroll = rowscroll[row];
 					cons = 1;
-					while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
+					if(scroll != TILE_LINE_DISABLED)
+					{
+						while( row + cons < rows &&	rowscroll[row + cons] == scroll ) cons++;
 
-					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-					else scroll %= blit.source_width;
+						if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+						else scroll %= blit.source_width;
 
-					blit.clip_top = row * rowheight;
-					if (blit.clip_top < top) blit.clip_top = top;
-					blit.clip_bottom = (row + cons) * rowheight;
-					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+						blit.clip_top = row * rowheight;
+						if (blit.clip_top < top) blit.clip_top = top;
+						blit.clip_bottom = (row + cons) * rowheight;
+						if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					mark_visible( scroll,0 );
-					mark_visible( scroll - blit.source_width,0 );
-
+						mark_visible( scroll,0 );
+						mark_visible( scroll - blit.source_width,0 );
+					}
 					row += cons;
 				}
 			}
@@ -1266,27 +1278,29 @@ void tilemap_update( struct tilemap *tilemap ){
 		 			/* count consecutive columns scrolled by the same amount */
 					scroll = colscroll[col];
 					cons = 1;
-					while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
+					if(scroll != TILE_LINE_DISABLED)
+					{
+						while( col + cons < cols &&	colscroll[col + cons] == scroll ) cons++;
 
-					if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
-					else scroll %= blit.source_height;
+						if (scroll < 0) scroll = blit.source_height - (-scroll) % blit.source_height;
+						else scroll %= blit.source_height;
 
-					blit.clip_left = col * colwidth + scrollx;
-					if (blit.clip_left < left) blit.clip_left = left;
-					blit.clip_right = (col + cons) * colwidth + scrollx;
-					if (blit.clip_right > right) blit.clip_right = right;
+						blit.clip_left = col * colwidth + scrollx;
+						if (blit.clip_left < left) blit.clip_left = left;
+						blit.clip_right = (col + cons) * colwidth + scrollx;
+						if (blit.clip_right > right) blit.clip_right = right;
 
-					mark_visible( scrollx,scroll );
-					mark_visible( scrollx,scroll - blit.source_height );
+						mark_visible( scrollx,scroll );
+						mark_visible( scrollx,scroll - blit.source_height );
 
-					blit.clip_left = col * colwidth + scrollx - blit.source_width;
-					if (blit.clip_left < left) blit.clip_left = left;
-					blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
-					if (blit.clip_right > right) blit.clip_right = right;
+						blit.clip_left = col * colwidth + scrollx - blit.source_width;
+						if (blit.clip_left < left) blit.clip_left = left;
+						blit.clip_right = (col + cons) * colwidth + scrollx - blit.source_width;
+						if (blit.clip_right > right) blit.clip_right = right;
 
-					mark_visible( scrollx - blit.source_width,scroll );
-					mark_visible( scrollx - blit.source_width,scroll - blit.source_height );
-
+						mark_visible( scrollx - blit.source_width,scroll );
+						mark_visible( scrollx - blit.source_width,scroll - blit.source_height );
+					}
 					col += cons;
 				}
 			}
@@ -1309,27 +1323,29 @@ void tilemap_update( struct tilemap *tilemap ){
 					/* count consecutive rows scrolled by the same amount */
 					scroll = rowscroll[row];
 					cons = 1;
-					while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
+					if(scroll != TILE_LINE_DISABLED)
+					{
+						while (row + cons < rows &&	rowscroll[row + cons] == scroll) cons++;
 
-					if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
-					else scroll %= blit.source_width;
+						if (scroll < 0) scroll = blit.source_width - (-scroll) % blit.source_width;
+						else scroll %= blit.source_width;
 
-					blit.clip_top = row * rowheight + scrolly;
-					if (blit.clip_top < top) blit.clip_top = top;
-					blit.clip_bottom = (row + cons) * rowheight + scrolly;
-					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+						blit.clip_top = row * rowheight + scrolly;
+						if (blit.clip_top < top) blit.clip_top = top;
+						blit.clip_bottom = (row + cons) * rowheight + scrolly;
+						if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					mark_visible( scroll,scrolly );
-					mark_visible( scroll - blit.source_width,scrolly );
+						mark_visible( scroll,scrolly );
+						mark_visible( scroll - blit.source_width,scrolly );
 
-					blit.clip_top = row * rowheight + scrolly - blit.source_height;
-					if (blit.clip_top < top) blit.clip_top = top;
-					blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
-					if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
+						blit.clip_top = row * rowheight + scrolly - blit.source_height;
+						if (blit.clip_top < top) blit.clip_top = top;
+						blit.clip_bottom = (row + cons) * rowheight + scrolly - blit.source_height;
+						if (blit.clip_bottom > bottom) blit.clip_bottom = bottom;
 
-					mark_visible( scroll,scrolly - blit.source_height );
-					mark_visible( scroll - blit.source_width,scrolly - blit.source_height );
-
+						mark_visible( scroll,scrolly - blit.source_height );
+						mark_visible( scroll - blit.source_width,scrolly - blit.source_height );
+					}
 					row += cons;
 				}
 			}

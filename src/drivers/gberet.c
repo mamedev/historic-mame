@@ -4,6 +4,8 @@ Green Beret memory map (preliminary)
 
 gberetb is a bootleg hacked to run on different hardware.
 
+driver by Nicola Salmoria
+
 
 0000-bfff ROM
 c000-c7ff Color RAM
@@ -72,8 +74,8 @@ void gberet_scroll_w(int offset,int data);
 void gberetb_scroll_w(int offset,int data);
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
-void gberet_init(void);
-void gberetb_init(void);
+void init_gberet(void);
+void init_gberetb(void);
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int gberet_interrupt(void);
@@ -557,15 +559,15 @@ static struct GfxLayout gberetb_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 16 },
-	{ 1, 0x04000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gberetb_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &gberetb_charlayout,       0, 16 },
-	{ 1, 0x04000, &gberetb_spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &gberetb_charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &gberetb_spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -580,7 +582,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gberet =
 {
 	/* basic machine hardware */
 	{
@@ -705,12 +707,14 @@ ROM_START( gberet )
 	ROM_LOAD( "c08_l02.bin",  0x4000, 0x4000, 0x240836a5 )
 	ROM_LOAD( "c07_l01.bin",  0x8000, 0x4000, 0x41fa3e1f )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "f03_l07.bin",  0x00000, 0x4000, 0x4da7bd1b )
-	ROM_LOAD( "e05_l06.bin",  0x04000, 0x4000, 0x0f1cb0ca )
-	ROM_LOAD( "e04_l05.bin",  0x08000, 0x4000, 0x523a8b66 )
-	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
-	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e05_l06.bin",  0x00000, 0x4000, 0x0f1cb0ca )
+	ROM_LOAD( "e04_l05.bin",  0x04000, 0x4000, 0x523a8b66 )
+	ROM_LOAD( "f04_l08.bin",  0x08000, 0x4000, 0x883933a4 )
+	ROM_LOAD( "e03_l04.bin",  0x0c000, 0x4000, 0xccecda4c )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
@@ -724,12 +728,14 @@ ROM_START( rushatck )
 	ROM_LOAD( "rush_h02.8c",  0x4000, 0x4000, 0xb5802806 )
 	ROM_LOAD( "rush_h01.7c",  0x8000, 0x4000, 0xda7c8f3d )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rush_h07.3f",  0x00000, 0x4000, 0x03f9815f )
-	ROM_LOAD( "e05_l06.bin",  0x04000, 0x4000, 0x0f1cb0ca )
-	ROM_LOAD( "rush_h05.4e",  0x08000, 0x4000, 0x9d028e8f )
-	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
-	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e05_l06.bin",  0x00000, 0x4000, 0x0f1cb0ca )
+	ROM_LOAD( "rush_h05.4e",  0x04000, 0x4000, 0x9d028e8f )
+	ROM_LOAD( "f04_l08.bin",  0x08000, 0x4000, 0x883933a4 )
+	ROM_LOAD( "e03_l04.bin",  0x0c000, 0x4000, 0xccecda4c )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
@@ -742,12 +748,14 @@ ROM_START( gberetb )
 	ROM_LOAD( "2-ic82.10g",   0x0000, 0x8000, 0x6d6fb494 )
 	ROM_LOAD( "3-ic81.10f",   0x8000, 0x4000, 0xf1520a0a )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1-ic92.12c",   0x00000, 0x4000, 0xb0189c87 )
-	ROM_LOAD( "7-1c8.2b",     0x04000, 0x4000, 0x86334522 )
-	ROM_LOAD( "6-ic9.2c",     0x08000, 0x4000, 0xbda50d3e )
-	ROM_LOAD( "5-ic10.2d",    0x0c000, 0x4000, 0x6a7b3881 )
-	ROM_LOAD( "4-ic11.2e",    0x10000, 0x4000, 0x3fb186c9 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7-1c8.2b",     0x00000, 0x4000, 0x86334522 )
+	ROM_LOAD( "6-ic9.2c",     0x04000, 0x4000, 0xbda50d3e )
+	ROM_LOAD( "5-ic10.2d",    0x08000, 0x4000, 0x6a7b3881 )
+	ROM_LOAD( "4-ic11.2e",    0x0c000, 0x4000, 0x3fb186c9 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
@@ -761,10 +769,12 @@ ROM_START( mrgoemon )
 	ROM_LOAD( "621d02.12c",   0x08000, 0x4000, 0xc3337a97 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "621a05.6d",   0x00000, 0x4000, 0xf0a6dfc5 )
-	ROM_LOAD( "621d03.4d",   0x04000, 0x8000, 0x66f2b973 )
-	ROM_LOAD( "621d04.5d",   0x0c000, 0x8000, 0x47df6301 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "621d03.4d",   0x00000, 0x8000, 0x66f2b973 )
+	ROM_LOAD( "621d04.5d",   0x08000, 0x8000, 0x47df6301 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "621a06.5f",    0x0000, 0x0020, 0x7c90de5f ) /* palette */
@@ -774,104 +784,8 @@ ROM_END
 
 
 
-struct GameDriver driver_gberet =
-{
-	__FILE__,
-	0,
-	"gberet",
-	"Green Beret",
-	"1985",
-	"Konami",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	gberet_init,
+GAME( 1985, gberet,   0,      gberet,   gberet,   gberet,  ROT0, "Konami", "Green Beret" )
+GAME( 1985, rushatck, gberet, gberet,   gberet,   gberet,  ROT0, "Konami", "Rush'n Attack" )
+GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  gberetb, ROT0, "bootleg", "Green Beret (bootleg)" )
+GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, gberet,  ROT0, "Konami", "Mr. Goemon (Japan)" )
 
-	rom_gberet,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gberet,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rushatck =
-{
-	__FILE__,
-	&driver_gberet,
-	"rushatck",
-	"Rush'n Attack",
-	"1985",
-	"Konami",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	gberet_init,
-
-	rom_rushatck,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gberet,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gberetb =
-{
-	__FILE__,
-	&driver_gberet,
-	"gberetb",
-	"Green Beret (bootleg)",
-	"1985",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
-	0,
-	&machine_driver_gberetb,
-	gberetb_init,
-
-	rom_gberetb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gberetb,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
-
-struct GameDriver driver_mrgoemon =
-{
-	__FILE__,
-	0,
-	"mrgoemon",
-	"Mr. Goemon (Japan)",
-	"1986",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_mrgoemon,
-	gberet_init,
-
-	rom_mrgoemon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mrgoemon,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};

@@ -2,6 +2,8 @@
 
 Speed Ball map
 
+driver by Joseba Epalza
+
 Z80 MAIN CPU
 0000-7fff ROM 1 32k
 8000-dbff ROM 2 data
@@ -253,9 +255,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,	 256, 16 },
-	{ 1, 0x08000, &tilelayout,	 512, 16 },
-	{ 1, 0x28000, &spritelayout,   0, 16 },
+	{ REGION_GFX1, 0, &charlayout,	 256, 16 },
+	{ REGION_GFX2, 0, &tilelayout,	 512, 16 },
+	{ REGION_GFX3, 0, &spritelayout,   0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -270,7 +272,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_speedbal =
 {
 	/* basic machine hardware */
 	{
@@ -326,52 +328,33 @@ ROM_START( speedbal )
 	ROM_LOAD( "sb1.bin",  0x0000,  0x8000, 0x1c242e34 )
 	ROM_LOAD( "sb3.bin",  0x8000,  0x8000, 0x7682326a )
 
-	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("sb10.bin", 0x00000, 0x08000, 0x36dea4bf )    /* chars */
-	ROM_LOAD( "sb9.bin", 0x08000, 0x08000, 0xb567e85e )    /* bg tiles */
-	ROM_LOAD( "sb5.bin", 0x10000, 0x08000, 0xb0eae4ba )
-	ROM_LOAD( "sb8.bin", 0x18000, 0x08000, 0xd2bfbdb6 )
-	ROM_LOAD( "sb4.bin", 0x20000, 0x08000, 0x1d23a130 )
-	ROM_LOAD( "sb6.bin", 0x28000, 0x08000, 0x0e2506eb )    /* sprites */
-	ROM_LOAD( "sb7.bin", 0x30000, 0x08000, 0x9f1b33d1 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for second CPU: sound */
 	ROM_LOAD( "sb2.bin",  0x0000, 0x8000, 0xe6a6d9b7 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD("sb10.bin",  0x00000, 0x08000, 0x36dea4bf )    /* chars */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sb9.bin",  0x00000, 0x08000, 0xb567e85e )    /* bg tiles */
+	ROM_LOAD( "sb5.bin",  0x08000, 0x08000, 0xb0eae4ba )
+	ROM_LOAD( "sb8.bin",  0x10000, 0x08000, 0xd2bfbdb6 )
+	ROM_LOAD( "sb4.bin",  0x18000, 0x08000, 0x1d23a130 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sb6.bin",  0x00000, 0x08000, 0x0e2506eb )    /* sprites */
+	ROM_LOAD( "sb7.bin",  0x08000, 0x08000, 0x9f1b33d1 )
 ROM_END
 
 
-static void speedbal_decode (void)
+static void init_speedbal(void)
 {
 	int i;
 
 	/* invert the graphics bits on the sprites */
-	for (i = 0x28000; i < 0x38000; i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX3); i++)
+		memory_region(REGION_GFX3)[i] ^= 0xff;
 }
 
 
 
-struct GameDriver driver_speedbal =
-{
-	__FILE__,
-	0,
-	"speedbal",
-	"Speed Ball",
-	"1987",
-	"Tecfri",
-	"Joseba Epalza",
-	0,
-	&machine_driver,
-	speedbal_decode,
-
-	rom_speedbal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_speedbal,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1987, speedbal, 0, speedbal, speedbal, speedbal, ROT270, "Tecfri", "Speed Ball" )

@@ -166,16 +166,15 @@ static z80ctc_interface ctc_intf =
 	{ ctc_timer_2 }      /* ZC/TO2 callback */
 };
 
-static void tone_update(int num,void *buffer,int length)
+static void tone_update(int num,INT16 *buffer,int length)
 {
-	UINT8 *buf = buffer;
-    UINT8 out = 0;
+	INT16 out = 0;
 
-    if (channel_active[num])
-        out = output[num];
+	if (channel_active[num])
+		out = output[num] << 8;
 
-    while (length--) *(buf++) = out;
-    channel_active[num] = 0;
+	while (length--) *(buffer++) = out;
+	channel_active[num] = 0;
 }
 
 int cchasm_sh_start(const struct MachineSound *msound)
@@ -185,8 +184,8 @@ int cchasm_sh_start(const struct MachineSound *msound)
     sound_flags = 0;
     output[0] = 0; output[1] = 0;
 
-    channel[0] = stream_init("CTC sound 1", 50, Machine->sample_rate,8, 0, tone_update);
-    channel[1] = stream_init("CTC sound 2", 50, Machine->sample_rate,8, 1, tone_update);
+    channel[0] = stream_init("CTC sound 1", 50, Machine->sample_rate, 0, tone_update);
+    channel[1] = stream_init("CTC sound 2", 50, Machine->sample_rate, 1, tone_update);
 
 	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
 	z80ctc_init (&ctc_intf);

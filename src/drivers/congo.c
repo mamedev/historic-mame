@@ -380,7 +380,7 @@ ROM_START( congo )
 	ROM_LOAD( "congo16.bin",  0x08000, 0x2000, 0xcb6d5775 )
 	ROM_LOAD( "congo15.bin",  0x0a000, 0x2000, 0x7b15a7a4 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemap */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
@@ -417,7 +417,7 @@ ROM_START( tiptop )
 	ROM_LOAD( "congo16.bin",  0x08000, 0x2000, 0xcb6d5775 )
 	ROM_LOAD( "congo15.bin",  0x0a000, 0x2000, 0x7b15a7a4 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemap */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
@@ -429,5 +429,5 @@ ROM_END
 
 
 
-GAME( 1983, congo,  ,      congo, congo, , ROT90, "Sega", "Congo Bongo" )
-GAME( 1983, tiptop, congo, congo, congo, , ROT90, "Sega", "Tip Top" )
+GAME( 1983, congo,  0,     congo, congo, 0, ROT90, "Sega", "Congo Bongo" )
+GAME( 1983, tiptop, congo, congo, congo, 0, ROT90, "Sega", "Tip Top" )

@@ -201,10 +201,10 @@ INPUT_PORTS_START( bsktball )
 	PORT_DIPSETTING(	0x01, "0:30/Credit" )
 	PORT_DIPSETTING(	0x00, "1:00/Credit" )
 	PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode" )
-	PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x20, 0x00, "Cost" )
 	PORT_DIPSETTING(	0x20, "Two Coin Minimum" )
 	PORT_DIPSETTING(	0x00, "One Coin Minimum" )
@@ -417,4 +417,4 @@ ROM_END
 
 
 
-GAME( 1979, bsktball, , bsktball, bsktball, , ROT0, "Atari", "Basketball" )
+GAME( 1979, bsktball, 0, bsktball, bsktball, 0, ROT0, "Atari", "Basketball" )

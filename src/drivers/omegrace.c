@@ -404,7 +404,7 @@ INPUT_PORTS_START( omegrace )
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING (   0x06, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING (   0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING (   0x03, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (   0x03, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING (   0x04, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING (   0x05, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( 1C_2C ) )
@@ -413,7 +413,7 @@ INPUT_PORTS_START( omegrace )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING (   0x30, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING (   0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING (   0x18, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (   0x18, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING (   0x20, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING (   0x28, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING (   0x00, DEF_STR( 1C_2C ) )
@@ -460,7 +460,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -469,7 +468,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_omegrace =
 {
 	/* basic machine hardware */
 	{
@@ -533,36 +532,11 @@ ROM_START( omegrace )
 	ROM_LOAD( "omega.e1",     0x9000, 0x0800, 0x1d0fdf3a )
 	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
 
-	ROM_REGION_DISPOSE(0x0800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio cpu */
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 
 
 
-struct GameDriver driver_omegrace =
-{
-	__FILE__,
-	0,
-	"omegrace",
-	"Omega Race",
-	"1981",
-	"Midway",
-	"Al Kossow (original code)\nBernd Wiebelt (MAME driver)\ndedicated to Natalia & Lara\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	0,
-
-	rom_omegrace,
-	0, 0,
-	0,
-	0,
-
-	input_ports_omegrace,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1981, omegrace, 0, omegrace, omegrace, 0, ROT0, "Midway", "Omega Race" )
 

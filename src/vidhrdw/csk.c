@@ -92,7 +92,7 @@ void cpk_colorram_w(int offset,int data)
 
 int  cpk_expansion_r(int offset)
 {
-	unsigned char * RAM = memory_region(2);
+	unsigned char * RAM = memory_region(REGION_GFX3);
 	return RAM[offset];
 }
 

@@ -211,23 +211,23 @@ INPUT_PORTS_START( funkyjet )
 
 	/* Some of these coinage options may not be correct.. */
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -301,9 +301,9 @@ static struct GfxLayout sprite_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x100000, &charlayout,   256, 16 },	/* Characters 8x8 */
-	{ 1, 0x100000, &tile_layout,  512, 16 }, 	/* Tiles 16x16 */
-	{ 1, 0x000000, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,   256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tile_layout,  512, 16 }, 	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -313,7 +313,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
 	{ 7757 },	/* Frequency */
-	{ 3 },      /* memory region 3 */
+	{ REGION_SOUND1 },      /* memory region */
 	{ 50 }
 };
 
@@ -385,41 +385,20 @@ ROM_START( funkyjet )
 	ROM_LOAD_EVEN( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
 	ROM_LOAD_ODD ( "jk01.13f", 0x00000, 0x40000, 0xbe3920d7 )
 
-	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
-  	ROM_LOAD( "mat00", 0x000000, 0x80000, 0xfbda0228 ) /* sprites */
-	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
-	ROM_LOAD( "mat02", 0x100000, 0x80000, 0xe4b94c7e ) /* chars */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, 0x748c0bd8 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mat02", 0x000000, 0x80000, 0xe4b94c7e ) /* chars */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "mat00", 0x000000, 0x80000, 0xfbda0228 ) /* sprites */
+	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
   	ROM_LOAD( "jk03.15h",    0x00000, 0x20000, 0x69a0eaf7 )
 ROM_END
 
 /******************************************************************************/
 
-struct GameDriver driver_funkyjet =
-{
-	__FILE__,
-	0,
-	"funkyjet",
-	"Funky Jet",
-	"1992",
-	"[Data East] (Mitchell license)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_funkyjet,
-	0,
-
-	rom_funkyjet,
-	0, 0,
-	0,
-	0,
-
-	input_ports_funkyjet,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
+GAMEX( 1992, funkyjet, 0, funkyjet, funkyjet, 0, ROT0, "[Data East] (Mitchell license)", "Funky Jet", GAME_NOT_WORKING )

@@ -255,8 +255,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,            0, 32 },
-	{ 1, 0x18000, &charlayout,            0, 32 },
+	{ REGION_GFX1, 0, &charlayout, 0, 32 },
+	{ REGION_GFX2, 0, &charlayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -266,7 +266,6 @@ static struct YM2203interface ym2203_interface =
 	1,		/* 1 chip */
 	2000000,	/* 2 MHz (?) */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -275,7 +274,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_goindol =
 {
 	/* basic machine hardware */
 	{
@@ -332,17 +331,18 @@ ROM_START( goindol )
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
 
-	ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
 	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
 	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
-	ROM_LOAD( "r7", 0x18000, 0x8000, 0x362f2a27 )
-	ROM_LOAD( "r8", 0x20000, 0x8000, 0x9fc7946e )
-	ROM_LOAD( "r9", 0x28000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
+	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
+	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
@@ -356,17 +356,18 @@ ROM_START( homo )
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
 
-	ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
 	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
 	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
-	ROM_LOAD( "r7", 0x18000, 0x8000, 0x362f2a27 )
-	ROM_LOAD( "r8", 0x20000, 0x8000, 0x9fc7946e )
-	ROM_LOAD( "r9", 0x28000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
+	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
+	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
@@ -376,7 +377,7 @@ ROM_END
 
 
 
-void goindol_patch(void)
+void init_goindol(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -402,7 +403,7 @@ void goindol_patch(void)
 	rom[0x3365] = 0x00;
 }
 
-void homo_patch(void)
+void init_homo(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -414,52 +415,5 @@ void homo_patch(void)
 
 
 
-struct GameDriver driver_goindol =
-{
-	__FILE__,
-	0,
-	"goindol",
-	"Goindol",
-	"1987",
-	"Sun a Electronics",
-	"Jarek Parchanski\n",
-	0,
-	&machine_driver,
-	goindol_patch,
-
-	rom_goindol,
-	0, 0,
-	0,
-	0,
-
-	input_ports_goindol,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_homo =
-{
-	__FILE__,
-	&driver_goindol,
-	"homo",
-	"Homo",
-	"1987",
-	"bootleg",
-	"Jarek Parchanski\nVictor Trucco\n",
-	0,
-	&machine_driver,
-	homo_patch,
-
-	rom_homo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_homo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1987, goindol, 0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol" )
+GAME( 1987, homo,    goindol, goindol, homo,    homo,    ROT90, "bootleg", "Homo" )

@@ -3,6 +3,8 @@
 Gauntlet Memory Map
 -----------------------------------
 
+driver by Aaron Giles
+
 GAUNTLET 68010 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -657,8 +659,8 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x00000, &pfmolayout,  256, 32 },		/* playfield & motion objects */
-	{ 2, 0x00000, &anlayout,      0, 64 },		/* alphanumerics */
+	{ REGION_GFX2, 0, &pfmolayout,  256, 32 },		/* playfield & motion objects */
+	{ REGION_GFX1, 0, &anlayout,      0, 64 },		/* alphanumerics */
 	{ -1 } /* end of array */
 };
 
@@ -704,7 +706,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gauntlet =
 {
 	/* basic machine hardware */
 	{
@@ -779,10 +781,10 @@ ROM_START( gauntlet )
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -810,10 +812,10 @@ ROM_START( gauntir1 )
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -841,10 +843,10 @@ ROM_START( gauntir2 )
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -872,10 +874,10 @@ ROM_START( gaunt2p )
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -905,10 +907,10 @@ ROM_START( gaunt2 )
 	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x5c731006 )
 	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0xdc3591e7 )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt2.6p",  0x00000, 0x04000, 0xd101905d )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gauntlt2.1a",  0x00000, 0x08000, 0x09df6e23 )
 	ROM_LOAD( "gauntlt2.1b",  0x08000, 0x08000, 0x869330be )
 	ROM_LOAD( "gauntlt2.1c",  0x10000, 0x04000, 0xe4c98f01 )
@@ -950,10 +952,10 @@ ROM_START( vindctr2 )
 	ROM_LOAD( "1160", 0x4000, 0x4000, 0xeef0a003 )
 	ROM_LOAD( "1161", 0x8000, 0x8000, 0x68c74337 )
 
-	ROM_REGION_DISPOSE(0x04000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1198",  0x00000, 0x04000, 0xf99b631a )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1101", 0x00000, 0x08000, 0xdd3833ad )
 	ROM_LOAD( "1166", 0x08000, 0x08000, 0xe2db50a0 )
 	ROM_LOAD( "1170", 0x10000, 0x08000, 0xf050ab43 )
@@ -1024,18 +1026,18 @@ static void rom_decode(void)
 	data = malloc(0x8000);
 	if (data)
 	{
-		memcpy(data, &memory_region(3)[0x88000], 0x8000);
+		memcpy(data, &memory_region(REGION_GFX2)[0x88000], 0x8000);
 		for (i = 0; i < 0x8000; i++)
 		{
 			int srcoffs = (i & 0x4000) | ((i << 11) & 0x3800) | ((i >> 3) & 0x07ff);
-			memory_region(3)[0x88000 + i] = data[srcoffs];
+			memory_region(REGION_GFX2)[0x88000 + i] = data[srcoffs];
 		}
 		free(data);
 	}
 
 	/* also invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < memory_region_length(3); i++)
-		memory_region(3)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 }
 
 
@@ -1046,7 +1048,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void gauntlet_init(void)
+static void init_gauntlet(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 104);
@@ -1068,7 +1070,7 @@ static void gauntlet_init(void)
 }
 
 
-static void gaunt2p_init(void)
+static void init_gaunt2p(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 107);
@@ -1090,7 +1092,7 @@ static void gaunt2p_init(void)
 }
 
 
-static void gauntlet2_init(void)
+static void init_gauntlet2(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 106);
@@ -1112,7 +1114,7 @@ static void gauntlet2_init(void)
 }
 
 
-static void vindctr2_init(void)
+static void init_vindctr2(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 118);
@@ -1137,157 +1139,9 @@ static void vindctr2_init(void)
  *
  *************************************/
 
-struct GameDriver driver_gauntlet =
-{
-	__FILE__,
-	0,
-	"gauntlet",
-	"Gauntlet",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	gauntlet_init,
-
-	rom_gauntlet,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gauntlet,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_gauntir1 =
-{
-	__FILE__,
-	&driver_gauntlet,
-	"gauntir1",
-	"Gauntlet (Intermediate Release 1)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	gauntlet_init,
-
-	rom_gauntir1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gauntlet,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_gauntir2 =
-{
-	__FILE__,
-	&driver_gauntlet,
-	"gauntir2",
-	"Gauntlet (Intermediate Release 2)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	gauntlet_init,
-
-	rom_gauntir2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gauntlet,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_gaunt2p =
-{
-	__FILE__,
-	&driver_gauntlet,
-	"gaunt2p",
-	"Gauntlet (2 Players)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	gaunt2p_init,
-
-	rom_gaunt2p,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gauntlet,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_gaunt2 =
-{
-	__FILE__,
-	0,
-	"gaunt2",
-	"Gauntlet II",
-	"1986",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	gauntlet2_init,
-
-	rom_gaunt2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gauntlet,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_vindctr2 =
-{
-	__FILE__,
-	0,
-	"vindctr2",
-	"Vindicators Part II",
-	"1988",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	0,
-	&machine_driver,
-	vindctr2_init,
-
-	rom_vindctr2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vindctr2,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
+GAME( 1985, gauntlet, 0,        gauntlet, gauntlet, gauntlet,  ROT0, "Atari Games", "Gauntlet" )
+GAME( 1985, gauntir1, gauntlet, gauntlet, gauntlet, gauntlet,  ROT0, "Atari Games", "Gauntlet (Intermediate Release 1)" )
+GAME( 1985, gauntir2, gauntlet, gauntlet, gauntlet, gauntlet,  ROT0, "Atari Games", "Gauntlet (Intermediate Release 2)" )
+GAME( 1985, gaunt2p,  gauntlet, gauntlet, gauntlet, gaunt2p,   ROT0, "Atari Games", "Gauntlet (2 Players)" )
+GAME( 1986, gaunt2,   0,        gauntlet, gauntlet, gauntlet2, ROT0, "Atari Games", "Gauntlet II" )
+GAMEX(1988, vindctr2, 0,        gauntlet, vindctr2, vindctr2,  ROT0, "Atari Games", "Vindicators Part II", GAME_IMPERFECT_COLORS )

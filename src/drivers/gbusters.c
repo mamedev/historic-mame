@@ -111,7 +111,7 @@ void gbusters_sh_irqtrigger_w(int offset, int data)
 
 static void gbusters_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(4);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 
 	int bank_B = 0x20000*((data >> 2) & 0x01);	/* ?? */
 	int bank_A = 0x20000*((data) & 0x01);		/* ?? */
@@ -307,7 +307,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
@@ -321,7 +321,7 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gbusters =
 {
 	/* basic machine hardware */
 	{
@@ -381,22 +381,22 @@ ROM_START( gbusters )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 	ROM_LOAD( "878j03.rom", 0x20000, 0x10000, 0x3943a065 )	/* ROM K15 */
 
-	ROM_REGION( 0x80000 ) /* graphics (addressable by the main CPU) */
-	ROM_LOAD( "878c07.rom", 0x00000, 0x40000, 0xeeed912c )	/* tiles */
-	ROM_LOAD( "878c08.rom", 0x40000, 0x40000, 0x4d14626d )	/* tiles */
-
-	ROM_REGION( 0x80000 ) /* graphics (addressable by the main CPU) */
-	ROM_LOAD( "878c05.rom", 0x00000, 0x40000, 0x01f4aea5 )	/* sprites */
-	ROM_LOAD( "878c06.rom", 0x40000, 0x40000, 0xedfaaaaf )	/* sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "878h01.rom", 0x00000, 0x08000, 0x96feafaa )
 
-	ROM_REGION( 0x40000 ) /* samples for 007232 */
-	ROM_LOAD( "878c04.rom",  0x00000, 0x40000, 0x9e982d1c )
+	ROM_REGIONX( 0x80000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD( "878c07.rom", 0x00000, 0x40000, 0xeeed912c )	/* tiles */
+	ROM_LOAD( "878c08.rom", 0x40000, 0x40000, 0x4d14626d )	/* tiles */
+
+	ROM_REGIONX( 0x80000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD( "878c05.rom", 0x00000, 0x40000, 0x01f4aea5 )	/* sprites */
+	ROM_LOAD( "878c06.rom", 0x40000, 0x40000, 0xedfaaaaf )	/* sprites */
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "878a09.rom",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 */
+	ROM_LOAD( "878c04.rom",  0x00000, 0x40000, 0x9e982d1c )
 ROM_END
 
 /***************************************************************************
@@ -437,35 +437,12 @@ static void gbusters_init_machine( void )
 }
 
 
-static void gfx_untangle(void)
+static void init_gbusters(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_gbusters =
-{
-	__FILE__,
-	0,
-	"gbusters",
-	"Gang Busters",
-	"1988",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_gbusters,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gbusters,
-
-	0, 0, 0,
-    ROT90,
-	0, 0
-};
+GAME( 1988, gbusters, 0, gbusters, gbusters, gbusters, ROT90, "Konami", "Gang Busters" )

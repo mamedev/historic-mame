@@ -121,7 +121,6 @@ static struct AY8910interface ay8910_interface =
 	4,	/* 4 chips */
 	2000000,	/* 2 MHz */
 	{ 15, 15, 15, 15 },
-	AY8910_DEFAULT_GAIN,
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
@@ -213,4 +212,4 @@ static void init_aztarac(void)
 
 
 
-GAME( 1983, aztarac, , aztarac, aztarac, aztarac, ROT0, "Centuri", "Aztarac" )
+GAME( 1983, aztarac, 0, aztarac, aztarac, aztarac, ROT0, "Centuri", "Aztarac" )

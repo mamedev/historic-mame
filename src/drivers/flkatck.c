@@ -30,7 +30,7 @@ extern int flkatck_irq_enabled;
 
 static void flkatck_init_machine( void )
 {
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A, bank_B;
 
 	bank_A = 0x20000 * 0;
@@ -153,38 +153,38 @@ static struct MemoryWriteAddress flkatck_writemem_sound[] =
 INPUT_PORTS_START( flkatck )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
 	//PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
@@ -267,7 +267,7 @@ static struct GfxLayout gfxlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &gfxlayout, 0, 32 },
+	{ REGION_GFX1, 0, &gfxlayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -275,7 +275,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 
@@ -288,7 +288,7 @@ static void volume_callback0(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,			/* number of chips */
-	{ 3 },		/* memory region */
+	{ REGION_SOUND1 },		/* memory region */
 	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback0 }	/* external port callback */
 };
@@ -346,13 +346,13 @@ ROM_START( mx5000 )
 	ROM_LOAD( "r01",          0x010000, 0x006000, 0x79b226fc )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
-    ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
-	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
-	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
+    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
+
+	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
 ROM_END
 
@@ -361,66 +361,17 @@ ROM_START( flkatck )
 	ROM_LOAD( "gx669_p1.16c", 0x010000, 0x006000, 0xc5cd2807 )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
-    ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
-	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
-	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
+    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
+
+	ROM_REGIONX( 0x040000, REGION_SOUND1 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
 ROM_END
 
 
 
-struct GameDriver driver_mx5000 =
-{
-	__FILE__,
-	0,
-	"mx5000",
-	"MX5000",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver_flkatck,
-	0,
-
-	rom_mx5000,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_flkatck,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_flkatck =
-{
-	__FILE__,
-	&driver_mx5000,
-	"flkatck",
-	"Flak Attack (Japan)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver_flkatck,
-	0,
-
-	rom_flkatck,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_flkatck,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1987, mx5000,  0,      flkatck, flkatck, 0, ROT90, "Konami", "MX5000" )
+GAME( 1987, flkatck, mx5000, flkatck, flkatck, 0, ROT90, "Konami", "Flak Attack (Japan)" )

@@ -2,6 +2,8 @@
 
 Senjyo / Star Force / Baluba-louk
 
+driver by Mirko Buffoni
+
 This board was obviously born to run Senjyo. Four scrolling layers, gradient
 background, sprite/background priorities, and even a small bitmap for the
 radar. Star Force uses only a small subset of the features.
@@ -68,10 +70,6 @@ I/O read/write
 
 
 
-/* in machine/segacrpt.c */
-void suprloco_decode(void);
-
-
 extern unsigned char *senjyo_fgscroll;
 extern unsigned char *senjyo_bgstripes;
 extern unsigned char *senjyo_scrollx1,*senjyo_scrolly1;
@@ -88,9 +86,9 @@ void senjyo_bg3videoram_w(int offset,int data);
 void senjyo_bgstripes_w(int offset,int data);
 void senjyo_flipscreen_w(int offset,int data);
 
-void starforc_init(void);
-void starfore_init(void);
-void senjyo_init(void);
+void init_starforc(void);
+void init_starfore(void);
+void init_senjyo(void);
 
 int senjyo_vh_start(void);
 void senjyo_vh_stop(void);
@@ -535,13 +533,13 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 8 },	/*   0- 63 characters */
-	{ 1, 0x03000, &tilelayout_256,  64, 8 },	/*  64-127 background #1 */
-	{ 1, 0x09000, &tilelayout_256, 128, 8 },	/* 128-191 background #2 */
-	{ 1, 0x0f000, &tilelayout_128, 192, 8 },	/* 192-255 background #3 */
-	{ 1, 0x12000, &spritelayout1,  320, 8 },	/* 320-383 normal sprites */
-	{ 1, 0x12000, &spritelayout2,  320, 8 },	/* 320-383 large sprites */
-												/* 384-399 is background */
+	{ REGION_GFX1, 0, &charlayout,       0, 8 },	/*   0- 63 characters */
+	{ REGION_GFX2, 0, &tilelayout_256,  64, 8 },	/*  64-127 background #1 */
+	{ REGION_GFX3, 0, &tilelayout_256, 128, 8 },	/* 128-191 background #2 */
+	{ REGION_GFX4, 0, &tilelayout_128, 192, 8 },	/* 192-255 background #3 */
+	{ REGION_GFX5, 0, &spritelayout1,  320, 8 },	/* 320-383 normal sprites */
+	{ REGION_GFX5, 0, &spritelayout2,  320, 8 },	/* 320-383 large sprites */
+													/* 384-399 is background */
 	{ -1 } /* end of array */
 };
 
@@ -572,7 +570,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_senjyo =
 {
 	{
 		{
@@ -633,27 +631,35 @@ ROM_START( senjyo )
 	ROM_LOAD( "08j_03t.bin", 0x4000, 0x2000, 0xc33aedee )
 	ROM_LOAD( "08f_02t.bin", 0x6000, 0x2000, 0x0ef4db9e )
 
-	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "02h_01t.bin", 0x0000, 0x2000, 0xc1c24455 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "08h_08b.bin", 0x00000, 0x1000, 0x0c875994 )	/* fg */
 	ROM_LOAD( "08f_07b.bin", 0x01000, 0x1000, 0x497bea8e )
 	ROM_LOAD( "08d_06b.bin", 0x02000, 0x1000, 0x4ef69b00 )
-	ROM_LOAD( "05n_16m.bin", 0x03000, 0x1000, 0x0d3e00fb )	/* bg1 */
-	ROM_LOAD( "05k_15m.bin", 0x05000, 0x1000, 0x93442213 )
-	ROM_CONTINUE(			 0x07000, 0x1000             )
-	ROM_LOAD( "07n_18m.bin", 0x09000, 0x1000, 0xd50fced3 )	/* bg2 */
-	ROM_LOAD( "07k_17m.bin", 0x0b000, 0x1000, 0x10c3a5f0 )
-	ROM_CONTINUE(			 0x0d000, 0x1000             )
-	ROM_LOAD( "09n_20m.bin", 0x0f000, 0x1000, 0x54cb8126 )	/* bg3 */
-	ROM_LOAD( "09k_19m.bin", 0x10000, 0x2000, 0x373e047c )
-	ROM_LOAD( "08p_13b.bin", 0x12000, 0x2000, 0x40127efd )	/* sprites */
-	ROM_LOAD( "08s_14b.bin", 0x14000, 0x2000, 0x42648ffa )
-	ROM_LOAD( "08m_11b.bin", 0x16000, 0x2000, 0xccc4680b )
-	ROM_LOAD( "08n_12b.bin", 0x18000, 0x2000, 0x742fafed )
-	ROM_LOAD( "08j_09b.bin", 0x1a000, 0x2000, 0x1ee63b5c )
-	ROM_LOAD( "08k_10b.bin", 0x1c000, 0x2000, 0xa9f41ec9 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
-	ROM_LOAD( "02h_01t.bin", 0x0000, 0x2000, 0xc1c24455 )
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "05n_16m.bin", 0x00000, 0x1000, 0x0d3e00fb )	/* bg1 */
+	ROM_LOAD( "05k_15m.bin", 0x02000, 0x1000, 0x93442213 )
+	ROM_CONTINUE(			 0x04000, 0x1000             )
+
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07n_18m.bin", 0x00000, 0x1000, 0xd50fced3 )	/* bg2 */
+	ROM_LOAD( "07k_17m.bin", 0x02000, 0x1000, 0x10c3a5f0 )
+	ROM_CONTINUE(			 0x04000, 0x1000             )
+
+	ROM_REGIONX( 0x03000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "09n_20m.bin", 0x00000, 0x1000, 0x54cb8126 )	/* bg3 */
+	ROM_LOAD( "09k_19m.bin", 0x01000, 0x2000, 0x373e047c )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "08p_13b.bin", 0x00000, 0x2000, 0x40127efd )	/* sprites */
+	ROM_LOAD( "08s_14b.bin", 0x02000, 0x2000, 0x42648ffa )
+	ROM_LOAD( "08m_11b.bin", 0x04000, 0x2000, 0xccc4680b )
+	ROM_LOAD( "08n_12b.bin", 0x06000, 0x2000, 0x742fafed )
+	ROM_LOAD( "08j_09b.bin", 0x08000, 0x2000, 0x1ee63b5c )
+	ROM_LOAD( "08k_10b.bin", 0x0a000, 0x2000, 0xa9f41ec9 )
 
 	ROM_REGION(0x0020)     /* PROMs */
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
@@ -664,25 +670,33 @@ ROM_START( starforc )
 	ROM_LOAD( "starforc.3",   0x0000, 0x4000, 0x8ba27691 )
 	ROM_LOAD( "starforc.2",   0x4000, 0x4000, 0x0fc4d2d6 )
 
-	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "starforc.7",   0x00000, 0x1000, 0xf4803339 )	/* fg */
 	ROM_LOAD( "starforc.8",   0x01000, 0x1000, 0x96979684 )
 	ROM_LOAD( "starforc.9",   0x02000, 0x1000, 0xeead1d5c )
-	ROM_LOAD( "starforc.15",  0x03000, 0x2000, 0xc3bda12f )	/* bg1 */
-	ROM_LOAD( "starforc.14",  0x05000, 0x2000, 0x9e9384fe )
-	ROM_LOAD( "starforc.13",  0x07000, 0x2000, 0x84603285 )
-	ROM_LOAD( "starforc.12",  0x09000, 0x2000, 0xfdd9e38b )	/* bg2 */
-	ROM_LOAD( "starforc.11",  0x0b000, 0x2000, 0x668aea14 )
-	ROM_LOAD( "starforc.10",  0x0d000, 0x2000, 0xc62a19c1 )
-	ROM_LOAD( "starforc.18",  0x0f000, 0x1000, 0x6455c3ad )	/* bg3 */
-	ROM_LOAD( "starforc.17",  0x10000, 0x1000, 0x68c60d0f )
-	ROM_LOAD( "starforc.16",  0x11000, 0x1000, 0xce20b469 )
-	ROM_LOAD( "starforc.6",   0x12000, 0x4000, 0x5468a21d )	/* sprites */
-	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
-	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
-	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.15",  0x00000, 0x2000, 0xc3bda12f )	/* bg1 */
+	ROM_LOAD( "starforc.14",  0x02000, 0x2000, 0x9e9384fe )
+	ROM_LOAD( "starforc.13",  0x04000, 0x2000, 0x84603285 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.12",  0x00000, 0x2000, 0xfdd9e38b )	/* bg2 */
+	ROM_LOAD( "starforc.11",  0x02000, 0x2000, 0x668aea14 )
+	ROM_LOAD( "starforc.10",  0x04000, 0x2000, 0xc62a19c1 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.18",  0x00000, 0x1000, 0x6455c3ad )	/* bg3 */
+	ROM_LOAD( "starforc.17",  0x01000, 0x1000, 0x68c60d0f )
+	ROM_LOAD( "starforc.16",  0x02000, 0x1000, 0xce20b469 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.6",   0x00000, 0x4000, 0x5468a21d )	/* sprites */
+	ROM_LOAD( "starforc.5",   0x04000, 0x4000, 0xf71717f8 )
+	ROM_LOAD( "starforc.4",   0x08000, 0x4000, 0xdd9d68a4 )
 
 	ROM_REGION(0x0020)     /* PROMs */
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
@@ -695,25 +709,33 @@ ROM_START( starfore )
 	ROM_LOAD( "starfore.003", 0x4000, 0x2000, 0x9f8013b9 )
 	ROM_LOAD( "starfore.002", 0x6000, 0x2000, 0xf8111eba )
 
-	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "starfore.000", 0x0000, 0x2000, 0xa277c268 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "starforc.7",   0x00000, 0x1000, 0xf4803339 )	/* fg */
 	ROM_LOAD( "starforc.8",   0x01000, 0x1000, 0x96979684 )
 	ROM_LOAD( "starforc.9",   0x02000, 0x1000, 0xeead1d5c )
-	ROM_LOAD( "starforc.15",  0x03000, 0x2000, 0xc3bda12f )	/* bg1 */
-	ROM_LOAD( "starforc.14",  0x05000, 0x2000, 0x9e9384fe )
-	ROM_LOAD( "starforc.13",  0x07000, 0x2000, 0x84603285 )
-	ROM_LOAD( "starforc.12",  0x09000, 0x2000, 0xfdd9e38b )	/* bg2 */
-	ROM_LOAD( "starforc.11",  0x0b000, 0x2000, 0x668aea14 )
-	ROM_LOAD( "starforc.10",  0x0d000, 0x2000, 0xc62a19c1 )
-	ROM_LOAD( "starforc.18",  0x0f000, 0x1000, 0x6455c3ad )	/* bg3 */
-	ROM_LOAD( "starforc.17",  0x10000, 0x1000, 0x68c60d0f )
-	ROM_LOAD( "starforc.16",  0x11000, 0x1000, 0xce20b469 )
-	ROM_LOAD( "starforc.6",   0x12000, 0x4000, 0x5468a21d )	/* sprites */
-	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
-	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
-	ROM_LOAD( "starfore.000", 0x0000, 0x2000, 0xa277c268 )
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.15",  0x00000, 0x2000, 0xc3bda12f )	/* bg1 */
+	ROM_LOAD( "starforc.14",  0x02000, 0x2000, 0x9e9384fe )
+	ROM_LOAD( "starforc.13",  0x04000, 0x2000, 0x84603285 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.12",  0x00000, 0x2000, 0xfdd9e38b )	/* bg2 */
+	ROM_LOAD( "starforc.11",  0x02000, 0x2000, 0x668aea14 )
+	ROM_LOAD( "starforc.10",  0x04000, 0x2000, 0xc62a19c1 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.18",  0x00000, 0x1000, 0x6455c3ad )	/* bg3 */
+	ROM_LOAD( "starforc.17",  0x01000, 0x1000, 0x68c60d0f )
+	ROM_LOAD( "starforc.16",  0x02000, 0x1000, 0xce20b469 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.6",   0x00000, 0x4000, 0x5468a21d )	/* sprites */
+	ROM_LOAD( "starforc.5",   0x04000, 0x4000, 0xf71717f8 )
+	ROM_LOAD( "starforc.4",   0x08000, 0x4000, 0xdd9d68a4 )
 
 	ROM_REGION(0x0020)     /* PROMs */
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
@@ -724,25 +746,33 @@ ROM_START( megaforc )
 	ROM_LOAD( "mf3.bin",      0x0000, 0x4000, 0xd3ea82ec )
 	ROM_LOAD( "mf2.bin",      0x4000, 0x4000, 0xaa320718 )
 
-	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mf7.bin",      0x00000, 0x1000, 0x43ef8d20 )	/* fg */
 	ROM_LOAD( "mf8.bin",      0x01000, 0x1000, 0xc36fb746 )
 	ROM_LOAD( "mf9.bin",      0x02000, 0x1000, 0x62e7c9ec )
-	ROM_LOAD( "starforc.15",  0x03000, 0x2000, 0xc3bda12f )	/* bg1 */
-	ROM_LOAD( "starforc.14",  0x05000, 0x2000, 0x9e9384fe )
-	ROM_LOAD( "starforc.13",  0x07000, 0x2000, 0x84603285 )
-	ROM_LOAD( "starforc.12",  0x09000, 0x2000, 0xfdd9e38b )	/* bg2 */
-	ROM_LOAD( "starforc.11",  0x0b000, 0x2000, 0x668aea14 )
-	ROM_LOAD( "starforc.10",  0x0d000, 0x2000, 0xc62a19c1 )
-	ROM_LOAD( "starforc.18",  0x0f000, 0x1000, 0x6455c3ad )	/* bg3 */
-	ROM_LOAD( "starforc.17",  0x10000, 0x1000, 0x68c60d0f )
-	ROM_LOAD( "starforc.16",  0x11000, 0x1000, 0xce20b469 )
-	ROM_LOAD( "starforc.6",   0x12000, 0x4000, 0x5468a21d )	/* sprites */
-	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
-	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
-	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.15",  0x00000, 0x2000, 0xc3bda12f )	/* bg1 */
+	ROM_LOAD( "starforc.14",  0x02000, 0x2000, 0x9e9384fe )
+	ROM_LOAD( "starforc.13",  0x04000, 0x2000, 0x84603285 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.12",  0x00000, 0x2000, 0xfdd9e38b )	/* bg2 */
+	ROM_LOAD( "starforc.11",  0x02000, 0x2000, 0x668aea14 )
+	ROM_LOAD( "starforc.10",  0x04000, 0x2000, 0xc62a19c1 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.18",  0x00000, 0x1000, 0x6455c3ad )	/* bg3 */
+	ROM_LOAD( "starforc.17",  0x01000, 0x1000, 0x68c60d0f )
+	ROM_LOAD( "starforc.16",  0x02000, 0x1000, 0xce20b469 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starforc.6",   0x00000, 0x4000, 0x5468a21d )	/* sprites */
+	ROM_LOAD( "starforc.5",   0x04000, 0x4000, 0xf71717f8 )
+	ROM_LOAD( "starforc.4",   0x08000, 0x4000, 0xdd9d68a4 )
 
 	ROM_REGION(0x0020)     /* PROMs */
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
@@ -753,25 +783,33 @@ ROM_START( baluba )
 	ROM_LOAD( "0",   		  0x0000, 0x4000, 0x0e2ebe32 )
 	ROM_LOAD( "1",   		  0x4000, 0x4000, 0xcde97076 )
 
-	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "2",   		  0x0000, 0x2000, 0x441fbc64 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "15",   		  0x00000, 0x1000, 0x3dda0d84 )	/* fg */
 	ROM_LOAD( "16",   		  0x01000, 0x1000, 0x3ebc79d8 )
 	ROM_LOAD( "17",   		  0x02000, 0x1000, 0xc4430deb )
-	ROM_LOAD( "9",  		  0x03000, 0x2000, 0x90f88c43 )	/* bg1 */
-	ROM_LOAD( "10",  		  0x05000, 0x2000, 0xab117070 )
-	ROM_LOAD( "11",  		  0x07000, 0x2000, 0xe13b44b0 )
-	ROM_LOAD( "12", 		  0x09000, 0x2000, 0xa6541c8d )	/* bg2 */
-	ROM_LOAD( "13", 		  0x0b000, 0x2000, 0xafccdd18 )
-	ROM_LOAD( "14", 		  0x0d000, 0x2000, 0x69542e65 )
-	ROM_LOAD( "8",  		  0x0f000, 0x1000, 0x31e97ef9 )	/* bg3 */
-	ROM_LOAD( "7",  		  0x10000, 0x1000, 0x5915c5e2 )
-	ROM_LOAD( "6",  		  0x11000, 0x1000, 0xad6881da )
-	ROM_LOAD( "5",  		  0x12000, 0x4000, 0x3b6b6e96 )	/* sprites */
-	ROM_LOAD( "4",  		  0x16000, 0x4000, 0xdd954124 )
-	ROM_LOAD( "3",  		  0x1a000, 0x4000, 0x7ac24983 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
-	ROM_LOAD( "2",   		  0x0000, 0x2000, 0x441fbc64 )
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9",  		  0x00000, 0x2000, 0x90f88c43 )	/* bg1 */
+	ROM_LOAD( "10",  		  0x02000, 0x2000, 0xab117070 )
+	ROM_LOAD( "11",  		  0x04000, 0x2000, 0xe13b44b0 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "12", 		  0x00000, 0x2000, 0xa6541c8d )	/* bg2 */
+	ROM_LOAD( "13", 		  0x02000, 0x2000, 0xafccdd18 )
+	ROM_LOAD( "14", 		  0x04000, 0x2000, 0x69542e65 )
+
+	ROM_REGIONX( 0x03000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "8",  		  0x00000, 0x1000, 0x31e97ef9 )	/* bg3 */
+	ROM_LOAD( "7",  		  0x01000, 0x1000, 0x5915c5e2 )
+	ROM_LOAD( "6",  		  0x02000, 0x1000, 0xad6881da )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5",  		  0x00000, 0x4000, 0x3b6b6e96 )	/* sprites */
+	ROM_LOAD( "4",  		  0x04000, 0x4000, 0xdd954124 )
+	ROM_LOAD( "3",  		  0x08000, 0x4000, 0x7ac24983 )
 
 	ROM_REGION(0x0020)     /* PROMs */
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
@@ -779,140 +817,8 @@ ROM_END
 
 
 
-static void starfore_decode(void)
-{
-	starfore_init();
-	suprloco_decode();
-}
-
-
-
-struct GameDriver driver_senjyo =
-{
-	__FILE__,
-	0,
-	"senjyo",
-	"Senjyo",
-	"1983",
-	"Tehkan",
-	"Mirko Buffoni\nNicola Salmoria\n",
-	0,
-	&machine_driver,
-	senjyo_init,
-
-	rom_senjyo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_senjyo,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_starforc =
-{
-	__FILE__,
-	0,
-	"starforc",
-	"Star Force",
-	"1984",
-	"Tehkan",
-	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
-	0,
-	&machine_driver,
-	starforc_init,
-
-	rom_starforc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starforc,
-
-	0, 0, 0,
-	ROT90,
-
-	0,0
-};
-
-struct GameDriver driver_starfore =
-{
-	__FILE__,
-	&driver_starforc,
-	"starfore",
-	"Star Force (encrypted)",
-	"1984",
-	"Tehkan",
-	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
-	0,
-	&machine_driver,
-	starfore_decode,
-
-	rom_starfore,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starforc,
-
-	0, 0, 0,
-	ROT90,
-
-	0,0
-};
-
-struct GameDriver driver_megaforc =
-{
-	__FILE__,
-	&driver_starforc,
-	"megaforc",
-	"Mega Force",
-	"1985",
-	"Tehkan (Video Ware license)",
-	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
-	0,
-	&machine_driver,
-	starforc_init,
-
-	rom_megaforc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starforc,
-
-	0, 0, 0,
-	ROT90,
-
-	0,0
-};
-
-struct GameDriver driver_baluba =
-{
-	__FILE__,
-	0,
-	"baluba",
-	"Baluba-louk no Densetsu",
-	"1986",
-	"Able Corp, Ltd.",
-	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili\nZsolt Vasvari",
-	0,
-	&machine_driver,
-	starforc_init,
-
-	rom_baluba,
-	0, 0,
-	0,
-	0,
-
-	input_ports_baluba,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1983, senjyo,   0,        senjyo, senjyo,   senjyo,   ROT90, "Tehkan", "Senjyo" )
+GAME( 1984, starforc, 0,        senjyo, starforc, starforc, ROT90, "Tehkan", "Star Force" )
+GAME( 1984, starfore, starforc, senjyo, starforc, starfore, ROT90, "Tehkan", "Star Force (encrypted)" )
+GAME( 1985, megaforc, starforc, senjyo, starforc, starforc, ROT90, "Tehkan (Video Ware license)", "Mega Force" )
+GAME( 1986, baluba,   0,        senjyo, baluba,   starforc, ROT90, "Able Corp, Ltd.", "Baluba-louk no Densetsu" )

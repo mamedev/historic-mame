@@ -169,7 +169,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
-	unsigned char *p=memory_region(4);
+	unsigned char *p=memory_region(REGION_GFX4);
 	int top,left,xscroll,yscroll;
 
 

@@ -2,6 +2,8 @@
 
 Lady Bug memory map (preliminary)
 
+driver by Nicola Salmoria
+
 0000-5fff ROM
 6000-6fff RAM
 d000-d3ff video RAM
@@ -244,7 +246,7 @@ INPUT_PORTS_START( snapjack )
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
@@ -257,7 +259,7 @@ INPUT_PORTS_START( snapjack )
 	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x90, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
@@ -402,9 +404,9 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0,  8 },
-	{ 1, 0x2000, &spritelayout,  4*8, 16 },
-	{ 1, 0x2000, &spritelayout2, 4*8, 16 },
+	{ REGION_GFX1, 0, &charlayout,      0,  8 },
+	{ REGION_GFX2, 0, &spritelayout,  4*8, 16 },
+	{ REGION_GFX2, 0, &spritelayout2, 4*8, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -418,7 +420,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_ladybug =
 {
 	/* basic machine hardware */
 	{
@@ -472,11 +474,13 @@ ROM_START( ladybug )
 	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
 	ROM_LOAD( "lb6.cpu",      0x5000, 0x1000, 0xcf1acca4 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
 	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
-	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
-	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "lb8.cpu",      0x0000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x1000, 0x1000, 0x86a5b448 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
@@ -493,11 +497,13 @@ ROM_START( ladybugb )
 	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
 	ROM_LOAD( "lb6a.cpu",     0x5000, 0x1000, 0x88c8002a )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
 	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
-	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
-	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "lb8.cpu",      0x0000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x1000, 0x1000, 0x86a5b448 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
@@ -514,11 +520,13 @@ ROM_START( snapjack )
 	ROM_LOAD( "sj2e.bin",     0x4000, 0x1000, 0x1bff7d05 )
 	ROM_LOAD( "sj2f.bin",     0x5000, 0x1000, 0x21793edf )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sj2i.bin",     0x0000, 0x1000, 0xff2011c7 )
 	ROM_LOAD( "sj2j.bin",     0x1000, 0x1000, 0xf097babb )
-	ROM_LOAD( "sj2h.bin",     0x2000, 0x1000, 0xb7f105b6 )
-	ROM_LOAD( "sj2g.bin",     0x3000, 0x1000, 0x1cdb03a8 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sj2h.bin",     0x0000, 0x1000, 0xb7f105b6 )
+	ROM_LOAD( "sj2g.bin",     0x1000, 0x1000, 0x1cdb03a8 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "sj8t.bin",     0x0000, 0x0020, 0xcbbd9dd1 ) /* palette */
@@ -535,11 +543,13 @@ ROM_START( cavenger )
 	ROM_LOAD( "5",            0x4000, 0x1000, 0xd117153e )
 	ROM_LOAD( "6",            0x5000, 0x1000, 0xc7d366cb )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "9",            0x0000, 0x1000, 0x63357785 )
 	ROM_LOAD( "0",            0x1000, 0x1000, 0x52ad1133 )
-	ROM_LOAD( "8",            0x2000, 0x1000, 0xb022bf2d )
-/*	ROM_LOAD( "7", 0x3000, 0x1000, 0x )	empty socket */
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "8",            0x0000, 0x1000, 0xb022bf2d )
+	/* 1000-1fff empty */
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "t8.bpr",       0x0000, 0x0020, 0x42a24dd5 ) /* palette */
@@ -549,102 +559,7 @@ ROM_END
 
 
 
-struct GameDriver driver_ladybug =
-{
-	__FILE__,
-	0,
-	"ladybug",
-	"Lady Bug",
-	"1981",
-	"Universal",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ladybug,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ladybug,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_ladybugb =
-{
-	__FILE__,
-	&driver_ladybug,
-	"ladybugb",
-	"Lady Bug (bootleg)",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ladybugb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ladybug,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_snapjack =
-{
-	__FILE__,
-	0,
-	"snapjack",
-	"Snap Jack",
-	"1981?",
-	"Universal",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_snapjack,
-	0, 0,
-	0,
-	0,
-
-	input_ports_snapjack,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_cavenger =
-{
-	__FILE__,
-	0,
-	"cavenger",
-	"Cosmic Avenger",
-	"1981",
-	"Universal",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_cavenger,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cavenger,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1981, ladybug,  0,       ladybug, ladybug,  0, ROT270, "Universal", "Lady Bug" )
+GAME( 1982, ladybugb, ladybug, ladybug, ladybug,  0, ROT270, "bootleg", "Lady Bug (bootleg)" )
+GAME( 1981?,snapjack, 0,       ladybug, snapjack, 0, ROT0,   "Universal", "Snap Jack" )
+GAME( 1981, cavenger, 0,       ladybug, cavenger, 0, ROT0,   "Universal", "Cosmic Avenger" )

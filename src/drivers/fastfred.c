@@ -2,6 +2,8 @@
 
 Fast Freddie/Jump Coaster memory map (preliminary)
 
+driver by Zsolt Vasvari
+
 These games run on a modified Galaxian board.
 
 Main CPU
@@ -412,15 +414,15 @@ static struct GfxLayout jumpcoas_spritelayout =
 
 static struct GfxDecodeInfo fastfred_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &fastfred_charlayout,     0, 32 },
-	{ 1, 0x6000, &fastfred_spritelayout,   0, 32 },
+	{ REGION_GFX1, 0, &fastfred_charlayout,     0, 32 },
+	{ REGION_GFX2, 0, &fastfred_spritelayout,   0, 32 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &jumpcoas_charlayout,     0, 32 },
-	{ 1, 0x0800, &jumpcoas_spritelayout,   0, 32 },
+	{ REGION_GFX1, 0x0000, &jumpcoas_charlayout,     0, 32 },
+	{ REGION_GFX1, 0x0800, &jumpcoas_spritelayout,   0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -432,7 +434,6 @@ static struct AY8910interface fastfred_ay8910_interface =
 	2,             /* 2 chips */
 	CLOCK/12,       /* ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -443,8 +444,7 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 {
 	1,             /* 1 chip */
 	CLOCK/12,       /* ? */
-	{ 50 },
-	AY8910_DEFAULT_GAIN,
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -551,25 +551,27 @@ ROM_START( fastfred )
 	ROM_LOAD( "ffr.07",       0x6000, 0x1000, 0x2935c76a )
 	ROM_LOAD( "ffr.08",       0x7000, 0x1000, 0x0fb79e7b )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "ffr.09",       0x0000, 0x1000, 0xa1ec8d7e )
+	ROM_LOAD( "ffr.10",       0x1000, 0x1000, 0x460ca837 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ffr.14",       0x0000, 0x1000, 0xe8a00e81 )
 	ROM_LOAD( "ffr.17",       0x1000, 0x1000, 0x701e0f01 )
 	ROM_LOAD( "ffr.15",       0x2000, 0x1000, 0xb49b053f )
 	ROM_LOAD( "ffr.18",       0x3000, 0x1000, 0x4b208c8b )
 	ROM_LOAD( "ffr.16",       0x4000, 0x1000, 0x8c686bc2 )
 	ROM_LOAD( "ffr.19",       0x5000, 0x1000, 0x75b613f6 )
-	ROM_LOAD( "ffr.11",       0x6000, 0x1000, 0x0e1316d4 )
-	ROM_LOAD( "ffr.12",       0x7000, 0x1000, 0x94c06686 )
-	ROM_LOAD( "ffr.13",       0x8000, 0x1000, 0x3fcfaa8e )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ffr.11",       0x0000, 0x1000, 0x0e1316d4 )
+	ROM_LOAD( "ffr.12",       0x1000, 0x1000, 0x94c06686 )
+	ROM_LOAD( "ffr.13",       0x2000, 0x1000, 0x3fcfaa8e )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "ffr.09",       0x0000, 0x1000, 0xa1ec8d7e )
-	ROM_LOAD( "ffr.10",       0x1000, 0x1000, 0x460ca837 )
 ROM_END
 
 ROM_START( flyboy )
@@ -583,25 +585,27 @@ ROM_START( flyboy )
 	ROM_LOAD( "rom7.cpu",     0x6000, 0x1000, 0x50a1baff )
 	ROM_LOAD( "rom8.cpu",     0x7000, 0x1000, 0xfe2ae95d )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
+	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom14.rom",    0x0000, 0x1000, 0xaeb07260 )
 	ROM_LOAD( "rom17.rom",    0x1000, 0x1000, 0xa834325b )
 	ROM_LOAD( "rom15.rom",    0x2000, 0x1000, 0xc10c7ce2 )
 	ROM_LOAD( "rom18.rom",    0x3000, 0x1000, 0x2f196c80 )
 	ROM_LOAD( "rom16.rom",    0x4000, 0x1000, 0x719246b1 )
 	ROM_LOAD( "rom19.rom",    0x5000, 0x1000, 0x00c1c5d2 )
-	ROM_LOAD( "rom11.rom",    0x6000, 0x1000, 0xee7ec342 )
-	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
-	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rom11.rom",    0x0000, 0x1000, 0xee7ec342 )
+	ROM_LOAD( "rom12.rom",    0x1000, 0x1000, 0x84d03124 )
+	ROM_LOAD( "rom13.rom",    0x2000, 0x1000, 0xfcb33ff4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
-	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
 ROM_START( flyboyb )
@@ -615,25 +619,27 @@ ROM_START( flyboyb )
 	ROM_LOAD( "rom7.cpu",     0x6000, 0x1000, 0x50a1baff )
 	ROM_LOAD( "rom8.cpu",     0x7000, 0x1000, 0xfe2ae95d )
 
-	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
+	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
+	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom14.rom",    0x0000, 0x1000, 0xaeb07260 )
 	ROM_LOAD( "rom17.rom",    0x1000, 0x1000, 0xa834325b )
 	ROM_LOAD( "rom15.rom",    0x2000, 0x1000, 0xc10c7ce2 )
 	ROM_LOAD( "rom18.rom",    0x3000, 0x1000, 0x2f196c80 )
 	ROM_LOAD( "rom16.rom",    0x4000, 0x1000, 0x719246b1 )
 	ROM_LOAD( "rom19.rom",    0x5000, 0x1000, 0x00c1c5d2 )
-	ROM_LOAD( "rom11.rom",    0x6000, 0x1000, 0xee7ec342 )
-	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
-	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rom11.rom",    0x0000, 0x1000, 0xee7ec342 )
+	ROM_LOAD( "rom12.rom",    0x1000, 0x1000, 0x84d03124 )
+	ROM_LOAD( "rom13.rom",    0x2000, 0x1000, 0xfcb33ff4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
-	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
-	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
 ROM_START( jumpcoas )
@@ -643,7 +649,7 @@ ROM_START( jumpcoas )
 	ROM_LOAD( "jumpcoas.003", 0x4000, 0x2000, 0xd9fc93be )
 	ROM_LOAD( "jumpcoas.004", 0x6000, 0x2000, 0xdc108fc1 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jumpcoas.005", 0x0000, 0x1000, 0x2dce6b07 )
 	ROM_LOAD( "jumpcoas.006", 0x1000, 0x1000, 0x0d24aa1b )
 	ROM_LOAD( "jumpcoas.007", 0x2000, 0x1000, 0x14c21e67 )
@@ -655,115 +661,19 @@ ROM_START( jumpcoas )
 ROM_END
 
 
-static void fastfred_driver_init(void)
+static void init_fastfred(void)
 {
 	install_mem_read_handler(0, 0xc800, 0xcfff, fastfred_custom_io_r);
 }
 
-static void jumpcoas_driver_init(void)
+static void init_jumpcoas(void)
 {
 	install_mem_read_handler(0, 0xc800, 0xcfff, jumpcoas_custom_io_r);
 }
 
 
 
-struct GameDriver driver_flyboy =
-{
-	__FILE__,
-	0,
-	"flyboy",
-	"Fly-Boy",
-	"1982",
-	"Kaneko",
-	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
-	0,
-	&machine_driver_fastfred,
-	0,
-
-	rom_flyboy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_flyboy,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,	/* protection */
-	0,0
-};
-
-struct GameDriver driver_flyboyb =
-{
-	__FILE__,
-	&driver_flyboy,
-	"flyboyb",
-	"Fly-Boy (bootleg)",
-	"1982",
-	"Kaneko",
-	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
-	0,
-	&machine_driver_fastfred,
-	0,
-
-	rom_flyboyb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_flyboy,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_fastfred =
-{
-	__FILE__,
-	&driver_flyboy,
-	"fastfred",
-	"Fast Freddie",
-	"1982",
-	"Atari",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_fastfred,
-	fastfred_driver_init,
-
-	rom_fastfred,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fastfred,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jumpcoas =
-{
-	__FILE__,
-	0,
-	"jumpcoas",
-	"Jump Coaster",
-	"1983",
-	"Kaneko",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_jumpcoas,
-	jumpcoas_driver_init,
-
-	rom_jumpcoas,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jumpcoas,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
+GAMEX(1982, flyboy,   0,      fastfred, flyboy,   0,        ROT90, "Kaneko", "Fly-Boy", GAME_NOT_WORKING )	/* protection */
+GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   0,        ROT90, "Kaneko", "Fly-Boy (bootleg)" )
+GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fast Freddie" )
+GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )

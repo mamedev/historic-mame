@@ -2,6 +2,8 @@
 
 Mysterious Stones memory map (preliminary)
 
+driver by Nicola Salmoria
+
 MAIN BOARD:
 
 0000-0fff RAM
@@ -267,9 +269,9 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   3*8, 4 },	/* ?? */
-	{ 1, 0x0c000, &tilelayout,   2*8, 1 },
-	{ 1, 0x00000, &spritelayout,   0, 2 },
+	{ REGION_GFX1, 0, &charlayout,   3*8, 4 },
+	{ REGION_GFX2, 0, &tilelayout,   2*8, 1 },
+	{ REGION_GFX1, 0, &spritelayout,   0, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -280,7 +282,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? */
 	{ 30, 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -289,7 +290,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mystston =
 {
 	/* basic machine hardware */
 	{
@@ -345,19 +346,21 @@ ROM_START( mystston )
 	ROM_LOAD( "ms4",          0xc000, 0x2000, 0x47cefe9b )
 	ROM_LOAD( "ms5",          0xe000, 0x2000, 0xb37ae12b )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ms6",          0x00000, 0x2000, 0x85c83806 )
 	ROM_LOAD( "ms9",          0x02000, 0x2000, 0xb146c6ab )
 	ROM_LOAD( "ms7",          0x04000, 0x2000, 0xd025f84d )
 	ROM_LOAD( "ms10",         0x06000, 0x2000, 0xd85015b5 )
 	ROM_LOAD( "ms8",          0x08000, 0x2000, 0x53765d89 )
 	ROM_LOAD( "ms11",         0x0a000, 0x2000, 0x919ee527 )
-	ROM_LOAD( "ms12",         0x0c000, 0x2000, 0x72d8331d )
-	ROM_LOAD( "ms13",         0x0e000, 0x2000, 0x845a1f9b )
-	ROM_LOAD( "ms14",         0x10000, 0x2000, 0x822874b0 )
-	ROM_LOAD( "ms15",         0x12000, 0x2000, 0x4594e53c )
-	ROM_LOAD( "ms16",         0x14000, 0x2000, 0x2f470b0f )
-	ROM_LOAD( "ms17",         0x16000, 0x2000, 0x38966d1b )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ms12",         0x00000, 0x2000, 0x72d8331d )
+	ROM_LOAD( "ms13",         0x02000, 0x2000, 0x845a1f9b )
+	ROM_LOAD( "ms14",         0x04000, 0x2000, 0x822874b0 )
+	ROM_LOAD( "ms15",         0x06000, 0x2000, 0x4594e53c )
+	ROM_LOAD( "ms16",         0x08000, 0x2000, 0x2f470b0f )
+	ROM_LOAD( "ms17",         0x0a000, 0x2000, 0x38966d1b )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic61",         0x0000, 0x0020, 0xe802d6cf )
@@ -365,27 +368,4 @@ ROM_END
 
 
 
-struct GameDriver driver_mystston =
-{
-	__FILE__,
-	0,
-	"mystston",
-	"Mysterious Stones",
-	"1984",
-	"Technos",
-	"Nicola Salmoria\nMike Balfour\nBrad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mystston,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mystston,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1984, mystston, 0, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones" )

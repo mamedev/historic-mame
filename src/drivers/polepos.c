@@ -1,6 +1,9 @@
 /***************************************************************************
   Pole Position memory map (preliminary)
 
+driver by Ernesto Corvi, Juergen Buchmueller, Alex Pasadyn, Aaron Giles
+
+
 Z80
 ----------------------------------------
 0000-2fff (R) ROM
@@ -474,7 +477,7 @@ static struct Samplesinterface samples_interface =
  * Machine driver
  *********************************************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_polepos =
 {
 	/* basic machine hardware */
 	{
@@ -572,7 +575,7 @@ ROM_START( polepos )
 	ROM_LOAD	 ( "pp1_22",		0x14000, 0x2000, 0x1d2f30b1 )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-137.bpr",	0x0000, 0x0100, 0xf07ff2ad )	/* red palette PROM */
 	ROM_LOAD	 ( "014-138.bpr",	0x0100, 0x0100, 0xadbde7d7 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-139.bpr",	0x0200, 0x0100, 0xddac786a )	/* blue palette PROM */
@@ -637,7 +640,7 @@ ROM_START( poleposa )
 	ROM_LOAD	 ( "014-155.rom",	0x14000, 0x2000, 0x111896ad )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-137.bpr",	0x0000, 0x0100, 0xf07ff2ad )	/* red palette PROM */
 	ROM_LOAD	 ( "014-138.bpr",	0x0100, 0x0100, 0xadbde7d7 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-139.bpr",	0x0200, 0x0100, 0xddac786a )	/* blue palette PROM */
@@ -700,7 +703,7 @@ ROM_START( polepos1 )
 	ROM_LOAD	 ( "014-155.rom",	0x14000, 0x2000, 0x111896ad )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-137.bpr",	0x0000, 0x0100, 0xf07ff2ad )	/* red palette PROM */
 	ROM_LOAD	 ( "014-138.bpr",	0x0100, 0x0100, 0xadbde7d7 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-139.bpr",	0x0200, 0x0100, 0xddac786a )	/* blue palette PROM */
@@ -763,7 +766,7 @@ ROM_START( topracer )
 	ROM_LOAD	 ( "tr22.bin",		0x14000, 0x2000, 0xf48917b2 )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-137.bpr",	0x0000, 0x0100, 0xf07ff2ad )	/* red palette PROM */
 	ROM_LOAD	 ( "014-138.bpr",	0x0100, 0x0100, 0xadbde7d7 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-139.bpr",	0x0200, 0x0100, 0xddac786a )	/* blue palette PROM */
@@ -831,7 +834,7 @@ ROM_START( polepos2 )
 	ROM_LOAD	 ( "174.12m",		0x16000, 0x2000, 0xf0c571dc )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-186.bpr",	0x0000, 0x0100, 0x16d69c31 )	/* red palette PROM */
 	ROM_LOAD	 ( "014-187.bpr",	0x0100, 0x0100, 0x07340311 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-188.bpr",	0x0200, 0x0100, 0x1efc84d7 )	/* blue palette PROM */
@@ -899,7 +902,7 @@ ROM_START( poleps2a )
 	ROM_LOAD	 ( "174.12m",		0x16000, 0x2000, 0xf0c571dc )
 
 	/* graphics (P)ROM data */
-	ROM_REGIONX(0x7000, REGION_PROMS)
+	ROM_REGIONX( 0x7000, REGION_PROMS )
 	ROM_LOAD	 ( "014-186.bpr",	0x0000, 0x0100, 0x16d69c31 )	/* red palette PROM */
 	ROM_LOAD	 ( "014-187.bpr",	0x0100, 0x0100, 0x07340311 )	/* green palette PROM */
 	ROM_LOAD	 ( "014-188.bpr",	0x0200, 0x0100, 0x1efc84d7 )	/* blue palette PROM */
@@ -932,159 +935,9 @@ ROM_END
  * Game drivers
  *********************************************************************/
 
-struct GameDriver driver_polepos =
-{
-	__FILE__,
-	0,
-	"polepos",
-	"Pole Position",
-	"1982",
-	"Namco",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_polepos,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_poleposa =
-{
-	__FILE__,
-	&driver_polepos,
-	"poleposa",
-	"Pole Position (Atari version 2)",
-	"1982",
-	"Namco (Atari license)",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_poleposa,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_polepos1 =
-{
-	__FILE__,
-	&driver_polepos,
-	"polepos1",
-	"Pole Position (Atari version 1)",
-	"1982",
-	"[Namco] (Atari license)",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_polepos1,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_topracer =
-{
-	__FILE__,
-	&driver_polepos,
-	"topracer",
-	"Top Racer",
-	"1982",
-	"bootleg",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_topracer,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_polepos2 =
-{
-	__FILE__,
-	NULL,
-	"polepos2",
-	"Pole Position II (Atari set 1)",
-	"1983",
-	"Namco (Atari license)",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_polepos2,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_poleps2a =
-{
-	__FILE__,
-	&driver_polepos2,
-	"poleps2a",
-	"Pole Position II (Atari set 2)",
-	"1983",
-	"Namco (Atari license)",
-	"Ernesto Corvi\nJuergen Buchmueller\nAlex Pasadyn\nAaron Giles",
-	0,
-	&machine_driver,
-	0,		/* driver init */
-
-	rom_poleps2a,
-	0,		/* rom decode */
-	0,
-	0,
-	0,
-
-	input_ports_polepos2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1982, polepos,  0,        polepos, polepos,  0, ROT0, "Namco", "Pole Position" )
+GAME( 1982, poleposa, polepos,  polepos, polepos,  0, ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
+GAME( 1982, polepos1, polepos,  polepos, polepos,  0, ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
+GAME( 1982, topracer, polepos,  polepos, polepos,  0, ROT0, "bootleg", "Top Racer" )
+GAME( 1983, polepos2, 0,        polepos, polepos2, 0, ROT0, "Namco (Atari license)", "Pole Position II (Atari set 1)" )
+GAME( 1983, poleps2a, polepos2, polepos, polepos2, 0, ROT0, "Namco (Atari license)", "Pole Position II (Atari set 2)" )

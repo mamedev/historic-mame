@@ -797,9 +797,9 @@ ROM_END
 
 
 
-GAME( 1979, asteroid, ,         asteroid, asteroid, , ROT0, "Atari", "Asteroids (rev 2)" )
-GAME( 1979, asteroi1, asteroid, asteroid, asteroid, , ROT0, "Atari", "Asteroids (rev 1)" )
-GAME( 1980, astdelux, ,         astdelux, astdelux, , ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
-GAME( 1980, astdelu1, astdelux, astdelux, astdelux, , ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
-GAME( 1979, llander,  ,         llander,  llander,  , ROT0, "Atari", "Lunar Lander (rev 2)" )
-GAME( 1979, llander1, llander,  llander,  llander1, , ROT0, "Atari", "Lunar Lander (rev 1)" )
+GAME( 1979, asteroid, 0,        asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 2)" )
+GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 1)" )
+GAME( 1980, astdelux, 0,        astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
+GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
+GAME( 1979, llander,  0,        llander,  llander,  0, ROT0, "Atari", "Lunar Lander (rev 2)" )
+GAME( 1979, llander1, llander,  llander,  llander1, 0, ROT0, "Atari", "Lunar Lander (rev 1)" )

@@ -173,7 +173,7 @@ static void sound_irq_w(int offset,int data)
 
 static void sound_bank_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A, bank_B;
 
 	/* banks # for the 007232 (chip 1) */
@@ -382,7 +382,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(70,MIXER_PAN_LEFT,70,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -395,14 +395,14 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 3 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gradius3 =
 {
 	/* basic machine hardware */
 	{
@@ -444,7 +444,7 @@ static struct MachineDriver machine_driver =
 	gradius3_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -483,11 +483,6 @@ ROM_START( gradius3 )
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
 
-	ROM_REGION(0x80000)	/* 007232 samples */
-	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
-	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
-	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
-
 	ROM_REGIONX( 0x20000, REGION_GFX1 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
@@ -505,6 +500,11 @@ ROM_START( gradius3 )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* 007232 samples */
+	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
+	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
+	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
 ROM_END
 
 ROM_START( grdius3a )
@@ -525,11 +525,6 @@ ROM_START( grdius3a )
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
 
-	ROM_REGION(0x80000)	/* 007232 samples */
-	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
-	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
-	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
-
 	ROM_REGIONX( 0x20000, REGION_GFX1 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
@@ -547,65 +542,22 @@ ROM_START( grdius3a )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* 007232 samples */
+	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
+	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
+	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
 ROM_END
 
 
 
-static void gfx_untangle(void)
+static void init_gradius3(void)
 {
 	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_gradius3 =
-{
-	__FILE__,
-	0,
-	"gradius3",
-	"Gradius III (Japan)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
+GAME( 1989, gradius3, 0,        gradius3, gradius3, gradius3, ROT0, "Konami", "Gradius III (Japan)" )
+GAME( 1989, grdius3a, gradius3, gradius3, gradius3, gradius3, ROT0, "Konami", "Gradius III (Asia)" )
 
-	rom_gradius3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gradius3,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_grdius3a =
-{
-	__FILE__,
-	&driver_gradius3,
-	"grdius3a",
-	"Gradius III (Asia)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_grdius3a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gradius3,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};

@@ -1048,8 +1048,8 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 			sy = 31 - sy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[(irem_textram[offs + 1] & 0x10) ? 3 : 2],
-				irem_textram[offs],
+		drawgfx(bitmap,Machine->gfx[2],
+				irem_textram[offs] + ((irem_textram[offs + 1] & 0x10) << 4),
 				(irem_textram[offs + 1] & 0x0f) + (spelunk2_palbank << 4),
 				flipscreen,flipscreen,
 				12*sx + 64,8*sy,

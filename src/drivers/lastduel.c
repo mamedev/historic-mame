@@ -310,20 +310,20 @@ static struct GfxLayout madgear_tile2 =
 
 static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
 {
-  {  1, 0x40000,&sprites,       512, 16 },	/* colors 512-767 */
-  {  1, 0xc0000,&text_layout,   768, 16 },	/* colors 768-831 */
-  {  1, 0x00000,&scroll1layout,   0, 16 },	/* colors   0-255 */
-  {  1, 0xc8000,&scroll2layout,	256, 16 },	/* colors 256-511 */
-  { -1 }
+	{ REGION_GFX1, 0,&sprites,       512, 16 },	/* colors 512-767 */
+	{ REGION_GFX2, 0,&text_layout,   768, 16 },	/* colors 768-831 */
+	{ REGION_GFX3, 0,&scroll1layout,   0, 16 },	/* colors   0-255 */
+	{ REGION_GFX4, 0,&scroll2layout, 256, 16 },	/* colors 256-511 */
+	{ -1 }
 };
 
 static struct GfxDecodeInfo madgear_gfxdecodeinfo[] =
 {
-  {  1, 0x40000,&sprites,       512, 16 },	/* colors 512-767 */
-  {  1, 0xc0000,&text_layout,   768, 16 },	/* colors 768-831 */
-  {  1, 0x00000,&madgear_tile,    0, 16 },	/* colors   0-255 */
-  {  1, 0xc8000,&madgear_tile2,	256, 16 },	/* colors 256-511 */
-  { -1 }
+	{ REGION_GFX1, 0,&sprites,       512, 16 },	/* colors 512-767 */
+	{ REGION_GFX2, 0,&text_layout,   768, 16 },	/* colors 768-831 */
+	{ REGION_GFX3, 0,&madgear_tile,    0, 16 },	/* colors   0-255 */
+	{ REGION_GFX4, 0,&madgear_tile2, 256, 16 },	/* colors 256-511 */
+	{ -1 }
 };
 
 /******************************************************************************/
@@ -336,9 +336,9 @@ static void irqhandler(int irq)
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,              /* 1 chip */
+	1,              	/* 1 chip */
 	{ 8000 },           /* 8000Hz frequency */
-	{ 3 },			/* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region 3 */
 	{ 90 }
 };
 
@@ -347,7 +347,6 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	3579545, /* Accurate */
 	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -649,38 +648,38 @@ INPUT_PORTS_START( madgear )
 
 	PORT_START /* Dip switch C, free play is COIN A all off, COIN B all on */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x03, "5 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x01, "8 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x30, "5 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x20, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
@@ -693,31 +692,37 @@ ROM_START( lastduel )
 	ROM_LOAD_EVEN( "ldu-04.rom",   0x40000, 0x10000, 0x429fb964 )
 	ROM_LOAD_ODD ( "ldu-03.rom",   0x40000, 0x10000, 0x5aa4df72 )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_REGIONX( 0x10000 , REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_09.bin",    0x000000, 0x10000, 0xf8fd5243 ) /* sprites */
+	ROM_LOAD( "ld_10.bin",    0x010000, 0x10000, 0xb49ad746 )
+	ROM_LOAD( "ld_11.bin",    0x020000, 0x10000, 0x1a0d180e )
+	ROM_LOAD( "ld_12.bin",    0x030000, 0x10000, 0xb2745e26 )
+	ROM_LOAD( "ld_15.bin",    0x040000, 0x10000, 0x96b13bbc )
+	ROM_LOAD( "ld_16.bin",    0x050000, 0x10000, 0x9d80f7e6 )
+	ROM_LOAD( "ld_13.bin",    0x060000, 0x10000, 0xa1a598ac )
+	ROM_LOAD( "ld_14.bin",    0x070000, 0x10000, 0xedf515cc )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_01.bin",    0x000000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ld_17.bin",    0x000000, 0x10000, 0x7188bfdd ) /* tiles */
 	ROM_LOAD( "ld_18.bin",    0x010000, 0x10000, 0xa62af66a )
 	ROM_LOAD( "ld_19.bin",    0x020000, 0x10000, 0x4b762e50 )
 	ROM_LOAD( "ld_20.bin",    0x030000, 0x10000, 0xb140188e )
-	ROM_LOAD( "ld_09.bin",    0x040000, 0x10000, 0xf8fd5243 ) /* sprites */
-	ROM_LOAD( "ld_10.bin",    0x050000, 0x10000, 0xb49ad746 )
-	ROM_LOAD( "ld_11.bin",    0x060000, 0x10000, 0x1a0d180e )
-	ROM_LOAD( "ld_12.bin",    0x070000, 0x10000, 0xb2745e26 )
-	ROM_LOAD( "ld_15.bin",    0x080000, 0x10000, 0x96b13bbc )
-	ROM_LOAD( "ld_16.bin",    0x090000, 0x10000, 0x9d80f7e6 )
-	ROM_LOAD( "ld_13.bin",    0x0a0000, 0x10000, 0xa1a598ac )
-	ROM_LOAD( "ld_14.bin",    0x0b0000, 0x10000, 0xedf515cc )
-	ROM_LOAD( "ld_01.bin",    0x0c0000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
-	ROM_LOAD( "ld_28.bin",    0x0c8000, 0x10000, 0x06778248 ) /* tiles */
-	ROM_LOAD( "ld_26.bin",    0x0d8000, 0x10000, 0xb0edac81 )
-	ROM_LOAD( "ld_24.bin",    0x0e8000, 0x10000, 0x66eac4df )
-	ROM_LOAD( "ld_22.bin",    0x0f8000, 0x10000, 0xf80f8812 )
-	ROM_LOAD( "ld_27.bin",    0x108000, 0x10000, 0x48c78675 )
-	ROM_LOAD( "ld_25.bin",    0x118000, 0x10000, 0xc541ae9a )
-	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
-	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
-	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_28.bin",    0x000000, 0x10000, 0x06778248 ) /* tiles */
+	ROM_LOAD( "ld_26.bin",    0x010000, 0x10000, 0xb0edac81 )
+	ROM_LOAD( "ld_24.bin",    0x020000, 0x10000, 0x66eac4df )
+	ROM_LOAD( "ld_22.bin",    0x030000, 0x10000, 0xf80f8812 )
+	ROM_LOAD( "ld_27.bin",    0x040000, 0x10000, 0x48c78675 )
+	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
+	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
+	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
 ROM_END
 
 ROM_START( lstduela )
@@ -727,31 +732,37 @@ ROM_START( lstduela )
 	ROM_LOAD_EVEN( "04",   0x40000, 0x10000, 0xaa4bf001 )
 	ROM_LOAD_ODD ( "03",   0x40000, 0x10000, 0xbbaac8ab )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_REGIONX( 0x10000 , REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_09.bin",    0x000000, 0x10000, 0xf8fd5243 ) /* sprites */
+	ROM_LOAD( "ld_10.bin",    0x010000, 0x10000, 0xb49ad746 )
+	ROM_LOAD( "ld_11.bin",    0x020000, 0x10000, 0x1a0d180e )
+	ROM_LOAD( "ld_12.bin",    0x030000, 0x10000, 0xb2745e26 )
+	ROM_LOAD( "ld_15.bin",    0x040000, 0x10000, 0x96b13bbc )
+	ROM_LOAD( "ld_16.bin",    0x050000, 0x10000, 0x9d80f7e6 )
+	ROM_LOAD( "ld_13.bin",    0x060000, 0x10000, 0xa1a598ac )
+	ROM_LOAD( "ld_14.bin",    0x070000, 0x10000, 0xedf515cc )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_01.bin",    0x000000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ld_17.bin",    0x000000, 0x10000, 0x7188bfdd ) /* tiles */
 	ROM_LOAD( "ld_18.bin",    0x010000, 0x10000, 0xa62af66a )
 	ROM_LOAD( "ld_19.bin",    0x020000, 0x10000, 0x4b762e50 )
 	ROM_LOAD( "ld_20.bin",    0x030000, 0x10000, 0xb140188e )
-	ROM_LOAD( "ld_09.bin",    0x040000, 0x10000, 0xf8fd5243 ) /* sprites */
-	ROM_LOAD( "ld_10.bin",    0x050000, 0x10000, 0xb49ad746 )
-	ROM_LOAD( "ld_11.bin",    0x060000, 0x10000, 0x1a0d180e )
-	ROM_LOAD( "ld_12.bin",    0x070000, 0x10000, 0xb2745e26 )
-	ROM_LOAD( "ld_15.bin",    0x080000, 0x10000, 0x96b13bbc )
-	ROM_LOAD( "ld_16.bin",    0x090000, 0x10000, 0x9d80f7e6 )
-	ROM_LOAD( "ld_13.bin",    0x0a0000, 0x10000, 0xa1a598ac )
-	ROM_LOAD( "ld_14.bin",    0x0b0000, 0x10000, 0xedf515cc )
-	ROM_LOAD( "ld_01.bin",    0x0c0000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
-	ROM_LOAD( "ld_28.bin",    0x0c8000, 0x10000, 0x06778248 ) /* tiles */
-	ROM_LOAD( "ld_26.bin",    0x0d8000, 0x10000, 0xb0edac81 )
-	ROM_LOAD( "ld_24.bin",    0x0e8000, 0x10000, 0x66eac4df )
-	ROM_LOAD( "ld_22.bin",    0x0f8000, 0x10000, 0xf80f8812 )
-	ROM_LOAD( "ld_27.bin",    0x108000, 0x10000, 0x48c78675 )
-	ROM_LOAD( "ld_25.bin",    0x118000, 0x10000, 0xc541ae9a )
-	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
-	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
-	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_28.bin",    0x000000, 0x10000, 0x06778248 ) /* tiles */
+	ROM_LOAD( "ld_26.bin",    0x010000, 0x10000, 0xb0edac81 )
+	ROM_LOAD( "ld_24.bin",    0x020000, 0x10000, 0x66eac4df )
+	ROM_LOAD( "ld_22.bin",    0x030000, 0x10000, 0xf80f8812 )
+	ROM_LOAD( "ld_27.bin",    0x040000, 0x10000, 0x48c78675 )
+	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
+	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
+	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
 ROM_END
 
 ROM_START( lstduelb )
@@ -763,31 +774,37 @@ ROM_START( lstduelb )
 	ROM_LOAD_EVEN( "ldu-04.rom",   0x40000, 0x10000, 0x429fb964 )
 	ROM_LOAD_ODD ( "ldu-03.rom",   0x40000, 0x10000, 0x5aa4df72 )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_REGIONX( 0x10000 , REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_09.bin",    0x000000, 0x10000, 0xf8fd5243 ) /* sprites */
+	ROM_LOAD( "ld_10.bin",    0x010000, 0x10000, 0xb49ad746 )
+	ROM_LOAD( "ld_11.bin",    0x020000, 0x10000, 0x1a0d180e )
+	ROM_LOAD( "ld_12.bin",    0x030000, 0x10000, 0xb2745e26 )
+	ROM_LOAD( "ld_15.bin",    0x040000, 0x10000, 0x96b13bbc )
+	ROM_LOAD( "ld_16.bin",    0x050000, 0x10000, 0x9d80f7e6 )
+	ROM_LOAD( "ld_13.bin",    0x060000, 0x10000, 0xa1a598ac )
+	ROM_LOAD( "ld_14.bin",    0x070000, 0x10000, 0xedf515cc )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_01.bin",    0x000000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ld_17.bin",    0x000000, 0x10000, 0x7188bfdd ) /* tiles */
 	ROM_LOAD( "ld_18.bin",    0x010000, 0x10000, 0xa62af66a )
 	ROM_LOAD( "ld_19.bin",    0x020000, 0x10000, 0x4b762e50 )
 	ROM_LOAD( "ld_20.bin",    0x030000, 0x10000, 0xb140188e )
-	ROM_LOAD( "ld_09.bin",    0x040000, 0x10000, 0xf8fd5243 ) /* sprites */
-	ROM_LOAD( "ld_10.bin",    0x050000, 0x10000, 0xb49ad746 )
-	ROM_LOAD( "ld_11.bin",    0x060000, 0x10000, 0x1a0d180e )
-	ROM_LOAD( "ld_12.bin",    0x070000, 0x10000, 0xb2745e26 )
-	ROM_LOAD( "ld_15.bin",    0x080000, 0x10000, 0x96b13bbc )
-	ROM_LOAD( "ld_16.bin",    0x090000, 0x10000, 0x9d80f7e6 )
-	ROM_LOAD( "ld_13.bin",    0x0a0000, 0x10000, 0xa1a598ac )
-	ROM_LOAD( "ld_14.bin",    0x0b0000, 0x10000, 0xedf515cc )
-	ROM_LOAD( "ld_01.bin",    0x0c0000, 0x08000, 0xad3c6f87 ) /* 8x8 text */
-	ROM_LOAD( "ld_28.bin",    0x0c8000, 0x10000, 0x06778248 ) /* tiles */
-	ROM_LOAD( "ld_26.bin",    0x0d8000, 0x10000, 0xb0edac81 )
-	ROM_LOAD( "ld_24.bin",    0x0e8000, 0x10000, 0x66eac4df )
-	ROM_LOAD( "ld_22.bin",    0x0f8000, 0x10000, 0xf80f8812 )
-	ROM_LOAD( "ld_27.bin",    0x108000, 0x10000, 0x48c78675 )
-	ROM_LOAD( "ld_25.bin",    0x118000, 0x10000, 0xc541ae9a )
-	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
-	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
-	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ld_28.bin",    0x000000, 0x10000, 0x06778248 ) /* tiles */
+	ROM_LOAD( "ld_26.bin",    0x010000, 0x10000, 0xb0edac81 )
+	ROM_LOAD( "ld_24.bin",    0x020000, 0x10000, 0x66eac4df )
+	ROM_LOAD( "ld_22.bin",    0x030000, 0x10000, 0xf80f8812 )
+	ROM_LOAD( "ld_27.bin",    0x040000, 0x10000, 0x48c78675 )
+	ROM_LOAD( "ld_25.bin",    0x050000, 0x10000, 0xc541ae9a )
+	ROM_LOAD( "ld_23.bin",    0x060000, 0x10000, 0xd817332c )
+	ROM_LOAD( "ld_21.bin",    0x070000, 0x10000, 0xb74f0c0e )
 ROM_END
 
 ROM_START( madgear )
@@ -797,24 +814,30 @@ ROM_START( madgear )
 	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
 	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
-	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
-	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
-	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
-	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
-	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
-	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
-	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
-	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
-	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
-	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
-
-	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
+	ROM_REGIONX( 0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
-	ROM_REGION( 0x40000 ) /* ADPCM */
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg_m11.rom",   0x000000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "mg_m07.rom",   0x010000, 0x10000, 0xe5c0b211 )
+	ROM_LOAD( "mg_m12.rom",   0x020000, 0x10000, 0x887ef120 )
+	ROM_LOAD( "mg_m08.rom",   0x030000, 0x10000, 0x59709aa3 )
+	ROM_LOAD( "mg_m13.rom",   0x040000, 0x10000, 0xeae07db4 )
+	ROM_LOAD( "mg_m09.rom",   0x050000, 0x10000, 0x40ee83eb )
+	ROM_LOAD( "mg_m14.rom",   0x060000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "mg_m10.rom",   0x070000, 0x10000, 0xb64afb54 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg_06.rom",    0x000000, 0x08000, 0x382ee59b )	/* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-11",        0x000000, 0x80000, 0x6bf81c64 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
 ROM_END
@@ -826,24 +849,30 @@ ROM_START( madgearj )
 	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
 	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
-	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
-	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
-	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
-	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
-	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
-	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
-	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
-	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
-	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
-	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
-
 	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
-	ROM_REGION( 0x40000 ) /* ADPCM */
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg_m11.rom",   0x000000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "mg_m07.rom",   0x010000, 0x10000, 0xe5c0b211 )
+	ROM_LOAD( "mg_m12.rom",   0x020000, 0x10000, 0x887ef120 )
+	ROM_LOAD( "mg_m08.rom",   0x030000, 0x10000, 0x59709aa3 )
+	ROM_LOAD( "mg_m13.rom",   0x040000, 0x10000, 0xeae07db4 )
+	ROM_LOAD( "mg_m09.rom",   0x050000, 0x10000, 0x40ee83eb )
+	ROM_LOAD( "mg_m14.rom",   0x060000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "mg_m10.rom",   0x070000, 0x10000, 0xb64afb54 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg_06.rom",    0x000000, 0x08000, 0x382ee59b )	/* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-11",        0x000000, 0x80000, 0x6bf81c64 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
 ROM_END
@@ -855,164 +884,39 @@ ROM_START( ledstorm )
 	ROM_LOAD_EVEN( "mg_02.rom", 0x40000, 0x20000, 0x9f5ebe16 )
 	ROM_LOAD_ODD ( "mg_01.rom", 0x40000, 0x20000, 0x1cea2af0 )
 
-	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
-	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
-	ROM_LOAD( "07",           0x050000, 0x10000, 0x7152b212 )
-	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
-	ROM_LOAD( "08",           0x070000, 0x10000, 0x72e5d525 )
-	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
-	ROM_LOAD( "09",           0x090000, 0x10000, 0x7b5175cb )
-	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
-	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
-	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
-	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
-
 	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
-	ROM_REGION( 0x40000 ) /* ADPCM */
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg_m11.rom",   0x000000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "07",           0x010000, 0x10000, 0x7152b212 )
+	ROM_LOAD( "mg_m12.rom",   0x020000, 0x10000, 0x887ef120 )
+	ROM_LOAD( "08",           0x030000, 0x10000, 0x72e5d525 )
+	ROM_LOAD( "mg_m13.rom",   0x040000, 0x10000, 0xeae07db4 )
+	ROM_LOAD( "09",           0x050000, 0x10000, 0x7b5175cb )
+	ROM_LOAD( "mg_m14.rom",   0x060000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "10",           0x070000, 0x10000, 0x6db7ca64 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "06",           0x000000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ls-11",        0x000000, 0x80000, 0x6bf81c64 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
 ROM_END
 
 /******************************************************************************/
 
-struct GameDriver driver_lastduel =
-{
-	__FILE__,
-	0,
-	"lastduel",
-	"Last Duel (US set 1)",
-	"1988",
-	"Capcom",
-	"Bryan McPhail",
-	0,
-	&machine_driver_lastduel,
-	0,
-
-	rom_lastduel,
-	0,0,0,0,
-
-	input_ports_lastduel,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_lstduela =
-{
-	__FILE__,
-	&driver_lastduel,
-	"lstduela",
-	"Last Duel (US set 2)",
-	"1988",
-	"Capcom",
-	"Bryan McPhail",
-	0,
-	&machine_driver_lastduel,
-	0,
-
-	rom_lstduela,
-	0,0,0,0,
-
-	input_ports_lastduel,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_lstduelb =
-{
-	__FILE__,
-	&driver_lastduel,
-	"lstduelb",
-	"Last Duel (bootleg)",
-	"1988",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&machine_driver_lastduel,
-	0,
-
-	rom_lstduelb,
-	0,0,0,0,
-
-	input_ports_lastduel,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_madgear =
-{
-	__FILE__,
-	0,
-	"madgear",
-	"Mad Gear (US)",
-	"1989",
-	"Capcom",
-	"Bryan McPhail",
-	0,
-	&machine_driver_madgear,
-	0,
-
-	rom_madgear,
-	0,0,0,0,
-
-	input_ports_madgear,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_madgearj =
-{
-	__FILE__,
-	&driver_madgear,
-	"madgearj",
-	"Mad Gear (Japan)",
-	"1989",
-	"Capcom",
-	"Bryan McPhail",
-	0,
-	&machine_driver_madgear,
-	0,
-
-	rom_madgearj,
-	0,0,0,0,
-
-	input_ports_madgear,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_ledstorm =
-{
-	__FILE__,
-	&driver_madgear,
-	"ledstorm",
-	"Led Storm (US)",
-	"1988",
-	"Capcom",
-	"Bryan McPhail",
-	0,
-	&machine_driver_madgear,
-	0,
-
-	rom_ledstorm,
-	0,0,0,0,
-
-	input_ports_madgear,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1988, lastduel, 0,        lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 1)" )
+GAME( 1988, lstduela, lastduel, lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 2)" )
+GAME( 1988, lstduelb, lastduel, lastduel, lastduel, 0, ROT270, "bootleg", "Last Duel (bootleg)" )
+GAME( 1989, madgear,  0,        madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (US)" )
+GAME( 1989, madgearj, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (Japan)" )
+GAME( 1988, ledstorm, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Led Storm (US)" )

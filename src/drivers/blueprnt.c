@@ -178,8 +178,8 @@ INPUT_PORTS_START( blueprnt )
 	PORT_DIPSETTING(    0x00, "2nd Maze" )
 	PORT_DIPSETTING(    0x10, "3rd Maze" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
@@ -324,7 +324,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	10000000/8,	/* 1.25 MHz (4H) */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{            0, input_port_2_r },
 	{ soundlatch_r, input_port_3_r },
 	{ dipsw_w },
@@ -454,6 +453,6 @@ ROM_END
 
 
 
-GAME( 1982, blueprnt, ,         blueprnt, blueprnt, , ROT270, "[Zilec] Bally Midway", "Blue Print (Midway)" )
-GAME( 1982, blueprnj, blueprnt, blueprnt, blueprnt, , ROT270, "[Zilec] Jaleco", "Blue Print (Jaleco)" )
-GAME( 1983, saturn,   ,         blueprnt, saturn,   , ROT270, "[Zilec] Jaleco", "Saturn" )
+GAME( 1982, blueprnt, 0,        blueprnt, blueprnt, 0, ROT270, "[Zilec] Bally Midway", "Blue Print (Midway)" )
+GAME( 1982, blueprnj, blueprnt, blueprnt, blueprnt, 0, ROT270, "[Zilec] Jaleco", "Blue Print (Jaleco)" )
+GAME( 1983, saturn,   0,        blueprnt, saturn,   0, ROT270, "[Zilec] Jaleco", "Saturn" )

@@ -3,7 +3,6 @@
 
 #define NEW_TIMER 0    /* CPU slice optimize with new timer system */
 
-#define NAMCO_S1_RAM_REGION 5
 #define NAMCOS1_MAX_BANK 0x400
 
 /* from vidhrdw */
@@ -619,7 +618,7 @@ void namcos1_cpu_control_w( int offset, int data )
 
 void namcos1_sound_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = ( data >> 4 ) & 0x07;
 
 	cpu_setbank( 1, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
@@ -664,13 +663,13 @@ void namcos1_mcu_bankswitch_w(int offset,int data)
 	}
 	/* bit 0-1 : address line A15-A16 */
 	addr += (data&3)*0x8000;
-	if( addr >= memory_region_length(6))
+	if( addr >= memory_region_length(REGION_CPU4))
 	{
 		if(errorlog)
 			fprintf(errorlog,"unmapped mcu bank selected pc=%04x bank=%02x\n",cpu_get_pc(),data);
 		addr = 0x4000;
 	}
-	cpu_setbank( 4, memory_region(6)+addr );
+	cpu_setbank( 4, memory_region(REGION_CPU4)+addr );
 }
 
 /* This pont This is very obscure, but i havent found any better way yet. */
@@ -744,7 +743,7 @@ static void namcos1_install_bank(int start,int end,handler_r hr,handler_w hw,
 
 static void namcos1_install_rom_bank(int start,int end,int size,int offset)
 {
-	unsigned char *BROM = memory_region(4);
+	unsigned char *BROM = memory_region(REGION_USER1);
 	int step = size/0x2000;
 	while(start < end)
 	{
@@ -759,7 +758,7 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	int i;
 
 	/* S1 RAM pointer set */
-	s1ram = memory_region(NAMCO_S1_RAM_REGION);
+	s1ram = memory_region(REGION_USER2);
 
 	/* clear all banks to unknown area */
 	for(i=0;i<NAMCOS1_MAX_BANK;i++)
@@ -799,7 +798,7 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
 }
 
-void namcos1_machine_init( void ) {
+void init_namcos1( void ) {
 
 	int oldcpu = cpu_getactivecpu(), i;
 
@@ -889,7 +888,7 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 
 	/* sound cpu speedup optimize (auto ditect) */
 	{
-		unsigned char *RAM = memory_region(3); /* sound cpu */
+		unsigned char *RAM = memory_region(REGION_CPU3); /* sound cpu */
 		int addr,flag_ptr;
 
 		for(addr=0xd000;addr<0xd0ff;addr++)
@@ -945,7 +944,7 @@ static const struct namcos1_slice_timer normal_slice[]={{0}};
 *	Shadowland / Youkai Douchuuki specific						  *
 **************************************************************************************/
 
-void shadowld_driver_init( void )
+void init_shadowld( void )
 {
 	const struct namcos1_specific shadowld_specific=
 	{
@@ -963,7 +962,7 @@ void shadowld_driver_init( void )
 **************************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
-void dspirit_driver_init( void )
+void init_dspirit( void )
 {
 	/* sometime sound stopped */
 	const struct namcos1_specific dspirit_specific=
@@ -983,7 +982,7 @@ void dspirit_driver_init( void )
 **************************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
-void quester_driver_init( void )
+void init_quester( void )
 {
 	const struct namcos1_specific quester_specific=
 	{
@@ -1003,7 +1002,7 @@ void quester_driver_init( void )
 
 /* Theres is an id check followed by some key nightmare */
 
-void blazer_driver_init( void )
+void init_blazer( void )
 {
 	const struct namcos1_specific blazer_specific=
 	{
@@ -1019,7 +1018,7 @@ void blazer_driver_init( void )
 /**************************************************************************************
 *	Pacmania / Pacmania (japan) specific								     *
 **************************************************************************************/
-void pacmania_driver_init( void )
+void init_pacmania( void )
 {
 	const struct namcos1_specific pacmania_specific=
 	{
@@ -1035,7 +1034,7 @@ void pacmania_driver_init( void )
 /**************************************************************************************
 *	Galaga 88 / Galaga 88 (japan) specific								       *
 **************************************************************************************/
-void galaga88_driver_init( void )
+void init_galaga88( void )
 {
 	const struct namcos1_specific galaga88_specific=
 	{
@@ -1052,7 +1051,7 @@ void galaga88_driver_init( void )
 /**************************************************************************************
 *	World Stadium specific								       *
 **************************************************************************************/
-void wstadium_driver_init( void )
+void init_wstadium( void )
 {
 	const struct namcos1_specifi wstadium_specific=
 	{
@@ -1069,7 +1068,7 @@ void wstadium_driver_init( void )
 /**************************************************************************************
 *	Berabohman specific								    *
 **************************************************************************************/
-void berabohm_driver_init( void )
+void init_berabohm( void )
 {
 	const struct namcos1_specific berabohm_specific=
 	{
@@ -1085,7 +1084,7 @@ void berabohm_driver_init( void )
 /**************************************************************************************
 *	Alice in Wonderland / Merhen Maze specific					  *
 **************************************************************************************/
-void alice_driver_init( void )
+void init_alice( void )
 {
 	const struct namcos1_specific alice_specific=
 	{
@@ -1101,7 +1100,7 @@ void alice_driver_init( void )
 /**************************************************************************************
 *	Bakutotsu Kijuutei specific								    *
 **************************************************************************************/
-void bakutotu_driver_init( void )
+void init_bakutotu( void )
 {
 	const struct namcos1_specific bakutotu_specific=
 	{
@@ -1117,7 +1116,7 @@ void bakutotu_driver_init( void )
 /**************************************************************************************
 *	World Court specific								     *
 **************************************************************************************/
-void wldcourt_driver_init( void )
+void init_wldcourt( void )
 {
 	const struct namcos1_specific worldcourt_specific=
 	{
@@ -1136,7 +1135,7 @@ void wldcourt_driver_init( void )
 
 /* Theres is an id check followed by some key nightmare */
 
-void splatter_driver_init( void )
+void init_splatter( void )
 {
 	const struct namcos1_specific splatter_specific=
 	{
@@ -1153,7 +1152,7 @@ void splatter_driver_init( void )
 /**************************************************************************************
 *	Face Off specific							    *
 **************************************************************************************/
-void faceoff_driver_init( void )
+void init_faceoff( void )
 {
 	const struct namcos1_specific faceoff_specific=
 	{
@@ -1170,7 +1169,7 @@ void faceoff_driver_init( void )
 /**************************************************************************************
 *	Rompers specific							   *
 **************************************************************************************/
-void rompers_driver_init( void )
+void init_rompers( void )
 {
 	const struct namcos1_specific rompers_specific=
 	{
@@ -1187,7 +1186,7 @@ void rompers_driver_init( void )
 /**************************************************************************************
 *	Blast Off specific							     *
 **************************************************************************************/
-void blastoff_driver_init( void )
+void init_blastoff( void )
 {
 	const struct namcos1_specific blastoff_specific=
 	{
@@ -1205,7 +1204,7 @@ void blastoff_driver_init( void )
 /**************************************************************************************
 *	World Stadium 89 specific							*
 **************************************************************************************/
-void ws89_driver_init( void )
+void init_ws89( void )
 {
 	const struct namcos1_specific ws89_specific=
 	{
@@ -1222,7 +1221,7 @@ void ws89_driver_init( void )
 /**************************************************************************************
 *	Dangerous Seed specific 							  *
 **************************************************************************************/
-void dangseed_driver_init( void )
+void init_dangseed( void )
 {
 	const struct namcos1_specific dangseed_specific=
 	{
@@ -1240,7 +1239,7 @@ void dangseed_driver_init( void )
 **************************************************************************************/
 /* Theres is an id check followed by some key nightmare */
 
-void ws90_driver_init( void )
+void init_ws90( void )
 {
 	const struct namcos1_specific ws90_specific=
 	{
@@ -1259,7 +1258,7 @@ void ws90_driver_init( void )
 /**************************************************************************************
 *	Pistol Daimyo no Bouken specific							 *
 **************************************************************************************/
-void pistoldm_driver_init( void )
+void init_pistoldm( void )
 {
 	const struct namcos1_specific pistoldm_specific=
 	{
@@ -1278,7 +1277,7 @@ void pistoldm_driver_init( void )
 /**************************************************************************************
 *	PSouko Ban DX specific							       *
 **************************************************************************************/
-void soukobdx_driver_init( void )
+void init_soukobdx( void )
 {
 	const struct namcos1_specific soukobdx_specific=
 	{
@@ -1297,7 +1296,7 @@ void soukobdx_driver_init( void )
 /**************************************************************************************
 *	Tank Force specific							    *
 **************************************************************************************/
-void tankfrce_driver_init( void )
+void init_tankfrce( void )
 {
 	const struct namcos1_specific tankfrce_specific=
 	{

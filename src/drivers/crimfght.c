@@ -555,5 +555,5 @@ static void init_crimfght(void)
 
 
 
-GAME( 1989, crimfght, ,         crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US)" )
+GAME( 1989, crimfght, 0,        crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US)" )
 GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan)" )

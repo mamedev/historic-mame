@@ -310,5 +310,5 @@ ROM_END
 
 
 
-GAME( 1989, blockout, ,         blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 1)" )
-GAME( 1989, blckout2, blockout, blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 2)" )
+GAME( 1989, blockout, 0,        blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 1)" )
+GAME( 1989, blckout2, blockout, blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 2)" )

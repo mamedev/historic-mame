@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "machine/neogeo.h"
 #include <time.h>
 
 //static unsigned char *memcard;
@@ -63,16 +62,16 @@ void neogeo_init_machine(void)
 	if (src & 0x04)	res |= 0x8000;
 
 	/* write the ID in the system BIOS ROM */
-	WRITE_WORD(&memory_region(MEM_BIOS)[0x0400],res);
+	WRITE_WORD(&memory_region(REGION_USER1)[0x0400],res);
 
 	if (memcard_manager==1)
 	{
 		memcard_manager=0;
-		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a], 0x500a);
+		WRITE_WORD(&memory_region(REGION_USER1)[0x11b1a], 0x500a);
 	}
 	else
 	{
-		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a],0x1b6a);
+		WRITE_WORD(&memory_region(REGION_USER1)[0x11b1a],0x1b6a);
 	}
 
 	time(&ltime);
@@ -94,15 +93,15 @@ void init_neogeo(void)
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	extern struct YM2610interface neogeo_ym2610_interface;
 
-	if (memory_region_length(MEM_SAMPLE1) > 1)
+	if (memory_region(REGION_SOUND2))
 	{
-		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE1);
-		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE1;
+		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",REGION_SOUND2);
+		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND2;
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE0);
-		neogeo_ym2610_interface.pcmromb[0] = MEM_SAMPLE0;
+		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",REGION_SOUND1);
+		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND1;
 	}
 
     /* Allocate ram banks */
@@ -110,7 +109,7 @@ void init_neogeo(void)
 	cpu_setbank(1, neogeo_ram);
 
 	/* Set the biosbank */
-	cpu_setbank(3, memory_region(MEM_BIOS));
+	cpu_setbank(3, memory_region(REGION_USER1));
 
 	/* Set the 2nd ROM bank */
     RAM = memory_region(REGION_CPU1);
@@ -136,7 +135,7 @@ void init_neogeo(void)
 	memcard_number=0;
 
 
-	RAM = memory_region(MEM_BIOS);
+	RAM = memory_region(REGION_USER1);
 
 	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
 	{

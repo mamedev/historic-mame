@@ -175,7 +175,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r, input_port_1_r },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -248,4 +247,4 @@ ROM_END
 
 
 
-GAME( 1983, ambush, , ambush, ambush, , ROT0, "Nippon Amuse Co-Ltd", "Ambush" )
+GAME( 1983, ambush, 0, ambush, ambush, 0, ROT0, "Nippon Amuse Co-Ltd", "Ambush" )

@@ -1,6 +1,10 @@
 /***************************************************************************
 
-IronHorse memory map (preliminary)
+IronHorse
+
+driver by Mirko Buffoni
+
+memory map (preliminary)
 
 0000-00ff  Work area
 2000-23ff  ColorRAM
@@ -384,9 +388,9 @@ static struct GfxLayout ironhors_spritelayout =
 
 static struct GfxDecodeInfo ironhors_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &ironhors_charlayout,         0, 16*8 },
-	{ 1, 0x10000, &ironhors_spritelayout, 16*8*16, 16*8 },
-	{ 1, 0x10000, &ironhors_charlayout,   16*8*16, 16*8 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0, &ironhors_charlayout,         0, 16*8 },
+	{ REGION_GFX2, 0, &ironhors_spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX2, 0, &ironhors_charlayout,   16*8*16, 16*8 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -428,9 +432,9 @@ static struct GfxLayout farwest_spritelayout2 =
 
 static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &farwest_charlayout,         0, 16*8 },
-	{ 1, 0x10000, &farwest_spritelayout, 16*8*16, 16*8 },
-	{ 1, 0x10000, &farwest_spritelayout2,16*8*16, 16*8 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0, &farwest_charlayout,         0, 16*8 },
+	{ REGION_GFX2, 0, &farwest_spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX2, 0, &farwest_spritelayout2,16*8*16, 16*8 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -440,7 +444,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	18432000/6,		/* 3.07 MHz?  mod by Shingo Suzuki 1999/10/15 */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -548,11 +551,16 @@ ROM_START( ironhors )
 	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
 	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "09f_h07.bin",  0x00000, 0x8000, 0xc761ec73 )
 	ROM_LOAD( "06f_h04.bin",  0x08000, 0x8000, 0xc1486f61 )
-	ROM_LOAD( "08f_h06.bin",  0x10000, 0x8000, 0xf21d8c93 )
-	ROM_LOAD( "07f_h05.bin",  0x18000, 0x8000, 0x60107859 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "08f_h06.bin",  0x00000, 0x8000, 0xf21d8c93 )
+	ROM_LOAD( "07f_h05.bin",  0x08000, 0x8000, 0x60107859 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
@@ -560,9 +568,6 @@ ROM_START( ironhors )
 	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
-	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
 ROM_START( dairesya )
@@ -570,11 +575,16 @@ ROM_START( dairesya )
 	ROM_LOAD( "560-k03.13c",  0x4000, 0x8000, 0x2ac6103b )
 	ROM_LOAD( "560-k02.12c",  0xc000, 0x4000, 0x07bc13a9 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "560-k07.9f",   0x00000, 0x8000, 0xc8a1b840 )
 	ROM_LOAD( "560-k04.6f",   0x08000, 0x8000, 0xc883d856 )
-	ROM_LOAD( "560-j06.8f",   0x10000, 0x8000, 0xa6e8248d )
-	ROM_LOAD( "560-j05.7f",   0x18000, 0x8000, 0xf75893d4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "560-j06.8f",   0x00000, 0x8000, 0xa6e8248d )
+	ROM_LOAD( "560-j05.7f",   0x08000, 0x8000, 0xf75893d4 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
@@ -582,9 +592,6 @@ ROM_START( dairesya )
 	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
-	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
 ROM_END
 
 ROM_START( farwest )
@@ -593,13 +600,18 @@ ROM_START( farwest )
 	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )
 	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0x471182b7 )	/* don't know what this is for */
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ironhors.005", 0x00000, 0x8000, 0xf77e5b83 )
 	ROM_LOAD( "ironhors.006", 0x08000, 0x8000, 0x7bbc0b51 )
-	ROM_LOAD( "ironhors.001", 0x10000, 0x4000, 0xa8fc21d3 )
-	ROM_LOAD( "ironhors.002", 0x14000, 0x4000, 0x9c1e5593 )
-	ROM_LOAD( "ironhors.003", 0x18000, 0x4000, 0x3a0bf799 )
-	ROM_LOAD( "ironhors.004", 0x1c000, 0x4000, 0x1fab18a3 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ironhors.001", 0x00000, 0x4000, 0xa8fc21d3 )
+	ROM_LOAD( "ironhors.002", 0x04000, 0x4000, 0x9c1e5593 )
+	ROM_LOAD( "ironhors.003", 0x08000, 0x4000, 0x3a0bf799 )
+	ROM_LOAD( "ironhors.004", 0x0c000, 0x4000, 0x1fab18a3 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "ironcol.003",  0x0000, 0x0100, 0x3e3fca11 ) /* palette red */
@@ -607,84 +619,10 @@ ROM_START( farwest )
 	ROM_LOAD( "ironcol.002",  0x0200, 0x0100, 0x77c88430 ) /* palette blue */
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "ironcol.005",  0x0400, 0x0100, 0x15077b9c ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
-	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
 ROM_END
 
 
 
-struct GameDriver driver_ironhors =
-{
-	__FILE__,
-	0,
-	"ironhors",
-	"Iron Horse",
-	"1986",
-	"Konami",
-	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver_ironhors,
-	0,
-
-	rom_ironhors,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ironhors,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_dairesya =
-{
-	__FILE__,
-	&driver_ironhors,
-	"dairesya",
-	"Dai Ressya Goutou (Japan)",
-	"1986",
-	"[Konami] (Kawakusu license)",
-	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver_ironhors,
-	0,
-
-	rom_dairesya,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dairesya,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_farwest =
-{
-	__FILE__,
-	&driver_ironhors,
-	"farwest",
-	"Far West",
-	"1986",
-	"bootleg?",
-	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
-	0,
-	&machine_driver_farwest,
-	0,
-
-	rom_farwest,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ironhors,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
+GAME( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse" )
+GAME( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)" )
+GAMEX(1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING )

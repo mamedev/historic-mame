@@ -165,8 +165,8 @@ PORT_START	/* DSW #1 (if DIPSW #1 == 0, free play) */
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
@@ -330,28 +330,4 @@ ROM_START( splash )
 ROM_END
 
 
-struct GameDriver driver_splash =
-{
-	__FILE__,
-	0,
-	"splash",
-	"Splash",
-	"1992",
-	"Gaelco",
-	"Manuel Abadia",
-	0,
-	&machine_driver_splash,
-	0,
-
-	rom_splash,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_splash,
-
-	0, 0, 0,
-	ROT0 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0, 0
-};
+GAMEX( 1992, splash, 0, splash, splash, 0, ROT0_16BIT, "Gaelco", "Splash", GAME_IMPERFECT_SOUND )

@@ -63,6 +63,6 @@ struct sprite_list *sprite_list_create( int num_sprites, int flags );
 void sprite_update( void );
 void sprite_draw( struct sprite_list *sprite_list, int priority );
 
-void sprite_set_shade_table(unsigned char *table);
+void sprite_set_shade_table(UINT16 *table);
 
 #endif

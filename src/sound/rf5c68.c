@@ -31,6 +31,9 @@ static unsigned char wreg[0x10]; /* write data */
 #define    RF_ON     (1<<0)
 #define    RF_START  (1<<1)
 
+
+static void RF5C68Update( int num, INT16 **buffer, int length );
+
 /************************************************/
 /*    RF5C68 start                              */
 /************************************************/
@@ -72,7 +75,7 @@ int RF5C68_sh_start( const struct MachineSound *msound )
 		vol[0] = (MIXER_PAN_LEFT<<8)  | (intf->volume&0xff);
 		vol[1] = (MIXER_PAN_RIGHT<<8) | (intf->volume&0xff);
 
-		stream = stream_init_multi( RF_LR_PAN, name, vol, rate, 16, 0, RF5C68Update );
+		stream = stream_init_multi( RF_LR_PAN, name, vol, rate, 0, RF5C68Update );
 		if(stream == -1) return 1;
 	}
 	return 0;
@@ -93,18 +96,18 @@ void RF5C68_sh_stop( void )
 
 INLINE int ILimit(int v, int max, int min) { return v > max ? max : (v < min ? min : v); }
 
-void RF5C68Update( int num, void **buffer, int length )
+static void RF5C68Update( int num, INT16 **buffer, int length )
 {
 	int i, j, tmp;
 	unsigned int addr, old_addr;
 	signed int ld, rd;
-	RF5C68_SAMPLE  *datap[2];
+	INT16  *datap[2];
 
-	datap[RF_L_PAN] = (RF5C68_SAMPLE *)buffer[0];
-	datap[RF_R_PAN] = (RF5C68_SAMPLE *)buffer[1];
+	datap[RF_L_PAN] = buffer[0];
+	datap[RF_R_PAN] = buffer[1];
 
-	memset( datap[RF_L_PAN], 0x00, length * sizeof(RF5C68_SAMPLE) );
-	memset( datap[RF_R_PAN], 0x00, length * sizeof(RF5C68_SAMPLE) );
+	memset( datap[RF_L_PAN], 0x00, length * sizeof(INT16) );
+	memset( datap[RF_R_PAN], 0x00, length * sizeof(INT16) );
 
 	for( i = 0; i < RF5C68_PCM_MAX; i++ )
 	{

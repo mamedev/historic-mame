@@ -7,7 +7,6 @@
 /******************************************/
 #define  RF5C68_PCM_MAX    (8)
 
-typedef signed short RF5C68_SAMPLE;
 
 typedef struct rf5c68pcm
 {
@@ -34,7 +33,6 @@ struct RF5C68interface
 /******************************************/
 int RF5C68_sh_start( const struct MachineSound *msound );
 void RF5C68_sh_stop( void );
-void RF5C68Update( int num, void **buffer, int length );
 void RF5C68WriteReg( int r, int v );
 
 int RF5C68ReadMem( int r );

@@ -146,16 +146,16 @@ INPUT_PORTS_START( dynduke )
 
 	PORT_START	/* Dip switch A */
 	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x06, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credits" )
-	PORT_DIPSETTING(    0x00, "5 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x18, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x10, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x20, 0x20, "Starting Coin" )
 	PORT_DIPSETTING(    0x20, "normal" )
 	PORT_DIPSETTING(    0x00, "X 2" )
@@ -185,11 +185,11 @@ INPUT_PORTS_START( dynduke )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x40, 0x40, "Continue?" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Demo Sound?" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Coins */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
@@ -263,17 +263,17 @@ static struct GfxLayout fg_layout =
 
 static struct GfxDecodeInfo dynduke_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,   1280, 16 },
-	{ 1, 0x020000, &bg_layout,    2048, 32 }, /* Really 0 */
-	{ 1, 0x1a0000, &fg_layout,     512, 16 },
-	{ 1, 0x2a0000, &spritelayout,  768, 32 },
+	{ REGION_GFX1, 0, &charlayout,   1280, 16 },
+	{ REGION_GFX2, 0, &bg_layout,    2048, 32 }, /* Really 0 */
+	{ REGION_GFX3, 0, &fg_layout,     512, 16 },
+	{ REGION_GFX4, 0, &spritelayout,  768, 32 },
 	{ -1 } /* end of array */
 };
 
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,4);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static int dynduke_interrupt(void)
 {
@@ -334,143 +334,111 @@ static struct MachineDriver machine_driver_dynduke =
 /***************************************************************************/
 
 ROM_START( dynduke )
-	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* v30 main cpu */
 	ROM_LOAD_V20_ODD ("dd1.cd8",   0x0a0000, 0x10000, 0xa5e2a95a )
 	ROM_LOAD_V20_EVEN("dd2.cd7",   0x0a0000, 0x10000, 0x7e51af22 )
 	ROM_LOAD_V20_ODD ("dd3.ef8",   0x0c0000, 0x20000, 0xa56f8692 )
 	ROM_LOAD_V20_EVEN("dd4.ef7",   0x0c0000, 0x20000, 0xee4b87b3 )
 
-	ROM_REGION_DISPOSE(0x4a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "dd9.jk5",	0x000000, 0x04000, 0xf2bc9af4 ) /* chars */
-	ROM_LOAD( "dd10.jk3",	0x010000, 0x04000, 0xc2a9f19b )
-
-	ROM_LOAD( "dd.a2",		0x020000, 0x40000, 0x598f343f ) /* background */
-	ROM_LOAD( "dd.b2",		0x060000, 0x40000, 0x41a9088d )
-	ROM_LOAD( "dd.c2",		0x0a0000, 0x40000, 0xcc341b42 )
-	ROM_LOAD( "dd.d2",		0x0e0000, 0x40000, 0x4752b4d7 )
-	ROM_LOAD( "dd.de3",		0x120000, 0x40000, 0x44a4cb62 )
-	ROM_LOAD( "dd.ef3",		0x160000, 0x40000, 0xaa8aee1a )
-
-	ROM_LOAD( "dd.mn3",		0x1a0000, 0x40000, 0x2ee0ca98 ) /* foreground */
-	ROM_LOAD( "dd.mn4",		0x1e0000, 0x40000, 0x6c71e2df )
-	ROM_LOAD( "dd.n45",		0x220000, 0x40000, 0x85d918e1 )
-	ROM_LOAD( "dd.mn5",		0x260000, 0x40000, 0xe71e34df )
-
-	ROM_LOAD_GFX_EVEN(  "dd.n1", 0x2a0000, 0x40000, 0xcf1db927 ) /* sprites */
-	ROM_LOAD_GFX_ODD (  "dd.n2", 0x2a0000, 0x40000, 0x5328150f )
-	ROM_LOAD_GFX_EVEN(  "dd.m1", 0x320000, 0x40000, 0x80776452 )
-	ROM_LOAD_GFX_ODD (  "dd.m2", 0x320000, 0x40000, 0xff61a573 )
-	ROM_LOAD_GFX_EVEN(  "dd.e1", 0x3a0000, 0x40000, 0x84a0b87c )
-	ROM_LOAD_GFX_ODD (  "dd.e2", 0x3a0000, 0x40000, 0xa9585df2 )
-	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x420000, 0x40000, 0x9aed24ba )
-	ROM_LOAD_GFX_ODD (  "dd.f2", 0x420000, 0x40000, 0x3eb5783f )
-
-	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "dd8.w8", 0x000000, 0x08000, 0x3c29480b )
-	ROM_CONTINUE(       0x010000, 0x08000 )
-
-	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU2 ) /* v30 sub cpu */
 	ROM_LOAD_V20_ODD ("dd5.p8",  0x0e0000, 0x10000, 0x883d319c )
 	ROM_LOAD_V20_EVEN("dd6.p7",  0x0e0000, 0x10000, 0xd94cb4ff )
 
-	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
+	ROM_REGIONX( 0x18000, REGION_CPU3 ) /* sound Z80 */
+	ROM_LOAD( "dd8.w8", 0x000000, 0x08000, 0x3c29480b )
+	ROM_CONTINUE(       0x010000, 0x08000 )
+
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd9.jk5",	0x000000, 0x04000, 0xf2bc9af4 ) /* chars */
+	ROM_LOAD( "dd10.jk3",	0x010000, 0x04000, 0xc2a9f19b )
+
+	ROM_REGIONX( 0x180000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd.a2",		0x000000, 0x40000, 0x598f343f ) /* background */
+	ROM_LOAD( "dd.b2",		0x040000, 0x40000, 0x41a9088d )
+	ROM_LOAD( "dd.c2",		0x080000, 0x40000, 0xcc341b42 )
+	ROM_LOAD( "dd.d2",		0x0c0000, 0x40000, 0x4752b4d7 )
+	ROM_LOAD( "dd.de3",		0x100000, 0x40000, 0x44a4cb62 )
+	ROM_LOAD( "dd.ef3",		0x140000, 0x40000, 0xaa8aee1a )
+
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd.mn3",		0x000000, 0x40000, 0x2ee0ca98 ) /* foreground */
+	ROM_LOAD( "dd.mn4",		0x040000, 0x40000, 0x6c71e2df )
+	ROM_LOAD( "dd.n45",		0x080000, 0x40000, 0x85d918e1 )
+	ROM_LOAD( "dd.mn5",		0x0c0000, 0x40000, 0xe71e34df )
+
+	ROM_REGIONX( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN(  "dd.n1", 0x000000, 0x40000, 0xcf1db927 ) /* sprites */
+	ROM_LOAD_GFX_ODD (  "dd.n2", 0x000000, 0x40000, 0x5328150f )
+	ROM_LOAD_GFX_EVEN(  "dd.m1", 0x080000, 0x40000, 0x80776452 )
+	ROM_LOAD_GFX_ODD (  "dd.m2", 0x080000, 0x40000, 0xff61a573 )
+	ROM_LOAD_GFX_EVEN(  "dd.e1", 0x100000, 0x40000, 0x84a0b87c )
+	ROM_LOAD_GFX_ODD (  "dd.e2", 0x100000, 0x40000, 0xa9585df2 )
+	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x180000, 0x40000, 0x9aed24ba )
+	ROM_LOAD_GFX_ODD (  "dd.f2", 0x180000, 0x40000, 0x3eb5783f )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "dd7.x10", 0x000000, 0x10000, 0x9cbc7b41 )
 ROM_END
 
 ROM_START( dbldyn )
-	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* v30 main cpu */
 	ROM_LOAD_V20_ODD ("dd1.cd8", 0x0a0000, 0x10000, 0xa5e2a95a )
 	ROM_LOAD_V20_EVEN("dd2.cd7", 0x0a0000, 0x10000, 0x7e51af22 )
 	ROM_LOAD_V20_ODD ("3.8e",    0x0c0000, 0x20000, 0x9b785028 )
 	ROM_LOAD_V20_EVEN("4.7e",    0x0c0000, 0x20000, 0x0d0f6350 )
 
-	ROM_REGION_DISPOSE(0x4a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "9.5k",	0x004000, 0x4000, 0x16bec703 ) /* chars */
-	ROM_CONTINUE(       0x000000, 0x4000 )
-	ROM_CONTINUE(       0x008000, 0x8000 )
-	ROM_LOAD( "10.4k",	0x014000, 0x4000, 0x719f909d )
-	ROM_CONTINUE(       0x010000, 0x4000 )
-	ROM_CONTINUE(       0x008000, 0x8000 )
-
-	ROM_LOAD( "dd.a2",		0x020000, 0x40000, 0x598f343f ) /* background */
-	ROM_LOAD( "dd.b2",		0x060000, 0x40000, 0x41a9088d )
-	ROM_LOAD( "dd.c2",		0x0a0000, 0x40000, 0xcc341b42 )
-	ROM_LOAD( "dd.d2",		0x0e0000, 0x40000, 0x4752b4d7 )
-	ROM_LOAD( "dd.de3",		0x120000, 0x40000, 0x44a4cb62 )
-	ROM_LOAD( "dd.ef3",		0x160000, 0x40000, 0xaa8aee1a )
-
-	ROM_LOAD( "dd.mn3",		0x1a0000, 0x40000, 0x2ee0ca98 ) /* foreground */
-	ROM_LOAD( "dd.mn4",		0x1e0000, 0x40000, 0x6c71e2df )
-	ROM_LOAD( "dd.n45",		0x220000, 0x40000, 0x85d918e1 )
-	ROM_LOAD( "dd.mn5",		0x260000, 0x40000, 0xe71e34df )
-
-	ROM_LOAD_GFX_EVEN(  "dd.n1", 0x2a0000, 0x40000, 0xcf1db927 ) /* sprites */
-	ROM_LOAD_GFX_ODD (  "dd.n2", 0x2a0000, 0x40000, 0x5328150f )
-	ROM_LOAD_GFX_EVEN(  "dd.m1", 0x320000, 0x40000, 0x80776452 )
-	ROM_LOAD_GFX_ODD (  "dd.m2", 0x320000, 0x40000, 0xff61a573 )
-	ROM_LOAD_GFX_EVEN(  "dd.e1", 0x3a0000, 0x40000, 0x84a0b87c )
-	ROM_LOAD_GFX_ODD (  "dd.e2", 0x3a0000, 0x40000, 0xa9585df2 )
-	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x420000, 0x40000, 0x9aed24ba )
-	ROM_LOAD_GFX_ODD (  "dd.f2", 0x420000, 0x40000, 0x3eb5783f )
-
-	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "8.8w", 0x000000, 0x08000, 0xf4066081 )
-	ROM_CONTINUE(     0x010000, 0x08000 )
-
-	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU2 ) /* v30 sub cpu */
 	ROM_LOAD_V20_ODD ("5.8p",  0x0e0000, 0x10000, 0xea56d719 )
 	ROM_LOAD_V20_EVEN("6.7p",  0x0e0000, 0x10000, 0x9ffa0ecd )
 
-	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
+	ROM_REGIONX( 0x18000, REGION_CPU3 ) /* sound Z80 */
+	ROM_LOAD( "8.8w", 0x000000, 0x08000, 0xf4066081 )
+	ROM_CONTINUE(     0x010000, 0x08000 )
+
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9.5k",	    0x004000, 0x4000, 0x16bec703 ) /* chars */
+	ROM_CONTINUE(           0x000000, 0x4000 )
+	ROM_CONTINUE(           0x008000, 0x8000 )
+	ROM_LOAD( "10.4k",	    0x014000, 0x4000, 0x719f909d )
+	ROM_CONTINUE(           0x010000, 0x4000 )
+	ROM_CONTINUE(           0x008000, 0x8000 )
+
+	ROM_REGIONX( 0x180000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd.a2",		0x000000, 0x40000, 0x598f343f ) /* background */
+	ROM_LOAD( "dd.b2",		0x040000, 0x40000, 0x41a9088d )
+	ROM_LOAD( "dd.c2",		0x080000, 0x40000, 0xcc341b42 )
+	ROM_LOAD( "dd.d2",		0x0c0000, 0x40000, 0x4752b4d7 )
+	ROM_LOAD( "dd.de3",		0x100000, 0x40000, 0x44a4cb62 )
+	ROM_LOAD( "dd.ef3",		0x140000, 0x40000, 0xaa8aee1a )
+
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd.mn3",		0x000000, 0x40000, 0x2ee0ca98 ) /* foreground */
+	ROM_LOAD( "dd.mn4",		0x040000, 0x40000, 0x6c71e2df )
+	ROM_LOAD( "dd.n45",		0x080000, 0x40000, 0x85d918e1 )
+	ROM_LOAD( "dd.mn5",		0x0c0000, 0x40000, 0xe71e34df )
+
+	ROM_REGIONX( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN(  "dd.n1", 0x000000, 0x40000, 0xcf1db927 ) /* sprites */
+	ROM_LOAD_GFX_ODD (  "dd.n2", 0x000000, 0x40000, 0x5328150f )
+	ROM_LOAD_GFX_EVEN(  "dd.m1", 0x080000, 0x40000, 0x80776452 )
+	ROM_LOAD_GFX_ODD (  "dd.m2", 0x080000, 0x40000, 0xff61a573 )
+	ROM_LOAD_GFX_EVEN(  "dd.e1", 0x100000, 0x40000, 0x84a0b87c )
+	ROM_LOAD_GFX_ODD (  "dd.e2", 0x100000, 0x40000, 0xa9585df2 )
+	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x180000, 0x40000, 0x9aed24ba )
+	ROM_LOAD_GFX_ODD (  "dd.f2", 0x180000, 0x40000, 0x3eb5783f )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "dd7.x10", 0x000000, 0x10000, 0x9cbc7b41 )
 ROM_END
 
 /***************************************************************************/
 
-struct GameDriver driver_dynduke =
+
+static void init_dynduke(void)
 {
-	__FILE__,
-	0,
-	"dynduke",
-	"Dynamite Duke",
-	"1989",
-	"Seibu Kaihatsu (Fabtek license)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_dynduke,
-	seibu_sound_decrypt,
+	seibu_sound_decrypt();
+}
 
-	rom_dynduke,
-	0, 0,
-	0, 0,
-	input_ports_dynduke,
 
-	0, 0, 0,
-	ROT0 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_dbldyn =
-{
-	__FILE__,
-	&driver_dynduke,
-	"dbldyn",
-	"The Double Dynamites",
-	"1989",
-	"Seibu Kaihatsu (Fabtek license)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_dynduke,
-	seibu_sound_decrypt,
-
-	rom_dbldyn,
-	0, 0,
-	0, 0,
-	input_ports_dynduke,
-
-	0, 0, 0,
-	ROT0 | GAME_NO_SOUND,
-
-	0, 0
-};
+GAMEX( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke", GAME_NO_SOUND )
+GAMEX( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites", GAME_NO_SOUND )

@@ -262,7 +262,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { -1 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_stactics =
 {
 	/* basic machine hardware */
 	{
@@ -314,7 +314,7 @@ ROM_START( stactics )
 	ROM_LOAD( "epr-222y",     0x2000, 0x0800, 0x24dd2bcc )
 	ROM_LOAD( "epr-223x",     0x2800, 0x0800, 0x7fef0940 )
 
-	ROM_REGION_DISPOSE(0x1060)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1060, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* gfx decoded in vh_start */
 	ROM_LOAD( "epr-217",      0x0000, 0x0800, 0x38259f5f )      /* LED fire beam data      */
 	ROM_LOAD( "pr55",         0x0800, 0x0800, 0xf162673b )      /* timing PROM (unused)    */
 	ROM_LOAD( "pr65",         0x1000, 0x0020, 0xa1506b9d )      /* timing PROM (unused)    */
@@ -327,30 +327,5 @@ ROM_END
 
 
 
-struct GameDriver driver_stactics =
-{
-	__FILE__,
-	0,
-	"stactics",
-	"Space Tactics",
-	"1981",
-	"Sega",
-	"Frank Palazzolo",
-	0,
-	&machine_driver,
-	0,
-
-	rom_stactics,
-	0, 0,
-
-	0,
-
-	0,
-
-	input_ports_stactics,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1981, stactics, 0, stactics, stactics, 0, ROT0, "Sega", "Space Tactics" )
 

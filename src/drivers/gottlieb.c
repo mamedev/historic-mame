@@ -2,6 +2,8 @@
 
 Gottlieb driver : dedicated to Warren Davis, Jeff Lee & David Thiel
 
+driver by Fabrice Frances
+
 ****************************************************************************
 
 Reactor: earlier version of the board, with a different memory map
@@ -580,8 +582,8 @@ INPUT_PORTS_START( mplanets )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "12000" )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Round Select" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x14, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -626,8 +628,8 @@ INPUT_PORTS_START( qbert )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Kicker" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
@@ -638,14 +640,14 @@ INPUT_PORTS_START( qbert )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "SW5" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "SW7" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "SW8" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 /* 0x40 must be connected to the IP16 line */
 
@@ -695,9 +697,9 @@ INPUT_PORTS_START( qbertqub )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 2/1" )
 	PORT_DIPSETTING(    0x05, "A 1/3 B 1/1" )
 	PORT_DIPSETTING(    0x35, DEF_STR( Free_Play ) )
-/* 0x25 "2 Coins/1 Credit"
-   0x01 "1 Coin/1 Credit"
-   0x34 "Free Play" */
+/* 0x25 DEF_STR( 2C_1C )
+   0x01 DEF_STR( 1C_1C )
+   0x34 DEF_STR( Free_Play ) */
 	PORT_DIPNAME( 0x02, 0x00, "1st Bonus Life" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "15000" )
@@ -791,9 +793,9 @@ INPUT_PORTS_START( mach3 )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x08, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Normal" )
@@ -844,28 +846,28 @@ INPUT_PORTS_START( usvsthem )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
-/*	PORT_DIPSETTING(    0x09, "Free Play" ) */
+/*	PORT_DIPSETTING(    0x09, DEF_STR( Free_Play ) ) */
 	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
@@ -911,8 +913,8 @@ INPUT_PORTS_START( 3stooges )
 	PORT_DIPSETTING (   0x10, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING (   0x14, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME (0x40, 0x00, "1st Bonus Life at" )
 	PORT_DIPSETTING (   0x40, "10000" )
 	PORT_DIPSETTING (   0x00, "20000" )
@@ -984,8 +986,8 @@ PORT_DIPSETTING(    0xc0, "A 2/1 B 2/1" )
 PORT_DIPSETTING(    0x80, "A 1/1 B 1/2" )
 PORT_DIPSETTING(    0x40, "A 1/1 B 1/3" )
 PORT_DIPSETTING(    0x00, "A 1/1 B 1/1" )
-PORT_DIPSETTING(    0xc2, "Free Play" ) */
-	PORT_DIPNAME( 0xc2, 0x00, "Coinage" )
+PORT_DIPSETTING(    0xc2, DEF_STR( Free_Play ) ) */
+	PORT_DIPNAME( 0xc2, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x42, "A 4/1 B 1/1" )
 	PORT_DIPSETTING(    0x82, "A 3/1 B 1/1" )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 1/1" )
@@ -1074,22 +1076,22 @@ static struct GfxLayout qbertqub_spritelayout =
 
 static struct GfxDecodeInfo charRAM_gfxdecodeinfo[] =
 {
-	{ 0, 0x4000, &charRAMlayout, 0, 1 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout,  0, 1 },
+	{ 0,           0x4000, &charRAMlayout, 0, 1 },	/* the game dynamically modifies this */
+	{ REGION_GFX2, 0x0000, &spritelayout,  0, 1 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo charROM_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charROMlayout, 0, 1 },
-	{ 1, 0x2000, &spritelayout,  0, 1 },
+	{ REGION_GFX1, 0x0000, &charROMlayout, 0, 1 },
+	{ REGION_GFX2, 0x2000, &spritelayout,  0, 1 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charROMlayout,         0, 1 },
-	{ 1, 0x2000, &qbertqub_spritelayout, 0, 1 },
+	{ REGION_GFX1, 0x0000, &charROMlayout,         0, 1 },
+	{ REGION_GFX2, 0x2000, &qbertqub_spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -1190,22 +1192,11 @@ static struct Samplesinterface samples_interface =
 	100	/* volume */
 };
 
-static void reactor_init(void)
-{
-	samples_interface.samplenames = reactor_sample_names;
-}
-
-static void qbert_init(void)
-{
-	samples_interface.samplenames = qbert_sample_names;
-}
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1363,7 +1354,15 @@ ROM_START( reactor )
 	ROM_LOAD( "rom1",         0xe000, 0x1000, 0x944e1ddf )
 	ROM_LOAD( "rom0",         0xf000, 0x1000, 0x55930aed )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	/* no gfx1 (RAM is used) */
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* 0000-0fff empty */
 	ROM_LOAD( "fg0",          0x1000, 0x1000, 0xd1f20e15 )	/* sprites */
 	/* 2000-2fff empty */
@@ -1372,12 +1371,6 @@ ROM_START( reactor )
 	ROM_LOAD( "fg2",          0x5000, 0x1000, 0x5489605a )
 	/* 6000-6fff empty */
 	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
-	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
-	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mplanets )
@@ -1388,19 +1381,21 @@ ROM_START( mplanets )
 	ROM_LOAD( "rom1",         0xc000, 0x2000, 0xeb515f10 )
 	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x74de78aa )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
-	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x4921e345 )
-	ROM_LOAD( "fg3",          0x2000, 0x2000, 0xc990b39f )	/* sprites */
-	ROM_LOAD( "fg2",          0x4000, 0x2000, 0x735e2522 )
-	ROM_LOAD( "fg1",          0x6000, 0x2000, 0x6456cc1c )
-	ROM_LOAD( "fg0",          0x8000, 0x2000, 0xa920e325 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
-	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
-	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
+	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x4921e345 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg3",          0x0000, 0x2000, 0xc990b39f )	/* sprites */
+	ROM_LOAD( "fg2",          0x2000, 0x2000, 0x735e2522 )
+	ROM_LOAD( "fg1",          0x4000, 0x2000, 0x6456cc1c )
+	ROM_LOAD( "fg0",          0x6000, 0x2000, 0xa920e325 )
 ROM_END
 
 ROM_START( qbert )
@@ -1409,19 +1404,21 @@ ROM_START( qbert )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
 	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x8e318641 )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-fg3.bin",   0x0000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x2000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x4000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x6000, 0x2000, 0x2f695b85 )
 ROM_END
 
 ROM_START( qbertjp )
@@ -1430,19 +1427,21 @@ ROM_START( qbertjp )
 	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
 	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0x69679d5c )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-fg3.bin",   0x0000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x2000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x4000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x6000, 0x2000, 0x2f695b85 )
 ROM_END
 
 ROM_START( sqbert )
@@ -1451,19 +1450,21 @@ ROM_START( sqbert )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
 	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x61260a7e )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
-	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x4f6d8075 )
-	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xee595eda )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0x59884c78 )
-	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x2a60e3ad )
-	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0xb11ad9d8 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x4f6d8075 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb-fg3.bin",   0x0000, 0x2000, 0xee595eda )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x2000, 0x2000, 0x59884c78 )
+	ROM_LOAD( "qb-fg1.bin",   0x4000, 0x2000, 0x2a60e3ad )
+	ROM_LOAD( "qb-fg0.bin",   0x6000, 0x2000, 0xb11ad9d8 )
 ROM_END
 
 ROM_START( qbertqub )
@@ -1473,19 +1474,21 @@ ROM_START( qbertqub )
 	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000, 0x63e6c43d )
 	ROM_LOAD( "qq-rom0.bin",  0xe000, 0x2000, 0x8ddbe438 )
 
-	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
-	ROM_LOAD( "qq-bg1.bin",   0x1000, 0x1000, 0x8875902f )
-	ROM_LOAD( "qq-fg3.bin",   0x2000, 0x4000, 0x91a949cc )	/* sprites */
-	ROM_LOAD( "qq-fg2.bin",   0x6000, 0x4000, 0x782d9431 )
-	ROM_LOAD( "qq-fg1.bin",   0xa000, 0x4000, 0x71c3ac4c )
-	ROM_LOAD( "qq-fg0.bin",   0xe000, 0x4000, 0x6192853f )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
+	ROM_LOAD( "qq-bg1.bin",   0x1000, 0x1000, 0x8875902f )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qq-fg3.bin",   0x0000, 0x4000, 0x91a949cc )	/* sprites */
+	ROM_LOAD( "qq-fg2.bin",   0x4000, 0x4000, 0x782d9431 )
+	ROM_LOAD( "qq-fg1.bin",   0x8000, 0x4000, 0x71c3ac4c )
+	ROM_LOAD( "qq-fg0.bin",   0xc000, 0x4000, 0x6192853f )
 ROM_END
 
 ROM_START( krull )
@@ -1498,17 +1501,19 @@ ROM_START( krull )
 	ROM_LOAD( "rom1.bin",     0xc000, 0x2000, 0x1ad956a3 )
 	ROM_LOAD( "rom0.bin",     0xe000, 0x2000, 0xa466afae )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
+	ROM_RELOAD(               0x6000, 0x1000) /* A15 is not decoded */
+	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
+	ROM_RELOAD(               0x7000, 0x1000) /* A15 is not decoded */
+
+	/* no gfx1 (RAM is used) */
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fg3.bin",      0x0000, 0x2000, 0x82d77a45 )	/* sprites */
 	ROM_LOAD( "fg2.bin",      0x2000, 0x2000, 0x25a24317 )
 	ROM_LOAD( "fg1.bin",      0x4000, 0x2000, 0x7e3ad7b0 )
 	ROM_LOAD( "fg0.bin",      0x6000, 0x2000, 0x7402dc19 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
-	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
-	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
-	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mach3 )
@@ -1519,19 +1524,21 @@ ROM_START( mach3 )
 	ROM_LOAD( "m3rom1.bin",   0xc000, 0x2000, 0x3b0ba80b )
 	ROM_LOAD( "m3rom0.bin",   0xe000, 0x2000, 0x70c12bf4 )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xea2f5257 )
-	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0xf543e4ce )
-	ROM_LOAD( "mach3fg3.bin", 0x2000, 0x2000, 0x472128b4 )
-	ROM_LOAD( "mach3fg2.bin", 0x4000, 0x2000, 0x2a59e99e )
-	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x9b88767b )
-	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x0bae12a5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "m3drom1.bin",  0xf000, 0x1000, 0xa6e29212 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xea2f5257 )
+	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0xf543e4ce )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mach3fg3.bin", 0x0000, 0x2000, 0x472128b4 )
+	ROM_LOAD( "mach3fg2.bin", 0x2000, 0x2000, 0x2a59e99e )
+	ROM_LOAD( "mach3fg1.bin", 0x4000, 0x2000, 0x9b88767b )
+	ROM_LOAD( "mach3fg0.bin", 0x6000, 0x2000, 0x0bae12a5 )
 ROM_END
 
 ROM_START( usvsthem )
@@ -1542,19 +1549,21 @@ ROM_START( usvsthem )
 	ROM_LOAD( "usvs.rm1",     0xc000, 0x2000, 0x697bc989 )
 	ROM_LOAD( "usvs.rm0",     0xe000, 0x2000, 0x30cf6bd9 )
 
-	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "usvs.bg0",     0x0000, 0x1000, 0x8a0de09f )
-	ROM_LOAD( "usvs.bg1",     0x1000, 0x1000, 0x6fb64d3c )
-	ROM_LOAD( "usvs.fg3",     0x2000, 0x4000, 0x98703015 )
-	ROM_LOAD( "usvs.fg2",     0x6000, 0x4000, 0xd3990707 )
-	ROM_LOAD( "usvs.fg1",     0xa000, 0x4000, 0xa2057430 )
-	ROM_LOAD( "usvs.fg0",     0xe000, 0x4000, 0x7734e53f )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "usvsdrom.1",   0xe000, 0x2000, 0xc0b5cab0 )
 
-	ROM_REGIONX(0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "usvs.bg0",     0x0000, 0x1000, 0x8a0de09f )
+	ROM_LOAD( "usvs.bg1",     0x1000, 0x1000, 0x6fb64d3c )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "usvs.fg3",     0x0000, 0x4000, 0x98703015 )
+	ROM_LOAD( "usvs.fg2",     0x4000, 0x4000, 0xd3990707 )
+	ROM_LOAD( "usvs.fg1",     0x8000, 0x4000, 0xa2057430 )
+	ROM_LOAD( "usvs.fg0",     0xc000, 0x4000, 0x7734e53f )
 ROM_END
 
 ROM_START( 3stooges )
@@ -1566,18 +1575,20 @@ ROM_START( 3stooges )
 	ROM_LOAD( "gv113rom.1",   0xc000, 0x2000, 0x34ab051e )
 	ROM_LOAD( "gv113rom.0",   0xe000, 0x2000, 0xab124329 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gv113fg3",     0x0000, 0x2000, 0x28071212 )	/* sprites */
-	ROM_LOAD( "gv113fg2",     0x2000, 0x2000, 0x9fa3dfde )
-	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
-	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "drom1",        0xe000, 0x2000, 0x87a9fa10 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "yrom2",        0xc000, 0x2000, 0x90f9c940 )
 	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
+
+	/* no gfx1 (RAM is used) */
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gv113fg3",     0x0000, 0x2000, 0x28071212 )	/* sprites */
+	ROM_LOAD( "gv113fg2",     0x2000, 0x2000, 0x9fa3dfde )
+	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
+	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
 ROM_END
 
 ROM_START( curvebal )
@@ -1587,294 +1598,46 @@ ROM_START( curvebal )
 	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0xeb1e08bd )
 	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x401fc7e3 )
 
-	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cb-bg-0.chp",  0x0000, 0x1000, 0xd666a179 )
-	ROM_LOAD( "cb-bg-1.chp",  0x1000, 0x1000, 0x5e34ff4e )
-	ROM_LOAD( "cb-fg-3.chp",  0x2000, 0x2000, 0x9c9452fe )
-	ROM_LOAD( "cb-fg-2.chp",  0x4000, 0x2000, 0x065131af )
-	ROM_LOAD( "cb-fg-1.chp",  0x6000, 0x2000, 0x1b7b7f94 )
-	ROM_LOAD( "cb-fg-0.chp",  0x8000, 0x2000, 0xe3a8230e )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yrom.sbd",     0xe000, 0x1000, 0x4c313d9b )
 	ROM_LOAD( "drom.sbd",     0xf000, 0x1000, 0xcecece88 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cb-bg-0.chp",  0x0000, 0x1000, 0xd666a179 )
+	ROM_LOAD( "cb-bg-1.chp",  0x1000, 0x1000, 0x5e34ff4e )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cb-fg-3.chp",  0x0000, 0x2000, 0x9c9452fe )
+	ROM_LOAD( "cb-fg-2.chp",  0x2000, 0x2000, 0x065131af )
+	ROM_LOAD( "cb-fg-1.chp",  0x4000, 0x2000, 0x1b7b7f94 )
+	ROM_LOAD( "cb-fg-0.chp",  0x6000, 0x2000, 0xe3a8230e )
 ROM_END
 
 
-
-struct GameDriver driver_reactor =
+static void init_reactor(void)
 {
-	__FILE__,
-	0,
-	"reactor",
-	"Reactor",
-	"1982",
-	"Gottlieb",
-	"Fabrice Frances",
-	0,
-	&machine_driver_reactor,
-	reactor_init,
+	samples_interface.samplenames = reactor_sample_names;
+}
 
-	rom_reactor,
-	0, 0,
-	0,
-	0,
-
-	input_ports_reactor,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mplanets =
+static void init_qbert(void)
 {
-	__FILE__,
-	0,
-	"mplanets",
-	"Mad Planets",
-	"1983",
-	"Gottlieb",
-	"Fabrice Frances",
-	0,
-	&machine_driver_gottlieb,
-	0,
+	samples_interface.samplenames = qbert_sample_names;
+}
 
-	rom_mplanets,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mplanets,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_qbert =
+static void init_gottlieb(void)
 {
-	__FILE__,
-	0,
-	"qbert",
-	"Q*bert (US)",
-	"1982",
-	"Gottlieb",
-	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
-	0,
-	&machine_driver_gottlieb,
-	qbert_init,
+	gottlieb_sound_init();
+}
 
-	rom_qbert,
-	0, 0,
-	0,
-	0,
 
-	input_ports_qbert,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_qbertjp =
-{
-	__FILE__,
-	&driver_qbert,
-	"qbertjp",
-	"Q*bert (Japan)",
-	"1982",
-	"Gottlieb (Konami license)",
-	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
-	0,
-	&machine_driver_gottlieb,
-	qbert_init,
-
-	rom_qbertjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_qbert,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_sqbert =
-{
-	__FILE__,
-	0,
-	"sqbert",
-	"Faster, Harder, More Challenging Q*bert",
-	"1983",
-	"Mylstar",
-	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
-	0,
-	&machine_driver_gottlieb,
-	qbert_init,
-
-	rom_sqbert,
-	0, 0,
-	0,
-	0,
-
-	input_ports_qbert,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_qbertqub =
-{
-	__FILE__,
-	0,
-	"qbertqub",
-	"Q*bert's Qubes",
-	"1983",
-	"Mylstar",
-	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver_qbertqub,
-	qbert_init,
-
-	rom_qbertqub,
-	0, 0,
-	0,
-	0,
-
-	input_ports_qbertqub,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_krull =
-{
-	__FILE__,
-	0,
-	"krull",
-	"Krull",
-	"1983",
-	"Gottlieb",
-	"Fabrice Frances (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver_krull,
-	0,
-
-	rom_krull,
-	0, 0,
-	0,
-	0,
-
-	input_ports_krull,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mach3 =
-{
-	__FILE__,
-	0,
-	"mach3",
-	"M.A.C.H. 3",
-	"1983",
-	"Mylstar",
-	"Fabrice Frances (MAME driver)\n\n"
-	"This is a LASER DISC game, so it doesn't work.",
-	0,
-	&machine_driver_mach3,
-	gottlieb_sound_init,	/* clear nmi_timer */
-
-	rom_mach3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mach3,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_usvsthem =
-{
-	__FILE__,
-	0,
-	"usvsthem",
-	"Us vs. Them",
-	"????",
-	"Mylstar",
-	"Fabrice Frances (MAME driver)\n\n"
-	"This is a LASER DISC game, so it doesn't work.",
-	0,
-	&machine_driver_usvsthem,
-	gottlieb_sound_init,	/* clear nmi_timer */
-
-	rom_usvsthem,
-	0, 0,
-	0,
-	0,
-
-	input_ports_usvsthem,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_3stooges =
-{
-	__FILE__,
-	0,
-	"3stooges",
-	"Three Stooges",
-	"1984",
-	"Mylstar",
-	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
-	0,
-	&machine_driver_stooges,
-	gottlieb_sound_init,	/* clear nmi_timer */
-
-	rom_3stooges,
-	0, 0,
-	0,
-	0,
-
-	input_ports_3stooges,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_curvebal =
-{
-	__FILE__,
-	0,
-	"curvebal",
-	"Curve Ball",
-	"1984",
-	"Mylstar",
-	"Fabrice Frances (MAME driver)",
-	0,
-	&machine_driver_gottlieb,
-	0,
-
-	rom_curvebal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_curvebal,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1982, reactor,  0,     reactor,  reactor,  reactor,  ROT0,   "Gottlieb", "Reactor" )
+GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
+GAME( 1982, qbert,    0,     gottlieb, qbert,    qbert,    ROT270, "Gottlieb", "Q*bert (US)" )
+GAME( 1982, qbertjp,  qbert, gottlieb, qbert,    qbert,    ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
+GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert" )
+GAME( 1983, qbertqub, 0,     qbertqub, qbertqub, qbert,    ROT270, "Mylstar", "Q*bert's Qubes" )
+GAME( 1983, krull,    0,     krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
+GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
+GAMEX(????, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
+GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "Three Stooges", GAME_IMPERFECT_SOUND )
+GAME( 1984, curvebal, 0,     gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball" )

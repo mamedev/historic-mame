@@ -3,6 +3,8 @@
 Food Fight Memory Map
 -----------------------------------
 
+driver by Aaron Giles
+
 Function                           Address        R/W  DATA
 -------------------------------------------------------------
 Program ROM                        000000-00FFFF  R    D0-D15
@@ -188,8 +190,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x4000, &charlayout,      0, 64 },		/* characters 8x8 */
-	{ 1, 0x0000, &spritelayout,    0, 64 },		/* sprites & playfield */
+	{ REGION_GFX1, 0, &charlayout,   0, 64 },	/* characters 8x8 */
+	{ REGION_GFX2, 0, &spritelayout, 0, 64 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -217,7 +219,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_foodf =
 {
 	/* basic machine hardware */
 	{
@@ -275,35 +277,14 @@ ROM_START( foodf )
 	ROM_LOAD_EVEN( "foodf.9f",     0x0c000, 0x02000, 0x608690c9 )
 	ROM_LOAD_ODD ( "foodf.8f",     0x0c000, 0x02000, 0x17828dbb )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "foodf.6lm",    0x0000, 0x2000, 0xc13c90eb )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "foodf.4d",     0x0000, 0x2000, 0x8870e3d6 )
 	ROM_LOAD( "foodf.4e",     0x2000, 0x2000, 0x84372edf )
-	ROM_LOAD( "foodf.6lm",    0x4000, 0x2000, 0xc13c90eb )
 ROM_END
 
 
 
-struct GameDriver driver_foodf =
-{
-	__FILE__,
-	0,
-	"foodf",
-	"Food Fight",
-	"1982",
-	"Atari",
-	"Aaron Giles (MAME driver)\nMike Balfour (Hardware info)\nAlan J. McCormick (Sound info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_foodf,
-	0, 0,
-	0,
-	0,
-
-	input_ports_foodf,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1982, foodf, 0, foodf, foodf, 0, ROT0, "Atari", "Food Fight" )

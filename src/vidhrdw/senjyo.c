@@ -8,6 +8,9 @@
 
 #include "driver.h"
 
+/* in machine/segacrpt.c */
+void suprloco_decode(void);
+
 
 extern unsigned char *spriteram;
 extern int spriteram_size;
@@ -30,17 +33,20 @@ static int bgbitmap_dirty;
 static int flipscreen;
 
 
-void starforc_init(void)
+void init_starforc(void)
 {
 	senjyo = 0;
 	scrollhack = 1;
 }
-void starfore_init(void)
+void init_starfore(void)
 {
+	/* encrypted CPU */
+	suprloco_decode();
+
 	senjyo = 0;
 	scrollhack = 0;
 }
-void senjyo_init(void)
+void init_senjyo(void)
 {
 	senjyo = 1;
 	scrollhack = 0;

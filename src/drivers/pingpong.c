@@ -169,8 +169,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,         0, 64 },
-	{ 1, 0x2000, &spritelayout,    64*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,         0, 64 },
+	{ REGION_GFX2, 0, &spritelayout,    64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -184,7 +184,7 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pingpong =
 {
 	/* basic machine hardware */
 	{
@@ -233,9 +233,11 @@ ROM_START( pingpong )
 	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
 	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, 0xd1d6f090 )
-	ROM_LOAD( "pp_e02.rom",   0x2000, 0x2000, 0x33c687e0 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pp_e02.rom",   0x0000, 0x2000, 0x33c687e0 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, 0x3e04f06e ) /* palette (this might be bad) */
@@ -245,26 +247,4 @@ ROM_END
 
 
 
-struct GameDriver driver_pingpong =
-{
-	__FILE__,
-	0,
-	"pingpong",
-	"Ping Pong",
-	"1985",
-	"Konami",
-	"Jarek Parchanski (MAME driver)\nMartin Binder (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pingpong,
-	0, 0,
-	0,
-	0,
-	input_ports_pingpong,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1985, pingpong, 0, pingpong, pingpong, 0, ROT0, "Konami", "Ping Pong" )

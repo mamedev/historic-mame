@@ -340,8 +340,8 @@ static struct GfxLayout bulletlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &spritelayout, 0, 8 },
-	{ 1, 0x1000, &bulletlayout, 0, 8 },
+	{ REGION_GFX1, 0, &spritelayout, 0, 8 },
+	{ REGION_GFX2, 0, &bulletlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -352,7 +352,7 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_spacefb =
 {
 	/* basic machine hardware */
 	{
@@ -410,16 +410,18 @@ ROM_START( spacefb )
 	ROM_LOAD( "5m.cpu",       0x3000, 0x0800, 0x6286f534 )
 	ROM_LOAD( "5n.cpu",       0x3800, 0x0800, 0x1c9f91ee )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5k.vid",       0x0000, 0x0800, 0x236e1ff7 )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
-	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x528e8533 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
 ROM_START( spacefbg )
@@ -433,19 +435,21 @@ ROM_START( spacefbg )
 	ROM_LOAD( "5m.cpu",       0x3000, 0x0800, 0x6286f534 )
 	ROM_LOAD( "5n.cpu",       0x3800, 0x0800, 0x1c9f91ee )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tst-v.5k",     0x0000, 0x0800, 0xbacc780d )
 	ROM_LOAD( "tst-v.6k",     0x0800, 0x0800, 0x1645ff26 )
-	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x528e8533 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spcbird )
+ROM_START( spacebrd )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sb5e.cpu",     0x0000, 0x0800, 0x232d66b8 )         /* Code */
 	ROM_LOAD( "sb5f.cpu",     0x0800, 0x0800, 0x99504327 )
@@ -456,16 +460,18 @@ ROM_START( spcbird )
 	ROM_LOAD( "sb5m.cpu",     0x3000, 0x0800, 0x4cbe92fc )
 	ROM_LOAD( "sb5n.cpu",     0x3800, 0x0800, 0x1a798fbf )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5k.vid",       0x0000, 0x0800, 0x236e1ff7 )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
-	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x528e8533 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "spcbird.clr",  0x0000, 0x0020, 0x25c79518 )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
 ROM_START( spacedem )
@@ -479,120 +485,23 @@ ROM_START( spacedem )
 	ROM_LOAD( "sd5m.cpu",     0x3000, 0x0800, 0x14d3c656 )
 	ROM_LOAD( "sd5n.cpu",     0x3800, 0x0800, 0x7e0e41b0 )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sd5k.vid",     0x0000, 0x0800, 0x55758e4d )
 	ROM_LOAD( "sd6k.vid",     0x0800, 0x0800, 0x3fcbb20c )
-	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4i.vid",       0x0000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
-    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 ROM_END
 
 
 
-struct GameDriver driver_spacefb =
-{
-	__FILE__,
-	0,
-	"spacefb",
-	"Space Firebird (Nintendo)",
-	"1980",
-	"Nintendo",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spacefb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacefb,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_spacefbg =
-{
-	__FILE__,
-	&driver_spacefb,
-	"spacefbg",
-	"Space Firebird (Gremlin)",
-	"1980",
-	"Gremlin",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spacefbg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacefb,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_spacebrd =
-{
-	__FILE__,
-	&driver_spacefb,
-	"spacebrd",
-	"Space Bird (bootleg)",
-	"1980",
-	"bootleg",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spcbird,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacefb,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_spacedem =
-{
-	__FILE__,
-	&driver_spacefb,
-	"spacedem",
-	"Space Demon",
-	"1980",
-	"Nintendo / Fortrek",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spacedem,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacedem,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
-
+GAMEX( 1980, spacefb,  0,       spacefb, spacefb,  0, ROT90, "Nintendo", "Space Firebird (Nintendo)", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, spacefbg, spacefb, spacefb, spacefb,  0, ROT90, "Gremlin", "Space Firebird (Gremlin)", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, spacebrd, spacefb, spacefb, spacefb,  0, ROT90, "bootleg", "Space Bird (bootleg)", GAME_IMPERFECT_COLORS )
+GAMEX( 1980, spacedem, spacefb, spacefb, spacedem, 0, ROT90, "Nintendo / Fortrek", "Space Demon", GAME_IMPERFECT_COLORS )

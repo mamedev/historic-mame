@@ -326,5 +326,5 @@ ROM_END
 
 
 
-GAME( 1983, ccastles, ,         ccastles, ccastles, , ROT0, "Atari", "Crystal Castles (set 1)" )
-GAME( 1983, ccastle2, ccastles, ccastles, ccastles, , ROT0, "Atari", "Crystal Castles (set 2)" )
+GAME( 1983, ccastles, 0,        ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (set 1)" )
+GAME( 1983, ccastle2, ccastles, ccastles, ccastles, 0, ROT0, "Atari", "Crystal Castles (set 2)" )

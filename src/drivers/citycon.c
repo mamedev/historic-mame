@@ -193,8 +193,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1250000,	/* 1.25 MHz */
-	{ YM2203_VOL(20,20), YM2203_VOL(20,20) },
-	{ 0x20, 0x20 },	/* 8910 gain */
+	{ YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)), YM2203_VOL(20,MIXERG(20,MIXER_GAIN_2x,MIXER_PAN_CENTER)) },
 	{ soundlatch_r },
 	{ soundlatch2_r },
 	{ 0 },
@@ -337,6 +336,6 @@ ROM_END
 
 
 
-GAME( 1985, citycon,  ,        citycon, citycon, , ROT0, "Jaleco", "City Connection (set 1)" )
-GAME( 1985, citycona, citycon, citycon, citycon, , ROT0, "Jaleco", "City Connection (set 2)" )
-GAME( 1985, cruisin,  citycon, citycon, citycon, , ROT0, "Jaleco (Kitkorp license)", "Cruisin" )
+GAME( 1985, citycon,  0,       citycon, citycon, 0, ROT0, "Jaleco", "City Connection (set 1)" )
+GAME( 1985, citycona, citycon, citycon, citycon, 0, ROT0, "Jaleco", "City Connection (set 2)" )
+GAME( 1985, cruisin,  citycon, citycon, citycon, 0, ROT0, "Jaleco (Kitkorp license)", "Cruisin" )

@@ -39,7 +39,7 @@
 #define SAMPLE_BITS 16
 
 #if (SAMPLE_BITS==16)
-	typedef signed short SAMP;
+	typedef INT16 SAMP;
 #endif
 #if (SAMPLE_BITS==8)
 	typedef signed char  SAMP;
@@ -67,7 +67,7 @@ void YM2151ResetChip(int num);
 ** '**buffers' is table of pointers to the buffers: left and right
 ** 'length' is the number of samples should be generated
 */
-void YM2151UpdateOne(int num, void **buffers, int length);
+void YM2151UpdateOne(int num, INT16 **buffers, int length);
 
 /* write 'v' to register 'r' on YM2151 chip number 'n'*/
 void YM2151WriteReg(int n, int r, int v);

@@ -125,8 +125,8 @@ INPUT_PORTS_START( robotbwl )
 	PORT_DIPSETTING(    0x08, "1 Player - 1 Coin" )
 	PORT_DIPSETTING(    0x10, "1 Player - 2 Coin" )
 	PORT_DIPNAME( 0x04, 0x04, "Beer Frame" )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
@@ -524,7 +524,7 @@ ROM_END
 
 
 
-GAME( 1977, circus,   , circus,   circus,   ,         ROT0, "Exidy", "Circus" )
-GAME( 1977, robotbwl, , robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl" )
-GAME( 1979, crash,    , crash,    crash,    ,         ROT0, "Exidy", "Crash" )
-GAMEX(1977, ripcord,  , ripcord,  ripcord,  ,         ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )
+GAME( 1977, circus,   0, circus,   circus,   0,        ROT0, "Exidy", "Circus" )
+GAME( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl" )
+GAME( 1979, crash,    0, crash,    crash,    0,        ROT0, "Exidy", "Crash" )
+GAMEX(1977, ripcord,  0, ripcord,  ripcord,  0,        ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )

@@ -565,7 +565,6 @@ static struct YM2203interface ym2203_interface =
 	1,							/* 1 chip */
 	3500000,					/* 3.5 MHz? */
 	{ YM2203_VOL(20,20) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ combatsc_portA_w },
@@ -830,8 +829,8 @@ static void init_combascb( void )
 
 
 
-GAMEX( 1988, combasc,  ,        combatsc, combatsc,  ,         ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
-GAMEX( 1987, combasct, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
-GAMEX( 1987, combascj, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
-GAMEX( 1987, bootcamp, combasc, combatsc, combatsct, ,         ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
+GAMEX( 1988, combasc,  0,       combatsc, combatsc,  0,        ROT0, "Konami", "Combat School (joystick)", GAME_NOT_WORKING )
+GAMEX( 1987, combasct, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (trackball)", GAME_NOT_WORKING )
+GAMEX( 1987, combascj, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Combat School (Japan trackball)", GAME_NOT_WORKING )
+GAMEX( 1987, bootcamp, combasc, combatsc, combatsct, 0,        ROT0, "Konami", "Boot Camp", GAME_NOT_WORKING )
 GAMEX( 1988, combascb, combasc, cmbatscb, cmbatscb,  combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )

@@ -21,7 +21,6 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
-#define AUDIO_CONV(A) ((A))
 
 static const struct astrocade_interface *intf;
 
@@ -29,7 +28,7 @@ static int emulation_rate;
 static int div_by_N_factor;
 static int buffer_len;
 
-static void *astrocade_buffer[MAX_ASTROCADE_CHIPS];
+static INT16 *astrocade_buffer[MAX_ASTROCADE_CHIPS];
 
 static int sample_pos[MAX_ASTROCADE_CHIPS];
 
@@ -73,7 +72,7 @@ static int randbit = 1;
 
 static void astrocade_update(int num, int newpos)
 {
-	void *buffer = astrocade_buffer[num];
+	INT16 *buffer = astrocade_buffer[num];
 
 	int pos = sample_pos[num];
 	int i, data, data16, noise_plus_osc, vib_plus_osc;
@@ -116,15 +115,8 @@ static void astrocade_update(int num, int newpos)
 			data = data + randbit*vol_noise4[num];
 		}
 
-		if( Machine->sample_bits == 16 )
-		{	/* 16bit output */
-			data16 = data<<8;
-			((unsigned short *)buffer)[pos++] = data16;
-		}
-		else
-		{	/* 8bit output */
-			((unsigned char *)buffer)[pos++] = AUDIO_CONV(data);
-		}
+		data16 = data<<8;
+		buffer[pos++] = data16;
 
 		if (current_count_A[num] >= current_size_A[num])
 		{
@@ -188,7 +180,7 @@ int astrocade_sh_start(const struct MachineSound *msound)
 	/* reserve buffer */
 	for (i = 0;i < intf->num;i++)
 	{
-		if ((astrocade_buffer[i] = malloc((Machine->sample_bits/8)*buffer_len)) == 0)
+		if ((astrocade_buffer[i] = malloc(sizeof(INT16)*buffer_len)) == 0)
 		{
 			while (--i >= 0) free(astrocade_buffer[i]);
 			return 1;
@@ -330,11 +322,6 @@ void astrocade_sound2_w(int offset, int data)
 	astrocade_sound_w(1, offset, data);
 }
 
-/* #define DUMPFILE 1 */
-
-#if DUMPFILE
-FILE *ofp = 0;
-#endif
 
 void astrocade_sh_update(void)
 {
@@ -342,29 +329,12 @@ void astrocade_sh_update(void)
 
 	if (Machine->sample_rate == 0 ) return;
 
-#if DUMPFILE
-	if (!ofp)
-		ofp = fopen("astrocde.pcm","wb");
-#endif
-
 	for (num = 0;num < intf->num;num++)
 	{
 		astrocade_update(num, buffer_len);
 		/* reset position , step , count */
 		sample_pos[num] = 0;
 		/* play sound */
-		if( Machine->sample_bits == 16 )
-			mixer_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate);
-		else
-		{
-			mixer_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate);
-		}
+		mixer_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate);
 	}
-
-#if DUMPFILE
-	/* Note: this assumes 8-bit sound */
-	for(i=0;i<buffer_len;i++)
-		fprintf(ofp,"%c",(((unsigned char *)astrocade_buffer[0])[i]) +
-					     (((unsigned char *)astrocade_buffer[1])[i]) );
-#endif
 }

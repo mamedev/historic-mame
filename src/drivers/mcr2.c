@@ -2,6 +2,8 @@
 
 	Midway MCR-2 system
 
+    driver by Christopher Kirmse, Aaron Giles
+
 	Currently implemented:
 		* Satan's Hollow
 		* Tron
@@ -451,8 +453,8 @@ MCR_SPRITE_LAYOUT(spritelayout, 128);
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 4 },	/* colors 0-63 */
-	{ 1, 0x4000, &spritelayout,  0, 4 },	/* colors 0-63 */
+	{ REGION_GFX1, 0, &charlayout,    0, 4 },	/* colors 0-63 */
+	{ REGION_GFX2, 0, &spritelayout,  0, 4 },	/* colors 0-63 */
 	{ -1 } /* end of array */
 };
 
@@ -464,7 +466,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mcr2 =
 {
 	/* basic machine hardware */
 	{
@@ -549,7 +551,7 @@ static struct MachineDriver machine_driver_journey =
  *
  *************************************/
 
-static void shollow_init(void)
+static void init_shollow(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -559,7 +561,7 @@ static void shollow_init(void)
 }
 
 
-static void tron_init(void)
+static void init_tron(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -569,7 +571,7 @@ static void tron_init(void)
 }
 
 
-static void kroozr_init(void)
+static void init_kroozr(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -580,7 +582,7 @@ static void kroozr_init(void)
 }
 
 
-static void domino_init(void)
+static void init_domino(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -590,7 +592,7 @@ static void domino_init(void)
 }
 
 
-static void wacko_init(void)
+static void init_wacko(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -600,7 +602,7 @@ static void wacko_init(void)
 }
 
 
-static void twotiger_init(void)
+static void init_twotiger(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -610,7 +612,7 @@ static void twotiger_init(void)
 }
 
 
-static void journey_init(void)
+static void init_journey(void)
 {
 	MCR_CONFIGURE_HISCORE(0xc000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -636,18 +638,20 @@ ROM_START( shollow )
 	ROM_LOAD( "sh-pro.04",    0x8000, 0x2000, 0x22fa9175 )
 	ROM_LOAD( "sh-pro.05",    0xa000, 0x2000, 0x1716e2bb )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sh-bg.00",     0x00000, 0x2000, 0x3e2b333c )
-	ROM_LOAD( "sh-bg.01",     0x02000, 0x2000, 0xd1d70cc4 )
-	ROM_LOAD( "sh-fg.00",     0x04000, 0x2000, 0x33f4554e )
-	ROM_LOAD( "sh-fg.01",     0x08000, 0x2000, 0xba1a38b4 )
-	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
-	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sh-snd.01",    0x0000, 0x1000, 0x55a297cc )
 	ROM_LOAD( "sh-snd.02",    0x1000, 0x1000, 0x46fc31f6 )
 	ROM_LOAD( "sh-snd.03",    0x2000, 0x1000, 0xb1f4a6a8 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sh-bg.00",     0x00000, 0x2000, 0x3e2b333c )
+	ROM_LOAD( "sh-bg.01",     0x02000, 0x2000, 0xd1d70cc4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sh-fg.00",     0x00000, 0x2000, 0x33f4554e )
+	ROM_LOAD( "sh-fg.01",     0x04000, 0x2000, 0xba1a38b4 )
+	ROM_LOAD( "sh-fg.02",     0x08000, 0x2000, 0x6b57f6da )
+	ROM_LOAD( "sh-fg.03",     0x0c000, 0x2000, 0x37ea9d07 )
 ROM_END
 
 
@@ -660,18 +664,20 @@ ROM_START( shollow2 )
 	ROM_LOAD( "sh-pro.04",    0x8000, 0x2000, 0x22fa9175 )
 	ROM_LOAD( "sh-pro.05",    0xa000, 0x2000, 0x1716e2bb )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sh-bg.00",     0x00000, 0x2000, 0x3e2b333c )
-	ROM_LOAD( "sh-bg.01",     0x02000, 0x2000, 0xd1d70cc4 )
-	ROM_LOAD( "sh-fg.00",     0x04000, 0x2000, 0x33f4554e )
-	ROM_LOAD( "sh-fg.01",     0x08000, 0x2000, 0xba1a38b4 )
-	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
-	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd-0.a7",     0x0000, 0x1000, 0x9d815bb3 )
 	ROM_LOAD( "snd-1.a8",     0x1000, 0x1000, 0x9f253412 )
 	ROM_LOAD( "snd-2.a9",     0x2000, 0x1000, 0x7783d6c6 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sh-bg.00",     0x00000, 0x2000, 0x3e2b333c )
+	ROM_LOAD( "sh-bg.01",     0x02000, 0x2000, 0xd1d70cc4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sh-fg.00",     0x00000, 0x2000, 0x33f4554e )
+	ROM_LOAD( "sh-fg.01",     0x04000, 0x2000, 0xba1a38b4 )
+	ROM_LOAD( "sh-fg.02",     0x08000, 0x2000, 0x6b57f6da )
+	ROM_LOAD( "sh-fg.03",     0x0c000, 0x2000, 0x37ea9d07 )
 ROM_END
 
 
@@ -684,18 +690,20 @@ ROM_START( tron )
 	ROM_LOAD( "scpu_pge.bin", 0x8000, 0x2000, 0x24c185d8 )
 	ROM_LOAD( "scpu_pgf.bin", 0xA000, 0x2000, 0x38c4bbaf )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, 0x1a9ed2f5 )
-	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, 0x3220f974 )
-	ROM_LOAD( "vg_3.bin",     0x04000, 0x2000, 0xbc036d1d )
-	ROM_LOAD( "vg_2.bin",     0x08000, 0x2000, 0x58ee14d3 )
-	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
-	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, 0x1a9ed2f5 )
+	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, 0x3220f974 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vg_3.bin",     0x00000, 0x2000, 0xbc036d1d )
+	ROM_LOAD( "vg_2.bin",     0x04000, 0x2000, 0x58ee14d3 )
+	ROM_LOAD( "vg_1.bin",     0x08000, 0x2000, 0x3329f9d4 )
+	ROM_LOAD( "vg_0.bin",     0x0c000, 0x2000, 0x9743f873 )
 ROM_END
 
 
@@ -708,18 +716,20 @@ ROM_START( tron2 )
 	ROM_LOAD( "scpu_pge.bin", 0x8000, 0x2000, 0x24c185d8 )
 	ROM_LOAD( "scpu_pgf.bin", 0xA000, 0x2000, 0x38c4bbaf )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, 0x1a9ed2f5 )
-	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, 0x3220f974 )
-	ROM_LOAD( "vg_3.bin",     0x04000, 0x2000, 0xbc036d1d )
-	ROM_LOAD( "vg_2.bin",     0x08000, 0x2000, 0x58ee14d3 )
-	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
-	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, 0x1a9ed2f5 )
+	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, 0x3220f974 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vg_3.bin",     0x00000, 0x2000, 0xbc036d1d )
+	ROM_LOAD( "vg_2.bin",     0x04000, 0x2000, 0x58ee14d3 )
+	ROM_LOAD( "vg_1.bin",     0x08000, 0x2000, 0x3329f9d4 )
+	ROM_LOAD( "vg_0.bin",     0x0c000, 0x2000, 0x9743f873 )
 ROM_END
 
 
@@ -731,18 +741,20 @@ ROM_START( kroozr )
 	ROM_LOAD( "kozmkcpu.5d",  0x6000, 0x2000, 0xa0ec38c1 )
 	ROM_LOAD( "kozmkcpu.6d",  0x8000, 0x2000, 0x7044f2b6 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "kozmkcpu.3g",  0x00000, 0x2000, 0xeda6ed2d )
-	ROM_LOAD( "kozmkcpu.4g",  0x02000, 0x2000, 0xddde894b )
-	ROM_LOAD( "kozmkvid.1e",  0x04000, 0x2000, 0xca60e2cc )
-	ROM_LOAD( "kozmkvid.1d",  0x08000, 0x2000, 0x4e23b35b )
-	ROM_LOAD( "kozmkvid.1b",  0x0c000, 0x2000, 0xc6041ba7 )
-	ROM_LOAD( "kozmkvid.1a",  0x10000, 0x2000, 0xb57fb0ff )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "kozmksnd.7a",  0x0000, 0x1000, 0x6736e433 )
 	ROM_LOAD( "kozmksnd.8a",  0x1000, 0x1000, 0xea9cd919 )
 	ROM_LOAD( "kozmksnd.9a",  0x2000, 0x1000, 0x9dfa7994 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kozmkcpu.3g",  0x00000, 0x2000, 0xeda6ed2d )
+	ROM_LOAD( "kozmkcpu.4g",  0x02000, 0x2000, 0xddde894b )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kozmkvid.1e",  0x00000, 0x2000, 0xca60e2cc )
+	ROM_LOAD( "kozmkvid.1d",  0x04000, 0x2000, 0x4e23b35b )
+	ROM_LOAD( "kozmkvid.1b",  0x08000, 0x2000, 0xc6041ba7 )
+	ROM_LOAD( "kozmkvid.1a",  0x0c000, 0x2000, 0xb57fb0ff )
 ROM_END
 
 
@@ -753,19 +765,21 @@ ROM_START( domino )
 	ROM_LOAD( "dmanpg2.bin",  0x4000, 0x2000, 0x7dd2177a )
 	ROM_LOAD( "dmanpg3.bin",  0x6000, 0x2000, 0xf2e0aa44 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dmanbg0.bin",  0x00000, 0x2000, 0x9163007f )
-	ROM_LOAD( "dmanbg1.bin",  0x02000, 0x2000, 0x28615c56 )
-	ROM_LOAD( "dmanfg0.bin",  0x04000, 0x2000, 0x0b1f9f9e )
-	ROM_LOAD( "dmanfg1.bin",  0x08000, 0x2000, 0x16aa4b9b )
-	ROM_LOAD( "dmanfg2.bin",  0x0c000, 0x2000, 0x4a8e76b8 )
-	ROM_LOAD( "dmanfg3.bin",  0x10000, 0x2000, 0x1f39257e )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dm-a7.snd",    0x0000, 0x1000, 0xfa982dcc )
 	ROM_LOAD( "dm-a8.snd",    0x1000, 0x1000, 0x72839019 )
 	ROM_LOAD( "dm-a9.snd",    0x2000, 0x1000, 0xad760da7 )
 	ROM_LOAD( "dm-a10.snd",   0x3000, 0x1000, 0x958c7287 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dmanbg0.bin",  0x00000, 0x2000, 0x9163007f )
+	ROM_LOAD( "dmanbg1.bin",  0x02000, 0x2000, 0x28615c56 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dmanfg0.bin",  0x00000, 0x2000, 0x0b1f9f9e )
+	ROM_LOAD( "dmanfg1.bin",  0x04000, 0x2000, 0x16aa4b9b )
+	ROM_LOAD( "dmanfg2.bin",  0x08000, 0x2000, 0x4a8e76b8 )
+	ROM_LOAD( "dmanfg3.bin",  0x0c000, 0x2000, 0x1f39257e )
 ROM_END
 
 
@@ -776,18 +790,20 @@ ROM_START( wacko )
 	ROM_LOAD( "wackocpu.4d",  0x4000, 0x2000, 0x515edff7 )
 	ROM_LOAD( "wackocpu.5d",  0x6000, 0x2000, 0x9b01bf32 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "wackocpu.3g",  0x00000, 0x2000, 0x33160eb1 )
-	ROM_LOAD( "wackocpu.4g",  0x02000, 0x2000, 0xdaf37d7c )
-	ROM_LOAD( "wackovid.1e",  0x04000, 0x2000, 0xdca59be7 )
-	ROM_LOAD( "wackovid.1d",  0x08000, 0x2000, 0xa02f1672 )
-	ROM_LOAD( "wackovid.1b",  0x0c000, 0x2000, 0x7d899790 )
-	ROM_LOAD( "wackovid.1a",  0x10000, 0x2000, 0x080be3ad )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "wackosnd.7a",  0x0000, 0x1000, 0x1a58763f )
 	ROM_LOAD( "wackosnd.8a",  0x1000, 0x1000, 0xa4e3c771 )
 	ROM_LOAD( "wackosnd.9a",  0x2000, 0x1000, 0x155ba3dd )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "wackocpu.3g",  0x00000, 0x2000, 0x33160eb1 )
+	ROM_LOAD( "wackocpu.4g",  0x02000, 0x2000, 0xdaf37d7c )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "wackovid.1e",  0x00000, 0x2000, 0xdca59be7 )
+	ROM_LOAD( "wackovid.1d",  0x04000, 0x2000, 0xa02f1672 )
+	ROM_LOAD( "wackovid.1b",  0x08000, 0x2000, 0x7d899790 )
+	ROM_LOAD( "wackovid.1a",  0x0c000, 0x2000, 0x080be3ad )
 ROM_END
 
 
@@ -798,18 +814,20 @@ ROM_START( twotiger )
 	ROM_LOAD( "2tgrpg2.bin",  0x4000, 0x2000, 0xb5ca3f17 )
 	ROM_LOAD( "2tgrpg3.bin",  0x6000, 0x2000, 0x8aa82049 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "2tgrbg0.bin",  0x00000, 0x2000, 0x52f69068 )
-	ROM_LOAD( "2tgrbg1.bin",  0x02000, 0x2000, 0x758d4f7d )
-	ROM_LOAD( "2tgrfg0.bin",  0x04000, 0x2000, 0x4abf3ca0 )
-	ROM_LOAD( "2tgrfg1.bin",  0x08000, 0x2000, 0xfbcaffa5 )
-	ROM_LOAD( "2tgrfg2.bin",  0x0c000, 0x2000, 0x08e3e1a6 )
-	ROM_LOAD( "2tgrfg3.bin",  0x10000, 0x2000, 0x9b22697b )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2tgra7.bin",   0x0000, 0x1000, 0x4620d970 )
 	ROM_LOAD( "2tgra8.bin",   0x1000, 0x1000, 0xe95d8cfe )
 	ROM_LOAD( "2tgra9.bin",   0x2000, 0x1000, 0x81e6ce0e )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2tgrbg0.bin",  0x00000, 0x2000, 0x52f69068 )
+	ROM_LOAD( "2tgrbg1.bin",  0x02000, 0x2000, 0x758d4f7d )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2tgrfg0.bin",  0x00000, 0x2000, 0x4abf3ca0 )
+	ROM_LOAD( "2tgrfg1.bin",  0x04000, 0x2000, 0xfbcaffa5 )
+	ROM_LOAD( "2tgrfg2.bin",  0x08000, 0x2000, 0x08e3e1a6 )
+	ROM_LOAD( "2tgrfg3.bin",  0x0c000, 0x2000, 0x9b22697b )
 ROM_END
 
 
@@ -821,119 +839,36 @@ ROM_START( journey )
 	ROM_LOAD( "d5",           0x6000, 0x2000, 0xc3023931 )
 	ROM_LOAD( "d6",           0x8000, 0x2000, 0x5d445c99 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "g3",           0x00000, 0x2000, 0xc14558de )
-	ROM_LOAD( "g4",           0x02000, 0x2000, 0x9104c1d0 )
-	ROM_LOAD( "a7",           0x04000, 0x2000, 0x4ca2bb2d )
-	ROM_LOAD( "a8",           0x06000, 0x2000, 0x4fb7925d )
-	ROM_LOAD( "a5",           0x08000, 0x2000, 0x560c474f )
-	ROM_LOAD( "a6",           0x0a000, 0x2000, 0xb1f31583 )
-	ROM_LOAD( "a3",           0x0c000, 0x2000, 0xf295afda )
-	ROM_LOAD( "a4",           0x0e000, 0x2000, 0x765876a7 )
-	ROM_LOAD( "a1",           0x10000, 0x2000, 0x4af986f8 )
-	ROM_LOAD( "a2",           0x12000, 0x2000, 0xb30cd2a7 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x2524a2aa )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0xb8e35814 )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0x09c488cf )
 	ROM_LOAD( "d",            0x3000, 0x1000, 0x3d627bee )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "g3",           0x00000, 0x2000, 0xc14558de )
+	ROM_LOAD( "g4",           0x02000, 0x2000, 0x9104c1d0 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a7",           0x00000, 0x2000, 0x4ca2bb2d )
+	ROM_LOAD( "a8",           0x02000, 0x2000, 0x4fb7925d )
+	ROM_LOAD( "a5",           0x04000, 0x2000, 0x560c474f )
+	ROM_LOAD( "a6",           0x06000, 0x2000, 0xb1f31583 )
+	ROM_LOAD( "a3",           0x08000, 0x2000, 0xf295afda )
+	ROM_LOAD( "a4",           0x0a000, 0x2000, 0x765876a7 )
+	ROM_LOAD( "a1",           0x0c000, 0x2000, 0x4af986f8 )
+	ROM_LOAD( "a2",           0x0e000, 0x2000, 0xb30cd2a7 )
 ROM_END
 
 
 
-/*************************************
- *
- *	Game drivers
- *
- *************************************/
 
-#define MCR2_DRIVER(name,year,rotate,fullname) 		\
-	struct GameDriver driver_##name =				\
-	{												\
-		__FILE__,									\
-		0,											\
-		#name,										\
-		fullname,									\
-		#year,										\
-		"Bally Midway",								\
-		"Christopher Kirmse\nAaron Giles\n"			\
-		"Nicola Salmoria\nBrad Oliver",				\
-		0,											\
-		&machine_driver,							\
-		name##_init,								\
-													\
-		rom_##name,									\
-		0, 0,										\
-		0,											\
-		0,							\
-													\
-		input_ports_##name,							\
-													\
-		0, 0,0,										\
-		rotate,										\
-		0,0											\
-	};
-
-#define MCR2_CLONE_DRIVER(name,year,rotate,fullname,cloneof) \
-	struct GameDriver driver_##name =				\
-	{												\
-		__FILE__,									\
-		&driver_##cloneof,							\
-		#name,										\
-		fullname,									\
-		#year,										\
-		"Bally Midway",								\
-		"Christopher Kirmse\nAaron Giles\n"			\
-		"Nicola Salmoria\nBrad Oliver",				\
-		0,											\
-		&machine_driver,							\
-		cloneof##_init,								\
-													\
-		rom_##name,									\
-		0, 0,										\
-		0,											\
-		0,							\
-													\
-		input_ports_##cloneof,						\
-													\
-		0, 0,0,										\
-		rotate,										\
-		0,0											\
-	};
-
-
-MCR2_DRIVER      (shollow,  1981, ROT90, "Satan's Hollow (set 1)")
-MCR2_CLONE_DRIVER(shollow2, 1981, ROT90, "Satan's Hollow (set 2)", shollow)
-MCR2_DRIVER      (tron,     1982, ROT90, "Tron (set 1)")
-MCR2_CLONE_DRIVER(tron2,    1982, ROT90, "Tron (set 2)", tron)
-MCR2_DRIVER      (kroozr,   1982, ROT0,   "Kozmik Kroozr")
-MCR2_DRIVER      (domino,   1982, ROT0,   "Domino Man")
-MCR2_DRIVER      (wacko,    1982, ROT0,   "Wacko")
-MCR2_DRIVER      (twotiger, 1984, ROT0,   "Two Tigers")
-
-struct GameDriver driver_journey =
-{
-	__FILE__,
-	0,
-	"journey",
-	"Journey",
-	"1983",
-	"Bally Midway",
-	"Christopher Kirmse\nAaron Giles\n"
-	"Nicola Salmoria\nBrad Oliver",
-	0,
-	&machine_driver_journey,
-	journey_init,
-
-	rom_journey,
-	0, 0,
-	0,
-	0,
-
-	input_ports_domino,
-
-	0,0,0,
-	ROT90,
-	0,0
-};
+GAME( 1981, shollow,  0,       mcr2,    shollow,  shollow,  ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
+GAME( 1981, shollow2, shollow, mcr2,    shollow,  shollow,  ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
+GAME( 1982, tron,     0,       mcr2,    tron,     tron,     ROT90, "Bally Midway", "Tron (set 1)" )
+GAME( 1982, tron2,    tron,    mcr2,    tron,     tron,     ROT90, "Bally Midway", "Tron (set 2)" )
+GAME( 1982, kroozr,   0,       mcr2,    kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
+GAME( 1982, domino,   0,       mcr2,    domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
+GAME( 1982, wacko,    0,       mcr2,    wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
+GAME( 1984, twotiger, 0,       mcr2,    twotiger, twotiger, ROT0,  "Bally Midway", "Two Tigers" )
+GAME( 1983, journey,  0,       journey, domino,   journey,  ROT90, "Bally Midway", "Journey" )

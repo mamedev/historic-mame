@@ -569,7 +569,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -742,6 +741,6 @@ ROM_END
 
 
 
-GAME( 1984, 1942,  ,     1942, 1942, , ROT270, "Capcom", "1942 (set 1)" )
-GAME( 1984, 1942a, 1942, 1942, 1942, , ROT270, "Capcom", "1942 (set 2)" )
-GAME( 1984, 1942b, 1942, 1942, 1942, , ROT270, "Capcom", "1942 (set 3)" )
+GAME( 1984, 1942,  0,    1942, 1942, 0, ROT270, "Capcom", "1942 (set 1)" )
+GAME( 1984, 1942a, 1942, 1942, 1942, 0, ROT270, "Capcom", "1942 (set 2)" )
+GAME( 1984, 1942b, 1942, 1942, 1942, 0, ROT270, "Capcom", "1942 (set 3)" )

@@ -1016,11 +1016,11 @@ static void OPL_UnLockTable(void)
 /*******************************************************************************/
 
 /* ---------- update one of chip ----------- */
-void YM3812UpdateOne(FM_OPL *OPL, void *buffer, int length)
+void YM3812UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 {
     int i;
 	int data;
-	FMSAMPLE *buf = (FMSAMPLE *)buffer;
+	FMSAMPLE *buf = buffer;
 	UINT32 amsCnt  = OPL->amsCnt;
 	UINT32 vibCnt  = OPL->vibCnt;
 	UINT8 rythm = OPL->rythm&0x20;
@@ -1069,11 +1069,11 @@ void YM3812UpdateOne(FM_OPL *OPL, void *buffer, int length)
 
 #if BUILD_Y8950
 
-void Y8950UpdateOne(FM_OPL *OPL, void *buffer, int length)
+void Y8950UpdateOne(FM_OPL *OPL, INT16 *buffer, int length)
 {
     int i;
 	int data;
-	FMSAMPLE *buf = (FMSAMPLE *)buffer;
+	FMSAMPLE *buf = buffer;
 	UINT32 amsCnt  = OPL->amsCnt;
 	UINT32 vibCnt  = OPL->vibCnt;
 	UINT8 rythm = OPL->rythm&0x20;

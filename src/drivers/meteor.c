@@ -2,6 +2,8 @@
 
 Meteoroids Memory Map
 
+driver by Zsolt Vasvari
+
 
 0000-3fff   R	ROM
 4000-43ff	R/W	RAM
@@ -191,7 +193,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 8 },
+	{ REGION_GFX1, 0, &charlayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -234,7 +236,7 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_meteor =
 {
 	/* basic machine hardware */
 	{
@@ -294,42 +296,18 @@ ROM_START( meteor )
 	ROM_LOAD( "vm7", 	      0x3000, 0x0800, 0x39f43ac2 )
 	ROM_LOAD( "vm8", 	      0x3800, 0x0800, 0xa0508de3 )
 
-	ROM_REGION_DISPOSE(0x3000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )		/* sound MCU */
+	ROM_LOAD( "vm5", 	      0x0000, 0x0800, 0xb14ccd57 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rm1v",         0x0000, 0x0800, 0xd621fe96 )
 	ROM_LOAD( "rm2v",         0x0800, 0x0800, 0xb3981251 )
 	ROM_LOAD( "gm1v",         0x1000, 0x0800, 0xd44617e8 )
 	ROM_LOAD( "gm2v",         0x1800, 0x0800, 0x0997d945 )
 	ROM_LOAD( "bm1v",         0x2000, 0x0800, 0xcc97c890 )
 	ROM_LOAD( "bm2v",         0x2800, 0x0800, 0x2858cf5c )
-
-	ROM_REGIONX( 0x1000, REGION_CPU2 )		/* sound MCU */
-	ROM_LOAD( "vm5", 	      0x0000, 0x0800, 0xb14ccd57 )
 ROM_END
 
 
-struct GameDriver driver_meteor =
-{
-	__FILE__,
-	0,
-	"meteor",
-	"Meteoroids",
-	"1981",
-	"Venture Line",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
 
-	rom_meteor,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_meteor,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
+GAME( 1981, meteor, 0, meteor, meteor, 0, ROT270, "Venture Line", "Meteoroids" )

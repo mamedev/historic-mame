@@ -338,7 +338,7 @@ INPUT_PORTS_START( spacfury )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
@@ -395,7 +395,7 @@ INPUT_PORTS_START( zektor )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -456,7 +456,7 @@ INPUT_PORTS_START( startrek )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -515,7 +515,7 @@ INPUT_PORTS_START( tacscan )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -580,7 +580,7 @@ INPUT_PORTS_START( elim2 )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
@@ -645,7 +645,7 @@ INPUT_PORTS_START( elim4 )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
@@ -686,47 +686,583 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-void spacfury_decode(void)
+void init_spacfury(void)
 {
     /* This game uses the 315-0064 security chip */
     sega_security(64);
 }
 
-void zektor_decode(void)
+void init_zektor(void)
 {
     /* This game uses the 315-0082 security chip */
     sega_security(82);
 }
 
-void elim2_decode(void)
+void init_elim2(void)
 {
     /* This game uses the 315-0070 security chip */
     sega_security(70);
 }
 
-void elim4_decode(void)
+void init_elim4(void)
 {
     /* This game uses the 315-0076 security chip */
     sega_security(76);
 }
 
-void startrek_decode(void)
+void init_startrek(void)
 {
     /* This game uses the 315-0064 security chip */
     sega_security(64);
 }
 
-void tacscan_decode(void)
+void init_tacscan(void)
 {
     /* This game uses the 315-0076 security chip */
     sega_security(76);
 }
 
+
+
 /***************************************************************************
 
-  Game ROMs
+  Game driver(s)
 
 ***************************************************************************/
+
+static const char *spacfury_sample_names[] =
+{
+	"*spacfury",
+	/* Speech samples */
+	"sf01.wav",
+	"sf02.wav",
+	"sf03.wav",
+	"sf04.wav",
+	"sf05.wav",
+	"sf06.wav",
+	"sf07.wav",
+	"sf08.wav",
+	"sf09.wav",
+	"sf0a.wav",
+	"sf0b.wav",
+	"sf0c.wav",
+	"sf0d.wav",
+	"sf0e.wav",
+	"sf0f.wav",
+	"sf10.wav",
+	"sf11.wav",
+	"sf12.wav",
+	"sf13.wav",
+	"sf14.wav",
+	"sf15.wav",
+	/* Sound samples */
+	"sfury1.wav",
+	"sfury2.wav",
+	"sfury3.wav",
+	"sfury4.wav",
+	"sfury5.wav",
+	"sfury6.wav",
+	"sfury7.wav",
+	"sfury8.wav",
+	"sfury9.wav",
+	"sfury10.wav",
+    0	/* end of array */
+};
+
+static struct Samplesinterface spacfury_samples_interface =
+{
+	9,	/* 9 channels */
+	25,	/* volume */
+	spacfury_sample_names
+};
+
+static struct CustomSound_interface sega_custom_interface =
+{
+	sega_sh_start,
+	0,
+	sega_sh_update
+};
+
+static struct MachineDriver machine_driver_spacfury =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem, writemem, spacfury_readport, spacfury_writeport,
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 512, 1536, 552, 1464 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&spacfury_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
+		}
+	}
+};
+
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+static const char *zektor_sample_names[] =
+{
+	"*zektor",
+	"zk01.wav",  /* 1 */
+	"zk02.wav",
+	"zk03.wav",
+	"zk04.wav",
+	"zk05.wav",
+	"zk06.wav",
+	"zk07.wav",
+	"zk08.wav",
+	"zk09.wav",
+	"zk0a.wav",
+	"zk0b.wav",
+	"zk0c.wav",
+	"zk0d.wav",
+	"zk0e.wav",
+	"zk0f.wav",
+	"zk10.wav",
+	"zk11.wav",
+	"zk12.wav",
+	"zk13.wav",
+	"elim1.wav",  /* 19 fireball */
+	"elim2.wav",  /* 20 bounce */
+	"elim3.wav",  /* 21 Skitter */
+	"elim4.wav",  /* 22 Eliminator */
+	"elim5.wav",  /* 23 Electron */
+	"elim6.wav",  /* 24 fire */
+	"elim7.wav",  /* 25 thrust */
+	"elim8.wav",  /* 26 Electron */
+	"elim9.wav",  /* 27 small explosion */
+	"elim10.wav", /* 28 med explosion */
+	"elim11.wav", /* 29 big explosion */
+				  /* Missing Zizzer */
+				  /* Missing City fly by */
+				  /* Missing Rotation Rings */
+
+
+    0	/* end of array */
+};
+
+static struct Samplesinterface zektor_samples_interface =
+{
+	12, /* only speech for now */
+	25,	/* volume */
+	zektor_sample_names
+};
+
+
+
+static struct MachineDriver machine_driver_zektor =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem,writemem,zektor_readport,zektor_writeport,
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 512, 1536, 624, 1432 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&zektor_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
+		}
+	}
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+static const char *tacscan_sample_names[] =
+{
+	"*tacscan",
+	/* Player ship thrust sounds */
+	"01.wav",
+	"02.wav",
+	"03.wav",
+        "plaser.wav",
+	"pexpl.wav",
+	"pship.wav",
+	"tunnelh.wav",
+	"sthrust.wav",
+	"slaser.wav",
+	"sexpl.wav",
+	"eshot.wav",
+	"eexpl.wav",
+        "tunnelw.wav",
+        "flight1.wav",
+        "flight2.wav",
+        "flight3.wav",
+        "flight4.wav",
+        "flight5.wav",
+        "formatn.wav",
+        "warp.wav",
+        "credit.wav",
+        "1up.wav",
+
+    0	/* end of array */
+};
+
+static struct Samplesinterface tacscan_samples_interface =
+{
+	12,	/* 12 channels */
+	25,	/* volume */
+	tacscan_sample_names
+};
+
+static struct CustomSound_interface tacscan_custom_interface =
+{
+	tacscan_sh_start,
+	0,
+	tacscan_sh_update
+};
+
+
+
+static struct MachineDriver machine_driver_tacscan =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem,writemem,zektor_readport,tacscan_writeport,
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 496, 1552, 592, 1456 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&tacscan_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&tacscan_custom_interface
+		}
+	}
+};
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/* Eliminator sound samples (all versions) */
+static const char *elim_sample_names[] =
+{
+	"*elim2",
+	"elim1.wav",
+	"elim2.wav",
+	"elim3.wav",
+	"elim4.wav",
+	"elim5.wav",
+	"elim6.wav",
+	"elim7.wav",
+	"elim8.wav",
+	"elim9.wav",
+	"elim10.wav",
+	"elim11.wav",
+	"elim12.wav",
+    0	/* end of array */
+};
+
+static struct Samplesinterface elim2_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	elim_sample_names
+};
+
+
+static struct MachineDriver machine_driver_elim2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem,writemem,elim2_readport,elim_writeport,
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 512, 1536, 600, 1440 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&elim2_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
+		}
+	}
+};
+
+
+
+static struct MachineDriver machine_driver_elim4 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem,writemem,elim4_readport,elim_writeport,
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 512, 1536, 600, 1440 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&elim2_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
+		}
+	}
+};
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+static const char *startrek_sample_names[] =
+{
+	"*startrek",
+	/* Speech samples */
+	"st01.wav",
+	"st02.wav",
+	"st03.wav",
+	"st04.wav",
+	"st05.wav",
+	"st06.wav",
+	"st07.wav",
+	"st08.wav",
+	"st09.wav",
+	"st0a.wav",
+	"st0b.wav",
+	"st0c.wav",
+	"st0d.wav",
+	"st0e.wav",
+	"st0f.wav",
+	"st10.wav",
+	"st11.wav",
+	"st12.wav",
+	"st13.wav",
+	"st14.wav",
+	"st15.wav",
+	"st16.wav",
+	"st17.wav",
+	/* Sound samples */
+	"trek1.wav",
+	"trek2.wav",
+	"trek3.wav",
+	"trek4.wav",
+	"trek5.wav",
+	"trek6.wav",
+	"trek7.wav",
+	"trek8.wav",
+	"trek9.wav",
+	"trek10.wav",
+	"trek11.wav",
+	"trek12.wav",
+	"trek13.wav",
+	"trek14.wav",
+	"trek15.wav",
+	"trek16.wav",
+	"trek17.wav",
+	"trek18.wav",
+	"trek19.wav",
+	"trek20.wav",
+	"trek21.wav",
+	"trek22.wav",
+	"trek23.wav",
+	"trek24.wav",
+	"trek25.wav",
+	"trek26.wav",
+	"trek27.wav",
+	"trek28.wav",
+    0	/* end of array */
+};
+
+static struct Samplesinterface startrek_samples_interface =
+{
+	10,	/* 10 channels */
+	25,	/* volume */
+	startrek_sample_names
+};
+
+static struct MachineDriver machine_driver_startrek =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3867120,	/* 3.86712 Mhz */
+			readmem,writemem,zektor_readport,startrek_writeport,
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
+		}
+	},
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	400, 300, { 512, 1536, 616, 1464 },
+	0,
+	256,256,
+	sega_init_colors,
+
+	VIDEO_TYPE_VECTOR,
+	0,
+	sega_vh_start,
+	sega_vh_stop,
+	sega_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&startrek_samples_interface
+		},
+		{
+			SOUND_CUSTOM,	/* actually plays the samples */
+			&sega_custom_interface
+		}
+	}
+};
+
+
+
+
 
 ROM_START( spacfury ) /* Revision C */
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -901,736 +1437,12 @@ ROM_END
 
 
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
-
-static const char *spacfury_sample_names[] =
-{
-	"*spacfury",
-	/* Speech samples */
-	"sf01.wav",
-	"sf02.wav",
-	"sf03.wav",
-	"sf04.wav",
-	"sf05.wav",
-	"sf06.wav",
-	"sf07.wav",
-	"sf08.wav",
-	"sf09.wav",
-	"sf0a.wav",
-	"sf0b.wav",
-	"sf0c.wav",
-	"sf0d.wav",
-	"sf0e.wav",
-	"sf0f.wav",
-	"sf10.wav",
-	"sf11.wav",
-	"sf12.wav",
-	"sf13.wav",
-	"sf14.wav",
-	"sf15.wav",
-	/* Sound samples */
-	"sfury1.wav",
-	"sfury2.wav",
-	"sfury3.wav",
-	"sfury4.wav",
-	"sfury5.wav",
-	"sfury6.wav",
-	"sfury7.wav",
-	"sfury8.wav",
-	"sfury9.wav",
-	"sfury10.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface spacfury_samples_interface =
-{
-	9,	/* 9 channels */
-	25,	/* volume */
-	spacfury_sample_names
-};
-
-static struct CustomSound_interface sega_custom_interface =
-{
-	sega_sh_start,
-	0,
-	sega_sh_update
-};
-
-static struct MachineDriver machine_driver_spacfury =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem, writemem, spacfury_readport, spacfury_writeport,
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 552, 1464 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&spacfury_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-
-
-struct GameDriver driver_spacfury =
-{
-	__FILE__,
-	0,
-	"spacfury",
-	"Space Fury (revision C)",
-	"1981",
-	"Sega",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_spacfury,
-	spacfury_decode,
-
-	rom_spacfury,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacfury,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_spacfura =
-{
-	__FILE__,
-	&driver_spacfury,
-	"spacfura",
-	"Space Fury (revision A)",
-	"1981",
-	"Sega",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_spacfury,
-	spacfury_decode,
-
-	rom_spacfura,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spacfury,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-static const char *zektor_sample_names[] =
-{
-	"*zektor",
-	"zk01.wav",  /* 1 */
-	"zk02.wav",
-	"zk03.wav",
-	"zk04.wav",
-	"zk05.wav",
-	"zk06.wav",
-	"zk07.wav",
-	"zk08.wav",
-	"zk09.wav",
-	"zk0a.wav",
-	"zk0b.wav",
-	"zk0c.wav",
-	"zk0d.wav",
-	"zk0e.wav",
-	"zk0f.wav",
-	"zk10.wav",
-	"zk11.wav",
-	"zk12.wav",
-	"zk13.wav",
-	"elim1.wav",  /* 19 fireball */
-	"elim2.wav",  /* 20 bounce */
-	"elim3.wav",  /* 21 Skitter */
-	"elim4.wav",  /* 22 Eliminator */
-	"elim5.wav",  /* 23 Electron */
-	"elim6.wav",  /* 24 fire */
-	"elim7.wav",  /* 25 thrust */
-	"elim8.wav",  /* 26 Electron */
-	"elim9.wav",  /* 27 small explosion */
-	"elim10.wav", /* 28 med explosion */
-	"elim11.wav", /* 29 big explosion */
-				  /* Missing Zizzer */
-				  /* Missing City fly by */
-				  /* Missing Rotation Rings */
-
-
-    0	/* end of array */
-};
-
-static struct Samplesinterface zektor_samples_interface =
-{
-	12, /* only speech for now */
-	25,	/* volume */
-	zektor_sample_names
-};
-
-
-
-static struct MachineDriver machine_driver_zektor =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem,writemem,zektor_readport,zektor_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 624, 1432 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zektor_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-
-
-struct GameDriver driver_zektor =
-{
-	__FILE__,
-	0,
-	"zektor",
-	"Zektor",
-	"1982",
-	"Sega",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_zektor,
-	zektor_decode,
-
-	rom_zektor,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zektor,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-static const char *tacscan_sample_names[] =
-{
-	"*tacscan",
-	/* Player ship thrust sounds */
-	"01.wav",
-	"02.wav",
-	"03.wav",
-        "plaser.wav",
-	"pexpl.wav",
-	"pship.wav",
-	"tunnelh.wav",
-	"sthrust.wav",
-	"slaser.wav",
-	"sexpl.wav",
-	"eshot.wav",
-	"eexpl.wav",
-        "tunnelw.wav",
-        "flight1.wav",
-        "flight2.wav",
-        "flight3.wav",
-        "flight4.wav",
-        "flight5.wav",
-        "formatn.wav",
-        "warp.wav",
-        "credit.wav",
-        "1up.wav",
-
-    0	/* end of array */
-};
-
-static struct Samplesinterface tacscan_samples_interface =
-{
-	12,	/* 12 channels */
-	25,	/* volume */
-	tacscan_sample_names
-};
-
-static struct CustomSound_interface tacscan_custom_interface =
-{
-	tacscan_sh_start,
-	0,
-	tacscan_sh_update
-};
-
-
-
-static struct MachineDriver machine_driver_tacscan =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem,writemem,zektor_readport,tacscan_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 496, 1552, 592, 1456 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&tacscan_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&tacscan_custom_interface
-		}
-	}
-};
-
-struct GameDriver driver_tacscan =
-{
-	__FILE__,
-	0,
-	"tacscan",
-	"Tac/Scan",
-	"1982",
-	"Sega",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_tacscan,
-	tacscan_decode,
-
-	rom_tacscan,
-	0, 0,
-	0,
-	0,
-
-        input_ports_tacscan,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Eliminator sound samples (all versions) */
-static const char *elim_sample_names[] =
-{
-	"*elim2",
-	"elim1.wav",
-	"elim2.wav",
-	"elim3.wav",
-	"elim4.wav",
-	"elim5.wav",
-	"elim6.wav",
-	"elim7.wav",
-	"elim8.wav",
-	"elim9.wav",
-	"elim10.wav",
-	"elim11.wav",
-	"elim12.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface elim2_samples_interface =
-{
-	8,	/* 8 channels */
-	25,	/* volume */
-	elim_sample_names
-};
-
-
-static struct MachineDriver machine_driver_elim2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem,writemem,elim2_readport,elim_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 600, 1440 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&elim2_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-struct GameDriver driver_elim2 =
-{
-	__FILE__,
-	0,
-	"elim2",
-	"Eliminator (2 Players, set 1)",
-	"1981",
-	"Gremlin",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_elim2,
-	elim2_decode,
-
-	rom_elim2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_elim2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_elim2a =
-{
-	__FILE__,
-	&driver_elim2,
-	"elim2a",
-	"Eliminator (2 Players, set 2)",
-	"1981",
-	"Gremlin",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_elim2,
-	elim2_decode,
-
-	rom_elim2a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_elim2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-
-static struct MachineDriver machine_driver_elim4 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem,writemem,elim4_readport,elim_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 600, 1440 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&elim2_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-struct GameDriver driver_elim4 =
-{
-	__FILE__,
-	&driver_elim2,
-	"elim4",
-	"Eliminator (4 Players)",
-	"1981",
-	"Gremlin",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_elim4,
-	elim4_decode,
-
-	rom_elim4,
-	0, 0,
-	0,
-	0,
-
-	input_ports_elim4,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-static const char *startrek_sample_names[] =
-{
-	"*startrek",
-	/* Speech samples */
-	"st01.wav",
-	"st02.wav",
-	"st03.wav",
-	"st04.wav",
-	"st05.wav",
-	"st06.wav",
-	"st07.wav",
-	"st08.wav",
-	"st09.wav",
-	"st0a.wav",
-	"st0b.wav",
-	"st0c.wav",
-	"st0d.wav",
-	"st0e.wav",
-	"st0f.wav",
-	"st10.wav",
-	"st11.wav",
-	"st12.wav",
-	"st13.wav",
-	"st14.wav",
-	"st15.wav",
-	"st16.wav",
-	"st17.wav",
-	/* Sound samples */
-	"trek1.wav",
-	"trek2.wav",
-	"trek3.wav",
-	"trek4.wav",
-	"trek5.wav",
-	"trek6.wav",
-	"trek7.wav",
-	"trek8.wav",
-	"trek9.wav",
-	"trek10.wav",
-	"trek11.wav",
-	"trek12.wav",
-	"trek13.wav",
-	"trek14.wav",
-	"trek15.wav",
-	"trek16.wav",
-	"trek17.wav",
-	"trek18.wav",
-	"trek19.wav",
-	"trek20.wav",
-	"trek21.wav",
-	"trek22.wav",
-	"trek23.wav",
-	"trek24.wav",
-	"trek25.wav",
-	"trek26.wav",
-	"trek27.wav",
-	"trek28.wav",
-    0	/* end of array */
-};
-
-static struct Samplesinterface startrek_samples_interface =
-{
-	10,	/* 10 channels */
-	25,	/* volume */
-	startrek_sample_names
-};
-
-static struct MachineDriver machine_driver_startrek =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 Mhz */
-			readmem,writemem,zektor_readport,startrek_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 616, 1464 },
-	0,
-	256,256,
-	sega_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&startrek_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-struct GameDriver driver_startrek =
-{
-	__FILE__,
-	0,
-	"startrek",
-	"Star Trek",
-	"1982",
-	"Sega",
-        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver_startrek,
-	startrek_decode,
-
-	rom_startrek,
-	0, 0,
-	0,
-	0,
-
-	input_ports_startrek,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1981, spacfury, 0,        spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
+GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision A)" )
+GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ROT0,   "Sega", "Zektor" )
+GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ROT270, "Sega", "Tac/Scan" )
+GAME( 1981, elim2,    0,        elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
+GAME( 1981, elim2a,   elim2,    elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
+GAME( 1981, elim4,    elim2,    elim4,    elim4,    elim4,    ROT0,   "Gremlin", "Eliminator (4 Players)" )
+GAME( 1982, startrek, 0,        startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )

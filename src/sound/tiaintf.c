@@ -19,7 +19,7 @@ static unsigned int sample_pos;
 static int channel;
 
 static const struct TIAinterface *intf;
-static unsigned char *buffer;
+static INT16 *buffer;
 
 int tia_sh_start(const struct MachineSound *msound)
 {
@@ -34,9 +34,9 @@ int tia_sh_start(const struct MachineSound *msound)
 
 	channel = mixer_allocate_channel(intf->volume);
 
-	if ((buffer = malloc(buffer_len)) == 0)
+	if ((buffer = malloc(sizeof(INT16) * buffer_len)) == 0)
 		return 1;
-	memset(buffer,0,buffer_len);
+	memset(buffer,0,sizeof(INT16) * buffer_len);
 
 	Tia_sound_init (intf->clock, emulation_rate);
 	return 0;
@@ -56,5 +56,5 @@ void tia_sh_update (void)
 		Tia_process (buffer + sample_pos, buffer_len - sample_pos);
 	sample_pos = 0;
 
-	mixer_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate);
+	mixer_play_streamed_sample_16(channel,buffer,2*buffer_len,emulation_rate);
 }

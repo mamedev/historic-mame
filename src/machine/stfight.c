@@ -34,7 +34,7 @@ Encryption PAL 16R4 on CPU board
 
 */
 
-void empcity_decode(void)
+void init_empcity(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -65,13 +65,13 @@ void empcity_decode(void)
 	}
 }
 
-void stfight_decode(void)
+void init_stfight(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
 
 
-	empcity_decode();
+	init_empcity();
 
 	/* patch out a tight loop during startup - is the code waiting */
 	/* for NMI to wake it up? */

@@ -2,6 +2,8 @@
 
 Rollergames (GX999) (c) 1991 Konami
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -250,12 +252,12 @@ static struct YM3812interface ym3812_interface =
 static struct K053260_interface k053260_interface =
 {
 	3579545,
-	4, /* memory region */
+	REGION_SOUND1, /* memory region */
 	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) },
 	0
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rollerg =
 {
 	/* basic machine hardware */
 	{
@@ -316,18 +318,18 @@ ROM_START( rollerg )
 	ROM_LOAD( "999m02.g7",  0x10000, 0x18000, 0x3df8db93 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x200000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
-	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
-
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
-	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "999m01.e11", 0x0000, 0x8000, 0x1fcfb22f )
 
-	ROM_REGION( 0x80000 )	/* samples for 053260 */
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
+	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
+	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
 	ROM_LOAD( "999h09.c5",  0x000000, 0x080000, 0xc5188783 )
 ROM_END
 
@@ -336,18 +338,18 @@ ROM_START( rollergj )
 	ROM_LOAD( "999v02.bin", 0x10000, 0x18000, 0x0dd8c3ac )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x200000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
-	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
-
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
-	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "999m01.e11", 0x0000, 0x8000, 0x1fcfb22f )
 
-	ROM_REGION( 0x80000 )	/* samples for 053260 */
+	ROM_REGIONX( 0x200000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "999h06.k2",  0x000000, 0x100000, 0xeda05130 ) /* sprites */
+	ROM_LOAD( "999h05.k8",  0x100000, 0x100000, 0x5f321c7d )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "999h03.d23", 0x000000, 0x040000, 0xea1edbd2 ) /* zoom */
+	ROM_LOAD( "999h04.f23", 0x040000, 0x040000, 0xc1a35355 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* samples for 053260 */
 	ROM_LOAD( "999h09.c5",  0x000000, 0x080000, 0xc5188783 )
 ROM_END
 
@@ -377,59 +379,12 @@ static void rollerg_init_machine( void )
 	readzoomroms = 0;
 }
 
-static void gfx_untangle(void)
+static void init_rollerg(void)
 {
-	konami_rom_deinterleave_2(1);
+	konami_rom_deinterleave_2(REGION_GFX1);
 }
 
 
 
-struct GameDriver driver_rollerg =
-{
-	__FILE__,
-	0,
-	"rollerg",
-	"Rollergames (US)",
-	"1991",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_rollerg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rollerg,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_rollergj =
-{
-	__FILE__,
-	&driver_rollerg,
-	"rollergj",
-	"Rollergames (Japan)",
-	"1991",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_rollergj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rollerg,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
+GAME( 1991, rollerg,  0,       rollerg, rollerg, rollerg, ROT0, "Konami", "Rollergames (US)" )
+GAME( 1991, rollergj, rollerg, rollerg, rollerg, rollerg, ROT0, "Konami", "Rollergames (Japan)" )

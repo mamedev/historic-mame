@@ -320,7 +320,7 @@ INPUT_PORTS_START( GAMENAME## )										\
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )									\
 																				\
 	PORT_START	/* IN2 */														\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )  \
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 10, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )  \
 	/* The lower 4 bits are the input, and bit 7 is the direction. */			\
 	/* The state of bit 7 does not change if the trackball is not moved.*/		\
 																				\
@@ -359,10 +359,10 @@ INPUT_PORTS_START( GAMENAME## )										\
 																				\
 	PORT_START	/* IN5 */														\
 	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )								\
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )							\
-	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )								\
-	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )								\
 	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )								\
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )								\
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )								\
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )							\
 	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )										\
 	PORT_DIPSETTING (   0x00, "*1" )											\
 	PORT_DIPSETTING (   0x04, "*4" )											\
@@ -380,7 +380,7 @@ INPUT_PORTS_START( GAMENAME## )										\
 	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )								\
 																				\
 	PORT_START	/* IN6, fake trackball input port. */							\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 10, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
 INPUT_PORTS_END
 
 PORTS(centiped, "Spanish")
@@ -446,7 +446,6 @@ static struct AY8910interface centipdb_ay8910_interface =
 	1,	/* 1 chips */
 	12096000/8,	/* 1.512 MHz */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -458,7 +457,6 @@ static struct AY8910interface centipb2_ay8910_interface =
 	1,	/* 1 chips */
 	12096000/8,	/* 1.512 MHz */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ centipdb_rand_r },
 	{ 0 },
 	{ 0 },
@@ -575,7 +573,7 @@ ROM_START( centipb2 )
 ROM_END
 
 
-GAME( 1980, centiped, ,         centiped, centiped, , ROT270, "Atari", "Centipede (revision 3)" )
-GAME( 1980, centipd2, centiped, centiped, centiped, , ROT270, "Atari", "Centipede (revision 2)" )
-GAME( 1980, centipdb, centiped, centipdb, centipdb, , ROT270, "bootleg", "Centipede (bootleg set 1)" )
-GAME( 1980, centipb2, centiped, centipb2, centiped, , ROT270, "bootleg", "Centipede (bootleg set 2)" )
+GAME( 1980, centiped, 0,        centiped, centiped, 0, ROT270, "Atari", "Centipede (revision 3)" )
+GAME( 1980, centipd2, centiped, centiped, centiped, 0, ROT270, "Atari", "Centipede (revision 2)" )
+GAME( 1980, centipdb, centiped, centipdb, centipdb, 0, ROT270, "bootleg", "Centipede (bootleg set 1)" )
+GAME( 1980, centipb2, centiped, centipb2, centiped, 0, ROT270, "bootleg", "Centipede (bootleg set 2)" )

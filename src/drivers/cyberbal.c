@@ -450,24 +450,24 @@ static void decode_chunk(UINT8 *memory, INT16 *output, int overall)
 }
 
 
-static void sample_stream_update(int param, void **buffer, int length)
+static void sample_stream_update(int param, INT16 **buffer, int length)
 {
-	void *buf_left = buffer[0];
-	void *buf_right = buffer[1];
+	INT16 *buf_left = buffer[0];
+	INT16 *buf_right = buffer[1];
 	int i;
 
 	(void)param;
 
 	/* reset the buffers so we can add into them */
-	memset(buf_left, 0, length * Machine->sample_bits / 8);
-	memset(buf_right, 0, length * Machine->sample_bits / 8);
+	memset(buf_left, 0, length * sizeof(INT16));
+	memset(buf_right, 0, length * sizeof(INT16));
 
 	/* loop over voices */
 	for (i = 0; i < 6; i++)
 	{
 		struct voice_descriptor *voice = &voices[i];
 		int left = length;
-		void *output;
+		INT16 *output;
 
 		/* bail if not playing */
 		if (!voice->playing || !voice->buffer)
@@ -512,21 +512,8 @@ static void sample_stream_update(int param, void **buffer, int length)
 			voice->chunk_remaining -= this_batch;
 			left -= this_batch;
 
-			/* copy either 8-bit or 16-bit */
-			if (Machine->sample_bits == 16)
-			{
-				INT16 *dest = output;
-				while (this_batch--)
-					*dest++ += *source++;
-				output = dest;
-			}
-			else
-			{
-				INT8 *dest = output;
-				while (this_batch--)
-					*dest++ += *source++ >> 8;
-				output = dest;
-			}
+			while (this_batch--)
+				*output++ += *source++;
 		}
 	}
 }
@@ -564,7 +551,7 @@ static int samples_start(const struct MachineSound *msound)
 	vol[0] = MIXER(100, MIXER_PAN_LEFT);
 	vol[1] = MIXER(100, MIXER_PAN_RIGHT);
 #endif
-	stream_channel = stream_init_multi(2, names, vol, SAMPLE_RATE, Machine->sample_bits, 0, sample_stream_update);
+	stream_channel = stream_init_multi(2, names, vol, SAMPLE_RATE, 0, sample_stream_update);
 
 	/* reset voices */
 	memset(voices, 0, sizeof(voices));
@@ -1437,6 +1424,6 @@ static void init_cyberb2p(void)
  *
  *************************************/
 
-GAME( 1988, cyberbal, ,         cyberbal, cyberbal, cyberbal, ROT0_16BIT, "Atari Games", "Cyberball" )
+GAME( 1988, cyberbal, 0,        cyberbal, cyberbal, cyberbal, ROT0_16BIT, "Atari Games", "Cyberball" )
 GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0_16BIT, "Atari Games", "Tournament Cyberball 2072" )
 GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0_16BIT, "Atari Games", "Cyberball 2072 (2 player)" )

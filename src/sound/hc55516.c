@@ -31,7 +31,7 @@ static struct hc55516_data hc55516[MAX_HC55516];
 static double charge, decay, leak;
 
 
-static void hc55516_update(int num, void *buffer, int length);
+static void hc55516_update(int num, INT16 *buffer, int length);
 
 
 
@@ -56,7 +56,7 @@ int hc55516_sh_start(const struct MachineSound *msound)
 
 		/* create the stream */
 		sprintf(name, "HC55516 #%d", i);
-		chip->channel = stream_init(name, intf->volume[i] & 0xff, Machine->sample_rate, 16, i, hc55516_update);
+		chip->channel = stream_init(name, intf->volume[i] & 0xff, Machine->sample_rate, i, hc55516_update);
 
 		/* bail on fail */
 		if (chip->channel == -1)
@@ -68,10 +68,9 @@ int hc55516_sh_start(const struct MachineSound *msound)
 }
 
 
-void hc55516_update(int num, void *buffer, int length)
+void hc55516_update(int num, INT16 *buffer, int length)
 {
 	struct hc55516_data *chip = &hc55516[num];
-	INT16 *dest = buffer;
 	INT32 data, slope;
 	int i;
 
@@ -94,7 +93,7 @@ void hc55516_update(int num, void *buffer, int length)
 
 	/* reset the sample count */
 	for (i = 0; i < length; i++, data += slope)
-		*dest++ = data;
+		*buffer++ = data;
 }
 
 

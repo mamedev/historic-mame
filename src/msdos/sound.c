@@ -31,7 +31,6 @@ static int stream_cache_len[MIXER_MAX_CHANNELS];
 static int stream_cache_freq[MIXER_MAX_CHANNELS];
 static int stream_cache_volume[MIXER_MAX_CHANNELS];
 static int stream_cache_pan[MIXER_MAX_CHANNELS];
-static int stream_cache_bits[MIXER_MAX_CHANNELS];
 
 
 int msdos_init_seal (void)
@@ -131,7 +130,6 @@ int msdos_init_sound(void)
 		stream_cache_freq[0] = 0;
 		stream_cache_volume[0] = 0;
 		stream_cache_pan[0] = 0;
-		stream_cache_bits[0] = 0;
 	}
 
 	/* update the Machine structure to reflect the actual sample rate */
@@ -329,7 +327,7 @@ void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,i
 	playsample(channel,data,len,freq,volume,loop,8);
 }
 
-void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop)
+void osd_play_sample_16(int channel,INT16 *data,int len,int freq,int volume,int loop)
 {
 	playsample(channel,(signed char *)data,len,freq,volume,loop,16);
 }
@@ -339,7 +337,7 @@ void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volu
 						/* but also increases the latency. */
 static int streams_are_playing;
 
-static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan,int bits)
+static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan)
 {
 	static int c[MIXER_MAX_CHANNELS];
 
@@ -347,7 +345,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
 
-	/* SEAL double volume for panned channels, so we have to compensate */
+	/* SEAL doubles volume for panned channels, so we have to compensate */
 	if (pan != MIXER_PAN_CENTER) volume /= 2;
 
 	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return 1;
@@ -365,8 +363,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 		if ((lpWave[channel] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
 			return 1;
 
-		lpWave[channel]->wFormat = (bits == 8 ? AUDIO_FORMAT_8BITS : AUDIO_FORMAT_16BITS)
-				| AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
+		lpWave[channel]->wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
 		lpWave[channel]->nSampleRate = nominal_sample_rate;
 		lpWave[channel]->dwLength = NUM_BUFFERS*len;
 		lpWave[channel]->dwLoopStart = 0;
@@ -401,7 +398,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 		if (throttle)   /* sync with audio only when speed throttling is not turned off */
 		{
 			AGetVoicePosition(hVoice[channel],&pos);
-			if (bits == 16) pos *= 2;
+			pos *= 2;	/* 16-bit adjust */
 			if (pos >= c[channel] * len && pos < (c[channel]+1)*len) return 0;
 		}
 
@@ -424,24 +421,13 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 	return 1;
 }
 
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan)
+void osd_play_streamed_sample_16(int channel,INT16 *data,int len,int freq,int volume,int pan)
 {
 	stream_cache_data[channel] = data;
 	stream_cache_len[channel] = len;
 	stream_cache_freq[channel] = freq;
 	stream_cache_volume[channel] = volume;
 	stream_cache_pan[channel] = pan;
-	stream_cache_bits[channel] = 8;
-}
-
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan)
-{
-	stream_cache_data[channel] = data;
-	stream_cache_len[channel] = len;
-	stream_cache_freq[channel] = freq;
-	stream_cache_volume[channel] = volume;
-	stream_cache_pan[channel] = pan;
-	stream_cache_bits[channel] = 16;
 }
 
 
@@ -511,8 +497,7 @@ static int update_streams(void)
 					stream_cache_len[channel],
 					stream_cache_freq[channel],
 					stream_cache_volume[channel],
-					stream_cache_pan[channel],
-					stream_cache_bits[channel]))
+					stream_cache_pan[channel]))
 				stream_cache_data[channel] = 0;
 			else
 				res = 0;

@@ -1,3 +1,10 @@
+/***************************************************************************
+
+Golden Star
+
+driver by Mirko Buffoni
+
+***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -143,8 +150,8 @@ INPUT_PORTS_START( goldstar )
 	PORT_DIPSETTING(    0x10, "60%" )
 	PORT_DIPSETTING(    0x00, "70%" )
 	PORT_DIPNAME( 0x20, 0x20, "W-Up Game" )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, "Bet Max" )
 	PORT_DIPSETTING(    0xc0, "8 Bet" )
 	PORT_DIPSETTING(    0x80, "16 Bet" )
@@ -173,8 +180,8 @@ INPUT_PORTS_START( goldstar )
 	PORT_DIPSETTING(    0x08, "1000" )
 	PORT_DIPSETTING(    0x00, "Unlimited" )
 	PORT_DIPNAME( 0x20, 0x00, "100 Odds Sound" )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Key-In Type" )
 	PORT_DIPSETTING(    0x40, "B-Type" )
 	PORT_DIPSETTING(    0x00, "A-Type" )
@@ -184,15 +191,15 @@ INPUT_PORTS_START( goldstar )
 
 	PORT_START	/* DSW 3 */
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x0c, "1 Coin/100 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/50 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/20 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/20 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/50 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/100 Credits" )
 	PORT_DIPNAME( 0xc0, 0x40, "Coin C" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/10 Credits" )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credits" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xc0, "1 Coin/10 Credits" )
 
 	PORT_START	/* DSW 4 */
 	PORT_DIPNAME( 0x07, 0x06, "Credit Limited" )
@@ -274,14 +281,14 @@ static struct GfxLayout tilelayoutbl =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 },
-	{ 1, 0x20000, &tilelayout, 128,  8 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &tilelayout, 128,  8 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo gfxdecodeinfobl[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 },
-	{ 1, 0x20000, &tilelayoutbl, 128,  8 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &tilelayoutbl, 128,  8 },
 	{ -1 } /* end of array */
 };
 
@@ -292,7 +299,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* ????? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_7_r },	/* DSW 4 */
 	{ input_port_6_r },	/* DSW 3 */
 	{ 0 },
@@ -303,13 +309,13 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
 	{ 8000 },           /* 8000Hz frequency */
-	{ 2 },              /* memory region 2 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_goldstar =
 {
 	/* basic machine hardware */
 	{
@@ -410,11 +416,13 @@ ROM_START( goldstar )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gs4-cpu.bin",  0x0000, 0x10000, 0x73e47d4d )
 
-	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
-	ROM_LOAD( "gs3.bin",      0x20000, 0x08000, 0x8454ce3c )
 
-	ROM_REGION( 0x20000 ) /* Audio ADPCM */
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gs3.bin",      0x00000, 0x08000, 0x8454ce3c )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* Audio ADPCM */
 	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
@@ -423,16 +431,18 @@ ROM_START( goldstbl )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gsb-cpu.bin",  0x0000, 0x10000, 0x82b238c3 )
 
-	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
-	ROM_LOAD( "gsb-spr.bin",  0x20000, 0x08000, 0x52ecd4c7 )
 
-	ROM_REGION( 0x20000 ) /* Audio ADPCM */
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gsb-spr.bin",  0x00000, 0x08000, 0x52ecd4c7 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* Audio ADPCM */
 	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
 
-static void goldstar_decode(void)
+static void init_goldstar(void)
 {
 	int A;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -449,55 +459,5 @@ static void goldstar_decode(void)
 
 
 
-struct GameDriver driver_goldstar =
-{
-	__FILE__,
-	0,
-	"goldstar",
-	"Golden Star",
-	"????",
-	"IGS",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	goldstar_decode,
-
-	rom_goldstar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_goldstar,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
-
-
-struct GameDriver driver_goldstbl =
-{
-	__FILE__,
-	&driver_goldstar,
-	"goldstbl",
-	"Golden Star (Blue version)",
-	"????",
-	"IGS",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver_goldstbl,
-	0,
-
-	rom_goldstbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_goldstar,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
+GAME( ????, goldstar, 0,        goldstar, goldstar, goldstar, ROT0, "IGS", "Golden Star" )
+GAME( ????, goldstbl, goldstar, goldstbl, goldstar, 0,        ROT0, "IGS", "Golden Star (Blue version)" )

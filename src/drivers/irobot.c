@@ -70,7 +70,7 @@ extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short 
 extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void irobot_paletteram_w(int offset,int data);
 
-void irmb_init(void);	/* convert mathbox ROMs */
+void init_irobot(void);	/* convert mathbox ROMs */
 void irobot_init_machine (void);
 
 int irobot_status_r(int offset);
@@ -288,7 +288,7 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_irobot =
 {
 	/* basic machine hardware */
 	{
@@ -377,28 +377,4 @@ ROM_END
 
 
 
-struct GameDriver driver_irobot =
-{
-	__FILE__,
-	0,
-	"irobot",
-	"I, Robot",
-	"1983",
-	"Atari",
-	"Dan Boris\nJohn Dickson\nMike Balfour\nFrank Palazzolo\nAaron Giles\nBryan Smith (Tech info)\nJohn Madfreda (Tech info)",
-	0,
-	&machine_driver,
-	irmb_init,
-
-	rom_irobot,
-	0, 0,
-	0,
-	0,
-
-	input_ports_irobot,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot" )

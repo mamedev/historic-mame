@@ -29,15 +29,16 @@ static int sample_offsets[4];
 /************************************/
 /* Stream updater                   */
 /************************************/
-static void engine_sound_update(int num, void *buffer, int length)
+static void engine_sound_update(int num, INT16 *buffer, int length)
 {
 	UINT32 current = current_position, step, clock, slot, volume;
-	UINT8 *output = buffer, *base;
+	UINT8 *base;
+
 
 	/* if we're not enabled, just fill with 0 */
 	if (!sample_enable || Machine->sample_rate == 0)
 	{
-		memset(output, 0, length);
+		memset(buffer, 0, length * sizeof(INT16));
 		return;
 	}
 
@@ -53,7 +54,7 @@ static void engine_sound_update(int num, void *buffer, int length)
 	/* fill in the sample */
 	while (length--)
 	{
-		*output++ = (base[(current >> 12) & 0x7ff] * volume) / 256;
+		*buffer++ = (base[(current >> 12) & 0x7ff] * volume);
 		current += step;
 	}
 
@@ -122,7 +123,7 @@ int polepos_sh_start(const struct MachineSound *msound)
 		sample_offsets[4] = 0x6000;		/* How is this triggered? */
 	}
 
-	sound_stream = stream_init("Engine Sound", 50, Machine->sample_rate, 8, 0, engine_sound_update);
+	sound_stream = stream_init("Engine Sound", 50, Machine->sample_rate, 0, engine_sound_update);
 	current_position = 0;
 	sample_msb = sample_lsb = 0;
 	sample_enable = 0;

@@ -126,7 +126,7 @@ int 		DisOp;
 #undef cpu_readmem24_word
 #undef cpu_readmem24_dword
 
-#include "..\..\cpuintrf.h"
+#include "cpuintrf.h"
 
 /*
  * Defines used by Program
@@ -200,6 +200,7 @@ int 		DisOp;
  */
 
 FILE *fp = NULL;
+char *comptab = NULL;
 
 int  FlagProcess    = 0;
 int  CheckInterrupt = 0;
@@ -6446,11 +6447,8 @@ void MoveAddressSpace(void)
 void JumpTable(void)
 {
 	int Opcode,l,op;
-	FILE *jt ;
 
-	jt = fopen( "obj/cpu/m68000/comptab.asm", "w" ) ;
-
-    fprintf(jt, "DD OP_1000\n");
+    fprintf(fp, "DD OP_1000\n");
 
     l = 0 ;
     for(Opcode=0x0;Opcode<0x10000;)
@@ -6458,7 +6456,7 @@ void JumpTable(void)
 
 		op = OpcodeArray[Opcode];
 
-		fprintf(jt, "DD ");
+		fprintf(fp, "DD ");
 
 		l = 1 ;
 		while ( op == OpcodeArray[Opcode+l] && ((Opcode+l) & 0xfff) != 0 )
@@ -6471,21 +6469,20 @@ void JumpTable(void)
        	if (l > 255)
         {
 	        if(op > -1)
-    	        fprintf(jt, "OP_%4.4x - OP_1000\n",op);
+    	        fprintf(fp, "OP_%4.4x - OP_1000\n",op);
 	        else
-    	        fprintf(jt, "ILLEGAL - OP_1000\n");
+    	        fprintf(fp, "ILLEGAL - OP_1000\n");
 
-            fprintf(jt, "DW %d\n", l);
+            fprintf(fp, "DW %d\n", l);
         }
         else
         {
 	        if(op > -1)
-    	        fprintf(jt, "(OP_%4.4x - OP_1000) + (%d * 1000000h)\n",op,l);
+    	        fprintf(fp, "(OP_%4.4x - OP_1000) + (%d * 1000000h)\n",op,l);
 	        else
-    	        fprintf(jt, "(ILLEGAL - OP_1000) + (%d * 1000000h)\n",l);
+    	        fprintf(fp, "(ILLEGAL - OP_1000) + (%d * 1000000h)\n",l);
         }
     }
-	fclose(jt);
 }
 
 void CodeSegmentBegin(void)
@@ -6909,11 +6906,8 @@ void CodeSegmentEnd(void)
 
 	fprintf(fp, "COMPTABLE\n\n");
 
-#ifdef UNIX
-	fprintf(fp, "%cinclude 'obj/cpu/m68000/comptab.asm'\n\n",'%');
-#else
-	fprintf(fp, "%cinclude 'obj\\cpu\\m68000\\comptab.asm'\n\n",'%');
-#endif
+	fprintf(fp, "%cinclude '%s'\n\n",'%', comptab);
+
 	fprintf(fp, "\t\tDW   0,0,0\n\n");
 
 
@@ -7003,12 +6997,16 @@ void EmitCode(void)
 
 int main(int argc, char **argv)
 {
-	int dwLoop = 0;
+	int dwLoop;
 
 	printf("Make68K - V%s - Copyright 1998, Mike Coates (mcoates@mame.freeserve.co.uk)\n", VERSION);
     printf("                          1999  & Darren Olafson (deo@mail.island.net)\n");
 
-
+	if (argc != 3)
+	{
+		printf("Usage: %s outfile jumptable-outfile\n", argv[0]);
+		exit(1);
+	}
 
     for(dwLoop=0;dwLoop<65536;)	OpcodeArray[dwLoop++] = -2;
 
@@ -7019,23 +7017,15 @@ int main(int argc, char **argv)
   		exit(3);
  	}
 
-	if (argc < 1)
+	/* Emit the code */
+	fp = fopen(argv[1], "w");
+	if (!fp)
 	{
-		printf("Usage: %s outfile \n", argv[0]);
+		fprintf(stderr, "Can't open %s for writing\n", argv[1]);
 		exit(1);
 	}
 
-	for (dwLoop = 1; dwLoop < argc; dwLoop++)
-		if (argv[dwLoop][0] != '-')
-		{
-			fp = fopen(argv[dwLoop], "w");
-			break;
-		}
-
-	if (NULL == fp)
-	{
-		fprintf(stderr, "Can't open %s for writing\n", argv[1]);
-	}
+	comptab = argv[2];
 
 	EmitCode();
 
@@ -7044,8 +7034,16 @@ int main(int argc, char **argv)
 	printf("\n%d Unique Opcodes\n",Opcount);
 
     /* output Jump table to separate file */
+	fp = fopen(argv[2], "w");
+	if (!fp)
+	{
+		fprintf(stderr, "Can't open %s for writing\n", argv[2]);
+		exit(1);
+	}
 
     JumpTable();
+
+    fclose(fp);
 
     exit(0);
 }

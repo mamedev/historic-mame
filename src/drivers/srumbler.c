@@ -6,6 +6,10 @@
 
   M6809 for game, Z80 and YM-2203 for sound.
 
+Notes:
+- Transparency is not really right.
+- There are three unknown PROMs. They might be related to transparency.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -231,12 +235,218 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,   320, 16 }, /* colors 320 - 383 */
-	{ 1, 0x10000, &tilelayout,     0,  8 }, /* colors   0 - 127 */
-	{ 1, 0x50000, &spritelayout, 128,  8 }, /* colors 128 - 255 */
+	{ REGION_GFX1, 0, &charlayout,   320, 16 }, /* colors 320 - 383 */
+	{ REGION_GFX2, 0, &tilelayout,     0,  8 }, /* colors   0 - 127 */
+	{ REGION_GFX3, 0, &spritelayout, 128,  8 }, /* colors 128 - 255 */
 	{ -1 } /* end of array */
 };
+
+
+static struct YM2203interface ym2203_interface =
+{
+	2,                      /* 2 chips */
+	4000000,        /* 4.0 MHz (? hand tuned to match the real board) */
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
+static struct MachineDriver machine_driver_srumbler =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			1500000,        /* 1.5 Mhz (?) */
+			readmem,writemem,0,0,
+			srumbler_interrupt,2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,        /* 3 Mhz ??? */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,4
+		}
+	},
+	60, 2500,       /* frames per second, vblank duration */
+				/* hand tuned to get rid of sprite lag */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo,
+	384, 384,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
+	0,
+	srumbler_vh_start,
+	srumbler_vh_stop,
+	srumbler_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( srumbler )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	/* empty, will be filled later */
+
+	ROM_REGIONX( 0x40000, REGION_USER1 ) /* Paged ROMs */
+	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
+	ROM_LOAD( "13e_sr03.bin", 0x08000, 0x08000, 0x87bda812 )  /* RC3 */
+	ROM_LOAD( "12e_sr02.bin", 0x10000, 0x08000, 0xd8609cca )  /* RC2 */
+	ROM_LOAD( "11e_sr01.bin", 0x18000, 0x08000, 0x27ec4776 )  /* RC1 */
+	ROM_LOAD( "14f_sr09.bin", 0x20000, 0x08000, 0x2146101d )  /* RC9 */
+	ROM_LOAD( "13f_sr08.bin", 0x28000, 0x08000, 0x838369a6 )  /* RC8 */
+	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
+	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "2f_sr05.bin",  0x0000, 0x8000, 0x0177cebe )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11a_sr11.bin", 0x00000, 0x8000, 0x5fa042ba ) /* tiles */
+	ROM_LOAD( "13a_sr12.bin", 0x08000, 0x8000, 0xa2db64af )
+	ROM_LOAD( "14a_sr13.bin", 0x10000, 0x8000, 0xf1df5499 )
+	ROM_LOAD( "15a_sr14.bin", 0x18000, 0x8000, 0xb22b31b3 )
+	ROM_LOAD( "11c_sr15.bin", 0x20000, 0x8000, 0xca3a3af3 )
+	ROM_LOAD( "13c_sr16.bin", 0x28000, 0x8000, 0xc49a4a11 )
+	ROM_LOAD( "14c_sr17.bin", 0x30000, 0x8000, 0xaa80aaab )
+	ROM_LOAD( "15c_sr18.bin", 0x38000, 0x8000, 0xce67868e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15e_sr20.bin", 0x00000, 0x8000, 0x3924c861 ) /* sprites */
+	ROM_LOAD( "14e_sr19.bin", 0x08000, 0x8000, 0xff8f9129 )
+	ROM_LOAD( "15f_sr22.bin", 0x10000, 0x8000, 0xab64161c )
+	ROM_LOAD( "14f_sr21.bin", 0x18000, 0x8000, 0xfd64bcd1 )
+	ROM_LOAD( "15h_sr24.bin", 0x20000, 0x8000, 0xc972af3e )
+	ROM_LOAD( "14h_sr23.bin", 0x28000, 0x8000, 0x8c9abf57 )
+	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
+	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+ROM_END
+
+ROM_START( srumblr2 )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	/* empty, will be filled later */
+
+	ROM_REGIONX( 0x40000, REGION_USER1 ) /* Paged ROMs */
+	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
+	ROM_LOAD( "rc03.13e",     0x08000, 0x08000, 0xe82f78d4 )  /* RC3 (different) */
+	ROM_LOAD( "rc02.12e",     0x10000, 0x08000, 0x009a62d8 )  /* RC2 (different) */
+	ROM_LOAD( "rc01.11e",     0x18000, 0x08000, 0x2ac48d1d )  /* RC1 (different) */
+	ROM_LOAD( "rc09.14f",     0x20000, 0x08000, 0x64f23e72 )  /* RC9 (different) */
+	ROM_LOAD( "rc08.13f",     0x28000, 0x08000, 0x74c71007 )  /* RC8 (different) */
+	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
+	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11a_sr11.bin", 0x00000, 0x8000, 0x5fa042ba ) /* tiles */
+	ROM_LOAD( "13a_sr12.bin", 0x08000, 0x8000, 0xa2db64af )
+	ROM_LOAD( "14a_sr13.bin", 0x10000, 0x8000, 0xf1df5499 )
+	ROM_LOAD( "15a_sr14.bin", 0x18000, 0x8000, 0xb22b31b3 )
+	ROM_LOAD( "11c_sr15.bin", 0x20000, 0x8000, 0xca3a3af3 )
+	ROM_LOAD( "13c_sr16.bin", 0x28000, 0x8000, 0xc49a4a11 )
+	ROM_LOAD( "14c_sr17.bin", 0x30000, 0x8000, 0xaa80aaab )
+	ROM_LOAD( "15c_sr18.bin", 0x38000, 0x8000, 0xce67868e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15e_sr20.bin", 0x00000, 0x8000, 0x3924c861 ) /* sprites */
+	ROM_LOAD( "14e_sr19.bin", 0x08000, 0x8000, 0xff8f9129 )
+	ROM_LOAD( "15f_sr22.bin", 0x10000, 0x8000, 0xab64161c )
+	ROM_LOAD( "14f_sr21.bin", 0x18000, 0x8000, 0xfd64bcd1 )
+	ROM_LOAD( "15h_sr24.bin", 0x20000, 0x8000, 0xc972af3e )
+	ROM_LOAD( "14h_sr23.bin", 0x28000, 0x8000, 0x8c9abf57 )
+	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
+	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+ROM_END
+
+ROM_START( rushcrsh )
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
+	/* empty, will be filled later */
+
+	ROM_REGIONX( 0x40000, REGION_USER1 ) /* Paged ROMs */
+	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
+	ROM_LOAD( "rc03.bin",     0x08000, 0x08000, 0xa49c9be0 )  /* RC3 (different) */
+	ROM_LOAD( "rc02.12e",     0x10000, 0x08000, 0x009a62d8 )  /* RC2 (different) */
+	ROM_LOAD( "rc01.11e",     0x18000, 0x08000, 0x2ac48d1d )  /* RC1 (different) */
+	ROM_LOAD( "rc09.14f",     0x20000, 0x08000, 0x64f23e72 )  /* RC9 (different) */
+	ROM_LOAD( "rc08.bin",     0x28000, 0x08000, 0x2c25874b )  /* RC8 (different) */
+	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
+	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rc10.bin",     0x00000, 0x4000, 0x0a3c0b0d ) /* characters */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11a_sr11.bin", 0x00000, 0x8000, 0x5fa042ba ) /* tiles */
+	ROM_LOAD( "13a_sr12.bin", 0x08000, 0x8000, 0xa2db64af )
+	ROM_LOAD( "14a_sr13.bin", 0x10000, 0x8000, 0xf1df5499 )
+	ROM_LOAD( "15a_sr14.bin", 0x18000, 0x8000, 0xb22b31b3 )
+	ROM_LOAD( "11c_sr15.bin", 0x20000, 0x8000, 0xca3a3af3 )
+	ROM_LOAD( "13c_sr16.bin", 0x28000, 0x8000, 0xc49a4a11 )
+	ROM_LOAD( "14c_sr17.bin", 0x30000, 0x8000, 0xaa80aaab )
+	ROM_LOAD( "15c_sr18.bin", 0x38000, 0x8000, 0xce67868e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15e_sr20.bin", 0x00000, 0x8000, 0x3924c861 ) /* sprites */
+	ROM_LOAD( "14e_sr19.bin", 0x08000, 0x8000, 0xff8f9129 )
+	ROM_LOAD( "15f_sr22.bin", 0x10000, 0x8000, 0xab64161c )
+	ROM_LOAD( "14f_sr21.bin", 0x18000, 0x8000, 0xfd64bcd1 )
+	ROM_LOAD( "15h_sr24.bin", 0x20000, 0x8000, 0xc972af3e )
+	ROM_LOAD( "14h_sr23.bin", 0x28000, 0x8000, 0x8c9abf57 )
+	ROM_LOAD( "15j_sr26.bin", 0x30000, 0x8000, 0xd4f1732f )
+	ROM_LOAD( "14j_sr25.bin", 0x38000, 0x8000, 0xd2a4ea4f )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )	/* Proms (not used for now.. Transparency???) */
+	ROM_LOAD( "63s141.12a",   0x0000, 0x0100, 0x8421786f )
+	ROM_LOAD( "63s141.13a",   0x0100, 0x0100, 0x6048583f )
+	ROM_LOAD( "63s141.8j",    0x0200, 0x0100, 0x1a89a7ff )
+ROM_END
+
+
 
 /*
 
@@ -315,7 +525,7 @@ static int page_table[16][9]=
 
 
 
-static void srumbler_init_machine(void)
+static void init_srumbler(void)
 {
      /*
      Use the paging map to copy the ROM blocks into a more usable format.
@@ -324,7 +534,7 @@ static void srumbler_init_machine(void)
 
     int j, i;
     unsigned char *RAM = memory_region(REGION_CPU1);
-    unsigned char *pROM = memory_region(3);
+    unsigned char *pROM = memory_region(REGION_USER1);
 
     /* Resident ROM area e000-ffff */
     memcpy(&RAM[0xe000], pROM+0x0c000, 0x2000);
@@ -332,300 +542,26 @@ static void srumbler_init_machine(void)
     /* Region 5000-dfff contains paged ROMS */
     for (j=0; j<16; j++)        /* 16 Pages */
     {
-	for (i=0; i<9; i++)     /* 9 * 0x1000 blocks */
-	{
-	    int nADDR=page_table[j][i];
-	    unsigned char *p=&RAM[0x10000+0x09000*j+i*0x1000];
+		for (i=0; i<9; i++)     /* 9 * 0x1000 blocks */
+		{
+			int nADDR=page_table[j][i];
+			unsigned char *p=&RAM[0x10000+0x09000*j+i*0x1000];
 
-	    if (nADDR == 0xfffff)
-	    {
-		/* Fill unassigned regions with an illegal M6809 opcode (1) */
-		memset(p, 1, 0x1000);
-	    }
-	    else
-	    {
-		memcpy(p, pROM+nADDR, 0x01000);
-	    }
-	}
+			if (nADDR == 0xfffff)
+			{
+				/* Fill unassigned regions with an illegal M6809 opcode (1) */
+				memset(p, 1, 0x1000);
+			}
+			else
+			{
+				memcpy(p, pROM+nADDR, 0x01000);
+			}
+		}
     }
-
-    /* Patch out startup test */
-//    RAM[0xe039]=12;
-//    RAM[0xe03a]=12;
-//    RAM[0xe03b]=12;
 }
 
 
 
-static struct YM2203interface ym2203_interface =
-{
-	2,                      /* 2 chips */
-	4000000,        /* 4.0 MHz (? hand tuned to match the real board) */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,        /* 1.5 Mhz (?) */
-			readmem,writemem,0,0,
-			srumbler_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 Mhz ??? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2500,       /* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	srumbler_init_machine,
-
-	/* video hardware */
-	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
-
-	gfxdecodeinfo,
-	384, 384,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	srumbler_vh_start,
-	srumbler_vh_stop,
-	srumbler_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( srumbler )
-	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
-	/* empty, will be filled later */
-
-	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
-	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
-	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
-	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
-	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
-	ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0xca3a3af3 )
-	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
-	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
-	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
-	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
-	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
-	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
-	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
-	ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0xc972af3e )
-	ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0x8c9abf57 )
-	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
-	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-	ROM_LOAD( "2f_sr05.bin",  0x0000, 0x8000, 0x0177cebe )
-
-	ROM_REGION(0x40000) /* Paged ROMs */
-	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
-	ROM_LOAD( "13e_sr03.bin", 0x08000, 0x08000, 0x87bda812 )  /* RC3 */
-	ROM_LOAD( "12e_sr02.bin", 0x10000, 0x08000, 0xd8609cca )  /* RC2 */
-	ROM_LOAD( "11e_sr01.bin", 0x18000, 0x08000, 0x27ec4776 )  /* RC1 */
-	ROM_LOAD( "14f_sr09.bin", 0x20000, 0x08000, 0x2146101d )  /* RC9 */
-	ROM_LOAD( "13f_sr08.bin", 0x28000, 0x08000, 0x838369a6 )  /* RC8 */
-	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
-	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
-
-	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
-ROM_END
-
-ROM_START( srumblr2 )
-	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
-	/* empty, will be filled later */
-
-	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6g_sr10.bin",  0x00000, 0x4000, 0xadabe271 ) /* characters */
-	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
-	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
-	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
-	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
-	ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0xca3a3af3 )
-	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
-	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
-	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
-	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
-	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
-	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
-	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
-	ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0xc972af3e )
-	ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0x8c9abf57 )
-	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
-	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
-
-	ROM_REGION(0x40000) /* Paged ROMs */
-	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
-	ROM_LOAD( "rc03.13e",     0x08000, 0x08000, 0xe82f78d4 )  /* RC3 (different) */
-	ROM_LOAD( "rc02.12e",     0x10000, 0x08000, 0x009a62d8 )  /* RC2 (different) */
-	ROM_LOAD( "rc01.11e",     0x18000, 0x08000, 0x2ac48d1d )  /* RC1 (different) */
-	ROM_LOAD( "rc09.14f",     0x20000, 0x08000, 0x64f23e72 )  /* RC9 (different) */
-	ROM_LOAD( "rc08.13f",     0x28000, 0x08000, 0x74c71007 )  /* RC8 (different) */
-	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
-	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
-
-	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
-ROM_END
-
-ROM_START( rushcrsh )
-	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
-	/* empty, will be filled later */
-
-	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rc10.bin",     0x00000, 0x4000, 0x0a3c0b0d ) /* characters */
-	ROM_LOAD( "11a_sr11.bin", 0x10000, 0x8000, 0x5fa042ba ) /* tiles */
-	ROM_LOAD( "13a_sr12.bin", 0x18000, 0x8000, 0xa2db64af )
-	ROM_LOAD( "14a_sr13.bin", 0x20000, 0x8000, 0xf1df5499 )
-	ROM_LOAD( "15a_sr14.bin", 0x28000, 0x8000, 0xb22b31b3 )
-	ROM_LOAD( "11c_sr15.bin", 0x30000, 0x8000, 0xca3a3af3 )
-	ROM_LOAD( "13c_sr16.bin", 0x38000, 0x8000, 0xc49a4a11 )
-	ROM_LOAD( "14c_sr17.bin", 0x40000, 0x8000, 0xaa80aaab )
-	ROM_LOAD( "15c_sr18.bin", 0x48000, 0x8000, 0xce67868e )
-	ROM_LOAD( "15e_sr20.bin", 0x50000, 0x8000, 0x3924c861 ) /* sprites */
-	ROM_LOAD( "14e_sr19.bin", 0x58000, 0x8000, 0xff8f9129 )
-	ROM_LOAD( "15f_sr22.bin", 0x60000, 0x8000, 0xab64161c )
-	ROM_LOAD( "14f_sr21.bin", 0x68000, 0x8000, 0xfd64bcd1 )
-	ROM_LOAD( "15h_sr24.bin", 0x70000, 0x8000, 0xc972af3e )
-	ROM_LOAD( "14h_sr23.bin", 0x78000, 0x8000, 0x8c9abf57 )
-	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
-	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
-	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
-
-	ROM_REGION(0x40000) /* Paged ROMs */
-	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, 0xa68ce89c )  /* RC4 */
-	ROM_LOAD( "rc03.bin",     0x08000, 0x08000, 0xa49c9be0 )  /* RC3 (different) */
-	ROM_LOAD( "rc02.12e",     0x10000, 0x08000, 0x009a62d8 )  /* RC2 (different) */
-	ROM_LOAD( "rc01.11e",     0x18000, 0x08000, 0x2ac48d1d )  /* RC1 (different) */
-	ROM_LOAD( "rc09.14f",     0x20000, 0x08000, 0x64f23e72 )  /* RC9 (different) */
-	ROM_LOAD( "rc08.bin",     0x28000, 0x08000, 0x2c25874b )  /* RC8 (different) */
-	ROM_LOAD( "12f_sr07.bin", 0x30000, 0x08000, 0xde785076 )  /* RC7 */
-	ROM_LOAD( "11f_sr06.bin", 0x38000, 0x08000, 0xa70f4fd4 )  /* RC6 */
-
-	ROM_REGION(0x0300) /* Proms (not used for now.. Transparency???) */
-	ROM_LOAD( "63s141.12a",   0x00000, 0x00100, 0x8421786f )
-	ROM_LOAD( "63s141.13a",   0x00100, 0x00100, 0x6048583f )
-	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
-ROM_END
-
-
-
-struct GameDriver driver_srumbler =
-{
-	__FILE__,
-	0,
-	"srumbler",
-	"The Speed Rumbler (set 1)",
-	"1986",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_srumbler,
-	0,
-	0,0,
-	0,
-
-	input_ports_srumbler,
-
-	0, 0, 0,
-
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_srumblr2 =
-{
-	__FILE__,
-	&driver_srumbler,
-	"srumblr2",
-	"The Speed Rumbler (set 2)",
-	"1986",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_srumblr2,
-	0,
-	0,0,
-	0,
-
-	input_ports_srumbler,
-
-	0, 0, 0,
-
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_rushcrsh =
-{
-	__FILE__,
-	&driver_srumbler,
-	"rushcrsh",
-	"Rush & Crash (Japan)",
-	"1986",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rushcrsh,
-	0,
-	0,0,
-	0,
-
-	input_ports_srumbler,
-
-	0, 0, 0,
-
-	ROT270,
-	0,0
-};
+GAME( 1986, srumbler, 0,        srumbler, srumbler, srumbler, ROT270, "Capcom", "The Speed Rumbler (set 1)" )
+GAME( 1986, srumblr2, srumbler, srumbler, srumbler, srumbler, ROT270, "Capcom", "The Speed Rumbler (set 2)" )
+GAME( 1986, rushcrsh, srumbler, srumbler, srumbler, srumbler, ROT270, "Capcom", "Rush & Crash (Japan)" )

@@ -96,12 +96,10 @@ INLINE int limit( int val, int max, int min ) {
 #define MAXOUT 0x7fff
 #define MINOUT -0x8000
 
-void K053260_update( int param, void **buffer, int length ) {
+void K053260_update( int param, INT16 **buffer, int length ) {
 	int i, j, lvol[4], rvol[4], play[4], loop[4], ppcm_data[4], ppcm[4];
 	unsigned char *rom[4];
 	unsigned long delta[4], end[4], pos[4];
-	unsigned char **buf = ( unsigned char ** )buffer;
-	unsigned short **buf16 = ( unsigned short ** )buffer;
 	int dataL, dataR;
 	signed char d;
 #if INTERPOLATE_SAMPLES
@@ -132,8 +130,6 @@ void K053260_update( int param, void **buffer, int length ) {
 		}
 	}
 
-	/* 16 bit case */
-	if ( Machine->sample_bits == 16 ) {
 		for ( j = 0; j < length; j++ ) {
 
 			dataL = dataR = 0;
@@ -223,106 +219,9 @@ void K053260_update( int param, void **buffer, int length ) {
 				}
 			}
 
-			buf16[1][j] = limit( dataL, MAXOUT, MINOUT );
-			buf16[0][j] = limit( dataR, MAXOUT, MINOUT );
+			buffer[1][j] = limit( dataL, MAXOUT, MINOUT );
+			buffer[0][j] = limit( dataR, MAXOUT, MINOUT );
 		}
-	} else { /* 8 bit case */
-		for ( j = 0; j < length; j++ ) {
-
-			dataL = dataR = 0;
-
-			for ( i = 0; i < 4; i++ ) {
-				/* see if the voice is on */
-				if ( play[i] ) {
-					/* see if we're done */
-					if ( ( pos[i] >> BASE_SHIFT ) >= end[i] ) {
-
-						ppcm_data[i] = 0;
-
-						if ( loop[i] )
-							pos[i] = 0;
-						else {
-							play[i] = 0;
-							continue;
-						}
-					}
-
-					if ( ppcm[i] ) { /* Packed PCM */
-						/* we only update the signal if we're starting or a real sound sample has gone by */
-						/* this is all due to the dynamic sample rate convertion */
-						if ( pos[i] == 0 || ( ( pos[i] ^ ( pos[i] - delta[i] ) ) & 0x8000 ) == 0x8000 ) {
-							if ( pos[i] & 0x8000 )
-								ppcm_data[i] = rom[i][pos[i] >> BASE_SHIFT] & 0x0f;
-							else
-								ppcm_data[i] = ( ( rom[i][pos[i] >> BASE_SHIFT] ) >> 4 ) & 0x0f;
-
-							ppcm_data[i] *= 0x11;
-						}
-
-						d = ppcm_data[i];
-
-						d /= 2;
-
-#if INTERPOLATE_SAMPLES
-						if ( steps[i] ) {
-							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
-								signed char diff;
-								int next_d;
-
-								if ( pos[i] & 0x8000 )
-									next_d = ( ( ( rom[i][(pos[i] >> BASE_SHIFT)+1] ) >> 4 ) & 0x0f ) * 0x11;
-								else
-									next_d = ( rom[i][( pos[i] >> BASE_SHIFT)] & 0x0f ) * 0x11;
-
-								diff = next_d;
-								diff /= 2;
-								diff -= d;
-
-								diff /= steps[i];
-
-								d += ( diff * stepcount[i]++ );
-
-								if ( stepcount[i] >= steps[i] )
-									stepcount[i] = 0;
-							}
-						}
-#endif
-						pos[i] += delta[i];
-					} else { /* PCM */
-						d = rom[i][pos[i] >> BASE_SHIFT];
-
-#if INTERPOLATE_SAMPLES
-						if ( steps[i] ) {
-							if ( ( pos[i] >> BASE_SHIFT ) < ( end[i] - 1 ) ) {
-								signed char diff = rom[i][(pos[i] >> BASE_SHIFT) + 1];
-								diff -= d;
-								diff /= steps[i];
-
-								d += ( diff * stepcount[i]++ );
-
-								if ( stepcount[i] >= steps[i] )
-									stepcount[i] = 0;
-							}
-						}
-#endif
-
-						pos[i] += delta[i];
-					}
-
-					if ( K053260_chip.mode & 2 ) {
-						dataL += ( d * lvol[i] ) >> 2;
-						dataR += ( d * rvol[i] ) >> 2;
-					}
-				}
-			}
-
-			dataL = limit( dataL, MAXOUT, MINOUT );
-			dataR = limit( dataR, MAXOUT, MINOUT );
-
-			buf[1][j] = dataL >> 8;
-			buf[0][j] = dataR >> 8;
-		}
-	}
 
 	/* update the regs now */
 	for ( i = 0; i < 4; i++ ) {
@@ -363,7 +262,7 @@ int K053260_sh_start(const struct MachineSound *msound) {
 
 	K053260_chip.channel = stream_init_multi( 2, names,
 						K053260_chip.intf->mixing_level, Machine->sample_rate,
-						Machine->sample_bits, 0, K053260_update );
+						0, K053260_update );
 
 	InitDeltaTable();
 

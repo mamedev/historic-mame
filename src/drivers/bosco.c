@@ -215,14 +215,14 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 INPUT_PORTS_START( bosco )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter" )
 	PORT_DIPSETTING(    0x30, "15K 50K" )
@@ -298,14 +298,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( boscomd )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter" )
 	PORT_DIPSETTING(    0x30, "15K 50K" )
@@ -649,6 +649,6 @@ ROM_END
 
 
 
-GAME( 1981, bosco,    ,      bosco, bosco,   , ROT0, "Namco", "Bosconian" )
-GAME( 1981, boscomd,  bosco, bosco, boscomd, , ROT0, "[Namco] (Midway license)", "Bosconian (Midway, new version)" )
-GAME( 1981, boscomdo, bosco, bosco, boscomd, , ROT0, "[Namco] (Midway license)", "Bosconian (Midway, old version)" )
+GAME( 1981, bosco,    0,     bosco, bosco,   0, ROT0, "Namco", "Bosconian" )
+GAME( 1981, boscomd,  bosco, bosco, boscomd, 0, ROT0, "[Namco] (Midway license)", "Bosconian (Midway, new version)" )
+GAME( 1981, boscomdo, bosco, bosco, boscomd, 0, ROT0, "[Namco] (Midway license)", "Bosconian (Midway, old version)" )

@@ -20,10 +20,6 @@ MCU (used by original version): not hooked up
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
 
-#define MEM_DATA		1
-#define MEM_GFX			3
-
-#define CREDITS "Phil Stroffolino"
 
 extern unsigned char *lkage_scroll, *lkage_vreg;
 extern void lkage_videoram_w( int offset, int data );
@@ -33,53 +29,48 @@ extern void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int sound_nmi_enable,pending_nmi;
 
-static void nmi_callback(int param){
+static void nmi_callback(int param)
+{
 	if (sound_nmi_enable) cpu_cause_interrupt(1,Z80_NMI_INT);
 	else pending_nmi = 1;
 }
 
-void lkage_sound_command_w(int offset,int data){
+void lkage_sound_command_w(int offset,int data)
+{
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-void lkage_sh_nmi_disable_w(int offset,int data){
+void lkage_sh_nmi_disable_w(int offset,int data)
+{
 	sound_nmi_enable = 0;
 }
 
-void lkage_sh_nmi_enable_w(int offset,int data){
+void lkage_sh_nmi_enable_w(int offset,int data)
+{
 	sound_nmi_enable = 1;
-	if (pending_nmi){ /* probably wrong but commands may go lost otherwise */
+	if (pending_nmi)
+	{ /* probably wrong but commands may go lost otherwise */
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 		pending_nmi = 0;
 	}
 }
 
-static void irqhandler(int irq){
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
-}
 
-static struct YM2203interface ym2203_interface = {
-	2,          /* 2 chips */
-	4000000,    /* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(19,19), YM2203_VOL(19,19) },
-	AY8910_DEFAULT_GAIN,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
-};
-
-static int status_r(int offset){
+static int status_r(int offset)
+{
 	return 0x3;
 }
 
-static int unknown0_r( int offset ){
+static int unknown0_r( int offset )
+{
 	return 0x00;
 }
 
-static struct MemoryReadAddress readmem[] = {
+
+
+static struct MemoryReadAddress readmem[] =
+{
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xefff, paletteram_r },
@@ -99,7 +90,8 @@ static struct MemoryReadAddress readmem[] = {
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem[] = {
+static struct MemoryWriteAddress writemem[] =
+{
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
@@ -115,24 +107,27 @@ static struct MemoryWriteAddress writemem[] = {
 	{ -1 }
 };
 
-static int port_fetch_r( int offset )
+static int port_fetch_r(int offset)
 {
-	return memory_region(MEM_DATA)[offset];
+	return memory_region(REGION_USER1)[offset];
 }
 
-static struct IOReadPort readport[] = {
+static struct IOReadPort readport[] =
+{
 	{ 0x4000, 0x7fff, port_fetch_r },
 	{ -1 }
 };
 
 #if 0
-static struct MemoryReadAddress m68705_readmem[] = {
+static struct MemoryReadAddress m68705_readmem[] =
+{
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
 	{ -1 }
 };
 
-static struct MemoryWriteAddress m68705_writemem[] = {
+static struct MemoryWriteAddress m68705_writemem[] =
+{
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
 	{ -1 }
@@ -287,10 +282,12 @@ INPUT_PORTS_START( lkage )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 INPUT_PORTS_END
 
-static struct GfxLayout tile_layout = {
+
+
+static struct GfxLayout tile_layout =
+{
 	8,8,	/* 8x8 characters */
 	256,	/* number of characters */
 	4,		/* 4 bits per pixel */
@@ -300,7 +297,8 @@ static struct GfxLayout tile_layout = {
 	64 /* offset to next character */
 };
 
-static struct GfxLayout sprite_layout = {
+static struct GfxLayout sprite_layout =
+{
 	16,16,	/* sprite size */
 	384,	/* number of sprites */
 	4,		/* bits per pixel */
@@ -315,15 +313,38 @@ static struct GfxLayout sprite_layout = {
 	256 /* offset to next sprite */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] = {
-	{ MEM_GFX, 0x0000, 		&tile_layout,	 128, 3 },
-	{ MEM_GFX, 0x0800, 		&tile_layout,	 128, 3 },
-	{ MEM_GFX, 0x0800*5,	&tile_layout,	 128, 3 },
-	{ MEM_GFX, 0x1000, 		&sprite_layout,	 0, 8 },
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &tile_layout,  128, 3 },
+	{ REGION_GFX1, 0x0800, &tile_layout,  128, 3 },
+	{ REGION_GFX1, 0x2800, &tile_layout,  128, 3 },
+	{ REGION_GFX1, 0x1000, &sprite_layout,  0, 8 },
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver =
+
+
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static struct YM2203interface ym2203_interface =
+{
+	2,          /* 2 chips */
+	4000000,    /* 4 MHz ? (hand tuned) */
+	{ YM2203_VOL(19,19), YM2203_VOL(19,19) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+
+
+
+static struct MachineDriver machine_driver_lkage =
 {
 	{
 		{
@@ -380,20 +401,20 @@ ROM_START( lkage )
 	ROM_LOAD( "a54-01-1.37", 0x00000, 0x8000, 0x973da9c5 )
 	ROM_LOAD( "a54-02-1.38", 0x08000, 0x8000, 0x27b509da )
 
-	ROM_REGION( 0x4000 ) /* data */
-	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54",   0x00000, 0x8000, 0x541faf9a )
 
-	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 68705 MCU code (not used) */
+	ROM_LOAD( "a54-09.53",   0x00000, 0x0800, 0x0e8b8846 )
+
+	ROM_REGIONX( 0x4000, REGION_USER1 ) /* data */
+	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a54-05-1.84", 0x00000, 0x4000, 0x0033c06a )
 	ROM_LOAD( "a54-06-1.85", 0x04000, 0x4000, 0x9f04d9ad )
 	ROM_LOAD( "a54-07-1.86", 0x08000, 0x4000, 0xb20561a4 )
 	ROM_LOAD( "a54-08-1.87", 0x0c000, 0x4000, 0x3ff3b230 )
-
-	ROM_REGION( 0x10000 ) /* 68705 MCU code */
-	ROM_LOAD( "a54-09.53",   0x00000, 0x0800, 0x0e8b8846 )
 ROM_END
 
 ROM_START( lkageb )
@@ -401,69 +422,20 @@ ROM_START( lkageb )
 	ROM_LOAD( "lok.a",     0x0000, 0x8000, 0x866df793 )
 	ROM_LOAD( "lok.b",     0x8000, 0x8000, 0xfba9400f )
 
-	ROM_REGION( 0x4000 ) /* data */
-	ROM_LOAD( "a54-03.51", 0x0000, 0x4000, 0x493e76d8 ) // LOK.C
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54", 0x0000, 0x8000, 0x541faf9a ) // LOK.D
 
-	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
+	ROM_REGIONX( 0x4000, REGION_USER1 ) /* data */
+	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 ) // LOK.C
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "lok.f",     0x0000, 0x4000, 0x76753e52 )
 	ROM_LOAD( "lok.e",     0x4000, 0x4000, 0xf33c015c )
 	ROM_LOAD( "lok.h",     0x8000, 0x4000, 0x0e02c2e8 )
 	ROM_LOAD( "lok.g",     0xc000, 0x4000, 0x4ef5f073 )
-
-	ROM_REGION( 0x100 ) /* fake */
 ROM_END
 
 
 
-struct GameDriver driver_lkage = {
-	__FILE__,
-	0,
-	"lkage",
-	"The Legend of Kage",
-	"1984",
-	"Taito Corporation",
-	CREDITS,
-	0, // MCU not hooked up
-	&machine_driver,
-	0,
-
-	rom_lkage,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_lkage,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_lkageb = {
-	__FILE__,
-	&driver_lkage,
-	"lkageb",
-	"The Legend of Kage (bootleg)",
-	"1984",
-	"bootleg",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_lkageb,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_lkage,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1984, lkage,  0,     lkage, lkage, 0, ROT0, "Taito Corporation", "The Legend of Kage" )
+GAME( 1984, lkageb, lkage, lkage, lkage, 0, ROT0, "bootleg", "The Legend of Kage (bootleg)" )

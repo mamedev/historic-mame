@@ -30,7 +30,7 @@ void marvins_palette_bank_w( int offset, int data ){
 }
 
 static void stuff_palette( int source_index, int dest_index, int num_colors ){
-    unsigned char *color_prom = memory_region(7) + source_index;
+    unsigned char *color_prom = memory_region(REGION_PROMS) + source_index;
     int i;
     for( i=0; i<num_colors; i++ ){
         int bit0=0,bit1,bit2,bit3;

@@ -238,8 +238,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 32 },
-	{ 1, 0x2000, &charlayout, 32*4, 32 },
+	{ REGION_GFX1, 0, &charlayout,    0, 32 },
+	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -254,7 +254,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_naughtyb =
 {
 	/* basic machine hardware */
 	{
@@ -350,15 +350,17 @@ ROM_START( naughtyb )
 	ROM_LOAD( "7.24",      0x3000, 0x0800, 0x00caf9be )
 	ROM_LOAD( "8.23",      0x3800, 0x0800, 0x17c3b6fb )
 
-	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "15.44",     0x0000, 0x0800, 0xd692f9c7 )
 	ROM_LOAD( "16.43",     0x0800, 0x0800, 0xd3ba8b27 )
 	ROM_LOAD( "13.46",     0x1000, 0x0800, 0xc1669cd5 )
 	ROM_LOAD( "14.45",     0x1800, 0x0800, 0xeef2c8e5 )
-	ROM_LOAD( "11.48",     0x2000, 0x0800, 0x75ec9710 )
-	ROM_LOAD( "12.47",     0x2800, 0x0800, 0xef0706c3 )
-	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
-	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11.48",     0x0000, 0x0800, 0x75ec9710 )
+	ROM_LOAD( "12.47",     0x0800, 0x0800, 0xef0706c3 )
+	ROM_LOAD( "9.50",      0x1000, 0x0800, 0x8c8db764 )
+	ROM_LOAD( "10.49",     0x1800, 0x0800, 0xc97c97b9 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
@@ -376,15 +378,17 @@ ROM_START( naughtya )
 	ROM_LOAD( "97",        0x3000, 0x0800, 0x3cafde88 )
 	ROM_LOAD( "8.23",      0x3800, 0x0800, 0x17c3b6fb )
 
-	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "15.44",     0x0000, 0x0800, 0xd692f9c7 )
 	ROM_LOAD( "16.43",     0x0800, 0x0800, 0xd3ba8b27 )
 	ROM_LOAD( "13.46",     0x1000, 0x0800, 0xc1669cd5 )
 	ROM_LOAD( "14.45",     0x1800, 0x0800, 0xeef2c8e5 )
-	ROM_LOAD( "11.48",     0x2000, 0x0800, 0x75ec9710 )
-	ROM_LOAD( "12.47",     0x2800, 0x0800, 0xef0706c3 )
-	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
-	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11.48",     0x0000, 0x0800, 0x75ec9710 )
+	ROM_LOAD( "12.47",     0x0800, 0x0800, 0xef0706c3 )
+	ROM_LOAD( "9.50",      0x1000, 0x0800, 0x8c8db764 )
+	ROM_LOAD( "10.49",     0x1800, 0x0800, 0xc97c97b9 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
@@ -402,15 +406,17 @@ ROM_START( naughtyc )
 	ROM_LOAD( "nb7ic24",   0x3000, 0x0800, 0x9cc287df )
 	ROM_LOAD( "nb8ic23",   0x3800, 0x0800, 0x4d84ff2c )
 
-	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "15.44",     0x0000, 0x0800, 0xd692f9c7 )
 	ROM_LOAD( "16.43",     0x0800, 0x0800, 0xd3ba8b27 )
 	ROM_LOAD( "13.46",     0x1000, 0x0800, 0xc1669cd5 )
 	ROM_LOAD( "14.45",     0x1800, 0x0800, 0xeef2c8e5 )
-	ROM_LOAD( "nb11ic48",  0x2000, 0x0800, 0x23271a13 )
-	ROM_LOAD( "12.47",     0x2800, 0x0800, 0xef0706c3 )
-	ROM_LOAD( "nb9ic50",   0x3000, 0x0800, 0xd6949c27 )
-	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "nb11ic48",  0x0000, 0x0800, 0x23271a13 )
+	ROM_LOAD( "12.47",     0x0800, 0x0800, 0xef0706c3 )
+	ROM_LOAD( "nb9ic50",   0x1000, 0x0800, 0xd6949c27 )
+	ROM_LOAD( "10.49",     0x1800, 0x0800, 0xc97c97b9 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
@@ -424,11 +430,13 @@ ROM_START( popflame )
 	ROM_LOAD( "ic94.pop",     0x2000, 0x1000, 0x945a3c0f )
 	ROM_LOAD( "ic100.pop",    0x3000, 0x1000, 0xf9f2343b )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic13.pop",     0x0000, 0x1000, 0x2367131e )
 	ROM_LOAD( "ic3.pop",      0x1000, 0x1000, 0xdeed0a8b )
-	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic29.pop",     0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",     0x1000, 0x1000, 0xdd2d9601 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
@@ -442,11 +450,13 @@ ROM_START( popflama )
 	ROM_LOAD( "popflama.26",     0x2000, 0x1000, 0x09df0d4d )
 	ROM_LOAD( "popflama.24",     0x3000, 0x1000, 0xf399d553 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic13.pop",     0x0000, 0x1000, 0x2367131e )
 	ROM_LOAD( "ic3.pop",      0x1000, 0x1000, 0xdeed0a8b )
-	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic29.pop",     0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",     0x1000, 0x1000, 0xdd2d9601 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
@@ -455,128 +465,8 @@ ROM_END
 
 
 
-struct GameDriver driver_naughtyb =
-{
-	__FILE__,
-	0,
-	"naughtyb",
-	"Naughty Boy",
-	"1982",
-	"Jaleco",
-	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_naughtyb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_naughtyb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_naughtya =
-{
-	__FILE__,
-	&driver_naughtyb,
-	"naughtya",
-	"Naughty Boy (bootleg)",
-	"1982",
-	"bootleg",
-	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_naughtya,
-	0, 0,
-	0,
-	0,
-
-	input_ports_naughtyb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_naughtyc =
-{
-	__FILE__,
-	&driver_naughtyb,
-	"naughtyc",
-	"Naughty Boy (Cinematronics)",
-	"1982",
-	"Jaleco (Cinematronics license)",
-	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_naughtyc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_naughtyb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_popflame =
-{
-	__FILE__,
-	0,
-	"popflame",
-	"Pop Flamer (set 1)",
-	"1982",
-	"Jaleco",
-	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_popflame,
-	0,
-
-	rom_popflame,
-	0, 0,
-	0,
-	0,
-
-	input_ports_naughtyb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_popflama =
-{
-	__FILE__,
-	&driver_popflame,
-	"popflama",
-	"Pop Flamer (set 2)",
-	"1982",
-	"Jaleco",
-	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_popflame,
-	0,
-
-	rom_popflama,
-	0, 0,
-	0,
-	0,
-
-	input_ports_naughtyb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
+GAME( 1982, naughtyb, 0,        naughtyb, naughtyb, 0, ROT90, "Jaleco", "Naughty Boy" )
+GAME( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0, ROT90, "bootleg", "Naughty Boy (bootleg)" )
+GAME( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0, ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)" )
+GAME( 1982, popflame, 0,        popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 1)" )
+GAME( 1982, popflama, popflame, popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 2)" )

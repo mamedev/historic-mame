@@ -55,7 +55,6 @@ static uint16  samps_per_sync;        /* Number of samples per vsync */
 static uint16  buffer_size;           /* Actual buffer size in bytes */
 static uint16  real_rate;             /* Actual playback rate */
 static uint16  chip_max;              /* Desired number of chips in use */
-static char    apu_16bits;            /* Will we use 16 bits? */
 static uint8   noise_lut[NOISE_LONG]; /* Noise sample lookup table */
 static uint16  vbl_times[0x20];       /* VBL durations in samples */
 static uint32  sync_times1[SYNCS_MAX1]; /* Samples per sync table */
@@ -644,8 +643,7 @@ INLINE void apu_regwrite(int chip,int address, uint8 value)
 /* UPDATE SOUND BUFFER USING CURRENT DATA */
 INLINE void apu_update(int chip)
 {
-   static signed char  *buffer8 = NULL;
-   static signed short *buffer16 = NULL;
+   static INT16 *buffer16 = NULL;
    int accum;
    int endp = sound_scalebufferpos(samps_per_sync);
    int elapsed;
@@ -657,13 +655,11 @@ INLINE void apu_update(int chip)
 #endif
 
    SETAPU(chip);
-   buffer8  = (signed char *) cur->buffer;
-   buffer16 = (signed short *) buffer8;
+   buffer16  = cur->buffer;
 
 #ifndef USE_QUEUE
    /* Recall last position updated and restore pointers */
    elapsed = cur->buf_pos;
-   buffer8  += elapsed;
    buffer16 += elapsed;
 #endif
 
@@ -690,11 +686,7 @@ INLINE void apu_update(int chip)
       else if (accum < -128)
          accum = -128;
 
-      // Output 8 or 16 bits, depending.
-      if (apu_16bits)
-         *(buffer16++)=accum<<8;
-      else
-         *(buffer8++)=accum;
+      *(buffer16++)=accum<<8;
    }
 #ifndef USE_QUEUE
    cur->buf_pos = endp;
@@ -737,7 +729,6 @@ int NESPSG_sh_start(const struct MachineSound *msound)
   samps_per_sync = Machine->sample_rate / Machine->drv->frames_per_second;
   buffer_size = samps_per_sync;
   real_rate = samps_per_sync * Machine->drv->frames_per_second;
-  apu_16bits = (Machine->sample_bits>8);
   chip_max = intf->num;
   apu_incsize = (float) (N2A03_DEFAULTCLOCK / (float) real_rate);
 
@@ -747,7 +738,7 @@ int NESPSG_sh_start(const struct MachineSound *msound)
   create_syncs(samps_per_sync);
 
   /* Adjust buffer size if 16 bits */
-  if (apu_16bits) buffer_size+=samps_per_sync;
+  buffer_size+=samps_per_sync;
 
   /* Initialize individual chips */
   for (i = 0;i < chip_max;i++)
@@ -803,9 +794,6 @@ void NESPSG_sh_update(void)
 #ifndef USE_QUEUE
     APU[i].buf_pos=0;
 #endif
-    if (apu_16bits)
-      mixer_play_streamed_sample_16(channel+i,(signed short *)APU[i].buffer,buffer_size,real_rate);
-    else
-      mixer_play_streamed_sample(channel+i,(signed char *)APU[i].buffer,buffer_size,real_rate);
+    mixer_play_streamed_sample_16(channel+i,APU[i].buffer,buffer_size,real_rate);
   }
 }

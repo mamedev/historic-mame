@@ -386,5 +386,5 @@ static void init_blockhl(void)
 
 
 
-GAME( 1989, blockhl, ,        blockhl, blockhl, blockhl, ROT0, "Konami", "Block Hole" )
+GAME( 1989, blockhl, 0,       blockhl, blockhl, blockhl, ROT0, "Konami", "Block Hole" )
 GAME( 1989, quarth,  blockhl, blockhl, blockhl, blockhl, ROT0, "Konami", "Quarth (Japan)" )

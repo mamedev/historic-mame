@@ -74,18 +74,18 @@ void pontoon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int bank,col,sx,sy,flipx;
+			int col,sx,sy,flipx;
 
 			dirtybuffer[offs] = 0;
 
 			sx    = offs % 32;
 			sy    = offs / 32;
-			bank  = (colorram[offs] >> 4) & 0x03;
 			col   =  colorram[offs] & 0x0f;
 			flipx =  colorram[offs] & 0x40;
 
-			drawgfx(tmpbitmap,Machine->gfx[bank],
-					videoram[offs], col,
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0x30) << 4),
+					col,
 					flipx,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -359,7 +359,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_missile =
 {
 	/* basic machine hardware */
 	{
@@ -440,77 +440,6 @@ ROM_END
 
 
 
-struct GameDriver driver_missile =
-{
-	__FILE__,
-	0,
-	"missile",
-	"Missile Command (set 1)",
-	"1980",
-	"Atari",
-	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
-	0,
-	&machine_driver,
-	0,
-
-	rom_missile,
-	0, 0,
-	0,
-	0,
-
-	input_ports_missile,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_missile2 =
-{
-	__FILE__,
-	&driver_missile,
-	"missile2",
-	"Missile Command (set 2)",
-	"1980",
-	"Atari",
-	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
-	0,
-	&machine_driver,
-	0,
-
-	rom_missile2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_missile,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_suprmatk =
-{
-	__FILE__,
-	&driver_missile,
-	"suprmatk",
-	"Super Missile Attack",
-	"1981",
-	"Atari + Gencomp",
-	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
-	0,
-	&machine_driver,
-	0,
-
-	rom_suprmatk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_suprmatk,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1980, missile,  0,       missile, missile,  0, ROT0, "Atari", "Missile Command (set 1)" )
+GAME( 1980, missile2, missile, missile, missile,  0, ROT0, "Atari", "Missile Command (set 2)" )
+GAME( 1981, suprmatk, missile, missile, suprmatk, 0, ROT0, "Atari + Gencomp", "Super Missile Attack" )

@@ -16,11 +16,25 @@
   listener at half intensity, since it is coming from only one speaker.
   Use the MIXER() macro to select which speaker the channel should go to. E.g.
   mixer_allocate_channel(MIXER(50,MIXER_PAN_LEFT));
+
+  The MIXER() macro uses 16 bits because the YM3012_VOL() macro stuffs two
+  MIXER() values for left and right channel into a long.
 */
-#define MIXER_PAN_CENTER 0
-#define MIXER_PAN_LEFT   1
-#define MIXER_PAN_RIGHT  2
-#define MIXER(volume,pan) ((volume&0xff)|((pan)<<8))
+#define MIXER_PAN_CENTER  0
+#define MIXER_PAN_LEFT    1
+#define MIXER_PAN_RIGHT   2
+#define MIXER(level,pan) ((level & 0xff) | ((pan & 0x03) << 8))
+
+#define MIXER_GAIN_1x  0
+#define MIXER_GAIN_2x  1
+#define MIXER_GAIN_4x  2
+#define MIXER_GAIN_8x  3
+#define MIXERG(level,gain,pan) ((level & 0xff) | ((gain & 0x03) << 10) | ((pan & 0x03) << 8))
+
+#define MIXER_GET_LEVEL(mixing_level)  ((mixing_level) & 0xff)
+#define MIXER_GET_PAN(mixing_level)    (((mixing_level) >> 8) & 0x03)
+#define MIXER_GET_GAIN(mixing_level)   (((mixing_level) >> 10) & 0x03)
+
 
 int mixer_sh_start(void);
 void mixer_sh_stop(void);
@@ -47,9 +61,8 @@ const char *mixer_get_name(int channel);
 void mixer_set_volume(int channel,int volume);
 
 void mixer_play_sample(int channel,signed char *data,int len,int freq,int loop);
-void mixer_play_sample_16(int channel,signed short *data,int len,int freq,int loop);
-void mixer_play_streamed_sample(int channel,signed char *data,int len,int freq);
-void mixer_play_streamed_sample_16(int channel,signed short *data,int len,int freq);
+void mixer_play_sample_16(int channel,INT16 *data,int len,int freq,int loop);
+void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
 
 /* private functions for user interface only - don't call them from drivers! */
 void mixer_set_mixing_level(int channel,int level);

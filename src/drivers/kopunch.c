@@ -159,14 +159,14 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 1 },
-	{ 1, 0x1800, &charlayout2, 0, 1 },
+	{ REGION_GFX1, 0, &charlayout,  0, 1 },
+	{ REGION_GFX2, 0, &charlayout2, 0, 1 },
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_kopunch =
 {
 	/* basic machine hardware */
 	{
@@ -210,16 +210,18 @@ ROM_START( kopunch )
 	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, 0x34ef5e79 )
 	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, 0x25a5c68b )
 
-	ROM_REGION_DISPOSE(0x7800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr1102",      0x0000, 0x0800, 0x8a52de96 )
 	ROM_LOAD( "epr1103",      0x0800, 0x0800, 0xbae5e054 )
 	ROM_LOAD( "epr1104",      0x1000, 0x0800, 0x7b119a0e )
-	ROM_LOAD( "epr1107",      0x1800, 0x1000, 0xca00244d )
-	ROM_LOAD( "epr1108",      0x2800, 0x1000, 0xcc17c5ed )
-	ROM_LOAD( "epr1110",      0x3800, 0x1000, 0xae0aff15 )
-	ROM_LOAD( "epr1109",      0x4800, 0x1000, 0x625446ba )
-	ROM_LOAD( "epr1112",      0x5800, 0x1000, 0xef6994df )
-	ROM_LOAD( "epr1111",      0x6800, 0x1000, 0x28530ec9 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "epr1107",      0x0000, 0x1000, 0xca00244d )
+	ROM_LOAD( "epr1108",      0x1000, 0x1000, 0xcc17c5ed )
+	ROM_LOAD( "epr1110",      0x2000, 0x1000, 0xae0aff15 )
+	ROM_LOAD( "epr1109",      0x3000, 0x1000, 0x625446ba )
+	ROM_LOAD( "epr1112",      0x4000, 0x1000, 0xef6994df )
+	ROM_LOAD( "epr1111",      0x5000, 0x1000, 0x28530ec9 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "epr1099",      0x0000, 0x0020, 0xfc58c456 )
@@ -228,7 +230,7 @@ ROM_START( kopunch )
 ROM_END
 
 
-static void patch(void)
+static void init_kopunch(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -237,28 +239,5 @@ static void patch(void)
 	RAM[0x119] = 0;
 }
 
-struct GameDriver driver_kopunch =
-{
-	__FILE__,
-	0,
-	"kopunch",
-	"KO Punch",
-	"1981",
-	"Sega",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	patch,
 
-	rom_kopunch,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kopunch,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
+GAME( 1981, kopunch, 0, kopunch, kopunch, kopunch, ROT270, "Sega", "KO Punch" )

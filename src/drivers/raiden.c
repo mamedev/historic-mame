@@ -4,6 +4,9 @@
 	Raiden (Alternate Hardware)		(c) 1990 Seibu Kaihatsu
 	Raiden (Korean license)			(c) 1990 Seibu Kaihatsu
 
+    driver by Oliver Bergmann, Bryan McPhail, Randy Mongenel
+
+
 	The alternate hardware version is probably earlier than the main set.
 	It looks closer to Dynamite Duke (1989 game), while the main set looks
 	closer to the newer 68000 games in terms of graphics registers used, etc.
@@ -192,16 +195,16 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPSETTING(    0x00, "B" )
 	/* Coin Mode A */
 	PORT_DIPNAME( 0x1e, 0x1e, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "8 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x14, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x04, "5 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x16, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x1a, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 8C_3C ) )
 	PORT_DIPSETTING(    0x1c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x12, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_4C ) )
@@ -292,17 +295,17 @@ static struct GfxLayout raiden_spritelayout =
 
 static struct GfxDecodeInfo raiden_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &raiden_charlayout,      768, 16 },
-	{ 1, 0x020000, &raiden_spritelayout,      0, 16 },
-	{ 1, 0x0a0000, &raiden_spritelayout,    256, 16 },
-	{ 1, 0x120000, &raiden_spritelayout,    512, 16 },
+	{ REGION_GFX1, 0, &raiden_charlayout,   768, 16 },
+	{ REGION_GFX2, 0, &raiden_spritelayout,   0, 16 },
+	{ REGION_GFX3, 0, &raiden_spritelayout, 256, 16 },
+	{ REGION_GFX4, 0, &raiden_spritelayout, 512, 16 },
 	{ -1 } /* end of array */
 };
 
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,4);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static int raiden_interrupt(void)
 {
@@ -403,84 +406,99 @@ static struct MachineDriver machine_driver_raidena =
 /***************************************************************************/
 
 ROM_START( raiden )
-	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
 	ROM_LOAD_V20_ODD ( "rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
 	ROM_LOAD_V20_EVEN( "rai4.bin",   0x0c0000, 0x20000, 0x8d184b99 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
-	ROM_LOAD( "rai10.bin",    0x008000, 0x08000, 0x5f90786a )
-
-	ROM_LOAD( "raiu0919.bin", 0x020000, 0x80000, 0xda151f0b ) /* tiles */
-	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac ) /* tiles */
-	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde ) /* sprites */
-
-	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "rai6.bin", 0x000000, 0x08000, 0x723a483b )
-	ROM_CONTINUE(         0x010000, 0x08000 )
-
-	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU2 ) /* v30 sub cpu */
 	ROM_LOAD_V20_ODD ( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
 	ROM_LOAD_V20_EVEN( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
-	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
-	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
+	ROM_REGIONX( 0x18000, REGION_CPU3 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "rai6.bin", 0x000000, 0x08000, 0x723a483b )
+	ROM_CONTINUE(         0x010000, 0x08000 )
+
+	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
+	ROM_LOAD( "rai10.bin",    0x08000, 0x08000, 0x5f90786a )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0919.bin", 0x00000, 0x80000, 0xda151f0b ) /* tiles */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0920.bin", 0x00000, 0x80000, 0xac1f57ac ) /* tiles */
+
+	ROM_REGIONX( 0x090000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu165.bin",  0x00000, 0x80000, 0x946d7bde ) /* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	 /* ADPCM samples */
+	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, 0x8f927822 )
 ROM_END
 
 ROM_START( raidena )
-	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
 	ROM_LOAD_V20_ODD ( "raiden03.rom", 0x0c0000, 0x20000, 0xf6af09d0 )
 	ROM_LOAD_V20_EVEN( "raiden04.rom", 0x0c0000, 0x20000, 0x6bdfd416 )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
-	ROM_LOAD( "rai10.bin",    0x008000, 0x08000, 0x5f90786a )
-
-	ROM_LOAD( "raiu0919.bin", 0x020000, 0x80000, 0xda151f0b )
-	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac )
-	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde )
-
-	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "raiden08.rom", 0x000000, 0x08000, 0x731adb43 )
-	ROM_CONTINUE(             0x010000, 0x08000 )
-
-	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU2 ) /* v30 sub cpu */
 	ROM_LOAD_V20_ODD ( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
 	ROM_LOAD_V20_EVEN( "raiden06.rom",   0x0c0000, 0x20000, 0xa19d5b5d )
 
-	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
-	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
+	ROM_REGIONX( 0x18000, REGION_CPU3 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "raiden08.rom", 0x000000, 0x08000, 0x731adb43 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+
+	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
+	ROM_LOAD( "rai10.bin",    0x08000, 0x08000, 0x5f90786a )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0919.bin", 0x00000, 0x80000, 0xda151f0b ) /* tiles */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0920.bin", 0x00000, 0x80000, 0xac1f57ac ) /* tiles */
+
+	ROM_REGIONX( 0x090000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu165.bin",  0x00000, 0x80000, 0x946d7bde ) /* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	 /* ADPCM samples */
+	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, 0x8f927822 )
 ROM_END
 
 ROM_START( raidenk )
-	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
 	ROM_LOAD_V20_ODD ( "raiden03.rom", 0x0c0000, 0x20000, 0xf6af09d0 )
 	ROM_LOAD_V20_EVEN( "1i",           0x0c0000, 0x20000, 0xfddf24da )
 
-	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
-	ROM_LOAD( "rai10.bin",    0x008000, 0x08000, 0x5f90786a )
-
-	ROM_LOAD( "raiu0919.bin", 0x020000, 0x80000, 0xda151f0b )
-	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac )
-	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde )
-
-	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "8b",           0x000000, 0x08000, 0x99ee7505 )
-	ROM_CONTINUE(             0x010000, 0x08000 )
-
-	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU2 ) /* v30 sub cpu */
 	ROM_LOAD_V20_ODD ( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
 	ROM_LOAD_V20_EVEN( "raiden06.rom",   0x0c0000, 0x20000, 0xa19d5b5d )
 
-	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
-	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
+	ROM_REGIONX( 0x18000, REGION_CPU3 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "8b",           0x000000, 0x08000, 0x99ee7505 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+
+	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
+	ROM_LOAD( "rai10.bin",    0x08000, 0x08000, 0x5f90786a )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0919.bin", 0x00000, 0x80000, 0xda151f0b ) /* tiles */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu0920.bin", 0x00000, 0x80000, 0xac1f57ac ) /* tiles */
+
+	ROM_REGIONX( 0x090000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "raiu165.bin",  0x00000, 0x80000, 0x946d7bde ) /* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	 /* ADPCM samples */
+	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, 0x8f927822 )
 ROM_END
 
 /***************************************************************************/
@@ -512,7 +530,7 @@ static int sub_cpu_spina(int offset)
 	return ret;
 }
 
-static void memory_patch(void)
+static void init_raiden(void)
 {
 	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
 	install_seibu_sound_speedup(2);
@@ -584,13 +602,13 @@ static void common_decrypt(void)
 	}
 }
 
-static void raiden_decrypt(void)
+static void init_raidenk(void)
 {
 	memory_patcha();
 	common_decrypt();
 }
 
-static void raidena_decrypt(void)
+static void init_raidena(void)
 {
 	memory_patcha();
 	common_decrypt();
@@ -600,74 +618,6 @@ static void raidena_decrypt(void)
 
 /***************************************************************************/
 
-struct GameDriver driver_raiden =
-{
-	__FILE__,
-	0,
-	"raiden",
-	"Raiden",
-	"1990",
-	"Seibu Kaihatsu",
-	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
-	0,
-	&machine_driver_raiden,
-	memory_patch,
-
-	rom_raiden,
-	0, 0,
-	0, 0,
-	input_ports_raiden,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
-
-struct GameDriver driver_raidena =
-{
-	__FILE__,
-	&driver_raiden,
-	"raidena",
-	"Raiden (Alternate Hardware)",
-	"1990",
-	"Seibu Kaihatsu",
-	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
-	0,
-	&machine_driver_raidena,
-	raidena_decrypt,
-
-	rom_raidena,
-	0, 0,
-	0, 0,
-	input_ports_raiden,
-
-	0, 0, 0,
-	ROT270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_raidenk =
-{
-	__FILE__,
-	&driver_raiden,
-	"raidenk",
-	"Raiden (Korea)",
-	"1990",
-	"Seibu Kaihatsu (IBL Corporation license)",
-	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
-	0,
-	&machine_driver_raidena,
-	raiden_decrypt,
-
-	rom_raidenk,
-	0, 0,
-	0, 0,
-	input_ports_raiden,
-
-	0, 0, 0,
-	ROT270,
-
-	0, 0
-};
+GAME( 1990, raiden,  0,      raiden,  raiden, raiden,  ROT270, "Seibu Kaihatsu", "Raiden" )
+GAMEX(1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)", GAME_NO_SOUND )
+GAME( 1990, raidenk, raiden, raidena, raiden, raidenk, ROT270, "Seibu Kaihatsu (IBL Corporation license)", "Raiden (Korea)" )

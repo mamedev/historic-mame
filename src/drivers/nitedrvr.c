@@ -145,7 +145,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -168,7 +168,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_nitedrv =
 {
 	/* basic machine hardware */
 	{
@@ -214,46 +214,12 @@ ROM_START( nitedrvr )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "6569-01.d2",   0x9000, 0x0800, 0x7afa7542 )
 	ROM_LOAD( "6570-01.f2",   0x9800, 0x0800, 0xbf5d77b1 )
-	ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_RELOAD( 			  0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x200)	  /* 0.5k for graphics */
+	ROM_REGIONX( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6568-01.p2",   0x0000, 0x0200, 0xf80d8889 )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
 
-***************************************************************************/
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_nitedrvr =
-{
-	__FILE__,
-	0,
-	"nitedrvr",
-	"Night Driver",
-	"1976",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_nitedrvr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nitedrvr,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1976, nitedrvr, 0, nitedrv, nitedrvr, 0, ROT0, "Atari", "Night Driver" )

@@ -108,7 +108,7 @@ static int ddrible_vlm5030_busy_r(int offset)
 
 static void ddrible_vlm5030_ctrl_w(int offset,int data)
 {
-	unsigned char *SPEECH_ROM = memory_region(5);
+	unsigned char *SPEECH_ROM = memory_region(REGION_SOUND1);
 	/* b7 : vlm data bus OE   */
 	/* b6 : VLM5030-RST       */
 	/* b5 : VLM5030-ST        */
@@ -209,7 +209,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( ddrible )
+INPUT_PORTS_START( ddribble )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -248,6 +248,7 @@ INPUT_PORTS_START( ddrible )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
@@ -257,7 +258,6 @@ INPUT_PORTS_START( ddrible )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "4 Coins/5 Credits" )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
@@ -265,6 +265,7 @@ INPUT_PORTS_START( ddrible )
 	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_5C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
@@ -274,7 +275,6 @@ INPUT_PORTS_START( ddrible )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-	PORT_DIPSETTING(    0x00, "4 Coins/5 Credits" )
 
 	PORT_START	/* DSW #2 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -368,10 +368,10 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout1,	   48,  1 },	/* colors 48-63 */
-	{ 1, 0x80000, &charlayout2,	   16,  1 },	/* colors 16-31 */
-	{ 1, 0x10000, &spritelayout1,  32,  1 },	/* colors 32-47 */
-	{ 1, 0x40000, &spritelayout2,  64, 16 },	/* colors  0-15 but using lookup table */
+	{ REGION_GFX1, 0x00000, &charlayout1,	 48,  1 },	/* colors 48-63 */
+	{ REGION_GFX2, 0x00000, &charlayout2,	 16,  1 },	/* colors 16-31 */
+	{ REGION_GFX1, 0x10000, &spritelayout1,  32,  1 },	/* colors 32-47 */
+	{ REGION_GFX2, 0x40000, &spritelayout2,  64, 16 },	/* colors  0-15 but using lookup table */
 	{ -1 } /* end of array */
 };
 
@@ -380,7 +380,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	3580000,	/* 3.58 MHz */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ ddrible_vlm5030_busy_r },
 	{ ddrible_vlm5030_ctrl_w },
@@ -391,12 +390,12 @@ static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* 3.58 MHz */
 	25,         /* volume */
-	5,          /* memory region of speech rom */
+	REGION_SOUND1,	/* memory region of speech rom */
 	0x10000,    /* memory size 64Kbyte * 2 bank */
 	0           /* VCU pin level (default) */
 };
 
-static struct MachineDriver machine_driver_ddrible =
+static struct MachineDriver machine_driver_ddribble =
 {
 	/* basic machine hardware  */
 	{
@@ -450,21 +449,10 @@ static struct MachineDriver machine_driver_ddrible =
 };
 
 
-ROM_START( ddrible )
+ROM_START( ddribble )
 	ROM_REGIONX( 0x1a000, REGION_CPU1 ) /* 64K CPU #0 + 40K for Banked ROMS */
 	ROM_LOAD( "690c03.bin",	0x10000, 0x0a000, 0x07975a58 )
 	ROM_CONTINUE(			0x0a000, 0x06000 )
-
-	ROM_REGION_DISPOSE(0xc0000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "690a05.bin",	0x00000, 0x20000, 0x6a816d0d )	/* characters (set 1) & obtects (set 1) */
-	ROM_LOAD( "690a06.bin",	0x20000, 0x20000, 0x46300cd0 )	/* characters (set 1) & objects (set 1) */
-	ROM_LOAD( "690a08.bin",	0x40000, 0x20000, 0x9a889944 )	/* objects (set 2) */
-	ROM_LOAD( "690a07.bin",	0x60000, 0x20000, 0xfaf81b3f )	/* objects (set 2) */
-	ROM_LOAD( "690a10.bin", 0x80000, 0x20000, 0x61efa222 )	/* characters (set 2) */
-	ROM_LOAD( "690a09.bin", 0xa0000, 0x20000, 0xab682186 )	/* characters (set 2) */
-
-	ROM_REGIONX( 0x0100, REGION_PROMS )
-	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64 for the CPU #1 */
 	ROM_LOAD( "690c02.bin", 0x08000, 0x08000, 0xf07c030a )
@@ -472,33 +460,23 @@ ROM_START( ddrible )
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "690b01.bin", 0x08000, 0x08000, 0x806b8453 )
 
-	ROM_REGION(0x20000)	/* 128k for the VLM5030 data */
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "690a05.bin",	0x00000, 0x20000, 0x6a816d0d )	/* characters (set 1) & obtects (set 1) */
+	ROM_LOAD( "690a06.bin",	0x20000, 0x20000, 0x46300cd0 )	/* characters (set 1) & objects (set 1) */
+
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "690a10.bin", 0x00000, 0x20000, 0x61efa222 )	/* characters (set 2) */
+	ROM_LOAD( "690a09.bin", 0x20000, 0x20000, 0xab682186 )	/* characters (set 2) */
+	ROM_LOAD( "690a08.bin",	0x40000, 0x20000, 0x9a889944 )	/* objects (set 2) */
+	ROM_LOAD( "690a07.bin",	0x60000, 0x20000, 0xfaf81b3f )	/* objects (set 2) */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for the VLM5030 data */
 	ROM_LOAD( "690a04.bin", 0x00000, 0x20000, 0x1bfeb763 )
 ROM_END
 
 
 
-struct GameDriver driver_ddrible =
-{
-	__FILE__,
-	0,
-	"ddribble",
-	"Double Dribble",
-	"1986",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver_ddrible,
-	0,
-
-	rom_ddrible,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ddrible,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, ddribble, 0, ddribble, ddribble, 0, ROT0, "Konami", "Double Dribble" )

@@ -107,12 +107,8 @@ int fuzzycmp (const char *s, const char *l)
 
 int main (int argc, char **argv)
 {
-	int res, i, j, game_index;
+	int res, i, j = 0, game_index;
     char *playbackname = NULL;
-   #ifdef MESS
-		char *driver;
-      j=0; /* hack????? */
-   #endif
 
 	/* these two are not available in mame.cfg */
 	ignorecfg = 0;
@@ -149,9 +145,9 @@ int main (int argc, char **argv)
 
 	#ifdef MESS
     set_config_file ("mess.cfg");
-   #else
+	#else
     set_config_file ("mame.cfg");
-   #endif
+	#endif
 
 	/* Initialize the audio library */
 	if (msdos_init_seal())
@@ -207,7 +203,7 @@ int main (int argc, char **argv)
         {
             if (argv[j][0] != '-') break;
         }
-            /* do we have a driver for this? */
+		/* do we have a driver for this? */
 #ifdef MAME_DEBUG
         /* pick a random game */
         if (stricmp(argv[j],"random") == 0)
@@ -282,11 +278,10 @@ int main (int argc, char **argv)
         }
     }
 
-   #ifdef MESS
-     driver = argv[j];
-     /* This function has been added to MESS.C as load_image() */
-     load_image(argc, argv, driver, j);
-   #endif
+	#ifdef MESS
+	/* This function has been added to MESS.C as load_image() */
+	load_image(argc, argv, j, game_index);
+	#endif
 
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, game_index);

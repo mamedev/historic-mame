@@ -2,6 +2,9 @@
 
 	Exidy 440 system
 
+    driver by Aaron Giles
+
+
 	Currently implemented:
 		* Crossbow
 		* Cheyenne
@@ -665,17 +668,17 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) ) \
 	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) ) \
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) ) \
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_2C ) ) \
 	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) ) \
 	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) ) \
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) ) \
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" ) \
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" ) \
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_4C ) ) \
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_3C ) ) \
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_2C ) ) \
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) \
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_4C ) ) \
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_4C ) ) \
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) ) \
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) ) \
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
@@ -1097,7 +1100,7 @@ static struct CustomSound_interface custom_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exidy440 =
 {
 	/* basic machine hardware */
 	{
@@ -1159,16 +1162,16 @@ static struct MachineDriver machine_driver =
 	mirror_trigger_bit 		= mt;\
 	copy_protection_read 	= cpr
 
-static void crossbow_init(void) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
-static void cheyenne_init(void) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
-static void combat_init(void)   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
-static void cracksht_init(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void claypign_init(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
-static void chiller_init(void)  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void topsecex_init(void) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void hitnmiss_init(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
-static void whodunit_init(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
-static void showdown_init(void)
+static void init_crossbow(void) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
+static void init_cheyenne(void) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
+static void init_combat  (void)   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
+static void init_cracksht(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static void init_claypign(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
+static void init_chiller (void)  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static void init_topsecex(void) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static void init_hitnmiss(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
+static void init_whodunit(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
+static void init_showdown(void)
 {
 	SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00);
 
@@ -1229,7 +1232,7 @@ ROM_START( crossbow )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "xba-11.1h",  0x0e000, 0x2000, 0x1b61d0c1 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "xba-1.2k",   0x00000, 0x2000, 0xb6e57685 )
 	ROM_LOAD( "xba-1.2l",   0x02000, 0x2000, 0x2c24cb35 )
 	ROM_LOAD( "xba-1.2m",   0x04000, 0x2000, 0xf3a4f2be )
@@ -1285,7 +1288,7 @@ ROM_START( cheyenne )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cya-1.1h",   0x0e000, 0x2000, 0x5aed3d8c )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "cya-1.2k",   0x00000, 0x2000, 0xdc2b716d )
 	ROM_LOAD( "cya-1.2l",   0x02000, 0x2000, 0x091ad047 )
 	ROM_LOAD( "cya-1.2m",   0x04000, 0x2000, 0x59085362 )
@@ -1333,7 +1336,7 @@ ROM_START( combat )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "1h",  0x0e000, 0x2000, 0x8f3dd350 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "2k", 		 0x00000, 0x2000, 0x1c9df8b5 )
 	ROM_LOAD( "2l", 		 0x02000, 0x2000, 0x6b733306 )
 	ROM_LOAD( "2m", 		 0x04000, 0x2000, 0xdc074733 )
@@ -1377,7 +1380,7 @@ ROM_START( cracksht )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "csa3.1h",   0x0e000, 0x2000, 0x5ba8b4ac )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "csa3.2k",   0x00000, 0x2000, 0x067a4f71 )
 	ROM_LOAD( "csa3.2l",   0x02000, 0x2000, 0x5716c59e )
 	ROM_LOAD( "csa3.2m",   0x04000, 0x2000, 0xb3ff659b )
@@ -1415,7 +1418,7 @@ ROM_START( claypign )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "claypige.h1",   0x0e000, 0x2000, 0x9eedc68d )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "claypige.k2",   0x00000, 0x2000, 0x0dd93c6c )
 	ROM_LOAD( "claypige.l2",   0x02000, 0x2000, 0xe1d67c42 )
 	ROM_LOAD( "claypige.m2",   0x04000, 0x2000, 0xb56d8bd5 )
@@ -1463,7 +1466,7 @@ ROM_START( chiller )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cha3.1h",   0x0f000, 0x1000, 0xb195cbba )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "cha3.2k",   0x00000, 0x2000, 0x814a1c6e )
 	ROM_LOAD( "cha3.2l",   0x02000, 0x2000, 0xb326007f )
 	ROM_LOAD( "cha3.2m",   0x04000, 0x2000, 0x11075e8c )
@@ -1523,7 +1526,7 @@ ROM_START( topsecex )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "tsa1.1h",   0x0e000, 0x2000, 0x35a1dd40 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "tsa1.2k",   0x00000, 0x2000, 0xc0b7c8f9 )
 	ROM_LOAD( "tsa1.2l",   0x02000, 0x2000, 0xd46f2f23 )
 	ROM_LOAD( "tsa1.2m",   0x04000, 0x2000, 0x04722ee4 )
@@ -1573,7 +1576,7 @@ ROM_START( hitnmiss )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma3.1h",  0x0e000, 0x2000, 0xf718da36 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "hm2.2k",   0x00000, 0x2000, 0xd3583b62 )
 	ROM_LOAD( "hm2.2l",   0x02000, 0x2000, 0xc059d51e )
 	ROM_LOAD( "hma.2m",   0x04000, 0x2000, 0x09bb8495 )
@@ -1621,7 +1624,7 @@ ROM_START( hitnmis2 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma2.1h",  0x0e000, 0x2000, 0x9be48f45 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "hm2.2k",   0x00000, 0x2000, 0xd3583b62 )
 	ROM_LOAD( "hm2.2l",   0x02000, 0x2000, 0xc059d51e )
 	ROM_LOAD( "hma.2m",   0x04000, 0x2000, 0x09bb8495 )
@@ -1677,7 +1680,7 @@ ROM_START( whodunit )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "wda8.h1",  0x0e000, 0x2000, 0x0090e5a7 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "wda6.k2",   0x00000, 0x2000, 0xd4951375 )
 	ROM_LOAD( "wda6.l2",   0x02000, 0x2000, 0xbe8dcf07 )
 	ROM_LOAD( "wda6.m2",   0x04000, 0x2000, 0xfb389e2d )
@@ -1730,7 +1733,7 @@ ROM_START( showdown )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "showd1h.bin",  0x0e000, 0x2000, 0x6a10ff47 )
 
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
 	ROM_LOAD( "showd2k.bin",   0x00000, 0x2000, 0x67a86f7f )
 	ROM_LOAD( "showd2l.bin",   0x02000, 0x2000, 0x0bb8874b )
 	ROM_LOAD( "showd2m.bin",   0x04000, 0x2000, 0x8b77eac8 )
@@ -1757,66 +1760,14 @@ ROM_END
  *
  *************************************/
 
-#define EXIDY440_DRIVER(name,year,fullname) \
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		NULL,									\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Exidy",								\
-		"Aaron Giles",							\
-		0,										\
-		&machine_driver,						\
-		name##_init,							\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##name,						\
-												\
-		0,0,0,									\
-		ROT0,					\
-		0,0										\
-	};
-
-#define EXIDY440_CLONE_DRIVER(name,year,fullname,cloneof) \
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		&driver_##cloneof,						\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Exidy",								\
-		"Aaron Giles",							\
-		0,										\
-		&machine_driver,						\
-		cloneof##_init,							\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##cloneof,					\
-												\
-		0,0,0,									\
-		ROT0,					\
-		0,0										\
-	};
-
-EXIDY440_DRIVER      (crossbow, 1983, "Crossbow (version 2.0)")
-EXIDY440_DRIVER      (cheyenne, 1984, "Cheyenne (version 1.0)")
-EXIDY440_DRIVER      (combat,   1985, "Combat (version 3.0)")
-EXIDY440_DRIVER      (cracksht, 1985, "Crackshot (version 2.0)")
-EXIDY440_DRIVER      (claypign, 1986, "Clay Pigeon (version 2.0)")
-EXIDY440_DRIVER      (chiller,  1986, "Chiller (version 3.0)")
-EXIDY440_DRIVER      (topsecex, 1986, "Top Secret (Exidy) (version 1.0)")
-EXIDY440_DRIVER      (hitnmiss, 1987, "Hit 'n Miss (version 3.0)")
-EXIDY440_CLONE_DRIVER(hitnmis2, 1987, "Hit 'n Miss (version 2.0)", hitnmiss)
-EXIDY440_DRIVER      (whodunit, 1988, "Who Dunit (version 8.0)")
-EXIDY440_DRIVER      (showdown, 1988, "Showdown (version 5.0)")
+GAME( 1983, crossbow, 0,        exidy440, crossbow, crossbow, ROT0, "Exidy", "Crossbow (version 2.0)" )
+GAME( 1984, cheyenne, 0,        exidy440, cheyenne, cheyenne, ROT0, "Exidy", "Cheyenne (version 1.0)" )
+GAME( 1985, combat,   0,        exidy440, combat,   combat,   ROT0, "Exidy", "Combat (version 3.0)" )
+GAME( 1985, cracksht, 0,        exidy440, cracksht, cracksht, ROT0, "Exidy", "Crackshot (version 2.0)" )
+GAME( 1986, claypign, 0,        exidy440, claypign, claypign, ROT0, "Exidy", "Clay Pigeon (version 2.0)" )
+GAME( 1986, chiller,  0,        exidy440, chiller,  chiller,  ROT0, "Exidy", "Chiller (version 3.0)" )
+GAME( 1986, topsecex, 0,        exidy440, topsecex, topsecex, ROT0, "Exidy", "Top Secret (Exidy) (version 1.0)" )
+GAME( 1987, hitnmiss, 0,        exidy440, hitnmiss, hitnmiss, ROT0, "Exidy", "Hit 'n Miss (version 3.0)" )
+GAME( 1987, hitnmis2, hitnmiss, exidy440, hitnmiss, hitnmiss, ROT0, "Exidy", "Hit 'n Miss (version 2.0)" )
+GAME( 1988, whodunit, 0,        exidy440, whodunit, whodunit, ROT0, "Exidy", "Who Dunit (version 8.0)" )
+GAME( 1988, showdown, 0,        exidy440, showdown, showdown, ROT0, "Exidy", "Showdown (version 5.0)" )

@@ -4,6 +4,8 @@ Mat Mania
 Memetron, 1985
 (copyright Taito, licensed by Technos, distributed by Memetron)
 
+driver by Brad Oliver
+
 MAIN BOARD:
 
 0000-0fff RAM
@@ -337,17 +339,17 @@ static struct GfxLayout maniach_tilelayout =
 
 static struct GfxDecodeInfo matmania_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,              0, 4 },
-	{ 1, 0x06000, &tilelayout,            4*8, 4 },
-	{ 1, 0x12000, &matmania_spritelayout, 8*8, 2 },
+	{ REGION_GFX1, 0, &charlayout,              0, 4 },
+	{ REGION_GFX2, 0, &tilelayout,            4*8, 4 },
+	{ REGION_GFX3, 0, &matmania_spritelayout, 8*8, 2 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo maniach_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,             0, 4 },
-	{ 1, 0x06000, &maniach_tilelayout,   4*8, 4 },
-	{ 1, 0x1e000, &maniach_spritelayout, 8*8, 2 },
+	{ REGION_GFX1, 0, &charlayout,             0, 4 },
+	{ REGION_GFX2, 0, &maniach_tilelayout,   4*8, 4 },
+	{ REGION_GFX3, 0, &maniach_spritelayout, 8*8, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -358,7 +360,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 30, 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -505,46 +506,49 @@ ROM_START( matmania )
 	ROM_LOAD( "k1-03",        0x8000, 0x4000, 0x3b3c3f08 )
 	ROM_LOAD( "k2-03",        0xc000, 0x4000, 0x286c0917 )
 
-	ROM_REGION_DISPOSE(0x66000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
+	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ku-02",        0x00000, 0x2000, 0x613c8698 )	/* Character ROMs - 1024 chars, 3 bpp */
 	ROM_LOAD( "kv-02",        0x02000, 0x2000, 0x274ce14b )
 	ROM_LOAD( "kw-02",        0x04000, 0x2000, 0x7588a9c4 )
-	ROM_LOAD( "kt-02",        0x06000, 0x4000, 0x5d817c70 )	/* tile set */
-	ROM_LOAD( "ks-02",        0x0a000, 0x4000, 0x2e9f3ba0 )
-	ROM_LOAD( "kr-02",        0x0e000, 0x4000, 0xb057d3e3 )
-	ROM_LOAD( "k6-00",        0x12000, 0x4000, 0x294d0878 )	/* sprites */
-	ROM_LOAD( "k7-00",        0x16000, 0x4000, 0x0908c2f5 )
-	ROM_LOAD( "k8-00",        0x1a000, 0x4000, 0xae8341e1 )
-	ROM_LOAD( "k9-00",        0x1e000, 0x4000, 0x752ac2c6 )
-	ROM_LOAD( "ka-00",        0x22000, 0x4000, 0x46a9cb16 )
-	ROM_LOAD( "kb-00",        0x26000, 0x4000, 0xbf016772 )
-	ROM_LOAD( "kc-00",        0x2a000, 0x4000, 0x8d08bce7 )
-	ROM_LOAD( "kd-00",        0x2e000, 0x4000, 0xaf1d6a60 )
-	ROM_LOAD( "ke-00",        0x32000, 0x4000, 0x614f19b0 )
-	ROM_LOAD( "kf-00",        0x36000, 0x4000, 0xbdf58c18 )
-	ROM_LOAD( "kg-00",        0x3a000, 0x4000, 0x2189f5cf )
-	ROM_LOAD( "kh-00",        0x3e000, 0x4000, 0x6b11ed1f )
-	ROM_LOAD( "ki-00",        0x42000, 0x4000, 0xd7ac4ec5 )
-	ROM_LOAD( "kj-00",        0x46000, 0x4000, 0x2caee05d )
-	ROM_LOAD( "kk-00",        0x4a000, 0x4000, 0xeb54f010 )
-	ROM_LOAD( "kl-00",        0x4e000, 0x4000, 0xfa4c7e0c )
-	ROM_LOAD( "km-00",        0x52000, 0x4000, 0x6d2369b6 )
-	ROM_LOAD( "kn-00",        0x56000, 0x4000, 0xc55733e2 )
-	ROM_LOAD( "ko-00",        0x5a000, 0x4000, 0xed3c3476 )
-	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
-	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kt-02",        0x00000, 0x4000, 0x5d817c70 )	/* tile set */
+	ROM_LOAD( "ks-02",        0x04000, 0x4000, 0x2e9f3ba0 )
+	ROM_LOAD( "kr-02",        0x08000, 0x4000, 0xb057d3e3 )
+
+	ROM_REGIONX( 0x54000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "k6-00",        0x00000, 0x4000, 0x294d0878 )	/* sprites */
+	ROM_LOAD( "k7-00",        0x04000, 0x4000, 0x0908c2f5 )
+	ROM_LOAD( "k8-00",        0x08000, 0x4000, 0xae8341e1 )
+	ROM_LOAD( "k9-00",        0x0c000, 0x4000, 0x752ac2c6 )
+	ROM_LOAD( "ka-00",        0x10000, 0x4000, 0x46a9cb16 )
+	ROM_LOAD( "kb-00",        0x14000, 0x4000, 0xbf016772 )
+	ROM_LOAD( "kc-00",        0x18000, 0x4000, 0x8d08bce7 )
+	ROM_LOAD( "kd-00",        0x1c000, 0x4000, 0xaf1d6a60 )
+	ROM_LOAD( "ke-00",        0x20000, 0x4000, 0x614f19b0 )
+	ROM_LOAD( "kf-00",        0x24000, 0x4000, 0xbdf58c18 )
+	ROM_LOAD( "kg-00",        0x28000, 0x4000, 0x2189f5cf )
+	ROM_LOAD( "kh-00",        0x2c000, 0x4000, 0x6b11ed1f )
+	ROM_LOAD( "ki-00",        0x30000, 0x4000, 0xd7ac4ec5 )
+	ROM_LOAD( "kj-00",        0x34000, 0x4000, 0x2caee05d )
+	ROM_LOAD( "kk-00",        0x38000, 0x4000, 0xeb54f010 )
+	ROM_LOAD( "kl-00",        0x3c000, 0x4000, 0xfa4c7e0c )
+	ROM_LOAD( "km-00",        0x40000, 0x4000, 0x6d2369b6 )
+	ROM_LOAD( "kn-00",        0x44000, 0x4000, 0xc55733e2 )
+	ROM_LOAD( "ko-00",        0x48000, 0x4000, 0xed3c3476 )
+	ROM_LOAD( "kp-00",        0x4c000, 0x4000, 0x9c84a969 )
+	ROM_LOAD( "kq-00",        0x50000, 0x4000, 0xfa2f0003 )
 
 	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
 	ROM_LOAD( "matmania.16",  0x0060, 0x0020, 0x09325dc2 ) /* tile palette blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
-	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
-	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
 ROM_END
-
 
 ROM_START( excthour )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -552,44 +556,48 @@ ROM_START( excthour )
 	ROM_LOAD( "e28",          0x08000, 0x4000, 0x17b63708 )
 	ROM_LOAD( "e27",          0x0c000, 0x4000, 0x269ab3bc )
 
-	ROM_REGION_DISPOSE(0x66000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
+	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "e30",          0x00000, 0x2000, 0xb2875329 )	/* Character ROMs - 1024 chars, 3 bpp */
 	ROM_LOAD( "e31",          0x02000, 0x2000, 0xc9506de8 )
 	ROM_LOAD( "e32",          0x04000, 0x2000, 0x00d1635f )
-	ROM_LOAD( "e5",           0x06000, 0x4000, 0x0604dc55 )	/* tile set */
-	ROM_LOAD( "ks-02",        0x0a000, 0x4000, 0x2e9f3ba0 )
-	ROM_LOAD( "e3",           0x0e000, 0x4000, 0xebd273c6 )
-	ROM_LOAD( "k6-00",        0x12000, 0x4000, 0x294d0878 )	/* sprites */
-	ROM_LOAD( "k7-00",        0x16000, 0x4000, 0x0908c2f5 )
-	ROM_LOAD( "k8-00",        0x1a000, 0x4000, 0xae8341e1 )
-	ROM_LOAD( "k9-00",        0x1e000, 0x4000, 0x752ac2c6 )
-	ROM_LOAD( "ka-00",        0x22000, 0x4000, 0x46a9cb16 )
-	ROM_LOAD( "kb-00",        0x26000, 0x4000, 0xbf016772 )
-	ROM_LOAD( "kc-00",        0x2a000, 0x4000, 0x8d08bce7 )
-	ROM_LOAD( "kd-00",        0x2e000, 0x4000, 0xaf1d6a60 )
-	ROM_LOAD( "ke-00",        0x32000, 0x4000, 0x614f19b0 )
-	ROM_LOAD( "kf-00",        0x36000, 0x4000, 0xbdf58c18 )
-	ROM_LOAD( "kg-00",        0x3a000, 0x4000, 0x2189f5cf )
-	ROM_LOAD( "kh-00",        0x3e000, 0x4000, 0x6b11ed1f )
-	ROM_LOAD( "ki-00",        0x42000, 0x4000, 0xd7ac4ec5 )
-	ROM_LOAD( "kj-00",        0x46000, 0x4000, 0x2caee05d )
-	ROM_LOAD( "kk-00",        0x4a000, 0x4000, 0xeb54f010 )
-	ROM_LOAD( "kl-00",        0x4e000, 0x4000, 0xfa4c7e0c )
-	ROM_LOAD( "km-00",        0x52000, 0x4000, 0x6d2369b6 )
-	ROM_LOAD( "kn-00",        0x56000, 0x4000, 0xc55733e2 )
-	ROM_LOAD( "ko-00",        0x5a000, 0x4000, 0xed3c3476 )
-	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
-	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e5",           0x00000, 0x4000, 0x0604dc55 )	/* tile set */
+	ROM_LOAD( "ks-02",        0x04000, 0x4000, 0x2e9f3ba0 )
+	ROM_LOAD( "e3",           0x08000, 0x4000, 0xebd273c6 )
+
+	ROM_REGIONX( 0x54000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "k6-00",        0x00000, 0x4000, 0x294d0878 )	/* sprites */
+	ROM_LOAD( "k7-00",        0x04000, 0x4000, 0x0908c2f5 )
+	ROM_LOAD( "k8-00",        0x08000, 0x4000, 0xae8341e1 )
+	ROM_LOAD( "k9-00",        0x0c000, 0x4000, 0x752ac2c6 )
+	ROM_LOAD( "ka-00",        0x10000, 0x4000, 0x46a9cb16 )
+	ROM_LOAD( "kb-00",        0x14000, 0x4000, 0xbf016772 )
+	ROM_LOAD( "kc-00",        0x18000, 0x4000, 0x8d08bce7 )
+	ROM_LOAD( "kd-00",        0x1c000, 0x4000, 0xaf1d6a60 )
+	ROM_LOAD( "ke-00",        0x20000, 0x4000, 0x614f19b0 )
+	ROM_LOAD( "kf-00",        0x24000, 0x4000, 0xbdf58c18 )
+	ROM_LOAD( "kg-00",        0x28000, 0x4000, 0x2189f5cf )
+	ROM_LOAD( "kh-00",        0x2c000, 0x4000, 0x6b11ed1f )
+	ROM_LOAD( "ki-00",        0x30000, 0x4000, 0xd7ac4ec5 )
+	ROM_LOAD( "kj-00",        0x34000, 0x4000, 0x2caee05d )
+	ROM_LOAD( "kk-00",        0x38000, 0x4000, 0xeb54f010 )
+	ROM_LOAD( "kl-00",        0x3c000, 0x4000, 0xfa4c7e0c )
+	ROM_LOAD( "km-00",        0x40000, 0x4000, 0x6d2369b6 )
+	ROM_LOAD( "kn-00",        0x44000, 0x4000, 0xc55733e2 )
+	ROM_LOAD( "ko-00",        0x48000, 0x4000, 0xed3c3476 )
+	ROM_LOAD( "kp-00",        0x4c000, 0x4000, 0x9c84a969 )
+	ROM_LOAD( "kq-00",        0x50000, 0x4000, 0xfa2f0003 )
 
 	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
 	ROM_LOAD( "matmania.16",  0x0060, 0x0020, 0x09325dc2 ) /* tile palette blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
-	ROM_LOAD( "k4-0",         0x8000, 0x4000, 0x86dab489 )
-	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
 ROM_END
 
 ROM_START( maniach )
@@ -598,44 +606,6 @@ ROM_START( maniach )
 	ROM_LOAD( "mc-ma2.bin",   0x08000, 0x4000, 0x84583323 )
 	ROM_LOAD( "mc-m92.bin",   0x0c000, 0x4000, 0xe209a500 )
 
-	ROM_REGION_DISPOSE(0x72000)	/* temporary space for graphics (disposed after conversion) */
-	/* Character ROMs - 1024 chars, 3 bpp */
-	ROM_LOAD( "mc-m60.bin",   0x00000, 0x2000, 0x1cdbb117 )
-	ROM_LOAD( "mc-m70.bin",   0x02000, 0x2000, 0x553f0780 )
-	ROM_LOAD( "mc-m80.bin",   0x04000, 0x2000, 0x9392ecb7 )
-	/* tile set */
-	ROM_LOAD( "mc-m01.bin",   0x06000, 0x8000, 0xda558e4d )
-	ROM_LOAD( "mc-m10.bin",   0x0e000, 0x8000, 0x619a02f8 )
-	ROM_LOAD( "mc-m20.bin",   0x16000, 0x8000, 0xa617c6c1 )
-	/* sprites */
-	ROM_LOAD( "mc-mc0.bin",   0x1e000, 0x4000, 0x133d644f )
-	ROM_LOAD( "mc-md0.bin",   0x22000, 0x4000, 0xe387b036 )
-	ROM_LOAD( "mc-me0.bin",   0x26000, 0x4000, 0xb36b1283 )
-	ROM_LOAD( "mc-mf0.bin",   0x2a000, 0x4000, 0x2584d8a9 )
-	ROM_LOAD( "mc-mg0.bin",   0x2e000, 0x4000, 0xcf31a714 )
-	ROM_LOAD( "mc-mh0.bin",   0x32000, 0x4000, 0x6292d589 )
-	ROM_LOAD( "mc-mi0.bin",   0x36000, 0x4000, 0xee2e06e3 )
-	ROM_LOAD( "mc-mj0.bin",   0x3a000, 0x4000, 0x7e73895b )
-	ROM_LOAD( "mc-mk0.bin",   0x3e000, 0x4000, 0x66c8bf75 )
-	ROM_LOAD( "mc-ml0.bin",   0x42000, 0x4000, 0x88138a1d )
-	ROM_LOAD( "mc-mm0.bin",   0x46000, 0x4000, 0xa1a4260d )
-	ROM_LOAD( "mc-mn0.bin",   0x4a000, 0x4000, 0x6bc61b58 )
-	ROM_LOAD( "mc-mo0.bin",   0x4e000, 0x4000, 0xf96ef600 )
-	ROM_LOAD( "mc-mp0.bin",   0x52000, 0x4000, 0x1259618e )
-	ROM_LOAD( "mc-mq0.bin",   0x56000, 0x4000, 0x102a1666 )
-	ROM_LOAD( "mc-mr0.bin",   0x5a000, 0x4000, 0x1e854453 )
-	ROM_LOAD( "mc-ms0.bin",   0x5e000, 0x4000, 0x7bc9d878 )
-	ROM_LOAD( "mc-mt0.bin",   0x62000, 0x4000, 0x09cea985 )
-	ROM_LOAD( "mc-mu0.bin",   0x66000, 0x4000, 0x5421769e )
-	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
-	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
-
-	ROM_REGIONX( 0x0080, REGION_PROMS )
-	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
-	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
-	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
-	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
@@ -643,6 +613,45 @@ ROM_START( maniach )
 
 	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 8k for the microcontroller */
 	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-m60.bin",   0x00000, 0x2000, 0x1cdbb117 )	/* Character ROMs - 1024 chars, 3 bpp */
+	ROM_LOAD( "mc-m70.bin",   0x02000, 0x2000, 0x553f0780 )
+	ROM_LOAD( "mc-m80.bin",   0x04000, 0x2000, 0x9392ecb7 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-m01.bin",   0x00000, 0x8000, 0xda558e4d )	/* tile set */
+	ROM_LOAD( "mc-m10.bin",   0x08000, 0x8000, 0x619a02f8 )
+	ROM_LOAD( "mc-m20.bin",   0x10000, 0x8000, 0xa617c6c1 )
+
+	ROM_REGIONX( 0x54000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-mc0.bin",   0x00000, 0x4000, 0x133d644f )	/* sprites */
+	ROM_LOAD( "mc-md0.bin",   0x04000, 0x4000, 0xe387b036 )
+	ROM_LOAD( "mc-me0.bin",   0x08000, 0x4000, 0xb36b1283 )
+	ROM_LOAD( "mc-mf0.bin",   0x0c000, 0x4000, 0x2584d8a9 )
+	ROM_LOAD( "mc-mg0.bin",   0x10000, 0x4000, 0xcf31a714 )
+	ROM_LOAD( "mc-mh0.bin",   0x14000, 0x4000, 0x6292d589 )
+	ROM_LOAD( "mc-mi0.bin",   0x18000, 0x4000, 0xee2e06e3 )
+	ROM_LOAD( "mc-mj0.bin",   0x1c000, 0x4000, 0x7e73895b )
+	ROM_LOAD( "mc-mk0.bin",   0x20000, 0x4000, 0x66c8bf75 )
+	ROM_LOAD( "mc-ml0.bin",   0x24000, 0x4000, 0x88138a1d )
+	ROM_LOAD( "mc-mm0.bin",   0x28000, 0x4000, 0xa1a4260d )
+	ROM_LOAD( "mc-mn0.bin",   0x2c000, 0x4000, 0x6bc61b58 )
+	ROM_LOAD( "mc-mo0.bin",   0x30000, 0x4000, 0xf96ef600 )
+	ROM_LOAD( "mc-mp0.bin",   0x34000, 0x4000, 0x1259618e )
+	ROM_LOAD( "mc-mq0.bin",   0x38000, 0x4000, 0x102a1666 )
+	ROM_LOAD( "mc-mr0.bin",   0x3c000, 0x4000, 0x1e854453 )
+	ROM_LOAD( "mc-ms0.bin",   0x40000, 0x4000, 0x7bc9d878 )
+	ROM_LOAD( "mc-mt0.bin",   0x44000, 0x4000, 0x09cea985 )
+	ROM_LOAD( "mc-mu0.bin",   0x48000, 0x4000, 0x5421769e )
+	ROM_LOAD( "mc-mv0.bin",   0x4c000, 0x4000, 0x36fc3e2d )
+	ROM_LOAD( "mc-mw0.bin",   0x50000, 0x4000, 0x135dce4c )
+
+	ROM_REGIONX( 0x0080, REGION_PROMS )
+	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
+	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
+	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
+	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
 ROM_END
 
 ROM_START( maniach2 )
@@ -651,44 +660,6 @@ ROM_START( maniach2 )
 	ROM_LOAD( "ic41-ma1",     0x08000, 0x4000, 0x85ec8279 )
 	ROM_LOAD( "ic42-m91",     0x0c000, 0x4000, 0xa14b86dd )
 
-	ROM_REGION_DISPOSE(0x72000)	/* temporary space for graphics (disposed after conversion) */
-	/* Character ROMs - 1024 chars, 3 bpp */
-	ROM_LOAD( "mc-m60.bin",   0x00000, 0x2000, 0x1cdbb117 )
-	ROM_LOAD( "mc-m70.bin",   0x02000, 0x2000, 0x553f0780 )
-	ROM_LOAD( "mc-m80.bin",   0x04000, 0x2000, 0x9392ecb7 )
-	/* tile set */
-	ROM_LOAD( "mc-m01.bin",   0x06000, 0x8000, 0xda558e4d )
-	ROM_LOAD( "mc-m10.bin",   0x0e000, 0x8000, 0x619a02f8 )
-	ROM_LOAD( "mc-m20.bin",   0x16000, 0x8000, 0xa617c6c1 )
-	/* sprites */
-	ROM_LOAD( "mc-mc0.bin",   0x1e000, 0x4000, 0x133d644f )
-	ROM_LOAD( "mc-md0.bin",   0x22000, 0x4000, 0xe387b036 )
-	ROM_LOAD( "mc-me0.bin",   0x26000, 0x4000, 0xb36b1283 )
-	ROM_LOAD( "mc-mf0.bin",   0x2a000, 0x4000, 0x2584d8a9 )
-	ROM_LOAD( "mc-mg0.bin",   0x2e000, 0x4000, 0xcf31a714 )
-	ROM_LOAD( "mc-mh0.bin",   0x32000, 0x4000, 0x6292d589 )
-	ROM_LOAD( "mc-mi0.bin",   0x36000, 0x4000, 0xee2e06e3 )
-	ROM_LOAD( "mc-mj0.bin",   0x3a000, 0x4000, 0x7e73895b )
-	ROM_LOAD( "mc-mk0.bin",   0x3e000, 0x4000, 0x66c8bf75 )
-	ROM_LOAD( "mc-ml0.bin",   0x42000, 0x4000, 0x88138a1d )
-	ROM_LOAD( "mc-mm0.bin",   0x46000, 0x4000, 0xa1a4260d )
-	ROM_LOAD( "mc-mn0.bin",   0x4a000, 0x4000, 0x6bc61b58 )
-	ROM_LOAD( "mc-mo0.bin",   0x4e000, 0x4000, 0xf96ef600 )
-	ROM_LOAD( "mc-mp0.bin",   0x52000, 0x4000, 0x1259618e )
-	ROM_LOAD( "mc-mq0.bin",   0x56000, 0x4000, 0x102a1666 )
-	ROM_LOAD( "mc-mr0.bin",   0x5a000, 0x4000, 0x1e854453 )
-	ROM_LOAD( "mc-ms0.bin",   0x5e000, 0x4000, 0x7bc9d878 )
-	ROM_LOAD( "mc-mt0.bin",   0x62000, 0x4000, 0x09cea985 )
-	ROM_LOAD( "mc-mu0.bin",   0x66000, 0x4000, 0x5421769e )
-	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
-	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
-
-	ROM_REGIONX( 0x0080, REGION_PROMS )
-	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
-	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
-	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
-	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
@@ -696,107 +667,50 @@ ROM_START( maniach2 )
 
 	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 8k for the microcontroller */
 	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-m60.bin",   0x00000, 0x2000, 0x1cdbb117 )	/* Character ROMs - 1024 chars, 3 bpp */
+	ROM_LOAD( "mc-m70.bin",   0x02000, 0x2000, 0x553f0780 )
+	ROM_LOAD( "mc-m80.bin",   0x04000, 0x2000, 0x9392ecb7 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-m01.bin",   0x00000, 0x8000, 0xda558e4d )	/* tile set */
+	ROM_LOAD( "mc-m10.bin",   0x08000, 0x8000, 0x619a02f8 )
+	ROM_LOAD( "mc-m20.bin",   0x10000, 0x8000, 0xa617c6c1 )
+
+	ROM_REGIONX( 0x54000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc-mc0.bin",   0x00000, 0x4000, 0x133d644f )	/* sprites */
+	ROM_LOAD( "mc-md0.bin",   0x04000, 0x4000, 0xe387b036 )
+	ROM_LOAD( "mc-me0.bin",   0x08000, 0x4000, 0xb36b1283 )
+	ROM_LOAD( "mc-mf0.bin",   0x0c000, 0x4000, 0x2584d8a9 )
+	ROM_LOAD( "mc-mg0.bin",   0x10000, 0x4000, 0xcf31a714 )
+	ROM_LOAD( "mc-mh0.bin",   0x14000, 0x4000, 0x6292d589 )
+	ROM_LOAD( "mc-mi0.bin",   0x18000, 0x4000, 0xee2e06e3 )
+	ROM_LOAD( "mc-mj0.bin",   0x1c000, 0x4000, 0x7e73895b )
+	ROM_LOAD( "mc-mk0.bin",   0x20000, 0x4000, 0x66c8bf75 )
+	ROM_LOAD( "mc-ml0.bin",   0x24000, 0x4000, 0x88138a1d )
+	ROM_LOAD( "mc-mm0.bin",   0x28000, 0x4000, 0xa1a4260d )
+	ROM_LOAD( "mc-mn0.bin",   0x2c000, 0x4000, 0x6bc61b58 )
+	ROM_LOAD( "mc-mo0.bin",   0x30000, 0x4000, 0xf96ef600 )
+	ROM_LOAD( "mc-mp0.bin",   0x34000, 0x4000, 0x1259618e )
+	ROM_LOAD( "mc-mq0.bin",   0x38000, 0x4000, 0x102a1666 )
+	ROM_LOAD( "mc-mr0.bin",   0x3c000, 0x4000, 0x1e854453 )
+	ROM_LOAD( "mc-ms0.bin",   0x40000, 0x4000, 0x7bc9d878 )
+	ROM_LOAD( "mc-mt0.bin",   0x44000, 0x4000, 0x09cea985 )
+	ROM_LOAD( "mc-mu0.bin",   0x48000, 0x4000, 0x5421769e )
+	ROM_LOAD( "mc-mv0.bin",   0x4c000, 0x4000, 0x36fc3e2d )
+	ROM_LOAD( "mc-mw0.bin",   0x50000, 0x4000, 0x135dce4c )
+
+	ROM_REGIONX( 0x0080, REGION_PROMS )
+	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
+	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
+	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
+	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
 ROM_END
 
 
 
-struct GameDriver driver_matmania =
-{
-	__FILE__,
-	0,
-	"matmania",
-	"Mat Mania",
-	"1985",
-	"Technos (Taito America license)",
-	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_matmania,
-	0,
-
-	rom_matmania,
-	0, 0,
-	0,
-	0,
-
-	input_ports_matmania,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-
-struct GameDriver driver_excthour =
-{
-	__FILE__,
-	&driver_matmania,
-	"excthour",
-	"Exciting Hour",
-	"1985",
-	"Technos (Taito license)",
-	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_matmania,
-	0,
-
-	rom_excthour,
-	0, 0,
-	0,
-	0,
-
-	input_ports_matmania,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_maniach =
-{
-	__FILE__,
-	0,
-	"maniach",
-	"Mania Challenge (set 1)",
-	"1986",
-	"Technos (Taito America license)",
-	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_maniach,
-	0,
-
-	rom_maniach,
-	0, 0,
-	0,
-	0,
-
-	input_ports_matmania,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_maniach2 =
-{
-	__FILE__,
-	&driver_maniach,
-	"maniach2",
-	"Mania Challenge (set 2)",	/* earlier version? */
-	"1986",
-	"Technos (Taito America license)",
-	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	0,
-	&machine_driver_maniach,
-	0,
-
-	rom_maniach2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_matmania,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1985, matmania, 0,        matmania, matmania, 0, ROT270, "Technos (Taito America license)", "Mat Mania" )
+GAME( 1985, excthour, matmania, matmania, matmania, 0, ROT270, "Technos (Taito license)", "Exciting Hour" )
+GAME( 1986, maniach,  0,        maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 1)" )
+GAME( 1986, maniach2, maniach,  maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 2)" )	/* earlier version? */

@@ -239,7 +239,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout tile_3bpp =
 {
 	16,16,
-	4096,
+	2048,
 	3,
 	{ 0x20000*8, 0x10000*8, 0x00000*8 },
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
@@ -264,9 +264,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tile_3bpp,    512, 16 },	/* Tiles 16x16 */
-	{ 1, 0x050000, &spritelayout, 256, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tile_3bpp,    512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &spritelayout, 256, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -300,7 +300,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	{ 7757 },           /* 8000Hz frequency */
-	{ 3 },              /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region 3 */
 	{ 80 }
 };
 
@@ -365,53 +365,32 @@ ROM_START( stadhero )
 	ROM_LOAD_EVEN( "ef15.bin",  0x00000, 0x10000, 0xbbba364e )
 	ROM_LOAD_ODD ( "ef13.bin",  0x00000, 0x10000, 0x97c6717a )
 
-	ROM_REGION_DISPOSE(0xd0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ef08.bin",     0x000000, 0x10000, 0xe84752fe )	/* chars */
-	ROM_LOAD( "ef09.bin",     0x010000, 0x08000, 0x2ade874d )
-
-	ROM_LOAD( "ef10.bin",     0x020000, 0x10000, 0xdca3d599 )	/* tiles */
-	ROM_LOAD( "ef11.bin",     0x030000, 0x10000, 0xaf563e96 )
-	ROM_LOAD( "ef12.bin",     0x040000, 0x10000, 0x9a1bf51c )
-
-	ROM_LOAD( "ef00.bin",     0x050000, 0x10000, 0x94ed257c )	/* sprites */
-	ROM_LOAD( "ef01.bin",     0x060000, 0x10000, 0x6eb9a721 )
-	ROM_LOAD( "ef02.bin",     0x070000, 0x10000, 0x850cb771 )
-	ROM_LOAD( "ef03.bin",     0x080000, 0x10000, 0x24338b96 )
-	ROM_LOAD( "ef04.bin",     0x090000, 0x10000, 0x9e3d97a7 )
-	ROM_LOAD( "ef05.bin",     0x0a0000, 0x10000, 0x88631005 )
-	ROM_LOAD( "ef06.bin",     0x0b0000, 0x10000, 0x9f47848f )
-	ROM_LOAD( "ef07.bin",     0x0c0000, 0x10000, 0x8859f655 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ef18.bin",  0x8000, 0x8000, 0x20fd9668 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ef08.bin",     0x000000, 0x10000, 0xe84752fe )	/* chars */
+	ROM_LOAD( "ef09.bin",     0x010000, 0x08000, 0x2ade874d )
+
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ef10.bin",     0x000000, 0x10000, 0xdca3d599 )	/* tiles */
+	ROM_LOAD( "ef11.bin",     0x010000, 0x10000, 0xaf563e96 )
+	ROM_LOAD( "ef12.bin",     0x020000, 0x10000, 0x9a1bf51c )
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ef00.bin",     0x000000, 0x10000, 0x94ed257c )	/* sprites */
+	ROM_LOAD( "ef01.bin",     0x010000, 0x10000, 0x6eb9a721 )
+	ROM_LOAD( "ef02.bin",     0x020000, 0x10000, 0x850cb771 )
+	ROM_LOAD( "ef03.bin",     0x030000, 0x10000, 0x24338b96 )
+	ROM_LOAD( "ef04.bin",     0x040000, 0x10000, 0x9e3d97a7 )
+	ROM_LOAD( "ef05.bin",     0x050000, 0x10000, 0x88631005 )
+	ROM_LOAD( "ef06.bin",     0x060000, 0x10000, 0x9f47848f )
+	ROM_LOAD( "ef07.bin",     0x070000, 0x10000, 0x8859f655 )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ef17.bin",  0x0000, 0x10000, 0x07c78358 )
 ROM_END
 
 /******************************************************************************/
 
-struct GameDriver driver_stadhero =
-{
-	__FILE__,
-	0,
-	"stadhero",
-	"Stadium Hero (Japan)",
-	"1988",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_stadhero,
-	0,
-
-	rom_stadhero,
-	0, 0,
-	0,
-	0,
-
-	input_ports_stadhero,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
+GAME( 1988, stadhero, 0, stadhero, stadhero, 0, ROT0, "Data East Corporation", "Stadium Hero (Japan)" )

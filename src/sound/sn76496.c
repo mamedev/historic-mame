@@ -16,7 +16,6 @@
 
 
 #define MAX_OUTPUT 0x7fff
-#define AUDIO_CONV(A) (A)
 
 #define STEP 0x10000
 
@@ -142,22 +141,95 @@ void SN76496_3_w(int offset,int data) {	SN76496Write(3,data); }
 
 
 
-static void SN76496Update_8(int chip,void *buffer,int length)
+static void SN76496Update(int chip,INT16 *buffer,int length)
 {
-#define DATATYPE unsigned char
-#define DATACONV(A) AUDIO_CONV((A) / (STEP * 256))
-#include "sn76496u.c"
-#undef DATATYPE
-#undef DATACONV
-}
+	int i;
+	struct SN76496 *R = &sn[chip];
 
-static void SN76496Update_16(int chip,void *buffer,int length)
-{
-#define DATATYPE unsigned short
-#define DATACONV(A) ((A) / STEP)
-#include "sn76496u.c"
-#undef DATATYPE
-#undef DATACONV
+
+	/* If the volume is 0, increase the counter */
+	for (i = 0;i < 4;i++)
+	{
+		if (R->Volume[i] == 0)
+		{
+			/* note that I do count += length, NOT count = length + 1. You might think */
+			/* it's the same since the volume is 0, but doing the latter could cause */
+			/* interferencies when the program is rapidly modulating the volume. */
+			if (R->Count[i] <= length*STEP) R->Count[i] += length*STEP;
+		}
+	}
+
+	while (length > 0)
+	{
+		int vol[4];
+		unsigned int out;
+		int left;
+
+
+		/* vol[] keeps track of how long each square wave stays */
+		/* in the 1 position during the sample period. */
+		vol[0] = vol[1] = vol[2] = vol[3] = 0;
+
+		for (i = 0;i < 3;i++)
+		{
+			if (R->Output[i]) vol[i] += R->Count[i];
+			R->Count[i] -= STEP;
+			/* Period[i] is the half period of the square wave. Here, in each */
+			/* loop I add Period[i] twice, so that at the end of the loop the */
+			/* square wave is in the same status (0 or 1) it was at the start. */
+			/* vol[i] is also incremented by Period[i], since the wave has been 1 */
+			/* exactly half of the time, regardless of the initial position. */
+			/* If we exit the loop in the middle, Output[i] has to be inverted */
+			/* and vol[i] incremented only if the exit status of the square */
+			/* wave is 1. */
+			while (R->Count[i] <= 0)
+			{
+				R->Count[i] += R->Period[i];
+				if (R->Count[i] > 0)
+				{
+					R->Output[i] ^= 1;
+					if (R->Output[i]) vol[i] += R->Period[i];
+					break;
+				}
+				R->Count[i] += R->Period[i];
+				vol[i] += R->Period[i];
+			}
+			if (R->Output[i]) vol[i] -= R->Count[i];
+		}
+
+		left = STEP;
+		do
+		{
+			int nextevent;
+
+
+			if (R->Count[3] < left) nextevent = R->Count[3];
+			else nextevent = left;
+
+			if (R->Output[3]) vol[3] += R->Count[3];
+			R->Count[3] -= nextevent;
+			if (R->Count[3] <= 0)
+			{
+				if (R->RNG & 1) R->RNG ^= R->NoiseFB;
+				R->RNG >>= 1;
+				R->Output[3] = R->RNG & 1;
+				R->Count[3] += R->Period[3];
+				if (R->Output[3]) vol[3] += R->Period[3];
+			}
+			if (R->Output[3]) vol[3] -= R->Count[3];
+
+			left -= nextevent;
+		} while (left > 0);
+
+		out = vol[0] * R->Volume[0] + vol[1] * R->Volume[1] +
+				vol[2] * R->Volume[2] + vol[3] * R->Volume[3];
+
+		if (out > MAX_OUTPUT * STEP) out = MAX_OUTPUT * STEP;
+
+		*(buffer++) = out / STEP;
+
+		length--;
+	}
 }
 
 
@@ -206,7 +278,7 @@ static void SN76496_set_gain(int chip,int gain)
 
 
 
-static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int volume,int sample_rate,int sample_bits)
+static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int volume,int sample_rate)
 {
 	int i;
 	struct SN76496 *R = &sn[chip];
@@ -214,8 +286,7 @@ static int SN76496_init(const struct MachineSound *msound,int chip,int clock,int
 
 
 	sprintf(name,"SN76496 #%d",chip);
-	R->Channel = stream_init(name,volume,sample_rate,sample_bits,
-			chip,(sample_bits == 16) ? SN76496Update_16 : SN76496Update_8);
+	R->Channel = stream_init(name,volume,sample_rate,chip,SN76496Update);
 
 	if (R->Channel == -1)
 		return 1;
@@ -253,7 +324,7 @@ int SN76496_sh_start(const struct MachineSound *msound)
 
 	for (chip = 0;chip < intf->num;chip++)
 	{
-		if (SN76496_init(msound,chip,intf->baseclock[chip],intf->volume[chip] & 0xff,Machine->sample_rate,Machine->sample_bits) != 0)
+		if (SN76496_init(msound,chip,intf->baseclock[chip],intf->volume[chip] & 0xff,Machine->sample_rate) != 0)
 			return 1;
 
 		SN76496_set_gain(chip,(intf->volume[chip] >> 8) & 0xff);

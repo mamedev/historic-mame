@@ -129,15 +129,15 @@ INPUT_PORTS_START( bogeyman )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
@@ -241,7 +241,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? */
 	{ 30, 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -321,4 +320,4 @@ ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1985?, bogeyman, , bogeyman, bogeyman, , ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS )
+GAMEX( 1985?, bogeyman, 0, bogeyman, bogeyman, 0, ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS )

@@ -2,6 +2,8 @@
 
 	Relief Pitcher
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -289,8 +291,8 @@ static struct GfxLayout pfanmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x000000, &pfanmolayout,   0, 64 },		/* alpha & playfield */
-	{ 2, 0x000001, &pfanmolayout, 256, 16 },		/* sprites */
+	{ REGION_GFX1, 0x000000, &pfanmolayout,   0, 64 },		/* alpha & playfield */
+	{ REGION_GFX1, 0x000001, &pfanmolayout, 256, 16 },		/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -306,7 +308,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
 	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ 1 },       		/* memory region 2 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 75 }
 };
 
@@ -326,7 +328,7 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_relief =
 {
 	/* basic machine hardware */
 	{
@@ -379,12 +381,12 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT8 *base = memory_region(1);
+	UINT8 *base = memory_region(REGION_SOUND1);
 	int i;
 
 	/* invert the graphics bits */
-	for (i = 0; i < memory_region_length(2); i++)
-		memory_region(2)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -415,7 +417,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void relief_init(void)
+static void init_relief(void)
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -434,7 +436,7 @@ static void relief_init(void)
 }
 
 
-static void relief2_init(void)
+static void init_relief2(void)
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -474,18 +476,17 @@ ROM_START( relief )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION( 0x200000 )	/* 2MB for ADPCM data */
-	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
-	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
-
-	ROM_REGION_DISPOSE(0x240000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x240000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
 	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
 	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
 	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
 	ROM_LOAD( "093-0029.4d",  0x200000, 0x40000, 0xe4593ff4 )
-ROM_END
 
+	ROM_REGIONX( 0x200000, REGION_SOUND1 )	/* 2MB for ADPCM data */
+	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
+	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
+ROM_END
 
 ROM_START( relief2 )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -494,16 +495,16 @@ ROM_START( relief2 )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION( 0x200000 )	/* 2MB for ADPCM data */
-	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
-	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
-
-	ROM_REGION_DISPOSE(0x240000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x240000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
 	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
 	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
 	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
 	ROM_LOAD( "093-0029.4d",  0x200000, 0x40000, 0xe4593ff4 )
+
+	ROM_REGIONX( 0x200000, REGION_SOUND1 )	/* 2MB for ADPCM data */
+	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
+	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
 ROM_END
 
 
@@ -514,53 +515,5 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver driver_relief =
-{
-	__FILE__,
-	0,
-	"relief",
-	"Relief Pitcher (set 1)",
-	"1992",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	relief_init,
-
-	rom_relief,
-	0, 0,
-	0,
-	0,
-
-	input_ports_relief,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_relief2 =
-{
-	__FILE__,
-	&driver_relief,
-	"relief2",
-	"Relief Pitcher (set 2)",
-	"1992",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	relief2_init,
-
-	rom_relief2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_relief,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1992, relief,  0,      relief, relief, relief,  ROT0, "Atari Games", "Relief Pitcher (set 1)" )
+GAME( 1992, relief2, relief, relief, relief, relief2, ROT0, "Atari Games", "Relief Pitcher (set 2)" )

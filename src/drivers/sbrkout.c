@@ -188,8 +188,8 @@ static struct GfxLayout balllayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0, 2 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &balllayout, 0, 2 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout, 0, 2 },
+	{ REGION_GFX2, 0, &balllayout, 0, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -222,7 +222,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sbrkout =
 {
 	/* basic machine hardware */
 	{
@@ -274,37 +274,16 @@ ROM_START( sbrkout )
 	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
 	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
 	ROM_LOAD( "033455.e1",    0x3800, 0x0800, 0xe0a6871c )
-	ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x420)	  /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "033280.p4",    0x0000, 0x0200, 0x5a69ce85 )
 	ROM_LOAD( "033281.r4",    0x0200, 0x0200, 0x066bd624 )
-	ROM_LOAD( "033282.k6",    0x0400, 0x0020, 0x6228736b )
+
+	ROM_REGIONX( 0x0020, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "033282.k6",    0x0000, 0x0020, 0x6228736b )
 ROM_END
 
 
 
-struct GameDriver driver_sbrkout =
-{
-	__FILE__,
-	0,
-	"sbrkout",
-	"Super Breakout",
-	"1978",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sbrkout,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sbrkout,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1978, sbrkout, 0, sbrkout, sbrkout, 0, ROT270, "Atari", "Super Breakout" )

@@ -87,7 +87,7 @@ int screen_line_offset;
 static struct sprite_list *first_sprite_list = NULL; /* used for resource tracking */
 static int FlickeringInvisible;
 
-static unsigned char *shade_table;
+static UINT16 *shade_table;
 
 static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int *last, int *delta ){
 	if( sprite_list->flags&SPRITE_LIST_FRONT_TO_BACK ){
@@ -602,6 +602,256 @@ skip3:
 
 }
 
+
+static void do_blit_zoom16( const struct sprite *sprite ){
+	/*	assumes SPRITE_LIST_RAW_DATA flag is set */
+
+	int x1,x2, y1,y2, dx,dy;
+	int xcount0 = 0, ycount0 = 0;
+
+	if( sprite->flags & SPRITE_FLIPX ){
+		x2 = sprite->x;
+		x1 = x2+sprite->total_width;
+		dx = -1;
+		if( x2<blit.clip_left ) x2 = blit.clip_left;
+		if( x1>blit.clip_right ){
+			xcount0 = (x1-blit.clip_right)*sprite->tile_width;
+			x1 = blit.clip_right;
+		}
+		if( x2>=x1 ) return;
+		x1--; x2--;
+	}
+	else {
+		x1 = sprite->x;
+		x2 = x1+sprite->total_width;
+		dx = 1;
+		if( x1<blit.clip_left ){
+			xcount0 = (blit.clip_left-x1)*sprite->tile_width;
+			x1 = blit.clip_left;
+		}
+		if( x2>blit.clip_right ) x2 = blit.clip_right;
+		if( x1>=x2 ) return;
+	}
+	if( sprite->flags & SPRITE_FLIPY ){
+		y2 = sprite->y;
+		y1 = y2+sprite->total_height;
+		dy = -1;
+		if( y2<blit.clip_top ) y2 = blit.clip_top;
+		if( y1>blit.clip_bottom ){
+			ycount0 = (y1-blit.clip_bottom)*sprite->tile_height;
+			y1 = blit.clip_bottom;
+		}
+		if( y2>=y1 ) return;
+		y1--; y2--;
+	}
+	else {
+		y1 = sprite->y;
+		y2 = y1+sprite->total_height;
+		dy = 1;
+		if( y1<blit.clip_top ){
+			ycount0 = (blit.clip_top-y1)*sprite->tile_height;
+			y1 = blit.clip_top;
+		}
+		if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
+		if( y1>=y2 ) return;
+	}
+
+	if(!(sprite->flags & (SPRITE_SHADOW | SPRITE_PARTIAL_SHADOW)))
+	{
+		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned short *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip1; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) *dest1 = shade_table[*dest1];
+					else */if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip1:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip; /* marker for right side of sprite; needed for AltBeast, ESwat */
+/*					if( pen==10 ) dest[x] = shade_table[dest[x]];
+					else */if( pen ) dest[x] = pal_data[pen];
+					xcount += sprite->tile_width;
+				}
+skip:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+	else if(sprite->flags & SPRITE_PARTIAL_SHADOW)
+	{
+		const unsigned char *pen_data = sprite->pen_data;
+		const unsigned short *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip6; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) *dest1 = shade_table[*dest1];
+					else if( pen ) *dest1 = pal_data[pen];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip6:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip5; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen==sprite->shadow_pen ) dest[x] = shade_table[dest[x]];
+					else if( pen ) dest[x] = pal_data[pen];
+					xcount += sprite->tile_width;
+				}
+skip5:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+	else
+	{	// Shadow Sprite
+		const unsigned char *pen_data = sprite->pen_data;
+//		const unsigned short *pal_data = sprite->pal_data;
+		int x,y;
+		unsigned char pen;
+		int pitch = blit.line_offset*dy/2;
+		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
+		int ycount = ycount0;
+
+		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
+			int xcount = xcount0;
+			for( x=x1; x!=x2; x+=dx ){
+				const unsigned char *source;
+				UINT16 *dest1;
+
+				ycount = ycount0;
+				while( xcount>=sprite->total_width ){
+					xcount -= sprite->total_width;
+					pen_data+=sprite->line_offset;
+				}
+				source = pen_data;
+				dest1 = &dest[x];
+				for( y=y1; y!=y2; y+=dy ){
+					while( ycount>=sprite->total_height ){
+						ycount -= sprite->total_height;
+						source ++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip4; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) *dest1 = shade_table[*dest1];
+					ycount+= sprite->tile_height;
+					dest1 += pitch;
+				}
+skip4:
+				xcount += sprite->tile_width;
+			}
+		}
+		else {
+			for( y=y1; y!=y2; y+=dy ){
+				int xcount = xcount0;
+				const unsigned char *source;
+				while( ycount>=sprite->total_height ){
+					ycount -= sprite->total_height;
+					pen_data += sprite->line_offset;
+				}
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					while( xcount>=sprite->total_width ){
+						xcount -= sprite->total_width;
+						source++;
+					}
+					pen = *source;
+					if( pen==0xff ) goto skip3; /* marker for right side of sprite; needed for AltBeast, ESwat */
+					if( pen ) dest[x] = shade_table[dest[x]];
+					xcount += sprite->tile_width;
+				}
+skip3:
+				ycount += sprite->tile_height;
+				dest += pitch;
+			}
+		}
+	}
+
+}
+
 /*********************************************************************/
 
 void sprite_init( void ){
@@ -690,7 +940,7 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 
 			/* we must also swap the flipx and flipy bits (if they aren't identical) */
 			if( sprite->flags&SPRITE_FLIPX ){
-				if( !sprite->flags&SPRITE_FLIPY ){
+				if( !(sprite->flags&SPRITE_FLIPY) ){
 					sprite->flags = (sprite->flags&~SPRITE_FLIPX)|SPRITE_FLIPY;
 				}
 			}
@@ -872,7 +1122,13 @@ void sprite_draw( struct sprite_list *sprite_list, int priority ){
 
 		switch( sprite_list->sprite_type ){
 			case SPRITE_TYPE_ZOOM:
-			do_blit = do_blit_zoom;
+			if (Machine->scrbitmap->depth == 16) /* 16 bit */
+			{
+				do_blit = do_blit_zoom16;
+//				return;
+			}
+			else
+				do_blit = do_blit_zoom;
 			break;
 
 			case SPRITE_TYPE_STACK:
@@ -896,7 +1152,7 @@ void sprite_draw( struct sprite_list *sprite_list, int priority ){
 }
 
 
-void sprite_set_shade_table(unsigned char *table)
+void sprite_set_shade_table(UINT16 *table)
 {
 	shade_table=table;
 }

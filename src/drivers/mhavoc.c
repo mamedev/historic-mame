@@ -449,7 +449,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mhavoc =
 {
 	/* basic machine hardware */
 	{
@@ -524,8 +524,6 @@ ROM_START( mhavoc )
 	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 ) /* page 0+1 */
 	ROM_LOAD( "136025.107",   0x1c000, 0x4000, 0x5f81c5f3 ) /* page 2+3 */
 
-	ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
-
 	/* Gamma Processor ROM */
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
@@ -551,7 +549,6 @@ ROM_START( mhavoc2 )
 	ROM_LOAD( "136025.107",   0x1c000, 0x4000, 0x5f81c5f3 ) /* page 2+3 */
 
 	/* the last 0x1000 is used for the 2 RAM pages */
-	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 16k for code */
@@ -577,8 +574,6 @@ ROM_START( mhavocrv )
 	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 ) /* page 0+1 */
 	ROM_LOAD( "136025.907",   0x1c000, 0x4000, 0x4deea2c9 ) /* page 2+3 */
 
-	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
-
 	/* Gamma Processor ROM */
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.908",   0x08000, 0x4000, 0xc52ec664 )
@@ -586,141 +581,34 @@ ROM_START( mhavocrv )
 ROM_END
 
 ROM_START( mhavocp )
- /* Alpha Processor ROMs */
- ROM_REGIONX( 0x21000, REGION_CPU1 )
- /* Vector Generator ROM */
- ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
+	/* Alpha Processor ROMs */
+	ROM_REGIONX( 0x21000, REGION_CPU1 )
+	/* Vector Generator ROM */
+	ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
 
- /* Program ROM */
- ROM_LOAD( "136025.016",   0x08000, 0x4000, 0x94caf6c0 )
- ROM_LOAD( "136025.017",   0x0c000, 0x4000, 0x05cba70a )
+	/* Program ROM */
+	ROM_LOAD( "136025.016",   0x08000, 0x4000, 0x94caf6c0 )
+	ROM_LOAD( "136025.017",   0x0c000, 0x4000, 0x05cba70a )
 
- /* Paged Program ROM - switched to 2000-3fff */
- ROM_LOAD( "136025.015",   0x10000, 0x4000, 0xc567c11b )
- ROM_LOAD( "136025.018",   0x14000, 0x4000, 0xa8c35ccd )
+	/* Paged Program ROM - switched to 2000-3fff */
+	ROM_LOAD( "136025.015",   0x10000, 0x4000, 0xc567c11b )
+	ROM_LOAD( "136025.018",   0x14000, 0x4000, 0xa8c35ccd )
 
- /* Paged Vector Generator ROM */
- ROM_LOAD( "136025.006",   0x18000, 0x4000, 0xe272ed41 )
- ROM_LOAD( "136025.007",   0x1c000, 0x4000, 0xe152c9d8 )
+	/* Paged Vector Generator ROM */
+	ROM_LOAD( "136025.006",   0x18000, 0x4000, 0xe272ed41 )
+	ROM_LOAD( "136025.007",   0x1c000, 0x4000, 0xe152c9d8 )
 
- /* the last 0x1000 is used for the 2 RAM pages */
- ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
+	/* the last 0x1000 is used for the 2 RAM pages */
 
- /* Gamma Processor ROM */
- ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
- ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
- ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
+	/* Gamma Processor ROM */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
+	ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
+	ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
 ROM_END
 
 
 
-#define CREDITS \
-	"Mike Appolo (MAME driver)\n" \
-	"Brad Oliver (MAME driver)\n" \
-	"Neil Bradley (MAME driver)\n" \
-	"Bernd Wiebelt (MAME driver)\n" \
-	"Frank Palazzolo (technical info)\n" \
-	"Jess Askey (technical info)\n" \
-	"Owen Rubin (technical info)\n" \
-	VECTOR_TEAM
-
-struct GameDriver driver_mhavoc =
-{
-	__FILE__,
-	0,
-	"mhavoc",
-	"Major Havoc (rev 3)",
-	"1983",
-	"Atari",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mhavoc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mhavoc,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mhavoc2 =
-{
-	__FILE__,
-	&driver_mhavoc,
-	"mhavoc2",
-	"Major Havoc (rev 2)",
-	"1983",
-	"Atari",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mhavoc2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mhavoc,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mhavocrv =
-{
-	__FILE__,
-	&driver_mhavoc,
-	"mhavocrv",
-	"Major Havoc (Return to Vax)",
-	"1983",
-	"hack",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mhavocrv,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mhavoc,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mhavocp =
-{
-	__FILE__,
-	&driver_mhavoc,
-	"mhavocp",
-	"Major Havoc (prototype)",
-	"1983",
-	"Atari",
-	CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mhavocp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mhavocp,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1983, mhavoc,   0,      mhavoc, mhavoc,  0, ROT0, "Atari", "Major Havoc (rev 3)" )
+GAME( 1983, mhavoc2,  mhavoc, mhavoc, mhavoc,  0, ROT0, "Atari", "Major Havoc (rev 2)" )
+GAME( 1983, mhavocrv, mhavoc, mhavoc, mhavoc,  0, ROT0, "hack", "Major Havoc (Return to Vax)" )
+GAME( 1983, mhavocp,  mhavoc, mhavoc, mhavocp, 0, ROT0, "Atari", "Major Havoc (prototype)" )

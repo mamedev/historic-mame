@@ -2,6 +2,8 @@
 
 Pontoon Memory Map (preliminary)
 
+driver by Zsolt Vasvari
+
 Enter switch test mode by holding down the Hit key, and when the
 crosshatch pattern comes up, release it and push it again.
 
@@ -169,7 +171,7 @@ INPUT_PORTS_START( pontoon )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x38, 0x30, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x28, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x28, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_3C ) )
@@ -189,7 +191,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
+	1024,   /* 1024 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 4, 0, 12, 8, 20, 16, 28, 24},
@@ -200,10 +202,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0, 16 },
-	{ 1, 0x2000, &charlayout, 0, 16 },
-	{ 1, 0x4000, &charlayout, 0, 16 },
-	{ 1, 0x6000, &charlayout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -213,7 +212,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 2 chips */
 	4608000,	/* 18.432000 / 4 (???) */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },
 	{ input_port_4_r },
 	{ 0 },
@@ -221,7 +219,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pontoon =
 {
 	/* basic machine hardware */
 	{
@@ -272,7 +270,7 @@ ROM_START( pontoon )
 	ROM_LOAD( "ponttekh.001",   0x0000, 0x4000, 0x1f8c1b38 )
 	ROM_LOAD( "ponttekh.002",   0x4000, 0x2000, 0xbefb4f48 )
 
-	ROM_REGION_DISPOSE(0x8000)  /* temporary space for graphics */
+	ROM_REGIONX( 0x8000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ponttekh.003",   0x0000, 0x2000, 0xa6a91b3d )
 	ROM_LOAD( "ponttekh.004",   0x2000, 0x2000, 0x976ed924 )
 	ROM_LOAD( "ponttekh.005",   0x4000, 0x2000, 0x2b8e8ca7 )
@@ -286,28 +284,4 @@ ROM_END
 
 
 
-struct GameDriver driver_pontoon =
-{
-	__FILE__,
-	0,
-	"pontoon",
-	"Pontoon",
-	"1985",
-	"Tehkan",
-	"Zsolt Vasvari\nGerald Coy",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pontoon,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_pontoon,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1985, pontoon, 0, pontoon, pontoon, 0, ROT0, "Tehkan", "Pontoon" )

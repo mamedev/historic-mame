@@ -604,10 +604,10 @@ static struct GfxLayout backgroundlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
-	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0, &bulletlayout, 8*4, 2 },
+	{ 0,           0, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
@@ -742,7 +742,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1620000,	/* 1.62 MHz */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -869,7 +868,7 @@ ROM_START( mooncrst )
 	ROM_LOAD( "mc7",          0x3000, 0x0800, 0xb50dbc46 )
 	ROM_LOAD( "mc8",          0x3800, 0x0800, 0x18ca312b )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mcs_b",        0x0000, 0x0800, 0xfb0f1f81 )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "mcs_a",        0x1000, 0x0800, 0x631ebb5a )
@@ -890,7 +889,7 @@ ROM_START( mooncrsg )
 	ROM_LOAD( "epr200",       0x3000, 0x0800, 0xb7c85bf1 )
 	ROM_LOAD( "epr201",       0x3800, 0x0800, 0x2caba07f )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
@@ -911,7 +910,7 @@ ROM_START( smooncrs )
 	ROM_LOAD( "933",          0x3000, 0x0800, 0x73783cee )
 	ROM_LOAD( "934",          0x3800, 0x0800, 0xc1a14aa2 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
@@ -932,7 +931,7 @@ ROM_START( mooncrsb )
 	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
 	ROM_LOAD( "bepr201",      0x3800, 0x0800, 0x66da55d5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
@@ -953,7 +952,7 @@ ROM_START( mooncrs2 )
 	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
 	ROM_LOAD( "m7.bin",       0x3800, 0x0800, 0x957ee078 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
 	ROM_LOAD( "12.chr",       0x0800, 0x0200, 0x5a4b17ea )
 	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
@@ -980,7 +979,7 @@ ROM_START( fantazia )
 	ROM_LOAD( "f11.bin",      0x3000, 0x0800, 0x42869646 )
 	ROM_LOAD( "f12.bin",      0x3800, 0x0800, 0xa48d7fb0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
 	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
@@ -1003,7 +1002,7 @@ ROM_START( eagle )
 	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
 	ROM_LOAD( "e8",           0x3800, 0x0800, 0xc437a876 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "e10",          0x0000, 0x0800, 0x40ce58bf )
 	ROM_LOAD( "e12",          0x0800, 0x0200, 0x628fdeed )
 	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
@@ -1030,7 +1029,7 @@ ROM_START( eagle2 )
 	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
 	ROM_LOAD( "e8",           0x3800, 0x0800, 0xc437a876 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "e10.2",        0x0000, 0x0800, 0x25b38ebd )
 	ROM_LOAD( "e12",          0x0800, 0x0200, 0x628fdeed )
 	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
@@ -1057,7 +1056,7 @@ ROM_START( moonqsr )
 	ROM_LOAD( "mq7",          0x3000, 0x0800, 0x78d7fe5b )
 	ROM_LOAD( "mq8",          0x3800, 0x0800, 0x4919eed5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mqb",          0x0000, 0x0800, 0xb55ec806 )
 	ROM_LOAD( "mqd",          0x0800, 0x0800, 0x9e7d0e13 )
 	ROM_LOAD( "mqa",          0x1000, 0x0800, 0x66eee0db )
@@ -1075,7 +1074,7 @@ ROM_START( checkman )
 	ROM_LOAD( "cm4",          0x1800, 0x0800, 0x8c12ecc0 )
 	ROM_LOAD( "cm5",          0x2000, 0x0800, 0x2352cfd6 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cm11",         0x0000, 0x0800, 0x8d1bcca0 )
 	/* 0800-0fff empty */
 	ROM_LOAD( "cm9",          0x1000, 0x0800, 0x3cd5c751 )
@@ -1103,7 +1102,7 @@ ROM_START( moonal2 )
 	ROM_LOAD( "ali10",        0x2400, 0x0400, 0xb1059179 )
 	ROM_LOAD( "ali11",        0x2800, 0x0400, 0x9e79a1c6 )
 
-	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ali13.1h",     0x0000, 0x0800, 0xa1287bf6 )
 	/* 0800-0fff empty */
 	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
@@ -1126,7 +1125,7 @@ ROM_START( moonal2b )
 	ROM_LOAD( "ali10",        0x2400, 0x0400, 0xb1059179 )
 	ROM_LOAD( "md-6",         0x2800, 0x0800, 0x9cc973e0 )
 
-	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ali13.1h",     0x0000, 0x0800, 0xa1287bf6 )
 	/* 0800-0fff empty */
 	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
@@ -1142,7 +1141,7 @@ ROM_START( kingball )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
 	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, 0x9cd550e7 )
 	/* 0800-0fff empty */
 	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
@@ -1164,7 +1163,7 @@ ROM_START( kingbalj )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
 	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, 0x9cd550e7 )
 	/* 0800-0fff empty */
 	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
@@ -1194,7 +1193,7 @@ static unsigned char decode(int data,int addr)
 	return res;
 }
 
-static void mooncrst_decode(void)
+static void init_mooncrst(void)
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -1204,7 +1203,7 @@ static void mooncrst_decode(void)
 		rom[A] = decode(rom[A],A);
 }
 
-static void moonqsr_decode(void)
+static void init_moonqsr(void)
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -1217,7 +1216,7 @@ static void moonqsr_decode(void)
 		rom[A + diff] = decode(rom[A],A);
 }
 
-static void checkman_decode(void)
+static void init_checkman(void)
 {
 /*
                      Encryption Table
@@ -1278,354 +1277,17 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 
 
 
-struct GameDriver driver_mooncrst =
-{
-	__FILE__,
-	0,
-	"mooncrst",
-	"Moon Cresta (Nichibutsu)",
-	"1980",
-	"Nichibutsu",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	mooncrst_decode,
-
-	rom_mooncrst,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_mooncrsg =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"mooncrsg",
-	"Moon Cresta (Gremlin)",
-	"1980",
-	"Gremlin",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_mooncrsg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_smooncrs =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"smooncrs",
-	"Super Moon Cresta",
-	"1980?",
-	"Gremlin",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_smooncrs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_mooncrsb =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"mooncrsb",
-	"Moon Cresta (bootleg set 1)",
-	"1980",
-	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_mooncrsb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_mooncrs2 =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"mooncrs2",
-	"Moon Cresta (bootleg set 2)",
-	"1980",
-	"Nichibutsu",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_mooncrs2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_fantazia =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"fantazia",
-	"Fantazia",
-	"1980",
-	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_fantazia,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mooncrst,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_eagle =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"eagle",
-	"Eagle (set 1)",
-	"1980",
-	"Centuri",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_eagle,
-	0, 0,
-	0,
-	0,
-
-	input_ports_eagle,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_eagle2 =
-{
-	__FILE__,
-	&driver_mooncrst,
-	"eagle2",
-	"Eagle (set 2)",
-	"1980",
-	"Centuri",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
-	&machine_driver_mooncrst,
-	0,
-
-	rom_eagle2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_eagle2,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_moonqsr =
-{
-	__FILE__,
-	0,
-	"moonqsr",
-	"Moon Quasar",
-	"1980",
-	"Nichibutsu",
-	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
-	0,
-	&machine_driver_moonqsr,
-	moonqsr_decode,
-
-	rom_moonqsr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_moonqsr,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_checkman =
-{
-	__FILE__,
-	0,
-	"checkman",
-	"Checkman",
-	"1982",
-	"Zilec-Zenitone",
-	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
-	0,
-	&machine_driver_checkman,
-	checkman_decode,
-
-	rom_checkman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_checkman,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_moonal2 =
-{
-	__FILE__,
-	0,
-	"moonal2",
-	"Moon Alien Part 2",
-	"1980",
-	"Nichibutsu",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
-	0,
-	&machine_driver_moonal2,
-	0,
-
-	rom_moonal2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_moonal2,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_moonal2b =
-{
-	__FILE__,
-	&driver_moonal2,
-	"moonal2b",
-	"Moon Alien Part 2 (older version)",
-	"1980",
-	"Nichibutsu",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
-	0,
-	&machine_driver_moonal2,
-	0,
-
-	rom_moonal2b,
-	0, 0,
-	0,
-	0,
-
-	input_ports_moonal2,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_kingball =
-{
-	__FILE__,
-	0,
-	"kingball",
-	"King & Balloon (US)",
-	"1980",
-	"Namco",
-	"Brad Oliver",
-	0,
-	&machine_driver_kingball,
-	0,
-
-	rom_kingball,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kingball,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_kingbalj =
-{
-	__FILE__,
-	&driver_kingball,
-	"kingbalj",
-	"King & Balloon (Japan)",
-	"1980",
-	"Namco",
-	"Brad Oliver",
-	0,
-	&machine_driver_kingball,
-	0,
-
-	rom_kingbalj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kingball,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1980, mooncrst, 0,        mooncrst, mooncrst, mooncrst, ROT90, "Nichibutsu", "Moon Cresta (Nichibutsu)" )
+GAME( 1980, mooncrsg, mooncrst, mooncrst, mooncrst, 0,        ROT90, "Gremlin", "Moon Cresta (Gremlin)" )
+GAME( 1980?,smooncrs, mooncrst, mooncrst, mooncrst, 0,        ROT90, "Gremlin", "Super Moon Cresta" )
+GAME( 1980, mooncrsb, mooncrst, mooncrst, mooncrst, 0,        ROT90, "bootleg", "Moon Cresta (bootleg set 1)" )
+GAME( 1980, mooncrs2, mooncrst, mooncrst, mooncrst, 0,        ROT90, "Nichibutsu", "Moon Cresta (bootleg set 2)" )
+GAME( 1980, fantazia, mooncrst, mooncrst, mooncrst, 0,        ROT90, "bootleg", "Fantazia" )
+GAME( 1980, eagle,    mooncrst, mooncrst, eagle,    0,        ROT90, "Centuri", "Eagle (set 1)" )
+GAME( 1980, eagle2,   mooncrst, mooncrst, eagle2,   0,        ROT90, "Centuri", "Eagle (set 2)" )
+GAME( 1980, moonqsr,  0,        moonqsr,  moonqsr,  moonqsr,  ROT90, "Nichibutsu", "Moon Quasar" )
+GAME( 1982, checkman, 0,        checkman, checkman, checkman, ROT90, "Zilec-Zenitone", "Checkman" )
+GAME( 1980, moonal2,  0,        moonal2,  moonal2,  0,        ROT90, "Nichibutsu", "Moon Alien Part 2" )
+GAME( 1980, moonal2b, moonal2,  moonal2,  moonal2,  0,        ROT90, "Nichibutsu", "Moon Alien Part 2 (older version)" )
+GAME( 1980, kingball, 0,        kingball, kingball, 0,        ROT90, "Namco", "King & Balloon (US)" )
+GAME( 1980, kingbalj, kingball, kingball, kingball, 0,        ROT90, "Namco", "King & Balloon (Japan)" )

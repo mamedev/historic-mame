@@ -158,6 +158,7 @@ INPUT_PORTS_START( shootout )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
+
 static struct GfxLayout char_layout =
 {
 	8,8,	/* 8*8 characters */
@@ -178,13 +179,22 @@ static struct GfxLayout sprite_layout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
+static struct GfxLayout tile_layout =
+{
+	8,8,	/* 8*8 characters */
+	0x800,	/* 2048 characters */
+	2,	/* 2 bits per pixel */
+	{ 0,4 },	/* the bitplanes are packed in the same byte */
+	{ (0x4000*8)+0, (0x4000*8)+1, (0x4000*8)+2, (0x4000*8)+3, 0, 1, 2, 3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x30000, &char_layout,   16*4+8*8,	16	}, /* characters */
-	{ 1, 0x00000, &sprite_layout, 16*4,		8	}, /* sprites */
-	{ 1, 0x34000, &char_layout,   0,		16	}, /* tiles */
-	{ 1, 0x38000, &char_layout,   0,		16	}, /* tiles */
+	{ REGION_GFX1, 0, &char_layout,   16*4+8*8, 16 }, /* characters */
+	{ REGION_GFX2, 0, &sprite_layout, 16*4,      8 }, /* sprites */
+	{ REGION_GFX3, 0, &tile_layout,   0,        16 }, /* tiles */
 	{ -1 } /* end of array */
 };
 
@@ -193,7 +203,6 @@ static struct YM2203interface ym2203_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ??? */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -215,7 +224,7 @@ static int shootout_interrupt(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_shootout =
 {
 	/* basic machine hardware */
 	{
@@ -267,32 +276,34 @@ ROM_START( shootout )
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
 	ROM_LOAD( "cu01.c1",        0x18000, 0x4000, 0x8843c3ae ) /* opcodes encrypted */
 
-	ROM_REGION_DISPOSE(0x3c000)	/* temporary space for graphics (disposed after conversion) */
-	/* sprites */
-	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 ) /* plane 0 */
-	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
-	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f ) /* plane 1 */
-	ROM_LOAD( "cu05.c9",        0x18000, 0x8000, 0xdd038b85 )
-	ROM_LOAD( "cu08.c13",       0x20000, 0x8000, 0x91290933 ) /* plane 2 */
-	ROM_LOAD( "cu07.c12",       0x28000, 0x8000, 0x19b6b94f )
-
-	ROM_LOAD( "cu11.h19",       0x30000, 0x4000, 0xeff00460 ) /* foreground characters */
-
-	ROM_LOAD( "cu10.h17",       0x34000, 0x8000, 0x3854c877 ) /* background tiles */
-
-	ROM_REGIONX( 0x0100, REGION_PROMS )
-	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "cu09.j1",        0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
 
-	ROM_REGION(0x0100) /* unknown prom */
-	ROM_LOAD( "gb09.k6",        0x0000, 0x0100, 0xaa090565 )
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
+
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 )	/* sprites */
+	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
+	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f )
+	ROM_LOAD( "cu05.c9",        0x18000, 0x8000, 0xdd038b85 )
+	ROM_LOAD( "cu08.c13",       0x20000, 0x8000, 0x91290933 )
+	ROM_LOAD( "cu07.c12",       0x28000, 0x8000, 0x19b6b94f )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
+	ROM_CONTINUE(               0x04000, 0x2000 )
+	ROM_CONTINUE(               0x02000, 0x2000 )
+	ROM_CONTINUE(               0x06000, 0x2000 )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
+	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )	/* unknown */
 ROM_END
 
 
 
-static void shootout_decode (void)
+static void init_shootout(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -307,27 +318,4 @@ static void shootout_decode (void)
 
 
 
-struct GameDriver driver_shootout =
-{
-	__FILE__,
-	0,
-	"shootout",
-	"Shoot Out (US)",
-	"1985",
-	"Data East USA",
-	"Ernesto Corvi\nPhil Stroffolino\nZsolt Vasvari\nKevin Brisley\n",
-	0,
-	&machine_driver,
-	shootout_decode,
-
-	rom_shootout,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shootout,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1985, shootout, 0, shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)" )

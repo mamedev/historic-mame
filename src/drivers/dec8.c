@@ -1109,17 +1109,17 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ghostb )
@@ -1153,8 +1153,8 @@ INPUT_PORTS_START( ghostb )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1162,8 +1162,8 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Dummy input for i8751 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
@@ -1188,14 +1188,14 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPSETTING(    0x30, "5.00" )
 	PORT_DIPSETTING(    0x20, "6.00" )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup" ) /* Ghostb only */
 	PORT_DIPSETTING(    0x00, "Up 1.5%" )
 	PORT_DIPSETTING(    0x80, "Normal" )
 //	PORT_DIPNAME( 0x80, 0x80, "Freeze" ) /* Mazeh only */
-//	PORT_DIPSETTING(    0x80, "Off" )
-//	PORT_DIPSETTING(    0x00, "On" )
+//	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( srdarwin )
@@ -1305,8 +1305,8 @@ INPUT_PORTS_START( gondo )
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not currently supported */
 	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1314,8 +1314,8 @@ INPUT_PORTS_START( gondo )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -1329,17 +1329,17 @@ INPUT_PORTS_START( gondo )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( oscar )
@@ -1379,8 +1379,8 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x20, 0x20, "Demo Freeze Mode" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1408,11 +1408,11 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPSETTING(    0x10, "Every 90000" )
 	PORT_DIPSETTING(    0x00, "50000 only" )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lastmiss )
@@ -1443,11 +1443,11 @@ INPUT_PORTS_START( lastmiss )
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage options not supported (controlled by the i8751) */
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1467,17 +1467,17 @@ INPUT_PORTS_START( lastmiss )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?" )
-	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( shackled )
@@ -1508,8 +1508,8 @@ INPUT_PORTS_START( shackled )
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
 	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1532,17 +1532,17 @@ INPUT_PORTS_START( shackled )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( csilver )
@@ -1573,8 +1573,8 @@ INPUT_PORTS_START( csilver )
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
 	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1597,17 +1597,17 @@ INPUT_PORTS_START( csilver )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( garyoret )
@@ -1846,7 +1846,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,	/* Should be accurate for all games, derived from 12MHz crystal */
 	{ YM2203_VOL(20,23) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2883,7 +2882,7 @@ ROM_END
 /******************************************************************************/
 
 /* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound. */
-static void deco222_decode(void)
+static void init_deco222(void)
 {
 	int A,sound_cpu;
 	unsigned char *rom;
@@ -2904,393 +2903,34 @@ static void deco222_decode(void)
 		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
-static void meikyuh_patch(void)
+static void init_meikyuh(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
 	unsigned char *RAM = memory_region(REGION_PROMS);
 	memset(RAM+0x20,0,0xe0);
 }
 
-static void ghostb_decode(void)
+static void init_ghostb(void)
 {
-	deco222_decode();
-	meikyuh_patch();
+	init_deco222();
+	init_meikyuh();
 }
 
 /******************************************************************************/
 
-struct GameDriver driver_cobracom =
-{
-	__FILE__,
-	0,
-	"cobracom",
-	"Cobra-Command (Japan)",
-	"1988",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_cobra,
-	0,
+GAME( 1988, cobracom, 0,        cobra,    cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (Japan)" )
+GAME( 1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)" )
+GAME( 1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)" )
+GAME( 1987, meikyuh,  ghostb,   ghostb,   ghostb,   meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)" )
+GAME( 1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
+GAME( 1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)" )
+GAME( 1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)" )
+GAME( 1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)" )
+GAME( 1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan)" )
+GAME( 1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)" )
+GAME( 1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)" )
+GAME( 1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)" )
+GAME( 1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan)" )
+GAME( 1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)" )
+GAME( 1987, garyoret, 0,        garyoret, garyoret, 0,       ROT0,   "Data East Corporation", "Garyo Retsuden (Japan)" )
 
-	rom_cobracom,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cobracom,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_ghostb =
-{
-	__FILE__,
-	0,
-	"ghostb",
-	"The Real Ghostbusters (US 2 Players)",
-	"1987",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_ghostb,
-	ghostb_decode,
-
-	rom_ghostb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ghostb,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_ghostb3 =
-{
-	__FILE__,
-	&driver_ghostb,
-	"ghostb3",
-	"The Real Ghostbusters (US 3 Players)",
-	"1987",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_ghostb,
-	ghostb_decode,
-
-	rom_ghostb3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ghostb,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_meikyuh =
-{
-	__FILE__,
-	&driver_ghostb,
-	"meikyuh",
-	"Meikyuu Hunter G (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_ghostb,
-	meikyuh_patch,
-
-	rom_meikyuh,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ghostb,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_srdarwin =
-{
-	__FILE__,
-	0,
-	"srdarwin",
-	"Super Real Darwin (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_srdarwin,
-	deco222_decode,
-
-	rom_srdarwin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_srdarwin,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_gondo =
-{
-	__FILE__,
-	0,
-	"gondo",
-	"Gondomania (US)",
-	"1987",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_gondo,
-	0,
-
-	rom_gondo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gondo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_makyosen =
-{
-	__FILE__,
-	&driver_gondo,
-	"makyosen",
-	"Makyou Senshi (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_gondo,
-	0,
-
-	rom_makyosen,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gondo,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_oscar =
-{
-	__FILE__,
-	0,
-	"oscar",
-	"Psycho-Nics Oscar (US)",
-	"1988",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_oscar,
-	deco222_decode,
-
-	rom_oscar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_oscar,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_oscarj =
-{
-	__FILE__,
-	&driver_oscar,
-	"oscarj",
-	"Psycho-Nics Oscar (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_oscar,
-	deco222_decode,
-
-	rom_oscarj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_oscar,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_lastmiss =
-{
-	__FILE__,
-	0,
-	"lastmiss",
-	"Last Mission (US revision 6)",
-	"1986",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_lastmiss,
-	0,
-
-	rom_lastmiss,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lastmiss,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_lastmss2 =
-{
-	__FILE__,
-	&driver_lastmiss,
-	"lastmss2",
-	"Last Mission (US revision 5)",
-	"1986",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_lastmiss,
-	0,
-
-	rom_lastmss2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lastmiss,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_shackled =
-{
-	__FILE__,
-	0,
-	"shackled",
-	"Shackled (US)",
-	"1986",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&machine_driver_shackled,
-	0,
-
-	rom_shackled,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shackled,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_breywood =
-{
-	__FILE__,
-	&driver_shackled,
-	"breywood",
-	"Breywood (Japan)",
-	"1986",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_shackled,
-	0,
-
-	rom_breywood,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shackled,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_csilver =
-{
-	__FILE__,
-	0,
-	"csilver",
-	"Captain Silver (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_csilver,
-	0,
-
-	rom_csilver,
-	0, 0,
-	0,
-	0,
-
-	input_ports_csilver,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_garyoret =
-{
-	__FILE__,
-	0,
-	"garyoret",
-	"Garyo Retsuden (Japan)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_garyoret,
-	0,
-
-	rom_garyoret,
-	0, 0,
-	0,
-	0,
-
-	input_ports_garyoret,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};

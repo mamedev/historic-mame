@@ -128,31 +128,31 @@ INPUT_PORTS_START( qwakprot )
 
 	PORT_START      /* IN8 */
 	PORT_DIPNAME( 0x01, 0x00, "DIP 1" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x01, "off" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "DIP 2" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x02, "off" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "DIP 3" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x04, "off" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "DIP 4" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x08, "off" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "DIP 5" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x10, "off" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "DIP 6" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x20, "off" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "DIP 7" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x40, "off" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "DIP 8" )
-	PORT_DIPSETTING(    0x00, "on" )
-	PORT_DIPSETTING(    0x80, "off" )
-
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -180,9 +180,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0800, &charlayout,   0, 1 },
-	{ 1, 0x0808, &charlayout,   0, 1 },
-	{ 1, 0x0000, &spritelayout, 0, 1 },
+	{ REGION_GFX1, 0x0800, &charlayout,   0, 1 },
+	{ REGION_GFX1, 0x0808, &charlayout,   0, 1 },
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -209,7 +209,7 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_qwakprot =
 {
 	/* basic machine hardware */
 	{
@@ -261,7 +261,7 @@ ROM_START( qwakprot )
 	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, 0x90771cc0 )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION( 0x4000 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, 0xbed2c067 )
 	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, 0x73a31d28 )
 	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, 0x07fd9e80 )
@@ -270,28 +270,4 @@ ROM_END
 
 
 
-struct GameDriver driver_qwakprot =
-{
-	__FILE__,
-	0,
-	"qwakprot",
-	"Qwak (prototype)",
-	"1982",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_qwakprot,
-	0, 0,
-	0,
-	0,
-
-	input_ports_qwakprot,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
+GAME( 1982, qwakprot, 0, qwakprot, qwakprot, 0, ROT270, "Atari", "Qwak (prototype)" )

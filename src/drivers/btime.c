@@ -1277,7 +1277,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
 	{ 23, 23 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1767,18 +1766,18 @@ static void init_wtennis(void)
 
 
 
-GAME( 1982, btime,    ,        btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 1)" )
+GAME( 1982, btime,    0,       btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 1)" )
 GAME( 1982, btime2,   btime,   btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 2)" )
 GAME( 1982, btimem,   btime,   btime,    btime,    btime,   ROT270, "Data East (Bally Midway license)", "Burger Time (Midway)" )
 GAME( 1982, cookrace, btime,   cookrace, cookrace, lnc,     ROT270, "bootleg", "Cook Race" )
-GAME( 1981, lnc,      ,        lnc,      lnc,      lnc,     ROT270, "Data East Corporation", "Lock'n'Chase" )
-GAMEX(1982, wtennis,  ,        wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis", GAME_IMPERFECT_COLORS )
-GAME( 1982, mmonkey,  ,        mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey" )
-GAME( 1982, brubber,  ,        bnj,      bnj,      lnc,     ROT270, "Data East", "Burnin' Rubber" )
+GAME( 1981, lnc,      0,       lnc,      lnc,      lnc,     ROT270, "Data East Corporation", "Lock'n'Chase" )
+GAMEX(1982, wtennis,  0,       wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis", GAME_IMPERFECT_COLORS )
+GAME( 1982, mmonkey,  0,       mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey" )
+GAME( 1982, brubber,  0,       bnj,      bnj,      lnc,     ROT270, "Data East", "Burnin' Rubber" )
 GAME( 1982, bnj,      brubber, bnj,      bnj,      lnc,     ROT270, "Data East USA (Bally Midway license)", "Bump 'n' Jump" )
 GAME( 1983, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "Car Action" )
-GAME( 1982, zoar,     ,        zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
-GAME( 1982, disco,    ,        disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
+GAME( 1982, zoar,     0,       zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
+GAME( 1982, disco,    0,       disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
 
 
 
@@ -2004,4 +2003,4 @@ ROM_START( decocass )
 	ROM_LOAD( "rms8.snd",     0xf800, 0x0800, 0xb66b2c2a )
 ROM_END
 
-GAME( ????, decocass, , decocass, decocass, lnc, ROT270, "?????", "decocass" )
+GAME( ????, decocass, 0, decocass, decocass, lnc, ROT270, "?????", "decocass" )

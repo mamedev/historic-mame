@@ -289,10 +289,10 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,              0, 256 },
-	{ 1, 0x02000, &charlayout,          256*4, 256 },
-	{ 1, 0x10000, &spritelayout,  256*4+256*4, 3*64 },
-	{ 1, 0x18000, &spritelayout,  256*4+256*4, 3*64 },
+	{ REGION_GFX1, 0, &charlayout,              0, 256 },
+	{ REGION_GFX2, 0, &charlayout,          256*4, 256 },
+	{ REGION_GFX3, 0, &spritelayout,  256*4+256*4, 3*64 },
+	{ REGION_GFX4, 0, &spritelayout,  256*4+256*4, 3*64 },
 	{ -1 } /* end of array */
 };
 
@@ -307,7 +307,7 @@ static struct namco_interface namco_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pacland =
 {
 	/* basic machine hardware */
 	{
@@ -368,13 +368,23 @@ ROM_START( pacland )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl3_06.bin",   0x1c000, 0x4000, 0x2ffe3319 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl2_12.bin",   0x00000, 0x2000, 0xa63c8726 )	/* chars */
-	ROM_LOAD( "pl4_13.bin",   0x02000, 0x2000, 0x3ae582fd )
-	ROM_LOAD( "pl1-9",        0x10000, 0x4000, 0xf5d5962b )	/* sprites */
-	ROM_LOAD( "pl1-10",       0x14000, 0x4000, 0xc7cf1904 )
-	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
-	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl4_13.bin",   0x00000, 0x2000, 0x3ae582fd )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-9",        0x00000, 0x4000, 0xf5d5962b )	/* sprites */
+	ROM_LOAD( "pl1-10",       0x04000, 0x4000, 0xc7cf1904 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-8",        0x00000, 0x4000, 0xa2ebfa4a )
+	ROM_LOAD( "pl1-11",       0x04000, 0x4000, 0x6621361a )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
@@ -382,10 +392,6 @@ ROM_START( pacland )
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( pacland2 )
@@ -398,13 +404,23 @@ ROM_START( pacland2 )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl0_12.bin",   0x00000, 0x2000, 0xc8cb61ab )	/* chars */
-	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
-	ROM_LOAD( "pl1_09b.bin",  0x10000, 0x4000, 0x80768a87 )	/* sprites */
-	ROM_LOAD( "pl1_10b.bin",  0x14000, 0x4000, 0xffd9d66e )
-	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
-	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1_09b.bin",  0x00000, 0x4000, 0x80768a87 )	/* sprites */
+	ROM_LOAD( "pl1_10b.bin",  0x04000, 0x4000, 0xffd9d66e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1_08.bin",   0x00000, 0x4000, 0x2b20e46d )
+	ROM_LOAD( "pl1_11.bin",   0x04000, 0x4000, 0xc59775d8 )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
@@ -412,10 +428,6 @@ ROM_START( pacland2 )
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( pacland3 )
@@ -428,13 +440,23 @@ ROM_START( pacland3 )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
-	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
-	ROM_LOAD( "pl1_09b.bin",  0x10000, 0x4000, 0x80768a87 )	/* sprites */
-	ROM_LOAD( "pl1_10b.bin",  0x14000, 0x4000, 0xffd9d66e )
-	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
-	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1_09b.bin",  0x00000, 0x4000, 0x80768a87 )	/* sprites */
+	ROM_LOAD( "pl1_10b.bin",  0x04000, 0x4000, 0xffd9d66e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1_08.bin",   0x00000, 0x4000, 0x2b20e46d )
+	ROM_LOAD( "pl1_11.bin",   0x04000, 0x4000, 0xc59775d8 )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
@@ -442,10 +464,6 @@ ROM_START( pacland3 )
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( paclandm )
@@ -458,13 +476,23 @@ ROM_START( paclandm )
 	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
-	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
-	ROM_LOAD( "pl1-9",        0x10000, 0x4000, 0xf5d5962b )	/* sprites */
-	ROM_LOAD( "pl1-10",       0x14000, 0x4000, 0xc7cf1904 )
-	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
-	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-13",       0x00000, 0x2000, 0x6c5ed9ae )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-9",        0x00000, 0x4000, 0xf5d5962b )	/* sprites */
+	ROM_LOAD( "pl1-10",       0x04000, 0x4000, 0xc7cf1904 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pl1-8",        0x00000, 0x4000, 0xa2ebfa4a )
+	ROM_LOAD( "pl1-11",       0x04000, 0x4000, 0x6621361a )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
@@ -472,110 +500,11 @@ ROM_START( paclandm )
 	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 
 
-struct GameDriver driver_pacland =
-{
-	__FILE__,
-	0,
-	"pacland",
-	"Pac-Land (set 1)",
-	"1984",
-	"Namco",
-	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacland,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacland,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_pacland2 =
-{
-	__FILE__,
-	&driver_pacland,
-	"pacland2",
-	"Pac-Land (set 2)",
-	"1984",
-	"Namco",
-	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacland2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacland,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_pacland3 =
-{
-	__FILE__,
-	&driver_pacland,
-	"pacland3",
-	"Pac-Land (set 3)",
-	"1984",
-	"Namco",
-	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacland3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacland,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_paclandm =
-{
-	__FILE__,
-	&driver_pacland,
-	"paclandm",
-	"Pac-Land (Midway)",
-	"1984",
-	"[Namco] (Bally Midway license)",
-	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_paclandm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacland,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1984, pacland,  0,       pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 1)" )
+GAME( 1984, pacland2, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 2)" )
+GAME( 1984, pacland3, pacland, pacland, pacland, 0, ROT0, "Namco", "Pac-Land (set 3)" )
+GAME( 1984, paclandm, pacland, pacland, pacland, 0, ROT0, "[Namco] (Bally Midway license)", "Pac-Land (Midway)" )

@@ -1,8 +1,8 @@
 /***************************************************************************
 
-Shaolin's Road memory map (preliminary)
+Shaolin's Road
 
-
+driver by Allard Van Der Bas
 
 ***************************************************************************/
 
@@ -213,8 +213,8 @@ static struct GfxLayout shaolins_spritelayout =
 
 static struct GfxDecodeInfo shaolins_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &shaolins_charlayout,         0, 16*8 },
-	{ 1, 0x4000, &shaolins_spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX1, 0, &shaolins_charlayout,         0, 16*8 },
+	{ REGION_GFX2, 0, &shaolins_spritelayout, 16*8*16, 16*8 },
 	{ -1 } /* end of array */
 };
 
@@ -279,11 +279,13 @@ ROM_START( kicker )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
 
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "kikra10.bin",  0x0000, 0x2000, 0x4d156afc )
 	ROM_LOAD( "kikra11.bin",  0x2000, 0x2000, 0xff6ca5df )
-	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
-	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kikrh14.bin",  0x0000, 0x4000, 0xb94e645b )
+	ROM_LOAD( "kikrh13.bin",  0x4000, 0x4000, 0x61bbf797 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
@@ -299,11 +301,13 @@ ROM_START( shaolins )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
 
-	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "shaolins.6",   0x0000, 0x2000, 0xff18a7ed )
 	ROM_LOAD( "shaolins.7",   0x2000, 0x2000, 0x5f53ae61 )
-	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
-	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kikrh14.bin",  0x0000, 0x4000, 0xb94e645b )
+	ROM_LOAD( "kikrh13.bin",  0x4000, 0x4000, 0x61bbf797 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
@@ -315,52 +319,5 @@ ROM_END
 
 
 
-struct GameDriver driver_kicker =
-{
-	__FILE__,
-	0,
-	"kicker",
-	"Kicker",
-	"1985",
-	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
-	0,
-	&machine_driver_shaolins,
-	0,
-
-	rom_kicker,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shaolins,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_shaolins =
-{
-	__FILE__,
-	&driver_kicker,
-	"shaolins",
-	"Shao-Lin's Road",
-	"1985",
-	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
-	0,
-	&machine_driver_shaolins,
-	0,
-
-	rom_shaolins,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shaolins,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1985, kicker,   0,      shaolins, shaolins, 0, ROT90, "Konami", "Kicker" )
+GAME( 1985, shaolins, kicker, shaolins, shaolins, 0, ROT90, "Konami", "Shao-Lin's Road" )

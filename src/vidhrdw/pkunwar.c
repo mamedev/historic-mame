@@ -52,8 +52,8 @@ void pkunwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (flipscreen[0]) sx = 31 - sx;
 			if (flipscreen[1]) sy = 31 - sy;
 
-			drawgfx(tmpbitmap,Machine->gfx[colorram[offs] & 0x07],
-					videoram[offs],
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0x07) << 8),
 					(colorram[offs] & 0xf0) >> 4,
 					flipscreen[0],flipscreen[1],
 					8*sx,8*sy,
@@ -73,8 +73,8 @@ void pkunwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		sx = ((spriteram[offs + 1] + 8) & 0xff) - 8;
 		sy = spriteram[offs + 2];
-		flipx = spriteram[offs+0] & 0x01;
-		flipy = spriteram[offs+0] & 0x02;
+		flipx = spriteram[offs] & 0x01;
+		flipy = spriteram[offs] & 0x02;
 		if (flipscreen[0])
 		{
 			sx = 240 - sx;
@@ -86,8 +86,8 @@ void pkunwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[8 + (spriteram[offs + 3] & 0x07)],
-				(spriteram[offs] & 0xfc) >> 2,
+		drawgfx(bitmap,Machine->gfx[1],
+				((spriteram[offs] & 0xfc) >> 2) + ((spriteram[offs + 3] & 0x07) << 6),
 				(spriteram[offs + 3] & 0xf0) >> 4,
 				flipx,flipy,
 				sx,sy,
@@ -108,8 +108,8 @@ void pkunwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (flipscreen[0]) sx = 31 - sx;
 			if (flipscreen[1]) sy = 31 - sy;
 
-			drawgfx(bitmap,Machine->gfx[colorram[offs] & 0x07],
-					videoram[offs],
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0x07) << 8),
 					(colorram[offs] & 0xf0) >> 4,
 					flipscreen[0],flipscreen[1],
 					8*sx,8*sy,

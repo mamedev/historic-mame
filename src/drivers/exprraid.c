@@ -93,7 +93,7 @@ static int vblank_r( int offset ) {
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see exprraid_decode_rom below */
+	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see init_exprraid below */
     { 0x0000, 0x05ff, MRA_RAM },
     { 0x0600, 0x07ff, MRA_RAM }, /* sprites */
     { 0x0800, 0x0bff, videoram_r },
@@ -263,17 +263,17 @@ static struct GfxLayout tile2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &charlayout,   128, 2 }, /* characters */
-    { 1, 0x04000, &spritelayout,  64, 8 }, /* sprites */
-    { 1, 0x34000, &tile1,          0, 4 }, /* background tiles */
-    { 1, 0x34000, &tile2,          0, 4 },
-    { 1, 0x38000, &tile1,          0, 4 },
-    { 1, 0x38000, &tile2,          0, 4 },
-    { 1, 0x3c000, &tile1,          0, 4 },
-    { 1, 0x3c000, &tile2,          0, 4 },
-    { 1, 0x40000, &tile1,          0, 4 },
-    { 1, 0x40000, &tile2,          0, 4 },
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x00000, &charlayout,   128, 2 }, /* characters */
+	{ REGION_GFX2, 0x00000, &spritelayout,  64, 8 }, /* sprites */
+	{ REGION_GFX3, 0x00000, &tile1,          0, 4 }, /* background tiles */
+	{ REGION_GFX3, 0x00000, &tile2,          0, 4 },
+	{ REGION_GFX3, 0x04000, &tile1,          0, 4 },
+	{ REGION_GFX3, 0x04000, &tile2,          0, 4 },
+	{ REGION_GFX3, 0x08000, &tile1,          0, 4 },
+	{ REGION_GFX3, 0x08000, &tile2,          0, 4 },
+	{ REGION_GFX3, 0x0c000, &tile1,          0, 4 },
+	{ REGION_GFX3, 0x0c000, &tile2,          0, 4 },
+	{ -1 } /* end of array */
 };
 
 
@@ -289,8 +289,7 @@ static struct YM2203interface ym2203_interface =
 {
     1,      /* 1 chip */
     1500000,        /* 1.5 MHz ??? */
-    { YM2203_VOL(255,255) },
-	AY8910_DEFAULT_GAIN,
+    { YM2203_VOL(30,30) },
     { 0 },
     { 0 },
     { 0 },
@@ -301,7 +300,7 @@ static struct YM3526interface ym3526_interface =
 {
     1,                      /* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-    { 255 },         /* (not supported) */
+    { 30 },		/* volume */
 	{ irqhandler }
 };
 
@@ -320,7 +319,7 @@ static int exprraid_interrupt(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exprraid =
 {
 	/* basic machine hardware */
 	{
@@ -381,30 +380,34 @@ ROM_START( exprraid )
 	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
     ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
 
-    ROM_REGION_DISPOSE(0x54000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+
+    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
-	ROM_LOAD( "cz09",    0x04000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x0c000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x14000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x1c000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x24000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x2c000, 0x8000, 0x2f611978 )
-	ROM_LOAD( "cz04",    0x34000, 0x8000, 0x643a1bd3 )	/* tiles */
-/* Save 0x34000-0x43fff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "cz06",    0x4c000, 0x8000, 0xb9bb448b )	/* tiles */
+
+    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+
+    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cz04",    0x00000, 0x8000, 0x643a1bd3 )	/* tiles */
+	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
+	ROM_LOAD( "cz06",    0x18000, 0x8000, 0xb9bb448b )	/* tiles */
+
+    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
     ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
-
-    ROM_REGION( 0x8000 )     /* 32k for tile maps */
-	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
-
-    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
-    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
 ROM_START( wexpress )
@@ -412,30 +415,34 @@ ROM_START( wexpress )
 	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
     ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
 
-    ROM_REGION_DISPOSE(0x54000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+
+    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
-	ROM_LOAD( "cz09",    0x04000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x0c000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x14000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x1c000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x24000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x2c000, 0x8000, 0x2f611978 )
-	ROM_LOAD( "4",       0x34000, 0x8000, 0xf2e93ff0 )	/* tiles */
-/* Save 0x34000-0x43fff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
+
+    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+
+    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
+	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
+	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
+
+    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
     ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
-
-    ROM_REGION(0x8000)     /* 32k for tile maps */
-	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
-
-    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
-    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
 ROM_START( wexpresb )
@@ -443,43 +450,46 @@ ROM_START( wexpresb )
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
 
-    ROM_REGION_DISPOSE(0x54000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sub cpu */
+    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+
+    ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
-	ROM_LOAD( "cz09",    0x04000, 0x8000, 0x1ed250d1 )	/* sprites */
-	ROM_LOAD( "cz08",    0x0c000, 0x8000, 0x2293fc61 )
-	ROM_LOAD( "cz13",    0x14000, 0x8000, 0x7c3bfd00 )
-	ROM_LOAD( "cz12",    0x1c000, 0x8000, 0xea2294c8 )
-	ROM_LOAD( "cz11",    0x24000, 0x8000, 0xb7418335 )
-	ROM_LOAD( "cz10",    0x2c000, 0x8000, 0x2f611978 )
-	ROM_LOAD( "4",       0x34000, 0x8000, 0xf2e93ff0 )	/* tiles */
-/* Save 0x34000-0x43fff to expand the previous so we can decode the thing */
-	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
+
+    ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cz09",    0x00000, 0x8000, 0x1ed250d1 )	/* sprites */
+	ROM_LOAD( "cz08",    0x08000, 0x8000, 0x2293fc61 )
+	ROM_LOAD( "cz13",    0x10000, 0x8000, 0x7c3bfd00 )
+	ROM_LOAD( "cz12",    0x18000, 0x8000, 0xea2294c8 )
+	ROM_LOAD( "cz11",    0x20000, 0x8000, 0xb7418335 )
+	ROM_LOAD( "cz10",    0x28000, 0x8000, 0x2f611978 )
+
+    ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "4",       0x00000, 0x8000, 0xf2e93ff0 )	/* tiles */
+	/* Save 0x08000-0x0ffff to expand the previous so we can decode the thing */
+	ROM_LOAD( "cz05",    0x10000, 0x8000, 0xc44570bf )	/* tiles */
+	ROM_LOAD( "6",       0x18000, 0x8000, 0xc3a56de5 )	/* tiles */
+
+    ROM_REGIONX( 0x8000, REGION_GFX4 )     /* background tilemaps */
+	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
     ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
-
-    ROM_REGION(0x8000)     /* 32k for tile maps */
-	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
-
-    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
-    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
 
 
-static void exprraid_gfx_expand( void )
+static void exprraid_gfx_expand(void)
 {
 	/* Expand the background rom so we can use regular decode routines */
 
-	unsigned char	*gfx = memory_region(1);
+	unsigned char	*gfx = memory_region(REGION_GFX3);
 	int				offs = 0x10000-0x1000;
 	int				i;
 
-	gfx += 0x34000;
 
 	for ( i = 0x8000-0x1000; i >= 0; i-= 0x1000 )
 	{
@@ -494,7 +504,7 @@ static void exprraid_gfx_expand( void )
 }
 
 
-static void wexpress_decode_rom( void )
+static void init_wexpress(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -516,7 +526,7 @@ static void wexpress_decode_rom( void )
 	}
 }
 
-static void exprraid_decode_rom( void )
+static void init_exprraid(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -532,82 +542,15 @@ static void exprraid_decode_rom( void )
 	rom[0xffff] = rom[0xfff2];
 
 	/* HACK!: Implement custom opcode as regular with a mapped io read */
-	wexpress_decode_rom();
+	init_wexpress();
+}
+
+static void init_wexpresb(void)
+{
+	exprraid_gfx_expand();
 }
 
 
-
-struct GameDriver driver_exprraid =
-{
-	__FILE__,
-	0,
-	"exprraid",
-	"Express Raider (US)",
-	"1986",
-	"Data East USA",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver,
-	exprraid_decode_rom,
-
-	rom_exprraid,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exprraid,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_wexpress =
-{
-	__FILE__,
-	&driver_exprraid,
-	"wexpress",
-	"Western Express (World?)",
-	"1986",
-	"Data East Corporation",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver,
-	wexpress_decode_rom,
-
-	rom_wexpress,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exprraid,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_wexpresb =
-{
-	__FILE__,
-	&driver_exprraid,
-	"wexpresb",
-	"Western Express (bootleg)",
-	"1986",
-	"bootleg",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver,
-	exprraid_gfx_expand,
-
-	rom_wexpresb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exprraid,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, exprraid, 0,        exprraid, exprraid, exprraid, ROT0, "Data East USA", "Express Raider (US)" )
+GAME( 1986, wexpress, exprraid, exprraid, exprraid, wexpress, ROT0, "Data East Corporation", "Western Express (World?)" )
+GAME( 1986, wexpresb, exprraid, exprraid, exprraid, wexpresb, ROT0, "bootleg", "Western Express (bootleg)" )

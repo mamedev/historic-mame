@@ -1,3 +1,11 @@
+/****************************************************************************
+
+Higemaru
+
+driver by Mirko Buffoni
+
+****************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -158,8 +166,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 32 },
-	{ 1, 0x02000, &spritelayout,  32*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 32 },
+	{ REGION_GFX2, 0, &spritelayout,  32*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -170,7 +178,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	12000000/8,	/* 1.5 MHz ? Main xtal is 12MHz */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -179,7 +186,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_higemaru =
 {
 	/* basic machine hardware */
 	{
@@ -231,10 +238,12 @@ ROM_START( higemaru )
 	ROM_LOAD( "hg6",          0x4000, 0x2000, 0x5f5296aa )
 	ROM_LOAD( "hg7",          0x6000, 0x2000, 0xdc5d455d )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hg3",          0x00000, 0x2000, 0xb37b88c8 )	/* characters */
-	ROM_LOAD( "hg1",          0x02000, 0x2000, 0xef4c2f5d )	/* tiles */
-	ROM_LOAD( "hg2",          0x04000, 0x2000, 0x9133f804 )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hg3",          0x0000, 0x2000, 0xb37b88c8 )	/* characters */
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hg1",          0x0000, 0x2000, 0xef4c2f5d )	/* tiles */
+	ROM_LOAD( "hg2",          0x2000, 0x2000, 0x9133f804 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "hgb3",         0x0000, 0x0020, 0x629cebd8 )	/* palette */
@@ -244,27 +253,4 @@ ROM_END
 
 
 
-struct GameDriver driver_higemaru =
-{
-	__FILE__,
-	0,
-	"higemaru",
-	"Pirate Ship HigeMaru",
-	"1984",
-	"Capcom",
-	"Mirko Buffoni\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_higemaru,
-	0, 0,
-	0,
-	0,
-
-	input_ports_higemaru,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1984, higemaru, 0, higemaru, higemaru, 0, ROT0, "Capcom", "Pirate Ship HigeMaru" )

@@ -2,6 +2,9 @@
 
 Son Son memory map (preliminary)
 
+driver by Mirko Buffoni
+
+
 MAIN CPU:
 
 0000-0fff RAM
@@ -229,8 +232,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,      0, 64 },
-	{ 1, 0x04000, &spritelayout, 64*4, 32 },
+	{ REGION_GFX1, 0, &charlayout,      0, 64 },
+	{ REGION_GFX2, 0, &spritelayout, 64*4, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -241,7 +244,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 30, 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -250,7 +252,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sonson =
 {
 	/* basic machine hardware */
 	{
@@ -307,46 +309,25 @@ ROM_START( sonson )
 	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )
 	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ss5.v12",      0x00000, 0x2000, 0x990890b1 )	/* characters */
 	ROM_LOAD( "ss6.v12",      0x02000, 0x2000, 0x9388ff82 )
-	ROM_LOAD( "ss7.v12",      0x04000, 0x4000, 0x32b14b8e )	/* sprites */
-	ROM_LOAD( "ss8.v12",      0x08000, 0x4000, 0x9f59014e )
-	ROM_LOAD( "ss9.v12",      0x0c000, 0x4000, 0xe240345a )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ss7.v12",      0x00000, 0x4000, 0x32b14b8e )	/* sprites */
+	ROM_LOAD( "ss8.v12",      0x04000, 0x4000, 0x9f59014e )
+	ROM_LOAD( "ss9.v12",      0x08000, 0x4000, 0xe240345a )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
 	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
 	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
 	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0xd4f7bfb5 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
 ROM_END
 
 
 
-struct GameDriver driver_sonson =
-{
-	__FILE__,
-	0,
-	"sonson",
-	"Son Son",
-	"1984",
-	"Capcom",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info=",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sonson,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sonson,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1984, sonson, 0, sonson, sonson, 0, ROT0, "Capcom", "Son Son" )

@@ -141,8 +141,9 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Left screen - special check for drawing right screen's sub */
 		if ((offs!=0) || (sub_enable))
 		{
-			drawgfx(bitmap,Machine->gfx[1 + prom_set],
-					charcode, 0,
+			drawgfx(bitmap,Machine->gfx[1],
+					charcode + 32 * prom_set,
+					0,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
@@ -150,8 +151,9 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Right screen - special check for drawing left screen's sub */
 		if ((offs!=1) || (sub_enable))
 		{
-			drawgfx(bitmap,Machine->gfx[1 + prom_set],
-					charcode, 0,
+			drawgfx(bitmap,Machine->gfx[1],
+					charcode + 32 * prom_set,
+					0,
 					0,0,sx + 256,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

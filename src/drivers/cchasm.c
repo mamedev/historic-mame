@@ -137,7 +137,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	1818182,	/* 1.82 MHz */
 	{ 20, 20 },
-	AY8910_DEFAULT_GAIN,
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -261,5 +260,5 @@ ROM_END
 
 
 
-GAME( 1983, cchasm,  ,       cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 1)" )
-GAME( 1983, cchasm1, cchasm, cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 2)" )
+GAME( 1983, cchasm,  0,      cchasm, cchasm, 0, ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 1)" )
+GAME( 1983, cchasm1, cchasm, cchasm, cchasm, 0, ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 2)" )

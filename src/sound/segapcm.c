@@ -58,6 +58,10 @@ static int segapcm_gaintable[] = {
 };
 #endif
 
+
+static void SEGAPCMUpdate( int num, INT16 **buffer, int length );
+
+
 /************************************************/
 /*                                              */
 /************************************************/
@@ -135,7 +139,7 @@ int SEGAPCMInit( const struct MachineSound *msound, int banksize, int mode, unsi
 		sprintf( buf[1], "%s R", sound_name(msound) );
 		vol[0] = (MIXER_PAN_LEFT<<8)  | (volume&0xff);
 		vol[1] = (MIXER_PAN_RIGHT<<8) | (volume&0xff);
-		stream = stream_init_multi( LR_PAN, name, vol, rate, 16, 0, SEGAPCMUpdate );
+		stream = stream_init_multi( LR_PAN, name, vol, rate, 0, SEGAPCMUpdate );
 	}
 	//printf( "segaPCM end\n" );
 	return 0;
@@ -175,23 +179,23 @@ void SEGAPCMResetChip( void )
 
 INLINE int ILimit(int v, int max, int min) { return v > max ? max : (v < min ? min : v); }
 
-void SEGAPCMUpdate( int num, void **buffer, int length )
+static void SEGAPCMUpdate( int num, INT16 **buffer, int length )
 {
 	int i, j;
 	unsigned int addr, old_addr, end_addr, end_check_addr;
 	unsigned char *pcm_buf;
 	int  lv, rv;
-	SEGAPCM_SMP  *datap[2];
+	INT16  *datap[2];
 	int tmp;
 
 	if( Machine->sample_rate == 0 ) return;
 	if( pcm_rom == NULL )    return;
 
-	datap[0] = (SEGAPCM_SMP *)buffer[0];
-	datap[1] = (SEGAPCM_SMP *)buffer[1];
+	datap[0] = buffer[0];
+	datap[1] = buffer[1];
 
-	memset( datap[0], 0x00, length * sizeof(SEGAPCM_SMP) );
-	memset( datap[1], 0x00, length * sizeof(SEGAPCM_SMP) );
+	memset( datap[0], 0x00, length * sizeof(INT16) );
+	memset( datap[1], 0x00, length * sizeof(INT16) );
 
 	for( i = 0; i < SEGAPCM_MAX; i++ )
 	{

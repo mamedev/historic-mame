@@ -362,8 +362,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 32 },
-	{ 1, 0x1000, &spritelayout,  32*4, 32 },
+	{ REGION_GFX1, 0, &charlayout,       0, 32 },
+	{ REGION_GFX2, 0, &spritelayout,  32*4, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -374,7 +374,7 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	5			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static const char *galaga_sample_names[] =
@@ -392,7 +392,7 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_galaga =
 {
 	/* basic machine hardware */
 	{
@@ -460,10 +460,18 @@ ROM_START( galaga )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
 	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -471,13 +479,7 @@ ROM_START( galaga )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
@@ -488,10 +490,18 @@ ROM_START( galagamw )
 	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
 	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -499,13 +509,7 @@ ROM_START( galagamw )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
@@ -516,10 +520,18 @@ ROM_START( galagads )
 	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
 	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -527,13 +539,7 @@ ROM_START( galagads )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
@@ -544,10 +550,21 @@ ROM_START( gallag )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
 	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -555,17 +572,8 @@ ROM_START( gallag )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
-
-	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
 ROM_END
 
 ROM_START( galagab2 )
@@ -575,10 +583,21 @@ ROM_START( galagab2 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
 	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -586,17 +605,8 @@ ROM_START( galagab2 )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
-
-	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
 ROM_START( galaga84 )
@@ -606,10 +616,21 @@ ROM_START( galaga84 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
 	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
-	ROM_LOAD( "gal84u4d",     0x1000, 0x1000, 0x22e339d5 )
-	ROM_LOAD( "gal84u4e",     0x2000, 0x1000, 0x60dcf940 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gal84u4d",     0x0000, 0x1000, 0x22e339d5 )
+	ROM_LOAD( "gal84u4e",     0x1000, 0x1000, 0x60dcf940 )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -617,17 +638,8 @@ ROM_START( galaga84 )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
-
-	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
-	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
 ROM_START( nebulbee )
@@ -637,10 +649,18 @@ ROM_START( nebulbee )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
 	ROM_LOAD( "nebulbee.04",  0x3000, 0x1000, 0xd76788a5 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
-	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
-	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "07e_g10.bin",  0x0000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x1000, 0x1000, 0xdd6f1afc )
 
 	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
@@ -648,190 +668,16 @@ ROM_START( nebulbee )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
-
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
 
 
-struct GameDriver driver_galaga =
-{
-	__FILE__,
-	0,
-	"galaga",
-	"Galaga (Namco)",
-	"1981",
-	"Namco",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galaga,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaganm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galagamw =
-{
-	__FILE__,
-	&driver_galaga,
-	"galagamw",
-	"Galaga (Midway)",
-	"1981",
-	"[Namco] (Midway license)",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galagamw,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaga,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galagads =
-{
-	__FILE__,
-	&driver_galaga,
-	"galagads",
-	"Galaga (fast shoot)",
-	"1981",
-	"hack",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galagads,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaga,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_gallag =
-{
-	__FILE__,
-	&driver_galaga,
-	"gallag",
-	"Gallag",
-	"1982",
-	"bootleg",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_gallag,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaganm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galagab2 =
-{
-	__FILE__,
-	&driver_galaga,
-	"galagab2",
-	"Galaga (bootleg)",
-	"1981",
-	"bootleg",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galagab2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaganm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_galaga84 =
-{
-	__FILE__,
-	&driver_galaga,
-	"galaga84",
-	"Galaga '84",
-	"1984",
-	"hack",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_galaga84,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaganm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_nebulbee =
-{
-	__FILE__,
-	&driver_galaga,
-	"nebulbee",
-	"Nebulous Bee",
-	"1984",
-	"hack",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_nebulbee,
-	0, 0,
-	0,
-	0,
-
-	input_ports_galaganm,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
+GAME( 1981, galaga,   0,      galaga, galaganm, 0, ROT90, "Namco", "Galaga (Namco)" )
+GAME( 1981, galagamw, galaga, galaga, galaga,   0, ROT90, "[Namco] (Midway license)", "Galaga (Midway)" )
+GAME( 1981, galagads, galaga, galaga, galaga,   0, ROT90, "hack", "Galaga (fast shoot)" )
+GAME( 1982, gallag,   galaga, galaga, galaganm, 0, ROT90, "bootleg", "Gallag" )
+GAME( 1981, galagab2, galaga, galaga, galaganm, 0, ROT90, "bootleg", "Galaga (bootleg)" )
+GAME( 1984, galaga84, galaga, galaga, galaganm, 0, ROT90, "hack", "Galaga '84" )
+GAME( 1984, nebulbee, galaga, galaga, galaganm, 0, ROT90, "hack", "Nebulous Bee" )

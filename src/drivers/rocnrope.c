@@ -220,14 +220,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rocnrope =
 {
 	/* basic machine hardware */
 	{
@@ -284,22 +284,24 @@ ROM_START( rocnrope )
 	ROM_LOAD( "rr4.4h",       0xc000, 0x2000, 0x7acb2a05 )
 	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
-	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
 	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
-	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
+	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
+	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
+	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
 ROM_START( rocnropk )
@@ -310,27 +312,29 @@ ROM_START( rocnropk )
 	ROM_LOAD( "rnr_h4.vid",   0xc000, 0x2000, 0x9b2e5f2a )
 	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
-	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
 	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
-	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
+	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
+	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
+	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
 
 
-static void rocnrope_decode(void)
+static void init_rocnrope(void)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -340,54 +344,12 @@ static void rocnrope_decode(void)
 	rom[0x703d + diff] = 0x98;	/* fix one instruction */
 }
 
-
-
-struct GameDriver driver_rocnrope =
+static void init_rocnropk(void)
 {
-	__FILE__,
-	0,
-	"rocnrope",
-	"Roc'n Rope",
-	"1983",
-	"Konami",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	rocnrope_decode,
+	konami1_decode();
+}
 
-	rom_rocnrope,
-	0, 0,
-	0,
-	0,
 
-	input_ports_rocnrope,
 
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_rocnropk =
-{
-	__FILE__,
-	&driver_rocnrope,
-	"rocnropk",
-	"Roc'n Rope (Kosuka)",
-	"1983",
-	"Konami + Kosuka",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	konami1_decode,
-
-	rom_rocnropk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rocnrope,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1983, rocnrope, 0,        rocnrope, rocnrope, rocnrope, ROT270, "Konami", "Roc'n Rope" )
+GAME( 1983, rocnropk, rocnrope, rocnrope, rocnrope, rocnropk, ROT270, "Konami + Kosuka", "Roc'n Rope (Kosuka)" )

@@ -1,6 +1,10 @@
 /***************************************************************************
 
 Pinball Action memory map (preliminary)
+
+driver by Nicola Salmoria
+
+
 0000-9fff ROM
 d000-d3ff Video RAM
 d400-d7ff Color RAM
@@ -22,6 +26,10 @@ e600      interrupt enable
 e604      flip screen
 e606      bg scroll? not sure
 e800      command for the sound CPU
+
+
+Notes:
+- pbactio2 has a ROM for a third Z80, not emulated, function unknown
 
 ***************************************************************************/
 
@@ -244,10 +252,10 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout1,    0, 16 },	/*   0-127 characters */
-	{ 1, 0x06000, &charlayout2,  128,  8 },	/* 128-255 background */
-	{ 1, 0x16000, &spritelayout1,  0, 16 },	/*   0-127 normal sprites */
-	{ 1, 0x17000, &spritelayout2,  0, 16 },	/*   0-127 large sprites */
+	{ REGION_GFX1, 0x00000, &charlayout1,    0, 16 },	/*   0-127 characters */
+	{ REGION_GFX2, 0x00000, &charlayout2,  128,  8 },	/* 128-255 background */
+	{ REGION_GFX3, 0x00000, &spritelayout1,  0, 16 },	/*   0-127 normal sprites */
+	{ REGION_GFX3, 0x01000, &spritelayout2,  0, 16 },	/*   0-127 large sprites */
 	{ -1 } /* end of array */
 };
 
@@ -257,7 +265,6 @@ static struct AY8910interface ay8910_interface =
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 25, 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -271,7 +278,7 @@ int pbaction_interrupt(void)
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pbaction =
 {
 	/* basic machine hardware */
 	{
@@ -329,22 +336,24 @@ ROM_START( pbaction )
 	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
 	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
 
-	ROM_REGION_DISPOSE(0x1c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
 	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
 	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_LOAD( "a-j5.bin",     0x06000, 0x4000, 0x21efe866 )
-	ROM_LOAD( "a-j6.bin",     0x0a000, 0x4000, 0x7f984c80 )
-	ROM_LOAD( "a-j7.bin",     0x0e000, 0x4000, 0xdf69e51b )
-	ROM_LOAD( "a-j8.bin",     0x12000, 0x4000, 0x0094cb8b )
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
+	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
+	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
+	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
 
-	ROM_LOAD( "b-c7.bin",     0x16000, 0x2000, 0xd1795ef5 )
-	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
-	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
-	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
+	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
+	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )
 ROM_END
 
 
@@ -354,75 +363,30 @@ ROM_START( pbactio2 )
 	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
 	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
 
-	ROM_REGION_DISPOSE(0x1c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for a third Z80 (not emulated) */
+	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, 0x2734ae60 )
+
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
 	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
 	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_LOAD( "a-j5.bin",     0x06000, 0x4000, 0x21efe866 )
-	ROM_LOAD( "a-j6.bin",     0x0a000, 0x4000, 0x7f984c80 )
-	ROM_LOAD( "a-j7.bin",     0x0e000, 0x4000, 0xdf69e51b )
-	ROM_LOAD( "a-j8.bin",     0x12000, 0x4000, 0x0094cb8b )
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a-j5.bin",     0x00000, 0x4000, 0x21efe866 )
+	ROM_LOAD( "a-j6.bin",     0x04000, 0x4000, 0x7f984c80 )
+	ROM_LOAD( "a-j7.bin",     0x08000, 0x4000, 0xdf69e51b )
+	ROM_LOAD( "a-j8.bin",     0x0c000, 0x4000, 0x0094cb8b )
 
-	ROM_LOAD( "b-c7.bin",     0x16000, 0x2000, 0xd1795ef5 )
-	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
-	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
-	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
-
-	ROM_REGION(0x10000)	/* 64k for a third Z80 (not emulated) */
-	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, 0x2734ae60 )
+	ROM_REGIONX( 0x06000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b-c7.bin",     0x00000, 0x2000, 0xd1795ef5 )
+	ROM_LOAD( "b-d7.bin",     0x02000, 0x2000, 0xf28df203 )
+	ROM_LOAD( "b-f7.bin",     0x04000, 0x2000, 0xaf6e9817 )
 ROM_END
 
 
 
-struct GameDriver driver_pbaction =
-{
-	__FILE__,
-	0,
-	"pbaction",
-	"Pinball Action (set 1)",
-	"1985",
-	"Tehkan",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pbaction,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pbaction,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pbactio2 =
-{
-	__FILE__,
-	&driver_pbaction,
-	"pbactio2",
-	"Pinball Action (set 2)",
-	"1985",
-	"Tehkan",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pbactio2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pbaction,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1985, pbaction, 0,        pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 1)" )
+GAME( 1985, pbactio2, pbaction, pbaction, pbaction, 0, ROT90, "Tehkan", "Pinball Action (set 2)" )

@@ -120,7 +120,7 @@ int YM2610_sh_start(const struct MachineSound *msound)
 			mixed_vol>>=16;
 			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
+		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,i,YM2610UpdateOne);
 		/* setup adpcm buffers */
 		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
 		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);
@@ -176,7 +176,7 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 			mixed_vol>>=16;
 			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 		}
-		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2610BUpdateOne);
+		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,i,YM2610BUpdateOne);
 		/* setup adpcm buffers */
 		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
 		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);

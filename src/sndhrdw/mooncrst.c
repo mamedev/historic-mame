@@ -72,11 +72,10 @@ static INT16 backgroundwave[32] =
 static int channelnoise,channelshoot,channellfo;
 static int tone_stream;
 
-static void tone_update(int ch, void *buffer, int length)
+static void tone_update(int ch, INT16 *buffer, int length)
 {
 	int i,j;
 	INT8 *w = tonewave[vol];
-	INT16 *dest = buffer;
 	static int counter, countdown;
 
 	/* only update if we have non-zero volume and frequency */
@@ -97,13 +96,13 @@ static void tone_update(int ch, void *buffer, int length)
 
 				mix += w[counter];
 			}
-			*dest++ = (mix << 8) / STEPS;
+			*buffer++ = (mix << 8) / STEPS;
 		}
 	}
 	else
 	{
 		for( i = 0; i < length; i++ )
-			*dest++ = 0;
+			*buffer++ = 0;
 	}
 }
 
@@ -468,7 +467,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	pitch = 0;
 	vol = 0;
 
-	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,16,0,tone_update);
+	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,0,tone_update);
 
 #if SAMPLES
 	if (!deathsampleloaded)

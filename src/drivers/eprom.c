@@ -3,6 +3,9 @@
 EPRoM Memory Map
 ----------------
 
+driver by Aaron Giles
+
+
 EPRoM 68010 MEMORY MAP
 
 Program ROM             000000-05FFFF   R    D15-D0
@@ -398,8 +401,8 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x000000, &pfmolayout,  256, 32 },	/* sprites & playfield */
-	{ 3, 0x100000, &anlayout,      0, 64 },		/* characters 8x8 */
+	{ REGION_GFX1, 0, &pfmolayout,  256, 32 },	/* sprites & playfield */
+	{ REGION_GFX2, 0, &anlayout,      0, 64 },	/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -411,7 +414,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_eprom =
 {
 	/* basic machine hardware */
 	{
@@ -464,11 +467,11 @@ static void rom_decode(void)
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < 0x100000; i++)
-		memory_region(3)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&memory_region(1)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -498,7 +501,7 @@ ROM_START( eprom )
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136069.47s",   0x00000, 0x10000, 0x0de9d98d )
 	ROM_LOAD( "136069.43s",   0x10000, 0x10000, 0x8eb106ad )
 	ROM_LOAD( "136069.38s",   0x20000, 0x10000, 0xbf3d0e18 )
@@ -515,9 +518,10 @@ ROM_START( eprom )
 	ROM_LOAD( "136069.70u",   0xd0000, 0x10000, 0xfbc3934b )
 	ROM_LOAD( "136069.64u",   0xe0000, 0x10000, 0x0e07493b )
 	ROM_LOAD( "136069.57u",   0xf0000, 0x10000, 0x34f8f0ed )
-	ROM_LOAD( "1360691.25d",  0x100000, 0x04000, 0x409d818e )
-ROM_END
 
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1360691.25d",  0x00000, 0x04000, 0x409d818e )
+ROM_END
 
 ROM_START( eprom2 )
 	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
@@ -540,7 +544,7 @@ ROM_START( eprom2 )
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136069.47s",   0x00000, 0x10000, 0x0de9d98d )
 	ROM_LOAD( "136069.43s",   0x10000, 0x10000, 0x8eb106ad )
 	ROM_LOAD( "136069.38s",   0x20000, 0x10000, 0xbf3d0e18 )
@@ -557,7 +561,9 @@ ROM_START( eprom2 )
 	ROM_LOAD( "136069.70u",   0xd0000, 0x10000, 0xfbc3934b )
 	ROM_LOAD( "136069.64u",   0xe0000, 0x10000, 0x0e07493b )
 	ROM_LOAD( "136069.57u",   0xf0000, 0x10000, 0x34f8f0ed )
-	ROM_LOAD( "1360691.25d",  0x100000, 0x04000, 0x409d818e )
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1360691.25d",  0x00000, 0x04000, 0x409d818e )
 ROM_END
 
 
@@ -568,7 +574,7 @@ ROM_END
  *
  *************************************/
 
-static void eprom_init(void)
+static void init_eprom(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 6, 1, 0x0002);
@@ -590,53 +596,5 @@ static void eprom_init(void)
  *
  *************************************/
 
-struct GameDriver driver_eprom =
-{
-	__FILE__,
-	0,
-	"eprom",
-	"Escape from the Planet of the Robot Monsters (set 1)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
-	0,
-	&machine_driver,
-	eprom_init,
-
-	rom_eprom,
-	0, 0,
-	0,
-	0,
-
-	input_ports_eprom,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_eprom2 =
-{
-	__FILE__,
-	&driver_eprom,
-	"eprom2",
-	"Escape from the Planet of the Robot Monsters (set 2)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
-	0,
-	&machine_driver,
-	eprom_init,
-
-	rom_eprom2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_eprom,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1989, eprom,  0,     eprom, eprom, eprom, ROT0, "Atari Games", "Escape from the Planet of the Robot Monsters (set 1)" )
+GAME( 1989, eprom2, eprom, eprom, eprom, eprom, ROT0, "Atari Games", "Escape from the Planet of the Robot Monsters (set 2)" )

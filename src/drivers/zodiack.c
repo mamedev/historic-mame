@@ -421,7 +421,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -532,8 +531,8 @@ ROM_START( moguchan )
 	ROM_LOAD( "7.7m",         0x1800, 0x1000, 0xbfca00f4 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
-	ROM_LOAD( "moguchan.cl1", 0x0000, 0x0020, 0x00000000 )
-	ROM_LOAD( "moguchan.cl2", 0x0020, 0x0020, 0x00000000 )
+	ROM_LOAD( "moguchan.2a",  0x0000, 0x0020, 0xe83daab3 )
+	ROM_LOAD( "moguchan.2b",  0x0020, 0x0020, 0x9abfdf40 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
@@ -637,7 +636,7 @@ struct GameDriver driver_moguchan =
 	input_ports_moguchan,
 
 	0, 0, 0,
-	ROT270 | GAME_WRONG_COLORS,
+	ROT270,
 	0,0
 };
 

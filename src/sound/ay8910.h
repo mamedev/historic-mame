@@ -9,15 +9,12 @@ struct AY8910interface
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
 	int mixing_level[MAX_8910];
-	int gain[MAX_8910];
 	int (*portAread[MAX_8910])(int offset);
 	int (*portBread[MAX_8910])(int offset);
 	void (*portAwrite[MAX_8910])(int offset,int data);
 	void (*portBwrite[MAX_8910])(int offset,int data);
 	void (*handler[MAX_8910])(int irq);	/* IRQ handler for the YM2203 */
 };
-
-#define AY8910_DEFAULT_GAIN { 0 }
 
 void AY8910_reset(int chip);
 

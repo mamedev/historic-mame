@@ -194,22 +194,12 @@ void rallyx_flipscreen_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-static int displacement;
-
-void rallyx_init(void)
-{
-	displacement = 1;
-}
-
-void jungler_init(void)
-{
-	displacement = 0;
-}
 
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
+const int displacement = 1;
 
 
 	if (flipscreen)
@@ -355,35 +345,20 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int x,y;
 
-		if (displacement)	/* RallyX */
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8) - 2;
+		y = 235 - rallyx_radary[offs];
+		if (flipscreen)
 		{
-			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8) - 2;
-			y = 235 - rallyx_radary[offs];
-			if (flipscreen)
-			{
-				x -= 1;
-				y += 2;
-			}
-
-			drawgfx(bitmap,Machine->gfx[2],
-					((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
-					0,
-					flipscreen,flipscreen,
-					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+			x -= 1;
+			y += 2;
 		}
-		else	/* Jungler */
-		{
-			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5) + 1;
-			y = 238 - rallyx_radary[offs];
 
-			drawgfx(bitmap,Machine->gfx[2],
-					(rallyx_radarattr[offs] & 0x07) ^ 0x07,
-					0,
-					flipscreen,flipscreen,
-					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
-		}
+		drawgfx(bitmap,Machine->gfx[2],
+				((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
+				0,
+				flipscreen,flipscreen,
+				x,y,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
 
@@ -393,6 +368,7 @@ void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
+const int displacement = 0;
 
 
 	if (flipscreen)
@@ -500,35 +476,15 @@ void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int x,y;
 
-		if (displacement)	/* RallyX */
-		{
-			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8) - 2;
-			y = 235 - rallyx_radary[offs];
-			if (flipscreen)
-			{
-				x -= 1;
-				y += 2;
-			}
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5) + 1;
+		y = 238 - rallyx_radary[offs];
 
-			drawgfx(bitmap,Machine->gfx[2],
-					((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
-					0,
-					flipscreen,flipscreen,
-					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
-		}
-		else	/* Jungler */
-		{
-			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5) + 1;
-			y = 238 - rallyx_radary[offs];
-
-			drawgfx(bitmap,Machine->gfx[2],
-					(rallyx_radarattr[offs] & 0x07) ^ 0x07,
-					0,
-					flipscreen,flipscreen,
-					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
-		}
+		drawgfx(bitmap,Machine->gfx[2],
+				(rallyx_radarattr[offs] & 0x07) ^ 0x07,
+				0,
+				flipscreen,flipscreen,
+				x,y,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
 

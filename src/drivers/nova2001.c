@@ -2,6 +2,8 @@
 
      Nova 2001 - by UPL - 1983
 
+     driver by Howie Cohen, Frank Palazzolo, Alex Pasadyn
+
      Memory Map:
 
      Address Range:     R/W:     Function:
@@ -22,11 +24,6 @@
      c007               R        Player 2 Controls
      c00e               R        Coin Inputs, etc.
      e000 - e7ff        R/W      Work RAM
-
-     Issues:
-
-     - High Score Saving doesn't update the HISCORE display at the top,
-       but it does update the high score table.
 
 *******************************************************************************/
 
@@ -127,8 +124,8 @@ INPUT_PORTS_START( nova2001 )
     PORT_DIPSETTING(    0x00, "None" )
     PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coinage ) )
     PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_2C ) )
     PORT_DIPSETTING(    0x60, DEF_STR( 1C_1C ) )
-    PORT_DIPSETTING(    0x00, "2 Coins/2 Credits" )
     PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
     PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
     PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -200,7 +197,6 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	6000000/3,	/* 2 MHz */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0, input_port_3_r },
 	{ 0, input_port_4_r },
 	{ nova2001_scroll_x_w }, /* writes are connected to pf scroll */
@@ -208,7 +204,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_nova2001 =
 {
 	{
 		{
@@ -287,52 +283,5 @@ ROM_END
 
 
 
-struct GameDriver driver_nova2001 =
-{
-	__FILE__,
-	0,
-	"nova2001",
-	"Nova 2001 (Japan)",
-	"1983",
-	"UPL",
-	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
-	0,
-	&machine_driver,
-	0,
-
-	rom_nova2001,
-	0,0,
-	0,
-	0, /* sound prom */
-
-	input_ports_nova2001,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_nov2001u =
-{
-	__FILE__,
-	&driver_nova2001,
-	"nov2001u",
-	"Nova 2001 (US)",
-	"1983",
-	"UPL (Universal license)",
-	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
-	0,
-	&machine_driver,
-	0,
-
-	rom_nov2001u,
-	0,0,
-	0,
-	0, /* sound prom */
-
-	input_ports_nova2001,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1983, nova2001, 0,        nova2001, nova2001, 0, ROT0, "UPL", "Nova 2001 (Japan)" )
+GAME( 1983, nov2001u, nova2001, nova2001, nova2001, 0, ROT0, "UPL (Universal license)", "Nova 2001 (US)" )

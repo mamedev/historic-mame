@@ -159,7 +159,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_quantum =
 {
 	/* basic machine hardware */
 	{
@@ -250,81 +250,7 @@ ROM_END
 
 
 
-struct GameDriver driver_quantum =
-{
-	__FILE__,
-	0,
-	"quantum",
-	"Quantum (rev 2)",
-	"1982",
-	"Atari",
-	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	0,
-
-	rom_quantum,
-	0, 0,
-
-	0,
-	0,
-
-	input_ports_quantum,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_quantum1 =
-{
-	__FILE__,
-	&driver_quantum,
-	"quantum1",
-	"Quantum (rev 1)",
-	"1982",
-	"Atari",
-	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	0,
-
-	rom_quantum1,
-	0, 0,
-
-	0,
-	0,
-
-	input_ports_quantum,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_quantump =
-{
-	__FILE__,
-	&driver_quantum,
-	"quantump",
-	"Quantum (prototype)",
-	"1982",
-	"Atari",
-	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&machine_driver,
-	0,
-
-	rom_quantump,
-	0, 0,
-
-	0,
-	0,
-
-	input_ports_quantum,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1982, quantum,  0,       quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 2)" )
+GAME( 1982, quantum1, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (rev 1)" )
+GAME( 1982, quantump, quantum, quantum, quantum, 0, ROT0, "Atari", "Quantum (prototype)" )
 

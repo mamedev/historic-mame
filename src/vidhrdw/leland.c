@@ -681,7 +681,7 @@ void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 ***************************************************************************/
 
-static signed char *buffer1,*buffer2;
+static INT16 *buffer1,*buffer2;
 static int channel;
 const int buffer_len = 256;
 
@@ -690,16 +690,16 @@ int leland_sh_start(const struct MachineSound *msound)
 	int vol[2];
 
 	/* allocate the buffers */
-	buffer1 = malloc(buffer_len);
-	buffer2 = malloc(buffer_len);
+	buffer1 = malloc(sizeof(INT16)*buffer_len);
+	buffer2 = malloc(sizeof(INT16)*buffer_len);
 	if (buffer1 == 0 || buffer2 == 0)
 	{
 		free(buffer1);
 		free(buffer2);
 		return 1;
 	}
-	memset(buffer1,0,buffer_len);
-	memset(buffer2,0,buffer_len);
+	memset(buffer1,0,sizeof(INT16)*buffer_len);
+	memset(buffer2,0,sizeof(INT16)*buffer_len);
 
 	/* request a sound channel */
 	vol[0] = vol[1] = 25;
@@ -721,7 +721,7 @@ void leland_sh_update(void)
     /* 8MHZ 8 bit DAC sound stored in program ROMS */
     int dacpos;
     int dac1on, dac2on;
-	signed char *buf;
+	INT16 *buf;
 
     if (Machine->sample_rate == 0) return;
 
@@ -733,21 +733,21 @@ void leland_sh_update(void)
 		buf = buffer1;
 
         for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos]/2;
+			*(buf++) = leland_video_ram[dacpos]<<7;
 	}
-	else memset(buffer1,0,buffer_len);
+	else memset(buffer1,0,sizeof(INT16)*buffer_len);
 
     if (dac2on)
     {
 		buf = buffer2;
 
         for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]/2;
+			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]<<7;
 	}
-	else memset(buffer2,0,buffer_len);
+	else memset(buffer2,0,sizeof(INT16)*buffer_len);
 
-	mixer_play_streamed_sample(channel+0,buffer1,buffer_len,buffer_len * Machine->drv->frames_per_second);
-	mixer_play_streamed_sample(channel+1,buffer2,buffer_len,buffer_len * Machine->drv->frames_per_second);
+	mixer_play_streamed_sample_16(channel+0,buffer1,sizeof(INT16)*buffer_len,buffer_len * Machine->drv->frames_per_second);
+	mixer_play_streamed_sample_16(channel+1,buffer2,sizeof(INT16)*buffer_len,buffer_len * Machine->drv->frames_per_second);
 }
 
 /***************************************************************************

@@ -229,8 +229,8 @@ INPUT_PORTS_START( skydiver )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x20, 0x00, "Extended Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x40, "French" )
@@ -289,9 +289,9 @@ static struct GfxLayout wide_motion_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0x00, 0x06 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &motion_layout, 0x00, 0x06 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &wide_motion_layout, 0x00, 0x06 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout,         0, 6 },
+	{ REGION_GFX2, 0, &motion_layout,      0, 6 },
+	{ REGION_GFX2, 0, &wide_motion_layout, 0, 6 },
 	{ -1 } /* end of array */
 };
 
@@ -327,7 +327,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_skydiver =
 {
 	/* basic machine hardware */
 	{
@@ -377,45 +377,14 @@ ROM_START( skydiver )
 	ROM_LOAD( "33166-02.c1", 0x7800, 0x0800, 0x3d26da2b )
 	ROM_RELOAD(              0xF800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0xc00)	  /* 3k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "33163-01.h5", 0x0000, 0x0400, 0x5b9bb7c2 )
-	ROM_LOAD( "33176-01.l5", 0x0400, 0x0400, 0x6b082a01 )
-	ROM_LOAD( "33177-01.k5", 0x0800, 0x0400, 0xf5541af0 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "33176-01.l5", 0x0000, 0x0400, 0x6b082a01 )
+	ROM_LOAD( "33177-01.k5", 0x0400, 0x0400, 0xf5541af0 )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
 
-***************************************************************************/
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_skydiver =
-{
-	__FILE__,
-	0,
-	"skydiver",
-	"Sky Diver",
-	"1978",
-	"Atari",
-	"Mike Balfour\nBrad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_skydiver,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skydiver,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1978, skydiver, 0, skydiver, skydiver, 0, ROT0, "Atari", "Sky Diver" )

@@ -4,160 +4,112 @@
 
  emulation of video hardware of cosmic machines of 1979-1980(ish)
 
- (256 * 192)
-
- 1. Cosmic Alien,
- 2. Cosmic Guerilla
- 3. Space Panic
- 4. Magic Spot II
- 5. Devil Zone
- 6. No Man's Land
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *cosmic_videoram;
 
-/**************************************************/
-/* Colour Decode variables and Functions          */
-/**************************************************/
+static int refresh_tmpbitmap;
+static int flipscreen;
+static int (*map_color)(int x, int y);
 
-const unsigned char *colourrom;
+static int color_registers[3];
+static int color_base = 0;
+static int nomnlnd_background_on=0;
 
-int ColourRegisters[3];
-int ColourMap=0;
-int BackGround=0;
-int CosmicFlipX;
-int CosmicFlipY;
-int	MachineID;
 
-int ColourRomLookup(int ScreenX,int ScreenY)
+/* No Mans Land - I don't know if there are more screen layouts than this */
+/* this one seems to be OK for the start of the game       */
+
+static const signed short nomnlnd_tree_positions[2][2] =
 {
-	int ColourByte;
+	{66,63},{66,159}
+};
 
-    switch(MachineID)
+static const signed short nomnlnd_water_positions[4][2] =
+{
+	{160,32},{160,96},{160,128},{160,192}
+};
+
+
+void panic_color_register_w(int offset,int data)
+{
+	/* 7c0c & 7c0e = Rom Address Offset
+ 	   7c0d        = high / low nibble */
+
+	if (color_registers[offset] != (data & 0x80))
     {
-    	case 2 :
-            {
-    	        /* Cosmic Guerilla = 16 x 16 */
-
-		        if ((ScreenY > 23) && (ScreenY < 32))
-			        ColourByte = colourrom[ColourMap + (ScreenX / 16) * 16 + 9];
-                else
-			        ColourByte = colourrom[ColourMap + (ScreenX / 16) * 16 + (15 - ((ScreenY) / 16))];
-
-    	        return Machine->pens[ColourByte & 0x0F];
-            }
-
-    	case 4 :
-            {
-		        /* Magic Spot = 16 x 8 colouring */
-
-  	            if ((ScreenY > 31) && (ScreenY < 40))
-			        ColourByte = colourrom[ColourMap + 26 * 16 + (ScreenX / 16)];
-                else
-			        ColourByte = colourrom[ColourMap + (31-(ScreenY / 8)) * 16 + (ScreenX / 16)];
-
-	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
-	            else return Machine->pens[ColourByte & 0x0F];
-            }
-
-        case 5 :
-        case 6 :
-            {
-		        /* No Mans Land, Devil Zone = 16 x 8 colouring */
-
-		        ColourByte = colourrom[ColourMap + (31-(ScreenY / 8)) * 16 + (ScreenX / 16)];
-
-	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
-	            else return Machine->pens[ColourByte & 0x0F];
-            }
-
-        case 1 :
-        case 3 :
-            {
-		        /* 8 x 16 colouring */
-
-		        ColourByte = colourrom[ColourMap + (15 - (ScreenY / 16)) * 32 + (ScreenX / 8)];
-
-  	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
-  	            else return Machine->pens[ColourByte & 0x0F];
-            }
+    	color_registers[offset] = data & 0x80;
+    	color_base = (color_registers[0] << 2) + (color_registers[2] << 3);
+    	refresh_tmpbitmap = 1;
     }
-
-    return 0; /* Should NEVER get here */
 }
 
-void ColourBankSwitch(void)
+void cosmicg_color_register_w(int offset,int data)
 {
-	/* Need to re-colour existing screen */
-
-	int x,y;
-    int ex,ey;
-
-    if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+	if (color_registers[offset] != data)
     {
-        for(x=0;x<192;x++)
-		{
-			if (CosmicFlipX)
-				ex = 191 - x;
-            else
-                ex = x;
+    	color_registers[offset] = data;
 
-            for(y=0;y<255;y++)
-            {
-				if (CosmicFlipY)
-                    ey = y;
-                else
-                    ey = 255 - y;
+        color_base = 0;
 
-                if(tmpbitmap->line[ex][ey] != Machine->pens[0])
-                {
-                    tmpbitmap->line[ex][ey] = ColourRomLookup(x,y);
-                }
-            }
-        }
+        if (color_registers[0] == 1) color_base += 0x100;
+        if (color_registers[1] == 1) color_base += 0x200;
 
- 		osd_mark_dirty(0,0,255,191,0);	/* ASG 971015 */
-    }
-    else
-    {
-        /* Normal */
-
-        for(x=0;x<192;x++)
-		{
-			if (CosmicFlipX)
-				ex = 191 - x;
-            else
-                ex = x;
-
-            for(y=0;y<255;y++)
-            {
-				if (CosmicFlipY)
-                    ey = y;
-                else
-                    ey = 255 - y;
-
-                if(tmpbitmap->line[ey][ex] != Machine->pens[0])
-                {
-                    tmpbitmap->line[ey][ex] = ColourRomLookup(x,y);
-                }
-            }
-        }
-
-		osd_mark_dirty(0,0,191,255,0);	/* ASG 971015 */
+		refresh_tmpbitmap = 1;
     }
 }
 
 
+static int panic_map_color(int x, int y)
+{
+	/* 8 x 16 coloring */
+	unsigned char byte = memory_region(REGION_USER1)[color_base + (x / 16) * 32 + (y / 8)];
 
-/**************************************************/
-/* Space Panic specific routines                  */
-/**************************************************/
+	if (color_registers[1])
+		return byte >> 4;
+	else
+		return byte & 0x0f;
+}
 
-static const unsigned char Remap[64][2] = {
+static int cosmicg_map_color(int x, int y)
+{
+	unsigned char byte;
+
+	/* 16 x 16 coloring */
+	//if ((x >= 224) && (x < 232))
+	//	byte = color_rom[color_base + (y / 16) * 16 + 9];
+	//else
+		byte = memory_region(REGION_USER1)[color_base + (y / 16) * 16 + (x / 16)];
+
+	/* the upper 4 bits are for cocktail mode support */
+
+	return byte & 0x0f;
+}
+
+static int magspot2_map_color(int x, int y)
+{
+	unsigned char byte;
+
+	/* 16 x 8 coloring */
+
+	// Should the top line of the logo be red or white???
+
+	//if ((x >= 216) && (x < 224))
+	//	byte = memory_region(REGION_USER1)[26 * 16 + (y / 16)];
+	//else
+		byte = memory_region(REGION_USER1)[(x / 8) * 16 + (y / 16)];
+
+	if (color_registers[1])
+		return byte >> 4;
+	else
+		return byte & 0x0f;
+}
+
+
+static const unsigned char panic_remap_sprite_code[64][2] =
+{
 {0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0}, /* 00 */
 {0x00,0},{0x26,0},{0x25,0},{0x24,0},{0x23,0},{0x22,0},{0x21,0},{0x20,0}, /* 08 */
 {0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0},{0x00,0}, /* 10 */
@@ -169,11 +121,11 @@ static const unsigned char Remap[64][2] = {
 };
 
 /*
- * Panic Colour table setup
+ * Panic Color table setup
  *
  * Bit 0 = RED, Bit 1 = GREEN, Bit 2 = BLUE
  *
- * First 8 colours are normal intensities
+ * First 8 colors are normal intensities
  *
  * But, bit 3 can be used to pull Blue via a 2k resistor to 5v
  * (1k to ground) so second version of table has blue set to 2/3
@@ -186,9 +138,6 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-    colourrom = color_prom + 0x24;
-	MachineID = 3;
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		*(palette++) = 0xff * ((i >> 0) & 1);
@@ -200,32 +149,48 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	}
 
 
-	/* characters and sprites use the same palette */
-
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = *(color_prom++) & 0x0f;
+
+
+    map_color = panic_map_color;
 }
 
-/***************************************************************************
- * Space Panic Colour Selectors
+
+/*
+ * Cosmic Alien Color table setup
  *
- * 7c0c & 7c0e = Rom Address Offset
- * 7c0d        = high / low nibble
- **************************************************************************/
+ * 8 colors, 16 sprite color codes
+ *
+ * Bit 0 = RED, Bit 1 = GREEN, Bit 2 = BLUE
+ *
+ */
 
-void panic_colourmap_select(int offset,int data)
+void cosmica_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	if (ColourRegisters[offset] != (data & 0x80))
-    {
-    	ColourRegisters[offset] = data & 0x80;
-    	ColourMap = (ColourRegisters[0] << 2) + (ColourRegisters[2] << 3);
-		ColourBankSwitch();
-    }
+	int i;
+
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		*(palette++) = 0xff * ((i >> 0) & 1);
+		*(palette++) = 0xff * ((i >> 1) & 1);
+		*(palette++) = 0xff * ((i >> 2) & 1);
+	}
+
+
+	for (i = 0;i < TOTAL_COLORS(0)/2;i++)
+	{
+		COLOR(0,i)                     =  * color_prom          & 0x07;
+		COLOR(0,i+(TOTAL_COLORS(0)/2)) = (*(color_prom++) >> 4) & 0x07;
+	}
+
+
+    map_color = panic_map_color;
 }
 
-/**************************************************/
-/* Cosmic Guerilla specific routines              */
-/**************************************************/
 
 /*
  * Cosmic guerilla table setup
@@ -238,15 +203,12 @@ void panic_colourmap_select(int offset,int data)
  *
  */
 
-void cosmicguerilla_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void cosmicg_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-    colourrom = color_prom+32;
-	MachineID = 2;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -256,68 +218,15 @@ void cosmicguerilla_vh_convert_color_prom(unsigned char *palette, unsigned short
 		*(palette++) = 0xaa * ((i >> 1) & 1);
 		*(palette++) = 0xaa * ((i >> 2) & 1);
 	}
-}
 
-void cosmicguerilla_colourmap_select(int offset,int data)
-{
-	if (ColourRegisters[offset] != data)
-    {
-    	ColourRegisters[offset] = data;
 
-        ColourMap = 0;
-
-        if (ColourRegisters[0] == 1) ColourMap += 0x100;
-        if (ColourRegisters[1] == 1) ColourMap += 0x200;
-
-		ColourBankSwitch();
-    }
+    map_color = cosmicg_map_color;
 }
 
 /**************************************************/
-/* Cosmic Alien specific routines                 */
-/**************************************************/
-
-/*
- * Cosmic Alien Colour table setup
- *
- * Bit 0 = RED, Bit 1 = GREEN, Bit 2 = BLUE
- *
- */
-
-void cosmicalien_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-    colourrom = color_prom + 0x24;
-	MachineID = 1;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = 0xff * ((i >> 0) & 1);
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
-	}
-
-	/* characters and sprites use the same palette */
-
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++) & 0x0f;
-}
-
-void cosmicalien_colourmap_select(int offset,int data)
-{
-	if (ColourRegisters[1] != data)
-    {
-        ColourRegisters[1] = data;
-		ColourBankSwitch();
-    }
-}
-
-/**************************************************/
-/* Magical Spot                                   */
+/* Magical Spot 2/Devil Zone specific routines    */
+/*												  */
+/* 16 colors, 8 sprite color codes				  */
 /**************************************************/
 
 void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -326,8 +235,6 @@ void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-    colourrom  = color_prom + 0x22;
-	MachineID  = 4;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -340,308 +247,146 @@ void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		*(palette++) = 0xff * ((i >> 2) & 1);
 	}
 
-	/* characters and sprites use the same palette */
 
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++) & 0xf;
-
-}
-
-void magspot2_colourmap_w(int offset, int data)
-{
-	ColourRegisters[1] = data;
-}
-
-/**************************************************/
-/* Devil Zone                                     */
-/**************************************************/
-
-void devzone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-    colourrom  = color_prom + 0x2;
-	MachineID  = 5;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		if ((i & 0x09) == 0x08)
-			*(palette++) = 0xaa;
-	 	else
-			*(palette++) = 0xff * ((i >> 0) & 1);
-
-		*(palette++) = 0xff * ((i >> 1) & 1);
-		*(palette++) = 0xff * ((i >> 2) & 1);
+		COLOR(0,i) = *(color_prom++) & 0x0f;
 	}
 
-	/* characters and sprites use the same palette */
 
+    map_color = magspot2_map_color;
 }
 
-/**************************************************/
-/* No Man's Land                                  */
-/**************************************************/
 
-/* I don't know if there are more screen layouts than this */
-/* this one seems to be OK for the start of the game       */
-
-static const signed short TreePositions[2][2] = {
-	{66,31},{66,127}
-};
-
-static const signed short WaterPositions[4][2] = {
-	{160,0},{160,64},{160,96},{160,160}
-};
-
-void nomanland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void nomnlnd_background_w(int offset, int data)
 {
-	magspot2_vh_convert_color_prom(palette, colortable, color_prom);
-
-	MachineID = 6;
+	nomnlnd_background_on = data;
 }
 
-void nomanland_background_w(int offset, int data)
+
+void cosmica_flipscreen_w(int offset, int data)
 {
-	BackGround = data;
-}
-
-/**************************************************/
-/* Common Routines                                */
-/**************************************************/
-
-void cosmic_flipscreen_w(int offset, int data)
-{
- static int LastMode=0;
- int x,y,Safe;
-
- 	if (data != LastMode)
+	if (data != flipscreen)
 	{
-     	LastMode = data;
+		flipscreen = data;
 
-     	if (data)
-     	{
-     		CosmicFlipX = ((Machine->orientation & ORIENTATION_FLIP_X) == 0);
-	     	CosmicFlipY = ((Machine->orientation & ORIENTATION_FLIP_Y) == 0);
-    	}
-     	else
-     	{
-      		CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
-      		CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
-     	}
-
-     	/* Flip Bitmap */
-
-     	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-     	{
-     		for(x=0;x<96;x++)
-      		{
-            	for(y=0;y<255;y++)
-            	{
-            		Safe = tmpbitmap->line[x][y];
-                	tmpbitmap->line[x][y] = tmpbitmap->line[191-x][255-y];
-	                tmpbitmap->line[191-x][255-y] = Safe;
-    	        }
-        	}
-
-	       	osd_mark_dirty(0,0,255,191,0);
-	    }
-     	else
-     	{
-     		for(x=0;x<96;x++)
-      		{
-        		for(y=0;y<255;y++)
-            	{
-            		Safe = tmpbitmap->line[y][x];
-	                tmpbitmap->line[y][x] = tmpbitmap->line[255-y][191-x];
-    	            tmpbitmap->line[255-y][191-x] = Safe;
-            	}
-        	}
-
-      		osd_mark_dirty(0,0,191,255,0);
-     	}
- 	}
-}
-
-void cosmic_videoram_w(int offset,int data)
-{
-    int i,x,y;
-    int col;
-
-	if ((cosmic_videoram[offset] != data))
-	{
-	    cosmic_videoram[offset] = data;
-
-		x = offset / 32;
-		y = 256-8 - 8 * (offset % 32);
-
-        col = ColourRomLookup(x,y);
-
-        /* Allow Rotate */
-
-        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-        {
-			if (CosmicFlipX)
-				x = 191 - x;
-
-			if (CosmicFlipY)
-            {
-				osd_mark_dirty(y,x,y+7,x,0);
-
-			    for (i = 0;i < 8;i++)
-			    {
-				    if (data & 0x01) tmpbitmap->line[x][y] = col;
-				    else tmpbitmap->line[x][y] = Machine->pens[0]; /* black */
-
-				    y++;
-				    data >>= 1;
-                }
-            }
-            else
-            {
-				y = 255 - y;
-				osd_mark_dirty(y-7,x,y,x,0);
-
-			    for (i = 0;i < 8;i++)
-			    {
-				    if (data & 0x01) tmpbitmap->line[x][y] = col;
-				    else tmpbitmap->line[x][y] = Machine->pens[0]; /* black */
-
-				    y--;
-				    data >>= 1;
-                }
-            }
-        }
-        else
-        {
-            /* Normal */
-
-			if (CosmicFlipX)
-				x = 191 - x;
-
-			if (CosmicFlipY)
-            {
-				osd_mark_dirty(x,y,x,y+7,0);
-
-			    for (i = 0;i < 8;i++)
-			    {
-				    if (data & 0x01) tmpbitmap->line[y][x] = col;
-				    else tmpbitmap->line[y][x] = Machine->pens[0]; /* black */
-
-				    y++;
-				    data >>= 1;
-                }
-            }
-            else
-            {
-				y = 255 - y;
-				osd_mark_dirty(x,y-7,x,y,0);
-
-			    for (i = 0;i < 8;i++)
-			    {
-				    if (data & 0x01) tmpbitmap->line[y][x] = col;
-				    else tmpbitmap->line[y][x] = Machine->pens[0]; /* black */
-
-				    y--;
-				    data >>= 1;
-                }
-            }
-        }
+		refresh_tmpbitmap = 1;
 	}
 }
 
 
-int cosmic_vh_start(void)
+void cosmica_videoram_w(int offset,int data)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
+    int i,x,y,col;
 
-	/* initialize the bitmap to our background color */
+    videoram[offset] = data;
 
-	fillbitmap(tmpbitmap,Machine->pens[0],&Machine->drv->visible_area);
+	y = offset / 32;
+	x = 8 * (offset % 32);
 
-    /* Initialise Bitmap orientation */
+    col = Machine->pens[map_color(x, y)];
 
-	CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
-	CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
-
-	return 0;
-}
-
-
-void cosmic_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-void cosmic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int offs, Sprite=0;
-
-	/* copy the character mapped graphics */
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
-    /* Draw the sprites () */
-
-    if (MachineID == 3)
+    for (i = 0; i < 8; i++)
     {
-		int Bank, Rotate;
+		if (flipscreen)
+			plot_pixel(tmpbitmap, 255-x, 255-y, (data & 0x80) ? col : Machine->pens[0]);
+		else
+			plot_pixel(tmpbitmap,     x,     y, (data & 0x80) ? col : Machine->pens[0]);
 
-	    for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	    {
-		    if (spriteram[offs] != 0)
-            {
-        	    /* Remap sprite number to my layout */
-
-                Sprite = Remap[(spriteram[offs] & 0x3F)][0];
-                Bank   = Remap[(spriteram[offs] & 0x3F)][1];
-                Rotate = spriteram[offs] & 0x40;
-
-                /* Switch Bank */
-
-                if(spriteram[offs+3] & 0x08) Bank=1;
-
-		        drawgfx(bitmap,Machine->gfx[Bank],
-				        Sprite,
-				        7 - (spriteram[offs+3] & 0x07),
-				        0,Rotate,
-				        256-spriteram[offs+2],spriteram[offs+1]-32,
-				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-            }
-	    }
+	    x++;
+	    data <<= 1;
     }
 }
 
 
-void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
+void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs, Sprite=0;
+	if (refresh_tmpbitmap)
+	{
+		int offs;
 
-	/* copy the character mapped graphics */
+		for (offs = 0; offs < videoram_size; offs++)
+		{
+			cosmica_videoram_w(offs, videoram[offs]);
+		}
+
+		refresh_tmpbitmap = 0;
+	}
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
 
-    /* Draw the sprites () */
+
+void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+
+
+    /* draw the sprites */
+
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (spriteram[offs] != 0)
+		{
+			int code,bank,flipy;
+
+			/* panic_remap_sprite_code sprite number to my layout */
+
+			code = panic_remap_sprite_code[(spriteram[offs] & 0x3F)][0];
+			bank = panic_remap_sprite_code[(spriteram[offs] & 0x3F)][1];
+			flipy = spriteram[offs] & 0x40;
+
+			/* Switch Bank */
+
+			if(spriteram[offs+3] & 0x08) bank=1;
+
+			if (flipscreen)
+			{
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[bank],
+					code,
+					7 - (spriteram[offs+3] & 0x07),
+					flipscreen,flipy,
+					256-spriteram[offs+2],spriteram[offs+1],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
+
+void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+
+
+    /* draw the sprites */
 
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		if (spriteram[offs] != 0)
         {
-			Sprite = ~spriteram[offs] & 0x3f;
+			int code, color;
+
+			code  = ~spriteram[offs  ] & 0x3f;
+			color = ~spriteram[offs+3] & 0x0f;
 
             if (spriteram[offs] & 0x80)
             {
                 /* 16x16 sprite */
 
 			    drawgfx(bitmap,Machine->gfx[0],
-					    Sprite,
-					    7 - (spriteram[offs+3] & 0x07),
+					    code,
+					    color,
 					    0,0,
-				    	256-spriteram[offs+2],(spriteram[offs+1]-32),
+				    	256-spriteram[offs+2],spriteram[offs+1],
 				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
             }
             else
@@ -649,58 +394,126 @@ void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
                 /* 32x32 sprite */
 
 			    drawgfx(bitmap,Machine->gfx[1],
-					    Sprite >> 2,
-					    7 - (spriteram[offs+3] & 0x07),
+					    code >> 2,
+					    color,
 					    0,0,
-				    	256-spriteram[offs+2],(spriteram[offs+1]-32),
+				    	256-spriteram[offs+2],spriteram[offs+1],
 				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
             }
         }
 	}
+}
 
-    /* Background for No Mans Land */
 
-    if ((MachineID == 6) && (BackGround))
+void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+
+
+    /* draw the sprites */
+
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (spriteram[offs] != 0)
+        {
+			int code, color;
+
+			code  = ~spriteram[offs  ] & 0x3f;
+			color = ~spriteram[offs+3] & 0x07;
+
+            if (spriteram[offs] & 0x80)
+            {
+                /* 16x16 sprite */
+
+			    drawgfx(bitmap,Machine->gfx[0],
+					    code,
+					    color,
+					    0,0,
+				    	256-spriteram[offs+2],spriteram[offs+1],
+				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+            }
+            else
+            {
+                /* 32x32 sprite */
+
+			    drawgfx(bitmap,Machine->gfx[1],
+					    code >> 2,
+					    color,
+					    0,0,
+				    	256-spriteram[offs+2],spriteram[offs+1],
+				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+            }
+        }
+	}
+}
+
+
+void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	magspot2_vh_screenrefresh(bitmap, full_refresh);
+
+
+    if (nomnlnd_background_on)
     {
-        static int Animate=0;
-    	int y;
+		// draw trees
 
-        Animate = (++Animate & 255);
+        static UINT8 water_animate=0;
 
-        if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
-        	Sprite = 1;
-        else
-        	Sprite = 3;
+        water_animate++;
 
     	for(offs=0;offs<2;offs++)
         {
-            if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
-        	    y = TreePositions[offs][0];
-            else
-        	    y = 225 - TreePositions[offs][0];
+			int code,x,y;
 
-    		drawgfx(bitmap,Machine->gfx[1],
-					Sprite,
+			x = nomnlnd_tree_positions[offs][0];
+			y = nomnlnd_tree_positions[offs][1];
+
+			if (flipscreen)
+			{
+				x = 223 - x;
+				y = 223 - y;
+				code = 2 + offs;
+			}
+			else
+			{
+				code = offs;
+			}
+
+    		drawgfx(bitmap,Machine->gfx[2],
+					code,
 					8,
 					0,0,
-					y,TreePositions[offs][1],
+					x,y,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
         }
 
+		// draw water
+
     	for(offs=0;offs<4;offs++)
         {
-            if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
-        	    y = WaterPositions[offs][0];
-            else
-        	    y = 241 - WaterPositions[offs][0];
+			int x,y;
 
-    		drawgfx(bitmap,Machine->gfx[2],
-					(Animate >> 3),
+			x = nomnlnd_water_positions[offs][0];
+			y = nomnlnd_water_positions[offs][1];
+
+			if (flipscreen)
+			{
+				x = 239 - x;
+				y = 223 - y;
+			}
+
+    		drawgfx(bitmap,Machine->gfx[3],
+					water_animate >> 3,
 					9,
 					0,0,
-					y,WaterPositions[offs][1],
+					x,y,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
         }
     }
 }
-

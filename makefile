@@ -844,11 +844,11 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/kyugo.a obj/williams.a obj/gremlin.a obj/vicdual.a \
          obj/capcom.a obj/capbowl.a obj/leland.a \
          obj/sega.a obj/dataeast.a obj/tehkan.a obj/konami.a \
-         obj/exidy.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
+         obj/exidy.a obj/atari.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/visco.a \
-         obj/orca.a obj/gaelco.a obj/other.a \
+         obj/orca.a obj/gaelco.a obj/kaneko.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -904,7 +904,7 @@ obj/%.og: obj/%.c
 # generate asm source files for the 68000 emulator
 obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
-	obj/cpu/m68000/make68k $@
+	obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
 
 # generated asm files for the 68000 emulator
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
@@ -953,6 +953,8 @@ obj/phoenix.a: \
          obj/vidhrdw/naughtyb.o obj/drivers/naughtyb.o \
 
 obj/namco.a: \
+         obj/machine/geebee.o obj/vidhrdw/geebee.o obj/sndhrdw/geebee.o obj/drivers/geebee.o \
+         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/drivers/locomotn.o \
          obj/machine/bosco.o obj/sndhrdw/bosco.o obj/vidhrdw/bosco.o obj/drivers/bosco.o \
@@ -1272,11 +1274,8 @@ obj/atari.a: \
          obj/vidhrdw/offtwall.o obj/drivers/offtwall.o \
          obj/vidhrdw/arcadecl.o obj/drivers/arcadecl.o \
 
-obj/rockola.a: \
-         obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
-         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
-
 obj/snk.a: \
+         obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
          obj/drivers/munchmo.o \
          obj/vidhrdw/marvins.o obj/drivers/marvins.o \
 		 obj/drivers/hal21.o \
@@ -1374,6 +1373,11 @@ obj/orca.a: \
 obj/gaelco.a: \
          obj/vidhrdw/gaelco.o obj/drivers/gaelco.o \
 
+obj/kaneko.a: \
+         obj/vidhrdw/kaneko16.o obj/drivers/kaneko16.o \
+         obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
+         obj/vidhrdw/airbustr.o obj/drivers/airbustr.o \
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
@@ -1397,8 +1401,6 @@ obj/other.a: \
          obj/machine/exctsccr.o obj/vidhrdw/exctsccr.o obj/drivers/exctsccr.o \
          obj/vidhrdw/speedbal.o obj/drivers/speedbal.o \
          obj/vidhrdw/sauro.o obj/drivers/sauro.o \
-         obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
-         obj/vidhrdw/airbustr.o obj/drivers/airbustr.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
          obj/drivers/shanghai.o \

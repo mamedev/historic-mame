@@ -196,9 +196,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 }, /* characters */
-    { 1, 0x08000, &spritelayout, 16*16, 16 }, /* sprites */
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0, &charlayout,   0, 16 }, /* characters */
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 }, /* sprites */
+	{ -1 } /* end of array */
 };
 
 static int jb_interrupt( void ) {
@@ -226,12 +226,12 @@ static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock */
 	100,        /* volume       */
-	3,          /* memory region of speech rom */
+	REGION_SOUND1,	/* memory region of speech rom */
 	0,          /* memory size of speech rom */
 	0           /* VCU pin level (default)     */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_jailbrek =
 {
 	/* basic machine hardware */
 	{
@@ -285,15 +285,15 @@ ROM_START( jailbrek )
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )
 
-    ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	/* characters */
-	ROM_LOAD( "jailb4f.bin",  0x00000, 0x4000, 0xe3b7a226 )
+    ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "jailb4f.bin",  0x00000, 0x4000, 0xe3b7a226 )	/* characters */
     ROM_LOAD( "jailb5f.bin",  0x04000, 0x4000, 0x504f0912 )
-	/* sprites */
-    ROM_LOAD( "jailb3e.bin",  0x08000, 0x4000, 0x0d269524 )
-    ROM_LOAD( "jailb4e.bin",  0x0c000, 0x4000, 0x27d4f6f4 )
-    ROM_LOAD( "jailb5e.bin",  0x10000, 0x4000, 0x717485cb )
-    ROM_LOAD( "jailb3f.bin",  0x14000, 0x4000, 0xe933086f )
+
+    ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "jailb3e.bin",  0x00000, 0x4000, 0x0d269524 )	/* sprites */
+    ROM_LOAD( "jailb4e.bin",  0x04000, 0x4000, 0x27d4f6f4 )
+    ROM_LOAD( "jailb5e.bin",  0x08000, 0x4000, 0x717485cb )
+    ROM_LOAD( "jailb3f.bin",  0x0c000, 0x4000, 0xe933086f )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "jailbbl.cl2",  0x0000, 0x0020, 0xf1909605 ) /* red & green */
@@ -301,32 +301,15 @@ ROM_START( jailbrek )
 	ROM_LOAD( "jailbbl.bp2",  0x0040, 0x0100, 0xd4fe5c97 ) /* char lookup */
 	ROM_LOAD( "jailbbl.bp1",  0x0140, 0x0100, 0x0266c7db ) /* sprites lookup */
 
-	ROM_REGION( 0x4000 ) /* speech rom */
+	ROM_REGIONX( 0x4000, REGION_SOUND1 ) /* speech rom */
 	ROM_LOAD( "jailb8c.bin",  0x0000, 0x2000, 0xd91d15e3 )
 ROM_END
 
 
-
-struct GameDriver driver_jailbrek =
+static void init_jailbrek(void)
 {
-	__FILE__,
-	0,
-	"jailbrek",
-	"Jail Break",
-	"1986",
-	"Konami",
-	"Ernesto Corvi\n",
-	0,
-	&machine_driver,
-	konami1_decode,
-	rom_jailbrek,
-	0, 0,
-	0,
-	0,
+	konami1_decode();
+}
 
-	input_ports_jailbrek,
 
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, jailbrek, 0, jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Jail Break" )

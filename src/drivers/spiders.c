@@ -249,13 +249,13 @@ INPUT_PORTS_START( spiders )
     PORT_BIT( 0xF3, IP_ACTIVE_HIGH, IPT_UNUSED )
 
     PORT_START  /* DSW1 */
-    PORT_DIPNAME( 0x07, 0x07, "Coins/Credit" )
-    PORT_DIPSETTING(    0x07, "1 COIN 1 PLAY" )
-    PORT_DIPSETTING(    0x06, "4 COINS 5 PLAYS" )
-    PORT_DIPSETTING(    0x04, "1 COIN 2 PLAYS" )
-    PORT_DIPSETTING(    0x02, "1 COIN 3 PLAYS" )
-    PORT_DIPSETTING(    0x01, "2 COINS 1 PLAY" )
-    PORT_DIPSETTING(    0x00, "FREE PLAY" )
+    PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x06, DEF_STR( 4C_5C ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
     PORT_BIT(0xf8, IP_ACTIVE_LOW,IPT_UNUSED)
 
     PORT_START  /* DSW2 */
@@ -336,7 +336,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_spiders =
 {
         /* basic machine hardware */
     {
@@ -388,14 +388,10 @@ ROM_START( spiders )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
 	ROM_LOAD( "sp-ic71",      0xf000, 0x1000, 0xa9539b18 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
-	ROM_REGION(0x10000)     /* 64k graphics block */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )     /* 64k graphics block used at runtime */
 	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
 	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
 	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
@@ -412,14 +408,10 @@ ROM_START( spiders2 )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
 	ROM_LOAD( "sp4.bin",      0xf000, 0x1000, 0xf3d126bb )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
-	ROM_REGION(0x10000)     /* 64k graphics block */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )     /* 64k graphics block used at runtime */
 	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
 	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
 	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
@@ -432,54 +424,5 @@ ROM_END
 
 
 /* this is a newer version with just one bug fix */
-struct GameDriver driver_spiders =
-{
-	__FILE__,
-	0,
-	"spiders",
-	"Spiders (set 1)",
-	"1981",
-	"Sigma Ent. Inc.",
-	"Keith Wilkins",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spiders,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spiders,
-
-	0, 0, 0,
-	ROT270 | GAME_NO_SOUND,
-
-	0,0
-};
-
-struct GameDriver driver_spiders2 =
-{
-	__FILE__,
-	&driver_spiders,
-	"spiders2",
-	"Spiders (set 2)",
-	"1981",
-	"Sigma Ent. Inc.",
-	"Keith Wilkins",
-	0,
-	&machine_driver,
-	0,
-
-	rom_spiders2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spiders,
-
-	0, 0, 0,
-	ROT270 | GAME_NO_SOUND,
-
-	0,0
-};
+GAMEX( 1981, spiders,  0,       spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 1)", GAME_NO_SOUND )
+GAMEX( 1981, spiders2, spiders, spiders, spiders, 0, ROT270, "Sigma Ent. Inc.", "Spiders (set 2)", GAME_NO_SOUND )

@@ -4,6 +4,8 @@ Super Basketball memory map (preliminary)
 (Hold down Start 1 & Start 2 keys to enter test mode on start up;
  use Start 1 to change modes)
 
+driver by Zsolt Vasvari
+
 MAIN BOARD:
 2000-2fff RAM
 3000-33ff Color RAM
@@ -218,8 +220,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &spritelayout, 16*16, 16*16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16*16 },
 	{ -1 } /* end of array */
 };
 
@@ -239,16 +241,16 @@ static const char *sbasketb_sample_names[] =
 
 struct VLM5030interface sbasketb_vlm5030_interface =
 {
-    3580000,    /* master clock  */
-    255,        /* volume        */
-    4,         /* memory region  */
-    0,         /* memory size    */
-    0,         /* VCU            */
+	3580000,    /* master clock  */
+	255,        /* volume        */
+	REGION_SOUND1,	/* memory region  */
+	0,         /* memory size    */
+	0,         /* VCU            */
 	sbasketb_sample_names
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sbasketb =
 {
 	/* basic machine hardware */
 	{
@@ -313,11 +315,16 @@ ROM_START( sbasketb )
 	ROM_LOAD( "sbb_j11.bin",  0x8000, 0x4000, 0x0a4d7a82 )
 	ROM_LOAD( "sbb_j09.bin",  0xc000, 0x4000, 0x4f9dd9a0 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_LOAD( "sbb_e13.bin",  0x0000, 0x2000, 0x1ec7458b )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sbb_e12.bin",  0x0000, 0x4000, 0xe02c54da )
-	ROM_LOAD( "sbb_h06.bin",  0x4000, 0x4000, 0xcfbbff07 )
-	ROM_LOAD( "sbb_h08.bin",  0x8000, 0x4000, 0xc75901b6 )
-	ROM_LOAD( "sbb_h10.bin",  0xc000, 0x4000, 0x95bc5942 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sbb_h06.bin",  0x0000, 0x4000, 0xcfbbff07 )
+	ROM_LOAD( "sbb_h08.bin",  0x4000, 0x4000, 0xc75901b6 )
+	ROM_LOAD( "sbb_h10.bin",  0x8000, 0x4000, 0x95bc5942 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "405e17",       0x0000, 0x0100, 0xb4c36d57 ) /* palette red component */
@@ -326,36 +333,10 @@ ROM_START( sbasketb )
 	ROM_LOAD( "405e20",       0x0300, 0x0100, 0x8ca6de2f ) /* character lookup table */
 	ROM_LOAD( "405e19",       0x0400, 0x0100, 0xe0bc782f ) /* sprite lookup table */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
-	ROM_LOAD( "sbb_e13.bin",  0x0000, 0x2000, 0x1ec7458b )
-
-	ROM_REGION(0x10000)     /* 64k for speech rom */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )     /* 64k for speech rom */
 	ROM_LOAD( "sbb_e15.bin",  0x0000, 0x2000, 0x01bb5ce9 )
 ROM_END
 
 
 
-struct GameDriver driver_sbasketb =
-{
-	__FILE__,
-	0,
-	"sbasketb",
-	"Super Basketball",
-	"1984",
-	"Konami",
-	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili\nTatsuyuki Satoh(speech sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sbasketb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sbasketb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1984, sbasketb, 0, sbasketb, sbasketb, 0, ROT90, "Konami", "Super Basketball" )

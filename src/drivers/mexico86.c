@@ -277,15 +277,15 @@ INPUT_PORTS_START( kikikai )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
@@ -336,7 +336,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -347,7 +347,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },
 	{ input_port_4_r },
 	{ 0 },
@@ -423,7 +422,13 @@ ROM_START( kicknrun )
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000			 */
 
-	ROM_REGION_DISPOSE(0x40000)	 /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )	/* manually crafted from the Mexico '86 one */
+
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a87-05.bin", 0x08000, 0x08000, 0x4eee3a8a )
 	ROM_CONTINUE(           0x00000, 0x08000 )
 	ROM_LOAD( "a87-04.bin", 0x10000, 0x08000, 0x8b438d20 )
@@ -437,12 +442,6 @@ ROM_START( kicknrun )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
-	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )	/* manually crafted from the Mexico '86 one */
 ROM_END
 
 ROM_START( mexico86 )
@@ -451,7 +450,13 @@ ROM_START( mexico86 )
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000			 */
 
-	ROM_REGION_DISPOSE(0x40000)	 /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, 0xff92f816 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4_d.bin",    0x08000, 0x08000, 0x57cfdbca )
 	ROM_CONTINUE(           0x00000, 0x08000 )
 	ROM_LOAD( "5_c.bin",    0x10000, 0x08000, 0xe42fa143 )
@@ -465,12 +470,6 @@ ROM_START( mexico86 )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
-	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, 0xff92f816 )
 ROM_END
 
 ROM_START( kikikai )
@@ -479,7 +478,13 @@ ROM_START( kikikai )
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
 
-	ROM_REGION_DISPOSE(0x40000)	 /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a85-15.rom", 0x00000, 0x10000, 0xaebc8c32 )
 	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, 0xa9df0453 )
 	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, 0x3eeaf878 )
@@ -489,87 +494,10 @@ ROM_START( kikikai )
 	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, 0xd15f61a8 )
 	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
 	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
-	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
 ROM_END
 
 
 
-struct GameDriver driver_kicknrun =
-{
-	__FILE__,
-	0,
-	"kicknrun",
-	"Kick and Run",
-	"1986",
-	"Taito Corporation",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver_mexico86,
-	0,
-
-	rom_kicknrun,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mexico86,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mexico86 =
-{
-	__FILE__,
-	&driver_kicknrun,
-	"mexico86",
-	"Mexico 86",
-	"1986",
-	"bootleg",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver_mexico86,
-	0,
-
-	rom_mexico86,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mexico86,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_kikikai =
-{
-	__FILE__,
-	0,
-	"kikikai",
-	"KiKi KaiKai",
-	"1986",
-	"Taito Corporation",
-	"Ernesto Corvi\nNicola Salmoria",
-	0,
-	&machine_driver_kikikai,
-	0,
-
-	rom_kikikai,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kikikai,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0,0
-};
+GAME( 1986, kicknrun, 0,        mexico86, mexico86, 0, ROT0, "Taito Corporation", "Kick and Run" )
+GAME( 1986, mexico86, kicknrun, mexico86, mexico86, 0, ROT0, "bootleg", "Mexico 86" )
+GAMEX(1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai", GAME_NOT_WORKING )

@@ -16,9 +16,6 @@
 #define	FADE_TO_ZERO	1
 
 
-/* signed/unsigned 8-bit conversion macros */
-#define AUDIO_CONV(A) ((UINT8)(A))
-
 
 /* sample rates for each chip */
 #define	SAMPLE_RATE_FAST		(12979200/256)	/* FCLK */
@@ -96,7 +93,6 @@ static int m6844_chain;
 
 /* sound interface parameters */
 static int sound_stream;
-static int sample_bits;
 static sound_channel_data sound_channel[4];
 
 /* debugging */
@@ -116,7 +112,7 @@ static const int channel_bits[4] =
 
 
 /* function prototypes */
-static void channel_update(int ch, void **buffer, int length);
+static void channel_update(int ch, INT16 **buffer, int length);
 static void m6844_finished(int ch);
 static void play_cvsd(int ch);
 static void stop_cvsd(int ch);
@@ -181,13 +177,12 @@ int exidy440_sh_start(const struct MachineSound *msound)
 	m6844_chain = 0x00;
 
 	/* get stream channels */
-	sample_bits = Machine->sample_bits;
 	vol[0] = MIXER(100, MIXER_PAN_LEFT);
 	vol[1] = MIXER(100, MIXER_PAN_RIGHT);
-	sound_stream = stream_init_multi(2, names, vol, SAMPLE_RATE_FAST, sample_bits, 0, channel_update);
+	sound_stream = stream_init_multi(2, names, vol, SAMPLE_RATE_FAST, 0, channel_update);
 
 	/* allocate the sample cache */
-	length = memory_region_length(2) * sample_bits + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
+	length = memory_region_length(REGION_SOUND1) * 16 + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
 	sound_cache = malloc(length);
 	if (!sound_cache)
 		return 1;
@@ -294,35 +289,6 @@ static void add_and_scale_samples(int ch, INT32 *dest, int samples, int volume)
 
 /*************************************
  *
- *	Mix the result to 8 bits
- *
- *************************************/
-
-static void mix_to_8(int length, UINT8 *dest_left, UINT8 *dest_right)
-{
-	INT32 *mixer_left = mixer_buffer_left;
-	INT32 *mixer_right = mixer_buffer_right;
-	int i, clippers = 0;
-
-	for (i = 0; i < length; i++)
-	{
-		INT32 sample_left = *mixer_left++ >> 8;
-		INT32 sample_right = *mixer_right++ >> 8;
-
-		if (sample_left < -128) { sample_left = -128; clippers++; }
-		else if (sample_left > 127) { sample_left = 127; clippers++; }
-		if (sample_right < -128) { sample_right = -128; clippers++; }
-		else if (sample_right > 127) { sample_right = 127; clippers++; }
-
-		*dest_left++ = AUDIO_CONV(sample_left);
-		*dest_right++ = AUDIO_CONV(sample_right);
-	}
-}
-
-
-
-/*************************************
- *
  *	Mix the result to 16 bits
  *
  *************************************/
@@ -356,7 +322,7 @@ static void mix_to_16(int length, INT16 *dest_left, INT16 *dest_right)
  *
  *************************************/
 
-static void channel_update(int ch, void **buffer, int length)
+static void channel_update(int ch, INT16 **buffer, int length)
 {
 	/* reset the mixer buffers */
 	memset(mixer_buffer_left, 0, length * sizeof(INT32));
@@ -404,10 +370,7 @@ static void channel_update(int ch, void **buffer, int length)
 	}
 
 	/* all done, time to mix it */
-	if (sample_bits == 16)
-		mix_to_16(length, buffer[0], buffer[1]);
-	else
-		mix_to_8(length, buffer[0], buffer[1]);
+	mix_to_16(length, buffer[0], buffer[1]);
 }
 
 
@@ -705,7 +668,7 @@ INT16 *add_to_sound_cache(UINT8 *input, int address, int length, int bits, int f
 	sound_cache_entry *current = sound_cache_end;
 
 	/* compute where the end will be once we add this entry */
-	sound_cache_end = (sound_cache_entry *)((UINT8 *)current + sizeof(sound_cache_entry) + length * sample_bits);
+	sound_cache_end = (sound_cache_entry *)((UINT8 *)current + sizeof(sound_cache_entry) + length * 16);
 
 	/* if this will overflow the cache, reset and re-add */
 	if (sound_cache_end > sound_cache_max)
@@ -735,7 +698,7 @@ INT16 *find_or_add_to_sound_cache(int address, int length, int bits, int frequen
 		if (current->address == address && current->length == length && current->bits == bits && current->frequency == frequency)
 			return current->data;
 
-	return add_to_sound_cache(&memory_region(2)[address], address, length, bits, frequency);
+	return add_to_sound_cache(&memory_region(REGION_SOUND1)[address], address, length, bits, frequency);
 }
 
 

@@ -1098,7 +1098,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	3000000,	/* ??? */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1885,45 +1884,45 @@ static int gangwars_cycle_r(int offset)
 	return ret;
 }
 
-static void custom_memory(void)
+static void init_timesold(void)
 {
-	if (!strcmp(Machine->gamedrv->name,"timesold"))  install_mem_read_handler(0, 0x40008, 0x40009, timesold_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"skysoldr"))  {
-		install_mem_read_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
-		cpu_setbank(8, (memory_region(3))+0x40000);
-	}
-
-	if (!strcmp(Machine->gamedrv->name,"gangwarb"))  {
-		install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
-		cpu_setbank(8, memory_region(3));
-	}
-	if (!strcmp(Machine->gamedrv->name,"gangwars"))  {
-		install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
-		cpu_setbank(8, memory_region(3));
-	}
-	if (!strcmp(Machine->gamedrv->name,"goldmedb"))
-		cpu_setbank(8, memory_region(3));
+	install_mem_read_handler(0, 0x40008, 0x40009, timesold_cycle_r);
 }
 
-static void gangwarb_patch(void)
+static void init_skysoldr(void)
+{
+	install_mem_read_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
+	cpu_setbank(8, (memory_region(3))+0x40000);
+}
+
+static void init_goldmedb(void)
+{
+	cpu_setbank(8, memory_region(3));
+}
+
+static void init_gangwarb(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	custom_memory();
+	install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
+	cpu_setbank(8, memory_region(3));
+
 	WRITE_WORD(&RAM[0x98fa],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb76c],0x4e71);	/* Disable rom check */
 }
 
-static void gangwars_patch(void)
+static void init_gangwars(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	custom_memory();
+	install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
+	cpu_setbank(8, memory_region(3));
+
 	WRITE_WORD(&RAM[0x98e6],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb758],0x4e71);	/* Disable rom check */
 }
 
-static void btl_patch(void)
+static void init_btlfield(void)
 {
 //	unsigned char *RAM = memory_region(REGION_CPU1);
 //	WRITE_WORD(&RAM[0x9da8],0x4e73);
@@ -1932,327 +1931,16 @@ static void btl_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_kyros =
-{
-	__FILE__,
-	0,
-	"kyros",
-	"Kyros",
-	"1987",
-	"World Games Inc",
-	"Bryan McPhail",
-	0,
-	&machine_driver_kyros,
-	0,
-
-	rom_kyros,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timesold,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_sstingry =
-{
-	__FILE__,
-	0,
-	"sstingry",
-	"Super Stingray",
-	"1988",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_kyros,
-	0,
-
-	rom_sstingry,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sstingry,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_paddlema =
-{
-	__FILE__,
-	0,
-	"paddlema",
-	"Paddle Mania",
-	"1988",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_I,
-	0,
-
-	rom_paddlema,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timesold,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_timesold =
-{
-	__FILE__,
-	0,
-	"timesold",
-	"Time Soldiers (Rev 3)",
-	"1987",
-	"SNK / Romstar",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	custom_memory,
-
-	rom_timesold,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timesold,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0, 0
-};
-
-struct GameDriver driver_timesol2 =
-{
-	__FILE__,
-	&driver_timesold,
-	"timesol2",
-	"Time Soldiers (Rev 1)",
-	"1987",
-	"SNK / Romstar",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	0,
-
-	rom_timesol2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timesold,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_btlfield =
-{
-	__FILE__,
-	&driver_timesold,
-	"btlfield",
-	"Battlefield (Japan)",
-	"1987",
-	"SNK / Romstar",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	btl_patch,
-
-	rom_btlfield,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timesold,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_skysoldr =
-{
-	__FILE__,
-	0,
-	"skysoldr",
-	"Sky Soldiers",
-	"1988",
-	"SNK / Romstar",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	custom_memory,
-
-	rom_skysoldr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skysoldr,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0, 0
-};
-
-struct GameDriver driver_goldmedl =
-{
-	__FILE__,
-	0,
-	"goldmedl",
-	"Gold Medalist",
-	"1988",
-	"SNK",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	custom_memory,
-
-	rom_goldmedl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_goldmedl,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_goldmedb =
-{
-	__FILE__,
-	&driver_goldmedl,
-	"goldmedb",
-	"Gold Medalist (bootleg)",
-	"1988",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_II,
-	custom_memory,
-
-	rom_goldmedb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_goldmedl,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_skyadvnt =
-{
-	__FILE__,
-	0,
-	"skyadvnt",
-	"Sky Adventure",
-	"1989",
-	"SNK of America (licensed from Alpha)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_V,
-	custom_memory,
-
-	rom_skyadvnt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skyadvnt,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT90,
-	0, 0
-};
-
-struct GameDriver driver_gangwars =
-{
-	__FILE__,
-	0,
-	"gangwars",
-	"Gang Wars",
-	"1989",
-	"Alpha",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_V,
-	gangwars_patch,
-
-	rom_gangwars,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gangwars,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_gangwarb =
-{
-	__FILE__,
-	&driver_gangwars,
-	"gangwarb",
-	"Gang Wars (bootleg)",
-	"1989",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_V,
-	gangwarb_patch,
-
-	rom_gangwarb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gangwars,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_REQUIRES_16BIT,
-	0, 0
-};
-
-struct GameDriver driver_sbasebal =
-{
-	__FILE__,
-	0,
-	"sbasebal",
-	"Super Champion Baseball",
-	"1989",
-	"SNK of America (licensed from Alpha)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_alpha68k_V_sb,
-	custom_memory,
-
-	rom_sbasebal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sbasebal,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
+GAMEX(1987, kyros,    0,        kyros,         timesold, 0,        ROT90,      "World Games Inc", "Kyros", GAME_NOT_WORKING )
+GAMEX(1988, sstingry, 0,        kyros,         sstingry, 0,        ROT90,      "SNK", "Super Stingray", GAME_NOT_WORKING )
+GAMEX(1988, paddlema, 0,        alpha68k_I,    timesold, 0,        ROT90,      "SNK", "Paddle Mania", GAME_NOT_WORKING )
+GAME( 1987, timesold, 0,        alpha68k_II,   timesold, timesold, ROT90,      "SNK / Romstar", "Time Soldiers (Rev 3)" )
+GAMEX(1987, timesol2, timesold, alpha68k_II,   timesold, 0,        ROT90,      "SNK / Romstar", "Time Soldiers (Rev 1)", GAME_NOT_WORKING )
+GAMEX(1987, btlfield, timesold, alpha68k_II,   timesold, btlfield, ROT90,      "SNK / Romstar", "Battlefield (Japan)", GAME_NOT_WORKING )
+GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers" )
+GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, 0,        ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING )
+GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, 0,        ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure" )
+GAMEX(1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha", "Gang Wars", GAME_NOT_WORKING )
+GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwarb, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
+GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, 0,        ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NOT_WORKING )

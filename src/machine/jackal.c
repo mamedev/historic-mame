@@ -81,7 +81,7 @@ void jackal_commonram_w(int offset,int data)
 void jackal_commonram1_w(int offset,int data)
 {
 	(memory_region(REGION_CPU1))[0x0060+offset] = data;
-	(memory_region(2))[0x6060+offset] = data;
+	(memory_region(REGION_CPU2))[0x6060+offset] = data;
 }
 
 

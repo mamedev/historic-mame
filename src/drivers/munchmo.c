@@ -145,7 +145,7 @@ static void draw_background( struct osd_bitmap *bitmap ){
 	ROM B1.2C contains 256 tilemaps defining 4x4 configurations of
 	the 4x8 tiles in ROM B2.2B
 */
-	unsigned char *tile_data = memory_region(3);
+	unsigned char *tile_data = memory_region(REGION_GFX5);
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 	for( offs=0; offs<0x100; offs++ ){
@@ -418,7 +418,7 @@ INPUT_PORTS_START( mnchmobl )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unused" ) /* possibly sound CPU status? */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) ) /* possibly sound CPU status? */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1e, 0x00, DEF_STR( Coinage ) )
@@ -455,7 +455,7 @@ INPUT_PORTS_START( mnchmobl )
 	PORT_DIPSETTING(    0x01, "100000" )
 	PORT_DIPSETTING(    0x02, "40000" )
 	PORT_DIPSETTING(    0x03, "30000" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
@@ -474,7 +474,10 @@ INPUT_PORTS_START( mnchmobl )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-static struct GfxLayout char_layout = {
+
+
+static struct GfxLayout char_layout =
+{
 	8,8,
 	256,
 	4,
@@ -484,7 +487,8 @@ static struct GfxLayout char_layout = {
 	128
 };
 
-static struct GfxLayout tile_layout = {
+static struct GfxLayout tile_layout =
+{
 	8,8,
 	0x100,
 	4,
@@ -494,7 +498,8 @@ static struct GfxLayout tile_layout = {
 	128
 };
 
-static struct GfxLayout sprite_layout = {
+static struct GfxLayout sprite_layout =
+{
 	32,32,
 	128,
 	3,
@@ -513,7 +518,8 @@ static struct GfxLayout sprite_layout = {
 	256
 };
 
-static struct GfxLayout sprite_layout2 = {
+static struct GfxLayout sprite_layout2 =
+{
 	32,32,
 	128,
 	1,
@@ -532,16 +538,17 @@ static struct GfxLayout sprite_layout2 = {
 	256
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] = {
-	{ 4,	0,		&char_layout,		0, 4 },
-	{ 2,	0,		&tile_layout,		0, 4 },
-	{ 5,	0,		&sprite_layout,		0, 4 },
-	{ 6,	0,		&sprite_layout2,	0, 4 },
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &char_layout,    0, 4 },
+	{ REGION_GFX2, 0, &tile_layout,    0, 4 },
+	{ REGION_GFX3, 0, &sprite_layout,  0, 4 },
+	{ REGION_GFX4, 0, &sprite_layout2, 0, 4 },
 	{ -1 }
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_munchmo =
 {
 	{
 		{
@@ -593,22 +600,23 @@ ROM_START( joyfulr )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound CPU */
 	ROM_LOAD( "mu.2j",	 0x0000, 0x2000, 0x420adbd4 )
 
-	ROM_REGION_DISPOSE( 0x1000 ) /* 4x8 partial tiles */
-	ROM_LOAD( "b2.2b",	 0x0000, 0x1000, 0x0df28913 )
-	ROM_REGION( 0x1000 ) /* tilemap data */
-	ROM_LOAD( "b1.2c",	 0x0000, 0x1000, 0x8ce3a403 )
-
-	ROM_REGION_DISPOSE( 0x2000 ) /* characters */
-	ROM_LOAD( "s1.10a",	 0x0000, 0x1000, 0xc0bcc301 )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s1.10a",	 0x0000, 0x1000, 0xc0bcc301 )	/* characters */
 	ROM_LOAD( "s2.10b",	 0x1000, 0x1000, 0x96aa11ca )
 
-	ROM_REGION_DISPOSE( 0x6000 ) /* sprites */
-	ROM_LOAD( "f1j.1g",	 0x0000, 0x2000, 0x93c3c17e )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b2.2b",	 0x0000, 0x1000, 0x0df28913 )	/* 4x8 partial tiles */
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f1j.1g",	 0x0000, 0x2000, 0x93c3c17e )	/* sprites */
 	ROM_LOAD( "f2j.3g",	 0x2000, 0x2000, 0xb3fb5bd2 )
 	ROM_LOAD( "f3j.5g",	 0x4000, 0x2000, 0x772a7527 )
 
-	ROM_REGION_DISPOSE( 0x2000 ) /* monochrome sprites */
-	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )
+	ROM_REGIONX( 0x2000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )	/* monochrome sprites */
+
+	ROM_REGIONX( 0x1000, REGION_GFX5 ) /* tilemap data */
+	ROM_LOAD( "b1.2c",	 0x0000, 0x1000, 0x8ce3a403 )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "a2001.clr", 0x0000, 0x0100, 0x1b16b907 ) /* color prom */
@@ -622,75 +630,29 @@ ROM_START( mnchmobl )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound CPU */
 	ROM_LOAD( "mu.2j",	 0x0000, 0x2000, 0x420adbd4 )
 
-	ROM_REGION_DISPOSE( 0x1000 ) /* 4x8 partial tiles */
-	ROM_LOAD( "b2.2b",	 0x0000, 0x1000, 0x0df28913 )
-	ROM_REGION( 0x1000 ) /* tilemap data */
-	ROM_LOAD( "b1.2c",	 0x0000, 0x1000, 0x8ce3a403 )
-
-	ROM_REGION_DISPOSE( 0x2000 ) /* characters */
-	ROM_LOAD( "s1.10a",	 0x0000, 0x1000, 0xc0bcc301 )
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "s1.10a",	 0x0000, 0x1000, 0xc0bcc301 )	/* characters */
 	ROM_LOAD( "s2.10b",	 0x1000, 0x1000, 0x96aa11ca )
 
-	ROM_REGION_DISPOSE( 0x6000 ) /* sprites */
-	ROM_LOAD( "f1.1g",	 0x0000, 0x2000, 0xb75411d4 )
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b2.2b",	 0x0000, 0x1000, 0x0df28913 )	/* 4x8 partial tiles */
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f1.1g",	 0x0000, 0x2000, 0xb75411d4 )	/* sprites */
 	ROM_LOAD( "f2.3g",	 0x2000, 0x2000, 0x539a43ba )
 	ROM_LOAD( "f3.5g",	 0x4000, 0x2000, 0xec996706 )
 
-	ROM_REGION_DISPOSE( 0x2000 ) /* monochrome sprites */
-	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )
+	ROM_REGIONX( 0x2000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )	/* monochrome sprites */
+
+	ROM_REGIONX( 0x1000, REGION_GFX5 ) /* tilemap data */
+	ROM_LOAD( "b1.2c",	 0x0000, 0x1000, 0x8ce3a403 )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "a2001.clr", 0x0000, 0x0100, 0x1b16b907 ) /* color prom */
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
-
-struct GameDriver driver_joyfulr =
-{
-	__FILE__,
-	0,
-	"joyfulr",
-	"Joyful Road (US)",
-	"1983",
-	"SNK",
-	"Phil Stroffolino\nZsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_joyfulr,
-	0, 0, 0, 0,
-
-	input_ports_mnchmobl,
-
-	0, 0, 0,
-	ROT270 | GAME_WRONG_COLORS,
-	0, 0
-};
-
-struct GameDriver driver_mnchmobl =
-{
-	__FILE__,
-	&driver_joyfulr,
-	"mnchmobl",
-	"Munch Mobile (Japan)",
-	"1983",
-	"SNK (Centuri license)",
-	"Phil Stroffolino\nZsolt Vasvari\nMike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mnchmobl,
-	0, 0, 0, 0,
-
-	input_ports_mnchmobl,
-
-	0, 0, 0,
-	ROT270 | GAME_WRONG_COLORS,
-	0, 0
-};
+GAMEX( 1983, joyfulr,  0,       munchmo, mnchmobl, 0, ROT270, "SNK", "Joyful Road (US)", GAME_WRONG_COLORS )
+GAMEX( 1983, mnchmobl, joyfulr, munchmo, mnchmobl, 0, ROT270, "SNK (Centuri license)", "Munch Mobile (Japan)", GAME_WRONG_COLORS )

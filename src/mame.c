@@ -34,32 +34,47 @@ int run_machine(void);
 
 
 #ifdef MAME_DEBUG
+
+INLINE int my_stricmp( const char *dst, const char *src)
+{
+	while (*src && *dst)
+	{
+		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
+		src++;
+		dst++;
+	}
+	return *dst - *src;
+}
+
 static int validitychecks(void)
 {
 	int i,j;
 	UINT8 a,b;
+	int error = 0;
+
 
 	a = 0xff;
 	b = a + 1;
-	if (b > a)	{ printf("UINT8 must be 8 bits\n"); return 1; }
+	if (b > a)	{ printf("UINT8 must be 8 bits\n"); error = 1; }
 
-	if (sizeof(INT8)   != 1)	{ printf("INT8 must be 8 bits\n"); return 1; }
-	if (sizeof(UINT8)  != 1)	{ printf("UINT8 must be 8 bits\n"); return 1; }
-	if (sizeof(INT16)  != 2)	{ printf("INT16 must be 16 bits\n"); return 1; }
-	if (sizeof(UINT16) != 2)	{ printf("UINT16 must be 16 bits\n"); return 1; }
-	if (sizeof(INT32)  != 4)	{ printf("INT32 must be 32 bits\n"); return 1; }
-	if (sizeof(UINT32) != 4)	{ printf("UINT32 must be 32 bits\n"); return 1; }
-	if (sizeof(INT64)  != 8)	{ printf("INT64 must be 64 bits\n"); return 1; }
-	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); return 1; }
+	if (sizeof(INT8)   != 1)	{ printf("INT8 must be 8 bits\n"); error = 1; }
+	if (sizeof(UINT8)  != 1)	{ printf("UINT8 must be 8 bits\n"); error = 1; }
+	if (sizeof(INT16)  != 2)	{ printf("INT16 must be 16 bits\n"); error = 1; }
+	if (sizeof(UINT16) != 2)	{ printf("UINT16 must be 16 bits\n"); error = 1; }
+	if (sizeof(INT32)  != 4)	{ printf("INT32 must be 32 bits\n"); error = 1; }
+	if (sizeof(UINT32) != 4)	{ printf("UINT32 must be 32 bits\n"); error = 1; }
+	if (sizeof(INT64)  != 8)	{ printf("INT64 must be 64 bits\n"); error = 1; }
+	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); error = 1; }
 
 	for (i = 0;drivers[i];i++)
 	{
 		const struct RomModule *romp;
+		const struct InputPortTiny *inp;
 
 		if (drivers[i]->clone_of == drivers[i])
 		{
 			printf("%s is set as a clone of itself\n",drivers[i]->name);
-			return 1;
+			error = 1;
 		}
 
 		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
@@ -67,7 +82,7 @@ static int validitychecks(void)
 			if ((drivers[i]->clone_of->clone_of->flags & NOT_A_DRIVER) == 0)
 			{
 				printf("%s is a clone of a clone\n",drivers[i]->name);
-				return 1;
+				error = 1;
 			}
 		}
 
@@ -76,17 +91,17 @@ static int validitychecks(void)
 			if (!strcmp(drivers[i]->name,drivers[j]->name))
 			{
 				printf("%s is a duplicate name (%s, %s)\n",drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
-				return 1;
+				error = 1;
 			}
 			if (!strcmp(drivers[i]->description,drivers[j]->description))
 			{
 				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
-				return 1;
+				error = 1;
 			}
 			if (drivers[i]->rom == drivers[j]->rom && drivers[i]->rom!=NULL)
 			{
 				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
-				return 1;
+				error = 1;
 			}
 		}
 
@@ -110,7 +125,7 @@ static int validitychecks(void)
 					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
 						printf("%s has invalid ROM_REGION type %x\n",drivers[i]->name,type);
-						return 1;
+						error = 1;
 					}
 
 					region_type_used[type]++;
@@ -123,7 +138,7 @@ static int validitychecks(void)
 						if (tolower(*c) != *c)
 						{
 							printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
-							return 1;
+							error = 1;
 						}
 						c++;
 					}
@@ -137,13 +152,72 @@ static int validitychecks(void)
 				if (region_type_used[j] > 1)
 				{
 					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
-					return 1;
+					error = 1;
 				}
+			}
+		}
+
+
+		inp = drivers[i]->input_ports;
+
+		if (inp)
+		{
+			while (inp->type != IPT_END)
+			{
+				if (inp->name && inp->name != IP_NAME_DEFAULT)
+				{
+					j = 0;
+
+					while (ipdn_defaultstrings[j] != DEF_STR( Unknown ))
+					{
+						if (inp->name == ipdn_defaultstrings[j]) break;
+						else if (!my_stricmp(inp->name,ipdn_defaultstrings[j]))
+						{
+							printf("%s must use DEF_STR( %s )\n",drivers[i]->name,inp->name);
+							error = 1;
+						}
+						j++;
+					}
+
+					if (inp->name == DEF_STR( On ) && (inp+1)->name == DEF_STR( Off ))
+					{
+						printf("%s has inverted Off/On dipswitch order\n",drivers[i]->name);
+						error = 1;
+					}
+
+					if (inp->name == DEF_STR( Yes ) && (inp+1)->name == DEF_STR( No ))
+					{
+						printf("%s has inverted No/Yes dipswitch order\n",drivers[i]->name);
+						error = 1;
+					}
+
+					if (!my_stricmp(inp->name,"table"))
+					{
+						printf("%s must use DEF_STR( Cocktail ), not %s\n",drivers[i]->name,inp->name);
+						error = 1;
+					}
+
+					if (inp->name == DEF_STR( Cocktail ) && (inp+1)->name == DEF_STR( Upright ))
+					{
+						printf("%s has inverted Upright/Cocktail dipswitch order\n",drivers[i]->name);
+						error = 1;
+					}
+
+					if (inp->name >= DEF_STR( 9C_1C ) && inp->name <= DEF_STR( Free_Play )
+							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
+							&& inp->name >= (inp+1)->name)
+					{
+						printf("%s has unsorted coinage %s > %s\n",drivers[i]->name,inp->name,(inp+1)->name);
+						error = 1;
+					}
+				}
+
+				inp++;
 			}
 		}
 	}
 
-	return 0;
+	return error;
 }
 #endif
 
@@ -234,20 +308,10 @@ int run_game(int game)
 	err = 1;
 	bailing = 0;
 
-   #ifdef MESS
-   {
-   int i;
-	/* MESS - set up the storage peripherals */
-	for (i = 0; i < MAX_ROM; i ++)
-		strcpy (rom_name[i], options.rom_name[i]);
-	for (i = 0; i < MAX_FLOPPY; i ++)
-		strcpy (floppy_name[i], options.floppy_name[i]);
-	for (i = 0; i < MAX_HARD; i ++)
-		strcpy (hard_name[i], options.hard_name[i]);
-	for (i = 0; i < MAX_CASSETTE; i ++)
-		strcpy (cassette_name[i], options.cassette_name[i]);
-   }
-   #endif
+	#ifdef MESS
+	if (get_filenames())
+		return err;
+	#endif
 
 	if (osd_init() == 0)
 	{
@@ -313,26 +377,21 @@ int init_machine(void)
 		}
 	}
 
-	#ifdef MESS
-   	if (!gamedrv->rom)
-        {
-      	  if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
-          goto load_next;
-        }
-	#endif
+    #ifdef MESS
+	if (!gamedrv->rom)
+	{
+		if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
+		goto load_next;
+	}
+    #endif
 
 	if (readroms() != 0)
 		goto out_free;
 
 	#ifdef MESS
 	load_next:
-	/* The ROM loading routine should allocate the ROM and RAM space and */
-	/* assign them to the appropriate Machine->memory_region blocks. */
-        if (gamedrv->rom_load && (*gamedrv->rom_load)() != 0)
-	{
-		printf("Image load failed.\n");
-		goto out_free;
-	}
+		if (init_devices(gamedrv))
+			goto out_free;
 	#endif
 
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
@@ -368,7 +427,11 @@ void shutdown_machine(void)
 	int i;
 
 
-	/* ASG 971007 free memory element map */
+	#ifdef MESS
+	exit_devices();
+	#endif
+
+    /* ASG 971007 free memory element map */
 	memory_shutdown();
 
 	/* free the memory allocated for ROM and RAM */
@@ -587,7 +650,12 @@ int run_machine(void)
 				{
 					if (Machine->memory_region_type[region] & REGIONFLAG_DISPOSE)
 					{
-						free (Machine->memory_region[region]);
+						int i;
+
+						/* invalidate contents to avoid subtle bugs */
+						for (i = 0;i < memory_region_length(region);i++)
+							memory_region(region)[i] = rand();
+						free(Machine->memory_region[region]);
 						Machine->memory_region[region] = 0;
 					}
 				}

@@ -2,7 +2,10 @@
  *** PSYCHIC 5 hardware ***		(by Roberto Ventura)
  **************************
 
+
 Psychic 5 (c) JALECO (early 1987)
+
+driver by Jarek Parchanski
 
 
 0) GENERAL.
@@ -518,10 +521,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/* character set */
-	{ 1, 0x00000, &spritelayout,  0*16, 16 },
-	{ 1, 0x20000, &spritelayout, 16*16, 16 },
-	{ 1, 0x40000, &charlayout,   32*16, 16 },
+	{ REGION_GFX1, 0, &spritelayout,  0*16, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
+	{ REGION_GFX3, 0, &charlayout,   32*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -537,7 +539,6 @@ static struct YM2203interface ym2203_interface =
 	2,		/* 2 chips   */
 	6000000/4,    	/* 1.5 MHz */
 	{ YM2203_VOL(25,15), YM2203_VOL(25,15) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -545,7 +546,7 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_psychic5 =
 {
 	/* basic machine hardware */
 	{
@@ -600,40 +601,21 @@ ROM_START( psychic5 )
 	ROM_LOAD( "p5d",          0x00000, 0x08000, 0x90259249 )
 	ROM_LOAD( "p5e",          0x10000, 0x10000, 0x72298f34 )
 
-	ROM_REGION_DISPOSE( 0x48000 )   			/* graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) 				/*64K for 2nd z80 CPU*/
+	ROM_LOAD( "p5a",          0x00000, 0x08000, 0x50060ecd )
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "p5b",          0x00000, 0x10000, 0x7e3f87d4 )	/* sprite tiles */
 	ROM_LOAD( "p5c",          0x10000, 0x10000, 0x8710fedb )
-	ROM_LOAD( "p5g",          0x20000, 0x10000, 0xf9262f32 )	/* background tiles */
-	ROM_LOAD( "p5h",          0x30000, 0x10000, 0xc411171a )
-	ROM_LOAD( "p5f",          0x40000, 0x08000, 0x04d7e21c ) /* foreground tiles */
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) 				/*64K for 2nd z80 CPU*/
-	ROM_LOAD( "p5a",          0x00000, 0x08000, 0x50060ecd )
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p5g",          0x00000, 0x10000, 0xf9262f32 )	/* background tiles */
+	ROM_LOAD( "p5h",          0x10000, 0x10000, 0xc411171a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "p5f",          0x00000, 0x08000, 0x04d7e21c )	/* foreground tiles */
 ROM_END
 
 
 
-struct GameDriver driver_psychic5 =
-{
-	__FILE__,
-	0,
-	"psychic5",
-	"Psychic 5",
-	"1987",
-	"Jaleco",
-	"Jarek Parchanski\nRoberto Ventura",
-	0,
-	&machine_driver,
-	0,
-
-	rom_psychic5,
-	0, 0,
-	0,
-	0,
-
-	input_ports_psychic5,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1987, psychic5, 0, psychic5, psychic5, 0, ROT270, "Jaleco", "Psychic 5" )

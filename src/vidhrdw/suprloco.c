@@ -239,8 +239,8 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 
 		col = 0;
 
-		/* memory region #2 contains the packed sprite data */
-		gfx = &(memory_region(2)[src & 0x7fff]);
+		/* get pointer to packed sprite data */
+		gfx = &(memory_region(REGION_GFX2)[src & 0x7fff]);
 		flipx = src & 0x8000;   /* flip x */
 
 		while (1)

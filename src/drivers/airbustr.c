@@ -705,7 +705,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	3000000,					/* ?? */
 	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
-	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },			/* DSW-1 connected to port A */
 	{ input_port_4_r },			/* DSW-2 connected to port B */
 	{ 0 },
@@ -832,4 +831,4 @@ unsigned char *RAM;
 
 
 
-GAME( 1990, airbustr, , airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster (Japan)" )
+GAME( 1990, airbustr, 0, airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster (Japan)" )

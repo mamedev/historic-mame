@@ -102,7 +102,7 @@ palette_init_used_colors();
 	int color,code,i;
 	int colmask[64];
 	int pal_base;
-	unsigned char *p=memory_region(3);
+	unsigned char *p=memory_region(REGION_GFX4);
 
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
@@ -235,7 +235,7 @@ if (palette_recalc())
 
 		if (offs != lastoffs || dirtypalette)
 		{
-			unsigned char *p=memory_region(3);
+			unsigned char *p=memory_region(REGION_GFX4);
 
 
 			lastoffs = offs;

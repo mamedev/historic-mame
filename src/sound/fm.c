@@ -1411,12 +1411,12 @@ static YM2203 *FM2203=NULL;	/* array of YM2203's */
 static int YM2203NumChips;	/* total chip */
 
 /* ---------- update one of chip ----------- */
-void YM2203UpdateOne(int num, void *buffer, int length)
+void YM2203UpdateOne(int num, INT16 *buffer, int length)
 {
 	YM2203 *F2203 = &(FM2203[num]);
 	FM_OPN *OPN =   &(FM2203[num].OPN);
     int i,ch;
-	FMSAMPLE *buf = (FMSAMPLE *)buffer;
+	FMSAMPLE *buf = buffer;
 
 	cur_chip = (void *)F2203;
 	State = &F2203->OPN.ST;
@@ -1968,7 +1968,7 @@ INLINE void YM2608_RYTHM( YM2608 *F2608, ADPCM_CH *ch )
 #endif /* YM2608_RHYTHM_PCM */
 
 /* ---------- update one of chip ----------- */
-void YM2608UpdateOne(int num, void **buffer, int length)
+void YM2608UpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2608 *F2608 = &(FM2608[num]);
 	FM_OPN *OPN   = &(FM2608[num].OPN);
@@ -1979,8 +1979,8 @@ void YM2608UpdateOne(int num, void **buffer, int length)
 	YM_DELTAT_DECODE_PRESET(DELTAT);
 
 	/* set bufer */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
+	bufL = buffer[0];
+	bufR = buffer[1];
 
 	if( (void *)F2608 != cur_chip ){
 		cur_chip = (void *)F2608;
@@ -2352,7 +2352,7 @@ static YM2610 *FM2610=NULL;	/* array of YM2610's */
 static int YM2610NumChips;	/* total chip */
 
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
-void YM2610UpdateOne(int num, void **buffer, int length)
+void YM2610UpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
@@ -2363,8 +2363,8 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 	YM_DELTAT_DECODE_PRESET(DELTAT);
 
 	/* buffer setup */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
+	bufL = buffer[0];
+	bufR = buffer[1];
 
 	if( (void *)F2610 != cur_chip ){
 		cur_chip = (void *)F2610;
@@ -2450,7 +2450,7 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 
 #if BUILD_YM2610B
 /* ---------- update one of chip (YM2610B FM6: ADPCM-A6: ADPCM-B:1) ----------- */
-void YM2610BUpdateOne(int num, void **buffer, int length)
+void YM2610BUpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2610 *F2610 = &(FM2610[num]);
 	FM_OPN *OPN   = &(FM2610[num].OPN);
@@ -2460,8 +2460,8 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 	/* setup DELTA-T unit */
 	YM_DELTAT_DECODE_PRESET(DELTAT);
 	/* buffer setup */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
+	bufL = buffer[0];
+	bufR = buffer[1];
 
 	if( (void *)F2610 != cur_chip ){
 		cur_chip = (void *)F2610;
@@ -2806,7 +2806,7 @@ static YM2612 *FM2612=NULL;	/* array of YM2612's */
 static int dacen;
 
 /* ---------- update one of chip ----------- */
-void YM2612UpdateOne(int num, void **buffer, int length)
+void YM2612UpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2612 *F2612 = &(FM2612[num]);
 	FM_OPN *OPN   = &(FM2612[num].OPN);
@@ -2814,8 +2814,8 @@ void YM2612UpdateOne(int num, void **buffer, int length)
 	int dacout  = F2612->dacout;
 
 	/* set bufer */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
+	bufL = buffer[0];
+	bufR = buffer[1];
 
 	if( (void *)F2612 != cur_chip ){
 		cur_chip = (void *)F2612;
@@ -3503,15 +3503,15 @@ UINT8 YM2151Read(int n,int a)
 }
 
 /* ---------- make digital sound data ---------- */
-void OPMUpdateOne(int num, void **buffer, int length)
+void OPMUpdateOne(int num, INT16 **buffer, int length)
 {
 	YM2151 *OPM = &(FMOPM[num]);
 	int i;
 	int amd,pmd;
 
 	/* set bufer */
-	bufL = (FMSAMPLE *)buffer[0];
-	bufR = (FMSAMPLE *)buffer[1];
+	bufL = buffer[0];
+	bufR = buffer[1];
 
 	if( (void *)OPM != cur_chip ){
 		cur_chip = (void *)OPM;

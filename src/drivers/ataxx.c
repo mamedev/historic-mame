@@ -494,7 +494,7 @@ static struct GfxLayout ataxx_tilelayout =
 
 static struct GfxDecodeInfo ataxx_gfxdecodeinfo[] =
 {
-  { 1, 0x00000, &ataxx_tilelayout, 0, 64 },
+  { REGION_GFX1, 0, &ataxx_tilelayout, 0, 64 },
   { -1 } /* end of array */
 };
 
@@ -671,7 +671,7 @@ int ataxx_xrom1_data_r(int offset)
     }
     else
     {
-        unsigned char *XROM = memory_region(4);
+        unsigned char *XROM = memory_region(REGION_USER1);
         int ret=XROM[ataxx_xrom_address];
         if (errorlog)
         {
@@ -692,7 +692,7 @@ int ataxx_xrom2_data_r(int offset)
     }
     else
     {
-        unsigned char *XROM = memory_region(4);
+        unsigned char *XROM = memory_region(REGION_USER1);
         int ret=XROM[0x20000+ataxx_xrom_address];
         if (errorlog)
         {
@@ -856,7 +856,7 @@ ROM_START( ataxx )
     ROM_REGIONX( 0x80000, REGION_CPU1 )
 	ROM_LOAD( "ataxx.038",   0x00000, 0x20000, 0x0e1cf6236)
 
-	ROM_REGION_DISPOSE(0xC0000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "ataxx.098",  0x00000, 0x20000, 0x059d0f2ae )
 	ROM_LOAD( "ataxx.099",  0x20000, 0x20000, 0x06ab7db25 )
 	ROM_LOAD( "ataxx.100",  0x40000, 0x20000, 0x02352849e )
@@ -875,7 +875,7 @@ ROM_START( ataxx )
     ROM_LOAD_EVEN( "ataxx.016",  0xC0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
     ROM_LOAD_ODD ( "ataxx.002",  0xC0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
-    ROM_REGION(0x20000) /* X-ROM (data used by main processor) */
+    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 ROM_END
 
@@ -883,7 +883,7 @@ ROM_START( ataxxa )
     ROM_REGIONX( 0x80000, REGION_CPU1 )
     ROM_LOAD( "u38",   0x00000, 0x20000, 0x3378937d)
 
-    ROM_REGION_DISPOSE(0xc0000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "ataxx.098",  0x00000, 0x20000, 0x059d0f2ae )
 	ROM_LOAD( "ataxx.099",  0x20000, 0x20000, 0x06ab7db25 )
 	ROM_LOAD( "ataxx.100",  0x40000, 0x20000, 0x02352849e )
@@ -902,7 +902,7 @@ ROM_START( ataxxa )
     ROM_LOAD_EVEN( "ataxx.016",  0xc0000, 0x20000, 0x0f2bdff48 ) /* BAD in self-test */
     ROM_LOAD_ODD ( "ataxx.002",  0xc0000, 0x20000, 0x0ca06a394 ) /* BAD in self-test */
 
-    ROM_REGION(0x40000) /* X-ROM (data used by main processor) */
+    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 ROM_END
 
@@ -956,7 +956,7 @@ ROM_START( indyheat )
     ROM_LOAD( "u66_27c.010",   0x40000, 0x20000, 0xc9612072)  /* 8,9,a,b */
     ROM_LOAD( "u67_27c.010",   0x60000, 0x20000, 0x4c4b25e0)  /* c,d,e,f */
 
-    ROM_REGION_DISPOSE(0xc0000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "u145_27c.010",  0x00000, 0x20000, 0x612d4bf8 )
     ROM_LOAD( "u146_27c.010",  0x20000, 0x20000, 0x77a725f6 )
     ROM_LOAD( "u147_27c.010",  0x40000, 0x20000, 0xd6aac372 )
@@ -983,7 +983,7 @@ ROM_START( indyheat )
     ROM_LOAD_EVEN( "u4_27c.010",  0xc0000, 0x20000, 0xfa7bfa04 )  /* BAD in self-test */
     ROM_LOAD_ODD ( "u5_27c.010",  0xc0000, 0x20000, 0x198285d4 )  /* BAD in self-test */
 
-    ROM_REGION(0x40000) /* X-ROM (data used by main processor) */
+    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "u68_27c.010",   0x00000, 0x20000, 0x9e88efb3)
     ROM_LOAD( "u69_27c.010",   0x20000, 0x20000, 0xaa39fcb3)
 ROM_END
@@ -1055,7 +1055,7 @@ ROM_START( wsf )
     ROM_LOAD( "30022-03.u64",  0x00000, 0x20000, 0x2e7faa96)
     ROM_LOAD( "30023-03.u65",  0x20000, 0x20000, 0x7146328f)
 
-    ROM_REGION_DISPOSE(0x100000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "30011-02.145",  0x00000, 0x10000, 0x6153569b )
     ROM_LOAD( "30012-02.146",  0x20000, 0x10000, 0x52d65e21 )
     ROM_LOAD( "30013-02.147",  0x40000, 0x10000, 0xb3afda12 )
@@ -1081,14 +1081,14 @@ ROM_START( wsf )
     ROM_LOAD_EVEN( "30018-01.u4",  0xc0000, 0x20000, 0x1ec16735 )
     ROM_LOAD_ODD ( "30019-01.u5",  0xc0000, 0x20000, 0x2881f73b )
 
-    ROM_REGION(0x40000) /* X-ROM (data used by main processor) */
+    ROM_REGIONX( 0x40000, REGION_USER1 ) /* X-ROM (data used by main processor) */
     ROM_LOAD( "30009-01.u68",   0x00000, 0x10000, 0xf2fbfc15)
     ROM_LOAD( "30010-01.u69",   0x20000, 0x10000, 0xb4ed2d3b)
 ROM_END
 
 
 
-GAMEX( 1990, ataxx,    ,      kludge, ataxx,    , ROT0, "Leland Corp.", "Ataxx (set 1)", GAME_NOT_WORKING )
-GAMEX( 1990, ataxxa,   ataxx, ataxx,  ataxx,    , ROT0, "Leland Corp.", "Ataxx (set 2)", GAME_NOT_WORKING )
-GAMEX( 1991, indyheat, ,      ataxx,  indyheat, , ROT0, "Leland Corp.", "Indy Heat", GAME_NOT_WORKING )
-GAMEX( 1990, wsf,      ,      ataxx,  wsf,      , ROT0, "Leland Corp. USA", "World Soccer Finals", GAME_NOT_WORKING )
+GAMEX( 1990, ataxx,    0,     kludge, ataxx,    0, ROT0, "Leland Corp.", "Ataxx (set 1)", GAME_NOT_WORKING )
+GAMEX( 1990, ataxxa,   ataxx, ataxx,  ataxx,    0, ROT0, "Leland Corp.", "Ataxx (set 2)", GAME_NOT_WORKING )
+GAMEX( 1991, indyheat, 0,     ataxx,  indyheat, 0, ROT0, "Leland Corp.", "Indy Heat", GAME_NOT_WORKING )
+GAMEX( 1990, wsf,      0,     ataxx,  wsf,      0, ROT0, "Leland Corp. USA", "World Soccer Finals", GAME_NOT_WORKING )

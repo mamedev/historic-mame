@@ -219,7 +219,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r, 0 },	/* ? */
 	{ soundlatch2_r, 0 },	/* ? */
 	{ 0, 0 },
@@ -329,5 +328,5 @@ ROM_END
 
 
 
-GAMEX( 1984, formatz,  ,        formatz, formatz, ,  ROT0, "Jaleco", "Formation Z", GAME_NOT_WORKING )
-GAMEX( 1984, aeroboto, formatz, formatz, formatz, ,  ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_NOT_WORKING )
+GAMEX( 1984, formatz,  0,       formatz, formatz, 0, ROT0, "Jaleco", "Formation Z", GAME_NOT_WORKING )
+GAMEX( 1984, aeroboto, formatz, formatz, formatz, 0, ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_NOT_WORKING )

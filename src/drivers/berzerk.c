@@ -131,13 +131,13 @@ static struct IOWritePort writeport[] =
 	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) ) \
 	PORT_DIPSETTING(    0x0d, DEF_STR( 4C_3C ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) ) \
-	PORT_DIPSETTING(    0x0e, "4 Coins/5 Credits" ) \
+	PORT_DIPSETTING(    0x0e, DEF_STR( 4C_5C ) ) \
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) ) \
-	PORT_DIPSETTING(    0x0f, "4 Coins/7 Credits" ) \
+	PORT_DIPSETTING(    0x0f, DEF_STR( 4C_7C ) ) \
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) ) \
 	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_5C ) ) \
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) ) \
-	PORT_DIPSETTING(    0x0c, "2 Coins/7 Credits" ) \
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_7C ) ) \
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) ) \
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) ) \
@@ -201,13 +201,13 @@ INPUT_PORTS_START( berzerk )
 	PORT_DIPSETTING(    0x00, "None" )
 
 	PORT_START      /* IN5 */
-	COINAGE(C)
+	COINAGE(3)
 
 	PORT_START      /* IN6 */
-	COINAGE(B)
+	COINAGE(2)
 
 	PORT_START      /* IN7 */
-	COINAGE(A)
+	COINAGE(1)
 
 	PORT_START      /* IN8 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Free_Play ) )
@@ -524,6 +524,6 @@ ROM_END
 
 
 
-GAME( 1980, berzerk,  ,        berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 1)" )
-GAME( 1980, berzerk1, berzerk, berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 2)" )
-GAME( 1982, frenzy,   ,        frenzy,  frenzy,  , ROT0, "Stern", "Frenzy" )
+GAME( 1980, berzerk,  0,       berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 1)" )
+GAME( 1980, berzerk1, berzerk, berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 2)" )
+GAME( 1982, frenzy,   0,       frenzy,  frenzy,  0, ROT0, "Stern", "Frenzy" )

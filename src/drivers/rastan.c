@@ -1,5 +1,8 @@
 /***************************************************************************
 
+Rastan
+
+driver by Jarek Burczynski
 
 ***************************************************************************/
 
@@ -81,10 +84,10 @@ static int rastan_cycle_r(int offset)
 
 static int rastan_sound_spin(int offset)
 {
-	if ( (cpu_get_pc()==0x1c5) && !(memory_region(2)[ 0x8f27 ] & 0x01) )
+	if ( (cpu_get_pc()==0x1c5) && !(memory_region(REGION_CPU2)[ 0x8f27 ] & 0x01) )
 		cpu_spin();
 
-	return memory_region(2)[ 0x8f27 ];
+	return memory_region(REGION_CPU2)[ 0x8f27 ];
 }
 
 
@@ -351,8 +354,8 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
-	{ 1, 0x80000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
+	{ REGION_GFX1, 0, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ REGION_GFX2, 0, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
 	{ -1 } /* end of array */
 };
 
@@ -387,14 +390,14 @@ static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 chip */
 	8000,       /* 8000Hz playback */
-	3,			/* memory region 3 */
+	REGION_SOUND1,	/* memory region */
 	adpcm_init,	/* init function */
 	{ 60 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rastan =
 {
 	/* basic machine hardware */
 	{
@@ -459,21 +462,23 @@ ROM_START( rastan )
 	ROM_LOAD_EVEN( "ic21_42.bin", 0x40000, 0x10000, 0x1857a7cb )
 	ROM_LOAD_ODD ( "ic09_43.bin", 0x40000, 0x10000, 0xc34b9152 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
-	ROM_LOAD( "ic15_05.bin",  0x80000, 0x20000, 0xc22d94ac )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0xa0000, 0x20000, 0xb5632a51 )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
-	ROM_REGION(0x10000)	/* 64k for the samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, 0xc22d94ac )        /* sprites 1a */
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, 0xb5632a51 )        /* sprites 3a */
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, 0x002ccf39 )        /* sprites 1b */
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, 0xfeafca05 )        /* sprites 3b */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
@@ -486,21 +491,23 @@ ROM_START( rastanu )
 	ROM_LOAD_EVEN( "ic21_42.bin", 0x40000, 0x10000, 0x1857a7cb )
 	ROM_LOAD_ODD ( "b04-41-1.9",  0x40000, 0x10000, 0xbd403269 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
-	ROM_LOAD( "ic15_05.bin",  0x80000, 0x20000, 0xc22d94ac )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0xa0000, 0x20000, 0xb5632a51 )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
-	ROM_REGION(0x10000)	/* 64k for the samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, 0xc22d94ac )        /* sprites 1a */
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, 0xb5632a51 )        /* sprites 3a */
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, 0x002ccf39 )        /* sprites 1b */
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, 0xfeafca05 )        /* sprites 3b */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
@@ -513,21 +520,23 @@ ROM_START( rastanu2 )
 	ROM_LOAD_EVEN( "b04-25.21",   0x40000, 0x10000, 0xd1e5adee )
 	ROM_LOAD_ODD ( "b04-24.9",    0x40000, 0x10000, 0xa3dcc106 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
-	ROM_LOAD( "ic15_05.bin",  0x80000, 0x20000, 0xc22d94ac )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0xa0000, 0x20000, 0xb5632a51 )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
-	ROM_REGION(0x10000)	/* 64k for the samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, 0xc22d94ac )        /* sprites 1a */
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, 0xb5632a51 )        /* sprites 3a */
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, 0x002ccf39 )        /* sprites 1b */
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, 0xfeafca05 )        /* sprites 3b */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
@@ -540,451 +549,30 @@ ROM_START( rastsaga )
 	ROM_LOAD_EVEN( "rs21_42.bin", 0x40000, 0x10000, 0xb626c439 )
 	ROM_LOAD_ODD ( "rs09_43.bin", 0x40000, 0x10000, 0xc928a516 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
-	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
-	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
-	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
-	ROM_LOAD( "ic15_05.bin",  0x80000, 0x20000, 0xc22d94ac )        /* sprites 1a */
-	ROM_LOAD( "ic14_07.bin",  0xa0000, 0x20000, 0xb5632a51 )        /* sprites 3a */
-	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
-	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
-	ROM_REGION(0x10000)	/* 64k for the samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic40_01.bin",  0x00000, 0x20000, 0xcd30de19 )        /* 8x8 0 */
+	ROM_LOAD( "ic39_03.bin",  0x20000, 0x20000, 0xab67e064 )        /* 8x8 0 */
+	ROM_LOAD( "ic67_02.bin",  0x40000, 0x20000, 0x54040fec )        /* 8x8 1 */
+	ROM_LOAD( "ic66_04.bin",  0x60000, 0x20000, 0x94737e93 )        /* 8x8 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15_05.bin",  0x00000, 0x20000, 0xc22d94ac )        /* sprites 1a */
+	ROM_LOAD( "ic14_07.bin",  0x20000, 0x20000, 0xb5632a51 )        /* sprites 3a */
+	ROM_LOAD( "ic28_06.bin",  0x40000, 0x20000, 0x002ccf39 )        /* sprites 1b */
+	ROM_LOAD( "ic27_08.bin",  0x60000, 0x20000, 0xfeafca05 )        /* sprites 3b */
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* 64k for the samples */
 	ROM_LOAD( "ic76_20.bin", 0x0000, 0x10000, 0xfd1a34cc ) /* samples are 4bit ADPCM */
 ROM_END
 
 
 
-struct GameDriver driver_rastan =
-{
-	__FILE__,
-	0,
-	"rastan",
-	"Rastan (World)",
-	"1987",
-	"Taito Corporation Japan",
-	"Jarek Burczynski",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rastan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rastan,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
+GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)" )
 /* IDENTICAL to rastan, only differennce is copyright notice and Coin B coinage */
-struct GameDriver driver_rastanu =
-{
-	__FILE__,
-	&driver_rastan,
-	"rastanu",
-	"Rastan (US set 1)",
-	"1987",
-	"Taito America Corporation",
-	"Jarek Burczynski",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rastanu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rastsaga,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rastanu2 =
-{
-	__FILE__,
-	&driver_rastan,
-	"rastanu2",
-	"Rastan (US set 2)",
-	"1987",
-	"Taito America Corporation",
-	"Jarek Burczynski",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rastanu2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rastsaga,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rastsaga =
-{
-	__FILE__,
-	&driver_rastan,
-	"rastsaga",
-	"Rastan Saga (Japan)",
-	"1987",
-	"Taito Corporation",
-	"Jarek Burczynski",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rastsaga,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rastsaga,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-
-
-#if 0
-/*
-** YM2151 CYM file player (can play callus .cym files)
-**
-** driver is called cymplay (extern it in driver.c)
-**
-** For this to run you only need a file "2151.cym" in the same
-** directory of mame.exe
-*/
-
-ROM_START( ymcym )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )
-	ROM_REGIONX( 0x1000, REGION_CPU2 )
-ROM_END
-
-INPUT_PORTS_START( ymcym )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-void ymcym_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-}
-
-static FILE * cymfile =NULL;
-
-int ymcym_vh_start(void)
-{
-	cymfile=fopen("2151.cym","rb");
-	if (!cymfile){
-		if (errorlog) fprintf(errorlog,"Could not find 2151.cym file !\n");
-		return 1;
-	}
-	return 0;
-}
-
-void ymcym_vh_stop(void)
-{
-	if (cymfile) fclose(cymfile);
-}
-
-static struct MemoryReadAddress ymcym_readmem[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
-static struct MemoryWriteAddress ymcym_writemem[] =
-{
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
-
-void ymcym_2151_irq_handler(int irq)
-{
-}
-
-static struct YM2151interface ymcym_2151_interface =
-{
-	1,			/* 1 chip */
-	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ ymcym_2151_irq_handler },
-	{ 0 }
-};
-
-int ymcym_interrupt(void)
-{
-int i;
-	do
-	{
-		i = fgetc(cymfile);
-		if (i == EOF){
-			if (errorlog) fprintf(errorlog,"2151.cym EOF reached... Restarting...\n");
-			fseek(cymfile,0,SEEK_SET);
-			i = fgetc(cymfile);
-		}
-		if (i){
-			YM2151_register_port_0_w(0,i);
-			i = fgetc(cymfile);
-			YM2151_data_port_0_w(0,i);
-			i = 1;
-		}
-	}while (i);
-
-	return 0;
-}
-
-static struct MachineDriver ymcym_machine =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1000000,	/* 1 Mhz */
-			ymcym_readmem, ymcym_writemem,0,0,
-			ymcym_interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	2048, 2048,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ymcym_vh_start,
-	ymcym_vh_stop,
-	ymcym_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151_ALT,
-//			SOUND_YM2151,
-			&ymcym_2151_interface
-		}
-	}
-};
-
-struct GameDriver driver_cymplay =
-{
-	__FILE__,
-	0,
-	"cymplay",
-	"YM2151 .CYM file player",
-	" ",
-	" ",
-	"Jarek Burczynski",
-	0,
-	&ymcym_machine,
-	0,
-
-	rom_ymcym,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ymcym,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-
-
-/*
-** YM2151 register test
-**
-** driver is called ymtest (extern it in driver.c)
-**
-** For this to run you only need a file "2151.reg" in the same
-** directory of mame.exe
-*/
-
-
-static FILE * ymfile =NULL;
-
-int ymtest_vh_start(void)
-{
-	ymfile=fopen("2151.reg","rb");
-	if (!ymfile){
-		if (errorlog) fprintf(errorlog,"Could not find 2151.reg file !\n");
-		return 1;
-	}
-	return 0;
-}
-
-void ymtest_vh_stop(void)
-{
-	if (ymfile) fclose(ymfile);
-}
-
-void ymtest_2151_irq_handler(int irq)
-{
-}
-
-static struct YM2151interface ymtest_2151_interface =
-{
-	1,		/* 1 chip */
-	4000000,	/* 4 MHz clock [X68000] */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ ymtest_2151_irq_handler },
-	{ 0 }
-};
-
-
-int fget_reg(FILE *f)
-{
-int tab[256];
-int i,wyn;
-int mode=0;
-int val=-1;
-
-	for (i=0; i<256; i++)
-		tab[i] = 0;
-	for (i='0'; i<='9'; i++)
-		tab[i] = i-'0';
-	for (i='a'; i<='f'; i++)
-		tab[i] = i-'a'+10;
-	for (i='A'; i<='F'; i++)
-		tab[i] = i-'A'+10;
-
-	while ( ( (wyn=fgetc(f)) != EOF)  && (mode>=0) )
-	{
-		if (wyn=='$')
-		{
-			mode=1;
-		}
-		else
-		{
-			switch(mode)
-			{
-			case 1:	val = tab[wyn];
-				mode=2;
-				break;
-			case 2:	val = val*16 + tab[wyn];
-				mode = -1;
-				break;
-			}
-		}
-	}
-
-	if (wyn!=EOF)
-		return val;
-	else
-		return -1;
-}
-
-int ymtest_interrupt(void)
-{
-static int finished=0;
-int i,j;
-	while (!finished)
-	{
-		i = fget_reg(ymfile); //get reg from 2151.reg file
-		j = fget_reg(ymfile); //get data from 2151.reg file
-
-		if ( (i < 0) || (j < 0) ){
-			if (errorlog) fprintf(errorlog,"2151.reg EOF reached... \n");
-			finished=1;
-		}
-		else{
-			if (errorlog) fprintf(errorlog,"2151 write to reg %02x value %02x \n",i,j);
-			YM2151_register_port_0_w(0,i);
-			YM2151_data_port_0_w(0,j);
-		}
-	};
-
-	return 0;
-}
-
-static struct MachineDriver ymtest_machine =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1000000,	/* 1 Mhz */
-			ymcym_readmem, ymcym_writemem,0,0,
-			ymtest_interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	2048, 2048,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ymtest_vh_start,
-	ymtest_vh_stop,
-	ymcym_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151_ALT,
-//			SOUND_YM2151,
-			&ymtest_2151_interface
-		}
-	}
-};
-
-struct GameDriver driver_ymtest =
-{
-	__FILE__,
-	0,
-	"ymtest",
-	"YM2151 register test",
-	" ",
-	" ",
-	"Jarek Burczynski",
-	0,
-	&ymtest_machine,
-	0,
-
-	rom_ymcym,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ymcym,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-#endif
+GAME( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)" )
+GAME( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)" )
+GAME( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)" )

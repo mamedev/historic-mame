@@ -231,7 +231,7 @@ int tms5220_int_read (void)
 
 ***********************************************************************************************/
 
-void tms5220_process(signed char *buffer, unsigned int size)
+void tms5220_process(INT16 *buffer, unsigned int size)
 {
     int buf_count=0;
     int i, interp_period;
@@ -395,11 +395,11 @@ tryagain:
         /* clipping, just like the chip */
 
         if (u[0] > 511)
-            buffer[buf_count] = 127;
+            buffer[buf_count] = 127<<8;
         else if (u[0] < -512)
-            buffer[buf_count] = -128;
+            buffer[buf_count] = -128<<8;
         else
-            buffer[buf_count] = u[0] >> 2;
+            buffer[buf_count] = u[0] << 6;
 
         /* Update all counts */
 

@@ -2,6 +2,8 @@
 
 	Shuuz
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -274,8 +276,8 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &pflayout,  256, 16 },		/* sprites & playfield */
-	{ 1, 0x080000, &molayout,    0, 16 },		/* sprites & playfield */
+	{ REGION_GFX1, 0, &pflayout,  256, 16 },		/* sprites & playfield */
+	{ REGION_GFX2, 0, &molayout,    0, 16 },		/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -291,7 +293,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
 	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ 2 },       		/* memory region 2 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
 
@@ -303,7 +305,7 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_shuuz =
 {
 	/* basic machine hardware */
 	{
@@ -354,8 +356,10 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < memory_region_length(1); i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 }
 
 
@@ -371,22 +375,23 @@ ROM_START( shuuz )
 	ROM_LOAD_EVEN( "4010.23p",     0x00000, 0x20000, 0x1c2459f8 )
 	ROM_LOAD_ODD ( "4011.13p",     0x00000, 0x20000, 0x6db53a85 )
 
-	ROM_REGION_DISPOSE(0x180000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2030.43x", 0x000000, 0x20000, 0x8ecf1ed8 )
 	ROM_LOAD( "2032.20x", 0x020000, 0x20000, 0x5af184e6 )
 	ROM_LOAD( "2031.87x", 0x040000, 0x20000, 0x72e9db63 )
 	ROM_LOAD( "2033.65x", 0x060000, 0x20000, 0x8f552498 )
 
-	ROM_LOAD( "1020.43u", 0x080000, 0x20000, 0xd21ad039 )
-	ROM_LOAD( "1022.20u", 0x0a0000, 0x20000, 0x0c10bc90 )
-	ROM_LOAD( "1024.43m", 0x0c0000, 0x20000, 0xadb09347 )
-	ROM_LOAD( "1026.20m", 0x0e0000, 0x20000, 0x9b20e13d )
-	ROM_LOAD( "1021.87u", 0x100000, 0x20000, 0x8388910c )
-	ROM_LOAD( "1023.65u", 0x120000, 0x20000, 0x71353112 )
-	ROM_LOAD( "1025.87m", 0x140000, 0x20000, 0xf7b20a64 )
-	ROM_LOAD( "1027.65m", 0x160000, 0x20000, 0x55d54952 )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1020.43u", 0x000000, 0x20000, 0xd21ad039 )
+	ROM_LOAD( "1022.20u", 0x020000, 0x20000, 0x0c10bc90 )
+	ROM_LOAD( "1024.43m", 0x040000, 0x20000, 0xadb09347 )
+	ROM_LOAD( "1026.20m", 0x060000, 0x20000, 0x9b20e13d )
+	ROM_LOAD( "1021.87u", 0x080000, 0x20000, 0x8388910c )
+	ROM_LOAD( "1023.65u", 0x0a0000, 0x20000, 0x71353112 )
+	ROM_LOAD( "1025.87m", 0x0c0000, 0x20000, 0xf7b20a64 )
+	ROM_LOAD( "1027.65m", 0x0e0000, 0x20000, 0x55d54952 )
 
-	ROM_REGION( 0x40000 )	/* ADPCM data */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "1040.75b", 0x00000, 0x20000, 0x0896702b )
 	ROM_LOAD( "1041.65b", 0x20000, 0x20000, 0xb3b07ce9 )
 ROM_END
@@ -397,35 +402,30 @@ ROM_START( shuuz2 )
 	ROM_LOAD_EVEN( "23p.rom",     0x00000, 0x20000, 0x98aec4e7 )
 	ROM_LOAD_ODD ( "13p.rom",     0x00000, 0x20000, 0xdd9d5d5c )
 
-	ROM_REGION_DISPOSE(0x180000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2030.43x", 0x000000, 0x20000, 0x8ecf1ed8 )
 	ROM_LOAD( "2032.20x", 0x020000, 0x20000, 0x5af184e6 )
 	ROM_LOAD( "2031.87x", 0x040000, 0x20000, 0x72e9db63 )
 	ROM_LOAD( "2033.65x", 0x060000, 0x20000, 0x8f552498 )
 
-	ROM_LOAD( "1020.43u", 0x080000, 0x20000, 0xd21ad039 )
-	ROM_LOAD( "1022.20u", 0x0a0000, 0x20000, 0x0c10bc90 )
-	ROM_LOAD( "1024.43m", 0x0c0000, 0x20000, 0xadb09347 )
-	ROM_LOAD( "1026.20m", 0x0e0000, 0x20000, 0x9b20e13d )
-	ROM_LOAD( "1021.87u", 0x100000, 0x20000, 0x8388910c )
-	ROM_LOAD( "1023.65u", 0x120000, 0x20000, 0x71353112 )
-	ROM_LOAD( "1025.87m", 0x140000, 0x20000, 0xf7b20a64 )
-	ROM_LOAD( "1027.65m", 0x160000, 0x20000, 0x55d54952 )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1020.43u", 0x000000, 0x20000, 0xd21ad039 )
+	ROM_LOAD( "1022.20u", 0x020000, 0x20000, 0x0c10bc90 )
+	ROM_LOAD( "1024.43m", 0x040000, 0x20000, 0xadb09347 )
+	ROM_LOAD( "1026.20m", 0x060000, 0x20000, 0x9b20e13d )
+	ROM_LOAD( "1021.87u", 0x080000, 0x20000, 0x8388910c )
+	ROM_LOAD( "1023.65u", 0x0a0000, 0x20000, 0x71353112 )
+	ROM_LOAD( "1025.87m", 0x0c0000, 0x20000, 0xf7b20a64 )
+	ROM_LOAD( "1027.65m", 0x0e0000, 0x20000, 0x55d54952 )
 
-	ROM_REGION( 0x40000 )	/* ADPCM data */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "1040.75b", 0x00000, 0x20000, 0x0896702b )
 	ROM_LOAD( "1041.65b", 0x20000, 0x20000, 0xb3b07ce9 )
 ROM_END
 
 
 
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void shuuz_init(void)
+static void init_shuuz(void)
 {
 	atarigen_eeprom_default = NULL;
 
@@ -434,59 +434,5 @@ static void shuuz_init(void)
 
 
 
-/*************************************
- *
- *	Game driver(s)
- *
- *************************************/
-
-struct GameDriver driver_shuuz =
-{
-	__FILE__,
-	0,
-	"shuuz",
-	"Shuuz (version 8.0)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	shuuz_init,
-
-	rom_shuuz,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shuuz,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_shuuz2 =
-{
-	__FILE__,
-	&driver_shuuz,
-	"shuuz2",
-	"Shuuz (version 7.1)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	shuuz_init,
-
-	rom_shuuz2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shuuz2,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1990, shuuz,  0,     shuuz, shuuz,  shuuz, ROT0, "Atari Games", "Shuuz (version 8.0)" )
+GAME( 1990, shuuz2, shuuz, shuuz, shuuz2, shuuz, ROT0, "Atari Games", "Shuuz (version 7.1)" )

@@ -110,30 +110,6 @@ static struct MachineDriver machine_driver_pong =
 
 ***************************************************************************/
 
-struct GameDriver driver_pong =
-{
-	__FILE__,
-	0,
-	"pong",
-	"Pong",
-	"1972",
-	"Atari",
-	NULL,
-	0,
-	&machine_driver_pong,
-	0,
+#define rom_pong 0	/* this game has no ROMs */
 
-	NULL,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_pong,
-
-	0, 0, 0,
-	ROT0,
-
-	0,0
-};
-
+GAME( 1972, pong, 0, pong, pong, 0, ROT0, "Atari", "Pong" )

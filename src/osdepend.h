@@ -87,9 +87,8 @@ void osd_save_snapshot(void);
 ******************************************************************************/
 
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
-void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
+void osd_play_sample_16(int channel,INT16 *data,int len,int freq,int volume,int loop);
+void osd_play_streamed_sample_16(int channel,INT16 *data,int len,int freq,int volume,int pan);
 void osd_set_sample_freq(int channel,int freq);
 void osd_set_sample_volume(int channel,int volume);
 void osd_stop_sample(int channel);

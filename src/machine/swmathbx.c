@@ -35,7 +35,7 @@ static int PROM_STR[1024]; /* Storage for instruction strobe only */
 static int PROM_MAS[1024]; /* Storage for direct address only */
 static int PROM_AM[1024]; /* Storage for address mode select only */
 
-void translate_proms(void)
+void init_starwars(void)
 {
 	int cnt,val;
 	unsigned char *RAM = memory_region(REGION_CPU1);

@@ -210,7 +210,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 8 },
+	{ REGION_GFX1, 0x0000, &charlayout,  0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -224,7 +224,7 @@ static Z80_DaisyChain daisy_chain[] =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_dlair =
 {
 	/* basic machine hardware */
 	{
@@ -271,34 +271,11 @@ ROM_START( dlair )
 	ROM_LOAD( "u47",          0x4000, 0x2000, 0x6a66f6b4 )
 	ROM_LOAD( "u48",          0x6000, 0x2000, 0x36575106 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "u33",          0x0000, 0x2000, 0xe7506d96 )
 ROM_END
 
 
 
-struct GameDriver driver_dlair =
-{
-	__FILE__,
-	0,
-	"dlair",
-	"Dragon's Lair",
-	"1983",
-	"Cinematronics",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
+GAMEX( 1983, dlair, 0, dlair, dlair, 0, ROT0, "Cinematronics", "Dragon's Lair", GAME_NOT_WORKING )
 
-	rom_dlair,
-	0, 0,
-	0,
-	0,
-
-	input_ports_dlair,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-
-	0, 0
-};

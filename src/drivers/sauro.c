@@ -2,6 +2,7 @@
 
 Sauro Memory Map (preliminary)
 
+driver by Zsolt Vasvari
 
 Main CPU
 --------
@@ -250,10 +251,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x00000, &charlayout  , 0, 64 },
-        { 1, 0x10000, &charlayout  , 0, 64 },
-        { 1, 0x20000, &spritelayout, 0, 64 },
-        { -1 } /* end of array */
+	{ REGION_GFX1, 0, &charlayout  , 0, 64 },
+	{ REGION_GFX2, 0, &charlayout  , 0, 64 },
+	{ REGION_GFX3, 0, &spritelayout, 0, 64 },
+	{ -1 } /* end of array */
 };
 
 
@@ -271,7 +272,7 @@ static struct YM3526interface ym3812_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_sauro =
 {
 	/* basic machine hardware */
 	{
@@ -325,28 +326,32 @@ ROM_START( sauro )
 	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
 	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )
 
-	ROM_REGION_DISPOSE(0x40000)  /* 256k for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
+	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, 0x9b617cda )
 	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, 0xa6e2640d )
-	ROM_LOAD( "sauro-6.bin",     0x10000, 0x8000, 0x4b77cb0f )
-	ROM_LOAD( "sauro-7.bin",     0x18000, 0x8000, 0x187da060 )
-	ROM_LOAD( "sauro-8.bin",     0x20000, 0x8000, 0xe08b5d5e )
-	ROM_LOAD( "sauro-9.bin",     0x28000, 0x8000, 0x7c707195 )
-	ROM_LOAD( "sauro-10.bin",    0x30000, 0x8000, 0xc93380d1 )
-	ROM_LOAD( "sauro-11.bin",    0x38000, 0x8000, 0xf47982a8 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sauro-6.bin",     0x00000, 0x8000, 0x4b77cb0f )
+	ROM_LOAD( "sauro-7.bin",     0x08000, 0x8000, 0x187da060 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sauro-8.bin",     0x00000, 0x8000, 0xe08b5d5e )
+	ROM_LOAD( "sauro-9.bin",     0x08000, 0x8000, 0x7c707195 )
+	ROM_LOAD( "sauro-10.bin",    0x10000, 0x8000, 0xc93380d1 )
+	ROM_LOAD( "sauro-11.bin",    0x18000, 0x8000, 0xf47982a8 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, 0xd52c4cd0 )  /* Red component */
 	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
 	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
-	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
 ROM_END
 
 
 
-static void driver_init(void)
+static void init_sauro(void)
 {
 	/* This game doesn't like all memory to be initialized to zero, it won't
 	   initialize the high scores */
@@ -358,28 +363,4 @@ static void driver_init(void)
 }
 
 
-struct GameDriver driver_sauro =
-{
-	__FILE__,
-	0,
-	"sauro",
-	"Sauro",
-	"1987",
-	"Tecfri",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	driver_init,
-
-	rom_sauro,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_sauro,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
+GAMEX( 1987, sauro, 0, sauro, sauro, sauro, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_COLORS )

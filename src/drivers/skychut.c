@@ -113,7 +113,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 7 },	/* 4 color codes to support midframe */
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 7 },	/* 4 color codes to support midframe */
 	{ -1 } /* end of array */
 };
 
@@ -170,37 +170,11 @@ ROM_START( skychut )
 	ROM_LOAD( "sc7",  0x2800, 0x0400, 0xdd4c8e1a )
 	ROM_LOAD( "sc8d", 0x2c00, 0x0400, 0xaca8b798 )
 
-
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sc9d",  0x0000, 0x0400, 0x2101029e )
 	ROM_LOAD( "sc10d", 0x0400, 0x0400, 0x2f81c70c )
 ROM_END
 
 
 
-struct GameDriver driver_skychut =
-{
-	__FILE__,
-	0,
-	"skychut",
-	"Sky Chuter",
-	"1980",
-	"Irem",
-	"Lee Taylor",
-	0,
-	&machine_driver_skychut,
-	0,
-
-	rom_skychut,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skychut,
-
-	0, 0, 0,
-	ROT0 | GAME_WRONG_COLORS,
-
-	0, 0
-};
+GAMEX( 1980, skychut, 0, skychut, skychut, 0, ROT0, "Irem", "Sky Chuter", GAME_WRONG_COLORS )

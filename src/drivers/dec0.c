@@ -943,7 +943,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,	/* 12MHz clock divided by 8 = 1.50 MHz */
 	{ YM2203_VOL(35,90) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -970,7 +969,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
 	{ 7757 },           /* 8000Hz frequency */
-	{ 3 },              /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 80 }
 };
 
@@ -1408,50 +1407,6 @@ static struct MachineDriver machine_driver_midres =
 
 ROM_START( hbarrel )
 	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
-	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
-	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
-	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
-	ROM_LOAD_EVEN( "hb_ec06.rom",  0x40000, 0x10000, 0x61ec20d8 )
-	ROM_LOAD_ODD ( "hb_ec03.rom",  0x40000, 0x10000, 0x720c6b13 )
-
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hb_ec25.rom",  0x000000, 0x10000, 0x2e5732a2 )	/* chars */
-	ROM_LOAD( "hb_ec26.rom",  0x010000, 0x10000, 0x161a2c4d )
-	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
-	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
-	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
-	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
-	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
-	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
-	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
-	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
-	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
-	/* b0000-bfff empty */
-	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
-	/* d0000-dfff empty */
-	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
-	/* f0000-ffff empty */
-	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
-	/* 110000-11fff empty */
-	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
-	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
-	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
-	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
-	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
-	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
-	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
-	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
-	ROM_LOAD( "hb_ec07.rom",  0x8000, 0x8000, 0x16a5a1aa )
-
-	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
-ROM_END
-
-ROM_START( hbarrelu )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
 	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1490,8 +1445,52 @@ ROM_START( hbarrelu )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
+ROM_END
+
+ROM_START( hbarrelw )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
+	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
+	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
+	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
+	ROM_LOAD_EVEN( "hb_ec06.rom",  0x40000, 0x10000, 0x61ec20d8 )
+	ROM_LOAD_ODD ( "hb_ec03.rom",  0x40000, 0x10000, 0x720c6b13 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hb_ec25.rom",  0x000000, 0x10000, 0x2e5732a2 )	/* chars */
+	ROM_LOAD( "hb_ec26.rom",  0x010000, 0x10000, 0x161a2c4d )
+	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
+	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
+	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
+	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
+	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
+	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
+	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
+	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
+	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
+	/* b0000-bfff empty */
+	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
+	/* d0000-dfff empty */
+	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
+	/* f0000-ffff empty */
+	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
+	/* 110000-11fff empty */
+	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
+	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
+	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
+	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
+	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
+	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
+	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
+	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
+	ROM_LOAD( "hb_ec07.rom",  0x8000, 0x8000, 0x16a5a1aa )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
 ROM_END
 
 ROM_START( baddudes )
@@ -1542,7 +1541,7 @@ ROM_START( baddudes )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "baddudes.7",   0x8000, 0x8000, 0x9fb1ef4b )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
@@ -1594,7 +1593,7 @@ ROM_START( drgninja )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "drgninja.07",  0x8000, 0x8000, 0x001d2f51 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
@@ -1634,7 +1633,7 @@ ROM_START( birdtry )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0x236549bc )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0xbe3db6cb )
 ROM_END
 
@@ -1672,7 +1671,7 @@ ROM_START( robocop )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
@@ -1713,7 +1712,7 @@ ROM_START( robocopu )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
@@ -1754,7 +1753,7 @@ ROM_START( robocpu0 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
@@ -1795,7 +1794,7 @@ ROM_START( robocopb )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
-	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 ROM_END
 
@@ -1829,7 +1828,7 @@ ROM_START( hippodrm )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
-	ROM_REGION(0x10000)	/* ADPCM sounds */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
@@ -1866,7 +1865,7 @@ ROM_START( ffantasy )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
-	ROM_REGION(0x10000)	/* ADPCM sounds */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
@@ -1902,7 +1901,7 @@ ROM_START( slyspy )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
@@ -1946,7 +1945,7 @@ ROM_START( slyspy2 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
@@ -1990,17 +1989,16 @@ ROM_START( secretag )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
-#if 0
 ROM_START( secretab )
 	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
-	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x1b534294 )
-	ROM_LOAD_EVEN( "sa_06.bin",    0x20000, 0x10000, 0x04a79266 )
-	ROM_LOAD_ODD ( "sa_04.bin",    0x20000, 0x10000, 0x641cc4b3 )
+	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x00000001 )
+	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x00000001 )
+	ROM_LOAD_EVEN( "sa_06.bin",    0x20000, 0x10000, 0x00000001 )
+	ROM_LOAD_ODD ( "sa_04.bin",    0x20000, 0x10000, 0x00000001 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
@@ -2027,7 +2025,6 @@ ROM_START( secretab )
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
-#endif
 
 ROM_START( midres )
 	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
@@ -2061,7 +2058,7 @@ ROM_START( midres )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
@@ -2097,7 +2094,7 @@ ROM_START( midresu )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
@@ -2133,7 +2130,7 @@ ROM_START( midresj )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fh16",              0x00000, 0x10000, 0x00736f32 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fh17",              0x00000, 0x20000, 0xc7b0a24e )
 ROM_END
 
@@ -2167,7 +2164,7 @@ ROM_START( bouldash )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fn-10",      0x00000, 0x10000, 0xc74106e7 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
 ROM_END
 
@@ -2183,13 +2180,18 @@ static void h6280_decrypt(int memory_area)
 		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x1) << 7) | ((RAM[i] & 0x80) >> 7);
 }
 
-static void hippodrm_patch(void)
+static void init_dec0(void)
 {
-	unsigned char *RAM = memory_region(4);
+	dec0_custom_memory();
+}
+
+static void init_hippodrm(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU3);
 
 	dec0_custom_memory();
 
-	h6280_decrypt(4);
+	h6280_decrypt(REGION_CPU3);
 
 	/* The protection cpu has additional memory mapped protection! */
 	RAM[0x189]=0x60; /* RTS prot area */
@@ -2198,13 +2200,13 @@ static void hippodrm_patch(void)
 	RAM[0x21a]=0x60; /* RTS prot area */
 }
 
-static void slyspy_patch(void)
+static void init_slyspy(void)
 {
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	dec0_custom_memory();
 
-	h6280_decrypt(2);
+	h6280_decrypt(REGION_CPU2);
 
 	/* Slyspy sound cpu has some protection */
 	RAM[0xf2d]=0xea;
@@ -2213,479 +2215,22 @@ static void slyspy_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_hbarrel =
-{
-	__FILE__,
-	0,
-	"hbarrel",
-	"Heavy Barrel (US)",
-	"1987",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_hbarrel,
-	dec0_custom_memory,
-
-	rom_hbarrelu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hbarrel,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_hbarrelw =
-{
-	__FILE__,
-	&driver_hbarrel,
-	"hbarrelw",
-	"Heavy Barrel (World)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_hbarrel,
-	dec0_custom_memory,
-
-	rom_hbarrel,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hbarrel,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_baddudes =
-{
-	__FILE__,
-	0,
-	"baddudes",
-	"Bad Dudes vs. Dragonninja (US)",
-	"1988",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_baddudes,
-	dec0_custom_memory,
-
-	rom_baddudes,
-	0, 0,
-	0,
-	0,
-
-	input_ports_baddudes,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_drgninja =
-{
-	__FILE__,
-	&driver_baddudes,
-	"drgninja",
-	"Dragonninja (Japan)",
-	"1988",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_baddudes,
-	dec0_custom_memory,
-
-	rom_drgninja,
-	0, 0,
-	0,
-	0,
-
-	input_ports_baddudes,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_birdtry =
-{
-	__FILE__,
-	0,
-	"birdtry",
-	"Birdie Try (Japan)",
-	"1988",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_birdtry,
-	dec0_custom_memory,
-
-	rom_birdtry,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hbarrel, /* For now */
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT270 | GAME_NOT_WORKING,
-	0, 0
-};
-
-struct GameDriver driver_robocop =
-{
-	__FILE__,
-	0,
-	"robocop",
-	"Robocop (World revision 3)",
-	"1988",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_robocop,
-	dec0_custom_memory,
-
-	rom_robocop,
-	0, 0,
-	0,
-	0,
-
-	input_ports_robocop,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_robocopu =
-{
-	__FILE__,
-	&driver_robocop,
-	"robocopu",
-	"Robocop (US revision 1)",
-	"1988",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_robocop,
-	dec0_custom_memory,
-
-	rom_robocopu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_robocop,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_robocpu0 =
-{
-	__FILE__,
-	&driver_robocop,
-	"robocpu0",
-	"Robocop (US revision 0)",
-	"1988",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_robocop,
-	dec0_custom_memory,
-
-	rom_robocpu0,
-	0, 0,
-	0,
-	0,
-
-	input_ports_robocop,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_robocopb =
-{
-	__FILE__,
-	&driver_robocop,
-	"robocopb",
-	"Robocop (World bootleg)",
-	"1988",
-	"bootleg",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_robocopb,
-	dec0_custom_memory,
-
-	rom_robocopb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_robocop,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_hippodrm =
-{
-	__FILE__,
-	0,
-	"hippodrm",
-	"Hippodrome (US)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_hippodrm,
-	hippodrm_patch,
-
-	rom_hippodrm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hippodrm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_ffantasy =
-{
-	__FILE__,
-	&driver_hippodrm,
-	"ffantasy",
-	"Fighting Fantasy (Japan)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_hippodrm,
-	hippodrm_patch,
-
-	rom_ffantasy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hippodrm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_slyspy =
-{
-	__FILE__,
-	0,
-	"slyspy",
-	"Sly Spy (US revision 3)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_slyspy,
-	slyspy_patch,
-
-	rom_slyspy,
-	0,0,
-	0,
-	0,
-
-	input_ports_slyspy,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_slyspy2 =
-{
-	__FILE__,
-	&driver_slyspy,
-	"slyspy2",
-	"Sly Spy (US revision 2)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_slyspy,
-	slyspy_patch,
-
-	rom_slyspy2,
-	0,0,
-	0,
-	0,
-
-	input_ports_slyspy,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_secretag =
-{
-	__FILE__,
-	&driver_slyspy,
-	"secretag",
-	"Secret Agent (World)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_slyspy,
-	slyspy_patch,
-
-	rom_secretag,
-	0,0,
-	0,
-	0,
-
-	input_ports_slyspy,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-#if 0
-struct GameDriver driver_secretab =
-{
-	__FILE__,
-	&driver_slyspy,
-	"secretab",
-	"Sly Spy (revision 2)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_slyspy,
-	dec0_custom_memory,
-
-	rom_secretab,
-	0,0,
-	0,
-	0,
-
-	input_ports_slyspy,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-#endif
-
-struct GameDriver driver_midres =
-{
-	__FILE__,
-	0,
-	"midres",
-	"Midnight Resistance (World)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_midres,
-	dec0_custom_memory,
-
-	rom_midres,
-	0, 0,
-	0,
-	0,
-
-	input_ports_midres,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_midresu =
-{
-	__FILE__,
-	&driver_midres,
-	"midresu",
-	"Midnight Resistance (US)",
-	"1989",
-	"Data East USA",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_midres,
-	dec0_custom_memory,
-
-	rom_midresu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_midres,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_midresj =
-{
-	__FILE__,
-	&driver_midres,
-	"midresj",
-	"Midnight Resistance (Japan)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_midres,
-	dec0_custom_memory,
-
-	rom_midresj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_midres,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_bouldash =
-{
-	__FILE__,
-	0,
-	"bouldash",
-	"Boulder Dash / Boulder Dash Part 2 (World)",
-	"1990",
-	"Data East Corporation (licensed from First Star)",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&machine_driver_slyspy,
-	slyspy_patch,
-
-	rom_bouldash,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bouldash,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1987, hbarrel,  0,        hbarrel,  hbarrel,  dec0,     ROT270, "Data East USA", "Heavy Barrel (US)" )
+GAME( 1987, hbarrelw, hbarrel,  hbarrel,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Heavy Barrel (World)" )
+GAME( 1988, baddudes, 0,        baddudes, baddudes, dec0,     ROT0,   "Data East USA", "Bad Dudes vs. Dragonninja (US)" )
+GAME( 1988, drgninja, baddudes, baddudes, baddudes, dec0,     ROT0,   "Data East Corporation", "Dragonninja (Japan)" )
+GAMEX(1988, birdtry,  0,        birdtry,  hbarrel,  dec0,     ROT270, "Data East Corporation", "Birdie Try (Japan)", GAME_NOT_WORKING )
+GAMEX(1988, robocop,  0,        robocop,  robocop,  dec0,     ROT0,   "Data East Corporation", "Robocop (World revision 3)", GAME_NOT_WORKING )
+GAMEX(1988, robocopu, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 1)", GAME_NOT_WORKING )
+GAMEX(1988, robocpu0, robocop,  robocop,  robocop,  dec0,     ROT0,   "Data East USA", "Robocop (US revision 0)", GAME_NOT_WORKING )
+GAME( 1988, robocopb, robocop,  robocopb, robocop,  dec0,     ROT0,   "bootleg", "Robocop (World bootleg)" )
+GAME( 1989, hippodrm, 0,        hippodrm, hippodrm, hippodrm, ROT0,   "Data East USA", "Hippodrome (US)" )
+GAME( 1989, ffantasy, hippodrm, hippodrm, hippodrm, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)" )
+GAME( 1989, slyspy,   0,        slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 3)" )
+GAME( 1989, slyspy2,  slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East USA", "Sly Spy (US revision 2)" )
+GAME( 1989, secretag, slyspy,   slyspy,   slyspy,   slyspy,   ROT0,   "Data East Corporation", "Secret Agent (World)" )
+GAME( 1989, secretab, slyspy,   slyspy,   slyspy,   dec0,     ROT0,   "Data East USA", "Sly Spy (revision 2)" )
+GAME( 1989, midres,   0,        midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (World)" )
+GAME( 1989, midresu,  midres,   midres,   midres,   dec0,     ROT0,   "Data East USA", "Midnight Resistance (US)" )
+GAME( 1989, midresj,  midres,   midres,   midres,   dec0,     ROT0,   "Data East Corporation", "Midnight Resistance (Japan)" )
+GAME( 1990, bouldash, 0,        slyspy,   bouldash, slyspy,   ROT0,   "Data East Corporation (licensed from First Star)", "Boulder Dash / Boulder Dash Part 2 (World)" )

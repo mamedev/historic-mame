@@ -356,13 +356,7 @@ struct GameDriver
 
 	const struct RomModule *rom;
 #ifdef MESS
-	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
-	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
-	const char **file_extension;    /* default file extensions for the system. */
-	int num_of_rom_slots;
-	int num_of_floppy_drives;
-	int num_of_hard_drives;
-	int num_of_cassette_drives;
+	const struct IODevice *dev;
 #endif
 
 	struct obsolete *obsolete3;
@@ -371,7 +365,7 @@ struct GameDriver
 	struct obsolete *obsolete5;
 	struct obsolete *obsolete6;
 
-	struct InputPortTiny *input_ports;
+	const struct InputPortTiny *input_ports;
 
 	struct obsolete *obsolete7;
 	struct obsolete *obsolete8;
@@ -457,7 +451,7 @@ struct GameDriver driver_##NAME =			\
 #define	ROT270_16BIT	(ROT270|GAME_REQUIRES_16BIT)
 
 /* this allows to leave the INIT field empty in the GAME() macro call */
-#define init_ 0
+#define init_0 0
 
 
 extern const struct GameDriver *drivers[];

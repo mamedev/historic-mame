@@ -221,7 +221,7 @@ void machine_init(void)
 	TAITO8741_start(&gsword_8741interface);
 }
 
-void gsword_reset(void)
+void init_gsword(void)
 {
 	int i;
 
@@ -437,13 +437,13 @@ INPUT_PORTS_START( gsword )
 	/*	 Coins configurations were handled 	 */
 	/*	 via external hardware & not via program */
 	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 5C_1C ) )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -539,10 +539,9 @@ static struct GfxLayout gsword_sprites2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	/* character set */
-	{ 1, 0x00000, &gsword_text,         0, 64 },
-	{ 1, 0x04000, &gsword_sprites1,  64*4, 64 },
-	{ 1, 0x06000, &gsword_sprites2,  64*4, 64 },
+	{ REGION_GFX1, 0, &gsword_text,         0, 64 },
+	{ REGION_GFX2, 0, &gsword_sprites1,  64*4, 64 },
+	{ REGION_GFX3, 0, &gsword_sprites2,  64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -553,7 +552,6 @@ static struct AY8910interface ay8910_interface =
 	2,		/* 2 chips */
 	1500000,	/* 1.5 MHZ */
 	{ 30, 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0,0 },
 	{ 0,0 },
 	{ 0,gsword_nmi_set }, /* portA write */
@@ -571,7 +569,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gsword =
 {
 	/* basic machine hardware */
 	{
@@ -642,21 +640,6 @@ ROM_START( gsword )
 	ROM_LOAD( "gs4",          0x6000, 0x2000, 0xca9d206d )
 	ROM_LOAD( "gs5",          0x8000, 0x1000, 0x2a892326 )
 
-	ROM_REGION_DISPOSE(0xa000)	/* graphics (disposed after conversion) */
-	ROM_LOAD( "gs10",         0x0000, 0x2000, 0x517c571b )	/* tiles */
-	ROM_LOAD( "gs11",         0x2000, 0x2000, 0x7a1d8a3a )
-	ROM_LOAD( "gs6",          0x4000, 0x2000, 0x1b0a3cb7 )	/* sprites */
-	ROM_LOAD( "gs7",          0x6000, 0x2000, 0xef5f28c6 )
-	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
-
-	ROM_REGIONX( 0x0360, REGION_PROMS )
-	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
-	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
-	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
-	ROM_LOAD( "003",          0x0300, 0x0020, 0x43a548b8 )	/* address decoder? not used */
-	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
-	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for 2nd CPU */
 	ROM_LOAD( "gs15",         0x0000, 0x2000, 0x1aa4690e )
 	ROM_LOAD( "gs16",         0x2000, 0x2000, 0x10accc10 )
@@ -665,32 +648,27 @@ ROM_START( gsword )
 	ROM_LOAD( "gs12",         0x0000, 0x2000, 0xa6589068 )
 	ROM_LOAD( "gs13",         0x2000, 0x2000, 0x4ee79796 )
 	ROM_LOAD( "gs14",         0x4000, 0x2000, 0x455364b6 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gs10",         0x0000, 0x2000, 0x517c571b )	/* tiles */
+	ROM_LOAD( "gs11",         0x2000, 0x2000, 0x7a1d8a3a )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gs6",          0x0000, 0x2000, 0x1b0a3cb7 )	/* sprites */
+
+	ROM_REGIONX( 0x4000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gs7",          0x0000, 0x2000, 0xef5f28c6 )
+	ROM_LOAD( "gs8",          0x2000, 0x2000, 0x46824b30 )
+
+	ROM_REGIONX( 0x0360, REGION_PROMS )
+	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
+	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
+	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
+	ROM_LOAD( "003",          0x0300, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
 ROM_END
 
 
 
-struct GameDriver driver_gsword =
-{
-	__FILE__,
-	0,
-	"gsword",
-	"Great Swordsman",
-	"1984",
-	"Taito Corporation",
-	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
-	0,
-	&machine_driver,
-	gsword_reset,
-
-	rom_gsword,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gsword,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
+GAMEX( 1984, gsword, 0, gsword, gsword, gsword, ROT0, "Taito Corporation", "Great Swordsman", GAME_IMPERFECT_COLORS )

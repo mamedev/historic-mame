@@ -269,11 +269,10 @@ static int parse_frame (void)
 }
 
 /* decode and buffering data */
-static void vlm5030_update_callback(int num,void *buf, int length)
+static void vlm5030_update_callback(int num,INT16 *buffer, int length)
 {
 	int buf_count=0;
 	int interp_effect;
-	unsigned char *buffer = (unsigned char *)buf;
 
 	/* running */
 	if( phase == PH_RUN )
@@ -387,11 +386,11 @@ static void vlm5030_update_callback(int num,void *buf, int length)
 			x[0] = u[0];
 			/* clipping, buffering */
 			if (u[0] > 511)
-				buffer[buf_count] = 127;
+				buffer[buf_count] = 127<<8;
 			else if (u[0] < -512)
-				buffer[buf_count] = -128;
+				buffer[buf_count] = -128<<8;
 			else
-				buffer[buf_count] = u[0] >> 2;
+				buffer[buf_count] = u[0] << 6;
 			buf_count++;
 
 			/* sample count */
@@ -589,7 +588,7 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	else
 		VLM5030_address_mask = intf->memory_size-1;
 
-	channel = stream_init("VLM5030",intf->volume,emulation_rate /* Machine->sample_rate */,8,
+	channel = stream_init("VLM5030",intf->volume,emulation_rate /* Machine->sample_rate */,
 				0,vlm5030_update_callback);
 	if (channel == -1) return 1;
 

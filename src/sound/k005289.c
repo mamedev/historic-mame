@@ -27,8 +27,6 @@
 
 #include "driver.h"
 
-/* note: we work with signed samples here, unlike other drivers */
-#define AUDIO_CONV(A)	(A)
 #define FREQBASEBITS	16
 
 /* this structure defines the parameters for a channel */
@@ -44,11 +42,11 @@ static k005289_sound_channel channel_list[2];
 
 /* global sound parameters */
 static const unsigned char *sound_prom;
-static int sample_bits,stream,mclock,rate;
+static int stream,mclock,rate;
 
 /* mixer tables and internal buffers */
-static signed char *mixer_table;
-static signed char *mixer_lookup;
+static INT16 *mixer_table;
+static INT16 *mixer_lookup;
 static short *mixer_buffer;
 
 static int k005289_A_frequency,k005289_B_frequency;
@@ -57,42 +55,27 @@ static int k005289_A_waveform,k005289_B_waveform;
 static int k005289_A_latch,k005289_B_latch;
 
 /* build a table to divide by the number of voices */
-static int make_mixer_table(int voices, int bits)
+static int make_mixer_table(int voices)
 {
 	int count = voices * 128;
 	int i;
 	int gain = 16;
 
 	/* allocate memory */
-	mixer_table = malloc(256 * voices * bits / 8);
+	mixer_table = malloc(256 * voices * sizeof(INT16));
 	if (!mixer_table)
 		return 1;
 
 	/* find the middle of the table */
-	mixer_lookup = mixer_table + (128 * voices * bits / 8);
-
-	/* fill in the table - 8 bit case */
-	if (bits == 8)
-	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain / (voices * 16);
-			if (val > 127) val = 127;
-			mixer_lookup[ i] = AUDIO_CONV(val);
-			mixer_lookup[-i] = AUDIO_CONV(-val);
-		}
-	}
+	mixer_lookup = mixer_table + (128 * voices);
 
 	/* fill in the table - 16 bit case */
-	else
+	for (i = 0; i < count; i++)
 	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain * 16 / voices;
-			if (val > 32767) val = 32767;
-			((short *)mixer_lookup)[ i] = val;
-			((short *)mixer_lookup)[-i] = -val;
-		}
+		int val = i * gain * 16 / voices;
+		if (val > 32767) val = 32767;
+		mixer_lookup[ i] = val;
+		mixer_lookup[-i] = -val;
 	}
 
 	return 0;
@@ -100,14 +83,14 @@ static int make_mixer_table(int voices, int bits)
 
 
 /* generate sound to the mix buffer */
-static void K005289_update(int ch, void *buffer, int length)
+static void K005289_update(int ch, INT16 *buffer, int length)
 {
 	k005289_sound_channel *voice=channel_list;
 	short *mix;
 	int i,v,f;
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer, 0, length * sizeof(short));
+	memset(mixer_buffer, 0, length * sizeof(INT16));
 
 	v=voice[0].volume;
 	f=voice[0].frequency;
@@ -157,18 +140,8 @@ static void K005289_update(int ch, void *buffer, int length)
 
 	/* mix it down */
 	mix = mixer_buffer;
-	if (sample_bits == 16)
-	{
-		short *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = ((short *)mixer_lookup)[*mix++];
-	}
-	else
-	{
-		unsigned char *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = mixer_lookup[*mix++];
-	}
+	for (i = 0; i < length; i++)
+		*buffer++ = mixer_lookup[*mix++];
 }
 
 int K005289_sh_start(const struct MachineSound *msound)
@@ -178,8 +151,7 @@ int K005289_sh_start(const struct MachineSound *msound)
 	const struct k005289_interface *intf = msound->sound_interface;
 
 	/* get stream channels */
-	sample_bits = Machine->sample_bits;
-	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, sample_bits, 0, K005289_update);
+	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, 0, K005289_update);
 	mclock = intf->master_clock;
 	rate = Machine->sample_rate;
 
@@ -188,7 +160,7 @@ int K005289_sh_start(const struct MachineSound *msound)
 		return 1;
 
 	/* build the mixer table */
-	if (make_mixer_table(2, Machine->sample_bits))
+	if (make_mixer_table(2))
 	{
 		free (mixer_buffer);
 		return 1;

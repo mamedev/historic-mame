@@ -4,6 +4,8 @@ Surprise Attack (Konami GX911) (c) 1990 Konami
 
 Very similar to Parodius
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -240,7 +242,7 @@ static struct YM2151interface ym2151_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_surpratk =
 {
 	/* basic machine hardware */
 	{
@@ -289,11 +291,11 @@ ROM_START( surpratk )
 	ROM_LOAD( "911m02.bin", 0x30000, 0x18000, 0x5d4148a8 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "911d05.bin", 0x000000, 0x040000, 0x308d2319 ) /* characters */
 	ROM_LOAD( "911d06.bin", 0x040000, 0x040000, 0x91cc9b32 ) /* characters */
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGIONX( 0x080000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
 	ROM_LOAD( "911d03.bin", 0x000000, 0x040000, 0xe34ff182 )	/* sprites */
 	ROM_LOAD( "911d04.bin", 0x040000, 0x040000, 0x20700bd2 )	/* sprites */
 ROM_END
@@ -323,35 +325,12 @@ static void surpratk_init_machine( void )
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 }
 
-static void gfx_untangle(void)
+static void init_surpratk(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_surpratk =
-{
-	__FILE__,
-	0,
-	"surpratk",
-	"Surprise Attack (Japan)",
-	"1990",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_surpratk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_surpratk,
-
-	0, 0, 0,
-    ROT0,
-	0, 0
-};
+GAME( 1990, surpratk, 0, surpratk, surpratk, surpratk, ROT0, "Konami", "Surprise Attack (Japan)" )

@@ -355,7 +355,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ junofrst_portA_r },
 	{ 0 },
 	{ 0 },
@@ -369,7 +368,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_junofrst =
 {
 	/* basic machine hardware */
 	{
@@ -450,28 +449,10 @@ ROM_START( junofrst )
 ROM_END
 
 
-
-struct GameDriver driver_junofrst =
+static void init_junofrst(void)
 {
-	__FILE__,
-	0,
-	"junofrst",
-	"Juno First",
-	"1983",
-	"Konami",
-	"Chris Hardy (MAME driver)\nMirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	konami1_decode,
+	konami1_decode();
+}
 
-	rom_junofrst,
-	0, 0,
-	0,
-	0,
 
-	input_ports_junofrst,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, junofrst, 0, junofrst, junofrst, junofrst, ROT90, "Konami", "Juno First" )

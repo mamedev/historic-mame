@@ -282,10 +282,10 @@ static struct GfxLayout seallayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &seallayout,  768, 16 },	/* Tiles 16x16 */
-	{ 1, 0x0a0000, &seallayout, 1024, 16 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &seallayout2, 256, 32 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,    0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &seallayout,  768, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &seallayout, 1024, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &seallayout2, 256, 32 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -295,7 +295,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* Frequency */
-	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ REGION_SOUND1, REGION_SOUND2 },       /* memory regions */
 	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
@@ -304,7 +304,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -385,22 +384,27 @@ ROM_START( darkseal )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
-
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-03.rom",   0x000000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-02.rom",   0x000000, 0x80000, 0x49504e89 ) /* tiles 2 */
+
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-00.rom",   0x000000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x080000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
@@ -411,48 +415,58 @@ ROM_START( darksea1 )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
-
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-03.rom",   0x000000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-02.rom",   0x000000, 0x80000, 0x49504e89 ) /* tiles 2 */
+
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-00.rom",   0x000000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x080000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
 ROM_START( darkseaj )
-	ROM_REGIONX(0x80000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fz-04.bin",    0x00000, 0x20000, 0x817faa2c )
 	ROM_LOAD_ODD ( "fz-01.bin",    0x00000, 0x20000, 0x373caeee )
 	ROM_LOAD_EVEN( "fz-00.bin",    0x40000, 0x20000, 0x1ab99aa7 )
 	ROM_LOAD_ODD ( "fz-05.bin",    0x40000, 0x20000, 0x3374ef8c )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
 	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-03.rom",   0x000000, 0x80000, 0x9996f3dc ) /* tiles 1 */
 
-	ROM_REGIONX(0x10000, REGION_CPU2)	/* Sound CPU */
-	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-02.rom",   0x000000, 0x80000, 0x49504e89 ) /* tiles 2 */
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-00.rom",   0x000000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x080000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
@@ -463,22 +477,27 @@ ROM_START( gatedoom )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
-
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-03.rom",   0x000000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-02.rom",   0x000000, 0x80000, 0x49504e89 ) /* tiles 2 */
+
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-00.rom",   0x000000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x080000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
@@ -489,24 +508,30 @@ ROM_START( gatedom1 )
 	ROM_LOAD_EVEN( "gb00.bin",     0x40000, 0x20000, 0xa88c16a1 )
 	ROM_LOAD_ODD ( "gb05.bin",     0x40000, 0x20000, 0x252d7e14 )
 
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
 	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
   	/* the following four have not been verified on a real Gate of Doom */
 	/* board - might be different from Dark Seal! */
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
- 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-03.rom",   0x000000, 0x80000, 0x9996f3dc ) /* tiles 1 */
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-02.rom",   0x000000, 0x80000, 0x49504e89 ) /* tiles 2 */
+
+	ROM_REGIONX( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mac-00.rom",   0x000000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x080000, 0x80000, 0xb28f7584 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
@@ -540,7 +565,7 @@ static int darkseal_cycle_r(int offset)
 	return b;
 }
 
-static void memory_patch(void)
+static void init_darkseal(void)
 {
 	install_mem_read_handler(0, 0x100006, 0x100007, darkseal_cycle_r);
 	darkseal_decrypt();
@@ -549,127 +574,8 @@ static void memory_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_darkseal =
-{
-	__FILE__,
-	0,
-	"darkseal",
-	"Dark Seal (World revision 3)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_darkseal,
-	memory_patch,
-
-	rom_darkseal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkseal,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_darksea1 =
-{
-	__FILE__,
-	&driver_darkseal,
-	"darksea1",
-	"Dark Seal (World revision 1)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_darkseal,
-	memory_patch,
-
-	rom_darksea1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkseal,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_darkseaj =
-{
-	__FILE__,
-	&driver_darkseal,
-	"darkseaj",
-	"Dark Seal (Japan)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_darkseal,
-	memory_patch,
-
-	rom_darkseaj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkseal,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gatedoom =
-{
-	__FILE__,
-	&driver_darkseal,
-	"gatedoom",
-	"Gate of Doom (US revision 4)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_darkseal,
-	memory_patch,
-
-	rom_gatedoom,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkseal,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_gatedom1 =
-{
-	__FILE__,
-	&driver_darkseal,
-	"gatedom1",
-	"Gate of Doom (US revision 1)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&machine_driver_darkseal,
-	memory_patch,
-
-	rom_gatedom1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darkseal,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1990, darkseal, 0,        darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 3)" )
+GAME( 1990, darksea1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 1)" )
+GAME( 1990, darkseaj, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (Japan)" )
+GAME( 1990, gatedoom, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 4)" )
+GAME( 1990, gatedom1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 1)" )

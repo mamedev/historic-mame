@@ -349,8 +349,8 @@ ROM_END
 
 
 
-GAME( 1980, astrof,   ,         astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 1)" )
-GAME( 1980, astrof2,  astrof,   astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 2)" )
-GAME( 1980, astrof3,  astrof,   astrof,   astrof,   , ROT90, "Data East", "Astro Fighter (set 3)" )
-GAME( 1980, tomahawk, ,         tomahawk, tomahawk, , ROT90, "Data East", "Tomahawk 777 (Revision 1)" )
-GAME( 1980, tomahaw5, tomahawk, tomahawk, tomahawk, , ROT90, "Data East", "Tomahawk 777 (Revision 5)" )
+GAME( 1980, astrof,   0,        astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 1)" )
+GAME( 1980, astrof2,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 2)" )
+GAME( 1980, astrof3,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 3)" )
+GAME( 1980, tomahawk, 0,        tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 1)" )
+GAME( 1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 5)" )

@@ -1257,15 +1257,15 @@ INPUT_PORTS_START( kageki )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START		/* DSW B */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
@@ -1388,7 +1388,6 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(30,30) },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },		/* DSW1 connected to port A */
 	{ input_port_1_r },		/* DSW2 connected to port B */
 	{ 0 },
@@ -1407,7 +1406,6 @@ static struct YM2203interface ym2203b_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(100,100) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1420,7 +1418,6 @@ static struct YM2203interface kageki_ym2203_interface =
 	1,					/* 1 chip */
 	3000000,				/* 12000000/4 ??? */
 	{ YM2203_VOL(35, 15) },
-	AY8910_DEFAULT_GAIN,
 	{ kageki_csport_r },
 	{ 0 },
 	{ 0 },
@@ -2017,16 +2014,16 @@ ROM_END
 
 
 
-GAME( 1987, extrmatn, ,         arkanoi2, extrmatn, extrmatn, ROT270, "[Taito] World Games", "Extermination (US)" )
-GAME( 1987, arkanoi2, ,         arkanoi2, arkanoi2, arkanoi2, ROT270, "Taito Corporation Japan", "Arkanoid - Revenge of DOH (World)" )
+GAME( 1987, extrmatn, 0,        arkanoi2, extrmatn, extrmatn, ROT270, "[Taito] World Games", "Extermination (US)" )
+GAME( 1987, arkanoi2, 0,        arkanoi2, arkanoi2, arkanoi2, ROT270, "Taito Corporation Japan", "Arkanoid - Revenge of DOH (World)" )
 GAME( 1987, ark2us,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito America Corporation (Romstar license)", "Arkanoid - Revenge of DOH (US)" )
 GAME( 1987, ark2jp,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito Corporation", "Arkanoid - Revenge of DOH (Japan)" )
-GAME( 1987, plumppop, ,         drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
-GAME( 1987, drtoppel, ,         drtoppel, drtoppel, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)" )
-GAME( 1988, chukatai, ,         tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
-GAME( 1988, tnzs,     ,         tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The Newzealand Story (Japan)" )
+GAME( 1987, plumppop, 0,        drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
+GAME( 1987, drtoppel, 0,        drtoppel, drtoppel, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)" )
+GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
+GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The Newzealand Story (Japan)" )
 GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzs,     ROT0,   "bootleg", "The Newzealand Story (World, bootleg)" )
 GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The Newzealand Story 2 (World)" )
-GAME( 1989, insectx,  ,         insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
-GAME( 1988, kageki,   ,         kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
+GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
+GAME( 1988, kageki,   0,        kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
 GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)" )

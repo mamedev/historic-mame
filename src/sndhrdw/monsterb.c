@@ -7,14 +7,12 @@ struct TMS3617_interface
 	int volume;		/* playback volume */
 };
 
-/* note: we work with signed samples here, unlike other drivers */
-#define AUDIO_CONV(A) (A)
 
 static int emulation_rate;
 static struct TMS3617_interface *interface;
 static int buffer_len;
 static int sample_pos;
-static signed char *output_buffer;
+static INT16 *output_buffer;
 
 static int channel;
 
@@ -24,8 +22,8 @@ static int voice_enable[NUM_VOICES];
 static int counter[NUM_VOICES];
 static int TMS3617_pitch;
 
-static signed char  *mixer_table;
-static signed char  *mixer_lookup;
+static INT16 *mixer_table;
+static INT16 *mixer_lookup;
 static signed short *mixer_buffer;
 
 
@@ -101,7 +99,7 @@ static int make_mixer_table (int gain)
 	int i;
 
 	/* allocate memory */
-	mixer_table = malloc (256 * NUM_VOICES);
+	mixer_table = malloc (256 * NUM_VOICES * sizeof(INT16));
 	if (!mixer_table)
 		return 1;
 
@@ -111,16 +109,16 @@ static int make_mixer_table (int gain)
 	/* fill in the table */
 	for (i = 0; i < count; i++)
 	{
-		int val = i * gain / (NUM_VOICES * 16);
-		if (val > 127) val = 127;
-		mixer_lookup[ i] = AUDIO_CONV(val);
-		mixer_lookup[-i] = AUDIO_CONV(-val);
+		int val = i * gain * 16 / NUM_VOICES;
+		if (val > 32767) val = 32767;
+		mixer_lookup[ i] = val;
+		mixer_lookup[-i] = -val;
 	}
 
 	return 0;
 }
 
-static void TMS3617_update(signed char *buffer,int len)
+static void TMS3617_update(INT16 *buffer,int len)
 {
 	int i;
 	int voice;
@@ -178,7 +176,7 @@ int TMS3617_sh_start(const struct MachineSound *msound)
 
 	channel = mixer_allocate_channel(intf->volume);
 
-	if ((output_buffer = malloc(buffer_len)) == 0)
+	if ((output_buffer = malloc(sizeof(INT16) * buffer_len)) == 0)
 		return 1;
 
 	if ((mixer_buffer = malloc(sizeof(short) * buffer_len)) == 0)
@@ -221,10 +219,10 @@ void TMS3617_sh_update(void)
 	if (Machine->sample_rate == 0) return;
 
 
-	TMS3617_update(&output_buffer[sample_pos],buffer_len - sample_pos);
+	TMS3617_update(output_buffer + sample_pos,buffer_len - sample_pos);
 	sample_pos = 0;
 
-	mixer_play_streamed_sample(channel,output_buffer,buffer_len,emulation_rate);
+	mixer_play_streamed_sample_16(channel,output_buffer,sizeof(INT16) * buffer_len,emulation_rate);
 }
 
 void TMS3617_voice_enable(int voice, int enable)
@@ -248,7 +246,7 @@ void TMS3617_doupdate(void)
 
 	newpos = sound_scalebufferpos(buffer_len);	/* get current position based on the timer */
 
-	TMS3617_update(&output_buffer[sample_pos],newpos - sample_pos);
+	TMS3617_update(output_buffer + sample_pos,newpos - sample_pos);
 	sample_pos = newpos;
 }
 

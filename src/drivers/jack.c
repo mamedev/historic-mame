@@ -2,6 +2,9 @@
 
 Jack the Giant Killer memory map (preliminary)
 
+driver by Brad Oliver
+
+
 Main CPU
 --------
 0000-3fff  ROM
@@ -241,8 +244,8 @@ INPUT_PORTS_START( zzyzzyxx )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPNAME( 0x20, 0x00, "Show Intermissions" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x20, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0x00, "Extra Lives" )
 	PORT_DIPSETTING(    0x00, "None" )
   //PORT_DIPSETTING(    0x40, "None" )
@@ -356,7 +359,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0, 8 },
+	{ REGION_GFX1, 0, &charlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -367,7 +370,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	18000000/12,	/* 1.5 MHz */
 	{ 100 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ timer_r },
 	{ 0 },
@@ -375,7 +377,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_jack =
 {
 	/* basic machine hardware */
 	{
@@ -436,14 +438,14 @@ ROM_START( jack )
 	ROM_LOAD( "jgk.j2",       0xe000, 0x1000, 0xdb21bd55 )
 	ROM_LOAD( "jgk.j1",       0xf000, 0x1000, 0x49fffe31 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jgk.j12",      0x0000, 0x1000, 0xce726df0 )
 	ROM_LOAD( "jgk.j13",      0x1000, 0x1000, 0x6aec2c8d )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( jack2 )
@@ -457,14 +459,14 @@ ROM_START( jack2 )
 	ROM_LOAD( "jgk.j2",       0xe000, 0x1000, 0xdb21bd55 )
 	ROM_LOAD( "jgk.j1",       0xf000, 0x1000, 0x49fffe31 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jgk.j12",      0x0000, 0x1000, 0xce726df0 )
 	ROM_LOAD( "jgk.j13",      0x1000, 0x1000, 0x6aec2c8d )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( jack3 )
@@ -478,14 +480,14 @@ ROM_START( jack3 )
 	ROM_LOAD( "jgk.j2",       0xe000, 0x1000, 0xdb21bd55 )
 	ROM_LOAD( "jack1",        0xf000, 0x1000, 0x7e75ea3d )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jack12",       0x0000, 0x1000, 0x80320647 )
 	ROM_LOAD( "jgk.j13",      0x1000, 0x1000, 0x6aec2c8d )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( treahunt )
@@ -499,14 +501,14 @@ ROM_START( treahunt )
 	ROM_LOAD( "thunt-7.6e",   0xe000, 0x1000, 0x7c2d6279 )
 	ROM_LOAD( "thunt-8.4e",   0xf000, 0x1000, 0xf73b86fb )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "thunt-13.a4",  0x0000, 0x1000, 0xe03f1f09 )
 	ROM_LOAD( "thunt-12.a3",  0x1000, 0x1000, 0xda4ee9eb )
 	ROM_LOAD( "thunt-10.a1",  0x2000, 0x1000, 0x51ec7934 )
 	ROM_LOAD( "thunt-11.a2",  0x3000, 0x1000, 0xf9781143 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( zzyzzyxx )
@@ -520,15 +522,15 @@ ROM_START( zzyzzyxx )
 	ROM_LOAD( "g.6e",         0xe000, 0x1000, 0x408f2326 )
 	ROM_LOAD( "h.4e",         0xf000, 0x1000, 0xf8bbabe0 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
+	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n.1c",         0x0000, 0x1000, 0x4f64538d )
 	ROM_LOAD( "m.1d",         0x1000, 0x1000, 0x217b1402 )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
-	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( zzyzzyx2 )
@@ -542,15 +544,15 @@ ROM_START( zzyzzyx2 )
 	ROM_LOAD( "g.6e",         0xe000, 0x1000, 0x408f2326 )
 	ROM_LOAD( "h.4e",         0xf000, 0x1000, 0xf8bbabe0 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
+	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n.1c",         0x0000, 0x1000, 0x4f64538d )
 	ROM_LOAD( "m.1d",         0x1000, 0x1000, 0x217b1402 )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
-	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( brix )
@@ -564,15 +566,15 @@ ROM_START( brix )
 	ROM_LOAD( "g",            0xe000, 0x1000, 0xadca02d8 )
 	ROM_LOAD( "h",            0xf000, 0x1000, 0xbc3b878c )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
+	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "n",            0x0000, 0x1000, 0x8064910e )
 	ROM_LOAD( "m.1d",         0x1000, 0x1000, 0x217b1402 )
 	ROM_LOAD( "k",            0x2000, 0x1000, 0xc7d7e2a0 )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
-	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( freeze )
@@ -586,14 +588,14 @@ ROM_START( freeze )
 	ROM_LOAD( "freeze.e5",    0xe000, 0x1000, 0x95c18d75 )
 	ROM_LOAD( "freeze.e4",    0xf000, 0x1000, 0x7e8f5afc )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "freeze.5a",    0x0000, 0x1000, 0x6c8a98a0 )
 	ROM_LOAD( "freeze.3a",    0x1000, 0x1000, 0x6d2125e4 )
 	ROM_LOAD( "freeze.1a",    0x2000, 0x1000, 0x3a7f2fa9 )
 	ROM_LOAD( "freeze.2a",    0x3000, 0x1000, 0xdd70ddd6 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )
 ROM_END
 
 ROM_START( sucasino )
@@ -607,14 +609,14 @@ ROM_START( sucasino )
 	ROM_LOAD( "7",       	  0xe000, 0x1000, 0x67c68b82 )
 	ROM_LOAD( "8",       	  0xf000, 0x1000, 0xf5b63006 )
 
-	ROM_REGION_DISPOSE(0x4000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "9",       	  0x0000, 0x1000, 0x67cf8aec )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "11",      	  0x0000, 0x1000, 0xf92c4c5b )
 	/* 1000-1fff empty */
 	ROM_LOAD( "10",      	  0x2000, 0x1000, 0x3b0783ce )
 	/* 3000-3fff empty */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "9",       	  0x0000, 0x1000, 0x67cf8aec )
 ROM_END
 
 
@@ -664,247 +666,30 @@ static void treahunt_decode(void)
 	}
 }
 
-static void jack_driver_init(void)
+static void init_jack(void)
 {
 	timer_rate = 128;
 }
 
-static void treahunt_driver_init(void)
+static void init_treahunt(void)
 {
 	timer_rate = 128;
 	treahunt_decode();
 }
 
-static void zzyzzyxx_driver_init(void)
+static void init_zzyzzyxx(void)
 {
 	timer_rate = 16;
 }
 
 
 
-struct GameDriver driver_jack =
-{
-	__FILE__,
-	0,
-	"jack",
-	"Jack the Giantkiller (set 1)",
-	"1982",
-	"Cinematronics",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	jack_driver_init,
-
-	rom_jack,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jack,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jack2 =
-{
-	__FILE__,
-	&driver_jack,
-	"jack2",
-	"Jack the Giantkiller (set 2)",
-	"1982",
-	"Cinematronics",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	jack_driver_init,
-
-	rom_jack2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jack,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_jack3 =
-{
-	__FILE__,
-	&driver_jack,
-	"jack3",
-	"Jack the Giantkiller (set 3)",
-	"1982",
-	"Cinematronics",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	jack_driver_init,
-
-	rom_jack3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jack,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_treahunt =
-{
-	__FILE__,
-	&driver_jack,
-	"treahunt",
-	"Treasure Hunt (Japan?)",
-	"1982",
-	"Hara Industries",
-	"Brad Oliver\nMike Balfour",
-	0,
-	&machine_driver,
-	treahunt_driver_init,
-
-	rom_treahunt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jack,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_zzyzzyxx =
-{
-	__FILE__,
-	0,
-	"zzyzzyxx",
-	"Zzyzzyxx (set 1)",
-	"1982",
-	"Cinematronics + Advanced Microcomputer Systems",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	zzyzzyxx_driver_init,
-
-	rom_zzyzzyxx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zzyzzyxx,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_zzyzzyx2 =
-{
-	__FILE__,
-	&driver_zzyzzyxx,
-	"zzyzzyx2",
-	"Zzyzzyxx (set 2)",
-	"1982",
-	"Cinematronics + Advanced Microcomputer Systems",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	zzyzzyxx_driver_init,
-
-	rom_zzyzzyx2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zzyzzyxx,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_brix =
-{
-	__FILE__,
-	&driver_zzyzzyxx,
-	"brix",
-	"Brix",
-	"1982",
-	"Cinematronics + Advanced Microcomputer Systems",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	zzyzzyxx_driver_init,
-
-	rom_brix,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zzyzzyxx,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_freeze =
-{
-	__FILE__,
-	0,
-	"freeze",
-	"Freeze",
-	"????",
-	"Cinematronics",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	jack_driver_init,
-
-	rom_freeze,
-	0, 0,
-	0,
-	0,
-
-	input_ports_freeze,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_sucasino =
-{
-	__FILE__,
-	0,
-	"sucasino",
-	"Super Casino",
-	"1982",
-	"Data Amusement",
-	"Brad Oliver",
-	0,
-	&machine_driver,
-	jack_driver_init,
-
-	rom_sucasino,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jack,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1982, jack,     0,        jack, jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 1)" )
+GAME( 1982, jack2,    jack,     jack, jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 2)" )
+GAME( 1982, jack3,    jack,     jack, jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 3)" )
+GAME( 1982, treahunt, jack,     jack, jack,     treahunt, ROT90, "Hara Industries", "Treasure Hunt (Japan?)" )
+GAME( 1982, zzyzzyxx, 0,        jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 1)" )
+GAME( 1982, zzyzzyx2, zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 2)" )
+GAME( 1982, brix,     zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
+GAME( ????, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
+GAME( 1982, sucasino, 0,        jack, jack,     jack,     ROT90, "Data Amusement", "Super Casino" )

@@ -516,6 +516,6 @@ ROM_END
 
 
 
-GAME( 1987, bionicc,  ,        bionicc, bionicc, , ROT0, "Capcom", "Bionic Commando (US set 1)" )
-GAME( 1987, bionicc2, bionicc, bionicc, bionicc, , ROT0, "Capcom", "Bionic Commando (US set 2)" )
-GAME( 1987, topsecrt, bionicc, bionicc, bionicc, , ROT0, "Capcom", "Top Secret (Japan)" )
+GAME( 1987, bionicc,  0,       bionicc, bionicc, 0, ROT0, "Capcom", "Bionic Commando (US set 1)" )
+GAME( 1987, bionicc2, bionicc, bionicc, bionicc, 0, ROT0, "Capcom", "Bionic Commando (US set 2)" )
+GAME( 1987, topsecrt, bionicc, bionicc, bionicc, 0, ROT0, "Capcom", "Top Secret (Japan)" )

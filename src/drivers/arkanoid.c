@@ -264,7 +264,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chips */
 	1500000,	/* 1.5 MHz ???? */
 	{ 33 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ input_port_4_r },
 	{ 0 },
@@ -519,12 +518,12 @@ ROM_END
 
 
 
-GAME( 1986, arkanoid, ,         arkanoid, arkanoid, , ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
-GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, , ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
-GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, , ROT90, "Taito Corporation", "Arkanoid (Japan)" )
-GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, , ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
-GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
-GAME( 1986, arkatayt, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
-GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
-GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Block (Game Corporation bootleg)" )
-GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )
+GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0, ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
+GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0, ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
+GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0, ROT90, "Taito Corporation", "Arkanoid (Japan)" )
+GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
+GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
+GAME( 1986, arkatayt, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
+GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
+GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (Game Corporation bootleg)" )
+GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )

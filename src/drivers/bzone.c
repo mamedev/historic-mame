@@ -688,6 +688,6 @@ ROM_END
 
 
 
-GAME( 1980, bzone,    ,      bzone,    bzone,    , ROT0, "Atari", "Battle Zone (set 1)" )
-GAME( 1980, bzone2,   bzone, bzone,    bzone,    , ROT0, "Atari", "Battle Zone (set 2)" )
-GAME( 1980, redbaron, ,      redbaron, redbaron, , ROT0, "Atari", "Red Baron" )
+GAME( 1980, bzone,    0,     bzone,    bzone,    0, ROT0, "Atari", "Battle Zone (set 1)" )
+GAME( 1980, bzone2,   bzone, bzone,    bzone,    0, ROT0, "Atari", "Battle Zone (set 2)" )
+GAME( 1980, redbaron, 0,     redbaron, redbaron, 0, ROT0, "Atari", "Red Baron" )

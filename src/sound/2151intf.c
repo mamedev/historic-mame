@@ -98,7 +98,7 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
 			stream[i] = stream_init_multi(YM2151_NUMBUF,
-				name,vol,rate,FM_OUTPUT_BIT,i,OPMUpdateOne);
+				name,vol,rate,i,OPMUpdateOne);
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
@@ -126,7 +126,7 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
 			stream[i] = stream_init_multi(YM2151_NUMBUF,
-				name,vol,rate,SAMPLE_BITS,i,YM2151UpdateOne);
+				name,vol,rate,i,YM2151UpdateOne);
 		}
 		if (YM2151Init(intf->num,intf->baseclock,Machine->sample_rate) == 0)
 		{

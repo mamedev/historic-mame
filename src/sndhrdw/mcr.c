@@ -201,7 +201,6 @@ struct AY8910interface ssio_ay8910_interface =
 	2,			/* 2 chips */
 	2000000,	/* 2 MHz ?? */
 	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) },	/* dotron clips with anything higher */
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -36,14 +36,14 @@ typedef struct non_emu3812_state {
 	unsigned int timer2_val;
 	void *timer1;
 	void *timer2;
-	int aOPLFreqArray[16];		// Up to 9 channels..
+	int aOPLFreqArray[16];		/* Up to 9 channels.. */
 }NE_OPL_STATE;
 
 static double timer_step;
 static NE_OPL_STATE *nonemu_state;
 
 /* These ones are used by both */
-//static const struct YM3812interface *intf = NULL;
+/*static const struct YM3812interface *intf = NULL; */
 static const struct Y8950interface *intf = NULL;
 
 /* Function procs to access the selected YM type */
@@ -259,10 +259,11 @@ static void IRQHandler(int n,int irq)
 }
 
 /* update handler */
-static void YM3812UpdateHandler(int n, void *buf, int length)
+static void YM3812UpdateHandler(int n, INT16 *buf, int length)
 {	YM3812UpdateOne(F3812[n],buf,length); }
 
-static void Y8950UpdateHandler(int n, void *buf, int length)
+#if HAS_Y8950
+static void Y8950UpdateHandler(int n, INT16 *buf, int length)
 {	Y8950UpdateOne(F3812[n],buf,length); }
 
 static unsigned char Y8950PortHandler_r(int chip)
@@ -276,6 +277,7 @@ static unsigned char Y8950KeyboardHandler_r(int chip)
 
 static void Y8950KeyboardHandler_w(int chip,unsigned char data)
 {	intf->keyboardwrite[chip](chip,data); }
+#endif
 
 /* Timer overflow callback from timer.c */
 static void timer_callback_3812(int param)
@@ -334,14 +336,14 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		{
 			F3812[i]->deltat->memory = (unsigned char *)(memory_region(intf->rom_region[i]));
 			F3812[i]->deltat->memory_size = memory_region_length(intf->rom_region[i]);
-			stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,Y8950UpdateHandler);
+			stream[i] = stream_init(name,vol,rate,i,Y8950UpdateHandler);
 			/* port and keyboard handler */
 			OPLSetPortHandler(F3812[i],Y8950PortHandler_w,Y8950PortHandler_r,i);
 			OPLSetKeyboardHandler(F3812[i],Y8950KeyboardHandler_w,Y8950KeyboardHandler_r,i);
 		}
 		else
 #endif
-		stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,YM3812UpdateHandler);
+		stream[i] = stream_init(name,vol,rate,i,YM3812UpdateHandler);
 		/* YM3812 setup */
 		OPLSetTimerHandler(F3812[i],TimerHandler,i*2);
 		OPLSetIRQHandler(F3812[i]  ,IRQHandler,i);
@@ -489,6 +491,7 @@ int YM3526_sh_start(const struct MachineSound *msound)
 /**********************************************************************************************
 	Begin of Y8950 interface stubs block
  **********************************************************************************************/
+#if HAS_Y8950
 int Y8950_sh_start(const struct MachineSound *msound)
 {
 	chiptype = OPL_TYPE_Y8950;
@@ -497,6 +500,7 @@ int Y8950_sh_start(const struct MachineSound *msound)
 	/* !!!!! delta-t memory address set !!!!! */
 	return 0;
 }
+#endif
 
 /**********************************************************************************************
 	End of Y8950 interface stubs block

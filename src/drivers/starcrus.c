@@ -2,12 +2,10 @@
 
 Ramtek Star Cruiser Driver
 
-TBD:
-    Add sample support -
-        the 4 state variables for the
-        3 samples are already defined
-    Add Collision Detection
-        - the logic is there but not the actual detection
+(no known issues)
+
+Frank Palazzolo
+palazzol@home.com
 
 ***************************************************************************/
 
@@ -29,16 +27,13 @@ extern void starcrus_ship_parm_2_w(int offset, int data);
 extern void starcrus_proj_parm_1_w(int offset, int data);
 extern void starcrus_proj_parm_2_w(int offset, int data);
 extern int starcrus_coll_det_r(int offset);
+extern int starcrus_vh_start(void);
+extern void starcrus_vh_stop(void);
 extern void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int p1_sprite;
 extern int p2_sprite;
 extern int s1_sprite;
 extern int s2_sprite;
-
-int starcrus_engine_sound_playing = 0;
-int starcrus_explode_sound_playing = 0;
-int starcrus_launch1_sound_playing = 0;
-int starcrus_launch2_sound_playing = 0;
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -80,8 +75,9 @@ static struct IOWritePort writeport[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( starcrus )
 
+
+INPUT_PORTS_START( starcrus )
 		PORT_START	/* player 1 */
 		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY ) /* ccw */
 		PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* engine */
@@ -109,8 +105,8 @@ INPUT_PORTS_START( starcrus )
         PORT_DIPSETTING ( 0x01, "120 secs" )
         PORT_DIPSETTING ( 0x00, "150 secs" )
         PORT_DIPNAME ( 0x04, 0x00, DEF_STR( Coinage ))
-        PORT_DIPSETTING ( 0x00, DEF_STR( 1C_1C ))
         PORT_DIPSETTING ( 0x04, DEF_STR( 2C_1C ))
+        PORT_DIPSETTING ( 0x00, DEF_STR( 1C_1C ))
         PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_COIN2 )
         PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_DIPNAME ( 0x20, 0x20, "Mode" )
@@ -118,8 +114,9 @@ INPUT_PORTS_START( starcrus )
         PORT_DIPSETTING ( 0x00, "Alternate" )
         PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
         PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout spritelayout1 =
 {
@@ -148,20 +145,21 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0040, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0080, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x00c0, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0200, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0240, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0280, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x02c0, &spritelayout1, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0400, &spritelayout2, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0500, &spritelayout2, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0600, &spritelayout2, 0x00, 0x01 }, /* offset into colors, # of colors */
-    { 1, 0x0700, &spritelayout2, 0x00, 0x01 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0x0000, &spritelayout1, 0, 1 },
+    { REGION_GFX1, 0x0040, &spritelayout1, 0, 1 },
+    { REGION_GFX1, 0x0080, &spritelayout1, 0, 1 },
+    { REGION_GFX1, 0x00c0, &spritelayout1, 0, 1 },
+    { REGION_GFX2, 0x0000, &spritelayout1, 0, 1 },
+    { REGION_GFX2, 0x0040, &spritelayout1, 0, 1 },
+    { REGION_GFX2, 0x0080, &spritelayout1, 0, 1 },
+    { REGION_GFX2, 0x00c0, &spritelayout1, 0, 1 },
+    { REGION_GFX3, 0x0000, &spritelayout2, 0, 1 },
+    { REGION_GFX3, 0x0100, &spritelayout2, 0, 1 },
+    { REGION_GFX3, 0x0200, &spritelayout2, 0, 1 },
+    { REGION_GFX3, 0x0300, &spritelayout2, 0, 1 },
 	{ -1 } /* end of array */
 };
+
 
 static unsigned char palette[] =
 {
@@ -170,7 +168,7 @@ static unsigned char palette[] =
 };
 static unsigned short colortable[] =
 {
-	0x00, 0x01,
+	0x00, 0x01, /* White on Black */
 };
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
@@ -178,8 +176,25 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 	memcpy(game_colortable,colortable,sizeof(colortable));
 }
 
+static const char *starcrus_sample_names[] =
+{
+    "*starcrus",
+    "engine.wav",	/* engine sound, channel 0 */
+    "explos1.wav",	/* explosion sound, first part, channel 1 */
+    "explos2.wav",	/* explosion sound, second part, channel 1 */
+    "launch.wav",	/* launch sound, channels 2 and 3 */
+    0   /* end of array */
+};
 
-static struct MachineDriver machine_driver =
+static struct Samplesinterface samples_interface =
+{
+    4,	/* 4 channels */
+	100,	/* volume */
+	starcrus_sample_names
+};
+
+
+static struct MachineDriver machine_driver_starcrus =
 {
 	/* basic machine hardware */
 	{
@@ -202,12 +217,18 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-    0,
-    0,
+	starcrus_vh_start,
+	starcrus_vh_stop,
 	starcrus_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0
+    /* sound hardware */
+    0,0,0,0,
+    {
+        {
+            SOUND_SAMPLES,
+            &samples_interface
+        }
+    }
 
 };
 
@@ -228,47 +249,16 @@ ROM_START( starcrus )
 	ROM_LOAD( "starcrus.r1",   0x0c00, 0x0200, 0x010cdcfe )
 	ROM_LOAD( "starcrus.s1",   0x0e00, 0x0200, 0xda4e276b )
 
-    ROM_REGION_DISPOSE(0x800)   /* graphics */
+    ROM_REGIONX( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "starcrus.e6",   0x0000, 0x0200, 0x54887a25 )
-	ROM_LOAD( "starcrus.l2",   0x0200, 0x0200, 0x54887a25 )
-	ROM_LOAD( "starcrus.j4",   0x0400, 0x0200, 0x25f15ae1 )
-	ROM_LOAD( "starcrus.g5",   0x0600, 0x0200, 0x73b27f6e )
+
+    ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starcrus.l2",   0x0000, 0x0200, 0x54887a25 )
+
+    ROM_REGIONX( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "starcrus.j4",   0x0000, 0x0200, 0x25f15ae1 )
+	ROM_LOAD( "starcrus.g5",   0x0200, 0x0200, 0x73b27f6e )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
-
-***************************************************************************/
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_starcrus =
-{
-	__FILE__,
-	0,
-	"starcrus",
-	"Star Cruiser",
-	"1977",
-	"Ramtek",
-	"Frank Palazzolo",
-	0,
-	&machine_driver,
-	0,
-	rom_starcrus,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_starcrus,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAME( 1977, starcrus, 0, starcrus, starcrus, 0, ROT0, "Ramtek", "Star Cruiser" )

@@ -192,8 +192,8 @@ INPUT_PORTS_START( phozon )
 	PORT_BIT_IMPULSE(   0x20, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START  /* IN1 */
 	PORT_BIT(   0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -249,10 +249,10 @@ static struct GfxLayout spritelayout8 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,		0, 64 },
-	{ 1, 0x1000, &charlayout,		0, 64 },
-	{ 1, 0x2000, &spritelayout,	 64*4, 64 },
-	{ 1, 0x2000, &spritelayout8, 64*4, 64 },
+	{ REGION_GFX1, 0, &charlayout,       0, 64 },
+	{ REGION_GFX2, 0, &charlayout,       0, 64 },
+	{ REGION_GFX3, 0, &spritelayout,  64*4, 64 },
+	{ REGION_GFX3, 0, &spritelayout8, 64*4, 64 },
 	{ -1 } /* end of table */
 };
 
@@ -261,7 +261,7 @@ static struct namco_interface namco_interface =
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
 	100,	/* playback volume */
-	5		/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static struct MachineDriver machine_driver_phozon =
@@ -313,6 +313,8 @@ static struct MachineDriver machine_driver_phozon =
 	}
 };
 
+
+
 ROM_START( phozon )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the MAIN CPU  */
 	ROM_LOAD( "6e.rom", 0x8000, 0x2000, 0xa6686af1 )
@@ -320,16 +322,20 @@ ROM_START( phozon )
 	ROM_LOAD( "6c.rom", 0xc000, 0x2000, 0xf1fda22e )
 	ROM_LOAD( "6d.rom", 0xe000, 0x2000, 0xf40e6df0 )
 
-	ROM_REGION_DISPOSE(0x4000)  /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "7j.rom", 0x0000, 0x1000, 0x27f9db5b ) /* characters (set 1) */
-	ROM_LOAD( "8j.rom", 0x1000, 0x1000, 0x15b12ef8 ) /* characters (set 2) */
-	ROM_LOAD( "5t.rom", 0x2000, 0x2000, 0xd50f08f8 ) /* sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the SUB CPU */
 	ROM_LOAD( "9r.rom", 0xe000, 0x2000, 0x5d9f0a28 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the SOUND CPU */
 	ROM_LOAD( "3b.rom", 0xe000, 0x2000, 0x5a4b3a79 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7j.rom", 0x0000, 0x1000, 0x27f9db5b ) /* characters (set 1) */
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "8j.rom", 0x0000, 0x1000, 0x15b12ef8 ) /* characters (set 2) */
+
+	ROM_REGIONX( 0x2000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5t.rom", 0x0000, 0x2000, 0xd50f08f8 ) /* sprites */
 
 	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "red.prm",     0x0000, 0x0100, 0xa2880667 ) /* red palette ROM (4 bits) */
@@ -339,32 +345,10 @@ ROM_START( phozon )
 	ROM_LOAD( "sprite.prm",  0x0400, 0x0100, 0x9061db07 ) /* sprites */
 	ROM_LOAD( "palette.prm", 0x0500, 0x0020, 0x60e856ed ) /* palette (unused?) */
 
-	ROM_REGION(0x0100)      /* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "sound.prm", 0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-struct GameDriver driver_phozon =
-{
-	__FILE__,
-	0,
-	"phozon",
-	"Phozon",
-	"1983",
-	"Namco",
-	"Manuel Abadia\nLarry Bank(color info)",
-	0,
-	&machine_driver_phozon,
-	0,
 
-	rom_phozon,
-	0, 0,
-	0,
-	0,
 
-	input_ports_phozon,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1983, phozon, 0, phozon, phozon, 0, ROT90, "Namco", "Phozon" )

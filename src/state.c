@@ -72,7 +72,7 @@ INLINE int my_stricmp( const char *dst, const char *src)
 		src++;
 		dst++;
 	}
-	return 0;
+	return *dst - *src;
 }
 
 /* free a linked list of state_vars (aka section) */

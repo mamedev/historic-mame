@@ -1,3 +1,10 @@
+/***************************************************************************
+
+Shisen
+
+driver by Nicola Salmoria
+
+***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
@@ -184,9 +191,9 @@ INPUT_PORTS_START( shisen )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x01, "8 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x02, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 8C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 5C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
@@ -213,7 +220,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,
-	4096,
+	4096*8,
 	4,
 	{ 0, 4, 0x80000*8+0, 0x80000*8+4 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
@@ -224,14 +231,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,  0, 16 },
-	{ 1, 0x10000, &charlayout,  0, 16 },
-	{ 1, 0x20000, &charlayout,  0, 16 },
-	{ 1, 0x30000, &charlayout,  0, 16 },
-	{ 1, 0x40000, &charlayout,  0, 16 },
-	{ 1, 0x50000, &charlayout,  0, 16 },
-	{ 1, 0x60000, &charlayout,  0, 16 },
-	{ 1, 0x70000, &charlayout,  0, 16 },
+	{ REGION_GFX1, 0x00000, &charlayout,  0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -241,7 +241,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579645,	/* 3.579645 MHz */
-	{ YM3012_VOL(55,MIXER_PAN_LEFT,55,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ m72_ym2151_irq_handler },
 	{ 0 }
 };
@@ -254,7 +254,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_shisen =
 {
 	/* basic machine hardware */
 	{
@@ -316,7 +316,10 @@ ROM_START( sichuan2 )
 	ROM_RELOAD(               0x10000, 0x10000 )
 	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -334,10 +337,7 @@ ROM_START( sichuan2 )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
-
-	ROM_REGION(0x40000)	/* samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
@@ -350,7 +350,10 @@ ROM_START( sichuana )
 	ROM_RELOAD(               0x10000, 0x10000 )
 	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -368,24 +371,22 @@ ROM_START( sichuana )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
-
-	ROM_REGION(0x40000)	/* samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
 	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
 ROM_END
-
-
 
 ROM_START( shisen )
 	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k+128k for main CPU */
 	ROM_LOAD( "a-27-a.rom",   0x00000, 0x20000, 0xde2ecf05 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
 	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
 	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
@@ -403,10 +404,7 @@ ROM_START( shisen )
 	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
 	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
-
-	ROM_REGION(0x40000)	/* samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
 	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
 	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
@@ -415,77 +413,6 @@ ROM_END
 
 
 
-struct GameDriver driver_sichuan2 =
-{
-	__FILE__,
-	0,
-	"sichuan2",
-	"Sichuan II (hack?) (set 1)",
-	"1989",
-	"Tamtex",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-        rom_sichuan2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shisen,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sichuana =
-{
-	__FILE__,
-	&driver_sichuan2,
-	"sichuana",
-	"Sichuan II (hack ?) (set 2)",
-	"1989",
-	"Tamtex",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-        rom_sichuana,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shisen,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_shisen =
-{
-	__FILE__,
-	&driver_sichuan2,
-	"shisen",
-	"Shisensho - Joshiryo-Hen (Japan)",
-	"1989",
-	"Tamtex",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_shisen,
-	0, 0,
-	0,
-	0,
-
-	input_ports_shisen,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1989, sichuan2, 0,        shisen, shisen, 0, ROT0, "Tamtex", "Sichuan II (hack?) (set 1)" )
+GAME( 1989, sichuana, sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Sichuan II (hack ?) (set 2)" )
+GAME( 1989, shisen,   sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Shisensho - Joshiryo-Hen (Japan)" )

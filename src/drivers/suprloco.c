@@ -2,6 +2,8 @@
 
  Super Locomotive
 
+driver by Zsolt Vasvari
+
  TODO:
  Bit 4 in suprloco_control_w is pulsed when loco turns "super"
 
@@ -189,7 +191,7 @@ static struct GfxLayout charlayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* sprites use colors 0-255 */
-	{ 1, 0x6000, &charlayout, 256, 16 },
+	{ REGION_GFX1, 0x6000, &charlayout, 256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -261,42 +263,41 @@ ROM_START( suprloco )
 	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
 	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
 
-	ROM_REGION_DISPOSE(0xe000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
+
+	ROM_REGIONX( 0xe000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic63.bin",     0x0000, 0x2000, 0xe571fe81 )
 	ROM_LOAD( "ic62.bin",     0x2000, 0x2000, 0x6130f93c )
 	ROM_LOAD( "ic61.bin",     0x4000, 0x2000, 0x3b03004e )
-							/*0x6000- 0xe000 fill be created dynamically */
+							/*0x6000- 0xe000 will be created by init_suprloco */
 
-	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_REGIONX( 0x8000, REGION_GFX2 )	/* 32k for sprites data used at runtime */
 	ROM_LOAD( "ic55.bin",     0x0000, 0x4000, 0xee2d3ed3 )
 	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
 							/*0x6000 empty */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
-
-	ROM_REGIONX( 0x0600, REGION_PROMS )
+	ROM_REGIONX( 0x0620, REGION_PROMS )
 	ROM_LOAD( "ic100.bin",    0x0000, 0x0080, 0x7b0c8ce5 )  /* color PROM */
 	ROM_CONTINUE(             0x0100, 0x0080 )
 	ROM_CONTINUE(             0x0080, 0x0080 )
 	ROM_CONTINUE(             0x0180, 0x0080 )
 	ROM_LOAD( "ic89.bin",     0x0200, 0x0400, 0x1d4b02cb )  /* 3bpp to 4bpp table */
-
-	ROM_REGION(0x0020)	/* I don't know what the following ROM is */
-	ROM_LOAD( "ic7.bin",      0x0000, 0x0020, 0x89ba674f )
+	ROM_LOAD( "ic7.bin",      0x0600, 0x0020, 0x89ba674f )	/* unknown */
 ROM_END
 
 
-void suprloco_unmangle(void)
+
+void init_suprloco(void)
 {
 	/* convert graphics to 4bpp from 3bpp */
 
 	int i, j, k, color_source, color_dest;
 	unsigned char *source, *dest, *lookup;
 
-	source = memory_region(1);
+	source = memory_region(REGION_GFX1);
 	dest   = source + 0x6000;
-	lookup = memory_region(4) + 0x0200;
+	lookup = memory_region(REGION_PROMS) + 0x0200;
 
 	for (i = 0; i < 0x80; i++, lookup += 8)
 	{
@@ -327,27 +328,4 @@ void suprloco_unmangle(void)
 
 
 
-struct GameDriver driver_suprloco =
-{
-	__FILE__,
-	0,
-	"suprloco",
-	"Super Locomotive",
-	"1982",
-	"Sega",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_suprloco,
-	suprloco_unmangle,
-
-	rom_suprloco,
-	0, 0,
-	0,
-	0,
-
-	input_ports_suprloco,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1982, suprloco, 0, suprloco, suprloco, suprloco, ROT0, "Sega", "Super Locomotive" )

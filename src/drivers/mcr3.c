@@ -654,7 +654,7 @@ INPUT_PORTS_START( destderb )
 	PORT_DIPSETTING(    0x00, "Limited" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -837,8 +837,8 @@ INPUT_PORTS_START( powerdrv )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_BITX( 0x80,    0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Advance", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1074,17 +1074,17 @@ static struct GfxLayout spyhunt_alphalayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 4 },
-	{ 1, 0x8000, &spritelayout,  0, 4 },
+	{ REGION_GFX1, 0, &charlayout,    0, 4 },
+	{ REGION_GFX2, 0, &spritelayout,  0, 4 },
 	{ -1 } /* end of array */
 };
 
 
 static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &spyhunt_charlayout,  1*16, 1 },
-	{ 1, 0x08000, &spritelayout,        0*16, 4 },
-	{ 1, 0x48000, &spyhunt_alphalayout, 8*16, 1 },
+	{ REGION_GFX1, 0, &spyhunt_charlayout,  1*16, 1 },
+	{ REGION_GFX2, 0, &spritelayout,        0*16, 4 },
+	{ REGION_GFX3, 0, &spyhunt_alphalayout, 8*16, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -1445,6 +1445,501 @@ static struct MachineDriver machine_driver_crater =
 
 /*************************************
  *
+ *	ROM definitions
+ *
+ *************************************/
+
+ROM_START( tapper )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "tappg0.bin",   0x00000, 0x4000, 0x127171d1 )
+	ROM_LOAD( "tappg1.bin",   0x04000, 0x4000, 0x9d6a47f7 )
+	ROM_LOAD( "tappg2.bin",   0x08000, 0x4000, 0x3a1f8778 )
+	ROM_LOAD( "tappg3.bin",   0x0c000, 0x2000, 0xe8dcdaa4 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x0e8bb9d5 )
+	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x0cf0e29b )
+	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0x31eb6dc6 )
+	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x01a9be6a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
+	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tapfg1.bin",   0x00000, 0x4000, 0x32509011 )
+	ROM_LOAD( "tapfg0.bin",   0x04000, 0x4000, 0x8412c808 )
+	ROM_LOAD( "tapfg3.bin",   0x10000, 0x4000, 0x818fffd4 )
+	ROM_LOAD( "tapfg2.bin",   0x14000, 0x4000, 0x67e37690 )
+	ROM_LOAD( "tapfg5.bin",   0x20000, 0x4000, 0x800f7c8a )
+	ROM_LOAD( "tapfg4.bin",   0x24000, 0x4000, 0x32674ee6 )
+	ROM_LOAD( "tapfg7.bin",   0x30000, 0x4000, 0x070b4c81 )
+	ROM_LOAD( "tapfg6.bin",   0x34000, 0x4000, 0xa37aef36 )
+ROM_END
+
+
+ROM_START( tappera )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pr00_1c.128",   0x00000, 0x4000, 0xbb060bb0 )
+	ROM_LOAD( "pr01_2c.128",   0x04000, 0x4000, 0xfd9acc22 )
+	ROM_LOAD( "pr02_3c.128",   0x08000, 0x4000, 0xb3755d41 )
+	ROM_LOAD( "pr03_4c.64",    0x0c000, 0x2000, 0x77273096 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x0e8bb9d5 )
+	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x0cf0e29b )
+	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0x31eb6dc6 )
+	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x01a9be6a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
+	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg1_a7.128",   0x00000, 0x4000, 0xbac70b69 )
+	ROM_LOAD( "fg0_a8.128",   0x04000, 0x4000, 0xc300925d )
+	ROM_LOAD( "fg3_a5.128",   0x10000, 0x4000, 0xecff6c23 )
+	ROM_LOAD( "fg2_a6.128",   0x14000, 0x4000, 0xa4f2d1be )
+	ROM_LOAD( "fg5_a3.128",   0x20000, 0x4000, 0x16ce38cb )
+	ROM_LOAD( "fg4_a4.128",   0x24000, 0x4000, 0x082a4059 )
+	ROM_LOAD( "fg7_a1.128",   0x30000, 0x4000, 0x3b476abe )
+	ROM_LOAD( "fg6_a2.128",   0x34000, 0x4000, 0x6717264c )
+ROM_END
+
+
+ROM_START( sutapper )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "5791",         0x0000, 0x4000, 0x87119cc4 )
+	ROM_LOAD( "5792",         0x4000, 0x4000, 0x4c23ad89 )
+	ROM_LOAD( "5793",         0x8000, 0x4000, 0xfecbf683 )
+	ROM_LOAD( "5794",         0xc000, 0x2000, 0x5bdc1916 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5788",         0x00000, 0x1000, 0x5c1d0982 )
+	ROM_LOAD( "5787",         0x01000, 0x1000, 0x09e74ed8 )
+	ROM_LOAD( "5786",         0x02000, 0x1000, 0xc3e98284 )
+	ROM_LOAD( "5785",         0x03000, 0x1000, 0xced2fd47 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5790",         0x00000, 0x4000, 0xac1558c1 )
+	ROM_LOAD( "5789",         0x04000, 0x4000, 0xfa66cab5 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5795",         0x00000, 0x4000, 0x5d987c92 )
+	ROM_LOAD( "5796",         0x04000, 0x4000, 0xde5700b4 )
+	ROM_LOAD( "5797",         0x10000, 0x4000, 0xf10a1d05 )
+	ROM_LOAD( "5798",         0x14000, 0x4000, 0x614990cd )
+	ROM_LOAD( "5799",         0x20000, 0x4000, 0x02c69432 )
+	ROM_LOAD( "5800",         0x24000, 0x4000, 0xebf1f948 )
+	ROM_LOAD( "5801",         0x30000, 0x4000, 0xd70defa7 )
+	ROM_LOAD( "5802",         0x34000, 0x4000, 0xd4f114b9 )
+ROM_END
+
+
+ROM_START( rbtapper )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "rbtpg0.bin",   0x00000, 0x4000, 0x20b9adf4 )
+	ROM_LOAD( "rbtpg1.bin",   0x04000, 0x4000, 0x87e616c2 )
+	ROM_LOAD( "rbtpg2.bin",   0x08000, 0x4000, 0x0b332c97 )
+	ROM_LOAD( "rbtpg3.bin",   0x0c000, 0x2000, 0x698c06f2 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5788",         0x00000, 0x1000, 0x5c1d0982 )
+	ROM_LOAD( "5787",         0x01000, 0x1000, 0x09e74ed8 )
+	ROM_LOAD( "5786",         0x02000, 0x1000, 0xc3e98284 )
+	ROM_LOAD( "5785",         0x03000, 0x1000, 0xced2fd47 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rbtbg1.bin",   0x00000, 0x4000, 0x44dfa483 )
+	ROM_LOAD( "rbtbg0.bin",   0x04000, 0x4000, 0x510b13de )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rbtfg1.bin",   0x00000, 0x4000, 0x1c0b8791 )
+	ROM_LOAD( "rbtfg0.bin",   0x04000, 0x4000, 0xe99f6018 )
+	ROM_LOAD( "rbtfg3.bin",   0x10000, 0x4000, 0x3e725e77 )
+	ROM_LOAD( "rbtfg2.bin",   0x14000, 0x4000, 0x4ee8b624 )
+	ROM_LOAD( "rbtfg5.bin",   0x20000, 0x4000, 0x9eeca46e )
+	ROM_LOAD( "rbtfg4.bin",   0x24000, 0x4000, 0x8c79e7d7 )
+	ROM_LOAD( "rbtfg7.bin",   0x30000, 0x4000, 0x8dbf0c36 )
+	ROM_LOAD( "rbtfg6.bin",   0x34000, 0x4000, 0x441201a0 )
+ROM_END
+
+
+ROM_START( timber )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "timpg0.bin",   0x00000, 0x4000, 0x377032ab )
+	ROM_LOAD( "timpg1.bin",   0x04000, 0x4000, 0xfd772836 )
+	ROM_LOAD( "timpg2.bin",   0x08000, 0x4000, 0x632989f9 )
+	ROM_LOAD( "timpg3.bin",   0x0c000, 0x2000, 0xdae8a0dc )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "tima7.bin",    0x00000, 0x1000, 0xc615dc3e )
+	ROM_LOAD( "tima8.bin",    0x01000, 0x1000, 0x83841c87 )
+	ROM_LOAD( "tima9.bin",    0x02000, 0x1000, 0x22bcdcd3 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "timbg1.bin",   0x00000, 0x4000, 0xb1cb2651 )
+	ROM_LOAD( "timbg0.bin",   0x04000, 0x4000, 0x2ae352c4 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "timfg1.bin",   0x00000, 0x4000, 0x81de4a73 )
+	ROM_LOAD( "timfg0.bin",   0x04000, 0x4000, 0x7f3a4f59 )
+	ROM_LOAD( "timfg3.bin",   0x10000, 0x4000, 0x37c03272 )
+	ROM_LOAD( "timfg2.bin",   0x14000, 0x4000, 0xe2c2885c )
+	ROM_LOAD( "timfg5.bin",   0x20000, 0x4000, 0xeb636216 )
+	ROM_LOAD( "timfg4.bin",   0x24000, 0x4000, 0xb7105eb7 )
+	ROM_LOAD( "timfg7.bin",   0x30000, 0x4000, 0xd9c27475 )
+	ROM_LOAD( "timfg6.bin",   0x34000, 0x4000, 0x244778e8 )
+ROM_END
+
+
+ROM_START( dotron )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "loc-pg0.1c",   0x0000, 0x4000, 0xba0da15f )
+	ROM_LOAD( "loc-pg1.2c",   0x4000, 0x4000, 0xdc300191 )
+	ROM_LOAD( "loc-pg2.3c",   0x8000, 0x4000, 0xab0b3800 )
+	ROM_LOAD( "loc-pg1.4c",   0xc000, 0x2000, 0xf98c9f8e )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "sound0.a7",    0x00000, 0x1000, 0x6d39bf19 )
+	ROM_LOAD( "sound1.a8",    0x01000, 0x1000, 0xac872e1d )
+	ROM_LOAD( "sound2.a9",    0x02000, 0x1000, 0xe8ef6519 )
+	ROM_LOAD( "sound3.a10",   0x03000, 0x1000, 0x6b5aeb02 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "pre.u3",       0x0d000, 0x1000, 0xc3d0f762 )
+	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
+	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
+	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "loc-g.cp4",    0x00000, 0x2000, 0x57a2b1ff )
+	ROM_LOAD( "loc-h.cp3",    0x02000, 0x2000, 0x3bb4d475 )
+	ROM_LOAD( "loc-e.cp6",    0x10000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x12000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-c.cp8",    0x20000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x22000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-a.cp0",    0x30000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x32000, 0x2000, 0x565a5c48 )
+ROM_END
+
+
+ROM_START( dotrone )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "loc-cpu1",     0x00000, 0x4000, 0xeee31b8c )
+	ROM_LOAD( "loc-cpu2",     0x04000, 0x4000, 0x75ba6ad3 )
+	ROM_LOAD( "loc-cpu3",     0x08000, 0x4000, 0x94bb1a0e )
+	ROM_LOAD( "loc-cpu4",     0x0c000, 0x2000, 0xc137383c )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "loc-a",        0x00000, 0x1000, 0x2de6a8a8 )
+	ROM_LOAD( "loc-b",        0x01000, 0x1000, 0x4097663e )
+	ROM_LOAD( "loc-c",        0x02000, 0x1000, 0xf576b9e7 )
+	ROM_LOAD( "loc-d",        0x03000, 0x1000, 0x74b0059e )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_LOAD( "pre.u3",       0x0d000, 0x1000, 0xc3d0f762 )
+	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
+	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
+	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "loc-g.cp4",    0x00000, 0x2000, 0x57a2b1ff )
+	ROM_LOAD( "loc-h.cp3",    0x02000, 0x2000, 0x3bb4d475 )
+	ROM_LOAD( "loc-e.cp6",    0x10000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x12000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-c.cp8",    0x20000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x22000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-a.cp0",    0x30000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x32000, 0x2000, 0x565a5c48 )
+ROM_END
+
+
+ROM_START( destderb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "dd_pro",       0x00000, 0x4000, 0x8781b367 )
+	ROM_LOAD( "dd_pro1",      0x04000, 0x4000, 0x4c713bfe )
+	ROM_LOAD( "dd_pro2",      0x08000, 0x4000, 0xc2cbd2a4 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
+	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd_bg0.6f",    0x00000, 0x2000, 0xcf80be19 )
+	ROM_LOAD( "dd_bg1.5f",    0x04000, 0x2000, 0x4e173e52 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd_fg-0.a4",   0x00000, 0x4000, 0xe57a4de6 )
+	ROM_LOAD( "dd_fg-4.a3",   0x04000, 0x4000, 0x55aa667f )
+	ROM_LOAD( "dd_fg-1.a6",   0x10000, 0x4000, 0x70259651 )
+	ROM_LOAD( "dd_fg-5.a5",   0x14000, 0x4000, 0x5fe99007 )
+	ROM_LOAD( "dd_fg-2.a8",   0x20000, 0x4000, 0x6cab7b95 )
+	ROM_LOAD( "dd_fg-6.a7",   0x24000, 0x4000, 0xabfb9a8b )
+	ROM_LOAD( "dd_fg-3.a10",  0x30000, 0x4000, 0x801d9b86 )
+	ROM_LOAD( "dd_fg-7.a9",   0x34000, 0x4000, 0x0ec3f60a )
+ROM_END
+
+
+ROM_START( destderm )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pro0.3b",      0x00000, 0x8000, 0x2e24527b )
+	ROM_LOAD( "pro1.5b",      0x08000, 0x8000, 0x034c00fc )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
+	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg0.15a",      0x00000, 0x2000, 0xa35d13b8 )
+	ROM_LOAD( "bg1.14b",      0x04000, 0x2000, 0x22ca93f3 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "dd_fg-0.a4",   0x00000, 0x4000, 0xe57a4de6 )
+	ROM_LOAD( "dd_fg-4.a3",   0x04000, 0x4000, 0x55aa667f )
+	ROM_LOAD( "dd_fg-1.a6",   0x10000, 0x4000, 0x70259651 )
+	ROM_LOAD( "dd_fg-5.a5",   0x14000, 0x4000, 0x5fe99007 )
+	ROM_LOAD( "dd_fg-2.a8",   0x20000, 0x4000, 0x6cab7b95 )
+	ROM_LOAD( "dd_fg-6.a7",   0x24000, 0x4000, 0xabfb9a8b )
+	ROM_LOAD( "dd_fg-3.a10",  0x30000, 0x4000, 0x801d9b86 )
+	ROM_LOAD( "dd_fg-7.a9",   0x34000, 0x4000, 0x0ec3f60a )
+ROM_END
+
+
+ROM_START( sarge )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "cpu_3b.bin",   0x0000, 0x8000, 0xda31a58f )
+	ROM_LOAD( "cpu_5b.bin",   0x8000, 0x8000, 0x6800e746 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xa894ef8a )
+	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x6ca6faf3 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "til_15a.bin",  0x00000, 0x2000, 0x685001b8 )
+	ROM_LOAD( "til_14b.bin",  0x04000, 0x2000, 0x8449eb45 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "spr_8e.bin",   0x00000, 0x8000, 0x93fac29d )
+	ROM_LOAD( "spr_6e.bin",   0x10000, 0x8000, 0x7cc6fb28 )
+	ROM_LOAD( "spr_5e.bin",   0x20000, 0x8000, 0xc832375c )
+	ROM_LOAD( "spr_4e.bin",   0x30000, 0x8000, 0xc382267d )
+ROM_END
+
+
+ROM_START( rampage )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pro0rev3.3b",  0x00000, 0x08000, 0x2f7ca03c )
+	ROM_LOAD( "pro1rev3.5b",  0x08000, 0x08000, 0xd89bd9a4 )
+
+	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )	/* these are Revision 2 sound ROMs */
+	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
+	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
+	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
+	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg-0",         0x00000, 0x10000, 0x0974be5d )
+	ROM_LOAD( "fg-1",         0x10000, 0x10000, 0x8728532b )
+	ROM_LOAD( "fg-2",         0x20000, 0x10000, 0x9489f714 )
+	ROM_LOAD( "fg-3",         0x30000, 0x10000, 0x81e1de40 )
+ROM_END
+
+
+ROM_START( rampage2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pro0rev2.3b",  0x0000, 0x8000, 0x3f1d0293 )
+	ROM_LOAD( "pro1rev2.5b",  0x8000, 0x8000, 0x58523d75 )
+
+	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )    /* these are Revision 2 sound ROMs */
+	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
+	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
+	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
+	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg-0",         0x00000, 0x10000, 0x0974be5d )
+	ROM_LOAD( "fg-1",         0x10000, 0x10000, 0x8728532b )
+	ROM_LOAD( "fg-2",         0x20000, 0x10000, 0x9489f714 )
+	ROM_LOAD( "fg-3",         0x30000, 0x10000, 0x81e1de40 )
+ROM_END
+
+
+ROM_START( powerdrv )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pdrv3b.bin",   0x0000, 0x8000, 0xd870b704 )
+	ROM_LOAD( "pdrv5b.bin",   0x8000, 0x8000, 0xfa0544ad )
+
+	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "pdsndu7.bin",  0x00000, 0x8000, 0x78713e78 )
+	ROM_LOAD_ODD ( "pdsndu17.bin", 0x00000, 0x8000, 0xc41de6e4 )
+	ROM_LOAD_EVEN( "pdsndu8.bin",  0x10000, 0x8000, 0x15714036 )
+	ROM_LOAD_ODD ( "pdsndu18.bin", 0x10000, 0x8000, 0xcae14c70 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pdrv15a.bin",  0x00000, 0x04000, 0xb858b5a8 )
+	ROM_LOAD( "pdrv14b.bin",  0x04000, 0x04000, 0x12ee7fc2 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pdrv8e.bin",   0x00000, 0x10000, 0xdd3a2adc )
+	ROM_LOAD( "pdrv6e.bin",   0x10000, 0x10000, 0x1a1f7f81 )
+	ROM_LOAD( "pdrv5e.bin",   0x20000, 0x10000, 0x4cb4780e )
+	ROM_LOAD( "pdrv4e.bin",   0x30000, 0x10000, 0xde400335 )
+ROM_END
+
+
+ROM_START( maxrpm )
+	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
+	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
+	ROM_CONTINUE(             0x10000, 0x2000 )	/* unused? but there seems to be stuff in here */
+								/* loading it at e000 causes rogue sprites to appear on screen */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "turbskwk.u5",   0x8000, 0x4000, 0x55c3b759 )
+	ROM_LOAD( "turbskwk.u4",   0xc000, 0x4000, 0x31a2da2e )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
+	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg-0",         0x00000, 0x8000, 0x1d1435c1 )
+	ROM_LOAD( "fg-1",         0x10000, 0x8000, 0xe54b7f2a )
+	ROM_LOAD( "fg-2",         0x20000, 0x8000, 0x38be8505 )
+	ROM_LOAD( "fg-3",         0x30000, 0x8000, 0x9ae3eb52 )
+ROM_END
+
+
+ROM_START( spyhunt )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "cpu_pg0.6d",   0x0000, 0x2000, 0x1721b88f )
+	ROM_LOAD( "cpu_pg1.7d",   0x2000, 0x2000, 0x909d044f )
+	ROM_LOAD( "cpu_pg2.8d",   0x4000, 0x2000, 0xafeeb8bd )
+	ROM_LOAD( "cpu_pg3.9d",   0x6000, 0x2000, 0x5e744381 )
+	ROM_LOAD( "cpu_pg4.10d",  0x8000, 0x2000, 0xa3033c15 )
+	ROM_LOAD( "cpu_pg5.11d",  0xa000, 0x4000, 0x88aa1e99 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "snd_0sd.a8",   0x0000, 0x1000, 0xc95cf31e )
+	ROM_LOAD( "snd_1sd.a7",   0x1000, 0x1000, 0x12aaa48e )
+
+	ROM_REGIONX( 0x8000, REGION_CPU3 )  /* 32k for the Chip Squeak Deluxe */
+	ROM_LOAD_EVEN( "csd_u7a.u7",   0x00000, 0x2000, 0x6e689fe7 )
+	ROM_LOAD_ODD ( "csd_u17b.u17", 0x00000, 0x2000, 0x0d9ddce6 )
+	ROM_LOAD_EVEN( "csd_u8c.u8",   0x04000, 0x2000, 0x35563cd0 )
+	ROM_LOAD_ODD ( "csd_u18d.u18", 0x04000, 0x2000, 0x63d3f5b1 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cpu_bg0.3a",   0x00000, 0x2000, 0xdea34fed )
+	ROM_LOAD( "cpu_bg1.4a",   0x02000, 0x2000, 0x8f64525f )
+	ROM_LOAD( "cpu_bg2.5a",   0x04000, 0x2000, 0xba0fd626 )
+	ROM_LOAD( "cpu_bg3.6a",   0x06000, 0x2000, 0x7b482d61 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_0fg.a8",   0x00000, 0x4000, 0x292c5466 )
+	ROM_LOAD( "vid_1fg.a7",   0x04000, 0x4000, 0x9fe286ec )
+	ROM_LOAD( "vid_2fg.a6",   0x10000, 0x4000, 0x62c8bfa5 )
+	ROM_LOAD( "vid_3fg.a5",   0x14000, 0x4000, 0xb894934d )
+	ROM_LOAD( "vid_4fg.a4",   0x20000, 0x4000, 0x7ca4941b )
+	ROM_LOAD( "vid_5fg.a3",   0x24000, 0x4000, 0x2d9fbcec )
+	ROM_LOAD( "vid_6fg.a2",   0x30000, 0x4000, 0x8cb8a066 )
+	ROM_LOAD( "vid_7fg.a1",   0x34000, 0x4000, 0x940fe17e )
+
+	ROM_REGIONX( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cpu_alph.10g", 0x00000, 0x1000, 0x936dc87f )
+ROM_END
+
+
+ROM_START( turbotag )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "ttprog0.bin",  0x0000, 0x2000, 0x6110fd80 )
+	ROM_LOAD( "ttprog1.bin",  0x2000, 0x2000, BADCRC( 0xb0505e18 ))
+	ROM_LOAD( "ttprog2.bin",  0x4000, 0x2000, 0xc4141237 )
+	ROM_LOAD( "ttprog3.bin",  0x6000, 0x2000, 0xaf294c6e )
+	ROM_LOAD( "ttprog4.bin",  0x8000, 0x2000, 0x8c5bc1a4 )
+	ROM_LOAD( "ttprog5.bin",  0xa000, 0x2000, 0x11e62fe4 )
+	ROM_RELOAD(               0xc000, 0x2000 )
+
+	ROM_REGIONX( 0x8000, REGION_CPU2 )  /* 32k for the Chip Squeak Deluxe */
+	ROM_LOAD_EVEN( "ttu7.bin",  0x00000, 0x2000, 0x8ebb3302 )
+	ROM_LOAD_ODD ( "ttu17.bin", 0x00000, 0x2000, 0x605d6c74 )
+	ROM_LOAD_EVEN( "ttu8.bin",  0x04000, 0x2000, 0x6bfcb22a )
+	ROM_LOAD_ODD ( "ttu18.bin", 0x04000, 0x2000, 0xbb25852c )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ttbg0.bin",    0x00000, 0x2000, 0x1cd2023f )
+	ROM_LOAD( "ttbg1.bin",    0x02000, 0x2000, 0x784e84cd )
+	ROM_LOAD( "ttbg2.bin",    0x04000, 0x2000, 0xda9d47d2 )
+	ROM_LOAD( "ttbg3.bin",    0x06000, 0x2000, 0x367e06a5 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ttfg0.bin",    0x00000, 0x4000, 0xed69e1a8 )
+	ROM_LOAD( "ttfg1.bin",    0x04000, 0x4000, 0x9d7e6ebc )
+	ROM_LOAD( "ttfg2.bin",    0x10000, 0x4000, 0x037ec6fc )
+	ROM_LOAD( "ttfg3.bin",    0x14000, 0x4000, 0x74e21c1c )
+	ROM_LOAD( "ttfg4.bin",    0x20000, 0x4000, 0x6fdb0c13 )
+	ROM_LOAD( "ttfg5.bin",    0x24000, 0x4000, 0x8b718879 )
+	ROM_LOAD( "ttfg6.bin",    0x30000, 0x4000, 0x4094e996 )
+	ROM_LOAD( "ttfg7.bin",    0x34000, 0x4000, 0x212019dc )
+
+	ROM_REGIONX( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ttan.bin",     0x00000, 0x1000, 0xaa0b1471 )
+ROM_END
+
+
+ROM_START( crater )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
+	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )
+	ROM_LOAD( "crcpu.8d",     0x4000, 0x2000, 0xc95f9088 )
+	ROM_LOAD( "crcpu.9d",     0x6000, 0x2000, 0xa03c4b11 )
+	ROM_LOAD( "crcpu.10d",    0x8000, 0x2000, 0x44ae4cbd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "crsnd4.a7",    0x0000, 0x1000, 0xfd666cb5 )
+	ROM_LOAD( "crsnd1.a8",    0x1000, 0x1000, 0x90bf2c4c )
+	ROM_LOAD( "crsnd2.a9",    0x2000, 0x1000, 0x3b8deef1 )
+	ROM_LOAD( "crsnd3.a10",   0x3000, 0x1000, 0x05803453 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "crcpu.3a",     0x00000, 0x2000, 0x9d73504a )
+	ROM_LOAD( "crcpu.4a",     0x02000, 0x2000, 0x42a47dff )
+	ROM_LOAD( "crcpu.5a",     0x04000, 0x2000, 0x2fe4a6e1 )
+	ROM_LOAD( "crcpu.6a",     0x06000, 0x2000, 0xd0659042 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "crvid.a3",     0x00000, 0x4000, 0x2c2f5b29 )
+	ROM_LOAD( "crvid.a4",     0x04000, 0x4000, 0x579a8e36 )
+	ROM_LOAD( "crvid.a5",     0x10000, 0x4000, 0x9bdec312 )
+	ROM_LOAD( "crvid.a6",     0x14000, 0x4000, 0x5bf954e0 )
+	ROM_LOAD( "crvid.a7",     0x20000, 0x4000, 0x9fa307d5 )
+	ROM_LOAD( "crvid.a8",     0x24000, 0x4000, 0x4b913498 )
+	ROM_LOAD( "crvid.a9",     0x30000, 0x4000, 0x811f152d )
+	ROM_LOAD( "crvid.a10",    0x34000, 0x4000, 0x7a22d6bc )
+
+	ROM_REGIONX( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "crcpu.10g",    0x00000, 0x1000, 0x6fe53c8d )
+ROM_END
+
+
+
+/*************************************
+ *
  *	Driver initialization
  *
  *************************************/
@@ -1454,8 +1949,8 @@ static void mcrmono_decode(void)
 	int i;
 
 	/* Rampage tile graphics are inverted */
-	for (i = 0; i < 0x8000; i++)
-		memory_region(1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 
@@ -1479,7 +1974,7 @@ static void spyhunt_decode(void)
 }
 
 
-static void tapper_init(void)
+static void init_tapper(void)
 {
 	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -1490,7 +1985,7 @@ static void tapper_init(void)
 }
 
 
-static void timber_init(void)
+static void init_timber(void)
 {
 	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -1505,7 +2000,7 @@ static void timber_init(void)
 }
 
 
-static void dotron_init(void)
+static void init_dotron(void)
 {
 	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_SQUAWK_N_TALK);
@@ -1517,7 +2012,7 @@ static void dotron_init(void)
 }
 
 
-static void destderb_init(void)
+static void init_destderb(void)
 {
 	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
@@ -1528,7 +2023,7 @@ static void destderb_init(void)
 	mcr3_sprite_code_mask = 0x0ff;
 
 	/* need to invert the graphics for the monoboard version only */
-	if (memory_region(1)[0] == 0xff)
+	if (memory_region(REGION_GFX1)[0] == 0xff)
 	{
 		MCR_CONFIGURE_NO_HISCORE;
 		MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, turbocs_data_w, NULL);
@@ -1537,7 +2032,7 @@ static void destderb_init(void)
 }
 
 
-static void sarge_init(void)
+static void init_sarge(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
@@ -1551,7 +2046,7 @@ static void sarge_init(void)
 }
 
 
-static void rampage_init(void)
+static void init_rampage(void)
 {
 	MCR_CONFIGURE_HISCORE(0xe631, 0x3f, NULL);	/* no actual NVRAM here, though */
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
@@ -1565,7 +2060,7 @@ static void rampage_init(void)
 }
 
 
-static void powerdrv_init(void)
+static void init_powerdrv(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
@@ -1579,7 +2074,7 @@ static void powerdrv_init(void)
 }
 
 
-static void maxrpm_init(void)
+static void init_maxrpm(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
@@ -1593,7 +2088,7 @@ static void maxrpm_init(void)
 }
 
 
-static void spyhunt_init(void)
+static void init_spyhunt(void)
 {
 	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
@@ -1611,7 +2106,7 @@ static void spyhunt_init(void)
 }
 
 
-static void turbotag_init(void)
+static void init_turbotag(void)
 {
 	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_CHIP_SQUEAK_DELUXE);
@@ -1630,7 +2125,7 @@ static void turbotag_init(void)
 }
 
 
-static void crater_init(void)
+static void init_crater(void)
 {
 	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
@@ -1646,537 +2141,22 @@ static void crater_init(void)
 
 
 
-/*************************************
- *
- *	ROM definitions
- *
- *************************************/
 
-ROM_START( tapper )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "tappg0.bin",   0x00000, 0x4000, 0x127171d1 )
-	ROM_LOAD( "tappg1.bin",   0x04000, 0x4000, 0x9d6a47f7 )
-	ROM_LOAD( "tappg2.bin",   0x08000, 0x4000, 0x3a1f8778 )
-	ROM_LOAD( "tappg3.bin",   0x0c000, 0x2000, 0xe8dcdaa4 )
 
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
-	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
-	ROM_LOAD( "tapfg1.bin",   0x08000, 0x4000, 0x32509011 )
-	ROM_LOAD( "tapfg0.bin",   0x0c000, 0x4000, 0x8412c808 )
-	ROM_LOAD( "tapfg3.bin",   0x18000, 0x4000, 0x818fffd4 )
-	ROM_LOAD( "tapfg2.bin",   0x1c000, 0x4000, 0x67e37690 )
-	ROM_LOAD( "tapfg5.bin",   0x28000, 0x4000, 0x800f7c8a )
-	ROM_LOAD( "tapfg4.bin",   0x2c000, 0x4000, 0x32674ee6 )
-	ROM_LOAD( "tapfg7.bin",   0x38000, 0x4000, 0x070b4c81 )
-	ROM_LOAD( "tapfg6.bin",   0x3c000, 0x4000, 0xa37aef36 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x0e8bb9d5 )
-	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x0cf0e29b )
-	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0x31eb6dc6 )
-	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x01a9be6a )
-ROM_END
-
-
-ROM_START( tappera )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pr00_1c.128",   0x00000, 0x4000, 0xbb060bb0 )
-	ROM_LOAD( "pr01_2c.128",   0x04000, 0x4000, 0xfd9acc22 )
-	ROM_LOAD( "pr02_3c.128",   0x08000, 0x4000, 0xb3755d41 )
-	ROM_LOAD( "pr03_4c.64",    0x0c000, 0x2000, 0x77273096 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
-	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
-	ROM_LOAD( "fg1_a7.128",   0x08000, 0x4000, 0xbac70b69 )
-	ROM_LOAD( "fg0_a8.128",   0x0c000, 0x4000, 0xc300925d )
-	ROM_LOAD( "fg3_a5.128",   0x18000, 0x4000, 0xecff6c23 )
-	ROM_LOAD( "fg2_a6.128",   0x1c000, 0x4000, 0xa4f2d1be )
-	ROM_LOAD( "fg5_a3.128",   0x28000, 0x4000, 0x16ce38cb )
-	ROM_LOAD( "fg4_a4.128",   0x2c000, 0x4000, 0x082a4059 )
-	ROM_LOAD( "fg7_a1.128",   0x38000, 0x4000, 0x3b476abe )
-	ROM_LOAD( "fg6_a2.128",   0x3c000, 0x4000, 0x6717264c )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x0e8bb9d5 )
-	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x0cf0e29b )
-	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0x31eb6dc6 )
-	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x01a9be6a )
-ROM_END
-
-
-ROM_START( sutapper )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "5791",         0x0000, 0x4000, 0x87119cc4 )
-	ROM_LOAD( "5792",         0x4000, 0x4000, 0x4c23ad89 )
-	ROM_LOAD( "5793",         0x8000, 0x4000, 0xfecbf683 )
-	ROM_LOAD( "5794",         0xc000, 0x2000, 0x5bdc1916 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5790",         0x00000, 0x4000, 0xac1558c1 )
-	ROM_LOAD( "5789",         0x04000, 0x4000, 0xfa66cab5 )
-	ROM_LOAD( "5795",         0x08000, 0x4000, 0x5d987c92 )
-	ROM_LOAD( "5796",         0x0c000, 0x4000, 0xde5700b4 )
-	ROM_LOAD( "5797",         0x18000, 0x4000, 0xf10a1d05 )
-	ROM_LOAD( "5798",         0x1c000, 0x4000, 0x614990cd )
-	ROM_LOAD( "5799",         0x28000, 0x4000, 0x02c69432 )
-	ROM_LOAD( "5800",         0x2c000, 0x4000, 0xebf1f948 )
-	ROM_LOAD( "5801",         0x38000, 0x4000, 0xd70defa7 )
-	ROM_LOAD( "5802",         0x3c000, 0x4000, 0xd4f114b9 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5788",         0x00000, 0x1000, 0x5c1d0982 )
-	ROM_LOAD( "5787",         0x01000, 0x1000, 0x09e74ed8 )
-	ROM_LOAD( "5786",         0x02000, 0x1000, 0xc3e98284 )
-	ROM_LOAD( "5785",         0x03000, 0x1000, 0xced2fd47 )
-ROM_END
-
-
-ROM_START( rbtapper )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "rbtpg0.bin",   0x00000, 0x4000, 0x20b9adf4 )
-	ROM_LOAD( "rbtpg1.bin",   0x04000, 0x4000, 0x87e616c2 )
-	ROM_LOAD( "rbtpg2.bin",   0x08000, 0x4000, 0x0b332c97 )
-	ROM_LOAD( "rbtpg3.bin",   0x0c000, 0x2000, 0x698c06f2 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rbtbg1.bin",   0x00000, 0x4000, 0x44dfa483 )
-	ROM_LOAD( "rbtbg0.bin",   0x04000, 0x4000, 0x510b13de )
-	ROM_LOAD( "rbtfg1.bin",   0x08000, 0x4000, 0x1c0b8791 )
-	ROM_LOAD( "rbtfg0.bin",   0x0c000, 0x4000, 0xe99f6018 )
-	ROM_LOAD( "rbtfg3.bin",   0x18000, 0x4000, 0x3e725e77 )
-	ROM_LOAD( "rbtfg2.bin",   0x1c000, 0x4000, 0x4ee8b624 )
-	ROM_LOAD( "rbtfg5.bin",   0x28000, 0x4000, 0x9eeca46e )
-	ROM_LOAD( "rbtfg4.bin",   0x2c000, 0x4000, 0x8c79e7d7 )
-	ROM_LOAD( "rbtfg7.bin",   0x38000, 0x4000, 0x8dbf0c36 )
-	ROM_LOAD( "rbtfg6.bin",   0x3c000, 0x4000, 0x441201a0 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "5788",         0x00000, 0x1000, 0x5c1d0982 )
-	ROM_LOAD( "5787",         0x01000, 0x1000, 0x09e74ed8 )
-	ROM_LOAD( "5786",         0x02000, 0x1000, 0xc3e98284 )
-	ROM_LOAD( "5785",         0x03000, 0x1000, 0xced2fd47 )
-ROM_END
-
-
-ROM_START( timber )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "timpg0.bin",   0x00000, 0x4000, 0x377032ab )
-	ROM_LOAD( "timpg1.bin",   0x04000, 0x4000, 0xfd772836 )
-	ROM_LOAD( "timpg2.bin",   0x08000, 0x4000, 0x632989f9 )
-	ROM_LOAD( "timpg3.bin",   0x0c000, 0x2000, 0xdae8a0dc )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "timbg1.bin",   0x00000, 0x4000, 0xb1cb2651 )
-	ROM_LOAD( "timbg0.bin",   0x04000, 0x4000, 0x2ae352c4 )
-	ROM_LOAD( "timfg1.bin",   0x08000, 0x4000, 0x81de4a73 )
-	ROM_LOAD( "timfg0.bin",   0x0c000, 0x4000, 0x7f3a4f59 )
-	ROM_LOAD( "timfg3.bin",   0x18000, 0x4000, 0x37c03272 )
-	ROM_LOAD( "timfg2.bin",   0x1c000, 0x4000, 0xe2c2885c )
-	ROM_LOAD( "timfg5.bin",   0x28000, 0x4000, 0xeb636216 )
-	ROM_LOAD( "timfg4.bin",   0x2c000, 0x4000, 0xb7105eb7 )
-	ROM_LOAD( "timfg7.bin",   0x38000, 0x4000, 0xd9c27475 )
-	ROM_LOAD( "timfg6.bin",   0x3c000, 0x4000, 0x244778e8 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "tima7.bin",    0x00000, 0x1000, 0xc615dc3e )
-	ROM_LOAD( "tima8.bin",    0x01000, 0x1000, 0x83841c87 )
-	ROM_LOAD( "tima9.bin",    0x02000, 0x1000, 0x22bcdcd3 )
-ROM_END
-
-
-ROM_START( dotron )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "loc-pg0.1c",   0x0000, 0x4000, 0xba0da15f )
-	ROM_LOAD( "loc-pg1.2c",   0x4000, 0x4000, 0xdc300191 )
-	ROM_LOAD( "loc-pg2.3c",   0x8000, 0x4000, 0xab0b3800 )
-	ROM_LOAD( "loc-pg1.4c",   0xc000, 0x2000, 0xf98c9f8e )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
-	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
-	ROM_LOAD( "loc-g.cp4",    0x08000, 0x2000, 0x57a2b1ff )
-	ROM_LOAD( "loc-h.cp3",    0x0a000, 0x2000, 0x3bb4d475 )
-	ROM_LOAD( "loc-e.cp6",    0x18000, 0x2000, 0xce957f1a )
-	ROM_LOAD( "loc-f.cp5",    0x1a000, 0x2000, 0xd26053ce )
-	ROM_LOAD( "loc-c.cp8",    0x28000, 0x2000, 0xef45d146 )
-	ROM_LOAD( "loc-d.cp7",    0x2a000, 0x2000, 0x5e8a3ef3 )
-	ROM_LOAD( "loc-a.cp0",    0x38000, 0x2000, 0xb35f5374 )
-	ROM_LOAD( "loc-b.cp9",    0x3a000, 0x2000, 0x565a5c48 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "sound0.a7",    0x00000, 0x1000, 0x6d39bf19 )
-	ROM_LOAD( "sound1.a8",    0x01000, 0x1000, 0xac872e1d )
-	ROM_LOAD( "sound2.a9",    0x02000, 0x1000, 0xe8ef6519 )
-	ROM_LOAD( "sound3.a10",   0x03000, 0x1000, 0x6b5aeb02 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "pre.u3",       0x0d000, 0x1000, 0xc3d0f762 )
-	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
-	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
-ROM_END
-
-
-ROM_START( dotrone )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "loc-cpu1",     0x00000, 0x4000, 0xeee31b8c )
-	ROM_LOAD( "loc-cpu2",     0x04000, 0x4000, 0x75ba6ad3 )
-	ROM_LOAD( "loc-cpu3",     0x08000, 0x4000, 0x94bb1a0e )
-	ROM_LOAD( "loc-cpu4",     0x0c000, 0x2000, 0xc137383c )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
-	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
-	ROM_LOAD( "loc-g.cp4",    0x08000, 0x2000, 0x57a2b1ff )
-	ROM_LOAD( "loc-h.cp3",    0x0a000, 0x2000, 0x3bb4d475 )
-	ROM_LOAD( "loc-e.cp6",    0x18000, 0x2000, 0xce957f1a )
-	ROM_LOAD( "loc-f.cp5",    0x1a000, 0x2000, 0xd26053ce )
-	ROM_LOAD( "loc-c.cp8",    0x28000, 0x2000, 0xef45d146 )
-	ROM_LOAD( "loc-d.cp7",    0x2a000, 0x2000, 0x5e8a3ef3 )
-	ROM_LOAD( "loc-a.cp0",    0x38000, 0x2000, 0xb35f5374 )
-	ROM_LOAD( "loc-b.cp9",    0x3a000, 0x2000, 0x565a5c48 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "loc-a",        0x00000, 0x1000, 0x2de6a8a8 )
-	ROM_LOAD( "loc-b",        0x01000, 0x1000, 0x4097663e )
-	ROM_LOAD( "loc-c",        0x02000, 0x1000, 0xf576b9e7 )
-	ROM_LOAD( "loc-d",        0x03000, 0x1000, 0x74b0059e )
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
-	ROM_LOAD( "pre.u3",       0x0d000, 0x1000, 0xc3d0f762 )
-	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
-	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
-ROM_END
-
-
-ROM_START( destderb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "dd_pro",       0x00000, 0x4000, 0x8781b367 )
-	ROM_LOAD( "dd_pro1",      0x04000, 0x4000, 0x4c713bfe )
-	ROM_LOAD( "dd_pro2",      0x08000, 0x4000, 0xc2cbd2a4 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dd_bg0.6f",    0x00000, 0x2000, 0xcf80be19 )
-	ROM_LOAD( "dd_bg1.5f",    0x04000, 0x2000, 0x4e173e52 )
-	ROM_LOAD( "dd_fg-0.a4",   0x08000, 0x4000, 0xe57a4de6 )
-	ROM_LOAD( "dd_fg-4.a3",   0x0c000, 0x4000, 0x55aa667f )
-	ROM_LOAD( "dd_fg-1.a6",   0x18000, 0x4000, 0x70259651 )
-	ROM_LOAD( "dd_fg-5.a5",   0x1c000, 0x4000, 0x5fe99007 )
-	ROM_LOAD( "dd_fg-2.a8",   0x28000, 0x4000, 0x6cab7b95 )
-	ROM_LOAD( "dd_fg-6.a7",   0x2c000, 0x4000, 0xabfb9a8b )
-	ROM_LOAD( "dd_fg-3.a10",  0x38000, 0x4000, 0x801d9b86 )
-	ROM_LOAD( "dd_fg-7.a9",   0x3c000, 0x4000, 0x0ec3f60a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
-	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
-ROM_END
-
-
-ROM_START( destderm )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pro0.3b",      0x00000, 0x8000, 0x2e24527b )
-	ROM_LOAD( "pro1.5b",      0x08000, 0x8000, 0x034c00fc )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg0.15a",      0x00000, 0x2000, 0xa35d13b8 )
-	ROM_LOAD( "bg1.14b",      0x04000, 0x2000, 0x22ca93f3 )
-	ROM_LOAD( "dd_fg-0.a4",   0x08000, 0x4000, 0xe57a4de6 )
-	ROM_LOAD( "dd_fg-4.a3",   0x0c000, 0x4000, 0x55aa667f )
-	ROM_LOAD( "dd_fg-1.a6",   0x18000, 0x4000, 0x70259651 )
-	ROM_LOAD( "dd_fg-5.a5",   0x1c000, 0x4000, 0x5fe99007 )
-	ROM_LOAD( "dd_fg-2.a8",   0x28000, 0x4000, 0x6cab7b95 )
-	ROM_LOAD( "dd_fg-6.a7",   0x2c000, 0x4000, 0xabfb9a8b )
-	ROM_LOAD( "dd_fg-3.a10",  0x38000, 0x4000, 0x801d9b86 )
-	ROM_LOAD( "dd_fg-7.a9",   0x3c000, 0x4000, 0x0ec3f60a )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
-	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
-ROM_END
-
-
-ROM_START( sarge )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "cpu_3b.bin",   0x0000, 0x8000, 0xda31a58f )
-	ROM_LOAD( "cpu_5b.bin",   0x8000, 0x8000, 0x6800e746 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "til_15a.bin",  0x00000, 0x2000, 0x685001b8 )
-	ROM_LOAD( "til_14b.bin",  0x04000, 0x2000, 0x8449eb45 )
-	ROM_LOAD( "spr_8e.bin",   0x08000, 0x8000, 0x93fac29d )
-	ROM_LOAD( "spr_6e.bin",   0x18000, 0x8000, 0x7cc6fb28 )
-	ROM_LOAD( "spr_5e.bin",   0x28000, 0x8000, 0xc832375c )
-	ROM_LOAD( "spr_4e.bin",   0x38000, 0x8000, 0xc382267d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xa894ef8a )
-	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x6ca6faf3 )
-ROM_END
-
-
-ROM_START( rampage )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pro0rev3.3b",  0x00000, 0x08000, 0x2f7ca03c )
-	ROM_LOAD( "pro1rev3.5b",  0x08000, 0x08000, 0xd89bd9a4 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
-	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
-	ROM_LOAD( "fg-0",         0x08000, 0x10000, 0x0974be5d )
-	ROM_LOAD( "fg-1",         0x18000, 0x10000, 0x8728532b )
-	ROM_LOAD( "fg-2",         0x28000, 0x10000, 0x9489f714 )
-	ROM_LOAD( "fg-3",         0x38000, 0x10000, 0x81e1de40 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
-	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )	/* these are Revision 2 sound ROMs */
-	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
-	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
-	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
-ROM_END
-
-
-ROM_START( rampage2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pro0rev2.3b",  0x0000, 0x8000, 0x3f1d0293 )
-	ROM_LOAD( "pro1rev2.5b",  0x8000, 0x8000, 0x58523d75 )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
-	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
-	ROM_LOAD( "fg-0",         0x08000, 0x10000, 0x0974be5d )
-	ROM_LOAD( "fg-1",         0x18000, 0x10000, 0x8728532b )
-	ROM_LOAD( "fg-2",         0x28000, 0x10000, 0x9489f714 )
-	ROM_LOAD( "fg-3",         0x38000, 0x10000, 0x81e1de40 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
-	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )    /* these are Revision 2 sound ROMs */
-	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
-	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
-	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
-ROM_END
-
-
-ROM_START( powerdrv )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pdrv3b.bin",   0x0000, 0x8000, 0xd870b704 )
-	ROM_LOAD( "pdrv5b.bin",   0x8000, 0x8000, 0xfa0544ad )
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pdrv15a.bin",  0x00000, 0x04000, 0xb858b5a8 )
-	ROM_LOAD( "pdrv14b.bin",  0x04000, 0x04000, 0x12ee7fc2 )
-	ROM_LOAD( "pdrv8e.bin",   0x08000, 0x10000, 0xdd3a2adc )
-	ROM_LOAD( "pdrv6e.bin",   0x18000, 0x10000, 0x1a1f7f81 )
-	ROM_LOAD( "pdrv5e.bin",   0x28000, 0x10000, 0x4cb4780e )
-	ROM_LOAD( "pdrv4e.bin",   0x38000, 0x10000, 0xde400335 )
-
-	ROM_REGIONX( 0x20000, REGION_CPU2 )  /* 128k for the Sounds Good board */
-	ROM_LOAD_EVEN( "pdsndu7.bin",  0x00000, 0x8000, 0x78713e78 )
-	ROM_LOAD_ODD ( "pdsndu17.bin", 0x00000, 0x8000, 0xc41de6e4 )
-	ROM_LOAD_EVEN( "pdsndu8.bin",  0x10000, 0x8000, 0x15714036 )
-	ROM_LOAD_ODD ( "pdsndu18.bin", 0x10000, 0x8000, 0xcae14c70 )
-ROM_END
-
-
-ROM_START( maxrpm )
-	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
-	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
-	ROM_CONTINUE(             0x10000, 0x2000 )	/* unused? but there seems to be stuff in here */
-								/* loading it at e000 causes rogue sprites to appear on screen */
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
-	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
-	ROM_LOAD( "fg-0",         0x08000, 0x8000, 0x1d1435c1 )
-	ROM_LOAD( "fg-1",         0x18000, 0x8000, 0xe54b7f2a )
-	ROM_LOAD( "fg-2",         0x28000, 0x8000, 0x38be8505 )
-	ROM_LOAD( "fg-3",         0x38000, 0x8000, 0x9ae3eb52 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "turbskwk.u5",   0x8000, 0x4000, 0x55c3b759 )
-	ROM_LOAD( "turbskwk.u4",   0xc000, 0x4000, 0x31a2da2e )
-ROM_END
-
-
-ROM_START( spyhunt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "cpu_pg0.6d",   0x0000, 0x2000, 0x1721b88f )
-	ROM_LOAD( "cpu_pg1.7d",   0x2000, 0x2000, 0x909d044f )
-	ROM_LOAD( "cpu_pg2.8d",   0x4000, 0x2000, 0xafeeb8bd )
-	ROM_LOAD( "cpu_pg3.9d",   0x6000, 0x2000, 0x5e744381 )
-	ROM_LOAD( "cpu_pg4.10d",  0x8000, 0x2000, 0xa3033c15 )
-	ROM_LOAD( "cpu_pg5.11d",  0xa000, 0x4000, 0x88aa1e99 )
-
-	ROM_REGION_DISPOSE(0x49000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu_bg0.3a",   0x00000, 0x2000, 0xdea34fed )
-	ROM_LOAD( "cpu_bg1.4a",   0x02000, 0x2000, 0x8f64525f )
-	ROM_LOAD( "cpu_bg2.5a",   0x04000, 0x2000, 0xba0fd626 )
-	ROM_LOAD( "cpu_bg3.6a",   0x06000, 0x2000, 0x7b482d61 )
-	ROM_LOAD( "vid_0fg.a8",   0x08000, 0x4000, 0x292c5466 )
-	ROM_LOAD( "vid_1fg.a7",   0x0c000, 0x4000, 0x9fe286ec )
-	ROM_LOAD( "vid_2fg.a6",   0x18000, 0x4000, 0x62c8bfa5 )
-	ROM_LOAD( "vid_3fg.a5",   0x1c000, 0x4000, 0xb894934d )
-	ROM_LOAD( "vid_4fg.a4",   0x28000, 0x4000, 0x7ca4941b )
-	ROM_LOAD( "vid_5fg.a3",   0x2c000, 0x4000, 0x2d9fbcec )
-	ROM_LOAD( "vid_6fg.a2",   0x38000, 0x4000, 0x8cb8a066 )
-	ROM_LOAD( "vid_7fg.a1",   0x3c000, 0x4000, 0x940fe17e )
-	ROM_LOAD( "cpu_alph.10g", 0x48000, 0x1000, 0x936dc87f )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_0sd.a8",   0x0000, 0x1000, 0xc95cf31e )
-	ROM_LOAD( "snd_1sd.a7",   0x1000, 0x1000, 0x12aaa48e )
-
-	ROM_REGIONX( 0x8000, REGION_CPU3 )  /* 32k for the Chip Squeak Deluxe */
-	ROM_LOAD_EVEN( "csd_u7a.u7",   0x00000, 0x2000, 0x6e689fe7 )
-	ROM_LOAD_ODD ( "csd_u17b.u17", 0x00000, 0x2000, 0x0d9ddce6 )
-	ROM_LOAD_EVEN( "csd_u8c.u8",   0x04000, 0x2000, 0x35563cd0 )
-	ROM_LOAD_ODD ( "csd_u18d.u18", 0x04000, 0x2000, 0x63d3f5b1 )
-ROM_END
-
-
-ROM_START( turbotag )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "ttprog0.bin",  0x0000, 0x2000, 0x6110fd80 )
-	ROM_LOAD( "ttprog1.bin",  0x2000, 0x2000, BADCRC( 0xb0505e18 ))
-	ROM_LOAD( "ttprog2.bin",  0x4000, 0x2000, 0xc4141237 )
-	ROM_LOAD( "ttprog3.bin",  0x6000, 0x2000, 0xaf294c6e )
-	ROM_LOAD( "ttprog4.bin",  0x8000, 0x2000, 0x8c5bc1a4 )
-	ROM_LOAD( "ttprog5.bin",  0xa000, 0x2000, 0x11e62fe4 )
-	ROM_RELOAD(               0xc000, 0x2000 )
-
-	ROM_REGION_DISPOSE(0x49000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ttbg0.bin",    0x00000, 0x2000, 0x1cd2023f )
-	ROM_LOAD( "ttbg1.bin",    0x02000, 0x2000, 0x784e84cd )
-	ROM_LOAD( "ttbg2.bin",    0x04000, 0x2000, 0xda9d47d2 )
-	ROM_LOAD( "ttbg3.bin",    0x06000, 0x2000, 0x367e06a5 )
-	ROM_LOAD( "ttfg0.bin",    0x08000, 0x4000, 0xed69e1a8 )
-	ROM_LOAD( "ttfg1.bin",    0x0c000, 0x4000, 0x9d7e6ebc )
-	ROM_LOAD( "ttfg2.bin",    0x18000, 0x4000, 0x037ec6fc )
-	ROM_LOAD( "ttfg3.bin",    0x1c000, 0x4000, 0x74e21c1c )
-	ROM_LOAD( "ttfg4.bin",    0x28000, 0x4000, 0x6fdb0c13 )
-	ROM_LOAD( "ttfg5.bin",    0x2c000, 0x4000, 0x8b718879 )
-	ROM_LOAD( "ttfg6.bin",    0x38000, 0x4000, 0x4094e996 )
-	ROM_LOAD( "ttfg7.bin",    0x3c000, 0x4000, 0x212019dc )
-	ROM_LOAD( "ttan.bin",     0x48000, 0x1000, 0xaa0b1471 )
-
-	ROM_REGIONX( 0x8000, REGION_CPU2 )  /* 32k for the Chip Squeak Deluxe */
-	ROM_LOAD_EVEN( "ttu7.bin",  0x00000, 0x2000, 0x8ebb3302 )
-	ROM_LOAD_ODD ( "ttu17.bin", 0x00000, 0x2000, 0x605d6c74 )
-	ROM_LOAD_EVEN( "ttu8.bin",  0x04000, 0x2000, 0x6bfcb22a )
-	ROM_LOAD_ODD ( "ttu18.bin", 0x04000, 0x2000, 0xbb25852c )
-ROM_END
-
-
-ROM_START( crater )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
-	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )
-	ROM_LOAD( "crcpu.8d",     0x4000, 0x2000, 0xc95f9088 )
-	ROM_LOAD( "crcpu.9d",     0x6000, 0x2000, 0xa03c4b11 )
-	ROM_LOAD( "crcpu.10d",    0x8000, 0x2000, 0x44ae4cbd )
-
-	ROM_REGION_DISPOSE(0x49000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "crcpu.3a",     0x00000, 0x2000, 0x9d73504a )
-	ROM_LOAD( "crcpu.4a",     0x02000, 0x2000, 0x42a47dff )
-	ROM_LOAD( "crcpu.5a",     0x04000, 0x2000, 0x2fe4a6e1 )
-	ROM_LOAD( "crcpu.6a",     0x06000, 0x2000, 0xd0659042 )
-	ROM_LOAD( "crvid.a3",     0x08000, 0x4000, 0x2c2f5b29 )
-	ROM_LOAD( "crvid.a4",     0x0c000, 0x4000, 0x579a8e36 )
-	ROM_LOAD( "crvid.a5",     0x18000, 0x4000, 0x9bdec312 )
-	ROM_LOAD( "crvid.a6",     0x1c000, 0x4000, 0x5bf954e0 )
-	ROM_LOAD( "crvid.a7",     0x28000, 0x4000, 0x9fa307d5 )
-	ROM_LOAD( "crvid.a8",     0x2c000, 0x4000, 0x4b913498 )
-	ROM_LOAD( "crvid.a9",     0x38000, 0x4000, 0x811f152d )
-	ROM_LOAD( "crvid.a10",    0x3c000, 0x4000, 0x7a22d6bc )
-	ROM_LOAD( "crcpu.10g",    0x48000, 0x1000, 0x6fe53c8d )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "crsnd4.a7",    0x0000, 0x1000, 0xfd666cb5 )
-	ROM_LOAD( "crsnd1.a8",    0x1000, 0x1000, 0x90bf2c4c )
-	ROM_LOAD( "crsnd2.a9",    0x2000, 0x1000, 0x3b8deef1 )
-	ROM_LOAD( "crsnd3.a10",   0x3000, 0x1000, 0x05803453 )
-ROM_END
-
-
-
-/*************************************
- *
- *	Game drivers
- *
- *************************************/
-
-#define MCR3_DRIVER(name,machine,year,rotate,fullname) \
-	struct GameDriver driver_##name =				\
-	{												\
-		__FILE__,									\
-		0,											\
-		#name,										\
-		fullname,									\
-		#year,										\
-		"Bally Midway",								\
-		"Christopher Kirmse\nAaron Giles\n"			\
-		"Nicola Salmoria\nBrad Oliver",				\
-		0,											\
-		&machine_driver_##machine,					\
-		name##_init,								\
-													\
-		rom_##name,									\
-		0, 0,										\
-		0,											\
-		0,							\
-													\
-		input_ports_##name,							\
-													\
-		0, 0,0,										\
-		rotate,										\
-		0,0											\
-	};
-
-#define MCR3_CLONE_DRIVER(name,machine,year,rotate,fullname,cloneof) \
-	struct GameDriver driver_##name =				\
-	{												\
-		__FILE__,									\
-		&driver_##cloneof,							\
-		#name,										\
-		fullname,									\
-		#year,										\
-		"Bally Midway",								\
-		"Christopher Kirmse\nAaron Giles\n"			\
-		"Nicola Salmoria\nBrad Oliver",				\
-		0,											\
-		&machine_driver_##machine,					\
-		cloneof##_init,								\
-													\
-		rom_##name,									\
-		0, 0,										\
-		0,											\
-		0,							\
-													\
-		input_ports_##cloneof,						\
-													\
-		0, 0,0,										\
-		rotate,										\
-		0,0											\
-	};
-
-MCR3_DRIVER      (tapper,   mcr3,     1983, ROT0,   "Tapper (Budweiser)")
-MCR3_CLONE_DRIVER(tappera,  mcr3,     1983, ROT0,   "Tapper (alternate)", tapper)
-MCR3_CLONE_DRIVER(sutapper, mcr3,     1983, ROT0,   "Tapper (Suntory)", tapper)
-MCR3_CLONE_DRIVER(rbtapper, mcr3,     1984, ROT0,   "Tapper (Root Beer)", tapper)
-MCR3_DRIVER      (timber,   mcr3,     1984, ROT0,   "Timber")
-MCR3_DRIVER      (dotron,   dotron,   1983, ORIENTATION_FLIP_X,    "Discs of Tron (Upright)")
-MCR3_CLONE_DRIVER(dotrone,  dotron,   1983, ORIENTATION_FLIP_X,    "Discs of Tron (Environmental)", dotron)
-MCR3_DRIVER      (destderb, destderb, 1984, ROT0,   "Demolition Derby")
-
-MCR3_CLONE_DRIVER(destderm, sarge,    1984, ROT0,   "Demolition Derby (2-Player Mono Board Version)", destderb)
-MCR3_DRIVER      (sarge,    sarge,    1985, ROT0,   "Sarge")
-MCR3_DRIVER      (rampage,  rampage,  1986, ROT0,   "Rampage (revision 3)")
-MCR3_CLONE_DRIVER(rampage2, rampage,  1986, ROT0,   "Rampage (revision 2)", rampage)
-MCR3_DRIVER      (powerdrv, powerdrv, 1986, ROT0,   "Power Drive")
-MCR3_DRIVER      (maxrpm,   sarge,    1986, ROT0,   "Max RPM")
-
-MCR3_DRIVER      (spyhunt,  spyhunt,  1983, ROT90, "Spy Hunter")
-MCR3_DRIVER      (turbotag, turbotag, 1985, ROT90, "Turbo Tag (Prototype)")
-MCR3_DRIVER      (crater,   crater,   1984, ORIENTATION_FLIP_X,    "Crater Raider")
+GAME( 1983, tapper,   0,        mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Budweiser)" )
+GAME( 1983, tappera,  tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (alternate)" )
+GAME( 1983, sutapper, tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Suntory)" )
+GAME( 1984, rbtapper, tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Root Beer)" )
+GAME( 1984, timber,   0,        mcr3,     timber,   timber,   ROT0,  "Bally Midway", "Timber" )
+GAME( 1983, dotron,   0,        dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)" )
+GAME( 1983, dotrone,  dotron,   dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
+GAME( 1984, destderb, 0,        destderb, destderb, destderb, ROT0,  "Bally Midway", "Demolition Derby" )
+GAME( 1984, destderm, destderb, sarge,    destderb, destderb, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)" )
+GAME( 1985, sarge,    0,        sarge,    sarge,    sarge,    ROT0,  "Bally Midway", "Sarge" )
+GAME( 1986, rampage,  0,        rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)" )
+GAME( 1986, rampage2, rampage,  rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)" )
+GAME( 1986, powerdrv, 0,        powerdrv, powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive" )
+GAME( 1986, maxrpm,   0,        sarge,    maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM" )
+GAME( 1983, spyhunt,  0,        spyhunt,  spyhunt,  spyhunt,  ROT90, "Bally Midway", "Spy Hunter" )
+GAME( 1985, turbotag, 0,        turbotag, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (Prototype)" )
+GAME( 1984, crater,   0,        crater,   crater,   crater,   ORIENTATION_FLIP_X, "Bally Midway", "Crater Raider" )

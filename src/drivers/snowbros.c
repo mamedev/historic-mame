@@ -1,5 +1,9 @@
 /***************************************************************************
+
  Snow Brothers
+
+ driver by Mike Coates
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -230,7 +234,7 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &tilelayout,  0, 16 },
+	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -252,7 +256,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_snowbros =
 {
 	/* basic machine hardware */
 	{
@@ -308,14 +312,14 @@ ROM_START( snowbros )
 	ROM_LOAD_EVEN( "sn6.bin",  0x00000, 0x20000, 0x4899ddcf )
 	ROM_LOAD_ODD ( "sn5.bin",  0x00000, 0x20000, 0xad310d3f )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbroa )
@@ -323,14 +327,14 @@ ROM_START( snowbroa )
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbrob )
@@ -338,14 +342,14 @@ ROM_START( snowbrob )
 	ROM_LOAD_EVEN( "sbros3-a",     0x00000, 0x20000, 0x301627d6 )
 	ROM_LOAD_ODD ( "sbros2-a",     0x00000, 0x20000, 0xf6689f41 )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbroj )
@@ -353,116 +357,20 @@ ROM_START( snowbroj )
 	ROM_LOAD_EVEN( "snowbros.3",   0x00000, 0x20000, 0x3f504f9e )
 	ROM_LOAD_ODD ( "snowbros.2",   0x00000, 0x20000, 0x854b02bc )
 
-	ROM_REGION_DISPOSE(0x80000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* The gfx ROM (snowbros.1) was bad, I'm using the ones from the other sets. */
 	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
 	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 
 
-struct GameDriver driver_snowbros =
-{
-	__FILE__,
-	0,
-	"snowbros",
-	"Snow Bros. - Nick & Tom (set 1)",
-	"1990",
-	"Toaplan (Romstar license)",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_snowbros,
-	0, 0,
-	0,
-	0,
-
-	input_ports_snowbros,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_snowbroa =
-{
-	__FILE__,
-	&driver_snowbros,
-	"snowbroa",
-	"Snow Bros. - Nick & Tom (set 2)",
-	"1990",
-	"Toaplan (Romstar license)",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_snowbroa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_snowbros,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_snowbrob =
-{
-	__FILE__,
-	&driver_snowbros,
-	"snowbrob",
-	"Snow Bros. - Nick & Tom (set 3)",
-	"1990",
-	"Toaplan (Romstar license)",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_snowbrob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_snowbros,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_snowbroj =
-{
-	__FILE__,
-	&driver_snowbros,
-	"snowbroj",
-	"Snow Bros. - Nick & Tom (Japan)",
-	"1990",
-	"Toaplan (Romstar license)",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_snowbroj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_snowbros,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
+GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 1)" )
+GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 2)" )
+GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 3)" )
+GAME( 1990, snowbroj, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (Japan)" )

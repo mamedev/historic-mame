@@ -4,6 +4,8 @@ S.P.Y. (c) 1989 Konami
 
 Similar to Bottom of the Ninth
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -362,10 +364,10 @@ ROM_START( spy )
 	ROM_LOAD( "857a10.bin",   0x0000, 0x0100, 0x32758507 )	/* priority encoder (not used) */
 
 	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
-	ROM_LOAD( "857b07.bin",   0x00000, 0x40000, 0x78ff357c )
+	ROM_LOAD( "857b07.bin",   0x00000, 0x40000, 0xce3512d4 )
 
 	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
-	ROM_LOAD( "857b04.bin",   0x00000, 0x40000, 0xf0a5ad5c )
+	ROM_LOAD( "857b04.bin",   0x00000, 0x40000, 0x20b83c13 )
 ROM_END
 
 
@@ -376,7 +378,7 @@ static void gfx_untangle(void)
 	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
-static void spy_init(void)
+static void init_spy(void)
 {
 	paletteram = &memory_region(REGION_CPU1)[0x28000];
 	gfx_untangle();
@@ -384,28 +386,4 @@ static void spy_init(void)
 
 
 
-struct GameDriver driver_spy =
-{
-	__FILE__,
-	0,
-	"spy",
-	"S.P.Y. - Special Project Y (US)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver_spy,
-	spy_init,
-
-	rom_spy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spy,
-
-	0, 0, 0,
-    ROT0 | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAMEX( 1989, spy, 0, spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (US)", GAME_NOT_WORKING )

@@ -12,8 +12,6 @@
 
 #include "driver.h"
 
-/* note: we work with signed samples here, unlike other drivers */
-#define AUDIO_CONV(A) (A)
 
 /* 8 voices max */
 #define MAX_VOICES 8
@@ -45,55 +43,39 @@ static sound_channel *last_channel;
 
 /* global sound parameters */
 static const unsigned char *sound_prom,*sound_rom;
-static int sample_bits;
 static int num_voices;
 static int sound_enable;
 static int stream;
 
 /* mixer tables and internal buffers */
-static signed char *mixer_table;
-static signed char *mixer_lookup;
+static INT16 *mixer_table;
+static INT16 *mixer_lookup;
 static short *mixer_buffer;
 static short *mixer_buffer_2;
 
 
 
 /* build a table to divide by the number of voices; gain is specified as gain*16 */
-static int make_mixer_table(int voices, int gain, int bits)
+static int make_mixer_table(int voices, int gain)
 {
 	int count = voices * 128;
 	int i;
 
 	/* allocate memory */
-	mixer_table = malloc(256 * voices * bits / 8);
+	mixer_table = malloc(256 * voices * sizeof(INT16));
 	if (!mixer_table)
 		return 1;
 
 	/* find the middle of the table */
-	mixer_lookup = mixer_table + (128 * voices * bits / 8);
-
-	/* fill in the table - 8 bit case */
-	if (bits == 8)
-	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain / (voices * 16);
-			if (val > 127) val = 127;
-			mixer_lookup[ i] = AUDIO_CONV(val);
-			mixer_lookup[-i] = AUDIO_CONV(-val);
-		}
-	}
+	mixer_lookup = mixer_table + (128 * voices);
 
 	/* fill in the table - 16 bit case */
-	else
+	for (i = 0; i < count; i++)
 	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain * 16 / voices;
-			if (val > 32767) val = 32767;
-			((short *)mixer_lookup)[ i] = val;
-			((short *)mixer_lookup)[-i] = -val;
-		}
+		int val = i * gain * 16 / voices;
+		if (val > 32767) val = 32767;
+		mixer_lookup[ i] = val;
+		mixer_lookup[-i] = -val;
 	}
 
 	return 0;
@@ -101,7 +83,7 @@ static int make_mixer_table(int voices, int gain, int bits)
 
 
 /* generate sound to the mix buffer in mono */
-static void wiping_update_mono(int ch, void *buffer, int length)
+static void wiping_update_mono(int ch, INT16 *buffer, int length)
 {
 	sound_channel *voice;
 	short *mix;
@@ -110,10 +92,7 @@ static void wiping_update_mono(int ch, void *buffer, int length)
 	/* if no sound, we're done */
 	if (sound_enable == 0)
 	{
-		if (sample_bits == 16)
-			memset(buffer, 0, length * 2);
-		else
-			memset(buffer, AUDIO_CONV(0x00), length);
+		memset(buffer, 0, length * 2);
 		return;
 	}
 
@@ -180,18 +159,8 @@ static void wiping_update_mono(int ch, void *buffer, int length)
 
 	/* mix it down */
 	mix = mixer_buffer;
-	if (sample_bits == 16)
-	{
-		short *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = ((short *)mixer_lookup)[*mix++];
-	}
-	else
-	{
-		unsigned char *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = mixer_lookup[*mix++];
-	}
+	for (i = 0; i < length; i++)
+		*buffer++ = mixer_lookup[*mix++];
 }
 
 
@@ -202,8 +171,7 @@ int wiping_sh_start(const struct MachineSound *msound)
 	sound_channel *voice;
 
 	/* get stream channels */
-	sample_bits = Machine->sample_bits;
-	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, sample_bits, 0, wiping_update_mono);
+	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, 0, wiping_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
 	if ((mixer_buffer = malloc(2 * sizeof(short) * samplerate)) == 0)
@@ -211,7 +179,7 @@ int wiping_sh_start(const struct MachineSound *msound)
 	mixer_buffer_2 = mixer_buffer + samplerate;
 
 	/* build the mixer table */
-	if (make_mixer_table(8, defgain, Machine->sample_bits))
+	if (make_mixer_table(8, defgain))
 	{
 		free (mixer_buffer);
 		return 1;
@@ -221,8 +189,8 @@ int wiping_sh_start(const struct MachineSound *msound)
 	num_voices = 8;
 	last_channel = channel_list + num_voices;
 
-	sound_rom = memory_region(4);
-	sound_prom = memory_region(5);
+	sound_rom = memory_region(REGION_SOUND1);
+	sound_prom = memory_region(REGION_SOUND2);
 
 	/* start with sound enabled, many games don't have a sound enable register */
 	sound_enable = 1;

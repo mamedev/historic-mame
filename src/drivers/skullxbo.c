@@ -3,6 +3,8 @@
 Skull & Crossbones Memory Map
 -----------------------------
 
+driver by Aaron Giles
+
 SKULL & CROSSBONES 68000 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -289,9 +291,9 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x000000, &molayout, 0x000, 32 },
-	{ 3, 0x190000, &pflayout, 0x200, 16 },
-	{ 3, 0x230000, &anlayout, 0x300, 16 },
+	{ REGION_GFX1, 0, &molayout, 0x000, 32 },
+	{ REGION_GFX2, 0, &pflayout, 0x200, 16 },
+	{ REGION_GFX3, 0, &anlayout, 0x300, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -303,7 +305,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_skullxbo =
 {
 	/* basic machine hardware */
 	{
@@ -361,13 +363,7 @@ ROM_START( skullxbo )
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
-	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
-	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
-	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
-	ROM_LOAD( "1148",      0x30000, 0x10000, 0xc48df49a )
-
-	ROM_REGION_DISPOSE(0x238000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x190000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1102",     0x000000, 0x10000, 0x90becdfa ) /* MO */
 	ROM_LOAD( "1104",     0x010000, 0x10000, 0x33609071 ) /* MO */
 	ROM_LOAD( "1106",     0x020000, 0x10000, 0x71962e9f ) /* MO */
@@ -397,18 +393,26 @@ ROM_START( skullxbo )
 	ROM_LOAD( "1128",     0x160000, 0x10000, 0xdce32863 ) /* MO */
 	/* 170000-18ffff empty */
 
-	ROM_LOAD( "2129",     0x190000, 0x10000, 0x36b1a578 ) /* playfield */
-	ROM_LOAD( "2131",     0x1a0000, 0x10000, 0x7b7c04a1 ) /* playfield */
-	ROM_LOAD( "2133",     0x1b0000, 0x10000, 0xe03fe4d9 ) /* playfield */
-	ROM_LOAD( "2135",     0x1c0000, 0x10000, 0x7d497110 ) /* playfield */
-	ROM_LOAD( "2137",     0x1d0000, 0x10000, 0xf91e7872 ) /* playfield */
-	ROM_LOAD( "2130",     0x1e0000, 0x10000, 0xb25368cc ) /* playfield */
-	ROM_LOAD( "2132",     0x1f0000, 0x10000, 0x112f2d20 ) /* playfield */
-	ROM_LOAD( "2134",     0x200000, 0x10000, 0x84884ed6 ) /* playfield */
-	ROM_LOAD( "2136",     0x210000, 0x10000, 0xbc028690 ) /* playfield */
-	ROM_LOAD( "2138",     0x220000, 0x10000, 0x60cec955 ) /* playfield */
+	ROM_REGIONX( 0x0a0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2129",     0x000000, 0x10000, 0x36b1a578 ) /* playfield */
+	ROM_LOAD( "2131",     0x010000, 0x10000, 0x7b7c04a1 ) /* playfield */
+	ROM_LOAD( "2133",     0x020000, 0x10000, 0xe03fe4d9 ) /* playfield */
+	ROM_LOAD( "2135",     0x030000, 0x10000, 0x7d497110 ) /* playfield */
+	ROM_LOAD( "2137",     0x040000, 0x10000, 0xf91e7872 ) /* playfield */
+	ROM_LOAD( "2130",     0x050000, 0x10000, 0xb25368cc ) /* playfield */
+	ROM_LOAD( "2132",     0x060000, 0x10000, 0x112f2d20 ) /* playfield */
+	ROM_LOAD( "2134",     0x070000, 0x10000, 0x84884ed6 ) /* playfield */
+	ROM_LOAD( "2136",     0x080000, 0x10000, 0xbc028690 ) /* playfield */
+	ROM_LOAD( "2138",     0x090000, 0x10000, 0x60cec955 ) /* playfield */
 
-	ROM_LOAD( "2141",     0x230000, 0x08000, 0x60d6d6df ) /* alphanumerics */
+	ROM_REGIONX( 0x008000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2141",     0x000000, 0x08000, 0x60d6d6df ) /* alphanumerics */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
+	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
+	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
+	ROM_LOAD( "1148",      0x30000, 0x10000, 0xc48df49a )
 ROM_END
 
 
@@ -427,13 +431,7 @@ ROM_START( skullxb2 )
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
-	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
-	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
-	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
-	ROM_LOAD( "1148",      0x30000, 0x10000, 0xc48df49a )
-
-	ROM_REGION_DISPOSE(0x238000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x190000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1102",     0x000000, 0x10000, 0x90becdfa ) /* MO */
 	ROM_LOAD( "1104",     0x010000, 0x10000, 0x33609071 ) /* MO */
 	ROM_LOAD( "1106",     0x020000, 0x10000, 0x71962e9f ) /* MO */
@@ -463,18 +461,26 @@ ROM_START( skullxb2 )
 	ROM_LOAD( "1128",     0x160000, 0x10000, 0xdce32863 ) /* MO */
 	/* 170000-18ffff empty */
 
-	ROM_LOAD( "2129",     0x190000, 0x10000, 0x36b1a578 ) /* playfield */
-	ROM_LOAD( "2131",     0x1a0000, 0x10000, 0x7b7c04a1 ) /* playfield */
-	ROM_LOAD( "2133",     0x1b0000, 0x10000, 0xe03fe4d9 ) /* playfield */
-	ROM_LOAD( "2135",     0x1c0000, 0x10000, 0x7d497110 ) /* playfield */
-	ROM_LOAD( "2137",     0x1d0000, 0x10000, 0xf91e7872 ) /* playfield */
-	ROM_LOAD( "2130",     0x1e0000, 0x10000, 0xb25368cc ) /* playfield */
-	ROM_LOAD( "2132",     0x1f0000, 0x10000, 0x112f2d20 ) /* playfield */
-	ROM_LOAD( "2134",     0x200000, 0x10000, 0x84884ed6 ) /* playfield */
-	ROM_LOAD( "2136",     0x210000, 0x10000, 0xbc028690 ) /* playfield */
-	ROM_LOAD( "2138",     0x220000, 0x10000, 0x60cec955 ) /* playfield */
+	ROM_REGIONX( 0x0a0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2129",     0x000000, 0x10000, 0x36b1a578 ) /* playfield */
+	ROM_LOAD( "2131",     0x010000, 0x10000, 0x7b7c04a1 ) /* playfield */
+	ROM_LOAD( "2133",     0x020000, 0x10000, 0xe03fe4d9 ) /* playfield */
+	ROM_LOAD( "2135",     0x030000, 0x10000, 0x7d497110 ) /* playfield */
+	ROM_LOAD( "2137",     0x040000, 0x10000, 0xf91e7872 ) /* playfield */
+	ROM_LOAD( "2130",     0x050000, 0x10000, 0xb25368cc ) /* playfield */
+	ROM_LOAD( "2132",     0x060000, 0x10000, 0x112f2d20 ) /* playfield */
+	ROM_LOAD( "2134",     0x070000, 0x10000, 0x84884ed6 ) /* playfield */
+	ROM_LOAD( "2136",     0x080000, 0x10000, 0xbc028690 ) /* playfield */
+	ROM_LOAD( "2138",     0x090000, 0x10000, 0x60cec955 ) /* playfield */
 
-	ROM_LOAD( "2141",     0x230000, 0x08000, 0x60d6d6df ) /* alphanumerics */
+	ROM_REGIONX( 0x008000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2141",     0x000000, 0x08000, 0x60d6d6df ) /* alphanumerics */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
+	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
+	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
+	ROM_LOAD( "1148",      0x30000, 0x10000, 0xc48df49a )
 ROM_END
 
 
@@ -489,20 +495,14 @@ static void rom_decode(void)
 {
 	int i;
 	for (i = 0x170000; i < 0x190000; i++)
-		memory_region(3)[i] = 0;
-	for (i = 0x190000; i < 0x230000; i++)
-		memory_region(3)[i] ^= 0xff;
+		memory_region(REGION_GFX1)[i] = 0;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 }
 
 
 
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void skullxbo_init(void)
+static void init_skullxbo(void)
 {
 	atarigen_eeprom_default = NULL;
 
@@ -519,59 +519,5 @@ static void skullxbo_init(void)
 
 
 
-/*************************************
- *
- *	Game driver(s)
- *
- *************************************/
-
-struct GameDriver driver_skullxbo =
-{
-	__FILE__,
-	0,
-	"skullxbo",
-	"Skull & Crossbones (set 1)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (Hardware Info)",
-	0,
-	&machine_driver,
-	skullxbo_init,
-
-	rom_skullxbo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skullxbo,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_skullxb2 =
-{
-	__FILE__,
-	&driver_skullxbo,
-	"skullxb2",
-	"Skull & Crossbones (set 2)",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nMike Balfour (Hardware Info)",
-	0,
-	&machine_driver,
-	skullxbo_init,
-
-	rom_skullxb2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skullxbo,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1989, skullxbo, 0,        skullxbo, skullxbo, skullxbo, ROT0, "Atari Games", "Skull & Crossbones (set 1)" )
+GAME( 1989, skullxb2, skullxbo, skullxbo, skullxbo, skullxbo, ROT0, "Atari Games", "Skull & Crossbones (set 2)" )

@@ -32,33 +32,61 @@
 
 void invaders_vh_flipscreen(int data);
 
+/*
+   Note: For invad2ct, the Player 1 sounds are the same as for the
+         original and deluxe versions.  Player 2 sounds are all
+         different, and are triggered by writes to port 1 and port 7.
+
+*/
+
+void invad2ct_sh_port1_w(int offset, int data)
+{
+	static unsigned char Sound = 0;
+
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (7, 10, 1);		/* Saucer Sound - Player 2 */
+
+	if (~data & 0x01 && Sound & 0x01)
+		sample_stop (7);
+
+	if (data & 0x02 && ~Sound & 0x02)
+	{
+		sample_start (8, 11, 0);		/* Missle Sound - Player 2 */
+	}
+
+	if (data & 0x04 && ~Sound & 0x04)
+		sample_start (9, 12, 0);		/* Explosion - Player 2 */
+
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (10, 13, 0);		/* Invader Hit - Player 2 */
+
+	if (data & 0x10 && ~Sound & 0x10)
+		sample_start (4, 9, 0);		    /* Bonus Missle Base - Player 2 */
+
+	Sound = data;
+}
+
 void invaders_sh_port3_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
 
 	if (data & 0x01 && ~Sound & 0x01)
-		sample_start (0, 0, 1);
+		sample_start (0, 0, 1);			/* Saucer Sound */
 
 	if (~data & 0x01 && Sound & 0x01)
 		sample_stop (0);
 
 	if (data & 0x02 && ~Sound & 0x02)
-		sample_start (1, 1, 0);
-
-	if (~data & 0x02 && Sound & 0x02)
-		sample_stop (1);
+		sample_start (1, 1, 0);			/* Missle Sound */
 
 	if (data & 0x04 && ~Sound & 0x04)
-		sample_start (2, 2, 0);
-
-	if (~data & 0x04 && Sound & 0x04)
-		sample_stop (2);
+		sample_start (2, 2, 0);			/* Explosion */
 
 	if (data & 0x08 && ~Sound & 0x08)
-		sample_start (3, 3, 0);
+		sample_start (3, 3, 0);			/* Invader Hit */
 
-	if (~data & 0x08 && Sound & 0x08)
-		sample_stop (3);
+	if (data & 0x10 && ~Sound & 0x10)
+		sample_start (4, 9, 0);			/* Bonus Missle Base */
 
 	Sound = data;
 }
@@ -76,9 +104,6 @@ void invadpt2_sh_port3_w(int offset, int data)
 
 	if (data & 0x02 && ~Sound & 0x02)
 		sample_start (1, 1, 0);
-
-	if (~data & 0x02 && Sound & 0x02)
-		sample_stop (1);
 
 	if (data & 0x04 && ~Sound & 0x04){
             sample_start (2, 2, 0);
@@ -103,9 +128,6 @@ void invadpt2_sh_port3_w(int offset, int data)
 	if (data & 0x08 && ~Sound & 0x08)
 		sample_start (3, 3, 0);
 
-	if (~data & 0x08 && Sound & 0x08)
-		sample_stop (3);
-
 	Sound = data;
 }
 
@@ -122,9 +144,6 @@ void invaders_sh_port4_w(int offset, int data)
 
 	if (data & 0x02 && ~Sound & 0x02)
 		sample_start (1, 1, 0);
-
-	if (~data & 0x02 && Sound & 0x02)
-		sample_stop (1);
 
 	if (data & 0x04 && ~Sound & 0x04){
             sample_start (2, 2, 0);
@@ -152,35 +171,51 @@ void invaders_sh_port4_w(int offset, int data)
 	if (data & 0x08 && ~Sound & 0x08)
 		sample_start (3, 3, 0);
 
-	if (~data & 0x08 && Sound & 0x08)
-		sample_stop (3);
-
 	Sound = data;
 }
-
-
 
 void invaders_sh_port5_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
 
 	if (data & 0x01 && ~Sound & 0x01)
-		sample_start (4, 4, 0);
+		sample_start (5, 4, 0);			/* Fleet 1 */
 
 	if (data & 0x02 && ~Sound & 0x02)
-		sample_start (5, 5, 0);
+		sample_start (5, 5, 0);			/* Fleet 2 */
 
 	if (data & 0x04 && ~Sound & 0x04)
-		sample_start (6, 6, 0);
+		sample_start (5, 6, 0);			/* Fleet 3 */
 
 	if (data & 0x08 && ~Sound & 0x08)
-		sample_start (7, 7, 0);
+		sample_start (5, 7, 0);			/* Fleet 4 */
 
 	if (data & 0x10 && ~Sound & 0x10)
-		sample_start (8, 8, 0);
+		sample_start (6, 8, 0);			/* Saucer Hit */
 
-	if (~data & 0x10 && Sound & 0x10)
-		sample_stop (5);
+	invaders_vh_flipscreen(data & 0x20);
+
+	Sound = data;
+}
+
+void invad2ct_sh_port7_w(int offset, int data)
+{
+	static unsigned char Sound = 0;
+
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (11, 14, 0);		/* Fleet 1 - Player 2 */
+
+	if (data & 0x02 && ~Sound & 0x02)
+		sample_start (11, 15, 0);		/* Fleet 2 - Player 2 */
+
+	if (data & 0x04 && ~Sound & 0x04)
+		sample_start (11, 16, 0);		/* Fleet 3 - Player 2 */
+
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (11, 17, 0);		/* Fleet 4 - Player 2 */
+
+	if (data & 0x10 && ~Sound & 0x10)
+		sample_start (12, 18, 0);		/* Saucer Hit - Player 2 */
 
 	invaders_vh_flipscreen(data & 0x20);
 
@@ -190,8 +225,6 @@ void invaders_sh_port5_w(int offset, int data)
 
 /* HC 4/14/98 NOTE: *I* THINK there are sounds missing...
 i dont know for sure... but that is my guess....... */
-
-
 
 void boothill_sh_port3_w(int offset, int data)
 {

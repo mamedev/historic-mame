@@ -7,6 +7,8 @@ Notes:
 
 Pooyan memory map (preliminary)
 
+driver by Allard Van Der Bas
+
 Thanks must go to Mike Cuddy for providing information on this one.
 
 Sound processor memory map.
@@ -193,8 +195,8 @@ INPUT_PORTS_START( pooyan )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -226,14 +228,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x2000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pooyan =
 {
 	/* basic machine hardware */
 	{
@@ -291,20 +293,22 @@ ROM_START( pooyan )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
 	ROM_LOAD( "4.7a",         0x6000, 0x2000, 0x9e0f9bcc )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8.10g",        0x0000, 0x1000, 0x931b29eb )
 	ROM_LOAD( "7.9g",         0x1000, 0x1000, 0xbbe6d6e4 )
-	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
-	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6.9a",         0x0000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x1000, 0x1000, 0x1097c2b6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
-	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 ROM_START( pooyans )
@@ -314,20 +318,22 @@ ROM_START( pooyans )
 	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x2660218a )
 	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000, 0x3d2a10ad )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000, 0x7433aea9 )
 	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000, 0x87c1789e )
-	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
-	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6.9a",         0x0000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x1000, 0x1000, 0x1097c2b6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
-	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 ROM_START( pootan )
@@ -337,95 +343,26 @@ ROM_START( pootan )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
 	ROM_LOAD( "poo_ic25.bin", 0x6000, 0x2000, 0x8ae459ef )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "poo_ic13.bin", 0x0000, 0x1000, 0x0be802e4 )
 	ROM_LOAD( "poo_ic14.bin", 0x1000, 0x1000, 0xcba29096 )
-	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
-	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6.9a",         0x0000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x1000, 0x1000, 0x1097c2b6 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
-	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 
 
-struct GameDriver driver_pooyan =
-{
-	__FILE__,
-	0,
-	"pooyan",
-	"Pooyan",
-	"1982",
-	"Konami",
-	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pooyan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pooyan,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_pooyans =
-{
-	__FILE__,
-	&driver_pooyan,
-	"pooyans",
-	"Pooyan (Stern)",
-	"1982",
-	"[Konami] (Stern license)",
-	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pooyans,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pooyan,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_pootan =
-{
-	__FILE__,
-	&driver_pooyan,
-	"pootan",
-	"Pootan",
-	"1982",
-	"bootleg",
-	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pootan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pooyan,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1982, pooyan,  0,      pooyan, pooyan, 0, ROT270, "Konami", "Pooyan" )
+GAME( 1982, pooyans, pooyan, pooyan, pooyan, 0, ROT270, "[Konami] (Stern license)", "Pooyan (Stern)" )
+GAME( 1982, pootan,  pooyan, pooyan, pooyan, 0, ROT270, "bootleg", "Pootan" )

@@ -172,15 +172,15 @@ INPUT_PORTS_START( cop01 )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, "Free play" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -270,7 +270,6 @@ static struct AY8910interface ay8910_interface =
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 25, 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -402,5 +401,5 @@ ROM_END
 
 
 
-GAMEX( 1985, cop01,  ,      cop01, cop01, , ROT0, "Nichibutsu", "Cop 01 (set 1)", GAME_IMPERFECT_COLORS )
-GAMEX( 1985, cop01a, cop01, cop01, cop01, , ROT0, "Nichibutsu", "Cop 01 (set 2)", GAME_IMPERFECT_COLORS )
+GAMEX( 1985, cop01,  0,     cop01, cop01, 0, ROT0, "Nichibutsu", "Cop 01 (set 1)", GAME_IMPERFECT_COLORS )
+GAMEX( 1985, cop01a, cop01, cop01, cop01, 0, ROT0, "Nichibutsu", "Cop 01 (set 2)", GAME_IMPERFECT_COLORS )

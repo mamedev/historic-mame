@@ -477,11 +477,10 @@ static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
 	14318180/8,	/* 1.789772727 MHz */
-	{ MIXER(18,MIXER_PAN_RIGHT), MIXER(18,MIXER_PAN_LEFT),
-			MIXER(20,MIXER_PAN_RIGHT), MIXER(20,MIXER_PAN_RIGHT), MIXER(20,MIXER_PAN_LEFT) },
+	{ MIXERG(18,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(18,MIXER_GAIN_4x,MIXER_PAN_LEFT),
+			MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_RIGHT), MIXERG(20,MIXER_GAIN_4x,MIXER_PAN_LEFT) },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
-	{ 0x20, 0x20, 0x30, 0x30, 0x30 },	/* gain */
 	{ 0, 0, gyruss_portA_r },
 	{ 0 },
 	{ 0 },
@@ -496,7 +495,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gyruss =
 {
 	/* basic machine hardware */
 	{
@@ -674,78 +673,12 @@ ROM_START( venus )
 ROM_END
 
 
-
-struct GameDriver driver_gyruss =
+static void init_gyruss(void)
 {
-	__FILE__,
-	0,
-	"gyruss",
-	"Gyruss (Konami)",
-	"1983",
-	"Konami",
-	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	konami1_decode_cpu4,
+	konami1_decode_cpu4();
+}
 
-	rom_gyruss,
-	0, 0,
-	0,
-	0,
 
-	input_ports_gyruss,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_gyrussce =
-{
-	__FILE__,
-	&driver_gyruss,
-	"gyrussce",
-	"Gyruss (Centuri)",
-	"1983",
-	"Konami (Centuri license)",
-	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	konami1_decode_cpu4,
-
-	rom_gyrussce,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gyrussce,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_venus =
-{
-	__FILE__,
-	&driver_gyruss,
-	"venus",
-	"Venus",
-	"1983",
-	"bootleg",
-	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	konami1_decode_cpu4,
-
-	rom_venus,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gyrussce,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, gyruss,   0,      gyruss, gyruss,   gyruss, ROT90, "Konami", "Gyruss (Konami)" )
+GAME( 1983, gyrussce, gyruss, gyruss, gyrussce, gyruss, ROT90, "Konami (Centuri license)", "Gyruss (Centuri)" )
+GAME( 1983, venus,    gyruss, gyruss, gyrussce, gyruss, ROT90, "bootleg", "Venus" )

@@ -364,7 +364,6 @@ static struct AY8910interface ay8910_interface =
 	2,		/* 2 chips */
 	1250000,	/* 1.25 MHz? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -373,7 +372,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pinbo =
 {
 	/* basic machine hardware */
 	{
@@ -447,7 +446,6 @@ ROM_START( pinbo )
 	ROM_LOAD( "blue.n10",    0x0200, 0x0100, 0xe41250ad )
 ROM_END
 
-
 ROM_START( pinbos )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b4.bin",     0x2000, 0x2000, 0xd9452d4f )
@@ -471,53 +469,6 @@ ROM_START( pinbos )
 ROM_END
 
 
-struct GameDriver driver_pinbo =
-{
-	__FILE__,
-	0,
-	"pinbo",
-	"Pinbo",
-	"1984",
-	"Jaleco",
-	"Scott Kelley",
-	0,
-	&machine_driver,
-	0,
 
-	rom_pinbo,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_pinbo,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_pinbos =
-{
-	__FILE__,
-	&driver_pinbo,
-	"pinbos",
-	"Pinbo (Strike)",
-	"1984",
-	"bootleg?",
-	"Scott Kelley",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pinbos,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports_pinbos,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
+GAME( 1984, pinbo,  0,     pinbo, pinbo,  0, ROT90, "Jaleco", "Pinbo" )
+GAME( 1984, pinbos, pinbo, pinbo, pinbos, 0, ROT90, "bootleg?", "Pinbo (Strike)" )

@@ -309,7 +309,6 @@ static struct AY8910interface ay8910_interface =
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 13, 13, 13 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -431,5 +430,5 @@ ROM_END
 
 
 
-GAME( 1984, bombjack, ,         bombjack, bombjack, , ROT90, "Tehkan", "Bomb Jack (set 1)" )
-GAME( 1984, bombjac2, bombjack, bombjack, bombjack, , ROT90, "Tehkan", "Bomb Jack (set 2)" )
+GAME( 1984, bombjack, 0,        bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 1)" )
+GAME( 1984, bombjac2, bombjack, bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 2)" )

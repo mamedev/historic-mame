@@ -2,6 +2,8 @@
 
 Millipede memory map (preliminary)
 
+driver by Ivan Mackintosh
+
 0400-040F       POKEY 1
 0800-080F       POKEY 2
 1000-13BF       SCREEN RAM (8x8 TILES, 32x30 SCREEN)
@@ -170,15 +172,15 @@ INPUT_PORTS_START( milliped )
 	PORT_DIPSETTING (   0x00, "Easy" )
 	PORT_DIPSETTING (   0x40, "Hard" )
 	PORT_DIPNAME(0x80, 0x00, "Starting Score Select" )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
 	PORT_DIPSETTING (   0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
 
 	PORT_START	/* 5 */ /* DSW2 $0808 */
 	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )
 	PORT_DIPSETTING (   0x00, "*1" )
 	PORT_DIPSETTING (   0x04, "*4" )
@@ -231,8 +233,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 4 },	/* use colors 0-15 */
-	{ 1, 0x0000, &spritelayout,   16, 1 },	/* use colors 16-19 */
+	{ REGION_GFX1, 0, &charlayout,      0, 4 },	/* use colors 0-15 */
+	{ REGION_GFX1, 0, &spritelayout,   16, 1 },	/* use colors 16-19 */
 	{ -1 } /* end of array */
 };
 
@@ -260,7 +262,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_milliped =
 {
 	/* basic machine hardware */
 	{
@@ -315,35 +317,11 @@ ROM_START( milliped )
 	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x46752c7d )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0xf4468045 )
 	ROM_LOAD( "milliped.107", 0x0800, 0x0800, 0x68c3437a )
 ROM_END
 
 
 
-struct GameDriver driver_milliped =
-{
-	__FILE__,
-	0,
-	"milliped",
-	"Millipede",
-	"1982",
-	"Atari",
-	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_milliped,
-	0, 0,
-	0,
-	0,
-
-	input_ports_milliped,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
+GAME( 1982, milliped, 0, milliped, milliped, 0, ROT270, "Atari", "Millipede" )

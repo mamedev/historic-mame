@@ -235,6 +235,7 @@ INPUT_PORTS_END
 #define input_ports_ddtodu      input_ports_sfa
 #define input_ports_mshj        input_ports_sfa
 #define input_ports_mshvsfu     input_ports_sfa
+#define input_ports_rckman2j    input_ports_sfa
 #define input_ports_sfzj        input_ports_sfa
 #define input_ports_sfz2j       input_ports_sfa
 #define input_ports_ssf2j       input_ports_sfa
@@ -243,6 +244,7 @@ INPUT_PORTS_END
 #define input_ports_vhuntj      input_ports_sfa
 #define input_ports_vhunt2j     input_ports_sfa
 #define input_ports_vsavj       input_ports_sfa
+#define input_ports_vsav2j      input_ports_sfa
 #define input_ports_xmcotaj     input_ports_sfa
 #define input_ports_xmvssfj     input_ports_sfa
 
@@ -252,6 +254,7 @@ CPS2_MACHINE_DRIVER( batcirj,     CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( ddtodu,  	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( mshj,     	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( mshvsfu, 	  CPS2_DEFAULT_CPU_SPEED )
+CPS2_MACHINE_DRIVER( rckman2j, 	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( sfzj,  	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( sfz2j,   	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( ssf2j,   	  CPS2_DEFAULT_CPU_SPEED )
@@ -260,6 +263,7 @@ CPS2_MACHINE_DRIVER( vampj,   	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( vhuntj,   	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( vhunt2j,  	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( vsavj,    	  CPS2_DEFAULT_CPU_SPEED )
+CPS2_MACHINE_DRIVER( vsav2j,   	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( xmcotaj, 	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( xmvssfj,  	  CPS2_DEFAULT_CPU_SPEED )
 
@@ -460,6 +464,28 @@ ROM_START( mshvsfu )
 	ROM_REGION(0x800000) /* Q Sound Samples */
     ROM_LOAD( "mshvsf.s11",   0x000000, 0x400000, 0x86219770 )
     ROM_LOAD( "mshvsf.s12",   0x400000, 0x400000, 0xf2fd7f68 )
+ROM_END
+
+ROM_START( rckman2j )
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+    ROM_LOAD_WIDE_SWAP("rckmn2_j.c03",  0x000000, 0x80000, 0xdbaa1437 )
+    ROM_LOAD_WIDE_SWAP("rckmn2_j.c04",  0x080000, 0x80000, 0xcf5ba612 )
+    ROM_LOAD_WIDE_SWAP("rckmn2_j.c05",  0x100000, 0x80000, 0x02ee9efc )
+
+    ROM_REGION_DISPOSE(0x800000) /* load samples as graphics */
+    ROM_LOAD( "rckmn2.g18",     0x000000, 0x200000, 0x12257251 )
+    ROM_LOAD( "rckmn2.g14",     0x200000, 0x200000, 0x9b1f00b4 )
+	ROM_LOAD( "rckmn2.g20",     0x400000, 0x200000, 0xf9b6e786 )
+    ROM_LOAD( "rckmn2.g16",     0x600000, 0x200000, 0xc2bb0c24 )
+
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_LOAD( "rckmn2.01",     0x00000, 0x08000, 0xd18e7859 )
+    ROM_CONTINUE(               0x10000, 0x18000 )
+    ROM_LOAD( "rckmn2.02",     0x28000, 0x20000, 0xc463ece0 )
+
+	ROM_REGION(0x400000) /* Q Sound Samples */
+    ROM_LOAD( "rckmn2.s11",   0x000000, 0x200000, 0x2106174d )
+    ROM_LOAD( "rckmn2.s12",   0x200000, 0x200000, 0x546c1636 )
 ROM_END
 
 ROM_START( sfzj )
@@ -816,6 +842,37 @@ ROM_START( vsavu )
     ROM_LOAD( "vsav.s12",   0x400000, 0x400000, 0x9cd71557 )
 ROM_END
 
+ROM_START( vsav2j )
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP("vs2j.03", 0x000000, 0x80000, 0x89fd86b4 )
+	ROM_LOAD_WIDE_SWAP("vs2j.04", 0x080000, 0x80000, 0x107c091b )
+	ROM_LOAD_WIDE_SWAP("vs2j.05", 0x100000, 0x80000, 0x61979638 )
+	ROM_LOAD_WIDE_SWAP("vs2j.06", 0x180000, 0x80000, 0xf37c5bc2 )
+	ROM_LOAD_WIDE_SWAP("vs2j.07", 0x200000, 0x80000, 0x8f885809 )
+	ROM_LOAD_WIDE_SWAP("vs2j.08", 0x280000, 0x80000, 0x2018c120 )
+	ROM_LOAD_WIDE_SWAP("vs2j.09", 0x300000, 0x80000, 0xfac3c217 )
+	ROM_LOAD_WIDE_SWAP("vs2j.10", 0x380000, 0x80000, 0xeb490213 )
+
+    ROM_REGION_DISPOSE(0x2000000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "vs2.18",   0x0000000, 0x400000, 0x778dc4f6 )
+    ROM_LOAD( "vs2.17",   0x0400000, 0x400000, 0x39db59ad )
+    ROM_LOAD( "vs2.14",   0x0800000, 0x400000, 0xcd09bd63 )
+    ROM_LOAD( "vs2.13",   0x0c00000, 0x400000, 0x5c852f52 )
+    ROM_LOAD( "vs2.20",   0x1000000, 0x400000, 0x605d9d1d )
+    ROM_LOAD( "vs2.19",   0x1400000, 0x400000, 0x00c763a7 )
+    ROM_LOAD( "vs2.16",   0x1800000, 0x400000, 0xe0182c15 )
+    ROM_LOAD( "vs2.15",   0x1c00000, 0x400000, 0xa20f58af )
+
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+    ROM_LOAD( "vs2.01",         0x00000, 0x08000, 0x35190139 )
+    ROM_CONTINUE(              0x10000, 0x18000 )
+    ROM_LOAD( "vs2.02",         0x28000, 0x20000, 0xc32dba09 )
+
+	ROM_REGION(0x800000) /* Q Sound Samples */
+    ROM_LOAD( "vs2.11",   0x000000, 0x400000, 0xd67e47b7 )
+    ROM_LOAD( "vs2.12",   0x400000, 0x400000, 0x6d020a14 )
+ROM_END
+
 ROM_START( xmcotaj )
     ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("xmcota_j.c03", 0x000000, 0x80000, 0x0bafeb0e )
@@ -885,7 +942,7 @@ CLONE_CPS2_GAME_DRIVER(ddtoda,  ddtodu , "Dungeons & Dragons: Tower of Doom (Asi
 CPS2_GAME_DRIVER(mshj,                   "Marvel Super Heroes (Japan 951024)"                 			, "1995", "Capcom", ROT0)
 CPS2_GAME_DRIVER(mshvsfu,                "Marvel Super Heroes Vs. Street Fighter (USA 970625)"			, "1997", "Capcom", ROT0)
 //CPS2_GAME_DRIVER(mvsc,                   "Marvel Super Heroes vs. Capcom: Clash of Super Heroes (??? ??????)"    , "199?", "Capcom", ROT0)
-//CPS2_GAME_DRIVER(rckman2,                "Rockman 2: The Power Fighters (??? ??????)"                    , "199?", "Capcom", ROT0)
+CPS2_GAME_DRIVER(rckman2j,               "Rockman 2: The Power Fighters (Japan 960708)"                 , "1996", "Capcom", ROT0)
 CPS2_GAME_DRIVER(sfzj,                   "Street Fighter Zero (Japan, 950727)"						, "1995", "Capcom", ROT0)
 CLONE_CPS2_GAME_DRIVER(sfzj1, sfzj,      "Street Fighter Zero (Japan, 950627)"						, "1995", "Capcom", ROT0)
 CLONE_CPS2_GAME_DRIVER(sfau, sfzj,       "Street Fighter Alpha: The Warriors Dream (USA, 950727)"			, "1995", "Capcom", ROT0)
@@ -899,7 +956,7 @@ CPS2_GAME_DRIVER(vhuntj,                 "Vampire Hunter: Darkstalkers 2 (Japan,
 CPS2_GAME_DRIVER(vhunt2j,                "Vampire Hunter 2: Darkstalkers Revenge (Japan, 970828)"			, "1997", "Capcom", ROT0)
 CPS2_GAME_DRIVER(vsavj,                  "Vampire Savior: The Lord of Vampire (Japan, 970519)"			, "1997", "Capcom", ROT0)
 CLONE_CPS2_GAME_DRIVER(vsavu, vsavj,     "Vampire Savior: Jedah's Damnation (USA 970519)"				, "1997", "Capcom", ROT0)
-//CPS2_GAME_DRIVER(vsav2,                  "Vampire Savior 2: The Lord of Vampire (??? ??????)"            , "199?", "Capcom", ROT0)
+CPS2_GAME_DRIVER(vsav2j,                 "Vampire Savior 2: The Lord of Vampire (Japan 97????)"            , "1997", "Capcom", ROT0)
 CPS2_GAME_DRIVER(xmcotaj,                "X-Men: Children of the Atom (Japan, 950105)"					, "1995", "Capcom", ROT0)
 CPS2_GAME_DRIVER(xmvssfj,                "X-Men Vs. Street Fighter (Japan, 961004)"					, "1996", "Capcom", ROT0)
 

@@ -1322,24 +1322,26 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 #ifdef MESS
 /* Function to handle Aliases in the MESS.CFG file */
-char * get_alias(char *driver_name, char *argv)
+char * get_alias(const char *driver_name, char *argv)
 {
-	return(get_config_string(driver_name,argv,""));
+	char driver[8+1];
+	strcpy(driver, driver_name);
+	return get_config_string(driver,argv,"");
 }
 
 /* Function to check if CRC is known from "<driver>.crc" file */
 int check_crc(int crc, int length, char * driver)
 {
 
-	char crc_string[8];
+	char crc_string[10];
 	char *crc_file_name;
 
 	/* allocate the letters for the path and file */
-	crc_file_name = (char*)malloc(MAX_PATH*sizeof(char));
+	crc_file_name = (char*)malloc((strlen(crcdir)+1+strlen(driver)+4+1)*sizeof(char));
+    if( !crcdir ) return 0;
 
 	/* create filename from driver (.crc) */
 	sprintf(crc_file_name,"%s/%s.crc",crcdir,driver);
-
 
 	/* Match CRC and length from file */
 	image.crc=crc;
@@ -1348,13 +1350,18 @@ int check_crc(int crc, int length, char * driver)
 
 	/* open the override config file and see if CRC is defined */
 	override_config_file(crc_file_name);
+	free(crc_file_name);
 	image.name = get_config_string(driver,crc_string,"");
-
-	if(image.name!="")
-	{
+	if(image.name[0])
 		return 1; /* found */
- 	}
-	/* If no CRC match found, set name to default */
+
+	/* try with leading zeroes */
+    sprintf(crc_string,"%08x",image.crc);
+	image.name = get_config_string(driver,crc_string,"");
+	if(image.name[0])
+        return 1; /* found */
+
+    /* If no CRC match found, set name to default */
 	image.name = "Unknown - No CRC Match";
 	return 0; /* no match found */
 }

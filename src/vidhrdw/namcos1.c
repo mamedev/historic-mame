@@ -9,8 +9,6 @@
 /* support non use tilemap system draw routine */
 #define NAMCOS1_DIRECT_DRAW 1
 
-#define NAMCO_S1_RAM_REGION 5
-
 /*
   video ram map
   0000-1fff : scroll playfield (0)
@@ -656,8 +654,8 @@ int namcos1_vh_start( void )
 		gfx_drawmode_table[i] = DRAWMODE_SHADOW;
 
 	/* set static memory points */
-	namcos1_paletteram  = memory_region(NAMCO_S1_RAM_REGION);
-	namcos1_controllram = memory_region(NAMCO_S1_RAM_REGION) + 0x8000;
+	namcos1_paletteram  = memory_region(REGION_USER2);
+	namcos1_controllram = memory_region(REGION_USER2) + 0x8000;
 
 	/* allocate videoram */
 	namcos1_videoram   = malloc(0x8000);

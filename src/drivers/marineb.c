@@ -2,6 +2,8 @@
 
 Marine Boy hardware memory map (preliminary)
 
+driver by Zsolt Vasvari
+
 MAIN CPU:
 
 0000-7fff ROM (not all games use the entire region)
@@ -341,10 +343,10 @@ INPUT_PORTS_START( wanted )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static struct GfxLayout marineb_charlayout =
 {
 	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
+	512,	/* 512 characters */
 	2,	    /* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
@@ -358,6 +360,17 @@ static struct GfxLayout wanted_charlayout =
 	1024,	/* 1024 characters */
 	2,	    /* 2 bits per pixel */
 	{ 4, 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8	/* every char takes 16 bytes */
+};
+
+static struct GfxLayout hopprobo_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	1024,	/* 1024 characters */
+	2,	    /* 2 bits per pixel */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 bytes */
@@ -426,32 +439,40 @@ static struct GfxLayout changes_big_spritelayout =
 
 static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 64 },
-	{ 1, 0x4000, &marineb_small_spritelayout,  0, 64 },
-	{ 1, 0x4000, &marineb_big_spritelayout,    0, 64 },
+	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo wanted_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &wanted_charlayout,           0, 64 },
-	{ 1, 0x4000, &marineb_small_spritelayout,  0, 64 },
-	{ 1, 0x4000, &marineb_big_spritelayout,    0, 64 },
+	{ REGION_GFX1, 0x0000, &wanted_charlayout,           0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 64 },
-	{ 1, 0x4000, &changes_small_spritelayout,  0, 64 },
-	{ 1, 0x5000, &changes_big_spritelayout,    0, 64 },
+	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 64 },
+	{ REGION_GFX2, 0x0000, &changes_small_spritelayout,  0, 64 },
+	{ REGION_GFX2, 0x1000, &changes_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo hoccer_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                  0, 16 },	/* no palette banks */
-	{ 1, 0x4000, &changes_small_spritelayout,  0, 16 },	/* no palette banks */
+	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 16 },	/* no palette banks */
+	{ REGION_GFX2, 0x0000, &changes_small_spritelayout,  0, 16 },	/* no palette banks */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo hopprobo_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &hopprobo_charlayout,         0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },
+	{ REGION_GFX2, 0x0000, &marineb_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -461,7 +482,6 @@ static struct AY8910interface marineb_ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -473,7 +493,6 @@ static struct AY8910interface wanted_ay8910_interface =
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -481,8 +500,7 @@ static struct AY8910interface wanted_ay8910_interface =
 };
 
 
-#define springer_gfxdecodeinfo  marineb_gfxdecodeinfo
-#define hopprobo_gfxdecodeinfo  marineb_gfxdecodeinfo
+#define springer_gfxdecodeinfo   marineb_gfxdecodeinfo
 
 #define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
@@ -547,11 +565,12 @@ ROM_START( marineb )
 	ROM_LOAD( "marineb.4",     0x3000, 0x1000, 0xa157a283 )
 	ROM_LOAD( "marineb.5",     0x4000, 0x1000, 0x9ffff9c0 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "marineb.6",     0x0000, 0x2000, 0xee53ec2e )
-	ROM_RELOAD(				   0x2000, 0x2000 )
-	ROM_LOAD( "marineb.8",     0x4000, 0x2000, 0xdc8bc46c )
-	ROM_LOAD( "marineb.7",     0x6000, 0x2000, 0x9d2e19ab )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "marineb.8",     0x0000, 0x2000, 0xdc8bc46c )
+	ROM_LOAD( "marineb.7",     0x2000, 0x2000, 0x9d2e19ab )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, 0xf32d9472 ) /* palette low 4 bits */
@@ -566,10 +585,11 @@ ROM_START( changes )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "changes.7",     0x0000, 0x2000, 0x2204194e )
-	ROM_RELOAD(				   0x2000, 0x2000 )
-	ROM_LOAD( "changes.6",     0x4000, 0x2000, 0x985c9db4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "changes.6",     0x0000, 0x2000, 0x985c9db4 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
@@ -584,10 +604,11 @@ ROM_START( looper )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "looper_7.bin",  0x0000, 0x2000, 0x71a89975 )
-	ROM_RELOAD(				   0x2000, 0x2000 )
-	ROM_LOAD( "looper_6.bin",  0x4000, 0x2000, 0x1f3f70c2 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "looper_6.bin",  0x0000, 0x2000, 0x1f3f70c2 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
@@ -602,15 +623,15 @@ ROM_START( springer )
 	ROM_LOAD( "springer.4",    0x3000, 0x1000, 0x859d1bf5 )
 	ROM_LOAD( "springer.5",    0x4000, 0x1000, 0x72adbbe3 )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "springer.6",    0x0000, 0x1000, 0x6a961833 )
-	ROM_RELOAD(				   0x2000, 0x1000 )
 	ROM_LOAD( "springer.7",    0x1000, 0x1000, 0x95ab8fc0 )
-	ROM_RELOAD(				   0x3000, 0x1000 )
-	ROM_LOAD( "springer.8",    0x4000, 0x1000, 0xa54bafdc )
-							/* 0x5000 -0x5fff empty for my convinience */
-	ROM_LOAD( "springer.9",    0x6000, 0x1000, 0xfa302775 )
-							/* 0x7000 -0x7fff empty for my convinience */
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "springer.8",    0x0000, 0x1000, 0xa54bafdc )
+							/* 0x1000-0x1fff empty for my convinience */
+	ROM_LOAD( "springer.9",    0x2000, 0x1000, 0xfa302775 )
+							/* 0x3000-0x3fff empty for my convinience */
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "1b.vid",        0x0000, 0x0100, 0xa2f935aa ) /* palette low 4 bits */
@@ -624,10 +645,11 @@ ROM_START( hoccer )
 	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, 0x048a0659 )
 	ROM_LOAD( "hr4.cpu",       0x6000, 0x2000, 0x9a788a2c )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
-	ROM_RELOAD(				   0x2000, 0x2000 )
-	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
@@ -641,10 +663,11 @@ ROM_START( hoccer2 )
 	ROM_LOAD( "hr.3",          0x4000, 0x2000, 0x4e67b0be )
 	ROM_LOAD( "hr.4",          0x6000, 0x2000, 0xd2b44f58 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
-	ROM_RELOAD(				   0x2000, 0x2000 )
-	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hr.c",          0x0000, 0x2000, 0x02808294 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
@@ -657,11 +680,13 @@ ROM_START( wanted )
 	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
 	ROM_LOAD( "prg-3",		   0x4000, 0x2000, 0x373c7d82 )
 
-	ROM_REGION_DISPOSE(0x8000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vram-1",		   0x0000, 0x2000, 0xc4226e54 )
 	ROM_LOAD( "vram-2",		   0x2000, 0x2000, 0x2a9b1e36 )
-	ROM_LOAD( "obj-a",		   0x4000, 0x2000, 0x90b60771 )
-	ROM_LOAD( "obj-b",		   0x6000, 0x2000, 0xe14ee689 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "obj-a",		   0x0000, 0x2000, 0x90b60771 )
+	ROM_LOAD( "obj-b",		   0x2000, 0x2000, 0xe14ee689 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, 0x2ba90a00 )	/* palette low 4 bits */
@@ -676,12 +701,14 @@ ROM_START( hopprobo )
 	ROM_LOAD( "hopper04.3p",   0x3000, 0x1000, 0x0f4f3ca8 )
 	ROM_LOAD( "hopper05.3r",   0x4000, 0x1000, 0x9d77a37b )
 
-	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hopper06.5c",   0x0000, 0x2000, 0x68f79bc8 )
 	ROM_LOAD( "hopper07.5d",   0x2000, 0x1000, 0x33d82411 )
 	ROM_RELOAD(				   0x3000, 0x1000 )
-	ROM_LOAD( "hopper08.6f",   0x4000, 0x2000, 0x06d37e64 )
-	ROM_LOAD( "hopper09.6k",   0x6000, 0x2000, 0x047921c7 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hopper08.6f",   0x0000, 0x2000, 0x06d37e64 )
+	ROM_LOAD( "hopper09.6k",   0x2000, 0x2000, 0x047921c7 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, 0x94450775 ) /* palette low 4 bits */
@@ -690,202 +717,11 @@ ROM_END
 
 
 
-struct GameDriver driver_marineb =
-{
-	__FILE__,
-	0,
-	"marineb",
-	"Marine Boy",
-	"1982",
-	"Orca",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_marineb,
-	0,
-
-	rom_marineb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_marineb,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_changes =
-{
-	__FILE__,
-	0,
-	"changes",
-	"Changes",
-	"1982",
-	"Orca",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_changes,
-	0,
-
-	rom_changes,
-	0, 0,
-	0,
-	0,
-
-	input_ports_changes,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_looper =
-{
-	__FILE__,
-	&driver_changes,
-	"looper",
-	"Looper",
-	"1982",
-	"Orca",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_changes,
-	0,
-
-	rom_looper,
-	0, 0,
-	0,
-	0,
-
-	input_ports_changes,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_springer =
-{
-	__FILE__,
-	0,
-	"springer",
-	"Springer",
-	"1982",
-	"Orca",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_springer,
-	0,
-
-	rom_springer,
-	0, 0,
-	0,
-	0,
-
-	input_ports_marineb,  /* same as Marine Boy */
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_hoccer =
-{
-	__FILE__,
-	0,
-	"hoccer",
-	"Hoccer (set 1)",
-	"1983",
-	"Eastern Micro Electronics, Inc.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_hoccer,
-	0,
-
-	rom_hoccer,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hoccer,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_hoccer2 =
-{
-	__FILE__,
-	&driver_hoccer,
-	"hoccer2",
-	"Hoccer (set 2)",	/* earlier */
-	"1983",
-	"Eastern Micro Electronics, Inc.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_hoccer,
-	0,
-
-	rom_hoccer2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hoccer,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_wanted =
-{
-	__FILE__,
-	0,
-	"wanted",
-	"Wanted",
-	"1984",
-	"Sigma Ent. Inc.",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_wanted,
-	0,
-
-	rom_wanted,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wanted,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_hopprobo =
-{
-	__FILE__,
-	0,
-	"hopprobo",
-	"Hopper Robo",
-	"1983",
-	"Sega",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver_hopprobo,
-	0,
-
-	rom_hopprobo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_marineb,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1982, marineb,  0,       marineb,  marineb, 0, ROT0,   "Orca", "Marine Boy" )
+GAME( 1982, changes,  0,       changes,  changes, 0, ROT0,   "Orca", "Changes" )
+GAME( 1982, looper,   changes, changes,  changes, 0, ROT0,   "Orca", "Looper" )
+GAME( 1982, springer, 0,       springer, marineb, 0, ROT270, "Orca", "Springer" )
+GAME( 1983, hoccer,   0,       hoccer,   hoccer,  0, ROT90,  "Eastern Micro Electronics, Inc.", "Hoccer (set 1)" )
+GAME( 1983, hoccer2,  hoccer,  hoccer,   hoccer,  0, ROT90,  "Eastern Micro Electronics, Inc.", "Hoccer (set 2)" )	/* earlier */
+GAME( 1984, wanted,   0,       wanted,   wanted,  0, ROT90,  "Sigma Ent. Inc.", "Wanted" )
+GAME( 1983, hopprobo, 0,       hopprobo, marineb, 0, ROT90,  "Sega", "Hopper Robo" )

@@ -71,6 +71,7 @@ Tons of thanks to the guy who posted these, whoever he is...
 #include "memory.h"
 #include "mamedbg.h"
 #include "tms9900.h"
+#include <math.h>
 
 
 #if (TMS99XX_MODEL == TMS9900_ID)

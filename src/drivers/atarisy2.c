@@ -664,7 +664,7 @@ INPUT_PORTS_START( paperboy )
 	PORT_DIPSETTING(    0x60, "2 each 4" )
 	PORT_DIPSETTING(    0x20, "1 each 2" )
 	PORT_DIPSETTING(    0xc0, "1 each ?" )
-	PORT_DIPSETTING(    0xe0, "Free Play" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
@@ -764,7 +764,7 @@ INPUT_PORTS_START( 720 )
 	PORT_DIPSETTING(    0xa0, "1 each 3" )
 	PORT_DIPSETTING(    0x60, "2 each 4" )
 	PORT_DIPSETTING(    0x20, "1 each 2" )
-	PORT_DIPSETTING(    0xe0, "Free Play" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
@@ -862,7 +862,7 @@ INPUT_PORTS_START( ssprint )
 	PORT_DIPSETTING(    0x60, "2 each 4" )
 	PORT_DIPSETTING(    0x20, "1 each 2" )
 	PORT_DIPSETTING(    0xc0, "1 each ?" )
-	PORT_DIPSETTING(    0xe0, "Free Play" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
@@ -961,7 +961,7 @@ INPUT_PORTS_START( csprint )
 	PORT_DIPSETTING(    0x60, "2 each 4" )
 	PORT_DIPSETTING(    0x20, "1 each 2" )
 	PORT_DIPSETTING(    0xc0, "1 each ?" )
-	PORT_DIPSETTING(    0xe0, "Free Play" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
@@ -1059,7 +1059,7 @@ INPUT_PORTS_START( apb )
 	PORT_DIPSETTING(    0x60, "1 each 3" )
 	PORT_DIPSETTING(    0x40, "1 each 2" )
 	PORT_DIPSETTING(    0x20, "1 each 1" )
-	PORT_DIPSETTING(    0xe0, "Free Play" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Attract Lights" )
@@ -1992,10 +1992,10 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, paperboy, ,    paperboy, paperboy, paperboy, ROT0,   "Atari Games", "Paperboy" )
-GAME( 1986, 720,      ,    a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 1)" )
+GAME( 1984, paperboy, 0,   paperboy, paperboy, paperboy, ROT0,   "Atari Games", "Paperboy" )
+GAME( 1986, 720,      0,   a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 1)" )
 GAME( 1986, 720b,     720, a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 2)" )
-GAME( 1986, ssprint,  ,    sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint" )
-GAME( 1986, csprint,  ,    sprint,   csprint,  csprint,  ROT0,   "Atari Games", "Championship Sprint" )
-GAME( 1987, apb,      ,    paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 1)" )
+GAME( 1986, ssprint,  0,   sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint" )
+GAME( 1986, csprint,  0,   sprint,   csprint,  csprint,  ROT0,   "Atari Games", "Championship Sprint" )
+GAME( 1987, apb,      0,   paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 1)" )
 GAME( 1987, apb2,     apb, paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 2)" )

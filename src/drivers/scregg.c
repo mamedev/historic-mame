@@ -4,6 +4,8 @@ Eggs
 
 Very similar to Burger Time hardware (and uses its video driver)
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -150,8 +152,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 1 },     /* char set #1 */
-	{ 1, 0x0000, &spritelayout,        0, 1 },     /* sprites */
+	{ REGION_GFX1, 0, &charlayout,          0, 1 },     /* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,        0, 1 },     /* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -162,7 +164,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
 	{ 23, 23 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -171,7 +172,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_scregg =
 {
 	/* basic machine hardware */
 	{
@@ -219,7 +220,7 @@ ROM_START( scregg )
 	ROM_LOAD( "scregg.a14",   0x7000, 0x1000, 0xb5a0814a )
 	ROM_RELOAD(               0xf000, 0x1000 )        /* for reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "scregg.j12",   0x0000, 0x1000, 0xa485c10c )
 	ROM_LOAD( "scregg.j10",   0x1000, 0x1000, 0x1fd4e539 )
 	ROM_LOAD( "scregg.h12",   0x2000, 0x1000, 0x8454f4b2 )
@@ -241,7 +242,7 @@ ROM_START( eggs )
 	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
 	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
 	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
 	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
@@ -256,52 +257,5 @@ ROM_END
 
 
 
-struct GameDriver driver_scregg =
-{
-	__FILE__,
-	0,
-	"scregg",
-	"Scrambled Egg",
-	"1983",
-	"Technos",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_scregg,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scregg,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_eggs =
-{
-	__FILE__,
-	&driver_scregg,
-	"eggs",
-	"Eggs",
-	"1983",
-	"[Technos] Universal USA",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_eggs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_scregg,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg" )
+GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs" )

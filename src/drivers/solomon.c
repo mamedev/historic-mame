@@ -1,3 +1,10 @@
+/***************************************************************************
+
+Solomon's Key
+
+driver by Mirko Buffoni
+
+***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
@@ -191,9 +198,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 8 },	/* colors   0-127 */
-	{ 1, 0x10000, &charlayout,   128, 8 },	/* colors 128-255 */
-	{ 1, 0x20000, &spritelayout,   0, 8 },	/* colors   0-127 */
+	{ REGION_GFX1, 0, &charlayout,     0, 8 },	/* colors   0-127 */
+	{ REGION_GFX2, 0, &charlayout,   128, 8 },	/* colors 128-255 */
+	{ REGION_GFX3, 0, &spritelayout,   0, 8 },	/* colors   0-127 */
 	{ -1 } /* end of array */
 };
 
@@ -202,7 +209,6 @@ static struct AY8910interface ay8910_interface =
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 12, 12, 12 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -266,43 +272,24 @@ ROM_START( solomon )
 	ROM_CONTINUE(             0x04000, 0x4000 )
 	ROM_LOAD( "slmn_08.bin",  0x0f000, 0x1000, 0xb924d162 )
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "slmn_12.bin",  0x00000, 0x08000, 0xaa26dfcb )	/* characters */
-	ROM_LOAD( "slmn_11.bin",  0x08000, 0x08000, 0x6f94d2af )
-	ROM_LOAD( "slmn_10.bin",  0x10000, 0x08000, 0x8310c2a1 )
-	ROM_LOAD( "slmn_09.bin",  0x18000, 0x08000, 0xab7e6c42 )
-	ROM_LOAD( "slmn_02.bin",  0x20000, 0x04000, 0x80fa2be3 )	/* sprites */
-	ROM_LOAD( "slmn_03.bin",  0x24000, 0x04000, 0x236106b4 )
-	ROM_LOAD( "slmn_04.bin",  0x28000, 0x04000, 0x088fe5d9 )
-	ROM_LOAD( "slmn_05.bin",  0x2c000, 0x04000, 0x8366232a )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "slmn_01.bin",  0x0000, 0x4000, 0xfa6e562e )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "slmn_12.bin",  0x00000, 0x08000, 0xaa26dfcb )	/* characters */
+	ROM_LOAD( "slmn_11.bin",  0x08000, 0x08000, 0x6f94d2af )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "slmn_10.bin",  0x00000, 0x08000, 0x8310c2a1 )
+	ROM_LOAD( "slmn_09.bin",  0x08000, 0x08000, 0xab7e6c42 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "slmn_02.bin",  0x00000, 0x04000, 0x80fa2be3 )	/* sprites */
+	ROM_LOAD( "slmn_03.bin",  0x04000, 0x04000, 0x236106b4 )
+	ROM_LOAD( "slmn_04.bin",  0x08000, 0x04000, 0x088fe5d9 )
+	ROM_LOAD( "slmn_05.bin",  0x0c000, 0x04000, 0x8366232a )
 ROM_END
 
 
 
-struct GameDriver driver_solomon =
-{
-	__FILE__,
-	0,
-	"solomon",
-	"Solomon's Key (Japan)",
-	"1986",
-	"Tecmo",
-	"Mirko Buffoni",
-	0,
-	&machine_driver_solomon,
-	0,
-
-	rom_solomon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_solomon,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, solomon, 0, solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (Japan)" )

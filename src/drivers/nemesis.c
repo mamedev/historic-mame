@@ -11,6 +11,8 @@
 	Lifeforce (US)			GX587
 	Lifeforce (Japan)		GX587
 
+driver by Bryan McPhail
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -281,7 +283,7 @@ void salamand_speech_start (int offset, int data)
 void gx400_speech_start (int offset, int data)
 {
         /* the voice data is not in a rom but in sound RAM at $8000 */
-        VLM5030_set_rom ((memory_region(2))+ 0x8000);
+        VLM5030_set_rom ((memory_region(REGION_CPU2))+ 0x8000);
         VLM5030_ST (1);
         VLM5030_ST (0);
 }
@@ -809,25 +811,25 @@ INPUT_PORTS_START( konamigt )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Unknown" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x20, "Normal" )
 	PORT_DIPSETTING(    0x10, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -870,8 +872,8 @@ INPUT_PORTS_START( rf2 )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -884,25 +886,25 @@ INPUT_PORTS_START( rf2 )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x20, "Normal" )
 	PORT_DIPSETTING(    0x10, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -967,8 +969,8 @@ INPUT_PORTS_START( gwarrior )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "7" )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "30k 100k 200k 400k" )
 	PORT_DIPSETTING(    0x10, "40k 120k 240k 480k" )
@@ -1041,8 +1043,8 @@ INPUT_PORTS_START( twinbee )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "7" )
 	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "30k and every 70k" )
 	PORT_DIPSETTING(    0x10, "40k and every 80k" )
@@ -1463,8 +1465,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      		/* 2 chips */
 	14318180/8,     /* 1.78975 Mhz */
-	{ 0xff, 0xff },
-	{ 0x20, 0x20 }, /* gain */
+	{ 30, 30 },
 	{ nemesis_portA_r, 0 },
 	{ 0, 0 },
 	{ 0, k005289_control_A_w },
@@ -2050,252 +2051,13 @@ ROM_END
 
 
 
-struct GameDriver driver_nemesis =
-{
-	__FILE__,
-	0,
-	"nemesis",
-	"Nemesis (hacked?)",
-	"1985",
-	"Konami",
-	"Allard van der Bas",
-	0,
-	&machine_driver_nemesis,
-	0,
-
-	rom_nemesis,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nemesis,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_nemesuk =
-{
-	__FILE__,
-	&driver_nemesis,
-	"nemesuk",
-	"Nemesis (World?)",
-	"1985",
-	"Konami",
-	"Allard van der Bas",
-	0,
-	&machine_driver_nemesis,
-	0,
-
-	rom_nemesuk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nemesuk,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_konamigt =
-{
-	__FILE__,
-	0,
-	"konamigt",
-	"Konami GT",
-	"1985",
-	"Konami",
-	"Allard van der Bas\nAndrew Prime",
-	0,
-	&machine_driver_konamigt,
-	0,
-
-	rom_konamigt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_konamigt,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rf2 =
-{
-	__FILE__,
-	&driver_konamigt,
-	"rf2",
-	"Konami RF2 - Red Fighter",
-	"1985",
-	"Konami",
-	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
-	0,
-	&machine_driver_rf2_gx400,
-	0,
-
-	rom_rf2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rf2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_twinbee =
-{
-	__FILE__,
-	0,
-	"twinbee",
-	"TwinBee",
-	"1985",
-	"Konami",
-	"Allard van der Bas\nNicola Salmoria\nAndrew Prime\nE.Watanabe",
-	0,
-	&machine_driver_twinbee_gx400,
-	0,
-
-	rom_twinbee,
-	0, 0,
-	0,
-	0,
-
-	input_ports_twinbee,
-
-	0, 0, 0,
-	ORIENTATION_SWAP_XY,
-	0,0
-};
-
-struct GameDriver driver_gradius =
-{
-	__FILE__,
-	&driver_nemesis,
-	"gradius",
-	"Gradius",
-	"1985",
-	"Konami",
-	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
-	0,
-	&machine_driver_gx400,
-	0,
-
-	rom_gradius,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gradius,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gwarrior =
-{
-	__FILE__,
-	0,
-	"gwarrior",
-	"Galactic Warriors",
-	"1985",
-	"Konami",
-	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
-	0,
-	&machine_driver_gx400,
-	0,
-
-	rom_gwarrior,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gwarrior,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_salamand =
-{
-	__FILE__,
-	0,
-	"salamand",
-	"Salamander",
-	"1986",
-	"Konami",
-	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
-	0,
-	&machine_driver_salamand,
-	0,
-
-	rom_salamand,
-	0, 0,
-	0,
-	0,
-
-	input_ports_salamand,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_lifefrce =
-{
-	__FILE__,
-	&driver_salamand,
-	"lifefrce",
-	"Lifeforce (US)",
-	"1986",
-	"Konami",
-	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
-	0,
-	&machine_driver_salamand,
-	0,
-
-	rom_lifefrce,
-	0, 0,
-	0,
-	0,
-
-	input_ports_salamand,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_lifefrcj =
-{
-	__FILE__,
-	&driver_salamand,
-	"lifefrcj",
-	"Lifeforce (Japan)",
-	"1986",
-	"Konami",
-	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
-	0,
-	&machine_driver_salamand,
-	0,
-
-	rom_lifefrcj,
-	0, 0,
-	0,
-	0,
-
-        input_ports_lifefrcj,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1985, nemesis,  0,        nemesis,       nemesis,  0, ROT0, "Konami", "Nemesis (hacked?)" )
+GAME( 1985, nemesuk,  nemesis,  nemesis,       nemesuk,  0, ROT0, "Konami", "Nemesis (World?)" )
+GAME( 1985, konamigt, 0,        konamigt,      konamigt, 0, ROT0, "Konami", "Konami GT" )
+GAME( 1985, rf2,      konamigt, rf2_gx400,     rf2,      0, ROT0, "Konami", "Konami RF2 - Red Fighter" )
+GAME( 1985, twinbee,  0,        twinbee_gx400, twinbee,  0, ORIENTATION_SWAP_XY, "Konami", "TwinBee" )
+GAME( 1985, gradius,  nemesis,  gx400,         gradius,  0, ROT0, "Konami", "Gradius" )
+GAME( 1985, gwarrior, 0,        gx400,         gwarrior, 0, ROT0, "Konami", "Galactic Warriors" )
+GAME( 1986, salamand, 0,        salamand,      salamand, 0, ROT0, "Konami", "Salamander" )
+GAME( 1986, lifefrce, salamand, salamand,      salamand, 0, ROT0, "Konami", "Lifeforce (US)" )
+GAME( 1986, lifefrcj, salamand, salamand,      lifefrcj, 0, ROT0, "Konami", "Lifeforce (Japan)" )

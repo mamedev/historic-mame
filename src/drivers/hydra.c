@@ -270,8 +270,8 @@ static struct GfxLayout anlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 4, 0x000000, &pflayout, 0x300, 8 },
-	{ 4, 0x0a0000, &anlayout, 0x100, 16 },
+	{ REGION_GFX1, 0, &pflayout, 0x300, 8 },
+	{ REGION_GFX2, 0, &anlayout, 0x100, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -283,7 +283,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_hydra =
 {
 	/* basic machine hardware */
 	{
@@ -329,7 +329,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-static void hydra_init(void)
+static void init_hydra(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x078000, 116);
@@ -352,7 +352,7 @@ static void hydra_init(void)
 }
 
 
-static void hydrap_init(void)
+static void init_hydrap(void)
 {
 	atarigen_eeprom_default = NULL;
 
@@ -373,7 +373,7 @@ static void hydrap_init(void)
 }
 
 
-static void pitfight_init(void)
+static void init_pitfight(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 111);
@@ -418,12 +418,22 @@ ROM_START( hydra )
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, 0x619d7319 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
-	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, 0xb974d3d0 )
-	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, 0xa2eda15b )
-	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, 0xeb9eaeb7 )
+	ROM_REGIONX( 0x0a0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hydr1017.bin",  0x000000, 0x10000, 0xbd77b747 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "hydr1018.bin",  0x010000, 0x10000, 0x7c24e637 )
+	ROM_LOAD( "hydr1019.bin",  0x020000, 0x10000, 0xaa2fb07b )
+	ROM_LOAD( "hydr1020.bin",  0x030000, 0x10000, 0x906ccd98 )
+	ROM_LOAD( "hydr1021.bin",  0x040000, 0x10000, 0xf88cdac2 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "hydr1022.bin",  0x050000, 0x10000, 0xa9c612ff )
+	ROM_LOAD( "hydr1023.bin",  0x060000, 0x10000, 0xb706aa6e )
+	ROM_LOAD( "hydr1024.bin",  0x070000, 0x10000, 0xc49eac53 )
+	ROM_LOAD( "hydr1025.bin",  0x080000, 0x10000, 0x98b5b1a1 ) /* playfield plane 4 */
+	ROM_LOAD( "hydr1026.bin",  0x090000, 0x10000, 0xd68d44aa )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x020000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hydr1027.bin",  0x000000, 0x20000, 0xf9135b9b ) /* alphanumerics */
+
+	ROM_REGIONX( 0x100000, REGION_GFX3 )
 	ROM_LOAD_ODD ( "hydr1001.bin", 0x00000, 0x10000, 0x3f757a53 )
 	ROM_LOAD_EVEN( "hydr1002.bin", 0x00000, 0x10000, 0xa1169469 )
 	ROM_LOAD_ODD ( "hydr1003.bin", 0x20000, 0x10000, 0xaa21ec33 )
@@ -441,21 +451,11 @@ ROM_START( hydra )
 	ROM_LOAD_ODD ( "hydr1015.bin", 0xe0000, 0x10000, 0xcf7f69fd )
 	ROM_LOAD_EVEN( "hydr1016.bin", 0xe0000, 0x10000, 0x61aaf14f )
 
-	ROM_REGION_DISPOSE(0x0c0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hydr1017.bin",  0x000000, 0x10000, 0xbd77b747 ) /* playfield, planes 0-3 odd */
-	ROM_LOAD( "hydr1018.bin",  0x010000, 0x10000, 0x7c24e637 )
-	ROM_LOAD( "hydr1019.bin",  0x020000, 0x10000, 0xaa2fb07b )
-	ROM_LOAD( "hydr1020.bin",  0x030000, 0x10000, 0x906ccd98 )
-	ROM_LOAD( "hydr1021.bin",  0x040000, 0x10000, 0xf88cdac2 ) /* playfield, planes 0-3 even */
-	ROM_LOAD( "hydr1022.bin",  0x050000, 0x10000, 0xa9c612ff )
-	ROM_LOAD( "hydr1023.bin",  0x060000, 0x10000, 0xb706aa6e )
-	ROM_LOAD( "hydr1024.bin",  0x070000, 0x10000, 0xc49eac53 )
-	ROM_LOAD( "hydr1025.bin",  0x080000, 0x10000, 0x98b5b1a1 ) /* playfield plane 4 */
-	ROM_LOAD( "hydr1026.bin",  0x090000, 0x10000, 0xd68d44aa )
-
-	ROM_LOAD( "hydr1027.bin",  0x0a0000, 0x20000, 0xf9135b9b ) /* alphanumerics */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
+	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, 0xb974d3d0 )
+	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, 0xa2eda15b )
+	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, 0xeb9eaeb7 )
 ROM_END
-
 
 ROM_START( hydrap )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -472,12 +472,22 @@ ROM_START( hydrap )
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, BADCRC(0x619d7319) )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
-	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, BADCRC(0xb974d3d0) )
-	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, BADCRC(0xa2eda15b) )
-	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
+	ROM_REGIONX( 0x0a0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hydr1017.bin",  0x000000, 0x10000, 0xbd77b747 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "hydr1018.bin",  0x010000, 0x10000, 0x7c24e637 )
+	ROM_LOAD( "hydr1019.bin",  0x020000, 0x10000, 0xaa2fb07b )
+	ROM_LOAD( "hydpl03.bin",   0x030000, 0x10000, 0x1f0dfe60 )
+	ROM_LOAD( "hydr1021.bin",  0x040000, 0x10000, 0xf88cdac2 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "hydr1022.bin",  0x050000, 0x10000, 0xa9c612ff )
+	ROM_LOAD( "hydr1023.bin",  0x060000, 0x10000, 0xb706aa6e )
+	ROM_LOAD( "hydphi3.bin",   0x070000, 0x10000, 0x917e250c )
+	ROM_LOAD( "hydr1025.bin",  0x080000, 0x10000, 0x98b5b1a1 ) /* playfield plane 4 */
+	ROM_LOAD( "hydpl41.bin",   0x090000, 0x10000, 0x85f9afa6 )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x020000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hydalph.bin",   0x000000, 0x20000, 0x7dd2b062 ) /* alphanumerics */
+
+	ROM_REGIONX( 0x100000, REGION_GFX3 )
 	ROM_LOAD_ODD ( "hydmhi0.bin", 0x00000, 0x10000, 0x3c83b42d )
 	ROM_LOAD_EVEN( "hydmlo0.bin", 0x00000, 0x10000, 0x6d49650c )
 	ROM_LOAD_ODD ( "hydmhi1.bin", 0x20000, 0x10000, 0x689b3376 )
@@ -495,21 +505,11 @@ ROM_START( hydrap )
 	ROM_LOAD_ODD ( "hydmhi7.bin", 0xe0000, 0x10000, 0x71fc3e43 )
 	ROM_LOAD_EVEN( "hydmlo7.bin", 0xe0000, 0x10000, 0x7960b0c2 )
 
-	ROM_REGION_DISPOSE(0x0c0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hydr1017.bin",  0x000000, 0x10000, 0xbd77b747 ) /* playfield, planes 0-3 odd */
-	ROM_LOAD( "hydr1018.bin",  0x010000, 0x10000, 0x7c24e637 )
-	ROM_LOAD( "hydr1019.bin",  0x020000, 0x10000, 0xaa2fb07b )
-	ROM_LOAD( "hydpl03.bin",   0x030000, 0x10000, 0x1f0dfe60 )
-	ROM_LOAD( "hydr1021.bin",  0x040000, 0x10000, 0xf88cdac2 ) /* playfield, planes 0-3 even */
-	ROM_LOAD( "hydr1022.bin",  0x050000, 0x10000, 0xa9c612ff )
-	ROM_LOAD( "hydr1023.bin",  0x060000, 0x10000, 0xb706aa6e )
-	ROM_LOAD( "hydphi3.bin",   0x070000, 0x10000, 0x917e250c )
-	ROM_LOAD( "hydr1025.bin",  0x080000, 0x10000, 0x98b5b1a1 ) /* playfield plane 4 */
-	ROM_LOAD( "hydpl41.bin",   0x090000, 0x10000, 0x85f9afa6 )
-
-	ROM_LOAD( "hydalph.bin",   0x0a0000, 0x20000, 0x7dd2b062 ) /* alphanumerics */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
+	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, BADCRC(0xb974d3d0) )
+	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, BADCRC(0xa2eda15b) )
+	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
 ROM_END
-
 
 ROM_START( pitfight )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -522,13 +522,17 @@ ROM_START( pitfight )
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
-	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
-	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
-	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
-	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
+	ROM_REGIONX( 0x0a0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1017",  0x000000, 0x10000, 0xad3cfea5 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "1018",  0x010000, 0x10000, 0x1a0f8bcf )
+	ROM_LOAD( "1021",  0x040000, 0x10000, 0x777efee3 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "1022",  0x050000, 0x10000, 0x524319d0 )
+	ROM_LOAD( "1025",  0x080000, 0x10000, 0xfc41691a ) /* playfield plane 4 */
 
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x020000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1027",  0x000000, 0x10000, 0xa59f381d ) /* alphanumerics */
+
+	ROM_REGIONX( 0x200000, REGION_GFX3 )
 	ROM_LOAD_ODD ( "1001", 0x000000, 0x20000, 0x3af31444 )
 	ROM_LOAD_EVEN( "1002", 0x000000, 0x20000, 0xf1d76a4c )
 	ROM_LOAD_ODD ( "1003", 0x040000, 0x20000, 0x28c41c2a )
@@ -546,16 +550,12 @@ ROM_START( pitfight )
 	ROM_LOAD_ODD ( "1015", 0x1c0000, 0x20000, 0x9378ad0b )
 	ROM_LOAD_EVEN( "1016", 0x1c0000, 0x20000, 0x19c3fbe0 )
 
-	ROM_REGION_DISPOSE(0x0c0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1017",  0x000000, 0x10000, 0xad3cfea5 ) /* playfield, planes 0-3 odd */
-	ROM_LOAD( "1018",  0x010000, 0x10000, 0x1a0f8bcf )
-	ROM_LOAD( "1021",  0x040000, 0x10000, 0x777efee3 ) /* playfield, planes 0-3 even */
-	ROM_LOAD( "1022",  0x050000, 0x10000, 0x524319d0 )
-	ROM_LOAD( "1025",  0x080000, 0x10000, 0xfc41691a ) /* playfield plane 4 */
-
-	ROM_LOAD( "1027",  0x0a0000, 0x10000, 0xa59f381d ) /* alphanumerics */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
+	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
+	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
+	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
 ROM_END
-
 
 ROM_START( pitfigh3 )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
@@ -568,13 +568,17 @@ ROM_START( pitfigh3 )
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
-	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
-	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
-	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
-	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
+	ROM_REGIONX( 0x0a0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1017",  0x000000, 0x10000, 0xad3cfea5 ) /* playfield, planes 0-3 odd */
+	ROM_LOAD( "1018",  0x010000, 0x10000, 0x1a0f8bcf )
+	ROM_LOAD( "1021",  0x040000, 0x10000, 0x777efee3 ) /* playfield, planes 0-3 even */
+	ROM_LOAD( "1022",  0x050000, 0x10000, 0x524319d0 )
+	ROM_LOAD( "1025",  0x080000, 0x10000, 0xfc41691a ) /* playfield plane 4 */
 
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x020000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1027",  0x000000, 0x10000, 0xa59f381d ) /* alphanumerics */
+
+	ROM_REGIONX( 0x200000, REGION_GFX3 )
 	ROM_LOAD_ODD ( "1001", 0x000000, 0x20000, 0x3af31444 )
 	ROM_LOAD_EVEN( "1002", 0x000000, 0x20000, 0xf1d76a4c )
 	ROM_LOAD_ODD ( "1003", 0x040000, 0x20000, 0x28c41c2a )
@@ -592,14 +596,11 @@ ROM_START( pitfigh3 )
 	ROM_LOAD_ODD ( "1015", 0x1c0000, 0x20000, 0x9378ad0b )
 	ROM_LOAD_EVEN( "1016", 0x1c0000, 0x20000, 0x19c3fbe0 )
 
-	ROM_REGION_DISPOSE(0x0c0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1017",  0x000000, 0x10000, 0xad3cfea5 ) /* playfield, planes 0-3 odd */
-	ROM_LOAD( "1018",  0x010000, 0x10000, 0x1a0f8bcf )
-	ROM_LOAD( "1021",  0x040000, 0x10000, 0x777efee3 ) /* playfield, planes 0-3 even */
-	ROM_LOAD( "1022",  0x050000, 0x10000, 0x524319d0 )
-	ROM_LOAD( "1025",  0x080000, 0x10000, 0xfc41691a ) /* playfield plane 4 */
-
-	ROM_LOAD( "1027",  0x0a0000, 0x10000, 0xa59f381d ) /* alphanumerics */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
+	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
+	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
+	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
+	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
 ROM_END
 
 
@@ -610,109 +611,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver driver_hydra =
-{
-	__FILE__,
-	0,
-	"hydra",
-	"Hydra",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	hydra_init,
-
-	rom_hydra,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_hydra,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_hydrap =
-{
-	__FILE__,
-	&driver_hydra,
-	"hydrap",
-	"Hydra (prototype)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	hydrap_init,
-
-	rom_hydrap,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_hydra,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_pitfight =
-{
-	__FILE__,
-	0,
-	"pitfight",
-	"Pit Fighter (version 4)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	pitfight_init,
-
-	rom_pitfight,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_pitfight,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_pitfigh3 =
-{
-	__FILE__,
-	&driver_pitfight,
-	"pitfigh3",
-	"Pit Fighter (version 3)",
-	"1990",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	pitfight_init,
-
-	rom_pitfigh3,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_pitfight,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1990, hydra,    0,        hydra, hydra,    hydra,    ROT0, "Atari Games", "Hydra" )
+GAME( 1990, hydrap,   hydra,    hydra, hydra,    hydrap,   ROT0, "Atari Games", "Hydra (prototype)" )
+GAME( 1990, pitfight, 0,        hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 4)" )
+GAME( 1990, pitfigh3, pitfight, hydra, pitfight, pitfight, ROT0, "Atari Games", "Pit Fighter (version 3)" )

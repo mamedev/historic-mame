@@ -250,7 +250,6 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
 	{ YM2203_VOL(10,15), YM2203_VOL(10,15) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -471,6 +470,6 @@ ROM_END
 
 
 
-GAME( 1987, 1943,    ,     1943, 1943, , ROT270, "Capcom", "1943 - The Battle of Midway (US)" )
-GAME( 1987, 1943j,   1943, 1943, 1943, , ROT270, "Capcom", "1943 - The Battle of Midway (Japan)" )
-GAME( 1987, 1943kai, ,     1943, 1943, , ROT270, "Capcom", "1943 Kai" )
+GAME( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)" )
+GAME( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)" )
+GAME( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai" )

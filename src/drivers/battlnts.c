@@ -460,7 +460,7 @@ ROM_END
 
 
 
-GAME( 1987, battlnts, ,         battlnts, battlnts, , ROT90, "Konami", "Battlantis" )
-GAME( 1987, battlntj, battlnts, battlnts, battlnts, , ROT90, "Konami", "Battlantis (Japan)" )
-GAME( 1987, thehustl, ,         battlnts, thehustj, , ROT90, "Konami", "The Hustler (Japan version M)" )
-GAME( 1987, thehustj, thehustl, battlnts, thehustj, , ROT90, "Konami", "The Hustler (Japan version J)" )
+GAME( 1987, battlnts, 0,        battlnts, battlnts, 0, ROT90, "Konami", "Battlantis" )
+GAME( 1987, battlntj, battlnts, battlnts, battlnts, 0, ROT90, "Konami", "Battlantis (Japan)" )
+GAME( 1987, thehustl, 0,        battlnts, thehustj, 0, ROT90, "Konami", "The Hustler (Japan version M)" )
+GAME( 1987, thehustj, thehustl, battlnts, thehustj, 0, ROT90, "Konami", "The Hustler (Japan version J)" )

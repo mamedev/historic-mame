@@ -627,7 +627,7 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	6			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static const char *xevious_sample_names[] =
@@ -747,7 +747,7 @@ ROM_START( xevious )
 	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
 	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -787,7 +787,7 @@ ROM_START( xeviousa )
 	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
 	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -830,7 +830,7 @@ ROM_START( xevios )
 	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
 	ROM_LOAD( "12.3d",        0x3000, 0x1000, 0x51a4e83b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
@@ -879,7 +879,7 @@ ROM_START( sxevious )
 	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
 	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END

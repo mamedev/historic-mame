@@ -23,7 +23,6 @@ static int Sound2Base;
 static int Sound2Mask;
 static unsigned char LastPort1;
 
-#define SOUND_MEMORY_REGION	3
 
 static unsigned char waveform[32] =
 {
@@ -88,9 +87,9 @@ void rockola_sh_update(void)
 
 	if (!NoSound0)
 	{
- 		if (memory_region(SOUND_MEMORY_REGION)[Sound0Base+Sound0Offset]!=0xff)
+ 		if (memory_region(REGION_SOUND1)[Sound0Base+Sound0Offset]!=0xff)
 		{
- 			osd_set_sample_freq(tonechannels+0,(32000 / (256-memory_region(SOUND_MEMORY_REGION)[Sound0Base+Sound0Offset])) * 16);
+ 			osd_set_sample_freq(tonechannels+0,(32000 / (256-memory_region(REGION_SOUND1)[Sound0Base+Sound0Offset])) * 16);
  			mixer_set_volume(tonechannels+0,100);
 		}
 		else
@@ -104,9 +103,9 @@ void rockola_sh_update(void)
 
 	if (!NoSound1)
 	{
-		if (memory_region(SOUND_MEMORY_REGION)[Sound1Base+Sound1Offset]!=0xff)
+		if (memory_region(REGION_SOUND1)[Sound1Base+Sound1Offset]!=0xff)
 		{
-			osd_set_sample_freq(tonechannels+1,(32000 / (256-memory_region(SOUND_MEMORY_REGION)[Sound1Base+Sound1Offset])) * 16);
+			osd_set_sample_freq(tonechannels+1,(32000 / (256-memory_region(REGION_SOUND1)[Sound1Base+Sound1Offset])) * 16);
 			mixer_set_volume(tonechannels+1,100);
 		}
 		else
@@ -118,9 +117,9 @@ void rockola_sh_update(void)
 
 	if (!NoSound2)
 	{
-		if (memory_region(SOUND_MEMORY_REGION)[Sound2Base+Sound2Offset]!=0xff)
+		if (memory_region(REGION_SOUND1)[Sound2Base+Sound2Offset]!=0xff)
 		{
-			osd_set_sample_freq(tonechannels+2,(32000 / (256-memory_region(SOUND_MEMORY_REGION)[Sound2Base+Sound2Offset])) * 16);
+			osd_set_sample_freq(tonechannels+2,(32000 / (256-memory_region(REGION_SOUND1)[Sound2Base+Sound2Offset])) * 16);
 			mixer_set_volume(tonechannels+2,100);
 		}
 		else

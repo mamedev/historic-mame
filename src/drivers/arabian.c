@@ -242,7 +242,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz?????? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -326,5 +325,5 @@ ROM_END
 
 
 
-GAMEX( 1983, arabian,  ,        arabian, arabian, , ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS )
-GAMEX( 1983, arabiana, arabian, arabian, arabian, , ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, arabian,  0,       arabian, arabian, 0, ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, arabiana, arabian, arabian, arabian, 0, ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS )

@@ -71,8 +71,8 @@ INPUT_PORTS_START( avalnche )
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x04, 0x04, "Allow Extended Play" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x08, 0x00, "Lives/Extended Play" )
 	PORT_DIPSETTING(    0x00, "3/450 points" )
 	PORT_DIPSETTING(    0x08, "5/750 points" )
@@ -187,4 +187,4 @@ static void init_avalnche(void)
 
 
 
-GAME( 1978, avalnche, , avalnche, avalnche, avalnche, ROT0, "Atari", "Avalanche" )
+GAME( 1978, avalnche, 0, avalnche, avalnche, avalnche, ROT0, "Atari", "Avalanche" )

@@ -467,7 +467,7 @@ void load_oproms(void)
 
 
 /* Init mathbox (only called once) */
-void irmb_init(void)
+void init_irobot(void)
 {
 	int i;
 	for (i = 0; i < 16; i++)

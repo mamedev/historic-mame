@@ -150,7 +150,7 @@ void spiders_vrif_w(int address,int data)
 int spiders_vrom_r(int address)
 {
 	int retval;
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_GFX1);
 
 	if(vrom_ctrl_mode)
 	{

@@ -158,11 +158,11 @@ void rtype2_sample_addr_w(int offset,int data)
 
 int m72_sample_r(int offset)
 {
-	return memory_region(3)[sample_addr];
+	return memory_region(REGION_SOUND1)[sample_addr];
 }
 
 void m72_sample_w(int offset,int data)
 {
 	DAC_signed_data_w(0,data);
-	sample_addr = (sample_addr + 1) & (memory_region_length(3) - 1);
+	sample_addr = (sample_addr + 1) & (memory_region_length(REGION_SOUND1) - 1);
 }

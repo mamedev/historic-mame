@@ -665,29 +665,29 @@ static struct GfxLayout charlayout512 =
 
 static struct GfxDecodeInfo sasuke_gfxdecodeinfo[] =
 {
-    { 0, 0x1000, &swapcharlayout256,   0, 4 },	/* the game dynamically modifies this */
-    { 1, 0x0000, &swapcharlayout256, 4*4, 4 },
+    { 0,           0x1000, &swapcharlayout256,   0, 4 },	/* the game dynamically modifies this */
+    { REGION_GFX1, 0x0000, &swapcharlayout256, 4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo satansat_gfxdecodeinfo[] =
 {
-    { 0, 0x1000, &charlayout256,   0, 4 },	/* the game dynamically modifies this */
-    { 1, 0x0000, &charlayout256, 4*4, 4 },
+    { 0,           0x1000, &charlayout256,   0, 4 },	/* the game dynamically modifies this */
+    { REGION_GFX1, 0x0000, &charlayout256, 4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo vanguard_gfxdecodeinfo[] =
 {
-	{ 0, 0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &charlayout256, 8*4, 8 },
+	{ 0,           0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &charlayout256, 8*4, 8 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo fantasy_gfxdecodeinfo[] =
 {
-	{ 0, 0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
-	{ 1, 0x0000, &charlayout512, 8*4, 8 },
+	{ 0,           0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &charlayout512, 8*4, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -900,12 +900,12 @@ ROM_START( sasuke )
 	ROM_LOAD( "sc6",          0x6800, 0x0800, 0x80406afb )
 	ROM_LOAD( "sc7",          0x7000, 0x0800, 0x04d0f104 )
 	ROM_LOAD( "sc8",          0x7800, 0x0800, 0x0219104b )
-	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "sc9",          0x8000, 0x0800, 0xd6ff889a )
 	ROM_LOAD( "sc10",         0x8800, 0x0800, 0x19df6b9a )
 	ROM_LOAD( "sc11",         0x9000, 0x0800, 0x24a0e121 )
 
-	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mcs_c",        0x0000, 0x0800, 0xaff9743d )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x9c805120 )
 
@@ -930,14 +930,14 @@ ROM_START( satansat )
 	ROM_LOAD( "ss10",         0x8800, 0x0800, 0x8f1b313a )
 	ROM_LOAD( "ss11",         0x9000, 0x0800, 0xe74f98e0 )
 
-	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zarz135.73",   0x0000, 0x0800, 0xe837c62b )
 	ROM_LOAD( "zarz136.75",   0x0800, 0x0800, 0x83f61623 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
-    ROM_REGION( 0x1000 )  /* sound data for Vanguard-style audio section */
+    ROM_REGIONX( 0x1000, REGION_SOUND1 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "ss12",         0x0000, 0x0800, 0xdee01f24 )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, 0x580934d2 )
 ROM_END
@@ -957,14 +957,14 @@ ROM_START( zarzon )
 	ROM_LOAD( "zarz131.23",   0x8800, 0x0800, 0x7be20678 )
 	ROM_LOAD( "zarz132.24",   0x9000, 0x0800, 0x72b2cb76 )
 
-	ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zarz135.73",   0x0000, 0x0800, 0xe837c62b )
 	ROM_LOAD( "zarz136.75",   0x0800, 0x0800, 0x83f61623 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
-    ROM_REGION( 0x1000 )  /* sound data for Vanguard-style audio section */
+    ROM_REGIONX( 0x1000, REGION_SOUND1 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "zarz133.53",   0x0000, 0x0800, 0xb253cf78 )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, 0x580934d2 )
 ROM_END
@@ -981,7 +981,7 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk4_ic15.bin", 0xa000, 0x1000, 0x8549b8f8 )
 	ROM_LOAD( "sk4_ic16.bin", 0xb000, 0x1000, 0x062e0be2 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0xe7d4315b )
 	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x96e87858 )
 
@@ -989,11 +989,11 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
-	ROM_REGION( 0x1000 )	/* space for the sound ROMs */
+	ROM_REGIONX( 0x1000, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* sound ROM 1 */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* sound ROM 2 */
 
-	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_REGIONX( 0x1800, REGION_SOUND2 )	/* space for the speech ROMs (not supported) */
 	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, 0x2b7cbae9 )
 	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, 0x3b7e9d7c )
 	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, 0xc36df041 )
@@ -1011,7 +1011,7 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk4_ic15.bin", 0xa000, 0x1000, 0x8549b8f8 )
 	ROM_LOAD( "8",            0xb000, 0x1000, 0x4b825bc8 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0xe7d4315b )
 	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x96e87858 )
 
@@ -1019,11 +1019,11 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
-	ROM_REGION( 0x1000 )	/* space for the sound ROMs */
+	ROM_REGIONX( 0x1000, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* missing, using the SNK one */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* missing, using the SNK one */
 
-	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_REGIONX( 0x1800, REGION_SOUND2 )	/* space for the speech ROMs (not supported) */
 	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, 0x2b7cbae9 )
 	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, 0x3b7e9d7c )
 	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, 0xc36df041 )
@@ -1042,7 +1042,7 @@ ROM_START( fantasy )
 	ROM_LOAD( "ic16.cpu",        0xa000, 0x1000, 0x6c2aeb6e )
 	ROM_LOAD( "ic17.cpu",        0xb000, 0x1000, 0xf6aa5de1 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, 0x86a801c3 )
 	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, 0x9dfff71c )
 
@@ -1050,12 +1050,12 @@ ROM_START( fantasy )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
-	ROM_REGION( 0x1800 )	/* space for the sound ROMs */
+	ROM_REGIONX( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, 0x48094ec5 )
 	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, 0x1d0316e8 )
 	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, 0x49fd4ae8 )
 
-	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_REGIONX( 0x1800, REGION_SOUND2 )	/* space for the speech ROMs (not supported) */
 	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, 0xa7ef4cc6 )
 	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, 0x19b8fb3e )
 	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, 0x3a352e1f )
@@ -1074,7 +1074,7 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fs8jic16.bin",    0xa000, 0x1000, 0xae5bf727 )
 	ROM_LOAD( "fs9jic17.bin",    0xb000, 0x1000, 0xfa6903e2 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, 0x86a801c3 )
 	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, 0x9dfff71c )
 
@@ -1082,12 +1082,12 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
-	ROM_REGION( 0x1800 )	/* space for the sound ROMs */
+	ROM_REGIONX( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, 0x48094ec5 )
 	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, 0x1d0316e8 )
 	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, 0x49fd4ae8 )
 
-	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_REGIONX( 0x1800, REGION_SOUND2 )	/* space for the speech ROMs (not supported) */
 	ROM_LOAD( "fs_d_7.bin",      0x0000, 0x0800, 0xa7ef4cc6 )
 	ROM_LOAD( "fs_e_8.bin",      0x0800, 0x0800, 0x19b8fb3e )
 	ROM_LOAD( "fs_f_11.bin",     0x1000, 0x0800, 0x3a352e1f )
@@ -1104,7 +1104,7 @@ ROM_START( pballoon )
 	ROM_RELOAD(               0xf000, 0x1000 )  /* for the reset and interrupt vectors */
 	ROM_LOAD( "sk7_ic15.bin", 0x9000, 0x1000, 0x1f78d814 )
 
-	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "sk8_ic50.bin", 0x0000, 0x1000, 0x560df07f )
 	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd415de51 )
 
@@ -1112,7 +1112,7 @@ ROM_START( pballoon )
 	ROM_LOAD( "sk8_ic7.bin",  0x0000, 0x0020, 0xef6c82a0 ) /* foreground colors */
 	ROM_LOAD( "sk8_ic6.bin",  0x0020, 0x0020, 0xeabc6a00 ) /* background colors */
 
-	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
+	ROM_REGIONX( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0x5d6d68ea )
 	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0xa4c505cd )
@@ -1131,7 +1131,7 @@ ROM_START( nibbler )
 	ROM_LOAD( "g960-55.16",   0xa000, 0x1000, 0x4bb39815 )
 	ROM_LOAD( "g960-56.17",   0xb000, 0x1000, 0xed680f19 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
 	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
 
@@ -1139,7 +1139,7 @@ ROM_START( nibbler )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
-	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
+	ROM_REGIONX( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
 	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
@@ -1153,12 +1153,12 @@ ROM_START( nibblera )
 	ROM_LOAD( "ic09",         0x6000, 0x1000, 0xa599df10 )
 	ROM_LOAD( "ic10",         0x7000, 0x1000, 0xa6b5abe5 )
 	ROM_LOAD( "ic14",         0x8000, 0x1000, 0x9f537185 )
-	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "g960-54.15",   0x9000, 0x1000, 0x7205fb8d )
 	ROM_LOAD( "g960-55.16",   0xa000, 0x1000, 0x4bb39815 )
 	ROM_LOAD( "g960-56.17",   0xb000, 0x1000, 0xed680f19 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
 	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
 
@@ -1166,7 +1166,7 @@ ROM_START( nibblera )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
-	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
+	ROM_REGIONX( 0x1800, REGION_SOUND1 )	/* sound ROMs */
 	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
 	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
@@ -1174,256 +1174,13 @@ ROM_END
 
 
 
-struct GameDriver driver_sasuke =
-{
-	__FILE__,
-	0,
-	"sasuke",
-	"Sasuke vs. Commander",
-	"1980",
-	"SNK",
-	"Dan Boris\nTheo Philips",
-	0,
-	&machine_driver_sasuke,
-	0,
-
-	rom_sasuke,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sasuke,
-
-	0, 0, 0,
-	ROT90 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_satansat =
-{
-	__FILE__,
-	0,
-	"satansat",
-	"Satan of Saturn",
-	"1981",
-	"SNK",
-	"Dan Boris\nTheo Philips",
-	0,
-	&machine_driver_satansat,
-	0,
-
-	rom_satansat,
-	0, 0,
-	0,
-	0,
-
-	input_ports_satansat,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_zarzon =
-{
-	__FILE__,
-	&driver_satansat,
-	"zarzon",
-	"Zarzon",
-	"1981",
-	"[SNK] (Taito America license)",
-	"Dan Boris\nTheo Philips",
-	0,
-	&machine_driver_satansat,
-	0,
-
-	rom_zarzon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_satansat,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_vanguard =
-{
-	__FILE__,
-	0,
-	"vanguard",
-	"Vanguard (SNK)",
-	"1981",
-	"SNK",
-	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
-	0,
-	&machine_driver_vanguard,
-	0,
-
-	rom_vanguard,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vanguard,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_vangrdce =
-{
-	__FILE__,
-	&driver_vanguard,
-	"vangrdce",
-	"Vanguard (Centuri)",
-	"1981",
-	"SNK (Centuri license)",
-	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
-	0,
-	&machine_driver_vanguard,
-	0,
-
-	rom_vangrdce,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vanguard,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_fantasy =
-{
-	__FILE__,
-	0,
-	"fantasy",
-	"Fantasy (US)",
-	"1981",
-	"[SNK] (Rock-ola license)",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	0,
-	&machine_driver_fantasy,
-	0,
-
-	rom_fantasy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fantasy,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_fantasyj =
-{
-	__FILE__,
-	&driver_fantasy,
-	"fantasyj",
-	"Fantasy (Japan)",
-	"1981",
-	"SNK",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	0,
-	&machine_driver_fantasy,
-	0,
-
-	rom_fantasyj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fantasy,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_pballoon =
-{
-	__FILE__,
-	0,
-	"pballoon",
-	"Pioneer Balloon",
-	"1982",
-	"SNK",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	0,
-	&machine_driver_pballoon,
-	0,
-
-	rom_pballoon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pballoon,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_nibbler =
-{
-	__FILE__,
-	0,
-	"nibbler",
-	"Nibbler (set 1)",
-	"1982",
-	"Rock-ola",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
-	0,
-	&machine_driver_fantasy,
-	0,
-
-	rom_nibbler,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nibbler,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_nibblera =
-{
-	__FILE__,
-	&driver_nibbler,
-	"nibblera",
-	"Nibbler (set 2)",
-	"1982",
-	"Rock-ola",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
-	0,
-	&machine_driver_fantasy,
-	0,
-
-	rom_nibblera,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nibbler,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_SOUND,
-	0,0
-};
+GAMEX( 1980, sasuke,   0,        sasuke,   sasuke,   0, ROT90, "SNK", "Sasuke vs. Commander", GAME_NO_SOUND )
+GAMEX( 1981, satansat, 0,        satansat, satansat, 0, ROT90, "SNK", "Satan of Saturn", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, zarzon,   satansat, satansat, satansat, 0, ROT90, "[SNK] (Taito America license)", "Zarzon", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, vanguard, 0,        vanguard, vanguard, 0, ROT90, "SNK", "Vanguard (SNK)", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, vangrdce, vanguard, vanguard, vanguard, 0, ROT90, "SNK (Centuri license)", "Vanguard (Centuri)", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, fantasy,  0,        fantasy,  fantasy,  0, ROT90, "[SNK] (Rock-ola license)", "Fantasy (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1981, fantasyj, fantasy,  fantasy,  fantasy,  0, ROT90, "SNK", "Fantasy (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, pballoon, 0,        pballoon, pballoon, 0, ROT90, "SNK", "Pioneer Balloon", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, nibbler,  0,        fantasy,  nibbler,  0, ROT90, "Rock-ola", "Nibbler (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX( 1982, nibblera, nibbler,  fantasy,  nibbler,  0, ROT90, "Rock-ola", "Nibbler (set 2)", GAME_IMPERFECT_SOUND )

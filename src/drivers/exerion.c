@@ -201,7 +201,7 @@ static struct GfxLayout bgcharlayout =
     64*32            /* every char takes 16 consecutive bytes */
 };
 
-/* 16 x 16 sprites -- requires reorganizing characters in exerion_decode() */
+/* 16 x 16 sprites -- requires reorganizing characters in init_exerion() */
 static struct GfxLayout spritelayout =
 {
     16,16,          /* 16*16 sprites */
@@ -248,7 +248,6 @@ static struct AY8910interface ay8910_interface =
     2,  /* 2 chips */
     10000000/6, /* 1.666 MHz */
     { 30, 30 },
-    AY8910_DEFAULT_GAIN,
     { 0, exerion_porta_r },
     { 0 },
     { 0 },
@@ -257,7 +256,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exerion =
 {
     /* basic machine hardware */
     {
@@ -391,7 +390,7 @@ ROM_END
 
 
 
-static void exerion_decode(void)
+static void init_exerion(void)
 {
     int i, x, offs;
     unsigned char *RAM;
@@ -457,7 +456,7 @@ static void exerion_decode(void)
     }
 }
 
-static void exerionb_decode(void)
+static void init_exerionb(void)
 {
     int A;
     unsigned char *RAM = memory_region(REGION_CPU1);
@@ -468,82 +467,11 @@ static void exerionb_decode(void)
         RAM[A] = (RAM[A] & 0xf9) | ((RAM[A] & 2) << 1) | ((RAM[A] & 4) >> 1);
 
     /* also convert the gfx as in Exerion */
-    exerion_decode();
+    init_exerion();
 }
 
 
 
-struct GameDriver driver_exerion =
-{
-    __FILE__,
-    0,
-    "exerion",
-    "Exerion",
-    "1983",
-    "Jaleco",
-    "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
-    0,
-    &machine_driver,
-    exerion_decode,
-
-    rom_exerion,
-    0, 0,
-    0,
-    0,
-
-    input_ports_exerion,
-
-    0, 0, 0,
-    ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
-
-struct GameDriver driver_exeriont =
-{
-    __FILE__,
-    &driver_exerion,
-    "exeriont",
-    "Exerion (Taito)",
-    "1983",
-    "Jaleco (Taito America license)",
-    "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
-    0,
-    &machine_driver,
-    exerion_decode,
-
-    rom_exeriont,
-    0, 0,
-    0,
-    0,
-
-    input_ports_exerion,
-
-    0, 0, 0,
-    ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
-
-struct GameDriver driver_exerionb =
-{
-    __FILE__,
-    &driver_exerion,
-    "exerionb",
-    "Exerion (bootleg)",
-    "1983",
-    "Jaleco",
-    "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
-    0,
-    &machine_driver,
-    exerionb_decode,
-
-    rom_exerionb,
-    0, 0,
-    0,
-    0,
-
-    input_ports_exerion,
-
-    0, 0, 0,
-    ROT90 | GAME_WRONG_COLORS,
-	0,0
-};
+GAMEX( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", GAME_WRONG_COLORS )
+GAMEX( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", GAME_WRONG_COLORS )
+GAMEX( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", GAME_WRONG_COLORS )

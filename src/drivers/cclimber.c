@@ -351,11 +351,11 @@ INPUT_PORTS_START( rpatrolb )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x0020, 0x00, "Unknown 1" )  /* Probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x0020, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x0020, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Unknown 2" )  /* Probably unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Memory Test" )
 	PORT_DIPSETTING(    0x00, "Retry on Error" )
 	PORT_DIPSETTING(    0x80, "Stop on Error" )
@@ -420,7 +420,6 @@ static struct AY8910interface ay8910_interface =
 	1,      /* 1 chip */
 	1536000,	/* 1.536 MHz */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ cclimber_sample_select_w },
@@ -1009,20 +1008,6 @@ ROM_END
 
 
 
-GAME( 1980, cclimber, ,         cclimber, cclimber, cclimber, ROT0,   "Nichibutsu", "Crazy Climber (US)" )
-GAME( 1980, cclimbrj, cclimber, cclimber, cclimber, cclimbrj, ROT0,   "Nichibutsu", "Crazy Climber (Japan)" )
-GAME( 1980, ccboot,   cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 1)" )
-GAME( 1980, ccboot2,  cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 2)" )
-GAME( 1981, ckong,    ,         cclimber, ckong,    ,         ROT270, "Falcon", "Crazy Kong (set 1)" )
-GAME( 1981, ckonga,   ckong,    cclimber, ckong,    ,         ROT270, "Falcon", "Crazy Kong (set 2)" )
-GAME( 1981, ckongjeu, ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Jeutel bootleg)" )
-GAME( 1981, ckongo,   ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Orca bootleg)" )
-GAME( 1981, ckongalc, ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Crazy Kong (Alca bootleg)" )
-GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    ,         ROT270, "bootleg", "Monkey Donkey" )
-GAME( ????, rpatrolb, ,         cclimber, rpatrolb, ,         ROT0,   "bootleg", "River Patrol (bootleg)" )
-GAME( ????, silvland, rpatrolb, cclimber, rpatrolb, ,         ROT0,   "Falcon", "Silver Land" )
-
-
 
 
 /***************************************************************************
@@ -1288,7 +1273,6 @@ static struct AY8910interface swimmer_ay8910_interface =
 	2,      /* 2 chips */
 	4000000/2,	/* 2 MHz */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1438,6 +1422,19 @@ ROM_END
 
 
 
-GAME( 1982, swimmer,  ,        swimmer, swimmer, , ROT0,  "Tehkan", "Swimmer (set 1)" )
-GAME( 1982, swimmera, swimmer, swimmer, swimmer, , ROT0,  "Tehkan", "Swimmer (set 2)" )
-GAME( 1983, guzzler,  ,        swimmer, guzzler, , ROT90, "Tehkan", "Guzzler" )
+GAME( 1980, cclimber, 0,        cclimber, cclimber, cclimber, ROT0,   "Nichibutsu", "Crazy Climber (US)" )
+GAME( 1980, cclimbrj, cclimber, cclimber, cclimber, cclimbrj, ROT0,   "Nichibutsu", "Crazy Climber (Japan)" )
+GAME( 1980, ccboot,   cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 1)" )
+GAME( 1980, ccboot2,  cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 2)" )
+GAME( 1981, ckong,    0,        cclimber, ckong,    0,        ROT270, "Falcon", "Crazy Kong (set 1)" )
+GAME( 1981, ckonga,   ckong,    cclimber, ckong,    0,        ROT270, "Falcon", "Crazy Kong (set 2)" )
+GAME( 1981, ckongjeu, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Jeutel bootleg)" )
+GAME( 1981, ckongo,   ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Orca bootleg)" )
+GAME( 1981, ckongalc, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Alca bootleg)" )
+GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Monkey Donkey" )
+GAME( ????, rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)" )
+GAME( ????, silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land" )
+
+GAME( 1982, swimmer,  0,       swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 1)" )
+GAME( 1982, swimmera, swimmer, swimmer, swimmer, 0, ROT0,  "Tehkan", "Swimmer (set 2)" )
+GAME( 1983, guzzler,  0,       swimmer, guzzler, 0, ROT90, "Tehkan", "Guzzler" )

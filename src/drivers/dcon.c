@@ -234,18 +234,18 @@ static struct GfxLayout dcon_spritelayout =
 
 static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &dcon_charlayout,    1024+768, 16 },
-	{ 1, 0x020000, &dcon_tilelayout,    1024+0,   16 },
-	{ 1, 0x0a0000, &dcon_tilelayout,    1024+512, 16 },
-	{ 1, 0x120000, &dcon_tilelayout,    1024+256, 16 },
-	{ 1, 0x1a0000, &dcon_spritelayout,         0, 64 },
+	{ REGION_GFX1, 0, &dcon_charlayout,    1024+768, 16 },
+	{ REGION_GFX2, 0, &dcon_tilelayout,    1024+0,   16 },
+	{ REGION_GFX3, 0, &dcon_tilelayout,    1024+512, 16 },
+	{ REGION_GFX4, 0, &dcon_tilelayout,    1024+256, 16 },
+	{ REGION_GFX5, 0, &dcon_spritelayout,         0, 64 },
 	{ -1 } /* end of array */
 };
 
 /******************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,3);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,REGION_SOUND1);
 
 static struct MachineDriver machine_driver_dcon =
 {
@@ -288,61 +288,46 @@ static struct MachineDriver machine_driver_dcon =
 /***************************************************************************/
 
 ROM_START( dcon )
-	ROM_REGIONX(0x80000, REGION_CPU1)
+	ROM_REGIONX( 0x80000, REGION_CPU1 )
 	ROM_LOAD_EVEN("p0-0",   0x000000, 0x20000, 0xa767ec15 )
 	ROM_LOAD_ODD ("p0-1",   0x000000, 0x20000, 0xa7efa091 )
 	ROM_LOAD_EVEN("p1-0",   0x040000, 0x20000, 0x3ec1ef7d )
 	ROM_LOAD_ODD ("p1-1",   0x040000, 0x20000, 0x4b8de320 )
 
-	ROM_REGION_DISPOSE(0x3a0000)	/* Region 1 - Graphics */
-	ROM_LOAD( "fix0",  0x000000, 0x10000, 0xab30061f ) /* chars */
-	ROM_LOAD( "fix1",  0x010000, 0x10000, 0xa0582115 )
-
-	ROM_LOAD( "bg1",   0x020000, 0x80000, 0xeac43283 ) /* tiles */
-	ROM_LOAD( "bg3",   0x0a0000, 0x80000, 0x1408a1e0 ) /* tiles */
-	ROM_LOAD( "bg2",   0x120000, 0x80000, 0x01864eb6 ) /* tiles */
-	ROM_LOAD( "obj0",  0x1a0000, 0x80000, 0xc3af37db ) /* sprites */
-	ROM_LOAD( "obj1",  0x220000, 0x80000, 0xbe1f53ba )
-	ROM_LOAD( "obj2",  0x2a0000, 0x80000, 0x24e0b51c )
-	ROM_LOAD( "obj3",  0x320000, 0x80000, 0x5274f02d )
-
-	ROM_REGIONX(0x18000, REGION_CPU2)	 /* Region 2 - 64k code for sound Z80 */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	 /* 64k code for sound Z80 */
 	ROM_LOAD( "fm", 0x000000, 0x08000, 0x50450faa )
 	ROM_CONTINUE(   0x010000, 0x08000 )
 
-	ROM_REGION(0x20000)	 /* Region 3 - ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fix0",  0x000000, 0x10000, 0xab30061f ) /* chars */
+	ROM_LOAD( "fix1",  0x010000, 0x10000, 0xa0582115 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg1",   0x000000, 0x80000, 0xeac43283 ) /* tiles */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg3",   0x000000, 0x80000, 0x1408a1e0 ) /* tiles */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg2",   0x000000, 0x80000, 0x01864eb6 ) /* tiles */
+
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "obj0",  0x000000, 0x80000, 0xc3af37db ) /* sprites */
+	ROM_LOAD( "obj1",  0x080000, 0x80000, 0xbe1f53ba )
+	ROM_LOAD( "obj2",  0x100000, 0x80000, 0x24e0b51c )
+	ROM_LOAD( "obj3",  0x180000, 0x80000, 0x5274f02d )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	 /* ADPCM samples */
 	ROM_LOAD( "pcm", 0x000000, 0x20000, 0xd2133b85 )
 ROM_END
 
 /***************************************************************************/
 
-static void memory_patch(void)
+static void init_dcon(void)
 {
 	install_seibu_sound_speedup(1);
 }
 
 /***************************************************************************/
 
-struct GameDriver driver_dcon =
-{
-	__FILE__,
-	0,
-	"dcon",
-	"D-Con",
-	"1992",
-	"Success (Seibu hardware)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_dcon,
-	memory_patch,
-
-	rom_dcon,
-	0, 0,
-	0, 0,
-	input_ports_dcon,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1992, dcon, 0, dcon, dcon, dcon, ROT0, "Success (Seibu hardware)", "D-Con" )

@@ -141,7 +141,7 @@ int YM2608_sh_start(const struct MachineSound *msound)
 			mixed_vol>>=16;
 			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 		}
-		stream[i] = stream_init_multi(YM2608_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2608UpdateOne);
+		stream[i] = stream_init_multi(YM2608_NUMBUF,name,vol,rate,i,YM2608UpdateOne);
 		/* setup adpcm buffers */
 		pcmbufa[i]  = NULL;
 		pcmsizea[i] = 0;

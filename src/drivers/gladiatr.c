@@ -8,7 +8,6 @@ Credits:
 		  input port patches, panning fix, sprite banking,
 		  Golden Castle Rom Set Support
 - Phil Stroffolino: palette, sprites, misc video driver fixes
-- Nicola Salmoria: Japaneese Rom Set Support(Ohgon no Siro)
 - Tatsuyuki Satoh: YM2203 sound improvements, NEC 8741 simulation,ADPCM with MC6809
 
 special thanks to:
@@ -534,36 +533,31 @@ DEFINE_LAYOUT( gladiator_tileD, 0+0x4000*8, 0x14000*8, 0x14000*8+4 )
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* monochrome text layer */
-	{ 1, 0x34000, &gladiator_text_layout, 512, 1 },
+	{ REGION_GFX1, 0x00000, &gladiator_text_layout, 512, 1 },
 
 	/* background tiles */
-	{ 1, 0x18000, &gladiator_tile0, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile1, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile2, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile3, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile4, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile5, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile6, 0, 64 },
-	{ 1, 0x18000, &gladiator_tile7, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile0, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile1, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile2, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile3, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile4, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile5, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile6, 0, 64 },
+	{ REGION_GFX2, 0x00000, &gladiator_tile7, 0, 64 },
 
 	/* sprites */
-	{ 1, 0x30000, &gladiator_tile0, 0, 64 },
-	{ 1, 0x30000, &gladiator_tileB, 0, 64 },
-
-	{ 1, 0x30000, &gladiator_tileA, 0, 64 },
-	{ 1, 0x30000, &gladiator_tile3, 0, 64 }, /* "GLAD..." */
-
-	{ 1, 0x00000, &gladiator_tile0, 0, 64 },
-	{ 1, 0x00000, &gladiator_tileB, 0, 64 },
-
-	{ 1, 0x00000, &gladiator_tileA, 0, 64 },
-	{ 1, 0x00000, &gladiator_tile3, 0, 64 }, /* ...DIATOR */
-
-	{ 1, 0x00000, &gladiator_tile4, 0, 64 },
-	{ 1, 0x00000, &gladiator_tileD, 0, 64 },
-
-	{ 1, 0x00000, &gladiator_tileC, 0, 64 },
-	{ 1, 0x00000, &gladiator_tile7, 0, 64 },
+	{ REGION_GFX3, 0x00000, &gladiator_tile0, 0, 64 },
+	{ REGION_GFX3, 0x00000, &gladiator_tileB, 0, 64 },
+	{ REGION_GFX3, 0x00000, &gladiator_tileA, 0, 64 },
+	{ REGION_GFX3, 0x00000, &gladiator_tile3, 0, 64 }, /* "GLAD..." */
+	{ REGION_GFX3, 0x18000, &gladiator_tile0, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tileB, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tileA, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tile3, 0, 64 }, /* ...DIATOR */
+	{ REGION_GFX3, 0x18000, &gladiator_tile4, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tileD, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tileC, 0, 64 },
+	{ REGION_GFX3, 0x18000, &gladiator_tile7, 0, 64 },
 
 	{ -1 } /* end of array */
 };
@@ -577,7 +571,6 @@ static struct YM2203interface ym2203_interface =
 	1,		/* 1 chip */
 	1500000,	/* 1.5 MHz? */
 	{ YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ gladiator_dsw3_r },         /* port B read */
 	{ gladiator_int_controll_w }, /* port A write */
@@ -596,7 +589,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gladiatr =
 {
 	{
 		{
@@ -660,173 +653,102 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gladiatr )
 	ROM_REGIONX( 0x1c000, REGION_CPU1 )
-	ROM_LOAD( "qb0-5",        0x00000, 	0x4000, 0x25b19efb )
-	ROM_LOAD( "qb0-4",        0x04000, 	0x2000, 0x347ec794 )
-	ROM_LOAD( "qb0-1",        0x10000, 	0x4000, 0x040c9839 )
-	ROM_LOAD( "qc0-3",        0x14000, 	0x8000, 0x8d182326 )
+	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
+	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
+	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
+	ROM_LOAD( "qc0-3",          0x14000, 0x8000, 0x8d182326 )
 
-	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
-	/* sprites */
-	ROM_LOAD( "qc2-7",        	0x00000, 0x8000, 0xc992c4f7 ) /* plane 3 */
-	ROM_LOAD( "qc1-10",       	0x08000, 0x8000, 0x364cdb58 ) /* planes 1,2 */
-	ROM_LOAD( "qc2-11",       	0x10000, 0x8000, 0xc9fecfff ) /* planes 1,2 */
-
-	ROM_LOAD( "qc1-6",        	0x30000, 0x4000, 0x651e6e44 ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x38000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
-	ROM_LOAD( "qc1-9",        	0x40000, 0x4000, 0x01043e03 ) /* planes 1,2 */
-
-	/* tiles */
-	ROM_LOAD( "qb0-12",       	0x18000, 0x8000, 0x0585d9ac ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x20000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x28000, 0x8000, 0x85b71211 ) /* planes 1,2 */
-
-	ROM_LOAD( "qc0-15",       	0x34000, 0x2000, 0xa7efa340 ) /* (monochrome) */
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Code for the 2nd CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
 	ROM_REGIONX( 0x28000, REGION_CPU3 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
-	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
-	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
+	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qc0-15",       	0x00000, 0x2000, 0xa7efa340 ) /* (monochrome) */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "qc1-6",        	0x00000, 0x4000, 0x651e6e44 ) /* plane 3 */
+	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "qc1-9",        	0x10000, 0x4000, 0x01043e03 ) /* planes 1,2 */
+	ROM_LOAD( "qc2-7",        	0x18000, 0x8000, 0xc992c4f7 ) /* plane 3 */
+	ROM_LOAD( "qc1-10",       	0x20000, 0x8000, 0x364cdb58 ) /* planes 1,2 */
+	ROM_LOAD( "qc2-11",       	0x28000, 0x8000, 0xc9fecfff ) /* planes 1,2 */
 ROM_END
 
 ROM_START( ogonsiro )
 	ROM_REGIONX( 0x1c000, REGION_CPU1 )
-	ROM_LOAD( "qb0-5",        0x00000, 	0x4000, 0x25b19efb )
-	ROM_LOAD( "qb0-4",        0x04000, 	0x2000, 0x347ec794 )
-	ROM_LOAD( "qb0-1",        0x10000, 	0x4000, 0x040c9839 )
-	ROM_LOAD( "qb0_3",        0x14000, 	0x8000, 0xd6a342e7 )
+	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
+	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
+	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
+	ROM_LOAD( "qb0_3",          0x14000, 0x8000, 0xd6a342e7 )
 
-	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
-	/* sprites */
-	ROM_LOAD( "qb0_7",        	0x00000, 0x8000, 0x4b677bd9 ) /* plane 3 */
-	ROM_LOAD( "qb0_10",       	0x08000, 0x8000, 0x87ab6cc4 ) /* planes 1,2 */
-	ROM_LOAD( "qb0_11",       	0x10000, 0x8000, 0x25eaa4ff ) /* planes 1,2 */
-
-	ROM_LOAD( "qb0_6",        	0x30000, 0x4000, 0x1a2bc769 ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x38000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
-	ROM_LOAD( "qb0_9",        	0x40000, 0x4000, 0x38f5152d ) /* planes 1,2 */
-
-	/* tiles */
-	ROM_LOAD( "qb0-12",       	0x18000, 0x8000, 0x0585d9ac ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x20000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x28000, 0x8000, 0x85b71211 ) /* planes 1,2 */
-
-	ROM_LOAD( "qb0_15",       	0x34000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Code for the 2nd CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
 	ROM_REGIONX( 0x28000, REGION_CPU3 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
-	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
-	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
+	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb0_15",       	0x34000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "qb0_6",        	0x00000, 0x4000, 0x1a2bc769 ) /* plane 3 */
+	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "qb0_9",        	0x10000, 0x4000, 0x38f5152d ) /* planes 1,2 */
+	ROM_LOAD( "qb0_7",        	0x18000, 0x8000, 0x4b677bd9 ) /* plane 3 */
+	ROM_LOAD( "qb0_10",       	0x20000, 0x8000, 0x87ab6cc4 ) /* planes 1,2 */
+	ROM_LOAD( "qb0_11",       	0x28000, 0x8000, 0x25eaa4ff ) /* planes 1,2 */
 ROM_END
 
 ROM_START( gcastle )
 	ROM_REGIONX( 0x1c000, REGION_CPU1 )
-	ROM_LOAD( "gc0-5",        0x00000, 	0x4000, 0x00000000 )
-	ROM_LOAD( "gc0-4",        0x04000, 	0x2000, 0x00000000 )
-	ROM_LOAD( "gc0-1",        0x10000, 	0x4000, 0x00000000 )
-	ROM_LOAD( "gc0_3",        0x14000, 	0x8000, 0x00000000 )
+	ROM_LOAD( "gc0-5",          0x00000, 0x4000, 0x00000000 )
+	ROM_LOAD( "gc0-4",          0x04000, 0x2000, 0x00000000 )
+	ROM_LOAD( "gc0-1",          0x10000, 0x4000, 0x00000000 )
+	ROM_LOAD( "gc0_3",          0x14000, 0x8000, 0x00000000 )
 
-	ROM_REGION_DISPOSE(0x44000)	/* temporary space for graphics (disposed after conversion) */
-	/* sprites */
-	ROM_LOAD( "gc2-7",        	0x00000, 0x8000, 0xbb2cb454 ) /* plane 3 */
-	ROM_LOAD( "qb0_10",       	0x08000, 0x8000, 0x87ab6cc4 ) /* planes 1,2 */
-	ROM_LOAD( "gc2-11",       	0x10000, 0x8000, 0x5c512365 ) /* planes 1,2 */
-
-	ROM_LOAD( "gc1-6",        	0x30000, 0x4000, 0x94f49be2 ) /* plane 3 */
-	ROM_LOAD( "qc0-8",        	0x38000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
-	ROM_LOAD( "gc1-9",        	0x40000, 0x4000, 0x69b977fd ) /* planes 1,2 */
-
-	/* tiles */
-	ROM_LOAD( "qb0-12",       	0x18000, 0x8000, 0x0585d9ac ) /* plane 3 */
-	ROM_LOAD( "qb0-13",       	0x20000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
-	ROM_LOAD( "qb0-14",       	0x28000, 0x8000, 0x85b71211 ) /* planes 1,2 */
-
-	ROM_LOAD( "qb0_15",       	0x34000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
-
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Code for the 2nd CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
 	ROM_REGIONX( 0x28000, REGION_CPU3 )  /* 6809 Code & ADPCM data */
-	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
-	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
-	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
+	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qb0_15",       	0x34000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
+	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
+	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
+
+	ROM_REGIONX( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "gc1-6",        	0x00000, 0x4000, 0x94f49be2 ) /* plane 3 */
+	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
+	ROM_LOAD( "gc1-9",        	0x10000, 0x4000, 0x69b977fd ) /* planes 1,2 */
+	ROM_LOAD( "gc2-7",        	0x18000, 0x8000, 0xbb2cb454 ) /* plane 3 */
+	ROM_LOAD( "qb0_10",       	0x20000, 0x8000, 0x87ab6cc4 ) /* planes 1,2 */
+	ROM_LOAD( "gc2-11",       	0x28000, 0x8000, 0x5c512365 ) /* planes 1,2 */
 ROM_END
 
 
 
-struct GameDriver driver_gladiatr =
-{
-	__FILE__,
-	0,
-	"gladiatr",
-	"Gladiator (US)",
-	"1986",
-	"Taito America Corporation",
-	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
-	0,
-	&machine_driver,
-	0,
-
-	rom_gladiatr,
-	0, 0,
-	0,
-	0,
-	input_ports_gladiatr,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_ogonsiro =
-{
-	__FILE__,
-	&driver_gladiatr,
-	"ogonsiro",
-	"Ohgon no Siro (Japan)",
-	"1986",
-	"Taito Corporation",
-	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ogonsiro,
-	0, 0,
-	0,
-	0,
-	input_ports_gladiatr,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gcastle =
-{
-	__FILE__,
-	&driver_gladiatr,
-	"gcastle",
-	"Golden Castle",
-	"1986",
-	"bootleg",
-	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
-	0,
-	&machine_driver,
-	0,
-
-	rom_gcastle,
-	0, 0,
-	0,
-	0,
-	input_ports_gladiatr,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1986, gladiatr, 0,        gladiatr, gladiatr, 0, ROT0, "Taito America Corporation", "Gladiator (US)" )
+GAME( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, 0, ROT0, "Taito Corporation", "Ohgon no Siro (Japan)" )
+GAME( 1986, gcastle,  gladiatr, gladiatr, gladiatr, 0, ROT0, "bootleg", "Golden Castle" )

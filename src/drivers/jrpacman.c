@@ -241,8 +241,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 128 },
-	{ 1, 0x2000, &spritelayout,    0, 128 },
+	{ REGION_GFX1, 0, &charlayout,      0, 128 },
+	{ REGION_GFX2, 0, &spritelayout,    0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -253,12 +253,12 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	3			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_jrpacman =
 {
 	/* basic machine hardware */
 	{
@@ -311,23 +311,25 @@ ROM_START( jrpacman )
 	ROM_LOAD( "jrp8j.bin",    0xa000, 0x2000, 0x9737099e )
 	ROM_LOAD( "jrp8k.bin",    0xc000, 0x2000, 0x5252dd97 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, 0x0527ff9b )
-	ROM_LOAD( "jrp2e.bin",    0x2000, 0x2000, 0x73477193 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "jrp2e.bin",    0x0000, 0x2000, 0x73477193 )
 
 	ROM_REGIONX( 0x0140, REGION_PROMS )
 	ROM_LOAD( "jrpacman.9e",  0x0000, 0x0020, 0x90012b3f ) /* palette low bits */
 	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
 	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0100, REGION_SOUND1 )	/* sound prom */
 	/* I don't know if this is correct. I'm using the Pac Man one. */
 	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, BADCRC( 0xa9cc86bf ) )
 ROM_END
 
 
 
-static void jrpacman_decode(void)
+static void init_jrpacman(void)
 {
 	/* The encryption PALs garble bits 0, 2 and 7 of the ROMs. The encryption */
 	/* scheme is complex (basically it's a state machine) and can only be */
@@ -381,27 +383,5 @@ static void jrpacman_decode(void)
 }
 
 
-struct GameDriver driver_jrpacman =
-{
-	__FILE__,
-	0,
-	"jrpacman",
-	"Jr. Pac-Man",
-	"1983",
-	"Bally Midway",
-	"David Caldwell\nNicola Salmoria\nMarco Cassili",
-	0,
-	&machine_driver,
-	jrpacman_decode,
 
-	rom_jrpacman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jrpacman,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, jrpacman, 0, jrpacman, jrpacman, jrpacman, ROT90, "Bally Midway", "Jr. Pac-Man" )

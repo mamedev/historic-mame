@@ -2,6 +2,9 @@
 
 Karate Champ - (c) 1984 Data East
 
+driver by Ernesto Corvi
+
+
 Changes:
 (1999/11/11 Takahiro Nogi)
 Changed "karatedo" to "karatevs".
@@ -356,22 +359,22 @@ INPUT_PORTS_START( kchamp )
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
@@ -404,10 +407,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x18000, &tilelayout,	32*4, 32 },
-	{ 1, 0x08000, &spritelayout,	0, 16 },
-	{ 1, 0x04000, &spritelayout,	0, 16 },
-	{ 1, 0x00000, &spritelayout,	0, 16 },
+	{ REGION_GFX1, 0x00000, &tilelayout,	32*4, 32 },
+	{ REGION_GFX2, 0x08000, &spritelayout,	0, 16 },
+	{ REGION_GFX2, 0x04000, &spritelayout,	0, 16 },
+	{ REGION_GFX2, 0x00000, &spritelayout,	0, 16 },
 	{ -1 }
 };
 
@@ -444,7 +447,6 @@ static struct AY8910interface ay8910_interface =
 	2, /* 2 chips */
 	1500000,			/* 12 Mhz / 8 = 1.5 Mhz */
 	{ 30, 30 },			// Modified by T.Nogi 1999/11/08
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -600,27 +602,6 @@ ROM_START( kchamp )
 	ROM_LOAD( "b018.bin", 0x8000, 0x2000, 0xb824abc7 )
 	ROM_LOAD( "b019.bin", 0xa000, 0x2000, 0x3b487a46 )
 
-	ROM_REGION_DISPOSE(0x20000)
-	ROM_LOAD( "b013.bin", 0x00000, 0x2000, 0xeaad4168 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "b004.bin", 0x02000, 0x2000, 0x10a47e2d )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "b007.bin", 0x0C000, 0x2000, 0xcb91d16b )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "b010.bin", 0x0E000, 0x2000, 0x489c9c04 )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "b000.bin", 0x18000, 0x2000, 0xa4fa98a1 )  /* plane0 */ /* tiles */
-	ROM_LOAD( "b001.bin", 0x1C000, 0x2000, 0xfea09f7c )  /* plane1 */ /* tiles */
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
-	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
-	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "b026.bin", 0x0000, 0x2000, 0x999ed2c7 )
 	ROM_LOAD( "b025.bin", 0x2000, 0x2000, 0x33171e07 ) /* adpcm */
@@ -629,6 +610,29 @@ ROM_START( kchamp )
 	ROM_LOAD( "b022.bin", 0x8000, 0x2000, 0x5928e749 )
 	ROM_LOAD( "b021.bin", 0xa000, 0x2000, 0xca17e3ba )
 	ROM_LOAD( "b020.bin", 0xc000, 0x2000, 0xada4f2cd )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b000.bin", 0x00000, 0x2000, 0xa4fa98a1 )  /* plane0 */ /* tiles */
+	ROM_LOAD( "b001.bin", 0x04000, 0x2000, 0xfea09f7c )  /* plane1 */ /* tiles */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b013.bin", 0x00000, 0x2000, 0xeaad4168 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "b004.bin", 0x02000, 0x2000, 0x10a47e2d )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "b002.bin", 0x0a000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "b007.bin", 0x0c000, 0x2000, 0xcb91d16b )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "b010.bin", 0x0e000, 0x2000, 0x489c9c04 )  /* bot, plane1 */ /* sprites */
+	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
+	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
+	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
+	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 ROM_END
 
 ROM_START( karatedo )
@@ -640,27 +644,6 @@ ROM_START( karatedo )
 	ROM_LOAD( "be18", 0x8000, 0x2000, 0xa09046ad )
 	ROM_LOAD( "be19", 0xa000, 0x2000, 0x0cdc4da9 )
 
-	ROM_REGION_DISPOSE(0x20000)
-	ROM_LOAD( "be13",     0x00000, 0x2000, 0xfb358707 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "be04",     0x02000, 0x2000, 0x48372bf8 )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
-	ROM_LOAD( "be07",     0x0C000, 0x2000, 0x40f2b6fb )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "be10",     0x0E000, 0x2000, 0x325c0a97 )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
-	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
-	ROM_LOAD( "be00",     0x18000, 0x2000, 0xcec020f2 )  /* plane0 */ /* tiles */
-	ROM_LOAD( "be01",     0x1C000, 0x2000, 0xcd96271c )  /* plane1 */ /* tiles */
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
-	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
-	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "be26", 0x0000, 0x2000, 0x999ab0a3 )
 	ROM_LOAD( "be25", 0x2000, 0x2000, 0x253bf0da ) /* adpcm */
@@ -669,6 +652,29 @@ ROM_START( karatedo )
 	ROM_LOAD( "be22", 0x8000, 0x2000, 0x38055c48 )
 	ROM_LOAD( "be21", 0xa000, 0x2000, 0x5f0efbe7 )
 	ROM_LOAD( "be20", 0xc000, 0x2000, 0xcbe8a533 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "be00",     0x00000, 0x2000, 0xcec020f2 )  /* plane0 */ /* tiles */
+	ROM_LOAD( "be01",     0x04000, 0x2000, 0xcd96271c )  /* plane1 */ /* tiles */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "be13",     0x00000, 0x2000, 0xfb358707 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "be04",     0x02000, 0x2000, 0x48372bf8 )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
+	ROM_LOAD( "b002.bin", 0x0a000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
+	ROM_LOAD( "be07",     0x0c000, 0x2000, 0x40f2b6fb )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "be10",     0x0e000, 0x2000, 0x325c0a97 )  /* bot, plane1 */ /* sprites */
+	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
+	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
+	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
+	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
+	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 ROM_END
 
 ROM_START( kchampvs )
@@ -681,33 +687,35 @@ ROM_START( kchampvs )
 	ROM_LOAD( "bs19", 0xa000, 0x2000, 0x43e196c4 )
 	ROM_CONTINUE(     0xe000, 0x2000 )
 
-	ROM_REGION_DISPOSE(0x20000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
+	ROM_LOAD( "bs18", 0x0000, 0x2000, 0xeaa646eb )
+	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
+	ROM_LOAD( "bs16", 0x4000, 0x2000, 0x6f811c43 ) /* adpcm */
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bs12",     0x00000, 0x2000, 0x4c574ecd )
+	ROM_LOAD( "bs13",     0x02000, 0x2000, 0x750b66af )
+	ROM_LOAD( "bs14",     0x04000, 0x2000, 0x9ad6227c )
+	ROM_LOAD( "bs15",     0x06000, 0x2000, 0x3b6d5de5 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bs00",     0x00000, 0x2000, 0x51eda56c )
 	ROM_LOAD( "bs06",     0x02000, 0x2000, 0x593264cf )
 	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
 	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
 	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
-	ROM_LOAD( "bs03",     0x0C000, 0x2000, 0x8dcd271a )
-	ROM_LOAD( "bs09",     0x0E000, 0x2000, 0x4ee1dba7 )
+	ROM_LOAD( "b002.bin", 0x0a000, 0x2000, 0x6be342a6 )  /* bs08 */
+	ROM_LOAD( "bs03",     0x0c000, 0x2000, 0x8dcd271a )
+	ROM_LOAD( "bs09",     0x0e000, 0x2000, 0x4ee1dba7 )
 	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
 	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
 	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
 	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
-	ROM_LOAD( "bs12",     0x18000, 0x2000, 0x4c574ecd )
-	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
-	ROM_LOAD( "bs14",     0x1C000, 0x2000, 0x9ad6227c )
-	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
-	ROM_LOAD( "bs18", 0x0000, 0x2000, 0xeaa646eb )
-	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
-	ROM_LOAD( "bs16", 0x4000, 0x2000, 0x6f811c43 ) /* adpcm */
 ROM_END
 
 ROM_START( karatevs )
@@ -720,38 +728,40 @@ ROM_START( karatevs )
 	ROM_LOAD( "br19", 0xa000, 0x2000, 0xdd2239d2 )
 	ROM_CONTINUE(     0xe000, 0x2000 )
 
-	ROM_REGION_DISPOSE(0x20000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
+	ROM_LOAD( "br18", 0x0000, 0x2000, 0x00ccb8ea )
+	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
+	ROM_LOAD( "br16", 0x4000, 0x2000, 0x2512d961 ) /* adpcm */
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "br12",     0x00000, 0x2000, 0x9ed6f00d )
+	ROM_LOAD( "bs13",     0x02000, 0x2000, 0x750b66af )
+	ROM_LOAD( "br14",     0x04000, 0x2000, 0xfc399229 )
+	ROM_LOAD( "bs15",     0x06000, 0x2000, 0x3b6d5de5 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "br00",     0x00000, 0x2000, 0xc46a8b88 )
 	ROM_LOAD( "br06",     0x02000, 0x2000, 0xcf8982ff )
 	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
 	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
 	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
-	ROM_LOAD( "br03",     0x0C000, 0x2000, 0xbde8a52b )
-	ROM_LOAD( "br09",     0x0E000, 0x2000, 0xe9a5f945 )
+	ROM_LOAD( "b002.bin", 0x0a000, 0x2000, 0x6be342a6 )  /* bs08 */
+	ROM_LOAD( "br03",     0x0c000, 0x2000, 0xbde8a52b )
+	ROM_LOAD( "br09",     0x0e000, 0x2000, 0xe9a5f945 )
 	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
 	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
 	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
 	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
-	ROM_LOAD( "br12",     0x18000, 0x2000, 0x9ed6f00d )
-	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
-	ROM_LOAD( "br14",     0x1C000, 0x2000, 0xfc399229 )
-	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
-	ROM_LOAD( "br18", 0x0000, 0x2000, 0x00ccb8ea )
-	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
-	ROM_LOAD( "br16", 0x4000, 0x2000, 0x2512d961 ) /* adpcm */
 ROM_END
 
 
 
-static void kchampvs_decode( void )
+static void init_kchampvs( void )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -785,102 +795,7 @@ static void kchampvs_decode( void )
 
 
 
-struct GameDriver driver_kchamp =
-{
-	__FILE__,
-	0,
-	"kchamp",
-	"Karate Champ (US)",
-	"1984",
-	"Data East USA",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&machine_driver_kchamp,
-	0,
-
-	rom_kchamp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kchamp,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_karatedo =
-{
-	__FILE__,
-	&driver_kchamp,
-	"karatedo",
-	"Karate Dou (Japan)",
-	"1984",
-	"Data East Corporation",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&machine_driver_kchamp,
-	0,
-
-	rom_karatedo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kchamp,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_kchampvs =
-{
-	__FILE__,
-	&driver_kchamp,
-	"kchampvs",
-	"Karate Champ (US VS version)",
-	"1984",
-	"Data East USA",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&machine_driver_kchampvs,
-	kchampvs_decode,
-
-	rom_kchampvs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kchampvs,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_karatevs =
-{
-	__FILE__,
-	&driver_kchamp,
-	"karatevs",
-	"Taisen Karate Dou (Japan VS version)",
-	"1984",
-	"Data East Corporation",
-	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-	0,
-	&machine_driver_kchampvs,
-	kchampvs_decode,
-
-	rom_karatevs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kchampvs,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1984, kchamp,   0,      kchamp, kchamp,     0,        ROT90, "Data East USA", "Karate Champ (US)" )
+GAME( 1984, karatedo, kchamp, kchamp, kchamp,     0,        ROT90, "Data East Corporation", "Karate Dou (Japan)" )
+GAME( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)" )
+GAME( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)" )

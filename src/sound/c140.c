@@ -38,7 +38,6 @@ struct voice_registers
 };
 
 static int sample_rate;
-static int sample_bits;
 static int stream;
 
 /* internal buffers */
@@ -142,7 +141,7 @@ INLINE int limit(int in)
 	return in;
 }
 
-static void update_stereo(int ch, void **buffer, int length)
+static void update_stereo(int ch, INT16 **buffer, int length)
 {
 	long	i,j;
 	long	rvol,lvol;
@@ -161,8 +160,8 @@ static void update_stereo(int ch, void **buffer, int length)
 	if(length>sample_rate) length=sample_rate;
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer_left, 0, length * sizeof(short));
-	memset(mixer_buffer_right, 0, length * sizeof(short));
+	memset(mixer_buffer_left, 0, length * sizeof(INT16));
+	memset(mixer_buffer_right, 0, length * sizeof(INT16));
 
 	//--- audio update
 	for( i=0;i<MAX_VOICE;i++ )
@@ -316,33 +315,16 @@ static void update_stereo(int ch, void **buffer, int length)
 	lmix = mixer_buffer_left;
 	rmix = mixer_buffer_right;
 	{
-		if(sample_bits==16)
+		INT16 *dest1 = buffer[0];
+		INT16 *dest2 = buffer[1];
+		for (i = 0; i < length; i++)
 		{
-			short *dest1 = buffer[0];
-			short *dest2 = buffer[1];
-			for (i = 0; i < length; i++)
-			{
-				/*
-				*dest1++ = 8*(*lmix++);
-				*dest2++ = 8*(*rmix++);
-				*/
-				*dest1++ = limit(8*(*lmix++));			/* 991112.CAB */
-				*dest2++ = limit(8*(*rmix++));
-			}
-		}
-		else
-		{
-			char *dest1 = buffer[0];
-			char *dest2 = buffer[1];
-			for (i = 0; i < length; i++)
-			{
-				/*
-				*dest1++ = ((8*(*lmix++))>>8)&0xff;
-				*dest2++ = ((8*(*rmix++))>>8)&0xff;
-				*/
-				*dest1++ = (limit(8*(*lmix++))>>8)&0xff;		/* 991119.CAB */
-				*dest2++ = (limit(8*(*rmix++))>>8)&0xff;
-			}
+			/*
+			*dest1++ = 8*(*lmix++);
+			*dest2++ = 8*(*rmix++);
+			*/
+			*dest1++ = limit(8*(*lmix++));			/* 991112.CAB */
+			*dest2++ = limit(8*(*rmix++));
 		}
 	}
 }
@@ -357,9 +339,8 @@ int C140_sh_start( const struct MachineSound *msound )
 	vol[1] = MIXER(intf->mixing_level,MIXER_PAN_RIGHT);
 
 	sample_rate=baserate=intf->frequency;
-	sample_bits=Machine->sample_bits;
 
-	stream = stream_init_multi(2,stereo_names,vol,sample_rate,sample_bits,0,update_stereo);
+	stream = stream_init_multi(2,stereo_names,vol,sample_rate,0,update_stereo);
 
 	pRom=memory_region(intf->region);
 

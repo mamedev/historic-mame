@@ -401,11 +401,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,	0, 4},		/* character generator */
-	{ 1, 0x0400, &spritelayout, 0, 4},		/* sprite prom 1 */
-	{ 1, 0x0800, &spritelayout, 0, 4},		/* sprite prom 2 */
-	{ 1, 0x0c00, &spritelayout, 0, 4},		/* sprite prom 3 (unused) */
-	{ 1, 0x1000, &spritelayout, 0, 4},		/* sprite prom 4 (unused) */
+	{ REGION_GFX1, 0, &charlayout,	 0, 4 },		/* character generator */
+	{ REGION_GFX2, 0, &spritelayout, 0, 4 },		/* sprite prom 1 */
+	{ REGION_GFX3, 0, &spritelayout, 0, 4 },		/* sprite prom 2 */
+	{ REGION_GFX4, 0, &spritelayout, 0, 4 },		/* sprite prom 3 (unused) */
+	{ REGION_GFX5, 0, &spritelayout, 0, 4 },		/* sprite prom 4 (unused) */
 	{ -1 } /* end of array */
 };
 
@@ -557,10 +557,19 @@ ROM_START( deadeye )
 	ROM_LOAD( "de5.12h",      0x1400, 0x0400, 0x7bdb535c )
 	ROM_LOAD( "de6.13h",      0x1800, 0x0400, 0x847f9467 )
 
-	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "de_char.15e",  0x0000, 0x0400, 0xb032bd8d )
-	ROM_LOAD( "de_mov1.5a",   0x0400, 0x0400, 0xc046b4c6 )
-	ROM_LOAD( "de_mov2.13a",  0x0800, 0x0400, 0xb89c5df9 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "de_mov1.5a",   0x0000, 0x0400, 0xc046b4c6 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "de_mov2.13a",  0x0000, 0x0400, 0xb89c5df9 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	/* empty */
+	ROM_REGIONX( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	/* empty */
 
 	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "de_snd",       0x0000, 0x0400, 0xc10a1b1a )
@@ -574,10 +583,20 @@ ROM_START( gypsyjug )
 	ROM_LOAD( "gj.4b",        0x1000, 0x0400, 0xdca519c8 )
 	ROM_LOAD( "gj.5b",        0x1400, 0x0400, 0x7d83f9d0 )
 
-	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gj.e15",       0x0000, 0x0400, 0xadb25e13 )
-	ROM_LOAD( "gj.a",         0x0400, 0x0400, 0xd3725193 )
-	ROM_RELOAD(               0x0800, 0x0400 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gj.a",         0x0000, 0x0400, 0xd3725193 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	/* empty (copied from 2) */
+
+	ROM_REGIONX( 0x0400, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	/* empty (filled with fake data) */
+
+	ROM_REGIONX( 0x0400, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	/* empty (filled with fake data) */
 
 	ROM_REGIONX( 0x08000, REGION_CPU2 ) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "gj.a4s",       0x0000, 0x0400, 0x17a116bc )
@@ -585,8 +604,10 @@ ROM_START( gypsyjug )
 	ROM_LOAD( "gj.a6s",       0x0800, 0x0400, 0x9e7bd71e )
 ROM_END
 
+
+
 /* A fake for the missing ball sprites #3 and #4 */
-static void gypsyjug_rom_decode(void)
+static void init_gypsyjug(void)
 {
 int i;
 static unsigned char ball[16*2] = {
@@ -595,59 +616,16 @@ static unsigned char ball[16*2] = {
 	0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,
 	0x01,0x80, 0x03,0xc0, 0x03,0xc0, 0x01,0x80};
 
-	for (i = 0; i < 0x800; i += 16*2)
-		memcpy(&memory_region(1)[0x0c00+i], ball, sizeof(ball));
+	memcpy(memory_region(REGION_GFX3),memory_region(REGION_GFX2),memory_region_length(REGION_GFX3));
+
+	for (i = 0; i < memory_region_length(REGION_GFX4); i += 16*2)
+	{
+		memcpy(memory_region(REGION_GFX4) + i, ball, sizeof(ball));
+		memcpy(memory_region(REGION_GFX5) + i, ball, sizeof(ball));
+	}
 }
 
 
 
-struct GameDriver driver_deadeye =
-{
-	__FILE__,
-	0,
-	"deadeye",
-	"Dead Eye",
-	"1978",
-	"Meadows",
-	"Juergen Buchmueller\n",
-	0,
-	&machine_driver_deadeye,
-	0,
-
-	rom_deadeye,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_meadows,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_gypsyjug =
-{
-	__FILE__,
-	0,
-	"gypsyjug",
-	"Gypsy Juggler",
-	"1978",
-	"Meadows",
-	"Juergen Buchmueller\n",
-	0,
-	&machine_driver_gypsyjug,
-	gypsyjug_rom_decode,
-
-	rom_gypsyjug,
-	0, 0,
-	0,
-	0,
-
-	input_ports_meadows,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1978, deadeye,  0, deadeye,  meadows, 0,        ROT0, "Meadows", "Dead Eye" )
+GAME( 1978, gypsyjug, 0, gypsyjug, meadows, gypsyjug, ROT0, "Meadows", "Gypsy Juggler" )

@@ -2,6 +2,8 @@
 
 Fire Trap memory map (preliminary)
 
+driver by Nicola Salmoria
+
 Z80:
 0000-7fff ROM
 8000-bfff Banked ROM (4 banks)
@@ -287,8 +289,8 @@ INPUT_PORTS_START( firetrap )
 	PORT_DIPSETTING(    0x10, "80000 100000" )
 	PORT_DIPSETTING(    0x00, "50000" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
@@ -331,16 +333,16 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,	        0, 16 },
-	{ 1, 0x02000, &tilelayout,	     16*4,  4 },
-	{ 1, 0x06000, &tilelayout,	     16*4,  4 },
-	{ 1, 0x12000, &tilelayout,	     16*4,  4 },
-	{ 1, 0x16000, &tilelayout,	     16*4,  4 },
-	{ 1, 0x22000, &tilelayout,	16*4+4*16,  4 },
-	{ 1, 0x26000, &tilelayout,	16*4+4*16,  4 },
-	{ 1, 0x32000, &tilelayout,	16*4+4*16,  4 },
-	{ 1, 0x36000, &tilelayout,	16*4+4*16,  4 },
-	{ 1, 0x42000, &spritelayout, 16*4+4*16+4*16,  4 },
+	{ REGION_GFX1, 0x00000, &charlayout,                0, 16 },
+	{ REGION_GFX2, 0x00000, &tilelayout,             16*4,  4 },
+	{ REGION_GFX2, 0x04000, &tilelayout,             16*4,  4 },
+	{ REGION_GFX2, 0x10000, &tilelayout,             16*4,  4 },
+	{ REGION_GFX2, 0x14000, &tilelayout,             16*4,  4 },
+	{ REGION_GFX3, 0x00000, &tilelayout,        16*4+4*16,  4 },
+	{ REGION_GFX3, 0x04000, &tilelayout,        16*4+4*16,  4 },
+	{ REGION_GFX3, 0x10000, &tilelayout,        16*4+4*16,  4 },
+	{ REGION_GFX3, 0x14000, &tilelayout,        16*4+4*16,  4 },
+	{ REGION_GFX4, 0x00000, &spritelayout, 16*4+4*16+4*16,  4 },
 	{ -1 } /* end of array */
 };
 
@@ -349,8 +351,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 255 }		/* (not supported) */
+	3600000,	/* 3.600000 MHz ? */
+	{ 100 }		/* volume */
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -364,7 +366,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_firetrap =
 {
 	/* basic machine hardware */
 	{
@@ -427,30 +429,36 @@ ROM_START( firetrap )
 	ROM_LOAD( "di01.bin",     0x10000, 0x8000, 0x9bbae38b )
 	ROM_LOAD( "di00.bin",     0x18000, 0x8000, 0xd0dad7de )
 
-	ROM_REGION_DISPOSE(0x62000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )	/* characters */
-	ROM_LOAD( "di06.bin",     0x02000, 0x8000, 0x441d9154 )	/* tiles */
-	ROM_LOAD( "di07.bin",     0x0a000, 0x8000, 0xef0a7e23 )
-	ROM_LOAD( "di04.bin",     0x12000, 0x8000, 0x8e6e7eec )
-	ROM_LOAD( "di05.bin",     0x1a000, 0x8000, 0xec080082 )
-	ROM_LOAD( "di09.bin",     0x22000, 0x8000, 0xd11e28e8 )
-	ROM_LOAD( "di11.bin",     0x2a000, 0x8000, 0x6424d5c3 )
-	ROM_LOAD( "di08.bin",     0x32000, 0x8000, 0xc32a21d8 )
-	ROM_LOAD( "di10.bin",     0x3a000, 0x8000, 0x9b89300a )
-	ROM_LOAD( "di16.bin",     0x42000, 0x8000, 0x0de055d7 )	/* sprites */
-	ROM_LOAD( "di13.bin",     0x4a000, 0x8000, 0x869219da )
-	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
-	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
-
-	ROM_REGIONX( 0x0200, REGION_PROMS )
-	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
-	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
-
 	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 
 	/* there's also a protected 8751 microcontroller with ROM onboard */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )	/* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di06.bin",     0x00000, 0x8000, 0x441d9154 )	/* tiles */
+	ROM_LOAD( "di07.bin",     0x08000, 0x8000, 0xef0a7e23 )
+	ROM_LOAD( "di04.bin",     0x10000, 0x8000, 0x8e6e7eec )
+	ROM_LOAD( "di05.bin",     0x18000, 0x8000, 0xec080082 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di09.bin",     0x00000, 0x8000, 0xd11e28e8 )
+	ROM_LOAD( "di11.bin",     0x08000, 0x8000, 0x6424d5c3 )
+	ROM_LOAD( "di08.bin",     0x10000, 0x8000, 0xc32a21d8 )
+	ROM_LOAD( "di10.bin",     0x18000, 0x8000, 0x9b89300a )
+
+	ROM_REGIONX( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )	/* sprites */
+	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
+	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
+	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
+	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
 ROM_END
 
 ROM_START( firetpbl )
@@ -460,78 +468,37 @@ ROM_START( firetpbl )
 	ROM_LOAD( "ft0b.bin",     0x18000, 0x8000, 0xf2412fe8 )
 	ROM_LOAD( "ft0a.bin",     0x08000, 0x8000, 0x613313ee )	/* unprotection code */
 
-	ROM_REGION_DISPOSE(0x62000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
+	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ft0e.bin",     0x00000, 0x2000, 0xa584fc16 )	/* characters */
-	ROM_LOAD( "di06.bin",     0x02000, 0x8000, 0x441d9154 )	/* tiles */
-	ROM_LOAD( "di07.bin",     0x0a000, 0x8000, 0xef0a7e23 )
-	ROM_LOAD( "di04.bin",     0x12000, 0x8000, 0x8e6e7eec )
-	ROM_LOAD( "di05.bin",     0x1a000, 0x8000, 0xec080082 )
-	ROM_LOAD( "di09.bin",     0x22000, 0x8000, 0xd11e28e8 )
-	ROM_LOAD( "di11.bin",     0x2a000, 0x8000, 0x6424d5c3 )
-	ROM_LOAD( "di08.bin",     0x32000, 0x8000, 0xc32a21d8 )
-	ROM_LOAD( "di10.bin",     0x3a000, 0x8000, 0x9b89300a )
-	ROM_LOAD( "di16.bin",     0x42000, 0x8000, 0x0de055d7 )	/* sprites */
-	ROM_LOAD( "di13.bin",     0x4a000, 0x8000, 0x869219da )
-	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
-	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di06.bin",     0x00000, 0x8000, 0x441d9154 )	/* tiles */
+	ROM_LOAD( "di07.bin",     0x08000, 0x8000, 0xef0a7e23 )
+	ROM_LOAD( "di04.bin",     0x10000, 0x8000, 0x8e6e7eec )
+	ROM_LOAD( "di05.bin",     0x18000, 0x8000, 0xec080082 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di09.bin",     0x00000, 0x8000, 0xd11e28e8 )
+	ROM_LOAD( "di11.bin",     0x08000, 0x8000, 0x6424d5c3 )
+	ROM_LOAD( "di08.bin",     0x10000, 0x8000, 0xc32a21d8 )
+	ROM_LOAD( "di10.bin",     0x18000, 0x8000, 0x9b89300a )
+
+	ROM_REGIONX( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )	/* sprites */
+	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
+	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
+	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
-	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
-	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 ROM_END
 
 
 
-struct GameDriver driver_firetrap =
-{
-	__FILE__,
-	0,
-	"firetrap",
-	"Fire Trap",
-	"1986",
-	"Data East USA",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_firetrap,
-	0, 0,
-	0,
-	0,
-
-	input_ports_firetrap,
-
-	0, 0, 0,
-	ROT90 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_firetpbl =
-{
-	__FILE__,
-	&driver_firetrap,
-	"firetpbl",
-	"Fire Trap (Japan bootleg)",
-	"1986",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_firetpbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_firetrap,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAMEX(1986, firetrap, 0,        firetrap, firetrap, 0, ROT90, "Data East USA", "Fire Trap", GAME_NOT_WORKING )
+GAME( 1986, firetpbl, firetrap, firetrap, firetrap, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)" )

@@ -69,8 +69,8 @@ void sichuan2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
-			drawgfx(tmpbitmap,Machine->gfx[gfxbank],
-					videoram[offs] + ((videoram[offs+1] & 0x0f) << 8),
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((videoram[offs+1] & 0x0f) << 8) + (gfxbank << 12),
 					(videoram[offs+1] & 0xf0) >> 4,
 					0,0,
 					8*sx,8*sy,

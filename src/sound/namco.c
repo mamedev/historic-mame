@@ -13,8 +13,6 @@
 
 #include "driver.h"
 
-/* note: we work with signed samples here, unlike other drivers */
-#define AUDIO_CONV(A) (A)
 
 /* 8 voices max */
 #define MAX_VOICES 8
@@ -45,7 +43,6 @@ static sound_channel *last_channel;
 /* global sound parameters */
 static const unsigned char *sound_prom;
 static int samples_per_byte;
-static int sample_bits;
 static int num_voices;
 static int sound_enable;
 static int stream;
@@ -53,15 +50,15 @@ static int namco_clock;
 static int sample_rate;
 
 /* mixer tables and internal buffers */
-static signed char *mixer_table;
-static signed char *mixer_lookup;
+static INT16 *mixer_table;
+static INT16 *mixer_lookup;
 static short *mixer_buffer;
 static short *mixer_buffer_2;
 
 
 
 /* build a table to divide by the number of voices */
-static int make_mixer_table(int voices, int bits)
+static int make_mixer_table(int voices)
 {
 	int count = voices * 128;
 	int i;
@@ -69,35 +66,20 @@ static int make_mixer_table(int voices, int bits)
 
 
 	/* allocate memory */
-	mixer_table = malloc(256 * voices * bits / 8);
+	mixer_table = malloc(256 * voices * sizeof(INT16));
 	if (!mixer_table)
 		return 1;
 
 	/* find the middle of the table */
-	mixer_lookup = mixer_table + (128 * voices * bits / 8);
-
-	/* fill in the table - 8 bit case */
-	if (bits == 8)
-	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain / (voices * 16);
-			if (val > 127) val = 127;
-			mixer_lookup[ i] = AUDIO_CONV(val);
-			mixer_lookup[-i] = AUDIO_CONV(-val);
-		}
-	}
+	mixer_lookup = mixer_table + (128 * voices);
 
 	/* fill in the table - 16 bit case */
-	else
+	for (i = 0; i < count; i++)
 	{
-		for (i = 0; i < count; i++)
-		{
-			int val = i * gain * 16 / voices;
-			if (val > 32767) val = 32767;
-			((short *)mixer_lookup)[ i] = val;
-			((short *)mixer_lookup)[-i] = -val;
-		}
+		int val = i * gain * 16 / voices;
+		if (val > 32767) val = 32767;
+		mixer_lookup[ i] = val;
+		mixer_lookup[-i] = -val;
 	}
 
 	return 0;
@@ -105,7 +87,7 @@ static int make_mixer_table(int voices, int bits)
 
 
 /* generate sound to the mix buffer in mono */
-static void namco_update_mono(int ch, void *buffer, int length)
+static void namco_update_mono(int ch, INT16 *buffer, int length)
 {
 	sound_channel *voice;
 	short *mix;
@@ -114,10 +96,7 @@ static void namco_update_mono(int ch, void *buffer, int length)
 	/* if no sound, we're done */
 	if (sound_enable == 0)
 	{
-		if (sample_bits == 16)
-			memset(buffer, 0, length * 2);
-		else
-			memset(buffer, AUDIO_CONV(0x00), length);
+		memset(buffer, 0, length * sizeof(INT16));
 		return;
 	}
 
@@ -200,23 +179,13 @@ static void namco_update_mono(int ch, void *buffer, int length)
 
 	/* mix it down */
 	mix = mixer_buffer;
-	if (sample_bits == 16)
-	{
-		short *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = ((short *)mixer_lookup)[*mix++];
-	}
-	else
-	{
-		unsigned char *dest = buffer;
-		for (i = 0; i < length; i++)
-			*dest++ = mixer_lookup[*mix++];
-	}
+	for (i = 0; i < length; i++)
+		*buffer++ = mixer_lookup[*mix++];
 }
 
 
 /* generate sound to the mix buffer in stereo */
-static void namco_update_stereo(int ch, void **buffer, int length)
+static void namco_update_stereo(int ch, INT16 **buffer, int length)
 {
 	sound_channel *voice;
 	short *lmix, *rmix;
@@ -225,22 +194,14 @@ static void namco_update_stereo(int ch, void **buffer, int length)
 	/* if no sound, we're done */
 	if (sound_enable == 0)
 	{
-		if (sample_bits == 16)
-		{
-			memset(buffer[0], 0, length * 2);
-			memset(buffer[1], 0, length * 2);
-		}
-		else
-		{
-			memset(buffer[0], AUDIO_CONV(0x00), length);
-			memset(buffer[1], AUDIO_CONV(0x00), length);
-		}
+		memset(buffer[0], 0, length * sizeof(INT16));
+		memset(buffer[1], 0, length * sizeof(INT16));
 		return;
 	}
 
 	/* zap the contents of the mixer buffer */
-	memset(mixer_buffer, 0, length * sizeof(short));
-	memset(mixer_buffer_2, 0, length * sizeof(short));
+	memset(mixer_buffer, 0, length * sizeof(INT16));
+	memset(mixer_buffer_2, 0, length * sizeof(INT16));
 
 	/* loop over each voice and add its contribution */
 	for (voice = channel_list; voice < last_channel; voice++)
@@ -331,20 +292,9 @@ static void namco_update_stereo(int ch, void **buffer, int length)
 	/* mix it down */
 	lmix = mixer_buffer;
 	rmix = mixer_buffer_2;
-	if (sample_bits == 16)
 	{
-		short *dest1 = buffer[0];
-		short *dest2 = buffer[1];
-		for (i = 0; i < length; i++)
-		{
-			*dest1++ = ((short *)mixer_lookup)[*lmix++];
-			*dest2++ = ((short *)mixer_lookup)[*rmix++];
-		}
-	}
-	else
-	{
-		unsigned char *dest1 = buffer[0];
-		unsigned char *dest2 = buffer[1];
+		INT16 *dest1 = buffer[0];
+		INT16 *dest2 = buffer[1];
 		for (i = 0; i < length; i++)
 		{
 			*dest1++ = mixer_lookup[*lmix++];
@@ -369,18 +319,17 @@ int namco_sh_start(const struct MachineSound *msound)
 	sample_rate = Machine->sample_rate;
 
 	/* get stream channels */
-	sample_bits = Machine->sample_bits;
 	if (intf->stereo)
 	{
 		int vol[2];
 
 		vol[0] = MIXER(intf->volume,MIXER_PAN_LEFT);
 		vol[1] = MIXER(intf->volume,MIXER_PAN_RIGHT);
-		stream = stream_init_multi(2, stereo_names, vol, intf->samplerate, sample_bits, 0, namco_update_stereo);
+		stream = stream_init_multi(2, stereo_names, vol, intf->samplerate, 0, namco_update_stereo);
 	}
 	else
 	{
-		stream = stream_init(mono_name, intf->volume, intf->samplerate, sample_bits, 0, namco_update_mono);
+		stream = stream_init(mono_name, intf->volume, intf->samplerate, 0, namco_update_mono);
 	}
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
@@ -389,7 +338,7 @@ int namco_sh_start(const struct MachineSound *msound)
 	mixer_buffer_2 = mixer_buffer + intf->samplerate;
 
 	/* build the mixer table */
-	if (make_mixer_table(intf->voices, Machine->sample_bits))
+	if (make_mixer_table(intf->voices))
 	{
 		free (mixer_buffer);
 		return 1;

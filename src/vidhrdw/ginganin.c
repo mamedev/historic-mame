@@ -64,7 +64,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *txt_tilemap;
 static int layers_ctrl, flipscreen;
 
 /* Variables that driver has access to */
-unsigned char *ginganin_bgram, *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
+unsigned char *ginganin_fgram, *ginganin_txtram, *ginganin_vregs;
 
 /* Variables defined in drivers */
 
@@ -85,7 +85,7 @@ unsigned char *ginganin_bgram, *ginganin_fgram, *ginganin_txtram, *ginganin_vreg
 static void get_bg_tile_info( int col, int row )
 {
 	int tile_index = row + col * BG_NY;
-	int code = ginganin_bgram[tile_index*2 + 0] * 256 + ginganin_bgram[tile_index*2 + 1];
+	int code = memory_region(REGION_GFX5)[tile_index*2 + 0] * 256 + memory_region(REGION_GFX5)[tile_index*2 + 1];
 	SET_TILE_INFO(BG_GFX, code, code >> 12);
 }
 

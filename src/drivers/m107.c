@@ -360,7 +360,7 @@ static int m107_raster_interrupt(void)
 	return 0;
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_firebarr =
 {
 	/* basic machine hardware */
 	{
@@ -504,28 +504,28 @@ ROM_END
 
 /***************************************************************************/
 
-static void m107_startup(void)
+static void init_m107(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
 
-	RAM = memory_region(2);
+	RAM = memory_region(REGION_CPU2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
 	m107_irq_vectorbase=0x20;
 	raster_enable=1;
 }
 
-static void dsoccr94_startup(void)
+static void init_dsoccr94(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
 
-	RAM = memory_region(2);
+	RAM = memory_region(REGION_CPU2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
 	m107_irq_vectorbase=0x80;
@@ -536,48 +536,5 @@ static void dsoccr94_startup(void)
 
 /***************************************************************************/
 
-struct GameDriver driver_firebarr =
-{
-	__FILE__,
-	0,
-	"firebarr",
-	"Fire Barrel (Japan)",
-	"1993",
-	"Irem",
-	"Bryan McPhail",
-	0,
-	&machine_driver,
-	m107_startup,
-
-	rom_firebarr,
-	0, 0,
-	0,
-	0,
-	input_ports_firebarr,
-	0, 0, 0,
-	ROT270 | GAME_NO_SOUND | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_dsoccr94 =
-{
-	__FILE__,
-	0,
-	"dsoccr94",
-	"Dream Soccer '94",
-	"1994",
-	"Irem (Data East Corporation license)",
-	"Bryan McPhail",
-	0,
-	&machine_driver_dsoccr94,
-	dsoccr94_startup,
-
-	rom_dsoccr94,
-	0, 0,
-	0,
-	0,
-	input_ports_dsoccr94,
-	0, 0, 0,
-	ROT0 | GAME_NO_SOUND,
-	0,0
-};
+GAMEX( 1993, firebarr, 0, firebarr, firebarr, m107,     ROT270, "Irem", "Fire Barrel (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1994, dsoccr94, 0, dsoccr94, dsoccr94, dsoccr94, ROT0, "Irem (Data East Corporation license)", "Dream Soccer '94", GAME_NO_SOUND )

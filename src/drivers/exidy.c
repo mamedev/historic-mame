@@ -161,13 +161,13 @@ void exidy_init_machine(void);
 int venture_interrupt(void);
 int venture_shinterrupt(void);
 
-void sidetrac_driver_init(void);
-void targ_driver_init(void);
-void spectar_driver_init(void);
-void venture_driver_init(void);
-void mtrap_driver_init(void);
-void pepper2_driver_init(void);
-void fax_driver_init(void);
+void init_sidetrac(void);
+void init_targ(void);
+void init_spectar(void);
+void init_venture(void);
+void init_mtrap(void);
+void init_pepper2(void);
+void init_fax(void);
 void exidy_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 
 int exidy_interrupt(void);
@@ -797,22 +797,22 @@ static struct GfxLayout targ_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout, 8, 2 },  /* Sprites */
+	{ 0,           0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &spritelayout, 8, 2 },  /* Sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo pepper2_gfxdecodeinfo[] =
 {
-	{ 0, 0x6000, &pepper2_charlayout,       0, 4 },    /* the game dynamically modifies this */
-	{ 1, 0x0000, &spritelayout, 16, 2 },  /* Angel/Devil/Zipper Ripper */
+	{ 0,           0x6000, &pepper2_charlayout,       0, 4 },    /* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &spritelayout, 16, 2 },  /* Angel/Devil/Zipper Ripper */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo targ_gfxdecodeinfo[] =
 {
-	{ 0, 0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
-	{ 1, 0x0000, &targ_spritelayout, 8, 2 },  /* Sprites */
+	{ 0,           0x4800, &charlayout,       0, 4 },         /* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &targ_spritelayout, 8, 2 },  /* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -1136,7 +1136,7 @@ ROM_START( sidetrac )
 	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "stl9c-1",     0x4800, 0x0400, 0x08710a84 ) /* prom instead of ram chr gen*/
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "stl11d",      0x0000, 0x0200, 0x3bd1acc1 )
 ROM_END
 
@@ -1149,7 +1149,7 @@ ROM_START( targ )
 	ROM_LOAD( "targ06a3",    0x3800, 0x0800, 0xa60a1bfc )
 	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "targ11d1",    0x0000, 0x0400, 0x9f03513e )
 ROM_END
 
@@ -1163,7 +1163,7 @@ ROM_START( spectar )
 	ROM_LOAD( "spl6a-2",     0x3800, 0x0800, 0x0cb46b25 )
 	ROM_RELOAD(              0xf800, 0x0800 )  /* for the reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
@@ -1179,7 +1179,7 @@ ROM_START( spectar1 )
 	ROM_LOAD( "spl6a1",      0x3800, 0x0800, 0xf0e4e71a )
 	ROM_RELOAD(              0xf800, 0x0800 )   /* for the reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
 	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
@@ -1193,9 +1193,6 @@ ROM_START( mtrap )
 	ROM_LOAD( "mtl7a.bin",   0xe000, 0x1000, 0xcaafbb6d )
 	ROM_LOAD( "mtl6a.bin",   0xf000, 0x1000, 0xd85e52ca )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
@@ -1207,6 +1204,9 @@ ROM_START( mtrap )
 	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
 	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
 	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 ROM_END
 
 ROM_START( mtrap3 )
@@ -1218,9 +1218,6 @@ ROM_START( mtrap3 )
 	ROM_LOAD( "mtl-3.7a",    0xe000, 0x1000, 0xea8ec479 )
 	ROM_LOAD( "mtl-3.6a",    0xf000, 0x1000, 0xd72ba72d )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
@@ -1232,6 +1229,9 @@ ROM_START( mtrap3 )
 	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
 	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
 	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 ROM_END
 
 ROM_START( mtrap4 )
@@ -1242,9 +1242,6 @@ ROM_START( mtrap4 )
 	ROM_LOAD( "mta48a.bin",   0xd000, 0x1000, 0xde0442f8 )
 	ROM_LOAD( "mta47a.bin",   0xe000, 0x1000, 0xcdf8c6a8 )
 	ROM_LOAD( "mta46a.bin",   0xf000, 0x1000, 0x77d3f2e6 )
-
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
@@ -1257,6 +1254,9 @@ ROM_START( mtrap4 )
 	ROM_LOAD( "mta3a.bin", 0x1000,0x1000,0x31bdfe5c )
 	ROM_LOAD( "mta4a.bin", 0x2000,0x1000,0x1502d0e8 )
 	ROM_LOAD( "mta1a.bin", 0x3000,0x1000,0x658482a6 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
 ROM_END
 
 ROM_START( venture )
@@ -1270,9 +1270,6 @@ ROM_START( venture )
 	ROM_LOAD( "7a-cpu",       0xe000, 0x1000, 0x48d66220 )
 	ROM_LOAD( "6a-cpu",       0xf000, 0x1000, 0x7b78cf49 )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "3a-ac",        0x5800, 0x0800, 0x4ea1c3d9 )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
@@ -1280,6 +1277,9 @@ ROM_START( venture )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
 ROM_END
 
 ROM_START( venture2 )
@@ -1293,9 +1293,6 @@ ROM_START( venture2 )
 	ROM_LOAD( "vent_a7.cpu",  0xe000, 0x1000, 0x1aab27c2 )
 	ROM_LOAD( "vent_a6.cpu",  0xf000, 0x1000, 0x767bdd71 )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "3a-ac",        0x5800, 0x0800, 0x4ea1c3d9 )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
@@ -1303,6 +1300,9 @@ ROM_START( venture2 )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
 ROM_END
 
 ROM_START( venture4 )
@@ -1316,9 +1316,6 @@ ROM_START( venture4 )
 	ROM_LOAD( "vel7a-4",      0xe000, 0x1000, 0x0a091701 )
 	ROM_LOAD( "vel6a-4",      0xf000, 0x1000, 0x7b165f67 )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vel11d-2",     0x0000, 0x0800, 0xea6fd981 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "vea3a-2",      0x5800, 0x0800, 0x83b8836f )
 	ROM_LOAD( "4a-ac",        0x6000, 0x0800, 0x5154c39e )
@@ -1326,6 +1323,9 @@ ROM_START( venture4 )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vel11d-2",     0x0000, 0x0800, 0xea6fd981 )
 ROM_END
 
 ROM_START( pepper2 )
@@ -1338,14 +1338,14 @@ ROM_START( pepper2 )
 	ROM_LOAD( "main_7a",      0xe000, 0x1000, 0xb1c6f07c )
 	ROM_LOAD( "main_6a",      0xf000, 0x1000, 0x515b1046 )
 
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "main_11d",     0x0000, 0x0800, 0xb25160cd )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "audio_5a",     0x6800, 0x0800, 0x90e3c781 )
 	ROM_LOAD( "audio_6a",     0x7000, 0x0800, 0xdd343e34 )
 	ROM_LOAD( "audio_7a",     0x7800, 0x0800, 0xe02b4356 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "main_11d",     0x0000, 0x0800, 0xb25160cd )
 ROM_END
 
 ROM_START( hardhat )
@@ -1357,14 +1357,14 @@ ROM_START( hardhat )
 	ROM_LOAD( "hhl-2.7a",     0xe000, 0x1000, 0x6f7ce1c2 )
 	ROM_LOAD( "hhl-2.6a",     0xf000, 0x1000, 0x2a20cf10 )
 
-	ROM_REGION_DISPOSE(0x0800) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hhl-1.11d",    0x0000, 0x0800, 0xdbcdf353 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "hha-1.5a",     0x6800, 0x0800, 0x16a5a183 )
 	ROM_LOAD( "hha-1.6a",     0x7000, 0x0800, 0xbde64021 )
 	ROM_LOAD( "hha-1.7a",     0x7800, 0x0800, 0x505ee5d3 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "hhl-1.11d",    0x0000, 0x0800, 0xdbcdf353 )
 ROM_END
 
 ROM_START( fax )
@@ -1401,347 +1401,32 @@ ROM_START( fax )
 	ROM_LOAD( "fxd-5a.64",          0x38000, 0x2000, 0x67285bc6 )
 	ROM_LOAD( "fxd-6a.64",          0x3A000, 0x2000, 0xba67b7b2 )
 	/* The last two ROM sockets were apparently never populated */
-//      ROM_LOAD( "fxd-7a.64",  0x3C000, 0x2000, 0x00000000 )
-//      ROM_LOAD( "fxd-8a.64",  0x3E000, 0x2000, 0x00000000 )
-
-	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fxl1-11d.32",  0x0000, 0x0800, 0x54fc873d )
-	ROM_CONTINUE(             0x0000, 0x0800 )       /* overwrite with the real one - should be a 2716? */
+//	ROM_LOAD( "fxd-7a.64",          0x3C000, 0x2000, 0x00000000 )
+//	ROM_LOAD( "fxd-8a.64",          0x3E000, 0x2000, 0x00000000 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, 0x7c525aec )
 	ROM_LOAD( "fxa2-6a.16",   0x7000, 0x0800, 0x2b3bfc44 )
 	ROM_LOAD( "fxa2-7a.16",   0x7800, 0x0800, 0x578c62b7 )
 	ROM_RELOAD(               0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fxl1-11d.32",  0x0000, 0x0800, 0x54fc873d )
+	ROM_CONTINUE(             0x0000, 0x0800 )       /* overwrite with the real one - should be a 2716? */
 ROM_END
 
 
 
-struct GameDriver driver_sidetrac =
-{
-	__FILE__,
-	0,
-	"sidetrac",
-	"Side Track",
-	"1979",
-	"Exidy",
-	"Marc LaFontaine\nBrian Levine\nMike Balfour",
-	0,
-	&machine_driver_targ,
-	sidetrac_driver_init,
-
-	rom_sidetrac,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sidetrac,
-
-	0, 0, 0,
-
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_targ =
-{
-	__FILE__,
-	0,
-	"targ",
-	"Targ",
-	"1980",
-	"Exidy",
-	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
-	0,
-	&machine_driver_targ,
-	targ_driver_init,
-
-	rom_targ,
-	0, 0,
-	0,
-	0,
-
-	input_ports_targ,
-
-	0, 0, 0,
-
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_spectar =
-{
-	__FILE__,
-	0,
-	"spectar",
-	"Spectar (revision 3)",
-	"1980",
-	"Exidy",
-	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
-	0,
-	&machine_driver_targ,
-	spectar_driver_init,
-
-	rom_spectar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spectar,
-
-	0, 0, 0,
-
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_spectar1 =
-{
-	__FILE__,
-	&driver_spectar,
-	"spectar1",
-	"Spectar (revision 1?)",
-	"1980",
-	"Exidy",
-	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
-	0,
-	&machine_driver_targ,
-	spectar_driver_init,
-
-	rom_spectar1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spectar,
-
-	0, 0, 0,
-
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mtrap =
-{
-	__FILE__,
-	0,
-	"mtrap",
-	"Mouse Trap (version 5)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
-	0,
-	&machine_driver_mtrap,
-	mtrap_driver_init,
-
-	rom_mtrap,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mtrap,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mtrap3 =
-{
-	__FILE__,
-	&driver_mtrap,
-	"mtrap3",
-	"Mouse Trap (version 3)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
-	0,
-	&machine_driver_mtrap,
-	mtrap_driver_init,
-
-	rom_mtrap3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mtrap,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mtrap4 =
-{
-	__FILE__,
-        &driver_mtrap,
-	"mtrap4",
-	"Mouse Trap (version 4)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
-	0,
-	&machine_driver_mtrap,
-	mtrap_driver_init,
-
-	rom_mtrap4,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mtrap,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_venture =
-{
-	__FILE__,
-	0,
-	"venture",
-	"Venture (version 5 set 1)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
-	0,
-	&machine_driver_venture,
-	venture_driver_init,
-
-	rom_venture,
-	0, 0,
-	0,
-	0,
-
-	input_ports_venture,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_venture2 =
-{
-	__FILE__,
-	&driver_venture,
-	"venture2",
-	"Venture (version 5 set 2)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
-	0,
-	&machine_driver_venture,
-	venture_driver_init,
-
-	rom_venture2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_venture,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_venture4 =
-{
-	__FILE__,
-	&driver_venture,
-	"venture4",
-	"Venture (version 4)",
-	"1981",
-	"Exidy",
-    "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
-	0,
-	&machine_driver_venture,
-	venture_driver_init,
-
-	rom_venture4,
-	0, 0,
-	0,
-	0,
-
-	input_ports_venture,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_pepper2 =
-{
-	__FILE__,
-	0,
-	"pepper2",
-	"Pepper II",
-	"1982",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
-	0,
-	&machine_driver_pepper2,
-	pepper2_driver_init,
-
-	rom_pepper2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pepper2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_hardhat =
-{
-	__FILE__,
-	0,
-	"hardhat",
-	"Hard Hat",
-	"1982",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
-	0,
-	&machine_driver_pepper2,
-	pepper2_driver_init,
-
-	rom_hardhat,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pepper2,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_fax =
-{
-	__FILE__,
-	0,
-	"fax",
-	"Fax",
-	"1983",
-	"Exidy",
-    "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
-	0,
-	&machine_driver_fax,
-	fax_driver_init,
-
-	rom_fax,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fax,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1979, sidetrac, 0,       targ,    sidetrac, sidetrac, ROT0, "Exidy", "Side Track" )
+GAME( 1980, targ,     0,       targ,    targ,     targ,     ROT0, "Exidy", "Targ" )
+GAME( 1980, spectar,  0,       targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 3)" )
+GAME( 1980, spectar1, spectar, targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 1?)" )
+GAME( 1981, mtrap,    0,       mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 5)" )
+GAME( 1981, mtrap3,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 3)" )
+GAME( 1981, mtrap4,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 4)" )
+GAME( 1981, venture,  0,       venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 1)" )
+GAME( 1981, venture2, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 5 set 2)" )
+GAME( 1981, venture4, venture, venture, venture,  venture,  ROT0, "Exidy", "Venture (version 4)" )
+GAME( 1982, pepper2,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Pepper II" )
+GAME( 1982, hardhat,  0,       pepper2, pepper2,  pepper2,  ROT0, "Exidy", "Hard Hat" )
+GAME( 1983, fax,      0,       fax,     fax,      fax,      ROT0, "Exidy", "Fax" )

@@ -1,6 +1,9 @@
 /***************************************************************************
 
-D-Day memory map (preliminary)
+D-Day
+
+driver by Zsolt Vasvari
+
 
 Note: This game doesn't seem to support cocktail mode, which is not too
       suprising for a gun game.
@@ -162,16 +165,16 @@ INPUT_PORTS_START( dday )
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_6C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/7 Credits" )
-	PORT_DIPSETTING(    0x00, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_8C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
@@ -179,16 +182,16 @@ INPUT_PORTS_START( dday )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_8C ) )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x40, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_6C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, "2 Coins/7 Credits" )
-	PORT_DIPSETTING(    0x00, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_8C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
@@ -235,16 +238,16 @@ INPUT_PORTS_START( ddayc )
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_6C ) )
 	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/7 Credits" )
-	PORT_DIPSETTING(    0x00, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_8C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
@@ -252,16 +255,16 @@ INPUT_PORTS_START( ddayc )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_8C ) )
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_2C ) )
 	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x40, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_6C ) )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, "2 Coins/7 Credits" )
-	PORT_DIPSETTING(    0x00, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_8C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
@@ -298,10 +301,10 @@ static struct GfxLayout charlayout_flipx =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 8 },
-	{ 1, 0x1000, &charlayout,       32, 8 },
-	{ 1, 0x2000, &charlayout,       64, 8 },
-	{ 1, 0x2000, &charlayout_flipx, 64, 8 },
+	{ REGION_GFX1, 0, &charlayout,        0, 8 },
+	{ REGION_GFX2, 0, &charlayout,       32, 8 },
+	{ REGION_GFX3, 0, &charlayout,       64, 8 },
+	{ REGION_GFX3, 0, &charlayout_flipx, 64, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -312,7 +315,6 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	1000000,	/* 1.0 MHz ? */
 	{ 25, 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -320,7 +322,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_dday =
 {
 	/* basic machine hardware */
 	{
@@ -372,26 +374,30 @@ ROM_START( dday )
 	ROM_LOAD( "e6_65co.bin",  0x2000, 0x1000, 0xfe414a83 )
 	ROM_LOAD( "e5_66co.bin",  0x3000, 0x1000, 0xfc9f7774 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "k2_71.bin",    0x0000, 0x0800, 0xf85461de )
 	ROM_LOAD( "k3_72.bin",    0x0800, 0x0800, 0xfdfe88b6 )
-	ROM_LOAD( "j8_70co.bin",  0x1000, 0x0800, 0x0c60e94c )
-	ROM_LOAD( "j9_69co.bin",  0x1800, 0x0800, 0xba341c10 )
-	ROM_LOAD( "k6_74o.bin",   0x2000, 0x0800, 0x66719aea )
-	ROM_LOAD( "k7_75o.bin",   0x2800, 0x0800, 0x5f8772e2 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j8_70co.bin",  0x0000, 0x0800, 0x0c60e94c )
+	ROM_LOAD( "j9_69co.bin",  0x0800, 0x0800, 0xba341c10 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "k6_74o.bin",   0x0000, 0x0800, 0x66719aea )
+	ROM_LOAD( "k7_75o.bin",   0x0800, 0x0800, 0x5f8772e2 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX4 )      /* search light */
+	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
+	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
+							/*0x1800 -0x1fff will be filled in dynamically */
+
+	ROM_REGIONX( 0x0800, REGION_GFX5 )      /* layer mask */
+	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
-
-	ROM_REGION( 0x2000 )      /* search light */
-	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
-	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
-							/*0x1800 -0x1fff will be filled in dynamically */
-
-	ROM_REGION(0x0800)      /* layer mask */
-	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 ROM_END
 
 ROM_START( ddayc )
@@ -401,76 +407,38 @@ ROM_START( ddayc )
 	ROM_LOAD( "e6_65-c.bin",  0x2000, 0x1000, 0x4c210686 )
 	ROM_LOAD( "e5_66-c.bin",  0x3000, 0x1000, 0xe7e832f9 )
 
-	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "k2_71.bin",    0x0000, 0x0800, 0xf85461de )
 	ROM_LOAD( "k3_72.bin",    0x0800, 0x0800, 0xfdfe88b6 )
-	ROM_LOAD( "j8_70-c.bin",  0x1000, 0x0800, 0xa0c6b86b )
-	ROM_LOAD( "j9_69-c.bin",  0x1800, 0x0800, 0xd352a3d6 )
-	ROM_LOAD( "k6_74.bin",    0x2000, 0x0800, 0xd21a3e22 )
-	ROM_LOAD( "k7_75.bin",    0x2800, 0x0800, 0xa5e5058c )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j8_70-c.bin",  0x0000, 0x0800, 0xa0c6b86b )
+	ROM_LOAD( "j9_69-c.bin",  0x0800, 0x0800, 0xd352a3d6 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "k6_74.bin",    0x0000, 0x0800, 0xd21a3e22 )
+	ROM_LOAD( "k7_75.bin",    0x0800, 0x0800, 0xa5e5058c )
+
+	ROM_REGIONX( 0x2000, REGION_GFX4 )      /* search light */
+	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
+	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
+							/*0x1800 -0x1fff will be filled in dynamically */
+
+	ROM_REGIONX( 0x0800, REGION_GFX5 )      /* layer mask */
+	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
-
-	ROM_REGION( 0x2000 )      /* search light */
-	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
-	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
-							/*0x1800 -0x1fff will be filled in dynamically */
-
-	ROM_REGION(0x0800)      /* layer mask */
-	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 ROM_END
 
 
-
-struct GameDriver driver_dday =
+static void init_dday(void)
 {
-	__FILE__,
-	0,
-	"dday",
-	"D-Day",
-	"1982",
-	"Olympia",
-	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	0,
-	&machine_driver,
-	dday_decode,
+	dday_decode();
+}
 
-	rom_dday,
-	0, 0,
-	0,
-	0,
 
-	input_ports_dday,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_ddayc =
-{
-	__FILE__,
-	&driver_dday,
-	"ddayc",
-	"D-Day (Centuri)",
-	"1982",
-	"Olympia (Centuri license)",
-	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	0,
-	&machine_driver,
-	dday_decode,
-
-	rom_ddayc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ddayc,
-
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_COLORS,
-	0,0
-};
+GAMEX( 1982, dday,  0,    dday, dday,  dday, ROT0, "Olympia", "D-Day", GAME_IMPERFECT_COLORS )
+GAMEX( 1982, ddayc, dday, dday, ddayc, dday, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", GAME_IMPERFECT_COLORS )

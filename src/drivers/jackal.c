@@ -401,21 +401,21 @@ static struct GfxLayout topgunbl_spritelayout8 =
 
 static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,          256,  1 },	/* colors 256-511 */
-	{ 1, 0x10000, &spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
-	{ 1, 0x30000, &spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
-	{ 1, 0x10000, &spritelayout8,       512, 16 },  /* to handle 8x8 sprites */
-	{ 1, 0x30000, &spritelayout8, 512+16*16, 16 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0x00000, &charlayout,          256,  1 },	/* colors 256-511 */
+	{ REGION_GFX1, 0x10000, &spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ REGION_GFX1, 0x30000, &spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ REGION_GFX1, 0x10000, &spritelayout8,       512, 16 },  /* to handle 8x8 sprites */
+	{ REGION_GFX1, 0x30000, &spritelayout8, 512+16*16, 16 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo topgunbl_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &topgunbl_charlayout,          256,  1 },	/* colors 256-511 */
-	{ 1, 0x40000, &topgunbl_spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
-	{ 1, 0x60000, &topgunbl_spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
-	{ 1, 0x40000, &topgunbl_spritelayout8,       512, 16 },	/* to handle 8x8 sprites */
-	{ 1, 0x60000, &topgunbl_spritelayout8, 512+16*16, 16 },	/* to handle 8x8 sprites */
+	{ REGION_GFX1, 0x00000, &topgunbl_charlayout,          256,  1 },	/* colors 256-511 */
+	{ REGION_GFX1, 0x40000, &topgunbl_spritelayout,        512, 16 },	/* colors   0- 15 with lookup */
+	{ REGION_GFX1, 0x60000, &topgunbl_spritelayout,  512+16*16, 16 },	/* colors  16- 31 with lookup */
+	{ REGION_GFX1, 0x40000, &topgunbl_spritelayout8,       512, 16 },	/* to handle 8x8 sprites */
+	{ REGION_GFX1, 0x60000, &topgunbl_spritelayout8, 512+16*16, 16 },	/* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -430,7 +430,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_jackal =
 {
 	/* basic machine hardware */
 	{
@@ -532,14 +532,14 @@ ROM_START( jackal )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
 	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
@@ -552,14 +552,14 @@ ROM_START( topgunr )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tgnr7h.bin",   0x00000, 0x20000, 0x50122a12 )
 	ROM_LOAD( "tgnr12h.bin",  0x20000, 0x20000, 0x37dbbdb0 )
 	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
@@ -572,14 +572,14 @@ ROM_START( jackalj )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "631t03.bin",   0x0c000, 0x4000, 0xfd5f9624 )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "631t04.bin",   0x00000, 0x20000, 0x457f42f0 )
 	ROM_LOAD( "631t06.bin",   0x20000, 0x20000, 0x2d10e56e )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
@@ -592,7 +592,10 @@ ROM_START( topgunbl )
 	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
 	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "t-17.n12",     0x00000, 0x08000, 0xe8875110 )
 	ROM_LOAD( "t-18.n13",     0x08000, 0x08000, 0xcf14471d )
 	ROM_LOAD( "t-19.n14",     0x10000, 0x08000, 0x46ee5dd2 )
@@ -610,9 +613,6 @@ ROM_START( topgunbl )
 	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
 	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
-
 	ROM_REGIONX( 0x0200, REGION_PROMS )	/* color lookup tables */
 	ROM_LOAD( "631r08.bpr",   0x0000, 0x0100, 0x7553a172 )
 	ROM_LOAD( "631r09.bpr",   0x0100, 0x0100, 0xa74dd86c )
@@ -620,102 +620,7 @@ ROM_END
 
 
 
-struct GameDriver driver_jackal =
-{
-	__FILE__,
-	0,
-	"jackal",
-	"Jackal (World)",
-	"1986",
-	"Konami",
-	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
-	0,
-	&machine_driver,
-	0,
-
-	rom_jackal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jackal,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_topgunr =
-{
-	__FILE__,
-	&driver_jackal,
-	"topgunr",
-	"Top Gunner (US)",
-	"1986",
-	"Konami",
-	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
-	0,
-	&machine_driver,
-	0,
-
-	rom_topgunr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jackal,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_jackalj =
-{
-	__FILE__,
-	&driver_jackal,
-	"jackalj",
-	"Tokushu Butai Jackal (Japan)",
-	"1986",
-	"Konami",
-	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
-	0,
-	&machine_driver,
-	0,
-
-	rom_jackalj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jackal,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
-
-struct GameDriver driver_topgunbl =
-{
-	__FILE__,
-	&driver_jackal,
-	"topgunbl",
-	"Top Gunner (bootleg)",
-	"1987",
-	"bootleg",
-	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
-	0,
-	&machine_driver_topgunbl,
-	0,
-
-	rom_topgunbl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_jackal,
-
-	0, 0, 0,
-	ROT90 | GAME_IMPERFECT_COLORS,
-	0,0
-};
+GAMEX( 1986, jackal,   0,      jackal,   jackal, 0, ROT90, "Konami", "Jackal (World)", GAME_IMPERFECT_COLORS )
+GAMEX( 1986, topgunr,  jackal, jackal,   jackal, 0, ROT90, "Konami", "Top Gunner (US)", GAME_IMPERFECT_COLORS )
+GAMEX( 1986, jackalj,  jackal, jackal,   jackal, 0, ROT90, "Konami", "Tokushu Butai Jackal (Japan)", GAME_IMPERFECT_COLORS )
+GAMEX( 1987, topgunbl, jackal, topgunbl, jackal, 0, ROT90, "bootleg", "Top Gunner (bootleg)", GAME_IMPERFECT_COLORS )

@@ -172,7 +172,7 @@ int exidy_input_port_2_r(int offset)
 	return value;
 }
 
-void sidetrac_driver_init(void) {
+void init_sidetrac(void) {
 	*exidy_sprite_enable = 0x10;
 	exidy_collision_mask = 0x00;
 	targ_spec_flag = 1;
@@ -181,7 +181,7 @@ void sidetrac_driver_init(void) {
 	colortable = sidetrac_colortable;
 }
 
-void targ_driver_init(void) {
+void init_targ(void) {
 	*exidy_sprite_enable = 0x10;
 	exidy_collision_mask = 0x00;
 	targ_spec_flag = 1;
@@ -190,7 +190,7 @@ void targ_driver_init(void) {
 	colortable = venture_colortable;
 }
 
-void spectar_driver_init(void) {
+void init_spectar(void) {
 	/* Spectar does not have a sprite enable register so we have to fake it out */
 	*exidy_sprite_enable = 0x10;
 	exidy_collision_mask = 0x00;
@@ -200,7 +200,7 @@ void spectar_driver_init(void) {
 	colortable = venture_colortable;
 }
 
-void mtrap_driver_init(void) {
+void init_mtrap(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -215,7 +215,7 @@ void mtrap_driver_init(void) {
 	colortable = venture_colortable;
 }
 
-void pepper2_driver_init(void) {
+void init_pepper2(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -230,7 +230,7 @@ void pepper2_driver_init(void) {
 	colortable = pepper2_colortable;
 }
 
-void venture_driver_init(void) {
+void init_venture(void) {
 	/* Disable ROM Check for quicker startup (Venture)*/
 	#if 0
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -252,7 +252,7 @@ void venture_driver_init(void) {
 	colortable = venture_colortable;
 }
 
-void fax_driver_init(void) {
+void init_fax(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
 	unsigned char *RAM = memory_region(REGION_CPU1);

@@ -2,16 +2,7 @@
 
 GAME PLAN driver, used for games like MegaTack, Killer Comet, Kaos, Challenger
 
-Modifications by Santeri Saarimaa:
-
-3/6/1998: - CPU #2 is only for audio in all four games, added | CPU_AUDIO_CPU
-          - A little louder sounds
-          - Fixed MegaTack dip switches & input ports
-          - Fixed Killer Comet dip switches & input ports
-          - Fixed Challenger dip switches & input ports + coin slots
-          - Added hi-score saving/loading for Challenger
-          - Added hi-score saving/loading for MegaTack
-          - Added hi-score saving/loading for Killer Comet
+driver by Chris Moore
 
 TO-DO: - Fix the input ports/dip switches of Kaos?
        - Graphics are still somewhat scrambled sometimes (just look at
@@ -224,7 +215,7 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPNAME(0x0f, 0x0f, DEF_STR( Coinage ) ) /* -> 039F */
 	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(   0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(   0x0e, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(   0x0e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x0d, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(   0x0b, DEF_STR( 1C_4C ) )
@@ -240,8 +231,8 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x01, "1 Coin/14 Credits" )
 
 	PORT_DIPNAME(0x10, 0x10, "Unknown" ) /* -> 039A */
-	PORT_DIPSETTING(   0x10, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME(0x60, 0x20, "Unknown" ) /* -> 039C */
 	PORT_DIPSETTING(   0x60, "1" )
@@ -260,8 +251,8 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x00, "4" )
 
 	PORT_DIPNAME(0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(   0x02, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME(0x0c, 0x00, "Unknown" )
 	PORT_DIPSETTING(   0x0c, "1" )
@@ -270,16 +261,16 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x00, "4" )
 
 	PORT_DIPNAME(0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(   0x10, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME(0x20, 0x00, "Unknown" )
-	PORT_DIPSETTING(   0x20, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME(0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(   0x40, "Off" )
-	PORT_DIPSETTING(   0x00, "On" )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
@@ -546,7 +537,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -554,7 +544,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_gameplan =
 {
     /* basic machine hardware */
     {							/* MachineCPU */
@@ -689,97 +679,7 @@ ROM_END
 
 
 
-struct GameDriver driver_kaos =
-{
-	__FILE__,
-	0,
-	"kaos",
-	"Kaos",
-	"1981",
-	"GamePlan",
-    "Chris Moore      (MAME driver)\nSanteri Saarimaa (not a sausage)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_kaos,
-	0, 0, 0, 0,
-
-	input_ports_kaos,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-
-struct GameDriver driver_killcom =
-{
-	__FILE__,
-	0,
-	"killcom",
-	"Killer Comet",
-	"1980",
-	"GamePlan (Centuri license)",
-    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
-	0,
-    &machine_driver,
-	0,
-
-	rom_killcom,
-	0, 0, 0, 0,
-
-	input_ports_killcom,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_megatack =
-{
-	__FILE__,
-	0,
-	"megatack",
-	"MegaTack",
-	"1980",
-	"GamePlan (Centuri license)",
-    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_megatack,
-	0, 0, 0, 0,
-
-	input_ports_megatack,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_challeng =
-{
-	__FILE__,
-	0,
-    "challeng",
-    "Challenger",
-	"1980",
-	"GamePlan (Centuri license)",
-    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
-	0,
-    &machine_driver,
-	0,
-
-    rom_challeng,
-    0, 0, 0, 0,
-
-    input_ports_challeng,
-
-    0, 0, 0,
-    ROT0,
-	0,0
-};
-
+GAME( 1981, kaos,     0, gameplan, kaos,     0, ROT270, "GamePlan", "Kaos" )
+GAME( 1980, killcom,  0, gameplan, killcom,  0, ROT0,   "GamePlan (Centuri license)", "Killer Comet" )
+GAME( 1980, megatack, 0, gameplan, megatack, 0, ROT0,   "GamePlan (Centuri license)", "MegaTack" )
+GAME( 1980, challeng, 0, gameplan, challeng, 0, ROT0,   "GamePlan (Centuri license)", "Challenger" )

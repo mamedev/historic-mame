@@ -124,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static void sound_bankswitch_w (int offset, int data)
 {
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
 
 	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
@@ -164,49 +164,49 @@ static struct MemoryWriteAddress sound_writemem[] =
 INPUT_PORTS_START( footchmp )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x30, "2 Players" )
 	PORT_DIPSETTING(    0x10, "4 Players" )
 	PORT_DIPSETTING(    0x20, "4 Players (No Select)" )
 //	PORT_DIPSETTING(    0x00, "4 Players" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Game Version" )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x80, "European" )
@@ -300,9 +300,9 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tilelayout,		0, 256 },	/* tiles */
-	{ 1, 0x100000, &spritelayout,	0, 256 },	/* sprites */
-	{ 1, 0x000000, &charlayout,		0, 128 },	/* chars - generated at run time */
+	{ REGION_GFX1, 0, &tilelayout,   0, 256 },	/* tiles */
+	{ REGION_GFX2, 0, &spritelayout, 0, 256 },	/* sprites */
+	{ REGION_GFX1, 0, &charlayout,   0, 128 },	/* chars - generated at run time */
 	{ -1 } /* end of array */
 };
 
@@ -317,14 +317,13 @@ static struct YM2610interface ym2610_interface =
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ 3 },
-	{ 3 },
+	{ REGION_SOUND1 },
+	{ REGION_SOUND1 },
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
 
@@ -339,7 +338,7 @@ static int footchmp_irq( void ) {
 	return m68_level6_irq();
 }
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_footchmp =
 {
 	/* basic machine hardware */
 	{
@@ -396,41 +395,22 @@ ROM_START( footchmp )
 	ROM_LOAD_EVEN( "efc7.bin", 0x40000, 0x20000, 0x80d46fef )
 	ROM_LOAD_ODD ( "efc5.bin", 0x40000, 0x20000, 0x40ac4828 )
 
-	ROM_REGION_DISPOSE(0x300000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "efc1.bin",	0x000000, 0x080000, 0x9a17fe8c )
-	ROM_LOAD( "efc2.bin",	0x080000, 0x080000, 0xacde7071 )
-	ROM_LOAD( "efc9.bin",	0x100000, 0x100000, 0xf43782e6 )
-	ROM_LOAD( "efc10.bin",	0x200000, 0x100000, 0x060a8b61 )
-
 	ROM_REGIONX( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "efc70.bin", 0x00000, 0x04000, 0x05aa7fd7 )
 	ROM_CONTINUE(		   0x10000, 0x0c000 )
 
-	ROM_REGION(0x100000)     /* YM2610 samples */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "efc1.bin",	0x000000, 0x080000, 0x9a17fe8c )
+	ROM_LOAD( "efc2.bin",	0x080000, 0x080000, 0xacde7071 )
+
+	ROM_REGIONX( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "efc9.bin",	0x000000, 0x100000, 0xf43782e6 )
+	ROM_LOAD( "efc10.bin",	0x100000, 0x100000, 0x060a8b61 )
+
+	ROM_REGIONX( 0x100000, REGION_SOUND1 )     /* YM2610 samples */
 	ROM_LOAD( "efc57.bin", 0x00000, 0x100000, 0x609938d5 )
 ROM_END
 
-struct GameDriver driver_footchmp =
-{
-	__FILE__,
-	0,
-	"footchmp",
-	"Football Champ (World)",
-	"1990",
-	"Taito Corporation Japan",
-	"Ernesto Corvi",
-	0,
-	&machine_driver,
-	0,
 
-	rom_footchmp,
-	0, 0,
-	0,
-	0,
 
-	input_ports_footchmp,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
+GAME( 1990, footchmp, 0, footchmp, footchmp, 0, ROT0, "Taito Corporation Japan", "Football Champ (World)" )

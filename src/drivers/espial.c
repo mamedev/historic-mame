@@ -143,8 +143,8 @@ INPUT_PORTS_START( espial )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPNAME( 0x02, 0x02, "CounterAttack" )	/* you can shoot bullets */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -159,13 +159,13 @@ INPUT_PORTS_START( espial )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x1c, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x00, "20k and every 70k" )
@@ -227,8 +227,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 64 },
-	{ 1, 0x3000, &spritelayout,  0, 64 },
+	{ REGION_GFX1, 0, &charlayout,    0, 64 },
+	{ REGION_GFX2, 0, &spritelayout,  0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -239,7 +239,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHZ?????? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -248,7 +247,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_espial =
 {
 	/* basic machine hardware */
 	{
@@ -306,19 +305,21 @@ ROM_START( espial )
 	ROM_LOAD( "espial.6",     0x4000, 0x1000, 0xbaa60bc1 )
 	ROM_LOAD( "espial.5",     0xc000, 0x1000, 0x6d7bbfc1 )
 
-	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "espial.1",     0x0000, 0x1000, 0x1e5ec20b )
+	ROM_LOAD( "espial.2",     0x1000, 0x1000, 0x3431bb97 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "espial.8",     0x0000, 0x2000, 0x2f43036f )
 	ROM_LOAD( "espial.7",     0x2000, 0x1000, 0xebfef046 )
-	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
-	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "espial.10",    0x0000, 0x1000, 0xde80fbc1 )
+	ROM_LOAD( "espial.9",     0x1000, 0x1000, 0x48c258a0 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "espial.1",     0x0000, 0x1000, 0x1e5ec20b )
-	ROM_LOAD( "espial.2",     0x1000, 0x1000, 0x3431bb97 )
 ROM_END
 
 ROM_START( espiale )
@@ -328,69 +329,24 @@ ROM_START( espiale )
 	ROM_LOAD( "2732.6",       0x4000, 0x1000, 0x357025b4 )
 	ROM_LOAD( "2732.5",       0xc000, 0x1000, 0xd03a2fc4 )
 
-	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "2732.1",       0x0000, 0x1000, 0xfc7729e9 )
+	ROM_LOAD( "2732.2",       0x1000, 0x1000, 0xe4e256da )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "espial.8",     0x0000, 0x2000, 0x2f43036f )
 	ROM_LOAD( "espial.7",     0x2000, 0x1000, 0xebfef046 )
-	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
-	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "espial.10",    0x0000, 0x1000, 0xde80fbc1 )
+	ROM_LOAD( "espial.9",     0x1000, 0x1000, 0x48c258a0 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "2732.1",       0x0000, 0x1000, 0xfc7729e9 )
-	ROM_LOAD( "2732.2",       0x1000, 0x1000, 0xe4e256da )
 ROM_END
 
 
 
-struct GameDriver driver_espial =
-{
-	__FILE__,
-	0,
-	"espial",
-	"Espial (US?)",
-	"1983",
-	"[Orca] Thunderbolt",
-	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_espial,
-	0, 0,
-	0,
-	0,
-
-	input_ports_espial,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_espiale =
-{
-	__FILE__,
-	&driver_espial,
-	"espiale",
-	"Espial (Europe)",
-	"1983",
-	"[Orca] Thunderbolt",
-	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_espiale,
-	0, 0,
-	0,
-	0,
-
-	input_ports_espial,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1983, espial,  0,      espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (US?)" )
+GAME( 1983, espiale, espial, espial, espial, 0, ROT0, "[Orca] Thunderbolt", "Espial (Europe)" )

@@ -186,7 +186,7 @@ INPUT_PORTS_START( bloodbro )
 	PORT_START /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Coin Mode" )
 	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x01, "Free Play" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
@@ -201,11 +201,11 @@ INPUT_PORTS_START( bloodbro )
 	PORT_DIPSETTING(    0x20, "Normal" )
 	PORT_DIPSETTING(    0x00, "x2" )
 	PORT_DIPNAME( 0x40, 0x40, "Unused 1" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unused 2" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x80, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -224,11 +224,11 @@ INPUT_PORTS_START( bloodbro )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x80, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /**** West Story Input Ports *******************************************/
@@ -440,13 +440,13 @@ static struct MachineDriver machine_driver_weststry =
 
 
 ROM_START( bloodbro )
-	ROM_REGIONX(0x90000, REGION_CPU1)
+	ROM_REGIONX( 0x90000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "bb_02.bin" ,   0x00000, 0x20000, 0xc0fdc3e4 )
 	ROM_LOAD_EVEN( "bb_01.bin" ,   0x00000, 0x20000, 0x2d7e0fdf )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGIONX(0x18000, REGION_CPU2)
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "bb_07.bin" ,   0x000000, 0x08000, 0x411b94e8 )
 	ROM_CONTINUE(             0x010000, 0x08000 )
 
@@ -465,13 +465,13 @@ ROM_START( bloodbro )
 ROM_END
 
 ROM_START( weststry )
-	ROM_REGIONX(0x90000, REGION_CPU1)	/* 64k for cpu code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "ws13.bin" ,   0x00000, 0x20000, 0x158e302a )
 	ROM_LOAD_EVEN( "ws15.bin" ,   0x00000, 0x20000, 0x672e9027 )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGIONX(0x18000, REGION_CPU2)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ws17.bin" ,   0x000000, 0x08000, 0xe00a8f09 )
 	ROM_CONTINUE(            0x010000, 0x08000 )
 
@@ -533,5 +533,5 @@ static void init_weststry(void)
 
 /***************************************************************************/
 
-GAME( 1990, bloodbro, ,         bloodbro, bloodbro, bloodbro, ROT0, "Tad", "Blood Bros." )
+GAME( 1990, bloodbro, 0,        bloodbro, bloodbro, bloodbro, ROT0, "Tad", "Blood Bros." )
 GAME( 1990, weststry, bloodbro, weststry, weststry, weststry, ROT0, "bootleg", "West Story" )

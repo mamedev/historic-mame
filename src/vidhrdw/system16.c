@@ -23,14 +23,12 @@ void dump_tilemap(void);
 // really worth using.
 //#define GAMMA_ADJUST
 #define TRANSPARENT_SHADOWS
+#define MAXCOLOURS 8192
 
 #ifdef TRANSPARENT_SHADOWS
-#define NumOfShadowColors 32
 #define ShadowColorsShift 8
-unsigned char shade_table[256];
+UINT16 shade_table[MAXCOLOURS];
 int sys16_sh_shadowpal;
-#else
-#define NumOfShadowColors 0
 #endif
 int sys16_MaxShadowColors;
 static int sys16_MaxShadowColors_Shift;
@@ -89,6 +87,9 @@ unsigned char *sys18_splittab_bg_y;
 unsigned char *sys18_splittab_fg_x;
 unsigned char *sys18_splittab_fg_y;
 
+static int sys16_freezepalette;
+static int sys16_palettedirty[MAXCOLOURS];
+
 #ifdef SPACEHARRIER_OFFSETS
 unsigned char *spaceharrier_patternoffsets;
 #endif
@@ -141,23 +142,98 @@ void sys16_paletteram_w(int offset, int data){
 			if (newword&0x8000) g|=1;
 			if (newword&0x2000) b|=1;
 		}
+
 #ifndef TRANSPARENT_SHADOWS
-		palette_change_color( offset/2,
-			(r << 3) | (r >> 2), /* 5 bits red */
-			(g << 2) | (g >> 4), /* 6 bits green */
-			(b << 3) | (b >> 2) /* 5 bits blue */
-		);
+		if(!sys16_freezepalette)
+		{
+			palette_change_color( offset/2,
+				(r << 3) | (r >> 2), /* 5 bits red */
+				(g << 2) | (g >> 4), /* 6 bits green */
+				(b << 3) | (b >> 2) /* 5 bits blue */
+			);
+		}
+		else
+		{
+			r=(r << 3) | (r >> 2); /* 5 bits red */
+			g=(g << 2) | (g >> 4); /* 6 bits green */
+			b=(b << 3) | (b >> 2); /* 5 bits blue */
+			sys16_palettedirty[offset/2]=0xff000000+(r<<16)+(g<<8)+b;
+		}
 #else
-		palette_change_color( offset/2,
-			(r << 3) | (r >> 3), /* 5 bits red */
-			(g << 2) | (g >> 4), /* 6 bits green */
-			(b << 3) | (b >> 3) /* 5 bits blue */
-		);
+		if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
+		{
+			if(!sys16_freezepalette)
+			{
+				palette_change_color( offset/2,
+					(r << 3) | (r >> 3), /* 5 bits red */
+					(g << 2) | (g >> 4), /* 6 bits green */
+					(b << 3) | (b >> 3) /* 5 bits blue */
+				);
+			}
+			else
+			{
+				r=(r << 3) | (r >> 3); /* 5 bits red */
+				g=(g << 2) | (g >> 4); /* 6 bits green */
+				b=(b << 3) | (b >> 3); /* 5 bits blue */
+				sys16_palettedirty[offset/2]=0xff000000+(r<<16)+(g<<8)+b;
+			}
+		}
+		else
+		{
+			if(!sys16_freezepalette)
+			{
+				r=(r << 3) | (r >> 2); /* 5 bits red */
+				g=(g << 2) | (g >> 4); /* 6 bits green */
+				b=(b << 3) | (b >> 2); /* 5 bits blue */
+
+				palette_change_color( offset/2,r,g,b);
+
+				/* shadow color */
+
+				r= r * 160 / 256;
+				g= g * 160 / 256;
+				b= b * 160 / 256;
+
+				palette_change_color( offset/2+Machine->drv->total_colors/2,r,g,b);
+			}
+			else
+			{
+				r=(r << 3) | (r >> 3); /* 5 bits red */
+				g=(g << 2) | (g >> 4); /* 6 bits green */
+				b=(b << 3) | (b >> 3); /* 5 bits blue */
+				sys16_palettedirty[offset/2]=0xff000000+(r<<16)+(g<<8)+b;
+
+				r= r * 160 / 256;
+				g= g * 160 / 256;
+				b= b * 160 / 256;
+				sys16_palettedirty[offset/2+Machine->drv->total_colors/2]=0xff000000+(r<<16)+(g<<8)+b;
+			}
+		}
 #endif
 
 		WRITE_WORD (&paletteram[offset], newword);
 	}
 }
+
+
+static void sys16_refresh_palette(void)
+{
+	int i;
+	UINT8 r,g,b;
+
+	for(i=0;i<Machine->drv->total_colors;i++)
+	{
+		if(sys16_palettedirty[i])
+		{
+			r=(sys16_palettedirty[i]&0x00ff0000) >> 16;
+			g=(sys16_palettedirty[i]&0x0000ff00) >> 8;
+			b=(sys16_palettedirty[i]&0x000000ff);
+			palette_change_color(i,r,g,b);
+			sys16_palettedirty[i]=0;
+		}
+	}
+}
+
 
 static void update_page( void ){
 	int i,r,c,ro,co, all_dirty = 0;
@@ -319,8 +395,8 @@ static void get_fg_tile_info( int col, int row ){
 		{
 			case 1:		// alien syndrome
 				tile_info.priority = (data&0x8000)?1:0;
-				if(READ_WORD(&paletteram[((data>>6)&0x7f)*16]) !=0 && tile_info.priority==1)
-					tile_info.flags=TILE_IGNORE_TRANSPARENCY;
+//				if(READ_WORD(&paletteram[((data>>6)&0x7f)*16]) !=0 && tile_info.priority==1)
+//					tile_info.flags=TILE_IGNORE_TRANSPARENCY;
 				break;
 
 			case 3:
@@ -547,9 +623,11 @@ int sys16_vh_start( void ){
 			palette_change_color( i, 0,0,0 );
 		}
 #ifdef TRANSPARENT_SHADOWS
+		memset(&palette_used_colors[0], PALETTE_COLOR_UNUSED, Machine->drv->total_colors);
+		if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
 		{
 			int j,color;
-			for(j = 0, i = Machine->drv->total_colors-NumOfShadowColors;j<sys16_MaxShadowColors;i++,j++)
+			for(j = 0, i = Machine->drv->total_colors/2;j<sys16_MaxShadowColors;i++,j++)
 			{
 				color=j * 160 / (sys16_MaxShadowColors-1);
 //				color=j * 128 / (sys16_MaxShadowColors-1);
@@ -564,6 +642,11 @@ int sys16_vh_start( void ){
 			sys16_MaxShadowColors_Shift = ShadowColorsShift+1;
 
 #endif
+		for(i=0;i<MAXCOLOURS;i++)
+		{
+			sys16_palettedirty[i]=0;
+		}
+		sys16_freezepalette=0;
 
 		sprite_list->max_priority = 3;
 		sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
@@ -731,6 +814,17 @@ static void get_sprite_info( void ){
 	struct sprite *sprite = sprite_list->sprite;
 	const struct sprite *finish = sprite + NUM_SPRITES;
 
+	int passshot_y=0;
+	int passshot_width=0;
+
+#ifdef SYS16_DEBUG
+	int dump_spritedata=0;
+	if(errorlog && keyboard_pressed_memory(KEYCODE_W))
+	{
+		dump_spritedata=1;
+		fprintf(errorlog,"sprites\n");
+	}
+#endif
 	switch( sys16_spritesystem  ){
 		case 1: /* standard sprite hardware (Shinobi, Altered Beast, Golden Axe, ...) */
 /*
@@ -764,6 +858,11 @@ static void get_sprite_info( void ){
 				UINT16 zoomx = source[5]&0x3ff;
 				UINT16 zoomy = (source[6]&0x3ff);
 				int gfx = source[3]*4;
+
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
 
 				if( zoomy==0 ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
 
@@ -815,6 +914,9 @@ static void get_sprite_info( void ){
 		}
 		break;
 
+		case 8: /* Passing shot 4p */
+			passshot_y=-0x23;
+			passshot_width=1;
 		case 0: /* Passing shot */
 /*
 	0	???????X	XXXXXXXX	(screen coordinate)
@@ -828,8 +930,8 @@ static void get_sprite_info( void ){
 		while( sprite<finish ){
 			UINT16 attributes = source[5];
 			UINT16 ypos = source[1];
-			int bottom = ypos>>8;
-			int top = ypos&0xff;
+			int bottom = (ypos>>8)+passshot_y;
+			int top = (ypos&0xff)+passshot_y;
 			sprite->flags = 0;
 
 			if( bottom>top && ypos!=0xffff ){
@@ -839,7 +941,17 @@ static void get_sprite_info( void ){
 
 				int zoom = source[4]&0x3ff;
 				int xpos = source[0] + sys16_sprxoffset;
+
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
 				sprite->priority = 3-((attributes>>14)&0x3);
+				if(passshot_width) /* 4 player bootleg version */
+				{
+					width=-width;
+					number-=width*(bottom-top-1)-1;
+				}
 
 				if( number & 0x8000 ) sprite->flags |= SPRITE_FLIPX;
 				if( width  & 0x0080 ) sprite->flags |= SPRITE_FLIPY;
@@ -930,6 +1042,11 @@ static void get_sprite_info( void ){
 				UINT16 zoomy = (source[6]&0x3ff);
 				int gfx = source[3]*4;
 
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
+
 				if( zoomy==0 ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
 				sprite->pal_data = base_pal + ((attributes&0x3f)<<4);
 
@@ -995,6 +1112,10 @@ static void get_sprite_info( void ){
 					}
 					sprite->flags = 0;
 
+#ifdef SYS16_DEBUG
+					if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+							source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
 #ifdef TRANSPARENT_SHADOWS
 					if(bottom !=0 && bottom > top)
 #else
@@ -1105,6 +1226,11 @@ static void get_sprite_info( void ){
 				UINT16 width;
 				int gfx;
 
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
+
 				tsource[2]=source[2];
 				tsource[3]=source[3];
 #ifndef TRANSPARENT_SHADOWS
@@ -1200,6 +1326,11 @@ static void get_sprite_info( void ){
 				int gfx;
 				int zoomx,zoomy;
 
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
+
 				tsource[2]=source[2];
 				tsource[3]=source[3];
 
@@ -1294,6 +1425,11 @@ static void get_sprite_info( void ){
 				UINT16 width;
 				int gfx;
 				int zoomx,zoomy;
+
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
 
 				tsource[2]=source[2]&0xff;
 				tsource[3]=source[3];
@@ -1462,6 +1598,11 @@ static void get_sprite_info( void ){
 				int zoom;
 				int x;
 
+#ifdef SYS16_DEBUG
+				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
+#endif
+
 				zoom=source[4]&0xfff;
 //				if (zoom==0x32c) zoom=0x3cf;	//???
 
@@ -1627,6 +1768,7 @@ static void mark_sprite_colors( void ){
 			pal_size=128;
 			break;
 		case 0: /* passing shot */
+		case 8: /* passing shot 4p */
 			do{
 				if( source[1]!=0xffff ) used[(source[5]>>8)&0x3f] = 1;
 				source+=8;
@@ -1650,28 +1792,59 @@ static void mark_sprite_colors( void ){
 		}
 	}
 #ifdef TRANSPARENT_SHADOWS
-	memset(&palette_used_colors[Machine->drv->total_colors-NumOfShadowColors], PALETTE_COLOR_USED, sys16_MaxShadowColors);
+	if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
+	{
+		memset(&palette_used_colors[Machine->drv->total_colors/2], PALETTE_COLOR_USED, sys16_MaxShadowColors);
+	}
+	else if(sys16_MaxShadowColors != 0) /* 16 bit shadows */
+	{
+		/* Mark the shadowed versions of the used pens */
+		memcpy(&palette_used_colors[Machine->drv->total_colors/2], &palette_used_colors[0], Machine->drv->total_colors/2);
+	}
 #endif
 }
 
 #ifdef TRANSPARENT_SHADOWS
 static void build_shadow_table(void)
 {
-	int i;
-	int color_start=Machine->drv->total_colors-NumOfShadowColors;
+	int i,size;
+	int color_start=Machine->drv->total_colors/2;
 	/* build the shading lookup table */
-	if(sys16_MaxShadowColors == 0) return;
-	for (i = 0; i < 256; i++)
+	if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
 	{
-		unsigned char r, g, b;
-		int y;
-		osd_get_pen(i, &r, &g, &b);
-		y = (r * 10 + g * 18 + b * 4) >> sys16_MaxShadowColors_Shift;
-		shade_table[i] = Machine->pens[color_start + y];
+		if(sys16_MaxShadowColors == 0) return;
+		for (i = 0; i < 256; i++)
+		{
+			unsigned char r, g, b;
+			int y;
+			osd_get_pen(i, &r, &g, &b);
+			y = (r * 10 + g * 18 + b * 4) >> sys16_MaxShadowColors_Shift;
+			shade_table[i] = Machine->pens[color_start + y];
+		}
+		for(i=0;i<sys16_MaxShadowColors;i++)
+		{
+			shade_table[Machine->pens[color_start + i]]=Machine->pens[color_start + i];
+		}
 	}
-	for(i=0;i<sys16_MaxShadowColors;i++)
+	else
 	{
-		shade_table[Machine->pens[color_start + i]]=Machine->pens[color_start + i];
+		if(sys16_MaxShadowColors != 0)
+		{
+			size=Machine->drv->total_colors/2;
+			for(i=0;i<size;i++)
+			{
+				shade_table[Machine->pens[i]]=Machine->pens[size + i];
+				shade_table[Machine->pens[size+i]]=Machine->pens[size + i];
+			}
+		}
+		else
+		{
+			size=Machine->drv->total_colors;
+			for(i=0;i<size;i++)
+			{
+				shade_table[Machine->pens[i]]=Machine->pens[i];
+			}
+		}
 	}
 }
 #else
@@ -1686,13 +1859,22 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	// from sys16 emu (Not sure if this is the best place for this?)
 	{
 		static int freeze_counter=0;
-		if (!sys16_refreshenable) freeze_counter=4;
+		if (!sys16_refreshenable)
+		{
+			freeze_counter=4;
+			sys16_freezepalette=1;
+		}
 		if (freeze_counter)
 		{
 			if( sys16_clear_screen)
 				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 			freeze_counter--;
 			return;
+		}
+		else if(sys16_freezepalette)
+		{
+			sys16_refresh_palette();
+			sys16_freezepalette=0;
 		}
 	}
 
@@ -1897,13 +2079,22 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	// from sys16 emu (Not sure if this is the best place for this?)
 	{
 		static int freeze_counter=0;
-		if (!sys16_refreshenable) freeze_counter=4;
+		if (!sys16_refreshenable)
+		{
+			freeze_counter=4;
+			sys16_freezepalette=1;
+		}
 		if (freeze_counter)
 		{
 //			if( sys16_clear_screen)
 //				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 			freeze_counter--;
 			return;
+		}
+		else if(sys16_freezepalette)
+		{
+			sys16_refresh_palette();
+			sys16_freezepalette=0;
 		}
 	}
 
@@ -2060,10 +2251,12 @@ static void render_gr(struct osd_bitmap *bitmap,int priority)
 	UINT8 *data = memory_region(5);
 	UINT8 *source;
 	UINT8 *line;
+	UINT16 *line16;
 	UINT32 *line32;
 	UINT8 *data_ver=gr_ver;
 	UINT32 ver_data,hor_pos;
-	UINT8 colors[5];
+	UINT16 colors[5];
+//	UINT8 colors[5];
 	UINT32 fastfill;
 	int colorflip;
 	int yflip=0,ypos;
@@ -2074,134 +2267,270 @@ static void render_gr(struct osd_bitmap *bitmap,int priority)
 
 	priority=priority << 10;
 
-	if( Machine->orientation & ORIENTATION_SWAP_XY )
+	if (Machine->scrbitmap->depth == 16) /* 16 bit */
 	{
-		if( Machine->orientation & ORIENTATION_FLIP_Y ){
-			dx=-1;
-			xoff=319;
-		}
-		if( Machine->orientation & ORIENTATION_FLIP_X ){
-			yflip=1;
-		}
-
-		for(i=0;i<224;i++)
+		if( Machine->orientation & ORIENTATION_SWAP_XY )
 		{
-			if(yflip) ypos=223-i;
-			else ypos=i;
-			ver_data=READ_WORD(data_ver);
-			if((ver_data & 0x400) == priority)
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
 			{
-				colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
-
-				if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x400) == priority)
 				{
-					// fill line
-					for(j=0;j<320;j++)
+					colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
+
+					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
 					{
-						bitmap->line[j][ypos]=colors[0];
-					}
-				}
-				else
-				{
-					// copy line
-					ver_data=ver_data & 0x00ff;
-					colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
-
-					colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
-					colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
-					colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
-					colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
-
-					hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
-					ver_data = ver_data << gr_bitmap_width;
-
-					if(hor_pos & 0xf000)
-					{
-						// reverse
-						hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						// fill line
+						for(j=0;j<320;j++)
+						{
+							line16=(UINT16 *)bitmap->line[j]+ypos;
+							*line16=colors[0];
+						}
 					}
 					else
 					{
-						// normal
-						hor_pos=(hor_pos+0x200) & 0x3ff;
-					}
+						// copy line
+						ver_data=ver_data & 0x00ff;
+						colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
 
-					source = data + hor_pos + ver_data + 18 + 8;
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+						colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
 
-					for(j=0;j<320;j++)
-					{
-						bitmap->line[xoff+j*dx][ypos] = colors[*source++];
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						ver_data = ver_data << gr_bitmap_width;
+
+						if(hor_pos & 0xf000)
+						{
+							// reverse
+							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						}
+						else
+						{
+							// normal
+							hor_pos=(hor_pos+0x200) & 0x3ff;
+						}
+
+						source = data + hor_pos + ver_data + 18 + 8;
+
+						for(j=0;j<320;j++)
+						{
+							line16=(UINT16 *)bitmap->line[xoff+j*dx]+ypos;
+							*line16 = colors[*source++];
+						}
 					}
 				}
+				data_ver+=2;
 			}
-			data_ver+=2;
+		}
+		else
+		{
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x400) == priority)
+				{
+					colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
+
+					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
+					{
+						line16=(UINT16 *)bitmap->line[ypos];
+						for(j=0;j<320;j++)
+						{
+							*line16++=colors[0];
+						}
+					}
+					else
+					{
+						// copy line
+						line16 = (UINT16 *)bitmap->line[ypos]+xoff;
+						ver_data=ver_data & 0x00ff;
+						colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+						colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						ver_data = ver_data << gr_bitmap_width;
+
+						if(hor_pos & 0xf000)
+						{
+							// reverse
+							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						}
+						else
+						{
+							// normal
+							hor_pos=(hor_pos+0x200) & 0x3ff;
+						}
+
+						source = data + hor_pos + ver_data + 18 + 8;
+
+						for(j=0;j<320;j++)
+						{
+							*line16 = colors[*source++];
+							line16+=dx;
+						}
+					}
+				}
+				data_ver+=2;
+			}
 		}
 	}
-	else
+	else /* 8 bit */
 	{
-		if( Machine->orientation & ORIENTATION_FLIP_X ){
-			dx=-1;
-			xoff=319;
-		}
-		if( Machine->orientation & ORIENTATION_FLIP_Y ){
-			yflip=1;
-		}
-
-		for(i=0;i<224;i++)
+		if( Machine->orientation & ORIENTATION_SWAP_XY )
 		{
-			if(yflip) ypos=223-i;
-			else ypos=i;
-			ver_data=READ_WORD(data_ver);
-			if((ver_data & 0x400) == priority)
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
 			{
-				colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
-
-				if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x400) == priority)
 				{
-					// fill line
-					line32 = (UINT32 *)bitmap->line[ypos];
-					fastfill = colors[0] + (colors[0] << 8) + (colors[0] << 16) + (colors[0] << 24);
-					for(j=0;j<320;j+=4)
+					colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
+
+					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
 					{
-						*line32++ = fastfill;
-					}
-				}
-				else
-				{
-					// copy line
-					line = bitmap->line[ypos]+xoff;
-					ver_data=ver_data & 0x00ff;
-					colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
-
-					colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
-					colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
-					colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
-					colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
-
-					hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
-					ver_data = ver_data << gr_bitmap_width;
-
-					if(hor_pos & 0xf000)
-					{
-						// reverse
-						hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						// fill line
+						for(j=0;j<320;j++)
+						{
+							bitmap->line[j][ypos]=colors[0];
+						}
 					}
 					else
 					{
-						// normal
-						hor_pos=(hor_pos+0x200) & 0x3ff;
-					}
+						// copy line
+						ver_data=ver_data & 0x00ff;
+						colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
 
-					source = data + hor_pos + ver_data + 18 + 8;
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+						colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
 
-					for(j=0;j<320;j++)
-					{
-						*line = colors[*source++];
-						line+=dx;
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						ver_data = ver_data << gr_bitmap_width;
+
+						if(hor_pos & 0xf000)
+						{
+							// reverse
+							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						}
+						else
+						{
+							// normal
+							hor_pos=(hor_pos+0x200) & 0x3ff;
+						}
+
+						source = data + hor_pos + ver_data + 18 + 8;
+
+						for(j=0;j<320;j++)
+						{
+							bitmap->line[xoff+j*dx][ypos] = colors[*source++];
+						}
 					}
 				}
+				data_ver+=2;
 			}
-			data_ver+=2;
+		}
+		else
+		{
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x400) == priority)
+				{
+					colors[0] = paldata1[ READ_WORD(&gr_pal[(ver_data<<1)&0x1fe])&0xff ];
+
+					if((ver_data & 0x500) == 0x100 || (ver_data & 0x300) == 0x200)
+					{
+						// fill line
+						line32 = (UINT32 *)bitmap->line[ypos];
+						fastfill = colors[0] + (colors[0] << 8) + (colors[0] << 16) + (colors[0] << 24);
+						for(j=0;j<320;j+=4)
+						{
+							*line32++ = fastfill;
+						}
+					}
+					else
+					{
+						// copy line
+						line = bitmap->line[ypos]+xoff;
+						ver_data=ver_data & 0x00ff;
+						colorflip = (READ_WORD(&gr_flip[ver_data<<1]) >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+						colors[4] = paldata2[ gr_colorflip[colorflip][3] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						ver_data = ver_data << gr_bitmap_width;
+
+						if(hor_pos & 0xf000)
+						{
+							// reverse
+							hor_pos=((0-((hor_pos&0x7ff)^7))+0x9f8)&0x3ff;
+						}
+						else
+						{
+							// normal
+							hor_pos=(hor_pos+0x200) & 0x3ff;
+						}
+
+						source = data + hor_pos + ver_data + 18 + 8;
+
+						for(j=0;j<320;j++)
+						{
+							*line = colors[*source++];
+							line+=dx;
+						}
+					}
+				}
+				data_ver+=2;
+			}
 		}
 	}
 }
@@ -2217,11 +2546,20 @@ void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	// from sys16 emu (Not sure if this is the best place for this?)
 	{
 		static int freeze_counter=0;
-		if (!sys16_refreshenable) freeze_counter=4;
+		if (!sys16_refreshenable)
+		{
+			freeze_counter=4;
+			sys16_freezepalette=1;
+		}
 		if (freeze_counter)
 		{
 			freeze_counter--;
 			return;
+		}
+		else if(sys16_freezepalette)
+		{
+			sys16_refresh_palette();
+			sys16_freezepalette=0;
 		}
 	}
 
@@ -2301,10 +2639,11 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 	UINT8 *data = memory_region(5);
 	UINT8 *source,*source2,*temp;
 	UINT8 *line;
+	UINT16 *line16;
 	UINT32 *line32;
 	UINT8 *data_ver=gr_ver;
 	UINT32 ver_data,hor_pos,hor_pos2;
-	UINT8 colors[5];
+	UINT16 colors[5];
 	UINT32 fastfill;
 	int colorflip,colorflip_info;
 	int yflip=0,ypos;
@@ -2317,160 +2656,323 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 
 	priority=priority << 11;
 
-	if( Machine->orientation & ORIENTATION_SWAP_XY )
+	if (Machine->scrbitmap->depth == 16) /* 16 bit */
 	{
-		if( Machine->orientation & ORIENTATION_FLIP_Y ){
-			dx=-1;
-			xoff=319;
-		}
-		if( Machine->orientation & ORIENTATION_FLIP_X ){
-			yflip=1;
-		}
-
-		for(i=0;i<224;i++)
+		if( Machine->orientation & ORIENTATION_SWAP_XY )
 		{
-			if(yflip) ypos=223-i;
-			else ypos=i;
-			ver_data=READ_WORD(data_ver);
-			if((ver_data & 0x800) == priority)
-			{
-
-				if(ver_data & 0x800)
-				{
-					colors[0] = paldata1[ ver_data&0x3f ];
-					// fill line
-					for(j=0;j<320;j++)
-					{
-						bitmap->line[j][ypos]=colors[0];
-					}
-				}
-				else
-				{
-					// copy line
-					ver_data=ver_data & 0x01ff;		//???
-					colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
-
-					colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
-
-					colorflip = (colorflip_info >> 3) & 1;
-
-					colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
-					colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
-					colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
-
-					hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
-					hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
-
-					ver_data=ver_data>>1;
-					if( ver_data != 0 )
-					{
-						ver_data = (ver_data-1) << gr_bitmap_width;
-					}
-
-					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
-					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
-
-					switch(second_road)
-					{
-						case 0:	source2=source;	break;
-						case 2:	temp=source;source=source2;source2=temp; break;
-						case 3:	source=source2;	break;
-					}
-
-					source2++;
-
-					for(j=0;j<320;j++)
-					{
-						if(*source2 <= *source)
-							bitmap->line[xoff+j*dx][ypos] = colors[*source];
-						else
-							bitmap->line[xoff+j*dx][ypos] = colors[*source2];
-						source++;
-						source2++;
-					}
-				}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				dx=-1;
+				xoff=319;
 			}
-			data_ver+=2;
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x800) == priority)
+				{
+
+					if(ver_data & 0x800)
+					{
+						colors[0] = paldata1[ ver_data&0x3f ];
+						// fill line
+						for(j=0;j<320;j++)
+						{
+							line16=(UINT16 *)bitmap->line[j]+ypos;
+							*line16=colors[0];
+						}
+					}
+					else
+					{
+						// copy line
+						ver_data=ver_data & 0x01ff;		//???
+						colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
+
+						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
+
+						colorflip = (colorflip_info >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
+
+						ver_data=ver_data>>1;
+						if( ver_data != 0 )
+						{
+							ver_data = (ver_data-1) << gr_bitmap_width;
+						}
+
+						source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
+
+						switch(second_road)
+						{
+							case 0:	source2=source;	break;
+							case 2:	temp=source;source=source2;source2=temp; break;
+							case 3:	source=source2;	break;
+						}
+
+						source2++;
+
+						for(j=0;j<320;j++)
+						{
+							line16=(UINT16 *)bitmap->line[xoff+j*dx]+ypos;
+							if(*source2 <= *source)
+								*line16 = colors[*source];
+							else
+								*line16 = colors[*source2];
+							source++;
+							source2++;
+						}
+					}
+				}
+				data_ver+=2;
+			}
+		}
+		else
+		{
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x800) == priority)
+				{
+
+					if(ver_data & 0x800)
+					{
+						colors[0] = paldata1[ ver_data&0x3f ];
+						// fill line
+						line16 = (UINT16 *)bitmap->line[ypos];
+						for(j=0;j<320;j++)
+						{
+							*line16++ = colors[0];
+						}
+					}
+					else
+					{
+						// copy line
+						line16 = (UINT16 *)bitmap->line[ypos]+xoff;
+						ver_data=ver_data & 0x01ff;		//???
+						colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
+
+						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
+
+						colorflip = (colorflip_info >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
+
+						ver_data=ver_data>>1;
+						if( ver_data != 0 )
+						{
+							ver_data = (ver_data-1) << gr_bitmap_width;
+						}
+
+						source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
+
+						switch(second_road)
+						{
+							case 0:	source2=source;	break;
+							case 2:	temp=source;source=source2;source2=temp; break;
+							case 3:	source=source2;	break;
+						}
+
+						source2++;
+
+						for(j=0;j<320;j++)
+						{
+							if(*source2 <= *source)
+								*line16 = colors[*source];
+							else
+								*line16 = colors[*source2];
+							source++;
+							source2++;
+							line16+=dx;
+						}
+					}
+				}
+				data_ver+=2;
+			}
 		}
 	}
 	else
 	{
-		if( Machine->orientation & ORIENTATION_FLIP_X ){
-			dx=-1;
-			xoff=319;
-		}
-		if( Machine->orientation & ORIENTATION_FLIP_Y ){
-			yflip=1;
-		}
-
-		for(i=0;i<224;i++)
+		if( Machine->orientation & ORIENTATION_SWAP_XY )
 		{
-			if(yflip) ypos=223-i;
-			else ypos=i;
-			ver_data=READ_WORD(data_ver);
-			if((ver_data & 0x800) == priority)
-			{
-
-				if(ver_data & 0x800)
-				{
-					colors[0] = paldata1[ ver_data&0x3f ];
-					// fill line
-					line32 = (UINT32 *)bitmap->line[ypos];
-					fastfill = colors[0] + (colors[0] << 8) + (colors[0] << 16) + (colors[0] << 24);
-					for(j=0;j<320;j+=4)
-					{
-						*line32++ = fastfill;
-					}
-				}
-				else
-				{
-					// copy line
-					line = bitmap->line[ypos]+xoff;
-					ver_data=ver_data & 0x01ff;		//???
-					colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
-
-					colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
-
-					colorflip = (colorflip_info >> 3) & 1;
-
-					colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
-					colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
-					colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
-
-					hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
-					hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
-
-					ver_data=ver_data>>1;
-					if( ver_data != 0 )
-					{
-						ver_data = (ver_data-1) << gr_bitmap_width;
-					}
-
-					source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
-					source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
-
-					switch(second_road)
-					{
-						case 0:	source2=source;	break;
-						case 2:	temp=source;source=source2;source2=temp; break;
-						case 3:	source=source2;	break;
-					}
-
-					source2++;
-
-					for(j=0;j<320;j++)
-					{
-						if(*source2 <= *source)
-							*line = colors[*source];
-						else
-							*line = colors[*source2];
-						source++;
-						source2++;
-						line+=dx;
-					}
-				}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				dx=-1;
+				xoff=319;
 			}
-			data_ver+=2;
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x800) == priority)
+				{
+
+					if(ver_data & 0x800)
+					{
+						colors[0] = paldata1[ ver_data&0x3f ];
+						// fill line
+						for(j=0;j<320;j++)
+						{
+							bitmap->line[j][ypos]=colors[0];
+						}
+					}
+					else
+					{
+						// copy line
+						ver_data=ver_data & 0x01ff;		//???
+						colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
+
+						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
+
+						colorflip = (colorflip_info >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
+
+						ver_data=ver_data>>1;
+						if( ver_data != 0 )
+						{
+							ver_data = (ver_data-1) << gr_bitmap_width;
+						}
+
+						source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
+
+						switch(second_road)
+						{
+							case 0:	source2=source;	break;
+							case 2:	temp=source;source=source2;source2=temp; break;
+							case 3:	source=source2;	break;
+						}
+
+						source2++;
+
+						for(j=0;j<320;j++)
+						{
+							if(*source2 <= *source)
+								bitmap->line[xoff+j*dx][ypos] = colors[*source];
+							else
+								bitmap->line[xoff+j*dx][ypos] = colors[*source2];
+							source++;
+							source2++;
+						}
+					}
+				}
+				data_ver+=2;
+			}
+		}
+		else
+		{
+			if( Machine->orientation & ORIENTATION_FLIP_X ){
+				dx=-1;
+				xoff=319;
+			}
+			if( Machine->orientation & ORIENTATION_FLIP_Y ){
+				yflip=1;
+			}
+
+			for(i=0;i<224;i++)
+			{
+				if(yflip) ypos=223-i;
+				else ypos=i;
+				ver_data=READ_WORD(data_ver);
+				if((ver_data & 0x800) == priority)
+				{
+
+					if(ver_data & 0x800)
+					{
+						colors[0] = paldata1[ ver_data&0x3f ];
+						// fill line
+						line32 = (UINT32 *)bitmap->line[ypos];
+						fastfill = colors[0] + (colors[0] << 8) + (colors[0] << 16) + (colors[0] << 24);
+						for(j=0;j<320;j+=4)
+						{
+							*line32++ = fastfill;
+						}
+					}
+					else
+					{
+						// copy line
+						line = bitmap->line[ypos]+xoff;
+						ver_data=ver_data & 0x01ff;		//???
+						colorflip_info = READ_WORD(&gr_flip[ver_data<<1]);
+
+						colors[0] = paldata2[ ((colorflip_info >> 8) & 0x1f) + 0x20 ];		//??
+
+						colorflip = (colorflip_info >> 3) & 1;
+
+						colors[1] = paldata2[ gr_colorflip[colorflip][0] ];
+						colors[2] = paldata2[ gr_colorflip[colorflip][1] ];
+						colors[3] = paldata2[ gr_colorflip[colorflip][2] ];
+
+						hor_pos = (READ_WORD(&gr_hor[ver_data<<1]) );
+						hor_pos2= (READ_WORD(&gr_hor[(ver_data<<1)+0x400]) );
+
+						ver_data=ver_data>>1;
+						if( ver_data != 0 )
+						{
+							ver_data = (ver_data-1) << gr_bitmap_width;
+						}
+
+						source  = data + ((hor_pos +0x200) & 0x7ff) + 768 + ver_data + 8;
+						source2 = data + ((hor_pos2+0x200) & 0x7ff) + 768 + ver_data + 8;
+
+						switch(second_road)
+						{
+							case 0:	source2=source;	break;
+							case 2:	temp=source;source=source2;source2=temp; break;
+							case 3:	source=source2;	break;
+						}
+
+						source2++;
+
+						for(j=0;j<320;j++)
+						{
+							if(*source2 <= *source)
+								*line = colors[*source];
+							else
+								*line = colors[*source2];
+							source++;
+							source2++;
+							line+=dx;
+						}
+					}
+				}
+				data_ver+=2;
+			}
 		}
 	}
 }
@@ -2483,11 +2985,20 @@ void sys16_or_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	// from sys16 emu (Not sure if this is the best place for this?)
 	{
 		static int freeze_counter=0;
-		if (!sys16_refreshenable) freeze_counter=4;
+		if (!sys16_refreshenable)
+		{
+			freeze_counter=4;
+			sys16_freezepalette=1;
+		}
 		if (freeze_counter)
 		{
 			freeze_counter--;
 			return;
+		}
+		else if(sys16_freezepalette)
+		{
+			sys16_refresh_palette();
+			sys16_freezepalette=0;
 		}
 	}
 

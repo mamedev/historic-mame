@@ -126,7 +126,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress frogger2_readmem[] =
+static struct MemoryReadAddress froggrmc_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -139,7 +139,7 @@ static struct MemoryReadAddress frogger2_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress frogger2_writemem[] =
+static struct MemoryWriteAddress froggrmc_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
@@ -226,7 +226,7 @@ INPUT_PORTS_START( frogger )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frogger2 )
+INPUT_PORTS_START( froggrmc )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -295,8 +295,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 16 },
-	{ 1, 0x0000, &spritelayout,   0,  8 },
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },
+	{ REGION_GFX1, 0, &spritelayout,   0,  8 },
 	{ -1 } /* end of array */
 };
 
@@ -306,8 +306,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 80 },
-	{ 0x20 },	/* gain */
+	{ MIXERG(80,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -316,7 +315,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_frogger =
 {
 	/* basic machine hardware */
 	{
@@ -359,14 +358,14 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver machine_driver_frogger2 =
+static struct MachineDriver machine_driver_froggrmc =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			frogger2_readmem,frogger2_writemem,0,0,
+			froggrmc_readmem,froggrmc_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
@@ -417,17 +416,17 @@ ROM_START( frogger )
 	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
 	ROM_LOAD( "frsm3.7",      0x2000, 0x1000, 0xaca22ae0 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
-	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
-	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogseg1 )
@@ -436,17 +435,17 @@ ROM_START( frogseg1 )
 	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
 	ROM_LOAD( "frogger.34",   0x2000, 0x1000, 0xed866bab )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
-	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
-	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogseg2 )
@@ -456,41 +455,41 @@ ROM_START( frogseg2 )
 	ROM_LOAD( "frogger.ic7",  0x2000, 0x1000, 0xdd251066 )
 	ROM_LOAD( "frogger.ic8",  0x3000, 0x1000, 0xbf293a02 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
-	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
-	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
-ROM_START( frogger2 )
+ROM_START( froggrmc )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr-1031.15",  0x0000, 0x1000, 0x4b7c8d11 )
 	ROM_LOAD( "epr-1032.16",  0x1000, 0x1000, 0xac00b9d9 )
 	ROM_LOAD( "epr-1033.33",  0x2000, 0x1000, 0xbc1d6fbc )
 	ROM_LOAD( "epr-1034.34",  0x3000, 0x1000, 0x9efe7399 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "epr-1082.42",  0x0000, 0x1000, 0x802843c2 )
+	ROM_LOAD( "epr-1035.43",  0x1000, 0x0800, 0x14e74148 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "epr-1082.42",  0x0000, 0x1000, 0x802843c2 )
-	ROM_LOAD( "epr-1035.43",  0x1000, 0x0800, 0x14e74148 )
 ROM_END
 
 
 
-static void frogger_decode(void)
+static void init_frogger(void)
 {
 	int A;
 	unsigned char *RAM;
@@ -502,12 +501,12 @@ static void frogger_decode(void)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
 	/* likewise, the first gfx ROM has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(1);
+	RAM = memory_region(REGION_GFX1);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
 
-static void frogger2_decode(void)
+static void init_froggrmc(void)
 {
 	int A;
 	unsigned char *RAM;
@@ -521,103 +520,9 @@ static void frogger2_decode(void)
 
 
 
-struct GameDriver driver_frogger =
-{
-	__FILE__,
-	0,
-	"frogger",
-	"Frogger",
-	"1981",
-	"Konami",
-	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	frogger_decode,
-
-	rom_frogger,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frogger,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_frogseg1 =
-{
-	__FILE__,
-	&driver_frogger,
-	"frogseg1",
-	"Frogger (Sega set 1)",
-	"1981",
-	"[Konami] (Sega license)",
-	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	frogger_decode,
-
-	rom_frogseg1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frogger,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_frogseg2 =
-{
-	__FILE__,
-	&driver_frogger,
-	"frogseg2",
-	"Frogger (Sega set 2)",
-	"1981",
-	"[Konami] (Sega license)",
-	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
-	0,
-	&machine_driver,
-	frogger_decode,
-
-	rom_frogseg2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frogger,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1981, frogger,  0,       frogger,  frogger,  frogger,  ROT90, "Konami", "Frogger" )
+GAME( 1981, frogseg1, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 1)" )
+GAME( 1981, frogseg2, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 2)" )
 
 /* this version runs on modified Moon Cresta hardware */
-struct GameDriver driver_froggrmc =
-{
-	__FILE__,
-	&driver_frogger,
-	"froggrmc",
-	"Frogger (modified Moon Cresta hardware)",
-	"1981",
-	"bootleg?",
-	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
-	0,
-	&machine_driver_frogger2,
-	frogger2_decode,
-
-	rom_frogger2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frogger2,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1981, froggrmc, frogger, froggrmc, froggrmc, froggrmc, ROT90, "bootleg?", "Frogger (modified Moon Cresta hardware)" )

@@ -231,9 +231,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( twocrude )
 	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -241,9 +241,9 @@ INPUT_PORTS_START( twocrude )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -262,23 +262,23 @@ INPUT_PORTS_START( twocrude )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -306,7 +306,7 @@ INPUT_PORTS_START( twocrude )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-  	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -353,11 +353,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout, 	0, 16 },	/* Characters 8x8 */
-	{ 1, 0x0a0000, &tilelayout,  1024, 16 },	/* Tiles 16x16 */
-	{ 1, 0x0a0000, &tilelayout,   768, 16 },	/* Tiles 16x16 */
-	{ 1, 0x020000, &tilelayout,   512, 16 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &spritelayout, 256, 80 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout, 	   0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,  1024, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tilelayout,   768, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &tilelayout,   512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &spritelayout, 256, 80 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -367,7 +367,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* Frequency */
-	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ REGION_SOUND1, REGION_SOUND2 },  /* memory regions 3 & 4 */
 	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
@@ -376,7 +376,6 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Accurate, audio section crystal is 32.220 MHz */
 	{ YM2203_VOL(40,40) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -457,31 +456,34 @@ ROM_START( cbuster )
   	ROM_LOAD_EVEN( "fx03.rom", 0x40000, 0x20000, 0xc3d65bf9 )
  	ROM_LOAD_ODD ( "fx02.rom", 0x40000, 0x20000, 0xb875266b )
 
- 	ROM_REGION_DISPOSE(0x2a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fu05-.rom",  0x000000, 0x10000, 0x8134d412 ) /* Chars */
-	ROM_LOAD( "fu06-.rom",  0x010000, 0x10000, 0x2f914a45 )
-
-	ROM_LOAD( "mab-00",  0x020000, 0x80000, 0x660eaabd ) /* Tiles */
-	ROM_LOAD( "mab-01",  0x0a0000, 0x80000, 0x1080d619 ) /* Tiles */
-
-	ROM_LOAD( "mab-02",  0x120000, 0x80000, 0x58b7231d ) /* Sprites */
-	/* Space for extra sprites to be copied to (0x20000) */
-	ROM_LOAD( "mab-03",  0x1c0000, 0x80000, 0x76053b9d )
- 	/* Space for extra sprites to be copied to (0x20000) */
-
-	ROM_LOAD( "fu07-.rom",    0x260000, 0x10000, 0xca8d0bb3 ) /* Extra sprites */
-	ROM_LOAD( "fu08-.rom",    0x270000, 0x10000, 0xc6afc5c8 )
-	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
-	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
+	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, 0x65f20f10 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu12-.rom",    0x00000, 0x20000, 0x2d1d65f2 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, 0x8134d412 ) /* Chars */
+	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, 0x2f914a45 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-01",        0x00000, 0x80000, 0x1080d619 ) /* Tiles */
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, 0x660eaabd ) /* Tiles */
+
+	ROM_REGIONX( 0x180000,REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-02",        0x000000, 0x80000, 0x58b7231d ) /* Sprites */
+	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, 0x76053b9d )
+ 	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "fu07-.rom",     0x140000, 0x10000, 0xca8d0bb3 ) /* Extra sprites */
+	ROM_LOAD( "fu08-.rom",     0x150000, 0x10000, 0xc6afc5c8 )
+	ROM_LOAD( "fu09-.rom",     0x160000, 0x10000, 0x526809ca )
+	ROM_LOAD( "fu10-.rom",     0x170000, 0x10000, 0x6be6d50e )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "fu12-.rom",     0x00000, 0x20000, 0x2d1d65f2 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_LOAD( "fu13-.rom",     0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
 ROM_START( cbusterw )
@@ -491,99 +493,108 @@ ROM_START( cbusterw )
   	ROM_LOAD_EVEN( "fu03-.rom", 0x40000, 0x20000, 0xdef46956 )
  	ROM_LOAD_ODD ( "fu02-.rom", 0x40000, 0x20000, 0x649c3338 )
 
- 	ROM_REGION_DISPOSE(0x2a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fu05-.rom",  0x000000, 0x10000, 0x8134d412 ) /* Chars */
-	ROM_LOAD( "fu06-.rom",  0x010000, 0x10000, 0x2f914a45 )
-
-	ROM_LOAD( "mab-00",  0x020000, 0x80000, 0x660eaabd ) /* Tiles */
-	ROM_LOAD( "mab-01",  0x0a0000, 0x80000, 0x1080d619 ) /* Tiles */
-
-	ROM_LOAD( "mab-02",  0x120000, 0x80000, 0x58b7231d ) /* Sprites */
-	/* Space for extra sprites to be copied to (0x20000) */
-	ROM_LOAD( "mab-03",  0x1c0000, 0x80000, 0x76053b9d )
- 	/* Space for extra sprites to be copied to (0x20000) */
-
-	ROM_LOAD( "fu07-.rom",    0x260000, 0x10000, 0xca8d0bb3 ) /* Extra sprites */
-	ROM_LOAD( "fu08-.rom",    0x270000, 0x10000, 0xc6afc5c8 )
-	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
-	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
+	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, 0x65f20f10 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu12-.rom",    0x00000, 0x20000, 0x2d1d65f2 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, 0x8134d412 ) /* Chars */
+	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, 0x2f914a45 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-01",        0x00000, 0x80000, 0x1080d619 ) /* Tiles */
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, 0x660eaabd ) /* Tiles */
+
+	ROM_REGIONX( 0x180000,REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-02",        0x000000, 0x80000, 0x58b7231d ) /* Sprites */
+	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, 0x76053b9d )
+ 	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "fu07-.rom",     0x140000, 0x10000, 0xca8d0bb3 ) /* Extra sprites */
+	ROM_LOAD( "fu08-.rom",     0x150000, 0x10000, 0xc6afc5c8 )
+	ROM_LOAD( "fu09-.rom",     0x160000, 0x10000, 0x526809ca )
+	ROM_LOAD( "fu10-.rom",     0x170000, 0x10000, 0x6be6d50e )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "fu12-.rom",     0x00000, 0x20000, 0x2d1d65f2 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_LOAD( "fu13-.rom",     0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
 ROM_START( cbusterj )
 	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
-  	ROM_LOAD_EVEN( "fr01-1", 0x00000, 0x20000, 0xaf3c014f )
-	ROM_LOAD_ODD ( "fr00-1", 0x00000, 0x20000, 0xf666ad52 )
-  	ROM_LOAD_EVEN( "fr03",   0x40000, 0x20000, 0x02c06118 )
- 	ROM_LOAD_ODD ( "fr02",   0x40000, 0x20000, 0xb6c34332 )
-
-	ROM_REGION_DISPOSE(0x2a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fu05-.rom",  0x000000, 0x10000, 0x8134d412 ) /* Chars */
-	ROM_LOAD( "fu06-.rom",  0x010000, 0x10000, 0x2f914a45 )
-
-	ROM_LOAD( "mab-00",  0x020000, 0x80000, 0x660eaabd ) /* Tiles */
-	ROM_LOAD( "mab-01",  0x0a0000, 0x80000, 0x1080d619 ) /* Tiles */
-
-	ROM_LOAD( "mab-02",  0x120000, 0x80000, 0x58b7231d ) /* Sprites */
-	/* Space for extra sprites to be copied to (0x20000) */
-	ROM_LOAD( "mab-03",  0x1c0000, 0x80000, 0x76053b9d )
- 	/* Space for extra sprites to be copied to (0x20000) */
-
-	ROM_LOAD( "fr07",    0x260000, 0x10000, 0x52c85318 ) /* Extra sprites */
-	ROM_LOAD( "fr08",    0x270000, 0x10000, 0xea25fbac )
-	ROM_LOAD( "fr09",    0x280000, 0x10000, 0xf8363424 )
-	ROM_LOAD( "fr10",    0x290000, 0x10000, 0x241d5760 )
+  	ROM_LOAD_EVEN( "fr01-1",   0x00000, 0x20000, 0xaf3c014f )
+	ROM_LOAD_ODD ( "fr00-1",   0x00000, 0x20000, 0xf666ad52 )
+  	ROM_LOAD_EVEN( "fr03",     0x40000, 0x20000, 0x02c06118 )
+ 	ROM_LOAD_ODD ( "fr02",     0x40000, 0x20000, 0xb6c34332 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
+	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, 0x65f20f10 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu12-.rom",    0x00000, 0x20000, 0x2d1d65f2 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, 0x8134d412 ) /* Chars */
+	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, 0x2f914a45 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-01",        0x00000, 0x80000, 0x1080d619 ) /* Tiles */
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, 0x660eaabd ) /* Tiles */
+
+	ROM_REGIONX( 0x180000,REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-02",        0x000000, 0x80000, 0x58b7231d ) /* Sprites */
+	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, 0x76053b9d )
+ 	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "fr07",          0x140000, 0x10000, 0x52c85318 ) /* Extra sprites */
+	ROM_LOAD( "fr08",          0x150000, 0x10000, 0xea25fbac )
+	ROM_LOAD( "fr09",          0x160000, 0x10000, 0xf8363424 )
+	ROM_LOAD( "fr10",          0x170000, 0x10000, 0x241d5760 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "fu12-.rom",     0x00000, 0x20000, 0x2d1d65f2 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_LOAD( "fu13-.rom",     0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
 ROM_START( twocrude )
 	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN( "ft01",    0x00000, 0x20000, 0x08e96489 )
-	ROM_LOAD_ODD ( "ft00",    0x00000, 0x20000, 0x6765c445 )
-	ROM_LOAD_EVEN( "ft03",    0x40000, 0x20000, 0x28002c99 )
-	ROM_LOAD_ODD ( "ft02",    0x40000, 0x20000, 0x37ea0626 )
-
-	ROM_REGION_DISPOSE(0x2a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fu05-.rom",  0x000000, 0x10000, 0x8134d412 ) /* Chars */
-	ROM_LOAD( "fu06-.rom",  0x010000, 0x10000, 0x2f914a45 )
-
-	ROM_LOAD( "mab-00",  0x020000, 0x80000, 0x660eaabd ) /* Tiles */
-	ROM_LOAD( "mab-01",  0x0a0000, 0x80000, 0x1080d619 ) /* Tiles */
-
-	ROM_LOAD( "mab-02",  0x120000, 0x80000, 0x58b7231d ) /* Sprites */
-	/* Space for extra sprites to be copied to (0x20000) */
-	ROM_LOAD( "mab-03",  0x1c0000, 0x80000, 0x76053b9d )
- 	/* Space for extra sprites to be copied to (0x20000) */
-
-	ROM_LOAD( "ft07",    0x260000, 0x10000, 0xe3465c25 )
-	ROM_LOAD( "ft08",    0x270000, 0x10000, 0xc7f1d565 )
-	ROM_LOAD( "ft09",    0x280000, 0x10000, 0x6e3657b9 )
-	ROM_LOAD( "ft10",    0x290000, 0x10000, 0xcdb83560 )
+	ROM_LOAD_EVEN( "ft01",     0x00000, 0x20000, 0x08e96489 )
+	ROM_LOAD_ODD ( "ft00",     0x00000, 0x20000, 0x6765c445 )
+	ROM_LOAD_EVEN( "ft03",     0x40000, 0x20000, 0x28002c99 )
+	ROM_LOAD_ODD ( "ft02",     0x40000, 0x20000, 0x37ea0626 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
-	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
+	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, 0x65f20f10 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu12-.rom",    0x00000, 0x20000, 0x2d1d65f2 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, 0x8134d412 ) /* Chars */
+	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, 0x2f914a45 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-01",        0x00000, 0x80000, 0x1080d619 ) /* Tiles */
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, 0x660eaabd ) /* Tiles */
+
+	ROM_REGIONX( 0x180000,REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mab-02",        0x000000, 0x80000, 0x58b7231d ) /* Sprites */
+	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, 0x76053b9d )
+ 	/* Space for extra sprites to be copied to (0x20000) */
+	ROM_LOAD( "ft07",          0x140000, 0x10000, 0xe3465c25 )
+	ROM_LOAD( "ft08",          0x150000, 0x10000, 0xc7f1d565 )
+	ROM_LOAD( "ft09",          0x160000, 0x10000, 0x6e3657b9 )
+	ROM_LOAD( "ft10",          0x170000, 0x10000, 0xcdb83560 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "fu12-.rom",     0x00000, 0x20000, 0x2d1d65f2 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_LOAD( "fu13-.rom",     0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
 /******************************************************************************/
@@ -612,8 +623,8 @@ static void init_twocrude(void)
 	}
 
 	/* Rearrange the 'extra' sprite bank to be in the same format as main sprites */
-	PTR = memory_region(1) + 0x260000;
-	RAM = memory_region(1) + 0x1a0000;
+	RAM = memory_region(REGION_GFX4) + 0x080000;
+	PTR = memory_region(REGION_GFX4) + 0x140000;
 	for (i=0; i<0x20000; i+=64) {
 		for (j=0; j<16; j+=1) { /* Copy 16 lines down */
 			RAM[i+      0+j*2]=PTR[i/2+      0+j]; /* Pixels 0-7 for each plane */
@@ -633,7 +644,7 @@ static void init_twocrude(void)
 
 /******************************************************************************/
 
-GAME( 1990, cbuster,  ,        twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FX version)" )
+GAME( 1990, cbuster,  0,       twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FX version)" )
 GAME( 1990, cbusterw, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FU version)" )
 GAME( 1990, cbusterj, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (Japan)" )
 GAME( 1990, twocrude, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East USA", "Two Crude (US)" )

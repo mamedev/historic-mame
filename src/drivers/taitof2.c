@@ -157,7 +157,7 @@ static unsigned char *taitof2_ram; /* used for high score save */
 
 static void bankswitch_w (int offset, int data)
 {
-	unsigned char *RAM = memory_region(2);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
 
 	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
@@ -883,7 +883,6 @@ static struct YM2610interface ym2610_interface =
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

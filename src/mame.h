@@ -13,7 +13,7 @@ extern char build_version[];
 extern FILE *errorlog;
 
 #define MAX_GFX_ELEMENTS 32
-#define MAX_MEMORY_REGIONS 10
+#define MAX_MEMORY_REGIONS 32
 
 struct RunningMachine
 {
@@ -52,6 +52,18 @@ struct RunningMachine
 	int ui_orientation;
 };
 
+#ifdef MESS
+#define MAX_IMAGES	32
+/*
+ * This is a filename and it's associated peripheral type
+ * The types are defined in mess.h (IO_...)
+ */
+struct ImageFile {
+	const char *name;
+	int type;
+};
+#endif
+
 /* The host platform should fill these fields with the preferences specified in the GUI */
 /* or on the commandline. */
 struct GameOptions {
@@ -81,11 +93,8 @@ struct GameOptions {
 	int use_artwork;
 
 	#ifdef MESS
-		/* This is ugly for now, but its temporary! */
-	  char rom_name[MAX_ROM][MAX_PATH];           /* MESS */
- 	  char floppy_name[MAX_FLOPPY][MAX_PATH];     /* MESS */
-	  char hard_name[MAX_HARD][MAX_PATH];         /* MESS */
-	  char cassette_name[MAX_CASSETTE][MAX_PATH]; /* MESS */
+	struct ImageFile image_files[MAX_IMAGES];
+	int image_count;
 	#endif
 };
 

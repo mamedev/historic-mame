@@ -95,7 +95,7 @@ typedef signed int		INT32;   /* signed 32bit   */
 #endif
 
 #if (FM_OUTPUT_BIT==16)
-typedef unsigned short FMSAMPLE;
+typedef INT16 FMSAMPLE;
 typedef unsigned long FMSAMPLE_MIX;
 #endif
 #if (FM_OUTPUT_BIT==8)
@@ -145,7 +145,7 @@ void YM2203ResetChip(int num);
 ** update one of chip
 */
 
-void YM2203UpdateOne(int num, void *buffer, int length);
+void YM2203UpdateOne(int num, INT16 *buffer, int length);
 
 /*
 ** Write
@@ -172,7 +172,7 @@ int YM2608Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2608Shutdown(void);
 void YM2608ResetChip(int num);
-void YM2608UpdateOne(int num, void **buffer, int length);
+void YM2608UpdateOne(int num, INT16 **buffer, int length);
 
 int YM2608Write(int n, int a,unsigned char v);
 unsigned char YM2608Read(int n,int a);
@@ -186,9 +186,9 @@ int YM2610Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);
-void YM2610UpdateOne(int num, void **buffer, int length);
+void YM2610UpdateOne(int num, INT16 **buffer, int length);
 #if BUILD_YM2610B
-void YM2610BUpdateOne(int num, void **buffer, int length);
+void YM2610BUpdateOne(int num, INT16 **buffer, int length);
 #endif
 
 int YM2610Write(int n, int a,unsigned char v);
@@ -202,7 +202,7 @@ int YM2612Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2612Shutdown(void);
 void YM2612ResetChip(int num);
-void YM2612UpdateOne(int num, void **buffer, int length);
+void YM2612UpdateOne(int num, INT16 **buffer, int length);
 int YM2612Write(int n, int a,unsigned char v);
 unsigned char YM2612Read(int n,int a);
 int YM2612TimerOver(int n, int c );
@@ -216,7 +216,7 @@ int OPMInit(int num, int baseclock, int rate,
 void OPMShutdown(void);
 void OPMResetChip(int num);
 
-void OPMUpdateOne(int num, void **buffer, int length );
+void OPMUpdateOne(int num, INT16 **buffer, int length );
 /* ---- set callback hander when port CT0/1 write ----- */
 /* CT.bit0 = CT0 , CT.bit1 = CT1 */
 void OPMSetPortHander(int n,void (*PortWrite)(int offset,int CT) );

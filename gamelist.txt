@@ -159,7 +159,7 @@ command to list them.
 | Contra               |  Yes   |  Yes   |  Yes   |   No   | contra   |
 | Cop 01               |  Yes   | Close  |  Yes   |   No   | cop01    |
 | Cops'n Robbers       |  Yes   |Overlay |   No   |  n/a   | copsnrob |
-| Cosmic Alien         |  Yes   |   No   |   No   |   No   | cosmica  |
+| Cosmic Alien         |  Yes   |  Yes   |   No   |   No   | cosmica  |
 | Cosmic Avenger       |  Yes   |  Yes?  |  Yes   |  Yes   | cavenger |
 | Cosmic Chasm         |  Yes   |  Yes?  |  Yes   |  n/a?  | cchasm   |
 | Cosmic Guerilla      |  Yes   |  Yes   | Yes(1) |   No   | cosmicg  |
@@ -293,6 +293,7 @@ command to list them.
 | Gorf                 |  Yes   |   No   | Yes(1) |  Yes   | gorf     |
 | Gradius III          |  Yes   |  Yes   |  Yes   |  Yes   | gradius3 |
 | Gravitar             |  Yes   | Close  |  Yes   |   No   | gravitar |
+| Great 1000 Miles Rall|  Yes   |  Yes   |  Yes   |   No   | gtmr     |
 | Great Swordsman      |  Yes   |   No   |  Yes   |   No   | gsword   |
 | Green Beret          |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
 | Gridiron Fight       |  Yes   |  Yes   |  Yes   |   No   | gridiron |
@@ -635,7 +636,7 @@ command to list them.
 | Showdown             |  Yes   |  Yes   |  Yes   |  Yes   | showdown |
 | Shuuz                |  Yes   |  Yes   |  Yes   |   No   | shuuz    |
 | Sichuan II           |  Yes   |  Yes   |  Yes   |   No   | sichuan2 |
-| Side Pocket          |  Yes   |   No   |  Yes   |   No   | sidepckt |
+| Side Pocket          |  Yes   |  Yes   |  Yes   |   No   | sidepckt |
 | Side Track           |  Yes   |   No   | Yes(1) |   No   | sidetrac |
 | Sidearms             |  Yes   |  Yes   |  Yes   |   No   | sidearms |
 | Silkworm             |  Yes   |  Yes   |  Yes   |   No   | silkworm |
@@ -755,7 +756,7 @@ command to list them.
 | Thunder Cross II     |  Yes   |  Yes   |  Yes   |  Yes   | thndrx2  |
 | ThunderJaws          |  Yes   |  Yes   |  Yes   |   No   | thunderj |
 | Tiger Heli           |  Yes   |  Yes   |  Yes   |   No   | tigerh   |
-| Tiger Road           |  Yes   |  Yes   |  Yes   |   No   | tigeroad |
+| Tiger Road           |  Yes   |  Yes   |  Yes   |  Yes   | tigeroad |
 | Timber               |  Yes   |  Yes   |  Yes   |   No   | timber   |
 | Time Pilot           |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
 | Time Pilot 84        |  Yes   |  Yes   |  Yes   |   No   | tp84     |

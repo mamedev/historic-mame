@@ -279,7 +279,7 @@ INPUT_PORTS_START( lwings )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_4C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
 
@@ -559,7 +559,6 @@ static struct YM2203interface ym2203_interface =
 	2,                      /* 2 chips */
 	1500000,        /* 1.5 MHz (?) */
 	{ YM2203_VOL(10,20), YM2203_VOL(10,20) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -568,7 +567,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_lwings =
 {
 	/* basic machine hardware */
 	{
@@ -695,83 +694,6 @@ ROM_END
 
 
 
-struct GameDriver driver_lwings =
-{
-	__FILE__,
-	0,
-	"lwings",
-	"Legendary Wings (US set 1)",
-	"1986",
-	"Capcom",
-	"Paul Leaman\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_lwings,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lwings,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_lwings2 =
-{
-	__FILE__,
-	&driver_lwings,
-	"lwings2",
-	"Legendary Wings (US set 2)",
-	"1986",
-	"Capcom",
-	"Paul Leaman\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_lwings2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lwings,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_lwingsjp =
-{
-	__FILE__,
-	&driver_lwings,
-	"lwingsjp",
-	"Ales no Tsubasa (Japan)",
-	"1986",
-	"Capcom",
-	"Paul Leaman\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_lwingsjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lwings,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-
-
 /***************************************************************
 
  Section Z
@@ -833,55 +755,6 @@ ROM_START( sctionza )
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
 ROM_END
 
-struct GameDriver driver_sectionz =
-{
-	__FILE__,
-	0,
-	"sectionz",
-	"Section Z (set 1)",
-	"1985",
-	"Capcom",
-	"Paul Leaman\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sectionz,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sectionz,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_sctionza =
-{
-	__FILE__,
-	&driver_sectionz,
-	"sctionza",
-	"Section Z (set 2)",
-	"1985",
-	"Capcom",
-	"Paul Leaman\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sctionza,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sectionz,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
 
 
 /***************************************************************
@@ -1096,80 +969,6 @@ ROM_END
 
 
 
-struct GameDriver driver_trojan =
-{
-	__FILE__,
-	0,
-	"trojan",
-	"Trojan (US)",
-	"1986",
-	"Capcom",
-	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver_trojan,
-	0,
-
-	rom_trojan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_trojanls,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_trojanr =
-{
-	__FILE__,
-	&driver_trojan,
-	"trojanr",
-	"Trojan (Romstar)",
-	"1986",
-	"Capcom (Romstar license)",
-	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver_trojan,
-	0,
-
-	rom_trojanr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_trojan,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_trojanj =
-{
-	__FILE__,
-	&driver_trojan,
-	"trojanj",
-	"Tatakai no Banka (Japan)",
-	"1986",
-	"Capcom",
-	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
-	0,
-	&machine_driver_trojan,
-	0,
-
-	rom_trojanj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_trojan,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
 
 /***************************************************************************
  Avengers - Doesn't work due to copy protection
@@ -1343,23 +1142,23 @@ INPUT_PORTS_START( avengers )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 INPUT_PORTS_END
 
 ROM_START( avengers )
@@ -1450,52 +1249,13 @@ ROM_END
 
 
 
-struct GameDriver driver_avengers =
-{
-	__FILE__,
-	0,
-	"avengers",
-	"Avengers (set 1)",
-	"1987",
-	"Capcom",
-	"Paul Leaman\nPhil Stroffolino",
-	0,
-	&machine_driver_avengers,
-	0,
-
-	rom_avengers,
-	0, 0,
-	0,
-	0,
-
-	input_ports_avengers,
-
-	0, 0, 0,
-	ROT270 | GAME_NOT_WORKING,
-	0,0 /* high score load/save */
-};
-
-struct GameDriver driver_avenger2 =
-{
-	__FILE__,
-	&driver_avengers,
-	"avenger2",
-	"Avengers (set 2)",
-	"1987",
-	"Capcom",
-	"Paul Leaman\nPhil Stroffolino",
-	0,
-	&machine_driver_avengers,
-	0,
-
-	rom_avenger2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_avengers,
-
-	0, 0, 0,
-	ROT270 | GAME_NOT_WORKING,
-	0,0 /* high score load/save */
-};
+GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)" )
+GAME( 1986, lwings2,  lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 2)" )
+GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Ales no Tsubasa (Japan)" )
+GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 1)" )
+GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 2)" )
+GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)" )
+GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)" )
+GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)" )
+GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 1)", GAME_NOT_WORKING )
+GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (set 2)", GAME_NOT_WORKING )

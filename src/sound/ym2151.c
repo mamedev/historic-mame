@@ -1239,6 +1239,8 @@ void YM2151ResetChip(int num)
 	int i;
 	YM2151 *chip = &YMPSG[num];
 
+	PSG = &YMPSG[num];
+
 	/* initialize hardware registers */
 
 	for( i=0; i<32; i++)
@@ -1501,7 +1503,7 @@ OscilRec *OP;
 ** '**buffers' is table of pointers to the buffers: left and right
 ** 'length' is the number of samples should be generated
 */
-void YM2151UpdateOne(int num, void **buffers, int length)
+void YM2151UpdateOne(int num, INT16 **buffers, int length)
 {
 	int i;
 	signed int outl,outr;

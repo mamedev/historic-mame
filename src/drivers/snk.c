@@ -24,15 +24,17 @@ Legofair, Chopper1
 
 y8950
 Fighting Soccer
-***************************************************************************/
 
-/* (in alphabetical order) */
+(in alphabetical order)
 #define CREDITS	"Ernesto Corvi\n" \
 				"Carlos A. Lozano\n" \
 				"Jarek Parchanski\n" \
 				"Phil Stroffolino\n" \
 				"Victor Trucco\n" \
 				"Marco Cassili\n"
+
+***************************************************************************/
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -1348,7 +1350,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( ikarius )
+ROM_START( ikari )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* CPU A */
 	ROM_LOAD( "1.rom",  0x0000, 0x10000, 0x52a8b2dd )
 
@@ -2014,114 +2016,6 @@ ROM_REGION( 1 ) /* dummy */
 ROM_END
 
 
-
-static void ikarius_decode(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/*  Hack ROM test */
-	RAM[0x11a6] = 0x00;
-	RAM[0x11a7] = 0x00;
-	RAM[0x11a8] = 0x00;
-
-	/* Hack Incorrect port value */
-	RAM[0x1003] = 0xc3;
-	RAM[0x1004] = 0x02;
-	RAM[0x1005] = 0x10;
-
-	dial_type = DIAL_NORMAL;
-	hard_flags = 1;
-}
-
-static void ikarijp_decode(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	RAM[0x190b] = 0xc9; /* faster test */
-
-	dial_type = DIAL_NORMAL;
-	hard_flags = 1;
-}
-
-static void ikarijpb_decode( void ){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	RAM[0x190b] = 0xc9; /* faster test */
-
-	dial_type = DIAL_BOOTLEG;
-	hard_flags = 1;
-}
-
-static void victroad_decode(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* Hack ROM test */
-	RAM[0x17bd] = 0x00;
-	RAM[0x17be] = 0x00;
-	RAM[0x17bf] = 0x00;
-
-	/* Hack Incorrect port value */
-	RAM[0x161a] = 0xc3;
-	RAM[0x161b] = 0x19;
-	RAM[0x161c] = 0x16;
-
-	dial_type = DIAL_NORMAL;
-	hard_flags = 1;
-}
-
-static void dogosoke_decode(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* Hack ROM test */
-	RAM[0x179f] = 0x00;
-	RAM[0x17a0] = 0x00;
-	RAM[0x17a1] = 0x00;
-
-	/* Hack Incorrect port value */
-	RAM[0x15fc] = 0xc3;
-	RAM[0x15fd] = 0xfb;
-	RAM[0x15fe] = 0x15;
-
-	dial_type = DIAL_NORMAL;
-	hard_flags = 1;
-}
-
-static void gwar_decode(void){
-	dial_type = DIAL_NORMAL;
-	hard_flags = 0;
-}
-
-static void chopper_decode(void){
-	dial_type = DIAL_NONE;
-	hard_flags = 0;
-}
-
-static void bermudat_decode(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	// Patch Turbo Error
-	RAM[0x127e] = 0xc9;
-	RAM[0x118d] = 0x00;
-	RAM[0x118e] = 0x00;
-
-	dial_type = DIAL_NORMAL;
-	hard_flags = 0;
-}
-
-static void tdfever_decode( void ){
-	dial_type = DIAL_NONE;
-	hard_flags = 0;
-}
-
-static void tnk3_decode( void ){
-	dial_type = DIAL_NORMAL;
-	hard_flags = 0;
-}
-
-static void athena_decode( void ){
-	dial_type = DIAL_NONE;
-	hard_flags = 0;
-}
-
-static void psychos_decode( void ){
-	dial_type = DIAL_NONE;
-	hard_flags = 0;
-}
-
 /***********************************************************************/
 
 #define SNK_ROTARY \
@@ -2173,7 +2067,7 @@ static void psychos_decode( void ){
 	PORT_START \
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-INPUT_PORTS_START( ikarius )
+INPUT_PORTS_START( ikari )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound CPU status */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -2307,8 +2201,8 @@ INPUT_PORTS_START( victroad )
 
 	PORT_START /* DSW 1 */
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Kill friend & walk everywhere" ,0 ,0 )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x02, "P1 & P2 Fire Buttons" )
 	PORT_DIPSETTING(    0x02, "Separate" )
 	PORT_DIPSETTING(    0x00, "Common" )
@@ -2805,8 +2699,8 @@ INPUT_PORTS_START( fitegolf ) /* bogus */
 	PORT_DIPSETTING(    0x01, "Coin Up" )
 	PORT_DIPSETTING(    0x00, "Standard" )
 	PORT_DIPNAME( 0x02, 0x02, "Flip Screen?" )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus" )
 	PORT_DIPSETTING(    0x04, "Every" )
 	PORT_DIPSETTING(    0x00, "Only" )
@@ -2831,8 +2725,8 @@ INPUT_PORTS_START( fitegolf ) /* bogus */
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds?" )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2886,8 +2780,8 @@ INPUT_PORTS_START( ftsoccer )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2946,8 +2840,8 @@ INPUT_PORTS_START( tdfever )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2973,474 +2867,143 @@ INPUT_PORTS_END
 
 /***********************************************************************/
 
-struct GameDriver driver_tnk3 =
+static void init_ikari(void)
 {
-	__FILE__,
-	0,
-	"tnk3",
-	"TNK III (US?)",
-	"1985",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_tnk3,
-	tnk3_decode,
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	rom_tnk3,
-	0, 0,
-	0,
-	0,
+	/*  Hack ROM test */
+	RAM[0x11a6] = 0x00;
+	RAM[0x11a7] = 0x00;
+	RAM[0x11a8] = 0x00;
 
-	input_ports_tnk3,
+	/* Hack Incorrect port value */
+	RAM[0x1003] = 0xc3;
+	RAM[0x1004] = 0x02;
+	RAM[0x1005] = 0x10;
 
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+	dial_type = DIAL_NORMAL;
+	hard_flags = 1;
+}
 
-struct GameDriver driver_tnk3j =
+static void init_ikarijp(void)
 {
-	__FILE__,
-	&driver_tnk3,
-	"tnk3j",
-	"Tank (Japan)",
-	"1985",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_tnk3,
-	tnk3_decode,
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	RAM[0x190b] = 0xc9; /* faster test */
 
-	rom_tnk3j,
-	0, 0,
-	0,
-	0,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 1;
+}
 
-	input_ports_tnk3,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_athena =
+static void init_ikarijpb(void)
 {
-	__FILE__,
-	0,
-	"athena",
-	"Athena",
-	"1986",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_athena,
-	athena_decode,
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	RAM[0x190b] = 0xc9; /* faster test */
 
-	rom_athena,
-	0, 0,
-	0,
-	0,
+	dial_type = DIAL_BOOTLEG;
+	hard_flags = 1;
+}
 
-	input_ports_athena,
-
-	0, 0, 0,
-	ROT0 | GAME_REQUIRES_16BIT,
-	0,0
-};
-
-struct GameDriver driver_fitegolf =
+static void init_victroad(void)
 {
-	__FILE__,
-	0,
-	"fitegolf",
-	"Fighting Golf",
-	"1988",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_athena,
-	0,
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	/* Hack ROM test */
+	RAM[0x17bd] = 0x00;
+	RAM[0x17be] = 0x00;
+	RAM[0x17bf] = 0x00;
 
-	rom_fitegolf,
-	0, 0,
-	0,
-	0,
+	/* Hack Incorrect port value */
+	RAM[0x161a] = 0xc3;
+	RAM[0x161b] = 0x19;
+	RAM[0x161c] = 0x16;
 
-	input_ports_fitegolf,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 1;
+}
 
-	0, 0, 0,
-	ROT0 | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_ikari =
+static void init_dogosoke(void)
 {
-	__FILE__,
-	0,
-	"ikari",
-	"Ikari Warriors (US)",
-	"1986",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_ikari,
-	ikarius_decode,
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	/* Hack ROM test */
+	RAM[0x179f] = 0x00;
+	RAM[0x17a0] = 0x00;
+	RAM[0x17a1] = 0x00;
 
-	rom_ikarius,
-	0, 0,
-	0,
-	0,
+	/* Hack Incorrect port value */
+	RAM[0x15fc] = 0xc3;
+	RAM[0x15fd] = 0xfb;
+	RAM[0x15fe] = 0x15;
 
-	input_ports_ikarius,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 1;
+}
 
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_ikarijp =
+static void init_gwar(void)
 {
-	__FILE__,
-	&driver_ikari,
-	"ikarijp",
-	"Ikari Warriors (Japan)",
-	"1986",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_ikari,
-	ikarijp_decode,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 0;
+}
 
-	rom_ikarijp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ikarijp,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_ikarijpb =
+static void init_chopper(void)
 {
-	__FILE__,
-	&driver_ikari,
-	"ikarijpb",
-	"Ikari Warriors (Japan bootleg)",
-	"1986",
-	"bootleg",
-	CREDITS,
-	0,
-	&machine_driver_ikari,
-	ikarijpb_decode,
+	dial_type = DIAL_NONE;
+	hard_flags = 0;
+}
 
-	rom_ikarijpb,
-	0,0,
-	0,
-	0, /* sound prom */
-
-	input_ports_ikarijp,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_victroad =
+static void init_bermudat(void)
 {
-	__FILE__,
-	0,
-	"victroad",
-	"Victory Road",
-	"1986",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_victroad,
-	victroad_decode,
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	rom_victroad,
-	0, 0,
-	0,
-	0,
+	// Patch Turbo Error
+	RAM[0x127e] = 0xc9;
+	RAM[0x118d] = 0x00;
+	RAM[0x118e] = 0x00;
 
-	input_ports_victroad,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 0;
+}
 
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_dogosoke =
+static void init_tdfever( void )
 {
-	__FILE__,
-	&driver_victroad,
-	"dogosoke",
-	"Dogou Souken",
-	"1986",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_victroad,
-	dogosoke_decode,
+	dial_type = DIAL_NONE;
+	hard_flags = 0;
+}
 
-	rom_dogosoke,
-	0, 0,
-	0,
-	0,
-
-	input_ports_victroad,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_gwar =
+static void init_tnk3( void )
 {
-	__FILE__,
-	0,
-	"gwar",
-	"Guerrilla War",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_gwar,
-	gwar_decode,
+	dial_type = DIAL_NORMAL;
+	hard_flags = 0;
+}
 
-	rom_gwar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gwar,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_bermudat =
+static void init_athena( void )
 {
-	__FILE__,
-	0,
-	"bermudat",
-	"Bermuda Triangle (World?)",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_bermudat,
-	bermudat_decode,
+	dial_type = DIAL_NONE;
+	hard_flags = 0;
+}
 
-	rom_bermudat,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bermudat,
-
-	0, 0, 0,
-	ROT270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_bermudaj =
+static void init_psychos( void )
 {
-	__FILE__,
-	&driver_bermudat,
-	"bermudaj",
-	"Bermuda Triangle (Japan)",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_bermudat,
-	bermudat_decode,
+	dial_type = DIAL_NONE;
+	hard_flags = 0;
+}
 
-	rom_bermudaj,
-	0, 0,
-	0,
-	0,
 
-	input_ports_bermudat,
 
-	0, 0, 0,
-	ROT270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_psychos =
-{
-	__FILE__,
-	0,
-	"psychos",
-	"Psycho Soldier (US)",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_psychos,
-	psychos_decode,
-
-	rom_psychos,
-	0, 0,
-	0,
-	0,
-	input_ports_psychos,
-	0, 0, 0,
-	ROT0 | GAME_REQUIRES_16BIT,
-	0,0
-};
-
-struct GameDriver driver_psychosa =
-{
-	__FILE__,
-	&driver_psychos,
-	"psychosa",
-	"Psycho Soldier (Japan)",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_psychos,
-	psychos_decode,
-
-	rom_psychosa,
-	0, 0,
-	0,
-	0,
-	input_ports_psychos,
-	0, 0, 0,
-	ROT0 | GAME_REQUIRES_16BIT,
-	0,0
-};
-
-struct GameDriver driver_chopper =
-{
-	__FILE__,
-	0,
-	"chopper",
-	"Chopper I",
-	"1988",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_chopper1,
-	chopper_decode,
-
-	rom_chopper,
-	0, 0,
-	0,
-	0,
-
-	input_ports_legofair,
-
-	0, 0, 0,
-	ROT270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_legofair =
-{
-	__FILE__,
-	&driver_chopper,
-	"legofair",
-	"Koukuu Kihei Monogatari - The Legend of Air Cavalry",
-	"1988",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_chopper1,
-	chopper_decode,
-
-	rom_legofair,
-	0, 0,
-	0,
-	0,
-
-	input_ports_legofair,
-
-	0, 0, 0,
-	ROT270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_ftsoccer =
-{
-	__FILE__,
-	0,
-	"ftsoccer",
-	"Fighting Soccer",
-	"1988",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_psychos,
-
-	0,
-
-	rom_ftsoccer,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ftsoccer,
-
-	0, 0, 0,
-	ROT0 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_tdfever =
-{
-	__FILE__,
-	0,
-	"tdfever",
-	"TouchDown Fever",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_tdfever,
-	tdfever_decode,
-
-	rom_tdfever,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tdfever,
-
-	0, 0, 0,
-	ROT270 | GAME_IMPERFECT_SOUND,
-	0,0
-};
-
-struct GameDriver driver_tdfeverj =
-{
-	__FILE__,
-        &driver_tdfever,
-	"tdfeverj",
-	"TouchDown Fever (Japan)",
-	"1987",
-	"SNK",
-	CREDITS,
-	0,
-	&machine_driver_tdfever,
-	tdfever_decode,
-
-	rom_tdfeverj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tdfever,
-
-	0, 0, 0,
-	ROT270 | GAME_IMPERFECT_SOUND,
-	0,0
-};
+GAME( 1985, tnk3,     0,        tnk3,     tnk3,     tnk3,     ROT270,       "SNK", "TNK III (US?)" )
+GAME( 1985, tnk3j,    tnk3,     tnk3,     tnk3,     tnk3,     ROT270,       "SNK", "Tank (Japan)" )
+GAME( 1986, athena,   0,        athena,   athena,   athena,   ROT0_16BIT,   "SNK", "Athena" )
+GAMEX(1988, fitegolf, 0,        athena,   fitegolf, 0,        ROT0,         "SNK", "Fighting Golf", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1986, ikari,    0,        ikari,    ikari,    ikari,    ROT270,       "SNK", "Ikari Warriors (US)" )
+GAME( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270,       "SNK", "Ikari Warriors (Japan)" )
+GAME( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270,       "bootleg", "Ikari Warriors (Japan bootleg)" )
+GAME( 1986, victroad, 0,        victroad, victroad, victroad, ROT270,       "SNK", "Victory Road" )
+GAME( 1986, dogosoke, victroad, victroad, victroad, dogosoke, ROT270,       "SNK", "Dogou Souken" )
+GAME( 1987, gwar,     0,        gwar,     gwar,     gwar,     ROT270,       "SNK", "Guerrilla War" )
+GAMEX(1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270_16BIT, "SNK", "Bermuda Triangle (World?)", GAME_IMPERFECT_SOUND )
+GAMEX(1987, bermudaj, bermudat, bermudat, bermudat, bermudat, ROT270_16BIT, "SNK", "Bermuda Triangle (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0_16BIT,   "SNK", "Psycho Soldier (US)" )
+GAME( 1987, psychosa, psychos,  psychos,  psychos,  psychos,  ROT0_16BIT,   "SNK", "Psycho Soldier (Japan)" )
+GAMEX(1988, chopper,  0,        chopper1, legofair, chopper,  ROT270_16BIT, "SNK", "Chopper I", GAME_IMPERFECT_SOUND )
+GAMEX(1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270_16BIT, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry", GAME_IMPERFECT_SOUND )
+GAMEX(1988, ftsoccer, 0,        psychos,  ftsoccer, 0,        ROT0_16BIT,   "SNK", "Fighting Soccer", GAME_IMPERFECT_SOUND )
+GAMEX(1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270,       "SNK", "TouchDown Fever", GAME_IMPERFECT_SOUND )
+GAMEX(1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270,       "SNK", "TouchDown Fever (Japan)", GAME_IMPERFECT_SOUND )

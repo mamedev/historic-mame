@@ -2,6 +2,8 @@
 
 Moon Patrol memory map (preliminary)
 
+driver by Nicola Salmoria
+
 0000-3fff ROM
 8000-83ff Video RAM
 8400-87ff Color RAM
@@ -350,20 +352,20 @@ static struct GfxLayout bgcharlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,               0, 64 },
-	{ 1, 0x2000, &spritelayout,          64*4, 16 },
-	{ 1, 0x4000, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* top half */
-	{ 1, 0x4800, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* bottom half */
-	{ 1, 0x5000, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* top half */
-	{ 1, 0x5800, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* bottom half */
-	{ 1, 0x6000, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* top half */
-	{ 1, 0x6800, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* bottom half */
+	{ REGION_GFX1, 0x0000, &charlayout,               0, 64 },
+	{ REGION_GFX2, 0x0000, &spritelayout,          64*4, 16 },
+	{ REGION_GFX3, 0x0000, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* top half */
+	{ REGION_GFX3, 0x0800, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* bottom half */
+	{ REGION_GFX4, 0x0000, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* top half */
+	{ REGION_GFX4, 0x0800, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* bottom half */
+	{ REGION_GFX5, 0x0000, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* top half */
+	{ REGION_GFX5, 0x0800, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* bottom half */
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_mpatrol =
 {
 	/* basic machine hardware */
 	{
@@ -415,23 +417,31 @@ ROM_START( mpatrol )
 	ROM_LOAD( "mp-a.3k",      0x2000, 0x1000, 0x2e1a598c )
 	ROM_LOAD( "mp-a.3j",      0x3000, 0x1000, 0xdd05b587 )
 
-	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
 	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
-	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
-	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
+
+	ROM_REGIONX( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mpatrolw )
@@ -441,23 +451,31 @@ ROM_START( mpatrolw )
 	ROM_LOAD( "mpw-a.3k",     0x2000, 0x1000, 0x9b249fe5 )
 	ROM_LOAD( "mpw-a.3j",     0x3000, 0x1000, 0xfee76972 )
 
-	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mpw-e.3e",     0x0000, 0x1000, 0xf56e01fe )       /* chars */
 	ROM_LOAD( "mpw-e.3f",     0x1000, 0x1000, 0xcaaba2d9 )
-	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
-	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
+
+	ROM_REGIONX( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mranger )
@@ -467,98 +485,35 @@ ROM_START( mranger )
 	ROM_LOAD( "mr-a.3k",      0x2000, 0x1000, 0x9f0af7b2 )
 	ROM_LOAD( "mr-a.3j",      0x3000, 0x1000, 0x7fe8e2cd )
 
-	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
 	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
-	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
-	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
+
+	ROM_REGIONX( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 
 
-struct GameDriver driver_mpatrol =
-{
-	__FILE__,
-	0,
-	"mpatrol",
-	"Moon Patrol",
-	"1982",
-	"Irem",
-	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mpatrol,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mpatrol,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mpatrolw =
-{
-	__FILE__,
-	&driver_mpatrol,
-	"mpatrolw",
-	"Moon Patrol (Williams)",
-	"1982",
-	"Irem (Williams license)",
-	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mpatrolw,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mpatrolw,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_mranger =
-{
-	__FILE__,
-	&driver_mpatrol,
-	"mranger",
-	"Moon Ranger",
-	"1982",
-	"bootleg",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mranger,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mpatrol,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1982, mpatrol,  0,       mpatrol, mpatrol,  0, ROT0, "Irem", "Moon Patrol" )
+GAME( 1982, mpatrolw, mpatrol, mpatrol, mpatrolw, 0, ROT0, "Irem (Williams license)", "Moon Patrol (Williams)" )
+GAME( 1982, mranger,  mpatrol, mpatrol, mpatrol,  0, ROT0, "bootleg", "Moon Ranger" )

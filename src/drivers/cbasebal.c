@@ -263,9 +263,9 @@ static struct GfxLayout cbasebal_spritelayout =
 
 static struct GfxDecodeInfo cbasebal_gfxdecodeinfo[] =
 {
-	{ 1, 0x100000, &cbasebal_textlayout,   256,  8 }, /* colors 256- 287 */
-	{ 1, 0x000000, &cbasebal_tilelayout,   768, 16 }, /* colors 768-1023 */
-	{ 1, 0x080000, &cbasebal_spritelayout, 512,  8 }, /* colors 512- 639 */
+	{ REGION_GFX1, 0, &cbasebal_textlayout,   256,  8 }, /* colors 256- 287 */
+	{ REGION_GFX2, 0, &cbasebal_tilelayout,   768, 16 }, /* colors 768-1023 */
+	{ REGION_GFX3, 0, &cbasebal_spritelayout, 512,  8 }, /* colors 512- 639 */
 	{ -1 } /* end of array */
 };
 
@@ -282,7 +282,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
 	{ 8000 },	/* 8000Hz ??? */
-	{ 2 },		/* memory region 2 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 50 }
 };
 
@@ -336,18 +336,22 @@ ROM_START( cbasebal )
 	ROM_LOAD( "cbj05.13f",    0x50000, 0x20000, 0xd0089f37 )
 	/* 0x70000-0x8ffff empty (space for 04) */
 
-	ROM_REGION_DISPOSE(0x110000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cbj02.1f",     0x000000, 0x20000, 0xd6740535 )	/* tiles */
-	ROM_LOAD( "cbj03.2f",     0x020000, 0x20000, 0x88098dcd )
-	ROM_LOAD( "cbj08.1j",     0x040000, 0x20000, 0x5f3344bf )
-	ROM_LOAD( "cbj09.2j",     0x060000, 0x20000, 0xaafffdae )
-	ROM_LOAD( "cbj11.1m",     0x080000, 0x20000, 0xbdc1507d )	/* sprites */
-	ROM_LOAD( "cbj12.2m",     0x0a0000, 0x20000, 0x973f3efe )
-	ROM_LOAD( "cbj14.1n",     0x0c0000, 0x20000, 0x765dabaa )
-	ROM_LOAD( "cbj15.2n",     0x0e0000, 0x20000, 0x74756de5 )
-	ROM_LOAD( "cbj13.16m",    0x100000, 0x10000, 0x2359fa0a )	/* text */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cbj13.16m",    0x00000, 0x10000, 0x2359fa0a )	/* text */
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cbj02.1f",     0x00000, 0x20000, 0xd6740535 )	/* tiles */
+	ROM_LOAD( "cbj03.2f",     0x20000, 0x20000, 0x88098dcd )
+	ROM_LOAD( "cbj08.1j",     0x40000, 0x20000, 0x5f3344bf )
+	ROM_LOAD( "cbj09.2j",     0x60000, 0x20000, 0xaafffdae )
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cbj11.1m",     0x00000, 0x20000, 0xbdc1507d )	/* sprites */
+	ROM_LOAD( "cbj12.2m",     0x20000, 0x20000, 0x973f3efe )
+	ROM_LOAD( "cbj14.1n",     0x40000, 0x20000, 0x765dabaa )
+	ROM_LOAD( "cbj15.2n",     0x60000, 0x20000, 0x74756de5 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "cbj01.1e",     0x00000, 0x20000, 0x1d8968bd )
 ROM_END
 
@@ -358,4 +362,4 @@ void init_cbasebal(void)
 }
 
 
-GAME( 1989, cbasebal, , cbasebal, cbasebal, cbasebal, ROT0, "Capcom", "Capcom Baseball (Japan)" )
+GAME( 1989, cbasebal, 0, cbasebal, cbasebal, cbasebal, ROT0, "Capcom", "Capcom Baseball (Japan)" )

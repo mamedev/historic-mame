@@ -601,11 +601,11 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   0, 16 },
-	{ 1, 0x64000, &charlayout2,  0, 16 },
-	{ 1, 0x68000, &charlayout2,  0, 16 },
-	{ 1, 0x6c000, &charlayout2,  0, 16 },
-	{ 1, 0x60000, &charlayout2,  0, 16 },
+	{ REGION_GFX1, 0x00000, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0x04000, &charlayout2,  0, 16 },
+	{ REGION_GFX2, 0x08000, &charlayout2,  0, 16 },
+	{ REGION_GFX2, 0x0c000, &charlayout2,  0, 16 },
+	{ REGION_GFX2, 0x00000, &charlayout2,  0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -682,16 +682,17 @@ ROM_START( csk227it )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v227i.bin",   0x0000, 0x10000, 0xdf1ebf49 )
 
-	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.227",  0x00000, 0x20000, 0xe9aad93b )
 	ROM_LOAD( "5.227",  0x20000, 0x20000, 0xe4c4c8da )
 	ROM_LOAD( "4.227",  0x40000, 0x20000, 0xafb365dd )
 
-	ROM_LOAD( "3.bin",  0x60000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
-	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
-	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3.bin",  0x00000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
+	ROM_LOAD( "2.bin",  0x10000, 0x10000, 0x848343a3 )
+	ROM_LOAD( "1.bin",  0x20000, 0x10000, 0x921ad5de )
 
-	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGIONX( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.227",   0x0000, 0x10000, 0xa10786ad )
 ROM_END
 
@@ -700,16 +701,17 @@ ROM_START( csk234it )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v234it.bin",   0x0000, 0x10000, 0x344b7059 )
 
-	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "6.234",  0x00000, 0x20000, 0x23b855a4 )
 	ROM_LOAD( "5.234",  0x20000, 0x20000, 0x189039d7 )
 	ROM_LOAD( "4.234",  0x40000, 0x20000, 0xc82b0ffc )
 
-	ROM_LOAD( "3.bin",  0x60000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
-	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
-	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3.bin",  0x00000, 0x10000, 0xfcb115ac )	/* extension charset, used for ability game */
+	ROM_LOAD( "2.bin",  0x10000, 0x10000, 0x848343a3 )
+	ROM_LOAD( "1.bin",  0x20000, 0x10000, 0x921ad5de )
 
-	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGIONX( 0x10000, REGION_GFX3 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.234",   0x0000, 0x10000, 0xae6dd4ad )
 ROM_END
 
@@ -736,6 +738,6 @@ static void init_cska(void)
 }
 
 
-GAME( ????, csk227it, ,         csk227it, csk227, cska, ROT0, "IGS", "Champion Skill (with Ability)" )
+GAME( ????, csk227it, 0,        csk227it, csk227, cska, ROT0, "IGS", "Champion Skill (with Ability)" )
 GAME( ????, csk234it, csk227it, csk234it, csk234, cska, ROT0, "IGS", "Champion Skill (Ability, Poker & Symbols)" )
 

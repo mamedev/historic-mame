@@ -14,7 +14,6 @@
 #include "driver.h"
 #include <math.h>
 
-#define AUDIO_CONV(A) ((UINT8)(A))
 
 
 /* waveform generation parameters */
@@ -137,14 +136,13 @@ static sound_chip chip_list[MAX_CEM3394];
 /* global sound parameters */
 static double inv_sample_rate;
 static int sample_rate;
-static int sample_bits;
 
 static INT16 *mixer_buffer;
 static INT16 *external_buffer;
 
 
 /* generate sound to the mix buffer in mono */
-static void cem3394_update(int ch, void *buffer, int length)
+static void cem3394_update(int ch, INT16 *buffer, int length)
 {
 	sound_chip *chip = &chip_list[ch];
 	int int_volume = (chip->volume * chip->mixer_internal) / 256;
@@ -164,10 +162,7 @@ static void cem3394_update(int ch, void *buffer, int length)
 	/* bail if nothing's going on */
 	if (int_volume == 0 && ext_volume == 0)
 	{
-		if (sample_bits == 16)
-			memset(buffer, 0, sizeof(INT16) * length);
-		else
-			memset(buffer, AUDIO_CONV(0), length);
+		memset(buffer, 0, sizeof(INT16) * length);
 		return;
 	}
 
@@ -308,54 +303,24 @@ static void cem3394_update(int ch, void *buffer, int length)
 	/* mix it down */
 	mix = mixer_buffer;
 	ext = external_buffer;
-	if (sample_bits == 16)
 	{
-		INT16 *dest = buffer;
-
 		/* internal + external */
 		if (ext_volume != 0 && int_volume != 0)
 		{
 			for (i = 0; i < length; i++, mix++, ext++)
-				*dest++ = (*mix * int_volume + *ext * ext_volume) / 128;
+				*buffer++ = (*mix * int_volume + *ext * ext_volume) / 128;
 		}
-
 		/* internal only */
 		else if (int_volume != 0)
 		{
 			for (i = 0; i < length; i++, mix++)
-				*dest++ = *mix * int_volume / 128;
+				*buffer++ = *mix * int_volume / 128;
 		}
-
 		/* external only */
 		else
 		{
 			for (i = 0; i < length; i++, ext++)
-				*dest++ = *ext * ext_volume / 128;
-		}
-	}
-	else
-	{
-		UINT8 *dest = buffer;
-
-		/* internal + external */
-		if (ext_volume != 0 && int_volume != 0)
-		{
-			for (i = 0; i < length; i++, mix++, ext++)
-				*dest++ = AUDIO_CONV((*mix * int_volume + *ext * ext_volume) / 32768);
-		}
-
-		/* internal only */
-		else if (int_volume != 0)
-		{
-			for (i = 0; i < length; i++, mix++)
-				*dest++ = AUDIO_CONV(*mix * int_volume / 32768);
-		}
-
-		/* external only */
-		else
-		{
-			for (i = 0; i < length; i++, ext++)
-				*dest++ = AUDIO_CONV(*ext * ext_volume / 32768);
+				*buffer++ = *ext * ext_volume / 128;
 		}
 	}
 }
@@ -371,7 +336,6 @@ int cem3394_sh_start(const struct MachineSound *msound)
 		return 0;
 
 	/* copy global parameters */
-	sample_bits = Machine->sample_bits;
 	sample_rate = Machine->sample_rate;
 	inv_sample_rate = 1.0 / (double)sample_rate;
 
@@ -382,7 +346,7 @@ int cem3394_sh_start(const struct MachineSound *msound)
 
 		memset(&chip_list[i], 0, sizeof(chip_list[i]));
 		sprintf(name_buffer, "CEM3394 #%d", i);
-		chip_list[i].stream = stream_init(name_buffer, intf->volume[i], sample_rate, sample_bits, i, cem3394_update);
+		chip_list[i].stream = stream_init(name_buffer, intf->volume[i], sample_rate, i, cem3394_update);
 		chip_list[i].external = intf->external[i];
 		chip_list[i].vco_zero_freq = intf->vco_zero_freq[i];
 		chip_list[i].filter_zero_freq = intf->filter_zero_freq[i];

@@ -564,8 +564,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 30, 30 },
-	{ 0x30, 0x30 },		/* gain */
+	{ MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(30,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -765,10 +764,10 @@ ROM_END
 
 
 
-GAME( 1981, amidar,  ,        amidar, amidarjp, , ROT90, "Konami", "Amidar" )
-GAME( 1982, amidaru, amidar,  amidar, amidar,   , ROT90, "Konami (Stern license)", "Amidar (Stern)" )
-GAME( 1982, amidaro, amidar,  amidar, amidaro,  , ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
-GAME( 1982, amigo,   amidar,  amidar, amidar,   , ROT90, "bootleg", "Amigo" )
-GAME( 1981, turtles, ,        amidar, turtles,  , ROT90, "[Konami] (Stern license)", "Turtles" )
-GAME( 1981, turpin,  turtles, amidar, turpin,   , ROT90, "[Konami] (Sega license)", "Turpin" )
-GAME( 1981, 600,     turtles, amidar, 600,      , ROT90, "Konami", "600" )
+GAME( 1981, amidar,  0,       amidar, amidarjp, 0, ROT90, "Konami", "Amidar" )
+GAME( 1982, amidaru, amidar,  amidar, amidar,   0, ROT90, "Konami (Stern license)", "Amidar (Stern)" )
+GAME( 1982, amidaro, amidar,  amidar, amidaro,  0, ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
+GAME( 1982, amigo,   amidar,  amidar, amidar,   0, ROT90, "bootleg", "Amigo" )
+GAME( 1981, turtles, 0,       amidar, turtles,  0, ROT90, "[Konami] (Stern license)", "Turtles" )
+GAME( 1981, turpin,  turtles, amidar, turpin,   0, ROT90, "[Konami] (Sega license)", "Turpin" )
+GAME( 1981, 600,     turtles, amidar, 600,      0, ROT90, "Konami", "600" )

@@ -2,6 +2,9 @@
 
 Rally X memory map (preliminary)
 
+driver by Nicola Salmoria
+
+
 0000-3fff ROM
 8000-83ff Radar video RAM + other
 8400-87ff video RAM
@@ -69,7 +72,6 @@ void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
-void rallyx_init(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -269,9 +271,9 @@ static struct GfxLayout dotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 64 },
-	{ 1, 0x0000, &spritelayout,      0, 64 },
-	{ 1, 0x1000, &dotlayout,      64*4,  1 },
+	{ REGION_GFX1, 0, &charlayout,        0, 64 },
+	{ REGION_GFX1, 0, &spritelayout,      0, 64 },
+	{ REGION_GFX2, 0, &dotlayout,      64*4,  1 },
 	{ -1 } /* end of array */
 };
 
@@ -282,7 +284,7 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	3			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static const char *rallyx_sample_names[] =
@@ -301,7 +303,7 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rallyx =
 {
 	/* basic machine hardware */
 	{
@@ -357,16 +359,19 @@ ROM_START( rallyx )
 	ROM_LOAD( "rallyxn.1h",   0x2000, 0x1000, 0x4f98dd1c )
 	ROM_LOAD( "rallyxn.1k",   0x3000, 0x1000, 0x9aacccf0 )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
-	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( rallyxm )
@@ -376,16 +381,19 @@ ROM_START( rallyxm )
 	ROM_LOAD( "1h",           0x2000, 0x1000, 0x110d7dcd )
 	ROM_LOAD( "1k",           0x3000, 0x1000, 0x473ab447 )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
-	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )	/* dots */
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( nrallyx )
@@ -395,91 +403,23 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, 0xaeba29b5 )
 	ROM_LOAD( "nrallyx.1k",   0x3000, 0x1000, 0x78f17da7 )
 
-	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
-	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
+
+	ROM_REGIONX( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound proms */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
 
-struct GameDriver driver_rallyx =
-{
-	__FILE__,
-	0,
-	"rallyx",
-	"Rally X",
-	"1980",
-	"Namco",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	rallyx_init,
-
-	rom_rallyx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rallyx,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_rallyxm =
-{
-	__FILE__,
-	&driver_rallyx,
-	"rallyxm",
-	"Rally X (Midway)",
-	"1980",
-	"[Namco] (Midway license)",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	rallyx_init,
-
-	rom_rallyxm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rallyx,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_nrallyx =
-{
-	__FILE__,
-	0,
-	"nrallyx",
-	"New Rally X",
-	"1981",
-	"Namco",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	rallyx_init,
-
-	rom_nrallyx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_nrallyx,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1980, rallyx,  0,      rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
+GAME( 1980, rallyxm, rallyx, rallyx, rallyx,  0, ROT0, "[Namco] (Midway license)", "Rally X (Midway)" )
+GAME( 1981, nrallyx, 0,      rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )

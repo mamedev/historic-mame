@@ -2,6 +2,8 @@
 
 Funky Bee/Sky Lancer memory map (preliminary)
 
+driver by Zsolt Vasvari
+
 MAIN CPU:
 
 0000-4fff ROM
@@ -224,10 +226,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,	0,  8 },
-	{ 1, 0x2000, &charlayout,	0,  8 },
-	{ 1, 0x0000, &spritelayout,	16, 4 },
-	{ 1, 0x2000, &spritelayout,	16, 4 },
+	{ REGION_GFX1, 0, &charlayout,    0, 8 },
+	{ REGION_GFX2, 0, &charlayout,    0, 8 },
+	{ REGION_GFX1, 0, &spritelayout, 16, 4 },
+	{ REGION_GFX2, 0, &spritelayout, 16, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -237,7 +239,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHZ?????? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },
 	{ 0 },
 	{ 0 },
@@ -245,7 +246,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_funkybee =
 {
 	/* basic machine hardware */
 	{
@@ -296,9 +297,11 @@ ROM_START( funkybee )
 	ROM_LOAD( "funkybee.2",    0x2000, 0x1000, 0x8cc0fe8e )
 	ROM_LOAD( "funkybee.4",    0x3000, 0x1000, 0x1e1aac26 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "funkybee.5",    0x0000, 0x2000, 0x86126655 )
-	ROM_LOAD( "funkybee.6",    0x2000, 0x2000, 0x5fffd323 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "funkybee.6",    0x0000, 0x2000, 0x5fffd323 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "funkybee.clr",  0x0000, 0x0020, 0xe2cf5fe2 )
@@ -310,65 +313,19 @@ ROM_START( skylancr )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, 0xdff3a682 )
 	ROM_LOAD( "3.5d",          0x4000, 0x1000, 0x7c006ee6 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "4.6a",          0x0000, 0x2000, 0x0f8ede07 )
-	ROM_LOAD( "5.6b",          0x2000, 0x2000, 0x24cec070 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5.6b",          0x0000, 0x2000, 0x24cec070 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "18s030.1a",     0x0000, 0x0020, 0xe645bacb )
 ROM_END
 
 
-struct GameDriver driver_funkybee =
-{
-	__FILE__,
-	0,
-	"funkybee",
-	"Funky Bee",
-	"1982",
-	"Orca Corporation",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
 
-	rom_funkybee,
-	0, 0,
-	0,
-	0,
-
-	input_ports_funkybee,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
-
-struct GameDriver driver_skylancr =
-{
-	__FILE__,
-	0,
-	"skylancr",
-	"Sky Lancer",
-	"1983",
-	"Orca (Esco Trading Co license)",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rom_skylancr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_skylancr,
-
-	0, 0, 0,
-	ROT90,
-
-	0, 0
-};
+GAME( 1982, funkybee, 0, funkybee, funkybee, 0, ROT90, "Orca Corporation", "Funky Bee" )
+GAME( 1983, skylancr, 0, funkybee, skylancr, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer" )
 
 

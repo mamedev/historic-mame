@@ -128,7 +128,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			drv = gamedrv;
 			do
 			{
-				err = osd_fchecksum (gamedrv->name, name, &aud->length, &aud->checksum);
+				err = osd_fchecksum (drv->name, name, &aud->length, &aud->checksum);
 				drv = drv->clone_of;
 			} while (err && drv);
 
@@ -247,7 +247,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 
 	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH))
 		return INCORRECT;
-	if (archive_status & (AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE))
+	if (archive_status & (AUD_ROM_NEED_DUMP|AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE))
 		return BEST_AVAILABLE;
 
 	return CORRECT;

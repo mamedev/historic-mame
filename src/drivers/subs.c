@@ -64,8 +64,8 @@ static struct MemoryWriteAddress writemem[] =
 INPUT_PORTS_START( subs )
 	PORT_START /* OPTIONS */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Credit/Time" )
 	PORT_DIPSETTING(    0x00, "Each Coin Buys Time" )
 	PORT_DIPSETTING(    0x02, "Fixed Time" )
@@ -146,11 +146,11 @@ static struct GfxLayout playfield_layout =
 static struct GfxLayout motion_layout =
 {
 	16,16,	/* 16*16 characters */
-	32,		/* 32 characters */
+	64,		/* 64 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 }, /* No info needed for bit offsets */
-	{ 3 + 0x200*8, 2 + 0x200*8, 1 + 0x200*8, 0 + 0x200*8,
-	  7 + 0x200*8, 6 + 0x200*8, 5 + 0x200*8, 4 + 0x200*8,
+	{ 3 + 0x400*8, 2 + 0x400*8, 1 + 0x400*8, 0 + 0x400*8,
+	  7 + 0x400*8, 6 + 0x400*8, 5 + 0x400*8, 4 + 0x400*8,
 	  3, 2, 1, 0, 7, 6, 5, 4 },
 	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
@@ -159,13 +159,12 @@ static struct GfxLayout motion_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &playfield_layout,	0, 2 }, 	/* playfield graphics */
-	{ 1, 0x0800, &motion_layout,	0, 2 }, 	/* motion graphics */
-	{ 1, 0x0c00, &motion_layout,	0, 2 }, 	/* motion graphics */
+	{ REGION_GFX1, 0, &playfield_layout, 0, 2 }, 	/* playfield graphics */
+	{ REGION_GFX2, 0, &motion_layout,    0, 2 }, 	/* motion graphics */
 	{ -1 } /* end of array */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_subs =
 {
 	/* basic machine hardware */
 	{
@@ -203,20 +202,6 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-static void subs_rom_init(void)
-{
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int i;
-
-	/* Merge nibble-wide roms together,
-	   and load them into 0x2000-0x20ff */
-
-	for(i=0;i<0x100;i++)
-	{
-		rom[0x2000+i] = (rom[0x8000+i]<<4)+rom[0x9000+i];
-	}
-}
-
 ROM_START( subs )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "34190.p1",     0x2800, 0x0800, 0xa88aef21 )
@@ -230,43 +215,31 @@ ROM_START( subs )
 	ROM_LOAD( "34196.e2",     0x8000, 0x0100, 0x7c7a04c3 )	/* ROM 0 D4-D7 */
 	ROM_LOAD( "34194.e1",     0x9000, 0x0100, 0x6b1c4acc )	/* ROM 0 D0-D3 */
 
-	ROM_REGION_DISPOSE(0x1000) /* graphics */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "34211.m4",     0x0000, 0x0800, 0xfa8d4409 )	/* Playfield */
-	ROM_LOAD( "34216.d7",     0x0800, 0x0200, 0x941d28b4 )	/* Motion */
-	ROM_LOAD( "34217.d8",     0x0a00, 0x0200, 0xa7a60da3 )	/* Motion */
-	ROM_LOAD( "34218.e7",     0x0c00, 0x0200, 0xf4f4d874 )	/* Motion */
-	ROM_LOAD( "34219.e8",     0x0e00, 0x0200, 0x99a5a49b )	/* Motion */
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "34216.d7",     0x0000, 0x0200, 0x941d28b4 )	/* Motion */
+	ROM_LOAD( "34218.e7",     0x0200, 0x0200, 0xf4f4d874 )	/* Motion */
+	ROM_LOAD( "34217.d8",     0x0400, 0x0200, 0xa7a60da3 )	/* Motion */
+	ROM_LOAD( "34219.e8",     0x0600, 0x0200, 0x99a5a49b )	/* Motion */
 
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_subs =
+static void init_subs(void)
 {
-	__FILE__,
-	0,
-	"subs",
-	"Subs",
-	"1977",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	subs_rom_init,
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int i;
 
-	rom_subs,
-	0, 0,
-	0,
-	0,
+	/* Merge nibble-wide roms together,
+	   and load them into 0x2000-0x20ff */
 
-	input_ports_subs,
+	for(i=0;i<0x100;i++)
+	{
+		rom[0x2000+i] = (rom[0x8000+i]<<4)+rom[0x9000+i];
+	}
+}
 
-	0, 0, 0,
-	ROT0,
 
-	0, 0
-};
+GAME( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs" )

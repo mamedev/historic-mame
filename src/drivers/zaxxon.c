@@ -773,7 +773,7 @@ ROM_START( zaxxon )
 	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -805,7 +805,7 @@ ROM_START( zaxxon2 )
 	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -837,7 +837,7 @@ ROM_START( zaxxonb )
 	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -869,7 +869,7 @@ ROM_START( szaxxon )
 	ROM_LOAD( "suzaxxon.12",  0x2000, 0x2000, 0x3b53d83f )
 	ROM_LOAD( "suzaxxon.13",  0x4000, 0x2000, 0x581e8793 )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "suzaxxon.8",   0x0000, 0x2000, 0xdd1b52df )
 	ROM_LOAD( "suzaxxon.7",   0x2000, 0x2000, 0xb5bc07f0 )
 	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, 0x68e84174 )
@@ -901,7 +901,7 @@ ROM_START( futspy )
 	ROM_LOAD( "fs_vid.u78",   0x4000, 0x4000, 0x50e55262 )
 	ROM_LOAD( "fs_vid.u79",   0x8000, 0x4000, 0xbfb02e3e )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "fs_vid.u91",   0x0000, 0x2000, 0x86da01f4 )
 	ROM_LOAD( "fs_vid.u90",   0x2000, 0x2000, 0x2bd41d2d )
 	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, 0xb82b4997 )
@@ -933,7 +933,7 @@ ROM_START( razmataz )
 	ROM_LOAD( "1926.u78",      0x2000, 0x2000, 0x9a3af434 )
 	ROM_LOAD( "1927.u79",      0x4000, 0x2000, 0x0323de2b )
 
-	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* background tilemaps converted in vh_start */
 	ROM_LOAD( "1929.u91",      0x0000, 0x2000, 0x55c7c757 )
 	ROM_LOAD( "1928.u90",      0x2000, 0x2000, 0xe58b155b )
 	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
@@ -1041,9 +1041,9 @@ static void init_razmataz(void)
 }
 
 
-GAME( 1982, zaxxon,   ,       zaxxon,   zaxxon,   ,         ROT90,  "Sega",    "Zaxxon (set 1)" )
-GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   ,         ROT90,  "Sega",    "Zaxxon (set 2)" )
+GAME( 1982, zaxxon,   0,      zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)" )
+GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)" )
 GAME( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
-GAME( 1982, szaxxon,  ,       zaxxon,   zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
-GAME( 1984, futspy,   ,       futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy" )
-GAME( 1983, razmataz, ,       razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz" )
+GAME( 1982, szaxxon,  0,      zaxxon,   zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
+GAME( 1984, futspy,   0,      futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy" )
+GAME( 1983, razmataz, 0,      razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz" )

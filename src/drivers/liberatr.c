@@ -396,7 +396,7 @@ ROM_START( liberatr )
 	ROM_LOAD( "136012.200",   0xe000, 0x1000, 0x1e98d21a )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION( 0x4000 )	/* 16k for planet image  */
+	ROM_REGIONX( 0x4000, REGION_GFX1 )	/* planet image, used at runtime */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )
@@ -413,7 +413,7 @@ ROM_START( liberat2 )
 	ROM_LOAD( "l1.bin",       0xb000, 0x1000, 0xef6e9f9e )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION( 0x4000 )	/* 16k for planet image  */
+	ROM_REGIONX( 0x4000, REGION_GFX1 )	/* planet image, used at runtime */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )
@@ -422,53 +422,6 @@ ROM_END
 
 
 
-struct GameDriver driver_liberatr =
-{
-	__FILE__,
-	0,
-	"liberatr",
-	"Liberator (set 1)",
-	"1982",
-	"Atari",
-	"Paul Winkler",
-	0,
-	&machine_driver_liberatr,
-	0,
-
-	rom_liberatr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_liberatr,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_liberat2 =
-{
-	__FILE__,
-	&driver_liberatr,
-	"liberat2",
-	"Liberator (set 2)",
-	"1982",
-	"Atari",
-	"Paul Winkler",
-	0,
-	&machine_driver_liberat2,
-	0,
-
-	rom_liberat2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_liberatr,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
+GAME( 1982, liberatr, 0,        liberatr, liberatr, 0, ROT0, "Atari", "Liberator (set 1)" )
+GAMEX(1982, liberat2, liberatr, liberat2, liberatr, 0, ROT0, "Atari", "Liberator (set 2)", GAME_NOT_WORKING )
 

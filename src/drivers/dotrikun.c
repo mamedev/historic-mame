@@ -73,7 +73,7 @@ INPUT_PORTS_START( dotrikun )
 INPUT_PORTS_END
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_dotrikun =
 {
 	/* basic machine hardware */
 	{
@@ -122,56 +122,5 @@ ROM_START( dotriku2 )
 ROM_END
 
 
-struct GameDriver driver_dotrikun =
-{
-	__FILE__,
-	0,
-	"dotrikun",
-	"Dottori Kun (new version)",
-	"1990",
-	"Sega",
-	"Takahiro Nogi",
-	0,
-	&machine_driver,
-	0,
-
-	rom_dotrikun,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_dotrikun,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
-
-struct GameDriver driver_dotriku2 =
-{
-	__FILE__,
-	&driver_dotrikun,
-	"dotriku2",
-	"Dottori Kun (old version)",
-	"1990",
-	"Sega",
-	"Takahiro Nogi",
-	0,
-	&machine_driver,
-	0,
-
-	rom_dotriku2,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_dotrikun,
-
-	0, 0, 0,
-	ROT0,
-
-	0, 0
-};
+GAME( 1990, dotrikun, 0,        dotrikun, dotrikun, 0, ROT0, "Sega", "Dottori Kun (new version)" )
+GAME( 1990, dotriku2, dotrikun, dotrikun, dotrikun, 0, ROT0, "Sega", "Dottori Kun (old version)" )

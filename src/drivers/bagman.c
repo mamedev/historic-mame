@@ -389,7 +389,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
 	{ 50 },
-	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -677,10 +676,10 @@ ROM_END
 
 
 
-GAME( 1982, bagman,   ,        bagman, bagman,  , ROT270, "Valadon Automation", "Bagman" )
-GAME( 1982, bagnard,  bagman,  bagman, bagman,  , ROT270, "Valadon Automation", "Le Bagnard" )
-GAME( 1982, bagmans,  bagman,  bagman, bagmans, , ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
-GAME( 1982, bagmans2, bagman,  bagman, bagman,  , ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
-GAME( 1984, sbagman,  ,        bagman, sbagman, , ROT270, "Valadon Automation", "Super Bagman" )
-GAME( 1984, sbagmans, sbagman, bagman, sbagman, , ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
-GAME( 1983, pickin,   ,        pickin, pickin,  , ROT270, "Valadon Automation", "Pickin'" )
+GAME( 1982, bagman,   0,       bagman, bagman,  0, ROT270, "Valadon Automation", "Bagman" )
+GAME( 1982, bagnard,  bagman,  bagman, bagman,  0, ROT270, "Valadon Automation", "Le Bagnard" )
+GAME( 1982, bagmans,  bagman,  bagman, bagmans, 0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
+GAME( 1982, bagmans2, bagman,  bagman, bagman,  0, ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
+GAME( 1984, sbagman,  0,       bagman, sbagman, 0, ROT270, "Valadon Automation", "Super Bagman" )
+GAME( 1984, sbagmans, sbagman, bagman, sbagman, 0, ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
+GAME( 1983, pickin,   0,       pickin, pickin,  0, ROT270, "Valadon Automation", "Pickin'" )

@@ -77,7 +77,6 @@ struct AY8910interface irem_ay8910_interface =
 	2,	/* 2 chips */
 	910000,	/* .91 MHz ?? */
 	{ 20, 20 },
-	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r, 0 },
 	{ 0 },
 	{ 0 },

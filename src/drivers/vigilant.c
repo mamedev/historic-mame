@@ -220,9 +220,9 @@ INPUT_PORTS_START( vigilant )
 	PORT_DIPSETTING(	0xb0, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(	0xc0, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(	0xd0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(	0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(	0x10, DEF_STR( 8C_3C ) )
 	PORT_DIPSETTING(	0xe0, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(	0x20, DEF_STR( 5C_3C ) )
 	PORT_DIPSETTING(	0x30, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(	0xf0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( 2C_3C ) )
@@ -560,7 +560,7 @@ ROM_START( vigilant )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
@@ -588,7 +588,7 @@ ROM_START( vigilntu )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
@@ -616,7 +616,7 @@ ROM_START( vigilntj )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
 	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
 
-	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
@@ -635,7 +635,7 @@ ROM_START( kikcubic )
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* region#2: 64k for sound */
 	ROM_LOAD( "mqj-sp",       0x00000, 0x10000, 0xbbcf3582 )
 
-	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* samples */
 	ROM_LOAD( "mqj-v0",       0x00000, 0x10000, 0x54762956 )
 ROM_END
 

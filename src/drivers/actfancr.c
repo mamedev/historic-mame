@@ -671,6 +671,6 @@ static void init_actfancj(void)
 
 
 
-GAME( 1989, actfancr, ,         actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World)" )
+GAME( 1989, actfancr, 0,        actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World)" )
 GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan)" )
-GAME( 1989, triothep, ,         triothep, triothep, ,         ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)" )
+GAME( 1989, triothep, 0,        triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)" )

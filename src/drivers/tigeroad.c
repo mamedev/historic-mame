@@ -1,12 +1,11 @@
 /***************************************************************************
 
-remaining issues:
-	busy loop should be patched out
+Tiger Road (C) 1987 Romstar/Capcom USA
 
 Please contact Phil Stroffolino (phil@maya.com) if there are any questions
 regarding this driver.
 
-Tiger Road is (C) 1987 Romstar/Capcom USA
+F1 Dream protection workaround by Eric Hustvedt
 
 Memory Overview:
 	0xfe0800    sprites
@@ -24,13 +23,13 @@ Memory Overview:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern int tigeroad_base_bank;
-extern unsigned char *tigeroad_scrollram;
 
-void tigeroad_scrollram_w(int offset,int data);
+void tigeroad_videoctrl_w(int offset,int data);
+void tigeroad_scroll_w(int offset,int data);
 void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static unsigned char *ram;	/* for hi score save */
+
+static unsigned char *ram;
 
 /*
  F1 Dream protection code written by Eric Hustvedt (hustvedt@ma.ultranet.com).
@@ -146,60 +145,29 @@ static void f1dream_protection_w(void)
 	}
 }
 
-static void f1dream_control_w( int offset, int data )
+static void f1dream_control_w(int offset,int data)
 {
-	switch( offset )
-	{
-		case 0:
-			tigeroad_base_bank = (data>>8)&0xF;
-			break;
-		case 2:
-			if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
-			f1dream_protection_w();
-			break;
-	}
+	if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
+	f1dream_protection_w();
 }
 
-static void tigeroad_control_w( int offset, int data )
+static void tigeroad_soundcmd_w(int offset,int data)
 {
-	switch( offset )
-	{
-		case 0:
-			tigeroad_base_bank = (data>>8)&0xF;
-			break;
-		case 2:
-			soundlatch_w(offset,(data >> 8) & 0xff);
-			break;
-	}
+	if ((data & 0xff000000) == 0)
+		soundlatch_w(offset,(data >> 8) & 0xff);
 }
 
-static int tigeroad_input_r (int offset);
-static int tigeroad_input_r (int offset){
-	switch (offset){
-		case 0: return (input_port_1_r( offset )<<8) |
-						input_port_0_r( offset );
-
-		case 2: return (input_port_3_r( offset )<<8) |
-						input_port_2_r( offset );
-
-		case 4: return (input_port_5_r( offset )<<8) |
-						input_port_4_r( offset );
-	}
-	return 0x00;
+static void msm5205_w(int offset,int data)
+{
+	MSM5205_reset_w(offset,(data>>7)&1);
+	MSM5205_data_w(offset,data);
+	MSM5205_vclk_w(offset,1);
+	MSM5205_vclk_w(offset,0);
 }
 
-int tigeroad_interrupt(void){
+int tigeroad_interrupt(void)
+{
 	return 2;
-}
-
-void tigeroad_driver_init(void)
-{
-	install_mem_write_handler(0, 0xfe4000, 0xfe4003, tigeroad_control_w);
-}
-
-void f1dream_driver_init(void)
-{
-	install_mem_write_handler(0, 0xfe4000, 0xfe4003, f1dream_control_w);
 }
 
 
@@ -210,10 +178,12 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0xfe0800, 0xfe0cff, MRA_BANK1 },
 	{ 0xfe0d00, 0xfe1807, MRA_BANK2 },
-	{ 0xfe4000, 0xfe4007, tigeroad_input_r },
+	{ 0xfe4000, 0xfe4001, input_port_0_r },
+	{ 0xfe4002, 0xfe4003, input_port_1_r },
+	{ 0xfe4004, 0xfe4005, input_port_2_r },
 	{ 0xfec000, 0xfec7ff, MRA_BANK3 },
 	{ 0xff8200, 0xff867f, paletteram_word_r },
-	{ 0xffc000, 0xffffff, MRA_BANK5 },
+	{ 0xffc000, 0xffffff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
@@ -222,12 +192,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0xfe0800, 0xfe0cff, MWA_BANK1, &spriteram, &spriteram_size },
 	{ 0xfe0d00, 0xfe1807, MWA_BANK2 },  /* still part of OBJ RAM */
-	/*{ 0xfe4000, 0xfe4003, tigeroad_control_w },*/
+	{ 0xfe4000, 0xfe4001, tigeroad_videoctrl_w },	/* char bank, coin counters, + ? */
+	/*{ 0xfe4002, 0xfe4003, tigeroad_soundcmd_w }, added by init_tigeroad() */
 	{ 0xfec000, 0xfec7ff, MWA_BANK3, &videoram, &videoram_size },
-	{ 0xfe8000, 0xfe8003, MWA_BANK4, &tigeroad_scrollram },
-	{ 0xfe800c, 0xfe800f, MWA_NOP },    /* fe800e = watchdog or IRQ acknowledge */
+	{ 0xfe8000, 0xfe8003, tigeroad_scroll_w },
+	{ 0xfe800e, 0xfe800f, MWA_NOP },    /* fe800e = watchdog or IRQ acknowledge */
 	{ 0xff8200, 0xff867f, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0xffc000, 0xffffff, MWA_BANK5, &ram },
+	{ 0xffc000, 0xffffff, MWA_BANK4, &ram },
 	{ -1 }  /* end of table */
 };
 
@@ -254,7 +225,32 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x00, 0x01, IOWP_NOP },   /* ??? */
+	{ 0x7f, 0x7f, soundlatch2_w },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress sample_readmem[] =
+{
+	{ 0x0000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+/* yes, no RAM */
+static struct MemoryWriteAddress sample_writemem[] =
+{
+	{ 0x0000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort sample_readport[] =
+{
+	{ 0x00, 0x00, soundlatch2_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort sample_writeport[] =
+{
+	{ 0x01, 0x01, msm5205_w },
 	{ -1 }  /* end of table */
 };
 
@@ -262,167 +258,155 @@ static struct IOWritePort sound_writeport[] =
 
 INPUT_PORTS_START( tigeroad )
 	PORT_START  /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* dipswitch A */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START /* dipswitch B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
-	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "20000 70000 70000" )
-	PORT_DIPSETTING(    0x10, "20000 80000 80000" )
-	PORT_DIPSETTING(    0x08, "30000 80000 80000" )
-	PORT_DIPSETTING(    0x00, "30000 90000 90000" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, "Very Easy" )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_START  /* dipswitch */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPSETTING(      0x0100, "5" )
+	PORT_DIPSETTING(      0x0000, "7" )
+	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPSETTING(      0x0400, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x1800, "20000 70000 70000" )
+	PORT_DIPSETTING(      0x1000, "20000 80000 80000" )
+	PORT_DIPSETTING(      0x0800, "30000 80000 80000" )
+	PORT_DIPSETTING(      0x0000, "30000 90000 90000" )
+	PORT_DIPNAME( 0x6000, 0x6000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Very Easy" )
+	PORT_DIPSETTING(      0x4000, "Easy" )
+	PORT_DIPSETTING(      0x6000, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Difficult" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( f1dream )
 	PORT_START  /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START  /* dipswitch A */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START /* dipswitch B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
-	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x18, 0x18, "F1 Up Point" )
-	PORT_DIPSETTING(    0x18, "12" )
-	PORT_DIPSETTING(    0x10, "16" )
-	PORT_DIPSETTING(    0x08, "18" )
-	PORT_DIPSETTING(    0x00, "20" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x40, 0x00, "Version" )
-	PORT_DIPSETTING(    0x00, "International" )
-	PORT_DIPSETTING(    0x40, "Japan" )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_START  /* dipswitch */
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_6C ) )
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
+	PORT_DIPSETTING(      0x0100, "5" )
+	PORT_DIPSETTING(      0x0000, "7" )
+	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPSETTING(      0x0400, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x1800, 0x1800, "F1 Up Point" )
+	PORT_DIPSETTING(      0x1800, "12" )
+	PORT_DIPSETTING(      0x1000, "16" )
+	PORT_DIPSETTING(      0x0800, "18" )
+	PORT_DIPSETTING(      0x0000, "20" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x2000, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Difficult" )
+	PORT_DIPNAME( 0x4000, 0x0000, "Version" )
+	PORT_DIPSETTING(      0x0000, "International" )
+	PORT_DIPSETTING(      0x4000, "Japan" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -482,9 +466,9 @@ static struct GfxLayout sprite_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tile_layout,     0, 16 },   /* colors   0-255 */
-	{ 1, 0x100000, &sprite_layout, 256, 16 },   /* colors 256-511 */
-	{ 1, 0x180000, &text_layout,   512, 16 },   /* colors 512-575 */
+	{ REGION_GFX1, 0, &text_layout,   512, 16 },   /* colors 512-575 */
+	{ REGION_GFX2, 0, &tile_layout,     0, 16 },   /* colors   0-255 */
+	{ REGION_GFX3, 0, &sprite_layout, 256, 16 },   /* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
@@ -501,7 +485,6 @@ static struct YM2203interface ym2203_interface =
 	2,          /* 2 chips */
 	3579545,    /* 3.579 MHz ? */
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -509,9 +492,17 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+static struct MSM5205interface msm5205_interface =
+{
+	1,		/* 1 chip */
+	384000,	/* 384KHz ? */
+	{ 0 },	/* interrupt function */
+	{ MSM5205_SEX_4B },	/* 4KHz playback ?  */
+	{ 100 }
+};
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_tigeroad =
 {
 	{
 		{
@@ -555,6 +546,62 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+/* same as above but with additional Z80 for samples playback */
+static struct MachineDriver machine_driver_toramich =
+{
+	{
+		{
+			CPU_M68000,
+			6000000, /* ? Main clock is 24MHz */
+			readmem,writemem,0,0,
+			tigeroad_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,    /* 4 Mhz ??? */
+			sound_readmem,sound_writemem,0,sound_writeport,
+			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
+								/* IRQs are triggered by the YM2203 */
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* ? */
+			sample_readmem,sample_writemem,sample_readport,sample_writeport,
+			0,0,
+			interrupt,4000	/* ? */
+		}
+	},
+	60, 2500,   /* frames per second, vblank duration */
+				/* vblank duration hand tuned to get proper sprite/background alignment */
+	1,  /* CPU slices per frame */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	576, 576,
+	0, /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
+	0,
+	0,
+	0,
+	tigeroad_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -566,59 +613,112 @@ static struct MachineDriver machine_driver =
 ROM_START( tigeroad )
 	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "tru02.bin",    0x00000, 0x20000, 0x8d283a95 )
-	ROM_LOAD_ODD( "tru04.bin",    0x00000, 0x20000, 0x72e2ef20 )
-
-	ROM_REGION_DISPOSE(0x188000) /* temporary space for graphics */
-	ROM_LOAD( "tr-01a.bin",   0x000000, 0x20000, 0xa8aa2e59 ) /* tiles */
-	ROM_LOAD( "tr-04a.bin",   0x020000, 0x20000, 0x8863a63c )
-	ROM_LOAD( "tr-02a.bin",   0x040000, 0x20000, 0x1a2c5f89 )
-	ROM_LOAD( "tr05.bin",     0x060000, 0x20000, 0x5bf453b3 )
-	ROM_LOAD( "tr-03a.bin",   0x080000, 0x20000, 0x1e0537ea )
-	ROM_LOAD( "tr-06a.bin",   0x0A0000, 0x20000, 0xb636c23a )
-	ROM_LOAD( "tr-07a.bin",   0x0C0000, 0x20000, 0x5f907d4d )
-	ROM_LOAD( "tr08.bin",     0x0E0000, 0x20000, 0xadee35e2 )
-	ROM_LOAD( "tr-09a.bin",   0x100000, 0x20000, 0x3d98ad1e ) /* sprites */
-	ROM_LOAD( "tr-10a.bin",   0x120000, 0x20000, 0x8f6f03d7 )
-	ROM_LOAD( "tr-11a.bin",   0x140000, 0x20000, 0xcd9152e5 )
-	ROM_LOAD( "tr-12a.bin",   0x160000, 0x20000, 0x7d8a99d0 )
-	ROM_LOAD( "tr01.bin",     0x180000, 0x08000, 0x74a9f08c ) /* 8x8 text */
-
-	ROM_REGION( 0x08000 ) /* tilemap for background */
-	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
+	ROM_LOAD_ODD ( "tru04.bin",    0x00000, 0x20000, 0x72e2ef20 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "tru05.bin",    0x0000, 0x8000, 0xf9a7c9bf )
+
+	/* no samples player in the English version */
+
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr01.bin",     0x00000, 0x08000, 0x74a9f08c ) /* 8x8 text */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr-01a.bin",   0x00000, 0x20000, 0xa8aa2e59 ) /* tiles */
+	ROM_LOAD( "tr-04a.bin",   0x20000, 0x20000, 0x8863a63c )
+	ROM_LOAD( "tr-02a.bin",   0x40000, 0x20000, 0x1a2c5f89 )
+	ROM_LOAD( "tr05.bin",     0x60000, 0x20000, 0x5bf453b3 )
+	ROM_LOAD( "tr-03a.bin",   0x80000, 0x20000, 0x1e0537ea )
+	ROM_LOAD( "tr-06a.bin",   0xa0000, 0x20000, 0xb636c23a )
+	ROM_LOAD( "tr-07a.bin",   0xc0000, 0x20000, 0x5f907d4d )
+	ROM_LOAD( "tr08.bin",     0xe0000, 0x20000, 0xadee35e2 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr-09a.bin",   0x00000, 0x20000, 0x3d98ad1e ) /* sprites */
+	ROM_LOAD( "tr-10a.bin",   0x20000, 0x20000, 0x8f6f03d7 )
+	ROM_LOAD( "tr-11a.bin",   0x40000, 0x20000, 0xcd9152e5 )
+	ROM_LOAD( "tr-12a.bin",   0x60000, 0x20000, 0x7d8a99d0 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
+ROM_END
+
+ROM_START( toramich )
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
+	ROM_LOAD_EVEN( "tr_02.bin",    0x00000, 0x20000, 0xb54723b1 )
+	ROM_LOAD_ODD ( "tr_04.bin",    0x00000, 0x20000, 0xab432479 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "tr_05.bin",    0x0000, 0x8000, 0x3ebe6e62 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* samples player */
+	ROM_LOAD( "tr_03.bin",    0x0000, 0x10000, 0xea1807ef )
+
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr01.bin",     0x00000, 0x08000, 0x74a9f08c ) /* 8x8 text */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr-01a.bin",   0x00000, 0x20000, 0xa8aa2e59 ) /* tiles */
+	ROM_LOAD( "tr-04a.bin",   0x20000, 0x20000, 0x8863a63c )
+	ROM_LOAD( "tr-02a.bin",   0x40000, 0x20000, 0x1a2c5f89 )
+	ROM_LOAD( "tr05.bin",     0x60000, 0x20000, 0x5bf453b3 )
+	ROM_LOAD( "tr-03a.bin",   0x80000, 0x20000, 0x1e0537ea )
+	ROM_LOAD( "tr-06a.bin",   0xa0000, 0x20000, 0xb636c23a )
+	ROM_LOAD( "tr-07a.bin",   0xc0000, 0x20000, 0x5f907d4d )
+	ROM_LOAD( "tr08.bin",     0xe0000, 0x20000, 0xadee35e2 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tr-09a.bin",   0x00000, 0x20000, 0x3d98ad1e ) /* sprites */
+	ROM_LOAD( "tr-10a.bin",   0x20000, 0x20000, 0x8f6f03d7 )
+	ROM_LOAD( "tr-11a.bin",   0x40000, 0x20000, 0xcd9152e5 )
+	ROM_LOAD( "tr-12a.bin",   0x60000, 0x20000, 0x7d8a99d0 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "trprom.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
 ROM_END
 
 ROM_START( f1dream )
 	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "06j_02.bin",   0x00000, 0x20000, 0x3c2ec697 )
-	ROM_LOAD_ODD( "06k_03.bin",   0x00000, 0x20000, 0x85ebad91 )
-
-	ROM_REGION_DISPOSE(0x188000) /* temporary space for graphics */
-	ROM_LOAD( "03f_12.bin",   0x000000, 0x10000, 0xbc13e43c ) /* tiles */
-	ROM_LOAD( "01f_10.bin",   0x010000, 0x10000, 0xf7617ad9 )
-	ROM_LOAD( "03h_14.bin",   0x020000, 0x10000, 0xe33cd438 )
-	/* 30000-7ffff empty */
-	ROM_LOAD( "02f_11.bin",   0x080000, 0x10000, 0x4aa49cd7 )
-	ROM_LOAD( "17f_09.bin",   0x090000, 0x10000, 0xca622155 )
-	ROM_LOAD( "02h_13.bin",   0x0a0000, 0x10000, 0x2a63961e )
-	/* b0000-fffff empty */
-	ROM_LOAD( "03b_06.bin",   0x100000, 0x10000, 0x5e54e391 ) /* sprites */
-	/* 110000-11ffff empty */
-	ROM_LOAD( "02b_05.bin",   0x120000, 0x10000, 0xcdd119fd )
-	/* 130000-13ffff empty */
-	ROM_LOAD( "03d_08.bin",   0x140000, 0x10000, 0x811f2e22 )
-	/* 150000-15ffff empty */
-	ROM_LOAD( "02d_07.bin",   0x160000, 0x10000, 0xaa9a1233 )
-	/* 170000-17ffff empty */
-	ROM_LOAD( "10d_01.bin",   0x180000, 0x08000, 0x361caf00 ) /* 8x8 text */
-
-	ROM_REGION(  0x08000 ) /* tilemap for background */
-	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
+	ROM_LOAD_ODD ( "06k_03.bin",   0x00000, 0x20000, 0x85ebad91 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
+
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10d_01.bin",   0x00000, 0x08000, 0x361caf00 ) /* 8x8 text */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03f_12.bin",   0x00000, 0x10000, 0xbc13e43c ) /* tiles */
+	ROM_LOAD( "01f_10.bin",   0x10000, 0x10000, 0xf7617ad9 )
+	ROM_LOAD( "03h_14.bin",   0x20000, 0x10000, 0xe33cd438 )
+	/* 30000-7ffff empty */
+	ROM_LOAD( "02f_11.bin",   0x80000, 0x10000, 0x4aa49cd7 )
+	ROM_LOAD( "17f_09.bin",   0x90000, 0x10000, 0xca622155 )
+	ROM_LOAD( "02h_13.bin",   0xa0000, 0x10000, 0x2a63961e )
+	/* b0000-fffff empty */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03b_06.bin",   0x00000, 0x10000, 0x5e54e391 ) /* sprites */
+	/* 10000-1ffff empty */
+	ROM_LOAD( "02b_05.bin",   0x20000, 0x10000, 0xcdd119fd )
+	/* 30000-3ffff empty */
+	ROM_LOAD( "03d_08.bin",   0x40000, 0x10000, 0x811f2e22 )
+	/* 50000-5ffff empty */
+	ROM_LOAD( "02d_07.bin",   0x60000, 0x10000, 0xaa9a1233 )
+	/* 70000-7ffff empty */
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
 ROM_END
 
 ROM_START( f1dreamb )
@@ -628,100 +728,56 @@ ROM_START( f1dreamb )
 	ROM_LOAD_EVEN( "f1d_02.bin",   0x20000, 0x10000, 0x98973c4c )
 	ROM_LOAD_ODD( "f1d_03.bin",   0x20000, 0x10000, 0x3d21c78a )
 
-	ROM_REGION_DISPOSE(0x188000) /* temporary space for graphics */
-	ROM_LOAD( "03f_12.bin",   0x000000, 0x10000, 0xbc13e43c ) /* tiles */
-	ROM_LOAD( "01f_10.bin",   0x010000, 0x10000, 0xf7617ad9 )
-	ROM_LOAD( "03h_14.bin",   0x020000, 0x10000, 0xe33cd438 )
-	/* 30000-7ffff empty */
-	ROM_LOAD( "02f_11.bin",   0x080000, 0x10000, 0x4aa49cd7 )
-	ROM_LOAD( "17f_09.bin",   0x090000, 0x10000, 0xca622155 )
-	ROM_LOAD( "02h_13.bin",   0x0a0000, 0x10000, 0x2a63961e )
-	/* b0000-fffff empty */
-	ROM_LOAD( "03b_06.bin",   0x100000, 0x10000, 0x5e54e391 ) /* sprites */
-	/* 110000-11ffff empty */
-	ROM_LOAD( "02b_05.bin",   0x120000, 0x10000, 0xcdd119fd )
-	/* 130000-13ffff empty */
-	ROM_LOAD( "03d_08.bin",   0x140000, 0x10000, 0x811f2e22 )
-	/* 150000-15ffff empty */
-	ROM_LOAD( "02d_07.bin",   0x160000, 0x10000, 0xaa9a1233 )
-	/* 170000-17ffff empty */
-	ROM_LOAD( "10d_01.bin",   0x180000, 0x08000, 0x361caf00 ) /* 8x8 text */
-
-	ROM_REGION( 0x08000 ) /* tilemap for background */
-	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
+
+	ROM_REGIONX( 0x008000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10d_01.bin",   0x00000, 0x08000, 0x361caf00 ) /* 8x8 text */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03f_12.bin",   0x00000, 0x10000, 0xbc13e43c ) /* tiles */
+	ROM_LOAD( "01f_10.bin",   0x10000, 0x10000, 0xf7617ad9 )
+	ROM_LOAD( "03h_14.bin",   0x20000, 0x10000, 0xe33cd438 )
+	/* 30000-7ffff empty */
+	ROM_LOAD( "02f_11.bin",   0x80000, 0x10000, 0x4aa49cd7 )
+	ROM_LOAD( "17f_09.bin",   0x90000, 0x10000, 0xca622155 )
+	ROM_LOAD( "02h_13.bin",   0xa0000, 0x10000, 0x2a63961e )
+	/* b0000-fffff empty */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "03b_06.bin",   0x00000, 0x10000, 0x5e54e391 ) /* sprites */
+	/* 10000-1ffff empty */
+	ROM_LOAD( "02b_05.bin",   0x20000, 0x10000, 0xcdd119fd )
+	/* 30000-3ffff empty */
+	ROM_LOAD( "03d_08.bin",   0x40000, 0x10000, 0x811f2e22 )
+	/* 50000-5ffff empty */
+	ROM_LOAD( "02d_07.bin",   0x60000, 0x10000, 0xaa9a1233 )
+	/* 70000-7ffff empty */
+
+	ROM_REGIONX( 0x08000, REGION_GFX4 )	/* background tilemaps */
+	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "09e_tr.bin",   0x0000, 0x0100, 0xec80ae36 )	/* unknown (palette bank select?) */
 ROM_END
 
 
 
-struct GameDriver driver_tigeroad =
+void init_tigeroad(void)
 {
-	__FILE__,
-	0,
-	"tigeroad",
-	"Tiger Road",
-	"1987",
-	"Capcom (Romstar license)",
-	"Phil Stroffolino (MAME driver)\nTim Lindquist",
-	0,
-	&machine_driver,
-	tigeroad_driver_init,
+	install_mem_write_handler(0, 0xfe4002, 0xfe4003, tigeroad_soundcmd_w);
+}
 
-	rom_tigeroad,
-	0,0,0,0,
+void init_f1dream(void)
+{
+	install_mem_write_handler(0, 0xfe4002, 0xfe4003, f1dream_control_w);
+}
 
-	input_ports_tigeroad,
 
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+
+GAME( 1987, tigeroad, 0,        tigeroad, tigeroad, tigeroad, ROT0, "Capcom (Romstar license)", "Tiger Road (US)" )
+GAME( 1987, toramich, tigeroad, toramich, tigeroad, tigeroad, ROT0, "Capcom", "Tora eno Michi (Japan)" )
 
 /* F1 Dream has an Intel 8751 microcontroller for protection */
-struct GameDriver driver_f1dream =
-{
-	__FILE__,
-	0,
-	"f1dream",
-	"F-1 Dream",
-	"1988",
-	"Capcom (Romstar license)",
-	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist\nEric Hustvedt (protection)",
-	0,
-	&machine_driver,
-	f1dream_driver_init,
-
-	rom_f1dream,
-	0,0,0,0,
-
-	input_ports_f1dream,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_f1dreamb =
-{
-	__FILE__,
-	&driver_f1dream,
-	"f1dreamb",
-	"F-1 Dream (bootleg)",
-	"1988",
-	"bootleg",
-	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
-	0,
-	&machine_driver,
-	tigeroad_driver_init,
-
-	rom_f1dreamb,
-	0,0,0,0,
-
-	input_ports_f1dream,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1988, f1dream,  0,        tigeroad, f1dream,  f1dream,  ROT0, "Capcom (Romstar license)", "F-1 Dream" )
+GAME( 1988, f1dreamb, f1dream,  tigeroad, f1dream,  tigeroad, ROT0, "bootleg", "F-1 Dream (bootleg)" )

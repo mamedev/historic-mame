@@ -1550,13 +1550,13 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, marble,   ,         atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 1)" )
+GAME( 1984, marble,   0,        atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 1)" )
 GAME( 1984, marble2,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 2)" )
 GAME( 1984, marblea,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 3)" )
-GAME( 1984, peterpak, ,         atarisy1, peterpak, peterpak, ROT0, "Atari Games", "Peter Pack-Rat" )
-GAME( 1985, indytemp, ,         atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 1)" )
+GAME( 1984, peterpak, 0,        atarisy1, peterpak, peterpak, ROT0, "Atari Games", "Peter Pack-Rat" )
+GAME( 1985, indytemp, 0,        atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 1)" )
 GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 2)" )
 GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 3)" )
 GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)" )
-GAME( 1985, roadrunn, ,         atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
-GAME( 1987, roadblst, ,         atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )
+GAME( 1985, roadrunn, 0,        atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
+GAME( 1987, roadblst, 0,        atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )

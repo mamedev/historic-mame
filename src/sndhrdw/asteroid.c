@@ -33,7 +33,6 @@
 #define MIN_SLICE 10
 #define LANDER_OVERSAMPLE_RATE	768000
 
-#define AUDIO_CONV8(A) ((A)-0x80)
 #define AUDIO_CONV16(A) ((A)-0x8000)
 
 static int sinetable[64]=
@@ -51,7 +50,7 @@ static long multiplier;
 static int sample_pos;
 static int channel;
 static int lfsr_index;
-static void *sample_buffer;
+static INT16 *sample_buffer;
 static unsigned short *lfsr_buffer;
 
 static int volume;
@@ -252,8 +251,8 @@ int llander_sh_start(const struct MachineSound *msound)
 
 	channel = mixer_allocate_channel(25);
 
-	if ((sample_buffer = malloc((Machine->sample_bits/8)*buffer_len)) == 0) return 1;
-	memset(sample_buffer,0,(Machine->sample_bits/8)*buffer_len);
+	if ((sample_buffer = malloc(sizeof(INT16)*buffer_len)) == 0) return 1;
+	memset(sample_buffer,0,sizeof(INT16)*buffer_len);
 
 	return 0;
 }
@@ -333,7 +332,7 @@ void llander_sh_stop(void)
 
 ***************************************************************************/
 
-void llander_process(void *buffer,int start, int n)
+void llander_process(INT16 *buffer,int start, int n)
 {
 	static int sampnum=0;
 	static long noisetarg=0,noisecurrent=0;
@@ -382,14 +381,7 @@ void llander_process(void *buffer,int start, int n)
 
 		/* Scale ouput down to buffer */
 
-		if( Machine->sample_bits == 16 )
-		{
-			((unsigned short *)buffer)[start+loop]=AUDIO_CONV16(sample<<5);
-		}
-		else
-		{
-			((unsigned char *)buffer)[start+loop]=AUDIO_CONV8(sample>>3);
-		}
+		buffer[start+loop] = AUDIO_CONV16(sample<<5);
 
 		sampnum++;
 		lastoversampnum=oversampnum;
@@ -421,17 +413,11 @@ void llander_sh_update(void)
 {
 	if (Machine->sample_rate == 0) return;
 
-        if (sample_pos < buffer_len) llander_process (sample_buffer, sample_pos, buffer_len - sample_pos);
+	if (sample_pos < buffer_len)
+		llander_process (sample_buffer, sample_pos, buffer_len - sample_pos);
 	sample_pos = 0;
 
-	if( Machine->sample_bits == 16 )
-	{
-		mixer_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate);
-	}
-	else
-	{
-		mixer_play_streamed_sample(channel,sample_buffer,buffer_len,emulation_rate);
-	}
+	mixer_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate);
 }
 
 void llander_snd_reset_w(int offset,int data)

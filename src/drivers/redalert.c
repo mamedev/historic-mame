@@ -275,7 +275,6 @@ static struct AY8910interface ay8910_interface =
 	1,			/* 1 chip */
 	2000000,	/* 2 MHz */
 	{ 50 },		/* Volume */
-	AY8910_DEFAULT_GAIN,
 	{ redalert_AY8910_A_r },		/* Port A Read */
 	{ 0 },		/* Port B Read */
 	{ 0 },		/* Port A Write */
@@ -284,7 +283,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_redalert =
 {
 	/* basic machine hardware */
 	{
@@ -349,7 +348,7 @@ ROM_START( redalert )
 	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
 	ROM_LOAD( "rag7n",        	0x7000, 0x1000, 0x82ab2dae )
 	ROM_LOAD( "rag8n",        	0x8000, 0x1000, 0xb80eece9 )
-	ROM_RELOAD(                0xf000, 0x1000 )
+	ROM_RELOAD(                 0xf000, 0x1000 )
 	ROM_LOAD( "rag9",         	0x9000, 0x1000, 0x2b7d1295 )
 	ROM_LOAD( "ragab",        	0xa000, 0x1000, 0xab99f5ed )
 	ROM_LOAD( "ragb",         	0xb000, 0x1000, 0x8e0d1661 )
@@ -365,39 +364,6 @@ ROM_START( redalert )
 	ROM_LOAD( "ras4",         	0x3000, 0x1000, 0x130e66db )
 ROM_END
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_redalert =
-{
-	__FILE__,
-	0,
-	"redalert",
-	"Red Alert",
-	"1981",
-	"GDI + Irem",
-	"Mike Balfour\nDick Milliken (Information)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_redalert,
-	0, 0,
-	0,
-	0,
-
-	input_ports_redalert,
-
-	0, 0, 0,
-	ROT270 | GAME_WRONG_COLORS,
-
-	0, 0
-};
+GAMEX( 1981, redalert, 0, redalert, redalert, 0, ROT270, "GDI + Irem", "Red Alert", GAME_WRONG_COLORS )

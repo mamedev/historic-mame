@@ -791,8 +791,8 @@ INPUT_PORTS_START( vanvan )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
@@ -1895,8 +1895,8 @@ static void init_ponpoko(void)
 	/* Here we revert it to the usual format. */
 
 	/* Characters */
-	RAM = memory_region(1);
-	for (i = 0; i < 0x1000; i += 0x10)
+	RAM = memory_region(REGION_GFX1);
+	for (i = 0;i < memory_region_length(REGION_GFX1);i += 0x10)
 	{
 		for (j = 0; j < 8; j++)
 		{
@@ -1907,7 +1907,8 @@ static void init_ponpoko(void)
 	}
 
 	/* Sprites */
-	for (; i < 0x2000; i += 0x20)
+	RAM = memory_region(REGION_GFX2);
+	for (i = 0;i < memory_region_length(REGION_GFX2);i += 0x20)
 	{
 		for (j = 0; j < 8; j++)
 		{
@@ -1917,6 +1918,25 @@ static void init_ponpoko(void)
 			RAM[i+j+0x08] = RAM[i+j+0x00];
 			RAM[i+j+0x00] = temp;
 		}
+	}
+}
+
+static void eyes_decode(unsigned char *data)
+{
+	int j;
+	unsigned char swapbuffer[8];
+
+	for (j = 0; j < 8; j++)
+	{
+		swapbuffer[j] = data[(j >> 2) + (j & 2) + ((j & 1) << 2)];
+	}
+
+	for (j = 0; j < 8; j++)
+	{
+		char ch = swapbuffer[j];
+
+		data[j] = (ch & 0x80) | ((ch & 0x10) << 2) |
+					 (ch & 0x20) | ((ch & 0x40) >> 2) | (ch & 0x0f);
 	}
 }
 
@@ -1939,25 +1959,12 @@ static void init_eyes(void)
 	/* Graphics ROMs */
 
 	/* Data lines D4 and D6 and address lines A0 and A2 are swapped */
-	RAM = memory_region(1);
-	for (i = 0; i < 0x2000; i += 8)
-	{
-		int j;
-		unsigned char swapbuffer[8];
-
-		for (j = 0; j < 8; j++)
-		{
-			swapbuffer[j] = RAM[i + (j >> 2) + (j & 2) + ((j & 1) << 2)];
-		}
-
-		for (j = 0; j < 8; j++)
-		{
-			char ch = swapbuffer[j];
-
-			RAM[i + j] = (ch & 0x80) | ((ch & 0x10) << 2) |
-				         (ch & 0x20) | ((ch & 0x40) >> 2) | (ch & 0x0f);
-		}
-	}
+	RAM = memory_region(REGION_GFX1);
+	for (i = 0;i < memory_region_length(REGION_GFX1);i += 8)
+		eyes_decode(&RAM[i]);
+	RAM = memory_region(REGION_GFX2);
+	for (i = 0;i < memory_region_length(REGION_GFX2);i += 8)
+		eyes_decode(&RAM[i]);
 }
 
 
@@ -1967,35 +1974,35 @@ static void init_pacplus(void)
 }
 
 
-GAME( 1980, pacman,   ,         pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (Japan set 1)" )
-GAME( 1980, pacmanjp, pacman,   pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (Japan set 2)" )
-GAME( 1980, pacmanm,  pacman,   pacman,  pacman,   ,         ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
-GAME( 1981, npacmod,  pacman,   pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (harder?)" )
-GAME( 1981, pacmod,   pacman,   pacman,  pacman,   ,         ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
-GAME( 1981, hangly,   pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Hangly-Man (set 1)" )
-GAME( 1981, hangly2,  pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Hangly-Man (set 2)" )
-GAME( 1980, puckman,  pacman,   pacman,  pacman,   ,         ROT90,  "hack", "New Puck-X" )
-GAME( 1981, pacheart, pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Pac-Man (Hearts)" )
-GAME( 1981, piranha,  pacman,   pacman,  mspacman, ,         ROT90,  "hack", "Piranha" )
-GAME( 1982, pacplus,  ,         pacman,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
-GAME( 1981, mspacman, ,         pacman,  mspacman, ,         ROT90,  "bootleg", "Ms. Pac-Man" )
-GAME( 1981, mspacatk, mspacman, pacman,  mspacman, ,         ROT90,  "hack", "Ms. Pac-Man Plus" )
-GAME( 1981, pacgal,   mspacman, pacman,  mspacman, ,         ROT90,  "hack", "Pac-Gal" )
-GAME( 1981, crush,    ,         pacman,  maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
-GAME( 1981, crush2,   crush,    pacman,  maketrax, ,         ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
+GAME( 1980, pacman,   0,        pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
+GAME( 1980, pacmanjp, pacman,   pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 2)" )
+GAME( 1980, pacmanm,  pacman,   pacman,  pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
+GAME( 1981, npacmod,  pacman,   pacman,  pacman,   0,        ROT90,  "Namco", "PuckMan (harder?)" )
+GAME( 1981, pacmod,   pacman,   pacman,  pacman,   0,        ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
+GAME( 1981, hangly,   pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Hangly-Man (set 1)" )
+GAME( 1981, hangly2,  pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Hangly-Man (set 2)" )
+GAME( 1980, puckman,  pacman,   pacman,  pacman,   0,        ROT90,  "hack", "New Puck-X" )
+GAME( 1981, pacheart, pacman,   pacman,  pacman,   0,        ROT90,  "hack", "Pac-Man (Hearts)" )
+GAME( 1981, piranha,  pacman,   pacman,  mspacman, 0,        ROT90,  "hack", "Piranha" )
+GAME( 1982, pacplus,  0,        pacman,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
+GAME( 1981, mspacman, 0,        pacman,  mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man" )
+GAME( 1981, mspacatk, mspacman, pacman,  mspacman, 0,        ROT90,  "hack", "Ms. Pac-Man Plus" )
+GAME( 1981, pacgal,   mspacman, pacman,  mspacman, 0,        ROT90,  "hack", "Pac-Gal" )
+GAME( 1981, crush,    0,        pacman,  maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
+GAME( 1981, crush2,   crush,    pacman,  maketrax, 0,        ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
 GAME( 1981, crush3,   crush,    pacman,  maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
 GAME( 1981, maketrax, crush,    pacman,  maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax" )
-GAME( 1981, mbrush,   crush,    pacman,  mbrush,   ,         ROT90,  "bootleg", "Magic Brush" )
-GAME( 1981, paintrlr, crush,    pacman,  paintrlr, ,         ROT90,  "bootleg", "Paint Roller" )
-GAME( 1982, ponpoko,  ,         pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )
+GAME( 1981, mbrush,   crush,    pacman,  mbrush,   0,        ROT90,  "bootleg", "Magic Brush" )
+GAME( 1981, paintrlr, crush,    pacman,  paintrlr, 0,        ROT90,  "bootleg", "Paint Roller" )
+GAME( 1982, ponpoko,  0,        pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )
 GAME( 1982, ponpokov, ponpoko,  pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
-GAME( 1982, eyes,     ,         pacman,  eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
+GAME( 1982, eyes,     0,        pacman,  eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
 GAME( 1982, eyes2,    eyes,     pacman,  eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
-GAME( 1983, mrtnt,    ,         pacman,  eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
-GAME( 1985, lizwiz,   ,         pacman,  lizwiz,   ,         ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
-GAME( 1983, theglob,  ,         theglob, theglob,  ,         ROT90,  "Epos Corporation", "The Glob" )
-GAME( 1984, beastf,   theglob,  theglob, theglob,  ,         ROT90,  "Epos Corporation", "Beastie Feastie" )
-GAMEX(????, jumpshot, ,         pacman,  pacman,   ,         ROT90,  "<unknown>", "Jump Shot", GAME_NOT_WORKING )	/* not working, encrypted */
-GAME( 1983, vanvan,   ,         vanvan,  vanvan,   ,         ROT270, "Karateco", "Van Van Car" )
-GAME( 1983, vanvanb,  vanvan,   vanvan,  vanvan,   ,         ROT270, "bootleg", "Van Van Car (bootleg)" )
-GAME( 1982, alibaba,  ,         alibaba, alibaba,  ,         ROT90,  "Sega", "Ali Baba and 40 Thieves" )
+GAME( 1983, mrtnt,    0,        pacman,  eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
+GAME( 1985, lizwiz,   0,        pacman,  lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
+GAME( 1983, theglob,  0,        theglob, theglob,  0,        ROT90,  "Epos Corporation", "The Glob" )
+GAME( 1984, beastf,   theglob,  theglob, theglob,  0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
+GAMEX(????, jumpshot, 0,        pacman,  pacman,   0,        ROT90,  "<unknown>", "Jump Shot", GAME_NOT_WORKING )	/* not working, encrypted */
+GAME( 1983, vanvan,   0,        vanvan,  vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
+GAME( 1983, vanvanb,  vanvan,   vanvan,  vanvan,   0,        ROT270, "bootleg", "Van Van Car (bootleg)" )
+GAME( 1982, alibaba,  0,        alibaba, alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )

@@ -1661,8 +1661,7 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
-	{ 15, 15, 15, 15 },
-	{ 0, 0, 0, 0x20 },	/* gain */
+	{ 15, 15, 15, MIXERG(15,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
 	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
 	{ 0, DAC_data_w, 0, 0 },		/* port Awrite */
@@ -2340,21 +2339,21 @@ static void init_alpinea(void)
 
 
 
-GAME( 1981, spaceskr, ,         nomcu, spaceskr,   ,        ROT180, "Taito Corporation", "Space Seeker" )
-GAME( 1982, junglek,  ,         nomcu, junglek,    ,        ROT0,   "Taito Corporation", "Jungle King (Japan)" )
-GAME( 1982, junglkj2, junglek,  nomcu, junglek,    ,        ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
-GAME( 1982, jungleh,  junglek,  nomcu, junglek,    ,        ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )
-GAME( 1982, alpine,   ,         nomcu, alpine,     alpine,  ROT270, "Taito Corporation", "Alpine Ski (set 1)" )
+GAME( 1981, spaceskr, 0,        nomcu, spaceskr,   0,       ROT180, "Taito Corporation", "Space Seeker" )
+GAME( 1982, junglek,  0,        nomcu, junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan)" )
+GAME( 1982, junglkj2, junglek,  nomcu, junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
+GAME( 1982, jungleh,  junglek,  nomcu, junglek,    0,       ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )
+GAME( 1982, alpine,   0,        nomcu, alpine,     alpine,  ROT270, "Taito Corporation", "Alpine Ski (set 1)" )
 GAME( 1982, alpinea,  alpine,   nomcu, alpinea,    alpinea, ROT270, "Taito Corporation", "Alpine Ski (set 2)" )
-GAME( 1982, timetunl, ,         nomcu, timetunl,   ,        ROT0,   "Taito Corporation", "Time Tunnel" )
-GAME( 1982, wwestern, ,         nomcu, wwestern,   ,        ROT270, "Taito Corporation", "Wild Western (set 1)" )
-GAME( 1982, wwester1, wwestern, nomcu, wwestern,   ,        ROT270, "Taito Corporation", "Wild Western (set 2)" )
-GAME( 1982, frontlin, ,         mcu,   frontlin,   ,        ROT270, "Taito Corporation", "Front Line" )
-GAME( 1983, elevator, ,         mcu,   elevator,   ,        ROT0,   "Taito Corporation", "Elevator Action" )
-GAME( 1983, elevatob, elevator, nomcu, elevator,   ,        ROT0,   "bootleg", "Elevator Action (bootleg)" )
-GAME( 1983, tinstar,  ,         mcu,   tinstar,    ,        ROT0,   "Taito Corporation", "The Tin Star" )
-GAME( 1983, waterski, ,         nomcu, waterski,   ,        ROT270, "Taito Corporation", "Water Ski" )
-GAME( 1983, bioatack, ,         nomcu, bioatack,   ,        ROT270, "Taito Corporation (Fox Video Games license)", "Bio Attack" )
-GAME( 1984, sfposeid, ,         mcu,   sfposeid,   ,        ROT0,   "Taito Corporation", "Sea Fighter Poseidon" )
-GAME( 1983, hwrace,   ,         nomcu, hwrace,     ,        ROT270, "Taito Corporation", "High Way Race" )
-GAMEX(1984, kikstart, ,         mcu,   junglek,    ,        ROT0,   "Taito Corporation", "Kick Start Wheelie King", GAME_NOT_WORKING )
+GAME( 1982, timetunl, 0,        nomcu, timetunl,   0,       ROT0,   "Taito Corporation", "Time Tunnel" )
+GAME( 1982, wwestern, 0,        nomcu, wwestern,   0,       ROT270, "Taito Corporation", "Wild Western (set 1)" )
+GAME( 1982, wwester1, wwestern, nomcu, wwestern,   0,       ROT270, "Taito Corporation", "Wild Western (set 2)" )
+GAME( 1982, frontlin, 0,        mcu,   frontlin,   0,       ROT270, "Taito Corporation", "Front Line" )
+GAME( 1983, elevator, 0,        mcu,   elevator,   0,       ROT0,   "Taito Corporation", "Elevator Action" )
+GAME( 1983, elevatob, elevator, nomcu, elevator,   0,       ROT0,   "bootleg", "Elevator Action (bootleg)" )
+GAME( 1983, tinstar,  0,        mcu,   tinstar,    0,       ROT0,   "Taito Corporation", "The Tin Star" )
+GAME( 1983, waterski, 0,        nomcu, waterski,   0,       ROT270, "Taito Corporation", "Water Ski" )
+GAME( 1983, bioatack, 0,        nomcu, bioatack,   0,       ROT270, "Taito Corporation (Fox Video Games license)", "Bio Attack" )
+GAME( 1984, sfposeid, 0,        mcu,   sfposeid,   0,       ROT0,   "Taito Corporation", "Sea Fighter Poseidon" )
+GAME( 1983, hwrace,   0,        nomcu, hwrace,     0,       ROT270, "Taito Corporation", "High Way Race" )
+GAMEX(1984, kikstart, 0,        mcu,   junglek,    0,       ROT0,   "Taito Corporation", "Kick Start Wheelie King", GAME_NOT_WORKING )

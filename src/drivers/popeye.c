@@ -2,6 +2,8 @@
 
 Popeye memory map (preliminary)
 
+driver by Marc Lafontaine
+
 0000-7fff  ROM
 
 8000-87ff  RAM
@@ -153,7 +155,7 @@ INPUT_PORTS_START( popeye )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x00, "Free play" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 /*  0x0e = 2 Coins/1 Credit
     0x07, 0x0c = 1 Coin/1 Credit
     0x01, 0x0b, 0x0d = 1 Coin/2 Credits */
@@ -197,7 +199,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	512,	/* 512 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 0x4000*8 },	/* the two bitplanes are separated in different files */
 	{7+(0x2000*8),6+(0x2000*8),5+(0x2000*8),4+(0x2000*8),
@@ -212,9 +214,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0800, &charlayout,      0, 16 },	/* chars */
-	{ 1, 0x1000, &spritelayout, 16*2, 64 },	/* sprites */
-	{ 1, 0x2000, &spritelayout, 16*2, 64 },	/* sprites */
+	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 },	/* chars */
+	{ REGION_GFX2, 0x0000, &spritelayout, 16*2, 64 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -246,7 +247,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	2000000,	/* 2 MHz */
 	{ 40 },
-	AY8910_DEFAULT_GAIN,
 	{ popeye_portA_r },
 	{ 0 },
 	{ 0 },
@@ -307,12 +307,15 @@ ROM_START( popeye )
 	ROM_LOAD( "c-7c",         0x4000, 0x2000, 0x5882ebf9 )
 	ROM_LOAD( "c-7e",         0x6000, 0x2000, 0xef8649ca )
 
-	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
-	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
-	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
-	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
-	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-5n",         0x0000, 0x0800, 0xcca61ddd )	/* first half is empty */
+	ROM_CONTINUE(             0x0000, 0x0800 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-1e",         0x0000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x2000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x4000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x6000, 0x2000, 0x49e1d170 )
 
 	ROM_REGIONX( 0x0340, REGION_PROMS )
 	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
@@ -329,12 +332,15 @@ ROM_START( popeye2 )
 	ROM_LOAD( "7c",           0x4000, 0x2000, 0x8eee859e )
 	ROM_LOAD( "7e",           0x6000, 0x2000, 0xb64aa314 )
 
-	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
-	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
-	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
-	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
-	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-5n",         0x0000, 0x0800, 0xcca61ddd )	/* first half is empty */
+	ROM_CONTINUE(             0x0000, 0x0800 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-1e",         0x0000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x2000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x4000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x6000, 0x2000, 0x49e1d170 )
 
 	ROM_REGIONX( 0x0340, REGION_PROMS )
 	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
@@ -352,12 +358,15 @@ ROM_START( popeyebl )
 	ROM_LOAD( "po4",          0x6000, 0x2000, 0x548a6514 )
 	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x8de22998 )	/* protection PROM */
 
-	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
-	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
-	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
-	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
-	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-5n",         0x0000, 0x0800, 0xcca61ddd )	/* first half is empty */
+	ROM_CONTINUE(             0x0000, 0x0800 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "v-1e",         0x0000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x2000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x4000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x6000, 0x2000, 0x49e1d170 )
 
 	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
@@ -372,77 +381,6 @@ ROM_END
 /* The encryption is based on a custom ALU and seems to be dynamically evolving */
 /* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
 /* an opcode for the ALU and the others contain the data. */
-struct GameDriver driver_popeye =
-{
-	__FILE__,
-	0,
-	"popeye",
-	"Popeye (set 1)",
-	"1982?",
-	"Nintendo",
-	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	0,
-	&machine_driver_popeyebl,
-	0,
-
-	rom_popeye,
-	0, 0,
-	0,
-	0,
-
-	input_ports_popeye,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_popeye2 =
-{
-	__FILE__,
-	&driver_popeye,
-	"popeye2",
-	"Popeye (set 2)",
-	"1982?",
-	"Nintendo",
-	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	0,
-	&machine_driver_popeyebl,
-	0,
-
-	rom_popeye2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_popeye,
-
-	0, 0, 0,
-	ROT0 | GAME_NOT_WORKING,
-	0,0
-};
-
-struct GameDriver driver_popeyebl =
-{
-	__FILE__,
-	&driver_popeye,
-	"popeyebl",
-	"Popeye (bootleg)",
-	"1982?",
-	"bootleg",
-	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	0,
-	&machine_driver_popeyebl,
-	0,
-
-	rom_popeyebl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_popeye,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAMEX(1982?, popeye,   0,      popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 1)", GAME_NOT_WORKING )
+GAMEX(1982?, popeye2,  popeye, popeyebl, popeye, 0, ROT0, "Nintendo", "Popeye (set 2)", GAME_NOT_WORKING )
+GAME( 1982?, popeyebl, popeye, popeyebl, popeye, 0, ROT0, "bootleg", "Popeye (bootleg)" )

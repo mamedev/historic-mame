@@ -137,7 +137,7 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 static void get_bg_tile_info(int col,int row)
 {
-	unsigned char *BGROM = memory_region(2);
+	unsigned char *BGROM = memory_region(REGION_GFX4);
 	int addr = 128 * row + col;
 	int attr = BGROM[addr + 0x4000];
 	int code = BGROM[addr] | ((attr & 0x03) << 8);
@@ -155,7 +155,7 @@ static void get_char_tile_info(int col,int row)
 
 static void ninjemak_get_bg_tile_info(int col,int row)
 {
-	unsigned char *BGROM = memory_region(2);
+	unsigned char *BGROM = memory_region(REGION_GFX4);
 	int addr = 32 * col + row;
 	int attr = BGROM[addr + 0x4000];
 	int code = BGROM[addr] | ((attr & 0x03) << 8);

@@ -542,7 +542,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	    {
 		    code = READ_WORD (&rastan_spriteram[offs]);
 
-		    if (code)
+		    if (code < Machine->gfx[1]->total_elements)
 		    {
 			    int data1;
 

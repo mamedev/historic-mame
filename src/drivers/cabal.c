@@ -81,14 +81,14 @@ struct ADPCMinterface adpcm_interface =
 {
 	2,			/* total number of ADPCM decoders in the machine */
 	8000,		/* playback frequency */
-	3,			/* memory region where the samples come from */
+	REGION_SOUND1, /* memory region where the samples come from */
 	0,			/* initialization function */
 	{40,40}
 };
 
 static void cabal_play_adpcm( int channel, int which ){
 	if( which!=0xff ){
-		unsigned char *RAM = memory_region(3);
+		unsigned char *RAM = memory_region(REGION_SOUND1);
 		int offset = channel*0x10000;
 		int start, len;
 
@@ -289,7 +289,7 @@ INPUT_PORTS_START( cabal )
 	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, "2 Coins/2 Credits 3/4" )
-	PORT_DIPSETTING(    0x02, "3 Coins/3 credits" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_3C ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x09, DEF_STR( 1C_4C ) )
@@ -378,9 +378,9 @@ static struct GfxLayout sprite_layout =
 };
 
 static struct GfxDecodeInfo cabal_gfxdecodeinfo[] = {
-	{ 2,      0x100000, &text_layout,		0, 1024/4 },
-	{ 2,      0x000000, &tile_layout,		32*16, 16 },
-	{ 2,      0x080000, &sprite_layout,		16*16, 16 },
+	{ REGION_GFX1, 0, &text_layout,		0, 1024/4 },
+	{ REGION_GFX2, 0, &tile_layout,		32*16, 16 },
+	{ REGION_GFX3, 0, &sprite_layout,	16*16, 16 },
 	{ -1 }
 };
 
@@ -479,30 +479,34 @@ ROM_START( cabal )
 	ROM_LOAD( "4-3n",           0x0000, 0x2000, 0x4038eff2 )
 	ROM_LOAD( "3-3p",           0x8000, 0x8000, 0xd9defcbf )
 
-	ROM_REGION_DISPOSE(0x104000)
-	/* the gfx ROMs were missing in this set, I'm using the ones from */
-	/* the bootleg (apart from the characters) */
-	ROM_LOAD( "cabal_17.bin",   0x000000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
-	ROM_LOAD( "cabal_16.bin",   0x010000, 0x10000, 0x77bc7a60 )
-	ROM_LOAD( "cabal_18.bin",   0x020000, 0x10000, 0x0bc50075 )
-	ROM_LOAD( "cabal_19.bin",   0x030000, 0x10000, 0x67e4fe47 )
-	ROM_LOAD( "cabal_15.bin",   0x040000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
-	ROM_LOAD( "cabal_14.bin",   0x050000, 0x10000, 0x420b0801 )
-	ROM_LOAD( "cabal_12.bin",   0x060000, 0x10000, 0x543fcb37 )
-	ROM_LOAD( "cabal_13.bin",   0x070000, 0x10000, 0xd28d921e )
-	ROM_LOAD( "cabal_05.bin",   0x080000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
-	ROM_LOAD( "cabal_06.bin",   0x090000, 0x10000, 0x6a0e739d )
-	ROM_LOAD( "cabal_07.bin",   0x0a0000, 0x10000, 0x581a50c1 )
-	ROM_LOAD( "cabal_08.bin",   0x0b0000, 0x10000, 0x702735c9 )
-	ROM_LOAD( "cabal_04.bin",   0x0c0000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
-	ROM_LOAD( "cabal_03.bin",   0x0d0000, 0x10000, 0x7065e840 )
-	ROM_LOAD( "cabal_02.bin",   0x0e0000, 0x10000, 0x0e1ec30e )
-	ROM_LOAD( "cabal_01.bin",   0x0f0000, 0x10000, 0x55c44764 )
-	ROM_LOAD( "t6_128.bin",     0x100000, 0x04000, 0x1ccee214 ) /* characters */
+	ROM_REGIONX( 0x4000,  REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "t6_128.bin",     0x00000, 0x04000, 0x1ccee214 ) /* characters */
 
-	ROM_REGION(0x20000)	/* Samples? */
-	ROM_LOAD( "2-1s",            0x00000, 0x10000, 0x850406b4 )
-	ROM_LOAD( "1-1u",            0x10000, 0x10000, 0x8b3e0789 )
+	/* the gfx ROMs were missing in this set, I'm using the ones from */
+	/* the bootleg */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_17.bin",   0x00000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
+	ROM_LOAD( "cabal_16.bin",   0x10000, 0x10000, 0x77bc7a60 )
+	ROM_LOAD( "cabal_18.bin",   0x20000, 0x10000, 0x0bc50075 )
+	ROM_LOAD( "cabal_19.bin",   0x30000, 0x10000, 0x67e4fe47 )
+	ROM_LOAD( "cabal_15.bin",   0x40000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
+	ROM_LOAD( "cabal_14.bin",   0x50000, 0x10000, 0x420b0801 )
+	ROM_LOAD( "cabal_12.bin",   0x60000, 0x10000, 0x543fcb37 )
+	ROM_LOAD( "cabal_13.bin",   0x70000, 0x10000, 0xd28d921e )
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_05.bin",   0x00000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
+	ROM_LOAD( "cabal_06.bin",   0x10000, 0x10000, 0x6a0e739d )
+	ROM_LOAD( "cabal_07.bin",   0x20000, 0x10000, 0x581a50c1 )
+	ROM_LOAD( "cabal_08.bin",   0x30000, 0x10000, 0x702735c9 )
+	ROM_LOAD( "cabal_04.bin",   0x40000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
+	ROM_LOAD( "cabal_03.bin",   0x50000, 0x10000, 0x7065e840 )
+	ROM_LOAD( "cabal_02.bin",   0x60000, 0x10000, 0x0e1ec30e )
+	ROM_LOAD( "cabal_01.bin",   0x70000, 0x10000, 0x55c44764 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* Samples? */
+	ROM_LOAD( "2-1s",           0x00000, 0x10000, 0x850406b4 )
+	ROM_LOAD( "1-1u",           0x10000, 0x10000, 0x8b3e0789 )
 ROM_END
 
 ROM_START( cabal2 )
@@ -516,30 +520,34 @@ ROM_START( cabal2 )
 	ROM_LOAD( "4-3n",           0x0000, 0x2000, 0x4038eff2 )
 	ROM_LOAD( "3-3p",           0x8000, 0x8000, 0xd9defcbf )
 
-	ROM_REGION_DISPOSE(0x104000)
-	/* the gfx ROMs were missing in this set, I'm using the ones from */
-	/* the bootleg (apart from the characters) */
-	ROM_LOAD( "cabal_17.bin",   0x000000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
-	ROM_LOAD( "cabal_16.bin",   0x010000, 0x10000, 0x77bc7a60 )
-	ROM_LOAD( "cabal_18.bin",   0x020000, 0x10000, 0x0bc50075 )
-	ROM_LOAD( "cabal_19.bin",   0x030000, 0x10000, 0x67e4fe47 )
-	ROM_LOAD( "cabal_15.bin",   0x040000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
-	ROM_LOAD( "cabal_14.bin",   0x050000, 0x10000, 0x420b0801 )
-	ROM_LOAD( "cabal_12.bin",   0x060000, 0x10000, 0x543fcb37 )
-	ROM_LOAD( "cabal_13.bin",   0x070000, 0x10000, 0xd28d921e )
-	ROM_LOAD( "cabal_05.bin",   0x080000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
-	ROM_LOAD( "cabal_06.bin",   0x090000, 0x10000, 0x6a0e739d )
-	ROM_LOAD( "cabal_07.bin",   0x0a0000, 0x10000, 0x581a50c1 )
-	ROM_LOAD( "cabal_08.bin",   0x0b0000, 0x10000, 0x702735c9 )
-	ROM_LOAD( "cabal_04.bin",   0x0c0000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
-	ROM_LOAD( "cabal_03.bin",   0x0d0000, 0x10000, 0x7065e840 )
-	ROM_LOAD( "cabal_02.bin",   0x0e0000, 0x10000, 0x0e1ec30e )
-	ROM_LOAD( "cabal_01.bin",   0x0f0000, 0x10000, 0x55c44764 )
-	ROM_LOAD( "5-6s",           0x100000, 0x04000, 0x6a76955a ) /* characters */
+	ROM_REGIONX( 0x4000,  REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5-6s",           0x00000, 0x04000, 0x6a76955a ) /* characters */
 
-	ROM_REGION(0x20000)	/* Samples? */
-	ROM_LOAD( "2-1s",            0x00000, 0x10000, 0x850406b4 )
-	ROM_LOAD( "1-1u",            0x10000, 0x10000, 0x8b3e0789 )
+	/* the gfx ROMs were missing in this set, I'm using the ones from */
+	/* the bootleg */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_17.bin",   0x00000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
+	ROM_LOAD( "cabal_16.bin",   0x10000, 0x10000, 0x77bc7a60 )
+	ROM_LOAD( "cabal_18.bin",   0x20000, 0x10000, 0x0bc50075 )
+	ROM_LOAD( "cabal_19.bin",   0x30000, 0x10000, 0x67e4fe47 )
+	ROM_LOAD( "cabal_15.bin",   0x40000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
+	ROM_LOAD( "cabal_14.bin",   0x50000, 0x10000, 0x420b0801 )
+	ROM_LOAD( "cabal_12.bin",   0x60000, 0x10000, 0x543fcb37 )
+	ROM_LOAD( "cabal_13.bin",   0x70000, 0x10000, 0xd28d921e )
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_05.bin",   0x00000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
+	ROM_LOAD( "cabal_06.bin",   0x10000, 0x10000, 0x6a0e739d )
+	ROM_LOAD( "cabal_07.bin",   0x20000, 0x10000, 0x581a50c1 )
+	ROM_LOAD( "cabal_08.bin",   0x30000, 0x10000, 0x702735c9 )
+	ROM_LOAD( "cabal_04.bin",   0x40000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
+	ROM_LOAD( "cabal_03.bin",   0x50000, 0x10000, 0x7065e840 )
+	ROM_LOAD( "cabal_02.bin",   0x60000, 0x10000, 0x0e1ec30e )
+	ROM_LOAD( "cabal_01.bin",   0x70000, 0x10000, 0x55c44764 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* Samples? */
+	ROM_LOAD( "2-1s",           0x00000, 0x10000, 0x850406b4 )
+	ROM_LOAD( "1-1u",           0x10000, 0x10000, 0x8b3e0789 )
 ROM_END
 
 ROM_START( cabalbl )
@@ -552,32 +560,36 @@ ROM_START( cabalbl )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "cabal_11.bin",    0x0000, 0x10000, 0xd308a543 )
 
-	ROM_REGION_DISPOSE(0x104000)
-	ROM_LOAD( "cabal_17.bin",   0x000000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
-	ROM_LOAD( "cabal_16.bin",   0x010000, 0x10000, 0x77bc7a60 )
-	ROM_LOAD( "cabal_18.bin",   0x020000, 0x10000, 0x0bc50075 )
-	ROM_LOAD( "cabal_19.bin",   0x030000, 0x10000, 0x67e4fe47 )
-	ROM_LOAD( "cabal_15.bin",   0x040000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
-	ROM_LOAD( "cabal_14.bin",   0x050000, 0x10000, 0x420b0801 )
-	ROM_LOAD( "cabal_12.bin",   0x060000, 0x10000, 0x543fcb37 )
-	ROM_LOAD( "cabal_13.bin",   0x070000, 0x10000, 0xd28d921e )
-	ROM_LOAD( "cabal_05.bin",   0x080000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
-	ROM_LOAD( "cabal_06.bin",   0x090000, 0x10000, 0x6a0e739d )
-	ROM_LOAD( "cabal_07.bin",   0x0a0000, 0x10000, 0x581a50c1 )
-	ROM_LOAD( "cabal_08.bin",   0x0b0000, 0x10000, 0x702735c9 )
-	ROM_LOAD( "cabal_04.bin",   0x0c0000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
-	ROM_LOAD( "cabal_03.bin",   0x0d0000, 0x10000, 0x7065e840 )
-	ROM_LOAD( "cabal_02.bin",   0x0e0000, 0x10000, 0x0e1ec30e )
-	ROM_LOAD( "cabal_01.bin",   0x0f0000, 0x10000, 0x55c44764 )
-	ROM_LOAD( "5-6s",           0x100000, 0x04000, 0x6a76955a ) /* characters */
+	ROM_REGIONX( 0x4000,  REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5-6s",           0x00000, 0x04000, 0x6a76955a ) /* characters */
 
-	ROM_REGION(0x20000)
-	ROM_LOAD( "cabal_09.bin",    0x00000, 0x10000, 0x4ffa7fe3 ) /* Z80 code/adpcm data */
-	ROM_LOAD( "cabal_10.bin",    0x10000, 0x10000, 0x958789b6 ) /* Z80 code/adpcm data */
+	ROM_REGIONX( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_17.bin",   0x00000, 0x10000, 0x3b6d2b09 ) /* tiles, planes0,1 */
+	ROM_LOAD( "cabal_16.bin",   0x10000, 0x10000, 0x77bc7a60 )
+	ROM_LOAD( "cabal_18.bin",   0x20000, 0x10000, 0x0bc50075 )
+	ROM_LOAD( "cabal_19.bin",   0x30000, 0x10000, 0x67e4fe47 )
+	ROM_LOAD( "cabal_15.bin",   0x40000, 0x10000, 0x1023319b ) /* tiles, planes2,3 */
+	ROM_LOAD( "cabal_14.bin",   0x50000, 0x10000, 0x420b0801 )
+	ROM_LOAD( "cabal_12.bin",   0x60000, 0x10000, 0x543fcb37 )
+	ROM_LOAD( "cabal_13.bin",   0x70000, 0x10000, 0xd28d921e )
+
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cabal_05.bin",   0x00000, 0x10000, 0x4e49c28e ) /* sprites, planes0,1 */
+	ROM_LOAD( "cabal_06.bin",   0x10000, 0x10000, 0x6a0e739d )
+	ROM_LOAD( "cabal_07.bin",   0x20000, 0x10000, 0x581a50c1 )
+	ROM_LOAD( "cabal_08.bin",   0x30000, 0x10000, 0x702735c9 )
+	ROM_LOAD( "cabal_04.bin",   0x40000, 0x10000, 0x34d3cac8 ) /* sprites, planes2,3 */
+	ROM_LOAD( "cabal_03.bin",   0x50000, 0x10000, 0x7065e840 )
+	ROM_LOAD( "cabal_02.bin",   0x60000, 0x10000, 0x0e1ec30e )
+	ROM_LOAD( "cabal_01.bin",   0x70000, 0x10000, 0x55c44764 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )
+	ROM_LOAD( "cabal_09.bin",   0x00000, 0x10000, 0x4ffa7fe3 ) /* Z80 code/adpcm data */
+	ROM_LOAD( "cabal_10.bin",   0x10000, 0x10000, 0x958789b6 ) /* Z80 code/adpcm data */
 ROM_END
 
 
 
-GAMEX(1988, cabal,   ,      cabal,   cabal, , ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_NOT_WORKING )
-GAMEX(1988, cabal2,  cabal, cabal,   cabal, , ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_NOT_WORKING )
-GAME( 1988, cabalbl, cabal, cabalbl, cabal, , ROT0, "bootleg", "Cabal (bootleg)" )
+GAMEX(1988, cabal,   0,     cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_NOT_WORKING )
+GAMEX(1988, cabal2,  cabal, cabal,   cabal, 0, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_NOT_WORKING )
+GAME( 1988, cabalbl, cabal, cabalbl, cabal, 0, ROT0, "bootleg", "Cabal (bootleg)" )

@@ -1,5 +1,8 @@
 /***************************************************************************
   Rainbow Islands (and Jumping)
+
+  driver by Mike Coates
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -269,13 +272,13 @@ static struct GfxLayout spritelayout3 =
 
 static struct GfxDecodeInfo rainbowe_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
-	{ 1, 0x080000, &spritelayout2, 0, 0x80 },	/* sprites 16x16 */
-	{ 1, 0x100000, &spritelayout3, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
+	{ REGION_GFX2, 0x000000, &spritelayout2, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX2, 0x020000, &spritelayout3, 0, 0x80 },	/* sprites 16x16 */
 	{ -1 } 										/* end of array */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_rainbow =
 {
 	/* basic machine hardware */
 	{
@@ -319,100 +322,6 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( rainbow )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )			 /* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x3b013495 )
-	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0x80041a3d )
-	ROM_LOAD_EVEN( "b22-08",     0x20000, 0x10000, 0x962fb845 )
-	ROM_LOAD_ODD ( "b22-09",     0x20000, 0x10000, 0xf43efa27 )
-	ROM_LOAD_EVEN( "ri_m03.rom", 0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD_ODD ( "ri_m04.rom", 0x40000, 0x20000, 0x91625e7f )
-
-	ROM_REGION_DISPOSE(0x120000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ri_m01.rom", 	 0x000000, 0x80000, 0xb76c9168 )  /* 8x8 gfx */
-  	ROM_LOAD( "ri_m02.rom", 	 0x080000, 0x80000, 0x1b87ecf0 )  /* sprites */
-	ROM_LOAD( "b22-13",     	 0x100000, 0x10000, 0x2fda099f )
-	ROM_LOAD( "b22-12",     	 0x110000, 0x10000, 0x67a76dc6 )
-
-    ROM_REGION( 0x10000 )			 /* Dump of C-Chip */
-    ROM_LOAD( "jb1_f89",    	 0x0000, 0x10000, 0x0810d327 )
-
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )			 /* 64k for the audio CPU */
-	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
-	ROM_CONTINUE(           	 0x10000, 0xc000 )
-ROM_END
-
-ROM_START( rainbowe )
-	ROM_REGIONX( 0x80000, REGION_CPU1 )			   /* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
-	ROM_LOAD_ODD ( "ri_02.rom",    0x00000, 0x10000, 0x4dead71f )
-	ROM_LOAD_EVEN( "ri_03.rom",    0x20000, 0x10000, 0x4a4cb785 )
-	ROM_LOAD_ODD ( "ri_04.rom",    0x20000, 0x10000, 0x4caa53bd )
-	ROM_LOAD_EVEN( "ri_m03.rom",   0x40000, 0x20000, 0x3ebb0fb8 )
-	ROM_LOAD_ODD ( "ri_m04.rom",   0x40000, 0x20000, 0x91625e7f )
-
-	ROM_REGION_DISPOSE(0x120000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ri_m01.rom",   	    0x000000, 0x80000, 0xb76c9168 )        /* 8x8 gfx */
-  	ROM_LOAD( "ri_m02.rom",         0x080000, 0x80000, 0x1b87ecf0 )        /* sprites */
-	ROM_LOAD( "b22-13",             0x100000, 0x10000, 0x2fda099f )
-	ROM_LOAD( "b22-12",             0x110000, 0x10000, 0x67a76dc6 )
-
-    ROM_REGION( 0x100 )				/* C-Chip for Extra (I Wish!) */
-
-	ROM_REGIONX( 0x1c000, REGION_CPU2 )				/* 64k for the audio CPU */
-	ROM_LOAD( "b22-14",      		0x00000, 0x4000, 0x113c1a5b )
-	ROM_CONTINUE(            		0x10000, 0xc000 )
-ROM_END
-
-struct GameDriver driver_rainbow =
-{
-	__FILE__,
-	0,
-	"rainbow",
-	"Rainbow Islands",
-	"1987",
-	"Taito Corporation",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rainbow,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rainbow,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_rainbowe =
-{
-	__FILE__,
-	&driver_rainbow,
-	"rainbowe",
-	"Rainbow Islands (Extra)",
-	"1988",
-	"Taito Corporation",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_rainbowe,
-	0, 0,
-	0,
-	0,
-
-	input_ports_rainbow,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NOT_WORKING,
-	0, 0
-};
 
 /***************************************************************************
   Jumping Specific
@@ -520,20 +429,9 @@ INPUT_PORTS_START( jumping )
   	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
   	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
   	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
-
 INPUT_PORTS_END
 
-/* sprite roms need all bits reversing, as colours are    */
-/* mapped back to front from the pattern used by Rainbow! */
 
-static void jumping_sprite_decode(void)
-{
-	/* Sprite colour map is reversed - switch to normal */
-
-	int Count;
-
-    for(Count=0x11ffff;Count>=0x80000;Count--) memory_region(1)[Count]^=0xFF;
-}
 
 static struct GfxLayout jumping_tilelayout =
 {
@@ -559,8 +457,8 @@ static struct GfxLayout jumping_spritelayout =
 
 static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &jumping_tilelayout, 0, 0x80 },		/* sprites 8x8 */
-	{ 1, 0x080000, &jumping_spritelayout, 0, 0x80 },	/* sprites 16x16 */
+	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },		/* sprites 8x8 */
+	{ REGION_GFX2, 0, &jumping_spritelayout, 0, 0x80 },	/* sprites 16x16 */
 	{ -1 } 												/* end of array */
 };
 
@@ -598,6 +496,57 @@ static struct MachineDriver machine_driver_jumping =
     0
 };
 
+
+
+ROM_START( rainbow )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			 /* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x3b013495 )
+	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0x80041a3d )
+	ROM_LOAD_EVEN( "b22-08",     0x20000, 0x10000, 0x962fb845 )
+	ROM_LOAD_ODD ( "b22-09",     0x20000, 0x10000, 0xf43efa27 )
+	ROM_LOAD_EVEN( "ri_m03.rom", 0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD_ODD ( "ri_m04.rom", 0x40000, 0x20000, 0x91625e7f )
+
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )			 /* 64k for the audio CPU */
+	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
+	ROM_CONTINUE(           	 0x10000, 0xc000 )
+
+    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ri_m01.rom", 	 0x000000, 0x80000, 0xb76c9168 )  /* 8x8 gfx */
+
+    ROM_REGIONX( 0x0a0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "ri_m02.rom", 	 0x000000, 0x80000, 0x1b87ecf0 )  /* sprites */
+	ROM_LOAD( "b22-13",     	 0x080000, 0x10000, 0x2fda099f )
+	ROM_LOAD( "b22-12",     	 0x090000, 0x10000, 0x67a76dc6 )
+
+    ROM_REGIONX( 0x10000, REGION_USER1 )			 /* Dump of C-Chip */
+    ROM_LOAD( "jb1_f89",    	 0x0000, 0x10000, 0x0810d327 )
+ROM_END
+
+ROM_START( rainbowe )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			   /* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
+	ROM_LOAD_ODD ( "ri_02.rom",    0x00000, 0x10000, 0x4dead71f )
+	ROM_LOAD_EVEN( "ri_03.rom",    0x20000, 0x10000, 0x4a4cb785 )
+	ROM_LOAD_ODD ( "ri_04.rom",    0x20000, 0x10000, 0x4caa53bd )
+	ROM_LOAD_EVEN( "ri_m03.rom",   0x40000, 0x20000, 0x3ebb0fb8 )
+	ROM_LOAD_ODD ( "ri_m04.rom",   0x40000, 0x20000, 0x91625e7f )
+
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )				/* 64k for the audio CPU */
+	ROM_LOAD( "b22-14",      		0x00000, 0x4000, 0x113c1a5b )
+	ROM_CONTINUE(            		0x10000, 0xc000 )
+
+    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ri_m01.rom",   	    0x000000, 0x80000, 0xb76c9168 )        /* 8x8 gfx */
+
+    ROM_REGIONX( 0x0a0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "ri_m02.rom",         0x000000, 0x80000, 0x1b87ecf0 )        /* sprites */
+	ROM_LOAD( "b22-13",             0x080000, 0x10000, 0x2fda099f )
+	ROM_LOAD( "b22-12",             0x090000, 0x10000, 0x67a76dc6 )
+
+	/* C-Chip is missing! */
+ROM_END
+
 ROM_START( jumping )
 	ROM_REGIONX( 0xA0000, REGION_CPU1 )		/* 8*64k for code, 64k*2 for protection chip */
     ROM_LOAD_EVEN( "jb1_h4",       0x00000, 0x10000, 0x3fab6b31 )
@@ -608,54 +557,49 @@ ROM_START( jumping )
 	ROM_LOAD_ODD ( "ri_m04.rom",   0x40000, 0x20000, 0x91625e7f )
     ROM_LOAD_ODD ( "jb1_f89",      0x80000, 0x10000, 0x0810d327 ) 	/* Dump of C-Chip? */
 
-    ROM_REGION_DISPOSE(0x120000)    /* Graphics */
-    ROM_LOAD( "jb2_ic8",      0x00000, 0x10000, 0x65b76309 )			/* 8x8 characters */
-    ROM_LOAD( "jb2_ic7",      0x10000, 0x10000, 0x43a94283 )
-    ROM_LOAD( "jb2_ic10",     0x20000, 0x10000, 0xe61933fb )
-    ROM_LOAD( "jb2_ic9",      0x30000, 0x10000, 0xed031eb2 )
-    ROM_LOAD( "jb2_ic12",     0x40000, 0x10000, 0x312700ca )
-    ROM_LOAD( "jb2_ic11",     0x50000, 0x10000, 0xde3b0b88 )
-    ROM_LOAD( "jb2_ic14",     0x60000, 0x10000, 0x9fdc6c8e )
-    ROM_LOAD( "jb2_ic13",     0x70000, 0x10000, 0x06226492 )
-
-    ROM_LOAD( "jb2_ic62",     0x80000, 0x10000, 0x8548db6c )			/* 16x16 sprites */
-    ROM_LOAD( "jb2_ic61",     0x90000, 0x10000, 0x37c5923b )
-    ROM_LOAD( "jb2_ic60",     0xA0000, 0x08000, 0x662a2f1e )
-    ROM_LOAD( "jb2_ic78",     0xA8000, 0x10000, 0x925865e1 )
-    ROM_LOAD( "jb2_ic77",     0xB8000, 0x10000, 0xb09695d1 )
-    ROM_LOAD( "jb2_ic76",     0xC8000, 0x08000, 0x41937743 )
-    ROM_LOAD( "jb2_ic93",     0xD0000, 0x10000, 0xf644eeab )
-    ROM_LOAD( "jb2_ic92",     0xE0000, 0x10000, 0x3fbccd33 )
-    ROM_LOAD( "jb2_ic91",     0xF0000, 0x08000, 0xd886c014 )
-    ROM_LOAD( "jb2_i121",     0xF8000, 0x10000, 0x93df1e4d )
-    ROM_LOAD( "jb2_i120",     0x108000, 0x10000, 0x7c4e893b )
-    ROM_LOAD( "jb2_i119",     0x118000, 0x08000, 0x7e1d58d8 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the audio CPU */
-	ROM_LOAD( "jb1_cd67",     0x0000, 0x10000, 0x8527c00e )
+	ROM_LOAD( "jb1_cd67",          0x0000, 0x10000, 0x8527c00e )
+
+    ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "jb2_ic8",           0x00000, 0x10000, 0x65b76309 )			/* 8x8 characters */
+    ROM_LOAD( "jb2_ic7",           0x10000, 0x10000, 0x43a94283 )
+    ROM_LOAD( "jb2_ic10",          0x20000, 0x10000, 0xe61933fb )
+    ROM_LOAD( "jb2_ic9",           0x30000, 0x10000, 0xed031eb2 )
+    ROM_LOAD( "jb2_ic12",          0x40000, 0x10000, 0x312700ca )
+    ROM_LOAD( "jb2_ic11",          0x50000, 0x10000, 0xde3b0b88 )
+    ROM_LOAD( "jb2_ic14",          0x60000, 0x10000, 0x9fdc6c8e )
+    ROM_LOAD( "jb2_ic13",          0x70000, 0x10000, 0x06226492 )
+
+    ROM_REGIONX( 0x0a0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_LOAD( "jb2_ic62",          0x00000, 0x10000, 0x8548db6c )			/* 16x16 sprites */
+    ROM_LOAD( "jb2_ic61",          0x10000, 0x10000, 0x37c5923b )
+    ROM_LOAD( "jb2_ic60",          0x20000, 0x08000, 0x662a2f1e )
+    ROM_LOAD( "jb2_ic78",          0x28000, 0x10000, 0x925865e1 )
+    ROM_LOAD( "jb2_ic77",          0x38000, 0x10000, 0xb09695d1 )
+    ROM_LOAD( "jb2_ic76",          0x48000, 0x08000, 0x41937743 )
+    ROM_LOAD( "jb2_ic93",          0x50000, 0x10000, 0xf644eeab )
+    ROM_LOAD( "jb2_ic92",          0x60000, 0x10000, 0x3fbccd33 )
+    ROM_LOAD( "jb2_ic91",          0x70000, 0x08000, 0xd886c014 )
+    ROM_LOAD( "jb2_i121",          0x78000, 0x10000, 0x93df1e4d )
+    ROM_LOAD( "jb2_i120",          0x88000, 0x10000, 0x7c4e893b )
+    ROM_LOAD( "jb2_i119",          0x98000, 0x08000, 0x7e1d58d8 )
 ROM_END
 
-struct GameDriver driver_jumping =
+
+
+/* sprite roms need all bits reversing, as colours are    */
+/* mapped back to front from the pattern used by Rainbow! */
+static void init_jumping(void)
 {
-	__FILE__,
-	&driver_rainbow,
-	"jumping",
-	"Jumping",
-	"1989",
-	"bootleg",
-	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	0,
-	&machine_driver_jumping,
-	jumping_sprite_decode,
+	/* Sprite colour map is reversed - switch to normal */
+	int i;
 
-	rom_jumping,
-	0, 0,
-	0,
-	0,
+	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
+			memory_region(REGION_GFX2)[i] ^= 0xff;
+}
 
-	input_ports_jumping,
 
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_NO_SOUND,
-	0, 0
-};
+
+GAME( 1987, rainbow,  0,       rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands" )
+GAMEX(1988, rainbowe, rainbow, rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING )
+GAMEX(1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping", GAME_NO_SOUND )

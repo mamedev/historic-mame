@@ -2,6 +2,8 @@
 
 	Off the Wall
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -384,7 +386,7 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x000000, &pfmolayout,  256, 32 },		/* sprites & playfield */
+	{ REGION_GFX1, 0, &pfmolayout,  256, 32 },		/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -396,7 +398,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_offtwall =
 {
 	/* basic machine hardware */
 	{
@@ -442,8 +444,8 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < memory_region_length(2); i++)
-		memory_region(2)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 
@@ -463,7 +465,7 @@ ROM_START( offtwall )
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "otw1014.bin", 0x000000, 0x20000, 0x4d64507e )
 	ROM_LOAD( "otw1016.bin", 0x020000, 0x20000, 0xf5454f3a )
 	ROM_LOAD( "otw1018.bin", 0x040000, 0x20000, 0x17864231 )
@@ -482,7 +484,7 @@ ROM_START( offtwalc )
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "090-1614.rom", 0x000000, 0x20000, 0x307ed447 )
 	ROM_LOAD( "090-1616.rom", 0x020000, 0x20000, 0xa5bd3d9b )
 	ROM_LOAD( "090-1618.rom", 0x040000, 0x20000, 0xc7d9df5d )
@@ -514,7 +516,7 @@ static const UINT16 default_eeprom[] =
 };
 
 
-static void offtwall_init(void)
+static void init_offtwall(void)
 {
 	atarigen_eeprom_default = default_eeprom;
 
@@ -535,7 +537,7 @@ static void offtwall_init(void)
 }
 
 
-static void offtwalc_init(void)
+static void init_offtwalc(void)
 {
 	atarigen_eeprom_default = default_eeprom;
 
@@ -562,53 +564,5 @@ static void offtwalc_init(void)
  *
  *************************************/
 
-struct GameDriver driver_offtwall =
-{
-	__FILE__,
-	0,
-	"offtwall",
-	"Off the Wall (2/3-player upright)",
-	"1991",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	offtwall_init,
-
-	rom_offtwall,
-	0, 0,
-	0,
-	0,
-
-	input_ports_offtwall,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
-
-
-struct GameDriver driver_offtwalc =
-{
-	__FILE__,
-	&driver_offtwall,
-	"offtwalc",
-	"Off the Wall (2-player cocktail)",
-	"1991",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	offtwalc_init,
-
-	rom_offtwalc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_offtwall,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0,
-	0,0
-};
+GAME( 1991, offtwall, 0,        offtwall, offtwall, offtwall, ROT0, "Atari Games", "Off the Wall (2/3-player upright)" )
+GAME( 1991, offtwalc, offtwall, offtwall, offtwall, offtwalc, ROT0, "Atari Games", "Off the Wall (2-player cocktail)" )

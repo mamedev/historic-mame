@@ -536,5 +536,5 @@ static void init_88games(void)
 
 
 
-GAME( 1988, 88games,  ,        88games, 88games, 88games, ROT0, "Konami", "'88 Games" )
+GAME( 1988, 88games,  0,       88games, 88games, 88games, ROT0, "Konami", "'88 Games" )
 GAME( 1988, konami88, 88games, 88games, 88games, 88games, ROT0, "Konami", "Konami '88" )

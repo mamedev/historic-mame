@@ -703,7 +703,7 @@ ROM_END
 
 
 
-GAME( 1976, blockade, , blockade, blockade, blockade, ROT0, "Gremlin", "Blockade" )
-GAME( 1976, comotion, , comotion, comotion, comotion, ROT0, "Gremlin", "Comotion" )
-GAME( 1978, blasto,   , blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto" )
-GAME( 1977, hustle,   , hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle" )
+GAME( 1976, blockade, 0, blockade, blockade, blockade, ROT0, "Gremlin", "Blockade" )
+GAME( 1976, comotion, 0, comotion, comotion, comotion, ROT0, "Gremlin", "Comotion" )
+GAME( 1978, blasto,   0, blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto" )
+GAME( 1977, hustle,   0, hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle" )

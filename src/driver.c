@@ -18,11 +18,11 @@
 #ifndef DRIVER_RECURSIVE
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-struct GameDriver driver_ =
+struct GameDriver driver_0 =
 {
 	__FILE__,
 	0,
-	"root",
+	"",
 	0,
 	0,
 	0,
@@ -278,11 +278,16 @@ const struct GameDriver *drivers[] =
 	DRIVER( popflama )	/* (c) 1982 Jaleco */
 
 	/* Namco games (plus some intruders on similar hardware) */
-	DRIVER( warpwarp )	/* (c) 1981 Namco - different hardware */
-	DRIVER( warpwarr )	/* (c) 1981 Rock-ola - different hardware */
-						/* the high score table says "NAMCO" */
-	DRIVER( warpwar2 )	/* (c) 1981 Rock-ola - different hardware */
-						/* the high score table says "NAMCO" */
+	DRIVER( geebee )	/* [1979] Gremlin */
+/* 1979  6  BOMB BEE */
+/* 1979 11  CUTIE Q */
+/* 1980  2  NAVALONE */
+/* 1980  2  TAKARA SAGASHI */
+/* 1980  2  SOS */
+/* 1980 10  TANK BATTALION */
+	DRIVER( warpwarp )	/* (c) 1981 Namco */
+	DRIVER( warpwarr )	/* (c) 1981 Rock-ola - the high score table says "NAMCO" */
+	DRIVER( warpwar2 )	/* (c) 1981 Rock-ola - the high score table says "NAMCO" */
 	DRIVER( rallyx )	/* (c) 1980 Namco */
 	DRIVER( rallyxm )	/* (c) 1980 Midway */
 	DRIVER( nrallyx )	/* (c) 1981 Namco */
@@ -463,7 +468,7 @@ TESTDRIVER( suzuka8h )
 	DRIVER( yankeedo )	/* bootleg */
 	DRIVER( docastle )	/* (c) 1983 */
 	DRIVER( docastl2 )	/* (c) 1983 */
-	DRIVER( dounicorn )	/* (c) 1983 */
+	DRIVER( douni )		/* (c) 1983 */
 	DRIVER( dorunrun )	/* (c) 1984 */
 	DRIVER( dorunru2 )	/* (c) 1984 */
 	DRIVER( dorunruc )	/* (c) 1984 */
@@ -521,13 +526,14 @@ TESTDRIVER( herocast )
 	DRIVER( bowler )	/* 730 [1978] Midway */
 	DRIVER( invaders )	/* 739 [1979] */
 	DRIVER( blueshrk )	/* 742 [1978] */
-	/* 851 - Space Invaders II cocktail */
+	DRIVER( invad2ct )	/* 851 (c) 1980 Midway */
 	DRIVER( invadpt2 )	/* 852 [1980] Taito */
 	DRIVER( invdpt2m )	/* 852 [1980] Midway */
 	/* 870 - Space Invaders Deluxe cocktail */
 	DRIVER( earthinv )
 	DRIVER( spaceatt )
 	DRIVER( sinvemag )
+	DRIVER( jspecter )
 	DRIVER( invrvnge )
 	DRIVER( invrvnga )
 	DRIVER( galxwars )
@@ -1065,6 +1071,7 @@ TESTDRIVER( defcomnd )	/* bootleg */
 	DRIVER( sf1us )		/*  8/1987 (c) 1987 (US) */
 	DRIVER( sf1jp )		/*  8/1987 (c) 1987 (Japan) */
 	DRIVER( tigeroad )	/* 11/1987 (c) 1987 + Romstar (US) */
+	DRIVER( toramich )	/* 11/1987 (c) 1987 (Japan) */
 	DRIVER( f1dream )	/*  4/1988 (c) 1988 + Romstar */
 	DRIVER( f1dreamb )	/* bootleg */
 	DRIVER( 1943kai )	/*  6/1988 (c) 1987 (Japan) */
@@ -1453,21 +1460,29 @@ TESTDRIVER( kopunch )	/* 834-0103 (c) 1981 Sega */
 	DRIVER( alexkidd )	/* (c) 1986 (protected) */
 	DRIVER( aliensya )	/* (c) 1987 (protected) */
 	DRIVER( aliensyb )	/* (c) 1987 (protected) */
+	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
 	DRIVER( astorm )	/* (c) 1990 (protected) */
+	DRIVER( astorm2p )	/* (c) 1990 (protected 2 Players) */
 	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
+	DRIVER( bayrouta )	/* (c) 1989 (protected) */
 	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
-	DRIVER( bayrouta )	/* (c) 1989 (protected) */
-	DRIVER( eswat )		/* (c) 1989 (protected) */
 	DRIVER( enduror )	/* (c) 1985 (protected) */
+	DRIVER( eswat )		/* (c) 1989 (protected) */
 	DRIVER( fpoint )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxc )	/* (c) 1989 (protected) */
+	DRIVER( goldnaxj )	/* (c) 1989 (protected. Japan) */
+	DRIVER( jyuohki )	/* (c) 1988 (protected. Altered Beast Japan) */
 	DRIVER( moonwalk )	/* (c) 1990 (protected) */
+	DRIVER( moonwlka )	/* (c) 1990 (protected) */
 	DRIVER( passsht )	/* (protected) */
+	DRIVER( sdioj )		/* (c) 1987 (protected. Japan) */
 	DRIVER( shangon )	/* (c) 1992 (protected) */
 	DRIVER( shinobia )	/* (c) 1987 (protected) */
+	DRIVER( shinobib )	/* (c) 1987 (protected) */
 	DRIVER( tetris )	/* (c) 1988 (protected) */
+	DRIVER( tetrisa )	/* (c) 1988 (protected) */
 	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
 
 TESTDRIVER( aceattac )	/* (protected) */
@@ -1492,47 +1507,50 @@ TESTDRIVER( toutruna )	/* (protected) */
 	// Working
 	DRIVER( alexkida )	/* (c) 1986 */
 	DRIVER( aliensyn )	/* (c) 1987 */
-	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
+	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( astormbl )	/* bootleg */
 	DRIVER( atomicp )	/* (c) 1990 Philko */
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
 	DRIVER( bayroute )	/* (c) 1989 */
 	DRIVER( bodyslam )	/* (c) 1986 */
-	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
 	DRIVER( dduxbl )	/* (c) 1989 (Datsu bootleg) */
-	DRIVER( endurobl )	/* (c) 1985 (Herb bootleg) */
+	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
 	DRIVER( endurob2 )	/* (c) 1985 (Beta bootleg) */
+	DRIVER( endurobl )	/* (c) 1985 (Herb bootleg) */
 	DRIVER( eswatbl )	/* (c) 1989 (but bootleg) */
 	DRIVER( fantzone )	/* (c) 1986 */
+	DRIVER( fantzono )	/* (c) 1986 */
 	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
-	DRIVER( goldnaxe )	/* (c) 1989 */
-	DRIVER( goldnaxa )	/* (c) 1989 */
 	DRIVER( goldnabl )	/* (c) 1989 (bootleg) */
+	DRIVER( goldnaxa )	/* (c) 1989 */
+	DRIVER( goldnaxe )	/* (c) 1989 */
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( hwchamp )	/* (c) 1987 */
-	DRIVER( moonwlkb )	/* bootleg */
 	DRIVER( mjleague )	/* (c) 1985 */
+	DRIVER( moonwlkb )	/* bootleg */
 	DRIVER( outrun )	/* (c) 1986 (bootleg)*/
 	DRIVER( outruna )	/* (c) 1986 (bootleg) */
 	DRIVER( outrunb )	/* (c) 1986 (protected beta bootleg) */
+	DRIVER( passht4b )	/* bootleg */
 	DRIVER( passshtb )	/* bootleg */
 	DRIVER( quartet )	/* (c) 1986 */
 	DRIVER( quartet2 )	/* (c) 1986 */
+	DRIVER( quartetj )	/* (c) 1986 */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( sdi )		/* (c) 1987 */
 	DRIVER( shangonb )	/* (c) 1992 (but bootleg) */
 	DRIVER( sharrier )	/* (c) 1985 */
-	DRIVER( shdancer )	/* (c) 1989 */
 	DRIVER( shdancbl )	/* (c) 1989 (but bootleg) */
+	DRIVER( shdancer )	/* (c) 1989 */
 	DRIVER( shdancrj )	/* (c) 1989 */
 	DRIVER( shinobi )	/* (c) 1987 */
 	DRIVER( shinobl )	/* (c) 1987 (but bootleg) */
 	DRIVER( tetrisbl )	/* (c) 1988 (but bootleg) */
 	DRIVER( timscanr )	/* (c) 1987 */
 	DRIVER( tturf )		/* (c) 1989 Sega / Sunsoft */
-	DRIVER( tturfu )	/* (c) 1989 Sega / Sunsoft */
 	DRIVER( tturfbl )	/* (c) 1989 (Datsu bootleg) */
+	DRIVER( tturfu )	/* (c) 1989 Sega / Sunsoft */
 	DRIVER( wb3 )		/* (c) 1988 Sega / Westone */
 	DRIVER( wb3bl )		/* (c) 1988 Sega / Westone (but bootleg) */
 	DRIVER( wrestwar )	/* (c) 1989 */
@@ -1570,7 +1588,8 @@ TESTDRIVER( decocass )
 	DRIVER( darwin )	/* (c) 1986 Data East Corporation (Japan) */
 	DRIVER( shootout )	/* (c) 1985 Data East USA (US) */
 	DRIVER( sidepckt )	/* (c) 1986 Data East Corporation */
-	DRIVER( sidepckb )	/* bootleg */
+	DRIVER( sidepctj )	/* (c) 1986 Data East Corporation */
+	DRIVER( sidepctb )	/* bootleg */
 	DRIVER( exprraid )	/* (c) 1986 Data East USA (US) */
 	DRIVER( wexpress )	/* (c) 1986 Data East Corporation (World?) */
 	DRIVER( wexpresb )	/* bootleg */
@@ -1621,6 +1640,7 @@ TESTDRIVER( birdtry )	/* (c) 1988 Data East Corporation (Japan) */
 	DRIVER( slyspy )	/* (c) 1989 Data East USA (US) */
 	DRIVER( slyspy2 )	/* (c) 1989 Data East USA (US) */
 	DRIVER( secretag )	/* (c) 1989 Data East Corporation (World) */
+TESTDRIVER( secretab )	/* bootleg */
 	DRIVER( midres )	/* (c) 1989 Data East Corporation (World) */
 	DRIVER( midresu )	/* (c) 1989 Data East USA (US) */
 	DRIVER( midresj )	/* (c) 1989 Data East Corporation (Japan) */
@@ -1754,7 +1774,7 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( topgunr )	/* GX631 (c) 1986 (US) */
 	DRIVER( jackalj )	/* GX631 (c) 1986 (Japan) */
 	DRIVER( topgunbl )	/* bootleg */
-	DRIVER( ddrible )	/* GX690 (c) 1986 */
+	DRIVER( ddribble )	/* GX690 (c) 1986 */
 	DRIVER( contra )	/* GX633 (c) 1987 */
 	DRIVER( contrab )	/* bootleg */
 	DRIVER( contraj )	/* GX633 (c) 1987 (Japan) */
@@ -2136,7 +2156,7 @@ TESTDRIVER( ftsoccer )	/*            (c) 1988 */
 	/* Mechanized Attack   A8002 'MA' (c) 1989 */
 	DRIVER( prehisle )	/* A8003 'GT' (c) 1989 */
 	DRIVER( prehislu )	/* A8003 'GT' (c) 1989 */
-	DRIVER( prehislj )	/* A8003 'GT' (c) 1989 */
+	DRIVER( gensitou )	/* A8003 'GT' (c) 1989 */
 	/* Beast Busters       A9003 'BB' (c) 1989 */
 
 	/* SNK / Alpha 68K games */
@@ -2337,6 +2357,7 @@ TESTDRIVER( narc3 )		/* (c) 1988 Williams */
 	DRIVER( scion )		/* (c) 1984 Seibu Denshi */
 	DRIVER( scionc )	/* (c) 1984 Seibu Denshi + Cinematronics license */
 	DRIVER( wiz )		/* (c) 1985 Seibu Kaihatsu */
+	DRIVER( wizt )		/* (c) 1985 Taito */
 	DRIVER( empcity )	/* (c) 1986 Seibu Kaihatsu (bootleg?) */
 	DRIVER( stfight )	/* (c) 1986 Seibu Kaihatsu (Germany) (bootleg?) */
 	DRIVER( dynduke )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
@@ -2412,6 +2433,7 @@ TESTDRIVER( narc3 )		/* (c) 1988 Williams */
 
 	/* Video System Co. games */
 	DRIVER( pspikes )	/* (c) 1991 */
+	DRIVER( svolly91 )	/* (c) 1991 */
 	DRIVER( turbofrc )	/* (c) 1991 */
 	DRIVER( aerofgt )	/* (c) 1992 */
 	DRIVER( aerofgtb )	/* (c) 1992 */
@@ -2470,6 +2492,16 @@ Gaelco Game list:
 All games newer than Splash are heavily protected.
 */
 
+	/* Kaneko "AX System" games */
+TESTDRIVER( berlwall )
+	DRIVER( gtmr )		/* (c) 1994 Kaneko */
+TESTDRIVER( gtmr2 )
+TESTDRIVER( shogwarr )
+
+	/* other Kaneko games */
+	DRIVER( galpanic )	/* (c) 1990 Kaneko */
+	DRIVER( airbustr )	/* (c) 1990 Kaneko */
+
 	DRIVER( pong )
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
@@ -2507,11 +2539,9 @@ All games newer than Splash are heavily protected.
 	DRIVER( exctscc2 )
 	DRIVER( speedbal )	/* (c) 1987 Tecfri */
 	DRIVER( sauro )		/* (c) 1987 Tecfri */
-	DRIVER( galpanic )	/* (c) 1990 Kaneko */
-	DRIVER( airbustr )	/* (c) 1990 Kaneko */
 	DRIVER( ambush )	/* (c) 1983 Nippon Amuse Co-Ltd */
 	DRIVER( starcrus )	/* [1977 Ramtek] */
-TESTDRIVER( shanghai )	/* (c) 1988 Sun Electronics */
+	DRIVER( shanghai )	/* (c) 1988 Sun Electronics */
 	DRIVER( goindol )	/* (c) 1987 Sun a Electronics */
 	DRIVER( homo )		/* bootleg */
 TESTDRIVER( dlair )

@@ -401,5 +401,5 @@ static void init_blstroid(void)
  *
  *************************************/
 
-GAME( 1987, blstroid, ,         blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 4)" )
+GAME( 1987, blstroid, 0,        blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 4)" )
 GAME( 1987, blstroi2, blstroid, blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 2)" )

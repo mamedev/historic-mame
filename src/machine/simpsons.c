@@ -215,7 +215,7 @@ void simpsons_init_machine( void )
 	/* init the default banks */
 	cpu_setbank( 1, &RAM[0x10000] );
 
-	RAM = memory_region(3);
+	RAM = memory_region(REGION_CPU2);
 
 	cpu_setbank( 2, &RAM[0x10000] );
 

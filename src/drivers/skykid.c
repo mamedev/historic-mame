@@ -199,13 +199,13 @@ INPUT_PORTS_START( skykid )
 	PORT_START	/* DSW A */
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Round Skip" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
@@ -213,10 +213,10 @@ INPUT_PORTS_START( skykid )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -288,13 +288,13 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_START	/* DSW A */
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Round Skip" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
@@ -302,10 +302,10 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -439,11 +439,11 @@ static struct GfxLayout sprite_layout3 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &text_layout,		0, 64 },
-	{ 1, 0x02000, &tile_layout,		64*4, 128 },
-	{ 1, 0x04000, &sprite_layout1,	64*4+128*4, 64 },
-	{ 1, 0x04000, &sprite_layout2,	64*4+128*4, 64 },
-	{ 1, 0x04000, &sprite_layout3,	64*4+128*4, 64 },
+	{ REGION_GFX1, 0, &text_layout,		0, 64 },
+	{ REGION_GFX2, 0, &tile_layout,		64*4, 128 },
+	{ REGION_GFX3, 0, &sprite_layout1,	64*4+128*4, 64 },
+	{ REGION_GFX3, 0, &sprite_layout2,	64*4+128*4, 64 },
+	{ REGION_GFX3, 0, &sprite_layout3,	64*4+128*4, 64 },
 	{-1 }
 };
 
@@ -549,16 +549,21 @@ ROM_START( skykid )
 	ROM_LOAD( "sk1-6b.bin",   0x0c000, 0x4000, 0x7abe6c6c )
 	ROM_LOAD( "sk3-6d.bin",   0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
 
-	ROM_REGION_DISPOSE(0x0e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sk6-6l.bin",   0x00000, 0x2000, 0x58b731b9 )	/* chars */
-	ROM_LOAD( "sk5-7e.bin",   0x02000, 0x2000, 0xc33a498e )
-	ROM_LOAD( "sk9-10n.bin",  0x04000, 0x4000, 0x44bb7375 )	/* sprites */
-	ROM_LOAD( "sk7-10m.bin",  0x08000, 0x4000, 0x3454671d )
-	/* empty space to decode the sprites as 3bpp */
-
 	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "sk4-3c.bin",   0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
 	ROM_LOAD( "sk1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
+															/* Using Pacland code (probably similar) */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sk6-6l.bin",   0x00000, 0x2000, 0x58b731b9 )	/* chars */
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sk5-7e.bin",   0x00000, 0x2000, 0xc33a498e )
+
+	ROM_REGIONX( 0x0a000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sk9-10n.bin",  0x00000, 0x4000, 0x44bb7375 )	/* sprites */
+	ROM_LOAD( "sk7-10m.bin",  0x04000, 0x4000, 0x3454671d )
+	/* empty space to decode the sprites as 3bpp */
 
 	ROM_REGIONX( 0x0700, REGION_PROMS )
 	ROM_LOAD( "sk1-2n.bin",   0x0000, 0x0100, 0x0218e726 )	/* red component */
@@ -575,17 +580,22 @@ ROM_START( drgnbstr )
 	ROM_LOAD( "6b.bin",		0x0c000, 0x04000, 0x1c7c1821 )
 	ROM_LOAD( "6d.bin",		0x10000, 0x04000, 0x6da169ae )	/* banked ROM */
 
-	ROM_REGION_DISPOSE(0x0e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6l.bin",		0x00000, 0x2000, 0xc080b66c )	/* tiles */
-	ROM_LOAD( "7e.bin",		0x02000, 0x2000, 0x28129aed )
-	ROM_LOAD( "10n.bin",	0x04000, 0x4000, 0x11942c61 )	/* sprites */
-	ROM_LOAD( "10m.bin",	0x08000, 0x4000, 0xcc130fe2 )
-		/* empty space to decode the sprites as 3bpp */
-
 	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "3c.bin",		0x8000, 0x02000, 0x8a0b1fc1 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	0x01000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "6l.bin",		0x00000, 0x2000, 0xc080b66c )	/* tiles */
+
+	ROM_REGIONX( 0x02000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7e.bin",		0x00000, 0x2000, 0x28129aed )
+
+	ROM_REGIONX( 0x0a000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10n.bin",	0x00000, 0x4000, 0x11942c61 )	/* sprites */
+	ROM_LOAD( "10m.bin",	0x04000, 0x4000, 0xcc130fe2 )
+		/* empty space to decode the sprites as 3bpp */
+
 	ROM_REGIONX( 0x0700, REGION_PROMS )
 	ROM_LOAD( "2n.bin",		0x00000, 0x0100, 0x3f8cce97 )	/* red component */
 	ROM_LOAD( "2p.bin",		0x00100, 0x0100, 0xafe32436 )	/* green component */
@@ -596,54 +606,5 @@ ROM_END
 
 
 
-struct GameDriver driver_skykid =
-{
-	__FILE__,
-	0,
-	"skykid",
-	"Sky Kid",
-	"1985",
-	"Namco",
-	"Manuel Abadia",
-	0,
-	&machine_driver_skykid,
-	0,
-
-	rom_skykid,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_skykid,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
-
-struct GameDriver driver_drgnbstr =
-{
-	__FILE__,
-	0,
-	"drgnbstr",
-	"Dragon Buster",
-	"1984",
-	"Namco",
-	"Manuel Abadia",
-	0,
-	&machine_driver_drgnbstr,
-	0,
-
-	rom_drgnbstr,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_drgnbstr,
-
-	0, 0, 0,
-	ROT0,
-	0, 0
-};
+GAME( 1985, skykid,   0, skykid,   skykid,   0, ROT0, "Namco", "Sky Kid" )
+GAME( 1984, drgnbstr, 0, drgnbstr, drgnbstr, 0, ROT0, "Namco", "Dragon Buster" )

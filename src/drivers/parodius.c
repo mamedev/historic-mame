@@ -2,6 +2,8 @@
 
 Parodius (Konami GX955) (c) 1990 Konami
 
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -316,14 +318,14 @@ static struct YM2151interface ym2151_interface =
 static struct K053260_interface k053260_interface =
 {
 	3579545,
-	4, /* memory region */
+	REGION_SOUND1, /* memory region */
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
 //	sound_nmi_callback
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_parodius =
 {
 	/* basic machine hardware */
 	{
@@ -383,18 +385,18 @@ ROM_START( parodius )
 	ROM_LOAD( "955e02.bin", 0x30000, 0x18000, 0x14010d6f )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "955d07.bin", 0x000000, 0x080000, 0x89473fec ) /* characters */
-	ROM_LOAD( "955d08.bin", 0x080000, 0x080000, 0x43d5cda1 ) /* characters */
-
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "955d05.bin", 0x000000, 0x080000, 0x7a1e55e0 )	/* sprites */
-	ROM_LOAD( "955d06.bin", 0x080000, 0x080000, 0xf4252875 )	/* sprites */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "955e03.bin", 0x0000, 0x10000, 0x940aa356 )
 
-	ROM_REGION( 0x80000 ) /* 053260 samples */
+	ROM_REGIONX( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "955d07.bin", 0x000000, 0x080000, 0x89473fec ) /* characters */
+	ROM_LOAD( "955d08.bin", 0x080000, 0x080000, 0x43d5cda1 ) /* characters */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "955d05.bin", 0x000000, 0x080000, 0x7a1e55e0 )	/* sprites */
+	ROM_LOAD( "955d06.bin", 0x080000, 0x080000, 0xf4252875 )	/* sprites */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 ) /* 053260 samples */
 	ROM_LOAD( "955d04.bin", 0x00000, 0x80000, 0xe671491a )
 ROM_END
 
@@ -430,35 +432,13 @@ static void parodius_init_machine( void )
 	cpu_setbank(1,&RAM[0x10000]);
 }
 
-static void gfx_untangle(void)
+
+static void init_parodius(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_parodius =
-{
-	__FILE__,
-	0,
-	"parodius",
-	"Parodius DA! (Japan)",
-	"1990",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	gfx_untangle,
-
-	rom_parodius,
-	0, 0,
-	0,
-	0,
-
-	input_ports_parodius,
-
-	0, 0, 0,
-    ROT0,
-	0, 0
-};
+GAME( 1990, parodius, 0, parodius, parodius, parodius, ROT0, "Konami", "Parodius DA! (Japan)" )

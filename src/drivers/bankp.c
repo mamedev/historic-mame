@@ -257,4 +257,4 @@ ROM_END
 
 
 
-GAME( 1984, bankp, , bankp, bankp, , ROT0, "Sega", "Bank Panic" )
+GAME( 1984, bankp, 0, bankp, bankp, 0, ROT0, "Sega", "Bank Panic" )

@@ -1746,12 +1746,11 @@ static void init_roishtar(void)
 
 
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR  */
-GAME( 1986, hopmappy, ,         hopmappy, hopmappy, namco86,  ROT0,   "Namco", "Hopping Mappy" )
-GAME( 1986, skykiddx, ,         skykiddx, skykiddx, namco86,  ROT180, "Namco", "Sky Kid Deluxe (set 1)" )
+GAME( 1986, hopmappy, 0,        hopmappy, hopmappy, namco86,  ROT0,   "Namco", "Hopping Mappy" )
+GAME( 1986, skykiddx, 0,        skykiddx, skykiddx, namco86,  ROT180, "Namco", "Sky Kid Deluxe (set 1)" )
 GAME( 1986, skykiddo, skykiddx, skykiddx, skykiddx, namco86,  ROT180, "Namco", "Sky Kid Deluxe (set 2)" )
-GAME( 1986, roishtar, ,         roishtar, roishtar, roishtar, ROT0,   "Namco", "The Return of Ishtar" )
-GAME( 1986, genpeitd, ,         genpeitd, genpeitd, namco86,  ROT0,   "Namco", "Genpei ToumaDen" )
-GAME( 1986, rthunder, ,         rthunder, rthunder, namco86,  ROT0,   "Namco", "Rolling Thunder (new version)" )
+GAME( 1986, roishtar, 0,        roishtar, roishtar, roishtar, ROT0,   "Namco", "The Return of Ishtar" )
+GAME( 1986, genpeitd, 0,        genpeitd, genpeitd, namco86,  ROT0,   "Namco", "Genpei ToumaDen" )
+GAME( 1986, rthunder, 0,        rthunder, rthunder, namco86,  ROT0,   "Namco", "Rolling Thunder (new version)" )
 GAME( 1986, rthundro, rthunder, rthunder, rthundro, namco86,  ROT0,   "Namco", "Rolling Thunder (old version)" )
-GAME( 1987, wndrmomo, ,         wndrmomo, wndrmomo, namco86,  ROT0,   "Namco", "Wonder Momo" )
+GAME( 1987, wndrmomo, 0,        wndrmomo, wndrmomo, namco86,  ROT0,   "Namco", "Wonder Momo" )

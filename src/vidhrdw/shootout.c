@@ -93,8 +93,8 @@ static void draw_background( struct osd_bitmap *bitmap ){
 			int tile_number = videoram[offs] + 256*(attributes&7);
 			int color = attributes>>4;
 
-			drawgfx(tmpbitmap,Machine->gfx[(tile_number&0x400)?3:2],
-					tile_number&0x3ff,
+			drawgfx(tmpbitmap,Machine->gfx[2],
+					tile_number&0x7ff,
 					color,
 					0,0,
 					sx,sy,

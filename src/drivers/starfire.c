@@ -1,6 +1,8 @@
 /***************************************************************************
   Star Fire
 
+driver by Daniel Boris, Olivier Galibert
+
 Memory Map:
 
 Read:
@@ -275,10 +277,7 @@ static struct MachineDriver machine_driver_fireone =
     starfire_vh_screenrefresh,
 
 	/* sound hardware */
-    0,
-    0,
-    0,
-    0
+    0,0,0,0
 };
 
 
@@ -289,85 +288,38 @@ static struct MachineDriver machine_driver_fireone =
 ***************************************************************************/
 
 ROM_START( starfire )
-        ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-        ROM_LOAD( "sfire.1a",     0x0000, 0x0800, 0x9990af64 )
-        ROM_LOAD( "sfire.2a",     0x0800, 0x0800, 0x6e17ba33 )
-        ROM_LOAD( "sfire.1b",     0x1000, 0x0800, 0x946175d0 )
-        ROM_LOAD( "sfire.2b",     0x1800, 0x0800, 0x67be4275 )
-        ROM_LOAD( "sfire.1c",     0x2000, 0x0800, 0xc56b4e07 )
-        ROM_LOAD( "sfire.2c",     0x2800, 0x0800, 0xb4b9d3a7 )
-        ROM_LOAD( "sfire.1d",     0x3000, 0x0800, 0xfd52ffb5 )
-        ROM_LOAD( "sfire.2d",     0x3800, 0x0800, 0x51c69fe3 )
-        ROM_LOAD( "sfire.1e",     0x4000, 0x0800, 0x01994ec8 )
-        ROM_LOAD( "sfire.2e",     0x4800, 0x0800, 0xef3d1b71 )
-        ROM_LOAD( "sfire.1f",     0x5000, 0x0800, 0xaf31dc39 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "sfire.1a",     0x0000, 0x0800, 0x9990af64 )
+	ROM_LOAD( "sfire.2a",     0x0800, 0x0800, 0x6e17ba33 )
+	ROM_LOAD( "sfire.1b",     0x1000, 0x0800, 0x946175d0 )
+	ROM_LOAD( "sfire.2b",     0x1800, 0x0800, 0x67be4275 )
+	ROM_LOAD( "sfire.1c",     0x2000, 0x0800, 0xc56b4e07 )
+	ROM_LOAD( "sfire.2c",     0x2800, 0x0800, 0xb4b9d3a7 )
+	ROM_LOAD( "sfire.1d",     0x3000, 0x0800, 0xfd52ffb5 )
+	ROM_LOAD( "sfire.2d",     0x3800, 0x0800, 0x51c69fe3 )
+	ROM_LOAD( "sfire.1e",     0x4000, 0x0800, 0x01994ec8 )
+	ROM_LOAD( "sfire.2e",     0x4800, 0x0800, 0xef3d1b71 )
+	ROM_LOAD( "sfire.1f",     0x5000, 0x0800, 0xaf31dc39 )
 ROM_END
 
 ROM_START( fireone )
-        ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-        ROM_LOAD( "fo-ic13.7b",     0x0000, 0x0800, 0xf927f086 )
-        ROM_LOAD( "fo-ic24.7c",     0x0800, 0x0800, 0x0d2d8723 )
-        ROM_LOAD( "fo-ic12.6b",     0x1000, 0x0800, 0xac7783d9 )
-        ROM_LOAD( "fo-ic23.6c",     0x1800, 0x0800, 0x15c74ee7 )
-        ROM_LOAD( "fo-ic11.5b",     0x2000, 0x0800, 0x721930a1 )
-        ROM_LOAD( "fo-ic22.5c",     0x2800, 0x0800, 0xf0c965b4 )
-        ROM_LOAD( "fo-ic10.4b",     0x3000, 0x0800, 0x27a7b2c0 )
-        ROM_LOAD( "fo-ic21.4c",     0x3800, 0x0800, 0xb142c857 )
-        ROM_LOAD( "fo-ic09.3b",     0x4000, 0x0800, 0x1c076b1b )
-        ROM_LOAD( "fo-ic20.3c",     0x4800, 0x0800, 0xb4ac6e71 )
-        ROM_LOAD( "fo-ic08.2b",     0x5000, 0x0800, 0x5839e2ff )
-        ROM_LOAD( "fo-ic19.2c",     0x5800, 0x0800, 0x9fd85e11 )
-        ROM_LOAD( "fo-ic07.1b",     0x6000, 0x0800, 0xb90baae1 )
-        ROM_LOAD( "fo-ic18.1c",     0x6800, 0x0800, 0x771ee5ba )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "fo-ic13.7b",     0x0000, 0x0800, 0xf927f086 )
+	ROM_LOAD( "fo-ic24.7c",     0x0800, 0x0800, 0x0d2d8723 )
+	ROM_LOAD( "fo-ic12.6b",     0x1000, 0x0800, 0xac7783d9 )
+	ROM_LOAD( "fo-ic23.6c",     0x1800, 0x0800, 0x15c74ee7 )
+	ROM_LOAD( "fo-ic11.5b",     0x2000, 0x0800, 0x721930a1 )
+	ROM_LOAD( "fo-ic22.5c",     0x2800, 0x0800, 0xf0c965b4 )
+	ROM_LOAD( "fo-ic10.4b",     0x3000, 0x0800, 0x27a7b2c0 )
+	ROM_LOAD( "fo-ic21.4c",     0x3800, 0x0800, 0xb142c857 )
+	ROM_LOAD( "fo-ic09.3b",     0x4000, 0x0800, 0x1c076b1b )
+	ROM_LOAD( "fo-ic20.3c",     0x4800, 0x0800, 0xb4ac6e71 )
+	ROM_LOAD( "fo-ic08.2b",     0x5000, 0x0800, 0x5839e2ff )
+	ROM_LOAD( "fo-ic19.2c",     0x5800, 0x0800, 0x9fd85e11 )
+	ROM_LOAD( "fo-ic07.1b",     0x6000, 0x0800, 0xb90baae1 )
+	ROM_LOAD( "fo-ic18.1c",     0x6800, 0x0800, 0x771ee5ba )
 ROM_END
 
-struct GameDriver driver_starfire =
-{
-	__FILE__,
-	0,
-	"starfire",
-	"Star Fire",
-	"1979",
-	"Exidy",
-	"Daniel Boris\nOlivier Galibert",
-	0,
-	&machine_driver_starfire,
-	0,
 
-	rom_starfire,
-	0, 0,
-	0,
-	0,
-
-	input_ports_starfire,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_fireone =
-{
-	__FILE__,
-	0,
-	"fireone",
-	"Fire One",
-	"1979",
-	"Exidy",
-	"Daniel Boris\nOlivier Galibert",
-	0,
-	&machine_driver_fireone,
-	0,
-
-	rom_fireone,
-	0, 0,
-	0,
-	0,
-
-	input_ports_fireone,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
+GAME( 1979, starfire, 0, starfire, starfire, 0, ROT0, "Exidy", "Star Fire" )
+GAME( 1979, fireone,  0, fireone,  fireone,  0, ROT0, "Exidy", "Fire One" )

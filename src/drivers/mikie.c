@@ -2,6 +2,9 @@
 
 Mikie memory map (preliminary)
 
+driver by Allard Van Der Bas
+
+
 MAIN BOARD:
 2800-288f Sprite RAM (288f, not 287f - quite unusual)
 3800-3bff Color RAM
@@ -240,9 +243,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,         0, 16*8 },
-	{ 1, 0x4000, &spritelayout, 16*8*16, 16*8 },
-	{ 1, 0x4001, &spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX1, 0x0000, &charlayout,         0, 16*8 },
+	{ REGION_GFX2, 0x0000, &spritelayout, 16*8*16, 16*8 },
+	{ REGION_GFX2, 0x0001, &spritelayout, 16*8*16, 16*8 },
 	{ -1 } /* end of array */
 };
 
@@ -315,12 +318,17 @@ ROM_START( mikie )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "o11",          0x00000, 0x4000, 0x3c82aaf3 )
-	ROM_LOAD( "001",          0x04000, 0x4000, 0xa2ba0df5 )
-	ROM_LOAD( "003",          0x08000, 0x4000, 0x9775ab32 )
-	ROM_LOAD( "005",          0x0c000, 0x4000, 0xba44aeef )
-	ROM_LOAD( "007",          0x10000, 0x4000, 0x31afc153 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "001",          0x00000, 0x4000, 0xa2ba0df5 )
+	ROM_LOAD( "003",          0x04000, 0x4000, 0x9775ab32 )
+	ROM_LOAD( "005",          0x08000, 0x4000, 0xba44aeef )
+	ROM_LOAD( "007",          0x0c000, 0x4000, 0x31afc153 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
@@ -328,9 +336,6 @@ ROM_START( mikie )
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiej )
@@ -339,12 +344,17 @@ ROM_START( mikiej )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "08i_q11.bin",  0x00000, 0x4000, 0xc48b269b )
-	ROM_LOAD( "f01_q01.bin",  0x04000, 0x4000, 0x31551987 )
-	ROM_LOAD( "f03_q03.bin",  0x08000, 0x4000, 0x34414df0 )
-	ROM_LOAD( "h01_q05.bin",  0x0c000, 0x4000, 0xf9e1ebb1 )
-	ROM_LOAD( "h03_q07.bin",  0x10000, 0x4000, 0x15dc093b )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f01_q01.bin",  0x00000, 0x4000, 0x31551987 )
+	ROM_LOAD( "f03_q03.bin",  0x04000, 0x4000, 0x34414df0 )
+	ROM_LOAD( "h01_q05.bin",  0x08000, 0x4000, 0xf9e1ebb1 )
+	ROM_LOAD( "h03_q07.bin",  0x0c000, 0x4000, 0x15dc093b )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
@@ -352,9 +362,6 @@ ROM_START( mikiej )
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiehs )
@@ -363,12 +370,17 @@ ROM_START( mikiehs )
 	ROM_LOAD( "12a_m13.bin",  0x8000, 0x4000, 0x9c42d715 )
 	ROM_LOAD( "12d_m17.bin",  0xc000, 0x4000, 0xcb5c03c9 )
 
-	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "06e_h10.bin",  0x0000, 0x2000, 0x4ed887d2 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "08i_l11.bin",  0x00000, 0x4000, 0x5ba9d86b )
-	ROM_LOAD( "f01_i01.bin",  0x04000, 0x4000, 0x0c0cab5f )
-	ROM_LOAD( "f03_i03.bin",  0x08000, 0x4000, 0x694da32f )
-	ROM_LOAD( "h01_i05.bin",  0x0c000, 0x4000, 0x00e357e1 )
-	ROM_LOAD( "h03_i07.bin",  0x10000, 0x4000, 0xceeba6ac )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "f01_i01.bin",  0x00000, 0x4000, 0x0c0cab5f )
+	ROM_LOAD( "f03_i03.bin",  0x04000, 0x4000, 0x694da32f )
+	ROM_LOAD( "h01_i05.bin",  0x08000, 0x4000, 0x00e357e1 )
+	ROM_LOAD( "h03_i07.bin",  0x0c000, 0x4000, 0xceeba6ac )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
@@ -376,84 +388,10 @@ ROM_START( mikiehs )
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "06e_h10.bin",  0x0000, 0x2000, 0x4ed887d2 )
 ROM_END
 
 
 
-struct GameDriver driver_mikie =
-{
-	__FILE__,
-	0,
-	"mikie",
-	"Mikie",
-	"1984",
-	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
-	0,
-	&machine_driver_mikie,
-	0,
-
-	rom_mikie,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mikie,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mikiej =
-{
-	__FILE__,
-	&driver_mikie,
-	"mikiej",
-	"Shinnyuushain Tooru-kun",
-	"1984",
-	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
-	0,
-	&machine_driver_mikie,
-	0,
-
-	rom_mikiej,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mikie,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
-
-struct GameDriver driver_mikiehs =
-{
-	__FILE__,
-	&driver_mikie,
-	"mikiehs",
-	"Mikie (High School Graffiti)",
-	"1984",
-	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
-	0,
-	&machine_driver_mikie,
-	0,
-
-	rom_mikiehs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mikie,
-
-	0, 0, 0,
-	ROT270,
-	0,0
-};
+GAME( 1984, mikie,   0,     mikie, mikie, 0, ROT270, "Konami", "Mikie" )
+GAME( 1984, mikiej,  mikie, mikie, mikie, 0, ROT270, "Konami", "Shinnyuushain Tooru-kun" )
+GAME( 1984, mikiehs, mikie, mikie, mikie, 0, ROT270, "Konami", "Mikie (High School Graffiti)" )

@@ -379,8 +379,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 16 },
-	{ 1, 0x04000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -412,7 +412,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	4000000,	/* ??????? */
 	{ 25 },
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ pandoras_portB_r },
 	{ 0 },
@@ -425,7 +424,7 @@ static struct DACinterface dac_interface =
 	{ 50 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pandoras =
 {
 	/* basic machine hardware */
 	{
@@ -498,18 +497,6 @@ ROM_START( pandoras )
 	ROM_LOAD( "pand_j10.cpu",	0x0c000, 0x02000, 0xbe3af3b7 )
 	ROM_LOAD( "pand_j9.cpu",	0x0e000, 0x02000, 0xe674a17a )
 
-	ROM_REGION_DISPOSE( 0xa000 ) /* graphics (disposed after conversion) */
-	ROM_LOAD( "pand_a18.cpu",	0x000000, 0x02000, 0x23706d4a )	/* tiles */
-	ROM_LOAD( "pand_a19.cpu",	0x002000, 0x02000, 0xa463b3f9 )	/* tiles */
-	ROM_LOAD( "pand_j18.cpu",	0x004000, 0x02000, 0x99a696c5 )	/* sprites */
-	ROM_LOAD( "pand_j17.cpu",	0x006000, 0x02000, 0x38a03c21 )	/* sprites */
-	ROM_LOAD( "pand_j16.cpu",	0x008000, 0x02000, 0xe0708a78 )	/* sprites */
-
-	ROM_REGIONX( 0x0220, REGION_PROMS )
-	ROM_LOAD( "pandora.2a",		0x0000, 0x020, 0x4d56f939 ) /* palette */
-	ROM_LOAD( "pandora.17g",	0x0020, 0x100, 0xc1a90cfc ) /* sprite lookup table */
-	ROM_LOAD( "pandora.16b",	0x0120, 0x100, 0xc89af0c3 ) /* character lookup table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64K for the CPU B */
 	ROM_LOAD( "pand_j5.cpu",	0x0e000, 0x02000, 0x4aab190b )
 
@@ -518,35 +505,22 @@ ROM_START( pandoras )
 
 	ROM_REGIONX( 0x1000, REGION_CPU4 ) /* 4K for the Sound CPU 2 */
 	ROM_LOAD( "pand_7e.snd",	0x00000, 0x01000, 0x18b0f9d0 )
+
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pand_a18.cpu",	0x00000, 0x02000, 0x23706d4a )	/* tiles */
+	ROM_LOAD( "pand_a19.cpu",	0x02000, 0x02000, 0xa463b3f9 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pand_j18.cpu",	0x00000, 0x02000, 0x99a696c5 )	/* sprites */
+	ROM_LOAD( "pand_j17.cpu",	0x02000, 0x02000, 0x38a03c21 )
+	ROM_LOAD( "pand_j16.cpu",	0x04000, 0x02000, 0xe0708a78 )
+
+	ROM_REGIONX( 0x0220, REGION_PROMS )
+	ROM_LOAD( "pandora.2a",		0x0000, 0x020, 0x4d56f939 ) /* palette */
+	ROM_LOAD( "pandora.17g",	0x0020, 0x100, 0xc1a90cfc ) /* sprite lookup table */
+	ROM_LOAD( "pandora.16b",	0x0120, 0x100, 0xc89af0c3 ) /* character lookup table */
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
-
-struct GameDriver driver_pandoras =
-{
-	__FILE__,
-	0,
-	"pandoras",
-	"Pandora's Palace",
-	"1984",
-	"Konami/Interlogic",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pandoras,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pandoras,
-
-	0, 0, 0,
-    ROT270,
-	0, 0
-};
+GAME( 1984, pandoras, 0, pandoras, pandoras, 0, ROT270, "Konami/Interlogic", "Pandora's Palace" )

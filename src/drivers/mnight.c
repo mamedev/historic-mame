@@ -1,3 +1,13 @@
+/***************************************************************************
+
+Mutant Night
+
+driver by Leandro Dardini
+
+TODO:
+- must do palette marking, it is overflowing at the moment
+
+***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -335,10 +345,10 @@ static struct GfxLayout bigspritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x30000, &spritelayout,     0*16, 16},
-	{ 1, 0x00000, &spritelayout,    16*16, 16},
-	{ 1, 0x00000, &bigspritelayout, 16*16, 16},
-	{ 1, 0x60000, &charlayout,      32*16, 16},
+	{ REGION_GFX1, 0, &spritelayout,     0*16, 16},
+	{ REGION_GFX2, 0, &spritelayout,    16*16, 16},
+	{ REGION_GFX2, 0, &bigspritelayout, 16*16, 16},
+	{ REGION_GFX3, 0, &charlayout,      32*16, 16},
 	{ -1} /* end of array */
 };
 
@@ -348,7 +358,6 @@ static struct YM2203interface ym2203_interface =
 	2,	 /* 2 chips */
 	12000000/8, // lax 11/03/1999  (1250000 -> 1500000 ???)
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25)},
-	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -406,7 +415,24 @@ ROM_START( mnight )
 	ROM_LOAD( "mn3-j14.bin",  0x20000, 0x8000, 0xdf6a4f7a )
 	ROM_LOAD( "mn2-j12.bin",  0x28000, 0x8000, 0x9c391d1b )
 
-	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mn11-b20.bin", 0x00000, 0x4000, 0x4d37e0f4 )   // background tiles
+	ROM_CONTINUE(             0x18000, 0x4000 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_CONTINUE(             0x1c000, 0x4000 )
+	ROM_LOAD( "mn12-b22.bin", 0x08000, 0x4000, 0xb22cbbd3 )
+	ROM_CONTINUE(             0x20000, 0x4000 )
+	ROM_CONTINUE(             0x0c000, 0x4000 )
+	ROM_CONTINUE(             0x24000, 0x4000 )
+	ROM_LOAD( "mn13-b23.bin", 0x10000, 0x4000, 0x65714070 )
+	ROM_CONTINUE(             0x28000, 0x4000 )
+	ROM_CONTINUE(             0x14000, 0x4000 )
+	ROM_CONTINUE(             0x2c000, 0x4000 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mn7-e11.bin",  0x00000, 0x4000, 0x4883059c )	  // sprites tiles
 	ROM_CONTINUE(             0x18000, 0x4000 )
 	ROM_CONTINUE(             0x04000, 0x4000 )
@@ -419,25 +445,12 @@ ROM_START( mnight )
 	ROM_CONTINUE(             0x28000, 0x4000 )
 	ROM_CONTINUE(             0x14000, 0x4000 )
 	ROM_CONTINUE(             0x2c000, 0x4000 )
-	ROM_LOAD( "mn11-b20.bin", 0x30000, 0x4000, 0x4d37e0f4 )   // background tiles
-	ROM_CONTINUE(             0x48000, 0x4000 )
-	ROM_CONTINUE(             0x34000, 0x4000 )
-	ROM_CONTINUE(             0x4c000, 0x4000 )
-	ROM_LOAD( "mn12-b22.bin", 0x38000, 0x4000, 0xb22cbbd3 )
-	ROM_CONTINUE(             0x50000, 0x4000 )
-	ROM_CONTINUE(             0x3c000, 0x4000 )
-	ROM_CONTINUE(             0x54000, 0x4000 )
-	ROM_LOAD( "mn13-b23.bin", 0x40000, 0x4000, 0x65714070 )
-	ROM_CONTINUE(             0x58000, 0x4000 )
-	ROM_CONTINUE(             0x44000, 0x4000 )
-	ROM_CONTINUE(             0x5c000, 0x4000 )
-	ROM_LOAD( "mn10-b10.bin", 0x60000, 0x2000, 0x37b8221f )	// foreground tiles OK
-	ROM_CONTINUE(             0x64000, 0x2000 )
-	ROM_CONTINUE(             0x62000, 0x2000 )
-	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mn10-b10.bin", 0x00000, 0x2000, 0x37b8221f )	// foreground tiles OK
+	ROM_CONTINUE(             0x04000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
 ROM_END
 
 ROM_START( arkarea )
@@ -448,7 +461,24 @@ ROM_START( arkarea )
 	ROM_LOAD( "arkarea.011",  0x20000, 0x8000, 0x63f022c9 )
 	ROM_LOAD( "arkarea.012",  0x28000, 0x8000, 0x3c4c65d5 )
 
-	ROM_REGION_DISPOSE(0x68000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "arkarea.013",  0x00000, 0x8000, 0x2d409d58 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "arkarea.003",  0x00000, 0x4000, 0x6f45a308 )   // background tiles
+	ROM_CONTINUE(             0x18000, 0x4000 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_CONTINUE(             0x1c000, 0x4000 )
+	ROM_LOAD( "arkarea.002",  0x08000, 0x4000, 0x051d3482 )
+	ROM_CONTINUE(             0x20000, 0x4000 )
+	ROM_CONTINUE(             0x0c000, 0x4000 )
+	ROM_CONTINUE(             0x24000, 0x4000 )
+	ROM_LOAD( "arkarea.001",  0x10000, 0x4000, 0x09d11ab7 )
+	ROM_CONTINUE(             0x28000, 0x4000 )
+	ROM_CONTINUE(             0x14000, 0x4000 )
+	ROM_CONTINUE(             0x2c000, 0x4000 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "arkarea.007",  0x00000, 0x4000, 0xd5684a27 )   // sprites tiles
 	ROM_CONTINUE(             0x18000, 0x4000 )
 	ROM_CONTINUE(             0x04000, 0x4000 )
@@ -461,75 +491,15 @@ ROM_START( arkarea )
 	ROM_CONTINUE(             0x28000, 0x4000 )
 	ROM_CONTINUE(             0x14000, 0x4000 )
 	ROM_CONTINUE(             0x2c000, 0x4000 )
-	ROM_LOAD( "arkarea.003",  0x30000, 0x4000, 0x6f45a308 )   // background tiles
-	ROM_CONTINUE(             0x48000, 0x4000 )
-	ROM_CONTINUE(             0x34000, 0x4000 )
-	ROM_CONTINUE(             0x4c000, 0x4000 )
-	ROM_LOAD( "arkarea.002",  0x38000, 0x4000, 0x051d3482 )
-	ROM_CONTINUE(             0x50000, 0x4000 )
-	ROM_CONTINUE(             0x3c000, 0x4000 )
-	ROM_CONTINUE(             0x54000, 0x4000 )
-	ROM_LOAD( "arkarea.001",  0x40000, 0x4000, 0x09d11ab7 )
-	ROM_CONTINUE(             0x58000, 0x4000 )
-	ROM_CONTINUE(             0x44000, 0x4000 )
-	ROM_CONTINUE(             0x5c000, 0x4000 )
-	ROM_LOAD( "arkarea.004",  0x60000, 0x2000, 0x69e36af2 ) // foreground tiles OK
-	ROM_CONTINUE(             0x64000, 0x2000 )
-	ROM_CONTINUE(             0x62000, 0x2000 )
-	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "arkarea.013",  0x00000, 0x8000, 0x2d409d58 )
+	ROM_REGIONX( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "arkarea.004",  0x00000, 0x2000, 0x69e36af2 ) // foreground tiles OK
+	ROM_CONTINUE(             0x04000, 0x2000 )
+	ROM_CONTINUE(             0x02000, 0x2000 )
+	ROM_CONTINUE(             0x06000, 0x2000 )
 ROM_END
 
 
 
-struct GameDriver driver_mnight =
-{
-	__FILE__,
-	0,
-	"mnight",
-	"Mutant Night",
-	"1987",
-	"UPL (Kawakus license)",
-	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
-	0,
-	&machine_driver_mnight,
-	0,
-
-	rom_mnight,
-	0,0,
-	0,
-	0, /* sound prom */
-
-	input_ports_mnight,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
-
-struct GameDriver driver_arkarea =
-{
-	__FILE__,
-	0,
-	"arkarea",
-	"Ark Area",
-	"1988?",
-	"UPL",
-	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
-	0,
-	&machine_driver_mnight,
-	0,
-
-	rom_arkarea,
-	0,0,
-	0,
-	0, /* sound prom */
-
-	input_ports_arkarea,
-
-	0, 0, 0,
-	ROT0,
-	0,0
-};
+GAME( 1987, mnight,  0, mnight, mnight,  0, ROT0, "UPL (Kawakus license)", "Mutant Night" )
+GAME( 1988?,arkarea, 0, mnight, arkarea, 0, ROT0, "UPL", "Ark Area" )

@@ -312,8 +312,8 @@ INPUT_PORTS_START( armedf )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen ?" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -479,7 +479,7 @@ INPUT_PORTS_START( cclimbr2 )
 	PORT_DIPSETTING(    0x10, "3")
 	PORT_DIPSETTING(    0x00, "0")
 #if 0
-	PORT_DIPNAME( 0x20, 0x20, "Flip Screen" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #endif
@@ -730,7 +730,7 @@ ROM_START( terraf )
 	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
 	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
 
-	ROM_REGION(0x4000)	/* unknown */
+	ROM_REGIONX( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
 	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
@@ -764,7 +764,7 @@ ROM_START( terrafu )
 	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
 	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
 
-	ROM_REGION(0x4000)	/* unknown */
+	ROM_REGIONX( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
 	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
@@ -829,13 +829,13 @@ ROM_START( cclimbr2 )
 	ROM_LOAD( "13.bin", 0x20000, 0x10000, 0x6b6ec999 )
 	ROM_LOAD( "14.bin", 0x30000, 0x10000, 0xf426a4ad )
 
-	ROM_REGION(0x4000)	/* unknown */
+	ROM_REGIONX( 0x4000, REGION_GFX5 )	/* data for mcu/blitter? */
 	ROM_LOAD( "9.bin",  0x0000, 0x4000, 0x740d260f )	// DATA ?
 ROM_END
 
 
 
-GAME( 1987, terraf,   ,       terraf,   terraf,   , ROT0,   "Nichibutsu", "Terra Force" )
-GAME( 1987, terrafu,  terraf, terraf,   terraf,   , ROT0,   "Nichibutsu USA", "Terra Force (US)" )
-GAME( 1988, armedf,   ,       armedf,   armedf,   , ROT270, "Nichibutsu", "Armed Formation" )
-GAME( 1988, cclimbr2, ,       cclimbr2, cclimbr2, , ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)" )
+GAME( 1987, terraf,   0,      terraf,   terraf,   0, ROT0,   "Nichibutsu", "Terra Force" )
+GAME( 1987, terrafu,  terraf, terraf,   terraf,   0, ROT0,   "Nichibutsu USA", "Terra Force (US)" )
+GAME( 1988, armedf,   0,      armedf,   armedf,   0, ROT270, "Nichibutsu", "Armed Formation" )
+GAME( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, 0, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)" )

@@ -17,7 +17,7 @@ static struct tilemap *bgb_tilemap, *bgm_tilemap, *char_tilemap;
 static void get_bgb_tile_info( int col, int row )
 {
 	int addr = (col*32 + row*2 + 128) & 0xffff;
-	unsigned char *base = memory_region(2) + addr;
+	unsigned char *base = memory_region(REGION_GFX5) + addr;
 	int attr = base[65536];
 	int color = base[0];
 	int code = (base[65537]<<8) | base[1];
@@ -28,7 +28,7 @@ static void get_bgb_tile_info( int col, int row )
 static void get_bgm_tile_info( int col, int row )
 {
 	int addr = (col*32 + row*2 + 128) & 0xffff;
-	unsigned char *base = memory_region(2) + addr + 65536*2;
+	unsigned char *base = memory_region(REGION_GFX5) + addr + 65536*2;
 	int attr = base[65536];
 	int color = base[0];
 	int code = (base[65537]<<8) | base[1];

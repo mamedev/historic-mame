@@ -1094,8 +1094,6 @@ static struct AY8910interface carnival_ay8910_interface =
 	1,	/* 1 chips */
 	PSG_CLOCK_CARNIVAL,
 	{ 35 },
-	AY8910_DEFAULT_GAIN,
-	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1666,23 +1664,23 @@ static void init_pulsar(void)
 }
 
 
-GAME( 1977, depthch,  ,         2ports,   depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
-GAMEX(1977, safari,   ,         safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
-GAMEX(1978, frogs,    ,         2ports,   frogs,    nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
-GAMEX(1979, sspaceat, ,         3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (Upright)", GAME_NO_SOUND )
+GAME( 1977, depthch,  0,        2ports,   depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
+GAMEX(1977, safari,   0,        safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
+GAMEX(1978, frogs,    0,        2ports,   frogs,    nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
+GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (Upright)", GAME_NO_SOUND )
 GAMEX(1979, sspacatc, sspaceat, 3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (Cocktail)", GAME_NO_SOUND )
-GAMEX(1979, headon,   ,         2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
+GAMEX(1979, headon,   0,        2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
 GAMEX(1979, headonb,  headon,   2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
-GAMEX(1979, headon2,  ,         3ports,   headon2,  nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
-GAME( 1979, invho2,   ,         4ports,   invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
-GAMEX(1980, samurai,  ,         4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
-GAME( 1979, invinco,  ,         3ports,   invinco,  invinco,   ROT270, "Sega", "Invinco" )
-GAME( 1979, invds,    ,         4ports,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
-GAMEX(1980, tranqgun, ,         4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
-GAMEX(1980, spacetrk, ,         4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (Upright)", GAME_NO_SOUND )
+GAMEX(1979, headon2,  0,        3ports,   headon2,  nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
+GAME( 1979, invho2,   0,        4ports,   invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
+GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
+GAME( 1979, invinco,  0,        3ports,   invinco,  invinco,   ROT270, "Sega", "Invinco" )
+GAME( 1979, invds,    0,        4ports,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
+GAMEX(1980, tranqgun, 0,        4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
+GAMEX(1980, spacetrk, 0,        4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (Upright)", GAME_NO_SOUND )
 GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "Space Trek (Cocktail)", GAME_NO_SOUND )
-GAME( 1980, carnival, ,         carnival, carnival, carnival,  ROT270, "Sega", "Carnival (Upright)" )
+GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (Upright)" )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (Cocktail)" )
-GAMEX(1980, digger,   ,         3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
-GAME( 1981, pulsar,   ,         4ports,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
-GAMEX(1979, heiankyo, ,         4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )
+GAMEX(1980, digger,   0,        3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
+GAME( 1981, pulsar,   0,        4ports,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
+GAMEX(1979, heiankyo, 0,        4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )

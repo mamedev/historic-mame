@@ -327,8 +327,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -339,7 +339,6 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
 	{ 30 },
-	AY8910_DEFAULT_GAIN,
 	{ megazone_portA_r },
 	{ 0 },
 	{ 0 },
@@ -354,7 +353,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_megazone =
 {
 	/* basic machine hardware */
 	{
@@ -423,13 +422,21 @@ ROM_START( megazone )
 	ROM_LOAD( "319i04.bin",    0xc000, 0x2000, 0x1e968603 )
 	ROM_LOAD( "319i03.bin",    0xe000, 0x2000, 0x0888b803 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
+
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, 0xe0fb7835 )
 	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
-	ROM_LOAD( "319e11.bin",    0x4000, 0x2000, 0xf36f19c5 )
-	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
-	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
-	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, 0xf36f19c5 )
+	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, 0x6add71b1 )
 
 	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
@@ -437,12 +444,6 @@ ROM_START( megazone )
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
 	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
-
-	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
-	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
 ROM_START( megaznik )
@@ -453,13 +454,21 @@ ROM_START( megaznik )
 	ROM_LOAD( "ic56_cpu.bin",  0xc000, 0x2000, 0x2aabcfbf )
 	ROM_LOAD( "ic55_cpu.bin",  0xe000, 0x2000, 0xb33a3c37 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
+
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic40_vid.bin",  0x0000, 0x2000, 0x07b8b24b )
 	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
-	ROM_LOAD( "ic15_vid.bin",  0x4000, 0x2000, 0x965a7ff6 )
-	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
-	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
-	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15_vid.bin",  0x0000, 0x2000, 0x965a7ff6 )
+	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, 0x6add71b1 )
 
 	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
@@ -467,62 +476,14 @@ ROM_START( megaznik )
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
 	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
-
-	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
-	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
 
-
-struct GameDriver driver_megazone =
+static void init_megazone(void)
 {
-	__FILE__,
-	0,
-	"megazone",
-	"Mega Zone",
-	"1983",
-	"Konami",
-	"Chris Hardy",
-	0,
-	&machine_driver,
-	konami1_decode,
+	konami1_decode();
+}
 
-	rom_megazone,
-	0, 0,
-	0,
-	0,
 
-	input_ports_megazone,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
-
-struct GameDriver driver_megaznik =
-{
-	__FILE__,
-	&driver_megazone,
-	"megaznik",
-	"Mega Zone (Kosuka)",
-	"1983",
-	"Konami / Interlogic + Kosuka",
-	"Chris Hardy",
-	0,
-	&machine_driver,
-	konami1_decode,
-
-	rom_megaznik,
-	0, 0,
-	0,
-	0,
-
-	input_ports_megazone,
-
-	0, 0, 0,
-	ROT90,
-	0,0
-};
+GAME( 1983, megazone, 0,        megazone, megazone, megazone, ROT90, "Konami", "Mega Zone" )
+GAME( 1983, megaznik, megazone, megazone, megazone, megazone, ROT90, "Konami / Interlogic + Kosuka", "Mega Zone (Kosuka)" )

@@ -2,6 +2,8 @@
 
 	Exterminator memory map
 
+driver by Zsolt Vasvari and Alex Pasadyn
+
 
  Master CPU (TMS34010, all addresses are in bits)
 
@@ -308,7 +310,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_exterm =
 {
 	/* basic machine hardware */
 	{
@@ -416,7 +418,7 @@ ROM_START( exterm )
 ROM_END
 
 
-void driver_init(void)
+void init_exterm(void)
 {
 	memcpy (exterm_code_rom,memory_region(REGION_CPU1),code_rom_size);
 
@@ -425,27 +427,4 @@ void driver_init(void)
 }
 
 
-struct GameDriver driver_exterm =
-{
-	__FILE__,
-	0,
-	"exterm",
-	"Exterminator",
-	"1989",
-	"Gottlieb / Premier Technology",
-	"Zsolt Vasvari\nAlex Pasadyn",
-	0,
-	&machine_driver,
-	driver_init,
-
-	rom_exterm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_exterm,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ROT0 | GAME_REQUIRES_16BIT,
-	0,0
-};
+GAME( 1989, exterm, 0, exterm, exterm, exterm, ROT0_16BIT, "Gottlieb / Premier Technology", "Exterminator" )

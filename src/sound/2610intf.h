@@ -10,14 +10,14 @@
 
 #ifndef VOL_YM3012
 /* #define YM3014_VOL(Vol,Pan) VOL_YM3012((Vol)/2,Pan,(Vol)/2,Pan) */
-#define YM3012_VOL(LVol,LPan,RVol,RPan) ((LVol)|((LPan)<<8)|((RVol)<<16)|((RPan)<<24))
+#define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))
 #endif
 
-struct YM2610interface{
+struct YM2610interface
+{
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
 	int volumeSSG[MAX_2610]; /* for SSG sound */
-	int gainSSG[MAX_2610];
 	int ( *portAread[MAX_2610] )( int offset );
 	int ( *portBread[MAX_2610] )( int offset );
 	void ( *portAwrite[MAX_2610] )( int offset, int data );
