@@ -57,118 +57,125 @@ void arabian_blit_byte(int offset, int val, int val2, int plane)
   int plane1,plane2,plane3,plane4;
   unsigned char *bm;
   unsigned char *pom;
+  
+  int	sy;
+  int	sx;
 
   plane1 = plane & 0x01;
   plane2 = plane & 0x02;
   plane3 = plane & 0x04;
   plane4 = plane & 0x08;
 
-
-     pom = tmpbitmap->line[0];
-     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );
+	sx = offset % 256;
+	sy = (0x3f - (offset / 256)) * 4;
+	
+/*     pom = tmpbitmap->line[0];                                    */
+/*     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );*/
+	pom = tmpbitmap->line[sy] + sx;
 
      bm = pom;
 
      if (plane1)
      {	
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x80) *bm |= 1;
 	if (val & 0x08) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+1] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x40) *bm |= 1;
 	if (val & 0x04) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+2] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x20) *bm |= 1;
 	if (val & 0x02) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+3] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x10) *bm |= 1;
 	if (val & 0x01) *bm |= 2;
-/*/// TODO: remap the pixel color thru the color table */
-
+/* TODO: remap the pixel color thru the color table */
      }
 
      bm=pom;
      if (plane2)
      {	
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x80) *bm |= 4;
 	if (val2 & 0x08) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+1] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x40) *bm |= 4;
 	if (val2 & 0x04) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+2] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x20) *bm |= 4;
 	if (val2 & 0x02) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+3] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x10) *bm |= 4;
 	if (val2 & 0x01) *bm |= 8;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 
 
-     pom = tmpbitmap2->line[0];
-     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );
+/*     pom = tmpbitmap2->line[0];                                   */
+/*     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );*/
+	pom = tmpbitmap2->line[sy] + sx;
+
      bm = pom;
 
      if (plane3)
      {	
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x80) *bm |= 1;
 	if (val & 0x08) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+1] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x40) *bm |= 1;
 	if (val & 0x04) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+2] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x20) *bm |= 1;
 	if (val & 0x02) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+3] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x10) *bm |= 1;
 	if (val & 0x01) *bm |= 2;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 
      bm=pom;
      if (plane4)
      {	
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x80) *bm |= 4;
 	if (val2 & 0x08) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+1] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x40) *bm |= 4;
 	if (val2 & 0x04) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+2] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x20) *bm |= 4;
 	if (val2 & 0x02) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+3] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val2 & 0x10) *bm |= 4;
 	if (val2 & 0x01) *bm |= 8;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 }
@@ -228,117 +235,125 @@ void arabian_videoramw(int offset, int val)
   unsigned char *bm;
   unsigned char *pom;
 
+	int sx;
+	int	sy;
+	
   plane1 = Machine->memory_region[0][0xe000] & 0x01;
   plane2 = Machine->memory_region[0][0xe000] & 0x02;
   plane3 = Machine->memory_region[0][0xe000] & 0x04;
   plane4 = Machine->memory_region[0][0xe000] & 0x08;
 
 
-     pom = tmpbitmap->line[0];
-     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );
+	sx = offset % 256;
+	sy = (0x3f - (offset / 256)) * 4;
+	
+/*     pom = tmpbitmap->line[0];                                     */
+/*     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) ); */
+	pom = tmpbitmap->line[sy] + sx;
 
      bm = pom;
 
      if (plane1)
      {	
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x80) *bm |= 1;
 	if (val & 0x08) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+1] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x40) *bm |= 1;
 	if (val & 0x04) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+2] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x20) *bm |= 1;
 	if (val & 0x02) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap->line[sy+3] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x10) *bm |= 1;
 	if (val & 0x01) *bm |= 2;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 
      bm=pom;
      if (plane2)
      {	
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x80) *bm |= 4;
 	if (val & 0x08) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+1] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x40) *bm |= 4;
 	if (val & 0x04) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+2] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x20) *bm |= 4;
 	if (val & 0x02) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap->line[sy+3] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x10) *bm |= 4;
 	if (val & 0x01) *bm |= 8;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 
 
-     pom = tmpbitmap2->line[0];
-     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );
-     bm = pom;
+/*     pom = tmpbitmap2->line[0];                                     */
+/*     pom += ( (offset % 256 ) + ( (0x3f-(offset /256)) * 1024 ) );  */
+ 	pom = tmpbitmap2->line[sy] + sx;
+    bm = pom;
 
      if (plane3)
      {	
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x80) *bm |= 1;
 	if (val & 0x08) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+1] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x40) *bm |= 1;
 	if (val & 0x04) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+2] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x20) *bm |= 1;
 	if (val & 0x02) *bm |= 2;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+3] + sx;
 
-	*bm &= 0xfc;
+	*bm &= 0x0c;
 	if (val & 0x10) *bm |= 1;
 	if (val & 0x01) *bm |= 2;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 
      bm=pom;
      if (plane4)
      {	
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x80) *bm |= 4;
 	if (val & 0x08) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+1] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x40) *bm |= 4;
 	if (val & 0x04) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+2] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x20) *bm |= 4;
 	if (val & 0x02) *bm |= 8;
-	bm+=256;
+	bm = tmpbitmap2->line[sy+3] + sx;
 
-	*bm &= 0xf3;
+	*bm &= 0x03;
 	if (val & 0x10) *bm |= 4;
 	if (val & 0x01) *bm |= 8;
-/*/// TODO: remap the pixel color thru the color table */
+/* TODO: remap the pixel color thru the color table */
 
      }
 

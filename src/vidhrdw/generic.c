@@ -30,11 +30,11 @@ int generic_vh_start(void)
 
 
 	len = (Machine->drv->screen_width/8) * (Machine->drv->screen_height/8);
-	/* round the length to the next 0x100 boundary. This is necessary to */
+	/* round the length to the next 0x400 boundary. This is necessary to */
 	/* allocate a buffer large enough for Pac Man and other games using */
-	/* 224x288 and 288x224 video modes, but still a 256x256 video memory */
-	/* layout. */
-	len = (len + 0xff) & 0xfffffe00;
+	/* 224x288 and 288x224 video modes, but still a 32x32 video memory */
+	/* layout, and for Popeye, using a 512x480 screen but a 64x64 memory. */
+	len = (len + 0x3ff) & 0xfffffc00;
 
 	if ((dirtybuffer = malloc(len)) == 0)
 		return 1;

@@ -300,7 +300,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,

@@ -1012,11 +1012,11 @@ int setdipswitches(void)
 		{
 			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
 			dt[2 * i].text = dswsettings[i].name;
-			dt[2 * i].x = 2*8;
-			dt[2 * i].y = 2*8 * i + (Machine->drv->screen_height - 2*8 * (total - 1)) / 2;
+			dt[2 * i].x = 2*Machine->gfx[0]->width;
+			dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
 			dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
 			dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
-			dt[2 * i + 1].x = Machine->drv->screen_width - 2*8 - 8*strlen(dt[2 * i + 1].text);
+			dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
 			dt[2 * i + 1].y = dt[2 * i].y;
 		}
 		dt[2 * i].text = 0;	/* terminate array */

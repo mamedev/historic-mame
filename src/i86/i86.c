@@ -38,6 +38,8 @@
 
 extern int cpu_readmem(register int A);
 extern void cpu_writemem(register int A,register unsigned char V);
+extern int cpu_readport(int Port);
+extern void cpu_writeport(int Port,int Value);
 extern BYTE I86_In(WORD port);
 extern void I86_Out(WORD port, BYTE val);
 

@@ -2,60 +2,84 @@
 
 Warp Warp memory map (preliminary)
 
-0000-37ff ROM
+  Memory Map figured out by Chris Hardy (chrish@kcbbs.gen.nz)
+  Initial Driver code by Mirko
+
+
+0000-37FF ROM		Code
+4800-4FFF ROM		Graphics rom which must be included in memory space
 
 memory mapped ports:
 
 read:
-5000      IN0
-5040      IN1
-5080      DSW1
+
+All Read ports only use bit 0
+
+C000      Coin slot 2
+C001      ???
+C002      Start P1
+C003      Start P2
+C004      Fire
+C005      Test Mode
+C006      ???
+C007      Coin Slot 2
+C020-C027 Dipswitch 1->8 in bit 0
+
+C010      Analog Joystick
+			 0->62 = DOWN
+			 63->110 = LEFT
+			 111->166 = RIGHT
+			 167->255 = UP
 
 write:
-c003      interrupt_enable
+
+C003			WatchDog reset (ignore)
+C036			re-enable interrupts (ignore)
+C010			Sound Port (??)
+C020			Sound Port 2 (??)
 
 ***************************************************************************/
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+extern unsigned char *warpwarp_bulletsram;
 extern void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+
+extern int warpwarp_input_c000_7_r(int offset);
+extern int warpwarp_input_c020_27_r(int offset);
+extern int warpwarp_input_controller_r(int offset);
+extern int warpwarp_interrupt();
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4000, 0x7FFF, MRA_RAM },
+	{ 0x8000, 0x83FF, MRA_RAM },
 	{ 0x0000, 0x37ff, MRA_ROM },
-        { 0xc000, 0xc000, input_port_0_r },
-        { 0xc001, 0xc001, input_port_1_r },
-        { 0xc002, 0xc002, input_port_2_r },
+	{ 0x4000, 0x47FF, MRA_RAM },
+	{ 0x4800, 0x4FFF, MRA_ROM },
+        { 0xc000, 0xc007, warpwarp_input_c000_7_r },
+        { 0xc010, 0xc010, warpwarp_input_controller_r },
+        { 0xc020, 0xc027, warpwarp_input_c020_27_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4000, 0x7FFF, MWA_RAM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram },
-	{ 0x8400, 0x87ff, videoram_w, &videoram },
-	{ 0xc003, 0xc003, interrupt_enable_w },
-        { 0xc000, 0xc03f, MWA_RAM },
+	{ 0x8000, 0x83FF, MWA_RAM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0xC000, 0xC001, MWA_RAM, &warpwarp_bulletsram },
+
 	{ 0x0000, 0x37ff, MWA_ROM },
+	{ 0x4800, 0x4FFF, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct InputPort input_ports[] =
 {
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
-				OSD_KEY_F1, 0, 0, OSD_KEY_3 },
-		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, OSD_KEY_F2, OSD_KEY_1, OSD_KEY_2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
 	{	/* DSW1 */
 		0xe9,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -65,13 +89,14 @@ static struct InputPort input_ports[] =
 };
 
 
+/* These are NOT correct at all */
 
 static struct DSW dsw[] =
 {
-	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
-	{ 2, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
+	{ 0, 0x0c, "LIVES", { "1", "2", "3", "5" } },
+	{ 0, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
+	{ 0, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
+	{ 0, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
 	{ -1 }
 };
 
@@ -136,7 +161,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3 Mhz? */
+			2048000,	/* 3 Mhz? */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
@@ -146,8 +171,9 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-  	32*8, 32*8, { 6*8, 30*8-1, 0*8, 32*8-1 },
+  	32*8, 34*8, { 0*8, 32*8-1, 0*8, 34*8-1 },
 	gfxdecodeinfo,
+
 	sizeof(palette)/3,sizeof(colortable),
 	0,
 
@@ -173,6 +199,7 @@ ROM_START( warpwarp_rom )
 	ROM_LOAD( "warp_2m.bin", 0x1000, 0x1000)
 	ROM_LOAD( "warp_1p.bin", 0x2000, 0x1000)
 	ROM_LOAD( "warp_1t.bin", 0x3000, 0x0800)
+	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "warp_s12.bin", 0x0000, 0x0800 )

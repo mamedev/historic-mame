@@ -276,7 +276,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz????? */
 			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,

@@ -147,12 +147,12 @@ if (osd_key_pressed(OSD_KEY_V))
 
 			drawgfx(tmpbitmap1,Machine->gfx[bose],
 					elevator_videoram3[offs],
-1,//					elevator_attributesram[2 * sy + 1],
+1,/*                    elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[bose],
 					elevator_videoram2[offs],
-0,//					elevator_attributesram[2 * sy + 1],
+0,/*                    elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -186,14 +186,12 @@ if (osd_key_pressed(OSD_KEY_V))
 	/* order, to have the correct priorities. */
 	for (offs = 31*4;offs >= 0;offs -= 4)
 	{
-	/* meaning of bit 2 of spriteram[offs + 2] is unknown */
-		if (spriteram[offs + 3] & 0x40)
-			drawgfx(bitmap,Machine->gfx[3],
-					spriteram[offs + 3] & 0x3f,
-					3,
-					spriteram[offs + 2] & 1,0,
-					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 2],
+				spriteram[offs + 3] & 0x3f,
+				(spriteram[offs + 2] >> 2) & 1,
+				spriteram[offs + 2] & 1,0,
+				((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -209,7 +207,7 @@ if (osd_key_pressed(OSD_KEY_V))
 		if (videoram[offs])
 			drawgfx(bitmap,Machine->gfx[bose],
 					videoram[offs],
-2,//					elevator_attributesram[2 * sy + 1],
+2,/*                    elevator_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

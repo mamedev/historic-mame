@@ -1,12 +1,24 @@
 An adaptation of MAME 0.81 for X11 / 0.81 for DOS. 
-Can be played. Has only been tested on Linux, but should port easily.
+
+Original work by Dick the Ridder and Allard van der Bas
+Actually mantained by Juan Antonio Martinez
+
+Tested on:
+Ix86/Linux
+Ix86/FreeBSD
+Sparc/SunOS
+Sparc/Solaris
+SGI/irix
+
+Other ports are not as easy. Help wanted...
 
 To run:
 - edit Makefile.UNIX to suit your needs
 - make -f Makefile.UNIX clean
 - make -f Makefile.UNIX
 
-and you can run 'mame [game]'.
+and you can run 'xmame.<arch> [game]'.
+<arch> equals to one of: linux, solaris, sunos, irix
 
 Use 'mame -frameskip x' (x = 1, 2, 3, 4) if things run too slow.
 
@@ -18,8 +30,8 @@ X-interface) was a copy/paste from his 'msdos.c'.
 
 We've had terrible problems implementing sound. If there's anybody out
 there who thinks she/he can do better: you're welcome. We just don't know
-enough about it. You can test sound on your machine (Linux only, for
-now) by specifying -sound on the command-line.
+enough about it. You can test sound on your machine 
+by specifying -sound on the command-line.
 
 Using the SEAL lib (which is available for Windoze 95, NT, Dos & Linux) 
 does not seem to be a good idea. Sound is terrible. Right now, a
@@ -34,12 +46,14 @@ a few seconds after a sample is played. Note: we're testing on a GUS.
 
 By the way:
 
-- Joystick support should be possible in XFree 3.2 using the
-  extension. Haven't looked at it yet.
+Joystick support available under Linux, but need joystick kernel module
+to be loaded
 
 Created: March, 5th
          Allard van der Bas	avdbas@wi.leidenuniv.nl
-         Dick de Ridder			dick@ph.tn.tudelft.nl
+         Dick de Ridder		dick@ph.tn.tudelft.nl
 
 Visit the arcade emulator programming repository at 
   http://valhalla.ph.tn.tudelft.nl/emul8
+And the X-Mame Home page at
+  http://www.dit.upm.es/~jantonio/mame

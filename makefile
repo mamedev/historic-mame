@@ -27,7 +27,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
          obj/machine/scramble.o obj/vidhrdw/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
          obj/drivers/scobra.o \
-         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
+         obj/machine/warpwarp.o obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
          obj/vidhrdw/popeye.o obj/sndhrdw/popeye.o obj/drivers/popeye.o \
          obj/vidhrdw/amidar.o obj/sndhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
@@ -50,13 +50,16 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/gberet.o obj/vidhrdw/gberet.o obj/sndhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/venture.o obj/drivers/venture.o \
          obj/drivers/pepper2.o \
-         obj/vidhrdw/qbert.o obj/sndhrdw/qbert.o obj/drivers/qbert.o \
-         obj/drivers/mplanets.o \
          obj/vidhrdw/gottlieb.o obj/drivers/reactor.o \
+         obj/sndhrdw/gottlieb.o obj/drivers/qbert.o \
+         obj/drivers/krull.o \
+         obj/drivers/mplanets.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
          obj/machine/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/sndhrdw/arabian.o obj/drivers/arabian.o \
+         obj/machine/1942.o obj/vidhrdw/1942.o obj/sndhrdw/1942.o obj/drivers/1942.o \
+         obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o
 
 VPATH = src src/Z80 src/M6502 src/I86

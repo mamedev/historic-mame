@@ -54,19 +54,49 @@ void dkong_sh3_w(int offset,int data)
 void dkong_sh2_w(int offset,int data)
 {
 	static last;
-
+	static hit = 0;
 
 	if (Machine->samples == 0) return;
 
+    if (data != 6)
+	{
+	   hit = 0;
+    }
+
 	if (last != data)
 	{
+		last = data;
+
 		switch (data)
 		{
+		   case 6:	  /* mix in hammer hit on different channel */
+		   last = 4;
+		   if (!hit)
+		   {
+		       if (Machine->samples->sample[data+8] != 0)
+			   {
+			   	  osd_play_sample(3,Machine->samples->sample[data+8]->data,
+				     Machine->samples->sample[data+8]->length,emulation_rate,255,0);
+			   }
+			   hit = 1;
+			}
+			break;
+
+            case 13:
+			last = 11;
+		    if (Machine->samples->sample[data+8] != 0)
+			{
+			   osd_play_sample(3,Machine->samples->sample[data+8]->data,
+				  Machine->samples->sample[data+8]->length,emulation_rate,255,0);
+			}
+			break;
+
 			case 8:		  /* these samples repeat */
 			case 9:
 			case 10:
 			case 11:
 			case 4:
+			case 3:
 			if (Machine->samples->sample[data+8] != 0)
 			{
 				osd_play_sample(4,Machine->samples->sample[data+8]->data,
@@ -85,7 +115,6 @@ void dkong_sh2_w(int offset,int data)
 			}
 			break;
 		}
-		last = data;
 	}
 }
 

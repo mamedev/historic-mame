@@ -197,10 +197,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x3000, &charlayout,    0, 32 },
-	{ 1, 0x0000, &charlayout,    0, 32 },
-	{ 1, 0x4800, &spritelayout,  0, 32 },
-	{ 1, 0x1800, &spritelayout,  0, 32 },
+	{ 1, 0x3000, &charlayout,    0, 3 },
+	{ 1, 0x0000, &charlayout,    0, 3 },
+	{ 1, 0x0000, &spritelayout, 3*8, 2 },
+	{ 1, 0x1800, &spritelayout, 3*8, 2 },
+	{ 1, 0x4800, &spritelayout, 3*8, 2 },	/* seems to be unused (contains garbage in the bootleg version) */
 	{ -1 } /* end of array */
 };
 
@@ -220,6 +221,7 @@ static unsigned char palette[] =
 	25,110,110,	/* DKCYAN */
 	195,153,110,	/* BROWN1 */
 	238,195,153,	/* BROWN2 */
+	170,136,51,	/* BROWN3 */
 	238,238,238, /* WHITE */
 	238,110,195,	/* DKPINK */
 
@@ -229,7 +231,6 @@ static unsigned char palette[] =
 
 	0xe0,0xb0,0x70,	/* BROWN */
 	0xd0,0xa0,0x60,	/* BROWN0 */
-	0x80,0x60,0x20,	/* BROWN3 */
 	0x54,0x40,0x14,	/* BROWN4 */
 
   0x54,0xa8,0xff, /* LTBLUE */
@@ -241,47 +242,21 @@ static unsigned char palette[] =
 };
 
 enum {BLACK,BLUE,CYAN,DKGRAY,RED,GRAY,LTGRAY,LTGRAY2,PINK,DKCYAN,
-		BROWN1,BROWN2,WHITE,DKPINK,
+		BROWN1,BROWN2,BROWN3,WHITE,DKPINK,
 
 		GREEN,YELLOW,MAGENTA,
-       BROWN,BROWN0,BROWN3,BROWN4,
+       BROWN,BROWN0,BROWN4,
 			 LTBLUE,DKGREEN,GRASSGREEN,DKORANGE,LTORANGE
             };
 
 static unsigned char colortable[] =
 {
         0,BLUE,CYAN,LTGRAY,GRAY,RED,LTGRAY2,DKGRAY,
-        0,PINK,DKGRAY,LTGRAY2,DKCYAN,GRAY,GRAY,10,
-        0,14,WHITE,BROWN2,DKPINK,BROWN1,DKGRAY,RED,
-        0,4,13,6,7,8,17,9,
-        0,13,6,7,8,7,9,2,
-        0,6,7,8,7,9,2,5,
-        0,7,8,7,9,2,5,13,
-        0,8,7,9,2,5,13,8,
-        0,7,9,2,5,13,8,13,
-        0,9,2,5,13,8,13,7,
-        0,2,5,13,8,13,7,2,
-        0,5,13,8,13,7,2,14,
-        0,13,8,13,7,2,14,4,
-        0,8,13,7,2,14,4,5,
-        0,13,7,2,14,4,5,6,
-        0,13,7,2,14,4,5,6,
-        0,1,2,14,4,13,6,7,
-        0,2,14,4,13,6,7,8,
-        0,14,4,13,6,7,8,7,
-        0,4,13,6,7,8,17,9,
-        0,13,6,7,8,7,9,2,
-        0,6,7,8,7,9,2,5,
-        0,7,8,7,9,2,5,13,
-        0,8,7,9,2,5,13,8,
-        0,7,9,2,5,13,8,13,
-        0,9,2,5,13,8,13,7,
-        0,2,5,13,8,13,7,2,
-        0,5,13,8,13,7,2,14,
-        0,13,8,13,7,2,14,4,
-        0,8,13,7,2,14,4,5,
-        0,13,7,2,14,4,5,6,
-        0,13,7,2,14,4,5,6,
+        0,PINK,DKGRAY,LTGRAY2,DKCYAN,GRAY,GRAY,15,
+        0,BROWN3,WHITE,BROWN2,DKPINK,BROWN1,DKGRAY,RED,
+		/* sprites */
+        0,BROWN2,BROWN3,11,RED,LTGRAY,BROWN1,3,
+        0,CYAN,GRAY,DKGRAY,BLUE,LTGRAY,LTGRAY2,5,
 };
 
 

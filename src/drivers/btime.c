@@ -289,7 +289,7 @@ static struct MachineDriver machine_driver =
 			btime_interrupt,12	/* 12 interrupts per frame */
 		},
 		{
-			CPU_M6502,
+			CPU_M6502 | CPU_AUDIO_CPU,
 			500000,	/* 500 khz */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,

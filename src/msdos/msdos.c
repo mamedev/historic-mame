@@ -58,6 +58,8 @@ int osd_init(int argc,char **argv)
 	int soundcard;
 
 
+	first_free_pen = 0;
+
 	use_vesa = 0;
 	use_vesascan = 0;
 	use_vesaskip = 0;
@@ -71,8 +73,10 @@ int osd_init(int argc,char **argv)
 	{
 		if (stricmp(argv[i],"-vesa") == 0)
 			use_vesa = 1;
-		if (stricmp(argv[i],"-vesascan") == 0)
+		if (stricmp(argv[i],"-vesascan") == 0) {
 			use_vesascan = 1;
+                        use_vesa = 0;
+                }
 		if (stricmp(argv[i],"-vesaskip") == 0)
 		{
 			use_vesascan = 1;
@@ -98,13 +102,6 @@ int osd_init(int argc,char **argv)
 			video_sync = 1;
 		if (stricmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
-	}
-
-	if (use_joystick)
-	{
-		/* Try to install Allegro joystick handler */
-		if (initialise_joystick())
-			use_joystick = 0; /* joystick not found */
 	}
 
 	if (play_sound)
@@ -134,7 +131,7 @@ int osd_init(int argc,char **argv)
 			else
 			{
 				/* open audio device */
-//				info.nDeviceId = AUDIO_DEVICE_MAPPER;
+/*				info.nDeviceId = AUDIO_DEVICE_MAPPER;*/
 				info.nDeviceId = soundcard;
 				info.wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
 				info.nSampleRate = SAMPLE_RATE;
@@ -162,7 +159,7 @@ int osd_init(int argc,char **argv)
 					ASetVoicePanning(hVoice[i],128);
 
 					if ((lpWave[i] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
-// have to handle this better...
+/* have to handle this better...*/
 						return 1;
 
 					lpWave[i]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO;
@@ -171,7 +168,7 @@ int osd_init(int argc,char **argv)
 					lpWave[i]->dwLoopStart = lpWave[i]->dwLoopEnd = 0;
 					if (ACreateAudioData(lpWave[i]) != AUDIO_ERROR_NONE)
 					{
-// have to handle this better...
+/* have to handle this better...*/
 						free(lpWave[i]);
 
 						return 1;
@@ -183,7 +180,13 @@ int osd_init(int argc,char **argv)
 
 	allegro_init();
 	install_keyboard();		/* Allegro keyboard handler */
-	first_free_pen = 0;
+
+	if (use_joystick)
+	{
+		/* Try to install Allegro joystick handler */
+		if (initialise_joystick())
+			use_joystick = 0; /* joystick not found */
+	}
 
 	return 0;
 }
@@ -611,6 +614,8 @@ void osd_update_display(void)
 
 void osd_update_audio(void)
 {
+	if (play_sound == 0) return;
+
 	AUpdateAudio();
 }
 
@@ -644,7 +649,7 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 	if (play_sound == 0 || channel >= NUMVOICES) return;
 
 	/* check if the waveform is large enough for double buffering */
-//	if (2*sizeof(aBuffer) > lpWave->dwLength) {
+/*	if (2*sizeof(aBuffer) > lpWave->dwLength) {*/
 
 	if (!playing[channel])
 	{

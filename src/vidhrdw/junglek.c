@@ -125,12 +125,12 @@ if (osd_key_pressed(OSD_KEY_V))
 
 			drawgfx(tmpbitmap1,Machine->gfx[1+bose],
 					junglek_videoram3[offs],
-2,//					junglek_attributesram[2 * sy + 1],
+2,/*                    junglek_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[1+bose],
 					junglek_videoram2[offs],
-1,//					junglek_attributesram[2 * sy + 1],
+1,/*                    junglek_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -230,7 +230,7 @@ else	/* 0x0b, 0x06 */
 		if (videoram[offs] < 160)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-0,//					junglek_attributesram[2 * sy + 1],
+0,/*                    junglek_attributesram[2 * sy + 1],*/
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

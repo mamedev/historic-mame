@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver =
 		},
 #if 0
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz ???? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,

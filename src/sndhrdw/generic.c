@@ -23,6 +23,12 @@ static int command_queue[QUEUE_LENGTH];
 int pending_commands;
 
 
+/***************************************************************************
+
+  This function reads a command from the sound queue. If the queue is empty,
+  returns 0.
+
+***************************************************************************/
 int sound_command_r(int offset)
 {
 	int i,res;
@@ -41,6 +47,33 @@ int sound_command_r(int offset)
 	{
 		if (errorlog) fprintf(errorlog,"warning: read sound command, but queue empty\n");
 		res = 0;
+	}
+
+	return res;
+}
+
+
+
+/***************************************************************************
+
+  Similar to sound_command_r(), but if the queue is empty it returns the
+  last command instead of 0. Games which continuously poll the sound command
+  port should use this function.
+
+***************************************************************************/
+int sound_command_latch_r(int offset)
+{
+	int i,res;
+
+
+	res = command_queue[0];
+
+	if (pending_commands > 0)
+	{
+		pending_commands--;
+
+		for (i = 0;i < pending_commands;i++)
+			command_queue[i] = command_queue[i+1];
 	}
 
 	return res;

@@ -4,10 +4,6 @@
 
 
 
-unsigned char *bombjack_intflag;
-
-
-
 static struct AY8910interface interface =
 {
 	3,	/* 3 chips */

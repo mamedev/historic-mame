@@ -30,7 +30,7 @@ int noisemulate = 0;
 
 int phoenix_sh_init(const char *gamename)
 {
-        if (Machine->samples->total == 0)
+        if (Machine->samples->sample[0] == 0)
           noisemulate = 1;
         else
           noisemulate = 0;

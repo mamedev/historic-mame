@@ -1,0 +1,74 @@
+X-Mame version 0.17.2
+
+patched by jantonio@dit.upm.es 
+
+history:
+
+xmame-0.17      Original sources from: 
+		http://valhalla.ph.tn.tudelft.nl/emul8/files/xmame-0.17.zip
+xmame-0.17.1 	Joystick support under Linux
+		Reorder src/unix directory to support *ix dependent archs
+xmame-0.17.2    Support for sound under Solaris ( very beta, but works )
+
+TODO:
+	- Sound support under SunOS ( should be easy, basically is the same
+	  code that solaris one, but no time (and no machine) to test..... )
+
+	- Sound support under IRIX ( Hard. in-built audio mixer in kernel
+          "unlimited" audio buffer size , but should be done in a week ... )
+
+	- Rewrite audio code under *ix. No more Timer alarms to fill audio
+	  buffer, please ( to many sync problems and audio "glitches" )
+
+( Yes, I'm asking for help )
+
+this is a -still beta, but playable- patched version of xmame-0.17.1 with
+sound support for Sun's Sparc machines running Solaris 2.5.X
+
+	I've tested it on a Sun Sparc5 ( acceptable ) and in a Sun Sparc1+
+( extremely slooooooow sound )
+
+	Several things:
+
+a) Actual code is very time-critical. You'll have to edit and recompile 
+several times to find correct values for audio's device buffer size and
+AUDIO_TIMER_FREQ #defined variable. Remember that audio buffer cannot
+exceed 8192 bytes or solaris kernel will bypass your selection
+
+b) There are at least two audio drivers in Sparc machines. the one based 
+on amd73c90 chipset ( on 1,1+,2,SLC,IPX machines ) cannon run at 22Khz
+linear encoding. So a little trick is used. Special thanks to people 
+involved in ISABEL proyect for help and code to convert to ulaw encoding
+( see ISABEL proyect on http://www.dit.upm.es/~proy/isabel/index.html )
+
+c) In general, sound code under *IX should be rewritten. The basic idea is
+to use *ix kernel features to poll data into audio buffers instead of
+use timer alarms. I'm working on them. These method should eliminate problems
+of synchronization and "glitches" due to non-constant audio input data stream
+The use of timers tend to waste expensive cpu time and slow down performance
+( specially under "Sun's SlowLARIS" )
+
+------------------------------------------------------------------------------
+Copyright NOTICE:
+
+	Code under file src/unix/lin2ulaw.h is copyright of Departamento de
+Ingenieria Telematica of Universidad Politecnica de Madrid. It can be 
+distributed freely if:
+
+1- You also distribute source code, ( or make it available ), and
+2- This copyright notice is distributed with the package
+------------------------------------------------------------------------------
+
+	Send bug,patches and suggestions to: mix@lim.dsi.unimi.it 
+					     avdbas@wi.leidenuniv.nl
+					     dick@ph.tn.tudelft.nl 
+					     jantonio@dit.upm.es
+
+==============================================================================
+Juan Antonio Martinez			Universidad Politecnica de Madrid
+email: jantonio@dit.upm.es		E.T.S.I Telecomunicacion
+Tel:   34-1-5495700 ext 328		Dpt. Ing. Telematica Centro de Calculo
+Fax:   34-1-3367333			Madrid, Spain
+http://www.dit.upm.es/~jantonio
+==============================================================================
+

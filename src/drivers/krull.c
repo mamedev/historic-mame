@@ -1,17 +1,17 @@
 /***************************************************************************
 
-Mad Planets' memory map
+Krull's memory map
 
 Main processor (8088 minimum mode) memory map.
 0000-0fff RAM
-1000-1fff RAM
-2000-2fff RAM
+1000-1fff ROM
+2000-2fff ROM
 3000-37ff sprite programmation (64 sprites)
 3800-3fff background ram (32x30 chars)
 4000-4fff background object ram ?
 5000-57ff palette ram (palette of 16 colors)
 5800-5fff i/o ports (see below)
-6000-ffff ROM (mad planets' prog)
+6000-ffff ROM
 
 memory mapped ports:
 
@@ -57,7 +57,7 @@ Sound processor (6502) memory map:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int mplanets_vh_start(void);
+extern int krull_vh_start(void);
 extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
@@ -66,14 +66,18 @@ extern void gottlieb_output(int offset, int data);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_spriteram;
+extern unsigned char *gottlieb_characterram;
 extern void gottlieb_videoram_w(int offset,int data);
 extern void gottlieb_paletteram_w(int offset,int data);
+extern void gottlieb_characterram_w(int offset, int data);
 extern void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x57ff, MRA_RAM },
+	{ 0x0000, 0x0fff, MRA_RAM },
+	{ 0x1000, 0x2fff, MRA_ROM },
+	{ 0x3000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
 	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
 	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
@@ -85,10 +89,11 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x2fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x37ff, MWA_RAM, &gottlieb_spriteram },
 	{ 0x3800, 0x3fff, gottlieb_videoram_w, &gottlieb_videoram },
-	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
+	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
 	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
@@ -107,28 +112,30 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* buttons */
-		0x80,
-		{ OSD_KEY_3, OSD_KEY_4, /* coin 1 and 2 */
+		0x01,
+		{ 0,                    /* diag mode */
+          OSD_KEY_G,            /* select */
+		  OSD_KEY_3, OSD_KEY_4, /* coin 1 & 2 */
 		  0,0,                  /* not connected ? */
-		  0,0,                  /* not connected ? */
-		  OSD_KEY_S,            /* select */
-		  0 },                  /* diag mode */
+		  OSD_KEY_1,
+		  OSD_KEY_2 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* trackball: not used yet */
+	{       /* trackball: not used */
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* trackball: not used yet */
+	{       /* trackball: not used */
 		0xff,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{       /* joystick */
+	{       /* joysticks */
 		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		OSD_KEY_CONTROL,OSD_KEY_1,OSD_KEY_2,OSD_KEY_ALT},
+		{
+        OSD_KEY_W,OSD_KEY_D,OSD_KEY_S,OSD_KEY_A,
+		OSD_KEY_UP,OSD_KEY_RIGHT,OSD_KEY_DOWN,OSD_KEY_LEFT},
 		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT,
 					OSD_JOY_FIRE, 0, 0, 0 }
 	},
@@ -138,7 +145,7 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
-	{ 0, 0x08, "ROUND SELECT", { "OFF","ON" } },
+	{ 0, 0x08, "LIVES PER GAME", { "3","5" } },
 	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
 	{ 0, 0x1C, "", {
 		"1 PLAY FOR 1 COIN" , "1 PLAY FOR 2 COINS",
@@ -146,10 +153,15 @@ static struct DSW dsw[] =
 		"2 PLAYS FOR 1 COIN", "FREE PLAY",
 		"2 PLAYS FOR 1 COIN", "FREE PLAY"
 		} },
-	{ 0, 0x20, "SHIPS PER GAME", { "3", "5" } },
-	{ 0, 0x02, "EXTRA SHIP EVERY", { "10000", "12000" } },
-	{ 0, 0xC0, "DIFFICULTY", { "STANDARD", "EASY", "HARD", "VERY HARD" } },
-	{ 1, 0x80, "TEST MODE", {"ON", "OFF"} },
+	{ 0, 0x20, "HEXAGON", { "ROVING", "STATIONARY" } },
+	{ 0, 0x02, "DIFFICULTY", { "NORMAL", "HARD" } },
+	{ 0, 0xC0, "", {
+		"LIFE AT 30000 THEN EVERY 50000",
+		"LIFE AT 30000 THEN EVERY 30000",
+		"LIFE AT 40000 THEN EVERY 50000",
+		"LIFE AT 50000 THEN EVERY 75000"
+		} },
+	{ 1, 0x01, "TEST MODE", {"ON", "OFF"} },
 	{ -1 }
 };
 
@@ -160,8 +172,8 @@ static struct GfxLayout charlayout =
 	256,    /* 256 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 7*32, 6*32, 5*32, 4*32, 3*32, 2*32, 1*32, 0*32 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	{ 28, 24, 20, 16, 12, 8, 4, 0},
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
@@ -190,10 +202,10 @@ static struct GfxLayout fakelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   16, 2 }, /* white & yellow palettes for Mame's texts */
-	{ 1, 0x0000, &charlayout,   0, 1 }, /* 1 palette for the game */
-	{ 1, 0x2000, &spritelayout, 0, 1 },
-	{ 0, 0, &fakelayout, 3*16, 16 }, /* 256 colors to pick in */
+	{ 0, 0xa357, &charlayout, 16, 2 }, /* 1 "white" palette, 1 "yellow" palette */
+	{ 0, 0x4000, &charlayout, 0, 1 }, /* 1 palette used by the game */
+	{ 1, 0, &spritelayout, 0, 1 },
+	{ 0, 0, &fakelayout, 3*16, 16 }, /* 256 colors */
 	{ -1 } /* end of array */
 };
 
@@ -219,7 +231,7 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_init_basic_color_palette,
 
 	0,      /* init vh */
-	mplanets_vh_start,
+	krull_vh_start,
 	generic_vh_stop,
 	gottlieb_vh_screenrefresh,
 
@@ -231,24 +243,24 @@ static const struct MachineDriver machine_driver =
 	gottlieb_sh_update
 };
 
-ROM_START( mplanets_rom )
+ROM_START( krull_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM0",  0xe000, 0x2000 )
-	ROM_LOAD( "ROM1",  0xc000, 0x2000 )
-	ROM_LOAD( "ROM2",  0xa000, 0x2000 )
-	ROM_LOAD( "ROM3",  0x8000, 0x2000 )
-	ROM_LOAD( "ROM4",  0x6000, 0x2000 )
+	ROM_LOAD( "ROM0.BIN",  0xe000, 0x2000 )
+	ROM_LOAD( "ROM1.BIN",  0xc000, 0x2000 )
+	ROM_LOAD( "ROM2.BIN",  0xa000, 0x2000 )
+	ROM_LOAD( "ROM3.BIN",  0x8000, 0x2000 )
+	ROM_LOAD( "ROM4.BIN",  0x6000, 0x2000 )
+	ROM_LOAD( "RAM4.BIN",  0x2000, 0x1000 )
+	ROM_LOAD( "RAM2.BIN",  0x1000, 0x1000 )
 
-	ROM_REGION(0xA000)      /* temporary space for graphics */
-	ROM_LOAD( "BG0",  0x0000, 0x1000 )
-	ROM_LOAD( "BG1",  0x1000, 0x1000 )
-	ROM_LOAD( "FG3",  0x2000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG2",  0x4000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG1",  0x6000, 0x2000 )       /* sprites */
-	ROM_LOAD( "FG0",  0x8000, 0x2000 )       /* sprites */
+	ROM_REGION(0x8000)      /* temporary space for graphics */
+	ROM_LOAD( "FG3.BIN",  0x0000, 0x2000 )       /* sprites */
+	ROM_LOAD( "FG2.BIN",  0x2000, 0x2000 )       /* sprites */
+	ROM_LOAD( "FG1.BIN",  0x4000, 0x2000 )       /* sprites */
+	ROM_LOAD( "FG0.BIN",  0x6000, 0x2000 )       /* sprites */
 ROM_END
 
-static unsigned short mplanets_colors[256]={
+static unsigned short krull_colors[256]={
 	0x000, 0xfff, 0xff0,
 	0x005, 0x006, 0x007, 0x008, 0x009, 0x00b, 0x00f,
 	0x010, 0x017, 0x019, 0x01a, 0x020, 0x028, 0x02b, 0x030,
@@ -282,23 +294,23 @@ static unsigned short mplanets_colors[256]={
 };
 
 
-struct GameDriver mplanets_driver =
+struct GameDriver krull_driver =
 {
-	"mplanets",
+	"krull",
 	&machine_driver,
 
-	mplanets_rom,
+	krull_rom,
 	0, 0,   /* rom decode and opcode decode functions */
 	gottlieb_sample_names,
 
 	input_ports, dsw,
 
-	(char *)mplanets_colors,
+	(char *)krull_colors,
 	0,0,    /* palette, colortable */
 
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x2a,       /* letters */
-		0x2b,0x2c,0x2d,0x2e,0x2f,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,0x57,0x5f },
+		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
+		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
 	0,1,      /* white & yellow for dsw menu */
 	8*11,8*20,1, /* paused message displayed at X,Y and color */
 

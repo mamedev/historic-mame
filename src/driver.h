@@ -129,6 +129,12 @@ struct MachineCPU
 #define CPU_M6502 2
 #define CPU_I86 3
 
+/* set this if the CPU is used as a slave for audio. It will not be emulated if */
+/* play_sound == 0, therefore speeding up a lot the emulation. */
+#define CPU_AUDIO_CPU 0x8000
+
+#define CPU_FLAGS_MASK 0xff00
+
 
 #define MAX_CPU 4
 

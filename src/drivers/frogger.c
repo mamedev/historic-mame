@@ -6,9 +6,9 @@ Frogger memory map (preliminary)
 8000-87ff RAM
 a800-abff Video RAM
 b000-b0ff Object RAM
-  b000-b03f  screen attributes
-  b040-b05f  sprites
-  b060-b0ff  unused?
+b000-b03f screen attributes
+b040-b05f sprites
+b060-b0ff unused?
 
 read:
 8800      Watchdog Reset
@@ -258,8 +258,8 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_Z80,
-			1504000,	/* 1.57275 Mhz?????? */
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1572750,	/* 1.57275 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			frogger_sh_interrupt,1

@@ -36,13 +36,29 @@
  * Visit the arcade emulator programming repository at
  *   http://valhalla.ph.tn.tudelft.nl/emul8
  *
- * Revisions: #define DR1, #define DR2, Dick de Ridder, 8-5-97
+ * Revisions: #define DR1, #define DR2, Dick de Ridder, 8-3-97
  *            Some bugfixes after profiling with Purify on SunOS.
+ *
+ *            #define DR3, Dick de Ridder, 7-4-97
+ *            Upgrade to Mame 0.15.
+ *
+ *
+ * Added Joystick support under Linux. by Juan Antonio Martinez
+ * jantonio@dit.upm.es 15-Apr-1997.
+ * Need module joystick-0.8.0 to be insmod'ed prior to use it
  *
  * Some fixes by Jack Patton, 9-5-97.
  * Some fixes by Allard van der Bas 10-9-97 (who also broke the already
  * fragile sound under linux :-) ).
  *
+ *            #define CS1, Terry Conklin, 23-3-97
+ *            New code to support scaling the display by Terry Conklin 23-3-97
+ *    				Wrote the Shared mem code blind. Hope it works.  conklin@mich.com
+ *    				specify -widthscale and -heightscale on the command line.
+ *    				Large scaling will KILL your processor.     
+ *   
+ *            #define DB1, David Black, 25-3-97
+ *            Perfected sound. ( set as fixed option on xmame-0.18.1 )
  */
 
 /*
@@ -74,6 +90,10 @@
 #include <X11/keysym.h>
 
 #include "osdepend.h"
+/* include table for linear-to-ulaw conversion */
+#if defined solaris || defined sunos
+#include "lin2ulaw.h"
+#endif
 
 #ifdef UNIX
 #define stricmp         strcasecmp
@@ -90,6 +110,8 @@
 
 #define DR1
 #define DR2
+#define DR3
+#define CS1
 
 typedef unsigned char		byte;
 
@@ -121,6 +143,20 @@ Window 		  	 	 window;
 Colormap 	 		 colormap;
 XImage 				*image;
 GC 				 gc;
+
+#ifdef CS1
+
+/* CS: scaling hack - integer factors only */
+
+int 		scaling		= FALSE;
+unsigned int 	widthscale	= 1;
+unsigned int 	heightscale 	= 1;
+
+/* CS: scaling hack */
+byte  *scaled_buffer_ptr;
+
+#endif
+
 /* Just the default GC - we don't really draw. */
 
 unsigned long  		 	White,
@@ -130,26 +166,21 @@ unsigned long 	*xpixel = NULL;	/* Pixel index values for the colors we need. */
 
 
 /* Fixed title to say Mame - Jack Patton (jpatton@intserv.com) */
-char 	*title 		= "X-MAME v0.9";
 
-int 	 snapshot_no	=	0;
 byte	*buffer_ptr;
+char	*title = "XMame 0.18";
+int 	 snapshot_no	= 0;
 
 struct osd_bitmap	*bitmap;
 int			 use_joystick;
 int			 play_sound;
+#ifdef DR3
+int			 video_sync;
+#endif
 int			 first_free_pen;
 
-/* Not implemented yet: */
-
-int 			 osd_joy_up,
-			 osd_joy_down,
-			 osd_joy_left,
-			 osd_joy_right;
-int 			 osd_joy_b1,
-			 osd_joy_b2,
-			 osd_joy_b3,
-			 osd_joy_b4;
+int      osd_joy_up, osd_joy_down, osd_joy_left, osd_joy_right;
+int 	 osd_joy_b1, osd_joy_b2, osd_joy_b3, osd_joy_b4;
 
 /*
  * Workaround: in DO$, the Allegro library maintains this array.
@@ -166,14 +197,22 @@ byte			 key[OSD_NUMKEYS];
  */
 
 #define AUDIO_SAMPLE_FREQ			(22050)
+#define AUDIO_SAMPLE_LOWFREQ			(8000)
 #define AUDIO_SAMPLE_BITS			(8)
 #define AUDIO_NUM_BUFS				(0)
 #define AUDIO_BUFSIZE_BITS			(8)
 #define AUDIO_MIX_BUFSIZE			(128)
 #define AUDIO_NUM_VOICES			(6)
-#define AUDIO_TIMER_FREQ			(48)
 
 int	   audio_fd;
+
+int	   audio_sample_freq; 
+int	   audio_timer_freq; 
+
+
+int    abuf_size;
+int    abuf_ptr;
+int    abuf_inc;
 
 int		audio_vol[AUDIO_NUM_VOICES];
 int		audio_dvol[AUDIO_NUM_VOICES];
@@ -183,56 +222,90 @@ int		audio_len[AUDIO_NUM_VOICES];
 byte 		*audio_data[AUDIO_NUM_VOICES];
 int		audio_on[AUDIO_NUM_VOICES];
 
-#ifdef linux
+struct sigaction	sig_action;	/* used for arm alarm signal */
 
-void audio_timer (int arg)
-{
-	static int	in = FALSE;
-	int		i, j;
-	static byte	buf[AUDIO_MIX_BUFSIZE];
-	static int	intbuf[AUDIO_MIX_BUFSIZE];
+/* system dependent functions */
+int sysdep_init(void);
+void sysdep_exist(void);
+void sysdep_poll_joystick(void);
+int sysdep_play_audio(byte *buf, int size);
+void sysdep_fill_audio_buffer(long *in,char *out, int start,int end);
 
-	if (!in)
-	{
-		in = TRUE;
+void audio_timer (int arg) {
+        static int  in = FALSE;
+        int   i, j;
+        static byte buf[65536];
+        static long  intbuf[65536];
+        int   j1, j2;
 
-/* Do your thang. */
-
-	  for (j = 0; j < AUDIO_MIX_BUFSIZE; j++)
-		{
-			intbuf[j] = 32768;
-		}
-
-		for (i = 0; i < AUDIO_NUM_VOICES; i++)
-		{
-			if (audio_on[i])
-			{
-				for (j = 0; j < AUDIO_MIX_BUFSIZE; j++)
-				{
-   				intbuf[j] |= 32768 + (audio_vol[i]/2) * audio_data[i][((j * audio_freq[i]) / AUDIO_SAMPLE_FREQ) % audio_len[i]];
-   			}
-
-   			audio_dvol[i]  = FALSE;
-   			audio_dfreq[i] = FALSE;
-   		}
-		}
-
-	  for (j = 0; j < AUDIO_MIX_BUFSIZE; j++)
-		{
-			buf[j] = intbuf[j];
-			if (intbuf[j] < 0)   	 buf[j] = 0;
-			if (intbuf[j] > 65535) buf[j] = 255;
-		}
-
-		if (write (audio_fd, buf, AUDIO_MIX_BUFSIZE) <= 0)
-		{
-			/* OKEE */
-		}
-		in = FALSE;
-	}
+        if (!in) {
+                in = TRUE;
+                j1 = abuf_ptr;  /* calc pointers for chunk of buffer */
+                j2 = j1 + abuf_inc; /* to be filled this time around */
+                for (i = 0; i < AUDIO_NUM_VOICES; i++) {
+                    if (audio_on[i]) {
+                        for (j = j1; j < j2; j++) {
+                            if (i != 0) intbuf[j] += (audio_vol[i]/16) * 
+                                        audio_data[i][((j * audio_freq[i]) / 
+                                        audio_sample_freq) % audio_len[i]];
+                            else        intbuf[j] = (audio_vol[0]/16) * 
+                                        audio_data[0][((j * audio_freq[0]) / 
+                                        audio_sample_freq) % audio_len[0]];
+                            }
+                        audio_dvol[i]  = FALSE;
+                        audio_dfreq[i] = FALSE;
+                    }
+                }
+		sysdep_fill_audio_buffer( intbuf,(char *)buf,j1,j2);
+                if (j2 == abuf_size) {  /* buffer full - dump to audio */
+			i=sysdep_play_audio(buf,abuf_size);
+                        abuf_ptr = 0;    /* and reset */
+                } else {
+                        abuf_ptr = j2;   /* not full - write more next time */
+                }
+        in = FALSE;
+        } /* else {
+          fprintf(stderr, ".");
+        } */
+#if defined solaris || defined sgi
+	/* rearm alarm timer */
+	sigaction (SIGALRM, &sig_action, NULL);
+#endif
 }
 
+/* 
+* Included specific *ix dependent code 
+* each file must be enclosed in a #ifdef -sysname- / #endif pair
+*
+* Must include the following functions
+*
+* int sysdep_init(void) 
+* 	containning system initialization code
+*
+* void sysdep_exist(void)
+* 	code to close & cleanup
+*
+* void sysdep_poll_joystick(void)
+* 	to perform ( if any ) joystick polling
+*
+* int sysdep_play_audio(byte *buf, int size)
+*       to extract audio samples from buffer and send to audio device
+*
+* Added by Juan Antonio Martinez <jantonio@dit.upm.es> 18-April-1997
+*
+*/
+/* linux & freebsd specific resides in same file */
+
+#include "linux.c"
+#include "sunos.c"
+#include "solaris.c"
+#include "irix.c"
+
+#ifndef AUDIO_TIMER_FREQ
+/* should be defined in sysdep files, but.... */
+#define AUDIO_TIMER_FREQ	(56)
 #endif
+
 
 /*
  * Put anything here you need to do when the program is started.
@@ -241,114 +314,47 @@ void audio_timer (int arg)
 
 int osd_init (int argc, char *argv[])
 {
+
 	int			i;
-
-#ifdef linux
-	int			dspfreq, dspbyte, dspstereo;
-	struct sigaction 	sig_action;
-	struct itimerval	timer_value;
-#endif
-
+	/* initialize some variables to defalut values */
+	use_joystick		= TRUE;
 	play_sound 		= FALSE;
+	scaling			= FALSE;
+        osd_joy_up = osd_joy_down = osd_joy_left = osd_joy_right = 0 ;
+	osd_joy_b1 = osd_joy_b2 = osd_joy_b3 = osd_joy_b4 = 0;
 
-	for (i = 1;i < argc;i++)
-	{
-#ifdef linux
-		if (stricmp(argv[i],"-sound") == 0)
-			play_sound = TRUE;
-#endif
-		if (stricmp(argv[i],"-nojoy") == 0)
-			use_joystick = FALSE;
+	/* parse argument invocation */
+	for (i = 1;i < argc;i++) {
+		if (stricmp(argv[i], "-sound") == 0) {
+			play_sound        = TRUE;
+			audio_sample_freq = AUDIO_SAMPLE_FREQ;
+			audio_timer_freq  = AUDIO_TIMER_FREQ;
+		}
+		if (stricmp(argv[i], "-nojoy") == 0) use_joystick = FALSE;
+		if (stricmp(argv[i], "-widthscale") == 0) {
+			widthscale = atoi (argv[i+1]);
+			scaling = TRUE;
+			if (widthscale <= 0) {
+				printf ("illegal widthscale (%d)\n", widthscale);
+				exit (1);
+			}
+		}
+		if (stricmp(argv[i], "-heightscale") == 0) {
+			heightscale = atoi (argv[i+1]);
+			scaling = TRUE;
+			if (heightscale <= 0) {
+				printf ("illegal heightscale (%d)\n", heightscale);
+				exit (1);
+			}
+		}
 	}
-
-#ifdef linux
-	if (play_sound)
-	{
-	  	dspbyte 	= AUDIO_SAMPLE_BITS;
- 		dspfreq 	= AUDIO_SAMPLE_FREQ;
-		dspstereo	= 0;
-
-    printf ("Linux sound device initialization...\n");
-
-    if ((audio_fd = open ("/dev/dsp", O_WRONLY | O_NONBLOCK)) < 0)
-    {
-      printf ("couldn't open audio device\n");
-      exit(1);
-    }
-
-    if (ioctl (audio_fd, SNDCTL_DSP_SETFMT, &dspbyte))
-    {
-      printf ("can't set DSP number of bits\n");
-      exit (1);
-    }
-  	else
-  	{
-  		printf ("DSP set to %d bits\n", dspbyte);
-  	}
-
-    if (ioctl (audio_fd, SNDCTL_DSP_STEREO, &dspstereo))
-    {
-    	printf ("can't set DSP to mono\n");
-    	exit (1);
-    }
-		else
-		{
-			printf ("DSP set to %s\n", dspstereo ? "stereo":"mono");
-		}
-
-    if (ioctl (audio_fd, SNDCTL_DSP_SPEED, &dspfreq))
-    {
-      printf ("can't set DSP frequency\n");
-      exit(1);
-    }
-		else
-		{
-			printf ("DSP set to %d Hz\n", dspfreq);
-		}
-/*
-
-  	i = (AUDIO_BUFSIZE_BITS | (AUDIO_NUM_BUFS << 16));
-  	if (ioctl (audio_fd, SNDCTL_DSP_SETFRAGMENT, &i) == -1)
-  	{
-  		printf ("Can't set DSP buffers\n");
-  		exit (1);
-  	}
-*/
-		for (i = 0; i < AUDIO_NUM_VOICES; i++)
-		{
-			audio_on[i] = FALSE;
-		}
-
-		sig_action.sa_handler = audio_timer;
-
-/* I didn't have time to check this out but I get an error under FreeBSD */
-/* with this compiling. Sound is broken anyway *shrug* */
-/* Jack Patton (jpatton@intserv.com) */
-
-#ifndef FREEBSD_SOUND_WORKAROUND
-		sig_action.sa_flags   = SA_NOMASK | SA_RESTART;
-#endif
-		sigaction (SIGALRM, &sig_action, NULL);
-
-	  	timer_value.it_interval.tv_sec =
- 	 	timer_value.it_value.tv_sec    = 0L;
- 	 	timer_value.it_interval.tv_usec=
-  		timer_value.it_value.tv_usec   = 1000000L / AUDIO_TIMER_FREQ;
-
-	  if (setitimer (ITIMER_REAL, &timer_value, NULL))
-	  {
- 	 		printf ("Setting the timer failed.\n");
-  		return (TRUE);
-  	}
-	}
-#endif
+	/* now invoice unix-dependent initialization */
+	sysdep_init();
 
 	first_free_pen = 0;
-
 	/* Initialize key array - no keys are pressed. */
 
-	for (i = 0; i < OSD_NUMKEYS; i++)
-	{
+	for (i = 0; i < OSD_NUMKEYS; i++) {
 		key[i] = FALSE;
 	}
 
@@ -362,12 +368,8 @@ int osd_init (int argc, char *argv[])
 
 void osd_exit (void)
 {
-#ifdef linux
-  if (play_sound)
-  {
-	close (audio_fd);
-  }
-#endif
+	/* actually no global options: invoice directly unix-dep routines */
+	sysdep_exit();
 }
 
 
@@ -390,10 +392,10 @@ struct osd_bitmap *osd_create_bitmap (int width, int height)
 
 #ifndef DR1
   if ((bitmap = malloc (sizeof (struct osd_bitmap) +
-												(height-1) * sizeof (byte *))) != NULL)
+		(height-1) * sizeof (byte *))) != NULL)
 #else
   if ((bitmap = malloc (sizeof (struct osd_bitmap) +
-												(height) * sizeof (byte *))) != NULL)
+		(height) * sizeof (byte *))) != NULL)
 #endif
   {
     bitmap->width = width;
@@ -442,8 +444,8 @@ struct osd_bitmap *osd_create_display (int width, int height)
 {
 	Screen	 	*screen;
 	XEvent		 event;
-  	XSizeHints 	 hints;
-  	XWMHints 	 wm_hints;
+  XSizeHints 	 hints;
+  XWMHints 	 wm_hints;
 	int		 i;
 
 	/* Allocate the bitmap and set the image width and height. */
@@ -470,13 +472,27 @@ struct osd_bitmap *osd_create_display (int width, int height)
   White			= WhitePixelOfScreen (screen);
   Black			= BlackPixelOfScreen (screen);
 
-  colormap		= DefaultColormapOfScreen (screen);
-  gc			= DefaultGCOfScreen (screen);
+  colormap	= DefaultColormapOfScreen (screen);
+  gc				= DefaultGCOfScreen (screen);
 
 	/* Create the window. No buttons, no fancy stuff. */
 
-  window= XCreateSimpleWindow (display, RootWindowOfScreen (screen), 0, 0,
-    			 	bitmap->width, bitmap->height, 0, White, Black);
+#ifdef CS1
+  if (scaling) 
+	{
+    window = XCreateSimpleWindow (display, RootWindowOfScreen (screen), 0, 0,
+  														    bitmap->width*widthscale, bitmap->height*heightscale, 
+																  0, White, Black);
+  }
+  else 
+	{
+    window = XCreateSimpleWindow (display, RootWindowOfScreen (screen), 0, 0,
+    bitmap->width, bitmap->height, 0, White, Black);
+  }
+#else                                    
+  window = XCreateSimpleWindow (display, RootWindowOfScreen (screen), 0, 0,
+  										  			 	bitmap->width, bitmap->height, 0, White, Black);
+#endif
 
   if (!window)
   {
@@ -487,8 +503,24 @@ struct osd_bitmap *osd_create_display (int width, int height)
 	/*  Placement hints etc. */
 
   hints.flags		= PSize | PMinSize | PMaxSize;
-  hints.min_width	= hints.max_width=hints.base_width= bitmap->width;
-  hints.min_height	= hints.max_height=hints.base_height=bitmap->height;
+#ifdef CS1
+	if (scaling)
+	{			
+ 	 	hints.min_width		= hints.max_width 	= hints.base_width	= 
+ 	 		bitmap->width * widthscale;
+ 	 	hints.min_height	= hints.max_height 	= hints.base_height	=	
+ 	 		bitmap->height * heightscale;
+ 	}
+ 	else
+ 	{
+	  hints.min_width		= hints.max_width=hints.base_width= bitmap->width;
+ 	 	hints.min_height	= hints.max_height=hints.base_height=bitmap->height;
+	}
+#else
+  hints.min_width		= hints.max_width		= hints.base_width	= bitmap->width;
+  hints.min_height	= hints.max_height	= hints.base_height	=	bitmap->height;
+#endif
+
   wm_hints.input	= TRUE;
   wm_hints.flags	= InputHint;
 
@@ -496,7 +528,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
   XSetWMNormalHints 	(display, window, &hints);
   XStoreName 		(display, window, title);
 
-/* Map and expose the window. */
+	/* Map and expose the window. */
 
   XSelectInput   (display, window, FocusChangeMask | ExposureMask | KeyPressMask | KeyReleaseMask);
   XMapRaised     (display, window);
@@ -508,8 +540,24 @@ struct osd_bitmap *osd_create_display (int width, int height)
 
 	/* Create a MITSHM image. */
 
+#ifdef CS1
+  /* CS: scaling changes requested image size */
+
+  if (scaling) 
+	{
+    image= XShmCreateImage (display, DefaultVisualOfScreen (screen), 8,
+       									    ZPixmap, NULL, &shm_info, bitmap->width*widthscale, 
+														bitmap->height*heightscale);
+  }
+  else 
+	{
+    image= XShmCreateImage (display, DefaultVisualOfScreen (screen), 8,
+   									        ZPixmap, NULL, &shm_info, bitmap->width, bitmap->height);
+  }
+#else
   image= XShmCreateImage (display, DefaultVisualOfScreen (screen), 8,
-  		  ZPixmap, NULL, &shm_info, bitmap->width, bitmap->height);
+  		  									ZPixmap, NULL, &shm_info, bitmap->width, bitmap->height);
+#endif
 
   if (!image)
   {
@@ -528,6 +576,29 @@ struct osd_bitmap *osd_create_display (int width, int height)
 
 	/* And allocate the bitmap buffer. */
 
+#ifdef CS1
+	/* CS: scaling uses 2 buffers for transparency with mame */
+
+	if (scaling) 
+	{
+  	scaled_buffer_ptr = (byte *)(image->data = shm_info.shmaddr =
+                				(byte *) shmat ( shm_info.shmid,0 ,0));
+  	buffer_ptr = (byte *) malloc (sizeof(byte) * bitmap->width * bitmap->height);
+  }
+ 	else 
+	{
+    buffer_ptr = (byte *)(image->data = shm_info.shmaddr =
+         				 (byte *) shmat (shm_info.shmid, 0, 0));
+  }
+
+	/* CS: added extra check here */
+
+  if (!buffer_ptr || (scaling && !scaled_buffer_ptr))
+  {
+    printf ("OSD ERROR: failed to allocate MITSHM bitmap buffer.\n");
+    return (NULL);
+  }
+#else
   buffer_ptr = (byte *)(image->data = shm_info.shmaddr =
 			 shmat (shm_info.shmid, 0, 0));
 
@@ -536,6 +607,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
   	printf ("OSD ERROR: failed to allocate MITSHM bitmap buffer.\n");
   	return (NULL);
   }
+#endif
 
   shm_info.readOnly = FALSE;
 
@@ -553,20 +625,57 @@ struct osd_bitmap *osd_create_display (int width, int height)
 
   buffer_ptr = (byte *) malloc (sizeof(byte) * bitmap->width * bitmap->height);
 
+#ifdef CS1
+  /* CS: allocated scaled image buffer - ugly, but leave all other code untouched. */
+
+	if (scaling)
+	{
+  	scaled_buffer_ptr = (byte *) malloc (sizeof(byte) * bitmap->width *
+ 																				 bitmap->height * widthscale * heightscale);
+	}
+#endif
+
+#ifdef CS1
+  /* CS: scaling hack extends this check */
+
+  if (!buffer_ptr || (scaling && !scaled_buffer_ptr))
+  {
+    printf ("OSD ERROR: failed to allocate bitmap buffer.\n");
+    return (NULL);
+  }
+#else
   if (!buffer_ptr)
   {
   	printf ("OSD ERROR: failed to allocate bitmap buffer.\n");
   	return (NULL);
   }
+#endif
 
 	/* Create the image. It's a ZPixmap, which means that the buffer will
 	 * contain a byte for each pixel. This also means that it will only work
 	 * on PseudoColor visuals (i.e. 8-bit/256-color displays).
 	 */
 
+#ifdef CD1
+ 	/* CS: Ximage is allocated against our new image if scaling active */
+
+ 	if (scaling) 
+	{
+  	image = XCreateImage (display, DefaultVisualOfScreen (screen), 8,
+          							  ZPixmap, 0, (char *) scaled_buffer_ptr,
+            							bitmap->width*widthscale, bitmap->height*heightscale, 8, 0);
+  }
+ 	else 
+	{
+  	image = XCreateImage (display, DefaultVisualOfScreen (screen), 8,
+    							        ZPixmap, 0, (char *) buffer_ptr,
+            							bitmap->width, bitmap->height, 8, 0);
+  }
+#else
   image = XCreateImage (display, DefaultVisualOfScreen (screen), 8,
-      			ZPixmap, 0, (char *) buffer_ptr,
-      			bitmap->width, bitmap->height, 8, 0);
+						      			ZPixmap, 0, (char *) buffer_ptr,
+      									bitmap->width, bitmap->height, 8, 0);
+#endif
 
   if (!image)
   {
@@ -620,6 +729,15 @@ void osd_close_display (void)
     if (image)
     {
     	XDestroyImage (image);
+
+#ifdef CS1
+		  /* CS: scaling hack means scaled_buffer_ptr is auto-freed, so... */
+
+   	  if (scaling)
+			{
+      	free(buffer_ptr);
+			}
+#endif
     }
 
     for (i = 0; i < 16; i++)
@@ -717,15 +835,54 @@ int osd_obtain_pen (byte red, byte green, byte blue)
 
 void osd_update_display (void)
 {
-#ifdef MITSHM
+#ifdef CS1
+  /* CS: scaling - here's the CPU burner.  Buy a faster computer
+         sez Micro$oft. Ignore the ugly framerate stuff.*/
+	
+    if (scaling) { /* IF SCALING ACTIVE */
+	byte *start,*end;
+	int x,y,i,linechanged;
+        register byte *from = buffer_ptr;
+	register byte *to   = scaled_buffer_ptr;
+	
+	start=end=to; /* not really needed, but compiler blames */
+	for (y=0;y<bitmap->height;y++,to+=(heightscale-1)*widthscale*bitmap->width) {
+	    linechanged=0;
+	    for (x=0; x<bitmap->width; x++,from++,to+=widthscale) {
+		if ( *to == *from ) continue;
+		for (i=0;i<widthscale;i++) *(to+i)=*from;
+		if (!linechanged) { start=to; linechanged++; }
+		end=to+i-1;
+	    } /* end of x search. if line changed, use memcpy to update */
+	    if(linechanged) for (i=1;i<heightscale;i++)
+		memcpy((start+i*bitmap->width*widthscale),start,end-start+1);
+	} /* end of lines in bitmap */
 
-  XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
-   		bitmap->width, bitmap->height, FALSE);
+#ifdef MITSHM
+	XShmPutImage (display, window, gc, image, 0, 0, 0, 0,
+  					      bitmap->width*widthscale, bitmap->height*heightscale, FALSE);
+#else
+	XPutImage (display, window, gc, image, 0, 0, 0, 0,
+    			     bitmap->width*widthscale, bitmap->height*heightscale);
+#endif
+
+    } else { /* NO SCALING ACTIVE - JUST PUTIMAGE */
+
+#ifdef MITSHM
+ 	 XShmPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height, FALSE);
+#else
+	 XPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+#endif
+    } /* if scaling */
 
 #else
+/* NOT CS1 */
 
-  XPutImage (display, window, gc, image, 0, 0, 0, 0,
-  		 bitmap->width, bitmap->height);
+#ifdef MITSHM
+  XShmPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height, FALSE);
+#else
+  XPutImage (display, window, gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
+#endif
 
 #endif
 
@@ -1033,13 +1190,45 @@ int osd_key_pressed (int request)
 
 void osd_poll_joystick (void)
 {
-	/* Not implemented yet. */
+	if (use_joystick) sysdep_poll_joystick();
 }
 
 int osd_joy_pressed (int joycode)
 {
-	/* Not implemented yet. */
-	return (FALSE);
+	/* if joystick not implemented , all variables set to zero */
+	switch (joycode)
+	{
+		case OSD_JOY_LEFT:
+			return osd_joy_left;
+			break;
+		case OSD_JOY_RIGHT:
+			return osd_joy_right;
+			break;
+		case OSD_JOY_UP:
+			return osd_joy_up;
+			break;
+		case OSD_JOY_DOWN:
+			return osd_joy_down;
+			break;
+		case OSD_JOY_FIRE1:
+			return osd_joy_b1;
+			break;
+		case OSD_JOY_FIRE2:
+			return osd_joy_b2;
+			break;
+		case OSD_JOY_FIRE3:
+			return osd_joy_b3;
+			break;
+		case OSD_JOY_FIRE4:
+			return osd_joy_b4;
+			break;
+		case OSD_JOY_FIRE:
+			return (osd_joy_b1 || osd_joy_b2 || osd_joy_b3 || osd_joy_b4);
+			break;
+		default:
+			return FALSE;
+			break;
+	}
 }
 
 /*

@@ -274,13 +274,41 @@ ROM_END
 
 
 
+static unsigned jumpbug_decode(int A)
+{                        
+	switch (A)
+	{
+                case 0x265a:
+                case 0x8a16:
+                case 0x8dae:
+                        return 0xc9;
+			break;
+
+                case 0x8dbe:
+                case 0x9f53:
+                        return 0xc3;
+			break;
+
+                case 0x8dd7:
+                case 0x9f3d:
+                        return 0x18;
+			break;
+
+		default:
+			return RAM[A];
+			break;
+	}
+}
+
+
+
 struct GameDriver jumpbug_driver =
 {
 	"jumpbug",
 	&machine_driver,
 
 	jumpbug_rom,
-	0, 0,
+        0, jumpbug_decode,
 	0,
 
 	input_ports, dsw,

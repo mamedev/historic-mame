@@ -162,30 +162,22 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	if ((*gberet_spritebank & 0x08) != 0)
 	{
+		unsigned char *sr;
+
+
+		if ((*gberet_spritebank & 0x08) != 0)
+			sr = spriteram;
+		else sr = spriteram_2;
+
 		for (offs = 0;offs < 48*4;offs += 4)
 		{
-			if (spriteram[offs+3])
+			if (sr[offs+3])
 			{
-				drawgfx(bitmap,Machine->gfx[(spriteram[offs+1] & 0x40) ? 2 : 1],
-						spriteram[offs],spriteram[offs+1] & 0x0f,
-						spriteram[offs+1] & 0x10,spriteram[offs+1] & 0x20,
-						spriteram[offs+2] - 2*(spriteram[offs+1] & 0x80),spriteram[offs+3]-8,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
-			}
-		}
-	}
-	else
-	{
-		for (offs = 64*4;offs < 64*4+48*4;offs += 4)
-		{
-			if (spriteram[offs+3])
-			{
-				drawgfx(bitmap,Machine->gfx[(spriteram[offs+1] & 0x40) ? 2 : 1],
-						spriteram[offs],spriteram[offs+1] & 0x0f,
-						spriteram[offs+1] & 0x10,spriteram[offs+1] & 0x20,
-						spriteram[offs+2] - 2*(spriteram[offs+1] & 0x80),spriteram[offs+3]-8,
+				drawgfx(bitmap,Machine->gfx[(sr[offs+1] & 0x40) ? 2 : 1],
+						sr[offs],sr[offs+1] & 0x0f,
+						sr[offs+1] & 0x10,sr[offs+1] & 0x20,
+						sr[offs+2] - 2*(sr[offs+1] & 0x80),sr[offs+3]-8,
 						&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 			}
 		}

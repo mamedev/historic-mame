@@ -271,18 +271,18 @@ static unsigned char palette[] =
 	0xff,0xff,0xff, /* WHITE */
 	0xff,0x00,0x00, /* RED */
 	0xff,0x00,0xff, /* PURPLE */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0xff,0x80, /* LTORANGE */
-	0xdb,0x00,0x00, /* DKRED */
+	168,0xff,0xff,  /* CYAN */
+	255,200,184,    /* LTORANGE */
+	184,0x00,0x00,  /* DKRED */
 	0x00,0x00,0xff, /* BLUE */
 	0xff,0xff,0x00, /* YELLOW */
-	239,3,239,      /* PINK */
-	3,180,239,      /* LTBLUE */
-	255,131,3,      /* ORANGE */
+	255,128,255,    /* PINK */
+	120,192,255,    /* LTBLUE */
+	0xff,96,0x00,   /* ORANGE */
 	0x00,0xff,0x00, /* GREEN */
-	167,3,3,        /* DKBROWN */
-	255,183,115,    /* LTBROWN */
-	0x00,0x46,0x00, /* DKGREEN */
+	136,0x00,0x00,  /* DKBROWN */
+	255,176,112,    /* LTBROWN */
+	0x00,96,0x00,   /* DKGREEN */
 };
 
 enum { BLACK,WHITE,RED,PURPLE,CYAN,LTORANGE,DKRED,BLUE,YELLOW,PINK,
@@ -311,21 +311,21 @@ static unsigned char dkong_colortable[] =
 	0,0,0,RED,      /* RUB END */
 	0,5,6,RED,      /* (C), ITC */
 	0,5,6,RED,      /* (C), ITC */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
-	0,LTORANGE,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
+	0,LTBROWN,DKRED,WHITE, /* Kong in intermission */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
 	BLACK,RED,PURPLE,CYAN,  /* BONUS */
-	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
-	BLACK,0,0,LTORANGE,     /* 0-9 in intermission */
+	BLACK,0,0,RED,          /* 0-9 in intermission */
+	BLACK,0,0,RED,          /* 0-9 in intermission */
+	BLACK,0,0,RED,          /* 0-9 in intermission */
 	BLACK,RED,PURPLE,CYAN,  /* 0-9 in intermission, BONUS */
 	0,0,0,0,        /* unused */
 	0,0,0,0,        /* unused */
@@ -335,48 +335,48 @@ static unsigned char dkong_colortable[] =
 	0,0,0,0,        /* unused */
 	0,0,0,0,        /* unused */
 	0,0,0,0,        /* unused */
-	0,CYAN,BLUE,YELLOW,     /* ziqqurat level */
-	0,CYAN,BLUE,YELLOW,     /* ziqqurat level */
-	0,CYAN,0,0,     /* _ ziqqurat level */
+	0,CYAN,BLUE,YELLOW, /* ziqqurat level */
+	0,CYAN,BLUE,YELLOW, /* ziqqurat level */
+	0,LTBLUE,0,0,   /* ziqqurat level */
 	0,0,0,0,        /* unused */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder, ladder */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder*/
 	0,0,0,0,        /* unused */
 	0,0,0,0,        /* unused */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	0,0,0,0,        /* unused */
-	0,0,0,CYAN,     /* HELP! */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
 	0,0,0,0,        /* unused */
 	0,0,0,CYAN,     /* HELP! */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	BLACK,RED,PURPLE,CYAN,  /* barrel level */
-	0,0,0,RED,      /* ? */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
+	0,0,0,0,        /* unused */
+	0,0,0,CYAN,     /* HELP! */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
+	BLACK,RED,PURPLE,CYAN,  /* barrel level girder */
+	0,0,0,0,        /* unused RED */
 	0,RED,LTORANGE,BLUE,    /* lives */
 
 	/* sprites */
-	BLACK,LTBLUE,LTBROWN,RED,       /* Fireball (When Mario has hammer) */
+	BLACK,LTBLUE,BLUE,ORANGE,       /* Fireball (When Mario has hammer) */
 							/* Rotating ends on conveyors */
 							/* Springy things (lift screen) */
-	BLACK,RED,YELLOW,WHITE, /* Fireball (normal) */
+	BLACK,ORANGE,YELLOW,WHITE,      /* Fireball (normal) */
 							/* Flames (on top of oil tank) */
 	BLACK,RED,LTORANGE,BLUE,        /* Mario */
-	BLACK,1,2,3,                    /* -Moving Ladder (conveyor screen) */
+	BLACK,RED,PURPLE,WHITE,         /* -Moving Ladder (conveyor screen) */
 							/* Moving Lift */
-	BLACK,4,5,6,
-	BLACK,7,8,9,
-	BLACK,10,11,12,
+	BLACK,0,0,0,                    /* unused */
+	BLACK,0,0,0,                    /* unused */
+	BLACK,0,0,0,                    /* unused */
 	BLACK,LTBROWN,DKBROWN,WHITE,    /* Kong (Head), Hammer, Scores (100,200,500,800 etc) */
 	BLACK,LTBROWN,DKBROWN,ORANGE,   /* Kong (body) */
 	BLACK,ORANGE,WHITE,PINK,        /* girl (Head), Heart (when screen completed) */
-	BLACK,WHITE,BLUE,PINK,  /* Girl (lower half), Umbrella, Purse, hat */
-	BLACK,ORANGE,BLUE,YELLOW,       /* Rolling Barrel (type 1), Standing Barrel (near Kong) */
-	BLACK,WHITE,LTBLUE,BLUE,        /* Oil tank, Rolling Barrel (type 2), Explosion (barrel hit withhammer) */
-	BLACK,3,4,5,
-	BLACK,GREEN,1,2,        /* -Pies (Conveyor screen) */
-	BLACK,YELLOW,RED,BLACK  /* -Thing at top/bottom of lifts, Clipping sprite (all black) */
+	BLACK,WHITE,BLUE,PINK,          /* Girl (lower half), Umbrella, Purse, hat */
+	BLACK,ORANGE,BLUE,LTORANGE,     /* Rolling Barrel (type 1), Standing Barrel (near Kong) */
+	BLACK,WHITE,CYAN,BLUE,          /* Oil tank, Rolling Barrel (type 2), Explosion (barrel hit withhammer) */
+	BLACK,0,0,0,                    /* unused */
+	BLACK,LTBROWN,YELLOW,BLUE,      /* -Pies (Conveyor screen) */
+	BLACK,YELLOW,ORANGE,BLACK  /* -Thing at top/bottom of lifts, Clipping sprite (all black) */
 };
 
 static unsigned char dkongjr_colortable[] =
@@ -428,23 +428,23 @@ static unsigned char dkongjr_colortable[] =
 	BLACK,BLACK,ORANGE,BLACK,      /* Screen1: Islands Bottom */
 	BLACK,LTBLUE,BLUE,RED,         /* Screen4: Locks */
 	BLACK,LTBLUE,BLUE,WHITE,       /* Screen1: Water */
-	BLACK,BLACK,BLUE,BLACK,        /* Screen4: Rope Cage-Lock */
-	BLACK,BLACK,BLUE,BLACK,        /* Screen4: Rope Cage-Lock */
+	BLACK,BLACK,BLUE,BLACK,        /* Screen2: Rope Cage-Lock */
+	BLACK,BLACK,BLUE,BLACK,        /* Screen2: Rope Cage-Lock */
 	BLACK,GREEN,RED,LTBROWN,       /* Screen1: Vines */
-	BLACK,GREEN,RED,RED,           /* Rope & Chains */
-	BLACK,GREEN,GREEN,WHITE,       /* Screen4: Wall */
-	0,0,0,0,
-	0,0,0,0,
-	0,0,0,0,
-	0,1,2,3,                       /* ?? */
-	0,4,5,6,                       /* ?? */
+	BLACK,GREEN,BLUE,LTBLUE,       /* Rope & Chains */
+	BLACK,CYAN,BLUE,LTBLUE,        /* Screen2: Wall */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Mario's Platform */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Mario's Platform */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Mario's Platform */
+	0,0,0,0,                       /* Unused */
+	0,0,0,0,                       /* Unused */
 	BLACK,GREEN,DKGREEN,WHITE,     /* Screen1: Islands Top */
-	BLACK,GREEN,DKGREEN,WHITE,     /* Screen1&2: Top Floor Bottom Part */
-	0,7,8,9,                       /* ?? */
-	0,10,11,12,                    /* ?? */
-	BLACK,WHITE,ORANGE,YELLOW,     /* Screen1&2: Platform */
-	0,13,14,15,                    /* ?? */
-	0,1,1,1,                       /* ?? */
+	BLACK,LTBLUE,BLUE,WHITE,       /* Screen1&2: Top Floor Bottom Part */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Bottom Platform */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Bottom Platform */
+	BLACK,LTBLUE,ORANGE,YELLOW,    /* Screen1,2,4: Platform */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Bottom Platform */
+	BLACK,LTBLUE,BLUE,BLUE,        /* Screen4: Bottom Platform */
 	BLACK,DKGREEN,DKBROWN,LTBROWN, /* Lives */
 
 	/* chars (second bank) */
@@ -460,21 +460,21 @@ static unsigned char dkongjr_colortable[] =
 	0,0,0,0,
 	0,0,0,0,
 	0,0,0,0,
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLACK,      /* Logo: Donkey Kong */
-	BLACK,LTORANGE,RED,BLUE,       /* Logo: Junior */
-	BLACK,LTORANGE,RED,BLUE,       /* Logo: Junior */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLACK,        /* Logo: Donkey Kong */
+	BLACK,YELLOW,RED,BLUE,         /* Logo: Donkey Kong, TM, Junior */
 	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
 	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
 	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
@@ -496,12 +496,12 @@ static unsigned char dkongjr_colortable[] =
 	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
 	BLACK,BLACK,RED,BLUE,          /* Logo: Junior */
 	0,0,0,0,
-	BLACK,GREEN,BLACK,BLACK,       /* Logo: (c) 198 */
-	BLACK,GREEN,BLACK,BLACK,       /*       2 Nin   */
-	BLACK,GREEN,BLACK,BLACK,       /*       tendo   */
-	BLACK,GREEN,BLACK,BLACK,       /*       of Am   */
-	BLACK,GREEN,BLACK,BLACK,       /*       erica   */
-	BLACK,GREEN,BLACK,BLACK,       /*       Inc.    */
+	BLACK,RED,BLACK,BLACK,         /* Logo: (c) 198 */
+	BLACK,RED,BLACK,BLACK,         /*       2 Nin   */
+	BLACK,RED,BLACK,BLACK,         /*       tendo   */
+	BLACK,RED,BLACK,BLACK,         /*       of Am   */
+	BLACK,RED,BLACK,BLACK,         /*       erica   */
+	BLACK,RED,BLACK,BLACK,         /*       Inc.    */
 	0,0,0,0,
 	0,0,0,0,
 	0,0,0,0,
@@ -514,7 +514,7 @@ static unsigned char dkongjr_colortable[] =
 	0,0,0,0,
 
 	/* sprites */
-	BLACK,LTBROWN,BLUE,RED,        /* Mario */
+	BLACK,LTORANGE,BLUE,RED,       /* Mario */
 	BLACK,BLACK,BLACK,WHITE,       /* Bonus Score */
 	BLACK,GREEN,ORANGE,WHITE,      /* Screen2: Moving Platform */
 	BLACK,1,2,3,                   /* ?? */
@@ -661,32 +661,32 @@ ROM_END
 
 static const char *sample_names[] =
 {
-	"walk.sam",
-	"jump.sam",
-	"boom.sam",
-	"coin.sam",
-	"drop.sam",
-	"prize.sam",
-	"",
-	"",
-	"",
-	"intro.sam",
-	"howhigh.sam",
-	"time.sam",
-	"hammer.sam",
-	"rivet2a.sam",
-	"hamhit.sam",
-	"lvl1end.sam",
-	"back1.sam",
-	"",
-	"back3.sam",
-	"back2.sam",
-	"rivet1a.sam",
-	"",
-	"rivet1.sam",
-	"gorilla.sam",
-	"death.sam",
-	0	/* end of array */
+	"effect00.sam",    
+	"effect01.sam",
+	"effect02.sam",
+	"effect03.sam",
+	"effect04.sam",
+	"effect05.sam",
+	"effect06.sam",
+	"effect07.sam",
+	"tune00.sam",   
+	"tune01.sam",   
+	"tune02.sam",   
+	"tune03.sam",
+	"tune04.sam",   
+	"tune05.sam",   
+	"tune06.sam",   
+	"tune07.sam",
+	"tune08.sam",   
+	"tune09.sam",   
+	"tune0a.sam",
+	"tune0b.sam",
+	"tune0c.sam",   
+	"tune0d.sam",   
+	"tune0e.sam",   
+	"tune0f.sam",
+	"interupt.sam",
+    0	/* end of array */
 };
 
 

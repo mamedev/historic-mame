@@ -73,6 +73,10 @@ static unsigned char porthandler3(AY8910 *chip, int port, int iswrite, unsigned 
 {
 	return porthandler(3,chip,port,iswrite,val);
 }
+static unsigned char porthandler4(AY8910 *chip, int port, int iswrite, unsigned char val)
+{
+	return porthandler(4,chip,port,iswrite,val);
+}
 
 
 
@@ -99,6 +103,11 @@ int AY8910_sh_start(struct AY8910interface *interface)
 			AYSetPortHandler(3,AY_PORTA,porthandler3);
 			AYSetPortHandler(3,AY_PORTB,porthandler3);
 		}
+		if (intf->num > 4)
+		{
+			AYSetPortHandler(4,AY_PORTA,porthandler4);
+			AYSetPortHandler(4,AY_PORTB,porthandler4);
+		}
 
 		return 0;
 	}
@@ -114,7 +123,7 @@ void AY8910_sh_stop(void)
 
 
 
-static int lastreg0,lastreg1,lastreg2,lastreg3;	/* AY-3-8910 register currently selected */
+static int lastreg0,lastreg1,lastreg2,lastreg3,lastreg4;	/* AY-3-8910 register currently selected */
 
 
 int AY8910_read_port_0_r(int offset)
@@ -132,6 +141,10 @@ int AY8910_read_port_2_r(int offset)
 int AY8910_read_port_3_r(int offset)
 {
 	return AYReadReg(3,lastreg3);
+}
+int AY8910_read_port_4_r(int offset)
+{
+	return AYReadReg(4,lastreg4);
 }
 
 
@@ -152,6 +165,10 @@ void AY8910_control_port_3_w(int offset,int data)
 {
 	lastreg3 = data;
 }
+void AY8910_control_port_4_w(int offset,int data)
+{
+	lastreg4 = data;
+}
 
 
 
@@ -171,6 +188,10 @@ void AY8910_write_port_3_w(int offset,int data)
 {
 	AYWriteReg(3,lastreg3,data);
 }
+void AY8910_write_port_4_w(int offset,int data)
+{
+	AYWriteReg(4,lastreg4,data);
+}
 
 
 
@@ -178,6 +199,8 @@ void AY8910_sh_update(void)
 {
 	int i;
 
+
+	if (play_sound == 0) return;
 
 	AYUpdate();
 	for (i = 0;i < intf->num;i++)

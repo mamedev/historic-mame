@@ -128,7 +128,7 @@ static struct GfxLayout charlayout =
 	8*7	/* every char takes 7 consecutive bytes */
 };
 
-// Main Sprites
+/* Main Sprites */
 
 static struct GfxLayout spritelayout0 =
 {
@@ -141,7 +141,7 @@ static struct GfxLayout spritelayout0 =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-// Man Top
+/* Man Top */
 
 static struct GfxLayout spritelayout1 =
 {
@@ -157,9 +157,9 @@ static struct GfxLayout spritelayout1 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 0, 751, &charlayout, 0, 8 },
-	{ 1, 0x0A00, &spritelayout0, 0, 8 },	// Monsters
-	{ 1, 0x0200, &spritelayout0, 0, 8 },    // Monsters eating Man
-	{ 1, 0x0800, &spritelayout1, 0, 8 },    // Man
+    { 1, 0x0A00, &spritelayout0, 0, 8 },    /* Monsters             */
+    { 1, 0x0200, &spritelayout0, 0, 8 },    /* Monsters eating Man  */
+    { 1, 0x0800, &spritelayout1, 0, 8 },    /* Man                  */
 	{ -1 } /* end of array */
 };
 

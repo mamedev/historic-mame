@@ -22,74 +22,923 @@ Here is a quick list of ther currently supported games; read on for details.
 The list doesn't include variants of the same game.
 
 
-                                         Accurate            Hi score
-Game                         Playable?    colors?    Sound?    save?
+==============================================================================
+|                             |        |Accurate|        |Hi score| Directory|
+| Game Name                   |Playable| colors | Sound  |  save  |   Name   |
+==============================================================================
+| 1942                        |  Yes   |  Yes   |  Yes   |  Yes   | 1942     |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Amidar                      |  Yes   | Close  |  Yes   |   No   | amidar   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Arabian                     |  Yes   |   No   |  Yes   |   No   | arabian  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Bagman                      |  Yes   |   No   | Music  |   No   | bagman   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Bomb Jack                   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Burger Time                 |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Carnival                    |  Yes   | Maybe  |   No   |   No   | carnival |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Centipede                   |  Yes   |   No   |  Yes   |  Yes   | centiped |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Congo Bongo                 |  Yes   |   No   |   No   |  Yes   | congo    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Crazy Climber               |  Yes   |  Yes   |  Yes   |  Yes   | cclimber |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Crazy Kong                  |  Yes   |  Yes   |  Yes   |  Yes   | ckong    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Crush Roller                |  Yes   |  Yes   |  Yes   |  Yes   | crush    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Donkey Kong                 |  Yes   | Close  | Yes(1) |  Yes   | dkong    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Donkey Kong Jr.             |  Yes   | Close  |   No   |  Yes   | dkongjr  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Donkey Kong 3               |  Yes   |   No   |   No   |  Yes   | dkong3   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Elevator Action - Bootleg   |  Yes   |   No   |   No   |  n/a   | elevator |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Elevator Action - Original  |   No   |   No   |   No   |   No   | elevatob |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Fantasy                     |   No   |   No   |   No   |   No   | fantasy  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Frogger                     |  Yes   | Close  |  Yes   |   No   | frogger  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Galaxian                    |  Yes   |  Yes   | Limited|  Yes   | galaxian |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Gorf                        |   No   |   No   |   No   |  n/a   | gorf     |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Green Beret                 |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Gyruss                      |  Yes   | Close  | Yes(1) |  Yes   | gyruss   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| "Japanese Irem game"        |  Yes   |  Yes   | Limited|   No   | japirem  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Jump Bug                    |  Yes   |   No   |  Yes   |   No   | jumpbug  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Jungle King                 |  Yes   |   No   |   No   |   No   | junglek  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Krull                       |  Yes   |  Yes   |   No   |  n/a   | krull    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Lady Bug                    |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Lost Tomb                   |   No   |   No   |  Yes   |  n/a   | losttomb |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mad Planets                 |  Yes   |  Yes?  |   No   |   No   | mplanets |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Millipede                   |  Yes   |   No   |   No   |  Yes   | milliped |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Moon Cresta                 |  Yes   |  Yes   | Limited|  Yes   | mooncrst |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Moon Patrol                 |  Yes   |   No   |   No   |   No   | mpatrol  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Moon Quasar                 |  Yes   |  Yes   | Limited|  Yes   | moonqsr  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mouse Trap                  |Partial.|   No   |   No   |   No   | mtrap    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mr. Do!                     |  Yes   |  Yes   |  Yes   |  Yes   | mrdo     |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Mr. Do's Castle             |   No   |   No   |   No   |  n/a   | docastle |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Ms Pac Man (bootleg)        |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Nibbler                     |  Yes   |   No   |   No   |  Yes   | nibbler  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pac Man                     |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pengo                       |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pepper II                   |Partial.|   No   |   No   |   No   | pepper2  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Phoenix                     |  Yes   | Close  | Yes(1) |   No   | phoenix  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pisces                      |  Yes   |  Yes   | Limited|   No   | pisces   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pleiads                     |  Yes   |   No   | Limited|   No   | pleiads  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Pooyan                      |  Yes   |   No   |  Yes   |  Yes   | pooyan   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Popeye - Bootleg            |  Yes   |  Yes   |  Yes   |  Yes   | popeyebl |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Q*Bert                      |  Yes   |  Yes   | Yes(1) |   No   | qbert    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Rally X                     |  Yes   |   No   |Partial.|   No   | rallyx   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Scramble                    |  Yes   |  Yes   |  Yes   |   No   | scramble |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Seicross                    |   No   |   No   |  Yes   |  n/a   | seicross |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Space Invaders              |  Yes   |  Yes   | Yes(1) |  Yes   | invaders |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Space Panic                 |  Yes   | Close  |   No   |  Yes   | panic    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Super Cobra                 |  Yes   |   No   |  Yes   |   No   | scobra   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| The Adventures of Robby Roto|   No   |   No   |   No   |  n/a   | robby    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| The End                     |  Yes   |   No   |  Yes   |   No   | theend   |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Time Pilot                  |  Yes   | Close  |  Yes   |  Yes   | timeplt  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Turtles                     |  Yes   | Close  |  Yes   |   No   | turtles  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Vanguard                    |  Yes   |   No   |   No   |   No   | vanguard |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Venture                     |Partial.|   No   |   No   |   No   | venture  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| War of the Bugs             |  Yes   |   No   | Limited|   No   | warofbug |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Warp Warp                   |  Yes   |   No   |   No   |  n/a   | warpwarp |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Wizard of Wor               |  Yes   | Maybe  |   No   |   No   | wow      |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Zaxxon                      |  Yes   | Close  |   No   |  Yes   | zaxxon   |
+|-----------------------------|--------|--------|--------|--------|----------|
 
-Pac Man                        Yes         Yes        Yes       Yes
-Ms Pac Man (bootleg)           Yes         Yes        Yes       Yes
-Crush Roller                   Yes         Yes        Yes       Yes
-Pengo                          Yes         Yes        Yes       Yes
-Lady Bug                       Yes         Yes        Yes       Yes
-Mr. Do!                        Yes         Yes        Yes       Yes
-Mr. Do's Castle                 No          No         No       n/a
-Crazy Climber                  Yes         Yes        Yes       Yes
-Seicross                        No          No        Yes       n/a
-Crazy Kong                     Yes         Yes        Yes       Yes
-Donkey Kong                    Yes          No      Yes (1)     Yes
-Donkey Kong Jr.                Yes          No         No       Yes
-Donkey Kong 3                  Yes          No         No       Yes
-Mario Bros.                    Yes          No         No       Yes
-Bagman                         Yes          No     Music only    No
-Wizard of Wor                  Yes        Maybe        No        No
-The Adventures of Robby Roto    No          No         No       n/a
-Gorf                            No          No         No       n/a
-Galaxian                       Yes         Yes      Limited     Yes
-Pisces                         Yes         Yes      Limited      No
-"Japanese Irem game"           Yes         Yes      Limited      No
-War of the Bugs                Yes          No      Limited      No
-Moon Cresta                    Yes         Yes      Limited     Yes
-Moon Quasar                    Yes         Yes      Limited     Yes
-Scramble                       Yes         Yes        Yes        No
-Super Cobra                    Yes          No        Yes        No
-The End                        Yes          No        Yes        No
-Frogger                        Yes        Close       Yes        No
-Amidar                         Yes        Close       Yes        No
-Turtles                        Yes          No        Yes        No
-Rally X                        Yes          No      Partial      No
-Time Pilot                     Yes          No        Yes       Yes
-Pooyan                         Yes          No        Yes       Yes
-Phoenix                        Yes        Close     Yes (1)      No
-Pleiads                        Yes          No      Limited      No
-Space Invaders                 Yes         Yes      Yes (1)     Yes
-Carnival                       Yes        Maybe        No        No
-Zaxxon                         Yes          No         No       Yes
-Congo Bongo                    Yes          No         No       Yes
-Bomb Jack                      Yes         Yes        Yes       Yes
-Centipede                      Yes          No        Yes       Yes
-Millipede                      Yes          No         No       Yes
-Nibbler                        Yes          No         No       Yes
-Fantasy                         No          No         No        No
-Vanguard                       Yes          No         No        No
-Moon Patrol                    Yes          No         No        No
-Burger Time                    Yes         Yes        Yes       Yes
-Lost Tomb                       No          No        Yes       n/a
-Jump Bug                       Yes          No        Yes        No
-Green Beret                    Yes         Yes        Yes       Yes
-Venture                     Partially       No         No        No
-Mouse Trap                  Partially       No         No        No
-Pepper II                   Partially       No         No        No
-Q*Bert                         Yes         Yes?    Partial (1)   No
-Mad Planets                    Yes         Yes?        No        No
-Jungle King                    Yes          No         No        No
-Elevator Action - Original      No          No         No        No
-Elevator Action - Bootleg      Yes          No         No       n/a
-Space Panic                    Yes        Close        No       Yes
-Arabian                        Yes          No        Yes        No
-Warp Warp                       No          No         No       n/a
-Popeye - Bootleg                No          No        Yes       n/a
-1942                           Yes          No        Yes       n/a
+(1) Need samples provided separately
 
-(1) Needs samples, provided in a separate archive
+
+
+1942 ("1942")
+=============
+Arrows  Move around
+CTRL    Fire
+ALT     Air Routing
+
+
+
+Amidar ("amidar")
+=================
+Arrows  Move around
+CTRL    Jump
+
+Clones supported:
+  Japanese version ("amidarjp"). This version has a worse attract mode and
+                                 does not display the number of jumps left.
+Known issues:
+- What do the dip switches do?
+
+
+
+Arabian ("arabian")
+===================
+Arrows  Move around
+CTRL    Kick
+F1      Enter test mode
+
+
+
+Bagman ("bagman")
+=================
+Arrows  Move around
+CTRL    Action
+
+
+
+Bomb Jack ("bombjack")
+======================
+Arrows  Move around
+CTRL    Jump
+
+Press fire to skip the ROM/RAM test at the beginning.
+
+In the dip switch menu, DIFFICULTY 1 refers to the speed of the mechanical
+bird, while DIFFICULTY 2 to the number and speed of enemies.
+SPECIAL refers to how often the (E) and (S) coins appear.
+
+Known issues:
+- Colors are accurate, but not entirely: the original machine uses 12 bits
+  (4 bits per pen), while I currently use only 8 bits (3 bits for red and
+  green, 2 bits for blue).
+- There is a bit in the sprite attributes which I don't know what means:
+  it seems to be set only when the (B) materializes.
+- The INITIAL HIGH SCORE setting doesn't only set that, it does something
+  else as well - but I don't know what.
+
+
+
+Burger Time ("btime")
+=====================
+Arrows  Move around
+CTRL    Pepper
+F1      \  Various tests.
+F2      |  Use F1 to cycle through tests while in test mode.
+F1+F2   /
+
+Clones supported:
+  different ROM set, without Midway copyright and different demo ("btimea")
+
+Known issues:
+- The way I turn sprites off is not correct.
+
+
+
+Carnival ("carnival")
+=====================
+Arrows  Move around
+CTRL    Fire
+
+
+
+Centipede ("centiped")
+======================
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz,
+  I don't know if the game runs correctly.
+- The game awards you 18 credits on startup
+- Palette is not supported
+
+
+
+Congo Bongo ("congo")
+=====================
+Runs on the same hardware as Zaxxon.
+
+Arrows  Move around
+CTRL    Jump
+
+
+
+Crazy Climber ("cclimber")
+==========================
+E,S,D,F Left joystick
+I,J,K,L Right joystick
+F1      Skip level
+
+Clones supported:
+  Japanese version ("ccjap")
+  bootleg version ("ccboot")
+
+
+
+Crazy Kong ("ckong")
+====================
+This Donkey Kong clone runs on the same hardware as Crazy Climber, most
+notable differencies being a larger character set and the display rotated
+90 degrees.
+
+Arrows  Move around
+CTRL    Jump
+
+Clones supported:
+  version running on Scramble hardware ("ckongs")
+
+Known issues:
+- Some problems with sound
+
+
+
+Crush Roller ("crush")
+======================
+Crush Roller is a hacked version of Make Trax, modified to run on a
+Pac Man board.
+
+Arrows  Move around
+F1      Skip level
+
+
+
+Donkey Kong ("dkong")
+=====================
+Arrows  Move around
+CTRL    Jump
+
+
+
+Donkey Kong Jr. ("dkongjr")
+===========================
+Runs on hardware similar to Donkey Kong
+
+Arrows  Move around
+CTRL    Jump
+
+
+
+Donkey Kong 3 ("dkong3")
+========================
+Runs on hardware similar to Donkey Kong
+
+Arrows  Move around
+CTRL    Fire
+F1      Test (keep it pressed - very nice, try it!)
+
+
+
+Elevator Action ("elevator")
+============================
+Should run on hardware similar to Jungle King.
+
+Known issues:
+- Collision detect not yet implemented.
+
+
+
+Elevator Action - Bootleg ("elevatob")
+======================================
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Collision detect not yet implemented.
+
+
+
+Fantasy ("fantasy")
+===================
+Runs on the same hardware as Nibbler.
+
+Not playable yet!
+
+
+
+Frogger ("frogger")
+===================
+Arrows  Move around
+
+Clones supported:
+  alternate version, smaller, with different help, but still (C) Sega 1981
+     ("frogsega")
+  bootleg version, which runs on a modified Scramble board ("froggers")
+
+
+
+Galaxian ("galaxian")
+=====================
+Original version with Namco copyright
+
+Arrows  Move around
+CTRL    Fire
+F2      Test mode
+
+  original with Midway copyright ("galmidw")
+  and several bootlegs:
+  one with Namco copyright ("galnamco")
+  Super Galaxian ("superg")
+  Galaxian Part X ("galapx")
+  Galaxian Part 1 ("galap1")
+  Galaxian Part 4 ("galap4")
+  Galaxian Turbo ("galturbo")
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+
+
+
+Gorf ("gorf")
+=============
+This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
+It boots, shows some text on the screen and that's all.
+
+
+
+Green Beret ("gberet")
+======================
+Arrows  Move around
+CTRL    Knife
+ALT     Fire
+
+Clones supported:
+  US version, called Rush'n Attack ("rushatck")
+
+Known issues:
+- The music starts with what seems a correct pitch, but changes after you die
+  for the first time or finishe the first level. Weird.
+
+
+
+Gyruss ("gyruss")
+======================
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Some of the components of spaceship do wraparound the top of the screen
+  for a while.  Dunno if the original machine does.
+
+
+
+"Japanese Irem game" ("japirem")
+================================
+This runs on a modified Galaxian board.
+
+Arrows  Move around
+CTRL    Fire
+
+Clones supported:
+  Uniwars ("uniwars")
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+- What does dip switch 6 do?
+
+
+
+Jump Bug ("jumpbug")
+====================
+Arrows  Move around
+CTRL    Fire
+ALT     Jump
+
+Clones supported:
+  "Sega" version ("jbugsega")
+
+Known issues:
+- The original version has now a decode_opcode, but controls appear to be
+  reversed compared to the booleg version.  Haven't checked this yet.
+- Graphics are wrong - the game has multiple character banks, not emulated yet.
+
+
+
+Jungle King ("junglek")
+=======================
+Arrows  Move around
+CTRL    Jump
+
+Known issues:
+- I haven't the gfx bank selector switch, therefore the background graphics
+  are not selected appropriately. Use C and V to change the gfx set.
+
+
+
+Krull ("krull")
+========================
+Runs on the same hardware as Q*Bert
+
+Arrows  Move around
+CTRL    Fire
+A,W,D,S Firing joystick (Left, Up, Right, Down)
+G       Select
+
+
+Lady Bug ("ladybug")
+====================
+Arrows  Move around
+F1      Skip level
+
+
+
+Lost Tomb ("losttomb")
+======================
+This runs on a Super Cobra hardware.
+
+Known issues:
+- Not playable. Crashes during demo. Graphics are garbled. I think the ROMs
+  are corrupted.
+
+
+
+Mad Planets ("mplanets")
+========================
+Runs on the same hardware as Q*Bert
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- The dialer (used to rotate the ship) is not supported.
+
+
+
+Mario Bros. ("mario")
+=====================
+Runs on hardware similar to Donkey Kong
+
+Arrows  Move around player 1
+CTRL    Jump player 1
+Z,X     Move around player 2
+SPACE   Jump player 2
+F1      Test (keep it pressed - very nice, try it!)
+
+
+
+Millipede ("milliped")
+======================
+As you can imagine, this runs on the same hardware as Centipede.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz,
+  I don't know if the game runs correctly.
+- High scores don't seem to work.
+- Palette is not supported
+
+
+
+Moon Cresta ("mooncrst")
+========================
+This runs on a hardware very similar to Galaxian.
+The ROMs are encrypted. Nichibutsu copyright.
+
+Arrows  Move around
+CTRL    Fire
+
+Clones supported:
+  Unencrypted version ("mooncrsb")
+  bootleg version called Fantazia ("fantazia")
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+- What do the dip switches do?
+
+
+
+Moon Patrol ("mpatrol")
+=======================
+Arrows  Move around
+CTRL    Fire
+ALT     Jump
+F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
+                   tests, press 2 for an additional menu of options, then
+                   left/right to choose the option, and 1 to select it)
+
+Clones supported:
+  bootleg version, called Moon Ranger ("mranger")
+
+Known issues:
+- No background graphics. I don't know where to place them... can anyone
+  provide a screen snapshot?
+
+
+
+Moon Quasar ("moonqsr")
+=======================
+This runs on a modified Moon Cresta board.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+
+
+
+Mouse Trap ("mtrap")
+====================
+Runs on the same hardware as Venture.
+
+Arrows  Move around
+CTRL    Fire
+3+F3    Test mode
+
+Known issues:
+- Collision detection doesn't work.
+
+
+
+Mr. Do! ("mrdo")
+================
+Arrows  Move around
+CTRL    Fire
+F1      Skip level
+CTRL+F3 Test mode
+
+Clones supported:
+  Version with additional Taito copyright ("mrdot")
+  Mr. Lo! ("mrlo")
+
+
+
+Mr. Do's Castle ("docastle")
+============================
+Not working yet!
+
+
+
+Ms Pac Man ("mspacman")
+=======================
+Arrows  Move around
+F1      Skip level
+F2      Test mode
+CTRL    Speed up cheat
+
+
+
+Nibbler ("nibbler")
+===================
+Arrows  Move around
+F1      Skip level
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz
+- Some input bits seem to be used as debug controls - quite interesting, but
+  I haven't investigated yet.
+
+
+
+Pac Man ("pacman")
+==================
+Arrows  Move around
+F1      Skip level
+F2      Test mode
+CTRL    Speed up cheat
+
+Clones supported:
+  Pac Man modification ("pacmod")
+  Namco Pac Man ("namcopac")
+  Hangly Man ("hangly")
+  Puck Man ("puckman")
+  Piranha ("piranha")
+
+
+
+Pengo ("pengo")
+===============
+Arrows  Move around
+CTRL    Push
+F1      Skip level
+F2      Test mode
+
+Clones supported:
+  Penta ("penta")
+
+
+
+Pepper II ("pepper2")
+=====================
+Runs on hardware similar to Venture.
+
+Arrows  Move around
+CTRL    Dog button
+Z       Yellow button
+X       Red button
+C       Blue button
+3+F3    Test mode
+
+Known issues:
+- Collision detection doesn't work - use 7 and 8 to simulate it.
+
+
+
+Phoenix ("phoenix")
+===================
+Arrows  Move around
+CTRL    Fire
+ALT     Barrier
+
+
+
+Pisces ("pisces")
+=================
+This runs on a modified Galaxian board.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+- What do the dip switches do?
+
+
+
+Pleiads ("pleiads")
+===================
+This runs on the same hardware as Phoenix.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Teleport
+
+
+
+Pooyan ("pooyan")
+=================
+Runs on hardware similar to Time Pilot.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- The characters seem to use 16 color codes, however the color code for many
+  characters has bit 4 set. I don't know what it's for.
+
+
+
+Popeye - bootleg ("popeyebl")
+=============================
+
+Arrows  Move around
+CTRL    Fire
+Q,W,E   Fire
+
+
+
+Q*Bert ("qbert")
+================
+Arrows  Move around
+To enter your name in the high score list, use 1 or 2.
+
+Clones supported:
+  Japanese version ("qbertjp")
+
+
+
+Rally X ("rallyx")
+==================
+Arrows  Move around
+CTRL    Smoke
+F2      Test
+
+Known issues:
+- Sprites are not turned off appropriately.
+- Cars are not displayed on the radar screen.
+- I don't know if I reproduced the layout of the screen coreectly.
+
+
+
+Scramble ("scramble")
+=====================
+The video hardware is very similar to Galaxian, main differences being that
+bullets are not vertical lines and the star background doesn't scroll.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Bomb
+
+Clones supported:
+  Battle of Atlantis ("atlantis") [I don't know what most of the dip switches
+                                   do, and you get a massive 14 credits per
+                                   coin - now that's what I call good value
+                                   for money! ;-)]
+
+Known issues:
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
+
+
+
+Seicross ("seicross")
+=====================
+Runs on almost the same hardware as Crazy Climber, but not exactly the same.
+
+Not playable.
+
+
+
+Space Invaders ("invaders")
+===========================
+Arrows  Move around
+CTRL    Fire
+
+Clones supported (some of these have wrong colors, and the dip switch menu
+      doesn't work):
+  Super Earth Invasion ("earthinv")
+  Space Attack II ("spaceatt")
+  Space Invaders Deluxe ("invdelux") (doesn't work yet)
+  Galaxy Wars ("galxwars")
+  Lunar Rescur ("lrescue")
+  Destination Earth ("desterth")
+
+Known issues:
+- The color stripes are not placed correctly
+
+
+
+Space Panic ("panic")
+=====================
+Arrows  Move around
+CTRL    Fire1
+ALT     Fire2
+
+
+
+Super Cobra ("scobra")
+======================
+Runs on the same hardware as Scramble.
+This is the version with Stern copyright.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Bomb
+
+Clones supported:
+  Konami copyright ("scobrak")
+  bootleg version ("scobrab")
+
+Known issues:
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
+
+
+
+The Adventures of Robby Roto ("robby")
+======================================
+This game runs on the same hardware as Wizard of Wor, but doesn't work yet. I
+still haven to check the loading address of the ROMs.
+
+
+
+The End ("theend")
+==================
+This runs on a Scramble hardware.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
+
+
+
+Time Pilot ("timeplt")
+======================
+Arrows  Move around
+CTRL    Fire
+
+Clones supported:
+  bootleg version ("spaceplt")
+
+Known issues:
+- The ROM copyright message and the dipswitch menu are unreadable. Time Pilot
+  doesn't have consecutive letters in the graphics ROms, I'll have to modify
+  my text routines to handle that.
+- This game uses double-width sprites for the clouds, but I haven't yet figured
+  out they are selected. The code is currently a hack - just double the sprites
+  which I know are used for clouds...
+- The memory mapped read port at c000 puzzles me...
+
+
+
+Turtles ("turtles")
+===================
+This runs on the same hardware as Amidar
+
+Arrows  Move around
+CTRL    Bomb
+
+Known issues:
+- What do the dip switches do? I'm obviously missing something, becasue the
+  game plays in unlimited lives mode.
+
+
+
+Vanguard ("vanguard")
+=====================
+Runs on hardware similar to Nibbler.
+
+Arrows  Move around
+S,D,E,F Fire
+
+
+
+Venture ("venture")
+===================
+Arrows  Move around
+CTRL    Fire
+3+F3    Test mode
+On startup, keep 1 or 2 pressed to proceed
+
+Known issues:
+- Collision detection doesn't work - use 7 and 8 to simulate it.
+
+
+
+Wizard of Wor ("wow")
+=====================
+Arrows  Move around
+CTRL    Fire
+F2      Test mode (keep it pressed)
+The original machine had a special joystick which could be moved either
+partially or fully in a direction. Pushing it slightly would turn around the
+player without moking it move. The emulator assumes that you are always
+pushing the joystick fully, to simulate the "half press" you can press Alt.
+
+Known issues:
+- No background stars, no fade in/fade out.
+
+
+
+War of the Bugs ("warofbug")
+============================
+This runs on the same hardware as Galaxian.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
+- What do the dip switches do?
+
+
+
+Zaxxon ("zaxxon")
+===================
+Arrows  Move around
+CTRL    Fire
+
 
 
 
@@ -127,8 +976,8 @@ UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
 
 Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
    Buffoni (mix@lim.dsi.unimi.it) and Richard Davies (R.Davies@dcs.hull.ac.uk)
-Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
-   by Mirko Buffoni (mix@lim.dsi.unimi.it)
+Gyruss, Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers
+   provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
@@ -137,12 +986,14 @@ Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
    Levine.
 Carnival driver completed by Mike Coates and Richard Davies.
-Popeye preliminar driver provided by Marc LaFontaine.
+Warp warp driver completed by Chris Hardy (chrish@kcbbs.gen.nz).
+Popeye driver provided by Marc LaFontaine and Nicola Salmoria.
 Jump Bug driver by Richard Davies (R.Davies@dcs.hull.ac.uk) and Brad Oliver
    (bradman@primenet.com).
 Venture, Mouse Trap and Pepper II drivers by Marc Lafontaine
    (marclaf@sympatico.ca).
-Q*Bert and Mad Planets drivers by Fabrice Frances (frances@ensica.fr)
+Q*Bert, Mad Planets, Reactor and Krull drivers by Fabrice Frances
+   (frances@ensica.fr)
 Space Panic driver by Mike Coates (mike@dissfulfils.co.uk)
 
 
@@ -160,6 +1011,9 @@ Information about the Crazy Climber machine hardware (including palette)
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
+Very special thanks to Michael Cuddy for the extensive information on
+   Gyruss hardware (You'r right, it's a bear of a game!).
+Gyruss samples are a courtesy of Michel Cuddy (mcuddy@fensende.com)
 Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
    extensive information on Donkey Kong and Donkey Kong Jr.
 Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
@@ -173,7 +1027,7 @@ Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
 Space Invaders information gathered from the Space Invaders Emulator by
    Michael Strutt (mstrutt@pixie.co.za)
 Thanks to Paul Leaman (paull@phonelink.com) for exaustive documentation on
-   1942 arcade board.
+   1942 arcade board, and for providing us the correct color proms.
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
    indications and gfx info.
@@ -248,6 +1102,7 @@ options:
               interactively)
 -nojoy        don't poll joystick
 -log          create a log of illegal memory accesses in ERROR.LOG
+-list         display a list of currently supported games
 -frameskip n  skip frames to speed up the emulation. For example, if the game
               normally runs at 60 fps, "-skipframe 1" will make it run at 30
               fps, and "-skipframe 2" at 20 fps. Use F11 to check the fps your
@@ -266,800 +1121,7 @@ Tab     Change dip switch settings
 P       Pause
 F3      Reset
 F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit.
-F11     Toggle fps counter
 F10     Toggle speed throttling
+F11     Toggle fps counter
 F12     Save a screen snapshot
 ESC     Exit emulator
-
-
-
-Pac Man ("pacman")
-------------------
-
-Arrows  Move around
-F1      Skip level
-F2      Test mode
-CTRL    Speed up cheat
-
-Clones supported:
-  Pac Man modification ("pacmod")
-  Namco Pac Man ("namcopac")
-  Hangly Man ("hangly")
-  Puck Man ("puckman")
-  Piranha ("piranha")
-
-
-
-Ms Pac Man ("mspacman")
------------------------
-
-Arrows  Move around
-F1      Skip level
-F2      Test mode
-CTRL    Speed up cheat
-
-
-
-Crush Roller ("crush")
-----------------------
-
-Crush Roller is a hacked version of Make Trax, modified to run on a
-Pac Man board.
-
-Arrows  Move around
-F1      Skip level
-
-
-
-Pengo ("pengo")
----------------
-
-Arrows  Move around
-CTRL    Push
-F1      Skip level
-F2      Test mode
-
-Clones supported:
-  Penta ("penta")
-
-
-
-Lady Bug ("ladybug")
---------------------
-
-Arrows  Move around
-F1      Skip level
-
-
-
-Mr. Do! ("mrdo")
-----------------
-
-Arrows  Move around
-CTRL    Fire
-F1      Skip level
-CTRL+F3 Test mode
-
-Clones supported:
-  Version with additional Taito copyright ("mrdot")
-  Mr. Lo! ("mrlo")
-
-
-
-Mr. Do's Castle ("docastle")
-----------------------------
-
-Not working yet!
-
-
-
-Crazy Climber ("cclimber")
---------------------------
-
-E,S,D,F Left joystick
-I,J,K,L Right joystick
-F1      Skip level
-
-Clones supported:
-  Japanese version ("ccjap")
-  bootleg version ("ccboot")
-
-
-
-Seicross ("seicross")
----------------------
-
-Runs on almost the same hardware as Crazy Climber, but not exactly the same.
-
-Not playable.
-
-
-
-Crazy Kong ("ckong")
---------------------
-
-This Donkey Kong clone runs on the same hardware as Crazy Climber, most
-notable differencies being a larger character set and the display rotated
-90 degrees.
-
-Arrows  Move around
-CTRL    Jump
-
-Clones supported:
-  version running on Scramble hardware ("ckongs")
-
-Known issues:
-- Some problems with sound
-
-
-
-Donkey Kong ("dkong")
---------------------
-
-Arrows  Move around
-CTRL    Jump
-
-
-
-Donkey Kong Jr. ("dkongjr")
----------------------------
-
-Runs on hardware similar to Donkey Kong
-
-Arrows  Move around
-CTRL    Jump
-
-
-
-Donkey Kong 3 ("dkong3")
-------------------------
-
-Runs on hardware similar to Donkey Kong
-
-Arrows  Move around
-CTRL    Fire
-F1      Test (keep it pressed - very nice, try it!)
-
-
-
-Mario Bros. ("mario")
----------------------
-
-Runs on hardware similar to Donkey Kong
-
-Arrows  Move around player 1
-CTRL    Jump player 1
-Z,X     Move around player 2
-SPACE   Jump player 2
-F1      Test (keep it pressed - very nice, try it!)
-
-
-
-Bagman ("bagman")
------------------
-
-Arrows  Move around
-CTRL    Action
-
-
-
-Wizard of Wor ("wow")
----------------------
-
-Arrows  Move around
-CTRL    Fire
-F2      Test mode (keep it pressed)
-The original machine had a special joystick which could be moved either
-partially or fully in a direction. Pushing it slightly would turn around the
-player without moking it move. The emulator assumes that you are always
-pushing the joystick fully, to simulate the "half press" you can press Alt.
-
-Known issues:
-- No background stars, no fade in/fade out.
-
-
-
-The Adventures of Robby Roto ("robby")
---------------------------------------
-
-This game runs on the same hardware as Wizard of Wor, but doesn't work yet. I
-still haven to check the loading address of the ROMs.
-
-
-
-Gorf ("gorf")
---------------------------------------
-
-This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
-It boots, shows some text on the screen and that's all.
-
-
-
-Galaxian ("galaxian")
----------------------
-
-Original version with Namco copyright
-
-Arrows  Move around
-CTRL    Fire
-F2      Test mode
-
-  original with Midway copyright ("galmidw")
-  and several bootlegs:
-  one with Namco copyright ("galnamco")
-  Super Galaxian ("superg")
-  Galaxian Part X ("galapx")
-  Galaxian Part 1 ("galap1")
-  Galaxian Part 4 ("galap4")
-  Galaxian Turbo ("galturbo")
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-
-
-
-Pisces ("pisces")
------------------
-
-This runs on a modified Galaxian board.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-- What do the dip switches do?
-
-
-
-"Japanese Irem game" ("japirem")
---------------------------------
-
-This runs on a modified Galaxian board.
-
-Arrows  Move around
-CTRL    Fire
-
-Clones supported:
-  Uniwars ("uniwars")
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-- What does dip switch 6 do?
-
-
-
-War of the Bugs ("warofbug")
-----------------------------
-
-This runs on the same hardware as Galaxian.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-- What do the dip switches do?
-
-
-
-Moon Cresta ("mooncrst")
-------------------------
-
-This runs on a hardware very similar to Galaxian.
-The ROMs are encrypted. Nichibutsu copyright.
-
-Arrows  Move around
-CTRL    Fire
-
-Clones supported:
-  Unencrypted version ("mooncrsb")
-  bootleg version called Fantazia ("fantazia")
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-- What do the dip switches do?
-
-
-
-Moon Quasar ("moonqsr")
------------------------
-
-This runs on a modified Moon Cresta board.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct.
-- The star background is probably not entirely accurate.
-
-
-
-Scramble ("scramble")
----------------------
-
-The video hardware is very similar to Galaxian, main differences being that
-bullets are not vertical lines and the star background doesn't scroll.
-
-Arrows  Move around
-CTRL    Fire
-ALT     Bomb
-
-Clones supported:
-  Battle of Atlantis ("atlantis") [I don't know what most of the dip switches
-                                   do, and you get a massive 14 credits per
-                                   coin - now that's what I call good value
-                                   for money! ;-)]
-
-Known issues:
-- The star background is probably not entirely accurate. Also, maybe it should
-  be clipped at the top and bottom of the screen?
-
-
-
-Super Cobra ("scobra")
-----------------------
-
-Runs on the same hardware as Scramble.
-This is the version with Stern copyright.
-
-Arrows  Move around
-CTRL    Fire
-ALT     Bomb
-
-Clones supported:
-  Konami copyright ("scobrak")
-  bootleg version ("scobrab")
-
-Known issues:
-- The star background is probably not entirely accurate. Also, maybe it should
-  be clipped at the top and bottom of the screen?
-
-
-
-The End ("theend")
-------------------
-
-This runs on a Scramble hardware.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- The star background is probably not entirely accurate. Also, maybe it should
-  be clipped at the top and bottom of the screen?
-
-
-
-Frogger ("frogger")
--------------------
-
-Arrows  Move around
-
-Clones supported:
-  alternate version, smaller, with different help, but still (C) Sega 1981
-     ("frogsega")
-  bootleg version, which runs on a modified Scramble board ("froggers")
-
-
-
-Amidar ("amidar")
------------------
-
-Arrows  Move around
-CTRL    Jump
-
-Clones supported:
-  Japanese version ("amidarjp"). This version has a worse attract mode and
-                                 does not display the number of jumps left.
-
-Known issues:
-- What do the dip switches do?
-
-
-
-Turtles ("turtles")
--------------------
-
-This runs on the same hardware as Amidar
-
-Arrows  Move around
-CTRL    Bomb
-
-Known issues:
-- What do the dip switches do? I'm obviously missing something, becasue the
-  game plays in unlimited lives mode.
-
-
-
-Rally X ("rallyx")
-------------------
-
-Arrows  Move around
-CTRL    Smoke
-F2      Test
-
-Known issues:
-- Sprites are not turned off appropriately.
-- Cars are not displayed on the radar screen.
-- I don't know if I reproduced the layout of the screen coreectly.
-
-
-
-Time Pilot ("timeplt")
-----------------------
-
-Arrows  Move around
-CTRL    Fire
-
-Clones supported:
-  bootleg version ("spaceplt")
-
-Known issues:
-- The ROM copyright message and the dipswitch menu are unreadable. Time Pilot
-  doesn't have consecutive letters in the graphics ROms, I'll have to modify
-  my text routines to handle that.
-- This game uses double-width sprites for the clouds, but I haven't yet figured
-  out they are selected. The code is currently a hack - just double the sprites
-  which I know are used for clouds...
-- The memory mapped read port at c000 puzzles me...
-
-
-Pooyan ("pooyan")
------------------
-
-Runs on hardware similar to Time Pilot.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- The characters seem to use 16 color codes, however the color code for many
-  characters has bit 4 set. I don't know what it's for.
-
-
-
-Phoenix ("phoenix")
--------------------
-
-Arrows  Move around
-CTRL    Fire
-ALT     Barrier
-
-
-
-Pleiads ("pleiads")
----------------------
-
-This runs on the same hardware as Phoenix.
-
-Arrows  Move around
-CTRL    Fire
-ALT     Teleport
-
-
-
-Space Invaders ("invaders")
----------------------------
-
-Arrows  Move around
-CTRL    Fire
-
-Clones supported (some of these have wrong colors, and the dip switch menu
-      doesn't work):
-  Super Earth Invasion ("earthinv")
-  Space Attack II ("spaceatt")
-  Space Invaders Deluxe ("invdelux") (doesn't work yet)
-  Galaxy Wars ("galxwars")
-  Lunar Rescur ("lrescue")
-  Destination Earth ("desterth")
-
-Known issues:
-- The color stripes are not placed correctly
-
-
-
-Carnival ("carnival")
----------------------
-
-Arrows  Move around
-CTRL    Fire
-
-
-
-Zaxxon ("zaxxon")
----------------------
-
-Arrows  Move around
-CTRL    Fire
-
-
-
-Congo Bongo ("congo")
----------------------
-
-Runs on the same hardware as Zaxxon.
-
-Arrows  Move around
-CTRL    Jump
-
-
-
-Bomb Jack ("bombjack")
-----------------------
-
-Arrows  Move around
-CTRL    Jump
-
-Press fire to skip the ROM/RAM test at the beginning.
-
-In the dip switch menu, DIFFICULTY 1 refers to the speed of the mechanical
-bird, while DIFFICULTY 2 to the number and speed of enemies.
-SPECIAL refers to how often the (E) and (S) coins appear.
-
-Known issues:
-- Colors are accurate, but not entirely: the original machine uses 12 bits
-  (4 bits per pen), while I currently use only 8 bits (3 bits for red and
-  green, 2 bits for blue).
-- There is a bit in the sprite attributes which I don't know what means:
-  it seems to be set only when the (B) materializes.
-- The INITIAL HIGH SCORE setting doesn't only set that, it does something
-  else as well - but I don't know what.
-
-
-
-Centipede ("centiped")
-----------------------
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- What is the clock speed of the original machine? I'm currently using 1Mhz,
-  I don't know if the game runs correctly.
-- The game awards you 18 credits on startup
-- Palette is not supported
-
-
-
-Millipede ("milliped")
-----------------------
-
-As you can imagine, this runs on the same hardware as Centipede.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- What is the clock speed of the original machine? I'm currently using 1Mhz,
-  I don't know if the game runs correctly.
-- High scores don't seem to work.
-- Palette is not supported
-
-
-
-Nibbler ("nibbler")
--------------------
-
-Arrows  Move around
-F1      Skip level
-
-Known issues:
-- What is the clock speed of the original machine? I'm currently using 1Mhz
-- Some input bits seem to be used as debug controls - quite interesting, but
-  I haven't investigated yet.
-
-
-
-Fantasy ("fantasy")
---------------------
-
-Runs on the same hardware as Nibbler.
-
-Not playable yet!
-
-
-
-Vanguard ("vanguard")
---------------------
-
-Runs on hardware similar to Nibbler.
-
-Arrows  Move around
-S,D,E,F Fire
-
-
-
-Moon Patrol ("mpatrol")
------------------------
-
-Arrows  Move around
-CTRL    Fire
-ALT     Jump
-F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
-                   tests, press 2 for an additional menu of options, then
-                   left/right to choose the option, and 1 to select it)
-
-Clones supported:
-  bootleg version, called Moon Ranger ("mranger")
-
-Known issues:
-- No background graphics. I don't know where to place them... can anyone
-  provide a screen snapshot?
-
-
-
-Burger Time ("btime")
----------------------
-
-Arrows  Move around
-CTRL    Pepper
-F1      \  Various tests.
-F2      |  Use F1 to cycle through tests while in test mode.
-F1+F2   /
-
-Clones supported:
-  different ROM set, without Midway copyright and different demo ("btimea")
-
-Known issues:
-- The way I turn sprites off is not correct.
-
-
-
-Lost Tomb ("losttomb")
-----------------------
-
-This runs on a Super Cobra hardware.
-
-Known issues:
-- Not playable. Crashes during demo. Graphics are garbled. I think the ROMs
-  are corrupted.
-
-
-
-Jump Bug ("jumpbug")
---------------------
-
-Arrows  Move around
-CTRL    Fire
-ALT     Jump
-
-Clones supported:
-  "Sega" version ("jbugsega")
-
-Known issues:
-- "jumpbug" doesn't work - the protection is not emulated. "jbugsega" has the
-  protection checks removed, so it works.
-- Graphics are wrong - the game has multiple character banks, not emulated yet.
-
-
-
-Green Beret ("gberet")
-----------------------
-
-Arrows  Move around
-CTRL    Knife
-ALT     Fire
-
-Clones supported:
-  US version, called Rush'n Attack ("rushatck")
-
-Known issues:
-- The music starts with what seems a correct pitch, but changes after you die
-  for the first time or finishe the first level. Weird.
-
-
-
-Venture ("venture")
--------------------
-
-Arrows  Move around
-CTRL    Fire
-3+F3    Test mode
-On startup, keep 1 or 2 pressed to proceed
-
-Known issues:
-- Collision detection doesn't work - use 7 and 8 to simulate it.
-
-
-
-Mouse Trap ("mtrap")
---------------------
-
-Runs on the same hardware as Venture.
-
-Arrows  Move around
-CTRL    Fire
-3+F3    Test mode
-
-Known issues:
-- Collision detection doesn't work.
-
-
-
-Pepper II ("pepper2")
----------------------
-
-Runs on hardware similar to Venture.
-
-Arrows  Move around
-CTRL    Dog button
-Z       Yellow button
-X       Red button
-C       Blue button
-3+F3    Test mode
-
-Known issues:
-- Collision detection doesn't work - use 7 and 8 to simulate it.
-
-
-
-Q*Bert ("qbert")
-----------------
-
-Arrows  Move around
-To enter your name in the high score list, use 1 or 2.
-
-Clones supported:
-  Japanese version ("qbertjp")
-
-
-
-Mad Planets ("mplanets")
-------------------------
-
-Runs on the same hardware as Q*Bert
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- The dialer (used to rotate the ship) is not supported.
-
-
-
-Jungle King ("junglek")
------------------------
-
-Arrows  Move around
-CTRL    Jump
-
-Known issues:
-- I haven't the gfx bank selector switch, therefore the background graphics
-  are not selected appropriately. Use C and V to change the gfx set.
-
-
-
-Elevator Action ("elevator")
-----------------------------
-
-Should run on hardware similar to Jungle King.
-
-Set the dip switches to free play to play the game.
-
-Known issues:
-- Collision detect not yet implemented.
-
-
-
-Space Panic ("panic")
----------------------
-
-Arrows  Move around
-CTRL    Fire1
-ALT     Fire2
-
-
-
-Arabian ("arabian")
--------------------
-
-Arrows  Move around
-CTRL    Kick
-F1      Enter test mode

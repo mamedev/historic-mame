@@ -45,7 +45,15 @@ void cpu_run(void)
 
 	/* count how many CPUs we have to emulate */
 	totalcpu = 0;
-	while (totalcpu < MAX_CPU && Machine->drv->cpu[totalcpu].cpu_type != 0) totalcpu++;
+	while (totalcpu < MAX_CPU)
+	{
+		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
+		/* if sound is disabled, don't emulate the audio CPU */
+		if (play_sound == 0 && (Machine->drv->cpu[totalcpu].cpu_type & CPU_AUDIO_CPU))
+			break;
+
+		totalcpu++;
+	}
 
 reset:
 	for (activecpu = 0;activecpu < totalcpu;activecpu++)
@@ -56,7 +64,7 @@ reset:
 		cycles = Machine->drv->cpu[activecpu].cpu_clock /
 				(Machine->drv->frames_per_second * Machine->drv->cpu[activecpu].interrupts_per_frame);
 
-		switch(Machine->drv->cpu[activecpu].cpu_type)
+		switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 		{
 			case CPU_Z80:
 				{
@@ -107,7 +115,7 @@ reset:
 			if (activecpu == 0) ROM = ROM0;
 			else ROM = RAM;
 
-			switch(Machine->drv->cpu[activecpu].cpu_type)
+			switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 			{
 				case CPU_Z80:
 					{
@@ -153,7 +161,7 @@ reset:
 
 int cpu_getpc(void)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type)
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			return Z80_GetPC();
@@ -174,7 +182,7 @@ int cpu_getpc(void)
 
 int cpu_geticount(void)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type)
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			return Z80_ICount;
@@ -195,7 +203,7 @@ int cpu_geticount(void)
 
 void cpu_seticount(int cycles)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type)
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			Z80_ICount = cycles;
@@ -340,7 +348,7 @@ void interrupt_vector_w(int offset,int data)
 /* port when the game polls it) */
 int interrupt(void)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type)
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			if (interrupt_enable == 0) return Z80_IGNORE_INT;
@@ -363,7 +371,7 @@ int interrupt(void)
 
 int nmi_interrupt(void)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type)
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			if (interrupt_enable == 0) return Z80_IGNORE_INT;

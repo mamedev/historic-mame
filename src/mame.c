@@ -4,6 +4,7 @@
 
 
 #if defined (UNIX) || defined (__MWERKS__)
+#define stricmp strcasecmp
 #define uclock_t clock_t
 #define	uclock clock
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
@@ -48,8 +49,29 @@ int run_machine(const char *gamename);
 
 int main(int argc,char **argv)
 {
-	int i,log,success;
+	int i,list,log,success;
 
+	list = 0;
+        for (i = 1;i < argc;i++)
+        {
+                if (stricmp(argv[i],"-list") == 0)
+                        list = 1;
+        }
+
+	if (list)
+	{
+                printf("\nMAME currently supports the following games:\n\n");
+		i = 0;
+		while (drivers[i])
+		{
+			printf("%10s",drivers[i]->name);
+			i++;
+                        if (!(i % 7)) printf("\n");
+		}
+                if (i % 7) printf("\n");
+                printf("\nTotal games supported: %4d\n", i);
+		return 0;
+	}
 
 	success = 1;
 
@@ -416,8 +438,8 @@ int updatescreen(void)
 		if (showfps)
 		{
 			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%1000)/100],gamedrv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%100)/10],gamedrv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[fps%10],gamedrv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%100)/10],gamedrv->white_text,0,0,Machine->gfx[0]->width,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[fps%10],gamedrv->white_text,0,0,2*Machine->gfx[0]->width,0,0,TRANSPARENCY_NONE,0);
 		}
 
 		osd_update_display();

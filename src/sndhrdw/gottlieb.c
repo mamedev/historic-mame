@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-void qbert_sh_w(int offset,int data)
+void gottlieb_sh_w(int offset,int data)
 {
    int fx= 255-data;
 
@@ -64,16 +64,16 @@ void qbert_sh_w(int offset,int data)
 		case 23: /* noser fall */
 		case 25: /* noser on disk */
 		     osd_play_sample(1,Machine->samples->sample[fx]->data,
-		  			Machine->samples->sample[fx]->length,44100,255,0);
+					Machine->samples->sample[fx]->length,44100,255,0);
 		     break;
 		default:
 		     osd_play_sample(0,Machine->samples->sample[fx]->data,
-		  			Machine->samples->sample[fx]->length,44100,255,0);
+					Machine->samples->sample[fx]->length,44100,255,0);
 		     break;
 	}
 #endif
 }
 
-void qbert_sh_update(void)
+void gottlieb_sh_update(void)
 {
 }

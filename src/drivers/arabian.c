@@ -124,7 +124,7 @@ void moja(int port, int val)
   {
     if ( (lastr==0x0e) || (lastr==0x0f) )
     {
-//      if (errorlog) fprintf(errorlog,"AY reg:%02x, val: %02x\n", lastr, val );
+/*      if (errorlog) fprintf(errorlog,"AY reg:%02x, val: %02x\n", lastr, val );*/
     }
     else
       AY8910_write_port_0_w(port,val);

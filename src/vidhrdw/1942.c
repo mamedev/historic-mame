@@ -12,12 +12,74 @@
 
 
 #define VIDEO_RAM_SIZE 0x400
-#define BACKGROUND_SIZE 0x200
+#define BACKGROUND_SIZE 0x400
 
 unsigned char *c1942_backgroundram;
 unsigned char *c1942_scroll;
+unsigned char *c1942_palette_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
+
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  1942 has a three 256x4 palette PROMs (one per gun) and three 256x4 lookup
+  table PROMs (one for characters, one for sprites, one for background tiles).
+  The palette PROMs are connected to the RGB output this way:
+
+  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+        -- 1  kohm resistor  -- RED/GREEN/BLUE
+  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
+
+***************************************************************************/
+void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < 256;i++)
+	{
+		int bit0,bit1,bit2,bit3;
+
+
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i+256] >> 0) & 0x01;
+		bit1 = (color_prom[i+256] >> 1) & 0x01;
+		bit2 = (color_prom[i+256] >> 2) & 0x01;
+		bit3 = (color_prom[i+256] >> 3) & 0x01;
+		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i+256*2] >> 0) & 0x01;
+		bit1 = (color_prom[i+256*2] >> 1) & 0x01;
+		bit2 = (color_prom[i+256*2] >> 2) & 0x01;
+		bit3 = (color_prom[i+256*2] >> 3) & 0x01;
+		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	}
+
+	/* characters use colors 128-143 */
+	for (i = 0;i < 64*4;i++)
+		colortable[i] = color_prom[i + 256*3] + 128;
+
+	/* sprites use colors 64-79 */
+	for (i = 64*4;i < 64*4+16*16;i++)
+		colortable[i] = color_prom[i + 256*3] + 64;
+
+	/* background tiles use colors 0-63 in four banks */
+	for (i = 64*4+16*16;i < 64*4+16*16+32*8;i++)
+	{
+		colortable[i] = color_prom[i + 256*3];
+		colortable[i+32*8] = color_prom[i + 256*3] + 16;
+		colortable[i+2*32*8] = color_prom[i + 256*3] + 32;
+		colortable[i+3*32*8] = color_prom[i + 256*3] + 48;
+	}
+}
 
 
 
@@ -77,6 +139,22 @@ void c1942_background_w(int offset,int data)
 
 
 
+void c1942_palette_bank_w(int offset,int data)
+{
+	if (*c1942_palette_bank != data)
+	{
+		int i;
+
+
+		for (i = 0;i < BACKGROUND_SIZE;i++)
+			dirtybuffer2[i] = 1;
+
+		*c1942_palette_bank = data;
+	}
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -101,7 +179,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				drawgfx(tmpbitmap2,Machine->gfx[(c1942_backgroundram[offs + 16] & 0x80) ? 2 : 1],
 						c1942_backgroundram[offs],
-						c1942_backgroundram[offs + 16] & 0x1f,
+						(c1942_backgroundram[offs + 16] & 0x1f) + 32 * *c1942_palette_bank,
 						c1942_backgroundram[offs + 16] & 0x40,!(c1942_backgroundram[offs + 16] & 0x20),
 						16 * sx,16 * sy,
 						0,TRANSPARENCY_NONE,0);
@@ -164,7 +242,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (videoram[offs] != 0x30)	/* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x7f,
+					colorram[offs] & 0x3f,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

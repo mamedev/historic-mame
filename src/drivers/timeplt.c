@@ -200,6 +200,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* these are NOT the original color PROMs */
 static unsigned char color_prom[] =
 {
 	/* char palette */
@@ -245,7 +246,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,

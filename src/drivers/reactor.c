@@ -7,11 +7,12 @@ Reactor hardware: very similar to Q*bert with a different memory map...
 #include "vidhrdw/generic.h"
 
 extern int reactor_vh_start(void);
-extern void mplanets_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void qbert_sh_w(int offset, int data);
+extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern void gottlieb_sh_w(int offset, int data);
 extern void gottlieb_characterram_w(int offset, int data);
-extern int qbert_sh_init(const char *gamename);
-extern void qbert_sh_update(void);
+extern int gottlieb_sh_init(const char *gamename);
+extern void gottlieb_sh_update(void);
+extern const char *gottlieb_sample_names[];
 extern void gottlieb_output(int offset, int data);
 extern unsigned char *gottlieb_videoram;
 extern unsigned char *gottlieb_paletteram;
@@ -43,7 +44,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x67ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x7000, 0x7000, MWA_RAM },    /* watchdog timer clear */
 	{ 0x7001, 0x7001, MWA_RAM },    /* trackball: not used */
-	{ 0x7002, 0x7002, qbert_sh_w }, /* sound/speech command */
+	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
 	{ 0x7003, 0x7003, gottlieb_output },       /* OUT1 */
 	{ 0x7004, 0x7004, MWA_RAM },    /* OUT2 */
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -60,7 +61,7 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{       /* buttons */
-		0x00,   /* test mode off */
+		0x02,   /* test mode off */
 		{ OSD_KEY_S /* select */, 0,0,0,0,0,0,0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -77,7 +78,7 @@ static struct InputPort input_ports[] =
 	{       /* buttons */
 		0x00,
 		{ OSD_KEY_CONTROL, OSD_KEY_ALT, /* energy & decoy player 1. Also for 1 & 2 player start, short plays */
-		  OSD_KEY_1, OSD_KEY_2,		/* energy & decoy player 2. Also for 1 & 2 player start, long plays */
+		  OSD_KEY_1, OSD_KEY_2,         /* energy & decoy player 2. Also for 1 & 2 player start, long plays */
 		 OSD_KEY_3, 0 /* coin 2 */, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},               
@@ -101,7 +102,7 @@ static struct DSW dsw[] =
 };
 
 
-struct GfxLayout gottlieb_charlayout =
+static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -126,20 +127,21 @@ static struct GfxLayout spritelayout =
 
 static struct GfxLayout fakelayout =
 {
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
+	1,1,
+	0,
+	1,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	0
 }; 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x4000, &gottlieb_charlayout,   128, 16 },
-	{ 1, 0, &spritelayout, 256, 16 },
-        { 0, 0, &fakelayout, 0, 256 },
+	{ 0, 0x8005, &charlayout, 16, 2 }, /* characters in rom for Mame's messages in white & yellow */
+	{ 0, 0x4000, &charlayout, 0, 1 },
+	{ 1, 0, &spritelayout, 0, 1 },
+	{ 0, 0, &fakelayout, 3*16, 16 }, /* 256 colors to pick in */
 	{ -1 } /* end of array */
 };
 
@@ -162,7 +164,7 @@ static const struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,256+3*16,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
-	mplanets_vh_init_color_palette,
+	gottlieb_vh_init_basic_color_palette,
 	
 	0,      /* init vh */
 	reactor_vh_start,
@@ -174,7 +176,7 @@ static const struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	qbert_sh_update
+	gottlieb_sh_update
 };
 
 ROM_START( reactor_rom )
@@ -203,17 +205,17 @@ struct GameDriver reactor_driver =
 
 	reactor_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	0,
+	gottlieb_sample_names,
 
 	input_ports, dsw,
 
-	0,
+	(char *)1,
 	0,0,    /* palette, colortable */
 
-        { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-                0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
-                0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },   
-	1,2,      /* white & yellow for dsw menu */
+	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
+		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
+		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },   
+	0,1,      /* white & yellow for dsw menu */
 	8*11,8*20,1, /* paused message displayed at X,Y and color */
 
 	0,0     /* hi-score load and save */

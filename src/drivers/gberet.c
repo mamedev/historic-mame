@@ -80,7 +80,8 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram },
+	{ 0xd000, 0xd0bf, MWA_RAM, &spriteram },
+	{ 0xd100, 0xd1bf, MWA_RAM, &spriteram_2 },
 	{ 0xd200, 0xdfff, MWA_RAM },
 	{ 0xc000, 0xc7ff, colorram_w, &colorram },
 	{ 0xc800, 0xcfff, videoram_w, &videoram },
