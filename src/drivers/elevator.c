@@ -44,7 +44,10 @@ d40b      IN2
 d40c      COIN
           bit 5 = tilt
           bit 4 = coin
-d40f      DSW3
+d40f      DSW2 (when d40e == 0x0e) and DSW3 (when d40e == 0x0f)
+          DSW2
+		  coins per play
+          DSW3
           bit 7 = coinage (1 way/2 ways)
           bit 6 = no hit
           bit 5 = year display yes/no
@@ -53,22 +56,34 @@ d40f      DSW3
 		  bit 0-1 difficulty
 
 write
-d000-d01f front playfield column scroll (always 0)
+d000-d01f front playfield column scroll
 d020-d03f middle playfield column scroll
 d040-d05f back playfield column scroll
-d300      ?
-d40e-d40f ?
-d500-d505 ?
+d300      playfield priority control ??
+          bit 0-2 ?
+		  bit 3 = 1 middle playfield has priority over sprites ??
+d40e      0e/0f = control which of DSW2 and DSW3 is read from d40f; other values = ?
+d40f      ?
+d500      front playfield horizontal scroll
+d501      front playfield vertical scroll
+d502      middle playfield horizontal scroll
+d503      middle playfield vertical scroll
+d504      back playfield horizontal scroll
+d505      back playfield vertical scroll
 d506      bits 0-3 = front playfield color code
           bits 4-7 = middle playfield color code
 d507      bits 0-3 = back playfield color code
           bits 4-7 = sprite color bank (1 bank = 2 color codes)
 d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
-d50d      watchdog reset ?
+d50d      watchdog reset
 d50e      bootleg version: $01 -> ROM ea54.bin is mapped at 7000-7fff
                            $81 -> ROM ea52.bin is mapped at 7000-7fff
-d600      video enable? (maybe per playfield: 0xf0 = all on, 0x00 = all off)
+d600      bit 0-3 ?
+		  bit 4 front playfield enable
+		  bit 5 middle playfield (probably) enable
+		  bit 6 back playfield (probably) enable
+		  bit 7 sprites (probably) enable
 
 
 SOUND CPU:
@@ -96,6 +111,8 @@ write:
 
 
 
+extern unsigned char *taito_dsw23_select;
+extern int taito_dsw23_r(int offset);
 extern int elevator_init_machine(const char *gamename);
 extern int elevator_protection_r(int offset);
 extern int elevator_unknown_r(int offset);
@@ -105,6 +122,7 @@ extern unsigned char *elevator_videoram2,*elevator_videoram3;
 extern unsigned char *elevator_characterram;
 extern unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
 extern unsigned char *elevator_gfxpointer,*elevator_paletteram;
+extern unsigned char *elevator_colorbank,*elevator_video_priority;
 extern unsigned char *elevator_colorbank,*elevator_video_enable;
 extern void elevator_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int elevator_gfxrom_r(int offset);
@@ -132,7 +150,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
-	{ 0xd40f, 0xd40f, input_port_5_r },	/* DSW3 */
+	{ 0xd40f, 0xd40f, taito_dsw23_r },	/* DSW2 and DSW3 */
 	{ 0xd404, 0xd404, elevator_gfxrom_r },
 	{ 0x8801, 0x8801, elevator_unknown_r },
 	{ 0x8800, 0x8800, elevator_protection_r },
@@ -149,13 +167,15 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd000, 0xd01f, MWA_RAM, &elevator_scroll1 },
 	{ 0xd020, 0xd03f, MWA_RAM, &elevator_scroll2 },
 	{ 0xd040, 0xd05f, MWA_RAM, &elevator_scroll3 },
-	{ 0xd50d, 0xd50d, MWA_NOP },
-	{ 0xd509, 0xd50a, MWA_RAM, &elevator_gfxpointer },
 	{ 0xd506, 0xd507, elevator_colorbank_w, &elevator_colorbank },
+	{ 0xd509, 0xd50a, MWA_RAM, &elevator_gfxpointer },
+	{ 0xd50b, 0xd50b, sound_command_w },
+	{ 0xd50d, 0xd50d, MWA_NOP },
 	{ 0xd200, 0xd27f, elevator_paletteram_w, &elevator_paletteram },
 	{ 0x9000, 0xbfff, elevator_characterram_w, &elevator_characterram },
-	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
+	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
+	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_priority },
 	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_enable },
 { 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
@@ -217,8 +237,13 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, OSD_KEY_F2, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
+	{	/* DSW2 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
 	{	/* DSW3 */
-		0xff,
+		0x7f,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -244,11 +269,11 @@ static struct DSW dsw[] =
 {
 	{ 4, 0x18, "LIVES", { "6", "5", "4", "3" }, 1 },
 	{ 4, 0x03, "BONUS", { "25000", "20000", "15000", "10000" }, 1 },
-	{ 5, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
+	{ 6, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
 	{ 4, 0x04, "FREE PLAY", { "ON", "OFF" }, 1 },
-	{ 5, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
-	{ 5, 0x10, "COIN DISPLAY", { "NO", "YES" }, 1 },
-	{ 5, 0x20, "YEAR DISPLAY", { "NO", "YES" }, 1 },
+	{ 6, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
+	{ 6, 0x10, "COIN DISPLAY", { "NO", "YES" }, 1 },
+	{ 6, 0x20, "YEAR DISPLAY", { "NO", "YES" }, 1 },
 	{ -1 }
 };
 
@@ -276,28 +301,15 @@ struct GfxLayout elevator_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the remapped color table and dynamically build the real one. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &elevator_charlayout,   8*8,  3 },	/* not used by the game, here only for the dip switch menu */
-	{ 0, 0x9000, &elevator_charlayout,     0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0x9000, &elevator_spritelayout,   0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &elevator_spritelayout,   0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0,      &fakelayout,           11*8, 37 },
+	{ 0, 0x9000, &elevator_charlayout,   0, 16 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &elevator_spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &elevator_charlayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &elevator_spritelayout, 0,  8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -343,7 +355,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	37,8*8+3*8+37,	/* 8 codes for the game, 3 for the dip switch menu, and 37 spots for the available colors */
+	37, 16*8,
 	elevator_vh_convert_color_prom,
 
 	0,
@@ -446,11 +458,7 @@ struct GameDriver elevator_driver =
 	input_ports, dsw, keys,
 
 	color_prom,0,0,
-	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
-		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
-		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
-	0, 1,
-	8*13, 8*16, 2,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -469,11 +477,7 @@ struct GameDriver elevatob_driver =
 	input_ports, dsw, keys,
 
 	color_prom,0,0,
-	{ 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,	/* numbers */
-		0x1c,0x29,0x2e,0x30,0x1e,0x27,0x28,0x2b,0x2c,0x2c,0x21,0x1b,0x20,	/* letters */
-		0x25,0x2f,0x1a,0x2f,0x1f,0x2d,0x31,0x22,0x23,0x26,0x21,0x1d,0x12 },	/* j, k, q and z are missing */
-	0, 1,
-	8*13, 8*16, 2,
+	8*13, 8*16,
 
 	0, 0
 };

@@ -17,13 +17,15 @@ unsigned char *junglek_videoram2,*junglek_videoram3;
 unsigned char *junglek_characterram;
 unsigned char *junglek_scrollx1,*junglek_scrollx2,*junglek_scrollx3;
 unsigned char *junglek_scrolly1,*junglek_scrolly2,*junglek_scrolly3;
+unsigned char *junglek_colscrolly1,*junglek_colscrolly2,*junglek_colscrolly3;
 unsigned char *junglek_gfxpointer,*junglek_paletteram;
+unsigned char *junglek_colorbank,*junglek_video_priority;
 unsigned char *junglek_colorbank,*junglek_video_enable;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static const unsigned char *colors;
 static int dirtypalette,dirtycolor;
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
-static unsigned char dirtysprite[64];
+static unsigned char dirtysprite1[64],dirtysprite2[64];
 
 
 
@@ -57,18 +59,6 @@ void junglek_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 		bit2 = (~color_prom[2*i+1] >> 2) & 0x01;
 		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[19*8 + i] = i;
-
-
-	/* set up colors for the dip switch menu */
-	for (i = 0;i < 8*3;i++)
-		colortable[16*8 + i] = 0;
-	colortable[16*8 + 7] = 167;	/* white */
-	colortable[17*8 + 7] = 161;	/* yellow */
-	colortable[18*8 + 7] = 129;	/* red */
 }
 
 
@@ -187,10 +177,13 @@ void junglek_characterram_w(int offset,int data)
 		if (offset < 0x1800)
 		{
 			dirtycharacter1[(offset / 8) & 0xff] = 1;
-			dirtysprite[(offset / 32) & 0x3f] = 1;
+			dirtysprite1[(offset / 32) & 0x3f] = 1;
 		}
 		else
+		{
 			dirtycharacter2[(offset / 8) & 0xff] = 1;
+			dirtysprite2[(offset / 32) & 0x3f] = 1;
+		}
 
 		junglek_characterram[offset] = data;
 	}
@@ -211,34 +204,32 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 	extern struct GfxLayout junglek_charlayout,junglek_spritelayout;
 
 
-	if (*junglek_video_enable == 0)
-	{
-		clearbitmap(bitmap);
-		return;
-	}
-
-
 	/* decode modified characters */
 	for (offs = 0;offs < 256;offs++)
 	{
 		if (dirtycharacter1[offs] == 1)
 		{
-			decodechar(Machine->gfx[1],offs,junglek_characterram,&junglek_charlayout);
+			decodechar(Machine->gfx[0],offs,junglek_characterram,&junglek_charlayout);
 			dirtycharacter1[offs] = 0;
 		}
 		if (dirtycharacter2[offs] == 1)
 		{
-			decodechar(Machine->gfx[3],offs,junglek_characterram + 0x1800,&junglek_charlayout);
+			decodechar(Machine->gfx[2],offs,junglek_characterram + 0x1800,&junglek_charlayout);
 			dirtycharacter2[offs] = 0;
 		}
 	}
 	/* decode modified sprites */
 	for (offs = 0;offs < 64;offs++)
 	{
-		if (dirtysprite[offs] == 1)
+		if (dirtysprite1[offs] == 1)
 		{
-			decodechar(Machine->gfx[2],offs,junglek_characterram,&junglek_spritelayout);
-			dirtysprite[offs] = 0;
+			decodechar(Machine->gfx[1],offs,junglek_characterram,&junglek_spritelayout);
+			dirtysprite1[offs] = 0;
+		}
+		if (dirtysprite2[offs] == 1)
+		{
+			decodechar(Machine->gfx[3],offs,junglek_characterram + 0x1800,&junglek_spritelayout);
+			dirtysprite2[offs] = 0;
 		}
 	}
 
@@ -263,12 +254,12 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 				offs++;
 			}
 
-			col = Machine->gfx[4]->colortable[offs];
+			col = Machine->pens[offs];
 			/* avoid undesired transparency */
 			if (col == 0 && i % 8 != 0) col = 1;
-			Machine->gfx[1]->colortable[i] = col;
+			Machine->gfx[0]->colortable[i] = col;
 			if (i % 8 == 0) col = 0;	/* create also an alternate color code with transparent pen 0 */
-			Machine->gfx[1]->colortable[i+8*8] = col;
+			Machine->gfx[0]->colortable[i+8*8] = col;
 		}
 
 		/* redraw everything */
@@ -290,12 +281,12 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap3,Machine->gfx[1],
+			drawgfx(tmpbitmap3,Machine->gfx[0],
 					junglek_videoram3[offs],
 					junglek_colorbank[1] & 0x0f,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
-			drawgfx(tmpbitmap2,Machine->gfx[1],
+			drawgfx(tmpbitmap2,Machine->gfx[0],
 					junglek_videoram2[offs],
 					((junglek_colorbank[0] >> 4) & 0x0f) + 8,	/* use transparent pen 0 */
 					0,0,sx,sy,
@@ -313,24 +304,26 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		scrollx = *junglek_scrollx3;
-		scrollx = -((scrollx & 0xf8) | ((scrollx-1) & 7)) - 10;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 16;
 		for (i = 0;i < 32;i++)
-/*			scrolly[i] = -junglek_scrolly3[i];*/
-			scrolly[i] = -junglek_scrolly3[i] + 16;
+			scrolly[i] = -junglek_colscrolly3[i] - *junglek_scrolly3;
 
-		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (*junglek_video_enable & 0x40)
+			copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		else
+			clearbitmap(bitmap);
 	}
 
-	/* copy the second playfield */
+	/* copy the second playfield if it has not priority over sprites */
+	if ((*junglek_video_enable & 0x20) && (*junglek_video_priority & 0x08) == 0)
 	{
 		int scrollx,scrolly[32];
 
 
 		scrollx = *junglek_scrollx2;
-		scrollx = -((scrollx & 0xf8) | ((scrollx+1) & 7)) - 10;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
 		for (i = 0;i < 32;i++)
-/*			scrolly[i] = -junglek_scrolly2[i];*/
-			scrolly[i] = -junglek_scrolly2[i] + 16;
+			scrolly[i] = -junglek_colscrolly2[i] - *junglek_scrolly2;
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
@@ -338,35 +331,56 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 31*4;offs >= 0;offs -= 4)
+	if (*junglek_video_enable & 0x80)
 	{
-		drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 2],
-				spriteram[offs + 3] & 0x3f,
-				2 * ((junglek_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
-				spriteram[offs + 2] & 1,0,
-				((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		for (offs = 31*4;offs >= 0;offs -= 4)
+		{
+			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
+					spriteram[offs + 3] & 0x3f,
+					2 * ((junglek_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
+					spriteram[offs + 2] & 1,0,
+					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+
+
+	/* copy the second playfield if it has priority over sprites */
+	if ((*junglek_video_enable & 0x20) && (*junglek_video_priority & 0x08) != 0)
+	{
+		int scrollx,scrolly[32];
+
+
+		scrollx = *junglek_scrollx2;
+		scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
+		for (i = 0;i < 32;i++)
+			scrolly[i] = -junglek_colscrolly2[i] - *junglek_scrolly2;
+
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	if (*junglek_video_enable & 0x10)
 	{
-		if (videoram[offs] < 160)	/* don't draw spaces */
+		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 		{
-			int sx,sy;
+			if (videoram[offs] < 160)	/* don't draw spaces */
+			{
+				int sx,sy;
 
 
-			sx = offs % 32;
-			sy = (8*(offs / 32) + junglek_scrolly1[sx]) & 0xff;
-/*			sx = (8*sx + *junglek_scrollx1) & 0xff;*/
-			sx = 8*sx;
+				sx = offs % 32;
+				sy = (8*(offs / 32) - junglek_colscrolly1[sx] - *junglek_scrolly1) & 0xff;
+				/* horizontal scrolling of the frontmost playfield is not implemented */
+				sx = 8*sx;
 
-			drawgfx(bitmap,Machine->gfx[3],
-					videoram[offs],
-					junglek_colorbank[0] & 0x0f,
-					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[2],
+						videoram[offs],
+						junglek_colorbank[0] & 0x0f,
+						0,0,sx,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }

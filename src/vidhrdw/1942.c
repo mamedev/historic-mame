@@ -101,7 +101,7 @@ int c1942_vh_start(void)
 	memset(dirtybuffer,0,BACKGROUND_SIZE);
 
 	/* the background area is twice as tall as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_width)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();

@@ -45,6 +45,7 @@
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
 #endif
 
+static char mameversion[8] = "0.25";   /* M.Z.: current version */
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -56,12 +57,10 @@ static char hiscorename[50];
 
 
 int frameskip;
-int DefaultVolumes[] = {100, 75, 50, 25, 0};
 int VolumePTR = 0;
 int CurrentVolume = 100;
 
 
-#define MAX_COLORS 256	/* can't handle more than 256 colors on screen */
 #define MAX_COLOR_TUPLE 16	/* no more than 4 bits per pixel, for now */
 #define MAX_COLOR_CODES 256	/* no more than 256 color codes, for now */
 
@@ -87,29 +86,112 @@ int run_machine(const char *gamename);
 
 int main(int argc,char **argv)
 {
-	int i,list,log,success;
+	int i,j,list = 0,help,log,success;  /* MAURY_BEGIN: varie */
+	char *gamename;
 
-	list = 0;
-        for (i = 1;i < argc;i++)
-        {
-                if (stricmp(argv[i],"-list") == 0)
-                        list = 1;
-        }
+	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';  /* covert '/' in '-' */
 
-	if (list)
+	help = (argc == 1);
+	for (i = 1;i < argc;i++)       /* help me, please! */
 	{
-                printf("\nMAME currently supports the following games:\n\n");
-		i = 0;
-		while (drivers[i])
-		{
-			printf("%10s",drivers[i]->name);
-			i++;
-                        if (!(i % 7)) printf("\n");
-		}
-                if (i % 7) printf("\n");
-                printf("\nTotal games supported: %4d\n", i);
+		if ((stricmp(argv[i],"-?") == 0) || (stricmp(argv[i],"-h") == 0) || (stricmp(argv[i],"-help") == 0))
+			help = 1;
+	}
+
+	if (help)    /* brief help - useful to get current version info */
+	{
+		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
+		       "Copyright (C) 1997  by Nicola Salmoria and Mirko Buffoni\n\n",mameversion);
+		showdisclaimer();   /* Dichiarazione (in COMMON.C) */
+		printf("Usage:  MAME gamename [options]\n");
+
 		return 0;
 	}
+
+	for (i = 1;i < argc;i++)    /* Front end utilities ;) */
+	{
+		if (stricmp(argv[i],"-list") == 0) list = 1;
+		if (stricmp(argv[i],"-listfull") == 0) list = 2;
+		if (stricmp(argv[i],"-listroms") == 0) list = 3;
+		if (stricmp(argv[i],"-listsamples") == 0) list = 4;
+	}
+
+	switch (list)
+	{
+		case 1:      /* simple games list */
+			printf("\nMAME currently supports the following games:\n\n");
+			i = 0;
+			while (drivers[i])
+			{
+				printf("%10s",drivers[i]->name);   
+				i++;
+				if (!(i % 7)) printf("\n");
+			}
+			if (i % 7) printf("\n");
+			printf("\nTotal games supported: %4d\n", i);   
+			return 0;
+			break;
+		case 2:      /* games list with descriptions */
+			printf("NAMES:    DESCRIPTIONS:\n");   
+			i = 0;
+			while (drivers[i])
+			{
+				printf("%-10s\"%s\"\n",drivers[i]->name,drivers[i]->description);
+				i++;
+			}
+			return 0;
+			break;
+		case 3:      /* game roms list */
+		case 4:      /* game samples list */
+			gamename = (argc > 1) && (argv[1][0] != '-') ? argv[1] : DEFAULT_NAME;
+			j = 0;
+			while (drivers[j] && stricmp(gamename,drivers[j]->name) != 0) j++;
+			if (drivers[j] == 0)
+			{
+				printf("game \"%s\" not supported\n",gamename);
+				return 1;
+			}
+			gamedrv = drivers[j];
+			if (list == 3)
+			{
+				const struct RomModule *romp;
+
+				romp = gamedrv->rom;
+				while (romp->name || romp->offset || romp->length)
+				{
+					romp++; /* skip memory region definition */
+					while (romp->length)
+					{
+						char name[100];
+						int length;
+
+						sprintf(name,romp->name,gamename);
+						length = 0;
+						do
+						{
+							length += romp->length;
+							romp++;
+						}
+						while (romp->length && romp->name == 0);
+						printf("%s\n",name);
+					}
+				}
+			}
+			else
+			{
+				if (gamedrv->samplenames != 0 && gamedrv->samplenames[0] != 0)
+				{
+					i = 0;
+					while (gamedrv->samplenames[i] != 0)
+					{
+						printf("%s\n",gamedrv->samplenames[i]);
+						i++;
+					}
+				}
+			}
+			return 0;
+			break;
+	}                                          /* MAURY_END: varie */
 
 	success = 1;
 
@@ -261,6 +343,7 @@ void vh_close(void)
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) freegfx(Machine->gfx[i]);
+	freegfx(Machine->uifont);
 	osd_close_display();
 }
 
@@ -269,9 +352,8 @@ void vh_close(void)
 int vh_open(void)
 {
 	int i;
-	unsigned char pens[MAX_COLORS];
 	const unsigned char *palette,*colortable;
-	unsigned char convpalette[3 * MAX_COLORS];
+	unsigned char convpalette[3 * MAX_PENS];
 	unsigned char convtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
 	struct DisplayText dt[2];
 
@@ -292,28 +374,37 @@ int vh_open(void)
 	}
 
 	for (i = 0;i < drv->total_colors;i++)
-		pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
+		Machine->pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
 
-	Machine->background_pen = pens[0];
+	Machine->background_pen = Machine->pens[0];
 
 	for (i = 0;i < drv->color_table_len;i++)
-		remappedtable[i] = pens[colortable[i]];
+		remappedtable[i] = Machine->pens[colortable[i]];
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
+	Machine->uifont = 0;
 
-	for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
+	if (drv->gfxdecodeinfo)
 	{
-		if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
-				+ drv->gfxdecodeinfo[i].start,
-				drv->gfxdecodeinfo[i].gfxlayout)) == 0)
+		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
-			vh_close();
-			return 1;
+			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
+					+ drv->gfxdecodeinfo[i].start,
+					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
+			{
+				vh_close();
+				return 1;
+			}
+			Machine->gfx[i]->colortable = &remappedtable[drv->gfxdecodeinfo[i].color_codes_start];
+			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
+	}
 
-		Machine->gfx[i]->colortable = &remappedtable[drv->gfxdecodeinfo[i].color_codes_start];
-		Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
+	if ((Machine->uifont = builduifont(drv->total_colors,palette,Machine->pens)) == 0)
+	{
+		vh_close();
+		return 1;
 	}
 
 
@@ -322,22 +413,22 @@ int vh_open(void)
 	Machine->memory_region[1] = 0;
 
 
-	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND OR THE EXECUTABLE "
-			"APPLICATION WITH ANY ROM IMAGES\n"
+	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
+			"APPLICATION WITH ANY ROM IMAGES.\n"
 			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
 			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
-			"OF ANY ROM IMAGES\n\n"
-			"IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW";
+			"OF ANY ROM IMAGES.\n\n"
+			"IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW.";
 
-	dt[0].color = gamedrv->paused_color;
+	dt[0].color = DT_COLOR_RED;
 	dt[0].x = 0;
 	dt[0].y = 0;
 	dt[1].text = 0;
 	displaytext(dt,1);
 
 	i = osd_read_key();
-	while (osd_key_pressed(i));	/* wait for key release */
-	if (i == OSD_KEY_ESC) return 1;
+	while (osd_key_pressed(i));	        /* wait for key release */
+	if (i == OSD_KEY_ESC) return 2;         /* M.Z.: avoid error signal (useful to MAMEnu) ;) */
 
 	clearbitmap(Machine->scrbitmap);	/* initialize the bitmap to the correct background color */
 	osd_update_display();
@@ -355,7 +446,7 @@ int vh_open(void)
 ***************************************************************************/
 int updatescreen(void)
 {
-	static int framecount = 0;
+	static int framecount = 0, showfpstemp = 0, showvoltemp = 0; /* M.Z.: new options */
 
 
 	/* read hi scores from disk */
@@ -378,7 +469,7 @@ int updatescreen(void)
 
         if (osd_key_pressed(OSD_KEY_F9)) {
                 if (++VolumePTR > 4) VolumePTR = 0;
-                CurrentVolume = DefaultVolumes[VolumePTR];
+		CurrentVolume = (4-VolumePTR)*25;  /* M.Z.: array no more needed */
                 osd_set_mastervolume(CurrentVolume);
 		while (osd_key_pressed(OSD_KEY_F9)) {
                   if (*drv->sh_update) {
@@ -386,16 +477,39 @@ int updatescreen(void)
 		     osd_update_audio();
                   }
                 }
+		showvoltemp = 50;    /* M.Z.: new options */
         }
 
-	if (osd_key_pressed(OSD_KEY_SCRLOCK)) /* pause the game */
+	if (osd_key_pressed(OSD_KEY_F8))           /* MAURY_BEGIN: New_options */
+	{                                          /* change frameskip */
+		if (frameskip < 3) frameskip++;
+		else frameskip = 0;
+		while (osd_key_pressed(OSD_KEY_F8));
+		showfpstemp = 50;
+	}
+
+	if (osd_key_pressed(OSD_KEY_MINUS_PAD))     /* decrease volume */
+	{
+		if (CurrentVolume > 0) CurrentVolume--;
+		osd_set_mastervolume(CurrentVolume);
+		showvoltemp = 50;
+	}
+
+	if (osd_key_pressed(OSD_KEY_PLUS_PAD))      /* increase volume */
+	{
+		if (CurrentVolume < 100) CurrentVolume++;
+		osd_set_mastervolume(CurrentVolume);
+		showvoltemp = 50;
+	}                                          /* MAURY_END: new options */
+
+	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
 	{
 		struct DisplayText dt[2];
 		int key;
 
 
 		dt[0].text = "PAUSED";
-		dt[0].color = gamedrv->paused_color;
+		dt[0].color = DT_COLOR_RED;
 		dt[0].x = gamedrv->paused_x;
 		dt[0].y = gamedrv->paused_y;
 		dt[1].text = 0;
@@ -403,22 +517,24 @@ int updatescreen(void)
 
                 osd_set_mastervolume(0);
 
-		while (osd_key_pressed(OSD_KEY_SCRLOCK))
+		while (osd_key_pressed(OSD_KEY_P))
 			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
 
 		do
 		{
 			key = osd_read_key();
 
-			if (key == OSD_KEY_ESC) return 1;
-			else if (key == OSD_KEY_TAB)
+			/* if (key == OSD_KEY_ESC) return 1;
+			else */                                /* Do not quit with ESC */
+                        if (key == OSD_KEY_TAB)
 			{
 				if (setup_menu()) return 1;
 				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
 				displaytext(dt,0);
 			}
-		} while (key != OSD_KEY_SCRLOCK);
-		while (osd_key_pressed(key));
+		} while ((key == 0) || (key == OSD_KEY_TAB));    /* MAURY_BEGIN: any key restarts */
+		if ((key == OSD_KEY_ESC) || (key == OSD_KEY_P))
+			while (osd_key_pressed(key));            /* MAURY_END: Filter ESC or P */
                 osd_set_mastervolume(CurrentVolume);
 	}
 
@@ -478,6 +594,18 @@ int updatescreen(void)
 		}
 		else f11pressed = 0;
 
+		if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
+		{
+			showfpstemp--;
+			if ((showfps == 0) && (showfpstemp == 0)) clearbitmap(Machine->scrbitmap);
+		}
+
+		if (showvoltemp)
+		{
+			showvoltemp--;
+			if (!showfpstemp) clearbitmap(Machine->scrbitmap);
+		}                        /* MAURY_END: nuove opzioni */
+
 		if (osd_key_pressed(OSD_KEY_F10))
 		{
 			if (f10pressed == 0) throttle ^= 1;
@@ -488,12 +616,27 @@ int updatescreen(void)
 
 		(*drv->vh_update)(Machine->scrbitmap);	/* update screen */
 
-		if (showfps)
+		if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%1000)/100],gamedrv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[(fps%100)/10],gamedrv->white_text,0,0,Machine->gfx[0]->width,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],gamedrv->charset[fps%10],gamedrv->white_text,0,0,2*Machine->gfx[0]->width,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->uifont,((fps%1000)/100+48),DT_COLOR_WHITE,0,0,0,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->uifont,((fps%100)/10+48),DT_COLOR_WHITE,0,0,Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->uifont,(fps%10+48),DT_COLOR_WHITE,0,0,2*Machine->uifont->width,0,0,TRANSPARENCY_NONE,0);
 		}
+
+		if (showvoltemp)      /* MAURY_BEGIN: nuove opzioni */
+		{                     /* volume-meter */
+			int i,x;
+			char volstr[25];
+			x = (drv->screen_width - 24*Machine->gfx[0]->width)/2;
+			strcpy(volstr,"                      ");
+			for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
+
+			drawgfx(Machine->scrbitmap,Machine->uifont,16,DT_COLOR_RED,0,0,x,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
+			for (i = 0;i < 22;i++)
+			    drawgfx(Machine->scrbitmap,Machine->uifont,volstr[i],DT_COLOR_WHITE,
+                                        0,0,x+(i+1)*Machine->uifont->width,drv->screen_height/2,0,TRANSPARENCY_NONE,0);
+		}                     /* MAURY_END: nuove opzioni */
 
 		osd_update_display();
 
@@ -526,10 +669,10 @@ int updatescreen(void)
 ***************************************************************************/
 int run_machine(const char *gamename)
 {
-	int res = 1;
+	int res = 1, videostat;
 
-
-	if (vh_open() == 0)
+	videostat = vh_open();
+	if (videostat == 0)
 	{
 		if (*drv->vh_start == 0 || (*drv->vh_start)() == 0)	/* start the video hardware */
 		{
@@ -537,40 +680,90 @@ int run_machine(const char *gamename)
 			{
 				FILE *f;
 				char name[100];
-				int i,incount, keycount;
+				int i,j,len,incount,keycount;
 
 
 				incount = 0;
 				while (gamedrv->input_ports[incount].default_value != -1) incount++;
 
-				/* read dipswitch settings from disk */
-				sprintf(name,"%s/%s.dsw",gamename,gamename);
-				if ((f = fopen(name,"rb")) != 0)
-				{
-					/* use name as temporary buffer */
-					if (fread(name,1,incount,f) == incount)
-					{
-						for (i = 0;i < incount;i++)
-							gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
-					}
-					fclose(f);
-				}
-
 				keycount = 0;
 				while (gamedrv->keysettings[keycount].num != -1) keycount++;
 
-				/* read dipswitch settings from disk */
-				sprintf(name,"%s/%s.key",gamename,gamename);
-				if ((f = fopen(name,"rb")) != 0)
-				{
-					/* use name as temporary buffer */
-					if (fread(name,1,keycount,f) == keycount)
-					{
-						for (i = 0;i < keycount;i++)
-							gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+                                /* find the configuration file */
+                                sprintf(name,"%s/%s.cfg",gamename,gamename);
+                                if ((f = fopen(name,"rb")) != 0)
+                                {
+                                  for (j=0; j < 3; j++)
+                                  {
+                                     if ((len = fread(name,1,4,f)) == 4)
+                                     {
+                                        len = (unsigned char)name[3];
+                                        name[3] = '\0';
+                                        if (stricmp(name,"dsw") == 0) {
+                                          if ((len == incount) && (fread(name,1,incount,f) == incount))
+					  {
+						  for (i = 0;i < incount;i++)
+							  gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
+					  }
+                                        } else if (stricmp(name,"key") == 0) {
+                                          if ((len == keycount) && (fread(name,1,keycount,f) == keycount))
+					  {
+						  for (i = 0;i < keycount;i++)
+							  gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+					  }
+                                        } else if (stricmp(name,"joy") == 0) {
+                                          if ((len == keycount) && (fread(name,1,keycount,f) == keycount))
+					  {
+						  for (i = 0;i < keycount;i++)
+							  gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+                                          }
 					}
-					fclose(f);
-				}
+                                     }
+                                  }
+                                  fclose(f);
+                                }
+                                else
+                                {
+				   /* read dipswitch settings from disk */
+				   sprintf(name,"%s/%s.dsw",gamename,gamename);
+				   if ((f = fopen(name,"rb")) != 0)
+				   {
+					   /* use name as temporary buffer */
+					   if (fread(name,1,incount,f) == incount)
+					   {
+						   for (i = 0;i < incount;i++)
+							   gamedrv->input_ports[i].default_value = ((unsigned char)name[i]);
+					   }
+					   fclose(f);
+				   }
+
+				   /* read keysettings from disk */
+				   sprintf(name,"%s/%s.key",gamename,gamename);
+				   if ((f = fopen(name,"rb")) != 0)
+				   {
+					   /* use name as temporary buffer */
+					   if (fread(name,1,keycount,f) == keycount)
+					   {
+						   for (i = 0;i < keycount;i++)
+							   gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+					   }
+					   fclose(f);
+				   }
+
+
+				   /* read joystick settings from disk */
+				   sprintf(name,"%s/%s.joy",gamename,gamename);
+				   if ((f = fopen(name,"rb")) != 0)
+				   {
+					   /* use name as temporary buffer */
+					   if (fread(name,1,keycount,f) == keycount)
+					   {
+						   for (i = 0;i < keycount;i++)
+							   gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ] = ((unsigned char)name[i]);
+					   }
+					   fclose(f);
+				   }
+                                }
 
 				/* we have to load the hi scores, but this will be done while */
 				/* the game is running */
@@ -586,6 +779,36 @@ int run_machine(const char *gamename)
 				if (hiscoreloaded != 0 && *gamedrv->hiscore_save)
 					(*gamedrv->hiscore_save)(hiscorename);
 
+                                /* write the configuration file */
+                                sprintf(name,"%s/%s.cfg",gamename,gamename);
+                                if ((f = fopen(name,"wb")) != 0)
+                                {
+                                        sprintf(name, "dsw ");
+                                        name[3] = incount;
+                                        fwrite(name,1,4,f);
+					/* use name as temporary buffer */
+					for (i = 0;i < incount;i++)
+						name[i] = gamedrv->input_ports[i].default_value;
+					fwrite(name,1,incount,f);
+
+                                        sprintf(name, "key ");
+                                        name[3] = keycount;
+                                        fwrite(name,1,4,f);
+					/* use name as temporary buffer */
+					for (i = 0;i < keycount;i++)
+						name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].keyboard[ gamedrv->keysettings[i].mask ];
+					fwrite(name,1,keycount,f);
+
+                                        sprintf(name, "joy ");
+                                        name[3] = keycount;
+                                        fwrite(name,1,4,f);
+					/* use name as temporary buffer */
+					for (i = 0;i < keycount;i++)
+						name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ];
+					fwrite(name,1,keycount,f);
+                                        fclose(f);
+                                }
+#if 0
 				/* write dipswitch settings to disk */
 				sprintf(name,"%s/%s.dsw",gamename,gamename);
 				if ((f = fopen(name,"wb")) != 0)
@@ -610,6 +833,18 @@ int run_machine(const char *gamename)
 					fclose(f);
 				}
 
+				/* write joy settings to disk */
+				sprintf(name,"%s/%s.joy",gamename,gamename);
+				if ((f = fopen(name,"wb")) != 0)
+				{
+					/* use name as temporary buffer */
+					for (i = 0;i < keycount;i++)
+						name[i] = gamedrv->input_ports[ gamedrv->keysettings[i].num ].joystick[ gamedrv->keysettings[i].mask ];
+
+					fwrite(name,1,keycount,f);
+					fclose(f);
+				}
+#endif
 				res = 0;
 			}
 			else printf("Unable to start audio emulation\n");
@@ -618,7 +853,11 @@ int run_machine(const char *gamename)
 
 		vh_close();
 	}
-	else printf("Unable to initialize display\n");
+	else
+	{  /* MAURY_BEGIN: avoid signal error (useful to MAMEnu) ;) */
+		if (videostat == 2) res = 0;
+		else printf("Unable to initialize display\n");
+	}  /* MAURY_END: */
 
 	return res;
 }

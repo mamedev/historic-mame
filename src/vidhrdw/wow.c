@@ -13,7 +13,12 @@
 
 unsigned char *wow_videoram;
 
+/* palette colors (see drivers/wow.c) */
+enum { BLACK,YELLOW,BLUE,RED,WHITE };
+
 int magic_expand_color, magic_control, collision;
+
+
 
 int wow_intercept_r(int offset)
 {
@@ -40,7 +45,6 @@ void wow_videoram_w(int offset,int data)
 	{
 		int i;
                 int color;
-                const unsigned char *paldata;
 		unsigned char *bm;
 
 
@@ -59,22 +63,14 @@ void wow_videoram_w(int offset,int data)
 			bm = tmpbitmap->line[offset / 40] + 8 * (offset % 40) + 4;
 		}
 
-                paldata = &Machine->gfx[0]->colortable[0];
 		for (i = 0;i < 4;i++)
 		{
-/* Previous version
-			*bm = 0;
-
-			if (data & 0x80) *bm |= 1;
-			if (data & 0x40) *bm |= 2;
-*/
-                        color = 0x00;
-                        if (data & 0x80) color |= 0x01;
-                        if (data & 0x40) color |= 0x02;
-                        *bm = paldata[color];
+			color = 0x00;
+			if (data & 0x80) color |= 0x01;
+			if (data & 0x40) color |= 0x02;
+			*bm = Machine->pens[color];
 			bm++;
 			data <<= 2;
-
 		}
 	}
 }

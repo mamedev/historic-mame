@@ -62,8 +62,7 @@ Nota: I've used my own 6502 emulator in order to compute the digital effects
 because the clock emulation is much more precise and allows to put timestamps
 on amplitude DAC writes. MAME doesn't allow to compute the digital effects in
 real time like Euphoric (oops, <ad. mode end>) so the effects are provided
-as precomputed samples (some of them are quite big, I should convert them
-to 22kHz)
+as precomputed samples)
 ***************************************************************************/
 
 #include "driver.h"
@@ -72,7 +71,7 @@ to 22kHz)
 extern int qbert_vh_start(void);
 extern void gottlieb_vh_init_optimized_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void gottlieb_vh_init_basic_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void gottlieb_sh_w(int offset, int data);
+extern void qbert_sh_w(int offset, int data);
 extern void gottlieb_sh_update(void);
 extern void gottlieb_output(int offset, int data);
 extern int qbert_IN1_r(int offset);
@@ -105,7 +104,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5000, 0x57ff, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x5802, 0x5802, qbert_sh_w }, /* sound/speech command */
 	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0xa000, 0xffff, MWA_ROM },
@@ -365,11 +364,7 @@ struct GameDriver qbert_driver =
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */
 
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	1,2,      /* white & yellow for dsw menu */
-	8*11,8*20,1, /* paused message displayed at X,Y and color */
+	8*11,8*20,
 
 	0,0     /* hi-score load and save */
 };
@@ -389,12 +384,7 @@ struct GameDriver qbertjp_driver =
 
 	(char *)qbert_colors,
 	0,0,    /* palette, colortable */
-
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0,1,      /* white & yellow for dsw menu */
-	8*11,8*20,1, /* paused message displayed at X,Y and color */
+	8*11,8*20,
 
 	0,0     /* hi-score load and save */
 };

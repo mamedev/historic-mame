@@ -1,9 +1,12 @@
 /* CHANGELOG
+        97/06/19        some minor cleanup -V-
+
+        97/05/07        wrote a few comments ;-) -V-
+
         97/04/xx        renamed the arabian.c to kangaroo.c and
                         was a bit disappointed when it did not work
                         straight away: the arabian videohardware is
                         just as kludgy as kangaroo's
-        97/05/07        wrote a few comments ;-) -V-
 */
 /***************************************************************************
 
@@ -66,7 +69,7 @@ void kangaroo_vh_stop(void)
 */
 void kangaroo_spriteramw(int offset,int val)
 {
-  int ofsx, ofsy,x, y, pl, src,trg, xb,yb;
+  int ofsx, ofsy,x, y, pl, src, xb,yb;
 
 
   spriteram[offset]=val;
@@ -75,16 +78,18 @@ void kangaroo_spriteramw(int offset,int val)
   {
      pl  = spriteram[8];
      src = spriteram[0] + 256 * spriteram[1] - 0xc000;
-     trg = spriteram[2] + 256 * spriteram[3] - 0x8000;
-     xb  = spriteram[4] ;
-     yb  = spriteram[5] * 4;
+/*     trg = spriteram[2] + 256 * spriteram[3] - 0x8000;*/
+/*     xb  = spriteram[4] ; */
+/*     yb  = spriteram[5] * 4; */
 /*     pl |= ( pl << 1 ); */
-     ofsx = trg%256;
-     ofsy = (0x3f - (trg/256) )*4;
-     
 
-     for (y=ofsy; y>=ofsy-yb; y-=4)
-       for (x=ofsx; x<=xb+ofsx; x++, src++)
+     ofsx = spriteram[2];
+     ofsy = ( 0xbf - spriteram[3] )*4;
+     yb = ofsy - ( spriteram[5] *4 );
+     xb = ofsx + spriteram[4] ;
+
+     for (y=ofsy; y>=yb; y-=4)
+       for (x=ofsx; x<=xb; x++, src++)
        {
          if(pl & 0x0c)
            drawgfx(tmpbitmap2,Machine->gfx[1],src,0,0,0,\

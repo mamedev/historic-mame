@@ -62,6 +62,8 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Amidar                      |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Anteater                    |  Yes   |   No   |  Yes   |   No   | anteater |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Arabian                     |  Yes   | Close  |  Yes   |   No   | arabian  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Bagman                      |  Yes   |   No   | Music  |   No   | bagman   |
@@ -70,7 +72,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Bomb Jack                   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Bubbles                     |  Yes   |  Yes   | Yes(1) |  Yes   | bubbles  |
+| Bubbles                     |   No   |  Yes   | Yes(1) |  Yes   | bubbles  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Burger Time                 |  Yes   |  Yes   |  Yes   |  Yes   | btime    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -122,7 +124,7 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gingateikoku No Gyakushu    |  Yes   |  Yes   | Limited|   No   | japirem  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Jr. Pacman                  |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
+| Jr. Pacman                  |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Joust                       |  Yes   |  Yes?  | Yes(1) |  Yes   | joust    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -139,6 +141,8 @@ The list doesn't include variants of the same game.
 | Lady Bug                    |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Lost Tomb                   |  Yes   |   No   |  Yes   |  n/a   | losttomb |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Lunar Rescue                |  Yes   |  Yes   |  Yes   |  Yes   | lrescue  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Mario Bros.                 |  Yes   | Close  |   No   |  Yes   | mario    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -160,7 +164,11 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Ms Pac Man (bootleg)        |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Mysterious Stone            |  Yes   |  Yes   |   No   |   No   | mystston |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Nibbler                     |  Yes   |  Yes   |   No   |  Yes   | nibbler  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Naughty Boy                 |  Yes   | Close  |   No   |  Yes   | naughtyb |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Pac Man                     |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -186,6 +194,8 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Rally X                     |  Yes   |   No   |Partial.|   No   | rallyx   |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Rescue                      |  Yes   |   No   |  Yes   |   No   | rescue   |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Robotron                    |  Yes   |  Yes?  | Yes(1) |  Yes   | robotron |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Scramble                    |  Yes   |  Yes   |  Yes   |   No   | scramble |
@@ -194,6 +204,8 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Sinistar                    |   No   |  Yes   | Yes(1) |  Yes   | sinistar |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Space Firebird              |  Yes   |  Yes   |  No    |  No    | spacefb  |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Space Invaders              |  Yes   |  Yes   | Yes(1) |  Yes   | invaders |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Space Panic                 |  Yes   | Close  |   No   |  Yes   | panic    |
@@ -201,6 +213,8 @@ The list doesn't include variants of the same game.
 | Space Zap                   |  Yes   | Maybe  |   No   |   No   | spacezap |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Splat                       |  Yes   |  Yes   | Yes(1) |  Yes   | splat    |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Starforce                   |  Yes   |  Yes   |   No   |   No   | starforc |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Stargate (Defender II)      |  Yes   |  Yes   | Yes(1) |  Yes   | stargate |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -215,6 +229,8 @@ The list doesn't include variants of the same game.
 | Time Pilot                  |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Turtles                     |  Yes   |  Yes?  |  Yes   |   No   | turtles  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Tutankham                   |  Yes   |  Yes   |   No   |   No   | tutankhm |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Vanguard                    |  Yes   |  Yes   |   No   |   No   | vanguard |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -254,6 +270,21 @@ Clones supported:
                                  does not display the number of jumps left.
 Known issues:
 - What do the dip switches do?
+
+
+
+Anteater ("anteater")
+=====================
+This runs on the Super Cobra board.  Graphic is garbled with an address
+shuffling.
+
+Arrows  Move around
+CTRL    Retreat tongue
+
+Known issues:
+- Graphics are now perfect
+- I don't know where coin counter is located.  The game requires 4 credits
+  to start
 
 
 
@@ -371,6 +402,7 @@ Arrows  Move around
 CTRL    Jump
 
 Clones supported:
+  bootleg version by Jeutel ("ckongjeu")
   version running on Scramble hardware ("ckongs")
 
 
@@ -382,6 +414,23 @@ Pac Man board.
 
 Arrows  Move around
 F1      Skip level
+
+
+
+Defender ("defender")
+===========================
+Up key  Up
+Dn key  Down
+Lft key Reverse
+ALT     Thrust
+CTRL    Fire
+X       Smart bomb
+C       Hyperspace
+1+2     Goes into game setup menu
+2+3     Diagnostic menu (only in attract mode)
+
+Known issues:
+- The joystick controls are strange, but Defender had lots of buttons.. ;-)
 
 
 
@@ -567,12 +616,15 @@ Arrows  Move around
 CTRL    Flap
 F,G     Player 2 move
 S       Player 2 flap
+1+2     Goes into game setup menu
+2+3     Diagnostic menu
 
 
 
 Jr. Pac Man ("jrpacman")
 ========================
 Arrows  Move around
+CTRL    Enable speed cheat
 F1      Skip level
 F2      Test mode
 
@@ -662,6 +714,22 @@ E,S,D,F  Fire
 
 Known issues:
 - Graphics are now perfect
+- I don't know where coin counter is located.  The game requires 4 credits
+  to start
+
+
+
+Lunar Rescue ("lrescue")
+========================
+Arrows  Move around
+CTRL    Fire
+T       Activate Tilt
+
+Clones supported:
+  Destination Earth ("desterth") (uses Space Invaders color scheme)
+
+Known issues:
+  A free credit is awarded on the first docking of the first game.
 
 
 
@@ -672,6 +740,9 @@ Runs on the same hardware as Q*Bert
 Arrows  Move around
 CTRL    Fire
 Z,X     Dialer control
+F1      Test mode
+F2      Select
+
 
 
 
@@ -716,7 +787,6 @@ Clones supported:
 
 Known issues:
 - The star background is probably not entirely accurate.
-- What do the dip switches do?
 
 
 
@@ -785,6 +855,30 @@ Arrows  Move around
 F1      Skip level
 F2      Test mode
 CTRL    Speed up cheat
+
+Clones supported:
+  Ms Pac Man Attacks ("mspacatk")
+
+Known issues:
+- Speed cheat doesn't work in clone version
+- In clone version bonus (like cherry) moves over the maze.  I think this
+  is a rom bug and not a MAME one.
+
+
+
+Mysterious Stone ("mystston")
+=============================
+Arrows  Move around
+CTRL    Fire
+ALT     Kick
+
+
+
+
+Naugthy Boy ("naughtyb")
+========================
+Arrows  Move around
+CTRL    Throw the stone
 
 
 
@@ -938,6 +1032,9 @@ Known Issues:
 Q*Bert ("qbert")
 ================
 Arrows  Move around
+F1      Test mode
+F2      Select
+
 To enter your name in the high score list, use 1 or 2.
 
 Clones supported:
@@ -948,6 +1045,9 @@ Clones supported:
 Q*Bert Qubes ("qbertqub")
 =========================
 Arrows  Move around
+F1      Test mode
+F2      Select
+
 To enter your name in the high score list, use 1 or 2.
 
 Known issues:
@@ -955,6 +1055,7 @@ Known issues:
   supreme noser table appears, then the table will be correctly filled.
   Alternatively, you can insert a coin before this empty table appears...
 - Hiscore save not supported yet.
+
 
 
 Rally X ("rallyx")
@@ -978,9 +1079,23 @@ CTRL    Player 1 Energy
 ALT     Player 1 Decoy
 1       Player 2 Energy
 2       Player 3 Decoy
+F1      Test mode
+F2      Select
+
+
+
+Rescue ("rescue")
+===================
+This game works on the same board of Super Cobra.  Graphic is garbled with
+an address shuffling.
+
+Arrows  Move around
+CTRL    Fire
 
 Known issues:
-- The screen sometimes flips horizzontally and vertically
+- Graphics are now perfect
+- I don't know where coin counter is located.  The game requires 4 credits
+  to start
 
 
 
@@ -988,6 +1103,8 @@ Robotron ("robotron")
 =====================
 Arrows  Move around
 E,S,D,F Fire
+1+2     Goes into game setup menu
+2+3     Diagnostic menu
 
 
 
@@ -1027,20 +1144,39 @@ Known issues:
 
 
 
+Space Firebird ("spacefb")
+==========================
+Arrows  Move around
+ALT     Fire
+CTRL    Escape
+
+Clones supported:
+  None known
+
+Known issues:
+- Red screen "flash" when you die is not supported
+- Background Starfield not supported. It is NOT a Galaxians type starfield
+
+Bugs which aren't:
+- The sprites/characters don't use transperancy in the real game. This is
+  not a bug
+
+
+
 Space Invaders ("invaders")
 ===========================
 Arrows  Move around
 CTRL    Fire
 T       Activate Tilt
 
-Clones supported (some of these have wrong colors, and the dip switch menu
-      doesn't work):
+Clones supported:
   Super Earth Invasion ("earthinv")
   Space Attack II ("spaceatt")
   Invaders Revenge ("invrvnge")
   Galaxy Wars ("galxwars")
-  Lunar Rescur ("lrescue")
-  Destination Earth ("desterth")
+
+Known issues:
+  The colors used in Invaders Revenge may be wrong.
 
 
 
@@ -1109,16 +1245,29 @@ Known issues:
 
 
 
+Starforce ("starforc")
+======================
+Arrows  Move around
+CTRL    Fire
+
+
+
+
 Stargate ("stargate")
 =====================
-S       Up
-X       Down
-A       Reverse
-I       Thrust
-O       Fire
-J       Smart bomb
-M       Inviso
-SPACE   Hyperspace
+Up key  Up
+Dn key  Down
+Lft key Reverse
+ALT     Thrust
+CTRL    Fire
+X       Smart bomb
+C       Hyperspace
+V       Inviso
+1+2     Goes into game setup menu
+2+3     Diagnostic menu
+
+Known issues:
+- The joystick controls are strange, but Stargate had lots of buttons.. ;-)
 
 
 
@@ -1186,6 +1335,21 @@ Clones supported:
 
 Arrows  Move around
 CTRL    Bomb
+
+
+
+Tutankham ("tutankhm")
+======================
+Arrows  Move around
+CTRL    Fire left
+ALT     Fire Right
+SPACE   Flash Bomb
+
+Known issues:
+- Sound support isn't emulated.
+- David Dahl reported a probable missing ROM ("ra1_9a.snd"???), but I
+  disassembled the Z80 code and the area 2000-2fff isn't touched.  Maybe
+  different music roms are available since there is a place for a 3rd ROM.
 
 
 
@@ -1302,6 +1466,7 @@ Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
    Nicola Salmoria.
 Gyruss, Ghost 'n Goblin, Mario Bros., Vulgus, Zaxxon, Bomb Jack, Burger Time
    and Donkey Kong 3 drivers provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
+Tutankhamon driver provided by Mirko Buffoni and David Dahl (techt@juno.com)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo and Kangaroo drivers provided by Ville Laitinen (ville@sms.fi).
@@ -1371,6 +1536,8 @@ Colors log file for Ghosts 'n Goblins provided by Gabrio Secco.
 Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
    emulator by Gary Shepherdson.
 Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
+Colors for Space Invaders, Lunar Rescue and clones and high score saving
+    for Lunar Rescue provided by Valerio Verrando (v.verrando@mclink.it)
 Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
 Thanks to Marc Vergoossen and Marc Lafontaine (marclaf@sympatico.ca) for
@@ -1390,13 +1557,13 @@ Thanks to Mike Cuddy for Pooyan and Time pilot colors.
 Thanks to Thomas Meyer for Moon Patrol screenshots.
 Many thanks to Steve Scavone (krunch@intac.com) for his invaluable help with
    Wizard of Wor and related games.
-Vesa 2.0 linear and banked extensions, -vesascan and -vesaskip implemented
-   by Bernd Wiebelt (bernardo@studi.mathematik.hu-berlin.de)
+Vesa & rotate modes by Bernd Wiebelt (bernardo@studi.mathematik.hu-berlin.de)
 Thanks to Stefano Mozzi (piu1608@cdc8g5.cdc.polimi.it) for Mario Bros. colors.
 Thanks to Matthew Hillmer (mhillmer@pop.isd.net) for Donkey Kong 3 colors.
 Thanks to Tormod Tjaberg (tormod@sn.no) and Michael Strutts for Space Invaders
    sound.
 Thanks to Shaun Stephenson (shaun@marino13.demon.co.uk) for Phoenix samples.
+Thanks to Maurizio Zanello for a better interface between MAME and frontends.
 
 
 Usage
@@ -1411,25 +1578,46 @@ MAME mspacman -soundcard 0    will run Ms Pac Man without sound
 options:
 -noscanlines  use alternate video mode (not availble in all games). Use this
               if the default mode doesn't work with your monitor/video card.
--vesa         use standard 800x600x256 VESA 1.2 mode instead of custom video
-              mode. Use this as a last resort if -noscanlines doesn't solve
-              your video problems.
--vesa2b       use VESA2.0 banked mode extension
--vesa2l       use VESA2.0 linear mode extension
--640          tell MAME to use a vesa 640x480 video mode
--800          same as above, video mode is 800x600.  This is the default mode
+              in conjunction with VESA modes, things get rather SLOW 
+-vesa         use a standard VESA 1.2 mode (default 800x600) instead of custom
+	      video mode. By default this simulates scanlines unless the
+              above option ('-noscanlines') is given, or the game is too wide
+              to fit on the screen.
+              You probably want to try this if the custom modes don't work
+              correct for you.  Use PGUP/PGDN to scroll the game up/down
+              if the game is too tall to fit entirely on the screen.
+-vesa2b       same as '-vesa' except this uses VESA2.0 banked mode extension
+-vesa2l       same as '-vesa' except this uses VESA2.0 linear mode extension
+              (recommended if available since it is faster than VESA 1.2
+-XxY          where X and Y are width and height (ex: '-800x600')
+              This is the preferred method for selecting the 
+              VESA resolution. For possible X/Y combinations see below
+-320          tell MAME to use a vesa 320x240 video mode
+              If you get an error '320x240 not supported', you probably
+              need Scitech's Display Doctor, which provides the 'de facto'
+              standard VESA implementaion (http://www.scitech.com)
+              Note: this is a nice alternative to '-640x480 -noscanlines'
+-512          same as above, video mode is 512x384
+-640          same as above, video mode is 640x480
+-800          same as above, video mode is 800x600.
+              If no VESA resolution is given on the commandline, this
+              is the default mode. Since rotation modes (below) use VESA, 
+              this is also the default mode for them.
 -1024         same as above, video mode is 1024x768
--XxY          where X and Y are width and height (ex: 800x600)
-
--vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
-              slower than the other video modes. Use this if you want
-              scanlines and the default video mode doesn't work.
-              For frontend authors: same as '-vesa -800'.
--vesaskip n   similar to -vesascan, but use a 640x480 screen instead of
-              800x600. Since most games use a screen taller than 240 lines,
-              it won't fit in the screen - n sets the initial number of lines
-              to skip at the top of the screen. You can adjust the position
-              while the game is running using the PGUP and PGDOWN keys.
+-vesascan     is obsolte and no longer supported.
+              frontend authors: use '-vesa -800'.
+-vesaskip N   is obsolete and no longer supported
+              use '-640x480 -skiplines N' to get the old behaviour
+-skiplines N  since most games use a screen taller than 240 lines,
+              they won't fit in the screen. The parameter 'N' sets
+              the initial number of lines to skip at the top of
+              the screen. You can adjust the position while the game
+              is running using the PGUP and PGDOWN keys.
+              Note: this works _only_ if a VESA mode is selected,
+                    e.g. ('-640x480 -skiplines 10')
+-nodouble     prevents pixel doubling, if you like miniaturised
+              arcade emulation. It's also faster than the standard
+              pixel-doubling VESA modes.
 -vgafreq n    where n can be 0 (default) 1, 2 or 3.
               use different frequencies for the custom video modes. This
               could reduce flicker, especially in the 224x288noscanlines
@@ -1444,15 +1632,35 @@ options:
               utilities to set the VESA refresh rate to 60 Hz.
               Note that when this option is turned on, speed will NOT
               downgrade nicely if your system is not fast enough.
--rotate       display the whole screen rotated by 90 degree.  VESA is used
-              to do this, and max resolution supported is 320 x 240.
+-rotate       is obsolete and no longer supported
+-ror          rotate the display clockwise by 90 degrees. 
+              This implies '-vesa -800x600' if not specified otherwise
+              on the command line. It also provides authentic *vertical*
+              scanlines, given you turn your monitor to its side.
+              CAUTION:
+              A monitor is a complicated, high voltage electronic device.
+              There are some monitors which were designed to be rotated.
+              If yours is _not_ one of those, but you absolutely must
+              turn it to its side, you do so on your own risk.
+
+              ******************************************************
+              PLEASE DO NOT LET YOUR MONITOR WITHOUT ATTENTION IF IT
+              IS PLUGGED IN AND TURNED TO ITS SIDE
+              ******************************************************
+
+-rol          rotate display anticlockwise
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
 -nofm         suppress FM support.  If you have problems and don't have a
               soundblaster I suggest you to use this option
 -log          create a log of illegal memory accesses in ERROR.LOG
+-help, -?     display current mame version and copyright notice
 -list         display a list of currently supported games
+-listfull     display a list of game directory names + description
+-listroms     display selected game required roms
+-listsamples  display selected game required samples
+-mouse        enable mouse support
 -frameskip n  skip frames to speed up the emulation. For example, if the game
               normally runs at 60 fps, "-frameskip 1" will make it run at 30
               fps, and "-frameskip 2" at 20 fps. Use F11 to check the fps your
@@ -1462,16 +1670,20 @@ options:
               worse).  Maximum value for frameskip is 3.
 
 
+
 The following keys work in all emulators:
 
 3         Insert coin
 1         Start 1 player game
 2         Start 2 players game
-Tab       Enter dip switch settings and keys assignment and credits display menu
-ScrlLock  Pause
+Tab       Enter dip switch, keys and joy settings, and credits display menu
+          Pressing TAB again will back you to the emulator, ESC exit from MAME.
+P         Pause
 F3        Reset
 F4        Show the game graphics. Use cursor keys to change set/color, F4 to exit
+F8        Change frame skip on the fly (60, 30, 20, or 15)
 F9        To change volume percentage thru 100,75,50,25,0 values
+          Keypad PLUS and MINUS change the volume with fine granularity
 F10       Toggle speed throttling
 F11       Toggle fps counter
 F12       Save a screen snapshot

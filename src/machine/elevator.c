@@ -11,7 +11,20 @@
 
 
 
+unsigned char *taito_dsw23_select;
+
 static int bank;
+
+
+
+int taito_dsw23_r(int offset)
+{
+	if (*taito_dsw23_select == 0x0e) return readinputport(5);
+	else if (*taito_dsw23_select == 0x0f) return readinputport(6);
+	else if (errorlog) fprintf(errorlog,"d40e = %02x\n",*taito_dsw23_select);
+
+	return 0;
+}
 
 
 

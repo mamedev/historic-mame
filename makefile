@@ -5,12 +5,12 @@ DEFS   = -DX86_ASM -DLSB_FIRST
 CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
          -fstrength-reduce -fomit-frame-pointer -O3 -m486 -Wall
 LIBS   = -lalleg
-OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
+OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
-         obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
+         obj/machine/jrpacman.o obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
@@ -47,7 +47,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
          obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/machine/btime.o obj/vidhrdw/btime.o obj/sndhrdw/btime.o obj/drivers/btime.o \
-         obj/sndhrdw/jumpbug.o obj/drivers/jumpbug.o \
+         obj/sndhrdw/jumpbug.o obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
          obj/machine/vanguard.o obj/vidhrdw/vanguard.o obj/drivers/vanguard.o \
          obj/machine/gberet.o obj/vidhrdw/gberet.o obj/sndhrdw/gberet.o obj/drivers/gberet.o \
          obj/vidhrdw/venture.o obj/drivers/venture.o \
@@ -72,6 +72,12 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/sndhrdw/kungfum.o obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
          obj/machine/williams.o obj/sndhrdw/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
+         obj/vidhrdw/starforc.o obj/drivers/starforc.o \
+         obj/machine/naughtyb.o obj/vidhrdw/naughtyb.o obj/drivers/naughtyb.o \
+         obj/vidhrdw/wwestern.o obj/drivers/wwestern.o \
+         obj/machine/mystston.o obj/vidhrdw/mystston.o obj/drivers/mystston.o \
+         obj/machine/tutankhm.o obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
+         obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
 
 VPATH = src src/Z80 src/M6502 src/I86 src/M6809

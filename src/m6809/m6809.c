@@ -63,6 +63,7 @@
 #include <stdlib.h> /* DS */
 
 #include "m6809.h" /* DS */
+#include "driver.h"
 
 static void m6809_FIRQ( void );
 INLINE void fetch_effective_address( void );
@@ -506,6 +507,7 @@ void m6809_execute(void) /* DS */
 flaginstr:  /* $10 and $11 instructions return here */
 	if( fastopcodes ) ireg=M_RDOP(ipcreg++); /* JB 970526 */
 	else ireg=M_RDMEM(ipcreg++);
+
 	if(haspostbyte[ireg]) fetch_effective_address(); /* DS */
 	if( ireg==0x10 ){ iflag = 1; goto flaginstr;}	/* DS */
 	else if( ireg==0x11 ){ iflag = 2; goto flaginstr;}	/* DS */

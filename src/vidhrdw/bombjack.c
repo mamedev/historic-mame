@@ -79,17 +79,6 @@ void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		bit3 = (color_prom[2*i+1] >> 3) & 0x01;
 		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[16*8 + i] = i;
-
-
-	/* set up colors for the copyright notice - the other colors will be */
-	/* set later by the game. */
-	for (i = 0;i < 16*8;i++)
-		colortable[i] = 0;
-	colortable[2*8 + 7] = 11;	/* red */
 }
 
 
@@ -153,7 +142,7 @@ if (errorlog && offs == 0 &&
 		fprintf(errorlog,"warning: unknown color %02x %02x\n",
 				bombjack_paletteram[2*i],bombjack_paletteram[2*i+1]);
 
-			Machine->gfx[0]->colortable[i] = Machine->gfx[4]->colortable[offs];
+			Machine->gfx[0]->colortable[i] = Machine->pens[offs];
 		}
 	}
 

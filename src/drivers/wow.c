@@ -235,113 +235,6 @@ static struct DSW dsw[] =
 
 
 
-/* Wizard of Wor doesn't have character mapped graphics, */
-/* this definition is here only for the dip switch menu  */
-
-static struct GfxLayout charlayout =
-{
-	8,10,	/* 8*10 characters */
-	44,	/* 44 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	10*8	/* every char takes 10 consecutive bytes */
-};
-
-static struct GfxLayout gorf_charlayout =
-{
-	6,16,	/* 6*16 characters */
-	44,	/* 44 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0*8, 1*16, 2*16, 3*16, 4*16, 5*16 },
-	{ 15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 },	/* pretty straightforward layout */
-	6*16	/* every char takes 12 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout1 =
-{
-	7,10,					/* 7*10 characters */
-	25,						/* 25 characters */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout2 =
-{
-	7,10,					/* 7*10 characters */
-	6,						/* 6 characters */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5 , 6},
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout3 =
-{
-	11,10,					/* 10*10 characters */
-	1,						/* 1 character */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8, 16*8, 18*8 },
-	25*8					/* every char takes 25 consecutive bytes */
-};
-
-static struct GfxLayout robby_charlayout4 =
-{
-	4,10,					/* 4*10 characters */
-	1,						/* 1 character */
-	1,						/* 1 bit per pixel */
-	{ 0 },
-	{ 2, 0, 1, 2 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	15*8					/* every char takes 15 consecutive bytes */
-};
-
-/* Wizard of Wor */
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0x04ce, &charlayout,      0, 4 },
-	{ -1 } /* end of array */
-};
-
-/* Space Zap */
-
-static struct GfxDecodeInfo spacezap_gfxdecodeinfo[] =
-{
-	{ 0, 0x13BA, &charlayout,      0, 4 },
-	{ -1 } /* end of array */
-};
-
-/* Gorf */
-
-static struct GfxDecodeInfo gorf_gfxdecodeinfo[] =
-{
-	{ 0, 0x076A, &gorf_charlayout,0, 4 },
-	{ -1 } /* end of array */
-};
-
-/* Robby Roto - This will give us all of the characters, but in 6 banks! */
-/* So I've altered common.c to allow bank selection in the charset array */
-
-static struct GfxDecodeInfo robby_gfxdecodeinfo[] =
-{
-	{ 0, 0x0EAC, &robby_charlayout1, 0, 4 },		/* B - A */
-	{ 0, 0x1023, &robby_charlayout3, 0, 4 },		/* M */
-	{ 0, 0x103C, &robby_charlayout2, 0, 4 },		/* S - V */
-	{ 0, 0x1096, &robby_charlayout3, 0, 4 },		/* W */
-	{ 0, 0x10AF, &robby_charlayout2, 0, 4 },		/* X - Z */
-	{ 0, 0x0F15, &robby_charlayout4, 0, 4 },		/* I */
-	{ -1 } /* end of array */
-};
-
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
@@ -353,14 +246,6 @@ static unsigned char palette[] =
 
 enum { BLACK,YELLOW,BLUE,RED,WHITE };
 
-static unsigned char colortable[] =
-{
-	BLACK,YELLOW,BLUE,RED,
-	BLACK,WHITE,BLACK,RED	/* not used by the game, here only for the dip switch menu */
-};
-
-
-/* Wizard of Wor */
 
 
 static struct MachineDriver wow_machine_driver =
@@ -380,8 +265,8 @@ static struct MachineDriver wow_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -419,8 +304,8 @@ static struct MachineDriver spacezap_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	spacezap_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -455,8 +340,8 @@ static struct MachineDriver gorf_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	gorf_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -494,8 +379,8 @@ static struct MachineDriver robby_machine_driver =
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
-	robby_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -580,12 +465,8 @@ struct GameDriver wow_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
-		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
-	2, 0,
-	(320-8*6)/2, (204-10)/2, 3,
+	0, palette, 0,
+	(320-8*6)/2, (204-10)/2,
 
 	0, 0
 };
@@ -603,12 +484,8 @@ struct GameDriver spacezap_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09, 0x0A,					/* numbers */
-		0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,	/* letters */
-		0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25 },
-	2, 0,
-	(320-8*6)/2, (204-10)/2, 3,
+	0, palette, 0,
+	(320-8*6)/2, (204-10)/2,
 
 	0, 0
 };
@@ -626,12 +503,8 @@ struct GameDriver robby_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x015,0x00D,0x00E,0x00F,0x010,0x011,0x012,0x013,0x016,0x014,						/* numbers */
-	  0x018,0x000,0x001,0x002,0x003,0x004,0x005,0x006,0x500,0x008,0x009,0x017,0x100,	/* letters */
-	  0x00A,0x00B,0x202,0x203,0x00C,0x200,0x204,0x201,0x205,0x300,0x400,0x401,0x402 },
-	2, 0,
-	(320-8*6)/2, (204-10)/2, 3,
+	0, palette, 0,
+	(320-8*6)/2, (204-10)/2,
 
 	0, 0
 };
@@ -649,12 +522,8 @@ struct GameDriver gorf_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,	/* numbers */
-		0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	/* letters */
-		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24 },
-	2, 0,
-	(320-8*6)/2, (204-10)/2, 3,
+	0, palette, 0,
+	(320-8*6)/2, (204-10)/2,
 
 	0, 0
 };

@@ -13,37 +13,136 @@
 
 unsigned char *invaders_videoram;
 
+/* palette colors (see drivers/invaders.c) */
+enum { BLACK, RED, GREEN, YELLOW, WHITE, CYAN, PURPLE };
+
 
 
 void invaders_videoram_w(int offset,int data)
 {
-        if (invaders_videoram[offset] != data)
-        {
-                int i,x,y;
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
 
 
-                invaders_videoram[offset] = data;
+		invaders_videoram[offset] = data;
 
-                x = offset / 32 + 16;
-                y = 256-8 - 8 * (offset % 32);
+		x = offset / 32 + 16;
+		y = 256-8 - 8 * (offset % 32);
 
-                for (i = 0;i < 8;i++)
-                {
-                        int col;
+		for (i = 0;i < 8;i++)
+		{
+			int col;
 
 
-                        col = Machine->gfx[0]->colortable[1];   /* white */
-                        if (y >= 192 && y < 240) col = Machine->gfx[0]->colortable[3];     /* green */
-                        if (y >= 240 && x > 32 && x < 150) col = Machine->gfx[0]->colortable[3];     /* green */
-                        if (y > 32 && y < 64) col = Machine->gfx[0]->colortable[5];     /* red */
+			col = Machine->pens[WHITE];
+			if (y >= 184 && y < 240) col = Machine->pens[GREEN];
+			if (y >= 240 && x > 32 && x < 150) col = Machine->pens[GREEN];
+			if (y >= 32 && y < 64) col = Machine->pens[RED];
 
-                        if (data & 0x80) tmpbitmap->line[y][x] = col;
-                        else tmpbitmap->line[y][x] = Machine->gfx[0]->colortable[0];    /* black */
+			if (data & 0x80) tmpbitmap->line[y][x] = col;
+			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
 
-                        y++;
-                        data <<= 1;
-                }
-        }
+			y++;
+			data <<= 1;
+		}
+	}
+}
+
+
+void invrvnge_videoram_w(int offset,int data)   /* V.V */ /* Whole function */
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+
+
+		invaders_videoram[offset] = data;
+
+		x = offset / 32 + 16;
+		y = 256-8 - 8 * (offset % 32);
+
+		for (i = 0;i < 8;i++)
+		{
+			int col;
+
+
+			col = Machine->pens[WHITE];
+			if (y >= 184) col = Machine->pens[GREEN];
+			if (y > 32 && y < 64) col = Machine->pens[RED];
+
+			if (data & 0x80) tmpbitmap->line[y][x] = col;
+			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
+
+			y++;
+			data <<= 1;
+		}
+	}
+}
+
+
+
+void lrescue_videoram_w(int offset,int data)    /* V.V */ /* Whole function */
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+
+
+		invaders_videoram[offset] = data;
+
+		x = offset / 32 + 16;
+		y = 256-8 - 8 * (offset % 32);
+
+		for (i = 0;i < 8;i++)
+		{
+			int col;
+
+
+			col = Machine->pens[WHITE];
+
+			if (y >= 8 && y < 16) {
+				if (x < 88) col = Machine->pens[CYAN];
+				if (x >= 88 && x < 176) col = Machine->pens[RED];
+				if (x >= 176) col = Machine->pens[YELLOW];
+				}
+
+
+			if (y >= 16 && y < 24) {
+				if (x < 88) col = Machine->pens[CYAN];
+				if (x >= 88 && x < 176) col = Machine->pens[GREEN];
+				if (x >= 176) col = Machine->pens[YELLOW];
+				}
+
+
+			if (y >= 24 && y < 32) {
+				if (x >= 88 && x < 176) col = Machine->pens[GREEN];	/* or 168? */
+				if (x >= 176) col = Machine->pens[YELLOW];
+				}
+
+			if (y >= 32 && y < 40) col = Machine->pens[RED];
+			if (y >= 40 && y < 64) col = Machine->pens[PURPLE];
+			if (y >= 64 && y < 96) col = Machine->pens[GREEN];
+			if (y >= 96 && y < 128) col = Machine->pens[CYAN];
+			if (y >= 128 && y < 160) col = Machine->pens[PURPLE];
+			if (y >= 160 && y < 192) col = Machine->pens[YELLOW];
+			if (y >= 192 && y < 216) col = Machine->pens[RED];
+			if (y >= 216 && y < 232) col = Machine->pens[CYAN];
+			if (y >= 232 && y < 240) col = Machine->pens[RED];
+			if (y >= 240) {
+				if (x < 152) col = Machine->pens[CYAN];
+				if (x >= 152 && x < 200) col = Machine->pens[PURPLE];
+				if (x >= 200) col = Machine->pens[CYAN];
+				}
+			if (x == 239) col = Machine->pens[BLACK];
+
+			if (data & 0x80) tmpbitmap->line[y][x] = col;
+			else tmpbitmap->line[y][x] = Machine->pens[BLACK];
+
+			y++;
+			data <<= 1;
+		}
+	}
 }
 
 
@@ -57,6 +156,6 @@ void invaders_videoram_w(int offset,int data)
 ***************************************************************************/
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-        /* copy the character mapped graphics */
-        copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

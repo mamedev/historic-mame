@@ -101,42 +101,21 @@ extern int invaders_interrupt(void);
 
 extern unsigned char *invaders_videoram;
 extern void invaders_videoram_w(int offset,int data);
+extern void lrescue_videoram_w(int offset,int data);    /* V.V */
+extern void invrvnge_videoram_w(int offset,int data);   /* V.V */
 extern void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void invaders_sh_port3_w(int offset,int data);
 extern void invaders_sh_port5_w(int offset,int data);
 extern void invaders_sh_update(void);
 
-int invaders_init_machine(const char *gamename)
-{
-        if (stricmp(gamename,"invrvnge") == 0)
-          Machine->drv->gfxdecodeinfo[0].start = 0x0f0f;
-        if (stricmp(gamename,"spaceatt") == 0)
-          Machine->drv->gfxdecodeinfo[0].start = 0x1600;
-        if (stricmp(gamename,"invdelux") == 0) {
-          Machine->drv->gfxdecodeinfo[0].start = 0x1e21;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].width = 5;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].charincrement = 5*8;
-        }
-        if (stricmp(gamename,"galxwars") == 0) {
-          Machine->drv->gfxdecodeinfo[0].start = 0x02f0;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].width = 5;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].charincrement = 5*8;
-        }
-        if (stricmp(gamename,"lrescue") == 0 || stricmp(gamename,"desterth") == 0) {
-          Machine->drv->gfxdecodeinfo[0].start = 0x1c5b;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].width = 5;
-          Machine->drv->gfxdecodeinfo[0].gfxlayout[0].charincrement = 5*8;
-        }
 
-        return 0;
-}
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x57ff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -145,7 +124,27 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2400, 0x3fff, invaders_videoram_w, &invaders_videoram },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryWriteAddress lrescue_writemem[] = /* V.V */ /* Whole function */
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, lrescue_videoram_w, &invaders_videoram },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryWriteAddress invrvnge_writemem[] = /* V.V */ /* Whole function */
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, invrvnge_videoram_w, &invaders_videoram },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 
@@ -155,7 +154,7 @@ static struct IOReadPort readport[] =
 	{ 0x01, 0x01, input_port_0_r },
 	{ 0x02, 0x02, input_port_1_r },
 	{ 0x03, 0x03, invaders_shift_data_r },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
@@ -165,7 +164,7 @@ static struct IOReadPort invdelux_readport[] =
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, invaders_shift_data_r },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 /* Catch the write to unmapped I/O port 6 */
@@ -176,34 +175,34 @@ void invaders_dummy_write(int offset,int data)
 static struct IOWritePort writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-   { 0x03, 0x03, invaders_sh_port3_w },
+        { 0x03, 0x03, invaders_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-   { 0x05, 0x05, invaders_sh_port5_w },
-   { 0x06, 0x06, invaders_dummy_write },
-	{ -1 }	/* end of table */
+        { 0x05, 0x05, invaders_sh_port5_w },
+        { 0x06, 0x06, invaders_dummy_write },
+	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort invdelux_writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-   { 0x03, 0x03, invaders_sh_port3_w },
+        { 0x03, 0x03, invaders_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
-   { 0x05, 0x05, invaders_sh_port5_w },
-   { 0x06, 0x06, invaders_dummy_write },
-	{ -1 }	/* end of table */
+        { 0x05, 0x05, invaders_sh_port5_w },
+        { 0x06, 0x06, invaders_dummy_write },
+	{ -1 }  /* end of table */
 };
 
 
 static struct InputPort input_ports[] =
 {
-	{	/* IN0 */
+	{       /* IN0 */
 		0x81,
 		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
 				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
-	{	/* IN1 */
+	{       /* IN1 */
 		0x00,
 		{ 0, 0, OSD_KEY_T, 0,
 				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
@@ -215,22 +214,22 @@ static struct InputPort input_ports[] =
 
 static struct InputPort invdelux_input_ports[] =
 {
-	{	/* IN0 */
+	{       /* IN0 */
 		0xf4,
 		{ 0, 0, 0, 0, 0, 0, OSD_KEY_N, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
-	{	/* IN1 */
+	{       /* IN1 */
 		0x81,
 		{ OSD_KEY_3, OSD_KEY_2, OSD_KEY_1, 0,
 				OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0,
 				OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
-	{	/* IN2 */
+	{       /* IN2 */
 		0x00,
 		{ 0, 0, OSD_KEY_T, 0,
-            OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
+                	    OSD_KEY_CONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_FIRE,    OSD_JOY_LEFT, OSD_JOY_RIGHT, 0 }
 	},
 	{ -1 }
@@ -240,36 +239,36 @@ static struct InputPort invdelux_input_ports[] =
 
 static struct KEYSet keys[] =
 {
-        { 0, 5, "PL1 MOVE LEFT"  },
-        { 0, 6, "PL1 MOVE RIGHT" },
-        { 0, 4, "PL1 FIRE"       },
-        { 1, 5, "PL1 MOVE LEFT"  },
-        { 1, 6, "PL1 MOVE RIGHT" },
-        { 1, 4, "PL1 FIRE"       },
-        { -1 }
+	{ 0, 5, "PL1 MOVE LEFT"  },
+	{ 0, 6, "PL1 MOVE RIGHT" },
+	{ 0, 4, "PL1 FIRE"       },
+	{ 1, 5, "PL1 MOVE LEFT"  },
+	{ 1, 6, "PL1 MOVE RIGHT" },
+	{ 1, 4, "PL1 FIRE"       },
+	{ -1 }
 };
 
 static struct KEYSet invaders_keys[] =
 {
-        { 0, 5, "PL1 MOVE LEFT"  },
-        { 0, 6, "PL1 MOVE RIGHT" },
-        { 0, 4, "PL1 FIRE"       },
-        { 1, 5, "PL2 MOVE LEFT"  },
-        { 1, 6, "PL2 MOVE RIGHT" },
-        { 1, 4, "PL2 FIRE"       },
-        { -1 }
+	{ 0, 5, "PL1 MOVE LEFT"  },
+	{ 0, 6, "PL1 MOVE RIGHT" },
+	{ 0, 4, "PL1 FIRE"       },
+	{ 1, 5, "PL2 MOVE LEFT"  },
+	{ 1, 6, "PL2 MOVE RIGHT" },
+	{ 1, 4, "PL2 FIRE"       },
+	{ -1 }
 };
 
 /* Deluxe uses set two to input the name */
 static struct KEYSet invdelux_keys[] =
 {
-        { 1, 5, "PL1 MOVE LEFT"  },
-        { 1, 6, "PL1 MOVE RIGHT" },
-        { 1, 4, "PL1 FIRE"       },
-        { 2, 5, "PL2 MOVE LEFT"  },
-        { 2, 6, "PL2 MOVE RIGHT" },
-        { 2, 4, "PL2 FIRE"       },
-        { -1 }
+	{ 1, 5, "PL1 MOVE LEFT"  },
+	{ 1, 6, "PL1 MOVE RIGHT" },
+	{ 1, 4, "PL1 FIRE"       },
+	{ 2, 5, "PL2 MOVE LEFT"  },
+	{ 2, 6, "PL2 MOVE RIGHT" },
+	{ 2, 4, "PL2 FIRE"       },
+	{ -1 }
 };
 
 
@@ -296,47 +295,20 @@ static struct DSW invdelux_dsw[] =
 	{ -1 }
 };
 
-/* Space Invaders doesn't have character mapped graphics, this definition is here */
-/* only for the dip switch menu */
-static struct GfxLayout charlayout =
+
+
+static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
 {
-	8,8,	/* 8*8 characters */
-	42,	/* 42 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
-	8*8	/* every char takes 10 consecutive bytes */
+	0x00,0x00,0x00, /* BLACK */
+	0xff,0x20,0x20, /* RED */
+	0x20,0xff,0x20, /* GREEN */
+	0xff,0xff,0x20, /* YELLOW */
+	0xff,0xff,0xff, /* WHITE */
+	0x20,0xff,0xff, /* CYAN */
+	0xff,0x20,0xff  /* PURPLE */
 };
 
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0x1e00, &charlayout, 0, 4 },
-	{ -1 } /* end of array */
-};
-
-
-
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0x00,0x00,	/* RED */
-	0x00,0xff,0x00,	/* GREEN */
-	0xff,0xff,0x00,	/* YELLOW */
-	0xff,0xff,0xff	/* WHITE */
-};
-
-enum { BLACK,RED,GREEN,YELLOW,WHITE };
-
-static unsigned char colortable[] =
-{
-	BLACK,WHITE,
-	BLACK,GREEN,
-	BLACK,RED,
-	BLACK,YELLOW
-};
+enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 
 
 
@@ -346,19 +318,19 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			2000000,	/* 2 Mhz? */
+			2000000,        /* 1 Mhz? */
 			0,
 			readmem,writemem,readport,writeport,
-			invaders_interrupt,2	/* two interrupts per frame */
+			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
 	60,
-	invaders_init_machine,
+        0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -375,25 +347,96 @@ static struct MachineDriver machine_driver =
 };
 
 
+static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,lrescue_writemem,readport,writeport, /* V.V */
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60,
+        0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	invaders_sh_update
+};
+
+
+static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole function */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,invrvnge_writemem,readport,writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	invaders_sh_update
+};
+
+
+
 static struct MachineDriver invdelux_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			2000000,	/* 2 Mhz? */
+			2000000,        /* 2 Mhz? */
 			0,
 			readmem,writemem,invdelux_readport, invdelux_writeport,
-			invaders_interrupt,2	/* two interrupts per frame */
+			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
 	60,
-	invaders_init_machine,
+        0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
+	0,	/* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
 	0,
 
 	0,
@@ -418,7 +461,7 @@ static struct MachineDriver invdelux_machine_driver =
 ***************************************************************************/
 
 ROM_START( invaders_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invaders.h", 0x0000, 0x0800)
 	ROM_LOAD( "invaders.g", 0x0800, 0x0800)
 	ROM_LOAD( "invaders.f", 0x1000, 0x0800)
@@ -426,7 +469,7 @@ ROM_START( invaders_rom )
 ROM_END
 
 ROM_START( spaceatt_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800)
 	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800)
 	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800)
@@ -434,7 +477,7 @@ ROM_START( spaceatt_rom )
 ROM_END
 
 ROM_START( invrvnge_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invrvnge.h", 0x0000, 0x0800)
 	ROM_LOAD( "invrvnge.g", 0x0800, 0x0800)
 	ROM_LOAD( "invrvnge.f", 0x1000, 0x0800)
@@ -442,7 +485,7 @@ ROM_START( invrvnge_rom )
 ROM_END
 
 ROM_START( invdelux_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invdelux.h", 0x0000, 0x0800)
 	ROM_LOAD( "invdelux.g", 0x0800, 0x0800)
 	ROM_LOAD( "invdelux.f", 0x1000, 0x0800)
@@ -451,7 +494,7 @@ ROM_START( invdelux_rom )
 ROM_END
 
 ROM_START( galxwars_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "galxwars.0", 0x0000, 0x0400)
 	ROM_LOAD( "galxwars.1", 0x0400, 0x0400)
 	ROM_LOAD( "galxwars.2", 0x0800, 0x0400)
@@ -461,7 +504,7 @@ ROM_START( galxwars_rom )
 ROM_END
 
 ROM_START( lrescue_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "lrescue.1", 0x0000, 0x0800)
 	ROM_LOAD( "lrescue.2", 0x0800, 0x0800)
 	ROM_LOAD( "lrescue.3", 0x1000, 0x0800)
@@ -471,7 +514,7 @@ ROM_START( lrescue_rom )
 ROM_END
 
 ROM_START( desterth_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "36_h.bin", 0x0000, 0x0800)
 	ROM_LOAD( "35_g.bin", 0x0800, 0x0800)
 	ROM_LOAD( "34_f.bin", 0x1000, 0x0800)
@@ -494,7 +537,7 @@ static const char *invaders_sample_names[] =
 	"6.SAM",
 	"7.SAM",
 	"8.SAM",
-	0	/* end of array */
+	0       /* end of array */
 };
 
 
@@ -514,8 +557,9 @@ static int invaders_hiload(const char *name)
 
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
+
 
 
 static void invaders_hisave(const char *name)
@@ -539,16 +583,16 @@ static int invdelux_hiload(const char *name)
 
 		if ((f = fopen(name,"rb")) != 0)
 		{
-         /* Load the actual score */
+	 /* Load the actual score */
 		   fread(&RAM[0x20f4],1, 0x2,f);
-         /* Load the name */
+	 /* Load the name */
 		   fread(&RAM[0x2340],1, 0xa,f);
 			fclose(f);
 		}
 
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void invdelux_hisave(const char *name)
@@ -565,13 +609,79 @@ static void invdelux_hisave(const char *name)
 	}
 }
 
+static int lrescue_hiload(const char *name)     /* V.V */ /* Whole function */
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x20CF],"\x1b\x1b",2) == 0)
+	{
+		FILE *f;
+
+		if ((f = fopen(name,"rb")) != 0)
+	       {
+	 /* Load the actual score */
+		   fread(&RAM[0x20F4],1, 0x2,f);
+	 /* Load the name */
+		   fread(&RAM[0x20CF],1, 0xa,f);
+	 /* Load the high score length */
+		   fread(&RAM[0x20DB],1, 0x1,f);
+		   fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+
+}
+
+static int desterth_hiload(const char *name)     /* V.V */ /* Whole function */
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x20CF],"\x1b\x07",2) == 0)
+	{
+		FILE *f;
+
+		if ((f = fopen(name,"rb")) != 0)
+	       {
+	 /* Load the actual score */
+		   fread(&RAM[0x20F4],1, 0x2,f);
+	 /* Load the name */
+		   fread(&RAM[0x20CF],1, 0xa,f);
+	 /* Load the high score length */
+		   fread(&RAM[0x20DB],1, 0x1,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+
+}
+
+
+
+static void lrescue_hisave(const char *name)    /* V.V */ /* Whole function */
+{
+	FILE *f;
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+      /* Save the actual score */
+		fwrite(&RAM[0x20F4],1,0x02,f);
+      /* Save the name */
+		fwrite(&RAM[0x20CF],1,0xa,f);
+      /* Save the high score length */
+		fwrite(&RAM[0x20DB],1,0x1,f);
+		fclose(f);
+	}
+}
+
 
 
 struct GameDriver invaders_driver =
 {
 	"Space Invaders",
 	"invaders",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&machine_driver,
 
 	invaders_rom,
@@ -580,12 +690,8 @@ struct GameDriver invaders_driver =
 
 	input_ports, invaders_dsw, invaders_keys,
 
-	0, palette, colortable,
-	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	invaders_hiload, invaders_hisave
 };
@@ -594,7 +700,7 @@ struct GameDriver earthinv_driver =
 {
 	"Super Earth Invasion",
 	"earthinv",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&machine_driver,
 
 	invaders_rom,
@@ -603,12 +709,8 @@ struct GameDriver earthinv_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -618,7 +720,7 @@ struct GameDriver spaceatt_driver =
 {
 	"Space Attack II",
 	"spaceatt",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&machine_driver,
 
 	spaceatt_rom,
@@ -627,12 +729,8 @@ struct GameDriver spaceatt_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -642,7 +740,7 @@ struct GameDriver invrvnge_driver =
 	"Invaders Revenge",
 	"invrvnge",
 	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
-	&machine_driver,
+	&invrvnge_machine_driver,
 
 	invrvnge_rom,
 	0, 0,
@@ -650,12 +748,8 @@ struct GameDriver invrvnge_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -664,7 +758,7 @@ struct GameDriver invdelux_driver =
 {
 	"Invaders Deluxe",
 	"invdelux",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&invdelux_machine_driver,
 
 	invdelux_rom,
@@ -673,12 +767,8 @@ struct GameDriver invdelux_driver =
 
 	invdelux_input_ports, invdelux_dsw, invdelux_keys,
 
-	0, palette, colortable,
-	{ 0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	invdelux_hiload, invdelux_hisave
 };
@@ -687,7 +777,7 @@ struct GameDriver galxwars_driver =
 {
 	"Galaxy Wars",
 	"galxwars",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&machine_driver,
 
 	galxwars_rom,
@@ -696,12 +786,8 @@ struct GameDriver galxwars_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -710,8 +796,8 @@ struct GameDriver lrescue_driver =
 {
 	"Lunar Rescue",
 	"lrescue",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
-	&machine_driver,
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
+	&lrescue_machine_driver,
 
 	lrescue_rom,
 	0, 0,
@@ -719,21 +805,18 @@ struct GameDriver lrescue_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
-	0, 0
+	lrescue_hiload, lrescue_hisave  /* V.V */
 };
+
 
 struct GameDriver desterth_driver =
 {
 	"Destination Earth",
 	"desterth",
-	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI",
+	"MICHAEL STRUTTS\nNICOLA SALMORIA\nTORMOD TJABERG\nMIRKO BUFFONI\nVALERIO VERRANDO",    /* V.V */
 	&machine_driver,
 
 	desterth_rom,
@@ -742,12 +825,8 @@ struct GameDriver desterth_driver =
 
 	input_ports, dsw, keys,
 
-	0, palette, colortable,
-	{ 0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,	/* numbers */
-		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* letters */
-		0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19 },
-	0, 3,
-	8*13, 8*16, 2,
+	0, palette, 0,
+	8*13, 8*16,
 
-	0, 0
+	desterth_hiload, lrescue_hisave
 };

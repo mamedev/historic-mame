@@ -98,7 +98,7 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 0, 0x08, "ATTRACT MODE SOUND", { "ON", "OFF" } },
-/* 
+/*
    Too lazy to enter such a big table of coins/credit until non-consecutive
    dip-switches are handled... 8-)
    Dip-switches 2-3-4-5 are at locations 0x01, 0x04, 0x10, 0x20
@@ -258,14 +258,8 @@ struct GameDriver qbertqub_driver =
 
 	input_ports, dsw, keys,
 
-	(char *)qbertqub_colors,
-	0,0,    /* palette, colortable */
-
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	1,2,      /* white & yellow for dsw menu */
-	8*11,8*20,1, /* paused message displayed at X,Y and color */
+	(char *)qbertqub_colors, 0, 0,    /* palette, colortable */
+	8*11, 8*20,
 
 	0,0     /* hi-score load and save */
 };

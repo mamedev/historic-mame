@@ -2,8 +2,7 @@
 
   common.h
 
-  Generic functions used in different emulators.
-  There's not much for now, but it could grow in the future... ;-)
+  Generic functions, mostly ROM and graphics related.
 
 *********************************************************************/
 
@@ -88,18 +87,12 @@ struct rectangle
 
 
 
-struct DisplayText
-{
-	const char *text;	/* 0 marks the end of the array */
-	int color;
-	int x;
-	int y;
-};
-
 #define TRANSPARENCY_NONE 0
 #define TRANSPARENCY_PEN 1
 #define TRANSPARENCY_COLOR 2
 #define TRANSPARENCY_THROUGH 3
+
+void showdisclaimer(void);
 
 int readroms(const struct RomModule *romp,const char *basename);
 struct GameSamples *readsamples(const char **samplenames,const char *basename);
@@ -116,12 +109,5 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,int *rowscroll,int cols,int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void clearbitmap(struct osd_bitmap *bitmap);
-
-
-void displaytext(const struct DisplayText *dt,int erase);
-int showcharset(void);
-
-
-int setup_menu(void);
 
 #endif

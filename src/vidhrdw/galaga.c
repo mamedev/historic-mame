@@ -14,6 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
+#define STARS_COLOR_BASE 32
 
 unsigned char *galaga_starcontrol;
 static unsigned int stars_scroll;
@@ -91,10 +92,6 @@ void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 		bits = ((i-32) >> 4) & 0x03;
 		palette[3*i + 2] = map[bits];
 	}
-
-
-	for (i = 64*4;i < 64*4 + 64;i++)
-		colortable[i] = i;
 }
 
 
@@ -144,7 +141,7 @@ int galaga_vh_start(void)
 				{
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
-					stars[total_stars].col = Machine->gfx[2]->colortable[color];
+					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
 
 					total_stars++;
 				}

@@ -423,15 +423,8 @@ struct GameDriver qix_driver =
 
 	input_ports, qix_dsw, keys,
 
-        0, palette, colortable,   /* colors, palette, colortable */
-
-	{ /* numbers */
-	  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,
-	  /* letters */
-	  0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,
-	  0x2e,0x2f,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a },
-	0, 3,                  /* DSW menu colors */ /* JB 970527 */
-	128-(8*3), 128-4, 3,   /* Paused message displayed at X,Y and color */
+	0, palette, colortable,   /* colors, palette, colortable */
+	128-(8*3), 128-4,   /* Paused message displayed at X,Y  */
 	hiload, hisave	       /* High score load and save */ /* JB 970525 */
 };
 

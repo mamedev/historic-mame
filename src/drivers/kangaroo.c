@@ -2,10 +2,22 @@
 Kangaroo (c) Atari Games / Sun Electronics Corp 1982
 
    Changes:
-   97/05/07 changed to conform the new AUDIO_CPU code
-            changed the audio command read to use the latched version.
+   97/06/19 - mod to ensure it's really safe to load the scores.
 
-   97/04/xx created, based on the Arabian driver,
+   97/06/17 - added the coin counter output so the error log will
+              not get cluttered with so much garbage about unknown locations.
+            - added music on/off to dip switch settings.
+              Thanks to S. Joe Dunkle for mentioning the game should
+              have music. btw. this is not really a dip switch on the PCB,
+              it's a pin on the edge connector and the damn manual doesn't
+              really tell what it does, so I hadn't ever tried it out...
+            - added high score saving/loading. Since I try to avoid disassembling
+              the code at all costs I'm not sure it's correct - seems to work tho' ;-) -V-
+
+   97/05/07 - changed to conform the new AUDIO_CPU code
+            - changed the audio command read to use the latched version.
+
+   97/04/xx - created, based on the Arabian driver,
             The two games (arabian & kangaroo) are both by Sun Electronics
             and run on very similar hardware.
             Kangaroo PCB is constructed from two boards:
@@ -81,15 +93,17 @@ interrupts:
 #include "sndhrdw/8910intf.h"
 #include "sndhrdw/generic.h"
 
-/* vidhrdw */
-extern int  kangaroo_vh_start(void);
-extern void kangaroo_vh_stop(void);
-extern void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+
 /* machine */
 extern int  kangaroo_sec_chip_r(int offset);
 extern void kangaroo_sec_chip_w(int offset,int val);
 extern int  kangaroo_interrupt(void);
-/* again vidhrdw */
+
+/* vidhrdw */
+extern int  kangaroo_vh_start(void);
+extern void kangaroo_vh_stop(void);
+extern void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void kangaroo_spriteramw(int offset, int val);
 extern void kangaroo_videoramw(int offset, int val);
 extern void kangaroo_color_shadew(int offset, int val);
@@ -124,6 +138,7 @@ static struct MemoryWriteAddress writemem[] =
         { 0xe800, 0xe80a, kangaroo_spriteramw, &spriteram },
         { 0xef00, 0xefff, kangaroo_sec_chip_w, &videoram },
         { 0xec00, 0xec00, sound_command_w, &videoram },
+        { 0xed00, 0xed00, MWA_NOP },
         { 0x0000, 0x5fff, MWA_ROM },
         { -1 }  /* end of table */
 };
@@ -240,7 +255,7 @@ static struct DSW dsw[] =
         { 7, 0x01, "LIVES", { "03", "05" } },
         { 7, 0x02, "DIFFICULTY", { "EASY", "HARD" } },
         { 7, 0x0c, "BONUS", { "NO BONUS", "AT 10 000", "AT 10 AND EVERY 30 000", "AT 20 AND EVERY 40 000" } },
-       /* { 7, 0x08, "BONUS", { "SET A", "SET B" } },*/
+        { 0, 0x20, "MUSIC", { "ON ", "OFF" } }, /* 970617 -V- */
         { 7, 0xf0, "COIN SELECT 1", { "1/1 1/1", "2/1 2/1", "2/1 1/3", "1/1 1/2",\
                         "1/1 1/3", "1/1 1/4", "1/1 1/5", "1/1 1/6",\
                         "1/2 1/2", "1/2 1/4", "1/2 1/5", "1/2 1/10",\
@@ -334,6 +349,43 @@ static unsigned char colortable[] =
         0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 };
 
+/* 971706 -V- */
+static int kangaroo_hiload(const char *name)
+{
+        /* Ok, we need to explicitly tell what RAM to read...*/
+        /* realizing this was necessary took me quite a long time :( -V- */
+
+        unsigned char *RAM = Machine->memory_region[0];
+
+        /* just a guess really... */
+        if ( RAM[0xe1da] == 0x50 )
+        {
+                FILE *f;
+                if (( f = fopen(name, "rb")) != 0)
+                {
+                        fread(&RAM[0xe1a0], 1, 0x40, f);
+                        /* is this enough ??? */
+                        fclose(f);
+                }
+                return 1;
+         }
+         else return 0; /* didn't load them yet, do stop by later ;-) -V- */
+}
+/* 970617 -V- */
+static void kangaroo_hisave(const char *name)
+{
+        FILE *f;
+
+        unsigned char *RAM = Machine->memory_region[0];
+
+        if ((f = fopen(name , "wb")) != 0)
+        {
+                fwrite(&RAM[0xe1a0], 1, 0x40, f);
+                fclose(f);
+        }
+}
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -344,14 +396,14 @@ static struct MachineDriver machine_driver =
                         3000000,        /* 3 Mhz */
 			0,
                         readmem,writemem,0,0,
-                        kangaroo_interrupt,1
+                        interrupt,1
                 },
                 {
                         CPU_Z80 | CPU_AUDIO_CPU,
-                        1250000,
+                        2500000,
                         3,
                         sh_readmem,sh_writemem,sh_readport,sh_writeport,
-                        interrupt,1
+                        kangaroo_interrupt,1
                 }
 	},
 	60,
@@ -373,7 +425,7 @@ static struct MachineDriver machine_driver =
 	0,
         kangaroo_sh_start,
 	AY8910_sh_stop,
-	AY8910_sh_update
+        AY8910_sh_update
 };
 
 
@@ -420,11 +472,7 @@ struct GameDriver kangaroo_driver =
         k_input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-        15, 14,
-	8*13, 8*16,14,
+	8*13, 8*16,
 
-	0, 0
+        kangaroo_hiload, kangaroo_hisave
 };

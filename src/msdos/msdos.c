@@ -16,7 +16,11 @@
 #include <allegro.h>
 #include "driver.h"
 #include <audio.h>
+#include "ym2203.h"
 
+
+#define ROL -1
+#define ROR 1
 
 struct osd_bitmap *bitmap;
 int first_free_pen;
@@ -25,20 +29,23 @@ int videofreq;
 int video_sync;
 int play_sound;
 int use_joystick;
+int use_alternate;
 
-int use_vesa_scan;
-int use_rotate;
+int rotation;
 int vesa_mode;
 int vesa_width;
 int vesa_height;
-int vesa_skiplines;
+int skiplines;
 int vesa_xoffset;
 int vesa_yoffset;
 int vesa_display_lines;
 
 int noscanlines;
+int nodouble;
 
 struct { char *desc; int x, y; } gfx_res[] = {
+        { "-224x288"    , 224, 288 },
+        { "-224"        , 224, 288 },
 	{ "-320x240"	, 320, 240 },
 	{ "-320"	, 320, 240 },
 	{ "-512x384"	, 512, 384 },
@@ -53,6 +60,20 @@ struct { char *desc; int x, y; } gfx_res[] = {
 	};
 
 
+/* NTB: Mouse specific variables. */
+static int mouse_left = 0, mouse_right = 0, mouse_up = 0, mouse_down = 0;
+static int mouse_ox, mouse_oy;
+static int mouse_poll_count = 0;
+static int use_mouse = 0;
+
+#define MOUSE_CENTRE_X 160
+#define MOUSE_CENTRE_Y 120
+#define MOUSE_THRESHOLD 0
+#define TAN_22_5        106
+#define TAN_67_5        618
+
+void osd_poll_mouse(void);
+int osd_mouse_pressed(int joycode);
 
 
 /* audio related stuff */
@@ -64,6 +85,7 @@ LPAUDIOWAVE lpWave[NUMVOICES];
 int Volumi[NUMVOICES];
 int MasterVolume = 100;
 unsigned char No_FM = 0;
+unsigned char RegistersYM[264*5];  /* MAX 5 YM-2203 */
 
 
 /* put here anything you need to do when the program is started. Return 0 if */
@@ -77,10 +99,11 @@ int osd_init(int argc,char **argv)
 	first_free_pen = 0;
 
 	vesa_mode = 0;
-	vesa_width = 0;
-	vesa_height = 0;
+	vesa_width = 800;
+	vesa_height = 600;
 	noscanlines = 0;
-	use_rotate = 0;
+	nodouble = 0;
+	rotation = 0;
 	videofreq = 0;
 	video_sync = 0;
 	play_sound = 1;
@@ -89,45 +112,49 @@ int osd_init(int argc,char **argv)
 	for (i = 1;i < argc;i++)
 	{
 
-		if ((stricmp(argv[i],"-vesa") == 0) ||
-		    (stricmp(argv[i],"-vesascan") == 0))
+		if (stricmp(argv[i],"-vesa") == 0)
 			vesa_mode = GFX_VESA1;
 		if (stricmp(argv[i],"-vesa2b") == 0)
 			vesa_mode = GFX_VESA2B;
 		if (stricmp(argv[i],"-vesa2l") == 0)
 			vesa_mode = GFX_VESA2L;
-		if (stricmp(argv[i],"-vesaskip") == 0)
+		if (stricmp(argv[i],"-skiplines") == 0)
 		{
 			i++;
-			if (i < argc) vesa_skiplines = atoi(argv[i]);
-			if (!vesa_width)
-			{
-				vesa_width=640;
-				vesa_height=480;
-			}
+			if (i < argc) skiplines = atoi(argv[i]);
 		}
                 for (j=0; gfx_res[j].desc != NULL; j++)
 		{
 			if (stricmp(argv[i], gfx_res[j].desc) == 0)
 			{
-				vesa_width=gfx_res[j].x;
-				vesa_height=gfx_res[j].y;
+                                if (gfx_res[j].x == 224)
+                                  use_alternate = 1;
+                                else
+                                {
+				  if (!vesa_mode)
+					vesa_mode = GFX_VESA1;
+				  vesa_width=gfx_res[j].x;
+				  vesa_height=gfx_res[j].y;
+                                }
 				break;
 			}
 		}
-		if (stricmp(argv[i],"-rotate") == 0)
-		{
-			use_rotate=1;
-			vesa_width = 320;
-			vesa_height = 240;
-		}
+		if (stricmp(argv[i],"-ror") == 0)
+			rotation=ROR;
+		if (stricmp(argv[i],"-rol") == 0)
+			rotation=ROL;
+		if (stricmp(argv[i],"-noscanlines") == 0)
+			noscanlines = 1;
+		if (stricmp(argv[i],"-nodouble") == 0)
+			nodouble = 1;
+		if (stricmp(argv[i],"-vsync") == 0)
+			video_sync = 1;
+
 		if (stricmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
 			if (i < argc) soundcard = atoi(argv[i]);
 		}
-		if (stricmp(argv[i],"-noscanlines") == 0)
-			noscanlines = 1;
 		if (stricmp(argv[i],"-vgafreq") == 0)
 		{
 			i++;
@@ -135,18 +162,24 @@ int osd_init(int argc,char **argv)
 			if (videofreq < 0) videofreq = 0;
 			if (videofreq > 3) videofreq = 3;
 		}
-		if (stricmp(argv[i],"-vsync") == 0)
-			video_sync = 1;
 		if (stricmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
                 if (stricmp(argv[i],"-nofm") == 0)
                         No_FM = 1;
+
+                /* NTB */
+                if (stricmp(argv[i],"-mouse") == 0)
+                {
+                    use_mouse = 1;
+                    use_joystick = 0;
+                }
 	}
 
 	if (play_sound)
 	{
 	    AUDIOINFO info;
 	    AUDIOCAPS caps;
+            char *blaster_env;
 
 
 		/* initialize SEAL audio library */
@@ -219,6 +252,23 @@ int osd_init(int argc,char **argv)
 						return 1;
 					}
 				}
+
+        if (!No_FM) {
+           /* Get Soundblaster base address from environment variabler BLASTER   */
+           /* Soundblaster OPL base port, at some compatibles this must be 0x388 */
+
+           blaster_env = getenv("BLASTER");
+           BaseSb = i = 0;
+           while ((blaster_env[i] & 0x5f) != 0x41) i++;        /* Look for 'A' char */
+           while (blaster_env[++i] != 0x20) {
+             BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
+           }
+
+           DelayReg=4;   /* Delay after an OPL register write increase it to avoid problems ,but you'll lose speed */
+           DelayData=7;  /* same as above but after an OPL data write this usually is greater than above */
+           InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
+        }
+
 			}
 		}
 	}
@@ -233,6 +283,22 @@ int osd_init(int argc,char **argv)
 			use_joystick = 0; /* joystick not found */
 	}
 
+        /* NTB: Initialiase mouse */
+        if( use_mouse )
+        {
+            if( install_mouse() == - 1 )
+            {
+                use_mouse = 0;
+            }
+            else
+            {
+                set_mouse_speed( 0, 0 );
+                position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
+                mouse_ox = MOUSE_CENTRE_X;
+                mouse_oy = MOUSE_CENTRE_Y;
+            }
+        }
+
 	return 0;
 }
 
@@ -245,6 +311,9 @@ void osd_exit(void)
 	{
 		int n;
 
+                if (!No_FM)
+                   InitOpl();  /* Do this only before quiting , or some cards will make noise during playing */
+                               /* It resets entire OPL registers to zero */
 
 		/* stop and release voices */
 		for (n = 0; n < NUMVOICES; n++)
@@ -305,6 +374,19 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 }
 
 
+
+Register scr224x288_alternate[] =
+{
+        { 0x3c2, 0x00, 0xa7},{ 0x3d4, 0x00, 0x71},{ 0x3d4, 0x01, 0x37},
+        { 0x3d4, 0x02, 0x64},{ 0x3d4, 0x03, 0x92},{ 0x3d4, 0x04, 0x4f},
+        { 0x3d4, 0x05, 0x98},{ 0x3d4, 0x06, 0x46},{ 0x3d4, 0x07, 0x1f},
+        { 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x40},{ 0x3d4, 0x10, 0x31},
+        { 0x3d4, 0x11, 0x80},{ 0x3d4, 0x12, 0x1f},{ 0x3d4, 0x13, 0x1c},
+        { 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x2f},{ 0x3d4, 0x16, 0x44},
+        { 0x3d4, 0x17, 0xe3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x02, 0x0f},
+        { 0x3c4, 0x04, 0x0e},{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},
+        { 0x3c0, 0x10, 0x41},{ 0x3c0, 0x13, 0x00}
+};
 
 Register scr224x288[] =
 {
@@ -425,48 +507,44 @@ struct osd_bitmap *osd_create_display(int width,int height)
 
 	bitmap = osd_create_bitmap(width,height);
 
-        if (use_rotate)
-	{ int t; t = width; width = height; height = t; }
+        if (rotation)
+	{
+		int t;
+		if (!vesa_mode) vesa_mode = GFX_VESA1;
+		t = width; width = height; height = t;
+	}
 
-	if (!(width == 224 && height == 288) &&
+
+	if (!vesa_mode &&
+	    !(width == 224 && height == 288) &&
             !(width == 256 && height == 256) &&
 	    !(width == 288 && height == 224) &&
 	    !(width == 320 && height == 204) &&
             !(width == 240 && height == 272))
  		vesa_mode = GFX_VESA1;
 
- 	if (vesa_mode || vesa_width)
+ 	if (vesa_mode)
   	{
- 		if (!vesa_mode) vesa_mode = GFX_VESA1;
- 		if (!vesa_width)
-  		{
- 			vesa_width=800;
- 			vesa_height=600;
-  		}
-
  		if (set_gfx_mode(vesa_mode,vesa_width,vesa_height,0,0) != 0)
   		{
 			printf ("%dx%d not possible\n", vesa_width,vesa_height);
 			printf ("%s\n",allegro_error);
 			return 0;
- 		}	
- 		if (width > vesa_width/2)
+ 		}
+ 		if ((width > vesa_width/2) || nodouble)
  		{
- 			noscanlines = 1;
-                        use_vesa_scan = 0;
+                        nodouble = 1;
  			vesa_yoffset = (vesa_height - height) / 2;
  			vesa_xoffset = (vesa_width - width) / 2;
- 			vesa_display_lines = height - vesa_skiplines;
+ 			vesa_display_lines = height;
  			if (vesa_height < vesa_display_lines)
  				vesa_display_lines = vesa_height;
  		}
  		else
  		{
-/*/			noscanlines = 0;*/
-                        use_vesa_scan = 1;
  			vesa_yoffset = (vesa_height - height * 2) / 2;
  			vesa_xoffset = (vesa_width - width * 2) / 2;
- 			vesa_display_lines = height - vesa_skiplines;
+ 			vesa_display_lines = height;
  			if (vesa_height/2 < vesa_display_lines)
  				vesa_display_lines = vesa_height / 2;
  		}
@@ -475,7 +553,9 @@ struct osd_bitmap *osd_create_display(int width,int height)
  		/* Just in case */
  		if (vesa_yoffset < 0) vesa_yoffset = 0;
  		if (vesa_xoffset < 0) vesa_xoffset = 0;
-  	}
+  		if (vesa_display_lines+skiplines > height)
+			skiplines=height-vesa_display_lines;
+	}
 	else
 	{
 		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
@@ -492,7 +572,10 @@ struct osd_bitmap *osd_create_display(int width,int height)
 			}
 			else
 			{
-			        reg = scr224x288scanlines;
+                                if (use_alternate)
+                                  reg = scr224x288_alternate;
+                                else
+			          reg = scr224x288scanlines;
 				reglen = sizeof(scr224x288scanlines)/sizeof(Register);
 			}
 		}
@@ -534,7 +617,8 @@ struct osd_bitmap *osd_create_display(int width,int height)
 		}
 
 		/* set the VGA clock */
-		reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
+                if (!use_alternate)
+		  reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
 
 		outRegArray(reg,reglen);
 	}
@@ -611,12 +695,12 @@ inline void update_vesa(void)
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->width /4;
-	lb = bitmap->private + bitmap->width*vesa_skiplines;
+	lb = bitmap->private + bitmap->width*skiplines;
 
 	for (y = vesa_display_lines;y !=0 ; y--)
 	{
 		address = bmp_write_line (screen, vesa_line) + vesa_xoffset;
-		if (use_vesa_scan)
+		if (!nodouble)
 		{
 			double_pixels(lb,dest_seg,address,width4);
                         if (noscanlines) {
@@ -634,61 +718,121 @@ inline void update_vesa(void)
 	}
 }
 
-inline void rotate_pixels(unsigned char *lb, short seg,
-			  unsigned long address, int height, int width4)
-{
-	__asm__ __volatile__ ("
-	pushw %%es		\n
-	movw %%dx, %%es		\n
-	.align 4		\n
-	0:			\n
-	lodsb			\n
-	rorl $8, %%eax		\n
-	subl %%ebx, %%esi	\n
-	lodsb			\n
-	rorl $8, %%eax		\n
-	subl %%ebx, %%esi	\n
-	lodsb			\n
-	rorl $8, %%eax		\n
-	subl %%ebx, %%esi	\n
-	lodsb			\n
-	rorl $8, %%eax		\n
-	subl %%ebx, %%esi	\n
-	stosl			\n
-	loop 0b			\n
-	popw %%ax		\n
-	movw %%ax, %%es		\n
-	"
-	::
-	"d" (seg),
-	"c" (width4),
-	"b" (height+1),
-	"S" (lb),
-	"D" (address):
-	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");	
+inline void rotate(unsigned char *lb, short seg,				
+			  unsigned long address, int offset, int width4)
+{									
+	__asm__ __volatile__ ("						\
+	pushw %%es		;					\
+	movw %%dx, %%es		;					\
+	.align 4		;					\
+	0:			;					\
+	lodsb			;					\
+	rorl $8, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	rorl $8, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	rorl $8, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	rorl $8, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	stosl			;					\
+	loop 0b			;					\
+	popw %%ax		;					\
+	movw %%ax, %%es		;					\
+	"								\
+	::								\
+	"d" (seg),							\
+	"c" (width4),							\
+	"b" (offset),							\
+	"S" (lb),							\
+	"D" (address):							\
+	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");		\
+}
+inline void rotate_double(unsigned char *lb, short seg,				
+			  unsigned long address, int offset, int width4)
+{									
+	__asm__ __volatile__ ("						\
+	pushw %%es		;					\
+	movw %%dx, %%es		;					\
+	.align 4		;					\
+	0:			;					\
+	lodsb			;					\
+	movb %%al, %%ah		;					\
+	rorl $16, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	movb %%al, %%ah		;					\
+	rorl $16, %%eax		;					\
+	stosl			;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	movb %%al, %%ah		;					\
+	rorl $16, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	lodsb			;					\
+	movb %%al, %%ah	;						\
+	rorl $16, %%eax		;					\
+	addl %%ebx, %%esi	;					\
+	stosl			;					\
+	loop 0b			;					\
+	popw %%ax		;					\
+	movw %%ax, %%es		;					\
+	"								\
+	::								\
+	"d" (seg),							\
+	"c" (width4),							\
+	"b" (offset),							\
+	"S" (lb),							\
+	"D" (address):							\
+	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");		\
 }
 
 inline void update_rotate(void)
 {
 	short src_seg, dest_seg;
-	int y, vesa_line, width4;
+	int y, vesa_line, offset, width4;
 	unsigned char *lb;
-        unsigned long address;
+	unsigned long address;
 
  	src_seg	= _my_ds();	
 	dest_seg = screen->seg;
 	vesa_line = vesa_yoffset;
 	width4 = bitmap->height/4;
 
-	lb = bitmap->private + (bitmap->height-1)*bitmap->width
-             +vesa_skiplines;
+	if (rotation == ROR)
+	{
+		lb = bitmap->private + (bitmap->height-1)*bitmap->width+skiplines;
+		offset = -bitmap->width-1;
+	}
+	else 	
+	{
+		lb = bitmap->private + bitmap->width -1 -skiplines;
+		offset = bitmap->width-1;
+	}
 	
 	for (y = vesa_display_lines;y !=0 ; y--)
 	{
-		address = bmp_write_line (screen, vesa_line) +vesa_xoffset;
-		rotate_pixels (lb, dest_seg, address, bitmap->width, width4);
-		vesa_line++;
-		lb++;
+		address = bmp_write_line (screen, vesa_line)+vesa_xoffset;
+		if (!nodouble)
+		{
+			rotate_double (lb, dest_seg, address, offset, width4);
+			if (noscanlines)
+			{
+				address = bmp_write_line (screen, vesa_line+1)+vesa_xoffset;
+				rotate_double (lb, dest_seg, address, offset, width4);
+			}
+		vesa_line+=2;
+		lb+=rotation;
+		}
+		else
+		{
+			rotate (lb, dest_seg, address, offset, width4);
+			vesa_line++;
+			lb+=rotation;
+		}
 	}
 }
 
@@ -702,7 +846,7 @@ void osd_update_display(void)
 	if (vesa_mode)
 	{
 		int height;
-		if (use_rotate)
+		if (rotation)
 		{
 			update_rotate();
 			height = bitmap->width;
@@ -715,10 +859,10 @@ void osd_update_display(void)
 		/* Check for PGUP, PGDN and scroll screen */
 
 		if (osd_key_pressed(OSD_KEY_PGDN) &&
-			(vesa_skiplines+vesa_display_lines < height))
-			vesa_skiplines++;
-		if (osd_key_pressed(OSD_KEY_PGUP) && (vesa_skiplines>0))
-			vesa_skiplines--;
+			(skiplines+vesa_display_lines < height))
+			skiplines++;
+		if (osd_key_pressed(OSD_KEY_PGUP) && (skiplines>0))
+			skiplines--;
 	}
 	else 	/* no vesa-modes */
 	{
@@ -860,6 +1004,43 @@ void osd_stop_sample(int channel)
 }
 
 
+void osd_restart_sample(int channel)
+{
+	if (play_sound == 0 || channel >= NUMVOICES) return;
+
+	AStartVoice(hVoice[channel]);
+}
+
+
+int osd_get_sample_status(int channel)
+{
+        int stopped=0;
+	if (play_sound == 0 || channel >= NUMVOICES) return -1;
+
+	AGetVoiceStatus(hVoice[channel], &stopped);
+        return stopped;
+}
+
+
+void osd_ym2203_write(int n, int r, int v)
+{
+      if (No_FM) return;
+      else {
+        YMNumber = n;
+        RegistersYM[r+264*n] = v;
+        if (r == 0x28) SlotCh();
+        return;
+      }
+}
+
+
+void osd_ym2203_update(void)
+{
+      if (No_FM) return;
+      YM2203();  /* this is absolutely necesary */
+}
+
+
 void osd_set_mastervolume(int volume)
 {
         int channel;
@@ -931,11 +1112,29 @@ const char *osd_key_name(int keycode)
 }
 
 
+/* return the name of a joystick button */
+const char *osd_joy_name(int joycode)
+{
+  static char *joynames[] = { "LEFT", "RIGHT", "UP", "DOWN", "Button A",
+			      "Button B", "Button C", "Button D", "Any Button" };
+
+  if (joycode && joycode <= OSD_MAX_JOY) return (char*)joynames[joycode-1];
+  else return 0;
+}
+
+
 
 int joy_b3, joy_b4;
 
 void osd_poll_joystick(void)
 {
+        /* NTB. */
+        if( use_mouse == 1 )
+        {
+            osd_poll_mouse();
+            return;
+        }
+
 	if (use_joystick == 1)
 	{
 		unsigned char joystatus;
@@ -958,6 +1157,13 @@ int osd_joy_pressed(int joycode)
 	/* joystick right is not detected */
 	extern volatile int joy_left, joy_right, joy_up, joy_down;
 	extern volatile int joy_b1, joy_b2;
+
+
+        /* NTB. */
+        if( use_mouse == 1 )
+        {
+            return( osd_mouse_pressed( joycode ));
+        }
 
 
 	switch (joycode)
@@ -988,6 +1194,135 @@ int osd_joy_pressed(int joycode)
 			break;
 		case OSD_JOY_FIRE:
 			return (joy_b1 || joy_b2 || joy_b3 || joy_b4);
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+
+/* NTB. Read the mouse movement and equate it to a joystick direction. */
+
+void osd_poll_mouse(void)
+{
+    int mouse_dx, mouse_dy;
+    int mouse_tan;
+
+    extern volatile int mouse_x, mouse_y;
+
+
+    ++mouse_poll_count;
+
+    if( mouse_poll_count == 2 )
+	{
+        mouse_left = mouse_right = mouse_up = mouse_down = 0;
+
+        mouse_dx = mouse_x - mouse_ox;
+        mouse_dy = mouse_y - mouse_oy;
+
+        /* Only register mouse movement over a certain threshold */
+        if( ( abs(mouse_dx) > MOUSE_THRESHOLD ) ||
+            ( abs(mouse_dy) > MOUSE_THRESHOLD )
+        )
+        {
+            /* Pre-check for division by zero */
+            if( mouse_dy == 0 )
+            {
+                ++mouse_dy;
+            }
+
+            /* Calculate the mouse delta tangent using fixed pt. */            
+            mouse_tan = (mouse_dx * 256)/mouse_dy;
+
+            /* Approximate the mouse direction to a joystick direction */
+            if( mouse_dy <= 0 )
+            {
+                if( mouse_tan < -TAN_67_5 )
+                {
+                    mouse_right = 1;
+                }
+                else if( mouse_tan < -TAN_22_5 )
+                {
+                    mouse_up = 1;
+                    mouse_right = 1;
+                }
+                else if( mouse_tan < TAN_22_5 )
+                {
+                    mouse_up = 1;
+                }
+                else if( mouse_tan < TAN_67_5 )
+                {
+                    mouse_up = 1;
+                    mouse_left = 1;
+                }
+                else
+                {
+                    mouse_left = 1;
+                }
+            }
+            else
+            {
+                if( mouse_tan < -TAN_67_5 )
+                {
+                    mouse_left = 1;
+                }
+                else if( mouse_tan < -TAN_22_5 )
+                {
+                    mouse_down = 1;
+                    mouse_left = 1;
+                }
+                else if( mouse_tan < TAN_22_5 )
+                {
+                    mouse_down = 1;
+                }
+                else if( mouse_tan < TAN_67_5 )
+                {
+                    mouse_down = 1;
+                    mouse_right = 1;
+                }
+                else
+                {
+                    mouse_right = 1;
+                }
+            }
+        }
+        position_mouse( MOUSE_CENTRE_X, MOUSE_CENTRE_Y );
+        mouse_ox = MOUSE_CENTRE_X;
+        mouse_oy = MOUSE_CENTRE_Y;
+        mouse_poll_count = 0;
+	}
+}
+
+/* NTB. Same as osd_joy_pressed() */
+
+int osd_mouse_pressed(int joycode)
+{
+	switch (joycode)
+	{
+		case OSD_JOY_LEFT:
+            return mouse_left;
+			break;
+		case OSD_JOY_RIGHT:
+            return mouse_right;
+			break;
+		case OSD_JOY_UP:
+            return mouse_up;
+			break;
+		case OSD_JOY_DOWN:
+            return mouse_down;
+			break;
+		case OSD_JOY_FIRE1:
+            return (mouse_b & 1);
+			break;
+		case OSD_JOY_FIRE2:
+            return (mouse_b & 2);
+			break;
+		case OSD_JOY_FIRE3:
+            return (mouse_b & 4);
+			break;
+		case OSD_JOY_FIRE:
+            return ((mouse_b & 1) || (mouse_b & 2) || (mouse_b & 4));
 			break;
 		default:
 			return 0;

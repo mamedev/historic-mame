@@ -5,6 +5,7 @@
 #include "common.h"
 #include "mame.h"
 #include "cpuintrf.h"
+#include "usrintrf.h"
 
 
 /***************************************************************************
@@ -195,7 +196,7 @@ struct GameDriver
 
 	struct InputPort *input_ports;
 	const struct DSW *dswsettings;
-        const struct KEYSet *keysettings;
+	const struct KEYSet *keysettings;
 
 		/* if they are available, provide a dump of the color proms (there is no */
 		/* copyright infringement in that, since you can't copyright a color scheme) */
@@ -206,14 +207,7 @@ struct GameDriver
 	const unsigned char *palette;
 	const unsigned char *colortable;
 
-		/* provide here a conversion table containing the codes for the ten */
-		/* digits and the 26 letters in the game's character set. They will */
-		/* usually be consecutive, but in some cases (e.g. Time Pilot) they */
-		/* are scattered. */
-	const short int charset[10+26];         /* short int size must be 16-bit */
-	int white_text,yellow_text;	        /* color codes - used by the dip switch menu */
-	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
-						/* paused_color is also used for the startup notice */
+	int paused_x,paused_y;	/* used to print PAUSED on the screen */
 
 	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
 						/* returns nonzero */

@@ -49,12 +49,16 @@ int mplanets_dial_r(int offset)
 {
 	int res = 0;
 	const speed = 2;
+	static int countdown=0;
 
-	if (osd_key_pressed(OSD_KEY_Z) || osd_joy_pressed(OSD_JOY_FIRE3))
-		res = -speed;  
-	else if (osd_key_pressed(OSD_KEY_X) || osd_joy_pressed(OSD_JOY_FIRE4))
-		res = speed;
-
+	if (countdown==0) {
+		countdown=4;
+		if (osd_key_pressed(OSD_KEY_Z) || osd_joy_pressed(OSD_JOY_FIRE3))
+			res = -speed;  
+		else if (osd_key_pressed(OSD_KEY_X) || osd_joy_pressed(OSD_JOY_FIRE4))
+			res = speed;
+	}
+	countdown--;
 	return res;
 }
 

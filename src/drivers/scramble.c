@@ -199,16 +199,16 @@ static struct InputPort input_ports[] =
 
 static struct KEYSet keys[] =
 {
-        { 0, 0, "PL1 MOVE UP" },
+        { 2, 4, "PL1 MOVE UP" },
         { 0, 5, "PL1 MOVE LEFT"  },
         { 0, 4, "PL1 MOVE RIGHT" },
-        { 2, 0, "PL1 MOVE DOWN" },
+        { 2, 6, "PL1 MOVE DOWN" },
         { 0, 3, "PL1 FIRE FRONT" },
         { 0, 1, "PL1 FIRE DOWN" },
-        { 2, 4, "PL2 MOVE UP" },
+        { 0, 0, "PL2 MOVE UP" },
         { 1, 5, "PL2 MOVE LEFT"  },
         { 1, 4, "PL2 MOVE RIGHT" },
-        { 2, 6, "PL2 MOVE DOWN" },
+        { 2, 0, "PL2 MOVE DOWN" },
         { 1, 3, "PL2 FIRE FRONT" },
         { 1, 2, "PL2 FIRE DOWN" },
         { -1 }
@@ -260,18 +260,6 @@ static struct GfxLayout spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the color table */
-static struct GfxLayout starslayout =
-{
-	1,1,
-	0,
-	1,	/* 1 star = 1 color */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
@@ -279,7 +267,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -328,7 +315,7 @@ static struct MachineDriver scramble_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	32+64,32,
 	scramble_vh_convert_color_prom,
 
 	0,
@@ -483,11 +470,7 @@ struct GameDriver scramble_driver =
 	input_ports, scramble_dsw, keys,
 
 	scramble_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -506,11 +489,7 @@ struct GameDriver atlantis_driver =
 	input_ports, atlantis_dsw, keys,
 
 	scramble_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -529,11 +508,7 @@ struct GameDriver theend_driver =
 	input_ports, theend_dsw, keys,
 
 	scramble_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -552,11 +527,7 @@ struct GameDriver froggers_driver =
 	input_ports, scramble_dsw, keys,
 
 	froggers_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x07, 0x02,
-	8*13, 8*16, 0x01,
+	8*13, 8*16,
 
 	0, 0
 };

@@ -11,6 +11,7 @@ extern struct GameDriver hangly_driver;
 extern struct GameDriver puckman_driver;
 extern struct GameDriver piranha_driver;
 extern struct GameDriver mspacman_driver;
+extern struct GameDriver mspacatk_driver;
 extern struct GameDriver crush_driver;
 extern struct GameDriver pengo_driver;
 extern struct GameDriver penta_driver;
@@ -25,6 +26,7 @@ extern struct GameDriver ccboot_driver;
 extern struct GameDriver seicross_driver;
 extern struct GameDriver ckong_driver;
 extern struct GameDriver ckongs_driver;
+extern struct GameDriver ckongjeu_driver;
 extern struct GameDriver dkong_driver;
 extern struct GameDriver dkongjp_driver;
 extern struct GameDriver dkongjr_driver;
@@ -59,6 +61,9 @@ extern struct GameDriver scobra_driver;
 extern struct GameDriver scobrak_driver;
 extern struct GameDriver scobrab_driver;
 extern struct GameDriver losttomb_driver;
+extern struct GameDriver anteater_driver;
+extern struct GameDriver rescue_driver;
+extern struct GameDriver hunchy_driver;
 extern struct GameDriver frogger_driver;
 extern struct GameDriver frogsega_driver;
 extern struct GameDriver amidar_driver;
@@ -138,7 +143,13 @@ extern struct GameDriver defender_driver;
 extern struct GameDriver splat_driver;
 extern struct GameDriver blaster_driver;
 
-
+extern struct GameDriver starforc_driver;
+extern struct GameDriver naughtyb_driver;
+extern struct GameDriver mystston_driver;
+extern struct GameDriver frontlin_driver;
+extern struct GameDriver wwestern_driver;
+extern struct GameDriver spacefb_driver;
+extern struct GameDriver tutankhm_driver;
 
 
 const struct GameDriver *drivers[] =
@@ -152,6 +163,7 @@ const struct GameDriver *drivers[] =
 	&puckman_driver,
 	&piranha_driver,
 	&mspacman_driver,
+	&mspacatk_driver,
 	&crush_driver,
 	&pengo_driver,
 	&penta_driver,
@@ -166,6 +178,7 @@ const struct GameDriver *drivers[] =
 	&seicross_driver,
 	&ckong_driver,
 	&ckongs_driver,
+	&ckongjeu_driver,
 	&dkong_driver,
         &dkongjp_driver,
 	&dkongjr_driver,
@@ -200,6 +213,9 @@ const struct GameDriver *drivers[] =
 	&scobrak_driver,
 	&scobrab_driver,
 	&losttomb_driver,
+        &anteater_driver,
+        &rescue_driver,
+        &hunchy_driver,
 	&frogger_driver,
 	&frogsega_driver,
 	&amidar_driver,
@@ -277,5 +293,12 @@ const struct GameDriver *drivers[] =
         &defender_driver,
         &splat_driver,
         &blaster_driver,
+        &starforc_driver,
+        &naughtyb_driver,
+        &mystston_driver,
+        &frontlin_driver,
+        &wwestern_driver,
+        &spacefb_driver,
+        &tutankhm_driver,
 	0	/* end of array */
 };

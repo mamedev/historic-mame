@@ -4,6 +4,7 @@
 
 void cpu_run(void);
 
+int  cpu_getstatus(int cpunum);
 void cpu_halt(int cpunum,int running);
 
 

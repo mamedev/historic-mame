@@ -14,6 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
+#define STARS_COLOR_BASE 32
 
 unsigned char *mooncrst_attributesram;
 unsigned char *mooncrst_bulletsram;
@@ -95,6 +96,7 @@ void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		int bits;
 		int map[4] = { 0x00, 0x88, 0xcc, 0xff };
 
+
 		bits = ((i-32) >> 0) & 0x03;
 		palette[3*i] = map[bits];
 		bits = ((i-32) >> 2) & 0x03;
@@ -102,10 +104,6 @@ void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		bits = ((i-32) >> 4) & 0x03;
 		palette[3*i + 2] = map[bits];
 	}
-
-
-	for (i = 32;i < 32 + 64;i++)
-		colortable[i] = i;
 }
 
 
@@ -158,7 +156,7 @@ int mooncrst_vh_start(void)
 				{
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
-					stars[total_stars].col = Machine->gfx[2]->colortable[color];
+					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
 
 					total_stars++;
 				}
@@ -270,8 +268,8 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		if (offs == 4*7)
-			color = Machine->gfx[2]->colortable[0x0f];	/* yellow */
-		else color = Machine->gfx[2]->colortable[0x3f];	/* white */
+			color = Machine->pens[0x0f + STARS_COLOR_BASE];	/* yellow */
+		else color = Machine->pens[0x3f + STARS_COLOR_BASE];	/* white */
 
 		x = mooncrst_bulletsram[offs + 1];
 

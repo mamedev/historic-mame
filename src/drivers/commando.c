@@ -19,7 +19,8 @@ c003      DSW1
 c004      DSW2
 
 write:
-c808-c809 background scroll position
+c808-c809 background scroll y position
+c80a-c80b background scroll x position
 
 SOUND CPU
 0000-3fff ROM
@@ -43,7 +44,7 @@ write:
 extern int commando_interrupt(void);
 
 extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
-extern unsigned char *commando_scroll;
+extern unsigned char *commando_scrollx,*commando_scrolly;
 extern void commando_bgvideoram_w(int offset,int data);
 extern void commando_bgcolorram_w(int offset,int data);
 int commando_vh_start(void);
@@ -76,7 +77,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram },
 	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
 	{ 0xfe00, 0xff7f, MWA_RAM, &spriteram },
-	{ 0xc808, 0xc809, MWA_RAM, &commando_scroll },
+	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
+	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
 	{ 0xc800, 0xc800, sound_command_w },
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -153,7 +155,7 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 3, 0x0c, "LIVES", { "5", "2", "4", "3" }, 1 },
-	{ 4, 0x07, "BONUS", { "NONE", "20000 700000", "30000 800000", "10000 600000", "40000 1000000", "20000 600000", "30000 700000", "10000 500000" }, 1 },
+	{ 4, 0x07, "BONUS", { "NONE", "20000 700000", "30000 800000", "10000 600000", "40000 1000000", "20000 600000", "30000 700000", "10000 50000" }, 1 },
 	{ 4, 0x10, "DIFFICULTY", { "DIFFICULT", "NORMAL" }, 1 },
 	{ 3, 0x03, "STARTING STAGE", { "7", "3", "5", "1" }, 1 },
 	{ 4, 0x08, "DEMO SOUNDS", { "OFF", "ON" } },
@@ -437,11 +439,7 @@ struct GameDriver commando_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,	/* letters */
-		0x4e,0x4f,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a },
-	0, 1,
-	8*13, 8*16, 6,
+	8*13, 8*16,
 
 	hiload, hisave
 };

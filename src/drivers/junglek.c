@@ -40,7 +40,10 @@ d40b      IN2
 d40c      COIN
           bit 5 = tilt
           bit 4 = coin
-d40f      DSW3
+d40f      DSW2 (when d40e == 0x0e) and DSW3 (when d40e == 0x0f)
+          DSW2
+		  coins per play
+          DSW3
           bit 7 = coinage (1 way/2 ways)
           bit 6 = infinite lives
           bit 5 = year display yes/no
@@ -48,25 +51,33 @@ d40f      DSW3
 		  bit 0-1 bonus  none /10000 / 20000 /30000
 
 write
-d000-d01f front playfield column scroll (always 0?)
-d020-d03f middle playfield column scroll (always 0?)
-d040-d05f back playfield column scroll (always 0?)
-d300      ?
-d40e-d40f ?
-d500      front playfield horizontal scroll ?
-d501      ?
+d000-d01f front playfield column scroll
+d020-d03f middle playfield column scroll
+d040-d05f back playfield column scroll
+d300      playfield priority control ??
+          bit 0-2 ?
+		  bit 3 = 1 middle playfield has priority over sprites ??
+d40e      0e/0f = control which of DSW2 and DSW3 is read from d40f; other values = ?
+d40f      ?
+d500      front playfield horizontal scroll
+d501      front playfield vertical scroll
 d502      middle playfield horizontal scroll
-d503      ?
+d503      middle playfield vertical scroll
 d504      back playfield horizontal scroll
-d505      ?
+d505      back playfield vertical scroll
 d506      bits 0-3 = front playfield color code
           bits 4-7 = middle playfield color code
 d507      bits 0-3 = back playfield color code
           bits 4-7 = sprite color bank (1 bank = 2 color codes)
 d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
-d50d      watchdog reset ?
-d600      video enable? (maybe per playfield: 0xf0 = all on, 0x00 = all off)
+d50d      watchdog reset
+d50e      ?
+d600      bit 0-3 ?
+		  bit 4 front playfield enable
+		  bit 5 middle playfield (probably) enable
+		  bit 6 back playfield (probably) enable
+		  bit 7 sprites (probably) enable
 
 
 SOUND CPU:
@@ -93,16 +104,16 @@ write:
 
 
 
-extern int junglek_init_machine(const char *gamename);
-extern int junglek_protection_r(int offset);
-extern int junglek_unknown_r(int offset);
-extern void elevatob_bankswitch_w(int offset,int data);
+extern unsigned char *taito_dsw23_select;
+extern int taito_dsw23_r(int offset);
 
 extern unsigned char *junglek_videoram2,*junglek_videoram3;
 extern unsigned char *junglek_characterram;
 extern unsigned char *junglek_scrollx1,*junglek_scrollx2,*junglek_scrollx3;
 extern unsigned char *junglek_scrolly1,*junglek_scrolly2,*junglek_scrolly3;
+extern unsigned char *junglek_colscrolly1,*junglek_colscrolly2,*junglek_colscrolly3;
 extern unsigned char *junglek_gfxpointer,*junglek_paletteram;
+extern unsigned char *junglek_colorbank,*junglek_video_priority;
 extern unsigned char *junglek_colorbank,*junglek_video_enable;
 extern void junglek_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int junglek_gfxrom_r(int offset);
@@ -130,7 +141,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
 	{ 0xd40c, 0xd40c, input_port_3_r },	/* COIN */
 	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
-	{ 0xd40f, 0xd40f, input_port_5_r },	/* DSW3 */
+	{ 0xd40f, 0xd40f, taito_dsw23_r },	/* DSW2 and DSW3 */
 	{ 0xd404, 0xd404, junglek_gfxrom_r },
 	{ -1 }	/* end of table */
 };
@@ -142,18 +153,24 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc800, 0xcbff, junglek_videoram2_w, &junglek_videoram2 },
 	{ 0xcc00, 0xcfff, junglek_videoram3_w, &junglek_videoram3 },
 	{ 0xd100, 0xd17f, MWA_RAM, &spriteram },
-	{ 0xd000, 0xd01f, MWA_RAM, &junglek_scrolly1 },
-	{ 0xd020, 0xd03f, MWA_RAM, &junglek_scrolly2 },
-	{ 0xd040, 0xd05f, MWA_RAM, &junglek_scrolly3 },
+	{ 0xd000, 0xd01f, MWA_RAM, &junglek_colscrolly1 },
+	{ 0xd020, 0xd03f, MWA_RAM, &junglek_colscrolly2 },
+	{ 0xd040, 0xd05f, MWA_RAM, &junglek_colscrolly3 },
 	{ 0xd500, 0xd500, MWA_RAM, &junglek_scrollx1 },
+	{ 0xd501, 0xd501, MWA_RAM, &junglek_scrolly1 },
 	{ 0xd502, 0xd502, MWA_RAM, &junglek_scrollx2 },
+	{ 0xd503, 0xd503, MWA_RAM, &junglek_scrolly2 },
 	{ 0xd504, 0xd504, MWA_RAM, &junglek_scrollx3 },
-	{ 0xd50d, 0xd50d, MWA_NOP },
-	{ 0xd509, 0xd50a, MWA_RAM, &junglek_gfxpointer },
+	{ 0xd505, 0xd505, MWA_RAM, &junglek_scrolly3 },
 	{ 0xd506, 0xd507, junglek_colorbank_w, &junglek_colorbank },
+	{ 0xd509, 0xd50a, MWA_RAM, &junglek_gfxpointer },
+	{ 0xd50b, 0xd50b, sound_command_w },
+	{ 0xd50d, 0xd50d, MWA_NOP },
+{ 0xd50e, 0xd50e, MWA_NOP },
 	{ 0xd200, 0xd27f, junglek_paletteram_w, &junglek_paletteram },
 	{ 0x9000, 0xbfff, junglek_characterram_w, &junglek_characterram },
-	{ 0xd50b, 0xd50b, sound_command_w },
+	{ 0xd40e, 0xd40e, MWA_RAM, &taito_dsw23_select },
+	{ 0xd300, 0xd300, MWA_RAM, &junglek_video_priority },
 	{ 0xd600, 0xd600, MWA_RAM, &junglek_video_enable },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -209,12 +226,17 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* DSW1 */
-		0x3f,
+		0x7f,
 		{ 0, 0, 0, 0, 0, OSD_KEY_F2, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
+	{	/* DSW2 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
 	{	/* DSW3 */
-		0xff,
+		0x7f,
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -237,28 +259,19 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 4, 0x18, "LIVES", { "6", "5", "4", "3" }, 1 },
-	{ 5, 0x03, "BONUS", { "30000", "20000", "10000", "NONE" }, 1 },
+	{ 6, 0x03, "BONUS", { "30000", "20000", "10000", "NONE" }, 1 },
 	{ 4, 0x03, "FINISH BONUS", { "TIMER X3", "TIMER X2", "TIMER X1", "NONE" }, 1 },
-	{ 5, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
-	{ 5, 0x20, "YEAR DISPLAY", { "NO", "YES" }, 1 },
+	{ 6, 0x40, "DEMO MODE", { "ON", "OFF" }, 1 },
+	{ 6, 0x20, "YEAR DISPLAY", { "NO", "YES" }, 1 },
 	{ 4, 0x04, "SW A 3", { "ON", "OFF" }, 1 },
-	{ 5, 0x04, "SW C 3", { "ON", "OFF" }, 1 },
-	{ 5, 0x08, "SW C 4", { "ON", "OFF" }, 1 },
-	{ 5, 0x10, "SW C 5", { "ON", "OFF" }, 1 },
+	{ 6, 0x04, "SW C 3", { "ON", "OFF" }, 1 },
+	{ 6, 0x08, "SW C 4", { "ON", "OFF" }, 1 },
+	{ 6, 0x10, "SW C 5", { "ON", "OFF" }, 1 },
 	{ -1 }
 };
 
 
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	160,	/* 160 characters */
-	3,	/* 3 bits per pixel */
-	{ 320*8*8, 160*8*8, 0 },	/* the bitplanes are separated */
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
+
 struct GfxLayout junglek_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -281,28 +294,15 @@ struct GfxLayout junglek_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the remapped color table and dynamically build the real one. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          16*8,  3 },	/* not used by the game, here only for the dip switch menu */
-	{ 0, 0x9000, &junglek_charlayout,     0, 16 },	/* the game dynamically modifies this */
-	{ 0, 0x9000, &junglek_spritelayout,   0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0xa800, &junglek_charlayout,     0,  8 },	/* the game dynamically modifies this */
-	{ 0, 0,      &fakelayout,          19*8, 168 },
+	{ 0, 0x9000, &junglek_charlayout,   0, 16 },	/* the game dynamically modifies this */
+	{ 0, 0x9000, &junglek_spritelayout, 0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &junglek_charlayout,   0,  8 },	/* the game dynamically modifies this */
+	{ 0, 0xa800, &junglek_spritelayout, 0,  8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -364,7 +364,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	168,16*8+3*8+168,	/* 8+8 codes for the game, 3 for the dip switch menu, and 168 spots for the available colors */
+	168, 16*8,
 	junglek_vh_convert_color_prom,
 
 	0,
@@ -466,11 +466,7 @@ struct GameDriver junglek_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0, 1,
-	8*13, 8*16, 2,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -491,11 +487,7 @@ struct GameDriver jungleh_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0, 1,
-	8*13, 8*16, 2,
+	8*13, 8*16,
 
 	0, 0
 };

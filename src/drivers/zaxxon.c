@@ -351,36 +351,36 @@ static unsigned char colortable[] =
 
 	/* sprites */
 	0,YELLOW3,YELLOW1,YELLOW2,YELLOW2,YELLOW1,YELLOW5,DKORANGE,   /* Explosion Space */
-	0,RED,WHITE,CYAN,YELLOW,BLUE,GREEN,DKORANGE,     /* Explosion plane 1 */
-	0,DKRED,YELLOW,CYAN,RED,BLUE,GREEN,DKORANGE,     /* Explosion plane 2 */
-	0,RED,DKRED,RED,DKORANGE,RED,DKRED,DKRED2,      /* Explosion Rocket 1 and NMI bullet in space (low level)*/
-	0,BLACK,BLACK,GREEN,DKORANGE,RED,DKRED,DKRED2,  /* Player Bullet and NMI in space */
+	0,RED,WHITE,CYAN,YELLOW,BLUE,GREEN,DKORANGE,                  /* Explosion plane 1 */
+	0,DKRED,YELLOW,CYAN,RED,BLUE,GREEN,DKORANGE,                  /* Explosion plane 2 */
+	0,RED,DKRED,RED,DKORANGE,RED,DKRED,DKRED2,                    /* Explosion Rocket 1 and NMI bullet in space (low level)*/
+	0,BLACK,BLACK,GREEN,DKORANGE,RED,DKRED,DKRED2,                /* Player Bullet and NMI in space */
 	0,0,0,0,0,0,0,0,
-	0,RED,RED,RED,RED,RED,RED,RED,           /* NMI Bullet */
-	0,BLUE2,RED,BACK5,BACK4,BLUE1,BLUE3,BLACK,      /* Satellite 1/2 */
-	0,DKRED,BLACK,DKCYAN,RED,RED,RED,RED,        /* Plane When Hit and Cannon bullet */
-	0,BLACK,GRAY5,GRAY1,GRAY2,GRAY3,GRAY4,GRAY6, /* Cannon 2 */
-	0,WHITE,BACK3,BACK5,BACK6,BACK9,DKORANGE,BLACK,/* NMI Plane 1 (and Standing planes) */
-	0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,
-	0,BLACK,WHITE,BLACK,BLACK,BLACK,BLACK,BLACK,       /* Cross-Target */
+	0,RED,RED,RED,RED,RED,RED,RED,                            /* NMI Bullet */
+	0,BLUE2,RED,BACK5,BACK4,BLUE1,BLUE3,BLACK,                /* Satellite 1/2 */
+	0,DKRED,BLACK,DKCYAN,RED,RED,RED,RED,                     /* Plane When Hit and Cannon bullet */
+	0,BLACK,GRAY5,GRAY1,GRAY2,GRAY3,GRAY4,GRAY6,              /* Cannon 2 */
+	0,WHITE,BACK3,BACK5,BACK6,BACK9,DKORANGE,BLACK,           /* NMI Plane 1 (and Standing planes) */
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
-	0,CUSTOM1,RED,BACK5,CUSTOM3,CUSTOM4,BLACK,WHITE,     /* Plane and Force field */
+	0,BLACK,WHITE,BLACK,BLACK,BLACK,BLACK,BLACK,              /* Cross-Target */
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,CUSTOM1,RED,BACK5,CUSTOM3,CUSTOM4,BLACK,WHITE,          /* Plane and Force field */
 	0,YELLOW1,YELLOW2,YELLOW3,YELLOW4,YELLOW5,BLACK,BLACK,    /* NMI Plane 2 */
-	0,BLACK,GREEN3,RED,CUSTOM3,GREEN1,GREEN2,GREEN2, /* Cannon 1 */
-	0,WHITE,BLACK,BACK6,BACK5,BACK4,LTBLUE,BLACK, /* Wall and Junk pile from shooting radar,fuel...(with score) */
-	0,GRAY5,BLACK,RED,DKRED,DKORANGE,CUSTOM3,WHITE,  /* Radar & Fuel */
-	0,RED,DKRED,RED,DKORANGE,RED,CUSTOM3,LTORANGE,      /* Rocket 1 */
-	0,WHITE,BACK6,BACK5,BACK4,BACK11,BACK10,BLACK,      /* Zaxxon 1 */
-	0,BLUE2,CYAN,BACK5,BACK4,BLUE1,BLUE3,BLACK,      /* Satellite 2/2 */
-	0,WHITE,PINK,DKORANGE,CYAN,RED,DKRED,BLACK,      /* Zaxxon 2 (RED) */
-	0,RED,DKRED,RED,DKORANGE,YELLOW,LTORANGE,LTORANGE,/* Rocket 2 */
-	0,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,     /* Shadow of Plane */
+	0,BLACK,GREEN3,RED,CUSTOM3,GREEN1,GREEN2,GREEN2,          /* Cannon 1 */
+	0,WHITE,BLACK,BACK6,BACK5,BACK4,LTBLUE,BLACK,             /* Wall and Junk pile from shooting radar,fuel...(with score) */
+	0,GRAY5,BLACK,RED,DKRED,DKORANGE,CUSTOM3,WHITE,           /* Radar & Fuel */
+	0,RED,DKRED,RED,DKORANGE,RED,CUSTOM3,LTORANGE,            /* Rocket 1 */
+	0,WHITE,BACK6,BACK5,BACK4,BACK11,BACK10,BLACK,            /* Zaxxon 1 */
+	0,BLUE2,CYAN,BACK5,BACK4,BLUE1,BLUE3,BLACK,               /* Satellite 2/2 */
+	0,WHITE,PINK,DKORANGE,CYAN,RED,DKRED,BLACK,               /* Zaxxon 2 (RED) */
+	0,RED,DKRED,RED,DKORANGE,YELLOW,LTORANGE,LTORANGE,        /* Rocket 2 */
+	0,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,              /* Shadow of Plane */
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
-	0,BROWN,DKORANGE,DKRED2,RED,DKRED,DKRED2,BLACK,      /* Zaxxon Dead (more RED) */
+	0,BROWN,DKORANGE,DKRED2,RED,DKRED,DKRED2,BLACK,           /* Zaxxon Dead (more RED) */
 	0,0,0,0,0,0,0,0,
 
 	/* background tiles (normal) */
@@ -395,11 +395,11 @@ static unsigned char colortable[] =
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
-	0,BLACK,BACK7,BACK8,BACK2,BACK4,BLACK,BLACK,        /* Zaxxon Arena */
-	0,DKBLUE,LTBLUE,WHITE,DKCYAN,BLACK,BLUE,CYAN,    /* Space BG */
-	0,BACK1,WHITE,BACK5,BLACK,BACK6,BACK2,BACK4,      /* City BG 2 */
-	0,BACK2,BACK5,BACK4,BACK6,BACK1,BACK3,BLACK,  /* City BG 1 */
-	0,WHITE,BACK6,BLACK,BACK5,BACK4,YELLOW,BACK2,      /* Buildings */
+	0,BLACK,BACK7,BACK8,BACK2,BACK4,BLACK,BLACK,              /* Zaxxon Arena */
+	0,DKBLUE,LTBLUE,WHITE,DKCYAN,BLACK,BLUE,CYAN,             /* Space BG */
+	0,BACK1,WHITE,BACK5,BLACK,BACK6,BACK2,BACK4,              /* City BG 2 */
+	0,BACK2,BACK5,BACK4,BACK6,BACK1,BACK3,BLACK,              /* City BG 1 */
+	0,WHITE,BACK6,BLACK,BACK5,BACK4,YELLOW,BACK2,             /* Buildings */
 	/* background tiles (during death sequencel) */
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
@@ -412,11 +412,11 @@ static unsigned char colortable[] =
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
-	0,BLACK,BLACK,RED,DKRED2,DKRED3,BLACK,BLACK,        /* Zaxxon Arena */
-	0,DKBLUE,LTBLUE,WHITE,DKCYAN,DKRED2,BLUE,CYAN,    /* Space BG */
-	0,DKRED3,WHITE,BACK4,BLACK,WHITE,DKRED2,BACK10,      /* City BG 2 */
-	0,DKRED2,BACK4,BACK10,WHITE,DKRED3,BACK3,BLACK,  /* City BG 1 */
-	0,WHITE,WHITE,BLACK,BACK4,BACK10,YELLOW,DKRED2      /* Buildings */
+	0,BLACK,BLACK,RED,DKRED2,DKRED3,BLACK,BLACK,              /* Zaxxon Arena */
+	0,DKBLUE,LTBLUE,WHITE,DKCYAN,DKRED2,BLUE,CYAN,            /* Space BG */
+	0,DKRED3,WHITE,BACK4,BLACK,WHITE,DKRED2,BACK10,           /* City BG 2 */
+	0,DKRED2,BACK4,BACK10,WHITE,DKRED3,BACK3,BLACK,           /* City BG 1 */
+	0,WHITE,WHITE,BLACK,BACK4,BACK10,YELLOW,DKRED2            /* Buildings */
 };
 
 
@@ -542,11 +542,7 @@ struct GameDriver zaxxon_driver =
 	input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,	/* numbers */
-		0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6a,0x6b,0x6c,0x6d,	/* letters */
-		0x6e,0x6f,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7a },
-	0x00, 0x0f,
-	8*13, 8*16, 0x0f,
+	8*13, 8*16,
 
 	hiload, hisave
 };

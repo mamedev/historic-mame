@@ -60,7 +60,7 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
-				decodechar(Machine->gfx[1],charcode,carnival_characterram,&carnival_charlayout);
+				decodechar(Machine->gfx[0],charcode,carnival_characterram,&carnival_charlayout);
 				dirtycharacter[charcode] = 2;
 			}
 
@@ -70,7 +70,7 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs / 32);
 			sy = 8 * (31 - offs % 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,charcode >> 5,
 					0,0,sx + 16,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

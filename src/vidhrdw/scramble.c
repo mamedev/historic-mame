@@ -14,6 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
+#define STARS_COLOR_BASE 32
 
 unsigned char *scramble_attributesram;
 unsigned char *scramble_bulletsram;
@@ -99,10 +100,6 @@ void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		bits = ((i-32) >> 4) & 0x03;
 		palette[3*i + 2] = map[bits];
 	}
-
-
-	for (i = 32;i < 32 + 64;i++)
-		colortable[i] = i;
 }
 
 
@@ -154,7 +151,7 @@ int scramble_vh_start(void)
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
 					stars[total_stars].code = color;
-					stars[total_stars].col = Machine->gfx[2]->colortable[color];
+					stars[total_stars].col = Machine->pens[color + STARS_COLOR_BASE];
 
 					total_stars++;
 				}
@@ -250,7 +247,7 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 			y = 256 - scramble_bulletsram[offs + 3] - 8;
 
 			if (y >= 0)
-				bitmap->line[y][x] = Machine->gfx[2]->colortable[0x0f];	/* yellow (?) */
+				bitmap->line[y][x] = Machine->pens[0x0f + STARS_COLOR_BASE];	/* yellow (?) */
 		}
 	}
 

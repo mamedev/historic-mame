@@ -782,7 +782,7 @@ if(Erase_screen_each_vbl != 0)
 
 /*
  *  Prom to remap the colors of the shapes of Blaster.
- *  There is two of this but they are exactly the same, so I putted just one here
+ *  There is two of this but they are exactly the same, so I put just one here
  *  A0-A3 of the prom is the data from the roms (4 bits)
  *  0xC940 bits 0-6 is plugged at A4-A10 of the Prom
  */

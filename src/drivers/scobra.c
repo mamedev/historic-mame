@@ -69,7 +69,12 @@ a002      protection check control?
 #include "sndhrdw/generic.h"
 #include "sndhrdw/8910intf.h"
 
-int losttomb_decodegfx(const char *gamename);
+int     SternInit( const char *cpGame );
+void    STERNPatchSelfTest( void );
+int     DecodeRescueGfx( void );
+int     DecodeAntEaterGfx( void );
+
+int     losttomb_decodegfx(void);
 
 
 extern int scramble_IN2_r(int offset);
@@ -86,6 +91,7 @@ extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern int scramble_sh_interrupt(void);
 extern int scramble_sh_start(void);
 
+unsigned char *GfxRAM;
 
 
 static struct MemoryReadAddress readmem[] =
@@ -193,16 +199,16 @@ static struct DSW dsw[] =
 
 
 /*
-	JRT: Order is 0 -> 7
-	IN0					IN1:				IN2:
-		0: Start2			0: (DIP) Free Play	0:
-		1: Start1			1: (DIP) Demo Mode	1:
-		2: Up 				2: Fire U			2:
-		3: Down				3: Fire D			3:
-		4: Left				4: Fire R			4:
-		5: Right			5: Fire L			5:
-		6: Coin (2?)		6: Whip				6:
-		7: Coin (1?)		7:					7:
+        JRT: Order is 0 -> 7
+                IN0                                     IN1:                            IN2:
+                0: Start2                       0: (DIP) Free Play      0: DIP?
+                1: Start1                       1: (DIP) Demo Mode      1: DIP?
+                2: Up                           2: Fire U                       2: DIP?
+                3: Down                         3: Fire D                       3: DIP?
+                4: Left                         4: Fire R                       4: DIP?
+                5: Right                        5: Fire L                       5: DIP?
+                6: Coin (2?)            6: Whip                         6: DIP?
+                7: Coin (1?)            7: DIP?                         7: DIP?
 
 */
 static struct InputPort LTinput_ports[] =
@@ -230,6 +236,21 @@ static struct DSW LTdsw[] =
 {
 	{ 1, 0x02, "FREE PLAY", { "NO", "YES" } },
 	{ 1, 0x01, "PLAYER CAN DIE", { "NO", "YES" } },
+/*   JRT: In Development
+        { 1, 0x01, "DEMO MODE", { "ON", "OFF" } },
+
+        { 1, 0x02, "DIP1 1", { "ON", "OFF" } },
+
+        { 2, 0x80, "DIP1 7", { "ON", "OFF" } },
+        { 2, 0x01, "DIP2 0", { "ON", "OFF" } },
+        { 2, 0x02, "DIP2 1", { "ON", "OFF" } },
+        { 2, 0x04, "DIP2 2", { "ON", "OFF" } },
+        { 2, 0x08, "DIP2 3", { "ON", "OFF" } },
+        { 2, 0x10, "DIP2 4", { "ON", "OFF" } },
+        { 2, 0x20, "DIP2 5", { "ON", "OFF" } },
+        { 2, 0x40, "DIP2 6", { "ON", "OFF" } },
+        { 2, 0x80, "DIP2 7", { "ON", "OFF" } },
+*/
 	{ -1 }
 };
 
@@ -237,13 +258,129 @@ static struct DSW LTdsw[] =
 static struct KEYSet LTkeys[] =
 {
         { 0, 2, "MOVE UP" },
-        { 0, 5, "MOVE LEFT"  },
-        { 0, 4, "MOVE RIGHT" },
         { 0, 3, "MOVE DOWN" },
+        { 0, 5, "MOVE RIGHT"  },
+        { 0, 4, "MOVE LEFT" },
+        { 1, 2, "FIRE UP" },
+        { 1, 3, "FIRE DOWN" },
+        { 1, 4, "FIRE RIGHT"  },
+        { 1, 5, "FIRE LEFT" },
         { 1, 6, "WHIP" },
         { -1 }
 };
 
+
+/*
+        RESCUE  (Thanx To Chris Hardy)
+        JRT: Order is 0 -> 7
+                IN0                                     IN1:                            IN2:
+                0: Bomb                         0: (DIP) Free Play      0: Start1
+                1: ???                          1: (DIP) Demo Mode      1:
+                2: Up                           2: Fire U                       2:
+                3: Down                         3: Fire D                       3:
+                4: Right                        4: Fire R                       4:
+                5: Left                         5: Fire L                       5:
+                6: Coin (2?)            6:                                      6: Start2
+                7: Coin (1?)            7:                                      7:
+
+*/
+static struct InputPort Rescueinput_ports[] =
+{
+        {       /* IN0 */
+                0xff,
+                { OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
+                { 0, 0, 0, 0, 0, 0, 0, 0 }
+        },
+        {       /* IN1 */
+                0xff,
+                { 0, 0, OSD_KEY_E, OSD_KEY_D, OSD_KEY_F, OSD_KEY_S, OSD_KEY_CONTROL, OSD_KEY_1 },
+                { 0, 0, 0, 0, 0, 0, 0, 0 }
+        },
+        {       /* IN2 */
+                0xff,
+                { OSD_KEY_1, 0, 0, 0, 0, 0, OSD_KEY_2, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0 }
+        },
+        { -1 }  /* end of table */
+};
+
+
+static struct DSW Rescuedsw[] =
+{
+        { 1, 0x02, "FREE PLAY", { "NO", "YES" } },
+        { 1, 0x01, "PLAYER CAN DIE", { "NO", "YES" } },
+        { -1 }
+};
+
+
+static struct KEYSet Rescuekeys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 3, "MOVE DOWN" },
+        { 0, 5, "MOVE RIGHT"  },
+        { 0, 4, "MOVE LEFT" },
+        { 1, 2, "FIRE UP" },
+        { 1, 3, "FIRE DOWN" },
+        { 1, 5, "FIRE RIGHT"  },
+        { 1, 4, "FIRE LEFT" },
+        { 2, 0, "BOMB" },
+        { 2, 6, "FIRE2?" },
+        { -1 }
+};
+
+
+/*
+        ANTEATER
+        JRT: Order is 0 -> 7
+                IN0                                     IN1:                            IN2:
+                0: Retract                      0: (DIP) Free Play      0: Start1
+                1: Fire(?)1                     1: (DIP) Demo Mode      1:
+                2: Up                           2:                                      2:
+                3: Down                         3:                                      3:
+                4: Right                        4:                                      4:
+                5: Left                         5:                                      5:
+                6: Coin (2?)            6:                                      6: Start2
+                7: Coin (1?)            7:                                      7:
+
+*/
+static struct InputPort AntEaterinput_ports[] =
+{
+        {       /* IN0 */
+                0xff,
+                { OSD_KEY_CONTROL, OSD_KEY_ALT, OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, OSD_KEY_4 },
+                { OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
+        },
+        {       /* IN1 */
+                0xfd,
+                { 0, 0, 0, 0, 0, 0, 0, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0 }
+        },
+        {       /* IN2 */
+                0xff,
+                { OSD_KEY_1, 0, 0, 0, 0, 0, OSD_KEY_2, 0 },
+                { 0, 0, 0, 0, 0, 0, 0, 0 }
+        },
+        { -1 }  /* end of table */
+};
+
+
+static struct DSW AntEaterdsw[] =
+{
+        { 1, 0x02, "FREE PLAY", { "NO", "YES" } },
+        { 1, 0x01, "PLAYER CAN DIE", { "NO", "YES" } },
+        { -1 }
+};
+
+
+static struct KEYSet AntEaterkeys[] =
+{
+        { 0, 2, "MOVE UP" },
+        { 0, 3, "MOVE DOWN" },
+        { 0, 5, "MOVE RIGHT"  },
+        { 0, 4, "MOVE LEFT" },
+        { 0, 0, "RETRACT" },
+        { -1 }
+};
 
 
 static struct GfxLayout charlayout =
@@ -251,6 +388,16 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout charlayout2 =
+{
+	8,8,	/* 8*8 characters */
+	512,	/* 256 characters */
+	1,	/* 2 bits per pixel */
 	{ 0, 256*8*8 },	/* the two bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -288,6 +435,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ 0, 0,      &starslayout,   32, 64 },
+	{ 1, 0x0000, &charlayout2,     0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -334,7 +482,7 @@ static struct MachineDriver machine_driver =
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
 	scramble_vh_convert_color_prom,
 
-	losttomb_decodegfx,
+	SternInit,
 	scramble_vh_start,
 	generic_vh_stop,
 	scramble_vh_screenrefresh,
@@ -436,6 +584,60 @@ ROM_START( losttomb_rom )
 	ROM_LOAD( "5d",      0x0800, 0x0800 )
 ROM_END
 
+ROM_START( rescue_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "rb15acpu.bin",      0x0000, 0x1000 )
+        ROM_LOAD( "rb15bcpu.bin",      0x1000, 0x1000 )
+        ROM_LOAD( "rb15ccpu.bin",      0x2000, 0x1000 )
+        ROM_LOAD( "rb15dcpu.bin", 0x3000, 0x1000 )
+        ROM_LOAD( "rb15ecpu.bin",      0x4000, 0x1000 )
+
+        ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "rb15fcpu.bin",      0x0000, 0x0800 )
+        ROM_LOAD( "rb15hcpu.bin",      0x0800, 0x0800 )
+
+        ROM_REGION(0x10000)     /* 64k for the audio CPU */
+        ROM_LOAD( "rb15csnd.bin",      0x0000, 0x0800 )
+        ROM_LOAD( "rb15dsnd.bin",      0x0800, 0x0800 )
+ROM_END
+
+ROM_START( anteater_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "ra1-2c",     0x0000, 0x1000 )
+        ROM_LOAD( "ra1-2e",     0x1000, 0x1000 )
+        ROM_LOAD( "ra1-2f",     0x2000, 0x1000 )
+        ROM_LOAD( "ra1-2h",     0x3000, 0x1000 )
+
+        ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "ra6-5f",      0x0000, 0x0800 )
+        ROM_LOAD( "ra6-5h",      0x0800, 0x0800 )
+
+        ROM_REGION(0x10000)     /* 64k for the audio CPU */
+        ROM_LOAD( "ra4-5c",      0x0000, 0x0800 )
+        ROM_LOAD( "ra4-5d",      0x0800, 0x0800 )
+ROM_END
+
+
+ROM_START( hunchy_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "1b.bin",     0x0000, 0x1000 )
+        ROM_LOAD( "2a.bin",     0x1000, 0x1000 )
+        ROM_LOAD( "3a.bin",     0x2000, 0x1000 )
+        ROM_LOAD( "4c.bin",     0x3000, 0x1000 )
+        ROM_LOAD( "5a.bin",     0x4000, 0x1000 )
+        ROM_LOAD( "6c.bin",     0x5000, 0x1000 )
+
+        ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "8a.bin",     0x0000, 0x0800 )
+        ROM_LOAD( "9b.bin",     0x0800, 0x0800 )
+        ROM_LOAD( "10b.bin",    0x1000, 0x0800 )
+        ROM_LOAD( "11a.bin",    0x1800, 0x0800 )
+
+        ROM_REGION(0x10000)     /* 64k for the audio CPU */
+        ROM_LOAD( "5b_snd.bin",      0x0000, 0x0800 )
+ROM_END
+
+
 
 
 
@@ -454,11 +656,7 @@ struct GameDriver scobra_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -477,11 +675,7 @@ struct GameDriver scobrak_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -500,11 +694,7 @@ struct GameDriver scobrab_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
 };
@@ -513,7 +703,7 @@ struct GameDriver losttomb_driver =
 {
 	"Lost Tomb",
 	"losttomb",
-	"NICOLA SALMORIA\nJAMES TWINE\nMIRKO BUFFONI",
+	"NICOLA SALMORIA\nJAMES R. TWINE\nMIRKO BUFFONI\nFABIO BUFFONI",
 	&machine_driver,
 
 	losttomb_rom,
@@ -523,13 +713,68 @@ struct GameDriver losttomb_driver =
 	LTinput_ports, LTdsw, LTkeys,
 
 	color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,	/* letters */
-		0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a },
-	0x00, 0x01,
-	8*13, 8*16, 0x04,
+	8*13, 8*16,
 
 	0, 0
+};
+
+struct GameDriver anteater_driver =
+{
+        "Ant Eater",
+        "anteater",
+        "JAMES R. TWINE\nCHRIS HARDY\nMIRKO BUFFONI\nFABIO BUFFONI",
+        &machine_driver,
+
+        anteater_rom,
+        0, 0,
+        0,
+
+        AntEaterinput_ports, AntEaterdsw, AntEaterkeys,
+
+        color_prom, 0, 0,
+        8*13, 8*16,
+
+        0, 0
+};
+
+
+struct GameDriver rescue_driver =
+{
+        "Rescue",
+        "rescue",
+        "JAMES R. TWINE\nCHRIS HARDY\nMIRKO BUFFONI\nFABIO BUFFONI",
+        &machine_driver,
+
+        rescue_rom,
+        0, 0,
+        0,
+
+        Rescueinput_ports, Rescuedsw, Rescuekeys,
+
+        color_prom, 0, 0,
+        8*13, 8*16,
+
+        0, 0
+};
+
+
+struct GameDriver hunchy_driver =
+{
+        "Hunchback",
+        "hunchy",
+        "JAMES R. TWINE\nCHRIS HARDY",
+        &machine_driver,
+
+        hunchy_rom,
+        0, 0,
+        0,
+
+        LTinput_ports, LTdsw, LTkeys,
+
+        color_prom, 0, 0,
+        8*13, 8*16,
+
+        0, 0
 };
 
 void swapmem1(int x1, int x2)
@@ -540,45 +785,124 @@ void swapmem1(int x1, int x2)
         Machine->memory_region[1][x2] = swaptemp;
 }
 
-int losttomb_decodegfx(const char *gamename)
+int     SternInit( const char *cpGame )
 {
-        if (stricmp(gamename,"losttomb") == 0)
-        {
-            int i;
+        if ((GfxRAM = malloc(0x2000)) == 0)
+          return 1;
 
-            for (i=0x80; i < 0x100; i++)
-            {
-                 if (i & 2) {
-                   swapmem1( i, i ^ 0x480 );
-                   swapmem1( i+0x800, (i+0x800) ^ 0x480 );
-                   swapmem1( i+0x100, (i+0x100) ^ 0x480 );
-                   swapmem1( i+0x900, (i+0x900) ^ 0x480 );
-                   swapmem1( i+0x200, (i+0x200) ^ 0x480 );
-                   swapmem1( i+0xa00, (i+0xa00) ^ 0x480 );
-                   swapmem1( i+0x300, (i+0x300) ^ 0x480 );
-                   swapmem1( i+0xb00, (i+0xb00) ^ 0x480 );
-                 }
-                 else {
-                   swapmem1( i, i ^ 0x180 );
-                   swapmem1( i+0x800, (i+0x800) ^ 0x180 );
-                   swapmem1( i+0x200, (i+0x200) ^ 0x180 );
-                   swapmem1( i+0xa00, (i+0xa00) ^ 0x180 );
-                   swapmem1( i+0x400, (i+0x400) ^ 0x180 );
-                   swapmem1( i+0xc00, (i+0xc00) ^ 0x180 );
-                   swapmem1( i+0x600, (i+0x600) ^ 0x180 );
-                   swapmem1( i+0xe00, (i+0xe00) ^ 0x180 );
-                 }
-            }
-            for (i=0x100; i < 0x200; i++)
-            {
-                swapmem1( i, i + 0x300);
-                swapmem1( i+0x800, (i+0x800) + 0x300);
-            }
-            for (i=0x300; i < 0x400; i++)
-            {
-                swapmem1( i, i + 0x300);
-                swapmem1( i+0x800, (i+0x800) + 0x300);
-            }
+        memcpy(GfxRAM, Machine->memory_region[1], 0x2000);
+
+        if( !stricmp( cpGame, "losttomb" ) )                                    /* If This Is Lost Tomb */
+                losttomb_decodegfx();                                                           /* Decode Lost Tomb Graphics */
+
+        if( !stricmp( cpGame, "rescue" ) )                                              /* If This Is Rescue */
+                DecodeRescueGfx();                                                                      /* Decode Rescue Graphics */
+
+        if( !stricmp( cpGame, "anteater" ) )                                    /* If This Is Ant Eater */
+                DecodeAntEaterGfx();                                                            /* Decode Ant Eater Graphics */
+
+        if( ( !stricmp( cpGame, "anteater" ) ) ||                               /* If This Is Ant Eater */
+                ( !stricmp( cpGame, "rescue" ) ) )                                      /* Or Rescue */
+                STERNPatchSelfTest();                                                           /* Remove SelfTest (For Now) */
+
+        free(GfxRAM);
+
+        return( 0 );                                                                                    /* All Good! */
+}
+
+
+void    STERNPatchSelfTest( void )
+{
+        /*
+        //      Patch To Bypass The Self Test
+        //
+        //      Thanx To Chris Hardy For The Patch Code
+        //  To Remove The Self Test For Rescue.
+        //      (Also Works For Ant Eater, and Lost Tomb)
+        */
+        Machine -> memory_region[ 0 ][ 0x008A ] = 0;
+        Machine -> memory_region[ 0 ][ 0x008B ] = 0;
+        Machine -> memory_region[ 0 ][ 0x008C ] = 0;
+
+        Machine -> memory_region[ 0 ][ 0x0091 ] = 0;
+        Machine -> memory_region[ 0 ][ 0x0092 ] = 0;
+        Machine -> memory_region[ 0 ][ 0x0093 ] = 0;
+
+        Machine -> memory_region[ 0 ][ 0x0097 ] = 0;
+        Machine -> memory_region[ 0 ][ 0x0098 ] = 0;
+        Machine -> memory_region[ 0 ][ 0x0099 ] = 0;
+
+        return;                                                                                                 /* Done! */
+}
+
+static int bit(int i, int n)
+{
+return ((i >> n) & 1);
+}
+
+
+int  losttomb_decodegfx( void )
+{
+        /*
+         *   Code To Decode Lost Tomb by Mirko Buffoni
+         *   Optimizations done by Fabio Buffoni
+         */
+
+        int i,j;
+
+        for (i=0; i < 0x1000; i++)
+        {
+           j = i & 0xa7f;
+           j |= ( bit(i,7) ^ (bit(i,1) & ( bit(i,7) ^ bit(i,10) ))) << 8;
+           j |= ( (bit(i,1) & bit(i,7)) | ((1 ^ bit(i,1)) & (bit(i,8)))) << 10;
+           j |= ( (bit(i,1) & bit(i,8)) | ((1 ^ bit(i,1)) & (bit(i,10)))) << 7;
+           Machine->memory_region[1][i] = GfxRAM[j];
+        }
+
+    return 0;
+}
+
+
+
+
+int  DecodeAntEaterGfx( void )
+{
+        /*
+         *   Code To Decode Ant Eater by Mirko Buffoni
+         *   Optimizations done by Fabio Buffoni
+         */
+
+        int i,j;
+
+        for (i=0; i < 0x1000; i++)
+        {
+           j = i & 0x9bf;
+           j |= ( bit(i,0) ^ bit(i,6) ^ 1) << 10;
+           j |= ( bit(i,2) ^ bit(i,10) ) << 9;
+           j |= ( bit(i,4) ^ bit(i,9) ^ ( bit(i,2) & bit (i,10) )) << 6;
+           Machine->memory_region[1][i] = GfxRAM[j];
+        }
+
+    return 0;
+}
+
+
+int  DecodeRescueGfx( void )
+{
+        /*
+         *   Code To Decode Ant Eater by Mirko Buffoni
+         *   Optimizations done by Fabio Buffoni
+         */
+
+        int i,j;
+
+        for (i=0; i < 0x1000; i++)
+        {
+           j = i & 0xa7f;
+           j |= ( bit(i,3) ^ bit(i,10) ) << 7;
+           j |= ( bit(i,1) ^ bit(i,7) ) << 8;
+           j |= ( bit(i,0) ^ bit(i,8) ) << 10;
+           Machine->memory_region[1][i] = GfxRAM[j];
         }
 
         return 0;

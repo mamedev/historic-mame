@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "Z80.h"
+#include "sndhrdw/8910intf.h"
 
 static int clock=0;
 
@@ -39,5 +40,5 @@ void kangaroo_sec_chip_w(int offset, int val)
 int kangaroo_interrupt(void)
 {
   /* clock = (clock+1) & 0xff; */
-  return 0;
+  return 0xffff;
 }

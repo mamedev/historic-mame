@@ -124,17 +124,6 @@ static struct DSW dsw[] =
 
 
 
-static struct GfxLayout charlayout1 =
-{
-	8,8,	/* 8*8 characters */
-	40,	/* 40 characters */
-	1,	/* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
-	8*8	/* every char takes 10 consecutive bytes */
-};
-
 struct GfxLayout carnival_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -150,7 +139,6 @@ struct GfxLayout carnival_charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x01e8, &charlayout1, 0, 8 },	/* letters */
 	{ 0, 0xe800, &carnival_charlayout, 0, 8 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
@@ -278,11 +266,7 @@ struct GameDriver carnival_driver =
 	input_ports, dsw, keys,
 
 	0, palette, colortable,
-	{ 0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,	/* numbers */
-		0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,	/* letters */
-		0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27 },
-	0, 1,
-	8*13, 8*16, 2,
+	8*13, 8*16,
 
 	0, 0
 };

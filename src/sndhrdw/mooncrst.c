@@ -14,7 +14,17 @@
 static char *tone;
 static char *noise;
 
+static int shootsampleloaded = 0;
 
+int mooncrst_sh_init(const char *gamename)
+{
+        if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
+          shootsampleloaded = 1;
+        else
+          shootsampleloaded = 0;
+
+        return 0;
+}
 
 void mooncrst_sound_freq_w(int offset,int data)
 {
@@ -30,6 +40,15 @@ void mooncrst_noise_w(int offset,int data)
 	else osd_adjust_sample(1,NOISE_RATE,0);
 }
 
+void mooncrst_shoot_w(int offset,int data)
+{
+        
+	if ((data & 1) && shootsampleloaded)
+             osd_play_sample(2,Machine->samples->sample[0]->data,
+                               Machine->samples->sample[0]->length,
+                               Machine->samples->sample[0]->smpfreq,
+                               Machine->samples->sample[0]->volume,0);
+}
 
 
 int mooncrst_sh_start(void)

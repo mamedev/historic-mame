@@ -248,18 +248,6 @@ static struct GfxLayout spritelayout2 =
 			40*8+0, 40*8+1, 40*8+2, 40*8+3, 40*8+4, 40*8+5, 40*8+6, 40*8+7 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the remapped color table and dynamically build the real one. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
@@ -269,7 +257,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x3000, &charlayout2,      0, 16 },	/* background tiles */
 	{ 1, 0x9000, &spritelayout1,    0, 16 },	/* normal sprites */
 	{ 1, 0xa000, &spritelayout2,    0, 16 },	/* large sprites */
-	{ 0, 0,      &fakelayout,    16*8, 182 },
 	{ -1 } /* end of array */
 };
 
@@ -332,7 +319,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
 	gfxdecodeinfo,
-	182,16*8+182,
+	182,16*8,
 	bombjack_vh_convert_color_prom,
 
 	0,
@@ -469,11 +456,7 @@ struct GameDriver bombjack_driver =
 	input_ports, dsw, keys,
 
 	color_prom,0,0,
-	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
-		0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,	/* letters */
-		0x4e,0x4f,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a },
-	5, 0,
-	8*13, 8*16,2,
+	8*13, 8*16,
 
 	hiload, hisave
 };

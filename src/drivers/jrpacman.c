@@ -93,6 +93,8 @@ OUT on port $0 sets the interrupt vector
 #include "vidhrdw/generic.h"
 
 
+extern int jrpacman_init_machine(const char *gamename);
+extern int jrpacman_interrupt(void);
 
 extern unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
 extern unsigned char *jrpacman_charbank,*jrpacman_spritebank;
@@ -303,11 +305,11 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,writeport,
-			interrupt,1
+			jrpacman_interrupt,1
 		}
 	},
 	60,
-	0,
+	jrpacman_init_machine,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
@@ -401,6 +403,72 @@ static unsigned jrpacman_decode(int A)
 }
 
 
+static int hiload(const char *name)
+{
+	static int resetcount;
+
+
+	/* during a reset, leave time to the game to clear the screen */
+	if (++resetcount < 60) return 0;
+
+	/* wait for "HIGH SCORE" to be on screen */
+	if ((memcmp(&RAM[0x476d],"\x40\x40\x40\x40",4) == 0) &&
+            (memcmp(&RAM[0x4751],"\x48\x47\x49\x48",4) == 0))
+	{
+		FILE *f;
+
+
+		resetcount = 0;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			char buf[10];
+			int hi;
+
+
+			fread(&RAM[0x4e88],1,4,f);
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			hi = (RAM[0x4e88] & 0x0f) +
+			     (RAM[0x4e88] >> 4) * 10 +
+			     (RAM[0x4e89] & 0x0f) * 100 +
+			     (RAM[0x4e89] >> 4) * 1000 +
+			     (RAM[0x4e8a] & 0x0f) * 10000 +
+			     (RAM[0x4e8a] >> 4) * 100000 +
+			     (RAM[0x4e8b] & 0x0f) * 1000000 +
+			     (RAM[0x4e8b] >> 4) * 10000000;
+			if (hi)
+			{
+				sprintf(buf,"%8d",hi);
+				if (buf[2] != ' ') jrpacman_videoram_w(0x0772,buf[2]-'0');
+				if (buf[3] != ' ') jrpacman_videoram_w(0x0771,buf[3]-'0');
+				if (buf[4] != ' ') jrpacman_videoram_w(0x0770,buf[4]-'0');
+				if (buf[5] != ' ') jrpacman_videoram_w(0x076f,buf[5]-'0');
+				if (buf[6] != ' ') jrpacman_videoram_w(0x076e,buf[6]-'0');
+				jrpacman_videoram_w(0x076d,buf[7]-'0');
+			}
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x4e88],1,4,f);
+		fclose(f);
+	}
+}
+
+
 
 struct GameDriver jrpacman_driver =
 {
@@ -416,11 +484,7 @@ struct GameDriver jrpacman_driver =
 	input_ports, dsw, keys,
 
 	color_prom, 0, 0,
-	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
-		0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,	/* letters */
-		0x4e,0x4f,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a },
-	19, 8,
-	8*11, 8*19, 10,
+	8*11, 8*19,
 
-	0, 0
+	hiload, hisave
 };

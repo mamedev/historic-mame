@@ -1,12 +1,13 @@
-/***************************************************************************
+/*********************************************************************
 
   common.c
 
-  Generic functions used in different emulators.
+  Generic functions, mostly ROM and graphics related.
 
-***************************************************************************/
+*********************************************************************/
 
 #include "driver.h"
+#include "dirent.h"
 
 /* LBO */
 #ifdef LSB_FIRST
@@ -16,6 +17,18 @@
 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
 
+
+void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
+{
+	printf("MAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
+		 "several arcade machines. But hardware is useless without software, so an image\n"
+		 "of the ROMs which run on that hardware is required. Such ROMs, like any other\n"
+		 "commercial software, are copyrighted material and it is therefore illegal to\n"
+		 "use them if you don't own the original arcade machine. Needless to say, ROMs\n"
+		 "are not distributed together with MAME. Distribution of MAME together with ROM\n"
+		 "images is a violation of copyright law and should be promptly reported to the\n"
+		 "authors so that appropriate legal action can be taken.\n\n");
+}                           /* MAURY_END: dichiarazione */
 
 /***************************************************************************
 
@@ -72,6 +85,8 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 		while (romp->length)
 		{
 			FILE *f;
+                        DIR *dirp;
+                        struct dirent *dp;
 			char buf[100];
 			char name[100];
 
@@ -83,11 +98,25 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			}
 
 			sprintf(buf,romp->name,basename);
-			sprintf(name,"%s/%s",basename,buf);
+
+                        /* jamc: code to perform a upper/lowercase rom search */
+                        /* try to open directory */
+                        if ( (dirp=opendir(basename)) == (DIR *)0) {
+                           fprintf(stderr,"Unable to open ROM directory %s\n",basename);
+                           goto printromlist;
+                        }
+                        /* search entry and upcasecompare to desired rom name */
+                        for (dp=readdir(dirp); dp ; dp=readdir(dirp))
+                            if (! strcasecmp(dp->d_name,buf)) break;
+                        if ( dp ) sprintf( name,"%s/%s",basename,dp->d_name);
+                        else      sprintf( name,"%s/%s",basename,buf);
+                        closedir(dirp);
+
+			/* sprintf(name,"%s/%s",basename,buf); */
 
 			if ((f = fopen(name,"rb")) == 0)
 			{
-				printf("Unable to open ROM %s\n",name);
+				fprintf(stderr, "Unable to open ROM %s\n",name);
 				goto printromlist;
 			}
 
@@ -121,14 +150,9 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 printromlist:
 	romp = rommodule;
-	printf( "\nMAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
-			"several arcade machines. But hardware is useless without software, so an image\n"
-			"of the ROMs which run on that hardware is required. Such ROMs, like any other\n"
-			"commercial software, are copyrighted material and it is therefore illegal to\n"
-			"use them if you don't own the original arcade machine. Needless to say, ROMs\n"
-			"are not distributed together with MAME. Distribution of MAME together with ROM\n"
-			"images is a violation of copyright law and should be promptly reported to the\n"
-			"author so that appropriate legal action can be taken.\n\nPress return to continue\n");
+        printf("\n");                         /* MAURY_BEGIN: dichiarazione */
+        showdisclaimer();
+        printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
 	printf("This is the list of the ROMs required.\n"
 			"All the ROMs must reside in a subdirectory called \"%s\".\n"
@@ -1234,518 +1258,4 @@ void clearbitmap(struct osd_bitmap *bitmap)
 
 	for (i = 0;i < bitmap->height;i++)
 		memset(bitmap->line[i],Machine->background_pen,bitmap->width);
-}
-
-
-
-/***************************************************************************
-
-  Display text on the screen. If erase is 0, it superimposes the text on
-  the last frame displayed.
-
-***************************************************************************/
-void displaytext(const struct DisplayText *dt,int erase)
-{
-	if (erase) clearbitmap(Machine->scrbitmap);
-
-	while (dt->text)
-	{
-		int x,y;
-		const char *c;
-
-
-		x = dt->x;
-		y = dt->y;
-		c = dt->text;
-
-		while (*c)
-		{
-			if (*c == '\n')
-			{
-				x = dt->x;
-				y += Machine->gfx[0]->height + 1;
-			}
-			else if (*c == ' ')
-			{
-				/* don't try to word wrap at the beginning of a line (this would cause */
-				/* an endless loop if a word is longer than a line) */
-				if (x == dt->x)
-					x += Machine->gfx[0]->width;
-				else
-				{
-					int nextlen=0;
-					const char *nc;
-
-
-					x += Machine->gfx[0]->width;
-					nc = c+1;
-					while (*nc && *nc != ' ' && *nc != '\n')
-                                        {
-				                if (*nc >= '0' && *nc <= '9')
-                	                           nextlen += Machine->gfx[Machine->gamedrv->charset[*nc - '0'] / 256]->width;
-				                else if (*nc >= 'A' && *nc <= 'Z')
-                	                           nextlen += Machine->gfx[Machine->gamedrv->charset[*nc - 'A' + 10] / 256]->width;
-						nc++;
-                                        }
-
-					/* word wrap */
-
-					if (x + nextlen >= Machine->drv->screen_width)
-					{
-						x = dt->x;
-						y += Machine->gfx[0]->height + 1;
-					}
-				}
-			}
-			else
-			{
-				int bank=-1;
-				int offs=0;
-
-				if (*c >= '0' && *c <= '9')
-                                {
-                	            bank = Machine->gamedrv->charset[*c - '0'] / 256;
-                                    offs = Machine->gamedrv->charset[*c - '0'] & 255;
-                                }
-				else if (*c >= 'A' && *c <= 'Z')
-                                {
-                	            bank = Machine->gamedrv->charset[*c - 'A' + 10] / 256;
-                                    offs = Machine->gamedrv->charset[*c - 'A' + 10] & 255;
-                                }
-
-                                if(bank >= 0)
-                                {
-					drawgfx(Machine->scrbitmap,Machine->gfx[bank],offs,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-					x += Machine->gfx[bank]->width;
-                                }
-			}
-
-			c++;
-		}
-
-		dt++;
-	}
-
-	osd_update_display();
-}
-
-
-
-int showcharset(void)
-{
-	int i,key,cpl;
-	struct DisplayText dt[2];
-	char buf[80];
-	int bank,color;
-
-
-	bank = 0;
-	color = 0;
-
-	do
-	{
-		clearbitmap(Machine->scrbitmap);
-
-		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
-
-		for (i = 0;i < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total;i++)
-		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-					i,color,
-					0,0,
-					(i % cpl) * Machine->gfx[bank]->width,
-					Machine->gfx[0]->height+1 + (i / cpl) * Machine->gfx[bank]->height,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
-		dt[0].text = buf;
-		dt[0].color = Machine->gamedrv->paused_color;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext(dt,0);
-
-
-		key = osd_read_keyrepeat();
-
-		switch (key)
-		{
-			case OSD_KEY_RIGHT:
-				if (Machine->gfx[bank + 1]) bank++;
-				break;
-
-			case OSD_KEY_LEFT:
-				if (bank > 0) bank--;
-				break;
-
-			case OSD_KEY_UP:
-				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
-					color++;
-				break;
-
-			case OSD_KEY_DOWN:
-				if (color > 0) color--;
-				break;
-		}
-	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
-
-	while (osd_key_pressed(key));	/* wait for key release */
-
-	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
-
-	if (key == OSD_KEY_ESC) return 1;
-	else return 0;
-}
-
-
-
-
-
-
-
-static int setdipswitches(void)
-{
-	struct DisplayText dt[40];
-	int settings[20];
-	int i,s,key,done;
-	int total;
-	const struct DSW *dswsettings;
-
-
-	dswsettings = Machine->gamedrv->dswsettings;
-
-	total = 0;
-	while (dswsettings[total].num != -1)
-	{
-		int msk,val;
-
-
-		msk = dswsettings[total].mask;
-		if (msk == 0) return 0;	/* error in DSW definition, quit */
-		val = Machine->gamedrv->input_ports[dswsettings[total].num].default_value;
-		while ((msk & 1) == 0)
-		{
-			val >>= 1;
-			msk >>= 1;
-		}
-		settings[total] = val & msk;
-
-		total++;
-	}
-
-	for (i = 0;i < total;i++)
-	{
-		dt[2 * i].text = dswsettings[i].name;
-		dt[2 * i].x = 2*Machine->gfx[0]->width;
-		dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
-	}
-
-	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->gfx[0]->height * (total+1) + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
-	dt[2 * total + 1].text = 0;	/* terminate array */
-	total++;
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-		{
-			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			if (i < total - 1)
-			{
-				dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-				dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
-			}
-		}
-
-		displaytext(dt,1);
-
-		key = osd_read_keyrepeat();
-
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_RIGHT:
-				if (s < total - 1)
-				{
-					if (dswsettings[s].reverse == 0)
-					{
-						if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
-					}
-					else
-					{
-						if (settings[s] > 0) settings[s]--;
-					}
-				}
-				break;
-
-			case OSD_KEY_LEFT:
-				if (s < total - 1)
-				{
-					if (dswsettings[s].reverse == 0)
-					{
-						if (settings[s] > 0) settings[s]--;
-					}
-					else
-					{
-						if (dswsettings[s].values[settings[s] + 1] != 0) settings[s]++;
-					}
-				}
-				break;
-
-			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key));	/* wait for key release */
-
-	total--;
-
-	while (--total >= 0)
-	{
-		int msk;
-
-
-		msk = dswsettings[total].mask;
-		while ((msk & 1) == 0)
-		{
-			settings[total] <<= 1;
-			msk >>= 1;
-		}
-
-		Machine->gamedrv->input_ports[dswsettings[total].num].default_value =
-				(Machine->gamedrv->input_ports[dswsettings[total].num].default_value
-				& ~dswsettings[total].mask) | settings[total];
-	}
-
-	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
-
-	if (done == 2) return 1;
-	else return 0;
-}
-
-
-
-static int setkeysettings(void)
-{
-	struct DisplayText dt[40];
-	int i,s,key,done;
-	int total;
-	const struct KEYSet *keysettings;
-
-
-	keysettings = Machine->gamedrv->keysettings;
-
-	total = 0;
-	while (keysettings[total].num != -1) total++;
-
-        if (total == 0) return 0;
-
-	for (i = 0;i < total;i++)
-	{
-		dt[2 * i].text = keysettings[i].name;
-		dt[2 * i].x = 2*Machine->gfx[0]->width;
-		dt[2 * i].y = 2*Machine->gfx[0]->height * i + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
-	}
-
-	dt[2 * total].text = "RETURN TO MAIN MENU";
-	dt[2 * total].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = 2*Machine->gfx[0]->height * (total+1) + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total + 1)) / 2;
-	dt[2 * total + 1].text = 0;	/* terminate array */
-	total++;
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-		{
-			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-			if (i < total - 1)
-			{
-				dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-				dt[2 * i + 1].text = osd_key_name( Machine->gamedrv->input_ports[ keysettings[i].num ].keyboard[ keysettings[i].mask ] );
-				dt[2 * i + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
-			}
-		}
-
-		displaytext(dt,1);
-
-		key = osd_read_keyrepeat();
-
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
-				else
-				{
-					int newkey;
-
-
-					dt[2 * s + 1].text = "            ";
-					dt[2 * s + 1].x = Machine->drv->screen_width - 2*Machine->gfx[0]->width - Machine->gfx[0]->width*strlen(dt[2 * s + 1].text);
-					displaytext(dt,1);
-					newkey = osd_read_key();
-					if (newkey != OSD_KEY_ESC)
-						Machine->gamedrv->input_ports[ keysettings[s].num ].keyboard[ keysettings[s].mask ] = newkey;
-				}
-				break;
-
-			case OSD_KEY_ESC:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key));	/* wait for key release */
-
-	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
-
-	if (done == 2) return 1;
-	else return 0;
-}
-
-
-
-static int showcredits(void)
-{
-	int key;
-	struct DisplayText dt[2];
-	char buf[256];
-
-
-	strcpy(buf,"THE FOLLOWING PEOPLE CONTRIBUTED TO THIS DRIVER\n\n");
-	strcat(buf,Machine->gamedrv->credits);
-	dt[0].text = buf;
-	dt[0].color = Machine->gamedrv->white_text;
-	dt[0].x = 0;
-	dt[0].y = 0;
-	dt[1].text = 0;
-	displaytext(dt,1);
-
-	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
-	if (key == OSD_KEY_ESC) return 1;
-
-	return 0;
-}
-
-
-
-int setup_menu(void)
-{
-	struct DisplayText dt[10];
-	int i,s,key,done;
-	int total;
-
-
-	total = 4;
-	dt[0].text = "DIP SWITCH SETUP";
-	dt[1].text = "KEYBOARD SETUP";
-	dt[2].text = "CREDITS";
-	dt[3].text = "RETURN TO GAME";
-	for (i = 0;i < total;i++)
-	{
-		dt[i].x = (Machine->drv->screen_width - Machine->gfx[0]->width * strlen(dt[i].text)) / 2;
-		dt[i].y = i * 2*Machine->gfx[0]->height + (Machine->drv->screen_height - 2*Machine->gfx[0]->height * (total - 1)) / 2;
-		if (i == total-1) dt[i].y += 2*Machine->gfx[0]->height;
-	}
-	dt[4].text = 0;	/* terminate array */
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-		{
-			dt[i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
-		}
-
-		displaytext(dt,1);
-
-		key = osd_read_keyrepeat();
-
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_ENTER:
-				switch (s)
-				{
-					case 0:
-						if (setdipswitches())
-							done = 2;
-						break;
-
-					case 1:
-						if (setkeysettings())
-							done = 2;
-						break;
-
-					case 2:
-						if (showcredits())
-							done = 2;
-						break;
-
-					case 3:
-						done = 1;
-						break;
-				}
-				break;
-
-			case OSD_KEY_ESC:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key));	/* wait for key release */
-
-	/* clear the screen before returning */
-	clearbitmap(Machine->scrbitmap);
-
-	if (done == 2) return 1;
-	else return 0;
 }

@@ -16,10 +16,9 @@
 #define BACKGROUND_SIZE 0x400
 #define SPRITES_SIZE (96*4)
 
-#define GFX_CHAR 1
-#define GFX_TILE 2
-#define GFX_SPRITE 6
-#define GFX_PALETTE 9
+#define GFX_CHAR 0
+#define GFX_TILE 1
+#define GFX_SPRITE 5
 
 unsigned char *gng_paletteram;
 static const unsigned char *colors;
@@ -89,21 +88,6 @@ void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 		bit3 = (color_prom[2*i+1] >> 7) & 0x01;
 		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		COLOR(GFX_PALETTE,i) = i;
-
-
-	/* set up colors for the copyright notice - the other colors will be */
-	/* set later by the game. */
-	for (i = 0;i < 3*4;i++) COLOR(0,i) = 0x00;	/* set all to black */
-	COLOR(0,1) = 1;	/* white */
-	COLOR(0,2) = 2;
-	COLOR(0,4+1) = 3;	/* yellow */
-	COLOR(0,4+2) = 4;
-	COLOR(0,2*4+1) = 5;	/* red */
-	COLOR(0,2*4+2) = 6;
 }
 
 
@@ -141,7 +125,7 @@ int gng_vh_start(void)
 	}
 
 	/* the background area is twice as tall and twice as large as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_width)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(spritebuffer2);
 		free(spritebuffer1);
@@ -260,7 +244,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 		        fprintf(errorlog,"warning: unknown color %02x %02x\n",
 				gng_paletteram[64*j+i],gng_paletteram[64*j+i + 0x100]);
 
-			Machine->gfx[conv[j]]->colortable[i] = Machine->gfx[GFX_PALETTE]->colortable[offs];
+			Machine->gfx[conv[j]]->colortable[i] = Machine->pens[offs];
 		}
 	}
 

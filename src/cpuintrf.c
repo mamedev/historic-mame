@@ -437,6 +437,19 @@ reset:
 }
 
 
+/***************************************************************************
+
+  This function return CPUNUM current status  (running or halted)
+
+***************************************************************************/
+int cpu_getstatus(int cpunum)
+{
+	if (cpunum >= MAX_CPU) return 0;
+
+        return cpurunning[cpunum];
+}
+
+
 
 /***************************************************************************
 

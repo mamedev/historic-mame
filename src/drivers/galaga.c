@@ -67,6 +67,7 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaga_sharedram;
+extern int galaga_reset_r(int offset);
 extern int galaga_hiscore_print_r(int offset);
 extern int galaga_sharedram_r(int offset);
 extern void galaga_sharedram_w(int offset,int data);
@@ -91,6 +92,7 @@ extern void pengo_sound_w(int offset,int data);
 extern int rallyx_sh_start(void);
 extern void pengo_sh_update(void);
 extern unsigned char *pengo_soundregs;
+extern unsigned char galaga_hiscoreloaded;
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
@@ -99,7 +101,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
         { 0x02b9, 0x02bd, galaga_hiscore_print_r },
-	{ 0x0000, 0x3fff, MRA_ROM },
+        { 0x0000, 0x0000, galaga_reset_r },
+	{ 0x0001, 0x3fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -233,18 +236,6 @@ static struct GfxLayout spritelayout =
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	64*8	/* every sprite takes 64 bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the color table */
-static struct GfxLayout starslayout =
-{
-	1,1,
-	0,
-	1,	/* 1 star = 1 color */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
@@ -252,7 +243,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,       0, 32 },
 	{ 1, 0x1000, &spritelayout,  32*4, 32 },
-	{ 0, 0,      &starslayout,   64*4, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -348,7 +338,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
-	32+64,64*4+64,	/* 32 for the characters, 64 for the stars */
+	32+64,64*4,	/* 32 for the characters, 64 for the stars */
 	galaga_vh_convert_color_prom,
 
 	0,
@@ -433,11 +423,13 @@ static int hiload(const char *name)
       {
          fread(&RAM[0x8A20],1,45,f);
          fclose(f);
+         galaga_hiscoreloaded = 1;
       }
 
       return 1;
    }
-   else return 0; /* we can't load the hi scores yet */
+   else
+      return 0; /* we can't load the hi scores yet */
 }
 
 
@@ -472,11 +464,7 @@ struct GameDriver galaga_driver =
 
 	color_prom, 0, 0,
 
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	1, 5,
-	8*11, 8*20, 4,
+	8*11, 8*20,
 
 	hiload, hisave
 };
@@ -496,11 +484,7 @@ struct GameDriver galagabl_driver =
 
 	color_prom, 0, 0,
 
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	1, 5,
-	8*11, 8*20, 4,
+	8*11, 8*20,
 
 	hiload, hisave
 };

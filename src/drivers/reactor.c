@@ -57,7 +57,7 @@ because the clock emulation is much more precise and allows to put timestamps
 on amplitude DAC writes. MAME doesn't allow to compute the digital effects in
 real time like Euphoric (oops, <ad. mode end>) so the effects are provided
 as precomputed samples (some of them are quite big, I should convert them
-to 22kHz)  
+to 22kHz)
 ******************************************************************************/
 
 #include "driver.h"
@@ -204,7 +204,7 @@ static struct GfxLayout fakelayout =
 	{ 0 },
 	{ 0 },
 	0
-}; 
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -235,7 +235,7 @@ static const struct MachineDriver machine_driver =
 	gfxdecodeinfo,
 	256,256+3*16,        /* 256 for colormap, 1*16 for the game, 2*16 for the dsw menu. Silly, isn't it ? */
 	gottlieb_vh_init_basic_color_palette,
-	
+
 	0,      /* init vh */
 	reactor_vh_start,
 	generic_vh_stop,
@@ -284,11 +284,7 @@ struct GameDriver reactor_driver =
 	(char *)1,
 	0,0,    /* palette, colortable */
 
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,    /* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,       /* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0,1,      /* white & yellow for dsw menu */
-	8*11,8*20,1, /* paused message displayed at X,Y and color */
+	8*11,8*20,
 
 	0,0     /* hi-score load and save */
 };

@@ -17,12 +17,13 @@ unsigned char *elevator_videoram2,*elevator_videoram3;
 unsigned char *elevator_characterram;
 unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
 unsigned char *elevator_gfxpointer,*elevator_paletteram;
+unsigned char *elevator_colorbank,*elevator_video_priority;
 unsigned char *elevator_colorbank,*elevator_video_enable;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static const unsigned char *colors;
 static int dirtypalette;
-static unsigned char dirtycharacter[256];
+static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
 
 
@@ -229,11 +230,14 @@ void elevator_characterram_w(int offset,int data)
 	{
 		if (offset < 0x1800)
 		{
-			dirtycharacter[(offset / 8) & 0xff] = 1;
+			dirtycharacter1[(offset / 8) & 0xff] = 1;
 			dirtysprite1[(offset / 32) & 0x3f] = 1;
 		}
 		else
+		{
+			dirtycharacter2[(offset / 8) & 0xff] = 1;
 			dirtysprite2[(offset / 32) & 0x3f] = 1;
+		}
 
 		elevator_characterram[offset] = data;
 	}
@@ -254,20 +258,18 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	extern struct GfxLayout elevator_charlayout,elevator_spritelayout;
 
 
-	if (*elevator_video_enable == 0)
-	{
-		clearbitmap(bitmap);
-		return;
-	}
-
-
 	/* decode modified characters */
 	for (offs = 0;offs < 256;offs++)
 	{
-		if (dirtycharacter[offs] == 1)
+		if (dirtycharacter1[offs] == 1)
 		{
-			decodechar(Machine->gfx[1],offs,elevator_characterram,&elevator_charlayout);
-			dirtycharacter[offs] = 0;
+			decodechar(Machine->gfx[0],offs,elevator_characterram,&elevator_charlayout);
+			dirtycharacter1[offs] = 0;
+		}
+		if (dirtycharacter2[offs] == 1)
+		{
+			decodechar(Machine->gfx[2],offs,elevator_characterram + 0x1800,&elevator_charlayout);
+			dirtycharacter2[offs] = 0;
 		}
 	}
 	/* decode modified sprites */
@@ -275,7 +277,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtysprite1[offs] == 1)
 		{
-			decodechar(Machine->gfx[2],offs,elevator_characterram,&elevator_spritelayout);
+			decodechar(Machine->gfx[1],offs,elevator_characterram,&elevator_spritelayout);
 			dirtysprite1[offs] = 0;
 		}
 		if (dirtysprite2[offs] == 1)
@@ -306,10 +308,10 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 				offs++;
 			}
 
-			col = Machine->gfx[4]->colortable[offs];
+			col = Machine->pens[offs];
 			/* avoid undesired transparency */
 			if (col == 0 && i % 8 != 0) col = 1;
-			Machine->gfx[1]->colortable[i] = col;
+			Machine->gfx[0]->colortable[i] = col;
 		}
 
 		/* redraw everything */
@@ -333,7 +335,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					elevator_colorbank[0] & 0x0f,
 					0,0,8*sx,8*sy,
@@ -353,7 +355,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap2,Machine->gfx[1],
+			drawgfx(tmpbitmap2,Machine->gfx[0],
 					elevator_videoram2[offs],
 					(elevator_colorbank[0] >> 4) & 0x0f,
 					0,0,sx,sy,
@@ -373,7 +375,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap3,Machine->gfx[1],
+			drawgfx(tmpbitmap3,Machine->gfx[0],
 					elevator_videoram3[offs],
 					elevator_colorbank[1] & 0x0f,
 					0,0,sx,sy,
@@ -390,11 +392,14 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (i = 0;i < 32;i++)
 			scroll[i] = -elevator_scroll3[i];
 
-		copyscrollbitmap(bitmap,tmpbitmap3,0,0,32,scroll,&spritevisiblearea,TRANSPARENCY_NONE,0);
+		if (*elevator_video_enable & 0x40)
+			copyscrollbitmap(bitmap,tmpbitmap3,0,0,32,scroll,&spritevisiblearea,TRANSPARENCY_NONE,0);
+		else
+			clearbitmap(bitmap);
 	}
 
-
-	/* copy the second playfield */
+	/* copy the second playfield if it has not priority over sprites */
+	if ((*elevator_video_enable & 0x20) && (*elevator_video_priority & 0x08) == 0)
 	{
 		int scroll[32];
 
@@ -408,39 +413,58 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = 31*4;offs >= 0;offs -= 4)
+	if (*elevator_video_enable & 0x80)
 	{
-		drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 2],
-				spriteram[offs + 3] & 0x3f,
-				2 * ((elevator_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
-				spriteram[offs + 2] & 1,0,
-				((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+		for (offs = 31*4;offs >= 0;offs -= 4)
+		{
+			drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
+					spriteram[offs + 3] & 0x3f,
+					2 * ((elevator_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
+					spriteram[offs + 2] & 1,0,
+					((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
+					&spritevisiblearea,TRANSPARENCY_PEN,0);
+		}
 	}
 
 
-	/* draw the opaque part of the frontmost playfield */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&bottomvisiblearea,TRANSPARENCY_NONE,0);
-
-
-	/* draw the remaining part of the frontmost playfield. */
-	/* They are characters, but draw them as sprites */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	/* copy the second playfield if it has priority over sprites */
+	if ((*elevator_video_enable & 0x20) && (*elevator_video_priority & 0x08) != 0)
 	{
-		if (videoram[offs])	/* don't draw spaces */
+		int scroll[32];
+
+
+		for (i = 0;i < 32;i++)
+			scroll[i] = -elevator_scroll2[i];
+
+		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
+	}
+
+
+	if (*elevator_video_enable & 0x10)
+	{
+		/* draw the opaque part of the frontmost playfield */
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&bottomvisiblearea,TRANSPARENCY_NONE,0);
+
+
+		/* draw the remaining part of the frontmost playfield. */
+		/* They are characters, but draw them as sprites */
+		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 		{
-			int sx,sy;
+			if (videoram[offs])	/* don't draw spaces */
+			{
+				int sx,sy;
 
 
-			sx = offs % 32;
-			sy = offs / 32;
+				sx = offs % 32;
+				sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[1],
-					videoram[offs],
-					elevator_colorbank[0] & 0x0f,
-					0,0,8*sx,8*sy,
-					&spritevisiblearea,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[0],
+						videoram[offs],
+						elevator_colorbank[0] & 0x0f,
+						0,0,8*sx,8*sy,
+						&spritevisiblearea,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 }

@@ -106,7 +106,7 @@ struct osd_bitmap
 #define OSD_JOY_FIRE3	7
 #define OSD_JOY_FIRE4	8
 #define OSD_JOY_FIRE	9	/* any of the fire buttons */
-
+#define OSD_MAX_JOY     9
 
 extern int play_sound;
 extern int video_sync;
@@ -125,10 +125,15 @@ void osd_play_sample(int channel,unsigned char *data,int len,int freq,int volume
 void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,int volume);
 void osd_adjust_sample(int channel,int freq,int volume);
 void osd_stop_sample(int channel);
+void osd_restart_sample(int channel);
+int osd_get_sample_status(int channel);
+void osd_ym2203_write(int n, int r, int v);
+void osd_ym2203_update(void);
 void osd_set_mastervolume(int volume);
 int osd_key_pressed(int keycode);
 int osd_read_key(void);
 int osd_read_keyrepeat(void);
+const char *osd_joy_name(int joycode);
 const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);

@@ -3934,9 +3934,9 @@ static void i_ffpre(void)
 
 static void i_invalid(void)
 {
-    fprintf(stderr,"Error: Unimplemented opcode cs:ip = %04X:%04X\n",
-		    sregs[CS],ip-1);
-    exit(1);
+    /* makes the cpu loops forever until user resets it */
+    ip--;
+    cycle_count-=10;
 }
 
 
@@ -3949,7 +3949,7 @@ void I86_Execute(void)
     while(cycle_count>0)
     {
 #ifdef DEBUG
-printf("[%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",ip,GetMemB(base[CS],ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
+printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,GetMemB(base[CS],ip),regs.w[AX],regs.w[BX],regs.w[CX],regs.w[DX]);
 #endif
 
 #if defined(BIGCASE) && !defined(RS6000)

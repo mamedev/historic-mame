@@ -19,6 +19,8 @@ extern void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
 extern void mooncrst_noise_w(int offset,int data);
+extern void mooncrst_shoot_w(int offset,int data);
+extern int mooncrst_sh_init(const char *gamename);
 extern int mooncrst_sh_start(void);
 extern void mooncrst_sh_stop(void);
 extern void mooncrst_sh_update(void);
@@ -47,6 +49,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
+	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },
 	{ 0xb004, 0xb004, mooncrst_stars_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
@@ -90,7 +93,7 @@ static struct KEYSet keys[] =
 static struct DSW dsw[] =
 {
 	{ 1, 0x80, "LANGUAGE", { "JAPANESE", "ENGLISH" } },
-	{ 1, 0x40, "SW1", { "OFF", "ON" } },
+	{ 1, 0x40, "BONUS", { "30000", "50000" } },
 	{ -1 }
 };
 
@@ -118,18 +121,6 @@ static struct GfxLayout spritelayout =
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the color table */
-static struct GfxLayout starslayout =
-{
-	1,1,
-	0,
-	1,	/* 1 star = 1 color */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
 
 
 
@@ -137,7 +128,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -177,7 +167,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	32+64,32,	/* 32 for the characters, 64 for the stars */
 	mooncrst_vh_convert_color_prom,
 
 	0,
@@ -187,7 +177,7 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
+	mooncrst_sh_init,
 	mooncrst_sh_start,
 	mooncrst_sh_stop,
 	mooncrst_sh_update
@@ -339,7 +329,11 @@ static void hisave(const char *name)
 	}
 }
 
-
+static const char *mooncrst_sample_names[] =
+{
+	"shot.sam",
+	0	/* end of array */
+};
 
 struct GameDriver mooncrst_driver =
 {
@@ -350,16 +344,12 @@ struct GameDriver mooncrst_driver =
 
 	mooncrst_rom,
 	moonqsr_decode, 0,
-	0,
+	mooncrst_sample_names,
 
 	input_ports, dsw, keys,
 
 	mooncrst_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0x07, 0x02,
-	8*13, 8*16, 0x00,
+	8*13, 8*16,
 
 	hiload, hisave
 };
@@ -373,16 +363,12 @@ struct GameDriver mooncrsb_driver =
 
 	mooncrsb_rom,
 	0, 0,
-	0,
+	mooncrst_sample_names,
 
 	input_ports, dsw, keys,
 
 	mooncrst_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0x07, 0x02,
-	8*13, 8*16, 0x00,
+	8*13, 8*16,
 
 	hiload, hisave
 };
@@ -396,16 +382,12 @@ struct GameDriver fantazia_driver =
 
 	fantazia_rom,
 	0, 0,
-	0,
+	mooncrst_sample_names,
 
 	input_ports, dsw, keys,
 
 	fantazia_color_prom, 0, 0,
-	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
-		0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,	/* letters */
-		0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23 },
-	0x00, 0x01,
-	8*13, 8*16, 0x03,
+	8*13, 8*16,
 
 	hiload, hisave
 };

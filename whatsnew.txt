@@ -1,3 +1,128 @@
+0.25
+
+Program:
+- We have added Starforce!  Another one that rocks!!
+  Sound is not supported yet.
+
+- Finally I've added Tutankham.  (Hi Moose!! ;)  Moose provided me a good
+  bunch of information and I lost much time on a stupid bug in bank selection.
+  Thanks to David Dahl (techt@juno.com) that provided me a driver too, and
+  I found the light!!  Also thanks to Rob Jarrett for the exaustive memory
+  map (I've included it in sources, it's better than mine).
+
+- I've decrypted the garbled graphics of AntEater and Rescue which are now
+  fully playable.  And Fabio Buffoni improved the decode routines with
+  thrilling code.  Colors are wrong, unless someone provides me a good
+  set of screenshots to study.  Hunchback doesn't work yet.
+
+- Nicola added a driver for Mysterious Stone.
+
+- Sal and John Bugliarisi provided us technical information about the game
+  Naughty Boy.  (Remember that code area is 64k long and not 32k).
+  We have implemented a driver and for this game which is now supported.
+
+- I took the time to add some high score saving.  So, now Junior Pacman,
+  Naughty Boy, Tutankham, Kangaroo, have high score saving support.
+  (So Dave will stop bothering me about that ;)  heheh!!!  Joking ;)
+
+- Nicola fixed Commando driver, so now intermissions have the correct
+  tiles positioned.
+
+- Added JrPacman speed cheat.  It works in the same way of Pacman.
+  (thanks to Hugo Pi for let me notice this).
+
+- Chris Hardy added support for Space Firebird.  Thanks to Chris and to
+  all Sage Staff.
+
+- Nicola did some fixes to Taito Games (Jungle King and Elevator Action)
+  about background placement and coins per credit dipswitch.  Plus vertical
+  scroll support in Jungle King (used in ground shake), correct sprite
+  priority, and no more rubbish is present during change of stage.
+  Finally, he also added preliminar support for WildWestern and FrontLine,
+  which are not yet playable.
+  DELETE ELEVATOB\ELEVATOB.DSW, JUNGLEK\JUNGLEK.DSW, JHUNT\JHUNT.DSW,
+  OTHERWISE THE GAME WILL NOT WORK CORRECTLY.
+
+- Eric Anschuetz proposed me to implement a different button layout for
+  joysticks.  I replyed with a configurable joystick setup (like the
+  keyboard one).  So Eric finished the work providing us a useful joystick
+  setup menu.  Thanks Eric and Robert! ;)
+
+- Refixed the galaga hiscore bug (it happened when syncing my sources with
+  Nicola's ones)
+
+- Maurizio Zanello provided a better interface between MAME and frontends.
+  And now you can select frameskip rate even while playing, without have to
+  exit.  Volume can be controlled with keypad PLUS and MINUS keys.
+
+- Robert Anschuetz provided me info about how to enable a shot sample with
+  moonquasar, mooncresta, galaxian and clones.
+
+- Valerio Verrando fixed the Williams driver to support joystick in
+  Blaster, Defender, Joust, Robotron, Splat, Stargate.  Also fixed the Space
+  Invaders driver to include high score saving and 100% arcade-perfect colors
+  for Lunar Rescue; since some bootleg machines did not use this colorful
+  overlay, Destination Earth retains the Space Invaders color scheme.
+
+- Bernd has cleaned up VESA command line options.
+  No longer supported:
+  '-vesascan'   --> use '-vesa' or (faster, if it works) '-vesa2l'
+  '-vesaskip N' --> use '-640x480 -skiplines N'  instead
+  '-rotate'     --> use '-rol' or '-ror' instead
+
+  New:
+  '-ror'
+  '-rol'  Rotate the display (anti)clockwise.  Since this uses
+          the standard VESA scanline mode, you'll get *vertical*
+          scanlines on rotated games (authentic?).
+  '-nodouble'
+          prevents pixel doubling, if you like miniaturised
+          arcade emulation. It's also faster than the standard
+          pixel-doubling VESA modes.
+  '-skiplines N'
+          does what '-vesaskip N' used to do, except it does not
+          select 640x480 VESA mode.
+
+- Minor modifications to Arabian palette.  Ville Laitinen also provided some
+  modifications to Kangaroo driver.
+
+- Pause key back to 'P'.  Sorry, you cannot use it for your redefinitions,
+  but, hey, you have 101 keys left!!! ;)
+
+- Found the meaning of SW1 in Moon Cresta (Thanks to Mikiya Yadohisa)
+
+- Added Crazy Kong bootleg version by Jeutel and Ms Pac Man Attacks clones
+
+Sources:
+- Added an alternate 224x288 video mode (on my Matrox this produce correct
+  aspect ratio with this tweaked mode).  To select it simply add -224 or
+  -224x288 parameter.
+
+- Nigel T. Barber  (Nigel.Barber@sgcs.co.uk) added mouse support.  We need
+  some feedback, because each mouse device has its own sensitivity.  Enable
+  mouse support with -mouse parameter.
+
+- Time to use proper MAME fonts.  I draw a good looking complete set of
+  chars to be used for messages and menu system in MAME.  Nicola changed
+  the entire set of drivers and implemented a user interface sublevel
+  (file is USRINTRF.C).
+
+- Modifications done by Eric Anschuetz to add joystick reconfiguration
+  menu.
+
+- I'v changed the system configuration of each game.  Now a game saves all
+  vital informations (DSW, KEY, and JOY settings) in a unique file with
+  .CFG extension.  A backward compatibility is provided, so the first time
+  MAME read previous settings and saves them in the .CFG file at exit/reset.
+
+- Bernd changed the VESA code to provide '-rol' and '-ror'
+  replacing '-rotate'. Rotation modes are now supported in all
+  VESA resolutions. The '-nodouble' option prevents pixel doubling
+  in VESA modes, resulting in more speed and a smaller display.
+
+
+
+
 0.24
 
 Program:
@@ -6,10 +131,10 @@ Program:
   Hiscore saving not supported yet.  Nicola also thanks Lee Taylor for
   help.
 
-- I'v found the decryption scheme for garbled chars of Lost Tomb which is
+- I've found the decryption scheme for garbled chars of Lost Tomb which is
   now playable.  Colors are still wrong.
 
-- Also, I'v finally fixed my problems with ADPCM decoding, so now Kung Fu
+- Also, I've finally fixed my problems with ADPCM decoding, so now Kung Fu
   Master doesn't need separate samples anymore (I didn't distribuite them
   because of copyright on sounds).  The samples are now calculated during
   bootstrap of the game.
@@ -96,9 +221,9 @@ Program:
   for documentation on FM generation.  If anyone want to join to the party
   forward me a mail!
 
-- I'v also fixed GALAGA hiscore saving, which is now flawlessy supported! ;)
+- I've also fixed GALAGA hiscore saving, which is now flawlessy supported! ;)
 
-- I'v added Kung Fu Master driver to MAME.  Credits fly to Ishmair for the
+- I've added Kung Fu Master driver to MAME.  Credits fly to Ishmair for the
   hardware information and to Nicola for fixing my sprite bugs.
 
 - Steven Hugg (hugg@pobox.com) provided a Williams games driver.  Stargate,
@@ -120,14 +245,14 @@ Program:
 - While talking of colors, Ghosts 'n Goblins has 100% correct colors too!
   Thanks to Gabrio Secco that provided us the complete colors LOG file ;)
 
-- I'v fixed Seicross which is now playable and has music too.  REMEMBER TO
+- I've fixed Seicross which is now playable and has music too.  REMEMBER TO
   DELETE PREVIOUS .DSW FILE, AND SET "DEMO & DEBUG MODE" TO OFF.
 
 - Also fixed Nibbler colors:  I should say 100% correct colors, but I
   remember the Nibbler hairs were Green versus Purple.  Maybe I played a
   bootleg version.
 
-- Added Phoenix TPN clone ("phoenix3").  I'v also added hiscore support to
+- Added Phoenix TPN clone ("phoenix3").  I've also added hiscore support to
   all Phoenix and Pleiads as well.
 
 - Fixed the "ape" bug in Kangaroo.
@@ -160,12 +285,12 @@ Program:
   So music is not present.
 
 - And here it is:  thanks to Roberto Ventura's superdetailed documentation
-  I'v added Ghost 'n Goblin support.  I lost one week because of a bug in
+  I've added Ghost 'n Goblin support.  I lost one week because of a bug in
   the new 6809 emulator, so I switch back to the previous one.  Big thanks
   to Nicola that fixed some stupid bugs in color palette generation. ;)
   We need a skilled player.  READ THE README.TXT FILE!
 
-- Another one added:  based on GnG hardware I'v added Diamond Run support.
+- Another one added:  based on GnG hardware I've added Diamond Run support.
   Don't know if the banks mode switch is right, it's too slow for me
   to go further the first level!
 
@@ -241,7 +366,7 @@ Sources:
 0.21
 
 Program:
-- I'd like to say I'v finished, but Nicola is too fast as always! ;)
+- I'd like to say I've finished, but Nicola is too fast as always! ;)
   So thanks to Nicola we have GALAGA!!  And very special thanks to Martin
   Scragg that provided us crucial information on custom I/O chips.
 
@@ -252,7 +377,7 @@ Program:
   Thanks to everyone.
 
 - Ville Laitinen provided a driver for Kangaroo, based on the Arabian
-  hardware.  I'v also adjusted the number of frames per second to 60
+  hardware.  I've also adjusted the number of frames per second to 60
   to the two drivers.  Sync with sound should be better, though.
 
 - Thank to Virtu-Al (Alan J McCormick (gonzothegreat@JUNO.COM)) Amidar
@@ -292,7 +417,7 @@ Sources:
 
 - Sound is freezed now during GFXView, Pause and DipSwitch settings.[Ahhh! ;)]
 
-- I'v added redefinable keys in MAME.  A new structure cointains which
+- I've added redefinable keys in MAME.  A new structure cointains which
   input ports and bits have a certain meaning.  The KEY settings will be
   saved in a .KEY file, in the game directory.
 

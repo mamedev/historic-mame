@@ -16,7 +16,7 @@
 #define SPRITES_SIZE (96*4)
 
 unsigned char *commando_bgvideoram,*commando_bgcolorram;
-unsigned char *commando_scroll;
+unsigned char *commando_scrollx,*commando_scrolly;
 static unsigned char *dirtybuffer2;
 static unsigned char *spritebuffer1,*spritebuffer2;
 static struct osd_bitmap *tmpbitmap2;
@@ -110,9 +110,11 @@ int commando_vh_start(void)
 		return 1;
 	}
 
-	/* the background area is twice as tall as the screen */
-	/* (actually it's also twice as large, but the right half is not used) */
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_width)) == 0)
+	if (generic_vh_start() != 0)
+		return 1;
+
+	/* the background area is twice as tall and twice as large as the screen */
+	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(spritebuffer2);
 		free(spritebuffer1);
@@ -197,38 +199,40 @@ int commando_interrupt(void)
 ***************************************************************************/
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,sx,sy;
+	int offs;
 
 
-	for (sy = 0;sy < 32;sy++)
+	for (offs = 0;offs < BACKGROUND_SIZE;offs++)
 	{
-		for (sx = 0;sx < 16;sx++)
+		int sx,sy;
+
+
+		if (dirtybuffer2[offs])
 		{
-			offs = 32 * (31 - sy) + sx;
+			dirtybuffer2[offs] = 0;
 
-			if (dirtybuffer2[offs])
-			{
-				dirtybuffer2[offs] = 0;
+			sx = offs % 32;
+			sy = 31 - offs / 32;
 
-				drawgfx(tmpbitmap2,Machine->gfx[1 + ((commando_bgcolorram[offs] >> 6) & 0x03)],
-						commando_bgvideoram[offs],
-						commando_bgcolorram[offs] & 0x0f,
-						commando_bgcolorram[offs] & 0x20,commando_bgcolorram[offs] & 0x10,
-						16 * sx,16 * sy,
-						0,TRANSPARENCY_NONE,0);
-			}
+			drawgfx(tmpbitmap2,Machine->gfx[1 + ((commando_bgcolorram[offs] >> 6) & 0x03)],
+					commando_bgvideoram[offs],
+					commando_bgcolorram[offs] & 0x0f,
+					commando_bgcolorram[offs] & 0x20,commando_bgcolorram[offs] & 0x10,
+					16 * sx,16 * sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the background graphics */
 	{
-		int scroll;
+		int scrollx,scrolly;
 
 
-		scroll = commando_scroll[0] + 256 * commando_scroll[1] - 256;
+		scrollx = -(commando_scrollx[0] + 256 * commando_scrollx[1]);
+		scrolly = commando_scrolly[0] + 256 * commando_scrolly[1] - 256;
 
-		copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

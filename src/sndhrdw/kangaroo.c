@@ -1,7 +1,8 @@
 /* CHANGELOG
 
-   97/04/xx  renamed the arabian.c to kangaroo.c, only function names
-             were changed to protect the innocent ;-) -V-
+   97/06/19  - minor cleanup -V-
+   97/04/xx  - renamed the arabian.c to kangaroo.c, only function names
+               were changed to protect the innocent ;-) -V-
 */
 #include "driver.h"
 #include "Z80.h"
@@ -13,8 +14,8 @@
 static struct AY8910interface interface =
 {
 	1,	/* 1 chip */
-	1832727040,	/* 1.832727040 MHZ?????? */
-	{ 255, 255, 255 },
+        1250000000,     /* 1.250000000 MHZ?????? */
+        { 255 },
 	{ },
 	{ },
 	{ },
