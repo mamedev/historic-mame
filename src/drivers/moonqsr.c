@@ -1,5 +1,28 @@
 /***************************************************************************
 
+>
+> Dips 1 & 2 control difficulty.
+>
+> 1 2
+> ---
+> F F = Easy
+> N F = Fairly easy
+> F N = Average
+> N N = Difficult
+>
+> 3 4
+> ---
+> F F = 1C, 1P(lay)
+> N F = 2C, 1P
+> F N = 3C, 1P
+> N N = 4C, 1P
+>
+> 5 6
+> ---
+> F F = 1C, 1P(lay)
+> N F = 1C, 2P
+> F N = 1C, 3P
+> N N = Freeplay
 
 ***************************************************************************/
 
@@ -63,7 +86,7 @@ static struct InputPort input_ports[] =
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* IN1 */
-		0x80,
+		0x00,
 		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -79,8 +102,7 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
-	{ 1, 0x80, "LANGUAGE", { "JAPANESE", "ENGLISH" } },
-	{ 1, 0x40, "SW1", { "OFF", "ON" } },
+	{ 1, 0xc0, "DIFFICULTY", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
 	{ -1 }
 };
 
@@ -112,7 +134,7 @@ static struct GfxLayout spritelayout =
 /* pick the color table */
 static struct GfxLayout starslayout =
 {
-	0,0,
+	1,1,
 	0,
 	1,	/* 1 star = 1 color */
 	{ 0 },
@@ -125,9 +147,9 @@ static struct GfxLayout starslayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0, 8 },
-	{ 0x10000, &spritelayout,   0, 8 },
-	{ 0,       &starslayout,   32, 64 },
+	{ 1, 0x0000, &charlayout,     0, 8 },
+	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -136,26 +158,26 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	/* characters */
-    0, 0, 0,                    // MC1
-    0, 0, 255,                  // MC2
-    255, 0, 0,                  // MC3
-    255, 255, 0,                // MC4
-    128, 0, 255,                // MC5
-    255, 128, 0,                // MC6
-    255, 0, 128,                // MC7
-    28*4, 20*4, 0,                  // MC8
-    0, 28*4, 20*4,                  // MC9
-    23*4, 30*4, 23*4,                 // MCA
-    0, 200, 128,                // MCB
-    200, 128, 200,              // MCC
-    128, 255, 128,              // MCD
-    200, 200, 64,               // MCE
-    255, 0, 200,                // MCF
-    200, 64, 255,               // MCG
-    200, 255, 0,                // MCH
-    0, 255, 200,                // MCI
-    255, 0, 255,                // MCJ
-    255, 255, 255,              // MCK
+    0, 0, 0,
+    0, 0, 255,
+    255, 0, 0,
+    255, 255, 0,
+    128, 0, 255,
+    255, 128, 0,
+    255, 0, 128,
+    28*4, 20*4, 0,
+    0, 28*4, 20*4,
+    23*4, 30*4, 23*4,
+    0, 200, 128,
+    200, 128, 200,
+    128, 255, 128,
+    200, 200, 64,
+    255, 0, 200,
+    200, 64, 255,
+    200, 255, 0,
+    0, 255, 200,
+    255, 0, 255,
+    255, 255, 255,
 	0,0,0,
 	0,0,0,
 	0,0,0,
@@ -273,12 +295,18 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 const struct MachineDriver moonqsr_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

@@ -79,7 +79,7 @@ int ladybug_IN1_r(int offset)
 	/* I think that IN1_VBLANK should be 1 during the whole vblank, which */
 	/* should last roughly 1/12th of the frame. */
 	if (vblank && Z80_ICount >
-			Z80_IPeriod - Machine->drv->cpu_clock / Machine->drv->frames_per_second / 12)
+			Z80_IPeriod - Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / 12)
 	{
 		res |= IN1_VBLANK;
 	}
@@ -111,16 +111,18 @@ int ladybug_interrupt(void)
 	/* let ladybug_IN1_r() know that it is time to report a vblank */
 	vblank = 1;
 
-	/* wait for the user to release the key before allowing another coin to */
-	/* be inserted. */
-	if (coin == 1 && osd_key_pressed(OSD_KEY_3) == 0) coin = 0;
 
 	/* user asks to insert coin: generate an interrupt. */
-	if (coin == 0 && osd_key_pressed(OSD_KEY_3))
+	if (osd_key_pressed(OSD_KEY_3))
 	{
-		coin = 1;
-		return 0xff;
+		if (coin == 0)
+		{
+			coin = 1;
+			return 0xff;
+		}
 	}
+	else coin = 0;
+
 
 	return Z80_IGNORE_INT;
 }

@@ -202,8 +202,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0,  8 },
-	{ 0x12000, &spritelayout, 4*8, 16 },
+	{ 1, 0x0000, &charlayout,     0,  8 },
+	{ 1, 0x2000, &spritelayout, 4*8, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -233,12 +233,18 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 const struct MachineDriver ladybug_driver =
 {
 	/* basic machine hardware */
-	4000000,	/* 4 Mhz */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz */
+			0,
+			readmem,writemem,0,0,
+			ladybug_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	ladybug_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },

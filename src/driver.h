@@ -68,8 +68,6 @@ struct IOWritePort
 
 
 
-
-
 /***************************************************************************
 
 Don't confuse this with the I/O ports above. This is used to handle game
@@ -103,7 +101,9 @@ struct DSW
 
 struct GfxDecodeInfo
 {
-	int start;	/* beginning of data data to decode (offset in RAM[]) */
+	int memory_region;	/* memory region where the data resides (usually 1) */
+						/* -1 marks the end of the array */
+	int start;	/* beginning of data to decode */
 	struct GfxLayout *gfxlayout;
 	int color_codes_start;	/* offset in the color lookup table where color codes start */
 	int total_color_codes;	/* total number of color codes */
@@ -111,20 +111,37 @@ struct GfxDecodeInfo
 
 
 
-struct MachineDriver
+struct MachineCPU
 {
-	/* basic machine hardware */
-	int cpu_clock;
-	int frames_per_second;
+	int cpu_type;	/* see #defines below. */
+	int cpu_clock;	/* in Hertz */
+	int memory_region;	/* number of the memory region (allocated by loadroms()) where */
+						/* this CPU resides */
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
 	const struct IOReadPort *port_read;
 	const struct IOWritePort *port_write;
+	int (*interrupt)(void);
+	int interrupts_per_frame;	/* usually 1 */
+};
+
+#define CPU_NONE 0
+#define CPU_Z80 1
+
+
+
+#define MAX_CPU 1
+
+
+struct MachineDriver
+{
+	/* basic machine hardware */
+	struct MachineCPU cpu[MAX_CPU];
+	int frames_per_second;
 	struct InputPort *input_ports;
 	const struct DSW *dswsettings;
 
 	int (*init_machine)(const char *gamename);
-	int (*interrupt)(void);
 
 	/* video hardware */
 	int screen_width,screen_height;
@@ -165,7 +182,8 @@ struct GameDriver
 {
 	const char *name;
 	const struct RomModule *rom;
-	unsigned (*opcode_decode)(dword A);
+	unsigned (*rom_decode)(dword A);	/* used to decrypt the ROMs after loading them */
+	unsigned (*opcode_decode)(dword A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
 	const struct MachineDriver *drv;
 };
 

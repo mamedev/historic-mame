@@ -164,8 +164,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,      0, 16 },
-	{ 0x12000, &spritelayout, 4*16, 16 },
+	{ 1, 0x0000, &charlayout,      0, 16 },
+	{ 1, 0x2000, &spritelayout, 4*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -238,12 +238,18 @@ static unsigned char colortable[] =
 const struct MachineDriver mario_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -265,4 +271,3 @@ const struct MachineDriver mario_driver =
 	0,
 	0
 };
-

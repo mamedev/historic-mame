@@ -123,7 +123,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x01e00, &charlayout, 0, 4 },
+	{ 0, 0x1e00, &charlayout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -153,12 +153,18 @@ static unsigned char colortable[] =
 const struct MachineDriver invaders_driver =
 {
 	/* basic machine hardware */
-	1000000,	/* 1 Mhz? */
-	120,
-	readmem,writemem,readport,writeport,
+	{
+		{
+			CPU_Z80,
+			2000000,	/* 2 Mhz? */
+			0,
+			readmem,writemem,readport,writeport,
+			invaders_interrupt,2	/* two interrupts per frame */
+		}
+	},
+	60,
 	input_ports,dsw,
 	0,
-	invaders_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

@@ -11,9 +11,11 @@
 extern FILE *errorlog;
 
 #define MAX_GFX_ELEMENTS 10
+#define MAX_MEMORY_REGIONS 10
 
 struct RunningMachine
 {
+	unsigned char *memory_region[MAX_MEMORY_REGIONS];
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 								/* the first one is used by DisplayText() */

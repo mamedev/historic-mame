@@ -29,7 +29,7 @@ int carnival_IN1_r(int offset)
 	/* I think that IN1_VBLANK should be 1 during the whole vblank, which */
 	/* should last roughly 1/12th of the frame. */
 	if (vblank && Z80_ICount >
-			Z80_IPeriod - Machine->drv->cpu_clock / Machine->drv->frames_per_second / 12)
+			Z80_IPeriod - Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / 12)
 		res |= IN1_VBLANK;
 	else vblank = 0;
 

@@ -74,7 +74,7 @@ void wow_videoram_w(int offset,int data)
 
 			if (data & 0x80) *bm |= 1;
 			if (data & 0x40) *bm |= 2;
-/// TODO: remap the pixel color thru the color table
+/*/// TODO: remap the pixel color thru the color table */
 
 			bm++;
 			data <<= 2;
@@ -277,8 +277,8 @@ void wow_blitter_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 		Z80_GetPC(),src,mode,skip,dest,length,loops);
 
-//		if ((mode & 0x09) == 0x00)	/* copy from 1 bitplane */
-//		else if ((mode & 0x09) == 0x08)	/* copy from 2 bitplanes */
+/*//		if ((mode & 0x09) == 0x00)	* copy from 1 bitplane */
+/*//		else if ((mode & 0x09) == 0x08)	* copy from 2 bitplanes */
 
 		for (i = 0; i <= loops;i++)
 		{

@@ -14,9 +14,6 @@
   Read ROMs into memory.
 
   Arguments:
-  unsigned char *dest - Pointer to the start of the memory region
-                        where the ROMs will be loaded.
-
   const struct RomModule *romp - pointer to an array of Rommodule structures,
                                  as defined in common.h.
 
@@ -28,39 +25,96 @@
 						 will be loaded.
 
 ***************************************************************************/
-int readroms(unsigned char *dest,const struct RomModule *romp,const char *basename)
+int readroms(const struct RomModule *romp,const char *basename)
 {
-	FILE *f;
-	char buf[100];
-	char name[100];
+	int region;
 
 
-	while (romp->size)
+	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
+		Machine->memory_region[region] = 0;
+
+	region = 0;
+
+	while (romp->name || romp->offset || romp->length)
 	{
-		sprintf(buf,romp->name,basename);
-		sprintf(name,"%s/%s",basename,buf);
+		int region_size,i;
 
-		if ((f = fopen(name,"rb")) == 0)
+
+		if (romp->name || romp->length)
 		{
-			printf("Unable to open file %s\n",name);
-			return 1;
+			printf("Error in RomModule definition: expecting ROM_REGION\n");
+			goto getout;
 		}
-		do
+
+		region_size = romp->offset;
+		if ((Machine->memory_region[region] = malloc(region_size)) == 0)
 		{
-			if (fread(dest + romp->offset,1,romp->size,f) != romp->size)
+			printf("Unable to allocate %d bytes of RAM\n",region_size);
+			goto getout;
+		}
+
+		/* fill the newly allocated memory with random data - simulate turning */
+		/* on the original machine! ;-) */
+		for (i = 0;i < region_size;i++) Machine->memory_region[region][i] = rand();
+
+		romp++;
+
+		while (romp->length)
+		{
+			FILE *f;
+			char buf[100];
+			char name[100];
+
+
+			if (romp->name == 0)
 			{
-				printf("Unable to read file %s\n",name);
-				fclose(f);
-				return 1;
+				printf("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
+				goto getout;
 			}
 
-			romp++;
-		} while (romp->size && romp->name == 0);
+			sprintf(buf,romp->name,basename);
+			sprintf(name,"%s/%s",basename,buf);
 
-		fclose(f);
+			if ((f = fopen(name,"rb")) == 0)
+			{
+				printf("Unable to open file %s\n",name);
+				goto getout;
+			}
+
+			do
+			{
+				if (romp->offset + romp->length > region_size)
+				{
+					printf("Error in RomModule definition: %s out of memory region space\n",name);
+					fclose(f);
+					goto getout;
+				}
+
+				if (fread(Machine->memory_region[region] + romp->offset,1,romp->length,f) != romp->length)
+				{
+					printf("Unable to read file %s\n",name);
+					fclose(f);
+					goto getout;
+				}
+
+				romp++;
+			} while (romp->length && romp->name == 0);
+
+			fclose(f);
+		}
+
+		region++;
 	}
 
 	return 0;
+
+getout:
+	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
+	{
+		free(Machine->memory_region[region]);
+		Machine->memory_region[region] = 0;
+	}
+	return 1;
 }
 
 
@@ -643,7 +697,7 @@ void clearbitmap(struct osd_bitmap *bitmap)
 
 
 
-void setdipswitches(void)
+int setdipswitches(void)
 {
 	struct DisplayText dt[40];
 	int settings[20];
@@ -661,7 +715,7 @@ void setdipswitches(void)
 
 
 		msk = dswsettings[total].mask;
-		if (msk == 0) return;	/* error in DSW definition, quit */
+		if (msk == 0) return 0;	/* error in DSW definition, quit */
 		val = Machine->drv->input_ports[dswsettings[total].num].default_value;
 		while ((msk & 1) == 0)
 		{
@@ -729,8 +783,6 @@ void setdipswitches(void)
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
-	if (key == OSD_KEY_ESC) Z80_Running = 0;
-
 	while (--total >= 0)
 	{
 		int msk;
@@ -750,6 +802,9 @@ void setdipswitches(void)
 
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
+
+	if (key == OSD_KEY_ESC) return 1;
+	else return 0;
 }
 
 
@@ -779,18 +834,45 @@ void displaytext(const struct DisplayText *dt,int erase)
 
 		while (*c)
 		{
-			if (*c != ' ' && *c != '\n')
+			if (*c == '\n')
+			{
+				x = dt->x;
+				y += Machine->gfx[0]->height + 1;
+			}
+			else if (*c == ' ')
+			{
+				/* don't try to word wrap at the beginning of a line (this would cause */
+				/* an endless loop if a word is longer than a line) */
+				if (x == dt->x)
+					x += Machine->gfx[0]->width;
+				else
+				{
+					int nextlen;
+					const char *nc;
+
+
+					x += Machine->gfx[0]->width;
+					nc = c+1;
+					while (*nc && *nc != ' ' && *nc != '\n')
+						nc++;
+
+					nextlen = nc - c - 1;
+
+					/* word wrap */
+					if (x + nextlen * Machine->gfx[0]->width >= Machine->drv->screen_width)
+					{
+						x = dt->x;
+						y += Machine->gfx[0]->height + 1;
+					}
+				}
+			}
+			else
 			{
 				if (*c >= '0' && *c <= '9')
 					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->drv->numbers_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
 				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->drv->letters_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-			}
 
-			x += Machine->gfx[0]->width;
-			if (*c == '\n' || x + Machine->gfx[0]->width > Machine->drv->screen_width)
-			{
-				x = dt->x;
-				y += Machine->gfx[0]->height + 1;
+				x += Machine->gfx[0]->width;
 			}
 
 			c++;
@@ -804,7 +886,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 
 
 
-void showcharset(void)
+int showcharset(void)
 {
 	int i,key,cpl;
 	struct DisplayText dt[2];
@@ -817,13 +899,7 @@ void showcharset(void)
 
 	do
 	{
-		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
-		dt[0].text = buf;
-		dt[0].color = Machine->drv->paused_color;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext(dt,1);
+		clearbitmap(Machine->scrbitmap);
 
 		cpl = Machine->scrbitmap->width / Machine->gfx[bank]->width;
 
@@ -836,7 +912,15 @@ void showcharset(void)
 					Machine->gfx[0]->height+1 + (i / cpl) * Machine->gfx[bank]->height,
 					0,TRANSPARENCY_NONE,0);
 		}
-		osd_update_display();
+
+		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
+		dt[0].text = buf;
+		dt[0].color = Machine->drv->paused_color;
+		dt[0].x = 0;
+		dt[0].y = 0;
+		dt[1].text = 0;
+		displaytext(dt,0);
+
 
 		key = osd_read_key();
 
@@ -863,8 +947,9 @@ void showcharset(void)
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
-	if (key == OSD_KEY_ESC) Z80_Running = 0;
-
 	/* clear the screen before returning */
 	clearbitmap(Machine->scrbitmap);
+
+	if (key == OSD_KEY_ESC) return 1;
+	else return 0;
 }

@@ -1,13 +1,41 @@
+# Makefile for MAME 0.81
+# Configuration options can be found under lines marked with '***'
+
+# *** Choose your compiler. Make it ANSI-compatible (e.g. 'cc -ansi').
 CC	= gcc
 LD	= gcc
 
-DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
-#CFLAGS = -pg -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -O3 -m486 -Wall
-LIBS   = -lalleg
+# *** If you have the MIT-SHM extension, uncomment the following:
+MS		= -DMITSHM
+
+# *** Choose your OS (one of linux, sunos, solaris, irix).
+ARCH	= linux
+
+# *** Set the paths to the X11 libs (-L) / includes (-I) below for your
+# *** architecture.
+
+# Linux
+DEFS.linux   = -DX86_ASM -DLSB_FIRST -DUNIX -Dlinux -m486
+LIBS.linux   = -L/usr/X11/lib -lX11 -lXext
+
+# SunOS
+DEFS.sunos	 = -DUNIX -Dsun -DCLOCKS_PER_SEC=1000000
+LIBS.sunos   = -L/usr/X11/lib -lX11 -lXext
+
+# Solaris
+DEFS.solaris	 = -DUNIX -Dsun
+LIBS.solaris   = -L/usr/X11/lib -lX11 -lXext -lnsl -lsocket
+
+# IRIX
+DEFS.irix	 = -DUNIX -Dsgi
+LIBS.irix   = -L/usr/X11/lib -lX11 -lXext
+
+# No configurable options below this line....
+
+CFLAGS = -Isrc -Isrc/Z80 -Isrc/unix -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -Wall
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
-		 obj/drivers/crush.o \
+				 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
@@ -36,28 +64,26 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/osdepend.o \
 
 VPATH = src src/z80
 
-all: mame.exe
+all: mame
 
-mame.exe:  $(OBJS)
-	$(LD) -s -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
-#	$(LD) -pg -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
+mame:  $(OBJS)
+	$(LD) -s -o mame $(OBJS) $(LIBS.$(ARCH))
 
-obj/osdepend.o: src/msdos/msdos.c
-	 $(CC) $(DEFS) $(CFLAGS) -Isrc/msdos -o $@ -c $<
+obj/osdepend.o: src/unix/unix.c
+	 $(CC) $(DEFS.$(ARCH)) $(MS) $(CFLAGS) -Isrc/unix -o $@ -c src/unix/unix.c
 
-obj/%.o: src/%.c mame.h common.h driver.h
-	 $(CC) $(DEFS) $(CFLAGS) -o $@ -c $<
+obj/%.o: src/%.c
+	 $(CC) $(DEFS.$(ARCH)) $(MS) $(CFLAGS) -o $@ -c $<
+
+sndtest: sndtest.c
+	gcc -o sndtest sndtest.c
 
 # dependencies
-obj/sndhrdw/cclimber.o:  src/sndhrdw/psg.c src/sndhrdw/psg.h
-obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
-
+obj/%.o:	    common.h machine.h driver.h
+obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
+obj/Z80/Z80.o:  src/Z80/Z80.c src/Z80/Z80.h src/Z80/Z80Codes.h src/Z80/Z80IO.h src/Z80/Z80DAA.h
 
 clean:
-	del obj\*.o
-	del obj\Z80\*.o
-	del obj\drivers\*.o
-	del obj\machine\*.o
-	del obj\vidhrdw\*.o
-	del obj\sndhrdw\*.o
-	del mame.exe
+	rm -rf *.o */*.o */*/*.o
+	rm -f mame
+

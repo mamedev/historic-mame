@@ -123,12 +123,12 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x7400, 0x77ff, dkong_videoram_w, &dkong_videoram },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x7800, 0x7803, MWA_RAM },	// ??
-	{ 0x7808, 0x7808, MWA_RAM },	// ??
-	{ 0x7c00, 0x7c00, MWA_RAM },	// ??
-	{ 0x7d00, 0x7d07, MWA_RAM },	// ??
-	{ 0x7d80, 0x7d83, MWA_RAM },	// ??
-	{ 0x7d85, 0x7d87, MWA_RAM },	// ??
+	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
+	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
+	{ 0x7c00, 0x7c00, MWA_RAM },	/* ???? */
+	{ 0x7d00, 0x7d07, MWA_RAM },	/* ???? */
+	{ 0x7d80, 0x7d83, MWA_RAM },	/* ???? */
+	{ 0x7d85, 0x7d87, MWA_RAM },	/* ???? */
 	{ -1 }	/* end of table */
 };
 static struct MemoryWriteAddress dkongjr_writemem[] =
@@ -140,12 +140,12 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 	{ 0x7400, 0x77ff, dkong_videoram_w, &dkong_videoram },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x7800, 0x7803, MWA_RAM },	// ??
-	{ 0x7808, 0x7808, MWA_RAM },	// ??
-	{ 0x7c00, 0x7c00, MWA_RAM },	// ??
-	{ 0x7d00, 0x7d07, MWA_RAM },	// ??
-	{ 0x7d80, 0x7d83, MWA_RAM },	// ??
-	{ 0x7d85, 0x7d87, MWA_RAM },	// ??
+	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
+	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
+	{ 0x7c00, 0x7c00, MWA_RAM },	/* ???? */
+	{ 0x7d00, 0x7d07, MWA_RAM },	/* ???? */
+	{ 0x7d80, 0x7d83, MWA_RAM },	/* ???? */
+	{ 0x7d85, 0x7d87, MWA_RAM },	/* ???? */
 	{ -1 }	/* end of table */
 };
 
@@ -225,14 +225,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo dkong_gfxdecodeinfo[] =
 {
-	{ 0x10000, &dkong_charlayout,   0,    64 },
-	{ 0x11000, &spritelayout,       64*4, 16 },
+	{ 1, 0x0000, &dkong_charlayout,   0,    64 },
+	{ 1, 0x1000, &spritelayout,       64*4, 16 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo dkongjr_gfxdecodeinfo[] =
 {
-	{ 0x10000, &dkongjr_charlayout, 0,    64 },
-	{ 0x12000, &spritelayout,       64*4, 16 },
+	{ 1, 0x0000, &dkongjr_charlayout, 0,    64 },
+	{ 1, 0x2000, &spritelayout,       64*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -354,21 +354,53 @@ static unsigned char dkong_colortable[] =
 static unsigned char dkongjr_colortable[] =
 {
 	/* chars */
+	BLACK,0,0,WHITE,	/* 0-9 */
+	BLACK,0,0,WHITE,	/* 0-9 */
+	BLACK,0,0,WHITE,	/* 0-9 */
+	BLACK,0,0,WHITE,	/* 0-9 */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	BLACK,0,0,RED,	/* A-Z */
+	0,0,0,RED,	/* RUB END */
+	0,0,0,RED,	/* RUB END */
+	0,5,6,RED,	/* (C), ITC */
+	0,5,6,RED,	/* (C), ITC */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	0,LTORANGE,DKRED,WHITE,	/* Kong in intermission */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* BONUS */
+	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
+	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
+	BLACK,0,0,LTORANGE,	/* 0-9 in intermission */
+	BLACK,RED,PURPLE,CYAN,	/* 0-9 in intermission, BONUS */
+	BLACK,RED,PURPLE,CYAN,	/* 0-9 in intermission, BONUS */
+	0,0,0,0,	/* unused */
+	0,0,0,0,	/* unused */
+	0,0,0,0,	/* unused */
+	0,0,0,0,	/* unused */
 	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
 	0,11,12,13,
 	0,12,13,14,
 	0,13,14,15,
+	0,LTBLUE,1,YELLOW,
 	0,14,15,1,
-	0,15,1,2,
 	0,15,1,2,
 	0,1,2,3,
 	0,2,3,4,
@@ -378,40 +410,8 @@ static unsigned char dkongjr_colortable[] =
 	0,6,7,8,
 	0,7,8,9,
 	0,8,9,10,
+	BLACK,GREEN,DKBROWN,WHITE,	/* pedestal */
 	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
-	0,11,12,13,
-	0,12,13,14,
-	0,13,14,15,
-	0,14,15,1,
-	0,15,1,2,
-	0,15,1,2,
-	0,1,2,3,
-	0,2,3,4,
-	0,3,4,5,
-	0,4,5,6,
-	0,5,6,7,
-	0,6,7,8,
-	0,7,8,9,
-	0,8,9,10,
-	0,9,10,11,
-	0,10,11,12,
 	0,11,12,13,
 	0,12,13,14,
 	0,13,14,15,
@@ -420,22 +420,23 @@ static unsigned char dkongjr_colortable[] =
 	0,15,1,2,
 
 	/* sprites */
-	BLACK,LTBLUE,LTBROWN,RED,
-	BLACK,RED,YELLOW,WHITE,
-	BLACK,RED,WHITE,BLUE,
-	BLACK,1,2,3,
-	BLACK,4,5,6,
-	BLACK,7,8,9,
-	BLACK,10,11,12,
-	BLACK,LTBROWN,DKBROWN,WHITE,
-	BLACK,LTBROWN,DKBROWN,ORANGE,
-	BLACK,ORANGE,WHITE,PINK,
-	BLACK,WHITE,BLUE,PINK,
-	BLACK,ORANGE,BLUE,YELLOW,
-	BLACK,WHITE,LTBLUE,BLUE,
-	BLACK,3,4,5,
-	BLACK,GREEN,1,2,
-	BLACK,YELLOW,RED,LTBLUE
+	BLACK,LTORANGE,BLUE,RED,	/* Mario */
+	BLACK,PINK,PINK,PINK,	/* unused? */
+	BLACK,PINK,PINK,PINK,	/* unused? */
+	BLACK,GREEN,ORANGE,WHITE,	/* bkgnd, vines */
+	BLACK,PINK,PINK,PINK,	/* unused? */
+	BLACK,PINK,PINK,PINK,	/* unused? */
+	BLACK,PINK,PINK,PINK,	/* unused? */
+
+	BLACK,WHITE,DKBROWN,LTBROWN,	/* dk head */
+	BLACK,BLUE,DKBROWN,LTBLUE,	/* dk cage */
+	BLACK,ORANGE,DKBROWN,LTBROWN,	/* donkey kong */
+	BLACK,PINK,PINK,PINK,
+	BLACK,GREEN,ORANGE,YELLOW,	/* bananas & other fruits */
+	BLACK,GREEN,ORANGE,WHITE,	/* oranges */
+	BLACK,YELLOW,BLUE,WHITE,	/* blue key & blue snapjaw, splash */
+	BLACK,YELLOW,RED,WHITE,	/* red snapjaw, snapjaw explosion */
+	BLACK,YELLOW,PINK,WHITE	/* purple key */
 };
 
 
@@ -443,12 +444,18 @@ static unsigned char dkongjr_colortable[] =
 const struct MachineDriver dkong_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			dkong_readmem,dkong_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	dkong_readmem,dkong_writemem,0,0,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -476,12 +483,18 @@ const struct MachineDriver dkong_driver =
 const struct MachineDriver dkongjr_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			dkongjr_readmem,dkongjr_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	dkongjr_readmem,dkongjr_writemem,0,0,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

@@ -90,9 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5400, 0x57ff, MWA_RAM },
 	{ 0x5800, 0x5bff, phoenix_scrollreg_w },
 	{ 0x5C00, 0x5fff, MWA_RAM },
-//	{ 0x6000, 0x63ff, phoenix_sounda_w },
 	{ 0x6400, 0x67ff, MWA_RAM },
-//	{ 0x6800, 0x6bff, phoenix_soundb_w },
 	{ 0x6C00, 0x6fff, MWA_RAM },
 	{ 0x7400, 0x77ff, MWA_RAM },
 	{ 0x7C00, 0x7fff, MWA_RAM },
@@ -142,8 +140,8 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,  0, 16 },
-	{ 0x11000, &charlayout, 64, 16 },
+	{ 1, 0x0000, &charlayout,  0, 16 },
+	{ 1, 0x1000, &charlayout, 64, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -218,12 +216,18 @@ static unsigned char colortable[] =
 const struct MachineDriver phoenix_driver =
 {
 	/* basic machine hardware */
-	1000000,	/* 1 Mhz ? */
+	{
+		{
+			CPU_Z80,
+			1000000,	/* 1 Mhz ? */
+			0,
+			readmem,writemem,0,0,
+			phoenix_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	phoenix_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },

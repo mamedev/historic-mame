@@ -36,7 +36,7 @@
 #define AY_PORTA	(14)
 #define AY_PORTB	(15)
 
-//typedef unsigned char byte;
+/*typedef unsigned char byte;*/
 
 /* default clock frequency, frequency in MHz * 100 */
 #ifndef AY8910_CLOCK
@@ -46,7 +46,7 @@
 /* SAMPLE_16BIT is not supported, yet */
 #ifndef SAMPLE_16BIT
 typedef unsigned char SAMPLE;
-// #define AUDIO_CONV(A) (128+(A))	/* use this macro for signed samples */
+/* #define AUDIO_CONV(A) (128+(A))*/	/* use this macro for signed samples */
 #define AUDIO_CONV(A) (A)		/* use this macro for unsigned samples */
 #else
 typedef unsigned short SAMPLE;

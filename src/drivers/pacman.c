@@ -244,8 +244,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 32 },
-	{ 0x11000, &spritelayout, 0, 32 },
+	{ 1, 0x0000, &charlayout,   0, 32 },
+	{ 1, 0x1000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -301,12 +301,18 @@ static unsigned char samples[8*32] =
 const struct MachineDriver pacman_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			pacman_readmem,pacman_writemem,0,writeport,
+			pacman_interrupt,1
+		}
+	},
 	60,
-	pacman_readmem,pacman_writemem,0,writeport,
 	input_ports,pacdsw,
 	pacman_init_machine,
-	pacman_interrupt,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
@@ -334,12 +340,18 @@ const struct MachineDriver pacman_driver =
 const struct MachineDriver mspacman_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			mspacman_readmem,mspacman_writemem,0,0,
+			pacman_interrupt,1
+		}
+	},
 	60,
-	mspacman_readmem,mspacman_writemem,0,0,
 	input_ports,mspacdsw,
 	pacman_init_machine,
-	pacman_interrupt,
 
 	/* video hardware */
 	28*8,36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },

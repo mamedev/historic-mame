@@ -11,9 +11,9 @@
 #include <pc.h>
 #include <sys/farptr.h>
 #include <go32.h>
+#include "TwkUser.c"
 #include <allegro.h>
 #include "driver.h"
-#include "TwkUser.c"
 #include <audio.h>
 
 
@@ -53,16 +53,16 @@ int osd_init(int argc,char **argv)
 	soundcard = -1;
 	for (i = 1;i < argc;i++)
 	{
-		if (stricmp(argv[i],"-vesa") == 0)
+		if (strcmp(argv[i],"-vesa") == 0)
 			use_vesa = 1;
-		if (stricmp(argv[i],"-soundcard") == 0)
+		if (strcmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
 			if (i < argc) soundcard = atoi(argv[i]);
 		}
-		if (stricmp(argv[i],"-noscanlines") == 0)
+		if (strcmp(argv[i],"-noscanlines") == 0)
 			noscanlines = 1;
-		if (stricmp(argv[i],"-nojoy") == 0)
+		if (strcmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
 	}
 

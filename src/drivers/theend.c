@@ -109,7 +109,7 @@ static struct GfxLayout spritelayout =
 /* pick the color table */
 static struct GfxLayout starslayout =
 {
-	0,0,
+	1,1,
 	0,
 	1,	/* 1 star = 1 color */
 	{ 0 },
@@ -122,9 +122,9 @@ static struct GfxLayout starslayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0, 8 },
-	{ 0x10000, &spritelayout,   0, 8 },
-	{ 0,       &starslayout,   32, 64 },
+	{ 1, 0x0000, &charlayout,     0, 8 },
+	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -133,23 +133,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	/* characters */
-    0*4, 0*4, 0*4,                    // TE1
-    20*4, 20*4, 20*4,                 // TE2
-    40*4, 40*4, 40*4,                 // TE3
-    58*4, 58*4, 58*4,                 // TE4
-    63*4, 63*4, 63*4,                 // TE5
-    10*4, 10*4, 20*4,                 // TE6
-    20*4, 20*4, 40*4,                 // TE7
-    0*4, 0*4, 63*4,                   // TE8
-    63*4, 0*4, 0*4,                   // TE9
-    0*4, 63*4, 0*4,                   // TEA
-    0*4, 20*4, 0*4,                   // TEB
-    0*4, 40*4, 0*4,                   // TEC
-    40*4, 63*4, 63*4,                 // TED
-    0*4, 0*4, 20*4,                   // TEE
-    0*4, 0*4, 40*4,                   // TEF
-    63*4, 20*4, 63*4,                 // TEG
-    63*4, 0*4, 63*4,                  // TEH
+    0*4, 0*4, 0*4,
+    20*4, 20*4, 20*4,
+    40*4, 40*4, 40*4,
+    58*4, 58*4, 58*4,
+    63*4, 63*4, 63*4,
+    10*4, 10*4, 20*4,
+    20*4, 20*4, 40*4,
+    0*4, 0*4, 63*4,
+    63*4, 0*4, 0*4,
+    0*4, 63*4, 0*4,
+    0*4, 20*4, 0*4,
+    0*4, 40*4, 0*4,
+    40*4, 63*4, 63*4,
+    0*4, 0*4, 20*4,
+    0*4, 0*4, 40*4,
+    63*4, 20*4, 63*4,
+    63*4, 0*4, 63*4,
 	0,0,0,
 	0,0,0,
 	0,0,0,
@@ -238,14 +238,14 @@ enum { TE1,TE2,TE3,TE4,TE5,TE6,TE7,TE8,TE9,TEA,TEB,TEC,TED,TEE,TEF,TEG,TEH };
 static unsigned char colortable[] =
 {
 	/* characters */
-    TE1, TE2, TE3, TE5,         // white text
-    TE1, TE8, TE9, TEA,         //
-    TE1, TEB, TEC, TEA,         // green text
-    TE1, TE9, TE8, TED,         //
-    TE1, TEE, TEF, TE8,         // bluish text
-    TE1, TE6, TE7, TED,         //
-    TE1, TE8, TEG, TE4,         //
-    TE1, TE5, TEA, TEH,         // explosion
+    TE1, TE2, TE3, TE5,         /* white text */
+    TE1, TE8, TE9, TEA,
+    TE1, TEB, TEC, TEA,         /* green text */
+    TE1, TE9, TE8, TED,
+    TE1, TEE, TEF, TE8,         /* bluish text */
+    TE1, TE6, TE7, TED,
+    TE1, TE8, TEG, TE4,
+    TE1, TE5, TEA, TEH,         /* explosion */
 
 	/* stars */
 	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,
@@ -259,12 +259,18 @@ static unsigned char colortable[] =
 const struct MachineDriver theend_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

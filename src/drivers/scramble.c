@@ -180,7 +180,7 @@ static struct GfxLayout spritelayout =
 /* pick the color table */
 static struct GfxLayout starslayout =
 {
-	0,0,
+	1,1,
 	0,
 	1,	/* 1 star = 1 color */
 	{ 0 },
@@ -193,9 +193,9 @@ static struct GfxLayout starslayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0, 8 },
-	{ 0x10000, &spritelayout,   0, 8 },
-	{ 0,       &starslayout,   32, 64 },
+	{ 1, 0x0000, &charlayout,     0, 8 },
+	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ 0, 0,      &starslayout,   32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -213,12 +213,18 @@ static unsigned char color_prom[] =
 const struct MachineDriver scramble_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,scramble_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -244,12 +250,18 @@ const struct MachineDriver scramble_driver =
 const struct MachineDriver atlantis_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,atlantis_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

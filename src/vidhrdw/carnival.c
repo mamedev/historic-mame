@@ -80,10 +80,8 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (31 - offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-//((sy/8)*32+(sx/8)),
-//(carnival_videoram[offs]/10)+3,
 					carnival_videoram[offs]+44,
-0,//					carnival_colorram[offs],
+0,/*					carnival_colorram[offs],*/
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}

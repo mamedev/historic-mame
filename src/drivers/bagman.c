@@ -119,13 +119,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa003, 0xa003, bagman_video_enable_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x9c00, 0x9fff, MWA_NOP },	// ????
-	{ 0xa001, 0xa002, MWA_NOP },	// ????
-	{ 0xa004, 0xa004, MWA_NOP },	// ????
-	{ 0xa007, 0xa007, MWA_NOP },	// ????
-	{ 0xa800, 0xa805, MWA_NOP },	// ????
-	{ 0xb000, 0xb000, MWA_NOP },	// ????
-	{ 0xb800, 0xb800, MWA_NOP },	// ????
+	{ 0x9c00, 0x9fff, MWA_NOP },	/* ???? */
+	{ 0xa001, 0xa002, MWA_NOP },	/* ???? */
+	{ 0xa004, 0xa004, MWA_NOP },	/* ???? */
+	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
+	{ 0xa800, 0xa805, MWA_NOP },	/* ???? */
+	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
+	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
 	{ -1 }	/* end of table */
 };
 
@@ -205,9 +205,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,      0, 16 },	/* char set #1 */
-	{ 0x12000, &charlayout,      0, 16 },	/* char set #2 */
-	{ 0x10000, &spritelayout,    0, 16 },	/* sprites */
+	{ 1, 0x0000, &charlayout,      0, 16 },	/* char set #1 */
+	{ 1, 0x2000, &charlayout,      0, 16 },	/* char set #2 */
+	{ 1, 0x0000, &spritelayout,    0, 16 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -290,12 +290,18 @@ static unsigned char colortable[] =
 const struct MachineDriver bagman_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			readmem,writemem,readport,writeport,
+			interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,readport,writeport,
 	input_ports,dsw,
 	0,
-	interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

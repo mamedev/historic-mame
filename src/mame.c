@@ -12,7 +12,12 @@
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct MachineDriver *drv;
-unsigned (*opcode_decode)(dword A);
+
+static const struct MemoryReadAddress *memoryread;
+static const struct MemoryWriteAddress *memorywrite;
+static const struct IOReadPort *portread;
+static const struct IOWritePort *portwrite;
+
 
 int frameskip;
 
@@ -22,8 +27,8 @@ int frameskip;
 #define MAX_COLOR_CODES 256	/* no more than 256 color codes, for now */
 
 
-unsigned char ram[0x20000];		/* 64k for ROM/RAM and 64k for other uses (gfx, samples...) */
-unsigned char *RAM = ram;
+unsigned char *RAM;
+unsigned char *ROM;
 
 
 static unsigned char remappedtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
@@ -43,7 +48,7 @@ int main(int argc,char **argv)
 	log = 0;
 	for (i = 1;i < argc;i++)
 	{
-		if (stricmp(argv[i],"-log") == 0)
+		if (strcmp(argv[i],"-log") == 0)
 			log = 1;
 	}
 
@@ -59,6 +64,13 @@ int main(int argc,char **argv)
 			osd_exit();
 		}
 		else printf("Unable to initialize system\n");
+
+		/* free the memory allocated for ROM and RAM */
+		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+		{
+			free(Machine->memory_region[i]);
+			Machine->memory_region[i] = 0;
+		}
 	}
 	else printf("Unable to initialize machine emulation\n");
 
@@ -85,7 +97,7 @@ int init_machine(const char *gamename,int argc,char **argv)
 	frameskip = 0;
 	for (i = 1;i < argc;i++)
 	{
-		if (stricmp(argv[i],"-frameskip") == 0)
+		if (strcmp(argv[i],"-frameskip") == 0)
 		{
 			i++;
 			if (i < argc)
@@ -98,7 +110,7 @@ int init_machine(const char *gamename,int argc,char **argv)
 	}
 
 	i = 0;
-	while (drivers[i].name && stricmp(gamename,drivers[i].name) != 0)
+	while (drivers[i].name && strcmp(gamename,drivers[i].name) != 0)
 		i++;
 
 	if (drivers[i].name == 0)
@@ -109,19 +121,50 @@ int init_machine(const char *gamename,int argc,char **argv)
 
 	drv = drivers[i].drv;
 	Machine->drv = drv;
-	opcode_decode = drivers[i].opcode_decode;
 
-	if (readroms(RAM,drivers[i].rom,gamename) != 0)
+	if (readroms(drivers[i].rom,gamename) != 0)
 		return 1;
 
+	RAM = Machine->memory_region[drv->cpu[0].memory_region];
+	ROM = RAM;
+
+	/* decrypt the ROMs if necessary */
+	if (drivers[i].rom_decode)
+	{
+		int j;
+
+
+		for (j = 0;j < 0x10000;j++)
+			RAM[j] = (*drivers[i].rom_decode)(j);
+	}
+
+	if (drivers[i].opcode_decode)
+	{
+		int j;
+
+
+		/* find the first avaialble memory region pointer */
+		j = 0;
+		while (Machine->memory_region[j]) j++;
+
+		if ((ROM = malloc(0x10000)) == 0)
+			return 1;
+
+		Machine->memory_region[j] = ROM;
+
+		for (j = 0;j < 0x10000;j++)
+			ROM[j] = (*drivers[i].opcode_decode)(j);
+	}
+
+
 	/* initialize the memory base pointers for memory hooks */
-	mra = drv->memory_read;
+	mra = drv->cpu[0].memory_read;
 	while (mra->start != -1)
 	{
 		if (mra->base) *mra->base = &RAM[mra->start];
 		mra++;
 	}
-	mwa = drv->memory_write;
+	mwa = drv->cpu[0].memory_write;
 	while (mwa->start != -1)
 	{
 		if (mwa->base) *mwa->base = &RAM[mwa->start];
@@ -166,7 +209,7 @@ int vh_open(void)
 	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height)) == 0)
 		return 1;
 
-	if (drv->color_prom && drv->vh_convert_color_prom)
+	if (drv->vh_convert_color_prom)
 	{
 		(*drv->vh_convert_color_prom)(convpalette,convtable,drv->color_prom);
 		palette = convpalette;
@@ -189,9 +232,10 @@ int vh_open(void)
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
 
-	for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].start != -1;i++)
+	for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 	{
-		if ((Machine->gfx[i] = decodegfx(RAM + drv->gfxdecodeinfo[i].start,
+		if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
+				+ drv->gfxdecodeinfo[i].start,
 				drv->gfxdecodeinfo[i].gfxlayout)) == 0)
 		{
 			vh_close();
@@ -203,10 +247,16 @@ int vh_open(void)
 	}
 
 
-	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE FILES OR THE EXECUTABLE WITH ROM IMAGES\n"\
-		   "DOING SO WILL HARM FURTHER EMULATOR DEVELOPMENT AND WILL CONSIDERABLY ANNOY "\
-		   "THE RIGHTFUL COPYRIGHT HOLDERS OF THOSE ROM IMAGES AND CAN RESULT IN LEGAL "\
-		   "ACTION UNDERTAKEN BY EARLIER MENTIONED COPYRIGHT HOLDERS";
+	/* free the graphics ROMs, they are no longer needed */
+	free(Machine->memory_region[1]);
+	Machine->memory_region[1] = 0;
+
+
+	dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE FILES OR THE EXECUTABLE WITH ROM IMAGES\n"
+		   "DOING SO WILL HARM FURTHER EMULATOR DEVELOPMENT AND WILL CONSIDERABLY ANNOY "
+		   "THE RIGHTFUL COPYRIGHT HOLDERS OF THOSE ROM IMAGES AND CAN RESULT IN LEGAL "
+		   "ACTION UNDERTAKEN BY EARLIER MENTIONED COPYRIGHT HOLDERS\n\n"
+		   "IF YOU DO NOT AGREE WITH THE ABOVE CONDITIONS PRESS ESC";
 	dt[0].color = drv->paused_color;
 	dt[0].x = 0;
 	dt[0].y = 0;
@@ -215,8 +265,133 @@ int vh_open(void)
 
 	i = osd_read_key();
 	while (osd_key_pressed(i));	/* wait for key release */
+	if (i == OSD_KEY_ESC) return 1;
 
 	clearbitmap(Machine->scrbitmap);	/* initialize the bitmap to the correct background color */
+
+	return 0;
+}
+
+
+
+/***************************************************************************
+
+  This function takes care of refreshing the screen, processing user input,
+  and throttling the emulation speed to obtain the required frames per second.
+
+***************************************************************************/
+int updatescreen(void)
+{
+	static int framecount = 0;
+
+
+	/* if the user pressed ESC, stop the emulation */
+	if (osd_key_pressed(OSD_KEY_ESC)) return 1;
+
+	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
+	{
+		struct DisplayText dt[2];
+		int key;
+
+
+		dt[0].text = "PAUSED";
+		dt[0].color = drv->paused_color;
+		dt[0].x = drv->paused_x;
+		dt[0].y = drv->paused_y;
+		dt[1].text = 0;
+		displaytext(dt,0);
+
+		while (osd_key_pressed(OSD_KEY_P));	/* wait for key release */
+		do
+		{
+			key = osd_read_key();
+
+			if (key == OSD_KEY_ESC) return 1;
+			else if (key == OSD_KEY_TAB)
+			{
+				if (setdipswitches()) return 1;
+				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
+				displaytext(dt,0);
+			}
+		} while (key != OSD_KEY_P);
+		while (osd_key_pressed(key));	/* wait for key release */
+	}
+
+	/* if the user pressed TAB, go to dipswitch setup menu */
+	if (osd_key_pressed(OSD_KEY_TAB))
+	{
+		if (setdipswitches()) return 1;
+	}
+
+	/* if the user pressed F4, show the character set */
+	if (osd_key_pressed(OSD_KEY_F4))
+	{
+		if (showcharset()) return 1;
+	}
+
+	if (*drv->sh_update)
+	{
+		(*drv->sh_update)();	/* update sound */
+		osd_update_audio();
+	}
+
+	if (++framecount > frameskip)
+	{
+		static int showfps,f11pressed;
+		static int throttle = 1,f10pressed;
+		uclock_t curr,mtpf;
+		#define MEMORY 10
+		static uclock_t prev[MEMORY];
+		static int i,fps;
+
+
+		framecount = 0;
+
+		if (osd_key_pressed(OSD_KEY_F11))
+		{
+			if (f11pressed == 0)
+			{
+				showfps ^= 1;
+				if (showfps == 0) clearbitmap(Machine->scrbitmap);
+			}
+			f11pressed = 1;
+		}
+		else f11pressed = 0;
+
+		if (osd_key_pressed(OSD_KEY_F10))
+		{
+			if (f10pressed == 0) throttle ^= 1;
+			f10pressed = 1;
+		}
+		else f10pressed = 0;
+
+
+		(*drv->vh_update)(Machine->scrbitmap);	/* update screen */
+
+		if (showfps)
+		{
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps/100 + drv->numbers_start,drv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],(fps%100)/10 + drv->numbers_start,drv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps%10 + drv->numbers_start,drv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
+		}
+
+		osd_update_display();
+
+		osd_poll_joystick();
+
+		/* now wait until it's time to trigger the interrupt */
+		do
+		{
+			curr = uclock();
+		} while (throttle && (curr - prev[i]) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
+
+		i = (i+1) % MEMORY;
+
+		mtpf = ((curr - prev[i])/(MEMORY))/2;
+		if (mtpf) fps = (UCLOCKS_PER_SEC+mtpf)/2/mtpf;
+
+		prev[i] = curr;
+	}
 
 	return 0;
 }
@@ -261,9 +436,29 @@ int run_machine(const char *gamename)
 					fclose(f);
 				}
 
-				Z80_IPeriod = drv->cpu_clock / drv->frames_per_second;	/* Number of T-states per interrupt */
+				memoryread = drv->cpu[0].memory_read;
+				memorywrite = drv->cpu[0].memory_write;
+				portread = drv->cpu[0].port_read;
+				portwrite = drv->cpu[0].port_write;
+
+				/* set number of T-states per interrupt */
+				Z80_IPeriod = drv->cpu[0].cpu_clock /
+						(drv->frames_per_second * drv->cpu[0].interrupts_per_frame);
 				Z80_Reset();
-				Z80();		/* start the CPU emulation */
+				do
+				{
+					int loops;
+
+
+					for (loops = 0;loops < drv->cpu[0].interrupts_per_frame;loops++)
+						Z80_Execute();		/* run the CPU emulation */
+
+					/* if F3 is pressed, reset the machine */
+					if (osd_key_pressed(OSD_KEY_F3))
+					{
+						Z80_Reset();
+					}
+				} while (updatescreen() == 0);
 
 				if (*drv->sh_stop) (*drv->sh_stop)();
 				if (*drv->vh_stop) (*drv->vh_stop)();
@@ -419,7 +614,7 @@ unsigned Z80_RDMEM(dword A)
 	const struct MemoryReadAddress *mra;
 
 
-	mra = drv->memory_read;
+	mra = memoryread;
 	while (mra->start != -1)
 	{
 		if (A >= mra->start && A <= mra->end)
@@ -451,7 +646,7 @@ void Z80_WRMEM(dword A,byte V)
 	const struct MemoryWriteAddress *mwa;
 
 
-	mwa = drv->memory_write;
+	mwa = memorywrite;
 	while (mwa->start != -1)
 	{
 		if (A >= mwa->start && A <= mwa->end)
@@ -479,124 +674,31 @@ void Z80_WRMEM(dword A,byte V)
 
 
 
-static void drawfps(void)
+byte Z80_In(byte Port)
 {
-	#define MEMORY 20
-	static uclock_t prev[MEMORY];
-	uclock_t curr;
-	static int i;
+	const struct IOReadPort *iorp;
 
 
-	curr = uclock();
-	if (prev[i])
+	iorp = portread;
+	if (iorp)
 	{
-		int fps;
-		uclock_t mtpf;
-
-		mtpf = ((curr - prev[i])/MEMORY)/2;
-		fps = (UCLOCKS_PER_SEC+mtpf)/2/mtpf;
-
-		drawgfx(Machine->scrbitmap,Machine->gfx[0],fps/10 + drv->numbers_start,drv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
-		drawgfx(Machine->scrbitmap,Machine->gfx[0],fps%10 + drv->numbers_start,drv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
-	}
-
-	prev[i] = curr;
-	i = (i+1) % MEMORY;
-}
-
-
-
-/***************************************************************************
-
-  Interrupt handler. This function is called at regular intervals
-  (determined by IPeriod) by the CPU emulation.
-
-***************************************************************************/
-
-int Z80_IRQ = Z80_IGNORE_INT;	/* needed by the CPU emulation */
-
-int Z80_Interrupt(void)
-{
-	static int showfps;
-	static uclock_t prev;
-	uclock_t curr;
-	static int framecount = 0;
-
-
-	/* if the user pressed ESC, stop the emulation */
-	if (osd_key_pressed(OSD_KEY_ESC)) Z80_Running = 0;
-
-	/* if F3, reset the machine */
-	if (osd_key_pressed(OSD_KEY_F3))
-	{
-		Z80_Reset();
-		return Z80_IGNORE_INT;
-	}
-
-	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
-	{
-		struct DisplayText dt[2];
-		int key;
-
-
-		dt[0].text = "PAUSED";
-		dt[0].color = drv->paused_color;
-		dt[0].x = drv->paused_x;
-		dt[0].y = drv->paused_y;
-		dt[1].text = 0;
-		displaytext(dt,0);
-
-		while (osd_key_pressed(OSD_KEY_P));	/* wait for key release */
-		do
+		while (iorp->start != -1)
 		{
-			key = osd_read_key();
-
-			if (key == OSD_KEY_ESC) Z80_Running = 0;
-			else if (key == OSD_KEY_TAB)
+			if (Port >= iorp->start && Port <= iorp->end)
 			{
-				setdipswitches();	/* might set CPURunning to 0 */
-				(*drv->vh_update)(Machine->scrbitmap);	/* redraw screen */
-				displaytext(dt,0);
+				int (*handler)() = iorp->handler;
+
+
+				if (handler == IORP_NOP) return 0;
+				else return (*handler)(Port - iorp->start);
 			}
-		} while (Z80_Running && key != OSD_KEY_P);
-		while (osd_key_pressed(key));	/* wait for key release */
+
+			iorp++;
+		}
 	}
 
-	/* if the user pressed TAB, go to dipswitch setup menu */
-	if (osd_key_pressed(OSD_KEY_TAB)) setdipswitches();
-
-	/* if the user pressed F4, show the character set */
-	if (osd_key_pressed(OSD_KEY_F4)) showcharset();
-
-	if (*drv->sh_update)
-	{
-		(*drv->sh_update)();	/* update sound */
-		osd_update_audio();
-	}
-
-	if (++framecount > frameskip)
-	{
-		framecount = 0;
-
-		(*drv->vh_update)(Machine->scrbitmap);	/* update screen */
-
-		if (osd_key_pressed(OSD_KEY_F11)) showfps = 1;
-		if (showfps) drawfps();
-
-		osd_update_display();
-
-		osd_poll_joystick();
-
-		/* now wait until it's time to trigger the interrupt */
-		do
-		{
-			curr = uclock();
-		} while ((curr - prev) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
-
-		prev = curr;
-	}
-
-	return (*drv->interrupt)();
+	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped I/O port %02x\n",Z80_GetPC(),Port);
+	return 0;
 }
 
 
@@ -606,7 +708,7 @@ void Z80_Out(byte Port,byte Value)
 	const struct IOWritePort *iowp;
 
 
-	iowp = drv->port_write;
+	iowp = portwrite;
 	if (iowp)
 	{
 		while (iowp->start != -1)
@@ -631,31 +733,18 @@ void Z80_Out(byte Port,byte Value)
 
 
 
-byte Z80_In(byte Port)
+/***************************************************************************
+
+  Interrupt handler. This function is called at regular intervals
+  (determined by IPeriod) by the CPU emulation.
+
+***************************************************************************/
+
+int Z80_IRQ = Z80_IGNORE_INT;	/* needed by the CPU emulation */
+
+int Z80_Interrupt(void)
 {
-	const struct IOReadPort *iorp;
-
-
-	iorp = drv->port_read;
-	if (iorp)
-	{
-		while (iorp->start != -1)
-		{
-			if (Port >= iorp->start && Port <= iorp->end)
-			{
-				int (*handler)() = iorp->handler;
-
-
-				if (handler == IORP_NOP) return 0;
-				else return (*handler)(Port - iorp->start);
-			}
-
-			iorp++;
-		}
-	}
-
-	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped I/O port %02x\n",Z80_GetPC(),Port);
-	return 0;
+	return (*drv->cpu[0].interrupt)();
 }
 
 

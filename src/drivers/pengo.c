@@ -204,10 +204,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,      0, 32 },	/* first bank */
-	{ 0x11000, &spritelayout,    0, 32 },
-	{ 0x12000, &charlayout,   4*32, 32 },	/* second bank */
-	{ 0x13000, &spritelayout, 4*32, 32 },
+	{ 1, 0x0000, &charlayout,      0, 32 },	/* first bank */
+	{ 1, 0x1000, &spritelayout,    0, 32 },
+	{ 1, 0x2000, &charlayout,   4*32, 32 },	/* second bank */
+	{ 1, 0x3000, &spritelayout, 4*32, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -272,12 +272,18 @@ static unsigned char samples[8*32] =
 const struct MachineDriver pengo_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	interrupt,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },

@@ -105,8 +105,8 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x001e8, &charlayout1, 0, 1 },	/* letters */
-	{ 0x00400, &charlayout2, 0, 1 },	/* graphics */
+	{ 0, 0x01e8, &charlayout1, 0, 1 },	/* letters */
+	{ 0, 0x0400, &charlayout2, 0, 1 },	/* graphics */
 	{ -1 } /* end of array */
 };
 
@@ -130,12 +130,18 @@ static unsigned char colortable[] =
 const struct MachineDriver carnival_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			readmem,writemem,readport,writeport,
+			carnival_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,readport,writeport,
 	input_ports,dsw,
 	0,
-	carnival_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },

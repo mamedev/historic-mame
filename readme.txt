@@ -39,7 +39,7 @@ Moon Cresta                    Yes             No           Limited
 Moon Quasar                    Yes             No           Limited
 The End                        Yes             No              No
 Scramble                       Yes            Yes              No
-Super Cobra                    Yes             ?               No
+Super Cobra                    Yes             No              No
 Frogger                        Yes           Close             No
 Amidar                         Yes           Close             No
 Turtles                        Yes             No              No
@@ -50,7 +50,8 @@ Pleiades                       Yes             No              No
 Space Invaders                 Yes            Yes              No
 Carnival                        No             No              No
 Mario Bros.                    Yes             No              No
-Zaxxon                      Not really         No              No
+Zaxxon                         Yes             No              No
+Bomb Jack                      Yes            Yes              No
 
 
 
@@ -74,12 +75,14 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    compatible.
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
   (mcuddy@FensEnde.com).
+UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
+  (dick@ph.tn.tudelft.nl).
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
 Thanks to Paul Swan for the information on the Lady Bug sound hardware and
    Mr.Do! colors.
-Thanks to Gary Walton for his help in making the Crush Roller colors better.
+Big thanks to Gary Walton for too many things to mention them all.
 Information about the Crazy Climber machine hardware (including palette) and
    ROM encryption scheme provided by Lionel Theunissen
    (lionelth@ozemail.com.au).
@@ -94,7 +97,10 @@ Pooyan information provided by Michael Cuddy and Allard van der Bas
 Thanks to Mirko Buffoni for the Amidar and Frogger colors.
 Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
    Buffoni (mix@lim.dsi.unimi.it)
-Mario Bros. and Zaxxon driver provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
+Mario Bros., Zaxxon and Bomb Jack drivers provided by Mirko Buffoni
+   (mix@lim.dsi.unimi.it)
+Thanks to Brad Thomas, Jakob Frendsen and Conny Melin for the info on Bomb
+   Jack.
 Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
    encryption scheme.
 Space Invaders information gathered from the Space Invaders Emulator by
@@ -146,7 +152,8 @@ Tab     Change dip switch settings
 P       Pause
 F3      Reset
 F4      Show the game graphics. Use cursor keys to change set/color, F4 to exit.
-F11     Activate fps counter
+F11     Toggle fps counter
+F10     Toggle speed throttling
 F12     Save a screen snapshot
 ESC     Exit emulator
 
@@ -420,9 +427,13 @@ Moon Cresta ("mooncrst")
 ------------------------
 
 This runs on a hardware very similar to Galaxian.
+The ROMs are encrypted. Nichibutsu copyright.
 
 Arrows  Move around
 CTRL    Fire
+
+Clones supported:
+  Unencrypted version ("mooncrsb")
 
 Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
@@ -440,7 +451,6 @@ CTRL    Fire
 
 Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
-- What do the dip switches do?
 
 
 
@@ -483,11 +493,14 @@ Known issues:
 Super Cobra ("scobra")
 ----------------------
 
-The version suported runs on a modified Scramble board.
+Runs on the same hardware as Scramble.
 
 Arrows  Move around
 CTRL    Fire
 ALT     Bomb
+
+Clones supported:
+  bootleg version ("scobrab")
 
 Known issues:
 - The background stars don't blink. Maybe they should also be clipped to the
@@ -592,9 +605,6 @@ Clones supported (some of these have wrong colors, and the dip switch menu
 
 Known issues:
 - The color stripes are not placed correctly
-- Bullets and aliens sometimes stop for an instant
-- Interrupts are not handled well. You should run the game with
-  "-frameskip 1", otherwise it will try to refresh at 120 fps.
 
 
 
@@ -622,6 +632,28 @@ Zaxxon ("zaxxon")
 Arrows  Move around
 CTRL    Fire
 
+
+
+Bomb Jack ("bombjack")
+----------------------
+
+Arrows  Move around
+CTRL    Jump
+
+Press fire to skip the ROM/RAM test at the beginning.
+
+In the dip switch menu, DIFFICULTY 1 refers to the speed of the mechanical
+bird, while DIFFICULTY 2 to the number and speed of enemies.
+
 Known issues:
-- The game is playable, but the background graphics layer is missing, so you
-  run into walls without seeing them ;-)
+- Colors are accurate, but not entirely: the original machine uses 12 bits
+  (4 bits per pen), while I currently use only 8 bits (3 bits for red and
+  green, 2 bits for blue).
+- Is the sprite priority correct? For example, during the demo, should GAME
+  OVER be in front or behind other sprites?
+  There is another bit in the sprite attributes which I don't know what means:
+  it seems to be set only when the (B) materializes.
+- For the DIFFICULTY 2 setting, EASY and MEDIUM might be swapped. Anyone can
+  confirm?
+- The INITIAL HIGH SCORE setting doesn't only set that, it does something
+  else as well - but I don't know what.

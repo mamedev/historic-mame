@@ -32,209 +32,200 @@ extern struct MachineDriver carnival_driver;
 extern struct MachineDriver invaders_driver;
 extern struct MachineDriver mario_driver;
 extern struct MachineDriver zaxxon_driver;
+extern struct MachineDriver bombjack_driver;
 
 
 
-static struct RomModule pacman_rom[] =
-{
-	/* code */
-	{ "%s.6e", 0x00000, 0x1000 },
-	{ "%s.6f", 0x01000, 0x1000 },
-	{ "%s.6h", 0x02000, 0x1000 },
-	{ "%s.6j", 0x03000, 0x1000 },
-	/* gfx */
-	{ "%s.5e", 0x10000, 0x1000 },
-	{ "%s.5f", 0x11000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pacman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.6e", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.6f", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.6h", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.6j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.5e", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.5f", 0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule pacmod_rom[] =
-{
-	/* code */
-	{ "6e.mod",    0x00000, 0x1000 },
-	{ "pacman.6f", 0x01000, 0x1000 },
-	{ "6h.mod",    0x02000, 0x1000 },
-	{ "pacman.6j", 0x03000, 0x1000 },
-	/* gfx */
-	{ "5e",        0x10000, 0x1000 },
-	{ "5f",        0x11000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pacmod_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6e.mod",    0x0000, 0x1000 )
+	ROM_LOAD( "pacman.6f", 0x1000, 0x1000 )
+	ROM_LOAD( "6h.mod",    0x2000, 0x1000 )
+	ROM_LOAD( "pacman.6j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",        0x0000, 0x1000 )
+	ROM_LOAD( "5f",        0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule piranha_rom[] =
-{
-	/* code */
-	{ "pr1.cpu", 0x00000, 0x1000 },
-	{ "pr2.cpu", 0x01000, 0x1000 },
-	{ "pr3.cpu", 0x02000, 0x1000 },
-	{ "pr4.cpu", 0x03000, 0x1000 },
-	/* gfx */
-	{ "pr5.cpu", 0x10000, 0x0800 },
-	{ "pr7.cpu", 0x10800, 0x0800 },
-	{ "pr6.cpu", 0x11000, 0x0800 },
-	{ "pr8.cpu", 0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( piranha_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pr1.cpu", 0x0000, 0x1000 )
+	ROM_LOAD( "pr2.cpu", 0x1000, 0x1000 )
+	ROM_LOAD( "pr3.cpu", 0x2000, 0x1000 )
+	ROM_LOAD( "pr4.cpu", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pr5.cpu", 0x0000, 0x0800 )
+	ROM_LOAD( "pr7.cpu", 0x0800, 0x0800 )
+	ROM_LOAD( "pr6.cpu", 0x1000, 0x0800 )
+	ROM_LOAD( "pr8.cpu", 0x1800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule mspacman_rom[] =
-{
-	/* code */
-	{ "boot1", 0x00000, 0x1000 },
-	{ "boot2", 0x01000, 0x1000 },
-	{ "boot3", 0x02000, 0x1000 },
-	{ "boot4", 0x03000, 0x1000 },
-	{ "boot5", 0x08000, 0x1000 },
-	{ "boot6", 0x09000, 0x1000 },
-	/* gfx */
-	{ "5e",    0x10000, 0x1000 },
-	{ "5f",    0x11000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( mspacman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "boot1", 0x0000, 0x1000 )
+	ROM_LOAD( "boot2", 0x1000, 0x1000 )
+	ROM_LOAD( "boot3", 0x2000, 0x1000 )
+	ROM_LOAD( "boot4", 0x3000, 0x1000 )
+	ROM_LOAD( "boot5", 0x8000, 0x1000 )
+	ROM_LOAD( "boot6", 0x9000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",    0x0000, 0x1000 )
+	ROM_LOAD( "5f",    0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule crush_rom[] =
-{
-	/* code */
-	{ "CR1", 0x00000, 0x0800 },
-	{ "CR5", 0x00800, 0x0800 },
-	{ "CR2", 0x01000, 0x0800 },
-	{ "CR6", 0x01800, 0x0800 },
-	{ "CR3", 0x02000, 0x0800 },
-	{ "CR7", 0x02800, 0x0800 },
-	{ "CR4", 0x03000, 0x0800 },
-	{ "CR8", 0x03800, 0x0800 },
-	/* gfx */
-	{ "CRA", 0x10000, 0x0800 },
-	{ "CRC", 0x10800, 0x0800 },
-	{ "CRB", 0x11000, 0x0800 },
-	{ "CRD", 0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( crush_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "CR1", 0x0000, 0x0800 )
+	ROM_LOAD( "CR5", 0x0800, 0x0800 )
+	ROM_LOAD( "CR2", 0x1000, 0x0800 )
+	ROM_LOAD( "CR6", 0x1800, 0x0800 )
+	ROM_LOAD( "CR3", 0x2000, 0x0800 )
+	ROM_LOAD( "CR7", 0x2800, 0x0800 )
+	ROM_LOAD( "CR4", 0x3000, 0x0800 )
+	ROM_LOAD( "CR8", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "CRA", 0x0000, 0x0800 )
+	ROM_LOAD( "CRC", 0x0800, 0x0800 )
+	ROM_LOAD( "CRB", 0x1000, 0x0800 )
+	ROM_LOAD( "CRD", 0x1800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule pengo_rom[] =
-{
-	/* code */
-	{ "pengopop.u8",  0x00000, 0x1000 },
-	{ "pengopop.u7",  0x01000, 0x1000 },
-	{ "pengopop.u15", 0x02000, 0x1000 },
-	{ "pengopop.u14", 0x03000, 0x1000 },
-	{ "pengopop.u21", 0x04000, 0x1000 },
-	{ "pengopop.u20", 0x05000, 0x1000 },
-	{ "pengopop.u32", 0x06000, 0x1000 },
-	{ "pengopop.u31", 0x07000, 0x1000 },
-	/* gfx */
-	{ "pengopop.u92", 0x10000, 0x2000 },
-	{ "pengopop.105", 0x12000, 0x2000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pengo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pengopop.u8",  0x0000, 0x1000 )
+	ROM_LOAD( "pengopop.u7",  0x1000, 0x1000 )
+	ROM_LOAD( "pengopop.u15", 0x2000, 0x1000 )
+	ROM_LOAD( "pengopop.u14", 0x3000, 0x1000 )
+	ROM_LOAD( "pengopop.u21", 0x4000, 0x1000 )
+	ROM_LOAD( "pengopop.u20", 0x5000, 0x1000 )
+	ROM_LOAD( "pengopop.u32", 0x6000, 0x1000 )
+	ROM_LOAD( "pengopop.u31", 0x7000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pengopop.u92", 0x0000, 0x2000 )
+	ROM_LOAD( "pengopop.105", 0x2000, 0x2000 )
+ROM_END
 
 
 
-static struct RomModule penta_rom[] =
-{
-	/* code */
-	{ "penta.u8",  0x00000, 0x1000 },
-	{ "penta.u7",  0x01000, 0x1000 },
-	{ "penta.u15", 0x02000, 0x1000 },
-	{ "penta.u14", 0x03000, 0x1000 },
-	{ "penta.u21", 0x04000, 0x1000 },
-	{ "penta.u20", 0x05000, 0x1000 },
-	{ "penta.u32", 0x06000, 0x1000 },
-	{ "penta.u31", 0x07000, 0x1000 },
-	/* gfx */
-	{ "penta.u92", 0x10000, 0x2000 },
-	{ "penta.105", 0x12000, 0x2000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( penta_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "penta.u8",  0x0000, 0x1000 )
+	ROM_LOAD( "penta.u7",  0x1000, 0x1000 )
+	ROM_LOAD( "penta.u15", 0x2000, 0x1000 )
+	ROM_LOAD( "penta.u14", 0x3000, 0x1000 )
+	ROM_LOAD( "penta.u21", 0x4000, 0x1000 )
+	ROM_LOAD( "penta.u20", 0x5000, 0x1000 )
+	ROM_LOAD( "penta.u32", 0x6000, 0x1000 )
+	ROM_LOAD( "penta.u31", 0x7000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "penta.u92", 0x0000, 0x2000 )
+	ROM_LOAD( "penta.105", 0x2000, 0x2000 )
+ROM_END
 
 
 
-static struct RomModule ladybug_rom[] =
-{
-	/* code */
-	{ "lb1.cpu", 0x00000, 0x1000 },
-	{ "lb2.cpu", 0x01000, 0x1000 },
-	{ "lb3.cpu", 0x02000, 0x1000 },
-	{ "lb4.cpu", 0x03000, 0x1000 },
-	{ "lb5.cpu", 0x04000, 0x1000 },
-	{ "lb6.cpu", 0x05000, 0x1000 },
-	/* gfx */
-	{ "lb9.vid",  0x10000, 0x1000 },
-	{ "lb10.vid", 0x11000, 0x1000 },
-	{ "lb8.cpu",  0x12000, 0x1000 },
-	{ "lb7.cpu",  0x13000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( ladybug_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "lb1.cpu",  0x0000, 0x1000 )
+	ROM_LOAD( "lb2.cpu",  0x1000, 0x1000 )
+	ROM_LOAD( "lb3.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "lb4.cpu",  0x3000, 0x1000 )
+	ROM_LOAD( "lb5.cpu",  0x4000, 0x1000 )
+	ROM_LOAD( "lb6.cpu",  0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lb9.vid",  0x0000, 0x1000 )
+	ROM_LOAD( "lb10.vid", 0x1000, 0x1000 )
+	ROM_LOAD( "lb8.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "lb7.cpu",  0x3000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule mrdo_rom[] =
-{
-	/* code */
-	{ "D1", 0x00000, 0x2000 },
-	{ "D2", 0x02000, 0x2000 },
-	{ "D3", 0x04000, 0x2000 },
-	{ "D4", 0x06000, 0x2000 },
-	/* gfx */
-	{ "D9", 0x10000, 0x1000 },
-	{ "D10",0x11000, 0x1000 },
-	{ "D8", 0x12000, 0x1000 },
-	{ "D7", 0x13000, 0x1000 },
-	{ "D5", 0x14000, 0x1000 },
-	{ "D6", 0x15000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( mrdo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "D1",  0x0000, 0x2000 )
+	ROM_LOAD( "D2",  0x2000, 0x2000 )
+	ROM_LOAD( "D3",  0x4000, 0x2000 )
+	ROM_LOAD( "D4",  0x6000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "D9",  0x0000, 0x1000 )
+	ROM_LOAD( "D10", 0x1000, 0x1000 )
+	ROM_LOAD( "D8",  0x2000, 0x1000 )
+	ROM_LOAD( "D7",  0x3000, 0x1000 )
+	ROM_LOAD( "D5",  0x4000, 0x1000 )
+	ROM_LOAD( "D6",  0x5000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule mrlo_rom[] =
-{
-	/* code */
-	{ "a4-01.bin", 0x00000, 0x2000 },
-	{ "c4-02.bin", 0x02000, 0x2000 },
-	{ "e4-03.bin", 0x04000, 0x2000 },
-	{ "g4-04.bin", 0x06000, 0x2000 },
-	/* gfx */
-	{ "s8-09.bin", 0x10000, 0x1000 },
-	{ "u8-10.bin", 0x11000, 0x1000 },
-	{ "r8-08.bin", 0x12000, 0x1000 },
-	{ "n8-07.bin", 0x13000, 0x1000 },
-	{ "h5-05.bin", 0x14000, 0x1000 },
-	{ "k5-06.bin", 0x15000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( mrlo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000 )
+	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000 )
+	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000 )
+	ROM_LOAD( "g4-04.bin", 0x6000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule cclimber_rom[] =
-{
-	/* code */
-	{ "cc11", 0x00000, 0x1000 },
-	{ "cc10", 0x01000, 0x1000 },
-	{ "cc09", 0x02000, 0x1000 },
-	{ "cc08", 0x03000, 0x1000 },
-	{ "cc07", 0x04000, 0x1000 },
-	/* gfx */
-	{ "cc06", 0x10000, 0x0800 },
-	{ "cc04", 0x10800, 0x0800 },
-	{ "cc05", 0x11000, 0x0800 },
-	{ "cc03", 0x11800, 0x0800 },
-	{ "cc02", 0x12000, 0x0800 },
-	{ "cc01", 0x12800, 0x0800 },
-	/* samples */
-	{ "cc13", 0x18000, 0x1000 },
-	{ "cc12", 0x19000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( cclimber_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cc11", 0x0000, 0x1000 )
+	ROM_LOAD( "cc10", 0x1000, 0x1000 )
+	ROM_LOAD( "cc09", 0x2000, 0x1000 )
+	ROM_LOAD( "cc08", 0x3000, 0x1000 )
+	ROM_LOAD( "cc07", 0x4000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cc06", 0x0000, 0x0800 )
+	ROM_LOAD( "cc04", 0x0800, 0x0800 )
+	ROM_LOAD( "cc05", 0x1000, 0x0800 )
+	ROM_LOAD( "cc03", 0x1800, 0x0800 )
+	ROM_LOAD( "cc02", 0x2000, 0x0800 )
+	ROM_LOAD( "cc01", 0x2800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "cc13", 0x0000, 0x1000 )
+	ROM_LOAD( "cc12", 0x1000, 0x1000 )
+ROM_END
 
 
 
@@ -286,49 +277,49 @@ unsigned cclimber_decode(dword A)
 
 
 
-static struct RomModule ccjap_rom[] =
-{
-	/* code */
-	{ "cc11j.bin", 0x00000, 0x1000 },
-	{ "cc10j.bin", 0x01000, 0x1000 },
-	{ "cc09j.bin", 0x02000, 0x1000 },
-	{ "cc08j.bin", 0x03000, 0x1000 },
-	{ "cc07j.bin", 0x04000, 0x1000 },
-	/* gfx */
-	{ "cc06j.bin", 0x10000, 0x0800 },
-	{ "cc04j.bin", 0x10800, 0x0800 },
-	{ "cc05j.bin", 0x11000, 0x0800 },
-	{ "cc03j.bin", 0x11800, 0x0800 },
-	{ "cc02j.bin", 0x12000, 0x0800 },
-	{ "cc01j.bin", 0x12800, 0x0800 },
-	/* samples */
-	{ "cc13j.bin", 0x18000, 0x1000 },
-	{ "cc12j.bin", 0x19000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( ccjap_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cc11j.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "cc10j.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "cc09j.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "cc08j.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "cc07j.bin", 0x4000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cc06j.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "cc04j.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "cc05j.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "cc03j.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "cc02j.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "cc01j.bin", 0x2800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "cc13j.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "cc12j.bin", 0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule ccboot_rom[] =
-{
-	/* code */
-	{ "m11.bin", 0x00000, 0x1000 },
-	{ "m10.bin", 0x01000, 0x1000 },
-	{ "m09.bin", 0x02000, 0x1000 },
-	{ "m08.bin", 0x03000, 0x1000 },
-	{ "m07.bin", 0x04000, 0x1000 },
-	/* gfx */
-	{ "m06.bin", 0x10000, 0x0800 },
-	{ "m04.bin", 0x10800, 0x0800 },
-	{ "m05.bin", 0x11000, 0x0800 },
-	{ "m03.bin", 0x11800, 0x0800 },
-	{ "m02.bin", 0x12000, 0x0800 },
-	{ "m01.bin", 0x12800, 0x0800 },
-	/* samples */
-	{ "m13.bin", 0x18000, 0x1000 },
-	{ "m12.bin", 0x19000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( ccboot_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "m11.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "m10.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "m09.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "m08.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "m07.bin", 0x4000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "m06.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "m04.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "m05.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "m03.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "m02.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "m01.bin", 0x2800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "m13.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "m12.bin", 0x1000, 0x1000 )
+ROM_END
 
 
 
@@ -380,321 +371,325 @@ unsigned ccjap_decode(dword A)
 
 
 
-static struct RomModule ckong_rom[] =
-{
-	/* code */
-	{ "7.dat",  0x00000, 0x1000 },
-	{ "8.dat",  0x01000, 0x1000 },
-	{ "9.dat",  0x02000, 0x1000 },
-	{ "10.dat", 0x03000, 0x1000 },
-	{ "11.dat", 0x04000, 0x1000 },
-	{ "12.dat", 0x05000, 0x1000 },
-	/* gfx */
-	{ "6.dat",  0x10000, 0x1000 },
-	{ "4.dat",  0x11000, 0x1000 },
-	{ "5.dat",  0x12000, 0x1000 },
-	{ "3.dat",  0x13000, 0x1000 },
-	{ "2.dat",  0x14000, 0x0800 },
-	{ "1.dat",  0x14800, 0x0800 },
-	/* samples */
-	{ "14.dat", 0x18000, 0x1000 },
-	{ "13.dat", 0x19000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( ckong_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "7.dat",  0x0000, 0x1000 )
+	ROM_LOAD( "8.dat",  0x1000, 0x1000 )
+	ROM_LOAD( "9.dat",  0x2000, 0x1000 )
+	ROM_LOAD( "10.dat", 0x3000, 0x1000 )
+	ROM_LOAD( "11.dat", 0x4000, 0x1000 )
+	ROM_LOAD( "12.dat", 0x5000, 0x1000 )
+
+	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6.dat",  0x0000, 0x1000 )
+	ROM_LOAD( "4.dat",  0x1000, 0x1000 )
+	ROM_LOAD( "5.dat",  0x2000, 0x1000 )
+	ROM_LOAD( "3.dat",  0x3000, 0x1000 )
+	ROM_LOAD( "2.dat",  0x4000, 0x0800 )
+	ROM_LOAD( "1.dat",  0x4800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "14.dat", 0x0000, 0x1000 )
+	ROM_LOAD( "13.dat", 0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule dkong_rom[] =
-{
-	/* code */
-	{ "dk.5e",  0x00000, 0x1000 },
-	{ "dk.5c",  0x01000, 0x1000 },
-	{ "dk.5b",  0x02000, 0x1000 },
-	{ "dk.5a",  0x03000, 0x1000 },
-	/* gfx */
-	{ "dk.3n",  0x10000, 0x0800 },
-	{ "dk.3p",  0x10800, 0x0800 },
-	{ "dk.7c",  0x11000, 0x0800 },
-	{ "dk.7d",  0x11800, 0x0800 },
-	{ "dk.7e",  0x12000, 0x0800 },
-	{ "dk.7f",  0x12800, 0x0800 },
-	/* samples? */
-	{ "dk.3h",  0x18000, 0x0800 },
-	{ "dk.3f",  0x18800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( dkong_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk.5e",  0x0000, 0x1000 )
+	ROM_LOAD( "dk.5c",  0x1000, 0x1000 )
+	ROM_LOAD( "dk.5b",  0x2000, 0x1000 )
+	ROM_LOAD( "dk.5a",  0x3000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk.3n",  0x0000, 0x0800 )
+	ROM_LOAD( "dk.3p",  0x0800, 0x0800 )
+	ROM_LOAD( "dk.7c",  0x1000, 0x0800 )
+	ROM_LOAD( "dk.7d",  0x1800, 0x0800 )
+	ROM_LOAD( "dk.7e",  0x2000, 0x0800 )
+	ROM_LOAD( "dk.7f",  0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "dk.3h",  0x0000, 0x0800 )
+	ROM_LOAD( "dk.3f",  0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule dkongjr_rom[] =
-{
-	/* code */
-	{ "dkj.5b",  0x00000, 0x1000 },
-	{ 0,         0x03000, 0x1000 },
-	{ "dkj.5c",  0x02000, 0x0800 },
-	{ 0,         0x04800, 0x0800 },
-	{ 0,         0x01000, 0x0800 },
-	{ 0,         0x05800, 0x0800 },
-	{ "dkj.5e",  0x04000, 0x0800 },
-	{ 0,         0x02800, 0x0800 },
-	{ 0,         0x05000, 0x0800 },
-	{ 0,         0x01800, 0x0800 },
-	/* gfx */
-	{ "dkj.3n",  0x10000, 0x1000 },
-	{ "dkj.3p",  0x11000, 0x1000 },
-	{ "dkj.7c",  0x12000, 0x0800 },
-	{ "dkj.7d",  0x12800, 0x0800 },
-	{ "dkj.7e",  0x13000, 0x0800 },
-	{ "dkj.7f",  0x13800, 0x0800 },
-	/* samples? */
-	{ "dkj.3h",  0x18000, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( dkongjr_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dkj.5b",  0x0000, 0x1000 )
+	ROM_CONTINUE(        0x3000, 0x1000 )
+	ROM_LOAD( "dkj.5c",  0x2000, 0x0800 )
+	ROM_CONTINUE(        0x4800, 0x0800 )
+	ROM_CONTINUE(        0x1000, 0x0800 )
+	ROM_CONTINUE(        0x5800, 0x0800 )
+	ROM_LOAD( "dkj.5e",  0x4000, 0x0800 )
+	ROM_CONTINUE(        0x2800, 0x0800 )
+	ROM_CONTINUE(        0x5000, 0x0800 )
+	ROM_CONTINUE(        0x1800, 0x0800 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dkj.3n",  0x0000, 0x1000 )
+	ROM_LOAD( "dkj.3p",  0x1000, 0x1000 )
+	ROM_LOAD( "dkj.7c",  0x2000, 0x0800 )
+	ROM_LOAD( "dkj.7d",  0x2800, 0x0800 )
+	ROM_LOAD( "dkj.7e",  0x3000, 0x0800 )
+	ROM_LOAD( "dkj.7f",  0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "dkj.3h",  0x0000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule bagman_rom[] =
-{
-	/* code */
-	{ "a4_9e.bin", 0x00000, 0x1000 },
-	{ "a4_9f.bin", 0x01000, 0x1000 },
-	{ "a4_9j.bin", 0x02000, 0x1000 },
-	{ "a4_9k.bin", 0x03000, 0x1000 },
-	{ "a4_9m.bin", 0x04000, 0x1000 },
-	{ "a4_9n.bin", 0x05000, 0x1000 },
-	/* gfx */
-	{ "a2_1e.bin", 0x10000, 0x1000 },
-	{ "a2_1j.bin", 0x11000, 0x1000 },
-	{ "a2_1c.bin", 0x12000, 0x1000 },
-	{ "a2_1f.bin", 0x13000, 0x1000 },
-	/* ??? */
-	{ "a1_9r.bin", 0x18000, 0x1000 },
-	{ "a1_9t.bin", 0x19000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( bagman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* ??? */
+	ROM_LOAD( "a1_9r.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a1_9t.bin", 0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule wow_rom[] =
-{
-	/* code */
-	{ "wow.x1", 0x00000, 0x1000 },
-	{ "wow.x2", 0x01000, 0x1000 },
-	{ "wow.x3", 0x02000, 0x1000 },
-	{ "wow.x4", 0x03000, 0x1000 },
-	{ "wow.x5", 0x08000, 0x1000 },
-	{ "wow.x6", 0x09000, 0x1000 },
-	{ "wow.x7", 0x0a000, 0x1000 },
-/*	{ "wow.x8", 0x0c000, 0x1000 },	here would go the foreign language ROM */
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( wow_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000 )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000 )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000 )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000 )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000 )
+/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000 )	here would go the foreign language ROM */
+ROM_END
 
 
 
-static struct RomModule robby_rom[] =
-{
-	/* code */
-	{ "robbya", 0x00000, 0x1000 },
-	{ "robbyb", 0x01000, 0x1000 },
-	{ "robbyc", 0x02000, 0x1000 },
-	{ "robbyd", 0x03000, 0x1000 },
-	{ "robbye", 0x08000, 0x1000 },
-	{ "robbyf", 0x09000, 0x1000 },
-	{ "robbyg", 0x0a000, 0x1000 },
-	{ "robbyh", 0x0b000, 0x1000 },
-	{ "robbyi", 0x0c000, 0x1000 },
-	{ "robbyj", 0x0d000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( robby_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "robbya", 0x0000, 0x1000 )
+	ROM_LOAD( "robbyb", 0x1000, 0x1000 )
+	ROM_LOAD( "robbyc", 0x2000, 0x1000 )
+	ROM_LOAD( "robbyd", 0x3000, 0x1000 )
+	ROM_LOAD( "robbye", 0x8000, 0x1000 )
+	ROM_LOAD( "robbyf", 0x9000, 0x1000 )
+	ROM_LOAD( "robbyg", 0xa000, 0x1000 )
+	ROM_LOAD( "robbyh", 0xb000, 0x1000 )
+	ROM_LOAD( "robbyi", 0xc000, 0x1000 )
+	ROM_LOAD( "robbyj", 0xd000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule gorf_rom[] =
-{
-	/* code */
-	{ "gorf-a.bin", 0x00000, 0x1000 },
-	{ "gorf-b.bin", 0x01000, 0x1000 },
-	{ "gorf-c.bin", 0x02000, 0x1000 },
-	{ "gorf-d.bin", 0x03000, 0x1000 },
-	{ "gorf-e.bin", 0x08000, 0x1000 },
-	{ "gorf-f.bin", 0x09000, 0x1000 },
-	{ "gorf-g.bin", 0x0a000, 0x1000 },
-	{ "gorf-h.bin", 0x0b000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( gorf_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000 )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000 )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000 )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule galaxian_rom[] =
-{
-	/* code */
-	{ "%s.u",  0x00000, 0x0800 },
-	{ "%s.v",  0x00800, 0x0800 },
-	{ "%s.w",  0x01000, 0x0800 },
-	{ "%s.y",  0x01800, 0x0800 },
-	{ "%s.z",  0x02000, 0x0800 },
-	/* gfx */
-	{ "%s.1j", 0x10000, 0x0800 },
-	{ "%s.1k", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galaxian_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.u",  0x0000, 0x0800 )
+	ROM_LOAD( "%s.v",  0x0800, 0x0800 )
+	ROM_LOAD( "%s.w",  0x1000, 0x0800 )
+	ROM_LOAD( "%s.y",  0x1800, 0x0800 )
+	ROM_LOAD( "%s.z",  0x2000, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.1j", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.1k", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule galnamco_rom[] =
-{
-	/* code */
-	{ "galaxian.u",  0x00000, 0x0800 },
-	{ "galaxian.v",  0x00800, 0x0800 },
-	{ "galaxian.w",  0x01000, 0x0800 },
-	{ "galaxian.y",  0x01800, 0x0800 },
-	{ "galaxian.z",  0x02000, 0x0800 },
-	/* gfx */
-	{ "galaxian.1h", 0x10000, 0x0800 },
-	{ "galaxian.1k", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galnamco_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galaxian.u",  0x0000, 0x0800 )
+	ROM_LOAD( "galaxian.v",  0x0800, 0x0800 )
+	ROM_LOAD( "galaxian.w",  0x1000, 0x0800 )
+	ROM_LOAD( "galaxian.y",  0x1800, 0x0800 )
+	ROM_LOAD( "galaxian.z",  0x2000, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "galaxian.1h", 0x0000, 0x0800 )
+	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule galapx_rom[] =
-{
-	/* code */
-	{ "galx.u",  0x00000, 0x0800 },
-	{ "galx.v",  0x00800, 0x0800 },
-	{ "galx.w",  0x01000, 0x0800 },
-	{ "galx.y",  0x01800, 0x0800 },
-	{ "galx.z",  0x02000, 0x0800 },
-	/* gfx */
-	{ "galx.1h", 0x10000, 0x0800 },
-	{ "galx.1k", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galapx_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galx.u",  0x0000, 0x0800 )
+	ROM_LOAD( "galx.v",  0x0800, 0x0800 )
+	ROM_LOAD( "galx.w",  0x1000, 0x0800 )
+	ROM_LOAD( "galx.y",  0x1800, 0x0800 )
+	ROM_LOAD( "galx.z",  0x2000, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "galx.1h", 0x0000, 0x0800 )
+	ROM_LOAD( "galx.1k", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule galap1_rom[] =
-{
-	/* code */
-	{ "galx_1.rom",   0x00000, 0x2800 },
-	/* gfx */
-	{ "galx_1c1.rom", 0x10000, 0x0800 },
-	{ "galx_1c2.rom", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galap1_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galx_1.rom",   0x0000, 0x2800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "galx_1c1.rom", 0x0000, 0x0800 )
+	ROM_LOAD( "galx_1c2.rom", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule galap4_rom[] =
-{
-	/* code */
-	{ "galx_4.rom",   0x00000, 0x2800 },
-	/* gfx */
-	{ "galx_4c1.rom", 0x10000, 0x0800 },
-	{ "galx_4c2.rom", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galap4_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galx_4.rom",   0x0000, 0x2800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800 )
+	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule pisces_rom[] =
-{
-	/* code */
-	{ "pisces.a1", 0x00000, 0x0800 },
-	{ "pisces.a2", 0x00800, 0x0800 },
-	{ "pisces.b2", 0x01000, 0x0800 },
-	{ "pisces.c1", 0x01800, 0x0800 },
-	{ "pisces.d1", 0x02000, 0x0800 },
-	{ "pisces.e2", 0x02800, 0x0800 },
-	/* gfx */
-	{ "pisces.1j", 0x10000, 0x1000 },
-	{ "pisces.1k", 0x11000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pisces_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pisces.a1", 0x0000, 0x0800 )
+	ROM_LOAD( "pisces.a2", 0x0800, 0x0800 )
+	ROM_LOAD( "pisces.b2", 0x1000, 0x0800 )
+	ROM_LOAD( "pisces.c1", 0x1800, 0x0800 )
+	ROM_LOAD( "pisces.d1", 0x2000, 0x0800 )
+	ROM_LOAD( "pisces.e2", 0x2800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pisces.1j", 0x0000, 0x1000 )
+	ROM_LOAD( "pisces.1k", 0x1000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule japirem_rom[] =
-{
-	/* code */
-	{ "f07_1a.bin",  0x00000, 0x0800 },
-	{ "h07_2a.bin",  0x00800, 0x0800 },
-	{ "k07_3a.bin",  0x01000, 0x0800 },
-	{ "m07_4a.bin",  0x01800, 0x0800 },
-	{ "d08p_5a.bin", 0x02000, 0x0800 },
-	{ "e08p_6a.bin", 0x02800, 0x0800 },
-	{ "m08p_7a.bin", 0x03000, 0x0800 },
-	{ "n08p_8a.bin", 0x03800, 0x0800 },
-	/* gfx */
-	{ "k01_1.bin",   0x10000, 0x0800 },
-	{ "k01_2.bin",   0x10800, 0x0800 },
-	{ "h01_1.bin",   0x11000, 0x0800 },
-	{ "h01_2.bin",   0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( japirem_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f07_1a.bin",  0x0000, 0x0800 )
+	ROM_LOAD( "h07_2a.bin",  0x0800, 0x0800 )
+	ROM_LOAD( "k07_3a.bin",  0x1000, 0x0800 )
+	ROM_LOAD( "m07_4a.bin",  0x1800, 0x0800 )
+	ROM_LOAD( "d08p_5a.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "e08p_6a.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "m08p_7a.bin", 0x3000, 0x0800 )
+	ROM_LOAD( "n08p_8a.bin", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "k01_1.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "k01_2.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "h01_1.bin",   0x1000, 0x0800 )
+	ROM_LOAD( "h01_2.bin",   0x1800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule uniwars_rom[] =
-{
-	/* code */
-	{ "u1",  0x00000, 0x0800 },
-	{ "u2",  0x00800, 0x0800 },
-	{ "u3",  0x01000, 0x0800 },
-	{ "u4",  0x01800, 0x0800 },
-	{ "u5",  0x02000, 0x0800 },
-	{ "u6",  0x02800, 0x0800 },
-	{ "u7",  0x03000, 0x0800 },
-	{ "u8",  0x03800, 0x0800 },
-	/* gfx */
-	{ "u9",  0x10000, 0x0800 },
-	{ "u11", 0x10800, 0x0800 },
-	{ "u10", 0x11000, 0x0800 },
-	{ "u12", 0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( uniwars_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u1",  0x0000, 0x0800 )
+	ROM_LOAD( "u2",  0x0800, 0x0800 )
+	ROM_LOAD( "u3",  0x1000, 0x0800 )
+	ROM_LOAD( "u4",  0x1800, 0x0800 )
+	ROM_LOAD( "u5",  0x2000, 0x0800 )
+	ROM_LOAD( "u6",  0x2800, 0x0800 )
+	ROM_LOAD( "u7",  0x3000, 0x0800 )
+	ROM_LOAD( "u8",  0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "u9",  0x0000, 0x0800 )
+	ROM_LOAD( "u11", 0x0800, 0x0800 )
+	ROM_LOAD( "u10", 0x1000, 0x0800 )
+	ROM_LOAD( "u12", 0x1800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule mooncrst_rom[] =
-{
-	/* code */
-	{ "EPR194", 0x00000, 0x0800 },
-	{ "EPR195", 0x00800, 0x0800 },
-	{ "EPR196", 0x01000, 0x0800 },
-	{ "EPR197", 0x01800, 0x0800 },
-	{ "EPR198", 0x02000, 0x0800 },
-	{ "EPR199", 0x02800, 0x0800 },
-	{ "EPR200", 0x03000, 0x0800 },
-	{ "EPR201", 0x03800, 0x0800 },
-	/* gfx */
-	{ "EPR202", 0x10000, 0x0800 },
-	{ "EPR171", 0x10800, 0x0800 },
-	{ "EPR203", 0x11000, 0x0800 },
-	{ "EPR172", 0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( mooncrst_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mc1", 0x0000, 0x0800 )
+	ROM_LOAD( "mc2", 0x0800, 0x0800 )
+	ROM_LOAD( "mc3", 0x1000, 0x0800 )
+	ROM_LOAD( "mc4", 0x1800, 0x0800 )
+	ROM_LOAD( "mc5", 0x2000, 0x0800 )
+	ROM_LOAD( "mc6", 0x2800, 0x0800 )
+	ROM_LOAD( "mc7", 0x3000, 0x0800 )
+	ROM_LOAD( "mc8", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mca", 0x0000, 0x0800 )
+	ROM_LOAD( "mcc", 0x0800, 0x0800 )
+	ROM_LOAD( "mcb", 0x1000, 0x0800 )
+	ROM_LOAD( "mcd", 0x1800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule moonqsr_rom[] =
-{
-	/* code */
-	{ "mq1", 0x00000, 0x0800 },
-	{ "mq2", 0x00800, 0x0800 },
-	{ "mq3", 0x01000, 0x0800 },
-	{ "mq4", 0x01800, 0x0800 },
-	{ "mq5", 0x02000, 0x0800 },
-	{ "mq6", 0x02800, 0x0800 },
-	{ "mq7", 0x03000, 0x0800 },
-	{ "mq8", 0x03800, 0x0800 },
-	/* gfx */
-	{ "mqa", 0x10000, 0x0800 },
-	{ "mqc", 0x10800, 0x0800 },
-	{ "mqb", 0x11000, 0x0800 },
-	{ "mqd", 0x11800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( mooncrsb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "EPR194", 0x0000, 0x0800 )
+	ROM_LOAD( "EPR195", 0x0800, 0x0800 )
+	ROM_LOAD( "EPR196", 0x1000, 0x0800 )
+	ROM_LOAD( "EPR197", 0x1800, 0x0800 )
+	ROM_LOAD( "EPR198", 0x2000, 0x0800 )
+	ROM_LOAD( "EPR199", 0x2800, 0x0800 )
+	ROM_LOAD( "EPR200", 0x3000, 0x0800 )
+	ROM_LOAD( "EPR201", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "EPR202", 0x0000, 0x0800 )
+	ROM_LOAD( "EPR171", 0x0800, 0x0800 )
+	ROM_LOAD( "EPR203", 0x1000, 0x0800 )
+	ROM_LOAD( "EPR172", 0x1800, 0x0800 )
+ROM_END
+
+
+
+ROM_START( moonqsr_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mq1", 0x0000, 0x0800 )
+	ROM_LOAD( "mq2", 0x0800, 0x0800 )
+	ROM_LOAD( "mq3", 0x1000, 0x0800 )
+	ROM_LOAD( "mq4", 0x1800, 0x0800 )
+	ROM_LOAD( "mq5", 0x2000, 0x0800 )
+	ROM_LOAD( "mq6", 0x2800, 0x0800 )
+	ROM_LOAD( "mq7", 0x3000, 0x0800 )
+	ROM_LOAD( "mq8", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mqa", 0x0000, 0x0800 )
+	ROM_LOAD( "mqc", 0x0800, 0x0800 )
+	ROM_LOAD( "mqb", 0x1000, 0x0800 )
+	ROM_LOAD( "mqd", 0x1800, 0x0800 )
+ROM_END
 
 
 
@@ -746,464 +741,484 @@ unsigned moonqsr_decode(dword A)
 
 
 
-static struct RomModule theend_rom[] =
-{
-	/* code */
-	{ "IC13", 0x00000, 0x0800 },
-	{ "IC14", 0x00800, 0x0800 },
-	{ "IC15", 0x01000, 0x0800 },
-	{ "IC16", 0x01800, 0x0800 },
-	{ "IC17", 0x02000, 0x0800 },
-	{ "IC18", 0x02800, 0x0800 },
-	{ "IC56", 0x03000, 0x0800 },
-	{ "IC55", 0x03800, 0x0800 },
-	/* gfx */
-	{ "IC30", 0x10000, 0x0800 },
-	{ "IC31", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( theend_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC13", 0x0000, 0x0800 )
+	ROM_LOAD( "IC14", 0x0800, 0x0800 )
+	ROM_LOAD( "IC15", 0x1000, 0x0800 )
+	ROM_LOAD( "IC16", 0x1800, 0x0800 )
+	ROM_LOAD( "IC17", 0x2000, 0x0800 )
+	ROM_LOAD( "IC18", 0x2800, 0x0800 )
+	ROM_LOAD( "IC56", 0x3000, 0x0800 )
+	ROM_LOAD( "IC55", 0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC30", 0x0000, 0x0800 )
+	ROM_LOAD( "IC31", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule scramble_rom[] =
-{
-	/* code */
-	{ "2c", 0x00000, 0x0800 },
-	{ "2e", 0x00800, 0x0800 },
-	{ "2f", 0x01000, 0x0800 },
-	{ "2h", 0x01800, 0x0800 },
-	{ "2j", 0x02000, 0x0800 },
-	{ "2l", 0x02800, 0x0800 },
-	{ "2m", 0x03000, 0x0800 },
-	{ "2p", 0x03800, 0x0800 },
-	/* gfx */
-	{ "5f", 0x10000, 0x0800 },
-	{ "5h", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( scramble_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x0800 )
+	ROM_LOAD( "2e", 0x0800, 0x0800 )
+	ROM_LOAD( "2f", 0x1000, 0x0800 )
+	ROM_LOAD( "2h", 0x1800, 0x0800 )
+	ROM_LOAD( "2j", 0x2000, 0x0800 )
+	ROM_LOAD( "2l", 0x2800, 0x0800 )
+	ROM_LOAD( "2m", 0x3000, 0x0800 )
+	ROM_LOAD( "2p", 0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule atlantis_rom[] =
-{
-	/* code */
-	{ "2c", 0x00000, 0x0800 },
-	{ "2e", 0x00800, 0x0800 },
-	{ "2f", 0x01000, 0x0800 },
-	{ "2h", 0x01800, 0x0800 },
-	{ "2j", 0x02000, 0x0800 },
-	{ "2l", 0x02800, 0x0800 },
-	/* gfx */
-	{ "5f", 0x10000, 0x0800 },
-	{ "5h", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( atlantis_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x0800 )
+	ROM_LOAD( "2e", 0x0800, 0x0800 )
+	ROM_LOAD( "2f", 0x1000, 0x0800 )
+	ROM_LOAD( "2h", 0x1800, 0x0800 )
+	ROM_LOAD( "2j", 0x2000, 0x0800 )
+	ROM_LOAD( "2l", 0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule scobra_rom[] =
-{
-	/* code */
-	{ "vid_2c.bin",   0x00000, 0x0800 },
-	{ "vid_2e.bin",   0x00800, 0x0800 },
-	{ "vid_2f.bin",   0x01000, 0x0800 },
-	{ "vid_2h.bin",   0x01800, 0x0800 },
-	{ "vid_2j_l.bin", 0x02000, 0x0800 },
-	{ "vid_2l_l.bin", 0x02800, 0x0800 },
-	{ "vid_2m_l.bin", 0x03000, 0x0800 },
-	{ "vid_2p_l.bin", 0x03800, 0x0800 },
-	{ "vid_2j_u.bin", 0x04000, 0x0800 },
-	{ "vid_2l_u.bin", 0x04800, 0x0800 },
-	{ "vid_2m_u.bin", 0x05000, 0x0800 },
-	{ "vid_2p_u.bin", 0x05800, 0x0800 },
-	/* gfx */
-	{ "vid_5f.bin",   0x10000, 0x0800 },
-	{ "vid_5h.bin",   0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( scobra_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x1000 )
+	ROM_LOAD( "2e", 0x1000, 0x1000 )
+	ROM_LOAD( "2f", 0x2000, 0x1000 )
+	ROM_LOAD( "2h", 0x3000, 0x1000 )
+	ROM_LOAD( "2j", 0x4000, 0x1000 )
+	ROM_LOAD( "2l", 0x5000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule frogger_rom[] =
-{
-	/* code */
-	{ "frogger.ic5", 0x00000, 0x1000 },
-	{ "frogger.ic6", 0x01000, 0x1000 },
-	{ "frogger.ic7", 0x02000, 0x1000 },
-	{ "frogger.ic8", 0x03000, 0x1000 },
-	/* gfx */
-	{ "frogger.606", 0x10000, 0x0800 },
-	{ "frogger.607", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( scobrab_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800 )
+	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800 )
+	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800 )
+	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800 )
+	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800 )
+	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800 )
+	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800 )
+	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule froggers_rom[] =
-{
-	/* code */
-	{ "vid_d2.bin", 0x00000, 0x0800 },
-	{ "vid_e2.bin", 0x00800, 0x0800 },
-	{ "vid_f2.bin", 0x01000, 0x0800 },
-	{ "vid_h2.bin", 0x01800, 0x0800 },
-	{ "vid_j2.bin", 0x02000, 0x0800 },
-	{ "vid_l2.bin", 0x02800, 0x0800 },
-	/* gfx */
-	{ "vid_f5.bin", 0x10000, 0x0800 },
-	{ "vid_h5.bin", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( frogger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000 )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000 )
+	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule amidar_rom[] =
-{
-	/* code */
-	{ "%s.2c", 0x00000, 0x1000 },
-	{ "%s.2e", 0x01000, 0x1000 },
-	{ "%s.2f", 0x02000, 0x1000 },
-	{ "%s.2h", 0x03000, 0x1000 },
-	/* gfx */
-	{ "%s.5f", 0x10000, 0x0800 },
-	{ "%s.5h", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( froggers_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vid_d2.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "vid_e2.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "vid_f2.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "vid_h2.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "vid_j2.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "vid_l2.bin", 0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule amidarus_rom[] =
-{
-	/* code */
-	{ "%s.2c", 0x00000, 0x1000 },
-	{ "%s.2e", 0x01000, 0x1000 },
-	{ "%s.2f", 0x02000, 0x1000 },
-	{ "%s.2h", 0x03000, 0x1000 },
-	{ "%s.2j", 0x04000, 0x1000 },
-	/* gfx */
-	{ "%s.5f", 0x10000, 0x0800 },
-	{ "%s.5h", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( amidar_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.2h", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule turtles_rom[] =
-{
-	/* code */
-	{ "turt_vid.2c", 0x00000, 0x1000 },
-	{ "turt_vid.2e", 0x01000, 0x1000 },
-	{ "turt_vid.2f", 0x02000, 0x1000 },
-	{ "turt_vid.2h", 0x03000, 0x1000 },
-	{ "turt_vid.2j", 0x04000, 0x1000 },
-	/* gfx */
-	{ "turt_vid.5f", 0x10000, 0x0800 },
-	{ "turt_vid.5h", 0x10800, 0x0800 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( amidarus_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.2h", 0x3000, 0x1000 )
+	ROM_LOAD( "%s.2j", 0x4000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule rallyx_rom[] =
-{
-	/* code */
-	{ "%s.1b", 0x00000, 0x1000 },
-	{ "%s.1e", 0x01000, 0x1000 },
-	{ "%s.1h", 0x02000, 0x1000 },
-	{ "%s.1k", 0x03000, 0x1000 },
-	/* gfx */
-	{ "%s.8e", 0x10000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( turtles_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "turt_vid.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "turt_vid.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "turt_vid.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000 )
+	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "turt_vid.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "turt_vid.5h", 0x0800, 0x0800 )
+ROM_END
 
 
 
-static struct RomModule pooyan_rom[] =
-{
-	/* code */
-	{ "ic22_a4.cpu",  0x00000, 0x2000 },
-	{ "ic23_a5.cpu",  0x02000, 0x2000 },
-	{ "ic24_a6.cpu",  0x04000, 0x2000 },
-	{ "ic25_a7.cpu",  0x06000, 0x2000 },
-	/* gfx */
-	{ "ic14_g9.cpu",  0x10000, 0x1000 },
-	{ "ic13_g10.cpu", 0x11000, 0x1000 },
-	{ "ic15_a9.cpu",  0x12000, 0x1000 },
-	{ "ic16_a8.cpu",  0x13000, 0x1000 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( rallyx_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.1b", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.1e", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.1h", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.1k", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.8e", 0x0000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule phoenix_rom[] =
-{
-	/* code */
-	{"phoenix.45", 0x00000, 0x0800},
-	{"phoenix.46", 0x00800, 0x0800},
-	{"phoenix.47", 0x01000, 0x0800},
-	{"phoenix.48", 0x01800, 0x0800},
-	{"phoenix.49", 0x2000, 0x0800},
-	{"phoenix.50", 0x02800, 0x0800},
-	{"phoenix.51", 0x03000, 0x0800},
-	{"phoenix.52", 0x03800, 0x0800},
-	/* gfx */
-	{"phoenix.39", 0x10000, 0x0800},
-	{"phoenix.40", 0x10800, 0x0800},
-	{"phoenix.23", 0x11000, 0x0800},
-	{"phoenix.24", 0x11800, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pooyan_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000 )
+	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000 )
+	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000 )
+	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic14_g9.cpu",  0x0000, 0x1000 )
+	ROM_LOAD( "ic13_g10.cpu", 0x1000, 0x1000 )
+	ROM_LOAD( "ic15_a9.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000 )
+ROM_END
 
 
 
-static struct RomModule pleiades_rom[] =
-{
-	/* code */
-	{ "pleiades.47", 0x00000, 0x0800},
-	{ "pleiades.48", 0x00800, 0x0800},
-	{ "pleiades.49", 0x01000, 0x0800},
-	{ "pleiades.50", 0x01800, 0x0800},
-	{ "pleiades.51", 0x02000, 0x0800},
-	{ "pleiades.52", 0x02800, 0x0800},
-	{ "pleiades.53", 0x03000, 0x0800},
-	{ "pleiades.54", 0x03800, 0x0800},
-	/* gfx */
-	{ "pleiades.27", 0x10000, 0x0800},
-	{ "pleiades.26", 0x10800, 0x0800},
-	{ "pleiades.45", 0x11000, 0x0800},
-	{ "pleiades.44", 0x11800, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( phoenix_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD("phoenix.45", 0x0000, 0x0800)
+	ROM_LOAD("phoenix.46", 0x0800, 0x0800)
+	ROM_LOAD("phoenix.47", 0x1000, 0x0800)
+	ROM_LOAD("phoenix.48", 0x1800, 0x0800)
+	ROM_LOAD("phoenix.49", 0x000, 0x0800)
+	ROM_LOAD("phoenix.50", 0x2800, 0x0800)
+	ROM_LOAD("phoenix.51", 0x3000, 0x0800)
+	ROM_LOAD("phoenix.52", 0x3800, 0x0800)
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("phoenix.39", 0x0000, 0x0800)
+	ROM_LOAD("phoenix.40", 0x0800, 0x0800)
+	ROM_LOAD("phoenix.23", 0x1000, 0x0800)
+	ROM_LOAD("phoenix.24", 0x1800, 0x0800)
+ROM_END
 
 
 
-static struct RomModule carnival_rom[] =
-{
-	/* code */
-	{ "651u33.cpu", 0x00000, 0x0400 },
-	{ 0,            0x04000, 0x0400 },
-	{ "652u32.cpu", 0x00400, 0x0400 },
-	{ 0,            0x04400, 0x0400 },
-	{ "653u31.cpu", 0x00800, 0x0400 },
-	{ 0,            0x04800, 0x0400 },
-	{ "654u30.cpu", 0x00c00, 0x0400 },
-	{ 0,            0x04c00, 0x0400 },
-	{ "655u29.cpu", 0x01000, 0x0400 },
-	{ 0,            0x05000, 0x0400 },
-	{ "656u28.cpu", 0x01400, 0x0400 },
-	{ 0,            0x05400, 0x0400 },
-	{ "657u27.cpu", 0x01800, 0x0400 },
-	{ 0,            0x05800, 0x0400 },
-	{ "658u26.cpu", 0x01c00, 0x0400 },
-	{ 0,            0x05c00, 0x0400 },
-	{ "659u8.cpu",  0x02000, 0x0400 },
-	{ 0,            0x06000, 0x0400 },
-	{ "660u7.cpu",  0x02400, 0x0400 },
-	{ 0,            0x06400, 0x0400 },
-	{ "661u6.cpu",  0x02800, 0x0400 },
-	{ 0,            0x06800, 0x0400 },
-	{ "662u5.cpu",  0x02c00, 0x0400 },
-	{ 0,            0x06c00, 0x0400 },
-	{ "663u4.cpu",  0x03000, 0x0400 },
-	{ 0,            0x07000, 0x0400 },
-	{ "664u3.cpu",  0x03400, 0x0400 },
-	{ 0,            0x07400, 0x0400 },
-	{ "665u2.cpu",  0x03800, 0x0400 },
-	{ 0,            0x07800, 0x0400 },
-	{ "666u1.cpu",  0x03c00, 0x0400 },
-	{ 0,            0x07c00, 0x0400 },
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( pleiades_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pleiades.47", 0x0000, 0x0800)
+	ROM_LOAD( "pleiades.48", 0x0800, 0x0800)
+	ROM_LOAD( "pleiades.49", 0x1000, 0x0800)
+	ROM_LOAD( "pleiades.50", 0x1800, 0x0800)
+	ROM_LOAD( "pleiades.51", 0x2000, 0x0800)
+	ROM_LOAD( "pleiades.52", 0x2800, 0x0800)
+	ROM_LOAD( "pleiades.53", 0x3000, 0x0800)
+	ROM_LOAD( "pleiades.54", 0x3800, 0x0800)
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pleiades.27", 0x0000, 0x0800)
+	ROM_LOAD( "pleiades.26", 0x0800, 0x0800)
+	ROM_LOAD( "pleiades.45", 0x1000, 0x0800)
+	ROM_LOAD( "pleiades.44", 0x1800, 0x0800)
+ROM_END
 
 
 
-static struct RomModule invaders_rom[] =
-{
-	/* code */
-	{ "invaders.h", 0x00000, 0x0800},
-	{ "invaders.g", 0x00800, 0x0800},
-	{ "invaders.f", 0x01000, 0x0800},
-	{ "invaders.e", 0x01800, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( carnival_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "651u33.cpu", 0x0000, 0x0400 )
+	ROM_CONTINUE(           0x4000, 0x0400 )
+	ROM_LOAD( "652u32.cpu", 0x0400, 0x0400 )
+	ROM_CONTINUE(           0x4400, 0x0400 )
+	ROM_LOAD( "653u31.cpu", 0x0800, 0x0400 )
+	ROM_CONTINUE(           0x4800, 0x0400 )
+	ROM_LOAD( "654u30.cpu", 0x0c00, 0x0400 )
+	ROM_CONTINUE(           0x4c00, 0x0400 )
+	ROM_LOAD( "655u29.cpu", 0x1000, 0x0400 )
+	ROM_CONTINUE(           0x5000, 0x0400 )
+	ROM_LOAD( "656u28.cpu", 0x1400, 0x0400 )
+	ROM_CONTINUE(           0x5400, 0x0400 )
+	ROM_LOAD( "657u27.cpu", 0x1800, 0x0400 )
+	ROM_CONTINUE(           0x5800, 0x0400 )
+	ROM_LOAD( "658u26.cpu", 0x1c00, 0x0400 )
+	ROM_CONTINUE(           0x5c00, 0x0400 )
+	ROM_LOAD( "659u8.cpu",  0x2000, 0x0400 )
+	ROM_CONTINUE(           0x6000, 0x0400 )
+	ROM_LOAD( "660u7.cpu",  0x2400, 0x0400 )
+	ROM_CONTINUE(           0x6400, 0x0400 )
+	ROM_LOAD( "661u6.cpu",  0x2800, 0x0400 )
+	ROM_CONTINUE(           0x6800, 0x0400 )
+	ROM_LOAD( "662u5.cpu",  0x2c00, 0x0400 )
+	ROM_CONTINUE(           0x6c00, 0x0400 )
+	ROM_LOAD( "663u4.cpu",  0x3000, 0x0400 )
+	ROM_CONTINUE(           0x7000, 0x0400 )
+	ROM_LOAD( "664u3.cpu",  0x3400, 0x0400 )
+	ROM_CONTINUE(           0x7400, 0x0400 )
+	ROM_LOAD( "665u2.cpu",  0x3800, 0x0400 )
+	ROM_CONTINUE(           0x7800, 0x0400 )
+	ROM_LOAD( "666u1.cpu",  0x3c00, 0x0400 )
+	ROM_CONTINUE(           0x7c00, 0x0400 )
+ROM_END
 
 
 
-static struct RomModule spaceatt_rom[] =
-{
-	/* code */
-	{ "spaceatt.h", 0x00000, 0x0800},
-	{ "spaceatt.g", 0x00800, 0x0800},
-	{ "spaceatt.f", 0x01000, 0x0800},
-	{ "spaceatt.e", 0x01800, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( invaders_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "invaders.h", 0x0000, 0x0800)
+	ROM_LOAD( "invaders.g", 0x0800, 0x0800)
+	ROM_LOAD( "invaders.f", 0x1000, 0x0800)
+	ROM_LOAD( "invaders.e", 0x1800, 0x0800)
+ROM_END
 
 
 
-static struct RomModule invdelux_rom[] =
-{
-	/* code */
-	{ "invdelux.h", 0x00000, 0x0800},
-	{ "invdelux.g", 0x00800, 0x0800},
-	{ "invdelux.f", 0x01000, 0x0800},
-	{ "invdelux.e", 0x01800, 0x0800},
-	{ "invdelux.d", 0x04000, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( spaceatt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800)
+	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800)
+	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800)
+	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800)
+ROM_END
 
 
 
-static struct RomModule galxwars_rom[] =
-{
-	/* code */
-	{ "galxwars.0", 0x00000, 0x0400},
-	{ "galxwars.1", 0x00400, 0x0400},
-	{ "galxwars.2", 0x00800, 0x0400},
-	{ "galxwars.3", 0x00c00, 0x0400},
-	{ "galxwars.4", 0x04000, 0x0400},
-	{ "galxwars.5", 0x04400, 0x0400},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( invdelux_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "invdelux.h", 0x0000, 0x0800)
+	ROM_LOAD( "invdelux.g", 0x0800, 0x0800)
+	ROM_LOAD( "invdelux.f", 0x1000, 0x0800)
+	ROM_LOAD( "invdelux.e", 0x1800, 0x0800)
+	ROM_LOAD( "invdelux.d", 0x4000, 0x0800)
+ROM_END
 
 
 
-static struct RomModule lrescue_rom[] =
-{
-	/* code */
-	{ "lrescue.1", 0x00000, 0x0800},
-	{ "lrescue.2", 0x00800, 0x0800},
-	{ "lrescue.3", 0x01000, 0x0800},
-	{ "lrescue.4", 0x01800, 0x0800},
-	{ "lrescue.5", 0x04000, 0x0800},
-	{ "lrescue.6", 0x04800, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( galxwars_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galxwars.0", 0x0000, 0x0400)
+	ROM_LOAD( "galxwars.1", 0x0400, 0x0400)
+	ROM_LOAD( "galxwars.2", 0x0800, 0x0400)
+	ROM_LOAD( "galxwars.3", 0x0c00, 0x0400)
+	ROM_LOAD( "galxwars.4", 0x4000, 0x0400)
+	ROM_LOAD( "galxwars.5", 0x4400, 0x0400)
+ROM_END
 
 
 
-static struct RomModule desterth_rom[] =
-{
-	/* code */
-	{ "36_h.bin", 0x00000, 0x0800},
-	{ "35_g.bin", 0x00800, 0x0800},
-	{ "34_f.bin", 0x01000, 0x0800},
-	{ "33_e.bin", 0x01800, 0x0800},
-	{ "32_d.bin", 0x04000, 0x0800},
-	{ "31_c.bin", 0x04800, 0x0800},
-	{ "42_b.bin", 0x05000, 0x0800},
-	{ 0, 0, 0 }	/* end of table */
-};
+ROM_START( lrescue_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "lrescue.1", 0x0000, 0x0800)
+	ROM_LOAD( "lrescue.2", 0x0800, 0x0800)
+	ROM_LOAD( "lrescue.3", 0x1000, 0x0800)
+	ROM_LOAD( "lrescue.4", 0x1800, 0x0800)
+	ROM_LOAD( "lrescue.5", 0x4000, 0x0800)
+	ROM_LOAD( "lrescue.6", 0x4800, 0x0800)
+ROM_END
 
 
 
-const struct RomModule mario_rom[] =
-{
-	/* code */
-	{ "%s.7f", 0x00000, 0x2000 },
-	{ "%s.7e", 0x02000, 0x2000 },
-	{ "%s.7d", 0x04000, 0x2000 },
-	{ "%s.7c", 0x0f000, 0x1000 },
-	/* gfx */
-	{ "%s.3f", 0x10000, 0x1000 },
-	{ "%s.3j", 0x11000, 0x1000 },
-	{ "%s.7m", 0x12000, 0x1000 },
-	{ "%s.7n", 0x13000, 0x1000 },
-	{ "%s.7p", 0x14000, 0x1000 },
-	{ "%s.7s", 0x15000, 0x1000 },
-	{ "%s.7t", 0x16000, 0x1000 },
-	{ "%s.7u", 0x17000, 0x1000 },
-	/* sound */
-	{ "%s.6k", 0x18000, 0x1000 },
-	{ 0, 0, 0 }     /* end of table */
-};
+ROM_START( desterth_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "36_h.bin", 0x0000, 0x0800)
+	ROM_LOAD( "35_g.bin", 0x0800, 0x0800)
+	ROM_LOAD( "34_f.bin", 0x1000, 0x0800)
+	ROM_LOAD( "33_e.bin", 0x1800, 0x0800)
+	ROM_LOAD( "32_d.bin", 0x4000, 0x0800)
+	ROM_LOAD( "31_c.bin", 0x4800, 0x0800)
+	ROM_LOAD( "42_b.bin", 0x5000, 0x0800)
+ROM_END
 
 
 
-const struct RomModule zaxxon_rom[] =
-{
-	/* code */
-	{ "%s.3",  0x00000, 0x2000 },
-	{ "%s.2",  0x02000, 0x2000 },
-	{ "%s.1",  0x04000, 0x1000 },
-	/* gfx */
-	{ "%s.14", 0x10000, 0x0800 },
-	{ "%s.15", 0x10800, 0x0800 },
-	{ "%s.6",  0x11000, 0x2000 },
-	{ "%s.5",  0x13000, 0x2000 },
-	{ "%s.4",  0x15000, 0x2000 },
-	{ "%s.11", 0x17000, 0x2000 },
-	{ "%s.12", 0x19000, 0x2000 },
-	{ "%s.13", 0x1b000, 0x2000 },
-	/* sound */
-//	{ "%s.8",  0x20000, 0x2000 },
-//	{ "%s.7",  0x22000, 0x2000 },
-//	{ "%s.10", 0x24000, 0x2000 },
-//	{ "%s.9",  0x26000, 0x2000 },
-	{ 0, 0, 0 }     /* end of table */
-};
+ROM_START( mario_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.7f", 0x0000, 0x2000 )
+	ROM_LOAD( "%s.7e", 0x2000, 0x2000 )
+	ROM_LOAD( "%s.7d", 0x4000, 0x2000 )
+	ROM_LOAD( "%s.7c", 0xf000, 0x1000 )
+
+	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.3f", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.3j", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.7m", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.7n", 0x3000, 0x1000 )
+	ROM_LOAD( "%s.7p", 0x4000, 0x1000 )
+	ROM_LOAD( "%s.7s", 0x5000, 0x1000 )
+	ROM_LOAD( "%s.7t", 0x6000, 0x1000 )
+	ROM_LOAD( "%s.7u", 0x7000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "%s.6k", 0x0000, 0x1000 )
+ROM_END
+
+
+
+ROM_START( zaxxon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.3",  0x0000, 0x2000 )
+	ROM_LOAD( "%s.2",  0x2000, 0x2000 )
+	ROM_LOAD( "%s.1",  0x4000, 0x1000 )
+
+	ROM_REGION(0xd000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.15", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.14", 0x0800, 0x0800 )
+	ROM_LOAD( "%s.13", 0x1000, 0x2000 )
+	ROM_LOAD( "%s.12", 0x3000, 0x2000 )
+	ROM_LOAD( "%s.11", 0x5000, 0x2000 )
+	ROM_LOAD( "%s.6",  0x7000, 0x2000 )
+	ROM_LOAD( "%s.5",  0x9000, 0x2000 )
+	ROM_LOAD( "%s.4",  0xb000, 0x2000 )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "%s.8",  0x0000, 0x2000 )
+	ROM_LOAD( "%s.7",  0x2000, 0x2000 )
+	ROM_LOAD( "%s.10", 0x4000, 0x2000 )
+	ROM_LOAD( "%s.9",  0x6000, 0x2000 )
+ROM_END
+
+
+
+ROM_START( bombjack_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000 )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000 )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000 )
+	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000 )
+
+	ROM_REGION(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000 )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000 )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000 )
+
+	ROM_REGION(0x1000)	/* background graphics */
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64 for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000 )
+ROM_END
 
 
 
 struct GameDriver drivers[] =
 {
-	{ "pacman",   pacman_rom,   0,               &pacman_driver },
-	{ "pacmod",   pacmod_rom,   0,               &pacman_driver },
-	{ "namcopac", pacman_rom,   0,               &pacman_driver },
-	{ "hangly",   pacman_rom,   0,               &pacman_driver },
-	{ "puckman",  pacman_rom,   0,               &pacman_driver },
-	{ "piranha",  piranha_rom,  0,               &pacman_driver },
-	{ "mspacman", mspacman_rom, 0,               &mspacman_driver },
-	{ "crush",    crush_rom,    0,               &crush_driver },
-	{ "pengo",    pengo_rom,    0,               &pengo_driver },
-	{ "penta",    penta_rom,    0,               &pengo_driver },
-	{ "ladybug",  ladybug_rom,  0,               &ladybug_driver },
-	{ "mrdo",     mrdo_rom,     0,               &mrdo_driver },
-	{ "mrlo",     mrlo_rom,     0,               &mrdo_driver },
-	{ "cclimber", cclimber_rom, cclimber_decode, &cclimber_driver },
-	{ "ccjap",    ccjap_rom,    ccjap_decode,    &cclimber_driver },
-	{ "ccboot",   ccboot_rom,   ccjap_decode,    &cclimber_driver },
-	{ "ckong",    ckong_rom,    0,               &ckong_driver },
-	{ "dkong",    dkong_rom,    0,               &dkong_driver },
-	{ "dkongjr",  dkongjr_rom,  0,               &dkongjr_driver },
-	{ "bagman",   bagman_rom,   0,               &bagman_driver },
-	{ "wow",      wow_rom,      0,               &wow_driver },
-	{ "robby",    robby_rom,    0,               &wow_driver },
-	{ "gorf",     gorf_rom,     0,               &wow_driver },
-	{ "galaxian", galaxian_rom, 0,               &galaxian_driver },
-	{ "galnamco", galnamco_rom, 0,               &galaxian_driver },
-	{ "superg",   galnamco_rom, 0,               &galaxian_driver },
-	{ "galapx",   galapx_rom,   0,               &galaxian_driver },
-	{ "galap1",   galap1_rom,   0,               &galaxian_driver },
-	{ "galap4",   galap4_rom,   0,               &galaxian_driver },
-	{ "galturbo", galnamco_rom, 0,               &galaxian_driver },
-	{ "pisces",   pisces_rom,   0,               &pisces_driver },
-	{ "japirem",  japirem_rom,  0,               &japirem_driver },
-	{ "uniwars",  uniwars_rom,  0,               &japirem_driver },
-	{ "warofbug", galaxian_rom, 0,               &warofbug_driver },
-	{ "mooncrst", mooncrst_rom, 0,               &mooncrst_driver },
-	{ "moonqsr",  moonqsr_rom,  moonqsr_decode,  &moonqsr_driver },
-	{ "theend",   theend_rom,   0,               &theend_driver },
-	{ "scramble", scramble_rom, 0,               &scramble_driver },
-	{ "atlantis", atlantis_rom, 0,               &atlantis_driver },
-	{ "scobra",   scobra_rom,   0,               &scobra_driver },
-	{ "frogger",  frogger_rom,  0,               &frogger_driver },
-	{ "froggers", froggers_rom, 0,               &scramble_driver },
-	{ "amidar",   amidar_rom,   0,               &amidar_driver },
-	{ "amidarus", amidarus_rom, 0,               &amidar_driver },
-	{ "turtles",  turtles_rom,  0,               &turtles_driver },
-	{ "rallyx",   rallyx_rom,   0,               &rallyx_driver },
-	{ "pooyan",   pooyan_rom,   0,               &pooyan_driver },
-	{ "phoenix",  phoenix_rom,  0,               &phoenix_driver },
-	{ "pleiades", pleiades_rom, 0,               &phoenix_driver },
-	{ "carnival", carnival_rom, 0,               &carnival_driver },
-	{ "invaders", invaders_rom, 0,               &invaders_driver },
-	{ "earthinv", invaders_rom, 0,               &invaders_driver },
-	{ "spaceatt", spaceatt_rom, 0,               &invaders_driver },
-	{ "invdelux", invdelux_rom, 0,               &invaders_driver },
-	{ "galxwars", galxwars_rom, 0,               &invaders_driver },
-	{ "lrescue",  lrescue_rom,  0,               &invaders_driver },
-	{ "desterth", desterth_rom, 0,               &invaders_driver },
-	{ "mario",    mario_rom,    0,               &mario_driver },
-	{ "zaxxon",   zaxxon_rom,   0,               &zaxxon_driver },
+	{ "pacman",   pacman_rom,   0, 0,               &pacman_driver },
+	{ "pacmod",   pacmod_rom,   0, 0,               &pacman_driver },
+	{ "namcopac", pacman_rom,   0, 0,               &pacman_driver },
+	{ "hangly",   pacman_rom,   0, 0,               &pacman_driver },
+	{ "puckman",  pacman_rom,   0, 0,               &pacman_driver },
+	{ "piranha",  piranha_rom,  0, 0,               &pacman_driver },
+	{ "mspacman", mspacman_rom, 0, 0,               &mspacman_driver },
+	{ "crush",    crush_rom,    0, 0,               &crush_driver },
+	{ "pengo",    pengo_rom,    0, 0,               &pengo_driver },
+	{ "penta",    penta_rom,    0, 0,               &pengo_driver },
+	{ "ladybug",  ladybug_rom,  0, 0,               &ladybug_driver },
+	{ "mrdo",     mrdo_rom,     0, 0,               &mrdo_driver },
+	{ "mrlo",     mrlo_rom,     0, 0,               &mrdo_driver },
+	{ "cclimber", cclimber_rom, 0, cclimber_decode, &cclimber_driver },
+	{ "ccjap",    ccjap_rom,    0, ccjap_decode,    &cclimber_driver },
+	{ "ccboot",   ccboot_rom,   0, ccjap_decode,    &cclimber_driver },
+	{ "ckong",    ckong_rom,    0, 0,               &ckong_driver },
+	{ "dkong",    dkong_rom,    0, 0,               &dkong_driver },
+	{ "dkongjr",  dkongjr_rom,  0, 0,               &dkongjr_driver },
+	{ "bagman",   bagman_rom,   0, 0,               &bagman_driver },
+	{ "wow",      wow_rom,      0, 0,               &wow_driver },
+	{ "robby",    robby_rom,    0, 0,               &wow_driver },
+	{ "gorf",     gorf_rom,     0, 0,               &wow_driver },
+	{ "galaxian", galaxian_rom, 0, 0,               &galaxian_driver },
+	{ "galnamco", galnamco_rom, 0, 0,               &galaxian_driver },
+	{ "superg",   galnamco_rom, 0, 0,               &galaxian_driver },
+	{ "galapx",   galapx_rom,   0, 0,               &galaxian_driver },
+	{ "galap1",   galap1_rom,   0, 0,               &galaxian_driver },
+	{ "galap4",   galap4_rom,   0, 0,               &galaxian_driver },
+	{ "galturbo", galnamco_rom, 0, 0,               &galaxian_driver },
+	{ "pisces",   pisces_rom,   0, 0,               &pisces_driver },
+	{ "japirem",  japirem_rom,  0, 0,               &japirem_driver },
+	{ "uniwars",  uniwars_rom,  0, 0,               &japirem_driver },
+	{ "warofbug", galaxian_rom, 0, 0,               &warofbug_driver },
+	{ "mooncrst", mooncrst_rom, moonqsr_decode, 0,  &mooncrst_driver },
+	{ "mooncrsb", mooncrsb_rom, 0, 0,               &mooncrst_driver },
+	{ "moonqsr",  moonqsr_rom,  0, moonqsr_decode,  &moonqsr_driver },
+	{ "theend",   theend_rom,   0, 0,               &theend_driver },
+	{ "scramble", scramble_rom, 0, 0,               &scramble_driver },
+	{ "atlantis", atlantis_rom, 0, 0,               &atlantis_driver },
+	{ "scobra",   scobra_rom,   0, 0,               &scobra_driver },
+	{ "scobrab",  scobrab_rom,  0, 0,               &scobra_driver },
+	{ "frogger",  frogger_rom,  0, 0,               &frogger_driver },
+	{ "froggers", froggers_rom, 0, 0,               &scramble_driver },
+	{ "amidar",   amidar_rom,   0, 0,               &amidar_driver },
+	{ "amidarus", amidarus_rom, 0, 0,               &amidar_driver },
+	{ "turtles",  turtles_rom,  0, 0,               &turtles_driver },
+	{ "rallyx",   rallyx_rom,   0, 0,               &rallyx_driver },
+	{ "pooyan",   pooyan_rom,   0, 0,               &pooyan_driver },
+	{ "phoenix",  phoenix_rom,  0, 0,               &phoenix_driver },
+	{ "pleiades", pleiades_rom, 0, 0,               &phoenix_driver },
+	{ "carnival", carnival_rom, 0, 0,               &carnival_driver },
+	{ "invaders", invaders_rom, 0, 0,               &invaders_driver },
+	{ "earthinv", invaders_rom, 0, 0,               &invaders_driver },
+	{ "spaceatt", spaceatt_rom, 0, 0,               &invaders_driver },
+	{ "invdelux", invdelux_rom, 0, 0,               &invaders_driver },
+	{ "galxwars", galxwars_rom, 0, 0,               &invaders_driver },
+	{ "lrescue",  lrescue_rom,  0, 0,               &invaders_driver },
+	{ "desterth", desterth_rom, 0, 0,               &invaders_driver },
+	{ "mario",    mario_rom,    0, 0,               &mario_driver },
+	{ "zaxxon",   zaxxon_rom,   0, 0,               &zaxxon_driver },
+	{ "bombjack", bombjack_rom, 0, 0,               &bombjack_driver },
 	{ 0	}	/* end of array */
 };

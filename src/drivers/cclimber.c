@@ -249,11 +249,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0, 16 },	/* char set #1 */
-	{ 0x11000, &charlayout,     0, 16 },	/* char set #2 */
-	{ 0x12000, &charlayout,  4*16,  8 },	/* big sprite char set */
-	{ 0x10000, &spritelayout,   0, 16 },	/* sprite set #1 */
-	{ 0x11000, &spritelayout,   0, 16 },	/* sprite set #2 */
+	{ 1, 0x0000, &charlayout,     0, 16 },	/* char set #1 */
+	{ 1, 0x1000, &charlayout,     0, 16 },	/* char set #2 */
+	{ 1, 0x2000, &charlayout,  4*16,  8 },	/* big sprite char set */
+	{ 1, 0x0000, &spritelayout,   0, 16 },	/* sprite set #1 */
+	{ 1, 0x1000, &spritelayout,   0, 16 },	/* sprite set #2 */
 	{ -1 } /* end of array */
 };
 
@@ -276,12 +276,18 @@ static unsigned char color_prom[] =
 const struct MachineDriver cclimber_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,readport,writeport,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,readport,writeport,
 	input_ports,dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },

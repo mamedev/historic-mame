@@ -299,7 +299,7 @@ static struct GfxLayout pisces_spritelayout =
 /* pick the color table */
 static struct GfxLayout starslayout =
 {
-	0,0,
+	1,1,
 	0,
 	1,	/* 1 star = 1 color */
 	{ 0 },
@@ -312,16 +312,16 @@ static struct GfxLayout starslayout =
 
 static struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
 {
-	{ 0x10000, &galaxian_charlayout,    0,  8 },
-	{ 0x10000, &galaxian_spritelayout,  0,  8 },
-	{ 0,       &starslayout,           32, 64 },
+	{ 1, 0x0000, &galaxian_charlayout,    0,  8 },
+	{ 1, 0x0000, &galaxian_spritelayout,  0,  8 },
+	{ 0, 0,      &starslayout,           32, 64 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo pisces_gfxdecodeinfo[] =
 {
-	{ 0x10000, &pisces_charlayout,    0,  8 },
-	{ 0x10000, &pisces_spritelayout,  0,  8 },
-	{ 0,       &starslayout,         32, 64 },
+	{ 1, 0x0000, &pisces_charlayout,    0,  8 },
+	{ 1, 0x0000, &pisces_spritelayout,  0,  8 },
+	{ 0, 0,      &starslayout,         32, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -371,12 +371,18 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 const struct MachineDriver galaxian_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			galaxian_readmem,galaxian_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	galaxian_readmem,galaxian_writemem,0,0,
 	galaxian_input_ports,galaxian_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -404,12 +410,18 @@ const struct MachineDriver galaxian_driver =
 const struct MachineDriver pisces_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			pisces_readmem,pisces_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	pisces_readmem,pisces_writemem,0,0,
 	galaxian_input_ports,pisces_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -437,12 +449,18 @@ const struct MachineDriver pisces_driver =
 const struct MachineDriver japirem_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			japirem_readmem,japirem_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	japirem_readmem,japirem_writemem,0,0,
 	galaxian_input_ports,japirem_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
@@ -470,12 +488,18 @@ const struct MachineDriver japirem_driver =
 const struct MachineDriver warofbug_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			galaxian_readmem,galaxian_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
 	60,
-	galaxian_readmem,galaxian_writemem,0,0,
 	warofbug_input_ports,warofbug_dsw,
 	0,
-	nmi_interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

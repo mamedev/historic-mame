@@ -188,7 +188,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x004ce, &charlayout,      0, 4 },
+	{ 0, 0x04ce, &charlayout,      0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -216,12 +216,18 @@ static unsigned char colortable[] =
 const struct MachineDriver wow_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,readport,writeport,
+			interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,readport,writeport,
 	input_ports,dsw,
 	0,
-	interrupt,
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },

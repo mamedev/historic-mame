@@ -20,7 +20,7 @@ static struct osd_bitmap *tmpbitmap1,*tmpbitmap2;
 
 static int scrollreg;
 static int palette_bank;
-//static int bankreg;
+
 
 
 static struct rectangle backvisiblearea =
@@ -41,7 +41,7 @@ int phoenix_vh_start(void)
 {
 	scrollreg = 0;
 	palette_bank = 0;
-//	bankreg = 0;
+
 
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
@@ -104,13 +104,12 @@ void phoenix_scrollreg_w (int offset,int data)
 
 void phoenix_videoreg_w (int offset,int data)
 {
-	if (palette_bank != ((data >> 1) & 1)) // || bankreg != (data & 1))
+	if (palette_bank != ((data >> 1) & 1))
 	{
 		int offs;
 
 
 		palette_bank = (data >> 1) & 1;
-//		bankreg = data & 1;
 
 		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 		{

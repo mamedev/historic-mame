@@ -66,10 +66,10 @@ int cclimber_sh_start(void)
 	/* decode the rom samples */
 	for (i = 0;i < 0x2000;i++)
 	{
-		bits = RAM[0x18000 + i] & 0xf0;
+		bits = Machine->memory_region[2][i] & 0xf0;
 		samples[2 * i] = (bits | (bits >> 4)) + 0x80;
 
-		bits = RAM[0x18000 + i] & 0x0f;
+		bits = Machine->memory_region[2][i] & 0x0f;
 		samples[2 * i + 1] = ((bits << 4) | bits) + 0x80;
 	}
 

@@ -85,12 +85,14 @@ c100      IN2
  *
 
 write:
+c000-c002 ?
 c006      ?
 ff3c-ff3f ?
-fff0      nmi interrupt enable
+fff0      interrupt enable
 fff1      ?
-fff8-fff9 playfield scroll registers?
-fffa      ?
+fff8-fff9 background playfield position
+fffa-fffb ?
+fffe      ?
 
 interrupts:
 VBlank triggers IRQ, handled with interrupt mode 1
@@ -101,9 +103,12 @@ NMI causes a ROM/RAM test.
 #include "driver.h"
 
 
+extern int zaxxon_IN2_r(int offset);
+
 extern unsigned char *zaxxon_videoram;
 extern unsigned char *zaxxon_colorram;
 extern unsigned char *zaxxon_spriteram;
+extern unsigned char *zaxxon_background_position;
 extern void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void zaxxon_videoram_w(int offset,int data);
 extern void zaxxon_colorram_w(int offset,int data);
@@ -120,7 +125,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa000, 0xa0ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
-	{ 0xc100, 0xc100, input_port_2_r },
+	{ 0xc100, 0xc100, zaxxon_IN2_r },
 	{ 0xc002, 0xc002, input_port_3_r },
 	{ 0xc003, 0xc003, input_port_4_r },
 	{ 0x0000, 0x4fff, MRA_ROM },
@@ -133,11 +138,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, zaxxon_videoram_w, &zaxxon_videoram },
 	{ 0xa000, 0xa0ff, MWA_RAM, &zaxxon_spriteram },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
+	{ 0xfff8, 0xfff9, MWA_RAM, &zaxxon_background_position },
 	{ 0x0000, 0x4fff, MWA_ROM },
-	{ 0xc006, 0xc006, MWA_NOP },	/* ??? */
-	{ 0xff3c, 0xff3f, MWA_NOP },	/* ??? */
-	{ 0xfff1, 0xfff1, MWA_NOP },	/* ??? */
-	{ 0xfff8, 0xfffa, MWA_NOP },	/* ??? */
 	{ -1 }  /* end of table */
 };
 
@@ -201,17 +203,6 @@ static struct GfxLayout charlayout1 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout charlayout2 =
-{
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
 static struct GfxLayout spritelayout =
 {
 	32,32,	/* 32*32 sprites */
@@ -229,13 +220,24 @@ static struct GfxLayout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
+static struct GfxLayout charlayout2 =
+{
+	8,8,	/* 8*8 characters */
+	1024,	/* 1024 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
+	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout1,  0, 16 },
-	{ 0x11000, &charlayout2,  0, 16 },
-	{ 0x17000, &spritelayout, 0, 16 },
+	{ 1, 0x0000, &charlayout1,  0, 16 },	/* characters */
+	{ 1, 0x1000, &spritelayout, 0, 16 },	/* sprites */
+	{ 1, 0x7000, &charlayout2,  0, 16 },	/* background graphics */
 	{ -1 } /* end of array */
 };
 
@@ -289,12 +291,18 @@ static unsigned char colortable[] =
 const struct MachineDriver zaxxon_driver =
 {
 	/* basic machine hardware */
-	3072000,	/* 3.072 Mhz */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
-	interrupt,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },

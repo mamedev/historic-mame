@@ -197,8 +197,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 32 },
-	{ 0x10000, &spritelayout, 0, 32 },
+	{ 1, 0x0000, &charlayout,   0, 32 },
+	{ 1, 0x0000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -260,12 +260,18 @@ static unsigned char colortable[] =
 const struct MachineDriver rallyx_driver =
 {
 	/* basic machine hardware */
-	2500000,	/* 2.5 Mhz? */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz ? */
+			0,
+			readmem,writemem,0,writeport,
+			interrupt,1
+		}
+	},
 	60,
-	readmem,writemem,0,writeport,
 	input_ports,dsw,
 	0,
-	interrupt,
 
 	/* video hardware */
 	320,256, {},	/* visible_area is not used by the video driver */
